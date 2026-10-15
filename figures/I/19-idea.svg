@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.19 at a glance</title>
+  <desc>The bigger angle (red) always looks across at the longer side (red), and the smaller angle (blue) at the shorter side (blue).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M184.4,94.5 L160.2,115.5 A32,32 0 0,0 210.6,112.9 Z" fill="#d0312d"/>
+  <path d="M345.0,207.0 L318.8,188.6 A32,32 0 0,0 313.0,207.0 Z" fill="#1f5aa6"/>
+  <line x1="184.4" y1="94.5" x2="345.0" y2="207.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+  <line x1="55.0" y1="207.0" x2="345.0" y2="207.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
+  <line x1="184.4" y1="94.5" x2="55.0" y2="207.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+</svg>

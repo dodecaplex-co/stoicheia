@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.11 at a glance</title>
+  <desc>Mark off equal lengths either side of the point (red) and join their ends with equal lines to a peak (blue): the line from the peak down to the point stands at right angles (yellow).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M200.0,223.3 L200.0,193.3 A30,30 0 0,0 170.0,223.3 Z" fill="#f2b705"/>
+  <path d="M200.0,223.3 L230.0,223.3 A30,30 0 0,0 200.0,193.3 Z" fill="#f2b705"/>
+  <polyline points="212.0,223.3 212.0,211.3 200.0,211.3" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <polyline points="200.0,211.3 188.0,211.3 188.0,223.3" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <line x1="40.0" y1="223.3" x2="360.0" y2="223.3" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="200.0" y1="84.7" x2="120.0" y2="223.3" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <line x1="200.0" y1="84.7" x2="280.0" y2="223.3" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <line x1="200.0" y1="223.3" x2="120.0" y2="223.3" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="200.0" y1="223.3" x2="280.0" y2="223.3" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="200.0" y1="223.3" x2="200.0" y2="84.7" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="200.0" cy="223.3" r="4.5" fill="#222222"/>
+</svg>

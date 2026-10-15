@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.20 at a glance: the triangle inequality</title>
+  <desc>Lay any two sides of a triangle end to end (blue and yellow), and together they are longer than the third side (red).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <line x1="100.0" y1="150.0" x2="300.0" y2="150.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
+  <line x1="179.8" y1="60.3" x2="100.0" y2="150.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <line x1="179.8" y1="60.3" x2="300.0" y2="150.0" stroke="#f2b705" stroke-width="6" stroke-linecap="round"/>
+  <line x1="65.0" y1="206.0" x2="185.0" y2="206.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
+  <line x1="185.0" y1="206.0" x2="335.0" y2="206.0" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
+  <line x1="65.0" y1="236.0" x2="265.0" y2="236.0" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
+</svg>

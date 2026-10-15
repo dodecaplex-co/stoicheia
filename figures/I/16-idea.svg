@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.16 at a glance</title>
+  <desc>Extend one side of a triangle past a corner: the outside angle there (red) is greater than either of the two inside angles across from it (yellow and blue).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M245.0,223.1 L277.0,223.1 A32,32 0 0,0 239.4,191.6 Z" fill="#d0312d"/>
+  <path d="M219.2,76.9 L194.7,97.5 A32,32 0 0,0 224.8,108.4 Z" fill="#f2b705"/>
+  <path d="M45.0,223.1 L77.0,223.1 A32,32 0 0,0 69.5,202.5 Z" fill="#1f5aa6"/>
+  <line x1="245.0" y1="223.1" x2="355.0" y2="223.1" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="219.2,76.9 45.0,223.1 245.0,223.1" fill="none" stroke="#222222" stroke-width="4" stroke-linejoin="round"/>
+</svg>

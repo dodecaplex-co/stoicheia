@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.41 at a glance</title>
+  <desc>On the same base and between the same parallels (blue), the parallelogram is twice the triangle: the two red corners together are as big as the yellow.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <polygon points="147.5,85.0 102.5,215.0 252.5,215.0 297.5,85.0" fill="#d0312d" fill-opacity="0.9"/>
+  <polygon points="197.5,85.0 102.5,215.0 252.5,215.0" fill="#f2b705" fill-opacity="0.95"/>
+  <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

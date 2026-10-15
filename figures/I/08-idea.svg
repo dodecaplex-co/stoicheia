@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.8 at a glance</title>
+  <desc>If all three sides match (red, blue and black), the angle between the red and blue sides matches too (yellow), however the triangle is turned.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M136.2,68.8 L118.6,95.5 A32,32 0 0,0 144.8,99.7 Z" fill="#f2b705"/>
+  <path d="M358.8,82.7 L332.5,100.8 A32,32 0 0,0 355.2,114.5 Z" fill="#f2b705"/>
+  <line x1="41.2" y1="212.8" x2="176.2" y2="212.8" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="136.2" y1="68.8" x2="41.2" y2="212.8" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="136.2" y1="68.8" x2="176.2" y2="212.8" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="216.8" y1="180.6" x2="342.0" y2="231.2" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="358.8" y1="82.7" x2="216.8" y2="180.6" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="358.8" y1="82.7" x2="342.0" y2="231.2" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

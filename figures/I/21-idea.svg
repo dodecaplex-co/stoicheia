@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.21 at a glance</title>
+  <desc>Draw two lines from the ends of the base to a point inside (red): together they are shorter than the two sides around them (blue), yet the angle between them (red) is wider than the angle at the top (blue).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M182.0,54.0 L166.6,79.7 A30,30 0 0,0 200.6,77.5 Z" fill="#1f5aa6"/>
+  <path d="M214.0,176.0 L186.8,188.7 A30,30 0 0,0 240.0,191.0 Z" fill="#d0312d"/>
+  <line x1="68.0" y1="244.0" x2="332.0" y2="244.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+  <line x1="182.0" y1="54.0" x2="68.0" y2="244.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <line x1="182.0" y1="54.0" x2="332.0" y2="244.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <line x1="214.0" y1="176.0" x2="68.0" y2="244.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
+  <line x1="214.0" y1="176.0" x2="332.0" y2="244.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
+</svg>

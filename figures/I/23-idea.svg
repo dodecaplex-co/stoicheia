@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.23 at a glance</title>
+  <desc>To copy an angle (yellow) onto a point of a line, copy a triangle around it with the same three sides (red, blue and black), and the angle comes with it.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M44.0,100.0 L69.2,119.7 A32,32 0 0,0 75.3,93.3 Z" fill="#f2b705"/>
+  <path d="M196.0,228.0 L228.0,228.0 A32,32 0 0,0 216.6,203.5 Z" fill="#f2b705"/>
+  <line x1="44.0" y1="100.0" x2="171.7" y2="199.7" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="44.0" y1="100.0" x2="173.1" y2="72.6" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="196.0" y1="228.0" x2="280.8" y2="126.9" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="196.0" y1="228.0" x2="366.0" y2="228.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="146.4" y1="180.0" x2="141.8" y2="79.2" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="44.0" y1="100.0" x2="146.4" y2="180.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
+  <line x1="44.0" y1="100.0" x2="141.8" y2="79.2" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <line x1="326.0" y1="228.0" x2="260.3" y2="151.4" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="196.0" y1="228.0" x2="326.0" y2="228.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
+  <line x1="196.0" y1="228.0" x2="260.3" y2="151.4" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="196.0" cy="228.0" r="4.5" fill="#222222"/>
+</svg>

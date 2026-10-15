@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.6 at a glance</title>
+  <desc>Make the two angles at the base equal (yellow), and the sides that rise from them come out equal (blue). It is the bridge of asses turned around.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M75.0,226.0 L107.0,226.0 A32,32 0 0,0 94.7,200.8 Z" fill="#f2b705"/>
+  <path d="M325.0,226.0 L293.0,226.0 A32,32 0 0,1 305.3,200.8 Z" fill="#f2b705"/>
+  <line x1="75.0" y1="226.0" x2="325.0" y2="226.0" stroke="#222222" stroke-width="4"/>
+  <line x1="200.0" y1="66.0" x2="75.0" y2="226.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="200.0" y1="66.0" x2="325.0" y2="226.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

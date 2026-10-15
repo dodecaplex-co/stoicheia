@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.33 at a glance</title>
+  <desc>Join two equal, parallel lines (blue) end to matching end, and the joining lines (red) are equal and parallel too.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <line x1="115.0" y1="60.0" x2="330.0" y2="90.0" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="70.0" y1="210.0" x2="285.0" y2="240.0" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="115.0" y1="60.0" x2="70.0" y2="210.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="330.0" y1="90.0" x2="285.0" y2="240.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

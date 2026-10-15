@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.26 at a glance</title>
+  <desc>When two angles (blue and red) and the side between them (black) match, the triangles match in every part: the other two sides (red and blue) and the last angle (yellow). A matching side opposite one of those angles works just as well.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M133.8,95.3 L114.5,118.3 A30,30 0 0,0 145.0,123.1 Z" fill="#f2b705"/>
+  <path d="M42.0,204.7 L72.0,204.7 A30,30 0 0,0 61.3,181.7 Z" fill="#1f5aa6"/>
+  <path d="M178.0,204.7 L166.8,176.9 A30,30 0 0,0 148.0,204.7 Z" fill="#d0312d"/>
+  <path d="M313.8,95.3 L294.5,118.3 A30,30 0 0,0 325.0,123.1 Z" fill="#f2b705"/>
+  <path d="M222.0,204.7 L252.0,204.7 A30,30 0 0,0 241.3,181.7 Z" fill="#1f5aa6"/>
+  <path d="M358.0,204.7 L346.8,176.9 A30,30 0 0,0 328.0,204.7 Z" fill="#d0312d"/>
+  <line x1="42.0" y1="204.7" x2="178.0" y2="204.7" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="133.8" y1="95.3" x2="42.0" y2="204.7" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="133.8" y1="95.3" x2="178.0" y2="204.7" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="222.0" y1="204.7" x2="358.0" y2="204.7" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="313.8" y1="95.3" x2="222.0" y2="204.7" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="313.8" y1="95.3" x2="358.0" y2="204.7" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

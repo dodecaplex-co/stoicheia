@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.32 at a glance</title>
+  <desc>The two far angles of a triangle (yellow and blue) fit exactly into the outside angle, so the three angles (yellow, blue and red) together make a straight line: two right angles.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M182.3,75.1 L191.5,103.6 A30,30 0 0,1 162.2,97.4 Z" fill="#f2b705"/>
+  <path d="M50.0,222.0 L70.1,199.7 A30,30 0 0,1 80.0,222.0 Z" fill="#1f5aa6"/>
+  <path d="M230.0,222.0 L200.0,222.0 A30,30 0 0,1 220.7,193.5 Z" fill="#d0312d"/>
+  <path d="M230.0,222.0 L220.7,193.5 A30,30 0 0,1 250.1,199.7 Z" fill="#f2b705"/>
+  <path d="M230.0,222.0 L250.1,199.7 A30,30 0 0,1 260.0,222.0 Z" fill="#1f5aa6"/>
+  <line x1="230.0" y1="222.0" x2="355.0" y2="222.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="230.0" y1="222.0" x2="330.4" y2="110.5" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <polygon points="182.3,75.1 50.0,222.0 230.0,222.0" fill="none" stroke="#222222" stroke-width="4" stroke-linejoin="round"/>
+</svg>

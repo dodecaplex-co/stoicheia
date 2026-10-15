@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.4 at a glance</title>
+  <desc>If two sides (red and blue) and the angle between them (yellow) match, everything else matches too: the base (black), the other two angles (blue and red), and the whole triangle.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M84.0,62.0 L76.4,93.1 A32,32 0 0,0 99.6,89.9 Z" fill="#f2b705"/>
+  <path d="M42.0,234.0 L49.1,204.9 A30,30 0 0,1 72.0,234.0 Z" fill="#1f5aa6"/>
+  <path d="M180.0,234.0 L165.4,207.8 A30,30 0 0,0 150.0,234.0 Z" fill="#d0312d"/>
+  <path d="M262.0,62.0 L254.4,93.1 A32,32 0 0,0 277.6,89.9 Z" fill="#f2b705"/>
+  <path d="M220.0,234.0 L227.1,204.9 A30,30 0 0,1 250.0,234.0 Z" fill="#1f5aa6"/>
+  <path d="M358.0,234.0 L343.4,207.8 A30,30 0 0,0 328.0,234.0 Z" fill="#d0312d"/>
+  <line x1="42.0" y1="234.0" x2="180.0" y2="234.0" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="84.0" y1="62.0" x2="42.0" y2="234.0" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="84.0" y1="62.0" x2="180.0" y2="234.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="220.0" y1="234.0" x2="358.0" y2="234.0" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="262.0" y1="62.0" x2="220.0" y2="234.0" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="262.0" y1="62.0" x2="358.0" y2="234.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

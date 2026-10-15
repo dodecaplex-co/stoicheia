@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.22 at a glance</title>
+  <desc>Lay the three lines end to end, then swing the outer two up on circles (red and yellow) until they meet: there is the triangle. It works only when any two lines together are longer than the third.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="131.0" cy="150.0" r="92.0" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="261.0" cy="150.0" r="100.0" fill="none" stroke="#f2b705" stroke-width="3" stroke-opacity="0.75"/>
+  <line x1="39.0" y1="150.0" x2="131.0" y2="150.0" stroke="#d0312d" stroke-width="6" stroke-linecap="butt"/>
+  <line x1="261.0" y1="150.0" x2="361.0" y2="150.0" stroke="#f2b705" stroke-width="6" stroke-linecap="butt"/>
+  <line x1="131.0" y1="150.0" x2="261.0" y2="150.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="butt"/>
+  <line x1="131.0" y1="150.0" x2="190.1" y2="79.5" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
+  <line x1="261.0" y1="150.0" x2="190.1" y2="79.5" stroke="#f2b705" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="131.0" cy="150.0" r="4.5" fill="#222222"/>
+  <circle cx="261.0" cy="150.0" r="4.5" fill="#222222"/>
+</svg>

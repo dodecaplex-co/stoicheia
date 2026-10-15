@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.44 at a glance</title>
+  <desc>To lay the triangle (yellow) on the blue line, build an equal parallelogram beside the line and draw the diagonal through the corner: the piece across from it, standing on the line in the same angle (red), is equal too.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <polygon points="32.0,227.1 127.7,227.1 66.4,121.2" fill="#f2b705" fill-opacity="0.95"/>
+  <polygon points="182.9,170.6 272.6,170.6 247.5,227.1 157.7,227.1" fill="#f2b705" fill-opacity="0.95"/>
+  <polygon points="272.6,170.6 324.5,170.6 368.0,72.9 316.2,72.9" fill="#f2b705" fill-opacity="0.95"/>
+  <path d="M272.6,170.6 L246.6,170.6 A26,26 0 0,0 262.1,194.4 Z" fill="#d0312d"/>
+  <path d="M272.6,170.6 L283.2,146.9 A26,26 0 0,1 298.6,170.6 Z" fill="#d0312d"/>
+  <polygon points="226.4,72.9 368.0,72.9 299.4,227.1 157.7,227.1" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
+  <line x1="316.2" y1="72.9" x2="247.5" y2="227.1" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="272.6" y1="170.6" x2="324.5" y2="170.6" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="226.4" y1="72.9" x2="299.4" y2="227.1" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+  <line x1="182.9" y1="170.6" x2="272.6" y2="170.6" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

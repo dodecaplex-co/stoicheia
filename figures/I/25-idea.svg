@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.25 at a glance</title>
+  <desc>Two triangles with the same two sides (red and blue): the one with the longer base (black) has the wider angle between those sides (yellow).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M110.4,133.9 L87.8,153.6 A30,30 0 0,0 136.1,149.3 Z" fill="#f2b705"/>
+  <path d="M284.2,100.4 L280.6,130.1 A30,30 0 0,0 303.1,123.6 Z" fill="#f2b705"/>
+  <line x1="35.0" y1="199.6" x2="220.2" y2="199.6" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="110.4" y1="133.9" x2="35.0" y2="199.6" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="110.4" y1="133.9" x2="220.2" y2="199.6" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="272.2" y1="199.6" x2="365.0" y2="199.6" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="284.2" y1="100.4" x2="272.2" y2="199.6" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="284.2" y1="100.4" x2="365.0" y2="199.6" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

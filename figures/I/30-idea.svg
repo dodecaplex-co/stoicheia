@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.30 at a glance</title>
+  <desc>Two lines (blue) that are each parallel to a third (red) are parallel to each other: a line crossing all three meets each one at the same angle (yellow).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M234.6,85.0 L248.6,58.5 A30,30 0 0,1 264.6,85.0 Z" fill="#f2b705"/>
+  <path d="M200.0,150.0 L214.1,123.5 A30,30 0 0,1 230.0,150.0 Z" fill="#f2b705"/>
+  <path d="M165.4,215.0 L179.5,188.5 A30,30 0 0,1 195.4,215.0 Z" fill="#f2b705"/>
+  <line x1="255.7" y1="45.3" x2="144.3" y2="254.7" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="45.0" y1="150.0" x2="355.0" y2="150.0" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

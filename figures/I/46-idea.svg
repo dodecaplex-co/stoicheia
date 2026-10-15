@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.46 at a glance</title>
+  <desc>Stand an equal line upright at one end (the arc swings it round), then close the shape with parallels: four equal sides (blue) and four right angles.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <polygon points="114.0,236.0 286.0,236.0 286.0,64.0 114.0,64.0" fill="#f2b705" fill-opacity="0.95"/>
+  <path d="M286.0,236.0 A172.0,172.0 0 0,0 114.0,64.0" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
+  <polyline points="126.0,236.0 126.0,224.0 114.0,224.0" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <polyline points="286.0,224.0 274.0,224.0 274.0,236.0" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <polyline points="274.0,64.0 274.0,76.0 286.0,76.0" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <polyline points="114.0,76.0 126.0,76.0 126.0,64.0" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <line x1="114.0" y1="236.0" x2="286.0" y2="236.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="114.0" y1="236.0" x2="114.0" y2="64.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="114.0" y1="64.0" x2="286.0" y2="64.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="286.0" y1="236.0" x2="286.0" y2="64.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="114.0" cy="236.0" r="4.5" fill="#222222"/>
+</svg>
