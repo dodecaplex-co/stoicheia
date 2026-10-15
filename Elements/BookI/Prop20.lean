@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.BookI.Prop03
 import Elements.BookI.Prop05
 import Elements.BookI.Helpers
 import Elements.BookI.Prop19
