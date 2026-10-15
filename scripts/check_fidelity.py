@@ -1,0 +1,125 @@
+"""Check that the Lean follows Euclid, and that the house rules hold.
+
+1. Fidelity. For every proposition, the docstring of `theorem PropN` must be
+   Heath's enunciation, and the full-line `--` comments inside its proof, read in
+   order, must be exactly Heath's proof (whitespace aside). Euclid's words go in
+   `--` comments; our own remarks go in `/- … -/` blocks.
+2. Every `axiom` lives in `Elements/Foundations/`.
+3. Book Zero (`Elements/Figure/`) never imports a proposition.
+4. No `native_decide` (it would add an axiom Lean's kernel doesn't check).
+5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first):
+   - only I.4 and I.8 may use superposition directly;
+   - no proposition before I.29 rests on Postulate 5 or any Euclidean-only rule.
+
+Exits non-zero on any failure. Standard library only.
+"""
+
+import json
+import re
+import sys
+
+import heath
+
+ROOT = heath.ROOT
+BOOKS = {"I": 48}
+SUPERPOSITION_ALLOWED = {"I.4", "I.8"}
+EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
+FIRST_EUCLIDEAN = {"I": 29}
+
+errors: list[str] = []
+
+
+def fail(msg: str) -> None:
+    errors.append(msg)
+
+
+def theorem_block(src: str, n: int):
+    """Return (docstring, proof_comment_text) for `theorem PropN`."""
+    m = re.search(r"/--((?:(?!-/).)*?)-/\s*theorem Prop%d\s" % n, src, re.S)
+    if not m:
+        return None, None
+    doc = m.group(1)
+    start = m.end()
+    # The proof runs until the next top-level declaration or the namespace end.
+    rest = src[start:]
+    stop = re.search(r"^(end |theorem |lemma |def |structure |/--|/-!|@\[)", rest, re.M)
+    body = rest[: stop.start()] if stop else rest
+    # Drop block comments (our remarks), keep full-line `--` comments (Euclid's words).
+    body = re.sub(r"/-.*?-/", "", body, flags=re.S)
+    words = [m.group(1) for m in re.finditer(r"^\s*--\s?(.*)$", body, re.M)]
+    return doc, " ".join(words)
+
+
+def first_difference(a: str, b: str) -> str:
+    i = next((k for k in range(min(len(a), len(b))) if a[k] != b[k]), min(len(a), len(b)))
+    return f"…{a[max(0, i - 40):i + 40]!r}\n      expected …{b[max(0, i - 40):i + 40]!r}"
+
+
+def check_fidelity() -> None:
+    for book, count in BOOKS.items():
+        for n in range(1, count + 1):
+            path = ROOT / "Elements" / f"Book{book}" / f"Prop{n:02d}.lean"
+            if not path.exists():
+                fail(f"{book}.{n}: missing {path.relative_to(ROOT)}")
+                continue
+            doc, words = theorem_block(path.read_text(), n)
+            if doc is None:
+                fail(f"{book}.{n}: no documented `theorem Prop{n}` found")
+                continue
+            _, enunciation, proof = heath.read(book, n)
+            if heath.normalize(doc) != heath.normalize(enunciation):
+                fail(f"{book}.{n}: docstring is not Heath's enunciation:\n      "
+                     + first_difference(heath.normalize(doc), heath.normalize(enunciation)))
+            expected = heath.normalize(" ".join(proof))
+            got = heath.normalize(words)
+            if got != expected:
+                fail(f"{book}.{n}: the `--` comments don't match Heath's proof:\n      "
+                     + first_difference(got, expected))
+
+
+def check_rules() -> None:
+    for path in sorted((ROOT / "Elements").rglob("*.lean")):
+        rel = path.relative_to(ROOT).as_posix()
+        src = path.read_text()
+        if re.search(r"^\s*(private\s+|protected\s+)?axiom\s", src, re.M) and \
+                not rel.startswith("Elements/Foundations/"):
+            fail(f"{rel}: declares an axiom outside Elements/Foundations/")
+        if "native_decide" in src:
+            fail(f"{rel}: uses native_decide")
+        if rel.startswith("Elements/Figure/") and re.search(r"^import Elements\.Book", src, re.M):
+            fail(f"{rel}: Book Zero must not import a proposition")
+
+
+def check_facts() -> None:
+    path = ROOT / "facts.json"
+    if not path.exists():
+        print("note: facts.json not found; skipping certificate checks")
+        return
+    facts = json.loads(path.read_text())
+    for p in facts["propositions"]:
+        ref = p["ref"]
+        book, num = ref.split(".")
+        if "Tacit.superposition" in p.get("direct_axioms", []) and ref not in SUPERPOSITION_ALLOWED:
+            fail(f"{ref}: uses superposition directly (only I.4 and I.8 may)")
+        if int(num) < FIRST_EUCLIDEAN.get(book, 1):
+            bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
+            if bad:
+                fail(f"{ref}: rests on {', '.join(bad)} before I.29")
+
+
+def main() -> int:
+    check_fidelity()
+    check_rules()
+    check_facts()
+    if errors:
+        print(f"{len(errors)} problem(s):")
+        for e in errors:
+            print("  ✗ " + e)
+        return 1
+    total = sum(BOOKS.values())
+    print(f"✓ fidelity: all {total} propositions quote Heath exactly; house rules hold")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

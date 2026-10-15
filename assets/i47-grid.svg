@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1000" viewBox="0 0 1600 1000">
+<title>Euclid, Elements I.47: the 3-4-5 right triangle with squares 9 + 16 = 25</title>
+<defs>
+  <radialGradient id="bg" cx="50%" cy="45%" r="75%">
+    <stop offset="0" stop-color="#14283f"/><stop offset="1" stop-color="#0a1626"/>
+  </radialGradient>
+  <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="12.31" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs>
+<rect width="1600" height="1000" fill="url(#bg)"/>
+<g stroke="#2f5277" stroke-width="1.69" opacity="0.9">
+<line x1="30.77" y1="0" x2="30.77" y2="1000"/>
+<line x1="107.69" y1="0" x2="107.69" y2="1000"/>
+<line x1="184.62" y1="0" x2="184.62" y2="1000"/>
+<line x1="261.54" y1="0" x2="261.54" y2="1000"/>
+<line x1="338.46" y1="0" x2="338.46" y2="1000"/>
+<line x1="415.38" y1="0" x2="415.38" y2="1000"/>
+<line x1="492.31" y1="0" x2="492.31" y2="1000"/>
+<line x1="569.23" y1="0" x2="569.23" y2="1000"/>
+<line x1="646.15" y1="0" x2="646.15" y2="1000"/>
+<line x1="723.08" y1="0" x2="723.08" y2="1000"/>
+<line x1="800.00" y1="0" x2="800.00" y2="1000"/>
+<line x1="876.92" y1="0" x2="876.92" y2="1000"/>
+<line x1="953.85" y1="0" x2="953.85" y2="1000"/>
+<line x1="1030.77" y1="0" x2="1030.77" y2="1000"/>
+<line x1="1107.69" y1="0" x2="1107.69" y2="1000"/>
+<line x1="1184.62" y1="0" x2="1184.62" y2="1000"/>
+<line x1="1261.54" y1="0" x2="1261.54" y2="1000"/>
+<line x1="1338.46" y1="0" x2="1338.46" y2="1000"/>
+<line x1="1415.38" y1="0" x2="1415.38" y2="1000"/>
+<line x1="1492.31" y1="0" x2="1492.31" y2="1000"/>
+<line x1="1569.23" y1="0" x2="1569.23" y2="1000"/>
+<line x1="0" y1="0.00" x2="1600" y2="0.00"/>
+<line x1="0" y1="76.92" x2="1600" y2="76.92"/>
+<line x1="0" y1="153.85" x2="1600" y2="153.85"/>
+<line x1="0" y1="230.77" x2="1600" y2="230.77"/>
+<line x1="0" y1="307.69" x2="1600" y2="307.69"/>
+<line x1="0" y1="384.62" x2="1600" y2="384.62"/>
+<line x1="0" y1="461.54" x2="1600" y2="461.54"/>
+<line x1="0" y1="538.46" x2="1600" y2="538.46"/>
+<line x1="0" y1="615.38" x2="1600" y2="615.38"/>
+<line x1="0" y1="692.31" x2="1600" y2="692.31"/>
+<line x1="0" y1="769.23" x2="1600" y2="769.23"/>
+<line x1="0" y1="846.15" x2="1600" y2="846.15"/>
+<line x1="0" y1="923.08" x2="1600" y2="923.08"/>
+<line x1="0" y1="1000.00" x2="1600" y2="1000.00"/>
+</g>
+<g filter="url(#glow)">
+<polygon points="646.15,615.38 646.15,384.62 415.38,384.62 415.38,615.38" fill="#f6b93b" fill-opacity="0.80"/>
+<g stroke="#0b1522" stroke-width="2.69" stroke-linecap="round" opacity="0.55">
+<line x1="492.31" y1="615.38" x2="492.31" y2="384.62"/>
+<line x1="569.23" y1="615.38" x2="569.23" y2="384.62"/>
+<line x1="646.15" y1="538.46" x2="415.38" y2="538.46"/>
+<line x1="646.15" y1="461.54" x2="415.38" y2="461.54"/>
+</g>
+<polygon points="646.15,615.38 953.85,615.38 953.85,923.08 646.15,923.08" fill="#3cb8f0" fill-opacity="0.80"/>
+<g stroke="#0b1522" stroke-width="2.69" stroke-linecap="round" opacity="0.55">
+<line x1="723.08" y1="615.38" x2="723.08" y2="923.08"/>
+<line x1="800.00" y1="615.38" x2="800.00" y2="923.08"/>
+<line x1="876.92" y1="615.38" x2="876.92" y2="923.08"/>
+<line x1="646.15" y1="846.15" x2="953.85" y2="846.15"/>
+<line x1="646.15" y1="769.23" x2="953.85" y2="769.23"/>
+<line x1="646.15" y1="692.31" x2="953.85" y2="692.31"/>
+</g>
+<polygon points="953.85,615.38 1184.62,307.69 876.92,76.92 646.15,384.62" fill="#f25c64" fill-opacity="0.80"/>
+<g stroke="#0b1522" stroke-width="2.69" stroke-linecap="round" opacity="0.55">
+<line x1="892.31" y1="569.23" x2="1123.08" y2="261.54"/>
+<line x1="1000.00" y1="553.85" x2="692.31" y2="323.08"/>
+<line x1="830.77" y1="523.08" x2="1061.54" y2="215.38"/>
+<line x1="1046.15" y1="492.31" x2="738.46" y2="261.54"/>
+<line x1="769.23" y1="476.92" x2="1000.00" y2="169.23"/>
+<line x1="1092.31" y1="430.77" x2="784.62" y2="200.00"/>
+<line x1="707.69" y1="430.77" x2="938.46" y2="123.08"/>
+<line x1="1138.46" y1="369.23" x2="830.77" y2="138.46"/>
+</g>
+<polygon points="646.15,615.38 953.85,615.38 646.15,384.62" fill="#f7f4ec" fill-opacity="0.96"/>
+<polygon points="646.15,615.38 646.15,384.62 415.38,384.62 415.38,615.38" fill="none" stroke="#f7f4ec" stroke-width="5.77" stroke-linejoin="round"/>
+<polygon points="646.15,615.38 953.85,615.38 953.85,923.08 646.15,923.08" fill="none" stroke="#f7f4ec" stroke-width="5.77" stroke-linejoin="round"/>
+<polygon points="953.85,615.38 1184.62,307.69 876.92,76.92 646.15,384.62" fill="none" stroke="#f7f4ec" stroke-width="5.77" stroke-linejoin="round"/>
+<polygon points="646.15,615.38 953.85,615.38 646.15,384.62" fill="none" stroke="#f7f4ec" stroke-width="5.77" stroke-linejoin="round"/>
+<polyline points="680.77,615.38 680.77,580.77 646.15,580.77" fill="none" stroke="#0b1522" stroke-width="3.77" opacity="0.8"/>
+</g>
+<g font-family="Georgia, 'Times New Roman', serif" font-size="47.7" text-anchor="end"><text x="1557.7" y="961.5" fill="#8ee6a0">Q.E.D. <tspan font-weight="bold" fill="#5fd47a">✓</tspan></text></g>
+</svg>

@@ -1,0 +1,67 @@
+Stoicheia
+Copyright 2026 Jack Challis and contributors
+
+This project is licensed under the Apache License, Version 2.0 (see LICENSE),
+except where noted below.
+
+------------------------------------------------------------------------------
+With great thanks to LeanEuclid
+------------------------------------------------------------------------------
+
+Our tacit rules (Elements/Foundations/Tacit/) follow the System E of Jeremy
+Avigad, Edward Dean and John Mumma ("A formal system for Euclid's Elements",
+Review of Symbolic Logic 2(4), 2009). While writing them we kept LeanEuclid's
+Lean rendering of System E open beside the paper the whole time, and we owe
+it a great deal:
+
+  * our single superposition rule follows LeanEuclid's combined form of
+    System E's two superposition rules;
+  * our Intersection rule 4 (circles_meet_of_on_inside_outside) uses
+    LeanEuclid's corrected hypothesis ("on the circle"), which fixes a
+    statement in the published paper that fails for a small circle lying
+    inside a larger one;
+  * our reading of the Points construction rules and the transfer rules was
+    checked against theirs line by line.
+
+LeanEuclid: https://github.com/loganrjmurphy/LeanEuclid
+by Logan Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and
+Xujie Si ("Autoformalizing Euclidean Geometry", ICML 2024). Thank you all!
+It is released under the MIT License:
+
+  MIT License
+
+  Copyright (c) 2024 Logan Murphy
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+
+------------------------------------------------------------------------------
+Texts and images
+------------------------------------------------------------------------------
+
+heath/  T. L. Heath, The Thirteen Books of Euclid's Elements, vol. 1
+        (Cambridge University Press, 1908). Public domain. Transcribed from
+        the Internet Archive scan "thirteenbookseu02heibgoog" (digitized by
+        Google from the library of Harvard University).
+
+assets/ The logo is built on a detail of Raphael's The School of Athens
+        (1509-1511), photographed by Marie-Lan Nguyen and shared on Wikimedia
+        Commons as PD-Art (PD-old-100-expired). See assets/CREDITS.md.
+
+Our own prose (mishnah/, figures/, docs/, README) is licensed under
+CC BY 4.0; see LICENSE-PROSE.md.

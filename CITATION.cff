@@ -1,0 +1,72 @@
+cff-version: 1.2.0
+message: "If you use Stoicheia, we'd be glad if you cited it like this."
+title: "Stoicheia: Euclid's Elements, checked line by line in Lean"
+authors:
+  - family-names: Challis
+    given-names: Jack
+repository-code: "https://github.com/jackChallis/stoicheia"
+license: Apache-2.0
+date-released: 2026-10-15
+keywords:
+  - Euclid
+  - Elements
+  - Lean
+  - formalization
+  - geometry
+references:
+  - type: book
+    title: "The Thirteen Books of Euclid's Elements"
+    authors:
+      - family-names: Heath
+        given-names: Thomas L.
+    publisher:
+      name: Cambridge University Press
+    year: 1908
+  - type: article
+    title: "A formal system for Euclid's Elements"
+    authors:
+      - family-names: Avigad
+        given-names: Jeremy
+      - family-names: Dean
+        given-names: Edward
+      - family-names: Mumma
+        given-names: John
+    journal: "The Review of Symbolic Logic"
+    volume: 2
+    issue: 4
+    start: 700
+    end: 768
+    year: 2009
+    doi: "10.1017/S1755020309990098"
+  - type: article
+    title: "Proof-checking Euclid"
+    authors:
+      - family-names: Beeson
+        given-names: Michael
+      - family-names: Narboux
+        given-names: Julien
+      - family-names: Wiedijk
+        given-names: Freek
+    journal: "Annals of Mathematics and Artificial Intelligence"
+    volume: 85
+    start: 213
+    end: 257
+    year: 2019
+    doi: "10.1007/s10472-018-9606-x"
+  - type: software
+    title: "LeanEuclid"
+    authors:
+      - family-names: Murphy
+        given-names: Logan
+      - family-names: Yang
+        given-names: Kaiyu
+      - family-names: Sun
+        given-names: Jialiang
+      - family-names: Li
+        given-names: Zhaoyu
+      - family-names: Anandkumar
+        given-names: Anima
+      - family-names: Si
+        given-names: Xujie
+    repository-code: "https://github.com/loganrjmurphy/LeanEuclid"
+    year: 2024

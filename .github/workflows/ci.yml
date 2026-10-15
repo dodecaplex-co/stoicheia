@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lean (elan)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Check every proof
+        run: lake build
+
+      - name: Compute the certificate
+        run: lake env lean Certificate/Facts.lean
+
+      - name: Check the Lean still quotes Heath, and the house rules
+        run: python3 scripts/check_fidelity.py
+
+      - name: Check the generated pages are up to date
+        run: |
+          python3 scripts/render.py
+          git diff --exit-code -- facts.json book CERTIFICATE.md GRAPH.md

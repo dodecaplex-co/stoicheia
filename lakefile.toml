@@ -1,0 +1,6 @@
+name = "stoicheia"
+version = "0.1.0"
+defaultTargets = ["Elements"]
+
+[[lean_lib]]
+name = "Elements"

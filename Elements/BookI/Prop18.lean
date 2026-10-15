@@ -1,0 +1,33 @@
+import Elements.Figure.Basics
+import Elements.BookI.Prop03
+import Elements.BookI.Prop16
+
+/-!
+# Book I, Proposition 18
+
+Euclid's text, in Heath's translation: [`heath/I/18.md`](../../heath/I/18.md).
+Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
+carries it out.
+-/
+
+namespace Elements.BookI
+
+open Tacit
+
+/-- In any triangle the greater side subtends the greater angle. -/
+theorem Prop18 {A B C : Point} (hABC : Triangle A B C) (h : ‖A B‖ < ‖A C‖) :
+    ∠ B C A < ∠ A B C := by
+  -- For let ABC be a triangle having the side AC greater than AB;
+  -- I say that the angle ABC is also greater than the angle BCA.
+  -- For, since AC is greater than AB, let AD be made equal to AB [I. 3], and let BD be joined.
+  -- Then, since the angle ADB is an exterior angle of the triangle BCD,
+  -- it is greater than the interior and opposite angle DCB. [I. 16]
+  -- But the angle ADB is equal to the angle ABD,
+  -- since the side AB is equal to AD;
+  -- therefore the angle ABD is also greater than the angle ACB;
+  -- therefore the angle ABC is much greater than the angle ACB.
+  -- Therefore etc.
+  -- Q. E. D.
+  sorry
+
+end Elements.BookI
