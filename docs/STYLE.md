@@ -13,7 +13,8 @@ the end.
   quotations.
 - **No crew talk where readers look** (the mishnah, captions, Lean comments, the
   gap catalogue, the README, the pages): "Book Zero proves it once", not "the first
-  mate added it". Ranks belong in `docs/reports/crew/` and `docs/briefs/`.
+  mate added it". Ranks belong in `docs/reports/crew/` and `docs/briefs/`, and in the
+  README's "How it was made", which says plainly how the work is done.
 - **People by name**, spelled as Heath spells them (Proclus', an-Nairīzī, van
   Pesch); modern authors in full ("Robin Hartshorne's *Geometry: Euclid and
   Beyond*"). Say who saw a gap first, where we know; call a find new only when it
