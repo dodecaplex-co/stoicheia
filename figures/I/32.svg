@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.32: the exterior angle equals the two opposite interior angles</title>
+  <rect x="0" y="0" width="400" height="280" rx="10" fill="#fbf7ee"/>
+  <polygon points="130,55 40,235 235,235" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="1.6" stroke-linejoin="round"/>
+  <g stroke="#3b2f2f" stroke-width="1.6">
+    <line x1="235" y1="235" x2="365" y2="235"/>
+    <line x1="235" y1="235" x2="325" y2="55"/>
+  </g>
+  <!-- The three interior angles and the exterior angle, split by CE. -->
+  <g fill="none" stroke="#a0522d" stroke-width="2.4">
+    <path d="M 142.60 76.59 A 25 25 0 0 1 118.82 77.36"/>
+    <path d="M 51.18 212.64 A 25 25 0 0 1 65 235"/>
+    <path d="M 212 235 A 23 23 0 0 1 223.41 215.13"/>
+    <path d="M 217.87 205.63 A 34 34 0 0 1 269 235"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="130" cy="55" r="2.6"/>
+    <circle cx="40" cy="235" r="2.6"/>
+    <circle cx="235" cy="235" r="2.6"/>
+    <circle cx="365" cy="235" r="2.6"/>
+    <circle cx="325" cy="55" r="2.6"/>
+    <text x="124" y="42">A</text>
+    <text x="24" y="256">B</text>
+    <text x="229" y="258">C</text>
+    <text x="365" y="257">D</text>
+    <text x="324" y="42">E</text>
+  </g>
+</svg>
