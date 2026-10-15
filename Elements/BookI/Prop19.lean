@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop05
+import Elements.BookI.Helpers
 import Elements.BookI.Prop18
 
 /-!
@@ -12,8 +13,8 @@ carries it out.
 There is no figure to build here. Euclid divides the cases ("by means of
 division", says Proclus): if `AC` is not greater than `AB`, it is equal to it or
 less, and I.5 and I.18, already proved, each rule one of them out. The Lean
-needs no helper of its own; Book Zero's `produce` hands I.5 the produced sides
-its statement asks for.
+needs no helper of its own; `Prop5.base` hands I.5 the produced sides its
+statement asks for.
 -/
 
 namespace Elements.BookI
@@ -43,11 +44,9 @@ theorem Prop19 {A B C : Point} (hABC : Triangle A B C) (h : ∠ B C A < ∠ A B 
     intro hAC_AB
     -- for then the angle ABC would also have been equal to the angle ACB; [I. 5]
     /- I.5 is stated with the equal sides produced, and here only the angles at
-       the base are wanted, so we produce AB and AC anywhere at all (`produce`,
-       Post. 2). -/
-    obtain ⟨D, hABD⟩ := produce hABC.ne₁₂
-    obtain ⟨E, hACE⟩ := produce hABC.ne₁₃
-    have hABC_ACB : ∠ A B C = ∠ A C B := (Prop5 hABC hAC_AB.symm hABD hACE).1
+       the base are wanted, so `Prop5.base` produces AB and AC anywhere at all
+       (Post. 2). -/
+    have hABC_ACB : ∠ A B C = ∠ A C B := Prop5.base hABC hAC_AB.symm
     -- but it is not;
     /- It is greater: the hypothesis, with BCA read as ACB. -/
     have hne : ∠ A B C ≠ ∠ A C B := fun heq => Magnitude.ne_of_lt hACB_ABC heq.symm

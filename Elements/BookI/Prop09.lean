@@ -2,6 +2,7 @@ import Elements.Figure.Basics
 import Elements.BookI.Prop01
 import Elements.BookI.Prop03
 import Elements.BookI.Prop05
+import Elements.BookI.Helpers
 import Elements.BookI.Prop07
 import Elements.BookI.Prop08
 
@@ -58,8 +59,7 @@ theorem Prop9.not_on_arm {A B C D E F : Point} (hBAC : Triangle B A C) (hADB : B
   have hFD : F ≠ D := hFDE.ne₁₂
   have hFE : F ≠ E := hFDE.ne₁₃
   /- Since `FD` is equal to `FE`, the angle `FDE` is equal to the angle `FED`. [I. 5] -/
-  obtain ⟨G, hFEG⟩ := produce hFE
-  have hbase : ∠ F D E = ∠ F E D := (Prop5 hFDE hFD_FE (between_symm hADF) hFEG).1
+  have hbase : ∠ F D E = ∠ F E D := Prop5.base hFDE hFD_FE
   /- Since `AD` is equal to `AE`, and `AD`, `AE` are produced to `F`, `C`, the angles
      `EDF`, `DEC` under the base are equal. [I. 5] -/
   have hunder : ∠ E D F = ∠ D E C := (Prop5 hADE hAD_AE hADF hAEC).2

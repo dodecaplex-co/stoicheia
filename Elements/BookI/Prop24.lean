@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop04
 import Elements.BookI.Prop05
+import Elements.BookI.Helpers
 import Elements.BookI.Prop19
 import Elements.BookI.Prop21
 import Elements.BookI.Prop23
@@ -122,11 +123,9 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
   have hDF_DG : ‖D F‖ = ‖D G‖ := hDG_DF.symm
   -- the angle DGF is also equal to the angle DFG; [I. 5]
   /- Our I.5 is stated as Euclid states it, with the equal sides produced, so `DF` and
-     `DG` are produced to `K` and `H` in order to cite it. Only the angles at the base
+     `DG` are produced in order to cite it (`Prop5.base`). Only the angles at the base
      are used. -/
-  obtain ⟨K, hDFK⟩ := produce hDF
-  obtain ⟨H, hDGH⟩ := produce hDEG.ne₁₃
-  have hDGF : ∠ D G F = ∠ D F G := (Prop5 hDFG hDF_DG hDFK hDGH).1.symm
+  have hDGF : ∠ D G F = ∠ D F G := (Prop5.base hDFG hDF_DG).symm
   /- Euclid's figure has `F` beyond `EG`. Lean must also take the two cases he leaves to
      the reader (`Prop24.cases`), and it takes them as Proclus does. -/
   have hEF_EG : ‖E F‖ < ‖E G‖ := by

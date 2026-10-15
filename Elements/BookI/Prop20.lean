@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop05
+import Elements.BookI.Helpers
 import Elements.BookI.Prop19
 
 /-!
@@ -55,13 +56,11 @@ theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
     have hDA_AC : ‖D A‖ = ‖A C‖ := by rw [len_symm D A, hAD_CA, len_symm C A]
     -- the angle ADC is also equal to the angle ACD; [I. 5]
     /- I.5 for the triangle ADC, whose sides AD, AC are equal. Its statement also
-       speaks of the equal sides produced, so Lean produces them (Post. 2), though
-       only the angles at the base are wanted here. -/
+       speaks of the equal sides produced, so Lean produces them (Post. 2,
+       `Prop5.base`), though only the angles at the base are wanted here. -/
     have hADC : Triangle A D C := Triangle.of_line hA_BA hD_BA hA_D hC_BA
-    obtain ⟨P, hADP⟩ := produce hA_D
-    obtain ⟨Q, hACQ⟩ := produce hA_C
     have hADC_ACD : ∠ A D C = ∠ A C D :=
-      (Prop5 hADC (by rw [← len_symm D A]; exact hDA_AC) hADP hACQ).1
+      Prop5.base hADC (by rw [← len_symm D A]; exact hDA_AC)
     -- therefore the angle BCD is greater than the angle ADC. [C.N. 5]
     /- Greater than the angle ACD, which is equal to it: CA falls within the angle
        BCD, since A lies between B and D, so that the angle BCD is made up of the

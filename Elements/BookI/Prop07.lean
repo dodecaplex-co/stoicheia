@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop05
+import Elements.BookI.Helpers
 
 /-!
 # Book I, Proposition 7
@@ -242,9 +243,7 @@ theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
   /- Again, since DB is equal to CB, the angles at the base of the triangle BDC are equal:
      the angle BDC is equal to the angle BCD. [I. 5] -/
   have hBC_BD : ‖B C‖ = ‖B D‖ := by rw [len_symm B C, hCB, len_symm D B]
-  obtain ⟨G, hBCG⟩ := produce hBCD.ne₁₂
-  obtain ⟨H, hBDH⟩ := produce hBCD.ne₁₃
-  have hbase : ∠ B C D = ∠ B D C := (Prop5 hBCD hBC_BD hBCG hBDH).1
+  have hbase : ∠ B C D = ∠ B D C := Prop5.base hBCD hBC_BD
   /- Therefore the same angle BDC is both greater than and equal to the angle BCD: which is
      impossible. -/
   rw [hbase] at h₃
@@ -285,10 +284,9 @@ theorem Prop7 {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = �
   -- Then, since AC is equal to AD,
   have hAC_AD : ‖A C‖ = ‖A D‖ := by rw [len_symm A C, hCA, len_symm D A]
   -- the angle ACD is also equal to the angle ADC; [I. 5]
-  /- I.5 is stated with the equal sides produced, so we produce AC, AD. [Post. 2] -/
-  obtain ⟨E, hACE⟩ := produce hACD.ne₁₂
-  obtain ⟨F, hADF⟩ := produce hACD.ne₁₃
-  have hACD_ADC : ∠ A C D = ∠ A D C := (Prop5 hACD hAC_AD hACE hADF).1
+  /- I.5 is stated with the equal sides produced, so `Prop5.base` produces AC, AD
+     [Post. 2] and keeps only the angles at the base. -/
+  have hACD_ADC : ∠ A C D = ∠ A D C := Prop5.base hACD hAC_AD
   -- therefore the angle ADC is greater than the angle DCB;
   /- Heath: "It would be natural to insert here the step 'but the angle ACD is greater than
      the angle BCD. [C. N. 5.]'" It rests on what the figure shows: CB falls within the
@@ -306,11 +304,8 @@ theorem Prop7 {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = �
   -- Again, since CB is equal to DB,
   have hBC_BD : ‖B C‖ = ‖B D‖ := by rw [len_symm B C, hCB, len_symm D B]
   -- the angle CDB is also equal to the angle DCB.
-  obtain ⟨G, hBCG⟩ := produce hBCD.ne₁₂
-  obtain ⟨H, hBDH⟩ := produce hBCD.ne₁₃
   have hCDB_DCB : ∠ C D B = ∠ D C B := by
-    rw [angle_symm hne hBCD.ne₁₃, ← (Prop5 hBCD hBC_BD hBCG hBDH).1,
-      angle_symm hBCD.ne₁₂ (Ne.symm hne)]
+    rw [angle_symm hne hBCD.ne₁₃, ← Prop5.base hBCD hBC_BD, angle_symm hBCD.ne₁₂ (Ne.symm hne)]
   -- But it was also proved much greater than it:
   rw [hCDB_DCB] at hDCB_CDB
   -- which is impossible.

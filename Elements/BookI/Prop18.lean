@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop03
 import Elements.BookI.Prop05
+import Elements.BookI.Helpers
 import Elements.BookI.Prop16
 
 /-!
@@ -52,12 +53,10 @@ theorem Prop18 {A B C : Point} (hABC : Triangle A B C) (h : ‖A B‖ < ‖A C�
   -- since the side AB is equal to AD;
   /- This is I.5, for the isosceles triangle ABD. As stated, I.5 also speaks of the
      angles under the base, so it asks for AB and AD produced; any points beyond B
-     and D will do. -/
+     and D will do (`Prop5.base`). -/
   have hABD : Triangle A B D := (Triangle.of_line hA_AC hD_AC hA_D hB_AC).acb
   have hAB_AD : ‖A B‖ = ‖A D‖ := hAD_AB.symm
-  obtain ⟨X, hABX⟩ := produce hA_B
-  obtain ⟨Y, hADY⟩ := produce hA_D
-  have hABD_ADB : ∠ A B D = ∠ A D B := (Prop5 hABD hAB_AD hABX hADY).1
+  have hABD_ADB : ∠ A B D = ∠ A D B := Prop5.base hABD hAB_AD
   -- therefore the angle ABD is also greater than the angle ACB;
   /- The angle DCB is the angle ACB, since D lies on the ray from C through A. -/
   have hDCB_ACB : ∠ D C B = ∠ A C B := angle_onRay_left (OnRay.of_between hCDA) hB_C

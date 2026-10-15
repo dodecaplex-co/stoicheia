@@ -23,6 +23,7 @@ import Elements.BookI.Prop02
 import Elements.BookI.Prop03
 import Elements.BookI.Prop04
 import Elements.BookI.Prop05
+import Elements.BookI.Helpers
 import Elements.BookI.Prop06
 import Elements.BookI.Prop07
 import Elements.BookI.Prop08
