@@ -21,7 +21,7 @@ There are no coordinates here, no real numbers and no complex numbers. The geome
 
 | | |
 |---|---|
-| **Book I** | All 48 propositions stated in Lean and sketched in Euclid's words; **3 proved** so far. [Read Book I →](book/I/index.md) |
+| **Book I** | All 48 propositions stated in Lean and sketched in Euclid's words; **8 proved** so far. [Read Book I →](book/I/index.md) |
 | Books II–XIII | To come, one book at a time. |
 
 The [certificate](CERTIFICATE.md) and the [graph of who uses whom](GRAPH.md) are regenerated from the proofs on every change.
