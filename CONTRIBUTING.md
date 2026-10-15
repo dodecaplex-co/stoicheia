@@ -35,8 +35,13 @@ because a proof only needs their statements.
   does Euclid take for granted? What did Lean make us say? How does the result look
   with coordinates, vectors or complex numbers? Quote Heath (public domain) freely,
   credit everyone, and keep it friendly.
-- `figures/<book>/NN.svg`: Heath's letters, the parchment background and the colours
-  of the existing figures.
+- Each proposition has two figures, both on the parchment background:
+  - `figures/<book>/NN-idea.svg`, the "at a glance" figure: no letters, Byrne's
+    red (#d0312d), yellow (#f2b705), blue (#1f5aa6) and black, equal things in the
+    same colour, and a one-sentence caption in the SVG's `<desc>` (it is shown on
+    the page). See `01-idea.svg`, `05-idea.svg`, `47-idea.svg`.
+  - `figures/<book>/NN.svg`, Euclid's figure, with Heath's letters, drawn to match
+    the proof.
 
 ## Before you open a pull request
 

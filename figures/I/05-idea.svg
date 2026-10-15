@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.5 at a glance: the bridge of asses</title>
+  <desc>Make two sides equal (blue), and the angles at the base are equal (yellow), and so are the angles under it (red).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M140,170 L170.0,170.0 A30,30 0 0,0 152.6,142.8 Z" fill="#f2b705"/>
+  <path d="M260,170 L230.0,170.0 A30,30 0 0,1 247.4,142.8 Z" fill="#f2b705"/>
+  <path d="M140,170 L164.0,170.0 A24,24 0 0,1 129.7,191.7 Z" fill="#d0312d"/>
+  <path d="M260,170 L236.0,170.0 A24,24 0 0,0 270.3,191.7 Z" fill="#d0312d"/>
+  <line x1="140" y1="170" x2="95" y2="265" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="260" y1="170" x2="305" y2="265" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="140" y1="170" x2="260" y2="170" stroke="#222222" stroke-width="4"/>
+  <line x1="200" y1="40" x2="140" y2="170" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="200" y1="40" x2="260" y2="170" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

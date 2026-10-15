@@ -77,6 +77,12 @@ def load_axiom_docs():
     return docs
 
 
+def svg_desc(path):
+    """The one-line caption kept in an SVG's <desc> element."""
+    m = re.search(r"<desc>(.*?)</desc>", path.read_text(), re.S)
+    return " ".join(m.group(1).split()) if m else ""
+
+
 def lean_body(path):
     """The part of a proposition file worth showing: from `open Tacit` to the end."""
     src = path.read_text()
@@ -168,12 +174,18 @@ def page(book, n, count, titles, facts, docs):
     figure = ROOT / "figures" / book / f"{n:02d}.svg"
     mishnah = ROOT / "mishnah" / book / f"{n:02d}.md"
     lean_path = ROOT / "Elements" / f"Book{book}" / f"Prop{n:02d}.lean"
+    idea = ROOT / "figures" / book / f"{n:02d}-idea.svg"
     out = [GENERATED, nav, "", f"# Book {book}, Proposition {n}", "",
            f"*{titles[n]}*", "", f"> {enunciation}", ""]
+    if idea.exists():
+        caption = svg_desc(idea)
+        out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "
+                f"alt=\"{caption}\" width=\"420\"></p>", "",
+                f"<p align=\"center\"><em>{caption}</em></p>", ""]
+    out += ["## Euclid's proof", ""]
     if figure.exists():
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}.svg\" "
-                f"alt=\"The figure for Proposition {ref}\" width=\"360\"></p>", ""]
-    out += ["## Euclid's proof", ""]
+                f"alt=\"Euclid's figure for Proposition {ref}, with Heath's letters\" width=\"360\"></p>", ""]
     for para in proof:
         out += [para, ""]
     out += ["## In Lean", "", status, "",
