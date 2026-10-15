@@ -133,24 +133,63 @@ def prop_key(ref):
     return (book, int(num))
 
 
+def prop_link(ref, book):
+    """A link to a proposition's page, from a page of `book`."""
+    b, num = ref.split(".")
+    where = "" if b == book else f"../{b}/"
+    return f"[{ref}]({where}{int(num):02d}.md)"
+
+
+def euclid_cites(paragraphs):
+    """What Euclid gives in brackets, in four groups: propositions, postulates,
+    definitions and common notions, each sorted by number (I.3 before I.10)."""
+    groups = {"props": [], "Post.": [], "Def.": [], "C.N.": []}
+    for j in heath.justifications(paragraphs):
+        kind, num = j.rsplit(" ", 1)
+        if kind in ("Post.", "Def.", "C.N."):
+            groups[kind].append(int(num))
+        else:
+            groups["props"].append(f"{kind}{num}")  # "I. 4", or "V. 9" in a later book
+    groups["props"].sort(key=prop_key)
+    for kind in ("Post.", "Def.", "C.N."):
+        groups[kind].sort()
+    return groups
+
+
+def euclid_cites_text(groups, book):
+    """Euclid's brackets for a page, grouped as Heath writes them: "I.3, I.4; Post. 1, 2"."""
+    parts = [", ".join(prop_link(c, book) for c in groups["props"])]
+    parts += [f"{kind} " + ", ".join(map(str, groups[kind]))
+              for kind in ("Post.", "Def.", "C.N.") if groups[kind]]
+    return "; ".join(x for x in parts if x)
+
+
 def euclids_text(source):
     """The footer naming Heath's pages. The source comment starts with "Source:"."""
     source = re.sub(r"^Source:\s*", "", source)
     return f"<sub>Euclid's text: {source}</sub>"
 
 
-def rests_on(p, docs, depth):
-    """Markdown for the 'What it rests on' section."""
+TACIT_CREDIT = ("<sub>The tacit rules follow the System E of Jeremy Avigad, Edward Dean and "
+                "John Mumma, read alongside LeanEuclid (Logan Murphy, Kaiyu Yang, Jialiang Sun, "
+                "Zhaoyu Li, Anima Anandkumar and Xujie Si).</sub>")
+
+
+def rests_on(p, docs, depth, book, euclid):
+    """Markdown for the 'What it rests on' section. `euclid` is what Euclid cites
+    (see euclid_cites); it comes from the text, so it is shown before the Lean is done."""
     up = "../" * depth
+    lines = ["| | |", "|---|---|",
+             "| Euclid cites | " + (euclid_cites_text(euclid, book) or "none") + " |"]
     if not p or p["status"] == "sketched":
-        return "_Not yet proved in Lean, so not yet known._\n"
+        return ("\n".join(lines) + "\n\n_Not yet proved in Lean, so what the Lean rests on "
+                "is not yet known._\n")
     axioms = p["axioms"]
     posts = [a for a in axioms if a.startswith("Postulate")]
     defs = [a for a in axioms if a.startswith("Definition")]
     tacit = [a for a in axioms if a.startswith("Tacit.")]
-    lines = ["| | |", "|---|---|"]
-    lines.append("| Propositions cited | " + (", ".join(f"[{c}]({c.split('.')[1].zfill(2)}.md)"
-                 for c in sorted(p["cites"], key=prop_key)) or "none") + " |")
+    lines.append("| Lean cites | " + (", ".join(prop_link(c, book) for c in
+                 sorted(p["cites"], key=prop_key)) or "no propositions") + " |")
     lines.append("| Postulates | " + (roman_list(posts, "Postulate") or "none") + " |")
     lines.append("| Definitions | " + (roman_list(defs, "Definition") or "none") + " |")
     lines.append("| Common Notions | " + (", ".join(c.replace("C.N. ", "") for c in
@@ -180,6 +219,8 @@ def rests_on(p, docs, depth):
 
 def page(book, n, count, titles, facts, docs):
     source, enunciation, proof = heath.read(book, n)
+    # The enunciation counts too: I.22's [I. 20] is there.
+    euclid = euclid_cites([enunciation] + proof)
     ref = f"{book}.{n}"
     p = facts.get(ref)
     status = STATUS.get(p["status"], "") if p else STATUS["sketched"]
@@ -207,13 +248,13 @@ def page(book, n, count, titles, facts, docs):
             f"From [`Elements/Book{book}/Prop{n:02d}.lean`](../../Elements/Book{book}/Prop{n:02d}.lean). "
             "Euclid's sentences are the `--` comments; the lines under each one are the Lean "
             "that carries it out.", "", "```lean", lean_body(lean_path), "```", "",
-            "## What it rests on", "", rests_on(p, docs, 2)]
+            "## What it rests on", "", rests_on(p, docs, 2, book, euclid)]
     out += ["## Mishnah", ""]
     if mishnah.exists():
         out += [mishnah.read_text().strip(), ""]
     else:
         out += ["_Commentary to come._", ""]
-    out += ["---", "", euclids_text(source), ""]
+    out += ["---", "", euclids_text(source), "", TACIT_CREDIT, ""]
     return "\n".join(out)
 
 
@@ -284,7 +325,9 @@ def certificate(facts, docs):
            "Everything on this page is computed from the Lean proofs themselves by "
            "[`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` tells us "
            "exactly which postulates, definitions and tacit assumptions each proof rests on. "
-           "Nothing here is typed in by hand.", ""]
+           "The one exception is the column \"Euclid cites\": the propositions Euclid gives in "
+           "brackets in Heath's translation, read from the text. Nothing here is typed in by hand.",
+           ""]
     for book, (count, titles) in BOOKS.items():
         props = [facts.get(f"{book}.{n}") for n in range(1, count + 1)]
         proved = [p for p in props if p and p["status"] == "proved"]
@@ -300,13 +343,15 @@ def certificate(facts, docs):
                    + " Euclid holds it back until I.29.")
         out.append("- **Superposition** is used directly by: " + (", ".join(sup) or "none yet")
                    + ". Only I.4 and I.8 are allowed to.")
-        out += ["", "| | Prop | Cites | Postulates | Definitions | C.N. | Tacit |",
-                "|---|---|---|---|---|---|---|"]
+        out += ["", "| | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |",
+                "|---|---|---|---|---|---|---|---|"]
         for n, p in enumerate(props, 1):
             ref = f"{book}.{n}"
             link = f"[{ref}](book/{book}/{n:02d}.md)"
+            _, enunciation, proof = heath.read(book, n)
+            euclid = ", ".join(euclid_cites([enunciation] + proof)["props"])
             if not p or p["status"] == "sketched":
-                out.append(f"| 🚧 | {link} | | | | | |")
+                out.append(f"| 🚧 | {link} | {euclid} | | | | | |")
                 continue
             ax = p["axioms"]
             posts = roman_list([a for a in ax if a.startswith("Postulate")], "Postulate")
@@ -314,7 +359,7 @@ def certificate(facts, docs):
             cns = ", ".join(c.replace("C.N. ", "") for c in sorted(set(p["common_notions"])))
             tacit = len([a for a in ax if a.startswith("Tacit.")])
             cites = ", ".join(sorted(p["cites"], key=prop_key))
-            out.append(f"| {STATUS_SHORT[p['status']]} | {link} | {cites} | "
+            out.append(f"| {STATUS_SHORT[p['status']]} | {link} | {euclid} | {cites} | "
                        f"{posts} | {defs} | {cns} | {tacit} |")
         out.append("")
     lean_version = next(iter(facts.values()), {}).get("lean_version", "")
