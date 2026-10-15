@@ -14,43 +14,6 @@ namespace Elements.BookI
 
 open Tacit
 
-/-! ## What Euclid reads off the figure -/
-
-/-- Euclid's "chance point" `F` on `BD`. He takes it at random, but in the very next
-breath calls `AE` "the greater" and `AF` "the less", so `F` must not lie too far out
-along `BD`. A circle about `A`, larger than `AB` but smaller than `AE`, keeps it in:
-`F` is taken on `BD` inside that circle, or where `BD` leaves it. -/
-theorem Prop5.chance_point {A B C D E : Point} (hAB : ‖A B‖ = ‖A C‖) (hD : Between A B D)
-    (hE : Between A C E) : ∃ F : Point, Between B F D ∧ ‖A F‖ < ‖A E‖ := by
-  obtain ⟨AE, hA_AE, hE_AE⟩ := Postulate1 A E (ne_of_between_ends hE)
-  have hC_AE : OnLine C AE := on_line_of_between_ends hE hA_AE hE_AE
-  have hCE : C ≠ E := (ne_of_between (between_symm hE)).symm
-  /- A point X between C and E: then AX is less than AE and greater than AC. -/
-  obtain ⟨X, -, hCXE, -⟩ := exists_point_between hC_AE hE_AE hCE []
-  have hAXE : Between A X E :=
-    between_symm (between_of_between_left (between_symm hE) (between_symm hCXE))
-  have hACX : Between A C X :=
-    between_symm (between_inner (between_symm hCXE) (between_symm hE))
-  have hAX_AE : ‖A X‖ < ‖A E‖ := by
-    rw [← len_add_of_between hAXE]
-    exact CommonNotion5 (len_pos (ne_of_between (between_symm hAXE)).symm)
-  have hAB_AX : ‖A B‖ < ‖A X‖ := by
-    rw [hAB, ← len_add_of_between hACX]
-    exact CommonNotion5 (len_pos (ne_of_between (between_symm hACX)).symm)
-  obtain ⟨α, hA_α, hX_α⟩ := Postulate3 A X (ne_of_between hAXE)
-  have hB_α : InsideCircle B α := inside_of_len_lt hA_α hX_α hAB_AX
-  have hBD : B ≠ D := (ne_of_between (between_symm hD)).symm
-  obtain ⟨BD, hB_BD, hD_BD⟩ := Postulate1 B D hBD
-  by_cases hD_α : InsideCircle D α ∨ OnCircle D α
-  · /- D is not outside the circle: any point between B and D is inside it. -/
-    obtain ⟨F, -, hBFD, -⟩ := exists_point_between hB_BD hD_BD hBD []
-    have hF_α : InsideCircle F α := inside_of_between (Or.inl hB_α) hD_α hBFD
-    exact ⟨F, hBFD, lt_trans (len_lt_of_inside hA_α hX_α hF_α) hAX_AE⟩
-  · /- D is outside: take F where BD crosses the circle (System E, Intersections 4). -/
-    have hD_out : OutsideCircle D α := ⟨fun h => hD_α (Or.inl h), fun h => hD_α (Or.inr h)⟩
-    obtain ⟨F, hF_α, -, hBFD⟩ := line_circle_between hB_α hB_BD hD_out hD_BD
-    exact ⟨F, hBFD, by rw [Definition15 hA_α hF_α hX_α]; exact hAX_AE⟩
-
 /-- In isosceles triangles the angles at the base are equal to one another, and, if the equal
 straight lines be produced further, the angles under the base will be equal to one another. -/
 theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖A C‖)
@@ -72,9 +35,14 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   have hE_AC : OnLine E AC := on_line_of_between hE hA_AC hC_AC
   -- I say that the angle ABC is equal to the angle ACB, and the angle CBD to the angle BCE.
   -- Let a point F be taken at random on BD;
-  /- At random, but not too far out: see `Prop5.chance_point`. Then F lies beyond B
-     on the straight line AB. -/
-  obtain ⟨F, hBFD, hAF_AE⟩ := Prop5.chance_point hAB hD hE
+  /- At random, but not too far out, for in the next breath AE is "the greater" and
+     AF "the less". AB, being equal to AC, is less than AE, so F can be taken nearer
+     to A than E is (`exists_between_nearer` in Book Zero, with a circle about A
+     through E). Then F lies beyond B on the straight line AB. -/
+  have hAB_AE : ‖A B‖ < ‖A E‖ := by
+    rw [hAB]
+    exact len_lt_of_between hE
+  obtain ⟨F, hBFD, hAF_AE⟩ := exists_between_nearer (ne_of_between (between_symm hD)).symm hAB_AE
   have hABF : Between A B F := between_cut hD hBFD
   have hF_AB : OnLine F AB := on_line_of_between hABF hA_AB hB_AB
   have hA_F : A ≠ F := ne_of_between_ends hABF

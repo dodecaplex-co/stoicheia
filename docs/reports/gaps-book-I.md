@@ -45,7 +45,7 @@ may cite them.
 
 ## I.5
 - F is taken "at random" on BD, but must be close enough to A that AE is the greater
-  (`Prop5.chance_point`, which draws a circle about A).
+  (`exists_between_nearer`, which draws a circle about A).
 - G lies beyond C on AE (`OnRay.between_of_len_lt`).
 - The angle FAG is common to both triangles, and BFC is AFC, because the points lie
   on the same rays (`angle_onRay_left`, System E Diagram-angle 4).
@@ -82,7 +82,7 @@ may cite them.
 
 ## I.9
 - The equilateral triangle on DE goes on the side away from A (Heath, vol. 1, p. 264); I.1 now takes the side as an argument.
-- D, taken "at random" on AB, must be nearer A than C is, so that I.3 can be used (`Prop9.chance_point`).
+- D, taken "at random" on AB, must be nearer A than C is, so that I.3 can be used (`exists_between_nearer`, as in I.5).
 - F falls within the angle BAC: the question of Proclus' objector (Heath, vol. 1, p. 265). If F were on an arm, Proclus' own argument with the second part of I.5 rules it out; if outside the angle, I.7 does (`Prop9.crossing`, `Prop9.not_on_arm`).
 
 ## I.10

@@ -35,29 +35,6 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- Euclid's chance point `D` on `AB`. He takes it at random, but in the next breath
-cuts off from `AC` a straight line equal to `AD` [I. 3], so `AD` must be less than
-`AC`. A circle about `A` through `C` keeps `D` in: `D` is taken between `A` and `B`
-if `B` is not outside that circle, or between `A` and the point where `AB` leaves
-it if `B` is outside. -/
-theorem Prop9.chance_point {A B C : Point} (hAB : A ≠ B) (hAC : A ≠ C) :
-    ∃ D : Point, Between A D B ∧ ‖A D‖ < ‖A C‖ := by
-  obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
-  obtain ⟨α, hA_α, hC_α⟩ := Postulate3 A C hAC
-  have hA_in : InsideCircle A α ∨ OnCircle A α := Or.inl (centre_inside hA_α)
-  by_cases hB_α : InsideCircle B α ∨ OnCircle B α
-  · /- `B` is not outside the circle: any point between `A` and `B` is inside it
-       (System E, Circle 2). -/
-    obtain ⟨D, -, hADB, -⟩ := exists_point_between hA_AB hB_AB hAB []
-    exact ⟨D, hADB, len_lt_of_inside hA_α hC_α (inside_of_between hA_in hB_α hADB)⟩
-  · /- `B` is outside: `AB` leaves the circle at a point `X` between `A` and `B`
-       (Intersections 4), and `D` is taken between `A` and `X`. -/
-    have hB_out : OutsideCircle B α := ⟨fun h => hB_α (Or.inl h), fun h => hB_α (Or.inr h)⟩
-    obtain ⟨X, hX_α, hX_AB, hAXB⟩ := line_circle_between (centre_inside hA_α) hA_AB hB_out hB_AB
-    obtain ⟨D, -, hADX, -⟩ := exists_point_between hA_AB hX_AB (ne_of_between hAXB) []
-    exact ⟨D, between_of_between_left hAXB hADX,
-      len_lt_of_inside hA_α hC_α (inside_of_between hA_in (Or.inr hX_α) hADX)⟩
-
 /-- Proclus' objector, first case: `F` might fall on `AB` itself, beyond `D`. Proclus
 answers him with the second part of I.5 (Heath, vol. 1, p. 265). Since `FD` is equal
 to `FE`, the angle `FDE` is equal to the angle `FED` [I. 5]. Since `AD` is equal to
@@ -176,9 +153,13 @@ theorem Prop9 {A B C : Point} (hBAC : Triangle B A C) :
   have hC_AB : ¬ OnLine C AB := hBAC.off_line hB_AB hA_AB
   -- It is then required to bisect it.
   -- Let a point D be taken at random on AB;
-  /- At random, but not too far out, since AD is about to be cut off from AC: see
-     `Prop9.chance_point`. -/
-  obtain ⟨D, hADB, hAD_AC⟩ := Prop9.chance_point hAB hAC
+  /- At random, but not too far out, since AD is about to be cut off from AC: D is
+     taken nearer to A than C is (`exists_between_nearer` in Book Zero, with a
+     circle about A through C). -/
+  have hAA_AC : ‖A A‖ < ‖A C‖ := by
+    rw [len_self]
+    exact len_pos hAC
+  obtain ⟨D, hADB, hAD_AC⟩ := exists_between_nearer hAB hAA_AC
   have hAD : A ≠ D := ne_of_between hADB
   have hD_AB : OnLine D AB := on_line_of_between_ends hADB hA_AB hB_AB
   -- let AE be cut off from AC equal to AD; [I. 3]
