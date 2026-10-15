@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 215" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.31: the straight line EAF drawn through A parallel to BC</title>
+  <rect x="0" y="0" width="400" height="215" rx="10" fill="#fbf7ee"/>
+  <!-- AD joined, from D taken between B and C -->
+  <line x1="235" y1="60" x2="160" y2="170" stroke="#3b2f2f" stroke-width="1.6"/>
+  <!-- the given straight line BC, and EAF drawn parallel to it [I. 27] -->
+  <line x1="40" y1="170" x2="360" y2="170" stroke="#a0522d" stroke-width="3"/>
+  <line x1="40" y1="60" x2="360" y2="60" stroke="#a0522d" stroke-width="3"/>
+  <!-- the alternate angles EAD, ADC, made equal [I. 23] -->
+  <path d="M 213 60 A 22 22 0 0 0 222.6 78.2" fill="none" stroke="#8c7b62" stroke-width="1.4"/>
+  <path d="M 182 170 A 22 22 0 0 0 172.4 151.8" fill="none" stroke="#8c7b62" stroke-width="1.4"/>
+  <g fill="#3b2f2f">
+    <circle cx="40" cy="60" r="2.6"/><circle cx="235" cy="60" r="2.6"/><circle cx="360" cy="60" r="2.6"/>
+    <circle cx="40" cy="170" r="2.6"/><circle cx="160" cy="170" r="2.6"/><circle cx="360" cy="170" r="2.6"/>
+    <text x="20" y="66">E</text><text x="230" y="47">A</text><text x="368" y="66">F</text>
+    <text x="20" y="176">B</text><text x="155" y="193">D</text><text x="368" y="176">C</text>
+  </g>
+</svg>
