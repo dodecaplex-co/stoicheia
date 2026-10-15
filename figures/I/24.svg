@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 245" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.24: the greater angle stands on the greater base</title>
+  <rect x="0" y="0" width="500" height="245" rx="10" fill="#fbf7ee"/>
+  <!-- triangle ABC, with the greater angle at A -->
+  <polygon points="100,92 27.4,199.8 204.3,199.8" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2" stroke-linejoin="round"/>
+  <!-- triangle DEF: DE equal to AB, DF to AC -->
+  <polygon points="320,72 299.9,200.4 397.5,200.4" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2" stroke-linejoin="round"/>
+  <!-- the angle EDG made equal to BAC [I. 23], DG equal to DF, and FG joined -->
+  <line x1="320" y1="72" x2="460.1" y2="125.5" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="397.5" y1="200.4" x2="460.1" y2="125.5" stroke="#3b2f2f" stroke-width="1.4"/>
+  <!-- the bases BC and EG, proved equal [I. 4]; F falls beyond EG -->
+  <line x1="27.4" y1="199.8" x2="204.3" y2="199.8" stroke="#a0522d" stroke-width="3"/>
+  <line x1="299.9" y1="200.4" x2="460.1" y2="125.5" stroke="#a0522d" stroke-width="3"/>
+  <!-- the equal angles BAC, EDG -->
+  <path d="M 87.7 110.2 A 22 22 0 0 0 115.3 107.8" fill="none" stroke="#8c7b62" stroke-width="1.4"/>
+  <path d="M 316.6 93.7 A 22 22 0 0 0 340.6 79.8" fill="none" stroke="#8c7b62" stroke-width="1.4"/>
+  <g fill="#3b2f2f">
+    <circle cx="100" cy="92" r="2.6"/><circle cx="27.4" cy="199.8" r="2.6"/><circle cx="204.3" cy="199.8" r="2.6"/>
+    <circle cx="320" cy="72" r="2.6"/><circle cx="299.9" cy="200.4" r="2.6"/><circle cx="397.5" cy="200.4" r="2.6"/>
+    <circle cx="460.1" cy="125.5" r="2.6"/>
+    <text x="94" y="81">A</text><text x="11" y="221">B</text><text x="208" y="221">C</text>
+    <text x="314" y="61">D</text><text x="283" y="222">E</text><text x="398" y="222">F</text>
+    <text x="466" y="128">G</text>
+  </g>
+</svg>
