@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 270" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.29: a straight line falling on parallels makes the alternate angles equal</title>
+  <rect x="0" y="0" width="400" height="270" rx="10" fill="#fbf7ee"/>
+  <!-- the parallel straight lines AB, CD -->
+  <line x1="50.0" y1="95.0" x2="350.0" y2="95.0" stroke="#3b2f2f" stroke-width="2"/>
+  <line x1="50.0" y1="185.0" x2="350.0" y2="185.0" stroke="#3b2f2f" stroke-width="2"/>
+  <!-- the straight line EF falling on them at G and H -->
+  <line x1="133.3" y1="40.0" x2="266.7" y2="240.0" stroke="#3b2f2f" stroke-width="1.6"/>
+  <!-- the alternate angles AGH, GHD, and the exterior angle EGB, proved equal -->
+  <path d="M 182.2 113.3 A 22 22 0 0 1 148.0 95.0" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <path d="M 217.8 166.7 A 22 22 0 0 1 252.0 185.0" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <path d="M 157.8 76.7 A 22 22 0 0 1 192.0 95.0" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <g fill="#3b2f2f">
+    <circle cx="50.0" cy="95.0" r="2.6"/><circle cx="350.0" cy="95.0" r="2.6"/><circle cx="50.0" cy="185.0" r="2.6"/><circle cx="350.0" cy="185.0" r="2.6"/>
+    <circle cx="133.3" cy="40.0" r="2.6"/><circle cx="266.7" cy="240.0" r="2.6"/><circle cx="170.0" cy="95.0" r="2.6"/><circle cx="230.0" cy="185.0" r="2.6"/>
+    <text x="30" y="101">A</text><text x="357" y="101">B</text><text x="30" y="191">C</text><text x="357" y="191">D</text>
+    <text x="139" y="36">E</text><text x="272" y="256">F</text><text x="139" y="88">G</text><text x="199" y="178">H</text>
+  </g>
+</svg>
