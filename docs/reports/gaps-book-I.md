@@ -152,7 +152,7 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - The angle CED is the angle CEB, and BAE is BAC, because each pair of points lies on one ray (`angle_onRay_right`).
 
 ## I.22
-- The circles meet. Heath: "It was early observed that Euclid assumes, without giving any reason, that the circles drawn as described will meet" when the condition holds (vol. 1, p. 293). Proclus argued it but missed the case of one circle within the other, and Simson thought no beginner so dull as not to see it. `Prop22.meet` follows Heath's own argument (vol. 1, p. 294): the circle about G has a point outside the circle about F and a point inside it, so they cut one another (System E's Intersection rule 4, `circles_meet_of_on_inside_outside`, in LeanEuclid's corrected form). Lean also needs the case Heath passes over, where the inside point is the centre F itself.
+- The circles meet. Heath: "It was early observed that Euclid assumes, without giving any reason, that the circles drawn as described will meet" when the condition holds (vol. 1, p. 293). Proclus argued it but missed the case of one circle within the other, and Simson thought no beginner so dull as not to see it. `Prop22.meet` follows Heath's own argument (vol. 1, p. 294): the circle about G has a point outside the circle about F and a point inside it, so they cut one another (System E's Intersection rule 4, `circles_meet_of_on_inside_outside`, in the corrected form Logan Murphy and his colleagues gave it in LeanEuclid). Lean also needs the case Heath passes over, where the inside point is the centre F itself.
 - DE is "of infinite length in the direction of E", but I.3 cuts off only from a greater finite straight line, so each cut needs room first (`Prop22.room`: I.2, then `produce_longer`). That is why I.2 is among the propositions I.22 cites.
 - None of A, B, C is nothing, which I.3 needs (`Prop22.ne_zero`).
 - K is taken where the circles cut one another on a chosen side of DE (System E, Intersections 8), so that I.23 can place the triangle where it wants it.
@@ -173,34 +173,29 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 
 ## The postulates: what the Lean uses and what Euclid cites
 
-Each proof's own steps (`direct_axioms` in `facts.json`, which leaves out whatever
-comes in through a cited proposition) set beside Heath's brackets, for I.1–I.24:
-
-| | Used in the proof, with no bracket there | Bracketed, but not used in the proof |
-|---|---|---|
-| Postulate 1 | I.3, I.4, I.6–I.11, I.13–I.15, I.17–I.24 | |
-| Postulate 2 | I.7, I.9, I.11, I.14, I.18–I.20, I.22, I.24 | I.2, I.5 |
-| Postulate 3 | I.5, I.9, I.11, I.16, I.20, I.22, I.24 | |
-| Postulate 4 | I.11–I.13 | |
-| Definition 15 | I.2, I.11, I.12, I.16, I.20, I.22, I.24 | |
+[CERTIFICATE.md](../../CERTIFICATE.md) sets what Euclid cites, read from Heath's
+brackets, beside what the Lean needs, for every proposition; where the two differ
+over a postulate, the reason is one of these.
 
 - **Postulate 1**: Lean must name a straight line before it can say a point is on
   it or off it, or lay a figure along it. This is a difference in bookkeeping, not
   in geometry: Euclid's "the straight line AB" names the same line implicitly.
 - **Postulate 2**: a straight line produced where Euclid gives no bracket (I.14);
   the sides of I.5 produced, because our I.5 is stated with them (`Prop5.base`);
-  and a straight line produced far enough for I.3 to cut from (`produce_longer`,
-  `OnRay.exists_len_eq`). In I.2 the rule that a straight line through the inside of
-  a circle meets it (System E, Intersections 5) does the producing, and in I.5 the
-  statement hands us the produced sides, so Lean has no use for Euclid's bracket.
+  a straight line produced far enough for I.3 to cut from (`produce_longer`); and a
+  straight line produced behind a point, so that a circle about it is cut on the
+  side we want (`OnRay.exists_len_eq`). In I.2 the rule that a straight line
+  through the inside of a circle meets it (System E, Intersections 5) does the
+  producing, and in I.5 the statement hands us the produced sides, so Lean has no
+  use for Euclid's bracket.
 - **Postulate 3 and Definition 15**: circles Euclid does not draw, which keep a
-  chance point near enough (`exists_between_nearer`, I.5 and I.9) or give a straight
-  line room to be cut from (`produce_longer`, `OnRay.exists_len_eq`); and circles he
-  does draw, but without a bracket for the circle (I.22) or for its radii (I.2,
-  I.12, I.22).
+  chance point near enough (`exists_between_nearer`, I.5 and I.9), give a straight
+  line room to be cut from (`produce_longer`), or lay a length along a ray
+  (`OnRay.exists_len_eq`); and circles he does draw, but without a bracket for the
+  circle (I.22) or for its radii (I.2, I.12, I.22).
 - **Postulate 4**: turning Definition 10's right angles into the one magnitude `∟`
   that all right angles share.
 
 The certificate counts everything a proof rests on, the propositions it cites
 included, so a postulate can be on a proposition's certificate when its own proof
-never uses it. [CERTIFICATE.md](../../CERTIFICATE.md) has the full list for each.
+never uses it.

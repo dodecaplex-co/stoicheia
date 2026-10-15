@@ -20,6 +20,9 @@ because a proof only needs their statements.
 2. **Follow Euclid's route.** Use the propositions he cites, in the order he cites
    them. If Lean needs something he never says, that's a discovery: prove it as a
    small `PropN.figure`-style lemma in the same file, and tell us in the mishnah.
+   Helpers go before the proposition, porisms and corollaries after it. A step
+   that several proofs share goes in Book Zero, or, if it cites a proposition, in
+   [`Elements/BookI/Helpers.lean`](Elements/BookI/Helpers.lean).
 3. **Never add an `axiom`.** All assumptions live in `Elements/Foundations/`. If you
    believe Euclid needs a rule that isn't there, open an issue; new rules come from
    System E (or LeanEuclid's corrections of it), with a citation. A rule that holds
@@ -32,7 +35,10 @@ because a proof only needs their statements.
 
 ## Writing commentary or drawing figures
 
-- `mishnah/<book>/NN.md`: a few short paragraphs, in the same voice as the rest. What
+[docs/STYLE.md](docs/STYLE.md) has the rules for the voice, the mishnah and the
+figures. In short:
+
+- `mishnah/<book>/NN.md`: 200 to 500 words, in the same voice as the rest. What
   does Euclid take for granted? What did Lean make us say? How does the result look
   with coordinates, vectors or complex numbers? Quote Heath (public domain) freely,
   credit everyone, and keep it friendly.
