@@ -48,11 +48,14 @@ def citations(paragraphs, book_roman: str = "I"):
 
 
 def justifications(paragraphs):
-    """Every bracketed justification Euclid gives: Post. 3, Def. 15, C.N. 1, I. 4 …"""
+    """Every bracketed justification Euclid gives: Post. 3, Def. 15, C.N. 1, I. 4 …
+
+    A bracket may hold several, as "[C.N. 1; I. 30]" or "[Post. 4 and C.N. 1]".
+    """
     found = []
     for p in paragraphs:
         for inner in CITATION.findall(p):
-            for part in inner.split(";"):
+            for part in re.split(r";|\band\b", inner):
                 part = " ".join(part.split())
                 if re.fullmatch(r"(Post\.|Def\.|C\.N\.|[IVX]+\.)\s*\d+", part):
                     part = re.sub(r"\.\s*(\d+)", r". \1", part)
