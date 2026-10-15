@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.17: the angles ABC, BCA are less than two right angles</title>
+  <rect x="0" y="0" width="400" height="260" rx="10" fill="#fbf7ee"/>
+  <!-- the triangle ABC -->
+  <polygon points="140.0,55.0 45.0,210.0 255.0,210.0" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2" stroke-linejoin="round"/>
+  <!-- BC produced to D [Post. 2] -->
+  <line x1="255.0" y1="210.0" x2="375.0" y2="210.0" stroke="#3b2f2f" stroke-width="2"/>
+  <!-- the exterior angle ACD, greater than the interior and opposite angle ABC [I. 16] -->
+  <path d="M 69.0 210.0 A 24 24 0 0 0 57.5 189.5" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <path d="M 233.6 181.1 A 36 36 0 0 1 291.0 210.0" fill="none" stroke="#a0522d" stroke-width="1.3"/>
+  <!-- the angle ACB, added to each; with ACD it makes two right angles [I. 13] -->
+  <path d="M 233.0 210.0 A 22 22 0 0 1 241.9 192.3" fill="none" stroke="#8c7b62" stroke-width="1.6"/>
+  <g fill="#3b2f2f">
+    <circle cx="140.0" cy="55.0" r="2.6"/><circle cx="45.0" cy="210.0" r="2.6"/><circle cx="255.0" cy="210.0" r="2.6"/><circle cx="375.0" cy="210.0" r="2.6"/>
+    <text x="134" y="44">A</text><text x="26" y="228">B</text><text x="250" y="232">C</text><text x="379" y="230">D</text>
+  </g>
+</svg>
