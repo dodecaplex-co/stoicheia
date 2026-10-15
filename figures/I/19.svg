@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.19: the greater angle ABC is subtended by the greater side AC</title>
+  <rect x="0" y="0" width="400" height="260" rx="10" fill="#fbf7ee"/>
+  <!-- the triangle ABC -->
+  <polygon points="150,40 60,220 340,220" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2" stroke-linejoin="round"/>
+  <!-- AC, the side that subtends the greater angle -->
+  <line x1="150" y1="40" x2="340" y2="220" stroke="#a0522d" stroke-width="3.2" stroke-linecap="round"/>
+  <!-- the angle ABC, the greater -->
+  <path d="M 77.9,184.2 A 40 40 0 0 1 100,220" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <!-- the angle BCA, the less -->
+  <path d="M 300,220 A 40 40 0 0 1 311.0,192.5" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <g fill="#3b2f2f">
+    <circle cx="150" cy="40" r="2.6"/><circle cx="60" cy="220" r="2.6"/><circle cx="340" cy="220" r="2.6"/>
+    <text x="144" y="30">A</text><text x="40" y="240">B</text><text x="346" y="240">C</text>
+  </g>
+</svg>
