@@ -89,7 +89,9 @@ axiom area_add_of_between (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
     (hAB : A ≠ B) (hAC : A ≠ C) (hBC : B ≠ C) (hD : ¬ OnLine D L) (h : Between A C B) :
     △ A C D + △ D C B = △ A D B
 
-/-- (Diagram-area 2, converse) -/
+/-- If `A`, `B` and `C` are different points of a straight line, `D` is off it, and the
+triangles `ACD` and `DCB` together make up the triangle `ADB`, then `C` lies between
+`A` and `B`. (Diagram-area 2, converse) -/
 axiom between_of_area_add (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
     (hAB : A ≠ B) (hAC : A ≠ C) (hBC : B ≠ C) (hD : ¬ OnLine D L)
     (h : △ A C D + △ D C B = △ A D B) : Between A C B

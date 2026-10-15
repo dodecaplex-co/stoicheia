@@ -47,7 +47,10 @@ def Equilateral (A B C : Point) : Prop :=
   Triangle A B C ∧ ‖A B‖ = ‖B C‖ ∧ ‖B C‖ = ‖C A‖
 
 /-- **Definition 20.** "... an isosceles triangle that which has two of its sides
-alone equal." (Here the two equal sides meet at `A`.) -/
+alone equal." (Here the two equal sides meet at `A`.) Euclid's "alone" is not
+kept: an equilateral triangle counts as isosceles here too. No proof in Book I
+yet uses this definition by name; I.5 and I.6 speak of the two equal sides
+directly. -/
 def Isosceles (A B C : Point) : Prop :=
   Triangle A B C ∧ ‖A B‖ = ‖A C‖
 

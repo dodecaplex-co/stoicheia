@@ -16,7 +16,8 @@ to prove facts about the figure already drawn, never to build anything new.
 Here it is one rule: a triangle can be laid down with its corner `A` on a given
 point `D` of a line, its side `AB` along the ray from `D` toward `G`, and its
 third corner on the same side as `H`, keeping all its sides and angles. We
-follow LeanEuclid's form of the rule, which combines System E's two
+follow the form of the rule in LeanEuclid, by Logan Murphy, Kaiyu Yang, Jialiang
+Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si, which combines System E's two
 superposition rules into one. To respect System E's restriction, the
 certificate's checks allow only I.4 and I.8 to cite it.
 -/
