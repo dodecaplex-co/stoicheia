@@ -19,22 +19,6 @@ open Tacit
 
 /-! ## What the figure shows -/
 
-/-- "On the same side of `AB`" is the same as "on the same side of `BA`". -/
-theorem Prop7.sameSideOf_swap {P Q A B : Point} (h : SameSideOf P Q A B) :
-    SameSideOf P Q B A :=
-  ⟨h.1.symm, fun L hB hA => h.2 L hA hB⟩
-
-/-- If `P` is on the same side of `AB` as `Q`, then `Q` is on the same side as `P`. -/
-theorem Prop7.sameSideOf_symm {P Q A B : Point} (h : SameSideOf P Q A B) :
-    SameSideOf Q P A B :=
-  ⟨h.1, fun L hA hB => same_side_symm (h.2 L hA hB)⟩
-
-/-- A finite straight line `AB` can be produced beyond `B`. [Post. 1, Post. 2] -/
-theorem Prop7.produce {A B : Point} (h : A ≠ B) : ∃ C : Point, Between A B C := by
-  obtain ⟨L, hA, hB⟩ := Postulate1 A B h
-  obtain ⟨C, -, hC, -⟩ := Postulate2 hA hB h []
-  exact ⟨C, hC⟩
-
 /-- `D` is a different point from `C`, on the same side of `AB` and as far from `A`. Then
 `D` is not on the straight line `AC`, so `ACD` really is a triangle. (Heath: "The case in
 which D falls on AC or BC does not require proof.") On the ray from `A` through `C`, the
@@ -70,7 +54,7 @@ theorem Prop7.cross {A B C D : Point} {Q : Line} (hCD : SameSideOf C D A B)
     (hBQ : OnLine B Q) (hCQ : OnLine C Q) (h : ¬ SameSide D A Q) :
     (∃ X : Point, Between A X D ∧ Between B X C) ∨ InsideTriangle C A B D := by
   have hACD : Triangle A C D := Prop7.triangle hCD hCA hne
-  have hBCD : Triangle B C D := Prop7.triangle (Prop7.sameSideOf_swap hCD) hCB hne
+  have hBCD : Triangle B C D := Prop7.triangle (SameSideOf.swap hCD) hCB hne
   obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hCD.1
   have hs : SameSide C D L := hCD.2 L hAL hBL
   obtain ⟨R, hAR, hDR⟩ := Postulate1 A D hACD.ne₁₃
@@ -113,22 +97,22 @@ theorem Prop7.cases {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
       (∃ X : Point, Between A X D ∧ Between B X C) ∨
       (∃ X : Point, Between A X C ∧ Between B X D) := by
   have hACD : Triangle A C D := Prop7.triangle hCD hCA hne
-  have hBCD : Triangle B C D := Prop7.triangle (Prop7.sameSideOf_swap hCD) hCB hne
+  have hBCD : Triangle B C D := Prop7.triangle (SameSideOf.swap hCD) hCB hne
   obtain ⟨P, hAP, hCP⟩ := Postulate1 A C hACD.ne₁₂
   obtain ⟨Q, hBQ, hCQ⟩ := Postulate1 B C hBCD.ne₁₂
   by_cases h₁ : SameSide D A Q
   · by_cases h₂ : SameSide D B P
     · refine Or.inl ⟨⟨hBCD.ne₁₂, fun Q' hBQ' hCQ' => ?_⟩,
-        ⟨hACD.ne₁₂.symm, fun P' hCP' hAP' => ?_⟩, Prop7.sameSideOf_symm hCD⟩
+        ⟨hACD.ne₁₂.symm, fun P' hCP' hAP' => ?_⟩, SameSideOf.symm hCD⟩
       · rw [← line_unique hBCD.ne₁₂ hBQ hCQ hBQ' hCQ']
         exact h₁
       · rw [← line_unique hACD.ne₁₂ hAP hCP hAP' hCP']
         exact h₂
-    · rcases Prop7.cross (Prop7.sameSideOf_swap hCD) hCB hCA hne hAP hCP h₂ with
+    · rcases Prop7.cross (SameSideOf.swap hCD) hCB hCA hne hAP hCP h₂ with
         ⟨X, hBXD, hAXC⟩ | h
       · exact Or.inr (Or.inr (Or.inr ⟨X, hAXC, hBXD⟩))
-      · exact Or.inr (Or.inl ⟨Prop7.sameSideOf_swap h.2.1, Prop7.sameSideOf_swap h.1,
-          Prop7.sameSideOf_swap h.2.2⟩)
+      · exact Or.inr (Or.inl ⟨SameSideOf.swap h.2.1, SameSideOf.swap h.1,
+          SameSideOf.swap h.2.2⟩)
   · rcases Prop7.cross hCD hCA hCB hne hBQ hCQ h₁ with h | h
     · exact Or.inr (Or.inr (Or.inl h))
     · exact Or.inr (Or.inl h)
@@ -141,7 +125,7 @@ theorem Prop7.figure {A B C D X : Point} (hCD : SameSideOf C D A B) (hCA : ‖C 
     ∠ A C D = ∠ A C B + ∠ B C D ∧ ∠ C D B = ∠ C D A + ∠ A D B ∧
       0 < ∠ A C B ∧ 0 < ∠ A D B := by
   have hACD : Triangle A C D := Prop7.triangle hCD hCA hne
-  have hBCD : Triangle B C D := Prop7.triangle (Prop7.sameSideOf_swap hCD) hCB hne
+  have hBCD : Triangle B C D := Prop7.triangle (SameSideOf.swap hCD) hCB hne
   obtain ⟨P, hAP, hCP⟩ := Postulate1 A C hACD.ne₁₂
   obtain ⟨Q, hBQ, hCQ⟩ := Postulate1 B C hBCD.ne₁₂
   obtain ⟨M, hCM, hDM⟩ := Postulate1 C D hne
@@ -191,7 +175,7 @@ angle `BCD`; and, since `DB` is equal to `CB`, it is also equal to it [I. 5]. -/
 theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = ‖D A‖)
     (hCB : ‖C B‖ = ‖D B‖) (hne : C ≠ D) (hD : InsideTriangle D A B C) : False := by
   have hACD : Triangle A C D := Prop7.triangle hCD hCA hne
-  have hBCD : Triangle B C D := Prop7.triangle (Prop7.sameSideOf_swap hCD) hCB hne
+  have hBCD : Triangle B C D := Prop7.triangle (SameSideOf.swap hCD) hCB hne
   obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hCD.1
   obtain ⟨P, hAP, hCP⟩ := Postulate1 A C hACD.ne₁₂
   obtain ⟨Q, hBQ, hCQ⟩ := Postulate1 B C hBCD.ne₁₂
@@ -268,8 +252,8 @@ theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
   /- Again, since DB is equal to CB, the angles at the base of the triangle BDC are equal:
      the angle BDC is equal to the angle BCD. [I. 5] -/
   have hBC_BD : ‖B C‖ = ‖B D‖ := by rw [len_symm B C, hCB, len_symm D B]
-  obtain ⟨G, hBCG⟩ := Prop7.produce hBCD.ne₁₂
-  obtain ⟨H, hBDH⟩ := Prop7.produce hBCD.ne₁₃
+  obtain ⟨G, hBCG⟩ := produce hBCD.ne₁₂
+  obtain ⟨H, hBDH⟩ := produce hBCD.ne₁₃
   have hbase : ∠ B C D = ∠ B D C := (Prop5 hBCD hBC_BD hBCG hBDH).1
   /- Therefore the same angle BDC is both greater than and equal to the angle BCD: which is
      impossible. -/
@@ -303,17 +287,17 @@ theorem Prop7 {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = �
         ∃ X : Point, Between A X D ∧ Between B X C := by
     rcases Prop7.cases hCD hCA hCB hne with h | h | h | h
     · exact (Prop7.within hCD hCA hCB hne h).elim
-    · exact (Prop7.within (Prop7.sameSideOf_symm hCD) hCA.symm hCB.symm (Ne.symm hne) h).elim
+    · exact (Prop7.within (SameSideOf.symm hCD) hCA.symm hCB.symm (Ne.symm hne) h).elim
     · exact ⟨C, D, hCD, hCA, hCB, hne, h⟩
-    · exact ⟨D, C, Prop7.sameSideOf_symm hCD, hCA.symm, hCB.symm, Ne.symm hne, h⟩
+    · exact ⟨D, C, SameSideOf.symm hCD, hCA.symm, hCB.symm, Ne.symm hne, h⟩
   have hACD : Triangle A C D := Prop7.triangle hCD hCA hne
-  have hBCD : Triangle B C D := Prop7.triangle (Prop7.sameSideOf_swap hCD) hCB hne
+  have hBCD : Triangle B C D := Prop7.triangle (SameSideOf.swap hCD) hCB hne
   -- Then, since AC is equal to AD,
   have hAC_AD : ‖A C‖ = ‖A D‖ := by rw [len_symm A C, hCA, len_symm D A]
   -- the angle ACD is also equal to the angle ADC; [I. 5]
   /- I.5 is stated with the equal sides produced, so we produce AC, AD. [Post. 2] -/
-  obtain ⟨E, hACE⟩ := Prop7.produce hACD.ne₁₂
-  obtain ⟨F, hADF⟩ := Prop7.produce hACD.ne₁₃
+  obtain ⟨E, hACE⟩ := produce hACD.ne₁₂
+  obtain ⟨F, hADF⟩ := produce hACD.ne₁₃
   have hACD_ADC : ∠ A C D = ∠ A D C := (Prop5 hACD hAC_AD hACE hADF).1
   -- therefore the angle ADC is greater than the angle DCB;
   /- Heath: "It would be natural to insert here the step 'but the angle ACD is greater than
@@ -332,8 +316,8 @@ theorem Prop7 {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = �
   -- Again, since CB is equal to DB,
   have hBC_BD : ‖B C‖ = ‖B D‖ := by rw [len_symm B C, hCB, len_symm D B]
   -- the angle CDB is also equal to the angle DCB.
-  obtain ⟨G, hBCG⟩ := Prop7.produce hBCD.ne₁₂
-  obtain ⟨H, hBDH⟩ := Prop7.produce hBCD.ne₁₃
+  obtain ⟨G, hBCG⟩ := produce hBCD.ne₁₂
+  obtain ⟨H, hBDH⟩ := produce hBCD.ne₁₃
   have hCDB_DCB : ∠ C D B = ∠ D C B := by
     rw [angle_symm hne hBCD.ne₁₃, ← (Prop5 hBCD hBC_BD hBCG hBDH).1,
       angle_symm hBCD.ne₁₂ (Ne.symm hne)]

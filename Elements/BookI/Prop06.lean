@@ -29,26 +29,6 @@ theorem Prop6.figure {A B C D : Point} (hABC : Triangle A B C) (hBDA : Between B
      lie on one straight line. -/
   exact hABC ⟨L, on_line_of_between hBDA hB hD, hB, hC⟩
 
-/-- The triangle `ABC`, named from another corner, as `CAB`. -/
-theorem Prop6.rotate {A B C : Point} (hABC : Triangle A B C) : Triangle C A B := by
-  rintro ⟨L, hC, hA, hB⟩
-  exact hABC ⟨L, hA, hB, hC⟩
-
-/-- The triangle `ABC`, named the other way round, as `ACB`. -/
-theorem Prop6.swap {A B C : Point} (hABC : Triangle A B C) : Triangle A C B := by
-  rintro ⟨L, hA, hC, hB⟩
-  exact hABC ⟨L, hA, hB, hC⟩
-
-/-- What Euclid sees in the figure: `D` lies on `BA`, on the same side of `B` as
-`A`, so the angle `DBC` is the angle `ABC` itself (System E, Diagram-angle 4). -/
-theorem Prop6.angle {A B C D : Point} (hABC : Triangle A B C) (hBDA : Between B D A) :
-    ∠ D B C = ∠ A B C := by
-  obtain ⟨BA, hB_BA, hA_BA⟩ := Postulate1 B A hABC.ne₁₂.symm
-  obtain ⟨BC, hB_BC, hC_BC⟩ := Postulate1 B C hABC.ne₂₃
-  exact angle_eq_of_same_rays hB_BA (on_line_of_between_ends hBDA hB_BA hA_BA) hA_BA
-    hB_BC hC_BC hC_BC (ne_of_between hBDA).symm hABC.ne₁₂ hABC.ne₂₃.symm hABC.ne₂₃.symm
-    (not_between_of_between hBDA) (fun h => ne_of_between_ends h rfl)
-
 /-- The tacit assumption Heath points out: because `D` is between `A` and `B`, the
 triangle `DBC` is less than the triangle `ACB`. The straight line `CD` cuts `ACB`
 into `DBC` and `ADC` (System E, Diagram-area 2), `ADC` is something, since `C` is
@@ -108,14 +88,16 @@ theorem Prop6 {A B C : Point} (hABC : Triangle A B C) (h : ∠ A B C = ∠ A C B
     have hsides : ‖B D‖ = ‖C A‖ ∧ ‖B C‖ = ‖C B‖ :=
       ⟨(len_symm B D).trans (hDB.trans (len_symm A C)), hBC⟩
     -- and the angle DBC is equal to the angle ACB;
-    /- The angle DBC is the angle ABC itself, since D lies on BA
-       (`Prop6.angle`), and ABC is equal to ACB by hypothesis. -/
-    have hDBC : ∠ D B C = ∠ A C B := (Prop6.angle hABC hBDA).trans h
+    /- The angle DBC is the angle ABC itself, since D lies on the ray from B
+       through A (`angle_onRay_left` in Book Zero, from System E's Diagram-angle
+       4), and ABC is equal to ACB by hypothesis. -/
+    have hDBC : ∠ D B C = ∠ A C B :=
+      (angle_onRay_left (OnRay.of_between hBDA) hABC.ne₂₃.symm).trans h
     -- therefore the base DC is equal to the base AB,
     /- This is I.4, applied to the triangles DBC and ACB; that DBC is a
        triangle at all is `Prop6.figure`. -/
     obtain ⟨hDC_AB, hBDC_CAB, -, -⟩ :=
-      Prop4 (Prop6.figure hABC hBDA) (Prop6.rotate hABC) hsides.1 hsides.2 hDBC
+      Prop4 (Prop6.figure hABC hBDA) hABC.cab hsides.1 hsides.2 hDBC
     -- and the triangle DBC will be equal to the triangle ACB,
     have hequal : △ D B C = △ A C B := by
       rw [area_swap D B C, area_rotate D C B, hBDC_CAB, ← area_rotate A B C, area_swap A B C]
@@ -129,7 +111,7 @@ theorem Prop6 {A B C : Point} (hABC : Triangle A B C) (h : ∠ A B C = ∠ A C B
     exact lt_irrefl _ hless
   -- Therefore AB is not unequal to AC;
   have hnot : ¬ ‖A B‖ ≠ ‖A C‖ := fun hne =>
-    (one_greater hne).elim (greater hABC h) (greater (Prop6.swap hABC) h.symm)
+    (one_greater hne).elim (greater hABC h) (greater hABC.acb h.symm)
   -- it is therefore equal to it.
   /- Reductio ad absurdum: a length not unequal to another is equal to it. -/
   exact Classical.byContradiction hnot

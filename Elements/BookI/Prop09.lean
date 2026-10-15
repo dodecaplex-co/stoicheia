@@ -8,6 +8,16 @@ import Elements.BookI.Prop08
 Euclid's text, in Heath's translation: [`heath/I/09.md`](../../heath/I/09.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+"Bisected by the straight line AF" says two things: `AF` falls within the angle
+`BAC` (`F` is on `C`'s side of `AB` and on `B`'s side of `AC`), and it cuts the
+angle into two equal angles `BAF`, `FAC`. I.10 needs the first: it is what makes
+the bisector of the angle `ACB` meet `AB` between `A` and `B` (`crossbar` in
+Book Zero).
+
+For `AF` to fall within the angle, the equilateral triangle on `DE` must be put
+on the side of `DE` away from `A`, which Euclid does not say; I.1 lets us choose
+the side.
 -/
 
 namespace Elements.BookI
@@ -16,7 +26,8 @@ open Tacit
 
 /-- To bisect a given rectilineal angle. -/
 theorem Prop9 {A B C : Point} (hBAC : Triangle B A C) :
-    ∃ F : Point, ∠ B A F = ∠ F A C ∧ ∠ B A F + ∠ F A C = ∠ B A C := by
+    ∃ F : Point, SameSideOf F C A B ∧ SameSideOf F B A C ∧
+      ∠ B A F = ∠ F A C ∧ ∠ B A F + ∠ F A C = ∠ B A C := by
   -- Let the angle BAC be the given rectilineal angle.
   -- It is then required to bisect it.
   -- Let a point D be taken at random on AB;

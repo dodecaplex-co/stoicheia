@@ -27,7 +27,9 @@ theorem Prop2 (A B C : Point) (hBC : B ≠ C) :
   -- the given straight line BC.
   -- From the point A to the point B let the straight line AB be joined; [Post. 1]
   -- and on it let the equilateral triangle DAB be constructed. [I. 1]
-  obtain ⟨D, hABD, -, hBD_DA⟩ := Prop1 A B hAB
+  /- Either side of AB will do, so no side is named: the point given for a side
+     is A itself, which is on AB. -/
+  obtain ⟨D, ⟨hABD, -, hBD_DA⟩, -⟩ := Prop1 A B hAB A
   have hDA_DB : ‖D A‖ = ‖D B‖ := hBD_DA.symm.trans (len_symm B D)
   have hDB : D ≠ B := hABD.ne₂₃.symm
   have hDA : D ≠ A := hABD.ne₁₃.symm

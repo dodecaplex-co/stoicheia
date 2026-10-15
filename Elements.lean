@@ -10,6 +10,13 @@ import Elements.Foundations.Tacit.Diagram
 import Elements.Foundations.Tacit.Metric
 import Elements.Foundations.Tacit.Transfer
 import Elements.Foundations.Tacit.Superposition
+import Elements.Figure.Lengths
+import Elements.Figure.Lines
+import Elements.Figure.Circles
+import Elements.Figure.Triangles
+import Elements.Figure.Rays
+import Elements.Figure.Sides
+import Elements.Figure.Angles
 import Elements.Figure.Basics
 import Elements.BookI.Prop01
 import Elements.BookI.Prop02

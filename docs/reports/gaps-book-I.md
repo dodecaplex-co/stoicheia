@@ -8,13 +8,20 @@ team, Hernández-Espiet and Kontorovich, and the Pistis team, whose catalogue of
 52 gaps in Books I–III is the natural companion to this one. Where we know who
 saw a gap first, we say so; nothing here is meant to be new except where marked.
 
-Each entry names the Lean lemma or tacit rule that fills the gap.
+Each entry names the Lean lemma or tacit rule that fills the gap. Lemmas named
+`PropN.something` are particular to one proposition's figure and live in its file;
+the others are general and live in Book Zero (`Elements/Figure/`), where any proof
+may cite them.
 
 ## I.1
 - The two circles cut one another. Heath: "It is a commonplace that Euclid has no
   right to assume, without premising some postulate, that the two circles will meet
   in a point C." Filled by the tacit rule `circles_meet` (System E, Intersection 5).
 - C is not on AB, so ABC really is a triangle (`Prop1.figure`).
+- The circles cut one another on both sides of AB, so the triangle may be put on
+  either side. Euclid relies on this without saying so in I.9, where the triangle
+  on DE must fall on the side away from A, and in I.11. I.1 is stated with a side
+  to choose (System E, Intersections 8).
 
 ## I.2
 - The circles about B and D are met by DB and DA produced (`line_circle_beyond`,
@@ -28,10 +35,10 @@ Each entry names the Lean lemma or tacit rule that fills the gap.
 
 ## I.4
 - "B will also coincide with E, because AB is equal to DE" uses the converse of
-  C.N. 4 for straight lines (Heath, vol. 1, p. 250). `Prop4.coincide` proves it by
+  C.N. 4 for straight lines (Heath, vol. 1, p. 250). `OnRay.eq_of_len_eq` proves it by
   Savile's argument: if B fell short of E or beyond it, the less would equal the greater.
 - "AC will also coincide with DF" needs that only one ray on that side of DE makes the
-  given angle (`Prop4.on_ray`).
+  given angle (`onRay_of_angle_eq`).
 - Heiberg's bracketed "two straight lines will enclose a space" is not needed: a
   finite straight line is fixed by its ends.
 - The moved triangle keeps its area (System E, Metric 9, `area_congruent`).
@@ -39,18 +46,18 @@ Each entry names the Lean lemma or tacit rule that fills the gap.
 ## I.5
 - F is taken "at random" on BD, but must be close enough to A that AE is the greater
   (`Prop5.chance_point`, which draws a circle about A).
-- G lies beyond C on AE (`Prop5.beyond`).
+- G lies beyond C on AE (`OnRay.between_of_len_lt`).
 - The angle FAG is common to both triangles, and BFC is AFC, because the points lie
-  on the same rays (`Prop5.angle_along`, System E Diagram-angle 4).
-- The angles ABG, ACF are made up of ABC, CBG and ACB, BCF (`Prop5.angle_add`,
+  on the same rays (`angle_onRay_left`, System E Diagram-angle 4).
+- The angles ABG, ACF are made up of ABC, CBG and ACB, BCF (`angle_add_of_between`,
   Pasch 2 and Diagram-angle 2).
-- Each of AFC, AGB, FBC, GCB is a genuine triangle (`Prop5.triangle`).
+- Each of AFC, AGB, FBC, GCB is a genuine triangle (`Triangle.of_line`).
 
 ## I.6
 - The triangle DBC is less than the triangle ABC because D lies between A and B; Heath
   notes the tacit assumption (vol. 1, p. 256). `Prop6.less`, from Diagram-area 1 and 2
   and C.N. 5.
-- DBC is a triangle, and the angle DBC is the angle ABC (`Prop6.figure`, `Prop6.angle`).
+- DBC is a triangle, and the angle DBC is the angle ABC (`Prop6.figure`, `angle_onRay_left`).
 - "One of them is greater" is the law that of two unequal magnitudes one is the greater
   (`lt_trichotomy`); the case where AC is the greater is the same argument with B and C
   exchanged.
@@ -67,10 +74,11 @@ Each entry names the Lean lemma or tacit rule that fills the gap.
 - D is on neither AC nor BC, which Heath says "does not require proof" (`Prop7.triangle`).
 
 ## I.8
-- C comes down on F's side of E along EF (`Prop8.coincide`).
+- C comes down on F's side of E along EF, as far from E as F is, so on F
+  (`OnRay.eq_of_len_eq`).
 - A comes down on the same side of EF as D, which I.7 needs; Euclid never says so.
 - "The same side of this line EF" becomes "the same side of the straight line EF" by the
-  uniqueness of the line through two points (`Prop8.sameSide`).
+  uniqueness of the line through two points (`SameSideOf.of_line`).
 
 ## Postulates the Lean needs that Euclid doesn't cite
 

@@ -17,7 +17,8 @@ import heath
 # The statements of Book I, in Heath's letters. Hypotheses come from Euclid's
 # setting-out ("Let ABC be a triangle …"), conclusions from "I say that …".
 BOOK_I = {
-    1: "(A B : Point) (hAB : A ≠ B) :\n    ∃ C : Point, Equilateral A B C",
+    1: "(A B : Point) (hAB : A ≠ B) (P : Point) :\n"
+       "    ∃ C : Point, Equilateral A B C ∧ (¬ Collinear A B P → SameSideOf C P A B)",
     2: "(A B C : Point) (hBC : B ≠ C) :\n    ∃ L : Point, ‖A L‖ = ‖B C‖",
     3: "{A B C₁ C₂ : Point} (hC : C₁ ≠ C₂) (h : ‖C₁ C₂‖ < ‖A B‖) :\n"
        "    ∃ E : Point, Between A E B ∧ ‖A E‖ = ‖C₁ C₂‖",
@@ -34,7 +35,8 @@ BOOK_I = {
        "    (hAB : ‖A B‖ = ‖D E‖) (hAC : ‖A C‖ = ‖D F‖) (hBC : ‖B C‖ = ‖E F‖) :\n"
        "    ∠ B A C = ∠ E D F",
     9: "{A B C : Point} (hBAC : Triangle B A C) :\n"
-       "    ∃ F : Point, ∠ B A F = ∠ F A C ∧ ∠ B A F + ∠ F A C = ∠ B A C",
+       "    ∃ F : Point, SameSideOf F C A B ∧ SameSideOf F B A C ∧\n"
+       "      ∠ B A F = ∠ F A C ∧ ∠ B A F + ∠ F A C = ∠ B A C",
     10: "{A B : Point} (hAB : A ≠ B) :\n    ∃ D : Point, Between A D B ∧ ‖A D‖ = ‖D B‖",
     11: "{A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬ Collinear A B Q) :\n"
         "    ∃ F : Point, SameSideOf F Q A B ∧ ∀ P : Point, Collinear A B P → P ≠ C → ∠ P C F = ∟",
@@ -56,11 +58,11 @@ BOOK_I = {
         "    ‖B C‖ < ‖B A‖ + ‖A C‖ ∧ ‖A C‖ < ‖A B‖ + ‖B C‖ ∧ ‖A B‖ < ‖B C‖ + ‖C A‖",
     21: "{A B C D : Point} (hABC : Triangle A B C) (hD : InsideTriangle D A B C) :\n"
         "    ‖B D‖ + ‖D C‖ < ‖B A‖ + ‖A C‖ ∧ ∠ B A C < ∠ B D C",
-    22: "{A₁ A₂ B₁ B₂ C₁ C₂ D E P : Point}\n"
+    22: "{A₁ A₂ B₁ B₂ C₁ C₂ E F P : Point}\n"
         "    (hAB : ‖C₁ C₂‖ < ‖A₁ A₂‖ + ‖B₁ B₂‖) (hAC : ‖B₁ B₂‖ < ‖A₁ A₂‖ + ‖C₁ C₂‖)\n"
-        "    (hBC : ‖A₁ A₂‖ < ‖B₁ B₂‖ + ‖C₁ C₂‖) (hDE : D ≠ E) (hP : ¬ Collinear D E P) :\n"
-        "    ∃ F G K : Point, OnRay F D E ∧ OnRay G D E ∧ Between D F G ∧ ‖D F‖ = ‖A₁ A₂‖ ∧\n"
-        "      SameSideOf K P D E ∧ ‖F K‖ = ‖A₁ A₂‖ ∧ ‖F G‖ = ‖B₁ B₂‖ ∧ ‖G K‖ = ‖C₁ C₂‖",
+        "    (hBC : ‖A₁ A₂‖ < ‖B₁ B₂‖ + ‖C₁ C₂‖) (hFE : F ≠ E) (hP : ¬ Collinear F E P) :\n"
+        "    ∃ G K : Point, OnRay G F E ∧ SameSideOf K P F E ∧\n"
+        "      ‖K F‖ = ‖A₁ A₂‖ ∧ ‖F G‖ = ‖B₁ B₂‖ ∧ ‖G K‖ = ‖C₁ C₂‖",
     23: "{A B C D E P : Point} (hAB : A ≠ B) (hDCE : Triangle D C E) (hP : ¬ Collinear A B P) :\n"
         "    ∃ F G : Point, OnRay F A B ∧ SameSideOf G P A B ∧ ∠ F A G = ∠ D C E",
     24: "{A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E F)\n"
