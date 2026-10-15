@@ -15,16 +15,24 @@ proved here once, from the postulates and the tacit rules, so that the proofs
 of the propositions can cite them by name and stay close to Euclid's words.
 Every proposition file imports this one, and through it:
 
-* `Lengths`: something added makes a thing greater; the part is less than the whole.
-* `Lines`: order on a straight line; producing a finite straight line.
-* `Circles`: points on, inside and outside a circle.
+* `Lengths`: something added makes a thing greater; the part is less than the
+  whole; take the same thing from two unequal magnitudes, and the less remains
+  the less.
+* `Lines`: order on a straight line; producing a finite straight line, and
+  producing it far enough to cut a given length from it.
+* `Circles`: points on, inside and outside a circle; a point taken "at random"
+  can be taken near enough.
 * `Triangles`: a triangle's corners, named in any order, and the straight lines
   through them.
-* `Rays`: points on the half of a straight line that starts at a point, and the
-  one point of a ray at a given distance from its start.
-* `Sides`: "on the same side of AB" and "on the other side of AB".
-* `Angles`: an angle depends only on its rays; adding angles; a straight line
-  within an angle crosses its base; one ray for one angle.
+* `Rays`: points on the half of a straight line that starts at a point; a point
+  cuts a straight line into two rays; on a ray, one point at a given distance
+  from its start, and only one.
+* `Sides`: "on the same side of AB" and "on the other side of AB"; a straight
+  line has only two sides.
+* `Angles`: an angle depends only on its rays; an angle of a triangle is
+  something; adding angles, and the part less than the whole; a straight line
+  within an angle crosses its base; a ray stays on one side of a straight line;
+  one ray for one angle.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is
 an axiom.
