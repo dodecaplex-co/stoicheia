@@ -11,10 +11,12 @@ place as comments and a `sorry` at the end. Pick any 🚧 proposition in
 [Book I](book/I/index.md); you can prove it before the ones it cites are finished,
 because a proof only needs their statements.
 
-1. **Euclid's words go in `--` comments, ours go in `/- … -/`.** Keep every `--`
-   line exactly as it is: CI checks that they still spell out Heath's text, word
-   for word. Put the Lean for each sentence directly under it. Anything you want to
-   say in your own voice ("Euclid doesn't say why…") goes in a `/- … -/` block.
+1. **Euclid's words go in `--` comments, ours go in `/- … -/`.** Keep the words
+   of every `--` line exactly as they are: CI checks that, read in order, they
+   still spell out Heath's text word for word. (Indentation may change, for
+   instance when a few sentences move into a sub-proof.) Put the Lean for each
+   sentence directly under it. Anything you want to say in your own voice
+   ("Euclid doesn't say why…") goes in a `/- … -/` block.
 2. **Follow Euclid's route.** Use the propositions he cites, in the order he cites
    them. If Lean needs something he never says, that's a discovery: prove it as a
    small `PropN.figure`-style lemma in the same file, and tell us in the mishnah.
