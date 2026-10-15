@@ -6,11 +6,11 @@ Everything on this page is computed from the Lean proofs themselves by [`Certifi
 
 ## Book I
 
-**8 of 48 propositions proved.**
+**16 of 48 propositions proved.**
 
 What the proofs show so far:
 
-- **Postulate 5**: 8 proved proposition(s) do without it. None of the proved propositions uses it yet. Euclid holds it back until I.29.
+- **Postulate 5**: 16 proved proposition(s) do without it. None of the proved propositions uses it yet. Euclid holds it back until I.29.
 - **Superposition** is used directly by: I.4, I.8. Only I.4 and I.8 are allowed to.
 
 | | Prop | Cites | Postulates | Definitions | C.N. | Tacit |
@@ -23,14 +23,14 @@ What the proofs show so far:
 | ✅ | [I.6](book/I/06.md) | I.3, I.4 | 1, 3 | 15 | 5 | 41 |
 | ✅ | [I.7](book/I/07.md) | I.5 | 1, 2, 3 | 15 | 5 | 50 |
 | ✅ | [I.8](book/I/08.md) | I.7 | 1, 2, 3 | 15 | 4, 5 | 50 |
-| 🚧 | [I.9](book/I/09.md) | | | | | |
-| 🚧 | [I.10](book/I/10.md) | | | | | |
-| 🚧 | [I.11](book/I/11.md) | | | | | |
-| 🚧 | [I.12](book/I/12.md) | | | | | |
-| 🚧 | [I.13](book/I/13.md) | | | | | |
-| 🚧 | [I.14](book/I/14.md) | | | | | |
-| 🚧 | [I.15](book/I/15.md) | | | | | |
-| 🚧 | [I.16](book/I/16.md) | | | | | |
+| ✅ | [I.9](book/I/09.md) | I.1, I.3, I.5, I.7, I.8 | 1, 2, 3 | 15 | 5 | 52 |
+| ✅ | [I.10](book/I/10.md) | I.1, I.4, I.9 | 1, 2, 3 | 15 |  | 52 |
+| ✅ | [I.11](book/I/11.md) | I.1, I.3, I.8 | 1, 2, 3, 4 | 15 | 5 | 50 |
+| ✅ | [I.12](book/I/12.md) | I.10, I.8 | 1, 2, 3, 4 | 15 |  | 53 |
+| ✅ | [I.13](book/I/13.md) | I.11 | 1, 2, 3, 4 | 15 | 1, 2 | 51 |
+| ✅ | [I.14](book/I/14.md) | I.13 | 1, 2, 3, 4 | 15 | 1, 3, 5 | 51 |
+| ✅ | [I.15](book/I/15.md) | I.13 | 1, 2, 3, 4 | 15 | 1, 3 | 51 |
+| ✅ | [I.16](book/I/16.md) | I.10, I.15, I.3, I.4 | 1, 2, 3, 4 | 15 | 5 | 53 |
 | 🚧 | [I.17](book/I/17.md) | | | | | |
 | 🚧 | [I.18](book/I/18.md) | | | | | |
 | 🚧 | [I.19](book/I/19.md) | | | | | |

@@ -2,7 +2,7 @@
 
 # Book I
 
-**8 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
+**16 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
 
 Start with the [definitions, postulates and common notions](front.md).
 
@@ -16,14 +16,14 @@ Start with the [definitions, postulates and common notions](front.md).
 | ✅ | [I.6](06.md) **Equal base angles make equal sides** | If in a triangle two angles be equal to one another, the sides which subtend the equal angles will also be… |
 | ✅ | [I.7](07.md) **Only one triangle on a base with given sides** | Given two straight lines constructed on a straight line (from its extremities) and meeting in a point,… |
 | ✅ | [I.8](08.md) **Side, side, side** | If two triangles have the two sides equal to two sides respectively, and have also the base equal to the… |
-| 🚧 | [I.9](09.md) **Bisecting an angle** | To bisect a given rectilineal angle. |
-| 🚧 | [I.10](10.md) **Bisecting a straight line** | To bisect a given finite straight line. |
-| 🚧 | [I.11](11.md) **A perpendicular from a point on a line** | To draw a straight line at right angles to a given straight line from a given point on it. |
-| 🚧 | [I.12](12.md) **A perpendicular from a point off a line** | To a given infinite straight line, from a given point which is not on it, to draw a perpendicular straight… |
-| 🚧 | [I.13](13.md) **Angles on a straight line** | If a straight line set up on a straight line make angles, it will make either two right angles or angles… |
-| 🚧 | [I.14](14.md) **When two angles make a straight line** | If with any straight line, and at a point on it, two straight lines not lying on the same side make the… |
-| 🚧 | [I.15](15.md) **Vertical angles** | If two straight lines cut one another, they make the vertical angles equal to one another. |
-| 🚧 | [I.16](16.md) **The exterior angle is greater** | In any triangle, if one of the sides be produced, the exterior angle is greater than either of the… |
+| ✅ | [I.9](09.md) **Bisecting an angle** | To bisect a given rectilineal angle. |
+| ✅ | [I.10](10.md) **Bisecting a straight line** | To bisect a given finite straight line. |
+| ✅ | [I.11](11.md) **A perpendicular from a point on a line** | To draw a straight line at right angles to a given straight line from a given point on it. |
+| ✅ | [I.12](12.md) **A perpendicular from a point off a line** | To a given infinite straight line, from a given point which is not on it, to draw a perpendicular straight… |
+| ✅ | [I.13](13.md) **Angles on a straight line** | If a straight line set up on a straight line make angles, it will make either two right angles or angles… |
+| ✅ | [I.14](14.md) **When two angles make a straight line** | If with any straight line, and at a point on it, two straight lines not lying on the same side make the… |
+| ✅ | [I.15](15.md) **Vertical angles** | If two straight lines cut one another, they make the vertical angles equal to one another. |
+| ✅ | [I.16](16.md) **The exterior angle is greater** | In any triangle, if one of the sides be produced, the exterior angle is greater than either of the… |
 | 🚧 | [I.17](17.md) **Two angles of a triangle are less than two right angles** | In any triangle two angles taken together in any manner are less than two right angles. |
 | 🚧 | [I.18](18.md) **The greater side subtends the greater angle** | In any triangle the greater side subtends the greater angle. |
 | 🚧 | [I.19](19.md) **The greater angle is subtended by the greater side** | In any triangle the greater angle is subtended by the greater side. |
