@@ -164,6 +164,7 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - The circles meet. Heath: "It was early observed that Euclid assumes, without giving any reason, that the circles drawn as described will meet" when the condition holds (vol. 1, p. 293). Proclus argued it but missed the case of one circle within the other, and Simson thought no beginner so dull as not to see it. `Prop22.meet` follows Heath's own argument (vol. 1, p. 294): the circle about G has a point outside the circle about F and a point inside it, so they cut one another (System E's Intersection rule 4, `circles_meet_of_on_inside_outside`, in the corrected form Logan Murphy and his colleagues gave it in LeanEuclid). Lean also needs the case Heath passes over, where the inside point is the centre F itself.
 - DE is "of infinite length in the direction of E", but I.3 cuts off only from a greater finite straight line, so each cut needs room first (`Prop22.room`: I.2, then `produce_longer`). That is why I.2 is among the propositions I.22 cites.
 - None of A, B, C is nothing, which I.3 needs (`Prop22.ne_zero`).
+- DF, FG and GH are cut off one after another, so that D, F, G, H lie in that order along DE, as in Euclid's figure (`between_cut`). Heath's argument that the circles meet needs it, since FH must be FG and GH together.
 - K is taken where the circles cut one another on a chosen side of DE (System E, Intersections 8), so that I.23 can place the triangle where it wants it.
 
 ## I.23
@@ -171,6 +172,7 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - Heath: "the construction of the triangle assumed in this proposition is not exactly the construction given in I. 22" (vol. 1, p. 295). Our I.22 is stated with its corner at a given point, a side along a given ray and its third corner on a given side, which is what I.23 asks of it.
 - AFG is a triangle, as I.8 needs: F is on AB and is not A, and G is off AB (`OnRay.onLine`, `SameSideOf.triangle`, `Triangle.off_line`, `Triangle.of_line`).
 - D and E are taken "at random", and the choice does not matter because an angle depends only on its rays (`angle_eq_of_onRay`).
+- DCE must be a triangle for I.20 and I.8, so D and E are not on one straight line with C. Definition 8 already asks this of a plane angle, whose lines "do not lie in a straight line"; a flat angle could not be copied this way, having no triangle to carry. The statement takes the given angle as the triangle DCE.
 - Which ray from A, and which side of AB, the new angle takes are left to the figure. The statement settles both, as I.24, I.31 and I.42 need.
 
 ## I.24
