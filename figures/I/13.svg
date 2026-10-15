@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.13: the angles a straight line makes with a straight line</title>
+  <rect x="0" y="0" width="400" height="250" rx="10" fill="#fbf7ee"/>
+  <!-- the angles CBA, ABD -->
+  <path d="M 176 200 A 24 24 0 0 1 184.57 181.61" fill="none" stroke="#8c7b62" stroke-width="1.4"/>
+  <path d="M 178.15 173.95 A 34 34 0 0 1 234 200" fill="none" stroke="#8c7b62" stroke-width="1.4"/>
+  <!-- the right angle EBD -->
+  <polyline points="210,200 210,190 200,190" fill="none" stroke="#8c7b62" stroke-width="1.2"/>
+  <!-- the straight line CD, and AB set up on it -->
+  <line x1="50" y1="200" x2="350" y2="200" stroke="#3b2f2f" stroke-width="2"/>
+  <line x1="200" y1="200" x2="93.94" y2="73.6" stroke="#3b2f2f" stroke-width="2"/>
+  <!-- BE, drawn at right angles to CD [I. 11] -->
+  <line x1="200" y1="200" x2="200" y2="45" stroke="#a0522d" stroke-width="2.2"/>
+  <g fill="#3b2f2f">
+    <circle cx="93.94" cy="73.6" r="2.6"/><circle cx="200" cy="200" r="2.6"/>
+    <circle cx="50" cy="200" r="2.6"/><circle cx="350" cy="200" r="2.6"/>
+    <circle cx="200" cy="45" r="2.6"/>
+    <text x="78" y="66">A</text><text x="194" y="224">B</text>
+    <text x="30" y="206">C</text><text x="357" y="206">D</text>
+    <text x="194" y="35">E</text>
+  </g>
+</svg>
