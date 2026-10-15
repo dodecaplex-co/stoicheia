@@ -38,17 +38,6 @@ theorem Prop22.ne_zero {k : Kind} {a b c : Magnitude k} (h₁ : c < a + b) (h₂
   rw [add_comm 0 c, add_zero] at h₂
   exact lt_irrefl _ (lt_trans h₁ h₂)
 
-/-- Take the same thing away from two unequal magnitudes, and the less remains
-the less: if `x` and `a` together are less than `y` and `a` together, then `x` is
-less than `y`. Otherwise `y` and `a` together would not exceed `x` and `a` together
-(the laws of magnitudes, System E §3.5). -/
-theorem Prop22.lt_of_add_lt {k : Kind} {a x y : Magnitude k} (h : x + a < y + a) : x < y := by
-  rcases lt_trichotomy x y with h' | h' | h'
-  · exact h'
-  · subst h'
-    exact absurd h (lt_irrefl _)
-  · exact absurd (lt_trans h (add_lt_add_right a h')) (lt_irrefl _)
-
 /-- Room to cut off a given straight line. Euclid's `DE` is "of infinite length in
 the direction of E", so that whatever is to be cut off from it, there is room. A
 straight line in Lean has no length to cut from, and I.3 cuts off only from a
@@ -113,7 +102,7 @@ theorem Prop22.meet {D F G H : Point} {α β : Circle} (hFGH : Between F G H)
       have hsum : ‖F M‖ + ‖G H‖ = ‖F G‖ := by
         rw [← hGM, len_symm G M]
         exact len_add_of_between (between_symm hGMF)
-      refine inside_of_len_lt hF_α hD_α (Prop22.lt_of_add_lt (a := ‖G H‖) ?_)
+      refine inside_of_len_lt hF_α hD_α (Magnitude.lt_of_add_lt_add_right (a := ‖G H‖) ?_)
       rw [hsum]
       exact h₂
     · /- `M` is `F` itself, the centre. -/
@@ -124,7 +113,7 @@ theorem Prop22.meet {D F G H : Point} {α β : Circle} (hFGH : Between F G H)
       have hsum : ‖F M‖ + ‖F G‖ = ‖G H‖ := by
         rw [← hGM, add_comm, len_symm F G]
         exact len_add_of_between hGFM
-      refine inside_of_len_lt hF_α hD_α (Prop22.lt_of_add_lt (a := ‖F G‖) ?_)
+      refine inside_of_len_lt hF_α hD_α (Magnitude.lt_of_add_lt_add_right (a := ‖F G‖) ?_)
       rw [hsum]
       exact h₁
   exact circles_meet_of_on_inside_outside hM_β (Or.inr hH_β) hM_in hH_out

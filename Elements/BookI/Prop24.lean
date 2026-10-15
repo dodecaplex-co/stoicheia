@@ -139,18 +139,6 @@ theorem Prop24.part {V P Q R : Point} (hPQV : Triangle P Q V) (h : Between P R Q
   have hR_L : OnLine R L := (same_ray_of_angle_eq_zero hVP hVR hV_L hP_L h0).1
   exact hV_N (line_unique (ne_of_between h) hP_L hR_L hP_N hR_N ▸ hV_L)
 
-/-- If `a` and `b` together are less than `a` and `c` together, then `b` is less than
-`c`: take the common `a` away. Otherwise `c` would be equal to `b` or less, and adding
-`a` to each would keep it so (System E §3.5, the laws of magnitudes). -/
-theorem Prop24.less {k : Kind} {a b c : Magnitude k} (h : a + b < a + c) : b < c := by
-  rcases lt_trichotomy b c with h' | h' | h'
-  · exact h'
-  · subst h'
-    exact absurd h (lt_irrefl _)
-  · have h'' := add_lt_add_right a h'
-    rw [add_comm c a, add_comm b a] at h''
-    exact absurd (lt_trans h h'') (lt_irrefl _)
-
 /-- If two triangles have the two sides equal to two sides respectively, but have the one of the
 angles contained by the equal straight lines greater than the other, they will also have the
 base greater than the base. -/
@@ -209,7 +197,7 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
       have hI21 : ‖D F‖ + ‖F E‖ < ‖D G‖ + ‖G E‖ := (Prop21 hDEG.cab hF).1
       rw [hDF_DG] at hI21
       rw [len_symm E F, len_symm E G]
-      exact Prop24.less hI21
+      exact Magnitude.lt_of_add_lt_add_left hI21
     · /- Euclid's figure: `F` beyond `EG`, which `DF` crosses at `X`. -/
       have hFG : F ≠ G := hDFG.ne₂₃
       have hEG : E ≠ G := hDEG.ne₂₃
