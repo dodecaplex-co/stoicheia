@@ -93,6 +93,7 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - The equilateral triangle on DE goes on the side away from A (Heath, vol. 1, p. 264); I.1 now takes the side as an argument.
 - D, taken "at random" on AB, must be nearer A than C is, so that I.3 can be used (`exists_between_nearer`, as in I.5).
 - F falls within the angle BAC: the question of Proclus' objector (Heath, vol. 1, p. 265). If F were on an arm, Proclus' own argument with the second part of I.5 rules it out; if outside the angle, I.7 does (`Prop9.crossing`, `Prop9.not_on_arm`).
+- Euclid proves the angles DAF and EAF equal, but the angle to be bisected is BAC. DAF and EAF are BAF and FAC because D and E lie on the rays from A through B and C (`angle_onRay_left`, `angle_symm`), and BAC is made up of them because F lies within it (`angle_add_of_inside`, System E Diagram-angle 2).
 
 ## I.10
 - The bisector of the angle ACB meets AB, and between A and B: I.9's statement (F within the angle) and Book Zero's `crossbar`.
@@ -106,6 +107,7 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 ## I.12
 - The circle about C through D cuts AB twice (System E Intersection 2).
 - "Perpendicular to the infinite straight line" again means a right angle with every point of AB (`OnRay.cases_of_between`, as in I.11).
+- HGC and HEC, the triangles I.8 compares, are genuine triangles: H, G and E are on AB, and C is off it (`Triangle.of_line`).
 
 ## I.13
 - Euclid's figure has BA leaning towards C; the other lean is his figure with C and D exchanged (`Prop13.cases`).
