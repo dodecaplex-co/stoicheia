@@ -37,9 +37,6 @@ Euclid's words on the left, the Lean that stands for them on the right. Words wi
 
 ## Postulates
 
-| | Euclid | Lean |
-|---|---|---|
-
 _Let the following be postulated:_
 
 | | Euclid | Lean |
@@ -62,4 +59,4 @@ _Let the following be postulated:_
 
 ---
 
-<sub>Euclid's text: Source: T. L. Heath, The Thirteen Books of Euclid's Elements, vol. 1 (Cambridge, 1908), pp. 153–155. Public domain. Transcribed from the Internet Archive scan thirteenbookseu02heibgoog.</sub>
+<sub>Euclid's text: T. L. Heath, The Thirteen Books of Euclid's Elements, vol. 1 (Cambridge, 1908), pp. 153–155. Public domain. Transcribed from the Internet Archive scan thirteenbookseu02heibgoog.</sub>

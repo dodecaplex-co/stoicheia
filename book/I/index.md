@@ -4,7 +4,7 @@
 
 **24 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
 
-Start with the [definitions, postulates and common notions](front.md).
+Start with the [definitions, postulates and common notions](front.md). What Euclid takes for granted along the way is gathered in [a catalogue](../../docs/reports/gaps-book-I.md).
 
 | | Proposition | |
 |---|---|---|
