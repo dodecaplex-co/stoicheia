@@ -7,11 +7,62 @@ import Elements.BookI.Prop13
 Euclid's text, in Heath's translation: [`heath/I/14.md`](../../heath/I/14.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+I.14 is the converse of I.13, and Euclid proves it by *reductio ad absurdum*.
+He supposes that `BD` is not in a straight line with `CB`, produces `CB` to
+`E`, and finds the angle `ABE` equal to the angle `ABD`, "the less to the
+greater". In Lean, once `E` is there, Euclid's supposition is that `D` is off
+the ray from `B` through `E`, and the argument runs as a sub-proof under it,
+as in I.6.
 -/
 
 namespace Elements.BookI
 
 open Tacit
+
+/-! ## What Euclid reads off the figure -/
+
+/-- A straight line through a point of `AB`, from a point `C` off it, crosses to
+the other side: if `B` lies between `C` and `E`, then `E` is on the other side
+of the straight line `AB` from `C`. (System E, Pasch 3) -/
+theorem Prop14.opposite {A B C E : Point} (hABC : Triangle A B C) (hCBE : Between C B E) :
+    OppositeSidesOf C E A B := by
+  obtain ⟨L, hA, hB⟩ := Postulate1 A B hABC.ne₁₂
+  have hC : ¬ OnLine C L := hABC.off_line hA hB
+  /- E is off AB too: a straight line through E and B goes on through C. -/
+  have hE : ¬ OnLine E L := fun hE => hC (on_line_of_between (between_symm hCBE) hE hB)
+  exact OppositeSidesOf.of_line hABC.ne₁₂ hA hB ⟨hC, hE, pasch3 hCBE hB⟩
+
+/-- A straight line has only two sides: two points, each on the other side of
+`AB` from `C`, are on the same side of `AB` as each other. (System E, Same
+side 5) -/
+theorem Prop14.sameSide {A B C D E : Point} (hD : OppositeSidesOf C D A B)
+    (hE : OppositeSidesOf C E A B) : SameSideOf D E A B := by
+  obtain ⟨L, hA, hB⟩ := Postulate1 A B hD.1
+  obtain ⟨hC_L, hD_L, hCD⟩ := hD.oppositeSides hA hB
+  obtain ⟨-, hE_L, hCE⟩ := hE.oppositeSides hA hB
+  refine SameSideOf.of_line hD.1 hA hB ?_
+  rcases same_side_or hC_L hD_L hE_L hCD with h | h
+  · exact absurd h hCE
+  · exact h
+
+/-- "In a straight line with CB": if `CB` is produced beyond `B` to `E`, then any
+point `D` on the ray from `B` through `E` lies in a straight line with `CB`, on
+the far side of `B` from `C`. (System E's rules for "between") -/
+theorem Prop14.straight {B C D E : Point} (hCBE : Between C B E) (hD : OnRay D B E) :
+    Between C B D := by
+  obtain ⟨-, hDB, ⟨L, hB, hE, hD_L⟩, hDBE⟩ := hD
+  have hC : OnLine C L := on_line_of_between (between_symm hCBE) hE hB
+  have hCD : C ≠ D := by
+    rintro rfl
+    exact hDBE hCBE
+  /- Of the three points C, B, D on one straight line, one lies between the
+     other two. If C did, or D, then B would lie between D and E, and D would
+     be off the ray. -/
+  rcases between_cases (ne_of_between hCBE) hDB.symm hCD hC hB hD_L with h | h | h
+  · exact h
+  · exact absurd (between_symm (between_of_between_right (between_symm hCBE) h)) hDBE
+  · exact absurd (between_inner h hCBE) hDBE
 
 /-- If with any straight line, and at a point on it, two straight lines not lying on the same side
 make the adjacent angles equal to two right angles, the two straight lines will be in a straight
@@ -20,20 +71,66 @@ theorem Prop14 {A B C D : Point} (hCD : OppositeSidesOf C D A B) (h : ∠ A B C 
     Between C B D := by
   -- For with any straight line AB, and at the point B on it, let the two straight lines BC, BD
   -- not lying on the same side make the adjacent angles ABC, ABD equal to two right angles;
+  /- "Not lying on the same side": C and D are on opposite sides of AB. So C is
+     off AB, and ABC is a triangle. -/
+  have hABC : Triangle A B C := hCD.triangle
+  have hA_B : A ≠ B := hABC.ne₁₂
+  have hC_B : C ≠ B := hABC.ne₂₃.symm
   -- I say that BD is in a straight line with CB.
+  /- In Lean: B lies between C and D. -/
   -- For, if BD is not in a straight line with BC, let BE be in a straight line with CB.
-  -- Then, since the straight line AB stands on the straight line CBE,
-  -- the angles ABC, ABE are equal to two right angles. [I. 13]
-  -- But the angles ABC, ABD are also equal to two right angles;
-  -- therefore the angles CBA, ABE are equal to the angles CBA, ABD. [Post. 4 and C.N. 1]
-  -- Let the angle CBA be subtracted from each;
-  -- therefore the remaining angle ABE is equal to the remaining angle ABD, [C.N. 3]
-  -- the less to the greater: which is impossible.
+  /- CB is produced beyond B to E [Post. 1, Post. 2], which is `produce` in Book
+     Zero. Euclid's supposition then says that BE is another straight line than
+     BD: that D is not on the ray from B through E. We follow his argument
+     under that supposition, as far as the impossible. -/
+  obtain ⟨E, hCBE⟩ := produce hC_B
+  have other : ¬ OnRay D B E → False := by
+    intro hD_BE
+    -- Then, since the straight line AB stands on the straight line CBE,
+    /- Stands on it, and is not part of it: A is off the straight line CE, for
+       that line passes through B, and A, B, C are not on one straight line. -/
+    have hA_CE : ¬ Collinear C E A := by
+      rintro ⟨L, hC, hE, hA⟩
+      exact hABC ⟨L, hA, on_line_of_between_ends hCBE hC hE, hC⟩
+    -- the angles ABC, ABE are equal to two right angles. [I. 13]
+    have hCBA_ABE : ∠ C B A + ∠ A B E = ∟ + ∟ := Prop13 hCBE hA_CE
+    -- But the angles ABC, ABD are also equal to two right angles;
+    have hCBA_ABD : ∠ C B A + ∠ A B D = ∟ + ∟ := by
+      rw [← angle_symm hA_B hC_B]
+      exact h
+    -- therefore the angles CBA, ABE are equal to the angles CBA, ABD. [Post. 4 and C.N. 1]
+    /- Todhunter's point, which Heath reports: C.N. 1 is not enough by itself,
+       for the two right angles of I.13 need not be the two of our hypothesis,
+       and it is Postulate 4 that makes all right angles equal. In Lean,
+       Postulate 4 has done its work before we get here: every right angle is
+       written with the one name `∟`, and I.13 hands its two back as `∟ + ∟`.
+       So the step itself is C.N. 1 alone. -/
+    have hsum : ∠ C B A + ∠ A B E = ∠ C B A + ∠ A B D := CommonNotion1 hCBA_ABE hCBA_ABD
+    -- Let the angle CBA be subtracted from each;
+    -- therefore the remaining angle ABE is equal to the remaining angle ABD, [C.N. 3]
+    have hABE_ABD : ∠ A B E = ∠ A B D :=
+      CommonNotion3 (c := ∠ C B A) (d := ∠ C B A) (by rw [add_comm, hsum, add_comm]) rfl
+    -- the less to the greater: which is impossible.
+    /- In Euclid's figure BE falls within the angle ABD, so that ABE is a part
+       of ABD; Lean must allow too for BD falling within ABE. Both figures are
+       settled by `onRay_of_angle_eq` in Book Zero: on one side of a straight
+       line, only one ray from a point of it makes a given angle with it, for
+       otherwise one of two equal angles would be a part of the other, the less
+       equal to the greater. E and D are on the same side of AB, both being on
+       the other side from C (`Prop14.opposite`, `Prop14.sameSide`); so D would
+       lie on the ray from B through E, against the supposition. -/
+    have hDE : SameSideOf D E A B := Prop14.sameSide hCD (Prop14.opposite hABC hCBE)
+    exact hD_BE (onRay_of_angle_eq hDE.swap hABE_ABD.symm)
   -- Therefore BE is not in a straight line with CB.
+  /- That is, BE is not another straight line than BD: the supposition has
+     failed, so D lies on the ray from B through E. -/
+  have hD_BE : OnRay D B E := Classical.byContradiction other
   -- Similarly we can prove that neither is any other straight line except BD.
+  /- Lean needs no "similarly": E was any point on CB produced, and the
+     argument never asked which. -/
   -- Therefore CB is in a straight line with BD.
+  exact Prop14.straight hCBE hD_BE
   -- Therefore etc.
   -- Q. E. D.
-  sorry
 
 end Elements.BookI
