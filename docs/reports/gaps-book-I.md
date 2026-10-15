@@ -53,6 +53,8 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 ## I.5
 - F is taken "at random" on BD, but must be close enough to A that AE is the greater
   (`exists_between_nearer`, which draws a circle about A).
+- F, taken between B and D, still lies beyond B as seen from A, so that B is between A
+  and F (`between_cut`).
 - G lies beyond C on AE (`OnRay.between_of_len_lt`).
 - The angle FAG is common to both triangles, and BFC is AFC, because the points lie
   on the same rays (`angle_onRay_left`, System E Diagram-angle 4).
