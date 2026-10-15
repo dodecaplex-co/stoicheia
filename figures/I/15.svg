@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 270" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.15: the vertical angles are equal</title>
+  <rect x="0" y="0" width="400" height="270" rx="10" fill="#fbf7ee"/>
+  <!-- the straight lines AB and CD, cutting one another at E -->
+  <line x1="60" y1="150" x2="340" y2="150" stroke="#3b2f2f" stroke-width="1.8"/>
+  <line x1="58" y1="82" x2="328" y2="210" stroke="#3b2f2f" stroke-width="1.8"/>
+  <!-- the vertical angles AED and CEB, proved equal -->
+  <path d="M 161.40 150.00 A 40 40 0 0 1 165.26 132.86" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <path d="M 241.40 150.00 A 40 40 0 0 1 237.55 167.13" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <!-- the vertical angles AEC and DEB, proved equal -->
+  <path d="M 186.04 142.72 A 17 17 0 0 1 218.40 150.00" fill="none" stroke="#a0522d" stroke-width="1.5"/>
+  <path d="M 182.43 141.00 A 21 21 0 0 1 222.40 150.00" fill="none" stroke="#a0522d" stroke-width="1.5"/>
+  <path d="M 216.76 157.28 A 17 17 0 0 1 184.40 150.00" fill="none" stroke="#a0522d" stroke-width="1.5"/>
+  <path d="M 220.38 158.99 A 21 21 0 0 1 180.40 150.00" fill="none" stroke="#a0522d" stroke-width="1.5"/>
+  <g fill="#3b2f2f">
+    <circle cx="58" cy="82" r="2.6"/><circle cx="328" cy="210" r="2.6"/>
+    <circle cx="60" cy="150" r="2.6"/><circle cx="340" cy="150" r="2.6"/>
+    <circle cx="201.4" cy="150" r="2.6"/>
+    <text x="44" y="74">A</text><text x="328" y="234">B</text>
+    <text x="348" y="156">C</text><text x="38" y="156">D</text>
+    <text x="206" y="122">E</text>
+  </g>
+</svg>
