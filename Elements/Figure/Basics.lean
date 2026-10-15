@@ -6,6 +6,7 @@ import Elements.Figure.Triangles
 import Elements.Figure.Rays
 import Elements.Figure.Sides
 import Elements.Figure.Angles
+import Elements.Figure.Parallels
 
 /-!
 # Book Zero: small facts every figure needs
@@ -25,14 +26,22 @@ Every proposition file imports this one, and through it:
 * `Triangles`: a triangle's corners, named in any order, and the straight lines
   through them.
 * `Rays`: points on the half of a straight line that starts at a point; a point
-  cuts a straight line into two rays; on a ray, one point at a given distance
-  from its start, and only one.
+  cuts a straight line into two rays; a point of a ray lies beyond its start from
+  any point behind it; on a ray, one point at a given distance from its start,
+  and only one.
 * `Sides`: "on the same side of AB" and "on the other side of AB"; a straight
-  line has only two sides.
+  line has only two sides; a straight line crossing `GH` at `G` carries a point to
+  the other side.
 * `Angles`: an angle depends only on its rays; an angle of a triangle is
   something; adding angles, and the part less than the whole; a straight line
   within an angle crosses its base; a ray stays on one side of a straight line;
   one ray for one angle.
+* `Parallels`: "AB is parallel to CD", said of any two points of each straight
+  line, either way round; parallels do not meet, and straight lines that do not
+  meet are parallel; a straight line falling on two parallels meets each in one
+  point; one parallel lies wholly on one side of the other; a straight line
+  joining two parallels in the same directions; and the figure of I.29 about any
+  straight line falling on two parallels.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is
 an axiom.

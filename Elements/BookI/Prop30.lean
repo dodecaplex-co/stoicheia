@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.BookI.Prop27
 import Elements.BookI.Prop29
 
 /-!
@@ -7,6 +8,9 @@ import Elements.BookI.Prop29
 Euclid's text, in Heath's translation: [`heath/I/30.md`](../../heath/I/30.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+Euclid's last step, "and they are alternate. Therefore AB is parallel to CD", is
+I.27, though he gives no bracket there; so this file imports it.
 -/
 
 namespace Elements.BookI

@@ -17,6 +17,7 @@ import Elements.Figure.Triangles
 import Elements.Figure.Rays
 import Elements.Figure.Sides
 import Elements.Figure.Angles
+import Elements.Figure.Parallels
 import Elements.Figure.Basics
 import Elements.BookI.Prop01
 import Elements.BookI.Prop02

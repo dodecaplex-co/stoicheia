@@ -10,7 +10,8 @@ lies on the straight line from `A` through `B`, on `B`'s side of `A`.
 
 Euclid takes for granted that a point between `A` and `B`, or beyond `B`, lies on
 that ray; that a point of a straight line cuts it into two rays; that two points
-of one ray are never on opposite sides of its start; and that on a ray just one
+of one ray are never on opposite sides of its start, and that a point of the ray
+lies beyond its start from any point behind it; and that on a ray just one
 point lies at a given distance from its start, so that a point "laid along" the
 ray at the right distance "coincides" with the point already there. These are
 those facts.
@@ -60,6 +61,34 @@ theorem OnRay.cases_of_between {A B C P : Point} {L : Line} (h : Between B A C)
     exact Or.inr ⟨(ne_of_between (between_symm h)).symm, hPA, ⟨L, hA, hC, hP⟩,
       not_between_of_between_between (between_symm hb) h⟩
   · exact Or.inl ⟨(ne_of_between h).symm, hPA, ⟨L, hA, hB, hP⟩, hb⟩
+
+/-- Beyond the start of a ray. If `CB` is produced beyond `B` to `E`, every point `D`
+of the ray from `B` through `E` lies beyond `B` from `C` as well. Of the three points
+`C`, `B`, `D` on one straight line one is between the other two (System E,
+Between 6); were it `C` or `D`, then `B` would lie between `D` and `E`, and `D`
+would be off the ray. -/
+theorem OnRay.between {C D E : Point} (hD : OnRay D B E) (hCBE : Between C B E) :
+    Between C B D := by
+  obtain ⟨-, hDB, ⟨L, hB, hE, hD_L⟩, hDBE⟩ := hD
+  have hC : OnLine C L := on_line_of_between (between_symm hCBE) hE hB
+  have hCD : C ≠ D := by
+    rintro rfl
+    exact hDBE hCBE
+  rcases between_cases (ne_of_between hCBE) hDB.symm hCD hC hB hD_L with h | h | h
+  · exact h
+  · exact absurd (between_symm (between_of_between_right (between_symm hCBE) h)) hDBE
+  · exact absurd (between_inner h hCBE) hDBE
+
+/-- Two points beyond `C` from `B` lie on one ray from `C`: if `C` is between `B` and
+`D`, and also between `B` and `E`, then `E` is on the ray from `C` through `D`
+(System E, Between 7). So when a straight line is produced twice beyond the same
+point, the angles made at that point by the two produced parts are the same. -/
+theorem OnRay.of_between_between {C D E : Point} (hBCD : Between B C D) (hBCE : Between B C E) :
+    OnRay E C D := by
+  obtain ⟨L, hB, hC⟩ := Postulate1 B C (ne_of_between hBCD)
+  exact ⟨(ne_of_between (between_symm hBCD)).symm, (ne_of_between (between_symm hBCE)),
+    ⟨L, hC, on_line_of_between hBCD hB hC, on_line_of_between hBCE hB hC⟩,
+    not_between_of_between_between hBCE hBCD⟩
 
 /-- Every straight line through `A` and `B` passes through each point of the ray
 from `A` through `B`. -/
