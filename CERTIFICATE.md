@@ -6,11 +6,11 @@ Everything on this page is computed from the Lean proofs themselves by [`Certifi
 
 ## Book I
 
-**24 of 48 propositions proved.**
+**32 of 48 propositions proved.**
 
 What the proofs show so far:
 
-- **Postulate 5**: 24 proved proposition(s) do without it. None of the proved propositions uses it yet. Euclid holds it back until I.29.
+- **Postulate 5**: 29 proved proposition(s) do without it; 3 use it, the first being I.29. Euclid holds it back until I.29.
 - **Superposition** is used directly by: I.4, I.8. Only I.4 and I.8 are allowed to.
 
 | | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |
@@ -39,14 +39,14 @@ What the proofs show so far:
 | ✅ | [I.22](book/I/22.md) | I.3, I.20 | I.2, I.3 | 1, 2, 3 | 15 | 5 | 33 |
 | ✅ | [I.23](book/I/23.md) | I.8, I.22 | I.8, I.20, I.22 | 1, 2, 3, 4 | 15 |  | 55 |
 | ✅ | [I.24](book/I/24.md) | I.4, I.5, I.19, I.23 | I.4, I.5, I.19, I.21, I.23 | 1, 2, 3, 4 | 15 | 5 | 55 |
-| 🚧 | [I.25](book/I/25.md) | I.4, I.24 | | | | | |
-| 🚧 | [I.26](book/I/26.md) | I.4, I.16 | | | | | |
-| 🚧 | [I.27](book/I/27.md) | I.16 | | | | | |
-| 🚧 | [I.28](book/I/28.md) | I.13, I.15, I.27 | | | | | |
-| 🚧 | [I.29](book/I/29.md) | I.13, I.15 | | | | | |
-| 🚧 | [I.30](book/I/30.md) | I.29 | | | | | |
-| 🚧 | [I.31](book/I/31.md) | I.23, I.27 | | | | | |
-| 🚧 | [I.32](book/I/32.md) | I.13, I.29, I.31 | | | | | |
+| ✅ | [I.25](book/I/25.md) | I.4, I.24 | I.4, I.24 | 1, 2, 3, 4 | 15 |  | 55 |
+| ✅ | [I.26](book/I/26.md) | I.4, I.16 | I.3, I.4, I.16 | 1, 2, 3, 4 | 15 | 5 | 53 |
+| ✅ | [I.27](book/I/27.md) | I.16 | I.16 | 1, 2, 3, 4 | 15 |  | 53 |
+| ✅ | [I.28](book/I/28.md) | I.13, I.15, I.27 | I.13, I.15, I.27 | 1, 2, 3, 4 | 15 | 1, 3 | 53 |
+| ✅ | [I.29](book/I/29.md) | I.13, I.15 | I.13, I.15 | 1, 2, 3, 4, 5 | 15 | 1, 2 | 51 |
+| ✅ | [I.30](book/I/30.md) | I.29 | I.27, I.29 | 1, 2, 3, 4, 5 | 15 | 1, 3, 5 | 54 |
+| ✅ | [I.31](book/I/31.md) | I.23, I.27 | I.23, I.27 | 1, 2, 3, 4 | 15 |  | 55 |
+| ✅ | [I.32](book/I/32.md) | I.13, I.29, I.31 | I.13, I.29, I.31 | 1, 2, 3, 4, 5 | 15 | 2 | 55 |
 | 🚧 | [I.33](book/I/33.md) | I.4, I.27, I.29 | | | | | |
 | 🚧 | [I.34](book/I/34.md) | I.4, I.26, I.29 | | | | | |
 | 🚧 | [I.35](book/I/35.md) | I.4, I.29, I.34 | | | | | |

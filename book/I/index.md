@@ -2,7 +2,7 @@
 
 # Book I
 
-**24 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
+**32 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
 
 Start with the [definitions, postulates and common notions](front.md). What Euclid takes for granted along the way is gathered in [a catalogue](../../docs/reports/gaps-book-I.md).
 
@@ -32,14 +32,14 @@ Start with the [definitions, postulates and common notions](front.md). What Eucl
 | ✅ | [I.22](22.md) **A triangle from three given lines** | Out of three straight lines, which are equal to three given straight lines, to construct a triangle: thus… |
 | ✅ | [I.23](23.md) **Copying an angle** | On a given straight line and at a point on it to construct a rectilineal angle equal to a given… |
 | ✅ | [I.24](24.md) **The wider angle has the longer base** | If two triangles have the two sides equal to two sides respectively, but have the one of the angles… |
-| 🚧 | [I.25](25.md) **The longer base has the wider angle** | If two triangles have the two sides equal to two sides respectively, but have the base greater than the… |
-| 🚧 | [I.26](26.md) **Angle, side, angle** | If two triangles have the two angles equal to two angles respectively, and one side equal to one side,… |
-| 🚧 | [I.27](27.md) **Equal alternate angles make parallels** | If a straight line falling on two straight lines make the alternate angles equal to one another, the… |
-| 🚧 | [I.28](28.md) **Equal corresponding angles make parallels** | If a straight line falling on two straight lines make the exterior angle equal to the interior and… |
-| 🚧 | [I.29](29.md) **Parallels make equal angles** | A straight line falling on parallel straight lines makes the alternate angles equal to one another, the… |
-| 🚧 | [I.30](30.md) **Parallels to the same line** | Straight lines parallel to the same straight line are also parallel to one another. |
-| 🚧 | [I.31](31.md) **Drawing a parallel through a point** | Through a given point to draw a straight line parallel to a given straight line. |
-| 🚧 | [I.32](32.md) **The angles of a triangle make two right angles** | In any triangle, if one of the sides be produced, the exterior angle is equal to the two interior and… |
+| ✅ | [I.25](25.md) **The longer base has the wider angle** | If two triangles have the two sides equal to two sides respectively, but have the base greater than the… |
+| ✅ | [I.26](26.md) **Angle, side, angle** | If two triangles have the two angles equal to two angles respectively, and one side equal to one side,… |
+| ✅ | [I.27](27.md) **Equal alternate angles make parallels** | If a straight line falling on two straight lines make the alternate angles equal to one another, the… |
+| ✅ | [I.28](28.md) **Equal corresponding angles make parallels** | If a straight line falling on two straight lines make the exterior angle equal to the interior and… |
+| ✅ | [I.29](29.md) **Parallels make equal angles** | A straight line falling on parallel straight lines makes the alternate angles equal to one another, the… |
+| ✅ | [I.30](30.md) **Parallels to the same line** | Straight lines parallel to the same straight line are also parallel to one another. |
+| ✅ | [I.31](31.md) **Drawing a parallel through a point** | Through a given point to draw a straight line parallel to a given straight line. |
+| ✅ | [I.32](32.md) **The angles of a triangle make two right angles** | In any triangle, if one of the sides be produced, the exterior angle is equal to the two interior and… |
 | 🚧 | [I.33](33.md) **Joining equal parallels** | The straight lines joining equal and parallel straight lines (at the extremities which are) in the same… |
 | 🚧 | [I.34](34.md) **Opposite sides and angles of a parallelogram** | In parallelogrammic areas the opposite sides and angles are equal to one another, and the diameter bisects… |
 | 🚧 | [I.35](35.md) **Parallelograms on the same base** | Parallelograms which are on the same base and in the same parallels are equal to one another. |
