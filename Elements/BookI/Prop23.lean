@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop08
+import Elements.BookI.Prop20
 import Elements.BookI.Prop22
 
 /-!
@@ -8,6 +9,16 @@ import Elements.BookI.Prop22
 Euclid's text, in Heath's translation: [`heath/I/23.md`](../../heath/I/23.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+The angle is constructed on the ray from `A` through `B` (the point `F` is on it)
+and on the side of `AB` where the given point `P` is, so that later propositions
+can place it: I.24 on the side of `F`, I.31 on the side away from `C`.
+
+I.22 builds the triangle `AFG` with its corner at `A` and `AF` along `AB`, from
+lengths `A₁A₂ := CE`, `B₁B₂ := CD`, `C₁C₂ := DE` (so its `G` and `K` are our
+`F` and `G`). It asks that two of these taken together be greater than the
+third; they are the sides of the triangle `DCE`, so that is I.20, as the bracket
+in I.22's enunciation says.
 -/
 
 namespace Elements.BookI

@@ -9,6 +9,9 @@ import Elements.BookI.Prop09
 Euclid's text, in Heath's translation: [`heath/I/10.md`](../../heath/I/10.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+Euclid never says why the bisector `CD` meets `AB` between `A` and `B`. I.9 says
+that it falls within the angle `ACB`, and `crossbar` (Book Zero) does the rest.
 -/
 
 namespace Elements.BookI

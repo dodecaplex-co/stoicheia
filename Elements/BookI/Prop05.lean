@@ -16,26 +16,6 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- Order on a straight line: if `Y` is between `X` and `Z`, and `Z` is between `X` and
-`W`, then `Z` is between `Y` and `W`. -/
-theorem Prop5.between_inner {X Y Z W : Point} (h₁ : Between X Y Z) (h₂ : Between X Z W) :
-    Between Y Z W := by
-  obtain ⟨L, hX, hZ⟩ := Postulate1 X Z (ne_of_between_ends h₁)
-  have hY : OnLine Y L := on_line_of_between_ends h₁ hX hZ
-  have hW : OnLine W L := on_line_of_between h₂ hX hZ
-  have hYZ : Y ≠ Z := (ne_of_between (between_symm h₁)).symm
-  have hZW : Z ≠ W := (ne_of_between (between_symm h₂)).symm
-  have hYW : Y ≠ W := by
-    rintro rfl
-    exact not_between_of_between (between_symm h₂) (between_symm h₁)
-  /- Of the three points Y, Z, W one is between the other two; only Z can be. -/
-  rcases between_cases hYZ hZW hYW hY hZ hW with h | h | h
-  · exact h
-  · exact absurd (between_of_between_left (between_symm h₂) (between_symm h))
-      (not_between_of_between_between h (between_symm h₁))
-  · exact absurd (between_of_between_left (between_symm h₁) (between_symm h))
-      (not_between_of_between (between_symm h₂))
-
 /-- Euclid's "chance point" `F` on `BD`. He takes it at random, but in the very next
 breath calls `AE` "the greater" and `AF` "the less", so `F` must not lie too far out
 along `BD`. A circle about `A`, larger than `AB` but smaller than `AE`, keeps it in:
@@ -50,7 +30,7 @@ theorem Prop5.chance_point {A B C D E : Point} (hAB : ‖A B‖ = ‖A C‖) (hD
   have hAXE : Between A X E :=
     between_symm (between_of_between_left (between_symm hE) (between_symm hCXE))
   have hACX : Between A C X :=
-    between_symm (Prop5.between_inner (between_symm hCXE) (between_symm hE))
+    between_symm (between_inner (between_symm hCXE) (between_symm hE))
   have hAX_AE : ‖A X‖ < ‖A E‖ := by
     rw [← len_add_of_between hAXE]
     exact CommonNotion5 (len_pos (ne_of_between (between_symm hAXE)).symm)
@@ -70,65 +50,6 @@ theorem Prop5.chance_point {A B C D E : Point} (hAB : ‖A B‖ = ‖A C‖) (hD
     have hD_out : OutsideCircle D α := ⟨fun h => hD_α (Or.inl h), fun h => hD_α (Or.inr h)⟩
     obtain ⟨F, hF_α, -, hBFD⟩ := line_circle_between hB_α hB_BD hD_out hD_BD
     exact ⟨F, hBFD, by rw [Definition15 hA_α hF_α hX_α]; exact hAX_AE⟩
-
-/-- `G` is cut off from `AE`, and `AG` is greater than `AC`; so `G` lies beyond `C`. -/
-theorem Prop5.beyond {A C G E : Point} (hACE : Between A C E) (hAGE : Between A G E)
-    (h : ‖A C‖ < ‖A G‖) : Between A C G := by
-  obtain ⟨L, hA, hE⟩ := Postulate1 A E (ne_of_between_ends hACE)
-  have hC : OnLine C L := on_line_of_between_ends hACE hA hE
-  have hG : OnLine G L := on_line_of_between_ends hAGE hA hE
-  have hCG : C ≠ G := by
-    rintro rfl
-    exact lt_irrefl _ h
-  rcases between_cases (ne_of_between hACE) hCG (ne_of_between hAGE) hA hC hG with h' | h' | h'
-  · exact h'
-  · /- A between C and G: then A would be between C and E. -/
-    exact absurd (between_of_between_right h' hAGE) (not_between_of_between hACE)
-  · /- G between A and C: then AG would be only a part of AC. -/
-    have hpart : ‖A G‖ < ‖A C‖ := by
-      rw [← len_add_of_between h']
-      exact CommonNotion5 (len_pos (ne_of_between (between_symm h')).symm)
-    exact absurd (lt_trans h hpart) (lt_irrefl _)
-
-/-- Two points of a straight line and a third point off it make a triangle. -/
-theorem Prop5.triangle {P Q R : Point} {L : Line} (hP : OnLine P L) (hQ : OnLine Q L)
-    (hPQ : P ≠ Q) (hR : ¬ OnLine R L) : Triangle P Q R := by
-  rintro ⟨M, hPM, hQM, hRM⟩
-  exact hR (line_unique hPQ hPM hQM hP hQ ▸ hRM)
-
-/-- An angle is not changed when one of its arms is traced through another point of the
-same ray: if `P` is between `V` and `P'`, the angle `P'VQ` is the angle `PVQ`.
-(System E, diagram-angle transfer 4) -/
-theorem Prop5.angle_along {V P P' Q : Point} (h : Between V P P') (hQV : Q ≠ V) :
-    ∠ P' V Q = ∠ P V Q := by
-  have hVP : V ≠ P := ne_of_between h
-  obtain ⟨L, hV, hP⟩ := Postulate1 V P hVP
-  obtain ⟨M, hVM, hQM⟩ := Postulate1 V Q hQV.symm
-  have hP' : OnLine P' L := on_line_of_between h hV hP
-  exact angle_eq_of_same_rays hV hP' hP hVM hQM hQM (ne_of_between_ends h).symm hVP.symm
-    hQV hQV (fun h' => not_between_of_between h (between_symm h'))
-    (fun h' => ne_of_between_ends h' rfl)
-
-/-- If `R` lies between `P` and `Q`, and `V` is off the straight line `PQ`, then `VR`
-falls within the angle `PVQ`, and that angle is made up of `PVR` and `RVQ`.
-(System E, Pasch 2 and diagram-angle transfer 2) -/
-theorem Prop5.angle_add {V P Q R : Point} {L M N : Line} (hVL : OnLine V L) (hPL : OnLine P L)
-    (hVM : OnLine V M) (hQM : OnLine Q M) (hPN : OnLine P N) (hQN : OnLine Q N)
-    (hVN : ¬ OnLine V N) (h : Between P R Q) : ∠ P V Q = ∠ P V R + ∠ R V Q := by
-  have hRN : OnLine R N := on_line_of_between_ends h hPN hQN
-  have hVP : V ≠ P := fun e => hVN (e ▸ hPN)
-  have hVQ : V ≠ Q := fun e => hVN (e ▸ hQN)
-  have hPQ : P ≠ Q := ne_of_between_ends h
-  have hPR : P ≠ R := ne_of_between h
-  have hRQ : R ≠ Q := (ne_of_between (between_symm h)).symm
-  have hLM : L ≠ M := by
-    rintro rfl
-    exact hVN (line_unique hPQ hPL hQM hPN hQN ▸ hVL)
-  have hRL : ¬ OnLine R L := fun hR => hVN (line_unique hPR hPL hR hPN hRN ▸ hVL)
-  have hRM : ¬ OnLine R M := fun hR => hVN (line_unique hRQ hR hQM hRN hQN ▸ hVM)
-  exact angle_add_of_inside hVL hVM hPL hQM hVP hVQ hRL hRM hLM
-    (same_side_symm (pasch2 (between_symm h) hQM hRM))
-    (same_side_symm (pasch2 h hPL hRL))
 
 /-- In isosceles triangles the angles at the base are equal to one another, and, if the equal
 straight lines be produced further, the angles under the base will be equal to one another. -/
@@ -155,7 +76,7 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
      on the straight line AB. -/
   obtain ⟨F, hBFD, hAF_AE⟩ := Prop5.chance_point hAB hD hE
   have hABF : Between A B F :=
-    between_symm (Prop5.between_inner (between_symm hBFD) (between_symm hD))
+    between_symm (between_inner (between_symm hBFD) (between_symm hD))
   have hF_AB : OnLine F AB := on_line_of_between hABF hA_AB hB_AB
   have hA_F : A ≠ F := ne_of_between_ends hABF
   -- from AE the greater let AG be cut off equal to AF the less; [I. 3]
@@ -179,13 +100,14 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
     rw [← len_add_of_between hABF]
     exact CommonNotion5 (len_pos (ne_of_between hBFD))
   have hACG : Between A C G :=
-    Prop5.beyond hE hAGE (by rw [hAC_AB, ← hAF_AG]; exact hAB_AF)
+    (OnRay.of_between hE).between_of_len_lt (OnRay.of_between hAGE)
+      (by rw [hAC_AB, ← hAF_AG]; exact hAB_AF)
   have hFAC_GAB : ∠ F A C = ∠ G A B := by
-    rw [Prop5.angle_along hABF hA_C.symm, angle_symm hA_B.symm hA_C.symm,
-      Prop5.angle_along hACG hA_B.symm]
+    rw [angle_onRay_left (OnRay.of_beyond hABF) hA_C.symm, angle_symm hA_B.symm hA_C.symm,
+      angle_onRay_left (OnRay.of_beyond hACG) hA_B.symm]
   -- Therefore the base FC is equal to the base GB,
-  have hAFC : Triangle A F C := Prop5.triangle hA_AB hF_AB hA_F hC_AB
-  have hAGB : Triangle A G B := Prop5.triangle hA_AC hG_AC hA_G hB_AC
+  have hAFC : Triangle A F C := Triangle.of_line hA_AB hF_AB hA_F hC_AB
+  have hAGB : Triangle A G B := Triangle.of_line hA_AC hG_AC hA_G hB_AC
   have hI4 := Prop4 hAFC hAGB hAF_AG hAC_AB hFAC_GAB
   have hFC_GB : ‖F C‖ = ‖G B‖ := hI4.1
   -- and the triangle AFC is equal to the triangle AGB,
@@ -210,17 +132,17 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   -- and the angle BFC is equal to the angle CGB,
   /- These are the angles AFC and AGB over again, since B lies on FA and C on GA. -/
   have hBFC_CGB : ∠ B F C = ∠ C G B := by
-    rw [← Prop5.angle_along (between_symm hABF) hF_C.symm,
-      ← Prop5.angle_along (between_symm hACG) hG_B.symm]
+    rw [← angle_onRay_left (OnRay.of_beyond (between_symm hABF)) hF_C.symm,
+      ← angle_onRay_left (OnRay.of_beyond (between_symm hACG)) hG_B.symm]
     exact hAFC_AGB
   -- while the base BC is common to them;
   /- Euclid is quoting I.4 ahead of time, as Heath explains: the bases are equal
      because they are one and the same base. -/
   -- therefore the triangle BFC is also equal to the triangle CGB,
   have hFBC : Triangle F B C :=
-    Prop5.triangle hF_AB hB_AB (ne_of_between (between_symm hABF)) hC_AB
+    Triangle.of_line hF_AB hB_AB (ne_of_between (between_symm hABF)) hC_AB
   have hGCB : Triangle G C B :=
-    Prop5.triangle hG_AC hC_AC (ne_of_between (between_symm hACG)) hB_AC
+    Triangle.of_line hG_AC hC_AC (ne_of_between (between_symm hACG)) hB_AC
   have hI4' := Prop4 hFBC hGCB hFB_GC hFC_GB hBFC_CGB
   have : △ B F C = △ C G B := by
     rw [← area_rotate F C B, ← area_swap F B C, hI4'.2.1, area_swap G C B, area_rotate G B C]
@@ -236,9 +158,9 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   /- Whole, because C lies between A and G, so that BC falls within the angle ABG;
      likewise B lies between A and F, so that CB falls within the angle ACF. -/
   have hABG : ∠ A B G = ∠ A B C + ∠ C B G :=
-    Prop5.angle_add hB_AB hA_AB hB_GB hG_GB hA_AC hG_AC hB_AC hACG
+    angle_add_of_between hAGB hACG
   have hACF : ∠ A C F = ∠ A C B + ∠ B C F :=
-    Prop5.angle_add hC_AC hA_AC hC_FC hF_FC hA_AB hF_AB hC_AB hABF
+    angle_add_of_between hAFC hABF
   -- and in these the angle CBG is equal to the angle BCF,
   -- the remaining angle ABC is equal to the remaining angle ACB;
   have hbase : ∠ A B C = ∠ A C B := by
@@ -249,10 +171,11 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   -- and they are under the base.
   /- Under the base: the angle CBD is the angle CBF, since F lies on BD, and the angle
      BCE is the angle BCG, since G lies between C and E. -/
-  have hCGE : Between C G E := Prop5.between_inner hACG hAGE
+  have hCGE : Between C G E := between_inner hACG hAGE
   have hunder : ∠ C B D = ∠ B C E := by
     rw [angle_symm hB_C.symm (ne_of_between (between_symm hD)),
-      Prop5.angle_along hBFD hB_C.symm, hFBC_GCB, ← Prop5.angle_along hCGE hB_C,
+      angle_onRay_left (OnRay.of_beyond hBFD) hB_C.symm, hFBC_GCB,
+      ← angle_onRay_left (OnRay.of_beyond hCGE) hB_C,
       angle_symm (ne_of_between (between_symm hE)) hB_C]
   -- Therefore etc.
   exact ⟨hbase, hunder⟩

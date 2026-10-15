@@ -18,46 +18,6 @@ namespace Elements.BookI
 
 open Tacit
 
-/-- The triangle `ABC`, read starting from `B`, is still a triangle: three points
-that are not on one straight line, in whatever order we name them. -/
-theorem Prop8.triangle {A B C : Point} (h : Triangle A B C) : Triangle B C A := by
-  rintro ⟨L, hB, hC, hA⟩
-  exact h ⟨L, hA, hB, hC⟩
-
-/-- What Euclid sees when he lays BC along EF: a point `P` on the straight line
-`EF`, on the same side of `E` as `F`, and as far from `E` as `F` is, is `F`
-itself. -/
-theorem Prop8.coincide {E F P : Point} {L : Line} (hE : OnLine E L) (hF : OnLine F L)
-    (hP : OnLine P L) (hEF : E ≠ F) (hray : ¬ Between P E F) (h : ‖E P‖ = ‖E F‖) :
-    P = F := by
-  by_cases hPF : P = F
-  · exact hPF
-  have hEP : E ≠ P := ne_of_len_eq h hEF
-  /- Of the three points E, P, F on one straight line, one lies between the other
-     two. P can't be on the far side of E from F; and if P were short of F, or
-     beyond it, then EF would be equal to EF together with something. -/
-  rcases between_cases hEP hPF hEF hE hP hF with hEPF | hPEF | hEFP
-  · have hsum : ‖E P‖ + ‖P F‖ = ‖E F‖ := len_add_of_between hEPF
-    rw [h] at hsum
-    have hlt : ‖E F‖ < ‖E F‖ + ‖P F‖ := CommonNotion5 (len_pos hPF)
-    rw [hsum] at hlt
-    exact absurd hlt (lt_irrefl _)
-  · exact absurd hPEF hray
-  · have hsum : ‖E F‖ + ‖F P‖ = ‖E P‖ := len_add_of_between hEFP
-    rw [h] at hsum
-    have hlt : ‖E F‖ < ‖E F‖ + ‖F P‖ := CommonNotion5 (len_pos (Ne.symm hPF))
-    rw [hsum] at hlt
-    exact absurd hlt (lt_irrefl _)
-
-/-- Two points on the same side of the straight line through `E` and `F` are on
-the same side of `EF`, whichever way we name that line: two points fix one
-straight line. -/
-theorem Prop8.sameSide {G D E F : Point} {L : Line} (hEF : E ≠ F) (hE : OnLine E L)
-    (hF : OnLine F L) (h : SameSide G D L) : SameSideOf G D E F := by
-  refine ⟨hEF, fun M hEM hFM => ?_⟩
-  rw [← line_unique hEF hE hF hEM hFM]
-  exact h
-
 /-- If two triangles have the two sides equal to two sides respectively, and have also the base
 equal to the base, they will also have the angles equal which are contained by the equal
 straight lines. -/
@@ -79,10 +39,15 @@ theorem Prop8 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
   obtain ⟨EF, hE_EF, hF_EF⟩ := Postulate1 E F hEF
   have hD_EF : ¬ OnLine D EF := fun hD => hDEF ⟨EF, hD, hE_EF, hF_EF⟩
   obtain ⟨C', G, hC'_EF, hC'_ray, hGD_EF, hEC', hC'G, hGE, -, hEGC', -⟩ :=
-    superposition (Prop8.triangle hABC) hE_EF hF_EF hEF hD_EF
+    superposition hABC.bca hE_EF hF_EF hEF hD_EF
   -- the point C will also coincide with F,
   -- because BC is equal to EF.
-  have hC'F : C' = F := Prop8.coincide hE_EF hF_EF hC'_EF hEF hC'_ray (hEC'.trans hBC)
+  /- C lands on the ray from E through F, as far from E as F is; on a ray only one
+     point is at that distance (`OnRay.eq_of_len_eq` in Book Zero). -/
+  have hEC'_EF : ‖E C'‖ = ‖E F‖ := hEC'.trans hBC
+  have hC'F : C' = F :=
+    OnRay.eq_of_len_eq ⟨hEF, (ne_of_len_eq hEC'_EF hEF).symm, ⟨EF, hE_EF, hF_EF, hC'_EF⟩, hC'_ray⟩
+      hEC'_EF
   -- Then, BC coinciding with EF,
   -- BA, AC will also coincide with ED, DF;
   /- The sides BA, AC have been carried to GE, GF, and they are equal to ED, DF. -/
@@ -100,8 +65,10 @@ theorem Prop8 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
   -- extremities), and on the same side of it, two other straight lines meeting in another
   -- point and equal to the former two respectively, namely each to that which has the same
   -- extremity with it.
-  /- G and D are on the same side of EF: superposition put G there. -/
-  have hGD_side : SameSideOf G D E F := Prop8.sameSide hEF hE_EF hF_EF hGD_EF
+  /- G and D are on the same side of EF: superposition put G there. And since
+     two points fix one straight line, that is the same side of "the straight
+     line EF" however it is named (`SameSideOf.of_line` in Book Zero). -/
+  have hGD_side : SameSideOf G D E F := SameSideOf.of_line hEF hE_EF hF_EF hGD_EF
   -- But they cannot be so constructed. [I. 7]
   -- Therefore it is not possible that, if the base BC be applied to the base EF, the sides BA,
   -- AC should not coincide with ED, DF;

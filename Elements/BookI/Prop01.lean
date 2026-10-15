@@ -6,6 +6,11 @@ import Elements.Figure.Basics
 Euclid's text, in Heath's translation: [`heath/I/01.md`](../../heath/I/01.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+The statement says a little more than Euclid's: the triangle can be put on
+whichever side of `AB` we please, the side of a given point `P`. (If `P` is on
+`AB`, no side is asked for.) Euclid uses this without saying so in I.9, where
+the triangle must fall on the side of `DE` away from `A`, and in I.11.
 -/
 
 namespace Elements.BookI
@@ -37,8 +42,8 @@ theorem Prop1.figure {A B C : Point} (hAB : A ≠ B) (hCA : ‖C A‖ = ‖A B�
     exact Magnitude.add_self_ne hne this
 
 /-- On a given finite straight line to construct an equilateral triangle. -/
-theorem Prop1 (A B : Point) (hAB : A ≠ B) :
-    ∃ C : Point, Equilateral A B C := by
+theorem Prop1 (A B : Point) (hAB : A ≠ B) (P : Point) :
+    ∃ C : Point, Equilateral A B C ∧ (¬ Collinear A B P → SameSideOf C P A B) := by
   -- Let AB be the given finite straight line.
   -- Thus it is required to construct an equilateral triangle on the straight line AB.
   -- With centre A and distance AB let the circle BCD be described; [Post. 3]
@@ -49,10 +54,20 @@ theorem Prop1 (A B : Point) (hAB : A ≠ B) :
   -- straight lines CA, CB be joined. [Post. 1]
   /- Euclid never says why the circles cut one another. Each passes through the
      other's centre, and a centre lies inside its circle, so they must cross
-     (System E, Intersection rule 5). Lean needs only the point C; the straight
-     lines CA, CB are drawn for the eye. -/
-  obtain ⟨C, -, -, hC_BCD, hC_ACE, -⟩ :=
-    circles_meet hB_BCD (centre_inside hA_BCD) (centre_inside hB_ACE) hA_ACE
+     (System E, Intersection rule 5). They cross on both sides of AB, so C may
+     be taken on whichever side we please: on P's side, when P is off AB
+     (Intersections 8). Lean needs only the point C; the straight lines CA, CB
+     are drawn for the eye. -/
+  have hmeet := circles_meet hB_BCD (centre_inside hA_BCD) (centre_inside hB_ACE) hA_ACE
+  obtain ⟨C, hC_BCD, hC_ACE, hside⟩ : ∃ C : Point, OnCircle C BCD ∧ OnCircle C ACE ∧
+      (¬ Collinear A B P → SameSideOf C P A B) := by
+    by_cases hP : Collinear A B P
+    · obtain ⟨C, -, -, hC_BCD, hC_ACE, -⟩ := hmeet
+      exact ⟨C, hC_BCD, hC_ACE, fun h => absurd hP h⟩
+    · obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
+      obtain ⟨C, hC_BCD, hC_ACE, hCP⟩ :=
+        circles_meet_same_side hmeet hA_BCD hB_ACE hA_AB hB_AB (Triangle.off_line hP hA_AB hB_AB)
+      exact ⟨C, hC_BCD, hC_ACE, fun _ => SameSideOf.of_line hAB hA_AB hB_AB hCP⟩
   -- Now, since the point A is the centre of the circle CDB,
   -- AC is equal to AB. [Def. 15]
   have hAC : ‖A C‖ = ‖A B‖ := Definition15 hA_BCD hC_BCD hB_BCD
@@ -71,7 +86,7 @@ theorem Prop1 (A B : Point) (hAB : A ≠ B) :
   have hBC_CA : ‖B C‖ = ‖C A‖ := (len_symm B C).trans (hCA_CB.symm)
   -- Therefore the triangle ABC is equilateral; and it has been constructed on the given finite
   -- straight line AB.
-  exact ⟨C, Prop1.figure hAB hCA hCB, hAB_BC, hBC_CA⟩
+  exact ⟨C, ⟨Prop1.figure hAB hCA hCB, hAB_BC, hBC_CA⟩, hside⟩
   -- (Being) what it was required to do.
 
 end Elements.BookI
