@@ -31,19 +31,62 @@ theorem Prop23 {A B C D E P : Point} (hAB : A ≠ B) (hDCE : Triangle D C E) (hP
     ∃ F G : Point, OnRay F A B ∧ SameSideOf G P A B ∧ ∠ F A G = ∠ D C E := by
   -- Let AB be the given straight line, A the point on it, and the angle DCE the given
   -- rectilineal angle;
+  /- The given angle comes as the triangle DCE: its arms CD, CE are two straight
+     lines through C, not one, so it is a true rectilineal angle. We shall need the
+     straight line AB itself, to see that the angle we build is not flat either. -/
+  obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
   -- thus it is required to construct on the given straight line AB, and at the point A on it,
   -- a rectilineal angle equal to the given rectilineal angle DCE.
+  /- On the ray from A through B, and on the side of AB where P is: see the note at
+     the top of this file. -/
   -- On the straight lines CD, CE respectively let the points D, E be taken at random;
+  /- The statement already names a point on each arm, D on CD and E on CE, so we
+     take those. Any others would do as well: an angle depends only on its two rays
+     (`angle_eq_of_onRay` in Book Zero). -/
   -- let DE be joined,
+  /- Lean needs only the points D and E; the straight line DE is drawn for the eye.
+     Joined, it closes the triangle DCE, whose three sides are the three straight
+     lines that I.22 is about to take. -/
   -- and out of three straight lines which are equal to the three straight lines CD, DE, CE let
   -- the triangle AFG be constructed in such a way that CD is equal to AF, CE to AG, and
   -- further DE to FG. [I. 22]
+  /- I.22 asks that two of the three taken together in any manner be greater than the
+     remaining one, and points to I.20 for it. The three are the sides of the
+     triangle DCE, so I.20, applied to it named from C, says just that, once each sum
+     is read in I.22's order. -/
+  obtain ⟨hDE_lt, hCE_lt, hCD_lt⟩ := Prop20 hDCE.bac
+  have h₁ : ‖D E‖ < ‖C E‖ + ‖C D‖ := by
+    rw [add_comm, ← len_symm D C]
+    exact hDE_lt
+  have h₂ : ‖C D‖ < ‖C E‖ + ‖D E‖ := by
+    rw [add_comm, len_symm C E]
+    exact hCD_lt
+  have h₃ : ‖C E‖ < ‖C D‖ + ‖D E‖ := hCE_lt
+  /- I.22 puts the corner of its triangle at A, the side AF along the ray from A
+     through B, and the third corner G on P's side of AB. Its lengths, in its own
+     order, are CE, CD and DE. Heath notes that Euclid asks more of I.22 here than
+     I.22, as Euclid gives it, provides: a triangle placed on a given straight line
+     at a given point (vol. 1, p. 295). Our I.22 is stated so as to provide it. -/
+  obtain ⟨F, G, hF, hG, hGA_CE, hAF_CD, hFG_DE⟩ :=
+    Prop22 (A₁ := C) (A₂ := E) (B₁ := C) (B₂ := D) (C₁ := D) (C₂ := E) h₁ h₂ h₃ hAB hP
+  /- Euclid calls AFG a triangle, and I.8 will need it to be one. F is on the
+     straight line AB (a point of the ray from A through B, so not A itself), and G,
+     being on one side of AB, is off it (`OnRay.onLine`, `SameSideOf.triangle`,
+     `Triangle.off_line`, `Triangle.of_line` in Book Zero). -/
+  have hF_AB : OnLine F AB := hF.onLine hA_AB hB_AB
+  have hA_F : A ≠ F := hF.2.1.symm
+  have hG_AB : ¬ OnLine G AB := hG.triangle.off_line hA_AB hB_AB
+  have hAFG : Triangle A F G := Triangle.of_line hA_AB hF_AB hA_F hG_AB
   -- Then, since the two sides DC, CE are equal to the two sides FA, AG respectively,
+  have hCD_AF : ‖C D‖ = ‖A F‖ := hAF_CD.symm
+  have hCE_AG : ‖C E‖ = ‖A G‖ := hGA_CE.symm.trans (len_symm G A)
   -- and the base DE is equal to the base FG,
+  have hDE_FG : ‖D E‖ = ‖F G‖ := hFG_DE.symm
   -- the angle DCE is equal to the angle FAG. [I. 8]
+  have hDCE_FAG : ∠ D C E = ∠ F A G := Prop8 hDCE.bac hAFG hCD_AF hCE_AG hDE_FG
   -- Therefore on the given straight line AB, and at the point A on it, the rectilineal angle
   -- FAG has been constructed equal to the given rectilineal angle DCE.
+  exact ⟨F, G, hF, hG, hDCE_FAG.symm⟩
   -- Q. E. F.
-  sorry
 
 end Elements.BookI
