@@ -98,7 +98,7 @@ Pick any 🚧 proposition in [Book I](book/I/index.md) and prove it; write a mis
 
 ## How it was made
 
-**How it was made.** Stoicheia is Jack Challis's project, built with Claude (Anthropic's AI) working as a crew of agents. A captain plans and merges; first mates prepare each stretch; sailors prove one proposition each, in parallel; bosuns merge their work and review it for faithfulness to Euclid; artists drew the figures; inspectors audit the whole for consistency. Early planning also drew on conversations with ChatGPT. Nothing rests on trust: Lean's kernel checks every proof, CI checks that every proof still quotes Heath word for word, and every quotation in the commentary was checked against the 1908 scan. The crew's logs are in [docs/reports/crew](docs/reports/crew).
+Stoicheia is Jack Challis's project, built with Claude (Anthropic's AI) working as a crew of agents. A captain plans and merges; first mates prepare each stretch; sailors prove one proposition each, in parallel; bosuns merge their work and review it for faithfulness to Euclid; artists drew the figures; inspectors audit the whole for consistency. Early planning also drew on conversations with ChatGPT. Nothing rests on trust: Lean's kernel checks every proof, CI checks that every proof still quotes Heath word for word, and every quotation in the commentary was checked against the 1908 scan. The crew's logs are in [docs/reports/crew](docs/reports/crew).
 
 ## Standing on shoulders
 

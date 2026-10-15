@@ -158,6 +158,8 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - "Let BD be drawn through to E": that BD, produced, reaches AC at all is the crossbar theorem, since D lies within the angle ABC (`crossbar`).
 - That it reaches AC beyond D, so that D lies between B and E: B and D are on one side of AC (System E, Pasch 3), and E is on the ray from B through D (`Prop21.through`).
 - Before I.20 and I.16 apply, ABE and CED must be triangles. C is off BE because D, on A's side of BC, is off BC (`Triangle.of_line`, `Triangle.off_line`).
+- "Let EC be added to each" and "let DB be added to each" have no bracket, and no Common Notion adds the same thing to unequals: as in I.17, it is the tacit law of magnitudes `add_lt_add_right`.
+- "BA, AC are greater than BE, EC" needs AE and EC to make up AC, since E lies between A and C, and in the same way ED and DB make up EB (System E, Diagram-segment 1).
 - The angle CED is the angle CEB, and BAE is BAC, because each pair of points lies on one ray (`angle_onRay_right`).
 
 ## I.22
