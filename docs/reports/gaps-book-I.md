@@ -110,10 +110,12 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - A could, in principle, lie on the perpendicular BE; it can't, since then the two angles would be equal.
 - BE must be drawn on A's side of CD; the figure decides it, and I.11's statement lets us choose.
 - "The angle DBA is equal to the two angles DBE, EBA" needs BE within DBA, a triple-incidence argument (`Prop13.within`).
+- "The same three angles": CBA, ABE, EBD and DBE, EBA, ABC are the same only because an angle is the same read from either arm (`angle_symm`, System E, Metric 4) and magnitudes add in any order (`add_comm`, `add_assoc`).
 
 ## I.14
 - Euclid's figure has BE within the angle ABD; the other case, BD within ABE, needs handling too (`onRay_of_angle_eq`).
 - E and D lie on the same side of AB, each being on the other side from C (`OppositeSidesOf.of_between`, `OppositeSidesOf.sameSideOf`): the one place the hypothesis "not lying on the same side" is used, as Proclus warned.
+- "AB stands on the straight line CBE" needs A off CBE before I.13 applies: that straight line passes through B and C, and A, B, C are not on one straight line.
 
 ## I.15
 - The two straight lines really cross, so that each "stands on" the other before I.13 applies (`Prop15.figure`).
@@ -124,15 +126,18 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - CF falls within the angle ECD, so that "the angle ECD is greater than the angle ECF" (C.N. 5). Heath notes this fails in Riemann's closed, sphere-like geometry (vol. 1, p. 280); in Lean it comes from Pasch's rules and the two sides of a line (`Prop16.within`), and then `angle_add_of_within` and `Triangle.angle_pos`.
 - BE produced must be long enough for I.3 to cut EF off it (`produce_longer`, as in I.11), which takes a circle (Post. 3) that Euclid does not draw.
 - "Similarly" becomes one argument applied twice, the second time with AC produced, and I.15 finishes it.
+- The angle ECD becomes the angle ACD, and BAE the triangle's angle BAC, without a word, since E lies on the ray from C through A and on the ray from A through C (`angle_onRay_left`, `angle_onRay_right`).
 
 ## I.17
 - "Let the angle ACB be added to each" has no bracket, and no Common Notion adds the same thing to unequals. It is the tacit law of magnitudes `add_lt_add_right` (System E §3.5). Heath points to this step as the one the rejected axiom "If equals be added to unequals" was after (vol. 1, p. 223).
 - I.13 needs AC to stand on BD with A off it: D is on BC produced, and A is off BC because ABC is a triangle (`Triangle.off_line`, `Triangle.of_line`). To say so, the straight line BC is named (Post. 1) before Postulate 2 produces it.
 - "Similarly" becomes one argument applied three times, to the triangles ABC, BAC and CAB.
+- Euclid names one angle two ways (ACB, then BCA in the sum; ABC where I.16 gives CBA) and adds in either order. Lean turns each angle round (`angle_symm`, System E, Metric 4) and reorders the sums (`add_comm`).
 
 ## I.18
 - "The angle ADB is equal to the angle ABD, since the side AB is equal to AD" is I.5, given without a bracket. Our I.5 also speaks of the angles under the base, so the sides are produced for it (`Prop5.base`).
 - The angle DCB that I.16 gives is the triangle's angle ACB, because D lies on the ray from C through A (`angle_onRay_left`).
+- Before I.16 applies, BCD must be a triangle: B is off the straight line AC, on which C and D lie (`Triangle.of_line`); and its side CD is already produced, to A, because I.3 put D between A and C.
 - "Much greater" needs BD to fall within the angle ABC, so that ABD is only a part of it: D lies between A and C (`angle_add_of_between`), the other part DBC is something (`Triangle.angle_pos`), and then C.N. 5 and `lt_trans`.
 
 ## I.19
