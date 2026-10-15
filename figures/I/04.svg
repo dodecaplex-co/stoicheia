@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 250" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.4: two sides and the angle between them</title>
+  <rect x="0" y="0" width="400" height="250" rx="10" fill="#fbf7ee"/>
+  <!-- triangle ABC -->
+  <polygon points="90,55 35,205 165,205" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2"/>
+  <!-- triangle DEF: AB equal to DE, AC to DF -->
+  <polygon points="290,55 235,205 365,205" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2"/>
+  <!-- the equal angles BAC, EDF -->
+  <path d="M 82.43 75.65 A 22 22 0 0 0 99.84 74.68" fill="none" stroke="#8c7b62" stroke-width="1.4"/>
+  <path d="M 282.43 75.65 A 22 22 0 0 0 299.84 74.68" fill="none" stroke="#8c7b62" stroke-width="1.4"/>
+  <!-- the bases BC, EF, proved equal -->
+  <line x1="35" y1="205" x2="165" y2="205" stroke="#a0522d" stroke-width="3"/>
+  <line x1="235" y1="205" x2="365" y2="205" stroke="#a0522d" stroke-width="3"/>
+  <g fill="#3b2f2f">
+    <circle cx="90" cy="55" r="2.6"/><circle cx="35" cy="205" r="2.6"/><circle cx="165" cy="205" r="2.6"/>
+    <circle cx="290" cy="55" r="2.6"/><circle cx="235" cy="205" r="2.6"/><circle cx="365" cy="205" r="2.6"/>
+    <text x="84" y="44">A</text><text x="18" y="226">B</text><text x="169" y="226">C</text>
+    <text x="284" y="44">D</text><text x="217" y="226">E</text><text x="369" y="226">F</text>
+  </g>
+</svg>
