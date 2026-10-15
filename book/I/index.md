@@ -2,7 +2,7 @@
 
 # Book I
 
-**3 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
+**8 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
 
 Start with the [definitions, postulates and common notions](front.md).
 
@@ -11,11 +11,11 @@ Start with the [definitions, postulates and common notions](front.md).
 | ✅ | [I.1](01.md) **An equilateral triangle on a given line** | On a given finite straight line to construct an equilateral triangle. |
 | ✅ | [I.2](02.md) **Placing a given length at a point** | To place at a given point (as an extremity) a straight line equal to a given straight line. |
 | ✅ | [I.3](03.md) **Cutting off a given length** | Given two unequal straight lines, to cut off from the greater a straight line equal to the less. |
-| 🚧 | [I.4](04.md) **Side, angle, side** | If two triangles have the two sides equal to two sides respectively, and have the angles contained by the… |
-| 🚧 | [I.5](05.md) **The base angles of an isosceles triangle** | In isosceles triangles the angles at the base are equal to one another, and, if the equal straight lines… |
-| 🚧 | [I.6](06.md) **Equal base angles make equal sides** | If in a triangle two angles be equal to one another, the sides which subtend the equal angles will also be… |
-| 🚧 | [I.7](07.md) **Only one triangle on a base with given sides** | Given two straight lines constructed on a straight line (from its extremities) and meeting in a point,… |
-| 🚧 | [I.8](08.md) **Side, side, side** | If two triangles have the two sides equal to two sides respectively, and have also the base equal to the… |
+| ✅ | [I.4](04.md) **Side, angle, side** | If two triangles have the two sides equal to two sides respectively, and have the angles contained by the… |
+| ✅ | [I.5](05.md) **The base angles of an isosceles triangle** | In isosceles triangles the angles at the base are equal to one another, and, if the equal straight lines… |
+| ✅ | [I.6](06.md) **Equal base angles make equal sides** | If in a triangle two angles be equal to one another, the sides which subtend the equal angles will also be… |
+| ✅ | [I.7](07.md) **Only one triangle on a base with given sides** | Given two straight lines constructed on a straight line (from its extremities) and meeting in a point,… |
+| ✅ | [I.8](08.md) **Side, side, side** | If two triangles have the two sides equal to two sides respectively, and have also the base equal to the… |
 | 🚧 | [I.9](09.md) **Bisecting an angle** | To bisect a given rectilineal angle. |
 | 🚧 | [I.10](10.md) **Bisecting a straight line** | To bisect a given finite straight line. |
 | 🚧 | [I.11](11.md) **A perpendicular from a point on a line** | To draw a straight line at right angles to a given straight line from a given point on it. |
