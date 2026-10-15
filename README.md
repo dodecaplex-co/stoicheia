@@ -39,8 +39,8 @@ Here is the heart of I.1. Euclid's sentences are the comments:
   -- again, with centre B and distance BA let the circle ACE be described; [Post. 3]
   obtain ⟨ACE, hB_ACE, hA_ACE⟩ := Postulate3 B A hAB.symm
   -- and from the point C, in which the circles cut one another, …
-  obtain ⟨C, -, -, hC_BCD, hC_ACE, -⟩ :=
-    circles_meet hB_BCD (centre_inside hA_BCD) (centre_inside hB_ACE) hA_ACE
+  have hmeet := circles_meet hB_BCD (centre_inside hA_BCD) (centre_inside hB_ACE) hA_ACE
+  -- (… C is taken where they cross, on whichever side of AB we need …)
   -- Now, since the point A is the centre of the circle CDB,
   -- AC is equal to AB. [Def. 15]
   have hAC : ‖A C‖ = ‖A B‖ := Definition15 hA_BCD hC_BCD hB_BCD
