@@ -165,8 +165,8 @@ graph TD
   I47 --> I48
   classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20
   classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242
-  class I1,I2,I3,I4,I5,I6,I7,I8,I9,I10,I11,I12,I13,I14,I15,I16 proved
-  class I17,I18,I19,I20,I21,I22,I23,I24,I25,I26,I27,I28,I29,I30,I31,I32,I33,I34,I35,I36,I37,I38,I39,I40,I41,I42,I43,I44,I45,I46,I47,I48 sketched
+  class I1,I2,I3,I4,I5,I6,I7,I8,I9,I10,I11,I12,I13,I14,I15,I16,I17,I18,I19,I20,I21,I22,I23,I24 proved
+  class I25,I26,I27,I28,I29,I30,I31,I32,I33,I34,I35,I36,I37,I38,I39,I40,I41,I42,I43,I44,I45,I46,I47,I48 sketched
 ```
 
 - [I.1](book/I/01.md): An equilateral triangle on a given line

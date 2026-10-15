@@ -2,7 +2,7 @@
 
 # Book I
 
-**16 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
+**24 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
 
 Start with the [definitions, postulates and common notions](front.md).
 
@@ -24,14 +24,14 @@ Start with the [definitions, postulates and common notions](front.md).
 | ✅ | [I.14](14.md) **When two angles make a straight line** | If with any straight line, and at a point on it, two straight lines not lying on the same side make the… |
 | ✅ | [I.15](15.md) **Vertical angles** | If two straight lines cut one another, they make the vertical angles equal to one another. |
 | ✅ | [I.16](16.md) **The exterior angle is greater** | In any triangle, if one of the sides be produced, the exterior angle is greater than either of the… |
-| 🚧 | [I.17](17.md) **Two angles of a triangle are less than two right angles** | In any triangle two angles taken together in any manner are less than two right angles. |
-| 🚧 | [I.18](18.md) **The greater side subtends the greater angle** | In any triangle the greater side subtends the greater angle. |
-| 🚧 | [I.19](19.md) **The greater angle is subtended by the greater side** | In any triangle the greater angle is subtended by the greater side. |
-| 🚧 | [I.20](20.md) **Two sides exceed the third** | In any triangle two sides taken together in any manner are greater than the remaining one. |
-| 🚧 | [I.21](21.md) **Lines drawn within a triangle** | If on one of the sides of a triangle, from its extremities, there be constructed two straight lines… |
-| 🚧 | [I.22](22.md) **A triangle from three given lines** | Out of three straight lines, which are equal to three given straight lines, to construct a triangle: thus… |
-| 🚧 | [I.23](23.md) **Copying an angle** | On a given straight line and at a point on it to construct a rectilineal angle equal to a given… |
-| 🚧 | [I.24](24.md) **The wider angle has the longer base** | If two triangles have the two sides equal to two sides respectively, but have the one of the angles… |
+| ✅ | [I.17](17.md) **Two angles of a triangle are less than two right angles** | In any triangle two angles taken together in any manner are less than two right angles. |
+| ✅ | [I.18](18.md) **The greater side subtends the greater angle** | In any triangle the greater side subtends the greater angle. |
+| ✅ | [I.19](19.md) **The greater angle is subtended by the greater side** | In any triangle the greater angle is subtended by the greater side. |
+| ✅ | [I.20](20.md) **Two sides exceed the third** | In any triangle two sides taken together in any manner are greater than the remaining one. |
+| ✅ | [I.21](21.md) **Lines drawn within a triangle** | If on one of the sides of a triangle, from its extremities, there be constructed two straight lines… |
+| ✅ | [I.22](22.md) **A triangle from three given lines** | Out of three straight lines, which are equal to three given straight lines, to construct a triangle: thus… |
+| ✅ | [I.23](23.md) **Copying an angle** | On a given straight line and at a point on it to construct a rectilineal angle equal to a given… |
+| ✅ | [I.24](24.md) **The wider angle has the longer base** | If two triangles have the two sides equal to two sides respectively, but have the one of the angles… |
 | 🚧 | [I.25](25.md) **The longer base has the wider angle** | If two triangles have the two sides equal to two sides respectively, but have the base greater than the… |
 | 🚧 | [I.26](26.md) **Angle, side, angle** | If two triangles have the two angles equal to two angles respectively, and one side equal to one side,… |
 | 🚧 | [I.27](27.md) **Equal alternate angles make parallels** | If a straight line falling on two straight lines make the alternate angles equal to one another, the… |
