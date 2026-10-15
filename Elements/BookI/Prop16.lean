@@ -50,37 +50,13 @@ theorem Prop16.within {A B C D E F : Point} (hABC : Triangle A B C) (hBCD : Betw
   have hF_AC : ¬ OnLine F AC := fun h =>
     hB_AC ((line_unique hE_F hE_BE hF_BE hE_AC h) ▸ hB_BE)
   /- `AC` separates `B` from `F`, and `B` from `D`; so `F` and `D` are on one side. -/
-  have hFD : SameSide F D AC := by
-    rcases same_side_or hB_AC hF_AC hD_AC (pasch3 hBEF hE_AC) with h | h
-    · exact absurd h (pasch3 hBCD hC_AC)
-    · exact h
+  have hFD : SameSide F D AC :=
+    same_side_of_opposite_sides ⟨hB_AC, hF_AC, pasch3 hBEF hE_AC⟩
+      ⟨hB_AC, hD_AC, pasch3 hBCD hC_AC⟩
   /- `E` and `F` are on one side of `BC`. -/
   have hEF : SameSide E F BC := pasch2 hBEF hB_BC hE_BC
   exact ⟨SameSideOf.of_line hE_C.symm hC_AC hE_AC hFD,
     SameSideOf.of_line hC_D hC_BC hD_BC (same_side_symm hEF)⟩
-
-/-- A straight line within an angle cuts it into two parts, each of them something. If
-`F` lies within the angle `ECD` (on `D`'s side of `CE` and on `E`'s side of `CD`), the
-angle `ECD` is made up of the angles `ECF` and `FCD` (System E, Diagram-angle 2), and
-`FCD` is not nothing, since `F` is off the straight line `CD` (Diagram-angle 1). -/
-theorem Prop16.part {C D E F : Point} (hFD : SameSideOf F D C E) (hFE : SameSideOf F E C D) :
-    ∠ E C D = ∠ E C F + ∠ F C D ∧ 0 < ∠ F C D := by
-  have hC_E : C ≠ E := hFD.1
-  have hC_D : C ≠ D := hFE.1
-  obtain ⟨L, hC_L, hE_L⟩ := Postulate1 C E hC_E
-  obtain ⟨M, hC_M, hD_M⟩ := Postulate1 C D hC_D
-  have hFD_L : SameSide F D L := hFD.sameSide hC_L hE_L
-  have hFE_M : SameSide F E M := hFE.sameSide hC_M hD_M
-  have hF_L : ¬ OnLine F L := not_on_line_of_same_side hFD_L
-  have hF_M : ¬ OnLine F M := not_on_line_of_same_side hFE_M
-  have hD_L : ¬ OnLine D L := not_on_line_of_same_side (same_side_symm hFD_L)
-  have hLM : L ≠ M := fun e => hD_L (e ▸ hD_M)
-  have hC_F : C ≠ F := fun e => hF_L (e ▸ hC_L)
-  refine ⟨angle_add_of_inside hC_L hC_M hE_L hD_M hC_E hC_D hF_L hF_M hLM
-    (same_side_symm hFE_M) (same_side_symm hFD_L), ?_⟩
-  refine Magnitude.pos_of_ne_zero fun h0 => hF_M ?_
-  rw [← angle_symm hC_D.symm hC_F.symm] at h0
-  exact (same_ray_of_angle_eq_zero hC_D hC_F hC_M hD_M h0).1
 
 /-- In any triangle, if one of the sides be produced, the exterior angle is greater than either of
 the interior and opposite angles. -/
@@ -154,13 +130,13 @@ theorem Prop16 {A B C D : Point} (hABC : Triangle A B C) (hBCD : Between B C D) 
     have hBAE_ECF : ∠ B A E = ∠ E C F := (angle_symm hB_A hE_A).trans hEAB_ECF'
     -- But the angle ECD is greater than the angle ECF; [C.N. 5]
     /- Heath's figure shows F within the angle ECD (`Prop16.within`), so that the
-       angle ECD is made up of the angles ECF and FCD, and FCD is something
-       (`Prop16.part`). The whole is greater than the part. -/
+       angle ECD is made up of the angles ECF and FCD (`angle_add_of_within`), and
+       FCD, an angle of the triangle FCD, is something (`Triangle.angle_pos`). The
+       whole is greater than the part. -/
     obtain ⟨hFD, hFE⟩ := Prop16.within hABC hBCD hAEC hBEF
-    obtain ⟨hECD, hFCD⟩ := Prop16.part hFD hFE
     have hECF_ECD : ∠ E C F < ∠ E C D := by
-      rw [hECD]
-      exact CommonNotion5 hFCD
+      rw [angle_add_of_within hFD hFE]
+      exact CommonNotion5 hFE.triangle.cab.angle_pos
     -- therefore the angle ACD is greater than the angle BAE.
     /- The angle ECD is the angle ACD, since E lies on the ray from C through A
        (`angle_onRay_left`). -/

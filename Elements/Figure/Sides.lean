@@ -12,8 +12,9 @@ that has been drawn and named; `SameSideOf P Q A B` (from
 Since two points fix one straight line (System E, Generalities 1), these say the
 same thing, and the lemmas here pass between them. They also record what
 Euclid never doubts: that "the same side of AB" is "the same side of BA", that
-if `P` is on `Q`'s side then `Q` is on `P`'s, and that a point on either side of
-`AB` is off it.
+if `P` is on `Q`'s side then `Q` is on `P`'s, that a point on either side of
+`AB` is off it, that a straight line through a point of `AB` crosses to the other
+side, and that a straight line has only two sides.
 -/
 
 namespace Elements
@@ -89,6 +90,41 @@ triangle. -/
 theorem OppositeSidesOf.triangle (h : OppositeSidesOf P Q A B) : Triangle A B P := by
   rintro ⟨L, hA, hB, hP⟩
   exact (h.2 L hA hB).1 hP
+
+/-- A straight line through a point of `AB`, from a point `C` off it, crosses to
+the other side: if `B` lies between `C` and `E`, then `E` is on the other side
+of the straight line `AB` from `C`. (System E, Pasch 3) -/
+theorem OppositeSidesOf.of_between {C E : Point} (hABC : Triangle A B C)
+    (h : Between C B E) : OppositeSidesOf C E A B := by
+  obtain ⟨L, hA, hB⟩ := Postulate1 A B hABC.ne₁₂
+  have hC : ¬ OnLine C L := hABC.off_line hA hB
+  /- `E` is off `AB` too: a straight line through `E` and `B` goes on through `C`. -/
+  have hE : ¬ OnLine E L := fun hE => hC (on_line_of_between (between_symm h) hE hB)
+  exact OppositeSidesOf.of_line hABC.ne₁₂ hA hB ⟨hC, hE, pasch3 h hB⟩
+
+/-! ## Only two sides -/
+
+/-- A straight line has only two sides: two points, each on the other side of the
+straight line `L` from `C`, are on the same side of `L` as each other. (System E,
+Same side 5) -/
+theorem same_side_of_opposite_sides {C D E : Point} (h₁ : OppositeSides C D L)
+    (h₂ : OppositeSides C E L) : SameSide D E L :=
+  (same_side_or h₁.1 h₁.2.1 h₂.2.1 h₁.2.2).resolve_left h₂.2.2
+
+/-- The same, said of "the straight line AB": two points, each on the other side of
+`AB` from `C`, are on the same side of `AB` as each other. -/
+theorem OppositeSidesOf.sameSideOf {C D E : Point} (h₁ : OppositeSidesOf C D A B)
+    (h₂ : OppositeSidesOf C E A B) : SameSideOf D E A B :=
+  ⟨h₁.1, fun L hA hB => same_side_of_opposite_sides (h₁.2 L hA hB) (h₂.2 L hA hB)⟩
+
+/-- A point on `Q`'s side of the straight line `AB`, where `Q` is on the other side
+from `R`, is itself on the other side from `R`. -/
+theorem SameSideOf.trans_opposite (h₁ : SameSideOf P Q A B) (h₂ : OppositeSidesOf Q R A B) :
+    OppositeSidesOf P R A B := by
+  refine ⟨h₁.1, fun L hA hB => ?_⟩
+  have hs : SameSide P Q L := h₁.2 L hA hB
+  have ho : OppositeSides Q R L := h₂.2 L hA hB
+  exact ⟨not_on_line_of_same_side hs, ho.2.1, fun h => ho.2.2 (same_side_trans hs h)⟩
 
 /-- "Let a point be taken at random on the other side of the straight line AB"
 (I.12): if `P` is off the straight line `AB`, there is a point on the other side

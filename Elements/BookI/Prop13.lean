@@ -21,23 +21,6 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- A straight line drawn from the corner of an angle through a point within it
-cuts the angle into two. If `R` lies within the angle `PVQ`, on `Q`'s side of `VP`
-and on `P`'s side of `VQ`, then the angle `PVQ` is made up of the angles `PVR` and
-`RVQ`. This is System E's Diagram-angle 2, said of "the straight lines VP, VQ"
-rather than of lines drawn and named. -/
-theorem Prop13.angle_add {V P Q R : Point} (hRQ : SameSideOf R Q V P)
-    (hRP : SameSideOf R P V Q) : ∠ P V Q = ∠ P V R + ∠ R V Q := by
-  obtain ⟨L, hVL, hPL⟩ := Postulate1 V P hRQ.1
-  obtain ⟨M, hVM, hQM⟩ := Postulate1 V Q hRP.1
-  have hRQ_L : SameSide R Q L := hRQ.sameSide hVL hPL
-  have hRP_M : SameSide R P M := hRP.sameSide hVM hQM
-  /- The two arms are different straight lines, for Q is off VP. -/
-  have hLM : L ≠ M := fun e =>
-    not_on_line_of_same_side (same_side_symm hRQ_L) (by rw [e]; exact hQM)
-  exact angle_add_of_inside hVL hVM hPL hQM hRQ.1 hRP.1 (not_on_line_of_same_side hRQ_L)
-    (not_on_line_of_same_side hRP_M) hLM (same_side_symm hRP_M) (same_side_symm hRQ_L)
-
 /-- Euclid's figure, seen from the other end of `CD`. If `BA` falls within the angle
 `CBE` (`A` on `E`'s side of `BC`, and on `C`'s side of `BE`), and `CB` is produced to
 `D`, then `BE` falls within the angle `DBA`: `E` is on `A`'s side of `BD`, and on
@@ -73,7 +56,8 @@ theorem Prop13.within {A B C D E : Point} (hCBD : Between C B D) (hAE : SameSide
   have hD_N : ¬ OnLine D N := fun hD => hA_L (line_unique hBD hB_N hD hB_L hD_L ▸ hA_N)
   have hE_N : ¬ OnLine E N := fun hE => hA_M (line_unique hBE hB_N hE hB_M hE_M ▸ hA_N)
   /- So E, not on C's side of BA, is on D's (Same side 5). -/
-  have hDE_N : SameSide D E N := (same_side_or hC_N hD_N hE_N hCD_N).resolve_left hCE_N
+  have hDE_N : SameSide D E N :=
+    same_side_of_opposite_sides ⟨hC_N, hD_N, hCD_N⟩ ⟨hC_N, hE_N, hCE_N⟩
   exact SameSideOf.of_line hBA hB_N hA_N (same_side_symm hDE_N)
 
 /-- Which way `AB` leans. With `BE` at right angles to `CD`, on `A`'s side of it, and
@@ -99,9 +83,11 @@ theorem Prop13.cases {A B C D E : Point} (hCBD : Between C B D) (hEA : SameSideO
   have hA_M : ¬ OnLine A M := by
     intro hA
     have hAB : A ≠ B := fun e => not_on_line_of_same_side (same_side_symm hEA_L) (e ▸ hB_L)
-    /- A would be on the ray from B through E, not behind B (Pasch 3). -/
-    have hA_ray : OnRay A B E := ⟨hBE, hAB, ⟨M, hB_M, hE_M, hA⟩, fun h => pasch3 h hB_L
-      (same_side_symm hEA_L)⟩
+    /- A would be on the ray from B through E, not behind B (Pasch 3,
+       `OnRay.of_sameSideOf`). -/
+    have hA_ray : OnRay A B E :=
+      OnRay.of_sameSideOf (SameSideOf.of_line hCB.symm hB_L hC_L (same_side_symm hEA_L))
+        ⟨M, hB_M, hE_M, hA⟩ hAB
     apply hne
     rw [angle_onRay_right hA_ray hCB, angle_onRay_left hA_ray hDB, hCBE, hEBD]
   rcases same_side_or hC_M hD_M hA_M (pasch3 hCBD hB_M) with h | h
@@ -160,7 +146,7 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
     have hDB : D ≠ B := ne_of_between (between_symm hCBD)
     -- Then, since the angle CBE is equal to the two angles CBA, ABE,
     /- BA falls within the angle CBE. -/
-    have hCBE_sum : ∠ C B E = ∠ C B A + ∠ A B E := Prop13.angle_add hAE hAC
+    have hCBE_sum : ∠ C B E = ∠ C B A + ∠ A B E := angle_add_of_within hAE hAC
     -- let the angle EBD be added to each;
     -- therefore the angles CBE, EBD are equal to the three angles CBA, ABE, EBD. [C.N. 2]
     have hthree : ∠ C B E + ∠ E B D = ∠ C B A + ∠ A B E + ∠ E B D :=
@@ -168,7 +154,7 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
     -- Again, since the angle DBA is equal to the two angles DBE, EBA,
     /- And so BE falls within the angle DBA (`Prop13.within`). -/
     obtain ⟨hEA', hED⟩ := Prop13.within hCBD hAE hAC
-    have hDBA_sum : ∠ D B A = ∠ D B E + ∠ E B A := Prop13.angle_add hEA' hED
+    have hDBA_sum : ∠ D B A = ∠ D B E + ∠ E B A := angle_add_of_within hEA' hED
     -- let the angle ABC be added to each;
     -- therefore the angles DBA, ABC are equal to the three angles DBE, EBA, ABC. [C.N. 2]
     have hthree' : ∠ D B A + ∠ A B C = ∠ D B E + ∠ E B A + ∠ A B C :=

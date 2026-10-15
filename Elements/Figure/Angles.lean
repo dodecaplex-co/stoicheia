@@ -8,11 +8,13 @@ An angle, for Euclid, is made by two straight lines that meet, and he names it b
 three letters without ever asking which points of its arms the letters stand
 for. "The angle FAG is common to both triangles", "the angle DBC is the angle
 ABC": an angle depends only on its two rays. He reads straight off the figure
-when one angle is made up of two others, and when a straight line drawn within
+that an angle of a triangle is something, when one angle is made up of two
+others (and so is greater than either), and when a straight line drawn within
 an angle crosses the straight line joining its arms; and he takes for granted
-that on one side of a straight line only one ray from a point of it makes a
-given angle with it. These are those facts, from System E's diagram rules
-(Avigad, Dean and Mumma, §3.4 and §3.6).
+that a ray from a point of a straight line stays on one side of it, and that on
+one side of a straight line only one ray from a point of it makes a given angle
+with it. These are those facts, from System E's diagram rules (Avigad, Dean and
+Mumma, §3.4 and §3.6).
 -/
 
 namespace Elements
@@ -46,7 +48,34 @@ theorem angle_onRay_right {C' : Point} (hC : OnRay C' A C) (hBA : B ≠ A) :
     ∠ B A C' = ∠ B A C :=
   angle_eq_of_onRay (OnRay.self hBA.symm) hC
 
+/-! ## An angle is something -/
+
+/-- An angle of a triangle is something, not nothing: in the triangle `ABC`, were
+the angle `ABC` nothing, `C` would lie on the straight line `BA` (System E,
+Diagram-angle 1), and `A`, `B`, `C` would be on one straight line. -/
+theorem Triangle.angle_pos (h : Triangle A B C) : 0 < ∠ A B C := by
+  obtain ⟨L, hB, hA⟩ := Postulate1 B A h.ne₁₂.symm
+  exact Magnitude.pos_of_ne_zero fun h0 =>
+    h ⟨L, hA, hB, (same_ray_of_angle_eq_zero h.ne₁₂.symm h.ne₂₃ hB hA h0).1⟩
+
 /-! ## Adding angles -/
+
+/-- A straight line drawn from the corner of an angle through a point within it
+cuts the angle into two. If `R` lies within the angle `PVQ`, on `Q`'s side of `VP`
+and on `P`'s side of `VQ`, then the angle `PVQ` is made up of the angles `PVR` and
+`RVQ`. This is System E's Diagram-angle 2, said of "the straight lines VP, VQ"
+rather than of lines drawn and named. -/
+theorem angle_add_of_within {V P Q R : Point} (hRQ : SameSideOf R Q V P)
+    (hRP : SameSideOf R P V Q) : ∠ P V Q = ∠ P V R + ∠ R V Q := by
+  obtain ⟨L, hVL, hPL⟩ := Postulate1 V P hRQ.1
+  obtain ⟨M, hVM, hQM⟩ := Postulate1 V Q hRP.1
+  have hRQ_L : SameSide R Q L := hRQ.sameSide hVL hPL
+  have hRP_M : SameSide R P M := hRP.sameSide hVM hQM
+  /- The two arms are different straight lines, for `Q` is off `VP`. -/
+  have hLM : L ≠ M := fun e =>
+    not_on_line_of_same_side (same_side_symm hRQ_L) (by rw [e]; exact hQM)
+  exact angle_add_of_inside hVL hVM hPL hQM hRQ.1 hRP.1 (not_on_line_of_same_side hRQ_L)
+    (not_on_line_of_same_side hRP_M) hLM (same_side_symm hRP_M) (same_side_symm hRQ_L)
 
 /-- If `R` lies between `P` and `Q`, and `V` is off the straight line `PQ`, then `VR`
 falls within the angle `PVQ`, and that angle is made up of the angles `PVR` and
@@ -71,6 +100,19 @@ theorem angle_add_of_between {V P Q R : Point} (hPQV : Triangle P Q V) (h : Betw
   exact angle_add_of_inside hVL hVM hPL hQM hVP hVQ hRL hRM hLM
     (same_side_symm (pasch2 (between_symm h) hQM hRM))
     (same_side_symm (pasch2 h hPL hRL))
+
+/-- The part is less than the whole, for angles: if `R` lies between `P` and `Q`, and
+`V` is off the straight line `PQ`, the angle `RVQ` is less than the angle `PVQ`. For
+`PVQ` is made up of `PVR` and `RVQ` (`angle_add_of_between`), and `PVR` is
+something, since `R` is off `VP` (`Triangle.angle_pos`). [C.N. 5] -/
+theorem angle_lt_of_between {V P Q R : Point} (hPQV : Triangle P Q V) (h : Between P R Q) :
+    ∠ R V Q < ∠ P V Q := by
+  obtain ⟨N, hP_N, hQ_N⟩ := Postulate1 P Q (ne_of_between_ends h)
+  have hPRV : Triangle P R V :=
+    Triangle.of_line hP_N (on_line_of_between_ends h hP_N hQ_N) (ne_of_between h)
+      (hPQV.off_line hP_N hQ_N)
+  rw [angle_add_of_between hPQV h, add_comm]
+  exact CommonNotion5 hPRV.acb.angle_pos
 
 /-! ## A straight line within an angle -/
 
@@ -115,6 +157,39 @@ theorem crossbar {D : Point} (hDC : SameSideOf D C A B) (hDB : SameSideOf D B A 
   exact ⟨X, hBXC, hAD, fun e => hXL (e ▸ hAL), ⟨N, hAN, hDN, hXN⟩,
     fun hb => pasch3 hb hAL (same_side_trans (same_side_symm hXC_L) (same_side_symm hDCL))⟩
 
+/-! ## A ray and the sides of a straight line -/
+
+/-- A point `G` on the ray from `D` through `P` is on the same side of the straight
+line `DE` as `P`: the ray leaves `DE` at `D` and never crosses it again (System E,
+Pasch 4). -/
+theorem SameSideOf.of_onRay {D E F G P : Point} (hG : OnRay G D P) (hP : SameSideOf P F D E) :
+    SameSideOf G F D E := by
+  have hDE : D ≠ E := hP.1
+  obtain ⟨L, hD_L, hE_L⟩ := Postulate1 D E hDE
+  have hPF : SameSide P F L := hP.sameSide hD_L hE_L
+  have hP_L : ¬ OnLine P L := not_on_line_of_same_side hPF
+  obtain ⟨-, hGD, ⟨M, hD_M, hP_M, hG_M⟩, hGDP⟩ := hG
+  have hLM : L ≠ M := fun e => hP_L (e ▸ hP_M)
+  have hGP : SameSide G P L := by
+    by_cases hGP : G = P
+    · subst hGP
+      exact same_side_refl hP_L
+    · /- Were `G` and `P` on opposite sides of `DE`, `D` would lie between them. -/
+      refine Classical.byContradiction fun hs => hGDP ?_
+      exact pasch4 hLM hD_L hD_M hG_M hP_M hGP hGD (fun e => hP_L (e ▸ hD_L)) hs
+  exact SameSideOf.of_line hDE hD_L hE_L (same_side_trans (same_side_symm hGP) hPF)
+
+/-- Going the other way: a point `P` of the straight line `DF`, other than `D`, and
+on the same side of the straight line `DE` as `F`, is on the ray from `D` through
+`F`. It is not behind `D`, for then `DE` would separate it from `F` (System E,
+Pasch 3). -/
+theorem OnRay.of_sameSideOf {D E F P : Point} (h : SameSideOf P F D E) (hP : Collinear D F P)
+    (hPD : P ≠ D) : OnRay P D F := by
+  obtain ⟨L, hD, hE⟩ := Postulate1 D E h.1
+  have hPF : SameSide P F L := h.sameSide hD hE
+  have hF : ¬ OnLine F L := not_on_line_of_same_side (same_side_symm hPF)
+  exact ⟨fun e => hF (e ▸ hD), hPD, hP, fun hb => pasch3 hb hD hPF⟩
+
 /-! ## One ray for one angle -/
 
 /-- On one side of a straight line, only one ray from a point of it makes a given
@@ -141,8 +216,7 @@ theorem onRay_of_angle_eq {D E F P : Point} (hPF : SameSideOf P F D E)
     refine Classical.byContradiction fun hP_M => ?_
     /- Off the straight line `DF`, the point `P` makes some angle with `DF`
        (System E, Diagram-angle 1). -/
-    have hFDP : 0 < ∠ F D P := Magnitude.pos_of_ne_zero fun h0 =>
-      hP_M (same_ray_of_angle_eq_zero hDF hPD.symm hD_M hF_M h0).1
+    have hFDP : 0 < ∠ F D P := (Triangle.of_line hF_M hD_M hDF.symm hP_M).angle_pos
     by_cases hs : SameSide E P M
     · /- `P` lies within the angle `EDF`, so the angle `EDP` is a part of the
          angle `EDF` (Diagram-angle 2): the part would be equal to the whole. -/
@@ -169,6 +243,6 @@ theorem onRay_of_angle_eq {D E F P : Point} (hPF : SameSideOf P F D E)
       exact lt_irrefl _ hlt
   /- And `P` is on `F`'s side of `D`, not beyond `D`: a point between `P` and
      `F` would put them on opposite sides of `DE` (Pasch 3). -/
-  exact ⟨hDF, hPD, ⟨M, hD_M, hF_M, hP_M⟩, fun hb => pasch3 hb hD hPF'⟩
+  exact OnRay.of_sameSideOf hPF ⟨M, hD_M, hF_M, hP_M⟩ hPD
 
 end Elements

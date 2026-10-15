@@ -19,27 +19,6 @@ namespace Elements.BookI
 
 open Tacit
 
-/-! ## What Euclid reads off the figure -/
-
-/-- "The angle ABC is much greater than the angle ACB": Euclid sees in his figure
-that `BD` falls within the angle `ABC`. Since `D` lies between `A` and `C`, the
-angle `ABC` is made up of the angles `ABD` and `DBC` (System E, Pasch 2 and
-Diagram-angle 2, `angle_add_of_between`), and the angle `DBC` is something, for
-otherwise `D` would lie on `BC` (Diagram-angle 1), and then `BC` and `AC`, which
-share the two points `D` and `C`, would be one straight line, with `A` on it. -/
-theorem Prop18.part {A B C D : Point} (hABC : Triangle A B C) (hADC : Between A D C) :
-    ∠ A B C = ∠ A B D + ∠ D B C ∧ 0 < ∠ D B C := by
-  refine ⟨angle_add_of_between hABC.acb hADC, ?_⟩
-  obtain ⟨AC, hA_AC, hC_AC⟩ := Postulate1 A C hABC.ne₁₃
-  obtain ⟨BC, hB_BC, hC_BC⟩ := Postulate1 B C hABC.ne₂₃
-  have hD_AC : OnLine D AC := on_line_of_between_ends hADC hA_AC hC_AC
-  have hD_C : D ≠ C := (ne_of_between (between_symm hADC)).symm
-  have hB_D : B ≠ D := fun e => hABC.acb.off_line hA_AC hC_AC (e ▸ hD_AC)
-  refine Magnitude.pos_of_ne_zero fun h0 => ?_
-  rw [angle_symm hB_D.symm hABC.ne₂₃.symm] at h0
-  have hD_BC : OnLine D BC := (same_ray_of_angle_eq_zero hABC.ne₂₃ hB_D hB_BC hC_BC h0).1
-  exact hABC.bca.off_line hB_BC hC_BC (line_unique hD_C hD_AC hC_AC hD_BC hC_BC ▸ hA_AC)
-
 /-- In any triangle the greater side subtends the greater angle. -/
 theorem Prop18 {A B C : Point} (hABC : Triangle A B C) (h : ‖A B‖ < ‖A C‖) :
     ∠ B C A < ∠ A B C := by
@@ -86,12 +65,14 @@ theorem Prop18 {A B C : Point} (hABC : Triangle A B C) (h : ‖A B‖ < ‖A C�
     rw [← hDCB_ACB, hABD_ADB]
     exact hDCB_ADB
   -- therefore the angle ABC is much greater than the angle ACB.
-  /- Much greater, because the angle ABD is only a part of the angle ABC: BD falls
-     within it (`Prop18.part`), and the whole is greater than the part [C.N. 5]. -/
-  obtain ⟨hABC_sum, hDBC⟩ := Prop18.part hABC hADC
+  /- Much greater, because the angle ABD is only a part of the angle ABC: since D
+     lies between A and C, BD falls within the angle ABC, which is made up of the
+     angles ABD and DBC (`angle_add_of_between`); the angle DBC, an angle of the
+     triangle DBC, is something (`Triangle.angle_pos`); and the whole is greater
+     than the part [C.N. 5]. -/
   have hABD_ABC : ∠ A B D < ∠ A B C := by
-    rw [hABC_sum]
-    exact CommonNotion5 hDBC
+    rw [angle_add_of_between hABC.acb hADC]
+    exact CommonNotion5 hBCD.cab.angle_pos
   have hACB_ABC : ∠ A C B < ∠ A B C := lt_trans hACB_ABD hABD_ABC
   -- Therefore etc.
   /- The angle ACB is the angle BCA, named from the other arm. -/

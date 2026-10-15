@@ -162,10 +162,8 @@ theorem Prop7.figure {A B C D X : Point} (hCD : SameSideOf C D A B) (hCA : ‖C 
   refine ⟨angle_add_of_inside hCP hCM hAP hDM hACD.ne₁₂.symm hne hBP hBM hPM hABM hDBP,
     angle_add_of_inside hDM hDS hCM hBS hne.symm hBCD.ne₁₃.symm hAM hAS hMS hCAS
       (same_side_symm hABM), ?_, ?_⟩
-  · exact Magnitude.pos_of_ne_zero fun h =>
-      hBP (same_ray_of_angle_eq_zero hACD.ne₁₂.symm hBCD.ne₁₂.symm hCP hAP h).1
-  · exact Magnitude.pos_of_ne_zero fun h =>
-      hBR (same_ray_of_angle_eq_zero hACD.ne₁₃.symm hBCD.ne₁₃.symm hDR hAR h).1
+  · exact (Triangle.of_line hAP hCP hACD.ne₁₂ hBP).angle_pos
+  · exact (Triangle.of_line hAR hDR hACD.ne₁₃ hBR).angle_pos
 
 /-- The case Euclid leaves out, answered as Proclus answers it (Heath, vol. 1, p. 260). If
 `D` falls within the triangle `ABC`, produce `AC`, `AD` to `E`, `F`. Since `AC` is equal to
@@ -210,18 +208,12 @@ theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
     triple_incidence1 hBL hBS hBQ hAL hDS hCQ hDCL (same_side_symm hDAQ)
   /- So `E`, beyond `C`, is on `B`'s side of `CD`; and `F`, beyond `D`, is on `B`'s side of
      `CD` and on `C`'s side of `BD`. -/
-  have hEBM : SameSide E B M := by
-    rcases same_side_or hAM hBM hEM hABM with h | h
-    · exact absurd h (pasch3 hACE hCM)
-    · exact same_side_symm h
-  have hBFM : SameSide B F M := by
-    rcases same_side_or hAM hBM hFM hABM with h | h
-    · exact absurd h (pasch3 hADF hDM)
-    · exact h
-  have hCFS : SameSide C F S := by
-    rcases same_side_or hAS hCS hFS hACS with h | h
-    · exact absurd h (pasch3 hADF hDS)
-    · exact h
+  have hEBM : SameSide E B M :=
+    same_side_of_opposite_sides ⟨hAM, hEM, pasch3 hACE hCM⟩ ⟨hAM, hBM, hABM⟩
+  have hBFM : SameSide B F M :=
+    same_side_of_opposite_sides ⟨hAM, hBM, hABM⟩ ⟨hAM, hFM, pasch3 hADF hDM⟩
+  have hCFS : SameSide C F S :=
+    same_side_of_opposite_sides ⟨hAS, hCS, hACS⟩ ⟨hAS, hFS, pasch3 hADF hDS⟩
   have hPM : P ≠ M := fun h => hDP (h ▸ hDM)
   have hSM : S ≠ M := fun h => hCS (h ▸ hCM)
   /- `CB` falls within the angle `ECD`, and `DF` within the angle `BDC`. -/
@@ -229,10 +221,8 @@ theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
     angle_add_of_inside hCP hCM hEP hDM hEC.symm hne hBP hBM hPM hEBM hDBP
   have hBDC : ∠ B D C = ∠ B D F + ∠ F D C :=
     angle_add_of_inside hDS hDM hBS hCM hBCD.ne₁₃.symm hne.symm hFS hFM hSM hBFM hCFS
-  have hECB : 0 < ∠ E C B := Magnitude.pos_of_ne_zero fun h =>
-    hBP (same_ray_of_angle_eq_zero hEC.symm hBCD.ne₁₂.symm hCP hEP h).1
-  have hBDF : 0 < ∠ B D F := Magnitude.pos_of_ne_zero fun h =>
-    hFS (same_ray_of_angle_eq_zero hBCD.ne₁₃.symm hFD.symm hDS hBS h).1
+  have hECB : 0 < ∠ E C B := (Triangle.of_line hEP hCP hEC hBP).angle_pos
+  have hBDF : 0 < ∠ B D F := (Triangle.of_line hBS hDS hBCD.ne₁₃ hFS).angle_pos
   /- Since AC is equal to AD, the angles ECD, FDC under the base are equal. [I. 5] -/
   have hAC_AD : ‖A C‖ = ‖A D‖ := by rw [len_symm A C, hCA, len_symm D A]
   have hunder : ∠ D C E = ∠ C D F := (Prop5 hACD hAC_AD hACE hADF).2

@@ -22,30 +22,6 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- A straight line through a point of `AB`, from a point `C` off it, crosses to
-the other side: if `B` lies between `C` and `E`, then `E` is on the other side
-of the straight line `AB` from `C`. (System E, Pasch 3) -/
-theorem Prop14.opposite {A B C E : Point} (hABC : Triangle A B C) (hCBE : Between C B E) :
-    OppositeSidesOf C E A B := by
-  obtain ⟨L, hA, hB⟩ := Postulate1 A B hABC.ne₁₂
-  have hC : ¬ OnLine C L := hABC.off_line hA hB
-  /- E is off AB too: a straight line through E and B goes on through C. -/
-  have hE : ¬ OnLine E L := fun hE => hC (on_line_of_between (between_symm hCBE) hE hB)
-  exact OppositeSidesOf.of_line hABC.ne₁₂ hA hB ⟨hC, hE, pasch3 hCBE hB⟩
-
-/-- A straight line has only two sides: two points, each on the other side of
-`AB` from `C`, are on the same side of `AB` as each other. (System E, Same
-side 5) -/
-theorem Prop14.sameSide {A B C D E : Point} (hD : OppositeSidesOf C D A B)
-    (hE : OppositeSidesOf C E A B) : SameSideOf D E A B := by
-  obtain ⟨L, hA, hB⟩ := Postulate1 A B hD.1
-  obtain ⟨hC_L, hD_L, hCD⟩ := hD.oppositeSides hA hB
-  obtain ⟨-, hE_L, hCE⟩ := hE.oppositeSides hA hB
-  refine SameSideOf.of_line hD.1 hA hB ?_
-  rcases same_side_or hC_L hD_L hE_L hCD with h | h
-  · exact absurd h hCE
-  · exact h
-
 /-- "In a straight line with CB": if `CB` is produced beyond `B` to `E`, then any
 point `D` on the ray from `B` through `E` lies in a straight line with `CB`, on
 the far side of `B` from `C`. (System E's rules for "between") -/
@@ -117,9 +93,10 @@ theorem Prop14 {A B C D : Point} (hCD : OppositeSidesOf C D A B) (h : ∠ A B C 
        line, only one ray from a point of it makes a given angle with it, for
        otherwise one of two equal angles would be a part of the other, the less
        equal to the greater. E and D are on the same side of AB, both being on
-       the other side from C (`Prop14.opposite`, `Prop14.sameSide`); so D would
-       lie on the ray from B through E, against the supposition. -/
-    have hDE : SameSideOf D E A B := Prop14.sameSide hCD (Prop14.opposite hABC hCBE)
+       the other side from C (`OppositeSidesOf.of_between`,
+       `OppositeSidesOf.sameSideOf`); so D would lie on the ray from B through E,
+       against the supposition. -/
+    have hDE : SameSideOf D E A B := hCD.sameSideOf (OppositeSidesOf.of_between hABC hCBE)
     exact hD_BE (onRay_of_angle_eq hDE.swap hABE_ABD.symm)
   -- Therefore BE is not in a straight line with CB.
   /- That is, BE is not another straight line than BD: the supposition has

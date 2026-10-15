@@ -106,7 +106,7 @@ may cite them.
 
 ## I.14
 - Euclid's figure has BE within the angle ABD; the other case, BD within ABE, needs handling too (`onRay_of_angle_eq`).
-- E and D lie on the same side of AB, each being on the other side from C (`Prop14.opposite`, `Prop14.sameSide`): the one place the hypothesis "not lying on the same side" is used, as Proclus warned.
+- E and D lie on the same side of AB, each being on the other side from C (`OppositeSidesOf.of_between`, `OppositeSidesOf.sameSideOf`): the one place the hypothesis "not lying on the same side" is used, as Proclus warned.
 
 ## I.15
 - The two straight lines really cross, so that each "stands on" the other before I.13 applies (`Prop15.figure`).
@@ -114,7 +114,7 @@ may cite them.
 - Heath's bracketed Porism (four angles about a point make four right angles) is also proved, as `Prop15.porism`.
 
 ## I.16
-- CF falls within the angle ECD, so that "the angle ECD is greater than the angle ECF" (C.N. 5). Heath notes this fails in Riemann's closed, sphere-like geometry (vol. 1, p. 280); in Lean it comes from Pasch's rules and the two sides of a line (`Prop16.within`).
+- CF falls within the angle ECD, so that "the angle ECD is greater than the angle ECF" (C.N. 5). Heath notes this fails in Riemann's closed, sphere-like geometry (vol. 1, p. 280); in Lean it comes from Pasch's rules and the two sides of a line (`Prop16.within`), and then `angle_add_of_within` and `Triangle.angle_pos`.
 - BE produced must be long enough for I.3 to cut EF off it (`produce_longer`, as in I.11), so Postulate 3 appears on the certificate.
 - "Similarly" becomes one argument applied twice, the second time with AC produced, and I.15 finishes it.
 

@@ -1,7 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop04
 import Elements.BookI.Prop05
-import Elements.BookI.Prop16
 import Elements.BookI.Prop19
 import Elements.BookI.Prop21
 import Elements.BookI.Prop23
@@ -26,30 +25,12 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- A point `G` on the ray from `D` through `P` is on the same side of `DE` as `P`:
-the ray leaves `DE` at `D` and never crosses it again (System E, Pasch 4). -/
-theorem Prop24.side {D E F G P : Point} (hG : OnRay G D P) (hP : SameSideOf P F D E) :
-    SameSideOf G F D E := by
-  have hDE : D ≠ E := hP.1
-  obtain ⟨L, hD_L, hE_L⟩ := Postulate1 D E hDE
-  have hPF : SameSide P F L := hP.sameSide hD_L hE_L
-  have hP_L : ¬ OnLine P L := not_on_line_of_same_side hPF
-  obtain ⟨-, hGD, ⟨M, hD_M, hP_M, hG_M⟩, hGDP⟩ := hG
-  have hLM : L ≠ M := fun e => hP_L (e ▸ hP_M)
-  have hGP : SameSide G P L := by
-    by_cases hGP : G = P
-    · subst hGP
-      exact same_side_refl hP_L
-    · /- Were `G` and `P` on opposite sides of `DE`, `D` would lie between them. -/
-      refine Classical.byContradiction fun hs => hGDP ?_
-      exact pasch4 hLM hD_L hD_M hG_M hP_M hGP hGD (fun e => hP_L (e ▸ hD_L)) hs
-  exact SameSideOf.of_line hDE hD_L hE_L (same_side_trans (same_side_symm hGP) hPF)
-
 /-- `F` lies within the angle `EDG`. Both are on one side of `DE`, and the angle `EDF`
 is the less. If `F` were on `DG`, the angle `EDF` would be the angle `EDG`
 (`angle_onRay_right`); if it were beyond `DG`, then `G` would lie within the angle
 `EDF` (System E, Triple incidence 2), and the angle `EDG` would be a part of it
-(`Prop16.part`), so the greater would be less than the less. -/
+(`angle_add_of_within`, with the angle `GDF` something, `Triangle.angle_pos`), so the
+greater would be less than the less. -/
 theorem Prop24.within {D E F G : Point} (hGF : SameSideOf G F D E) (h : ∠ E D F < ∠ E D G) :
     SameSideOf F E D G := by
   have hDE : D ≠ E := hGF.1
@@ -63,18 +44,16 @@ theorem Prop24.within {D E F G : Point} (hGF : SameSideOf G F D E) (h : ∠ E D 
   refine SameSideOf.of_line hDG hD_M hG_M (Classical.byContradiction fun hs => ?_)
   by_cases hF_M : OnLine F M
   · /- `F` on `DG`, and on `G`'s side of `D`, since both are on one side of `DE`. -/
-    have hF_ray : OnRay F D G :=
-      ⟨hDG, hDF.symm, ⟨M, hD_M, hG_M, hF_M⟩, fun hb => pasch3 hb hD_L (same_side_symm hGF_L)⟩
+    have hF_ray : OnRay F D G := OnRay.of_sameSideOf hGF.symm ⟨M, hD_M, hG_M, hF_M⟩ hDF.symm
     rw [angle_onRay_right hF_ray hDE.symm] at h
     exact lt_irrefl _ h
   · obtain ⟨N, hD_N, hF_N⟩ := Postulate1 D F hDF
     have hEG_N : SameSide E G N :=
       triple_incidence2 hD_L hD_M hD_N hE_L hG_M hF_N hGF_L
         (fun h' => hs (same_side_symm h')) hF_M hDE.symm
-    obtain ⟨hadd, hpos⟩ :=
-      Prop16.part hGF (SameSideOf.of_line hDF hD_N hF_N (same_side_symm hEG_N))
-    have hlt := CommonNotion5 (a := ∠ E D G) hpos
-    rw [← hadd] at hlt
+    have hGE : SameSideOf G E D F := SameSideOf.of_line hDF hD_N hF_N (same_side_symm hEG_N)
+    have hlt := CommonNotion5 (a := ∠ E D G) hGE.triangle.cab.angle_pos
+    rw [← angle_add_of_within hGF hGE] at hlt
     exact lt_irrefl _ (lt_trans hlt h)
 
 /-- Where `F` falls. Since `F` lies within the angle `EDG`, the straight line `DF`,
@@ -102,24 +81,6 @@ theorem Prop24.cases {D E F G : Point} (hGF : SameSideOf G F D E) (hFE : SameSid
     exact Or.inr (Or.inl ⟨hGF.symm,
       SameSideOf.of_line hDEG.ne₂₃ hE_N hG_N (pasch2 (between_symm hDFX) hX_N hF_N), hFE.swap⟩)
 
-/-- The part is less than the whole, for angles: if `R` lies between `P` and `Q`, and
-`V` is off `PQ`, the angle `RVQ` is less than the angle `PVQ`, for `PVQ` is made up of
-`PVR` and `RVQ` (`angle_add_of_between`), and `PVR` is something, since `R` is off
-`VP` (System E, Diagram-angle 1). [C.N. 5] -/
-theorem Prop24.part {V P Q R : Point} (hPQV : Triangle P Q V) (h : Between P R Q) :
-    ∠ R V Q < ∠ P V Q := by
-  rw [angle_add_of_between hPQV h, add_comm]
-  apply CommonNotion5
-  obtain ⟨N, hP_N, hQ_N⟩ := Postulate1 P Q (ne_of_between_ends h)
-  have hV_N : ¬ OnLine V N := hPQV.off_line hP_N hQ_N
-  have hR_N : OnLine R N := on_line_of_between_ends h hP_N hQ_N
-  have hVP : V ≠ P := fun e => hV_N (e ▸ hP_N)
-  have hVR : V ≠ R := fun e => hV_N (e ▸ hR_N)
-  obtain ⟨L, hV_L, hP_L⟩ := Postulate1 V P hVP
-  refine Magnitude.pos_of_ne_zero fun h0 => ?_
-  have hR_L : OnLine R L := (same_ray_of_angle_eq_zero hVP hVR hV_L hP_L h0).1
-  exact hV_N (line_unique (ne_of_between h) hP_L hR_L hP_N hR_N ▸ hV_L)
-
 /-- If two triangles have the two sides equal to two sides respectively, but have the one of the
 angles contained by the equal straight lines greater than the other, they will also have the
 base greater than the base. -/
@@ -140,10 +101,10 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
   obtain ⟨E₁, G₁, hE₁, hG₁F, hE₁DG₁⟩ := Prop23 hDE hABC.bac hDEF
   -- let DG be made equal to either of the two straight lines AC, DF, and let EG, FG be joined.
   /- `G` is laid along the arm `DG₁` with a circle about `D` (`OnRay.exists_len_eq`). It is
-     on `F`'s side of `DE`, as `G₁` is (`Prop24.side`), and the angle `EDG` is the angle
+     on `F`'s side of `DE`, as `G₁` is (`SameSideOf.of_onRay`), and the angle `EDG` is the angle
      `E₁DG₁`, its arms being the same rays (`angle_eq_of_onRay`). -/
   obtain ⟨G, hG, hDG_DF⟩ := OnRay.exists_len_eq hDF hG₁F.triangle.ne₁₃
-  have hGF : SameSideOf G F D E := Prop24.side hG hG₁F
+  have hGF : SameSideOf G F D E := SameSideOf.of_onRay hG hG₁F
   have hEDG : ∠ E D G = ∠ B A C := (angle_eq_of_onRay hE₁.symm hG).trans hE₁DG₁
   /- Joining needs different points. `G` is off `DE`; and `F`, the angle `EDF` being the
      less, lies within the angle `EDG` (`Prop24.within`), so it is off `DG`. -/
@@ -184,10 +145,10 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
       have hEG : E ≠ G := hDEG.ne₂₃
       -- therefore the angle DFG is greater than the angle EGF.
       /- The angle `EGF` is the angle `XGF`, a part of the angle `DGF`, since `X` lies
-         between `D` and `F` (`Prop24.part`). -/
+         between `D` and `F` (`angle_lt_of_between`). -/
       have hEGF_DGF : ∠ E G F < ∠ D G F := by
         rw [← angle_onRay_left (OnRay.of_between (between_symm hEXG)) hFG]
-        exact Prop24.part hDFG hDXF
+        exact angle_lt_of_between hDFG hDXF
       have hEGF_DFG : ∠ E G F < ∠ D F G := by
         rw [← hDGF]
         exact hEGF_DGF
@@ -196,7 +157,7 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
          between `E` and `G`. -/
       have hDFG_EFG : ∠ D F G < ∠ E F G := by
         rw [← angle_onRay_left (OnRay.of_between (between_symm hDXF)) hFG.symm]
-        exact Prop24.part hEGF hEXG
+        exact angle_lt_of_between hEGF hEXG
       have hmuch : ∠ E G F < ∠ E F G := lt_trans hEGF_DFG hDFG_EFG
       -- And, since EFG is a triangle having the angle EFG greater than the angle EGF,
       have hEFG : Triangle E F G := hEGF.acb

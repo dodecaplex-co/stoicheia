@@ -19,31 +19,6 @@ namespace Elements.BookI
 
 open Tacit
 
-/-! ## What Euclid reads off the figure -/
-
-/-- What Euclid sees in his figure: `CA` falls within the angle `BCD`, because `A`
-lies between `B` and `D`; so the angle `BCD` is made up of the angles `BCA` and
-`ACD` (`angle_add_of_between`), and `BCA` is something, since `B` is off the
-straight line `CA` (System E, Diagram-angle 1). The whole is greater than the
-part. -/
-theorem Prop20.part {A B C D : Point} (hBDC : Triangle B D C) (hBAD : Between B A D) :
-    ∠ A C D < ∠ B C D := by
-  have hBCD : ∠ B C D = ∠ B C A + ∠ A C D := angle_add_of_between hBDC hBAD
-  obtain ⟨L, hB_L, hD_L⟩ := Postulate1 B D hBDC.ne₁₂
-  have hA_L : OnLine A L := on_line_of_between_ends hBAD hB_L hD_L
-  have hC_L : ¬ OnLine C L := hBDC.off_line hB_L hD_L
-  have hC_A : C ≠ A := fun e => hC_L (e ▸ hA_L)
-  have hB_A : B ≠ A := ne_of_between hBAD
-  have hB_C : B ≠ C := fun e => hC_L (e ▸ hB_L)
-  obtain ⟨M, hC_M, hA_M⟩ := Postulate1 C A hC_A
-  have hB_M : ¬ OnLine B M := fun hB_M =>
-    hC_L ((line_unique hB_A hB_M hA_M hB_L hA_L) ▸ hC_M)
-  have hBCA : 0 < ∠ B C A := Magnitude.pos_of_ne_zero fun h0 => by
-    rw [angle_symm hB_C hC_A.symm] at h0
-    exact hB_M (same_ray_of_angle_eq_zero hC_A hB_C.symm hC_M hA_M h0).1
-  rw [hBCD, add_comm]
-  exact CommonNotion5 hBCA
-
 /-- In any triangle two sides taken together in any manner are greater than the remaining one. -/
 theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
     ‖B C‖ < ‖B A‖ + ‖A C‖ ∧ ‖A C‖ < ‖A B‖ + ‖B C‖ ∧ ‖A B‖ < ‖B C‖ + ‖C A‖ := by
@@ -89,13 +64,15 @@ theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
       (Prop5 hADC (by rw [← len_symm D A]; exact hDA_AC) hADP hACQ).1
     -- therefore the angle BCD is greater than the angle ADC. [C.N. 5]
     /- Greater than the angle ACD, which is equal to it: CA falls within the angle
-       BCD, since A lies between B and D, and the whole is greater than the part
-       (`Prop20.part`). -/
+       BCD, since A lies between B and D, so that the angle BCD is made up of the
+       angles BCA and ACD (`angle_add_of_between`); the angle BCA, an angle of the
+       triangle ABC, is something (`Triangle.angle_pos`); and the whole is greater
+       than the part. -/
     have hBDC : Triangle B D C :=
       Triangle.of_line hB_BA hD_BA (ne_of_between_ends hBAD) hC_BA
     have hADC_BCD : ∠ A D C < ∠ B C D := by
-      rw [hADC_ACD]
-      exact Prop20.part hBDC hBAD
+      rw [hADC_ACD, angle_add_of_between hBDC hBAD, add_comm]
+      exact CommonNotion5 hABC.bca.angle_pos
     -- And, since DCB is a triangle having the angle BCD greater than the angle BDC,
     /- The angle BDC is the angle ADC, since A lies on the ray from D through B
        (`angle_onRay_left`). -/

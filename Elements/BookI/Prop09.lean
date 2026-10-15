@@ -58,15 +58,6 @@ theorem Prop9.chance_point {A B C : Point} (hAB : A ≠ B) (hAC : A ≠ C) :
     exact ⟨D, between_of_between_left hAXB hADX,
       len_lt_of_inside hA_α hC_α (inside_of_between hA_in (Or.inr hX_α) hADX)⟩
 
-/-- A point on `Q`'s side of the straight line `AB`, where `Q` is on the other side
-from `R`, is itself on the other side from `R`: a straight line has only two sides. -/
-theorem Prop9.opposite {P Q R A B : Point} (hPQ : SameSideOf P Q A B)
-    (hQR : OppositeSidesOf Q R A B) : OppositeSidesOf P R A B := by
-  refine ⟨hPQ.1, fun L hA hB => ?_⟩
-  have hs : SameSide P Q L := hPQ.2 L hA hB
-  have ho : OppositeSides Q R L := hQR.2 L hA hB
-  exact ⟨not_on_line_of_same_side hs, ho.2.1, fun h => ho.2.2 (same_side_trans hs h)⟩
-
 /-- Proclus' objector, first case: `F` might fall on `AB` itself, beyond `D`. Proclus
 answers him with the second part of I.5 (Heath, vol. 1, p. 265). Since `FD` is equal
 to `FE`, the angle `FDE` is equal to the angle `FED` [I. 5]. Since `AD` is equal to
@@ -102,10 +93,9 @@ theorem Prop9.not_on_arm {A B C D E F : Point} (hBAC : Triangle B A C) (hADB : B
   have hCE : C ≠ E := ne_of_between (between_symm hAEC)
   have hC_DE : ¬ OnLine C DE := fun hC =>
     hFA.2.1 ((line_unique hCE hC hE_DE hC_AC hE_AC) ▸ hA_AC)
-  have hCF : SameSide C F DE := by
-    rcases same_side_or hFA.2.1 hC_DE hFA.1 (pasch3 hAEC hE_DE) with h | h
-    · exact absurd (same_side_symm h) hFA.2.2
-    · exact h
+  have hCF : SameSide C F DE :=
+    same_side_of_opposite_sides ⟨hFA.2.1, hC_DE, pasch3 hAEC hE_DE⟩
+      (hF.symm.oppositeSides hD_DE hE_DE)
   have hray : OnRay C E F :=
     onRay_of_angle_eq (SameSideOf.of_line hDE.symm hE_DE hD_DE hCF) hDEC_DEF
   /- So `F` is on `AC`, and on `AB`; and these meet only at `A`. -/
@@ -204,7 +194,7 @@ theorem Prop9 {A B C : Point} (hBAC : Triangle B A C) :
   have hDE : D ≠ E := hADE.ne₂₃
   obtain ⟨Q, hQA, -⟩ := exists_oppositeSidesOf hADE.bca []
   obtain ⟨F, ⟨-, -, hEF_FD⟩, hside⟩ := Prop1 D E hDE Q
-  have hFA : OppositeSidesOf F A D E := Prop9.opposite (hside hQA.triangle) hQA
+  have hFA : OppositeSidesOf F A D E := (hside hQA.triangle).trans_opposite hQA
   -- let AF be joined.
   /- Joined, AF falls within the angle BAC. That is Proclus' objector answered: AF
      crosses DE between D and E (`Prop9.crossing`, by I.5 and I.7), and from there F is
