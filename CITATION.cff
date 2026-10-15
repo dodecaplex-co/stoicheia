@@ -70,3 +70,32 @@ references:
         given-names: Xujie
     repository-code: "https://github.com/loganrjmurphy/LeanEuclid"
     year: 2024
+  - type: software
+    title: "synthetic_euclid_4"
+    authors:
+      - family-names: Hernández-Espiet
+        given-names: André
+      - family-names: Kontorovich
+        given-names: Alex
+    repository-code: "https://github.com/ah1112/synthetic_euclid_4"
+  - type: article
+    title: "Does the Proof Prove It That Way? Faithful Formalization of Elements Proofs"
+    authors:
+      - family-names: Mao
+        given-names: Tadd
+      - family-names: Zhong
+        given-names: Tianjun
+      - family-names: Arekar
+        given-names: Dhruva
+      - family-names: Feng
+        given-names: Yuming
+      - family-names: An
+        given-names: One
+      - family-names: Huang
+        given-names: Jiani
+      - family-names: Si
+        given-names: Xujie
+      - family-names: Li
+        given-names: Ziyang
+    url: "https://arxiv.org/abs/2608.15432"
+    year: 2026

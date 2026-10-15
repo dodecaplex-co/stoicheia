@@ -2,6 +2,12 @@
 
 The Stoicheia logo is built on a detail of a painting that is more than five hundred years old. We're grateful to everyone who made it, kept it, and photographed it.
 
+## The files
+
+- `stoicheia-social.png` (1280 × 640): the social preview, also shown at the top of the README.
+- `stoicheia-logo.png` (1024 × 1024), `stoicheia-logo-512.png` and `stoicheia-logo-128.png`: the logo cropped square, at three sizes, for an avatar or an icon. Nothing in the repository uses them yet; they are here for anyone who wants the logo.
+- `i47-grid.svg`: the figure of I.47 on the laptop's screen.
+
 ## The painting
 
 With gratitude to **Raphael** (Raffaello Sanzio da Urbino, 1483–1520), who painted ***The School of Athens*** (*Scuola di Atene*), a fresco made in 1509–1511 for the Stanza della Segnatura in the Apostolic Palace, Vatican City. It is cared for today by the **Vatican Museums** (Musei Vaticani).

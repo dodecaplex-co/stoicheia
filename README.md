@@ -40,7 +40,7 @@ Here is the heart of I.1. Euclid's sentences are the comments:
   obtain ⟨ACE, hB_ACE, hA_ACE⟩ := Postulate3 B A hAB.symm
   -- and from the point C, in which the circles cut one another, …
   have hmeet := circles_meet hB_BCD (centre_inside hA_BCD) (centre_inside hB_ACE) hA_ACE
-  -- (… C is taken where they cross, on whichever side of AB we need …)
+  /- … C is taken where they cross, on whichever side of AB we need … -/
   -- Now, since the point A is the centre of the circle CDB,
   -- AC is equal to AB. [Def. 15]
   have hAC : ‖A C‖ = ‖A B‖ := Definition15 hA_BCD hC_BCD hB_BCD
@@ -58,6 +58,8 @@ The foundations are in [`Elements/Foundations/`](Elements/Foundations):
 - [**Tacit rules**](Elements/Foundations/Tacit): everything Euclid reads off his figures without saying so. That a point lies between two others, that a line through the inside of a circle must cut it, that two triangles which match in every side and angle have the same area. These follow, rule by rule, the System E of Jeremy Avigad, Edward Dean and John Mumma, which was designed to capture exactly how Euclid reasons from a diagram.
 
 Because every assumption is a Lean `axiom`, `#print axioms` lists exactly what a proof rests on, and [`Certificate/Facts.lean`](Certificate/Facts.lean) turns that into the certificate. One famous result can't be faked: whether a proposition needs the parallel postulate. CI fails if anything before I.29 uses it.
+
+Proposition by proposition, the steps Euclid takes without a word, and the rule or lemma that fills each one, are gathered in [a catalogue for Book I](docs/reports/gaps-book-I.md), with the names of those who noticed them first, where we know.
 
 ## Run it
 
@@ -84,9 +86,9 @@ Because every assumption is a Lean `axiom`, `#print axioms` lists exactly what a
 | [`Elements/Figure/`](Elements/Figure) | "Book Zero": small facts every figure needs, proved once |
 | [`Elements/BookI/`](Elements/BookI) | One file per proposition |
 | [`mishnah/`](mishnah) | The commentary |
-| [`figures/`](figures) | The figures, drawn with Heath's letters |
+| [`figures/`](figures) | The figures: the "at a glance" figures in Byrne's colours, and Euclid's own with Heath's letters |
 | [`book/`](book), [`CERTIFICATE.md`](CERTIFICATE.md), [`GRAPH.md`](GRAPH.md) | Generated pages; don't edit by hand |
-| [`docs/`](docs) | The plan, and notes on sources and earlier work |
+| [`docs/`](docs) | The [plan](docs/briefs/0001-plan.md) the project started from, the [catalogue of what Euclid takes for granted](docs/reports/gaps-book-I.md), the [crew's logs](docs/reports/crew), and notes on [earlier work](docs/reports/0001-prior-art.md) |
 
 A Lean proof needs only the *statements* of the propositions it cites, not their proofs. So once a book's statements are written, its propositions can be proved in any order, and many at once.
 

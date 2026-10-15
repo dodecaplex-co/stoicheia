@@ -22,8 +22,9 @@ because a proof only needs their statements.
    small `PropN.figure`-style lemma in the same file, and tell us in the mishnah.
 3. **Never add an `axiom`.** All assumptions live in `Elements/Foundations/`. If you
    believe Euclid needs a rule that isn't there, open an issue; new rules come from
-   System E (or LeanEuclid's corrections of it), with a citation, and are tagged
-   if they hold only with the parallel postulate.
+   System E (or LeanEuclid's corrections of it), with a citation. A rule that holds
+   only with the parallel postulate is declared in the namespace
+   `Elements.Tacit.Euclidean`, and CI checks that nothing before I.29 rests on it.
 4. **Don't change a statement** without opening an issue first: other propositions
    are written against it.
 5. **No `native_decide`, and nothing in `Elements/Figure/` may cite a proposition.**
@@ -38,8 +39,8 @@ because a proof only needs their statements.
 - Each proposition has two figures, both on the parchment background:
   - `figures/<book>/NN-idea.svg`, the "at a glance" figure: no letters, Byrne's
     red (#d0312d), yellow (#f2b705), blue (#1f5aa6) and black, equal things in the
-    same colour, and a one-sentence caption in the SVG's `<desc>` (it is shown on
-    the page). See `01-idea.svg`, `05-idea.svg`, `47-idea.svg`.
+    same colour, and a caption of one or two short sentences in the SVG's `<desc>`
+    (it is shown on the page). See `01-idea.svg`, `05-idea.svg`, `47-idea.svg`.
   - `figures/<book>/NN.svg`, Euclid's figure, with Heath's letters, drawn to match
     the proof.
 
