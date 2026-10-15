@@ -21,6 +21,14 @@ of merit.
   Artificial Intelligence 85, 2019). All of Book I, checked in HOL Light and Coq, on
   a points-only axiom system; about 235 theorems for the 48 propositions. Part of
   [GeoCoq](https://github.com/GeoCoq/GeoCoq).
+- **Kellison, Bickford and Constable, *Implementing Euclid's straightedge and compass
+  constructions in type theory*** (Annals of Mathematics and Artificial Intelligence
+  85(2–4), 2019, pp. 175–192; [doi](https://doi.org/10.1007/s10472-018-9603-0)).
+  Euclid's constructions built in the intuitionistic type theory of the Nuprl proof
+  assistant, with a predicate for orientation that lets them be stated concisely; one
+  result is a proof of I.2 in its full generality. Cornell's Nuprl site also has
+  [Nuprl proofs of Book I's propositions](https://nuprl-web.cs.cornell.edu/MathLibrary/TheElements),
+  set out as Heath presents them.
 - **Pistis** (Mao, Zhong, Arekar, Feng, An, Huang, Si, Li; arXiv 2608.15432, August
   2026). Agentic, oracle-guided proof search producing Lean proofs of Books I–III
   that follow Euclid's natural-language argument, with a definition of
@@ -47,6 +55,26 @@ and superposition (§3.7). Two things we noticed while transcribing the rules:
   Book I was transcribed from the OCR and proofread against the page images.
 - **Perseus** has Heath's (1926) text under CC BY-SA; used only as a cross-check.
 - **Project Gutenberg** has Casey's *First Six Books* (1885, #21076) and Proclus on
-  Book I in Taylor's translation (#74253, #79455).
+  Book I in Taylor's translation (#74253, #79455). The Casey was produced by Joshua
+  Hutchinson, Keith Edkins and the Distributed Proofreaders from Cornell University
+  Library's scans (its Historical Mathematics Monographs collection), and revised by
+  Richard Tonsing.
+- **Simson 1756**: Robert Simson's *The Elements of Euclid, viz. the first six books,
+  together with the eleventh and twelfth* (Glasgow: Robert and Andrew Foulis). Heath
+  quotes him often, and our mishnah on I.24 builds on the sentence he added there,
+  which Heath leaves out.
 - **Joyce's** online edition and **Fitzpatrick's** Greek–English edition are
   copyrighted; we link to them.
+
+## Mathematics beside Lean
+
+Two projects showed how mathematics written for people can sit beside the Lean that
+checks it, and were the inspiration for our pages:
+
+- **leanblueprint** (Patrick Massot;
+  [repo](https://github.com/PatrickMassot/leanblueprint)). A plasTeX plugin for
+  writing the blueprint of a Lean formalization: the mathematics in prose, each
+  statement linked to its Lean.
+- **Verso** (David Thrane Christiansen and the Lean FRO;
+  [repo](https://github.com/leanprover/verso)). "A tool for writing about Lean":
+  documents written in Lean itself, for manuals, tutorials, blogs and papers.
