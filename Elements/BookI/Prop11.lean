@@ -21,37 +21,6 @@ namespace Elements.BookI
 
 open Tacit
 
-/-! ## What Euclid reads off the figure -/
-
-/-- Room to cut off `CE`. I.3 cuts a straight line off from a *greater* one, and
-nothing says that `CB` is greater than `CD`; Postulate 2 produces a straight line
-but says nothing of how far. So: with centre `C` and distance `CD` describe a
-circle (Post. 3); the straight line `DC`, produced beyond the centre, cuts it
-again at some `X` (System E, Intersections 5); and `CX` produced (Post. 2) is
-greater than `CX`, that is, than `CD`. -/
-theorem Prop11.produced {C D : Point} (hDC : D ≠ C) :
-    ∃ G : Point, Between D C G ∧ ‖C D‖ < ‖C G‖ := by
-  obtain ⟨L, hC, hD⟩ := Postulate1 C D hDC.symm
-  obtain ⟨α, hCα, hDα⟩ := Postulate3 C D hDC.symm
-  obtain ⟨X, hXα, -, hXCD⟩ := line_circle_beyond (centre_inside hCα) hC hD hDC
-  obtain ⟨G, hCXG⟩ := produce (ne_of_between hXCD).symm
-  refine ⟨G, between_of_between_right (between_symm hXCD) hCXG, ?_⟩
-  rw [Definition15 hCα hDα hXα]
-  exact len_lt_of_between hCXG
-
-/-- The two halves of a straight line. If `C` lies between `D` and `E`, every
-other point `P` of the straight line `DE` lies on the ray from `C` through `D` or
-on the ray from `C` through `E`: either `C` is not between `P` and `D`, or it is,
-and then it cannot also be between `P` and `E` (System E, Between 7). -/
-theorem Prop11.either_ray {C D E P : Point} {L : Line} (hDCE : Between D C E)
-    (hD : OnLine D L) (hC : OnLine C L) (hP : OnLine P L) (hPC : P ≠ C) :
-    OnRay P C D ∨ OnRay P C E := by
-  by_cases h : Between P C D
-  · have hE : OnLine E L := on_line_of_between hDCE hD hC
-    exact Or.inr ⟨(ne_of_between (between_symm hDCE)).symm, hPC, ⟨L, hC, hE, hP⟩,
-      fun h' => not_between_of_between_between h h' hDCE⟩
-  · exact Or.inl ⟨(ne_of_between hDCE).symm, hPC, ⟨L, hC, hD, hP⟩, h⟩
-
 /-- To draw a straight line at right angles to a given straight line from a given point on it. -/
 theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬ Collinear A B Q) :
     ∃ F : Point, SameSideOf F Q A B ∧ ∀ P : Point, Collinear A B P → P ≠ C → ∠ P C F = ∟ := by
@@ -78,11 +47,11 @@ theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬
       exact ⟨D, hD_AB, (ne_of_between (between_symm hADC)).symm⟩
   -- let CE be made equal to CD; [I. 3]
   /- CE is cut off from DC produced beyond C, far enough for I.3 to have a
-     greater straight line to cut it from (`Prop11.produced`). So C lies between
-     D and E: the figure's D, C, E in a row. -/
-  obtain ⟨G, hDCG, hCD_CG⟩ := Prop11.produced hDC
+     greater straight line to cut it from (`produce_longer` in Book Zero). So C
+     lies between D and E (`between_cut`): the figure's D, C, E in a row. -/
+  obtain ⟨G, hDCG, hCD_CG⟩ := produce_longer hDC hDC.symm
   obtain ⟨E, hCEG, hCE_CD⟩ := Prop3 hDC.symm hCD_CG
-  have hDCE : Between D C E := between_symm (between_inner (between_symm hCEG) (between_symm hDCG))
+  have hDCE : Between D C E := between_cut hDCG hCEG
   have hE_AB : OnLine E AB := on_line_of_between hDCE hD_AB hC_AB
   have hDE : D ≠ E := ne_of_between_ends hDCE
   have hEC : E ≠ C := ne_of_between (between_symm hDCE)
@@ -126,10 +95,10 @@ theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬
   -- Therefore the straight line CF has been drawn at right angles to the given straight line
   -- AB from the given point C on it.
   /- Every other point P of AB lies on the ray from C through D, or on the ray
-     from C through E (`Prop11.either_ray`), and the angle PCF is the angle DCF
-     or the angle ECF (`angle_onRay_left` in Book Zero). -/
+     from C through E (`OnRay.cases_of_between`), and the angle PCF is the angle
+     DCF or the angle ECF (`angle_onRay_left`; both are in Book Zero). -/
   refine ⟨F, SameSideOf.of_line hAB hA_AB hB_AB hF_Q, fun P hP hPC => ?_⟩
-  rcases Prop11.either_ray hDCE hD_AB hC_AB (on_AB hP) hPC with hPD | hPE
+  rcases OnRay.cases_of_between hDCE hD_AB hE_AB (on_AB hP) hPC with hPD | hPE
   · rw [angle_onRay_left hPD hFC]
     exact hDCF
   · rw [angle_onRay_left hPE hFC, angle_symm hEC hFC]

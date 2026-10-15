@@ -11,34 +11,15 @@ carries it out.
 
 Euclid proves that the angles `CHG` and `CHE` are right. The statement asks for
 more, as "perpendicular to the infinite straight line AB" does: a right angle
-with every other point of `AB`. `Prop12.onRay_cases` closes the gap: every
-point of the straight line other than `H` lies on the ray from `H` through `G`
-or on the ray from `H` through `E`.
+with every other point of `AB`. Book Zero's `OnRay.cases_of_between` closes the
+gap: every point of the straight line other than `H` lies on the ray from `H`
+through `G` or on the ray from `H` through `E`. This is why `CH`, making right
+angles with `HG` and with `HE`, makes a right angle with the whole of `AB`.
 -/
 
 namespace Elements.BookI
 
 open Tacit
-
-/-! ## What Euclid reads off the figure -/
-
-/-- The point `H` cuts the straight line through `G` and `E` into two rays: if `H`
-lies between `G` and `E`, every other point `P` of that straight line lies on the
-ray from `H` through `G` or on the ray from `H` through `E`. Euclid shows that `CH`
-makes right angles with `HG` and with `HE`; this is why it then makes a right
-angle with the whole of `AB`. (System E, Between 7) -/
-theorem Prop12.onRay_cases {G H E P : Point} {L : Line} (hGHE : Between G H E)
-    (hG : OnLine G L) (hE : OnLine E L) (hP : OnLine P L) (hPH : P ≠ H) :
-    OnRay P H G ∨ OnRay P H E := by
-  have hH : OnLine H L := on_line_of_between_ends hGHE hG hE
-  have hHG : H ≠ G := (ne_of_between hGHE).symm
-  have hHE : H ≠ E := (ne_of_between (between_symm hGHE)).symm
-  by_cases hb : Between P H G
-  · /- `P` is beyond `H` from `G`: then `H` is not between `P` and `E`, for `P` and
-       `E` are both beyond `H` from `G`. -/
-    exact Or.inr ⟨hHE, hPH, ⟨L, hH, hE, hP⟩,
-      not_between_of_between_between (between_symm hb) hGHE⟩
-  · exact Or.inl ⟨hHG, hPH, ⟨L, hH, hG, hP⟩, hb⟩
 
 /-- To a given infinite straight line, from a given point which is not on it, to draw a
 perpendicular straight line. -/
@@ -116,12 +97,12 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
   -- given point C which is not on it.
   /- Perpendicular to the whole infinite straight line: any other point P of AB
      lies on the ray from H through G or on the ray from H through E
-     (`Prop12.onRay_cases`), and then the angle CHP is the angle CHG or the
+     (`OnRay.cases_of_between`), and then the angle CHP is the angle CHG or the
      angle CHE (`angle_onRay_right`). -/
   refine ⟨H, ⟨AB, hA_AB, hB_AB, hH_AB⟩, fun P hP hPH => ?_⟩
   obtain ⟨L, hA_L, hB_L, hP_L⟩ := hP
   rw [line_unique hAB hA_L hB_L hA_AB hB_AB] at hP_L
-  rcases Prop12.onRay_cases hGHE hG_AB hE_AB hP_L hPH with hPG | hPE
+  rcases OnRay.cases_of_between hGHE hG_AB hE_AB hP_L hPH with hPG | hPE
   · exact (angle_onRay_right hPG hCH).trans hCHG
   · exact (angle_onRay_right hPE hCH).trans hCHE
   -- Q. E. F.

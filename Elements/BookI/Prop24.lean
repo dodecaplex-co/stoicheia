@@ -26,25 +26,6 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- "Let DG be made equal to DF." Euclid cites nothing here. On the ray from `D`
-through any point `P` there is a point `G` with `DG` equal to `DF`: describe the circle
-with centre `D` and distance `DF` (Post. 3); the straight line `DP`, which passes
-through its centre, cuts it on `P`'s side of `D` (System E, Intersections 5, with a
-point `Q` set out on the other side); and `DG` is a radius [Def. 15]. -/
-theorem Prop24.made_equal {D F P : Point} (hDF : D ≠ F) (hDP : D ≠ P) :
-    ∃ G : Point, OnRay G D P ∧ ‖D G‖ = ‖D F‖ := by
-  obtain ⟨α, hD_α, hF_α⟩ := Postulate3 D F hDF
-  obtain ⟨L, hD_L, hP_L⟩ := Postulate1 D P hDP
-  /- A point `Q` behind `D`, so that the circle is cut on `P`'s side. -/
-  obtain ⟨Q, hPDQ⟩ := produce hDP.symm
-  have hQ_L : OnLine Q L := on_line_of_between hPDQ hP_L hD_L
-  obtain ⟨G, hG_α, hG_L, hGDQ⟩ :=
-    line_circle_beyond (centre_inside hD_α) hD_L hQ_L (ne_of_between (between_symm hPDQ))
-  refine ⟨G, ⟨hDP, ne_of_between hGDQ, ⟨L, hD_L, hP_L, hG_L⟩, fun hGDP => ?_⟩,
-    Definition15 hD_α hG_α hF_α⟩
-  /- `G` and `P` are both on the far side of `D` from `Q`, so `D` is not between them. -/
-  exact not_between_of_between_between hGDQ hGDP (between_symm hPDQ)
-
 /-- A point `G` on the ray from `D` through `P` is on the same side of `DE` as `P`:
 the ray leaves `DE` at `D` and never crosses it again (System E, Pasch 4). -/
 theorem Prop24.side {D E F G P : Point} (hG : OnRay G D P) (hP : SameSideOf P F D E) :
@@ -158,10 +139,10 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
      whichever side of `DE` we ask for. We ask for `F`'s side, as in Euclid's figure. -/
   obtain ⟨E₁, G₁, hE₁, hG₁F, hE₁DG₁⟩ := Prop23 hDE hABC.bac hDEF
   -- let DG be made equal to either of the two straight lines AC, DF, and let EG, FG be joined.
-  /- `G` is laid along the arm `DG₁` with a circle about `D` (`Prop24.made_equal`). It is
+  /- `G` is laid along the arm `DG₁` with a circle about `D` (`OnRay.exists_len_eq`). It is
      on `F`'s side of `DE`, as `G₁` is (`Prop24.side`), and the angle `EDG` is the angle
      `E₁DG₁`, its arms being the same rays (`angle_eq_of_onRay`). -/
-  obtain ⟨G, hG, hDG_DF⟩ := Prop24.made_equal hDF hG₁F.triangle.ne₁₃
+  obtain ⟨G, hG, hDG_DF⟩ := OnRay.exists_len_eq hDF hG₁F.triangle.ne₁₃
   have hGF : SameSideOf G F D E := Prop24.side hG hG₁F
   have hEDG : ∠ E D G = ∠ B A C := (angle_eq_of_onRay hE₁.symm hG).trans hE₁DG₁
   /- Joining needs different points. `G` is off `DE`; and `F`, the angle `EDF` being the

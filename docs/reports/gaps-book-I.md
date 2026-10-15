@@ -89,14 +89,14 @@ may cite them.
 - The bisector of the angle ACB meets AB, and between A and B: I.9's statement (F within the angle) and Book Zero's `crossbar`.
 
 ## I.11
-- I.3 needs a greater line to cut from, and Postulate 2 gives no length; room is found with a circle (`Prop11.produced`).
+- I.3 needs a greater line to cut from, and Postulate 2 gives no length; room is found with a circle (`produce_longer`, used again in I.16, I.20 and I.22).
 - C lies between D and E, which makes the angles DCF and FCE adjacent.
-- "At right angles to AB" means at right angles to every point of AB, not only D and E (`Prop11.either_ray`).
+- "At right angles to AB" means at right angles to every point of AB, not only D and E (`OnRay.cases_of_between`).
 - Turning Definition 10's "right" into the one magnitude of all right angles takes Postulate 4, which Euclid doesn't cite here.
 
 ## I.12
 - The circle about C through D cuts AB twice (System E Intersection 2).
-- "Perpendicular to the infinite straight line" again means a right angle with every point of AB (`Prop12.onRay_cases`).
+- "Perpendicular to the infinite straight line" again means a right angle with every point of AB (`OnRay.cases_of_between`, as in I.11).
 
 ## I.13
 - Euclid's figure has BA leaning towards C; the other lean is his figure with C and D exchanged (`Prop13.cases`).
@@ -115,7 +115,7 @@ may cite them.
 
 ## I.16
 - CF falls within the angle ECD, so that "the angle ECD is greater than the angle ECF" (C.N. 5). Heath notes this fails in Riemann's closed, sphere-like geometry (vol. 1, p. 280); in Lean it comes from Pasch's rules and the two sides of a line (`Prop16.within`).
-- BE produced must be long enough for I.3 to cut EF off it (`Prop16.beyond`), so Postulate 3 appears on the certificate.
+- BE produced must be long enough for I.3 to cut EF off it (`produce_longer`, as in I.11), so Postulate 3 appears on the certificate.
 - "Similarly" becomes one argument applied twice, the second time with AC produced, and I.15 finishes it.
 
 ## Postulates the Lean needs that Euclid doesn't cite

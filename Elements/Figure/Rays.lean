@@ -9,10 +9,11 @@ starts at a point and runs one way. In Lean that is `OnRay P A B`: the point `P`
 lies on the straight line from `A` through `B`, on `B`'s side of `A`.
 
 Euclid takes for granted that a point between `A` and `B`, or beyond `B`, lies on
-that ray; that two points of one ray are never on opposite sides of its start;
-and that on a ray only one point lies at a given distance from its start, so
-that a point "laid along" the ray at the right distance "coincides" with the
-point already there. These are those facts.
+that ray; that a point of a straight line cuts it into two rays; that two points
+of one ray are never on opposite sides of its start; and that on a ray just one
+point lies at a given distance from its start, so that a point "laid along" the
+ray at the right distance "coincides" with the point already there. These are
+those facts.
 -/
 
 namespace Elements
@@ -44,6 +45,21 @@ through `P`: they are one and the same ray. -/
 theorem OnRay.symm (h : OnRay P A B) : OnRay B A P := by
   obtain ⟨hAB, hPA, ⟨L, hA, hB, hP⟩, hn⟩ := h
   exact ⟨hPA.symm, hAB.symm, ⟨L, hA, hP, hB⟩, fun hb => hn (between_symm hb)⟩
+
+/-- A point cuts a straight line into two rays. If `A` lies between `B` and `C`, every
+other point `P` of the straight line `BC` lies on the ray from `A` through `B` or on
+the ray from `A` through `C`: either `A` is not between `P` and `B`, or it is, and
+then it cannot also be between `P` and `C` (System E, Between 7). -/
+theorem OnRay.cases_of_between {A B C P : Point} {L : Line} (h : Between B A C)
+    (hB : OnLine B L) (hC : OnLine C L) (hP : OnLine P L) (hPA : P ≠ A) :
+    OnRay P A B ∨ OnRay P A C := by
+  have hA : OnLine A L := on_line_of_between_ends h hB hC
+  by_cases hb : Between P A B
+  · /- `P` is beyond `A` from `B`: then `A` is not between `P` and `C`, for `P` and
+       `C` are both beyond `A` from `B`. -/
+    exact Or.inr ⟨(ne_of_between (between_symm h)).symm, hPA, ⟨L, hA, hC, hP⟩,
+      not_between_of_between_between (between_symm hb) h⟩
+  · exact Or.inl ⟨(ne_of_between h).symm, hPA, ⟨L, hA, hB, hP⟩, hb⟩
 
 /-- Every straight line through `A` and `B` passes through each point of the ray
 from `A` through `B`. -/
@@ -85,6 +101,25 @@ theorem OnRay.between_of_len_lt (hP : OnRay P A B) (hQ : OnRay Q A B) (h : ‖A 
   · exact absurd h' (hP.not_between hQ)
   · /- Q between A and P: then AQ would be only a part of AP. -/
     exact absurd (lt_trans h (len_lt_of_between h')) (lt_irrefl _)
+
+/-- "Let DG be made equal to DF" (I.24): on the ray from `D` through any point `P`
+there is a point `G` with `DG` equal to `DF`. Describe the circle with centre `D` and
+distance `DF` (Post. 3); the straight line `DP`, which passes through its centre, cuts
+it on `P`'s side of `D` (System E, Intersections 5, with a point `Q` set out on the
+other side); and `DG` is a radius [Def. 15]. -/
+theorem OnRay.exists_len_eq {D F P : Point} (hDF : D ≠ F) (hDP : D ≠ P) :
+    ∃ G : Point, OnRay G D P ∧ ‖D G‖ = ‖D F‖ := by
+  obtain ⟨α, hD_α, hF_α⟩ := Postulate3 D F hDF
+  obtain ⟨L, hD_L, hP_L⟩ := Postulate1 D P hDP
+  /- A point `Q` behind `D`, so that the circle is cut on `P`'s side. -/
+  obtain ⟨Q, hPDQ⟩ := produce hDP.symm
+  have hQ_L : OnLine Q L := on_line_of_between hPDQ hP_L hD_L
+  obtain ⟨G, hG_α, hG_L, hGDQ⟩ :=
+    line_circle_beyond (centre_inside hD_α) hD_L hQ_L (ne_of_between (between_symm hPDQ))
+  refine ⟨G, ⟨hDP, ne_of_between hGDQ, ⟨L, hD_L, hP_L, hG_L⟩, fun hGDP => ?_⟩,
+    Definition15 hD_α hG_α hF_α⟩
+  /- `G` and `P` are both on the far side of `D` from `Q`, so `D` is not between them. -/
+  exact not_between_of_between_between hGDQ hGDP (between_symm hPDQ)
 
 /-- On a ray, only one point lies at a given distance from its start: a point `P`
 on the ray from `A` through `B`, as far from `A` as `B` is, is `B` itself.

@@ -43,20 +43,17 @@ the direction of E", so that whatever is to be cut off from it, there is room. A
 straight line in Lean has no length to cut from, and I.3 cuts off only from a
 greater finite straight line; so we find a point `Z` on `DF` produced beyond `F`
 with `FZ` greater than the given straight line `X₁X₂`. At `F` place a straight
-line equal to `X₁X₂` [I. 2]; describe the circle with centre `F` through its end
-[Post. 3]; the straight line `DF` produced beyond the centre cuts that circle at
-some `W` (System E, Intersections 5); and `FW` produced [Post. 2] is greater than
-`FW`, that is, than `X₁X₂` [Def. 15, C.N. 5]. -/
+line `FY` equal to `X₁X₂` [I. 2], and produce `DF` beyond `F` further than `FY`
+(`produce_longer` in Book Zero: a circle with centre `F` through `Y` [Post. 3],
+cut by `DF` produced beyond the centre [System E, Intersections 5], and `DF`
+produced a little further still [Post. 2]). -/
 theorem Prop22.room {D F X₁ X₂ : Point} (hDF : D ≠ F) (hX : X₁ ≠ X₂) :
     ∃ Z : Point, Between D F Z ∧ ‖X₁ X₂‖ < ‖F Z‖ := by
   obtain ⟨Y, hFY⟩ := Prop2 F X₁ X₂ hX
-  obtain ⟨α, hF_α, hY_α⟩ := Postulate3 F Y (ne_of_len_eq hFY hX)
-  obtain ⟨L, hD_L, hF_L⟩ := Postulate1 D F hDF
-  obtain ⟨W, hW_α, -, hWFD⟩ := line_circle_beyond (centre_inside hF_α) hF_L hD_L hDF
-  obtain ⟨Z, hFWZ⟩ := produce (ne_of_between hWFD).symm
-  refine ⟨Z, between_of_between_right (between_symm hWFD) hFWZ, ?_⟩
-  rw [← hFY, Definition15 hF_α hY_α hW_α]
-  exact len_lt_of_between hFWZ
+  obtain ⟨Z, hDFZ, hFY_FZ⟩ := produce_longer hDF (ne_of_len_eq hFY hX)
+  refine ⟨Z, hDFZ, ?_⟩
+  rw [← hFY]
+  exact hFY_FZ
 
 /-- The circles meet. Euclid takes `K` where the circle about `F` and the circle
 about `G` cut one another, and never says why they should. Heath's own argument
@@ -154,19 +151,17 @@ theorem Prop22 {A₁ A₂ B₁ B₂ C₁ C₂ E F P : Point}
   /- Three times I.3, each time cutting off from a straight line produced far
      enough to cut from (`Prop22.room`): FD from EF produced beyond F, FG from DF
      produced beyond F, and GH from FG produced beyond G. So D, F, G, H lie in that
-     order along DE, as in Euclid's figure (`between_inner`), and G lies on the ray
+     order along DE, as in Euclid's figure (`between_cut`), and G lies on the ray
      from F through E. -/
   obtain ⟨X, hEFX, hA_FX⟩ := Prop22.room hFE.symm hA
   obtain ⟨D, hFDX, hFD⟩ := Prop3 hA hA_FX
-  have hDFE : Between D F E := between_inner (between_symm hFDX) (between_symm hEFX)
+  have hDFE : Between D F E := between_symm (between_cut hEFX hFDX)
   obtain ⟨Y, hDFY, hB_FY⟩ := Prop22.room (ne_of_between hDFE) hB
   obtain ⟨G, hFGY, hFG⟩ := Prop3 hB hB_FY
-  have hDFG : Between D F G :=
-    between_symm (between_inner (between_symm hFGY) (between_symm hDFY))
+  have hDFG : Between D F G := between_cut hDFY hFGY
   obtain ⟨Z, hFGZ, hC_GZ⟩ := Prop22.room (ne_of_between hFGY) hC
   obtain ⟨H, hGHZ, hGH⟩ := Prop3 hC hC_GZ
-  have hFGH : Between F G H :=
-    between_symm (between_inner (between_symm hGHZ) (between_symm hFGZ))
+  have hFGH : Between F G H := between_cut hFGZ hGHZ
   have hD_DE : OnLine D DE := on_line_of_between (between_symm hDFE) hE_DE hF_DE
   have hG_DE : OnLine G DE := on_line_of_between hDFG hD_DE hF_DE
   have hG_ray : OnRay G F E :=

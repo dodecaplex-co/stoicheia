@@ -75,8 +75,7 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   /- At random, but not too far out: see `Prop5.chance_point`. Then F lies beyond B
      on the straight line AB. -/
   obtain ⟨F, hBFD, hAF_AE⟩ := Prop5.chance_point hAB hD hE
-  have hABF : Between A B F :=
-    between_symm (between_inner (between_symm hBFD) (between_symm hD))
+  have hABF : Between A B F := between_cut hD hBFD
   have hF_AB : OnLine F AB := on_line_of_between hABF hA_AB hB_AB
   have hA_F : A ≠ F := ne_of_between_ends hABF
   -- from AE the greater let AG be cut off equal to AF the less; [I. 3]

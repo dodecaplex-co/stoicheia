@@ -23,22 +23,6 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- "Let BE be joined and produced in a straight line to F; let EF be made equal to
-BE [I. 3]." I.3 cuts off from a greater straight line, and Postulate 2 produces `BE`
-without saying how far. So first produce it beyond `E` to a point `X` with `EX`
-greater than `BE`: produce `EB` beyond `B` to `P`, describe the circle with centre
-`E` and distance `EP`, and take `X` where `BE` produced cuts it (System E,
-Intersections 5). Then `EX` is equal to `EP` [Def. 15], which is greater than `EB`. -/
-theorem Prop16.beyond {B E : Point} (h : B ≠ E) :
-    ∃ X : Point, Between B E X ∧ ‖B E‖ < ‖E X‖ := by
-  obtain ⟨P, hEBP⟩ := produce h.symm
-  obtain ⟨α, hE_α, hP_α⟩ := Postulate3 E P (ne_of_between_ends hEBP)
-  obtain ⟨L, hB_L, hE_L⟩ := Postulate1 B E h
-  obtain ⟨X, hX_α, -, hXEB⟩ := line_circle_beyond (centre_inside hE_α) hE_L hB_L h
-  refine ⟨X, between_symm hXEB, ?_⟩
-  rw [len_symm B E, Definition15 hE_α hX_α hP_α]
-  exact len_lt_of_between hEBP
-
 /-- What Euclid sees in his figure: `F` lies within the angle `ECD`. It is on `D`'s
 side of `AC`, because `AC` separates `B` from `F` (`E` is between them) and also `B`
 from `D` (`C` is between them), and a straight line has only two sides. And it is on
@@ -124,14 +108,15 @@ theorem Prop16 {A B C D : Point} (hABC : Triangle A B C) (hBCD : Between B C D) 
     have hB_E : B ≠ E := fun h => hB_AC (h ▸ hE_AC)
     obtain ⟨BE, hB_BE, hE_BE⟩ := Postulate1 B E hB_E
     /- Produced beyond E to a point X, far enough for I.3 to cut EF off from EX:
-       `Prop16.beyond`. -/
-    obtain ⟨X, hBEX, hBE_EX⟩ := Prop16.beyond hB_E
+       `produce_longer` in Book Zero. -/
+    obtain ⟨X, hBEX, hEB_EX⟩ := produce_longer hB_E hB_E.symm
     -- let EF be made equal to BE [I. 3], let FC be joined [Post. 1], and let AC be drawn through
     -- to G [Post. 2].
-    obtain ⟨F, hEFX, hEF_BE⟩ := Prop3 hB_E hBE_EX
-    /- F lies between E and X, so E lies between B and F: BE produced reaches F. -/
-    have hBEF : Between B E F :=
-      between_symm (between_inner (between_symm hEFX) (between_symm hBEX))
+    obtain ⟨F, hEFX, hEF_BE⟩ :=
+      Prop3 (A := E) (B := X) hB_E (by rw [len_symm B E]; exact hEB_EX)
+    /- F lies between E and X, so E lies between B and F: BE produced reaches F
+       (`between_cut`). -/
+    have hBEF : Between B E F := between_cut hBEX hEFX
     have hF_BE : OnLine F BE := on_line_of_between hBEF hB_BE hE_BE
     have hE_F : E ≠ F := (ne_of_between (between_symm hBEF)).symm
     have hF_AC : ¬ OnLine F AC := fun h =>

@@ -21,23 +21,6 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- Room to cut off `AD`. "Let BA be drawn through to the point D, let DA be made
-equal to CA": that is I.3's work, and I.3 cuts off from a *greater* straight line,
-while Postulate 2 produces `BA` without saying how far. So first produce `BA` beyond
-`A` further than `AC`: describe the circle with centre `A` and distance `AC`
-(Post. 3), take `Y` where `BA` produced beyond the centre cuts it (System E,
-Intersections 5), and produce `AY` a little further still, to `X` (Post. 2). Then
-`AX` is greater than `AY`, which is equal to `AC` [Def. 15]. -/
-theorem Prop20.produced {A B C : Point} (hBA : B ≠ A) (hAC : A ≠ C) :
-    ∃ X : Point, Between B A X ∧ ‖A C‖ < ‖A X‖ := by
-  obtain ⟨α, hA_α, hC_α⟩ := Postulate3 A C hAC
-  obtain ⟨L, hB_L, hA_L⟩ := Postulate1 B A hBA
-  obtain ⟨Y, hY_α, -, hYAB⟩ := line_circle_beyond (centre_inside hA_α) hA_L hB_L hBA
-  obtain ⟨X, hAYX⟩ := produce (ne_of_between hYAB).symm
-  refine ⟨X, between_of_between_right (between_symm hYAB) hAYX, ?_⟩
-  rw [Definition15 hA_α hC_α hY_α]
-  exact len_lt_of_between hAYX
-
 /-- What Euclid sees in his figure: `CA` falls within the angle `BCD`, because `A`
 lies between `B` and `D`; so the angle `BCD` is made up of the angles `BCA` and
 `ACD` (`angle_add_of_between`), and `BCA` is something, since `B` is off the
@@ -80,16 +63,15 @@ theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
     have hC_BA : ¬ OnLine C BA := hABC.bac.off_line hB_BA hA_BA
     -- For let BA be drawn through to the point D,
     /- Drawn through beyond A to a point X, far enough for I.3 to cut AD off from AX:
-       `Prop20.produced`. -/
-    obtain ⟨X, hBAX, hAC_AX⟩ := Prop20.produced hB_A hA_C
+       `produce_longer` in Book Zero. -/
+    obtain ⟨X, hBAX, hAC_AX⟩ := produce_longer hB_A hA_C
     -- let DA be made equal to CA, and let DC be joined.
     /- Heath gives no bracket here, but "let DA be made equal" is I.3's work, as in
        I.11 and I.16: cut off AD from AX. Then D lies between A and X, and so A lies
-       between B and D: BA drawn through reaches D. -/
+       between B and D (`between_cut`): BA drawn through reaches D. -/
     obtain ⟨D, hADX, hAD_CA⟩ := Prop3 (A := A) (B := X) hA_C.symm
       (by rw [len_symm C A]; exact hAC_AX)
-    have hBAD : Between B A D :=
-      between_symm (between_inner (between_symm hADX) (between_symm hBAX))
+    have hBAD : Between B A D := between_cut hBAX hADX
     have hD_BA : OnLine D BA := on_line_of_between hBAD hB_BA hA_BA
     have hA_D : A ≠ D := ne_of_between hADX
     have hD_C : D ≠ C := fun e => hC_BA (e ▸ hD_BA)
