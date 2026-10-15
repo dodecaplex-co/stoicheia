@@ -115,7 +115,7 @@ may cite them.
 
 ## I.16
 - CF falls within the angle ECD, so that "the angle ECD is greater than the angle ECF" (C.N. 5). Heath notes this fails in Riemann's closed, sphere-like geometry (vol. 1, p. 280); in Lean it comes from Pasch's rules and the two sides of a line (`Prop16.within`), and then `angle_add_of_within` and `Triangle.angle_pos`.
-- BE produced must be long enough for I.3 to cut EF off it (`produce_longer`, as in I.11), so Postulate 3 appears on the certificate.
+- BE produced must be long enough for I.3 to cut EF off it (`produce_longer`, as in I.11), which takes a circle (Post. 3) that Euclid does not draw.
 - "Similarly" becomes one argument applied twice, the second time with AC produced, and I.15 finishes it.
 
 ## Postulates the Lean needs that Euclid doesn't cite
