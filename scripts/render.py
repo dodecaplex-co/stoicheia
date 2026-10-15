@@ -69,7 +69,10 @@ def load_axiom_docs():
     pattern = re.compile(r"/--((?:(?!-/).)*?)-/\s*axiom\s+([^\s({]+)", re.S)
     for path in sorted((ROOT / "Elements" / "Foundations").rglob("*.lean")):
         src = path.read_text()
-        prefix = "Tacit." if "namespace Elements.Tacit" in src else ""
+        # facts.json names an axiom by its namespace below `Elements`, e.g.
+        # `Tacit.circles_meet` or, for a Euclidean-only rule, `Tacit.Euclidean.…`.
+        ns = re.search(r"^namespace Elements\.(\S+)", src, re.M)
+        prefix = ns.group(1) + "." if ns else ""
         for m in pattern.finditer(src):
             doc = " ".join(m.group(1).split())
             line = src[: m.start(2)].count("\n") + 1
@@ -124,6 +127,18 @@ def roman_list(names, prefix):
     return ", ".join(n.replace(prefix, "") for n in sorted(names, key=lambda s: int(re.sub(r"\D", "", s) or 0)))
 
 
+def prop_key(ref):
+    """Sort references by number, so that I.3 comes before I.10."""
+    book, num = ref.split(".")
+    return (book, int(num))
+
+
+def euclids_text(source):
+    """The footer naming Heath's pages. The source comment starts with "Source:"."""
+    source = re.sub(r"^Source:\s*", "", source)
+    return f"<sub>Euclid's text: {source}</sub>"
+
+
 def rests_on(p, docs, depth):
     """Markdown for the 'What it rests on' section."""
     up = "../" * depth
@@ -135,7 +150,7 @@ def rests_on(p, docs, depth):
     tacit = [a for a in axioms if a.startswith("Tacit.")]
     lines = ["| | |", "|---|---|"]
     lines.append("| Propositions cited | " + (", ".join(f"[{c}]({c.split('.')[1].zfill(2)}.md)"
-                 for c in p["cites"]) or "none") + " |")
+                 for c in sorted(p["cites"], key=prop_key)) or "none") + " |")
     lines.append("| Postulates | " + (roman_list(posts, "Postulate") or "none") + " |")
     lines.append("| Definitions | " + (roman_list(defs, "Definition") or "none") + " |")
     lines.append("| Common Notions | " + (", ".join(c.replace("C.N. ", "") for c in
@@ -198,7 +213,7 @@ def page(book, n, count, titles, facts, docs):
         out += [mishnah.read_text().strip(), ""]
     else:
         out += ["_Commentary to come._", ""]
-    out += ["---", "", f"<sub>Euclid's text: {source}</sub>", ""]
+    out += ["---", "", euclids_text(source), ""]
     return "\n".join(out)
 
 
@@ -208,7 +223,9 @@ def index(book, count, titles, facts):
     out = [GENERATED, f"# Book {book}", "",
            f"**{proved} of {count} propositions proved in Lean.** "
            "✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched", "",
-           f"Start with the [definitions, postulates and common notions](front.md).", "",
+           f"Start with the [definitions, postulates and common notions](front.md). "
+           f"What Euclid takes for granted along the way is gathered in "
+           f"[a catalogue](../../docs/reports/gaps-book-{book}.md).", "",
            "| | Proposition | |", "|---|---|---|"]
     for n in range(1, count + 1):
         st = facts.get(f"{book}.{n}", {}).get("status", "sketched")
@@ -249,9 +266,16 @@ def front(book):
             lean = FRONT_LEAN_I.get(section, {}).get(int(num), "")
             out.append(f"| {num} | {rest} | {lean} |")
         elif line.strip() and section and not line.startswith("#"):
-            out += ["", f"_{line.strip()}_", ""] if not out[-1].startswith("|") else \
-                ["", f"_{line.strip()}_", "", "| | Euclid | Lean |", "|---|---|---|"]
-    out += ["", "---", "", f"<sub>Euclid's text: {source}</sub>", ""]
+            intro = [f"_{line.strip()}_", ""]
+            header = ["| | Euclid | Lean |", "|---|---|---|"]
+            if out[-2:] == header:
+                # No rows yet: the line goes before the table, not under an empty one.
+                out[-2:] = intro + header
+            elif out[-1].startswith("|"):
+                out += ["", *intro, *header]
+            else:
+                out += ["", *intro]
+    out += ["", "---", "", euclids_text(source), ""]
     return "\n".join(out)
 
 
@@ -289,7 +313,8 @@ def certificate(facts, docs):
             defs = roman_list([a for a in ax if a.startswith("Definition")], "Definition")
             cns = ", ".join(c.replace("C.N. ", "") for c in sorted(set(p["common_notions"])))
             tacit = len([a for a in ax if a.startswith("Tacit.")])
-            out.append(f"| {STATUS_SHORT[p['status']]} | {link} | {', '.join(p['cites'])} | "
+            cites = ", ".join(sorted(p["cites"], key=prop_key))
+            out.append(f"| {STATUS_SHORT[p['status']]} | {link} | {cites} | "
                        f"{posts} | {defs} | {cns} | {tacit} |")
         out.append("")
     lean_version = next(iter(facts.values()), {}).get("lean_version", "")
@@ -311,8 +336,9 @@ def graph(facts):
         for n in range(1, count + 1):
             out.append(f'  {book}{n}["{book}.{n}"]')
         for n in range(1, count + 1):
-            _, _, proof = heath.read(book, n)
-            for c in sorted(heath.citations(proof), key=lambda c: (c.split(".")[0], int(c.split(".")[1]))):
+            # The enunciation counts too: I.22's [I. 20] is there.
+            _, enunciation, proof = heath.read(book, n)
+            for c in sorted(heath.citations([enunciation] + proof), key=prop_key):
                 b, m = c.split(".")
                 if b == book and int(m) != n:
                     out.append(f"  {book}{m} --> {book}{n}")
