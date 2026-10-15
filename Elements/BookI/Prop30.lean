@@ -17,10 +17,11 @@ namespace Elements.BookI
 
 open Tacit
 
-/-- Euclid chooses the ends of a straight line on the desired sides of the
-transversal. A straight line through `G` on `T`, different from `T`, has a point
-on either side of `T`: take a point off `T` and, if necessary, produce to the
-other side (System E, Points 2, Pasch 3 and Same side 5). -/
+/-- Euclid's figure puts the ends of each straight line where the proof wants
+them, on one side or the other of the straight line falling on it. A straight line
+`L` through the point `G` of `T`, other than `T`, has a point on whichever side of
+`T` we name: take a point of `L` off `T`, and if it is on the wrong side, produce
+it through `G` to the other (System E, Points 2, Pasch 3 and Same side 5). -/
 theorem Prop30.point_on_side {L T : Line} {G P : Point}
     (hGL : OnLine G L) (hGT : OnLine G T) (hLT : L ≠ T) (hP : ¬ OnLine P T) :
     ∃ A : Point, OnLine A L ∧ SameSide A P T := by
@@ -35,11 +36,14 @@ theorem Prop30.point_on_side {L T : Line} {G P : Point}
     exact ⟨B, hBL, same_side_of_opposite_sides ⟨hAT, hBT, pasch3 hAGB hGT⟩
       ⟨hAT, hP, hs⟩⟩
 
-/-- Euclid's general enunciation also covers the arrangement with the common
-parallel outside the other two. Two straight lines through one point, each
-parallel to a third, coincide: I.29 makes their interior angles equal after the
-common angle is subtracted, and `onRay_of_angle_eq` identifies their rays.
-This supplies the uniqueness usually called Playfair's axiom, without assuming it. -/
+/-- Euclid's enunciation also covers `EF` lying outside `AB` and `CD`, where a
+straight line from one to the other need not cross it. For that case: two straight
+lines through one point, each parallel to a third, are one straight line. A
+straight line from the point to the third makes, with each, interior angles equal
+to two right angles (I.29); Common Notion 3 takes away the angle they share, and
+`onRay_of_angle_eq` makes the two rays one. This is the uniqueness of the
+parallel, often called Playfair's axiom, proved here from I.29 rather than
+assumed. -/
 theorem Prop30.unique {L M N : Line} {G H : Point}
     (hLN : Parallel L N) (hMN : Parallel M N)
     (hGL : OnLine G L) (hGM : OnLine G M) (hHN : OnLine H N) : L = M := by
@@ -81,9 +85,10 @@ theorem Prop30 {A B C D E F : Point} (h₁ : AreParallel A B E F) (h₂ : ArePar
   have hAB_EF := h₁.parallel hA_AB hB_AB hE_EF hF_EF
   have hCD_EF := h₂.parallel hC_CD hD_CD hE_EF hF_EF
   -- I say that AB is also parallel to CD.
-  /- The given endpoints need not occupy Heath's positions. We prove his case
-     with ends chosen on the appropriate sides of GK, then return to the given
-     names. The common parallel separates G and K in this case. -/
+  /- Heath's case, where `EF` separates `G` and `K`. The given points need not
+     stand where his do, so we choose ends of each straight line on the sides of
+     `GK` his figure wants, and return to the given names at the end: parallels
+     are whole straight lines. -/
   have separated : ∀ {G K : Point}, OnLine G AB → OnLine K CD →
       OppositeSides G K EF → Parallel AB CD := by
     intro G K hG_AB hK_CD hGK
@@ -147,9 +152,10 @@ theorem Prop30 {A B C D E F : Point} (h₁ : AreParallel A B E F) (h₂ : ArePar
     have hAD : OppositeSidesOf A D G K := (hDF_GK.trans_opposite hAF_GK.symm).symm
     -- Therefore AB is parallel to CD.
     exact (Prop27 hAGB (between_symm hDKC) hAD hequal).parallel hA_AB hB_AB hC_CD hD_CD
-  /- When EF lies outside the other two straight lines, the pictured segment GK
-     need not cross it. If AB and CD met, uniqueness of the parallel through
-     their meeting point would identify them, contrary to C being off AB. -/
+  /- When `EF` lies outside `AB` and `CD`, a straight line from one to the other
+     need not cross it. Then if `AB` and `CD` met, they would be two parallels to
+     `EF` through one point, and so one straight line (`Prop30.unique`); but `C`
+     is off `AB`. -/
   have hparallel : Parallel AB CD := by
     by_cases hs : SameSide A C EF
     · apply Parallel.of_not_meet hA_AB

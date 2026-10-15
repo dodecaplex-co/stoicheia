@@ -27,7 +27,7 @@ theorem Prop27 {A B C D E F : Point} (hAEB : Between A E B) (hCFD : Between C F 
     AreParallel A B C D := by
   -- For let the straight line EF falling on the two straight lines AB, CD make the alternate
   -- angles AEF, EFD equal to one another;
-  /- The straight lines AB, CD and EF, drawn whole [Post. 1]. EF falls on AB at E and on
+  /- The straight lines AB, CD and EF, drawn whole (Post. 1). EF falls on AB at E and on
      CD at F, and A and D are on opposite sides of it, so neither is on it. -/
   have hAB : A ≠ B := ne_of_between_ends hAEB
   have hCD : C ≠ D := ne_of_between_ends hCFD

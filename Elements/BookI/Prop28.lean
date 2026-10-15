@@ -25,8 +25,9 @@ theorem Prop28 {A B C D E F G H : Point} (hAGB : Between A G B) (hCHD : Between 
   -- For let the straight line EF falling on the two straight lines AB, CD make the exterior
   -- angle EGB equal to the interior and opposite angle GHD, or the interior angles on the same
   -- side, namely BGH, GHD, equal to two right angles;
-  /- EF and GH name the same straight line. Being on one side keeps B off it;
-     this also ensures that the angles below are genuine rectilineal angles. -/
+  /- `EF` is the straight line `GH`, so `B` and `D` lie on one side of `GH` too
+     (`SameSideOf.inner`); and `B`, on one side of it, is off it, which the angles
+     below will need. -/
   have hBD_GH : SameSideOf B D G H := hBD.inner hEGH hGHF
   -- I say that AB is parallel to CD.
   rcases h with hext | hint

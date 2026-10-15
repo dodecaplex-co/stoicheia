@@ -15,10 +15,11 @@ namespace Elements.BookI
 
 open Tacit
 
-/-- Euclid chooses the half of the parallel through `C` on `A`'s side of `BC`.
-The two ends supplied by I.31 are on opposite sides of `BC`, since their straight
-line crosses it at `C`; one must therefore lie on `A`'s side (System E, Pasch 3
-and Same side 5). This choice uses no proposition. -/
+/-- Euclid's figure puts `E`, on the parallel through `C`, on `A`'s side of `BC`.
+The two points I.31 gives, one on either side of `C`, lie on opposite sides of
+`BC`, which crosses their straight line at `C`; and a straight line has just two
+sides, so one of them is on `A`'s side (System E, Pasch 3 and Same side 5). It
+cites no proposition. -/
 theorem Prop32.choose_end {A B C P Q : Point} (hABC : Triangle A B C)
     (hPCQ : Between P C Q) (hpar : AreParallel P Q A B) :
     ∃ E : Point, AreParallel C E A B ∧ SameSideOf E A B C := by
