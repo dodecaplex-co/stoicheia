@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.30: straight lines parallel to the same straight line</title>
+  <rect x="0" y="0" width="400" height="260" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke-linecap="round">
+    <path d="M 40 65 H 360 M 40 195 H 360" stroke="#a0522d" stroke-width="2.6"/>
+    <path d="M 40 130 H 360 M 255 35 L 160 225" stroke="#3b2f2f" stroke-width="1.6"/>
+    <g stroke="#a0522d" stroke-width="2.2">
+      <path d="M 218 65 A 22 22 0 0 0 230.16 84.68"/>
+      <path d="M 229.5 130 A 22 22 0 0 0 217.34 110.32"/>
+      <path d="M 197 195 A 22 22 0 0 0 184.84 175.32"/>
+    </g>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="40" cy="65" r="2.6"/><circle cx="360" cy="65" r="2.6"/>
+    <circle cx="40" cy="195" r="2.6"/><circle cx="360" cy="195" r="2.6"/>
+    <circle cx="40" cy="130" r="2.6"/><circle cx="360" cy="130" r="2.6"/>
+    <circle cx="240" cy="65" r="2.6"/><circle cx="207.5" cy="130" r="2.6"/>
+    <circle cx="175" cy="195" r="2.6"/>
+    <text x="33" y="54">A</text><text x="354" y="54">B</text>
+    <text x="33" y="184">C</text><text x="354" y="184">D</text>
+    <text x="33" y="119">E</text><text x="354" y="119">F</text>
+    <text x="222" y="52">G</text><text x="185" y="118">H</text>
+    <text x="151" y="184">K</text>
+  </g>
+</svg>
