@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.9: to bisect a given rectilineal angle</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <!-- the equilateral triangle DEF, on the side of DE away from A -->
+  <polygon points="150.5,138 249.5,138 200,223.7" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="1.6" stroke-linejoin="round"/>
+  <!-- the given angle BAC; D on AB, and AE cut off from AC equal to AD -->
+  <line x1="200" y1="30" x2="90" y2="270" stroke="#3b2f2f" stroke-width="2"/>
+  <line x1="200" y1="30" x2="310" y2="270" stroke="#3b2f2f" stroke-width="2"/>
+  <!-- AF joined: the bisector -->
+  <line x1="200" y1="30" x2="200" y2="223.7" stroke="#a0522d" stroke-width="2.4"/>
+  <!-- the angles DAF and EAF, proved equal -->
+  <path d="M 181.67 70 A 44 44 0 0 0 198.46 73.97" fill="none" stroke="#a0522d" stroke-width="2"/>
+  <path d="M 201.54 73.97 A 44 44 0 0 0 218.33 70" fill="none" stroke="#a0522d" stroke-width="2"/>
+  <line x1="191.47" y1="69.08" x2="189.76" y2="76.9" stroke="#a0522d" stroke-width="1.6"/>
+  <line x1="208.53" y1="69.08" x2="210.24" y2="76.9" stroke="#a0522d" stroke-width="1.6"/>
+  <g fill="#3b2f2f">
+    <circle cx="200" cy="30" r="2.6"/><circle cx="90" cy="270" r="2.6"/><circle cx="310" cy="270" r="2.6"/>
+    <circle cx="150.5" cy="138" r="2.6"/><circle cx="249.5" cy="138" r="2.6"/><circle cx="200" cy="223.7" r="2.6"/>
+    <text x="194" y="21">A</text><text x="74" y="288">B</text><text x="314" y="288">C</text>
+    <text x="131" y="140">D</text><text x="256" y="140">E</text><text x="195" y="245">F</text>
+  </g>
+</svg>
