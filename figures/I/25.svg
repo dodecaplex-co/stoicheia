@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 230" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.25: the greater base subtends the greater angle</title>
+  <rect x="0" y="0" width="400" height="230" rx="10" fill="#fbf7ee"/>
+  <!-- the triangle ABC, with the greater base BC -->
+  <polygon points="98.6,72.7 38,190 214.6,190" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2" stroke-linejoin="round"/>
+  <!-- the triangle DEF: DE equal to AB, DF to AC -->
+  <polygon points="273.2,58.5 262,190 372.8,190" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2" stroke-linejoin="round"/>
+  <!-- the bases BC and EF, BC the greater -->
+  <line x1="38" y1="190" x2="214.6" y2="190" stroke="#a0522d" stroke-width="3"/>
+  <line x1="262" y1="190" x2="372.8" y2="190" stroke="#a0522d" stroke-width="3"/>
+  <!-- the angles BAC and EDF contained by the equal straight lines -->
+  <path d="M 87.5 94.0 A 24 24 0 0 0 115.4 89.8" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <path d="M 271.1 82.4 A 24 24 0 0 0 287.7 77.6" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <g fill="#3b2f2f">
+    <circle cx="98.6" cy="72.7" r="2.6"/><circle cx="38" cy="190" r="2.6"/><circle cx="214.6" cy="190" r="2.6"/>
+    <circle cx="273.2" cy="58.5" r="2.6"/><circle cx="262" cy="190" r="2.6"/><circle cx="372.8" cy="190" r="2.6"/>
+    <text x="93" y="61">A</text><text x="21" y="211">B</text><text x="218" y="211">C</text>
+    <text x="267" y="47">D</text><text x="245" y="211">E</text><text x="376" y="211">F</text>
+  </g>
+</svg>
