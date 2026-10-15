@@ -2,19 +2,19 @@
   <title>Euclid I.6: if the angles at the base are equal, so are the sides</title>
   <rect x="0" y="0" width="400" height="260" rx="10" fill="#fbf7ee"/>
   <!-- triangle DBC, the less, shaded -->
-  <polygon points="167,94 90,220 310,220" fill="#e9dcc0" fill-opacity="0.55"/>
+  <polygon points="167,91.2 90,220 310,220" fill="#e9dcc0" fill-opacity="0.55"/>
   <!-- triangle ABC, the greater -->
   <polygon points="200,36 90,220 310,220" fill="none" stroke="#3b2f2f" stroke-width="2"/>
   <!-- DB, cut off equal to AC -->
-  <line x1="167" y1="94" x2="90" y2="220" stroke="#a0522d" stroke-width="3.2"/>
+  <line x1="167" y1="91.2" x2="90" y2="220" stroke="#a0522d" stroke-width="3.2"/>
   <!-- DC, joined -->
-  <line x1="167" y1="94" x2="310" y2="220" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="167" y1="91.2" x2="310" y2="220" stroke="#3b2f2f" stroke-width="1.6"/>
   <!-- the equal angles ABC, ACB -->
   <path d="M 112.6,182.3 A 44 44 0 0 1 134,220" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
   <path d="M 266,220 A 44 44 0 0 1 287.4,182.3" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
   <g fill="#3b2f2f">
     <circle cx="200" cy="36" r="2.6"/><circle cx="90" cy="220" r="2.6"/><circle cx="310" cy="220" r="2.6"/>
-    <circle cx="167" cy="94" r="2.6"/>
+    <circle cx="167" cy="91.2" r="2.6"/>
     <text x="194" y="26">A</text><text x="70" y="240">B</text><text x="316" y="240">C</text>
     <text x="146" y="94">D</text>
   </g>
