@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 290" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.28: two angle conditions for parallel straight lines</title>
+  <rect x="0" y="0" width="400" height="290" rx="10" fill="#fbf7ee"/>
+  <!-- AB and CD, proved parallel in either case -->
+  <g stroke="#a0522d" stroke-width="2.8">
+    <line x1="45" y1="100" x2="355" y2="100"/>
+    <line x1="45" y1="200" x2="355" y2="200"/>
+  </g>
+  <!-- EF falls on AB and CD at G and H, in that order -->
+  <line x1="135" y1="40" x2="292.5" y2="250" stroke="#3b2f2f" stroke-width="1.6"/>
+  <!-- The exterior angle EGB and the interior angle GHD -->
+  <g fill="none" stroke="#a0522d" stroke-width="2.4">
+    <path d="M 166.8 82.4 A 22 22 0 0 1 202 100"/>
+    <path d="M 241.8 182.4 A 22 22 0 0 1 277 200"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="45" cy="100" r="2.6"/><circle cx="355" cy="100" r="2.6"/>
+    <circle cx="45" cy="200" r="2.6"/><circle cx="355" cy="200" r="2.6"/>
+    <circle cx="135" cy="40" r="2.6"/><circle cx="292.5" cy="250" r="2.6"/>
+    <circle cx="180" cy="100" r="2.6"/><circle cx="255" cy="200" r="2.6"/>
+    <text x="27" y="106">A</text><text x="364" y="106">B</text>
+    <text x="27" y="206">C</text><text x="364" y="206">D</text>
+    <text x="121" y="31">E</text><text x="298" y="268">F</text>
+    <text x="159" y="122">G</text><text x="234" y="222">H</text>
+  </g>
+</svg>
