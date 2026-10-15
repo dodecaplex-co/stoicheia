@@ -55,9 +55,11 @@ theorem Prop28 {A B C D E F G H : Point} (hAGB : Between A G B) (hCHD : Between 
     -- the angles AGH, BGH are equal to the angles BGH, GHD.
     have hsums : ∠ A G H + ∠ B G H = ∠ B G H + ∠ G H D := CommonNotion1 htwo hint
     -- Let the angle BGH be subtracted from each;
-    have hAGH_GHD : ∠ A G H = ∠ G H D := by
-      -- therefore the remaining angle AGH is equal to the remaining angle GHD;
-      exact CommonNotion3 (hsums.trans (add_comm _ _)) rfl
+    /- Each sum is written with the angle `BGH` last, for Common Notion 3 to take it
+       away. -/
+    have hsums' : ∠ A G H + ∠ B G H = ∠ G H D + ∠ B G H := hsums.trans (add_comm _ _)
+    -- therefore the remaining angle AGH is equal to the remaining angle GHD;
+    have hAGH_GHD : ∠ A G H = ∠ G H D := CommonNotion3 hsums' rfl
     -- and they are alternate;
     have hAD : OppositeSidesOf A D G H := hBD_GH.oppositeSidesOf_of_between hAGB
     -- therefore AB is parallel to CD. [I. 27]
