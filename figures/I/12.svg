@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 270" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.12: a perpendicular from a point to an infinite straight line</title>
+  <rect x="0" y="0" width="400" height="270" rx="10" fill="#fbf7ee"/>
+  <!-- triangles CHG and CHE: C, H, G and C, H, E -->
+  <polygon points="110.56,190 200,135 289.44,190" fill="#e9dcc0" fill-opacity="0.55" stroke="none"/>
+  <!-- circle EFG: centre C, distance CD -->
+  <circle cx="200" cy="135" r="105" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <!-- the given infinite straight line AB -->
+  <line x1="28" y1="190" x2="372" y2="190" stroke="#3b2f2f" stroke-width="1.6"/>
+  <!-- CG, CH, CE, joined -->
+  <line x1="200" y1="135" x2="110.56" y2="190" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="200" y1="135" x2="200" y2="190" stroke="#3b2f2f" stroke-width="2"/>
+  <line x1="200" y1="135" x2="289.44" y2="190" stroke="#3b2f2f" stroke-width="1.6"/>
+  <!-- the adjacent angles CHG and EHC, proved equal, and so right -->
+  <polyline points="189,190 189,179 200,179" fill="none" stroke="#a0522d" stroke-width="1.8"/>
+  <polyline points="211,190 211,179 200,179" fill="none" stroke="#a0522d" stroke-width="1.8"/>
+  <g fill="#3b2f2f">
+    <circle cx="40" cy="190" r="2.6"/><circle cx="360" cy="190" r="2.6"/>
+    <circle cx="200" cy="135" r="2.6"/>
+    <circle cx="110.56" cy="190" r="2.6"/><circle cx="200" cy="190" r="2.6"/>
+    <circle cx="289.44" cy="190" r="2.6"/>
+    <circle cx="260.23" cy="221.01" r="2.6"/>
+    <text x="34" y="213">A</text><text x="354" y="213">B</text>
+    <text x="194" y="125">C</text>
+    <text x="90" y="213">G</text><text x="194" y="213">H</text><text x="296" y="213">E</text>
+    <text x="266" y="242">D</text>
+    <text x="194" y="22">F</text>
+  </g>
+</svg>
