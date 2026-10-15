@@ -80,6 +80,44 @@ may cite them.
 - "The same side of this line EF" becomes "the same side of the straight line EF" by the
   uniqueness of the line through two points (`SameSideOf.of_line`).
 
+## I.9
+- The equilateral triangle on DE goes on the side away from A (Heath, vol. 1, p. 264); I.1 now takes the side as an argument.
+- D, taken "at random" on AB, must be nearer A than C is, so that I.3 can be used (`Prop9.chance_point`).
+- F falls within the angle BAC: the question of Proclus' objector (Heath, vol. 1, p. 265). If F were on an arm, Proclus' own argument with the second part of I.5 rules it out; if outside the angle, I.7 does (`Prop9.crossing`, `Prop9.not_on_arm`).
+
+## I.10
+- The bisector of the angle ACB meets AB, and between A and B: I.9's statement (F within the angle) and Book Zero's `crossbar`.
+
+## I.11
+- I.3 needs a greater line to cut from, and Postulate 2 gives no length; room is found with a circle (`Prop11.produced`).
+- C lies between D and E, which makes the angles DCF and FCE adjacent.
+- "At right angles to AB" means at right angles to every point of AB, not only D and E (`Prop11.either_ray`).
+- Turning Definition 10's "right" into the one magnitude of all right angles takes Postulate 4, which Euclid doesn't cite here.
+
+## I.12
+- The circle about C through D cuts AB twice (System E Intersection 2).
+- "Perpendicular to the infinite straight line" again means a right angle with every point of AB (`Prop12.onRay_cases`).
+
+## I.13
+- Euclid's figure has BA leaning towards C; the other lean is his figure with C and D exchanged (`Prop13.cases`).
+- A could, in principle, lie on the perpendicular BE; it can't, since then the two angles would be equal.
+- BE must be drawn on A's side of CD; the figure decides it, and I.11's statement lets us choose.
+- "The angle DBA is equal to the two angles DBE, EBA" needs BE within DBA, a triple-incidence argument (`Prop13.within`).
+
+## I.14
+- Euclid's figure has BE within the angle ABD; the other case, BD within ABE, needs handling too (`onRay_of_angle_eq`).
+- E and D lie on the same side of AB, each being on the other side from C (`Prop14.opposite`, `Prop14.sameSide`): the one place the hypothesis "not lying on the same side" is used, as Proclus warned.
+
+## I.15
+- The two straight lines really cross, so that each "stands on" the other before I.13 applies (`Prop15.figure`).
+- "Similarly it can be proved" hides a third use of I.13.
+- Heath's bracketed Porism (four angles about a point make four right angles) is also proved, as `Prop15.porism`.
+
+## I.16
+- CF falls within the angle ECD, so that "the angle ECD is greater than the angle ECF" (C.N. 5). Heath notes this fails in Riemann's closed, sphere-like geometry (vol. 1, p. 280); in Lean it comes from Pasch's rules and the two sides of a line (`Prop16.within`).
+- BE produced must be long enough for I.3 to cut EF off it (`Prop16.beyond`), so Postulate 3 appears on the certificate.
+- "Similarly" becomes one argument applied twice, the second time with AC produced, and I.15 finishes it.
+
 ## Postulates the Lean needs that Euclid doesn't cite
 
 Postulate 1 appears in I.3, I.4, I.6 and I.8 because Lean must name a straight line
