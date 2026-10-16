@@ -55,10 +55,10 @@ theorem Prop35.figure {A B C D E F : Point} (h₁ : Parallelogram A B C D)
     hAF_EB (line_unique hYE hY_AF hE hY_EB hE_EB)
   exact this ▸ hDYF
 
-/-- The overlapping case left to the figure: when `E` lies between `A` and `D`,
-`D` lies between `E` and `F`. The triangles `EAB`, `FDC` are equal by I.34, I.29
-and I.4; adding each to the trapezium `EBCD` gives the two parallelograms.
-This is the case Proclus supplies, as Heath reports under I.35. -/
+/-- One case Euclid leaves out, which Proclus supplies, as Heath reports under I.35:
+when `E` lies between `A` and `D`, `D` lies between `E` and `F`. The triangles
+`EAB`, `FDC` are equal by I.34, I.29 and I.4; adding each to the trapezium `EBCD`
+gives the two parallelograms. -/
 theorem Prop35.between {A B C D E F : Point} (h₁ : Parallelogram A B C D) (h₂ : Parallelogram E B C F)
     {AF : Line} (hA : OnLine A AF) (hD : OnLine D AF) (hE : OnLine E AF) (hF : OnLine F AF)
     (hAED : Between A E D) :
@@ -129,9 +129,10 @@ theorem Prop35.between {A B C D E F : Point} (h₁ : Parallelogram A B C D) (h�
     ac_rfl
   rw [hL₁, hR₁, h4]
 
-/-- The endpoint case left to the figure: when `E` is `D`, that point lies between
-`A` and `F`. The triangles `ADB`, `DFC` are equal by I.34, I.29 and I.4;
-adding the common triangle `DBC` gives the two parallelograms. -/
+/-- The other case Euclid leaves out, which Proclus also supplies: when `E` is `D`,
+that point lies between `A` and `F`. The triangles `ADB`, `DFC` are equal by I.34,
+I.29 and I.4; adding the common triangle `DBC` to each gives the two
+parallelograms. -/
 theorem Prop35.same {A B C D F : Point} (h₁ : Parallelogram A B C D) (h₂ : Parallelogram D B C F)
     {AF : Line} (hA : OnLine A AF) (hD : OnLine D AF) (hF : OnLine F AF) :
     quadArea A B C D = quadArea D B C F := by
