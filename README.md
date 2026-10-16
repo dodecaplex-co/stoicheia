@@ -4,7 +4,7 @@
 
 # Stoicheia
 
-*Euclid's Elements, checked line by line in Lean.*
+*Euclid's Elements in Lean, sentence by sentence.*
 
 Στοιχεῖα, *Stoicheia*, "Elements", is Euclid's title for the book that taught geometry for more than two thousand years. Abraham Lincoln, in the short autobiography he wrote in 1860, said of himself: "He studied and nearly mastered the Six-books of Euclid, since he was a member of Congress." This project carries the same book into [Lean](https://lean-lang.org), a programming language that checks mathematical proofs, so that every step Euclid takes is checked by a machine that can't be talked into anything.
 
