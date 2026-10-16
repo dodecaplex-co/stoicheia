@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.33: the straight lines joining equal and parallel straight lines</title>
+  <rect x="0" y="0" width="400" height="260" rx="10" fill="#fbf7ee"/>
+  <g fill="#e9dcc0" fill-opacity="0.55">
+    <polygon points="322,65 100,65 296,194"/>
+    <polygon points="74,194 296,194 100,65"/>
+  </g>
+  <g stroke="#3b2f2f" stroke-width="1.6" stroke-linecap="round">
+    <line x1="322" y1="65" x2="100" y2="65"/>
+    <line x1="74" y1="194" x2="296" y2="194"/>
+    <line x1="100" y1="65" x2="296" y2="194"/>
+  </g>
+  <g stroke="#a0522d" stroke-width="2.4" stroke-linecap="round">
+    <line x1="322" y1="65" x2="296" y2="194"/>
+    <line x1="100" y1="65" x2="74" y2="194"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="322" cy="65" r="2.6"/>
+    <circle cx="100" cy="65" r="2.6"/>
+    <circle cx="296" cy="194" r="2.6"/>
+    <circle cx="74" cy="194" r="2.6"/>
+    <text x="325" y="54">A</text>
+    <text x="88" y="54">B</text>
+    <text x="297" y="216">C</text>
+    <text x="60" y="216">D</text>
+  </g>
+</svg>
