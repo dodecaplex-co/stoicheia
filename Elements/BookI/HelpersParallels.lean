@@ -1,54 +1,28 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop28
 import Elements.BookI.Prop30
+import Elements.BookI.Prop31
 
 /-!
 # Book I: small steps about parallels that cite a proposition
 
-From I.33 on, almost every proof draws a parallel and reads off its angles, and
-several take the point where a straight line meets it. These steps cite I.28,
-I.29 or I.30, so they cannot live in Book Zero; and `Helpers.lean`, which I.7, I.9,
-I.18, I.19, I.20 and I.24 import, cannot import those propositions without the
-imports going round in a circle. So they live here, in a file of their own, for
-the propositions from I.31 on. Each is named after the proposition it cites.
+From I.33 on, almost every proof draws a parallel, and several take the point
+where a straight line meets it. These steps cite I.28, I.30 or I.31, so they
+cannot live in Book Zero; and `Helpers.lean`, which I.7, I.9, I.18, I.19, I.20 and
+I.24 import, cannot import those propositions without the imports going round in a
+circle. So they live here, in a file of their own, for the propositions from I.32
+on. Each is named after the proposition it cites. (I.29 said of any straight line
+falling on two parallels, `Prop29.alternate` and its companions, follows I.29 in
+its own file, so that I.30 can cite it too.)
 
 The certificate walks through these steps as it walks through any helper, so a
 proof that uses one is recorded as citing the proposition inside it. Those that
-cite I.29 or I.30 rest on Postulate 5.
+cite I.30 rest on Postulate 5.
 -/
 
 namespace Elements.BookI
 
 open Tacit
-
-/-! ## Citing I.29 about any straight line falling on two parallels -/
-
-/-- The alternate angles. If the straight line `PG` is parallel to `HQ`, and `P` and
-`Q` lie on opposite sides of `GH`, then the alternate angles `PGH`, `GHQ` are equal.
-Book Zero draws Euclid's figure about `GH` (`AreParallel.figure_alternate`), and I.29
-does the rest. [I. 29] -/
-theorem Prop29.alternate {P G H Q : Point} (hpar : AreParallel P G H Q)
-    (hPQ : OppositeSidesOf P Q G H) : ∠ P G H = ∠ G H Q := by
-  obtain ⟨B, C, E, F, h₁, h₂, h₃, h₄, hpar', hside⟩ := hpar.figure_alternate hPQ
-  exact (Prop29 hpar' h₁ h₂ h₃ h₄ hside).1
-
-/-- The interior angles on the same side. If the straight line `GP` is parallel to
-`HQ`, and `P` and `Q` lie on one side of `GH`, then the angles `PGH`, `GHQ` are
-equal to two right angles. [I. 29] -/
-theorem Prop29.interior {P G H Q : Point} (hpar : AreParallel G P H Q)
-    (hPQ : SameSideOf P Q G H) : ∠ P G H + ∠ G H Q = ∟ + ∟ := by
-  obtain ⟨A, C, E, F, h₁, h₂, h₃, h₄, hpar', hside⟩ := hpar.figure_interior hPQ
-  exact (Prop29 hpar' h₁ h₂ h₃ h₄ hside).2.2
-
-/-- The exterior angle. If the straight line `GP` is parallel to `HQ`, `P` and `Q` lie
-on one side of `GH`, and `E` lies on `HG` produced beyond `G`, then the exterior
-angle `EGP` is equal to the interior and opposite angle `GHQ`. [I. 29] -/
-theorem Prop29.exterior {P G H Q E : Point} (hpar : AreParallel G P H Q)
-    (hPQ : SameSideOf P Q G H) (hEGH : Between E G H) : ∠ E G P = ∠ G H Q := by
-  obtain ⟨A, C, E', F, h₁, h₂, h₃, h₄, hpar', hside⟩ := hpar.figure_interior hPQ
-  have hE : OnRay E G E' := OnRay.of_between_between (between_symm h₃) (between_symm hEGH)
-  rw [angle_onRay_left hE hpar.1.symm]
-  exact (Prop29 hpar' h₁ h₂ h₃ h₄ hside).2.1
 
 /-! ## A straight line meeting one of two parallels meets the other -/
 
@@ -84,8 +58,7 @@ theorem Prop30.meet {L M N : Line} {P : Point} (hLM : Parallel L M) (hPM : OnLin
 /-- I.30 said of straight lines drawn and named: two different straight lines `L` and
 `M`, each parallel to `N`, are parallel to one another. Euclid uses it without a
 bracket in I.44 and I.47, where a straight line drawn "parallel to either" of two
-parallels is parallel to both; in I.45 he brackets it. I.43 needs it too, to show
-that the complements are parallelograms. [I. 30] -/
+parallels is parallel to both; in I.45 he brackets it. [I. 30] -/
 theorem Prop30.parallel {L M N : Line} (hL : Parallel L N) (hM : Parallel M N) (hLM : L ≠ M) :
     Parallel L M := by
   obtain ⟨A, hA_L, -⟩ := exists_point_on_line L []
@@ -101,6 +74,26 @@ theorem Prop30.parallel {L M N : Line} (hL : Parallel L N) (hM : Parallel M N) (
     hC_L ((line_unique hAB hA_K hB_K hA_L hB_L) ▸ hC_K)
   exact (Prop30 (AreParallel.of_parallel hAB hEF hA_L hB_L hE_N hF_N hL)
     (AreParallel.of_parallel hCD hEF hC_M hD_M hE_N hF_N hM) hC).parallel hA_L hB_L hC_M hD_M
+
+/-- Completing the parallelogram. If `X` lies on `L`, and `Y` and `Z` on `M`, which is
+parallel to `L`, the straight line drawn through `Z` parallel to `XY` [I. 31] meets
+`L` at a point `W` (`Prop30.meet`), and `XYZW` is a parallelogram. Euclid draws such
+a parallel in I.37, I.38, I.42, I.44 and I.46, and reads the point where it meets
+`L`, and the parallelogram, off his figure. [I. 30, I. 31] -/
+theorem Prop31.parallelogram {X Y Z : Point} {L M : Line} (hLM : Parallel L M)
+    (hX : OnLine X L) (hY : OnLine Y M) (hZ : OnLine Z M) (hYZ : Y ≠ Z) :
+    ∃ W : Point, OnLine W L ∧ Parallelogram X Y Z W := by
+  have hXY : X ≠ Y := fun e => hLM.not_onLine hX (e ▸ hY)
+  obtain ⟨XY, hX_XY, hY_XY⟩ := Postulate1 X Y hXY
+  have hZ_XY : ¬ OnLine Z XY := fun h =>
+    hLM.not_onLine hX ((line_unique hYZ hY_XY h hY hZ) ▸ hX_XY)
+  obtain ⟨K, hZ_K, hK⟩ := Prop31.line hZ_XY
+  have hL_XY : L ≠ XY := fun e => hLM.not_onLine (e ▸ hY_XY) hY
+  obtain ⟨W, hW_L, hW_K⟩ := Prop30.meet hK hX_XY hX hL_XY
+  have hZW : Z ≠ W := fun e => hLM.not_onLine hW_L (e ▸ hZ)
+  have hWX : W ≠ X := fun e => hK.not_onLine hW_K (e ▸ hX_XY)
+  exact ⟨W, hW_L, AreParallel.of_parallel hXY hZW hX_XY hY_XY hZ_K hW_K hK.symm,
+    AreParallel.of_parallel hYZ hWX hY hZ hW_L hX hLM.symm⟩
 
 /-! ## Parallels from right angles, and squares -/
 

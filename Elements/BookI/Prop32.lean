@@ -61,21 +61,15 @@ theorem Prop32 {A B C D : Point} (hABC : Triangle A B C) (hBCD : Between B C D) 
   have hAB : AreParallel A B C E := hCE.symm
   -- and AC has fallen upon them,
   have hBE : OppositeSidesOf B E A C := hAB.swap_left.oppositeSidesOf hEA.symm
-  obtain ⟨B₁, C₁, E₁, F₁, h₁, h₂, h₃, h₄, hpar₁, hside₁⟩ :=
-    hAB.swap_left.figure_alternate hBE
   -- the alternate angles BAC, ACE are equal to one another. [I. 29]
-  have hBAC_ACE : ∠ B A C = ∠ A C E := (Prop29 hpar₁ h₁ h₂ h₃ h₄ hside₁).1
+  have hBAC_ACE : ∠ B A C = ∠ A C E := Prop29.alternate hAB.swap_left hBE
   -- Again, since AB is parallel to CE,
   have hCE_BA : AreParallel C E B A := hCE.swap_right
   -- and the straight line BD has fallen upon them,
-  obtain ⟨A₂, C₂, E₂, F₂, h₅, h₆, h₇, h₈, hpar₂, hside₂⟩ :=
-    hCE_BA.figure_interior hEA.swap
   -- the exterior angle ECD is equal to the interior and opposite angle ABC. [I. 29]
   have hECD_ABC : ∠ E C D = ∠ A B C := by
-    have h := (Prop29 hpar₂ h₅ h₆ h₇ h₈ hside₂).2.1
-    rw [angle_onRay_left (OnRay.of_between_between hBCD (between_symm h₇))
-      hCE.1.symm, angle_symm hCD.symm hCE.1.symm,
-      angle_symm hABC.ne₂₃.symm hABC.ne₁₂] at h
+    have h := Prop29.exterior hCE_BA hEA.swap (between_symm hBCD)
+    rw [angle_symm hCD.symm hCE.1.symm, angle_symm hABC.ne₂₃.symm hABC.ne₁₂] at h
     exact h
   -- But the angle ACE was also proved equal to the angle BAC;
   have hACE_BAC : ∠ A C E = ∠ B A C := hBAC_ACE.symm

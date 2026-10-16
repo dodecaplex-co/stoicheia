@@ -41,10 +41,7 @@ theorem Prop42 {A B C D₁ D D₂ : Point} (hABC : Triangle A B C) (hD : Triangl
   /- C₁ lies on the ray EC, and F₁ on A's side of EC. The parallel through A
      will determine F on the ray from E through F₁. -/
   -- through A let AG be drawn parallel to EC, and [I. 31]
-  obtain ⟨A₁, A₂, hA_between, hApar⟩ := Prop31 hEC hECA
-  obtain ⟨AG, hA₁_AG, hA₂_AG⟩ := Postulate1 A₁ A₂ hApar.1
-  have hA_AG : OnLine A AG := on_line_of_between_ends hA_between hA₁_AG hA₂_AG
-  have hAG : Parallel AG BC := hApar.parallel hA₁_AG hA₂_AG hE hC
+  obtain ⟨AG, hA_AG, hAG⟩ := Prop31.line hA_BC
   /- The straight line through E and F₁ meets AG by I.30. Both F and F₁ lie on
      A's side of BC, so F is on the constructed ray. -/
   have hEF₁ : E ≠ F₁ := hF₁.triangle.ne₁₃
@@ -57,19 +54,10 @@ theorem Prop42 {A B C D₁ D D₂ : Point} (hABC : Triangle A B C) (hD : Triangl
     OnRay.of_sameSideOf ((SameSideOf.of_line hEC hE hC hFA).trans hF₁.symm)
       ⟨EF, hE_EF, hF₁_EF, hF_EF⟩ hFE
   -- through C let CG be drawn parallel to EF.
-  have hEFC : Triangle E F C := (Triangle.of_line hE hC hEC (hAG.not_onLine hF_AG)).acb
-  obtain ⟨C₂, C₃, hC_between, hCpar⟩ := Prop31 hFE.symm hEFC
-  obtain ⟨CG, hC₂_CG, hC₃_CG⟩ := Postulate1 C₂ C₃ hCpar.1
-  have hC_CG : OnLine C CG := on_line_of_between_ends hC_between hC₂_CG hC₃_CG
-  have hCG_EF : Parallel CG EF := hCpar.parallel hC₂_CG hC₃_CG hE_EF hF_EF
-  have hAG_EF : AG ≠ EF := fun e => hAG.not_onLine (e ▸ hE_EF) hE
-  obtain ⟨G, hG_AG, hG_CG⟩ := Prop30.meet hCG_EF hF_EF hF_AG hAG_EF
+  /- It meets AG at G (`Prop31.parallelogram`, which cites I.30 for the meeting). -/
+  obtain ⟨G, hG_AG, hpar⟩ := Prop31.parallelogram hAG hF_AG hE hC hEC
   -- Then FECG is a parallelogram.
-  have hFG : F ≠ G := fun e => hCG_EF.not_onLine hG_CG (e ▸ hF_EF)
-  have hCG : C ≠ G := fun e => hAG.not_onLine hG_AG (e ▸ hC)
-  have hFECG : Parallelogram F E C G :=
-    ⟨AreParallel.of_parallel hFE hCG hF_EF hE_EF hC_CG hG_CG hCG_EF.symm,
-      AreParallel.of_parallel hEC hFG.symm hE hC hG_AG hF_AG hAG.symm⟩
+  have hFECG : Parallelogram F E C G := hpar
   -- And, since BE is equal to EC, the triangle ABE is also equal to the triangle AEC, for they
   -- are on equal bases BE, EC and in the same parallels BC, AG; [I. 38]
   have hABE : Triangle A B E := (Triangle.of_line hB hE (ne_of_between hBEC) hA_BC).cab

@@ -2,7 +2,6 @@ import Elements.Figure.Basics
 import Elements.BookI.Prop04
 import Elements.BookI.Prop27
 import Elements.BookI.Prop29
-import Elements.BookI.HelpersParallels
 
 /-!
 # Book I, Proposition 33
