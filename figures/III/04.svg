@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid III.4: two straight lines cannot bisect one another away from the centre</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="200" cy="145" r="105" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <line x1="98.5778" y1="172.1760" x2="298.6677" y2="180.9121" stroke="#a0522d" stroke-width="2.4"/>
+  <line x1="190.8486" y1="249.6004" x2="295.1623" y2="100.6251" stroke="#a0522d" stroke-width="2.4"/>
+  <line x1="200.0000" y1="145.0000" x2="240.7164" y2="178.3819" stroke="#3b2f2f" stroke-width="1.6"/>
+  <g fill="#3b2f2f">
+    <circle cx="98.5778" cy="172.1760" r="2.6"/>
+    <circle cx="190.8486" cy="249.6004" r="2.6"/>
+    <circle cx="298.6677" cy="180.9121" r="2.6"/>
+    <circle cx="295.1623" cy="100.6251" r="2.6"/>
+    <circle cx="240.7164" cy="178.3819" r="2.6"/>
+    <circle cx="200.0000" cy="145.0000" r="2.6"/>
+    <text x="78.5778" y="177.1760">A</text>
+    <text x="184.8486" y="272.6004">B</text>
+    <text x="308.6677" y="186.9121">C</text>
+    <text x="305.1623" y="96.6251">D</text>
+    <text x="247.7164" y="197.3819">E</text>
+    <text x="185.0000" y="137.0000">F</text>
+  </g>
+</svg>
