@@ -91,7 +91,7 @@ Proposition by proposition, the steps Euclid takes without a word, and the rule 
 | [`Elements/Foundations/`](Elements/Foundations) | Postulates, common notions, definitions, tacit rules |
 | [`Elements/Figure/`](Elements/Figure) | "Book Zero": small facts every figure needs, proved once |
 | [`Elements/BookI/`](Elements/BookI), [`Elements/BookII/`](Elements/BookII), [`Elements/BookIII/`](Elements/BookIII) | One file per proposition; Book II's shared ground, rectangles and squares from Book I, is in [`Rectangles.lean`](Elements/BookII/Rectangles.lean), and Book III's in [`Squares.lean`](Elements/BookIII/Squares.lean) and [`Circumferences.lean`](Elements/BookIII/Circumferences.lean) |
-| [`mishnah/`](mishnah) | The commentary |
+| [`mishnah/`](mishnah) | The commentary, and each book's introduction (`mishnah/intro/`), shown on its index page |
 | [`figures/`](figures) | The figures: the "at a glance" figures in Byrne's colours, and Euclid's own with Heath's letters |
 | [`book/`](book), [`CERTIFICATE.md`](CERTIFICATE.md), [`GRAPH.md`](GRAPH.md) | Generated pages; don't edit by hand |
 | [`docs/`](docs) | The [plan](docs/briefs/0001-plan.md) the project started from, the catalogues of what Euclid takes for granted in [Book I](docs/reports/gaps-book-I.md) and [Book II](docs/reports/gaps-book-II.md), the [logs](docs/reports/crew), and notes on [earlier work](docs/reports/0001-prior-art.md) |

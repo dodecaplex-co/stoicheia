@@ -76,11 +76,11 @@ axiom angle_eq_of_same_rays {B' C' : Point} (hAL : OnLine A L) (hB : OnLine B L)
 
 /-! ## Areas -/
 
-/-- A "triangle" whose corners lie on one line has no area. (Diagram-area 1) -/
+/-- A "triangle" whose corners lie on one straight line has no area. (Diagram-area 1) -/
 axiom area_eq_zero_of_on_line (hA : OnLine A L) (hB : OnLine B L) (hAB : A ≠ B)
     (hC : OnLine C L) : △ A B C = 0
 
-/-- A triangle with no area has its corners on one line. (Diagram-area 1) -/
+/-- A triangle with no area has its corners on one straight line. (Diagram-area 1) -/
 axiom on_line_of_area_eq_zero (hA : OnLine A L) (hB : OnLine B L) (hAB : A ≠ B)
     (h : △ A B C = 0) : OnLine C L
 

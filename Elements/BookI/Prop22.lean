@@ -69,9 +69,9 @@ about `G` cut one another, and never says why they should. Heath's own argument
   that is `GH`, which is less than `FD` and `FG` together, so again `FM` is less
   than `FD`. And if `M` is `F`, it is the centre.
 
-Then the two circles cut one another: that is System E's Intersection rule 4, in
-LeanEuclid's corrected form, and it is the "Principle of Continuity" that Heath
-invokes here, as he does for I.1. -/
+Then the two circles cut one another (System E, Intersection 4, in LeanEuclid's
+corrected form): this is the "Principle of Continuity" that Heath invokes here, as he
+does for I.1. -/
 theorem Prop22.meet {D F G H : Point} {α β : Circle} (hFGH : Between F G H)
     (hF_α : Centre F α) (hD_α : OnCircle D α) (hG_β : Centre G β) (hH_β : OnCircle H β)
     (h₁ : ‖G H‖ < ‖F D‖ + ‖F G‖) (h₂ : ‖F G‖ < ‖F D‖ + ‖G H‖)
@@ -175,7 +175,7 @@ theorem Prop22 {A₁ A₂ B₁ B₂ C₁ C₂ E F P : Point}
   /- Euclid takes K where the circles cut one another, without a word on why they
      should. They do, because two of A, B, C taken together in any manner are
      greater than the remaining one (`Prop22.meet`: Heath's argument, closed by
-     System E's Intersection rule 4). They cut one another on each side of DE, the
+     System E, Intersection 4). They cut one another on each side of DE, the
      straight line through their centres, and K is taken on P's side (System E,
      Intersections 8). -/
   have hmeet : CirclesMeet KLH DKL :=

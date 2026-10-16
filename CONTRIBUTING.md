@@ -53,10 +53,12 @@ too: a proof, a mishnah, a figure or the transcription.
 [docs/STYLE.md](docs/STYLE.md) has the rules for the voice, the mishnah, the further
 reading and the figures. In short:
 
-- `mishnah/<book>/NN.md`: 200 to 500 words, in the same voice as the rest. What
-  does Euclid take for granted? What did Lean make us say? How does the result look
-  with coordinates, vectors or complex numbers? Quote Heath (public domain) freely,
-  credit everyone, and keep it friendly.
+- `mishnah/<book>/NN.md`: 250 to 450 words, in the same voice as the rest, a friend
+  who knows Euclid talking over his figure. What does Euclid do here, and why does it
+  matter? What do Heath and Proclus add? What did Lean make us say? How does the
+  result look with coordinates, vectors or complex numbers? Quote Heath (public
+  domain) freely, credit everyone, and keep it friendly. What every page shares is
+  said once, in the book's introduction (`mishnah/intro/<book>.md`).
 - `reading/<book>/NN.md`: one to three friendly lines of further reading, only from
   [the reading list](docs/reading.md), by the rule in STYLE.
 - Each proposition has two figures, both on the parchment background:

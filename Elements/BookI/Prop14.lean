@@ -55,10 +55,7 @@ theorem Prop14 {A B C D : Point} (hCD : OppositeSidesOf C D A B) (h : ∠ A B C 
       rw [← angle_symm hA_B hC_B]
       exact h
     -- therefore the angles CBA, ABE are equal to the angles CBA, ABD. [Post. 4 and C.N. 1]
-    /- Todhunter's point, which Heath reports: C.N. 1 is not enough by itself,
-       for the two right angles of I.13 need not be the two of our hypothesis,
-       and it is Postulate 4 that makes all right angles equal. In Lean,
-       Postulate 4 has done its work before we get here: every right angle is
+    /- Postulate 4 has done its work before we get here: every right angle is
        written with the one name `∟`, and I.13 hands its two back as `∟ + ∟`.
        So the step itself is C.N. 1 alone. -/
     have hsum : ∠ C B A + ∠ A B E = ∠ C B A + ∠ A B D := CommonNotion1 hCBA_ABE hCBA_ABD

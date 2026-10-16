@@ -202,7 +202,7 @@ theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
   have hFS : ¬ OnLine F S := fun h => hAS ((line_unique hFD hFR hDR h hDS) ▸ hAR)
   /- With `D` within the angle `ACB`, the straight line `CD` separates `A` from `B`; with
      `D` within the angle `ABC`, the straight line `BD` separates `A` from `C`. (System E,
-     triple incidence rule 1.) -/
+     Triple incidence 1.) -/
   have hABM : ¬ SameSide A B M :=
     triple_incidence1 hCP hCM hCQ hAP hDM hBQ hDBP (same_side_symm hDAQ)
   have hACS : ¬ SameSide A C S :=

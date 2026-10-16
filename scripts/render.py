@@ -1,7 +1,8 @@
 """Build the readable pages from Heath's text, the Lean files, the mishnah, the
 further reading and `facts.json`, for every book in `heath.BOOKS`:
 
-    book/I/index.md    the book, proposition by proposition
+    book/I/index.md    the book, proposition by proposition, after its introduction
+                       (`mishnah/intro/I.md`), when that file exists
     book/I/front.md    its definitions (and Book I's postulates and common notions),
                        with their Lean
     book/I/NN.md       one page per proposition; after the mishnah, `reading/I/NN.md`
@@ -251,9 +252,13 @@ def euclid_cites_text(groups, book):
     return "; ".join(x for x in parts if x)
 
 
+HEATH_TITLE = "The Thirteen Books of Euclid's Elements"
+
+
 def euclids_text(source):
-    """The footer naming Heath's pages. The source comment starts with "Source:"."""
-    source = re.sub(r"^Source:\s*", "", source)
+    """The footer naming Heath's pages, his title in italics. The source comment starts
+    with "Source:"."""
+    source = re.sub(r"^Source:\s*", "", source).replace(HEATH_TITLE, f"*{HEATH_TITLE}*")
     return f"<sub>Euclid's text: {source}</sub>"
 
 
@@ -470,6 +475,15 @@ def in_words(names):
     return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
 
 
+def book_intro(book):
+    """A book's introduction, `mishnah/intro/<book>.md`, in the voice of the mishnah: what
+    the book is about, and, once, what its pages share (the house words, the shared steps
+    and where Postulate 5 comes in), so that no page has to say it again. Empty if the
+    book has none yet."""
+    path = ROOT / "mishnah" / "intro" / f"{book}.md"
+    return path.read_text().strip() if path.exists() else ""
+
+
 def index(book, count, titles, facts):
     proved = sum(1 for n in range(1, count + 1)
                  if facts.get(f"{book}.{n}", {}).get("status") == "proved")
@@ -484,11 +498,14 @@ def index(book, count, titles, facts):
         ("proved-pending", "proved, citing propositions still to be proved"),
         ("sketched", "stated")) if s in used)
     out = [GENERATED, f"# Book {book}", "",
-           f"**{proved} of {count} propositions proved in Lean.** {legend}", "",
-           start, "",
-           "Books and papers to read alongside, from Proclus to Lean, are gathered by theme "
-           "in [the reading list](../../docs/reading.md).", "",
-           "| | Proposition | |", "|---|---|---|"]
+           f"**{proved} of {count} propositions proved in Lean.** {legend}", ""]
+    intro = book_intro(book)
+    if intro:
+        out += [intro, "", "## The propositions", ""]
+    out += [start, "",
+            "Books and papers to read alongside, from Proclus to Lean, are gathered by theme "
+            "in [the reading list](../../docs/reading.md).", "",
+            "| | Proposition | |", "|---|---|---|"]
     for n in range(1, count + 1):
         st = facts.get(f"{book}.{n}", {}).get("status", "sketched")
         _, enunciation, _ = heath.read(book, n)

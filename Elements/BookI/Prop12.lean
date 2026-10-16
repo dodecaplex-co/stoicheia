@@ -35,8 +35,8 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
   -- which is not on it, a perpendicular straight line.
   -- For let a point D be taken at random on the other side of the straight line AB, and with
   -- centre C and distance CD let the circle EFG be described; [Post. 3]
-  /- "At random on the other side" is System E's Points rule 6, which Book Zero
-     gives as `exists_oppositeSidesOf`. D is not C, since C is not on the other
+  /- "At random on the other side" is System E, Points 6, which Book Zero gives
+     as `exists_oppositeSidesOf`. D is not C, since C is not on the other
      side of AB from itself. -/
   obtain ⟨D, hDC, -⟩ := exists_oppositeSidesOf hABC []
   have hCD_AB : OppositeSides C D AB := hDC.symm.oppositeSides hA_AB hB_AB

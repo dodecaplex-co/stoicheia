@@ -94,9 +94,8 @@ immediately obvious if we divide the squares into two triangles by drawing a
 diagonal in each" (vol. 1, p. 348). Each square is a parallelogram
 (`Prop28.square`), so the diameter `AC` cuts it into the triangles `ABC` and `ACD`,
 right-angled at `B` and `D`; and I.4 makes these equal to the triangles `A'B'C'`
-and `A'C'D'`. Here a
-square `ABCD` is "described on `AB`" when its far corners `C`, `D` lie on one side
-of `AB`. [I. 4, I. 28] -/
+and `A'C'D'`. Here a square `ABCD` is "described on `AB`" when its far corners `C`,
+`D` lie on one side of `AB`. [I. 4, I. 28] -/
 theorem Prop46.square_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
     (hCD : SameSideOf C D A B) (h' : Square A' B' C' D') (hCD' : SameSideOf C' D' A' B')
     (hAB : ‖A B‖ = ‖A' B'‖) : quadArea A B C D = quadArea A' B' C' D' := by
@@ -127,12 +126,12 @@ the side DC is also equal to BC"). Heath reports, under I.46, Proclus' proof, wh
 places the two squares side by side and then reasons through I.39, I.27, I.34
 and I.26. We take another road, because a figure cannot be moved here (as
 `Prop44.place` explains): one square has to be described afresh, and described
-inside the other it is a part of it. Were `AB` less than `A'B'`, cut off from
-`A'B'` a straight line `A'X` equal to `AB` [I. 3], and describe
-on it a square `A'ZYX` on the side of `C'` [I. 46]. It is equal to the square `ABCD`
-(`Prop46.square_eq`); `Z` falls on `A'D'`, short of `D'`; and each square is double
-the triangle its diameter cuts off from `A'` [I. 34]. But the triangle `XA'Z` is a
-part of the triangle `B'A'D'`, and so less. [I. 3, I. 4, I. 28, I. 34, I. 46] -/
+inside the other it is a part of it. Were `AB` less than `A'B'`, cut off from `A'B'`
+a straight line `A'X` equal to `AB` [I. 3], and describe on it a square `A'ZYX` on
+the side of `C'` [I. 46]. It is equal to the square `ABCD` (`Prop46.square_eq`); `Z`
+falls on `A'D'`, short of `D'`; and each square is double the triangle its diameter
+cuts off from `A'` [I. 34]. But the triangle `XA'Z` is a part of the triangle
+`B'A'D'`, and so less. [I. 3, I. 4, I. 28, I. 34, I. 46] -/
 theorem Prop46.side_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
     (hCD : SameSideOf C D A B) (h' : Square A' B' C' D') (hCD' : SameSideOf C' D' A' B')
     (hsq : quadArea A B C D = quadArea A' B' C' D') : ‖A B‖ = ‖A' B'‖ := by

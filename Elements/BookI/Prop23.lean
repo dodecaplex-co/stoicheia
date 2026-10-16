@@ -37,8 +37,8 @@ theorem Prop23 {A B C D E P : Point} (hAB : A ≠ B) (hDCE : Triangle D C E) (hP
   obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
   -- thus it is required to construct on the given straight line AB, and at the point A on it,
   -- a rectilineal angle equal to the given rectilineal angle DCE.
-  /- On the ray from A through B, and on the side of AB where P is: see the note at
-     the top of this file. -/
+  /- We build the angle on the ray from A through B, and on the side of AB where P
+     is, so that later propositions can place it where they need it (I.24, I.31). -/
   -- On the straight lines CD, CE respectively let the points D, E be taken at random;
   /- The statement already names a point on each arm, D on CD and E on CE, so we
      take those. Any others would do as well: an angle depends only on its two rays

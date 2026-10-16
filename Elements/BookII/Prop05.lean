@@ -28,7 +28,8 @@ theorem Prop5 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
   -- For let a straight line AB be cut into equal segments at C and into unequal segments at D;
   -- I say that the rectangle contained by AD, DB together with the square on CD is equal to
   -- the square on CB.
-  /- Euclid's case, `D` between `C` and `B`, once; the other side exchanges `A` and `B`. -/
+  /- Euclid's figure puts `D` between `C` and `B`; the other side is the same with `A`
+     and `B` exchanged. -/
   have euclid : ∀ {A B C D : Point}, Between A C B → ‖A C‖ = ‖C B‖ → Between C D B →
       rect A D D B + sq C D = sq C B := by
     intro A B C D hACB hAC hCDB

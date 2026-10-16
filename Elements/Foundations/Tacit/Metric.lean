@@ -16,10 +16,10 @@ variable {A B C D E F : Point}
 /-- A finite straight line with distinct ends has length. (Metric 1) -/
 axiom eq_of_len_eq_zero (h : ‖A B‖ = 0) : A = B
 
-/-- The "line" from a point to itself has no length. (Metric 1) -/
+/-- The "straight line" from a point to itself has no length. (Metric 1) -/
 axiom len_self (A : Point) : ‖A A‖ = 0
 
-/-- The line `AB` is the line `BA`. (Metric 3) -/
+/-- The straight line `AB` is the straight line `BA`. (Metric 3) -/
 axiom len_symm (A B : Point) : ‖A B‖ = ‖B A‖
 
 /-- The angle `ABC` is the angle `CBA`. (Metric 4) -/

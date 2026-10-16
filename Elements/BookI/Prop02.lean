@@ -39,7 +39,7 @@ theorem Prop2 (A B C : Point) (hBC : B ≠ C) :
   -- with centre B and distance BC let the circle CGH be described; [Post. 3]
   obtain ⟨CGH, hB_CGH, hC_CGH⟩ := Postulate3 B C hBC
   /- Euclid's point G is where DB, produced beyond B, meets the circle CGH
-     (System E, Intersections rule 5): B is the centre, so it lies inside. -/
+     (System E, Intersections 5): B is the centre, so it lies inside. -/
   obtain ⟨G, hG_CGH, -, hGBD⟩ :=
     line_circle_beyond (centre_inside hB_CGH) hB_DF hD_DF hDB
   have hDBG : Between D B G := between_symm hGBD

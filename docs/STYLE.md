@@ -1,16 +1,24 @@
 # House style
 
-How Stoicheia reads and looks at its best, drawn from the mishnah of I.1–I.3, the
-bosun's reviews, [CONTRIBUTING](../CONTRIBUTING.md) and the
+How Stoicheia reads and looks at its best, drawn from the mishnah of I.1–I.5, I.29 and
+I.47, the bosun's reviews, the [read-through](reports/read-through-01.md) of Books I to
+III, [CONTRIBUTING](../CONTRIBUTING.md) and the
 [first inspection](reports/crew/inspection-01.md). Everyone who writes for the
 project works from it; every new or changed file is checked against the list at
 the end.
 
 ## 1. Voice
 
-- **One warm, plain voice.** "We" for the project ("our I.1 lets the side be
-  named"), "Lean" for what the machine insists on. No "I" or "my" outside
-  quotations.
+- **One warm, plain voice**: a friend who knows Euclid well, talking over his figure
+  with a curious reader. Short, plain sentences, sure of themselves; nothing hedged,
+  and nothing written for a checker. "So the tacit rule is doing real work: it says
+  the plane has the square roots that ruler and compass need" (I.1). "Generations of
+  schoolchildren knew it as the *pons asinorum*, the bridge of asses" (I.5).
+- **"We" is the project**: its statements, figures, choices and discoveries ("our
+  I.1 lets the side be named"; "we prove Euclid's case … and get the other"), and it
+  may take the reader along ("Postulate 3 lets us draw a circle"). Two to four a
+  page. "Lean" is the machine and what it insists on ("Lean wants it said"). No "I"
+  or "my" outside quotations.
 - **No crew talk where readers look** (the mishnah, captions, Lean comments, the
   gap catalogue, the README, the pages): "Book Zero proves it once", not "the first
   mate added it". Ranks belong in `docs/reports/crew/` and `docs/briefs/`, and in the
@@ -18,44 +26,95 @@ the end.
 - **People by name**, spelled as Heath spells them (Proclus', an-Nairīzī, van
   Pesch); modern authors in full ("Robin Hartshorne's *Geometry: Euclid and
   Beyond*"), and a person's full name at the first mention on each page ("Robert
-  Simson", then "Simson"). Say who saw a gap first, where we know; call a find new
-  only when it is.
+  Simson", then "Simson"): Augustus De Morgan, Henry Savile, Robert Simson, John
+  Playfair, J. L. Heiberg, Paul Tannery, Isaac Todhunter, David Hilbert, Christopher
+  Clavius, Dionysius Lardner, H. G. Zeuthen. Heath is Heath. Say who saw a gap first,
+  where we know; call a find new only when it is.
 - **No comparisons.** Nothing here is first, only, better or unlike anyone else's
   work; we say what others' work does well, and link to it. ("Only one triangle"
   is geometry, and fine.)
-- **Euclid's words for Euclid's things**: "straight line", "produced", "on one
-  straight line", "the angle ABC". A Lean word gets a plain gloss the first time.
-- Short sentences, and no em dashes: a comma, colon or full stop does it.
+- **Euclid's words for Euclid's things**: straight line, produced, joined, greater
+  and less, the angle ABC, the square on AB, the rectangle contained by AB, BC,
+  circumference (an arc), touches (a tangent), segment. "Diameter" is Euclid's word
+  for a diagonal: gloss it at its first use in each book (in Book III it is the
+  circle's). Gloss "applied" (I.44) and "gnomon" (II.5). Modern words stay in "The
+  modern way"; a Lean word gets a plain gloss the first time.
+- **House words.** "Tacit rules", never "tacit assumptions" or "tacit laws" outside
+  Heath's words. "Cites" for a citation ("Euclid gives no citation for it: it is
+  I.10"); "brackets" only for Heiberg's, and Heath's own round III.12.
+- Short sentences, and no em dashes: a comma, colon or full stop does it. No "note
+  that", "strictly speaking" or "it is worth noting".
 
 ## 2. The mishnah
 
-**Shape.** 200–500 words, aiming at 300–400, in 3–5 paragraphs of no more than
-about 150 words. Each opens with a short bold lead ending in a full stop (a
-question mark if it asks): **The circles that must meet.** A lead may quote
-Euclid or Heath: **"Not lying on the same side."**
+**Shape.** 250–450 words, in three to five paragraphs of about 120 words at most,
+"The modern way" last. Each opens with a short bold lead ending in a full stop (a
+question mark if it asks), and the lead is a hook: a question (**Must the circles
+meet?**), a claim (**A compass that closes.**), or Euclid's or Heath's words
+(**"Less than two right angles."**). A lead that could head a paragraph on another
+page is a label, not a lead.
+
+**What it tells.** Each paragraph tells one thing worth telling. Open on Euclid:
+what he does here and why it matters. Then what Heath, Proclus or the history adds,
+in one or two quotations. What Lean made us say out loud takes one paragraph at
+most, told as a discovery ("Euclid's figure quietly settles the order of its
+points, and Lean wants each of those facts said", I.5), on the page where it first
+happens, with four Lean names at most, exact and in backticks (`circles_meet`,
+`Prop1.figure`). The proof and the table are on the page: say why they look as they
+do, not what they say. Finer gaps go in the [gap catalogue](reports/gaps-book-I.md).
 
 **The modern way.** Always the last paragraph: coordinates, vectors, complex
-numbers or matrices, a sentence or three (under 100 words), exactly right.
-If the modern point is not Euclid's, say so: I.2's L lies on DA produced, so it is
-not A + (C − B).
+numbers or matrices, one or two sentences, exactly right. If the modern route is not
+Euclid's, say so (I.43, I.48; I.2's L lies on DA produced, so it is not
+A + (C − B)). Never repeat a neighbour's.
 
-**What belongs.** What Euclid takes for granted; what Lean made us say out loud,
-with exact Lean names in backticks (`circles_meet`, `Prop1.figure`); one or two of
-Heath's best notes. Finer gaps go in the [gap catalogue](reports/gaps-book-I.md).
+**Bookkeeping.** The page's table shows what the proof rests on, and the generated
+line under it, "Brought in by shared steps", names what each shared step brings in.
+So the mishnah does not restate the table, say what the certificate "cites" or
+"records", explain what a cited proposition or shared step brings in, or trace the
+paths of Postulate 5, Postulates 1 to 4, Definition I.15 or the tacit rules. It
+speaks of them only when the reason is this proposition's story, and then says "the
+Lean cites": a departure from Euclid's route (I.2 and I.5 need no Postulate 2; the
+Lean cites I.10 in I.42 and I.17 in II.12, where Euclid gives no citation: one
+clause naming his step), a gap he leaves (I.1's circles, I.35's G), or a landmark
+(Postulate 5 at I.29, I.44 and II.10; I.31 without it).
 
-**The certificate** counts everything a proof rests on, cited propositions
-included. Say the proof *uses* Postulate 1 at a step, check `facts.json` before
-saying more, and name any cited proposition that brings it in too.
+**Told once.** Each book's shared machinery is told once, in the book's
+introduction, `mishnah/intro/<book>.md`, which `render.py` sets on the book's index
+page in the same voice. Book I's tells System E, Book Zero, Postulate 1 naming a
+straight line, `produce_longer`, superposition in I.4 and I.8 alone, Postulate 5
+beneath every proposition from I.29 on but I.31, and `Prop30.meet`, credited to
+Proclus (Heath, vol. 1, pp. 207 and 316). Book II's tells the steps of
+`Elements/BookII/Rectangles.lean`, with `Parallel.between`,
+`quadArea_add_of_parallelograms` and the unlettered point of `exists_off_line`; Book
+III's will tell `Squares.lean` and `Circumferences.lean`. A shared step may be told
+on its home page (II.1's rectangle contained, II.4's "For the same reason");
+elsewhere it gets a clause at most ("as in II.4").
+
+**Retired refrains**, each once said on a dozen pages:
+
+- "I.4 and I.34" for a drawn rectangle; Proclus "under I.31", and "a straight line
+  meeting one of two parallels meets the other"; `exists_off_line` and the point
+  "with no letter"; `Rectangle.of_right`; `Square.described`; "Lean proves it once":
+  the book's introduction, and a clause on the home page.
+- "Uses Postulate 1", "(… brings it in as well)": I.1 and I.3 only.
+- "Postulate 5 comes in through …": I.29 and the introductions only.
+- "The certificate cites/records …", "Of the postulates …", "besides Euclid's …",
+  "just Euclid's three brackets": nowhere.
+- The leads "What (else) Lean made us say.", "What it rests on.", "Where the
+  parallels meet.", "Naming the pieces.", "Where X falls.": name the discovery, ask
+  the question, or quote, as I.35 does: **"He allows this to appear from the figure
+  simply."**
 
 **Quotations.**
 
 - Heath's exact 1908 words, in straight double quotes, with the page: "(vol. 1,
   p. 242)", or "pp. 253–254" when the passage crosses a page; "(Heath, vol. 1,
   p. 252)" when the sentence doesn't name him. Those Heath reports (Proclus,
-  Todhunter, De Morgan) take his page.
+  Todhunter, De Morgan) take his page. Never invent a quotation or a page.
 - Single quotes inside, "…" for a cut, and brackets inside are Heath's own. No
   added italics, and keep Heath's italics: those he printed, all of them, and only
-  those ("the two circles *will* meet").
+  those ("the two circles *will* meet"), as `*…*`.
 - Each of Heath's notes is quoted on the page of the proposition it belongs to, and
   elsewhere only referred to in a clause: "as Todhunter remarks under I.14". A
   passage from his introduction, or his notes on the definitions and postulates, is
@@ -110,7 +169,9 @@ there is no file and no section.
   one that cites III.20–III.22 in `Elements/BookIII/Circumferences.lean`, and a proof cites
   the earlier books as `BookI.PropN`, `BookII.PropN`.
 - **Euclid's route**: the propositions he cites, in his order, nothing later. When
-  Lean cites one he gives no bracket for, the mishnah says why.
+  Lean cites one he gives no citation for, the page's generated line shows the shared
+  step that brings it in, or the mishnah names his step in a clause (§2,
+  Bookkeeping).
 - **No `axiom` outside `Elements/Foundations/`, no `native_decide`.**
   Superposition only in I.4 and I.8; nothing before I.29 rests on Postulate 5 or
   `Elements.Tacit.Euclidean`. A new tacit rule comes from System E, with its
@@ -150,14 +211,15 @@ the whole canvas), in Georgia.
   with its book), `[III. Def. 3]` and `[III. 1, Por.]` (a porism, cited with its
   proposition), and Heiberg's brackets round a passage he judged added later (I.4,
   I.15's Porism), with a comment; and Heath's own round a whole proposition (III.12),
-  with its reason. In our prose a bracket appears only when we quote one: "the bracket
+  with its reason. In our prose a bracket appears only when we quote one: "Euclid cites
   [I. 20]". In the Lean, a `/- … -/` remark may give a step Euclid leaves unbracketed
   its justification in his form, as a `--` line would: "subtracted from each [C.N. 1,
   C.N. 3]".
-- **Our prose writes** I.5, II.4, I.1–I.24 (en dash); Postulate 3, Common Notion 1,
-  Definition 15 in a sentence; Post. 3, C.N. 1, Def. 15 in parentheses and tables.
-  Another book's definition keeps its book: "Definition I.15" in a sentence, "Def. I.15"
-  in parentheses and tables. Quotations keep Heath's "I. 5".
+- **Our prose writes** I.5, II.4, I.1–I.24 (en dash); Postulate 3, Common Notion 1 in
+  a sentence; Post. 3, C.N. 1 in parentheses and tables. A definition always keeps its
+  book, since Books II and III have their own: "Definition I.15" in a sentence,
+  "Def. I.15" in parentheses and tables. [I. 5] only in Euclid's text, and "I. 5" only
+  inside Heath's words.
 - Titles and foreign words in italics: *pons asinorum*, *reductio ad absurdum*.
 
 ## 6. The enforcer's checklist
@@ -182,12 +244,17 @@ proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN
 
 **Mishnah**
 
-4. `wc -w F` is 200–500.
-5. `awk 'BEGIN{RS=""}{print NR": "NF}' F` shows 3–5 paragraphs, none much over 150.
+4. `wc -w F` is 250–450.
+5. `awk 'BEGIN{RS=""}{print NR": "NF}' F` shows 3–5 paragraphs, none much over 120.
 6. This prints nothing:
    `awk 'BEGIN{RS=""} !/^\*\*[^*]+[.?]"?\*\* /{print "no lead: " NR} {l=$0} END{if (l !~ /^\*\*The modern way\.\*\* /) print "not last: the modern way"}' F`
-7. The modern way is one to three sentences, under 100 words, and exactly right.
-8. Lean knows every backticked name (no "Unknown"):
+6b. Each lead is a hook, not a label (§2, Shape), and none is a retired one; the
+    page says "we" two to four times (`grep -oiwE 'we|our|us' F | wc -l`); and this
+    prints nothing that is not this page's own story (§2, Bookkeeping and Retired
+    refrains):
+    `grep -niE 'certificate|comes in through|brings it in|besides Euclid|of the postulates|under I\. ?31|with no letter|proves it once' F`
+7. The modern way is one or two sentences, exactly right, and not a neighbour's.
+8. There are four Lean names at most, and Lean knows every one (no "Unknown"):
    ```sh
    { echo 'import Elements'; echo 'open Elements Elements.BookI Elements.Tacit'
      grep -oE '`[A-Za-z_][A-Za-z0-9_.₀-₉]*`' F | tr -d '`' | grep -v '\.lean$' | sort -u | sed 's/^/#check @/'; } > /tmp/Names.lean
@@ -218,10 +285,11 @@ proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN
     image decides.
 13. Each hit of `grep -nE 'Avigad|LeanEuclid' F` is a particular debt, not thanks.
     Each rule name is a docstring label: `grep -rn 'Intersection 5' Elements/Foundations/Tacit`.
-14. What it says of the certificate matches `facts.json`:
+14. What it says of the Lean's citations and postulates matches `facts.json`:
     `python3 -c "import json,sys; p={x['ref']:x for x in json.load(open('facts.json'))['propositions']}[sys.argv[1]]; print(*p['direct_axioms']); print('cites', *p['cites'])" I.N`.
-15. Every letter named is in `heath/I/NN.md`, and every name is spelled as Heath
-    spells it.
+15. Every letter named is in `heath/I/NN.md`; every name is spelled as Heath
+    spells it, and each person has a full name at the first mention on the page
+    (§1).
 
 **Lean**
 
@@ -232,8 +300,11 @@ proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN
 18. `grep -nE '^(theorem|lemma) ' F`: helpers before `PropN`, corollaries after;
     none restates a Book Zero lemma (search `Elements/Figure/` for its conclusion).
 19. The `cites` from check 14 match the brackets in `heath/I/NN.md`, or the
-    mishnah explains each extra one. When a shared step brings it in, a sentence
-    naming the step is explanation enough (`Prop30.meet` brings in I.30).
+    difference is accounted for. An extra citation that a shared step brings in is
+    shown by the page's generated "Brought in by shared steps" line, and the mishnah
+    says nothing of it. The mishnah explains a citation only where the Lean departs
+    from Euclid's route or the reason is part of the story: one clause naming his
+    step ("Euclid gives no citation for it: it is I.10").
 
 **Figures**
 
