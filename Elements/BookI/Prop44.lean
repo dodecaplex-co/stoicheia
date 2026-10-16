@@ -1,9 +1,14 @@
 import Elements.Figure.Basics
+import Elements.BookI.Prop02
+import Elements.BookI.Prop04
 import Elements.BookI.Prop15
+import Elements.BookI.Prop23
 import Elements.BookI.Prop29
 import Elements.BookI.Prop31
+import Elements.BookI.Prop34
 import Elements.BookI.Prop42
 import Elements.BookI.Prop43
+import Elements.BookI.HelpersParallels
 
 /-!
 # Book I, Proposition 44
@@ -11,11 +16,81 @@ import Elements.BookI.Prop43
 Euclid's text, in Heath's translation: [`heath/I/44.md`](../../heath/I/44.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+"Let it be placed so that BE is in a straight line with AB": Euclid moves the
+parallelogram I.42 has made. Lean cannot move a figure, so `Prop44.place` builds
+an equal parallelogram where Euclid puts his, and the proof cites it at that
+sentence.
 -/
 
 namespace Elements.BookI
 
 open Tacit
+
+/-- "Let it be placed so that BE is in a straight line with AB." Euclid moves the
+parallelogram made by I.42 into place without a word, as if picking it up. Lean
+cannot move a figure, so it builds an equal one where Euclid puts his. Given the
+parallelogram `PQRS`, with its angle `RQP`, and a straight line `AB`: produce `AB` to
+`E`, making `BE` equal to `QR` [I. 2]; at `B` on `BE` construct the angle `EBG` equal
+to the angle `RQP`, on the side of `X` [I. 23], with `BG` equal to `QP` [I. 2];
+through `G` and `E` draw parallels to `BE` and `BG` [I. 31], meeting at `F`
+(`Prop30.meet`). Then `BEFG` is a parallelogram, and it is equal to `PQRS`, for each
+is double a triangle [I. 34], and the triangles `GBE` and `PQR` are equal [I. 4]. -/
+theorem Prop44.place {A B X P Q R S : Point} (hAB : A ≠ B) (hX : ¬ Collinear A B X)
+    (h : Parallelogram P Q R S) :
+    ∃ E F G : Point, Between A B E ∧ SameSideOf G X A B ∧ Parallelogram B E F G ∧
+      ∠ E B G = ∠ R Q P ∧ quadArea B E F G = quadArea P Q R S := by
+  have hPQR : Triangle P Q R := h.triangle
+  obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
+  have hX_AB : ¬ OnLine X AB := fun hX' => hX ⟨AB, hA_AB, hB_AB, hX'⟩
+  /- Produce `AB` to `E`, with `BE` equal to `QR`. -/
+  obtain ⟨E₁, hABE₁⟩ := produce hAB
+  obtain ⟨K₁, hBK₁⟩ := Prop2 B Q R hPQR.ne₂₃
+  obtain ⟨E, hE, hBE⟩ := OnRay.exists_len_eq (ne_of_len_eq hBK₁ hPQR.ne₂₃)
+    (ne_of_between (between_symm hABE₁)).symm
+  have hABE : Between A B E := hE.between hABE₁
+  have hBE_QR : ‖B E‖ = ‖Q R‖ := hBE.trans hBK₁
+  have hE_AB : OnLine E AB := on_line_of_between hABE hA_AB hB_AB
+  have hBE_ne : B ≠ E := (ne_of_between (between_symm hABE)).symm
+  /- At `B` on `BE`, the angle `EBG` equal to the angle `RQP`, on `X`'s side, with `BG`
+     equal to `QP`. -/
+  have hX' : ¬ Collinear B E X := fun ⟨K, hB_K, hE_K, hX_K⟩ =>
+    hX_AB ((line_unique hBE_ne hB_K hE_K hB_AB hE_AB) ▸ hX_K)
+  obtain ⟨E₂, G₁, hE₂, hG₁, hang⟩ := Prop23 hBE_ne hPQR.cba hX'
+  obtain ⟨K₂, hBK₂⟩ := Prop2 B Q P hPQR.ne₁₂.symm
+  obtain ⟨G, hG, hBG⟩ :=
+    OnRay.exists_len_eq (ne_of_len_eq hBK₂ hPQR.ne₁₂.symm) hG₁.triangle.ne₁₃
+  have hBG_QP : ‖B G‖ = ‖Q P‖ := hBG.trans hBK₂
+  have hGX : SameSideOf G X B E := SameSideOf.of_onRay hG hG₁
+  have hEBG : ∠ E B G = ∠ R Q P := (angle_eq_of_onRay hE₂.symm hG).trans hang
+  have hBEG : Triangle B E G := hGX.triangle
+  /- Through `G` a parallel to `BE`, through `E` a parallel to `BG`, meeting at `F`. -/
+  obtain ⟨U, V, hUGV, hUV⟩ := Prop31 hBE_ne (fun ⟨K, hB_K, hE_K, hG_K⟩ =>
+    hBEG ⟨K, hB_K, hE_K, hG_K⟩)
+  obtain ⟨U', V', hU'EV', hU'V'⟩ := Prop31 hBEG.ne₁₃ hBEG.acb
+  obtain ⟨ℓ₁, hU_ℓ₁, hV_ℓ₁⟩ := Postulate1 U V hUV.1
+  obtain ⟨ℓ₂, hU'_ℓ₂, hV'_ℓ₂⟩ := Postulate1 U' V' hU'V'.1
+  obtain ⟨BG, hB_BG, hG_BG⟩ := Postulate1 B G hBEG.ne₁₃
+  have hG_ℓ₁ : OnLine G ℓ₁ := on_line_of_between_ends hUGV hU_ℓ₁ hV_ℓ₁
+  have hE_ℓ₂ : OnLine E ℓ₂ := on_line_of_between_ends hU'EV' hU'_ℓ₂ hV'_ℓ₂
+  have hℓ₁ : Parallel ℓ₁ AB := hUV.parallel hU_ℓ₁ hV_ℓ₁ hB_AB hE_AB
+  have hℓ₂ : Parallel ℓ₂ BG := hU'V'.parallel hU'_ℓ₂ hV'_ℓ₂ hB_BG hG_BG
+  have hℓ₁BG : ℓ₁ ≠ BG := fun e => hℓ₁.not_onLine (e ▸ hB_BG) hB_AB
+  obtain ⟨F, hF_ℓ₁, hF_ℓ₂⟩ := Prop30.meet hℓ₂ hG_BG hG_ℓ₁ hℓ₁BG
+  have hFG : F ≠ G := fun e => hℓ₂.not_onLine hF_ℓ₂ (e ▸ hG_BG)
+  have hEF : E ≠ F := fun e => hℓ₁.not_onLine hF_ℓ₁ (e ▸ hE_AB)
+  have hBEFG : Parallelogram B E F G :=
+    ⟨AreParallel.of_parallel hBE_ne hFG hB_AB hE_AB hF_ℓ₁ hG_ℓ₁ hℓ₁.symm,
+      AreParallel.of_parallel hEF hBEG.ne₁₃.symm hE_ℓ₂ hF_ℓ₂ hG_BG hB_BG hℓ₂⟩
+  /- Each parallelogram is double a triangle, and the triangles are equal. -/
+  have hGBE : ∠ G B E = ∠ P Q R := by
+    rw [angle_symm hBEG.ne₁₃.symm hBE_ne.symm, hEBG, angle_symm hPQR.ne₂₃.symm hPQR.ne₁₂]
+  have htri : △ B G E = △ Q P R := (Prop4 hBEG.acb hPQR.bac hBG_QP hBE_QR hGBE).2.1
+  refine ⟨E, F, G, hABE, ?_, hBEFG, hEBG, ?_⟩
+  · exact SameSideOf.of_line hAB hA_AB hB_AB (hGX.sameSide hB_AB hE_AB)
+  · rw [← hBEFG.quadArea_rotate, ← quadArea_rotate₂ E F G B,
+      Prop34.bisect hBEFG.rotate.rotate.rotate, Prop34.bisect h, area_bac G B E, htri,
+      ← area_bac P Q R]
 
 /-- To a given straight line to apply, in a given rectilineal angle, a parallelogram equal to a
 given triangle. -/

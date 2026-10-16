@@ -31,3 +31,16 @@
 - **The square logos stay**, for avatars and icons.
 - **A wider crew.** From voyage 3 the crew includes OpenAI Codex sailors alongside
   Claude ones, and an enforcer who keeps the voice one voice.
+- **The area section's ground.** Book Zero gains `Areas.lean` and
+  `Parallelograms.lean`. The shared steps that cite I.28–I.30 (the angles of
+  parallels, "a straight line meeting one of two parallels meets the other", a
+  square is a parallelogram) live in
+  [`Elements/BookI/HelpersParallels.lean`](../../Elements/BookI/HelpersParallels.lean),
+  since `Helpers.lean`, imported by I.7, cannot import them.
+- **Two statements changed for voyage 4.** I.38's two triangles may share their
+  vertex, as I.42 needs; each of I.48's three squares lies on one side of the side
+  it is described on. I.42 is unchanged, and I.44 carries out Euclid's "let it be placed"
+  itself (`Prop44.place`). That squares on equal straight lines are equal, and the
+  converse, which Euclid assumes in I.48, are corollaries of I.46, as Heath reports
+  Proclus proving them there. The first mate's reasons are in
+  [first-mate-04.md](../reports/crew/first-mate-04.md).

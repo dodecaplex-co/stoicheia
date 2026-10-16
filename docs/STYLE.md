@@ -81,7 +81,8 @@ debt is still said where it falls: Intersection 4 is LeanEuclid's corrected form
 - **Book Zero first.** Search `Elements/Figure/` before writing a helper, and cite
   its lemma rather than keep a copy; Book Zero imports no proposition. A shared
   step that cites a proposition goes in `Elements/BookI/Helpers.lean`, named after
-  it (`Prop5.base`).
+  it (`Prop5.base`), or, if it cites I.28, I.29 or I.30, in
+  `Elements/BookI/HelpersParallels.lean` (`Prop30.meet`).
 - **Euclid's route**: the propositions he cites, in his order, nothing later. When
   Lean cites one he gives no bracket for, the mishnah says why.
 - **No `axiom` outside `Elements/Foundations/`, no `native_decide`.**

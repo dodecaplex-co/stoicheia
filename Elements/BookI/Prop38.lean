@@ -9,6 +9,10 @@ import Elements.BookI.Prop36
 Euclid's text, in Heath's translation: [`heath/I/38.md`](../../heath/I/38.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+"In the same parallels BF, AD": two parallel straight lines, one through the
+vertices `A` and `D`, the other through the bases `BC` and `EF`. The two vertices
+may be one point, as when I.42 cites this for the triangles `ABE` and `AEC`.
 -/
 
 namespace Elements.BookI
@@ -18,8 +22,8 @@ open Tacit
 /-- Triangles which are on equal bases and in the same parallels are equal to one another. -/
 theorem Prop38 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E F)
     (hbase : ‖B C‖ = ‖E F‖)
-    (hBF : ∃ L : Line, OnLine B L ∧ OnLine C L ∧ OnLine E L ∧ OnLine F L)
-    (hpar : AreParallel A D B F) :
+    (hpar : ∃ L M : Line, Parallel L M ∧ OnLine A L ∧ OnLine D L ∧
+      OnLine B M ∧ OnLine C M ∧ OnLine E M ∧ OnLine F M) :
     △ A B C = △ D E F := by
   -- Let ABC, DEF be triangles on equal bases BC, EF and in the same parallels BF, AD;
   -- I say that the triangle ABC is equal to the triangle DEF.

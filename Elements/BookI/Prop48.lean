@@ -8,6 +8,9 @@ import Elements.BookI.Prop47
 Euclid's text, in Heath's translation: [`heath/I/48.md`](../../heath/I/48.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+Each square is described on its side: its two far corners lie on one side of the
+side it stands on (Def. 22 alone does not say so). Either side will do.
 -/
 
 namespace Elements.BookI
@@ -16,8 +19,10 @@ open Tacit
 
 /-- If in a triangle the square on one of the sides be equal to the squares on the remaining two
 sides of the triangle, the angle contained by the remaining two sides of the triangle is right. -/
-theorem Prop48 {A B C P Q R S T U : Point} (hABC : Triangle A B C) (hBC : Square B P Q C)
-    (hBA : Square A B R S) (hAC : Square A C T U)
+theorem Prop48 {A B C P Q R S T U : Point} (hABC : Triangle A B C)
+    (hBC : Square B P Q C) (hPQ : SameSideOf P Q B C)
+    (hBA : Square A B R S) (hRS : SameSideOf R S A B)
+    (hAC : Square A C T U) (hTU : SameSideOf T U A C)
     (h : quadArea B P Q C = quadArea A B R S + quadArea A C T U) :
     ∠ B A C = ∟ := by
   -- For in the triangle ABC let the square on one side BC be equal to the squares on the sides

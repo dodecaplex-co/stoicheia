@@ -107,8 +107,8 @@ BOOK_I = {
         "    (hpar : AreParallel A D B C) :\n    △ A B C = △ D B C",
     38: "{A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E F)\n"
         "    (hbase : ‖B C‖ = ‖E F‖)\n"
-        "    (hBF : ∃ L : Line, OnLine B L ∧ OnLine C L ∧ OnLine E L ∧ OnLine F L)\n"
-        "    (hpar : AreParallel A D B F) :\n    △ A B C = △ D E F",
+        "    (hpar : ∃ L M : Line, Parallel L M ∧ OnLine A L ∧ OnLine D L ∧\n"
+        "      OnLine B M ∧ OnLine C M ∧ OnLine E M ∧ OnLine F M) :\n    △ A B C = △ D E F",
     39: "{A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)\n"
         "    (heq : △ A B C = △ D B C) (hside : SameSideOf A D B C) (hAD : A ≠ D) :\n"
         "    AreParallel A D B C",
@@ -139,8 +139,10 @@ BOOK_I = {
         "    (hABFG : Square A B F G) (hF : OppositeSidesOf F C A B) (hG : OppositeSidesOf G C A B)\n"
         "    (hACKH : Square A C K H) (hK : OppositeSidesOf K B A C) (hH : OppositeSidesOf H B A C) :\n"
         "    quadArea B D E C = quadArea A B F G + quadArea A C K H",
-    48: "{A B C P Q R S T U : Point} (hABC : Triangle A B C) (hBC : Square B P Q C)\n"
-        "    (hBA : Square A B R S) (hAC : Square A C T U)\n"
+    48: "{A B C P Q R S T U : Point} (hABC : Triangle A B C)\n"
+        "    (hBC : Square B P Q C) (hPQ : SameSideOf P Q B C)\n"
+        "    (hBA : Square A B R S) (hRS : SameSideOf R S A B)\n"
+        "    (hAC : Square A C T U) (hTU : SameSideOf T U A C)\n"
         "    (h : quadArea B P Q C = quadArea A B R S + quadArea A C T U) :\n"
         "    ∠ B A C = ∟",
 }

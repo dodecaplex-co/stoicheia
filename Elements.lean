@@ -18,6 +18,8 @@ import Elements.Figure.Rays
 import Elements.Figure.Sides
 import Elements.Figure.Angles
 import Elements.Figure.Parallels
+import Elements.Figure.Areas
+import Elements.Figure.Parallelograms
 import Elements.Figure.Basics
 import Elements.BookI.Prop01
 import Elements.BookI.Prop02
@@ -50,6 +52,7 @@ import Elements.BookI.Prop27
 import Elements.BookI.Prop28
 import Elements.BookI.Prop29
 import Elements.BookI.Prop30
+import Elements.BookI.HelpersParallels
 import Elements.BookI.Prop31
 import Elements.BookI.Prop32
 import Elements.BookI.Prop33

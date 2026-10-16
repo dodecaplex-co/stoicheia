@@ -7,6 +7,8 @@ import Elements.Figure.Rays
 import Elements.Figure.Sides
 import Elements.Figure.Angles
 import Elements.Figure.Parallels
+import Elements.Figure.Areas
+import Elements.Figure.Parallelograms
 
 /-!
 # Book Zero: small facts every figure needs
@@ -42,6 +44,15 @@ Every proposition file imports this one, and through it:
   point; one parallel lies wholly on one side of the other; a straight line
   joining two parallels in the same directions; and the figure of I.29 about any
   straight line falling on two parallels.
+* `Areas`: a triangle named from any corner; a triangle is something, and a
+  straight line from a corner cuts it into two which make up the whole; the
+  halves of equal things are equal; a four-sided figure whose diameters cross has
+  the same area whichever diameter cuts it.
+* `Parallelograms`: a parallelogram or a square named from another corner; a
+  point between two parallels; parallels keep order; a four-sided figure between
+  two parallels has crossing diameters or crossing sides; the diameters of a
+  parallelogram cross; a parallelogram cut by a parallel is the two parallelograms
+  it is cut into.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is
 an axiom.
