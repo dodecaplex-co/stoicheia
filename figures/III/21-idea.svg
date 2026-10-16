@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.21 at a glance</title>
+  <desc>The angles in the same segment of a circle are equal (yellow): wherever the corner sits on the circumference, the angle on the straight line (blue) is the same.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="200.0" cy="152.0" r="112.0" fill="none" stroke="#222222" stroke-width="3"/>
+  <path d="M101.1,99.4 L124.7,110.4 A26,26 0 0,1 99.7,125.4 Z" fill="#f2b705"/>
+  <path d="M184.4,41.1 L200.4,61.6 A26,26 0 0,1 171.4,63.6 Z" fill="#f2b705"/>
+  <path d="M288.3,83.0 L291.9,108.8 A26,26 0 0,1 265.7,96.0 Z" fill="#f2b705"/>
+  <line x1="101.1" y1="99.4" x2="96.2" y2="194.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="101.1" y1="99.4" x2="303.8" y2="194.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="184.4" y1="41.1" x2="96.2" y2="194.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="184.4" y1="41.1" x2="303.8" y2="194.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="288.3" y1="83.0" x2="96.2" y2="194.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="288.3" y1="83.0" x2="303.8" y2="194.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="96.2" y1="194.0" x2="303.8" y2="194.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>

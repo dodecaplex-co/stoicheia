@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.27 at a glance</title>
+  <desc>In equal circles, angles standing on equal circumferences (red) are equal, at the centres (yellow) and at the circumferences (blue).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="106.0" cy="150.0" r="82.0" fill="none" stroke="#222222" stroke-width="3"/>
+  <path d="M106.0,150.0 L83.9,132.8 A28,28 0 0,1 128.1,132.8 Z" fill="#f2b705"/>
+  <path d="M80.7,228.0 L70.7,195.5 A34,34 0 0,1 100.2,200.1 Z" fill="#1f5aa6"/>
+  <path d="M41.4,99.5 A82.0,82.0 0 0,1 170.6,99.5" fill="none" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="106.0" y1="150.0" x2="41.4" y2="99.5" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="106.0" y1="150.0" x2="170.6" y2="99.5" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="80.7" y1="228.0" x2="41.4" y2="99.5" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="80.7" y1="228.0" x2="170.6" y2="99.5" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="106.0" cy="150.0" r="4.5" fill="#222222"/>
+  <circle cx="294.0" cy="150.0" r="82.0" fill="none" stroke="#222222" stroke-width="3"/>
+  <path d="M294.0,150.0 L300.3,122.7 A28,28 0 0,1 318.9,162.7 Z" fill="#f2b705"/>
+  <path d="M226.8,197.0 L245.8,168.8 A34,34 0 0,1 260.7,194.7 Z" fill="#1f5aa6"/>
+  <path d="M312.4,70.1 A82.0,82.0 0 0,1 367.1,187.2" fill="none" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="294.0" y1="150.0" x2="312.4" y2="70.1" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="294.0" y1="150.0" x2="367.1" y2="187.2" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="226.8" y1="197.0" x2="312.4" y2="70.1" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="226.8" y1="197.0" x2="367.1" y2="187.2" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="294.0" cy="150.0" r="4.5" fill="#222222"/>
+</svg>
