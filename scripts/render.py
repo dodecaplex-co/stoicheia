@@ -95,22 +95,6 @@ def lean_body(path):
     return body.strip("\n")
 
 
-def group_axioms(names):
-    groups = {"Postulates": [], "Definitions": [], "Superposition": [],
-              "Reading the figure": [], "Lengths, angles and areas": [],
-              "Laws of magnitude": []}
-    for n in names:
-        if n.startswith("Postulate"):
-            groups["Postulates"].append(n)
-        elif n.startswith("Definition"):
-            groups["Definitions"].append(n)
-        elif n == "Tacit.superposition":
-            groups["Superposition"].append(n)
-        else:
-            groups["_tacit"] = groups.get("_tacit", []) + [n]
-    return groups
-
-
 def axiom_kind(path: str) -> str:
     if path.endswith("Tacit/Magnitudes.lean"):
         return "Laws of magnitude"
@@ -261,9 +245,14 @@ def page(book, n, count, titles, facts, docs):
 def index(book, count, titles, facts):
     proved = sum(1 for n in range(1, count + 1)
                  if facts.get(f"{book}.{n}", {}).get("status") == "proved")
+    # The key names only the marks the table uses: a finished book shows ✅ alone.
+    used = {facts.get(f"{book}.{n}", {}).get("status", "sketched") for n in range(1, count + 1)}
+    legend = " · ".join(f"{STATUS_SHORT[s]} {t}" for s, t in (
+        ("proved", "proved"),
+        ("proved-pending", "proved, citing propositions still to be proved"),
+        ("sketched", "sketched")) if s in used)
     out = [GENERATED, f"# Book {book}", "",
-           f"**{proved} of {count} propositions proved in Lean.** "
-           "✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched", "",
+           f"**{proved} of {count} propositions proved in Lean.** {legend}", "",
            f"Start with the [definitions, postulates and common notions](front.md). "
            f"What Euclid takes for granted along the way is gathered in "
            f"[a catalogue](../../docs/reports/gaps-book-{book}.md).", "",
@@ -280,8 +269,12 @@ FRONT_LEAN_I = {
     "Definitions": {
         1: "`Point`", 2: "`Line`", 3: "`Line`", 4: "`Line`", 8: "`∠ A B C`", 9: "`∠ A B C`",
         10: "`IsRightAngle`, with Postulate 4", 11: "`IsObtuse`", 12: "`IsAcute`",
-        15: "`Definition15` (an axiom: radii are equal)", 16: "`Centre`", 19: "`Triangle`",
-        20: "`Equilateral`, `Isosceles`", 21: "`RightAngledTriangle`", 22: "`Square`",
+        15: "`Definition15` (an axiom: radii are equal)", 16: "`Centre`",
+        17: "`quadArea A B C D` cuts the figure by its diameter `AC` (Euclid says it of a "
+            "parallelogram, from I.34)",
+        19: "`Triangle`; four-sided, `quadArea`",
+        20: "`Equilateral`, `Isosceles`", 21: "`RightAngledTriangle`",
+        22: "`Square`; a trapezium (I.35), `quadArea`",
         23: "`Parallel`",
     },
     "Postulates": {i: f"`Postulate{i}`" for i in range(1, 6)},
@@ -336,8 +329,8 @@ def certificate(facts, docs):
         no_p5 = [p["ref"] for p in proved if "Postulate5" not in p["axioms"]]
         with_p5 = [p["ref"] for p in proved if "Postulate5" in p["axioms"]]
         sup = [p["ref"] for p in props if p and "Tacit.superposition" in p["direct_axioms"]]
-        out += ["What the proofs show so far:", ""]
-        out.append(f"- **Postulate 5**: {len(no_p5)} proved proposition(s) do without it"
+        out += ["What the proofs show:" if len(proved) == count else "What the proofs show so far:", ""]
+        out.append(f"- **Postulate 5**: {len(no_p5)} proposition{'s' if len(no_p5) != 1 else ''} never need it"
                    + (f"; {len(with_p5)} use it, the first being {with_p5[0]}." if with_p5 else
                       ". None of the proved propositions uses it yet.")
                    + " Euclid holds it back until I.29.")
@@ -362,7 +355,6 @@ def certificate(facts, docs):
             out.append(f"| {STATUS_SHORT[p['status']]} | {link} | {euclid} | {cites} | "
                        f"{posts} | {defs} | {cns} | {tacit} |")
         out.append("")
-    lean_version = next(iter(facts.values()), {}).get("lean_version", "")
     out += ["The Common Notions are theorems in Lean (see "
             "[`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so they are "
             "counted where a proof cites them by name. Lean's own logical foundations "

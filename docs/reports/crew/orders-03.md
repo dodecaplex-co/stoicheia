@@ -58,9 +58,9 @@ The "at a glance" figure `NN-idea.svg` is already drawn; leave it alone.
 paragraphs, each opening with a short bold lead; "The modern way" last. Say what
 Euclid takes for granted, what Lean made us say (exact Lean names in backticks),
 and one or two of Heath's best notes. Quote Heath exactly, with the page, checked
-against `$HEATH_OCR`, the OCR of the scan (it is
-`/private/tmp/claude-501/-Users-johnchallis/68e6b57d-6355-42a6-8303-c463406f082f/scratchpad/heath-src/heathV1.ocr.txt`;
-volume 1's page N is scan leaf N + 20), or failing that against the page image.
+against `$HEATH_OCR`, the OCR text of the Internet Archive scan
+`thirteenbookseu02heibgoog` (the captain gives the path; volume 1's page N is
+scan leaf N + 20), or failing that against the page image.
 Quote a note of Heath's only on the page of
 the proposition it belongs to. One warm, plain voice: "we", no "I", no crew talk,
 no comparisons, no em dashes.

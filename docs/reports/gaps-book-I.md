@@ -18,11 +18,11 @@ Each entry names the Lean lemma or tacit rule that fills the gap. Lemmas named
 proposition's figure and live in its file. A few are steps that several proofs
 share and that cite a proposition, which Book Zero may not do: `Prop5.base`, the
 angles at the base of I.5 with the sides produced for us, lives in
-`Elements/BookI/Helpers.lean`; the steps that cite I.28, I.29 or I.30, such as
+`Elements/BookI/Helpers.lean`; the steps that cite I.28, I.30 or I.31, such as
 `Prop30.meet`, live in `Elements/BookI/HelpersParallels.lean`; and corollaries that
-later proofs draw from a proposition, such as `Prop34.bisect` and `Prop46.side_eq`,
-follow it in its own file. The other lemmas are general and live in Book Zero
-(`Elements/Figure/`), where any proof may cite them.
+later proofs draw from a proposition, such as `Prop29.alternate`, `Prop34.bisect`
+and `Prop46.side_eq`, follow it in its own file. The other lemmas are general and
+live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 
 ## I.1
 - The two circles cut one another. Heath: "It is a commonplace that Euclid has no right to assume, without premising some postulate, that the two circles will meet in a point C." Filled by the tacit rule `circles_meet` (System E, Intersection 5).
@@ -30,7 +30,7 @@ follow it in its own file. The other lemmas are general and live in Book Zero
 - The circles cut one another on both sides of AB, so the triangle may be put on either side. Euclid relies on this without saying so in I.9, where the triangle on DE must fall on the side away from A, and in I.11. I.1 is stated with a side to choose (System E, Intersections 8).
 
 ## I.2
-- The circles about B and D are met by DB and DA produced (`line_circle_beyond`, System E Intersections 5); Euclid's Postulate 2 steps are absorbed into this.
+- The circles about B and D are met by DB and DA produced (`line_circle_beyond`, System E, Intersections 5); Euclid's Postulate 2 steps are absorbed into this.
 - A lies inside the circle GKL, because DA is only part of DG (C.N. 5).
 
 ## I.3
@@ -46,7 +46,7 @@ follow it in its own file. The other lemmas are general and live in Book Zero
 - F is taken "at random" on BD, but must be close enough to A that AE is the greater (`exists_between_nearer`, which draws a circle about A).
 - F, taken between B and D, still lies beyond B as seen from A, so that B is between A and F (`between_cut`).
 - G lies beyond C on AE (`OnRay.between_of_len_lt`).
-- The angle FAG is common to both triangles, and BFC is AFC, because the points lie on the same rays (`angle_onRay_left`, System E Diagram-angle 4).
+- The angle FAG is common to both triangles, and BFC is AFC, because the points lie on the same rays (`angle_onRay_left`, System E, Diagram-angle 4).
 - The angles ABG, ACF are made up of ABC, CBG and ACB, BCF (`angle_add_of_between`, Pasch 2 and Diagram-angle 2).
 - Each of AFC, AGB, FBC, GCB is a genuine triangle (`Triangle.of_line`).
 
@@ -69,8 +69,8 @@ follow it in its own file. The other lemmas are general and live in Book Zero
 ## I.9
 - The equilateral triangle on DE goes on the side away from A (Heath, vol. 1, p. 264), and our I.1 lets the side be chosen.
 - D, taken "at random" on AB, must be nearer A than C is, so that I.3 can be used (`exists_between_nearer`, as in I.5).
-- F falls within the angle BAC: the question of Proclus' objector (Heath, vol. 1, p. 265). If F were on an arm, Proclus' own argument with the second part of I.5 rules it out; if outside the angle, I.7 does (`Prop9.crossing`, `Prop9.not_on_arm`).
-- Euclid proves the angles DAF and EAF equal, but the angle to be bisected is BAC. DAF and EAF are BAF and FAC because D and E lie on the rays from A through B and C (`angle_onRay_left`, `angle_symm`), and BAC is made up of them because F lies within it (`angle_add_of_inside`, System E Diagram-angle 2).
+- F falls within the angle BAC: the question of Proclus' objector (Heath, vol. 1, p. 265). If F were on an arm, Proclus' own argument with the second part of I.5 rules it out; if outside the angle, I.7 does (`Prop9.crossing`, `Prop9.not_on_arm`); and from the point where AF crosses DE, `Prop9.side` reads off which side of AB and of AC F lies on.
+- Euclid proves the angles DAF and EAF equal, but the angle to be bisected is BAC. DAF and EAF are BAF and FAC because D and E lie on the rays from A through B and C (`angle_onRay_left`, `angle_symm`), and BAC is made up of them because F lies within it (`angle_add_of_inside`, System E, Diagram-angle 2).
 
 ## I.10
 - The bisector of the angle ACB meets AB, and between A and B: I.9's statement (F within the angle) and Book Zero's `crossbar`.
@@ -82,7 +82,7 @@ follow it in its own file. The other lemmas are general and live in Book Zero
 - Turning Definition 10's "right" into the one magnitude of all right angles takes Postulate 4, which Euclid doesn't cite here.
 
 ## I.12
-- The circle about C through D cuts AB twice (System E Intersection 2).
+- The circle about C through D cuts AB twice (System E, Intersection 2).
 - "Perpendicular to the infinite straight line" again means a right angle with every point of AB (`OnRay.cases_of_between`, as in I.11).
 - HGC and HEC, the triangles I.8 compares, are genuine triangles: H, G and E are on AB, and C is off it (`Triangle.of_line`).
 
@@ -97,6 +97,7 @@ follow it in its own file. The other lemmas are general and live in Book Zero
 - Euclid's figure has BE within the angle ABD; the other case, BD within ABE, needs handling too (`onRay_of_angle_eq`).
 - E and D lie on the same side of AB, each being on the other side from C (`OppositeSidesOf.of_between`, `OppositeSidesOf.sameSideOf`): the one place the hypothesis "not lying on the same side" is used, as Proclus warned.
 - "AB stands on the straight line CBE" needs A off CBE before I.13 applies: that straight line passes through B and C, and A, B, C are not on one straight line.
+- "Therefore CB is in a straight line with BD": the supposition having failed, D lies on the ray from B through E, and every point of that ray lies beyond B from C (`OnRay.between`).
 
 ## I.15
 - The two straight lines really cross, so that each "stands on" the other before I.13 applies (`Prop15.figure`).
@@ -288,8 +289,10 @@ over a postulate, the reason is one of these.
   it or off it, or lay a figure along it. This is a difference in bookkeeping, not
   in geometry: Euclid's "the straight line AB" names the same line implicitly.
 - **Postulate 2**: a straight line produced where Euclid gives no bracket (I.14,
-  I.31, and BE laid along AB in I.44); the sides of I.5 produced, because our I.5
-  is stated with them (`Prop5.base`); a straight line produced far enough for I.3
+  I.31, and BE laid along AB in I.44); the given straight lines of I.30, produced
+  so that each has an end on either side of GK, as in Heath's figure
+  (`Prop30.point_on_side`); the sides of I.5 produced, because our I.5 is stated
+  with them (`Prop5.base`); a straight line produced far enough for I.3
   to cut from (`produce_longer`); a straight line produced behind a point, so that
   a circle about it is cut on the side we want (`OnRay.exists_len_eq`); and
   straight lines produced so that a straight line falling on two others meets each
@@ -307,7 +310,8 @@ over a postulate, the reason is one of these.
 - **Postulate 4**: turning Definition 10's right angles into the one magnitude `∟`
   that all right angles share.
 - **Postulate 5**: no difference. The Lean uses it directly just where Euclid
-  cites it, in I.29 and I.44, and elsewhere only through the propositions cited.
+  cites it, in I.29 and I.44, and elsewhere only through the propositions cited:
+  every proposition after I.29 but I.31 rests on it that way.
 
 The certificate counts everything a proof rests on, the propositions it cites
 included, so a postulate can be on a proposition's certificate when its own proof

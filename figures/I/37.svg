@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 400 240">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
   <title>Euclid I.37: triangles on the same base and in the same parallels</title>
-  <rect width="400" height="240" rx="10" fill="#fbf7ee"/>
+  <rect x="0" y="0" width="400" height="240" rx="10" fill="#fbf7ee"/>
   <g fill="#e9dcc0" fill-opacity="0.55">
     <path d="M 160,55 L 120,195 L 220,195 Z"/>
     <path d="M 250,55 L 120,195 L 220,195 Z"/>
@@ -19,7 +19,7 @@
     <circle cx="120" cy="195" r="2.6"/>
     <circle cx="220" cy="195" r="2.6"/>
   </g>
-  <g fill="#3b2f2f" font-family="Georgia, serif" font-size="17" font-style="italic">
+  <g fill="#3b2f2f">
     <text x="40" y="59">E</text>
     <text x="154" y="40">A</text>
     <text x="244" y="40">D</text>

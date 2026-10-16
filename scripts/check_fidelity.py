@@ -9,7 +9,8 @@
 4. No `native_decide` (it would add an axiom Lean's kernel doesn't check).
 5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first):
    - only I.4 and I.8 may use superposition directly;
-   - no proposition before I.29 rests on Postulate 5 or any Euclidean-only rule.
+   - no proposition before I.29 rests on Postulate 5 or any Euclidean-only rule;
+   - every proposition of a completed book is proved, with both figures and a mishnah.
 
 Exits non-zero on any failure. Standard library only.
 """
@@ -22,6 +23,8 @@ import heath
 
 ROOT = heath.ROOT
 BOOKS = {"I": 48}
+# Books whose every proposition is proved: they must stay that way.
+COMPLETE = {"I"}
 SUPERPOSITION_ALLOWED = {"I.4", "I.8"}
 EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 FIRST_EUCLIDEAN = {"I": 29}
@@ -105,6 +108,16 @@ def check_facts() -> None:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
             if bad:
                 fail(f"{ref}: rests on {', '.join(bad)} before I.29")
+    by_ref = {p["ref"]: p for p in facts["propositions"]}
+    for book in COMPLETE:
+        for n in range(1, BOOKS[book] + 1):
+            ref = f"{book}.{n}"
+            if by_ref.get(ref, {}).get("status") != "proved":
+                fail(f"{ref}: Book {book} is complete, but {ref} is not proved")
+            for f in (f"figures/{book}/{n:02d}.svg", f"figures/{book}/{n:02d}-idea.svg",
+                      f"mishnah/{book}/{n:02d}.md"):
+                if not (ROOT / f).exists():
+                    fail(f"{ref}: {f} is missing")
 
 
 def main() -> int:

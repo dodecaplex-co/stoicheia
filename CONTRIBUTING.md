@@ -6,10 +6,12 @@ transcription. A few house rules keep the whole thing honest and readable.
 
 ## Proving a proposition
 
-Every proposition of Book I is already stated in Lean, with Euclid's sentences in
-place as comments and a `sorry` at the end. Pick any 🚧 proposition in
-[Book I](book/I/index.md); you can prove it before the ones it cites are finished,
-because a proof only needs their statements.
+All 48 propositions of Book I are proved. Each new book starts the same way: every
+proposition is stated in Lean, with Euclid's sentences in place as comments and a
+`sorry` at the end, and marked 🚧 on the book's page. Pick any 🚧 proposition; you
+can prove it before the ones it cites are finished, because a proof only needs
+their statements. Corrections to Book I are welcome too: a proof, a mishnah, a
+figure or the transcription.
 
 1. **Euclid's words go in `--` comments, ours go in `/- … -/`.** Keep the words
    of every `--` line exactly as they are: CI checks that, read in order, they

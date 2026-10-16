@@ -20,9 +20,11 @@ rests on Postulate 5. The generated pages are left for the captain.
 sure of them, proofs were written against the statements. They were committed, not
 built, in `docs/reports/crew/scratch-04/` (the lakefile builds only the `Elements`
 root, and `check_fidelity.py` reads only `Elements/`); they served voyage 4 and were
-removed once the propositions were proved. Each compiles against this branch with
-no `sorry` of its own (`#print axioms` shows `sorryAx` only through the cited
-sketches). They follow Euclid's route but are not written under his sentences. The
+removed once Book I was proved. They are at commit 54a08e6
+([`scratch-04/`](https://github.com/jackChallis/stoicheia/tree/54a08e61a69c3b643590f1c7758c7b8058c9c7aa/docs/reports/crew/scratch-04));
+there, check one with `lake env lean docs/reports/crew/scratch-04/T35.lean`. Each
+compiles against this branch with no `sorry` of its own (`#print axioms` shows
+`sorryAx` only through the cited sketches). They follow Euclid's route but are not written under his sentences. The
 citations are those the certificate's walk finds.
 
 | File | Proves | Lines | Cites |

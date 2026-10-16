@@ -8,9 +8,9 @@ Everything on this page is computed from the Lean proofs themselves by [`Certifi
 
 **48 of 48 propositions proved.**
 
-What the proofs show so far:
+What the proofs show:
 
-- **Postulate 5**: 29 proved proposition(s) do without it; 19 use it, the first being I.29. Euclid holds it back until I.29.
+- **Postulate 5**: 29 propositions never need it; 19 use it, the first being I.29. Euclid holds it back until I.29.
 - **Superposition** is used directly by: I.4, I.8. Only I.4 and I.8 are allowed to.
 
 | | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |

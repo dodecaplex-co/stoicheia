@@ -30,7 +30,9 @@
   for LeanEuclid, is carried once on every page, in its footer.
 - **The square logos stay**, for avatars and icons.
 - **A wider crew.** From voyage 3 the crew includes OpenAI Codex sailors alongside
-  Claude ones, and an enforcer who keeps the voice one voice.
+  Claude ones, and an enforcer who keeps the voice one voice. In voyage 4 every
+  sailor was Codex, two to a proposition, at its usual and its highest reasoning
+  setting.
 - **The area section's ground.** Book Zero gains `Areas.lean` and
   `Parallelograms.lean`. The shared steps that cite I.28–I.30 (the angles of
   parallels, "a straight line meeting one of two parallels meets the other", a
@@ -46,9 +48,9 @@
   corollaries of I.46, as Heath reports Proclus proving them there. The first
   mate's reasons are in [first-mate-04.md](../reports/crew/first-mate-04.md).
 - **Scratch proofs in the open.** The proofs written to test the statements before a
-  voyage are committed, but not built, in `docs/reports/crew/scratch-04/`, so that
-  both crews start from the same ground. They served voyage 4 and were removed
-  once the propositions were proved.
+  voyage are committed, but not built, in
+  [`docs/reports/crew/scratch-04/`](https://github.com/jackChallis/stoicheia/tree/54a08e61a69c3b643590f1c7758c7b8058c9c7aa/docs/reports/crew/scratch-04),
+  so that both crews start from the same ground.
 - **Closing Book I: I.29's corollaries follow I.29.** `Prop29.alternate`,
   `Prop29.interior` and `Prop29.exterior`, I.29 said of any straight line falling on
   two parallels, move from `HelpersParallels.lean` to follow I.29 in its own file,
@@ -64,3 +66,11 @@
   `OnRay.between` instead of its own copy, and two Book Zero lemmas that nothing
   used are gone. No statement changed, and the certificate is the same for all
   forty-eight.
+- **Scratch proofs retired.** With Book I proved under Euclid's sentences, the
+  scratch proofs of voyage 4 are removed from `docs/reports/crew/scratch-04/`. They
+  stay in the history at commit `54a08e6`
+  ([scratch-04 at 54a08e6](https://github.com/jackChallis/stoicheia/tree/54a08e61a69c3b643590f1c7758c7b8058c9c7aa/docs/reports/crew/scratch-04)),
+  where each still compiles with `lake env lean`.
+- **Book I must stay whole.** `check_fidelity.py` now fails if any proposition of a
+  completed book is not proved, or has lost a figure or its mishnah, so a proof
+  that slips back to `sorry` cannot pass CI with its pages regenerated.
