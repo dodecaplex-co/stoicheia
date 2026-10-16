@@ -34,8 +34,8 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
   have hA_K : OnLine A K := on_line_of_between_ends hUAV hU_K hV_K
   have hKBC : Parallel K BC := hUV.parallel hU_K hV_K hB hC
   -- and let EC be joined.
-  /- E is where the parallel meets BD. That the meeting exists is I.30,
-     through Prop30.meet. -/
+  /- E is where the parallel meets BD; that they meet at all is I.30
+     (`Prop30.meet`). -/
   obtain ⟨BD, hB_BD, hD_BD⟩ := Postulate1 B D hDBC.ne₁₂.symm
   have hD_BC : ¬ OnLine D BC := hDBC.bca.off_line hB hC
   have hBD_BC : BD ≠ BC := fun e => hD_BC (e ▸ hD_BD)

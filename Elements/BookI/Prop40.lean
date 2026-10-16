@@ -33,7 +33,7 @@ theorem Prop40 {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Triangle C D 
   -- I say that AD is parallel to BE.
   -- For, if not, let AF be drawn through A parallel to BE [I. 31], and let FE be joined.
   /- U and V name the unlettered ends of the straight line supplied by I.31;
-     K is that straight line. F is where it meets CD, by I.30. -/
+     K is that straight line. F is where it meets CD, by I.30 (`Prop30.meet`). -/
   obtain ⟨U, V, hUAV, hUV⟩ := Prop31 hBE (Triangle.of_line hB hE hBE hA_BE)
   obtain ⟨K, hU_K, hV_K⟩ := Postulate1 U V hUV.1
   have hA_K : OnLine A K := on_line_of_between_ends hUAV hU_K hV_K
