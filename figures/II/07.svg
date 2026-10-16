@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid II.7: the whole and one part</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 85 35 H 315 V 265 H 85 Z" stroke="#a0522d" stroke-width="2.4"/>
+    <path d="M 250 35 V 265 M 85 100 H 315 M 85 265 L 315 35" stroke="#3b2f2f" stroke-width="1.6"/>
+    <path d="M 212 100 A 38 38 0 1 1 250 138" stroke="#a0522d" stroke-width="2.4" stroke-dasharray="4 5"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="85" cy="35" r="2.6"/>
+    <circle cx="250" cy="35" r="2.6"/>
+    <circle cx="315" cy="35" r="2.6"/>
+    <circle cx="85" cy="265" r="2.6"/>
+    <circle cx="250" cy="265" r="2.6"/>
+    <circle cx="315" cy="265" r="2.6"/>
+    <circle cx="85" cy="100" r="2.6"/>
+    <circle cx="250" cy="100" r="2.6"/>
+    <circle cx="315" cy="100" r="2.6"/>
+    <text x="75" y="23">A</text>
+    <text x="244" y="23">C</text>
+    <text x="314" y="23">B</text>
+    <text x="75" y="287">D</text>
+    <text x="244" y="287">N</text>
+    <text x="316" y="287">E</text>
+    <text x="64" y="106">H</text>
+    <text x="232" y="90">G</text>
+    <text x="325" y="106">F</text>
+    <text x="202" y="121">K</text>
+    <text x="280" y="53">L</text>
+    <text x="227" y="155">M</text>
+  </g>
+</svg>
