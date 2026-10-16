@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid II.2: a square divided into two rectangles</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 90 40 H 310 V 260 H 90 Z" stroke="#a0522d" stroke-width="2.6"/>
+    <path d="M 163.333 40 V 260" stroke="#3b2f2f" stroke-width="1.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="90" cy="40" r="2.6"/>
+    <circle cx="310" cy="40" r="2.6"/>
+    <circle cx="163.333" cy="40" r="2.6"/>
+    <circle cx="90" cy="260" r="2.6"/>
+    <circle cx="310" cy="260" r="2.6"/>
+    <circle cx="163.333" cy="260" r="2.6"/>
+    <text x="83" y="27">A</text>
+    <text x="304" y="27">B</text>
+    <text x="157" y="27">C</text>
+    <text x="82" y="283">D</text>
+    <text x="303" y="283">E</text>
+    <text x="157" y="283">F</text>
+  </g>
+</svg>
