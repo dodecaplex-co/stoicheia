@@ -116,7 +116,6 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
   -- CF is also greater than FG.
   /- The Lean above was said of any two points `B`, `C` on one side of `AD`; `C`, `G` are
      such a pair. -/
-  -- Again, since GF, FE are greater than EG,
   have hleast : ∀ G : Point, OnCircle G ABCD → G ≠ D → ‖F D‖ < ‖F G‖ := by
     intro G hG hGD
     by_cases hG_L : OnLine G L
@@ -124,6 +123,7 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
       rw [hGA]
       exact hDA
     have hFGE : Triangle F G E := (Triangle.of_line hF_L hE_L hEF.symm hG_L).acb
+    -- Again, since GF, FE are greater than EG,
     have h20 : ‖G E‖ < ‖G F‖ + ‖F E‖ := (BookI.Prop20 hFGE).1
     -- and EG is equal to ED,
     have hEG : ‖E G‖ = ‖E D‖ := Definition15 hE hG hD
@@ -177,6 +177,13 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
   -- I say again that another straight line equal to FG will not fall on the circle from the
   -- point F.
   refine ⟨H, hH, hHG, hFH, ?_⟩
+  -- For, if possible, let FK so fall.
+  intro K hK hFK
+  -- Then, since FK is equal to FG, and FH to FG,
+  -- FK is also equal to FH,
+  have hFKH : ‖F K‖ = ‖F H‖ := hFK.trans hFH.symm
+  -- the nearer to the straight line through the centre being thus equal to the more remote:
+  -- which is impossible.
   /- On one side of `AD`, two points of the circle as far from `F` make one point: were
      they two, one would be the nearer, and greater. -/
   have hone : ∀ X Y : Point, OnCircle X ABCD → OnCircle Y ABCD → SameSideOf X Y A D →
@@ -188,13 +195,6 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
         SameSideOf.of_line hFA hF_L hA_L (hXY.sameSide hA_L hD_L)
       exact (onRay_of_angle_eq hXY' h).eq_of_len_eq hFXY
     · exact absurd hFXY (Magnitude.ne_of_lt (hnearer Y X hY hX hXY.symm h))
-  -- For, if possible, let FK so fall.
-  intro K hK hFK
-  -- Then, since FK is equal to FG, and FH to FG,
-  -- FK is also equal to FH,
-  have hFKH : ‖F K‖ = ‖F H‖ := hFK.trans hFH.symm
-  -- the nearer to the straight line through the centre being thus equal to the more remote:
-  -- which is impossible.
   by_cases hK_L : OnLine K L
   · /- `K` on the diameter is `A`, the greatest, or `D`, the least. -/
     have hGA : G ≠ A := fun e => hG_L (e ▸ hA_L)
