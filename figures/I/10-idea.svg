@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.10 at a glance</title>
-  <desc>Stand a triangle with equal sides (blue) on the line and split its top angle into two equal parts (yellow): the dividing line cuts the line into two equal halves (red).</desc>
+  <desc>Stand a triangle with equal sides (blue) on the straight line and split its top angle into two equal parts (yellow): the dividing line cuts the base in half (red).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M200.0,63.4 L184.0,91.1 A32,32 0 0,0 200.0,95.4 Z" fill="#f2b705"/>
   <path d="M200.0,63.4 L200.0,95.4 A32,32 0 0,0 216.0,91.1 Z" fill="#f2b705"/>
