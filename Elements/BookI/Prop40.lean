@@ -43,6 +43,7 @@ theorem Prop40 {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Triangle C D 
     Prop30.meet hKBE hC hC_CD (fun e => hD_BE (e ▸ hD_CD))
   have hF_BE : ¬ OnLine F BE := hKBE.not_onLine hF_K
   have hFCE : Triangle F C E := (Triangle.of_line hC hE hCDE.ne₁₃ hF_BE).cab
+  obtain ⟨FE, hF_FE, hE_FE⟩ := Postulate1 F E hFCE.ne₁₃
   -- Therefore the triangle ABC is equal to the triangle FCE; for they are on equal bases BC,
   -- CE and in the same parallels BE, AF. [I. 38]
   have h38 : △ A B C = △ F C E :=

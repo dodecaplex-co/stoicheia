@@ -24,9 +24,9 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
   obtain ⟨BC, hB, hC⟩ := Postulate1 B C hABC.ne₂₃
   -- [I say that they are also in the same parallels.]
   -- And [For] let AD be joined;
+  /- The parallel drawn through A will pass through D, and so be AD. -/
   -- I say that AD is parallel to BC.
   -- For, if not, let AE be drawn through the point A parallel to the straight line BC, [I. 31]
-  refine Classical.byContradiction fun hnot => ?_
   /- I.31 names two points of the parallel through A. They serve to name the
      straight line K, which Euclid calls AE once E has been found. -/
   obtain ⟨U, V, hUAV, hUV⟩ := Prop31 hABC.ne₂₃ hABC.bca
@@ -40,8 +40,6 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
   have hD_BC : ¬ OnLine D BC := hDBC.bca.off_line hB hC
   have hBD_BC : BD ≠ BC := fun e => hD_BC (e ▸ hD_BD)
   obtain ⟨E, hE_BD, hE_K⟩ := Prop30.meet hKBC hB hB_BD hBD_BC
-  have hED : E ≠ D := fun e =>
-    hnot (AreParallel.of_parallel hAD hABC.ne₂₃ hA_K (e ▸ hE_K) hB hC hKBC)
   have hE_BC : ¬ OnLine E BC := hKBC.not_onLine hE_K
   have hEBC : Triangle E B C := (Triangle.of_line hB hC hABC.ne₂₃ hE_BC).cab
   obtain ⟨EC, hE_EC, hC_EC⟩ := Postulate1 E C hEBC.ne₁₃
@@ -59,24 +57,29 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
     (SameSideOf.of_line hABC.ne₂₃ hB hC (hKBC.sameSide hE_K hA_K)).trans hside
   have hray : OnRay E B D :=
     OnRay.of_sameSideOf hED_side ⟨BD, hB_BD, hD_BD, hE_BD⟩ hEB
-  rcases lt_trichotomy ‖B E‖ ‖B D‖ with hlt | hequal | hgt
-  · /- Euclid's figure: E lies between B and D, so EBC is less than DBC. -/
-    have hBED : Between B E D :=
-      hray.between_of_len_lt (OnRay.self hDBC.ne₁₂.symm) hlt
-    have hless := area_lt_of_cut hDBC.cba hBED
-    rw [← area_cba E B C, ← area_cba D B C, h1] at hless
-    exact Magnitude.ne_of_lt hless rfl
-  · /- Equal distances on the same ray put E at D, which was excluded. -/
-    exact hED (hray.eq_of_len_eq hequal)
-  · /- Proclus' other case: E lies on BD produced beyond D, so DBC is less. -/
-    have hBDE : Between B D E :=
-      (OnRay.self hDBC.ne₁₂.symm).between_of_len_lt hray hgt
-    have hless := area_lt_of_cut hEBC.cba hBDE
-    rw [← area_cba E B C, ← area_cba D B C, h1] at hless
-    exact Magnitude.ne_of_lt hless rfl
+  have hED : E = D := by
+    rcases lt_trichotomy ‖B E‖ ‖B D‖ with hlt | hequal | hgt
+    · /- Euclid's figure: E lies between B and D, so EBC is less than DBC. -/
+      have hBED : Between B E D :=
+        hray.between_of_len_lt (OnRay.self hDBC.ne₁₂.symm) hlt
+      have hless := area_lt_of_cut hDBC.cba hBED
+      rw [← area_cba E B C, ← area_cba D B C, h1] at hless
+      exact absurd rfl (Magnitude.ne_of_lt hless)
+    · exact hray.eq_of_len_eq hequal
+    · /- Proclus' other case: E lies on BD produced beyond D, so DBC is less. -/
+      have hBDE : Between B D E :=
+        (OnRay.self hDBC.ne₁₂.symm).between_of_len_lt hray hgt
+      have hless := area_lt_of_cut hEBC.cba hBDE
+      rw [← area_cba E B C, ← area_cba D B C, h1] at hless
+      exact absurd rfl (Magnitude.ne_of_lt hless)
   -- Therefore AE is not parallel to BC.
+  /- A parallel meeting BD away from D has been excluded: the parallel
+     through A must pass through D itself. -/
+  have hD_K : OnLine D K := hED ▸ hE_K
   -- Similarly we can prove that neither is any other straight line except AD; therefore AD is
   -- parallel to BC.
+  have hpar : AreParallel A D B C := AreParallel.of_parallel hAD hABC.ne₂₃ hA_K hD_K hB hC hKBC
   -- Therefore etc.
+  exact hpar
 
 end Elements.BookI
