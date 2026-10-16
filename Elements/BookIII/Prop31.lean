@@ -22,10 +22,11 @@ open Tacit
 angle, and that in a less segment greater than a right angle; and further the angle of the
 greater segment is greater than a right angle, and the angle of the less segment less than a
 right angle. -/
-theorem Prop31 {A B C D E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCircle A ABCD)
-    (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hD : OnCircle D ABCD)
-    (hBEC : Between B E C) (hBD : OppositeSidesOf B D A C) :
-    ∠ B A C = ∟ ∧ ∠ A B C < ∟ ∧ ∟ < ∠ A D C := by
+theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCircle A ABCD)
+    (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hBEC : Between B E C) (hAB : A ≠ B)
+    (hAC : A ≠ C) :
+    ∠ B A C = ∟ ∧ ∠ A B C < ∟ ∧
+      ∀ D : Point, OnCircle D ABCD → OppositeSidesOf B D A C → ∟ < ∠ A D C := by
   -- Let ABCD be a circle, let BC be its diameter, and E its centre, and let BA, AC, AD, DC be
   -- joined;
   -- I say that the angle BAC in the semicircle BAC is right,

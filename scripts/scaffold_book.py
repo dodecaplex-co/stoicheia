@@ -348,10 +348,11 @@ BOOK_III = {
         "    (hB : OnCircle B ADB) :\n"
         "    ∀ P : Point, ¬ Collinear A B P → ∃ D : Point, OnCircle D ADB ∧ SameSideOf D P A B ∧\n"
         "      standing ADB A B D = standing ADB D A B",
-    31: "{A B C D E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCircle A ABCD)\n"
-        "    (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hD : OnCircle D ABCD)\n"
-        "    (hBEC : Between B E C) (hBD : OppositeSidesOf B D A C) :\n"
-        "    ∠ B A C = ∟ ∧ ∠ A B C < ∟ ∧ ∟ < ∠ A D C",
+    31: "{A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCircle A ABCD)\n"
+        "    (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hBEC : Between B E C) (hAB : A ≠ B)\n"
+        "    (hAC : A ≠ C) :\n"
+        "    ∠ B A C = ∟ ∧ ∠ A B C < ∟ ∧\n"
+        "      ∀ D : Point, OnCircle D ABCD → OppositeSidesOf B D A C → ∟ < ∠ A D C",
     32: "{B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre O ABCD)\n"
         "    (hB : OnCircle B ABCD) (hD : OnCircle D ABCD) (hBD : B ≠ D) (hEF : Touches E F ABCD)\n"
         "    (hEBF : Between E B F) :\n"

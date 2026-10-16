@@ -324,3 +324,193 @@ graph TD
 - [II.12](book/II/12.md): The square opposite an obtuse angle
 - [II.13](book/II/13.md): The square opposite an acute angle
 - [II.14](book/II/14.md): A square equal to a rectilineal figure
+
+## Book III
+
+White: propositions of earlier books that Book III cites.
+
+```mermaid
+graph TD
+  I4["I.4"]
+  I5["I.5"]
+  I6["I.6"]
+  I8["I.8"]
+  I16["I.16"]
+  I17["I.17"]
+  I19["I.19"]
+  I20["I.20"]
+  I21["I.21"]
+  I23["I.23"]
+  I24["I.24"]
+  I26["I.26"]
+  I32["I.32"]
+  I47["I.47"]
+  II5["II.5"]
+  II6["II.6"]
+  III1["III.1"]
+  III2["III.2"]
+  III3["III.3"]
+  III4["III.4"]
+  III5["III.5"]
+  III6["III.6"]
+  III7["III.7"]
+  III8["III.8"]
+  III9["III.9"]
+  III10["III.10"]
+  III11["III.11"]
+  III12["III.12"]
+  III13["III.13"]
+  III14["III.14"]
+  III15["III.15"]
+  III16["III.16"]
+  III17["III.17"]
+  III18["III.18"]
+  III19["III.19"]
+  III20["III.20"]
+  III21["III.21"]
+  III22["III.22"]
+  III23["III.23"]
+  III24["III.24"]
+  III25["III.25"]
+  III26["III.26"]
+  III27["III.27"]
+  III28["III.28"]
+  III29["III.29"]
+  III30["III.30"]
+  III31["III.31"]
+  III32["III.32"]
+  III33["III.33"]
+  III34["III.34"]
+  III35["III.35"]
+  III36["III.36"]
+  III37["III.37"]
+  I8 --> III1
+  I5 --> III2
+  I16 --> III2
+  I19 --> III2
+  III1 --> III2
+  I5 --> III3
+  I8 --> III3
+  I26 --> III3
+  III1 --> III4
+  III3 --> III4
+  I4 --> III7
+  I20 --> III7
+  I23 --> III7
+  I24 --> III7
+  I4 --> III8
+  I20 --> III8
+  I21 --> III8
+  I24 --> III8
+  III1 --> III8
+  I8 --> III9
+  III1 --> III9
+  III1 --> III10
+  III5 --> III10
+  I20 --> III12
+  III2 --> III13
+  III11 --> III13
+  I47 --> III14
+  III1 --> III14
+  III3 --> III14
+  I20 --> III15
+  I24 --> III15
+  III14 --> III15
+  I5 --> III16
+  I17 --> III16
+  I19 --> III16
+  I4 --> III17
+  III1 --> III17
+  III16 --> III17
+  I17 --> III18
+  I19 --> III18
+  III18 --> III19
+  I5 --> III20
+  I32 --> III20
+  III20 --> III21
+  I32 --> III22
+  III21 --> III22
+  I16 --> III23
+  III10 --> III24
+  I6 --> III25
+  III9 --> III25
+  I4 --> III26
+  III24 --> III26
+  I23 --> III27
+  III20 --> III27
+  III26 --> III27
+  I8 --> III28
+  III26 --> III28
+  I4 --> III29
+  III27 --> III29
+  I4 --> III30
+  III28 --> III30
+  I5 --> III31
+  I17 --> III31
+  I32 --> III31
+  III22 --> III31
+  I32 --> III32
+  III19 --> III32
+  III22 --> III32
+  III31 --> III32
+  I4 --> III33
+  III16 --> III33
+  III31 --> III33
+  III32 --> III33
+  I23 --> III34
+  III32 --> III34
+  I47 --> III35
+  II5 --> III35
+  III3 --> III35
+  I47 --> III36
+  II6 --> III36
+  III3 --> III36
+  III18 --> III36
+  I8 --> III37
+  III16 --> III37
+  III18 --> III37
+  III36 --> III37
+  classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20
+  classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242
+  classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242
+  class I4,I5,I6,I8,I16,I17,I19,I20,I21,I23,I24,I26,I32,I47,II5,II6 earlier
+  class III1,III2,III3,III4,III5,III6,III7,III8,III9,III10,III11,III12,III13,III14,III15,III16,III17,III18,III19,III20,III21,III22,III23,III24,III25,III26,III27,III28,III29,III30,III31,III32,III33,III34,III35,III36,III37 sketched
+```
+
+- [III.1](book/III/01.md): Finding the centre of a circle
+- [III.2](book/III/02.md): A straight line joining two points of a circle
+- [III.3](book/III/03.md): A straight line through the centre bisecting another
+- [III.4](book/III/04.md): Two straight lines not through the centre
+- [III.5](book/III/05.md): Circles that cut one another
+- [III.6](book/III/06.md): Circles that touch one another
+- [III.7](book/III/07.md): Straight lines from a point within a circle
+- [III.8](book/III/08.md): Straight lines from a point outside a circle
+- [III.9](book/III/09.md): A point with three equal straight lines to the circle
+- [III.10](book/III/10.md): Circles cut one another at two points at most
+- [III.11](book/III/11.md): The centres of circles touching internally
+- [III.12](book/III/12.md): The centres of circles touching externally
+- [III.13](book/III/13.md): Circles touch at one point only
+- [III.14](book/III/14.md): Equal straight lines are equally distant from the centre
+- [III.15](book/III/15.md): The diameter is the greatest straight line in a circle
+- [III.16](book/III/16.md): The straight line at right angles to a diameter at its end
+- [III.17](book/III/17.md): Drawing a tangent from a point
+- [III.18](book/III/18.md): The radius to the point of contact
+- [III.19](book/III/19.md): The perpendicular to a tangent at the point of contact
+- [III.20](book/III/20.md): The angle at the centre is double the angle at the circumference
+- [III.21](book/III/21.md): Angles in the same segment
+- [III.22](book/III/22.md): Opposite angles of a quadrilateral in a circle
+- [III.23](book/III/23.md): Similar segments on the same straight line
+- [III.24](book/III/24.md): Similar segments on equal straight lines
+- [III.25](book/III/25.md): Completing the circle of a segment
+- [III.26](book/III/26.md): Equal angles stand on equal circumferences
+- [III.27](book/III/27.md): Angles on equal circumferences are equal
+- [III.28](book/III/28.md): Equal straight lines cut off equal circumferences
+- [III.29](book/III/29.md): Equal circumferences have equal straight lines
+- [III.30](book/III/30.md): Bisecting a circumference
+- [III.31](book/III/31.md): The angle in a semicircle
+- [III.32](book/III/32.md): The angle in the alternate segment
+- [III.33](book/III/33.md): A segment admitting a given angle
+- [III.34](book/III/34.md): Cutting off a segment admitting a given angle
+- [III.35](book/III/35.md): Two straight lines cutting one another in a circle
+- [III.36](book/III/36.md): The square on the tangent
+- [III.37](book/III/37.md): Its converse

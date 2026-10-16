@@ -97,3 +97,35 @@
   that path, so a Codex sailor reads the same ground as a Claude one. T02 draws its
   parallel with `Prop31.parallelogram`, as the orders ask. They are retired when Book II
   is proved.
+
+## 16 October 2026
+
+- **Book III's words.** Equal circles (`EqualCircles`), a straight line touching a circle
+  (`Touches`), and circles touching within or without (`TouchesInternally`,
+  `TouchesExternally`, `CirclesTouch`) are definitions, in
+  [`DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean). Circles touching
+  is read as Heath's minimum admission about inside and outside, said of the whole circle,
+  so that III.13 is a theorem and not the definition. The design is in
+  [0004-book-III.md](0004-book-III.md), and the first mate's reasons for each statement in
+  [first-mate-III.md](../reports/crew/first-mate-III.md).
+- **Circumferences measured, not assumed.** Euclid compares circumferences only in one
+  circle or in equal circles. Lean measures one by the angle that stands on it at the
+  circumference, taken twice (`circumference`, and `standing` for the one on which a given
+  angle stands); the facts he takes for granted about them are proved from III.20–III.22 in
+  [`Elements/BookIII/Circumferences.lean`](../../Elements/BookIII/Circumferences.lean). A
+  magnitude of their own, with tacit rules for adding and applying them, is left to the
+  captain; the statements would not change.
+- **Circles carry their centres by hypothesis.** A circle in a Book III statement comes with
+  `∃ O, Centre O α` unless the setting-out names its centre, and the proofs take it by III.1,
+  as Euclid does. III.1 finds, by its construction, the centre of a circle that has one.
+- **Mixed angles to the mishnah.** The angle of a semicircle and of a segment (III.16, III.31)
+  are not angles of ours. The statements carry the rectilineal facts Euclid proves them by.
+- **Porisms cited before they are proved.** `Prop1.porism` and `Prop16.porism` are stated now,
+  after their propositions, and the scripts read "[III. 1, Por.]" as citing III.1.
+- **Three books in one certificate.** The scripts and `Certificate/Facts.lean` take Book III;
+  Books I and II render byte for byte as at their tags. Book III may rest on Postulate 5
+  throughout. On a Book III page its own definitions are "Def. 11", Book I's "Def. I.10".
+- **Book III's scratch proofs in the open**, in
+  [`docs/reports/crew/scratch-III/`](../reports/crew/scratch-III), not built: III.1, III.5, III.6, III.11,
+  III.13, III.16, III.18–III.22, III.24, III.28, III.29 and III.31 in full, and the first steps of the
+  rest. They are retired when Book III is proved.

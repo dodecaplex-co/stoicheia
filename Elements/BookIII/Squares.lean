@@ -8,9 +8,8 @@ Book III borrows Book II's squares twice to compare straight lines, and passes f
 equal squares to equal sides without a word: "therefore the square on FE which remains
 is equal to the square on EG, therefore EF is equal to EG" (III.14); "the square on DE
 is equal to the square on DB; therefore DE is equal to DB" (III.37). Book I proves it of
-squares that are drawn (`Prop46.side_eq`, from Proclus' remark under I.46, as Heath
-reports it); here it is said once of the squares on straight lines, with the fact that
-the square on a straight line is something.
+squares that are drawn (`Prop46.side_eq`); here it is said once of the squares on
+straight lines, with the fact that the square on a straight line is something.
 
 Each docstring ends with the propositions the step cites; the certificate walks through
 it and records them.
@@ -51,7 +50,7 @@ theorem BookI.Prop46.sq {A B C D : Point} (h : sq A B = sq C D) : ‖A B‖ = �
     · subst hCD
       rw [sq_self] at h
       exact absurd h (Magnitude.ne_of_lt (sq_pos hAB)).symm
-    /- The squares `ADEB` on `AB` and `CGHD` on `CD`, read from `B` and from `D`. -/
+    /- The squares on `AB` and on `CD` [I. 46], each read from its second corner. -/
     obtain ⟨P, hP, -⟩ := exists_off_line hAB []
     obtain ⟨D', E', hsq, hD', hE'⟩ := Prop46 hAB hP
     obtain ⟨hp, heq⟩ := Square.described hsq hD' hE'
