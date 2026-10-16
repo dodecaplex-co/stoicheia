@@ -222,8 +222,8 @@ theorem Prop35 {A B C D E F : Point} (h₁ : Parallelogram A B C D) (h₂ : Para
     -- and the triangle EAB will be equal to the triangle FDC. [I. 4]
     have htri : △ A E B = △ D F C := h4.2.1
     -- Let DGE be subtracted from each;
-    /- ABGD is named from B, so that its diameter is BD. Each subtraction is
-       expressed by cutting the larger triangle into the trapezium and DGE. -/
+    /- ABGD is named from B, so that its diameter is BD. Each taking away is
+       written as a cutting: the larger triangle is the trapezium and DGE together. -/
     have e₁ : △ A E B = quadArea B G D A + △ D G E := by
       unfold quadArea
       rw [area_cab A E B, ← area_cut (A := B) hADE, area_bca B D E, ← area_cut (A := D) hEGB,
@@ -261,7 +261,7 @@ theorem Prop35 {A B C D E F : Point} (h₁ : Parallelogram A B C D) (h₂ : Para
     obtain ⟨hAD, -, -, -, -⟩ := Prop34 (A := A) (B := D) (C := B) (D := C) h₁
     obtain ⟨hEF, -, -, -, -⟩ := Prop34 (A := E) (B := F) (C := B) (D := C) h₂
     rcases hdir with rfl | hCE
-    · /- `E` is `A`: then `F` is `D`. -/
+    · /- E is A, and so F is D. -/
       have hFray : OnRay F E D :=
         OnRay.of_sameSideOf (h₂.sameSideOf.symm.trans h₁.sameSideOf) ⟨AF, hE, hD, hF⟩
           (h₂.sameSideOf.symm.triangle.ne₁₃.symm)
