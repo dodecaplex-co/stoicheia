@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.27 at a glance</title>
-  <desc>If a line crossing two others makes equal angles on opposite sides of it (yellow, in a Z), the two lines are parallel (blue) and never meet.</desc>
+  <desc>If a straight line falling on two others makes equal angles on opposite sides of it (yellow, in a Z), the two are parallel (blue): they never meet.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M222.6,107.5 L208.5,134.0 A30,30 0 0,1 192.6,107.5 Z" fill="#f2b705"/>
   <path d="M177.4,192.5 L191.5,166.0 A30,30 0 0,1 207.4,192.5 Z" fill="#f2b705"/>

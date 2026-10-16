@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.28 at a glance</title>
-  <desc>If a line crossing two others makes the angles in the same place equal (yellow), or the two inside angles on one side (red and yellow) add up to two right angles, the two lines are parallel (blue).</desc>
+  <desc>If a straight line falling on two others makes an outside angle equal to the inside one on the same side (yellow), or two inside angles on one side (red and yellow) together make two right angles, the two are parallel (blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M222.6,107.5 L236.7,81.0 A30,30 0 0,1 252.6,107.5 Z" fill="#f2b705"/>
   <path d="M222.6,107.5 L252.6,107.5 A30,30 0 0,1 208.5,134.0 Z" fill="#d0312d"/>
