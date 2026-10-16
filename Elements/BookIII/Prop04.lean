@@ -52,31 +52,33 @@ theorem Prop4 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre
   -- But the angle FEA was also proved right;
   -- therefore the angle FEA is equal to the angle FEB, the less to the greater: which is
   -- impossible.
+  have hFEA_FEB : ∠ F E A = ∠ F E B := hFEA.trans hFEB.symm
   /- Whichever of `B`, `D` lies on `A`'s side of `FE` (Euclid's figure: `B`) makes with `FE`
-     the angle `FEA`, so lies on the straight line `EA` (`onRay_of_angle_eq`, whose proof is
-     the part equal to the whole); then `BD` would be `AC`. -/
+     an angle equal to `FEA`, so lies on the straight line `EA` (`onRay_of_angle_eq`, whose
+     proof is the part equal to the whole); then `BD` would be `AC`. -/
   have hA_M : ¬ OnLine A M := fun h =>
     hF_L (line_unique (ne_of_between hAEC) hA_L hE_L h hE_M ▸ hF_M)
   have hB_M : ¬ OnLine B M := fun h =>
     hF_N (line_unique (ne_of_between hBED) hB_N hE_N h hE_M ▸ hF_M)
   have hD_M : ¬ OnLine D M := fun h =>
     hF_N (line_unique (ne_of_between (between_symm hBED)) hD_N hE_N h hE_M ▸ hF_M)
-  have key : ∀ P : Point, OnLine P N → SameSide P A M → ∠ F E P = ∟ → False := by
+  have hless : ∀ P : Point, OnLine P N → SameSide P A M → ∠ F E A = ∠ F E P → False := by
     intro P hP_N hPA hFEP
-    obtain ⟨-, hPE, hEAP, -⟩ := onRay_of_angle_eq (SameSideOf.of_line hEF hE_M hF_M hPA)
-      (hFEP.trans hFEA.symm)
+    obtain ⟨-, hPE, hEAP, -⟩ :=
+      onRay_of_angle_eq (SameSideOf.of_line hEF hE_M hF_M hPA) hFEP.symm
     obtain ⟨K, hE_K, hA_K, hP_K⟩ := hEAP
     have hKL : K = L := line_unique (ne_of_between hAEC).symm hE_K hA_K hE_L hA_L
     have hP_L : OnLine P L := hKL ▸ hP_K
     have hNL : N = L := line_unique hPE hP_N hE_N hP_L hE_L
     exact hB_AC ⟨L, hA_L, hC_L, hNL ▸ hB_N⟩
   by_cases hs : SameSide B A M
-  · exact key B hB_N hs hFEB
+  · exact hless B hB_N hs hFEA_FEB
   · have hBA : OppositeSides B A M := ⟨hB_M, hA_M, hs⟩
     have hBD' : OppositeSides B D M := ⟨hB_M, hD_M, pasch3 hBED hE_M⟩
     have hFED : ∠ F E D = ∟ :=
       (angle_symm hEF.symm (ne_of_between (between_symm hBED))).trans h₂.2
-    exact key D hD_N (same_side_symm (same_side_of_opposite_sides hBA hBD')) hFED
+    exact hless D hD_N (same_side_symm (same_side_of_opposite_sides hBA hBD'))
+      (hFEA.trans hFED.symm)
   -- Therefore AC, BD do not bisect one another.
   -- Therefore etc.
   -- Q. E. D.
