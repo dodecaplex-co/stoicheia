@@ -111,22 +111,6 @@ def lean_body(path):
     return body.strip("\n")
 
 
-def group_axioms(names):
-    groups = {"Postulates": [], "Definitions": [], "Superposition": [],
-              "Reading the figure": [], "Lengths, angles and areas": [],
-              "Laws of magnitude": []}
-    for n in names:
-        if n.startswith("Postulate"):
-            groups["Postulates"].append(n)
-        elif n.startswith("Definition"):
-            groups["Definitions"].append(n)
-        elif n == "Tacit.superposition":
-            groups["Superposition"].append(n)
-        else:
-            groups["_tacit"] = groups.get("_tacit", []) + [n]
-    return groups
-
-
 def axiom_kind(path: str) -> str:
     if path.endswith("Tacit/Magnitudes.lean"):
         return "Laws of magnitude"
@@ -141,6 +125,16 @@ def axiom_kind(path: str) -> str:
 
 def roman_list(names, prefix):
     return ", ".join(n.replace(prefix, "") for n in sorted(names, key=lambda s: int(re.sub(r"\D", "", s) or 0)))
+
+
+def definition_list(names, book):
+    """Book I's definitions a proof rests on (`Definition15`). Definitions are numbered
+    book by book, so outside Book I each keeps its book: "15" on a page of Book I, "I.15"
+    on a page of Book II, whose own Definitions 1 and 2 are words, not assumptions."""
+    nums = roman_list(names, "Definition")
+    if book == "I" or not nums:
+        return nums
+    return ", ".join(f"I.{n}" for n in nums.split(", "))
 
 
 def prop_key(ref):
@@ -163,11 +157,15 @@ def euclid_cites(paragraphs):
         kind, num = j.rsplit(" ", 1)
         if kind in ("Post.", "Def.", "C.N."):
             groups[kind].append(int(num))
+        elif kind.endswith(" Def."):
+            # "I. Def. 15" in a later book: a definition of another book keeps its book.
+            groups["Def."].append(f"{kind.split('.')[0]}.{num}")
         else:
             groups["props"].append(f"{kind}{num}")  # "I. 4", or "V. 9" in a later book
     groups["props"].sort(key=prop_key)
     for kind in ("Post.", "Def.", "C.N."):
-        groups[kind].sort()
+        # The page's own book first (Def. 1, 2), then another's (Def. I.15).
+        groups[kind].sort(key=lambda d: (0, d) if isinstance(d, int) else (1, prop_key(d)))
     return groups
 
 
@@ -206,7 +204,7 @@ def rests_on(p, docs, depth, book, euclid):
     lines.append("| Lean cites | " + (", ".join(prop_link(c, book) for c in
                  sorted(p["cites"], key=prop_key)) or "no propositions") + " |")
     lines.append("| Postulates | " + (roman_list(posts, "Postulate") or "none") + " |")
-    lines.append("| Definitions | " + (roman_list(defs, "Definition") or "none") + " |")
+    lines.append("| Definitions | " + (definition_list(defs, book) or "none") + " |")
     lines.append("| Common Notions | " + (", ".join(c.replace("C.N. ", "") for c in
                  sorted(set(p["common_notions"]))) or "none") + " |")
     lines.append(f"| Tacit assumptions | {len(tacit)} (listed below) |")
@@ -294,9 +292,14 @@ def index(book, count, titles, facts):
     if (ROOT / "docs" / "reports" / f"gaps-book-{book}.md").exists():
         start += (" What Euclid takes for granted along the way is gathered in "
                   f"[a catalogue](../../docs/reports/gaps-book-{book}.md).")
+    # The key names only the marks the table uses: a finished book shows ✅ alone.
+    used = {facts.get(f"{book}.{n}", {}).get("status", "sketched") for n in range(1, count + 1)}
+    legend = " · ".join(f"{STATUS_SHORT[s]} {t}" for s, t in (
+        ("proved", "proved"),
+        ("proved-pending", "proved, citing propositions still to be proved"),
+        ("sketched", "sketched")) if s in used)
     out = [GENERATED, f"# Book {book}", "",
-           f"**{proved} of {count} propositions proved in Lean.** "
-           "✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched", "",
+           f"**{proved} of {count} propositions proved in Lean.** {legend}", "",
            start, "",
            "| | Proposition | |", "|---|---|---|"]
     for n in range(1, count + 1):
@@ -311,8 +314,12 @@ FRONT_LEAN_I = {
     "Definitions": {
         1: "`Point`", 2: "`Line`", 3: "`Line`", 4: "`Line`", 8: "`∠ A B C`", 9: "`∠ A B C`",
         10: "`IsRightAngle`, with Postulate 4", 11: "`IsObtuse`", 12: "`IsAcute`",
-        15: "`Definition15` (an axiom: radii are equal)", 16: "`Centre`", 19: "`Triangle`",
-        20: "`Equilateral`, `Isosceles`", 21: "`RightAngledTriangle`", 22: "`Square`",
+        15: "`Definition15` (an axiom: radii are equal)", 16: "`Centre`",
+        17: "`quadArea A B C D` cuts the figure by its diameter `AC` (Euclid says it of a "
+            "parallelogram, from I.34)",
+        19: "`Triangle`; four-sided, `quadArea`",
+        20: "`Equilateral`, `Isosceles`", 21: "`RightAngledTriangle`",
+        22: "`Square`; a trapezium (I.35), `quadArea`",
         23: "`Parallel`",
     },
     "Postulates": {i: f"`Postulate{i}`" for i in range(1, 6)},
@@ -380,12 +387,21 @@ def certificate(facts, docs):
         no_p5 = [p["ref"] for p in proved if "Postulate5" not in p["axioms"]]
         with_p5 = [p["ref"] for p in proved if "Postulate5" in p["axioms"]]
         sup = [p["ref"] for p in props if p and "Tacit.superposition" in p["direct_axioms"]]
-        out += ["What the proofs show so far:", ""]
-        out.append(f"- **Postulate 5**: {len(no_p5)} proved proposition(s) do without it"
-                   + (f"; {len(with_p5)} use it, the first being {with_p5[0]}." if with_p5 else
-                      ". None of the proved propositions uses it yet.")
-                   + " " + P5_NOTE.get(book, f"Book {book} comes after I.29, where Euclid "
-                                       "first calls on it, so any of its propositions may."))
+        out += ["What the proofs show:" if len(proved) == count else "What the proofs show so far:", ""]
+        never = (f"{len(no_p5)} proposition never needs it" if len(no_p5) == 1 else
+                 f"{len(no_p5)} propositions never need it")
+        if not proved:
+            # Nothing proved, nothing to count: "0 propositions never need it" would read as a claim.
+            p5 = f"No proposition of Book {book} is proved yet."
+        elif not with_p5:
+            p5 = f"{never}. None of the proved propositions uses it yet."
+        elif not no_p5:
+            p5 = f"Every proved proposition uses it, the first being {with_p5[0]}."
+        else:
+            p5 = f"{never}; {len(with_p5)} use{'s' if len(with_p5) == 1 else ''} it, the first being {with_p5[0]}."
+        out.append(f"- **Postulate 5**: {p5} "
+                   + P5_NOTE.get(book, f"Book {book} comes after I.29, where Euclid "
+                                 "first calls on it, so any of its propositions may."))
         out.append("- **Superposition** is used directly by: " + (", ".join(sup) or "none yet")
                    + ". Only I.4 and I.8 are allowed to.")
         out += ["", "| | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |",
@@ -400,14 +416,13 @@ def certificate(facts, docs):
                 continue
             ax = p["axioms"]
             posts = roman_list([a for a in ax if a.startswith("Postulate")], "Postulate")
-            defs = roman_list([a for a in ax if a.startswith("Definition")], "Definition")
+            defs = definition_list([a for a in ax if a.startswith("Definition")], book)
             cns = ", ".join(c.replace("C.N. ", "") for c in sorted(set(p["common_notions"])))
             tacit = len([a for a in ax if a.startswith("Tacit.")])
             cites = ", ".join(sorted(p["cites"], key=prop_key))
             out.append(f"| {STATUS_SHORT[p['status']]} | {link} | {euclid} | {cites} | "
                        f"{posts} | {defs} | {cns} | {tacit} |")
         out.append("")
-    lean_version = next(iter(facts.values()), {}).get("lean_version", "")
     out += ["The Common Notions are theorems in Lean (see "
             "[`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so they are "
             "counted where a proof cites them by name. Lean's own logical foundations "

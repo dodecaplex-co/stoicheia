@@ -82,7 +82,7 @@ debt is still said where it falls: Intersection 4 is LeanEuclid's corrected form
 - **Book Zero first.** Search `Elements/Figure/` before writing a helper, and cite
   its lemma rather than keep a copy; Book Zero imports no proposition. A shared
   step that cites a proposition goes in `Elements/BookI/Helpers.lean`, named after
-  it (`Prop5.base`), or, if it cites I.28, I.29 or I.30, in
+  it (`Prop5.base`), or, if it cites I.28, I.30 or I.31, in
   `Elements/BookI/HelpersParallels.lean` (`Prop30.meet`), or, if it is a
   consequence of PropN that later proofs share, as a corollary after PropN
   (`Prop34.bisect`). In Book II, a shared step that cites Book I goes in
@@ -122,9 +122,9 @@ the whole canvas), in Georgia.
   leaves), the enunciation in italics, then one sentence or clause per paragraph,
   as the `--` comments take them. Changes only against the page image.
 - **Square brackets** there are his, kept exactly: the justifications `[I. 2]`,
-  `[Post. 3]`, `[C.N. 1]`, `[Def. 15]`, `[Post. 4 and C.N. 1]`, and Heiberg's
-  brackets round a passage he judged added later (I.4, I.15's Porism), with a
-  comment. In our prose a bracket appears only when we quote one: "the bracket
+  `[Post. 3]`, `[C.N. 1]`, `[Def. 15]`, `[Post. 4 and C.N. 1]`, II.10's
+  `[I. Post. 5]` with its book, and Heiberg's brackets round a passage he judged
+  added later (I.4, I.15's Porism), with a comment. In our prose a bracket appears only when we quote one: "the bracket
   [I. 20]".
 - **Our prose writes** I.5, II.4, I.1–I.24 (en dash); Postulate 3, Common Notion 1,
   Definition 15 in a sentence; Post. 3, C.N. 1, Def. 15 in parentheses and tables.
@@ -161,6 +161,9 @@ later book, read its numeral for `I` in the paths (`heath/II/NN.md`, `figures/II
      grep -oE '`[A-Za-z_][A-Za-z0-9_.₀-₉]*`' F | tr -d '`' | grep -v '\.lean$' | sort -u | sed 's/^/#check @/'; } > /tmp/Names.lean
    lake env lean /tmp/Names.lean
    ```
+   For a proposition of Book II, open `Elements.BookII` in place of `Elements.BookI`;
+   Book I's names are then written `BookI.PropN`, as the orders ask. Opened as above,
+   a bare `Prop4` would be I.4 and pass unnoticed.
 9. Each quotation has Heath's wording and page. Flatten the OCR once,
    `perl -0pe 's/-[ \t]*\n\s*//g; s/\s+/ /g' "$HEATH_OCR" > /tmp/heath.txt`, then
    `grep -oi 'a distinctive phrase.\{0,80\}' /tmp/heath.txt`: it agrees but for OCR

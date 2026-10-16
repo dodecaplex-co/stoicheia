@@ -10,7 +10,10 @@
 5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first):
    - only I.4 and I.8 may use superposition directly;
    - no proposition before I.29 rests on Postulate 5 or any Euclidean-only rule.
-     Every proposition of a later book comes after I.29, and may rest on it.
+     Every proposition of a later book comes after I.29, and may rest on it;
+   - every proposition of a completed book is proved, with both figures and a mishnah;
+   - the certificate covers exactly the books in `heath.BOOKS` (`Certificate/Facts.lean`
+     keeps its own list), and no proposition cites one that does not come before it.
 
 Exits non-zero on any failure. Standard library only.
 """
@@ -23,6 +26,8 @@ import heath
 
 ROOT = heath.ROOT
 BOOKS = heath.BOOKS
+# Books whose every proposition is proved: they must stay that way.
+COMPLETE = {"I"}
 SUPERPOSITION_ALLOWED = {"I.4", "I.8"}
 EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # The first proposition of each book allowed to rest on Postulate 5. Euclid holds it
@@ -101,9 +106,19 @@ def check_facts() -> None:
         print("note: facts.json not found; skipping certificate checks")
         return
     facts = json.loads(path.read_text())
+    have = {p["ref"] for p in facts["propositions"]}
+    want = {f"{book}.{n}" for book, count in BOOKS.items() for n in range(1, count + 1)}
+    for ref in sorted(want - have, key=heath.prop_key):
+        fail(f"{ref}: missing from facts.json (does Certificate/Facts.lean list Book {ref.split('.')[0]}?)")
+    for ref in sorted(have - want, key=heath.prop_key):
+        fail(f"{ref}: in facts.json but not in heath.BOOKS")
     for p in facts["propositions"]:
         ref = p["ref"]
         book, num = ref.split(".")
+        # Euclid cites only what comes before: nothing after II.N, and Book I nothing of Book II.
+        for c in p.get("cites", []):
+            if heath.prop_key(c) >= heath.prop_key(ref):
+                fail(f"{ref}: cites {c}, which does not come before it")
         if "Tacit.superposition" in p.get("direct_axioms", []) and ref not in SUPERPOSITION_ALLOWED:
             fail(f"{ref}: uses superposition directly (only I.4 and I.8 may)")
         first = FIRST_EUCLIDEAN.get(book, 1)
@@ -111,6 +126,16 @@ def check_facts() -> None:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
             if bad:
                 fail(f"{ref}: rests on {', '.join(bad)} before {book}.{first}")
+    by_ref = {p["ref"]: p for p in facts["propositions"]}
+    for book in COMPLETE:
+        for n in range(1, BOOKS[book] + 1):
+            ref = f"{book}.{n}"
+            if by_ref.get(ref, {}).get("status") != "proved":
+                fail(f"{ref}: Book {book} is complete, but {ref} is not proved")
+            for f in (f"figures/{book}/{n:02d}.svg", f"figures/{book}/{n:02d}-idea.svg",
+                      f"mishnah/{book}/{n:02d}.md"):
+                if not (ROOT / f).exists():
+                    fail(f"{ref}: {f} is missing")
 
 
 def main() -> int:

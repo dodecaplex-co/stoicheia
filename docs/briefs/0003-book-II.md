@@ -73,12 +73,15 @@ fact Euclid needs, that the gnomon and the remaining parallelogram make up the w
 The rule is Book I's: a fact that needs no proposition goes in Book Zero; one that cites
 a proposition goes beside the propositions.
 
-**Book Zero, `Elements/Figure/Rectangles.lean`** (no proposition, no axiom, no
-Postulate 5): `exists_off_line` (every Book II figure starts on one straight line, and
-the first square or perpendicular needs a side to stand on); `rect_congr`, `sq_congr`,
-`sq_symm`, `rect_comm`, `rect_self_left`, `rect_self_right`, `sq_self`;
-`Rectangle.rotate`, `Rectangle.reverse`, `Square.reverse`, `Square.rectangle`,
-`Square.len_eq`.
+**Book Zero, `Elements/Figure/Rectangles.lean`** (cites no proposition, declares no
+axiom, never uses Postulate 5): `exists_off_line` (every Book II figure starts on one
+straight line, and the first square or perpendicular needs a side to stand on; it rests
+on Postulates 1 and 3, Definition 15 and System E's rules, as I.1 does);
+`rect_congr`, `sq_congr`, `sq_symm`, `rect_comm`, `rect_self_left`, `rect_self_right`,
+`sq_self`; `Rectangle.rotate`, `Rectangle.reverse`, `Square.reverse`,
+`Square.rectangle`, `Square.len_eq`. Book II also uses `Parallel.between` (parallels
+keep order) in `Elements/Figure/Parallelograms.lean`: the closing of Book I removed it
+as unused, and Book II restores it for `Parallelogram.figure`.
 
 **Book II's ground, `Elements/BookII/Rectangles.lean`**, which may cite Book I. Each
 lemma's docstring ends with what it cites; the certificate's walk confirms them.
@@ -111,12 +114,21 @@ lemma's docstring ends with what it cites; the certificate's walk confirms them.
 | "let BD be drawn perpendicular to CA produced" (II.12), "AD ... perpendicular to BC" (II.13) | I.12's form: `D` on the straight line, and every angle there right; where `D` falls is then proved |
 
 Hypotheses come from the setting-out and conclusions from "I say that", as in Book I,
-with three choices worth naming:
+with four choices worth naming:
 
+- **II.1** cuts `BC` at the two points of its setting-out, "at the points D, E", as
+  I.45 takes the two triangles of its figure. One point of section is not an instance
+  of it (see "Later").
 - **II.5 and II.9** take `D` anywhere between `A` and `B` except at `C`, as the
-  enunciation does ("cut into equal and unequal segments"); Euclid's figure has it
-  between `C` and `B`, and the other side is the same with `A` and `B` exchanged. II.14
-  needs this: it cites II.5 with the section on whichever side the rectangle puts it.
+  enunciation does ("cut into equal and unequal segments"): the setting-out's "into
+  unequal segments at D" names no side. Euclid's figure has `D` between `C` and `B`,
+  and the other side is the same with `A` and `B` exchanged. The general form is for
+  later citers: III.35 meets the point of section on either side of the middle point.
+  II.14 does not need it. After "Let BE be greater", `E` lies between `G` and `F`,
+  II.5's own figure, and Heath suggests that is why Euclid wrote the words (vol. 1,
+  p. 410). `D ≠ C` is Euclid's "unequal". At `C` both statements hold in a line
+  (`rect_congr`, `sq_self`), so a citer whose point of section may be the middle point
+  takes that case first.
 - **II.12 and II.13** take the perpendicular as I.12 gives it, so that a later book can
   feed I.12's foot straight in. "CA produced" (II.12) and "cut off within" (II.13) are
   then proved from the obtuse angle, and from the two acute angles at `B` and `C`
@@ -142,9 +154,25 @@ with three choices worth naming:
   `book/II/`, a Book II section in `CERTIFICATE.md` and in `GRAPH.md` (with the Book I
   propositions it cites drawn in white), and links `[I.47](../I/47.md)` from Book II's
   pages. Book I's pages come out byte for byte as before.
+- **Brackets and numbers across books.** II.10's "[I. Post. 5]" stays as Heath prints
+  it, and the scripts read it as Post. 5: the postulates and common notions are Book I's
+  alone. Definitions are numbered book by book, so a Book II page and Book II's rows of
+  the certificate write Book I's Definition 15 as I.15, beside Book II's own
+  Definitions 1 and 2.
+- **Checks across books.** `check_fidelity.py` fails if `facts.json` does not cover
+  exactly the books in `heath.BOOKS` (`Certificate/Facts.lean` keeps its own list), or
+  if any proposition cites one that does not come before it: nothing after II.N, and
+  nothing of Book II in Book I.
 
 ## Later
 
+- **II.1 for one point of section.** II.1 is stated as its setting-out has it: `BC`
+  cut at two points `D`, `E`, both strictly within it. The enunciation's "any number of
+  segments whatever" is wider, and Heath calls the extension easy (vol. 1, p. 376). The
+  simplest case, the rectangle A, BC equal to the rectangles A, BD and A, DC, is not an
+  instance, and getting it from the three-piece form needs a cancellation that is not
+  Euclid's. If a later book cites II.1 with one point of section, that form is proved
+  then, as a corollary after II.1 from the same figure (one parallel `DK`).
 - `rect` has no existence or positivity lemma yet (that a rectangle contained by any two
   straight lines can be drawn, and is something). Book II never needs one, since it
   always draws its rectangles; Book VI will.

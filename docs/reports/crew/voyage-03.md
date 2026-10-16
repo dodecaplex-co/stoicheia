@@ -49,4 +49,6 @@ little.
 The first mate's look-ahead: I.37–I.46 each need "a straight line meeting one of
 two parallels meets the other", which rests on Postulate 5, so it should be a
 shared lemma citing I.29 or I.30, in `Elements/BookI/Helpers.lean`, before
-sailing.
+sailing. (It went instead into a file of its own,
+`Elements/BookI/HelpersParallels.lean`, as `Prop30.meet`, since `Helpers.lean` is
+imported by I.7; see [first-mate-04.md](first-mate-04.md).)

@@ -22,10 +22,6 @@ theorem ne_of_centre_of_on (hA : Centre A α) (hC : OnCircle C α) : C ≠ A := 
   subst h
   exact inside_not_on (centre_inside hA) hC
 
-/-- A point on a circle is not inside it. -/
-theorem not_inside_of_on (h : OnCircle A α) : ¬ InsideCircle A α :=
-  fun h' => inside_not_on h' h
-
 /-- A point farther from the centre than the circumference is outside the
 circle. -/
 theorem outside_of_len_gt (hA : Centre A α) (hD : OnCircle D α) (h : ‖A D‖ < ‖A B‖) :

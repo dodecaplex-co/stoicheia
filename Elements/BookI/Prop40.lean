@@ -32,12 +32,9 @@ theorem Prop40 {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Triangle C D 
   /- The parallel drawn through A will pass through D, and so be AD. -/
   -- I say that AD is parallel to BE.
   -- For, if not, let AF be drawn through A parallel to BE [I. 31], and let FE be joined.
-  /- U and V name the unlettered ends of the straight line supplied by I.31;
-     K is that straight line. F is where it meets CD, by I.30 (`Prop30.meet`). -/
-  obtain ⟨U, V, hUAV, hUV⟩ := Prop31 hBE (Triangle.of_line hB hE hBE hA_BE)
-  obtain ⟨K, hU_K, hV_K⟩ := Postulate1 U V hUV.1
-  have hA_K : OnLine A K := on_line_of_between_ends hUAV hU_K hV_K
-  have hKBE : Parallel K BE := hUV.parallel hU_K hV_K hB hE
+  /- The parallel through A is the straight line K (`Prop31.line`). F is where it
+     meets CD, by I.30 (`Prop30.meet`). -/
+  obtain ⟨K, hA_K, hKBE⟩ := Prop31.line hA_BE
   obtain ⟨CD, hC_CD, hD_CD⟩ := Postulate1 C D hCDE.ne₁₂
   obtain ⟨F, hF_CD, hF_K⟩ :=
     Prop30.meet hKBE hC hC_CD (fun e => hD_BE (e ▸ hD_CD))
@@ -59,21 +56,9 @@ theorem Prop40 {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Triangle C D 
       (((SameSideOf.of_line hBE hB hE (hKBE.sameSide hF_K hA_K)).trans hside).sameSide hB hE)
   have hray : OnRay F C D :=
     OnRay.of_sameSideOf hFD_side ⟨CD, hC_CD, hD_CD, hF_CD⟩ (fun e => hF_BE (e ▸ hC))
-  have hFD : F = D := by
-    rcases lt_trichotomy ‖C F‖ ‖C D‖ with hlt | heq' | hgt
-    · /- Euclid's case: F lies between C and D. -/
-      have hCFD : Between C F D :=
-        hray.between_of_len_lt (OnRay.self hCDE.ne₁₂) hlt
-      have hless := area_lt_of_cut hCDE.cab hCFD
-      rw [← area_cba F C E, ← area_cba D C E, h1] at hless
-      exact absurd rfl (Magnitude.ne_of_lt hless)
-    · exact hray.eq_of_len_eq heq'
-    · /- F beyond D: DCE is now the part and FCE the whole. -/
-      have hCDF : Between C D F :=
-        (OnRay.self hCDE.ne₁₂).between_of_len_lt hray hgt
-      have hless := area_lt_of_cut hFCE.cba hCDF
-      rw [← area_cba F C E, ← area_cba D C E, h1] at hless
-      exact absurd rfl (Magnitude.ne_of_lt hless)
+  /- Euclid's case has F between C and D; beyond D, DCE is the part and FCE
+     the whole. Either way only D itself will do (`OnRay.eq_of_area_eq`). -/
+  have hFD : F = D := hray.eq_of_area_eq hCDE.bac h1.symm
   -- Therefore AF is not parallel to BE.
   /- A parallel meeting CD away from D has been excluded: the parallel
      through A must pass through D itself. -/

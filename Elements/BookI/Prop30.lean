@@ -61,12 +61,8 @@ theorem Prop30.unique {L M N : Line} {G H : Point}
   have hHF : H ≠ F := fun e => hFT (e ▸ hHT)
   have hpar₁ := AreParallel.of_parallel hAG.symm hHF hGL hAL hHN hFN hLN
   have hpar₂ := AreParallel.of_parallel hDG.symm hHF hGM hDM hHN hFN hMN
-  obtain ⟨B, C, E, K, h₁, h₂, h₃, h₄, hp, hs⟩ :=
-    hpar₁.figure_interior (SameSideOf.of_line hGH hGT hHT hAF)
-  have ha := (Prop29 hp h₁ h₂ h₃ h₄ hs).2.2
-  obtain ⟨B', C', E', K', h₁', h₂', h₃', h₄', hp', hs'⟩ :=
-    hpar₂.figure_interior (SameSideOf.of_line hGH hGT hHT hDF)
-  have hd := (Prop29 hp' h₁' h₂' h₃' h₄' hs').2.2
+  have ha := Prop29.interior hpar₁ (SameSideOf.of_line hGH hGT hHT hAF)
+  have hd := Prop29.interior hpar₂ (SameSideOf.of_line hGH hGT hHT hDF)
   have hang : ∠ A G H = ∠ D G H := CommonNotion3 (ha.trans hd.symm) rfl
   have hAD : SameSideOf A D G H := SameSideOf.of_line hGH hGT hHT
     (same_side_trans (same_side_symm hAF) (same_side_symm hDF))
@@ -127,21 +123,16 @@ theorem Prop30 {A B C D E F : Point} (h₁ : AreParallel A B E F) (h₂ : ArePar
     -- Then, since the straight line GK has fallen on the parallel straight lines AB, EF,
     have hpar := AreParallel.of_parallel hA_G hF_H.symm hA_AB hG_AB hH_EF hF_EF hAB_EF
     -- the angle AGK is equal to the angle GHF. [I. 29]
-    obtain ⟨B₁, E₁, G₁, K₁, ha, hb, hc, hd, hp, hs⟩ := hpar.figure_alternate hAF
-    have hAGH : ∠ A G H = ∠ G H F := (Prop29 hp ha hb hc hd hs).1
+    have hAGH : ∠ A G H = ∠ G H F := Prop29.alternate hpar hAF
     have hAGK : ∠ A G K = ∠ G H F :=
       (angle_onRay_right (OnRay.of_between hGHK) hA_G).symm.trans hAGH
     -- Again, since the straight line GK has fallen on the parallel straight lines EF, CD,
     have hpar' := AreParallel.of_parallel hF_H.symm hD_K.symm hH_EF hF_EF hK_CD hD_CD
       hCD_EF.symm
     -- the angle GHF is equal to the angle GKD. [I. 29]
-    obtain ⟨E₂, C₂, G₂, K₂, ha', hb', hc', hd', hp', hs'⟩ := hpar'.figure_interior hFD
-    have hGHF : ∠ G H F = ∠ G K D := by
-      have hext := (Prop29 hp' ha' hb' hc' hd' hs').2.1
-      have hG₂ : OnRay G₂ H G :=
-        OnRay.of_between_between (between_symm hGHK) (between_symm hc')
-      rw [angle_onRay_left hG₂ hF_H] at hext
-      exact hext.trans (angle_onRay_left (OnRay.of_between (between_symm hGHK)) hD_K)
+    have hGHF : ∠ G H F = ∠ G K D :=
+      (Prop29.exterior hpar' hFD hGHK).trans
+        (angle_onRay_left (OnRay.of_between (between_symm hGHK)) hD_K)
     -- But the angle AGK was also proved equal to the angle GHF;
     have hsame : ∠ A G K = ∠ G H F := hAGK
     -- therefore the angle AGK is also equal to the angle GKD; [C.N. 1]

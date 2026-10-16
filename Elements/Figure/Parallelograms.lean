@@ -93,7 +93,9 @@ theorem Between.of_sameSide (hABC : Between A B C) (hB : OnLine B L) (hA : SameS
 lies between `A` and `C` on one crossing straight line, then `B'` lies between `A'`
 and `C'` on the other, when `A`, `A'` lie on `L₁`, `B`, `B'` on `L`, and `C`, `C'` on
 `L₃`, and `L₁` and `L₃` are each parallel to `L`. All of `L₁` lies on one side of
-`L`, and all of `L₃` on the other (`Parallel.sameSide`). -/
+`L`, and all of `L₃` on the other (`Parallel.sameSide`). Book II's figures use it
+(`Parallelogram.figure`), where the parallels through the points of section meet the
+far side of the square in the same order. -/
 theorem Parallel.between (h₁ : Parallel L₁ L) (h₃ : Parallel L₃ L) (hA : OnLine A L₁)
     (hB : OnLine B L) (hC : OnLine C L₃) (hABC : Between A B C) (hA' : OnLine A' L₁)
     (hB' : OnLine B' L) (hC' : OnLine C' L₃) (hcol : Collinear A' B' C') :

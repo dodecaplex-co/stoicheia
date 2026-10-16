@@ -1,5 +1,9 @@
 # Sailing orders, voyage 4: Book I, Propositions 33–48
 
+*The scratch proofs these orders name were removed once Book I was proved; they are
+at commit 54a08e6
+([scratch-04 at 54a08e6](https://github.com/jackChallis/stoicheia/tree/54a08e61a69c3b643590f1c7758c7b8058c9c7aa/docs/reports/crew/scratch-04)).*
+
 Every sailor, Claude or Codex, follows these orders word for word. Your proposition
 is I.N; NN is N in two digits.
 
@@ -82,9 +86,9 @@ lake build Elements.BookI.PropNN
 lake env lean Certificate/Facts.lean && python3 scripts/check_fidelity.py
 rsvg-convert -w 800 figures/I/NN.svg -o "${TMPDIR:-/tmp}/figNN.png"   # then look at it
 ```
-Then STYLE §6, with `$HEATH_OCR` at
-`/private/tmp/claude-501/-Users-johnchallis/68e6b57d-6355-42a6-8303-c463406f082f/scratchpad/heath-src/heathV1.ocr.txt`
-(page N is scan leaf N + 20). No `lake update` or `lake clean`. The generated pages
+Then STYLE §6, with `$HEATH_OCR` (the OCR text of the Internet Archive scan
+`thirteenbookseu02heibgoog`; the captain gives the path; page N is scan leaf
+N + 20). No `lake update` or `lake clean`. The generated pages
 are rendered after the merge, so CI's "generated pages up to date" step fails on
 your branch until then; that is expected.
 

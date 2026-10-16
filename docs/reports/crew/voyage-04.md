@@ -4,7 +4,8 @@ The largest voyage so far, and the last of Book I: four ships, each with a
 Claude captain, two Claude first mates and four Claude bosuns, and thirty-two
 OpenAI Codex sailors (`gpt-6-astra`), two on every proposition. A first mate went
 ahead with the groundwork (areas and parallelograms in Book Zero, the shared
-parallel steps, three statements adjusted and tested; see
+parallel steps, three statements adjusted and tested in scratch proofs, which
+served the voyage and were removed once the propositions were proved; see
 [first-mate-04.md](first-mate-04.md)), and two challengers tried to break it
 before anyone sailed.
 
@@ -12,6 +13,11 @@ Each bosun gave the orders ([orders-04.md](orders-04.md)) and its first mate's
 chart to two sailors, one at Codex's usual reasoning setting (a) and one at its
 highest (b), checked both, and kept the proof that read more like Euclid. First
 mates merged and reviewed; captains enforced the house voice.
+
+The first mate's report was written for a fleet of Claude and Codex crews; in the
+end every sailor was Codex, two to a proposition. Twelve propositions had a scratch
+proof to start from (I.35–I.39, I.41–I.45, I.47, I.48); I.33, I.34, I.40 and I.46
+did not. Both sailors on a proposition had the same.
 
 ## Results
 
@@ -40,8 +46,8 @@ mates merged and reviewed; captains enforced the house voice.
   retries and no usage limits reached. Best of two was insurance that wasn't
   needed for correctness, but it paid for itself in readability.
 - **The highest reasoning setting was kept fifteen times out of sixteen.** It took
-  about two minutes longer and a quarter more tokens, and the bosuns judged its
-  Lean to sit more closely under Euclid's sentences.
+  about two minutes longer and about 30 per cent more tokens, and the bosuns judged
+  its Lean to sit more closely under Euclid's sentences.
 - **The voice still needs its keeper.** Captains made five to eight edits per
   page, much as the enforcer did for Codex pages in voyage 3; nothing in the
   mathematics changed.

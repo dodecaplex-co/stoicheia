@@ -27,12 +27,9 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
   /- The parallel drawn through A will pass through D, and so be AD. -/
   -- I say that AD is parallel to BC.
   -- For, if not, let AE be drawn through the point A parallel to the straight line BC, [I. 31]
-  /- I.31 names two points of the parallel through A. They serve to name the
-     straight line K, which Euclid calls AE once E has been found. -/
-  obtain ⟨U, V, hUAV, hUV⟩ := Prop31 hABC.ne₂₃ hABC.bca
-  obtain ⟨K, hU_K, hV_K⟩ := Postulate1 U V hUV.1
-  have hA_K : OnLine A K := on_line_of_between_ends hUAV hU_K hV_K
-  have hKBC : Parallel K BC := hUV.parallel hU_K hV_K hB hC
+  /- The parallel through A is the straight line K (`Prop31.line`), which Euclid
+     calls AE once E has been found. -/
+  obtain ⟨K, hA_K, hKBC⟩ := Prop31.line (hABC.bca.off_line hB hC)
   -- and let EC be joined.
   /- E is where the parallel meets BD; that they meet at all is I.30
      (`Prop30.meet`). -/
@@ -57,21 +54,10 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
     (SameSideOf.of_line hABC.ne₂₃ hB hC (hKBC.sameSide hE_K hA_K)).trans hside
   have hray : OnRay E B D :=
     OnRay.of_sameSideOf hED_side ⟨BD, hB_BD, hD_BD, hE_BD⟩ hEB
-  have hED : E = D := by
-    rcases lt_trichotomy ‖B E‖ ‖B D‖ with hlt | hequal | hgt
-    · /- Euclid's figure: E lies between B and D, so EBC is less than DBC. -/
-      have hBED : Between B E D :=
-        hray.between_of_len_lt (OnRay.self hDBC.ne₁₂.symm) hlt
-      have hless := area_lt_of_cut hDBC.cba hBED
-      rw [← area_cba E B C, ← area_cba D B C, h1] at hless
-      exact absurd rfl (Magnitude.ne_of_lt hless)
-    · exact hray.eq_of_len_eq hequal
-    · /- Proclus' other case: E lies on BD produced beyond D, so DBC is less. -/
-      have hBDE : Between B D E :=
-        (OnRay.self hDBC.ne₁₂.symm).between_of_len_lt hray hgt
-      have hless := area_lt_of_cut hEBC.cba hBDE
-      rw [← area_cba E B C, ← area_cba D B C, h1] at hless
-      exact absurd rfl (Magnitude.ne_of_lt hless)
+  /- Euclid's figure has E between B and D, so that EBC is the less; Proclus'
+     other case has E beyond D, so that DBC is the less. Either way only D
+     itself will do (`OnRay.eq_of_area_eq`). -/
+  have hED : E = D := hray.eq_of_area_eq hDBC h1.symm
   -- Therefore AE is not parallel to BC.
   /- A parallel meeting BD away from D has been excluded: the parallel
      through A must pass through D itself. -/

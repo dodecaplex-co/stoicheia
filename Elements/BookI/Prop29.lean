@@ -14,6 +14,10 @@ not greater than the angle `GHD`, and says nothing of the other case, where `GHD
 the greater. That case is the same argument from `H`'s end of `GH`, on the side of
 `A` and `C`, with I.13 at `H`. So the Lean makes the argument once, for any two
 parallels and any straight line falling on them, and uses it twice.
+
+After the proposition, `Prop29.alternate`, `Prop29.interior` and `Prop29.exterior`
+say it of any straight line falling on two parallels, with Book Zero drawing
+Euclid's figure about it; I.30 and the propositions after it cite them.
 -/
 
 namespace Elements.BookI
@@ -130,5 +134,34 @@ theorem Prop29 {A B C D E F G H : Point} (hpar : AreParallel A B C D) (hAGB : Be
   -- Therefore etc.
   exact ⟨hAGH_GHD, hEGB_GHD, hBGH_GHD⟩
   -- Q. E. D.
+
+/-! ## I.29 said of any straight line falling on two parallels -/
+
+/-- The alternate angles. If the straight line `PG` is parallel to `HQ`, and `P` and
+`Q` lie on opposite sides of `GH`, then the alternate angles `PGH`, `GHQ` are equal.
+Book Zero draws Euclid's figure about `GH` (`AreParallel.figure_alternate`), and I.29
+does the rest. [I. 29] -/
+theorem Prop29.alternate {P G H Q : Point} (hpar : AreParallel P G H Q)
+    (hPQ : OppositeSidesOf P Q G H) : ∠ P G H = ∠ G H Q := by
+  obtain ⟨B, C, E, F, h₁, h₂, h₃, h₄, hpar', hside⟩ := hpar.figure_alternate hPQ
+  exact (Prop29 hpar' h₁ h₂ h₃ h₄ hside).1
+
+/-- The interior angles on the same side. If the straight line `GP` is parallel to
+`HQ`, and `P` and `Q` lie on one side of `GH`, then the angles `PGH`, `GHQ` are
+equal to two right angles. [I. 29] -/
+theorem Prop29.interior {P G H Q : Point} (hpar : AreParallel G P H Q)
+    (hPQ : SameSideOf P Q G H) : ∠ P G H + ∠ G H Q = ∟ + ∟ := by
+  obtain ⟨A, C, E, F, h₁, h₂, h₃, h₄, hpar', hside⟩ := hpar.figure_interior hPQ
+  exact (Prop29 hpar' h₁ h₂ h₃ h₄ hside).2.2
+
+/-- The exterior angle. If the straight line `GP` is parallel to `HQ`, `P` and `Q` lie
+on one side of `GH`, and `E` lies on `HG` produced beyond `G`, then the exterior
+angle `EGP` is equal to the interior and opposite angle `GHQ`. [I. 29] -/
+theorem Prop29.exterior {P G H Q E : Point} (hpar : AreParallel G P H Q)
+    (hPQ : SameSideOf P Q G H) (hEGH : Between E G H) : ∠ E G P = ∠ G H Q := by
+  obtain ⟨A, C, E', F, h₁, h₂, h₃, h₄, hpar', hside⟩ := hpar.figure_interior hPQ
+  have hE : OnRay E G E' := OnRay.of_between_between (between_symm h₃) (between_symm hEGH)
+  rw [angle_onRay_left hE hpar.1.symm]
+  exact (Prop29 hpar' h₁ h₂ h₃ h₄ hside).2.1
 
 end Elements.BookI

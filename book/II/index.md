@@ -2,7 +2,7 @@
 
 # Book II
 
-**0 of 14 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
+**0 of 14 propositions proved in Lean.** 🚧 sketched
 
 Start with the [definitions](front.md).
 

@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
-  <title>I.48 at a glance: the converse of Pythagoras</title>
+  <title>I.48 at a glance: the converse of the theorem of Pythagoras</title>
   <desc>Turn Pythagoras round: whenever the two smaller squares (9 and 16) together make the big one (25), the corner between them must be a right angle.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="142.5,156.9 183.9,101.7 128.7,60.3 87.3,115.5" fill="#f2b705" fill-opacity="0.95"/>

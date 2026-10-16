@@ -7,10 +7,12 @@ transcription. A few house rules keep the whole thing honest and readable.
 ## Proving a proposition
 
 Every proposition of Books I and II is stated in Lean, with Euclid's sentences in
-place as comments and, until it is proved, a `sorry` at the end. Book I is proved; pick
-any 🚧 proposition in [Book II](book/II/index.md). You can prove it before the ones it
-cites are finished, because a proof only needs their statements. How Book II speaks of
-rectangles and squares is in [its brief](docs/briefs/0003-book-II.md).
+place as comments and, until it is proved, a `sorry` at the end. All 48 propositions
+of Book I are proved; pick any 🚧 proposition in [Book II](book/II/index.md). You can
+prove it before the ones it cites are finished, because a proof only needs their
+statements. How Book II speaks of rectangles and squares is in
+[its brief](docs/briefs/0003-book-II.md). Corrections to Book I are welcome too: a
+proof, a mishnah, a figure or the transcription.
 
 1. **Euclid's words go in `--` comments, ours go in `/- … -/`.** Keep the words
    of every `--` line exactly as they are: CI checks that, read in order, they
@@ -24,7 +26,7 @@ rectangles and squares is in [its brief](docs/briefs/0003-book-II.md).
    Helpers go before the proposition, porisms and corollaries after it. A step
    that several proofs share goes in Book Zero; if it cites a proposition, in
    [`Elements/BookI/Helpers.lean`](Elements/BookI/Helpers.lean), or, if it cites
-   I.28, I.29 or I.30, in
+   I.28, I.30 or I.31, in
    [`Elements/BookI/HelpersParallels.lean`](Elements/BookI/HelpersParallels.lean);
    and if it is a consequence of one proposition that later proofs share, after
    that proposition as a corollary (`Prop34.bisect`). In Book II, a shared step that

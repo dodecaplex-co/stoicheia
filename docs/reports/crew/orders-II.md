@@ -11,12 +11,14 @@ its statement. Book I is proved: cite it as `BookI.PropN`, under Euclid's "[I. N
 **Read first.** `docs/STYLE.md` and `CONTRIBUTING.md`; `docs/briefs/0003-book-II.md`,
 how Lean says "the rectangle contained by AB, BC", "the square on AB" and "the gnomon";
 `heath/II/NN.md` and `Elements/BookII/PropNN.lean`; your note under "For the sailors"
-in `docs/reports/crew/first-mate-II.md`, and the scratch proof it names, if the captain
-gives you one; `Elements/BookII/Rectangles.lean` (Book II's ground) and
-`Elements/Figure/Rectangles.lean`; Book Zero from `Elements/Figure/Basics.lean`, above
-all `Areas.lean` and `Parallelograms.lean`; `Elements/BookI/HelpersParallels.lean`; and,
-as models of a proof under Euclid's sentences, `Elements/BookI/Prop46.lean` and
-`Prop47.lean`.
+in `docs/reports/crew/first-mate-II.md`, and any scratch proof it names, which is in
+`docs/reports/crew/scratch-II/` (not built; check one with
+`lake env lean docs/reports/crew/scratch-II/T02.lean`); `Elements/BookII/Rectangles.lean`
+(Book II's ground) and `Elements/Figure/Rectangles.lean`; Book Zero from
+`Elements/Figure/Basics.lean`, above all `Areas.lean` and `Parallelograms.lean`;
+`Elements/BookI/HelpersParallels.lean` and the corollaries after `Prop29` and `Prop31`
+in `Elements/BookI/Prop29.lean` and `Prop31.lean`; and, as models of a proof under
+Euclid's sentences, `Elements/BookI/Prop46.lean` and `Prop47.lean`.
 
 **Rectangles and squares.**
 - "The rectangle contained by AB, BC" is `rect A B B C`; "the square on AB" is `sq A B`;
@@ -45,8 +47,13 @@ so the propositions inside it become citations of yours; each is shown after the
   `Square.about_diameter` (adds I.5, I.6, I.29, I.34).
 - I.47 for the squares on straight lines: `BookI.Prop47.sq` (adds I.4, I.28, I.34, I.46,
   I.47).
-- From Book I: `BookI.Prop29.alternate`, `.interior`, `.exterior` (add I.29);
-  `BookI.Prop30.meet` for every point where a parallel you drew meets another straight
+- "Through D, E, C let parallels be drawn": `BookI.Prop31.parallelogram` draws the
+  parallel through a point, finds where it meets the far parallel, and gives the
+  parallelogram it makes (adds I.30, I.31); `BookI.Prop31.line` is the parallel through
+  a point as a named straight line (adds I.31). Draw your parallels with these, not
+  with `BookI.Prop31` and a hand-made meeting point.
+- From Book I besides: `BookI.Prop29.alternate`, `.interior`, `.exterior` (add I.29);
+  `BookI.Prop30.meet` for any other point where a parallel you drew meets a straight
   line, and `BookI.Prop30.parallel` (add I.30); `BookI.Prop28.square` (adds I.28);
   `BookI.Prop5.base` (adds I.5); `BookI.Prop34.bisect` (adds I.34). Write Book I's names
   with `BookI.` and don't `open BookI`: in a Book II file a bare `Prop4` means II.4.
@@ -60,15 +67,18 @@ mishnah explains each (STYLE check 19). When a shared step brings it in, one sen
 naming the step is enough. For the ground, for instance: that the rectangle drawn is the
 rectangle contained by its sides rests on rectangles with equal sides being equal, which
 Lean proves once from I.4 and I.34 (`Rectangle.contained`); Euclid takes it for granted
-every time he names a rectangle. For `Prop30.meet`: that a straight line meeting one of
-two parallels meets the other comes from I.30 (`Prop30.meet`), as Heath reports Proclus
-drawing it under I.31; refer to that note in a clause, don't quote it.
+every time he names a rectangle. For `Prop30.meet` and `Prop31.parallelogram`: that a
+straight line meeting one of two parallels meets the other comes from I.30, as Heath
+reports Proclus drawing it under I.31; refer to that note in a clause, don't quote it.
 
 **The rules.** Edit only `Elements/BookII/PropNN.lean`, `figures/II/NN.svg`,
 `mishnah/II/NN.md`; the ground (`Elements/BookII/Rectangles.lean`), Book Zero and Book I
 stay as they are. Import `Elements.Figure.Basics`, `Elements.BookII.Rectangles`, every
 proposition you cite (`Elements.BookI.PropNN` for Book I, `Elements.BookII.PropNN` for
-Book II), and `Elements.BookI.HelpersParallels` when you cite a step from it. Keep every
+Book II), and `Elements.BookI.HelpersParallels` when you cite `Prop30.meet`,
+`Prop30.parallel`, `Prop31.parallelogram` or `Prop28.square`. `Prop29.alternate`,
+`.interior` and `.exterior` come with `Elements.BookI.Prop29`, and `Prop31.line` with
+`Elements.BookI.Prop31`. Keep every
 `--` line word for word, Lean under it, your remarks in `/- … -/`. Never change the
 statement; never add an `axiom`. If the statement seems wrong or too weak, stop and say
 so in your report; do not work around it. No `native_decide` or `superposition`.
@@ -80,9 +90,11 @@ a docstring. Cite nothing after II.N.
   rectangle contained by AB, BC", "the square on AB", never "AB times BC", "AB²" or "the
   area of", except in the modern way.
 - No defensive asides ("note that", "strictly speaking"). Say the thing.
-- Quote a note of Heath's only on its own proposition's page. His notes on Book II's
-  definitions and on geometrical algebra (vol. 1, pp. 370–374) are quoted once, where
-  they matter most; elsewhere refer to them in a clause.
+- Quote a note of Heath's only on its own proposition's page. His notes before the
+  propositions are each quoted once, by one owner: only II.1 quotes his note on
+  "contained" (Def. 1, p. 370), only II.5 his note on the gnomon (Def. 2, p. 371), and
+  only II.4 his account of geometrical algebra (pp. 372–374). Every other mishnah refers
+  to them in a clause.
 - The mishnah is 200 to 500 words. The modern way is the identity in a sentence, exactly
   right: II.4 is (a + b)² = a² + b² + 2ab.
 - Certificate claims must hold after the merge, when all fourteen are proved: your

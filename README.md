@@ -55,7 +55,7 @@ The foundations are in [`Elements/Foundations/`](Elements/Foundations):
 
 - [**Postulates**](Elements/Foundations/Postulates.lean): Euclid's five, each a Lean `axiom`.
 - [**Common Notions**](Elements/Foundations/CommonNotions.lean): all five turn out to be *theorems*, once we state how magnitudes add and compare.
-- [**Definitions**](Elements/Foundations/Definitions.lean): the ones that do work in the proofs. Definition 15 (all radii of a circle are equal) is really an axiom, and is treated as one.
+- [**Definitions**](Elements/Foundations/Definitions.lean): the ones that do work in the proofs. Definition 15 (all radii of a circle are equal) is really an axiom, and is treated as one. [Book II's](Elements/Foundations/DefinitionsII.lean) are the rectangle contained by two straight lines and the square on one, defined, not assumed.
 - [**Tacit rules**](Elements/Foundations/Tacit): everything Euclid reads off his figures without saying so. That a point lies between two others, that a line through the inside of a circle must cut it, that two triangles which match in every side and angle have the same area. These follow, rule by rule, the System E of Jeremy Avigad, Edward Dean and John Mumma, which was designed to capture exactly how Euclid reasons from a diagram.
 
 Because every assumption is a Lean `axiom`, `#print axioms` lists exactly what a proof rests on, and [`Certificate/Facts.lean`](Certificate/Facts.lean) turns that into the certificate. One famous result can't be faked: whether a proposition needs the parallel postulate. CI fails if anything before I.29 uses it.
@@ -95,11 +95,11 @@ A Lean proof needs only the *statements* of the propositions it cites, not their
 
 ## Join in
 
-Pick any 🚧 proposition in [Book II](book/II/index.md) and prove it; write a mishnah; draw a figure. [CONTRIBUTING.md](CONTRIBUTING.md) explains the few house rules.
+Book I is proved, and Book II is under way: pick any 🚧 proposition in [Book II](book/II/index.md) and prove it, write a mishnah or draw a figure. There is plenty to do in [Book I](book/I/index.md) as well: read a page and tell us where it could be clearer, check a quotation against Heath's scans, or improve a figure or a proof. [CONTRIBUTING.md](CONTRIBUTING.md) explains the few house rules.
 
 ## How it was made
 
-Stoicheia is Jack Challis's project, built with Claude (Anthropic's AI) working as a crew of agents. A captain plans and merges; first mates prepare each stretch; sailors prove one proposition each, in parallel; bosuns merge their work and review it for faithfulness to Euclid; artists drew the figures; inspectors audit the whole for consistency. Early planning also drew on conversations with ChatGPT. Nothing rests on trust: Lean's kernel checks every proof, CI checks that every proof still quotes Heath word for word, and every quotation in the commentary was checked against the scanned 1908 text. The crew's logs are in [docs/reports/crew](docs/reports/crew).
+Stoicheia is Jack Challis's project, built with Claude (Anthropic's AI) working as a crew of agents. From the third voyage OpenAI's Codex joined the crew: Codex sailors proved I.26, I.28, I.30, I.32 and all of I.33–I.48, drew Euclid's figure for each and wrote the first draft of its mishnah, and Claude's bosuns, first mates and captains reviewed and edited their work. A captain plans and merges; first mates prepare each stretch; sailors prove each proposition, in parallel; bosuns and first mates merge their work and review it for faithfulness to Euclid; artists drew the figures; inspectors audit the whole for consistency. Early planning also drew on conversations with ChatGPT. Nothing rests on trust: Lean's kernel checks every proof, CI checks that every proof still quotes Heath word for word, and every quotation in the commentary was checked against the scanned 1908 text. The crew's logs are in [docs/reports/crew](docs/reports/crew).
 
 ## Standing on shoulders
 

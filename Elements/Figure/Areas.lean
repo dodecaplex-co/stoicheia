@@ -1,4 +1,5 @@
 import Elements.Figure.Triangles
+import Elements.Figure.Rays
 
 /-!
 # Book Zero: areas
@@ -7,11 +8,12 @@ From I.35 on, Euclid adds and takes away areas as freely as lengths and angles:
 "let DGE be subtracted from each", "let the triangle GBC be added to each". He
 never doubts that the triangle `ABC` is the triangle `BCA`, whichever corner it is
 named from; that a straight line from a corner cuts a triangle into two which make
-up the whole; that a triangle is something, and greater than a part of it; or that
-the halves of equal things are equal. Nor does he say which diameter measures a
-four-sided figure: when its diameters cross, either will do. These are those
-facts, proved from System E's rules for areas (Avigad, Dean and Mumma, §3.5 and
-§3.6) and the laws of magnitudes.
+up the whole; that a triangle is something, and greater than a part of it; that
+on a ray from a corner only one point makes a triangle equal to a given one on the
+same base; or that the halves of equal things are equal. Nor does he say which
+diameter measures a four-sided figure: when its diameters cross, either will do.
+These are those facts, proved from System E's rules for areas (Avigad, Dean and
+Mumma, §3.5 and §3.6) and the laws of magnitudes.
 
 Lean's `ac_rfl` can put any sum of magnitudes in order once it knows that adding
 is associative and commutative, and the two instances below tell it so. A proof
@@ -117,6 +119,26 @@ theorem area_lt_of_cut (hABC : Triangle A B C) (h : Between B D C) : △ A B D <
       (hABC.bca.off_line hB hC)).cab
   rw [← area_cut (A := A) h]
   exact CommonNotion5 hADC.area_pos
+
+/-- "The greater to the less: which is impossible" (I.39, I.40). On the ray from `B`
+through `D`, only `D` itself makes with the base `BC` a triangle equal to `DBC`. A
+point `E` nearer to `B` makes `EBC` a part of `DBC`, and a point beyond `D` makes
+`DBC` a part of `EBC`; either way the part would be equal to the whole
+(`area_lt_of_cut`, C.N. 5). If `E` is as far from `B` as `D` is, it is `D`
+(`OnRay.eq_of_len_eq`). -/
+theorem OnRay.eq_of_area_eq {E : Point} (hDBC : Triangle D B C) (hE : OnRay E B D)
+    (h : △ E B C = △ D B C) : E = D := by
+  obtain ⟨hBD, hEB, ⟨L, hB, hD, hE_L⟩, -⟩ := id hE
+  have hEBC : Triangle E B C := fun ⟨M, hE_M, hB_M, hC_M⟩ =>
+    hDBC ⟨M, (line_unique hEB hE_L hB hE_M hB_M) ▸ hD, hB_M, hC_M⟩
+  rcases lt_trichotomy ‖B E‖ ‖B D‖ with hlt | heq | hgt
+  · have hless := area_lt_of_cut hDBC.cba (hE.between_of_len_lt (OnRay.self hBD) hlt)
+    rw [← area_cba E B C, ← area_cba D B C, h] at hless
+    exact absurd rfl (Magnitude.ne_of_lt hless)
+  · exact hE.eq_of_len_eq heq
+  · have hless := area_lt_of_cut hEBC.cba ((OnRay.self hBD).between_of_len_lt hE hgt)
+    rw [← area_cba E B C, ← area_cba D B C, h] at hless
+    exact absurd rfl (Magnitude.ne_of_lt hless)
 
 /-! ## Four-sided figures
 

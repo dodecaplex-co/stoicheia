@@ -46,9 +46,10 @@ Every proposition file imports this one, and through it:
   joining two parallels in the same directions; and the figure of I.29 about any
   straight line falling on two parallels.
 * `Areas`: a triangle named from any corner; a triangle is something, and a
-  straight line from a corner cuts it into two which make up the whole; the
-  halves of equal things are equal; a four-sided figure whose diameters cross has
-  the same area whichever diameter cuts it.
+  straight line from a corner cuts it into two which make up the whole; on a ray
+  from a corner, one point only makes a triangle of a given area on a given base;
+  the halves of equal things are equal; a four-sided figure whose diameters cross
+  has the same area whichever diameter cuts it.
 * `Parallelograms`: a parallelogram or a square named from another corner; a
   point between two parallels; parallels keep order; a four-sided figure between
   two parallels has crossing diameters or crossing sides; the diameters of a

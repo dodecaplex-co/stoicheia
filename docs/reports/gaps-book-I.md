@@ -14,86 +14,63 @@ we know who saw a gap first, we say so; nothing here is meant to be new except
 where marked.
 
 Each entry names the Lean lemma or tacit rule that fills the gap. Lemmas named
-`PropN.something` are particular to one proposition's figure and live in its file;
-the others are general and live in Book Zero (`Elements/Figure/`), where any proof
-may cite them. The one exception is `Prop5.base`, the angles at the base of I.5
-with the sides produced for us: several proofs share it, and since it cites I.5 it
-lives beside the propositions, in `Elements/BookI/Helpers.lean`.
+`PropN.something` live beside the propositions. Most are particular to one
+proposition's figure and live in its file. A few are steps that several proofs
+share and that cite a proposition, which Book Zero may not do: `Prop5.base`, the
+angles at the base of I.5 with the sides produced for us, lives in
+`Elements/BookI/Helpers.lean`; the steps that cite I.28, I.30 or I.31, such as
+`Prop30.meet`, live in `Elements/BookI/HelpersParallels.lean`; and corollaries that
+later proofs draw from a proposition, such as `Prop29.alternate`, `Prop34.bisect`
+and `Prop46.side_eq`, follow it in its own file. The other lemmas are general and
+live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 
 ## I.1
-- The two circles cut one another. Heath: "It is a commonplace that Euclid has no
-  right to assume, without premising some postulate, that the two circles will meet
-  in a point C." Filled by the tacit rule `circles_meet` (System E, Intersection 5).
+- The two circles cut one another. Heath: "It is a commonplace that Euclid has no right to assume, without premising some postulate, that the two circles will meet in a point C." Filled by the tacit rule `circles_meet` (System E, Intersection 5).
 - C is not on AB, so ABC really is a triangle (`Prop1.figure`).
-- The circles cut one another on both sides of AB, so the triangle may be put on
-  either side. Euclid relies on this without saying so in I.9, where the triangle
-  on DE must fall on the side away from A, and in I.11. I.1 is stated with a side
-  to choose (System E, Intersections 8).
+- The circles cut one another on both sides of AB, so the triangle may be put on either side. Euclid relies on this without saying so in I.9, where the triangle on DE must fall on the side away from A, and in I.11. I.1 is stated with a side to choose (System E, Intersections 8).
 
 ## I.2
-- The circles about B and D are met by DB and DA produced (`line_circle_beyond`,
-  System E Intersections 5); Euclid's Postulate 2 steps are absorbed into this.
+- The circles about B and D are met by DB and DA produced (`line_circle_beyond`, System E, Intersections 5); Euclid's Postulate 2 steps are absorbed into this.
 - A lies inside the circle GKL, because DA is only part of DG (C.N. 5).
 
 ## I.3
-- The circle about A meets AB at a point E between A and B, because B lies outside it
-  (`outside_of_len_gt`, `line_circle_between`). This needs the straight line AB itself,
-  hence Postulate 1.
+- The circle about A meets AB at a point E between A and B, because B lies outside it (`outside_of_len_gt`, `line_circle_between`). This needs the straight line AB itself, hence Postulate 1.
 
 ## I.4
-- "B will also coincide with E, because AB is equal to DE" uses the converse of
-  C.N. 4 for straight lines (Heath, vol. 1, p. 250). `OnRay.eq_of_len_eq` proves it by
-  Savile's argument: if B fell short of E or beyond it, the less would equal the greater.
-- "AC will also coincide with DF" needs that only one ray on that side of DE makes the
-  given angle (`onRay_of_angle_eq`).
-- Heiberg's bracketed "two straight lines will enclose a space" is not needed: a
-  finite straight line is fixed by its ends.
+- "B will also coincide with E, because AB is equal to DE" uses the converse of C.N. 4 for straight lines (Heath, vol. 1, p. 250). `OnRay.eq_of_len_eq` proves it by Savile's argument: if B fell short of E or beyond it, the less would equal the greater.
+- "AC will also coincide with DF" needs that only one ray on that side of DE makes the given angle (`onRay_of_angle_eq`).
+- Heiberg's bracketed "two straight lines will enclose a space" is not needed: a finite straight line is fixed by its ends.
 - The moved triangle keeps its area (System E, Metric 9, `area_congruent`).
 
 ## I.5
-- F is taken "at random" on BD, but must be close enough to A that AE is the greater
-  (`exists_between_nearer`, which draws a circle about A).
-- F, taken between B and D, still lies beyond B as seen from A, so that B is between A
-  and F (`between_cut`).
+- F is taken "at random" on BD, but must be close enough to A that AE is the greater (`exists_between_nearer`, which draws a circle about A).
+- F, taken between B and D, still lies beyond B as seen from A, so that B is between A and F (`between_cut`).
 - G lies beyond C on AE (`OnRay.between_of_len_lt`).
-- The angle FAG is common to both triangles, and BFC is AFC, because the points lie
-  on the same rays (`angle_onRay_left`, System E Diagram-angle 4).
-- The angles ABG, ACF are made up of ABC, CBG and ACB, BCF (`angle_add_of_between`,
-  Pasch 2 and Diagram-angle 2).
+- The angle FAG is common to both triangles, and BFC is AFC, because the points lie on the same rays (`angle_onRay_left`, System E, Diagram-angle 4).
+- The angles ABG, ACF are made up of ABC, CBG and ACB, BCF (`angle_add_of_between`, Pasch 2 and Diagram-angle 2).
 - Each of AFC, AGB, FBC, GCB is a genuine triangle (`Triangle.of_line`).
 
 ## I.6
-- The triangle DBC is less than the triangle ABC because D lies between A and B; Heath
-  notes the tacit assumption (vol. 1, p. 256). `Prop6.less`, from Diagram-area 1 and 2
-  and C.N. 5.
+- The triangle DBC is less than the triangle ABC because D lies between A and B; Heath notes the tacit assumption (vol. 1, p. 256). `Prop6.less`, from Diagram-area 1 and 2 and C.N. 5.
 - DBC is a triangle, and the angle DBC is the angle ABC (`Prop6.figure`, `angle_onRay_left`).
-- "One of them is greater" is the law that of two unequal magnitudes one is the greater
-  (`lt_trichotomy`); the case where AC is the greater is the same argument with B and C
-  exchanged.
+- "One of them is greater" is the law that of two unequal magnitudes one is the greater (`lt_trichotomy`); the case where AC is the greater is the same argument with B and C exchanged.
 
 ## I.7
-- Euclid draws one figure. There are four configurations: AD crosses CB, AC crosses DB,
-  D within the triangle ABC, C within ABD (`Prop7.cases`, `Prop7.cross`). The
-  "within" case is the one Proclus answers with the second part of I.5 (Heath,
-  vol. 1, p. 260; `Prop7.within`).
-- CB falls within the angle ACD and DA within the angle CDB (`Prop7.figure`, from Pasch 2
-  and Diagram-angle 2), the "relative positions" Heath mentions.
-- The step Heath says it would be natural to insert, "the angle ACD is greater than the
-  angle BCD [C.N. 5]", also needs ACB to be a genuine angle (Diagram-angle 1).
+- Euclid draws one figure. There are four configurations: AD crosses CB, AC crosses DB, D within the triangle ABC, C within ABD (`Prop7.cases`, `Prop7.cross`). The "within" case is the one Proclus answers with the second part of I.5 (Heath, vol. 1, p. 260; `Prop7.within`).
+- CB falls within the angle ACD and DA within the angle CDB (`Prop7.figure`, from Pasch 2 and Diagram-angle 2), the "relative positions" Heath mentions.
+- The step Heath says it would be natural to insert, "the angle ACD is greater than the angle BCD [C.N. 5]", also needs ACB to be a genuine angle (Diagram-angle 1).
 - D is on neither AC nor BC, which Heath says "does not require proof" (`Prop7.triangle`).
 
 ## I.8
-- C comes down on F's side of E along EF, as far from E as F is, so on F
-  (`OnRay.eq_of_len_eq`).
+- C comes down on F's side of E along EF, as far from E as F is, so on F (`OnRay.eq_of_len_eq`).
 - A comes down on the same side of EF as D, which I.7 needs; Euclid never says so.
-- "The same side of this line EF" becomes "the same side of the straight line EF" by the
-  uniqueness of the line through two points (`SameSideOf.of_line`).
+- "The same side of this line EF" becomes "the same side of the straight line EF" by the uniqueness of the line through two points (`SameSideOf.of_line`).
 
 ## I.9
-- The equilateral triangle on DE goes on the side away from A (Heath, vol. 1, p. 264); I.1 now takes the side as an argument.
+- The equilateral triangle on DE goes on the side away from A (Heath, vol. 1, p. 264), and our I.1 lets the side be chosen.
 - D, taken "at random" on AB, must be nearer A than C is, so that I.3 can be used (`exists_between_nearer`, as in I.5).
-- F falls within the angle BAC: the question of Proclus' objector (Heath, vol. 1, p. 265). If F were on an arm, Proclus' own argument with the second part of I.5 rules it out; if outside the angle, I.7 does (`Prop9.crossing`, `Prop9.not_on_arm`).
-- Euclid proves the angles DAF and EAF equal, but the angle to be bisected is BAC. DAF and EAF are BAF and FAC because D and E lie on the rays from A through B and C (`angle_onRay_left`, `angle_symm`), and BAC is made up of them because F lies within it (`angle_add_of_inside`, System E Diagram-angle 2).
+- F falls within the angle BAC: the question of Proclus' objector (Heath, vol. 1, p. 265). If F were on an arm, Proclus' own argument with the second part of I.5 rules it out; if outside the angle, I.7 does (`Prop9.crossing`, `Prop9.not_on_arm`); and from the point where AF crosses DE, `Prop9.side` reads off which side of AB and of AC F lies on.
+- Euclid proves the angles DAF and EAF equal, but the angle to be bisected is BAC. DAF and EAF are BAF and FAC because D and E lie on the rays from A through B and C (`angle_onRay_left`, `angle_symm`), and BAC is made up of them because F lies within it (`angle_add_of_inside`, System E, Diagram-angle 2).
 
 ## I.10
 - The bisector of the angle ACB meets AB, and between A and B: I.9's statement (F within the angle) and Book Zero's `crossbar`.
@@ -105,7 +82,7 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - Turning Definition 10's "right" into the one magnitude of all right angles takes Postulate 4, which Euclid doesn't cite here.
 
 ## I.12
-- The circle about C through D cuts AB twice (System E Intersection 2).
+- The circle about C through D cuts AB twice (System E, Intersection 2).
 - "Perpendicular to the infinite straight line" again means a right angle with every point of AB (`OnRay.cases_of_between`, as in I.11).
 - HGC and HEC, the triangles I.8 compares, are genuine triangles: H, G and E are on AB, and C is off it (`Triangle.of_line`).
 
@@ -120,6 +97,7 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - Euclid's figure has BE within the angle ABD; the other case, BD within ABE, needs handling too (`onRay_of_angle_eq`).
 - E and D lie on the same side of AB, each being on the other side from C (`OppositeSidesOf.of_between`, `OppositeSidesOf.sameSideOf`): the one place the hypothesis "not lying on the same side" is used, as Proclus warned.
 - "AB stands on the straight line CBE" needs A off CBE before I.13 applies: that straight line passes through B and C, and A, B, C are not on one straight line.
+- "Therefore CB is in a straight line with BD": the supposition having failed, D lies on the ray from B through E, and every point of that ray lies beyond B from C (`OnRay.between`).
 
 ## I.15
 - The two straight lines really cross, so that each "stands on" the other before I.13 applies (`Prop15.figure`).
@@ -184,6 +162,123 @@ lives beside the propositions, in `Elements/BookI/Helpers.lean`.
 - "The angle DFG is greater than the angle EGF", and "much greater", are each the whole greater than the part, because X lies between D and F and between E and G (`angle_lt_of_between`).
 - In Proclus' second case, taking the equal DF and DG away from the two sums is a law of magnitudes Euclid never states (`Magnitude.lt_of_add_lt_add_left`).
 
+## I.25
+- "For, if not, it is either equal to it or less" is the division of I.19 (`lt_trichotomy`), and the last step, "therefore the angle BAC is greater than the angle EDF", is a *reductio ad absurdum* (`Classical.byContradiction`).
+- "For then the base BC would also have been less than the base EF" is I.24 with the triangles exchanged, DEF first, so the equal sides are read the other way round: DE equal to AB, and DF to AC.
+- Each "but it is not" is a law of magnitudes: BC, being greater than EF, is not equal to it (`Magnitude.ne_of_lt`), nor less (`lt_trans`, `lt_irrefl`).
+
+## I.26
+- "Let BG be made equal to DE", and in the second part "let BH be made equal to EF", have no bracket, but each is I.3's work, as in I.20; and I.3 puts G between B and A, and H between B and C.
+- GBC, ABH and AHC are genuine triangles, as I.4 and I.16 need (`Triangle.of_line`). The angles GBC and ABH are the angle ABC, their arms being the same rays (`OnRay.of_between`, `angle_onRay_left`, `angle_onRay_right`); and "the less to the greater" needs the angle BCG to be a part of BCA, since G lies between B and A (`angle_lt_of_between`).
+- "If AB is unequal to DE, one of them is greater", and Euclid lets it be AB. The other case is the same argument with the triangles exchanged, written once and used twice, and so is the second part's (`lt_trichotomy`).
+- The equal sides must be corresponding sides, both adjoining the equal angles or both subtending equal angles; Heath explains that a figure of Proclus shows just this (vol. 1, p. 306). The statement names them so: BC and EF, or AB and DE.
+
+## I.27
+- Euclid's two directions, "in the direction of B, D or towards A, C", are the two sides of EF; the Greek speaks of parts, Heath notes (vol. 1, p. 308). A point where AB and CD meet is off EF, for AB meets EF at E alone, and were the point E, CD would be EF itself, with D on it (System E, Generalities 1). So it lies on D's side or on A's, since a straight line has just two sides (`same_side_or`, System E, Same side 5).
+- "The exterior angle AEF" of the triangle GEF needs E between A and G, and "the interior and opposite angle EFG" needs EFG to be the given angle EFD. Euclid reads both off his figure. B lies on G's side of EF, so G lies on the ray from E through B (`OnRay.of_sameSideOf`), beyond E from A (`OnRay.between`); and G lies on the ray from F through D, so EFG is EFD (`angle_onRay_right`).
+- "Similarly" is the same argument with the figure read from the other end, D, C, B, A for A, B, C, D, written once and used twice, as in I.16.
+
+## I.28
+- "And they are alternate": I.27 needs A and D on opposite sides of GH. The statement puts B and D on one side of EF, which is the straight line GH (`SameSideOf.inner`), and G lies between A and B, so A is across GH from D (`SameSideOf.oppositeSidesOf_of_between`).
+- The same hypothesis keeps B off GH, so that AB and EH really cut one another at G, as I.15 needs, and H off AB, so that GH stands on AB, as I.13 needs.
+
+## I.29
+- Postulate 5, as Euclid cites it here, leaves out its conditions. Heath: "A good deal is left to be understood, namely that the straight lines begin from points at which they meet a transversal" (vol. 1, p. 312). `Postulate5` asks for all of it: the straight lines through B and G, through G and H, and through H and D, with B and D on one side of GH (`SameSideOf.inner`).
+- Euclid lets the angle AGH be the greater and leaves out the case where GHD is. That is his argument from H's end, on the side of A and C, with I.13 at H, written once and used twice.
+- "Let the angle BGH be added to each" has no bracket: as in I.17, it is the tacit law of magnitudes `add_lt_add_right`.
+- I.13 and I.15 need H off AB and B off EH. Both follow from B's being off GH, which comes from the statement's same-side hypothesis and not from the parallels.
+
+## I.30
+- Heath's figure puts EF between AB and CD, so that GK crosses it at H (`OppositeSides.exists_between`). The enunciation also covers EF lying outside both, where a straight line from one to the other need not cross it. For that case Lean proves from I.29 that two straight lines through one point, each parallel to a third, are one straight line (`Prop30.unique`): Playfair's axiom, of which I.30 is the logical equivalent, as Heath reports De Morgan pointing out (vol. 1, p. 314).
+- The given points need not stand where Heath's do, so `Prop30.point_on_side` takes an end of each straight line on whichever side of GK his figure wants, producing it if it must.
+- Each citation of I.29 needs Euclid's whole figure: the falling straight line meets each parallel between two of its points, and itself goes on beyond both. Book Zero produces the straight lines to make it (`AreParallel.figure_alternate`, `AreParallel.figure_interior`), and later proofs reach it through `Prop29.alternate`, `Prop29.interior` and `Prop29.exterior`.
+- "And they are alternate. Therefore AB is parallel to CD" is I.27, though Euclid gives no bracket for it.
+
+## I.31
+- The given point A is off the given straight line BC; the statement asks it.
+- D, "taken at random on BC", is taken between B and C, as in Euclid's figure (`exists_point_between`, System E, Points 3), so that B and C lie on either side of AD (`OppositeSidesOf.of_between`).
+- The angle DAE must be built on the side of AD away from C, or EAD and ADC would not be alternate angles, as I.27 needs. Our I.23 lets the side be named, and B's is named (`SameSideOf.trans_opposite`).
+- Proclus remarks that the construction implies that only one straight line through A is parallel to BC, and draws this from I.30: two such straight lines would be parallel, though they meet at A (Heath, vol. 1, p. 316). Our statement asks for a parallel, not the only one. The uniqueness is `Prop30.meet`, that a straight line meeting one of two parallels meets the other, and later proofs cite it wherever Euclid names a point on a parallel he has drawn: I.37–I.40, I.42, I.44, I.46 and I.47.
+
+## I.32
+- Euclid's figure puts E within the angle ACD. I.31 gives a straight line through C with a point on either side of C, and `Prop32.choose_end` takes the one on A's side of BC. Then E lies across AC from B, for otherwise the parallel would cross AB (`AreParallel.oppositeSidesOf`); so E and D are on one side of AC, and `angle_add_of_within` makes ACD the angles ACE, ECD together.
+
+## I.33
+- "(At the extremities which are) in the same directions (respectively)": the bracketed words are Heath's, inserted for clearness (vol. 1, p. 323). Our statement says it with `SameSideOf`: B and D lie on one side of AC. Book Zero's `AreParallel.oppositeSidesOf` then puts A and D on opposite sides of BC, so that ABC, BCD are alternate angles, as I.29 needs (`Prop29.alternate`).
+- I.27 asks for BC to meet each of AC and BD between two of its points, so AC and DB are produced beyond C and B (Post. 2, `produce`), to ends Heath leaves without letters. What I.27 then says of the produced straight lines it says of AC and BD (`AreParallel.of_parallel`).
+
+## I.34
+- Euclid never defines a parallelogram. Proclus observes that I.33 gives "the construction or origin of the parallelogram" without expressing the fact, so that Euclid can speak here of "parallelogrammic areas" with no more explanation (Heath, vol. 1, p. 323). Our `Parallelogram` is a four-sided figure whose opposite sides are parallel, its corners taken in order round it.
+- I.29 needs A and D on opposite sides of BC: the far corners of a parallelogram lie on one side of each side (`Parallelogram.sameSideOf`), and Book Zero's `AreParallel.oppositeSidesOf` does the rest.
+- "The whole angle ABD is equal to the whole angle ACD [C.N. 2]" needs BC within both angles, which the parallelogram, named from each corner in turn, gives (`angle_add_of_within`).
+
+## I.35
+- Heath: "Euclid speaks of the triangle DGE without any explanation that, in the case which he takes (where AD, EF have no point in common), BE, CD must meet at a point G between the two parallels" (vol. 1, p. 327). `Prop35.figure` proves it from Book Zero's `AreParallel.cross_or`, and puts E between D and F, as "the whole DF" needs.
+- Euclid gives one arrangement. Proclus, "observing that Euclid has given only the most difficult of the three possible cases, adds the other two with separate proofs" (Heath, vol. 1, p. 328): E between A and D (`Prop35.between`), and E at D (`Prop35.same`). Lean also takes E at A, where F is D (`OnRay.eq_of_len_eq`), and each case the other way along AF, by exchanging the parallelograms (`AreParallel.sameSideOf_or`).
+- Heath points out "the further tacit assumption that it is indifferent to what part or from what part of the same or equal areas the same or equal areas are added or subtracted", a postulate De Morgan thought particularly important (vol. 1, p. 328). In Lean an area is a magnitude, so where it is added or taken away does not matter; what must be said is what a figure is made of. A straight line from a corner cuts a triangle into two that make it up (`area_cut`, System E, Diagram-area 2), and a four-sided figure is the two triangles a diameter cuts it into (`quadArea`): the trapezium ABGD by its diameter BD.
+- A parallelogram has one area, whichever diameter cuts it: Book Zero shows that two diameters which cross give the same measure (`quadArea_rotate_of_cross`, `Parallelogram.quadArea_rotate`).
+
+## I.36
+- "Let BE, CH be joined": I.33 joins equal and parallel straight lines at the ends which are in the same directions, so C and H must lie on one side of BE. `AreParallel.sameSideOf_or` says they do, or else that E and C lie on one side of HB; the second is Euclid's case again, with EFGH read as HGFE.
+- The second citation of I.35, on the base EH, may fall in any of its arrangements, since BC and FG may overlap or share an end. So I.36 needs the cases Proclus adds under I.35 as well as Euclid's. Heath reports Heron distinguishing "the different cases of I. 35, 36" (vol. 1, p. 22).
+
+## I.37
+- E and F are where BE and CF, the parallels I.31 draws, meet AD produced. That they meet at all is `Prop30.meet` (see I.31): AD meets CA at A, so it meets BE, the parallel to CA.
+- "[But the halves of equal things are equal to one another.]" Heiberg brackets the words, but the step is needed all the same, and it is no inference from Common Notion 3. Tannery observes that it needs a *reductio ad absurdum* through Common Notion 2, and Heath that even then "a little argument would be necessary" (vol. 1, p. 224). Book Zero gives it as `Magnitude.eq_of_add_self_eq`.
+- "The diameter AB bisects it": `quadArea` measures EBCA by its diameter EC, so the figure is named from B (`Parallelogram.rotate`, `Parallelogram.quadArea_rotate`) before `Prop34.bisect` makes it twice ABC.
+
+## I.38
+- As in I.37: G and H, where BG and FH meet AD produced, come from `Prop30.meet`; the bracketed halves are `Magnitude.eq_of_add_self_eq`; and GBCA is named from B, so that its diameter is AB (`Parallelogram.quadArea_rotate`).
+- I.42 cites this proposition for two triangles with one vertex, ABE and AEC, where Euclid's AD is no straight line at all. Our statement takes "in the same parallels" as two whole straight lines, so the vertices may be one point, and the "AD" that Euclid produces is the parallel through them.
+
+## I.39
+- E, where the parallel through A meets BD, comes from `Prop30.meet`: BD meets BC at B, so it meets the parallel to BC.
+- "The greater to the less" needs to know where E falls. The parallel puts E on A's side of BC, and so on D's, on the ray from B through D (`OnRay.of_sameSideOf`). Euclid's figure has E between B and D; Proclus points out that the proof is as easy when it falls beyond D (Heath, vol. 1, p. 337). Either way one triangle is a part of the other (`area_lt_of_cut`, C.N. 5).
+- "Similarly we can prove that neither is any other straight line except AD" asks for an argument about every straight line through A. Lean needs it about one: the parallel I.31 draws through A meets BD at D itself (`OnRay.eq_of_len_eq`), and so it is AD.
+
+## I.40
+- As in I.39: F, where the parallel through A meets CD, comes from `Prop30.meet`; the same-side hypothesis puts F on the ray from C through D (`OnRay.of_sameSideOf`); and the case Proclus adds under I.39, F beyond D, is taken with Euclid's (`area_lt_of_cut`).
+
+## I.41
+- E may lie anywhere on the straight line AD, at A or at D among them. One argument serves, since our I.37 takes "in the same parallels" as two whole straight lines and lets its two triangles share their vertex.
+- E is off BC, for parallels do not meet (`Parallel.not_onLine`), so EBC is a triangle.
+
+## I.42
+- "Let BC be bisected at E" is I.10, though Euclid gives no bracket.
+- Euclid's F lies where the arm of the angle CEF meets AG, and G where CG, drawn parallel to EF, meets AG; both come from `Prop30.meet`. F must lie on the arm I.23 made, not behind E, or the angle CEF would not be equal to D: F is on A's side of BC, and so on the arm (`OnRay.of_sameSideOf`).
+- "Therefore the triangle ABC is double of the triangle AEC" needs ABC to be ABE and AEC together (`area_cut`). The parallelogram FECG is double of AEC too, and Euclid concludes that the two are equal, by the axiom on doubles that Heath notes is tacitly assumed here (vol. 1, p. 224). Each is AEC added to itself, so Common Notion 1 does it (`CommonNotion1`).
+
+## I.43
+- "The complement BK which remains" takes for granted that the triangle ABC is made up of the triangle AEK, the complement BK and the triangle KGC. `Prop43.cut` proves it from the three betweennesses alone. BK separates E from G, so the diameters of the complement cross (`OppositeSides.exists_between`), at a point between B and K with no letter in the figure (`Between.of_inside`); either diameter then measures it (`quadArea_rotate_of_cross`), and `area_cut` gives the three pieces. Lean never needs the complements to be parallelograms.
+
+## I.44
+- "Let it be placed so that BE is in a straight line with AB": Euclid moves the parallelogram I.42 has made. Lean cannot move a figure, so `Prop44.place` builds an equal one where Euclid puts it: I.2 copies its sides and I.23 its angle, I.31 and `Prop30.meet` complete it, and I.4 and I.34 make it equal. Which side of AB it stands on is left to the figure; the statement names it with a point P, and G goes on the other side, so that M falls on P's.
+- H, L and M, where straight lines meet the parallels, come from `Prop30.meet`, and "parallel to either", said twice, is I.30 (`Prop30.parallel`); Euclid brackets only I.31.
+- Lean has to state the orders Euclid reads off his figure, H, G, F; H, B, K; F, E, K; K, M, L; L, A, H; and G, B, M, before I.43 and I.15 apply. Parallels keep order (`Between.of_sameSide`).
+- "Therefore the angles BHG, GFE are less than two right angles" has no bracket: HB falls within the angle AHF (`angle_add_of_within`), and the part is less than the whole (C.N. 5).
+
+## I.45
+- Euclid cuts the rectilineal figure ABCD by DB into the triangles ABD and DBC, and takes "the whole rectilineal figure ABCD" to be the two together. Any rectilineal area, Heath says, "can of course be resolved into triangles" (vol. 1, p. 347); our statement gives the figure's area as those two triangles together.
+- "KH, HM not lying on the same side" needs GM applied on the side of GH away from K, which Euclid leaves to the figure. Our I.44 is asked for that side, through a point across GH from K with no letter in Heath; the same choice puts F and L on either side of GH, as the second use of I.14 needs.
+- Before I.30, Lean shows that KF and ML are different straight lines; before I.33, that F and L lie on one side of KM, so that KM and FL join them in the same directions.
+- "The whole parallelogram KFLM" is FH and GM together, which needs K, H, M and F, G, L in order, as the two uses of I.14 give (`quadArea_add_of_parallelograms`).
+
+## I.46
+- "Let AD be made equal to AB" has no bracket. A circle about A lays it off along AC (`OnRay.exists_len_eq`, Post. 3), so I.3 is not needed, and C may fall on either side of D.
+- E, where DE and BE meet, comes from `Prop30.meet`: DE meets AD at D, so it meets BE, the parallel to AD.
+- Which side of AB the square stands on is left to the figure. The statement names it with a point off AB, since I.48 describes its squares outward from a triangle, as I.47 asks; `SameSideOf.of_onRay` and `Parallelogram.sameSideOf` keep D and E there.
+
+## I.47
+- "Let the angle ABC be added to each" needs C within the angle DBA, and A within the angle FBC. Euclid reads both off his figure. The angles at B and C are less than right angles (I.17), and the squares are described outward, so `Prop47.within` puts each point where the figure does, by I.13, and `angle_add_of_within` adds the angles.
+- "Through A let AL be drawn parallel to either BD or CE" is I.31, though no bracket names it, and "either" is I.30 (`Prop30.parallel`). AL meets DE at L, and BC at a point Heath leaves without a letter (`Prop30.meet`).
+- "The whole square BDEC" is the parallelograms BL and CL together only if the foot of AL lies between B and C, and L between D and E. A lies between BD and CE, so AL, parallel to both, crosses BC and DE between them (`Between.of_inside`), and `quadArea_add_of_parallelograms` puts the pieces together.
+- Euclid's squares are described by I.46, so they are parallelograms, as I.41 needs. Ours are given in the statement as squares (Def. 22), and `Prop28.square` (I.28) shows them parallelograms.
+
+## I.48
+- "Let AD be drawn from the point A at right angles to the straight line AC" is I.11, though no bracket names it, and "let AD be made equal to BA" is a circle about A (`OnRay.exists_len_eq`, Post. 3).
+- Euclid speaks of the squares on DA, AC and DC without describing them. Lean describes them by I.46, outward from the triangle DAC, as I.47 asks.
+- "Since DA is equal to AB, the square on DA is also equal to the square on AB", and later "so that the side DC is also equal to BC": squares on equal straight lines are equal, and equal squares stand on equal straight lines. Euclid assumes both; Heath reports Proclus proving them under I.46 (vol. 1, pp. 348–349). They are `Prop46.square_eq` and `Prop46.side_eq`.
+
 ## The postulates: what the Lean uses and what Euclid cites
 
 [CERTIFICATE.md](../../CERTIFICATE.md) sets what Euclid cites, read from Heath's
@@ -193,21 +288,30 @@ over a postulate, the reason is one of these.
 - **Postulate 1**: Lean must name a straight line before it can say a point is on
   it or off it, or lay a figure along it. This is a difference in bookkeeping, not
   in geometry: Euclid's "the straight line AB" names the same line implicitly.
-- **Postulate 2**: a straight line produced where Euclid gives no bracket (I.14);
-  the sides of I.5 produced, because our I.5 is stated with them (`Prop5.base`);
-  a straight line produced far enough for I.3 to cut from (`produce_longer`); and a
-  straight line produced behind a point, so that a circle about it is cut on the
-  side we want (`OnRay.exists_len_eq`). In I.2 the rule that a straight line
+- **Postulate 2**: a straight line produced where Euclid gives no bracket (I.14,
+  I.31, and BE laid along AB in I.44); the given straight lines of I.30, produced
+  so that each has an end on either side of GK, as in Heath's figure
+  (`Prop30.point_on_side`); the sides of I.5 produced, because our I.5 is stated
+  with them (`Prop5.base`); a straight line produced far enough for I.3
+  to cut from (`produce_longer`); a straight line produced behind a point, so that
+  a circle about it is cut on the side we want (`OnRay.exists_len_eq`); and
+  straight lines produced so that a straight line falling on two others meets each
+  of them between two of its points, as I.27, I.28 and I.29 ask
+  (`AreParallel.figure_alternate`, `AreParallel.figure_interior`,
+  `Prop28.interior`, and AC and DB in I.33). In I.2 the rule that a straight line
   through the inside of a circle meets it (System E, Intersections 5) does the
   producing, and in I.5 the statement hands us the produced sides, so Lean has no
   use for Euclid's bracket.
 - **Postulate 3 and Definition 15**: circles Euclid does not draw, which keep a
   chance point near enough (`exists_between_nearer`, I.5 and I.9), give a straight
   line room to be cut from (`produce_longer`), or lay a length along a ray
-  (`OnRay.exists_len_eq`); and circles he does draw, but without a bracket for the
-  circle (I.22) or for its radii (I.2, I.12, I.22).
+  (`OnRay.exists_len_eq`, I.24, I.44, I.46 and I.48); and circles he does draw, but
+  without a bracket for the circle (I.22) or for its radii (I.2, I.12, I.22).
 - **Postulate 4**: turning Definition 10's right angles into the one magnitude `∟`
   that all right angles share.
+- **Postulate 5**: no difference. The Lean uses it directly just where Euclid
+  cites it, in I.29 and I.44, and elsewhere only through the propositions cited:
+  every proposition after I.29 but I.31 rests on it that way.
 
 The certificate counts everything a proof rests on, the propositions it cites
 included, so a postulate can be on a proposition's certificate when its own proof

@@ -66,18 +66,33 @@ def citations(paragraphs):
     return found
 
 
+# A justification in a bracket: a proposition ("I. 4"), or a postulate, definition or
+# common notion, which a later book may cite with its book ("I. Post. 5", "I. Def. 15").
+JUSTIFICATION = re.compile(r"(?:([IVX]+)\.\s*)?(Post\.|Def\.|C\.N\.)\s*(\d+)|([IVX]+)\.\s*(\d+)")
+
+
 def justifications(paragraphs):
     """Every bracketed justification Euclid gives: Post. 3, Def. 15, C.N. 1, I. 4 …
 
     A bracket may hold several, as "[C.N. 1; I. 30]" or "[Post. 4 and C.N. 1]".
+    Book II cites Book I's Postulate 5 as "[I. Post. 5]". The postulates and common
+    notions are Book I's alone, so that is Post. 5; definitions are numbered book by
+    book, so "[I. Def. 15]" in a later book stays "I. Def. 15".
     """
     found = []
     for p in paragraphs:
         for inner in CITATION.findall(p):
             for part in re.split(r";|\band\b", inner):
-                part = " ".join(part.split())
-                if re.fullmatch(r"(Post\.|Def\.|C\.N\.|[IVX]+\.)\s*\d+", part):
-                    part = re.sub(r"\.\s*(\d+)", r". \1", part)
-                    if part not in found:
-                        found.append(part)
+                m = JUSTIFICATION.fullmatch(" ".join(part.split()))
+                if not m:
+                    continue
+                book, kind, num, pbook, pnum = m.groups()
+                if pbook:
+                    part = f"{pbook}. {int(pnum)}"
+                elif book and kind == "Def.":
+                    part = f"{book}. Def. {int(num)}"
+                else:
+                    part = f"{kind} {int(num)}"
+                if part not in found:
+                    found.append(part)
     return found
