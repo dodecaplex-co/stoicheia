@@ -29,23 +29,71 @@ theorem Prop46 {A B P : Point} (hAB : A ≠ B) (hP : ¬ Collinear A B P) :
     ∃ D E : Point, Square A D E B ∧ SameSideOf D P A B ∧ SameSideOf E P A B := by
   -- Let AB be the given straight line; thus it is required to describe a square on the
   -- straight line AB.
+  obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
   -- Let AC be drawn at right angles to the straight line AB from the point A on it [I. 11],
+  obtain ⟨C, hCP, hright⟩ := Prop11 hAB ⟨AB, hA_AB, hB_AB, hA_AB⟩ hP
+  have hBAC : ∠ B A C = ∟ := hright B ⟨AB, hA_AB, hB_AB, hB_AB⟩ hAB.symm
   -- and let AD be made equal to AB; through the point D let DE be drawn parallel to AB, and
   -- through the point B let BE be drawn parallel to AD. [I. 31]
+  /- A circle about A with distance AB gives D on the ray AC (Postulate 3).
+     C need not lie beyond D. -/
+  obtain ⟨D, hD, hAD⟩ := OnRay.exists_len_eq hAB hCP.triangle.ne₁₃
+  have hDP : SameSideOf D P A B := SameSideOf.of_onRay hD hCP
+  have hABD : Triangle A B D := hDP.triangle
+  obtain ⟨U, V, hUDV, hUV⟩ := Prop31 hAB hABD
+  obtain ⟨U', V', hU'BV', hU'V'⟩ := Prop31 hABD.ne₁₃ hABD.acb
+  obtain ⟨DE, hU_DE, hV_DE⟩ := Postulate1 U V hUV.1
+  obtain ⟨BE, hU'_BE, hV'_BE⟩ := Postulate1 U' V' hU'V'.1
+  obtain ⟨AD, hA_AD, hD_AD⟩ := Postulate1 A D hABD.ne₁₃
+  have hD_DE : OnLine D DE := on_line_of_between_ends hUDV hU_DE hV_DE
+  have hB_BE : OnLine B BE := on_line_of_between_ends hU'BV' hU'_BE hV'_BE
+  have hDE_AB : Parallel DE AB := hUV.parallel hU_DE hV_DE hA_AB hB_AB
+  have hBE_AD : Parallel BE AD := hU'V'.parallel hU'_BE hV'_BE hA_AD hD_AD
+  have hDE_AD : DE ≠ AD := fun e => hDE_AB.not_onLine (e ▸ hA_AD) hA_AB
+  /- DE meets AD at D, so it meets the parallel BE at E (I.30). -/
+  obtain ⟨E, hE_DE, hE_BE⟩ := Prop30.meet hBE_AD hD_AD hD_DE hDE_AD
   -- Therefore ADEB is a parallelogram; therefore AB is equal to DE, and AD to BE. [I. 34]
+  have hDE : D ≠ E := fun e => hBE_AD.not_onLine (e ▸ hE_BE) hD_AD
+  have hEB : E ≠ B := fun e => hDE_AB.not_onLine hE_DE (e ▸ hB_AB)
+  have hADEB : Parallelogram A D E B :=
+    ⟨AreParallel.of_parallel hABD.ne₁₃ hEB hA_AD hD_AD hE_BE hB_BE hBE_AD.symm,
+      AreParallel.of_parallel hDE hAB.symm hD_DE hE_DE hB_AB hA_AB hDE_AB⟩
+  obtain ⟨hAB_DE, hAD_BE, -, -, -⟩ := Prop34 hADEB
   -- But AB is equal to AD; therefore the four straight lines BA, AD, DE, EB are equal to one
   -- another; therefore the parallelogram ADEB is equilateral.
+  have h₁ : ‖A D‖ = ‖D E‖ := hAD.trans hAB_DE
+  have h₂ : ‖D E‖ = ‖E B‖ :=
+    hAB_DE.symm.trans (hAD.symm.trans (hAD_BE.trans (len_symm B E)))
+  have h₃ : ‖E B‖ = ‖B A‖ :=
+    (len_symm E B).trans (hAD_BE.symm.trans (hAD.trans (len_symm A B)))
   -- I say next that it is also right-angled.
-  -- For, since the straight line AD falls upon the parallels AB, DE, the angles BAD, ADE are
-  -- equal to two right angles. [I. 29]
-  -- But the angle BAD is right; therefore the angle ADE is also right.
-  -- And in parallelogrammic areas the opposite sides and angles are equal to one
-  -- another; [I. 34] therefore each of the opposite angles ABE, BED is also right.
-  -- Therefore ADEB is right-angled.
+  have hright : ∠ B A D = ∟ ∧ ∠ A D E = ∟ ∧ ∠ D E B = ∟ ∧ ∠ E B A = ∟ := by
+    -- For, since the straight line AD falls upon the parallels AB, DE, the angles BAD, ADE are
+    -- equal to two right angles. [I. 29]
+    have h29 : ∠ B A D + ∠ A D E = ∟ + ∟ :=
+      Prop29.interior hADEB.2.symm.swap_left hADEB.sameSideOf.symm
+    -- But the angle BAD is right; therefore the angle ADE is also right.
+    have hBAD : ∠ B A D = ∟ := (angle_onRay_right hD hAB.symm).trans hBAC
+    have hADE : ∠ A D E = ∟ := by
+      rw [hBAD] at h29
+      exact CommonNotion3 (c := ∟) (d := ∟) (by rw [add_comm]; exact h29) rfl
+    -- And in parallelogrammic areas the opposite sides and angles are equal to one
+    -- another; [I. 34] therefore each of the opposite angles ABE, BED is also right.
+    obtain ⟨-, -, hBAD_DEB, hABE_ADE, -⟩ := Prop34 hADEB
+    have hABE : ∠ A B E = ∟ := hABE_ADE.trans hADE
+    have hBED : ∠ B E D = ∟ :=
+      (angle_symm hEB.symm hDE).trans (hBAD_DEB.symm.trans hBAD)
+    -- Therefore ADEB is right-angled.
+    exact ⟨hBAD, hADE, (angle_symm hDE hEB.symm).trans hBED,
+      (angle_symm hEB hAB).trans hABE⟩
   -- And it was also proved equilateral.
+  have hequil : ‖A D‖ = ‖D E‖ ∧ ‖D E‖ = ‖E B‖ ∧ ‖E B‖ = ‖B A‖ := ⟨h₁, h₂, h₃⟩
   -- Therefore it is a square; and it is described on the straight line AB.
+  have hsquare : Square A D E B := ⟨hequil.1, hequil.2.1, hequil.2.2, hright⟩
+  have hEP : SameSideOf E P A B :=
+    hADEB.rotate.rotate.rotate.sameSideOf.swap.symm.trans hDP
+  exact ⟨D, E, hsquare, hDP, hEP⟩
   -- Q. E. F.
-  sorry
 
 /-- Squares described on equal straight lines are equal. Euclid assumes this in
 I.48 ("since DA is equal to AB, the square on DA is also equal to the square on
