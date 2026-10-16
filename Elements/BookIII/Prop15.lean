@@ -137,20 +137,23 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
     hE_MN_line (line_unique (ne_of_between_ends hMLN) h1 h2 hM_MN hN_MN ▸ h3)
   have hL : Collinear M N L := ⟨MN, hM_MN, hN_MN, hL_MN⟩
   -- Then, since EH is equal to EL,
+  have hEH_EL : ‖E H‖ = ‖E L‖ := hEL.symm
   -- BC is also equal to MN. [III. 14]
   have hBC_MN : ‖B C‖ = ‖M N‖ :=
-    (Prop14 hE hB hC hM hN hE_BC hE_MN hH hEH hL hEL_perp).2 hEL.symm
+    (Prop14 hE hB hC hM hN hE_BC hE_MN hH hEH hL hEL_perp).2 hEH_EL
   -- Again, since AE is equal to EM, and ED to EN,
+  have hAE : ‖A E‖ = ‖E M‖ := (len_symm A E).trans (Definition15 hE hA hM)
+  have hED : ‖E D‖ = ‖E N‖ := Definition15 hE hD hN
   -- AD is equal to ME, EN.
   have hAD : ‖A D‖ = ‖M E‖ + ‖E N‖ := by
-    rw [← len_add_of_between hAED, len_symm A E, len_symm M E, Definition15 hE hA hM,
-      Definition15 hE hD hN]
+    rw [← len_add_of_between hAED, hAE, hED, len_symm M E]
   -- But ME, EN are greater than MN, [I. 20]
   have h20 : ‖M N‖ < ‖M E‖ + ‖E N‖ := (BookI.Prop20 (Triangle.cab hE_MN)).1
   -- and MN is equal to BC;
+  rw [← hBC_MN] at h20
   -- therefore AD is greater than BC.
   have hdiameter : ‖B C‖ < ‖A D‖ := by
-    rw [hBC_MN, hAD]
+    rw [hAD]
     exact h20
   -- And, since the two sides ME, EN are equal to the two sides FE, EG,
   have hEM : ‖E M‖ = ‖E F‖ := Definition15 hE hM hF
@@ -199,11 +202,9 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
   -- therefore the base MN is greater than the base FG. [I. 24]
   have h24 : ‖F G‖ < ‖M N‖ := BookI.Prop24 (Triangle.cab hE_MN) (Triangle.cab hE_FG) hEM hEN hMEN
   -- But MN was proved equal to BC.
-  have hgreater : ‖F G‖ < ‖B C‖ := by
-    rw [hBC_MN]
-    exact h24
+  rw [← hBC_MN] at h24
   -- Therefore the diameter AD is greatest and BC greater than FG.
-  exact ⟨hdiameter, hgreater⟩
+  exact ⟨hdiameter, h24⟩
   -- Therefore etc.
   -- Q. E. D.
 
