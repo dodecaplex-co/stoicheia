@@ -8,51 +8,51 @@ Start with the [definitions, postulates and common notions](front.md). What Eucl
 
 | | Proposition | |
 |---|---|---|
-| ✅ | [I.1](01.md) **An equilateral triangle on a given line** | On a given finite straight line to construct an equilateral triangle. |
-| ✅ | [I.2](02.md) **Placing a given length at a point** | To place at a given point (as an extremity) a straight line equal to a given straight line. |
-| ✅ | [I.3](03.md) **Cutting off a given length** | Given two unequal straight lines, to cut off from the greater a straight line equal to the less. |
-| ✅ | [I.4](04.md) **Side, angle, side** | If two triangles have the two sides equal to two sides respectively, and have the angles contained by the… |
-| ✅ | [I.5](05.md) **The base angles of an isosceles triangle** | In isosceles triangles the angles at the base are equal to one another, and, if the equal straight lines… |
-| ✅ | [I.6](06.md) **Equal base angles make equal sides** | If in a triangle two angles be equal to one another, the sides which subtend the equal angles will also be… |
-| ✅ | [I.7](07.md) **Only one triangle on a base with given sides** | Given two straight lines constructed on a straight line (from its extremities) and meeting in a point,… |
-| ✅ | [I.8](08.md) **Side, side, side** | If two triangles have the two sides equal to two sides respectively, and have also the base equal to the… |
-| ✅ | [I.9](09.md) **Bisecting an angle** | To bisect a given rectilineal angle. |
-| ✅ | [I.10](10.md) **Bisecting a straight line** | To bisect a given finite straight line. |
-| ✅ | [I.11](11.md) **A perpendicular from a point on a line** | To draw a straight line at right angles to a given straight line from a given point on it. |
-| ✅ | [I.12](12.md) **A perpendicular from a point off a line** | To a given infinite straight line, from a given point which is not on it, to draw a perpendicular straight… |
-| ✅ | [I.13](13.md) **Angles on a straight line** | If a straight line set up on a straight line make angles, it will make either two right angles or angles… |
-| ✅ | [I.14](14.md) **When two angles make a straight line** | If with any straight line, and at a point on it, two straight lines not lying on the same side make the… |
-| ✅ | [I.15](15.md) **Vertical angles** | If two straight lines cut one another, they make the vertical angles equal to one another. |
-| ✅ | [I.16](16.md) **The exterior angle is greater** | In any triangle, if one of the sides be produced, the exterior angle is greater than either of the… |
+| ✅ | [I.1](01.md) **An equilateral triangle on a given straight line** | On a given finite straight line to construct an equilateral triangle. |
+| ✅ | [I.2](02.md) **A straight line equal to a given one, placed at a given point** | To place at a given point (as an extremity) a straight line equal to a given straight line. |
+| ✅ | [I.3](03.md) **A straight line equal to the less, cut off from the greater** | Given two unequal straight lines, to cut off from the greater a straight line equal to the less. |
+| ✅ | [I.4](04.md) **Two sides and the contained angle make the base equal** | If two triangles have the two sides equal to two sides respectively, and have the angles contained by the… |
+| ✅ | [I.5](05.md) **In isosceles triangles the angles at the base are equal** | In isosceles triangles the angles at the base are equal to one another, and, if the equal straight lines… |
+| ✅ | [I.6](06.md) **Equal angles are subtended by equal sides** | If in a triangle two angles be equal to one another, the sides which subtend the equal angles will also be… |
+| ✅ | [I.7](07.md) **Equal straight lines cannot meet in another point** | Given two straight lines constructed on a straight line (from its extremities) and meeting in a point,… |
+| ✅ | [I.8](08.md) **Two sides and the base make the angles equal** | If two triangles have the two sides equal to two sides respectively, and have also the base equal to the… |
+| ✅ | [I.9](09.md) **A given rectilineal angle, bisected** | To bisect a given rectilineal angle. |
+| ✅ | [I.10](10.md) **A given finite straight line, bisected** | To bisect a given finite straight line. |
+| ✅ | [I.11](11.md) **A straight line at right angles from a point on a given one** | To draw a straight line at right angles to a given straight line from a given point on it. |
+| ✅ | [I.12](12.md) **A perpendicular straight line from a point not on a given one** | To a given infinite straight line, from a given point which is not on it, to draw a perpendicular straight… |
+| ✅ | [I.13](13.md) **Angles on a straight line equal two right angles** | If a straight line set up on a straight line make angles, it will make either two right angles or angles… |
+| ✅ | [I.14](14.md) **Angles equal to two right angles make a straight line** | If with any straight line, and at a point on it, two straight lines not lying on the same side make the… |
+| ✅ | [I.15](15.md) **Straight lines cutting one another make the vertical angles equal** | If two straight lines cut one another, they make the vertical angles equal to one another. |
+| ✅ | [I.16](16.md) **The exterior angle is greater than either opposite angle** | In any triangle, if one of the sides be produced, the exterior angle is greater than either of the… |
 | ✅ | [I.17](17.md) **Two angles of a triangle are less than two right angles** | In any triangle two angles taken together in any manner are less than two right angles. |
 | ✅ | [I.18](18.md) **The greater side subtends the greater angle** | In any triangle the greater side subtends the greater angle. |
 | ✅ | [I.19](19.md) **The greater angle is subtended by the greater side** | In any triangle the greater angle is subtended by the greater side. |
-| ✅ | [I.20](20.md) **Two sides exceed the third** | In any triangle two sides taken together in any manner are greater than the remaining one. |
-| ✅ | [I.21](21.md) **Lines drawn within a triangle** | If on one of the sides of a triangle, from its extremities, there be constructed two straight lines… |
-| ✅ | [I.22](22.md) **A triangle from three given lines** | Out of three straight lines, which are equal to three given straight lines, to construct a triangle: thus… |
-| ✅ | [I.23](23.md) **Copying an angle** | On a given straight line and at a point on it to construct a rectilineal angle equal to a given… |
-| ✅ | [I.24](24.md) **The wider angle has the longer base** | If two triangles have the two sides equal to two sides respectively, but have the one of the angles… |
-| ✅ | [I.25](25.md) **The longer base has the wider angle** | If two triangles have the two sides equal to two sides respectively, but have the base greater than the… |
-| ✅ | [I.26](26.md) **Angle, side, angle** | If two triangles have the two angles equal to two angles respectively, and one side equal to one side,… |
+| ✅ | [I.20](20.md) **Two sides of a triangle are greater than the remaining one** | In any triangle two sides taken together in any manner are greater than the remaining one. |
+| ✅ | [I.21](21.md) **Straight lines within a triangle are less, their angle greater** | If on one of the sides of a triangle, from its extremities, there be constructed two straight lines… |
+| ✅ | [I.22](22.md) **A triangle out of three given straight lines** | Out of three straight lines, which are equal to three given straight lines, to construct a triangle: thus… |
+| ✅ | [I.23](23.md) **An angle equal to a given one, on a given straight line** | On a given straight line and at a point on it to construct a rectilineal angle equal to a given… |
+| ✅ | [I.24](24.md) **The greater angle has the greater base** | If two triangles have the two sides equal to two sides respectively, but have the one of the angles… |
+| ✅ | [I.25](25.md) **The greater base has the greater angle** | If two triangles have the two sides equal to two sides respectively, but have the base greater than the… |
+| ✅ | [I.26](26.md) **Two angles and one side make the remaining sides equal** | If two triangles have the two angles equal to two angles respectively, and one side equal to one side,… |
 | ✅ | [I.27](27.md) **Equal alternate angles make parallels** | If a straight line falling on two straight lines make the alternate angles equal to one another, the… |
-| ✅ | [I.28](28.md) **Equal corresponding angles make parallels** | If a straight line falling on two straight lines make the exterior angle equal to the interior and… |
-| ✅ | [I.29](29.md) **Parallels make equal angles** | A straight line falling on parallel straight lines makes the alternate angles equal to one another, the… |
-| ✅ | [I.30](30.md) **Parallels to the same line** | Straight lines parallel to the same straight line are also parallel to one another. |
-| ✅ | [I.31](31.md) **Drawing a parallel through a point** | Through a given point to draw a straight line parallel to a given straight line. |
-| ✅ | [I.32](32.md) **The angles of a triangle make two right angles** | In any triangle, if one of the sides be produced, the exterior angle is equal to the two interior and… |
-| ✅ | [I.33](33.md) **Joining equal parallels** | The straight lines joining equal and parallel straight lines (at the extremities which are) in the same… |
-| ✅ | [I.34](34.md) **Opposite sides and angles of a parallelogram** | In parallelogrammic areas the opposite sides and angles are equal to one another, and the diameter bisects… |
-| ✅ | [I.35](35.md) **Parallelograms on the same base** | Parallelograms which are on the same base and in the same parallels are equal to one another. |
-| ✅ | [I.36](36.md) **Parallelograms on equal bases** | Parallelograms which are on equal bases and in the same parallels are equal to one another. |
-| ✅ | [I.37](37.md) **Triangles on the same base** | Triangles which are on the same base and in the same parallels are equal to one another. |
-| ✅ | [I.38](38.md) **Triangles on equal bases** | Triangles which are on equal bases and in the same parallels are equal to one another. |
-| ✅ | [I.39](39.md) **Equal triangles on the same base** | Equal triangles which are on the same base and on the same side are also in the same parallels. |
-| ✅ | [I.40](40.md) **Equal triangles on equal bases** | Equal triangles which are on equal bases and on the same side are also in the same parallels. |
-| ✅ | [I.41](41.md) **A parallelogram is double the triangle** | If a parallelogram have the same base with a triangle and be in the same parallels, the parallelogram is… |
-| ✅ | [I.42](42.md) **A parallelogram equal to a triangle** | To construct, in a given rectilineal angle, a parallelogram equal to a given triangle. |
-| ✅ | [I.43](43.md) **The complements are equal** | In any parallelogram the complements of the parallelograms about the diameter are equal to one another. |
-| ✅ | [I.44](44.md) **Applying a parallelogram to a line** | To a given straight line to apply, in a given rectilineal angle, a parallelogram equal to a given triangle. |
-| ✅ | [I.45](45.md) **A parallelogram equal to a rectilineal figure** | To construct, in a given rectilineal angle, a parallelogram equal to a given rectilineal figure. |
-| ✅ | [I.46](46.md) **Describing a square** | On a given straight line to describe a square. |
-| ✅ | [I.47](47.md) **The theorem of Pythagoras** | In right-angled triangles the square on the side subtending the right angle is equal to the squares on the… |
-| ✅ | [I.48](48.md) **Its converse** | If in a triangle the square on one of the sides be equal to the squares on the remaining two sides of the… |
+| ✅ | [I.28](28.md) **Equal exterior and interior angles make parallels** | If a straight line falling on two straight lines make the exterior angle equal to the interior and… |
+| ✅ | [I.29](29.md) **Parallels make the alternate angles equal** | A straight line falling on parallel straight lines makes the alternate angles equal to one another, the… |
+| ✅ | [I.30](30.md) **Parallels to the same straight line are parallel** | Straight lines parallel to the same straight line are also parallel to one another. |
+| ✅ | [I.31](31.md) **A straight line parallel to a given one, through a given point** | Through a given point to draw a straight line parallel to a given straight line. |
+| ✅ | [I.32](32.md) **The three angles of a triangle equal two right angles** | In any triangle, if one of the sides be produced, the exterior angle is equal to the two interior and… |
+| ✅ | [I.33](33.md) **Straight lines joining equal parallels are equal and parallel** | The straight lines joining equal and parallel straight lines (at the extremities which are) in the same… |
+| ✅ | [I.34](34.md) **In parallelograms the opposite sides and angles are equal** | In parallelogrammic areas the opposite sides and angles are equal to one another, and the diameter bisects… |
+| ✅ | [I.35](35.md) **Parallelograms on the same base and in the same parallels are equal** | Parallelograms which are on the same base and in the same parallels are equal to one another. |
+| ✅ | [I.36](36.md) **Parallelograms on equal bases and in the same parallels are equal** | Parallelograms which are on equal bases and in the same parallels are equal to one another. |
+| ✅ | [I.37](37.md) **Triangles on the same base and in the same parallels are equal** | Triangles which are on the same base and in the same parallels are equal to one another. |
+| ✅ | [I.38](38.md) **Triangles on equal bases and in the same parallels are equal** | Triangles which are on equal bases and in the same parallels are equal to one another. |
+| ✅ | [I.39](39.md) **Equal triangles on the same base are in the same parallels** | Equal triangles which are on the same base and on the same side are also in the same parallels. |
+| ✅ | [I.40](40.md) **Equal triangles on equal bases are in the same parallels** | Equal triangles which are on equal bases and on the same side are also in the same parallels. |
+| ✅ | [I.41](41.md) **The parallelogram is double of the triangle** | If a parallelogram have the same base with a triangle and be in the same parallels, the parallelogram is… |
+| ✅ | [I.42](42.md) **A parallelogram equal to a given triangle, in a given angle** | To construct, in a given rectilineal angle, a parallelogram equal to a given triangle. |
+| ✅ | [I.43](43.md) **In any parallelogram the complements are equal** | In any parallelogram the complements of the parallelograms about the diameter are equal to one another. |
+| ✅ | [I.44](44.md) **A parallelogram applied to a given straight line** | To a given straight line to apply, in a given rectilineal angle, a parallelogram equal to a given triangle. |
+| ✅ | [I.45](45.md) **A parallelogram equal to a given rectilineal figure** | To construct, in a given rectilineal angle, a parallelogram equal to a given rectilineal figure. |
+| ✅ | [I.46](46.md) **A square on a given straight line** | On a given straight line to describe a square. |
+| ✅ | [I.47](47.md) **The square on the side subtending the right angle** | In right-angled triangles the square on the side subtending the right angle is equal to the squares on the… |
+| ✅ | [I.48](48.md) **If the square equals the other two, the angle is right** | If in a triangle the square on one of the sides be equal to the squares on the remaining two sides of the… |

@@ -169,54 +169,54 @@ graph TD
   class I1,I2,I3,I4,I5,I6,I7,I8,I9,I10,I11,I12,I13,I14,I15,I16,I17,I18,I19,I20,I21,I22,I23,I24,I25,I26,I27,I28,I29,I30,I31,I32,I33,I34,I35,I36,I37,I38,I39,I40,I41,I42,I43,I44,I45,I46,I47,I48 proved
 ```
 
-- [I.1](book/I/01.md): An equilateral triangle on a given line
-- [I.2](book/I/02.md): Placing a given length at a point
-- [I.3](book/I/03.md): Cutting off a given length
-- [I.4](book/I/04.md): Side, angle, side
-- [I.5](book/I/05.md): The base angles of an isosceles triangle
-- [I.6](book/I/06.md): Equal base angles make equal sides
-- [I.7](book/I/07.md): Only one triangle on a base with given sides
-- [I.8](book/I/08.md): Side, side, side
-- [I.9](book/I/09.md): Bisecting an angle
-- [I.10](book/I/10.md): Bisecting a straight line
-- [I.11](book/I/11.md): A perpendicular from a point on a line
-- [I.12](book/I/12.md): A perpendicular from a point off a line
-- [I.13](book/I/13.md): Angles on a straight line
-- [I.14](book/I/14.md): When two angles make a straight line
-- [I.15](book/I/15.md): Vertical angles
-- [I.16](book/I/16.md): The exterior angle is greater
+- [I.1](book/I/01.md): An equilateral triangle on a given straight line
+- [I.2](book/I/02.md): A straight line equal to a given one, placed at a given point
+- [I.3](book/I/03.md): A straight line equal to the less, cut off from the greater
+- [I.4](book/I/04.md): Two sides and the contained angle make the base equal
+- [I.5](book/I/05.md): In isosceles triangles the angles at the base are equal
+- [I.6](book/I/06.md): Equal angles are subtended by equal sides
+- [I.7](book/I/07.md): Equal straight lines cannot meet in another point
+- [I.8](book/I/08.md): Two sides and the base make the angles equal
+- [I.9](book/I/09.md): A given rectilineal angle, bisected
+- [I.10](book/I/10.md): A given finite straight line, bisected
+- [I.11](book/I/11.md): A straight line at right angles from a point on a given one
+- [I.12](book/I/12.md): A perpendicular straight line from a point not on a given one
+- [I.13](book/I/13.md): Angles on a straight line equal two right angles
+- [I.14](book/I/14.md): Angles equal to two right angles make a straight line
+- [I.15](book/I/15.md): Straight lines cutting one another make the vertical angles equal
+- [I.16](book/I/16.md): The exterior angle is greater than either opposite angle
 - [I.17](book/I/17.md): Two angles of a triangle are less than two right angles
 - [I.18](book/I/18.md): The greater side subtends the greater angle
 - [I.19](book/I/19.md): The greater angle is subtended by the greater side
-- [I.20](book/I/20.md): Two sides exceed the third
-- [I.21](book/I/21.md): Lines drawn within a triangle
-- [I.22](book/I/22.md): A triangle from three given lines
-- [I.23](book/I/23.md): Copying an angle
-- [I.24](book/I/24.md): The wider angle has the longer base
-- [I.25](book/I/25.md): The longer base has the wider angle
-- [I.26](book/I/26.md): Angle, side, angle
+- [I.20](book/I/20.md): Two sides of a triangle are greater than the remaining one
+- [I.21](book/I/21.md): Straight lines within a triangle are less, their angle greater
+- [I.22](book/I/22.md): A triangle out of three given straight lines
+- [I.23](book/I/23.md): An angle equal to a given one, on a given straight line
+- [I.24](book/I/24.md): The greater angle has the greater base
+- [I.25](book/I/25.md): The greater base has the greater angle
+- [I.26](book/I/26.md): Two angles and one side make the remaining sides equal
 - [I.27](book/I/27.md): Equal alternate angles make parallels
-- [I.28](book/I/28.md): Equal corresponding angles make parallels
-- [I.29](book/I/29.md): Parallels make equal angles
-- [I.30](book/I/30.md): Parallels to the same line
-- [I.31](book/I/31.md): Drawing a parallel through a point
-- [I.32](book/I/32.md): The angles of a triangle make two right angles
-- [I.33](book/I/33.md): Joining equal parallels
-- [I.34](book/I/34.md): Opposite sides and angles of a parallelogram
-- [I.35](book/I/35.md): Parallelograms on the same base
-- [I.36](book/I/36.md): Parallelograms on equal bases
-- [I.37](book/I/37.md): Triangles on the same base
-- [I.38](book/I/38.md): Triangles on equal bases
-- [I.39](book/I/39.md): Equal triangles on the same base
-- [I.40](book/I/40.md): Equal triangles on equal bases
-- [I.41](book/I/41.md): A parallelogram is double the triangle
-- [I.42](book/I/42.md): A parallelogram equal to a triangle
-- [I.43](book/I/43.md): The complements are equal
-- [I.44](book/I/44.md): Applying a parallelogram to a line
-- [I.45](book/I/45.md): A parallelogram equal to a rectilineal figure
-- [I.46](book/I/46.md): Describing a square
-- [I.47](book/I/47.md): The theorem of Pythagoras
-- [I.48](book/I/48.md): Its converse
+- [I.28](book/I/28.md): Equal exterior and interior angles make parallels
+- [I.29](book/I/29.md): Parallels make the alternate angles equal
+- [I.30](book/I/30.md): Parallels to the same straight line are parallel
+- [I.31](book/I/31.md): A straight line parallel to a given one, through a given point
+- [I.32](book/I/32.md): The three angles of a triangle equal two right angles
+- [I.33](book/I/33.md): Straight lines joining equal parallels are equal and parallel
+- [I.34](book/I/34.md): In parallelograms the opposite sides and angles are equal
+- [I.35](book/I/35.md): Parallelograms on the same base and in the same parallels are equal
+- [I.36](book/I/36.md): Parallelograms on equal bases and in the same parallels are equal
+- [I.37](book/I/37.md): Triangles on the same base and in the same parallels are equal
+- [I.38](book/I/38.md): Triangles on equal bases and in the same parallels are equal
+- [I.39](book/I/39.md): Equal triangles on the same base are in the same parallels
+- [I.40](book/I/40.md): Equal triangles on equal bases are in the same parallels
+- [I.41](book/I/41.md): The parallelogram is double of the triangle
+- [I.42](book/I/42.md): A parallelogram equal to a given triangle, in a given angle
+- [I.43](book/I/43.md): In any parallelogram the complements are equal
+- [I.44](book/I/44.md): A parallelogram applied to a given straight line
+- [I.45](book/I/45.md): A parallelogram equal to a given rectilineal figure
+- [I.46](book/I/46.md): A square on a given straight line
+- [I.47](book/I/47.md): The square on the side subtending the right angle
+- [I.48](book/I/48.md): If the square equals the other two, the angle is right
 
 ## Book II
 
@@ -310,20 +310,20 @@ graph TD
   class II1,II2,II3,II4,II5,II6,II7,II8,II9,II10,II11,II12,II13,II14 proved
 ```
 
-- [II.1](book/II/01.md): A rectangle cut into rectangles
-- [II.2](book/II/02.md): The square as two rectangles
-- [II.3](book/II/03.md): A rectangle as a rectangle and a square
-- [II.4](book/II/04.md): The square on a straight line cut in two
-- [II.5](book/II/05.md): A straight line cut equally and unequally
-- [II.6](book/II/06.md): A bisected straight line produced
-- [II.7](book/II/07.md): The squares on the whole and a segment
-- [II.8](book/II/08.md): Four rectangles and a square
+- [II.1](book/II/01.md): The rectangle contained by two straight lines, one cut
+- [II.2](book/II/02.md): The rectangle contained by the whole and both segments
+- [II.3](book/II/03.md): The rectangle contained by the whole and one segment
+- [II.4](book/II/04.md): The squares on the whole and both segments
+- [II.5](book/II/05.md): The rectangle contained by the unequal segments
+- [II.6](book/II/06.md): The rectangle contained by the whole and the added straight line
+- [II.7](book/II/07.md): The squares on the whole and one segment
+- [II.8](book/II/08.md): Four times the rectangle contained by the whole and one segment
 - [II.9](book/II/09.md): The squares on the unequal segments
-- [II.10](book/II/10.md): The squares on a bisected straight line produced
-- [II.11](book/II/11.md): Cutting in extreme and mean ratio
-- [II.12](book/II/12.md): The square opposite an obtuse angle
-- [II.13](book/II/13.md): The square opposite an acute angle
-- [II.14](book/II/14.md): A square equal to a rectilineal figure
+- [II.10](book/II/10.md): The squares on the whole and the added straight line
+- [II.11](book/II/11.md): A straight line cut so that the rectangle equals the square
+- [II.12](book/II/12.md): The square on the side subtending the obtuse angle
+- [II.13](book/II/13.md): The square on the side subtending the acute angle
+- [II.14](book/II/14.md): A square equal to a given rectilineal figure
 
 ## Book III
 
@@ -477,40 +477,40 @@ graph TD
   class III1,III2,III3,III4,III5,III6,III7,III8,III9,III10,III11,III12,III13,III14,III15,III16,III17,III18,III19,III20,III21,III22,III23,III24,III25,III26,III27,III28,III29,III30,III31,III32,III33,III34,III35,III36,III37 sketched
 ```
 
-- [III.1](book/III/01.md): Finding the centre of a circle
-- [III.2](book/III/02.md): A straight line joining two points of a circle
-- [III.3](book/III/03.md): A straight line through the centre bisecting another
-- [III.4](book/III/04.md): Two straight lines not through the centre
-- [III.5](book/III/05.md): Circles that cut one another
-- [III.6](book/III/06.md): Circles that touch one another
-- [III.7](book/III/07.md): Straight lines from a point within a circle
-- [III.8](book/III/08.md): Straight lines from a point outside a circle
-- [III.9](book/III/09.md): A point with three equal straight lines to the circle
-- [III.10](book/III/10.md): Circles cut one another at two points at most
+- [III.1](book/III/01.md): The centre of a given circle
+- [III.2](book/III/02.md): The straight line joining two points falls within the circle
+- [III.3](book/III/03.md): Through the centre, to bisect is to cut at right angles
+- [III.4](book/III/04.md): Straight lines not through the centre do not bisect one another
+- [III.5](book/III/05.md): Circles cutting one another do not have the same centre
+- [III.6](book/III/06.md): Circles touching one another do not have the same centre
+- [III.7](book/III/07.md): Straight lines falling from a point on a diameter
+- [III.8](book/III/08.md): Straight lines falling from a point outside a circle
+- [III.9](book/III/09.md): More than two equal straight lines fall only from the centre
+- [III.10](book/III/10.md): A circle does not cut a circle at more points than two
 - [III.11](book/III/11.md): The centres of circles touching internally
 - [III.12](book/III/12.md): The centres of circles touching externally
-- [III.13](book/III/13.md): Circles touch at one point only
+- [III.13](book/III/13.md): A circle does not touch a circle at more points than one
 - [III.14](book/III/14.md): Equal straight lines are equally distant from the centre
-- [III.15](book/III/15.md): The diameter is the greatest straight line in a circle
-- [III.16](book/III/16.md): The straight line at right angles to a diameter at its end
-- [III.17](book/III/17.md): Drawing a straight line to touch a circle
-- [III.18](book/III/18.md): The radius to the point of contact
-- [III.19](book/III/19.md): The perpendicular to a tangent at the point of contact
-- [III.20](book/III/20.md): The angle at the centre is double the angle at the circumference
-- [III.21](book/III/21.md): Angles in the same segment
-- [III.22](book/III/22.md): Opposite angles of a quadrilateral in a circle
-- [III.23](book/III/23.md): Similar segments on the same straight line
-- [III.24](book/III/24.md): Similar segments on equal straight lines
-- [III.25](book/III/25.md): Completing the circle of a segment
+- [III.15](book/III/15.md): Of straight lines in a circle the diameter is greatest
+- [III.16](book/III/16.md): The straight line at right angles to a diameter from its extremity
+- [III.17](book/III/17.md): A straight line touching a given circle, from a given point
+- [III.18](book/III/18.md): The straight line from the centre is perpendicular to the tangent
+- [III.19](book/III/19.md): The centre is on the straight line at right angles to the tangent
+- [III.20](book/III/20.md): The angle at the centre is double of that at the circumference
+- [III.21](book/III/21.md): Angles in the same segment are equal
+- [III.22](book/III/22.md): Opposite angles of quadrilaterals in circles equal two right angles
+- [III.23](book/III/23.md): Similar segments on the same straight line cannot be unequal
+- [III.24](book/III/24.md): Similar segments on equal straight lines are equal
+- [III.25](book/III/25.md): The complete circle of a given segment
 - [III.26](book/III/26.md): Equal angles stand on equal circumferences
-- [III.27](book/III/27.md): Angles on equal circumferences are equal
+- [III.27](book/III/27.md): Angles standing on equal circumferences are equal
 - [III.28](book/III/28.md): Equal straight lines cut off equal circumferences
-- [III.29](book/III/29.md): Equal circumferences have equal straight lines
-- [III.30](book/III/30.md): Bisecting a circumference
-- [III.31](book/III/31.md): The angle in a semicircle
-- [III.32](book/III/32.md): The angle in the alternate segment
-- [III.33](book/III/33.md): A segment admitting a given angle
-- [III.34](book/III/34.md): Cutting off a segment admitting a given angle
-- [III.35](book/III/35.md): Two straight lines cutting one another in a circle
-- [III.36](book/III/36.md): The square on the tangent
-- [III.37](book/III/37.md): Its converse
+- [III.29](book/III/29.md): Equal circumferences are subtended by equal straight lines
+- [III.30](book/III/30.md): A given circumference, bisected
+- [III.31](book/III/31.md): The angle in the semicircle is right
+- [III.32](book/III/32.md): Angles with the tangent equal those in the alternate segments
+- [III.33](book/III/33.md): A segment admitting a given angle, on a given straight line
+- [III.34](book/III/34.md): A segment admitting a given angle, cut off from a given circle
+- [III.35](book/III/35.md): The rectangles contained by the segments are equal
+- [III.36](book/III/36.md): The rectangle equals the square on the tangent
+- [III.37](book/III/37.md): If the rectangle equals the square, the straight line touches

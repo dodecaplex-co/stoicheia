@@ -8,17 +8,17 @@ Start with the [definitions](front.md).
 
 | | Proposition | |
 |---|---|---|
-| ✅ | [II.1](01.md) **A rectangle cut into rectangles** | If there be two straight lines, and one of them be cut into any number of segments whatever, the rectangle… |
-| ✅ | [II.2](02.md) **The square as two rectangles** | If a straight line be cut at random, the rectangle contained by the whole and both of the segments is… |
-| ✅ | [II.3](03.md) **A rectangle as a rectangle and a square** | If a straight line be cut at random, the rectangle contained by the whole and one of the segments is equal… |
-| ✅ | [II.4](04.md) **The square on a straight line cut in two** | If a straight line be cut at random, the square on the whole is equal to the squares on the segments and… |
-| ✅ | [II.5](05.md) **A straight line cut equally and unequally** | If a straight line be cut into equal and unequal segments, the rectangle contained by the unequal segments… |
-| ✅ | [II.6](06.md) **A bisected straight line produced** | If a straight line be bisected and a straight line be added to it in a straight line, the rectangle… |
-| ✅ | [II.7](07.md) **The squares on the whole and a segment** | If a straight line be cut at random, the square on the whole and that on one of the segments both together… |
-| ✅ | [II.8](08.md) **Four rectangles and a square** | If a straight line be cut at random, four times the rectangle contained by the whole and one of the… |
+| ✅ | [II.1](01.md) **The rectangle contained by two straight lines, one cut** | If there be two straight lines, and one of them be cut into any number of segments whatever, the rectangle… |
+| ✅ | [II.2](02.md) **The rectangle contained by the whole and both segments** | If a straight line be cut at random, the rectangle contained by the whole and both of the segments is… |
+| ✅ | [II.3](03.md) **The rectangle contained by the whole and one segment** | If a straight line be cut at random, the rectangle contained by the whole and one of the segments is equal… |
+| ✅ | [II.4](04.md) **The squares on the whole and both segments** | If a straight line be cut at random, the square on the whole is equal to the squares on the segments and… |
+| ✅ | [II.5](05.md) **The rectangle contained by the unequal segments** | If a straight line be cut into equal and unequal segments, the rectangle contained by the unequal segments… |
+| ✅ | [II.6](06.md) **The rectangle contained by the whole and the added straight line** | If a straight line be bisected and a straight line be added to it in a straight line, the rectangle… |
+| ✅ | [II.7](07.md) **The squares on the whole and one segment** | If a straight line be cut at random, the square on the whole and that on one of the segments both together… |
+| ✅ | [II.8](08.md) **Four times the rectangle contained by the whole and one segment** | If a straight line be cut at random, four times the rectangle contained by the whole and one of the… |
 | ✅ | [II.9](09.md) **The squares on the unequal segments** | If a straight line be cut into equal and unequal segments, the squares on the unequal segments of the… |
-| ✅ | [II.10](10.md) **The squares on a bisected straight line produced** | If a straight line be bisected, and a straight line be added to it in a straight line, the square on the… |
-| ✅ | [II.11](11.md) **Cutting in extreme and mean ratio** | To cut a given straight line so that the rectangle contained by the whole and one of the segments is equal… |
-| ✅ | [II.12](12.md) **The square opposite an obtuse angle** | In obtuse-angled triangles the square on the side subtending the obtuse angle is greater than the squares… |
-| ✅ | [II.13](13.md) **The square opposite an acute angle** | In acute-angled triangles the square on the side subtending the acute angle is less than the squares on… |
-| ✅ | [II.14](14.md) **A square equal to a rectilineal figure** | To construct a square equal to a given rectilineal figure. |
+| ✅ | [II.10](10.md) **The squares on the whole and the added straight line** | If a straight line be bisected, and a straight line be added to it in a straight line, the square on the… |
+| ✅ | [II.11](11.md) **A straight line cut so that the rectangle equals the square** | To cut a given straight line so that the rectangle contained by the whole and one of the segments is equal… |
+| ✅ | [II.12](12.md) **The square on the side subtending the obtuse angle** | In obtuse-angled triangles the square on the side subtending the obtuse angle is greater than the squares… |
+| ✅ | [II.13](13.md) **The square on the side subtending the acute angle** | In acute-angled triangles the square on the side subtending the acute angle is less than the squares on… |
+| ✅ | [II.14](14.md) **A square equal to a given rectilineal figure** | To construct a square equal to a given rectilineal figure. |
