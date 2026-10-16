@@ -63,5 +63,5 @@ assets/ The logo is built on a detail of Raphael's The School of Athens
         (1509-1511), photographed by Marie-Lan Nguyen and shared on Wikimedia
         Commons as PD-Art (PD-old-100-expired). See assets/CREDITS.md.
 
-Our own prose (mishnah/, figures/, docs/, README) is licensed under
-CC BY 4.0; see LICENSE-PROSE.md.
+Our own prose (mishnah/, reading/, figures/, docs/, README) is licensed
+under CC BY 4.0; see LICENSE-PROSE.md.

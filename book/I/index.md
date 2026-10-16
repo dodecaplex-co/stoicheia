@@ -6,6 +6,8 @@
 
 Start with the [definitions, postulates and common notions](front.md). What Euclid takes for granted along the way is gathered in [a catalogue](../../docs/reports/gaps-book-I.md).
 
+Books and papers to read alongside, from Proclus to Lean, are gathered by theme in [the reading list](../../docs/reading.md).
+
 | | Proposition | |
 |---|---|---|
 | ✅ | [I.1](01.md) **An equilateral triangle on a given line** | On a given finite straight line to construct an equilateral triangle. |

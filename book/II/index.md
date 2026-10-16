@@ -6,6 +6,8 @@
 
 Start with the [definitions](front.md).
 
+Books and papers to read alongside, from Proclus to Lean, are gathered by theme in [the reading list](../../docs/reading.md).
+
 | | Proposition | |
 |---|---|---|
 | ✅ | [II.1](01.md) **A rectangle cut into rectangles** | If there be two straight lines, and one of them be cut into any number of segments whatever, the rectangle… |

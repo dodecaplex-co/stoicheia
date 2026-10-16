@@ -65,6 +65,14 @@ docstring label, "System E, Intersection 5" (a diagram rule, §3.4) or "System E
 Intersections 8" (a construction rule, §3.3), or by its Lean name. A particular
 debt is still said where it falls: Intersection 4 is LeanEuclid's corrected form.
 
+**Further reading.** `reading/<book>/NN.md`, shown after the mishnah, is one to three
+friendly lines, each a list item naming a work from [the reading list](reading.md): the
+author in full, the title in italics with the list's link, then a sentence on what the
+work gives this proposition, with the chapter where the list names one, and **Free**
+where the list says so. Verified works only: a new one goes on the list first, checked,
+and into `references.bib`. Every new page adds its own, Book III's among them; with
+nothing apt, there is no file and no section.
+
 ## 3. Lean
 
 - **Euclid's words in `--` comments, ours in `/- … -/`.** The docstring of
@@ -223,3 +231,12 @@ proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN
 
 24. `git diff main -- heath/` is empty, or each change carries a comment naming the
     page image checked.
+
+**Further reading**
+
+25. `grep -c . F` is 1 to 3 and `grep -vc '^- ' F` is 0, and every link is one the
+    reading list gives (this prints nothing):
+    ```sh
+    grep -oE '\]\(https?://[^)]+\)' F | sed 's/^](//; s/)$//' |
+      while read -r u; do grep -qF "]($u)" docs/reading.md || echo "not on the list: $u"; done
+    ```
