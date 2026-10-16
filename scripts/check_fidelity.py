@@ -10,6 +10,7 @@
 5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first):
    - only I.4 and I.8 may use superposition directly;
    - no proposition before I.29 rests on Postulate 5 or any Euclidean-only rule.
+     Every proposition of a later book comes after I.29, and may rest on it.
 
 Exits non-zero on any failure. Standard library only.
 """
@@ -21,10 +22,14 @@ import sys
 import heath
 
 ROOT = heath.ROOT
-BOOKS = {"I": 48}
+BOOKS = heath.BOOKS
 SUPERPOSITION_ALLOWED = {"I.4", "I.8"}
 EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
-FIRST_EUCLIDEAN = {"I": 29}
+# The first proposition of each book allowed to rest on Postulate 5. Euclid holds it
+# back until I.29; Book II comes after the whole of Book I, so it may use the
+# postulate from II.1 on, as II.10 does by name. A book missing here may use it
+# throughout.
+FIRST_EUCLIDEAN = {"I": 29, "II": 1}
 
 errors: list[str] = []
 
@@ -101,10 +106,11 @@ def check_facts() -> None:
         book, num = ref.split(".")
         if "Tacit.superposition" in p.get("direct_axioms", []) and ref not in SUPERPOSITION_ALLOWED:
             fail(f"{ref}: uses superposition directly (only I.4 and I.8 may)")
-        if int(num) < FIRST_EUCLIDEAN.get(book, 1):
+        first = FIRST_EUCLIDEAN.get(book, 1)
+        if int(num) < first:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
             if bad:
-                fail(f"{ref}: rests on {', '.join(bad)} before I.29")
+                fail(f"{ref}: rests on {', '.join(bad)} before {book}.{first}")
 
 
 def main() -> int:

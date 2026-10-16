@@ -32,8 +32,11 @@ def commonNotions : List (Name × String) :=
    (``Elements.CommonNotion4.angle, "C.N. 4"), (``Elements.CommonNotion4.triangle, "C.N. 4"),
    (``Elements.CommonNotion5, "C.N. 5")]
 
-/-- The books, their Lean namespaces and how many propositions each has. -/
-def books : List (String × Name × Nat) := [("I", `Elements.BookI, 48)]
+/-- The books, their Lean namespaces and how many propositions each has. A proposition
+of a later book may cite one of an earlier book, and the walk below records it by its
+own book: `"I.47"` among the citations of II.9. -/
+def books : List (String × Name × Nat) :=
+  [("I", `Elements.BookI, 48), ("II", `Elements.BookII, 14)]
 
 /-- Is `n` declared in one of this project's own modules (or in this file)? -/
 def isLocal (env : Environment) (n : Name) : Bool :=
@@ -68,10 +71,10 @@ partial def directDeps (env : Environment) (props : NameSet) (root : Name) :
       else if isLocal env d && !seen.contains d then todo := todo.push d
   return (cites, notions, direct, hasSorry)
 
-/-- `Elements.BookI.Prop12` ↦ `"I.12"`. -/
+/-- `Elements.BookI.Prop12` ↦ `"I.12"`, `Elements.BookII.Prop4` ↦ `"II.4"`. -/
 def refOf (n : Name) : String :=
   let book := match n.getPrefix with
-    | Name.str _ s => (s.drop 4).toString   -- "BookI" ↦ "I"
+    | Name.str _ s => (s.drop 4).toString   -- "BookI" ↦ "I", "BookII" ↦ "II"
     | _ => "?"
   let num := match n with
     | Name.str _ s => (s.drop 4).toString   -- "Prop12" ↦ "12"
