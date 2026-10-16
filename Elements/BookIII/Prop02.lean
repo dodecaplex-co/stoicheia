@@ -53,8 +53,8 @@ theorem Prop2 {A B : Point} {ABC : Circle} (hABC : ∃ D : Point, Centre D ABC) 
      The outside supposition, and the point F it supplies, are taken below in `hout`. -/
   -- let the centre of the circle ABC be taken [III. 1], and let it be D; let DA, DB be joined,
   -- and let DFE be drawn through.
-  obtain ⟨D, -, -, -, hD, -⟩ := Prop1 hABC hA hB (ne_of_between_ends hAEB)
   have hAB : A ≠ B := ne_of_between_ends hAEB
+  obtain ⟨D, -, -, -, hD, -⟩ := Prop1 hABC hA hB hAB
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
   have hE_L := on_line_of_between_ends hAEB hA_L hB_L
   -- Then, since DA is equal to DB,

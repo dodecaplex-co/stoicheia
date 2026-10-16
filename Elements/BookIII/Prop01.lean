@@ -31,9 +31,10 @@ theorem Prop1.middle {A B D G : Point} (hADB : Between A D B) (hAD : ‖A D‖ =
     fun hb => not_between_of_between hAGB (between_of_between_right hb hADB)⟩
   exact OnRay.eq_of_len_eq hray hlen
 
-/-- At a point `A`, only one straight line is at right angles to `AD`. Euclid
-takes this for granted in "the greater to the less"; the same-side argument
-and its adjacent right angle cover either side of the straight line. -/
+/-- At a point `A` of the straight line `AD`, only one straight line is at right
+angles to it. Euclid takes this for granted in "the greater to the less". With `E`
+and `F` on one side of `AD`, the equal right angles put `F` on `AE`; on opposite
+sides, `EA` produced beyond `A` makes a right angle on `F`'s side. -/
 theorem Prop1.perpendicular {A D E F : Point} (hE : Triangle D A E) (hF : Triangle D A F)
     (hDAE : ∠ D A E = ∟) (hDAF : ∠ D A F = ∟) : Collinear A E F := by
   have hAD : A ≠ D := hE.ne₁₂.symm
@@ -79,6 +80,7 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
   obtain ⟨C, hC, hC_N, hCDE⟩ := line_circle_beyond hD_in hD_N hE_N (ne_of_between hEDX)
   have hCray : OnRay C D X := OnRay.of_between_between hEDX (between_symm hCDE)
   have hDA : D ≠ A := (ne_of_between hADB).symm
+  have hDB : D ≠ B := (ne_of_between (between_symm hADB)).symm
   have hADC : ∠ A D C = ∟ := by
     rw [angle_onRay_right hCray hDA.symm]
     exact hX A ⟨L, hA_L, hB_L, hA_L⟩ hDA.symm
@@ -99,8 +101,7 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
         (between_of_inside_chord hG_L hA_L hB_L (centre_inside hG) hA hB hAB)
         (by rw [len_symm A G, Definition15 hG hA hB])) ▸ hD_N)
     have hDAG : Triangle D A G := Triangle.of_line hD_L hA_L hDA hG_L
-    have hDBG : Triangle D B G :=
-      Triangle.of_line hD_L hB_L (ne_of_between (between_symm hADB)).symm hG_L
+    have hDBG : Triangle D B G := Triangle.of_line hD_L hB_L hDB hG_L
     -- Then, since AD is equal to DB,
     have hDA_DB : ‖D A‖ = ‖D B‖ := by rw [len_symm D A, hAD]
     -- and DG is common,
@@ -118,18 +119,23 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
     -- therefore the angle GDB is right.
     have hGDB : ∠ G D B = ∟ := h8 ▸ hADG
     -- But the angle FDB is also right;
-    /- If AB passes through the centre, F is D. We compare ADC and ADG,
-       whose arms are distinct, without forming the angle FDB. -/
+    /- If AB passes through the centre, F is D and there is no angle FDB. Lean
+       takes in its place the angle CDB, right by construction. -/
+    have hBDC : ∠ B D C = ∟ := by
+      rw [angle_onRay_right hCray hDB.symm]
+      exact hX B ⟨L, hA_L, hB_L, hB_L⟩ hDB.symm
     -- therefore the angle FDB is equal to the angle GDB, the greater to the less: which is
     -- impossible.
-    have hDAC : Triangle D A C := Triangle.of_line hD_L hA_L hDA hC_L
-    obtain ⟨M, hD_M, hC_M, hG_M⟩ := Prop1.perpendicular hDAC.bac hDAG.bac hADC (h8.trans hGDB)
+    have hDBC : Triangle D B C := Triangle.of_line hD_L hB_L hDB hC_L
+    obtain ⟨M, hD_M, hC_M, hG_M⟩ := Prop1.perpendicular hDBC.bac hDBG.bac hBDC
+      ((angle_symm hDBG.ne₁₂.symm hDBG.ne₁₃.symm).trans hGDB)
     exact hG_N ((line_unique hCD hC_M hD_M hC_N hD_N) ▸ hG_M)
   -- Therefore G is not the centre of the circle ABC.
   -- Similarly we can prove that neither is any other point except F.
   -- Therefore the point F is the centre of the circle ABC.
   /- The centre is within the circle, hence between C and E. Its equal radii
-     make it the middle point F, the last step Heath supplies (vol. 2, p. 8). -/
+     make it the middle point F, the step Heath says Euclid takes for granted
+     (vol. 2, p. 8). -/
   have hCGE := between_of_inside_chord hG_N hC_N hE_N (centre_inside hG) hC hE
     (ne_of_between_ends hCDE)
   obtain rfl : G = F := Prop1.middle hCFE hCF hCGE (by rw [len_symm C G, Definition15 hG hC hE])
