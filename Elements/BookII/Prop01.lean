@@ -65,7 +65,6 @@ theorem Prop1 {A₁ A₂ B C D E : Point} (hA : A₁ ≠ A₂) (hBDE : Between B
   obtain ⟨L, hL_GH, hGBEL⟩ :=
     BookI.Prop31.parallelogram hGH_BC hG_GH hB_BC hE_BC (ne_of_between hBEC)
   obtain ⟨H, hH_GH, hGBCH⟩ := BookI.Prop31.parallelogram hGH_BC hG_GH hB_BC hC_BC hBC
-  -- Then BH is equal to BK, DL, EH.
   obtain ⟨BG, hB_BG, hG_BG⟩ := Postulate1 B G (ne_of_between hBGX)
   obtain ⟨DK, hD_DK, hK_DK⟩ := Postulate1 D K hGBDK.1.2.1
   obtain ⟨EL, hE_EL, hL_EL⟩ := Postulate1 E L hGBEL.1.2.1
@@ -73,6 +72,7 @@ theorem Prop1 {A₁ A₂ B C D E : Point} (hA : A₁ ≠ A₂) (hBDE : Between B
   have hDK_BG : Parallel DK BG := (hGBDK.1.parallel hG_BG hB_BG hD_DK hK_DK).symm
   have hEL_BG : Parallel EL BG := (hGBEL.1.parallel hG_BG hB_BG hE_EL hL_EL).symm
   have hCH_BG : Parallel CH BG := (hGBCH.1.parallel hG_BG hB_BG hC_CH hH_CH).symm
+  -- Then BH is equal to BK, DL, EH.
   have hDE : D ≠ E := ne_of_between hDEC
   have hDC : D ≠ C := (ne_of_between (between_symm hBDC)).symm
   have hEC : E ≠ C := (ne_of_between (between_symm hBEC)).symm
