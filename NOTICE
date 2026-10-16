@@ -54,14 +54,17 @@ It is released under the MIT License:
 Texts and images
 ------------------------------------------------------------------------------
 
-heath/  T. L. Heath, The Thirteen Books of Euclid's Elements, vol. 1
+heath/  T. L. Heath, The Thirteen Books of Euclid's Elements, vols. 1-2
         (Cambridge University Press, 1908). Public domain. Transcribed from
-        the Internet Archive scan "thirteenbookseu02heibgoog" (digitized by
-        Google from the library of Harvard University).
+        the Internet Archive scans thirteenbookseu02heibgoog (vol. 1) and
+        thirteenbookseu00heibgoog (vol. 2), digitized by Google from copies
+        in the Stanford University Libraries.
 
 assets/ The logo is built on a detail of Raphael's The School of Athens
         (1509-1511), photographed by Marie-Lan Nguyen and shared on Wikimedia
         Commons as PD-Art (PD-old-100-expired). See assets/CREDITS.md.
 
-Our own prose (mishnah/, reading/, figures/, docs/, README) is licensed
-under CC BY 4.0; see LICENSE-PROSE.md.
+Our own prose and figures are licensed under CC BY 4.0: mishnah/,
+reading/, figures/, docs/, our parts of assets/, the README, CONTRIBUTING,
+and the pages under book/ apart from Heath's text and the Lean. See
+LICENSE-PROSE.md.

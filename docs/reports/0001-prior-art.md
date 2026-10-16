@@ -39,20 +39,22 @@ of merit.
 Avigad, Dean and Mumma, *A formal system for Euclid's Elements* (Review of Symbolic
 Logic 2(4), 2009, pp. 700–768; arXiv 0810.4315). Construction rules (§3.3),
 diagrammatic inferences (§3.4), metric inferences (§3.5), transfer inferences (§3.6)
-and superposition (§3.7). Two things we noticed while transcribing the rules:
+and superposition (§3.7). Two things to know when reading the rules:
 
-- Points rule 6 prints "a is on the same side of L as b" where "not on the same side"
-  is meant.
-- Intersection rule 4 ("a on or inside α") fails for a small circle wholly inside a
-  large one; LeanEuclid's form ("a on α") is the one we use.
+- Points rule 6 has a misprint: it prints "a is on the same side of L as b" where "not
+  on the same side" is meant.
+- Intersection rule 4 as printed ("a on or inside α") fails for a small circle wholly
+  inside a large one, as LeanEuclid's authors found, so we use their form ("a on α").
 
 ## The text
 
 - **Heath 1908** (public domain): Internet Archive scans; vol. 1 (Books I–II) is
   `thirteenbookseu02heibgoog`, vol. 2 is `thirteenbookseu00heibgoog`, vol. 3 is
   `thirteenbookseu03heibgoog`. Page-image URLs follow
-  `https://archive.org/download/<id>/page/n<LEAF>.jpg`; in vol. 1, leaf = page + 20.
-  Book I was transcribed from the OCR and proofread against the page images.
+  `https://archive.org/download/<id>/page/n<LEAF>.jpg`; in vol. 1, leaf = page + 20,
+  and in vol. 2, leaf = page + 12. Both were digitized by Google from copies in the
+  Stanford University Libraries. Book I was transcribed from the OCR and proofread
+  against the page images.
 - **Perseus** has Heath's (1926) text under CC BY-SA; used only as a cross-check.
 - **Project Gutenberg** has Casey's *First Six Books* (1885, #21076) and Proclus on
   Book I in Taylor's translation (#74253, #79455). The Casey was produced by Joshua
@@ -76,5 +78,5 @@ checks it, and were the inspiration for our pages:
   writing the blueprint of a Lean formalization: the mathematics in prose, each
   statement linked to its Lean.
 - **Verso** (David Thrane Christiansen and the Lean FRO;
-  [repo](https://github.com/leanprover/verso)). "A tool for writing about Lean":
+  [repo](https://github.com/leanprover/verso)). *Verso: An Authoring Tool for Lean*:
   documents written in Lean itself, for manuals, tutorials, blogs and papers.

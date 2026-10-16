@@ -6,8 +6,10 @@ with the groundwork ([first-mate-II.md](first-mate-II.md),
 the same 1908 scan, the scripts taught about more than one book, "the rectangle
 contained by AB, BC" and "the square on AB" defined as areas, with every drawn
 rectangle proved equal to the rectangle contained by its sides, and II.1–II.14
-stated in Heath's letters. Two challengers found nothing to change in the
-statements. Artists drew the colour figures in Byrne's manner, each identity as
+stated in Heath's letters and tested in scratch proofs (II.2, II.4, II.12, II.13 and
+II.14 in full, II.5's case split, and the first steps of the rest), which served the
+voyage and were removed once the propositions were proved. Two challengers found
+nothing to change in the statements. Artists drew the colour figures in Byrne's manner, each identity as
 rectangles and squares fitted together.
 
 Then four ships: four Claude captains, eight first mates and fourteen bosuns, with
@@ -47,3 +49,6 @@ user's latest message meant, so no one stood down.
   and CI now guards Book II the same way.
 
 With these fourteen, Book II is complete.
+
+**Axioms and gaps.** No axiom added; gaps: see [gaps-book-II.md](../gaps-book-II.md),
+written after the voyage.

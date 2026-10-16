@@ -15,6 +15,27 @@ why `#print axioms` on a proposition lists exactly what the proof rests on.
 The vocabulary follows the System E of Jeremy Avigad, Edward Dean and John
 Mumma ("A formal system for Euclid's *Elements*", Review of Symbolic Logic,
 2009), which was designed to match the way Euclid reasons from a diagram.
+
+## The plane they describe
+
+No proof uses numbers, but the axioms have a model, and that is how we know they
+can all be true together (given Lean's logic and the real numbers). Read the words
+in the ordinary plane, and every postulate, Definition 15 and every tacit rule
+holds, degenerate cases included:
+
+* a `Point` is a point of the plane, a `Line` a whole straight line, and a `Circle`
+  a circle of positive radius, with its `Centre`; `OnCircle` is lying on it and
+  `InsideCircle` lying nearer the centre than the radius;
+* `Between A B C` is strict betweenness, and `SameSide A B L` says that `A` and `B`
+  lie in one open half-plane of `L`;
+* the magnitudes are real numbers of at least 0, added and compared as usual
+  (`Magnitudes.lean`): the length `‖A B‖` is the distance from `A` to `B`; the angle
+  `∠ A B C` is the angle between the rays from `B`, in [0, π], and 0 when a point is
+  repeated; the area `△ A B C` is the area of the triangle; and `∟` is π/2.
+
+The plane stays a model of everything Lean knows only while the words stay `opaque`,
+so that Lean knows nothing of them but what the axioms say; `scripts/check_fidelity.py`
+checks that they do.
 -/
 
 namespace Elements

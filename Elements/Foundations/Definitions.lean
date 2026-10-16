@@ -19,7 +19,9 @@ namespace Elements
 adjacent angles equal to one another, each of the equal angles is right."
 
 The angle `ABC` is right when, continuing `AB` beyond `B` to some `D`, the
-straight line `BC` makes the adjacent angles `ABC` and `CBD` equal. -/
+straight line `BC` makes the adjacent angles `ABC` and `CBD` equal. The clause
+`¬ Collinear A B C` rules out a degenerate `C`, such as `C` at `B`, where both
+angles would be nothing and Postulate 4 would be false. -/
 def IsRightAngle (A B C : Point) : Prop :=
   ∃ D : Point, Between A B D ∧ ¬ Collinear A B C ∧ ∠ A B C = ∠ C B D
 

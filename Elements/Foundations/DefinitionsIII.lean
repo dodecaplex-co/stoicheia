@@ -41,8 +41,8 @@ Book III is about circles, and most of its words need no Lean word of their own:
   equal.
 * The angle of a segment (Definition 7) is "contained by a straight line and a
   circumference": a mixed angle, which our angles, each made by two straight lines, are
-  not. No proof uses it. III.16 and III.31 speak of such angles at their ends, and there
-  Lean states the rectilineal facts that Euclid proves them by.
+  not. No proof uses it. III.16 and III.31 speak of such angles in their last clauses,
+  and there Lean states the rectilineal facts that Euclid proves them by.
 * No proposition of Book III uses a sector (Definition 10).
 
 The others are here: equal circles; a straight line touching a circle; circles touching
@@ -59,7 +59,7 @@ exactly when these angles are, and that is all Euclid ever asks of them; the pro
 that compare circumferences say "in equal circles", as he does.
 
 `circumference` chooses one such angle (`Classical.epsilon`), as `rect` chooses one
-rectangle. That every point `A` gives the same angle is III.21, the angles in the same
+area. That every point `A` gives the same angle is III.21, the angles in the same
 segment being equal, and the facts about circumferences that Euclid takes for granted
 are proved once from III.20–III.22 (`Elements/BookIII/Circumferences.lean`).
 
@@ -75,7 +75,7 @@ def EqualCircles (α β : Circle) : Prop :=
   ∃ G H P Q : Point, Centre G α ∧ Centre H β ∧ OnCircle P α ∧ OnCircle Q β ∧ ‖G P‖ = ‖H Q‖
 
 /-- **Definition III.2.** The straight line `AB` touches the circle `α`: it meets the
-circle, and, produced either way, it does not cut it (`LineMeetsCircle`, two points). -/
+circle and, produced either way, does not meet it at two points (`LineMeetsCircle`). -/
 def Touches (A B : Point) (α : Circle) : Prop :=
   A ≠ B ∧ ∀ L : Line, OnLine A L → OnLine B L →
     (∃ P : Point, OnLine P L ∧ OnCircle P α) ∧ ¬ LineMeetsCircle L α

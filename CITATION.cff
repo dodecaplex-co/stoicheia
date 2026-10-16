@@ -5,8 +5,9 @@ authors:
   - family-names: Challis
     given-names: Jack
 repository-code: "https://github.com/jackChallis/stoicheia"
-license: Apache-2.0
-date-released: 2026-10-15
+license: [Apache-2.0, CC-BY-4.0]
+version: book-II
+date-released: 2026-10-16
 keywords:
   - Euclid
   - Elements
@@ -53,6 +54,21 @@ references:
     end: 257
     year: 2019
     doi: "10.1007/s10472-018-9606-x"
+  - type: article
+    title: "Implementing Euclid's straightedge and compass constructions in type theory"
+    authors:
+      - family-names: Kellison
+        given-names: Ariel
+      - family-names: Bickford
+        given-names: Mark
+      - family-names: Constable
+        given-names: Robert
+    journal: "Annals of Mathematics and Artificial Intelligence"
+    volume: 85
+    start: 175
+    end: 192
+    year: 2019
+    doi: "10.1007/s10472-018-9603-0"
   - type: software
     title: "LeanEuclid"
     authors:

@@ -17,8 +17,9 @@ the end.
   README's "How it was made", which says plainly how the work is done.
 - **People by name**, spelled as Heath spells them (Proclus', an-Nairīzī, van
   Pesch); modern authors in full ("Robin Hartshorne's *Geometry: Euclid and
-  Beyond*"). Say who saw a gap first, where we know; call a find new only when it
-  is.
+  Beyond*"), and a person's full name at the first mention on each page ("Robert
+  Simson", then "Simson"). Say who saw a gap first, where we know; call a find new
+  only when it is.
 - **No comparisons.** Nothing here is first, only, better or unlike anyone else's
   work; we say what others' work does well, and link to it. ("Only one triangle"
   is geometry, and fine.)
@@ -53,7 +54,8 @@ saying more, and name any cited proposition that brings it in too.
   p. 252)" when the sentence doesn't name him. Those Heath reports (Proclus,
   Todhunter, De Morgan) take his page.
 - Single quotes inside, "…" for a cut, and brackets inside are Heath's own. No
-  added italics: only those Heath printed.
+  added italics, and keep Heath's italics: those he printed, all of them, and only
+  those ("the two circles *will* meet").
 - Each of Heath's notes is quoted on the page of the proposition it belongs to, and
   elsewhere only referred to in a clause: "as Todhunter remarks under I.14". A
   passage from his introduction, or his notes on the definitions and postulates, is
@@ -126,11 +128,12 @@ the whole canvas), in Georgia.
   numbers on a fill, as in I.47); equal things share a colour; no letters. Title
   "I.N at a glance", with a name if it has one (": the bridge of asses"). The
   `<desc>` is the caption on the page: one or two short sentences in the house
-  voice, colours named in brackets.
+  voice, about 40 words at most, colours named in brackets.
 - **`NN.svg`, Euclid's figure.** 400 wide (440 at most). Italic letters at 17; ink
   `#3b2f2f` for lines, dots and letters; circles `#8c7b62`; what the proposition is
   about in `#a0522d`, drawn heavier; triangle fills `#e9dcc0` at 0.55. Dots r 2.6,
-  lines 1.6, circles 1.3. Title "Euclid I.N: …", no caption.
+  lines 1.6, circles 1.3, what the proposition is about 2.4 to 2.6, and angle marks in
+  `#8c7b62` at 1.3. Title "Euclid I.N: …", no caption.
 - **Heath's letters, all and only**, each point where the proof puts it (I.6: D on
   AB), clear of every stroke, nothing touching the frame. Where the Lean places a
   point otherwise than Heath's figure, draw the proof and let the mishnah say so
@@ -143,12 +146,18 @@ the whole canvas), in Georgia.
   as the `--` comments take them. Changes only against the page image.
 - **Square brackets** there are his, kept exactly: the justifications `[I. 2]`,
   `[Post. 3]`, `[C.N. 1]`, `[Def. 15]`, `[Post. 4 and C.N. 1]`, II.10's
-  `[I. Post. 5]` with its book, and Heiberg's brackets round a passage he judged
-  added later (I.4, I.15's Porism), with a comment. In our prose a bracket appears only when we quote one: "the bracket
-  [I. 20]".
+  `[I. Post. 5]` with its book, Book III's `[I. Def. 10]` (another book's definition,
+  with its book), `[III. Def. 3]` and `[III. 1, Por.]` (a porism, cited with its
+  proposition), and Heiberg's brackets round a passage he judged added later (I.4,
+  I.15's Porism), with a comment; and Heath's own round a whole proposition (III.12),
+  with its reason. In our prose a bracket appears only when we quote one: "the bracket
+  [I. 20]". In the Lean, a `/- … -/` remark may give a step Euclid leaves unbracketed
+  its justification in his form, as a `--` line would: "subtracted from each [C.N. 1,
+  C.N. 3]".
 - **Our prose writes** I.5, II.4, I.1–I.24 (en dash); Postulate 3, Common Notion 1,
   Definition 15 in a sentence; Post. 3, C.N. 1, Def. 15 in parentheses and tables.
-  Quotations keep Heath's "I. 5".
+  Another book's definition keeps its book: "Definition I.15" in a sentence, "Def. I.15"
+  in parentheses and tables. Quotations keep Heath's "I. 5".
 - Titles and foreign words in italics: *pons asinorum*, *reductio ad absurdum*.
 
 ## 6. The enforcer's checklist
@@ -200,6 +209,13 @@ proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN
     Euclid's own words.
 12. Each hit of `grep -nE '[“”‘’]|(^|[^*])\*"|"\*($|[^*])' F` is an italic Heath
     printed.
+
+12b. Every italic Heath printed is kept. The scan's ABBYY file
+    (`https://archive.org/download/<id>/<id>_abbyy.gz`, `<id>` as for the page images)
+    flags each italic letter with `italic="true"` on its `<formatting>`; on the quoted
+    page (the `<page>` of its leaf, counting from 0), every word inside the quotation
+    so flagged is in italics in F, and no other. Where a flag is doubtful, the page
+    image decides.
 13. Each hit of `grep -nE 'Avigad|LeanEuclid' F` is a particular debt, not thanks.
     Each rule name is a docstring label: `grep -rn 'Intersection 5' Elements/Foundations/Tacit`.
 14. What it says of the certificate matches `facts.json`:
@@ -232,7 +248,8 @@ proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN
     ```
 21. `grep -oE '#[0-9a-fA-F]{3,6}' F | sort -u` lists only section 4's colours, and
     the `viewBox` is the right size.
-22. `grep -o '<desc>.*</desc>' F`: one or two short sentences, in the house voice.
+22. `grep -o '<desc>.*</desc>' F`: one or two short sentences, in the house voice,
+    and `sed -n 's:.*<desc>\(.*\)</desc>.*:\1:p' F | wc -w` is about 40 at most.
 23. `rsvg-convert -w 800 F -o /tmp/fig.png`, and look: letters clear, nothing
     clipped, points where the proof puts them, sizes like the others'.
 

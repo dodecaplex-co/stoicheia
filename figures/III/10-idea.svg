@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.10 at a glance</title>
-  <desc>Two circles (blue and red) can cut one another at two points, but never at three. A circle's centre lies on every black line that halves a straight line between two of its points (yellow) at right angles, and two such black lines meet at one point only.</desc>
+  <desc>Two circles (blue and red) can cut one another at two points, but never at three. A circle's centre lies on every black line that halves a straight line between two of its points (yellow) at right angles, and two such black lines cross only at the centre.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="242.00" cy="156.00" r="90.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
   <circle cx="139.73" cy="124.73" r="69.22" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>

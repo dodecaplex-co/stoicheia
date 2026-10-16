@@ -26,7 +26,7 @@ We also used the full-fresco scan on Commons to help estimate the painting's per
 
 ## License and public-domain status
 
-Both files are tagged on Wikimedia Commons as `{{PD-art|PD-old-100-expired}}`:
+On Wikimedia Commons the photograph of the detail is tagged `{{PD-art|PD-old-100-expired}}`, and the full-fresco scan `{{PD-Art-two-auto|1520}}`:
 
 - The fresco is in the **public domain** worldwide. Raphael died in 1520, so it is in the public domain in its country of origin and in every country where copyright lasts for the author's life plus 100 years or less. It is also in the public domain in the United States.
 - The photograph is a faithful reproduction of a two-dimensional public-domain work of art. The Wikimedia Foundation's position, which Commons applies here, is that such reproductions are themselves in the public domain. A few jurisdictions may treat reproductions differently, so please see Commons' note on reusing PD-Art photographs if that matters to you.

@@ -96,7 +96,8 @@ assert all(len(titles) == count for count, titles in BOOKS.values())
 STATUS = {
     "proved": "✅ Proved",
     "proved-pending": "☑️ Proved, citing propositions still to be proved",
-    "sketched": "🚧 Sketched: Euclid's sentences are in place, the Lean steps are still to come",
+    # The facts.json key stays "sketched"; the pages say "stated", as the README does.
+    "sketched": "🚧 Stated: the statement and Euclid's sentences are in place; the proof is to come",
 }
 STATUS_SHORT = {"proved": "✅", "proved-pending": "☑️", "sketched": "🚧"}
 
@@ -216,6 +217,41 @@ def euclids_text(source):
     return f"<sub>Euclid's text: {source}</sub>"
 
 
+# The Internet Archive scans of Heath's volumes: vol. 1 (Books I–II), vol. 2 (Books III–IX).
+SCANS = {"1": "thirteenbookseu02heibgoog", "2": "thirteenbookseu00heibgoog"}
+
+
+def heath_figure_note(source):
+    """For a proposition whose lettered figure is still to be drawn: where Heath's own is,
+    read from the source comment ("vol. 2 … figure on n18", "figures on n67 and n68")."""
+    vol = re.search(r"vol\. (\d+)", source)
+    leaves = re.search(r"figures? on (n\d+(?:(?:, | and )n\d+)*)", source)
+    if not vol or not leaves or vol.group(1) not in SCANS:
+        return "_Euclid's figure, with Heath's letters, is still to be drawn._"
+    url = f"https://archive.org/details/{SCANS[vol.group(1)]}/page/"
+    found = re.findall(r"n\d+", leaves.group(1))
+    if len(found) == 1:
+        where = f"[scan leaf {found[0]}]({url}{found[0]})"
+    else:
+        links = [f"[{leaf}]({url}{leaf})" for leaf in found]
+        where = "scan leaves " + ", ".join(links[:-1]) + " and " + links[-1]
+    if leaves.group(0).startswith("figures"):
+        # Heath draws more than one figure (III.25, III.33, III.35, III.36).
+        return ("_Euclid's figures, with Heath's letters, are still to be drawn; until then, "
+                f"Heath's own are on {where}._")
+    return ("_Euclid's figure, with Heath's letters, is still to be drawn; until then, "
+            f"Heath's own is on {where}._")
+
+
+# Why Heath prints a whole proposition in square brackets, said under its enunciation.
+BRACKET_NOTES = {
+    ("III", 12): "_Heath prints this whole proposition in square brackets. Heron gives its "
+                 "proof as his own addition to III.11, for circles touching externally, and "
+                 "Heath thinks it \"most probable that Theon or some other editor added Heron's "
+                 "proof in his edition and made Prop. 12 out of it\" (vol. 2, p. 28)._",
+}
+
+
 TACIT_CREDIT = ("<sub>The tacit rules follow the System E of Jeremy Avigad, Edward Dean and "
                 "John Mumma, read alongside LeanEuclid (Logan Murphy, Kaiyu Yang, Jialiang Sun, "
                 "Zhaoyu Li, Anima Anandkumar and Xujie Si).</sub>")
@@ -234,6 +270,9 @@ def rests_on(p, docs, depth, book, euclid):
     posts = [a for a in axioms if a.startswith("Postulate")]
     defs = [a for a in axioms if a.startswith("Definition")]
     tacit = [a for a in axioms if a.startswith("Tacit.")]
+    # An axiom of no known kind is shown under "Other", never dropped; check_fidelity.py
+    # fails on any axiom declared outside Elements/Foundations/.
+    other = [a for a in axioms if a not in posts + defs + tacit]
     lines.append("| Lean cites | " + (", ".join(prop_link(c, book) for c in
                  sorted(p["cites"], key=prop_key)) or "no propositions") + " |")
     lines.append("| Postulates | " + (roman_list(posts, "Postulate") or "none") + " |")
@@ -241,23 +280,31 @@ def rests_on(p, docs, depth, book, euclid):
     lines.append("| Common Notions | " + (", ".join(c.replace("C.N. ", "") for c in
                  sorted(set(p["common_notions"]))) or "none") + " |")
     lines.append(f"| Tacit assumptions | {len(tacit)} (listed below) |")
+    if other:
+        lines.append(f"| Other axioms | {len(other)} (listed below) |")
     out = "\n".join(lines) + "\n"
     if p["status"] == "proved-pending":
         out += ("\n_This proof is complete, but it cites propositions that are still "
-                "sketched, so the list above will grow when they are proved._\n")
-    if tacit:
+                "only stated, so the list above will grow when they are proved._\n")
+    if tacit or other:
         by_kind = {}
         for a in tacit:
             doc, path, line = docs.get(a, ("", "", 0))
             by_kind.setdefault(axiom_kind(path), []).append((a, doc, path, line))
-        out += f"\n<details><summary>The {len(tacit)} things Euclid takes for granted here</summary>\n\n"
+        for a in other:
+            doc, path, line = docs.get(a, ("", "", 0))
+            by_kind.setdefault("Other", []).append((a, doc, path, line))
+        out += (f"\n<details><summary>The {len(tacit) + len(other)} things Euclid takes for "
+                "granted here</summary>\n\n")
         for kind in ["Reading the figure", "Lengths, angles and areas", "Superposition",
                      "Laws of magnitude", "Other"]:
             if kind not in by_kind:
                 continue
             out += f"**{kind}**\n\n"
             for a, doc, path, line in sorted(by_kind[kind]):
-                out += f"- [`{a.replace('Tacit.', '')}`]({up}{path}#L{line}): {doc}\n"
+                name = a.replace('Tacit.', '')
+                out += (f"- [`{name}`]({up}{path}#L{line}): {doc}\n" if path else
+                        f"- `{name}`: not declared in `Elements/Foundations/`\n")
             out += "\n"
         out += "</details>\n"
     return out
@@ -282,6 +329,9 @@ def page(book, n, count, titles, facts, docs):
     opening = "[" if heath.bracketed(book, n) else ""
     out = [GENERATED, nav, "", f"# Book {book}, Proposition {n}", "",
            f"*{titles[n]}*", "", f"> {opening}{enunciation}", ""]
+    if opening:
+        out += [BRACKET_NOTES.get((book, n), "_Heath prints this whole proposition in "
+                                  "square brackets._"), ""]
     if idea.exists():
         caption = svg_desc(idea)
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "
@@ -291,12 +341,19 @@ def page(book, n, count, titles, facts, docs):
     if figure.exists():
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}.svg\" "
                 f"alt=\"Euclid's figure for Proposition {ref}, with Heath's letters\" width=\"360\"></p>", ""]
+    else:
+        out += [heath_figure_note(source), ""]
     for para in proof:
         out += [para, ""]
+    if not p or p["status"] == "sketched":
+        how = ("Euclid's sentences are the `--` comments. The Lean that will carry each one out "
+               "is still to be written; `sorry` is Lean's word for a step not yet taken.")
+    else:
+        how = ("Euclid's sentences are the `--` comments; the lines under each one are the Lean "
+               "that carries it out.")
     out += ["## In Lean", "", status, "",
             f"From [`Elements/Book{book}/Prop{n:02d}.lean`](../../Elements/Book{book}/Prop{n:02d}.lean). "
-            "Euclid's sentences are the `--` comments; the lines under each one are the Lean "
-            "that carries it out.", "", "```lean", lean_body(lean_path), "```", "",
+            + how, "", "```lean", lean_body(lean_path), "```", "",
             "## What it rests on", "", rests_on(p, docs, 2, book, euclid)]
     out += ["## Mishnah", ""]
     if mishnah.exists():
@@ -338,7 +395,7 @@ def index(book, count, titles, facts):
     legend = " · ".join(f"{STATUS_SHORT[s]} {t}" for s, t in (
         ("proved", "proved"),
         ("proved-pending", "proved, citing propositions still to be proved"),
-        ("sketched", "sketched")) if s in used)
+        ("sketched", "stated")) if s in used)
     out = [GENERATED, f"# Book {book}", "",
            f"**{proved} of {count} propositions proved in Lean.** {legend}", "",
            start, "",
@@ -379,18 +436,27 @@ FRONT_LEAN_III = {
     "Definitions": {
         1: "`EqualCircles`: a radius of the one is equal to a radius of the other",
         2: "`Touches A B α`: the straight line AB meets the circle and does not cut it",
-        3: "`TouchesInternally`, `TouchesExternally`, `CirclesTouch`",
+        3: "`TouchesInternally α β C`: the circles meet at C, and no point of β falls outside "
+           "α; `TouchesExternally α β C`: they meet at C, and no point is within both; "
+           "`CirclesTouch α β C`: they touch one another in one of these ways",
         4: "`‖E F‖ = ‖E G‖`, for the perpendiculars EF, EG from the centre E (III.14)",
         5: "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15)",
         6: "a circle, a straight line AB in it, and a point E of the circumference on one "
            "side: the segment AEB",
+        7: "none: a mixed angle, of a straight line and a curve; III.16 and III.31 speak of "
+           "it, and their Lean states the straight-line facts Euclid proves them by",
         8: "`∠ A E B`, for a point E on the circumference of the segment",
         9: "`standing α B A C`, the circumference on which the angle BAC stands; the "
-           "circumference BKC is `circumference α B K C`",
+           "circumference BKC is `circumference α B K C`; each measured as twice the angle "
+           "that stands on it at the circumference",
+        10: "none: no proposition of Book III uses a sector",
         11: "`∠ A E B = ∠ C F D`: equal angles in the segments AEB, CFD",
     },
 }
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
+# Book III's Euclid speaks of a mixed angle (Def. 7) in III.16 and III.31, so its front
+# page says that the words with no Lean partner are never used in a Lean proof.
+FRONT_UNUSED = {"III": "Words with no Lean partner are never used in a Lean proof."}
 
 
 def front(book):
@@ -400,7 +466,7 @@ def front(book):
     out = [GENERATED, f"[Book {book}](index.md)", "",
            f"# Book {book}: {', '.join(front_sections(book))}", "",
            "Euclid's words on the left, the Lean that stands for them on the right. "
-           "Words with no Lean partner are never used in a proof.", ""]
+           + FRONT_UNUSED.get(book, "Words with no Lean partner are never used in a proof."), ""]
     section = None
     for line in text.splitlines():
         if line.startswith("## "):
@@ -460,7 +526,8 @@ def certificate(facts, docs):
         out.append(f"- **Postulate 5**: {p5} "
                    + P5_NOTE.get(book, f"Book {book} comes after I.29, where Euclid "
                                  "first calls on it, so any of its propositions may."))
-        out.append("- **Superposition** is used directly by: " + (", ".join(sup) or "none yet")
+        nobody = "none" if len(proved) == count else "none yet"
+        out.append("- **Superposition** is used directly by: " + (", ".join(sup) or nobody)
                    + ". Only I.4 and I.8 are allowed to.")
         out += ["", "| | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |",
                 "|---|---|---|---|---|---|---|---|"]
@@ -492,7 +559,7 @@ def certificate(facts, docs):
 def graph(facts):
     out = [GENERATED, "# Who uses whom", "",
            "Each arrow runs from a proposition to one that cites it, following Euclid's own "
-           "bracketed references in Heath's translation. Green: proved in Lean; grey: sketched.",
+           "bracketed references in Heath's translation. Green: proved in Lean; grey: stated.",
            ""]
     for book, (count, titles) in BOOKS.items():
         # The enunciation counts too: I.22's [I. 20] is there.

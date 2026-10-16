@@ -175,9 +175,11 @@ with four choices worth naming:
   then, as a corollary after II.1 from the same figure (one parallel `DK`).
 - `rect` has no existence or positivity lemma yet (that a rectangle contained by any two
   straight lines can be drawn, and is something). Book II never needs one, since it
-  always draws its rectangles; Book VI will.
+  always draws its rectangles; Book VI will. (Book III's ground now proves `sq_pos` for
+  squares; see [0004](0004-book-III.md).)
 - A gap catalogue for Book II, as `docs/reports/gaps-book-I.md` is for Book I. Book II's
-  index page links it once it exists.
+  index page links it once it exists. (It now does:
+  [gaps-book-II.md](../reports/gaps-book-II.md).)
 - I.45 for any number of triangles, if a later book squares a figure of more sides;
   II.14's proof would then cite it in place of I.45, and its statement could take any
   number of triangles.

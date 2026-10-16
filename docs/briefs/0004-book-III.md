@@ -71,13 +71,13 @@ mishnah owns Heath's note on Definition 3 and says all this.
 **Circumferences.** Euclid compares circumferences only in one circle or in equal circles:
 III.26–III.30, IV.11 and IV.16, and VI.33. A new kind of magnitude for them would need
 new tacit rules, among them a rule of superposition for segments, and System E has
-none; the first mate cannot add an axiom. So a circumference is measured, by a
+none, and we add no axiom for Book III. So a circumference is measured, by a
 definition, as Definition 9 suggests: by the angle that stands on it at the
 circumference, taken twice.
 
 `circumference α B K C` is `∠ B A C + ∠ B A C` for a point `A` of `α` on the other side of
 `BC` from `K`; Lean chooses one such angle (`Classical.epsilon`), as `rect` chooses one
-rectangle. It is the angle the circumference subtends at the centre when it is less than
+area. It is the angle the circumference subtends at the centre when it is less than
 a semicircle (III.20); a semicircle is two right angles, and the whole circle four. In one
 circle, or in equal circles, two circumferences are equal exactly when these angles are,
 and that is all Euclid asks of them. The statements that compare circumferences keep his
@@ -95,18 +95,13 @@ What this costs, and what it does not:
   compares them, so no statement of his says otherwise.
 - Some of Euclid's conclusions become short by the measure. Equal angles at the
   circumferences give equal measures at once, in any two circles. Euclid's route to
-  III.26 goes by I.4, III.24 and the whole circle, and the sailors are to take it; a
+  III.26 goes by I.4, III.24 and the whole circle, and the proof takes it; a
   proof that went by the measure alone would leave "in equal circles" unused, and Lean's
   linter would say so.
 - The facts Euclid takes for granted about circumferences (that a circumference and the
   one remaining make up the circle; that the less is less than a semicircle) are proved
   from III.20–III.22, in `Elements/BookIII/Circumferences.lean`, and so a proposition that
   uses them cites those three.
-
-If the captain would rather have circumferences as magnitudes of their own, with tacit
-rules for adding them and for applying one segment to another, the statements need not
-change: they speak of `circumference` and `standing`, and only the definitions and the
-ground would.
 
 **Mixed angles.** "The angle of the semicircle is greater, and the remaining angle less,
 than any acute rectilineal angle" (III.16); "the angle of the greater segment is greater
@@ -153,8 +148,6 @@ III.1 itself finds the centre of a circle that has one: given two points `A`, `B
 circle, it constructs `D`, `C`, `E` and `F` as Euclid does and concludes `Centre F ABC`.
 The statement is the problem's answer with its construction; its content is the reductio,
 which shows that the point found is the centre, the circle having some centre `G`.
-If the captain adds Definition 15's other half (a circle has a centre) as a rule, every
-`∃ O, Centre O α` can go.
 
 ## Where the facts live
 
@@ -187,7 +180,8 @@ III.23–III.37:
 | `Circumference.centre` | a circumference beyond which the centre lies is its angle at the centre | III.20, III.21 |
 | `Circumference.whole` | the two circumferences on a straight line make up the whole circle, four right angles | III.21, III.22 |
 | `Circumference.semicircle` | a semicircle is two right angles | I.5, I.32 |
-| `Circumference.lt_semicircle`, `.gt_semicircle` | the circumference beyond the centre is less than a semicircle, the one on the centre's side greater | I.32, III.20–III.22 |
+| `Circumference.lt_semicircle` | the circumference beyond the centre is less than a semicircle | I.32, III.20, III.21 |
+| `Circumference.gt_semicircle` | the circumference on the centre's side is greater than a semicircle | I.32, III.20–III.22 |
 
 `Circumference.semicircle` proves of circumferences, by Euclid's own argument, what III.31
 proves of the angle in a semicircle: III.28 and III.29 need it first. It argues at the
@@ -274,9 +268,11 @@ worth naming. The first mate's report has a note on every statement.
 - **III.23** concludes that the circles are one, `ACB = ADB`: on one straight line and on
   one side, similar segments coincide.
 - **III.24** concludes that the circles are equal and the circumferences of the segments
-  equal. Euclid proves it by applying one segment to the other; Lean has no superposition
-  outside I.4 and I.8, and proves it by the angles at the centres (III.20, III.22) and the
-  isosceles triangles on the equal bases (I.5, I.26, I.32). The scratch proof does so.
+  equal. Euclid proves it by applying one segment to the other, and Lean has no
+  superposition outside I.4 and I.8. III.24 will be proved without applying one segment to
+  another; [the scratch proof](../reports/crew/scratch-III/T24.lean) does so, by the angles
+  at the centres (III.20, III.22) and the isosceles triangles on the equal bases (I.5,
+  I.26, I.32).
 - **III.25** finds the centre of the circle of a given segment, with Euclid's construction
   and his three cases: the centre beyond the segment, at `D`, or within it, as the angle
   `ABD` is greater than, equal to, or less than `BAD`.

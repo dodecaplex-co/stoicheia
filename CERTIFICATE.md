@@ -71,7 +71,7 @@ What the proofs show:
 What the proofs show:
 
 - **Postulate 5**: Every proved proposition uses it, the first being II.1. Book II comes after I.29, where Euclid first calls on it, so any of its propositions may.
-- **Superposition** is used directly by: none yet. Only I.4 and I.8 are allowed to.
+- **Superposition** is used directly by: none. Only I.4 and I.8 are allowed to.
 
 | | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |
 |---|---|---|---|---|---|---|---|

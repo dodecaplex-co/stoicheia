@@ -52,3 +52,5 @@ shared lemma citing I.29 or I.30, in `Elements/BookI/Helpers.lean`, before
 sailing. (It went instead into a file of its own,
 `Elements/BookI/HelpersParallels.lean`, as `Prop30.meet`, since `Helpers.lean` is
 imported by I.7; see [first-mate-04.md](first-mate-04.md).)
+
+**Axioms and gaps.** No axiom added; gaps: see [gaps-book-I.md](../gaps-book-I.md).

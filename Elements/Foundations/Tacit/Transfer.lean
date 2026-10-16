@@ -4,7 +4,7 @@ import Elements.Foundations.Tacit.Metric
 # Tacit rules: from the figure to magnitudes, and back
 
 "Since `B` lies between `A` and `C`, the whole `AC` is equal to `AB` and `BC`
-together" — Euclid moves between the figure and its magnitudes all the time.
+together": Euclid moves between the figure and its magnitudes all the time.
 These are the transfer inferences of System E, §3.6 (Avigad, Dean and Mumma,
 2009). Diagram-angle rule 5 is Postulate 5 itself, and the forward half of
 diagram-segment rule 3 is Definition 15.

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.1 at a glance</title>
-  <desc>Halve any straight line drawn across the circle (red), draw another across the circle through its middle at right angles (yellow), and halve that one too (blue): its middle is the centre.</desc>
+  <desc>Halve any straight line drawn across the circle (red), draw another (blue) across the circle through its middle at right angles (yellow), and halve that one too: its middle is the centre.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="150.0" r="112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M218.5,200.7 L208.9,174.4 A28,28 0 0,1 244.8,191.2 Z" fill="#f2b705"/>

@@ -9,8 +9,8 @@
   formalizations. It was dropped. The pages speak in one voice, and the people
   whose work a page draws on are thanked warmly where it draws on them: in the
   mishnah, in the [gap catalogue](../reports/gaps-book-I.md) and in the README.
-- **"Euclid cites" beside "Lean needs".** The certificate line now sets what
-  Euclid cites, read from Heath's brackets, beside what the Lean needs, as the plan
+- **"Euclid cites" beside "Lean cites".** The certificate line now sets what
+  Euclid cites, read from Heath's brackets, beside what the Lean cites, as the plan
   first intended.
 - **Captions.** The caption of an "at a glance" figure may be one or two short
   sentences.
@@ -93,7 +93,7 @@
   `Elements/Figure/Parallelograms.lean`, unchanged.
 - **Book II's scratch proofs in the open.** As for voyage 4, the proofs that tested
   Book II's statements are committed, not built, in
-  [`docs/reports/crew/scratch-II/`](../reports/crew/scratch-II), and the orders name
+  [`docs/reports/crew/scratch-II/`](https://github.com/jackChallis/stoicheia/tree/19279eb/docs/reports/crew/scratch-II), and the orders name
   that path, so a Codex sailor reads the same ground as a Claude one. T02 draws its
   parallel with `Prop31.parallelogram`, as the orders ask. They are retired when Book II
   is proved.
@@ -146,3 +146,23 @@
   lines in a circle are `Elements/Figure/OnCircles.lean`; and the certificate reads a
   porism as its proposition. III.14, III.15, III.26 and III.27 keep their statements, and
   `circumference` stays an angle, for the captain to decide.
+- **Book II's scratch proofs retired.** With Book II proved under Euclid's sentences, the
+  scratch proofs that tested its statements are removed from
+  `docs/reports/crew/scratch-II/`, as voyage 4's were. They stay in the history at commit
+  `19279eb`
+  ([scratch-II at 19279eb](https://github.com/jackChallis/stoicheia/tree/19279eb/docs/reports/crew/scratch-II)).
+- **A gap catalogue may follow its book.** Book II was released without its gap
+  catalogue; [`gaps-book-II.md`](../reports/gaps-book-II.md) follows its book, and Book
+  II's index page links it.
+- **Where the axioms live, checked from Lean.** `Certificate/Facts.lean` records the module
+  of every axiom the project declares and of every axiom a proposition rests on, and the
+  `opaque` words, and `check_fidelity.py` reads them: every axiom is in
+  `Elements/Foundations/`, there are 87 (5 postulates, Definition 15 and 81 tacit rules),
+  and the 17 primitive words and magnitudes of `Words.lean` and `Magnitudes.lean` stay
+  `opaque`. A change to either number is a decision for this page. The checks also refuse
+  `decide +native`, `set_option debug.…`, `run_cmd` and the other commands that could get
+  round the kernel, and CI's page check now sees new and deleted pages too.
+- **Negative tests in CI.** The breaks the plan asked for, run once at the start, are now
+  `scripts/negative_tests.py`, a CI job of their own: an edited Heath word, the README's
+  wrong radii in I.1, and Postulate 5, a planted Euclidean-only rule and an axiom hidden
+  after a docstring, all in I.16. Each must be caught, and is.

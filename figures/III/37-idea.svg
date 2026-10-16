@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.37 at a glance</title>
-  <desc>If the square on a straight line from the point (blue, below) equals the rectangle of the whole cutting line (red and black) and its outside piece (black), it is as long as the line touching from there (blue, above). The triangles they make with the centre are then equal, so it too meets the radius at right angles (yellow), and touches.</desc>
+  <desc>The lower blue line touches if its square equals the rectangle of the cutting line (red and black) and its outer part (black): then it equals the upper blue line, which touches, the triangles at the centre are equal, and its angle is right (yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="128.0" cy="150.0" r="84.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M169.4,76.9 L156.6,99.5 A26,26 0 0,0 192.1,89.8 Z" fill="#f2b705"/>

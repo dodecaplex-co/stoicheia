@@ -59,3 +59,5 @@ did not. Both sailors on a proposition had the same.
 With these sixteen, Book I is complete: forty-eight propositions, every one
 proved along Euclid's route, with the parallel postulate entering at I.29 and
 not before.
+
+**Axioms and gaps.** No axiom added; gaps: see [gaps-book-I.md](../gaps-book-I.md).

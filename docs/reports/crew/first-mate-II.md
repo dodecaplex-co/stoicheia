@@ -140,8 +140,10 @@ reach it, and none needs a statement of a later proposition.
 
 ## Scratch
 
-The statements were tested in scratch files, now committed, not built, in
-[`scratch-II/`](scratch-II), as voyage 4's were, and re-checked against this branch
+The statements were tested in scratch files, committed, not built, in
+[`scratch-II/`](https://github.com/jackChallis/stoicheia/tree/19279eb/docs/reports/crew/scratch-II),
+as voyage 4's were; they served Book II and were removed once it was proved, and are at
+commit 19279eb. They were re-checked against this branch
 after main's closing pass was merged: each compiles with `lake env lean`, T05 and
 TFirst with the `sorry`s marked below. T02 now draws `CF` with `Prop31.parallelogram`.
 The two walk files (`Walk.lean`, `WalkT.lean`) were tools and stay out.

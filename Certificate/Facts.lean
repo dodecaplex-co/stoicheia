@@ -13,6 +13,12 @@ proposition it records, straight from Lean's own proof terms:
 * exactly which postulates, definitions and tacit rules it rests on
   (via `#print axioms`, i.e. `Lean.collectAxioms`).
 
+For the whole environment it also records the module that declares every axiom of
+this project, and of every axiom a proposition rests on, and the `opaque` words, so
+that `scripts/check_fidelity.py` can check from Lean itself, not from the source
+text, that every axiom lives in `Elements/Foundations/` and that the primitive words
+stay opaque.
+
 The results go to `facts.json`, which `scripts/render.py` turns into
 `CERTIFICATE.md`, `GRAPH.md` and the pages under `book/`.
 -/
@@ -94,6 +100,25 @@ def refOf (n : Name) : String :=
 def nameStr (n : Name) : String :=
   (n.toString.replace "Elements." "")
 
+/-- The module that declares `n`, or `""` for a declaration of this file. -/
+def moduleOf (env : Environment) (n : Name) : String :=
+  match env.getModuleIdxFor? n with
+  | none => ""
+  | some idx => (env.header.moduleNames[idx.toNat]!).toString
+
+/-- Every axiom and every `opaque` constant declared in this project's own modules
+(`Elements` and below), with the module that declares it. -/
+def projectDecls (env : Environment) : Array (Name × String) × Array Name := Id.run do
+  let mut axs : Array (Name × String) := #[]
+  let mut opaques : Array Name := #[]
+  for (n, ci) in env.constants.toList do
+    let some idx := env.getModuleIdxFor? n | continue
+    let m := env.header.moduleNames[idx.toNat]!
+    unless (`Elements).isPrefixOf m do continue
+    if ci.isAxiom then axs := axs.push (n, m.toString)
+    if let .opaqueInfo _ := ci then opaques := opaques.push n
+  return (axs, opaques)
+
 end Certificate
 
 open Certificate in
@@ -106,8 +131,16 @@ run_cmd do
       if env.contains n then props := props.push n
   let propSet := NameSet.ofList props.toList
   let mut entries : Array Json := #[]
+  /- Every axiom any proposition rests on, with its module, beside those this project
+     declares: an axiom from anywhere else shows up here with the module it came from. -/
+  let (declared, opaques) := projectDecls env
+  let mut modules : Std.HashMap String String := {}
+  for (n, m) in declared do modules := modules.insert (nameStr n) m
   for p in props do
     let axs ← collectAxioms p
+    for a in axs do
+      unless leanFoundations.contains a || a == ``sorryAx do
+        modules := modules.insert (nameStr a) (moduleOf env a)
     let (cites, notions, direct, sorryHere) := directDeps env propSet p
     let restsOnSorry := axs.contains ``sorryAx
     /- A proposition is not finished until its porism is. -/
@@ -132,7 +165,10 @@ run_cmd do
       ("direct_axioms", Json.arr ((direct.toList.map nameStr).toArray.qsort (· < ·) |>.map Json.str)),
       ("lean_foundations", Json.arr (foundations.map (Json.str ∘ nameStr))),
       ("enunciation", Json.str (doc.getD ""))]
+  let axiomModules := modules.toArray.qsort (fun a b => a.1 < b.1)
   let out := Json.mkObj [("lean_version", Json.str Lean.versionString),
-    ("propositions", Json.arr entries)]
+    ("propositions", Json.arr entries),
+    ("axiom_modules", Json.mkObj (axiomModules.toList.map fun (n, m) => (n, Json.str m))),
+    ("opaque", Json.arr ((opaques.map nameStr).qsort (· < ·) |>.map Json.str))]
   IO.FS.writeFile "facts.json" (out.pretty ++ "\n")
   logInfo m!"certificate: {props.size} propositions written to facts.json"

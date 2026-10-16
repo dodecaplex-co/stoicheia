@@ -1,5 +1,9 @@
 # Sailing orders, Book II: Propositions 1–14
 
+*The scratch proofs these orders name were removed once Book II was proved; they are
+at commit 19279eb
+([scratch-II at 19279eb](https://github.com/jackChallis/stoicheia/tree/19279eb/docs/reports/crew/scratch-II)).*
+
 Every sailor, Claude or Codex, follows these orders word for word. Your proposition
 is II.N; NN is N in two digits.
 
@@ -12,7 +16,7 @@ its statement. Book I is proved: cite it as `BookI.PropN`, under Euclid's "[I. N
 how Lean says "the rectangle contained by AB, BC", "the square on AB" and "the gnomon";
 `heath/II/NN.md` and `Elements/BookII/PropNN.lean`; your note under "For the sailors"
 in `docs/reports/crew/first-mate-II.md`, and any scratch proof it names, which is in
-`docs/reports/crew/scratch-II/` (not built; check one with
+[`docs/reports/crew/scratch-II/`](https://github.com/jackChallis/stoicheia/tree/19279eb/docs/reports/crew/scratch-II) (not built; check one with
 `lake env lean docs/reports/crew/scratch-II/T02.lean`); `Elements/BookII/Rectangles.lean`
 (Book II's ground) and `Elements/Figure/Rectangles.lean`; Book Zero from
 `Elements/Figure/Basics.lean`, above all `Areas.lean` and `Parallelograms.lean`;

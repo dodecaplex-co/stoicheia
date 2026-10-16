@@ -2,7 +2,7 @@
 
 # Who uses whom
 
-Each arrow runs from a proposition to one that cites it, following Euclid's own bracketed references in Heath's translation. Green: proved in Lean; grey: sketched.
+Each arrow runs from a proposition to one that cites it, following Euclid's own bracketed references in Heath's translation. Green: proved in Lean; grey: stated.
 
 ## Book I
 
