@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.13 at a glance</title>
+  <desc>One circle touches another at a single point, whether from inside (red) or from outside (yellow): the straight line through the two centres (black) always runs to that point.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="168.00" cy="160.00" r="104.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="116.09" cy="145.12" r="50.00" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="307.51" cy="85.82" r="54.00" fill="none" stroke="#f2b705" stroke-width="3" stroke-opacity="0.9"/>
+  <line x1="168.00" y1="160.00" x2="68.03" y2="131.33" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="168.00" y1="160.00" x2="307.51" y2="85.82" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="168.00" cy="160.00" r="4.5" fill="#222222"/>
+  <circle cx="116.09" cy="145.12" r="4.5" fill="#222222"/>
+  <circle cx="307.51" cy="85.82" r="4.5" fill="#222222"/>
+  <circle cx="68.03" cy="131.33" r="4.5" fill="#222222"/>
+  <circle cx="259.83" cy="111.17" r="4.5" fill="#222222"/>
+</svg>

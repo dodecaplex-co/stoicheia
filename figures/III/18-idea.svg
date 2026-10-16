@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.18 at a glance</title>
+  <desc>The straight line from the centre to the point of contact (black) stands at right angles (yellow) to the straight line that touches the circle (red). Every other point of the red line lies outside the circle, so every other straight line from the centre to it (dashed) is longer.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="196.00" cy="118.00" r="92.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
+  <path d="M221.36,206.44 L194.44,214.15 A28,28 0 0,1 213.64,179.52 Z" fill="#f2b705"/>
+  <path d="M221.36,206.44 L213.64,179.52 A28,28 0 0,1 248.27,198.72 Z" fill="#f2b705"/>
+  <polyline points="218.05,194.90 206.52,198.21 209.82,209.74" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <polyline points="218.05,194.90 229.59,191.59 232.89,203.13" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <line x1="196.00" y1="118.00" x2="322.29" y2="177.49" stroke="#222222" stroke-width="3" stroke-dasharray="9 8" stroke-linecap="round"/>
+  <line x1="196.00" y1="118.00" x2="221.36" y2="206.44" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="62.75" y1="251.92" x2="379.97" y2="160.96" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="196.00" cy="118.00" r="4.5" fill="#222222"/>
+</svg>

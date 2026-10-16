@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.16 at a glance</title>
+  <desc>Stand a straight line at right angles (yellow) on a diameter at its end, and it falls outside the circle and touches it only there (red). Lean it ever so little (dashed) and it cuts into the circle: no straight line fits between the red line and the circumference.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="232.00" cy="150.00" r="112.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
+  <path d="M120.00,150.00 L120.00,122.00 A28,28 0 0,1 148.00,150.00 Z" fill="#f2b705"/>
+  <path d="M120.00,150.00 L148.00,150.00 A28,28 0 0,1 120.00,178.00 Z" fill="#f2b705"/>
+  <polyline points="132.00,150.00 132.00,138.00 120.00,138.00" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <polyline points="132.00,150.00 132.00,162.00 120.00,162.00" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <line x1="120.00" y1="150.00" x2="344.00" y2="150.00" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+  <line x1="87.46" y1="76.92" x2="167.23" y2="256.07" stroke="#222222" stroke-width="3" stroke-dasharray="9 8" stroke-linecap="round"/>
+  <line x1="120.00" y1="28.00" x2="120.00" y2="272.00" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="232.00" cy="150.00" r="4.5" fill="#222222"/>
+  <circle cx="120.00" cy="150.00" r="4.5" fill="#222222"/>
+</svg>
