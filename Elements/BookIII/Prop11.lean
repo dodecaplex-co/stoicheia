@@ -29,6 +29,7 @@ theorem Prop11 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
     Between F G A := by
   -- For let the two circles ABC, ADE touch one another internally at the point A, and let the
   -- centre F of the circle ABC, and the centre G of ADE, be taken;
+  /- The centres differ [III. 6], so FG is a straight line. -/
   have hFG : F ≠ G := fun e => Prop6 (Or.inl htouch) ⟨hF, e ▸ hG⟩
   obtain ⟨hA₁, hA₂, -, hwithin⟩ := htouch
   -- I say that the straight line joined from G to F and produced will fall on A.
