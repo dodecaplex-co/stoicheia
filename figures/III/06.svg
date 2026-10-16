@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid III.6: touching circles cannot have the same centre</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <!-- ABC and CDE touch at C; F is the supposed common centre. -->
+  <g fill="none" stroke="#a0522d" stroke-width="2.4">
+    <circle cx="200" cy="150" r="115"/>
+    <circle cx="170.4" cy="127.8" r="78"/>
+  </g>
+  <!-- FC joined, and FEB drawn through. -->
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6">
+    <line x1="180" y1="145" x2="108" y2="81"/>
+    <line x1="180" y1="145" x2="313.627" y2="167.717"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="200" cy="265" r="2.6"/>
+    <circle cx="313.627" cy="167.717" r="2.6"/>
+    <circle cx="108" cy="81" r="2.6"/>
+    <circle cx="170.4" cy="205.8" r="2.6"/>
+    <circle cx="243.221" cy="155.748" r="2.6"/>
+    <circle cx="180" cy="145" r="2.6"/>
+    <text x="194" y="287">A</text>
+    <text x="325" y="174">B</text>
+    <text x="87" y="75">C</text>
+    <text x="164" y="227">D</text>
+    <text x="253" y="149">E</text>
+    <text x="170" y="165">F</text>
+  </g>
+</svg>
