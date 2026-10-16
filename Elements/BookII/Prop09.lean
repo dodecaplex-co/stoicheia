@@ -137,7 +137,7 @@ theorem Prop9 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
     have hAEB : ∠ A E B = ∟ := by
       have hsplit := angle_add_of_between (Triangle.of_line hA_AB hB_AB hAB hE_AB) hACB
       have heq : ∠ C E A = ∠ C E B :=
-        Magnitude.eq_of_add_self_eq (by rw [← h5a]; exact hhalf_CAE.trans hhalf_CEB.symm)
+        Magnitude.eq_of_add_self_eq (hhalf_CEA.trans hhalf_CEB.symm)
       rw [hsplit, angle_symm hEA.symm hCE', heq]; exact hhalf_CEB
     -- And, since the angle GEF is half a right angle,
     have hGEF : ∠ G E F = ∠ C E B :=
@@ -150,8 +150,8 @@ theorem Prop9 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
       have h29 := BookI.Prop29.exterior hpG.1.symm.swap_left
         hpG.rotate.rotate.rotate.sameSideOf.symm hEGC
       rw [h29, angle_onRay_left (OnRay.of_between (between_symm hEGC)) hCD.symm,
-        angle_symm hCE'.symm hCD.symm]
-      exact rightAt hD_AB hCD.symm
+        angle_onRay_right (OnRay.of_between hCDB) hCE'.symm, angle_symm hCE'.symm hCB.symm]
+      exact hBCE
     -- the remaining angle EFG is half a right angle; [I. 32]
     have hFEG : Triangle F E G := by
       refine Triangle.of_line hF_EB hE_EB (ne_of_between hEFB).symm fun h => ?_
@@ -188,8 +188,9 @@ theorem Prop9 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
     have hFDB : ∠ F D B = ∟ := by
       have h29 := BookI.Prop29.exterior hpG.2.swap_right hpG.sameSideOf.swap (between_symm hCDB)
       rw [angle_symm hDF.symm hDB.symm, h29,
-        angle_onRay_right (OnRay.of_between (between_symm hEGC)) hCD.symm]
-      exact rightAt hD_AB hCD.symm
+        angle_onRay_right (OnRay.of_between (between_symm hEGC)) hCD.symm,
+        angle_onRay_left (OnRay.of_between hCDB) hCE'.symm]
+      exact hBCE
     have hBDF : ∠ B D F = ∟ := (angle_symm hDB.symm hDF.symm).trans hFDB
     -- the remaining angle BFD is half a right angle; [I. 32]
     have hFB : F ≠ B := ne_of_between (between_symm hEFB) |>.symm

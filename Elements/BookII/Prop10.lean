@@ -135,6 +135,8 @@ theorem Prop10 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C 
     CommonNotion3 (c := ∟) (d := ∟) (by rw [← h32a]; ac_rfl) rfl
   have hhalf_CEA : ∠ C E A + ∠ C E A = ∟ := by
     rw [← hrem_a, angle_symm hEA hAC'.symm, h5a]
+  have hhalf_EAC : ∠ E A C + ∠ E A C = ∟ := by
+    rw [angle_symm hEA hAC'.symm, h5a]; exact hhalf_CEA
   -- For the same reason
   -- each of the angles CEB, EBC is also half a right angle;
   have h5b : ∠ C B E = ∠ C E B := BookI.Prop5.base hCBE (by rw [hCE, len_symm C A, hAC])
