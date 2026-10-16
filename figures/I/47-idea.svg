@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.47 at a glance: the theorem of Pythagoras</title>
-  <desc>Count the little squares: 9 and 16 make 25. Euclid proves it for every right-angled triangle, and never counts anything.</desc>
+  <desc>Count the little squares: 9 (yellow) and 16 (blue) make 25 (red). Euclid proves it for every right-angled triangle, and never counts anything.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <g transform="translate(-22,-8)">
   <polygon points="170.0,200.0 170.0,134.0 104.0,134.0 104.0,200.0" fill="#f2b705" fill-opacity="0.95"/>
