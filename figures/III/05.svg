@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="330" viewBox="0 0 400 330">
+  <title>Euclid III.5: circles that cut have different centres</title>
+  <rect width="400" height="330" rx="10" fill="#fbf7ee"/>
+  <g fill="none">
+    <circle cx="160" cy="170" r="88" stroke="#a0522d" stroke-width="2.4"/>
+    <circle cx="212" cy="192" r="118" stroke="#8c7b62" stroke-width="1.3"/>
+    <path d="M 168.296,82.392 L 158,175 L 297.884,272.919" stroke="#3b2f2f" stroke-width="1.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="80.245" cy="132.810" r="2.6"/>
+    <circle cx="102.901" cy="236.961" r="2.6"/>
+    <circle cx="168.296" cy="82.392" r="2.6"/>
+    <circle cx="124.309" cy="113.043" r="2.6"/>
+    <circle cx="158" cy="175" r="2.6"/>
+    <circle cx="228.958" cy="224.670" r="2.6"/>
+    <circle cx="297.884" cy="272.919" r="2.6"/>
+  </g>
+  <g font-family="Georgia, serif" font-size="17" font-style="italic" fill="#3b2f2f">
+    <text x="60" y="130">A</text>
+    <text x="84" y="254">B</text>
+    <text x="170" y="67">C</text>
+    <text x="135" y="128">D</text>
+    <text x="138" y="180">E</text>
+    <text x="233" y="252">F</text>
+    <text x="307" y="286">G</text>
+  </g>
+</svg>
