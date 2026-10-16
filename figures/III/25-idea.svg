@@ -2,7 +2,7 @@
   <title>III.25 at a glance</title>
   <desc>To complete a segment of a circle (blue), halve the straight line under it, stand a perpendicular at the middle, and copy the angle at the top to the end (yellow). Where they meet is the centre, equally far (red) from the three points, and the circle is complete.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <path d="M307.8,112.0 A118.0,118.0 0 1,1 92.2,112.0" fill="none" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <path d="M307.8,112.0 A118.0,118.0 0 1,1 92.2,112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6" stroke-linecap="round"/>
   <line x1="92.2" y1="112.0" x2="307.8" y2="112.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
   <path d="M92.2,112.0 L122.4,92.4 A36,36 0 0,1 125.1,126.6 Z" fill="#f2b705"/>
   <path d="M200.0,42.0 L200.0,78.0 A36,36 0 0,1 169.8,61.6 Z" fill="#f2b705"/>

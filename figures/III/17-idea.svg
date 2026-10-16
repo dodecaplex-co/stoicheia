@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.17 at a glance</title>
-  <desc>Draw a circle through the given point about the same centre (black), and where the straight line from the point to the centre crosses the given circle (blue), stand a straight line at right angles (yellow) out to the black circle. Join its end to the centre: the same triangle, turned over, puts a right angle (yellow) where the join crosses the blue circle, and the straight line from the point to there touches it (red).</desc>
+  <desc>Draw a circle through the given point about the same centre (black). Where the straight line from the point to the centre crosses the given circle (blue), stand a straight line at right angles (yellow) out to the black circle, and join its end to the centre: the same triangle, turned over, has its right angle on the blue circle, and the red line from the point touches there.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="142.00" cy="150.00" r="84.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
-  <path d="M289.26,14.67 A200.00,200.00 0 0,1 289.26,285.33" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.75"/>
+  <path d="M289.26,14.67 A200.00,200.00 0 0,1 289.26,285.33" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M212.78,195.24 L192.56,182.31 A24,24 0 0,1 225.70,175.01 Z" fill="#f2b705"/>
   <path d="M212.78,104.76 L225.70,124.99 A24,24 0 0,1 192.56,117.69 Z" fill="#f2b705"/>
   <polyline points="204.35,189.85 209.74,181.42 218.16,186.81" fill="none" stroke="#222222" stroke-width="1.6"/>

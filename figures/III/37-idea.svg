@@ -2,7 +2,7 @@
   <title>III.37 at a glance</title>
   <desc>If the square on a straight line from the point (blue, below) equals the rectangle of the whole cutting line (red and black) and its outside piece (black), it is as long as the line touching from there (blue, above). The triangles they make with the centre are then equal, so it too meets the radius at right angles (yellow), and touches.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <circle cx="128.0" cy="150.0" r="84.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="128.0" cy="150.0" r="84.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M169.4,76.9 L156.6,99.5 A26,26 0 0,0 192.1,89.8 Z" fill="#f2b705"/>
   <path d="M155.9,229.2 L147.2,204.7 A26,26 0 0,1 180.4,220.6 Z" fill="#f2b705"/>
   <polyline points="163.0,88.2 174.3,94.7 180.7,83.3" fill="none" stroke="#222222" stroke-width="1.6"/>

@@ -2,7 +2,7 @@
   <title>III.20 at a glance</title>
   <desc>When an angle at the centre and an angle at the circumference stand on the same circumference (red), the one at the centre is double the other: two yellow angles to one.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <circle cx="200.0" cy="152.0" r="112.0" fill="none" stroke="#222222" stroke-width="3"/>
+  <circle cx="200.0" cy="152.0" r="112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M158.0,48.2 L175.7,72.4 A30,30 0 0,1 150.8,77.3 Z" fill="#f2b705"/>
   <path d="M200.0,152.0 L200.0,182.0 A30,30 0 0,1 177.0,171.3 Z" fill="#f2b705"/>
   <path d="M200.0,152.0 L223.0,171.3 A30,30 0 0,1 200.0,182.0 Z" fill="#f2b705"/>

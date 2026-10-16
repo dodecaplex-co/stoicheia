@@ -2,7 +2,7 @@
   <title>III.16 at a glance</title>
   <desc>Stand a straight line at right angles (yellow) on a diameter at its end, and it falls outside the circle and touches it only there (red). Lean it ever so little (dashed) and it cuts into the circle: no straight line fits between the red line and the circumference.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <circle cx="232.00" cy="150.00" r="112.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="232.00" cy="150.00" r="112.00" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M120.00,150.00 L120.00,122.00 A28,28 0 0,1 148.00,150.00 Z" fill="#f2b705"/>
   <path d="M120.00,150.00 L148.00,150.00 A28,28 0 0,1 120.00,178.00 Z" fill="#f2b705"/>
   <polyline points="132.00,150.00 132.00,138.00 120.00,138.00" fill="none" stroke="#222222" stroke-width="1.6"/>

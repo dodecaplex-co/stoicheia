@@ -2,13 +2,13 @@
   <title>III.33 at a glance</title>
   <desc>Lay the given angle (red) at one end of the straight line. The circle that touches its other arm there (blue) and passes through the far end cuts off a segment (yellow) whose angles all equal it.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <circle cx="256.0" cy="149.8" r="112.3" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="256.0" cy="149.84" r="112.27" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M34.0,158.0 L64.0,158.0 A30,30 0 0,0 53.3,135.0 Z" fill="#d0312d"/>
   <path d="M170.0,222.0 L208.0,222.0 A38,38 0 0,1 194.4,251.1 Z" fill="#d0312d"/>
-  <path d="M203.3,50.7 L196.4,86.1 A36,36 0 0,0 226.0,78.7 Z" fill="#d0312d"/>
+  <path d="M203.3,50.7 L196.4,86.0 A36,36 0 0,0 226.0,78.7 Z" fill="#d0312d"/>
   <line x1="34.0" y1="158.0" x2="122.0" y2="158.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
   <line x1="34.0" y1="158.0" x2="90.6" y2="90.6" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
-  <path d="M342.0,222.0 A112.3,112.3 0 1,0 170.0,222.0" fill="none" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
+  <path d="M342.0,222.0 A112.27,112.27 0 1,0 170.0,222.0" fill="none" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
   <line x1="203.3" y1="50.7" x2="170.0" y2="222.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="203.3" y1="50.7" x2="342.0" y2="222.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="141.7" y1="188.3" x2="217.6" y2="278.7" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>

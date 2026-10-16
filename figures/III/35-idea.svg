@@ -2,9 +2,9 @@
   <title>III.35 at a glance</title>
   <desc>When two straight lines cut one another in a circle (red, blue), the rectangle contained by the two pieces of the one equals that contained by the two pieces of the other (both yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <circle cx="112.0" cy="150.0" r="88.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="112.0" cy="150.0" r="88.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <line x1="110.2" y1="62.0" x2="169.8" y2="216.4" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
-  <line x1="198.5" y1="133.8" x2="93.1" y2="235.9" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <line x1="198.5" y1="133.8" x2="93.0" y2="235.9" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <circle cx="154.4" cy="176.5" r="4.5" fill="#222222"/>
   <polygon points="243.9,89.3 286.6,89.3 286.6,212.0 243.9,212.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <polygon points="324.6,126.6 386.0,126.6 386.0,212.0 324.6,212.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>

@@ -2,7 +2,7 @@
   <title>III.32 at a glance</title>
   <desc>A straight line drawn across the circle from where the tangent (blue) touches makes angles with the tangent equal to the angles in the segments on the other side of it: red to red, and yellow to yellow.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <circle cx="200.0" cy="140.0" r="100.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="200.0" cy="140.0" r="100.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M200.0,240.0 L236.0,240.0 A36,36 0 0,0 216.3,207.9 Z" fill="#d0312d"/>
   <path d="M113.4,90.0 L134.4,126.4 A42,42 0 0,0 155.3,87.8 Z" fill="#d0312d"/>
   <path d="M200.0,240.0 L170.0,240.0 A30,30 0 0,1 213.6,213.3 Z" fill="#f2b705"/>

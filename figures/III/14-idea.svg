@@ -2,7 +2,7 @@
   <title>III.14 at a glance</title>
   <desc>In a circle, equal straight lines (red) stand equally far from the centre (yellow), and straight lines that stand equally far from it are equal.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <circle cx="200.00" cy="150.00" r="120.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="200.00" cy="150.00" r="120.00" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <polyline points="164.03,115.27 172.37,106.64 163.74,98.30" fill="none" stroke="#222222" stroke-width="1.6"/>
   <polyline points="247.55,165.45 243.84,176.86 255.26,180.57" fill="none" stroke="#222222" stroke-width="1.6"/>
   <line x1="226.77" y1="33.02" x2="84.03" y2="180.84" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>

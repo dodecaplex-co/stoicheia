@@ -2,7 +2,7 @@
   <title>III.19 at a glance</title>
   <desc>At the point where a straight line touches the circle (red), stand a straight line at right angles to it (yellow): it runs through the centre (black).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <circle cx="206.00" cy="136.00" r="98.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="206.00" cy="136.00" r="98.00" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M175.72,229.20 L149.09,220.55 A28,28 0 0,1 184.37,202.57 Z" fill="#f2b705"/>
   <path d="M175.72,229.20 L184.37,202.57 A28,28 0 0,1 202.35,237.86 Z" fill="#f2b705"/>
   <polyline points="179.42,217.79 168.01,214.08 164.30,225.50" fill="none" stroke="#222222" stroke-width="1.6"/>

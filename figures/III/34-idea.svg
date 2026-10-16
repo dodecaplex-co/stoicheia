@@ -2,7 +2,7 @@
   <title>III.34 at a glance</title>
   <desc>Draw a straight line touching the circle (blue) and lay the given angle (red) against it where it touches: the straight line across cuts off a segment (yellow) whose angles all equal the given one.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <circle cx="252.0" cy="140.0" r="100.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="252.0" cy="140.0" r="100.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M32.0,96.0 L62.0,96.0 A30,30 0 0,0 47.9,70.6 Z" fill="#d0312d"/>
   <path d="M252.0,240.0 L282.0,240.0 A30,30 0 0,0 267.9,214.6 Z" fill="#d0312d"/>
   <path d="M154.2,119.2 L178.1,148.7 A38,38 0 0,0 191.9,114.6 Z" fill="#d0312d"/>
