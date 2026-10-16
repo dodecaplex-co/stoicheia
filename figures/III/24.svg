@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="240" viewBox="0 0 400 240">
+  <title>Euclid III.24: similar segments on equal straight lines</title>
+  <rect width="400" height="240" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 40 160 A 87.5 87.5 0 0 1 180 160" stroke="#a0522d" stroke-width="2.5"/>
+    <path d="M 230 160 A 87.5 87.5 0 0 1 370 160" stroke="#a0522d" stroke-width="2.5"/>
+    <path d="M 230 160 C 260 146 300 116 325 116 C 369 116 391 130 370 160" stroke="#8c7b62" stroke-width="1.3"/>
+    <path d="M 40 160 H 180 M 230 160 H 370" stroke="#3b2f2f" stroke-width="1.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="40" cy="160" r="2.6"/>
+    <circle cx="180" cy="160" r="2.6"/>
+    <circle cx="230" cy="160" r="2.6"/>
+    <circle cx="370" cy="160" r="2.6"/>
+    <circle cx="110" cy="125" r="2.6"/>
+    <circle cx="282" cy="126.871" r="2.6"/>
+    <circle cx="325" cy="116" r="2.6"/>
+  </g>
+  <g fill="#3b2f2f" font-family="Georgia, serif" font-size="17" font-style="italic" text-anchor="middle">
+    <text x="36" y="184">A</text>
+    <text x="184" y="184">B</text>
+    <text x="226" y="184">C</text>
+    <text x="374" y="184">D</text>
+    <text x="110" y="111">E</text>
+    <text x="277" y="113">F</text>
+    <text x="325" y="102">G</text>
+  </g>
+</svg>
