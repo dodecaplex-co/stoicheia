@@ -6,9 +6,9 @@
     <line x1="260" y1="65" x2="60" y2="235"/>
     <line x1="60" y1="235" x2="360" y2="235"/>
     <line x1="260" y1="65" x2="260" y2="235"/>
+    <polyline points="260,223 272,223 272,235"/>
   </g>
   <line x1="260" y1="65" x2="360" y2="235" stroke="#a0522d" stroke-width="2.4"/>
-  <polyline points="260,223 272,223 272,235" fill="none" stroke="#a0522d" stroke-width="1.6"/>
   <g fill="#3b2f2f">
     <circle cx="260" cy="65" r="2.6"/>
     <circle cx="60" cy="235" r="2.6"/>

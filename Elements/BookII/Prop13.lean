@@ -67,7 +67,6 @@ theorem Prop13 {A B C D : Point} (hABC : Triangle A B C) (hB : IsAcute A B C) (h
     exact lt_irrefl _ h
   have hDA : D ≠ A := fun e => hA_BC (e ▸ hD_BC)
   have hADB : ∠ A D B = ∟ := hAD B (col hB_BC) hDB.symm
-  have hBDA : ∠ B D A = ∟ := (angle_symm hDB.symm hDA.symm).trans hADB
   have hADC : ∠ A D C = ∟ := hAD C (col hC_BC) hDC.symm
   -- I say that the square on AC is less than the squares on CB, BA by twice the rectangle
   -- contained by CB, BD.
@@ -94,6 +93,7 @@ theorem Prop13 {A B C D : Point} (hABC : Triangle A B C) (hB : IsAcute A B C) (h
     ac_rfl
   -- But the square on AB is equal to the squares on BD, DA, for the angle at D is
   -- right; [I. 47]
+  have hBDA : ∠ B D A = ∟ := (angle_symm hDB.symm hDA.symm).trans hADB
   have h47a : sq A B = sq B D + sq D A := by
     rw [sq_symm A B]
     exact BookI.Prop47.sq (Triangle.of_line hD_BC hB_BC hDB hA_BC) hBDA
