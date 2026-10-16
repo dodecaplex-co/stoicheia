@@ -20,7 +20,7 @@ open Tacit
 
 /-- Euclid takes for granted that at `A` only one straight line is at right angles to
 `AD`. On each side of `AD`, equal angles give the same ray; producing one ray through
-`A` gives the perpendicular on the other side. This excludes the foot `G` being `A`. -/
+`A` gives the perpendicular on the other side. So the foot `G` cannot be `A`. -/
 theorem Prop16.one_perp {A D E F : Point} (hE : Triangle D A E) (hF : Triangle D A F)
     (hDAE : ∠ D A E = ∟) (hDAF : ∠ D A F = ∟) : Collinear A E F := by
   have hAD : A ≠ D := hE.ne₁₂.symm
@@ -117,7 +117,7 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
       exact hF ⟨L, hA_L, hE_L, hA_L⟩
     /- If AF passes through the centre, D itself is already within the circle. -/
     have hDF : ¬ Collinear A F D := fun h => hFA ⟨D, h, centre_inside hD⟩
-    /- Drawing this perpendicular is I.12, which Euclid leaves unbracketed. -/
+    /- Euclid gives no citation for drawing this perpendicular: it is I.12. -/
     obtain ⟨G, hG, hDG⟩ := BookI.Prop12 hAF hDF
     have hDAF : Triangle D A F := fun ⟨M, h1, h2, h3⟩ => hDF ⟨M, h2, h3, h1⟩
     /- Were G to be A, AF and AE would be the same perpendicular to AD. -/

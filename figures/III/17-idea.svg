@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.17 at a glance</title>
-  <desc>Draw a circle about the same centre through the given point (the outer circle). Where the straight line to the point crosses the blue circle, a perpendicular (yellow) reaches the outer circle; the same triangle, turned over, gives the red line its right angle where it touches.</desc>
+  <desc>Draw a circle about the given circle's centre through the given point. Where the straight line to it crosses the given circle (blue), a perpendicular (black) reaches the new circle; turned over, the same triangle gives the touching line (red) a right angle (yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="142.00" cy="150.00" r="84.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
   <path d="M289.26,14.67 A200.00,200.00 0 0,1 289.26,285.33" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
