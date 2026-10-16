@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid III.2: the straight line joining two points of a circle falls within</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="213" cy="136" r="108" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <!-- DA and DB joined; DFE drawn through the circumference to E outside. -->
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6">
+    <path d="M 106.641 154.754 L 213 136 L 231.754 242.359"/>
+    <path d="M 213 136 L 153 250"/>
+  </g>
+  <!-- Heath bows the supposed straight line AEB outside the circle. -->
+  <path d="M 106.641 154.754 C 97 204 119 235 153 250 C 179 261 212 257 231.754 242.359" fill="none" stroke="#a0522d" stroke-width="2.5"/>
+  <g fill="#3b2f2f">
+    <circle cx="106.641" cy="154.754" r="2.6"/>
+    <circle cx="231.754" cy="242.359" r="2.6"/>
+    <circle cx="213" cy="136" r="2.6"/>
+    <circle cx="153" cy="250" r="2.6"/>
+    <circle cx="162.699" cy="231.571" r="2.6"/>
+    <text x="86" y="158">A</text>
+    <text x="238" y="264">B</text>
+    <text x="305" y="65">C</text>
+    <text x="218" y="126">D</text>
+    <text x="142" y="274">E</text>
+    <text x="149" y="215">F</text>
+  </g>
+</svg>
