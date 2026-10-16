@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.39 at a glance</title>
-  <desc>If two triangles on the same base (red) are equal in area (yellow), the line through their tips runs parallel to the base (blue).</desc>
+  <desc>If two triangles on the same base (red), and on the same side of it, are equal in area (yellow), the straight line through their tips is parallel to the base (blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="70.0,85.0 150.0,215.0 250.0,215.0" fill="#f2b705" fill-opacity="0.9"/>
   <polygon points="295.0,85.0 150.0,215.0 250.0,215.0" fill="#f2b705" fill-opacity="0.9"/>

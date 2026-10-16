@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.35 at a glance</title>
-  <desc>Two parallelograms on the same base and between the same parallels (blue) are equal: each is the yellow piece plus a red triangle, and the two red triangles are the same.</desc>
+  <desc>Two parallelograms on the same base and between the same parallels (blue) are equal: each is the yellow piece plus a red triangle, and the two red triangles are equal.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="167.5,85.0 62.5,215.0 232.5,215.0 247.5,85.0" fill="#f2b705" fill-opacity="0.9"/>
   <polygon points="77.5,85.0 62.5,215.0 167.5,85.0" fill="#d0312d" fill-opacity="0.9"/>
