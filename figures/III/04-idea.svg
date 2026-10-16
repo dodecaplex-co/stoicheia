@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.4 at a glance</title>
+  <desc>Two straight lines that cross in a circle away from the centre never cut each other in half: if one is halved (red), the pieces of the other (blue, yellow) are unequal.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="200.0" cy="150.0" r="112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
+  <line x1="166.0" y1="180.0" x2="218.7" y2="39.6" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <line x1="166.0" y1="180.0" x2="141.4" y2="245.5" stroke="#f2b705" stroke-width="7" stroke-linecap="round"/>
+  <line x1="233.8" y1="256.8" x2="166.0" y2="180.0" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="166.0" y1="180.0" x2="98.2" y2="103.2" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="200.0" cy="150.0" r="4.5" fill="#222222"/>
+</svg>

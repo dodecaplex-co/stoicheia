@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.2 at a glance</title>
+  <desc>Join any two points on a circle with a straight line (red), and it falls inside the circle: never outside it (dashed), nor along the circumference.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="224.0" cy="150.0" r="108.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
+  <path d="M143.7,77.7 A87.1,87.1 0 0,0 176.7,247.1" fill="none" stroke="#222222" stroke-width="3" stroke-dasharray="9 8" stroke-linecap="round"/>
+  <line x1="143.7" y1="77.7" x2="176.7" y2="247.1" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="143.7" cy="77.7" r="4.5" fill="#222222"/>
+  <circle cx="176.7" cy="247.1" r="4.5" fill="#222222"/>
+</svg>
