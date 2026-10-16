@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.24 at a glance</title>
-  <desc>Two triangles with the same two sides (blue and red): open the angle between them wider (yellow), and the base (black) comes out longer.</desc>
+  <desc>Two triangles with the same two sides (blue and red): open the angle between them (yellow) wider, and the base (black) is greater.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M148.6,128.4 L171.3,150.9 A32,32 0 0,1 122.5,146.9 Z" fill="#f2b705"/>
   <path d="M355.8,94.7 L358.5,126.6 A32,32 0 0,1 337.4,120.9 Z" fill="#f2b705"/>
