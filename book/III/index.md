@@ -6,6 +6,8 @@
 
 Start with the [definitions](front.md).
 
+Books and papers to read alongside, from Proclus to Lean, are gathered by theme in [the reading list](../../docs/reading.md).
+
 | | Proposition | |
 |---|---|---|
 | 🚧 | [III.1](01.md) **Finding the centre of a circle** | To find the centre of a given circle. |

@@ -1,7 +1,8 @@
 # License for the prose and figures
 
-The commentary in [`mishnah/`](mishnah), the figures in [`figures/`](figures), the
-documents in [`docs/`](docs), and the README are licensed under the
+The commentary in [`mishnah/`](mishnah), the further reading in `reading/`, the
+figures in [`figures/`](figures), the documents in [`docs/`](docs), and the README are
+licensed under the
 [Creative Commons Attribution 4.0 International License (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
 
 You may share and adapt them for any purpose, including commercially, as long as

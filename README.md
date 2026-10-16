@@ -50,6 +50,8 @@ Here is the heart of I.1. Euclid's sentences are the comments:
 
 That `circles_meet` is a step Euclid never justifies. Heath: "It is a commonplace that Euclid has no right to assume, without premising some postulate, that the two circles will meet in a point C." In Lean it has to be a named rule, and so it appears on I.1's certificate.
 
+To read further, a page may end with a line or three chosen for its proposition, and [the reading list](docs/reading.md) gathers books, papers and a few web pages by theme, from Proclus and Hilbert to Lean, marking the ones free online.
+
 ## What Euclid takes for granted
 
 The foundations are in [`Elements/Foundations/`](Elements/Foundations):

@@ -1,10 +1,11 @@
-"""Build the readable pages from Heath's text, the Lean files, the mishnah and
-`facts.json`, for every book in `heath.BOOKS`:
+"""Build the readable pages from Heath's text, the Lean files, the mishnah, the
+further reading and `facts.json`, for every book in `heath.BOOKS`:
 
     book/I/index.md    the book, proposition by proposition
     book/I/front.md    its definitions (and Book I's postulates and common notions),
                        with their Lean
-    book/I/NN.md       one page per proposition
+    book/I/NN.md       one page per proposition; after the mishnah, `reading/I/NN.md`
+                       under "Further reading", when that file exists
     CERTIFICATE.md     what every proposition rests on, book by book
     GRAPH.md           who uses whom, book by book
 
@@ -302,6 +303,11 @@ def page(book, n, count, titles, facts, docs):
         out += [mishnah.read_text().strip(), ""]
     else:
         out += ["_Commentary to come._", ""]
+    # A line or three from docs/reading.md, chosen for this proposition; no file, no section.
+    reading = ROOT / "reading" / book / f"{n:02d}.md"
+    further = reading.read_text().strip() if reading.exists() else ""
+    if further:
+        out += ["## Further reading", "", further, ""]
     out += ["---", "", euclids_text(source), "", TACIT_CREDIT, ""]
     return "\n".join(out)
 
@@ -336,6 +342,8 @@ def index(book, count, titles, facts):
     out = [GENERATED, f"# Book {book}", "",
            f"**{proved} of {count} propositions proved in Lean.** {legend}", "",
            start, "",
+           "Books and papers to read alongside, from Proclus to Lean, are gathered by theme "
+           "in [the reading list](../../docs/reading.md).", "",
            "| | Proposition | |", "|---|---|---|"]
     for n in range(1, count + 1):
         st = facts.get(f"{book}.{n}", {}).get("status", "sketched")

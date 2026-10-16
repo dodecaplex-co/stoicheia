@@ -50,13 +50,15 @@ too: a proof, a mishnah, a figure or the transcription.
 
 ## Writing commentary or drawing figures
 
-[docs/STYLE.md](docs/STYLE.md) has the rules for the voice, the mishnah and the
-figures. In short:
+[docs/STYLE.md](docs/STYLE.md) has the rules for the voice, the mishnah, the further
+reading and the figures. In short:
 
 - `mishnah/<book>/NN.md`: 200 to 500 words, in the same voice as the rest. What
   does Euclid take for granted? What did Lean make us say? How does the result look
   with coordinates, vectors or complex numbers? Quote Heath (public domain) freely,
   credit everyone, and keep it friendly.
+- `reading/<book>/NN.md`: one to three friendly lines of further reading, only from
+  [the reading list](docs/reading.md), by the rule in STYLE.
 - Each proposition has two figures, both on the parchment background:
   - `figures/<book>/NN-idea.svg`, the "at a glance" figure: no letters, Byrne's
     red (#d0312d), yellow (#f2b705), blue (#1f5aa6) and black, equal things in the

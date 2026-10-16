@@ -4,16 +4,16 @@ Every sailor, Claude or Codex, follows these orders word for word. Your proposit
 is III.N; NN is N in two digits.
 
 **The job.** Prove III.N in Lean along Euclid's route, his steps in his order,
-citing what he cites where he cites it; draw his figure; write the mishnah. Others are
-proving the rest of Book III at once, so cite any proposition of Book III by its
-statement. Books I and II are proved: cite them as `BookI.PropN` and `BookII.PropN`,
-under Euclid's "[I. N]" and "[II. N]".
+citing what he cites where he cites it; draw his figure; write the mishnah and a line
+or three of further reading. Others are proving the rest of Book III at once, so cite
+any proposition of Book III by its statement. Books I and II are proved: cite them as
+`BookI.PropN` and `BookII.PropN`, under Euclid's "[I. N]" and "[II. N]".
 
-**Read first.** `docs/STYLE.md` and `CONTRIBUTING.md`; `docs/briefs/0004-book-III.md`,
-how Lean says "equal circles", "touches", "the circumference BKC" and "the angle standing
-on a circumference", and why the circles carry their centres; `heath/III/NN.md` and
-`Elements/BookIII/PropNN.lean`; your note under "For the sailors" in
-`docs/reports/crew/first-mate-III.md`, and any scratch proof it names, which is in
+**Read first.** `docs/STYLE.md`, `CONTRIBUTING.md` and `docs/reading.md`;
+`docs/briefs/0004-book-III.md`, how Lean says "equal circles", "touches", "the
+circumference BKC" and "the angle standing on a circumference", and why the circles
+carry their centres; `heath/III/NN.md` and `Elements/BookIII/PropNN.lean`; your note
+under "For the sailors" in `docs/reports/crew/first-mate-III.md`, and any scratch proof it names, which is in
 `docs/reports/crew/scratch-III/` (not built; check one with
 `lake env lean docs/reports/crew/scratch-III/T20.lean`);
 `Elements/Foundations/DefinitionsIII.lean`, `Elements/Figure/OnCircles.lean` (Book Zero for
@@ -102,8 +102,8 @@ part from him (III.24 has no superposition; III.5 and III.6 fall to `circle_eq`)
 sentences, put Lean under them that does the same work, and let the mishnah say how.
 
 **The rules.** Edit only `Elements/BookIII/PropNN.lean`, `figures/III/NN.svg`,
-`mishnah/III/NN.md`; the ground, Book Zero, Books I and II stay as they are. Import
-`Elements.Figure.Basics`, `Elements.BookIII.Squares` (and from III.23 on
+`mishnah/III/NN.md`, `reading/III/NN.md`; the ground, Book Zero, Books I and II stay as
+they are. Import `Elements.Figure.Basics`, `Elements.BookIII.Squares` (and from III.23 on
 `Elements.BookIII.Circumferences`), every proposition you cite (`Elements.BookI.PropNN`,
 `Elements.BookII.PropNN`, `Elements.BookIII.PropNN`), and `Elements.BookI.Helpers` for
 `Prop5.base`. Keep every `--` line word for word, Lean under it, your remarks in `/- … -/`.
@@ -155,6 +155,19 @@ figure each, carrying all their cases. Check 20 drops the word "PORISM" (III.1, 
 which is not a letter. Circles are `#8c7b62`; the circle or
 circumference the proposition is about may be drawn in `#a0522d`.
 
+**Further reading.** Write `reading/III/NN.md` the same way as the pages of Books I and
+II, by STYLE §2: one to three lines, each a list item naming a work on `docs/reading.md`,
+with the list's link and a friendly sentence on what it adds to III.N; nothing that is
+not on the list. For the circle, look first at Benno Artmann's chapter "Euclid Book III:
+About the Circle"; Coxeter and Greitzer's *Geometry Revisited* (circles, chapter 2;
+inversion, chapter 5); Kiran Kedlaya's *Geometry Unbound* (the power of a point and the
+radical axis, chapter 6; cyclic quadrilaterals, chapter 8); Tristan Needham on inversion
+(chapter 3); for the straight lines in a circle and their tables, Eli Maor's
+*Trigonometric Delights* (chapter 2), Glen Van Brummelen and Ptolemy's *Almagest*; and
+Felix Klein's *Elementary Mathematics from a Higher Standpoint* for the horn angle of
+III.16. Choose what truly fits III.N: one apt line is better than three loose ones.
+Check it with STYLE check 25.
+
 **Verify.**
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
@@ -169,9 +182,9 @@ pp. 1–76; page N is scan leaf N + 12). No `lake update` or `lake clean`. The g
 pages are rendered after the merge, so CI's "generated pages up to date" step fails on
 your branch until then; that is expected.
 
-**Finish.** Commit your three files by name, "III.N: proof, figure and mishnah"; not
-`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`. Codex sailors: your sandbox
-cannot write to `.git`, so leave the three files for your bosun to commit. Don't
+**Finish.** Commit your four files by name, "III.N: proof, figure, mishnah and further
+reading"; not `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`. Codex sailors: your
+sandbox cannot write to `.git`, so leave the four files for your bosun to commit. Don't
 push, merge or rebase.
 
 **Report:** proved or where the `sorry` is; your helpers; citations beyond Euclid's
