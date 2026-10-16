@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.37 at a glance</title>
-  <desc>Two triangles on the same base with their tips on the same parallel (blue) are equal: take away the part they share (yellow) and the pieces left over (red) are equal too.</desc>
+  <desc>Two triangles on the same base and between the same parallels (blue) are equal; so when the part they share (yellow) is taken away, the pieces left over (red) are equal too.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="182.3,159.6 80.0,215.0 210.0,215.0" fill="#f2b705" fill-opacity="0.9"/>
   <polygon points="145.0,85.0 80.0,215.0 182.3,159.6" fill="#d0312d" fill-opacity="0.9"/>
