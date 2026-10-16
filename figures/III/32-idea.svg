@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.32 at a glance</title>
+  <desc>A straight line drawn across the circle from where the tangent (blue) touches makes angles with the tangent equal to the angles in the segments on the other side of it: red to red, and yellow to yellow.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="200.0" cy="140.0" r="100.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.75"/>
+  <path d="M200.0,240.0 L236.0,240.0 A36,36 0 0,0 216.3,207.9 Z" fill="#d0312d"/>
+  <path d="M113.4,90.0 L134.4,126.4 A42,42 0 0,0 155.3,87.8 Z" fill="#d0312d"/>
+  <path d="M200.0,240.0 L170.0,240.0 A30,30 0 0,1 213.6,213.3 Z" fill="#f2b705"/>
+  <path d="M289.1,185.4 L268.6,197.9 A24,24 0 0,1 287.2,161.5 Z" fill="#f2b705"/>
+  <line x1="113.4" y1="90.0" x2="200.0" y2="240.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="113.4" y1="90.0" x2="280.9" y2="81.2" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="289.1" y1="185.4" x2="200.0" y2="240.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="289.1" y1="185.4" x2="280.9" y2="81.2" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="200.0" y1="240.0" x2="280.9" y2="81.2" stroke="#222222" stroke-width="5" stroke-linecap="round"/>
+  <line x1="35.0" y1="240.0" x2="365.0" y2="240.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="200.0" cy="240.0" r="4.5" fill="#222222"/>
+</svg>
