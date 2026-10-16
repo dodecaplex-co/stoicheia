@@ -76,6 +76,7 @@ theorem Prop17 {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD) (
   have hEAEF : ‖E A‖ = ‖E F‖ := Definition15 hE_AFG hA_AFG hF
   have hEDEB : ‖E D‖ = ‖E B‖ := Definition15 hE hD hB
   -- therefore the two sides AE, EB are equal to the two sides FE, ED;
+  have hEB_ED : ‖E B‖ = ‖E D‖ := hEDEB.symm
   -- and they contain a common angle, the angle at E;
   have hcommon : ∠ A E B = ∠ F E D := by
     rw [angle_onRay_right (OnRay.of_between hEBF) hEA.symm,
@@ -84,7 +85,7 @@ theorem Prop17 {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD) (
   -- therefore the base DF is equal to the base AB,
   -- and the triangle DEF is equal to the triangle BEA,
   -- and the remaining angles to the remaining angles; [I. 4]
-  obtain ⟨-, -, -, hEBA_EDF⟩ := BookI.Prop4 hEAB hEFD hEAEF hEDEB.symm hcommon
+  obtain ⟨-, -, -, hEBA_EDF⟩ := BookI.Prop4 hEAB hEFD hEAEF hEB_ED hcommon
   -- therefore the angle EDF is equal to the angle EBA.
   have hEDF_EBA : ∠ E D F = ∠ E B A := hEBA_EDF.symm
   -- But the angle EDF is right;
