@@ -86,7 +86,10 @@ debt is still said where it falls: Intersection 4 is LeanEuclid's corrected form
   `Elements/BookI/HelpersParallels.lean` (`Prop30.meet`), or, if it is a
   consequence of PropN that later proofs share, as a corollary after PropN
   (`Prop34.bisect`). In Book II, a shared step that cites Book I goes in
-  `Elements/BookII/Rectangles.lean`, and a proof cites Book I as `BookI.PropN`.
+  `Elements/BookII/Rectangles.lean`, and a proof cites Book I as `BookI.PropN`. In Book
+  III, a shared step that cites Books I or II goes in `Elements/BookIII/Squares.lean`,
+  one that cites III.20–III.22 in `Elements/BookIII/Circumferences.lean`, and a proof cites
+  the earlier books as `BookI.PropN`, `BookII.PropN`.
 - **Euclid's route**: the propositions he cites, in his order, nothing later. When
   Lean cites one he gives no bracket for, the mishnah says why.
 - **No `axiom` outside `Elements/Foundations/`, no `native_decide`.**
@@ -136,9 +139,12 @@ the whole canvas), in Georgia.
 Run from the repo root after `lake build`; F is the file, NN its proposition.
 `$HEATH_OCR` is the OCR text of the Internet Archive scan of Heath's volume 1,
 `thirteenbookseu02heibgoog` (the captain gives the path); page N's image is
-`https://archive.org/download/thirteenbookseu02heibgoog/page/n<N+20>.jpg`. Each
-check is yes or no; a no goes back with the line that failed. For a proposition of a
-later book, read its numeral for `I` in the paths (`heath/II/NN.md`, `figures/II/NN.svg`).
+`https://archive.org/download/thirteenbookseu02heibgoog/page/n<N+20>.jpg`. For Books
+III to IX it is volume 2, `thirteenbookseu00heibgoog`, where page N's image is
+`https://archive.org/download/thirteenbookseu00heibgoog/page/n<N+12>.jpg`, and quotations
+give "vol. 2". Each check is yes or no; a no goes back with the line that failed. For a
+proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN.md`,
+`figures/II/NN.svg`).
 
 **Every reader-facing file**
 
@@ -161,9 +167,10 @@ later book, read its numeral for `I` in the paths (`heath/II/NN.md`, `figures/II
      grep -oE '`[A-Za-z_][A-Za-z0-9_.₀-₉]*`' F | tr -d '`' | grep -v '\.lean$' | sort -u | sed 's/^/#check @/'; } > /tmp/Names.lean
    lake env lean /tmp/Names.lean
    ```
-   For a proposition of Book II, open `Elements.BookII` in place of `Elements.BookI`;
-   Book I's names are then written `BookI.PropN`, as the orders ask. Opened as above,
-   a bare `Prop4` would be I.4 and pass unnoticed.
+   For a proposition of Book II or III, open `Elements.BookII` or `Elements.BookIII` in
+   place of `Elements.BookI`; the earlier books' names are then written `BookI.PropN`,
+   `BookII.PropN`, as the orders ask. Opened as above, a bare `Prop4` would be I.4 and
+   pass unnoticed.
 9. Each quotation has Heath's wording and page. Flatten the OCR once,
    `perl -0pe 's/-[ \t]*\n\s*//g; s/\s+/ /g' "$HEATH_OCR" > /tmp/heath.txt`, then
    `grep -oi 'a distinctive phrase.\{0,80\}' /tmp/heath.txt`: it agrees but for OCR
@@ -203,7 +210,7 @@ later book, read its numeral for `I` in the paths (`heath/II/NN.md`, `figures/II
     `Prop44.place`, may use its own):
     ```sh
     diff <(grep -o '<text[^>]*>[A-Z]</text>' figures/I/NN.svg | sed 's/<[^>]*>//g' | sort -u) \
-         <(sed -e 's/<!--.*-->//' -e 's/\[[^]]*\]//g' -e 's/Q\. E\. [DF]\.//g' -e 's/I say//g' -e '/^#/d' heath/I/NN.md \
+         <(sed -e 's/<!--.*-->//' -e 's/\[[^]]*\]//g' -e 's/Q\. E\. [DF]\.//g' -e 's/I say//g' -e 's/PORISM\.//' -e '/^#/d' heath/I/NN.md \
              | grep -oE '\b[A-Z]+\b' | fold -w1 | sort -u)
     ```
 21. `grep -oE '#[0-9a-fA-F]{3,6}' F | sort -u` lists only section 4's colours, and
