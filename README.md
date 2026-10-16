@@ -63,7 +63,7 @@ The foundations are in [`Elements/Foundations/`](Elements/Foundations):
 
 Because every assumption is a Lean `axiom`, `#print axioms` lists exactly what a proof rests on, and [`Certificate/Facts.lean`](Certificate/Facts.lean) turns that into the certificate. One famous result can't be faked: whether a proposition needs the parallel postulate. CI fails if anything before I.29 uses it.
 
-Proposition by proposition, the steps Euclid takes without a word, and the rule or lemma that fills each one, are gathered in [a catalogue for Book I](docs/reports/gaps-book-I.md), with the names of those who noticed them first, where we know.
+Proposition by proposition, the steps Euclid takes without a word, and the rule or lemma that fills each one, are gathered in catalogues for [Book I](docs/reports/gaps-book-I.md) and [Book II](docs/reports/gaps-book-II.md), with the names of those who noticed them first, where we know.
 
 ## Run it
 
@@ -92,7 +92,7 @@ Proposition by proposition, the steps Euclid takes without a word, and the rule 
 | [`mishnah/`](mishnah) | The commentary |
 | [`figures/`](figures) | The figures: the "at a glance" figures in Byrne's colours, and Euclid's own with Heath's letters |
 | [`book/`](book), [`CERTIFICATE.md`](CERTIFICATE.md), [`GRAPH.md`](GRAPH.md) | Generated pages; don't edit by hand |
-| [`docs/`](docs) | The [plan](docs/briefs/0001-plan.md) the project started from, the [catalogue of what Euclid takes for granted](docs/reports/gaps-book-I.md), the [crew's logs](docs/reports/crew), and notes on [earlier work](docs/reports/0001-prior-art.md) |
+| [`docs/`](docs) | The [plan](docs/briefs/0001-plan.md) the project started from, the catalogues of what Euclid takes for granted in [Book I](docs/reports/gaps-book-I.md) and [Book II](docs/reports/gaps-book-II.md), the [crew's logs](docs/reports/crew), and notes on [earlier work](docs/reports/0001-prior-art.md) |
 
 A Lean proof needs only the *statements* of the propositions it cites, not their proofs. So once a book's statements are written, its propositions can be proved in any order, and many at once.
 
