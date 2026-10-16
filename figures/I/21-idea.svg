@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.21 at a glance</title>
-  <desc>Draw two lines from the ends of the base to a point inside (red): together they are shorter than the two sides around them (blue), yet the angle between them (red) is wider than the angle at the top (blue).</desc>
+  <desc>From the ends of the base draw two straight lines to a point within (red): together they are less than the two sides (blue), yet the angle they contain (red) is greater than the angle at the top (blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M182.0,54.0 L166.6,79.7 A30,30 0 0,0 200.6,77.5 Z" fill="#1f5aa6"/>
   <path d="M214.0,176.0 L186.8,188.7 A30,30 0 0,0 240.0,191.0 Z" fill="#d0312d"/>
