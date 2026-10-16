@@ -60,7 +60,35 @@ TITLES_II = {
     11: "Cutting in extreme and mean ratio", 12: "The square opposite an obtuse angle",
     13: "The square opposite an acute angle", 14: "A square equal to a rectilineal figure",
 }
-TITLES = {"I": TITLES_I, "II": TITLES_II}
+TITLES_III = {
+    1: "Finding the centre of a circle", 2: "A straight line joining two points of a circle",
+    3: "A straight line through the centre bisecting another",
+    4: "Two straight lines not through the centre", 5: "Circles that cut one another",
+    6: "Circles that touch one another", 7: "Straight lines from a point within a circle",
+    8: "Straight lines from a point outside a circle",
+    9: "A point with three equal straight lines to the circle",
+    10: "Circles cut one another at two points at most",
+    11: "The centres of circles touching internally",
+    12: "The centres of circles touching externally", 13: "Circles touch at one point only",
+    14: "Equal straight lines are equally distant from the centre",
+    15: "The diameter is the greatest straight line in a circle",
+    16: "The straight line at right angles to a diameter at its end",
+    17: "Drawing a straight line to touch a circle", 18: "The radius to the point of contact",
+    19: "The perpendicular to a tangent at the point of contact",
+    20: "The angle at the centre is double the angle at the circumference",
+    21: "Angles in the same segment", 22: "Opposite angles of a quadrilateral in a circle",
+    23: "Similar segments on the same straight line",
+    24: "Similar segments on equal straight lines", 25: "Completing the circle of a segment",
+    26: "Equal angles stand on equal circumferences",
+    27: "Angles on equal circumferences are equal",
+    28: "Equal straight lines cut off equal circumferences",
+    29: "Equal circumferences have equal straight lines", 30: "Bisecting a circumference",
+    31: "The angle in a semicircle", 32: "The angle in the alternate segment",
+    33: "A segment admitting a given angle", 34: "Cutting off a segment admitting a given angle",
+    35: "Two straight lines cutting one another in a circle", 36: "The square on the tangent",
+    37: "Its converse",
+}
+TITLES = {"I": TITLES_I, "II": TITLES_II, "III": TITLES_III}
 BOOKS = {book: (count, TITLES[book]) for book, count in heath.BOOKS.items()}
 assert all(len(titles) == count for count, titles in BOOKS.values())
 
@@ -149,14 +177,18 @@ def prop_link(ref, book):
     return f"[{ref}]({where}{int(num):02d}.md)"
 
 
-def euclid_cites(paragraphs):
+def euclid_cites(paragraphs, book=None):
     """What Euclid gives in brackets, in four groups: propositions, postulates,
-    definitions and common notions, each sorted by number (I.3 before I.10)."""
+    definitions and common notions, each sorted by number (I.3 before I.10). On a page
+    of `book`, that book's own definitions are written without it."""
     groups = {"props": [], "Post.": [], "Def.": [], "C.N.": []}
     for j in heath.justifications(paragraphs):
         kind, num = j.rsplit(" ", 1)
         if kind in ("Post.", "Def.", "C.N."):
             groups[kind].append(int(num))
+        elif kind.endswith(" Def.") and kind.split(".")[0] == book:
+            # "III. Def. 11" on a page of Book III is that book's own Definition 11.
+            groups["Def."].append(int(num))
         elif kind.endswith(" Def."):
             # "I. Def. 15" in a later book: a definition of another book keeps its book.
             groups["Def."].append(f"{kind.split('.')[0]}.{num}")
@@ -233,7 +265,7 @@ def rests_on(p, docs, depth, book, euclid):
 def page(book, n, count, titles, facts, docs):
     source, enunciation, proof = heath.read(book, n)
     # The enunciation counts too: I.22's [I. 20] is there.
-    euclid = euclid_cites([enunciation] + proof)
+    euclid = euclid_cites([enunciation] + proof, book)
     ref = f"{book}.{n}"
     p = facts.get(ref)
     status = STATUS.get(p["status"], "") if p else STATUS["sketched"]
@@ -244,8 +276,11 @@ def page(book, n, count, titles, facts, docs):
     mishnah = ROOT / "mishnah" / book / f"{n:02d}.md"
     lean_path = ROOT / "Elements" / f"Book{book}" / f"Prop{n:02d}.lean"
     idea = ROOT / "figures" / book / f"{n:02d}-idea.svg"
+    # A proposition Heath prints in square brackets (III.12) opens its bracket before
+    # the enunciation, to close after "Q. E. D." at the end of the proof.
+    opening = "[" if heath.bracketed(book, n) else ""
     out = [GENERATED, nav, "", f"# Book {book}, Proposition {n}", "",
-           f"*{titles[n]}*", "", f"> {enunciation}", ""]
+           f"*{titles[n]}*", "", f"> {opening}{enunciation}", ""]
     if idea.exists():
         caption = svg_desc(idea)
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "
@@ -332,7 +367,22 @@ FRONT_LEAN_II = {
         2: "the sum of its three parallelograms (`Parallelogram.about_diameter`)",
     },
 }
-FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II}
+FRONT_LEAN_III = {
+    "Definitions": {
+        1: "`EqualCircles`: a radius of the one is equal to a radius of the other",
+        2: "`Touches A B α`: the straight line AB meets the circle and does not cut it",
+        3: "`TouchesInternally`, `TouchesExternally`, `CirclesTouch`",
+        4: "`‖E F‖ = ‖E G‖`, for the perpendiculars EF, EG from the centre E (III.14)",
+        5: "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15)",
+        6: "a circle, a straight line AB in it, and a point E of the circumference on one "
+           "side: the segment AEB",
+        8: "`∠ A E B`, for a point E on the circumference of the segment",
+        9: "`standing α B A C`, the circumference on which the angle BAC stands; the "
+           "circumference BKC is `circumference α B K C`",
+        11: "`∠ A E B = ∠ C F D`: equal angles in the segments AEB, CFD",
+    },
+}
+FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
 
 
 def front(book):
