@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.34 at a glance</title>
-  <desc>In a parallelogram the opposite sides are equal (blue, red), the opposite angles are equal (yellow, black), and the diagonal cuts it into two equal halves.</desc>
+  <desc>In a parallelogram the opposite sides are equal (blue, red), the opposite angles are equal (yellow, black), and the diameter cuts it into two equal halves.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M140.0,80.0 L172.0,80.0 A32,32 0 0,1 125.7,108.6 Z" fill="#222222"/>
   <path d="M260.0,220.0 L228.0,220.0 A32,32 0 0,1 274.3,191.4 Z" fill="#222222"/>
