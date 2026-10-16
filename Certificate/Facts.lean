@@ -36,7 +36,7 @@ def commonNotions : List (Name × String) :=
 of a later book may cite one of an earlier book, and the walk below records it by its
 own book: `"I.47"` among the citations of II.9. -/
 def books : List (String × Name × Nat) :=
-  [("I", `Elements.BookI, 48), ("II", `Elements.BookII, 14)]
+  [("I", `Elements.BookI, 48), ("II", `Elements.BookII, 14), ("III", `Elements.BookIII, 37)]
 
 /-- Is `n` declared in one of this project's own modules (or in this file)? -/
 def isLocal (env : Environment) (n : Name) : Bool :=
@@ -71,10 +71,11 @@ partial def directDeps (env : Environment) (props : NameSet) (root : Name) :
       else if isLocal env d && !seen.contains d then todo := todo.push d
   return (cites, notions, direct, hasSorry)
 
-/-- `Elements.BookI.Prop12` ↦ `"I.12"`, `Elements.BookII.Prop4` ↦ `"II.4"`. -/
+/-- `Elements.BookI.Prop12` ↦ `"I.12"`, `Elements.BookII.Prop4` ↦ `"II.4"`,
+`Elements.BookIII.Prop31` ↦ `"III.31"`. -/
 def refOf (n : Name) : String :=
   let book := match n.getPrefix with
-    | Name.str _ s => (s.drop 4).toString   -- "BookI" ↦ "I", "BookII" ↦ "II"
+    | Name.str _ s => (s.drop 4).toString   -- "BookI" ↦ "I", "BookIII" ↦ "III"
     | _ => "?"
   let num := match n with
     | Name.str _ s => (s.drop 4).toString   -- "Prop12" ↦ "12"

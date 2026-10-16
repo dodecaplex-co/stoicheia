@@ -34,7 +34,7 @@ ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII
 
 # The books carried into Lean so far, and how many propositions each has.
 # `Certificate/Facts.lean` keeps the same list.
-BOOKS = {"I": 48, "II": 14}
+BOOKS = {"I": 48, "II": 14, "III": 37}
 
 
 def arabic(book: str) -> int:
@@ -54,13 +54,15 @@ def normalize(s: str) -> str:
 
 
 def citations(paragraphs):
-    """Propositions Euclid cites, e.g. {"I.4", "II.6"} from "[I. 4]", "[C.N. 1; II. 6]"."""
+    """Propositions Euclid cites, e.g. {"I.4", "II.6"} from "[I. 4]", "[C.N. 1; II. 6]".
+
+    A porism is cited with its proposition: "[III. 1, Por.]" cites III.1."""
     found = set()
     for p in paragraphs:
         for inner in CITATION.findall(p):
             for part in inner.split(";"):
                 part = part.strip()
-                m = re.fullmatch(r"([IVX]+)\.\s*(\d+)", part)
+                m = re.fullmatch(r"([IVX]+)\.\s*(\d+)(?:,\s*Por\.)?", part)
                 if m:
                     found.add(f"{m.group(1)}.{int(m.group(2))}")
     return found
@@ -68,7 +70,8 @@ def citations(paragraphs):
 
 # A justification in a bracket: a proposition ("I. 4"), or a postulate, definition or
 # common notion, which a later book may cite with its book ("I. Post. 5", "I. Def. 15").
-JUSTIFICATION = re.compile(r"(?:([IVX]+)\.\s*)?(Post\.|Def\.|C\.N\.)\s*(\d+)|([IVX]+)\.\s*(\d+)")
+JUSTIFICATION = re.compile(
+    r"(?:([IVX]+)\.\s*)?(Post\.|Def\.|C\.N\.)\s*(\d+)|([IVX]+)\.\s*(\d+)(?:,\s*Por\.)?")
 
 
 def justifications(paragraphs):
@@ -77,7 +80,8 @@ def justifications(paragraphs):
     A bracket may hold several, as "[C.N. 1; I. 30]" or "[Post. 4 and C.N. 1]".
     Book II cites Book I's Postulate 5 as "[I. Post. 5]". The postulates and common
     notions are Book I's alone, so that is Post. 5; definitions are numbered book by
-    book, so "[I. Def. 15]" in a later book stays "I. Def. 15".
+    book, so "[I. Def. 15]" in a later book stays "I. Def. 15". A porism counts as its
+    proposition: "[III. 16, Por.]" is III. 16.
     """
     found = []
     for p in paragraphs:

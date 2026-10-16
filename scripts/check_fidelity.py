@@ -31,10 +31,10 @@ COMPLETE = {"I", "II"}
 SUPERPOSITION_ALLOWED = {"I.4", "I.8"}
 EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # The first proposition of each book allowed to rest on Postulate 5. Euclid holds it
-# back until I.29; Book II comes after the whole of Book I, so it may use the
-# postulate from II.1 on, as II.10 does by name. A book missing here may use it
-# throughout.
-FIRST_EUCLIDEAN = {"I": 29, "II": 1}
+# back until I.29; Books II and III come after the whole of Book I, so they may use the
+# postulate from their first proposition on, as II.10 does by name. A book missing here
+# may use it throughout.
+FIRST_EUCLIDEAN = {"I": 29, "II": 1, "III": 1}
 
 errors: list[str] = []
 

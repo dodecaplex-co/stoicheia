@@ -1,0 +1,50 @@
+import Elements.Figure.Basics
+import Elements.BookIII.Squares
+import Elements.BookIII.Circumferences
+import Elements.BookI.Prop23
+import Elements.BookIII.Prop20
+import Elements.BookIII.Prop26
+
+/-!
+# Book III, Proposition 27
+
+Euclid's text, in Heath's translation: [`heath/III/27.md`](../../heath/III/27.md).
+Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
+carries it out.
+-/
+
+namespace Elements.BookIII
+
+open Tacit
+
+/-- In equal circles angles standing on equal circumferences are equal to one another, whether they
+stand at the centres or at the circumferences. -/
+theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles ABC DEF)
+    (hG : Centre G ABC) (hH : Centre H DEF) (hA : OnCircle A ABC) (hB : OnCircle B ABC)
+    (hC : OnCircle C ABC) (hD : OnCircle D DEF) (hE : OnCircle E DEF)
+    (hF : OnCircle F DEF) (hBAC : Triangle B A C) (hEDF : Triangle E D F)
+    (heq : standing ABC B A C = standing DEF E D F) :
+    ∠ B A C = ∠ E D F ∧
+      (SameSideOf G A B C → SameSideOf H D E F → ∠ B G C = ∠ E H F) := by
+  -- For in equal circles ABC, DEF, on equal circumferences BC, EF, let the angles BGC, EHF
+  -- stand at the centres G, H, and the angles BAC, EDF at the circumferences;
+  -- I say that the angle BGC is equal to the angle EHF,
+  -- and the angle BAC is equal to the angle EDF.
+  -- For, if the angle BGC is unequal to the angle EHF,
+  -- one of them is greater.
+  -- Let the angle BGC be greater; and on the straight line BG, and at the point G on it, let
+  -- the angle BGK be constructed equal to the angle EHF. [I. 23]
+  -- Now equal angles stand on equal circumferences, when they are at the centres; [III. 26]
+  -- therefore the circumference BK is equal to the circumference EF.
+  -- But EF is equal to BC;
+  -- therefore BK is also equal to BC, the less to the greater: which is impossible.
+  -- Therefore the angle BGC is not unequal to the angle EHF;
+  -- therefore it is equal to it.
+  -- And the angle at A is half of the angle BGC,
+  -- and the angle at D half of the angle EHF; [III. 20]
+  -- therefore the angle at A is also equal to the angle at D.
+  -- Therefore etc.
+  -- Q. E. D.
+  sorry
+
+end Elements.BookIII
