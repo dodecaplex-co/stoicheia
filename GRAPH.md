@@ -217,3 +217,110 @@ graph TD
 - [I.46](book/I/46.md): Describing a square
 - [I.47](book/I/47.md): The theorem of Pythagoras
 - [I.48](book/I/48.md): Its converse
+
+## Book II
+
+White: propositions of earlier books that Book II cites.
+
+```mermaid
+graph TD
+  I3["I.3"]
+  I5["I.5"]
+  I6["I.6"]
+  I11["I.11"]
+  I15["I.15"]
+  I29["I.29"]
+  I31["I.31"]
+  I32["I.32"]
+  I34["I.34"]
+  I36["I.36"]
+  I43["I.43"]
+  I45["I.45"]
+  I46["I.46"]
+  I47["I.47"]
+  II1["II.1"]
+  II2["II.2"]
+  II3["II.3"]
+  II4["II.4"]
+  II5["II.5"]
+  II6["II.6"]
+  II7["II.7"]
+  II8["II.8"]
+  II9["II.9"]
+  II10["II.10"]
+  II11["II.11"]
+  II12["II.12"]
+  II13["II.13"]
+  II14["II.14"]
+  I3 --> II1
+  I11 --> II1
+  I31 --> II1
+  I34 --> II1
+  I31 --> II2
+  I46 --> II2
+  I31 --> II3
+  I46 --> II3
+  I5 --> II4
+  I6 --> II4
+  I29 --> II4
+  I31 --> II4
+  I34 --> II4
+  I46 --> II4
+  I31 --> II5
+  I36 --> II5
+  I43 --> II5
+  I46 --> II5
+  I31 --> II6
+  I36 --> II6
+  I43 --> II6
+  I46 --> II6
+  I43 --> II7
+  I46 --> II7
+  I36 --> II8
+  I43 --> II8
+  I6 --> II9
+  I29 --> II9
+  I32 --> II9
+  I34 --> II9
+  I47 --> II9
+  I3 --> II10
+  I5 --> II10
+  I6 --> II10
+  I11 --> II10
+  I15 --> II10
+  I29 --> II10
+  I31 --> II10
+  I32 --> II10
+  I34 --> II10
+  I47 --> II10
+  I46 --> II11
+  I47 --> II11
+  II6 --> II11
+  I47 --> II12
+  II4 --> II12
+  I47 --> II13
+  II7 --> II13
+  I45 --> II14
+  I47 --> II14
+  II5 --> II14
+  classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20
+  classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242
+  classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242
+  class I3,I5,I6,I11,I15,I29,I31,I32,I34,I36,I43,I45,I46,I47 earlier
+  class II1,II2,II3,II4,II5,II6,II7,II8,II9,II10,II11,II12,II13,II14 sketched
+```
+
+- [II.1](book/II/01.md): A rectangle cut into rectangles
+- [II.2](book/II/02.md): The square as two rectangles
+- [II.3](book/II/03.md): A rectangle as a rectangle and a square
+- [II.4](book/II/04.md): The square on a straight line cut in two
+- [II.5](book/II/05.md): A straight line cut equally and unequally
+- [II.6](book/II/06.md): A bisected straight line produced
+- [II.7](book/II/07.md): The squares on the whole and a segment
+- [II.8](book/II/08.md): Four rectangles and a square
+- [II.9](book/II/09.md): The squares on the unequal segments
+- [II.10](book/II/10.md): The squares on a bisected straight line produced
+- [II.11](book/II/11.md): Cutting in extreme and mean ratio
+- [II.12](book/II/12.md): The square opposite an obtuse angle
+- [II.13](book/II/13.md): The square opposite an acute angle
+- [II.14](book/II/14.md): A square equal to a rectilineal figure
