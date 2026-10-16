@@ -24,10 +24,7 @@ theorem Prop5 {E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : Circles
   /- EC is drawn for the eye; Lean needs only its ends. An unlettered point
      chooses the direction of EFG, which meets both circles beyond E. -/
   obtain ⟨P, hP⟩ := exists_point [E]
-  have hPE : P ≠ E := by
-    intro hPE
-    subst P
-    exact hP (List.Mem.head [])
+  have hPE : P ≠ E := fun h => hP (h ▸ List.mem_singleton_self P)
   obtain ⟨EFG, hE_EFG, hP_EFG⟩ := Postulate1 E P hPE.symm
   obtain ⟨F, hF_ABC, -, -⟩ :=
     line_circle_beyond (centre_inside hE_ABC) hE_EFG hP_EFG hPE
