@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.11 at a glance</title>
+  <desc>When one circle touches another inside it (red in blue), the straight line joining the two centres, produced, falls on the point where they touch: there a radius of each (blue, red) lies along one straight line.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="222.00" cy="150.00" r="118.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="170.08" cy="170.98" r="62.00" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>
+  <line x1="222.00" y1="150.00" x2="170.08" y2="170.98" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <line x1="171.20" y1="173.76" x2="113.72" y2="196.99" stroke="#1f5aa6" stroke-width="5" stroke-linecap="butt"/>
+  <line x1="168.95" y1="168.20" x2="111.47" y2="191.42" stroke="#d0312d" stroke-width="5" stroke-linecap="butt"/>
+  <circle cx="222.00" cy="150.00" r="4.5" fill="#222222"/>
+  <circle cx="170.08" cy="170.98" r="4.5" fill="#222222"/>
+  <circle cx="112.59" cy="194.20" r="4.5" fill="#222222"/>
+</svg>
