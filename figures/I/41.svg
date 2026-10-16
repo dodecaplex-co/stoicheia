@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.41: a parallelogram double of a triangle</title>
+  <rect x="0" y="0" width="400" height="280" rx="10" fill="#fbf7ee"/>
+  <path d="M 345 70 L 100 220 L 280 220 Z" fill="#e9dcc0" fill-opacity="0.55"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 240 70 H 345 L 280 220 M 100 220 L 345 70 M 60 70 L 280 220" stroke="#3b2f2f" stroke-width="1.6"/>
+    <path d="M 60 70 L 100 220 L 280 220 L 240 70 Z" stroke="#a0522d" stroke-width="2.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="60" cy="70" r="2.6"/>
+    <circle cx="100" cy="220" r="2.6"/>
+    <circle cx="280" cy="220" r="2.6"/>
+    <circle cx="240" cy="70" r="2.6"/>
+    <circle cx="345" cy="70" r="2.6"/>
+    <text x="49" y="57">A</text>
+    <text x="88" y="244">B</text>
+    <text x="277" y="244">C</text>
+    <text x="233" y="57">D</text>
+    <text x="341" y="57">E</text>
+  </g>
+</svg>

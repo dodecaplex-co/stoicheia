@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.43: the complements are equal</title>
+  <rect x="0" y="0" width="400" height="280" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 100 50 L 40 230 L 292 230 L 352 50 Z M 80 110 L 332 110 M 184 50 L 124 230" stroke="#3b2f2f" stroke-width="1.6"/>
+    <path d="M 80 110 L 40 230 L 124 230 L 164 110 Z M 184 50 L 164 110 L 332 110 L 352 50 Z" stroke="#a0522d" stroke-width="2.6"/>
+    <path d="M 100 50 L 292 230" stroke="#3b2f2f" stroke-width="1.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="100" cy="50" r="2.6"/><circle cx="40" cy="230" r="2.6"/>
+    <circle cx="292" cy="230" r="2.6"/><circle cx="352" cy="50" r="2.6"/>
+    <circle cx="80" cy="110" r="2.6"/><circle cx="332" cy="110" r="2.6"/>
+    <circle cx="124" cy="230" r="2.6"/><circle cx="184" cy="50" r="2.6"/>
+    <circle cx="164" cy="110" r="2.6"/>
+    <text x="94" y="37">A</text><text x="31" y="252">B</text>
+    <text x="287" y="252">C</text><text x="347" y="37">D</text>
+    <text x="59" y="116">E</text><text x="345" y="116">F</text>
+    <text x="118" y="252">G</text><text x="179" y="37">H</text>
+    <text x="177" y="100">K</text>
+  </g>
+</svg>
