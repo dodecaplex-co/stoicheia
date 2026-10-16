@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.31 at a glance</title>
-  <desc>Join the point to the given line, then copy the angle it makes (yellow) at the point, on the other side: the new line through the point is parallel to the given one (blue).</desc>
+  <desc>Join the point to the given straight line and copy the angle this makes (yellow) at the point, on the other side: the straight line drawn through the point is parallel to the given one (blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M165.0,205.0 L181.1,179.7 A30,30 0 0,1 195.0,205.0 Z" fill="#f2b705"/>
   <path d="M235.0,95.0 L218.9,120.3 A30,30 0 0,1 205.0,95.0 Z" fill="#f2b705"/>
