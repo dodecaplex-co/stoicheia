@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.13 at a glance</title>
-  <desc>In a triangle, the square across from an acute angle (red) equals the other two squares (blue, and yellow with black) less the black: two rectangles as tall as the side below and as wide as the piece the perpendicular cuts off.</desc>
+  <desc>In a triangle, the square across from an acute angle (red) equals the other two squares (blue, and yellow with black) less two rectangles (black), each as tall as the side below and as wide as the piece the perpendicular cuts off within.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <polygon points="177.0,97.6 250.6,174.8 327.9,101.2 254.3,24.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="149.4,174.8 177.0,97.6 99.7,70.0 72.1,147.2" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="204.6,276.0 250.6,276.0 250.6,174.8 204.6,174.8" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="149.4,276.0 177.0,276.0 177.0,174.8 149.4,174.8" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="177.0,276.0 204.6,276.0 204.6,174.8 177.0,174.8" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <line x1="177.0" y1="174.8" x2="177.0" y2="97.6" stroke="#222222" stroke-width="2" stroke-linecap="butt"/>
-  <polyline points="187.0,174.8 187.0,164.8 177.0,164.8" fill="none" stroke="#222222" stroke-width="1.6"/>
-  <polygon points="177.0,97.6 149.4,174.8 250.6,174.8" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
+  <polygon points="177.0,98.0 251.0,175.0 328.0,101.0 254.0,24.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="149.0,175.0 177.0,98.0 100.0,70.0 72.0,147.0" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="205.0,277.0 251.0,277.0 251.0,175.0 205.0,175.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="149.0,277.0 177.0,277.0 177.0,175.0 149.0,175.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="177.0,277.0 205.0,277.0 205.0,175.0 177.0,175.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <line x1="177.0" y1="175.0" x2="177.0" y2="98.0" stroke="#222222" stroke-width="2" stroke-linecap="butt"/>
+  <polyline points="187.0,175.0 187.0,165.0 177.0,165.0" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <polygon points="177.0,98.0 149.0,175.0 251.0,175.0" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
 </svg>

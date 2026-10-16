@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.11 at a glance: the golden section</title>
-  <desc>To cut a line so that the square on one piece equals the rectangle on the whole and the other piece (yellow), swing the line from the middle of the big square's side to the far corner (blue) up onto that side produced.</desc>
+  <desc>To cut a straight line so that the rectangle of the whole and one piece equals the square on the other (both yellow), swing the line from the middle of the big square's side to its far corner (blue) up onto that side produced: the part beyond the corner is the longer piece.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <polygon points="125.0,121.4 217.7,121.4 217.7,271.4 125.0,271.4" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="125.0,121.4 125.0,28.6 217.7,28.6 217.7,121.4" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="217.7,121.4 275.0,121.4 275.0,271.4 217.7,271.4" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <path d="M275.0,121.4 A167.7,167.7 0 0,0 125.0,28.6" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
-  <line x1="125.0" y1="196.4" x2="275.0" y2="121.4" stroke="#1f5aa6" stroke-width="5" stroke-linecap="round"/>
-  <line x1="125.0" y1="196.4" x2="125.0" y2="28.6" stroke="#1f5aa6" stroke-width="5" stroke-linecap="round"/>
-  <line x1="125.0" y1="121.4" x2="275.0" y2="121.4" stroke="#222222" stroke-width="5" stroke-linecap="round"/>
-  <circle cx="125.0" cy="196.4" r="4" fill="#222222"/>
-  <circle cx="217.7" cy="121.4" r="4.5" fill="#222222"/>
+  <polygon points="128.0,122.5 217.0,122.5 217.0,266.5 128.0,266.5" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="128.0,122.5 128.0,33.5 217.0,33.5 217.0,122.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="217.0,122.5 272.0,122.5 272.0,266.5 217.0,266.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <path d="M272.0,122.5 A161.0,161.0 0 0,0 128.0,33.5" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
+  <line x1="128.0" y1="194.5" x2="272.0" y2="122.5" stroke="#1f5aa6" stroke-width="5" stroke-linecap="round"/>
+  <line x1="128.0" y1="194.5" x2="128.0" y2="33.5" stroke="#1f5aa6" stroke-width="5" stroke-linecap="round"/>
+  <line x1="128.0" y1="122.5" x2="272.0" y2="122.5" stroke="#222222" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="128.0" cy="194.5" r="4.5" fill="#222222"/>
+  <circle cx="217.0" cy="122.5" r="4.5" fill="#222222"/>
 </svg>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.8 at a glance</title>
-  <desc>Cut a line anywhere and add on a copy of one piece (blue): four rectangles on the whole and that piece (red), with the square on the other piece (yellow), fill the square on the lengthened line.</desc>
+  <desc>Cut a straight line anywhere and add on a copy of one piece (blue): four rectangles of the whole and that piece (red), with the square on the other piece (yellow), fill the square on the lengthened line.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="95.0,246.0 245.0,246.0 245.0,186.0 95.0,186.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <polygon points="245.0,246.0 305.0,246.0 305.0,96.0 245.0,96.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
@@ -10,8 +10,8 @@
   <line x1="95.0" y1="258.0" x2="185.0" y2="258.0" stroke="#f2b705" stroke-width="6" stroke-linecap="butt"/>
   <line x1="185.0" y1="258.0" x2="245.0" y2="258.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="butt"/>
   <line x1="245.0" y1="258.0" x2="305.0" y2="258.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="butt"/>
-  <circle cx="95.0" cy="258.0" r="4" fill="#222222"/>
-  <circle cx="185.0" cy="258.0" r="4" fill="#222222"/>
-  <circle cx="245.0" cy="258.0" r="4" fill="#222222"/>
-  <circle cx="305.0" cy="258.0" r="4" fill="#222222"/>
+  <circle cx="95.0" cy="258.0" r="4.5" fill="#222222"/>
+  <circle cx="185.0" cy="258.0" r="4.5" fill="#222222"/>
+  <circle cx="245.0" cy="258.0" r="4.5" fill="#222222"/>
+  <circle cx="305.0" cy="258.0" r="4.5" fill="#222222"/>
 </svg>

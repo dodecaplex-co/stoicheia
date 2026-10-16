@@ -2,7 +2,7 @@
   <title>II.14 at a glance</title>
   <desc>Any straight-sided figure can be remade as a rectangle, and any rectangle as a square (all yellow): lay its short side (red) on beyond the long one, draw the semicircle, and the upright at the join is the square's side.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <polygon points="26.9,184.5 91.7,207.5 123.1,123.9 41.5,92.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="33.0,182.0 57.0,97.0 131.0,161.0 127.0,226.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <polygon points="163.1,223.5 331.1,223.5 331.1,181.5 163.1,181.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <polygon points="247.1,181.5 331.1,181.5 331.1,97.5 247.1,97.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <path d="M373.1,181.5 A105.0,105.0 0 0,0 163.1,181.5" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
@@ -10,5 +10,5 @@
   <line x1="331.1" y1="181.5" x2="331.1" y2="97.5" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="331.1" y1="181.5" x2="331.1" y2="223.5" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
   <line x1="331.1" y1="181.5" x2="373.1" y2="181.5" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
-  <circle cx="331.1" cy="97.5" r="4" fill="#222222"/>
+  <circle cx="331.1" cy="97.5" r="4.5" fill="#222222"/>
 </svg>
