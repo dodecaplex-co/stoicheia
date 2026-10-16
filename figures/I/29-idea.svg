@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.29 at a glance</title>
-  <desc>A line crossing two parallels (blue) makes the same angles at both crossings: every yellow angle is equal, every red angle is equal, and a red and a yellow together make two right angles.</desc>
+  <desc>A straight line falling on two parallels (blue) makes the same angles at both crossings: the yellow angles are all equal, the red angles are all equal, and a red and a yellow together make two right angles.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M222.6,107.5 L236.7,81.0 A30,30 0 0,1 252.6,107.5 Z" fill="#f2b705"/>
   <path d="M222.6,107.5 L208.5,134.0 A30,30 0 0,1 192.6,107.5 Z" fill="#f2b705"/>
