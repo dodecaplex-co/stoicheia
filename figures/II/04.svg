@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid II.4: the square on a straight line cut at random</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 80 30 H 320 V 270 H 80 Z" stroke="#a0522d" stroke-width="2.6"/>
+    <path d="M 320 30 L 80 270 M 240 30 V 270 M 80 110 H 320" stroke="#3b2f2f" stroke-width="1.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="80" cy="30" r="2.6"/>
+    <circle cx="320" cy="30" r="2.6"/>
+    <circle cx="240" cy="30" r="2.6"/>
+    <circle cx="80" cy="270" r="2.6"/>
+    <circle cx="320" cy="270" r="2.6"/>
+    <circle cx="240" cy="270" r="2.6"/>
+    <circle cx="240" cy="110" r="2.6"/>
+    <circle cx="80" cy="110" r="2.6"/>
+    <circle cx="320" cy="110" r="2.6"/>
+    <text x="73" y="20">A</text>
+    <text x="314" y="20">B</text>
+    <text x="233" y="20">C</text>
+    <text x="73" y="291">D</text>
+    <text x="314" y="291">E</text>
+    <text x="233" y="291">F</text>
+    <text x="220" y="101">G</text>
+    <text x="60" y="116">H</text>
+    <text x="330" y="116">K</text>
+  </g>
+</svg>
