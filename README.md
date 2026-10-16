@@ -22,7 +22,7 @@ There are no coordinates here, no real numbers and no complex numbers. The geome
 
 | | |
 |---|---|
-| **Book I** | All 48 propositions stated in Lean and sketched in Euclid's words; **32 proved** so far. [Read Book I →](book/I/index.md) |
+| **Book I** | **Complete: all 48 propositions proved**, every one following Euclid's own proof. The certificate shows the shape of the book: 29 propositions never need the parallel postulate, and the first that does is I.29, just where Euclid puts it. [Read Book I →](book/I/index.md) |
 | Books II–XIII | To come, one book at a time. |
 
 The [certificate](CERTIFICATE.md) and the [graph of who uses whom](GRAPH.md) are regenerated from the proofs on every change.

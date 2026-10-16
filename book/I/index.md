@@ -2,7 +2,7 @@
 
 # Book I
 
-**32 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
+**48 of 48 propositions proved in Lean.** ✅ proved · ☑️ proved, citing propositions still to be proved · 🚧 sketched
 
 Start with the [definitions, postulates and common notions](front.md). What Euclid takes for granted along the way is gathered in [a catalogue](../../docs/reports/gaps-book-I.md).
 
@@ -40,19 +40,19 @@ Start with the [definitions, postulates and common notions](front.md). What Eucl
 | ✅ | [I.30](30.md) **Parallels to the same line** | Straight lines parallel to the same straight line are also parallel to one another. |
 | ✅ | [I.31](31.md) **Drawing a parallel through a point** | Through a given point to draw a straight line parallel to a given straight line. |
 | ✅ | [I.32](32.md) **The angles of a triangle make two right angles** | In any triangle, if one of the sides be produced, the exterior angle is equal to the two interior and… |
-| 🚧 | [I.33](33.md) **Joining equal parallels** | The straight lines joining equal and parallel straight lines (at the extremities which are) in the same… |
-| 🚧 | [I.34](34.md) **Opposite sides and angles of a parallelogram** | In parallelogrammic areas the opposite sides and angles are equal to one another, and the diameter bisects… |
-| 🚧 | [I.35](35.md) **Parallelograms on the same base** | Parallelograms which are on the same base and in the same parallels are equal to one another. |
-| 🚧 | [I.36](36.md) **Parallelograms on equal bases** | Parallelograms which are on equal bases and in the same parallels are equal to one another. |
-| 🚧 | [I.37](37.md) **Triangles on the same base** | Triangles which are on the same base and in the same parallels are equal to one another. |
-| 🚧 | [I.38](38.md) **Triangles on equal bases** | Triangles which are on equal bases and in the same parallels are equal to one another. |
-| 🚧 | [I.39](39.md) **Equal triangles on the same base** | Equal triangles which are on the same base and on the same side are also in the same parallels. |
-| 🚧 | [I.40](40.md) **Equal triangles on equal bases** | Equal triangles which are on equal bases and on the same side are also in the same parallels. |
-| 🚧 | [I.41](41.md) **A parallelogram is double the triangle** | If a parallelogram have the same base with a triangle and be in the same parallels, the parallelogram is… |
-| 🚧 | [I.42](42.md) **A parallelogram equal to a triangle** | To construct, in a given rectilineal angle, a parallelogram equal to a given triangle. |
-| 🚧 | [I.43](43.md) **The complements are equal** | In any parallelogram the complements of the parallelograms about the diameter are equal to one another. |
-| 🚧 | [I.44](44.md) **Applying a parallelogram to a line** | To a given straight line to apply, in a given rectilineal angle, a parallelogram equal to a given triangle. |
-| 🚧 | [I.45](45.md) **A parallelogram equal to a rectilineal figure** | To construct, in a given rectilineal angle, a parallelogram equal to a given rectilineal figure. |
-| 🚧 | [I.46](46.md) **Describing a square** | On a given straight line to describe a square. |
-| 🚧 | [I.47](47.md) **The theorem of Pythagoras** | In right-angled triangles the square on the side subtending the right angle is equal to the squares on the… |
-| 🚧 | [I.48](48.md) **Its converse** | If in a triangle the square on one of the sides be equal to the squares on the remaining two sides of the… |
+| ✅ | [I.33](33.md) **Joining equal parallels** | The straight lines joining equal and parallel straight lines (at the extremities which are) in the same… |
+| ✅ | [I.34](34.md) **Opposite sides and angles of a parallelogram** | In parallelogrammic areas the opposite sides and angles are equal to one another, and the diameter bisects… |
+| ✅ | [I.35](35.md) **Parallelograms on the same base** | Parallelograms which are on the same base and in the same parallels are equal to one another. |
+| ✅ | [I.36](36.md) **Parallelograms on equal bases** | Parallelograms which are on equal bases and in the same parallels are equal to one another. |
+| ✅ | [I.37](37.md) **Triangles on the same base** | Triangles which are on the same base and in the same parallels are equal to one another. |
+| ✅ | [I.38](38.md) **Triangles on equal bases** | Triangles which are on equal bases and in the same parallels are equal to one another. |
+| ✅ | [I.39](39.md) **Equal triangles on the same base** | Equal triangles which are on the same base and on the same side are also in the same parallels. |
+| ✅ | [I.40](40.md) **Equal triangles on equal bases** | Equal triangles which are on equal bases and on the same side are also in the same parallels. |
+| ✅ | [I.41](41.md) **A parallelogram is double the triangle** | If a parallelogram have the same base with a triangle and be in the same parallels, the parallelogram is… |
+| ✅ | [I.42](42.md) **A parallelogram equal to a triangle** | To construct, in a given rectilineal angle, a parallelogram equal to a given triangle. |
+| ✅ | [I.43](43.md) **The complements are equal** | In any parallelogram the complements of the parallelograms about the diameter are equal to one another. |
+| ✅ | [I.44](44.md) **Applying a parallelogram to a line** | To a given straight line to apply, in a given rectilineal angle, a parallelogram equal to a given triangle. |
+| ✅ | [I.45](45.md) **A parallelogram equal to a rectilineal figure** | To construct, in a given rectilineal angle, a parallelogram equal to a given rectilineal figure. |
+| ✅ | [I.46](46.md) **Describing a square** | On a given straight line to describe a square. |
+| ✅ | [I.47](47.md) **The theorem of Pythagoras** | In right-angled triangles the square on the side subtending the right angle is equal to the squares on the… |
+| ✅ | [I.48](48.md) **Its converse** | If in a triangle the square on one of the sides be equal to the squares on the remaining two sides of the… |
