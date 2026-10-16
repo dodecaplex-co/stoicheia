@@ -1,12 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookII.Rectangles
 import Elements.BookI.HelpersParallels
-import Elements.BookI.Prop04
-import Elements.BookI.Prop05
-import Elements.BookI.Prop06
-import Elements.BookI.Prop28
-import Elements.BookI.Prop29
-import Elements.BookI.Prop30
 import Elements.BookI.Prop31
 import Elements.BookI.Prop34
 import Elements.BookI.Prop36
@@ -151,15 +145,17 @@ theorem Prop5 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
     have hLGsq : quadArea H L E G = sq C D := by
       rw [quadArea_rotate₂ E G H L, hLG.eq_sq hHLEG.rotate.rotate]
       exact sq_congr ((hLG.1.trans hLG.2.1).trans (hDC_HL.symm.trans (len_symm D C)))
-    have hadd₃ := CommonNotion2 hNOP hLGsq
     -- therefore the gnomon NOP and LG are equal to the rectangle contained by AD, DB and the
     -- square on CD.
+    have hadd₃ := CommonNotion2 hNOP hLGsq
     -- But the gnomon NOP and LG are the whole square CEFB, which is described on CB;
     have hwhole := hBCEF.about_diameter hBHE hBDC hCLE hEGF hFMB hBDHM hHLEG
     -- therefore the rectangle contained by AD, DB together with the square on CD is equal to the
     -- square on CB.
     rw [← hadd₃, ← hCEFB, hBCEF.quadArea_rotate, hwhole]
     ac_rfl
+  /- Where `D` falls: between `A` and `C`, exchange `A` and `B`; at `C`, it cannot, the
+     segments being unequal; between `C` and `B`, Euclid's case. -/
   have hCray : OnRay C A B := OnRay.of_between hACB
   have hDray : OnRay D A B := OnRay.of_between hADB
   rcases lt_trichotomy ‖A D‖ ‖A C‖ with h | h | h
