@@ -37,10 +37,15 @@
   square is a parallelogram) live in
   [`Elements/BookI/HelpersParallels.lean`](../../Elements/BookI/HelpersParallels.lean),
   since `Helpers.lean`, imported by I.7, cannot import them.
-- **Two statements changed for voyage 4.** I.38's two triangles may share their
-  vertex, as I.42 needs; each of I.48's three squares lies on one side of the side
-  it is described on. I.42 is unchanged, and I.44 carries out Euclid's "let it be placed"
-  itself (`Prop44.place`). That squares on equal straight lines are equal, and the
-  converse, which Euclid assumes in I.48, are corollaries of I.46, as Heath reports
-  Proclus proving them there. The first mate's reasons are in
-  [first-mate-04.md](../reports/crew/first-mate-04.md).
+- **Three statements changed for voyage 4.** I.38's two triangles may share their
+  vertex, as I.42 needs, and I.37 now reads "in the same parallels" the same way,
+  so that I.39 and I.41 need no case for it; each of I.48's three squares lies on
+  one side of the side it is described on. I.42 is unchanged, and I.44 carries out
+  Euclid's "let it be placed" itself (`Prop44.place`). That squares on equal
+  straight lines are equal, and the converse, which Euclid assumes in I.48, are
+  corollaries of I.46, as Heath reports Proclus proving them there. The first
+  mate's reasons are in [first-mate-04.md](../reports/crew/first-mate-04.md).
+- **Scratch proofs in the open.** The proofs written to test the statements before a
+  voyage are committed, but not built, in
+  [`docs/reports/crew/scratch-04/`](../reports/crew/scratch-04), so that both crews
+  start from the same ground.

@@ -12,7 +12,9 @@ carries it out.
 
 "In the same parallels BF, AD": two parallel straight lines, one through the
 vertices `A` and `D`, the other through the bases `BC` and `EF`. The two vertices
-may be one point, as when I.42 cites this for the triangles `ABE` and `AEC`.
+may be one point, as when I.42 cites this for the triangles `ABE` and `AEC`. So
+under "let AD be produced in both directions to G, H", "AD" is the parallel
+through the vertices itself, and `G` and `H` are taken on it.
 -/
 
 namespace Elements.BookI

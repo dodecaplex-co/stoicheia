@@ -54,8 +54,9 @@ theorem Parallelogram.sameSideOf (h : Parallelogram A B C D) : SameSideOf C D A 
 Were `A` between it and `C`, `L` would separate it from `C`; were `C` between it and
 `A`, `M` would separate it from `A` (System E, Between 6 and Pasch 3). So a point
 of a straight line joining two parallels, lying between the parallels, lies
-between the points where it meets them. -/
-theorem between_of_sameSide (hA : OnLine A L) (hC : OnLine C M) (hX : Collinear A X C)
+between the points where it meets them. `Between.of_sameSide`, below, is another
+matter: it carries the order of three points across a straight line. -/
+theorem Between.of_inside (hA : OnLine A L) (hC : OnLine C M) (hX : Collinear A X C)
     (hXL : SameSide X C L) (hXM : SameSide X A M) : Between A X C := by
   have hX_L : ¬ OnLine X L := not_on_line_of_same_side hXL
   have hX_M : ¬ OnLine X M := not_on_line_of_same_side hXM
@@ -69,8 +70,8 @@ theorem between_of_sameSide (hA : OnLine A L) (hC : OnLine C M) (hX : Collinear 
   · exact absurd hXL (pasch3 h hA)
   · exact absurd (same_side_symm hXM) (pasch3 h hC)
 
-/-- Order kept across a straight line. If `B` lies between `A` and `C` on the
-straight line `L`, and `A'`, `C'` lie on the same sides of `L` as `A`, `C`, then a
+/-- Order kept across a straight line. If `B`, on the straight line `L`, lies
+between `A` and `C`, and `A'`, `C'` lie on the same sides of `L` as `A`, `C`, then a
 point `B'` of `L` on one straight line with `A'` and `C'` lies between them: `A'` and
 `C'` are on opposite sides of `L`, so the straight line joining them crosses `L`
 between them, and it crosses `L` only once (System E, Pasch 3 and 4). -/
@@ -108,7 +109,7 @@ either the diameters `AC` and `BD` of the figure `ABCD` cross, or its sides `AB`
 The straight line `AC` either separates `B` from `D` or it does not. If it does, `BD`
 crosses it, between the parallels, and so between `A` and `C`. If it does not, `D`
 lies within the angle `ACB`, and the straight line `CD` crosses `AB` (`crossbar`),
-again between the parallels (`between_of_sameSide`). -/
+again between the parallels (`Between.of_inside`). -/
 theorem AreParallel.cross_or (h : AreParallel A D B C) :
     (∃ X : Point, Between A X C ∧ Between B X D) ∨
       (∃ X : Point, Between A X B ∧ Between D X C) := by
@@ -139,7 +140,7 @@ theorem AreParallel.cross_or (h : AreParallel A D B C) :
     have hXB_L : SameSide X B L := pasch2 hAXB hA hX_L
     have hXA_M : SameSide X A M := pasch2 (between_symm hAXB) hB hX_M
     obtain ⟨-, -, ⟨P, hC_P, hD_P, hX_P⟩, -⟩ := hX
-    refine Or.inr ⟨X, hAXB, between_of_sameSide hD hC ⟨P, hD_P, hX_P, hC_P⟩
+    refine Or.inr ⟨X, hAXB, Between.of_inside hD hC ⟨P, hD_P, hX_P, hC_P⟩
       (same_side_trans (same_side_symm hXB_L) hBC_L)
       (same_side_trans (same_side_symm hXA_M) hAD_M)⟩
   · /- `AC` separates `B` from `D`, so `BD` crosses it. -/
@@ -150,7 +151,7 @@ theorem AreParallel.cross_or (h : AreParallel A D B C) :
       hB_L (on_line_of_between (between_symm hBXD) hD hX_L)
     have hXD_M : SameSide X D M := pasch2 hBXD hB hX_M
     have hXB_L : SameSide X B L := pasch2 (between_symm hBXD) hD hX_L
-    refine Or.inl ⟨X, between_of_sameSide hA hC ⟨N, hA_N, hX_N, hC_N⟩
+    refine Or.inl ⟨X, Between.of_inside hA hC ⟨N, hA_N, hX_N, hC_N⟩
       (same_side_trans (same_side_symm hXB_L) hBC_L)
       (same_side_trans (same_side_symm hXD_M) (same_side_symm hAD_M)), hBXD⟩
 

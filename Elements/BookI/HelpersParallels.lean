@@ -62,7 +62,8 @@ meets another straight line: `E` and `F` in I.37, `G` and `H` in I.38, `E` in I.
 `F` in I.40, `F` and `G` in I.42, `H`, `L` and `M` in I.44, `E` in I.46 and `L` in
 I.47. It is the uniqueness of the parallel through a point, often called
 Playfair's axiom; Heath reports under I.31 that Proclus draws it from I.30.
-[I. 30] -/
+`Prop30.unique`, a step inside I.30's own proof, gives the same uniqueness from
+I.29; later proofs cite this one, Proclus' route through I.30. [I. 30] -/
 theorem Prop30.meet {L M N : Line} {P : Point} (hLM : Parallel L M) (hPM : OnLine P M)
     (hPN : OnLine P N) (hNM : N ≠ M) : ∃ Q : Point, OnLine Q N ∧ OnLine Q L := by
   refine Classical.byContradiction fun hno => ?_
@@ -82,8 +83,9 @@ theorem Prop30.meet {L M N : Line} {P : Point} (hLM : Parallel L M) (hPM : OnLin
 
 /-- I.30 said of straight lines drawn and named: two different straight lines `L` and
 `M`, each parallel to `N`, are parallel to one another. Euclid uses it without a
-bracket in I.43 and I.44, where the straight lines drawn "parallel to either" of two
-parallels are parallel to both. [I. 30] -/
+bracket in I.44 and I.47, where a straight line drawn "parallel to either" of two
+parallels is parallel to both; in I.45 he brackets it. I.43 needs it too, to show
+that the complements are parallelograms. [I. 30] -/
 theorem Prop30.parallel {L M N : Line} (hL : Parallel L N) (hM : Parallel M N) (hLM : L ≠ M) :
     Parallel L M := by
   obtain ⟨A, hA_L, -⟩ := exists_point_on_line L []

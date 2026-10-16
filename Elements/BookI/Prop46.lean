@@ -49,11 +49,12 @@ theorem Prop46 {A B P : Point} (hAB : A ≠ B) (hP : ¬ Collinear A B P) :
 
 /-- Squares described on equal straight lines are equal. Euclid assumes this in
 I.48 ("since DA is equal to AB, the square on DA is also equal to the square on
-AB"). Heath reports, under I.46, that Proclus proves it, and that it "is
+AB"). Heath reports, under I.46, that Proclus proves it, and remarks that it "is
 immediately obvious if we divide the squares into two triangles by drawing a
-diagonal in each" (vol. 1, p. 348). Each square is a parallelogram (`Prop28.square`), so the
-diameter `AC` cuts it into the triangles `ABC` and `ACD`, right-angled at `B` and
-`D`; and I.4 makes these equal to the triangles `A'B'C'` and `A'C'D'`. Here a
+diagonal in each" (vol. 1, p. 348). Each square is a parallelogram
+(`Prop28.square`), so the diameter `AC` cuts it into the triangles `ABC` and `ACD`,
+right-angled at `B` and `D`; and I.4 makes these equal to the triangles `A'B'C'`
+and `A'C'D'`. Here a
 square `ABCD` is "described on `AB`" when its far corners `C`, `D` lie on one side
 of `AB`. [I. 4, I. 28] -/
 theorem Prop46.square_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
@@ -83,8 +84,11 @@ theorem Prop46.square_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
 /-- Conversely, equal squares are described on equal straight lines. Euclid assumes
 this too in I.48 ("therefore the square on DC is equal to the square on BC, so that
 the side DC is also equal to BC"). Heath reports, under I.46, Proclus' proof, which
-places the two squares side by side. Lean takes another road. Were `AB` less than
-`A'B'`, cut off from `A'B'` a straight line `A'X` equal to `AB` [I. 3], and describe
+places the two squares side by side and then reasons through I.39, I.27, I.34
+and I.26. We take another road, because a figure cannot be moved here (as
+`Prop44.place` explains): one square has to be described afresh, and described
+inside the other it is a part of it. Were `AB` less than `A'B'`, cut off from
+`A'B'` a straight line `A'X` equal to `AB` [I. 3], and describe
 on it a square `A'ZYX` on the side of `C'` [I. 46]. It is equal to the square `ABCD`
 (`Prop46.square_eq`); `Z` falls on `A'D'`, short of `D'`; and each square is double
 the triangle its diameter cuts off from `A'` [I. 34]. But the triangle `XA'Z` is a

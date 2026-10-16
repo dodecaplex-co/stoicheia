@@ -104,7 +104,8 @@ BOOK_I = {
         "    (hBG : ∃ L : Line, OnLine B L ∧ OnLine C L ∧ OnLine F L ∧ OnLine G L) :\n"
         "    quadArea A B C D = quadArea E F G H",
     37: "{A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)\n"
-        "    (hpar : AreParallel A D B C) :\n    △ A B C = △ D B C",
+        "    (hpar : ∃ L M : Line, Parallel L M ∧ OnLine A L ∧ OnLine D L ∧ OnLine B M ∧ OnLine C M) :\n"
+        "    △ A B C = △ D B C",
     38: "{A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E F)\n"
         "    (hbase : ‖B C‖ = ‖E F‖)\n"
         "    (hpar : ∃ L M : Line, Parallel L M ∧ OnLine A L ∧ OnLine D L ∧\n"

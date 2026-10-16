@@ -76,13 +76,16 @@ debt is still said where it falls: Intersection 4 is LeanEuclid's corrected form
   (`hAB : A ≠ B`, `hA_BCD`).
 - **Order.** Helpers named `PropN.something` come before the main theorem, each
   with a docstring saying what Euclid takes for granted; porisms and other
-  corollaries after it (`Prop15.porism`). Import `Elements.Figure.Basics` and every
-  proposition cited.
+  corollaries after it (`Prop15.porism`). Import `Elements.Figure.Basics`, every
+  proposition cited, and `Elements.BookI.HelpersParallels` when a step from it is
+  cited.
 - **Book Zero first.** Search `Elements/Figure/` before writing a helper, and cite
   its lemma rather than keep a copy; Book Zero imports no proposition. A shared
   step that cites a proposition goes in `Elements/BookI/Helpers.lean`, named after
   it (`Prop5.base`), or, if it cites I.28, I.29 or I.30, in
-  `Elements/BookI/HelpersParallels.lean` (`Prop30.meet`).
+  `Elements/BookI/HelpersParallels.lean` (`Prop30.meet`), or, if it is a
+  consequence of PropN that later proofs share, as a corollary after PropN
+  (`Prop34.bisect`).
 - **Euclid's route**: the propositions he cites, in his order, nothing later. When
   Lean cites one he gives no bracket for, the mishnah says why.
 - **No `axiom` outside `Elements/Foundations/`, no `native_decide`.**
@@ -184,13 +187,15 @@ check is yes or no; a no goes back with the line that failed.
 18. `grep -nE '^(theorem|lemma) ' F`: helpers before `PropN`, corollaries after;
     none restates a Book Zero lemma (search `Elements/Figure/` for its conclusion).
 19. The `cites` from check 14 match the brackets in `heath/I/NN.md`, or the
-    mishnah explains each extra one.
+    mishnah explains each extra one. When a shared step brings it in, a sentence
+    naming the step is explanation enough (`Prop30.meet` brings in I.30).
 
 **Figures**
 
 20. The letters are Heath's, no more and no fewer (this prints nothing), and
     `grep -oE '\{[^}]*: Point\}|obtain ⟨[^⟩]*⟩' Elements/BookI/PropNN.lean` shows
-    the Lean using the same:
+    the Lean using the same (a helper written once over any letters, such as
+    `Prop44.place`, may use its own):
     ```sh
     diff <(grep -o '<text[^>]*>[A-Z]</text>' figures/I/NN.svg | sed 's/<[^>]*>//g' | sort -u) \
          <(sed -e 's/<!--.*-->//' -e 's/\[[^]]*\]//g' -e 's/Q\. E\. [DF]\.//g' -e 's/I say//g' -e '/^#/d' heath/I/NN.md \
