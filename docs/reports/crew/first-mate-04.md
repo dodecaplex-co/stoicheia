@@ -16,15 +16,18 @@ captain.
 
 **Two statements changed (I.38 and I.48); the other fourteen stand.** To be sure
 of them I wrote proofs against the statements, in scratch files that are not
-committed: I.38, I.42, I.36 and I.48 in full; Euclid's case of I.35 in full; and
-the area reckoning of I.43. Each closed with no `sorry` but the cited
-propositions' own.
+committed: I.35 in every case, I.36, I.38, I.42, I.44 (from its citation of I.42 on)
+and I.48 in full, and the area reckoning of I.43. Each closed with no `sorry` but
+the cited propositions' own. They are kept, for the captain, in
+`/private/tmp/claude-501/-Users-johnchallis/68e6b57d-6355-42a6-8303-c463406f082f/scratchpad/fm4/`
+(`T35.lean`, `T36.lean`, `T38.lean`, `T44.lean`, `T48.lean`); they follow Euclid's
+route but are not written under his sentences.
 
 | Prop | Verdict |
 |---|---|
 | I.33 | OK. `SameSideOf B D A C` is "in the same directions"; `AreParallel.oppositeSidesOf` turns it into the alternate sides I.29 wants. Fits I.36 and I.45. |
 | I.34 | OK. Its last conclusion is the bisection; `Prop34.bisect` (new, after `Prop34`) says it of `quadArea`. |
-| I.35 | OK, and the hardest of the voyage. General, as Euclid's enunciation is, and I.36 and I.37 need it so: I.37's parallelograms `EBCA`, `DBCF` and I.36's second citation (base `EH`) fall in any arrangement. Euclid proves one case (`D` between `A` and `E`); see the note for the sailors. |
+| I.35 | OK, and the hardest of the voyage. General, as Euclid's enunciation is, and I.36 and I.37 need it so: I.37's parallelograms `EBCA`, `DBCF` and I.36's second citation (base `EH`) fall in any arrangement. Euclid proves one case (`D` between `A` and `E`); see the note for the sailors. Proved in scratch in every case, 240 lines. |
 | I.36 | OK. The two parallelograms may be lettered round opposite ways; one case split (`AreParallel.sameSideOf_or`) gives Euclid's case or its mirror. Proved in scratch, 40 lines. |
 | I.37 | OK. Needs `A ≠ D`, which I.39 and I.41 can meet (where their `E` is `A` the two triangles are one). |
 | **I.38** | **Changed**: below. |
@@ -166,8 +169,8 @@ And `Prop34.bisect` (after `Prop34`): "the diameter bisects it", as
   `G`: `AreParallel.cross_or` on `ED ∥ BC`; the disjunct where `EC` meets `BD` is
   impossible, as `E` and `B` lie on either side of `DC`. Then `E` lies between `D`
   and `F` (they are on either sides of `EB`); `Prop29.exterior` for "FDC ... EAB";
-  I.4; `area_cut` four times, `CommonNotion3`, `ac_rfl`. The scratch proof was about
-  90 lines. The rest, as Heath reports Proclus doing (vol. 1, p. 328): `E` between
+  I.4; `area_cut` four times, `CommonNotion3`, `ac_rfl`. In scratch Euclid's case
+  took 90 lines and the whole 240. The rest, as Heath reports Proclus doing (vol. 1, p. 328): `E` between
   `A` and `D` (Proclus adds the triangles to the trapezium `EBCD`), `E` at `D`, and
   `E` at `A` (then `D` is `F`: `OnRay.eq_of_len_eq`). The mirror arrangements follow
   by exchanging the two parallelograms: `AreParallel.sameSideOf_or` on `AE ∥ BC`
@@ -196,7 +199,8 @@ And `Prop34.bisect` (after `Prop34`): "the diameter bisects it", as
   right angles"; `Postulate5` for `K`. Then I.43's hypotheses, each by
   `Between.of_sameSide` (parallels keep order): from `B` between `A` and `E`, `G` is
   between `H` and `F`; from that, `B` between `H` and `K`; and so on. `KL` is parallel
-  to `AB` by `Prop30.parallel`. I.15 at the end.
+  to `AB` by `Prop30.parallel`. I.15 at the end. In scratch, everything after the
+  citation of I.42 took 130 lines.
 - **I.45.** See "I.42 and I.44". `Prop29.interior`, I.14, `Prop29.alternate`, I.14,
   I.34, I.30, I.33 (`F`, `L` lie on one side of `KM`: `Parallel.sameSide`), and
   `quadArea_add_of_parallelograms` for "the whole".
@@ -213,8 +217,12 @@ And `Prop34.bisect` (after `Prop34`): "the diameter bisects it", as
 
 ## Looking ahead
 
-- I.35 and I.44 are the long ones. Each has a scratch-tested route above, but no
-  full proof yet.
+- I.35 and I.44 are the long ones; both are proved in scratch, so the statements
+  hold up, but each sailor still has to write the proof under Euclid's sentences.
+- I.47's foot of the parallel, and its "let the angle ABC be added to each" (that `C`
+  lies within the angle `DBA`), rest on the angles at `B` and `C` being less than
+  right (I.17). Of the steps not tried in scratch, these look the hardest: reading
+  the figure, not a statement, so the I.47 sailor should expect to spend time there.
 - `Prop46.side_eq` cites `Prop46`; until the I.46 sailor finishes, I.48 is pending
   through it.
 - The figure of I.45 will not look like Heath's (`H` sits on `ABD`), and I.47's foot
