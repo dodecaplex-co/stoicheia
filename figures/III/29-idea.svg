@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.29 at a glance</title>
+  <desc>In equal circles, equal circumferences (yellow) stand on equal angles at the centres (blue), so the straight lines joining their ends (red) are equal.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="107.0" cy="150.0" r="80.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.75"/>
+  <circle cx="293.0" cy="150.0" r="80.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.75"/>
+  <path d="M107.0,150.0 L119.2,127.0 A26,26 0 0,0 82.3,142.0 Z" fill="#1f5aa6"/>
+  <path d="M293.0,150.0 L293.9,176.0 A26,26 0 0,0 318.4,144.6 Z" fill="#1f5aa6"/>
+  <line x1="107.0" y1="150.0" x2="144.6" y2="79.4" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="107.0" y1="150.0" x2="30.9" y2="125.3" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="293.0" y1="150.0" x2="295.8" y2="230.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="293.0" y1="150.0" x2="371.3" y2="133.4" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <path d="M144.6,79.4 A80.0,80.0 0 0,0 30.9,125.3" fill="none" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
+  <path d="M295.8,230.0 A80.0,80.0 0 0,0 371.3,133.4" fill="none" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
+  <line x1="144.6" y1="79.4" x2="30.9" y2="125.3" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
+  <line x1="295.8" y1="230.0" x2="371.3" y2="133.4" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="107.0" cy="150.0" r="4.5" fill="#222222"/>
+  <circle cx="293.0" cy="150.0" r="4.5" fill="#222222"/>
+</svg>
