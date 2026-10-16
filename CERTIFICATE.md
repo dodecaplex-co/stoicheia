@@ -66,28 +66,28 @@ What the proofs show:
 
 ## Book II
 
-**0 of 14 propositions proved.**
+**14 of 14 propositions proved.**
 
-What the proofs show so far:
+What the proofs show:
 
-- **Postulate 5**: No proposition of Book II is proved yet. Book II comes after I.29, where Euclid first calls on it, so any of its propositions may.
+- **Postulate 5**: Every proved proposition uses it, the first being II.1. Book II comes after I.29, where Euclid first calls on it, so any of its propositions may.
 - **Superposition** is used directly by: none yet. Only I.4 and I.8 are allowed to.
 
 | | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |
 |---|---|---|---|---|---|---|---|
-| 🚧 | [II.1](book/II/01.md) | I.3, I.11, I.31, I.34 | | | | | |
-| 🚧 | [II.2](book/II/02.md) | I.31, I.46 | | | | | |
-| 🚧 | [II.3](book/II/03.md) | I.31, I.46 | | | | | |
-| 🚧 | [II.4](book/II/04.md) | I.5, I.6, I.29, I.31, I.34, I.46 | | | | | |
-| 🚧 | [II.5](book/II/05.md) | I.31, I.36, I.43, I.46 | | | | | |
-| 🚧 | [II.6](book/II/06.md) | I.31, I.36, I.43, I.46 | | | | | |
-| 🚧 | [II.7](book/II/07.md) | I.43, I.46 | | | | | |
-| 🚧 | [II.8](book/II/08.md) | I.36, I.43 | | | | | |
-| 🚧 | [II.9](book/II/09.md) | I.6, I.29, I.32, I.34, I.47 | | | | | |
-| 🚧 | [II.10](book/II/10.md) | I.3, I.5, I.6, I.11, I.15, I.29, I.31, I.32, I.34, I.47 | | | | | |
-| 🚧 | [II.11](book/II/11.md) | I.46, I.47, II.6 | | | | | |
-| 🚧 | [II.12](book/II/12.md) | I.47, II.4 | | | | | |
-| 🚧 | [II.13](book/II/13.md) | I.47, II.7 | | | | | |
-| 🚧 | [II.14](book/II/14.md) | I.45, I.47, II.5 | | | | | |
+| ✅ | [II.1](book/II/01.md) | I.3, I.11, I.31, I.34 | I.2, I.3, I.4, I.11, I.29, I.30, I.31, I.34 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 62 |
+| ✅ | [II.2](book/II/02.md) | I.31, I.46 | I.4, I.28, I.29, I.30, I.31, I.34, I.46 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 61 |
+| ✅ | [II.3](book/II/03.md) | I.31, I.46 | I.4, I.28, I.29, I.30, I.31, I.34, I.46 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 62 |
+| ✅ | [II.4](book/II/04.md) | I.5, I.6, I.29, I.31, I.34, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 64 |
+| ✅ | [II.5](book/II/05.md) | I.31, I.36, I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 5 | 64 |
+| ✅ | [II.6](book/II/06.md) | I.31, I.36, I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 2, 3, 5 | 63 |
+| ✅ | [II.7](book/II/07.md) | I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 2, 3, 5 | 63 |
+| ✅ | [II.8](book/II/08.md) | I.36, I.43 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 2, 3, 5 | 63 |
+| ✅ | [II.9](book/II/09.md) | I.6, I.29, I.32, I.34, I.47 | I.4, I.5, I.6, I.11, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 64 |
+| ✅ | [II.10](book/II/10.md) | I.3, I.5, I.6, I.11, I.15, I.29, I.31, I.32, I.34, I.47 | I.3, I.4, I.5, I.6, I.11, I.15, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | I.15 | 1, 3, 5 | 63 |
+| ✅ | [II.11](book/II/11.md) | I.46, I.47, II.6 | I.4, I.10, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47, II.6 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 65 |
+| ✅ | [II.12](book/II/12.md) | I.47, II.4 | I.4, I.17, I.28, I.34, I.46, I.47, II.4 | 1, 2, 3, 4, 5 | I.15 | 2 | 65 |
+| ✅ | [II.13](book/II/13.md) | I.47, II.7 | I.4, I.13, I.17, I.28, I.34, I.46, I.47, II.7 | 1, 2, 3, 4, 5 | I.15 | 2 | 64 |
+| ✅ | [II.14](book/II/14.md) | I.45, I.47, II.5 | I.4, I.10, I.11, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 66 |
 
 The Common Notions are theorems in Lean (see [`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so they are counted where a proof cites them by name. Lean's own logical foundations (`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and are left out.

@@ -307,7 +307,7 @@ graph TD
   classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242
   classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242
   class I3,I5,I6,I11,I15,I29,I31,I32,I34,I36,I43,I45,I46,I47 earlier
-  class II1,II2,II3,II4,II5,II6,II7,II8,II9,II10,II11,II12,II13,II14 sketched
+  class II1,II2,II3,II4,II5,II6,II7,II8,II9,II10,II11,II12,II13,II14 proved
 ```
 
 - [II.1](book/II/01.md): A rectangle cut into rectangles

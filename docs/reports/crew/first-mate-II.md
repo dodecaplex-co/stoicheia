@@ -33,7 +33,7 @@ from Book II, which stays as Heath prints it (challenge 9 below).
   Euclid cites, from either book. `python3 scripts/scaffold_book.py II` made
   `Elements/BookII/Prop01.lean`–`Prop14.lean`.
 - **`scripts/render.py`**: `book/II/` (pages, index, front page), a Book II section in
-  `CERTIFICATE.md` and `GRAPH.md`, and links across books, `[I.47](../I/47.md)` on a
+  `CERTIFICATE.md` and `GRAPH.md`, and links across books (a Book II page links to I.47 at `../I/47.md`) on a
   Book II page. The front page's heading and the index's first sentence come from the
   sections of `heath/<book>/front.md` (Book II has Definitions only), and the gap
   catalogue is linked only once it exists. In `GRAPH.md`, the Book I propositions that

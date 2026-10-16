@@ -23,7 +23,7 @@ There are no coordinates here, no real numbers and no complex numbers. The geome
 | | |
 |---|---|
 | **Book I** | **Complete: all 48 propositions proved**, every one following Euclid's own proof. The certificate shows the shape of the book: 29 propositions never need the parallel postulate, and the first that does is I.29, just where Euclid puts it. [Read Book I →](book/I/index.md) |
-| **Book II** | **All 14 propositions stated** in Lean, in Heath's letters, with Euclid's sentences in place, ready for their proofs. "The rectangle contained by AB, BC" and "the square on AB" are areas in Lean, and a rectangle drawn in a figure is proved equal to the rectangle contained by its sides. [Read Book II →](book/II/index.md) |
+| **Book II** | **Complete: all 14 propositions proved**, every one following Euclid's own proof. "The rectangle contained by AB, BC" and "the square on AB" are areas in Lean, defined rather than assumed, and a rectangle drawn in a figure is proved equal to the rectangle contained by its sides. [Read Book II →](book/II/index.md) |
 | Books III–XIII | To come, one book at a time. |
 
 The [certificate](CERTIFICATE.md) and the [graph of who uses whom](GRAPH.md) are regenerated from the proofs on every change.
