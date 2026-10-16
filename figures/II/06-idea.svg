@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>II.6 at a glance</title>
+  <desc>Halve a straight line and lengthen it (black): the rectangle of the whole and the added piece (red and yellow) and the square on the half (blue) make the square on the line from the middle to the end. The red piece lying down equals the one standing up.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <polygon points="70.0,76.0 165.0,76.0 165.0,146.0 70.0,146.0" fill="#d0312d" fill-opacity="0.9"/>
+  <polygon points="165.0,76.0 330.0,76.0 330.0,146.0 165.0,146.0" fill="#f2b705" fill-opacity="0.95"/>
+  <polygon points="165.0,146.0 260.0,146.0 260.0,241.0 165.0,241.0" fill="#1f5aa6" fill-opacity="0.9"/>
+  <polygon points="260.0,146.0 330.0,146.0 330.0,241.0 260.0,241.0" fill="#d0312d" fill-opacity="0.9"/>
+  <line x1="165.0" y1="76.0" x2="165.0" y2="146.0" stroke="#fbf7ee" stroke-width="2"/>
+  <line x1="165.0" y1="146.0" x2="330.0" y2="146.0" stroke="#fbf7ee" stroke-width="2"/>
+  <line x1="260.0" y1="146.0" x2="260.0" y2="241.0" stroke="#fbf7ee" stroke-width="2"/>
+  <line x1="70.0" y1="64.0" x2="330.0" y2="64.0" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
+  <circle cx="165.0" cy="64.0" r="5.0" fill="#222222"/>
+  <circle cx="260.0" cy="64.0" r="5.0" fill="#222222"/>
+</svg>
