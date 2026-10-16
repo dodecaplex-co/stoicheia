@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 230" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.35: the parallelograms ABCD, EBCF on the same base BC</title>
+  <rect x="0" y="0" width="400" height="230" rx="10" fill="#fbf7ee"/>
+  <g fill="#e9dcc0" fill-opacity="0.55">
+    <path d="M 230 50 L 55 50 L 85 180 Z"/>
+    <path d="M 370 50 L 195 50 L 225 180 Z"/>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 55 50 H 370" stroke="#3b2f2f" stroke-width="1.6"/>
+    <path d="M 55 50 L 85 180 L 225 180 L 195 50 Z M 230 50 L 85 180 L 225 180 L 370 50 Z" stroke="#a0522d" stroke-width="2.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="55" cy="50" r="2.6"/>
+    <circle cx="85" cy="180" r="2.6"/>
+    <circle cx="225" cy="180" r="2.6"/>
+    <circle cx="195" cy="50" r="2.6"/>
+    <circle cx="230" cy="50" r="2.6"/>
+    <circle cx="370" cy="50" r="2.6"/>
+    <circle cx="201" cy="76" r="2.6"/>
+    <text x="48" y="35">A</text>
+    <text x="76" y="204">B</text>
+    <text x="219" y="204">C</text>
+    <text x="187" y="35">D</text>
+    <text x="224" y="35">E</text>
+    <text x="363" y="35">F</text>
+    <text x="210" y="92">G</text>
+  </g>
+</svg>
