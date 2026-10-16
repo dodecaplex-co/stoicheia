@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>II.12 at a glance</title>
+  <desc>In a triangle, the square across from an obtuse angle (red) equals the other two squares (yellow, blue) and two rectangles (black), each as tall as the yellow side and as wide as the piece the perpendicular cuts off outside.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <polygon points="148.5,195.9 260.5,137.7 202.2,25.7 90.2,83.9" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="226.9,195.9 260.5,137.7 318.7,171.3 285.1,229.5" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="148.5,195.9 226.9,195.9 226.9,274.3 148.5,274.3" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="114.9,274.3 148.5,274.3 148.5,195.9 114.9,195.9" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="81.3,274.3 114.9,274.3 114.9,195.9 81.3,195.9" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <line x1="226.9" y1="195.9" x2="260.5" y2="195.9" stroke="#222222" stroke-width="2" stroke-linecap="butt"/>
+  <line x1="260.5" y1="195.9" x2="260.5" y2="137.7" stroke="#222222" stroke-width="2" stroke-linecap="butt"/>
+  <polyline points="250.5,195.9 250.5,185.9 260.5,185.9" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <polygon points="226.9,195.9 260.5,137.7 148.5,195.9" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
+</svg>
