@@ -55,7 +55,7 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   have hACD : Between A C D := between_of_between_left hABD hACB
   have hCBD : Between C B D := between_inner hACB hABD
   -- let the square AEFD be described on AD, and let the figure be drawn double.
-  obtain ⟨X, hX, _⟩ := exists_off_line hAD []
+  obtain ⟨X, hX, -⟩ := exists_off_line hAD []
   obtain ⟨E, F, hsq, hE, hF⟩ := BookI.Prop46 hAD hX
   obtain ⟨hp, hAEFD⟩ := Square.described hsq hE hF
   obtain ⟨L, K, M, N, hDKE, hELF, hAME, hFND, hBKL, hMKN, hDBKN, hKMEL⟩ :=
@@ -136,7 +136,8 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   have hMOE : Between M O E := between_inner hAMO hAOE
   have hEHL : Between E H L := between_inner (between_symm hHLF) (between_symm hEHF)
     |> between_symm
-  /- The nine cells of the figure, with the orientations used below. -/
+  /- The cells of the figure are parallelograms, named as the proof reads them; OH is
+     the second figure's. -/
   have hCBKG : Parallelogram C B K G := Prop8.cell hMN_AD.symm hCH_BL
     hC_AD hB_AD hK_MN hG_MN hC_CH hG_CH hB_BL hK_BL
   have hBDNK : Parallelogram B D N K := hDBKN.reverse.rotate.rotate.rotate
@@ -166,7 +167,6 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   -- QR is also equal to RP.
   have hQR_RP : ‖Q R‖ = ‖R P‖ := hGK_QR.symm.trans (hGK_KN.trans hKN_RP)
   -- And, since BC is equal to BD, and GK to KN,
-  have hBC_BD : ‖B C‖ = ‖B D‖ := (len_symm B C).trans hCB_BD
   let CK := quadArea B C G K
   let KD := quadArea D B K N
   let GR := quadArea K G Q R
@@ -196,7 +196,6 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   have hfourCK : KD + CK + GR + RN = CK + CK + CK + CK := by
     rw [← hCK_KD, hGR_CK, hRN_CK]
   -- Again, since CB is equal to BD,
-  have hCB_BD' := hCB_BD
   -- while BD is equal to BK, that is CG,
   have hKDsq : Square D B K N := hsq.rotate.rotate.rotate.about_diameter hDAEF
     hDKE (between_symm hABD) (between_symm hFND) hDBKN
@@ -211,7 +210,7 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   have hGK_GQ : ‖G K‖ = ‖G Q‖ := (len_symm G K).trans hGRsq.2.2.1
   have hCB_GQ : ‖C B‖ = ‖G Q‖ := hCB_GK.trans hGK_GQ
   -- therefore CG is also equal to GQ.
-  have hCG_GQ : ‖C G‖ = ‖G Q‖ := hBD_CG.symm.trans (hCB_BD'.symm.trans hCB_GQ)
+  have hCG_GQ : ‖C G‖ = ‖G Q‖ := hBD_CG.symm.trans (hCB_BD.symm.trans hCB_GQ)
   -- And, since CG is equal to GQ, and QR to RP,
   let AG := quadArea C A M G
   let MQ := quadArea G M O Q
@@ -298,7 +297,7 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   -- therefore four times the rectangle AB, BD together with the square on AC is equal to the
   -- gnomon STU and OH.
   have hadded : rect A B B D + rect A B B D + rect A B B D + rect A B B D + sq A C =
-      STU + quadArea Q O E H := by rw [hrect_STU, hOH]
+      STU + quadArea Q O E H := CommonNotion2 hrect_STU hOH.symm
   -- But the gnomon STU and OH are the whole square AEFD,
   have hwhole : STU + quadArea Q O E H = quadArea A E F D := by
     have h := hDAEF.about_diameter hDQE (between_symm hACD) hAOE hEHF hFPD hDCQP hQOEH

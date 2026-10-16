@@ -74,7 +74,8 @@ theorem Prop7 {A B C : Point} (hACB : Between A C B) :
     hsq.rotate.rotate.rotate.about_diameter hBADE hBGD (between_symm hACB)
       (between_symm hEFB) hBCGF
   have hBF : ‖B F‖ = ‖B C‖ := hCF.len_eq
-  /- AF has the same parallels as the pieces and the right angle at B of ADEB. -/
+  /- AF is a parallelogram, its sides lying along those of CF and of ADEB, and its angle
+     at B is the square's right angle. -/
   have hBAHF : Parallelogram B A H F := by
     constructor
     · refine ⟨hAB.symm, ne_of_between_ends hHGF, ?_⟩
