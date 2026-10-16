@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.8 at a glance</title>
-  <desc>Cut a straight line anywhere and add on a copy of one piece (blue): four rectangles of the whole and that piece (red), with the square on the other piece (yellow), fill the square on the lengthened line.</desc>
+  <desc>Cut a straight line anywhere and add on a copy of one piece (blue): four rectangles contained by the whole and that piece (red), with the square on the other piece (yellow), fill the square on the lengthened line.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="95.0,246.0 245.0,246.0 245.0,186.0 95.0,186.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <polygon points="245.0,246.0 305.0,246.0 305.0,96.0 245.0,96.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
