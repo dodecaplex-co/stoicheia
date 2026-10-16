@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.11 at a glance: the golden section</title>
-  <desc>To cut a straight line so that the rectangle of the whole and one piece equals the square on the other (both yellow), swing the line from the middle of the big square's side to its far corner (blue) up onto that side produced: the part beyond the corner is the longer piece.</desc>
+  <desc>To cut a straight line so that the rectangle of the whole and one piece equals the square on the other (both yellow), swing the line from the middle of the big square's side to its far corner (blue) up onto that side produced: the part beyond the corner is the longer piece. (Drawn with 89 and 144, since this cut can never be drawn exactly.)</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="128.0,122.5 217.0,122.5 217.0,266.5 128.0,266.5" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <polygon points="128.0,122.5 128.0,33.5 217.0,33.5 217.0,122.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
