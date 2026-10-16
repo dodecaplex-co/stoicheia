@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
 import Elements.BookI.Prop04
+import Elements.BookI.Prop11
 import Elements.BookIII.Prop01
 import Elements.BookIII.Prop16
 
@@ -22,27 +23,90 @@ theorem Prop17 {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD) (
   -- Let A be the given point, and BCD the given circle;
   -- thus it is required to draw from the point A a straight line touching the circle BCD.
   -- For let the centre E of the circle be taken; [III. 1]
+  /- III.1 needs two points of the circle. The straight line from the given centre
+     towards A meets it at D, and meets it again beyond the centre (System E,
+     Intersections 4 and 5). III.1's centre is the same point (Generalities 2). -/
+  obtain ⟨E₀, hE₀⟩ := hBCD
+  have hEA : E₀ ≠ A := fun e => hA.1 (e ▸ centre_inside hE₀)
+  obtain ⟨L, hE_L, hA_L⟩ := Postulate1 E₀ A hEA
+  obtain ⟨D, hD, hD_L, hEDA⟩ := line_circle_between (centre_inside hE₀) hE_L hA hA_L
+  obtain ⟨D', hD', -, hD'EA⟩ :=
+    line_circle_beyond (centre_inside hE₀) hE_L hA_L hEA.symm
+  have hDD' : D ≠ D' := fun e => not_between_of_between (e ▸ hD'EA) hEDA
+  obtain ⟨E, -, -, -, hE, -⟩ := Prop1 ⟨E₀, hE₀⟩ hD hD' hDD'
+  obtain rfl : E = E₀ := centre_unique hE hE₀
   -- let AE be joined, and with centre E and distance EA let the circle AFG be described;
+  obtain ⟨AFG, hE_AFG, hA_AFG⟩ := Postulate3 E A hEA
   -- from D let DF be drawn at right angles to EA,
+  /- I.11 draws the perpendicular through D. Its point F' need not be on AFG:
+     take F where the perpendicular, produced beyond D, meets that circle. -/
+  have hED : E ≠ D := (ne_of_centre_of_on hE hD).symm
+  obtain ⟨Q, hQ, -⟩ := exists_off_line hEA []
+  obtain ⟨F', hF'Q, hF'⟩ := BookI.Prop11 hEA ⟨L, hE_L, hA_L, hD_L⟩ hQ
+  have hF'_L : ¬ OnLine F' L := hF'Q.triangle.off_line hE_L hA_L
+  have hEDF' : ∠ E D F' = ∟ := hF' E ⟨L, hE_L, hA_L, hE_L⟩ hED
+  have hDF' : D ≠ F' := fun e => hF'_L (e ▸ hD_L)
+  obtain ⟨N, hD_N, hF'_N⟩ := Postulate1 D F' hDF'
+  have hD_in : InsideCircle D AFG :=
+    inside_of_between (Or.inl (centre_inside hE_AFG)) (Or.inr hA_AFG) hEDA
+  obtain ⟨F, hF, hF_N, hFDF'⟩ :=
+    line_circle_beyond hD_in hD_N hF'_N hDF'.symm
+  have hE_N : ¬ OnLine E N := fun h =>
+    hF'_L ((line_unique hED h hD_N hE_L hD_L) ▸ hF'_N)
+  have hF_L : ¬ OnLine F L := fun h =>
+    hF'_L ((line_unique (ne_of_between hFDF').symm hD_N hF_N hD_L h) ▸ hF'_N)
   -- and let EF, AB be joined;
+  /- F is farther from E than D is, so EF leaves BCD at B between E and F. -/
+  have hEF : E ≠ F := fun e => hE_N (e ▸ hF_N)
+  have hED_EF : ‖E D‖ < ‖E F‖ := by
+    rw [← Definition15 hE_AFG hA_AFG hF]
+    exact len_lt_of_inside hE_AFG hA_AFG hD_in
+  have hF_out : OutsideCircle F BCD := outside_of_len_gt hE hD hED_EF
+  obtain ⟨M, hE_M, hF_M⟩ := Postulate1 E F hEF
+  obtain ⟨B, hB, hB_M, hEBF⟩ :=
+    line_circle_between (centre_inside hE) hE_M hF_out hF_M
+  have hB_L : ¬ OnLine B L := fun h =>
+    hF_L ((line_unique (ne_of_between hEBF) hE_M hB_M hE_L h) ▸ hF_M)
+  have hEAB : Triangle E A B := Triangle.of_line hE_L hA_L hEA hB_L
+  have hEFD : Triangle E F D := (Triangle.of_line hE_L hD_L hED hF_L).acb
+  obtain ⟨K, hA_K, hB_K⟩ := Postulate1 A B hEAB.ne₂₃
   -- I say that AB has been drawn from the point A touching the circle BCD.
   -- For, since E is the centre of the circles BCD, AFG,
   -- EA is equal to EF, and ED to EB;
+  have hEAEF : ‖E A‖ = ‖E F‖ := Definition15 hE_AFG hA_AFG hF
+  have hEDEB : ‖E D‖ = ‖E B‖ := Definition15 hE hD hB
   -- therefore the two sides AE, EB are equal to the two sides FE, ED;
   -- and they contain a common angle, the angle at E;
+  have hcommon : ∠ A E B = ∠ F E D := by
+    rw [angle_onRay_right (OnRay.of_between hEBF) hEA.symm,
+      angle_symm hEA.symm hEF.symm,
+      angle_onRay_right (OnRay.of_between hEDA) hEF.symm]
   -- therefore the base DF is equal to the base AB,
   -- and the triangle DEF is equal to the triangle BEA,
   -- and the remaining angles to the remaining angles; [I. 4]
+  obtain ⟨-, -, -, hEBA_EDF⟩ := BookI.Prop4 hEAB hEFD hEAEF hEDEB.symm hcommon
   -- therefore the angle EDF is equal to the angle EBA.
+  have hEDF_EBA : ∠ E D F = ∠ E B A := hEBA_EDF.symm
   -- But the angle EDF is right;
+  /- F lies on the other side of D from F'; the angle adjacent to a right angle
+     is right (System E, Diagram-angle 3). -/
+  have hEDF : ∠ E D F = ∟ := by
+    have hF'DE : ∠ F' D E = ∟ := by
+      rw [angle_symm hDF'.symm hED]
+      exact hEDF'
+    rw [← adjacent_eq_of_right hF'_N hF_N (between_symm hFDF') hE_N hF'DE, hF'DE]
   -- therefore the angle EBA is also right.
+  have hEBA : ∠ E B A = ∟ := hEDF_EBA.symm.trans hEDF
   -- Now EB is a radius;
   -- and the straight line drawn at right angles to the diameter of a circle, from its
   -- extremity, touches the circle; [III. 16, Por.]
+  have hBA : Touches B A BCD := Prop16.porism hE hB hEAB.acb hEBA
   -- therefore AB touches the circle BCD.
+  have hAB : Touches A B BCD :=
+    hBA.of_collinear ⟨K, hB_K, hA_K, hA_K⟩ ⟨K, hB_K, hA_K, hB_K⟩ hEAB.ne₂₃
   -- Therefore from the given point A the straight line AB has been drawn touching the circle
   -- BCD.
+  exact ⟨B, hB, hAB⟩
   -- Q. E. F.
-  sorry
 
 end Elements.BookIII
