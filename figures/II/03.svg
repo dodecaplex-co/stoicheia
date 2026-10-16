@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid II.3: the rectangle contained by AB, BC</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 70 60 H 340 V 240 H 70 Z" stroke="#a0522d" stroke-width="2.6"/>
+    <path d="M 160 60 V 240" stroke="#3b2f2f" stroke-width="1.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="70" cy="60" r="2.6"/>
+    <circle cx="160" cy="60" r="2.6"/>
+    <circle cx="340" cy="60" r="2.6"/>
+    <circle cx="160" cy="240" r="2.6"/>
+    <circle cx="340" cy="240" r="2.6"/>
+    <circle cx="70" cy="240" r="2.6"/>
+    <text x="58" y="46">A</text>
+    <text x="344" y="46">B</text>
+    <text x="154" y="46">C</text>
+    <text x="153" y="263">D</text>
+    <text x="344" y="263">E</text>
+    <text x="57" y="263">F</text>
+  </g>
+</svg>
