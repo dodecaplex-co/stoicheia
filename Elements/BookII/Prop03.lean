@@ -42,13 +42,13 @@ theorem Prop3 {A B C : Point} (hACB : Between A C B) :
   -- let ED be drawn through to F,
   /- DE names the whole straight line. The parallel through A will find F on it. -/
   obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hp.2.1
-  obtain ⟨CD, hC_CD, hD_CD⟩ := Postulate1 C D hp.1.1
-  obtain ⟨BE, hB_BE, hE_BE⟩ := Postulate1 B E hp.1.2.1.symm
   have hDE_AB : Parallel DE AB := hp.2.parallel hD_DE hE_DE hB_AB hC_AB
-  have hCD_BE : Parallel CD BE := hp.1.parallel hC_CD hD_CD hE_BE hB_BE
   -- and through A let AF be drawn parallel to either CD or BE. [I. 31]
   /- I.31 draws AF parallel to CD; I.30 finds its meeting with DE and makes it
      parallel to BE as well. -/
+  obtain ⟨CD, hC_CD, hD_CD⟩ := Postulate1 C D hp.1.1
+  obtain ⟨BE, hB_BE, hE_BE⟩ := Postulate1 B E hp.1.2.1.symm
+  have hCD_BE : Parallel CD BE := hp.1.parallel hC_CD hD_CD hE_BE hB_BE
   obtain ⟨F, hF_DE, hDCAF⟩ :=
     BookI.Prop31.parallelogram hDE_AB hD_DE hC_AB hA_AB hAC.symm
   have hAF : A ≠ F := hDCAF.1.2.1

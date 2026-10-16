@@ -45,6 +45,7 @@ theorem Prop4 {A B C : Point} (hACB : Between A C B) :
   obtain ⟨BD, hB_BD, hD_BD⟩ := Postulate1 B D hBD
   -- through C let CF be drawn parallel to either AD or EB,
   -- and through G let HK be drawn parallel to either AB or DE. [I. 31]
+  /- G is where CF cuts BD; F, H, K are where the parallels meet the sides. -/
   obtain ⟨F, G, H, K, hBGD, hDFE, hAHD, hEKB, hCGF, -, hBCGK, hGHDF⟩ := hp.figure hACB
   -- Then, since CF is parallel to AD,
   obtain ⟨AD, hA_AD, hD_AD⟩ := Postulate1 A D hp.1.1
@@ -83,7 +84,7 @@ theorem Prop4 {A B C : Point} (hACB : Between A C B) :
     have hCBG : Triangle C B G := hBCGK.triangle.bac
     exact BookI.Prop6 hCBG (by rw [angle_symm hCB hGB]; exact hGBC.symm)
   -- But CB is equal to GK, and CG to KB; [I. 34]
-  obtain ⟨hCB_GK, hCG_BK, hGCB_GKB, hCBK_CGK, -⟩ :=
+  obtain ⟨hCB_GK, hCG_BK, -, -, -⟩ :=
     BookI.Prop34 (A := C) (B := B) (C := G) (D := K) hBCGK.rotate
   -- therefore GK is also equal to KB;
   have hGK_KB : ‖G K‖ = ‖K B‖ := by
@@ -106,6 +107,8 @@ theorem Prop4 {A B C : Point} (hACB : Between A C B) :
     rw [hKBC, add_comm] at h29'
     exact CommonNotion3 h29' rfl
   -- so that the opposite angles CGK, GKB are also right. [I. 34]
+  obtain ⟨-, -, hGCB_GKB, hCBK_CGK, -⟩ :=
+    BookI.Prop34 (A := C) (B := B) (C := G) (D := K) hBCGK.rotate
   have hCGK : ∠ C G K = ∟ := by
     rw [← hCBK_CGK, angle_symm hCB (ne_of_between (between_symm hEKB)).symm]; exact hKBC
   have hGKB : ∠ G K B = ∟ := hGCB_GKB ▸ hBCG
@@ -159,11 +162,12 @@ theorem Prop4 {A B C : Point} (hACB : Between A C B) :
   -- But HF, CK, AG, GE are the whole ADEB,
   have hwhole := hBADE.about_diameter hBGD hBCA hAHD hDFE hEKB hBCGK hGHDF
   -- which is the square on AB.
+  have hsqAB : quadArea B A D E = sq A B := hBADE.quadArea_rotate.symm.trans hADEB
   -- Therefore the square on AB is equal to the squares on AC, CB and twice the rectangle
   -- contained by AC, CB.
   calc
-    sq A B = quadArea B A D E := hADEB.symm.trans hBADE.quadArea_rotate
-    _ = quadArea B C G K + quadArea C A H G + quadArea G H D F + quadArea K G F E := hwhole
+    sq A B = quadArea B A D E := hsqAB.symm
+    _ =quadArea B C G K + quadArea C A H G + quadArea G H D F + quadArea K G F E := hwhole
     _ = quadArea G H D F + quadArea B C G K + (quadArea C A H G + quadArea K G F E) := by ac_rfl
     _ = sq A C + sq C B + (rect A C C B + rect A C C B) := hfour
   -- Therefore etc.
