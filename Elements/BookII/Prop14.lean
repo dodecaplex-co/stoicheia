@@ -67,12 +67,13 @@ theorem Prop14 {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h
     obtain ⟨G, hBGF, hBG⟩ := BookI.Prop10 (ne_of_between_ends hBEF)
     -- With centre G and distance one of the straight lines GB, GF let the semicircle BHF be
     -- described; let DE be produced to H, and let GH be joined.
-    obtain ⟨α, hGα, hBα⟩ := Postulate3 G B (ne_of_between hBGF).symm
-    have hFα : OnCircle F α :=
-      on_circle_of_len_eq hGα hBα (by rw [← hBG, len_symm G B])
-    have hEα : InsideCircle E α := inside_of_between (Or.inr hBα) (Or.inr hFα) hBEF
+    obtain ⟨BHF, hG_BHF, hB_BHF⟩ := Postulate3 G B (ne_of_between hBGF).symm
+    have hF_BHF : OnCircle F BHF :=
+      on_circle_of_len_eq hG_BHF hB_BHF (by rw [← hBG, len_symm G B])
+    have hE_BHF : InsideCircle E BHF :=
+      inside_of_between (Or.inr hB_BHF) (Or.inr hF_BHF) hBEF
     obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hDE
-    obtain ⟨H, hHα, hH_DE, hHED⟩ := line_circle_beyond hEα hE_DE hD_DE hDE
+    obtain ⟨H, hH_BHF, hH_DE, hHED⟩ := line_circle_beyond hE_BHF hE_DE hD_DE hDE
     /- H lies beyond E from D, on the semicircle away from the rectangle.
        GH is the side of the triangle used below. -/
     -- Then, since the straight line BF has been cut into equal segments at G, and into unequal
@@ -94,12 +95,12 @@ theorem Prop14 {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h
         have := Magnitude.add_self_lt_add_self h'
         rw [← hBF, hBF'] at this
         exact lt_irrefl _ (lt_trans hlt' (Magnitude.lt_of_add_lt_add_left this))
-    have hGE : E ≠ G := ne_of_between (between_symm hBGE)
+    have hEG : E ≠ G := ne_of_between (between_symm hBGE)
     -- the rectangle contained by BE, EF together with the square on EG is equal to the square on
     -- GF. [II. 5]
-    have h5 : rect B E E F + sq G E = sq G F := Prop5 hBGF hBG hBEF hGE
+    have h5 : rect B E E F + sq G E = sq G F := Prop5 hBGF hBG hBEF hEG
     -- But GF is equal to GH;
-    have hGF_GH : ‖G F‖ = ‖G H‖ := Definition15 hGα hFα hHα
+    have hGF_GH : ‖G F‖ = ‖G H‖ := Definition15 hG_BHF hF_BHF hH_BHF
     -- therefore the rectangle BE, EF together with the square on GE is equal to the square on
     -- GH.
     have hsum : rect B E E F + sq G E = sq G H := h5.trans (sq_congr hGF_GH)
@@ -112,15 +113,17 @@ theorem Prop14 {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h
     have hHE : H ≠ E := ne_of_between hHED
     have hH_BF : ¬ OnLine H BF := fun hH =>
       hD_BF ((line_unique hHE hH_DE hE_DE hH hE_BF) ▸ hD_DE)
+    /- The angle HEG is right: it is the angle HEB, beside the rectangle's right angle
+       DEB, and G lies on EB. -/
     have hBEH : ∠ B E H = ∟ := by
       rw [← adjacent_eq_of_right hD_DE hH_DE (between_symm hHED)
         (hDEB.off_line hD_DE hE_DE) h.2.1]
       exact h.2.1
     have hHEG : ∠ H E G = ∟ := by
-      rw [angle_symm hHE (Ne.symm hGE),
+      rw [angle_symm hHE (Ne.symm hEG),
         angle_onRay_left (OnRay.of_between (between_symm hBGE)) hHE]
       exact hBEH
-    have h47 := BookI.Prop47.sq (Triangle.of_line hE_BF hG_BF hGE hH_BF).acb hHEG
+    have h47 := BookI.Prop47.sq (Triangle.of_line hE_BF hG_BF hEG hH_BF).acb hHEG
     -- therefore the rectangle BE, EF together with the square on GE is equal to the squares on
     -- HE, EG.
     have hequal : rect B E E F + sq G E = sq H E + sq E G :=
@@ -136,10 +139,11 @@ theorem Prop14 {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h
     have hBD_HE : quadArea E B C D = sq H E :=
       hrectangle.trans (hEH.trans (sq_symm E H))
     -- And BD is equal to the rectilineal figure A.
-    have hA : △ A₁ A₂ A₄ + △ A₄ A₂ A₃ = sq H E := hBD.symm.trans hBD_HE
+    have hBD_A : quadArea E B C D = △ A₁ A₂ A₄ + △ A₄ A₂ A₃ := hBD
     -- Therefore the rectilineal figure A is also equal to the square which can be described on
     -- EH.
-    have hA_EH : △ A₁ A₂ A₄ + △ A₄ A₂ A₃ = sq E H := hA.trans (sq_symm H E)
+    have hA_EH : △ A₁ A₂ A₄ + △ A₄ A₂ A₃ = sq E H :=
+      hBD_A.symm.trans (hBD_HE.trans (sq_symm H E))
     -- Therefore a square, namely that which can be described on EH, has been constructed equal
     -- to the given rectilineal figure A.
     exact ⟨E, H, hA_EH.symm⟩
