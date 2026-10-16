@@ -59,8 +59,9 @@ theorem Prop34 {A B C D : Point} (h : Parallelogram A C D B) :
   -- And, since the angle ABC is equal to the angle BCD,
   -- and the angle CBD to the angle ACB,
   -- the whole angle ABD is equal to the whole angle ACD. [C.N. 2]
-  /- BC falls within both angles: the far corners lie on one side of each
-     side, with the parallelogram named from each corner. -/
+  /- BC falls within both angles: C within the angle ABD, and B within the
+     angle ACD, as `Parallelogram.sameSideOf` says of the parallelogram named
+     from each corner. -/
   have hABD : ∠ A B D = ∠ A B C + ∠ C B D :=
     angle_add_of_within h.rotate.rotate.rotate.sameSideOf h.rotate.rotate.sameSideOf.symm.swap
   have hACD : ∠ A C D = ∠ A C B + ∠ B C D :=
@@ -78,13 +79,17 @@ theorem Prop34 {A B C D : Point} (h : Parallelogram A C D B) :
   -- and BC is common,
   have hBC_CB : ‖B C‖ = ‖C B‖ := len_symm B C
   -- the two sides AB, BC are equal to the two sides DC, CB respectively;
+  have : ‖A B‖ = ‖D C‖ ∧ ‖B C‖ = ‖C B‖ := ⟨hAB_DC, hBC_CB⟩
   -- and the angle ABC is equal to the angle BCD;
+  have : ∠ A B C = ∠ D C B := hB
   -- therefore the base AC is also equal to DB,
-  have hSAS := Prop4 hABC.bac hDCB.bac hBA_CD hBC_CB hB
+  /- I.4 takes the corner of the given angle first: BAC and CDB, as in I.33. -/
+  obtain ⟨hAC_DB', hBAC_CDB_area, -, -⟩ := Prop4 hABC.bac hDCB.bac hBA_CD hBC_CB hB
   -- and the triangle ABC is equal to the triangle DCB. [I. 4]
-  have harea : △ B A C = △ C D B := hSAS.2.1
+  have harea : △ A B C = △ D C B := by
+    rw [area_bac A B C, hBAC_CDB_area, area_bac C D B]
   -- Therefore the diameter BC bisects the parallelogram ACDB.
-  rw [area_bac A B C, harea, area_bac C D B]
+  exact harea
   -- Q. E. D.
 
 /-- The diameter bisects the parallelogram, said of its area: the parallelogram
