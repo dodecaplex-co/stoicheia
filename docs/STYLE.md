@@ -85,7 +85,8 @@ debt is still said where it falls: Intersection 4 is LeanEuclid's corrected form
   it (`Prop5.base`), or, if it cites I.28, I.29 or I.30, in
   `Elements/BookI/HelpersParallels.lean` (`Prop30.meet`), or, if it is a
   consequence of PropN that later proofs share, as a corollary after PropN
-  (`Prop34.bisect`).
+  (`Prop34.bisect`). In Book II, a shared step that cites Book I goes in
+  `Elements/BookII/Rectangles.lean`, and a proof cites Book I as `BookI.PropN`.
 - **Euclid's route**: the propositions he cites, in his order, nothing later. When
   Lean cites one he gives no bracket for, the mishnah says why.
 - **No `axiom` outside `Elements/Foundations/`, no `native_decide`.**
@@ -136,7 +137,8 @@ Run from the repo root after `lake build`; F is the file, NN its proposition.
 `$HEATH_OCR` is the OCR text of the Internet Archive scan of Heath's volume 1,
 `thirteenbookseu02heibgoog` (the captain gives the path); page N's image is
 `https://archive.org/download/thirteenbookseu02heibgoog/page/n<N+20>.jpg`. Each
-check is yes or no; a no goes back with the line that failed.
+check is yes or no; a no goes back with the line that failed. For a proposition of a
+later book, read its numeral for `I` in the paths (`heath/II/NN.md`, `figures/II/NN.svg`).
 
 **Every reader-facing file**
 

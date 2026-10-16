@@ -6,10 +6,11 @@ transcription. A few house rules keep the whole thing honest and readable.
 
 ## Proving a proposition
 
-Every proposition of Book I is already stated in Lean, with Euclid's sentences in
-place as comments and a `sorry` at the end. Pick any 🚧 proposition in
-[Book I](book/I/index.md); you can prove it before the ones it cites are finished,
-because a proof only needs their statements.
+Every proposition of Books I and II is stated in Lean, with Euclid's sentences in
+place as comments and, until it is proved, a `sorry` at the end. Book I is proved; pick
+any 🚧 proposition in [Book II](book/II/index.md). You can prove it before the ones it
+cites are finished, because a proof only needs their statements. How Book II speaks of
+rectangles and squares is in [its brief](docs/briefs/0003-book-II.md).
 
 1. **Euclid's words go in `--` comments, ours go in `/- … -/`.** Keep the words
    of every `--` line exactly as they are: CI checks that, read in order, they
@@ -26,7 +27,10 @@ because a proof only needs their statements.
    I.28, I.29 or I.30, in
    [`Elements/BookI/HelpersParallels.lean`](Elements/BookI/HelpersParallels.lean);
    and if it is a consequence of one proposition that later proofs share, after
-   that proposition as a corollary (`Prop34.bisect`). Import the files you cite.
+   that proposition as a corollary (`Prop34.bisect`). In Book II, a shared step that
+   cites Book I goes in
+   [`Elements/BookII/Rectangles.lean`](Elements/BookII/Rectangles.lean). Import the
+   files you cite.
 3. **Never add an `axiom`.** All assumptions live in `Elements/Foundations/`. If you
    believe Euclid needs a rule that isn't there, open an issue; new rules come from
    System E (or LeanEuclid's corrections of it), with a citation. A rule that holds

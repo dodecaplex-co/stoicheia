@@ -23,7 +23,8 @@ There are no coordinates here, no real numbers and no complex numbers. The geome
 | | |
 |---|---|
 | **Book I** | **Complete: all 48 propositions proved**, every one following Euclid's own proof. The certificate shows the shape of the book: 29 propositions never need the parallel postulate, and the first that does is I.29, just where Euclid puts it. [Read Book I →](book/I/index.md) |
-| Books II–XIII | To come, one book at a time. |
+| **Book II** | **All 14 propositions stated** in Lean, in Heath's letters, with Euclid's sentences in place, ready for their proofs. "The rectangle contained by AB, BC" and "the square on AB" are areas in Lean, and a rectangle drawn in a figure is proved equal to the rectangle contained by its sides. [Read Book II →](book/II/index.md) |
+| Books III–XIII | To come, one book at a time. |
 
 The [certificate](CERTIFICATE.md) and the [graph of who uses whom](GRAPH.md) are regenerated from the proofs on every change.
 
@@ -84,7 +85,7 @@ Proposition by proposition, the steps Euclid takes without a word, and the rule 
 | [`heath/`](heath) | Heath's translation, transcribed from the 1908 scans and checked against the page images |
 | [`Elements/Foundations/`](Elements/Foundations) | Postulates, common notions, definitions, tacit rules |
 | [`Elements/Figure/`](Elements/Figure) | "Book Zero": small facts every figure needs, proved once |
-| [`Elements/BookI/`](Elements/BookI) | One file per proposition |
+| [`Elements/BookI/`](Elements/BookI), [`Elements/BookII/`](Elements/BookII) | One file per proposition; Book II's shared ground, rectangles and squares from Book I, is in [`Rectangles.lean`](Elements/BookII/Rectangles.lean) |
 | [`mishnah/`](mishnah) | The commentary |
 | [`figures/`](figures) | The figures: the "at a glance" figures in Byrne's colours, and Euclid's own with Heath's letters |
 | [`book/`](book), [`CERTIFICATE.md`](CERTIFICATE.md), [`GRAPH.md`](GRAPH.md) | Generated pages; don't edit by hand |
@@ -94,7 +95,7 @@ A Lean proof needs only the *statements* of the propositions it cites, not their
 
 ## Join in
 
-Pick any 🚧 proposition in [Book I](book/I/index.md) and prove it; write a mishnah; draw a figure. [CONTRIBUTING.md](CONTRIBUTING.md) explains the few house rules.
+Pick any 🚧 proposition in [Book II](book/II/index.md) and prove it; write a mishnah; draw a figure. [CONTRIBUTING.md](CONTRIBUTING.md) explains the few house rules.
 
 ## How it was made
 

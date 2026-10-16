@@ -49,3 +49,13 @@
   voyage are committed, but not built, in
   [`docs/reports/crew/scratch-04/`](../reports/crew/scratch-04), so that both crews
   start from the same ground.
+- **Book II's magnitudes.** "The rectangle contained by AB, CD" is `rect A B C D` and
+  "the square on AB" is `sq A B`, areas defined from Definition II.1, and proved once to
+  be the area of any rectangle drawn with those sides (from I.4 and I.34). The gnomon is
+  the sum of its three parallelograms. The shared steps that cite Book I live in
+  [`Elements/BookII/Rectangles.lean`](../../Elements/BookII/Rectangles.lean). The design
+  is in [0003-book-II.md](0003-book-II.md), and the first mate's reasons for each
+  statement in [first-mate-II.md](../reports/crew/first-mate-II.md).
+- **Two books in one certificate.** The scripts and `Certificate/Facts.lean` take a list
+  of books; Book I's pages are unchanged by it. Postulate 5 is held back until I.29 in
+  Book I only: Book II comes after all of Book I, and II.10 cites the postulate by name.
