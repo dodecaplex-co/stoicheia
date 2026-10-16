@@ -30,12 +30,31 @@ def read(book: str, n: int):
     return source, enunciation, paras[1:]
 
 
+ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII"]
+
+# The books carried into Lean so far, and how many propositions each has.
+# `Certificate/Facts.lean` keeps the same list.
+BOOKS = {"I": 48, "II": 14}
+
+
+def arabic(book: str) -> int:
+    """The number of a book from its Roman numeral: "I" is 1, "II" is 2, "XIII" is 13."""
+    return ROMAN.index(book) + 1
+
+
+def prop_key(ref: str):
+    """Sort references by book, then by number: I.3 before I.10, I.48 before II.1,
+    and IX before X."""
+    book, num = ref.split(".")
+    return (arabic(book), int(num))
+
+
 def normalize(s: str) -> str:
     return " ".join(s.split())
 
 
-def citations(paragraphs, book_roman: str = "I"):
-    """Propositions Euclid cites, e.g. {"I.4", "I.10"} from "[I. 4]", "[C.N. 1; I. 30]"."""
+def citations(paragraphs):
+    """Propositions Euclid cites, e.g. {"I.4", "II.6"} from "[I. 4]", "[C.N. 1; II. 6]"."""
     found = set()
     for p in paragraphs:
         for inner in CITATION.findall(p):

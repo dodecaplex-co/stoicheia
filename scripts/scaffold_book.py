@@ -5,7 +5,7 @@ written between the comments.
 
 Only creates files that don't exist yet, so it never overwrites a proof.
 
-    python3 scripts/scaffold_book.py I
+    python3 scripts/scaffold_book.py II
 """
 
 import re
@@ -148,7 +148,47 @@ BOOK_I = {
         "    ∠ B A C = ∟",
 }
 
-BOOKS = {"I": BOOK_I}
+# The statements of Book II. "The rectangle contained by AB, CD" is `rect A B C D`, and
+# "the square on AB" is `sq A B` (Elements/Foundations/DefinitionsII.lean); "twice" a
+# magnitude is that magnitude added to itself. A straight line Heath names by one
+# letter is two points (`A₁ A₂` for "A" in II.1), and so on for the rectilineal figure
+# "A" of II.14, cut by a diameter into two triangles as I.45 takes it.
+BOOK_II = {
+    1: "{A₁ A₂ B C D E : Point} (hA : A₁ ≠ A₂) (hBDE : Between B D E) (hDEC : Between D E C) :\n"
+       "    rect A₁ A₂ B C = rect A₁ A₂ B D + rect A₁ A₂ D E + rect A₁ A₂ E C",
+    2: "{A B C : Point} (hACB : Between A C B) :\n    rect A B B C + rect B A A C = sq A B",
+    3: "{A B C : Point} (hACB : Between A C B) :\n    rect A B B C = rect A C C B + sq B C",
+    4: "{A B C : Point} (hACB : Between A C B) :\n"
+       "    sq A B = sq A C + sq C B + (rect A C C B + rect A C C B)",
+    5: "{A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B‖) (hADB : Between A D B)\n"
+       "    (hDC : D ≠ C) :\n    rect A D D B + sq C D = sq C B",
+    6: "{A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B‖)\n"
+       "    (hABD : Between A B D) :\n    rect A D D B + sq C B = sq C D",
+    7: "{A B C : Point} (hACB : Between A C B) :\n"
+       "    sq A B + sq B C = rect A B B C + rect A B B C + sq C A",
+    8: "{A B C : Point} (hACB : Between A C B) :\n"
+       "    ∀ D : Point, Between A B D → ‖B D‖ = ‖C B‖ →\n"
+       "      rect A B B C + rect A B B C + rect A B B C + rect A B B C + sq A C = sq A D",
+    9: "{A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B‖) (hADB : Between A D B)\n"
+       "    (hDC : D ≠ C) :\n    sq A D + sq D B = sq A C + sq C D + (sq A C + sq C D)",
+    10: "{A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B‖)\n"
+        "    (hABD : Between A B D) :\n    sq A D + sq D B = sq A C + sq C D + (sq A C + sq C D)",
+    11: "{A B : Point} (hAB : A ≠ B) :\n    ∃ H : Point, Between A H B ∧ rect A B B H = sq A H",
+    12: "{A B C D : Point} (hABC : Triangle A B C) (hBAC : IsObtuse B A C)\n"
+        "    (hD : Collinear C A D) (hBD : ∀ P : Point, Collinear C A P → P ≠ D → ∠ B D P = ∟) :\n"
+        "    sq B C = sq B A + sq A C + (rect C A A D + rect C A A D)",
+    13: "{A B C D : Point} (hABC : Triangle A B C) (hB : IsAcute A B C) (hC : IsAcute A C B)\n"
+        "    (hD : Collinear B C D) (hAD : ∀ P : Point, Collinear B C P → P ≠ D → ∠ A D P = ∟) :\n"
+        "    sq A C + (rect C B B D + rect C B B D) = sq C B + sq B A",
+    14: "{A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h₂ : Triangle A₄ A₂ A₃) :\n"
+        "    ∃ E H : Point, sq E H = △ A₁ A₂ A₄ + △ A₄ A₂ A₃",
+}
+
+BOOKS = {"I": BOOK_I, "II": BOOK_II}
+
+# What every proposition of a book imports besides Book Zero: the ground its proofs
+# share, which cites propositions of earlier books.
+GROUNDWORK = {"II": ["Elements.BookII.Rectangles"]}
 
 WIDTH = 100
 
@@ -173,11 +213,14 @@ def docstring(enunciation: str) -> str:
 
 def render(book: str, n: int, signature: str) -> str:
     _, enunciation, proof = heath.read(book, n)
-    cites = sorted((c for c in heath.citations(proof) if c.startswith(f"{book}.")),
-                   key=lambda c: int(c.split(".")[1]))
+    # Every proposition Euclid cites comes before this one: in an earlier book, or
+    # earlier in this one.
+    cites = sorted((c for c in heath.citations(proof)
+                    if heath.prop_key(c) < (heath.arabic(book), n)), key=heath.prop_key)
     imports = ["import Elements.Figure.Basics"]
-    imports += [f"import Elements.Book{book}.Prop{int(c.split('.')[1]):02d}" for c in cites
-                if int(c.split(".")[1]) < n]
+    imports += [f"import {m}" for m in GROUNDWORK.get(book, [])]
+    imports += [f"import Elements.Book{c.split('.')[0]}.Prop{int(c.split('.')[1]):02d}"
+                for c in cites]
     body = []
     for p in proof:
         body.extend(comment_lines(p))

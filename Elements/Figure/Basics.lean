@@ -9,6 +9,7 @@ import Elements.Figure.Angles
 import Elements.Figure.Parallels
 import Elements.Figure.Areas
 import Elements.Figure.Parallelograms
+import Elements.Figure.Rectangles
 
 /-!
 # Book Zero: small facts every figure needs
@@ -53,6 +54,10 @@ Every proposition file imports this one, and through it:
   two parallels has crossing diameters or crossing sides; the diameters of a
   parallelogram cross; a parallelogram cut by a parallel is the two parallelograms
   it is cut into.
+* `Rectangles`: the rectangle contained by two straight lines, and the square on
+  one, follow their lengths, and read either way round are the same; a rectangle
+  with a side that is nothing is nothing; a rectangle or a square named from
+  another corner.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is
 an axiom.
