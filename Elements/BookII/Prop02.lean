@@ -51,8 +51,8 @@ theorem Prop2 {A B C : Point} (hACB : Between A C B) :
   have hE_AB : ¬ OnLine E AB := not_on_line_of_same_side (hE.sameSide hA_AB hB_AB)
   have hC_BE : ¬ OnLine C BE := fun h =>
     hE_AB ((line_unique hCB h hB_BE hC_AB hB_AB) ▸ hE_BE)
-  /- I.31 draws CF and I.30 gives its meeting with DE, as Heath reports Proclus
-     drawing the latter step under I.31 (`BookI.Prop31.parallelogram`). -/
+  /- I.31 draws CF, and I.30 finds F where it meets DE, by the argument Heath
+     reports Proclus giving under I.31 (`BookI.Prop31.parallelogram`). -/
   obtain ⟨F, hF_DE, hDACF⟩ := BookI.Prop31.parallelogram hDE_AB hD_DE hA_AB hC_AB hAC
   have hADFC : Parallelogram A D F C := hDACF.reverse.rotate.rotate.rotate
   have hFC : F ≠ C := hADFC.1.2.1
