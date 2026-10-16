@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.40: equal triangles on equal bases in the same parallels</title>
+  <rect x="0" y="0" width="400" height="280" rx="10" fill="#fbf7ee"/>
+  <g fill="#e9dcc0" fill-opacity="0.55">
+    <path d="M 70 90 L 40 235 L 200 235 Z"/>
+    <path d="M 200 235 L 320 55 L 360 235 Z"/>
+  </g>
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 40 235 L 70 90 L 200 235 L 320 55 L 360 235"/>
+    <path d="M 70 90 H 296.666667 L 360 235"/>
+    <path d="M 70 90 L 320 55 M 40 235 H 360" stroke="#a0522d" stroke-width="2.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="70" cy="90" r="2.6"/>
+    <circle cx="40" cy="235" r="2.6"/>
+    <circle cx="200" cy="235" r="2.6"/>
+    <circle cx="320" cy="55" r="2.6"/>
+    <circle cx="360" cy="235" r="2.6"/>
+    <circle cx="296.666667" cy="90" r="2.6"/>
+    <text x="49" y="80">A</text>
+    <text x="32" y="258">B</text>
+    <text x="193" y="258">C</text>
+    <text x="316" y="40">D</text>
+    <text x="355" y="258">E</text>
+    <text x="274" y="81">F</text>
+  </g>
+</svg>
