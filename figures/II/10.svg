@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid II.10: a bisected straight line with a straight line added</title>
+  <rect x="0" y="0" width="400" height="260" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 140 150 V 50 L 40 150 L 300 210 L 140 50 H 300 V 210"/>
+    <path d="M 40 150 H 300" stroke="#a0522d" stroke-width="2.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="40" cy="150" r="2.6"/>
+    <circle cx="140" cy="150" r="2.6"/>
+    <circle cx="240" cy="150" r="2.6"/>
+    <circle cx="300" cy="150" r="2.6"/>
+    <circle cx="140" cy="50" r="2.6"/>
+    <circle cx="300" cy="50" r="2.6"/>
+    <circle cx="300" cy="210" r="2.6"/>
+    <text x="22" y="163">A</text>
+    <text x="149" y="142">C</text>
+    <text x="228" y="173">B</text>
+    <text x="310" y="156">D</text>
+    <text x="132" y="36">E</text>
+    <text x="295" y="36">F</text>
+    <text x="306" y="231">G</text>
+  </g>
+</svg>
