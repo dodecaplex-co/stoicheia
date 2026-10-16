@@ -11,7 +11,9 @@ proposition it records, straight from Lean's own proof terms:
 * which earlier propositions it cites directly;
 * which Common Notions it cites by name;
 * exactly which postulates, definitions and tacit rules it rests on
-  (via `#print axioms`, i.e. `Lean.collectAxioms`).
+  (via `#print axioms`, i.e. `Lean.collectAxioms`);
+* which shared steps it calls on (`Prop30.meet`, `Prop34.bisect`, `Rectangle.eq_rect`),
+  and the propositions each one brings in.
 
 The results go to `facts.json`, which `scripts/render.py` turns into
 `CERTIFICATE.md`, `GRAPH.md` and the pages under `book/`.
@@ -80,6 +82,45 @@ partial def directDeps (env : Environment) (props : NameSet) (root : Name) :
       else if isLocal env d && !seen.contains d then todo := todo.push d
   return (cites, notions, direct, hasSorry)
 
+/-- The shared steps the proof of `root` calls on itself: this project's own lemmas
+and definitions that live outside `root`'s namespace, such as a lemma of Book Zero,
+`Prop30.meet`, the corollary `Prop34.bisect` or `Rectangle.eq_rect`. The walk passes
+through `root`'s own helpers (`Prop7.figure`) and Lean's auxiliary declarations, and
+stops at each shared step, as at propositions, axioms and Common Notions: what a
+shared step calls on in turn is its own business, counted by `directDeps` from it. -/
+def sharedSteps (env : Environment) (props : NameSet) (root : Name) : NameSet :=
+  Id.run do
+  let mut seen : NameSet := {}
+  let mut todo : Array Name := #[root]
+  let mut steps : NameSet := {}
+  while h : todo.size > 0 do
+    let c := todo.back
+    todo := todo.pop
+    if seen.contains c then continue
+    seen := seen.insert c
+    let some ci := env.find? c | continue
+    let some v := ci.value? (allowOpaque := true) | continue
+    for d in v.getUsedConstants do
+      if props.contains d || (porismOf props d).isSome then continue
+      if (env.find? d).any (·.isAxiom) then continue
+      if (commonNotions.map (·.1)).contains d || !isLocal env d then continue
+      if root.isPrefixOf d || d.isInternal then todo := todo.push d
+      else steps := steps.insert d
+  return steps
+
+/-- Where `n` is declared, as a path from the repository root and the line of its
+name: `("Elements/BookII/Rectangles.lean", 98)` for `Rectangle.eq_rect`. -/
+def declaredAt {m : Type → Type} [Monad m] [MonadEnv m] [MonadLiftT BaseIO m]
+    (n : Name) : m (String × Nat) := do
+  let env ← getEnv
+  let file := match env.getModuleIdxFor? n with
+    | some idx => (env.header.moduleNames[idx.toNat]!.toString.replace "." "/") ++ ".lean"
+    | none => ""
+  let line := match ← findDeclarationRanges? n with
+    | some r => r.selectionRange.pos.line
+    | none => 0
+  return (file, line)
+
 /-- `Elements.BookI.Prop12` ↦ `"I.12"`, `Elements.BookII.Prop4` ↦ `"II.4"`,
 `Elements.BookIII.Prop31` ↦ `"III.31"`. -/
 def refOf (n : Name) : String :=
@@ -122,6 +163,18 @@ run_cmd do
     let foundations := axs.filter fun a => leanFoundations.contains a
     let notionRefs := (commonNotions.filter fun (n, _) => notions.contains n).map (·.2)
     let doc ← findDocString? env p
+    /- The shared steps that bring in at least one proposition, each with the
+    propositions it brings in, in the order of the books. -/
+    let mut shared : Array Json := #[]
+    for s in (sharedSteps env propSet p).toList.toArray.qsort (nameStr · < nameStr ·) do
+      let (reached, _, _, _) := directDeps env propSet s
+      if reached.isEmpty then continue
+      let (file, line) ← declaredAt s
+      shared := shared.push <| Json.mkObj [
+        ("name", Json.str (nameStr s)),
+        ("brings_in", Json.arr ((props.filter reached.contains).map (Json.str ∘ refOf))),
+        ("file", Json.str file),
+        ("line", toJson line)]
     entries := entries.push <| Json.mkObj [
       ("ref", Json.str (refOf p)),
       ("name", Json.str (nameStr p)),
@@ -131,6 +184,7 @@ run_cmd do
       ("axioms", Json.arr ((euclid.map nameStr).qsort (· < ·) |>.map Json.str)),
       ("direct_axioms", Json.arr ((direct.toList.map nameStr).toArray.qsort (· < ·) |>.map Json.str)),
       ("lean_foundations", Json.arr (foundations.map (Json.str ∘ nameStr))),
+      ("shared_steps", Json.arr shared),
       ("enunciation", Json.str (doc.getD ""))]
   let out := Json.mkObj [("lean_version", Json.str Lean.versionString),
     ("propositions", Json.arr entries)]
