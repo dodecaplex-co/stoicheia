@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>III.24 at a glance</title>
+  <desc>Segments of circles that hold equal angles (yellow) on equal straight lines (blue) are equal (red): laid one on the other, they fit exactly.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <path d="M50.0,220.0 A74.7,74.7 0 1,1 182.0,220.0 Z" fill="#d0312d"/>
+  <path d="M78.6,120.2 L100.2,141.0 A30,30 0 0,1 70.4,149.0 Z" fill="#f2b705"/>
+  <line x1="78.6" y1="120.2" x2="50.0" y2="220.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="78.6" y1="120.2" x2="182.0" y2="220.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="50.0" y1="220.0" x2="182.0" y2="220.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <path d="M241.7,217.0 A74.7,74.7 0 1,1 358.3,155.0 Z" fill="#d0312d"/>
+  <path d="M327.5,94.5 L341.1,121.3 A30,30 0 0,1 310.3,119.1 Z" fill="#f2b705"/>
+  <line x1="327.5" y1="94.5" x2="241.7" y2="217.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="327.5" y1="94.5" x2="358.3" y2="155.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="241.7" y1="217.0" x2="358.3" y2="155.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+</svg>
