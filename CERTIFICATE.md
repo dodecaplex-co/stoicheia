@@ -90,4 +90,53 @@ What the proofs show:
 | ✅ | [II.13](book/II/13.md) | I.47, II.7 | I.4, I.13, I.17, I.28, I.34, I.46, I.47, II.7 | 1, 2, 3, 4, 5 | I.15 | 2 | 64 |
 | ✅ | [II.14](book/II/14.md) | I.45, I.47, II.5 | I.4, I.10, I.11, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 66 |
 
+## Book III
+
+**0 of 37 propositions proved.**
+
+What the proofs show so far:
+
+- **Postulate 5**: No proposition of Book III is proved yet. Book III comes after I.29, where Euclid first calls on it, so any of its propositions may.
+- **Superposition** is used directly by: none yet. Only I.4 and I.8 are allowed to.
+
+| | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |
+|---|---|---|---|---|---|---|---|
+| 🚧 | [III.1](book/III/01.md) | I.8 | | | | | |
+| 🚧 | [III.2](book/III/02.md) | I.5, I.16, I.19, III.1 | | | | | |
+| 🚧 | [III.3](book/III/03.md) | I.5, I.8, I.26 | | | | | |
+| 🚧 | [III.4](book/III/04.md) | III.1, III.3 | | | | | |
+| 🚧 | [III.5](book/III/05.md) |  | | | | | |
+| 🚧 | [III.6](book/III/06.md) |  | | | | | |
+| 🚧 | [III.7](book/III/07.md) | I.4, I.20, I.23, I.24 | | | | | |
+| 🚧 | [III.8](book/III/08.md) | I.4, I.20, I.21, I.24, III.1 | | | | | |
+| 🚧 | [III.9](book/III/09.md) | I.8, III.1 | | | | | |
+| 🚧 | [III.10](book/III/10.md) | III.1, III.5 | | | | | |
+| 🚧 | [III.11](book/III/11.md) |  | | | | | |
+| 🚧 | [III.12](book/III/12.md) | I.20 | | | | | |
+| 🚧 | [III.13](book/III/13.md) | III.2, III.11 | | | | | |
+| 🚧 | [III.14](book/III/14.md) | I.47, III.1, III.3 | | | | | |
+| 🚧 | [III.15](book/III/15.md) | I.20, I.24, III.14 | | | | | |
+| 🚧 | [III.16](book/III/16.md) | I.5, I.17, I.19 | | | | | |
+| 🚧 | [III.17](book/III/17.md) | I.4, III.1, III.16 | | | | | |
+| 🚧 | [III.18](book/III/18.md) | I.17, I.19 | | | | | |
+| 🚧 | [III.19](book/III/19.md) | III.18 | | | | | |
+| 🚧 | [III.20](book/III/20.md) | I.5, I.32 | | | | | |
+| 🚧 | [III.21](book/III/21.md) | III.20 | | | | | |
+| 🚧 | [III.22](book/III/22.md) | I.32, III.21 | | | | | |
+| 🚧 | [III.23](book/III/23.md) | I.16 | | | | | |
+| 🚧 | [III.24](book/III/24.md) | III.10 | | | | | |
+| 🚧 | [III.25](book/III/25.md) | I.6, III.9 | | | | | |
+| 🚧 | [III.26](book/III/26.md) | I.4, III.24 | | | | | |
+| 🚧 | [III.27](book/III/27.md) | I.23, III.20, III.26 | | | | | |
+| 🚧 | [III.28](book/III/28.md) | I.8, III.26 | | | | | |
+| 🚧 | [III.29](book/III/29.md) | I.4, III.27 | | | | | |
+| 🚧 | [III.30](book/III/30.md) | I.4, III.28 | | | | | |
+| 🚧 | [III.31](book/III/31.md) | I.5, I.17, I.32, III.22 | | | | | |
+| 🚧 | [III.32](book/III/32.md) | I.32, III.19, III.22, III.31 | | | | | |
+| 🚧 | [III.33](book/III/33.md) | I.4, III.16, III.31, III.32 | | | | | |
+| 🚧 | [III.34](book/III/34.md) | I.23, III.32 | | | | | |
+| 🚧 | [III.35](book/III/35.md) | I.47, II.5, III.3 | | | | | |
+| 🚧 | [III.36](book/III/36.md) | I.47, II.6, III.3, III.18 | | | | | |
+| 🚧 | [III.37](book/III/37.md) | I.8, III.16, III.18, III.36 | | | | | |
+
 The Common Notions are theorems in Lean (see [`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so they are counted where a proof cites them by name. Lean's own logical foundations (`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and are left out.

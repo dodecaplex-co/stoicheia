@@ -36,7 +36,7 @@ def commonNotions : List (Name × String) :=
 of a later book may cite one of an earlier book, and the walk below records it by its
 own book: `"I.47"` among the citations of II.9. -/
 def books : List (String × Name × Nat) :=
-  [("I", `Elements.BookI, 48), ("II", `Elements.BookII, 14)]
+  [("I", `Elements.BookI, 48), ("II", `Elements.BookII, 14), ("III", `Elements.BookIII, 37)]
 
 /-- Is `n` declared in one of this project's own modules (or in this file)? -/
 def isLocal (env : Environment) (n : Name) : Bool :=
@@ -44,10 +44,17 @@ def isLocal (env : Environment) (n : Name) : Bool :=
   | none => true
   | some idx => (`Elements).isPrefixOf (env.header.moduleNames[idx.toNat]!)
 
+/-- A porism is part of its proposition: `Elements.BookIII.Prop1.porism` belongs to
+`Elements.BookIII.Prop1`, as Heath's "[III. 1, Por.]" cites III. 1. -/
+def porismOf (props : NameSet) : Name → Option Name
+  | .str p "porism" => if props.contains p then some p else none
+  | _ => none
+
 /-- Walk the proof of `root`, passing through helper lemmas and auxiliary
-declarations, stopping at other propositions. Returns the propositions cited,
-the Common Notions cited, the axioms used directly (not through another
-proposition), and whether a `sorry` appears along the way. -/
+declarations, stopping at other propositions and at their porisms (a porism counts
+as citing its proposition). Returns the propositions cited, the Common Notions
+cited, the axioms used directly (not through another proposition), and whether a
+`sorry` appears along the way. -/
 partial def directDeps (env : Environment) (props : NameSet) (root : Name) :
     NameSet × NameSet × NameSet × Bool := Id.run do
   let mut seen : NameSet := {}
@@ -66,15 +73,18 @@ partial def directDeps (env : Environment) (props : NameSet) (root : Name) :
     for d in v.getUsedConstants do
       if d == ``sorryAx then hasSorry := true
       else if props.contains d && d != root then cites := cites.insert d
+      else if let some p := porismOf props d then
+        if p != root then cites := cites.insert p
       else if (env.find? d).any (·.isAxiom) then direct := direct.insert d
       else if (commonNotions.map (·.1)).contains d then notions := notions.insert d
       else if isLocal env d && !seen.contains d then todo := todo.push d
   return (cites, notions, direct, hasSorry)
 
-/-- `Elements.BookI.Prop12` ↦ `"I.12"`, `Elements.BookII.Prop4` ↦ `"II.4"`. -/
+/-- `Elements.BookI.Prop12` ↦ `"I.12"`, `Elements.BookII.Prop4` ↦ `"II.4"`,
+`Elements.BookIII.Prop31` ↦ `"III.31"`. -/
 def refOf (n : Name) : String :=
   let book := match n.getPrefix with
-    | Name.str _ s => (s.drop 4).toString   -- "BookI" ↦ "I", "BookII" ↦ "II"
+    | Name.str _ s => (s.drop 4).toString   -- "BookI" ↦ "I", "BookIII" ↦ "III"
     | _ => "?"
   let num := match n with
     | Name.str _ s => (s.drop 4).toString   -- "Prop12" ↦ "12"
@@ -100,8 +110,14 @@ run_cmd do
     let axs ← collectAxioms p
     let (cites, notions, direct, sorryHere) := directDeps env propSet p
     let restsOnSorry := axs.contains ``sorryAx
-    let status := if sorryHere then "sketched"
-      else if restsOnSorry then "proved-pending" else "proved"
+    /- A proposition is not finished until its porism is. -/
+    let por := Name.str p "porism"
+    let (porSorry, porPending) ← if env.contains por then do
+        let (_, _, _, s) := directDeps env propSet por
+        pure (s, (← collectAxioms por).contains ``sorryAx)
+      else pure (false, false)
+    let status := if sorryHere || porSorry then "sketched"
+      else if restsOnSorry || porPending then "proved-pending" else "proved"
     let euclid := axs.filter fun a => !leanFoundations.contains a && a != ``sorryAx
     let foundations := axs.filter fun a => leanFoundations.contains a
     let notionRefs := (commonNotions.filter fun (n, _) => notions.contains n).map (·.2)
