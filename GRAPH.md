@@ -493,7 +493,7 @@ graph TD
 - [III.14](book/III/14.md): Equal straight lines are equally distant from the centre
 - [III.15](book/III/15.md): The diameter is the greatest straight line in a circle
 - [III.16](book/III/16.md): The straight line at right angles to a diameter at its end
-- [III.17](book/III/17.md): Drawing a tangent from a point
+- [III.17](book/III/17.md): Drawing a straight line to touch a circle
 - [III.18](book/III/18.md): The radius to the point of contact
 - [III.19](book/III/19.md): The perpendicular to a tangent at the point of contact
 - [III.20](book/III/20.md): The angle at the centre is double the angle at the circumference

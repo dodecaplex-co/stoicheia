@@ -104,8 +104,12 @@
   (`Touches`), and circles touching within or without (`TouchesInternally`,
   `TouchesExternally`, `CirclesTouch`) are definitions, in
   [`DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean). Circles touching
-  is read as Heath's minimum admission about inside and outside, said of the whole circle,
-  so that III.13 is a theorem and not the definition. The design is in
+  is read of the whole circle, the reading Heath reports as Todhunter's (vol. 2, p. 3),
+  with "do not cut" made precise by Heath's inside and outside. Heath prefers a local
+  reading, at the point of contact, which Lean cannot say without neighbourhoods; so the
+  definition carries what Heath says Euclid assumes without stating in III.11–III.13, that
+  touching circles do not cross anywhere. III.13 is still a theorem: the definition does
+  not say they meet at one point only. The design is in
   [0004-book-III.md](0004-book-III.md), and the first mate's reasons for each statement in
   [first-mate-III.md](../reports/crew/first-mate-III.md).
 - **Circumferences measured, not assumed.** Euclid compares circumferences only in one
@@ -116,12 +120,16 @@
   magnitude of their own, with tacit rules for adding and applying them, is left to the
   captain; the statements would not change.
 - **Circles carry their centres by hypothesis.** A circle in a Book III statement comes with
-  `∃ O, Centre O α` unless the setting-out names its centre, and the proofs take it by III.1,
-  as Euclid does. III.1 finds, by its construction, the centre of a circle that has one.
+  `∃ O, Centre O α` unless the setting-out names its centre, or the enunciation measures
+  from it (III.14, III.15), and the proofs take it by III.1 where Euclid does, III.14
+  included. III.1 finds, by its construction, the centre of a circle that has one.
 - **Mixed angles to the mishnah.** The angle of a semicircle and of a segment (III.16, III.31)
   are not angles of ours. The statements carry the rectilineal facts Euclid proves them by.
 - **Porisms cited before they are proved.** `Prop1.porism` and `Prop16.porism` are stated now,
-  after their propositions, and the scripts read "[III. 1, Por.]" as citing III.1.
+  after their propositions. The scripts read "[III. 1, Por.]" as citing III.1, and so does the
+  certificate: a citation of `Prop1.porism` is recorded as one of III.1, without walking
+  into the porism, and III.1 is not proved until its porism is. I.15's Porism, which
+  nothing cites, keeps its record.
 - **Three books in one certificate.** The scripts and `Certificate/Facts.lean` take Book III;
   Books I and II render byte for byte as at their tags. Book III may rest on Postulate 5
   throughout. On a Book III page its own definitions are "Def. 11", Book I's "Def. I.10".
@@ -129,3 +137,12 @@
   [`docs/reports/crew/scratch-III/`](../reports/crew/scratch-III), not built: III.1, III.5, III.6, III.11,
   III.13, III.16, III.18–III.22, III.24, III.28, III.29 and III.31 in full, and the first steps of the
   rest. They are retired when Book III is proved.
+- **The first mate's statements, challenged.** Twenty-six challenges were answered before the
+  voyage (the list is in [first-mate-III.md](../reports/crew/first-mate-III.md)). III.9 no
+  longer asks that the point be within, which Euclid's proof does not use and III.25
+  cannot supply; III.31 says the angle in the greater segment of every point of it, as
+  IV.5 cites it; Book III's ground gains `foot_between`, the perpendicular from the centre
+  falling within the straight line, for III.14, III.35 and III.36; Book Zero's straight
+  lines in a circle are `Elements/Figure/OnCircles.lean`; and the certificate reads a
+  porism as its proposition. III.14, III.15, III.26 and III.27 keep their statements, and
+  `circumference` stays an angle, for the captain to decide.

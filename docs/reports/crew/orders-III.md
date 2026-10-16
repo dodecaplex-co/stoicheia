@@ -16,13 +16,14 @@ on a circumference", and why the circles carry their centres; `heath/III/NN.md` 
 `docs/reports/crew/first-mate-III.md`, and any scratch proof it names, which is in
 `docs/reports/crew/scratch-III/` (not built; check one with
 `lake env lean docs/reports/crew/scratch-III/T20.lean`);
-`Elements/Foundations/DefinitionsIII.lean`, `Elements/Figure/Chords.lean` (Book Zero for
+`Elements/Foundations/DefinitionsIII.lean`, `Elements/Figure/OnCircles.lean` (Book Zero for
 circles), `Elements/BookIII/Squares.lean` and, from III.23 on,
 `Elements/BookIII/Circumferences.lean` (Book III's ground); Book Zero from
 `Elements/Figure/Basics.lean`, above all `Circles.lean`, `Sides.lean` and `Angles.lean`;
-System E's rules for circles in `Elements/Foundations/Tacit/Diagram.lean` and
-`Constructions.lean`; and, as models of a proof under Euclid's sentences,
-`Elements/BookI/Prop12.lean` and `Elements/BookII/Prop12.lean`.
+System E's rules for circles in `Elements/Foundations/Tacit/Diagram.lean`,
+`Constructions.lean` and `Transfer.lean` (`circle_eq`, `inside_of_len_lt`); and, as
+models of a proof under Euclid's sentences, `Elements/BookI/Prop12.lean` and
+`Elements/BookII/Prop12.lean`.
 
 **Circles.**
 - A circle takes Heath's letters: the circle ABC is `ABC : Circle`, and `OnCircle A ABC`
@@ -30,8 +31,15 @@ System E's rules for circles in `Elements/Foundations/Tacit/Diagram.lean` and
 - Our circles have a centre only by hypothesis. Where Euclid says "let the centre of the
   circle be taken [III. 1], and let it be F", take it from III.1:
   `obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hABC hA hB hAB`, with `hABC : ∃ F, Centre F ABC`
-  from your statement and two points of the circle. Where the statement names the centre,
-  use it.
+  from your statement and two points of the circle. Where the statement names the centre
+  and Euclid has no "[III. 1]", use it. Where it names the centre and Euclid still takes it
+  "[III. 1]" (III.14), take III.1's and show it is yours:
+  `obtain ⟨E₀, -, -, -, hE₀, -⟩ := Prop1 ⟨E, hE⟩ hA hB hAB`, then
+  `obtain rfl : E = E₀ := centre_unique hE hE₀`. Where the statement gives no two points
+  of the circle (III.17), find two first: from the centre `hABC` gives, a straight line to
+  a point outside meets the circle between them (`line_circle_between`) and beyond the
+  centre (`line_circle_beyond`); then `Prop1` on those two, and `centre_unique`. The
+  scratch proofs of III.14 and III.17 do it, and the mishnah says why in a sentence.
 - System E knows a good deal of Book III already: a straight line between two points of a
   circle is within it (`inside_of_between`, which *is* III.2); a circle is fixed by its
   centre and radius (`circle_eq`); a circle has one centre (`centre_unique`); a straight line
@@ -63,12 +71,16 @@ the propositions inside it become citations of yours; each is shown after the st
   III.21); `Circumference.centre` (adds III.20, III.21); `Circumference.whole` (adds III.21,
   III.22); `Circumference.semicircle` (adds I.5, I.32); `Circumference.lt_semicircle`,
   `.gt_semicircle` (add I.32, III.20, III.21, and III.22 for `gt`).
-- Squares: `BookI.Prop46.sq`, equal squares on equal straight lines (adds I.3, I.4, I.28,
-  I.34, I.46); `sq_pos`; Book II's ground, above all `BookI.Prop47.sq` (adds I.4, I.28, I.34,
-  I.46, I.47), `rect_congr`, `sq_congr`, `rect_comm`, `sq_self`.
-- The porisms: `Prop1.porism` (the centre on the perpendicular bisector; adds III.1 once
-  it is proved from `Prop1`), `Prop16.porism` (the straight line at right angles to a
-  radius at its end touches the circle; adds III.16).
+- Squares, Book III's ground: `BookI.Prop46.sq`, equal squares on equal straight lines
+  (adds I.3, I.4, I.28, I.34, I.46); `sq_pos` (adds I.4, I.28, I.34, I.46). Book II's
+  ground: `BookI.Prop47.sq` (adds I.4, I.28, I.34, I.46, I.47). Book Zero, adding nothing:
+  `rect_congr`, `sq_congr`, `rect_comm`, `sq_self` (`Elements/Figure/Rectangles.lean`).
+- The perpendicular from the centre: `foot_between` (adds I.17, I.19). Where Euclid draws
+  a perpendicular from the centre and then bisects by III.3 (III.14, III.35, III.36), it
+  gives the `Between` that `Prop3` asks for.
+- The porisms: `Prop1.porism` (the centre on the perpendicular bisector; counts as citing
+  III.1), `Prop16.porism` (the straight line at right angles to a radius at its end
+  touches the circle; counts as citing III.16).
 - From Book I: `BookI.Prop5.base` (adds I.5); `onRay_of_angle_eq`, `crossbar`,
   `angle_add_of_within`, `angle_add_of_between` and the other angle lemmas are Book Zero and
   add nothing. Write Book I's and II's names with their book and don't `open BookI`: in a
@@ -106,8 +118,12 @@ report rather than work around it.
 **The porisms.** III.1 and III.16 end with a porism that later propositions cite. Its
 sentence is a `--` line in the proof, as I.15's is; the theorem `Prop1.porism`
 (`Prop16.porism`) follows `Prop1` (`Prop16`), already stated with a `sorry`. Prove it from
-the proposition, "from this it is manifest", so that its citers cite III.1 (III.16) as
-Euclid's "[III. 1, Por.]" does.
+the proposition, "from this it is manifest", and prove it first: III.1 (III.16) is not
+proved until its porism is. The certificate reads a citation of a porism as a citation of
+its proposition, as Euclid's "[III. 1, Por.]" does, and does not walk into it; so a citer
+(III.9, III.10, III.17, III.33, III.34, III.37) has III.1 (III.16) in its `cites`, its
+`direct_axioms` are its own and final, and it reads "proved, citing propositions still to
+be proved" until III.1 (III.16) is proved.
 
 **The voice: last voyages' faults, and Book III's.**
 - Euclid's words: "straight line", never "chord" or "segment" for a straight line;
@@ -133,8 +149,10 @@ the artists draw it later. In STYLE check 20, read `heath/III` and `figures/III`
 `heath/I` and `figures/I`; the letters inside the shared steps don't count; a point Heath
 leaves without a letter gets a name in the Lean and none in the figure; a letter Heath
 gives a point the Lean does not need (III.3's `C`, `D`) is drawn, and the Lean may leave it
-unnamed. Where Heath has two or three figures (III.7, III.8, III.20, III.25, III.33), draw
-them side by side in one SVG, up to 440 wide. Circles are `#8c7b62`; the circle or
+unnamed. Where Heath has two or three figures (III.25, III.33, III.35, III.36), draw
+them side by side in one SVG, up to 440 wide; III.7, III.8, III.13 and III.20 have one
+figure each, carrying all their cases. Check 20 drops the word "PORISM" (III.1, III.16),
+which is not a letter. Circles are `#8c7b62`; the circle or
 circumference the proposition is about may be drawn in `#a0522d`.
 
 **Verify.**

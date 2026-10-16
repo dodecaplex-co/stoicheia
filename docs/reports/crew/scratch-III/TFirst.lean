@@ -140,7 +140,7 @@ theorem T08 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
 
 /-- III.9, its first steps: `AB`, `BC` bisected at `E`, `F`. -/
 theorem T09 {A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O ABC)
-    (hD : InsideCircle D ABC) (hA : OnCircle A ABC) (hB : OnCircle B ABC)
+    (hA : OnCircle A ABC) (hB : OnCircle B ABC)
     (hC : OnCircle C ABC) (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C)
     (hDA : ‖D A‖ = ‖D B‖) (hDB : ‖D B‖ = ‖D C‖) :
     Centre D ABC := by
@@ -170,32 +170,53 @@ theorem T12 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Centre 
   have _ := hFG
   sorry
 
-/-- III.14, its first steps: the feet bisect the straight lines (III.3), once they are shown
-to lie between their ends. -/
+/-- III.14, its first steps: the centre by III.1, which is `E`; the feet within the
+straight lines (`foot_between`), and bisecting them (III.3). -/
 theorem T14 {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E ABDC) (hA : OnCircle A ABDC)
     (hB : OnCircle B ABDC) (hC : OnCircle C ABDC) (hD : OnCircle D ABDC)
     (hE_AB : ¬ Collinear A B E) (hE_CD : ¬ Collinear C D E) (hF : Collinear A B F)
     (hEF : ∀ P : Point, Collinear A B P → P ≠ F → ∠ E F P = ∟) (hG : Collinear C D G)
     (hEG : ∀ P : Point, Collinear C D P → P ≠ G → ∠ E G P = ∟) :
     ‖A B‖ = ‖C D‖ ↔ ‖E F‖ = ‖E G‖ := by
-  have hAF : Between A F B := sorry  -- the foot lies within: I. 19, as Heath remarks
-  have hAFFB : ‖A F‖ = ‖F B‖ := (Prop3 hE hA hB hAF hE_AB).2 (by
-    have := hEF A ⟨_, (Postulate1 A B (ne_of_between_ends hAF)).choose_spec.1,
-      (Postulate1 A B (ne_of_between_ends hAF)).choose_spec.2,
-      (Postulate1 A B (ne_of_between_ends hAF)).choose_spec.1⟩ (ne_of_between hAF)
-    rwa [angle_symm (fun h => hE_AB (by rw [h]; exact hF)) (ne_of_between hAF)] at this)
+  /- "Let the centre of the circle ABDC be taken [III. 1], and let it be E": III.1 finds a
+     centre, and a circle has one centre (System E, Generalities 2). -/
+  obtain ⟨E₀, -, -, -, hE₀, -⟩ := Prop1 ⟨E, hE⟩ hA hB (Triangle.ne₁₂ hE_AB)
+  obtain rfl : E = E₀ := centre_unique hE hE₀
+  /- The feet lie within the straight lines [I. 17, I. 19, through `foot_between`]. -/
+  have hAFB : Between A F B := foot_between hE hA hB hE_AB hF hEF
+  have hCGD : Between C G D := foot_between hE hC hD hE_CD hG hEG
+  /- EF through the centre cuts AB at right angles, so bisects it [III. 3]. -/
+  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B (ne_of_between_ends hAFB)
+  have hF_L : OnLine F L := on_line_of_between_ends hAFB hA_L hB_L
+  have hEF' : E ≠ F := fun h => hE_AB ⟨L, hA_L, hB_L, h ▸ hF_L⟩
+  have hAF : ‖A F‖ = ‖F B‖ := (Prop3 hE hA hB hAFB hE_AB).2 (by
+    have := hEF A ⟨L, hA_L, hB_L, hA_L⟩ (ne_of_between hAFB)
+    rwa [angle_symm hEF' (ne_of_between hAFB)] at this)
+  have _ := hCGD
+  have _ := hAF
   sorry
 
-/-- III.17, its first steps: the centre, `D` where `EA` meets the circle, and the circle
-`AFG`. -/
+/-- III.17, its first steps: the centre taken by III.1, after two points of the circle on
+the straight line from the given centre to `A`; then `D` where `EA` meets the circle, and
+the circle `AFG`. -/
 theorem T17 {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD)
     (hA : OutsideCircle A BCD) :
     ∃ B : Point, OnCircle B BCD ∧ Touches A B BCD := by
-  obtain ⟨E, hE⟩ := hBCD
-  have hEA : E ≠ A := fun e => hA.1 (e ▸ centre_inside hE)
-  obtain ⟨L, hE_L, hA_L⟩ := Postulate1 E A hEA
-  obtain ⟨D, hD, hD_L, hEDA⟩ := line_circle_between (centre_inside hE) hE_L hA hA_L
-  obtain ⟨AFG, hE', hA'⟩ := Postulate3 E A hEA
+  /- "Let the centre E of the circle be taken [III. 1]". III.1 needs two points of the
+     circle: the straight line from the circle's centre `E₀` to `A` meets it between them
+     (System E, Intersections 4) and beyond `E₀` (Intersections 5). III.1's centre is `E₀`
+     (Generalities 2). -/
+  obtain ⟨E₀, hE₀⟩ := hBCD
+  have hE₀A : E₀ ≠ A := fun e => hA.1 (e ▸ centre_inside hE₀)
+  obtain ⟨L, hE₀_L, hA_L⟩ := Postulate1 E₀ A hE₀A
+  obtain ⟨D, hD, hD_L, hE₀DA⟩ := line_circle_between (centre_inside hE₀) hE₀_L hA hA_L
+  obtain ⟨D', hD', -, hD'E₀A⟩ := line_circle_beyond (centre_inside hE₀) hE₀_L hA_L hE₀A.symm
+  have hDD' : D ≠ D' := fun e => not_between_of_between (e ▸ hD'E₀A) hE₀DA
+  obtain ⟨E, -, -, -, hE, -⟩ := Prop1 ⟨E₀, hE₀⟩ hD hD' hDD'
+  obtain rfl : E = E₀ := centre_unique hE hE₀
+  /- With centre `E` and distance `EA` the circle `AFG`. -/
+  obtain ⟨AFG, hE', hA'⟩ := Postulate3 E A hE₀A
+  have _ := hD_L
   sorry
 
 /-- III.19 in full, from III.18. -/
@@ -260,7 +281,8 @@ Euclid's I.5 and I.32; the rest as Euclid). -/
 theorem T31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCircle A ABCD)
     (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hBEC : Between B E C) (hAB : A ≠ B)
     (hAC : A ≠ C) :
-    ∠ B A C = ∟ ∧ ∠ A B C < ∟ ∧
+    ∠ B A C = ∟ ∧
+      (∀ X : Point, OnCircle X ABCD → SameSideOf X B A C → ∠ A X C < ∟) ∧
       ∀ D : Point, OnCircle D ABCD → OppositeSidesOf B D A C → ∟ < ∠ A D C := by
   have hABC : Triangle A B C :=
     Triangle.of_onCircle hA hB hC hAB (ne_of_between_ends hBEC) hAC
@@ -272,16 +294,42 @@ theorem T31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCircl
   have h17 := (BookI.Prop17 hABC).2.2
   rw [angle_symm hABC.ne₁₃.symm hABC.ne₁₂.symm, hBAC] at h17
   have hABC' : ∠ A B C < ∟ := Magnitude.lt_of_add_lt_add_left h17
-  refine ⟨hBAC, hABC', fun D hD hBD => ?_⟩
+  /- Two angles making up two right angles: if one is less than a right angle, the
+     other is greater. -/
+  have other : ∀ {x y : Angle}, x + y = ∟ + ∟ → x < ∟ → ∟ < y := by
+    intro x y hxy hx
+    rcases lt_trichotomy ∟ y with h | h | h
+    · exact h
+    · rw [← h] at hxy
+      exact absurd (CommonNotion3 hxy rfl) (Magnitude.ne_of_lt hx)
+    · exact absurd (hxy ▸ lt_trans (add_lt_add_right y hx)
+        (by rw [add_comm, add_comm ∟]; exact add_lt_add_right ∟ h)) (lt_irrefl _)
   /- The quadrilateral `ABCD` in the circle [III. 22]. -/
-  have h22 := (Prop22 ⟨E, hE⟩ hB hC hD hA hBD.swap).2
-  rw [angle_symm hABC.ne₂₃.symm hABC.ne₁₂] at h22
-  rcases lt_trichotomy ∟ (∠ A D C) with h | h | h
+  have hless : ∀ D : Point, OnCircle D ABCD → OppositeSidesOf B D A C → ∟ < ∠ A D C := by
+    intro D hD hBD
+    have h22 := (Prop22 ⟨E, hE⟩ hB hC hD hA hBD.swap).2
+    rw [angle_symm hABC.ne₂₃.symm hABC.ne₁₂] at h22
+    exact other h22 hABC'
+  refine ⟨hBAC, fun X hX hXB => ?_, hless⟩
+  /- Any point `X` of the greater segment: with a point `D` of the less, `AXCD` is a
+     quadrilateral in the circle [III. 22], and the angle at `D` is greater than a right
+     angle. -/
+  obtain ⟨D, hD, hDB⟩ := exists_onCircle_oppositeSidesOf hA hC hABC.acb
+  have hXD : OppositeSidesOf X D A C := hXB.trans_opposite hDB.symm
+  have h22 := (Prop22 ⟨E, hE⟩ hX hA hD hC hXD).2
+  have hDAC : Triangle A D C := hXD.symm.triangle.acb
+  rw [angle_symm hDAC.ne₂₃.symm hDAC.ne₁₂] at h22
+  have hobtuse : ∟ < ∠ A D C := hless D hD hDB.symm
+  rcases lt_trichotomy (∠ A X C) ∟ with h | h | h
   · exact h
-  · rw [← h] at h22
-    exact absurd (CommonNotion3 h22 rfl) (Magnitude.ne_of_lt hABC')
-  · exact absurd (h22 ▸ lt_trans (add_lt_add_right (∠ A D C) hABC')
-      (by rw [add_comm, add_comm ∟]; exact add_lt_add_right ∟ h)) (lt_irrefl _)
+  · rw [h, add_comm] at h22
+    exact absurd (CommonNotion3 h22 rfl).symm (Magnitude.ne_of_lt hobtuse)
+  · /- Both greater than a right angle: together greater than two. -/
+    have h₁ : ∟ + ∟ < ∠ A X C + ∟ := add_lt_add_right ∟ h
+    have h₂ : ∠ A X C + ∟ < ∠ A X C + ∠ A D C := by
+      rw [add_comm (∠ A X C) ∟, add_comm (∠ A X C) (∠ A D C)]
+      exact add_lt_add_right (∠ A X C) hobtuse
+    exact absurd (h22 ▸ lt_trans h₁ h₂) (lt_irrefl _)
 
 /-- III.32, its first steps: `BA` at right angles to `EF`. -/
 theorem T32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre O ABCD)

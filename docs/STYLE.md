@@ -210,7 +210,7 @@ proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN
     `Prop44.place`, may use its own):
     ```sh
     diff <(grep -o '<text[^>]*>[A-Z]</text>' figures/I/NN.svg | sed 's/<[^>]*>//g' | sort -u) \
-         <(sed -e 's/<!--.*-->//' -e 's/\[[^]]*\]//g' -e 's/Q\. E\. [DF]\.//g' -e 's/I say//g' -e '/^#/d' heath/I/NN.md \
+         <(sed -e 's/<!--.*-->//' -e 's/\[[^]]*\]//g' -e 's/Q\. E\. [DF]\.//g' -e 's/I say//g' -e 's/PORISM\.//' -e '/^#/d' heath/I/NN.md \
              | grep -oE '\b[A-Z]+\b' | fold -w1 | sort -u)
     ```
 21. `grep -oE '#[0-9a-fA-F]{3,6}' F | sort -u` lists only section 4's colours, and

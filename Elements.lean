@@ -23,7 +23,7 @@ import Elements.Figure.Parallels
 import Elements.Figure.Areas
 import Elements.Figure.Parallelograms
 import Elements.Figure.Rectangles
-import Elements.Figure.Chords
+import Elements.Figure.OnCircles
 import Elements.Figure.Basics
 import Elements.BookI.Prop01
 import Elements.BookI.Prop02

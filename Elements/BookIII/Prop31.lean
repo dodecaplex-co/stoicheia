@@ -25,7 +25,8 @@ right angle. -/
 theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCircle A ABCD)
     (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hBEC : Between B E C) (hAB : A ≠ B)
     (hAC : A ≠ C) :
-    ∠ B A C = ∟ ∧ ∠ A B C < ∟ ∧
+    ∠ B A C = ∟ ∧
+      (∀ X : Point, OnCircle X ABCD → SameSideOf X B A C → ∠ A X C < ∟) ∧
       ∀ D : Point, OnCircle D ABCD → OppositeSidesOf B D A C → ∟ < ∠ A D C := by
   -- Let ABCD be a circle, let BC be its diameter, and E its centre, and let BA, AC, AD, DC be
   -- joined;

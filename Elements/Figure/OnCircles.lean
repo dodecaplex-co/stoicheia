@@ -137,7 +137,7 @@ theorem EqualCircles.refl {G : Point} (hG : Centre G α) (hP : OnCircle P α) :
 /-! ## A straight line touching a circle -/
 
 /-- No point of a straight line that touches a circle lies within it: a straight line
-through a point within a circle cuts it (System E, Intersections 3). -/
+through a point within a circle cuts it (System E, Intersection 3). -/
 theorem Touches.not_inside (h : Touches A B α) (hP : Collinear A B P) :
     ¬ InsideCircle P α := by
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B h.1

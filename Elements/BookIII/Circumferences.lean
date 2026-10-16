@@ -98,13 +98,20 @@ theorem Circumference.whole (hα : ∃ O : Point, Centre O α) (hB : OnCircle B 
 /-- **A semicircle is two right angles.** When the centre `G` is on `BC`, the angle `BAC`
 at any point `A` of the circle is half of two right angles: the radii `GA`, `GB`, `GC`
 make the angles at `B` and `C` equal to the two parts of the angle at `A` [I. 5], and the
-three angles of the triangle `ABC` are two right angles [I. 32]. Euclid proves the same
-of the angle in a semicircle in III.31; III.28 and III.29 need it of circumferences
-first. [I. 5, I. 32] -/
+three angles of the triangle `ABC` are two right angles [I. 32]. Since that holds at
+every point, it holds at the one that measures the circumference, and the angles in a
+segment being equal (III.21) is not needed. Euclid proves the same of the angle in a
+semicircle in III.31; III.28 and III.29 need it of circumferences first. [I. 5, I. 32] -/
 theorem Circumference.semicircle (hG : Centre G α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hBGC : Between B G C) (hK : Triangle B C K) : circumference α B K C = ∟ + ∟ := by
-  obtain ⟨A, hA, hAK⟩ := exists_onCircle_oppositeSidesOf hB hC hK
-  rw [Circumference.eq ⟨G, hG⟩ hA hB hC hAK]
+  /- The point `A` at which Lean measured the circumference: some point of the circle on
+     the other side of `BC` from `K`, and there is one. -/
+  obtain ⟨A₀, hA₀, hA₀K⟩ := exists_onCircle_oppositeSidesOf hB hC hK
+  obtain ⟨A, hA, hAK, hx⟩ := Classical.epsilon_spec
+    (p := fun x => ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C ∧
+      x = ∠ B A C + ∠ B A C) ⟨_, A₀, hA₀, hA₀K, rfl⟩
+  unfold circumference
+  rw [hx]
   have hBCA : Triangle B C A := hAK.triangle
   have hGA : ‖G A‖ = ‖G B‖ := Definition15 hG hA hB
   have hGC : ‖G C‖ = ‖G B‖ := Definition15 hG hC hB

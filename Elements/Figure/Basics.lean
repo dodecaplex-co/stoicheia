@@ -10,7 +10,7 @@ import Elements.Figure.Parallels
 import Elements.Figure.Areas
 import Elements.Figure.Parallelograms
 import Elements.Figure.Rectangles
-import Elements.Figure.Chords
+import Elements.Figure.OnCircles
 
 /-!
 # Book Zero: small facts every figure needs
@@ -60,7 +60,7 @@ Every proposition file imports this one, and through it:
   one, follow their lengths, and read either way round are the same; a rectangle
   with a side that is nothing is nothing; a rectangle or a square named from
   another corner.
-* `Chords`: three points of a circle are not on one straight line; a straight line
+* `OnCircles`: three points of a circle are not on one straight line; a straight line
   in a circle has points of the circle on each side of it; a circumference named
   from either side; equal circles have equal radii; no point of a straight line
   touching a circle lies within it.

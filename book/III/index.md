@@ -24,7 +24,7 @@ Start with the [definitions](front.md).
 | 🚧 | [III.14](14.md) **Equal straight lines are equally distant from the centre** | In a circle equal straight lines are equally distant from the centre, and those which are equally distant… |
 | 🚧 | [III.15](15.md) **The diameter is the greatest straight line in a circle** | Of straight lines in a circle the diameter is greatest, and of the rest the nearer to the centre is always… |
 | 🚧 | [III.16](16.md) **The straight line at right angles to a diameter at its end** | The straight line drawn at right angles to the diameter of a circle from its extremity will fall outside… |
-| 🚧 | [III.17](17.md) **Drawing a tangent from a point** | From a given point to draw a straight line touching a given circle. |
+| 🚧 | [III.17](17.md) **Drawing a straight line to touch a circle** | From a given point to draw a straight line touching a given circle. |
 | 🚧 | [III.18](18.md) **The radius to the point of contact** | If a straight line touch a circle, and a straight line be joined from the centre to the point of contact,… |
 | 🚧 | [III.19](19.md) **The perpendicular to a tangent at the point of contact** | If a straight line touch a circle, and from the point of contact a straight line be drawn at right angles… |
 | 🚧 | [III.20](20.md) **The angle at the centre is double the angle at the circumference** | In a circle the angle at the centre is double of the angle at the circumference, when the angles have the… |

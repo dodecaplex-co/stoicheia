@@ -92,11 +92,14 @@ theorem T28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircle
     rcases centre_cases (K := L) hFH.triangle with hLF | hLcol | hLF
     · have hLH : OppositeSidesOf L H D E := hLF.trans_opposite hFH
       /- The angles at the centres are equal [I. 8], and so the less circumferences
-         [III. 26]; the greater remain [C.N. 3]. -/
+         [III. 26], at the centres: III.26 names each circle by a point of it on the other
+         side (`exists_onCircle_oppositeSidesOf`). The greater remain [C.N. 3]. -/
       have hAKB : ∠ A K B = ∠ D L E :=
         BookI.Prop8 hKG.triangle.cab hLH.triangle.cab hr hrB hAB
-      have h₂ : circumference ABC A G B = circumference DEF D H E := by
-        rw [Circumference.centre hK hA hB hKG, Circumference.centre hL hD hE hLH, hAKB]
+      obtain ⟨X, hX, hXG⟩ := exists_onCircle_oppositeSidesOf hA hB hCG.symm.triangle
+      obtain ⟨Y, hY, hYH⟩ := exists_onCircle_oppositeSidesOf hD hE hFH.symm.triangle
+      have h₂ : circumference ABC A G B = circumference DEF D H E :=
+        (Prop26 hcircles hK hL hX hA hB hY hD hE hXG hYH).1 hKG hLH hAKB
       refine ⟨CommonNotion3 (hw₁.trans hw₂.symm) h₂, h₂⟩
     · /- `DE` a diameter: then so is `AB`, against `K` being off it. -/
       obtain ⟨M, hD_M, hE_M, hL_M⟩ := hLcol
@@ -126,12 +129,21 @@ theorem T29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles AB
   have hr : ‖K B‖ = ‖L E‖ := hcircles.radii hK hL hB hE
   have hrC : ‖K C‖ = ‖L F‖ := hcircles.radii hK hL hC hF
   /- Equal circumferences beyond the centres: equal angles at the centres [III. 27],
-     and equal bases [I. 4]. -/
+     and equal bases [I. 4]. III.27 names each circumference by the angle standing on it
+     at a point `P` (`Q`) of the circle on the centre's side. -/
   have minor : ∀ {X Y : Point}, OppositeSidesOf K X B C → OppositeSidesOf L Y E F →
       circumference ABC B X C = circumference DEF E Y F → ‖B C‖ = ‖E F‖ := by
     intro X Y hKX hLY h
-    rw [Circumference.centre hK hB hC hKX, Circumference.centre hL hE hF hLY] at h
-    exact (BookI.Prop4 hKX.triangle.cab hLY.triangle.cab hr hrC h).1
+    obtain ⟨P, hP, hPK⟩ := exists_onCircle_sameSideOf hB hC hKX.triangle
+    obtain ⟨Q, hQ, hQL⟩ := exists_onCircle_sameSideOf hE hF hLY.triangle
+    have hPX : OppositeSidesOf P X B C := hPK.trans_opposite hKX
+    have hQY : OppositeSidesOf Q Y E F := hQL.trans_opposite hLY
+    have hst : standing ABC B P C = standing DEF E Q F := by
+      rw [standing_eq_circumference hPX, standing_eq_circumference hQY]; exact h
+    have hBKC : ∠ B K C = ∠ E L F :=
+      (Prop27 hcircles hK hL hP hB hC hQ hE hF hPX.triangle.acb hQY.triangle.acb hst).2
+        hPK.symm hQL.symm
+    exact (BookI.Prop4 hKX.triangle.cab hLY.triangle.cab hr hrC hBKC).1
   have hGt : Triangle B C G := hG
   have hHt : Triangle E F H := hH
   /- A circumference less than, equal to, or greater than a semicircle, as the centre

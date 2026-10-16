@@ -30,6 +30,14 @@ def read(book: str, n: int):
     return source, enunciation, paras[1:]
 
 
+def bracketed(book: str, n: int) -> bool:
+    """Is the whole proposition in Heath's square brackets, as III. 12 is? He prints the
+    opening bracket before the heading ("[Proposition 12."), which `read` leaves out with
+    the heading; the closing one follows "Q. E. D." and stays in the proof."""
+    text = HTML_COMMENT.sub("", heath_path(book, n).read_text())
+    return any(line.startswith("# [") for line in text.splitlines())
+
+
 ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII"]
 
 # The books carried into Lean so far, and how many propositions each has.

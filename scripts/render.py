@@ -73,7 +73,7 @@ TITLES_III = {
     14: "Equal straight lines are equally distant from the centre",
     15: "The diameter is the greatest straight line in a circle",
     16: "The straight line at right angles to a diameter at its end",
-    17: "Drawing a tangent from a point", 18: "The radius to the point of contact",
+    17: "Drawing a straight line to touch a circle", 18: "The radius to the point of contact",
     19: "The perpendicular to a tangent at the point of contact",
     20: "The angle at the centre is double the angle at the circumference",
     21: "Angles in the same segment", 22: "Opposite angles of a quadrilateral in a circle",
@@ -276,8 +276,11 @@ def page(book, n, count, titles, facts, docs):
     mishnah = ROOT / "mishnah" / book / f"{n:02d}.md"
     lean_path = ROOT / "Elements" / f"Book{book}" / f"Prop{n:02d}.lean"
     idea = ROOT / "figures" / book / f"{n:02d}-idea.svg"
+    # A proposition Heath prints in square brackets (III.12) opens its bracket before
+    # the enunciation, to close after "Q. E. D." at the end of the proof.
+    opening = "[" if heath.bracketed(book, n) else ""
     out = [GENERATED, nav, "", f"# Book {book}, Proposition {n}", "",
-           f"*{titles[n]}*", "", f"> {enunciation}", ""]
+           f"*{titles[n]}*", "", f"> {opening}{enunciation}", ""]
     if idea.exists():
         caption = svg_desc(idea)
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "

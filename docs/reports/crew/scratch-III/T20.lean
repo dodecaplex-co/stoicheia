@@ -19,7 +19,7 @@ theorem dbl {A E F X : Point} {α : Circle} (hE : Centre E α) (hA : OnCircle A 
   rw [h32, ← h5, angle_symm hX_AE.ne₁₃.symm hX_AE.ne₁₂.symm]
 
 /-- III.20 when the centre is on the other side of `AB` from `C` (Euclid's second
-figure, `BDC`): the straight line `EC` crosses `AB` within the circle. -/
+case, `BDC`): the straight line `EC` crosses `AB` within the circle. -/
 theorem case_across {A B C E F : Point} {α : Circle} (hE : Centre E α) (hA : OnCircle A α)
     (hB : OnCircle B α) (hC : OnCircle C α) (hAEF : Between A E F)
     (hEC : OppositeSidesOf E C A B) : ∠ B E C = ∠ B A C + ∠ B A C := by
@@ -64,7 +64,7 @@ theorem case_across {A B C E F : Point} {α : Circle} (hE : Centre E α) (hA : O
     ac_rfl
   rw [angle_symm hABE.ne₂₃ hAEC.ne₂₃.symm, this]
 
-/-- **III.20**, every case: the centre within the angle `BAC` (Euclid's first figure),
+/-- **III.20**, every case: the centre within the angle `BAC` (Euclid's first case),
 outside it (his second, `case_across`), or on one of its arms. -/
 theorem T20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hEA : SameSideOf E A B C) :
@@ -122,7 +122,7 @@ theorem T20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCircle 
         OppositeSidesOf.of_line hAC hA_M hC_M ⟨hE_M, hB_M, hs2⟩
       rw [angle_symm hBCE.ne₁₃ hBCE.ne₂₃, case_across hE hA hC hB hAEF hEB,
         angle_symm hAC.symm hAB.symm]
-  · /- `E` on the other side of `AB` from `C`: Euclid's second figure. -/
+  · /- `E` on the other side of `AB` from `C`: Euclid's second case. -/
     exact case_across hE hA hB hC hAEF (OppositeSidesOf.of_line hAB hA_L hB_L ⟨hE_L, hC_L, hs1⟩)
 
 end Scratch

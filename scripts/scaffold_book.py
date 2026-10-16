@@ -243,7 +243,7 @@ BOOK_III = {
        "      OppositeSidesOf B K D A ∧ ‖D B‖ = ‖D K‖ ∧\n"
        "      ∀ N : Point, OnCircle N ABC → ‖D N‖ = ‖D K‖ → N = K ∨ N = B)",
     9: "{A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O ABC)\n"
-       "    (hD : InsideCircle D ABC) (hA : OnCircle A ABC) (hB : OnCircle B ABC)\n"
+       "    (hA : OnCircle A ABC) (hB : OnCircle B ABC)\n"
        "    (hC : OnCircle C ABC) (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C)\n"
        "    (hDA : ‖D A‖ = ‖D B‖) (hDB : ‖D B‖ = ‖D C‖) :\n"
        "    Centre D ABC",
@@ -351,7 +351,8 @@ BOOK_III = {
     31: "{A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCircle A ABCD)\n"
         "    (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hBEC : Between B E C) (hAB : A ≠ B)\n"
         "    (hAC : A ≠ C) :\n"
-        "    ∠ B A C = ∟ ∧ ∠ A B C < ∟ ∧\n"
+        "    ∠ B A C = ∟ ∧\n"
+        "      (∀ X : Point, OnCircle X ABCD → SameSideOf X B A C → ∠ A X C < ∟) ∧\n"
         "      ∀ D : Point, OnCircle D ABCD → OppositeSidesOf B D A C → ∟ < ∠ A D C",
     32: "{B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre O ABCD)\n"
         "    (hB : OnCircle B ABCD) (hD : OnCircle D ABCD) (hBD : B ≠ D) (hEF : Touches E F ABCD)\n"

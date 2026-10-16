@@ -18,7 +18,7 @@ open Tacit
 /-- If a point be taken within a circle, and more than two equal straight lines fall from the point
 on the circle, the point taken is the centre of the circle. -/
 theorem Prop9 {A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O ABC)
-    (hD : InsideCircle D ABC) (hA : OnCircle A ABC) (hB : OnCircle B ABC)
+    (hA : OnCircle A ABC) (hB : OnCircle B ABC)
     (hC : OnCircle C ABC) (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C)
     (hDA : ‖D A‖ = ‖D B‖) (hDB : ‖D B‖ = ‖D C‖) :
     Centre D ABC := by
