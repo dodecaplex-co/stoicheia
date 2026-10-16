@@ -155,13 +155,7 @@ theorem Prop47 {A B C D E F G H K : Point} (hABC : Triangle A B C) (hright : ∠
   have hDE_BC : Parallel DE BC := hpsq.2.parallel hD_DE hE_DE hC_BC hB_BC
   have hA_BD : ¬ OnLine A BD :=
     not_on_line_of_same_side (same_side_symm (hCA_BD.sameSide hB_BD hD_BD))
-  /- I.31 supplies two points of the parallel through A; they serve to name
-     its straight line and have no letters in the figure. -/
-  obtain ⟨U, V, hUAV, hUV⟩ := Prop31 hBD (fun ⟨N, hB, hD, hA⟩ =>
-    hA_BD ((line_unique hBD hB hD hB_BD hD_BD) ▸ hA))
-  obtain ⟨AL, hU_AL, hV_AL⟩ := Postulate1 U V hUV.1
-  have hA_AL : OnLine A AL := on_line_of_between_ends hUAV hU_AL hV_AL
-  have hAL_BD : Parallel AL BD := hUV.parallel hU_AL hV_AL hB_BD hD_BD
+  obtain ⟨AL, hA_AL, hAL_BD⟩ := Prop31.line hA_BD
   have hA_CE : ¬ OnLine A CE :=
     not_on_line_of_same_side (same_side_symm (hBA_CE.sameSide hC_CE hE_CE))
   have hAL_CE : Parallel AL CE :=

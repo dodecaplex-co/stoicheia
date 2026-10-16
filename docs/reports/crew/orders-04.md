@@ -19,7 +19,8 @@ statement.
 the statements to test them. They are not built; check one with
 `lake env lean docs/reports/crew/scratch-04/T35.lean`. They follow Euclid's route
 but not his sentences. Borrow from yours freely; your proof is still written
-under Euclid's sentences, in `PropNN.lean`.
+under Euclid's sentences, in `PropNN.lean`. (A later note: the scratch proofs
+served voyage 4 and were removed once the propositions were proved.)
 
 **Shared steps: cite them, never copy them.** The certificate walks through a
 step, so the propositions inside it become citations of yours; each is shown

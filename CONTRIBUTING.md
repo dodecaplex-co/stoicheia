@@ -23,7 +23,7 @@ because a proof only needs their statements.
    Helpers go before the proposition, porisms and corollaries after it. A step
    that several proofs share goes in Book Zero; if it cites a proposition, in
    [`Elements/BookI/Helpers.lean`](Elements/BookI/Helpers.lean), or, if it cites
-   I.28, I.29 or I.30, in
+   I.28, I.30 or I.31, in
    [`Elements/BookI/HelpersParallels.lean`](Elements/BookI/HelpersParallels.lean);
    and if it is a consequence of one proposition that later proofs share, after
    that proposition as a corollary (`Prop34.bisect`). Import the files you cite.

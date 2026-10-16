@@ -20,26 +20,6 @@ namespace Elements.BookI
 
 open Tacit
 
-/-! ## What Euclid reads off the figure -/
-
-/-- "In a straight line with CB": if `CB` is produced beyond `B` to `E`, then any
-point `D` on the ray from `B` through `E` lies in a straight line with `CB`, on
-the far side of `B` from `C`. (System E's rules for "between") -/
-theorem Prop14.straight {B C D E : Point} (hCBE : Between C B E) (hD : OnRay D B E) :
-    Between C B D := by
-  obtain ⟨-, hDB, ⟨L, hB, hE, hD_L⟩, hDBE⟩ := hD
-  have hC : OnLine C L := on_line_of_between (between_symm hCBE) hE hB
-  have hCD : C ≠ D := by
-    rintro rfl
-    exact hDBE hCBE
-  /- Of the three points C, B, D on one straight line, one lies between the
-     other two. If C did, or D, then B would lie between D and E, and D would
-     be off the ray. -/
-  rcases between_cases (ne_of_between hCBE) hDB.symm hCD hC hB hD_L with h | h | h
-  · exact h
-  · exact absurd (between_symm (between_of_between_right (between_symm hCBE) h)) hDBE
-  · exact absurd (between_inner h hCBE) hDBE
-
 /-- If with any straight line, and at a point on it, two straight lines not lying on the same side
 make the adjacent angles equal to two right angles, the two straight lines will be in a straight
 line with one another. -/
@@ -106,7 +86,9 @@ theorem Prop14 {A B C D : Point} (hCD : OppositeSidesOf C D A B) (h : ∠ A B C 
   /- Lean needs no "similarly": E was any point on CB produced, and the
      argument never asked which. -/
   -- Therefore CB is in a straight line with BD.
-  exact Prop14.straight hCBE hD_BE
+  /- So D lies beyond B from C: a point of the ray from B through E does
+     (`OnRay.between`, in Book Zero). -/
+  exact hD_BE.between hCBE
   -- Therefore etc.
   -- Q. E. D.
 

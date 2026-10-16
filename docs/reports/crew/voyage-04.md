@@ -4,7 +4,8 @@ The largest voyage so far, and the last of Book I: four ships, each with a
 Claude captain, two Claude first mates and four Claude bosuns, and thirty-two
 OpenAI Codex sailors (`gpt-6-astra`), two on every proposition. A first mate went
 ahead with the groundwork (areas and parallelograms in Book Zero, the shared
-parallel steps, three statements adjusted and tested; see
+parallel steps, three statements adjusted and tested in scratch proofs, which
+served the voyage and were removed once the propositions were proved; see
 [first-mate-04.md](first-mate-04.md)), and two challengers tried to break it
 before anyone sailed.
 

@@ -9,7 +9,7 @@ small steps that several proofs share do cite one, so they live here instead,
 beside the propositions. Each is named after the proposition it cites, and this
 file imports only what they need. A step that cited a later proposition would
 make the imports go round in a circle, so it would need a file of its own: the
-steps about parallels that cite I.28, I.29 or I.30 are in `HelpersParallels.lean`.
+steps about parallels that cite I.28, I.30 or I.31 are in `HelpersParallels.lean`.
 
 The certificate walks through these steps as it walks through any helper, so a
 proof that uses one is recorded as citing the proposition inside it.

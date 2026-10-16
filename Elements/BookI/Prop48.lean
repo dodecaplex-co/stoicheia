@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop08
 import Elements.BookI.Prop11
+import Elements.BookI.Prop28
 import Elements.BookI.Prop46
 import Elements.BookI.Prop47
 import Elements.BookI.HelpersParallels

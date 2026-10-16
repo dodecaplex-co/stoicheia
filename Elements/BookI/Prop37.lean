@@ -32,33 +32,13 @@ theorem Prop37 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
   -- I say that the triangle ABC is equal to the triangle DBC.
   -- Let AD be produced in both directions to E, F; through B let BE be drawn parallel to
   -- CA, [I. 31] and through C let CF be drawn parallel to BD. [I. 31]
-  obtain ⟨CA, hC_CA, hA_CA⟩ := Postulate1 C A hABC.ne₁₃.symm
-  obtain ⟨BD, hD_BD, hB_BD⟩ := Postulate1 D B hDBC.ne₁₂
-  obtain ⟨B₁, B₂, hB₁BB₂, hB₁B₂⟩ := Prop31 hABC.ne₁₃.symm hABC.cab
-  obtain ⟨BE, hB₁_BE, hB₂_BE⟩ := Postulate1 B₁ B₂ hB₁B₂.1
-  have hB_BE : OnLine B BE := on_line_of_between_ends hB₁BB₂ hB₁_BE hB₂_BE
-  have hBE_CA : Parallel BE CA := hB₁B₂.parallel hB₁_BE hB₂_BE hC_CA hA_CA
-  obtain ⟨C₁, C₂, hC₁CC₂, hC₁C₂⟩ := Prop31 hDBC.ne₁₂ hDBC
-  obtain ⟨CF, hC₁_CF, hC₂_CF⟩ := Postulate1 C₁ C₂ hC₁C₂.1
-  have hC_CF : OnLine C CF := on_line_of_between_ends hC₁CC₂ hC₁_CF hC₂_CF
-  have hCF_BD : Parallel CF BD := hC₁C₂.parallel hC₁_CF hC₂_CF hD_BD hB_BD
-  /- E and F are where the parallels BE and CF meet the whole straight line AD. -/
-  have hAD_CA : AD ≠ CA := fun e => hAD_BC.symm.not_onLine hC (e ▸ hC_CA)
-  obtain ⟨E, hE, hE_BE⟩ := Prop30.meet hBE_CA hA_CA hA hAD_CA
-  have hAD_BD : AD ≠ BD := fun e => hAD_BC.symm.not_onLine hB (e ▸ hB_BD)
-  obtain ⟨F, hF, hF_CF⟩ := Prop30.meet hCF_BD hD_BD hD hAD_BD
+  /- E and F are where the parallels BE and CF meet the whole straight line AD
+     (`Prop31.parallelogram`, which cites I.30 for the meeting). -/
+  obtain ⟨E, hE, hACBE⟩ := Prop31.parallelogram hAD_BC hA hC hB hABC.ne₂₃.symm
+  obtain ⟨F, hF, hDBCF⟩ := Prop31.parallelogram hAD_BC hD hB hC hDBC.ne₂₃
   -- Then each of the figures EBCA, DBCF is a parallelogram; and they are equal, for they are
   -- on the same base BC and in the same parallels BC, EF. [I. 35]
-  have hEBCA : Parallelogram E B C A :=
-    ⟨AreParallel.of_parallel (fun e => hAD_BC.symm.not_onLine hB (e ▸ hE)) hABC.ne₁₃.symm
-        hE_BE hB_BE hC_CA hA_CA hBE_CA,
-      AreParallel.of_parallel hABC.ne₂₃ (fun e => hBE_CA.not_onLine hE_BE (e ▸ hA_CA))
-        hB hC hA hE hAD_BC.symm⟩
-  have hDBCF : Parallelogram D B C F :=
-    ⟨AreParallel.of_parallel hDBC.ne₁₂ (fun e => hAD_BC.symm.not_onLine hC (e ▸ hF))
-        hD_BD hB_BD hC_CF hF_CF hCF_BD.symm,
-      AreParallel.of_parallel hDBC.ne₂₃ (fun e => hCF_BD.not_onLine hF_CF (e ▸ hD_BD))
-        hB hC hF hD hAD_BC.symm⟩
+  have hEBCA : Parallelogram E B C A := hACBE.reverse.rotate
   have h35 : quadArea E B C A = quadArea D B C F :=
     Prop35 hEBCA hDBCF ⟨AD, hE, hA, hD, hF⟩
   -- Moreover the triangle ABC is half of the parallelogram EBCA; for the diameter AB bisects

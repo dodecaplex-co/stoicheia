@@ -46,6 +46,21 @@
   corollaries of I.46, as Heath reports Proclus proving them there. The first
   mate's reasons are in [first-mate-04.md](../reports/crew/first-mate-04.md).
 - **Scratch proofs in the open.** The proofs written to test the statements before a
-  voyage are committed, but not built, in
-  [`docs/reports/crew/scratch-04/`](../reports/crew/scratch-04), so that both crews
-  start from the same ground.
+  voyage are committed, but not built, in `docs/reports/crew/scratch-04/`, so that
+  both crews start from the same ground. They served voyage 4 and were removed
+  once the propositions were proved.
+- **Closing Book I: I.29's corollaries follow I.29.** `Prop29.alternate`,
+  `Prop29.interior` and `Prop29.exterior`, I.29 said of any straight line falling on
+  two parallels, move from `HelpersParallels.lean` to follow I.29 in its own file,
+  as a consequence of one proposition that later proofs share. I.30 and I.32 now
+  cite them instead of setting out I.29's figure by hand. `HelpersParallels.lean`
+  keeps the shared steps that cite I.28, I.30 or I.31.
+- **Closing Book I: shared steps written once.** Book Zero gains
+  `OnRay.eq_of_area_eq`, the "greater to the less" of I.39 and I.40. I.31 gains
+  `Prop31.line`, the parallel through a point as a named straight line, and
+  `HelpersParallels.lean` gains `Prop31.parallelogram`, the parallel drawn, the
+  point where it meets the far parallel, and the parallelogram it makes; I.37–I.47
+  cite them where each wrote the same steps out by hand. I.14 cites Book Zero's
+  `OnRay.between` instead of its own copy, and two Book Zero lemmas that nothing
+  used are gone. No statement changed, and the certificate is the same for all
+  forty-eight.

@@ -17,13 +17,13 @@ rests on Postulate 5. The generated pages are left for the captain.
 ## The statements of I.33–I.48
 
 **Three statements changed (I.37, I.38 and I.48); the other thirteen stand.** To be
-sure of them, proofs were written against the statements. They are committed, not
-built, in [`scratch-04/`](scratch-04): the lakefile builds only the `Elements` root,
-and `check_fidelity.py` reads only `Elements/`. Check one with
-`lake env lean docs/reports/crew/scratch-04/T35.lean`. Each compiles against this
-branch with no `sorry` of its own (`#print axioms` shows `sorryAx` only through the
-cited sketches). They follow Euclid's route but are not written under his
-sentences. The citations are those the certificate's walk finds.
+sure of them, proofs were written against the statements. They were committed, not
+built, in `docs/reports/crew/scratch-04/` (the lakefile builds only the `Elements`
+root, and `check_fidelity.py` reads only `Elements/`); they served voyage 4 and were
+removed once the propositions were proved. Each compiles against this branch with
+no `sorry` of its own (`#print axioms` shows `sorryAx` only through the cited
+sketches). They follow Euclid's route but are not written under his sentences. The
+citations are those the certificate's walk finds.
 
 | File | Proves | Lines | Cites |
 |---|---|---|---|
@@ -360,7 +360,7 @@ each with the step that brings it in.
 | 9 | The orders dropped the import rule | **Fixed** in the orders and STYLE §3: `Elements.BookI.HelpersParallels` when a step from it is cited. |
 | 10 | The orders dropped "If the statement seems wrong or too weak, stop and say so" | **Fixed**: restored, with "do not work around it". |
 | 11 | No stock clause for the certificate effect of shared steps | **Fixed.** The orders' Shared steps say what each adds, and give the clause for `Prop30.meet` (a clause, not a quotation of Heath's I.31 note). |
-| 12 | The scratch proofs lived only in a session scratchpad | **Fixed.** Committed, not built, in `docs/reports/crew/scratch-04/`, named in each note and in the orders; the same for both crews. |
+| 12 | The scratch proofs lived only in a session scratchpad | **Fixed.** Committed, not built, in `docs/reports/crew/scratch-04/`, named in each note and in the orders; the same for both crews. They served voyage 4 and were removed once the propositions were proved. |
 | 13 | I.47 untested; the foot and "C within DBA" had no helper and seemed to need I.13, I.17, I.29 | **Answered by 1.** Tested in full. The two steps are one helper (`Prop47.within`) and `Between.of_inside`; the walk shows I.29 is not needed. |
 | 14 | The I.40 note named the ray from `E` | **Fixed**: "(or `C`, in I.40)", as Heath's `F` lies on `CD`. |
 | 15 | `between_of_sameSide` and `Between.of_sameSide` too alike | **Fixed.** Renamed `Between.of_inside`; each docstring tells them apart; both named, with a gloss, in the orders. |

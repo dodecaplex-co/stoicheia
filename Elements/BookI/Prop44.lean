@@ -66,23 +66,9 @@ theorem Prop44.place {A B X P Q R S : Point} (hAB : A ≠ B) (hX : ¬ Collinear 
   have hEBG : ∠ E B G = ∠ R Q P := (angle_eq_of_onRay hE₂.symm hG).trans hang
   have hBEG : Triangle B E G := hGX.triangle
   /- Through `G` a parallel to `BE`, through `E` a parallel to `BG`, meeting at `F`. -/
-  obtain ⟨U, V, hUGV, hUV⟩ := Prop31 hBE_ne (fun ⟨K, hB_K, hE_K, hG_K⟩ =>
-    hBEG ⟨K, hB_K, hE_K, hG_K⟩)
-  obtain ⟨U', V', hU'EV', hU'V'⟩ := Prop31 hBEG.ne₁₃ hBEG.acb
-  obtain ⟨ℓ₁, hU_ℓ₁, hV_ℓ₁⟩ := Postulate1 U V hUV.1
-  obtain ⟨ℓ₂, hU'_ℓ₂, hV'_ℓ₂⟩ := Postulate1 U' V' hU'V'.1
-  obtain ⟨BG, hB_BG, hG_BG⟩ := Postulate1 B G hBEG.ne₁₃
-  have hG_ℓ₁ : OnLine G ℓ₁ := on_line_of_between_ends hUGV hU_ℓ₁ hV_ℓ₁
-  have hE_ℓ₂ : OnLine E ℓ₂ := on_line_of_between_ends hU'EV' hU'_ℓ₂ hV'_ℓ₂
-  have hℓ₁ : Parallel ℓ₁ AB := hUV.parallel hU_ℓ₁ hV_ℓ₁ hB_AB hE_AB
-  have hℓ₂ : Parallel ℓ₂ BG := hU'V'.parallel hU'_ℓ₂ hV'_ℓ₂ hB_BG hG_BG
-  have hℓ₁BG : ℓ₁ ≠ BG := fun e => hℓ₁.not_onLine (e ▸ hB_BG) hB_AB
-  obtain ⟨F, hF_ℓ₁, hF_ℓ₂⟩ := Prop30.meet hℓ₂ hG_BG hG_ℓ₁ hℓ₁BG
-  have hFG : F ≠ G := fun e => hℓ₂.not_onLine hF_ℓ₂ (e ▸ hG_BG)
-  have hEF : E ≠ F := fun e => hℓ₁.not_onLine hF_ℓ₁ (e ▸ hE_AB)
-  have hBEFG : Parallelogram B E F G :=
-    ⟨AreParallel.of_parallel hBE_ne hFG hB_AB hE_AB hF_ℓ₁ hG_ℓ₁ hℓ₁.symm,
-      AreParallel.of_parallel hEF hBEG.ne₁₃.symm hE_ℓ₂ hF_ℓ₂ hG_BG hB_BG hℓ₂⟩
+  obtain ⟨ℓ₁, hG_ℓ₁, hℓ₁⟩ := Prop31.line (hBEG.off_line hB_AB hE_AB)
+  obtain ⟨F, -, hGBEF⟩ := Prop31.parallelogram hℓ₁ hG_ℓ₁ hB_AB hE_AB hBE_ne
+  have hBEFG : Parallelogram B E F G := hGBEF.rotate
   /- Each parallelogram is double a triangle, and the triangles are equal. -/
   have hGBE : ∠ G B E = ∠ P Q R := by
     rw [angle_symm hBEG.ne₁₃.symm hBE_ne.symm, hEBG, angle_symm hPQR.ne₂₃.symm hPQR.ne₁₂]
@@ -123,11 +109,7 @@ theorem Prop44 {A B C₁ C₂ C₃ D₁ D D₂ P : Point} (hAB : A ≠ B) (hC : 
   -- [I. 31]
   have hA_BG : ¬ OnLine A BG := fun h =>
     hG_AB ((line_unique hAB.symm hB_BG h hB_AB hA_AB) ▸ hG_BG)
-  obtain ⟨U, V, hUAV, hUV⟩ := Prop31 hBG (fun ⟨ℓ, hB_ℓ, hG_ℓ, hA_ℓ⟩ =>
-    hA_BG ((line_unique hBG hB_ℓ hG_ℓ hB_BG hG_BG) ▸ hA_ℓ))
-  obtain ⟨AH, hU_AH, hV_AH⟩ := Postulate1 U V hUV.1
-  have hA_AH : OnLine A AH := on_line_of_between_ends hUAV hU_AH hV_AH
-  have hAH_BG : Parallel AH BG := hUV.parallel hU_AH hV_AH hB_BG hG_BG
+  obtain ⟨AH, hA_AH, hAH_BG⟩ := Prop31.line hA_BG
   have hFG_BG : FG ≠ BG := fun e => hAB_FG.not_onLine hB_AB (e ▸ hB_BG)
   obtain ⟨H, hH_FG, hH_AH⟩ := Prop30.meet hAH_BG hG_BG hG_FG hFG_BG
   have hHGF : Between H G F := hABE.of_sameSide hB_BG (hAH_BG.sameSide hH_AH hA_AH)
@@ -180,11 +162,7 @@ theorem Prop44 {A B C₁ C₂ C₃ D₁ D D₂ P : Point} (hAB : A ≠ B) (hC : 
       exact hH_AB ((line_unique hBE hB_HB hK_HB hB_AB hK) ▸ hH_HB)
     · exact hAB_FG.not_onLine ((line_unique hKE hK_EF hE_EF hK hE_AB) ▸ hF_EF) hF_FG
   -- through the point K let KL be drawn parallel to either EA or FH, [I. 31]
-  obtain ⟨U', V', hU'KV', hU'V'⟩ := Prop31 hHF.symm (fun ⟨ℓ, hF_ℓ, hH_ℓ, hK_ℓ⟩ =>
-    hK_FG ((line_unique hHF.symm hF_ℓ hH_ℓ hF_FG hH_FG) ▸ hK_ℓ))
-  obtain ⟨KL, hU'_KL, hV'_KL⟩ := Postulate1 U' V' hU'V'.1
-  have hK_KL : OnLine K KL := on_line_of_between_ends hU'KV' hU'_KL hV'_KL
-  have hKL_FG : Parallel KL FG := hU'V'.parallel hU'_KL hV'_KL hF_FG hH_FG
+  obtain ⟨KL, hK_KL, hKL_FG⟩ := Prop31.line hK_FG
   have hKL_AB : Parallel KL AB :=
     Prop30.parallel hKL_FG hAB_FG (fun e => hK_AB (e ▸ hK_KL))
   -- and let HA, GB be produced to the points L, M.

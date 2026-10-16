@@ -2,7 +2,9 @@ import Elements.Figure.Basics
 import Elements.BookI.Prop03
 import Elements.BookI.Prop04
 import Elements.BookI.Prop11
+import Elements.BookI.Prop28
 import Elements.BookI.Prop29
+import Elements.BookI.Prop30
 import Elements.BookI.Prop31
 import Elements.BookI.Prop34
 import Elements.BookI.HelpersParallels
@@ -40,24 +42,14 @@ theorem Prop46 {A B P : Point} (hAB : A ≠ B) (hP : ¬ Collinear A B P) :
   obtain ⟨D, hD, hAD⟩ := OnRay.exists_len_eq hAB hCP.triangle.ne₁₃
   have hDP : SameSideOf D P A B := SameSideOf.of_onRay hD hCP
   have hABD : Triangle A B D := hDP.triangle
-  obtain ⟨U, V, hUDV, hUV⟩ := Prop31 hAB hABD
-  obtain ⟨U', V', hU'BV', hU'V'⟩ := Prop31 hABD.ne₁₃ hABD.acb
-  obtain ⟨DE, hU_DE, hV_DE⟩ := Postulate1 U V hUV.1
-  obtain ⟨BE, hU'_BE, hV'_BE⟩ := Postulate1 U' V' hU'V'.1
-  obtain ⟨AD, hA_AD, hD_AD⟩ := Postulate1 A D hABD.ne₁₃
-  have hD_DE : OnLine D DE := on_line_of_between_ends hUDV hU_DE hV_DE
-  have hB_BE : OnLine B BE := on_line_of_between_ends hU'BV' hU'_BE hV'_BE
-  have hDE_AB : Parallel DE AB := hUV.parallel hU_DE hV_DE hA_AB hB_AB
-  have hBE_AD : Parallel BE AD := hU'V'.parallel hU'_BE hV'_BE hA_AD hD_AD
-  have hDE_AD : DE ≠ AD := fun e => hDE_AB.not_onLine (e ▸ hA_AD) hA_AB
-  /- DE meets AD at D, so it meets the parallel BE at E (I.30). -/
-  obtain ⟨E, hE_DE, hE_BE⟩ := Prop30.meet hBE_AD hD_AD hD_DE hDE_AD
+  obtain ⟨DE, hD_DE, hDE_AB⟩ := Prop31.line (hABD.off_line hA_AB hB_AB)
+  /- DE meets the parallel BE at E (`Prop31.parallelogram`, which cites I.30 for
+     the meeting). -/
+  obtain ⟨E, -, hDABE⟩ := Prop31.parallelogram hDE_AB hD_DE hA_AB hB_AB hAB
   -- Therefore ADEB is a parallelogram; therefore AB is equal to DE, and AD to BE. [I. 34]
-  have hDE : D ≠ E := fun e => hBE_AD.not_onLine (e ▸ hE_BE) hD_AD
-  have hEB : E ≠ B := fun e => hDE_AB.not_onLine hE_DE (e ▸ hB_AB)
-  have hADEB : Parallelogram A D E B :=
-    ⟨AreParallel.of_parallel hABD.ne₁₃ hEB hA_AD hD_AD hE_BE hB_BE hBE_AD.symm,
-      AreParallel.of_parallel hDE hAB.symm hD_DE hE_DE hB_AB hA_AB hDE_AB⟩
+  have hADEB : Parallelogram A D E B := hDABE.rotate.reverse
+  have hDE : D ≠ E := hADEB.2.1
+  have hEB : E ≠ B := hADEB.1.2.1
   obtain ⟨hAB_DE, hAD_BE, -, -, -⟩ := Prop34 hADEB
   -- But AB is equal to AD; therefore the four straight lines BA, AD, DE, EB are equal to one
   -- another; therefore the parallelogram ADEB is equilateral.

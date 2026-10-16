@@ -82,7 +82,7 @@ debt is still said where it falls: Intersection 4 is LeanEuclid's corrected form
 - **Book Zero first.** Search `Elements/Figure/` before writing a helper, and cite
   its lemma rather than keep a copy; Book Zero imports no proposition. A shared
   step that cites a proposition goes in `Elements/BookI/Helpers.lean`, named after
-  it (`Prop5.base`), or, if it cites I.28, I.29 or I.30, in
+  it (`Prop5.base`), or, if it cites I.28, I.30 or I.31, in
   `Elements/BookI/HelpersParallels.lean` (`Prop30.meet`), or, if it is a
   consequence of PropN that later proofs share, as a corollary after PropN
   (`Prop34.bisect`).

@@ -13,6 +13,10 @@ Euclid's point `D`, "taken at random on BC", is taken between `B` and `C`, as in
 figure. Then `B` and `C` lie on either side of `AD`, and I.23 can be asked to build
 the angle `DAE` on `B`'s side, away from `C`, so that `EAD` and `ADC` are alternate
 angles, as I.27 needs.
+
+After the proposition, `Prop31.line` says it of straight lines drawn and named: the
+parallel through a point off a straight line, as one straight line. Proofs from
+I.37 on cite it, directly or through `Prop31.parallelogram`.
 -/
 
 namespace Elements.BookI
@@ -67,5 +71,18 @@ theorem Prop31 {A B C : Point} (hBC : B ≠ C) (hA : ¬ Collinear B C A) :
   -- given straight line BC.
   exact ⟨E, F, hEAF, hpar⟩
   -- Q. E. F.
+
+/-- I.31 said of straight lines drawn and named: through a point `A` off the
+straight line `L` there is a straight line `K` parallel to `L`. I.31 gives two points
+of it, one on either side of `A`, and Postulate 1 joins them. [I. 31] -/
+theorem Prop31.line {A : Point} {L : Line} (hA : ¬ OnLine A L) :
+    ∃ K : Line, OnLine A K ∧ Parallel K L := by
+  obtain ⟨B, hB_L, -⟩ := exists_point_on_line L []
+  obtain ⟨C, hC_L, hC⟩ := exists_point_on_line L [B]
+  have hBC : B ≠ C := fun e => hC (e ▸ List.mem_singleton_self B)
+  obtain ⟨E, F, hEAF, hpar⟩ := Prop31 hBC fun ⟨M, hB_M, hC_M, hA_M⟩ =>
+    hA ((line_unique hBC hB_M hC_M hB_L hC_L) ▸ hA_M)
+  obtain ⟨K, hE_K, hF_K⟩ := Postulate1 E F hpar.1
+  exact ⟨K, on_line_of_between_ends hEAF hE_K hF_K, hpar.parallel hE_K hF_K hB_L hC_L⟩
 
 end Elements.BookI
