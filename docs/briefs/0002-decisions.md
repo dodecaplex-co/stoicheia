@@ -74,3 +74,26 @@
 - **Book I must stay whole.** `check_fidelity.py` now fails if any proposition of a
   completed book is not proved, or has lost a figure or its mishnah, so a proof
   that slips back to `sorry` cannot pass CI with its pages regenerated.
+- **Book II's magnitudes.** "The rectangle contained by AB, CD" is `rect A B C D` and
+  "the square on AB" is `sq A B`, areas defined from Definition II.1, and proved once to
+  be the area of any rectangle drawn with those sides (from I.4 and I.34). The gnomon is
+  the sum of its three parallelograms. The shared steps that cite Book I live in
+  [`Elements/BookII/Rectangles.lean`](../../Elements/BookII/Rectangles.lean). The design
+  is in [0003-book-II.md](0003-book-II.md), and the first mate's reasons for each
+  statement in [first-mate-II.md](../reports/crew/first-mate-II.md).
+- **Two books in one certificate.** The scripts and `Certificate/Facts.lean` take a list
+  of books; Book I's pages are unchanged by it. Postulate 5 is held back until I.29 in
+  Book I only: Book II comes after all of Book I, and II.10 cites the postulate by name.
+  `check_fidelity.py` fails if `facts.json` misses a book of `heath.BOOKS`, or if a
+  proposition cites one that does not come before it. Heath's "[I. Post. 5]" in II.10
+  is kept as he prints it and read as Post. 5; outside Book I, Book I's definitions are
+  written with their book (Def. I.15).
+- **`Parallel.between` back in Book Zero.** The closing of Book I removed it as unused;
+  Book II's ground uses it six times (`Parallelogram.figure`), so it is restored in
+  `Elements/Figure/Parallelograms.lean`, unchanged.
+- **Book II's scratch proofs in the open.** As for voyage 4, the proofs that tested
+  Book II's statements are committed, not built, in
+  [`docs/reports/crew/scratch-II/`](../reports/crew/scratch-II), and the orders name
+  that path, so a Codex sailor reads the same ground as a Claude one. T02 draws its
+  parallel with `Prop31.parallelogram`, as the orders ask. They are retired when Book II
+  is proved.

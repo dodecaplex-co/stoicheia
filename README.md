@@ -23,7 +23,8 @@ There are no coordinates here, no real numbers and no complex numbers. The geome
 | | |
 |---|---|
 | **Book I** | **Complete: all 48 propositions proved**, every one following Euclid's own proof. The certificate shows the shape of the book: 29 propositions never need the parallel postulate, and the first that does is I.29, just where Euclid puts it. [Read Book I →](book/I/index.md) |
-| Books II–XIII | To come, one book at a time. |
+| **Book II** | **All 14 propositions stated** in Lean, in Heath's letters, with Euclid's sentences in place, ready for their proofs. "The rectangle contained by AB, BC" and "the square on AB" are areas in Lean, and a rectangle drawn in a figure is proved equal to the rectangle contained by its sides. [Read Book II →](book/II/index.md) |
+| Books III–XIII | To come, one book at a time. |
 
 The [certificate](CERTIFICATE.md) and the [graph of who uses whom](GRAPH.md) are regenerated from the proofs on every change.
 
@@ -54,7 +55,7 @@ The foundations are in [`Elements/Foundations/`](Elements/Foundations):
 
 - [**Postulates**](Elements/Foundations/Postulates.lean): Euclid's five, each a Lean `axiom`.
 - [**Common Notions**](Elements/Foundations/CommonNotions.lean): all five turn out to be *theorems*, once we state how magnitudes add and compare.
-- [**Definitions**](Elements/Foundations/Definitions.lean): the ones that do work in the proofs. Definition 15 (all radii of a circle are equal) is really an axiom, and is treated as one.
+- [**Definitions**](Elements/Foundations/Definitions.lean): the ones that do work in the proofs. Definition 15 (all radii of a circle are equal) is really an axiom, and is treated as one. [Book II's](Elements/Foundations/DefinitionsII.lean) are the rectangle contained by two straight lines and the square on one, defined, not assumed.
 - [**Tacit rules**](Elements/Foundations/Tacit): everything Euclid reads off his figures without saying so. That a point lies between two others, that a line through the inside of a circle must cut it, that two triangles which match in every side and angle have the same area. These follow, rule by rule, the System E of Jeremy Avigad, Edward Dean and John Mumma, which was designed to capture exactly how Euclid reasons from a diagram.
 
 Because every assumption is a Lean `axiom`, `#print axioms` lists exactly what a proof rests on, and [`Certificate/Facts.lean`](Certificate/Facts.lean) turns that into the certificate. One famous result can't be faked: whether a proposition needs the parallel postulate. CI fails if anything before I.29 uses it.
@@ -84,7 +85,7 @@ Proposition by proposition, the steps Euclid takes without a word, and the rule 
 | [`heath/`](heath) | Heath's translation, transcribed from the 1908 scans and checked against the page images |
 | [`Elements/Foundations/`](Elements/Foundations) | Postulates, common notions, definitions, tacit rules |
 | [`Elements/Figure/`](Elements/Figure) | "Book Zero": small facts every figure needs, proved once |
-| [`Elements/BookI/`](Elements/BookI) | One file per proposition |
+| [`Elements/BookI/`](Elements/BookI), [`Elements/BookII/`](Elements/BookII) | One file per proposition; Book II's shared ground, rectangles and squares from Book I, is in [`Rectangles.lean`](Elements/BookII/Rectangles.lean) |
 | [`mishnah/`](mishnah) | The commentary |
 | [`figures/`](figures) | The figures: the "at a glance" figures in Byrne's colours, and Euclid's own with Heath's letters |
 | [`book/`](book), [`CERTIFICATE.md`](CERTIFICATE.md), [`GRAPH.md`](GRAPH.md) | Generated pages; don't edit by hand |
@@ -94,7 +95,7 @@ A Lean proof needs only the *statements* of the propositions it cites, not their
 
 ## Join in
 
-Book I is proved, and Book II is next: once its statements are in Lean, pick any 🚧 proposition and prove it. There is plenty to do in [Book I](book/I/index.md) as well: read a page and tell us where it could be clearer, check a quotation against Heath's scans, or improve a figure or a proof. [CONTRIBUTING.md](CONTRIBUTING.md) explains the few house rules.
+Book I is proved, and Book II is under way: pick any 🚧 proposition in [Book II](book/II/index.md) and prove it, write a mishnah or draw a figure. There is plenty to do in [Book I](book/I/index.md) as well: read a page and tell us where it could be clearer, check a quotation against Heath's scans, or improve a figure or a proof. [CONTRIBUTING.md](CONTRIBUTING.md) explains the few house rules.
 
 ## How it was made
 

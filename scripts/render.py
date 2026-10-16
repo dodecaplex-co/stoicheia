@@ -1,11 +1,15 @@
 """Build the readable pages from Heath's text, the Lean files, the mishnah and
-`facts.json`:
+`facts.json`, for every book in `heath.BOOKS`:
 
     book/I/index.md    the book, proposition by proposition
-    book/I/front.md    definitions, postulates and common notions, with their Lean
+    book/I/front.md    its definitions (and Book I's postulates and common notions),
+                       with their Lean
     book/I/NN.md       one page per proposition
-    CERTIFICATE.md     what every proposition rests on
-    GRAPH.md           who uses whom
+    CERTIFICATE.md     what every proposition rests on, book by book
+    GRAPH.md           who uses whom, book by book
+
+A page of a later book links each proposition it cites from an earlier one, as
+[I.47](../I/47.md) on a page of Book II.
 
 Run after `lake env lean Certificate/Facts.lean`. Standard library only.
 """
@@ -46,7 +50,19 @@ TITLES_I = {
     45: "A parallelogram equal to a rectilineal figure", 46: "Describing a square",
     47: "The theorem of Pythagoras", 48: "Its converse",
 }
-BOOKS = {"I": (48, TITLES_I)}
+TITLES_II = {
+    1: "A rectangle cut into rectangles", 2: "The square as two rectangles",
+    3: "A rectangle as a rectangle and a square", 4: "The square on a straight line cut in two",
+    5: "A straight line cut equally and unequally", 6: "A bisected straight line produced",
+    7: "The squares on the whole and a segment", 8: "Four rectangles and a square",
+    9: "The squares on the unequal segments",
+    10: "The squares on a bisected straight line produced",
+    11: "Cutting in extreme and mean ratio", 12: "The square opposite an obtuse angle",
+    13: "The square opposite an acute angle", 14: "A square equal to a rectilineal figure",
+}
+TITLES = {"I": TITLES_I, "II": TITLES_II}
+BOOKS = {book: (count, TITLES[book]) for book, count in heath.BOOKS.items()}
+assert all(len(titles) == count for count, titles in BOOKS.values())
 
 STATUS = {
     "proved": "✅ Proved",
@@ -111,10 +127,19 @@ def roman_list(names, prefix):
     return ", ".join(n.replace(prefix, "") for n in sorted(names, key=lambda s: int(re.sub(r"\D", "", s) or 0)))
 
 
+def definition_list(names, book):
+    """Book I's definitions a proof rests on (`Definition15`). Definitions are numbered
+    book by book, so outside Book I each keeps its book: "15" on a page of Book I, "I.15"
+    on a page of Book II, whose own Definitions 1 and 2 are words, not assumptions."""
+    nums = roman_list(names, "Definition")
+    if book == "I" or not nums:
+        return nums
+    return ", ".join(f"I.{n}" for n in nums.split(", "))
+
+
 def prop_key(ref):
-    """Sort references by number, so that I.3 comes before I.10."""
-    book, num = ref.split(".")
-    return (book, int(num))
+    """Sort references by book, then by number: I.3 before I.10, and I.47 before II.4."""
+    return heath.prop_key(ref)
 
 
 def prop_link(ref, book):
@@ -132,11 +157,15 @@ def euclid_cites(paragraphs):
         kind, num = j.rsplit(" ", 1)
         if kind in ("Post.", "Def.", "C.N."):
             groups[kind].append(int(num))
+        elif kind.endswith(" Def."):
+            # "I. Def. 15" in a later book: a definition of another book keeps its book.
+            groups["Def."].append(f"{kind.split('.')[0]}.{num}")
         else:
             groups["props"].append(f"{kind}{num}")  # "I. 4", or "V. 9" in a later book
     groups["props"].sort(key=prop_key)
     for kind in ("Post.", "Def.", "C.N."):
-        groups[kind].sort()
+        # The page's own book first (Def. 1, 2), then another's (Def. I.15).
+        groups[kind].sort(key=lambda d: (0, d) if isinstance(d, int) else (1, prop_key(d)))
     return groups
 
 
@@ -175,7 +204,7 @@ def rests_on(p, docs, depth, book, euclid):
     lines.append("| Lean cites | " + (", ".join(prop_link(c, book) for c in
                  sorted(p["cites"], key=prop_key)) or "no propositions") + " |")
     lines.append("| Postulates | " + (roman_list(posts, "Postulate") or "none") + " |")
-    lines.append("| Definitions | " + (roman_list(defs, "Definition") or "none") + " |")
+    lines.append("| Definitions | " + (definition_list(defs, book) or "none") + " |")
     lines.append("| Common Notions | " + (", ".join(c.replace("C.N. ", "") for c in
                  sorted(set(p["common_notions"]))) or "none") + " |")
     lines.append(f"| Tacit assumptions | {len(tacit)} (listed below) |")
@@ -242,9 +271,27 @@ def page(book, n, count, titles, facts, docs):
     return "\n".join(out)
 
 
+def front_sections(book):
+    """The headings of a book's front matter, in order: Book I has Definitions,
+    Postulates and Common Notions; Book II has Definitions alone."""
+    text = heath.HTML_COMMENT.sub("", (ROOT / "heath" / book / "front.md").read_text())
+    return [line[3:].strip() for line in text.splitlines() if line.startswith("## ")]
+
+
+def in_words(names):
+    """["Definitions", "Postulates", "Common Notions"] ↦ "definitions, postulates and
+    common notions"."""
+    names = [n.lower() for n in names]
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+
+
 def index(book, count, titles, facts):
     proved = sum(1 for n in range(1, count + 1)
                  if facts.get(f"{book}.{n}", {}).get("status") == "proved")
+    start = f"Start with the [{in_words(front_sections(book))}](front.md)."
+    if (ROOT / "docs" / "reports" / f"gaps-book-{book}.md").exists():
+        start += (" What Euclid takes for granted along the way is gathered in "
+                  f"[a catalogue](../../docs/reports/gaps-book-{book}.md).")
     # The key names only the marks the table uses: a finished book shows ✅ alone.
     used = {facts.get(f"{book}.{n}", {}).get("status", "sketched") for n in range(1, count + 1)}
     legend = " · ".join(f"{STATUS_SHORT[s]} {t}" for s, t in (
@@ -253,9 +300,7 @@ def index(book, count, titles, facts):
         ("sketched", "sketched")) if s in used)
     out = [GENERATED, f"# Book {book}", "",
            f"**{proved} of {count} propositions proved in Lean.** {legend}", "",
-           f"Start with the [definitions, postulates and common notions](front.md). "
-           f"What Euclid takes for granted along the way is gathered in "
-           f"[a catalogue](../../docs/reports/gaps-book-{book}.md).", "",
+           start, "",
            "| | Proposition | |", "|---|---|---|"]
     for n in range(1, count + 1):
         st = facts.get(f"{book}.{n}", {}).get("status", "sketched")
@@ -280,6 +325,14 @@ FRONT_LEAN_I = {
     "Postulates": {i: f"`Postulate{i}`" for i in range(1, 6)},
     "Common Notions": {i: f"`CommonNotion{i}` (a theorem)" for i in range(1, 6)},
 }
+FRONT_LEAN_II = {
+    "Definitions": {
+        1: "`Rectangle`; `rect A B C D`, the rectangle contained by AB, CD; `sq A B`, the "
+           "square on AB",
+        2: "the sum of its three parallelograms (`Parallelogram.about_diameter`)",
+    },
+}
+FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II}
 
 
 def front(book):
@@ -287,7 +340,7 @@ def front(book):
     source = heath.HTML_COMMENT.match(raw.strip()).group(0)[4:-3].strip()
     text = heath.HTML_COMMENT.sub("", raw)
     out = [GENERATED, f"[Book {book}](index.md)", "",
-           f"# Book {book}: Definitions, Postulates, Common Notions", "",
+           f"# Book {book}: {', '.join(front_sections(book))}", "",
            "Euclid's words on the left, the Lean that stands for them on the right. "
            "Words with no Lean partner are never used in a proof.", ""]
     section = None
@@ -297,7 +350,7 @@ def front(book):
             out += ["", f"## {section}", "", "| | Euclid | Lean |", "|---|---|---|"]
         elif re.match(r"^\d+\. ", line) and section:
             num, rest = line.split(". ", 1)
-            lean = FRONT_LEAN_I.get(section, {}).get(int(num), "")
+            lean = FRONT_LEAN.get(book, {}).get(section, {}).get(int(num), "")
             out.append(f"| {num} | {rest} | {lean} |")
         elif line.strip() and section and not line.startswith("#"):
             intro = [f"_{line.strip()}_", ""]
@@ -311,6 +364,11 @@ def front(book):
                 out += ["", *intro]
     out += ["", "---", "", euclids_text(source), ""]
     return "\n".join(out)
+
+
+# Where each book stands with the parallel postulate. Book I holds it back until I.29;
+# a later book comes after it, and the certificate says so.
+P5_NOTE = {"I": "Euclid holds it back until I.29."}
 
 
 def certificate(facts, docs):
@@ -330,10 +388,20 @@ def certificate(facts, docs):
         with_p5 = [p["ref"] for p in proved if "Postulate5" in p["axioms"]]
         sup = [p["ref"] for p in props if p and "Tacit.superposition" in p["direct_axioms"]]
         out += ["What the proofs show:" if len(proved) == count else "What the proofs show so far:", ""]
-        out.append(f"- **Postulate 5**: {len(no_p5)} proposition{'s' if len(no_p5) != 1 else ''} never need it"
-                   + (f"; {len(with_p5)} use it, the first being {with_p5[0]}." if with_p5 else
-                      ". None of the proved propositions uses it yet.")
-                   + " Euclid holds it back until I.29.")
+        never = (f"{len(no_p5)} proposition never needs it" if len(no_p5) == 1 else
+                 f"{len(no_p5)} propositions never need it")
+        if not proved:
+            # Nothing proved, nothing to count: "0 propositions never need it" would read as a claim.
+            p5 = f"No proposition of Book {book} is proved yet."
+        elif not with_p5:
+            p5 = f"{never}. None of the proved propositions uses it yet."
+        elif not no_p5:
+            p5 = f"Every proved proposition uses it, the first being {with_p5[0]}."
+        else:
+            p5 = f"{never}; {len(with_p5)} use{'s' if len(with_p5) == 1 else ''} it, the first being {with_p5[0]}."
+        out.append(f"- **Postulate 5**: {p5} "
+                   + P5_NOTE.get(book, f"Book {book} comes after I.29, where Euclid "
+                                 "first calls on it, so any of its propositions may."))
         out.append("- **Superposition** is used directly by: " + (", ".join(sup) or "none yet")
                    + ". Only I.4 and I.8 are allowed to.")
         out += ["", "| | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |",
@@ -348,7 +416,7 @@ def certificate(facts, docs):
                 continue
             ax = p["axioms"]
             posts = roman_list([a for a in ax if a.startswith("Postulate")], "Postulate")
-            defs = roman_list([a for a in ax if a.startswith("Definition")], "Definition")
+            defs = definition_list([a for a in ax if a.startswith("Definition")], book)
             cns = ", ".join(c.replace("C.N. ", "") for c in sorted(set(p["common_notions"])))
             tacit = len([a for a in ax if a.startswith("Tacit.")])
             cites = ", ".join(sorted(p["cites"], key=prop_key))
@@ -369,18 +437,34 @@ def graph(facts):
            "bracketed references in Heath's translation. Green: proved in Lean; grey: sketched.",
            ""]
     for book, (count, titles) in BOOKS.items():
-        out += [f"## Book {book}", "", "```mermaid", "graph TD"]
+        # The enunciation counts too: I.22's [I. 20] is there.
+        cites = {}
+        for n in range(1, count + 1):
+            _, enunciation, proof = heath.read(book, n)
+            cites[n] = sorted(heath.citations([enunciation] + proof), key=prop_key)
+        # Propositions of earlier books that this one cites, drawn as nodes of their own.
+        earlier = sorted({c for cs in cites.values() for c in cs if c.split(".")[0] != book},
+                         key=prop_key)
+        out += [f"## Book {book}", ""]
+        if earlier:
+            out += [f"White: propositions of earlier books that Book {book} cites.", ""]
+        out += ["```mermaid", "graph TD"]
+        for c in earlier:
+            out.append(f'  {c.replace(".", "")}["{c}"]')
         for n in range(1, count + 1):
             out.append(f'  {book}{n}["{book}.{n}"]')
         for n in range(1, count + 1):
-            # The enunciation counts too: I.22's [I. 20] is there.
-            _, enunciation, proof = heath.read(book, n)
-            for c in sorted(heath.citations([enunciation] + proof), key=prop_key):
+            for c in cites[n]:
                 b, m = c.split(".")
                 if b == book and int(m) != n:
                     out.append(f"  {book}{m} --> {book}{n}")
+                elif b != book:
+                    out.append(f"  {b}{m} --> {book}{n}")
         out.append("  classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20")
         out.append("  classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242")
+        if earlier:
+            out.append("  classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242")
+            out.append(f"  class {','.join(c.replace('.', '') for c in earlier)} earlier")
         proved = [f"{book}{n}" for n in range(1, count + 1)
                   if facts.get(f"{book}.{n}", {}).get("status") in ("proved", "proved-pending")]
         sketched = [f"{book}{n}" for n in range(1, count + 1) if f"{book}{n}" not in proved]

@@ -30,12 +30,31 @@ def read(book: str, n: int):
     return source, enunciation, paras[1:]
 
 
+ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII"]
+
+# The books carried into Lean so far, and how many propositions each has.
+# `Certificate/Facts.lean` keeps the same list.
+BOOKS = {"I": 48, "II": 14}
+
+
+def arabic(book: str) -> int:
+    """The number of a book from its Roman numeral: "I" is 1, "II" is 2, "XIII" is 13."""
+    return ROMAN.index(book) + 1
+
+
+def prop_key(ref: str):
+    """Sort references by book, then by number: I.3 before I.10, I.48 before II.1,
+    and IX before X."""
+    book, num = ref.split(".")
+    return (arabic(book), int(num))
+
+
 def normalize(s: str) -> str:
     return " ".join(s.split())
 
 
-def citations(paragraphs, book_roman: str = "I"):
-    """Propositions Euclid cites, e.g. {"I.4", "I.10"} from "[I. 4]", "[C.N. 1; I. 30]"."""
+def citations(paragraphs):
+    """Propositions Euclid cites, e.g. {"I.4", "II.6"} from "[I. 4]", "[C.N. 1; II. 6]"."""
     found = set()
     for p in paragraphs:
         for inner in CITATION.findall(p):
@@ -47,18 +66,33 @@ def citations(paragraphs, book_roman: str = "I"):
     return found
 
 
+# A justification in a bracket: a proposition ("I. 4"), or a postulate, definition or
+# common notion, which a later book may cite with its book ("I. Post. 5", "I. Def. 15").
+JUSTIFICATION = re.compile(r"(?:([IVX]+)\.\s*)?(Post\.|Def\.|C\.N\.)\s*(\d+)|([IVX]+)\.\s*(\d+)")
+
+
 def justifications(paragraphs):
     """Every bracketed justification Euclid gives: Post. 3, Def. 15, C.N. 1, I. 4 …
 
     A bracket may hold several, as "[C.N. 1; I. 30]" or "[Post. 4 and C.N. 1]".
+    Book II cites Book I's Postulate 5 as "[I. Post. 5]". The postulates and common
+    notions are Book I's alone, so that is Post. 5; definitions are numbered book by
+    book, so "[I. Def. 15]" in a later book stays "I. Def. 15".
     """
     found = []
     for p in paragraphs:
         for inner in CITATION.findall(p):
             for part in re.split(r";|\band\b", inner):
-                part = " ".join(part.split())
-                if re.fullmatch(r"(Post\.|Def\.|C\.N\.|[IVX]+\.)\s*\d+", part):
-                    part = re.sub(r"\.\s*(\d+)", r". \1", part)
-                    if part not in found:
-                        found.append(part)
+                m = JUSTIFICATION.fullmatch(" ".join(part.split()))
+                if not m:
+                    continue
+                book, kind, num, pbook, pnum = m.groups()
+                if pbook:
+                    part = f"{pbook}. {int(pnum)}"
+                elif book and kind == "Def.":
+                    part = f"{book}. Def. {int(num)}"
+                else:
+                    part = f"{kind} {int(num)}"
+                if part not in found:
+                    found.append(part)
     return found

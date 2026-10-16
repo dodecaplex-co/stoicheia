@@ -5,6 +5,7 @@ import Elements.Foundations.CommonNotions
 import Elements.Foundations.Definitions
 import Elements.Foundations.Postulates
 import Elements.Foundations.Phrases
+import Elements.Foundations.DefinitionsII
 import Elements.Foundations.Tacit.Constructions
 import Elements.Foundations.Tacit.Diagram
 import Elements.Foundations.Tacit.Metric
@@ -20,6 +21,7 @@ import Elements.Figure.Angles
 import Elements.Figure.Parallels
 import Elements.Figure.Areas
 import Elements.Figure.Parallelograms
+import Elements.Figure.Rectangles
 import Elements.Figure.Basics
 import Elements.BookI.Prop01
 import Elements.BookI.Prop02
@@ -71,3 +73,18 @@ import Elements.BookI.Prop45
 import Elements.BookI.Prop46
 import Elements.BookI.Prop47
 import Elements.BookI.Prop48
+import Elements.BookII.Rectangles
+import Elements.BookII.Prop01
+import Elements.BookII.Prop02
+import Elements.BookII.Prop03
+import Elements.BookII.Prop04
+import Elements.BookII.Prop05
+import Elements.BookII.Prop06
+import Elements.BookII.Prop07
+import Elements.BookII.Prop08
+import Elements.BookII.Prop09
+import Elements.BookII.Prop10
+import Elements.BookII.Prop11
+import Elements.BookII.Prop12
+import Elements.BookII.Prop13
+import Elements.BookII.Prop14
