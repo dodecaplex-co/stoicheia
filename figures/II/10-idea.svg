@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>II.10 at a glance</title>
+  <desc>Halve a line and add a piece: the squares on the whole and on the piece (left) are twice the squares on the half (yellow) and on the half and piece together (blue), for the red and black pieces make a second blue and yellow.</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <polygon points="84.0,188.0 164.0,188.0 164.0,138.0 84.0,138.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="34.0,138.0 84.0,138.0 84.0,58.0 34.0,58.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="34.0,188.0 84.0,188.0 84.0,138.0 34.0,138.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="84.0,138.0 164.0,138.0 164.0,58.0 84.0,58.0" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="134.0,242.0 164.0,242.0 164.0,212.0 134.0,212.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="236.0,142.0 316.0,142.0 316.0,62.0 236.0,62.0" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="316.0,142.0 366.0,142.0 366.0,92.0 316.0,92.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="286.0,238.0 366.0,238.0 366.0,188.0 286.0,188.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="236.0,238.0 286.0,238.0 286.0,158.0 236.0,158.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <polygon points="286.0,188.0 316.0,188.0 316.0,158.0 286.0,158.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <line x1="34.0" y1="200.0" x2="84.0" y2="200.0" stroke="#f2b705" stroke-width="6" stroke-linecap="butt"/>
+  <line x1="84.0" y1="200.0" x2="134.0" y2="200.0" stroke="#f2b705" stroke-width="6" stroke-linecap="butt"/>
+  <line x1="134.0" y1="200.0" x2="164.0" y2="200.0" stroke="#222222" stroke-width="6" stroke-linecap="butt"/>
+  <circle cx="34.0" cy="200.0" r="4" fill="#222222"/>
+  <circle cx="84.0" cy="200.0" r="4" fill="#222222"/>
+  <circle cx="134.0" cy="200.0" r="4" fill="#222222"/>
+  <circle cx="164.0" cy="200.0" r="4" fill="#222222"/>
+  <line x1="188.0" y1="144.5" x2="212.0" y2="144.5" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
+  <line x1="188.0" y1="155.5" x2="212.0" y2="155.5" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
+</svg>
