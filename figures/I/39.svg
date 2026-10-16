@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.39: equal triangles on the same base and side</title>
+  <rect x="0" y="0" width="400" height="280" rx="10" fill="#fbf7ee"/>
+  <polygon points="110,85 50,235 310,235" fill="#e9dcc0" fill-opacity="0.55"/>
+  <polygon points="300,45 50,235 310,235" fill="#e9dcc0" fill-opacity="0.55"/>
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 50 235 L 110 85 L 310 235 L 300 45 L 50 235"/>
+    <path d="M 110 85 L 300 45"/>
+    <path d="M 247.368421 85 L 310 235"/>
+  </g>
+  <g fill="none" stroke="#a0522d" stroke-width="2.4" stroke-linecap="round">
+    <path d="M 50 235 L 310 235"/>
+    <path d="M 110 85 L 247.368421 85"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="110" cy="85" r="2.6"/>
+    <circle cx="50" cy="235" r="2.6"/>
+    <circle cx="310" cy="235" r="2.6"/>
+    <circle cx="300" cy="45" r="2.6"/>
+    <circle cx="247.368421" cy="85" r="2.6"/>
+    <text x="91" y="77">A</text>
+    <text x="34" y="255">B</text>
+    <text x="315" y="255">C</text>
+    <text x="307" y="36">D</text>
+    <text x="256" y="90">E</text>
+  </g>
+</svg>
