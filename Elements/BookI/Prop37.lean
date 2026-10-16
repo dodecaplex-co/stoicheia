@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.BookI.Prop30
 import Elements.BookI.Prop31
 import Elements.BookI.Prop34
 import Elements.BookI.Prop35
@@ -69,9 +70,9 @@ theorem Prop37 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
   -- it. [I. 34]
   have h₂ : quadArea D B C F = △ D B C + △ D B C := Prop34.bisect hDBCF
   -- [But the halves of equal things are equal to one another.]
-  have := Magnitude.eq_of_add_self_eq (h₁.symm.trans (h35.trans h₂))
+  have heq : △ A B C = △ D B C := Magnitude.eq_of_add_self_eq (h₁.symm.trans (h35.trans h₂))
   -- Therefore the triangle ABC is equal to the triangle DBC.
-  exact this
+  exact heq
   -- Therefore etc.
   -- Q. E. D.
 
