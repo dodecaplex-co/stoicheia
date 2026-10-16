@@ -66,12 +66,21 @@ Intersections 8" (a construction rule, §3.3), or by its Lean name. A particular
 debt is still said where it falls: Intersection 4 is LeanEuclid's corrected form.
 
 **Further reading.** `reading/<book>/NN.md`, shown after the mishnah, is one to three
-friendly lines, each a list item naming a work from [the reading list](reading.md): the
-author in full, the title in italics with the list's link, then a sentence on what the
-work gives this proposition, with the chapter where the list names one, and **Free**
-where the list says so. Verified works only: a new one goes on the list first, checked,
-and into `references.bib`. Every new page adds its own, Book III's among them; with
-nothing apt, there is no file and no section.
+friendly lines, each a list item naming a work from [the reading list](reading.md) and
+what it gives this proposition. Every line runs the same way: "For" and what the reader
+will find; the author in full; the title with the list's link, in italics for a book and
+in quotation marks for a paper or a web page, as the list has it; the year of the edition
+linked, with "free online" beside it where the list says **Free**; the chapter, where a
+checked table of contents gives one; and a few words on the work. For instance:
+
+> - For the dot product of the modern way, Grant Sanderson's [*Essence of linear
+>   algebra*](https://www.3blue1brown.com/topics/linear-algebra) (2016, free online),
+>   ch. 9, "Dot products and duality", one short animated lesson that explains it in
+>   pictures.
+
+Verified works only: a new one goes on the list first, checked, and into
+`references.bib`. Every new page adds its own, Book III's among them; with nothing apt,
+there is no file and no section.
 
 ## 3. Lean
 
