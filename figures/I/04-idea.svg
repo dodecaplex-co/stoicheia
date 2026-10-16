@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.4 at a glance</title>
-  <desc>If two sides (red and blue) and the angle between them (yellow) match, everything else matches too: the base (black), the other two angles (blue and red), and the whole triangle.</desc>
+  <desc>If two triangles have two sides (red and blue) and the angle they contain (yellow) equal, all the rest is equal too: the base (black), the other two angles (blue and red), and the triangles themselves.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M84.0,62.0 L76.4,93.1 A32,32 0 0,0 99.6,89.9 Z" fill="#f2b705"/>
   <path d="M42.0,234.0 L49.1,204.9 A30,30 0 0,1 72.0,234.0 Z" fill="#1f5aa6"/>
