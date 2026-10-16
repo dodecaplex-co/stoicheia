@@ -31,8 +31,8 @@ theorem Prop46 {A B P : Point} (hAB : A ≠ B) (hP : ¬ Collinear A B P) :
   -- straight line AB.
   obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
   -- Let AC be drawn at right angles to the straight line AB from the point A on it [I. 11],
-  obtain ⟨C, hCP, hright⟩ := Prop11 hAB ⟨AB, hA_AB, hB_AB, hA_AB⟩ hP
-  have hBAC : ∠ B A C = ∟ := hright B ⟨AB, hA_AB, hB_AB, hB_AB⟩ hAB.symm
+  obtain ⟨C, hCP, hAC⟩ := Prop11 hAB ⟨AB, hA_AB, hB_AB, hA_AB⟩ hP
+  have hBAC : ∠ B A C = ∟ := hAC B ⟨AB, hA_AB, hB_AB, hB_AB⟩ hAB.symm
   -- and let AD be made equal to AB; through the point D let DE be drawn parallel to AB, and
   -- through the point B let BE be drawn parallel to AD. [I. 31]
   /- A circle about A with distance AB gives D on the ray AC (Postulate 3).
