@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid I.46: to describe a square on a given straight line</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 140 260 V 50" stroke="#3b2f2f" stroke-width="1.6"/>
+    <path d="M 140 260 V 140 H 260 V 260 Z" stroke="#a0522d" stroke-width="2.6"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="140" cy="260" r="2.6"/>
+    <circle cx="260" cy="260" r="2.6"/>
+    <circle cx="140" cy="50" r="2.6"/>
+    <circle cx="140" cy="140" r="2.6"/>
+    <circle cx="260" cy="140" r="2.6"/>
+    <text x="124" y="281">A</text>
+    <text x="263" y="281">B</text>
+    <text x="120" y="49">C</text>
+    <text x="117" y="146">D</text>
+    <text x="270" y="145">E</text>
+  </g>
+</svg>
