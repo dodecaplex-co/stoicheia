@@ -19,7 +19,8 @@ open Tacit
 
 /-- The foot does not fall beyond X when the angle AXY is acute, because the angle
 DXA beside it would be obtuse [I. 13] and the triangle AXD would have an obtuse and
-a right angle [I. 17]. -/
+a right angle [I. 17]. Euclid reads this off his figure when he takes the straight
+line CB to be "cut at random at D". -/
 theorem Prop13.not_beyond {A D X Y : Point} {L : Line} (hX : OnLine X L) (hY : OnLine Y L)
     (hD_L : OnLine D L) (hA_L : ¬ OnLine A L) (hacute : IsAcute A X Y)
     (hright : ∠ A D X = ∟) : ¬ Between D X Y := by
