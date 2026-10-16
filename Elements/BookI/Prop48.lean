@@ -33,8 +33,8 @@ theorem Prop48 {A B C P Q R S T U : Point} (hABC : Triangle A B C)
   obtain ⟨AC, hA_AC, hC_AC⟩ := Postulate1 A C hABC.ne₁₃
   -- I say that the angle BAC is right.
   -- For let AD be drawn from the point A at right angles to the straight line AC,
-  /- On the other side of AC from B, as in Euclid's figure. I.11 first gives a
-     point D₀ on the perpendicular; the circle below determines D. -/
+  /- On the other side of AC from B, as in Euclid's figure. I.11 gives a point
+     D₀ on the perpendicular; D is then taken on the ray from A through D₀. -/
   obtain ⟨X, hXB, -⟩ := exists_oppositeSidesOf hABC.acb []
   obtain ⟨D₀, hD₀X, hright⟩ :=
     Prop11 hABC.ne₁₃ ⟨AC, hA_AC, hC_AC, hA_AC⟩ hXB.triangle
