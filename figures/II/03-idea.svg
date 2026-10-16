@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
+  <title>II.3 at a glance</title>
+  <desc>Cut a straight line anywhere (red, blue), and the rectangle the whole makes with the blue piece splits into the rectangle of the two pieces (yellow) and the square on the blue piece (blue).</desc>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <polygon points="83.5,86.0 188.5,86.0 188.5,231.0 83.5,231.0" fill="#f2b705" fill-opacity="0.95"/>
+  <polygon points="188.5,86.0 333.5,86.0 333.5,231.0 188.5,231.0" fill="#1f5aa6" fill-opacity="0.9"/>
+  <line x1="188.5" y1="86.0" x2="188.5" y2="231.0" stroke="#fbf7ee" stroke-width="2"/>
+  <line x1="83.5" y1="72.5" x2="188.5" y2="72.5" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
+  <line x1="188.5" y1="72.5" x2="333.5" y2="72.5" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
+  <line x1="70.0" y1="86.0" x2="70.0" y2="231.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
+</svg>
