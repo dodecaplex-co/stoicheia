@@ -1,30 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 270" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 240" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
   <title>Euclid I.42: a parallelogram equal to a triangle in a given angle</title>
-  <rect x="0" y="0" width="400" height="270" rx="10" fill="#fbf7ee"/>
-  <path d="M 165 100 L 145 210 L 305 210 Z" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="1.6"/>
+  <rect x="0" y="0" width="400" height="240" rx="10" fill="#fbf7ee"/>
+  <path d="M 165 64 L 145 174 L 305 174 Z" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="1.6"/>
   <g fill="none" stroke="#3b2f2f" stroke-width="1.6">
-    <path d="M 165 100 L 225 210 M 165 100 L 375 100"/>
-    <path d="M 90 135 L 90 210 L 35 175"/>
+    <path d="M 165 64 L 225 174 M 165 64 L 375 64"/>
+    <path d="M 90 99 L 90 174 L 35 139"/>
   </g>
-  <path d="M 295 100 L 225 210 L 305 210 L 375 100 Z" fill="none" stroke="#a0522d" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M 295 64 L 225 174 L 305 174 L 375 64 Z" fill="none" stroke="#a0522d" stroke-width="3" stroke-linejoin="round"/>
   <g fill="none" stroke="#8c7b62" stroke-width="1.3">
-    <path d="M 245 210 A 20 20 0 0 0 235.74 193.13"/>
-    <path d="M 90 190 A 20 20 0 0 0 73.13 199.26"/>
+    <path d="M 245 174 A 20 20 0 0 0 235.74 157.13"/>
+    <path d="M 90 154 A 20 20 0 0 0 73.13 163.26"/>
   </g>
   <g fill="#3b2f2f">
-    <circle cx="165" cy="100" r="2.6"/>
-    <circle cx="145" cy="210" r="2.6"/>
-    <circle cx="305" cy="210" r="2.6"/>
-    <circle cx="90" cy="210" r="2.6"/>
-    <circle cx="225" cy="210" r="2.6"/>
-    <circle cx="295" cy="100" r="2.6"/>
-    <circle cx="375" cy="100" r="2.6"/>
-    <text x="158" y="86">A</text>
-    <text x="133" y="234">B</text>
-    <text x="302" y="234">C</text>
-    <text x="83" y="234">D</text>
-    <text x="218" y="234">E</text>
-    <text x="289" y="86">F</text>
-    <text x="369" y="86">G</text>
+    <circle cx="165" cy="64" r="2.6"/>
+    <circle cx="145" cy="174" r="2.6"/>
+    <circle cx="305" cy="174" r="2.6"/>
+    <circle cx="90" cy="174" r="2.6"/>
+    <circle cx="225" cy="174" r="2.6"/>
+    <circle cx="295" cy="64" r="2.6"/>
+    <circle cx="375" cy="64" r="2.6"/>
+    <text x="158" y="50">A</text>
+    <text x="133" y="198">B</text>
+    <text x="302" y="198">C</text>
+    <text x="83" y="198">D</text>
+    <text x="218" y="198">E</text>
+    <text x="289" y="50">F</text>
+    <text x="369" y="50">G</text>
   </g>
 </svg>
