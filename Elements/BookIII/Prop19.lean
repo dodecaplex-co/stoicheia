@@ -47,14 +47,14 @@ theorem Prop19 {A C D E : Point} {ABC : Circle} (hC : OnCircle C ABC) (hDE : Tou
   -- But the angle ACE is also right;
   have hACE : ∠ A C E₁ = ∟ := hCA E₁ ⟨L, hD_L, hE_L, hE₁_L⟩ hE₁C
   -- therefore the angle FCE is equal to the angle ACE,
-  have hEq : ∠ E₁ C F = ∠ E₁ C A := by
-    have hFC : F ≠ C := fun e => hF_L (e ▸ hC_L)
-    have hAC : A ≠ C := fun e => hA_L (e ▸ hC_L)
-    rw [angle_symm hE₁C hFC, angle_symm hE₁C hAC, hFCE, hACE]
+  have hFCE_ACE : ∠ F C E₁ = ∠ A C E₁ := hFCE.trans hACE.symm
   -- the less to the greater: which is impossible.
   /- One ray from `C` on `F`'s side of `DE` makes a right angle with it (`onRay_of_angle_eq`).
      Euclid's figure has `F` on `A`'s side; on the other side, `AC` produced to `A₁`. -/
+  have hFC : F ≠ C := fun e => hF_L (e ▸ hC_L)
   have hAC : A ≠ C := fun e => hA_L (e ▸ hC_L)
+  have hEq : ∠ E₁ C F = ∠ E₁ C A := by
+    rw [angle_symm hE₁C hFC, angle_symm hE₁C hAC]; exact hFCE_ACE
   obtain ⟨M, hA_M, hC_M⟩ := Postulate1 A C hAC
   apply hF_AC
   by_cases hs : SameSide F A L
