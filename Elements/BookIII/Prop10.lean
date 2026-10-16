@@ -136,16 +136,18 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
   have hP_NO : Collinear L O P := Prop1.porism hP hB₁ hG₁ hBLG hBL hO_off hBLO
   -- But it was also proved to be on AC, and the straight lines AC, NO meet at no point except
   -- at P;
-  /- The centre already lies on both straight lines. `Prop10.meet_once` below
-     proves that their common point is unique, even if P is K or L. -/
+  /- `Prop10.meet_once`: AC and NO are two straight lines, so any point on both is P,
+     even if P is K or L. -/
+  have hmeet : ∀ Q : Point, Collinear K C Q → Collinear L O Q → Q = P :=
+    fun Q hQ_AC hQ_NO =>
+      Prop10.meet_once hBHG hBKH hBLG hC_off hBKC hO_off hBLO hQ_AC hP_AC hQ_NO hP_NO
   -- therefore the point P is the centre of the circle ABC.
   /- The centre taken from hABC has been named P. -/
   -- Similarly we can prove that P is also the centre of the circle DEF;
   obtain ⟨P', hP'⟩ := hDEF
   have hP'_AC : Collinear K C P' := Prop1.porism hP' hB₂ hH₂ hBKH hBK hC_off hBKC
   have hP'_NO : Collinear L O P' := Prop1.porism hP' hB₂ hG₂ hBLG hBL hO_off hBLO
-  obtain rfl : P = P' :=
-    Prop10.meet_once hBHG hBKH hBLG hC_off hBKC hO_off hBLO hP_AC hP'_AC hP_NO hP'_NO
+  obtain rfl : P' = P := hmeet P' hP'_AC hP'_NO
   -- therefore the two circles ABC, DEF which cut one another have the same centre P: which is
   -- impossible. [III. 5]
   exact Prop5 hne ⟨B, G, hBG, hB₁, hB₂, hG₁, hG₂⟩ ⟨hP, hP'⟩
