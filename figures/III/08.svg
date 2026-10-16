@@ -1,14 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
   <title>Euclid III.8: straight lines from a point outside a circle</title>
   <rect width="400" height="400" rx="10" fill="#fbf7ee"/>
-  <circle cx="190" cy="244" r="115" fill="none" stroke="#a0522d" stroke-width="2.4"/>
+  <circle cx="190" cy="244" r="115" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
   <g fill="none" stroke="#3b2f2f" stroke-width="1.6" stroke-linecap="round">
-    <line x1="300.00" y1="36.00" x2="136.24" y2="345.66"/>
-    <line x1="300.00" y1="36.00" x2="88.60" y2="298.25"/>
-    <line x1="300.00" y1="36.00" x2="75.09" y2="239.42"/>
-    <line x1="300.00" y1="36.00" x2="93.70" y2="181.14"/>
-    <line x1="300.00" y1="36.00" x2="263.69" y2="155.71"/>
-    <line x1="300.00" y1="36.00" x2="298.65" y2="206.32"/>
     <line x1="190.00" y1="244.00" x2="88.60" y2="298.25"/>
     <line x1="190.00" y1="244.00" x2="75.09" y2="239.42"/>
     <line x1="190.00" y1="244.00" x2="93.70" y2="181.14"/>
@@ -17,6 +11,15 @@
     <line x1="190.00" y1="244.00" x2="163.37" y2="132.13"/>
     <line x1="190.00" y1="244.00" x2="263.69" y2="155.71"/>
     <line x1="190.00" y1="244.00" x2="298.65" y2="206.32" stroke-dasharray="2 5"/>
+  </g>
+  <!-- The straight lines compared from D, with DA through the centre. -->
+  <g fill="none" stroke="#a0522d" stroke-width="2.4" stroke-linecap="round">
+    <line x1="300.00" y1="36.00" x2="136.24" y2="345.66"/>
+    <line x1="300.00" y1="36.00" x2="88.60" y2="298.25"/>
+    <line x1="300.00" y1="36.00" x2="75.09" y2="239.42"/>
+    <line x1="300.00" y1="36.00" x2="93.70" y2="181.14"/>
+    <line x1="300.00" y1="36.00" x2="263.69" y2="155.71"/>
+    <line x1="300.00" y1="36.00" x2="298.65" y2="206.32"/>
   </g>
   <g fill="#3b2f2f">
     <circle cx="190.00" cy="244.00" r="2.6"/>
