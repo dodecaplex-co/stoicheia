@@ -152,7 +152,7 @@ with four choices worth naming:
   from either book.
 - **The scripts.** `heath.BOOKS` lists the books and their sizes; `render.py` writes
   `book/II/`, a Book II section in `CERTIFICATE.md` and in `GRAPH.md` (with the Book I
-  propositions it cites drawn in white), and links `[I.47](../I/47.md)` from Book II's
+  propositions it cites drawn in white), and links to I.47 (at `../I/47.md`) from Book II's
   pages. Book I's pages come out byte for byte as before.
 - **Brackets and numbers across books.** II.10's "[I. Post. 5]" stays as Heath prints
   it, and the scripts read it as Post. 5: the postulates and common notions are Book I's
