@@ -257,6 +257,42 @@ TACIT_CREDIT = ("<sub>The tacit rules follow the System E of Jeremy Avigad, Edwa
                 "Zhaoyu Li, Anima Anandkumar and Xujie Si).</sub>")
 
 
+def step_name(name, book):
+    """A shared step as the Lean on a page of `book` writes it: facts.json's
+    `BookI.Prop5.base` is `Prop5.base` on a page of Book I, and keeps its book on a page
+    of Book II; `Rectangle.eq_rect` belongs to no book."""
+    own = f"Book{book}."
+    return name[len(own):] if name.startswith(own) else name
+
+
+def natural_key(s):
+    """`Prop5.base` before `Prop29.interior`."""
+    return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", s)]
+
+
+def shared_steps_line(p, book, up):
+    """The line under a page's table naming the shared steps its proof calls on, each
+    with the propositions it brings in (facts.json's `shared_steps`). Steps that bring in
+    the same propositions share a bracket: "Brought in by shared steps:
+    `Prop29.alternate`, `Prop29.interior` (I.29); `Prop30.parallel` (I.30)." Empty when
+    no shared step brings in a proposition."""
+    groups = {}
+    for s in p.get("shared_steps", []):
+        groups.setdefault(tuple(sorted(s["brings_in"], key=prop_key)), []).append(s)
+    parts = []
+    for refs in sorted(groups, key=lambda r: [prop_key(x) for x in r]):
+        steps = sorted(groups[refs], key=lambda s: natural_key(step_name(s["name"], book)))
+        names = ", ".join(f"[`{step_name(s['name'], book)}`]({up}{s['file']}#L{s['line']})"
+                          for s in steps)
+        parts.append(f"{names} ({', '.join(refs)})")
+    return "Brought in by shared steps: " + "; ".join(parts) + "." if parts else ""
+
+
+TABLE_KEY = ("_Postulates, definitions and tacit rules include those of the propositions "
+             "this proof cites. Common Notions are those named in this proof and its shared "
+             "steps._")
+
+
 def rests_on(p, docs, depth, book, euclid):
     """Markdown for the 'What it rests on' section. `euclid` is what Euclid cites
     (see euclid_cites); it comes from the text, so it is shown before the Lean is done."""
@@ -279,10 +315,14 @@ def rests_on(p, docs, depth, book, euclid):
     lines.append("| Definitions | " + (definition_list(defs, book) or "none") + " |")
     lines.append("| Common Notions | " + (", ".join(c.replace("C.N. ", "") for c in
                  sorted(set(p["common_notions"]))) or "none") + " |")
-    lines.append(f"| Tacit assumptions | {len(tacit)} (listed below) |")
+    lines.append(f"| Tacit rules | {len(tacit)} (listed below) |")
     if other:
         lines.append(f"| Other axioms | {len(other)} (listed below) |")
     out = "\n".join(lines) + "\n"
+    steps = shared_steps_line(p, book, up)
+    if steps:
+        out += f"\n{steps}\n"
+    out += f"\n{TABLE_KEY}\n"
     if p["status"] == "proved-pending":
         out += ("\n_This proof is complete, but it cites propositions that are still "
                 "only stated, so the list above will grow when they are proved._\n")
@@ -294,8 +334,14 @@ def rests_on(p, docs, depth, book, euclid):
         for a in other:
             doc, path, line = docs.get(a, ("", "", 0))
             by_kind.setdefault("Other", []).append((a, doc, path, line))
-        out += (f"\n<details><summary>The {len(tacit) + len(other)} things Euclid takes for "
-                "granted here</summary>\n\n")
+        rules = "tacit rule" if len(tacit) == 1 else "tacit rules"
+        if other:
+            rules += f" and {len(other)} other axiom" + ("" if len(other) == 1 else "s")
+        # A proof that cites no proposition uses every rule beneath it itself.
+        cited = bool(p["cites"])
+        summary = f"The {len(tacit)} {rules} beneath this proof" + (
+            ", counting those of the propositions it cites" if cited else "")
+        out += f"\n<details><summary>{summary}</summary>\n\n"
         for kind in ["Reading the figure", "Lengths, angles and areas", "Superposition",
                      "Laws of magnitude", "Other"]:
             if kind not in by_kind:
@@ -303,8 +349,9 @@ def rests_on(p, docs, depth, book, euclid):
             out += f"**{kind}**\n\n"
             for a, doc, path, line in sorted(by_kind[kind]):
                 name = a.replace('Tacit.', '')
-                out += (f"- [`{name}`]({up}{path}#L{line}): {doc}\n" if path else
-                        f"- `{name}`: not declared in `Elements/Foundations/`\n")
+                here = " (used here)" if cited and a in p["direct_axioms"] else ""
+                out += (f"- [`{name}`]({up}{path}#L{line}){here}: {doc}\n" if path else
+                        f"- `{name}`{here}: not declared in `Elements/Foundations/`\n")
             out += "\n"
         out += "</details>\n"
     return out
@@ -495,14 +542,44 @@ def front(book):
 P5_NOTE = {"I": "Euclid holds it back until I.29."}
 
 
+def shared_steps_example(facts):
+    """The first proved proposition, in the order of the books, whose shared steps bring
+    in a proposition Euclid gives no bracket for: its reference and its line, written
+    for CERTIFICATE.md. None if there is no such proposition."""
+    for book, (count, _) in BOOKS.items():
+        for n in range(1, count + 1):
+            p = facts.get(f"{book}.{n}")
+            if not p or p["status"] != "proved":
+                continue
+            _, enunciation, proof = heath.read(book, n)
+            euclid = set(euclid_cites([enunciation] + proof, book)["props"])
+            if any(r not in euclid for s in p.get("shared_steps", []) for r in s["brings_in"]):
+                return f"{book}.{n}", shared_steps_line(p, book, "")
+    return None
+
+
 def certificate(facts, docs):
+    shared = ("Many Lean proofs call on shared steps: lemmas proved once and used by many "
+              "proofs, such as `Prop30.meet` in Book I or `Rectangle.eq_rect` in Book II. A "
+              "shared step that rests on a proposition brings it into every proof that calls "
+              "on the step, which is why the Lean sometimes cites a proposition Euclid gives "
+              "no bracket for. Each proposition's page names those steps in a line under its "
+              "table, with the propositions each one brings in")
+    example = shared_steps_example(facts)
+    if example:
+        ref, line = example
+        b, n = ref.split(".")
+        shared += f". On [{ref}](book/{b}/{int(n):02d}.md) it reads: \"{line}\""
+    else:
+        shared += "."
     out = [GENERATED, "# Certificate", "",
            "Everything on this page is computed from the Lean proofs themselves by "
            "[`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` tells us "
-           "exactly which postulates, definitions and tacit assumptions each proof rests on. "
+           "exactly which postulates, definitions and tacit rules each proof rests on, "
+           "counting those of the propositions it cites. "
            "The one exception is the column \"Euclid cites\": the propositions Euclid gives in "
            "brackets in Heath's translation, read from the text. Nothing here is typed in by hand.",
-           ""]
+           "", shared, ""]
     for book, (count, titles) in BOOKS.items():
         props = [facts.get(f"{book}.{n}") for n in range(1, count + 1)]
         proved = [p for p in props if p and p["status"] == "proved"]

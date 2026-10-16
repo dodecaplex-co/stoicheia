@@ -2,7 +2,9 @@
 
 # Certificate
 
-Everything on this page is computed from the Lean proofs themselves by [`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` tells us exactly which postulates, definitions and tacit assumptions each proof rests on. The one exception is the column "Euclid cites": the propositions Euclid gives in brackets in Heath's translation, read from the text. Nothing here is typed in by hand.
+Everything on this page is computed from the Lean proofs themselves by [`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` tells us exactly which postulates, definitions and tacit rules each proof rests on, counting those of the propositions it cites. The one exception is the column "Euclid cites": the propositions Euclid gives in brackets in Heath's translation, read from the text. Nothing here is typed in by hand.
+
+Many Lean proofs call on shared steps: lemmas proved once and used by many proofs, such as `Prop30.meet` in Book I or `Rectangle.eq_rect` in Book II. A shared step that rests on a proposition brings it into every proof that calls on the step, which is why the Lean sometimes cites a proposition Euclid gives no bracket for. Each proposition's page names those steps in a line under its table, with the propositions each one brings in. On [I.9](book/I/09.md) it reads: "Brought in by shared steps: [`Prop5.base`](Elements/BookI/Helpers.lean#L27) (I.5)."
 
 ## Book I
 
