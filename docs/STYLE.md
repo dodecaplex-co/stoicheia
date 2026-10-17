@@ -89,9 +89,11 @@ beneath every proposition from I.29 on but I.31, and `Prop30.meet`, credited to
 Proclus (Heath, vol. 1, pp. 207 and 316). Book II's tells the steps of
 `Elements/BookII/Rectangles.lean`, with `Parallel.between`,
 `quadArea_add_of_parallelograms` and the unlettered point of `exists_off_line`; Book
-III's will tell `Squares.lean` and `Circumferences.lean`. A shared step may be told
-on its home page (II.1's rectangle contained, II.4's "For the same reason");
-elsewhere it gets a clause at most ("as in II.4").
+III's tells a circle's centre by hypothesis and III.1, its definitions and the
+circumference measured by twice its angle, `Squares.lean` and `Circumferences.lean`,
+and the porisms of III.1 and III.16. A shared step may be told on its home page
+(II.1's rectangle contained, II.4's "For the same reason"); elsewhere it gets a
+clause at most ("as in II.4").
 
 **Retired refrains**, each once said on a dozen pages:
 
@@ -241,8 +243,9 @@ the whole canvas), in Georgia.
 - **Our prose writes** I.5, II.4, I.1–I.24 (en dash); Postulate 3, Common Notion 1 in
   a sentence; Post. 3, C.N. 1 in parentheses and tables. A definition always keeps its
   book, since Books II and III have their own: "Definition I.15" in a sentence,
-  "Def. I.15" in parentheses and tables. [I. 5] only in Euclid's text, and "I. 5" only
-  inside Heath's words.
+  "Def. I.15" in parentheses and tables (Book I's own tables write 15, as Heath's
+  brackets there do). [I. 5] only in Euclid's text, and "I. 5" only inside Heath's
+  words.
 - Titles and foreign words in italics: *pons asinorum*, *reductio ad absurdum*.
 
 ## 6. The enforcer's checklist

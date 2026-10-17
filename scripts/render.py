@@ -352,23 +352,34 @@ TABLE_KEY = ("_Postulates, definitions, Common Notions and tacit rules: all that
 def definitions_not_counted(euclid, defs, book):
     """A line for a page where Euclid cites a definition that the Definitions row does
     not count: only Def. I.15, the circle's, is an assumption in Lean; the others Euclid
-    cites (Def. 10, the right angle, in I.11 to I.13; Def. 23, parallels, in I.27) are
-    Lean definitions, used by name."""
-    counted = {int(d.replace("Definition", "")) for d in defs}
+    cites (Def. 10, the right angle, in I.11 to I.13; Def. 23, parallels, in I.27; Def.
+    I.10 in III.1, III.3 and III.9; Book III's own Definitions 3, 4, 5 and 11) are said
+    in Lean's own terms. A definition of the page's book is written without its book,
+    and one of another book keeps it (euclid_cites): "Def. 4", "Def. I.10". On a page of
+    Book I the line names the Lean definition."""
+    # Lean's `DefinitionN` axioms are Book I's.
+    counted = {("I", int(d.replace("Definition", ""))) for d in defs}
     names = []
     for d in euclid["Def."]:
-        if isinstance(d, int) and book == "I" and d not in counted:
-            lean = FRONT_LEAN.get(book, {}).get("Definitions", {}).get(d, "")
-            name = lean.split(",")[0].strip() if lean.startswith("`") else ""
-            names.append((d, name))
+        where, num = (book, d) if isinstance(d, int) else (d.split(".")[0], int(d.split(".")[1]))
+        if (where, num) in counted:
+            continue
+        lean = FRONT_LEAN.get(book, {}).get("Definitions", {}).get(num, "") if book == "I" else ""
+        name = lean.split(",")[0].strip() if lean.startswith("`") else ""
+        names.append((d, name))
     if not names:
         return ""
-    parts = [f"Def. {d}" + (f" is {name}" if name else "") for d, name in names]
-    verb = "is a Lean definition" if len(names) == 1 else "are Lean definitions"
-    if all(name for _, name in names):
-        return ("_Euclid's " + " and ".join(parts) + " in Lean, a definition rather than an "
-                "assumption, so the Definitions row does not count it._")
-    return f"_Euclid's {', '.join(f'Def. {d}' for d, _ in names)} {verb}, not assumptions._"
+    if book == "I" and all(name for _, name in names):
+        parts = [f"Def. {d} is {name}" for d, name in names]
+        what = ("a definition rather than an assumption, so the Definitions row does not "
+                "count it" if len(names) == 1 else "definitions rather than assumptions, so "
+                "the Definitions row does not count them")
+        return "_Euclid's " + " and ".join(parts) + f" in Lean, {what}._"
+    cited = [f"Def. {d}" for d, _ in names]
+    cited = cited[0] if len(cited) == 1 else ", ".join(cited[:-1]) + " and " + cited[-1]
+    what, it = (("is a definition in Lean, not an assumption", "it") if len(names) == 1 else
+                ("are definitions in Lean, not assumptions", "them"))
+    return f"_Euclid's {cited} {what}, so the Definitions row does not count {it}._"
 
 
 def rests_on(p, docs, depth, book, euclid):
@@ -685,8 +696,8 @@ def certificate(facts, docs):
            "Everything on this page is computed from the Lean proofs themselves by "
            "[`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` tells us "
            "exactly which postulates, definitions and tacit rules each proof rests on, and a "
-           "walk through the same proofs which Common Notions, in every case counting those "
-           "of the propositions it cites. "
+           "walk through the same proofs tells us which Common Notions; both count those of "
+           "the propositions the proof cites. "
            "The one exception is the column \"Euclid cites\": the propositions Euclid gives in "
            "brackets in Heath's translation, read from the text. Nothing here is typed in by hand.",
            "", shared, ""]

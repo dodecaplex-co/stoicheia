@@ -18,7 +18,8 @@ namespace Elements.Tacit
 
 variable {k : Kind}
 
-/-- It makes no difference which two of three magnitudes are added first. (System E §3.5) -/
+/-- Adding three magnitudes in a row, it makes no difference whether the first two or the last
+two are added first. (System E §3.5) -/
 axiom add_assoc (a b c : Magnitude k) : a + b + c = a + (b + c)
 
 /-- The order of adding does not matter. (System E §3.5) -/
