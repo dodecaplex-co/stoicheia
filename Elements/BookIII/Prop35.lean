@@ -23,7 +23,7 @@ open Tacit
 the rectangle contained by `AE`, `EC`, together with the square on `FE`, is the square
 on `FC`. This supplies "For the same reason" for `DB`, and the intermediate cases
 where one straight line passes through the centre or `E` is the perpendicular's foot.
-Heath relates the argument to Isaac Todhunter's isosceles triangle (vol. 2, p. 73). -/
+Isaac Todhunter saw in it a fact about the isosceles triangle `FAC` (Heath, vol. 2, p. 73). -/
 theorem Prop35.cut {A C E F : Point} {α : Circle} (hF : Centre F α) (hA : OnCircle A α)
     (hC : OnCircle C α) (hAEC : Between A E C) (hEF : E ≠ F) :
     rect A E E C + sq F E = sq F C := by
@@ -104,8 +104,8 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
   have hEF : E ≠ F := fun e => hE (e ▸ hF)
   have hAC : rect A E E C + sq F E = sq F C := by
     by_cases hF_AC : Collinear A C F
-    · /- Robert Simson's intermediate cases: `AC` may pass through the centre even when
-         `E` is not the centre. The same square identity follows directly from II.5. -/
+    · /- Robert Simson's intermediate cases: `AC` may pass through the centre when `E`
+         does not. Then `F` bisects `AC`, and II.5 gives the squares at once. -/
       exact Prop35.cut hF hA hC hAEC hEF
     have hAC' : A ≠ C := ne_of_between_ends hAEC
     obtain ⟨L, hA_L, hC_L⟩ := Postulate1 A C hAC'
@@ -134,7 +134,7 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
     -- GC; [II. 5]
     have h5 : rect A E E C + sq E G = sq G C := by
       by_cases hEG : E = G
-      · /- If the two cuts coincide, `AE = EC` and the square on `EG` is nothing. -/
+      · /- If `E` is `G`, `AE = EC` and the square on `EG` is nothing. -/
         subst hEG
         rw [sq_self, add_zero]
         exact rect_congr hAG rfl
