@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.18 at a glance</title>
-  <desc>The straight line from the centre to the point of contact (black) stands at right angles (yellow) to the straight line that touches the circle (red). Every other point of the red line lies outside the circle, so every other straight line from the centre to it (dashed) is longer, and the shortest is the one at right angles.</desc>
+  <desc>The straight line from the centre to the point of contact (black) stands at right angles (yellow) to the straight line touching the circle (red). Every other straight line from the centre to it (dashed) ends outside the circle, and is longer.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="196.00" cy="118.00" r="92.00" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M221.36,206.44 L194.44,214.15 A28,28 0 0,1 213.64,179.52 Z" fill="#f2b705"/>

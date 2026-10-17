@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid III.19: the perpendicular to the tangent passes through the centre</title>
+  <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <circle cx="190" cy="144" r="106" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <line x1="42" y1="250" x2="354" y2="250" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="190" y1="38" x2="190" y2="250" stroke="#a0522d" stroke-width="2.5"/>
+  <line x1="190" y1="250" x2="218" y2="132" stroke="#3b2f2f" stroke-width="1.6"/>
+  <g fill="#3b2f2f">
+    <circle cx="190" cy="38" r="2.6"/>
+    <circle cx="296" cy="144" r="2.6"/>
+    <circle cx="190" cy="250" r="2.6"/>
+    <circle cx="42" cy="250" r="2.6"/>
+    <circle cx="354" cy="250" r="2.6"/>
+    <circle cx="218" cy="132" r="2.6"/>
+    <text x="184" y="26">A</text>
+    <text x="306" y="149">B</text>
+    <text x="184" y="274">C</text>
+    <text x="35" y="274">D</text>
+    <text x="347" y="274">E</text>
+    <text x="227" y="128">F</text>
+  </g>
+</svg>
