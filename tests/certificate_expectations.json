@@ -1,0 +1,31 @@
+{
+  "about": "Facts the certificate must keep. scripts/check_fidelity.py checks each one against facts.json, so that a change to Certificate/Facts.lean cannot quietly lose them. They answer Astra's outside review (docs/reports/outside-review-01.md), which asked for these regressions by name; brief 0005, stage 1k. Each names an entry by its ref and a field of it (Certificate/FIELDS.md), and asks that the list `includes` some names, `excludes` others, or holds exactly `count.is` names beginning with `count.prefix`; `equals` compares the field with a value. `why` is shown when one fails.",
+  "expectations": [
+    {
+      "ref": "III.1 Por.",
+      "field": "axioms",
+      "includes": ["Tacit.centre_unique"],
+      "count": {"prefix": "Tacit.", "is": 57},
+      "why": "III.1's porism proves that the centre lies on the cutting line by `centre_unique`, which III.1's construction does not use. The review found the porism's assumptions missing from III.1's certificate; the porism's own entry must carry them: 57 tacit rules, centre_unique among them."
+    },
+    {
+      "ref": "III.1",
+      "field": "axioms",
+      "excludes": ["Tacit.centre_unique"],
+      "count": {"prefix": "Tacit.", "is": 56},
+      "why": "III.1's own certificate is its construction alone: 56 tacit rules, without the porism's centre_unique."
+    },
+    {
+      "ref": "III.1 Por.",
+      "field": "of",
+      "equals": "III.1",
+      "why": "A porism's entry names its proposition."
+    },
+    {
+      "ref": "III.1",
+      "field": "attached",
+      "equals": ["III.1 Por."],
+      "why": "A proposition lists its porism, so that it is not complete until the porism is proved."
+    }
+  ]
+}

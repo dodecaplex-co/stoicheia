@@ -5,37 +5,64 @@
    order, must be exactly Heath's proof (whitespace aside). Euclid's words go in
    `--` comments; our own remarks go in `/- … -/` blocks.
 2. Every `axiom` lives in `Elements/Foundations/`: a first look in the source here,
-   and the real check from Lean's own environment in 5.
+   and the real check from Lean's own environment in 6.
 3. Book Zero (`Elements/Figure/`) never imports a proposition.
 4. Nothing that gets round the kernel or adds an axiom without the word: no
    `native_decide` or `decide +native` (each adds an axiom Lean's kernel doesn't
    check), no `set_option debug.…`, and no `run_cmd`, `run_elab`, `elab`, `macro`,
    `implemented_by`, `extern` or `unsafe` under `Elements/`.
-5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first):
-   - every axiom a proposition rests on, other than Lean's own `propext`,
+5. Wording. README.md, CERTIFICATE.md, GRAPH.md and the books' index pages never say
+   "never need" (a proof uses Postulate 5 or does not), "Euclid cites" or "Euclid's
+   own bracketed" (the brackets are Heath's references: vol. 1, p. 83).
+6. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
+   fields are in `Certificate/FIELDS.md`):
+   - every axiom an entry rests on, other than Lean's own `propext`,
      `Classical.choice` and `Quot.sound`, is declared under `Elements.Foundations`,
      and so is every axiom declared anywhere in `Elements`, as Lean itself reports;
-   - there are 87 of them, and the 17 primitive words of `Words.lean` and
-     `Magnitudes.lean` are still `opaque`. Changing either is a decision, recorded in
-     `docs/briefs/0002-decisions.md` with the new number here;
-   - only I.4 and I.8 may use superposition directly;
-   - no proposition before I.29 rests on Postulate 5 or any Euclidean-only rule.
-     Every proposition of a later book comes after I.29, and may rest on it;
-   - every proposition of a completed book is proved, with both figures and a mishnah;
-   - the certificate covers exactly the books in `heath.BOOKS` (`Certificate/Facts.lean`
-     keeps its own list), and no proposition cites one that does not come before it.
+   - the axiom lock: every axiom's statement, and every definition those statements
+     reach, is exactly as `Certificate/axioms.lock` has it, in both directions. The
+     number of Euclid's assumptions is the lock's, and the 17 primitive words of
+     `Words.lean` and `Magnitudes.lean` are still `opaque`. Changing either is a
+     decision, recorded in `docs/briefs/0002-decisions.md`; then
+     `python3 scripts/check_fidelity.py --write-lock` writes the new lock;
+   - the entries are the propositions of `heath.BOOKS`, a porism entry for each of
+     Heath's porisms (`heath.heath_porisms`) and nothing else, and companions of
+     those propositions, each tied to its proposition by `of` and `attached`;
+   - for every entry, propositions, porisms and companions alike: none cites one that
+     does not come before it; only I.4 and I.8 use superposition directly; none
+     before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
+     after I.29, and may);
+   - every proposition of a completed book is proved, and so is everything attached
+     to it, with both figures and a mishnah;
+   - the facts pinned in `tests/certificate_expectations.json` still hold;
+   - the review records (`review/SCHEMA.md`): every proposition has one, valid; its
+     stamps match the statements in facts.json and its Lean file, so a record goes
+     stale when either changes; its passages begin at Euclid's sentences and name
+     helpers that exist; and every run of `--` lines with no Lean beneath it is
+     declared as a passage (`uncarried_runs`).
 
-Exits non-zero on any failure. Standard library only.
+`--facts PATH` checks another copy of facts.json (scripts/negative_tests.py uses it);
+`--write-lock` writes `Certificate/axioms.lock` from facts.json and stops.
+
+Exits non-zero on any failure. Standard library only; the review records need Python
+3.11 or later (tomllib).
 """
 
+import argparse
+import functools
 import json
 import re
 import sys
+from pathlib import Path
+from typing import NamedTuple
 
 import heath
 
 ROOT = heath.ROOT
 BOOKS = heath.BOOKS
+FACTS = ROOT / "facts.json"
+LOCK = ROOT / "Certificate" / "axioms.lock"
+EXPECTATIONS = ROOT / "tests" / "certificate_expectations.json"
 # Books whose every proposition is proved: they must stay that way.
 COMPLETE = {"I", "II", "III"}
 SUPERPOSITION_ALLOWED = {"I.4", "I.8"}
@@ -43,11 +70,8 @@ EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # The first proposition of each book allowed to rest on Postulate 5. Euclid holds it
 # back until I.29; Books II and III come after the whole of Book I, so they may use the
 # postulate from their first proposition on, as II.10 does by name. A book missing here
-# may use it throughout.
+# may use it throughout. A porism or companion goes with its proposition.
 FIRST_EUCLIDEAN = {"I": 29, "II": 1, "III": 1}
-# Euclid's assumptions: 5 postulates, Definition 15 and 81 tacit rules. A change is a
-# decision (docs/briefs/0002-decisions.md), and this number changes with it.
-AXIOM_COUNT = 87
 # The words Euclid leaves undefined, and the magnitudes. Each must stay `opaque`: Lean
 # then knows only what the axioms say of them, and the axioms stay true in the plane.
 PRIMITIVES = {
@@ -64,12 +88,26 @@ FORBIDDEN = re.compile(
     r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bset_option\s+debug\.|"
     r"\b(run_cmd|run_elab|run_meta|elab|elab_rules|macro|macro_rules|implemented_by|"
     r"extern|unsafe)\b")
+# Words retired from the reader-facing pages (brief 0005, stage 1e), and what to say.
+RETIRED = {
+    "never need": "say what the proof does: 'this proof uses Postulate 5', or 'the proofs "
+                  "of 29 propositions do not use it'",
+    "euclid cites": "the brackets are Heath's references (Heath, vol. 1, p. 83)",
+    "euclid's own bracketed": "the brackets are Heath's editorial references",
+}
 
 errors: list[str] = []
 
 
 def fail(msg: str) -> None:
     errors.append(msg)
+
+
+def rel(path: Path) -> str:
+    try:
+        return path.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return str(path)
 
 
 def theorem_block(src: str, n: int):
@@ -91,7 +129,7 @@ def first_difference(a: str, b: str) -> str:
 def check_fidelity() -> None:
     for book, count in BOOKS.items():
         for n in range(1, count + 1):
-            path = ROOT / "Elements" / f"Book{book}" / f"Prop{n:02d}.lean"
+            path = heath.lean_path(book, n)
             if not path.exists():
                 fail(f"{book}.{n}: missing {path.relative_to(ROOT)}")
                 continue
@@ -150,14 +188,165 @@ def check_rules() -> None:
             fail(f"{rel}: Book Zero must not import a proposition")
 
 
-def check_axioms(facts) -> None:
-    """Where the axioms live, read from Lean's environment by Certificate/Facts.lean."""
+# Wording.
+
+def wording_pages() -> list[Path]:
+    pages = [ROOT / "README.md", ROOT / "CERTIFICATE.md", ROOT / "GRAPH.md"]
+    return pages + sorted((ROOT / "book").glob("*/index.md"))
+
+
+def check_wording() -> None:
+    """The retired phrases, anywhere on the reader-facing summary pages."""
+    for page in wording_pages():
+        if not page.exists():
+            continue
+        for number, line in enumerate(page.read_text().splitlines(), 1):
+            low = line.replace("’", "'").lower()  # one character for one: same places
+            for phrase, advice in RETIRED.items():
+                at = low.find(phrase)
+                if at >= 0:
+                    fail(f"{rel(page)}:{number}: says {line[at:at + len(phrase)]!r}; {advice}")
+
+
+# The axiom lock, Certificate/axioms.lock.
+
+LOCK_HEADER = """\
+# Certificate/axioms.lock
+#
+# The exact statement of every assumption the propositions may rest on: Euclid's
+# postulates, Definition 15 and the tacit rules, all declared in Elements/Foundations/.
+# After them, every definition, instance, structure and opaque word of this project that
+# those statements reach, so that no assumption can change its meaning through a word it
+# uses. Lean prints both, as Certificate/FIELDS.md says: full names, no notation, one
+# line each.
+#
+# scripts/check_fidelity.py compares this file with facts.json in both directions, and
+# takes the number of Euclid's assumptions from it. Change it only with a decision,
+# recorded in docs/briefs/0002-decisions.md, and then only by running
+#
+#     python3 scripts/check_fidelity.py --write-lock
+"""
+
+
+def toml_string(s: str) -> str:
+    """A TOML basic string. JSON's escapes (\\", \\\\, \\n, \\uXXXX …) are TOML's too."""
+    return json.dumps(s, ensure_ascii=False)
+
+
+def render_lock(axioms: dict, vocabulary: dict) -> str:
+    lines = [LOCK_HEADER, f"[axioms]  # {len(axioms)}"]
+    lines += [f"{toml_string(k)} = {toml_string(v)}" for k, v in sorted(axioms.items())]
+    lines += ["", f"[vocabulary]  # {len(vocabulary)}"]
+    lines += [f"{toml_string(k)} = {toml_string(v)}" for k, v in sorted(vocabulary.items())]
+    return "\n".join(lines) + "\n"
+
+
+def read_lock(path: Path = LOCK):
+    """(axioms, vocabulary) from the lock, each {name: printed statement}; None if the
+    file is missing. Raises ValueError if it cannot be read."""
+    if not path.exists():
+        return None
+    tomllib = heath._toml()
+    try:
+        data = tomllib.loads(path.read_text())
+    except tomllib.TOMLDecodeError as e:
+        raise ValueError(f"{rel(path)}: not valid TOML: {e}") from None
+    if set(data) != {"axioms", "vocabulary"} or not all(
+            isinstance(data[k], dict) and all(isinstance(v, str) for v in data[k].values())
+            for k in data):
+        raise ValueError(f"{rel(path)}: expected an [axioms] and a [vocabulary] table of "
+                         "strings, and nothing else")
+    return data["axioms"], data["vocabulary"]
+
+
+def foundations(module: str) -> bool:
+    return module.startswith("Elements.Foundations.")
+
+
+def check_lock(facts, path: Path = LOCK):
+    """Compare the lock with facts.json's `axiom_types` and `vocabulary`, both ways.
+    Returns the number of assumptions the lock holds, or None if it cannot be read."""
+    try:
+        lock = read_lock(path)
+    except (ValueError, RuntimeError) as e:
+        fail(str(e))
+        return None
+    if lock is None:
+        fail(f"{rel(path)} is missing: with a decisions entry, write it with "
+             "`python3 scripts/check_fidelity.py --write-lock`")
+        return None
+    types, vocabulary = facts.get("axiom_types"), facts.get("vocabulary")
+    if types is None or vocabulary is None:
+        fail("facts.json has no axiom_types or vocabulary: rerun `lake env lean Certificate/Facts.lean`")
+        return len(lock[0])
+    locked_axioms, locked_vocabulary = lock
+    where = rel(path)
+    for name in sorted(set(types) - set(locked_axioms)):
+        fail(f"{name}: an assumption not in {where} (a new axiom is a decision: record it in "
+             "docs/briefs/0002-decisions.md, then run `python3 scripts/check_fidelity.py --write-lock`)")
+    for name in sorted(set(locked_axioms) - set(types)):
+        fail(f"{name}: in the lock but no longer an axiom ({where}; removing one is a decision "
+             "for docs/briefs/0002-decisions.md)")
+    for name in sorted(set(types) & set(locked_axioms)):
+        if types[name] != locked_axioms[name]:
+            fail(f"{name}: its statement is not the one in {where}:\n      "
+                 + first_difference(types[name], locked_axioms[name]))
+    for name in sorted(set(vocabulary) - set(locked_vocabulary)):
+        fail(f"{name}: in the axioms' vocabulary but not in {where}")
+    for name in sorted(set(locked_vocabulary) - set(vocabulary)):
+        fail(f"{name}: in the lock but no longer in the axioms' vocabulary ({where})")
+    for name in sorted(set(vocabulary) & set(locked_vocabulary)):
+        if vocabulary[name] != locked_vocabulary[name]:
+            fail(f"{name}: its definition is not the one in {where}:\n      "
+                 + first_difference(vocabulary[name], locked_vocabulary[name]))
+    return len(locked_axioms)
+
+
+def write_lock(facts, path: Path = LOCK) -> int:
+    """Write the lock from facts.json: the axioms declared in Elements/Foundations/, and
+    the vocabulary. Prints what changed."""
+    types, vocabulary = facts.get("axiom_types"), facts.get("vocabulary")
+    modules = facts.get("axiom_modules", {})
+    if types is None or vocabulary is None:
+        print("facts.json has no axiom_types or vocabulary: rerun `lake env lean Certificate/Facts.lean`")
+        return 1
+    axioms = {n: s for n, s in types.items() if foundations(modules.get(n, ""))}
+    for name in sorted(set(types) - set(axioms)):
+        print(f"  not locked: {name}, declared in {modules.get(name) or 'an unknown module'}, "
+              "outside Elements/Foundations/")
+    try:
+        old = read_lock(path)
+    except ValueError:
+        old = None
+    text = render_lock(axioms, vocabulary)
+    tomllib = heath._toml()
+    if tomllib.loads(text) != {"axioms": axioms, "vocabulary": vocabulary}:
+        print("internal error: the lock would not read back as written")
+        return 1
+    path.write_text(text)
+    print(f"wrote {rel(path)}: {len(axioms)} axioms, {len(vocabulary)} words of vocabulary")
+    if old is None:
+        print("  (a new lock)")
+        print("Record it in docs/briefs/0002-decisions.md.")
+        return 0
+    changes = []
+    for new, before, label in ((axioms, old[0], "axiom"), (vocabulary, old[1], "vocabulary")):
+        changes += [f"  + {label} {k}" for k in sorted(set(new) - set(before))]
+        changes += [f"  - {label} {k}" for k in sorted(set(before) - set(new))]
+        changes += [f"  ~ {label} {k}" for k in sorted(set(new) & set(before)) if new[k] != before[k]]
+    print("\n".join(changes) if changes else "  (no change)")
+    if changes:
+        print("Record the decision in docs/briefs/0002-decisions.md, with the reason.")
+    return 0
+
+
+def check_axioms(facts, count) -> None:
+    """Where the axioms live, read from Lean's environment by Certificate/Facts.lean.
+    `count` is the number of assumptions the lock holds (None: no lock to compare)."""
     modules = facts.get("axiom_modules")
     if modules is None or "opaque" not in facts:
         fail("facts.json has no axiom_modules or opaque: rerun `lake env lean Certificate/Facts.lean`")
         return
-    def foundations(module: str) -> bool:
-        return module.startswith("Elements.Foundations.")
     for name, module in sorted(modules.items()):
         if module.startswith("Elements") and not foundations(module):
             fail(f"{name}: an axiom declared in {module}, outside Elements/Foundations/")
@@ -168,65 +357,445 @@ def check_axioms(facts) -> None:
             if not foundations(modules.get(a, "")):
                 fail(f"{p['ref']}: rests on {a}, which is not one of Euclid's assumptions in "
                      f"Elements/Foundations/ (declared in {modules.get(a) or 'an unknown module'})")
-    count = sum(1 for m in modules.values() if foundations(m))
-    if count != AXIOM_COUNT:
-        fail(f"Elements/Foundations/ declares {count} axioms, not {AXIOM_COUNT}: a new or "
+    declared = sum(1 for m in modules.values() if foundations(m))
+    if count is not None and declared != count:
+        fail(f"Elements/Foundations/ declares {declared} axioms, not {count}: a new or "
              "removed assumption is a decision for docs/briefs/0002-decisions.md, and then "
-             "AXIOM_COUNT here")
+             "a new Certificate/axioms.lock (`--write-lock`)")
     for name in sorted(PRIMITIVES - set(facts["opaque"])):
         fail(f"{name}: no longer an opaque primitive; Lean must know only what the axioms say of it")
 
 
-def check_facts() -> None:
-    path = ROOT / "facts.json"
-    if not path.exists():
-        print("note: facts.json not found; skipping certificate checks")
-        return
-    facts = json.loads(path.read_text())
-    check_axioms(facts)
-    have = {p["ref"] for p in facts["propositions"]}
-    want = {f"{book}.{n}" for book, count in BOOKS.items() for n in range(1, count + 1)}
-    for ref in sorted(want - have, key=heath.prop_key):
-        fail(f"{ref}: missing from facts.json (does Certificate/Facts.lean list Book {ref.split('.')[0]}?)")
-    for ref in sorted(have - want, key=heath.prop_key):
-        fail(f"{ref}: in facts.json but not in heath.BOOKS")
+# The entries: propositions, porisms and companions.
+
+def entries_by_ref(facts) -> dict:
+    """{ref: (Ref, entry)} for every entry whose ref parses; faults are reported."""
+    out = {}
     for p in facts["propositions"]:
-        ref = p["ref"]
-        book, num = ref.split(".")
-        # Euclid cites only what comes before: nothing after II.N, and Book I nothing of Book II.
+        ref = p.get("ref", "")
+        try:
+            r = heath.parse_ref(ref)
+        except ValueError as e:
+            fail(f"facts.json: {e}")
+            continue
+        if str(r) != ref:
+            fail(f"{ref}: facts.json writes it {ref!r}, not in its one form {str(r)!r}")
+        if ref in out:
+            fail(f"{ref}: two entries in facts.json")
+        out[ref] = (r, p)
+    return out
+
+
+def check_entries(facts, by_ref) -> None:
+    """Which entries there are, how they hang together, and the three policies, for
+    every entry."""
+    if any("kind" not in p or "statement" not in p for p in facts["propositions"]):
+        fail("facts.json predates Certificate/FIELDS.md (an entry has no `kind` or "
+             "`statement`): rerun `lake env lean Certificate/Facts.lean`")
+    props = {ref for ref, (r, _) in by_ref.items() if r.kind == "proposition"}
+    want = {f"{book}.{n}" for book, count in BOOKS.items() for n in range(1, count + 1)}
+    for ref in sorted(want - props, key=heath.prop_key):
+        fail(f"{ref}: missing from facts.json (does Certificate/Facts.lean list Book {ref.split('.')[0]}?)")
+    for ref in sorted(props - want, key=heath.prop_key):
+        fail(f"{ref}: in facts.json but not in heath.BOOKS")
+
+    # Porisms are exactly Heath's.
+    porisms = {(r.book, r.n) for r, _ in by_ref.values() if r.kind == "porism"}
+    heaths = heath.heath_porisms()
+    for book, n in sorted(heaths - porisms, key=lambda p: heath.prop_key(f"{p[0]}.{p[1]}")):
+        fail(f"{book}.{n}: Heath prints a porism, but facts.json has no entry "
+             f"{book}.{n} Por. (is `Prop{n}.porism` declared?)")
+    for book, n in sorted(porisms - heaths, key=lambda p: heath.prop_key(f"{p[0]}.{p[1]}")):
+        fail(f"{book}.{n} Por.: a porism entry, but Heath prints no porism to {book}.{n}")
+
+    # `of` and `attached` tie each porism and companion to its proposition.
+    children: dict[str, list[str]] = {}
+    for ref, (r, p) in by_ref.items():
+        kind = p.get("kind", r.kind)
+        if kind != r.kind:
+            fail(f"{ref}: its kind is {kind!r}, but the reference names a {r.kind}")
+        if r.kind == "proposition":
+            if "of" in p:
+                fail(f"{ref}: a proposition has no `of`")
+            continue
+        if r.parent not in props:
+            fail(f"{ref}: its proposition {r.parent} has no entry in facts.json")
+        if p.get("of", r.parent) != r.parent:
+            fail(f"{ref}: `of` is {p['of']!r}, not {r.parent!r}")
+        children.setdefault(r.parent, []).append(ref)
+    for ref in sorted(props, key=heath.prop_key):
+        p = by_ref[ref][1]
+        expected = sorted(children.get(ref, []), key=lambda c: (heath.prop_key(c), c))
+        if "kind" in p and p.get("attached", []) != expected:
+            fail(f"{ref}: `attached` lists {p.get('attached', [])}, but its porism and "
+                 f"companions are {expected}")
+
+    # The policies, for every entry.
+    for ref, (r, p) in sorted(by_ref.items(), key=lambda e: (heath.prop_key(e[1][0]), e[0])):
+        key = heath.prop_key(r)
+        # Euclid cites only what comes before: nothing after II.N, and Book I nothing of
+        # Book II. A porism comes after its proposition, and a companion after both; two
+        # companions of one proposition may cite one another.
         for c in p.get("cites", []):
-            if heath.prop_key(c) >= heath.prop_key(ref):
+            try:
+                later = heath.prop_key(c) > key
+            except ValueError as e:
+                fail(f"{ref}: cites {c!r}: {e}")
+                continue
+            if later:
                 fail(f"{ref}: cites {c}, which does not come before it")
         if "Tacit.superposition" in p.get("direct_axioms", []) and ref not in SUPERPOSITION_ALLOWED:
             fail(f"{ref}: uses superposition directly (only I.4 and I.8 may)")
-        first = FIRST_EUCLIDEAN.get(book, 1)
-        if int(num) < first:
+        first = FIRST_EUCLIDEAN.get(r.book, 1)
+        if r.n < first:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
             if bad:
-                fail(f"{ref}: rests on {', '.join(bad)} before {book}.{first}")
-    by_ref = {p["ref"]: p for p in facts["propositions"]}
-    for book in COMPLETE:
+                fail(f"{ref}: rests on {', '.join(bad)} before {r.book}.{first}")
+
+    # A complete book stays complete: every proposition proved, with all it carries.
+    for book in sorted(COMPLETE, key=heath.arabic):
         for n in range(1, BOOKS[book] + 1):
             ref = f"{book}.{n}"
-            if by_ref.get(ref, {}).get("status") != "proved":
+            p = by_ref.get(ref, (None, {}))[1]
+            if p.get("status") != "proved":
                 fail(f"{ref}: Book {book} is complete, but {ref} is not proved")
+            for a in p.get("attached", []):
+                if by_ref.get(a, (None, {}))[1].get("status") != "proved":
+                    fail(f"{a}: Book {book} is complete, but {a}, attached to {ref}, is not proved")
             for f in (f"figures/{book}/{n:02d}.svg", f"figures/{book}/{n:02d}-idea.svg",
                       f"mishnah/{book}/{n:02d}.md"):
                 if not (ROOT / f).exists():
                     fail(f"{ref}: {f} is missing")
 
 
-def main() -> int:
+# Facts pinned by tests/certificate_expectations.json.
+
+def check_expectations(by_ref, path: Path = EXPECTATIONS) -> None:
+    """Each expectation names an entry (`ref`) and a list `field`, and asks that the
+    list `includes` some names, `excludes` others, or holds exactly `count` names
+    beginning with `prefix`; `equals` compares any field with a value."""
+    if not path.exists():
+        fail(f"{rel(path)} is missing")
+        return
+    try:
+        data = json.loads(path.read_text())
+        expectations = data["expectations"]
+    except (json.JSONDecodeError, KeyError, TypeError) as e:
+        fail(f"{rel(path)}: expected a JSON object with a list `expectations` ({e})")
+        return
+    known = {"ref", "field", "includes", "excludes", "equals", "count", "why"}
+    for i, x in enumerate(expectations, 1):
+        label = f"{rel(path)}, expectation {i}"
+        if not isinstance(x, dict) or not {"ref", "field", "why"} <= set(x) or set(x) - known:
+            fail(f"{label}: needs `ref`, `field` and `why`, and one or more of `includes`, "
+                 "`excludes`, `equals`, `count`")
+            continue
+        ref, field, why = x["ref"], x["field"], x["why"]
+        if ref not in by_ref:
+            fail(f"{ref}: pinned by {label}, but facts.json has no such entry")
+            continue
+        value = by_ref[ref][1].get(field)
+        if "equals" in x and value != x["equals"]:
+            fail(f"{ref}: its {field} is {value!r}, not {x['equals']!r} ({label}: {why})")
+        listed = value if isinstance(value, list) else []
+        for name in x.get("includes", []):
+            if name not in listed:
+                fail(f"{ref}: its {field} should include {name} ({label}: {why})")
+        for name in x.get("excludes", []):
+            if name in listed:
+                fail(f"{ref}: its {field} should not include {name} ({label}: {why})")
+        if "count" in x:
+            prefix, want = x["count"].get("prefix", ""), x["count"].get("is")
+            got = sum(1 for v in listed if isinstance(v, str) and v.startswith(prefix))
+            if got != want:
+                fail(f"{ref}: its {field} has {got} names beginning {prefix!r}, not {want} "
+                     f"({label}: {why})")
+
+
+# How the `--` lines sit in the Lean, for the review records.
+
+FORMULA = re.compile(
+    r"\[?(?:(?:If\s+)?therefore\s+etc\.|Q\.\s*E\.\s*[DF]\.|"
+    r"\(?Being\)?\s+what\s+it\s+was\s+required\s+to\s+(?:do|prove)\.)\]?|\]", re.I)
+PORISM_LINE = re.compile(r"\[?PORISM\.")
+SENTENCE_BREAK = re.compile(r"[.;:?!\]]\s+(?=\S)")
+
+
+def _blank_remarks(text: str) -> str:
+    """`text` with every `/- … -/` remark (nested ones too) made spaces, line breaks
+    kept, and `--` line comments left as they are."""
+    out, depth, i = [], 0, 0
+    while i < len(text):
+        if not depth and text.startswith("--", i):
+            j = text.find("\n", i)
+            j = len(text) if j < 0 else j
+            out.append(text[i:j])
+            i = j
+        elif text.startswith("/-", i):
+            depth, i = depth + 1, i + 2
+            out.append("  ")
+        elif depth and text.startswith("-/", i):
+            depth, i = depth - 1, i + 2
+            out.append("  ")
+        elif depth:
+            out.append("\n" if text[i] == "\n" else " ")
+            i += 1
+        else:
+            out.append(text[i])
+            i += 1
+    return "".join(out)
+
+
+def proof_lines(src: str, n: int) -> list:
+    """Each line of `theorem PropN`'s statement and proof in the Lean file's text `src`,
+    as (line number, kind, text): kind "words" for a full-line `--` comment, its text
+    Heath's words; "lean" for a line of Lean; "blank" for a blank line or a line of a
+    `/- … -/` remark. [] if there is no such theorem."""
+    span = heath.theorem_span(src, n)
+    if span is None:
+        return []
+    first = src.count("\n", 0, span.body) + 1
+    rows = []
+    for i, line in enumerate(_blank_remarks(src[span.body:span.end]).split("\n")):
+        s = line.strip()
+        if not s:
+            rows.append((first + i, "blank", ""))
+        elif s.startswith("--"):
+            rows.append((first + i, "words", re.sub(r"^--\s?", "", s)))
+        else:
+            rows.append((first + i, "lean", s))
+    return rows
+
+
+def _plain(s: str) -> str:
+    return heath.normalize(s.replace("*", ""))
+
+
+def sentence_starts(rows) -> list:
+    """Every place a sentence of Euclid's begins in the `--` lines of `rows`
+    (`proof_lines`): the start of each line, after an opening bracket, and after . ; :
+    ? ! or ] inside a line. Each is (line number, the words from there to the end)."""
+    joined, spans = "", []
+    for ln, kind, text in rows:
+        if kind != "words":
+            continue
+        text = _plain(text)
+        if joined and text:
+            joined += " "
+        spans.append((ln, len(joined), len(joined) + len(text)))
+        joined += text
+    starts = []
+    for ln, start, end in spans:
+        places = {start} | {start + m.end() for m in SENTENCE_BREAK.finditer(joined[start:end])}
+        places |= {p + 1 for p in places if joined[p:p + 1] in ("[", "(")}
+        starts += [(ln, joined[p:]) for p in sorted(places) if p < end]
+    return starts
+
+
+class Run(NamedTuple):
+    """A run of `--` lines with no Lean beneath it: `line` is where its words begin,
+    `text` its words (whitespace made single), `lines` the line numbers they are on.
+    Formula lines and a porism paragraph are left out of both."""
+    line: int
+    text: str
+    lines: frozenset
+
+
+def uncarried_runs(src: str, n: int) -> list:
+    """The runs of `--` lines in `theorem PropN` with no Lean line after them before the
+    next run or the theorem's end. Blank lines and `/- … -/` remarks are transparent:
+    they neither end a run nor carry it. Euclid's formulas, which no Lean need carry, are
+    left out: "Q. E. D.", "Q. E. F.", "(Being) what it was required to do" (or "prove"),
+    "[If] therefore etc.", a lone "]", and a porism paragraph, which is proved as a
+    theorem of its own. A run left with no words is not returned.
+
+    In Books I-III this finds the closing sentences of the reductios of III.4, III.5,
+    III.6, III.7 and III.19, and III.16's last part: its conclusion, then the angle of
+    the semicircle and the horn-like angle."""
+    runs, current = [], None
+    for ln, kind, text in proof_lines(src, n):
+        if kind == "words":
+            if current is None:
+                current = {"lines": [], "carried": False}
+                runs.append(current)
+            current["lines"].append((ln, text))
+        elif kind == "lean" and current is not None:
+            current["carried"] = True
+            current = None
+    found = []
+    for run in (r["lines"] for r in runs if not r["carried"]):
+        words, porism = [], False
+        for ln, text in run:
+            porism = porism or bool(PORISM_LINE.match(text))
+            if porism or FORMULA.fullmatch(_plain(text)):
+                continue
+            words.append((ln, text))
+        if words:
+            found.append(Run(words[0][0], _plain(" ".join(t for _, t in words)),
+                             frozenset(ln for ln, _ in words)))
+    return found
+
+
+@functools.lru_cache(maxsize=None)
+def declared_names() -> frozenset:
+    """Every declaration under Elements/, by its full name without `Elements.`, read
+    from the source with its namespaces: what a passage's `helper` may name."""
+    decl = re.compile(
+        r"^\s*(?:@\[[^\]]*\]\s*)?(?:(?:private|protected|noncomputable|partial|unsafe)\s+)*"
+        r"(?:theorem|lemma|def|abbrev|structure|inductive|class|instance|opaque|axiom)\s+"
+        r"([^\s:({\[]+)")
+    names = set()
+    for path in (ROOT / "Elements").rglob("*.lean"):
+        stack: list[list[str]] = []
+        for line in without_comments(path.read_text()).splitlines():
+            m = re.match(r"^\s*(namespace|section|end)\b\s*(\S*)", line)
+            if m:
+                word, name = m.groups()
+                if word == "namespace":
+                    stack.append(name.split("."))
+                elif word == "section":
+                    stack.append([])
+                elif stack:
+                    stack.pop()
+                continue
+            m = decl.match(line)
+            if m:
+                name = m.group(1)
+                full = name[len("_root_."):] if name.startswith("_root_.") else \
+                    ".".join([part for frame in stack for part in frame] + [name])
+                names.add(full[len("Elements."):] if full.startswith("Elements.") else full)
+    return frozenset(names)
+
+
+def helper_exists(book: str, helper: str) -> bool:
+    """Is `helper` declared: by its name under `Elements`, under the record's book, or
+    as the end of exactly one declared name (as an `open` lets the Lean write it)?"""
+    name = helper[len("Elements."):] if helper.startswith("Elements.") else helper
+    names = declared_names()
+    if name in names or f"Book{book}.{name}" in names:
+        return True
+    return sum(1 for d in names if d.endswith("." + name)) == 1
+
+
+def check_reviews(facts, by_ref) -> None:
+    """The review records against review/SCHEMA.md, the statements in facts.json (when
+    `facts` is given) and the Lean files."""
+    try:
+        heath._toml()
+    except RuntimeError as e:
+        fail(f"review records: {e}")
+        return
+    for book, count in BOOKS.items():
+        folder = heath.REVIEW / book
+        for path in sorted(folder.glob("*.toml")) if folder.exists() else []:
+            if not re.fullmatch(r"\d\d", path.stem) or not 1 <= int(path.stem) <= count:
+                fail(f"{rel(path)}: not a proposition of Book {book}")
+        for n in range(1, count + 1):
+            check_review(facts, by_ref, book, n)
+
+
+def check_review(facts, by_ref, book: str, n: int) -> None:
+    ref = f"{book}.{n}"
+    try:
+        record = heath.load_review(book, n)
+    except heath.ReviewError as e:
+        fail(str(e))
+        return
+    where = rel(heath.review_path(book, n))
+    st, route, rv = record["statement"], record["route"], record["review"]
+    tags = record.get("representation", {}).get("tags", [])
+    if not (st["scope"] == "full" and route["kind"] == "euclid" and not tags) and "note" not in st:
+        fail(f"{where}: [statement] needs a `note`, shown beside the badge, since the "
+             f"statement is {st['scope']}, the route {route['kind']}"
+             + (f", and it carries {', '.join(tags)}" if tags else ""))
+    for c in st["companions"]:
+        if facts is not None and c not in by_ref:
+            fail(f"{where}: companion {c} has no entry in facts.json")
+    if facts is not None and "overlap" in record:
+        rule = record["overlap"]["rule"]
+        if rule not in facts.get("axiom_modules", {}):
+            fail(f"{where}: [overlap] rule {rule} is not one of the axioms in facts.json")
+
+    # The stamps: what the reviewer read is what there is now. (A facts.json with no
+    # statements has been reported once already, by check_entries.)
+    if facts is not None and ref in by_ref and "statement" in by_ref[ref][1]:
+        try:
+            want = heath.review_fingerprint(facts, ref)
+        except KeyError as e:
+            fail(f"{ref}: {e.args[0] if e.args else e}")
+        else:
+            if st["fingerprint"] != want:
+                fail(f"{ref}: its statement has changed since it was reviewed ({where} has "
+                     f"{st['fingerprint']}, facts.json gives {want}): read the record "
+                     "again, then run scripts/review_stamp.py")
+    lean = heath.lean_path(book, n)
+    if not lean.exists():
+        return
+    want = heath.file_hash(lean)
+    if rv["lean"] != want:
+        fail(f"{ref}: its Lean file has changed since it was reviewed ({where} has "
+             f"{rv['lean']}, {rel(lean)} is {want}): read the record again, then run "
+             "scripts/review_stamp.py")
+
+    # The passages begin at Euclid's sentences, and name helpers that exist.
+    src = lean.read_text()
+    starts = sentence_starts(proof_lines(src, n))
+    for i, p in enumerate(record["passage"], 1):
+        at = _plain(p["at"])
+        if not any(words.startswith(at) for _, words in starts):
+            fail(f"{where}: [[passage]] {i}: `at` {p['at']!r} does not begin a sentence of "
+                 f"the `--` lines of theorem Prop{n}")
+        if "helper" in p and not helper_exists(book, p["helper"]):
+            fail(f"{where}: [[passage]] {i}: `helper` {p['helper']} is not declared under "
+                 "Elements/")
+
+    # Every run of `--` lines with no Lean beneath it is declared: a passage begins on
+    # one of its lines.
+    for run in uncarried_runs(src, n):
+        declared = any(ln in run.lines and words.startswith(_plain(p["at"]))
+                       for p in record["passage"] for ln, words in starts)
+        if not declared:
+            first = " ".join(run.text.split()[:8])
+            fail(f"{ref}: the `--` lines from {first!r} ({rel(lean)}:{run.line}) have no "
+                 f"Lean beneath them; declare them in {where} with a [[passage]] whose "
+                 "`at` quotes where they begin")
+
+
+def check_facts(path: Path) -> None:
+    if not path.exists():
+        print(f"note: {rel(path)} not found; skipping certificate checks")
+        check_reviews(None, {})
+        return
+    facts = json.loads(path.read_text())
+    count = check_lock(facts)
+    check_axioms(facts, count)
+    by_ref = entries_by_ref(facts)
+    check_entries(facts, by_ref)
+    check_expectations(by_ref)
+    check_reviews(facts, by_ref)
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
+    parser.add_argument("--facts", type=Path, default=FACTS,
+                        help="the facts.json to check (default: the repository's)")
+    parser.add_argument("--write-lock", action="store_true",
+                        help="write Certificate/axioms.lock from facts.json, and stop")
+    args = parser.parse_args(argv)
+    if args.write_lock:
+        return write_lock(json.loads(args.facts.read_text()))
     check_fidelity()
     check_rules()
-    check_facts()
+    check_wording()
+    check_facts(args.facts)
     if errors:
         print(f"{len(errors)} problem(s):")
         for e in errors:
             print("  ✗ " + e)
         return 1
     total = sum(BOOKS.values())
-    print(f"✓ fidelity: all {total} propositions quote Heath exactly; house rules hold")
+    print(f"✓ fidelity: all {total} propositions quote Heath exactly; house rules, the "
+          f"axiom lock, the policies for every entry and the {total} review records hold")
     return 0
 
 
