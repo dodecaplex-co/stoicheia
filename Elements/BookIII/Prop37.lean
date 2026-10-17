@@ -96,7 +96,7 @@ theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
   -- therefore the angle DBF is also right.
   have hDBF_right : ∠ D B F = ∟ := h8.symm.trans hDEF_right
   -- And FB produced is a diameter;
-  /- The porism of III.16 is stated at the end of a radius, so FB needs no new endpoint. -/
+  /- Our porism of III.16 is stated at the end of a radius, so Lean need not produce FB. -/
   -- and the straight line drawn at right angles to the diameter of a circle, from its
   -- extremity, touches the circle; [III. 16, Por.]
   have hBD : Touches B D ABC :=
