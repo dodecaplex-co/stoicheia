@@ -6,13 +6,13 @@ transcription. A few house rules keep the whole thing honest and readable.
 
 ## Proving a proposition
 
-Every proposition of Books I to III is stated in Lean, with Euclid's sentences in
-place as comments and, until it is proved, a `sorry` at the end. Books I and II are
-proved; pick any 🚧 proposition in [Book III](book/III/index.md). You can prove it
-before the ones it cites are finished, because a proof only needs their statements. How
-Book III speaks of circles, contact and circumferences is in
+All 99 propositions of Books I to III are proved. Each new book starts the same way:
+every proposition is stated in Lean, with Euclid's sentences in place as comments and
+a `sorry` at the end, and marked 🚧 on the book's page. Pick any 🚧 proposition; you
+can prove it before the ones it cites are finished, because a proof only needs their
+statements. How Book III speaks of circles, contact and circumferences is in
 [its brief](docs/briefs/0004-book-III.md); Book II's rectangles and squares are in
-[Book II's](docs/briefs/0003-book-II.md). Corrections to Books I and II are welcome
+[Book II's](docs/briefs/0003-book-II.md). Corrections to Books I to III are welcome
 too: a proof, a mishnah, a figure or the transcription.
 
 1. **Euclid's words go in `--` comments, ours go in `/- … -/`.** Keep the words
