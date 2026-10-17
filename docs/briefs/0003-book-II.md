@@ -4,6 +4,8 @@
 AB, BC", "the square on AB" and "the gnomon", where the facts about them live, and how
 Book II's propositions are stated. Where it differs from the code, the code is right.*
 
+*Kept as written. Book II's current decisions are gathered in [book-II.md](book-II.md).*
+
 ## What Book II needs
 
 Book I compares figures that are drawn: "the parallelogram BL is double of the triangle
