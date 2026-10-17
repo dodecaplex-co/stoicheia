@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 320" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid III.22: opposite angles of a quadrilateral in a circle</title>
+  <rect x="0" y="0" width="400" height="320" rx="10" fill="#fbf7ee"/>
+  <circle cx="200" cy="160" r="120" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <polygon points="96.077,100 260,56.077 291.925,237.135 179.162,278.177" fill="none" stroke="#a0522d" stroke-width="2.4" stroke-linejoin="round"/>
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6">
+    <line x1="96.077" y1="100" x2="291.925" y2="237.135"/>
+    <line x1="260" y1="56.077" x2="179.162" y2="278.177"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="96.077" cy="100" r="2.6"/>
+    <circle cx="260" cy="56.077" r="2.6"/>
+    <circle cx="291.925" cy="237.135" r="2.6"/>
+    <circle cx="179.162" cy="278.177" r="2.6"/>
+    <text x="76" y="94">A</text>
+    <text x="264" y="43">B</text>
+    <text x="302" y="251">C</text>
+    <text x="173" y="302">D</text>
+  </g>
+</svg>
