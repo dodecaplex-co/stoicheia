@@ -1,0 +1,13 @@
+[statement]
+scope = "full"
+note = "The two rectangles are added in the order of Euclid's \"I say\"; his conclusion names them the other way round."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

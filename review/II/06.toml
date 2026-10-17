@@ -1,0 +1,13 @@
+[statement]
+scope = "full"
+note = "D lies beyond B, as Euclid's setting-out puts it; a straight line added beyond A is the same case with A and B exchanged."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

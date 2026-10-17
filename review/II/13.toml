@@ -1,0 +1,17 @@
+[statement]
+scope = "full"
+note = "Asks for acute angles at B and C and nothing at A, so it says more than Euclid's acute-angled triangles; that D falls within CB is proved."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["hypothesis-dropped"]
+note = "Euclid's enunciation speaks of acute-angled triangles, all three angles acute. The statement leaves out the angle at A, which plays no part; the acute angle at C keeps the foot D within CB, as \"cut off within\" and II.7 need. The perpendicular from A and its foot D on BC are given."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

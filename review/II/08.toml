@@ -1,0 +1,13 @@
+[statement]
+scope = "full"
+note = "The square on AB, BC \"as on one straight line\" is the square on AD, for every D beyond B with BD equal to CB."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

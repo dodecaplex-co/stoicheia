@@ -1,0 +1,20 @@
+[statement]
+scope = "restricted"
+hypotheses = [
+  "BC is cut at exactly two points, D and E, in that order, into three segments (`hBDE : Between B D E`, `hDEC : Between D E C`)",
+]
+note = "Proved for BC cut at two points, D and E, into three segments, as Euclid's setting-out has it; his enunciation allows any number of segments."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["three-pieces"]
+note = "The straight line A is named by its two ends, A₁ and A₂. A straight line cut at one point, into two segments, is not an instance of the statement, and neither is one cut into four or more."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"
