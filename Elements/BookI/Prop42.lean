@@ -54,7 +54,7 @@ theorem Prop42 {A B C D₁ D D₂ : Point} (hABC : Triangle A B C) (hD : Triangl
     OnRay.of_sameSideOf ((SameSideOf.of_line hEC hE hC hFA).trans hF₁.symm)
       ⟨EF, hE_EF, hF₁_EF, hF_EF⟩ hFE
   -- through C let CG be drawn parallel to EF.
-  /- It meets AG at G (`Prop31.parallelogram`, which cites I.30 for the meeting). -/
+  /- It meets AG at G (`Prop31.parallelogram`). -/
   obtain ⟨G, hG_AG, hpar⟩ := Prop31.parallelogram hAG hF_AG hE hC hEC
   -- Then FECG is a parallelogram.
   have hFECG : Parallelogram F E C G := hpar

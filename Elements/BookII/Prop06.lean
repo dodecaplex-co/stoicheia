@@ -34,7 +34,6 @@ theorem Prop6 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
   -- I say that the rectangle contained by AD, DB together with the square on CB is equal to
   -- the square on CD.
   -- For let the square CEFD be described on CD, [I. 46]
-  /- An unlettered point chooses the side on which the square stands. -/
   obtain ⟨X, hX, -⟩ := exists_off_line hCD []
   obtain ⟨E, F, hsq, hE, hF⟩ := BookI.Prop46 hCD hX
   obtain ⟨hp, hCEFD⟩ := Square.described hsq hE hF

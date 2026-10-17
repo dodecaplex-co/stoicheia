@@ -36,8 +36,10 @@ theorem Prop9 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
   -- For let a straight line AB be cut into equal segments at C, and into unequal segments at
   -- D;
   -- I say that the squares on AD, DB are double of the squares on AC, CD.
-  /- Euclid's figure puts `D` between `C` and `B`; the other side is the same with `A`
-     and `B` exchanged. -/
+  /- As in II.5, D may fall on either side of C. Euclid's figure puts it between C
+     and B, and we prove that case for any letters; the other is the same with A and B
+     exchanged. Half a right angle is an angle that, added to itself, makes a right
+     angle, and two such halves are equal (`Magnitude.eq_of_add_self_eq`). -/
   have euclid : ∀ {A B C D : Point}, Between A C B → ‖A C‖ = ‖C B‖ → Between C D B →
       sq A D + sq D B = sq A C + sq C D + (sq A C + sq C D) := by
     intro A B C D hACB hAC hCDB
@@ -250,6 +252,8 @@ theorem Prop9 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
     have hAFdouble : sq A F = sq A C + sq C D + (sq A C + sq C D) := h47c.trans h5
     -- But the squares on AD, DF are equal to the square on AF, for the angle at D is
     -- right; [I. 47]
+    /- "The angle at D" is two angles: FDB, which I.29 makes right, and ADF beside
+       it, which I.47 needs here; an angle beside a right angle is right. -/
     have hADF : ∠ A D F = ∟ := by
       have := adjacent_eq_of_right hB_AB hA_AB (between_symm hADB) hF_AB hBDF
       rw [angle_symm hDA.symm hDF.symm, ← this, hBDF]
@@ -263,7 +267,7 @@ theorem Prop9 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
     -- therefore the squares on AD, DB are double of the squares on AC, CD.
     rw [← sq_congr hDF_DB]; exact hADDF
   -- Therefore etc.
-  /- Otherwise `D` lies between `A` and `C`: exchange `A` and `B`. -/
+  /- Otherwise D lies between A and C: exchange A and B. -/
   have hCray : OnRay C A B := OnRay.of_between hACB
   have hDray : OnRay D A B := OnRay.of_between hADB
   rcases lt_trichotomy ‖A D‖ ‖A C‖ with h | h | h

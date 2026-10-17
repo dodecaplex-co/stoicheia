@@ -9,10 +9,10 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 I.14 is the converse of I.13, and Euclid proves it by *reductio ad absurdum*.
-He supposes that `BD` is not in a straight line with `CB`, produces `CB` to
-`E`, and finds the angle `ABE` equal to the angle `ABD`, "the less to the
-greater". In Lean, once `E` is there, Euclid's supposition is that `D` is off
-the ray from `B` through `E`, and the argument runs as a sub-proof under it,
+He supposes that BD is not in a straight line with CB, produces CB to
+E, and finds the angle ABE equal to the angle ABD, "the less to the
+greater". In Lean, once E is there, Euclid's supposition is that D is off
+the ray from B through E, and the argument runs as a sub-proof under it,
 as in I.6.
 -/
 
@@ -55,12 +55,8 @@ theorem Prop14 {A B C D : Point} (hCD : OppositeSidesOf C D A B) (h : ∠ A B C 
       rw [← angle_symm hA_B hC_B]
       exact h
     -- therefore the angles CBA, ABE are equal to the angles CBA, ABD. [Post. 4 and C.N. 1]
-    /- Todhunter's point, which Heath reports: C.N. 1 is not enough by itself,
-       for the two right angles of I.13 need not be the two of our hypothesis,
-       and it is Postulate 4 that makes all right angles equal. In Lean,
-       Postulate 4 has done its work before we get here: every right angle is
-       written with the one name `∟`, and I.13 hands its two back as `∟ + ∟`.
-       So the step itself is C.N. 1 alone. -/
+    /- Post. 4 has done its work already, as in I.11: I.13 hands its two right
+       angles back as `∟ + ∟`. So the step itself is C.N. 1 alone. -/
     have hsum : ∠ C B A + ∠ A B E = ∠ C B A + ∠ A B D := CommonNotion1 hCBA_ABE hCBA_ABD
     -- Let the angle CBA be subtracted from each;
     -- therefore the remaining angle ABE is equal to the remaining angle ABD, [C.N. 3]

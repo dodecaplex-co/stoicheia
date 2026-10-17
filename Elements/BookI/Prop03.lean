@@ -9,7 +9,7 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 Euclid names the lesser straight line by a single letter, C. In Lean it is the
-finite straight line from `C₁` to `C₂`.
+finite straight line from C₁ to C₂.
 -/
 
 namespace Elements.BookI
@@ -28,7 +28,7 @@ theorem Prop3 {A B C₁ C₂ : Point} (hC : C₁ ≠ C₂) (h : ‖C₁ C₂‖ 
   have hAD' : A ≠ D := ne_of_len_eq hAD hC
   -- and with centre A and distance AD let the circle DEF be described. [Post. 3]
   obtain ⟨DEF, hA_DEF, hD_DEF⟩ := Postulate3 A D hAD'
-  /- Euclid doesn't say where the circle DEF meets AB. B lies outside it, since
+  /- Euclid does not say where the circle DEF meets AB. B lies outside it, since
      AB is the greater, and A, the centre, lies inside; so the straight line AB
      cuts the circle at a point E between A and B (System E, Intersections 4). -/
   obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB

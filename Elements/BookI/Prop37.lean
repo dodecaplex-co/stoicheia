@@ -13,10 +13,10 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 "In the same parallels AD, BC": two parallel straight lines, one through the
-vertices `A` and `D`, the other through the base `BC`, as in I.38. The two vertices
+vertices A and D, the other through the base BC, as in I.38. The two vertices
 may be one point, and then the two triangles are one. So under "let AD be produced
 in both directions to E, F", "AD" is the parallel through the vertices itself, and
-`E` and `F` are taken on it.
+E and F are taken on it.
 -/
 
 namespace Elements.BookI
@@ -33,7 +33,7 @@ theorem Prop37 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
   -- Let AD be produced in both directions to E, F; through B let BE be drawn parallel to
   -- CA, [I. 31] and through C let CF be drawn parallel to BD. [I. 31]
   /- E and F are where the parallels BE and CF meet the whole straight line AD
-     (`Prop31.parallelogram`, which cites I.30 for the meeting). -/
+     (`Prop31.parallelogram`). -/
   obtain ⟨E, hE, hACBE⟩ := Prop31.parallelogram hAD_BC hA hC hB hABC.ne₂₃.symm
   obtain ⟨F, hF, hDBCF⟩ := Prop31.parallelogram hAD_BC hD hB hC hDBC.ne₂₃
   -- Then each of the figures EBCA, DBCF is a parallelogram; and they are equal, for they are

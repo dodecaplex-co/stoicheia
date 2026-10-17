@@ -24,18 +24,18 @@ namespace Elements.BookI
 
 open Tacit
 
-/-- Where the squares fall. If the angle `ABC` is less than a right angle, and `BD`
-stands at right angles to `BC` on the other side of it from `A`, then `C` lies within
-the angle `ABD`: on `A`'s side of `BD`, and on `D`'s side of `BA`. Euclid reads this
-off his figure when he adds the angle `ABC` to the right angles `DBC`, `FBA`, and
-again when he takes the parallelograms `BL`, `CL` to make up the square `BDEC`.
+/-- Where the squares fall. If the angle ABC is less than a right angle, and BD
+stands at right angles to BC on the other side of it from A, then C lies within
+the angle ABD: on A's side of BD, and on D's side of BA. Euclid reads this
+off his figure when he adds the angle ABC to the right angles DBC, FBA, and
+again when he takes the parallelograms BL, CL to make up the square BDEC.
 
-The straight line `AD` crosses `BC`, since it joins points on either side of it. Not
-at `B`, for then the angles `ABC`, `CBD` would make two right angles [I. 13], and
-`CBD` alone is right. Not beyond `B` from `C`, for then the angle `ABD` would be
-greater than two right angles: the angle on the far side of `AB` from `C` is
+The straight line AD crosses BC, since it joins points on either side of it. Not
+at B, for then the angles ABC, CBD would make two right angles [I. 13], and
+CBD alone is right. Not beyond B from C, for then the angle ABD would be
+greater than two right angles: the angle on the far side of AB from C is
 greater than right [I. 13], and to it is added the right angle on the far side of
-`BD`. So it crosses on the ray from `B` through `C`, and `C` lies where the crossing
+BD. So it crosses on the ray from B through C, and C lies where the crossing
 point does. [I. 13] -/
 theorem Prop47.within {A B C D : Point} (hABC : Triangle A B C) (hD : OppositeSidesOf D A B C)
     (hCBD : ∠ C B D = ∟) (hacute : ∠ A B C < ∟) :
@@ -44,7 +44,7 @@ theorem Prop47.within {A B C D : Point} (hABC : Triangle A B C) (hD : OppositeSi
   have hop : OppositeSides A D BC := hD.symm.oppositeSides hB_BC hC_BC
   have hA_BC : ¬ OnLine A BC := hop.1
   have hD_BC : ¬ OnLine D BC := hop.2.1
-  /- `AD` crosses `BC` at a point `Y`. -/
+  /- AD crosses BC at a point Y. -/
   obtain ⟨Y, hY_BC, hAYD⟩ := OppositeSides.exists_between hop
   obtain ⟨AD, hA_AD, hD_AD⟩ := Postulate1 A D (ne_of_between_ends hAYD)
   have hY_AD : OnLine Y AD := on_line_of_between_ends hAYD hA_AD hD_AD
@@ -53,7 +53,8 @@ theorem Prop47.within {A B C D : Point} (hABC : Triangle A B C) (hD : OppositeSi
   obtain ⟨BD, hB_BD, hD_BD⟩ := Postulate1 B D hBD
   obtain ⟨BA, hB_BA, hA_BA⟩ := Postulate1 B A hBA
   by_cases hYB : Y = B
-  · /- Not at `B`: the angles `ABC`, `CBD` would make two right angles. [I. 13] -/
+  · /- It does not cross at B, for then the angles ABC, CBD would make two right
+       angles. [I. 13] -/
     exfalso
     rw [hYB] at hAYD hY_AD
     have hC : ¬ Collinear A D C := fun ⟨K, hA_K, hD_K, hC_K⟩ => by
@@ -70,7 +71,7 @@ theorem Prop47.within {A B C D : Point} (hABC : Triangle A B C) (hD : OppositeSi
     have hY_BA : ¬ OnLine Y BA := fun hY =>
       hA_BC ((line_unique hYB hY hB_BA hY_BC hB_BC) ▸ hA_BA)
     by_cases hYBC : Between Y B C
-    · /- Not beyond `B`: the angle `ABD` would be greater than two right angles. -/
+    · /- Nor beyond B, for then the angle ABD would be greater than two right angles. -/
       exfalso
       have hADB : Triangle A D B := fun ⟨K, hA_K, hD_K, hB_K⟩ =>
         hB_AD ((line_unique (ne_of_between_ends hAYD) hA_K hD_K hA_AD hD_AD) ▸ hB_K)
@@ -96,7 +97,7 @@ theorem Prop47.within {A B C D : Point} (hABC : Triangle A B C) (hD : OppositeSi
         rw [hsum, hYBD]
         exact add_lt_add_right ∟ hgt
       exact angle_le_two_right A B D h₄
-    · /- So `Y` lies on the ray from `B` through `C`, and within the angle `ABD`. -/
+    · /- So Y lies on the ray from B through C, and within the angle ABD. -/
       have hray : OnRay C B Y := OnRay.symm ⟨hABC.ne₂₃, hYB, ⟨BC, hB_BC, hC_BC, hY_BC⟩, hYBC⟩
       have h₁ : SameSideOf Y A B D :=
         SameSideOf.of_line hBD hB_BD hD_BD (pasch2 (between_symm hAYD) hD_BD hY_BD)
@@ -160,9 +161,7 @@ theorem Prop47 {A B C D E F G H K : Point} (hABC : Triangle A B C) (hright : ∠
     not_on_line_of_same_side (same_side_symm (hBA_CE.sameSide hC_CE hE_CE))
   have hAL_CE : Parallel AL CE :=
     Prop30.parallel hAL_BD hBD_CE.symm (fun e => hA_CE (e ▸ hA_AL))
-  /- The parallel meets DE at L and BC at its unlettered foot. A straight
-     line meeting one of two parallels meets the other:
-     `Prop30.meet`, as Heath reports Proclus drawing it under I.31. -/
+  /- The parallel meets DE at L and BC at its unlettered foot (`Prop30.meet`). -/
   have hDE_BD : DE ≠ BD := fun e => hDE_BC.not_onLine (e ▸ hB_BD) hB_BC
   obtain ⟨L, hL_DE, hL_AL⟩ := Prop30.meet hAL_BD hD_BD hD_DE hDE_BD
   have hBC_BD : BC ≠ BD := fun e => hD.triangle.off_line hB_BC hC_BC (e ▸ hD_BD)

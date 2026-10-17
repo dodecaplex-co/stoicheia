@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.14 at a glance</title>
-  <desc>Any straight-sided figure can be remade as a rectangle, and any rectangle as a square (all yellow): lay its short side (red) on beyond the long one, draw the semicircle, and the upright at the join is the square's side.</desc>
+  <desc>A straight-sided figure can be remade as a rectangle, and the rectangle as a square (all yellow): lay its short side (red) on beyond the long one, draw the semicircle (blue), and the upright at the join is the square's side.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="33.0,182.0 57.0,97.0 131.0,161.0 127.0,226.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
   <polygon points="163.1,223.5 331.1,223.5 331.1,181.5 163.1,181.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>

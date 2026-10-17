@@ -8,18 +8,18 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 The statement says a little more than Euclid's: the triangle can be put on
-whichever side of `AB` we please, the side of a given point `P`. (If `P` is on
-`AB`, no side is asked for.) Euclid uses this without saying so in I.9, where
-the triangle must fall on the side of `DE` away from `A`, and in I.11.
+whichever side of AB we please, the side of a given point P. (If P is on
+AB, no side is asked for.) Euclid uses this without saying so in I.9, where
+the triangle must fall on the side of DE away from A, and in I.11.
 -/
 
 namespace Elements.BookI
 
 open Tacit
 
-/-- What Euclid sees in the figure but never says: the point `C`, being as far
-from `A` and from `B` as they are from each other, is not on the straight line
-`AB`. So `ABC` really is a triangle. -/
+/-- What Euclid sees in the figure but never says: the point C, being as far
+from A and from B as they are from each other, is not on the straight line
+AB. So ABC really is a triangle. -/
 theorem Prop1.figure {A B C : Point} (hAB : A ≠ B) (hCA : ‖C A‖ = ‖A B‖)
     (hCB : ‖C B‖ = ‖A B‖) : Triangle A B C := by
   rintro ⟨L, hA, hB, hC⟩
@@ -54,10 +54,10 @@ theorem Prop1 (A B : Point) (hAB : A ≠ B) (P : Point) :
   -- straight lines CA, CB be joined. [Post. 1]
   /- Euclid never says why the circles cut one another. Each passes through the
      other's centre, and a centre lies inside its circle, so they must cross
-     (System E, Intersection rule 5). They cross on both sides of AB, so C may
+     (System E, Intersection 5). They cross on both sides of AB, so C may
      be taken on whichever side we please: on P's side, when P is off AB
-     (Intersections 8). Lean needs only the point C; the straight lines CA, CB
-     are drawn for the eye. -/
+     (System E, Intersections 8). Lean needs only the point C; the straight
+     lines CA, CB are drawn for the eye. -/
   have hmeet := circles_meet hB_BCD (centre_inside hA_BCD) (centre_inside hB_ACE) hA_ACE
   obtain ⟨C, hC_BCD, hC_ACE, hside⟩ : ∃ C : Point, OnCircle C BCD ∧ OnCircle C ACE ∧
       (¬ Collinear A B P → SameSideOf C P A B) := by

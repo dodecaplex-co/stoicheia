@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.1 at a glance</title>
-  <desc>Each side of the triangle is a radius of a circle, and the base is a radius of both, so all three sides are equal.</desc>
+  <desc>Each side of the triangle is a radius of the circle in its colour (blue, red), and the base, drawn in both colours, is a radius of both. So all three sides are equal.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="150" cy="150" r="100" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
   <circle cx="250" cy="150" r="100" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>

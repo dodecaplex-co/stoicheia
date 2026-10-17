@@ -32,8 +32,8 @@ theorem Prop40 {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Triangle C D 
   /- The parallel drawn through A will pass through D, and so be AD. -/
   -- I say that AD is parallel to BE.
   -- For, if not, let AF be drawn through A parallel to BE [I. 31], and let FE be joined.
-  /- The parallel through A is the straight line K (`Prop31.line`). F is where it
-     meets CD, by I.30 (`Prop30.meet`). -/
+  /- The parallel through A is the straight line K (`Prop31.line`), and F is where
+     it meets CD (`Prop30.meet`). -/
   obtain ⟨K, hA_K, hKBE⟩ := Prop31.line hA_BE
   obtain ⟨CD, hC_CD, hD_CD⟩ := Postulate1 C D hCDE.ne₁₂
   obtain ⟨F, hF_CD, hF_K⟩ :=
@@ -60,8 +60,7 @@ theorem Prop40 {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Triangle C D 
      the whole. Either way only D itself will do (`OnRay.eq_of_area_eq`). -/
   have hFD : F = D := hray.eq_of_area_eq hCDE.bac h1.symm
   -- Therefore AF is not parallel to BE.
-  /- A parallel meeting CD away from D has been excluded: the parallel
-     through A must pass through D itself. -/
+  /- So the parallel through A meets CD at D itself, and is AD. -/
   have hD_K : OnLine D K := hFD ▸ hF_K
   -- Similarly we can prove that neither is any other straight line except AD; therefore AD is
   -- parallel to BE.

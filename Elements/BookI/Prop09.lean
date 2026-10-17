@@ -13,21 +13,21 @@ Euclid's text, in Heath's translation: [`heath/I/09.md`](../../heath/I/09.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-"Bisected by the straight line AF" says two things: `AF` falls within the angle
-`BAC` (`F` is on `C`'s side of `AB` and on `B`'s side of `AC`), and it cuts the
-angle into two equal angles `BAF`, `FAC`. I.10 needs the first: it is what makes
-the bisector of the angle `ACB` meet `AB` between `A` and `B` (`crossbar` in
+"Bisected by the straight line AF" says two things: AF falls within the angle
+BAC (F is on C's side of AB and on B's side of AC), and it cuts the
+angle into two equal angles BAF, FAC. I.10 needs the first: it is what makes
+the bisector of the angle ACB meet AB between A and B (`crossbar` in
 Book Zero).
 
-For `AF` to fall within the angle, the equilateral triangle on `DE` must be put
-on the side of `DE` away from `A`, which Euclid does not say; I.1 lets us choose
+For AF to fall within the angle, the equilateral triangle on DE must be put
+on the side of DE away from A, which Euclid does not say; I.1 lets us choose
 the side.
 
-Even then, Euclid reads off his figure that `F` falls within the angle `BAC`.
+Even then, Euclid reads off his figure that F falls within the angle BAC.
 Proclus imagined an objector who doubted it, and answered him with the second
 part of I.5 (Heath, vol. 1, p. 265). The lemmas before the theorem answer the
-same objector in Lean: `Prop9.crossing` finds where `AF` crosses `DE`, between
-`D` and `E`, and `Prop9.side` reads off the sides of `AB` and `AC` from there.
+same objector in Lean: `Prop9.crossing` finds where AF crosses DE, between
+D and E, and `Prop9.side` reads off the sides of AB and AC from there.
 -/
 
 namespace Elements.BookI
@@ -36,13 +36,13 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- Proclus' objector, first case: `F` might fall on `AB` itself, beyond `D`. Proclus
-answers him with the second part of I.5 (Heath, vol. 1, p. 265). Since `FD` is equal
-to `FE`, the angle `FDE` is equal to the angle `FED` [I. 5]. Since `AD` is equal to
-`AE`, the angles `EDF`, `DEC` under the base of the triangle `ADE` are equal [I. 5].
-So the angle `DEF` is equal to the angle `DEC`, with `F` and `C` on the same side of
-`DE`; then `F` lies on the straight line `EC` (`onRay_of_angle_eq`), that is, on `AC`.
-But `AB` and `AC` meet only at `A`. -/
+/-- Proclus' objector has a first case: F might fall on AB itself, beyond D. Proclus
+answers him with the second part of I.5 (Heath, vol. 1, p. 265). Since FD is equal
+to FE, the angle FDE is equal to the angle FED [I. 5]. Since AD is equal to
+AE, the angles EDF, DEC under the base of the triangle ADE are equal [I. 5].
+So the angle DEF is equal to the angle DEC, with F and C on the same side of
+DE; then F lies on the straight line EC (`onRay_of_angle_eq`), that is, on AC.
+But AB and AC meet only at A. -/
 theorem Prop9.not_on_arm {A B C D E F : Point} (hBAC : Triangle B A C) (hADB : Between A D B)
     (hAEC : Between A E C) (hAD_AE : ‖A D‖ = ‖A E‖) (hFD_FE : ‖F D‖ = ‖F E‖)
     (hF : OppositeSidesOf F A D E) : ¬ Between A D F := by
@@ -58,15 +58,15 @@ theorem Prop9.not_on_arm {A B C D E F : Point} (hBAC : Triangle B A C) (hADB : B
   have hFDE : Triangle F D E := hF.triangle.cab
   have hFD : F ≠ D := hFDE.ne₁₂
   have hFE : F ≠ E := hFDE.ne₁₃
-  /- Since `FD` is equal to `FE`, the angle `FDE` is equal to the angle `FED`. [I. 5] -/
+  /- Since FD is equal to FE, the angle FDE is equal to the angle FED. [I. 5] -/
   have hbase : ∠ F D E = ∠ F E D := Prop5.base hFDE hFD_FE
-  /- Since `AD` is equal to `AE`, and `AD`, `AE` are produced to `F`, `C`, the angles
-     `EDF`, `DEC` under the base are equal. [I. 5] -/
+  /- Since AD is equal to AE, and AD, AE are produced to F, C, the angles
+     EDF, DEC under the base are equal. [I. 5] -/
   have hunder : ∠ E D F = ∠ D E C := (Prop5 hADE hAD_AE hADF hAEC).2
   have hDEC_DEF : ∠ D E C = ∠ D E F :=
     hunder.symm.trans ((angle_symm hDE.symm hFD).trans (hbase.trans (angle_symm hFE hDE)))
-  /- `C`, beyond `E` from `A`, is on the other side of `DE` from `A` (Pasch 3), as `F` is;
-     so `C` and `F` are on the same side of `DE`. -/
+  /- C, beyond E from A, is on the other side of DE from A (Pasch 3), as F is;
+     so C and F are on the same side of DE. -/
   have hCE : C ≠ E := ne_of_between (between_symm hAEC)
   have hC_DE : ¬ OnLine C DE := fun hC =>
     hFA.2.1 ((line_unique hCE hC hE_DE hC_AC hE_AC) ▸ hA_AC)
@@ -75,18 +75,18 @@ theorem Prop9.not_on_arm {A B C D E F : Point} (hBAC : Triangle B A C) (hADB : B
       (hF.symm.oppositeSides hD_DE hE_DE)
   have hray : OnRay C E F :=
     onRay_of_angle_eq (SameSideOf.of_line hDE.symm hE_DE hD_DE hCF) hDEC_DEF
-  /- So `F` is on `AC`, and on `AB`; and these meet only at `A`. -/
+  /- So F is on AC, and on AB; and these meet only at A. -/
   have hF_AC : OnLine F AC := hray.symm.onLine hE_AC hC_AC
   have hF_AB : OnLine F AB := on_line_of_between hADF hA_AB hD_AB
   have hAB_AC : AB = AC := line_unique (ne_of_between_ends hADF) hA_AB hF_AB hA_AC hF_AC
   exact hBAC.off_line hB_AB hA_AB (hAB_AC ▸ hC_AC)
 
-/-- Where the straight line `AF` crosses `DE`. Since `F` is on the other side of `DE`
-from `A`, the straight line `AF` crosses `DE` at a point `M` (Intersection 1, Pasch
-4). And `M` falls between `D` and `E`. It is not `D` or `E`: that is Proclus' first
-case, `Prop9.not_on_arm`. Nor is it beyond `D` or beyond `E`: then `D` and `E` would
-be on the same side of `AF`, and I.7 would make them one point, since `AD` is equal
-to `AE` and `FD` to `FE`. -/
+/-- Where does the straight line AF cross DE? Since F is on the other side of DE
+from A, the straight line AF crosses DE at a point M (Intersection 1, Pasch
+4). And M falls between D and E. It is not D or E: that is Proclus' first
+case, `Prop9.not_on_arm`. Nor is it beyond D or beyond E: then D and E would
+be on the same side of AF, and I.7 would make them one point, since AD is equal
+to AE and FD to FE. -/
 theorem Prop9.crossing {A B C D E F : Point} (hBAC : Triangle B A C) (hADB : Between A D B)
     (hAEC : Between A E C) (hAD_AE : ‖A D‖ = ‖A E‖) (hFD_FE : ‖F D‖ = ‖F E‖)
     (hF : OppositeSidesOf F A D E) : ∃ M : Point, Between A M F ∧ Between D M E := by
@@ -104,7 +104,7 @@ theorem Prop9.crossing {A B C D E F : Point} (hBAC : Triangle B A C) (hADB : Bet
   have hAMF : Between A M F :=
     pasch4 hLN hM_L hM_N hA_N hF_N hAF hMA.symm hMF.symm (fun h => hFA.2.2 (same_side_symm h))
   refine ⟨M, hAMF, ?_⟩
-  /- `M` is not `D`, nor `E`: Proclus' first case, on either arm. -/
+  /- M is not D, nor E: Proclus' first case, on either arm. -/
   have hDM : D ≠ M := by
     intro h
     rw [← h] at hAMF
@@ -113,7 +113,7 @@ theorem Prop9.crossing {A B C D E F : Point} (hBAC : Triangle B A C) (hADB : Bet
     intro h
     rw [h] at hAMF
     exact Prop9.not_on_arm hBAC.cba hAEC hADB hAD_AE.symm hFD_FE.symm hF.swap hAMF
-  /- `D` and `E` are not on the same side of `AF`, or I.7 would make them one point. -/
+  /- D and E are not on the same side of AF, or I.7 would make them one point. -/
   have hD_N : ¬ OnLine D N := fun hD => hLN (line_unique hDM hD_L hM_L hD hM_N)
   have hE_N : ¬ OnLine E N := fun hE => hLN (line_unique hME.symm hE_L hM_L hE hM_N)
   have hI7 : ¬ SameSide D E N := fun hs =>
@@ -124,9 +124,9 @@ theorem Prop9.crossing {A B C D E F : Point} (hBAC : Triangle B A C) (hADB : Bet
   · exact absurd (pasch2 h hM_N hD_N) hI7
   · exact absurd (same_side_symm (pasch2 (between_symm h) hM_N hE_N)) hI7
 
-/-- From where `AF` crosses `DE`, the sides of `AB`: `M`, between `D` and `E`, is on
-`E`'s side of `AB`, and `F`, beyond `M` from `A`, is on `M`'s side; and `E`, between
-`A` and `C`, is on `C`'s side (Pasch 2). So `F` is on `C`'s side of `AB`. -/
+/-- Where AF crosses DE tells the side of AB: M, between D and E, is on
+E's side of AB, and F, beyond M from A, is on M's side; and E, between
+A and C, is on C's side (Pasch 2). So F is on C's side of AB. -/
 theorem Prop9.side {A B C D E F M : Point} (hBAC : Triangle B A C) (hADB : Between A D B)
     (hAEC : Between A E C) (hDME : Between D M E) (hAMF : Between A M F) :
     SameSideOf F C A B := by

@@ -9,12 +9,12 @@ Euclid's text, in Heath's translation: [`heath/I/12.md`](../../heath/I/12.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-Euclid proves that the angles `CHG` and `CHE` are right. The statement asks for
+Euclid proves that the angles CHG and CHE are right. The statement asks for
 more, as "perpendicular to the infinite straight line AB" does: a right angle
-with every other point of `AB`. Book Zero's `OnRay.cases_of_between` closes the
-gap: every point of the straight line other than `H` lies on the ray from `H`
-through `G` or on the ray from `H` through `E`. This is why `CH`, making right
-angles with `HG` and with `HE`, makes a right angle with the whole of `AB`.
+with every other point of AB. Book Zero's `OnRay.cases_of_between` closes the
+gap: every point of the straight line other than H lies on the ray from H
+through G or on the ray from H through E. This is why CH, making right
+angles with HG and with HE, makes a right angle with the whole of AB.
 -/
 
 namespace Elements.BookI
@@ -35,8 +35,8 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
   -- which is not on it, a perpendicular straight line.
   -- For let a point D be taken at random on the other side of the straight line AB, and with
   -- centre C and distance CD let the circle EFG be described; [Post. 3]
-  /- "At random on the other side" is System E's Points rule 6, which Book Zero
-     gives as `exists_oppositeSidesOf`. D is not C, since C is not on the other
+  /- "At random on the other side" is System E, Points 6, which Book Zero gives
+     as `exists_oppositeSidesOf`. D is not C, since C is not on the other
      side of AB from itself. -/
   obtain ⟨D, hDC, -⟩ := exists_oppositeSidesOf hABC []
   have hCD_AB : OppositeSides C D AB := hDC.symm.oppositeSides hA_AB hB_AB
@@ -85,8 +85,8 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
   -- another, each of the equal angles is right, and the straight line standing on the other is
   -- called a perpendicular to that on which it stands. [Def. 10]
   /- Definition 10 is `IsRightAngle`: the angle GHC is right, its neighbour being
-     CHE, and so is EHC, its neighbour being CHG. Postulate 4, that all right
-     angles are equal, then says each of them is the right angle `∟`. -/
+     CHE, and so is EHC, its neighbour being CHG. Each is then the right angle `∟`
+     (Post. 4, as in I.11). -/
   have hGHC_right : IsRightAngle G H C :=
     ⟨E, hGHE, hHGC.bac, hGHC_EHC.trans (angle_symm hHE.symm hCH)⟩
   have hEHC_right : IsRightAngle E H C :=

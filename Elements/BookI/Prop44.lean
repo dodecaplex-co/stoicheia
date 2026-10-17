@@ -31,12 +31,12 @@ open Tacit
 /-- "Let it be placed so that BE is in a straight line with AB." Euclid moves the
 parallelogram made by I.42 into place without a word, as if picking it up. Lean
 cannot move a figure, so it builds an equal one where Euclid puts his. Given the
-parallelogram `PQRS`, with its angle `RQP`, and a straight line `AB`: produce `AB` to
-`E`, making `BE` equal to `QR` [I. 2]; at `B` on `BE` construct the angle `EBG` equal
-to the angle `RQP`, on the side of `X` [I. 23], with `BG` equal to `QP` [I. 2];
-through `G` and `E` draw parallels to `BE` and `BG` [I. 31], meeting at `F`
-(`Prop30.meet`). Then `BEFG` is a parallelogram, and it is equal to `PQRS`, for each
-is double a triangle [I. 34], and the triangles `GBE` and `PQR` are equal [I. 4]. -/
+parallelogram PQRS, with its angle RQP, and a straight line AB: produce AB to
+E, making BE equal to QR [I. 2]; at B on BE construct the angle EBG equal
+to the angle RQP, on the side of X [I. 23], with BG equal to QP [I. 2];
+through G and E draw parallels to BE and BG [I. 31], meeting at F
+(`Prop30.meet`). Then BEFG is a parallelogram, and it is equal to PQRS, for each
+is double a triangle [I. 34], and the triangles GBE and PQR are equal [I. 4]. -/
 theorem Prop44.place {A B X P Q R S : Point} (hAB : A ≠ B) (hX : ¬ Collinear A B X)
     (h : Parallelogram P Q R S) :
     ∃ E F G : Point, Between A B E ∧ SameSideOf G X A B ∧ Parallelogram B E F G ∧
@@ -44,7 +44,7 @@ theorem Prop44.place {A B X P Q R S : Point} (hAB : A ≠ B) (hX : ¬ Collinear 
   have hPQR : Triangle P Q R := h.triangle
   obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
   have hX_AB : ¬ OnLine X AB := fun hX' => hX ⟨AB, hA_AB, hB_AB, hX'⟩
-  /- Produce `AB` to `E`, with `BE` equal to `QR`. -/
+  /- Produce AB to E, with BE equal to QR. -/
   obtain ⟨E₁, hABE₁⟩ := produce hAB
   obtain ⟨K₁, hBK₁⟩ := Prop2 B Q R hPQR.ne₂₃
   obtain ⟨E, hE, hBE⟩ := OnRay.exists_len_eq (ne_of_len_eq hBK₁ hPQR.ne₂₃)
@@ -53,8 +53,8 @@ theorem Prop44.place {A B X P Q R S : Point} (hAB : A ≠ B) (hX : ¬ Collinear 
   have hBE_QR : ‖B E‖ = ‖Q R‖ := hBE.trans hBK₁
   have hE_AB : OnLine E AB := on_line_of_between hABE hA_AB hB_AB
   have hBE_ne : B ≠ E := (ne_of_between (between_symm hABE)).symm
-  /- At `B` on `BE`, the angle `EBG` equal to the angle `RQP`, on `X`'s side, with `BG`
-     equal to `QP`. -/
+  /- At B on BE, the angle EBG equal to the angle RQP, on X's side, with BG
+     equal to QP. -/
   have hX' : ¬ Collinear B E X := fun ⟨K, hB_K, hE_K, hX_K⟩ =>
     hX_AB ((line_unique hBE_ne hB_K hE_K hB_AB hE_AB) ▸ hX_K)
   obtain ⟨E₂, G₁, hE₂, hG₁, hang⟩ := Prop23 hBE_ne hPQR.cba hX'
@@ -65,7 +65,7 @@ theorem Prop44.place {A B X P Q R S : Point} (hAB : A ≠ B) (hX : ¬ Collinear 
   have hGX : SameSideOf G X B E := SameSideOf.of_onRay hG hG₁
   have hEBG : ∠ E B G = ∠ R Q P := (angle_eq_of_onRay hE₂.symm hG).trans hang
   have hBEG : Triangle B E G := hGX.triangle
-  /- Through `G` a parallel to `BE`, through `E` a parallel to `BG`, meeting at `F`. -/
+  /- Through G a parallel to BE, through E a parallel to BG, meeting at F. -/
   obtain ⟨ℓ₁, hG_ℓ₁, hℓ₁⟩ := Prop31.line (hBEG.off_line hB_AB hE_AB)
   obtain ⟨F, -, hGBEF⟩ := Prop31.parallelogram hℓ₁ hG_ℓ₁ hB_AB hE_AB hBE_ne
   have hBEFG : Parallelogram B E F G := hGBEF.rotate

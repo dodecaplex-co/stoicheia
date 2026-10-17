@@ -21,7 +21,7 @@ variable {k : Kind}
 /-- Adding is associative. (System E §3.5) -/
 axiom add_assoc (a b c : Magnitude k) : a + b + c = a + (b + c)
 
-/-- Adding is commutative. (System E §3.5) -/
+/-- The order of adding does not matter. (System E §3.5) -/
 axiom add_comm (a b : Magnitude k) : a + b = b + a
 
 /-- Adding nothing changes nothing. (System E §3.5) -/
@@ -30,7 +30,7 @@ axiom add_zero (a : Magnitude k) : a + 0 = a
 /-- No magnitude is less than itself. (System E §3.5) -/
 axiom lt_irrefl (a : Magnitude k) : ¬ a < a
 
-/-- "Less than" is transitive. (System E §3.5) -/
+/-- What is less than the less is less still. (System E §3.5) -/
 axiom lt_trans {a b c : Magnitude k} : a < b → b < c → a < c
 
 /-- Of two magnitudes, one is less, or they are equal, or the other is less.

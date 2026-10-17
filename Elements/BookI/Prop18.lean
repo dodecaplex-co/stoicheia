@@ -51,9 +51,7 @@ theorem Prop18 {A B C : Point} (hABC : Triangle A B C) (h : ‖A B‖ < ‖A C�
     exact hDCB_BDA
   -- But the angle ADB is equal to the angle ABD,
   -- since the side AB is equal to AD;
-  /- This is I.5, for the isosceles triangle ABD. As stated, I.5 also speaks of the
-     angles under the base, so it asks for AB and AD produced; any points beyond B
-     and D will do (`Prop5.base`). -/
+  /- This is I.5 (`Prop5.base`), for the isosceles triangle ABD. -/
   have hABD : Triangle A B D := (Triangle.of_line hA_AC hD_AC hA_D hB_AC).acb
   have hAB_AD : ‖A B‖ = ‖A D‖ := hAD_AB.symm
   have hABD_ADB : ∠ A B D = ∠ A D B := Prop5.base hABD hAB_AD
@@ -64,11 +62,9 @@ theorem Prop18 {A B C : Point} (hABC : Triangle A B C) (h : ‖A B‖ < ‖A C�
     rw [← hDCB_ACB, hABD_ADB]
     exact hDCB_ADB
   -- therefore the angle ABC is much greater than the angle ACB.
-  /- Much greater, because the angle ABD is only a part of the angle ABC: since D
-     lies between A and C, BD falls within the angle ABC, which is made up of the
-     angles ABD and DBC (`angle_add_of_between`); the angle DBC, an angle of the
-     triangle DBC, is something (`Triangle.angle_pos`); and the whole is greater
-     than the part [C.N. 5]. -/
+  /- The angle ABC is made up of ABD and DBC (`angle_add_of_between`), and DBC,
+     an angle of the triangle DBC, is something (`Triangle.angle_pos`): the whole
+     is greater than the part [C.N. 5]. -/
   have hABD_ABC : ∠ A B D < ∠ A B C := by
     rw [angle_add_of_between hABC.acb hADC]
     exact CommonNotion5 hBCD.cab.angle_pos

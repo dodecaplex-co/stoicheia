@@ -9,22 +9,22 @@ Euclid's text, in Heath's translation: [`heath/I/07.md`](../../heath/I/07.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-Euclid draws one figure: the straight lines `AD` and `CB` cross, so that `CB` falls
-within the angle `ACD` and `DA` within the angle `CDB`. The lemmas before the
-theorem say what he reads off that figure, and settle the figures he doesn't draw.
+Euclid draws one figure: the straight lines AD and CB cross, so that CB falls
+within the angle ACD and DA within the angle CDB. The lemmas before the
+theorem say what he reads off that figure, and settle the figures he does not draw.
 -/
 
 namespace Elements.BookI
 
 open Tacit
 
-/-! ## What the figure shows -/
+/-! ## What Euclid reads off the figure -/
 
-/-- `D` is a different point from `C`, on the same side of `AB` and as far from `A`. Then
-`D` is not on the straight line `AC`, so `ACD` really is a triangle. (Heath: "The case in
-which D falls on AC or BC does not require proof.") On the ray from `A` through `C`, the
-point `D` would make one length equal to itself with something added; on the other ray, the
-straight line `AB` would separate `C` from `D`. -/
+/-- D is a different point from C, on the same side of AB and as far from A. Then
+D is not on the straight line AC, so ACD really is a triangle. (Heath: "The case in
+which D falls on AC or BC does not require proof.") On the ray from A through C, the
+point D would make one length equal to itself with something added; on the other ray, the
+straight line AB would separate C from D. -/
 theorem Prop7.triangle {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = ‖D A‖)
     (hne : C ≠ D) : Triangle A C D := by
   rintro ⟨N, hA, hC, hD⟩
@@ -46,10 +46,10 @@ theorem Prop7.triangle {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C 
     rw [hsum] at hlt
     exact lt_irrefl _ hlt
 
-/-- When `D` and `A` are on opposite sides of the straight line `BC`, the straight line `AD`
-crosses `BC` at a point `X` on `C`'s side of `AB`. Either `X` falls between `B` and `C`, and
-the straight lines `AD`, `CB` cross as in Euclid's figure, or `C` falls between `B` and `X`,
-and then `C` lies within the triangle `ABD`. -/
+/-- When D and A are on opposite sides of the straight line BC, the straight line AD
+crosses BC at a point X on C's side of AB. Either X falls between B and C, and
+the straight lines AD, CB cross as in Euclid's figure, or C falls between B and X,
+and then C lies within the triangle ABD. -/
 theorem Prop7.cross {A B C D : Point} {Q : Line} (hCD : SameSideOf C D A B)
     (hCA : ‖C A‖ = ‖D A‖) (hCB : ‖C B‖ = ‖D B‖) (hne : C ≠ D)
     (hBQ : OnLine B Q) (hCQ : OnLine C Q) (h : ¬ SameSide D A Q) :
@@ -89,9 +89,9 @@ theorem Prop7.cross {A B C D : Point} {Q : Line} (hCD : SameSideOf C D A B)
       have hCR' : ¬ OnLine C R' := fun hC => hACD ⟨R', hAR', hC, hDR'⟩
       exact pasch2 (between_symm h') hXR' hCR'
 
-/-- Where can `D` be? Either it falls within the triangle `ABC`, or `C` falls within the
-triangle `ABD`, or the straight lines `AD` and `CB` cross (Euclid's figure), or `AC` and
-`DB` cross (Euclid's figure with `C` and `D` exchanged). -/
+/-- Where can D be? Either it falls within the triangle ABC, or C falls within the
+triangle ABD, or the straight lines AD and CB cross (Euclid's figure), or AC and
+DB cross (Euclid's figure with C and D exchanged). -/
 theorem Prop7.cases {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = ‖D A‖)
     (hCB : ‖C B‖ = ‖D B‖) (hne : C ≠ D) :
     InsideTriangle D A B C ∨ InsideTriangle C A B D ∨
@@ -118,8 +118,8 @@ theorem Prop7.cases {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
     · exact Or.inr (Or.inr (Or.inl h))
     · exact Or.inr (Or.inl h)
 
-/-- Euclid's figure. When the straight lines `AD` and `CB` cross (at `X`), the straight line
-`CB` falls within the angle `ACD`, and `DA` within the angle `CDB`. So each of those angles is
+/-- Euclid's figure. When the straight lines AD and CB cross (at X), the straight line
+CB falls within the angle ACD, and DA within the angle CDB. So each of those angles is
 made up of two angles, and neither part is nothing. -/
 theorem Prop7.figure {A B C D X : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = ‖D A‖)
     (hCB : ‖C B‖ = ‖D B‖) (hne : C ≠ D) (hAXD : Between A X D) (hBXC : Between B X C) :
@@ -134,7 +134,7 @@ theorem Prop7.figure {A B C D X : Point} (hCD : SameSideOf C D A B) (hCA : ‖C 
   obtain ⟨S, hBS, hDS⟩ := Postulate1 B D hBCD.ne₁₃
   have hXQ : OnLine X Q := on_line_of_between_ends hBXC hBQ hCQ
   have hXR : OnLine X R := on_line_of_between_ends hAXD hAR hDR
-  /- Which points are off which straight lines. -/
+  /- First we say which points lie off which straight lines. -/
   have hAM : ¬ OnLine A M := fun h => hACD ⟨M, h, hCM, hDM⟩
   have hBP : ¬ OnLine B P := fun h => not_on_line_of_same_side (hCD.2 P hAP h) hCP
   have hDP : ¬ OnLine D P := fun h => hACD ⟨P, hAP, hCP, h⟩
@@ -150,8 +150,8 @@ theorem Prop7.figure {A B C D X : Point} (hCD : SameSideOf C D A B) (hCA : ‖C 
     hDP ((line_unique (ne_of_between hAXD) hAR hXR hAP h) ▸ hDR)
   have hXS : ¬ OnLine X S := fun h =>
     hAS ((line_unique (ne_of_between (between_symm hAXD)) hDR hXR hDS h) ▸ hAR)
-  /- `A` and `B` are on the same side of `CD`, `D` and `B` of `AC`, and `C` and `A` of `BD`:
-     each pair is joined to `X` without crossing the straight line. -/
+  /- A and B are on the same side of CD, D and B of AC, and C and A of BD:
+     each pair is joined to X without crossing the straight line. -/
   have hABM : SameSide A B M :=
     same_side_trans (pasch2 (between_symm hAXD) hDM hXM) (pasch2 (between_symm hBXC) hCM hXM)
   have hDBP : SameSide D B P :=
@@ -167,10 +167,10 @@ theorem Prop7.figure {A B C D X : Point} (hCD : SameSideOf C D A B) (hCA : ‖C 
   · exact (Triangle.of_line hAR hDR hACD.ne₁₃ hBR).angle_pos
 
 /-- The case Euclid leaves out, answered as Proclus answers it (Heath, vol. 1, p. 260). If
-`D` falls within the triangle `ABC`, produce `AC`, `AD` to `E`, `F`. Since `AC` is equal to
-`AD`, the angles `ECD`, `FDC` under the base of the triangle `ACD` are equal [I. 5]. But the
-angle `ECD` is greater than the angle `BCD`, so the angle `BDC` is greater by far than the
-angle `BCD`; and, since `DB` is equal to `CB`, it is also equal to it [I. 5]. -/
+D falls within the triangle ABC, produce AC, AD to E, F. Since AC is equal to
+AD, the angles ECD, FDC under the base of the triangle ACD are equal [I. 5]. But the
+angle ECD is greater than the angle BCD, so the angle BDC is greater by far than the
+angle BCD; and, since DB is equal to CB, it is also equal to it [I. 5]. -/
 theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = ‖D A‖)
     (hCB : ‖C B‖ = ‖D B‖) (hne : C ≠ D) (hD : InsideTriangle D A B C) : False := by
   have hACD : Triangle A C D := Prop7.triangle hCD hCA hne
@@ -189,7 +189,7 @@ theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
   obtain ⟨F, hFR, hADF, -⟩ := Postulate2 hAR hDR hACD.ne₁₃ []
   have hEC : E ≠ C := ne_of_between (between_symm hACE)
   have hFD : F ≠ D := ne_of_between (between_symm hADF)
-  /- Which points are off which straight lines. -/
+  /- First we say which points lie off which straight lines. -/
   have hAM : ¬ OnLine A M := fun h => hACD ⟨M, h, hCM, hDM⟩
   have hBM : ¬ OnLine B M := fun h => hBCD ⟨M, h, hCM, hDM⟩
   have hBP : ¬ OnLine B P := fun h => not_on_line_of_same_side (hCD.2 P hAP h) hCP
@@ -200,15 +200,15 @@ theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
   have hEM : ¬ OnLine E M := fun h => hDP ((line_unique hEC hEP hCP h hCM) ▸ hDM)
   have hFM : ¬ OnLine F M := fun h => hAM ((line_unique hFD hFR hDR h hDM) ▸ hAR)
   have hFS : ¬ OnLine F S := fun h => hAS ((line_unique hFD hFR hDR h hDS) ▸ hAR)
-  /- With `D` within the angle `ACB`, the straight line `CD` separates `A` from `B`; with
-     `D` within the angle `ABC`, the straight line `BD` separates `A` from `C`. (System E,
-     triple incidence rule 1.) -/
+  /- With D within the angle ACB, the straight line CD separates A from B; with
+     D within the angle ABC, the straight line BD separates A from C. (System E,
+     Triple incidence 1.) -/
   have hABM : ¬ SameSide A B M :=
     triple_incidence1 hCP hCM hCQ hAP hDM hBQ hDBP (same_side_symm hDAQ)
   have hACS : ¬ SameSide A C S :=
     triple_incidence1 hBL hBS hBQ hAL hDS hCQ hDCL (same_side_symm hDAQ)
-  /- So `E`, beyond `C`, is on `B`'s side of `CD`; and `F`, beyond `D`, is on `B`'s side of
-     `CD` and on `C`'s side of `BD`. -/
+  /- So E, beyond C, is on B's side of CD; and F, beyond D, is on B's side of
+     CD and on C's side of BD. -/
   have hEBM : SameSide E B M :=
     same_side_of_opposite_sides ⟨hAM, hEM, pasch3 hACE hCM⟩ ⟨hAM, hBM, hABM⟩
   have hBFM : SameSide B F M :=
@@ -217,7 +217,7 @@ theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
     same_side_of_opposite_sides ⟨hAS, hCS, hACS⟩ ⟨hAS, hFS, pasch3 hADF hDS⟩
   have hPM : P ≠ M := fun h => hDP (h ▸ hDM)
   have hSM : S ≠ M := fun h => hCS (h ▸ hCM)
-  /- `CB` falls within the angle `ECD`, and `DF` within the angle `BDC`. -/
+  /- CB falls within the angle ECD, and DF within the angle BDC. -/
   have hECD : ∠ E C D = ∠ E C B + ∠ B C D :=
     angle_add_of_inside hCP hCM hEP hDM hEC.symm hne hBP hBM hPM hEBM hDBP
   have hBDC : ∠ B D C = ∠ B D F + ∠ F D C :=

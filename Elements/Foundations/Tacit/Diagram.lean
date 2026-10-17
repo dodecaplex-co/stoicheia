@@ -88,7 +88,7 @@ axiom same_side_refl (h : ¬ OnLine A L) : SameSide A A L
 as `A`. (Same side 2) -/
 axiom same_side_symm (h : SameSide A B L) : SameSide B A L
 
-/-- Points on one side of a line are not on it. (Same side 3) -/
+/-- Points on one side of a straight line are not on it. (Same side 3) -/
 axiom not_on_line_of_same_side (h : SameSide A B L) : ¬ OnLine A L
 
 /-- Two points on the same side of a straight line as a third point are on the same
@@ -110,7 +110,7 @@ on the same side of `L`: a straight line that leaves `L` at `A` does not cross i
 again. (Pasch 2) -/
 axiom pasch2 (h : Between A B C) (hA : OnLine A L) (hB : ¬ OnLine B L) : SameSide B C L
 
-/-- A line through a point between `A` and `C` separates them. (Pasch 3) -/
+/-- A straight line through a point between `A` and `C` separates them. (Pasch 3) -/
 axiom pasch3 (h : Between A B C) (hB : OnLine B L) : ¬ SameSide A C L
 
 /-- If two different straight lines `L` and `M` meet at `B`, and `A` and `C` are points
@@ -150,8 +150,8 @@ axiom triple_incidence3 (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
 
 /-! ## Circles -/
 
-/-- A chord through a point inside a circle has that point between its ends.
-(Circle 1) -/
+/-- A straight line through a point inside a circle has that point between the
+points where it meets the circle. (Circle 1) -/
 axiom between_of_inside_chord (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
     (hAin : InsideCircle A α) (hBon : OnCircle B α) (hCon : OnCircle C α) (hBC : B ≠ C) :
     Between B A C
@@ -166,8 +166,8 @@ axiom inside_of_between (hA : InsideCircle A α ∨ OnCircle A α)
 axiom outside_of_between (hA : InsideCircle A α ∨ OnCircle A α) (hC : ¬ InsideCircle C α)
     (h : Between A C B) : OutsideCircle B α
 
-/-- Two circles cut one another on opposite sides of the line through their
-centres. (Circle 4) -/
+/-- Two circles cut one another on opposite sides of the straight line through
+their centres. (Circle 4) -/
 axiom not_same_side_of_circles_meet (hαβ : α ≠ β) (hCα : OnCircle C α) (hCβ : OnCircle C β)
     (hDα : OnCircle D α) (hDβ : OnCircle D β) (hCD : C ≠ D) (hA : Centre A α)
     (hB : Centre B β) (hAL : OnLine A L) (hBL : OnLine B L) : ¬ SameSide C D L

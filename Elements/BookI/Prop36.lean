@@ -63,8 +63,8 @@ theorem Prop36 {A B C D E F G H : Point} (h₁ : Parallelogram A B C D) (h₂ : 
     have harea : quadArea F E H G = quadArea B E H C :=
       Prop35 h₂.reverse.rotate.rotate.rotate hEBCH.reverse.rotate.rotate.rotate
         ⟨BG, hF, hG, hB, hC⟩
-    /- This time the common base is EH. Book Zero turns both areas back to their
-       given names, whichever diameter measures them. -/
+    /- This time the common base is EH. Both areas are turned back to their given
+       names: a parallelogram has one area, whichever diameter measures it. -/
     have e₂ : quadArea E F G H = quadArea E B C H := calc
       quadArea E F G H = quadArea F G H E := h₂.quadArea_rotate.symm
       _ = quadArea F E H G := (quadArea_reverse F G H E).symm
@@ -73,8 +73,8 @@ theorem Prop36 {A B C D E F G H : Point} (h₁ : Parallelogram A B C D) (h₂ : 
       _ = quadArea E B C H := hEBCH.quadArea_rotate
     -- so that the parallelogram ABCD is also equal to EFGH. [C.N. 1]
     exact CommonNotion1 e₁ e₂
-  /- Book Zero settles which way EH runs. In the second case EFGH is read as
-     HGFE, and the same argument applies without changing its area. -/
+  /- EH runs the same way as BC, or the other way. In the second case EFGH is
+     read as HGFE, and the same argument applies without changing its area. -/
   have hEHBC : AreParallel E H B C :=
     AreParallel.of_parallel h₂.2.2.1.symm h₁.2.1 hE hH hB hC hpar
   have hequal : quadArea A B C D = quadArea E F G H := by

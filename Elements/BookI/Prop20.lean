@@ -11,7 +11,7 @@ Euclid's text, in Heath's translation: [`heath/I/20.md`](../../heath/I/20.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-Euclid proves that `BA`, `AC` are greater than `BC`, and then says "similarly" for
+Euclid proves that BA, AC are greater than BC, and then says "similarly" for
 the other two pairs of sides. So the Lean makes his argument once, for any
 triangle, and uses it three times, naming the triangle from a different corner
 each time.
@@ -39,8 +39,8 @@ theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
     obtain ⟨BA, hB_BA, hA_BA⟩ := Postulate1 B A hB_A
     have hC_BA : ¬ OnLine C BA := hABC.bac.off_line hB_BA hA_BA
     -- For let BA be drawn through to the point D,
-    /- Drawn through beyond A to a point X, far enough for I.3 to cut AD off from AX:
-       `produce_longer` in Book Zero. -/
+    /- Drawn through beyond A to a point X, far enough for I.3 to cut AD off from AX
+       (`produce_longer`, as in I.11). -/
     obtain ⟨X, hBAX, hAC_AX⟩ := produce_longer hB_A hA_C
     -- let DA be made equal to CA, and let DC be joined.
     /- Heath gives no bracket here, but "let DA be made equal" is I.3's work, as in
@@ -56,9 +56,7 @@ theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
     -- Then, since DA is equal to AC,
     have hDA_AC : ‖D A‖ = ‖A C‖ := by rw [len_symm D A, hAD_CA, len_symm C A]
     -- the angle ADC is also equal to the angle ACD; [I. 5]
-    /- I.5 for the triangle ADC, whose sides AD, AC are equal. Its statement also
-       speaks of the equal sides produced, so Lean produces them (Post. 2,
-       `Prop5.base`), though only the angles at the base are wanted here. -/
+    /- I.5 (`Prop5.base`), for the triangle ADC, whose sides AD, AC are equal. -/
     have hADC : Triangle A D C := Triangle.of_line hA_BA hD_BA hA_D hC_BA
     have hADC_ACD : ∠ A D C = ∠ A C D :=
       Prop5.base hADC (by rw [← len_symm D A]; exact hDA_AC)

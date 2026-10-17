@@ -92,7 +92,7 @@ theorem Prop34 {A B C D : Point} (h : Parallelogram A C D B) :
   -- Q. E. D.
 
 /-- The diameter bisects the parallelogram, said of its area: the parallelogram
-`ABCD`, measured by its diameter `AC`, is double the triangle `ABC`. I.35–I.47 cite
+ABCD, measured by its diameter AC, is double the triangle ABC. I.35–I.47 cite
 I.34 for this ("the triangle ABC is half of the parallelogram EBCA; for the diameter
 AB bisects it"). To halve by the other diameter, name the parallelogram from the
 next corner (`Parallelogram.rotate`) and turn its area round with

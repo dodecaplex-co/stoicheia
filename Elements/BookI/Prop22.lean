@@ -10,13 +10,13 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 Euclid names the three given straight lines by single letters, A, B, C. In Lean
-they are the finite straight lines `A₁A₂`, `B₁B₂`, `C₁C₂`.
+they are the finite straight lines A₁A₂, B₁B₂, C₁C₂.
 
 The statement says more than Euclid's, so that I.23 can use it as Euclid does:
-the triangle `KFG` is put in a given place. Its corner `F` is a given point,
-its side `FG` lies along the given ray from `F` through `E`, and `K` falls on the
-side of `FE` where the given point `P` is. Euclid's straight line `DE` is then
-set out through `F`, with `D` behind `F` and `DF` equal to A, and from there his
+the triangle KFG is put in a given place. Its corner F is a given point,
+its side FG lies along the given ray from F through E, and K falls on the
+side of FE where the given point P is. Euclid's straight line DE is then
+set out through F, with D behind F and DF equal to A, and from there his
 proof goes through as he writes it.
 -/
 
@@ -29,7 +29,7 @@ open Tacit
 /-- None of the three given straight lines is nothing. If `a` were nothing, the
 other two would each be greater than the other: `c` less than `b` (from `a`, `b`
 greater than `c`) and `b` less than `c` (from `a`, `c` greater than `b`). Euclid
-calls `A`, `B`, `C` straight lines, so for him the question never arises; in Lean
+calls A, B, C straight lines, so for him the question never arises; in Lean
 a finite straight line may have both ends at one point, and I.3 wants them apart. -/
 theorem Prop22.ne_zero {k : Kind} {a b c : Magnitude k} (h₁ : c < a + b) (h₂ : b < a + c) :
     a ≠ 0 := by
@@ -39,15 +39,13 @@ theorem Prop22.ne_zero {k : Kind} {a b c : Magnitude k} (h₁ : c < a + b) (h₂
   rw [add_comm 0 c, add_zero] at h₂
   exact lt_irrefl _ (lt_trans h₁ h₂)
 
-/-- Room to cut off a given straight line. Euclid's `DE` is "of infinite length in
+/-- Room to cut off a given straight line. Euclid's DE is "of infinite length in
 the direction of E", so that whatever is to be cut off from it, there is room. A
 straight line in Lean has no length to cut from, and I.3 cuts off only from a
-greater finite straight line; so we find a point `Z` on `DF` produced beyond `F`
-with `FZ` greater than the given straight line `X₁X₂`. At `F` place a straight
-line `FY` equal to `X₁X₂` [I. 2], and produce `DF` beyond `F` further than `FY`
-(`produce_longer` in Book Zero: a circle with centre `F` through `Y` [Post. 3],
-cut by `DF` produced beyond the centre [System E, Intersections 5], and `DF`
-produced a little further still [Post. 2]). -/
+greater finite straight line; so we find a point Z on DF produced beyond F
+with FZ greater than the given straight line X₁X₂. At F place a straight
+line FY equal to X₁X₂ [I. 2], and produce DF beyond F further than FY
+(`produce_longer`, as in I.11). -/
 theorem Prop22.room {D F X₁ X₂ : Point} (hDF : D ≠ F) (hX : X₁ ≠ X₂) :
     ∃ Z : Point, Between D F Z ∧ ‖X₁ X₂‖ < ‖F Z‖ := by
   obtain ⟨Y, hFY⟩ := Prop2 F X₁ X₂ hX
@@ -56,32 +54,32 @@ theorem Prop22.room {D F X₁ X₂ : Point} (hDF : D ≠ F) (hX : X₁ ≠ X₂)
   rw [← hFY]
   exact hFY_FZ
 
-/-- The circles meet. Euclid takes `K` where the circle about `F` and the circle
-about `G` cut one another, and never says why they should. Heath's own argument
-(vol. 1, p. 294) is that the circle about `G` has a point outside the circle about
-`F`, and a point inside it.
+/-- The circles meet. Euclid takes K where the circle about F and the circle
+about G cut one another, and never says why they should. Heath's own argument
+(vol. 1, p. 294) is that the circle about G has a point outside the circle about
+F, and a point inside it.
 
-* `H` is outside: `FH` is `FG` and `GH` together, which is greater than `FD`.
-* The point `M` where `GF` (produced if need be) cuts the circle about `G` is
-  inside. `GM` is equal to `GH`. If `M` falls between `G` and `F`, then `FM` and
-  `GH` together make `FG`, which is less than `FD` and `GH` together, so `FM` is
-  less than `FD`. If `M` falls beyond `F`, then `FM` and `FG` together make `GM`,
-  that is `GH`, which is less than `FD` and `FG` together, so again `FM` is less
-  than `FD`. And if `M` is `F`, it is the centre.
+* H is outside: FH is FG and GH together, which is greater than FD.
+* The point M where GF (produced if need be) cuts the circle about G is
+  inside. GM is equal to GH. If M falls between G and F, then FM and
+  GH together make FG, which is less than FD and GH together, so FM is
+  less than FD. If M falls beyond F, then FM and FG together make GM,
+  that is GH, which is less than FD and FG together, so again FM is less
+  than FD. And if M is F, it is the centre.
 
-Then the two circles cut one another: that is System E's Intersection rule 4, in
-LeanEuclid's corrected form, and it is the "Principle of Continuity" that Heath
-invokes here, as he does for I.1. -/
+Then the two circles cut one another (System E, Intersection 4, in LeanEuclid's
+corrected form): this is the "Principle of Continuity" that Heath invokes here, as he
+does for I.1. -/
 theorem Prop22.meet {D F G H : Point} {α β : Circle} (hFGH : Between F G H)
     (hF_α : Centre F α) (hD_α : OnCircle D α) (hG_β : Centre G β) (hH_β : OnCircle H β)
     (h₁ : ‖G H‖ < ‖F D‖ + ‖F G‖) (h₂ : ‖F G‖ < ‖F D‖ + ‖G H‖)
     (h₃ : ‖F D‖ < ‖F G‖ + ‖G H‖) : CirclesMeet β α := by
-  /- `H` is outside the circle about `F`. -/
+  /- H is outside the circle about F. -/
   have hH_out : OutsideCircle H α :=
     outside_of_len_gt hF_α hD_α (by rw [← len_add_of_between hFGH]; exact h₃)
-  /- `M` is on the ray from `G` through `F`, at the distance `GH` from `G`: it is
-     where the straight line `HG`, produced beyond the centre `G`, cuts the circle
-     about `G` (System E, Intersections 5). -/
+  /- M is on the ray from G through F, at the distance GH from G: it is
+     where the straight line HG, produced beyond the centre G, cuts the circle
+     about G (System E, Intersections 5). -/
   have hFG : F ≠ G := ne_of_between hFGH
   obtain ⟨L, hF_L, hG_L⟩ := Postulate1 F G hFG
   have hH_L : OnLine H L := on_line_of_between hFGH hF_L hG_L
@@ -92,10 +90,10 @@ theorem Prop22.meet {D F G H : Point} {α β : Circle} (hFGH : Between F G H)
     ⟨hFG.symm, ne_of_between hMGH, ⟨L, hG_L, hF_L, hM_L⟩,
       not_between_of_between_between (between_symm hMGH) (between_symm hFGH)⟩
   have hF_ray : OnRay F G F := OnRay.self hFG.symm
-  /- `M` is inside the circle about `F`. -/
+  /- M is inside the circle about F. -/
   have hM_in : InsideCircle M α := by
     rcases lt_trichotomy ‖G M‖ ‖G F‖ with h | h | h
-    · /- `M` falls between `G` and `F`. -/
+    · /- M falls between G and F. -/
       have hGMF : Between G M F := hM_ray.between_of_len_lt hF_ray h
       have hsum : ‖F M‖ + ‖G H‖ = ‖F G‖ := by
         rw [← hGM, len_symm G M]
@@ -103,10 +101,10 @@ theorem Prop22.meet {D F G H : Point} {α β : Circle} (hFGH : Between F G H)
       refine inside_of_len_lt hF_α hD_α (Magnitude.lt_of_add_lt_add_right (a := ‖G H‖) ?_)
       rw [hsum]
       exact h₂
-    · /- `M` is `F` itself, the centre. -/
+    · /- M is F itself, the centre. -/
       rw [hM_ray.eq_of_len_eq h]
       exact centre_inside hF_α
-    · /- `M` falls beyond `F`. -/
+    · /- M falls beyond F. -/
       have hGFM : Between G F M := hF_ray.between_of_len_lt hM_ray h
       have hsum : ‖F M‖ + ‖F G‖ = ‖G H‖ := by
         rw [← hGM, add_comm, len_symm F G]
@@ -175,7 +173,7 @@ theorem Prop22 {A₁ A₂ B₁ B₂ C₁ C₂ E F P : Point}
   /- Euclid takes K where the circles cut one another, without a word on why they
      should. They do, because two of A, B, C taken together in any manner are
      greater than the remaining one (`Prop22.meet`: Heath's argument, closed by
-     System E's Intersection rule 4). They cut one another on each side of DE, the
+     System E, Intersection 4). They cut one another on each side of DE, the
      straight line through their centres, and K is taken on P's side (System E,
      Intersections 8). -/
   have hmeet : CirclesMeet KLH DKL :=

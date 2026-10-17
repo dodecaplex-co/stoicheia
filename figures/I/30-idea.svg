@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.30 at a glance</title>
-  <desc>Two lines (blue) that are each parallel to a third (red) are parallel to each other: a line crossing all three meets each one at the same angle (yellow).</desc>
+  <desc>Two straight lines (blue), each parallel to a third (red), are parallel to each other: a straight line falling on all three meets each at the same angle (yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M234.6,85.0 L248.6,58.5 A30,30 0 0,1 264.6,85.0 Z" fill="#f2b705"/>
   <path d="M200.0,150.0 L214.1,123.5 A30,30 0 0,1 230.0,150.0 Z" fill="#f2b705"/>

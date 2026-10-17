@@ -166,3 +166,11 @@
   `scripts/negative_tests.py`, a CI job of their own: an edited Heath word, the README's
   wrong radii in I.1, and Postulate 5, a planted Euclidean-only rule and an axiom hidden
   after a docstring, all in I.16. Each must be caught, and is.
+- **Books I and II in one voice.** Books I and II are not frozen at their tags: `book-I`
+  and `book-II` keep the released text, and main carries the pages in one voice. The
+  mishnah follows one register (STYLE §1 and §2); each book's shared steps, and where
+  Postulate 5 comes in, are told once, in the book's introduction
+  (`mishnah/intro/<book>.md`, set on its index page); the line "Brought in by shared
+  steps" under each table replaces the sentences STYLE's check 19 used to ask for; the
+  titles are in Euclid's words, and the tacit list says "tacit rules". So Books I and II
+  no longer render byte for byte as tagged; their statements and proofs are unchanged.

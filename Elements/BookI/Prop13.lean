@@ -8,10 +8,10 @@ Euclid's text, in Heath's translation: [`heath/I/13.md`](../../heath/I/13.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-Euclid draws one figure, in which `AB` leans towards `C`, so that `BA` falls within
-the right angle `CBE`. If it leans towards `D` instead, the argument is his with
-`C` and `D` exchanged; so the Lean makes the argument once, for either way of
-naming the two ends of `CD`, and uses it whichever way `AB` leans
+Euclid draws one figure, in which AB leans towards C, so that BA falls within
+the right angle CBE. If it leans towards D instead, the argument is his with
+C and D exchanged; so the Lean makes the argument once, for either way of
+naming the two ends of CD, and uses it whichever way AB leans
 (`Prop13.cases`).
 -/
 
@@ -21,15 +21,15 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- Euclid's figure, seen from the other end of `CD`. If `BA` falls within the angle
-`CBE` (`A` on `E`'s side of `BC`, and on `C`'s side of `BE`), and `CB` is produced to
-`D`, then `BE` falls within the angle `DBA`: `E` is on `A`'s side of `BD`, and on
-`D`'s side of `BA`.
+/-- Euclid's figure, seen from the other end of CD. If BA falls within the angle
+CBE (A on E's side of BC, and on C's side of BE), and CB is produced to
+D, then BE falls within the angle DBA: E is on A's side of BD, and on
+D's side of BA.
 
 The first is the same side of the same straight line. For the second, the three
-straight lines `BC`, `BA`, `BE` through `B` divide the plane into six regions, and
-since `A` lies between `C` and `E` as seen from `B`, the straight line `BA` separates
-`C` from `E` (System E, Triple incidence 1); it also separates `C` from `D` (Pasch 3),
+straight lines BC, BA, BE through B divide the plane into six regions, and
+since A lies between C and E as seen from B, the straight line BA separates
+C from E (System E, Triple incidence 1); it also separates C from D (Pasch 3),
 and a straight line has only two sides (Same side 5). -/
 theorem Prop13.within {A B C D E : Point} (hCBD : Between C B D) (hAE : SameSideOf A E B C)
     (hAC : SameSideOf A C B E) : SameSideOf E A B D ∧ SameSideOf E D B A := by
@@ -60,13 +60,13 @@ theorem Prop13.within {A B C D E : Point} (hCBD : Between C B D) (hAE : SameSide
     same_side_of_opposite_sides ⟨hC_N, hD_N, hCD_N⟩ ⟨hC_N, hE_N, hCE_N⟩
   exact SameSideOf.of_line hBA hB_N hA_N (same_side_symm hDE_N)
 
-/-- Which way `AB` leans. With `BE` at right angles to `CD`, on `A`'s side of it, and
-the angles `CBA`, `ABD` unequal, `A` lies on `C`'s side of `BE` or on `D`'s.
+/-- Which way AB leans. With BE at right angles to CD, on A's side of it, and
+the angles CBA, ABD unequal, A lies on C's side of BE or on D's.
 
-It is not on `BE` itself: being on `E`'s side of `CD`, it would lie on the ray from
-`B` through `E`, and then the angles `CBA`, `ABD` would be the right angles `CBE`,
-`EBD` themselves, and equal (Diagram-angle 4). `C` and `D` are on opposite sides of
-`BE` (Pasch 3), and a straight line has only two sides (Same side 5). -/
+It is not on BE itself: being on E's side of CD, it would lie on the ray from
+B through E, and then the angles CBA, ABD would be the right angles CBE,
+EBD themselves, and equal (Diagram-angle 4). C and D are on opposite sides of
+BE (Pasch 3), and a straight line has only two sides (Same side 5). -/
 theorem Prop13.cases {A B C D E : Point} (hCBD : Between C B D) (hEA : SameSideOf E A C D)
     (hCBE : ∠ C B E = ∟) (hEBD : ∠ E B D = ∟) (hne : ∠ C B A ≠ ∠ A B D) :
     SameSideOf A C B E ∨ SameSideOf A D B E := by
@@ -115,7 +115,7 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
   by_cases heq : ∠ C B A = ∠ A B D
   -- they are two right angles. [Def. 10]
   /- Definition 10 says each is right, for they are adjacent angles (A is off the
-     straight line CD); Postulate 4 says each is then equal to `∟`. -/
+     straight line CD); each is then `∟` (Post. 4, as in I.11). -/
   · have hCBA : ∠ C B A = ∟ :=
       Postulate4 ⟨D, hCBD, Triangle.of_line hC_CD hB_CD hCB hA_CD, heq⟩
     have hABD : ∠ A B D = ∟ := heq.symm.trans hCBA
@@ -162,7 +162,7 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
     -- But the angles CBE, EBD were also proved equal to the same three angles;
     /- The same three, named from the other end and added in the other order: the
        angle CBA is the angle ABC (System E, Metric 4), and the order of adding does
-       not matter (a tacit law of magnitudes). -/
+       not matter (a tacit rule of magnitudes). -/
     have hsame : ∠ C B E + ∠ E B D = ∠ D B E + ∠ E B A + ∠ A B C := by
       rw [hthree, angle_symm hCB hAB, angle_symm hAB hEB, angle_symm hEB hDB,
         add_comm (∠ A B C + ∠ E B A), add_comm (∠ A B C), ← add_assoc]
