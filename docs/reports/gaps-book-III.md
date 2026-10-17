@@ -279,9 +279,11 @@ use one.
   beyond C in III.19; a straight line produced backwards from a point within the
   circle, so that `line_circle_beyond` meets the circle on the side we want (III.7,
   III.25, III.30); a side of a triangle, since our I.32 asks for one produced (III.22,
-  `Prop24.isosceles`, `Circumference.semicircle`); and DA beyond A in III.33. Where
-  Euclid draws a straight line through to the circle (III.1, III.10, III.20, III.23),
-  Intersections 5 does the producing, as in I.2.
+  III.32, `Prop24.isosceles`, `Circumference.semicircle`); the radius AD beyond the
+  centre D, to the diameter III.16 asks for, in its porism (`Prop16.porism`); DA beyond
+  A in III.33; and FB beyond B in III.34, so that the touching line EF runs on through
+  B to either side. Where Euclid draws a straight line through to the circle (III.1,
+  III.10, III.20, III.23), Intersections 5 does the producing, as in I.2.
 - **Postulate 3 and Definition I.15**: circles Euclid does not draw. The two of I.1
   find a point off a straight line (`exists_off_line`), in III.1, III.17, III.33 and
   III.34, and inside `BookI.Prop46.sq`, which brings them to III.14 and III.37. A
@@ -294,4 +296,5 @@ use one.
 - **Postulate 5**: the Lean uses it directly in III.25 and III.33, where Euclid takes
   for granted that two straight lines meet. Through what it cites, III.14 rests on it,
   by the squares of I.46 and I.47, and III.15 through III.14; so does every proposition
-  from III.20 on, by I.32. III.1–III.13 and III.16–III.19 do not.
+  from III.20 on: fourteen by I.32, III.35–III.37 by the squares again, and III.25 by
+  the postulate alone. III.1–III.13 and III.16–III.19 do not.

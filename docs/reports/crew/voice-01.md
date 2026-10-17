@@ -115,7 +115,8 @@ gains a second line, and the "scoreboard" is gone.
 
 - **I.23's letters.** The statement puts F on the ray AB and G off it; Heath has them
   the other way about. Swapping them is a change of statement, which needs the
-  captain; for now a line under the figure says so.
+  captain; for now a line under the figure says so. (Closed 17 October; see
+  [0002-decisions](../../briefs/0002-decisions.md).)
 - **A fresh blind read** would show whether the notes now sound like one hand. The
   register, by the readers' own account, was the larger problem, and the counts above
   are the measure of this pass, not a reader's ear.

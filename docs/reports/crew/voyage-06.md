@@ -72,4 +72,5 @@ orders began with a note on what the user's latest message meant, so no one stoo
 
 With these nineteen, III.1–III.19 are proved, and they reached main the same afternoon.
 
-**Axioms and gaps.** No axiom added; Book III's catalogue of gaps is still to be written.
+**Axioms and gaps.** No axiom added; gaps: see [gaps-book-III.md](../gaps-book-III.md),
+written after the voyage.

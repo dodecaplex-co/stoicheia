@@ -52,11 +52,11 @@ the next morning, 17 October, with Book III complete.
   thirty-three times out of thirty-seven across Book III. Sailor a's proof was kept for
   III.24, for its figure and its file's docstring, and for III.30, where it put Lean under
   two of Euclid's sentences that b had left bare. Sailor b took about two minutes longer
-  (5.1 minutes on average, against 3.1) and about a fifth more tokens, though at III.23
+  (5.0 minutes on average, against 3.1) and about a fifth more tokens, though at III.23
   it used a few fewer.
-- **Best of both, six times.** The bosuns took the other sailor's mishnah for III.24,
-  III.27 and III.30, its figure for III.29, a sentence for III.33, and Heath's italics as
-  sailor a set them for III.25.
+- **Best of both, six times.** The bosuns took the other sailor's mishnah and reading
+  line for III.24 and III.30, its mishnah for III.27, its figure for III.29, a sentence
+  for III.33, and Heath's italics as sailor a set them for III.25.
 - **Postulate 5 is under all of it.** Every proposition from III.20 on rests on the
   parallel postulate. Fourteen come to it through I.32, the angles of a triangle, which
   III.20 uses to compare the angle at the centre with the angle at the circumference;
@@ -80,4 +80,5 @@ With these eighteen, Book III is complete: thirty-seven propositions, every one 
 faithful to Euclid by its first mate, with Postulate 5 entering at III.14 through the
 squares and holding from III.20 on. CI now keeps all three books whole.
 
-**Axioms and gaps.** No axiom added; Book III's catalogue of gaps is still to be written.
+**Axioms and gaps.** No axiom added; gaps: see [gaps-book-III.md](../gaps-book-III.md),
+written after the voyage.

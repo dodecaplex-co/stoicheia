@@ -173,7 +173,8 @@
   (`mishnah/intro/<book>.md`, set on its index page); the line "Brought in by shared
   steps" under each table replaces the sentences STYLE's check 19 used to ask for; the
   titles are in Euclid's words, and the tacit list says "tacit rules". So Books I and II
-  no longer render byte for byte as tagged; their statements and proofs are unchanged.
+  no longer render byte for byte as tagged; their statements and proofs were unchanged
+  then.
 - **Common Notions counted like the other rows.** The owner chose to count the Common
   Notions on each certificate as the postulates, definitions and tacit rules are
   counted, with those of the propositions a proof cites. Until now they counted only
@@ -194,3 +195,9 @@
   for granted that two straight lines meet. None uses superposition directly; III.24,
   where Euclid applies one segment to another, compares the radii of their circles. The
   README, CONTRIBUTING and `CITATION.cff` say so.
+- **I.23 in Heath's letters.** I.23 now puts G on the ray from A through B and F on P's
+  side of AB, as Heath's figure has them (vol. 1, p. 294), and the line under its figure
+  is gone; its proof hands I.22 the lengths CD, CE, DE in the order of Euclid's
+  sentence. Its callers (I.24, I.31, I.42, I.44, III.7, III.8, III.25, III.27, III.33,
+  III.34) turn its angle FAG round with `angle_symm`, for Euclid names each of their
+  angles from the arm on the given straight line. The `book-I` tag keeps the old letters.
