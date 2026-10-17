@@ -262,31 +262,81 @@ def euclid_cites_text(groups, book):
 HEATH_TITLE = "The Thirteen Books of Euclid's Elements"
 
 
-def euclids_text(source):
-    """The footer naming Heath's pages, his title in italics. The source comment starts
-    with "Source:"."""
-    source = re.sub(r"^Source:\s*", "", source).replace(HEATH_TITLE, f"*{HEATH_TITLE}*")
-    return f"<sub>Euclid's text: {source}</sub>"
-
-
 # The Internet Archive scans of Heath's volumes: vol. 1 (Books I–II), vol. 2 (Books III–IX).
+# A source comment naming a volume not here keeps its leaves as plain text.
 SCANS = {"1": "thirteenbookseu02heibgoog", "2": "thirteenbookseu00heibgoog"}
+ARCHIVE = "https://archive.org/details/"
+
+
+def scan_url(vol, leaf):
+    """The Internet Archive's page for one leaf of Heath's scan: `scan_url("1", "n261")`
+    is the leaf of vol. 1 that holds p. 241. A source comment numbers its leaves as the
+    Archive does, so the leaf goes into the address as it stands."""
+    return f"{ARCHIVE}{SCANS[vol]}/page/{leaf}"
+
+
+def scan_volume(source):
+    """The volume a source comment names ("vol. 2" gives "2"), or None if it names none
+    whose scan is in SCANS."""
+    vol = re.search(r"vol\. (\d+)", source)
+    return vol.group(1) if vol and vol.group(1) in SCANS else None
+
+
+def leaf_links(leaves, vol):
+    """Leaves as links, joined as prose: "[n67](…) and [n68](…)"."""
+    links = [f"[{leaf}]({scan_url(vol, leaf)})" for leaf in leaves]
+    return links[0] if len(links) == 1 else ", ".join(links[:-1]) + " and " + links[-1]
+
+
+# What a source comment says of the scan: "scan leaves n261–n262", "scan leaf n390",
+# "figure on n261", "figures on n86", "figures on n67 and n68", "figures on n79, n80 and n81".
+SCAN_LEAVES = re.compile(r"scan leaves (n\d+)[–-](n\d+)|scan leaf (n\d+)"
+                         r"|(figures?) on (n\d+(?:(?:, | and )n\d+)*)")
+SCAN_ID = re.compile(r"(Internet Archive scan )([A-Za-z0-9_.-]*[A-Za-z0-9_])")
+
+
+def link_scans(source):
+    """A source comment with what it says of the scan linked to the Internet Archive:
+    "scan leaves n261–n262" to the first of them, "scan leaf n390" and "figure on n261"
+    to theirs, each leaf of "figures on n67 and n68" to its own, and the scan's
+    identifier, which the front pages name, to the scan itself."""
+    vol = scan_volume(source)
+
+    def leaves(m):
+        first, last, one, figures, on = m.groups()
+        if first:
+            return f"[scan leaves {first}–{last}]({scan_url(vol, first)})"
+        if one:
+            return f"[scan leaf {one}]({scan_url(vol, one)})"
+        found = re.findall(r"n\d+", on)
+        if len(found) == 1:
+            return f"[{figures} on {found[0]}]({scan_url(vol, found[0])})"
+        return f"{figures} on {leaf_links(found, vol)}"
+
+    if vol:
+        source = SCAN_LEAVES.sub(leaves, source)
+    return SCAN_ID.sub(lambda m: f"{m.group(1)}[{m.group(2)}]({ARCHIVE}{m.group(2)})", source)
+
+
+def euclids_text(source):
+    """The footer naming Heath's pages, his title in italics, and the scan linked (see
+    link_scans). The source comment starts with "Source:"."""
+    source = re.sub(r"^Source:\s*", "", source).replace(HEATH_TITLE, f"*{HEATH_TITLE}*")
+    return f"<sub>Euclid's text: {link_scans(source)}</sub>"
 
 
 def heath_figure_note(source):
     """For a proposition whose lettered figure is still to be drawn: where Heath's own is,
     read from the source comment ("vol. 2 … figure on n18", "figures on n67 and n68")."""
-    vol = re.search(r"vol\. (\d+)", source)
+    vol = scan_volume(source)
     leaves = re.search(r"figures? on (n\d+(?:(?:, | and )n\d+)*)", source)
-    if not vol or not leaves or vol.group(1) not in SCANS:
+    if not vol or not leaves:
         return "_Euclid's figure, with Heath's letters, is still to be drawn._"
-    url = f"https://archive.org/details/{SCANS[vol.group(1)]}/page/"
     found = re.findall(r"n\d+", leaves.group(1))
     if len(found) == 1:
-        where = f"[scan leaf {found[0]}]({url}{found[0]})"
+        where = f"[scan leaf {found[0]}]({scan_url(vol, found[0])})"
     else:
-        links = [f"[{leaf}]({url}{leaf})" for leaf in found]
-        where = "scan leaves " + ", ".join(links[:-1]) + " and " + links[-1]
+        where = "scan leaves " + leaf_links(found, vol)
     if leaves.group(0).startswith("figures"):
         # Heath draws more than one figure (III.25, III.33, III.35, III.36).
         return ("_Euclid's figures, with Heath's letters, are still to be drawn; until then, "
@@ -765,51 +815,140 @@ def certificate(facts, docs):
     return "\n".join(out)
 
 
+def heath_edges(book, count):
+    """The arrows of a book's graph from Heath's references: a (cited, citing) pair of
+    propositions for each earlier proposition that a proposition's enunciation or proof
+    refers to in Heath's brackets (I.22's [I. 20] is in its enunciation). "[III. 1, Por.]"
+    is drawn from III.1, as heath.citations reads it."""
+    edges = set()
+    for n in range(1, count + 1):
+        _, enunciation, proof = heath.read(book, n)
+        edges |= {(c, f"{book}.{n}") for c in heath.citations([enunciation] + proof)
+                  if c != f"{book}.{n}"}
+    return edges
+
+
+def lean_edges(facts, book):
+    """The arrows of a book's graph from the Lean: a (cited, citing) pair of propositions
+    for each entry of facts.json that a proposition of the book, its porism or a
+    companion cites (`cites`). A porism or companion is drawn as its proposition, both
+    citing and cited, so III.17's use of "III.16 Por." is an arrow from III.16, and III.1
+    Por.'s use of III.1 is no arrow at all."""
+    edges = set()
+    for p in facts.values():
+        citing = heath.parse_ref(p["ref"]).parent
+        if citing.split(".")[0] != book:
+            continue
+        edges |= {(heath.parse_ref(c).parent, citing) for c in p["cites"]
+                  if heath.parse_ref(c).parent != citing}
+    return edges
+
+
+def edge_order(edge):
+    """Arrows in the order of the proposition they reach, then of the one they leave."""
+    cited, citing = edge
+    return prop_key(citing), prop_key(cited)
+
+
+def node(ref):
+    """A proposition's name in a Mermaid graph: I.47 is `I47`."""
+    return ref.replace(".", "")
+
+
+def mermaid(book, count, facts, edges, dashed=frozenset()):
+    """One book's graph: its propositions, green when proved in Lean and grey when only
+    stated; the propositions of earlier books that an arrow leaves, white; and the arrows,
+    those in `dashed` dashed."""
+    earlier = sorted({c for c, _ in edges if c.split(".")[0] != book}, key=prop_key)
+    out = ["```mermaid", "graph TD"]
+    out += [f'  {node(c)}["{c}"]' for c in earlier]
+    out += [f'  {book}{n}["{book}.{n}"]' for n in range(1, count + 1)]
+    out += [f"  {node(c)} {'-.->' if (c, d) in dashed else '-->'} {node(d)}"
+            for c, d in sorted(edges, key=edge_order)]
+    out.append("  classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20")
+    out.append("  classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242")
+    if earlier:
+        out.append("  classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242")
+        out.append(f"  class {','.join(node(c) for c in earlier)} earlier")
+    proved = [f"{book}{n}" for n in range(1, count + 1)
+              if facts.get(f"{book}.{n}", {}).get("status") in ("proved", "proved-pending")]
+    sketched = [f"{book}{n}" for n in range(1, count + 1) if f"{book}{n}" not in proved]
+    if proved:
+        out.append(f"  class {','.join(proved)} proved")
+    if sketched:
+        out.append(f"  class {','.join(sketched)} sketched")
+    return out + ["```"]
+
+
+def arrows(k):
+    return f"{k} arrow" + ("" if k == 1 else "s")
+
+
+def page_link(ref):
+    """A proposition's page, linked from GRAPH.md at the top of the repository."""
+    b, n = ref.split(".")
+    return f"[{ref}](book/{b}/{int(n):02d}.md)"
+
+
+GRAPH_SECTIONS = ("From Heath's references", "From the Lean")
+# Heath's own word on the brackets, from his chapter on Euclid in Arabia (vol. 1, p. 83).
+HEATH_ON_BRACKETS = ("\"such specific quotations of earlier propositions are rare in "
+                     f"Euclid\" (vol. 1, p. 83, [scan leaf n103]({scan_url('1', 'n103')}))")
+
+
 def graph(facts):
+    """GRAPH.md: for each book, a graph from Heath's references and one from the Lean,
+    with the counts that tie them together, which are checked to add up."""
+    contents = []
+    for i, book in enumerate(BOOKS):
+        # GitHub numbers the second heading of a name "-1", the third "-2".
+        suffix = f"-{i}" if i else ""
+        contents.append(f"Book {book}: [from Heath's references](#from-heaths-references"
+                        f"{suffix}), [from the Lean](#from-the-lean{suffix})")
     out = [GENERATED, "# Who uses whom", "",
-           "Each arrow runs from a proposition to one that cites it, following Euclid's own "
-           "bracketed references in Heath's translation. Green: proved in Lean; grey: stated.",
-           ""]
+           "Two graphs for each book, in which each arrow runs from a proposition to one "
+           "that uses it. Green: proved in Lean; grey: stated; white: a proposition of an "
+           "earlier book.", "",
+           "- **From Heath's references.** An arrow for each earlier proposition that "
+           "Heath's translation names in square brackets, such as \"[I. 4]\", in a "
+           "proposition's enunciation or proof. The brackets are Heath's editorial "
+           "references, not Euclid's words: as Heath says, " + HEATH_ON_BRACKETS + ". A "
+           "missing bracket does not mean that Euclid gave no reason, and a bracket is "
+           "Heath's pointer, not a checked reconstruction of the argument.",
+           "- **From the Lean.** An arrow for each proposition that a proof in Lean cites, "
+           "as [the certificate](CERTIFICATE.md) records it; a porism is drawn as its "
+           "proposition. Solid arrows are also among Heath's references; dashed ones only "
+           "the Lean draws. A line under the graph names any of Heath's references that the "
+           "Lean does not cite.", "",
+           " · ".join(contents), ""]
     for book, (count, titles) in BOOKS.items():
-        # The enunciation counts too: I.22's [I. 20] is there.
-        cites = {}
-        for n in range(1, count + 1):
-            _, enunciation, proof = heath.read(book, n)
-            cites[n] = sorted(heath.citations([enunciation] + proof), key=prop_key)
-        # Propositions of earlier books that this one cites, drawn as nodes of their own.
-        earlier = sorted({c for cs in cites.values() for c in cs if c.split(".")[0] != book},
-                         key=prop_key)
-        out += [f"## Book {book}", ""]
-        if earlier:
-            out += [f"White: propositions of earlier books that Book {book} cites.", ""]
-        out += ["```mermaid", "graph TD"]
-        for c in earlier:
-            out.append(f'  {c.replace(".", "")}["{c}"]')
-        for n in range(1, count + 1):
-            out.append(f'  {book}{n}["{book}.{n}"]')
-        for n in range(1, count + 1):
-            for c in cites[n]:
-                b, m = c.split(".")
-                if b == book and int(m) != n:
-                    out.append(f"  {book}{m} --> {book}{n}")
-                elif b != book:
-                    out.append(f"  {b}{m} --> {book}{n}")
-        out.append("  classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20")
-        out.append("  classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242")
-        if earlier:
-            out.append("  classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242")
-            out.append(f"  class {','.join(c.replace('.', '') for c in earlier)} earlier")
-        proved = [f"{book}{n}" for n in range(1, count + 1)
-                  if facts.get(f"{book}.{n}", {}).get("status") in ("proved", "proved-pending")]
-        sketched = [f"{book}{n}" for n in range(1, count + 1) if f"{book}{n}" not in proved]
-        if proved:
-            out.append(f"  class {','.join(proved)} proved")
-        if sketched:
-            out.append(f"  class {','.join(sketched)} sketched")
-        out += ["```", ""]
-        for n in range(1, count + 1):
-            out.append(f"- [{book}.{n}](book/{book}/{n:02d}.md): {titles[n]}")
-        out.append("")
+        heath_side = heath_edges(book, count)
+        lean_side = lean_edges(facts, book)
+        both = heath_side & lean_side
+        lean_only = lean_side - heath_side
+        heath_only = sorted(heath_side - lean_side, key=edge_order)
+        # The counts printed below tie the two graphs together; they must add up.
+        assert len(both) + len(lean_only) == len(lean_side)
+        assert len(both) + len(heath_only) == len(heath_side)
+        out += [f"## Book {book}", "", f"### {GRAPH_SECTIONS[0]}", "",
+                f"{arrows(len(heath_side))}.", ""]
+        out += mermaid(book, count, facts, heath_side) + [""]
+        out += [f"### {GRAPH_SECTIONS[1]}", ""]
+        if not any(facts.get(f"{book}.{n}") for n in range(1, count + 1)):
+            out += ["_The certificate has no entries for this book yet._", ""]
+        else:
+            out += [f"{arrows(len(lean_side))}: {len(both)} also among Heath's references "
+                    f"(solid) and {len(lean_only)} only in the Lean (dashed).", ""]
+            out += mermaid(book, count, facts, lean_side, dashed=lean_only) + [""]
+            if heath_only:
+                missing = "; ".join(f"{page_link(c)} in {page_link(d)}" for c, d in heath_only)
+                out += [f"Heath's references that the Lean does not cite, {len(heath_only)} "
+                        f"of his {len(heath_side)}: {missing}.", ""]
+            else:
+                out += [f"The Lean cites all {len(heath_side)} of Heath's references.", ""]
+        out += [f"<details><summary>The {count} propositions of Book {book}</summary>", ""]
+        out += [f"- {page_link(f'{book}.{n}')}: {titles[n]}" for n in range(1, count + 1)]
+        out += ["", "</details>", ""]
     return "\n".join(out)
 
 
