@@ -1,10 +1,36 @@
-"""Read Heath's text (heath/<book>/NN.md) into enunciation + proof paragraphs.
+"""Read Heath's text (heath/<book>/NN.md) into enunciation + proof paragraphs, and keep
+the small contracts the other scripts share:
+
+* references: `parse_ref`, `prop_key` ("I.40", "III.1 Por.", "I.40 general");
+* Heath's porisms: `heath_porisms`, `heath_porism`;
+* the main theorem of a Lean file: `theorem_span`;
+* fingerprints of statements and files: `fingerprint`, `review_fingerprint`, `file_hash`;
+* the review records, review/<book>/NN.toml: `load_review`, `validate_review`,
+  `load_terms` (the schema is review/SCHEMA.md).
 
 Shared by scaffold_book.py, check_fidelity.py and render.py. Standard library only.
+Reading review records needs Python 3.11 or later, for tomllib; the rest runs on older
+Pythons too. `python3 scripts/heath.py` checks the contracts against themselves: the
+examples in review/SCHEMA.md, review/terms.toml and every review record present.
 """
 
+from __future__ import annotations
+
+import hashlib
 import re
+import sys
 from pathlib import Path
+from typing import NamedTuple
+
+
+def _toml():
+    """tomllib, imported only where a record is read, so that the scripts which never
+    read one still run on a Python older than 3.11."""
+    try:
+        import tomllib
+    except ModuleNotFoundError:
+        raise RuntimeError("reading review records needs Python 3.11 or later (tomllib)") from None
+    return tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -50,11 +76,82 @@ def arabic(book: str) -> int:
     return ROMAN.index(book) + 1
 
 
-def prop_key(ref: str):
-    """Sort references by book, then by number: I.3 before I.10, I.48 before II.1,
-    and IX before X."""
-    book, num = ref.split(".")
-    return (arabic(book), int(num))
+# What a reference names: a proposition ("I.40"), its porism ("III.1 Por."), or a
+# companion theorem beside it ("I.40 general", for `Prop40.general`). This order is the
+# third place of `prop_key`.
+KINDS = ("proposition", "porism", "companion")
+
+REF = re.compile(r"([IVX]+)\.\s*(\d+)(?:(?:,\s*|\s+)(Por\.)|\s+([A-Za-z_][\w']*))?")
+
+
+class Ref(NamedTuple):
+    """A reference taken apart: `parse_ref("III.1 Por.")` is
+    `Ref(book="III", n=1, kind="porism", name="porism")`.
+
+    `name` is the last part of the Lean declaration's name: None for the proposition
+    itself (`Prop1`), "porism" for its porism (`Prop1.porism`), and the companion's own
+    name for a companion ("general" for `Prop40.general`). `str()` gives the reference
+    back in its one written form: "III.1", "III.1 Por.", "I.40 general"."""
+    book: str
+    n: int
+    kind: str
+    name: str | None
+
+    def __str__(self) -> str:
+        base = f"{self.book}.{self.n}"
+        if self.kind == "porism":
+            return f"{base} Por."
+        if self.kind == "companion":
+            return f"{base} {self.name}"
+        return base
+
+    @property
+    def parent(self) -> str:
+        """The proposition this belongs to: "III.1" for "III.1 Por." and for "III.1"."""
+        return f"{self.book}.{self.n}"
+
+    @property
+    def lean(self) -> str:
+        """The Lean declaration: "Elements.BookIII.Prop1.porism" for "III.1 Por."."""
+        base = f"Elements.Book{self.book}.Prop{self.n}"
+        return f"{base}.{self.name}" if self.name else base
+
+
+def parse_ref(ref: str) -> Ref:
+    """Take apart a reference: "I.40", "III.1 Por." or "I.40 general".
+
+    Heath's spacing and comma are accepted too ("I. 4", "III. 1, Por."); `str()` of the
+    result is the written form. A porism is always "Por.", never a companion called
+    "porism". Raises ValueError on anything else."""
+    m = REF.fullmatch(ref.strip())
+    if not m:
+        raise ValueError(f"not a reference: {ref!r} (expected one like 'I.40', "
+                         "'III.1 Por.' or 'I.40 general')")
+    book, num, porism, name = m.groups()
+    if book not in ROMAN:
+        raise ValueError(f"not a reference: {ref!r} ({book} is not a book of the Elements)")
+    n = int(num)
+    if n < 1:
+        raise ValueError(f"not a reference: {ref!r} (propositions are numbered from 1)")
+    if porism:
+        return Ref(book, n, "porism", "porism")
+    if name:
+        if name.lower() in ("por", "porism"):
+            raise ValueError(f"not a reference: {ref!r} (a porism is written "
+                             f"'{book}.{n} Por.')")
+        return Ref(book, n, "companion", name)
+    return Ref(book, n, "proposition", None)
+
+
+def prop_key(ref: "str | Ref"):
+    """Sort references by book, then by number, then the proposition before its porism
+    and its porism before its companions: I.3 before I.10, I.48 before II.1, IX before
+    X, and III.1 before III.1 Por. before III.1 general.
+
+    The key is (arabic(book), n, 0 | 1 | 2). Two companions of one proposition share a
+    key: sort by `(prop_key(r), r)` for a fixed order among them."""
+    r = ref if isinstance(ref, Ref) else parse_ref(ref)
+    return (arabic(r.book), r.n, KINDS.index(r.kind))
 
 
 def normalize(s: str) -> str:
@@ -108,3 +205,452 @@ def justifications(paragraphs):
                 if part not in found:
                     found.append(part)
     return found
+
+
+# Heath's porisms. A porism is a paragraph of the proof that opens "PORISM.", or
+# "[PORISM." where Heath brackets it as probably interpolated (I.15).
+
+PORISM = re.compile(r"\[?PORISM\.")
+
+
+def heath_porism(book: str, n: int) -> str | None:
+    """Heath's porism to proposition n of the book, the paragraph as he prints it (I.15's
+    in his square brackets), or None if he prints none."""
+    _, _, proof = read(book, n)
+    return next((p for p in proof if PORISM.match(p)), None)
+
+
+def heath_porisms() -> frozenset:
+    """Every (book, n) in `BOOKS` whose proof in Heath has a porism paragraph: in Books
+    I-III, ("I", 15), ("III", 1) and ("III", 16)."""
+    return frozenset((book, n) for book, count in BOOKS.items()
+                     for n in range(1, count + 1) if heath_porism(book, n))
+
+
+# The main theorem of a proposition's Lean file.
+
+class TheoremSpan(NamedTuple):
+    """Where `theorem PropN` lies in the text `src` of its Lean file.
+
+    `src[start:end]` is the whole declaration, from its docstring's `/--` to the next
+    top-level declaration, the namespace's `end` or the end of the file;
+    `src[body:end]` is what follows `theorem PropN` and the one blank after it: the
+    statement and the proof; `doc` is the docstring's text, between `/--` and `-/`.
+    Before `start` come the file's header and its helpers; from `end` on, the porism,
+    the companions and anything else after the main theorem."""
+    start: int
+    body: int
+    end: int
+    doc: str
+
+
+def theorem_span(src: str, n: int) -> TheoremSpan | None:
+    """Find the documented `theorem PropN` in `src`; None if there is none."""
+    m = re.search(r"/--((?:(?!-/).)*?)-/\s*theorem Prop%d\s" % n, src, re.S)
+    if not m:
+        return None
+    # The theorem runs until the next top-level declaration or the namespace end.
+    rest = src[m.end():]
+    stop = re.search(r"^(end |theorem |lemma |def |structure |/--|/-!|@\[)", rest, re.M)
+    end = m.end() + (stop.start() if stop else len(rest))
+    return TheoremSpan(m.start(), m.end(), end, m.group(1))
+
+
+def lean_path(book: str, n: int) -> Path:
+    """The Lean file of a proposition, which also holds its porism and companions."""
+    return ROOT / "Elements" / f"Book{book}" / f"Prop{n:02d}.lean"
+
+
+# Fingerprints: "sha256:" and the first 16 hex digits of a SHA-256.
+
+HASH = re.compile(r"sha256:[0-9a-f]{16}")
+
+
+def _sha(data: bytes) -> str:
+    return "sha256:" + hashlib.sha256(data).hexdigest()[:16]
+
+
+def fingerprint(*statements: str) -> str:
+    """A short hash of one or more printed statements, whitespace aside: each statement
+    with its runs of whitespace made one space, joined by newlines."""
+    return _sha("\n".join(normalize(s) for s in statements).encode())
+
+
+def review_fingerprint(facts: dict, ref: str) -> str:
+    """The `fingerprint` a review record of the proposition `ref` must carry: of the
+    `statement` of its facts.json entry, then those of its `attached` entries (its
+    porism, then its companions) in the order listed. A change to any of them is a
+    change to what the record reviewed (Certificate/FIELDS.md, review/SCHEMA.md)."""
+    by_ref = {p["ref"]: p for p in facts["propositions"]}
+    entries = [by_ref[ref]] + [by_ref[a] for a in by_ref[ref].get("attached", [])]
+    missing = [e["ref"] for e in entries if "statement" not in e]
+    if missing:
+        raise KeyError(f"facts.json has no `statement` for {', '.join(missing)}: rerun "
+                       "`lake env lean Certificate/Facts.lean`")
+    return fingerprint(*(e["statement"] for e in entries))
+
+
+def file_hash(path) -> str:
+    """A short hash of a file's exact bytes, in the form `fingerprint` uses. A review
+    record's `lean` is the file_hash of `lean_path(book, n)`."""
+    return _sha(Path(path).read_bytes())
+
+
+# The review records, review/<book>/NN.toml. review/SCHEMA.md says what each field
+# means; this is the machine's half of it.
+
+REVIEW = ROOT / "review"
+NOTE_LIMIT = 160  # characters in [statement] note, which stands beside the badge
+SCOPES = ("full", "restricted", "partial")
+ROUTES = ("euclid", "modified", "alternative")
+PASSAGES = ("carried", "helper", "grouped", "different", "unformalized")
+STAGES = ("exceptions", "full")
+VERDICTS = ("pass", "fail", "n/a")
+TAG_KINDS = ("scope", "representation")
+COMMIT = re.compile(r"[0-9a-f]{7,40}")
+WORD = re.compile(r"[a-z][a-z0-9]*(?:-[a-z0-9]+)*")
+
+_STR, _LIST, _TABLE = "string", "list", "table"
+# Each section's keys, as (type, required). A "stamp" key is written by
+# scripts/review_stamp.py, and required unless an unstamped record is asked for.
+FIELDS = {
+    "statement": {"scope": (_STR, True), "hypotheses": (_LIST, False),
+                  "omitted": (_LIST, False), "note": (_STR, False),
+                  "fingerprint": (_STR, "stamp"), "companions": (_LIST, False)},
+    "route": {"kind": (_STR, True), "note": (_STR, False)},
+    "representation": {"tags": (_LIST, True), "note": (_STR, False)},
+    "overlap": {"rule": (_STR, True), "note": (_STR, False)},
+    "coverage": {"checked": (_LIST, False), "explains": (_LIST, False),
+                 "text_only": (_LIST, False)},
+    "passage": {"at": (_STR, True), "kind": (_STR, True), "helper": (_STR, False),
+                "note": (_STR, False)},
+    "figure": {"case": (_STR, True)},
+    "review": {"stage": (_STR, True), "commit": (_STR, "stamp"), "lean": (_STR, "stamp"),
+               "reviewer": (_STR, True), "items": (_TABLE, False)},
+}
+REQUIRED = ("statement", "route", "review")
+
+
+class ReviewError(ValueError):
+    """A review record (or review/terms.toml) that is missing, unreadable or breaks
+    review/SCHEMA.md. `where` is the file, `problems` each fault found in it."""
+
+    def __init__(self, where: str, problems: list[str]):
+        self.where, self.problems = where, problems
+        detail = problems[0] if len(problems) == 1 else "".join(f"\n  - {p}" for p in problems)
+        super().__init__(f"{where}: {detail}")
+
+
+def review_path(book: str, n: int) -> Path:
+    return REVIEW / book / f"{n:02d}.toml"
+
+
+def _rel(path: Path) -> str:
+    return path.relative_to(ROOT).as_posix()
+
+
+def load_terms() -> dict:
+    """review/terms.toml: the tags a record's [representation] may carry, as
+    {tag: {"kind": "scope" | "representation", "meaning": "one line"}}."""
+    path = REVIEW / "terms.toml"
+    tomllib = _toml()
+    try:
+        data = tomllib.loads(path.read_text())
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        raise ReviewError(_rel(path), [str(e)]) from None
+    tags = data.get("tag")
+    if set(data) != {"tag"} or not isinstance(tags, dict) or not tags:
+        raise ReviewError(_rel(path), ["expected [tag.<name>] tables and nothing else"])
+    problems = []
+    for name, t in tags.items():
+        if not WORD.fullmatch(name):
+            problems.append(f"tag {name!r}: a tag is lower-case words joined by hyphens")
+        if not isinstance(t, dict) or set(t) != {"kind", "meaning"}:
+            problems.append(f"tag {name!r}: needs `kind` and `meaning`, and nothing else")
+            continue
+        if t["kind"] not in TAG_KINDS:
+            problems.append(f"tag {name!r}: `kind` is one of {', '.join(TAG_KINDS)}")
+        if not isinstance(t["meaning"], str) or not t["meaning"].strip() or "\n" in t["meaning"]:
+            problems.append(f"tag {name!r}: `meaning` is one line of plain words")
+    if problems:
+        raise ReviewError(_rel(path), problems)
+    return tags
+
+
+def _shape(record, require_stamp: bool) -> list[str]:
+    """The faults of form: unknown or missing sections and keys, and wrong types."""
+    problems = []
+    bad = problems.append
+    if not isinstance(record, dict):
+        return ["a record is a TOML table"]
+    for section in record:
+        if section not in FIELDS:
+            bad(f"unknown section [{section}] (the sections are: {', '.join(FIELDS)})")
+    for section in REQUIRED:
+        if section not in record:
+            bad(f"[{section}] is missing")
+    tables = []
+    for section, fields in FIELDS.items():
+        value = record.get(section)
+        if value is None:
+            continue
+        if section == "passage":
+            if isinstance(value, list) and all(isinstance(t, dict) for t in value):
+                tables += [(f"[[passage]] {i}", t, fields) for i, t in enumerate(value, 1)]
+            else:
+                bad("passages are an array of tables: write each as [[passage]]")
+        elif isinstance(value, dict):
+            tables.append((f"[{section}]", value, fields))
+        else:
+            bad(f"[{section}] must be a table")
+    for label, table, fields in tables:
+        for key in table:
+            if key not in fields:
+                bad(f"{label}: unknown key `{key}` (the keys are: {', '.join(fields)})")
+        for key, (kind, required) in fields.items():
+            if key not in table:
+                if required is True:
+                    bad(f"{label}: `{key}` is missing")
+                elif required == "stamp" and require_stamp:
+                    bad(f"{label}: `{key}` is missing (scripts/review_stamp.py writes it)")
+                continue
+            v = table[key]
+            if kind == _STR and not (isinstance(v, str) and v.strip()):
+                bad(f"{label}: `{key}` must be a non-empty string")
+            elif kind == _LIST and not (isinstance(v, list)
+                                        and all(isinstance(x, str) and x.strip() for x in v)):
+                bad(f"{label}: `{key}` must be a list of non-empty strings")
+            elif kind == _TABLE and not isinstance(v, dict):
+                bad(f"{label}: `{key}` must be a table")
+    return problems
+
+
+def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = True,
+                    where: str | None = None) -> dict:
+    """Check a parsed review record of proposition n of the book against
+    review/SCHEMA.md, and return it with the defaults filled in: [statement]
+    hypotheses, omitted and companions, [coverage]'s three lists, `passage` and
+    [review] items, each empty when not given. Raises ReviewError naming every fault.
+
+    With require_stamp=False the stamp keys (fingerprint, commit, lean) may be absent,
+    for scripts/review_stamp.py to write. Whether the stamps are current (the
+    fingerprint against facts.json, `lean` against the file) is check_fidelity's
+    business, not this function's."""
+    where = where or _rel(review_path(book, n))
+    problems = _shape(record, require_stamp)
+    if problems:
+        raise ReviewError(where, problems)
+    bad = problems.append
+
+    st, route, rv = record["statement"], record["route"], record["review"]
+    for key in ("hypotheses", "omitted", "companions"):
+        st.setdefault(key, [])
+    if "coverage" in record:
+        for key in FIELDS["coverage"]:
+            record["coverage"].setdefault(key, [])
+    record.setdefault("passage", [])
+    rv.setdefault("items", {})
+
+    def plain(s: str) -> str:
+        return normalize(s.replace("*", ""))
+
+    _, enunciation, proof = read(book, n)
+    enunciation = plain(enunciation)
+    porism = plain(heath_porism(book, n) or "")
+    proof_text = plain(" ".join(proof))
+
+    # [statement]
+    scope = st["scope"]
+    if scope not in SCOPES:
+        bad(f"[statement]: `scope` is one of {', '.join(SCOPES)}, not {scope!r}")
+    note = st.get("note", "")
+    if scope in ("restricted", "partial") and not note:
+        bad(f"[statement]: a {scope} statement needs a `note`, shown beside the badge")
+    if len(note) > NOTE_LIMIT:
+        bad(f"[statement]: `note` has {len(note)} characters; the limit is {NOTE_LIMIT}")
+    if "\n" in note:
+        bad("[statement]: `note` is one line")
+    if scope == "full" and (st["hypotheses"] or st["omitted"]):
+        bad("[statement]: a full statement has no `hypotheses` and no `omitted`")
+    if scope == "restricted" and not st["hypotheses"]:
+        bad("[statement]: a restricted statement lists its extra `hypotheses`")
+    if scope == "restricted" and st["omitted"]:
+        bad("[statement]: a statement with `omitted` clauses is partial, not restricted")
+    if scope == "partial" and not st["omitted"]:
+        bad("[statement]: a partial statement lists its `omitted` clauses")
+    if scope == "partial" and "coverage" not in record:
+        bad("a partial statement needs a [coverage] clause map")
+    for q in st["omitted"]:
+        if plain(q) not in enunciation and plain(q) not in porism:
+            bad(f"[statement]: omitted {q!r} is not quoted from Heath's enunciation or porism")
+    for c in st["companions"]:
+        try:
+            r = parse_ref(c)
+        except ValueError as e:
+            bad(f"[statement]: companions: {e}")
+            continue
+        if r.kind != "companion" or r.parent != f"{book}.{n}":
+            bad(f"[statement]: companions: {c!r} is not a companion of {book}.{n} "
+                f"(write '{book}.{n} <name>', as 'I.40 general')")
+    if "fingerprint" in st and not HASH.fullmatch(st["fingerprint"]):
+        bad("[statement]: `fingerprint` is 'sha256:' and 16 hex digits")
+
+    # [route]
+    if route["kind"] not in ROUTES:
+        bad(f"[route]: `kind` is one of {', '.join(ROUTES)}, not {route['kind']!r}")
+    elif route["kind"] != "euclid" and "note" not in route:
+        bad(f"[route]: a {route['kind']} route needs a `note` saying how it differs")
+
+    # [representation]
+    if "representation" in record:
+        tags = record["representation"]["tags"]
+        terms = load_terms()
+        if not tags:
+            bad("[representation]: `tags` is empty; leave the section out instead")
+        if len(set(tags)) != len(tags):
+            bad("[representation]: a tag is listed twice")
+        for t in tags:
+            if t not in terms:
+                bad(f"[representation]: tag {t!r} is not in review/terms.toml")
+            elif terms[t]["kind"] == "scope" and scope == "full":
+                bad(f"[representation]: tag {t!r} narrows the statement, but its scope is full")
+
+    # [overlap]
+    if "overlap" in record and re.search(r"\s", record["overlap"]["rule"]):
+        bad("[overlap]: `rule` is one axiom's name as facts.json writes it, "
+            "as 'Tacit.inside_of_between'")
+
+    # [coverage]
+    if "coverage" in record:
+        cov = record["coverage"]
+        if not any(cov[k] for k in FIELDS["coverage"]):
+            bad("[coverage]: the clause map is empty")
+        for q in cov["text_only"]:
+            if plain(q) not in enunciation and plain(q) not in proof_text:
+                bad(f"[coverage]: text_only {q!r} is not quoted from Heath")
+
+    # [[passage]]
+    seen = set()
+    for i, p in enumerate(record["passage"], 1):
+        label = f"[[passage]] {i}"
+        kind = p["kind"]
+        if kind not in PASSAGES:
+            bad(f"{label}: `kind` is one of {', '.join(PASSAGES)}, not {kind!r}")
+        elif kind != "carried" and "note" not in p:
+            bad(f"{label}: a {kind} passage needs a `note`, shown on the page")
+        if kind == "helper" and "helper" not in p:
+            bad(f"{label}: a helper passage names its `helper`")
+        if "helper" in p and re.search(r"\s", p["helper"]):
+            bad(f"{label}: `helper` is one Lean name, as 'Prop1.middle'")
+        at = plain(p["at"])
+        found = proof_text.count(at)
+        if found == 0:
+            bad(f"{label}: `at` {p['at']!r} is not quoted from Heath's proof")
+        elif found > 1:
+            bad(f"{label}: `at` {p['at']!r} occurs {found} times in Heath's proof; "
+                "quote enough words to name one place")
+        if at in seen:
+            bad(f"{label}: another passage is already `at` {p['at']!r}")
+        seen.add(at)
+
+    # [review]
+    if rv["stage"] not in STAGES:
+        bad(f"[review]: `stage` is one of {', '.join(STAGES)}, not {rv['stage']!r}")
+    if "commit" in rv and not COMMIT.fullmatch(rv["commit"]):
+        bad("[review]: `commit` is a git commit, 7 to 40 lower-case hex digits")
+    if "lean" in rv and not HASH.fullmatch(rv["lean"]):
+        bad("[review]: `lean` is 'sha256:' and 16 hex digits")
+    for key, verdict in rv["items"].items():
+        if not WORD.fullmatch(key):
+            bad(f"[review]: items: {key!r} is not an item key (lower-case words and hyphens)")
+        if verdict not in VERDICTS:
+            bad(f"[review]: items: {key} is one of {', '.join(VERDICTS)}, not {verdict!r}")
+
+    if problems:
+        raise ReviewError(where, problems)
+    return record
+
+
+def load_review(book: str, n: int, *, require_stamp: bool = True) -> dict:
+    """Read and check review/<book>/NN.toml; return it as a dict, defaults filled in
+    (see `validate_review`), or raise ReviewError with the file and every fault."""
+    path = review_path(book, n)
+    if not path.exists():
+        raise ReviewError(_rel(path), ["missing: every proposition has a review record "
+                                       "(review/SCHEMA.md)"])
+    tomllib = _toml()
+    try:
+        record = tomllib.loads(path.read_text())
+    except tomllib.TOMLDecodeError as e:
+        raise ReviewError(_rel(path), [f"not valid TOML: {e}"]) from None
+    return validate_review(record, book, n, require_stamp=require_stamp, where=_rel(path))
+
+
+def _schema_examples():
+    """The worked examples in review/SCHEMA.md: each ```toml block whose first line is a
+    comment naming its record, "# review/III/16.toml"."""
+    text = (REVIEW / "SCHEMA.md").read_text()
+    for block in re.findall(r"```toml\n(.*?)```", text, re.S):
+        m = re.match(r"# review/([IVX]+)/(\d+)\.toml\n", block)
+        if m:
+            yield m.group(1), int(m.group(2)), block
+
+
+def _self_test() -> int:
+    """Check the contracts against themselves; return the number of faults."""
+    faults = []
+    for text, want in [("I.40", ("I", 40, "proposition", None)),
+                       ("III.1 Por.", ("III", 1, "porism", "porism")),
+                       ("III. 1, Por.", ("III", 1, "porism", "porism")),
+                       ("I.40 general", ("I", 40, "companion", "general")),
+                       ("I. 4", ("I", 4, "proposition", None))]:
+        if tuple(parse_ref(text)) != want:
+            faults.append(f"parse_ref({text!r}) is {tuple(parse_ref(text))}, not {want}")
+    for text in ("III.1 Por.", "I.40 general", "XIII.18"):
+        if str(parse_ref(text)) != text:
+            faults.append(f"str(parse_ref({text!r})) is {str(parse_ref(text))!r}")
+    for text in ("I.40 porism", "Def. 15", "I.0", "Q.1", "I.40 Por"):
+        try:
+            parse_ref(text)
+            faults.append(f"parse_ref({text!r}) should fail")
+        except ValueError:
+            pass
+    order = ["I.3", "I.10", "I.15", "I.15 Por.", "I.40", "I.40 general", "I.48", "II.1",
+             "III.1", "III.1 Por.", "IX.1", "X.1"]
+    if sorted(reversed(order), key=prop_key) != order:
+        faults.append(f"prop_key sorts {order} as {sorted(reversed(order), key=prop_key)}")
+    early = {p for p in heath_porisms() if p[0] in ("I", "II", "III")}
+    if early != {("I", 15), ("III", 1), ("III", 16)}:
+        faults.append(f"heath_porisms() finds {sorted(early)} in Books I-III")
+    try:
+        load_terms()
+    except ReviewError as e:
+        faults.append(str(e))
+    tomllib = _toml()
+    examples = 0
+    for book, n, block in _schema_examples():
+        examples += 1
+        try:
+            validate_review(tomllib.loads(block), book, n,
+                            where=f"review/SCHEMA.md, the example for {book}.{n}")
+        except (ReviewError, tomllib.TOMLDecodeError) as e:
+            faults.append(str(e))
+    records = 0
+    for book, count in BOOKS.items():
+        for n in range(1, count + 1):
+            if review_path(book, n).exists():
+                records += 1
+                try:
+                    load_review(book, n)
+                except ReviewError as e:
+                    faults.append(str(e))
+    for f in faults:
+        print("  ✗ " + f)
+    if not faults:
+        print(f"✓ contracts: references, porisms, review/terms.toml, {examples} examples in "
+              f"review/SCHEMA.md and {records} review records hold")
+    return len(faults)
+
+
+if __name__ == "__main__":
+    sys.exit(1 if _self_test() else 0)

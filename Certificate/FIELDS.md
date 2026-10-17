@@ -1,0 +1,141 @@
+# facts.json: the fields
+
+`lake env lean Certificate/Facts.lean` writes `facts.json` from Lean's own environment.
+`scripts/check_fidelity.py` checks it, `scripts/render.py` turns it into the pages, and
+the review records (`review/SCHEMA.md`) are stamped from it. This page is the contract
+between them. A field changes here first, and then in the code on both sides.
+
+Brief 0005 (stage 1a-1c) adds porisms and companions as entries of their own, a printed
+statement for every entry, and the axioms' exact statements. Every key that existed
+before keeps its name and its form, and for the 99 propositions its meaning, except
+where a cell below says otherwise.
+
+## References
+
+Every entry has a `ref`, written one way:
+
+| Ref | Names | Lean declaration |
+|---|---|---|
+| `"I.15"` | the proposition | `Elements.BookI.Prop15` |
+| `"I.15 Por."` | its porism | `Elements.BookI.Prop15.porism` |
+| `"I.40 general"` | a companion theorem beside it (stage 2 on) | `Elements.BookI.Prop40.general` |
+
+`heath.parse_ref` takes a reference apart into `(book, n, kind, name)`, and
+`heath.prop_key` sorts references: by book, then number, then the proposition, its
+porism, its companions. Heath's porisms are the paragraphs `heath.heath_porisms()` finds;
+in Books I-III, I.15, III.1 and III.16.
+
+## The top level
+
+| Key | Type | Meaning |
+|---|---|---|
+| `lean_version` | string | The Lean that computed the certificate. |
+| `propositions` | list of entries | One entry for every proposition, porism and companion (below). |
+| `axiom_modules` | object, name to module | Every axiom this project declares, and every other axiom an entry rests on, with the module that declares it. Lean's `propext`, `Classical.choice`, `Quot.sound` and `sorryAx` are not listed. |
+| `opaque` | list of names | Every `opaque` constant this project declares. |
+| `axiom_types` | object, name to string | **New.** The printed statement of every axiom in `axiom_modules`, with exactly the same keys. 87 at commit d040117. |
+| `vocabulary` | object, name to string | **New.** Every definition, instance, structure, inductive type and opaque of this project that an axiom's statement reaches (below). |
+
+Names here are Lean's full names without the leading `Elements.`, as `axiom_modules`
+has always written them: `"Postulate1"`, `"Tacit.centre_unique"`, `"Magnitude.add"`.
+`Certificate/axioms.lock` is compared with `axiom_types` and `vocabulary` in both
+directions (stage 1c).
+
+## Each entry
+
+The entries come in three groups: the propositions of every book, in order; then the
+porisms; then the companions, each group in `prop_key` order. Read an entry by its
+`ref`, not its place.
+
+| Key | Type | Meaning |
+|---|---|---|
+| `ref` | string | As above. |
+| `name` | string | The declaration, without `Elements.`: `"BookIII.Prop1"`, `"BookIII.Prop1.porism"`. |
+| `kind` | `"proposition"`, `"porism"` or `"companion"` | **New.** What the entry is. |
+| `of` | string | **New**, on porisms and companions only: the parent's ref, `"III.1"`. A proposition has no `of`. |
+| `attached` | list of refs | **New**, on propositions only: its porism, then its companions, in `prop_key` order; `[]` when it has none. |
+| `status` | `"proved"`, `"proved-pending"` or `"sketched"` | `"sketched"` if a `sorry` is in the declaration's own proof (through its helpers and shared steps); `"proved-pending"` if it rests on one only through what it cites; `"proved"` otherwise. A proposition, as before, also takes its porism's: it is not finished until its porism is. A companion's status is its own, and changes no other entry's. |
+| `cites` | list of refs | The entries the proof uses directly. **Changed**: a use of a porism is now recorded as the porism, `"III.1 Por."`, where it was recorded as `"III.1"`, and a use of a companion by its own ref. Sorted by string, as before. |
+| `common_notions` | list of strings | Every Common Notion beneath the proof, through what it cites too: `"C.N. 1"` and so on. |
+| `axioms` | list of names | Lean's `collectAxioms` of this declaration alone, without Lean's three foundations and `sorryAx`. For the 99 propositions this list does not change: III.1's still has 56 tacit rules, and III.1 Por.'s has 57, `Tacit.centre_unique` among them. |
+| `direct_axioms` | list of names | The axioms the proof uses itself, through its helpers and shared steps, but not through another entry it cites or a Common Notion. |
+| `lean_foundations` | list of names | Which of `propext`, `Classical.choice` and `Quot.sound` it rests on. |
+| `shared_steps` | list of objects | The project's own lemmas outside the declaration's namespace that bring in at least one proposition: `name`, `brings_in` (refs), `file`, `line`. For a porism or companion, the parent's own helpers (`Prop1.middle`) count as its own, not as shared steps. |
+| `enunciation` | string | The declaration's docstring. For a proposition it is Heath's enunciation (check_fidelity insists on it); for a porism, our docstring, which quotes Heath's porism; for a companion, our docstring saying what it adds. |
+| `statement` | string | **New.** The declaration's type, printed as below. Review records are fingerprinted from it (`heath.review_fingerprint`). |
+
+One walk, `mentions` (stage 1b), gives `cites`, `direct_axioms`, `common_notions` and
+`shared_steps`: it reads each declaration's type and value, opaque values included, and
+an inductive type's constructors. Facts.lean checks itself against Lean: each entry's
+`axioms` are exactly its `direct_axioms`, the axioms of its Common Notions and the
+`axioms` of every entry in `cites`. The Common Notions count because they are theorems,
+and some rest on tacit rules (C.N. 3 and C.N. 5 use `Tacit.add_lt_add_right`).
+
+## Printing a statement
+
+`statement`, `axiom_types` and the types and values in `vocabulary` are printed by
+`ppExpr` with these options, so that every name is written out and nothing hides behind
+notation:
+
+```lean
+pp.notation false
+pp.fullNames true
+pp.funBinderTypes true
+pp.fieldNotation false
+pp.structureInstances false
+format.width 100000
+```
+
+and then every run of whitespace is made one space, and the ends trimmed: one line each.
+
+At commit d040117 this gives, for III.1's porism,
+
+```text
+∀ {A B C D G : Elements.Point} {ABC : Elements.Circle}, Elements.Centre G ABC → Elements.OnCircle A ABC → Elements.OnCircle B ABC → Elements.Between A D B → Eq (Elements.len A D) (Elements.len D B) → Not (Elements.Collinear A B C) → Eq (Elements.ang A D C) Elements.rightAngle → Elements.Collinear D C G
+```
+
+and for `axiom_types["Postulate1"]`,
+
+```text
+∀ (A B : Elements.Point), Ne A B → Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (Elements.OnLine B L)
+```
+
+`heath.fingerprint` of III.16's statement followed by III.16 Por.'s is
+`sha256:9fd59073303dbcdc`, and of I.40's `sha256:5ea666d96871b7f8`; an implementation
+can be checked against these.
+
+## The vocabulary
+
+Start from the statements of the axioms in `axiom_modules`. Take every constant they
+mention; for a definition or instance, also every constant in its type and value, and
+for an inductive type or structure, its constructors; and go on until nothing new
+appears. Keep what this project declares, apart from the axioms themselves (they are in
+`axiom_types`). Stop at anything from outside the project (`Eq`, `Exists`, `HAdd.hAdd`):
+Lean's own constants are fixed by the toolchain.
+
+Each value is `"<kind> : <type>"`, with `" := <value>"` after it for a `def` or
+`instance`. The kinds are `def` (abbreviations and noncomputable definitions included),
+`instance`, `theorem`, `opaque`, `inductive`, `structure` and `constructor`. An opaque's
+value is not printed: that Lean cannot see it is the point. An inductive type's or a
+structure's constructors are entries of their own.
+
+At commit d040117 there are 37, among them:
+
+```text
+"Collinear": "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"
+"Kind.angle": "constructor : Elements.Kind"
+"Magnitude": "def : Elements.Kind → Type := fun (k : Elements.Kind) => NonemptyType.type (Elements.MagnitudeImpl k)"
+"Point": "opaque : Type"
+"instAddMagnitude": "instance : {k : Elements.Kind} → Add (Elements.Magnitude k) := fun {k : Elements.Kind} => Add.mk Elements.Magnitude.add"
+```
+
+The instances matter even though the printed statements do not show them: `a + b` in an
+axiom is `HAdd.hAdd a b`, and which addition it is lives in `instAddMagnitude`.
+
+## What reads it
+
+- `scripts/check_fidelity.py`: the policies, for every entry; that the porism entries are
+  exactly Heath's porisms; that every attached entry of a complete book is proved; the
+  axiom lock; the review stamps.
+- `scripts/render.py`: the pages, CERTIFICATE.md and GRAPH.md.
+- `scripts/review_stamp.py` and `heath.review_fingerprint`: the review records' stamps.

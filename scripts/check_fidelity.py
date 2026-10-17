@@ -74,19 +74,13 @@ def fail(msg: str) -> None:
 
 def theorem_block(src: str, n: int):
     """Return (docstring, proof_comment_text) for `theorem PropN`."""
-    m = re.search(r"/--((?:(?!-/).)*?)-/\s*theorem Prop%d\s" % n, src, re.S)
-    if not m:
+    span = heath.theorem_span(src, n)
+    if span is None:
         return None, None
-    doc = m.group(1)
-    start = m.end()
-    # The proof runs until the next top-level declaration or the namespace end.
-    rest = src[start:]
-    stop = re.search(r"^(end |theorem |lemma |def |structure |/--|/-!|@\[)", rest, re.M)
-    body = rest[: stop.start()] if stop else rest
     # Drop block comments (our remarks), keep full-line `--` comments (Euclid's words).
-    body = re.sub(r"/-.*?-/", "", body, flags=re.S)
+    body = re.sub(r"/-.*?-/", "", src[span.body:span.end], flags=re.S)
     words = [m.group(1) for m in re.finditer(r"^\s*--\s?(.*)$", body, re.M)]
-    return doc, " ".join(words)
+    return span.doc, " ".join(words)
 
 
 def first_difference(a: str, b: str) -> str:

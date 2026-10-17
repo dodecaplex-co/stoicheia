@@ -1,0 +1,57 @@
+# The tags a review record's [representation] may carry (review/SCHEMA.md).
+#
+# Each tag names one way our Lean differs from Euclid's words, so that pages and
+# summaries can show the reader every proposition that shares it.
+#
+#   kind = "scope"           the statement covers less than Euclid's enunciation; a record
+#                            with this tag has scope "restricted" or "partial", and says
+#                            exactly what is left out in [statement].
+#   kind = "representation"  a choice in how Euclid's objects are put into Lean, which
+#                            the reader needs in order to read the statement rightly.
+#
+# `meaning` is one plain line. A new tag is added here, with its meaning, before any
+# record uses it. Python reads this file with tomllib; heath.load_terms() checks it.
+
+[tag.adjacent-bases]
+kind = "scope"
+meaning = "Equal bases on one straight line are taken end to end, BC and CE meeting at C, where Euclid's may lie apart or overlap (I.40)."
+
+[tag.two-triangles]
+kind = "scope"
+meaning = "A given rectilineal figure is taken as two triangles, where Euclid's may have any number of sides (I.45, II.14)."
+
+[tag.three-pieces]
+kind = "scope"
+meaning = "A straight line cut into any number of segments is cut into exactly three (II.1)."
+
+[tag.diameters-excluded]
+kind = "scope"
+meaning = "Straight lines through the centre are excluded by hypothesis, so the case at distance zero from the centre is not covered (III.14)."
+
+[tag.mixed-angles-omitted]
+kind = "scope"
+meaning = "A clause about an angle contained by a straight line and a circumference is left out, since our angles are made by two straight lines; the rectilineal facts Euclid proves it by are stated (III.16, III.31)."
+
+[tag.centre-given]
+kind = "representation"
+meaning = "The circle comes with a centre, named or as `∃ G, Centre G α`, because a circle in Lean has a centre only when a hypothesis or Postulate 3 gives it one (brief 0004)."
+
+[tag.segment-with-circle]
+kind = "representation"
+meaning = "A segment is given as its whole circle, a straight line in it and one side of that line, so a statement given a segment is also given its circle (III.24, III.25)."
+
+[tag.angle-measure]
+kind = "representation"
+meaning = "A circumference is measured by the angle standing on it, taken twice; the measure carries no radius, so equal measures are equal circumferences only in one circle or in equal circles (III.24, III.26-III.29)."
+
+[tag.redundant-hypothesis]
+kind = "representation"
+meaning = "A hypothesis kept from Euclid's enunciation is not needed for the Lean conclusion, which holds without it; the proof may still use it, along Euclid's route (III.24, III.26, III.27)."
+
+[tag.hypothesis-dropped]
+kind = "representation"
+meaning = "A hypothesis of Euclid's enunciation is left out of the statement, which so claims more than he does (III.9's point need not be within the circle)."
+
+[tag.side-not-square]
+kind = "representation"
+meaning = "A construction of a square returns its side, a straight line EH whose square `sq E H` is the figure, not the four corners of a drawn square (II.14)."
