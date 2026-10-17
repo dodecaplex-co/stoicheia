@@ -10,8 +10,8 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 This is the first proof in the *Elements* by *reductio ad absurdum*. Euclid
-supposes that `AB` is the greater and lets the argument fall apart; the case in
-which `AC` is the greater is the same argument with `B` and `C` exchanged, so
+supposes that AB is the greater and lets the argument fall apart; the case in
+which AC is the greater is the same argument with B and C exchanged, so
 the Lean makes the argument once, for any triangle with equal angles at the
 base, and uses it both ways round.
 -/
@@ -20,8 +20,8 @@ namespace Elements.BookI
 
 open Tacit
 
-/-- What Euclid sees in the figure but never says: `D`, cut off on `BA`, is not on
-the straight line `BC`, so `DBC` is a triangle (and I.4 may be applied to it). -/
+/-- What Euclid sees in the figure but never says: D, cut off on BA, is not on
+the straight line BC, so DBC is a triangle (and I.4 may be applied to it). -/
 theorem Prop6.figure {A B C D : Point} (hABC : Triangle A B C) (hBDA : Between B D A) :
     Triangle B D C := by
   rintro ⟨L, hB, hD, hC⟩
@@ -29,10 +29,10 @@ theorem Prop6.figure {A B C D : Point} (hABC : Triangle A B C) (hBDA : Between B
      lie on one straight line. -/
   exact hABC ⟨L, on_line_of_between hBDA hB hD, hB, hC⟩
 
-/-- The tacit assumption Heath points out: because `D` is between `A` and `B`, the
-triangle `DBC` is less than the triangle `ACB`. The straight line `CD` cuts `ACB`
-into `DBC` and `ADC` (System E, Diagram-area 2), `ADC` is something, since `C` is
-not on `AB` (Diagram-area 1), and the whole is greater than the part (C.N. 5). -/
+/-- The step Heath points out: because D is between A and B, the
+triangle DBC is less than the triangle ACB. The straight line CD cuts ACB
+into DBC and ADC (System E, Diagram-area 2), ADC is something, since C is
+not on AB (Diagram-area 1), and the whole is greater than the part (C.N. 5). -/
 theorem Prop6.less {A B C D : Point} (hABC : Triangle A B C) (hBDA : Between B D A) :
     △ D B C < △ A C B := by
   obtain ⟨BA, hB, hA⟩ := Postulate1 B A hABC.ne₁₂.symm
@@ -59,7 +59,7 @@ theorem Prop6 {A B C : Point} (hABC : Triangle A B C) (h : ∠ A B C = ∠ A C B
   -- Let ABC be a triangle having the angle ABC equal to the angle ACB;
   -- I say that the side AB is also equal to the side AC.
   -- For, if AB is unequal to AC, one of them is greater.
-  /- That of two unequal lengths one is the greater is a tacit law of
+  /- That of two unequal lengths one is the greater is a tacit rule of
      magnitudes (System E §3.5), `lt_trichotomy`. -/
   have one_greater : ‖A B‖ ≠ ‖A C‖ → ‖A C‖ < ‖A B‖ ∨ ‖A B‖ < ‖A C‖ := by
     intro hne
@@ -74,7 +74,7 @@ theorem Prop6 {A B C : Point} (hABC : Triangle A B C) (h : ∠ A B C = ∠ A C B
       ‖A C‖ < ‖A B‖ → False := by
     intro B C hABC h hAC_AB
     -- Let AB be greater; and from AB the greater let DB be cut off equal to AC the less;
-    /- Euclid gives no reference, but cutting off is I.3, from the end B. -/
+    /- Euclid gives no citation, but cutting off is I.3, from the end B. -/
     have hAC_BA : ‖A C‖ < ‖B A‖ := by rw [len_symm B A]; exact hAC_AB
     obtain ⟨D, hBDA, hBD⟩ := Prop3 (A := B) (B := A) hABC.ne₁₃ hAC_BA
     -- let DC be joined.

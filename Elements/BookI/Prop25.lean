@@ -10,9 +10,9 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 There is no figure to build here. As in I.19, Euclid divides the cases: if the
-angle `BAC` is not greater than the angle `EDF`, it is equal to it or less, and
+angle BAC is not greater than the angle EDF, it is equal to it or less, and
 I.4 and I.24, already proved, each rule one of them out. I.24 is cited with the
-triangles exchanged, `DEF` as its first triangle and `ABC` as its second. The
+triangles exchanged, DEF as its first triangle and ABC as its second. The
 Lean needs no helper of its own.
 -/
 
@@ -32,7 +32,7 @@ theorem Prop25 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
   -- I say that the angle BAC is also greater than the angle EDF.
   -- For, if not, it is either equal to it or less.
   /- That an angle not greater than another is equal to it or less is the tacit
-     law of magnitudes `lt_trichotomy` (System E §3.5). -/
+     rule of magnitudes `lt_trichotomy` (System E §3.5). -/
   have either : ¬ ∠ E D F < ∠ B A C → ∠ B A C = ∠ E D F ∨ ∠ B A C < ∠ E D F := by
     intro hnot
     rcases lt_trichotomy (∠ B A C) (∠ E D F) with hlt | heq | hgt
@@ -56,8 +56,8 @@ theorem Prop25 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
   have not_less : ¬ ∠ B A C < ∠ E D F := by
     intro hA
     -- for then the base BC would also have been less than the base EF, [I. 24]
-    /- This is I.24 with the triangles exchanged: in `DEF` the angle at `D` is
-       now the greater, and its sides `DE`, `DF` are equal to `AB`, `AC`, the
+    /- This is I.24 with the triangles exchanged: in DEF the angle at D is
+       now the greater, and its sides DE, DF are equal to AB, AC, the
        equalities read the other way round. -/
     have hBC_EF : ‖B C‖ < ‖E F‖ := Prop24 hDEF hABC hAB.symm hAC.symm hA
     -- but it is not;

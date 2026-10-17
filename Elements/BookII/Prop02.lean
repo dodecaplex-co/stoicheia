@@ -36,12 +36,8 @@ theorem Prop2 {A B C : Point} (hACB : Between A C B) :
   show rect A B B C + rect B A A C = sq A B
   -- For let the square ADEB be described on AB [I. 46], and let CF be drawn through C parallel
   -- to either AD or BE. [I. 31]
-  /- All the given points lie on AB. A point off it chooses the side on which
-     I.46 describes the square; this point has no letter in Euclid's figure. -/
   obtain ⟨P, hP, -⟩ := exists_off_line hAB []
   obtain ⟨D, E, hsq, hD, hE⟩ := BookI.Prop46 hAB hP
-  /- `Square.described` makes the square a parallelogram: its right angles
-     make its opposite sides parallel by I.28. -/
   obtain ⟨hp, -⟩ := Square.described hsq hD hE
   obtain ⟨AD, hA_AD, hD_AD⟩ := Postulate1 A D hp.1.1
   obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hp.2.1
@@ -51,8 +47,8 @@ theorem Prop2 {A B C : Point} (hACB : Between A C B) :
   have hE_AB : ¬ OnLine E AB := not_on_line_of_same_side (hE.sameSide hA_AB hB_AB)
   have hC_BE : ¬ OnLine C BE := fun h =>
     hE_AB ((line_unique hCB h hB_BE hC_AB hB_AB) ▸ hE_BE)
-  /- I.31 draws CF, and I.30 finds F where it meets DE, by the argument Heath
-     reports Proclus giving under I.31 (`BookI.Prop31.parallelogram`). -/
+  /- I.31 draws CF, and I.30 finds F where it meets DE
+     (`BookI.Prop31.parallelogram`). -/
   obtain ⟨F, hF_DE, hDACF⟩ := BookI.Prop31.parallelogram hDE_AB hD_DE hA_AB hC_AB hAC
   have hADFC : Parallelogram A D F C := hDACF.reverse.rotate.rotate.rotate
   have hFC : F ≠ C := hADFC.1.2.1

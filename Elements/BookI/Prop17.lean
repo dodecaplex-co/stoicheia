@@ -9,10 +9,10 @@ Euclid's text, in Heath's translation: [`heath/I/17.md`](../../heath/I/17.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-Euclid proves that the angles `ABC`, `BCA` are less than two right angles, and
+Euclid proves that the angles ABC, BCA are less than two right angles, and
 then says "similarly" for the other two pairs. So the Lean makes the argument
-once, for any triangle, and uses it three times: in the triangle `ABC`, in the
-triangle `BAC` (with `AC` produced), and in the triangle `CAB` (with `AB`
+once, for any triangle, and uses it three times: in the triangle ABC, in the
+triangle BAC (with AC produced), and in the triangle CAB (with AB
 produced). Nothing more is read off the figure than Book Zero already says, so
 there are no helper theorems.
 -/
@@ -47,7 +47,7 @@ theorem Prop17 {A B C : Point} (hABC : Triangle A B C) :
       exact (Prop16 hABC hBCD).1
     -- Let the angle ACB be added to each;
     /- The same angle added to a greater and a less leaves the first sum greater: no
-       Common Notion says so, but a tacit law of magnitudes does (`add_lt_add_right`,
+       Common Notion says so, but a tacit rule of magnitudes does (`add_lt_add_right`,
        System E §3.5). -/
     have hadded : ∠ A B C + ∠ A C B < ∠ A C D + ∠ A C B := add_lt_add_right (∠ A C B) hABC_ACD
     -- therefore the angles ACD, ACB are greater than the angles ABC, BCA.

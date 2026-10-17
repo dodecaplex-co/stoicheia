@@ -33,7 +33,7 @@ theorem Prop33 {A B C D : Point} (hpar : AreParallel A B C D) (heq : ‖A B‖ =
   have hAB_CD : AreParallel A B C D := hpar
   -- and BC has fallen upon them,
   /- The ends joined in the same directions leave A and D on opposite sides
-     of BC: Book Zero's `AreParallel.oppositeSidesOf`. -/
+     of BC (`AreParallel.oppositeSidesOf`). -/
   have hAD : OppositeSidesOf A D B C := hAB_CD.oppositeSidesOf hdir
   -- the alternate angles ABC, BCD are equal to one another. [I. 29]
   have hABC_BCD : ∠ A B C = ∠ B C D := Prop29.alternate hAB_CD hAD

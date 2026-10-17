@@ -19,9 +19,9 @@ open Tacit
 
 /-- Euclid's figure puts the ends of each straight line where the proof wants
 them, on one side or the other of the straight line falling on it. A straight line
-`L` through the point `G` of `T`, other than `T`, has a point on whichever side of
-`T` we name: take a point of `L` off `T`, and if it is on the wrong side, produce
-it through `G` to the other (System E, Points 2, Pasch 3 and Same side 5). -/
+L through the point G of T, other than T, has a point on whichever side of
+T we name: take a point of L off T, and if it is on the wrong side, produce
+it through G to the other (System E, Points 2, Pasch 3 and Same side 5). -/
 theorem Prop30.point_on_side {L T : Line} {G P : Point}
     (hGL : OnLine G L) (hGT : OnLine G T) (hLT : L ≠ T) (hP : ¬ OnLine P T) :
     ∃ A : Point, OnLine A L ∧ SameSide A P T := by
@@ -36,7 +36,7 @@ theorem Prop30.point_on_side {L T : Line} {G P : Point}
     exact ⟨B, hBL, same_side_of_opposite_sides ⟨hAT, hBT, pasch3 hAGB hGT⟩
       ⟨hAT, hP, hs⟩⟩
 
-/-- Euclid's enunciation also covers `EF` lying outside `AB` and `CD`, where a
+/-- Euclid's enunciation also covers EF lying outside AB and CD, where a
 straight line from one to the other need not cross it. For that case: two straight
 lines through one point, each parallel to a third, are one straight line. A
 straight line from the point to the third makes, with each, interior angles equal
@@ -82,9 +82,9 @@ theorem Prop30 {A B C D E F : Point} (h₁ : AreParallel A B E F) (h₂ : ArePar
   have hAB_EF := h₁.parallel hA_AB hB_AB hE_EF hF_EF
   have hCD_EF := h₂.parallel hC_CD hD_CD hE_EF hF_EF
   -- I say that AB is also parallel to CD.
-  /- Heath's case, where `EF` separates `G` and `K`. The given points need not
+  /- Heath's case, where EF separates G and K. The given points need not
      stand where his do, so we choose ends of each straight line on the sides of
-     `GK` his figure wants, and return to the given names at the end: parallels
+     GK his figure wants, and return to the given names at the end: parallels
      are whole straight lines. -/
   have separated : ∀ {G K : Point}, OnLine G AB → OnLine K CD →
       OppositeSides G K EF → Parallel AB CD := by
@@ -144,10 +144,10 @@ theorem Prop30 {A B C D E F : Point} (h₁ : AreParallel A B E F) (h₂ : ArePar
     have hAD : OppositeSidesOf A D G K := (hDF_GK.trans_opposite hAF_GK.symm).symm
     -- Therefore AB is parallel to CD.
     exact (Prop27 hAGB (between_symm hDKC) hAD hequal).parallel hA_AB hB_AB hC_CD hD_CD
-  /- When `EF` lies outside `AB` and `CD`, a straight line from one to the other
-     need not cross it. Then if `AB` and `CD` met, they would be two parallels to
-     `EF` through one point, and so one straight line (`Prop30.unique`); but `C`
-     is off `AB`. -/
+  /- When EF lies outside AB and CD, a straight line from one to the other
+     need not cross it. Then if AB and CD met, they would be two parallels to
+     EF through one point, and so one straight line (`Prop30.unique`); but C
+     is off AB. -/
   have hparallel : Parallel AB CD := by
     by_cases hs : SameSide A C EF
     · apply Parallel.of_not_meet hA_AB

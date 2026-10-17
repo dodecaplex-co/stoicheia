@@ -110,7 +110,7 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
     have hDE_OP : DE = OP := line_unique (ne_of_between (between_symm hDKQ)).symm
       hK_DE hQ_DE (e ▸ hK_MN) hQ_OP
     exact hOP_AD.not_onLine (hDE_OP ▸ hD_DE) hD_AD)
-  /- Each meeting follows I.30, as in Proclus' account under I.31. -/
+  /- Each meeting follows from I.30. -/
   obtain ⟨G, hG_MN, hG_CH⟩ := BookI.Prop30.meet hCH_DF hN_DF hN_MN (by
     intro e
     exact hMN_AD.not_onLine (e ▸ hD_DF) hD_AD)

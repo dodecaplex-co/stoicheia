@@ -35,7 +35,6 @@ theorem Prop3 {A B C : Point} (hACB : Between A C B) :
   -- I say that the rectangle contained by AB, BC is equal to the rectangle contained by AC, CB
   -- together with the square on BC.
   -- For let the square CDEB be described on CB; [I. 46]
-  /- A point off CB chooses the side on which the square stands. -/
   obtain ⟨P, hP, -⟩ := exists_off_line hCB []
   obtain ⟨D, E, hsq, hD, hE⟩ := BookI.Prop46 hCB hP
   obtain ⟨hp, hDB⟩ := Square.described hsq hD hE

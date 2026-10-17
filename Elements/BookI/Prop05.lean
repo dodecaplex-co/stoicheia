@@ -61,7 +61,7 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   have hAC_AB : ‖A C‖ = ‖A B‖ := hAB.symm
   -- and they contain a common angle, the angle FAG.
   /- Common, because B lies on AF and C lies on AG. For C that takes a word Euclid
-     doesn't say: AG, being equal to AF, is greater than AB, that is, than AC; so G
+     does not say: AG, being equal to AF, is greater than AB, that is, than AC; so G
      lies beyond C. -/
   have hAB_AF : ‖A B‖ < ‖A F‖ := by
     rw [← len_add_of_between hABF]

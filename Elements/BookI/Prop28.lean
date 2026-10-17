@@ -25,8 +25,8 @@ theorem Prop28 {A B C D E F G H : Point} (hAGB : Between A G B) (hCHD : Between 
   -- For let the straight line EF falling on the two straight lines AB, CD make the exterior
   -- angle EGB equal to the interior and opposite angle GHD, or the interior angles on the same
   -- side, namely BGH, GHD, equal to two right angles;
-  /- `EF` is the straight line `GH`, so `B` and `D` lie on one side of `GH` too
-     (`SameSideOf.inner`); and `B`, on one side of it, is off it, which the angles
+  /- EF is the straight line GH, so B and D lie on one side of GH too
+     (`SameSideOf.inner`); and B, on one side of it, is off it, which the angles
      below will need. -/
   have hBD_GH : SameSideOf B D G H := hBD.inner hEGH hGHF
   -- I say that AB is parallel to CD.
@@ -56,7 +56,7 @@ theorem Prop28 {A B C D E F G H : Point} (hAGB : Between A G B) (hCHD : Between 
     -- the angles AGH, BGH are equal to the angles BGH, GHD.
     have hsums : ∠ A G H + ∠ B G H = ∠ B G H + ∠ G H D := CommonNotion1 htwo hint
     -- Let the angle BGH be subtracted from each;
-    /- Each sum is written with the angle `BGH` last, for Common Notion 3 to take it
+    /- Each sum is written with the angle BGH last, for Common Notion 3 to take it
        away. -/
     have hsums' : ∠ A G H + ∠ B G H = ∠ G H D + ∠ B G H := hsums.trans (add_comm _ _)
     -- therefore the remaining angle AGH is equal to the remaining angle GHD;

@@ -43,8 +43,7 @@ theorem Prop46 {A B P : Point} (hAB : A ≠ B) (hP : ¬ Collinear A B P) :
   have hDP : SameSideOf D P A B := SameSideOf.of_onRay hD hCP
   have hABD : Triangle A B D := hDP.triangle
   obtain ⟨DE, hD_DE, hDE_AB⟩ := Prop31.line (hABD.off_line hA_AB hB_AB)
-  /- DE meets the parallel BE at E (`Prop31.parallelogram`, which cites I.30 for
-     the meeting). -/
+  /- DE meets the parallel BE at E (`Prop31.parallelogram`). -/
   obtain ⟨E, -, hDABE⟩ := Prop31.parallelogram hDE_AB hD_DE hA_AB hB_AB hAB
   -- Therefore ADEB is a parallelogram; therefore AB is equal to DE, and AD to BE. [I. 34]
   have hADEB : Parallelogram A D E B := hDABE.rotate.reverse
@@ -89,13 +88,11 @@ theorem Prop46 {A B P : Point} (hAB : A ≠ B) (hP : ¬ Collinear A B P) :
 
 /-- Squares described on equal straight lines are equal. Euclid assumes this in
 I.48 ("since DA is equal to AB, the square on DA is also equal to the square on
-AB"). Heath reports, under I.46, that Proclus proves it, and remarks that it "is
-immediately obvious if we divide the squares into two triangles by drawing a
-diagonal in each" (vol. 1, p. 348). Each square is a parallelogram
-(`Prop28.square`), so the diameter `AC` cuts it into the triangles `ABC` and `ACD`,
-right-angled at `B` and `D`; and I.4 makes these equal to the triangles `A'B'C'`
-and `A'C'D'`. Here a square `ABCD` is "described on `AB`" when its far corners `C`,
-`D` lie on one side of `AB`. [I. 4, I. 28] -/
+AB"). Heath reports, under I.46, that Proclus proves it. Each square is a
+parallelogram (`Prop28.square`), so the diameter AC cuts it into the triangles ABC and ACD,
+right-angled at B and D; and I.4 makes these equal to the triangles A'B'C'
+and A'C'D'. Here a square ABCD is "described on AB" when its far corners C,
+D lie on one side of AB. [I. 4, I. 28] -/
 theorem Prop46.square_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
     (hCD : SameSideOf C D A B) (h' : Square A' B' C' D') (hCD' : SameSideOf C' D' A' B')
     (hAB : ‖A B‖ = ‖A' B'‖) : quadArea A B C D = quadArea A' B' C' D' := by
@@ -103,7 +100,7 @@ theorem Prop46.square_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
   have hp' := Prop28.square h' hCD'
   obtain ⟨h₁, h₂, h₃, -, hB, -, hD⟩ := h
   obtain ⟨h₁', h₂', h₃', -, hB', -, hD'⟩ := h'
-  /- All four sides of each square are equal to its side `AB`. -/
+  /- All four sides of each square are equal to its side AB. -/
   have hBC : ‖B C‖ = ‖B' C'‖ := h₁.symm.trans (hAB.trans h₁')
   have hCD₁ : ‖D C‖ = ‖D' C'‖ := by
     rw [len_symm D C, len_symm D' C', ← h₂, ← h₂']
@@ -126,12 +123,12 @@ the side DC is also equal to BC"). Heath reports, under I.46, Proclus' proof, wh
 places the two squares side by side and then reasons through I.39, I.27, I.34
 and I.26. We take another road, because a figure cannot be moved here (as
 `Prop44.place` explains): one square has to be described afresh, and described
-inside the other it is a part of it. Were `AB` less than `A'B'`, cut off from `A'B'`
-a straight line `A'X` equal to `AB` [I. 3], and describe on it a square `A'ZYX` on
-the side of `C'` [I. 46]. It is equal to the square `ABCD` (`Prop46.square_eq`); `Z`
-falls on `A'D'`, short of `D'`; and each square is double the triangle its diameter
-cuts off from `A'` [I. 34]. But the triangle `XA'Z` is a part of the triangle
-`B'A'D'`, and so less. [I. 3, I. 4, I. 28, I. 34, I. 46] -/
+inside the other it is a part of it. Were AB less than A'B', cut off from A'B'
+a straight line A'X equal to AB [I. 3], and describe on it a square A'ZYX on
+the side of C' [I. 46]. It is equal to the square ABCD (`Prop46.square_eq`); Z
+falls on A'D', short of D'; and each square is double the triangle its diameter
+cuts off from A' [I. 34]. But the triangle XA'Z is a part of the triangle
+B'A'D', and so less. [I. 3, I. 4, I. 28, I. 34, I. 46] -/
 theorem Prop46.side_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
     (hCD : SameSideOf C D A B) (h' : Square A' B' C' D') (hCD' : SameSideOf C' D' A' B')
     (hsq : quadArea A B C D = quadArea A' B' C' D') : ‖A B‖ = ‖A' B'‖ := by
@@ -143,7 +140,7 @@ theorem Prop46.side_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
     have hp' : Parallelogram A' B' C' D' := Prop28.square h' hCD'
     have hA'B' : A' ≠ B' := hCD'.1
     obtain ⟨L, hA'_L, hB'_L⟩ := Postulate1 A' B' hA'B'
-    /- Cut off `A'X` equal to `AB`, and describe the square `A'ZYX` on it. -/
+    /- Cut off A'X equal to AB, and describe the square A'ZYX on it. -/
     obtain ⟨X, hA'XB', hA'X⟩ := Prop3 hCD.1 hlt
     have hX_L : OnLine X L := on_line_of_between_ends hA'XB' hA'_L hB'_L
     have hA'X_ne : A' ≠ X := ne_of_between hA'XB'
@@ -156,7 +153,7 @@ theorem Prop46.side_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
     have hps : Parallelogram X A' Z Y := Prop28.square hsq' hZY
     have heq : quadArea A B C D = quadArea X A' Z Y :=
       Prop46.square_eq h hCD hsq' hZY (hA'X.symm.trans (len_symm A' X))
-    /- `Z` falls on `A'D'`, short of `D'`. -/
+    /- Z falls on A'D', short of D'. -/
     have hZD' : SameSideOf Z D' A' B' :=
       (SameSideOf.of_line hA'B' hA'_L hB'_L (hZ.sameSide hA'_L hX_L)).trans hCD'
     have hZray : OnRay Z A' D' := by
@@ -169,11 +166,11 @@ theorem Prop46.side_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
       exact hlt
     have hA'ZD' : Between A' Z D' :=
       hZray.between_of_len_lt (OnRay.self hCD'.symm.triangle.ne₁₃) hA'Z
-    /- Each square is double the triangle its diameter cuts off from `A'`. -/
+    /- Each square is double the triangle its diameter cuts off from A'. -/
     have hbig : quadArea A' B' C' D' = △ B' A' D' + △ B' A' D' := by
       rw [← hp'.quadArea_rotate, ← quadArea_reverse B' C' D' A']
       exact Prop34.bisect hp'.reverse.rotate.rotate.rotate
-    /- And the triangle `XA'Z` is a part of the triangle `B'A'D'`. -/
+    /- And the triangle XA'Z is a part of the triangle B'A'D'. -/
     have hpart : △ X A' Z < △ B' A' D' := by
       rw [area_cba X A' Z]
       refine lt_trans (area_lt_of_cut hZD'.triangle.cab hA'XB') ?_

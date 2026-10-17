@@ -79,7 +79,8 @@ theorem Prop48 {A B C P Q R S T U : Point} (hABC : Triangle A B C)
   have hDC_BC : quadArea D P' Q' C = quadArea B P Q C :=
     (h47.trans hsum).trans hBCsum.symm
   /- Read both squares from C to compare their sides CD and CB. I.28 makes
-     them parallelograms; Book Zero lets their diameters be exchanged. -/
+     them parallelograms, and a parallelogram has one area, whichever diameter
+     measures it. -/
   have hP'Q' : SameSideOf P' Q' D C := hP'.trans hQ'.symm
   have hsq : quadArea C D P' Q' = quadArea C B P Q := by
     have hpDC : Parallelogram C D P' Q' :=

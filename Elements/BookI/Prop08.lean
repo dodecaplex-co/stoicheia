@@ -9,7 +9,7 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 Euclid lays the triangle ABC down on DEF. In Lean the copy of ABC that
-superposition hands us has its own corners: `C'`, where C comes down, and `G`,
+superposition hands us has its own corners: C', where C comes down, and G,
 where A comes down. Euclid's G is exactly this point, the place A would occupy
 if BA, AC "fell beside" ED, DF.
 -/
@@ -34,7 +34,7 @@ theorem Prop8 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
      rule of superposition then sets B on E, sends C along the ray from E through
      F, and lets us choose the side of EF on which A comes down: D's side, so
      that the two triangles lie over one another, as Euclid's word "applied"
-     means. The copy of ABC is `G E C'`: C lands at `C'` and A at `G`. -/
+     means. The copy of ABC is `G E C'`: C lands at C' and A at G. -/
   have hEF : E ≠ F := hDEF.ne₂₃
   obtain ⟨EF, hE_EF, hF_EF⟩ := Postulate1 E F hEF
   have hD_EF : ¬ OnLine D EF := fun hD => hDEF ⟨EF, hD, hE_EF, hF_EF⟩

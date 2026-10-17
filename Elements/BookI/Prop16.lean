@@ -11,8 +11,8 @@ Euclid's text, in Heath's translation: [`heath/I/16.md`](../../heath/I/16.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-Euclid proves that the exterior angle `ACD` is greater than the angle `BAC`, and
-then says "similarly" for the angle `ABC`, with `BC` bisected in place of `AC`.
+Euclid proves that the exterior angle ACD is greater than the angle BAC, and
+then says "similarly" for the angle ABC, with BC bisected in place of AC.
 So the Lean makes the argument once, for any triangle with a side produced, and
 uses it twice.
 -/
@@ -23,11 +23,8 @@ open Tacit
 
 /-! ## What Euclid reads off the figure -/
 
-/-- What Euclid sees in his figure: `F` lies within the angle `ECD`. It is on `D`'s
-side of `AC`, because `AC` separates `B` from `F` (`E` is between them) and also `B`
-from `D` (`C` is between them), and a straight line has only two sides. And it is on
-`E`'s side of `BC`, because `BF` starts from `B` on `BC` and passes through `E`, off
-it, on the way to `F` (System E, Pasch 2 and 3, Same side 5). -/
+/-- What Euclid sees in his figure: F lies within the angle ECD, on D's side of AC
+and on E's side of BC (System E, Pasch 2 and 3, Same side 5). -/
 theorem Prop16.within {A B C D E F : Point} (hABC : Triangle A B C) (hBCD : Between B C D)
     (hAEC : Between A E C) (hBEF : Between B E F) :
     SameSideOf F D C E ∧ SameSideOf F E C D := by
@@ -40,7 +37,8 @@ theorem Prop16.within {A B C D E F : Point} (hABC : Triangle A B C) (hBCD : Betw
   have hE_C : E ≠ C := (ne_of_between (between_symm hAEC)).symm
   have hC_D : C ≠ D := (ne_of_between (between_symm hBCD)).symm
   have hE_F : E ≠ F := (ne_of_between (between_symm hBEF)).symm
-  /- Which points are off which straight lines. -/
+  /- First we say which points lie off which straight lines: B and A, because ABC
+     is a triangle, and E, D and F from them. -/
   have hB_AC : ¬ OnLine B AC := hABC.acb.off_line hA_AC hC_AC
   have hA_BC : ¬ OnLine A BC := hABC.bca.off_line hB_BC hC_BC
   have hE_BC : ¬ OnLine E BC := fun h =>
@@ -49,11 +47,11 @@ theorem Prop16.within {A B C D E F : Point} (hABC : Triangle A B C) (hBCD : Betw
     hB_AC ((line_unique hC_D hC_BC hD_BC hC_AC h) ▸ hB_BC)
   have hF_AC : ¬ OnLine F AC := fun h =>
     hB_AC ((line_unique hE_F hE_BE hF_BE hE_AC h) ▸ hB_BE)
-  /- `AC` separates `B` from `F`, and `B` from `D`; so `F` and `D` are on one side. -/
+  /- AC separates B from F, and B from D; so F and D are on one side. -/
   have hFD : SameSide F D AC :=
     same_side_of_opposite_sides ⟨hB_AC, hF_AC, pasch3 hBEF hE_AC⟩
       ⟨hB_AC, hD_AC, pasch3 hBCD hC_AC⟩
-  /- `E` and `F` are on one side of `BC`. -/
+  /- E and F are on one side of BC. -/
   have hEF : SameSide E F BC := pasch2 hBEF hB_BC hE_BC
   exact ⟨SameSideOf.of_line hE_C.symm hC_AC hE_AC hFD,
     SameSideOf.of_line hC_D hC_BC hD_BC (same_side_symm hEF)⟩
@@ -83,8 +81,8 @@ theorem Prop16 {A B C D : Point} (hABC : Triangle A B C) (hBCD : Between B C D) 
     have hE_AC : OnLine E AC := on_line_of_between_ends hAEC hA_AC hC_AC
     have hB_E : B ≠ E := fun h => hB_AC (h ▸ hE_AC)
     obtain ⟨BE, hB_BE, hE_BE⟩ := Postulate1 B E hB_E
-    /- Produced beyond E to a point X, far enough for I.3 to cut EF off from EX:
-       `produce_longer` in Book Zero. -/
+    /- Produced beyond E to a point X, far enough for I.3 to cut EF off from EX
+       (`produce_longer`, as in I.11). -/
     obtain ⟨X, hBEX, hEB_EX⟩ := produce_longer hB_E hB_E.symm
     -- let EF be made equal to BE [I. 3], let FC be joined [Post. 1], and let AC be drawn through
     -- to G [Post. 2].

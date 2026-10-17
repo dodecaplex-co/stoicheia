@@ -11,7 +11,7 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 There is no figure to build here. Euclid divides the cases ("by means of
-division", says Proclus): if `AC` is not greater than `AB`, it is equal to it or
+division", says Proclus): if AC is not greater than AB, it is equal to it or
 less, and I.5 and I.18, already proved, each rule one of them out. The Lean
 needs no helper of its own; `Prop5.base` hands I.5 the produced sides its
 statement asks for.
@@ -32,7 +32,7 @@ theorem Prop19 {A B C : Point} (hABC : Triangle A B C) (h : ∠ B C A < ∠ A B 
   -- I say that the side AC is also greater than the side AB.
   -- For, if not, AC is either equal to AB or less.
   /- That a length not greater than another is equal to it or less is the tacit
-     law of magnitudes `lt_trichotomy` (System E §3.5). -/
+     rule of magnitudes `lt_trichotomy` (System E §3.5). -/
   have either : ¬ ‖A B‖ < ‖A C‖ → ‖A C‖ = ‖A B‖ ∨ ‖A C‖ < ‖A B‖ := by
     intro hnot
     rcases lt_trichotomy ‖A C‖ ‖A B‖ with hlt | heq | hgt
@@ -43,9 +43,7 @@ theorem Prop19 {A B C : Point} (hABC : Triangle A B C) (h : ∠ B C A < ∠ A B 
   have not_equal : ‖A C‖ ≠ ‖A B‖ := by
     intro hAC_AB
     -- for then the angle ABC would also have been equal to the angle ACB; [I. 5]
-    /- I.5 is stated with the equal sides produced, and here only the angles at
-       the base are wanted, so `Prop5.base` produces AB and AC anywhere at all
-       (Post. 2). -/
+    /- I.5 (`Prop5.base`), for the triangle ABC. -/
     have hABC_ACB : ∠ A B C = ∠ A C B := Prop5.base hABC hAC_AB.symm
     -- but it is not;
     /- It is greater: the hypothesis, with BCA read as ACB. -/
@@ -57,7 +55,7 @@ theorem Prop19 {A B C : Point} (hABC : Triangle A B C) (h : ∠ B C A < ∠ A B 
     intro hAC_AB
     -- for then the angle ABC would also have been less than the angle ACB; [I. 18]
     /- This is I.18 for the triangle ACB, whose side AB is the greater. It hands
-       back the angle CBA, which is the angle ABC read the other way round. -/
+       back the angle CBA, which is the angle ABC read from the other arm. -/
     have hABC_ACB : ∠ A B C < ∠ A C B := by
       have hI18 : ∠ C B A < ∠ A C B := Prop18 hABC.acb hAC_AB
       rw [angle_symm hABC.ne₂₃.symm hABC.ne₁₂] at hI18

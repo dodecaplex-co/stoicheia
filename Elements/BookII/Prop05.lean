@@ -28,8 +28,8 @@ theorem Prop5 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
   -- For let a straight line AB be cut into equal segments at C and into unequal segments at D;
   -- I say that the rectangle contained by AD, DB together with the square on CD is equal to
   -- the square on CB.
-  /- Euclid's figure puts `D` between `C` and `B`; the other side is the same with `A`
-     and `B` exchanged. -/
+  /- Euclid's figure puts D between C and B; the other side is the same with A
+     and B exchanged. -/
   have euclid : ∀ {A B C D : Point}, Between A C B → ‖A C‖ = ‖C B‖ → Between C D B →
       rect A D D B + sq C D = sq C B := by
     intro A B C D hACB hAC hCDB
@@ -92,7 +92,7 @@ theorem Prop5 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
     -- Let CH be added to each;
     have hadd₂ := CommonNotion2 hAL_DF (rfl : quadArea D C L H = quadArea D C L H)
     -- therefore the whole AH is equal to the gnomon NOP.
-    /- AH is AL and CH together: `C` lies between `A` and `D`, and `L` between `K` and `H`,
+    /- AH is AL and CH together: C lies between A and D, and L between K and H,
        the parallels AK, CL, DH keeping order. -/
     have hACD : Between A C D := between_cut hACB hCDB
     obtain ⟨AK, hA_AK, hK_AK⟩ := Postulate1 A K hLCAK.1.2.1
@@ -155,8 +155,9 @@ theorem Prop5 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
     -- square on CB.
     rw [← hadd₃, ← hCEFB, hBCEF.quadArea_rotate, hwhole]
     ac_rfl
-  /- Where `D` falls: between `A` and `C`, exchange `A` and `B`; at `C`, it cannot, the
-     segments being unequal; between `C` and `B`, Euclid's case. -/
+  /- D falls between A and C, or between C and B, for it cannot be C itself, the
+     segments being unequal. The second is Euclid's case; for the first we exchange
+     A and B. -/
   have hCray : OnRay C A B := OnRay.of_between hACB
   have hDray : OnRay D A B := OnRay.of_between hADB
   rcases lt_trichotomy ‖A D‖ ‖A C‖ with h | h | h

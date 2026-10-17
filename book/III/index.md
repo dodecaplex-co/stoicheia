@@ -2,7 +2,7 @@
 
 # Book III
 
-**0 of 37 propositions proved in Lean.** 🚧 stated
+**0 of 37 propositions proved in Lean.** Key to the table: 🚧 stated.
 
 Start with the [definitions](front.md).
 

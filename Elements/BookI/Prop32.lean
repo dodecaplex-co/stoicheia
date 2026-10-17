@@ -15,10 +15,10 @@ namespace Elements.BookI
 
 open Tacit
 
-/-- Euclid's figure puts `E`, on the parallel through `C`, on `A`'s side of `BC`.
-The two points I.31 gives, one on either side of `C`, lie on opposite sides of
-`BC`, which crosses their straight line at `C`; and a straight line has just two
-sides, so one of them is on `A`'s side (System E, Pasch 3 and Same side 5). It
+/-- Euclid's figure puts E, on the parallel through C, on A's side of BC.
+The two points I.31 gives, one on either side of C, lie on opposite sides of
+BC, which crosses their straight line at C; and a straight line has just two
+sides, so one of them is on A's side (System E, Pasch 3 and Same side 5). It
 cites no proposition. -/
 theorem Prop32.choose_end {A B C P Q : Point} (hABC : Triangle A B C)
     (hPCQ : Between P C Q) (hpar : AreParallel P Q A B) :
@@ -74,8 +74,8 @@ theorem Prop32 {A B C D : Point} (hABC : Triangle A B C) (hBCD : Between B C D) 
   -- But the angle ACE was also proved equal to the angle BAC;
   have hACE_BAC : ∠ A C E = ∠ B A C := hBAC_ACE.symm
   -- therefore the whole angle ACD is equal to the two interior and opposite angles BAC, ABC.
-  /- `E` lies within `ACD`: both `E` and `D` are opposite `B` across `AC`,
-     and `E` is on `A`'s side of the straight line `CD`, which is `BC`. -/
+  /- E lies within ACD: both E and D are opposite B across AC,
+     and E is on A's side of the straight line CD, which is BC. -/
   have hED : SameSideOf E D C A :=
     (hBE.sameSideOf (OppositeSidesOf.of_between hABC.acb hBCD)).swap
   have hEA_CD : SameSideOf E A C D :=

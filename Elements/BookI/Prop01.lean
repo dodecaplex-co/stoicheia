@@ -8,18 +8,18 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 The statement says a little more than Euclid's: the triangle can be put on
-whichever side of `AB` we please, the side of a given point `P`. (If `P` is on
-`AB`, no side is asked for.) Euclid uses this without saying so in I.9, where
-the triangle must fall on the side of `DE` away from `A`, and in I.11.
+whichever side of AB we please, the side of a given point P. (If P is on
+AB, no side is asked for.) Euclid uses this without saying so in I.9, where
+the triangle must fall on the side of DE away from A, and in I.11.
 -/
 
 namespace Elements.BookI
 
 open Tacit
 
-/-- What Euclid sees in the figure but never says: the point `C`, being as far
-from `A` and from `B` as they are from each other, is not on the straight line
-`AB`. So `ABC` really is a triangle. -/
+/-- What Euclid sees in the figure but never says: the point C, being as far
+from A and from B as they are from each other, is not on the straight line
+AB. So ABC really is a triangle. -/
 theorem Prop1.figure {A B C : Point} (hAB : A ≠ B) (hCA : ‖C A‖ = ‖A B‖)
     (hCB : ‖C B‖ = ‖A B‖) : Triangle A B C := by
   rintro ⟨L, hA, hB, hC⟩

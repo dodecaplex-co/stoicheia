@@ -7,9 +7,9 @@ Euclid's text, in Heath's translation: [`heath/I/04.md`](../../heath/I/04.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-Euclid picks up the triangle `ABC` and lays it on `DEF`. In Lean the triangle
-as laid down is `DB'C'`: its corner `A` is on `D`, and `B'`, `C'` are where `B`
-and `C` land. The proof shows that they land on `E` and `F`.
+Euclid picks up the triangle ABC and lays it on DEF. In Lean the triangle
+as laid down is DB'C': its corner A is on D, and B', C' are where B
+and C land. The proof shows that they land on E and F.
 -/
 
 namespace Elements.BookI

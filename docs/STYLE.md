@@ -105,6 +105,19 @@ elsewhere it gets a clause at most ("as in II.4").
   parallels meet.", "Naming the pieces.", "Where X falls.": name the discovery, ask
   the question, or quote, as I.35 does: **"He allows this to appear from the figure
   simply."**
+- "Lean wants it said" and its kin ("Lean asks why", "Lean makes us say so"): I.1,
+  I.5 and I.22's payoff, "Lean is exactly that dull"; elsewhere state the gap and
+  say that we prove it.
+- "…, and the Lean cites it" closing a sentence: the table shows it. Where Euclid
+  gives no citation, one clause names his step ("it is I.10, though he gives no
+  citation").
+- "We give his argument once and use it twice" in the mishnah: the introduction and
+  the Lean notes, save I.17, where "taken together in any manner" is Euclid's own.
+- A paragraph closing on "our statement asks for …": only where the hypothesis is the
+  story (I.33's "in the same directions", I.37's coinciding vertices).
+- The same figure-reading point page after page (which side a point is on, why the
+  angles are alternate, Postulate 4 and `∟`, `Prop5.base`, `produce_longer`): told
+  once where it first does work (I.27, I.11, the introduction), a clause elsewhere.
 
 **Quotations.**
 
@@ -149,6 +162,13 @@ there is no file and no section.
   `theorem PropN` is Heath's enunciation; in the proof each of Euclid's sentences
   is a `--` line, word for word (indentation may change), with its Lean directly
   under it.
+- **Our notes read as the mishnah does.** Each `/- … -/` remark and helper docstring
+  is a full sentence or two, with Heath's letters plain (AB, not `AB`: the page shows
+  the Lean in a code block, where backticks print), and backticks only for Lean names
+  and expressions (`Prop30.meet`, `∠ A B C`). A shared step is explained once, where
+  it is first used or in the book's introduction; elsewhere a pointer does it: "I.5
+  (`Prop5.base`)", "(`produce_longer`, as in I.11)". A note does not repeat the
+  mishnah: the mishnah says why in plain words, the note says how.
 - **Heath's letters.** Points, lines and circles take his names (`BCD` for the
   circle BCD; a line he calls C becomes `C₁ C₂`), and hypotheses read off them
   (`hAB : A ≠ B`, `hA_BCD`).
@@ -197,8 +217,9 @@ the whole canvas), in Georgia.
   `#8c7b62` at 1.3. Title "Euclid I.N: …", no caption.
 - **Heath's letters, all and only**, each point where the proof puts it (I.6: D on
   AB), clear of every stroke, nothing touching the frame. Where the Lean places a
-  point otherwise than Heath's figure, draw the proof and let the mishnah say so
-  (I.23).
+  point otherwise than Heath's figure, draw the proof and say so in one line under
+  the figure, from `FIGURE_NOTES` in `render.py` (I.23, I.39, I.40), not in the
+  mishnah.
 
 ## 5. Text and citations
 

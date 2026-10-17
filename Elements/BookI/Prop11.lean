@@ -10,10 +10,10 @@ Euclid's text, in Heath's translation: [`heath/I/11.md`](../../heath/I/11.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-"At right angles to AB" is said here of every point `P` of the straight line
-`AB` other than `C`: the angle `PCF` is right, whichever way along `AB` from `C`
-the point `P` lies. And the perpendicular is put on the side of `AB` where a
-given point `Q` is, as I.46 and I.48 will need; I.1 lets the equilateral
+"At right angles to AB" is said here of every point P of the straight line
+AB other than C: the angle PCF is right, whichever way along AB from C
+the point P lies. And the perpendicular is put on the side of AB where a
+given point Q is, as I.46 and I.48 will need; I.1 lets the equilateral
 triangle be built on that side.
 -/
 

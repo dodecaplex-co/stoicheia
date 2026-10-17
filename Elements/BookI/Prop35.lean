@@ -15,8 +15,8 @@ namespace Elements.BookI
 
 open Tacit
 
-/-- Euclid's figure: with `D` between `A` and `E`, `EB` crosses `DC` at a point `G`
-between the parallels, and `E` lies between `D` and `F`. -/
+/-- Euclid's figure: with D between A and E, EB crosses DC at a point G
+between the parallels, and E lies between D and F. -/
 theorem Prop35.figure {A B C D E F : Point} (h₁ : Parallelogram A B C D)
     (h₂ : Parallelogram E B C F) {AF : Line} (hA : OnLine A AF) (hD : OnLine D AF)
     (hF : OnLine F AF) (hADE : Between A D E) :
@@ -55,8 +55,8 @@ theorem Prop35.figure {A B C D E F : Point} (h₁ : Parallelogram A B C D)
   exact this ▸ hDYF
 
 /-- One case Euclid leaves out, which Proclus supplies, as Heath reports under I.35:
-when `E` lies between `A` and `D`, `D` lies between `E` and `F`. The triangles
-`EAB`, `FDC` are equal by I.34, I.29 and I.4; adding each to the trapezium `EBCD`
+when E lies between A and D, D lies between E and F. The triangles
+EAB, FDC are equal by I.34, I.29 and I.4; adding each to the trapezium EBCD
 gives the two parallelograms. -/
 theorem Prop35.between {A B C D E F : Point} (h₁ : Parallelogram A B C D) (h₂ : Parallelogram E B C F)
     {AF : Line} (hA : OnLine A AF) (hD : OnLine D AF) (hE : OnLine E AF) (hF : OnLine F AF)
@@ -116,7 +116,7 @@ theorem Prop35.between {A B C D E F : Point} (h₁ : Parallelogram A B C D) (h�
   have hAEB : Triangle A E B := Triangle.of_line hA hE hAE hB_AF
   have hDFC : Triangle D F C := Triangle.of_line hD hF (ne_of_between (between_symm hEDF)).symm hC_AF
   have h4 : △ A E B = △ D F C := (Prop4 hAEB hDFC hAE_DF hAB hFDC.symm).2.1
-  /- Proclus: the triangles added to the trapezium EBCD. -/
+  /- As Proclus does, we add the triangles to the trapezium EBCD. -/
   have hL₁ : quadArea A B C D = △ B C E + △ A E B + △ C E D := by
     have hq : quadArea B C E A = quadArea A B C E := quadArea_rotate_of_cross hAYC hBYE
     unfold quadArea at hq ⊢
@@ -128,9 +128,9 @@ theorem Prop35.between {A B C D E F : Point} (h₁ : Parallelogram A B C D) (h�
     ac_rfl
   rw [hL₁, hR₁, h4]
 
-/-- The other case Euclid leaves out, which Proclus also supplies: when `E` is `D`,
-that point lies between `A` and `F`. The triangles `ADB`, `DFC` are equal by I.34,
-I.29 and I.4; adding the common triangle `DBC` to each gives the two
+/-- The other case Euclid leaves out, which Proclus also supplies: when E is D,
+that point lies between A and F. The triangles ADB, DFC are equal by I.34,
+I.29 and I.4; adding the common triangle DBC to each gives the two
 parallelograms. -/
 theorem Prop35.same {A B C D F : Point} (h₁ : Parallelogram A B C D) (h₂ : Parallelogram D B C F)
     {AF : Line} (hA : OnLine A AF) (hD : OnLine D AF) (hF : OnLine F AF) :

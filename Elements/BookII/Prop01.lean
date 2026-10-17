@@ -90,7 +90,7 @@ theorem Prop1 {A₁ A₂ B C D E : Point} (hA : A₁ ≠ A₂) (hBDE : Between B
     BookI.Prop30.parallel hDK_BG hCH_BG (fun e => hC_DK (e.symm ▸ hC_CH))
   have hEL_CH : Parallel EL CH :=
     BookI.Prop30.parallel hEL_BG hCH_BG (fun e => hC_EL (e.symm ▸ hC_CH))
-  /- The parallels keep the order of `B`, `D`, `E`, `C` on `GH`. -/
+  /- The parallels keep the order of B, D, E, C on GH. -/
   have hGKL : Between G K L := Parallel.between hDK_BG.symm hDK_EL.symm hB_BG hD_DK hE_EL
     hBDE hG_BG hK_DK hL_EL ⟨GH, hG_GH, hK_GH, hL_GH⟩
   have hKLH : Between K L H := Parallel.between hDK_EL hEL_CH.symm hD_DK hE_EL hC_CH

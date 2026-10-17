@@ -32,10 +32,13 @@ theorem Prop45 {A B C D E₁ E E₂ : Point} (hABD : Triangle A B D) (hDBC : Tri
   -- in the angle HKF which is equal to E; [I. 42] let the parallelogram GM equal to the
   -- triangle DBC be applied to the straight line GH, in the angle GHM which is equal to
   -- E. [I. 44]
-  /- I.42 builds on the triangle's own base, so H falls on D. The Lean writes D
-     wherever Euclid writes H. K lies between B and D, and F is on A's side of BD. -/
+  /- I.42 builds on half of the triangle's own base, so KH lies along BD and H
+     falls on D: the Lean writes D wherever Euclid writes H, and in our figure KFLM
+     overlaps ABCD. K lies between B and D, and F is on A's side of BD. -/
   obtain ⟨K, F, G, hBKD, hFA, hFKHG, hHKF, hFH⟩ := Prop42 hABD hE
   have hGHK : Triangle G D K := hFKHG.1.symm.swap_right.triangle.bac
+  /- I.44's point for the side is taken across GH from K, so that KH and HM are
+     "not lying on the same side", as I.14 will ask. -/
   obtain ⟨P, hPK, -⟩ := exists_oppositeSidesOf hGHK []
   obtain ⟨L, M, hMP, hGHML, hGHM, hGM⟩ := Prop44 hGHK.ne₁₂ hDBC hE hPK.triangle
   have hMK : OppositeSidesOf M K G D := hMP.trans_opposite hPK

@@ -51,11 +51,11 @@ theorem Prop11 {A B : Point} (hAB : A ≠ B) :
   have hAE' : A ≠ E := ne_of_between hAEC
   have hEB : E ≠ B := fun e => hB_AC (e ▸ hE_AC)
   have hAEB : Triangle A E B := Triangle.of_line hA_AC hE_AC hAE' hB_AC
-  /- The angle at `A` is right. -/
+  /- The angle at A is right. -/
   have hBAE : ∠ B A E = ∟ := by
     rw [angle_onRay_right (OnRay.of_between hAEC) hAB.symm]; exact hsq.2.2.2.1
   -- let CA be drawn through to F, and let EF be made equal to BE;
-  /- `EB` is greater than `EA`: the angle `ABE` is less than a right angle [I. 17],
+  /- EB is greater than EA: the angle ABE is less than a right angle [I. 17],
      and the greater angle is subtended by the greater side [I. 19]. -/
   have hABE : ∠ A B E < ∟ := by
     have h17 := (BookI.Prop17 hAEB.acb).2.2
@@ -73,14 +73,14 @@ theorem Prop11 {A B : Point} (hAB : A ≠ B) :
   -- let the square FH be described on AF, and let GH be drawn through to K.
   obtain ⟨H, G, hsqF, hH, hG⟩ := BookI.Prop46 hAF (Triangle.of_line hA_AC hF_AC hAF hB_AC)
   obtain ⟨hpF, -⟩ := Square.described hsqF hH hG
-  /- `AH` lies along `AB`: the angles `FAH`, `FAB` are right. -/
+  /- AH lies along AB: the angles FAH, FAB are right. -/
   have hFAB : ∠ F A B = ∟ := by
     have h := adjacent_eq_of_right hC_AC hF_AC hCAF hB_AC
       ((angle_symm hAC.symm hAB.symm).trans hsq.2.2.2.1)
     rw [angle_symm hAB.symm hAF.symm] at h
     exact h.symm.trans ((angle_symm hAC.symm hAB.symm).trans hsq.2.2.2.1)
   have hHray : OnRay H A B := onRay_of_angle_eq hH (hsqF.2.2.2.1.trans hFAB.symm)
-  /- `AF` is less than `AB` [I. 20]. -/
+  /- AF is less than AB [I. 20]. -/
   have hAF_AB : ‖A F‖ < ‖A B‖ := by
     have h20 := (BookI.Prop20 hAEB).1
     rw [← hEF, ← len_add_of_between hEAF] at h20

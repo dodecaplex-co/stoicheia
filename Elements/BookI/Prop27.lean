@@ -8,12 +8,12 @@ Euclid's text, in Heath's translation: [`heath/I/27.md`](../../heath/I/27.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-Euclid proves that `AB` and `CD` do not meet in the direction of `B`, `D`, and then
-says "similarly" for the direction of `A`, `C`. So the Lean makes the argument once,
+Euclid proves that AB and CD do not meet in the direction of B, D, and then
+says "similarly" for the direction of A, C. So the Lean makes the argument once,
 for any two straight lines on which a straight line falls, and uses it twice: the
-second time with the figure read from the other end, `D`, `C`, `B`, `A` for `A`,
-`B`, `C`, `D` and `F`, `E` for `E`, `F`. Euclid's two directions are the two sides of
-`EF`.
+second time with the figure read from the other end, D, C, B, A for A,
+B, C, D and F, E for E, F. Euclid's two directions are the two sides of
+EF.
 -/
 
 namespace Elements.BookI
@@ -41,11 +41,9 @@ theorem Prop27 {A B C D E F : Point} (hAEB : Between A E B) (hCFD : Between C F 
   -- I say that AB is parallel to CD.
   -- For, if not, AB, CD when produced will meet either in the direction of B, D or towards A,
   -- C.
-  /- A point where they meet is off EF. Were it on EF, it would be E, the one point
-     where AB meets EF, and then CD, through E and F, would be EF itself, with D on it
-     (System E, Generalities 1). So it lies on D's side of EF or on A's, for A and D
-     are on opposite sides, and a straight line has just two (System E, Same side 5).
-     These are Euclid's two directions: B lies on D's side, and C on A's. -/
+  /- A point where they meet lies on D's side of EF or on A's (System E,
+     Generalities 1 and Same side 5): these are Euclid's two directions, for B lies
+     on D's side, and C on A's. -/
   have either : ∀ G : Point, OnLine G AB → OnLine G CD →
       SameSideOf G D E F ∨ SameSideOf G A E F := by
     intro G hG_AB hG_CD

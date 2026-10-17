@@ -215,7 +215,7 @@ graph TD
 - [I.44](book/I/44.md): A parallelogram applied to a given straight line
 - [I.45](book/I/45.md): A parallelogram equal to a given rectilineal figure
 - [I.46](book/I/46.md): A square on a given straight line
-- [I.47](book/I/47.md): The square on the side subtending the right angle
+- [I.47](book/I/47.md): The square on the side subtending the right angle equals the other two
 - [I.48](book/I/48.md): If the square equals the other two, the angle is right
 
 ## Book II

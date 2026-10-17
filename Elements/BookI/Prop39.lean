@@ -31,8 +31,7 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
      calls AE once E has been found. -/
   obtain ⟨K, hA_K, hKBC⟩ := Prop31.line (hABC.bca.off_line hB hC)
   -- and let EC be joined.
-  /- E is where the parallel meets BD; that they meet at all is I.30
-     (`Prop30.meet`). -/
+  /- E is where the parallel meets BD (`Prop30.meet`). -/
   obtain ⟨BD, hB_BD, hD_BD⟩ := Postulate1 B D hDBC.ne₁₂.symm
   have hD_BC : ¬ OnLine D BC := hDBC.bca.off_line hB hC
   have hBD_BC : BD ≠ BC := fun e => hD_BC (e ▸ hD_BD)
@@ -54,9 +53,8 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
     (SameSideOf.of_line hABC.ne₂₃ hB hC (hKBC.sameSide hE_K hA_K)).trans hside
   have hray : OnRay E B D :=
     OnRay.of_sameSideOf hED_side ⟨BD, hB_BD, hD_BD, hE_BD⟩ hEB
-  /- Euclid's figure has E between B and D, so that EBC is the less; Proclus'
-     other case has E beyond D, so that DBC is the less. Either way only D
-     itself will do (`OnRay.eq_of_area_eq`). -/
+  /- In Heath's figure EBC is the less, in Proclus' other case DBC; either way
+     only D itself will do (`OnRay.eq_of_area_eq`). -/
   have hED : E = D := hray.eq_of_area_eq hDBC h1.symm
   -- Therefore AE is not parallel to BC.
   /- A parallel meeting BD away from D has been excluded: the parallel

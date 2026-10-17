@@ -32,9 +32,8 @@ theorem Prop12 {A B C D : Point} (hABC : Triangle A B C) (hBAC : IsObtuse B A C)
   have hB_CA : ¬ OnLine B CA := fun h => hABC ⟨CA, hA_CA, h, hC_CA⟩
   have colCA : ∀ {P : Point}, OnLine P CA → Collinear C A P :=
     fun h => ⟨CA, hC_CA, hA_CA, h⟩
-  /- Euclid reads "produced" off his figure. Lean proves it from the obtuse angle:
-     D cannot be A, where the angle would be right, or on the ray from A through C,
-     where the triangle ABD would have an obtuse angle and a right angle (I.17). -/
+  /- Euclid reads "produced" off his figure; we prove it from the obtuse angle,
+     which keeps D off A and off the ray from A through C [I. 17]. -/
   have hDA : D ≠ A := by
     intro e
     have h : ∟ < ∠ B A C := hBAC

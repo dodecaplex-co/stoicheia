@@ -72,7 +72,7 @@ TITLES_I = {
     44: "A parallelogram applied to a given straight line",
     45: "A parallelogram equal to a given rectilineal figure",
     46: "A square on a given straight line",
-    47: "The square on the side subtending the right angle",
+    47: "The square on the side subtending the right angle equals the other two",
     48: "If the square equals the other two, the angle is right",
 }
 TITLES_II = {
@@ -288,6 +288,17 @@ def heath_figure_note(source):
             f"Heath's own is on {where}._")
 
 
+# Where our drawing of Euclid's figure places a point otherwise than Heath's, as the Lean
+# does, said under the figure (docs/STYLE.md, section 4).
+FIGURE_NOTES = {
+    ("I", 23): "F stands on AB and G off it, where our proof puts them; Heath's figure has "
+               "them the other way about.",
+    ("I", 39): "AE is drawn level, as the proof supposes; Heath draws AD level.",
+    ("I", 40): "F is drawn between C and D, with AF level, as the proof supposes; Heath "
+               "draws AD level and AF sloping.",
+}
+
+
 # Why Heath prints a whole proposition in square brackets, said under its enunciation.
 BRACKET_NOTES = {
     ("III", 12): "_Heath prints this whole proposition in square brackets. Heron gives its "
@@ -338,6 +349,28 @@ TABLE_KEY = ("_Postulates, definitions and tacit rules include those of the prop
              "steps._")
 
 
+def definitions_not_counted(euclid, defs, book):
+    """A line for a page where Euclid cites a definition that the Definitions row does
+    not count: only Def. I.15, the circle's, is an assumption in Lean; the others Euclid
+    cites (Def. 10, the right angle, in I.11 to I.13; Def. 23, parallels, in I.27) are
+    Lean definitions, used by name."""
+    counted = {int(d.replace("Definition", "")) for d in defs}
+    names = []
+    for d in euclid["Def."]:
+        if isinstance(d, int) and book == "I" and d not in counted:
+            lean = FRONT_LEAN.get(book, {}).get("Definitions", {}).get(d, "")
+            name = lean.split(",")[0].strip() if lean.startswith("`") else ""
+            names.append((d, name))
+    if not names:
+        return ""
+    parts = [f"Def. {d}" + (f" is {name}" if name else "") for d, name in names]
+    verb = "is a Lean definition" if len(names) == 1 else "are Lean definitions"
+    if all(name for _, name in names):
+        return ("_Euclid's " + " and ".join(parts) + " in Lean, a definition rather than an "
+                "assumption, so the Definitions row does not count it._")
+    return f"_Euclid's {', '.join(f'Def. {d}' for d, _ in names)} {verb}, not assumptions._"
+
+
 def rests_on(p, docs, depth, book, euclid):
     """Markdown for the 'What it rests on' section. `euclid` is what Euclid cites
     (see euclid_cites); it comes from the text, so it is shown before the Lean is done."""
@@ -368,6 +401,9 @@ def rests_on(p, docs, depth, book, euclid):
     if steps:
         out += f"\n{steps}\n"
     out += f"\n{TABLE_KEY}\n"
+    unlisted = definitions_not_counted(euclid, defs, book)
+    if unlisted:
+        out += f"\n{unlisted}\n"
     if p["status"] == "proved-pending":
         out += ("\n_This proof is complete, but it cites propositions that are still "
                 "only stated, so the list above will grow when they are proved._\n")
@@ -431,8 +467,13 @@ def page(book, n, count, titles, facts, docs):
                 f"<p align=\"center\"><em>{caption}</em></p>", ""]
     out += ["## Euclid's proof", ""]
     if figure.exists():
+        note = FIGURE_NOTES.get((book, n), "")
+        alt = f"Euclid's figure for Proposition {ref}, with Heath's letters" + (
+            f". {note}" if note else "")
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}.svg\" "
-                f"alt=\"Euclid's figure for Proposition {ref}, with Heath's letters\" width=\"360\"></p>", ""]
+                f"alt=\"{alt}\" width=\"360\"></p>", ""]
+        if note:
+            out += [f"<p align=\"center\"><em>{note}</em></p>", ""]
     else:
         out += [heath_figure_note(source), ""]
     for para in proof:
@@ -498,7 +539,7 @@ def index(book, count, titles, facts):
         ("proved-pending", "proved, citing propositions still to be proved"),
         ("sketched", "stated")) if s in used)
     out = [GENERATED, f"# Book {book}", "",
-           f"**{proved} of {count} propositions proved in Lean.** {legend}", ""]
+           f"**{proved} of {count} propositions proved in Lean.** Key to the table: {legend}.", ""]
     intro = book_intro(book)
     if intro:
         out += [intro, "", "## The propositions", ""]
