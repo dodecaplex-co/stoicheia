@@ -1,0 +1,23 @@
+# review/III/05.toml
+[statement]
+scope = "full"
+note = "The circles are taken to be two (`ABC ≠ CDG`), as Euclid's figure takes for granted, cutting at two points; the proof uses only one of them."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[overlap]
+rule = "Tacit.circle_eq"
+note = "System E's Diagram-segment 2, that one centre and one radius make one circle, gives III.5 at once from a common point. The proof follows Euclid and closes with that rule."
+
+[[passage]]
+at = "Therefore the point E is not the centre of the circles ABC, CDG."
+kind = "grouped"
+note = "The reductio's conclusion. Lean supposed E the centre of both circles at the start and has reached the contradiction above, which proves it."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

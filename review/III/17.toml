@@ -1,0 +1,21 @@
+# review/III/17.toml
+[statement]
+scope = "restricted"
+hypotheses = [
+  "the given point A is outside the circle (`hA : OutsideCircle A BCD`), which leaves out a point on the circumference",
+]
+note = "Proved for a point outside the circle; a point on the circumference, which Euclid leaves to III.16's porism, is not covered."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The circle comes with a centre. III.1, which takes it, needs two points of the circle, and the proof finds them on the straight line from the centre to A."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

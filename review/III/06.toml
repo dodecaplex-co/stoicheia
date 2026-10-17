@@ -1,0 +1,26 @@
+# review/III/06.toml
+[statement]
+scope = "full"
+note = "Covers circles touching within, whichever is the inner, and circles touching without, the case Euclid leaves to the reader."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[overlap]
+rule = "Tacit.circle_eq"
+note = "For contact within, System E's Diagram-segment 2 gives III.6 at once from the point of contact; for contact without, our definition of touching with Generalities 3 does. The proof follows Euclid."
+
+[[passage]]
+at = "Therefore F is not the centre of the circles ABC, CDE."
+kind = "grouped"
+note = "The reductio's conclusion. Lean supposed F the centre of both circles at the start and has reached the contradiction above, in each kind of contact."
+
+[figure]
+case = "the circles touching within, as in Heath's figure"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

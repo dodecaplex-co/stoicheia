@@ -1,0 +1,19 @@
+# review/III/12.toml
+[statement]
+scope = "full"
+note = "The point of contact lies between the centres (`Between F A G`). Heath prints III.12 in square brackets; it is stated and proved like the rest."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+note = "The argument is the one Heath prints in brackets, which he judges Heron's, made into a proposition by Theon or another editor."
+
+[representation]
+tags = ["centre-given"]
+note = "The centres F and G are given, as the setting-out takes them. Touching without is read of the whole circles: no point is within both."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

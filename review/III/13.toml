@@ -1,0 +1,18 @@
+# review/III/13.toml
+[statement]
+scope = "full"
+note = "Circles touching within, either inside the other, or touching without, have no common point but the point of contact."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "Each circle comes with a centre. Touching is read of the whole circles, so circles touching within at D that meet again at B touch within at B too; III.13 shows that they cannot meet again."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

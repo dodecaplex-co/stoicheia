@@ -1,0 +1,23 @@
+# review/III/15.toml
+[statement]
+scope = "full"
+note = "The diameter's bound on BC is stated with a second straight line FG more remote than BC, as Euclid sets it out; such an FG always exists."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The centre E and the perpendiculars EH, EK are given, since Definition III.5 measures from them, and 'nearer' is `‖E H‖ < ‖E K‖`."
+
+[[passage]]
+at = "Then, since BC is nearer to the centre and FG more remote"
+kind = "carried"
+note = "The statement assumes it (`hnearer : ‖E H‖ < ‖E K‖`), for Definition III.5 is how it says that BC is nearer; no Lean is needed beneath."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"
