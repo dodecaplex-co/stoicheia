@@ -69,6 +69,8 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
   -- therefore the angle BAC is also equal to the angle FAC;
   have heq : ∠ B A C = ∠ F A C := hwhole.trans hext.symm
   -- therefore each is right; [I. Def. 10]
+  /- Definition I.10 says each is right, for they are adjacent angles on the straight
+     line BF; Postulate 4 says each is then the right angle `∟`. -/
   obtain ⟨M, hB_M, hA_M⟩ := Postulate1 B A hAB.symm
   have hF_M : OnLine F M := on_line_of_between hBAF hB_M hA_M
   have hC_M : ¬ OnLine C M := fun h => hABC ⟨M, hA_M, hB_M, h⟩
