@@ -121,9 +121,7 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     -- and from the point of contact at A a straight line AB is drawn across in the circle ABE,
     obtain ⟨D', hDAD'⟩ := produce hDA
     have hD'D : D' ≠ D := (ne_of_between_ends hDAD').symm
-    have hcol : Collinear A D D' := by
-      obtain ⟨K, h1, h2⟩ := Postulate1 D A hDA
-      exact ⟨K, h2, h1, on_line_of_between hDAD' h1 h2⟩
+    have hcol : Collinear A D D' := ⟨L, hA_L, hD_L, on_line_of_between hDAD' hD_L hA_L⟩
     have htouch' : Touches D' D ABE :=
       htouch.of_collinear hcol ⟨L, hA_L, hD_L, hD_L⟩ hD'D
     have hEray : OnRay E A G := OnRay.of_beyond (between_symm hEGA)
