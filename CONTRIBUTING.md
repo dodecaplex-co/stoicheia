@@ -2,72 +2,60 @@
 
 Thank you for wanting to help carry Euclid into Lean. Everything here is meant to be
 picked up by anyone: a proof, a page of commentary, a figure, a correction to the
-transcription. A few house rules keep the whole thing honest and readable.
+transcription, or a careful reading of a page. This page says where to begin. The rules
+themselves live in a few documents, each the one home of its rules:
 
-## Proving a proposition
+| To | Read |
+|---|---|
+| see the standard at a glance | [AGENTS.md](AGENTS.md): the priorities and the ten rules, written for agents and as useful for people |
+| write or change the Lean | [docs/FORMALIZATION.md](docs/FORMALIZATION.md) |
+| write anything a reader sees | [docs/STYLE.md](docs/STYLE.md) |
+| work alongside others, review, or release | [docs/WORKFLOW.md](docs/WORKFLOW.md) |
+| see what good pages look like | [docs/examples.md](docs/examples.md) |
+| learn a book's words and decisions | the briefs for [Book I](docs/briefs/book-I.md), [Book II](docs/briefs/book-II.md) and [Book III](docs/briefs/0004-book-III.md) |
+| see where the work stands | [docs/PROGRAM.md](docs/PROGRAM.md) |
 
-All 99 propositions of Books I to III are proved. Each new book starts the same way:
-every proposition is stated in Lean, with Euclid's sentences in place as comments and
-a `sorry` at the end, and marked 🚧 on the book's page. Pick any 🚧 proposition; you
-can prove it before the ones it cites are finished, because a proof only needs their
-statements. How Book III speaks of circles, contact and circumferences is in
-[its brief](docs/briefs/0004-book-III.md); Book II's rectangles and squares are in
-[Book II's](docs/briefs/0003-book-II.md). Corrections to Books I to III are welcome
-too: a proof, a mishnah, a figure or the transcription.
+## What you can do
 
-1. **Euclid's words go in `--` comments, ours go in `/- … -/`.** Keep the words
-   of every `--` line exactly as they are: CI checks that, read in order, they
-   still spell out Heath's text word for word. (Indentation may change, for
-   instance when a few sentences move into a sub-proof.) Put the Lean for each
-   sentence directly under it. Anything you want to say in your own voice
-   ("Euclid doesn't say why…") goes in a `/- … -/` block.
-2. **Follow Euclid's route.** Use the propositions he cites, in the order he cites
-   them. If Lean needs something he never says, that's a discovery: prove it as a
-   small `PropN.figure`-style lemma in the same file, and tell us in the mishnah.
-   Helpers go before the proposition, porisms and corollaries after it. A step
-   that several proofs share goes in Book Zero; if it cites a proposition, in
-   [`Elements/BookI/Helpers.lean`](Elements/BookI/Helpers.lean), or, if it cites
-   I.28, I.30 or I.31, in
-   [`Elements/BookI/HelpersParallels.lean`](Elements/BookI/HelpersParallels.lean);
-   and if it is a consequence of one proposition that later proofs share, after
-   that proposition as a corollary (`Prop34.bisect`). In Book II, a shared step that
-   cites Book I goes in
-   [`Elements/BookII/Rectangles.lean`](Elements/BookII/Rectangles.lean); in Book III,
-   one that cites Books I or II in
-   [`Elements/BookIII/Squares.lean`](Elements/BookIII/Squares.lean), and one that cites
-   III.20–III.22 in
-   [`Elements/BookIII/Circumferences.lean`](Elements/BookIII/Circumferences.lean). Import
-   the files you cite.
-3. **Never add an `axiom`.** All assumptions live in `Elements/Foundations/`. If you
-   believe Euclid needs a rule that isn't there, open an issue; new rules come from
-   System E (or LeanEuclid's corrections of it), with a citation. A rule that holds
-   only with the parallel postulate is declared in the namespace
-   `Elements.Tacit.Euclidean`, and CI checks that nothing before I.29 rests on it.
-4. **Don't change a statement** without opening an issue first: other propositions
-   are written against it.
-5. **No `native_decide`, and nothing in `Elements/Figure/` may cite a proposition.**
-   Book Zero is for facts every figure needs, proved from the foundations alone.
+**Read a page, and tell us where it could be clearer.** Open an issue naming the page and
+the sentence. A quotation that does not match Heath, a figure that misleads, a page that
+claims more than its theorem proves: each is a real help.
 
-## Writing commentary or drawing figures
+**Check a quotation or the transcription.** `heath/` is Heath's 1908 translation, from the
+Internet Archive's scans ([STYLE.md](docs/STYLE.md), section 5, says where each page is).
+A correction is made only against the page image, with a comment naming the leaf.
 
-[docs/STYLE.md](docs/STYLE.md) has the rules for the voice, the mishnah, the further
-reading and the figures. In short:
+**Improve a proof.** All 99 propositions of Books I–III are proved, and a proof can still
+follow Euclid more closely, or a helper say its step more plainly. Keep Heath's `--` lines
+word for word and the statement as it is.
 
-- `mishnah/<book>/NN.md`: 250 to 450 words, in the same voice as the rest, a friend
-  who knows Euclid talking over his figure. What does Euclid do here, and why does it
-  matter? What do Heath and Proclus add? What did Lean make us say? How does the
-  result look with coordinates, vectors or complex numbers? Quote Heath (public
-  domain) freely, credit everyone, and keep it friendly. What every page shares is
-  said once, in the book's introduction (`mishnah/intro/<book>.md`).
-- `reading/<book>/NN.md`: one to three friendly lines of further reading, only from
-  [the reading list](docs/reading.md), by the rule in STYLE.
-- Each proposition has two figures, both on the parchment background:
-  - `figures/<book>/NN-idea.svg`, the "at a glance" figure: no letters, Byrne's
-    red (#d0312d), yellow (#f2b705), blue (#1f5aa6) and black, equal things in the
-    same colour, and a caption of one or two short sentences in the SVG's `<desc>`
-    (it is shown on the page). See `01-idea.svg`, `05-idea.svg`, `47-idea.svg`.
-  - `figures/<book>/NN.svg`, Euclid's figure, with Heath's letters, drawn to match
-    the proof.
+**Prove a proposition of a new book.** Book IV, of figures inscribed in and circumscribed
+about circles, is next. Each new book starts with its brief, and with its statements
+reviewed and approved before anyone proves them; then every proposition is stated in Lean,
+with Euclid's sentences as comments and a `sorry`, and marked 🚧 on the book's page. Pick a
+🚧 proposition: a proof needs only the statements of what it cites, so it can be proved
+before they are.
+
+**Write commentary, or draw a figure.** [STYLE.md](docs/STYLE.md) has the voice, the
+mishnah, the further reading and the figures, and [the examples](docs/examples.md) show
+them at work.
+
+## A few house rules
+
+1. **Euclid's words go in `--` comments, ours in `/- … -/`.** Keep every `--` line exactly
+   as it is: CI checks that, read in order, they spell out Heath's text word for word. Put
+   the Lean for each sentence directly under it.
+2. **Follow Euclid's route,** and label any departure where it happens. Never add a
+   citation only to match Heath's references, or use a hypothesis only to silence a
+   warning. Helpers go before the proposition, corollaries after it, and shared steps where
+   [FORMALIZATION.md](docs/FORMALIZATION.md) says.
+3. **Never add an `axiom`.** All assumptions live in `Elements/Foundations/`. If you believe
+   Euclid needs a rule that is not there, open an issue: new rules come from System E, or
+   LeanEuclid's corrections of it, with a citation.
+4. **Don't change a statement** without opening an issue first: other propositions are
+   written against it.
+5. **One warm voice,** generous with credit and never competitive
+   ([STYLE.md](docs/STYLE.md), section 1).
 
 ## Before you open a pull request
 
@@ -75,8 +63,13 @@ reading and the figures. In short:
 lake build
 lake env lean Certificate/Facts.lean
 python3 scripts/check_fidelity.py
+python3 scripts/check_style.py
 python3 scripts/render.py
 ```
 
-Commit the regenerated `book/`, `CERTIFICATE.md`, `GRAPH.md` and `facts.json`; CI
-checks that they match.
+Working alone on a pull request, you are its integrator: commit the regenerated `book/`,
+`CERTIFICATE.md`, `GRAPH.md` and `facts.json` with your change, and CI checks that they
+match. When several people work in parallel, only the integrator commits them
+([WORKFLOW.md](docs/WORKFLOW.md), section 4). In the pull request, say what you checked and
+what you did not; the handback in [docs/templates/proposition.md](docs/templates/proposition.md)
+is a good shape for it.
