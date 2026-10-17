@@ -64,7 +64,7 @@ BOOK_I = {
         "    ∃ G K : Point, OnRay G F E ∧ SameSideOf K P F E ∧\n"
         "      ‖K F‖ = ‖A₁ A₂‖ ∧ ‖F G‖ = ‖B₁ B₂‖ ∧ ‖G K‖ = ‖C₁ C₂‖",
     23: "{A B C D E P : Point} (hAB : A ≠ B) (hDCE : Triangle D C E) (hP : ¬ Collinear A B P) :\n"
-        "    ∃ F G : Point, OnRay F A B ∧ SameSideOf G P A B ∧ ∠ F A G = ∠ D C E",
+        "    ∃ F G : Point, OnRay G A B ∧ SameSideOf F P A B ∧ ∠ F A G = ∠ D C E",
     24: "{A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E F)\n"
         "    (hAB : ‖A B‖ = ‖D E‖) (hAC : ‖A C‖ = ‖D F‖) (h : ∠ E D F < ∠ B A C) :\n"
         "    ‖E F‖ < ‖B C‖",
