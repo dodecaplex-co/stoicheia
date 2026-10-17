@@ -33,7 +33,7 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   have centres : SameSideOf G A B C → SameSideOf H D E F → ∠ B G C = ∠ E H F := by
     intro hGA hHD
     /- The circumferences BC, EF are named by points Q, R beyond them, across BC from A
-       and across EF from D; the centres lie on the sides of A and D. -/
+       and across EF from D, and the centres lie on the sides of A and D. -/
     obtain ⟨Q, hQA, -⟩ := exists_oppositeSidesOf hBAC.acb []
     obtain ⟨R, hRD, -⟩ := exists_oppositeSidesOf hEDF.acb []
     have hBC : circumference ABC B Q C = circumference DEF E R F := by
@@ -54,8 +54,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       -- the angle BGK be constructed equal to the angle EHF. [I. 23]
       have hGB : G ≠ B := (ne_of_centre_of_on hG hB).symm
       obtain ⟨K', B', hB', hK'C, hK'GB'⟩ := BookI.Prop23 hGB hHR.triangle.acb hGQ.triangle.cab
-      /- I.23 gives the direction. Take K on that ray at the distance GB from G;
-         System E, Diagram-segment 3, puts it on the given circle. -/
+      /- I.23 gives only the direction of GK. We take K on that ray at the distance GB
+         from G, and System E, Diagram-segment 3, puts it on the given circle. -/
       have hK'G : K' ≠ G := hK'C.triangle.ne₁₃.symm
       obtain ⟨K, hK_ray, hGK⟩ := OnRay.exists_len_eq hGB hK'G.symm
       have hK : OnCircle K ABC := on_circle_of_len_eq hG hB hGK
@@ -91,8 +91,9 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
     by_cases hGH : SameSideOf G A B C ∧ SameSideOf H D E F
     rotate_left
     · /- The statement also covers right and obtuse angles at the circumference,
-         where there is no angle at the centre standing on the same circumference
-         in Euclid's sense. The circumference is twice the angle standing on it. -/
+         where no angle at the centre in Euclid's sense stands on the same
+         circumference. There the circumference is twice the angle standing on it
+         (`Circumference.standing`), and halves of equal things are equal. -/
       rw [Circumference.standing ⟨G, hG⟩ hA hB hC hBAC.acb,
         Circumference.standing ⟨H, hH⟩ hD hE hF hEDF.acb] at heq
       exact Magnitude.eq_of_add_self_eq heq

@@ -19,11 +19,12 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- Euclid's argument for one straight line `AC` through a point `E` other than the centre `F`:
-the rectangle contained by `AE`, `EC`, together with the square on `FE`, is the square
-on `FC`. This supplies "For the same reason" for `DB`, and the intermediate cases
-where one straight line passes through the centre or `E` is the perpendicular's foot.
-Isaac Todhunter saw in it a fact about the isosceles triangle `FAC` (Heath, vol. 2, p. 73). -/
+/-- This is Euclid's argument for one straight line AC through a point E other than the
+centre F: the rectangle contained by AE, EC, together with the square on FE, is equal to
+the square on FC. It serves as his "For the same reason" for DB, and covers the
+intermediate cases, where one straight line passes through the centre or E is the foot
+of the perpendicular. Isaac Todhunter saw in it a fact about the isosceles triangle FAC
+(Heath, vol. 2, p. 73). -/
 theorem Prop35.cut {A C E F : Point} {α : Circle} (hF : Centre F α) (hA : OnCircle A α)
     (hC : OnCircle C α) (hAEC : Between A E C) (hEF : E ≠ F) :
     rect A E E C + sq F E = sq F C := by
@@ -31,7 +32,7 @@ theorem Prop35.cut {A C E F : Point} {α : Circle} (hF : Centre F α) (hA : OnCi
   obtain ⟨L, hA_L, hC_L⟩ := Postulate1 A C hAC
   have hE_L : OnLine E L := on_line_of_between_ends hAEC hA_L hC_L
   by_cases hF_AC : Collinear A C F
-  · /- When `AC` passes through the centre, `F` bisects it and II.5 applies there. -/
+  · /- When AC passes through the centre, F bisects it, and II.5 applies there. -/
     obtain ⟨M, hA_M, hC_M, hF_M⟩ := hF_AC
     have hAFC : Between A F C :=
       between_of_inside_chord hF_M hA_M hC_M (centre_inside hF) hA hC hAC
@@ -39,7 +40,7 @@ theorem Prop35.cut {A C E F : Point} {α : Circle} (hF : Centre F α) (hA : OnCi
       rw [len_symm A F]
       exact Definition15 hF hA hC
     exact BookII.Prop5 hAFC hAF hAEC hEF
-  · /- The perpendicular from `F` [I. 12] falls within `AC`. -/
+  · /- The perpendicular from F [I. 12] falls within AC. -/
     obtain ⟨G, hG, hFG⟩ := BookI.Prop12 hAC hF_AC
     have hAGC : Between A G C := foot_between hF hA hC hF_AC hG hFG
     have hG_L : OnLine G L := on_line_of_between_ends hAGC hA_L hC_L
@@ -48,9 +49,10 @@ theorem Prop35.cut {A C E F : Point} {α : Circle} (hF : Centre F α) (hA : OnCi
     have hAGF : ∠ A G F = ∟ := by
       rw [angle_symm (ne_of_between hAGC) hFG']
       exact hFG A ⟨L, hA_L, hC_L, hA_L⟩ (ne_of_between hAGC)
-    /- It bisects `AC` [III. 3]. -/
+    /- It bisects AC [III. 3]. -/
     have hAG : ‖A G‖ = ‖G C‖ := (Prop3 hF hA hC hAGC hF_AC).2 hAGF
-    /- The equal and unequal cuts [II. 5]; at `E = G`, the square on `EG` is nothing. -/
+    /- AC is cut into equal parts at G and unequal parts at E [II. 5]; if E is G, the
+       square on EG is nothing. -/
     have h5 : rect A E E C + sq E G = sq G C := by
       by_cases hEG : E = G
       · subst hEG
@@ -58,7 +60,7 @@ theorem Prop35.cut {A C E F : Point} {α : Circle} (hF : Centre F α) (hA : OnCi
         exact rect_congr hAG rfl
       · rw [sq_symm E G]
         exact BookII.Prop5 hAGC hAG hAEC hEG
-    /- Add the square on `GF`. -/
+    /- The square on GF is added to each. -/
     have hadd : rect A E E C + sq E G + sq G F = sq G C + sq G F :=
       CommonNotion2 h5 rfl
     /- The two right triangles replace the pairs of squares [I. 47]. -/
@@ -104,8 +106,9 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
   have hEF : E ≠ F := fun e => hE (e ▸ hF)
   have hAC : rect A E E C + sq F E = sq F C := by
     by_cases hF_AC : Collinear A C F
-    · /- Robert Simson's intermediate cases: `AC` may pass through the centre when `E`
-         does not. Then `F` bisects `AC`, and II.5 gives the squares at once. -/
+    · /- Robert Simson adds the intermediate cases, where AC passes through the centre
+         and E does not. Then F bisects AC, and `Prop35.cut` gives the squares by II.5 at
+         once. -/
       exact Prop35.cut hF hA hC hAEC hEF
     have hAC' : A ≠ C := ne_of_between_ends hAEC
     obtain ⟨L, hA_L, hC_L⟩ := Postulate1 A C hAC'
@@ -113,8 +116,8 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
     -- from F let FG, FH be drawn perpendicular to the straight lines AC, DB, and let FB, FC, FE
     -- be joined.
     obtain ⟨G, hG, hFG⟩ := BookI.Prop12 hAC' hF_AC
-    /- `FH` is drawn in `Prop35.cut`, applied to `DB` below. The joined straight
-       lines need no further construction in Lean. -/
+    /- FH is drawn in `Prop35.cut`, applied to DB below. The straight lines joined need
+       no construction in Lean. -/
     -- Then, since a straight line GF through the centre cuts a straight line AC not through the
     -- centre at right angles,
     have hAGC : Between A G C := foot_between hF hA hC hF_AC hG hFG
@@ -134,7 +137,7 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
     -- GC; [II. 5]
     have h5 : rect A E E C + sq E G = sq G C := by
       by_cases hEG : E = G
-      · /- If `E` is `G`, `AE = EC` and the square on `EG` is nothing. -/
+      · /- If E is G, AE is equal to EC, and the square on EG is nothing. -/
         subst hEG
         rw [sq_self, add_zero]
         exact rect_congr hAG rfl

@@ -42,11 +42,10 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre 
   have hA_L : ¬ OnLine A L := hAE.triangle.off_line hB_L hD_L
   by_cases hFA : SameSide F A L
   · exact greater hA hB hD hE (SameSideOf.of_line hBD hB_L hD_L hFA) hAE
-  /- Robert Simson's completion (Heath, vol. 2, pp. 49–50), for a segment equal
-     to or less than a semicircle. Produce AF to C on the circle and join CE;
+  /- This is Robert Simson's completion (Heath, vol. 2, pp. 49–50), for a segment
+     equal to or less than a semicircle. Produce AF to C on the circle and join CE;
      the segments on BC and CD contain the centre, so Euclid's case applies to
-     each. This C is Simson's, the end of a diameter; in Euclid's figure C only
-     names the circle. -/
+     each. -/
   have hAF : A ≠ F := ne_of_centre_of_on hF hA
   obtain ⟨N, hA_N, hF_N⟩ := Postulate1 A F hAF
   obtain ⟨C, hC, hC_N, hCFA⟩ := line_circle_beyond (centre_inside hF) hF_N hA_N hAF

@@ -49,7 +49,7 @@ theorem Prop34 {D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centr
   have hO_L : ¬ OnLine O L := hOBF'.bca.off_line hB_L hF_L
   -- and on the straight line FB, and at the point B on it, let the angle FBC be constructed
   -- equal to the angle at D. [I. 23]
-  /- Copy the given angle on the centre's side of EF. -/
+  /- We copy the given angle on the centre's side of EF. -/
   obtain ⟨C', F', hF', hC'O, hC'BF'⟩ := BookI.Prop23 hBF hD hOBF'.bca
   have hC'B : C' ≠ B := hC'O.triangle.ne₁₃.symm
   have hcopy : ∠ F B C' = ∠ D₁ D D₂ :=
@@ -74,8 +74,8 @@ theorem Prop34 {D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centr
     exact (line_unique hC'B.symm hB_K hC'_K hB_N hC'_N) ▸ hZ_K
   obtain ⟨C, hC, hC_N, hCZB⟩ := line_circle_beyond hZin hZ_N hB_N hZB.symm
   have hCB : C ≠ B := ne_of_between_ends hCZB
-  /- C lies on the centre's side of EF: otherwise the straight line OC would
-     cross EF within the circle, although EF touches it. -/
+  /- C lies on the centre's side of EF, as in III.32: otherwise the straight line OC
+     would cross EF within the circle, although EF touches it. -/
   have hCO : SameSide C O L := by
     have hC_L : ¬ OnLine C L := fun h =>
       (hEF.2 L hE_L hF_L).2 ⟨B, C, hCB.symm, hB_L, hB, h, hC⟩

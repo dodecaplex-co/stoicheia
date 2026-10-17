@@ -89,11 +89,12 @@ beneath every proposition from I.29 on but I.31, and `Prop30.meet`, credited to
 Proclus (Heath, vol. 1, pp. 207 and 316). Book II's tells the steps of
 `Elements/BookII/Rectangles.lean`, with `Parallel.between`,
 `quadArea_add_of_parallelograms` and the unlettered point of `exists_off_line`; Book
-III's tells a circle's centre by hypothesis and III.1, its definitions and the
-circumference measured by twice its angle, `Squares.lean` and `Circumferences.lean`,
-and the porisms of III.1 and III.16. A shared step may be told on its home page
-(II.1's rectangle contained, II.4's "For the same reason"); elsewhere it gets a
-clause at most ("as in II.4").
+III's tells a circle's centre by hypothesis and III.1, the constructions Euclid makes
+with no citation (III.1, I.10, I.11, I.12, I.23), its definitions and the circumference
+measured by twice its angle, the steps of `Squares.lean` and `Circumferences.lean`, the
+porisms of III.1 and III.16, and where its statements part from Euclid's. A shared
+step may be told on its home page (II.1's rectangle contained, II.4's "For the same
+reason"); elsewhere it gets a clause at most ("as in II.4").
 
 **Retired refrains**, each once said on a dozen pages:
 
@@ -130,8 +131,14 @@ clause at most ("as in II.4").
   p. 252)" when the sentence doesn't name him. Those Heath reports (Proclus,
   Todhunter, De Morgan) take his page. Never invent a quotation or a page.
 - Single quotes inside, "…" for a cut, and brackets inside are Heath's own. No
-  added italics, and keep Heath's italics: those he printed, all of them, and only
-  those ("the two circles *will* meet"), as `*…*`.
+  added italics, and keep Heath's italics for his emphasis and his titles: those he
+  printed, all of them, and only those ("the two circles *will* meet"), as `*…*`.
+- **Heath's letters are plain everywhere**, inside his quotations too. His page sets
+  them in italic; ours writes them as the rest of the page does: "the middle point of
+  CE" (vol. 2, p. 8), not "of *CE*". Where his italic runs on through letters and
+  words together, the words keep it and the letters do not: "AE, EB, EC *will also
+  pass through the remaining points of the segment*" (III.25). Euclid's figures keep
+  their italic letters (§4).
 - Each of Heath's notes is quoted on the page of the proposition it belongs to, and
   elsewhere only referred to in a clause: "as Todhunter remarks under I.14". A
   passage from his introduction, or his notes on the definitions and postulates, is
@@ -303,12 +310,16 @@ proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN
 12. Each hit of `grep -nE '[“”‘’]|(^|[^*])\*"|"\*($|[^*])' F` is an italic Heath
     printed.
 
-12b. Every italic Heath printed is kept. The scan's ABBYY file
+12b. Every italic Heath printed for his emphasis or a title is kept, and his letters
+    are plain (§2, Quotations). The scan's ABBYY file
     (`https://archive.org/download/<id>/<id>_abbyy.gz`, `<id>` as for the page images)
-    flags each italic letter with `italic="true"` on its `<formatting>`; on the quoted
-    page (the `<page>` of its leaf, counting from 0), every word inside the quotation
-    so flagged is in italics in F, and no other. Where a flag is doubtful, the page
-    image decides.
+    flags each italic character with `italic="true"` on its `<formatting>`; on the
+    quoted page (the `<page>` of its leaf, counting from 0), every word inside the
+    quotation so flagged is in italics in F, and no other, save the names of points,
+    straight lines and figures (CE, BADC, AE, EB, EC): Heath sets those in italic too,
+    and in F they are plain, not dropped italics. Where a flag is doubtful, the page
+    image decides. And this prints nothing:
+    `grep -nE '(^|[^*])\*[A-Z]+[′₀-₉]*([ ,]+[A-Z]+[′₀-₉]*)*\*($|[^*])' F`.
 13. Each hit of `grep -nE 'Avigad|LeanEuclid' F` is a particular debt, not thanks.
     Each rule name is a docstring label: `grep -rn 'Intersection 5' Elements/Foundations/Tacit`.
 14. What it says of the Lean's citations and postulates matches `facts.json`:
@@ -328,9 +339,11 @@ proposition of a later book, read its numeral for `I` in the paths (`heath/II/NN
 19. The `cites` from check 14 match the brackets in `heath/I/NN.md`, or the
     difference is accounted for. An extra citation that a shared step brings in is
     shown by the page's generated "Brought in by shared steps" line, and the mishnah
-    says nothing of it. The mishnah explains a citation only where the Lean departs
-    from Euclid's route or the reason is part of the story: one clause naming his
-    step ("Euclid gives no citation for it: it is I.10").
+    says nothing of it. Nor, in Book III, does it speak of an uncited construction
+    (III.1, I.10, I.11, I.12, I.23) unless the step is its story: the book's
+    introduction tells them once. The mishnah explains a citation only where the Lean
+    departs from Euclid's route or the reason is part of the story: one clause naming
+    his step ("Euclid gives no citation for it: it is I.10").
 
 **Figures**
 

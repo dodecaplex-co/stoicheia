@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.6 at a glance</title>
-  <desc>Two circles that touch one another (red, blue) cannot have the same centre: drawn about one centre, the smaller (dashed) lies wholly inside the larger and never touches it.</desc>
+  <desc>Circles that touch one another (red, blue) cannot have one centre: give the red the blue's centre (dashed), and it no longer touches, but lies inside with room all round.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="212.0" cy="150.0" r="64.0" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75" stroke-dasharray="9 8"/>
   <circle cx="163.1" cy="132.2" r="64.0" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>

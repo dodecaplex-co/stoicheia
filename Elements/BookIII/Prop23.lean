@@ -32,14 +32,14 @@ theorem Prop23 {A B C D : Point} {ACB ADB : Circle} (hACB : ∃ O : Point, Centr
   obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
   have hC_AB : ¬ OnLine C AB := hABC.off_line hA_AB hB_AB
   -- let ACD be drawn through, and let CB, DB be joined.
-  /- Euclid draws the segment ACB within ADB. The circles meet at `A` and `B`, so not at
-     `C` as well [III. 10]: `C` is within the circle ADB, or outside it. Within, `AC`
-     drawn through meets ADB at `D₀` beyond `C` (System E, Intersections 5), and the angle
-     `ADB` is the angle `AD₀B`, in the same segment [III. 21]. Outside, the segments are
-     the other way about: a point `M` between `A` and `B` is within both circles, so `MC`
-     meets ADB at a point `D₁` within ACB (Intersections 4, Circle 2), and `AD₁` drawn
-     through meets ACB at `C₀`. Either way a point `P` of one segment lies within the other,
-     and `AP` drawn through meets it at `Q`. -/
+  /- Euclid draws the segment ACB within ADB. The circles meet at A and B, so not at C as
+     well [III. 10]: C is within the circle ADB, or outside it. If C is within, AC drawn
+     through meets ADB at D₀ beyond C (System E, Intersections 5), and the angle ADB is
+     the angle AD₀B, in the same segment [III. 21]. If C is outside, the segments are the
+     other way about: a point M between A and B is within both circles, so MC meets ADB at
+     a point D₁ within ACB (Intersections 4, Circle 2), and AD₁ drawn through meets ACB at
+     C₀. Either way a point P of one segment lies within the other, and AP drawn through
+     meets it at Q. -/
   have hC₂ : ¬ OnCircle C ADB := fun hC₂ =>
     hne (Prop10 hACB hADB hA₁ hA₂ hB₁ hB₂ hC hC₂ hAB hABC.ne₁₃ hABC.ne₂₃)
   obtain ⟨P, Q, hAPQ, hP_AB, hangles⟩ : ∃ P Q : Point, Between A P Q ∧ ¬ OnLine P AB ∧

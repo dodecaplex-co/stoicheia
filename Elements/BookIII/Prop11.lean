@@ -51,8 +51,9 @@ theorem Prop11 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
     -- Then, since AG, GF are greater than FA, that is, than FH,
     have h20 : ‖F A‖ < ‖F G‖ + ‖G A‖ := by
       by_cases hA_L : OnLine A L
-      · /- Euclid leaves the case where A lies on GF produced beyond F to the
-           reader. Here AG is AF and FG together, so it already exceeds AF. -/
+      · /- A lies on GF produced beyond F, a case Heath says Euclid would have left to
+           the reader (vol. 2, p. 26). Here AG is AF and FG together, so it already
+           exceeds AF. -/
         have hAFH : Between A F H :=
           between_of_inside_chord hF_L hA_L hH_L (centre_inside hF) hA₁ hH hAH
         have hAFG : Between A F G := between_cut hAFH hFGH

@@ -18,7 +18,8 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- A right angle at `K` on the straight line `KC` is right on either side of `K`. -/
+/-- If the angle BKC is right, so is the angle BKX for any other point X of the straight
+line KC, on either side of K. -/
 theorem Prop10.right_on_line {B K C X : Point} {N : Line} (hK : OnLine K N) (hC : OnLine C N)
     (hX : OnLine X N) (hKC : K ≠ C) (hXK : X ≠ K) (hB : ¬ OnLine B N) (hBKC : ∠ B K C = ∟) :
     ∠ B K X = ∟ := by
@@ -29,9 +30,9 @@ theorem Prop10.right_on_line {B K C X : Point} {N : Line} (hK : OnLine K N) (hC 
     rw [← h, angle_symm hKC.symm hBK]; exact hBKC
   · rw [angle_onRay_right ⟨hKC, hXK, ⟨N, hK, hC, hX⟩, hb⟩ hBK]; exact hBKC
 
-/-- The perpendiculars at `K` and `L` have at most one common point. Euclid takes
-for granted that they are different straight lines: if they were one, the triangle
-`BKL` would have two right angles, contrary to I.17. -/
+/-- The straight lines at right angles to BH at K and to BG at L have at most one
+common point. Euclid takes for granted that they are two straight lines; as in III.9
+(`Prop9.apart`), were they one, the triangle BKL would have two right angles. -/
 theorem Prop10.meet_once {B G H K L C O P Q : Point} (hBHG : Triangle B H G)
     (hBKH : Between B K H) (hBLG : Between B L G)
     (hC : ¬ Collinear B H C) (hBKC : ∠ B K C = ∟) (hO : ¬ Collinear B G O)
@@ -52,7 +53,7 @@ theorem Prop10.meet_once {B G H K L C O P Q : Point} (hBHG : Triangle B H G)
   obtain rfl := line_unique hKC hK₁ hC₁ hK₂ hC₂
   obtain rfl := line_unique hLO hL₃ hO₃ hL₄ hO₄
   obtain rfl := line_unique hPQ hP₁ hQ₂ hP₃ hQ₄
-  /- One straight line `M₁` through `K`, `C`, `L`, `O`. -/
+  /- Now one straight line, `M₁`, passes through K, C, L and O. -/
   have hKL : K ≠ L := by
     rintro rfl
     have hBK : B ≠ K := ne_of_between hBKH
@@ -136,13 +137,13 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
   have hP_NO : Collinear L O P := Prop1.porism hP hB₁ hG₁ hBLG hBL hO_off hBLO
   -- But it was also proved to be on AC, and the straight lines AC, NO meet at no point except
   -- at P;
-  /- `Prop10.meet_once`: AC and NO are two straight lines, so any point on both is P,
+  /- AC and NO are two straight lines (`Prop10.meet_once`), so any point on both is P,
      even if P is K or L. -/
   have hmeet : ∀ Q : Point, Collinear K C Q → Collinear L O Q → Q = P :=
     fun Q hQ_AC hQ_NO =>
       Prop10.meet_once hBHG hBKH hBLG hC_off hBKC hO_off hBLO hQ_AC hP_AC hQ_NO hP_NO
   -- therefore the point P is the centre of the circle ABC.
-  /- The centre taken from hABC has been named P. -/
+  /- The centre that the hypothesis `hABC` gives has already been named P. -/
   -- Similarly we can prove that P is also the centre of the circle DEF;
   obtain ⟨P', hP'⟩ := hDEF
   have hP'_AC : Collinear K C P' := Prop1.porism hP' hB₂ hH₂ hBKH hBK hC_off hBKC

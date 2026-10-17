@@ -36,8 +36,8 @@ theorem Prop6 {C F : Point} {ABC CDE : Circle} (htouch : CirclesTouch ABC CDE C)
   -- But FC was proved equal to FB;
   -- therefore FE is also equal to FB, the less to the greater: which is impossible.
   have hEB : ‖F E‖ = ‖F B‖ := hFE.symm.trans hFB
-  /- A common centre and equal radii make one circle (System E, Diagram-segment 2).
-     Contact within requires two circles; contact without forbids a point within both. -/
+  /- Equal radii about one centre make one circle, as in III.5. Contact within
+     requires two circles, and contact without forbids a point within both, such as F. -/
   have hsame : CDE = ABC := circle_eq hF₂ hF₁ hE hB hEB
   subst hsame
   rcases htouch with ⟨-, -, hne, -⟩ | ⟨-, -, hne, -⟩ | ⟨-, -, hout⟩

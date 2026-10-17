@@ -43,13 +43,14 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
   have hFA : F ≠ A := (ne_of_between_ends hAEF).symm
   have hF_in : InsideCircle F ABCD :=
     inside_of_between (Or.inl (centre_inside hE)) (Or.inr hD) hEFD
-  /- A point of the circle on the diameter is `A` or `D` (System E, Circle 1). -/
+  /- A point of the circle on the diameter is A or D (System E, Circle 1). -/
   have hends : ∀ K, OnCircle K ABCD → OnLine K L → K ≠ A → K = D := by
     intro K hK hK_L hKA
     have hAEK : Between A E K :=
       between_of_inside_chord hE_L hA_L hK_L (centre_inside hE) hA hK hKA.symm
     exact (OnRay.of_between_between hAED hAEK).eq_of_len_eq (Definition15 hE hK hD)
-  /- `FD` is less than `FA`: `FD` is less than `ED`, which is `EA`, less than `FA`. -/
+  /- FD is less than FA, for FD is less than ED, which is equal to EA, and EA is less
+     than FA. -/
   have hDA : ‖F D‖ < ‖F A‖ := by
     have h₁ : ‖D F‖ < ‖D E‖ := len_lt_of_between (between_symm hEFD)
     have h₂ : ‖A E‖ < ‖A F‖ := len_lt_of_between hAEF
@@ -86,16 +87,16 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
     have hBC' : SameSideOf B C F E := SameSideOf.of_line hEF.symm hF_L hE_L (hBC.sameSide hA_L hD_L)
     have hBF : B ≠ F := fun e => inside_not_on hF_in (e ▸ hB)
     have hCF : C ≠ F := fun e => inside_not_on hF_in (e ▸ hC)
-    /- Euclid reads it off the figure; Augustus De Morgan's gap (Heath, vol. 2, p. 15). The angle `EFB` is
-       the angle `AFB`, `E` being on `FA`; so `FB` falls within the angle `EFC` (`BookI.Prop24.within`)
-       and crosses `EC` at `M` (`crossbar`). -/
+    /- Euclid reads this off the figure, the gap Augustus De Morgan points out (Heath,
+       vol. 2, p. 15). The angle EFB is the angle AFB, since E is on FA, so FB falls within
+       the angle EFC (`BookI.Prop24.within`) and crosses EC at a point M (`crossbar`). -/
     have hEray : OnRay E F A := OnRay.of_between (between_symm hAEF)
     rw [← angle_onRay_left hEray hBF, ← angle_onRay_left hEray hCF] at hlt
     have hwithin : SameSideOf B E F C := BookI.Prop24.within hBC'.symm hlt
     obtain ⟨M, hEMC, hM⟩ := crossbar hBC' hwithin
     have hM_in : InsideCircle M ABCD := inside_of_between (Or.inl (centre_inside hE)) (Or.inr hC) hEMC
-    /- `M` is between `F` and `B`: on the ray from `F` through `B`, and not beyond `B`, for
-       then `B` would be within the circle (System E, Circle 2). -/
+    /- M is between F and B: it is on the ray from F through B, and not beyond B, for
+       then B would be within the circle (System E, Circle 2). -/
     have hFMB : Between F M B := by
       obtain ⟨-, hMF, ⟨N, hF_N, hB_N, hM_N⟩, hMFB⟩ := hM
       have hMB : M ≠ B := fun e => inside_not_on hM_in (e ▸ hB)
@@ -114,7 +115,7 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
     exact h24
   -- For the same reason
   -- CF is also greater than FG.
-  /- The Lean above was said of any two points `B`, `C` on one side of `AD`; `C`, `G` are
+  /- The Lean above was said of any two points B, C on one side of AD, and C, G are
      such a pair. -/
   have hleast : ∀ G : Point, OnCircle G ABCD → G ≠ D → ‖F D‖ < ‖F G‖ := by
     intro G hG hGD
@@ -147,15 +148,15 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
   have hP_EF : ¬ Collinear E F P := Triangle.of_line hE_L hF_L hEF hPG.1
   obtain ⟨H', F', hF', hH', hang⟩ := BookI.Prop23 hEF hEFG.cab hP_EF
   have hEH' : E ≠ H' := hH'.triangle.ne₁₃
-  /- `H` where the straight line `EH'` meets the circle, on `H'`'s side of `E`
-     (System E, Intersections 5, with `H'E` produced to `Q`). -/
+  /- H is where the straight line EH' meets the circle on the side of E where H' is
+     (System E, Intersections 5, with H'E produced to a point Q). -/
   obtain ⟨N, hE_N, hH'_N⟩ := Postulate1 E H' hEH'
   obtain ⟨Q, hH'EQ⟩ := produce hEH'.symm
   have hQ_N : OnLine Q N := on_line_of_between hH'EQ hH'_N hE_N
   obtain ⟨H, hH, -, hHEQ⟩ :=
     line_circle_beyond (centre_inside hE) hE_N hQ_N (ne_of_between (between_symm hH'EQ))
   have hH_ray : OnRay H E H' := OnRay.of_between_between (between_symm hH'EQ) (between_symm hHEQ)
-  /- `H` is on the other side of `AD` from `G`. -/
+  /- H is on the other side of AD from G. -/
   have hHP : SameSideOf H P E F := SameSideOf.of_onRay hH_ray hH'
   have hHG_EF : OppositeSidesOf H G E F :=
     hHP.trans_opposite (OppositeSidesOf.of_line hEF hE_L hF_L hPG)
@@ -185,8 +186,8 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
   have hFKH : ‖F K‖ = ‖F H‖ := hFK.trans hFH.symm
   -- the nearer to the straight line through the centre being thus equal to the more remote:
   -- which is impossible.
-  /- On one side of `AD`, two points of the circle as far from `F` make one point: were
-     they two, one would be the nearer, and greater. -/
+  /- On one side of AD, two points of the circle equally distant from F are one point:
+     were they two, one would be the nearer to FA, and greater. -/
   have hone : ∀ X Y : Point, OnCircle X ABCD → OnCircle Y ABCD → SameSideOf X Y A D →
       ‖F X‖ = ‖F Y‖ → X = Y := by
     intro X Y hX hY hXY hFXY
@@ -197,7 +198,7 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
       exact (onRay_of_angle_eq hXY' h).eq_of_len_eq hFXY
     · exact absurd hFXY (Magnitude.ne_of_lt (hnearer Y X hY hX hXY.symm h))
   by_cases hK_L : OnLine K L
-  · /- `K` on the diameter is `A`, the greatest, or `D`, the least. -/
+  · /- A point K on the diameter is A, the greatest, or D, the least. -/
     have hGA : G ≠ A := fun e => hG_L (e ▸ hA_L)
     have hGD : G ≠ D := fun e => hG_L (e ▸ hD_L)
     by_cases hKA : K = A

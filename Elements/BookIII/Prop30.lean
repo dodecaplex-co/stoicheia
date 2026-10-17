@@ -27,7 +27,7 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
     ∀ P : Point, ¬ Collinear A B P → ∃ D : Point, OnCircle D ADB ∧ SameSideOf D P A B ∧
       standing ADB A B D = standing ADB D A B := by
   -- Let ADB be the given circumference;
-  /- The circumference on `P`'s side of `AB`. -/
+  /- The given circumference is the one on P's side of AB. -/
   intro P hP
   have hABP : Triangle A B P := hP
   have hAB : A ≠ B := hABP.ne₁₂
@@ -38,9 +38,9 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   obtain ⟨C, hACB, hAC⟩ := BookI.Prop10 hAB
   have hC_L : OnLine C L := on_line_of_between_ends hACB hA_L hB_L
   obtain ⟨X, hXP, hX⟩ := BookI.Prop11 hAB ⟨L, hA_L, hB_L, hC_L⟩ hP
-  /- `CX` meets the circumference on `P`'s side at `D`: `C` is within the circle
-     (`inside_of_between`), so, `XC` being produced beyond `C` to `Y`, the straight line
-     meets the circle at `D` beyond `C` from `Y`, on `X`'s side (`line_circle_beyond`). -/
+  /- CX meets the circumference on P's side at D. C is within the circle
+     (`inside_of_between`), so when XC is produced beyond C to Y, the straight line meets
+     the circle at D, beyond C from Y, on X's side (`line_circle_beyond`). -/
   have hC_in : InsideCircle C ADB := inside_of_between (Or.inr hA) (Or.inr hB) hACB
   have hX_L : ¬ OnLine X L := hXP.triangle.off_line hA_L hB_L
   have hCX : C ≠ X := fun e => hX_L (e ▸ hC_L)
@@ -80,15 +80,15 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   have hAD' : ‖A D‖ = ‖D B‖ := by rw [hAD, len_symm B D]
   -- But equal straight lines cut off equal circumferences, the greater equal to the greater,
   -- and the less to the less; [III. 28]
-  /- In one circle, which is equal to itself (`EqualCircles.refl`). The less circumferences
-     are named by points `Q`, `R` beyond `AD` from `B` and beyond `DB` from `A`. -/
+  /- III.28 is used in one circle, which is equal to itself (`EqualCircles.refl`). The
+     less circumferences are named by points Q, R beyond AD from B and beyond DB from A. -/
   obtain ⟨O, hO⟩ := hADB
   obtain ⟨Q, hQB, -⟩ := exists_oppositeSidesOf hABD.acb []
   obtain ⟨R, hRA, -⟩ := exists_oppositeSidesOf hABD.cba []
   have h28 := Prop28 (EqualCircles.refl hO hA) hA hD hD hB hQB.symm hRA.symm hAD'
   -- and each of the circumferences AD, DB is less than a semicircle;
-  /- They are measured at `B` and `A` (`Circumference.standing`), by the angles `ABD`, `DAB`,
-     which are equal (I.4 gave them, `C` being on `AB`), and two of them are less than two
+  /- They are measured at B and A (`Circumference.standing`), by the angles ABD, DAB.
+     These are equal, for I.4 gave them, C being on AB, and two of them are less than two
      right angles [I. 17]. -/
   have hbase : ∠ D A B = ∠ A B D := by
     rw [angle_symm hABD.ne₁₃.symm hAB.symm, ← angle_onRay_left (OnRay.of_between hACB) hABD.ne₁₃.symm, hA₁,
@@ -101,8 +101,8 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   have hDRB : circumference ADB D R B < ∟ + ∟ := by
     rw [← standing_eq_circumference hRA.symm, Circumference.standing ⟨O, hO⟩ hA hD hB hABD.cba, hbase]
     exact h17
-  /- So the circumferences `ABD`, `DAB` on the other sides are greater, the two on each
-     straight line making up the circle (`Circumference.whole`). -/
+  /- So the circumferences ABD, DAB on the other sides are greater, for the two on each
+     straight line make up the circle (`Circumference.whole`). -/
   have not_greater : ∀ {x y : Angle}, x < ∟ + ∟ → x + y = ∟ + ∟ + (∟ + ∟) → x ≤ y := by
     intro x y hx hxy hyx
     have h1 := add_lt_add_right y hx

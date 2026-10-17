@@ -53,7 +53,7 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     have hDAX : ∠ D A X = ∟ := hX D ⟨L, hD_L, hA_L, hD_L⟩ hDA
     have hXA : X ≠ A := fun e => (hXB.triangle) ⟨L, hD_L, hA_L, e ▸ hA_L⟩
     have hBA : B ≠ A := hAB.symm
-    /- AB falls within the right angle DAX. -/
+    /- AB falls within the right angle DAX, for the angle BAD is acute. -/
     have hlt : ∠ D A B < ∠ D A X := by
       rw [angle_symm hDA hBA, hDAX]; exact hacute
     have hBD_AX : SameSideOf B D A X := BookI.Prop24.within hXB.swap hlt
@@ -193,10 +193,10 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     have hBA : B ≠ A := hAB.symm
     have hlt : ∠ D A X < ∠ D A B := by
       rw [angle_symm hDA hBA, hDAX]; exact hobtuse
-    /- `AE` falls within the angle `BAD`: on `D`'s side of `AB`. -/
+    /- AE falls within the angle BAD, on D's side of AB. -/
     have hXD : SameSideOf X D A B := BookI.Prop24.within hXB.symm.swap hlt
-    /- The angle `XAB` is less than a right angle: produce `DA` to `D'`; `AB` falls within
-       the right angle `XAD'`. -/
+    /- The angle XAB is less than a right angle: when DA is produced to D', AB falls
+       within the right angle XAD'. -/
     obtain ⟨D', hDAD'⟩ := produce hDA
     have hD'_L : OnLine D' L := on_line_of_between hDAD' hD_L hA_L
     have hAD' : A ≠ D' := (ne_of_between (between_symm hDAD')).symm

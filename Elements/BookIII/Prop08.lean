@@ -19,8 +19,10 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- Augustus De Morgan's second assumption: `E` falls outside the triangle `DFM`, so the
-angle `EMD` is greater than `FMD`. -/
+/-- This is the second of Augustus De Morgan's assumptions: E falls outside the triangle
+DFM, so that the angle EMD is greater than the angle FMD. As in III.7, DE crosses MF at
+a point Y within the circle, and Y is between H and E (System E, Circle 1), so E lies
+beyond MF. -/
 theorem Prop8.outside {D M E F H : Point} {α : Circle} (hM : Centre M α) (hE : OnCircle E α)
     (hF : OnCircle F α) (hH : OnCircle H α) (hDHE : Between D H E) (hEF : SameSideOf E F D M)
     (hlt : ∠ M D E < ∠ M D F) : ∠ F M D < ∠ E M D := by
@@ -36,7 +38,8 @@ theorem Prop8.outside {D M E F H : Point} {α : Circle} (hM : Centre M α) (hE :
   have h1 : ∠ Y M D < ∠ E M D := angle_lt_of_between hEDM hEYD
   rwa [angle_onRay_left (OnRay.of_between hMYF) hEF.1] at h1
 
-/-- De Morgan's first assumption: `K` falls within the triangle `DLM`. -/
+/-- This is De Morgan's first assumption: K falls within the triangle DLM. DK crosses ML
+at a point Z within the circle, and K is between D and Z. -/
 theorem Prop8.within {D M K L C : Point} {α : Circle} (hM : Centre M α) (hK : OnCircle K α)
     (hL : OnCircle L α) (hC : OnCircle C α) (hDKC : Between D K C) (hKL : SameSideOf K L D M)
     (hlt : ∠ M D K < ∠ M D L) : InsideTriangle K L M D := by
@@ -48,7 +51,7 @@ theorem Prop8.within {D M K L C : Point} {α : Circle} (hM : Centre M α) (hK : 
   have hKC : K ≠ C := (ne_of_between (between_symm hDKC)).symm
   have hKZC : Between K Z C := between_of_inside_chord hZ_N hK_N hC_N hZ_in hK hC hKC
   have hDKZ : Between D K Z := between_cut hDKC hKZC
-  /- `K` is on `D`'s side of `LM`: `Z` is on `LM`, and `K` between `D` and `Z`. -/
+  /- K is on D's side of LM, for Z is on LM and K is between D and Z. -/
   have hLM : L ≠ M := ne_of_between_ends (between_symm hMZL)
   obtain ⟨P, hL_P, hM_P⟩ := Postulate1 L M hLM
   have hZ_P : OnLine Z P := on_line_of_between_ends hMZL hM_P hL_P
@@ -57,7 +60,8 @@ theorem Prop8.within {D M K L C : Point} {α : Circle} (hM : Centre M α) (hK : 
     hD_P (on_line_of_between (between_symm hDKZ) hZ_P hK_P)
   exact ⟨hKL.swap, hKM, SameSideOf.of_line hLM hL_P hM_P (pasch2 (between_symm hDKZ) hZ_P hK_P)⟩
 
-/-- A point of the circle on the straight line `DA` is `A` or `G`. -/
+/-- A point of the circle on the straight line DA is A or G, for no three points of a
+circle lie on one straight line. -/
 theorem Prop8.on_diameter {A G N : Point} {α : Circle} {L : Line} (hA : OnCircle A α)
     (hG : OnCircle G α) (hN : OnCircle N α) (hAG : A ≠ G) (hA_L : OnLine A L)
     (hG_L : OnLine G L) (hN_L : OnLine N L) : N = A ∨ N = G := by
@@ -112,7 +116,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
   have hG_Ld : OnLine G Ld := on_line_of_between_ends hDGA hD_Ld hA_Ld
   have hMA : ∀ P, OnCircle P ABC → ‖M P‖ = ‖M A‖ := fun P hP => Definition15 hM hP hA
   have hDP : ∀ P, OnCircle P ABC → P ≠ D := fun P hP e => hD.2 (e ▸ hP)
-  /- A point off the straight line `DA` makes a triangle with `M`, `D`. -/
+  /- A point off the straight line DA makes a triangle with M and D. -/
   have tri : ∀ P, ¬ OnLine P Ld → Triangle M P D := fun P hP =>
     (Triangle.of_line hM_Ld hD_Ld hDM.symm hP).acb
   have side : ∀ P Q, SameSideOf P Q D A → SameSideOf P Q D M := fun P Q h =>
@@ -155,7 +159,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     -- therefore EM, MD are equal to FM, MD;
     have hsides := And.intro hME_MF hMD
     -- and the angle EMD is greater than the angle FMD;
-    /- The less angle at D puts E beyond MF, as De Morgan asks us to prove. -/
+    /- The less angle at D puts E beyond MF, outside the triangle DFM (`Prop8.outside`). -/
     rw [ang E (hDP E hE), ang F (hDP F hF)] at hlt
     have hout := Prop8.outside hM hE hF hH hDHE (side E F hEF) hlt
     -- therefore the base ED is greater than the base FD. [I. 24]
@@ -165,7 +169,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
   -- Similarly we can prove that FD is greater than CD;
   -- therefore DA is greatest, while DE is greater than DF,
   -- and DF than DC.
-  /- The universal comparison applies again to F and C. -/
+  /- The comparison above holds for any two such points, F and C among them. -/
   have least : ∀ K : Point, OnCircle K ABC → K ≠ G → ‖D G‖ < ‖D K‖ := by
     intro K hK hKG
     /- On DA, K must be A, and DG is a part of DA. -/
@@ -191,7 +195,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     intro K L hK hL ⟨C, hC, hDKC⟩ _ hKL hlt
     -- And, since on MD, one of the sides of the triangle MLD, two straight lines MK, KD were
     -- constructed meeting within the triangle,
-    /- De Morgan's other placement: K is within the triangle LMD. -/
+    /- K is within the triangle DLM, De Morgan's other placement (`Prop8.within`). -/
     rw [ang K (hDP K hK), ang L (hDP L hL)] at hlt
     have hin := Prop8.within hM hK hL hC hDKC (side K L hKL) hlt
     -- therefore MK, KD are less than ML, LD; [I. 21]
@@ -205,7 +209,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     exact Magnitude.lt_of_add_lt_add_left h21
   -- Similarly we can prove that DL is also less than DH;
   -- therefore DG is least, while DK is less than DL, and DL than DH.
-  /- The universal comparison applies again to L and H. -/
+  /- The comparison above holds for any two such points, L and H among them. -/
   -- I say also that only two equal straight lines will fall from the point D on the circle,
   -- one on each side of the least DG.
   have two_equal : ∀ K : Point, OnCircle K ABC → ¬ Collinear D A K →
