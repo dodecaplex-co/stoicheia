@@ -1,0 +1,21 @@
+# review/I/35.toml
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "I say that ABCD is equal to the parallelogram EBCF"
+kind = "carried"
+note = "Euclid argues one arrangement, with AD and EF apart. The Lean adds Proclus's two others, E between A and D (`Prop35.between`) and E at D (`Prop35.same`), and each the other way along AF."
+
+[figure]
+case = "AD and EF apart, with D between A and E, as in Heath's figure"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

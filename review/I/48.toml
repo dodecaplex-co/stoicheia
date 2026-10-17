@@ -1,0 +1,14 @@
+# review/I/48.toml
+[statement]
+scope = "full"
+note = "The three given squares may each stand on either side of its side."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"
