@@ -20,9 +20,9 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- Half of "the angle MEN greater than the angle FEG": where `MN` cuts `EF` at `X`, `X`
-is within the circle and on `M`'s side of `EK`, so it lies between `M` and `L`, and the
-angle `FEK` (which is `XEL`) is a part of `MEL`. -/
+/-- This is half of Euclid's "the angle MEN greater than the angle FEG". Where MN cuts EF,
+at X, the point X is within the circle and on M's side of EK, so it lies between M and L,
+and the angle FEK, which is the angle XEL, is a part of the angle MEL. -/
 theorem Prop15.half {E F K L M : Point} {α : Circle} {EK MN : Line}
     (hE : Centre E α) (hF : OnCircle F α) (hM : OnCircle M α)
     (hE_EK : OnLine E EK) (hL_EK : OnLine L EK) (hELK : Between E L K)
@@ -47,9 +47,9 @@ theorem Prop15.half {E F K L M : Point} {α : Circle} {EK MN : Line}
   rw [← angle_eq_of_onRay (OnRay.of_between hEXF) (OnRay.of_between hELK)]
   exact angle_lt_of_between hMLE hMXL
 
-/-- When `M`, `L`, `N` lie in that order and `ELM` is right, `EL` makes a right
-angle with every ray of `MN` issuing from `L`. Euclid carries `LM` through to `N`
-and uses this perpendicular to compare distances from the centre. -/
+/-- When M, L, N lie in that order and the angle ELM is right, EL makes a right angle
+with every ray of MN issuing from L. Euclid carries LM through to N and uses this
+perpendicular to compare distances from the centre. -/
 theorem Prop15.perp {E L M N : Point} {MN : Line} (hM_MN : OnLine M MN) (hN_MN : OnLine N MN)
     (hMLN : Between M L N) (hE_MN : ¬ OnLine E MN) (hELM : ∠ E L M = ∟) :
     ∀ P : Point, Collinear M N P → P ≠ L → ∠ E L P = ∟ := by
@@ -78,11 +78,12 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
   -- diameter AD, and FG more remote;
   -- I say that AD is greatest and BC greater than FG.
   -- For from the centre E let EH, EK be drawn perpendicular to BC, FG.
-  /- Given; the foot K falls between F and G [I. 17, I. 19, through `foot_between`]. -/
+  /- Our statement gives the perpendiculars, and the foot K falls between F and G
+     (`foot_between`, as in III.14). -/
   have hFKG : Between F K G := foot_between hE hF hG hE_FG hK hEK
   -- Then, since BC is nearer to the centre and FG more remote, EK is greater than
   -- EH. [III. Def. 5]
-  /- Given, as `hnearer`. -/
+  /- Our statement gives this as `hnearer`. -/
   -- Let EL be made equal to EH, through L let LM be drawn at right angles to EK and carried
   -- through to N, and let ME, EN, FE, EG be joined.
   /- Cut EL off EK [I. 3]. -/
@@ -110,14 +111,14 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
     inside_of_between (Or.inl (centre_inside hE)) (Or.inl hK_in) hELK
   obtain ⟨N, hN, hN_MN, hNLR⟩ := line_circle_beyond hL_in hL_MN hR_MN hRL
   obtain ⟨M, hM, hM_MN, hMLN⟩ := line_circle_beyond hL_in hL_MN hN_MN (ne_of_between hNLR)
-  /- `MN` meets `EK` at `L` alone. -/
+  /- MN meets EK at L alone. -/
   have only_L : ∀ P, OnLine P MN → OnLine P EK → P = L := fun P hPMN hPEK =>
     Classical.byContradiction fun hPL => hR_EK (line_unique hPL hPMN hL_MN hPEK hL_EK ▸ hR_MN)
   have hE_MN_line : ¬ OnLine E MN := fun h => (ne_of_between hELK) (only_L E h hE_EK)
   have hK_MN : ¬ OnLine K MN := fun h => (ne_of_between (between_symm hELK)) (only_L K h hK_EK)
   have hM_EK : ¬ OnLine M EK := fun h => (ne_of_between hMLN) (only_L M hM_MN h)
   have hN_EK : ¬ OnLine N EK := fun h => (ne_of_between (between_symm hMLN)) (only_L N hN_MN h)
-  /- `M` on `F`'s side of `EK`, `N` on `G`'s. -/
+  /- M lies on F's side of EK, and N on G's. -/
   have hNR : OppositeSides N R EK := ⟨hN_EK, hR_EK, pasch3 hNLR hL_EK⟩
   have hNM : OppositeSides N M EK := ⟨hN_EK, hM_EK, pasch3 (between_symm hMLN) hL_EK⟩
   have hMF : SameSide M F EK :=
@@ -159,8 +160,8 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
   have hEM : ‖E M‖ = ‖E F‖ := Definition15 hE hM hF
   have hEN : ‖E N‖ = ‖E G‖ := Definition15 hE hN hG
   -- and the angle MEN greater than the angle FEG,
-  /- `FG` and `MN` never meet: at a common point `Z` the triangle `ZLK` would have two
-     right angles [I. 17]. So `F` and `G` are on `K`'s side of `MN`, and `E` on the other. -/
+  /- FG and MN never meet: at a common point Z the triangle ZLK would have two right
+     angles [I. 17]. So F and G are on K's side of MN, and E is on the other. -/
   have par : Parallel FG MN := Parallel.of_not_meet hF_FG fun Z hZFG hZMN => by
     have hZL : Z ≠ L := by
       intro e

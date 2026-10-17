@@ -174,13 +174,13 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
     have hED : E ≠ D := (ne_of_between (between_symm hBED)).symm
     have hEB : E ≠ B := (ne_of_between hBED).symm
     have hEA : E ≠ A := fun e => hA_N (e ▸ hE_N)
-    /- Then, as in the first case, EB is equal to EA [I. 6], -/
+    /- As in the first case, EB is equal to EA [I. 6]. -/
     have hABE : ∠ A B E = ∠ B A E := by
       rw [angle_onRay_right (OnRay.of_between hBED) hAB, hBAE]
     have hEBA : Triangle E B A := (Triangle.of_line hB_N hE_N hEB.symm hA_N).bac
     have hEB_EA : ‖E B‖ = ‖E A‖ := BookI.Prop6 hEBA (by
       rw [angle_symm hEB hAB, hABE, angle_symm hAB.symm hEA])
-    /- AE is equal to CE, the angles at D being right [I. 4], -/
+    /- AE is equal to CE, for the angles at D are right [I. 4]. -/
     have hADE : ∠ A D E = ∟ := by
       rw [angle_onRay_right (OnRay.of_between (between_symm hBED)) hAD']; exact hADB
     have hE_L : ¬ OnLine E L := fun hE_L =>
@@ -191,7 +191,7 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
       (BookI.Prop4 (Triangle.of_line hD_L hA_L hAD'.symm hE_L)
         (Triangle.of_line hD_L hC_L hCD'.symm hE_L) (by rw [len_symm D A, hAD]) rfl
         (hADE.trans hCDE.symm)).1
-    /- and the three straight lines AE, EB, EC being equal, E is the centre [III. 9]. -/
+    /- So the three straight lines AE, EB, EC are equal, and E is the centre [III. 9]. -/
     have h1 : ‖E A‖ = ‖E B‖ := hEB_EA.symm
     have h2 : ‖E B‖ = ‖E C‖ := by rw [hEB_EA, len_symm E A, hAE, len_symm C E]
     have hE : Centre E ABC := Prop9 hABC hA hB hC hAB hBC hAC h1 h2

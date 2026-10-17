@@ -27,7 +27,8 @@ theorem Prop19 {A C D E : Point} {ABC : Circle} (hC : OnCircle C ABC) (hDE : Tou
     obtain ⟨M, h1, h2, h3⟩ := hCDE
     exact (line_unique hDE.1 h1 h2 hD_L hE_L) ▸ h3
   have hA_L : ¬ OnLine A L := fun h => hA ⟨L, hD_L, hE_L, h⟩
-  /- Euclid's `E` is a point of `DE` other than `C`: `E` itself, or `D` when `C` is `E`. -/
+  /- Euclid's E, in the angles FCE and ACE, is a point of DE other than C. The Lean calls
+     it `E₁`: it is E itself, or D when C is E. -/
   obtain ⟨E₁, hE₁_L, hE₁C⟩ : ∃ E₁ : Point, OnLine E₁ L ∧ E₁ ≠ C := by
     by_cases hCE : C = E
     · exact ⟨D, hD_L, fun e => hDE.1 (e.trans hCE)⟩
@@ -49,8 +50,8 @@ theorem Prop19 {A C D E : Point} {ABC : Circle} (hC : OnCircle C ABC) (hDE : Tou
   -- therefore the angle FCE is equal to the angle ACE,
   have hFCE_ACE : ∠ F C E₁ = ∠ A C E₁ := hFCE.trans hACE.symm
   -- the less to the greater: which is impossible.
-  /- One ray from `C` on `F`'s side of `DE` makes a right angle with it (`onRay_of_angle_eq`).
-     Euclid's figure has `F` on `A`'s side; on the other side, `AC` produced to `A₁`. -/
+  /- `onRay_of_angle_eq` puts F on CA when F is on A's side of DE, as in Euclid's figure;
+     otherwise on AC produced to A₁, where the angle is right too. -/
   have hFC : F ≠ C := fun e => hF_L (e ▸ hC_L)
   have hAC : A ≠ C := fun e => hA_L (e ▸ hC_L)
   have hEq : ∠ E₁ C F = ∠ E₁ C A := by

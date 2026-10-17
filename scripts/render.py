@@ -297,6 +297,8 @@ FIGURE_NOTES = {
     ("I", 39): "AE is drawn level, as the proof supposes; Heath draws AD level.",
     ("I", 40): "F is drawn between C and D, with AF level, as the proof supposes; Heath "
                "draws AD level and AF sloping.",
+    ("III", 16): "G is drawn within the circle and H beyond it, where the proof finds them; "
+                 "Heath's figure draws the supposition, with H between D and G.",
 }
 
 

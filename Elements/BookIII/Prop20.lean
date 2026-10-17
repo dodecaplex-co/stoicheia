@@ -33,7 +33,8 @@ theorem Prop20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCirc
   obtain ⟨AE, hA_AE, hE_AE⟩ := Postulate1 A E hAE
   obtain ⟨F, -, -, hFEA⟩ := line_circle_beyond (centre_inside hE) hE_AE hA_AE hAE
   have hAEF : Between A E F := between_symm hFEA
-  /- The isosceles-triangle argument is used again at `C` and at `D`. -/
+  /- Euclid's isosceles-triangle argument is written once, for any letters, and used
+     again at C and at D. -/
   have double : ∀ {A B F : Point}, OnCircle A ABC → OnCircle B ABC → Between A E F →
       Triangle A E B → ∠ B E F = ∠ E A B + ∠ E A B := by
     intro A B F hA hB hAEF hAEB
@@ -102,7 +103,7 @@ theorem Prop20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCirc
     -- of which the angle GEB is double of the angle EDB;
     have hGEB : ∠ B E G = ∠ E D B + ∠ E D B := double hD hB hDEG hDEB
     -- therefore the angle BEC which remains is double of the angle BDC.
-    /- `B` lies within the angle `EDC`, and within the angle `GEC`. -/
+    /- B lies within the angle EDC, and within the angle GEC. -/
     have hsplitD : ∠ E D C = ∠ E D B + ∠ B D C := by
       rw [angle_add_of_between hECD hEYC, angle_onRay_right (OnRay.of_between hDYB) hDEC.ne₁₂.symm,
         angle_onRay_left (OnRay.of_between hDYB) hDBC.ne₁₃.symm]
@@ -131,14 +132,14 @@ theorem Prop20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCirc
     rw [add_comm, ← h]
     ac_rfl
   -- Therefore etc.
-  /- Which of Euclid's figures we are in: `E` on `AB` or on `AC`, within the angle `BAC`,
-     or outside it. -/
+  /- Now we find which of Euclid's figures we are in: E is on AB or on AC, within the
+     angle BAC, or outside it. -/
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
   obtain ⟨M, hA_M, hC_M⟩ := Postulate1 A C hAC
   have hC_L : ¬ OnLine C L := hBCA.cab.off_line hA_L hB_L
   have hB_M : ¬ OnLine B M := hBCA.cab.acb.off_line hA_M hC_M
   by_cases hE_L : OnLine E L
-  · /- `E` on `AB`, the case Euclid leaves out: `BEC` is the angle `FEC`. -/
+  · /- E is on AB, the case Euclid leaves out, and the angle BEC is the angle FEC. -/
     have hAEB : Between A E B := between_of_inside_chord hE_L hA_L hB_L (centre_inside hE) hA hB hAB
     have hAEC : Triangle A E C := Triangle.of_line hA_L hE_L hAE hC_L
     rw [angle_onRay_left (OnRay.of_between_between hAEF hAEB) hAEC.ne₂₃.symm,

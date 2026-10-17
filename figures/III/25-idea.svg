@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.25 at a glance</title>
-  <desc>To complete the circle of a segment (blue), halve the straight line under it at right angles, and copy the angle at the top to one end (yellow). The new side meets the perpendicular at the centre, equally far (red) from all three points.</desc>
+  <desc>To complete a segment's circle (blue), halve its base at right angles and copy the angle at the top to one end (yellow). The new side meets the perpendicular at the centre, equally far (red) from all three points.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M307.8,112.0 A118.0,118.0 0 1,1 92.2,112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6" stroke-linecap="round"/>
   <line x1="92.2" y1="112.0" x2="307.8" y2="112.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>

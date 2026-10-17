@@ -94,12 +94,12 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
   -- I say that the segment AEB is equal to the segment CFD.
   -- For, if the segment AEB be applied to CFD, and if the point A be placed on C and the
   -- straight line AB on CD,
-  /- Lean moves no figure. In place of applying the segment, the proof compares the
-     circles by their radii `MA`, `NC`, from the centres `M`, `N`. -/
+  /- In place of applying the segment, the proof compares the circles by their radii
+     MA, NC, from the centres M, N. -/
   have hMA : ‖M A‖ = ‖M B‖ := Definition15 hM hA hB
   have hNC : ‖N C‖ = ‖N D‖ := Definition15 hN hC hD
   -- the point B will also coincide with the point D, because AB is equal to CD;
-  /- On the equal bases `AB`, `CD`, equal angles at the centres make the radii equal
+  /- On the equal bases AB, CD, equal angles at the centres make the radii equal
      [III. 20, I. 5, I. 32, I. 26]; and so do two diameters, each the double of a radius. -/
   have central : ∀ {P Q : Point}, OnCircle P AEB → OnCircle Q CFD → SameSideOf M P A B →
       SameSideOf N Q C D → ∠ A P B = ∠ C Q D → ‖M A‖ = ‖N C‖ := by
@@ -114,8 +114,8 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
       rw [← len_add_of_between hCND, len_symm C N, ← hNC]
     exact Magnitude.eq_of_add_self_eq (d₁.symm.trans (hAB.trans d₂))
   -- and, AB coinciding with CD,
-  /- The segments on the other sides of `AB`, `CD`, at `X` and `Y`, are similar too: the
-     angle in each makes two right angles with the angle at `E` or `F` [III. 22]. -/
+  /- The segments on the other sides of AB, CD, at X and Y, are similar too: the angle in
+     each makes two right angles with the angle at E or F [III. 22]. -/
   have q₁ : ∠ A E B + ∠ A X B = ∟ + ∟ := by
     have := (Prop22 ⟨M, hM⟩ hE hA hX hB hXE.symm).2
     rwa [angle_symm hXE.triangle.ne₂₃ hXE.triangle.ne₁₃] at this
@@ -126,9 +126,9 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
     apply CommonNotion3 (c := ∠ A E B) (d := ∠ C F D) _ hsim
     rw [add_comm (∠ A X B), q₁, add_comm (∠ C Y D), q₂]
   -- the segment AEB will also coincide with CFD.
-  /- The circles are equal. The equal angles at `E`, `F` are both less than a right angle,
-     both right, or both greater, so the centres lie alike: on the sides of `E` and `F`, on
-     the bases, or beyond them, where `X` and `Y` serve. -/
+  /- The circles are equal. The equal angles at E, F are both less than a right angle,
+     both right, or both greater, so the centres lie alike: on the sides of E and F, on the
+     bases, or beyond them, where X and Y serve. -/
   have hrad : ‖M A‖ = ‖N C‖ := by
     rcases Prop24.angle_type hM hA hB hE hABE with ⟨hME, hlt⟩ | ⟨hAMB, hrt⟩ | ⟨hME, hgt⟩ <;>
       rcases Prop24.angle_type hN hC hD hF hCDF with ⟨hNF, hlt'⟩ | ⟨hCND, hrt'⟩ | ⟨hNF, hgt'⟩
@@ -147,14 +147,14 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
   -- it will either fall within it, or outside it;
   -- or it will fall awry, as CGD, and a circle cuts a circle at more points than two: which is
   -- impossible. [III. 10]
-  /- Lean has no superposition of segments. The radii have already been shown equal
-     by the angles at the centres, so there is nothing left to refute by III.10. -/
+  /- The radii are already equal, by the angles at the centres, so nothing is left for
+     III.10 to refute. -/
   -- Therefore, if the straight line AB be applied to CD, the segment AEB will not fail to
   -- coincide with CFD also;
   refine ⟨⟨M, N, A, C, hM, hN, hA, hC, hrad⟩, ?_⟩
   -- therefore it will coincide with it and will be equal to it.
-  /- With the circumference on the other side of its base, twice the angle at `E` or `F`,
-     each makes up the whole circle; the remainders are equal [C.N. 3]. -/
+  /- Each circumference, with the one on the other side of its base, which is twice the
+     angle at E or F, makes up the whole circle; so the remainders are equal [C.N. 3]. -/
   have w₁ := Circumference.whole ⟨M, hM⟩ hA hB hXE
   have w₂ := Circumference.whole ⟨N, hN⟩ hC hD hYF
   rw [Circumference.eq ⟨M, hM⟩ hE hA hB hXE.symm] at w₁
