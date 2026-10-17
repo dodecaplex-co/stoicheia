@@ -1,0 +1,13 @@
+[statement]
+scope = "full"
+note = "The centre is on A's side of BC, where the angle at the centre stands on the same circumference as BAC and is less than two right angles, as Euclid's are."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

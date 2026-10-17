@@ -1,0 +1,16 @@
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The circle comes with a centre (`∃ F, Centre F ABCD`), and the proof finds it by III.1 where Euclid takes it."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

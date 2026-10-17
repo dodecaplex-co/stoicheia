@@ -1,0 +1,17 @@
+[statement]
+scope = "full"
+note = "Stated as an equality: two circles through A and B with similar segments on one side of AB are one circle."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["segment-with-circle", "centre-given"]
+note = "Each segment is given as its circle, the straight line AB and a point C or D on one side, and each circle comes with a centre, which III.10 and III.21 need."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

@@ -1,0 +1,21 @@
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The circle comes with a centre (`∃ O, Centre O ABCD`), on which III.19 finds the diameter BA."
+
+[[passage]]
+at = "let a point C be taken at random on the circumference BD"
+kind = "carried"
+note = "C is any point of the segment DCB: the second conclusion is said of every such point, and Lean takes C up where that conclusion is proved."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

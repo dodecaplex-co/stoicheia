@@ -1,0 +1,17 @@
+[statement]
+scope = "full"
+note = "Euclid's two cases, each stated on its own; since our measure carries no radius, the conclusion holds in any two circles, equal or not."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["angle-measure", "redundant-hypothesis"]
+note = "\"In equal circles\" is kept from Euclid, and the proof uses the equal radii where he does, for I.4; but the circumferences are measured by angles, so the statement would hold without it."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

@@ -1,0 +1,20 @@
+# review/I/44.toml
+[statement]
+scope = "full"
+note = "The parallelogram stands on whichever side of AB a given point names."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "let it be placed so that BE is in a straight line with AB"
+kind = "helper"
+helper = "Prop44.place"
+note = "Our foundations keep superposition for I.4 and I.8, so nothing is moved: `Prop44.place` builds a parallelogram equal to I.42's where Euclid places his, with I.2, I.23, I.31, I.4 and I.34."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

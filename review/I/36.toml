@@ -1,0 +1,16 @@
+# review/I/36.toml
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[figure]
+case = "the bases BC and FG apart"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

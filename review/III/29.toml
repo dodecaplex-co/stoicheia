@@ -1,0 +1,16 @@
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["angle-measure"]
+note = "Equal circumferences are equal measures, which in equal circles is what Euclid means; the equal circles do real work here, giving I.4 its equal radii."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

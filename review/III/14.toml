@@ -1,0 +1,26 @@
+# review/III/14.toml
+[statement]
+scope = "restricted"
+hypotheses = [
+  "neither AB nor CD passes through the centre (`hE_AB : ¬ Collinear A B E`, `hE_CD : ¬ Collinear C D E`)",
+]
+note = "Proved for straight lines not through the centre; two diameters, or a diameter and another straight line, are not covered."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["diameters-excluded", "centre-given"]
+note = "The centre E and the feet F, G of the perpendiculars are given, since Definition III.4 measures from them; the proof still takes III.1's centre and shows that it is E."
+
+[[passage]]
+at = "Next, let the straight lines AB, CD be equally distant from the centre"
+kind = "grouped"
+note = "The converse needs no Lean of its own until 'And, since AE is equal to CE': the halves, AB double of AF and CD of CG, were found once, before the two directions part."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

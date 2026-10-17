@@ -1,0 +1,22 @@
+# review/I/47.toml
+# Full: Euclid describes the squares outward (I.46), and squares on one straight line
+# are equal whichever side they stand on (Prop46.square_eq, after Proclus), so the
+# outward squares are 'the squares on' the sides of every right-angled triangle.
+[statement]
+scope = "full"
+note = "The squares stand outward, as Euclid describes them; squares on one straight line are equal, whichever side they stand on (`Prop46.square_eq`)."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "For let there be described on BC the square BDEC"
+kind = "different"
+note = "The three squares are given in the statement, standing outward from the triangle, so I.46 is not called here; `Prop28.square` shows that each is a parallelogram."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

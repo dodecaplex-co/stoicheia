@@ -1,0 +1,24 @@
+# review/I/30.toml
+# `hC : ¬ Collinear A B C` says only that AB and CD are two straight lines, which
+# Euclid's words presuppose.
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "For let the straight line GK fall upon them"
+kind = "helper"
+helper = "Prop30.unique"
+note = "Euclid's GK crosses EF, as in his figure. When EF lies outside AB and CD it need not, and that case rests on `Prop30.unique`: two straight lines through one point, each parallel to EF, are one (from I.29)."
+
+[figure]
+case = "EF between AB and CD, so that GK crosses it, as in Heath's figure"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

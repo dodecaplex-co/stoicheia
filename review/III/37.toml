@@ -1,0 +1,26 @@
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The circle comes with a centre (`∃ F, Centre F ABC`), and the proof finds it by III.1 where Euclid takes it."
+
+[[passage]]
+at = "And FB produced is a diameter"
+kind = "different"
+note = "Our porism to III.16 is said at the end of a radius, so Lean applies it to FB itself and does not produce FB to a diameter."
+
+[[passage]]
+at = "Similarly this can be proved to be the case even if the centre be on AC"
+kind = "grouped"
+note = "No second case is needed: III.36 is cited by its statement, which holds wherever the centre lies, and nothing else in the argument looks at AC."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

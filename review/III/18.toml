@@ -1,0 +1,22 @@
+# review/III/18.toml
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The centre F is given, as Euclid's setting-out takes it; the proof shows it is off DE, since it is within the circle and no point of DE is."
+
+[[passage]]
+at = "Therefore FG is not perpendicular to DE."
+kind = "grouped"
+note = "The reductio shows that the foot G of the perpendicular from F is C itself, so FC is that perpendicular, and no other straight line is left to prove."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

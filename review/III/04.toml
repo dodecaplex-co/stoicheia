@@ -1,0 +1,23 @@
+# review/III/04.toml
+[statement]
+scope = "full"
+note = "'Not through the centre' is said of every centre of the circle, and B is off AC, so that the two straight lines are really two."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The circle comes with a centre, which the proof takes by III.1, as Euclid does."
+
+[[passage]]
+at = "Therefore AC, BD do not bisect one another."
+kind = "grouped"
+note = "The reductio's conclusion. Lean supposed the bisection at the start and has reached the contradiction above, which proves it."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"
