@@ -105,6 +105,8 @@ How we know:
 - A mutation test caught all 15 deliberately weakened axioms, so the search can find a false rule when one exists.
 - For this report we also read Postulates 1 to 5, Definitions 10 and 15, superposition, the magnitude laws and the angle and area transfer rules against the model, and each holds.
 
+*Correction, 17 October 2026:* that search met about 11.8 million configurations, not 8 million; rerun with more seeds and committed in [tests/model](../../tests/model/MODEL.md), it meets 13,454,289, with no counterexample.
+
 Four things are worth writing down:
 1. Soundness depends on the 17 primitive words and magnitudes staying `opaque`.
 2. Definition 10's `¬ Collinear A B C` clause is what keeps Postulate 4 true, and its docstring does not say so.
