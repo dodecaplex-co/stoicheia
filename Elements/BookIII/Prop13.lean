@@ -22,31 +22,71 @@ theorem Prop13 {A B C D : Point} {ABDC EBFD ACK : Circle} (hABDC : ∃ G : Point
     ((TouchesInternally ABDC EBFD D ∨ TouchesInternally EBFD ABDC D) →
       OnCircle B ABDC → OnCircle B EBFD → B = D) ∧
     (TouchesExternally ACK ABDC A → OnCircle C ACK → OnCircle C ABDC → C = A) := by
-  -- For, if possible, let the circle ABDC touch the circle EBFD, first internally, at more
-  -- points than one, namely D, B.
-  -- Let the centre G of the circle ABDC, and the centre H of EBFD, be taken.
-  -- Therefore the straight line joined from G to H will fall on B, D. [III. 11]
-  -- Let it so fall, as BGHD.
-  -- Then, since the point G is the centre of the circle ABCD,
-  -- BG is equal to GD;
-  -- therefore BG is greater than HD;
-  -- therefore BH is much greater than HD.
-  -- Again, since the point H is the centre of the circle EBFD,
-  -- BH is equal to HD;
-  -- but it was also proved much greater than it: which is impossible.
+  have within : ∀ {α β : Circle}, (∃ G, Centre G α) → (∃ H, Centre H β) →
+      TouchesInternally α β D → OnCircle B α → OnCircle B β → B = D := by
+    intro α β hα hβ ht hBα hBβ
+    -- For, if possible, let the circle ABDC touch the circle EBFD, first internally, at more
+    -- points than one, namely D, B.
+    refine Classical.byContradiction fun hBD => ?_
+    have htB : TouchesInternally α β B := ⟨hBα, hBβ, ht.2.2.1, ht.2.2.2⟩
+    -- Let the centre G of the circle ABDC, and the centre H of EBFD, be taken.
+    obtain ⟨G, hG⟩ := hα
+    obtain ⟨H, hH⟩ := hβ
+    -- Therefore the straight line joined from G to H will fall on B, D. [III. 11]
+    have hGHD : Between G H D := Prop11 hG hH ht
+    have hGHB : Between G H B := Prop11 hG hH htB
+    obtain ⟨L, hG_L, hH_L⟩ := Postulate1 G H (ne_of_between hGHD)
+    have hD_L : OnLine D L := on_line_of_between hGHD hG_L hH_L
+    have hB_L : OnLine B L := on_line_of_between hGHB hG_L hH_L
+    -- Let it so fall, as BGHD.
+    have hBGD : Between B G D :=
+      between_of_inside_chord hG_L hB_L hD_L (centre_inside hG) hBα ht.1 hBD
+    have hBGH : Between B G H := between_cut hBGD hGHD
+    -- Then, since the point G is the centre of the circle ABCD,
+    -- BG is equal to GD;
+    have hBG_GD : ‖B G‖ = ‖G D‖ := (len_symm B G).trans (Definition15 hG hBα ht.1)
+    -- therefore BG is greater than HD;
+    have hHD_BG : ‖H D‖ < ‖B G‖ := by
+      rw [hBG_GD, len_symm H D, len_symm G D]
+      exact len_lt_of_between (between_symm hGHD)
+    -- therefore BH is much greater than HD.
+    have hHD_BH : ‖H D‖ < ‖B H‖ := lt_trans hHD_BG (len_lt_of_between hBGH)
+    -- Again, since the point H is the centre of the circle EBFD,
+    -- BH is equal to HD;
+    have hBH_HD : ‖B H‖ = ‖H D‖ := (len_symm B H).trans (Definition15 hH hBβ ht.2.1)
+    -- but it was also proved much greater than it: which is impossible.
+    rw [hBH_HD] at hHD_BH
+    exact lt_irrefl _ hHD_BH
   -- Therefore a circle does not touch a circle internally at more points than one.
+  have hinternal : (TouchesInternally ABDC EBFD D ∨ TouchesInternally EBFD ABDC D) →
+      OnCircle B ABDC → OnCircle B EBFD → B = D := by
+    intro h hB₁ hB₂
+    /- The same argument serves with the circles' names exchanged. -/
+    rcases h with h | h
+    · exact within hABDC hEBFD h hB₁ hB₂
+    · exact within hEBFD hABDC h hB₂ hB₁
   -- I say further that neither does it so touch it externally.
-  -- For, if possible, let the circle ACK touch the circle ABDC at more points than one, namely
-  -- A, C,
-  -- and let AC be joined.
-  -- Then, since on the circumference of each of the circles ABDC, ACK two points A, C have
-  -- been taken at random, the straight line joining the points will fall within each
-  -- circle; [III. 2]
-  -- but it fell within the circle ABCD and outside ACK [III. Def. 3]: which is absurd.
+  have hexternal : TouchesExternally ACK ABDC A → OnCircle C ACK → OnCircle C ABDC →
+      C = A := by
+    intro h hC₁ hC₂
+    -- For, if possible, let the circle ACK touch the circle ABDC at more points than one, namely
+    -- A, C,
+    obtain ⟨hA₁, hA₂, hout⟩ := h
+    refine Classical.byContradiction fun hCA => ?_
+    -- and let AC be joined.
+    obtain ⟨AC, hA_AC, hC_AC⟩ := Postulate1 A C (Ne.symm hCA)
+    obtain ⟨P, -, hAPC, -⟩ := exists_point_between hA_AC hC_AC (Ne.symm hCA) []
+    -- Then, since on the circumference of each of the circles ABDC, ACK two points A, C have
+    -- been taken at random, the straight line joining the points will fall within each
+    -- circle; [III. 2]
+    have hP₂ : InsideCircle P ABDC := Prop2 hABDC hA₂ hC₂ P hAPC
+    have hP₁ : InsideCircle P ACK := Prop2 hACK hA₁ hC₁ P hAPC
+    -- but it fell within the circle ABCD and outside ACK [III. Def. 3]: which is absurd.
+    exact hout P hP₁ hP₂
   -- Therefore a circle does not touch a circle externally at more points than one.
   -- And it was proved that neither does it so touch it internally.
   -- Therefore etc.
   -- Q. E. D.
-  sorry
+  exact ⟨hinternal, hexternal⟩
 
 end Elements.BookIII

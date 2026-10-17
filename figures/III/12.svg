@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 330" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid III.12: the straight line through the centres and the point of contact</title>
+  <rect x="0" y="0" width="400" height="330" rx="10" fill="#fbf7ee"/>
+  <!-- Heath's false case (vol. 2, p. 28): the circles touch at A, and F, G are the assumed centres, not those of the circles drawn. -->
+  <path d="M 102.04 133.38 L 180.84 151.93 L 251.67 224.12 Z" fill="#e9dcc0" fill-opacity="0.55"/>
+  <g fill="none" stroke="#8c7b62" stroke-width="1.3">
+    <circle cx="115" cy="112" r="77"/>
+    <circle cx="264.63" cy="202.75" r="98"/>
+  </g>
+  <path d="M 102.04 133.38 L 180.84 151.93 L 251.67 224.12" fill="none" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="102.04" y1="133.38" x2="251.67" y2="224.12" stroke="#a0522d" stroke-width="2.4"/>
+  <g fill="#3b2f2f">
+    <circle cx="180.84" cy="151.93" r="2.6"/>
+    <circle cx="115" cy="35" r="2.6"/>
+    <circle cx="164.31" cy="171.14" r="2.6"/>
+    <circle cx="170.65" cy="174.99" r="2.6"/>
+    <circle cx="362.63" cy="202.75" r="2.6"/>
+    <circle cx="102.04" cy="133.38" r="2.6"/>
+    <circle cx="251.67" cy="224.12" r="2.6"/>
+    <text x="196" y="154">A</text>
+    <text x="110" y="25">B</text>
+    <text x="136" y="179">C</text>
+    <text x="175" y="199">D</text>
+    <text x="371" y="209">E</text>
+    <text x="83" y="139">F</text>
+    <text x="258" y="243">G</text>
+  </g>
+</svg>

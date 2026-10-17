@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="360" viewBox="0 0 400 360">
+  <title>Euclid III.15: the diameter is greatest</title>
+  <rect width="400" height="360" rx="10" fill="#fbf7ee"/>
+  <circle cx="205" cy="180" r="138" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 205.000,180.000 L 265.809,189.190"/>
+    <path d="M 205.000,180.000 L 103.082,175.920"/>
+    <path d="M 148.491,54.100 L 138.608,300.980"/>
+    <path d="M 148.491,54.100 L 205.000,180.000"/>
+    <path d="M 205.000,180.000 L 138.608,300.980"/>
+    <path d="M 106.800,83.043 L 205.000,180.000"/>
+    <path d="M 205.000,180.000 L 99.364,268.797"/>
+  </g>
+  <g fill="none" stroke="#a0522d" stroke-width="2.5" stroke-linecap="round">
+    <path d="M 199.480,42.110 L 210.520,317.890"/>
+    <path d="M 284.271,67.039 L 247.348,311.342"/>
+    <path d="M 106.800,83.043 L 99.364,268.797"/>
+  </g>
+  <g fill="none" stroke="#8c7b62" stroke-width="1.3">
+    <path d="M 111.075,176.240 L 111.395,168.246 L 103.402,167.926"/>
+    <path d="M 151.543,177.860 L 151.863,169.866 L 143.869,169.546"/>
+    <path d="M 257.899,187.995 L 259.095,180.085 L 267.005,181.280"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="199.480" cy="42.110" r="2.6"/>
+    <circle cx="284.271" cy="67.039" r="2.6"/>
+    <circle cx="247.348" cy="311.342" r="2.6"/>
+    <circle cx="210.520" cy="317.890" r="2.6"/>
+    <circle cx="205.000" cy="180.000" r="2.6"/>
+    <circle cx="106.800" cy="83.043" r="2.6"/>
+    <circle cx="99.364" cy="268.797" r="2.6"/>
+    <circle cx="265.809" cy="189.190" r="2.6"/>
+    <circle cx="103.082" cy="175.920" r="2.6"/>
+    <circle cx="143.549" cy="177.540" r="2.6"/>
+    <circle cx="148.491" cy="54.100" r="2.6"/>
+    <circle cx="138.608" cy="300.980" r="2.6"/>
+  </g>
+  <g fill="#3b2f2f" font-family="Georgia, serif" font-size="17" font-style="italic">
+    <text x="195" y="28">A</text>
+    <text x="290" y="61">B</text>
+    <text x="252" y="334">C</text>
+    <text x="208" y="341">D</text>
+    <text x="218" y="176">E</text>
+    <text x="90" y="73">F</text>
+    <text x="81" y="286">G</text>
+    <text x="278" y="198">H</text>
+    <text x="81" y="179">K</text>
+    <text x="127" y="169">L</text>
+    <text x="140" y="39">M</text>
+    <text x="122" y="323">N</text>
+  </g>
+</svg>
