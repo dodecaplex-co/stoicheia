@@ -4,11 +4,13 @@
 [statement]
 scope = "full"
 note = "Draws a parallel through A, as asked; that there is no other, which Proclus remarks, is proved from I.29 as `Prop30.unique`."
+fingerprint = "sha256:07d1a4437d0abafd"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:f274bc9695e362c7"

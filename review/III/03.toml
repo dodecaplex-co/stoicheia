@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "F is between A and B, as bisecting and cutting a straight line mean, and the converse asks only that the angle AFE be right."
+fingerprint = "sha256:02edb0964e2a267d"
 
 [route]
 kind = "euclid"
@@ -12,5 +13,6 @@ note = "The centre E is given, as Euclid's setting-out takes it, and his straigh
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:dbe127860e3c138b"

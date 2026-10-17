@@ -1,10 +1,12 @@
 [statement]
 scope = "full"
+fingerprint = "sha256:a3969aee9d73cfe8"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:7b299b042dbabba1"

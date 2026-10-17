@@ -6,6 +6,7 @@ hypotheses = [
   "the vertices A and D are different points (`hAD : A ≠ D`), so that AD is a straight line; Euclid's words also admit two triangles sharing their vertex, as ABC and ACE",
 ]
 note = "Proved for equal bases that meet end to end, as BC and CE, with A and D different points; Euclid's bases may lie anywhere on one straight line."
+fingerprint = "sha256:5ea666d96871b7f8"
 
 [route]
 kind = "euclid"
@@ -24,5 +25,6 @@ case = "the bases BC and CE meeting at C, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:5f353abf9022b4fd"

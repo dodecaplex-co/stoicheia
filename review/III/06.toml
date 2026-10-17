@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "Covers circles touching within, whichever is the inner, and circles touching without, the case Euclid leaves to the reader."
+fingerprint = "sha256:6300244ecb552653"
 
 [route]
 kind = "modified"
@@ -26,5 +27,6 @@ case = "the circles touching within, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:e3eb4136d1f071c4"

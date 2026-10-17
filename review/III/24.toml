@@ -2,6 +2,7 @@
 scope = "partial"
 omitted = ["are equal to one another"]
 note = "Proves the circles equal and the circumferences equal in the angle measure; that the segments are equal, one laid on the other, is left to the text."
+fingerprint = "sha256:078608b0ea0a6e21"
 
 [route]
 kind = "alternative"
@@ -35,5 +36,6 @@ note = "The circumferences are equal by the measure: each, with the circumferenc
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:ba959540baee714f"

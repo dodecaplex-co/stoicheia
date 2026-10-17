@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "Cuts off from the given circle a segment BAC admitting the given angle at A; the circle comes with a centre."
+fingerprint = "sha256:b3501a06d0f60e79"
 
 [route]
 kind = "euclid"
@@ -17,5 +18,6 @@ note = "Euclid reads C off his figure. The Lean finds it: by III.16 the straight
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:ce0ccbbf6c4b726a"

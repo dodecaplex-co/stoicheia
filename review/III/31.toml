@@ -5,6 +5,7 @@ omitted = [
   "the angle of the less segment less than a right angle",
 ]
 note = "Proves the angles in the semicircle and in each segment, at every point; the angles of the segments, made with a circumference, are left to the text."
+fingerprint = "sha256:9a6c82df950595b4"
 
 [route]
 kind = "euclid"
@@ -34,5 +35,6 @@ note = "These angles are contained by a straight line and a circumference, which
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:c490589add26d39f"

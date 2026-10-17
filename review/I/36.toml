@@ -1,6 +1,7 @@
 # review/I/36.toml
 [statement]
 scope = "full"
+fingerprint = "sha256:500234d8e20f469f"
 
 [route]
 kind = "euclid"
@@ -10,5 +11,6 @@ case = "the bases BC and FG apart"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:99d638f5b906dcc1"

@@ -5,6 +5,7 @@
 [statement]
 scope = "full"
 note = "'In the same parallels' is AD parallel to BC, so A and D are apart: on one base, ABC and DBC are two triangles only then."
+fingerprint = "sha256:e27bd8d22cd1f209"
 
 [route]
 kind = "euclid"
@@ -16,5 +17,6 @@ note = "Euclid supposes AD not parallel and refutes it. The Lean supposes nothin
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:a7efb796f39c1124"

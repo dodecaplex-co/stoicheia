@@ -35,7 +35,8 @@ holds, degenerate cases included:
 
 The plane stays a model of everything Lean knows only while the words stay `opaque`,
 so that Lean knows nothing of them but what the axioms say; `scripts/check_fidelity.py`
-checks that they do.
+checks that they do. The model is checked axiom by axiom, with the reason each holds
+and the programs that test it, in [tests/model/MODEL.md](../../tests/model/MODEL.md).
 -/
 
 namespace Elements

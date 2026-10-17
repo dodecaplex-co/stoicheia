@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "Both angles at the tangent are equal to the angles in the alternate segments, at every point of each segment; the circle comes with a centre."
+fingerprint = "sha256:7ea76618660f96c2"
 
 [route]
 kind = "euclid"
@@ -27,5 +28,6 @@ note = "When D is A, BD is itself the diameter and there is no triangle ABD: eve
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:a7314b11b9bdd460"

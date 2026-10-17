@@ -2,11 +2,13 @@
 [statement]
 scope = "full"
 note = "Euclid's condition is taken as three hypotheses; the triangle is built with its corner at F, a side along the ray FE and its third corner on P's side."
+fingerprint = "sha256:ece8cab1243b4f20"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:5a49e0741ffbf890"

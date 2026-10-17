@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "The three given squares may each stand on either side of its side."
+fingerprint = "sha256:4352f61aa88ed9dd"
 
 [route]
 kind = "euclid"
@@ -20,5 +21,6 @@ note = "Euclid assumes the converse too, that equal squares stand on equal strai
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:538a031257fe1dd2"

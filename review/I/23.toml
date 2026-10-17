@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "The angle FAG is built with G on the ray from A through B and F on the side of AB where a given point P lies, as I.24, I.31 and I.42 need."
+fingerprint = "sha256:a0045621afc2f9d1"
 
 [route]
 kind = "euclid"
@@ -12,5 +13,6 @@ note = "Superposition lays the triangle DCE down at A, along AB and on P's side,
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:ad601099741ee445"

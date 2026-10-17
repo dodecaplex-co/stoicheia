@@ -2,9 +2,18 @@
 
 # Who uses whom
 
-Each arrow runs from a proposition to one that cites it, following Euclid's own bracketed references in Heath's translation. Green: proved in Lean; grey: stated.
+Two graphs for each book, in which each arrow runs from a proposition to one that uses it. Green: proved in Lean; grey: stated; white: a proposition of an earlier book.
+
+- **From Heath's references.** An arrow for each earlier proposition that Heath's translation names in square brackets, such as "[I. 4]", in a proposition's enunciation or proof. The brackets are Heath's editorial references, not Euclid's words: as Heath says, "such specific quotations of earlier propositions are rare in Euclid" (vol. 1, p. 83, [scan leaf n103](https://archive.org/details/thirteenbookseu02heibgoog/page/n103)). A missing bracket does not mean that Euclid gave no reason, and a bracket is Heath's pointer, not a checked reconstruction of the argument.
+- **From the Lean.** An arrow for each proposition that a proof in Lean cites, as [the certificate](CERTIFICATE.md) records it; a porism is drawn as its proposition. Solid arrows are also among Heath's references; dashed ones only the Lean draws. A line under the graph names any of Heath's references that the Lean does not cite.
+
+Book I: [from Heath's references](#from-heaths-references), [from the Lean](#from-the-lean) · Book II: [from Heath's references](#from-heaths-references-1), [from the Lean](#from-the-lean-1) · Book III: [from Heath's references](#from-heaths-references-2), [from the Lean](#from-the-lean-2)
 
 ## Book I
+
+### From Heath's references
+
+108 arrows.
 
 ```mermaid
 graph TD
@@ -169,6 +178,210 @@ graph TD
   class I1,I2,I3,I4,I5,I6,I7,I8,I9,I10,I11,I12,I13,I14,I15,I16,I17,I18,I19,I20,I21,I22,I23,I24,I25,I26,I27,I28,I29,I30,I31,I32,I33,I34,I35,I36,I37,I38,I39,I40,I41,I42,I43,I44,I45,I46,I47,I48 proved
 ```
 
+### From the Lean
+
+141 arrows: 106 also among Heath's references (solid) and 35 only in the Lean (dashed).
+
+```mermaid
+graph TD
+  I1["I.1"]
+  I2["I.2"]
+  I3["I.3"]
+  I4["I.4"]
+  I5["I.5"]
+  I6["I.6"]
+  I7["I.7"]
+  I8["I.8"]
+  I9["I.9"]
+  I10["I.10"]
+  I11["I.11"]
+  I12["I.12"]
+  I13["I.13"]
+  I14["I.14"]
+  I15["I.15"]
+  I16["I.16"]
+  I17["I.17"]
+  I18["I.18"]
+  I19["I.19"]
+  I20["I.20"]
+  I21["I.21"]
+  I22["I.22"]
+  I23["I.23"]
+  I24["I.24"]
+  I25["I.25"]
+  I26["I.26"]
+  I27["I.27"]
+  I28["I.28"]
+  I29["I.29"]
+  I30["I.30"]
+  I31["I.31"]
+  I32["I.32"]
+  I33["I.33"]
+  I34["I.34"]
+  I35["I.35"]
+  I36["I.36"]
+  I37["I.37"]
+  I38["I.38"]
+  I39["I.39"]
+  I40["I.40"]
+  I41["I.41"]
+  I42["I.42"]
+  I43["I.43"]
+  I44["I.44"]
+  I45["I.45"]
+  I46["I.46"]
+  I47["I.47"]
+  I48["I.48"]
+  I1 --> I2
+  I2 --> I3
+  I3 --> I5
+  I4 --> I5
+  I3 -.-> I6
+  I4 -.-> I6
+  I5 --> I7
+  I7 --> I8
+  I1 -.-> I9
+  I3 --> I9
+  I5 -.-> I9
+  I7 -.-> I9
+  I8 --> I9
+  I1 --> I10
+  I4 --> I10
+  I9 --> I10
+  I1 --> I11
+  I3 --> I11
+  I8 --> I11
+  I8 --> I12
+  I10 --> I12
+  I11 --> I13
+  I13 --> I14
+  I13 --> I15
+  I3 --> I16
+  I4 --> I16
+  I10 --> I16
+  I15 --> I16
+  I13 --> I17
+  I16 --> I17
+  I3 --> I18
+  I5 -.-> I18
+  I16 --> I18
+  I5 --> I19
+  I18 --> I19
+  I3 -.-> I20
+  I5 --> I20
+  I19 --> I20
+  I16 --> I21
+  I20 --> I21
+  I2 -.-> I22
+  I3 --> I22
+  I8 --> I23
+  I20 -.-> I23
+  I22 --> I23
+  I4 --> I24
+  I5 --> I24
+  I19 --> I24
+  I21 -.-> I24
+  I23 --> I24
+  I4 --> I25
+  I24 --> I25
+  I3 -.-> I26
+  I4 --> I26
+  I16 --> I26
+  I16 --> I27
+  I13 --> I28
+  I15 --> I28
+  I27 --> I28
+  I13 --> I29
+  I15 --> I29
+  I27 -.-> I30
+  I29 --> I30
+  I23 --> I31
+  I27 --> I31
+  I13 --> I32
+  I29 --> I32
+  I31 --> I32
+  I4 --> I33
+  I27 --> I33
+  I29 --> I33
+  I4 --> I34
+  I26 --> I34
+  I29 --> I34
+  I4 --> I35
+  I29 --> I35
+  I34 --> I35
+  I33 --> I36
+  I34 --> I36
+  I35 --> I36
+  I30 -.-> I37
+  I31 --> I37
+  I34 --> I37
+  I35 --> I37
+  I30 -.-> I38
+  I31 --> I38
+  I34 --> I38
+  I36 --> I38
+  I30 -.-> I39
+  I31 --> I39
+  I37 --> I39
+  I30 -.-> I40
+  I31 --> I40
+  I38 --> I40
+  I34 --> I41
+  I37 --> I41
+  I10 -.-> I42
+  I23 --> I42
+  I30 -.-> I42
+  I31 --> I42
+  I38 --> I42
+  I41 --> I42
+  I34 --> I43
+  I2 -.-> I44
+  I4 -.-> I44
+  I15 --> I44
+  I23 -.-> I44
+  I29 --> I44
+  I30 -.-> I44
+  I31 --> I44
+  I34 -.-> I44
+  I42 --> I44
+  I43 --> I44
+  I14 --> I45
+  I29 --> I45
+  I30 --> I45
+  I33 --> I45
+  I34 --> I45
+  I42 --> I45
+  I44 --> I45
+  I11 --> I46
+  I29 --> I46
+  I30 -.-> I46
+  I31 --> I46
+  I34 --> I46
+  I4 --> I47
+  I13 -.-> I47
+  I14 --> I47
+  I17 -.-> I47
+  I28 -.-> I47
+  I30 -.-> I47
+  I31 -.-> I47
+  I41 --> I47
+  I3 -.-> I48
+  I4 -.-> I48
+  I8 --> I48
+  I11 -.-> I48
+  I28 -.-> I48
+  I34 -.-> I48
+  I46 -.-> I48
+  I47 --> I48
+  classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20
+  classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242
+  class I1,I2,I3,I4,I5,I6,I7,I8,I9,I10,I11,I12,I13,I14,I15,I16,I17,I18,I19,I20,I21,I22,I23,I24,I25,I26,I27,I28,I29,I30,I31,I32,I33,I34,I35,I36,I37,I38,I39,I40,I41,I42,I43,I44,I45,I46,I47,I48 proved
+```
+
+Heath's references that the Lean does not cite, 2 of his 108: [I.20](book/I/20.md) in [I.22](book/I/22.md); [I.46](book/I/46.md) in [I.47](book/I/47.md).
+
+<details><summary>The 48 propositions of Book I</summary>
+
 - [I.1](book/I/01.md): An equilateral triangle on a given straight line
 - [I.2](book/I/02.md): A straight line equal to a given one, placed at a given point
 - [I.3](book/I/03.md): A straight line equal to the less, cut off from the greater
@@ -218,9 +431,13 @@ graph TD
 - [I.47](book/I/47.md): The square on the side subtending the right angle equals the other two
 - [I.48](book/I/48.md): If the square equals the other two, the angle is right
 
+</details>
+
 ## Book II
 
-White: propositions of earlier books that Book II cites.
+### From Heath's references
+
+51 arrows.
 
 ```mermaid
 graph TD
@@ -310,6 +527,198 @@ graph TD
   class II1,II2,II3,II4,II5,II6,II7,II8,II9,II10,II11,II12,II13,II14 proved
 ```
 
+### From the Lean
+
+138 arrows: 51 also among Heath's references (solid) and 87 only in the Lean (dashed).
+
+```mermaid
+graph TD
+  I2["I.2"]
+  I3["I.3"]
+  I4["I.4"]
+  I5["I.5"]
+  I6["I.6"]
+  I10["I.10"]
+  I11["I.11"]
+  I13["I.13"]
+  I15["I.15"]
+  I17["I.17"]
+  I19["I.19"]
+  I20["I.20"]
+  I28["I.28"]
+  I29["I.29"]
+  I30["I.30"]
+  I31["I.31"]
+  I32["I.32"]
+  I34["I.34"]
+  I36["I.36"]
+  I43["I.43"]
+  I45["I.45"]
+  I46["I.46"]
+  I47["I.47"]
+  II1["II.1"]
+  II2["II.2"]
+  II3["II.3"]
+  II4["II.4"]
+  II5["II.5"]
+  II6["II.6"]
+  II7["II.7"]
+  II8["II.8"]
+  II9["II.9"]
+  II10["II.10"]
+  II11["II.11"]
+  II12["II.12"]
+  II13["II.13"]
+  II14["II.14"]
+  I2 -.-> II1
+  I3 --> II1
+  I4 -.-> II1
+  I11 --> II1
+  I29 -.-> II1
+  I30 -.-> II1
+  I31 --> II1
+  I34 --> II1
+  I4 -.-> II2
+  I28 -.-> II2
+  I29 -.-> II2
+  I30 -.-> II2
+  I31 --> II2
+  I34 -.-> II2
+  I46 --> II2
+  I4 -.-> II3
+  I28 -.-> II3
+  I29 -.-> II3
+  I30 -.-> II3
+  I31 --> II3
+  I34 -.-> II3
+  I46 --> II3
+  I4 -.-> II4
+  I5 --> II4
+  I6 --> II4
+  I28 -.-> II4
+  I29 --> II4
+  I30 -.-> II4
+  I31 --> II4
+  I34 --> II4
+  I43 -.-> II4
+  I46 --> II4
+  I4 -.-> II5
+  I5 -.-> II5
+  I6 -.-> II5
+  I28 -.-> II5
+  I29 -.-> II5
+  I30 -.-> II5
+  I31 --> II5
+  I34 -.-> II5
+  I36 --> II5
+  I43 --> II5
+  I46 --> II5
+  I4 -.-> II6
+  I5 -.-> II6
+  I6 -.-> II6
+  I28 -.-> II6
+  I29 -.-> II6
+  I30 -.-> II6
+  I31 --> II6
+  I34 -.-> II6
+  I36 --> II6
+  I43 --> II6
+  I46 --> II6
+  I4 -.-> II7
+  I5 -.-> II7
+  I6 -.-> II7
+  I28 -.-> II7
+  I29 -.-> II7
+  I30 -.-> II7
+  I31 -.-> II7
+  I34 -.-> II7
+  I43 --> II7
+  I46 --> II7
+  I4 -.-> II8
+  I5 -.-> II8
+  I6 -.-> II8
+  I28 -.-> II8
+  I29 -.-> II8
+  I30 -.-> II8
+  I31 -.-> II8
+  I34 -.-> II8
+  I36 --> II8
+  I43 --> II8
+  I46 -.-> II8
+  I4 -.-> II9
+  I5 -.-> II9
+  I6 --> II9
+  I11 -.-> II9
+  I28 -.-> II9
+  I29 --> II9
+  I30 -.-> II9
+  I31 -.-> II9
+  I32 --> II9
+  I34 --> II9
+  I46 -.-> II9
+  I47 --> II9
+  I3 --> II10
+  I4 -.-> II10
+  I5 --> II10
+  I6 --> II10
+  I11 --> II10
+  I15 --> II10
+  I28 -.-> II10
+  I29 --> II10
+  I30 -.-> II10
+  I31 --> II10
+  I32 --> II10
+  I34 --> II10
+  I46 -.-> II10
+  I47 --> II10
+  I4 -.-> II11
+  I10 -.-> II11
+  I17 -.-> II11
+  I19 -.-> II11
+  I20 -.-> II11
+  I28 -.-> II11
+  I29 -.-> II11
+  I30 -.-> II11
+  I34 -.-> II11
+  I46 --> II11
+  I47 --> II11
+  II6 --> II11
+  I4 -.-> II12
+  I17 -.-> II12
+  I28 -.-> II12
+  I34 -.-> II12
+  I46 -.-> II12
+  I47 --> II12
+  II4 --> II12
+  I4 -.-> II13
+  I13 -.-> II13
+  I17 -.-> II13
+  I28 -.-> II13
+  I34 -.-> II13
+  I46 -.-> II13
+  I47 --> II13
+  II7 --> II13
+  I4 -.-> II14
+  I10 -.-> II14
+  I11 -.-> II14
+  I28 -.-> II14
+  I29 -.-> II14
+  I34 -.-> II14
+  I45 --> II14
+  I46 -.-> II14
+  I47 --> II14
+  II5 --> II14
+  classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20
+  classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242
+  classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242
+  class I2,I3,I4,I5,I6,I10,I11,I13,I15,I17,I19,I20,I28,I29,I30,I31,I32,I34,I36,I43,I45,I46,I47 earlier
+  class II1,II2,II3,II4,II5,II6,II7,II8,II9,II10,II11,II12,II13,II14 proved
+```
+
+The Lean cites all 51 of Heath's references.
+
+<details><summary>The 14 propositions of Book II</summary>
+
 - [II.1](book/II/01.md): The rectangle contained by two straight lines, one cut
 - [II.2](book/II/02.md): The rectangle contained by the whole and both segments
 - [II.3](book/II/03.md): The rectangle contained by the whole and one segment
@@ -325,9 +734,13 @@ graph TD
 - [II.13](book/II/13.md): The square on the side subtending the acute angle
 - [II.14](book/II/14.md): A square equal to a given rectilineal figure
 
+</details>
+
 ## Book III
 
-White: propositions of earlier books that Book III cites.
+### From Heath's references
+
+86 arrows.
 
 ```mermaid
 graph TD
@@ -477,6 +890,261 @@ graph TD
   class III1,III2,III3,III4,III5,III6,III7,III8,III9,III10,III11,III12,III13,III14,III15,III16,III17,III18,III19,III20,III21,III22,III23,III24,III25,III26,III27,III28,III29,III30,III31,III32,III33,III34,III35,III36,III37 proved
 ```
 
+### From the Lean
+
+177 arrows: 85 also among Heath's references (solid) and 92 only in the Lean (dashed).
+
+```mermaid
+graph TD
+  I3["I.3"]
+  I4["I.4"]
+  I5["I.5"]
+  I6["I.6"]
+  I8["I.8"]
+  I10["I.10"]
+  I11["I.11"]
+  I12["I.12"]
+  I13["I.13"]
+  I16["I.16"]
+  I17["I.17"]
+  I19["I.19"]
+  I20["I.20"]
+  I21["I.21"]
+  I23["I.23"]
+  I24["I.24"]
+  I26["I.26"]
+  I28["I.28"]
+  I32["I.32"]
+  I34["I.34"]
+  I46["I.46"]
+  I47["I.47"]
+  II5["II.5"]
+  II6["II.6"]
+  III1["III.1"]
+  III2["III.2"]
+  III3["III.3"]
+  III4["III.4"]
+  III5["III.5"]
+  III6["III.6"]
+  III7["III.7"]
+  III8["III.8"]
+  III9["III.9"]
+  III10["III.10"]
+  III11["III.11"]
+  III12["III.12"]
+  III13["III.13"]
+  III14["III.14"]
+  III15["III.15"]
+  III16["III.16"]
+  III17["III.17"]
+  III18["III.18"]
+  III19["III.19"]
+  III20["III.20"]
+  III21["III.21"]
+  III22["III.22"]
+  III23["III.23"]
+  III24["III.24"]
+  III25["III.25"]
+  III26["III.26"]
+  III27["III.27"]
+  III28["III.28"]
+  III29["III.29"]
+  III30["III.30"]
+  III31["III.31"]
+  III32["III.32"]
+  III33["III.33"]
+  III34["III.34"]
+  III35["III.35"]
+  III36["III.36"]
+  III37["III.37"]
+  I8 --> III1
+  I10 -.-> III1
+  I11 -.-> III1
+  I5 --> III2
+  I16 --> III2
+  I19 --> III2
+  III1 --> III2
+  I5 --> III3
+  I8 --> III3
+  I26 --> III3
+  III1 --> III4
+  III3 --> III4
+  I4 --> III7
+  I20 --> III7
+  I23 --> III7
+  I24 --> III7
+  I4 --> III8
+  I20 --> III8
+  I21 --> III8
+  I23 -.-> III8
+  I24 --> III8
+  III1 --> III8
+  I8 --> III9
+  I10 -.-> III9
+  I17 -.-> III9
+  III1 --> III9
+  I10 -.-> III10
+  I11 -.-> III10
+  I17 -.-> III10
+  III1 --> III10
+  III5 --> III10
+  I20 -.-> III11
+  III6 -.-> III11
+  I20 --> III12
+  III6 -.-> III12
+  III2 --> III13
+  III11 --> III13
+  I3 -.-> III14
+  I4 -.-> III14
+  I17 -.-> III14
+  I19 -.-> III14
+  I28 -.-> III14
+  I34 -.-> III14
+  I46 -.-> III14
+  I47 --> III14
+  III1 --> III14
+  III3 --> III14
+  I3 -.-> III15
+  I11 -.-> III15
+  I17 -.-> III15
+  I19 -.-> III15
+  I20 --> III15
+  I24 --> III15
+  III14 --> III15
+  I5 --> III16
+  I12 -.-> III16
+  I17 --> III16
+  I19 --> III16
+  I4 --> III17
+  I11 -.-> III17
+  III1 --> III17
+  III16 --> III17
+  I12 -.-> III18
+  I17 --> III18
+  I19 --> III18
+  III18 --> III19
+  I5 --> III20
+  I32 --> III20
+  III20 --> III21
+  I32 --> III22
+  III21 --> III22
+  I16 --> III23
+  III10 -.-> III23
+  III21 -.-> III23
+  I5 -.-> III24
+  I26 -.-> III24
+  I32 -.-> III24
+  III20 -.-> III24
+  III21 -.-> III24
+  III22 -.-> III24
+  I4 -.-> III25
+  I6 --> III25
+  I10 -.-> III25
+  I11 -.-> III25
+  I17 -.-> III25
+  I23 -.-> III25
+  III9 --> III25
+  I4 --> III26
+  I5 -.-> III26
+  I32 -.-> III26
+  III20 -.-> III26
+  III21 -.-> III26
+  III22 -.-> III26
+  III24 --> III26
+  I23 --> III27
+  III20 --> III27
+  III21 -.-> III27
+  III26 --> III27
+  I5 -.-> III28
+  I8 --> III28
+  I20 -.-> III28
+  I32 -.-> III28
+  III20 -.-> III28
+  III21 -.-> III28
+  III22 -.-> III28
+  III26 --> III28
+  I4 --> III29
+  I5 -.-> III29
+  I32 -.-> III29
+  III20 -.-> III29
+  III21 -.-> III29
+  III22 -.-> III29
+  III27 --> III29
+  I4 --> III30
+  I10 -.-> III30
+  I11 -.-> III30
+  I17 -.-> III30
+  III21 -.-> III30
+  III22 -.-> III30
+  III28 --> III30
+  I5 --> III31
+  I17 --> III31
+  I32 --> III31
+  III22 --> III31
+  I11 -.-> III32
+  I13 -.-> III32
+  I32 --> III32
+  III19 --> III32
+  III21 -.-> III32
+  III22 --> III32
+  III31 --> III32
+  I4 --> III33
+  I10 -.-> III33
+  I11 -.-> III33
+  I23 -.-> III33
+  III16 --> III33
+  III31 --> III33
+  III32 --> III33
+  I11 -.-> III34
+  I23 --> III34
+  III16 -.-> III34
+  III32 --> III34
+  I4 -.-> III35
+  I12 -.-> III35
+  I17 -.-> III35
+  I19 -.-> III35
+  I28 -.-> III35
+  I34 -.-> III35
+  I46 -.-> III35
+  I47 --> III35
+  II5 --> III35
+  III1 -.-> III35
+  III3 --> III35
+  I4 -.-> III36
+  I12 -.-> III36
+  I17 -.-> III36
+  I19 -.-> III36
+  I28 -.-> III36
+  I34 -.-> III36
+  I46 -.-> III36
+  I47 --> III36
+  II6 --> III36
+  III1 -.-> III36
+  III3 --> III36
+  III18 --> III36
+  I3 -.-> III37
+  I4 -.-> III37
+  I8 --> III37
+  I20 -.-> III37
+  I28 -.-> III37
+  I34 -.-> III37
+  I46 -.-> III37
+  III1 -.-> III37
+  III16 --> III37
+  III17 -.-> III37
+  III18 --> III37
+  III36 --> III37
+  classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20
+  classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242
+  classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242
+  class I3,I4,I5,I6,I8,I10,I11,I12,I13,I16,I17,I19,I20,I21,I23,I24,I26,I28,I32,I34,I46,I47,II5,II6 earlier
+  class III1,III2,III3,III4,III5,III6,III7,III8,III9,III10,III11,III12,III13,III14,III15,III16,III17,III18,III19,III20,III21,III22,III23,III24,III25,III26,III27,III28,III29,III30,III31,III32,III33,III34,III35,III36,III37 proved
+```
+
+Heath's references that the Lean does not cite, 1 of his 86: [III.10](book/III/10.md) in [III.24](book/III/24.md).
+
+<details><summary>The 37 propositions of Book III</summary>
+
 - [III.1](book/III/01.md): The centre of a given circle
 - [III.2](book/III/02.md): The straight line joining two points falls within the circle
 - [III.3](book/III/03.md): Through the centre, to bisect is to cut at right angles
@@ -514,3 +1182,5 @@ graph TD
 - [III.35](book/III/35.md): The rectangles contained by the segments are equal
 - [III.36](book/III/36.md): The rectangle equals the square on the tangent
 - [III.37](book/III/37.md): If the rectangle equals the square, the straight line touches
+
+</details>

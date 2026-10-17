@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "The parallelogram stands on whichever side of AB a given point names."
+fingerprint = "sha256:689ae2a29ad313e2"
 
 [route]
 kind = "euclid"
@@ -14,5 +15,6 @@ note = "Our foundations keep superposition for I.4 and I.8, so nothing is moved:
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:b2396ca7df3e2c4a"

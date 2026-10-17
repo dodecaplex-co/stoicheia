@@ -206,3 +206,107 @@
   `docs/reports/crew/scratch-III/`, as Book II's were. They stay in the history at commit
   `81d72f5`
   ([scratch-III at 81d72f5](https://github.com/jackChallis/stoicheia/tree/81d72f5/docs/reports/crew/scratch-III)).
+
+The precision pass of [brief 0005](0005-astra-review.md), stages 1 and 1b, answering
+Astra's [outside review](../reports/outside-review-01.md), with our thanks:
+
+- **Porisms are entries of the certificate.** "I.15 Por.", "III.1 Por." and "III.16 Por."
+  each have an entry of their own in `facts.json`, with `kind`, `of` and `statement`, and
+  their proposition names them in `attached`; a `companions` list, empty for now, is ready
+  for stage 2's general theorems. Every policy (later citations, superposition, Postulate 5
+  before I.29) now runs over every entry, a porism entry must be one of Heath's porisms,
+  and a proposition counts as complete only when everything attached to it is proved. So
+  III.1 rests on 56 tacit rules and III.1 Por. on 57, `centre_unique` among them, and
+  `tests/certificate_expectations.json` pins that. `facts.json` lists the propositions,
+  then the porisms, then the companions; [FIELDS.md](../../Certificate/FIELDS.md) says to
+  read the entries by `ref`, so the order carries no meaning.
+- **One dependency walk, with a self-check.** `Certificate/Facts.lean` finds what a
+  declaration uses with one walk, `mentions`, which reads its type as well as its value
+  (opaque values and constructors included), and the direct axioms, the Common Notions and
+  the shared steps all come from it. Before it writes `facts.json` it checks itself against
+  Lean: each entry's `#print axioms`, less Lean's own foundations, must be its direct axioms
+  together with those of everything it cites, or the run exits 1, which fails CI's
+  certificate step. The `axioms` list of every proposition is byte for byte what it was. A
+  negative test plants a later proposition in a helper's statement only, and the walk
+  catches it.
+- **The axiom lock.** [`Certificate/axioms.lock`](../../Certificate/axioms.lock) holds the
+  exact statement of each of the 87 axioms, as Lean prints them with full names and no
+  notation, and the 37 definitions, instances and opaque words those statements reach.
+  `check_fidelity.py` compares it with `facts.json` in both directions and takes the
+  number of Euclid's assumptions from it, and [tests/model/lock.sha256](../../tests/model/lock.sha256)
+  pins its hash, so a changed axiom also sends someone back to the model. The lock changes
+  only with an entry on this page, and then only through
+  `python3 scripts/check_fidelity.py --write-lock`. It was first written today. Words that
+  only the propositions' statements use, such as `Touches` or `Parallel`, are not yet in
+  it; that question is open in [PROGRAM.md](../PROGRAM.md).
+- **Review records, keyed to a commit.** Every proposition has a review record,
+  `review/<book>/NN.toml`, in the form [review/SCHEMA.md](../../review/SCHEMA.md) gives:
+  the scope of its statement (full, restricted or partial), the route of its proof, what
+  the representation adds, any overlap with a rule, and the passages where the Lean does
+  not sit beneath Euclid's sentences one for one. Each record carries a fingerprint of the
+  statements it read, a hash of its Lean file and the commit it was read at, written by
+  `scripts/review_stamp.py` after a reading and never to quiet the check; a changed
+  statement or file makes the record stale, and `check_fidelity.py` fails. The records are
+  at stage "exceptions" now and become "full" in stage 5. The pages read them: a line under
+  each enunciation says what the Lean proves, a table under "In Lean" gives the details,
+  and the passage notes stand above the listing. The completion summaries in CERTIFICATE.md,
+  the index pages and README's rows (between its `<!-- scope:… -->` markers) are generated
+  from them, and CI checks README with the other generated pages.
+- **"Heath's references" and "this proof uses".** The square brackets in Heath's text are
+  his editorial references, not Euclid's citations: "such specific quotations of earlier
+  propositions are rare in Euclid" (Heath, vol. 1, p. 83). The pages and the certificate
+  now call them "Heath's references", and a bracket missing does not mean Euclid gave no
+  reason. We say that a proof uses Postulate 5, or does not, never that a proposition needs
+  it, and "Euclid calls on" only where his own sentence states what he calls on.
+  CERTIFICATE.md keeps three things apart: Heath's references, the Lean's dependencies, and
+  the reconstruction of the argument in the review records and gap catalogues. GRAPH.md
+  draws two graphs for each book, from Heath's references and from the Lean, and names the
+  references the Lean does not cite. A check rejects the old phrases on the summary pages.
+  This supersedes the wording of the 15 October entry "'Euclid cites' beside 'Lean cites'"
+  and the "never need" of the entry "Book III complete" above.
+- **Helpers folded, the main proof open.** A page's Lean listing shows the main theorem
+  open, with the helpers before it folded into one `<details>` that names them and counts
+  their lines, and the corollaries and porism proofs after it in another. Jump links stand
+  under the title, the previous and next links are repeated at the foot, the footers link
+  the scan leaves of Heath's text and figure, and `scripts/check_links.py` checks every
+  relative link and anchor in CI.
+- **The model harness lives in the repository.** The programs that test the axioms in the
+  plane, and the weakened axioms they must catch, are in [tests/model/](../../tests/model/),
+  with [MODEL.md](../../tests/model/MODEL.md) giving the reason each axiom holds. CI runs
+  `tests/model/run.py --fast` as a job of its own; `results/` is rewritten only by
+  `python3 -I tests/model/run.py --full --write`; and any change to the axiom lock means
+  MODEL.md is read again and `lock.sha256` updated in the same change.
+  `tests/model/hyperbolic.py`, which checks numerically that every axiom but Postulate 5
+  holds in the hyperbolic plane, is the evidence any page must name if it ever claims a proposition
+  cannot do without Postulate 5; until then the pages keep to "this proof uses". A formal
+  model in Lean with Mathlib, as a separate package, is a later milestone, defined in
+  MODEL.md.
+- **The overlap catalogue.** [docs/reports/overlaps.md](../reports/overlaps.md) lists where
+  one of System E's rules already says what Euclid proves (I.7, I.23, III.2, III.5, III.6)
+  or carries one of his steps: the rule, where it first enters, what brings it in, what our
+  proof does, and an audit lemma. The lemmas, in `Audit/Overlaps.lean`, each have the
+  proposition's own type and are proved from the rules alone; nothing imports them, and CI
+  builds them with `lake build Audit`. A page with an overlap says so in its top line. The
+  audit also shows that Diagram-angle 3 (`adjacent_eq_of_right`) follows from the other 86
+  axioms by I.13; it stays an axiom, as System E has it. Deriving such propositions from
+  weaker assumptions is an optional workstream of its own, not part of this plan.
+- **Voice rules are defaults.** The voice rules are now defaults, each with a reason, not
+  quotas: no count of "we"; a mishnah of usually 250 to 450 words, an exception having its
+  reason; bold leads where they help; a modern method may recur where it is clearest.
+  "Nothing hedged" becomes "state facts directly; qualify uncertainty precisely". A proof
+  in Lean is an argument, so no dummy citations and no artificial uses of a hypothesis: the
+  crew orders no longer ask that every hypothesis be used or that every bracket be cited.
+  Further reading describes a work in full at its first appearance in each book. This
+  supersedes the 15 October entry "The mishnah has a length".
+- **The layered standards, after Astra's guide.** [AGENTS.md](../../AGENTS.md), which
+  `CLAUDE.md` imports, opens with Astra's ten rules and the order of priorities, and links
+  each rule to its one home: [CONTRIBUTING.md](../../CONTRIBUTING.md) for people,
+  [STYLE.md](../STYLE.md) for what a reader sees, [FORMALIZATION.md](../FORMALIZATION.md)
+  for the Lean, [WORKFLOW.md](../WORKFLOW.md) for how the work is run, with the
+  [templates](../templates/), [reviewed examples](../examples.md) and a brief for each
+  book ([I](book-I.md), [II](book-II.md), [III](0004-book-III.md)). `scripts/check_style.py`
+  fails on STYLE's hard rules and reports its defaults without failing.
+- **Book III's further reading.** Ivor Thomas's Loeb *Selections* is linked to Harvard
+  University Press and not marked free, since the translation is still in copyright;
+  Koshkin's article is linked to its free arXiv preprint, with its DOI in the text; Tom
+  Davis's handout on inversion is linked over http, which is the address that works.

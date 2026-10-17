@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "Angles at the circumferences of any size, and at the centres where they stand on BC; since our measure carries no radius, it holds in any two circles."
+fingerprint = "sha256:76827ffe8edda107"
 
 [route]
 kind = "modified"
@@ -12,5 +13,6 @@ note = "\"In equal circles\" is kept from Euclid, and the proof uses it through 
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:6bcacf1061e97a68"

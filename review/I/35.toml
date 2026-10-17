@@ -1,6 +1,7 @@
 # review/I/35.toml
 [statement]
 scope = "full"
+fingerprint = "sha256:f08967fb2f521847"
 
 [route]
 kind = "euclid"
@@ -22,5 +23,6 @@ case = "AD and EF apart, with D between A and E, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:faf82eb7b41ef5a1"

@@ -2,8 +2,9 @@
 
 This page holds the state of the whole project and what we have learned making it. It
 is updated at the end of every stage and every book. The rules themselves live in
-`WORKFLOW.md`, `FORMALIZATION.md` and [STYLE.md](STYLE.md);
-this page says where we are against them, and why they are what they are.
+[WORKFLOW.md](WORKFLOW.md), [FORMALIZATION.md](FORMALIZATION.md) and [STYLE.md](STYLE.md),
+with [AGENTS.md](../AGENTS.md) as the way in; this page says where we are against them,
+and why they are what they are.
 
 ## 1. The standard
 
@@ -25,7 +26,7 @@ III.16 and III.31, and the places where a System E rule already contains a propo
 
 ## 2. How a book is made, in parallel
 
-The detail is in `WORKFLOW.md`. In outline, with the crew sizes of Books I–III:
+The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of Books I–III:
 
 1. **Ground.** Heath transcribed and proofread; the book's brief settles its vocabulary,
    representations, construction inputs and expected exceptions. One first mate.
@@ -51,22 +52,23 @@ The detail is in `WORKFLOW.md`. In outline, with the crew sizes of Books I–III
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved | precision pass | — | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved | precision pass | — | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved | precision pass | — | — | 80 (Astra, 676244a) | waiting on stage 1 |
+| I | 48 of 48 proved, and I.15's porism | records (exceptions) | 48 of 48 current, at stage "exceptions": 46 full, 2 restricted | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved | records (exceptions) | 14 of 14 current, at stage "exceptions": 12 full, 2 restricted | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 | records (exceptions) | 37 of 37 current, at stage "exceptions": 29 full, 5 restricted, 3 in part | — | 80 (Astra, 676244a) | release notes next, for Jack's approval |
 | IV–XIII | not begun | — | — | — | — | — |
 
-From stage 1 this table is generated from `facts.json`, `review/` and the acceptance
-report, and CI checks it is current.
+The scope of each book, generated from `facts.json` and `review/`, stands in the
+[README](../README.md) and on [the certificate](../CERTIFICATE.md), and CI checks that it
+is current. This table is still kept by hand: `render.py` does not yet generate it.
 
 The work under way is [brief 0005](briefs/0005-astra-review.md):
 
 | Stage | What | State |
 |---|---|---|
 | 0 | The review, this page, the brief | done |
-| 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | next |
-| 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates | |
-| — | Release of Book III | after 1 and 1b, notes approved by Jack |
+| 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
+| 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
+| — | Release of Book III | next: notes in the new terms, approved by Jack |
 | 2 | I.40, I.45, II.1, II.14 in full generality | |
 | 3 | Arcs and segments; III.24 | |
 | 4 | III.14, III.15, III.25 | |
@@ -86,7 +88,15 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
   borrowing commutativity; prototyped first.
 - **Incommensurables** (Book X): X.1 prototyped first.
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
-- **A formal model** of the axioms in Lean with Mathlib, as a separate package.
+- **A formal model** of the axioms in Lean with Mathlib, as a separate package, defined
+  in [MODEL.md](../tests/model/MODEL.md#a-formal-model-a-later-milestone). Until then the
+  evidence is numerical: [tests/model](../tests/model/), in CI, with the hyperbolic check.
+- **The statements' vocabulary.** The axiom lock covers the 37 words the axioms reach.
+  24 definitions reached only from the propositions' statements (`Touches`,
+  `EqualCircles`, `circumference`, `rect`, `Parallel` and others) are in no lock or
+  fingerprint, so a change to one of them changes no printed statement. To decide:
+  extend `vocabulary` to them, or lock them separately; either needs a FIELDS.md change
+  and a decisions entry.
 
 ## 5. Lessons
 
@@ -111,6 +121,22 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 - **17 Oct. An independent model is cheap.** Jev answered a scope question and three
   figure questions correctly in under a fifth of a second each; on the scope question it
   was right but only moderately confident, so its disagreements go to an adjudicator.
+- **17 Oct. A new kind of entry reaches every reader of the data.** The porism entries
+  ("III.1 Por.") stopped `check_fidelity.py` and `render.py`, which split references on
+  the dot, until each used the contracts' `parse_ref`. Shared formats go in the contracts
+  commit, and every consumer is named in the orders
+  ([FIELDS.md](../Certificate/FIELDS.md)).
+- **17 Oct. Text that becomes generated is overwritten.** README's book rows, rewritten by
+  hand in the wording pass, were replaced on the first render by the summaries the review
+  records give, which count the exceptions rather than describe them. A description
+  wanted on a generated page has to live in the generator's inputs
+  ([review/terms.toml](../review/terms.toml)).
+- **17 Oct. Stamps come last.** A review record's `lean` stamp hashes its whole file, so
+  even a comment changes it (Prop16, Prop31 and Prop18 this time). The integrator stamps
+  after every branch is merged ([review_stamp.py](../scripts/review_stamp.py)).
+- **17 Oct. One home per rule needs one owner per rule.** Two scripts grew the same lint:
+  `check_fidelity.py` (`check_wording`) and `check_style.py` (S5) both reject "Euclid
+  cites" and "never need". Who owns a rule is settled before the wave starts.
 
 ## 6. Cost and time
 
@@ -128,3 +154,4 @@ in the voyage logs).
 | Book III close-out (I.23, logs, catalogue, status) | 8 | 1.6M | 48 min |
 | Pre-release checks | 6 | 1.4M | 57 min |
 | Book III references research | 11 | 2.5M | 65 min |
+| Precision pass and standards (brief 0005, stages 1 and 1b) | *for the captain* | *for the captain* | *for the captain* |

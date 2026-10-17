@@ -10,6 +10,11 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # The review records are read with tomllib, which needs Python 3.11 or later.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - name: Install Lean (elan)
         run: |
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
@@ -18,24 +23,44 @@ jobs:
       - name: Check every proof
         run: lake build
 
-      - name: Compute the certificate
+      - name: Check the overlap catalogue's audit lemmas
+        # Audit/ is a library nothing imports, outside the default build.
+        run: lake build Audit
+
+      - name: Compute the certificate, and check its dependency walk against Lean's
+        # Facts.lean exits 1 if any entry's axioms differ from its own and its citations'.
         run: lake env lean Certificate/Facts.lean
 
-      - name: Check the Lean still quotes Heath, and the house rules
+      - name: Check the contracts (references, porisms, review terms and records)
+        run: python3 scripts/heath.py
+
+      - name: Check the Lean still quotes Heath; the house rules, the policies for every entry, the axiom lock, the review records and the wording
         run: python3 scripts/check_fidelity.py
 
+      - name: Check the house style's hard rules
+        # S12 asks Lean about the names in the mishnah, so it runs on the built tree.
+        run: python3 scripts/check_style.py
+
       - name: Check the generated pages are up to date
-        # `git status` sees new and deleted pages as well as changed ones.
+        # `git status` sees new and deleted pages as well as changed ones. README.md is
+        # generated in part: render.py fills its scope markers.
         run: |
           python3 scripts/render.py
-          git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md
-          test -z "$(git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md)"
+          git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md
+          test -z "$(git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md)"
+
+      - name: Check every relative link and anchor
+        run: python3 scripts/check_links.py
 
   negative:
     # Break the project on purpose, and check that every break is caught.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
 
       - name: Install Lean (elan)
         run: |
@@ -47,5 +72,18 @@ jobs:
           lake build
           lake env lean Certificate/Facts.lean
 
-      - name: An edited Heath word, wrong radii in I.1, and planted assumptions in I.16
+      - name: An edited Heath word, wrong radii in I.1, a weakened axiom, stale and incomplete review records, and planted assumptions in I.15's porism and I.16
         run: python3 scripts/negative_tests.py
+
+  model:
+    # The axioms in the plane: needs no Lean, for it reads the committed facts.json.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: The axioms hold in the plane, every weakened axiom is caught, and only Postulate 5 fails in the hyperbolic plane
+        run: python3 -I tests/model/run.py --fast

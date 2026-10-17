@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "The angle is given as the triangle BAC, its arms not in one straight line, as Definition 8 asks; the bisector AF is proved to fall within it."
+fingerprint = "sha256:615a25d41eb9d01a"
 
 [route]
 kind = "euclid"
@@ -14,5 +15,6 @@ note = "Euclid reads off his figure that AF falls within the angle; the Lean pro
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:b8232102341b543b"

@@ -4,6 +4,7 @@ hypotheses = [
   "the whole circle is given, with a centre, not only the segment (`ABC : Circle`, `hABC : ∃ E, Centre E ABC`)",
 ]
 note = "Handed the whole circle and that it has a centre; constructs B, D and E as Euclid does and proves E the centre, in each of his three cases."
+fingerprint = "sha256:cea48281c16e35be"
 
 [route]
 kind = "euclid"
@@ -35,5 +36,6 @@ note = "The Lean carries the construction, and the statement says that the centr
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:26e47b2091e4d8d6"

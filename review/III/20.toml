@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "The centre is on A's side of BC, where the angle at the centre stands on the same circumference as BAC and is less than two right angles, as Euclid's are."
+fingerprint = "sha256:fb6f51cf124385c5"
 
 [route]
 kind = "euclid"
@@ -16,5 +17,6 @@ note = "Euclid leaves out E on AB or on AC, which his proof plainly covers (Heat
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:064c2d6491def9e3"

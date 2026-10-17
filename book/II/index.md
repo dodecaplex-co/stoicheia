@@ -2,11 +2,13 @@
 
 # Book II
 
-**14 of 14 propositions proved in Lean.** Key to the table: ✅ proved.
+**All 14 propositions proved in Lean**: 12 as Euclid states them and 2 for a restricted statement ([II.1](01.md), [II.14](14.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. Every proof uses the parallel postulate: II.10's directly, where Euclid calls on it, and the others through the propositions they cite.
+
+Key to the table: ✅ proved. The Lean statement is the whole enunciation, a restricted statement, or part of it; each page says how.
 
 **Algebra without numbers.** Book II is the book of rectangles and squares on cut straight lines, sometimes called Euclid's geometrical algebra: what we would write as a(b + c + d) = ab + ac + ad, (a + b)² = a² + b² + 2ab and their cousins, done with figures alone. It ends with three famous results: the cut later called the golden section (II.11), the two partners of I.47 that are now the law of cosines (II.12, II.13), and a square equal to any straight-sided figure (II.14). Each page reads as Book I's do, and [Book I's introduction](../I/index.md) says how.
 
-**"The rectangle contained by AB, BC."** Book II has two definitions of its own. A rectangle is said to be contained by the two straight lines about its right angle, and Euclid often names it by them alone, "the rectangle AB, BC" (II.2). A gnomon is one of the parallelograms about the diameter of a parallelogram, Euclid's word for its diagonal, with the two complements (II.5). In Lean, the rectangle contained by two straight lines, `rect`, and the square on one, `sq`, are areas, defined from the lengths rather than assumed. So we state each proposition as Euclid does, as a sum of areas with no numbers anywhere: II.1 for two points of section, and II.14 for a figure of two triangles, as in I.45, the figures Euclid's own proofs take.
+**"The rectangle contained by AB, BC."** Book II has two definitions of its own. A rectangle is said to be contained by the two straight lines about its right angle, and Euclid often names it by them alone, "the rectangle AB, BC" (II.2). A gnomon is one of the parallelograms about the diameter of a parallelogram, Euclid's word for its diagonal, with the two complements (II.5). In Lean, the rectangle contained by two straight lines, `rect`, and the square on one, `sq`, are areas, defined from the lengths rather than assumed. So we state each proposition as Euclid does, as a sum of areas with no numbers anywhere, though two of them say less than his enunciations: II.1 is proved for two points of section, the case his proof draws, where his enunciation allows any number; and II.14 for a figure of two triangles, the figure of I.45's proof, where his allows any rectilineal figure.
 
 **What Book II borrows from Book I.** Page after page, Euclid takes the same few things for granted. We prove each once, in [`Rectangles.lean`](../../Elements/BookII/Rectangles.lean), and the line under each page's table names those its proof calls on. A rectangle he draws is the rectangle contained by its sides, or by straight lines equal to them, by I.4 and I.34 (`Rectangle.eq_rect`). One right angle makes a parallelogram a rectangle, by I.29, which, Heath remarks under II.4, I.46 has already shown (`Rectangle.of_right`). And I.47 is said of the squares on straight lines, for II.9 to II.14 (`BookI.Prop47.sq`).
 
@@ -20,19 +22,19 @@ Start with the [definitions](front.md). What Euclid takes for granted along the 
 
 Books and papers to read alongside, from Proclus to Lean, are gathered by theme in [the reading list](../../docs/reading.md).
 
-| | Proposition | |
-|---|---|---|
-| ✅ | [II.1](01.md) **The rectangle contained by two straight lines, one cut** | If there be two straight lines, and one of them be cut into any number of segments whatever, the rectangle… |
-| ✅ | [II.2](02.md) **The rectangle contained by the whole and both segments** | If a straight line be cut at random, the rectangle contained by the whole and both of the segments is… |
-| ✅ | [II.3](03.md) **The rectangle contained by the whole and one segment** | If a straight line be cut at random, the rectangle contained by the whole and one of the segments is equal… |
-| ✅ | [II.4](04.md) **The squares on the whole and both segments** | If a straight line be cut at random, the square on the whole is equal to the squares on the segments and… |
-| ✅ | [II.5](05.md) **The rectangle contained by the unequal segments** | If a straight line be cut into equal and unequal segments, the rectangle contained by the unequal segments… |
-| ✅ | [II.6](06.md) **The rectangle contained by the whole and the added straight line** | If a straight line be bisected and a straight line be added to it in a straight line, the rectangle… |
-| ✅ | [II.7](07.md) **The squares on the whole and one segment** | If a straight line be cut at random, the square on the whole and that on one of the segments both together… |
-| ✅ | [II.8](08.md) **Four times the rectangle contained by the whole and one segment** | If a straight line be cut at random, four times the rectangle contained by the whole and one of the… |
-| ✅ | [II.9](09.md) **The squares on the unequal segments** | If a straight line be cut into equal and unequal segments, the squares on the unequal segments of the… |
-| ✅ | [II.10](10.md) **The squares on the whole and the added straight line** | If a straight line be bisected, and a straight line be added to it in a straight line, the square on the… |
-| ✅ | [II.11](11.md) **A straight line cut so that the rectangle equals the square** | To cut a given straight line so that the rectangle contained by the whole and one of the segments is equal… |
-| ✅ | [II.12](12.md) **The square on the side subtending the obtuse angle** | In obtuse-angled triangles the square on the side subtending the obtuse angle is greater than the squares… |
-| ✅ | [II.13](13.md) **The square on the side subtending the acute angle** | In acute-angled triangles the square on the side subtending the acute angle is less than the squares on… |
-| ✅ | [II.14](14.md) **A square equal to a given rectilineal figure** | To construct a square equal to a given rectilineal figure. |
+| | Proposition | Lean statement | |
+|---|---|---|---|
+| ✅ | [II.1](01.md) **The rectangle contained by two straight lines, one cut** | restricted | If there be two straight lines, and one of them be cut into any number of segments whatever, the rectangle… |
+| ✅ | [II.2](02.md) **The rectangle contained by the whole and both segments** | whole | If a straight line be cut at random, the rectangle contained by the whole and both of the segments is… |
+| ✅ | [II.3](03.md) **The rectangle contained by the whole and one segment** | whole | If a straight line be cut at random, the rectangle contained by the whole and one of the segments is equal… |
+| ✅ | [II.4](04.md) **The squares on the whole and both segments** | whole | If a straight line be cut at random, the square on the whole is equal to the squares on the segments and… |
+| ✅ | [II.5](05.md) **The rectangle contained by the unequal segments** | whole | If a straight line be cut into equal and unequal segments, the rectangle contained by the unequal segments… |
+| ✅ | [II.6](06.md) **The rectangle contained by the whole and the added straight line** | whole | If a straight line be bisected and a straight line be added to it in a straight line, the rectangle… |
+| ✅ | [II.7](07.md) **The squares on the whole and one segment** | whole | If a straight line be cut at random, the square on the whole and that on one of the segments both together… |
+| ✅ | [II.8](08.md) **Four times the rectangle contained by the whole and one segment** | whole | If a straight line be cut at random, four times the rectangle contained by the whole and one of the… |
+| ✅ | [II.9](09.md) **The squares on the unequal segments** | whole | If a straight line be cut into equal and unequal segments, the squares on the unequal segments of the… |
+| ✅ | [II.10](10.md) **The squares on the whole and the added straight line** | whole | If a straight line be bisected, and a straight line be added to it in a straight line, the square on the… |
+| ✅ | [II.11](11.md) **A straight line cut so that the rectangle equals the square** | whole | To cut a given straight line so that the rectangle contained by the whole and one of the segments is equal… |
+| ✅ | [II.12](12.md) **The square on the side subtending the obtuse angle** | whole | In obtuse-angled triangles the square on the side subtending the obtuse angle is greater than the squares… |
+| ✅ | [II.13](13.md) **The square on the side subtending the acute angle** | whole | In acute-angled triangles the square on the side subtending the acute angle is less than the squares on… |
+| ✅ | [II.14](14.md) **A square equal to a given rectilineal figure** | restricted | To construct a square equal to a given rectilineal figure. |

@@ -1,5 +1,6 @@
 [statement]
 scope = "full"
+fingerprint = "sha256:3b821b319dc406ad"
 
 [route]
 kind = "euclid"
@@ -12,5 +13,6 @@ note = "Euclid's \"for the same reason\" is carried by one lemma, which gives hi
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:24f85c7951a63055"

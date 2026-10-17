@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "The rectangles AE, EC and DE, EB are equal wherever the two straight lines cut within the circle; the circle comes with a centre."
+fingerprint = "sha256:c435ba685e4d22d2"
 
 [route]
 kind = "euclid"
@@ -17,5 +18,6 @@ note = "Euclid's argument is written once for any straight line through E: it co
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:963cae5bb2629b9b"

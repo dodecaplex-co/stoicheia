@@ -1,6 +1,7 @@
 # review/I/06.toml
 [statement]
 scope = "full"
+fingerprint = "sha256:c1797ee9c0db3d8e"
 
 [route]
 kind = "euclid"
@@ -13,5 +14,6 @@ note = "Euclid takes for granted that DBC is less than ACB; the Lean proves it w
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:58a7cd3d271c02c5"

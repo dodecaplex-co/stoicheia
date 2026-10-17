@@ -4,6 +4,7 @@ hypotheses = [
   "the rectilineal figure A is two triangles on a common side A₂A₄, as our I.45 takes it (`h₁ : Triangle A₁ A₂ A₄`, `h₂ : Triangle A₄ A₂ A₃`)",
 ]
 note = "Proved for a figure of two triangles on a common side, as our I.45 takes it, returning the side EH of the square; Euclid's figure may have any number of sides."
+fingerprint = "sha256:164903fd832eae07"
 
 [route]
 kind = "euclid"
@@ -22,5 +23,6 @@ case = "BE greater than ED, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:85fb27ad1e21f491"

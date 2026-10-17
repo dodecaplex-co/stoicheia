@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "Stated positively: two points on one side of AB, each as far from A and from B as the other, are one and the same point."
+fingerprint = "sha256:4ebf3fea121843e1"
 
 [route]
 kind = "euclid"
@@ -18,5 +19,6 @@ note = "Euclid draws one figure. The Lean also takes AC crossing DB, his figure 
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:57759d34993e4ca6"

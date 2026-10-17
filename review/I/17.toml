@@ -2,11 +2,13 @@
 [statement]
 scope = "full"
 note = "All three pairs of angles are named, as Euclid's \"taken together in any manner\" asks."
+fingerprint = "sha256:83511090f6555959"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:f35da40349c54986"

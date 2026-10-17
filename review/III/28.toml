@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "\"The greater\" is taken as no less, so two diameters, which cut off four semicircles, are covered as well."
+fingerprint = "sha256:084cabc9fb6a1dad"
 
 [route]
 kind = "euclid"
@@ -17,5 +18,6 @@ note = "Euclid's figure has the centre K off AB, on C's side. If K is on AB, AB 
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:303b294cc4368109"

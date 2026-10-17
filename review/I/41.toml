@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "E may be any point of the straight line AD, at A or at D among them."
+fingerprint = "sha256:70bbb69cc030970d"
 
 [route]
 kind = "euclid"
@@ -11,5 +12,6 @@ case = "E on AD produced beyond D, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:920a7dc2766794ce"

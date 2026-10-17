@@ -3,11 +3,13 @@
 # to DE; AC to DF is the same theorem with B and C exchanged.
 [statement]
 scope = "full"
+fingerprint = "sha256:1cb4527204d38cee"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:a39a56a942144b8d"

@@ -1,11 +1,13 @@
 [statement]
 scope = "full"
 note = "The perpendicular from B and its foot D on the straight line CA are given; that D falls beyond A, as in Euclid's figure, is proved."
+fingerprint = "sha256:ee8ae557ec6ee73a"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:c8056e07b2db5b7d"

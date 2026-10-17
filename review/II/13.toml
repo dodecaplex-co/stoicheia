@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "Asks for acute angles at B and C and nothing at A, so it says more than Euclid's acute-angled triangles; that D falls within CB is proved."
+fingerprint = "sha256:8ebcab93a8dd3097"
 
 [route]
 kind = "euclid"
@@ -17,5 +18,6 @@ note = "Euclid reads off his figure that D falls within CB; the Lean proves it: 
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:d4220867a6bb2695"

@@ -2,11 +2,13 @@
 [statement]
 scope = "full"
 note = "Proved for any point C of AB, with F on the side of a given point Q; the angle PCF is the right angle ∟ for every point P of AB other than C."
+fingerprint = "sha256:5d52ae3586be5880"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:2e4f711e12e48055"

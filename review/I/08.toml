@@ -1,6 +1,7 @@
 # review/I/08.toml
 [statement]
 scope = "full"
+fingerprint = "sha256:dd20d32592101253"
 
 [route]
 kind = "euclid"
@@ -12,5 +13,6 @@ note = "Our I.7 is stated positively, so Euclid's reduction to the impossible is
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:fcb1ba2567bc9c46"

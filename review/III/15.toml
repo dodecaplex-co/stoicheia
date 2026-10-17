@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "The diameter's bound on BC is proved beside a straight line FG more remote than BC, as Euclid sets it out; that some such FG exists is not proved in Lean."
+fingerprint = "sha256:8f609380c65c4ddf"
 
 [route]
 kind = "euclid"
@@ -17,5 +18,6 @@ note = "The statement assumes it (`hnearer : ‖E H‖ < ‖E K‖`), for Defini
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:ec3b76bb968a6d6b"

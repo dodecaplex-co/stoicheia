@@ -5,6 +5,7 @@ hypotheses = [
   "the two straight lines compared as nearer and more remote, on the concave or on the convex circumference, lie on one side of DA (`SameSideOf E F D A`, `SameSideOf K L D A`). As in III.7, the statement gives the equal straight line on the other side by its length, not its inclination, so a comparison across DA does not follow from it.",
 ]
 note = "Nearer and more remote are compared only on one side of DA, as in Euclid's figure; a straight line on one side is not compared with one on the other."
+fingerprint = "sha256:5924e258038472ae"
 
 [route]
 kind = "modified"
@@ -31,5 +32,6 @@ note = "Lean does not appeal to the convex order, which misses a DN ending on th
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:2a04a14da07328ec"

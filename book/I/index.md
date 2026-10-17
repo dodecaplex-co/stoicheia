@@ -2,19 +2,21 @@
 
 # Book I
 
-**48 of 48 propositions proved in Lean.** Key to the table: ✅ proved.
+**All 48 propositions proved in Lean**: 46 as Euclid states them and 2 for a restricted statement ([I.40](40.md), [I.45](45.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. In [I.7](07.md) and [I.23](23.md), one of our tacit rules already contains the proposition, so the proof retraces Euclid's argument within our rules and does not establish the rule. Our proofs of 29 propositions do not use the parallel postulate: I.1–I.28 and I.31. The first proof that does is I.29's, just where Euclid first calls on it.
+
+Key to the table: ✅ proved. The Lean statement is the whole enunciation, a restricted statement, or part of it; each page says how.
 
 **From a triangle to Pythagoras.** Book I opens with an equilateral triangle on a given straight line and closes with Pythagoras' theorem and its converse (I.47, I.48). Heath sees three sections in it (vol. 1, p. 308): triangles, and how their sides and angles compare, up to I.26; parallels, from I.27, with the angles of a triangle (I.32) and the first parallelograms (I.33, I.34); and from I.35 on, areas that are equal without being congruent. Euclid holds his parallel postulate back until I.29, and so do our proofs.
 
-**What each page holds.** First Euclid's enunciation and proof, in Sir Thomas Heath's 1908 translation, with a figure at a glance in Oliver Byrne's red, yellow and blue, and Euclid's own figure with Heath's letters. Heath's square brackets, such as [I. 3], give what Euclid cites. Q. E. D. (*quod erat demonstrandum*, which was to be proved) closes a theorem, and Q. E. F. (*quod erat faciendum*, which was to be done) a problem. Then the Lean: Euclid's sentences are its `--` comments, word for word, each with the Lean that carries it out beneath it, and our own notes are in `/- … -/`. A table of what the proof rests on follows; then the mishnah, our commentary, and a few books and papers to read alongside.
+**What each page holds.** First Euclid's enunciation and proof, in Sir Thomas Heath's 1908 translation, with a figure at a glance in Oliver Byrne's red, yellow and blue, and Euclid's own figure with Heath's letters. Heath's square brackets, such as [I. 3], are his references, pointing to the earlier result a step uses; Euclid himself seldom names one, for, as Heath remarks, "specific quotations of earlier propositions are rare in Euclid" (vol. 1, p. 83). Q. E. D. (*quod erat demonstrandum*, which was to be proved) closes a theorem, and Q. E. F. (*quod erat faciendum*, which was to be done) a problem. Then the Lean: Euclid's sentences are its `--` comments, word for word, with the Lean that carries them out beneath them, and our own notes are in `/- … -/`. A table of what the proof rests on follows; then the mishnah, our commentary, and a few books and papers to read alongside.
 
 **What does the figure say?** That two circles cross, that a point lies between two others, which side of a straight line a point is on: Euclid reads all this off his figure, and Lean wants each one said. We state each as a tacit rule, a named axiom. The rules follow System E, the list of what Euclid reads off his figures drawn up by Jeremy Avigad, Edward Dean and John Mumma, and every page's footer thanks them and the authors of LeanEuclid, which carried System E into Lean. "Intersection 5" and its kin are names from System E: an Intersection rule says when straight lines and circles must meet, and an Intersections rule lets us take a point where they do. Book Zero, in [`Elements/Figure`](../../Elements/Figure), is our small library of facts every figure needs, proved once from the tacit rules and citing no proposition.
 
 **A straight line is whole.** In Lean a straight line is the whole straight line, named by any two of its points (Postulate 1), so producing it usually costs nothing: I.2 and I.5 need no Postulate 2. Where a proof must cut off with I.3 from a straight line produced, as I.11 does, `produce_longer` first makes it long enough. Superposition, Euclid's picking up of a triangle, is one named rule, and only I.4 and I.8 call on it. I.5 speaks of the equal sides produced, so a proof that wants only the angles at the base cites it through `Prop5.base`, which produces the sides anywhere. Where Euclid says "similarly", we write his argument once, for any letters, and use it in each place; where he gives one case and leaves the rest to the reader, Lean asks for every case, and we prove each.
 
-**When must two straight lines meet?** Euclid first calls on Postulate 5 in I.29, and again in I.44. I.1 to I.28 never need it, nor does I.31, which draws its parallel with I.27 alone; every other proposition from I.29 on rests on it. From I.37 on, Euclid often draws a parallel and names the point where it meets another straight line, reading the meeting off his figure. That a straight line meeting one of two parallels meets the other, Proclus states in his attempt to prove the postulate (Heath, vol. 1, p. 207), and under I.31 he infers from I.30 that the parallel through a point is unique (p. 316). Our `Prop30.meet` proves it from I.30, so wherever it is used the Lean cites I.30.
+**When must two straight lines meet?** Euclid first calls on Postulate 5 in I.29, and again in I.44. Our proofs of I.1 to I.28 never use it, nor does our proof of I.31, which draws its parallel with I.27 alone; every other proof from I.29 on rests on it. From I.37 on, Euclid often draws a parallel and names the point where it meets another straight line, reading the meeting off his figure. That a straight line meeting one of two parallels meets the other, Proclus states in his attempt to prove the postulate (Heath, vol. 1, p. 207), and under I.31 he infers from I.30 that the parallel through a point is unique (p. 316). Our `Prop30.meet` proves it from I.30, so wherever it is used the Lean cites I.30.
 
-**Why does the Lean cite more?** "Euclid cites" gives Heath's brackets, and "Lean cites" may name more; the table shows both. A shared step, a lemma proved once and used by many proofs, brings in the propositions it rests on, and the line under each table, "Brought in by shared steps", names them. The tacit rules are listed in full beneath it.
+**Why does the Lean cite more?** The column "Heath's references" gives the propositions in Heath's brackets, and "Lean cites" those the Lean proof cites, which may be more, and now and then fewer; the table shows both. A bracket is Heath's pointer, not a reconstruction of the argument, and where there is none Euclid may still have had his reason. A shared step, a lemma proved once and used by many proofs, brings in the propositions it rests on, and the line under each table, "Brought in by shared steps", names them. The tacit rules are listed in full beneath it.
 
 ## The propositions
 
@@ -22,53 +24,53 @@ Start with the [definitions, postulates and common notions](front.md). What Eucl
 
 Books and papers to read alongside, from Proclus to Lean, are gathered by theme in [the reading list](../../docs/reading.md).
 
-| | Proposition | |
-|---|---|---|
-| ✅ | [I.1](01.md) **An equilateral triangle on a given straight line** | On a given finite straight line to construct an equilateral triangle. |
-| ✅ | [I.2](02.md) **A straight line equal to a given one, placed at a given point** | To place at a given point (as an extremity) a straight line equal to a given straight line. |
-| ✅ | [I.3](03.md) **A straight line equal to the less, cut off from the greater** | Given two unequal straight lines, to cut off from the greater a straight line equal to the less. |
-| ✅ | [I.4](04.md) **Two sides and the contained angle make the base equal** | If two triangles have the two sides equal to two sides respectively, and have the angles contained by the… |
-| ✅ | [I.5](05.md) **In isosceles triangles the angles at the base are equal** | In isosceles triangles the angles at the base are equal to one another, and, if the equal straight lines… |
-| ✅ | [I.6](06.md) **Equal angles are subtended by equal sides** | If in a triangle two angles be equal to one another, the sides which subtend the equal angles will also be… |
-| ✅ | [I.7](07.md) **Equal straight lines cannot meet in another point** | Given two straight lines constructed on a straight line (from its extremities) and meeting in a point,… |
-| ✅ | [I.8](08.md) **Two sides and the base make the angles equal** | If two triangles have the two sides equal to two sides respectively, and have also the base equal to the… |
-| ✅ | [I.9](09.md) **A given rectilineal angle, bisected** | To bisect a given rectilineal angle. |
-| ✅ | [I.10](10.md) **A given finite straight line, bisected** | To bisect a given finite straight line. |
-| ✅ | [I.11](11.md) **A straight line at right angles from a point on a given one** | To draw a straight line at right angles to a given straight line from a given point on it. |
-| ✅ | [I.12](12.md) **A perpendicular straight line from a point not on a given one** | To a given infinite straight line, from a given point which is not on it, to draw a perpendicular straight… |
-| ✅ | [I.13](13.md) **Angles on a straight line equal two right angles** | If a straight line set up on a straight line make angles, it will make either two right angles or angles… |
-| ✅ | [I.14](14.md) **Angles equal to two right angles make a straight line** | If with any straight line, and at a point on it, two straight lines not lying on the same side make the… |
-| ✅ | [I.15](15.md) **Straight lines cutting one another make the vertical angles equal** | If two straight lines cut one another, they make the vertical angles equal to one another. |
-| ✅ | [I.16](16.md) **The exterior angle is greater than either opposite angle** | In any triangle, if one of the sides be produced, the exterior angle is greater than either of the… |
-| ✅ | [I.17](17.md) **Two angles of a triangle are less than two right angles** | In any triangle two angles taken together in any manner are less than two right angles. |
-| ✅ | [I.18](18.md) **The greater side subtends the greater angle** | In any triangle the greater side subtends the greater angle. |
-| ✅ | [I.19](19.md) **The greater angle is subtended by the greater side** | In any triangle the greater angle is subtended by the greater side. |
-| ✅ | [I.20](20.md) **Two sides of a triangle are greater than the remaining one** | In any triangle two sides taken together in any manner are greater than the remaining one. |
-| ✅ | [I.21](21.md) **Straight lines within a triangle are less, their angle greater** | If on one of the sides of a triangle, from its extremities, there be constructed two straight lines… |
-| ✅ | [I.22](22.md) **A triangle out of three given straight lines** | Out of three straight lines, which are equal to three given straight lines, to construct a triangle: thus… |
-| ✅ | [I.23](23.md) **An angle equal to a given one, on a given straight line** | On a given straight line and at a point on it to construct a rectilineal angle equal to a given… |
-| ✅ | [I.24](24.md) **The greater angle has the greater base** | If two triangles have the two sides equal to two sides respectively, but have the one of the angles… |
-| ✅ | [I.25](25.md) **The greater base has the greater angle** | If two triangles have the two sides equal to two sides respectively, but have the base greater than the… |
-| ✅ | [I.26](26.md) **Two angles and one side make the remaining sides equal** | If two triangles have the two angles equal to two angles respectively, and one side equal to one side,… |
-| ✅ | [I.27](27.md) **Equal alternate angles make parallels** | If a straight line falling on two straight lines make the alternate angles equal to one another, the… |
-| ✅ | [I.28](28.md) **Equal exterior and interior angles make parallels** | If a straight line falling on two straight lines make the exterior angle equal to the interior and… |
-| ✅ | [I.29](29.md) **Parallels make the alternate angles equal** | A straight line falling on parallel straight lines makes the alternate angles equal to one another, the… |
-| ✅ | [I.30](30.md) **Parallels to the same straight line are parallel** | Straight lines parallel to the same straight line are also parallel to one another. |
-| ✅ | [I.31](31.md) **A straight line parallel to a given one, through a given point** | Through a given point to draw a straight line parallel to a given straight line. |
-| ✅ | [I.32](32.md) **The three angles of a triangle equal two right angles** | In any triangle, if one of the sides be produced, the exterior angle is equal to the two interior and… |
-| ✅ | [I.33](33.md) **Straight lines joining equal parallels are equal and parallel** | The straight lines joining equal and parallel straight lines (at the extremities which are) in the same… |
-| ✅ | [I.34](34.md) **In parallelograms the opposite sides and angles are equal** | In parallelogrammic areas the opposite sides and angles are equal to one another, and the diameter bisects… |
-| ✅ | [I.35](35.md) **Parallelograms on the same base and in the same parallels are equal** | Parallelograms which are on the same base and in the same parallels are equal to one another. |
-| ✅ | [I.36](36.md) **Parallelograms on equal bases and in the same parallels are equal** | Parallelograms which are on equal bases and in the same parallels are equal to one another. |
-| ✅ | [I.37](37.md) **Triangles on the same base and in the same parallels are equal** | Triangles which are on the same base and in the same parallels are equal to one another. |
-| ✅ | [I.38](38.md) **Triangles on equal bases and in the same parallels are equal** | Triangles which are on equal bases and in the same parallels are equal to one another. |
-| ✅ | [I.39](39.md) **Equal triangles on the same base are in the same parallels** | Equal triangles which are on the same base and on the same side are also in the same parallels. |
-| ✅ | [I.40](40.md) **Equal triangles on equal bases are in the same parallels** | Equal triangles which are on equal bases and on the same side are also in the same parallels. |
-| ✅ | [I.41](41.md) **The parallelogram is double of the triangle** | If a parallelogram have the same base with a triangle and be in the same parallels, the parallelogram is… |
-| ✅ | [I.42](42.md) **A parallelogram equal to a given triangle, in a given angle** | To construct, in a given rectilineal angle, a parallelogram equal to a given triangle. |
-| ✅ | [I.43](43.md) **In any parallelogram the complements are equal** | In any parallelogram the complements of the parallelograms about the diameter are equal to one another. |
-| ✅ | [I.44](44.md) **A parallelogram applied to a given straight line** | To a given straight line to apply, in a given rectilineal angle, a parallelogram equal to a given triangle. |
-| ✅ | [I.45](45.md) **A parallelogram equal to a given rectilineal figure** | To construct, in a given rectilineal angle, a parallelogram equal to a given rectilineal figure. |
-| ✅ | [I.46](46.md) **A square on a given straight line** | On a given straight line to describe a square. |
-| ✅ | [I.47](47.md) **The square on the side subtending the right angle equals the other two** | In right-angled triangles the square on the side subtending the right angle is equal to the squares on the… |
-| ✅ | [I.48](48.md) **If the square equals the other two, the angle is right** | If in a triangle the square on one of the sides be equal to the squares on the remaining two sides of the… |
+| | Proposition | Lean statement | |
+|---|---|---|---|
+| ✅ | [I.1](01.md) **An equilateral triangle on a given straight line** | whole | On a given finite straight line to construct an equilateral triangle. |
+| ✅ | [I.2](02.md) **A straight line equal to a given one, placed at a given point** | whole | To place at a given point (as an extremity) a straight line equal to a given straight line. |
+| ✅ | [I.3](03.md) **A straight line equal to the less, cut off from the greater** | whole | Given two unequal straight lines, to cut off from the greater a straight line equal to the less. |
+| ✅ | [I.4](04.md) **Two sides and the contained angle make the base equal** | whole | If two triangles have the two sides equal to two sides respectively, and have the angles contained by the… |
+| ✅ | [I.5](05.md) **In isosceles triangles the angles at the base are equal** | whole | In isosceles triangles the angles at the base are equal to one another, and, if the equal straight lines… |
+| ✅ | [I.6](06.md) **Equal angles are subtended by equal sides** | whole | If in a triangle two angles be equal to one another, the sides which subtend the equal angles will also be… |
+| ✅ | [I.7](07.md) **Equal straight lines cannot meet in another point** | whole | Given two straight lines constructed on a straight line (from its extremities) and meeting in a point,… |
+| ✅ | [I.8](08.md) **Two sides and the base make the angles equal** | whole | If two triangles have the two sides equal to two sides respectively, and have also the base equal to the… |
+| ✅ | [I.9](09.md) **A given rectilineal angle, bisected** | whole | To bisect a given rectilineal angle. |
+| ✅ | [I.10](10.md) **A given finite straight line, bisected** | whole | To bisect a given finite straight line. |
+| ✅ | [I.11](11.md) **A straight line at right angles from a point on a given one** | whole | To draw a straight line at right angles to a given straight line from a given point on it. |
+| ✅ | [I.12](12.md) **A perpendicular straight line from a point not on a given one** | whole | To a given infinite straight line, from a given point which is not on it, to draw a perpendicular straight… |
+| ✅ | [I.13](13.md) **Angles on a straight line equal two right angles** | whole | If a straight line set up on a straight line make angles, it will make either two right angles or angles… |
+| ✅ | [I.14](14.md) **Angles equal to two right angles make a straight line** | whole | If with any straight line, and at a point on it, two straight lines not lying on the same side make the… |
+| ✅ | [I.15](15.md) **Straight lines cutting one another make the vertical angles equal** | whole | If two straight lines cut one another, they make the vertical angles equal to one another. |
+| ✅ | [I.16](16.md) **The exterior angle is greater than either opposite angle** | whole | In any triangle, if one of the sides be produced, the exterior angle is greater than either of the… |
+| ✅ | [I.17](17.md) **Two angles of a triangle are less than two right angles** | whole | In any triangle two angles taken together in any manner are less than two right angles. |
+| ✅ | [I.18](18.md) **The greater side subtends the greater angle** | whole | In any triangle the greater side subtends the greater angle. |
+| ✅ | [I.19](19.md) **The greater angle is subtended by the greater side** | whole | In any triangle the greater angle is subtended by the greater side. |
+| ✅ | [I.20](20.md) **Two sides of a triangle are greater than the remaining one** | whole | In any triangle two sides taken together in any manner are greater than the remaining one. |
+| ✅ | [I.21](21.md) **Straight lines within a triangle are less, their angle greater** | whole | If on one of the sides of a triangle, from its extremities, there be constructed two straight lines… |
+| ✅ | [I.22](22.md) **A triangle out of three given straight lines** | whole | Out of three straight lines, which are equal to three given straight lines, to construct a triangle: thus… |
+| ✅ | [I.23](23.md) **An angle equal to a given one, on a given straight line** | whole | On a given straight line and at a point on it to construct a rectilineal angle equal to a given… |
+| ✅ | [I.24](24.md) **The greater angle has the greater base** | whole | If two triangles have the two sides equal to two sides respectively, but have the one of the angles… |
+| ✅ | [I.25](25.md) **The greater base has the greater angle** | whole | If two triangles have the two sides equal to two sides respectively, but have the base greater than the… |
+| ✅ | [I.26](26.md) **Two angles and one side make the remaining sides equal** | whole | If two triangles have the two angles equal to two angles respectively, and one side equal to one side,… |
+| ✅ | [I.27](27.md) **Equal alternate angles make parallels** | whole | If a straight line falling on two straight lines make the alternate angles equal to one another, the… |
+| ✅ | [I.28](28.md) **Equal exterior and interior angles make parallels** | whole | If a straight line falling on two straight lines make the exterior angle equal to the interior and… |
+| ✅ | [I.29](29.md) **Parallels make the alternate angles equal** | whole | A straight line falling on parallel straight lines makes the alternate angles equal to one another, the… |
+| ✅ | [I.30](30.md) **Parallels to the same straight line are parallel** | whole | Straight lines parallel to the same straight line are also parallel to one another. |
+| ✅ | [I.31](31.md) **A straight line parallel to a given one, through a given point** | whole | Through a given point to draw a straight line parallel to a given straight line. |
+| ✅ | [I.32](32.md) **The three angles of a triangle equal two right angles** | whole | In any triangle, if one of the sides be produced, the exterior angle is equal to the two interior and… |
+| ✅ | [I.33](33.md) **Straight lines joining equal parallels are equal and parallel** | whole | The straight lines joining equal and parallel straight lines (at the extremities which are) in the same… |
+| ✅ | [I.34](34.md) **In parallelograms the opposite sides and angles are equal** | whole | In parallelogrammic areas the opposite sides and angles are equal to one another, and the diameter bisects… |
+| ✅ | [I.35](35.md) **Parallelograms on the same base and in the same parallels are equal** | whole | Parallelograms which are on the same base and in the same parallels are equal to one another. |
+| ✅ | [I.36](36.md) **Parallelograms on equal bases and in the same parallels are equal** | whole | Parallelograms which are on equal bases and in the same parallels are equal to one another. |
+| ✅ | [I.37](37.md) **Triangles on the same base and in the same parallels are equal** | whole | Triangles which are on the same base and in the same parallels are equal to one another. |
+| ✅ | [I.38](38.md) **Triangles on equal bases and in the same parallels are equal** | whole | Triangles which are on equal bases and in the same parallels are equal to one another. |
+| ✅ | [I.39](39.md) **Equal triangles on the same base are in the same parallels** | whole | Equal triangles which are on the same base and on the same side are also in the same parallels. |
+| ✅ | [I.40](40.md) **Equal triangles on equal bases are in the same parallels** | restricted | Equal triangles which are on equal bases and on the same side are also in the same parallels. |
+| ✅ | [I.41](41.md) **The parallelogram is double of the triangle** | whole | If a parallelogram have the same base with a triangle and be in the same parallels, the parallelogram is… |
+| ✅ | [I.42](42.md) **A parallelogram equal to a given triangle, in a given angle** | whole | To construct, in a given rectilineal angle, a parallelogram equal to a given triangle. |
+| ✅ | [I.43](43.md) **In any parallelogram the complements are equal** | whole | In any parallelogram the complements of the parallelograms about the diameter are equal to one another. |
+| ✅ | [I.44](44.md) **A parallelogram applied to a given straight line** | whole | To a given straight line to apply, in a given rectilineal angle, a parallelogram equal to a given triangle. |
+| ✅ | [I.45](45.md) **A parallelogram equal to a given rectilineal figure** | restricted | To construct, in a given rectilineal angle, a parallelogram equal to a given rectilineal figure. |
+| ✅ | [I.46](46.md) **A square on a given straight line** | whole | On a given straight line to describe a square. |
+| ✅ | [I.47](47.md) **The square on the side subtending the right angle equals the other two** | whole | In right-angled triangles the square on the side subtending the right angle is equal to the squares on the… |
+| ✅ | [I.48](48.md) **If the square equals the other two, the angle is right** | whole | If in a triangle the square on one of the sides be equal to the squares on the remaining two sides of the… |

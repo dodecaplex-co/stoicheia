@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "Stated as an equality: two circles through A and B with similar segments on one side of AB are one circle."
+fingerprint = "sha256:3f7601e5fce9aeab"
 
 [route]
 kind = "euclid"
@@ -17,5 +18,6 @@ note = "Simson's preliminary (Heath, vol. 2, p. 53): by III.10 the circles meet 
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:1084d9eefcd3f4c9"

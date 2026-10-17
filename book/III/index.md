@@ -2,15 +2,17 @@
 
 # Book III
 
-**37 of 37 propositions proved in Lean.** Key to the table: ✅ proved.
+**All 37 propositions proved in Lean**: 29 as Euclid states them, 5 for a restricted statement ([III.7](07.md), [III.8](08.md), [III.14](14.md), [III.17](17.md), [III.25](25.md)) and 3 in part, leaving clauses to Euclid's words ([III.16](16.md), [III.24](24.md), [III.31](31.md)). 29 proofs follow Euclid's argument, 7 follow it with one step changed ([III.5](05.md), [III.6](06.md), [III.8](08.md), [III.21](21.md), [III.26](26.md), [III.27](27.md), [III.29](29.md)) and 1 argues differently ([III.24](24.md)); each page says how. In [III.2](02.md), [III.5](05.md) and [III.6](06.md), one of our tacit rules already contains the proposition, so the proof retraces Euclid's argument within our rules and does not establish the rule. Our proofs of 17 propositions do not use the parallel postulate: III.1–III.13 and III.16–III.19. The first proof that does is III.14's.
+
+Key to the table: ✅ proved. The Lean statement is the whole enunciation, a restricted statement, or part of it; each page says how.
 
 **From the centre to the tangent.** Book I drew circles to find points; Book III studies the circle itself: its centre, the straight lines in it, those that touch it, the angles in its segments, the right angle in a semicircle among them (III.31), and the circumferences those angles stand on. A diameter, in Books I and II often a parallelogram's diagonal, is the circle's again (Definition I.17). The pages are laid out as in Book I, whose [introduction](../I/index.md) walks through one.
 
-**"Let the centre of the circle ABC be taken."** Euclid says it in III.2, citing III.1, and often after. In Lean a given circle has a centre only by hypothesis. Where Euclid cites III.1 for it, the Lean does too: a circle has only one centre (`centre_unique`), so III.1 finds the one given. Later he often takes the centre with no citation, and the Lean takes it straight from the hypothesis, or, in III.35 to III.37, by III.1 all the same. He also bisects a straight line, draws one at right angles or copies an angle without citing I.10, I.11, I.12 or I.23; where the Lean needs those steps, it cites them, and the table shows both. One rule of System E, Circle 2, is III.2 itself, and III.1 calls on it before III.2 is proved.
+**"Let the centre of the circle ABC be taken."** Euclid says it in III.2, where Heath's bracket gives III.1, and often after. In our foundations a given circle has a centre only by hypothesis. Where Heath's bracket gives III.1 for it, the Lean cites III.1 too: a circle has only one centre (`centre_unique`), so III.1 finds the one given. Later Euclid often takes the centre with no bracket, and the Lean takes it straight from the hypothesis, or, in III.35 to III.37, by III.1 all the same. He also bisects a straight line, draws one at right angles or copies an angle with no bracket for I.10, I.11, I.12 or I.23; where the Lean needs those steps, it cites them, and the table shows both. One rule of System E, Circle 2, already contains III.2, and III.1 calls on it before III.2 is proved; so our proof of III.2 retraces Euclid's argument within our rules, and does not derive it from anything weaker.
 
 **Words, not axioms.** Book III's words are definitions in [`DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean), none an axiom. Equal circles (`EqualCircles`) have equal radii, and Heath finds "nothing technically wrong in saying 'By *equal circles* I mean circles with equal radii'" (vol. 2, p. 2). A straight line touches a circle (`Touches`) "which, meeting the circle and being produced, does not cut the circle" (Definition III.2): it meets the circle, but never in two points. We read circles touching one another (`TouchesInternally`, `TouchesExternally`) as Isaac Todhunter does, by Heath's report: they cut nowhere at all.
 
-**How long is a circumference?** Lean has no magnitude for a curve, so we measure a circumference by twice the angle standing on it at the circumference (Definition III.9; `circumference`, `standing`): its angle at the centre, when it is less than a semicircle (III.20). Euclid compares circumferences only in one circle or in equal circles, and there this measure says exactly when two are equal. In unequal circles it would call two circumferences equal whenever their angles are, though one is longer than the other, so every statement keeps his "in equal circles".
+**How long is a circumference?** Our foundations have no magnitude for a curve, so we measure a circumference by twice the angle standing on it at the circumference (Definition III.9; `circumference`, `standing`): its angle at the centre, when it is less than a semicircle (III.20). Euclid compares circumferences only in one circle or in equal circles, and there this measure says exactly when two are equal. In unequal circles it would call two circumferences equal whenever their angles are, though one is longer than the other, so every statement keeps his "in equal circles". In III.26 and III.27 the conclusion would hold without it, since the measure carries no radius, and the proofs keep it on Euclid's route; in III.28 and III.29, where the measures meet straight lines, it does real work.
 
 **"Therefore EF is equal to EG."** III.14 reads it off the equal squares on EF and EG, one of the steps Euclid takes for granted again and again. We prove each once, and the line under each page's table names those its proof calls on. In [`Squares.lean`](../../Elements/BookIII/Squares.lean), equal squares are on equal straight lines (`BookI.Prop46.sq`), and the perpendicular from the centre falls between the ends of a straight line in the circle (`foot_between`). I.47 is said of the squares on straight lines, as in Book II. With the squares of I.46 and I.47, Postulate 5 first comes into Book III, at III.14.
 
@@ -18,7 +20,7 @@
 
 **"From this it is manifest."** So Euclid opens the porisms to III.1 and III.16, and later proofs cite them: the centre lies on a straight line bisecting a straight line in the circle at right angles (III.9, III.10), and the straight line at right angles to a diameter at its end touches the circle (III.17, III.33, III.37).
 
-**Where our statements part from Euclid's.** III.1 is stated for a circle that has a centre, and proves that the point it constructs is that centre. III.9 leaves out "within", which its proof never uses and III.25 cannot grant. III.12, Heron's addition to III.11 in Heath's square brackets, is stated and proved like the rest. Our angles are made by two straight lines, so III.16 and III.31 leave their mixed angles, "contained by a straight line and a circumference" (Definition III.7), to Euclid's words. Lean cannot give a segment without its circle, so III.25 is given the circle, a straight line in it and the segment's side. Each of these pages tells why.
+**Where our statements part from Euclid's.** III.1 is stated for a circle that has a centre, and proves that the point it constructs is that centre. III.9 leaves out "within", which its proof never uses and III.25 cannot grant. III.12, Heron's addition to III.11 in Heath's square brackets, is stated and proved like the rest. III.14 asks, as Euclid's proof does, that neither straight line pass through the centre, and so says nothing of diameters. Our angles are made by two straight lines, so III.16 and III.31 leave their mixed angles, "contained by a straight line and a circumference" (Definition III.7), to Euclid's words, with no Lean beneath them. III.24 concludes that the circles are equal and the circumferences equal in measure, not that one segment can be laid on the other. Our representation of a segment includes its circle, so III.25 is given the circle, a straight line in it and the segment's side, not the segment alone. Each of these pages tells why.
 
 ## The propositions
 
@@ -26,42 +28,42 @@ Start with the [definitions](front.md). What Euclid takes for granted along the 
 
 Books and papers to read alongside, from Proclus to Lean, are gathered by theme in [the reading list](../../docs/reading.md).
 
-| | Proposition | |
-|---|---|---|
-| ✅ | [III.1](01.md) **The centre of a given circle** | To find the centre of a given circle. |
-| ✅ | [III.2](02.md) **The straight line joining two points falls within the circle** | If on the circumference of a circle two points be taken at random, the straight line joining the points… |
-| ✅ | [III.3](03.md) **Through the centre, to bisect is to cut at right angles** | If in a circle a straight line through the centre bisect a straight line not through the centre, it also… |
-| ✅ | [III.4](04.md) **Straight lines not through the centre do not bisect one another** | If in a circle two straight lines cut one another which are not through the centre, they do not bisect one… |
-| ✅ | [III.5](05.md) **Circles cutting one another do not have the same centre** | If two circles cut one another, they will not have the same centre. |
-| ✅ | [III.6](06.md) **Circles touching one another do not have the same centre** | If two circles touch one another, they will not have the same centre. |
-| ✅ | [III.7](07.md) **Straight lines falling from a point on a diameter** | If on the diameter of a circle a point be taken which is not the centre of the circle, and from the point… |
-| ✅ | [III.8](08.md) **Straight lines falling from a point outside a circle** | If a point be taken outside a circle and from the point straight lines be drawn through to the circle, one… |
-| ✅ | [III.9](09.md) **More than two equal straight lines fall only from the centre** | If a point be taken within a circle, and more than two equal straight lines fall from the point on the… |
-| ✅ | [III.10](10.md) **A circle does not cut a circle at more points than two** | A circle does not cut a circle at more points than two. |
-| ✅ | [III.11](11.md) **The centres of circles touching internally** | If two circles touch one another internally, and their centres be taken, the straight line joining their… |
-| ✅ | [III.12](12.md) **The centres of circles touching externally** | If two circles touch one another externally, the straight line joining their centres will pass through the… |
-| ✅ | [III.13](13.md) **A circle does not touch a circle at more points than one** | A circle does not touch a circle at more points than one, whether it touch it internally or externally. |
-| ✅ | [III.14](14.md) **Equal straight lines are equally distant from the centre** | In a circle equal straight lines are equally distant from the centre, and those which are equally distant… |
-| ✅ | [III.15](15.md) **Of straight lines in a circle the diameter is greatest** | Of straight lines in a circle the diameter is greatest, and of the rest the nearer to the centre is always… |
-| ✅ | [III.16](16.md) **The straight line at right angles to a diameter from its extremity** | The straight line drawn at right angles to the diameter of a circle from its extremity will fall outside… |
-| ✅ | [III.17](17.md) **A straight line touching a given circle, from a given point** | From a given point to draw a straight line touching a given circle. |
-| ✅ | [III.18](18.md) **The straight line from the centre is perpendicular to the tangent** | If a straight line touch a circle, and a straight line be joined from the centre to the point of contact,… |
-| ✅ | [III.19](19.md) **The centre is on the straight line at right angles to the tangent** | If a straight line touch a circle, and from the point of contact a straight line be drawn at right angles… |
-| ✅ | [III.20](20.md) **The angle at the centre is double of that at the circumference** | In a circle the angle at the centre is double of the angle at the circumference, when the angles have the… |
-| ✅ | [III.21](21.md) **Angles in the same segment are equal** | In a circle the angles in the same segment are equal to one another. |
-| ✅ | [III.22](22.md) **Opposite angles of quadrilaterals in circles equal two right angles** | The opposite angles of quadrilaterals in circles are equal to two right angles. |
-| ✅ | [III.23](23.md) **Similar segments on the same straight line cannot be unequal** | On the same straight line there cannot be constructed two similar and unequal segments of circles on the… |
-| ✅ | [III.24](24.md) **Similar segments on equal straight lines are equal** | Similar segments of circles on equal straight lines are equal to one another. |
-| ✅ | [III.25](25.md) **The complete circle of a given segment** | Given a segment of a circle, to describe the complete circle of which it is a segment. |
-| ✅ | [III.26](26.md) **Equal angles stand on equal circumferences** | In equal circles equal angles stand on equal circumferences, whether they stand at the centres or at the… |
-| ✅ | [III.27](27.md) **Angles standing on equal circumferences are equal** | In equal circles angles standing on equal circumferences are equal to one another, whether they stand at… |
-| ✅ | [III.28](28.md) **Equal straight lines cut off equal circumferences** | In equal circles equal straight lines cut off equal circumferences, the greater equal to the greater and… |
-| ✅ | [III.29](29.md) **Equal circumferences are subtended by equal straight lines** | In equal circles equal circumferences are subtended by equal straight lines. |
-| ✅ | [III.30](30.md) **A given circumference, bisected** | To bisect a given circumference. |
-| ✅ | [III.31](31.md) **The angle in the semicircle is right** | In a circle the angle in the semicircle is right, that in a greater segment less than a right angle, and… |
-| ✅ | [III.32](32.md) **Angles with the tangent equal those in the alternate segments** | If a straight line touch a circle, and from the point of contact there be drawn across, in the circle, a… |
-| ✅ | [III.33](33.md) **A segment admitting a given angle, on a given straight line** | On a given straight line to describe a segment of a circle admitting an angle equal to a given rectilineal… |
-| ✅ | [III.34](34.md) **A segment admitting a given angle, cut off from a given circle** | From a given circle to cut off a segment admitting an angle equal to a given rectilineal angle. |
-| ✅ | [III.35](35.md) **The rectangles contained by the segments are equal** | If in a circle two straight lines cut one another, the rectangle contained by the segments of the one is… |
-| ✅ | [III.36](36.md) **The rectangle equals the square on the tangent** | If a point be taken outside a circle and from it there fall on the circle two straight lines, and if one… |
-| ✅ | [III.37](37.md) **If the rectangle equals the square, the straight line touches** | If a point be taken outside a circle and from the point there fall on the circle two straight lines, if… |
+| | Proposition | Lean statement | |
+|---|---|---|---|
+| ✅ | [III.1](01.md) **The centre of a given circle** | whole | To find the centre of a given circle. |
+| ✅ | [III.2](02.md) **The straight line joining two points falls within the circle** | whole | If on the circumference of a circle two points be taken at random, the straight line joining the points… |
+| ✅ | [III.3](03.md) **Through the centre, to bisect is to cut at right angles** | whole | If in a circle a straight line through the centre bisect a straight line not through the centre, it also… |
+| ✅ | [III.4](04.md) **Straight lines not through the centre do not bisect one another** | whole | If in a circle two straight lines cut one another which are not through the centre, they do not bisect one… |
+| ✅ | [III.5](05.md) **Circles cutting one another do not have the same centre** | whole | If two circles cut one another, they will not have the same centre. |
+| ✅ | [III.6](06.md) **Circles touching one another do not have the same centre** | whole | If two circles touch one another, they will not have the same centre. |
+| ✅ | [III.7](07.md) **Straight lines falling from a point on a diameter** | restricted | If on the diameter of a circle a point be taken which is not the centre of the circle, and from the point… |
+| ✅ | [III.8](08.md) **Straight lines falling from a point outside a circle** | restricted | If a point be taken outside a circle and from the point straight lines be drawn through to the circle, one… |
+| ✅ | [III.9](09.md) **More than two equal straight lines fall only from the centre** | whole | If a point be taken within a circle, and more than two equal straight lines fall from the point on the… |
+| ✅ | [III.10](10.md) **A circle does not cut a circle at more points than two** | whole | A circle does not cut a circle at more points than two. |
+| ✅ | [III.11](11.md) **The centres of circles touching internally** | whole | If two circles touch one another internally, and their centres be taken, the straight line joining their… |
+| ✅ | [III.12](12.md) **The centres of circles touching externally** | whole | If two circles touch one another externally, the straight line joining their centres will pass through the… |
+| ✅ | [III.13](13.md) **A circle does not touch a circle at more points than one** | whole | A circle does not touch a circle at more points than one, whether it touch it internally or externally. |
+| ✅ | [III.14](14.md) **Equal straight lines are equally distant from the centre** | restricted | In a circle equal straight lines are equally distant from the centre, and those which are equally distant… |
+| ✅ | [III.15](15.md) **Of straight lines in a circle the diameter is greatest** | whole | Of straight lines in a circle the diameter is greatest, and of the rest the nearer to the centre is always… |
+| ✅ | [III.16](16.md) **The straight line at right angles to a diameter from its extremity** | part | The straight line drawn at right angles to the diameter of a circle from its extremity will fall outside… |
+| ✅ | [III.17](17.md) **A straight line touching a given circle, from a given point** | restricted | From a given point to draw a straight line touching a given circle. |
+| ✅ | [III.18](18.md) **The straight line from the centre is perpendicular to the tangent** | whole | If a straight line touch a circle, and a straight line be joined from the centre to the point of contact,… |
+| ✅ | [III.19](19.md) **The centre is on the straight line at right angles to the tangent** | whole | If a straight line touch a circle, and from the point of contact a straight line be drawn at right angles… |
+| ✅ | [III.20](20.md) **The angle at the centre is double of that at the circumference** | whole | In a circle the angle at the centre is double of the angle at the circumference, when the angles have the… |
+| ✅ | [III.21](21.md) **Angles in the same segment are equal** | whole | In a circle the angles in the same segment are equal to one another. |
+| ✅ | [III.22](22.md) **Opposite angles of quadrilaterals in circles equal two right angles** | whole | The opposite angles of quadrilaterals in circles are equal to two right angles. |
+| ✅ | [III.23](23.md) **Similar segments on the same straight line cannot be unequal** | whole | On the same straight line there cannot be constructed two similar and unequal segments of circles on the… |
+| ✅ | [III.24](24.md) **Similar segments on equal straight lines are equal** | part | Similar segments of circles on equal straight lines are equal to one another. |
+| ✅ | [III.25](25.md) **The complete circle of a given segment** | restricted | Given a segment of a circle, to describe the complete circle of which it is a segment. |
+| ✅ | [III.26](26.md) **Equal angles stand on equal circumferences** | whole | In equal circles equal angles stand on equal circumferences, whether they stand at the centres or at the… |
+| ✅ | [III.27](27.md) **Angles standing on equal circumferences are equal** | whole | In equal circles angles standing on equal circumferences are equal to one another, whether they stand at… |
+| ✅ | [III.28](28.md) **Equal straight lines cut off equal circumferences** | whole | In equal circles equal straight lines cut off equal circumferences, the greater equal to the greater and… |
+| ✅ | [III.29](29.md) **Equal circumferences are subtended by equal straight lines** | whole | In equal circles equal circumferences are subtended by equal straight lines. |
+| ✅ | [III.30](30.md) **A given circumference, bisected** | whole | To bisect a given circumference. |
+| ✅ | [III.31](31.md) **The angle in the semicircle is right** | part | In a circle the angle in the semicircle is right, that in a greater segment less than a right angle, and… |
+| ✅ | [III.32](32.md) **Angles with the tangent equal those in the alternate segments** | whole | If a straight line touch a circle, and from the point of contact there be drawn across, in the circle, a… |
+| ✅ | [III.33](33.md) **A segment admitting a given angle, on a given straight line** | whole | On a given straight line to describe a segment of a circle admitting an angle equal to a given rectilineal… |
+| ✅ | [III.34](34.md) **A segment admitting a given angle, cut off from a given circle** | whole | From a given circle to cut off a segment admitting an angle equal to a given rectilineal angle. |
+| ✅ | [III.35](35.md) **The rectangles contained by the segments are equal** | whole | If in a circle two straight lines cut one another, the rectangle contained by the segments of the one is… |
+| ✅ | [III.36](36.md) **The rectangle equals the square on the tangent** | whole | If a point be taken outside a circle and from it there fall on the circle two straight lines, and if one… |
+| ✅ | [III.37](37.md) **If the rectangle equals the square, the straight line touches** | whole | If a point be taken outside a circle and from the point there fall on the circle two straight lines, if… |

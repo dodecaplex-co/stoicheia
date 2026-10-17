@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "Covers equal circumferences of any size, less than a semicircle, a semicircle or greater, compared by the angle measure."
+fingerprint = "sha256:88bb35fd9003b0a0"
 
 [route]
 kind = "modified"
@@ -18,5 +19,6 @@ note = "Euclid's figure has each centre beyond its straight line. The Lean sorts
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:4d3dfd4d6598633e"

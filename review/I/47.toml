@@ -5,6 +5,7 @@
 [statement]
 scope = "full"
 note = "Proved for squares standing outward, as Euclid describes them; inward squares are equal to these (`Prop46.square_eq`), and `Prop47.sq` states it of any."
+fingerprint = "sha256:d6269e6f56742e6b"
 
 [route]
 kind = "euclid"
@@ -27,5 +28,6 @@ note = "The statement is about the three given squares, so nothing remains to do
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:a0fc7319bcdf680a"

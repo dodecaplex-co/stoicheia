@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "The rectangle AD, DC is equal to the square on the tangent DB, whether or not DCA passes through the centre; the circle comes with a centre."
+fingerprint = "sha256:cbb9532a09c29817"
 
 [route]
 kind = "euclid"
@@ -11,5 +12,6 @@ note = "The circle comes with a centre (`∃ F, Centre F ABC`), and the proof fi
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:35e8fdec862fbd29"

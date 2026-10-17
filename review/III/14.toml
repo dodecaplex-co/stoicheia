@@ -5,6 +5,7 @@ hypotheses = [
   "neither AB nor CD passes through the centre (`hE_AB : ¬ Collinear A B E`, `hE_CD : ¬ Collinear C D E`)",
 ]
 note = "Proved for straight lines not through the centre; two diameters, or a diameter and another straight line, are not covered."
+fingerprint = "sha256:ab5dba1e761e8618"
 
 [route]
 kind = "euclid"
@@ -25,5 +26,6 @@ note = "The converse needs no Lean of its own until 'And, since AE is equal to C
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:2c5b7de80bddf235"

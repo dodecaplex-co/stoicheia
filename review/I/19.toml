@@ -1,11 +1,13 @@
 # review/I/19.toml
 [statement]
 scope = "full"
+fingerprint = "sha256:e765e06d4d7f208e"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:aeee0c79e4c3b334"

@@ -2,11 +2,13 @@
 [statement]
 scope = "full"
 note = "'In the same directions' is stated as B and D lying on one side of AC (`hdir`)."
+fingerprint = "sha256:baa852b497ce631e"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:fec349a6407fd3c6"

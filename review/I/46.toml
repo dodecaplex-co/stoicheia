@@ -2,11 +2,13 @@
 [statement]
 scope = "full"
 note = "The square stands on whichever side of AB a given point names."
+fingerprint = "sha256:aa4983891ecca1b7"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:1bd2ea836e5d51aa"

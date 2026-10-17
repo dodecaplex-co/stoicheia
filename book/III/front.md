@@ -25,4 +25,4 @@ Euclid's words on the left, the Lean that stands for them on the right. Words wi
 
 ---
 
-<sub>Euclid's text: T. L. Heath, *The Thirteen Books of Euclid's Elements*, vol. 2 (Cambridge, 1908), pp. 1–2; scan leaves n13–n14. Public domain. Transcribed from the Internet Archive scan thirteenbookseu00heibgoog.</sub>
+<sub>Euclid's text: T. L. Heath, *The Thirteen Books of Euclid's Elements*, vol. 2 (Cambridge, 1908), pp. 1–2; [scan leaves n13–n14](https://archive.org/details/thirteenbookseu00heibgoog/page/n13). Public domain. Transcribed from the Internet Archive scan [thirteenbookseu00heibgoog](https://archive.org/details/thirteenbookseu00heibgoog).</sub>

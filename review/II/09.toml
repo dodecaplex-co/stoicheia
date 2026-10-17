@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "For D on either side of C: Euclid's figure puts D between C and B, and the other side follows by exchanging A and B."
+fingerprint = "sha256:d7458f8b6387229f"
 
 [route]
 kind = "euclid"
@@ -15,5 +16,6 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:4816c01cd3768858"

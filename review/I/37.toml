@@ -2,6 +2,7 @@
 [statement]
 scope = "full"
 note = "'In the same parallels' is read as two whole parallel straight lines, so the vertices A and D may be one point, as I.41 needs."
+fingerprint = "sha256:562b9178b7b445ef"
 
 [route]
 kind = "euclid"
@@ -11,5 +12,6 @@ case = "the vertices A and D apart"
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:d59da7f6e4de693e"

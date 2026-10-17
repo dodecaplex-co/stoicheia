@@ -1,6 +1,7 @@
 # review/I/24.toml
 [statement]
 scope = "full"
+fingerprint = "sha256:080838b879590cc3"
 
 [route]
 kind = "euclid"
@@ -13,5 +14,6 @@ note = "Euclid draws F beyond EG and leaves the rest to the reader. The Lean tak
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:1b926e478a28d546"

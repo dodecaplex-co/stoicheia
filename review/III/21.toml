@@ -1,6 +1,7 @@
 [statement]
 scope = "full"
 note = "The angles at any two points of one segment are equal, in a segment of any size; the circle comes with a centre."
+fingerprint = "sha256:8d61fc6e9d4c7398"
 
 [route]
 kind = "modified"
@@ -12,5 +13,6 @@ note = "The circle comes with a centre (`∃ F, Centre F ABCD`), which Euclid ta
 
 [review]
 stage = "exceptions"
-commit = "22e50b8"
+commit = "dcb1767"
 reviewer = "Claude Opus 5.5"
+lean = "sha256:bc1d1c7450d6237e"
