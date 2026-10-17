@@ -2,6 +2,7 @@ import Elements.Figure.Basics
 import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop08
+import Elements.BookI.Prop20
 import Elements.BookIII.Prop26
 
 /-!
@@ -15,6 +16,40 @@ carries it out.
 namespace Elements.BookIII
 
 open Tacit
+
+/-- Where the centre `K` lies: on `C`'s side of `AB`, on `AB`, or on the other side. -/
+theorem Prop28.sides {A B C K : Point} (hABC : Triangle A B C) :
+    SameSideOf K C A B ∨ Collinear A B K ∨ OppositeSidesOf K C A B := by
+  obtain ⟨L, hA, hB⟩ := Postulate1 A B hABC.ne₁₂
+  have hC : ¬ OnLine C L := hABC.off_line hA hB
+  by_cases hK : OnLine K L
+  · exact Or.inr (Or.inl ⟨L, hA, hB, hK⟩)
+  by_cases hs : SameSide K C L
+  · exact Or.inl (SameSideOf.of_line hABC.ne₁₂ hA hB hs)
+  · exact Or.inr (Or.inr (OppositeSidesOf.of_line hABC.ne₁₂ hA hB ⟨hK, hC, hs⟩))
+
+/-- In equal circles, a straight line equal to a diameter of the one is a diameter of the
+other: else, with the radii to its ends, it would be less than two radii. [I. 20] -/
+theorem Prop28.diameter {A B D E K L : Point} {α β : Circle} (hK : Centre K α) (hL : Centre L β)
+    (hA : OnCircle A α) (hB : OnCircle B α) (hD : OnCircle D β) (hE : OnCircle E β)
+    (hr : ‖K A‖ = ‖L D‖) (hAKB : Between A K B) (hAB : ‖A B‖ = ‖D E‖) (hDE : D ≠ E) :
+    Between D L E := by
+  have hAB' : ‖A B‖ = ‖K A‖ + ‖K A‖ := by
+    rw [← len_add_of_between hAKB, len_symm A K, Definition15 hK hB hA]
+  by_cases hcol : Collinear D E L
+  · obtain ⟨M, hD_M, hE_M, hL_M⟩ := hcol
+    exact between_of_inside_chord hL_M hD_M hE_M (centre_inside hL) hD hE hDE
+  · have h20 := (BookI.Prop20 (show Triangle D E L from hcol).cab).1
+    rw [← hAB, hAB', len_symm D L, hr, Definition15 hL hE hD] at h20
+    exact absurd h20 (lt_irrefl _)
+
+/-- The centre does not lie on the side of the less circumference: the circumference
+beyond the centre is less than a semicircle, and the one on its side greater. -/
+theorem Prop28.beyond {X Y P Q M : Point} {α : Circle} (hM : Centre M α) (hX : OnCircle X α)
+    (hY : OnCircle Y α) (hPQ : OppositeSidesOf P Q X Y)
+    (hle : circumference α X Q Y ≤ circumference α X P Y) : ¬ SameSideOf M Q X Y := fun hMQ =>
+  hle (lt_trans (Circumference.lt_semicircle hM hX hY (hMQ.trans_opposite hPQ.symm))
+    (Circumference.gt_semicircle hM hX hY hMQ))
 
 /-- In equal circles equal straight lines cut off equal circumferences, the greater equal to the
 greater and the less to the less. -/
@@ -30,18 +65,53 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- I say that the greater circumference ACB is equal to the greater circumference DFE, and
   -- the less circumference AGB to DHE.
   -- For let the centres K, L of the circles be taken, and let AK, KB, DL, LE be joined.
+  obtain ⟨K, L, -, -, hK, hL, -⟩ := id hcircles
   -- Now, since the circles are equal,
   -- the radii are also equal;
+  have hr : ‖K A‖ = ‖L D‖ := hcircles.radii hK hL hA hD
+  have hrB : ‖K B‖ = ‖L E‖ := hcircles.radii hK hL hB hE
+  /- Euclid's figure has `K` beyond the less circumference `AGB`, on `C`'s side of `AB`.
+     It is not on `G`'s side (`Prop28.beyond`); if it is on `AB`, then `AB` is a diameter, and
+     so is `DE` (`Prop28.diameter`), and the four circumferences are semicircles. -/
+  rcases Prop28.sides (K := K) hCG.triangle with hKC | ⟨M, hA_M, hB_M, hK_M⟩ | hKC
+  rotate_left
+  · have hAKB := between_of_inside_chord hK_M hA_M hB_M (centre_inside hK) hA hB hCG.1
+    have hDLE := Prop28.diameter hK hL hA hB hD hE hr hAKB hAB hFH.1
+    rw [Circumference.semicircle hK hA hB hAKB hCG.symm.triangle,
+      Circumference.semicircle hK hA hB hAKB hCG.triangle,
+      Circumference.semicircle hL hD hE hDLE hFH.symm.triangle,
+      Circumference.semicircle hL hD hE hDLE hFH.triangle]
+    exact ⟨rfl, rfl⟩
+  · exact absurd (OppositeSidesOf.sameSideOf hKC.symm hCG) (Prop28.beyond hK hA hB hCG hABC)
+  rcases Prop28.sides (K := L) hFH.triangle with hLF | ⟨M, hD_M, hE_M, hL_M⟩ | hLF
+  rotate_left
+  · have hDLE := between_of_inside_chord hL_M hD_M hE_M (centre_inside hL) hD hE hFH.1
+    have hAKB := Prop28.diameter hL hK hD hE hA hB hr.symm hDLE hAB.symm hCG.1
+    exact False.elim (hKC.triangle.acb (collinear_of_between hAKB))
+  · exact absurd (OppositeSidesOf.sameSideOf hLF.symm hFH) (Prop28.beyond hL hD hE hFH hDEF)
+  have hKG : OppositeSidesOf K G A B := hKC.trans_opposite hCG
+  have hLH : OppositeSidesOf L H D E := hLF.trans_opposite hFH
   -- therefore the two sides AK, KB are equal to the two sides DL, LE;
   -- and the base AB is equal to the base DE;
   -- therefore the angle AKB is equal to the angle DLE. [I. 8]
+  have hAKB : ∠ A K B = ∠ D L E := BookI.Prop8 hKG.triangle.cab hLH.triangle.cab hr hrB hAB
   -- But equal angles stand on equal circumferences, when they are at the centres; [III. 26]
+  /- C and F name sides, not necessarily points of the circles. Take a point of each
+     circle on that side to apply III.26. -/
+  obtain ⟨X, hX, hXG⟩ := exists_onCircle_oppositeSidesOf hA hB hCG.symm.triangle
+  obtain ⟨Y, hY, hYH⟩ := exists_onCircle_oppositeSidesOf hD hE hFH.symm.triangle
   -- therefore the circumference AGB is equal to DHE.
+  have hless : circumference ABC A G B = circumference DEF D H E :=
+    (Prop26 hcircles hK hL hX hA hB hY hD hE hXG hYH).1 hKG hLH hAKB
   -- And the whole circle ABC is also equal to the whole circle DEF;
+  have hw₁ := Circumference.whole ⟨K, hK⟩ hA hB hCG.symm
+  have hw₂ := Circumference.whole ⟨L, hL⟩ hD hE hFH.symm
   -- therefore the circumference ACB which remains is also equal to the circumference DFE which
   -- remains.
+  have hgreater : circumference ABC A C B = circumference DEF D F E :=
+    CommonNotion3 (hw₁.trans hw₂.symm) hless
   -- Therefore etc.
+  exact ⟨hgreater, hless⟩
   -- Q. E. D.
-  sorry
 
 end Elements.BookIII
