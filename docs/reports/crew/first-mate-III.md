@@ -207,7 +207,7 @@ centre, and `on X Y Z` for `OnCircle` of each point; the exact Lean is in
 ## Scratch
 
 The statements were tested in scratch files, committed, not built, in
-[`scratch-III/`](scratch-III), as Book II's were. Each compiles with
+[`scratch-III/`](https://github.com/jackChallis/stoicheia/tree/81d72f5/docs/reports/crew/scratch-III), as Book II's were. Each compiles with
 `lake env lean docs/reports/crew/scratch-III/T20.lean`, against the sketches: a scratch
 proof cites a proposition's statement, as a sailor's will.
 

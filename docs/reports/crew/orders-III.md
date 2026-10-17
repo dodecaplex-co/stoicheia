@@ -1,5 +1,9 @@
 # Sailing orders, Book III: Propositions 1–37
 
+*The scratch proofs these orders name were removed once Book III was proved; they are
+at commit 81d72f5
+([scratch-III at 81d72f5](https://github.com/jackChallis/stoicheia/tree/81d72f5/docs/reports/crew/scratch-III)).*
+
 Every sailor, Claude or Codex, follows these orders word for word. Your proposition
 is III.N; NN is N in two digits.
 
@@ -14,7 +18,7 @@ any proposition of Book III by its statement. Books I and II are proved: cite th
 circumference BKC" and "the angle standing on a circumference", and why the circles
 carry their centres; `heath/III/NN.md` and `Elements/BookIII/PropNN.lean`; your note
 under "For the sailors" in `docs/reports/crew/first-mate-III.md`, and any scratch proof it names, which is in
-`docs/reports/crew/scratch-III/` (not built; check one with
+[`docs/reports/crew/scratch-III/`](https://github.com/jackChallis/stoicheia/tree/81d72f5/docs/reports/crew/scratch-III) (not built; check one with
 `lake env lean docs/reports/crew/scratch-III/T20.lean`);
 `Elements/Foundations/DefinitionsIII.lean`, `Elements/Figure/OnCircles.lean` (Book Zero for
 circles), `Elements/BookIII/Squares.lean` and, from III.23 on,

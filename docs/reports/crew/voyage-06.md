@@ -10,7 +10,7 @@ each measured by twice the angle standing on it at the circumference. Book III's
 proved beneath them (the squares on equal straight lines, the perpendicular from the
 centre, the circumferences), and III.1–III.37 were stated in Heath's letters and tested
 in scratch, eighteen of them in full; the scratch proofs are committed, not built, in
-[scratch-III](scratch-III). Twenty-six challenges to that work were answered before
+[scratch-III](https://github.com/jackChallis/stoicheia/tree/81d72f5/docs/reports/crew/scratch-III). Twenty-six challenges to that work were answered before
 anyone sailed. Artists drew the at-a-glance figures in Byrne's colours.
 
 Then four ships: four Claude captains, eleven first mates and nineteen bosuns, with

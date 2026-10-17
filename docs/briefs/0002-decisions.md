@@ -134,7 +134,7 @@
   Books I and II render byte for byte as at their tags. Book III may rest on Postulate 5
   throughout. On a Book III page its own definitions are "Def. 11", Book I's "Def. I.10".
 - **Book III's scratch proofs in the open**, in
-  [`docs/reports/crew/scratch-III/`](../reports/crew/scratch-III), not built: III.1, III.5, III.6, III.11,
+  [`docs/reports/crew/scratch-III/`](https://github.com/jackChallis/stoicheia/tree/81d72f5/docs/reports/crew/scratch-III), not built: III.1, III.5, III.6, III.11,
   III.13, III.16, III.18–III.22, III.24, III.28, III.29 and III.31 in full, and the first steps of the
   rest. They are retired when Book III is proved.
 - **The first mate's statements, challenged.** Twenty-six challenges were answered before the
@@ -201,3 +201,8 @@
   sentence. Its callers (I.24, I.31, I.42, I.44, III.7, III.8, III.25, III.27, III.33,
   III.34) turn its angle FAG round with `angle_symm`, for Euclid names each of their
   angles from the arm on the given straight line. The `book-I` tag keeps the old letters.
+- **Book III's scratch proofs retired.** With Book III proved under Euclid's sentences, the
+  scratch proofs that tested its statements are removed from
+  `docs/reports/crew/scratch-III/`, as Book II's were. They stay in the history at commit
+  `81d72f5`
+  ([scratch-III at 81d72f5](https://github.com/jackChallis/stoicheia/tree/81d72f5/docs/reports/crew/scratch-III)).

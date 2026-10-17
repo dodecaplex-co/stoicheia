@@ -270,7 +270,7 @@ worth naming. The first mate's report has a note on every statement.
 - **III.24** concludes that the circles are equal and the circumferences of the segments
   equal. Euclid proves it by applying one segment to the other, and Lean has no
   superposition outside I.4 and I.8. III.24 will be proved without applying one segment to
-  another; [the scratch proof](../reports/crew/scratch-III/T24.lean) does so, by the angles
+  another; [the scratch proof](https://github.com/jackChallis/stoicheia/blob/81d72f5/docs/reports/crew/scratch-III/T24.lean) does so, by the angles
   at the centres (III.20, III.22) and the isosceles triangles on the equal bases (I.5,
   I.26, I.32).
 - **III.25** finds the centre of the circle of a given segment, with Euclid's construction
