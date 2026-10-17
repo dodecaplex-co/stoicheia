@@ -92,34 +92,34 @@ What the proofs show:
 
 ## Book III
 
-**0 of 37 propositions proved.**
+**19 of 37 propositions proved.**
 
 What the proofs show so far:
 
-- **Postulate 5**: No proposition of Book III is proved yet. Book III comes after I.29, where Euclid first calls on it, so any of its propositions may.
+- **Postulate 5**: 17 propositions never need it; 2 use it, the first being III.14. Book III comes after I.29, where Euclid first calls on it, so any of its propositions may.
 - **Superposition** is used directly by: none yet. Only I.4 and I.8 are allowed to.
 
 | | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |
 |---|---|---|---|---|---|---|---|
-| 🚧 | [III.1](book/III/01.md) | I.8 | | | | | |
-| 🚧 | [III.2](book/III/02.md) | I.5, I.16, I.19, III.1 | | | | | |
-| 🚧 | [III.3](book/III/03.md) | I.5, I.8, I.26 | | | | | |
-| 🚧 | [III.4](book/III/04.md) | III.1, III.3 | | | | | |
-| 🚧 | [III.5](book/III/05.md) |  | | | | | |
-| 🚧 | [III.6](book/III/06.md) |  | | | | | |
-| 🚧 | [III.7](book/III/07.md) | I.4, I.20, I.23, I.24 | | | | | |
-| 🚧 | [III.8](book/III/08.md) | I.4, I.20, I.21, I.24, III.1 | | | | | |
-| 🚧 | [III.9](book/III/09.md) | I.8, III.1 | | | | | |
-| 🚧 | [III.10](book/III/10.md) | III.1, III.5 | | | | | |
-| 🚧 | [III.11](book/III/11.md) |  | | | | | |
-| 🚧 | [III.12](book/III/12.md) | I.20 | | | | | |
-| 🚧 | [III.13](book/III/13.md) | III.2, III.11 | | | | | |
-| 🚧 | [III.14](book/III/14.md) | I.47, III.1, III.3 | | | | | |
-| 🚧 | [III.15](book/III/15.md) | I.20, I.24, III.14 | | | | | |
-| 🚧 | [III.16](book/III/16.md) | I.5, I.17, I.19 | | | | | |
-| 🚧 | [III.17](book/III/17.md) | I.4, III.1, III.16 | | | | | |
-| 🚧 | [III.18](book/III/18.md) | I.17, I.19 | | | | | |
-| 🚧 | [III.19](book/III/19.md) | III.18 | | | | | |
+| ✅ | [III.1](book/III/01.md) | I.8 | I.8, I.10, I.11 | 1, 2, 3, 4 | I.15 | 5 | 56 |
+| ✅ | [III.2](book/III/02.md) | I.5, I.16, I.19, III.1 | I.5, I.16, I.19, III.1 | 1, 2, 3, 4 | I.15 | 5 | 57 |
+| ✅ | [III.3](book/III/03.md) | I.5, I.8, I.26 | I.5, I.8, I.26 | 1, 2, 3, 4 | I.15 |  | 54 |
+| ✅ | [III.4](book/III/04.md) | III.1, III.3 | III.1, III.3 | 1, 2, 3, 4 | I.15 | 5 | 57 |
+| ✅ | [III.5](book/III/05.md) |  |  | 1 | I.15 |  | 4 |
+| ✅ | [III.6](book/III/06.md) |  |  | 1 | I.15 |  | 4 |
+| ✅ | [III.7](book/III/07.md) | I.4, I.20, I.23, I.24 | I.4, I.20, I.23, I.24 | 1, 2, 3, 4 | I.15 | 5 | 56 |
+| ✅ | [III.8](book/III/08.md) | I.4, I.20, I.21, I.24, III.1 | I.4, I.20, I.21, I.23, I.24, III.1 | 1, 2, 3, 4 | I.15 | 5 | 59 |
+| ✅ | [III.9](book/III/09.md) | I.8, III.1 | I.8, I.10, I.17, III.1 | 1, 2, 3, 4 | I.15 |  | 58 |
+| ✅ | [III.10](book/III/10.md) | III.1, III.5 | I.10, I.11, I.17, III.1, III.5 | 1, 2, 3, 4 | I.15 |  | 59 |
+| ✅ | [III.11](book/III/11.md) |  | I.20, III.6 | 1, 2, 3, 4 | I.15 | 5 | 56 |
+| ✅ | [III.12](book/III/12.md) | I.20 | I.20, III.6 | 1, 2, 3, 4 | I.15 |  | 55 |
+| ✅ | [III.13](book/III/13.md) | III.2, III.11 | III.2, III.11 | 1, 2, 3, 4 | I.15 | 5 | 58 |
+| ✅ | [III.14](book/III/14.md) | I.47, III.1, III.3 | I.3, I.4, I.17, I.19, I.28, I.34, I.46, I.47, III.1, III.3 | 1, 2, 3, 4, 5 | I.15 | 2, 3, 5 | 66 |
+| ✅ | [III.15](book/III/15.md) | I.20, I.24, III.14 | I.3, I.11, I.17, I.19, I.20, I.24, III.14 | 1, 2, 3, 4, 5 | I.15 | 5 | 66 |
+| ✅ | [III.16](book/III/16.md) | I.5, I.17, I.19 | I.5, I.12, I.17, I.19 | 1, 2, 3, 4 | I.15 | 5 | 55 |
+| ✅ | [III.17](book/III/17.md) | I.4, III.1, III.16 | I.4, I.11, III.1, III.16 | 1, 2, 3, 4 | I.15 | 5 | 59 |
+| ✅ | [III.18](book/III/18.md) | I.17, I.19 | I.12, I.17, I.19 | 1, 2, 3, 4 | I.15 | 5 | 55 |
+| ✅ | [III.19](book/III/19.md) | III.18 | III.18 | 1, 2, 3, 4 | I.15 | 5 | 56 |
 | 🚧 | [III.20](book/III/20.md) | I.5, I.32 | | | | | |
 | 🚧 | [III.21](book/III/21.md) | III.20 | | | | | |
 | 🚧 | [III.22](book/III/22.md) | I.32, III.21 | | | | | |

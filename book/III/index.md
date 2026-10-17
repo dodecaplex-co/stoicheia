@@ -2,7 +2,7 @@
 
 # Book III
 
-**0 of 37 propositions proved in Lean.** 🚧 stated
+**19 of 37 propositions proved in Lean.** ✅ proved · 🚧 stated
 
 Start with the [definitions](front.md).
 
@@ -10,25 +10,25 @@ Books and papers to read alongside, from Proclus to Lean, are gathered by theme 
 
 | | Proposition | |
 |---|---|---|
-| 🚧 | [III.1](01.md) **Finding the centre of a circle** | To find the centre of a given circle. |
-| 🚧 | [III.2](02.md) **A straight line joining two points of a circle** | If on the circumference of a circle two points be taken at random, the straight line joining the points… |
-| 🚧 | [III.3](03.md) **A straight line through the centre bisecting another** | If in a circle a straight line through the centre bisect a straight line not through the centre, it also… |
-| 🚧 | [III.4](04.md) **Two straight lines not through the centre** | If in a circle two straight lines cut one another which are not through the centre, they do not bisect one… |
-| 🚧 | [III.5](05.md) **Circles that cut one another** | If two circles cut one another, they will not have the same centre. |
-| 🚧 | [III.6](06.md) **Circles that touch one another** | If two circles touch one another, they will not have the same centre. |
-| 🚧 | [III.7](07.md) **Straight lines from a point within a circle** | If on the diameter of a circle a point be taken which is not the centre of the circle, and from the point… |
-| 🚧 | [III.8](08.md) **Straight lines from a point outside a circle** | If a point be taken outside a circle and from the point straight lines be drawn through to the circle, one… |
-| 🚧 | [III.9](09.md) **A point with three equal straight lines to the circle** | If a point be taken within a circle, and more than two equal straight lines fall from the point on the… |
-| 🚧 | [III.10](10.md) **Circles cut one another at two points at most** | A circle does not cut a circle at more points than two. |
-| 🚧 | [III.11](11.md) **The centres of circles touching internally** | If two circles touch one another internally, and their centres be taken, the straight line joining their… |
-| 🚧 | [III.12](12.md) **The centres of circles touching externally** | If two circles touch one another externally, the straight line joining their centres will pass through the… |
-| 🚧 | [III.13](13.md) **Circles touch at one point only** | A circle does not touch a circle at more points than one, whether it touch it internally or externally. |
-| 🚧 | [III.14](14.md) **Equal straight lines are equally distant from the centre** | In a circle equal straight lines are equally distant from the centre, and those which are equally distant… |
-| 🚧 | [III.15](15.md) **The diameter is the greatest straight line in a circle** | Of straight lines in a circle the diameter is greatest, and of the rest the nearer to the centre is always… |
-| 🚧 | [III.16](16.md) **The straight line at right angles to a diameter at its end** | The straight line drawn at right angles to the diameter of a circle from its extremity will fall outside… |
-| 🚧 | [III.17](17.md) **Drawing a straight line to touch a circle** | From a given point to draw a straight line touching a given circle. |
-| 🚧 | [III.18](18.md) **The radius to the point of contact** | If a straight line touch a circle, and a straight line be joined from the centre to the point of contact,… |
-| 🚧 | [III.19](19.md) **The perpendicular to a tangent at the point of contact** | If a straight line touch a circle, and from the point of contact a straight line be drawn at right angles… |
+| ✅ | [III.1](01.md) **Finding the centre of a circle** | To find the centre of a given circle. |
+| ✅ | [III.2](02.md) **A straight line joining two points of a circle** | If on the circumference of a circle two points be taken at random, the straight line joining the points… |
+| ✅ | [III.3](03.md) **A straight line through the centre bisecting another** | If in a circle a straight line through the centre bisect a straight line not through the centre, it also… |
+| ✅ | [III.4](04.md) **Two straight lines not through the centre** | If in a circle two straight lines cut one another which are not through the centre, they do not bisect one… |
+| ✅ | [III.5](05.md) **Circles that cut one another** | If two circles cut one another, they will not have the same centre. |
+| ✅ | [III.6](06.md) **Circles that touch one another** | If two circles touch one another, they will not have the same centre. |
+| ✅ | [III.7](07.md) **Straight lines from a point within a circle** | If on the diameter of a circle a point be taken which is not the centre of the circle, and from the point… |
+| ✅ | [III.8](08.md) **Straight lines from a point outside a circle** | If a point be taken outside a circle and from the point straight lines be drawn through to the circle, one… |
+| ✅ | [III.9](09.md) **A point with three equal straight lines to the circle** | If a point be taken within a circle, and more than two equal straight lines fall from the point on the… |
+| ✅ | [III.10](10.md) **Circles cut one another at two points at most** | A circle does not cut a circle at more points than two. |
+| ✅ | [III.11](11.md) **The centres of circles touching internally** | If two circles touch one another internally, and their centres be taken, the straight line joining their… |
+| ✅ | [III.12](12.md) **The centres of circles touching externally** | If two circles touch one another externally, the straight line joining their centres will pass through the… |
+| ✅ | [III.13](13.md) **Circles touch at one point only** | A circle does not touch a circle at more points than one, whether it touch it internally or externally. |
+| ✅ | [III.14](14.md) **Equal straight lines are equally distant from the centre** | In a circle equal straight lines are equally distant from the centre, and those which are equally distant… |
+| ✅ | [III.15](15.md) **The diameter is the greatest straight line in a circle** | Of straight lines in a circle the diameter is greatest, and of the rest the nearer to the centre is always… |
+| ✅ | [III.16](16.md) **The straight line at right angles to a diameter at its end** | The straight line drawn at right angles to the diameter of a circle from its extremity will fall outside… |
+| ✅ | [III.17](17.md) **Drawing a straight line to touch a circle** | From a given point to draw a straight line touching a given circle. |
+| ✅ | [III.18](18.md) **The radius to the point of contact** | If a straight line touch a circle, and a straight line be joined from the centre to the point of contact,… |
+| ✅ | [III.19](19.md) **The perpendicular to a tangent at the point of contact** | If a straight line touch a circle, and from the point of contact a straight line be drawn at right angles… |
 | 🚧 | [III.20](20.md) **The angle at the centre is double the angle at the circumference** | In a circle the angle at the centre is double of the angle at the circumference, when the angles have the… |
 | 🚧 | [III.21](21.md) **Angles in the same segment** | In a circle the angles in the same segment are equal to one another. |
 | 🚧 | [III.22](22.md) **Opposite angles of a quadrilateral in a circle** | The opposite angles of quadrilaterals in circles are equal to two right angles. |
