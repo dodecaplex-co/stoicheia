@@ -4,3 +4,8 @@ defaultTargets = ["Elements"]
 
 [[lean_lib]]
 name = "Elements"
+
+# Audit lemmas for docs/reports/overlaps.md. Nothing imports them and they are not in the
+# default build; `lake build Audit` checks them.
+[[lean_lib]]
+name = "Audit"
