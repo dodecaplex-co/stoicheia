@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.28 at a glance</title>
-  <desc>In equal circles, equal straight lines (blue) cut off equal circumferences: the less equal to the less (red), and the greater to the greater (yellow).</desc>
+  <desc>Draw equal straight lines (blue) in equal circles: they cut off equal circumferences, the smaller pieces equal (red) and the larger equal (yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M157.6,86.3 A82.0,82.0 0 1,1 25.5,134.4" fill="none" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
   <path d="M25.5,134.4 A82.0,82.0 0 0,1 157.6,86.3" fill="none" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>

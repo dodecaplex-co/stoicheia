@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.24 at a glance</title>
-  <desc>Segments of circles that hold equal angles (yellow) on equal straight lines (blue) are equal (red): laid one on the other, they fit exactly.</desc>
+  <desc>Lay a segment on another with an equal base (blue) and an equal angle in it (yellow): the two fit exactly, and are equal (red).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M50.0,220.0 A74.7,74.7 0 1,1 182.0,220.0 Z" fill="#d0312d"/>
   <path d="M78.7,120.3 L100.2,141.1 A30,30 0 0,1 70.4,149.2 Z" fill="#f2b705"/>

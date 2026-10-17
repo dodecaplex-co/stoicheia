@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.15 at a glance</title>
-  <desc>Of all the straight lines in a circle the diameter (red) is the greatest, and of the rest the one nearer the centre (blue) is greater than the one farther off (yellow).</desc>
+  <desc>Slide a straight line in the circle nearer the centre and it grows: the blue, nearer, is longer than the yellow, and through the centre (red) it is longest.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.00" cy="150.00" r="124.00" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <polyline points="191.73,121.16 201.34,118.41 198.59,108.79" fill="none" stroke="#222222" stroke-width="1.6"/>

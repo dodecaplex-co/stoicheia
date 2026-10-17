@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.27 at a glance</title>
-  <desc>In equal circles, angles standing on equal circumferences (red) are equal, at the centres (yellow) and at the circumferences (blue).</desc>
+  <desc>Turn III.26 round: in equal circles, stand angles on equal circumferences (red), and they come out equal, at the centres (yellow) and at the circumferences (blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="106.0" cy="150.0" r="82.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M106.0,150.0 L83.9,132.8 A28,28 0 0,1 128.1,132.8 Z" fill="#f2b705"/>

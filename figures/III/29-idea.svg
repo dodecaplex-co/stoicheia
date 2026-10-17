@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.29 at a glance</title>
-  <desc>In equal circles, the angles at the centres standing on equal circumferences (yellow) are equal (blue), so the straight lines joining the ends of the circumferences (red) are equal too.</desc>
+  <desc>Cut off equal circumferences (yellow) in equal circles: the angles at the centres are equal (blue), and so are the straight lines joining the ends (red).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="107.0" cy="150.0" r="80.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <circle cx="293.0" cy="150.0" r="80.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>

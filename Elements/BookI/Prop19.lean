@@ -43,7 +43,6 @@ theorem Prop19 {A B C : Point} (hABC : Triangle A B C) (h : ∠ B C A < ∠ A B 
   have not_equal : ‖A C‖ ≠ ‖A B‖ := by
     intro hAC_AB
     -- for then the angle ABC would also have been equal to the angle ACB; [I. 5]
-    /- We cite I.5 through `Prop5.base`, for the triangle ABC. -/
     have hABC_ACB : ∠ A B C = ∠ A C B := Prop5.base hABC hAC_AB.symm
     -- but it is not;
     /- It is greater: the hypothesis, with BCA read as ACB. -/

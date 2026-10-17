@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.31 at a glance: the angle in a semicircle</title>
-  <desc>Three equal radii (blue) cut the triangle into two, each with two equal sides, so the angle in the semicircle is the other two angles together (red and yellow). The three make two right angles, so it is a right angle.</desc>
+  <desc>Three equal radii (blue) cut the triangle into two with equal sides, so the angle in the semicircle equals the other two together (red and yellow). All three make two right angles, so it is a right angle.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="160.0" r="116.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M84.0,160.0 L124.0,160.0 A40,40 0 0,0 104.6,125.7 Z" fill="#d0312d"/>

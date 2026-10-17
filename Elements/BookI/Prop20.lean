@@ -56,7 +56,6 @@ theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
     -- Then, since DA is equal to AC,
     have hDA_AC : ‖D A‖ = ‖A C‖ := by rw [len_symm D A, hAD_CA, len_symm C A]
     -- the angle ADC is also equal to the angle ACD; [I. 5]
-    /- We cite I.5 through `Prop5.base`, for the triangle ADC, whose sides AD, AC are equal. -/
     have hADC : Triangle A D C := Triangle.of_line hA_BA hD_BA hA_D hC_BA
     have hADC_ACD : ∠ A D C = ∠ A C D :=
       Prop5.base hADC (by rw [← len_symm D A]; exact hDA_AC)

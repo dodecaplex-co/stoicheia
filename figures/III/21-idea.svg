@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.21 at a glance</title>
-  <desc>The angles in the same segment of a circle are equal (yellow): wherever the corner sits on the circumference, the angle on the straight line (blue) is the same.</desc>
+  <desc>Slide the corner anywhere along the circumference of the segment: the angle on the blue straight line stays the same (yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="152.0" r="112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M101.1,99.4 L124.7,110.4 A26,26 0 0,1 99.7,125.4 Z" fill="#f2b705"/>

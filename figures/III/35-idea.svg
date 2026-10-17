@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.35 at a glance</title>
-  <desc>When two straight lines cut one another in a circle (red, blue), the rectangle contained by the two pieces of the one equals that contained by the two pieces of the other (both yellow).</desc>
+  <desc>Cross two straight lines in a circle (red, blue): the pieces of each contain a rectangle, and the two rectangles are equal (both yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="112.0" cy="150.0" r="88.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <line x1="110.2" y1="62.0" x2="169.8" y2="216.4" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>

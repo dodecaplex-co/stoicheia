@@ -55,6 +55,12 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   have hACD : Between A C D := between_of_between_left hABD hACB
   have hCBD : Between C B D := between_inner hACB hABD
   -- let the square AEFD be described on AD, and let the figure be drawn double.
+  /- I.46 describes the square on the side of a point off AD, and `Square.described`
+     says it is the square on AD. "The figure drawn double" is I.43's figure, drawn
+     twice in the square with its diameter DE (`Parallelogram.figure`): through B, BL
+     parallel to AE, cutting DE at K, and MN through K parallel to AD; through C, CH,
+     cutting DE at Q, and OP through Q. Each figure's complements are parallelograms
+     (`Parallelogram.complements`). -/
   obtain ⟨X, hX, -⟩ := exists_off_line hAD []
   obtain ⟨E, F, hsq, hE, hF⟩ := BookI.Prop46 hAD hX
   obtain ⟨hp, hAEFD⟩ := Square.described hsq hE hF
@@ -117,7 +123,11 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
   obtain ⟨R, hR_OP, hR_BL⟩ := BookI.Prop30.meet hBL_DF hP_DF hP_OP (by
     intro e
     exact hOP_AD.not_onLine (e ▸ hD_DF) hD_AD)
-  /- Parallels carry the order on AD and DE to every row and column. -/
+  /- The two figures cross and cut the square into nine cells, and where they cross,
+     G and R, Euclid reads off his figure. The order follows from Book Zero: points on
+     three parallels keep their order on every straight line crossing them
+     (`Parallel.between`). So M, G, K lie on MN as A, C, B lie on AD, and K, R, L lie on
+     BL as K, Q, E lie on the diameter, and so for every row and column. -/
   have hMGK : Between M G K := Parallel.between hAE_CH hCH_BL.symm
     hA_AE hC_CH hB_BL hACB hM_AE hG_CH hK_BL ⟨MN, hM_MN, hG_MN, hK_MN⟩
   have hCGQ : Between C G Q := Parallel.between hMN_AD.symm hMN_OP.symm
@@ -247,6 +257,10 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
       CK + KD + GR + RN = KD + CK + GR + RN := by ac_rfl
       _ = CK + CK + CK + CK := hfourCK
   -- therefore the eight areas, which contain the gnomon STU, are quadruple of AK.
+  /- The gnomon STU is the parallelogram CP about the diameter with its two complements,
+     AQ and QF (Definition II.2). We cut CP into its four cells KD, CK, GR, RN
+     (`Parallelogram.about_diameter`), and AQ and QF into two each
+     (`quadArea_add_of_parallelograms`): the eight areas. -/
   let AK := quadArea B A M K
   let STU := quadArea D C Q P + quadArea C A O Q + quadArea P Q H F
   have hCPsplit : quadArea D C Q P = KD + CK + GR + RN :=

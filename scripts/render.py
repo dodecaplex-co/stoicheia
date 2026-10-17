@@ -240,6 +240,11 @@ def euclid_cites(paragraphs, book=None):
         else:
             groups["props"].append(f"{kind}{num}")  # "I. 4", or "V. 9" in a later book
     groups["props"].sort(key=prop_key)
+    # A porism, "[III. 1, Por.]", is counted as its proposition; the page says so.
+    groups["porisms"] = sorted({f"{m.group(1)}.{int(m.group(2))}" for p in paragraphs
+                                for inner in heath.CITATION.findall(p)
+                                for m in re.finditer(r"([IVX]+)\.\s*(\d+),\s*Por\.", inner)},
+                               key=prop_key)
     for kind in ("Post.", "Def.", "C.N."):
         # The page's own book first (Def. 1, 2), then another's (Def. I.15).
         groups[kind].sort(key=lambda d: (0, d) if isinstance(d, int) else (1, prop_key(d)))
@@ -417,6 +422,10 @@ def rests_on(p, docs, depth, book, euclid):
     unlisted = definitions_not_counted(euclid, defs, book)
     if unlisted:
         out += f"\n{unlisted}\n"
+    for ref in euclid.get("porisms", []):
+        b, num = ref.split(".")
+        out += (f"\n_Euclid cites [{b}. {num}, Por.], the porism to {ref}, and the table "
+                f"counts it as {ref}._\n")
     if p["status"] == "proved-pending":
         out += ("\n_This proof is complete, but it cites propositions that are still "
                 "only stated, so the list above will grow when they are proved._\n")

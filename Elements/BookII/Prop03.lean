@@ -35,6 +35,8 @@ theorem Prop3 {A B C : Point} (hACB : Between A C B) :
   -- I say that the rectangle contained by AB, BC is equal to the rectangle contained by AC, CB
   -- together with the square on BC.
   -- For let the square CDEB be described on CB; [I. 46]
+  /- I.46 describes the square on the side of a point off CB (`exists_off_line`), and
+     `Square.described` says it is the square on CB. -/
   obtain ⟨P, hP, -⟩ := exists_off_line hCB []
   obtain ⟨D, E, hsq, hD, hE⟩ := BookI.Prop46 hCB hP
   obtain ⟨hp, hDB⟩ := Square.described hsq hD hE
@@ -68,6 +70,8 @@ theorem Prop3 {A B C : Point} (hACB : Between A C B) :
     quadArea_add_of_parallelograms hAFDC hp hACB hFDE
   -- Now AE is the rectangle contained by AB, BC, for it is contained by AB, BE, and BE is
   -- equal to BC;
+  /- AE is the parallelogram BAFE, and its angle at B is the square's right angle, so it
+     is a rectangle (`Rectangle.of_right`), contained by AB and BE (`Rectangle.eq_rect`). -/
   have hFE : F ≠ E := ne_of_between_ends hFDE
   have hBAFE : Parallelogram B A F E :=
     ⟨AreParallel.of_parallel hAB.symm hFE hB_AB hA_AB hF_DE hE_DE hDE_AB.symm,

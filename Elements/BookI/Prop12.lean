@@ -44,11 +44,10 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
     rintro rfl
     exact hCD_AB.2.2 (same_side_refl hC_AB)
   obtain ⟨EFG, hC_EFG, hD_EFG⟩ := Postulate3 C D hCD
-  /- Euclid never says why the circle cuts AB, nor that it cuts it twice. Its
-     centre C is inside it and D is on it, on the other side of AB; a straight
-     line that separates two such points cuts the circle in two points (System E,
-     Intersection 2). Heath's figure calls them G and E. F, the third letter of
-     the circle's name, is only a name: the proof never uses it. -/
+  /- The circle's centre C is inside it and D is on it, on the other side of AB,
+     so AB cuts the circle in two points (System E, Intersection 2). Heath's figure
+     calls them G and E. F, the third letter of the circle's name, is only a name:
+     the proof never uses it. -/
   obtain ⟨E, G, hEG, hE_AB, hE_EFG, hG_AB, hG_EFG⟩ :=
     line_meets_circle_of_opposite_sides (Or.inl (centre_inside hC_EFG)) (Or.inr hD_EFG) hCD_AB
   -- let the straight line EG be bisected at H, [I. 10]

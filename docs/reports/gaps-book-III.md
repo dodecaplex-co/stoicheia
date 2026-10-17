@@ -139,7 +139,7 @@ Euclid cites in most of the propositions of Book III.
 
 ## III.16
 - "Let DG be drawn from the point D perpendicular to FA": Euclid gives no citation for it: it is I.12.
-- Euclid's figure puts the foot G away from A. At A only one straight line is at right angles to AD (`Prop16.one_perp`), so were G at A, FA would be AE itself.
+- Euclid's figure puts the foot G away from A. At A only one straight line is at right angles to AD, as in III.1 (`Prop1.perpendicular`), so were G at A, FA would be AE itself.
 - If FA passes through the centre, D itself is the point of FA within the circle.
 - Euclid's "let it fall within as CA" takes a point C on E's side of A, where the angle with AD is the right angle at A. AE is a whole straight line, and beyond A the angle is right too, being adjacent to a right angle (`adjacent_eq_of_right`).
 - The angle of the semicircle and the horn-like angle are contained by a straight line and a circumference (Definition III.7), and our angles have two straight arms. Our statement keeps the rectilineal fact Euclid proves them by: every other straight line through A has a point within the circle.
@@ -157,8 +157,8 @@ Euclid cites in most of the propositions of Book III.
 - "Similarly we can prove that neither is any other straight line except FC" needs no Lean: the reductio puts the foot of I.12's perpendicular at C, so FC is at right angles to DE on both sides of C.
 
 ## III.19
-- Our A is any point off DE with CA at right angles to it, and need not be on the circle, so it may lie across DE from the centre. Then AC is produced beyond C (Post. 2), and the angle there is right too (`adjacent_eq_of_right`).
-- "The angle FCE is equal to the angle ACE, the less to the greater": on one side of DE only one ray from C makes a right angle with it (`onRay_of_angle_eq`).
+- Our A is any point off DE with CA at right angles to it, and need not be on the circle, so it may lie across DE from the centre.
+- "The angle FCE is equal to the angle ACE, the less to the greater": at C only one straight line is at right angles to DE, as in III.1 (`Prop1.perpendicular`), which produces AC beyond C when A lies across DE from F.
 - The supposed centre F is off DE: `centre_inside` and `Touches.not_inside`. Euclid's E is a point of DE other than C, which Lean chooses, since our D and E may include C.
 
 ## III.20
@@ -194,7 +194,7 @@ Euclid cites in most of the propositions of Book III.
 - Euclid cites [III. 9] for E, which in the first case nothing yet shows to be within the circle; our III.9 does not ask it.
 
 ## III.26
-- "As in III. 21, if Euclid's proof is to cover all cases, it requires us to take cognisance of 'angles at the centre' which are equal to or greater than two right angles. Otherwise we must deal separately with the cases where the angle at the circumference is equal to or greater than a right angle" (vol. 2, p. 57). Our angles are never straight or reflex, so Lean takes Heath's separate cases (`Prop26.angle_type`): acute, by III.20; right, where BC and EF are diameters; obtuse, by III.22, which passes to the acute angles in the other segments, as Heath proposes.
+- "As in III. 21, if Euclid's proof is to cover all cases, it requires us to take cognisance of 'angles at the centre' which are equal to or greater than two right angles. Otherwise we must deal separately with the cases where the angle at the circumference is equal to or greater than a right angle" (vol. 2, p. 57). Our angles are never straight or reflex, so Lean takes Heath's separate cases, sorted as in III.24 (`Prop24.angle_type`): acute, by III.20; right, where BC and EF are diameters; obtuse, by III.22, which passes to the acute angles in the other segments, as Heath proposes.
 - Euclid's setting-out gives equal angles at the centres and at the circumferences together. Our statement takes his two cases one at a time, and III.20, which Euclid does not cite, gives the other pair: halving the angles at the centres, or doubling those at A and D.
 - "But the whole circle ABC is also equal to the whole circle DEF; therefore the circumference BKC which remains": that a segment's circumference and the one remaining make up the whole circle is `Circumference.whole`; then Common Notion 3.
 
@@ -275,8 +275,8 @@ use one.
   in Books I and II.
 - **Postulate 2**: Euclid produces straight lines without a citation, as BA "carried
   through to F" in III.31, and Lean produces more: EA beyond A, so that only one
-  straight line is at right angles at A (`Prop1.perpendicular`, `Prop16.one_perp`); AC
-  beyond C in III.19; a straight line produced backwards from a point within the
+  straight line is at right angles at A (`Prop1.perpendicular`, used again in III.16 and
+  III.19); a straight line produced backwards from a point within the
   circle, so that `line_circle_beyond` meets the circle on the side we want (III.7,
   III.25, III.30); a side of a triangle, since our I.32 asks for one produced (III.22,
   III.32, `Prop24.isosceles`, `Circumference.semicircle`); the radius AD beyond the

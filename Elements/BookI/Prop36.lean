@@ -34,7 +34,6 @@ theorem Prop36 {A B C D E F G H : Point} (h₁ : Parallelogram A B C D) (h₂ : 
       quadArea A B C D = quadArea E F G H := by
     intro E F G H h₂ hbase hE hH hF hG
     -- For let BE, CH be joined.
-    /- The joining straight lines are named by their ends in I.33 below. -/
     -- Then, since BC is equal to FG,
     have hBC_FG : ‖B C‖ = ‖F G‖ := hbase
     -- while FG is equal to EH,
@@ -51,7 +50,7 @@ theorem Prop36 {A B C D E F G H : Point} (h₁ : Parallelogram A B C D) (h₂ : 
     have h33 := Prop33 hBCEH hBC_EH hdir
     -- Therefore EBCH is a parallelogram. [I. 34]
     /- Both pairs of opposite sides are parallel, which is the definition of a
-       parallelogram. I.34 supplies FG = EH earlier in the argument. -/
+       parallelogram. -/
     have hEBCH : Parallelogram E B C H :=
       ⟨h33.2.swap_left,
         AreParallel.of_parallel h₁.2.1 h₂.2.2.1 hB hC hH hE hpar.symm⟩

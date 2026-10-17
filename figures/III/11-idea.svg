@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.11 at a glance</title>
-  <desc>When one circle touches another inside it (red in blue), the straight line joining the two centres, produced, falls on the point where they touch: there a radius of each (blue, red) lies along one straight line.</desc>
+  <desc>Let the red circle touch the blue from inside. Join their centres and carry the straight line on: it reaches the point of contact, where a radius of each (blue, red) lies along one straight line.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="222.00" cy="150.00" r="118.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
   <circle cx="170.08" cy="170.98" r="62.00" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>
