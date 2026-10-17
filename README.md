@@ -8,15 +8,13 @@
 
 Στοιχεῖα, *Stoicheia*, "Elements", is Euclid's title for the book that taught geometry for more than two thousand years. Abraham Lincoln, in the short autobiography he wrote in 1860, said of himself: "He studied and nearly mastered the Six-books of Euclid, since he was a member of Congress." This project carries the same book into [Lean](https://lean-lang.org), a programming language that checks mathematical proofs, so that every step Euclid takes is checked by a machine that can't be talked into anything.
 
-For every proposition of Books I and II you get:
+For every proposition of Books I to III you get:
 
 - **Euclid's words**, in Sir Thomas Heath's 1908 translation (public domain).
 - **Two figures**: one "at a glance", in the bold red, yellow and blue of Oliver Byrne's 1847 Euclid, to show the idea before you read a word; and Euclid's own figure, with Heath's letters, to follow the proof by.
 - **The proof in Lean**, written to follow Euclid sentence by sentence. Each of his sentences is a comment, and under it is the Lean that carries it out.
 - **A certificate**, computed by Lean itself, of exactly what the proof rests on: which postulates, which common notions, and which of the many things Euclid takes for granted without saying so.
 - **A mishnah**: commentary on what Euclid assumed, what Lean made us say out loud, and how the same result looks with modern tools.
-
-Book III so far has Euclid's words, the at-a-glance figure and the Lean statement.
 
 The proofs use no coordinates, real numbers or complex numbers; only the last paragraph of each commentary, "The modern way", reaches for them. The geometry is the geometry Euclid wrote, the kind Lincoln would recognize. Lengths, angles and areas are *magnitudes*, which can be added and compared and nothing more, just as in the *Elements*.
 
@@ -26,14 +24,14 @@ The proofs use no coordinates, real numbers or complex numbers; only the last pa
 |---|---|
 | **Book I** | **Complete: all 48 propositions proved**, every one following Euclid's own proof. The certificate shows the shape of the book. 29 propositions never need the parallel postulate: I.1 to I.28, and I.31, which draws its parallel with I.27 alone. The first that does is I.29, just where Euclid puts it. [Read Book I →](book/I/index.md) |
 | **Book II** | **Complete: all 14 propositions proved**, every one following Euclid's own proof. "The rectangle contained by AB, BC" and "the square on AB" are areas in Lean, defined rather than assumed, and a rectangle drawn in a figure is proved equal to the rectangle contained by its sides. II.1 and II.14 (with I.45) are proved for the figures Euclid's proofs take: two points of section, and two triangles. [Read Book II →](book/II/index.md) |
-| **Book III** | **Stated: all 37 propositions**, with Euclid's sentences in place and the proofs to come. Equal circles, a straight line touching a circle, circles touching one another and the circumferences Euclid compares are defined in Lean, not assumed. [Read Book III →](book/III/index.md) |
+| **Book III** | **Complete: all 37 propositions proved**, every one following Euclid's own proof. The certificate shows the shape of the book: 17 propositions never need the parallel postulate, which first comes in at III.14 and III.15, through the squares of I.46 and I.47, and lies beneath every proposition from III.20 on, most of them through I.32. None uses superposition directly; where Euclid lays one segment on another, in III.24, Lean compares the radii of their circles. Equal circles, a straight line touching a circle, circles touching one another and the circumferences Euclid compares are defined in Lean, not assumed, and [Book III's introduction](book/III/index.md) tells how. [Read Book III →](book/III/index.md) |
 | Books IV–XIII | To come, one book at a time. |
 
 The [certificate](CERTIFICATE.md) and the [graph of who uses whom](GRAPH.md) are regenerated from the proofs on every change.
 
 ## Read it
 
-Start with [the definitions, postulates and common notions](book/I/front.md), then [Proposition 1](book/I/01.md). Every page of Books I and II reads the same way: Euclid's statement, his figure, his proof, then the Lean, what it rests on, and the mishnah.
+Start with [the definitions, postulates and common notions](book/I/front.md), then [Proposition 1](book/I/01.md). Every page of Books I to III reads the same way: Euclid's statement, his figure, his proof, then the Lean, what it rests on, and the mishnah.
 
 Here is the heart of I.1. Euclid's sentences are the comments:
 
@@ -100,11 +98,11 @@ A Lean proof needs only the *statements* of the propositions it cites, not their
 
 ## Join in
 
-Books I and II are proved and released, and Book III, the book of the circle, is under way: pick any 🚧 proposition in [Book III](book/III/index.md) and prove it, write a mishnah or draw a figure. There is plenty to do in [Book I](book/I/index.md) and [Book II](book/II/index.md) as well: read a page and tell us where it could be clearer, check a quotation against Heath's scans, or improve a figure or a proof. [CONTRIBUTING.md](CONTRIBUTING.md) explains the few house rules.
+Books I to III are proved, and Book IV, of figures inscribed in and circumscribed about circles, is next: once its statements are in Lean, pick any 🚧 proposition and prove it. There is plenty to do in [Book I](book/I/index.md), [Book II](book/II/index.md) and [Book III](book/III/index.md) as well: read a page and tell us where it could be clearer, check a quotation against Heath's scans, or improve a figure or a proof. [CONTRIBUTING.md](CONTRIBUTING.md) explains the few house rules.
 
 ## How it was made
 
-Stoicheia is Jack Challis's project, built with Claude (Anthropic's AI) working as a crew of agents. A captain plans and merges; first mates prepare each stretch, writing the statements and testing them; sailors prove each proposition, in parallel; bosuns and first mates merge their work and review it for faithfulness to Euclid; artists drew the at-a-glance figures in Byrne's colours; inspectors audited Book I for consistency. From the third voyage OpenAI's Codex joined the crew: Codex sailors proved I.26, I.28, I.30, I.32, all of I.33–I.48 and all of Book II, some of them from scratch proofs Claude's first mates had written to test the statements; they drew Euclid's figure for each and wrote the first draft of its mishnah, and Claude's bosuns, first mates and captains reviewed and edited their work. Early planning also drew on conversations with ChatGPT. Nothing rests on trust but the assumptions, and those are all listed: Lean's kernel checks every proof, CI checks that every proof still quotes Heath word for word, and every quotation in the commentary was checked against the scanned 1908 text. The crew's logs are in [docs/reports/crew](docs/reports/crew).
+Stoicheia is Jack Challis's project, built with Claude (Anthropic's AI) working as a crew of agents. A captain plans and merges; first mates prepare each stretch, writing the statements and testing them; sailors prove each proposition, in parallel; bosuns and first mates merge their work and review it for faithfulness to Euclid; artists drew the at-a-glance figures in Byrne's colours; inspectors audited Book I for consistency. From the third voyage OpenAI's Codex joined the crew: Codex sailors proved I.26, I.28, I.30, I.32, all of I.33–I.48 and all of Books II and III, some of them from scratch proofs Claude's first mates had written to test the statements; they drew Euclid's figure for each and wrote the first draft of its mishnah, and Claude's bosuns, first mates and captains reviewed and edited their work. Early planning also drew on conversations with ChatGPT. Nothing rests on trust but the assumptions, and those are all listed: Lean's kernel checks every proof, CI checks that every proof still quotes Heath word for word, and every quotation in the commentary was checked against the scanned 1908 text. The crew's logs are in [docs/reports/crew](docs/reports/crew).
 
 ## Standing on shoulders
 

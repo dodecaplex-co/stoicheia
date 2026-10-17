@@ -182,3 +182,15 @@
   walk that goes everywhere `collectAxioms` goes; 76 of the 81 proved propositions gain
   Common Notions, and nothing else in `facts.json` changes. The line under each
   page's table now gives one rule for every row.
+
+## 17 October 2026
+
+- **Book III complete.** All 37 propositions are proved under Euclid's sentences, by two
+  fleets (III.1–III.19, then III.20–III.37), and `check_fidelity.py` now keeps Book III
+  whole, as it keeps Books I and II. On the certificate 17 propositions never need
+  Postulate 5. It comes in at III.14 and III.15, through the squares of I.46 and I.47,
+  and lies beneath every proposition from III.20 on: through I.32 for most, through the
+  squares again for III.35–III.37, and by name in III.25 and III.33, where Euclid takes
+  for granted that two straight lines meet. None uses superposition directly; III.24,
+  where Euclid applies one segment to another, compares the radii of their circles. The
+  README, CONTRIBUTING and `CITATION.cff` say so.
