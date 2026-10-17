@@ -1,0 +1,10 @@
+# The sha256 of Certificate/axioms.lock: the exact axioms this model was last checked against.
+# tests/model/run.py compares it with the lock and fails when they differ, so that any change
+# to an axiom's statement sends someone back to the harness and MODEL.md before CI is green.
+#
+# TODO(integrator): Certificate/axioms.lock does not exist yet (brief 0005, stage 1c). When it
+# lands, check MODEL.md's law-by-law account against it, then replace the TODO line below with
+# the output of
+#     shasum -a 256 Certificate/axioms.lock
+# run from the repository root (keep these comment lines). Until then run.py reports "pending".
+TODO  Certificate/axioms.lock
