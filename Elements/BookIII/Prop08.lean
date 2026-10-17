@@ -19,8 +19,8 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- De Morgan's second assumption: `E` falls outside the triangle `DFM`, so the angle
-`EMD` is greater than `FMD`. -/
+/-- Augustus De Morgan's second assumption: `E` falls outside the triangle `DFM`, so the
+angle `EMD` is greater than `FMD`. -/
 theorem Prop8.outside {D M E F H : Point} {α : Circle} (hM : Centre M α) (hE : OnCircle E α)
     (hF : OnCircle F α) (hH : OnCircle H α) (hDHE : Between D H E) (hEF : SameSideOf E F D M)
     (hlt : ∠ M D E < ∠ M D F) : ∠ F M D < ∠ E M D := by

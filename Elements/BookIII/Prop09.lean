@@ -117,7 +117,7 @@ theorem Prop9 {A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O A
   -- drawn through to the points G, K, H, L.
   obtain ⟨E, hAEB, hAE⟩ := BookI.Prop10 hAB
   obtain ⟨F, hBFC, hBF⟩ := BookI.Prop10 hBC
-  /- Camerer's case (Heath, vol. 2, p. 22): AB or BC may pass through D.
+  /- J. G. Camerer's case (Heath, vol. 2, p. 22): AB or BC may pass through D.
      D is none of A, B, C, so at most one of AB, BC, CA passes through it.
      Bisect CA at an unlettered point and use the two straight lines D is off.
      The same I.8, Definition I.10 and III.1 porism argument applies to them. -/
