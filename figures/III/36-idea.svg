@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.36 at a glance</title>
-  <desc>From a point outside a circle, one straight line cuts the circle (black outside it, red within) and one touches it (blue): the rectangle of the whole cutting line and its outside piece equals the square on the tangent (both yellow).</desc>
+  <desc>From a point outside a circle, one straight line cuts it (black outside, red within) and one touches it (blue): the rectangle contained by the whole cutting straight line and its outside piece equals the square on the tangent (both yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="92.0" cy="122.0" r="68.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <polygon points="218.5,79.8 262.0,79.8 262.0,250.0 218.5,250.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
