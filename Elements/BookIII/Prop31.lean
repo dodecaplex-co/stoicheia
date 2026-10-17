@@ -69,8 +69,8 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
   -- therefore the angle BAC is also equal to the angle FAC;
   have heq : ∠ B A C = ∠ F A C := hwhole.trans hext.symm
   -- therefore each is right; [I. Def. 10]
-  /- Definition I.10 says each is right, for they are adjacent angles on the straight
-     line BF; Postulate 4 says each is then the right angle `∟`. -/
+  /- Definition I.10 says each is right, for they are equal adjacent angles on the
+     straight line BF, and each is then `∟` (Post. 4, as in I.11). -/
   obtain ⟨M, hB_M, hA_M⟩ := Postulate1 B A hAB.symm
   have hF_M : OnLine F M := on_line_of_between hBAF hB_M hA_M
   have hC_M : ¬ OnLine C M := fun h => hABC ⟨M, hA_M, hB_M, h⟩
@@ -109,8 +109,8 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
       rw [add_comm (∠ A D C) ∟] at h'
       exact absurd (lt_trans this h') (lt_irrefl _)
   -- and it is the angle in the segment ADC less than the semicircle.
-  /- The statement covers every point of the greater segment. With a point `D` of
-     the less segment, III.22 makes the angle at `X` less than a right angle. -/
+  /- The statement covers every point X of the greater segment. With a point D of the
+     less segment, III.22 makes the angle at X less than a right angle. -/
   have hgreater : ∀ X : Point, OnCircle X ABCD → SameSideOf X B A C → ∠ A X C < ∟ := by
     intro X hX hXB
     obtain ⟨D, hD, hDB⟩ := exists_onCircle_oppositeSidesOf hA hC hABC.acb
@@ -123,7 +123,8 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
     · exact h
     · rw [h, add_comm] at h22
       exact absurd (CommonNotion3 h22 rfl).symm (Magnitude.ne_of_lt hobtuse)
-    · /- Both greater than a right angle: together greater than two. -/
+    · /- Were the angle at X greater than a right angle too, the two angles together
+         would be greater than two right angles. -/
       have h₁ : ∟ + ∟ < ∠ A X C + ∟ := add_lt_add_right ∟ h
       have h₂ : ∠ A X C + ∟ < ∠ A X C + ∠ A D C := by
         rw [add_comm (∠ A X C) ∟, add_comm (∠ A X C) (∠ A D C)]

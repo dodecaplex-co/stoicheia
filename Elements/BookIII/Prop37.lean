@@ -22,12 +22,12 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- The triangle `DBF` of Euclid's figure. A point `B` of the circle, with `DB` equal to a
-straight line `DE` from `D` to a point `E` of the circle, `DEF` a triangle, is not on the
-straight line through `D` and the centre `F`: were `B` between `D` and `F`, the sides `DE`,
-`EF` would make up `DF`; were `F` between `D` and `B`, the sides `DF`, `FE` would make up
-`DE`; either way two sides of the triangle `DEF` would not be greater than the third
-[I. 20]. And `D`, outside the circle, is not between `B` and the centre. -/
+/-- Euclid's figure makes DBF a triangle, and this is why. A point B of the circle, with
+DB equal to a straight line DE from D to a point E of the circle, and DEF a triangle, is
+not on the straight line through D and the centre F. Were B between D and F, the sides
+DE, EF would make up DF; were F between D and B, the sides DF, FE would make up DE;
+either way two sides of the triangle DEF would not be greater than the third [I. 20].
+And D, outside the circle, is not between B and the centre. -/
 theorem Prop37.triangle {B D E F : Point} {ABC : Circle} (hF : Centre F ABC)
     (hD : OutsideCircle D ABC) (hB : OnCircle B ABC) (hE : OnCircle E ABC)
     (hDEF : Triangle D E F) (hDE_DB : ‖D E‖ = ‖D B‖) : Triangle D B F := by

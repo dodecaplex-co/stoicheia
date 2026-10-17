@@ -17,7 +17,8 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- Where the centre `K` lies: on `C`'s side of `AB`, on `AB`, or on the other side. -/
+/-- A point K lies on C's side of the straight line AB, on AB, or on the other side, for
+a straight line has two sides. Here K is the centre. -/
 theorem Prop28.sides {A B C K : Point} (hABC : Triangle A B C) :
     SameSideOf K C A B ∨ Collinear A B K ∨ OppositeSidesOf K C A B := by
   obtain ⟨L, hA, hB⟩ := Postulate1 A B hABC.ne₁₂
@@ -70,9 +71,9 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- the radii are also equal;
   have hr : ‖K A‖ = ‖L D‖ := hcircles.radii hK hL hA hD
   have hrB : ‖K B‖ = ‖L E‖ := hcircles.radii hK hL hB hE
-  /- Euclid's figure has `K` beyond the less circumference `AGB`, on `C`'s side of `AB`.
-     If it is on `AB`, then `AB` is a diameter, and so is `DE` (`Prop28.diameter`), and the
-     four circumferences are semicircles; and it is not on `G`'s side (`Prop28.beyond`). -/
+  /- Euclid's figure has K beyond the less circumference AGB, on C's side of AB. If K is
+     on AB, then AB is a diameter, and so is DE (`Prop28.diameter`), and the four
+     circumferences are semicircles; and K is not on G's side (`Prop28.beyond`). -/
   rcases Prop28.sides (K := K) hCG.triangle with hKC | ⟨M, hA_M, hB_M, hK_M⟩ | hKC
   rotate_left
   · have hAKB := between_of_inside_chord hK_M hA_M hB_M (centre_inside hK) hA hB hCG.1
@@ -83,8 +84,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       Circumference.semicircle hL hD hE hDLE hFH.triangle]
     exact ⟨rfl, rfl⟩
   · exact absurd (OppositeSidesOf.sameSideOf hKC.symm hCG) (Prop28.beyond hK hA hB hCG hABC)
-  /- Likewise `L` is on `F`'s side of `DE`: on `DE`, it would make `AB` a diameter too,
-     through `K`, which is off `AB`. -/
+  /- Likewise L is on F's side of DE. Were L on DE, AB would be a diameter too, through
+     K, which is off AB. -/
   rcases Prop28.sides (K := L) hFH.triangle with hLF | ⟨M, hD_M, hE_M, hL_M⟩ | hLF
   rotate_left
   · have hDLE := between_of_inside_chord hL_M hD_M hE_M (centre_inside hL) hD hE hFH.1
@@ -98,8 +99,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- therefore the angle AKB is equal to the angle DLE. [I. 8]
   have hAKB : ∠ A K B = ∠ D L E := BookI.Prop8 hKG.triangle.cab hLH.triangle.cab hr hrB hAB
   -- But equal angles stand on equal circumferences, when they are at the centres; [III. 26]
-  /- C and F name sides, not necessarily points of the circles. Take a point of each
-     circle on that side to apply III.26. -/
+  /- C and F name sides, not necessarily points of the circles, so a point of each
+     circle on that side is taken to apply III.26. -/
   obtain ⟨X, hX, hXG⟩ := exists_onCircle_oppositeSidesOf hA hB hCG.symm.triangle
   obtain ⟨Y, hY, hYH⟩ := exists_onCircle_oppositeSidesOf hD hE hFH.symm.triangle
   -- therefore the circumference AGB is equal to DHE.
