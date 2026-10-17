@@ -267,7 +267,7 @@ theorem Prop9 {A B C D : Point} (hACB : Between A C B) (hAC : ‖A C‖ = ‖C B
     -- therefore the squares on AD, DB are double of the squares on AC, CD.
     rw [← sq_congr hDF_DB]; exact hADDF
   -- Therefore etc.
-  /- Otherwise D lies between A and C: exchange A and B. -/
+  /- Otherwise D lies between A and C, and we exchange A and B. -/
   have hCray : OnRay C A B := OnRay.of_between hACB
   have hDray : OnRay D A B := OnRay.of_between hADB
   rcases lt_trichotomy ‖A D‖ ‖A C‖ with h | h | h

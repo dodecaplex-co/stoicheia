@@ -66,7 +66,7 @@ theorem Prop17 {A B C : Point} (hABC : Triangle A B C) :
     -- Therefore the angles ABC, BCA are less than two right angles.
     rw [← htwo]
     exact hgreater
-  /- Euclid's own figure: the angles ABC, BCA. -/
+  /- This is Euclid's own figure, with the angles ABC, BCA. -/
   have hABC_BCA : ∠ A B C + ∠ B C A < ∟ + ∟ := less hABC
   -- Similarly we can prove that the angles BAC, ACB are also less than two right angles, and
   -- so are the angles CAB, ABC as well.

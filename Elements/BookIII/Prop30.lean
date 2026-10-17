@@ -80,8 +80,8 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   have hAD' : ‖A D‖ = ‖D B‖ := by rw [hAD, len_symm B D]
   -- But equal straight lines cut off equal circumferences, the greater equal to the greater,
   -- and the less to the less; [III. 28]
-  /- III.28 is used in one circle, which is equal to itself (`EqualCircles.refl`). The
-     less circumferences are named by points Q, R beyond AD from B and beyond DB from A. -/
+  /- We use III.28 in one circle, which is equal to itself (`EqualCircles.refl`), and name
+     the less circumferences by points Q, R beyond AD from B and beyond DB from A. -/
   obtain ⟨O, hO⟩ := hADB
   obtain ⟨Q, hQB, -⟩ := exists_oppositeSidesOf hABD.acb []
   obtain ⟨R, hRA, -⟩ := exists_oppositeSidesOf hABD.cba []

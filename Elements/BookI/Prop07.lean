@@ -184,7 +184,7 @@ theorem Prop7.within {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A�
   have hDAQ : SameSide D A Q := hD.1.2 Q hBQ hCQ
   have hDBP : SameSide D B P := hD.2.1.2 P hCP hAP
   have hDCL : SameSide D C L := same_side_symm (hCD.2 L hAL hBL)
-  /- Produce AC, AD to E and F. [Post. 2] -/
+  /- We produce AC, AD to E and F. [Post. 2] -/
   obtain ⟨E, hEP, hACE, -⟩ := Postulate2 hAP hCP hACD.ne₁₂ []
   obtain ⟨F, hFR, hADF, -⟩ := Postulate2 hAR hDR hACD.ne₁₃ []
   have hEC : E ≠ C := ne_of_between (between_symm hACE)

@@ -53,9 +53,8 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
   -- For let the centres of the circles be taken, and let them be K, L; let BK, KC, EL, LF be
   -- joined.
   obtain ⟨K, L, -, -, hK, hL, -, -, -⟩ := id hcircles
-  /- Euclid's figure has each centre off its straight line. When K is on BC, BGC is a
-     semicircle, and so is EHF, so BC and EF are diameters of equal circles, each twice
-     the radius. -/
+  /- Euclid's figure has each centre off its straight line. When K is on BC, BGC and EHF are
+     semicircles, and BC, EF are diameters of equal circles. -/
   by_cases hKBC : Collinear B C K
   · obtain ⟨N, hB_N, hC_N, hK_N⟩ := hKBC
     have hBKC := between_of_inside_chord hK_N hB_N hC_N (centre_inside hK) hB hC hBCG.ne₁₂
@@ -66,12 +65,10 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
         hcircles.radii hK hL hB hE, hcircles.radii hK hL hC hF, len_symm E L]
     · exact absurd (heq ▸ hsemi ▸ hgt') (lt_irrefl _)
   -- Now, since the circumference BGC is equal to the circumference EHF,
-  /- Otherwise the angle BKC stands on the circumference beyond BC from K. In Euclid's
-     figure that is BGC, for K is beyond it; if not, it is BAC, the circumference which
-     remains, and the remaining circumferences are equal, since the wholes are
-     (`Circumference.whole`) [C.N. 3]. Equal circumferences are of one kind, so L's case
-     matches K's. III.27 measures each at a point X, Y of its circle on the centre's
-     side. -/
+  /- Otherwise the angle BKC stands on BGC, as in Euclid's figure, or on BAC, the
+     circumference which remains; the remainders are equal, since the wholes are
+     (`Circumference.whole`) [C.N. 3], and L falls as K does. For III.27 we take a point X,
+     Y of each circle on the centre's side. -/
   obtain ⟨X, Y, hX, hY, hKX, hLY, hst⟩ : ∃ X Y : Point, OnCircle X ABC ∧ OnCircle Y DEF ∧
       SameSideOf K X B C ∧ SameSideOf L Y E F ∧ standing ABC B X C = standing DEF E Y F := by
     rcases Prop29.size hK hB hC hBCG with ⟨hKG, hlt⟩ | ⟨hBKC, -⟩ | ⟨hKG, hgt⟩

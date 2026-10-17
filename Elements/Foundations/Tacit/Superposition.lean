@@ -13,9 +13,9 @@ figures appears in none of the postulates. Hilbert simply made side–angle–si
 an axiom. System E (§3.7) treats superposition as a rule that may be used only
 to prove facts about the figure already drawn, never to build anything new.
 
-Here it is one rule: a triangle can be laid down with its corner `A` on a given
-point `D` of a straight line, its side `AB` along the ray from `D` toward `G`, and its
-third corner on the same side as `H`, keeping all its sides and angles. We
+Here it is one rule: a triangle can be laid down with its corner A on a given
+point D of a straight line, its side AB along the ray from D toward G, and its
+third corner on the same side as H, keeping all its sides and angles. We
 follow the form of the rule in LeanEuclid, by Logan Murphy, Kaiyu Yang, Jialiang
 Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si, which combines System E's two
 superposition rules into one. To respect System E's restriction, the
@@ -24,9 +24,9 @@ certificate's checks allow only I.4 and I.8 to cite it.
 
 namespace Elements.Tacit
 
-/-- **Superposition.** The triangle `ABC` can be applied to the straight line `L`
-with `A` on `D`, `B` on the ray from `D` through `G`, and `C` on the side of `L`
-where `H` is, without changing any side or angle. -/
+/-- **Superposition.** The triangle ABC can be applied to the straight line L
+with A on D, B on the ray from D through G, and C on the side of L
+where H is, without changing any side or angle. -/
 axiom superposition {A B C D G H : Point} {L : Line} (hABC : Triangle A B C)
     (hD : OnLine D L) (hG : OnLine G L) (hDG : D ≠ G) (hH : ¬ OnLine H L) :
     ∃ B' C' : Point, OnLine B' L ∧ ¬ Between B' D G ∧ SameSide C' H L ∧

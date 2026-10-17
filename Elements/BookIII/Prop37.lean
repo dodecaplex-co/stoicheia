@@ -96,7 +96,7 @@ theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
   -- therefore the angle DBF is also right.
   have hDBF_right : ∠ D B F = ∟ := h8.symm.trans hDEF_right
   -- And FB produced is a diameter;
-  /- Our porism of III.16 is stated at the end of a radius, so Lean need not produce FB. -/
+  /- Our porism of III.16 is stated at the end of a radius, so we need not produce FB. -/
   -- and the straight line drawn at right angles to the diameter of a circle, from its
   -- extremity, touches the circle; [III. 16, Por.]
   have hBD : Touches B D ABC :=
@@ -106,8 +106,8 @@ theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
   have hDB_touch : Touches D B ABC :=
     hBD.of_collinear ⟨M, hB_M, hD_M, hD_M⟩ ⟨M, hB_M, hD_M, hB_M⟩ hDB
   -- Similarly this can be proved to be the case even if the centre be on AC.
-  /- Lean needs no second case: III.36 is cited by its statement, which holds wherever
-     the centre lies, and nothing else above looks at AC. -/
+  /- We need no second case: III.36 is cited by its statement, which holds wherever the
+     centre lies, and nothing else above looks at AC. -/
   -- Therefore etc.
   exact hDB_touch
   -- Q. E. D.

@@ -26,14 +26,14 @@ open Tacit
 
 /-! ## A straight line meeting one of two parallels meets the other -/
 
-/-- A straight line meeting one of two parallels meets the other. If `L` is parallel
-to `M`, and a straight line `N`, other than `M`, passes through a point `P` of `M`,
-then `N` meets `L`. Otherwise `N` would be parallel to `L` too, and by I.30 `M` and
-`N` would be parallel to one another, though both pass through `P`.
+/-- A straight line meeting one of two parallels meets the other. If L is parallel
+to M, and a straight line N, other than M, passes through a point P of M,
+then N meets L. Otherwise N would be parallel to L too, and by I.30 M and
+N would be parallel to one another, though both pass through P.
 
 Euclid uses this whenever he draws a parallel and then names the point where it
-meets another straight line: `E` and `F` in I.37, `G` and `H` in I.38, `E` in I.39,
-`F` in I.40, `F` and `G` in I.42, `H`, `L` and `M` in I.44, `E` in I.46 and `L` in
+meets another straight line: E and F in I.37, G and H in I.38, E in I.39,
+F in I.40, F and G in I.42, H, L and M in I.44, E in I.46 and L in
 I.47. It is the uniqueness of the parallel through a point, often called
 Playfair's axiom; Heath reports under I.31 that Proclus draws it from I.30.
 `Prop30.unique`, a step inside I.30's own proof, gives the same uniqueness from
@@ -55,8 +55,8 @@ theorem Prop30.meet {L M N : Line} {P : Point} (hLM : Parallel L M) (hPM : OnLin
     hC_M ((line_unique hPB hP_K hB_K hPM hB_M) ▸ hC_K)
   exact ((Prop30 h₁ h₂ hC).parallel hPM hB_M hC_N hPN).not_onLine hPM hPN
 
-/-- I.30 said of straight lines drawn and named: two different straight lines `L` and
-`M`, each parallel to `N`, are parallel to one another. Euclid uses it without a
+/-- I.30 said of straight lines drawn and named: two different straight lines L and
+M, each parallel to N, are parallel to one another. Euclid uses it without a
 bracket in I.44 and I.47, where a straight line drawn "parallel to either" of two
 parallels is parallel to both; in I.45 he brackets it. [I. 30] -/
 theorem Prop30.parallel {L M N : Line} (hL : Parallel L N) (hM : Parallel M N) (hLM : L ≠ M) :
@@ -75,11 +75,11 @@ theorem Prop30.parallel {L M N : Line} (hL : Parallel L N) (hM : Parallel M N) (
   exact (Prop30 (AreParallel.of_parallel hAB hEF hA_L hB_L hE_N hF_N hL)
     (AreParallel.of_parallel hCD hEF hC_M hD_M hE_N hF_N hM) hC).parallel hA_L hB_L hC_M hD_M
 
-/-- Completing the parallelogram. If `X` lies on `L`, and `Y` and `Z` on `M`, which is
-parallel to `L`, the straight line drawn through `Z` parallel to `XY` [I. 31] meets
-`L` at a point `W` (`Prop30.meet`), and `XYZW` is a parallelogram. Euclid draws such
+/-- Completing the parallelogram. If X lies on L, and Y and Z on M, which is
+parallel to L, the straight line drawn through Z parallel to XY [I. 31] meets
+L at a point W (`Prop30.meet`), and XYZW is a parallelogram. Euclid draws such
 a parallel in I.37, I.38, I.42, I.44 and I.46, and reads the point where it meets
-`L`, and the parallelogram, off his figure. [I. 30, I. 31] -/
+L, and the parallelogram, off his figure. [I. 30, I. 31] -/
 theorem Prop31.parallelogram {X Y Z : Point} {L M : Line} (hLM : Parallel L M)
     (hX : OnLine X L) (hY : OnLine Y M) (hZ : OnLine Z M) (hYZ : Y ≠ Z) :
     ∃ W : Point, OnLine W L ∧ Parallelogram X Y Z W := by
@@ -98,9 +98,9 @@ theorem Prop31.parallelogram {X Y Z : Point} {L M : Line} (hLM : Parallel L M)
 /-! ## Parallels from right angles, and squares -/
 
 /-- Two straight lines making the interior angles on one side of a third equal to
-two right angles are parallel: if `D` and `C` lie on one side of `AB`, and the angles
-`DAB`, `ABC` are equal to two right angles, then `AD` is parallel to `BC`. Produce
-the four straight lines to make I.28's figure about `AB`. [I. 28] -/
+two right angles are parallel: if D and C lie on one side of AB, and the angles
+DAB, ABC are equal to two right angles, then AD is parallel to BC. Produce
+the four straight lines to make I.28's figure about AB. [I. 28] -/
 theorem Prop28.interior {A B C D : Point} (hDC : SameSideOf D C A B)
     (h : ∠ D A B + ∠ A B C = ∟ + ∟) : AreParallel A D B C := by
   have hAB : A ≠ B := hDC.1
@@ -125,10 +125,10 @@ theorem Prop28.interior {A B C D : Point} (hDC : SameSideOf D C A B)
     (hpar.parallel (on_line_of_between hDAX hD_M hA_M) hD_M (on_line_of_between hCBY hC_N hB_N)
       hC_N)
 
-/-- A square is a parallelogram. If `ABCD` is a square (Def. 22) whose far corners
-`C`, `D` lie on one side of `AB`, its opposite sides are parallel: the right angles
-at `A` and `B` make `AD` parallel to `BC`, and those at `B` and `C` make `AB` parallel
-to `CD`. Euclid's squares are those I.46 describes, which are parallelograms by
+/-- A square is a parallelogram. If ABCD is a square (Def. 22) whose far corners
+C, D lie on one side of AB, its opposite sides are parallel: the right angles
+at A and B make AD parallel to BC, and those at B and C make AB parallel
+to CD. Euclid's squares are those I.46 describes, which are parallelograms by
 construction; a square given in a statement has to be shown one. [I. 28] -/
 theorem Prop28.square {A B C D : Point} (h : Square A B C D) (hCD : SameSideOf C D A B) :
     Parallelogram A B C D := by

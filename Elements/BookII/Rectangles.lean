@@ -38,10 +38,10 @@ variable {A B C D E F G H K P Q R S P' Q' R' S' : Point}
 
 /-! ## Rectangles -/
 
-/-- One right angle makes a rectangle: a parallelogram `ABCD` whose angle at `A` is
-right has all four of its angles right. The angles `DAB`, `ABC` stand on the parallels
-`AD`, `BC`, so together they make two right angles [I. 29], and the angle at `B` is
-right; in the same way so are the angles at `C` and `D`. Euclid says so in II.4 ("the
+/-- One right angle makes a rectangle: a parallelogram ABCD whose angle at A is
+right has all four of its angles right. The angles DAB, ABC stand on the parallels
+AD, BC, so together they make two right angles [I. 29], and the angle at B is
+right; in the same way so are the angles at C and D. Euclid says so in II.4 ("the
 angles KBC, GCB are equal to two right angles"), and elsewhere in Book II takes it
 for granted, as Heath remarks of II.4 that "there can be no need to repeat exactly
 that part of the proof of I. 46 which shows that all the angles of the figure there
@@ -59,9 +59,9 @@ theorem Rectangle.of_right (h : Parallelogram A B C D) (hA : ∠ D A B = ∟) :
   have hD := next h.rotate.rotate hC
   exact ⟨h, hA, hB, hC, hD⟩
 
-/-- Rectangles contained by equal straight lines are equal: if the rectangles `PQRS`,
-`P'Q'R'S'` have `PQ` equal to `P'Q'` and `PS` to `P'S'`, they are equal. The diameter
-`QS` cuts off the triangle `SPQ`, right-angled at `P`, which is half the rectangle
+/-- Rectangles contained by equal straight lines are equal: if the rectangles PQRS,
+P'Q'R'S' have PQ equal to P'Q' and PS to P'S', they are equal. The diameter
+QS cuts off the triangle SPQ, right-angled at P, which is half the rectangle
 [I. 34]; and the two halves are equal [I. 4]. Euclid takes this for granted whenever
 he names a rectangle by its sides. [I. 4, I. 34] -/
 theorem Rectangle.congr (h : Rectangle P Q R S) (h' : Rectangle P' Q' R' S')
@@ -78,9 +78,9 @@ theorem Rectangle.congr (h : Rectangle P Q R S) (h' : Rectangle P' Q' R' S')
     (Prop4 hp.triangle.bac hp'.triangle.bac h₂ h₁ (h.2.1.trans h'.2.1.symm)).2.1
   rw [half h, half h', t]
 
-/-- **A rectangle is contained by its sides** (Definition II.1): the rectangle `PQRS` is
-the rectangle contained by `PQ`, `PS`, the two straight lines containing its right
-angle at `P`. `rect` chose some rectangle contained by straight lines equal to these,
+/-- **A rectangle is contained by its sides** (Definition II.1): the rectangle PQRS is
+the rectangle contained by PQ, PS, the two straight lines containing its right
+angle at P. `rect` chose some rectangle contained by straight lines equal to these,
 and by `Rectangle.congr` the two are equal. [I. 4, I. 34] -/
 theorem Rectangle.contained (h : Rectangle P Q R S) : quadArea P Q R S = rect P Q P S := by
   have hex : ∃ x, Contain ‖P Q‖ ‖P S‖ x := ⟨_, Or.inr ⟨P, Q, R, S, h, rfl, rfl, rfl⟩⟩
@@ -92,8 +92,8 @@ theorem Rectangle.contained (h : Rectangle P Q R S) : quadArea P Q R S = rect P 
     exact h.congr h' h₁.symm h₂.symm
 
 /-- Euclid's way of naming a rectangle: "BH is the rectangle A, BC, for it is contained
-by GB, BC, and BG is equal to A" (II.1). If the sides `PQ`, `PS` of the rectangle
-`PQRS` are equal to `AB`, `CD`, it is the rectangle contained by `AB`, `CD`.
+by GB, BC, and BG is equal to A" (II.1). If the sides PQ, PS of the rectangle
+PQRS are equal to AB, CD, it is the rectangle contained by AB, CD.
 [I. 4, I. 34] -/
 theorem Rectangle.eq_rect (h : Rectangle P Q R S) (h₁ : ‖P Q‖ = ‖A B‖) (h₂ : ‖P S‖ = ‖C D‖) :
     quadArea P Q R S = rect A B C D :=
@@ -101,14 +101,14 @@ theorem Rectangle.eq_rect (h : Rectangle P Q R S) (h₁ : ‖P Q‖ = ‖A B‖)
 
 /-! ## Squares -/
 
-/-- A square is the square on its side: the square `ABCD`, a parallelogram, is the
-square on `AB`. [I. 4, I. 34] -/
+/-- A square is the square on its side: the square ABCD, a parallelogram, is the
+square on AB. [I. 4, I. 34] -/
 theorem Square.eq_sq (h : Square A B C D) (hp : Parallelogram A B C D) :
     quadArea A B C D = sq A B :=
   (h.rectangle hp).eq_rect rfl h.len_eq
 
-/-- The square `ADEB` that I.46 describes on `AB`, with `D` and `E` on the side of `AB`
-where `P` is, is a parallelogram [I. 28], and it is the square on `AB`: "AE is the
+/-- The square ADEB that I.46 describes on AB, with D and E on the side of AB
+where P is, is a parallelogram [I. 28], and it is the square on AB: "AE is the
 square on AB" (II.2). [I. 4, I. 28, I. 34] -/
 theorem Square.described (h : Square A D E B) (hD : SameSideOf D P A B)
     (hE : SameSideOf E P A B) : Parallelogram A D E B ∧ quadArea A D E B = sq A B := by
@@ -116,9 +116,9 @@ theorem Square.described (h : Square A D E B) (hD : SameSideOf D P A B)
     (Prop28.square h.rotate.rotate.rotate (hD.trans hE.symm).swap).rotate
   exact ⟨hp, (h.eq_sq hp).trans (sq_congr h.len_eq.symm)⟩
 
-/-- **In square areas the parallelograms about the diameter are squares.** If `ABCD` is a
-square and a parallelogram, `K` lies on its diameter `AC`, and `AEKH` is a
-parallelogram with `E` on `AB` and `H` on `AD`, then `AEKH` is a square.
+/-- **In square areas the parallelograms about the diameter are squares.** If ABCD is a
+square and a parallelogram, K lies on its diameter AC, and AEKH is a
+parallelogram with E on AB and H on AD, then AEKH is a square.
 
 Heath's note on II.4 quotes this from the Greek text, where it stands as a porism,
 "undoubtedly interpolated" (vol. 1, p. 381), and his 1908 text leaves it out. Euclid
@@ -126,10 +126,10 @@ proves its first case inside II.4 ("CGKB is equilateral ... it is also
 right-angled"), says "for the same reason" for the second, and in II.5–II.8 takes it
 for granted: "LG, which is equal to the square on CD".
 
-The angle `EKA` is equal to the alternate angle `KAH` [I. 29], that is to `CAD`, which
-is equal to the alternate angle `ACB` [I. 29], and so to `BAC` [I. 5]. So the angles
-`EAK`, `EKA` are equal, and `EK` is equal to `EA` [I. 6]; the opposite sides are
-equal [I. 34]; and the angle at `A` is the square's, so all four are right
+The angle EKA is equal to the alternate angle KAH [I. 29], that is to CAD, which
+is equal to the alternate angle ACB [I. 29], and so to BAC [I. 5]. So the angles
+EAK, EKA are equal, and EK is equal to EA [I. 6]; the opposite sides are
+equal [I. 34]; and the angle at A is the square's, so all four are right
 (`Rectangle.of_right`). [I. 5, I. 6, I. 29, I. 34] -/
 theorem Square.about_diameter (h : Square A B C D) (hp : Parallelogram A B C D)
     (hK : Between A K C) (hE : Between A E B) (hH : Between A H D)
@@ -138,12 +138,12 @@ theorem Square.about_diameter (h : Square A B C D) (hp : Parallelogram A B C D)
   have hAD : A ≠ D := ne_of_between_ends hH
   have hAC : A ≠ C := hABC.ne₁₃
   have hAB : A ≠ B := hABC.ne₁₂
-  /- The angles `BAC`, `BCA` at the base of the isosceles triangle `BAC`. [I. 5] -/
+  /- The angles BAC, BCA at the base of the isosceles triangle BAC are equal. [I. 5] -/
   have h₁ : ∠ B A C = ∠ B C A := Prop5.base hABC.bac (len_symm B A ▸ h.1)
-  /- The alternate angles `BCA`, `CAD`. [I. 29] -/
+  /- The alternate angles BCA, CAD are equal. [I. 29] -/
   have h₂ : ∠ B C A = ∠ C A D :=
     Prop29.alternate hp.2.swap_right (hp.2.swap_right.oppositeSidesOf hp.sameSideOf.swap)
-  /- The alternate angles `EKA`, `KAH`. [I. 29] -/
+  /- The alternate angles EKA, KAH are equal. [I. 29] -/
   have h₃ : ∠ E K A = ∠ K A H :=
     Prop29.alternate hAEKH.2.swap_right
       (hAEKH.2.swap_right.oppositeSidesOf hAEKH.sameSideOf.swap)
@@ -151,10 +151,10 @@ theorem Square.about_diameter (h : Square A B C D) (hp : Parallelogram A B C D)
   have h₄ : ∠ K A H = ∠ C A D := angle_eq_of_onRay hKray (OnRay.of_between hH)
   have h₅ : ∠ E A K = ∠ B A C := angle_eq_of_onRay (OnRay.of_between hE) hKray
   have hEAK : Triangle E A K := hAEKH.triangle.bac
-  /- So `EA` is equal to `EK`. [I. 6] -/
+  /- So EA is equal to EK. [I. 6] -/
   have hEA_EK : ‖E A‖ = ‖E K‖ :=
     Prop6 hEAK (h₅.trans (h₁.trans (h₂.trans (h₄.symm.trans h₃.symm))))
-  /- The opposite sides of `AEKH`. [I. 34] -/
+  /- The opposite sides of AEKH are equal. [I. 34] -/
   obtain ⟨hAH_EK, hAE_HK, -, -, -⟩ := Prop34 (A := A) (B := H) (C := E) (D := K) hAEKH
   have hrect : Rectangle A E K H := by
     refine Rectangle.of_right hAEKH ?_
@@ -167,9 +167,9 @@ theorem Square.about_diameter (h : Square A B C D) (hp : Parallelogram A B C D)
 
 /-! ## The parallelograms about a diameter, and the gnomon -/
 
-/-- The complements are parallelograms. In I.43's figure, the parallelogram `ABCD` with
-the parallelograms `AEKH`, `KGCF` about its diameter `AC`, the complements `EBGK` and
-`HKFD` are parallelograms too: each straight line through `K` is parallel to the side
+/-- The complements are parallelograms. In I.43's figure, the parallelogram ABCD with
+the parallelograms AEKH, KGCF about its diameter AC, the complements EBGK and
+HKFD are parallelograms too: each straight line through K is parallel to the side
 it runs beside, both being parallel to the opposite side [I. 30]. [I. 30] -/
 theorem Parallelogram.complements (hABCD : Parallelogram A B C D) (hK : Between A K C)
     (hE : Between A E B) (hG : Between B G C) (hF : Between C F D) (hH : Between D H A)
@@ -215,12 +215,12 @@ theorem Parallelogram.complements (hABCD : Parallelogram A B C D) (hK : Between 
       AreParallel.of_parallel hFG.2.2.1.symm (ne_of_between hH) hK_KF hF_KF hD_DA hH_DA h₄⟩⟩
 
 /-- **The gnomon and the rest are the whole.** In I.43's figure, the parallelogram
-`ABCD` is the two parallelograms `AEKH`, `KGCF` about its diameter `AC` together with
-the two complements `EBGK`, `HKFD`. So a gnomon (Definition II.2), one parallelogram
+ABCD is the two parallelograms AEKH, KGCF about its diameter AC together with
+the two complements EBGK, HKFD. So a gnomon (Definition II.2), one parallelogram
 about the diameter with the two complements, makes the whole together with the other
 parallelogram about the diameter: "the gnomon NOP and LG are the whole square CEFB"
-(II.5). The complements are parallelograms (`Parallelogram.complements`), `HKG` and
-`EKF` are straight lines, and the whole is cut along each in turn
+(II.5). The complements are parallelograms (`Parallelogram.complements`), HKG and
+EKF are straight lines, and the whole is cut along each in turn
 (`quadArea_add_of_parallelograms`). [I. 30] -/
 theorem Parallelogram.about_diameter (hABCD : Parallelogram A B C D) (hK : Between A K C)
     (hE : Between A E B) (hG : Between B G C) (hF : Between C F D) (hH : Between D H A)
@@ -241,8 +241,8 @@ theorem Parallelogram.about_diameter (hABCD : Parallelogram A B C D) (hK : Betwe
     hBC_DA.not_onLine hC_BC (on_line_of_between hK hA_DA h)
   have hK_BC : ¬ OnLine K BC := fun h =>
     hBC_DA.symm.not_onLine hA_DA (on_line_of_between (between_symm hK) hC_BC h)
-  /- `H`, `K`, `G` lie on one straight line, parallel to `AB`: through `K` there is
-     only one parallel to `AB` (`Prop30.meet`). -/
+  /- H, K, G lie on one straight line, parallel to AB: through K there is
+     only one parallel to AB (`Prop30.meet`). -/
   obtain ⟨KH, hK_KH, hH_KH⟩ := Postulate1 K H hEH.1.2.1
   obtain ⟨KG, hK_KG, hG_KG⟩ := Postulate1 K G hEBGK.1.2.1.symm
   have hKH_AB : Parallel KH AB := hEH.1.symm.parallel hK_KH hH_KH hA_AB hE_AB
@@ -253,7 +253,7 @@ theorem Parallelogram.about_diameter (hABCD : Parallelogram A B C D) (hK : Betwe
     obtain ⟨X, hX_KG, hX_AB⟩ := Prop30.meet hKH_AB.symm hK_KH hK_KG hne
     exact hKG_AB.not_onLine hX_KG hX_AB
   have hG_KH : OnLine G KH := hKG_KH ▸ hG_KG
-  /- `K` lies between `G` and `H`, being between the parallels `BC`, `DA`. -/
+  /- K lies between G and H, being between the parallels BC, DA. -/
   have hKG_DA : SameSide K G DA :=
     same_side_trans (same_side_symm (pasch2 hK hA_DA hK_DA))
       (same_side_symm (hBC_DA.sameSide hG_BC hC_BC))
@@ -263,7 +263,7 @@ theorem Parallelogram.about_diameter (hABCD : Parallelogram A B C D) (hK : Betwe
   have hGKH : Between G K H :=
     Between.of_inside hG_BC hH_DA ⟨KH, hG_KH, hK_KH, hH_KH⟩ hKH_BC hKG_DA
   have hGH : G ≠ H := ne_of_between_ends hGKH
-  /- So `ABGH` and `HGCD` are parallelograms. -/
+  /- So ABGH and HGCD are parallelograms. -/
   have hABGH : Parallelogram A B G H :=
     ⟨AreParallel.of_parallel hABCD.1.1 hGH hA_AB hB_AB hG_KH hH_KH hKH_AB.symm,
       AreParallel.of_parallel (ne_of_between hG) (ne_of_between (between_symm hH)).symm hB_BC
@@ -274,7 +274,7 @@ theorem Parallelogram.about_diameter (hABCD : Parallelogram A B C D) (hK : Betwe
         hAB_CD.not_onLine hA_AB (on_line_of_between (between_symm hK) hC_CD (e ▸ hK_KH))),
       AreParallel.of_parallel (ne_of_between (between_symm hG)).symm (ne_of_between hH)
         hG_BC hC_BC hD_DA hH_DA hBC_DA⟩
-  /- Cut the whole along `HG`, then each part along `EK` and `KF`. -/
+  /- We cut the whole along HG, then each part along EK and KF. -/
   have hwhole : quadArea A B C D = quadArea A B G H + quadArea H G C D :=
     quadArea_add_of_parallelograms hABGH hHGCD (between_symm hH) hG
   have hupper : quadArea B G H A = quadArea B G K E + quadArea E K H A :=
@@ -285,16 +285,16 @@ theorem Parallelogram.about_diameter (hABCD : Parallelogram A B C D) (hK : Betwe
     hEBGK.quadArea_rotate, hEH.quadArea_rotate, hFG.quadArea_rotate, hHKFD.quadArea_rotate]
   ac_rfl
 
-/-- **"Let the figure be drawn."** In the parallelogram `ADEB`, with `C` on its side `AB`,
-draw the diameter `BD`; through `C` the parallel `CF` to `AD`, cutting `BD` at `G` and
-`DE` at `F`; and through `G` the parallel `HK` to `AB`, cutting `AD` at `H` and `BE` at `K`
-[I. 31]. Each point where a parallel is cut is found by `Prop30.meet`. Then `G` lies
-between `B` and `D`, each other point between the ends of its side, `G` between `C` and
-`F` and between `H` and `K`, and `CGKB`, `GHDF` are the parallelograms about the diameter:
+/-- **"Let the figure be drawn."** In the parallelogram ADEB, with C on its side AB,
+draw the diameter BD; through C the parallel CF to AD, cutting BD at G and
+DE at F; and through G the parallel HK to AB, cutting AD at H and BE at K
+[I. 31]. Each point where a parallel is cut is found by `Prop30.meet`. Then G lies
+between B and D, each other point between the ends of its side, G between C and
+F and between H and K, and CGKB, GHDF are the parallelograms about the diameter:
 everything I.43 asks for, and `Parallelogram.about_diameter` with it.
 
 This is the figure of Book II. II.4 draws it line by line in these letters; II.7 says only
-"let the figure be drawn"; II.5 and II.6 draw it in a square on `CB` and on `CD`, and II.8
+"let the figure be drawn"; II.5 and II.6 draw it in a square on CB and on CD, and II.8
 draws it twice ("let the figure be drawn double"). [I. 30, I. 31] -/
 theorem Parallelogram.figure (hp : Parallelogram A D E B) (hACB : Between A C B) :
     ∃ F G H K : Point, Between B G D ∧ Between D F E ∧ Between A H D ∧ Between E K B ∧
@@ -318,7 +318,7 @@ theorem Parallelogram.figure (hp : Parallelogram A D E B) (hACB : Between A C B)
   have hC_BE : ¬ OnLine C BE := fun h =>
     hDE_AB.not_onLine hE_DE
       ((line_unique (ne_of_between (between_symm hACB)).symm h hB_BE hC_AB hB_AB) ▸ hE_BE)
-  /- Through `C`, the parallel to `AD`; it meets `BD` at `G` and `DE` at `F`. -/
+  /- Through C we draw the parallel to AD; it meets BD at G and DE at F. -/
   obtain ⟨U, V, hUCV, hUV⟩ := Prop31 hAD fun ⟨L, hA, hD, hC⟩ =>
     hC_AD ((line_unique hAD hA hD hA_AD hD_AD) ▸ hC)
   obtain ⟨CF, hU_CF, hV_CF⟩ := Postulate1 U V hUV.1
@@ -334,7 +334,7 @@ theorem Parallelogram.figure (hp : Parallelogram A D E B) (hACB : Between A C B)
     (between_symm hACB) hB_BE hG_CF hD_AD ⟨BD, hB_BD, hG_BD, hD_BD⟩
   have hDFE : Between D F E := Parallel.between hCF_AD.symm hCF_BE.symm hA_AD hC_CF hB_BE
     hACB hD_AD hF_CF hE_BE ⟨DE, hD_DE, hF_DE, hE_DE⟩
-  /- Through `G`, the parallel to `AB`; it meets `AD` at `H` and `BE` at `K`. -/
+  /- Through G we draw the parallel to AB; it meets AD at H and BE at K. -/
   have hG_AB : ¬ OnLine G AB := fun h =>
     hD_AB (on_line_of_between hBGD hB_AB h)
   have hG_DE : ¬ OnLine G DE := fun h =>
@@ -371,21 +371,21 @@ theorem Parallelogram.figure (hp : Parallelogram A D E B) (hACB : Between A C B)
 
 /-! ## I.47, said of the squares on straight lines -/
 
-/-- **I.47 for the squares on straight lines.** In the triangle `ABC` right-angled at
-`A`, the square on `BC` is equal to the squares on `BA`, `AC`. Book II cites I.47 in
+/-- **I.47 for the squares on straight lines.** In the triangle ABC right-angled at
+A, the square on BC is equal to the squares on BA, AC. Book II cites I.47 in
 this form: "the square on EA is equal to the squares on AC, CE, for the angle ACE is
 right" (II.9). The three squares are described outward [I. 46], I.47 compares them,
 and each is the square on its side (`Square.described`).
 [I. 4, I. 28, I. 34, I. 46, I. 47] -/
 theorem BookI.Prop47.sq (hABC : Triangle A B C) (hright : ∠ B A C = ∟) :
     sq B C = sq B A + sq A C := by
-  /- The square on `BC`, on the other side of `BC` from `A`. -/
+  /- The square on BC is described on the other side of BC from A. -/
   obtain ⟨P, hP, -⟩ := exists_oppositeSidesOf hABC.bca []
   obtain ⟨D, E, hBDEC, hD, hE⟩ := Prop46 hABC.ne₂₃ hP.triangle
-  /- The square on `AB`, on the other side of `AB` from `C`. -/
+  /- The square on AB is described on the other side of AB from C. -/
   obtain ⟨Q, hQ, -⟩ := exists_oppositeSidesOf hABC []
   obtain ⟨G, F, hAGFB, hG, hF⟩ := Prop46 hABC.ne₁₂ hQ.triangle
-  /- The square on `AC`, on the other side of `AC` from `B`. -/
+  /- The square on AC is described on the other side of AC from B. -/
   obtain ⟨R, hR, -⟩ := exists_oppositeSidesOf hABC.acb []
   obtain ⟨H, K, hAHKC, hH, hK⟩ := Prop46 hABC.ne₁₃ hR.triangle
   obtain ⟨-, hsq₁⟩ := Square.described hBDEC hD hE

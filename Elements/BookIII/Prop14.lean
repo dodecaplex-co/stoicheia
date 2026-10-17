@@ -66,9 +66,8 @@ theorem Prop14 {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E ABDC) (hA 
     rw [← len_add_of_between hCGD, ← hCG]
   -- and AB is equal to CD;
   refine ⟨fun hABCD => ?_, fun hEFG => ?_⟩
-  ·
-    -- therefore AF is also equal to CG.
-    have hAFCG : ‖A F‖ = ‖C G‖ :=
+  -- therefore AF is also equal to CG.
+  · have hAFCG : ‖A F‖ = ‖C G‖ :=
       Magnitude.eq_of_add_self_eq (hAB.symm.trans (hABCD.trans hCD))
     -- And, since AE is equal to EC,
     have hAEEC : ‖A E‖ = ‖E C‖ := (len_symm A E).trans (Definition15 hE hA hC)
@@ -101,12 +100,11 @@ theorem Prop14 {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E ABDC) (hA 
   -- Next, let the straight lines AB, CD be equally distant from the centre; that is, let EF be
   -- equal to EG.
   -- I say that AB is also equal to CD.
-  ·
-    -- For, with the same construction, we can prove, similarly, that AB is double of AF, and CD
-    -- of CG.
-    /- The same construction has already given the doubles `hAB` and `hCD`. -/
-    -- And, since AE is equal to CE,
-    have hAECE : ‖A E‖ = ‖C E‖ :=
+  -- For, with the same construction, we can prove, similarly, that AB is double of AF, and CD
+  -- of CG.
+  /- The same construction has already shown that AB is double of AF, and CD of CG. -/
+  -- And, since AE is equal to CE,
+  · have hAECE : ‖A E‖ = ‖C E‖ :=
       (len_symm A E).trans ((Definition15 hE hA hC).trans (len_symm E C))
     -- the square on AE is equal to the square on CE.
     have hsqAECE : sq A E = sq C E := sq_congr hAECE

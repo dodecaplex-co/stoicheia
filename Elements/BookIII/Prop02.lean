@@ -49,8 +49,8 @@ theorem Prop2 {A B : Point} {ABC : Circle} (hABC : ∃ D : Point, Centre D ABC) 
   -- I say that the straight line joined from A to B will fall within the circle.
   intro E hAEB
   -- For suppose it does not, but, if possible, let it fall outside, as AEB;
-  /- The comparison DE < DB serves both suppositions, outside and on the circle.
-     The outside supposition, and the point F it supplies, are taken below in `hout`. -/
+  /- DE is less than DB, and that one comparison serves both suppositions, outside and on
+     the circle. We take up the outside one, and the point F it supplies, below. -/
   -- let the centre of the circle ABC be taken [III. 1], and let it be D; let DA, DB be joined,
   -- and let DFE be drawn through.
   have hAB : A ≠ B := ne_of_between_ends hAEB

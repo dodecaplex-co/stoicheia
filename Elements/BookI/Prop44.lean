@@ -44,7 +44,7 @@ theorem Prop44.place {A B X P Q R S : Point} (hAB : A ≠ B) (hX : ¬ Collinear 
   have hPQR : Triangle P Q R := h.triangle
   obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
   have hX_AB : ¬ OnLine X AB := fun hX' => hX ⟨AB, hA_AB, hB_AB, hX'⟩
-  /- Produce AB to E, with BE equal to QR. -/
+  /- We produce AB to E, with BE equal to QR. -/
   obtain ⟨E₁, hABE₁⟩ := produce hAB
   obtain ⟨K₁, hBK₁⟩ := Prop2 B Q R hPQR.ne₂₃
   obtain ⟨E, hE, hBE⟩ := OnRay.exists_len_eq (ne_of_len_eq hBK₁ hPQR.ne₂₃)

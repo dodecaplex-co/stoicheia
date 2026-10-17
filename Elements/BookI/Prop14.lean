@@ -33,7 +33,7 @@ theorem Prop14 {A B C D : Point} (hCD : OppositeSidesOf C D A B) (h : ∠ A B C 
   have hA_B : A ≠ B := hABC.ne₁₂
   have hC_B : C ≠ B := hABC.ne₂₃.symm
   -- I say that BD is in a straight line with CB.
-  /- In Lean: B lies between C and D. -/
+  /- In Lean, this says that B lies between C and D. -/
   -- For, if BD is not in a straight line with BC, let BE be in a straight line with CB.
   /- CB is produced beyond B to E [Post. 1, Post. 2], which is `produce` in Book
      Zero. Euclid's supposition then says that BE is another straight line than

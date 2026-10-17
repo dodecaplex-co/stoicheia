@@ -3,7 +3,7 @@ import Elements.Foundations.Tacit.Metric
 /-!
 # Tacit rules: from the figure to magnitudes, and back
 
-"Since `B` lies between `A` and `C`, the whole `AC` is equal to `AB` and `BC`
+"Since B lies between A and C, the whole AC is equal to AB and BC
 together": Euclid moves between the figure and its magnitudes all the time.
 These are the transfer inferences of System E, §3.6 (Avigad, Dean and Mumma,
 2009). Diagram-angle rule 5 is Postulate 5 itself, and the forward half of
@@ -16,7 +16,7 @@ variable {A B C D : Point} {L M : Line} {α β : Circle}
 
 /-! ## Segments -/
 
-/-- If `B` is between `A` and `C`, then `AB` and `BC` together make up `AC`.
+/-- If B is between A and C, then AB and BC together make up AC.
 (Diagram-segment 1) -/
 axiom len_add_of_between (h : Between A B C) : ‖A B‖ + ‖B C‖ = ‖A C‖
 
@@ -39,24 +39,24 @@ axiom len_lt_of_inside (hA : Centre A α) (hB : OnCircle B α) (h : InsideCircle
 
 /-! ## Angles -/
 
-/-- If `C` lies on the ray from `A` through `B`, the angle `BAC` is nothing.
+/-- If C lies on the ray from A through B, the angle BAC is nothing.
 (Diagram-angle 1) -/
 axiom angle_eq_zero_of_same_ray (hAB : A ≠ B) (hAC : A ≠ C) (hA : OnLine A L)
     (hB : OnLine B L) (hC : OnLine C L) (h : ¬ Between B A C) : ∠ B A C = 0
 
-/-- If the angle `BAC` is nothing, `C` lies on the ray from `A` through `B`.
+/-- If the angle BAC is nothing, C lies on the ray from A through B.
 (Diagram-angle 1) -/
 axiom same_ray_of_angle_eq_zero (hAB : A ≠ B) (hAC : A ≠ C) (hA : OnLine A L)
     (hB : OnLine B L) (h : ∠ B A C = 0) : OnLine C L ∧ ¬ Between B A C
 
-/-- If `D` lies within the angle `BAC`, then `BAC` is made up of `BAD` and `DAC`.
+/-- If D lies within the angle BAC, then BAC is made up of BAD and DAC.
 (Diagram-angle 2) -/
 axiom angle_add_of_inside (hAL : OnLine A L) (hAM : OnLine A M) (hB : OnLine B L)
     (hC : OnLine C M) (hAB : A ≠ B) (hAC : A ≠ C) (hDL : ¬ OnLine D L) (hDM : ¬ OnLine D M)
     (hLM : L ≠ M) (hBD : SameSide B D M) (hCD : SameSide C D L) :
     ∠ B A C = ∠ B A D + ∠ D A C
 
-/-- If the angle `BAC` is made up of `BAD` and `DAC`, then `D` lies within it.
+/-- If the angle BAC is made up of BAD and DAC, then D lies within it.
 (Diagram-angle 2) -/
 axiom inside_of_angle_add (hAL : OnLine A L) (hAM : OnLine A M) (hB : OnLine B L)
     (hC : OnLine C M) (hAB : A ≠ B) (hAC : A ≠ C) (hDL : ¬ OnLine D L) (hDM : ¬ OnLine D M)
@@ -89,9 +89,9 @@ axiom area_add_of_between (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
     (hAB : A ≠ B) (hAC : A ≠ C) (hBC : B ≠ C) (hD : ¬ OnLine D L) (h : Between A C B) :
     △ A C D + △ D C B = △ A D B
 
-/-- If `A`, `B` and `C` are different points of a straight line, `D` is off it, and the
-triangles `ACD` and `DCB` together make up the triangle `ADB`, then `C` lies between
-`A` and `B`. (Diagram-area 2, converse) -/
+/-- If A, B and C are different points of a straight line, D is off it, and the
+triangles ACD and DCB together make up the triangle ADB, then C lies between
+A and B. (Diagram-area 2, converse) -/
 axiom between_of_area_add (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
     (hAB : A ≠ B) (hAC : A ≠ C) (hBC : B ≠ C) (hD : ¬ OnLine D L)
     (h : △ A C D + △ D C B = △ A D B) : Between A C B

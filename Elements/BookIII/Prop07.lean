@@ -115,7 +115,7 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
     exact h24
   -- For the same reason
   -- CF is also greater than FG.
-  /- The Lean above was said of any two points B, C on one side of AD, and C, G are
+  /- We gave Euclid's argument above for any two points B, C on one side of AD, and C, G are
      such a pair. -/
   have hleast : ∀ G : Point, OnCircle G ABCD → G ≠ D → ‖F D‖ < ‖F G‖ := by
     intro G hG hGD

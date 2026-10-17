@@ -99,8 +99,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- therefore the angle AKB is equal to the angle DLE. [I. 8]
   have hAKB : ∠ A K B = ∠ D L E := BookI.Prop8 hKG.triangle.cab hLH.triangle.cab hr hrB hAB
   -- But equal angles stand on equal circumferences, when they are at the centres; [III. 26]
-  /- C and F name sides, not necessarily points of the circles, so a point of each
-     circle on that side is taken to apply III.26. -/
+  /- C and F name sides, not necessarily points of the circles, so we take a point of each
+     circle on that side for III.26. -/
   obtain ⟨X, hX, hXG⟩ := exists_onCircle_oppositeSidesOf hA hB hCG.symm.triangle
   obtain ⟨Y, hY, hYH⟩ := exists_onCircle_oppositeSidesOf hD hE hFH.symm.triangle
   -- therefore the circumference AGB is equal to DHE.

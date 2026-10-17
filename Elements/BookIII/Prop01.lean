@@ -94,8 +94,8 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
   have hG_N : OnLine G N := by
     refine Classical.byContradiction fun hG_N => ?_
     -- and let GA, GD, GB be joined.
-    /- A centre on AB would be its middle point D, already on CE. Excluding
-       that case makes DAG and DBG triangles for I.8. -/
+    /- A centre on AB would be its middle point D, already on CE. We set that case aside, so
+       that DAG and DBG are triangles for I.8. -/
     have hG_L : ¬ OnLine G L := fun hG_L =>
       hG_N ((Prop1.middle hADB hAD
         (between_of_inside_chord hG_L hA_L hB_L (centre_inside hG) hA hB hAB)
@@ -119,8 +119,8 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
     -- therefore the angle GDB is right.
     have hGDB : ∠ G D B = ∟ := h8 ▸ hADG
     -- But the angle FDB is also right;
-    /- If AB passes through the centre, F is D and there is no angle FDB. Lean
-       takes in its place the angle CDB, right by construction. -/
+    /- If AB passes through the centre, F is D and there is no angle FDB. We take in its
+       place the angle CDB, right by construction. -/
     have hBDC : ∠ B D C = ∟ := by
       rw [angle_onRay_right hCray hDB.symm]
       exact hX B ⟨L, hA_L, hB_L, hB_L⟩ hDB.symm

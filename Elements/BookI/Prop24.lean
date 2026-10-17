@@ -124,7 +124,7 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
   -- Again, since DF is equal to DG,
   have hDF_DG : ‖D F‖ = ‖D G‖ := hDG_DF.symm
   -- the angle DGF is also equal to the angle DFG; [I. 5]
-  /- I.5 (`Prop5.base`), for the triangle DFG. -/
+  /- We cite I.5 through `Prop5.base`, for the triangle DFG. -/
   have hDGF : ∠ D G F = ∠ D F G := (Prop5.base hDFG hDF_DG).symm
   /- Euclid's figure has F beyond EG. Lean must also take the two cases he leaves to
      the reader (`Prop24.cases`), and it takes them as Proclus does. -/

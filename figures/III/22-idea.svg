@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.22 at a glance</title>
-  <desc>Opposite angles of a four-sided figure in a circle make two right angles. The bottom angle is the red and blue angles together, standing on the same circumferences, and with the top angle (yellow) they are a triangle's three angles.</desc>
+  <desc>Opposite angles of a four-sided figure in a circle make two right angles. The bottom angle's red and blue parts equal the triangle's red and blue angles, standing on the same circumferences; with the yellow angle they are the triangle's three.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="152.0" r="112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <line x1="93.5" y1="117.4" x2="311.4" y2="140.3" stroke="#222222" stroke-width="3" stroke-linecap="round"/>

@@ -11,7 +11,7 @@ of System E, §3.4 (Avigad, Dean and Mumma, 2009), one axiom for each thing a ru
 says: most rules say one thing, and Between 1, which says four, is four axioms.
 
 In one place we follow LeanEuclid's correction of the published rules:
-`circles_meet_of_on_inside_outside` (Intersection rule 4) asks that `A` be *on*
+`circles_meet_of_on_inside_outside` (Intersection rule 4) asks that A be *on*
 the first circle. As printed in the paper ("on or inside"), the rule fails for
 a small circle lying wholly inside a large one. Our thanks to LeanEuclid's
 authors, Logan Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and
@@ -39,7 +39,7 @@ axiom inside_not_on (hA : InsideCircle A α) : ¬ OnCircle A α
 
 /-! ## Between -/
 
-/-- If `B` is between `A` and `C`, it is between `C` and `A`. (Between 1) -/
+/-- If B is between A and C, it is between C and A. (Between 1) -/
 axiom between_symm (h : Between A B C) : Between C B A
 
 /-- A point between two others differs from the first. (Between 1) -/
@@ -48,25 +48,25 @@ axiom ne_of_between (h : Between A B C) : A ≠ B
 /-- The ends of a finite straight line differ. (Between 1) -/
 axiom ne_of_between_ends (h : Between A B C) : A ≠ C
 
-/-- If `B` is between `A` and `C`, then `A` is not between `B` and `C`. (Between 1) -/
+/-- If B is between A and C, then A is not between B and C. (Between 1) -/
 axiom not_between_of_between (h : Between A B C) : ¬ Between B A C
 
-/-- A straight line through `A` and `B`, with `B` between `A` and `C`, passes
-through `C`. (Between 2) -/
+/-- A straight line through A and B, with B between A and C, passes
+through C. (Between 2) -/
 axiom on_line_of_between (h : Between A B C) (hA : OnLine A L) (hB : OnLine B L) :
     OnLine C L
 
-/-- A straight line through `A` and `C` passes through every point between them.
+/-- A straight line through A and C passes through every point between them.
 (Between 3) -/
 axiom on_line_of_between_ends (h : Between A B C) (hA : OnLine A L) (hC : OnLine C L) :
     OnLine B L
 
-/-- If `B` is between `A` and `C`, and `D` is between `A` and `B`, then `D` is between
-`A` and `C`. (Between 4) -/
+/-- If B is between A and C, and D is between A and B, then D is between
+A and C. (Between 4) -/
 axiom between_of_between_left (h₁ : Between A B C) (h₂ : Between A D B) : Between A D C
 
-/-- If `B` is between `A` and `C`, and `C` is between `B` and `D`, then `B` is between
-`A` and `D`. (Between 5) -/
+/-- If B is between A and C, and C is between B and D, then B is between
+A and D. (Between 5) -/
 axiom between_of_between_right (h₁ : Between A B C) (h₂ : Between B C D) : Between A B D
 
 /-- Of three different points on a straight line, one is between the other two.
@@ -74,8 +74,8 @@ axiom between_of_between_right (h₁ : Between A B C) (h₂ : Between B C D) : B
 axiom between_cases (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) (hA : OnLine A L)
     (hB : OnLine B L) (hC : OnLine C L) : Between A B C ∨ Between B A C ∨ Between A C B
 
-/-- If `B` is between `A` and `C`, and also between `A` and `D`, then `B` is not
-between `C` and `D`: `C` and `D` lie on the same side of `B`. (Between 7) -/
+/-- If B is between A and C, and also between A and D, then B is not
+between C and D: C and D lie on the same side of B. (Between 7) -/
 axiom not_between_of_between_between (h₁ : Between A B C) (h₂ : Between A B D) :
     ¬ Between C B D
 
@@ -84,8 +84,8 @@ axiom not_between_of_between_between (h₁ : Between A B C) (h₂ : Between A B 
 /-- A point off a straight line is on the same side of it as itself. (Same side 1) -/
 axiom same_side_refl (h : ¬ OnLine A L) : SameSide A A L
 
-/-- If `A` is on the same side of a straight line as `B`, then `B` is on the same side
-as `A`. (Same side 2) -/
+/-- If A is on the same side of a straight line as B, then B is on the same side
+as A. (Same side 2) -/
 axiom same_side_symm (h : SameSide A B L) : SameSide B A L
 
 /-- Points on one side of a straight line are not on it. (Same side 3) -/
@@ -101,49 +101,49 @@ axiom same_side_or (hA : ¬ OnLine A L) (hB : ¬ OnLine B L) (hC : ¬ OnLine C L
 
 /-! ## Pasch -/
 
-/-- If `A` and `C` are on the same side of `L`, so is any point between them: if `B` is
-between `A` and `C`, then `A` and `B` are on the same side of `L`. (Pasch 1) -/
+/-- If A and C are on the same side of L, so is any point between them: if B is
+between A and C, then A and B are on the same side of L. (Pasch 1) -/
 axiom pasch1 (h : Between A B C) (hAC : SameSide A C L) : SameSide A B L
 
-/-- If `B` is between `A` and `C`, `A` is on `L` and `B` is off it, then `B` and `C` are
-on the same side of `L`: a straight line that leaves `L` at `A` does not cross it
+/-- If B is between A and C, A is on L and B is off it, then B and C are
+on the same side of L: a straight line that leaves L at A does not cross it
 again. (Pasch 2) -/
 axiom pasch2 (h : Between A B C) (hA : OnLine A L) (hB : ¬ OnLine B L) : SameSide B C L
 
-/-- A straight line through a point between `A` and `C` separates them. (Pasch 3) -/
+/-- A straight line through a point between A and C separates them. (Pasch 3) -/
 axiom pasch3 (h : Between A B C) (hB : OnLine B L) : ¬ SameSide A C L
 
-/-- If two different straight lines `L` and `M` meet at `B`, and `A` and `C` are points
-of `M`, different from each other and from `B`, that are not on the same side of
-`L`, then `B` is between `A` and `C`. (Pasch 4) -/
+/-- If two different straight lines L and M meet at B, and A and C are points
+of M, different from each other and from B, that are not on the same side of
+L, then B is between A and C. (Pasch 4) -/
 axiom pasch4 (hLM : L ≠ M) (hBL : OnLine B L) (hBM : OnLine B M) (hAM : OnLine A M)
     (hCM : OnLine C M) (hAC : A ≠ C) (hAB : A ≠ B) (hCB : C ≠ B) (h : ¬ SameSide A C L) :
     Between A B C
 
 /-! ## Triple incidence
 
-Three straight lines through one point `A` divide the plane into six regions. -/
+Three straight lines through one point A divide the plane into six regions. -/
 
-/-- Take `B` on `L`, `C` on `M` and `D` on `N`, three straight lines through `A`. If `C`
-lies within the angle `BAD` (on `D`'s side of `L` and on `B`'s side of `N`), then `B`
-and `D` are not on the same side of `M`: the straight line `AC` separates them.
+/-- Take B on L, C on M and D on N, three straight lines through A. If C
+lies within the angle BAD (on D's side of L and on B's side of N), then B
+and D are not on the same side of M: the straight line AC separates them.
 (Triple incidence 1) -/
 axiom triple_incidence1 (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
     (hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
     (hBC : SameSide B C N) : ¬ SameSide B D M
 
-/-- Take `B` on `L`, `C` on `M` and `D` on `N`, three straight lines through `A`, with
-`B` other than `A` and `D` off `M`. If `C` and `D` are on the same side of `L`, and `B`
-and `D` are not on the same side of `M`, then `B` and `C` are on the same side of
-`N`: `C` lies within the angle `BAD`. (Triple incidence 2) -/
+/-- Take B on L, C on M and D on N, three straight lines through A, with
+B other than A and D off M. If C and D are on the same side of L, and B
+and D are not on the same side of M, then B and C are on the same side of
+N: C lies within the angle BAD. (Triple incidence 2) -/
 axiom triple_incidence2 (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
     (hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
     (hBD : ¬ SameSide B D M) (hDM : ¬ OnLine D M) (hBA : B ≠ A) : SameSide B C N
 
-/-- Take `B` on `L`, `C` on `M` and `D` on `N`, three straight lines through `A`, with
-`C` within the angle `BAD` (on `D`'s side of `L` and on `B`'s side of `N`). A point
-`E` within the angle `CAD` (on `D`'s side of `M` and on `C`'s side of `N`) is on
-`C`'s side of `L`. (Triple incidence 3) -/
+/-- Take B on L, C on M and D on N, three straight lines through A, with
+C within the angle BAD (on D's side of L and on B's side of N). A point
+E within the angle CAD (on D's side of M and on C's side of N) is on
+C's side of L. (Triple incidence 3) -/
 axiom triple_incidence3 (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
     (hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
     (hBC : SameSide B C N) (hDE : SameSide D E M) (hCE : SameSide C E N) : SameSide C E L
@@ -174,7 +174,7 @@ axiom not_same_side_of_circles_meet (hαβ : α ≠ β) (hCα : OnCircle C α) (
 
 /-! ## Intersection rules -/
 
-/-- A straight line joining points on opposite sides of `L` crosses `L`.
+/-- A straight line joining points on opposite sides of L crosses L.
 (Intersection 1) -/
 axiom lines_meet_of_opposite_sides (h : OppositeSides A B L) (hAM : OnLine A M)
     (hBM : OnLine B M) : LinesMeet L M
@@ -189,8 +189,8 @@ axiom line_meets_circle_of_opposite_sides (hA : InsideCircle A α ∨ OnCircle A
 axiom line_meets_circle_of_inside (hA : InsideCircle A α) (hAL : OnLine A L) :
     LineMeetsCircle L α
 
-/-- Two circles cut one another if the first passes through a point `A` inside the
-second, and a point `B` outside the second is inside or on the first. (Intersection
+/-- Two circles cut one another if the first passes through a point A inside the
+second, and a point B outside the second is inside or on the first. (Intersection
 4, in LeanEuclid's corrected form) -/
 axiom circles_meet_of_on_inside_outside (hAα : OnCircle A α)
     (hBα : InsideCircle B α ∨ OnCircle B α) (hAβ : InsideCircle A β) (hBβ : OutsideCircle B β) :

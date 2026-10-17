@@ -20,11 +20,10 @@ namespace Elements.BookIII
 open Tacit
 
 /-- This is Euclid's argument for one straight line AC through a point E other than the
-centre F: the rectangle contained by AE, EC, together with the square on FE, is equal to
-the square on FC. It serves as his "For the same reason" for DB, and covers the
-intermediate cases, where one straight line passes through the centre or E is the foot
-of the perpendicular. Isaac Todhunter saw in it a fact about the isosceles triangle FAC
-(Heath, vol. 2, p. 73). -/
+centre F: the rectangle contained by AE, EC, together with the square on FE, is equal to the
+square on FC. It serves as his "For the same reason" for DB, and covers the intermediate
+cases, where one straight line passes through the centre or E is the foot of the
+perpendicular. -/
 theorem Prop35.cut {A C E F : Point} {α : Circle} (hF : Centre F α) (hA : OnCircle A α)
     (hC : OnCircle C α) (hAEC : Between A E C) (hEF : E ≠ F) :
     rect A E E C + sq F E = sq F C := by
@@ -40,7 +39,7 @@ theorem Prop35.cut {A C E F : Point} {α : Circle} (hF : Centre F α) (hA : OnCi
       rw [len_symm A F]
       exact Definition15 hF hA hC
     exact BookII.Prop5 hAFC hAF hAEC hEF
-  · /- The perpendicular from F [I. 12] falls within AC. -/
+  · /- The perpendicular from F, drawn by I.12, falls within AC (`foot_between`). -/
     obtain ⟨G, hG, hFG⟩ := BookI.Prop12 hAC hF_AC
     have hAGC : Between A G C := foot_between hF hA hC hF_AC hG hFG
     have hG_L : OnLine G L := on_line_of_between_ends hAGC hA_L hC_L
@@ -93,9 +92,8 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
   -- EB.
   -- If now AC, BD are through the centre, so that E is the centre of the circle ABCD,
   by_cases hE : Centre E ABCD
-  ·
-    -- it is manifest that, AE, EC, DE, EB being equal,
-    have h₁ : ‖A E‖ = ‖D E‖ := by
+  -- it is manifest that, AE, EC, DE, EB being equal,
+  · have h₁ : ‖A E‖ = ‖D E‖ := by
       rw [len_symm A E, Definition15 hE hA hD, len_symm]
     have h₂ : ‖E C‖ = ‖E B‖ := Definition15 hE hC hB
     -- the rectangle contained by AE, EC is also equal to the rectangle contained by DE, EB.
@@ -137,7 +135,7 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
     -- GC; [II. 5]
     have h5 : rect A E E C + sq E G = sq G C := by
       by_cases hEG : E = G
-      · /- If E is G, AE is equal to EC, and the square on EG is nothing. -/
+      · /- If E is G, the square on EG is nothing, as in `Prop35.cut`. -/
         subst hEG
         rw [sq_self, add_zero]
         exact rect_congr hAG rfl

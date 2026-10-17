@@ -33,11 +33,10 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
   obtain ⟨M, hA_M, hB_M⟩ := Postulate1 A B hAB
   -- The angle at C is then acute, or right, or obtuse.
   rcases lt_trichotomy (∠ C₁ C C₂) ∟ with h | h | h
-  ·
-    -- First let it be acute,
-    -- and, as in the first figure, on the straight line AB, and at the point A, let the angle
-    -- BAD be constructed equal to the angle at C;
-    obtain ⟨P, hP, -⟩ := exists_off_line hAB []
+  -- First let it be acute,
+  -- and, as in the first figure, on the straight line AB, and at the point A, let the angle
+  -- BAD be constructed equal to the angle at C;
+  · obtain ⟨P, hP, -⟩ := exists_off_line hAB []
     obtain ⟨D, B', hB', hDP, hDAB'⟩ := BookI.Prop23 hAB hC hP
     have hD : Triangle A B D := hDP.triangle
     have hDA : D ≠ A := hD.ne₁₃.symm
@@ -136,13 +135,12 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     -- Therefore on the given straight line AB the segment AEB of a circle has been described
     -- admitting the angle AEB equal to the given angle, the angle at C.
     exact ⟨ABE, E, ⟨G, hG⟩, hA, hB, hE, hED.triangle, hCE.symm⟩
-  ·
-    -- Next let the angle at C be right;
-    -- and let it be again required to describe on AB a segment of a circle admitting an angle
-    -- equal to the right angle at C.
-    -- Let the angle BAD be constructed equal to the right angle at C, as is the case in the
-    -- second figure;
-    obtain ⟨P, hP, -⟩ := exists_off_line hAB []
+  -- Next let the angle at C be right;
+  -- and let it be again required to describe on AB a segment of a circle admitting an angle
+  -- equal to the right angle at C.
+  -- Let the angle BAD be constructed equal to the right angle at C, as is the case in the
+  -- second figure;
+  · obtain ⟨P, hP, -⟩ := exists_off_line hAB []
     obtain ⟨D, B', hB', hDP, hDAB'⟩ := BookI.Prop23 hAB hC hP
     have hD : Triangle A B D := hDP.triangle
     have hDA : D ≠ A := hD.ne₁₃.symm
@@ -172,11 +170,10 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     -- Therefore again the segment AEB of a circle has been described on AB admitting an angle
     -- equal to the angle at C.
     exact ⟨AEB, E, ⟨F, hF⟩, hA, hB, hE, hEt, hEC⟩
-  ·
-    -- Next, let the angle at C be obtuse;
-    -- and on the straight line AB, and at the point A, let the angle BAD be constructed equal to
-    -- it, as is the case in the third figure;
-    obtain ⟨P, hP, -⟩ := exists_off_line hAB []
+  -- Next, let the angle at C be obtuse;
+  -- and on the straight line AB, and at the point A, let the angle BAD be constructed equal to
+  -- it, as is the case in the third figure;
+  · obtain ⟨P, hP, -⟩ := exists_off_line hAB []
     obtain ⟨D, B', hB', hDP, hDAB'⟩ := BookI.Prop23 hAB hC hP
     have hD : Triangle A B D := hDP.triangle
     have hDA : D ≠ A := hD.ne₁₃.symm

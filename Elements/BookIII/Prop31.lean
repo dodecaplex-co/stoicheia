@@ -109,8 +109,8 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
       rw [add_comm (∠ A D C) ∟] at h'
       exact absurd (lt_trans this h') (lt_irrefl _)
   -- and it is the angle in the segment ADC less than the semicircle.
-  /- The statement covers every point X of the greater segment. With a point D of the
-     less segment, III.22 makes the angle at X less than a right angle. -/
+  /- Our statement covers every point X of the greater segment. With a point D of the less
+     segment, III.22 makes the angle at X less than a right angle. -/
   have hgreater : ∀ X : Point, OnCircle X ABCD → SameSideOf X B A C → ∠ A X C < ∟ := by
     intro X hX hXB
     obtain ⟨D, hD, hDB⟩ := exists_onCircle_oppositeSidesOf hA hC hABC.acb

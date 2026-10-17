@@ -122,8 +122,8 @@ theorem Prop9 {A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O A
   obtain ⟨E, hAEB, hAE⟩ := BookI.Prop10 hAB
   obtain ⟨F, hBFC, hBF⟩ := BookI.Prop10 hBC
   /- This is J. G. Camerer's case (Heath, vol. 2, p. 22), where AB or BC passes through D.
-     At most one of AB, BC, CA can, since D is none of A, B, C; so CA is bisected too, at
-     an unlettered point, and `Prop9.centre_on` is used on the two that miss D. -/
+     At most one of AB, BC, CA can, since D is none of A, B, C; so we bisect CA too, at an
+     unlettered point, and use `Prop9.centre_on` on the two that miss D. -/
   obtain ⟨hDA', hDB'⟩ := Prop9.ne_ends hAB hDA
   have hDC' : D ≠ C := (Prop9.ne_ends hBC hDB).2
   have hDCA : ‖D C‖ = ‖D A‖ := (hDA.trans hDB).symm

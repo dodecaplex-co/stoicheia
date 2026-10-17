@@ -83,10 +83,10 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
   have hFKG : Between F K G := foot_between hE hF hG hE_FG hK hEK
   -- Then, since BC is nearer to the centre and FG more remote, EK is greater than
   -- EH. [III. Def. 5]
-  /- Our statement gives this as `hnearer`. -/
+  /- Our statement assumes this. -/
   -- Let EL be made equal to EH, through L let LM be drawn at right angles to EK and carried
   -- through to N, and let ME, EN, FE, EG be joined.
-  /- Cut EL off EK [I. 3]. -/
+  /- We cut EL off EK, equal to EH [I. 3]. -/
   have hEH' : E ≠ H := fun e => hE_BC (e ▸ hH)
   obtain ⟨L, hELK, hEL⟩ := BookI.Prop3 hEH' hnearer
   have hEK' : E ≠ K := ne_of_between_ends hELK
@@ -99,13 +99,14 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
     hE_FG_line (line_unique (ne_of_between hFKG) h hK_EK hF_FG hK_FG ▸ hE_EK)
   have hG_EK : ¬ OnLine G EK := fun h =>
     hE_FG_line (line_unique (ne_of_between (between_symm hFKG)) h hK_EK hG_FG hK_FG ▸ hE_EK)
-  /- Draw LM at right angles to EK [I. 11], on F's side. -/
+  /- We draw LM at right angles to EK, on F's side [I. 11]. -/
   obtain ⟨R, hRF, hR⟩ := BookI.Prop11 hEK' ⟨EK, hE_EK, hK_EK, hL_EK⟩
     (fun ⟨l, h1, h2, h3⟩ => hF_EK (line_unique hEK' h1 h2 hE_EK hK_EK ▸ h3))
   have hR_EK : ¬ OnLine R EK := not_on_line_of_same_side (hRF.sameSide hE_EK hK_EK)
   have hRL : R ≠ L := fun e => hR_EK (e ▸ hL_EK)
   obtain ⟨MN, hL_MN, hR_MN⟩ := Postulate1 L R hRL.symm
-  /- Carry it through to N; L is within the circle. -/
+  /- L is within the circle, so the straight line LM, carried through, meets the circle on
+     each side of L, at N and at M. -/
   have hK_in : InsideCircle K ABCD := inside_of_between (Or.inr hF) (Or.inr hG) hFKG
   have hL_in : InsideCircle L ABCD :=
     inside_of_between (Or.inl (centre_inside hE)) (Or.inl hK_in) hELK
@@ -160,8 +161,8 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
   have hEM : ‖E M‖ = ‖E F‖ := Definition15 hE hM hF
   have hEN : ‖E N‖ = ‖E G‖ := Definition15 hE hN hG
   -- and the angle MEN greater than the angle FEG,
-  /- FG and MN never meet: at a common point Z the triangle ZLK would have two right
-     angles [I. 17]. So F and G are on K's side of MN, and E is on the other. -/
+  /- FG and MN never meet, for at a common point Z the triangle ZLK would have two right
+     angles, against I.17. So F and G are on K's side of MN, and E is on the other. -/
   have par : Parallel FG MN := Parallel.of_not_meet hF_FG fun Z hZFG hZMN => by
     have hZL : Z ≠ L := by
       intro e

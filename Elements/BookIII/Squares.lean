@@ -26,7 +26,7 @@ namespace Elements
 
 open Tacit BookI
 
-/-- The square on a straight line is something. Described on `AB` [I. 46], it is a
+/-- The square on a straight line is something. Described on AB [I. 46], it is a
 parallelogram (`Square.described`), and its diameter cuts it into two triangles, each of
 which is something. [I. 4, I. 28, I. 34, I. 46] -/
 theorem sq_pos {A B : Point} (hAB : A ≠ B) : 0 < sq A B := by
@@ -40,8 +40,8 @@ theorem sq_pos {A B : Point} (hAB : A ≠ B) : 0 < sq A B := by
     exact hp.rotate.rotate.triangle.area_pos
   exact lt_trans h₁ (CommonNotion5 h₂)
 
-/-- **Equal squares are on equal straight lines.** If the square on `AB` is equal to the
-square on `CD`, then `AB` is equal to `CD`. Each square is described [I. 46] and is the
+/-- **Equal squares are on equal straight lines.** If the square on AB is equal to the
+square on CD, then AB is equal to CD. Each square is described [I. 46] and is the
 square on its side (`Square.described`); then I.46's corollary for drawn squares,
 `Prop46.side_eq`, compares them. If one of the straight lines is nothing, so is its
 square, and so the other (`sq_pos`). [I. 3, I. 4, I. 28, I. 34, I. 46] -/
@@ -57,7 +57,7 @@ theorem BookI.Prop46.sq {A B C D : Point} (h : sq A B = sq C D) : ‖A B‖ = �
     · subst hCD
       rw [sq_self] at h
       exact absurd h (Magnitude.ne_of_lt (sq_pos hAB)).symm
-    /- The squares on `AB` and on `CD` [I. 46], each read from its second corner. -/
+    /- We describe the squares on AB and on CD [I. 46], each read from its second corner. -/
     obtain ⟨P, hP, -⟩ := exists_off_line hAB []
     obtain ⟨D', E', hsq, hD', hE'⟩ := Prop46 hAB hP
     obtain ⟨hp, heq⟩ := Square.described hsq hD' hE'
@@ -74,11 +74,11 @@ theorem BookI.Prop46.sq {A B C D : Point} (h : sq A B = sq C D) : ‖A B‖ = �
     exact this
 
 /-- **The perpendicular from the centre falls within.** The perpendicular drawn from the
-centre `E` to a straight line `AB` in the circle, not through the centre, falls between
-`A` and `B`. Its foot `F` is nearer the centre than any other point `P` of the straight
-line: in the triangle `EFP` the angle at `F` is right, so the angle at `P` is less than a
-right angle [I. 17], and `EP`, opposite the greater angle, is greater than `EF` [I. 19].
-So `F` is nearer than `A` or than `B`, which are on the circle; it is within the circle,
+centre E to a straight line AB in the circle, not through the centre, falls between
+A and B. Its foot F is nearer the centre than any other point P of the straight
+line: in the triangle EFP the angle at F is right, so the angle at P is less than a
+right angle [I. 17], and EP, opposite the greater angle, is greater than EF [I. 19].
+So F is nearer than A or than B, which are on the circle; it is within the circle,
 and so between them (System E, Circle 1). Euclid reads it off the figure in III.14,
 III.35 and III.36, before III.3 bisects the straight line there. [I. 17, I. 19] -/
 theorem foot_between {A B E F : Point} {α : Circle} (hE : Centre E α) (hA : OnCircle A α)
@@ -87,19 +87,19 @@ theorem foot_between {A B E F : Point} {α : Circle} (hE : Centre E α) (hA : On
   have hAB : A ≠ B := Triangle.ne₁₂ hE_AB
   obtain ⟨M, hA_M, hB_M, hF_M⟩ := hF
   have hE_M : ¬ OnLine E M := Triangle.off_line hE_AB hA_M hB_M
-  /- Any other point `P` of the straight line is farther from `E` than `F` is. -/
+  /- Any other point P of the straight line is farther from E than F is. -/
   have nearer : ∀ P : Point, OnLine P M → P ≠ F → ‖E F‖ < ‖E P‖ := by
     intro P hP_M hPF
     have hFPE : Triangle F P E := Triangle.of_line hF_M hP_M hPF.symm hE_M
     have hEFP : Triangle E F P := hFPE.cab
     have hright : ∠ E F P = ∟ := hEF P ⟨M, hA_M, hB_M, hP_M⟩ hPF
-    /- The angles `EFP`, `FPE` are less than two right angles [I. 17]. -/
+    /- The angles EFP, FPE are less than two right angles [I. 17]. -/
     have h17 := (BookI.Prop17 hEFP).1
     rw [hright] at h17
     have hP : ∠ F P E < ∠ E F P := hright ▸ Magnitude.lt_of_add_lt_add_left h17
     /- The greater angle is subtended by the greater side [I. 19]. -/
     exact BookI.Prop19 hEFP hP
-  /- `F` is within the circle: nearer the centre than `A`, or than `B`. -/
+  /- F is within the circle: nearer the centre than A, or than B. -/
   have hF_in : InsideCircle F α := by
     by_cases hAF : A = F
     · have hBF : B ≠ F := fun e => hAB (hAF.trans e.symm)

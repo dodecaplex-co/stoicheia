@@ -29,7 +29,7 @@ theorem Prop11 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
     Between F G A := by
   -- For let the two circles ABC, ADE touch one another internally at the point A, and let the
   -- centre F of the circle ABC, and the centre G of ADE, be taken;
-  /- The centres differ [III. 6], so FG is a straight line. -/
+  /- By III.6 the centres differ, so FG is a straight line. -/
   have hFG : F ≠ G := fun e => Prop6 (Or.inl htouch) ⟨hF, e ▸ hG⟩
   obtain ⟨hA₁, hA₂, -, hwithin⟩ := htouch
   -- I say that the straight line joined from G to F and produced will fall on A.
@@ -73,8 +73,8 @@ theorem Prop11 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
     -- therefore GD is also greater than GH,
     have hGH_GD : ‖G H‖ < ‖G D‖ := hGA_GD ▸ hGH_GA
     -- the less than the greater: which is impossible.
-    /- The inequality puts D beyond H, outside ABC; internal contact forbids it.
-       Its strictness also excludes D = H. -/
+    /- GD greater than GH puts D beyond H, outside ABC, which internal contact forbids; and
+       since GD is greater, D is not H itself. -/
     have hGHD : Between G H D :=
       OnRay.between_of_len_lt (OnRay.self (ne_of_between hHGF).symm)
         (OnRay.of_between_between hFGH (between_symm hDGF)) hGH_GD

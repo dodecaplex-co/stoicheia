@@ -143,7 +143,7 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
     fun Q hQ_AC hQ_NO =>
       Prop10.meet_once hBHG hBKH hBLG hC_off hBKC hO_off hBLO hQ_AC hP_AC hQ_NO hP_NO
   -- therefore the point P is the centre of the circle ABC.
-  /- The centre that the hypothesis `hABC` gives has already been named P. -/
+  /- The centre our statement gives the circle ABC has already been named P. -/
   -- Similarly we can prove that P is also the centre of the circle DEF;
   obtain ⟨P', hP'⟩ := hDEF
   have hP'_AC : Collinear K C P' := Prop1.porism hP' hB₂ hH₂ hBKH hBK hC_off hBKC

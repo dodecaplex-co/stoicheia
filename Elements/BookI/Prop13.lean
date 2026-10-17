@@ -46,10 +46,10 @@ theorem Prop13.within {A B C D E : Point} (hCBD : Between C B D) (hAE : SameSide
   have hA_L : ¬ OnLine A L := not_on_line_of_same_side hAE_L
   have hA_M : ¬ OnLine A M := not_on_line_of_same_side hAC_M
   refine ⟨SameSideOf.of_line hBD hB_L hD_L (same_side_symm hAE_L), ?_⟩
-  /- BA separates C from E (Triple incidence 1) ... -/
+  /- BA separates C from E (Triple incidence 1). -/
   have hCE_N : ¬ SameSide C E N :=
     triple_incidence1 hB_L hB_N hB_M hC_L hA_N hE_M hAE_L (same_side_symm hAC_M)
-  /- ... and C from D (Pasch 3). -/
+  /- It also separates C from D (Pasch 3). -/
   have hCD_N : ¬ SameSide C D N := pasch3 hCBD hB_N
   /- None of C, D, E is on BA: else BA would be BC, or BE, and A would be on it. -/
   have hC_N : ¬ OnLine C N := fun hC => hA_L (line_unique hBC hB_N hC hB_L hC_L ▸ hA_N)
@@ -175,10 +175,10 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
     exact hequal.symm.trans hright
   -- Therefore etc.
   rcases Prop13.cases hCBD hEA hCBE hEBD heq with hAC | hAD
-  · /- Euclid's figure. -/
+  · /- This is Euclid's figure. -/
     rw [angle_symm hCB hAB, angle_symm hAB hDB, add_comm (∠ A B C)]
     exact two_right hCBD hCBE hEBD hAE_BC hAC
-  · /- Euclid's figure, with C and D exchanged. -/
+  · /- This is Euclid's figure with C and D exchanged. -/
     exact two_right (between_symm hCBD) hDBE hEBC hAE_BD hAD
   -- Q. E. D.
 

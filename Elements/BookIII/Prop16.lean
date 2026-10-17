@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
+import Elements.BookIII.Prop01
 import Elements.BookI.Prop05
 import Elements.BookI.Prop12
 import Elements.BookI.Prop17
@@ -17,31 +18,6 @@ carries it out.
 namespace Elements.BookIII
 
 open Tacit
-
-/-- Euclid takes for granted that at A only one straight line is at right angles to AD.
-On each side of AD, equal angles give the same ray; producing one ray through A gives the
-perpendicular on the other side. So the foot G cannot be A. -/
-theorem Prop16.one_perp {A D E F : Point} (hE : Triangle D A E) (hF : Triangle D A F)
-    (hDAE : ∠ D A E = ∟) (hDAF : ∠ D A F = ∟) : Collinear A E F := by
-  have hAD : A ≠ D := hE.ne₁₂.symm
-  obtain ⟨L, hA_L, hD_L⟩ := Postulate1 A D hAD
-  have hE_L : ¬ OnLine E L := hE.bac.off_line hA_L hD_L
-  have hF_L : ¬ OnLine F L := hF.bac.off_line hA_L hD_L
-  by_cases hs : SameSide F E L
-  · exact (onRay_of_angle_eq (SameSideOf.of_line hAD hA_L hD_L hs) (hDAF.trans hDAE.symm)).2.2.1
-  · obtain ⟨M, hE_M, hA_M⟩ := Postulate1 E A hE.ne₂₃.symm
-    obtain ⟨E', hE'_M, hEAE', -⟩ := Postulate2 hE_M hA_M hE.ne₂₃.symm []
-    have hD_M : ¬ OnLine D M := fun hD => hE ⟨M, hD, hA_M, hE_M⟩
-    have hEAD : ∠ E A D = ∟ := by rw [angle_symm hE.ne₂₃.symm hE.ne₁₂]; exact hDAE
-    have hDAE' : ∠ D A E' = ∟ := (adjacent_eq_of_right hE_M hE'_M hEAE' hD_M hEAD).symm.trans hEAD
-    have hE'_L : ¬ OnLine E' L := fun h => hE_L (on_line_of_between (between_symm hEAE') h hA_L)
-    have hFE' : SameSide F E' L := same_side_of_opposite_sides
-      ⟨hE_L, hF_L, fun h => hs (same_side_symm h)⟩ ⟨hE_L, hE'_L, pasch3 hEAE' hA_L⟩
-    obtain ⟨-, -, ⟨N, hA_N, hE'_N, hF_N⟩, -⟩ :=
-      onRay_of_angle_eq (SameSideOf.of_line hAD hA_L hD_L hFE') (hDAF.trans hDAE'.symm)
-    have hNM : N = M := line_unique (ne_of_between (between_symm hEAE')).symm hA_N hE'_N hA_M hE'_M
-    subst hNM
-    exact ⟨N, hA_N, hE_M, hF_N⟩
 
 /-- The straight line drawn at right angles to the diameter of a circle from its extremity will fall
 outside the circle, and into the space between the straight line and the circumference another
@@ -105,13 +81,12 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
     have hon : ¬ OnCircle P ABC := key P hP_L hPA
     -- therefore it will fall outside.
     exact ⟨hin, hon⟩
-  ·
-    -- Let it fall as AE;
-    -- I say next that into the space between the straight line AE and the circumference CHA
-    -- another straight line cannot be interposed.
-    -- For, if possible, let another straight line be so interposed, as FA, and let DG be drawn
-    -- from the point D perpendicular to FA.
-    refine Classical.byContradiction fun hFA => ?_
+  -- Let it fall as AE;
+  -- I say next that into the space between the straight line AE and the circumference CHA
+  -- another straight line cannot be interposed.
+  -- For, if possible, let another straight line be so interposed, as FA, and let DG be drawn
+  -- from the point D perpendicular to FA.
+  · refine Classical.byContradiction fun hFA => ?_
     have hAF : A ≠ F := by
       rintro rfl
       exact hF ⟨L, hA_L, hE_L, hA_L⟩
@@ -120,11 +95,12 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
     /- Euclid gives no citation for drawing this perpendicular: it is I.12. -/
     obtain ⟨G, hG, hDG⟩ := BookI.Prop12 hAF hDF
     have hDAF : Triangle D A F := fun ⟨M, h1, h2, h3⟩ => hDF ⟨M, h2, h3, h1⟩
-    /- Were G to be A, AF and AE would be the same perpendicular to AD. -/
+    /- Were G to be A, AF would be at right angles to AD at A, as AE is; but at A only
+       one straight line is at right angles to AD, as in III.1 (`Prop1.perpendicular`). -/
     have hGA : G ≠ A := by
       rintro rfl
       obtain ⟨M, h1, h2⟩ := Postulate1 G F hAF
-      exact hF (Prop16.one_perp hDAE' hDAF hDAE (hDG F ⟨M, h1, h2, h2⟩ hAF.symm))
+      exact hF (Prop1.perpendicular hDAE' hDAF hDAE (hDG F ⟨M, h1, h2, h2⟩ hAF.symm))
     obtain ⟨M, hA_M, hF_M, hG_M⟩ := hG
     have hD_M : ¬ OnLine D M := fun hD => hDF ⟨M, hA_M, hF_M, hD⟩
     have hDGA : Triangle D G A := (Triangle.of_line hG_M hA_M hGA hD_M).bca.bca
@@ -143,6 +119,9 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
     exact hFA ⟨G, ⟨M, hA_M, hF_M, hG_M⟩, inside_of_len_lt hD hA h19⟩
   -- Therefore another straight line cannot be interposed into the space between the straight
   -- line and the circumference.
+  /- Our angles are made by two straight lines, so the angle of the semicircle and the
+     horn-like angle are left to Euclid's words below. What he proves them by, that every
+     other straight line through A cuts the circle, is the second part above. -/
   -- I say further that the angle of the semicircle contained by the straight line BA and the
   -- circumference CHA is greater than any acute rectilineal angle,
   -- and the remaining angle contained by the circumference CHA and the straight line AE is
@@ -159,6 +138,7 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
   -- than the angle contained by the straight line BA and the circumference CHA, nor yet any
   -- acute angle contained by straight lines which is less than the angle contained by the
   -- circumference CHA and the straight line AE.—
+  /- The Porism is proved below, as `Prop16.porism`. -/
   -- PORISM. From this it is manifest that the straight line drawn at right angles to the
   -- diameter of a circle from its extremity touches the circle.
   -- Q. E. D.

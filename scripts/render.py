@@ -223,18 +223,19 @@ def prop_link(ref, book):
 
 def euclid_cites(paragraphs, book=None):
     """What Euclid gives in brackets, in four groups: propositions, postulates,
-    definitions and common notions, each sorted by number (I.3 before I.10). On a page
-    of `book`, that book's own definitions are written without it."""
+    definitions and common notions, each sorted by number (I.3 before I.10). A
+    definition keeps its book, as our prose writes it (STYLE §5), since Books II and III
+    have their own: "Def. III.11", "Def. I.10". Only Book I's own pages write Heath's
+    bare "Def. 15", as his brackets there do."""
     groups = {"props": [], "Post.": [], "Def.": [], "C.N.": []}
     for j in heath.justifications(paragraphs):
         kind, num = j.rsplit(" ", 1)
         if kind in ("Post.", "Def.", "C.N."):
             groups[kind].append(int(num))
-        elif kind.endswith(" Def.") and kind.split(".")[0] == book:
-            # "III. Def. 11" on a page of Book III is that book's own Definition 11.
+        elif kind.endswith(" Def.") and kind.split(".")[0] == "I" and book == "I":
             groups["Def."].append(int(num))
         elif kind.endswith(" Def."):
-            # "I. Def. 15" in a later book: a definition of another book keeps its book.
+            # "III. Def. 11" is Def. III.11, and "I. Def. 15" in a later book Def. I.15.
             groups["Def."].append(f"{kind.split('.')[0]}.{num}")
         else:
             groups["props"].append(f"{kind}{num}")  # "I. 4", or "V. 9" in a later book
@@ -300,13 +301,10 @@ FIGURE_NOTES = {
 }
 
 
-# Why Heath prints a whole proposition in square brackets, said under its enunciation.
-BRACKET_NOTES = {
-    ("III", 12): "_Heath prints this whole proposition in square brackets. Heron gives its "
-                 "proof as his own addition to III.11, for circles touching externally, and "
-                 "Heath thinks it \"most probable that Theon or some other editor added Heron's "
-                 "proof in his edition and made Prop. 12 out of it\" (vol. 2, p. 28)._",
-}
+# Why Heath prints a whole proposition in square brackets, said under its enunciation
+# when the mishnah does not: I.40's and III.12's tell the story, so they take the default.
+BRACKET_NOTES = {}
+BRACKET_DEFAULT = "_Heath prints this whole proposition in square brackets; the mishnah tells why._"
 
 
 TACIT_CREDIT = ("<sub>The tacit rules follow the System E of Jeremy Avigad, Edward Dean and "
@@ -349,37 +347,41 @@ TABLE_KEY = ("_Postulates, definitions, Common Notions and tacit rules: all that
              "rests on, counting those of the propositions it cites._")
 
 
+# What a definition Euclid cites, but the Definitions row does not count, is in Lean:
+# a Lean definition, or the words it comes to in our statements.
+DEFINITION_LEAN = {
+    ("I", 10): "is `IsRightAngle` in Lean",
+    ("I", 23): "is `Parallel` in Lean",
+    ("III", 3): "is `TouchesInternally` and `TouchesExternally` in Lean",
+    ("III", 4): "is said in Lean by the perpendiculars from the centre, `‖E F‖ = ‖E G‖`",
+    ("III", 5): "is said in Lean by the perpendiculars from the centre, `‖E H‖ < ‖E K‖`",
+    ("III", 11): "is said in Lean by the equal angles in the segments",
+}
+
+
 def definitions_not_counted(euclid, defs, book):
     """A line for a page where Euclid cites a definition that the Definitions row does
     not count: only Def. I.15, the circle's, is an assumption in Lean; the others Euclid
     cites (Def. 10, the right angle, in I.11 to I.13; Def. 23, parallels, in I.27; Def.
-    I.10 in III.1, III.3 and III.9; Book III's own Definitions 3, 4, 5 and 11) are said
-    in Lean's own terms. A definition of the page's book is written without its book,
-    and one of another book keeps it (euclid_cites): "Def. 4", "Def. I.10". On a page of
-    Book I the line names the Lean definition."""
+    I.10 in III.1, III.3, III.9 and III.31; Book III's own Definitions 3, 4, 5 and 11)
+    are said in Lean's own terms, which the line names, in one wording in every book.
+    Definitions are written as euclid_cites writes them: "Def. 10" on a page of Book I,
+    "Def. I.10" and "Def. III.4" elsewhere."""
     # Lean's `DefinitionN` axioms are Book I's.
     counted = {("I", int(d.replace("Definition", ""))) for d in defs}
-    names = []
+    parts = []
     for d in euclid["Def."]:
         where, num = (book, d) if isinstance(d, int) else (d.split(".")[0], int(d.split(".")[1]))
         if (where, num) in counted:
             continue
-        lean = FRONT_LEAN.get(book, {}).get("Definitions", {}).get(num, "") if book == "I" else ""
-        name = lean.split(",")[0].strip() if lean.startswith("`") else ""
-        names.append((d, name))
-    if not names:
+        lean = DEFINITION_LEAN.get((where, num))
+        parts.append(f"Def. {d} {lean}" if lean else f"Def. {d} is said in Lean's own terms")
+    if not parts:
         return ""
-    if book == "I" and all(name for _, name in names):
-        parts = [f"Def. {d} is {name}" for d, name in names]
-        what = ("a definition rather than an assumption, so the Definitions row does not "
-                "count it" if len(names) == 1 else "definitions rather than assumptions, so "
-                "the Definitions row does not count them")
-        return "_Euclid's " + " and ".join(parts) + f" in Lean, {what}._"
-    cited = [f"Def. {d}" for d, _ in names]
-    cited = cited[0] if len(cited) == 1 else ", ".join(cited[:-1]) + " and " + cited[-1]
-    what, it = (("is a definition in Lean, not an assumption", "it") if len(names) == 1 else
-                ("are definitions in Lean, not assumptions", "them"))
-    return f"_Euclid's {cited} {what}, so the Definitions row does not count {it}._"
+    what = ("a definition rather than an assumption, so the Definitions row does not count "
+            "it" if len(parts) == 1 else "definitions rather than assumptions, so the "
+            "Definitions row does not count them")
+    return "_Euclid's " + " and ".join(parts) + f", {what}._"
 
 
 def rests_on(p, docs, depth, book, euclid):
@@ -479,8 +481,7 @@ def page(book, n, count, titles, facts, docs):
     out = [GENERATED, nav, "", f"# Book {book}, Proposition {n}", "",
            f"*{titles[n]}*", "", f"> {opening}{enunciation}", ""]
     if opening:
-        out += [BRACKET_NOTES.get((book, n), "_Heath prints this whole proposition in "
-                                  "square brackets._"), ""]
+        out += [BRACKET_NOTES.get((book, n), BRACKET_DEFAULT), ""]
     if idea.exists():
         caption = svg_desc(idea)
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "

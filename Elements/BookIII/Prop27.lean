@@ -32,8 +32,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- and the angle BAC is equal to the angle EDF.
   have centres : SameSideOf G A B C → SameSideOf H D E F → ∠ B G C = ∠ E H F := by
     intro hGA hHD
-    /- The circumferences BC, EF are named by points Q, R beyond them, across BC from A
-       and across EF from D, and the centres lie on the sides of A and D. -/
+    /- We name the circumferences BC, EF by points Q, R beyond them, across BC from A and
+       across EF from D; the centres lie on the sides of A and D. -/
     obtain ⟨Q, hQA, -⟩ := exists_oppositeSidesOf hBAC.acb []
     obtain ⟨R, hRD, -⟩ := exists_oppositeSidesOf hEDF.acb []
     have hBC : circumference ABC B Q C = circumference DEF E R F := by
@@ -43,8 +43,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
     have hHR : OppositeSidesOf H R E F := hHD.trans_opposite hRD.symm
     -- For, if the angle BGC is unequal to the angle EHF,
     -- one of them is greater.
-    /- Either circle may have the greater angle. As in I.26, the reductio is written
-       once, then used with the circles named either way round. -/
+    /- Either circle may have the greater angle. As in I.26, we write the reductio once and
+       use it with the circles named either way round. -/
     have greater : ∀ {B C E F G H Q R : Point} {ABC DEF : Circle}, EqualCircles ABC DEF →
         Centre G ABC → Centre H DEF → OnCircle B ABC → OnCircle C ABC → OnCircle E DEF →
         OnCircle F DEF → OppositeSidesOf G Q B C → OppositeSidesOf H R E F →
@@ -64,7 +64,7 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
         exact (angle_symm hB'.2.1 hK'G).trans hK'GB'
       have hGBK : Triangle G B K := (SameSideOf.of_onRay hK_ray hK'C).triangle
       -- Now equal angles stand on equal circumferences, when they are at the centres; [III. 26]
-      /- III.26 names the circumference BK by a point P beyond it, and sets out a point of
+      /- For III.26 we name the circumference BK by a point P beyond it, and take a point of
          each circle on the centre's side. -/
       obtain ⟨P, hPG, -⟩ := exists_oppositeSidesOf hGBK.bca []
       obtain ⟨X, hX, hXG⟩ := exists_onCircle_sameSideOf hB hK hGBK.bca
@@ -90,7 +90,7 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   have hAD : ∠ B A C = ∠ E D F := by
     by_cases hGH : SameSideOf G A B C ∧ SameSideOf H D E F
     rotate_left
-    · /- The statement also covers right and obtuse angles at the circumference,
+    · /- Our statement also covers right and obtuse angles at the circumference,
          where no angle at the centre in Euclid's sense stands on the same
          circumference. There the circumference is twice the angle standing on it
          (`Circumference.standing`), and halves of equal things are equal. -/

@@ -40,9 +40,8 @@ theorem Prop36 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
   -- I say that the rectangle contained by AD, DC is equal to the square on DB.
   -- Then DCA is either through the centre or not through the centre.
   by_cases hthrough : ∀ P : Point, Centre P ABC → Collinear A C P
-  ·
-    -- First let it be through the centre, and let F be the centre of the circle ABC;
-    obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hABC hA hC hAC
+  -- First let it be through the centre, and let F be the centre of the circle ABC;
+  · obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hABC hA hC hAC
     -- let FB be joined;
     -- therefore the angle FBD is right. [III. 18]
     have hFBD : ∠ F B D = ∟ := Prop18 hF hB hDB hDB_B D hDB_D hDB'
@@ -76,10 +75,9 @@ theorem Prop36 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
     have hrect : rect A D D C = sq B D := CommonNotion3 hsum rfl
     -- therefore the rectangle AD, DC which remains is equal to the square on the tangent DB.
     exact hrect.trans (sq_symm B D)
-  ·
-    -- Again, let DCA not be through the centre of the circle ABC;
-    -- let the centre E be taken, and from E let EF be drawn perpendicular to AC;
-    obtain ⟨E, -, -, -, hE, -⟩ := Prop1 hABC hA hC hAC
+  -- Again, let DCA not be through the centre of the circle ABC;
+  -- let the centre E be taken, and from E let EF be drawn perpendicular to AC;
+  · obtain ⟨E, -, -, -, hE, -⟩ := Prop1 hABC hA hC hAC
     have hE_AC : ¬ Collinear A C E := fun h => hthrough fun P hP => by
       obtain rfl : P = E := centre_unique hP hE
       exact h

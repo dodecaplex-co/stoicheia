@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
+import Elements.BookIII.Prop01
 import Elements.BookIII.Prop18
 
 /-!
@@ -27,8 +28,8 @@ theorem Prop19 {A C D E : Point} {ABC : Circle} (hC : OnCircle C ABC) (hDE : Tou
     obtain ⟨M, h1, h2, h3⟩ := hCDE
     exact (line_unique hDE.1 h1 h2 hD_L hE_L) ▸ h3
   have hA_L : ¬ OnLine A L := fun h => hA ⟨L, hD_L, hE_L, h⟩
-  /- Euclid's E, in the angles FCE and ACE, is a point of DE other than C. The Lean calls
-     it `E₁`: it is E itself, or D when C is E. -/
+  /- Euclid's E, in the angles FCE and ACE, is a point of DE other than C. Here it is
+     `E₁`: E itself, or D when C is E. -/
   obtain ⟨E₁, hE₁_L, hE₁C⟩ : ∃ E₁ : Point, OnLine E₁ L ∧ E₁ ≠ C := by
     by_cases hCE : C = E
     · exact ⟨D, hD_L, fun e => hDE.1 (e.trans hCE)⟩
@@ -50,33 +51,15 @@ theorem Prop19 {A C D E : Point} {ABC : Circle} (hC : OnCircle C ABC) (hDE : Tou
   -- therefore the angle FCE is equal to the angle ACE,
   have hFCE_ACE : ∠ F C E₁ = ∠ A C E₁ := hFCE.trans hACE.symm
   -- the less to the greater: which is impossible.
-  /- `onRay_of_angle_eq` puts F on CA when F is on A's side of DE, as in Euclid's figure;
-     otherwise on AC produced to A₁, where the angle is right too. -/
+  /- At C only one straight line is at right angles to DE, as in III.1
+     (`Prop1.perpendicular`), so F lies on CA, on whichever side of DE it falls. -/
   have hFC : F ≠ C := fun e => hF_L (e ▸ hC_L)
   have hAC : A ≠ C := fun e => hA_L (e ▸ hC_L)
-  have hEq : ∠ E₁ C F = ∠ E₁ C A := by
-    rw [angle_symm hE₁C hFC, angle_symm hE₁C hAC]; exact hFCE_ACE
-  obtain ⟨M, hA_M, hC_M⟩ := Postulate1 A C hAC
-  apply hF_AC
-  by_cases hs : SameSide F A L
-  · obtain ⟨-, -, ⟨N, hC_N, hA_N, hF_N⟩, -⟩ :=
-      onRay_of_angle_eq (SameSideOf.of_line hE₁C.symm hC_L hE₁_L hs) hEq
-    exact ⟨N, hA_N, hC_N, hF_N⟩
-  · obtain ⟨A₁, hA₁_M, hCA₁, -⟩ := Postulate2 hA_M hC_M hAC []
-    have hE₁_M : ¬ OnLine E₁ M := fun h =>
-      hA_L ((line_unique hE₁C.symm hC_M h hC_L hE₁_L) ▸ hA_M)
-    have hA₁_L : ¬ OnLine A₁ L := fun h =>
-      hA_L (on_line_of_between (between_symm hCA₁) h hC_L)
-    have hadj := adjacent_eq_of_right hA_M hA₁_M hCA₁ hE₁_M hACE
-    have hEq₁ : ∠ E₁ C F = ∠ E₁ C A₁ := by
-      rw [hEq, angle_symm hE₁C hAC, hadj]
-    have hFA₁ : SameSide F A₁ L := same_side_of_opposite_sides
-      ⟨hA_L, hF_L, fun h => hs (same_side_symm h)⟩ ⟨hA_L, hA₁_L, pasch3 hCA₁ hC_L⟩
-    obtain ⟨-, -, ⟨N, hC_N, hA₁_N, hF_N⟩, -⟩ :=
-      onRay_of_angle_eq (SameSideOf.of_line hE₁C.symm hC_L hE₁_L hFA₁) hEq₁
-    have hNM : N = M := line_unique (ne_of_between (between_symm hCA₁)).symm hC_N hA₁_N hC_M hA₁_M
-    subst hNM
-    exact ⟨N, hA_M, hC_N, hF_N⟩
+  have hE₁CA : ∠ E₁ C A = ∟ := by rw [angle_symm hE₁C hAC]; exact hACE
+  have hE₁CF : ∠ E₁ C F = ∟ := by rw [angle_symm hE₁C hFC, hFCE_ACE]; exact hACE
+  obtain ⟨N, hC_N, hA_N, hF_N⟩ := Prop1.perpendicular (Triangle.of_line hE₁_L hC_L hE₁C hA_L)
+    (Triangle.of_line hE₁_L hC_L hE₁C hF_L) hE₁CA hE₁CF
+  exact hF_AC ⟨N, hA_N, hC_N, hF_N⟩
   -- Therefore F is not the centre of the circle ABC.
   -- Similarly we can prove that neither is any other point except a point on AC.
   -- Therefore etc.

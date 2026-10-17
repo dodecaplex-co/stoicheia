@@ -42,10 +42,9 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre 
   have hA_L : ¬ OnLine A L := hAE.triangle.off_line hB_L hD_L
   by_cases hFA : SameSide F A L
   · exact greater hA hB hD hE (SameSideOf.of_line hBD hB_L hD_L hFA) hAE
-  /- This is Robert Simson's completion (Heath, vol. 2, pp. 49–50), for a segment
-     equal to or less than a semicircle. Produce AF to C on the circle and join CE;
-     the segments on BC and CD contain the centre, so Euclid's case applies to
-     each. -/
+  /- This is Robert Simson's completion (Heath, vol. 2, pp. 49–50), for a segment equal to
+     or less than a semicircle. We produce AF to C on the circle and join CE; the segments
+     on BC and CD contain the centre, so Euclid's case applies to each. -/
   have hAF : A ≠ F := ne_of_centre_of_on hF hA
   obtain ⟨N, hA_N, hF_N⟩ := Postulate1 A F hAF
   obtain ⟨C, hC, hC_N, hCFA⟩ := line_circle_beyond (centre_inside hF) hF_N hA_N hAF
@@ -65,8 +64,8 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre 
     have hAE_L : SameSide A E L := hAE.sameSide hB_L hD_L
     exact ⟨not_on_line_of_same_side (same_side_symm hAE_L), hAC_L.2.1,
       fun h => hAC_L.2.2 (same_side_trans (same_side_symm hAE_L) h)⟩
-  /- AC and EC cross BD within the circle, hence between B and D. The
-     intersections Y and Z have no letters in Heath. -/
+  /- AC and EC cross BD within the circle, and so between B and D. The points of crossing, Y
+     and Z, have no letters in Heath. -/
   obtain ⟨Y, hY_L, hAYC⟩ := hAC_L.exists_between
   obtain ⟨Z, hZ_L, hEZC⟩ := hEC_L.exists_between
   have hBYD : Between B Y D :=

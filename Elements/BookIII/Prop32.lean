@@ -62,8 +62,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   have hX_L : ¬ OnLine X L := not_on_line_of_same_side (hXD.sameSide hE_L hF_L)
   have hXB : X ≠ B := fun e => hX_L (e ▸ hB_L)
   -- let a point C be taken at random on the circumference BD,
-  /- The second conclusion takes any such C, and C is introduced when that conclusion
-     is proved below. -/
+  /- The second conclusion takes any such C, and we bring C in when we prove it, below. -/
   -- and let AD, DC, CB be joined.
   -- Then, since a straight line EF touches the circle ABCD at B,
   -- and BA has been drawn from the point of contact at right angles to the tangent,
@@ -87,9 +86,8 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   have hright : ∀ {P : Point}, OnLine P L → P ≠ B → ∠ A B P = ∟ := fun hP hPB => by
     rw [angle_symm hAB hPB, angle_onRay_right hAX hPB]
     exact hX _ ⟨L, hE_L, hF_L, hP⟩ hPB
-  /- Euclid's figure has D on F's side of BA. The rest of his argument is written once,
-     for whichever end of the tangent is on D's side, and the case of D at A comes at the
-     end. -/
+  /- Euclid's figure has D on F's side of BA. We write the rest of his argument once, for
+     whichever end of the tangent is on D's side, and take the case of D at A at the end. -/
   have key : ∀ {E F : Point}, Between E B F → OnLine E L → OnLine F L → SameSideOf D F B A →
       (∀ A' : Point, OnCircle A' ABCD → OppositeSidesOf A' F B D → ∠ F B D = ∠ B A' D) ∧
       (∀ C : Point, OnCircle C ABCD → SameSideOf C F B D → ∠ E B D = ∠ D C B) := by
@@ -154,7 +152,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
       hEBF).swap
   by_cases hDA : D = A
   · /- When D is A, BD is the diameter: both segments are semicircles, and every angle
-       in them is right [III. 31], as are the angles FBD, EBD. -/
+       in them is right by III.31, as are the angles FBD, EBD. -/
     subst hDA
     have hBOD : Between B O D := between_symm hAOB
     refine ⟨fun A' hA' hA'F => ?_, fun C hC hCF => ?_⟩

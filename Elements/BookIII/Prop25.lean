@@ -68,18 +68,17 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
   have hA_N : ¬ OnLine A N := fun hA_N => hB_L ((line_unique hAD' hA_N hD_N hA_L hD_L) ▸ hB_N)
   -- the angle ABD is then greater than, equal to, or less than the angle BAD.
   rcases lt_trichotomy (∠ B A D) (∠ A B D) with h | h | h
-  ·
-    -- First let it be greater;
-    -- and on the straight line BA, and at the point A on it, let the angle BAE be constructed
-    -- equal to the angle ABD; let DB be drawn through to E, and let EC be joined.
-    obtain ⟨G, F, hF, hGD, hGAF⟩ := BookI.Prop23 hAB hABD hABD
+  -- First let it be greater;
+  -- and on the straight line BA, and at the point A on it, let the angle BAE be constructed
+  -- equal to the angle ABD; let DB be drawn through to E, and let EC be joined.
+  · obtain ⟨G, F, hF, hGD, hGAF⟩ := BookI.Prop23 hAB hABD hABD
     have hGA : G ≠ A := hGD.triangle.ne₁₃.symm
     have hBAG : ∠ B A G = ∠ A B D :=
       (angle_onRay_left hF hGA).symm.trans ((angle_symm hF.2.1 hGA).trans hGAF)
     obtain ⟨M, hA_M, hB_M⟩ := Postulate1 A B hAB
     obtain ⟨K, hA_K, hG_K⟩ := Postulate1 A G hGA.symm
-    /- AG and DB produced meet [Post. 5], for the angles GAB, ABD are less than two right
-       angles, ABD being less than a right angle [I. 17]. -/
+    /- Postulate 5 makes AG and DB produced meet, for the angles GAB, ABD are less than two
+       right angles, ABD being less than a right angle [I. 17]. -/
     have hABD_lt : ∠ A B D < ∟ := by
       have h17 := (BookI.Prop17 hABD).1
       rw [angle_symm hBD hAD', hADB] at h17
@@ -146,10 +145,9 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
     exact ⟨B, D, E, hB, hBP, hADC, hAD, hADB, hE, ⟨N, hD_N, hB_N, hE_N⟩, fun _ => hEB_AC,
       fun h' => absurd (h'.symm ▸ h) (lt_irrefl _),
       fun h' => absurd (lt_trans h h') (lt_irrefl _)⟩
-  ·
-    -- Similarly, even if the angle ABD be equal to the angle BAD,
-    -- AD being equal to each of the two BD, DC,
-    have hDA_DB : ‖D A‖ = ‖D B‖ := BookI.Prop6 (Triangle.of_line hD_L hA_L hAD'.symm hB_L) (by
+  -- Similarly, even if the angle ABD be equal to the angle BAD,
+  -- AD being equal to each of the two BD, DC,
+  · have hDA_DB : ‖D A‖ = ‖D B‖ := BookI.Prop6 (Triangle.of_line hD_L hA_L hAD'.symm hB_L) (by
       rw [angle_symm hAD'.symm hAB.symm, h, angle_symm hAB hBD.symm])
     -- the three straight lines DA, DB, DC will be equal to one another,
     have hDB_DC : ‖D B‖ = ‖D C‖ := by rw [← hDA_DB, len_symm D A, hAD]
@@ -159,12 +157,11 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
     exact ⟨B, D, D, hB, hBP, hADC, hAD, hADB, hD, ⟨N, hD_N, hB_N, hD_N⟩,
       fun h' => absurd (h ▸ h') (lt_irrefl _), fun _ => rfl,
       fun h' => absurd (h ▸ h') (lt_irrefl _)⟩
-  ·
-    -- But, if the angle ABD be less than the angle BAD,
-    -- and if we construct, on the straight line BA and at the point A on it, an angle equal to
-    -- the angle ABD, the centre will fall on DB within the segment ABC, and the segment ABC will
-    -- clearly be greater than a semicircle.
-    obtain ⟨G, F, hF, hGD, hGAF⟩ := BookI.Prop23 hAB hABD hABD
+  -- But, if the angle ABD be less than the angle BAD,
+  -- and if we construct, on the straight line BA and at the point A on it, an angle equal to
+  -- the angle ABD, the centre will fall on DB within the segment ABC, and the segment ABC will
+  -- clearly be greater than a semicircle.
+  · obtain ⟨G, F, hF, hGD, hGAF⟩ := BookI.Prop23 hAB hABD hABD
     have hGA : G ≠ A := hGD.triangle.ne₁₃.symm
     have hBAG : ∠ B A G = ∠ A B D :=
       (angle_onRay_left hF hGA).symm.trans ((angle_symm hF.2.1 hGA).trans hGAF)

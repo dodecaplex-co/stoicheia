@@ -33,8 +33,8 @@ theorem Prop20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCirc
   obtain ⟨AE, hA_AE, hE_AE⟩ := Postulate1 A E hAE
   obtain ⟨F, -, -, hFEA⟩ := line_circle_beyond (centre_inside hE) hE_AE hA_AE hAE
   have hAEF : Between A E F := between_symm hFEA
-  /- Euclid's isosceles-triangle argument is written once, for any letters, and used
-     again at C and at D. -/
+  /- We write Euclid's isosceles-triangle argument once, for any letters, and use it again
+     at C and at D. -/
   have double : ∀ {A B F : Point}, OnCircle A ABC → OnCircle B ABC → Between A E F →
       Triangle A E B → ∠ B E F = ∠ E A B + ∠ E A B := by
     intro A B F hA hB hAEF hAEB

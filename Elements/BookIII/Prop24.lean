@@ -53,9 +53,9 @@ theorem Prop24.angle_type {X Y Z M : Point} {α : Circle} (hM : Centre M α) (hX
     rw [hm] at hgt
     exact Or.inr (Or.inr ⟨hMZ, Prop24.half_lt hgt⟩)
 
-/-- Isosceles triangles on equal bases with equal angles at the vertex have equal sides:
-the base angles are equal [I. 5], the three angles make two right angles [I. 32],
-and angle, side, angle gives equal sides [I. 26]. -/
+/-- Isosceles triangles on equal bases with equal angles at the vertex have equal sides. The
+angles at the base are equal by I.5, the three angles make two right angles by I.32, and two
+angles and the side between them give the equal sides by I.26. -/
 theorem Prop24.isosceles {A B G C D H : Point} (hABG : Triangle A B G) (hCDH : Triangle C D H)
     (hG : ‖G A‖ = ‖G B‖) (hH : ‖H C‖ = ‖H D‖) (hAB : ‖A B‖ = ‖C D‖)
     (hang : ∠ A G B = ∠ C H D) : ‖G A‖ = ‖H C‖ := by
@@ -94,13 +94,13 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
   -- I say that the segment AEB is equal to the segment CFD.
   -- For, if the segment AEB be applied to CFD, and if the point A be placed on C and the
   -- straight line AB on CD,
-  /- In place of applying the segment, the proof compares the circles by their radii
-     MA, NC, from the centres M, N. -/
+  /- In place of applying the segment, we compare the circles by their radii MA, NC, from
+     the centres M, N. -/
   have hMA : ‖M A‖ = ‖M B‖ := Definition15 hM hA hB
   have hNC : ‖N C‖ = ‖N D‖ := Definition15 hN hC hD
   -- the point B will also coincide with the point D, because AB is equal to CD;
-  /- On the equal bases AB, CD, equal angles at the centres make the radii equal
-     [III. 20, I. 5, I. 32, I. 26]; and so do two diameters, each the double of a radius. -/
+  /- On the equal bases AB, CD, equal angles at the centres make the radii equal, by III.20
+     and `Prop24.isosceles`; and so do two diameters, each the double of a radius. -/
   have central : ∀ {P Q : Point}, OnCircle P AEB → OnCircle Q CFD → SameSideOf M P A B →
       SameSideOf N Q C D → ∠ A P B = ∠ C Q D → ‖M A‖ = ‖N C‖ := by
     intro P Q hP hQ hMP hNQ hPQ

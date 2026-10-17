@@ -34,9 +34,9 @@ theorem Prop22 {A B C D : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   have hBXD : Between B X D := between_of_inside_chord hX_L hB_L hD_L
     (inside_of_between (Or.inr hA) (Or.inr hC) hAXC) hB hD hBD
   have hAC' : A ≠ C := ne_of_between_ends hAXC
-  /- Euclid proves it for the angles at B and D, and says "similarly" for those at A and
-     C; so his argument is given for every quadrilateral in the circle whose straight
-     lines AC, BD cut one another, in his letters, and used twice. -/
+  /- Euclid proves it for the angles at B and D and says "similarly" for those at A and C,
+     so we write his argument once, for any quadrilateral in the circle whose straight lines
+     AC, BD cut one another, and use it twice. -/
   have half : ∀ {A B C D X : Point}, OnCircle A ABCD → OnCircle B ABCD → OnCircle C ABCD →
       OnCircle D ABCD → Between A X C → Between B X D → Triangle A B C → Triangle B C D →
       Triangle A C D → ∠ A B C + ∠ A D C = ∟ + ∟ := by

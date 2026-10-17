@@ -67,7 +67,7 @@ theorem Prop8 {A B C : Point} (hACB : Between A C B) :
     hAME hELF hFND hDBKN hKMEL
   obtain ⟨hCAOQ, hPQHF⟩ := hDAEF.complements hDQE (between_symm hACD)
     hAOE hEHF hFPD hDCQP hQOEH
-  /- Name the straight lines of the two figures. -/
+  /- We name the straight lines of the two figures. -/
   obtain ⟨AD, hA_AD, hD_AD⟩ := Postulate1 A D hAD
   obtain ⟨EF, hE_EF, hF_EF⟩ := Postulate1 E F hp.2.1
   obtain ⟨AE, hA_AE, hE_AE⟩ := Postulate1 A E hp.1.1

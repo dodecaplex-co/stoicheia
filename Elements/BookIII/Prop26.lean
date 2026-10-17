@@ -18,43 +18,6 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- If twice one magnitude is less than twice another, the first is less than the
-second, as in III.24 (`Prop24.half_lt`). It lets the comparison with a semicircle sort
-the angle standing on it. -/
-theorem Prop26.half_lt {k : Kind} {a b : Magnitude k} (h : a + a < b + b) : a < b := by
-  rcases lt_trichotomy a b with h' | h' | h'
-  · exact h'
-  · subst h'; exact absurd h (lt_irrefl _)
-  · exact absurd (lt_trans h (Magnitude.add_self_lt_add_self h')) (lt_irrefl _)
-
-/-- The angle in a segment is acute, right or obtuse as the centre lies on its side of
-the base, on the base, or beyond it, as in III.24 (`Prop24.angle_type`). These are the
-cases Heath separates under III.26 (vol. 2, p. 57). [I. 5, I. 32, III. 20, III. 21,
-III. 22] -/
-theorem Prop26.angle_type {X Y Z M : Point} {α : Circle} (hM : Centre M α) (hX : OnCircle X α)
-    (hY : OnCircle Y α) (hZ : OnCircle Z α) (hXYZ : Triangle X Y Z) :
-    (SameSideOf M Z X Y ∧ ∠ X Z Y < ∟) ∨ (Between X M Y ∧ ∠ X Z Y = ∟) ∨
-      (OppositeSidesOf M Z X Y ∧ ∟ < ∠ X Z Y) := by
-  obtain ⟨W, hW, hWZ⟩ := exists_onCircle_oppositeSidesOf hX hY hXYZ
-  have hm : circumference α X W Y = ∠ X Z Y + ∠ X Z Y :=
-    Circumference.eq ⟨M, hM⟩ hZ hX hY hWZ.symm
-  obtain ⟨L, hX_L, hY_L⟩ := Postulate1 X Y hXYZ.ne₁₂
-  by_cases hM_L : OnLine M L
-  · have hXMY := between_of_inside_chord hM_L hX_L hY_L (centre_inside hM) hX hY hXYZ.ne₁₂
-    have hs := Circumference.semicircle hM hX hY hXMY hWZ.triangle
-    rw [hm] at hs
-    exact Or.inr (Or.inl ⟨hXMY, Magnitude.eq_of_add_self_eq hs⟩)
-  by_cases hs : SameSide M Z L
-  · have hMZ : SameSideOf M Z X Y := SameSideOf.of_line hXYZ.ne₁₂ hX_L hY_L hs
-    have hlt := Circumference.lt_semicircle hM hX hY (hMZ.trans_opposite hWZ.symm)
-    rw [hm] at hlt
-    exact Or.inl ⟨hMZ, Prop26.half_lt hlt⟩
-  · have hMZ : OppositeSidesOf M Z X Y :=
-      OppositeSidesOf.of_line hXYZ.ne₁₂ hX_L hY_L ⟨hM_L, hXYZ.off_line hX_L hY_L, hs⟩
-    have hgt := Circumference.gt_semicircle hM hX hY (OppositeSidesOf.sameSideOf hMZ.symm hWZ.symm)
-    rw [hm] at hgt
-    exact Or.inr (Or.inr ⟨hMZ, Prop26.half_lt hgt⟩)
-
 /-- In equal circles equal angles stand on equal circumferences, whether they stand at the centres
 or at the circumferences. -/
 theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : EqualCircles ABC DEF)
@@ -79,15 +42,12 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
   -- therefore the base BC is equal to the base EF. [I. 4]
   have base : Triangle G B C → Triangle H E F → ∠ B G C = ∠ E H F → ‖B C‖ = ‖E F‖ :=
     fun hGBC hHEF h => (BookI.Prop4 hGBC hHEF hGB hGC h).1
-  /- When the angles are given at A and D, Heath's three cases follow (vol. 2, p. 57).
-     In Euclid's, each centre is within its segment, and the angles at the centres are
-     double those at A and D [III. 20]. If the angles at A and D are right, the bases are
-     diameters. If they are obtuse, the angles in the other segments are equal [III. 22],
-     and the angles at the centres are double those. -/
+  /- When the angles are given at A and D, III.24 sorts them into Heath's three cases,
+     acute, right and obtuse (`Prop24.angle_type`), and we take each in turn. -/
   have base' : ∠ B A C = ∠ E D F → ‖B C‖ = ‖E F‖ := by
     intro h
-    rcases Prop26.angle_type hG hB hC hA hBCA with ⟨hGA, hlt⟩ | ⟨hBGC, hrt⟩ | ⟨hGA, hgt⟩ <;>
-      rcases Prop26.angle_type hH hE hF hD hEFD with ⟨hHD, hlt'⟩ | ⟨hEHF, hrt'⟩ | ⟨hHD, hgt'⟩
+    rcases Prop24.angle_type hG hB hC hA hBCA with ⟨hGA, hlt⟩ | ⟨hBGC, hrt⟩ | ⟨hGA, hgt⟩ <;>
+      rcases Prop24.angle_type hH hE hF hD hEFD with ⟨hHD, hlt'⟩ | ⟨hEHF, hrt'⟩ | ⟨hHD, hgt'⟩
     · exact base hGA.triangle.cab hHD.triangle.cab
         (by rw [Prop20 hG hA hB hC hGA, Prop20 hH hD hE hF hHD, h])
     · rw [h, hrt'] at hlt; exact absurd hlt (lt_irrefl _)
@@ -114,8 +74,8 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
       exact base hGA.triangle.cab hHD.triangle.cab
         (by rw [Prop20 hG hX hB hC hXG.symm, Prop20 hH hY hE hF hYH.symm, hXY])
   -- And, since the angle at A is equal to the angle at D,
-  /- When the angles are given at the centres, the angles at A and D are their halves
-     [III. 20], and so equal. -/
+  /- When the angles are given at the centres, the angles at A and D are their halves by
+     III.20, and so equal. -/
   have atA : OppositeSidesOf G K B C → OppositeSidesOf H L E F → ∠ B G C = ∠ E H F →
       ∠ B A C = ∠ E D F := by
     intro hGK hHL h

@@ -38,8 +38,8 @@ theorem Prop17 {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD) (
   -- let AE be joined, and with centre E and distance EA let the circle AFG be described;
   obtain ⟨AFG, hE_AFG, hA_AFG⟩ := Postulate3 E A hEA
   -- from D let DF be drawn at right angles to EA,
-  /- I.11 draws the perpendicular through D. Its point F' need not be on AFG:
-     take F where the perpendicular, produced beyond D, meets that circle. -/
+  /- I.11 draws the perpendicular through D. Its point F' need not be on AFG, so we take F
+     where the perpendicular, produced beyond D, meets that circle. -/
   have hED : E ≠ D := (ne_of_centre_of_on hE hD).symm
   obtain ⟨Q, hQ, -⟩ := exists_off_line hEA []
   obtain ⟨F', hF'Q, hF'⟩ := BookI.Prop11 hEA ⟨L, hE_L, hA_L, hD_L⟩ hQ

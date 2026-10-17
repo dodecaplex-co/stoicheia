@@ -66,7 +66,9 @@ do, not what they say. Finer gaps go in the [gap catalogue](reports/gaps-book-I.
 **The modern way.** Always the last paragraph: coordinates, vectors, complex
 numbers or matrices, one or two sentences, exactly right. If the modern route is not
 Euclid's, say so (I.43, I.48; I.2's L lies on DA produced, so it is not
-A + (C − B)). Never repeat a neighbour's.
+A + (C − B)). Never repeat a neighbour's. Write it as Book I does, for a curious
+reader: "cos θ + i sin θ", "the argument of", "turn B through θ", never TeX's
+e^{iθ}, and only the range of a variable the reader needs.
 
 **Bookkeeping.** The page's table shows what the proof rests on, its postulates,
 definitions, Common Notions and tacit rules alike counting those of the propositions
@@ -156,12 +158,17 @@ what it gives this proposition. Every line runs the same way: "For" and what the
 will find; the author in full; the title with the list's link, in italics for a book and
 in quotation marks for a paper or a web page, as the list has it; the year of the edition
 linked, with "free online" beside it where the list says **Free**; the chapter, where a
-checked table of contents gives one; and a few words on the work. For instance:
+checked table of contents gives one; and a few words on the work, a phrase rather than
+a verb ("a lively book that sets vectors beside classical proofs"). For instance:
 
 > - For the dot product of the modern way, Grant Sanderson's [*Essence of linear
 >   algebra*](https://www.3blue1brown.com/topics/linear-algebra) (2016, free online),
 >   ch. 9, "Dot products and duality", one short animated lesson that explains it in
 >   pictures.
+
+A work is described once, at its first appearance in any book; a later line points back,
+"the chapter met under I.21", "the book met under I.18", and the "For" says what this
+page finds there. A line that would fit any page of the book is left out.
 
 Verified works only: a new one goes on the list first, checked, and into
 `references.bib`. Every new page adds its own, Book III's among them; with nothing apt,
@@ -189,7 +196,9 @@ there is no file and no section.
   proposition cited, and `Elements.BookI.HelpersParallels` when a step from it is
   cited.
 - **Book Zero first.** Search `Elements/Figure/` before writing a helper, and cite
-  its lemma rather than keep a copy; Book Zero imports no proposition. A shared
+  its lemma rather than keep a copy; Book Zero imports no proposition. A helper
+  another page has proved is imported and cited with a pointer ("as in III.1",
+  `Prop1.perpendicular`), never proved again. A shared
   step that cites a proposition goes in `Elements/BookI/Helpers.lean`, named after
   it (`Prop5.base`), or, if it cites I.28, I.30 or I.31, in
   `Elements/BookI/HelpersParallels.lean` (`Prop30.meet`), or, if it is a

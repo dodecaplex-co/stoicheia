@@ -39,9 +39,9 @@ theorem Prop5 {E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : Circles
   -- But EC was proved equal to EF also;
   -- therefore EF is also equal to EG, the less to the greater: which is impossible.
   have hEFG : ‖E F‖ = ‖E G‖ := hECF.symm.trans hECG
-  /- Euclid sees F before G in the figure. Lean says why the supposed common
-     centre cannot be: equal radii about one centre make one circle (System E,
-     Diagram-segment 2), whereas ABC and CDG are two. -/
+  /- Euclid sees F before G in the figure. We give the reason the supposed common centre
+     cannot be: equal radii about one centre make one circle (System E, Diagram-segment 2),
+     and ABC and CDG are two. -/
   exact hne (circle_eq hE_ABC hE_CDG hF_ABC hG_CDG hEFG)
   -- Therefore the point E is not the centre of the circles ABC, CDG.
   -- Therefore etc.
