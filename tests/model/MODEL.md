@@ -94,7 +94,99 @@ run.py and hyperbolic.py are new.
 ## What the numbers say
 
 <!-- counts:begin -->
-(filled in by `python3 -I tests/model/run.py --full --write`)
+Counts from `run.py --full --write` at commit `9dbe96182b9a`, 2026-10-17, Python 3.11.9. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
+
+In the plane: **13,454,289** configurations met an axiom's hypotheses (1,558,659 in the search, 10,321,534 exhaustive, 1,574,096 structured), with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: 729,838 configurations met an axiom's hypotheses; Postulate 5 failed 1,189 times and every other axiom held.
+
+| Axiom | Search, seeds 1-3 | Exhaustive | Structured | Hyperbolic |
+|---|--:|--:|--:|--:|
+| `Postulate1` | 18,156 | 600 | · | 8,270 |
+| `Postulate2` | 25,446 | 600 | · | 4,851 |
+| `Postulate3` | 18,204 | 600 | · | 8,445 |
+| `Postulate4` | 0 | 1,072 | 14,711 | 5,875 |
+| `Postulate5` | 4 | 144,984 | 46,580 | 6,166 met, 1,189 fail |
+| `Definition15` | 2,485 | 2,448 | 27,114 | 6,845 |
+| `Tacit.add_assoc` | 60,000 | · | · | 20,000 |
+| `Tacit.add_comm` | 60,000 | · | · | 20,000 |
+| `Tacit.add_zero` | 60,000 | · | · | 20,000 |
+| `Tacit.lt_irrefl` | 60,000 | · | · | 20,000 |
+| `Tacit.lt_trans` | 5,651 | · | · | 2,635 |
+| `Tacit.lt_trichotomy` | 60,000 | · | · | 20,000 |
+| `Tacit.not_lt_zero` | 60,000 | · | · | 20,000 |
+| `Tacit.add_lt_add_right` | 28,346 | · | · | 9,528 |
+| `Tacit.exists_point` | 60,000 | · | · | 20,000 |
+| `Tacit.exists_point_on_line` | 60,000 | · | · | 20,000 |
+| `Tacit.exists_point_on_line_off_line` | 43 | · | 89,876 | 13,361 |
+| `Tacit.exists_point_between` | 25,432 | · | 72,507 | 4,858 |
+| `Tacit.exists_point_same_side` | 916 | · | 89,521 | 8,126 |
+| `Tacit.exists_point_opposite_side` | 988 | · | 89,623 | 7,992 |
+| `Tacit.exists_point_on_circle` | 60,000 | · | · | 20,000 |
+| `Tacit.exists_point_inside_circle` | 60,000 | · | · | 20,000 |
+| `Tacit.exists_point_outside_circle` | 60,000 | · | · | 20,000 |
+| `Tacit.line_circle_between` | 2,784 | 44,088 | 44,974 | 3,842 |
+| `Tacit.line_circle_beyond` | 7,225 | 80,320 | 57,135 | 9,609 |
+| `Tacit.circles_meet_same_side` | 364 | 216,488 | 40,033 | 8,980 |
+| `Tacit.circles_meet_opposite_side` | 397 | 216,488 | 40,177 | 8,852 |
+| `Tacit.line_unique` | 17,498 | 600 | · | 1,892 |
+| `Tacit.centre_unique` | 18,477 | 72 | · | 2,173 |
+| `Tacit.centre_inside` | 28,513 | 72 | · | 4,022 |
+| `Tacit.inside_not_on` | 33,143 | 1,260 | · | 9,421 |
+| `Tacit.between_symm` | 4,752 | 304 | · | 11,348 |
+| `Tacit.ne_of_between` | 4,828 | 304 | · | 11,438 |
+| `Tacit.ne_of_between_ends` | 4,733 | 304 | · | 11,382 |
+| `Tacit.not_between_of_between` | 4,789 | 304 | · | 11,334 |
+| `Tacit.on_line_of_between` | 5,525 | 304 | 7,215 | 394 |
+| `Tacit.on_line_of_between_ends` | 5,491 | 304 | 7,275 | 397 |
+| `Tacit.between_of_between_left` | 633 | 128 | 36,856 | 4,803 |
+| `Tacit.between_of_between_right` | 610 | 128 | 43,514 | 4,037 |
+| `Tacit.between_cases` | 16,489 | 912 | · | 2,191 |
+| `Tacit.not_between_of_between_between` | 1,771 | 560 | 48,699 | 5,022 |
+| `Tacit.same_side_refl` | 941 | 3,160 | · | 8,005 |
+| `Tacit.same_side_symm` | 369 | 45,192 | · | 4,381 |
+| `Tacit.not_on_line_of_same_side` | 332 | 45,192 | · | 4,333 |
+| `Tacit.same_side_trans` | 240 | 724,792 | 33,327 | 5,189 |
+| `Tacit.same_side_or` | 7 | 595,104 | 14,059 | 1,868 |
+| `Tacit.pasch1` | 1 | 17,160 | 28,583 | 3,370 |
+| `Tacit.pasch2` | 307 | 3,872 | 8,435 | 1,412 |
+| `Tacit.pasch3` | 5,775 | 3,856 | 15,576 | 1,630 |
+| `Tacit.pasch4` | 241 | 3,552 | 20,921 | 2,217 |
+| `Tacit.triple_incidence1` | 0 | 77,960 | 7,925 | 1,159 |
+| `Tacit.triple_incidence2` | 1 | 77,960 | 8,043 | 1,071 |
+| `Tacit.triple_incidence3` | 0 | 315,152 | 1,246 | 615 |
+| `Tacit.between_of_inside_chord` | 243 | 3,228 | 37,732 | 8,095 |
+| `Tacit.inside_of_between` | 1,663 | 76,104 | 39,272 | 6,718 |
+| `Tacit.outside_of_between` | 442 | 281,664 | 47,802 | 2,044 |
+| `Tacit.not_same_side_of_circles_meet` | 0 | 1,704 | 939 | 4,080 |
+| `Tacit.lines_meet_of_opposite_sides` | 21 | 26,248 | 39,362 | 4,461 |
+| `Tacit.line_meets_circle_of_opposite_sides` | 1,115 | 6,161,192 | 58,077 | 7,031 |
+| `Tacit.line_meets_circle_of_inside` | 27,936 | 30,204 | · | 5,018 |
+| `Tacit.circles_meet_of_on_inside_outside` | 782 | 49,616 | 358 | 995 |
+| `Tacit.circles_meet` | 1,341 | 10,668 | 1,587 | 2,585 |
+| `Tacit.eq_of_len_eq_zero` | 41,904 | 25 | · | 11,587 |
+| `Tacit.len_self` | 60,000 | 25 | · | 20,000 |
+| `Tacit.len_symm` | 60,000 | 625 | · | 20,000 |
+| `Tacit.angle_symm` | 15,446 | 14,400 | · | 7,018 |
+| `Tacit.angle_le_two_right` | 60,000 | 15,625 | · | 20,000 |
+| `Tacit.area_degenerate` | 60,000 | 625 | · | 20,000 |
+| `Tacit.area_rotate` | 60,000 | 15,625 | · | 20,000 |
+| `Tacit.area_swap` | 60,000 | 15,625 | · | 20,000 |
+| `Tacit.area_congruent` | 54,662 | 375,479 | 94,050 | 10,818 |
+| `Tacit.len_add_of_between` | 4,811 | 304 | · | 9,962 |
+| `Tacit.circle_eq` | 853 | 2,448 | 27,089 | 4,259 |
+| `Tacit.on_circle_of_len_eq` | 2,536 | 2,448 | 27,123 | 6,738 |
+| `Tacit.inside_of_len_lt` | 3,035 | 5,776 | 19,704 | 3,534 |
+| `Tacit.len_lt_of_inside` | 2,992 | 5,776 | 19,736 | 3,500 |
+| `Tacit.angle_eq_zero_of_same_ray` | 15,171 | 1,208 | · | 2,580 |
+| `Tacit.same_ray_of_angle_eq_zero` | 15,154 | 1,208 | · | 2,674 |
+| `Tacit.angle_add_of_inside` | 5 | 77,960 | 24,987 | 3,747 |
+| `Tacit.inside_of_angle_add` | 8 | 77,960 | 25,019 | 3,845 |
+| `Tacit.adjacent_eq_of_right` | 1 | 1,072 | 25,166 | 6,043 |
+| `Tacit.angle_eq_of_same_rays` | 7,021 | 60,032 | 8,676 | 4,152 |
+| `Tacit.area_eq_zero_of_on_line` | 24,674 | 2,112 | · | 4,793 |
+| `Tacit.on_line_of_area_eq_zero` | 24,785 | 2,112 | · | 4,645 |
+| `Tacit.area_add_of_between` | 19 | 6,176 | 55,499 | 8,550 |
+| `Tacit.between_of_area_add` | 21 | 6,176 | 56,023 | 8,422 |
+| `Tacit.superposition` | 111 | 363,888 | 71,970 | 8,605 |
 <!-- counts:end -->
 
 The full output of each program, headed with the commit, the seeds and the Python that
