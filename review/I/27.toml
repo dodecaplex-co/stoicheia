@@ -1,0 +1,11 @@
+# review/I/27.toml
+[statement]
+scope = "full"
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

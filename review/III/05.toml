@@ -1,0 +1,27 @@
+# review/III/05.toml
+[statement]
+scope = "full"
+note = "The circles are taken to be two (`ABC ≠ CDG`), as Euclid's figure takes for granted, cutting at two points; the proof uses only one of them."
+
+[route]
+kind = "modified"
+note = "Euclid's argument, but the last step does not order F and G as his figure does: EF equal to EG makes the two circles one (`circle_eq`), and they are two."
+
+[overlap]
+rule = "Tacit.circle_eq"
+note = "System E's Diagram-segment 2, that one centre and one radius make one circle, gives III.5 at once from a common point. The proof follows Euclid and closes with that rule."
+
+[[passage]]
+at = "therefore EF is also equal to EG, the less to the greater"
+kind = "different"
+note = "Lean does not order F and G as the figure does: EF equal to EG makes ABC and CDG one circle (`circle_eq`), and the statement says they are two."
+
+[[passage]]
+at = "Therefore the point E is not the centre of the circles ABC, CDG."
+kind = "grouped"
+note = "The reductio's conclusion. Lean supposed E the centre of both circles at the start and has reached the contradiction above, which proves it."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

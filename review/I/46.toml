@@ -1,0 +1,12 @@
+# review/I/46.toml
+[statement]
+scope = "full"
+note = "The square stands on whichever side of AB a given point names."
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

@@ -1,0 +1,17 @@
+# review/I/13.toml
+[statement]
+scope = "full"
+note = "Concludes that the two angles together are ∟ + ∟, Euclid's second form; his first, each angle right, is the case of equal angles, by Postulate 4."
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "Then, since the angle CBE is equal to the two angles CBA, ABE"
+kind = "grouped"
+note = "Euclid's figure has AB leaning towards C; leaning towards D is his figure with C and D exchanged (`Prop13.cases`), so one argument serves for both."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

@@ -1,0 +1,14 @@
+# review/I/36.toml
+[statement]
+scope = "full"
+
+[route]
+kind = "euclid"
+
+[figure]
+case = "the bases BC and FG apart"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

@@ -1,0 +1,13 @@
+# review/I/26.toml
+# Euclid's second case, a side subtending one of the equal angles, is stated as AB
+# to DE; AC to DF is the same theorem with B and C exchanged.
+[statement]
+scope = "full"
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

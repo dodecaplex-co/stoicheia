@@ -1,0 +1,16 @@
+# review/III/11.toml
+[statement]
+scope = "full"
+note = "FG produced beyond G, the centre of the inner circle ADE, falls on the point of contact A (`Between F G A`)."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The centres F and G are given, as the enunciation takes them. Touching within is read of the whole circles: no point of ADE is outside ABC, which carries what Heath says Euclid assumes, that touching circles cross nowhere."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

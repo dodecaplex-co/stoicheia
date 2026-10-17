@@ -1,0 +1,21 @@
+[statement]
+scope = "full"
+note = "Stated as an equality: two circles through A and B with similar segments on one side of AB are one circle."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["segment-with-circle", "centre-given"]
+note = "Each segment is given as its circle, the straight line AB and a point C or D on one side, and each circle comes with a centre, which III.10 and III.21 need."
+
+[[passage]]
+at = "let ACD be drawn through, and let CB, DB be joined"
+kind = "helper"
+helper = "Prop10"
+note = "Simson's preliminary (Heath, vol. 2, p. 53): by III.10 the circles meet only at A and B, so one segment falls within the other; III.21 carries the angle to where AC drawn through meets the other circle."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

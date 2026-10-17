@@ -1,0 +1,22 @@
+[statement]
+scope = "full"
+note = "Covers equal circumferences of any size, less than a semicircle, a semicircle or greater, compared by the angle measure."
+
+[route]
+kind = "modified"
+note = "Euclid's argument where the circumferences are less than semicircles; when they are semicircles, BC and EF are diameters, and when greater, his argument runs on the circumferences that remain."
+
+[representation]
+tags = ["angle-measure"]
+note = "Equal circumferences are equal measures, which in equal circles is what Euclid means; the equal circles do real work here, giving I.4 its equal radii."
+
+[[passage]]
+at = "Now, since the circumference BGC is equal to the circumference EHF"
+kind = "helper"
+helper = "Prop29.size"
+note = "Euclid's figure has each centre beyond its straight line. The Lean sorts each circumference as less than a semicircle, a semicircle or greater, and L falls as K does."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"
