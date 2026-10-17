@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="250" viewBox="0 0 400 250">
+  <title>Euclid III.26: equal angles stand on equal circumferences</title>
+  <rect width="400" height="250" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke="#8c7b62" stroke-width="1.3">
+    <circle cx="105" cy="125" r="75"/>
+    <circle cx="295" cy="125" r="75"/>
+  </g>
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6" stroke-linejoin="round">
+    <path d="M 45,170 L 60,65 L 165,170 Z"/>
+    <path d="M 45,170 L 105,125 L 165,170"/>
+    <path d="M 235,170 L 364.282,96.277 L 355,170 Z"/>
+    <path d="M 235,170 L 295,125 L 355,170"/>
+  </g>
+  <g fill="none" stroke="#a0522d" stroke-width="2.6" stroke-linecap="round">
+    <path d="M 45,170 A 75,75 0 0 0 165,170"/>
+    <path d="M 235,170 A 75,75 0 0 0 355,170"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="60" cy="65" r="2.6"/>
+    <circle cx="45" cy="170" r="2.6"/>
+    <circle cx="165" cy="170" r="2.6"/>
+    <circle cx="105" cy="125" r="2.6"/>
+    <circle cx="105" cy="200" r="2.6"/>
+    <circle cx="364.282" cy="96.277" r="2.6"/>
+    <circle cx="235" cy="170" r="2.6"/>
+    <circle cx="355" cy="170" r="2.6"/>
+    <circle cx="295" cy="125" r="2.6"/>
+    <circle cx="295" cy="200" r="2.6"/>
+  </g>
+  <g fill="#3b2f2f" font-family="Georgia, serif" font-size="17" font-style="italic" text-anchor="middle">
+    <text x="53" y="54">A</text>
+    <text x="33" y="185">B</text>
+    <text x="178" y="185">C</text>
+    <text x="90" y="121">G</text>
+    <text x="105" y="223">K</text>
+    <text x="380" y="96">D</text>
+    <text x="222" y="185">E</text>
+    <text x="368" y="185">F</text>
+    <text x="295" y="116">H</text>
+    <text x="295" y="223">L</text>
+  </g>
+</svg>
