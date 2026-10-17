@@ -22,16 +22,16 @@ a square are squares (`Square.about_diameter`, I.5, I.6, I.29, I.34); the figure
 II.4–II.8 and its gnomon (`Parallelogram.figure`, `Parallelogram.complements`,
 `Parallelogram.about_diameter`, I.30 and I.31); and I.47 said of the squares on
 straight lines, which it describes by I.46 (`BookI.Prop47.sq`). These, with the steps
-below that Euclid takes without a bracket or without a word, are why
+below that Euclid takes with no bracket in Heath or without a word, are why
 [CERTIFICATE.md](../../CERTIFICATE.md) shows the Lean citing more of Book I than
-Euclid brackets in every proposition of Book II.
+Heath's brackets give in every proposition of Book II.
 Steps of Book I that cite I.28, I.30 or I.31, such as `BookI.Prop30.meet`, are in
 `Elements/BookI/HelpersParallels.lean`; the two lemmas particular to one figure,
 `Prop8.cell` and `Prop13.not_beyond`, live in its file; and the rest are Book Zero's
 (`Elements/Figure/`) or tacit rules.
 
 ## II.1
-- "Let BG be made equal to A" carries the bracket [I. 3], but I.3 cuts off only from the greater of two straight lines, and I.11 gives BF no length. Lean first sets out a straight line equal to A at B, by I.2, which Euclid does not cite, and produces BF beyond it (`produce_longer`, as in I.11 and I.16).
+- "Let BG be made equal to A" carries the bracket [I. 3], but I.3 cuts off only from the greater of two straight lines, and I.11 gives BF no length. Lean first sets out a straight line equal to A at B, by I.2, which Euclid does not use, and produces BF beyond it (`produce_longer`, as in I.11 and I.16).
 - Every given point lies on BC, and BF stands on a side of it that Euclid leaves to his figure. `exists_off_line` finds a point off BC where the two circles of I.1 cut one another (Post. 3, Def. 15; `circles_meet`, System E, Intersection 5). Each of II.1–II.11 needs such a point, with no letter in Euclid's figure, before its first square or perpendicular.
 - Euclid names K, L, H, where DK, EL, CH meet GH, without asking whether they do. A straight line meeting one of two parallels meets the other (`BookI.Prop31.parallelogram`, through `BookI.Prop30.meet`, from I.30), a lemma Proclus states in his attempt to prove Postulate 5 (Heath, vol. 1, p. 207). I.30 also makes DK, EL, CH parallel to one another (`BookI.Prop30.parallel`), once `Parallel.off_transversal` has shown them different straight lines.
 - "Then BH is equal to BK, DL, EH" has no reason given. K and L lie between G and H, in the order of D and E on BC, because parallels keep order (`Parallel.between`), and a parallelogram cut by a parallel to two of its sides is the two parallelograms it is cut into (`quadArea_add_of_parallelograms`).
@@ -56,7 +56,7 @@ Steps of Book I that cite I.28, I.30 or I.31, such as `BookI.Prop30.meet`, are i
 ## II.5
 - The setting-out does not say on which side of C the point D falls, and Euclid's figure puts it between C and B. Reading II.5 as the solution of a quadratic, Heath remarks that "Euclid's figure corresponds to one only of the two solutions" (vol. 1, p. 384). Lean proves Euclid's case and gets the other by exchanging A and B (`lt_trichotomy`, `OnRay.eq_of_len_eq`).
 - "And again through A let AK be drawn parallel to either CL or BM": K, where AK meets KM, comes from I.30 (`BookI.Prop31.parallelogram`), and I.30 again makes AK parallel to DG, so that AH is a parallelogram (`BookI.Prop30.parallel`). L lies between K and H (`Parallel.between`), so that "the whole AH" is AL and CH together.
-- "Let LG, which is equal to the square on CD": LG is a square about the diameter (`Square.about_diameter`), and on CD because its side HL is equal to CD by I.34, which Euclid does not cite here. "DH is equal to DB" in the same way, DM being a square.
+- "Let LG, which is equal to the square on CD": LG is a square about the diameter (`Square.about_diameter`), and on CD because its side HL is equal to CD by I.34, with no bracket here. "DH is equal to DB" in the same way, DM being a square.
 
 ## II.6
 - As in II.5, with D beyond B: K comes from `BookI.Prop31.parallelogram`; L lies between K and M (`Parallel.between`), so that AM is AL and CM together; BM and LG are squares about the diameter (`Square.about_diameter`), so that DM is equal to DB; and HL is equal to BC by I.34, without a bracket.
@@ -74,14 +74,14 @@ Steps of Book I that cite I.28, I.30 or I.31, such as `BookI.Prop30.meet`, are i
 ## II.9
 - "Let CE be drawn from C at right angles to AB" has no bracket: it is I.11. "Let it be made equal to either AC or CB" is a circle about C (`OnRay.exists_len_eq`, Post. 3), so I.3 is not needed. "The angle EAC is also equal to the angle AEC" is I.5, again without a bracket.
 - "Let DF be drawn through D parallel to EC, and FG through F parallel to AB" is I.31 without a bracket (`BookI.Prop31.line`). F, where DF meets EB, comes from `BookI.Prop30.meet`, and G, where FG meets CE, from `BookI.Prop31.parallelogram`. Euclid's figure puts F between E and B and G between E and C, as the angles he takes at F and G need: `Between.of_sameSide` carries the order of C, D, B across DF, and of E, F, B across FG.
-- "Half a right angle": Lean has no word for a half. An angle is half a right angle when, added to itself, it makes a right angle, and two such halves are equal, the halves of equal things being equal (`Magnitude.eq_of_add_self_eq`), the step Heiberg brackets in I.37. "Therefore the whole angle AEB is right" adds the halves at E, which needs C between A and B (`angle_add_of_between`).
+- "Half a right angle": Our Lean has no word for a half. An angle is half a right angle when, added to itself, it makes a right angle, and two such halves are equal, the halves of equal things being equal (`Magnitude.eq_of_add_self_eq`), the step Heiberg brackets in I.37. "Therefore the whole angle AEB is right" adds the halves at E, which needs C between A and B (`angle_add_of_between`).
 - From here on, Heath notes, "the method of demonstration by showing in the figures the various rectangles and squares to which the theorems relate is here abandoned" (vol. 1, p. 394). The squares that I.47 compares are not drawn, and `BookI.Prop47.sq` describes them by I.46 and names each the square on its side, in II.9–II.14. Here its second use, for the square on EF, has no bracket.
 - D may fall on either side of C, as in II.5; on A's side, exchanging A and B gives Euclid's figure.
 
 ## II.10
 - "Let it be made equal to either AC or CB [I. 3]": I.3 needs a greater straight line to cut from, so the perpendicular is produced far enough first (`produce_longer`, as in II.1).
 - "Therefore the angles FEB, EFD are less than two right angles" has no bracket. EB falls within the angle CEF, B being on F's side of EC and on C's side of EF (`angle_add_of_within`); the part is less than the whole (C.N. 5); and adding the same to unequals keeps them unequal, the tacit law of magnitudes `add_lt_add_right`, as in I.17.
-- "[I. Post. 5]", the one postulate Book II cites, leaves out its conditions, as Heath remarks of it under I.29. `Postulate5` asks for the straight lines through E and B, through E and F, and through F and D, with B and D on one side of EF, and puts the meeting G on that side. Lean then proves that B lies between E and G, and D between F and G (`Between.of_inside`, `Between.of_sameSide`), as "if produced in the direction B, D" says and I.15 at B needs.
+- Postulate 5, as Euclid calls on it here, "[I. Post. 5]" in Heath's bracket, leaves out its conditions, as Heath remarks of it under I.29. `Postulate5` asks for the straight lines through E and B, through E and F, and through F and D, with B and D on one side of EF, and puts the meeting G on that side. Lean then proves that B lies between E and G, and D between F and G (`Between.of_inside`, `Between.of_sameSide`), as "if produced in the direction B, D" says and I.15 at B needs.
 
 ## II.11
 - "Let AC be bisected at the point E" has no bracket: it is I.10.
@@ -99,14 +99,14 @@ Steps of Book I that cite I.28, I.30 or I.31, such as `BookI.Prop30.meet`, are i
 
 ## II.14
 - "Let A be the given rectilineal figure": it may have any number of sides. Any rectilineal area, Heath says under I.45, "can of course be resolved into triangles" (vol. 1, p. 347); our I.45, and so our statement, take the figure of two triangles on one diameter.
-- "For let there be constructed the rectangular parallelogram BD equal to the rectilineal figure A" carries the bracket [I. 45], but I.45 makes a parallelogram in a given angle, so a right angle is given first, by I.11, which Euclid does not cite (`Rectangle.of_right` then makes it a rectangle).
+- "For let there be constructed the rectangular parallelogram BD equal to the rectilineal figure A" carries the bracket [I. 45], but I.45 makes a parallelogram in a given angle, so a right angle is given first, by I.11, with no bracket in Heath (`Rectangle.of_right` then makes it a rectangle).
 - "Let BE be greater": Simson pointed out that the words are not needed, and Heath suggests that Euclid wanted B, G, E, F placed as A, C, D, B are in the figure of II.5 (vol. 1, p. 410). Lean writes Euclid's case once, and reads the rectangle the other way round when ED is the greater. "Let BF be bisected at G" is I.10, without a bracket.
 - "Let the semicircle BHF be described; let DE be produced to H": Lean draws the whole circle (Post. 3). E lies inside it, between B and F (`inside_of_between`, System E, Circle 2), so DE produced beyond E meets it (`line_circle_beyond`, System E, Intersections 5). "But GF is equal to GH" is Definition 15, without a bracket.
 - "But the squares on HE, EG are equal to the square on GH" needs the angle HEG right, which Euclid does not say. BEH lies beside the rectangle's right angle DEB (`adjacent_eq_of_right`), and HEG is the same angle (`angle_onRay_left`), since G lies between B and E, BE being more than half of BF (`OnRay.between_of_len_lt`).
 
-## The postulates: what the Lean uses and what Euclid cites
+## The postulates: what the Lean uses and what Heath's brackets give
 
-Euclid cites one postulate in Book II, the fifth, in II.10. The certificate counts
+Euclid calls on one postulate in Book II, the fifth, in II.10. The certificate counts
 everything a proof rests on, the propositions it cites included, so all five are on
 every Book II certificate; these are the places where a proof's own steps use one.
 
@@ -116,7 +116,7 @@ every Book II certificate; these are the places where a proof's own steps use on
   (`produce_longer`, II.1 and II.10), or behind a point, so that a circle about it is
   cut on the side we want (`OnRay.exists_len_eq`, II.9, II.11 and II.14); FG
   produced in II.10, since our I.32 asks for a side produced, and BE produced in
-  II.14, where Euclid gives no bracket; and, inside `Square.described`, the sides of
+  II.14, where Heath gives no bracket; and, inside `Square.described`, the sides of
   each square produced to make I.28's figure (`BookI.Prop28.interior`), which is how
   II.12 and II.13 come to use it.
 - **Postulate 3 and Definition 15**: circles Euclid does not draw, the two of I.1
@@ -125,5 +125,5 @@ every Book II certificate; these are the places where a proof's own steps use on
   (`OnRay.exists_len_eq`); and the semicircle of II.14, which Euclid draws, but
   without a bracket for the circle or for its radii.
 - **Postulates 4 and 5**: no difference. The Lean uses Postulate 5 directly just
-  where Euclid cites it, in II.10, and Postulate 4 nowhere; every proposition of
+  where Euclid calls on it, in II.10, and Postulate 4 nowhere; every proposition of
   Book II rests on both through the propositions it cites.

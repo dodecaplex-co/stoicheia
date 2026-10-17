@@ -35,7 +35,8 @@ Book III is about circles, and most of its words need no Lean word of their own:
   for the feet `F`, `G`, `H`, `K` of perpendiculars from the centre `E` (III.14, III.15).
 * A segment (Definition 6) is a circle `α`, a straight line `AB` in it, and the
   circumference on one side of `AB`; "the segment AEB" names that side by a point `E` of
-  its circumference.
+  its circumference. So a statement given a segment is given its whole circle too:
+  III.25, which completes the circle of a given segment, is handed that circle.
 * The angle in a segment (Definition 8) is the angle `AEB`, for a point `E` of its
   circumference; similar segments (Definition 11) are those whose angles `AEB`, `CFD` are
   equal.
@@ -54,9 +55,18 @@ measures a circumference by the angle that stands on it at the circumference
 (Definition 9), taken twice: the circumference `BKC` is `∠ B A C + ∠ B A C`, for a point
 `A` of the circle on the other side of `BC` from `K`. That is the angle it subtends at the
 centre when it is less than a semicircle (III.20); a semicircle is two right angles, and
-the whole circle four. In one circle, or in equal circles, two circumferences are equal
-exactly when these angles are, and that is all Euclid ever asks of them; the propositions
-that compare circumferences say "in equal circles", as he does.
+the whole circle four.
+
+The measure carries no radius. In one circle, or in equal circles, two circumferences
+are equal exactly when their measures are, and that is all Euclid ever asks of them; in
+unequal circles equal measures do not make equal circumferences. So the propositions
+that compare circumferences say "in equal circles", as he does, though not all of them
+need it as stated. III.26 and III.27 hold for any two circles as stated: equal angles
+give equal measures whatever the radii, and their proofs keep the equal circles only
+along Euclid's route. III.28 and III.29 need equal circles, for there the measures are
+tied to straight lines in the circles. III.24 proves that the circles are equal and the
+measures equal, which is less than Euclid's equal segments: that one segment can be
+laid on the other is not stated.
 
 `circumference` chooses one such angle (`Classical.epsilon`), as `rect` chooses one
 area. That every point `A` gives the same angle is III.21, the angles in the same
@@ -101,7 +111,8 @@ def CirclesTouch (α β : Circle) (C : Point) : Prop :=
 of `α` from `B` to `C` on the side of the straight line `BC` where `K` is. It is measured
 by the angle that stands on it at the circumference, taken twice: `∠ B A C + ∠ B A C`,
 for a point `A` of `α` on the other side of `BC`. Lean chooses one such angle; that every
-such point gives the same is III.21 (`Circumference.eq`). -/
+such point gives the same is III.21 (`Circumference.eq`). The measure carries no radius,
+so equal measures are equal circumferences only in one circle or in equal circles. -/
 noncomputable def circumference (α : Circle) (B K C : Point) : Angle :=
   Classical.epsilon fun x =>
     ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C ∧ x = ∠ B A C + ∠ B A C
