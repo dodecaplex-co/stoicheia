@@ -71,8 +71,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   have hr : ‖K A‖ = ‖L D‖ := hcircles.radii hK hL hA hD
   have hrB : ‖K B‖ = ‖L E‖ := hcircles.radii hK hL hB hE
   /- Euclid's figure has `K` beyond the less circumference `AGB`, on `C`'s side of `AB`.
-     It is not on `G`'s side (`Prop28.beyond`); if it is on `AB`, then `AB` is a diameter, and
-     so is `DE` (`Prop28.diameter`), and the four circumferences are semicircles. -/
+     If it is on `AB`, then `AB` is a diameter, and so is `DE` (`Prop28.diameter`), and the
+     four circumferences are semicircles; and it is not on `G`'s side (`Prop28.beyond`). -/
   rcases Prop28.sides (K := K) hCG.triangle with hKC | ⟨M, hA_M, hB_M, hK_M⟩ | hKC
   rotate_left
   · have hAKB := between_of_inside_chord hK_M hA_M hB_M (centre_inside hK) hA hB hCG.1
@@ -83,6 +83,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       Circumference.semicircle hL hD hE hDLE hFH.triangle]
     exact ⟨rfl, rfl⟩
   · exact absurd (OppositeSidesOf.sameSideOf hKC.symm hCG) (Prop28.beyond hK hA hB hCG hABC)
+  /- Likewise `L` is on `F`'s side of `DE`: on `DE`, it would make `AB` a diameter too,
+     through `K`, which is off `AB`. -/
   rcases Prop28.sides (K := L) hFH.triangle with hLF | ⟨M, hD_M, hE_M, hL_M⟩ | hLF
   rotate_left
   · have hDLE := between_of_inside_chord hL_M hD_M hE_M (centre_inside hL) hD hE hFH.1

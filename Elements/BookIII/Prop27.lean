@@ -32,6 +32,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- and the angle BAC is equal to the angle EDF.
   have centres : SameSideOf G A B C → SameSideOf H D E F → ∠ B G C = ∠ E H F := by
     intro hGA hHD
+    /- The circumferences BC, EF are named by points Q, R beyond them, across BC from A
+       and across EF from D; the centres lie on the sides of A and D. -/
     obtain ⟨Q, hQA, -⟩ := exists_oppositeSidesOf hBAC.acb []
     obtain ⟨R, hRD, -⟩ := exists_oppositeSidesOf hEDF.acb []
     have hBC : circumference ABC B Q C = circumference DEF E R F := by
@@ -61,10 +63,12 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
         rw [angle_onRay_right hK_ray hGB.symm, ← angle_onRay_left hB' hK'G]
         exact hBGK'
       have hGBK : Triangle G B K := (SameSideOf.of_onRay hK_ray hK'C).triangle
+      -- Now equal angles stand on equal circumferences, when they are at the centres; [III. 26]
+      /- III.26 names the circumference BK by a point P beyond it, and sets out a point of
+         each circle on the centre's side. -/
       obtain ⟨P, hPG, -⟩ := exists_oppositeSidesOf hGBK.bca []
       obtain ⟨X, hX, hXG⟩ := exists_onCircle_sameSideOf hB hK hGBK.bca
       obtain ⟨Y, hY, hYH⟩ := exists_onCircle_sameSideOf hE hF hHR.triangle
-      -- Now equal angles stand on equal circumferences, when they are at the centres; [III. 26]
       -- therefore the circumference BK is equal to the circumference EF.
       have hBK : circumference ABC B P K = circumference DEF E R F :=
         (Prop26 hcircles hG hH hX hB hK hY hE hF (hXG.trans_opposite hPG.symm)
@@ -85,20 +89,20 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
     · exact (greater hcircles hG hH hB hC hE hF hGQ hHR hBC h).elim
   have hAD : ∠ B A C = ∠ E D F := by
     by_cases hGH : SameSideOf G A B C ∧ SameSideOf H D E F
-    ·
-      -- And the angle at A is half of the angle BGC,
-      have h20A := Prop20 hG hA hB hC hGH.1
-      -- and the angle at D half of the angle EHF; [III. 20]
-      have h20D := Prop20 hH hD hE hF hGH.2
-      -- therefore the angle at A is also equal to the angle at D.
-      exact Magnitude.eq_of_add_self_eq
-        (h20A.symm.trans ((centres hGH.1 hGH.2).trans h20D))
+    rotate_left
     · /- The statement also covers right and obtuse angles at the circumference,
          where there is no angle at the centre standing on the same circumference
          in Euclid's sense. The circumference is twice the angle standing on it. -/
       rw [Circumference.standing ⟨G, hG⟩ hA hB hC hBAC.acb,
         Circumference.standing ⟨H, hH⟩ hD hE hF hEDF.acb] at heq
       exact Magnitude.eq_of_add_self_eq heq
+    -- And the angle at A is half of the angle BGC,
+    have h20A := Prop20 hG hA hB hC hGH.1
+    -- and the angle at D half of the angle EHF; [III. 20]
+    have h20D := Prop20 hH hD hE hF hGH.2
+    -- therefore the angle at A is also equal to the angle at D.
+    exact Magnitude.eq_of_add_self_eq
+      (h20A.symm.trans ((centres hGH.1 hGH.2).trans h20D))
   -- Therefore etc.
   exact ⟨hAD, centres⟩
   -- Q. E. D.
