@@ -89,10 +89,10 @@ theorem Prop46 {A B P : Point} (hAB : A ≠ B) (hP : ¬ Collinear A B P) :
 /-- Squares described on equal straight lines are equal. Euclid assumes this in
 I.48 ("since DA is equal to AB, the square on DA is also equal to the square on
 AB"). Heath reports, under I.46, that Proclus proves it. Each square is a
-parallelogram (`Prop28.square`), so the diameter AC cuts it into the triangles ABC and ACD,
-right-angled at B and D; and I.4 makes these equal to the triangles A'B'C'
-and A'C'D'. Here a square ABCD is "described on AB" when its far corners C,
-D lie on one side of AB. [I. 4, I. 28] -/
+parallelogram (`Prop28.square`), so the diameter AC cuts it into the triangles
+ABC and ACD, right-angled at B and D; and I.4 makes these equal to the triangles
+A'B'C' and A'C'D'. Here a square ABCD is "described on AB" when its far corners
+C, D lie on one side of AB. [I. 4, I. 28] -/
 theorem Prop46.square_eq {A B C D A' B' C' D' : Point} (h : Square A B C D)
     (hCD : SameSideOf C D A B) (h' : Square A' B' C' D') (hCD' : SameSideOf C' D' A' B')
     (hAB : ‖A B‖ = ‖A' B'‖) : quadArea A B C D = quadArea A' B' C' D' := by

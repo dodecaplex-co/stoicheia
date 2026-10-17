@@ -14,7 +14,7 @@ an axiom. System E (§3.7) treats superposition as a rule that may be used only
 to prove facts about the figure already drawn, never to build anything new.
 
 Here it is one rule: a triangle can be laid down with its corner `A` on a given
-point `D` of a line, its side `AB` along the ray from `D` toward `G`, and its
+point `D` of a straight line, its side `AB` along the ray from `D` toward `G`, and its
 third corner on the same side as `H`, keeping all its sides and angles. We
 follow the form of the rule in LeanEuclid, by Logan Murphy, Kaiyu Yang, Jialiang
 Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si, which combines System E's two

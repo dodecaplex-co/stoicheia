@@ -200,12 +200,13 @@ def roman_list(names, prefix):
 
 def definition_list(names, book):
     """Book I's definitions a proof rests on (`Definition15`). Definitions are numbered
-    book by book, so outside Book I each keeps its book: "15" on a page of Book I, "I.15"
-    on a page of Book II, whose own Definitions 1 and 2 are words, not assumptions."""
+    book by book, so outside Book I each keeps its book, as a table writes it (STYLE §5):
+    "15" on a page of Book I, "Def. I.15" on a page of Book II, whose own Definitions 1
+    and 2 are words, not assumptions."""
     nums = roman_list(names, "Definition")
     if book == "I" or not nums:
         return nums
-    return ", ".join(f"I.{n}" for n in nums.split(", "))
+    return ", ".join(f"Def. I.{n}" for n in nums.split(", "))
 
 
 def prop_key(ref):
@@ -446,6 +447,16 @@ def page(book, n, count, titles, facts, docs):
     status = STATUS.get(p["status"], "") if p else STATUS["sketched"]
     prev_link = f"[← {book}.{n - 1}]({n - 1:02d}.md)" if n > 1 else ""
     next_link = f"[{book}.{n + 1} →]({n + 1:02d}.md)" if n < count else ""
+    # Across books: I.48 leads on to II.1, and II.1 back to I.48.
+    order = list(BOOKS)
+    i = order.index(book)
+    if n == 1 and i > 0:
+        before = order[i - 1]
+        last = BOOKS[before][0]
+        prev_link = f"[← {before}.{last}](../{before}/{last:02d}.md)"
+    if n == count and i + 1 < len(order):
+        after = order[i + 1]
+        next_link = f"[{after}.1 →](../{after}/01.md)"
     nav = " · ".join(x for x in [f"[Book {book}](index.md)", prev_link, next_link] if x)
     figure = ROOT / "figures" / book / f"{n:02d}.svg"
     mishnah = ROOT / "mishnah" / book / f"{n:02d}.md"
@@ -478,11 +489,12 @@ def page(book, n, count, titles, facts, docs):
     for para in proof:
         out += [para, ""]
     if not p or p["status"] == "sketched":
-        how = ("Euclid's sentences are the `--` comments. The Lean that will carry each one out "
-               "is still to be written; `sorry` is Lean's word for a step not yet taken.")
+        how = ("Euclid's sentences are the `--` comments, and our own notes are in `/- … -/`. "
+               "The Lean that will carry each sentence out is still to be written; `sorry` is "
+               "Lean's word for a step not yet taken.")
     else:
-        how = ("Euclid's sentences are the `--` comments; the lines under each one are the Lean "
-               "that carries it out.")
+        how = ("Euclid's sentences are the `--` comments, and our own notes are in `/- … -/`; "
+               "the lines under each sentence are the Lean that carries it out.")
     out += ["## In Lean", "", status, "",
             f"From [`Elements/Book{book}/Prop{n:02d}.lean`](../../Elements/Book{book}/Prop{n:02d}.lean). "
             + how, "", "```lean", lean_body(lean_path), "```", "",
