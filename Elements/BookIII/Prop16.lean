@@ -18,9 +18,9 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- Euclid takes for granted that at `A` only one straight line is at right angles to
-`AD`. On each side of `AD`, equal angles give the same ray; producing one ray through
-`A` gives the perpendicular on the other side. So the foot `G` cannot be `A`. -/
+/-- Euclid takes for granted that at A only one straight line is at right angles to AD.
+On each side of AD, equal angles give the same ray; producing one ray through A gives the
+perpendicular on the other side. So the foot G cannot be A. -/
 theorem Prop16.one_perp {A D E F : Point} (hE : Triangle D A E) (hF : Triangle D A F)
     (hDAE : ∠ D A E = ∟) (hDAF : ∠ D A F = ∟) : Collinear A E F := by
   have hAD : A ≠ D := hE.ne₁₂.symm
@@ -164,8 +164,8 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
   -- Q. E. D.
 
 /-- The Porism to III.16: "the straight line drawn at right angles to the diameter of a
-circle from its extremity touches the circle." The diameter through `A` is the
-straight line `AD`, `D` the centre, and `AE` is drawn at right angles to it. III.17,
+circle from its extremity touches the circle." The diameter through A is the
+straight line AD, D the centre, and AE is drawn at right angles to it. III.17,
 III.33 and III.37 cite it, and Book IV after them. -/
 theorem Prop16.porism {A D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCircle A ABC)
     (hE : ¬ Collinear D A E) (hDAE : ∠ D A E = ∟) :

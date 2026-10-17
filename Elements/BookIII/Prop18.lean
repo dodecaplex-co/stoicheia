@@ -49,8 +49,8 @@ theorem Prop18 {C D E F : Point} {ABC : Circle} (hF : Centre F ABC) (hC : OnCirc
     -- therefore FC is greater than FG.
     have hFG_FC : ‖F G‖ < ‖F C‖ := BookI.Prop19 hT (by rw [hFGC]; exact hacute)
     -- But FC is equal to FB;
-    /- B is where FG leaves the circle. G is outside: no point of DE is within,
-       and G cannot be on the circle, or DE would meet it at both C and G. -/
+    /- B is where FG leaves the circle, for G is outside it: DE has no point within
+       the circle (`Touches.not_inside`), and meets it at C alone. -/
     have hG_out : OutsideCircle G ABC :=
       ⟨hDE.not_inside hG, fun hG_on =>
         (hDE.2 L hD_L hE_L).2 ⟨C, G, Ne.symm hGC, hC_L, hC, hG_L, hG_on⟩⟩

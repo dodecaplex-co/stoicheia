@@ -25,18 +25,18 @@ theorem Prop22 {A B C D : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   have hBDC : Triangle B D C := hAC.symm.triangle
   -- I say that the opposite angles are equal to two right angles.
   -- Let AC, BD be joined.
-  /- `BD` separates `A` from `C`, so `AC` crosses the straight line `BD` at a point `X`;
-     `X` is within the circle (System E, Circle 2), so it lies between `B` and `D`
-     (Circle 1): `AC` and `BD` cut one another. -/
+  /- BD separates A from C, so AC crosses the straight line BD at a point X. X is within
+     the circle (System E, Circle 2), so it lies between B and D (Circle 1), as in III.21:
+     AC and BD cut one another. -/
   have hBD : B ≠ D := hAC.1
   obtain ⟨L, hB_L, hD_L⟩ := Postulate1 B D hBD
   obtain ⟨X, hX_L, hAXC⟩ := (hAC.2 L hB_L hD_L).exists_between
   have hBXD : Between B X D := between_of_inside_chord hX_L hB_L hD_L
     (inside_of_between (Or.inr hA) (Or.inr hC) hAXC) hB hD hBD
   have hAC' : A ≠ C := ne_of_between_ends hAXC
-  /- Euclid proves it for the angles at `B` and `D`, and says "similarly" for those at `A`
-     and `C`; so his argument is given for every quadrilateral in the circle whose
-     straight lines `AC`, `BD` cut one another, in his letters, and used twice. -/
+  /- Euclid proves it for the angles at B and D, and says "similarly" for those at A and
+     C; so his argument is given for every quadrilateral in the circle whose straight
+     lines AC, BD cut one another, in his letters, and used twice. -/
   have half : ∀ {A B C D X : Point}, OnCircle A ABCD → OnCircle B ABCD → OnCircle C ABCD →
       OnCircle D ABCD → Between A X C → Between B X D → Triangle A B C → Triangle B C D →
       Triangle A C D → ∠ A B C + ∠ A D C = ∟ + ∟ := by
@@ -69,15 +69,15 @@ theorem Prop22 {A B C D : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
       ac_rfl
     -- therefore the angles ABC, ADC are also equal to two right angles.
     exact h₄ ▸ h₅
-  /- Euclid's own figure: the angles ABC, ADC. Three points of the circle are a triangle
-     (`Triangle.of_onCircle`). -/
+  /- The argument serves first in Euclid's own figure, for the angles ABC, ADC. Three
+     points of the circle make a triangle (`Triangle.of_onCircle`). -/
   have hB_D : ∠ A B C + ∠ A D C = ∟ + ∟ := half hA hB hC hD hAXC hBXD
     (Triangle.of_onCircle hA hB hC hBDA.ne₁₃.symm hBDC.ne₁₃ hAC')
     (Triangle.of_onCircle hB hC hD hBDC.ne₁₃ hBDC.ne₂₃.symm hBD)
     (Triangle.of_onCircle hA hC hD hAC' hBDC.ne₂₃.symm hBDA.ne₂₃.symm)
   -- Similarly we can prove that the angles BAD, DCB are also equal to two right angles.
-  /- The same argument in the quadrilateral BCDA, whose straight lines BD, CA cut one
-     another at the same point: its angles BCD, BAD. -/
+  /- The same argument serves in the quadrilateral BCDA, whose straight lines BD, CA cut
+     one another at the same point, for its angles BCD, BAD. -/
   have hA_C : ∠ B A D + ∠ D C B = ∟ + ∟ := by
     rw [add_comm, angle_symm hBDC.ne₂₃ hBDC.ne₁₃]
     exact half hB hC hD hA hBXD (between_symm hAXC)
