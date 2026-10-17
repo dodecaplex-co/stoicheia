@@ -19,7 +19,8 @@ namespace Elements.BookIII
 open Tacit
 
 /-- If twice one magnitude is less than twice another, the first is less than the
-second. This lets the comparison with a semicircle classify the angle standing on it. -/
+second, as in III.24 (`Prop24.half_lt`). It lets the comparison with a semicircle sort
+the angle standing on it. -/
 theorem Prop26.half_lt {k : Kind} {a b : Magnitude k} (h : a + a < b + b) : a < b := by
   rcases lt_trichotomy a b with h' | h' | h'
   · exact h'
@@ -27,8 +28,9 @@ theorem Prop26.half_lt {k : Kind} {a b : Magnitude k} (h : a + a < b + b) : a < 
   · exact absurd (lt_trans h (Magnitude.add_self_lt_add_self h')) (lt_irrefl _)
 
 /-- The angle in a segment is acute, right or obtuse as the centre lies on its side of
-the base, on the base, or beyond it. These are the cases Heath separates under III.26
-(vol. 2, p. 57). [I. 5, I. 32, III. 20, III. 21, III. 22] -/
+the base, on the base, or beyond it, as in III.24 (`Prop24.angle_type`). These are the
+cases Heath separates under III.26 (vol. 2, p. 57). [I. 5, I. 32, III. 20, III. 21,
+III. 22] -/
 theorem Prop26.angle_type {X Y Z M : Point} {α : Circle} (hM : Centre M α) (hX : OnCircle X α)
     (hY : OnCircle Y α) (hZ : OnCircle Z α) (hXYZ : Triangle X Y Z) :
     (SameSideOf M Z X Y ∧ ∠ X Z Y < ∟) ∨ (Between X M Y ∧ ∠ X Z Y = ∟) ∨
@@ -77,10 +79,11 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
   -- therefore the base BC is equal to the base EF. [I. 4]
   have base : Triangle G B C → Triangle H E F → ∠ B G C = ∠ E H F → ‖B C‖ = ‖E F‖ :=
     fun hGBC hHEF h => (BookI.Prop4 hGBC hHEF hGB hGC h).1
-  /- Given the angles at A and D: Euclid's case, where each centre is within its segment
-     and the angles at the centres are double those at A and D [III. 20]; the angles at A
-     and D right, where the bases are diameters; or obtuse, where the angles in the other
-     segments are equal [III. 22] and the angles at the centres double those. Heath, vol. 2, p. 57. -/
+  /- When the angles are given at A and D, Heath's three cases follow (vol. 2, p. 57).
+     In Euclid's, each centre is within its segment, and the angles at the centres are
+     double those at A and D [III. 20]. If the angles at A and D are right, the bases are
+     diameters. If they are obtuse, the angles in the other segments are equal [III. 22],
+     and the angles at the centres are double those. -/
   have base' : ∠ B A C = ∠ E D F → ‖B C‖ = ‖E F‖ := by
     intro h
     rcases Prop26.angle_type hG hB hC hA hBCA with ⟨hGA, hlt⟩ | ⟨hBGC, hrt⟩ | ⟨hGA, hgt⟩ <;>
@@ -111,8 +114,8 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
       exact base hGA.triangle.cab hHD.triangle.cab
         (by rw [Prop20 hG hX hB hC hXG.symm, Prop20 hH hY hE hF hYH.symm, hXY])
   -- And, since the angle at A is equal to the angle at D,
-  /- At the centres, the angles at A and D are the halves of the equal angles at G and H
-     [III. 20]. -/
+  /- When the angles are given at the centres, the angles at A and D are their halves
+     [III. 20], and so equal. -/
   have atA : OppositeSidesOf G K B C → OppositeSidesOf H L E F → ∠ B G C = ∠ E H F →
       ∠ B A C = ∠ E D F := by
     intro hGK hHL h

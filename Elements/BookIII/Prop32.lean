@@ -21,10 +21,11 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- Two points of a circle, neither of them the point `B` where the straight line `EF`
-touches it, lie on the same side of `EF`. Euclid takes this for granted: the straight line
-joining them, were they on opposite sides, would cross `EF` at a point within the circle
-(System E, Circle 2), and no point of a straight line touching a circle is within it. -/
+/-- Two points of a circle, neither of them the point B where the straight line EF
+touches it, lie on the same side of EF. Euclid takes this for granted. Were they on
+opposite sides, the straight line joining them would cross EF at a point within the
+circle (System E, Circle 2), and no point of a straight line touching a circle is within
+it, as in III.18. -/
 theorem Prop32.sameSide {B E F P Q : Point} {α : Circle} {L : Line} (hEF : Touches E F α)
     (hE_L : OnLine E L) (hF_L : OnLine F L) (hB_L : OnLine B L) (hB : OnCircle B α)
     (hP : OnCircle P α) (hQ : OnCircle Q α) (hPB : P ≠ B) (hQB : Q ≠ B) : SameSide P Q L := by
@@ -61,7 +62,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   have hX_L : ¬ OnLine X L := not_on_line_of_same_side (hXD.sameSide hE_L hF_L)
   have hXB : X ≠ B := fun e => hX_L (e ▸ hB_L)
   -- let a point C be taken at random on the circumference BD,
-  /- The second conclusion takes any such `C`; it is introduced when that conclusion
+  /- The second conclusion takes any such C, and C is introduced when that conclusion
      is proved below. -/
   -- and let AD, DC, CB be joined.
   -- Then, since a straight line EF touches the circle ABCD at B,
@@ -76,8 +77,8 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   obtain ⟨A, hA, hA_M, hAOB⟩ :=
     line_circle_beyond (centre_inside hO) hO_M hB_M (ne_of_centre_of_on hO hB)
   have hAB : A ≠ B := ne_of_between_ends hAOB
-  /- `A` is on `X`'s side of `EF`, the side of the circle, so the straight line `BA` is the
-     one drawn at right angles to `EF`. -/
+  /- A is on X's side of EF, the side of the circle, so the straight line BA is the one
+     drawn at right angles to EF. -/
   have hAD_L : SameSide A D L := Prop32.sameSide hEF hE_L hF_L hB_L hB hA hD hAB hBD.symm
   have hAX : OnRay A B X :=
     OnRay.of_sameSideOf (E := F) (SameSideOf.of_line (ne_of_between (between_symm hEBF)).symm
@@ -86,9 +87,9 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   have hright : ∀ {P : Point}, OnLine P L → P ≠ B → ∠ A B P = ∟ := fun hP hPB => by
     rw [angle_symm hAB hPB, angle_onRay_right hAX hPB]
     exact hX _ ⟨L, hE_L, hF_L, hP⟩ hPB
-  /- Euclid's figure has `D` on `F`'s side of `BA`. Lean proves the rest of his argument
-     once, for whichever end of the tangent is on `D`'s side; the case of `D` at `A` is at
-     the end. -/
+  /- Euclid's figure has D on F's side of BA. The rest of his argument is written once,
+     for whichever end of the tangent is on D's side, and the case of D at A comes at the
+     end. -/
   have key : ∀ {E F : Point}, Between E B F → OnLine E L → OnLine F L → SameSideOf D F B A →
       (∀ A' : Point, OnCircle A' ABCD → OppositeSidesOf A' F B D → ∠ F B D = ∠ B A' D) ∧
       (∀ C : Point, OnCircle C ABCD → SameSideOf C F B D → ∠ E B D = ∠ D C B) := by
@@ -114,8 +115,8 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
     -- therefore the angle DBF which remains is equal to the angle BAD in the alternate segment
     -- of the circle.
     have hDBF : ∠ D B F = ∠ B A D := CommonNotion3 (by rw [add_comm, ← hsplit, h1]) rfl
-    /- `A` is on the other side of `BD` from `F`: the straight line `BD`, within the angle
-       `ABF`, crosses `AF`. -/
+    /- A is on the other side of BD from F, for the straight line BD, within the angle
+       ABF, crosses AF. -/
     obtain ⟨N, hB_N, hD_N⟩ := Postulate1 B D hBD
     obtain ⟨Y, hAYF, hY⟩ := crossbar hDF hDA_F
     obtain ⟨-, -, ⟨N', hB_N', hD_N', hY_N'⟩, -⟩ := hY
@@ -127,7 +128,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
         ⟨(Triangle.of_onCircle hB hD hA hBD hBAD.ne₂₃.symm hAB.symm).off_line hB_N hD_N,
           hF_N, pasch3 hAYF hY_N⟩
     refine ⟨fun A' hA' hA'F => ?_, fun C hC hCF => ?_⟩
-    · /- Any angle in that segment is the angle `BAD` [III. 21]. -/
+    · /- Any angle in that segment is the angle BAD [III. 21]. -/
       rw [angle_symm hFB hBD.symm, hDBF,
         Prop21 ⟨O, hO⟩ hA hB hD hA' (OppositeSidesOf.sameSideOf hAF.symm hA'F.symm)]
     -- Next, since ABCD is a quadrilateral in a circle,
@@ -152,8 +153,8 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
     (OppositeSidesOf.of_between (Triangle.of_line hB_L hE_L (ne_of_between hEBF).symm hD_L).cab
       hEBF).swap
   by_cases hDA : D = A
-  · /- `BD` is the diameter: both segments are semicircles, and every angle in them is
-       right [III. 31], as are the angles `FBD`, `EBD`. -/
+  · /- When D is A, BD is the diameter: both segments are semicircles, and every angle
+       in them is right [III. 31], as are the angles FBD, EBD. -/
     subst hDA
     have hBOD : Between B O D := between_symm hAOB
     refine ⟨fun A' hA' hA'F => ?_, fun C hC hCF => ?_⟩
