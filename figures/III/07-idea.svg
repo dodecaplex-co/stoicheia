@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.7 at a glance</title>
-  <desc>From a point on a diameter that is not the centre, the longest straight line to the circle runs through the centre (red) and the shortest is the rest of the diameter (yellow). The others shrink as they turn from the red to the yellow, and are equal only in mirror-image pairs (black, blue).</desc>
+  <desc>From a point on a diameter, not the centre, the straight line through the centre is greatest (red) and the rest of the diameter least (yellow). The rest shrink as they turn, equal only in pairs, one on each side (black, blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="150.0" r="112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <line x1="246.0" y1="150.0" x2="163.3" y2="255.8" stroke="#222222" stroke-width="6" stroke-linecap="round"/>

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="300" viewBox="0 0 400 300">
+  <title>Euclid III.10: circles cut one another at two points at most</title>
+  <rect width="400" height="300" rx="10" fill="#fbf7ee"/>
+  <g fill="none" stroke="#a0522d" stroke-width="2.5">
+    <circle cx="200" cy="160" r="100"/>
+    <ellipse cx="212" cy="160" rx="130" ry="65"/>
+  </g>
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6">
+    <path d="M 107.9,121.1 L 284.1,105.9 L 284.1,214.1"/>
+    <path d="M 191.4,60.4 L 208.6,259.6"/>
+    <path d="M 82,160 L 342,160"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="191.4" cy="60.4" r="2.6"/>
+    <circle cx="284.1" cy="105.9" r="2.6"/>
+    <circle cx="208.6" cy="259.6" r="2.6"/>
+    <circle cx="194.5" cy="95.6" r="2.6"/>
+    <circle cx="342" cy="160" r="2.6"/>
+    <circle cx="107.9" cy="198.9" r="2.6"/>
+    <circle cx="284.1" cy="214.1" r="2.6"/>
+    <circle cx="107.9" cy="121.1" r="2.6"/>
+    <circle cx="196" cy="113.5" r="2.6"/>
+    <circle cx="284.1" cy="160" r="2.6"/>
+    <circle cx="82" cy="160" r="2.6"/>
+    <circle cx="100" cy="160" r="2.6"/>
+    <circle cx="300" cy="160" r="2.6"/>
+    <circle cx="200" cy="160" r="2.6"/>
+  </g>
+  <g fill="#3b2f2f" font-family="Georgia, serif" font-size="17" font-style="italic">
+    <text x="184" y="49">A</text>
+    <text x="290" y="99">B</text>
+    <text x="203" y="281">C</text>
+    <text x="174" y="91">D</text>
+    <text x="351" y="166">E</text>
+    <text x="89" y="216">F</text>
+    <text x="290" y="231">G</text>
+    <text x="87" y="116">H</text>
+    <text x="205" y="131">K</text>
+    <text x="268" y="180">L</text>
+    <text x="60" y="166">M</text>
+    <text x="107" y="180">N</text>
+    <text x="306" y="180">O</text>
+    <text x="209" y="180">P</text>
+  </g>
+</svg>
