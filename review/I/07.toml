@@ -1,0 +1,22 @@
+# review/I/07.toml
+[statement]
+scope = "full"
+note = "Stated positively: two points on one side of AB, each as far from A and from B as the other, are one and the same point."
+
+[route]
+kind = "euclid"
+
+[overlap]
+rule = "Tacit.not_same_side_of_circles_meet"
+note = "System E's Circle 4 says I.7 of two circles: they cut one another on opposite sides of the straight line through their centres. Our proof follows Euclid, through I.5, and never uses the rule."
+
+[[passage]]
+at = "For, if possible, given two straight lines AC, CB"
+kind = "helper"
+helper = "Prop7.within"
+note = "Euclid draws one figure. The Lean also takes AC crossing DB, his figure with C and D exchanged, and D within the triangle ABC or C within ABD, answered as Proclus answers it, by the angles under the base of I.5."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

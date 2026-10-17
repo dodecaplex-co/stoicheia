@@ -1,0 +1,17 @@
+# review/I/24.toml
+[statement]
+scope = "full"
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "therefore the angle DFG is greater than the angle EGF"
+kind = "helper"
+helper = "Prop24.cases"
+note = "Euclid draws F beyond EG and leaves the rest to the reader. The Lean takes Proclus's other two cases (Heath, vol. 1, p. 297): F on EG, where EF is a part of EG, and F within the triangle DEG, by I.21."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

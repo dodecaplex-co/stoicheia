@@ -1,0 +1,31 @@
+# review/I/47.toml
+# Full: Euclid describes the squares outward (I.46), and squares on one straight line
+# are equal whichever side they stand on (Prop46.square_eq, after Proclus), so the
+# outward squares are 'the squares on' the sides of every right-angled triangle.
+[statement]
+scope = "full"
+note = "Proved for squares standing outward, as Euclid describes them; inward squares are equal to these (`Prop46.square_eq`), and `Prop47.sq` states it of any."
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "For let there be described on BC the square BDEC"
+kind = "different"
+note = "The three squares are given in the statement, standing outward from the triangle, so I.46 is not called here; `Prop28.square` shows that each is a parallelogram."
+
+[[passage]]
+at = "let the angle ABC be added to each"
+kind = "helper"
+helper = "Prop47.within"
+note = "Euclid reads off his figure that C lies within the angle DBA and A within FBC; the Lean finds the reason in I.17 and I.13, with the squares standing outward."
+
+[[passage]]
+at = "And the square BDEC is described on BC"
+kind = "carried"
+note = "The statement is about the three given squares, so nothing remains to do; squares on one straight line are equal whichever side they stand on (`Prop46.square_eq`, `Prop47.sq`)."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

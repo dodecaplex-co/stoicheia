@@ -1,0 +1,17 @@
+# review/I/15.toml
+[statement]
+scope = "full"
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "PORISM. From this it is manifest"
+kind = "carried"
+helper = "Prop15.porism"
+note = "Heath brackets the Porism, after Heiberg. It is proved as its own theorem, with its own certificate entry, I.15 Por."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

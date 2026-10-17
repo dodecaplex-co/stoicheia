@@ -1,0 +1,20 @@
+# review/I/39.toml
+# `hAD : A ≠ D` says that the two triangles are two: on one base, ABC and DBC are one
+# triangle when A is D. In I.40 the same hypothesis does exclude a case, since ABC and
+# ACE are two triangles.
+[statement]
+scope = "full"
+note = "'In the same parallels' is AD parallel to BC, so A and D are apart: on one base, ABC and DBC are two triangles only then."
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "Similarly we can prove that neither is any other straight line except AD"
+kind = "different"
+note = "Euclid supposes AD not parallel and refutes it. The Lean supposes nothing: the areas put E at D (`OnRay.eq_of_area_eq`), so the parallel through A is AD itself, and no other straight line needs trying."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

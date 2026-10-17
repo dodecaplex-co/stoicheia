@@ -1,0 +1,15 @@
+[statement]
+scope = "full"
+note = "Both pairs of opposite angles of ABCD make two right angles; the circle comes with a centre."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The circle comes with a centre (`∃ O, Centre O ABCD`), which III.21 needs for the angles in one segment."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

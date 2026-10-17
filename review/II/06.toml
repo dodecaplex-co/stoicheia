@@ -1,0 +1,11 @@
+[statement]
+scope = "full"
+note = "D lies beyond B, as Euclid's setting-out puts it; a straight line added beyond A is the same case with A and B exchanged."
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

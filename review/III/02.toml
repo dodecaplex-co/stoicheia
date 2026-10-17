@@ -1,0 +1,25 @@
+# review/III/02.toml
+[statement]
+scope = "full"
+note = "Every point strictly between two points of the circle is within it, AB through the centre included, which Euclid's figure leaves aside."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The circle comes with a centre (`∃ D, Centre D ABC`), which the proof takes by III.1, as Euclid does."
+
+[overlap]
+rule = "Tacit.inside_of_between"
+note = "System E's Circle 2 contains III.2. The Lean of III.2 never calls the rule, but rests on it through III.1 and through I.5, so it reconstructs Euclid's reasoning within our foundations and does not establish the rule."
+
+[[passage]]
+at = "For suppose it does not, but, if possible, let it fall outside"
+kind = "grouped"
+note = "That DE is less than DB does not need the supposition, so Lean proves it first, and then refutes 'outside' and 'on the circumference' each by that one comparison."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

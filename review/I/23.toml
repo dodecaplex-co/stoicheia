@@ -1,0 +1,16 @@
+# review/I/23.toml
+[statement]
+scope = "full"
+note = "The angle FAG is built with G on the ray from A through B and F on the side of AB where a given point P lies, as I.24, I.31 and I.42 need."
+
+[route]
+kind = "euclid"
+
+[overlap]
+rule = "Tacit.superposition"
+note = "Superposition lays the triangle DCE down at A, along AB and on P's side, and so gives I.23 at once. Our proof is Euclid's, by I.22 and I.8; it rests on the rule through I.8, and does not establish it."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

@@ -1,0 +1,17 @@
+[statement]
+scope = "full"
+note = "The square on AB, BC \"as on one straight line\" is the square on AD, for every D beyond B with BD equal to CB."
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "let the square AEFD be described on AD"
+kind = "helper"
+helper = "Prop8.cell"
+note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

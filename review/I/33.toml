@@ -1,0 +1,12 @@
+# review/I/33.toml
+[statement]
+scope = "full"
+note = "'In the same directions' is stated as B and D lying on one side of AC (`hdir`)."
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

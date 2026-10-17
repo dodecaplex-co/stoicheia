@@ -1,0 +1,16 @@
+# review/III/03.toml
+[statement]
+scope = "full"
+note = "F is between A and B, as bisecting and cutting a straight line mean, and the converse asks only that the angle AFE be right."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given"]
+note = "The centre E is given, as Euclid's setting-out takes it, and his straight line CD through the centre is FE, so C and D need no Lean names."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

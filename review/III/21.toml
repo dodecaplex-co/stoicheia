@@ -1,0 +1,16 @@
+[statement]
+scope = "full"
+note = "The angles at any two points of one segment are equal, in a segment of any size; the circle comes with a centre."
+
+[route]
+kind = "modified"
+note = "Euclid's argument for a segment greater than a semicircle, where it works; for the semicircle and the less segment, Simson's completion (Heath, vol. 2, pp. 49–50): AF drawn through the centre to C, and Euclid's case twice."
+
+[representation]
+tags = ["centre-given"]
+note = "The circle comes with a centre (`∃ F, Centre F ABCD`), which Euclid takes without a citation."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"
