@@ -1,5 +1,6 @@
 """Build the readable pages from Heath's text, the Lean files, the mishnah, the
-further reading and `facts.json`, for every book in `heath.BOOKS`:
+further reading, the review records (`review/<book>/NN.toml`) and `facts.json`, for
+every book in `heath.BOOKS`:
 
     book/I/index.md    the book, proposition by proposition, after its introduction
                        (`mishnah/intro/I.md`), when that file exists
@@ -7,13 +8,22 @@ further reading and `facts.json`, for every book in `heath.BOOKS`:
                        with their Lean
     book/I/NN.md       one page per proposition; after the mishnah, `reading/I/NN.md`
                        under "Further reading", when that file exists
-    CERTIFICATE.md     what every proposition rests on, book by book
+    CERTIFICATE.md     what every proposition, porism and companion rests on, book by book
     GRAPH.md           who uses whom, book by book
+    README.md          only the text between `<!-- scope:I -->` and `<!-- /scope:I -->`
+                       (and likewise for each book): the book's completion summary
 
 A page of a later book links each proposition it cites from an earlier one, as
-[I.47](../I/47.md) on a page of Book II.
+[I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
+[III.1 Por.](01.md#porism).
 
-Run after `lake env lean Certificate/Facts.lean`. Standard library only.
+Three things are kept apart on every page and in the certificate: Heath's references
+(the brackets in his translation, read from the text); the Lean's dependencies
+(facts.json, computed by Lean); and the reconstruction of Euclid's argument (the review
+records, written by a reviewer and tied to the commit read).
+
+Run after `lake env lean Certificate/Facts.lean`. Standard library, and Python 3.11 or
+later for the review records (tomllib).
 """
 
 import json
@@ -141,6 +151,17 @@ STATUS = {
     "sketched": "🚧 Stated: the statement and Euclid's sentences are in place; the proof is to come",
 }
 STATUS_SHORT = {"proved": "✅", "proved-pending": "☑️", "sketched": "🚧"}
+# The status as it opens the line under the enunciation: "**In Lean:** ✅ proved, …".
+STATUS_LINE = {
+    "proved": "✅ proved",
+    "proved-pending": "☑️ proved, citing propositions still to be proved",
+    "sketched": "🚧 stated, the proof to come",
+}
+
+# A review record's three answers in a word, for the index and the certificate.
+SCOPE_WORD = {"full": "whole", "restricted": "restricted", "partial": "part"}
+ROUTE_WORD = {"euclid": "Euclid's", "modified": "Euclid's, one step changed",
+              "alternative": "different"}
 
 
 def load_facts():
@@ -148,6 +169,39 @@ def load_facts():
     if not path.exists():
         return {}
     return {p["ref"]: p for p in json.loads(path.read_text())["propositions"]}
+
+
+def load_records():
+    """ref -> the review record of each proposition (`heath.load_review`, defaults
+    filled in), or None where it has none yet. A record that breaks review/SCHEMA.md
+    stops the render. The stamps are not required here: whether they are current is
+    check_fidelity's business, and the page shows what the record says."""
+    records = {}
+    for book, count in heath.BOOKS.items():
+        for n in range(1, count + 1):
+            exists = heath.review_path(book, n).exists()
+            records[f"{book}.{n}"] = (heath.load_review(book, n, require_stamp=False)
+                                      if exists else None)
+    return records
+
+
+def attached_entries(p, facts):
+    """The porism and companions facts.json attaches to the proposition entry p, in
+    order, each an entry of its own (Certificate/FIELDS.md)."""
+    return [facts[a] for a in (p or {}).get("attached", []) if a in facts]
+
+
+def attached_label(entry):
+    """How a page names an attached entry: "Porism", or a companion's Lean name."""
+    r = heath.parse_ref(entry["ref"])
+    return "Porism" if r.kind == "porism" else f"`Prop{r.n}.{r.name}`"
+
+
+def attached_mark(entry):
+    """How the list of tacit rules marks a rule found only beneath an attached entry:
+    "porism", or the companion's Lean name."""
+    label = attached_label(entry)
+    return "porism" if label == "Porism" else label
 
 
 def load_axiom_docs():
@@ -173,13 +227,43 @@ def svg_desc(path):
     return " ".join(m.group(1).split()) if m else ""
 
 
-def lean_body(path):
-    """The part of a proposition file worth showing: from `open Tacit` to the end."""
-    src = path.read_text()
+DECLARATION = re.compile(
+    r"^(?:theorem|lemma|def|abbrev|structure|inductive|instance)\s+([^\s({:]+)", re.M)
+
+
+class LeanParts:
+    """A proposition file cut in three for its page (see `lean_parts`). Each part is
+    Lean text, possibly empty, and each `*_names` lists the declarations in it."""
+
+    def __init__(self, before, main, after):
+        self.before, self.main, self.after = before, main, after
+        self.before_names = DECLARATION.findall(before)
+        self.after_names = DECLARATION.findall(after)
+
+
+def lean_parts(book, n):
+    """The part of a proposition file worth showing, from `open Tacit` to the
+    namespace's end, cut in three by `heath.theorem_span`: the helpers before the main
+    theorem; the main theorem, docstring, statement and proof; and what follows it, the
+    porism, the companions and other theorems later propositions use.
+
+    Text before the first helper that declares nothing (a section heading alone) goes
+    with the main theorem, as does everything when the file has no documented main
+    theorem."""
+    src = heath.lean_path(book, n).read_text()
     start = src.find("open Tacit")
-    end = src.rfind("end Elements.Book")
-    body = src[start + len("open Tacit"):end] if start >= 0 else src
-    return body.strip("\n")
+    start = start + len("open Tacit") if start >= 0 else 0
+    end = src.rfind(f"end Elements.Book{book}")
+    end = end if end >= 0 else len(src)
+    span = heath.theorem_span(src, n)
+    if span is None:
+        return LeanParts("", src[start:end].strip("\n"), "")
+    before = src[start:span.start].strip("\n")
+    main = src[span.start:span.end].strip("\n")
+    after = src[span.end:end].strip("\n")
+    if before and not DECLARATION.search(before):
+        before, main = "", before + "\n\n" + main
+    return LeanParts(before, main, after)
 
 
 def axiom_kind(path: str) -> str:
@@ -215,18 +299,30 @@ def prop_key(ref):
 
 
 def prop_link(ref, book):
-    """A link to a proposition's page, from a page of `book`."""
-    b, num = ref.split(".")
-    where = "" if b == book else f"../{b}/"
-    return f"[{ref}]({where}{int(num):02d}.md)"
+    """A link to a proposition's page, from a page of `book`; a porism links to its
+    anchor on its proposition's page, "[III.1 Por.](01.md#porism)", and a companion to
+    its own, "[I.40 general](40.md#general)"."""
+    r = heath.parse_ref(ref)
+    where = "" if r.book == book else f"../{r.book}/"
+    anchor = {"porism": "#porism", "companion": f"#{r.name}"}.get(r.kind, "")
+    return f"[{r}]({where}{r.n:02d}.md{anchor})"
 
 
-def euclid_cites(paragraphs, book=None):
-    """What Euclid gives in brackets, in four groups: propositions, postulates,
-    definitions and common notions, each sorted by number (I.3 before I.10). A
-    definition keeps its book, as our prose writes it (STYLE §5), since Books II and III
-    have their own: "Def. III.11", "Def. I.10". Only Book I's own pages write Heath's
-    bare "Def. 15", as his brackets there do."""
+# A proposition in one of Heath's brackets, or its porism: "I. 4", "III. 1, Por.".
+BRACKETED_PROP = re.compile(r"([IVX]+)\.\s*(\d+)(,\s*Por\.)?")
+
+
+def heath_refs(paragraphs, book=None):
+    """Heath's references: what his translation gives in square brackets, in four
+    groups, propositions, postulates, definitions and common notions, each sorted by
+    number (I.3 before I.10). They are Heath's editorial references, not Euclid's words
+    ("Such specific quotations of earlier propositions are rare in Euclid", vol. 1,
+    p. 83), and an absent bracket does not mean Euclid gave no reason.
+
+    A porism keeps its own reference: "[III. 1, Por.]" is III.1 Por. A definition keeps
+    its book, as our prose writes it (STYLE §5), since Books II and III have their own:
+    "Def. III.11", "Def. I.10". Only Book I's own pages write Heath's bare "Def. 15", as
+    his brackets there do."""
     groups = {"props": [], "Post.": [], "Def.": [], "C.N.": []}
     for j in heath.justifications(paragraphs):
         kind, num = j.rsplit(" ", 1)
@@ -237,26 +333,37 @@ def euclid_cites(paragraphs, book=None):
         elif kind.endswith(" Def."):
             # "III. Def. 11" is Def. III.11, and "I. Def. 15" in a later book Def. I.15.
             groups["Def."].append(f"{kind.split('.')[0]}.{num}")
-        else:
-            groups["props"].append(f"{kind}{num}")  # "I. 4", or "V. 9" in a later book
+    # heath.justifications counts a porism as its proposition; here each keeps its own.
+    for p in paragraphs:
+        for inner in heath.CITATION.findall(p):
+            for part in re.split(r";|\band\b", inner):
+                m = BRACKETED_PROP.fullmatch(" ".join(part.split()))
+                if m:
+                    ref = f"{m.group(1)}.{int(m.group(2))}" + (" Por." if m.group(3) else "")
+                    if ref not in groups["props"]:
+                        groups["props"].append(ref)
     groups["props"].sort(key=prop_key)
-    # A porism, "[III. 1, Por.]", is counted as its proposition; the page says so.
-    groups["porisms"] = sorted({f"{m.group(1)}.{int(m.group(2))}" for p in paragraphs
-                                for inner in heath.CITATION.findall(p)
-                                for m in re.finditer(r"([IVX]+)\.\s*(\d+),\s*Por\.", inner)},
-                               key=prop_key)
     for kind in ("Post.", "Def.", "C.N."):
         # The page's own book first (Def. 1, 2), then another's (Def. I.15).
         groups[kind].sort(key=lambda d: (0, d) if isinstance(d, int) else (1, prop_key(d)))
     return groups
 
 
-def euclid_cites_text(groups, book):
-    """Euclid's brackets for a page, grouped as Heath writes them: "I.3, I.4; Post. 1, 2"."""
+def heath_refs_text(groups, book):
+    """Heath's references for a page, grouped as he writes them: "I.3, I.4; Post. 1, 2"."""
     parts = [", ".join(prop_link(c, book) for c in groups["props"])]
     parts += [f"{kind} " + ", ".join(map(str, groups[kind]))
               for kind in ("Post.", "Def.", "C.N.") if groups[kind]]
     return "; ".join(x for x in parts if x)
+
+
+def split_porism(book, n):
+    """Heath's text of a proposition in two: the enunciation and proof without the
+    porism, and the porism paragraph alone ([] when there is none). Each part's
+    references go in its own column of the page's table."""
+    _, enunciation, proof = heath.read(book, n)
+    own = [enunciation] + [q for q in proof if not heath.PORISM.match(q)]
+    return own, [q for q in proof if heath.PORISM.match(q)]
 
 
 HEATH_TITLE = "The Thirteen Books of Euclid's Elements"
@@ -350,6 +457,9 @@ def shared_steps_line(p, book, up):
 
 TABLE_KEY = ("_Postulates, definitions, Common Notions and tacit rules: all that this proof "
              "rests on, counting those of the propositions it cites._")
+# The same key when the table has a column for a porism or a companion as well.
+TABLE_KEY_EACH = ("_Postulates, definitions, Common Notions and tacit rules: all that each "
+                  "proof rests on, counting those of the propositions it cites._")
 
 
 # What a definition Euclid cites, but the Definitions row does not count, is in Lean:
@@ -364,18 +474,18 @@ DEFINITION_LEAN = {
 }
 
 
-def definitions_not_counted(euclid, defs, book):
-    """A line for a page where Euclid cites a definition that the Definitions row does
-    not count: only Def. I.15, the circle's, is an assumption in Lean; the others Euclid
-    cites (Def. 10, the right angle, in I.11 to I.13; Def. 23, parallels, in I.27; Def.
-    I.10 in III.1, III.3, III.9 and III.31; Book III's own Definitions 3, 4, 5 and 11)
-    are said in Lean's own terms, which the line names, in one wording in every book.
-    Definitions are written as euclid_cites writes them: "Def. 10" on a page of Book I,
-    "Def. I.10" and "Def. III.4" elsewhere."""
+def definitions_not_counted(refs, defs, book):
+    """A line for a page where Heath's brackets give a definition that the Definitions
+    row does not count: only Def. I.15, the circle's, is an assumption in Lean; the
+    others his brackets give (Def. 10, the right angle, in I.11 to I.13; Def. 23,
+    parallels, in I.27; Def. I.10 in III.1, III.3, III.9 and III.31; Book III's own
+    Definitions 3, 4, 5 and 11) are said in Lean's own terms, which the line names, in
+    one wording in every book. Definitions are written as heath_refs writes them:
+    "Def. 10" on a page of Book I, "Def. I.10" and "Def. III.4" elsewhere."""
     # Lean's `DefinitionN` axioms are Book I's.
     counted = {("I", int(d.replace("Definition", ""))) for d in defs}
     parts = []
-    for d in euclid["Def."]:
+    for d in refs["Def."]:
         where, num = (book, d) if isinstance(d, int) else (d.split(".")[0], int(d.split(".")[1]))
         if (where, num) in counted:
             continue
@@ -389,52 +499,85 @@ def definitions_not_counted(euclid, defs, book):
     return "_Euclid's " + " and ".join(parts) + f", {what}._"
 
 
-def rests_on(p, docs, depth, book, euclid):
-    """Markdown for the 'What it rests on' section. `euclid` is what Euclid cites
-    (see euclid_cites); it comes from the text, so it is shown before the Lean is done."""
-    up = "../" * depth
-    lines = ["| | |", "|---|---|",
-             "| Euclid cites | " + (euclid_cites_text(euclid, book) or "none") + " |"]
-    if not p or p["status"] == "sketched":
-        return ("\n".join(lines) + "\n\n_Not yet proved in Lean, so what the Lean rests on "
-                "is not yet known._\n")
-    axioms = p["axioms"]
+def axiom_groups(entry):
+    """An entry's axioms by kind: postulates, definitions, tacit rules, and any other
+    axiom, which is shown under "Other", never dropped (check_fidelity.py fails on any
+    axiom declared outside Elements/Foundations/)."""
+    axioms = entry["axioms"]
     posts = [a for a in axioms if a.startswith("Postulate")]
     defs = [a for a in axioms if a.startswith("Definition")]
     tacit = [a for a in axioms if a.startswith("Tacit.")]
-    # An axiom of no known kind is shown under "Other", never dropped; check_fidelity.py
-    # fails on any axiom declared outside Elements/Foundations/.
     other = [a for a in axioms if a not in posts + defs + tacit]
-    lines.append("| Lean cites | " + (", ".join(prop_link(c, book) for c in
-                 sorted(p["cites"], key=prop_key)) or "no propositions") + " |")
-    lines.append("| Postulates | " + (roman_list(posts, "Postulate") or "none") + " |")
-    lines.append("| Definitions | " + (definition_list(defs, book) or "none") + " |")
-    lines.append("| Common Notions | " + (", ".join(c.replace("C.N. ", "") for c in
-                 sorted(set(p["common_notions"]))) or "none") + " |")
-    lines.append(f"| Tacit rules | {len(tacit)} (listed below) |")
-    if other:
-        lines.append(f"| Other axioms | {len(other)} (listed below) |")
+    return posts, defs, tacit, other
+
+
+def rests_on(p, docs, depth, book, refs, attached=()):
+    """Markdown for the 'What it rests on' section. `refs` is Heath's references (see
+    heath_refs); they come from the text, so they are shown before the Lean is done.
+    `attached` is [(entry, refs)] for the porism and companions facts.json attaches to
+    p: each gets a column of its own beside the proposition's, and a tacit rule found
+    only beneath one of them is marked with its name, "(porism)"."""
+    up = "../" * depth
+    columns = [(p, refs)] + list(attached)
+    if attached:
+        labels = ["Proposition"] + [attached_label(a) for a, _ in attached]
+        lines = ["| | " + " | ".join(labels) + " |", "|---|" + "---|" * len(labels)]
+    else:
+        lines = ["| | |", "|---|---|"]
+
+    def row(name, cell):
+        lines.append(f"| {name} | " + " | ".join(cell(e, r) for e, r in columns) + " |")
+
+    row("Heath's references", lambda e, r: heath_refs_text(r, book) or "none")
+    if not p or p["status"] == "sketched":
+        return ("\n".join(lines) + "\n\n_Not yet proved in Lean, so what the Lean rests on "
+                "is not yet known._\n")
+    done = [(e, r) for e, r in columns if e["status"] != "sketched"]
+    groups = {e["ref"]: axiom_groups(e) for e, _ in done}
+
+    def lean(fn):
+        return lambda e, r: fn(e) if e["ref"] in groups else "not yet proved"
+
+    row("Lean cites", lean(lambda e: ", ".join(prop_link(c, book) for c in
+                                               sorted(e["cites"], key=prop_key))
+                           or "no propositions"))
+    row("Postulates", lean(lambda e: roman_list(groups[e["ref"]][0], "Postulate") or "none"))
+    row("Definitions", lean(lambda e: definition_list(groups[e["ref"]][1], book) or "none"))
+    row("Common Notions", lean(lambda e: ", ".join(c.replace("C.N. ", "") for c in
+                                                   sorted(set(e["common_notions"])))
+                               or "none"))
+    row("Tacit rules", lean(lambda e: f"{len(groups[e['ref']][2])} (listed below)"))
+    if any(groups[e["ref"]][3] for e, _ in done):
+        row("Other axioms", lean(lambda e: f"{len(groups[e['ref']][3])} (listed below)"))
     out = "\n".join(lines) + "\n"
-    steps = shared_steps_line(p, book, up)
+    # One line for the shared steps of every column, each step named once.
+    steps = {}
+    for e, _ in done:
+        for s in e.get("shared_steps", []):
+            steps.setdefault(s["name"], s)
+    steps = shared_steps_line({"shared_steps": list(steps.values())}, book, up)
     if steps:
         out += f"\n{steps}\n"
-    out += f"\n{TABLE_KEY}\n"
-    unlisted = definitions_not_counted(euclid, defs, book)
+    out += f"\n{TABLE_KEY_EACH if attached else TABLE_KEY}\n"
+    posts, defs, tacit, other = groups[p["ref"]]
+    unlisted = definitions_not_counted(refs, defs, book)
     if unlisted:
         out += f"\n{unlisted}\n"
-    for ref in euclid.get("porisms", []):
-        b, num = ref.split(".")
-        out += (f"\n_Euclid cites [{b}. {num}, Por.], the porism to {ref}, and the table "
-                f"counts it as {ref}._\n")
-    if p["status"] == "proved-pending":
+    if any(e["status"] == "proved-pending" for e, _ in done):
         out += ("\n_This proof is complete, but it cites propositions that are still "
                 "only stated, so the list above will grow when they are proved._\n")
-    if tacit or other:
+    # The rules beneath the proposition, then those found only beneath an attached entry.
+    only = {}
+    for e, _ in done[1:]:
+        for a in groups[e["ref"]][2] + groups[e["ref"]][3]:
+            if a not in p["axioms"]:
+                only.setdefault(a, attached_mark(e))
+    if tacit or other or only:
         by_kind = {}
-        for a in tacit:
+        for a in tacit + [a for a in only if a.startswith("Tacit.")]:
             doc, path, line = docs.get(a, ("", "", 0))
             by_kind.setdefault(axiom_kind(path), []).append((a, doc, path, line))
-        for a in other:
+        for a in other + [a for a in only if not a.startswith("Tacit.")]:
             doc, path, line = docs.get(a, ("", "", 0))
             by_kind.setdefault("Other", []).append((a, doc, path, line))
         rules = "tacit rule" if len(tacit) == 1 else "tacit rules"
@@ -444,6 +587,12 @@ def rests_on(p, docs, depth, book, euclid):
         cited = bool(p["cites"])
         summary = f"The {len(tacit)} {rules} beneath this proof" + (
             ", counting those of the propositions it cites" if cited else "")
+        if only:
+            marks = sorted(set(only.values()), key=lambda m: m != "porism")
+            where = " and ".join("its porism" if m == "porism" else m for m in marks)
+            # Inside <summary>, Markdown's backticks are not read: write <code>.
+            where = re.sub(r"`([^`]+)`", r"<code>\1</code>", where)
+            summary += f", and {len(only)} more beneath {where}"
         out += f"\n<details><summary>{summary}</summary>\n\n"
         for kind in ["Reading the figure", "Lengths, angles and areas", "Superposition",
                      "Laws of magnitude", "Other"]:
@@ -452,7 +601,10 @@ def rests_on(p, docs, depth, book, euclid):
             out += f"**{kind}**\n\n"
             for a, doc, path, line in sorted(by_kind[kind]):
                 name = a.replace('Tacit.', '')
-                here = " (used here)" if cited and a in p["direct_axioms"] else ""
+                if a in only:
+                    here = f" ({only[a]})"
+                else:
+                    here = " (used here)" if cited and a in p["direct_axioms"] else ""
                 out += (f"- [`{name}`]({up}{path}#L{line}){here}: {doc}\n" if path else
                         f"- `{name}`{here}: not declared in `Elements/Foundations/`\n")
             out += "\n"
@@ -460,16 +612,263 @@ def rests_on(p, docs, depth, book, euclid):
     return out
 
 
-def page(book, n, count, titles, facts, docs):
-    source, enunciation, proof = heath.read(book, n)
-    # The enunciation counts too: I.22's [I. 20] is there.
-    euclid = euclid_cites([enunciation] + proof, book)
-    ref = f"{book}.{n}"
-    p = facts.get(ref)
-    status = STATUS.get(p["status"], "") if p else STATUS["sketched"]
+# What the review record says, on the page (review/SCHEMA.md). Brief 0005, stage 1d.
+
+NUMBER_WORDS = ["no", "one", "two", "three", "four", "five", "six", "seven", "eight",
+                "nine", "ten"]
+
+
+def number_word(k):
+    return NUMBER_WORDS[k] if k < len(NUMBER_WORDS) else str(k)
+
+
+def and_list(items):
+    """["a"] ↦ "a"; ["a", "b", "c"] ↦ "a, b and c"."""
+    items = list(items)
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+def clause(note):
+    """A record's note as a clause within the line under the enunciation: without its
+    closing full stop, so that " · " can follow."""
+    return note.strip().rstrip(".")
+
+
+def cell(text):
+    """Text for a table cell: one line, its pipes escaped."""
+    return " ".join(text.split()).replace("|", "\\|")
+
+
+def overlap_note(overlap):
+    """What an [overlap] says, as a sentence: its note, or the rule's name."""
+    rule = overlap["rule"].replace("Tacit.", "")
+    return (overlap.get("note")
+            or f"One of our tacit rules, `{rule}`, already contains this proposition.")
+
+
+def in_lean_line(p, record):
+    """The line under the enunciation, from the review record: whether the proof is
+    finished, what its statement covers and whose argument it follows, and an axiom
+    that already contains the proposition, if one does. The reader meets the scope
+    before the green check means anything more than it says."""
+    status = p["status"] if p else "sketched"
+    head = STATUS_LINE[status]
+    if record is None:
+        return f"**In Lean:** {head} · not yet reviewed against Euclid's enunciation"
+    st, route = record["statement"], record["route"]
+    note = clause(st.get("note", ""))
+    scope = {"full": "as Euclid states it",
+             "restricted": f"for a restricted statement: {note}",
+             "partial": f"leaving clauses to Euclid's words: {note}"}[st["scope"]]
+    parts = [f"{head}, {scope}"]
+    if status != "sketched":
+        parts.append({"euclid": "Euclid's argument",
+                      "modified": f"with one step changed: {clause(route.get('note', ''))}",
+                      "alternative": f"by a different argument: {clause(route.get('note', ''))}"}
+                     [route["kind"]])
+    if "overlap" in record:
+        parts.append(overlap_note(record["overlap"]))
+    return "**In Lean:** " + " · ".join(parts)
+
+
+def proof_cell(p, attached):
+    """The Proof row: the proposition's status, and its porism's and companions'."""
+    if not p:
+        return STATUS["sketched"]
+    text = STATUS[p["status"]]
+    for a in attached:
+        r = heath.parse_ref(a["ref"])
+        what = "its porism" if r.kind == "porism" else f"its companion `Prop{r.n}.{r.name}`"
+        link = prop_link(a["ref"], r.book)
+        if a["status"] == p["status"]:
+            text += f", and {what}, {link}"
+        else:
+            text += f"; {what}, {link}: {STATUS[a['status']]}"
+    return text
+
+
+def field_table(book, n, p, record, attached, docs):
+    """The table under "## In Lean": proof, statement, extra hypotheses, argument,
+    representation, overlap and the review, each row from facts.json or the record."""
+    rows = [("Proof", proof_cell(p, attached))]
+    if record is None:
+        rows.append(("Reviewed", "not yet: the statement has not been read against "
+                                 "Euclid's enunciation"))
+    else:
+        st, route = record["statement"], record["route"]
+        note = st.get("note", "")
+        rows.append(("Statement", {"full": "The whole enunciation.",
+                                   "restricted": "Restricted.",
+                                   "partial": "In part."}[st["scope"]]
+                     + (f" {note}" if note else "")))
+        if st["hypotheses"]:
+            # One to a line: a hypothesis may have a semicolon of its own (I.40).
+            rows.append(("Extra hypotheses", "<br>".join(st["hypotheses"])))
+        rows.append(("Argument", {"euclid": "Euclid's.",
+                                  "modified": "Euclid's, with one step changed.",
+                                  "alternative": "A different argument."}[route["kind"]]
+                     + (f" {route['note']}" if route.get("note") else "")))
+        rep = record.get("representation")
+        if rep:
+            terms = heath.load_terms()
+            meanings = [terms[t]["meaning"] for t in rep["tags"]
+                        if terms.get(t, {}).get("kind") == "representation"]
+            text = rep.get("note") or " ".join(meanings)
+            if text:
+                rows.append(("Representation", text))
+        if "overlap" in record:
+            rule = record["overlap"]["rule"]
+            doc, path, line = docs.get(rule, ("", "", 0))
+            name = f"`{rule.replace('Tacit.', '')}`"
+            name = f"[{name}](../../{path}#L{line})" if path else name
+            note = record["overlap"].get("note")
+            text = f"{name}: {note}" if note else f"{name} already contains this proposition."
+            if (ROOT / "docs" / "reports" / "overlaps.md").exists():
+                text += " See [the overlap catalogue](../../docs/reports/overlaps.md)."
+            rows.append(("Overlap", text))
+        rv = record["review"]
+        stage = {"exceptions": "for exceptions", "full": "in full"}[rv["stage"]]
+        where = f"[{stage}](../../review/{book}/{n:02d}.toml)"
+        commit = rv.get("commit")
+        rows.append(("Reviewed", f"{where}, at commit [`{commit}`]({REPO}/commit/{commit})"
+                                 if commit else f"{where}, not yet stamped with a commit"))
+    return "\n".join(["| | |", "|---|---|"] + [f"| {k} | {cell(v)} |" for k, v in rows])
+
+
+def clause_map(record):
+    """For a statement in part (III.16, III.31), the clause map from [coverage], shown
+    before the Lean: what the Lean checks, what it proves toward the clauses it leaves
+    out, and what stays in Euclid's words."""
+    cov = record.get("coverage") if record else None
+    if not cov:
+        return ""
+    out = ["**What the Lean proves, clause by clause**", ""]
+    for key, label in (("checked", "Checked in Lean:"),
+                       ("explains", "What the Lean proves toward the clauses it leaves out:"),
+                       ("text_only", "Kept in Euclid's words and the mishnah only:")):
+        if cov[key]:
+            out.append(f"- {label}")
+            out += [f'  - "{c}"' if key == "text_only" else f"  - {c}" for c in cov[key]]
+    return "\n".join(out)
+
+
+PASSAGE_WORD = {"carried": "carried", "helper": "by a lemma", "grouped": "grouped",
+                "different": "argued another way", "unformalized": "not formalized"}
+
+
+def plain_text(paragraphs):
+    """Heath's paragraphs as one line of plain words, as review records quote them."""
+    return heath.normalize(" ".join(paragraphs).replace("*", ""))
+
+
+def first_words(at, proof_text=""):
+    """A passage's first words, as the page quotes them: with Heath's full stop when
+    they end his sentence in `proof_text`, and with "…" when they stop within it."""
+    at = heath.normalize(at.replace("*", ""))
+    if at[-1] in ".?!":
+        return at
+    i = proof_text.find(at)
+    after = proof_text[i + len(at):i + len(at) + 1] if i >= 0 else ""
+    return at + after if after in (".", "?", "!") else at + "…"
+
+
+def passage_notes(record, proof_text=""):
+    """The record's [[passage]] notes, a short list keyed to the first words of each
+    passage, shown just above the listing: where a lemma does a step, sentences are
+    carried together, the argument goes another way, or a claim is not formalized."""
+    passages = record["passage"] if record else []
+    if not passages:
+        return ""
+    out = ["**How the Lean follows the text**", ""]
+    for q in passages:
+        word = PASSAGE_WORD[q["kind"]]
+        if q.get("helper"):
+            # A helper may be a lemma, a porism or an axiom (III.25's `Postulate5`).
+            word = (f"by `{q['helper']}`" if q["kind"] == "helper"
+                    else f"{word} by `{q['helper']}`")
+        note = f" {q['note']}" if q.get("note") else ""
+        out.append(f'- "{first_words(q["at"], proof_text)}"{note} _({word})_')
+    return "\n".join(out)
+
+
+def how_to_read(p, record, proof_text=""):
+    """The sentence under the field table on how to read the listing. It says the lines
+    under each sentence carry it out only where that is so: a passage the Lean does not
+    carry out is named."""
+    if not p or p["status"] == "sketched":
+        return ("Euclid's sentences are the `--` comments, and our own notes are in `/- … -/`. "
+                "The Lean that will carry each sentence out is still to be written; `sorry` is "
+                "Lean's word for a step not yet taken.")
+    how = ("Euclid's sentences are the `--` comments, and our own notes are in `/- … -/`; "
+           "the lines under each sentence are the Lean that carries it out")
+    passages = record["passage"] if record else []
+    left = [q for q in passages if q["kind"] == "unformalized"]
+    if len(left) == 1:
+        where = first_words(left[0]["at"], proof_text)
+        how += f', except the passage from "{where}", which the Lean does not carry out'
+    elif left:
+        how += (f", except {number_word(len(left))} passages the Lean does not carry out")
+    if left:
+        return how + "; the notes below say why."
+    if passages:
+        return how + ". Where the Lean follows the text otherwise, the notes below say how."
+    return how + "."
+
+
+def lean_listing(book, n, facts):
+    """The Lean of a page: the main theorem open; the lemmas before it folded in one
+    <details>, with their names and line count; and the porism, companions and other
+    theorems after it folded in another."""
+    parts = lean_parts(book, n)
+    companions = {f"Prop{n}.{heath.parse_ref(a).name}"
+                  for a in facts.get(f"{book}.{n}", {}).get("attached", [])
+                  if heath.parse_ref(a).kind == "companion"}
+
+    def names(found):
+        return and_list([f"<code>{x}</code>" for x in found])
+
+    def lines(text):
+        k = text.count("\n") + 1
+        return f"{k} line" + ("" if k == 1 else "s")
+
+    def fold(summary, text):
+        return [f"<details><summary>{summary}</summary>", "", "```lean", text, "```", "",
+                "</details>", ""]
+
+    out = []
+    if parts.before:
+        k = len(parts.before_names)
+        what = f"{number_word(k)} lemma" + ("" if k == 1 else "s")
+        out += fold(f"Before the theorem, {what}: {names(parts.before_names)} "
+                    f"({lines(parts.before)})", parts.before)
+    out += ["```lean", parts.main, "```", ""]
+    if parts.after:
+        porism = [x for x in parts.after_names if x == f"Prop{n}.porism"]
+        comp = [x for x in parts.after_names if x in companions]
+        rest = [x for x in parts.after_names if x not in porism + comp]
+        what = []
+        if porism:
+            what.append(f"its porism, {names(porism)}")
+        if comp:
+            what.append(f"its companion{'s' if len(comp) > 1 else ''}, {names(comp)}")
+        if rest:
+            k = len(rest)
+            more = "more " if porism or comp else ""
+            what.append(f"{number_word(k)} {more}theorem{'s' if k > 1 else ''} "
+                        f"later propositions use, {names(rest)}")
+        anchors = "".join(f'<a name="{x.split(".", 1)[1]}"></a>' for x in comp)
+        if anchors:
+            out += [anchors, ""]
+        out += fold(f"After the theorem, {and_list(what) if what else 'more Lean'} "
+                    f"({lines(parts.after)})", parts.after)
+    return "\n".join(out).rstrip("\n")
+
+
+def page_nav(book, n, count):
+    """The navigation line: the book's index, the previous and the next proposition.
+    Across books, I.48 leads on to II.1, and II.1 back to I.48."""
     prev_link = f"[← {book}.{n - 1}]({n - 1:02d}.md)" if n > 1 else ""
     next_link = f"[{book}.{n + 1} →]({n + 1:02d}.md)" if n < count else ""
-    # Across books: I.48 leads on to II.1, and II.1 back to I.48.
     order = list(BOOKS)
     i = order.index(book)
     if n == 1 and i > 0:
@@ -479,18 +878,37 @@ def page(book, n, count, titles, facts, docs):
     if n == count and i + 1 < len(order):
         after = order[i + 1]
         next_link = f"[{after}.1 →](../{after}/01.md)"
-    nav = " · ".join(x for x in [f"[Book {book}](index.md)", prev_link, next_link] if x)
+    return " · ".join(x for x in [f"[Book {book}](index.md)", prev_link, next_link] if x)
+
+
+JUMP_LINKS = ("[Euclid's proof](#euclids-proof) · [In Lean](#in-lean) · "
+              "[What it rests on](#what-it-rests-on) · [Mishnah](#mishnah)")
+
+
+def page(book, n, count, titles, facts, docs, records):
+    source, enunciation, proof = heath.read(book, n)
+    # The enunciation counts too: I.22's [I. 20] is there. The porism's references go
+    # in its own column.
+    own, porism_text = split_porism(book, n)
+    refs = heath_refs(own, book)
+    ref = f"{book}.{n}"
+    p = facts.get(ref)
+    record = records.get(ref)
+    attached = attached_entries(p, facts)
+    attached_refs = [(a, heath_refs(porism_text, book) if a.get("kind") == "porism"
+                      else heath_refs([], book)) for a in attached]
+    nav = page_nav(book, n, count)
     figure = ROOT / "figures" / book / f"{n:02d}.svg"
     mishnah = ROOT / "mishnah" / book / f"{n:02d}.md"
-    lean_path = ROOT / "Elements" / f"Book{book}" / f"Prop{n:02d}.lean"
     idea = ROOT / "figures" / book / f"{n:02d}-idea.svg"
     # A proposition Heath prints in square brackets (III.12) opens its bracket before
     # the enunciation, to close after "Q. E. D." at the end of the proof.
     opening = "[" if heath.bracketed(book, n) else ""
     out = [GENERATED, nav, "", f"# Book {book}, Proposition {n}", "",
-           f"*{titles[n]}*", "", f"> {opening}{enunciation}", ""]
+           f"*{titles[n]}*", "", JUMP_LINKS, "", f"> {opening}{enunciation}", ""]
     if opening:
         out += [BRACKET_NOTES.get((book, n), BRACKET_DEFAULT), ""]
+    out += [in_lean_line(p, record), ""]
     if idea.exists():
         caption = svg_desc(idea)
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "
@@ -508,18 +926,19 @@ def page(book, n, count, titles, facts, docs):
     else:
         out += [heath_figure_note(source), ""]
     for para in proof:
-        out += [para, ""]
-    if not p or p["status"] == "sketched":
-        how = ("Euclid's sentences are the `--` comments, and our own notes are in `/- … -/`. "
-               "The Lean that will carry each sentence out is still to be written; `sorry` is "
-               "Lean's word for a step not yet taken.")
-    else:
-        how = ("Euclid's sentences are the `--` comments, and our own notes are in `/- … -/`; "
-               "the lines under each sentence are the Lean that carries it out.")
-    out += ["## In Lean", "", status, "",
-            f"From [`Elements/Book{book}/Prop{n:02d}.lean`](../../Elements/Book{book}/Prop{n:02d}.lean). "
-            + how, "", "```lean", lean_body(lean_path), "```", "",
-            "## What it rests on", "", rests_on(p, docs, 2, book, euclid)]
+        # The porism's anchor, which its certificate row and its citations link to.
+        out += [('<a name="porism"></a>' if heath.PORISM.match(para) else "") + para, ""]
+    out += ["## In Lean", "", field_table(book, n, p, record, attached, docs), ""]
+    cmap = clause_map(record)
+    if cmap:
+        out += [cmap, ""]
+    out += [f"From [`Elements/Book{book}/Prop{n:02d}.lean`](../../Elements/Book{book}/Prop{n:02d}.lean). "
+            + how_to_read(p, record, plain_text(proof)), ""]
+    notes = passage_notes(record, plain_text(proof))
+    if notes:
+        out += [notes, ""]
+    out += [lean_listing(book, n, facts), "",
+            "## What it rests on", "", rests_on(p, docs, 2, book, refs, attached_refs)]
     out += ["## Mishnah", ""]
     if mishnah.exists():
         out += [mishnah.read_text().strip(), ""]
@@ -530,6 +949,7 @@ def page(book, n, count, titles, facts, docs):
     further = reading.read_text().strip() if reading.exists() else ""
     if further:
         out += ["## Further reading", "", further, ""]
+    out += [nav, ""]
     out += ["---", "", euclids_text(source), "", TACIT_CREDIT, ""]
     return "\n".join(out)
 
@@ -557,9 +977,117 @@ def book_intro(book):
     return path.read_text().strip() if path.exists() else ""
 
 
-def index(book, count, titles, facts):
-    proved = sum(1 for n in range(1, count + 1)
-                 if facts.get(f"{book}.{n}", {}).get("status") == "proved")
+def ref_ranges(refs):
+    """Propositions of one book in order, as our prose writes them: consecutive runs
+    joined by an en dash (STYLE §5). ["I.1", …, "I.28", "I.31"] ↦ "I.1–I.28 and I.31"."""
+    runs = []
+    for r in refs:
+        b, num = r.split(".")
+        if runs and runs[-1][0] == b and runs[-1][2] == int(num) - 1:
+            runs[-1][2] = int(num)
+        else:
+            runs.append([b, int(num), int(num)])
+    return and_list([f"{b}.{lo}" if lo == hi else f"{b}.{lo}–{b}.{hi}" for b, lo, hi in runs])
+
+
+def postulate5_sentence(book, facts, proved):
+    """Where the parallel postulate comes into the book's proofs, from facts.json, in
+    the certificate's words: what a proof uses, never what a proposition needs."""
+    count = BOOKS[book][0]
+    without = [r for r in proved if "Postulate5" not in facts[r]["axioms"]]
+    using = [r for r in proved if r not in without]
+    direct = [r for r in using if "Postulate5" in facts[r]["direct_axioms"]]
+    # Where Heath's brackets first give Post. 5 in this book.
+    heath_first = next((f"{book}.{n}" for n in range(1, count + 1)
+                        if "Post. 5" in heath.justifications(sum(split_porism(book, n), []))),
+                       None)
+    if not using:
+        return "None of the proofs uses the parallel postulate."
+    if not without:
+        if direct:
+            where = ", where Euclid calls on it," if direct[0] == heath_first else ""
+            rest = "the others through" if len(direct) == 1 else "the rest through"
+            return (f"Every proof uses the parallel postulate: {and_list(direct)}'s directly"
+                    f"{where} and {rest} the propositions they cite.")
+        return "Every proof uses the parallel postulate, through the propositions it cites."
+    first = using[0]
+    just = ", just where Euclid first calls on it" if first == heath_first else ""
+    return (f"Our proofs of {len(without)} propositions do not use the parallel postulate: "
+            f"{ref_ranges(without)}. The first proof that does is {first}'s{just}.")
+
+
+def book_summary(book, facts, records, href, postulate5=True):
+    """A book's completion summary, one line of Markdown generated from facts.json and
+    the review records: how many propositions are proved, how many statements are
+    whole, restricted or in part, whose argument the proofs follow, the propositions an
+    axiom already contains, and (unless `postulate5` is False) where the parallel
+    postulate comes in. `href(ref)` is the link to a proposition's page. The same line
+    heads the book's index, its section of CERTIFICATE.md and its row of README.md."""
+    count = BOOKS[book][0]
+    refs = [f"{book}.{n}" for n in range(1, count + 1)]
+
+    def links(rs):
+        return ", ".join(f"[{r}]({href(r)})" for r in rs)
+
+    proved = [r for r in refs if facts.get(r, {}).get("status") == "proved"]
+    head = (f"**All {count} propositions proved in Lean**" if len(proved) == count else
+            f"**{len(proved)} of {count} propositions proved in Lean**")
+    reviewed = [r for r in proved if records.get(r)]
+    scope = {s: [r for r in reviewed if records[r]["statement"]["scope"] == s]
+             for s in ("full", "restricted", "partial")}
+    def states(k):
+        return f"{k} as Euclid states {'it' if k == 1 else 'them'}"
+
+    out = []
+    if not reviewed:
+        out.append(head + ".")
+    elif not scope["restricted"] and not scope["partial"]:
+        out.append(head + (", every one as Euclid states it." if len(reviewed) == len(proved)
+                           else f": {states(len(scope['full']))}."))
+    else:
+        parts = [states(len(scope["full"]))] if scope["full"] else []
+        if scope["restricted"]:
+            parts.append(f"{len(scope['restricted'])} for a restricted statement "
+                         f"({links(scope['restricted'])})")
+        if scope["partial"]:
+            parts.append(f"{len(scope['partial'])} in part, leaving clauses to Euclid's words "
+                         f"({links(scope['partial'])})")
+        out.append(f"{head}: {and_list(parts)}.")
+    unreviewed = [r for r in proved if not records.get(r)]
+    if unreviewed:
+        out.append(f"Not yet reviewed against Euclid's enunciation: {links(unreviewed)}.")
+    if reviewed:
+        route = {k: [r for r in reviewed if records[r]["route"]["kind"] == k]
+                 for k in ("euclid", "modified", "alternative")}
+        if len(route["euclid"]) == len(reviewed):
+            out.append("Every proof follows Euclid's argument, and each page notes where the "
+                       "Lean departs from his sentences.")
+        else:
+            k = len(route["euclid"])
+            parts = [f"{k} proof{'' if k == 1 else 's'} follow{'s' if k == 1 else ''} "
+                     "Euclid's argument"]
+            if route["modified"]:
+                k = len(route["modified"])
+                parts.append(f"{k} follow{'s' if k == 1 else ''} it with one step changed "
+                             f"({links(route['modified'])})")
+            if route["alternative"]:
+                k = len(route["alternative"])
+                parts.append(f"{k} {'argues' if k == 1 else 'argue'} differently "
+                             f"({links(route['alternative'])})")
+            out.append(and_list(parts) + "; each page says how.")
+        overlap = [r for r in reviewed if "overlap" in records[r]]
+        if overlap:
+            rules = ("tacit rules" if all(records[r]["overlap"]["rule"].startswith("Tacit.")
+                                          for r in overlap) else "axioms")
+            out.append(f"In {and_list(links([r]) for r in overlap)}, one of our {rules} already "
+                       "contains the proposition, so the proof retraces Euclid's argument "
+                       "within our rules and does not establish the rule.")
+    if postulate5 and len(proved) == count:
+        out.append(postulate5_sentence(book, facts, proved))
+    return " ".join(out)
+
+
+def index(book, count, titles, facts, records):
     start = f"Start with the [{in_words(front_sections(book))}](front.md)."
     if (ROOT / "docs" / "reports" / f"gaps-book-{book}.md").exists():
         start += (" What Euclid takes for granted along the way is gathered in "
@@ -570,20 +1098,25 @@ def index(book, count, titles, facts):
         ("proved", "proved"),
         ("proved-pending", "proved, citing propositions still to be proved"),
         ("sketched", "stated")) if s in used)
-    out = [GENERATED, f"# Book {book}", "",
-           f"**{proved} of {count} propositions proved in Lean.** Key to the table: {legend}.", ""]
+    summary = book_summary(book, facts, records, lambda r: f"{int(r.split('.')[1]):02d}.md")
+    out = [GENERATED, f"# Book {book}", "", summary, "",
+           f"Key to the table: {legend}. The Lean statement is the whole enunciation, a "
+           "restricted statement, or part of it; each page says how.", ""]
     intro = book_intro(book)
     if intro:
         out += [intro, "", "## The propositions", ""]
     out += [start, "",
             "Books and papers to read alongside, from Proclus to Lean, are gathered by theme "
             "in [the reading list](../../docs/reading.md).", "",
-            "| | Proposition | |", "|---|---|---|"]
+            "| | Proposition | Lean statement | |", "|---|---|---|---|"]
     for n in range(1, count + 1):
         st = facts.get(f"{book}.{n}", {}).get("status", "sketched")
+        record = records.get(f"{book}.{n}")
+        scope = SCOPE_WORD[record["statement"]["scope"]] if record else ""
         _, enunciation, _ = heath.read(book, n)
         short = enunciation if len(enunciation) < 110 else enunciation[:107].rsplit(" ", 1)[0] + "…"
-        out.append(f"| {STATUS_SHORT[st]} | [{book}.{n}]({n:02d}.md) **{titles[n]}** | {short} |")
+        out.append(f"| {STATUS_SHORT[st]} | [{book}.{n}]({n:02d}.md) **{titles[n]}** | {scope} "
+                   f"| {short} |")
     return "\n".join(out) + "\n"
 
 
@@ -674,27 +1207,35 @@ P5_NOTE = {"I": "Euclid holds it back until I.29."}
 
 def shared_steps_example(facts):
     """The first proved proposition, in the order of the books, whose shared steps bring
-    in a proposition Euclid gives no bracket for: its reference and its line, written
+    in a proposition with no bracket in Heath's text: its reference and its line, written
     for CERTIFICATE.md. None if there is no such proposition."""
     for book, (count, _) in BOOKS.items():
         for n in range(1, count + 1):
             p = facts.get(f"{book}.{n}")
             if not p or p["status"] != "proved":
                 continue
-            _, enunciation, proof = heath.read(book, n)
-            euclid = set(euclid_cites([enunciation] + proof, book)["props"])
-            if any(r not in euclid for s in p.get("shared_steps", []) for r in s["brings_in"]):
+            bracketed = set(heath_refs(sum(split_porism(book, n), []), book)["props"])
+            if any(r not in bracketed for s in p.get("shared_steps", []) for r in s["brings_in"]):
                 return f"{book}.{n}", shared_steps_line(p, book, "")
     return None
 
 
-def certificate(facts, docs):
+# Heath's remark on references to earlier propositions, of an Arabic version that adds
+# them (vol. 1, p. 83, scan leaf n103), checked against the scan's text.
+RARE_IN_EUCLID = ('"Such specific quotations of earlier propositions are rare in Euclid" '
+                  "([vol. 1, p. 83]"
+                  "(https://archive.org/details/thirteenbookseu02heibgoog/page/n103))")
+
+
+def certificate_intro(facts):
+    """The opening of CERTIFICATE.md, which keeps three things apart: Heath's
+    references, the Lean's dependencies, and the reconstruction of the argument."""
     shared = ("Many Lean proofs call on shared steps: lemmas proved once and used by many "
               "proofs, such as `Prop30.meet` in Book I or `Rectangle.eq_rect` in Book II. A "
               "shared step that rests on a proposition brings it into every proof that calls "
-              "on the step, which is why the Lean sometimes cites a proposition Euclid gives "
-              "no bracket for. Each proposition's page names those steps in a line under its "
-              "table, with the propositions each one brings in")
+              "on the step, which is why the Lean sometimes cites a proposition with no "
+              "bracket in Heath's text. Each proposition's page names those steps in a line "
+              "under its table, with the propositions each one brings in")
     example = shared_steps_example(facts)
     if example:
         ref, line = example
@@ -702,59 +1243,122 @@ def certificate(facts, docs):
         shared += f". On [{ref}](book/{b}/{int(n):02d}.md) it reads: \"{line}\""
     else:
         shared += "."
-    out = [GENERATED, "# Certificate", "",
-           "Everything on this page is computed from the Lean proofs themselves by "
-           "[`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` tells us "
-           "exactly which postulates, definitions and tacit rules each proof rests on, and a "
-           "walk through the same proofs tells us which Common Notions; both count those of "
-           "the propositions the proof cites. "
-           "The one exception is the column \"Euclid cites\": the propositions Euclid gives in "
-           "brackets in Heath's translation, read from the text. Nothing here is typed in by hand.",
-           "", shared, ""]
+    gaps = [f"[Book {b}](docs/reports/gaps-book-{b}.md)" for b in BOOKS
+            if (ROOT / "docs" / "reports" / f"gaps-book-{b}.md").exists()]
+    catalogues = (f", and the steps Euclid takes without a word are gathered, proposition "
+                  f"by proposition, in the catalogues for {and_list(gaps)}" if gaps else "")
+    return [
+        "This page keeps three things apart.", "",
+        "- **Heath's references.** The column of that name gives the propositions in "
+        "square brackets in Heath's translation, read from his text. They are Heath's "
+        "editorial references, not Euclid's words. Of an Arabic version that names the "
+        f"earlier propositions it uses, Heath remarks: {RARE_IN_EUCLID}. So an absent "
+        "bracket does not mean Euclid gave no reason, and a bracket is Heath's, not a "
+        "machine-checked reconstruction of the argument.",
+        "- **The Lean's dependencies.** The columns \"Lean cites\", \"Postulates\", "
+        "\"Definitions\", \"C.N.\" and \"Tacit\" are computed from the Lean proofs themselves "
+        "by [`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` gives "
+        "exactly which postulates, definitions and tacit rules each proof rests on, and a "
+        "walk through the same proofs gives the propositions it cites and the Common "
+        "Notions; both count those of the propositions the proof cites. None of this is "
+        "typed in by hand.",
+        "- **The reconstruction of the argument.** What each Lean statement covers of "
+        "Euclid's enunciation, and whose argument each proof follows, is a reviewer's "
+        "reading, not the machine's. The columns \"Statement\" and \"Argument\" come from the "
+        "[review records](review/SCHEMA.md), each tied to the commit its reviewer read; each "
+        "page says how the Lean follows the passages of Euclid's proof" + catalogues + ".",
+        "",
+        "In the column \"Statement\", *whole* is the whole enunciation, *restricted* adds "
+        "hypotheses that exclude cases Euclid's words admit, and *part* leaves some clause "
+        "to Euclid's words. A porism has a row of its own under its proposition, with its "
+        "own certificate, and a proposition counts as proved only when its porism is too.",
+        "", shared, ""]
+
+
+def certificate_row(entry, link, refs, record=None):
+    """One row of a book's table: a proposition (with its record's Statement and
+    Argument) or, indented under it, its porism or a companion."""
+    status = STATUS_SHORT[entry["status"]] if entry else "🚧"
+    statement = SCOPE_WORD[record["statement"]["scope"]] if record else ""
+    argument = ROUTE_WORD[record["route"]["kind"]] if record else ""
+    heath_cell = ", ".join(refs["props"])
+    if not entry or entry["status"] == "sketched":
+        return f"| {status} | {link} | {statement} | {argument} | {heath_cell} | | | | | |"
+    posts, defs, tacit, _ = axiom_groups(entry)
+    book = heath.parse_ref(entry["ref"]).book
+    cns = ", ".join(c.replace("C.N. ", "") for c in sorted(set(entry["common_notions"])))
+    cites = ", ".join(sorted(entry["cites"], key=prop_key))
+    return (f"| {status} | {link} | {statement} | {argument} | {heath_cell} | {cites} | "
+            f"{roman_list(posts, 'Postulate')} | {definition_list(defs, book)} | {cns} | "
+            f"{len(tacit)} |")
+
+
+def postulate5_bullet(book, facts, proved, entries):
+    """The certificate's line on Postulate 5: what our proofs use, not what a
+    proposition needs."""
+    count = BOOKS[book][0]
+    no_p5 = [p["ref"] for p in proved if "Postulate5" not in p["axioms"]]
+    with_p5 = [p["ref"] for p in proved if "Postulate5" in p["axioms"]]
+
+    def proofs(k):
+        return f"the proof of {k} proposition" if k == 1 else f"the proofs of {k} propositions"
+
+    if not proved:
+        # Nothing proved, nothing to count: "the proofs of 0 propositions" would read as a claim.
+        p5 = f"No proposition of Book {book} is proved yet."
+    elif not with_p5:
+        p5 = (f"{proofs(len(no_p5)).capitalize()} {'does' if len(no_p5) == 1 else 'do'} not "
+              "use it" + ("; no proof does." if len(proved) == count
+                          else ", and no proof does yet."))
+    elif not no_p5:
+        p5 = "Every proof uses it" + ("." if len(proved) == count else " so far.")
+    else:
+        p5 = (f"{proofs(len(no_p5)).capitalize()} {'does' if len(no_p5) == 1 else 'do'} not "
+              f"use it, and {proofs(len(with_p5))} {'does' if len(with_p5) == 1 else 'do'}, "
+              f"the first being {with_p5[0]}'s.")
+    # A porism whose proof uses it where its proposition's does not, said once.
+    by_ref = {e["ref"]: e for e in entries}
+    for e in entries:
+        parent = by_ref.get(e.get("of", ""))
+        if parent and "Postulate5" in e["axioms"] and "Postulate5" not in parent["axioms"]:
+            p5 += f" The proof of {e['ref']} uses it, though {parent['ref']}'s does not."
+    return (f"- **Postulate 5**: {p5} "
+            + P5_NOTE.get(book, f"Book {book} comes after I.29, where Euclid first calls on "
+                                "it, so any of its proofs may."))
+
+
+def certificate(facts, docs, records):
+    out = [GENERATED, "# Certificate", ""] + certificate_intro(facts)
     for book, (count, titles) in BOOKS.items():
         props = [facts.get(f"{book}.{n}") for n in range(1, count + 1)]
         proved = [p for p in props if p and p["status"] == "proved"]
-        out += [f"## Book {book}", "",
-                f"**{len(proved)} of {count} propositions proved.**", ""]
-        no_p5 = [p["ref"] for p in proved if "Postulate5" not in p["axioms"]]
-        with_p5 = [p["ref"] for p in proved if "Postulate5" in p["axioms"]]
-        sup = [p["ref"] for p in props if p and "Tacit.superposition" in p["direct_axioms"]]
-        out += ["What the proofs show:" if len(proved) == count else "What the proofs show so far:", ""]
-        never = (f"{len(no_p5)} proposition never needs it" if len(no_p5) == 1 else
-                 f"{len(no_p5)} propositions never need it")
-        if not proved:
-            # Nothing proved, nothing to count: "0 propositions never need it" would read as a claim.
-            p5 = f"No proposition of Book {book} is proved yet."
-        elif not with_p5:
-            p5 = f"{never}. None of the proved propositions uses it yet."
-        elif not no_p5:
-            p5 = f"Every proved proposition uses it, the first being {with_p5[0]}."
-        else:
-            p5 = f"{never}; {len(with_p5)} use{'s' if len(with_p5) == 1 else ''} it, the first being {with_p5[0]}."
-        out.append(f"- **Postulate 5**: {p5} "
-                   + P5_NOTE.get(book, f"Book {book} comes after I.29, where Euclid "
-                                 "first calls on it, so any of its propositions may."))
+        # The propositions, then their porisms and companions: every entry of the book.
+        entries = [p for p in props if p] + [a for p in props for a in attached_entries(p, facts)]
+        summary = book_summary(book, facts, records,
+                               lambda r: f"book/{book}/{int(r.split('.')[1]):02d}.md",
+                               postulate5=False)
+        out += [f"## Book {book}", "", summary, ""]
+        sup = [e["ref"] for e in entries if "Tacit.superposition" in e["direct_axioms"]]
+        out += ["What the proofs show:" if len(proved) == count
+                else "What the proofs show so far:", ""]
+        out.append(postulate5_bullet(book, facts, proved, entries))
         nobody = "none" if len(proved) == count else "none yet"
         out.append("- **Superposition** is used directly by: " + (", ".join(sup) or nobody)
                    + ". Only I.4 and I.8 are allowed to.")
-        out += ["", "| | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |",
-                "|---|---|---|---|---|---|---|---|"]
+        out += ["", "| | Prop | Statement | Argument | Heath's references | Lean cites | "
+                "Postulates | Definitions | C.N. | Tacit |",
+                "|---|---|---|---|---|---|---|---|---|---|"]
         for n, p in enumerate(props, 1):
             ref = f"{book}.{n}"
-            link = f"[{ref}](book/{book}/{n:02d}.md)"
-            _, enunciation, proof = heath.read(book, n)
-            euclid = ", ".join(euclid_cites([enunciation] + proof)["props"])
-            if not p or p["status"] == "sketched":
-                out.append(f"| 🚧 | {link} | {euclid} | | | | | |")
-                continue
-            ax = p["axioms"]
-            posts = roman_list([a for a in ax if a.startswith("Postulate")], "Postulate")
-            defs = definition_list([a for a in ax if a.startswith("Definition")], book)
-            cns = ", ".join(c.replace("C.N. ", "") for c in sorted(set(p["common_notions"])))
-            tacit = len([a for a in ax if a.startswith("Tacit.")])
-            cites = ", ".join(sorted(p["cites"], key=prop_key))
-            out.append(f"| {STATUS_SHORT[p['status']]} | {link} | {euclid} | {cites} | "
-                       f"{posts} | {defs} | {cns} | {tacit} |")
+            own, porism_text = split_porism(book, n)
+            out.append(certificate_row(p, f"[{ref}](book/{book}/{n:02d}.md)",
+                                       heath_refs(own, book), records.get(ref)))
+            for a in attached_entries(p, facts):
+                r = heath.parse_ref(a["ref"])
+                anchor = "porism" if r.kind == "porism" else r.name
+                text = porism_text if r.kind == "porism" else []
+                out.append(certificate_row(a, f"&emsp;[{r}](book/{book}/{n:02d}.md#{anchor})",
+                                           heath_refs(text, book)))
         out.append("")
     out += ["The Common Notions are theorems in Lean (see "
             "[`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so `#print "
@@ -763,6 +1367,24 @@ def certificate(facts, docs):
             "(`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and "
             "are left out.", ""]
     return "\n".join(out)
+
+
+# README.md is generated in part: each book's completion summary stands between
+# `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand".
+SCOPE_MARKERS = re.compile(r"(<!-- scope:([IVX]+) -->)(.*?)(<!-- /scope:\2 -->)", re.S)
+
+
+def readme(text, facts, records):
+    """README.md's text with every book's summary filled in between its markers; the
+    rest of the file is left as it is."""
+    def fill(m):
+        book = m.group(2)
+        if book not in BOOKS:
+            return m.group(0)
+        summary = book_summary(book, facts, records,
+                               lambda r: f"book/{book}/{int(r.split('.')[1]):02d}.md")
+        return m.group(1) + summary + m.group(4)
+    return SCOPE_MARKERS.sub(fill, text)
 
 
 def graph(facts):
@@ -816,16 +1438,23 @@ def graph(facts):
 def main() -> None:
     facts = load_facts()
     docs = load_axiom_docs()
+    records = load_records()
     for book, (count, titles) in BOOKS.items():
         out_dir = ROOT / "book" / book
         out_dir.mkdir(parents=True, exist_ok=True)
         for n in range(1, count + 1):
-            (out_dir / f"{n:02d}.md").write_text(page(book, n, count, titles, facts, docs))
-        (out_dir / "index.md").write_text(index(book, count, titles, facts))
+            (out_dir / f"{n:02d}.md").write_text(page(book, n, count, titles, facts, docs,
+                                                      records))
+        (out_dir / "index.md").write_text(index(book, count, titles, facts, records))
         (out_dir / "front.md").write_text(front(book))
-    (ROOT / "CERTIFICATE.md").write_text(certificate(facts, docs))
+    (ROOT / "CERTIFICATE.md").write_text(certificate(facts, docs, records))
     (ROOT / "GRAPH.md").write_text(graph(facts))
-    print("rendered book pages, CERTIFICATE.md and GRAPH.md")
+    path = ROOT / "README.md"
+    text = path.read_text()
+    filled = readme(text, facts, records)
+    if filled != text:
+        path.write_text(filled)
+    print("rendered book pages, CERTIFICATE.md, GRAPH.md and README.md's scope summaries")
 
 
 if __name__ == "__main__":
