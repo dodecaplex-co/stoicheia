@@ -1,7 +1,6 @@
 # review/I/04.toml
 [statement]
 scope = "full"
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -9,10 +8,9 @@ kind = "euclid"
 [[passage]]
 at = "For if, when B coincides with E and C with F"
 kind = "unformalized"
-note = "Heiberg brackets this as an early scholium. In Lean a finite straight line is fixed by its ends, so once B is on E and C on F the base is EF, with nothing more to prove."
+note = "Heiberg brackets this as an early scholium. Our finite straight line is fixed by its ends, so once B is on E and C on F the base is EF, with nothing more to prove."
 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

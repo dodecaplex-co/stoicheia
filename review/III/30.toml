@@ -1,7 +1,6 @@
 [statement]
 scope = "full"
 note = "Handed the whole circle, the straight line AB and a point on the side of the given circumference; D bisects it in the angle measure."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -13,5 +12,4 @@ note = "The given circumference is put as a given segment is: its circle, the st
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

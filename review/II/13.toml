@@ -1,17 +1,21 @@
 [statement]
 scope = "full"
 note = "Asks for acute angles at B and C and nothing at A, so it says more than Euclid's acute-angled triangles; that D falls within CB is proved."
-fingerprint = ""
 
 [route]
 kind = "euclid"
 
 [representation]
 tags = ["hypothesis-dropped"]
-note = "Euclid's enunciation speaks of acute-angled triangles, all three angles acute. The statement leaves out the angle at A, which plays no part; the acute angle at C keeps the foot D within CB, as \"cut off within\" and II.7 need. The perpendicular from A and its foot D on BC are given."
+note = "Euclid's enunciation speaks of acute-angled triangles, all three angles acute. The statement leaves out the angle at A, which plays no part; the acute angle at C keeps the foot D within CB, as \"cut off within\" and II.7 need. The perpendicular from A and its foot D on BC are given. The scholiast's wider reading, any triangle acute-angled at B, is not stated: with a right angle at C the foot D is C itself, and with an obtuse angle at C it falls beyond C."
+
+[[passage]]
+at = "For, since the straight line CB has been cut at random at D"
+kind = "helper"
+helper = "Prop13.not_beyond"
+note = "Euclid reads off his figure that D falls within CB; the Lean proves it: a foot beyond B or C would give the triangle a right and an obtuse angle (I.13, I.17)."
 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

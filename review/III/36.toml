@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-fingerprint = ""
+note = "The rectangle AD, DC is equal to the square on the tangent DB, whether or not DCA passes through the centre; the circle comes with a centre."
 
 [route]
 kind = "euclid"
@@ -12,5 +12,4 @@ note = "The circle comes with a centre (`∃ F, Centre F ABC`), and the proof fi
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

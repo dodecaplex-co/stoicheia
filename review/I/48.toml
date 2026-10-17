@@ -2,13 +2,23 @@
 [statement]
 scope = "full"
 note = "The three given squares may each stand on either side of its side."
-fingerprint = ""
 
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Since DA is equal to AB, the square on DA"
+kind = "helper"
+helper = "Prop46.square_eq"
+note = "Euclid assumes that squares on equal straight lines are equal; Heath reports that Proclus proves it under I.46, and the Lean proves it so, by I.4 on the halves."
+
+[[passage]]
+at = "therefore the square on DC is equal to the square on BC"
+kind = "helper"
+helper = "Prop46.side_eq"
+note = "Euclid assumes the converse too, that equal squares stand on equal straight lines. Heath reports Proclus's proof; the Lean takes another road: the square on the less is the less."
+
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

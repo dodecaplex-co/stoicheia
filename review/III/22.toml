@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-fingerprint = ""
+note = "Both pairs of opposite angles of ABCD make two right angles; the circle comes with a centre."
 
 [route]
 kind = "euclid"
@@ -12,5 +12,4 @@ note = "The circle comes with a centre (`∃ O, Centre O ABCD`), which III.21 ne
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

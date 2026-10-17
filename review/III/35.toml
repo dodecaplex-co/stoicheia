@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-fingerprint = ""
+note = "The rectangles AE, EC and DE, EB are equal wherever the two straight lines cut within the circle; the circle comes with a centre."
 
 [route]
 kind = "euclid"
@@ -9,8 +9,13 @@ kind = "euclid"
 tags = ["centre-given"]
 note = "The circle comes with a centre (`∃ F, Centre F ABCD`), and the proof finds it by III.1 where Euclid takes it."
 
+[[passage]]
+at = "Next let AC, DB not be through the centre"
+kind = "helper"
+helper = "Prop35.cut"
+note = "Euclid's argument is written once for any straight line through E: it covers Simson's cases, where one straight line passes through the centre, and E at G, and serves for DB."
+
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-fingerprint = ""
+note = "Both angles at the tangent are equal to the angles in the alternate segments, at every point of each segment; the circle comes with a centre."
 
 [route]
 kind = "euclid"
@@ -11,11 +11,21 @@ note = "The circle comes with a centre (`∃ O, Centre O ABCD`), on which III.19
 
 [[passage]]
 at = "let a point C be taken at random on the circumference BD"
-kind = "carried"
+kind = "different"
 note = "C is any point of the segment DCB: the second conclusion is said of every such point, and Lean takes C up where that conclusion is proved."
+
+[[passage]]
+at = "Therefore BA is a diameter of the circle ABCD"
+kind = "helper"
+helper = "Prop32.sameSide"
+note = "Euclid takes for granted that A and D lie on one side of EF; the Lean proves it, since no point of a straight line touching a circle is within it, as in III.18."
+
+[[passage]]
+at = "therefore the angle ADB, being an angle in a semicircle, is right"
+kind = "different"
+note = "When D is A, BD is itself the diameter and there is no triangle ABD: every angle in either segment is right by III.31, as are the angles FBD and EBD."
 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

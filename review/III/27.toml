@@ -1,18 +1,16 @@
 [statement]
 scope = "full"
 note = "Angles at the circumferences of any size, and at the centres where they stand on BC; since our measure carries no radius, it holds in any two circles."
-fingerprint = ""
 
 [route]
 kind = "modified"
 note = "Euclid's reductio for the angles at the centres, and his halving by III.20 where the angles at the circumferences are acute; where they are right or obtuse, Lean halves the measure of the circumference instead (`Circumference.standing`)."
 
 [representation]
-tags = ["angle-measure", "redundant-hypothesis"]
-note = "\"In equal circles\" is kept from Euclid, and the proof uses it through III.26 as he does; but the circumferences are measured by angles, so the statement would hold without it."
+tags = ["angle-measure", "redundant-hypothesis", "centre-given"]
+note = "\"In equal circles\" is kept from Euclid, and the proof uses it through III.26 as he does; but the circumferences are measured by angles, so the statement would hold without it. The centres G and H are given, as the enunciation speaks of angles at the centres."
 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

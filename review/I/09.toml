@@ -2,13 +2,17 @@
 [statement]
 scope = "full"
 note = "The angle is given as the triangle BAC, its arms not in one straight line, as Definition 8 asks; the bisector AF is proved to fall within it."
-fingerprint = ""
 
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "let AF be joined"
+kind = "helper"
+helper = "Prop9.crossing"
+note = "Euclid reads off his figure that AF falls within the angle; the Lean proves it as Proclus answers his objector, by I.5 and I.7: AF crosses DE between D and E."
+
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

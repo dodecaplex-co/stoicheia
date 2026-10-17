@@ -5,7 +5,6 @@ hypotheses = [
   "neither AB nor CD passes through the centre (`hE_AB : ¬ Collinear A B E`, `hE_CD : ¬ Collinear C D E`)",
 ]
 note = "Proved for straight lines not through the centre; two diameters, or a diameter and another straight line, are not covered."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -15,6 +14,11 @@ tags = ["diameters-excluded", "centre-given"]
 note = "The centre E and the feet F, G of the perpendiculars are given, since Definition III.4 measures from them; the proof still takes III.1's centre and shows that it is E."
 
 [[passage]]
+at = "But in a circle straight lines are said to be equally distant from the centre"
+kind = "carried"
+note = "Definition III.4 is how the statement says 'equally distant': its conclusion is that EF is equal to EG, which the Lean above has proved."
+
+[[passage]]
 at = "Next, let the straight lines AB, CD be equally distant from the centre"
 kind = "grouped"
 note = "The converse needs no Lean of its own until 'And, since AE is equal to CE': the halves, AB double of AF and CD of CG, were found once, before the two directions part."
@@ -22,5 +26,4 @@ note = "The converse needs no Lean of its own until 'And, since AE is equal to C
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

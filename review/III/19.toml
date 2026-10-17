@@ -1,7 +1,6 @@
 [statement]
 scope = "full"
 note = "A may be any point off DE with CA at right angles to DE: it need not be on the circle, and may lie across DE from the centre."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -20,5 +19,4 @@ note = "The reductio is made for any point F off AC, so one argument gives this 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

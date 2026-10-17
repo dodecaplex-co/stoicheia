@@ -5,14 +5,13 @@ omitted = [
   "the angle of the less segment less than a right angle",
 ]
 note = "Proves the angles in the semicircle and in each segment, at every point; the angles of the segments, made with a circumference, are left to the text."
-fingerprint = ""
 
 [route]
 kind = "euclid"
 
 [representation]
-tags = ["mixed-angles-omitted"]
-note = "Our angles are made by two straight lines, so an angle contained by a straight line and a circumference has no Lean counterpart."
+tags = ["mixed-angles-omitted", "centre-given"]
+note = "Our angles are made by two straight lines, so an angle contained by a straight line and a circumference has no Lean counterpart. The centre E is given, as Euclid's setting-out names it."
 
 [coverage]
 checked = [
@@ -36,5 +35,4 @@ note = "These angles are contained by a straight line and a circumference, which
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

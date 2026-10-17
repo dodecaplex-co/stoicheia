@@ -5,7 +5,6 @@ omitted = [
   "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
 ]
 note = "Proves that AE falls outside the circle and that no other straight line can be interposed; the angles of the semicircle and the horn are left to the text."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -56,5 +55,4 @@ note = "Proved as its own theorem, III.16 Por., from the first part of the state
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

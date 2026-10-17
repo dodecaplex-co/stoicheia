@@ -5,7 +5,6 @@ hypotheses = [
   "the two straight lines compared as nearer and more remote lie on one side of the diameter AD (`SameSideOf B C A D`). Across AD the comparison follows, Heath notes, from Euclid's equal and equally inclined straight line on the other side (vol. 2, p. 17); the statement gives that line's length but not its inclination.",
 ]
 note = "Nearer and more remote are compared only on one side of AD, as in Euclid's figure; a straight line on one side is not compared with one on the other."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -27,5 +26,4 @@ note = "The conclusion of the argument above, which has shown that every point K
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

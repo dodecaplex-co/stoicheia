@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "E may be any point of the straight line AD, at A or at D among them."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -13,5 +12,4 @@ case = "E on AD produced beyond D, as in Heath's figure"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

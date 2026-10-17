@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "'Not through the centre' is said of every centre of the circle, and B is off AC, so that the two straight lines are really two."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -19,5 +18,4 @@ note = "The reductio's conclusion. Lean supposed the bisection at the start and 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "All three pairs of angles are named, as Euclid's \"taken together in any manner\" asks."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -10,5 +9,4 @@ kind = "euclid"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

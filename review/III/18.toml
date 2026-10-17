@@ -1,7 +1,7 @@
 # review/III/18.toml
 [statement]
 scope = "full"
-fingerprint = ""
+note = "The centre F is given, as Euclid's setting-out takes it."
 
 [route]
 kind = "euclid"
@@ -18,5 +18,4 @@ note = "The reductio shows that the foot G of the perpendicular from F is C itse
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

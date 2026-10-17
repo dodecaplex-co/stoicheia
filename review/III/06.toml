@@ -2,14 +2,19 @@
 [statement]
 scope = "full"
 note = "Covers circles touching within, whichever is the inner, and circles touching without, the case Euclid leaves to the reader."
-fingerprint = ""
 
 [route]
-kind = "euclid"
+kind = "modified"
+note = "Euclid's argument, but the last step does not order E and B as his figure does: FE equal to FB makes the circles one (`circle_eq`), which each kind of contact forbids."
 
 [overlap]
 rule = "Tacit.circle_eq"
 note = "For contact within, System E's Diagram-segment 2 gives III.6 at once from the point of contact; for contact without, our definition of touching with Generalities 3 does. The proof follows Euclid."
+
+[[passage]]
+at = "therefore FE is also equal to FB, the less to the greater"
+kind = "different"
+note = "Lean does not order E and B: FE equal to FB makes the circles one (`circle_eq`), which contact within forbids, and contact without forbids F, within both."
 
 [[passage]]
 at = "Therefore F is not the centre of the circles ABC, CDE."
@@ -22,5 +27,4 @@ case = "the circles touching within, as in Heath's figure"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

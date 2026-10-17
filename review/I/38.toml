@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "'In the same parallels' is read as two whole parallel straight lines, so the vertices A and D may be one point, as I.42 needs."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -13,5 +12,4 @@ case = "the bases BC and EF apart, and the vertices A and D apart"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

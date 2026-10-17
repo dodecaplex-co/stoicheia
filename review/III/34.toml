@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-fingerprint = ""
+note = "Cuts off from the given circle a segment BAC admitting the given angle at A; the circle comes with a centre."
 
 [route]
 kind = "euclid"
@@ -9,8 +9,13 @@ kind = "euclid"
 tags = ["segment-with-circle", "centre-given"]
 note = "The given circle comes with a centre (`∃ O, Centre O ABC`), which the proof needs to draw EF touching it by III.16's porism; the segment cut off is named by its points B, A and C."
 
+[[passage]]
+at = "and on the straight line FB"
+kind = "helper"
+helper = "Prop16"
+note = "Euclid reads C off his figure. The Lean finds it: by III.16 the straight line BC passes within the circle, so it meets the circle again, on the centre's side of EF."
+
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

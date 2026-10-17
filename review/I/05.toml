@@ -2,13 +2,16 @@
 [statement]
 scope = "full"
 note = "Both clauses are stated with the equal sides already produced to D and E, as Euclid produces them by Postulate 2; every isosceles triangle has such points."
-fingerprint = ""
 
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and let the straight lines BD, CE be produced further"
+kind = "different"
+note = "D and E come with the statement, already produced, so the Lean draws only AB and AC here and does not use Postulate 2; `Prop5.base` produces them for the propositions that cite only the angles at the base."
+
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

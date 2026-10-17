@@ -3,7 +3,6 @@
 # Euclid's words presuppose.
 [statement]
 scope = "full"
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -20,5 +19,4 @@ case = "EF between AB and CD, so that GK crosses it, as in Heath's figure"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

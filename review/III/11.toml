@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "FG produced beyond G, the centre of the inner circle ADE, falls on the point of contact A (`Between F G A`)."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -14,5 +13,4 @@ note = "The centres F and G are given, as the enunciation takes them. Touching w
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

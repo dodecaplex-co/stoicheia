@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "Circles touching within, either inside the other, or touching without, have no common point but the point of contact."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -14,5 +13,4 @@ note = "Each circle comes with a centre. Touching is read of the whole circles, 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "Stated positively: two circles with three points in common are one circle, whether they cut or only meet."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -19,5 +18,4 @@ note = "The statement gives ABC its centre, which Lean names P at once; that AC 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

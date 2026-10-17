@@ -1,6 +1,5 @@
 [statement]
 scope = "full"
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -8,5 +7,4 @@ kind = "euclid"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

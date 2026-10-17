@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "The parallelogram stands on whichever side of AB a given point names."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -16,5 +15,4 @@ note = "Our foundations keep superposition for I.4 and I.8, so nothing is moved:
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

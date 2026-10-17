@@ -1,7 +1,6 @@
 # review/I/14.toml
 [statement]
 scope = "full"
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -14,5 +13,4 @@ note = "No second argument is needed: E was any point on CB produced, and the on
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

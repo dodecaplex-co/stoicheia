@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "'In the same directions' is stated as B and D lying on one side of AC (`hdir`)."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -10,5 +9,4 @@ kind = "euclid"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

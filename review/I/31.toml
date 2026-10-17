@@ -3,8 +3,7 @@
 # which a parallel through it presupposes.
 [statement]
 scope = "full"
-note = "Draws a parallel through A, as asked; that there is no other, as Proclus remarks, is `Prop30.unique`."
-fingerprint = ""
+note = "Draws a parallel through A, as asked; that there is no other, which Proclus remarks, is proved from I.29 as `Prop30.unique`."
 
 [route]
 kind = "euclid"
@@ -12,5 +11,4 @@ kind = "euclid"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

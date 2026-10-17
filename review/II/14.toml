@@ -4,10 +4,14 @@ hypotheses = [
   "the rectilineal figure A is two triangles on a common side A₂A₄, as our I.45 takes it (`h₁ : Triangle A₁ A₂ A₄`, `h₂ : Triangle A₄ A₂ A₃`)",
 ]
 note = "Proved for a figure of two triangles on a common side, as our I.45 takes it, returning the side EH of the square; Euclid's figure may have any number of sides."
-fingerprint = ""
 
 [route]
 kind = "euclid"
+
+[[passage]]
+at = "Let BE be greater"
+kind = "grouped"
+note = "Euclid takes BE the greater; when ED is, the Lean reads the rectangle the other way round, so one argument serves for both."
 
 [representation]
 tags = ["two-triangles", "side-not-square"]
@@ -19,5 +23,4 @@ case = "BE greater than ED, as in Heath's figure"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

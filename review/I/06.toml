@@ -1,13 +1,17 @@
 # review/I/06.toml
 [statement]
 scope = "full"
-fingerprint = ""
 
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "the less to the greater"
+kind = "helper"
+helper = "Prop6.less"
+note = "Euclid takes for granted that DBC is less than ACB; the Lean proves it with areas, the whole triangle being greater than its part."
+
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

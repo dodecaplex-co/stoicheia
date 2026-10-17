@@ -1,7 +1,6 @@
 # review/I/08.toml
 [statement]
 scope = "full"
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -14,5 +13,4 @@ note = "Our I.7 is stated positively, so Euclid's reduction to the impossible is
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

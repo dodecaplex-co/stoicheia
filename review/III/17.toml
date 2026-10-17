@@ -5,7 +5,6 @@ hypotheses = [
   "the given point A is outside the circle (`hA : OutsideCircle A BCD`), which leaves out a point on the circumference",
 ]
 note = "Proved for a point outside the circle; a point on the circumference, which Euclid leaves to III.16's porism, is not covered."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -17,5 +16,4 @@ note = "The circle comes with a centre. III.1, which takes it, needs two points 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

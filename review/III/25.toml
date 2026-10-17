@@ -1,7 +1,9 @@
 [statement]
-scope = "full"
+scope = "restricted"
+hypotheses = [
+  "the whole circle is given, with a centre, not only the segment (`ABC : Circle`, `hABC : ∃ E, Centre E ABC`)",
+]
 note = "Handed the whole circle and that it has a centre; constructs B, D and E as Euclid does and proves E the centre, in each of his three cases."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -9,6 +11,12 @@ kind = "euclid"
 [representation]
 tags = ["segment-with-circle", "centre-given"]
 note = "The given segment is the circle ABC, the straight line AC in it and a point P on the segment's side, so the statement is handed the circle and `∃ E, Centre E ABC`. Euclid's construction uses only points of the segment, but a statement handed the circle cannot show that."
+
+[[passage]]
+at = "let DB be drawn through to E"
+kind = "helper"
+helper = "Postulate5"
+note = "Euclid takes for granted that AE meets DB drawn through; Postulate 5 gives it, the angles BAE, ABD being less than two right angles, since ABD is acute (I.17)."
 
 [[passage]]
 at = "And it is manifest that the segment ABC is less than a semicircle"
@@ -21,12 +29,11 @@ kind = "unformalized"
 note = "The statement says that D is the centre; it does not say that the segment is then a semicircle."
 
 [[passage]]
-at = "and the segment ABC will clearly be greater than a semicircle"
+at = "But, if the angle ABD be less than the angle BAD"
 kind = "unformalized"
-note = "The statement says that the centre falls on B's side of AC, between B and D; it does not compare the segment with a semicircle."
+note = "The Lean carries the construction, and the statement says that the centre falls on DB, on B's side of AC; that the segment is greater than a semicircle is not stated."
 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

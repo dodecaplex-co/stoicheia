@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-fingerprint = ""
+note = "The angles at any two points of one segment are equal, in a segment of any size; the circle comes with a centre."
 
 [route]
 kind = "modified"
@@ -13,5 +13,4 @@ note = "The circle comes with a centre (`∃ F, Centre F ABCD`), which Euclid ta
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

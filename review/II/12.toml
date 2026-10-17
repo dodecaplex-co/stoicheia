@@ -1,7 +1,6 @@
 [statement]
 scope = "full"
 note = "The perpendicular from B and its foot D on the straight line CA are given; that D falls beyond A, as in Euclid's figure, is proved."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -9,5 +8,4 @@ kind = "euclid"
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

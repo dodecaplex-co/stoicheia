@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "Given a circle with some centre and two points A, B of it, constructs D, C, E and F as Euclid does and proves that F is the centre."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -25,5 +24,4 @@ note = "Proved as its own theorem, III.1 Por., from this construction. It uses t
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

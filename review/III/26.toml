@@ -1,17 +1,21 @@
 [statement]
 scope = "full"
 note = "Euclid's two cases, each stated on its own; since our measure carries no radius, the conclusion holds in any two circles, equal or not."
-fingerprint = ""
 
 [route]
-kind = "euclid"
+kind = "modified"
+note = "Euclid's argument where the angles at the circumferences are acute; where they are right, BC and EF are diameters, and where obtuse, III.22 passes to the acute angle, as Heath proposes (vol. 2, p. 57)."
 
 [representation]
-tags = ["angle-measure", "redundant-hypothesis"]
-note = "\"In equal circles\" is kept from Euclid, and the proof uses the equal radii where he does, for I.4; but the circumferences are measured by angles, so the statement would hold without it."
+tags = ["angle-measure", "redundant-hypothesis", "centre-given"]
+note = "\"In equal circles\" is kept from Euclid, and the proof uses the equal radii where he does, for I.4; but the circumferences are measured by angles, so the statement would hold without it. The centres G and H are given, as the enunciation speaks of angles at the centres."
+
+[[passage]]
+at = "therefore the base BC is equal to the base EF"
+kind = "different"
+note = "Given the angles at A and D, the Lean sorts them as acute, right or obtuse: if right, BC and EF are diameters, each two radii; if obtuse, III.22 passes to the acute angle in the other segment."
 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

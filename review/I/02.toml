@@ -2,13 +2,16 @@
 [statement]
 scope = "full"
 note = "Proved wherever the point A lies; when A is B itself, BC already serves."
-fingerprint = ""
 
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let the straight lines AE, BF be produced in a straight line with DA, DB"
+kind = "different"
+note = "Our straight lines DA and DB are whole lines already, so nothing is produced and Postulate 2 is not used: G and L are where they meet the circles beyond B and A (System E, Intersections 5)."
+
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

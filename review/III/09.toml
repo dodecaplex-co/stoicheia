@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "Leaves out Euclid's 'within': any point from which three equal straight lines fall on the circle is its centre, as III.25 needs."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -14,5 +13,4 @@ note = "The circle comes with a centre, which the proof shows is D. Euclid's pro
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

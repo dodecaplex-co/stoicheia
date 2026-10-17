@@ -1,7 +1,6 @@
 # review/I/15.toml
 [statement]
 scope = "full"
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -15,5 +14,4 @@ note = "Heath brackets the Porism, after Heiberg. It is proved as its own theore
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

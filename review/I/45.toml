@@ -3,7 +3,6 @@
 scope = "restricted"
 hypotheses = ["the given rectilineal figure is two triangles ABD and DBC on the common side DB, and its area their sum (`hABD`, `hDBC`, and `△ A B D + △ D B C` in the conclusion)"]
 note = "Proved for a figure given as two triangles ABD, DBC on the side DB, which may overlap; Euclid's figure may have any number of sides."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -20,5 +19,4 @@ note = "I.42 builds FH on half of BD itself, so H falls on D: the Lean writes D 
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

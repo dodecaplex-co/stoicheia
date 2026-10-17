@@ -5,7 +5,6 @@ hypotheses = [
   "the two straight lines compared as nearer and more remote, on the concave or on the convex circumference, lie on one side of DA (`SameSideOf E F D A`, `SameSideOf K L D A`). As in III.7, the statement gives the equal straight line on the other side by its length, not its inclination, so a comparison across DA does not follow from it.",
 ]
 note = "Nearer and more remote are compared only on one side of DA, as in Euclid's figure; a straight line on one side is not compared with one on the other."
-fingerprint = ""
 
 [route]
 kind = "modified"
@@ -13,7 +12,7 @@ note = "Euclid's argument, but the last step, that no third straight line equals
 
 [representation]
 tags = ["centre-given"]
-note = "The circle comes with a centre, which the proof takes by III.1. The convex circumference is read as where a straight line from D first meets the circle, the concave as where it meets it again."
+note = "The circle comes with a centre, which the proof takes by III.1. The convex circumference is read as where a straight line from D first meets the circle, the concave as where it meets it again. A straight line touching the circle from D falls on neither, as Euclid's lines are drawn through."
 
 [[passage]]
 at = "Similarly we can prove that FD is greater than CD"
@@ -33,5 +32,4 @@ note = "Lean does not appeal to the convex order, which misses a DN ending on th
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"

@@ -2,7 +2,6 @@
 [statement]
 scope = "full"
 note = "Every point strictly between two points of the circle is within it, AB through the centre included, which Euclid's figure leaves aside."
-fingerprint = ""
 
 [route]
 kind = "euclid"
@@ -23,5 +22,4 @@ note = "That DE is less than DB does not need the supposition, so Lean proves it
 [review]
 stage = "exceptions"
 commit = "22e50b8"
-lean = ""
-reviewer = "Claude (classifier)"
+reviewer = "Claude Opus 5.5"
