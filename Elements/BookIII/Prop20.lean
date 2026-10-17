@@ -49,8 +49,6 @@ theorem Prop20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCirc
       ac_rfl
     -- therefore the angle BEF is also double of the angle EAB.
     exact h32.trans hdouble
-  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
-  obtain ⟨M, hA_M, hC_M⟩ := Postulate1 A C hAC
   have within : SameSideOf E C A B → SameSideOf E B A C → ∠ B E C = ∠ B A C + ∠ B A C := by
     intro hEC hEB
     have hAEB : Triangle A E B := hEC.triangle.acb
@@ -133,6 +131,10 @@ theorem Prop20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCirc
     rw [add_comm, ← h]
     ac_rfl
   -- Therefore etc.
+  /- Which of Euclid's figures we are in: `E` on an arm of the angle `BAC`, within it,
+     or outside it. -/
+  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
+  obtain ⟨M, hA_M, hC_M⟩ := Postulate1 A C hAC
   have hC_L : ¬ OnLine C L := hBCA.cab.off_line hA_L hB_L
   have hB_M : ¬ OnLine B M := hBCA.cab.acb.off_line hA_M hC_M
   by_cases hE_L : OnLine E L
