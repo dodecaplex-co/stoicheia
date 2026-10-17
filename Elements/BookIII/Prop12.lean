@@ -35,7 +35,7 @@ theorem Prop12 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
     Between F A G := by
   -- For let the two circles ABC, ADE touch one another externally at the point A, and let the
   -- centre F of ABC, and the centre G of ADE, be taken;
-  /- The centres differ [III. 6], so FG is a straight line. -/
+  /- As in III.11, the centres differ [III. 6], so FG is a straight line. -/
   have hFG : F ≠ G := fun e => Prop6 (Or.inr (Or.inr htouch)) ⟨hF, e ▸ hG⟩
   obtain ⟨hA₁, hA₂, hout⟩ := htouch
   have hFA : F ≠ A := (ne_of_centre_of_on hF hA₁).symm

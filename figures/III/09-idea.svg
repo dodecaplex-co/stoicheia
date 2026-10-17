@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.9 at a glance</title>
-  <desc>If three equal straight lines (blue) fall from a point to a circle, it is the centre: the black straight lines, halving at right angles those joining their ends (red, yellow), pass through it and the centre and cross only once.</desc>
+  <desc>If three equal straight lines (blue) fall from a point to a circle, it is the centre: the black straight lines, halving at right angles those joining their ends (red, yellow), pass through it and the centre, and cross once.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="150.0" r="112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <line x1="186.4" y1="38.8" x2="213.6" y2="261.2" stroke="#222222" stroke-width="3" stroke-linecap="round"/>

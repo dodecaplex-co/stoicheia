@@ -53,9 +53,9 @@ theorem Prop4 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre
   -- therefore the angle FEA is equal to the angle FEB, the less to the greater: which is
   -- impossible.
   have hFEA_FEB : ∠ F E A = ∠ F E B := hFEA.trans hFEB.symm
-  /- Whichever of `B`, `D` lies on `A`'s side of `FE` (Euclid's figure: `B`) makes with `FE`
-     an angle equal to `FEA`, so lies on the straight line `EA` (`onRay_of_angle_eq`, whose
-     proof is the part equal to the whole); then `BD` would be `AC`. -/
+  /- Whichever of B and D lies on A's side of FE (in Euclid's figure, B) makes with FE
+     an angle equal to FEA, so it lies on the straight line EA (`onRay_of_angle_eq`, whose
+     proof is the part equal to the whole); then BD would be AC. -/
   have hA_M : ¬ OnLine A M := fun h =>
     hF_L (line_unique (ne_of_between hAEC) hA_L hE_L h hE_M ▸ hF_M)
   have hB_M : ¬ OnLine B M := fun h =>

@@ -33,7 +33,7 @@ theorem Prop3 {A B E F : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCircl
   have hFBE : Triangle F B E :=
     Triangle.of_line hF_L hB_L (ne_of_between (between_symm hAFB)).symm hE_L
   refine ⟨fun hAF => ?_, fun hAFE => ?_⟩
-  · /- The first part. -/
+  · /- The first part: if AF is equal to FB, the angles at F are right. -/
     -- Then, since AF is equal to FB,
     -- and FE is common,
     have hFE : ‖F E‖ = ‖F E‖ := rfl
@@ -55,7 +55,7 @@ theorem Prop3 {A B E F : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCircl
     exact ⟨hAFE, h8 ▸ hAFE⟩
   -- Again, let CD cut AB at right angles;
   -- I say that it also bisects it, that is, that AF is equal to FB.
-  · /- The converse. -/
+  · /- The converse: if the angle AFE is right, AF is equal to FB. -/
     -- For, with the same construction,
     -- since EA is equal to EB,
     have hEA : ‖E A‖ = ‖E B‖ := Definition15 hE hA hB

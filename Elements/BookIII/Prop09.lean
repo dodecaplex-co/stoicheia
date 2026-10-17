@@ -17,8 +17,10 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- The centre is on the straight line from `D` to the middle point `E` of `AB`, when
-`DA = DB` and `D` is off `AB`: I.8, Definition I.10 and the porism to III.1. -/
+/-- When DA is equal to DB and D is off AB, the centre is on the straight line from D
+to the middle point E of AB. This is Euclid's argument for GK, which his "For the same
+reason" repeats for HL: I.8 and Definition I.10 make the angles at E right, and the
+porism to III.1 puts the centre on ED. -/
 theorem Prop9.centre_on {A B D E O : Point} {ABC : Circle} (hO : Centre O ABC)
     (hA : OnCircle A ABC) (hB : OnCircle B ABC) (hAEB : Between A E B) (hAE : ‖A E‖ = ‖E B‖)
     (hDA : ‖D A‖ = ‖D B‖) (hD : ¬ Collinear A B D) : ∠ A E D = ∟ ∧ Collinear E D O := by
@@ -34,8 +36,9 @@ theorem Prop9.centre_on {A B D E O : Point} {ABC : Circle} (hO : Centre O ABC)
     ⟨B, hAEB, hEAD.bac, h8.trans (angle_symm hEBD.ne₁₂.symm hEBD.ne₁₃.symm)⟩
   exact ⟨hr, Prop1.porism hO hA hB hAEB hAE hD hr⟩
 
-/-- Two straight lines at right angles to `AB` at `E` and to `BC` at `F` are not one:
-the triangle `BEF` would have two right angles. [I. 17] -/
+/-- The straight lines at right angles to AB at E and to BC at F are not one straight
+line, for then the triangle BEF would have two right angles [I. 17]. Euclid reads this
+off his figure. -/
 theorem Prop9.apart {A B C D E F : Point} (hABC : Triangle A B C) (hAEB : Between A E B)
     (hBFC : Between B F C) (hDAB : ¬ Collinear A B D) (hDBC : ¬ Collinear B C D)
     (hAED : ∠ A E D = ∟) (hBFD : ∠ B F D = ∟) : ¬ Collinear E F D := by
@@ -56,7 +59,7 @@ theorem Prop9.apart {A B C D E F : Point} (hABC : Triangle A B C) (hAEB : Betwee
     have := adjacent_eq_of_right hA_M hB_M hAEB (fun h => hDAB ⟨M, hA_M, hB_M, h⟩) hAED
     rw [angle_symm hBE hED.symm, ← this]; exact hAED
   have hDEB : ∠ D E B = ∟ := by rw [angle_symm hED.symm hBE]; exact hBED
-  /- `F` on the ray `ED` or on the opposite ray: either way `BEF` is right. -/
+  /- Whether F is on the ray ED or on the opposite ray, the angle BEF is right. -/
   have hBEF : ∠ B E F = ∟ := by
     by_cases hb : Between D E F
     · have := adjacent_eq_of_right hD_L hF_L hb hB_L hDEB
@@ -78,7 +81,7 @@ theorem Prop9.apart {A B C D E F : Point} (hABC : Triangle A B C) (hAEB : Betwee
   rw [hBEF, angle_symm hEF (ne_of_between hBFC), hBFE] at h17
   exact lt_irrefl _ h17
 
-/-- `D`, equally distant from `A` and `B`, is neither. -/
+/-- A point D as far from A as from B is neither A nor B. -/
 theorem Prop9.ne_ends {A B D : Point} (hAB : A ≠ B) (hDA : ‖D A‖ = ‖D B‖) : D ≠ A ∧ D ≠ B := by
   constructor
   · rintro rfl
@@ -86,14 +89,15 @@ theorem Prop9.ne_ends {A B D : Point} (hAB : A ≠ B) (hDA : ‖D A‖ = ‖D B�
   · rintro rfl
     exact hAB (eq_of_len_eq_zero (by rw [len_symm, hDA, len_self]))
 
-/-- `D` is not on two sides `AB`, `BC` of the triangle `ABC` unless it is `B`. -/
+/-- A point other than B is not on both of the sides AB and BC of the triangle ABC. -/
 theorem Prop9.not_two {A B C D : Point} (hABC : Triangle A B C) (hDB : D ≠ B)
     (h₁ : Collinear A B D) (h₂ : Collinear B C D) : False := by
   obtain ⟨L, hA, hB, hD⟩ := h₁
   obtain ⟨M, hB', hC, hD'⟩ := h₂
   exact hABC ⟨L, hA, hB, (line_unique hDB hD' hB' hD hB) ▸ hC⟩
 
-/-- Two straight lines through `D` and the centre `O`: if they are not one, `O` is `D`. -/
+/-- If the centre O is on both ED and FD, and these are not one straight line, then O
+is D. -/
 theorem Prop9.meet_at {E F D O : Point} (h₁ : Collinear E D O) (h₂ : Collinear F D O)
     (hap : ¬ Collinear E F D) : O = D := by
   refine Classical.byContradiction fun hOD => ?_
@@ -117,10 +121,9 @@ theorem Prop9 {A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O A
   -- drawn through to the points G, K, H, L.
   obtain ⟨E, hAEB, hAE⟩ := BookI.Prop10 hAB
   obtain ⟨F, hBFC, hBF⟩ := BookI.Prop10 hBC
-  /- J. G. Camerer's case (Heath, vol. 2, p. 22): AB or BC may pass through D.
-     D is none of A, B, C, so at most one of AB, BC, CA passes through it.
-     Bisect CA at an unlettered point and use the two straight lines D is off.
-     The same I.8, Definition I.10 and III.1 porism argument applies to them. -/
+  /- This is J. G. Camerer's case (Heath, vol. 2, p. 22), where AB or BC passes through D.
+     At most one of AB, BC, CA can, since D is none of A, B, C; so CA is bisected too, at
+     an unlettered point, and `Prop9.centre_on` is used on the two that miss D. -/
   obtain ⟨hDA', hDB'⟩ := Prop9.ne_ends hAB hDA
   have hDC' : D ≠ C := (Prop9.ne_ends hBC hDB).2
   have hDCA : ‖D C‖ = ‖D A‖ := (hDA.trans hDB).symm
@@ -172,8 +175,8 @@ theorem Prop9 {A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O A
   -- the centre of the circle ABC is also on HL.
   obtain ⟨hBFD, hFDO⟩ := Prop9.centre_on hO hB hC hBFC hBF hDB hDBC
   -- And the straight lines GK, HL have no other point common but the point D;
-  /- If they were one, BEF would have two right angles, contrary to I.17.
-     Two distinct straight lines cannot have two points in common. -/
+  /- GK and HL are two straight lines (`Prop9.apart`), and two straight lines have at
+     most one point in common. -/
   have hap := Prop9.apart hT hAEB hBFC hDAB hDBC hAED hBFD
   obtain rfl : O = D := Prop9.meet_at hEDO hFDO hap
   -- therefore the point D is the centre of the circle ABC.

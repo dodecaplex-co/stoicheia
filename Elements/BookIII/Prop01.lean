@@ -17,7 +17,7 @@ namespace Elements.BookIII
 open Tacit
 
 /-- A straight line has one middle point. Euclid takes this for granted when he
-identifies the centre on `CE` with its middle point `F`. -/
+identifies the centre on CE with its middle point F. -/
 theorem Prop1.middle {A B D G : Point} (hADB : Between A D B) (hAD : ‖A D‖ = ‖D B‖)
     (hAGB : Between A G B) (hAG : ‖A G‖ = ‖G B‖) : G = D := by
   have e₁ := len_add_of_between hAGB
@@ -31,10 +31,10 @@ theorem Prop1.middle {A B D G : Point} (hADB : Between A D B) (hAD : ‖A D‖ =
     fun hb => not_between_of_between hAGB (between_of_between_right hb hADB)⟩
   exact OnRay.eq_of_len_eq hray hlen
 
-/-- At a point `A` of the straight line `AD`, only one straight line is at right
-angles to it. Euclid takes this for granted in "the greater to the less". With `E`
-and `F` on one side of `AD`, the equal right angles put `F` on `AE`; on opposite
-sides, `EA` produced beyond `A` makes a right angle on `F`'s side. -/
+/-- At a point A of the straight line AD, only one straight line is at right
+angles to it. Euclid takes this for granted in "the greater to the less". With E
+and F on one side of AD, the equal right angles put F on AE; on opposite
+sides, EA produced beyond A makes a right angle on F's side. -/
 theorem Prop1.perpendicular {A D E F : Point} (hE : Triangle D A E) (hF : Triangle D A F)
     (hDAE : ∠ D A E = ∟) (hDAF : ∠ D A F = ∟) : Collinear A E F := by
   have hAD : A ≠ D := hE.ne₁₂.symm
@@ -148,8 +148,8 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
 
 /-- The Porism to III.1: "if in a circle a straight line cut a straight line into two
 equal parts and at right angles, the centre of the circle is on the cutting straight
-line." The straight line `DC` cuts `AB`, a straight line in the circle, at its
-middle point `D` and at right angles; the centre `G` is on `DC`. III.9 and III.10
+line." The straight line DC cuts AB, a straight line in the circle, at its
+middle point D and at right angles, and the centre G is on DC. III.9 and III.10
 cite it. -/
 theorem Prop1.porism {A B C D G : Point} {ABC : Circle} (hG : Centre G ABC) (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) (hADB : Between A D B) (hAD : ‖A D‖ = ‖D B‖)

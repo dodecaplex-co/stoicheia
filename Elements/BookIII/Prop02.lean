@@ -18,9 +18,9 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- Euclid's figure takes the centre off `AB`. When the centre `D` is on `AB`,
-a point `E` between its ends is nearer `D` than either end: `DE` is part of
-`DA` or of `DB`, which are equal. -/
+/-- Euclid's figure takes the centre off AB. When the centre D is on AB,
+a point E between its ends is nearer D than either end is, for DE is part of
+DA or of DB, which are equal. -/
 theorem Prop2.through_centre {A B D E : Point} {L : Line} (hADB : Between A D B)
     (hAEB : Between A E B) (hD_L : OnLine D L) (hA_L : OnLine A L) (hDA_DB : ‖D A‖ = ‖D B‖) :
     ‖D E‖ < ‖D B‖ := by
