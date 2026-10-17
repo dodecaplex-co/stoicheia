@@ -80,9 +80,11 @@ circumference, taken twice.
 area. It is the angle the circumference subtends at the centre when it is less than
 a semicircle (III.20); a semicircle is two right angles, and the whole circle four. In one
 circle, or in equal circles, two circumferences are equal exactly when these angles are,
-and that is all Euclid asks of them. The statements that compare circumferences keep his
-"in equal circles", and the proofs use it as he does: in III.26 "the radii are equal",
-and the bases, by I.4.
+and that is all Euclid asks of them. The measure carries no radius, so in unequal circles
+equal measures do not make equal circumferences. The statements that compare
+circumferences keep his "in equal circles", and the proofs use it as he does: in III.26
+"the radii are equal", and the bases, by I.4. Not every statement needs it, though
+(below).
 
 `standing α B A C`, the circumference on which the angle `BAC` stands, is the same measure
 named from the other side: the part of `α` cut off by `AB`, `AC`, away from `A`. Book
@@ -94,10 +96,17 @@ What this costs, and what it does not:
 - The angle measure cannot tell circumferences of unequal circles apart. Euclid never
   compares them, so no statement of his says otherwise.
 - Some of Euclid's conclusions become short by the measure. Equal angles at the
-  circumferences give equal measures at once, in any two circles. Euclid's route to
-  III.26 goes by I.4, III.24 and the whole circle, and the proof takes it; a
-  proof that went by the measure alone would leave "in equal circles" unused, and Lean's
-  linter would say so.
+  circumferences give equal measures at once, in any two circles. So III.26 and III.27
+  hold for any two circles as stated: they keep "in equal circles" from Euclid's
+  enunciations, and their proofs use it along his route (to III.26 by I.4, III.24 and
+  the whole circle), but the statements do not need it. III.28 and III.29 do need equal
+  circles, for there the measures are tied to straight lines in the circles: equal
+  straight lines in unequal circles cut off unequal measures. (Status note, 17 October
+  2026, from [brief 0005](0005-astra-review.md); the review records tag these
+  `redundant-hypothesis` and `angle-measure`.)
+- III.24's second conclusion, the equal measures, likewise follows from its equal
+  angles alone; its first, equal circles, is the real content. It proves equal circles
+  and equal measures, not that one segment can be laid on the other (below).
 - The facts Euclid takes for granted about circumferences (that a circumference and the
   one remaining make up the circle; that the less is less than a semicircle) are proved
   from III.20–III.22, in `Elements/BookIII/Circumferences.lean`, and so a proposition that
@@ -114,7 +123,8 @@ III.31, that the angles `BAC`, `CAF` are right. The Lean states III.16's clause 
 right angle `BAC`; that `CAF` is right, the proof of III.31 shows on its way, where Euclid
 finds `BAC` equal to `FAC` and so each right. The claims about mixed
 angles, and Heath's account of the quarrel over the horn-like angle, go to the
-mishnah.
+mishnah. In the proofs, Euclid's sentences about them stand as comments with no Lean
+beneath them, and each page says so.
 
 ## Circles and their centres
 
@@ -241,6 +251,11 @@ worth naming. The first mate's report has a note on every statement.
 - **III.11, III.12** conclude where the centres and the point of contact lie:
   `Between F G A` within, `Between F A G` without. III.12 is printed in square brackets by
   Heath, as Heron's proof made into a proposition; it is stated and proved like the rest.
+- **III.14** also asks that neither straight line pass through the centre, as Euclid's
+  proof does when it takes "a straight line AB not through the centre" (III.3). So its
+  statement leaves out diameters, at no distance from the centre, though the
+  enunciation covers them; the review record tags it `diameters-excluded`, and brief
+  0005's stage 4 adds them.
 - **III.14, III.15** take the centre and the feet of the perpendiculars as hypotheses,
   since Definitions 4 and 5 measure from them; III.14's proof takes the centre by III.1
   all the same (above). The perpendiculars are given, so I.12 is not cited; that the feet
@@ -268,21 +283,27 @@ worth naming. The first mate's report has a note on every statement.
 - **III.23** concludes that the circles are one, `ACB = ADB`: on one straight line and on
   one side, similar segments coincide.
 - **III.24** concludes that the circles are equal and the circumferences of the segments
-  equal. Euclid proves it by applying one segment to the other, and Lean has no
-  superposition outside I.4 and I.8. III.24 will be proved without applying one segment to
-  another; [the scratch proof](https://github.com/jackChallis/stoicheia/blob/81d72f5/docs/reports/crew/scratch-III/T24.lean) does so, by the angles
+  equal in measure. That is less than Euclid's equal segments: it does not say that one
+  segment can be laid on the other, and the equal measures follow from the equal angles
+  alone (above). Euclid proves it by applying one segment to the other, and our Lean
+  allows superposition only in I.4 and I.8. III.24 is proved without applying one
+  segment to another; [the scratch proof](https://github.com/jackChallis/stoicheia/blob/81d72f5/docs/reports/crew/scratch-III/T24.lean) does so, by the angles
   at the centres (III.20, III.22) and the isosceles triangles on the equal bases (I.5,
   I.26, I.32).
 - **III.25** finds the centre of the circle of a given segment, with Euclid's construction
   and his three cases: the centre beyond the segment, at `D`, or within it, as the angle
-  `ABD` is greater than, equal to, or less than `BAD`.
+  `ABD` is greater than, equal to, or less than `BAD`. A segment here is its circle, a
+  straight line in it and a side, so III.25 is handed the whole circle, with a centre,
+  and not the segment alone; the review record tags it `segment-with-circle`, and brief
+  0005's stage 4 gives the construction the segment only.
 - **III.26** says both of Euclid's cases as he enunciates them, "whether they stand at the
   centres or at the circumferences": equal angles at the centres (the circumferences less
   than semicircles) give equal circumferences, and so do equal angles at the
-  circumferences, of any size. IV.11 cites the second.
+  circumferences, of any size. IV.11 cites the second. As stated it holds for any two
+  circles (above).
 - **III.27** likewise: equal circumferences give equal angles at the circumferences, of
   any size (IV.11 needs obtuse ones), and equal angles at the centres where those stand on
-  them.
+  them. As stated it, too, holds for any two circles.
 - **III.28** asks of "the greater" only that it be no less (`≤`), so that two diameters,
   which Heath says the proposition covers "as the proof can easily be supplied" (vol. 2,
   p. 60), cut off semicircles.

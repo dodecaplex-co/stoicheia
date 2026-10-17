@@ -11,8 +11,13 @@ import Elements.BookI.Helpers
 # Book III, Proposition 16
 
 Euclid's text, in Heath's translation: [`heath/III/16.md`](../../heath/III/16.md).
-Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
-carries it out.
+Below, each of Euclid's sentences is a `--` comment, and the Lean beneath carries it
+out, with one exception. The sentences on the angle of the semicircle and the
+remaining, horn-like angle, each contained by a straight line and a circumference,
+stand in Euclid's words with no Lean beneath them: our angles are made by two straight
+lines, and the theorem leaves out that clause of the enunciation. What Euclid proves
+them by, that no other straight line can be interposed, is the theorem's second part.
+The Porism is proved after the theorem, as `Prop16.porism`.
 -/
 
 namespace Elements.BookIII
@@ -92,7 +97,7 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
       exact hF ⟨L, hA_L, hE_L, hA_L⟩
     /- If AF passes through the centre, D itself is already within the circle. -/
     have hDF : ¬ Collinear A F D := fun h => hFA ⟨D, h, centre_inside hD⟩
-    /- Euclid gives no citation for drawing this perpendicular: it is I.12. -/
+    /- Heath gives no bracket for drawing this perpendicular: it is I.12. -/
     obtain ⟨G, hG, hDG⟩ := BookI.Prop12 hAF hDF
     have hDAF : Triangle D A F := fun ⟨M, h1, h2, h3⟩ => hDF ⟨M, h2, h3, h1⟩
     /- Were G to be A, AF would be at right angles to AD at A, as AE is; but at A only
@@ -120,8 +125,9 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
   -- Therefore another straight line cannot be interposed into the space between the straight
   -- line and the circumference.
   /- Our angles are made by two straight lines, so the angle of the semicircle and the
-     horn-like angle are left to Euclid's words below. What he proves them by, that every
-     other straight line through A cuts the circle, is the second part above. -/
+     horn-like angle are left to Euclid's words below, with no Lean beneath them. What
+     he proves them by, that every other straight line through A cuts the circle, is
+     the second part above. -/
   -- I say further that the angle of the semicircle contained by the straight line BA and the
   -- circumference CHA is greater than any acute rectilineal angle,
   -- and the remaining angle contained by the circumference CHA and the straight line AE is
