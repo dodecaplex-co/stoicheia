@@ -69,18 +69,23 @@ theorem Prop22 {A B C D : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
       ac_rfl
     -- therefore the angles ABC, ADC are also equal to two right angles.
     exact h₄ ▸ h₅
-  have tri : ∀ {P Q R : Point}, OnCircle P ABCD → OnCircle Q ABCD → OnCircle R ABCD →
-      P ≠ Q → Q ≠ R → P ≠ R → Triangle P Q R := Triangle.of_onCircle
-  refine ⟨half hA hB hC hD hAXC hBXD (tri hA hB hC hBDA.ne₁₃.symm hBDC.ne₁₃ hAC')
-    (tri hB hC hD hBDC.ne₁₃ hBDC.ne₂₃.symm hBD) (tri hA hC hD hAC' hBDC.ne₂₃.symm
-      hBDA.ne₂₃.symm), ?_⟩
+  /- Euclid's own figure: the angles ABC, ADC. Three points of the circle are a triangle
+     (`Triangle.of_onCircle`). -/
+  have hB_D : ∠ A B C + ∠ A D C = ∟ + ∟ := half hA hB hC hD hAXC hBXD
+    (Triangle.of_onCircle hA hB hC hBDA.ne₁₃.symm hBDC.ne₁₃ hAC')
+    (Triangle.of_onCircle hB hC hD hBDC.ne₁₃ hBDC.ne₂₃.symm hBD)
+    (Triangle.of_onCircle hA hC hD hAC' hBDC.ne₂₃.symm hBDA.ne₂₃.symm)
   -- Similarly we can prove that the angles BAD, DCB are also equal to two right angles.
-  have h := half hB hC hD hA hBXD (between_symm hAXC)
-    (tri hB hC hD hBDC.ne₁₃ hBDC.ne₂₃.symm hBD) (tri hC hD hA hBDC.ne₂₃.symm hBDA.ne₂₃ hAC'.symm)
-    (tri hB hD hA hBD hBDA.ne₂₃ hBDA.ne₁₃)
-  rw [add_comm, angle_symm hBDC.ne₂₃ hBDC.ne₁₃]
-  exact h
+  /- The same argument in the quadrilateral BCDA, whose straight lines BD, CA cut one
+     another at the same point: its angles BCD, BAD. -/
+  have hA_C : ∠ B A D + ∠ D C B = ∟ + ∟ := by
+    rw [add_comm, angle_symm hBDC.ne₂₃ hBDC.ne₁₃]
+    exact half hB hC hD hA hBXD (between_symm hAXC)
+      (Triangle.of_onCircle hB hC hD hBDC.ne₁₃ hBDC.ne₂₃.symm hBD)
+      (Triangle.of_onCircle hC hD hA hBDC.ne₂₃.symm hBDA.ne₂₃ hAC'.symm)
+      (Triangle.of_onCircle hB hD hA hBD hBDA.ne₂₃ hBDA.ne₁₃)
   -- Therefore etc.
+  exact ⟨hB_D, hA_C⟩
   -- Q. E. D.
 
 end Elements.BookIII
