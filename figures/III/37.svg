@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 290" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="17">
+  <title>Euclid III.37: the converse of III.36</title>
+  <rect x="0" y="0" width="400" height="290" rx="10" fill="#fbf7ee"/>
+  <circle cx="267" cy="162" r="90" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 45.000000 72.000000 L 267.000000 72.000000 L 267.000000 162.000000 Z"/>
+    <path d="M 45.000000 72.000000 L 295.517718 247.362403 M 267.000000 162.000000 L 204.327478 226.592221"/>
+  </g>
+  <path d="M 45.000000 72.000000 L 204.327478 226.592221" fill="none" stroke="#a0522d" stroke-width="2.6" stroke-linecap="round"/>
+  <g fill="none" stroke="#8c7b62" stroke-width="1.3">
+    <path d="M 257.000000 72.000000 L 257.000000 82.000000 L 267.000000 82.000000"/>
+    <path d="M 197.150565 219.628607 L 204.114178 212.451694 L 211.291092 219.415307"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="295.517718" cy="247.362403" r="2.6"/>
+    <circle cx="204.327478" cy="226.592221" r="2.6"/>
+    <circle cx="177.032618" cy="164.422832" r="2.6"/>
+    <circle cx="45.000000" cy="72.000000" r="2.6"/>
+    <circle cx="267.000000" cy="72.000000" r="2.6"/>
+    <circle cx="267.000000" cy="162.000000" r="2.6"/>
+    <text x="303" y="266">A</text>
+    <text x="186" y="244">B</text>
+    <text x="157" y="176">C</text>
+    <text x="27" y="69">D</text>
+    <text x="261" y="59">E</text>
+    <text x="275" y="161">F</text>
+  </g>
+</svg>
