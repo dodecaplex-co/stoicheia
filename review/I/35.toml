@@ -1,0 +1,26 @@
+# review/I/35.toml
+[statement]
+scope = "full"
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "I say that ABCD is equal to the parallelogram EBCF"
+kind = "helper"
+helper = "Prop35.between"
+note = "Euclid argues one arrangement, with AD and EF apart. The Lean adds Proclus's two others, E between A and D (`Prop35.between`) and E at D (`Prop35.same`), each either way along AF; when E is A, F is D."
+
+[[passage]]
+at = "and DE is common"
+kind = "helper"
+helper = "Prop35.figure"
+note = "Euclid lets his figure show that EB and DC meet at G between the parallels; the Lean proves it from the diameters of EBCD, and E between D and F with it."
+
+[figure]
+case = "AD and EF apart, with D between A and E, as in Heath's figure"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

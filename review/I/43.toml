@@ -1,0 +1,22 @@
+# review/I/43.toml
+# Full: Euclid's parallelograms about the diameter meet at a point of it, and Heath
+# reads his words as putting the complements about the diameter too (vol. 1, p. 341).
+# Proclus's cases, with the parallelograms apart or overlapping, are told in the
+# commentary.
+[statement]
+scope = "full"
+note = "The parallelograms about the diameter meet at a point K of AC, as Heath reads Euclid's words; Proclus's cases, apart or overlapping, are left to the commentary."
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "therefore the complement BK which remains"
+kind = "helper"
+helper = "Prop43.cut"
+note = "Euclid takes for granted that the triangle ABC is made up of AEK, the complement BK and KGC; the Lean proves it from the order of the points."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

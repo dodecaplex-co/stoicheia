@@ -1,0 +1,16 @@
+[statement]
+scope = "full"
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "For the same reason"
+kind = "grouped"
+helper = "Square.about_diameter"
+note = "Euclid's \"for the same reason\" is carried by one lemma, which gives his argument for CK over any letters: a parallelogram about the diameter of a square is a square."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

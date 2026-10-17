@@ -1,0 +1,16 @@
+# review/III/09.toml
+[statement]
+scope = "full"
+note = "Leaves out Euclid's 'within': any point from which three equal straight lines fall on the circle is its centre, as III.25 needs."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["centre-given", "hypothesis-dropped"]
+note = "The circle comes with a centre, which the proof shows is D. Euclid's proof never uses that D is within, and the statement does not ask it."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

@@ -1,0 +1,38 @@
+[statement]
+scope = "partial"
+omitted = [
+  "the angle of the greater segment is greater than a right angle",
+  "the angle of the less segment less than a right angle",
+]
+note = "Proves the angles in the semicircle and in each segment, at every point; the angles of the segments, made with a circumference, are left to the text."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["mixed-angles-omitted", "centre-given"]
+note = "Our angles are made by two straight lines, so an angle contained by a straight line and a circumference has no Lean counterpart. The centre E is given, as Euclid's setting-out names it."
+
+[coverage]
+checked = [
+  "The angle BAC in the semicircle is right.",
+  "The angle in the greater segment ABC is less than a right angle, at every point of the segment, not only at B.",
+  "The angle in the less segment ADC is greater than a right angle, at every point of the segment.",
+]
+explains = [
+  "The proof shows that the angles BAC and FAC are both right, as Euclid's \"each is right\" says: the rectilineal facts his sentences about the angles of the segments rest on.",
+]
+text_only = [
+  "the angle of the greater segment is greater than a right angle",
+  "the angle of the less segment less than a right angle",
+]
+
+[[passage]]
+at = "I say further that the angle of the greater segment"
+kind = "unformalized"
+note = "These angles are contained by a straight line and a circumference, which our angles are not, so this argument stays in Euclid's words; the Lean beneath it only returns the three claims already proved."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

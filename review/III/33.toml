@@ -1,0 +1,21 @@
+[statement]
+scope = "full"
+note = "Describes on AB a circle with its centre, and a point E off AB at which the segment admits the given angle, acute, right or obtuse."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["segment-with-circle"]
+note = "The segment is returned as its circle AEB, with its centre, and a point E off AB naming its side; the angle it admits is the angle AEB."
+
+[[passage]]
+at = "Let AE be drawn at right angles to DA"
+kind = "helper"
+helper = "Postulate5"
+note = "Euclid assumes that AE and FG meet, as Heath notes (vol. 2, p. 70); Postulate 5 gives it, the angles EAF and AFG being less than two right angles. The obtuse case is the same."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

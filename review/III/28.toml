@@ -1,0 +1,21 @@
+[statement]
+scope = "full"
+note = "\"The greater\" is taken as no less, so two diameters, which cut off four semicircles, are covered as well."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["angle-measure"]
+note = "The circumferences are compared by the angle measure, and here the equal circles do real work: equal straight lines in unequal circles cut off unequal measures."
+
+[[passage]]
+at = "the radii are also equal"
+kind = "helper"
+helper = "Prop28.diameter"
+note = "Euclid's figure has the centre K off AB, on C's side. If K is on AB, AB and DE are diameters and the four circumferences semicircles; `Prop28.beyond` shows K is not on G's side."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

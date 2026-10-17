@@ -1,0 +1,22 @@
+[statement]
+scope = "full"
+note = "A may be any point off DE with CA at right angles to DE: it need not be on the circle, and may lie across DE from the centre."
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "the less to the greater: which is impossible"
+kind = "helper"
+helper = "Prop1.perpendicular"
+note = "At C only one straight line is at right angles to DE, which Euclid takes for granted here as in III.1; it puts F on CA on whichever side of DE A lies."
+
+[[passage]]
+at = "Therefore F is not the centre of the circle ABC"
+kind = "grouped"
+note = "The reductio is made for any point F off AC, so one argument gives this sentence and Euclid's \"similarly\" for every other point."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

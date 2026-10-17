@@ -1,0 +1,39 @@
+[statement]
+scope = "partial"
+omitted = ["are equal to one another"]
+note = "Proves the circles equal and the circumferences equal in the angle measure; that the segments are equal, one laid on the other, is left to the text."
+
+[route]
+kind = "alternative"
+note = "Euclid applies one segment to the other. Lean moves no figure, for superposition belongs to I.4 and I.8 alone, and compares the radii instead, by the angles at the centres (III.20, III.22) and isosceles triangles on the equal bases (`Prop24.isosceles`)."
+
+[representation]
+tags = ["segment-with-circle", "angle-measure", "redundant-hypothesis", "centre-given"]
+note = "Equal segments are read as equal circles with equal measures of their circumferences, each circle coming with a centre. The measure carries no radius, so the second clause follows from the equal angles at E and F alone; the equal bases are needed for the first."
+
+[coverage]
+checked = [
+  "The circles AEB and CFD are equal.",
+  "The circumferences AEB and CFD have equal measures.",
+]
+text_only = ["are equal to one another"]
+
+[[passage]]
+at = "For, if the segment AEB be applied to CFD"
+kind = "different"
+note = "In place of applying the segment, Lean compares the circles by their radii: the equal angles at E and F place the centres alike (`Prop24.angle_type`), and equal angles at the centres on equal bases give equal radii."
+
+[[passage]]
+at = "For, if the straight line AB coincide with CD"
+kind = "different"
+note = "With the radii already equal, no segment is left to fall within, outside or awry, so Lean refutes none of the three and cites neither III.10 nor III.23."
+
+[[passage]]
+at = "therefore it will coincide with it and will be equal to it"
+kind = "different"
+note = "The circumferences are equal by the measure: each, with the circumference on the other side of its base, which is twice the equal angle at E or F, makes up the whole circle (`Circumference.whole`)."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"

@@ -1,0 +1,58 @@
+# review/III/16.toml
+[statement]
+scope = "partial"
+omitted = [
+  "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
+]
+note = "Proves that AE falls outside the circle and that no other straight line can be interposed; the angles of the semicircle and the horn are left to the text."
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["mixed-angles-omitted", "centre-given"]
+note = "Our angles are made by two straight lines, so an angle contained by a straight line and a circumference has no Lean counterpart. The centre D is given, as Euclid's setting-out names it."
+
+[coverage]
+checked = [
+  "Every point of AE other than A is outside the circle.",
+  "Every other straight line through A has a point within the circle, so none can be interposed between AE and the circumference.",
+  "Porism: AE touches the circle (III.16 Por.).",
+]
+explains = [
+  "The second claim is what Euclid proves the angle clauses by: a rectilineal angle between them would need a straight line interposed.",
+]
+text_only = [
+  "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
+]
+
+[[passage]]
+at = "Similarly we can prove that neither will it fall on the circumference"
+kind = "grouped"
+note = "One step shows that no point of AE but A is on the circle; it gives both 'not within' and 'not on the circumference'."
+
+[[passage]]
+at = "But DA is equal to DH"
+kind = "grouped"
+note = "Lean needs no point H: DG, less than the radius DA, puts G within the circle (Diagram-segment 4), which the supposed interposition forbids. One step carries both sentences."
+
+[[passage]]
+at = "Therefore another straight line cannot be interposed"
+kind = "grouped"
+note = "The conclusion of the second reductio, which the contradiction above has proved: the supposed FA has a point G within the circle."
+
+[[passage]]
+at = "I say further that the angle of the semicircle"
+kind = "unformalized"
+note = "These angles are contained by a straight line and a circumference, which our angles are not, so this argument stays in Euclid's words."
+
+[[passage]]
+at = "PORISM. From this it is manifest"
+kind = "carried"
+helper = "Prop16.porism"
+note = "Proved as its own theorem, III.16 Por., from the first part of the statement."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+reviewer = "Claude Opus 5.5"
