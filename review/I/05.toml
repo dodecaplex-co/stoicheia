@@ -1,0 +1,14 @@
+# review/I/05.toml
+[statement]
+scope = "full"
+note = "Both clauses are stated with the equal sides already produced to D and E, as Euclid produces them by Postulate 2; every isosceles triangle has such points."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

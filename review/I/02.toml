@@ -1,0 +1,14 @@
+# review/I/02.toml
+[statement]
+scope = "full"
+note = "Proved wherever the point A lies; when A is B itself, BC already serves."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

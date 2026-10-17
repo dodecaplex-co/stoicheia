@@ -1,0 +1,14 @@
+# review/I/17.toml
+[statement]
+scope = "full"
+note = "All three pairs of angles are named, as Euclid's \"taken together in any manner\" asks."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

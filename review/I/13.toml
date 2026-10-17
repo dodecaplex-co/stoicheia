@@ -1,0 +1,14 @@
+# review/I/13.toml
+[statement]
+scope = "full"
+note = "Concludes that the two angles together are ∟ + ∟, Euclid's second form; his first, each angle right, is the case of equal angles, by Postulate 4."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

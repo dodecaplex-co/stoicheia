@@ -1,0 +1,18 @@
+# review/I/14.toml
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[[passage]]
+at = "Similarly we can prove that neither is any other straight line"
+kind = "grouped"
+note = "No second argument is needed: E was any point on CB produced, and the one argument already puts D on CB produced, beyond B."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

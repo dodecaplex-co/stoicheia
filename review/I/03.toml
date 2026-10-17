@@ -1,0 +1,13 @@
+# review/I/03.toml
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"
