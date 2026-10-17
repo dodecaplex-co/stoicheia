@@ -125,8 +125,9 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
       rw [angle_symm (ne_of_between hAGC) hFG']
       exact hFG A ⟨L, hA_L, hC_L, hA_L⟩ (ne_of_between hAGC)
     -- it also bisects it; [III. 3]
+    have hbisect := (Prop3 hF hA hC hAGC hF_AC).2 hAGF
     -- therefore AG is equal to GC.
-    have hAG : ‖A G‖ = ‖G C‖ := (Prop3 hF hA hC hAGC hF_AC).2 hAGF
+    have hAG : ‖A G‖ = ‖G C‖ := hbisect
     -- Since, then, the straight line AC has been cut into equal parts at G and into unequal
     -- parts at E,
     -- the rectangle contained by AE, EC together with the square on EG is equal to the square on
@@ -140,10 +141,12 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
       · rw [sq_symm E G]
         exact BookII.Prop5 hAGC hAG hAEC hEG
     -- Let the square on GF be added;
+    have hadd := CommonNotion2 h5 (rfl : sq G F = sq G F)
     -- therefore the rectangle AE, EC together with the squares on GE, GF is equal to the squares
     -- on CG, GF.
-    have hadd : rect A E E C + sq E G + sq G F = sq G C + sq G F :=
-      CommonNotion2 h5 rfl
+    have hsum : rect A E E C + (sq G E + sq G F) = sq C G + sq G F := by
+      rw [sq_symm G E, sq_symm C G, ← add_assoc]
+      exact hadd
     -- But the square on FE is equal to the squares on EG, GF,
     have hFE : sq F E = sq E G + sq G F := by
       by_cases hEG : E = G
@@ -164,8 +167,8 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
       ac_rfl
     -- therefore the rectangle AE, EC together with the square on FE is equal to the square on
     -- FC.
-    rw [hFE, hFC, ← add_assoc, sq_symm C G]
-    exact hadd
+    rw [hFE, hFC, sq_symm E G]
+    exact hsum
   -- And FC is equal to FB;
   have hFC_FB : ‖F C‖ = ‖F B‖ := Definition15 hF hC hB
   -- therefore the rectangle AE, EC together with the square on EF is equal to the square on
