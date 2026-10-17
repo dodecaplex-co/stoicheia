@@ -4,11 +4,11 @@ import Elements.Foundations.Tacit.Constructions
 # Tacit rules: what Euclid reads off the figure
 
 Euclid draws a figure and then uses facts that are "obvious from the picture":
-that a point lies between two others, that two points are on the same side of
-a line, that a line through the inside of a circle must cut it. He never states
-these facts or proves them. These are the diagrammatic inferences of System E,
-§3.4 (Avigad, Dean and Mumma, 2009), one axiom for each thing a rule says: most
-rules say one thing, and Between 1, which says four, is four axioms.
+that a point lies between two others, that two points are on the same side of a
+straight line, that a straight line through the inside of a circle must cut it.
+He never states these facts or proves them. These are the diagrammatic inferences
+of System E, §3.4 (Avigad, Dean and Mumma, 2009), one axiom for each thing a rule
+says: most rules say one thing, and Between 1, which says four, is four axioms.
 
 In one place we follow LeanEuclid's correction of the published rules:
 `circles_meet_of_on_inside_outside` (Intersection rule 4) asks that `A` be *on*

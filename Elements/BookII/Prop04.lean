@@ -167,7 +167,7 @@ theorem Prop4 {A B C : Point} (hACB : Between A C B) :
   -- contained by AC, CB.
   calc
     sq A B = quadArea B A D E := hsqAB.symm
-    _ =quadArea B C G K + quadArea C A H G + quadArea G H D F + quadArea K G F E := hwhole
+    _ = quadArea B C G K + quadArea C A H G + quadArea G H D F + quadArea K G F E := hwhole
     _ = quadArea G H D F + quadArea B C G K + (quadArea C A H G + quadArea K G F E) := by ac_rfl
     _ = sq A C + sq C B + (rect A C C B + rect A C C B) := hfour
   -- Therefore etc.

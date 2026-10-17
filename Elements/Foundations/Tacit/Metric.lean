@@ -4,9 +4,9 @@ import Elements.Foundations.Tacit.Diagram
 # Tacit rules: lengths, angles and areas
 
 Facts about magnitudes that Euclid treats as clear from the definitions: the
-line `AB` is the line `BA`, the angle `ABC` is the angle `CBA`, and two
-triangles that agree in all their sides and angles have the same area. System
-E, §3.5 (Avigad, Dean and Mumma, 2009).
+straight line `AB` is the straight line `BA`, the angle `ABC` is the angle
+`CBA`, and two triangles that agree in all their sides and angles have the same
+area. System E, §3.5 (Avigad, Dean and Mumma, 2009).
 -/
 
 namespace Elements.Tacit

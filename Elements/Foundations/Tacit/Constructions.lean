@@ -1,7 +1,7 @@
 import Elements.Foundations.Postulates
 
 /-!
-# Tacit rules: picking points, and where lines and circles cross
+# Tacit rules: picking points, and where straight lines and circles cross
 
 Euclid often says "let a point be taken at random", or "from the point C, in
 which the circles cut one another", without ever saying why such a point
