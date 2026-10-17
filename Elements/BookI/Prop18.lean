@@ -11,8 +11,8 @@ Euclid's text, in Heath's translation: [`heath/I/18.md`](../../heath/I/18.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
-Euclid cites I.3 and I.16. The step "the angle ADB is equal to the angle ABD,
-since the side AB is equal to AD" is I.5, which he leaves uncited; the Lean
+Heath's references are I.3 and I.16. The step "the angle ADB is equal to the
+angle ABD, since the side AB is equal to AD" has none: it is I.5, and the Lean
 imports it.
 -/
 
