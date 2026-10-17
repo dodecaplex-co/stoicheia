@@ -131,7 +131,7 @@ theorem Prop20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCirc
     rw [add_comm, ← h]
     ac_rfl
   -- Therefore etc.
-  /- Which of Euclid's figures we are in: `E` on an arm of the angle `BAC`, within it,
+  /- Which of Euclid's figures we are in: `E` on `AB` or on `AC`, within the angle `BAC`,
      or outside it. -/
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
   obtain ⟨M, hA_M, hC_M⟩ := Postulate1 A C hAC
