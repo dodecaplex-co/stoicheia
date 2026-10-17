@@ -2,7 +2,7 @@
 
 # Certificate
 
-Everything on this page is computed from the Lean proofs themselves by [`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` tells us exactly which postulates, definitions and tacit rules each proof rests on, counting those of the propositions it cites. The one exception is the column "Euclid cites": the propositions Euclid gives in brackets in Heath's translation, read from the text. Nothing here is typed in by hand.
+Everything on this page is computed from the Lean proofs themselves by [`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` tells us exactly which postulates, definitions and tacit rules each proof rests on, and a walk through the same proofs which Common Notions, in every case counting those of the propositions it cites. The one exception is the column "Euclid cites": the propositions Euclid gives in brackets in Heath's translation, read from the text. Nothing here is typed in by hand.
 
 Many Lean proofs call on shared steps: lemmas proved once and used by many proofs, such as `Prop30.meet` in Book I or `Rectangle.eq_rect` in Book II. A shared step that rests on a proposition brings it into every proof that calls on the step, which is why the Lean sometimes cites a proposition Euclid gives no bracket for. Each proposition's page names those steps in a line under its table, with the propositions each one brings in. On [I.9](book/I/09.md) it reads: "Brought in by shared steps: [`Prop5.base`](Elements/BookI/Helpers.lean#L27) (I.5)."
 
@@ -19,52 +19,52 @@ What the proofs show:
 |---|---|---|---|---|---|---|---|
 | ✅ | [I.1](book/I/01.md) |  |  | 1, 3 | 15 | 1, 5 | 15 |
 | ✅ | [I.2](book/I/02.md) | I.1 | I.1 | 1, 3 | 15 | 1, 3, 5 | 21 |
-| ✅ | [I.3](book/I/03.md) | I.2 | I.2 | 1, 3 | 15 | 1 | 24 |
+| ✅ | [I.3](book/I/03.md) | I.2 | I.2 | 1, 3 | 15 | 1, 3, 5 | 24 |
 | ✅ | [I.4](book/I/04.md) |  |  | 1 |  | 4, 5 | 22 |
-| ✅ | [I.5](book/I/05.md) | I.3, I.4 | I.3, I.4 | 1, 3 | 15 | 3, 5 | 45 |
-| ✅ | [I.6](book/I/06.md) |  | I.3, I.4 | 1, 3 | 15 | 5 | 41 |
-| ✅ | [I.7](book/I/07.md) | I.5 | I.5 | 1, 2, 3 | 15 | 5 | 50 |
-| ✅ | [I.8](book/I/08.md) | I.7 | I.7 | 1, 2, 3 | 15 | 4, 5 | 50 |
-| ✅ | [I.9](book/I/09.md) | I.3, I.8 | I.1, I.3, I.5, I.7, I.8 | 1, 2, 3 | 15 | 5 | 52 |
-| ✅ | [I.10](book/I/10.md) | I.1, I.4, I.9 | I.1, I.4, I.9 | 1, 2, 3 | 15 |  | 52 |
-| ✅ | [I.11](book/I/11.md) | I.1, I.3, I.8 | I.1, I.3, I.8 | 1, 2, 3, 4 | 15 | 5 | 50 |
-| ✅ | [I.12](book/I/12.md) | I.8, I.10 | I.8, I.10 | 1, 2, 3, 4 | 15 |  | 53 |
-| ✅ | [I.13](book/I/13.md) | I.11 | I.11 | 1, 2, 3, 4 | 15 | 1, 2 | 51 |
-| ✅ | [I.14](book/I/14.md) | I.13 | I.13 | 1, 2, 3, 4 | 15 | 1, 3, 5 | 51 |
-| ✅ | [I.15](book/I/15.md) | I.13 | I.13 | 1, 2, 3, 4 | 15 | 1, 3 | 51 |
-| ✅ | [I.16](book/I/16.md) | I.3, I.4, I.10, I.15 | I.3, I.4, I.10, I.15 | 1, 2, 3, 4 | 15 | 5 | 53 |
-| ✅ | [I.17](book/I/17.md) | I.13, I.16 | I.13, I.16 | 1, 2, 3, 4 | 15 |  | 53 |
-| ✅ | [I.18](book/I/18.md) | I.3, I.16 | I.3, I.5, I.16 | 1, 2, 3, 4 | 15 | 5 | 53 |
-| ✅ | [I.19](book/I/19.md) | I.5, I.18 | I.5, I.18 | 1, 2, 3, 4 | 15 |  | 53 |
-| ✅ | [I.20](book/I/20.md) | I.5, I.19 | I.3, I.5, I.19 | 1, 2, 3, 4 | 15 | 5 | 53 |
-| ✅ | [I.21](book/I/21.md) | I.16, I.20 | I.16, I.20 | 1, 2, 3, 4 | 15 |  | 53 |
-| ✅ | [I.22](book/I/22.md) | I.3, I.20 | I.2, I.3 | 1, 2, 3 | 15 | 5 | 33 |
-| ✅ | [I.23](book/I/23.md) | I.8, I.22 | I.8, I.20, I.22 | 1, 2, 3, 4 | 15 |  | 55 |
-| ✅ | [I.24](book/I/24.md) | I.4, I.5, I.19, I.23 | I.4, I.5, I.19, I.21, I.23 | 1, 2, 3, 4 | 15 | 5 | 55 |
-| ✅ | [I.25](book/I/25.md) | I.4, I.24 | I.4, I.24 | 1, 2, 3, 4 | 15 |  | 55 |
-| ✅ | [I.26](book/I/26.md) | I.4, I.16 | I.3, I.4, I.16 | 1, 2, 3, 4 | 15 | 5 | 53 |
-| ✅ | [I.27](book/I/27.md) | I.16 | I.16 | 1, 2, 3, 4 | 15 |  | 53 |
-| ✅ | [I.28](book/I/28.md) | I.13, I.15, I.27 | I.13, I.15, I.27 | 1, 2, 3, 4 | 15 | 1, 3 | 53 |
-| ✅ | [I.29](book/I/29.md) | I.13, I.15 | I.13, I.15 | 1, 2, 3, 4, 5 | 15 | 1, 2 | 51 |
-| ✅ | [I.30](book/I/30.md) | I.29 | I.27, I.29 | 1, 2, 3, 4, 5 | 15 | 1, 3, 5 | 54 |
-| ✅ | [I.31](book/I/31.md) | I.23, I.27 | I.23, I.27 | 1, 2, 3, 4 | 15 |  | 55 |
-| ✅ | [I.32](book/I/32.md) | I.13, I.29, I.31 | I.13, I.29, I.31 | 1, 2, 3, 4, 5 | 15 | 2 | 55 |
-| ✅ | [I.33](book/I/33.md) | I.4, I.27, I.29 | I.4, I.27, I.29 | 1, 2, 3, 4, 5 | 15 |  | 53 |
-| ✅ | [I.34](book/I/34.md) | I.4, I.26, I.29 | I.4, I.26, I.29 | 1, 2, 3, 4, 5 | 15 | 2 | 53 |
-| ✅ | [I.35](book/I/35.md) | I.4, I.29, I.34 | I.4, I.29, I.34 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 5 | 56 |
-| ✅ | [I.36](book/I/36.md) | I.33, I.34, I.35 | I.33, I.34, I.35 | 1, 2, 3, 4, 5 | 15 | 1 | 56 |
-| ✅ | [I.37](book/I/37.md) | I.31, I.34, I.35 | I.30, I.31, I.34, I.35 | 1, 2, 3, 4, 5 | 15 |  | 60 |
-| ✅ | [I.38](book/I/38.md) | I.31, I.34, I.36 | I.30, I.31, I.34, I.36 | 1, 2, 3, 4, 5 | 15 |  | 60 |
-| ✅ | [I.39](book/I/39.md) | I.31, I.37 | I.30, I.31, I.37 | 1, 2, 3, 4, 5 | 15 | 1, 5 | 61 |
-| ✅ | [I.40](book/I/40.md) | I.31, I.38 | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | 15 | 1, 5 | 61 |
-| ✅ | [I.41](book/I/41.md) | I.34, I.37 | I.34, I.37 | 1, 2, 3, 4, 5 | 15 |  | 60 |
-| ✅ | [I.42](book/I/42.md) | I.23, I.31, I.38, I.41 | I.10, I.23, I.30, I.31, I.38, I.41 | 1, 2, 3, 4, 5 | 15 | 1 | 60 |
-| ✅ | [I.43](book/I/43.md) | I.34 | I.34 | 1, 2, 3, 4, 5 | 15 | 2, 3 | 57 |
-| ✅ | [I.44](book/I/44.md) | I.15, I.29, I.31, I.42, I.43 | I.2, I.4, I.15, I.23, I.29, I.30, I.31, I.34, I.42, I.43 | 1, 2, 3, 4, 5 | 15 | 1, 5 | 61 |
-| ✅ | [I.45](book/I/45.md) | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | 1, 2, 3, 4, 5 | 15 | 1, 2 | 61 |
-| ✅ | [I.46](book/I/46.md) | I.11, I.29, I.31, I.34 | I.11, I.29, I.30, I.31, I.34 | 1, 2, 3, 4, 5 | 15 | 3 | 57 |
-| ✅ | [I.47](book/I/47.md) | I.4, I.14, I.41, I.46 | I.4, I.13, I.14, I.17, I.28, I.30, I.31, I.41 | 1, 2, 3, 4, 5 | 15 | 2 | 61 |
-| ✅ | [I.48](book/I/48.md) | I.8, I.47 | I.3, I.4, I.8, I.11, I.28, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | 15 | 2, 5 | 62 |
+| ✅ | [I.5](book/I/05.md) | I.3, I.4 | I.3, I.4 | 1, 3 | 15 | 1, 3, 4, 5 | 45 |
+| ✅ | [I.6](book/I/06.md) |  | I.3, I.4 | 1, 3 | 15 | 1, 3, 4, 5 | 41 |
+| ✅ | [I.7](book/I/07.md) | I.5 | I.5 | 1, 2, 3 | 15 | 1, 3, 4, 5 | 50 |
+| ✅ | [I.8](book/I/08.md) | I.7 | I.7 | 1, 2, 3 | 15 | 1, 3, 4, 5 | 50 |
+| ✅ | [I.9](book/I/09.md) | I.3, I.8 | I.1, I.3, I.5, I.7, I.8 | 1, 2, 3 | 15 | 1, 3, 4, 5 | 52 |
+| ✅ | [I.10](book/I/10.md) | I.1, I.4, I.9 | I.1, I.4, I.9 | 1, 2, 3 | 15 | 1, 3, 4, 5 | 52 |
+| ✅ | [I.11](book/I/11.md) | I.1, I.3, I.8 | I.1, I.3, I.8 | 1, 2, 3, 4 | 15 | 1, 3, 4, 5 | 50 |
+| ✅ | [I.12](book/I/12.md) | I.8, I.10 | I.8, I.10 | 1, 2, 3, 4 | 15 | 1, 3, 4, 5 | 53 |
+| ✅ | [I.13](book/I/13.md) | I.11 | I.11 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 51 |
+| ✅ | [I.14](book/I/14.md) | I.13 | I.13 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 51 |
+| ✅ | [I.15](book/I/15.md) | I.13 | I.13 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 51 |
+| ✅ | [I.16](book/I/16.md) | I.3, I.4, I.10, I.15 | I.3, I.4, I.10, I.15 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.17](book/I/17.md) | I.13, I.16 | I.13, I.16 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.18](book/I/18.md) | I.3, I.16 | I.3, I.5, I.16 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.19](book/I/19.md) | I.5, I.18 | I.5, I.18 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.20](book/I/20.md) | I.5, I.19 | I.3, I.5, I.19 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.21](book/I/21.md) | I.16, I.20 | I.16, I.20 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.22](book/I/22.md) | I.3, I.20 | I.2, I.3 | 1, 2, 3 | 15 | 1, 3, 5 | 33 |
+| ✅ | [I.23](book/I/23.md) | I.8, I.22 | I.8, I.20, I.22 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 55 |
+| ✅ | [I.24](book/I/24.md) | I.4, I.5, I.19, I.23 | I.4, I.5, I.19, I.21, I.23 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 55 |
+| ✅ | [I.25](book/I/25.md) | I.4, I.24 | I.4, I.24 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 55 |
+| ✅ | [I.26](book/I/26.md) | I.4, I.16 | I.3, I.4, I.16 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.27](book/I/27.md) | I.16 | I.16 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.28](book/I/28.md) | I.13, I.15, I.27 | I.13, I.15, I.27 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.29](book/I/29.md) | I.13, I.15 | I.13, I.15 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 51 |
+| ✅ | [I.30](book/I/30.md) | I.29 | I.27, I.29 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 54 |
+| ✅ | [I.31](book/I/31.md) | I.23, I.27 | I.23, I.27 | 1, 2, 3, 4 | 15 | 1, 2, 3, 4, 5 | 55 |
+| ✅ | [I.32](book/I/32.md) | I.13, I.29, I.31 | I.13, I.29, I.31 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 55 |
+| ✅ | [I.33](book/I/33.md) | I.4, I.27, I.29 | I.4, I.27, I.29 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.34](book/I/34.md) | I.4, I.26, I.29 | I.4, I.26, I.29 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 53 |
+| ✅ | [I.35](book/I/35.md) | I.4, I.29, I.34 | I.4, I.29, I.34 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [I.36](book/I/36.md) | I.33, I.34, I.35 | I.33, I.34, I.35 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [I.37](book/I/37.md) | I.31, I.34, I.35 | I.30, I.31, I.34, I.35 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 60 |
+| ✅ | [I.38](book/I/38.md) | I.31, I.34, I.36 | I.30, I.31, I.34, I.36 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 60 |
+| ✅ | [I.39](book/I/39.md) | I.31, I.37 | I.30, I.31, I.37 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 61 |
+| ✅ | [I.40](book/I/40.md) | I.31, I.38 | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 61 |
+| ✅ | [I.41](book/I/41.md) | I.34, I.37 | I.34, I.37 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 60 |
+| ✅ | [I.42](book/I/42.md) | I.23, I.31, I.38, I.41 | I.10, I.23, I.30, I.31, I.38, I.41 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 60 |
+| ✅ | [I.43](book/I/43.md) | I.34 | I.34 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 57 |
+| ✅ | [I.44](book/I/44.md) | I.15, I.29, I.31, I.42, I.43 | I.2, I.4, I.15, I.23, I.29, I.30, I.31, I.34, I.42, I.43 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 61 |
+| ✅ | [I.45](book/I/45.md) | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 61 |
+| ✅ | [I.46](book/I/46.md) | I.11, I.29, I.31, I.34 | I.11, I.29, I.30, I.31, I.34 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 57 |
+| ✅ | [I.47](book/I/47.md) | I.4, I.14, I.41, I.46 | I.4, I.13, I.14, I.17, I.28, I.30, I.31, I.41 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 61 |
+| ✅ | [I.48](book/I/48.md) | I.8, I.47 | I.3, I.4, I.8, I.11, I.28, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | 15 | 1, 2, 3, 4, 5 | 62 |
 
 ## Book II
 
@@ -77,20 +77,20 @@ What the proofs show:
 
 | | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |
 |---|---|---|---|---|---|---|---|
-| ✅ | [II.1](book/II/01.md) | I.3, I.11, I.31, I.34 | I.2, I.3, I.4, I.11, I.29, I.30, I.31, I.34 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 62 |
-| ✅ | [II.2](book/II/02.md) | I.31, I.46 | I.4, I.28, I.29, I.30, I.31, I.34, I.46 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 61 |
-| ✅ | [II.3](book/II/03.md) | I.31, I.46 | I.4, I.28, I.29, I.30, I.31, I.34, I.46 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 62 |
-| ✅ | [II.4](book/II/04.md) | I.5, I.6, I.29, I.31, I.34, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 64 |
-| ✅ | [II.5](book/II/05.md) | I.31, I.36, I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 5 | 64 |
-| ✅ | [II.6](book/II/06.md) | I.31, I.36, I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 2, 3, 5 | 63 |
-| ✅ | [II.7](book/II/07.md) | I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 2, 3, 5 | 63 |
-| ✅ | [II.8](book/II/08.md) | I.36, I.43 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 2, 3, 5 | 63 |
-| ✅ | [II.9](book/II/09.md) | I.6, I.29, I.32, I.34, I.47 | I.4, I.5, I.6, I.11, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 64 |
-| ✅ | [II.10](book/II/10.md) | I.3, I.5, I.6, I.11, I.15, I.29, I.31, I.32, I.34, I.47 | I.3, I.4, I.5, I.6, I.11, I.15, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | I.15 | 1, 3, 5 | 63 |
-| ✅ | [II.11](book/II/11.md) | I.46, I.47, II.6 | I.4, I.10, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47, II.6 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 65 |
-| ✅ | [II.12](book/II/12.md) | I.47, II.4 | I.4, I.17, I.28, I.34, I.46, I.47, II.4 | 1, 2, 3, 4, 5 | I.15 | 2 | 65 |
-| ✅ | [II.13](book/II/13.md) | I.47, II.7 | I.4, I.13, I.17, I.28, I.34, I.46, I.47, II.7 | 1, 2, 3, 4, 5 | I.15 | 2 | 64 |
-| ✅ | [II.14](book/II/14.md) | I.45, I.47, II.5 | I.4, I.10, I.11, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | I.15 | 3, 5 | 66 |
+| ✅ | [II.1](book/II/01.md) | I.3, I.11, I.31, I.34 | I.2, I.3, I.4, I.11, I.29, I.30, I.31, I.34 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 62 |
+| ✅ | [II.2](book/II/02.md) | I.31, I.46 | I.4, I.28, I.29, I.30, I.31, I.34, I.46 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 61 |
+| ✅ | [II.3](book/II/03.md) | I.31, I.46 | I.4, I.28, I.29, I.30, I.31, I.34, I.46 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 62 |
+| ✅ | [II.4](book/II/04.md) | I.5, I.6, I.29, I.31, I.34, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 64 |
+| ✅ | [II.5](book/II/05.md) | I.31, I.36, I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 64 |
+| ✅ | [II.6](book/II/06.md) | I.31, I.36, I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 63 |
+| ✅ | [II.7](book/II/07.md) | I.43, I.46 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 63 |
+| ✅ | [II.8](book/II/08.md) | I.36, I.43 | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 63 |
+| ✅ | [II.9](book/II/09.md) | I.6, I.29, I.32, I.34, I.47 | I.4, I.5, I.6, I.11, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 64 |
+| ✅ | [II.10](book/II/10.md) | I.3, I.5, I.6, I.11, I.15, I.29, I.31, I.32, I.34, I.47 | I.3, I.4, I.5, I.6, I.11, I.15, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 63 |
+| ✅ | [II.11](book/II/11.md) | I.46, I.47, II.6 | I.4, I.10, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47, II.6 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 65 |
+| ✅ | [II.12](book/II/12.md) | I.47, II.4 | I.4, I.17, I.28, I.34, I.46, I.47, II.4 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 65 |
+| ✅ | [II.13](book/II/13.md) | I.47, II.7 | I.4, I.13, I.17, I.28, I.34, I.46, I.47, II.7 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 64 |
+| ✅ | [II.14](book/II/14.md) | I.45, I.47, II.5 | I.4, I.10, I.11, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 66 |
 
 ## Book III
 
@@ -103,25 +103,25 @@ What the proofs show so far:
 
 | | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |
 |---|---|---|---|---|---|---|---|
-| ✅ | [III.1](book/III/01.md) | I.8 | I.8, I.10, I.11 | 1, 2, 3, 4 | I.15 | 5 | 56 |
-| ✅ | [III.2](book/III/02.md) | I.5, I.16, I.19, III.1 | I.5, I.16, I.19, III.1 | 1, 2, 3, 4 | I.15 | 5 | 57 |
-| ✅ | [III.3](book/III/03.md) | I.5, I.8, I.26 | I.5, I.8, I.26 | 1, 2, 3, 4 | I.15 |  | 54 |
-| ✅ | [III.4](book/III/04.md) | III.1, III.3 | III.1, III.3 | 1, 2, 3, 4 | I.15 | 5 | 57 |
+| ✅ | [III.1](book/III/01.md) | I.8 | I.8, I.10, I.11 | 1, 2, 3, 4 | I.15 | 1, 3, 4, 5 | 56 |
+| ✅ | [III.2](book/III/02.md) | I.5, I.16, I.19, III.1 | I.5, I.16, I.19, III.1 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 57 |
+| ✅ | [III.3](book/III/03.md) | I.5, I.8, I.26 | I.5, I.8, I.26 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 54 |
+| ✅ | [III.4](book/III/04.md) | III.1, III.3 | III.1, III.3 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 57 |
 | ✅ | [III.5](book/III/05.md) |  |  | 1 | I.15 |  | 4 |
 | ✅ | [III.6](book/III/06.md) |  |  | 1 | I.15 |  | 4 |
-| ✅ | [III.7](book/III/07.md) | I.4, I.20, I.23, I.24 | I.4, I.20, I.23, I.24 | 1, 2, 3, 4 | I.15 | 5 | 56 |
-| ✅ | [III.8](book/III/08.md) | I.4, I.20, I.21, I.24, III.1 | I.4, I.20, I.21, I.23, I.24, III.1 | 1, 2, 3, 4 | I.15 | 5 | 59 |
-| ✅ | [III.9](book/III/09.md) | I.8, III.1 | I.8, I.10, I.17, III.1 | 1, 2, 3, 4 | I.15 |  | 58 |
-| ✅ | [III.10](book/III/10.md) | III.1, III.5 | I.10, I.11, I.17, III.1, III.5 | 1, 2, 3, 4 | I.15 |  | 59 |
-| ✅ | [III.11](book/III/11.md) |  | I.20, III.6 | 1, 2, 3, 4 | I.15 | 5 | 56 |
-| ✅ | [III.12](book/III/12.md) | I.20 | I.20, III.6 | 1, 2, 3, 4 | I.15 |  | 55 |
-| ✅ | [III.13](book/III/13.md) | III.2, III.11 | III.2, III.11 | 1, 2, 3, 4 | I.15 | 5 | 58 |
-| ✅ | [III.14](book/III/14.md) | I.47, III.1, III.3 | I.3, I.4, I.17, I.19, I.28, I.34, I.46, I.47, III.1, III.3 | 1, 2, 3, 4, 5 | I.15 | 2, 3, 5 | 66 |
-| ✅ | [III.15](book/III/15.md) | I.20, I.24, III.14 | I.3, I.11, I.17, I.19, I.20, I.24, III.14 | 1, 2, 3, 4, 5 | I.15 | 5 | 66 |
-| ✅ | [III.16](book/III/16.md) | I.5, I.17, I.19 | I.5, I.12, I.17, I.19 | 1, 2, 3, 4 | I.15 | 5 | 55 |
-| ✅ | [III.17](book/III/17.md) | I.4, III.1, III.16 | I.4, I.11, III.1, III.16 | 1, 2, 3, 4 | I.15 | 5 | 59 |
-| ✅ | [III.18](book/III/18.md) | I.17, I.19 | I.12, I.17, I.19 | 1, 2, 3, 4 | I.15 | 5 | 55 |
-| ✅ | [III.19](book/III/19.md) | III.18 | III.18 | 1, 2, 3, 4 | I.15 | 5 | 56 |
+| ✅ | [III.7](book/III/07.md) | I.4, I.20, I.23, I.24 | I.4, I.20, I.23, I.24 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [III.8](book/III/08.md) | I.4, I.20, I.21, I.24, III.1 | I.4, I.20, I.21, I.23, I.24, III.1 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 59 |
+| ✅ | [III.9](book/III/09.md) | I.8, III.1 | I.8, I.10, I.17, III.1 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 58 |
+| ✅ | [III.10](book/III/10.md) | III.1, III.5 | I.10, I.11, I.17, III.1, III.5 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 59 |
+| ✅ | [III.11](book/III/11.md) |  | I.20, III.6 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [III.12](book/III/12.md) | I.20 | I.20, III.6 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 55 |
+| ✅ | [III.13](book/III/13.md) | III.2, III.11 | III.2, III.11 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 58 |
+| ✅ | [III.14](book/III/14.md) | I.47, III.1, III.3 | I.3, I.4, I.17, I.19, I.28, I.34, I.46, I.47, III.1, III.3 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 66 |
+| ✅ | [III.15](book/III/15.md) | I.20, I.24, III.14 | I.3, I.11, I.17, I.19, I.20, I.24, III.14 | 1, 2, 3, 4, 5 | I.15 | 1, 2, 3, 4, 5 | 66 |
+| ✅ | [III.16](book/III/16.md) | I.5, I.17, I.19 | I.5, I.12, I.17, I.19 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 55 |
+| ✅ | [III.17](book/III/17.md) | I.4, III.1, III.16 | I.4, I.11, III.1, III.16 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 59 |
+| ✅ | [III.18](book/III/18.md) | I.17, I.19 | I.12, I.17, I.19 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 55 |
+| ✅ | [III.19](book/III/19.md) | III.18 | III.18 | 1, 2, 3, 4 | I.15 | 1, 2, 3, 4, 5 | 56 |
 | 🚧 | [III.20](book/III/20.md) | I.5, I.32 | | | | | |
 | 🚧 | [III.21](book/III/21.md) | III.20 | | | | | |
 | 🚧 | [III.22](book/III/22.md) | I.32, III.21 | | | | | |
@@ -141,4 +141,4 @@ What the proofs show so far:
 | 🚧 | [III.36](book/III/36.md) | I.47, II.6, III.3, III.18 | | | | | |
 | 🚧 | [III.37](book/III/37.md) | I.8, III.16, III.18, III.36 | | | | | |
 
-The Common Notions are theorems in Lean (see [`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so they are counted where a proof cites them by name. Lean's own logical foundations (`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and are left out.
+The Common Notions are theorems in Lean (see [`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so `#print axioms` cannot see them; the walk that finds them goes everywhere `#print axioms` goes. Lean's own logical foundations (`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and are left out.

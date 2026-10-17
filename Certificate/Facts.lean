@@ -9,9 +9,11 @@ proposition it records, straight from Lean's own proof terms:
 
 * whether the proof is finished, or still has a `sorry` in it;
 * which earlier propositions it cites directly;
-* which Common Notions it cites by name;
 * exactly which postulates, definitions and tacit rules it rests on
   (via `#print axioms`, i.e. `Lean.collectAxioms`);
+* which Common Notions it rests on, found by a walk that goes wherever
+  `collectAxioms` goes, so that, like the postulates, they include those of the
+  propositions it cites;
 * which shared steps it calls on (`Prop30.meet`, `Prop34.bisect`, `Rectangle.eq_rect`),
   and the propositions each one brings in.
 
@@ -33,7 +35,7 @@ namespace Certificate
 def leanFoundations : List Name := [``propext, ``Classical.choice, ``Quot.sound]
 
 /-- The Common Notions are theorems in Lean, so `collectAxioms` can't see them;
-we notice them when a proof cites them by name. -/
+`allNotions` finds them by a walk of its own. -/
 def commonNotions : List (Name × String) :=
   [(``Elements.CommonNotion1, "C.N. 1"), (``Elements.CommonNotion2, "C.N. 2"),
    (``Elements.CommonNotion3, "C.N. 3"), (``Elements.CommonNotion4, "C.N. 4"),
@@ -60,15 +62,14 @@ def porismOf (props : NameSet) : Name → Option Name
 
 /-- Walk the proof of `root`, passing through helper lemmas and auxiliary
 declarations, stopping at other propositions and at their porisms (a porism counts
-as citing its proposition). Returns the propositions cited, the Common Notions
+as citing its proposition), and at the Common Notions. Returns the propositions
 cited, the axioms used directly (not through another proposition), and whether a
 `sorry` appears along the way. -/
 partial def directDeps (env : Environment) (props : NameSet) (root : Name) :
-    NameSet × NameSet × NameSet × Bool := Id.run do
+    NameSet × NameSet × Bool := Id.run do
   let mut seen : NameSet := {}
   let mut todo : Array Name := #[root]
   let mut cites : NameSet := {}
-  let mut notions : NameSet := {}
   let mut direct : NameSet := {}
   let mut hasSorry := false
   while h : todo.size > 0 do
@@ -84,9 +85,38 @@ partial def directDeps (env : Environment) (props : NameSet) (root : Name) :
       else if let some p := porismOf props d then
         if p != root then cites := cites.insert p
       else if (env.find? d).any (·.isAxiom) then direct := direct.insert d
-      else if (commonNotions.map (·.1)).contains d then notions := notions.insert d
+      else if (commonNotions.map (·.1)).contains d then continue
       else if isLocal env d && !seen.contains d then todo := todo.push d
-  return (cites, notions, direct, hasSorry)
+  return (cites, direct, hasSorry)
+
+/-- Every Common Notion beneath the proof of `root`, as `collectAxioms` finds every
+axiom beneath it: the walk goes through the types and values of everything the proof
+uses, its shared steps, the propositions it cites and their porisms among them, and
+stops only at the Common Notions themselves and at declarations from outside this
+project, which cannot use them. So the Common Notions are counted like the
+postulates, definitions and tacit rules, including those of the propositions a proof
+cites. -/
+def allNotions (env : Environment) (root : Name) : NameSet := Id.run do
+  let cns := commonNotions.map (·.1)
+  let mut seen : NameSet := {}
+  let mut todo : Array Name := #[root]
+  let mut notions : NameSet := {}
+  while h : todo.size > 0 do
+    let c := todo.back
+    todo := todo.pop
+    if seen.contains c then continue
+    seen := seen.insert c
+    if cns.contains c then
+      notions := notions.insert c
+      continue
+    unless isLocal env c do continue
+    let some ci := env.find? c | continue
+    let mut used := ci.type.getUsedConstants
+    if let some v := ci.value? (allowOpaque := true) then used := used ++ v.getUsedConstants
+    if let .inductInfo v := ci then used := used ++ v.ctors.toArray
+    for d in used do
+      unless seen.contains d do todo := todo.push d
+  return notions
 
 /-- The shared steps the proof of `root` calls on itself: this project's own lemmas
 and definitions that live outside `root`'s namespace, such as a lemma of Book Zero,
@@ -182,12 +212,13 @@ run_cmd do
     for a in axs do
       unless leanFoundations.contains a || a == ``sorryAx do
         modules := modules.insert (nameStr a) (moduleOf env a)
-    let (cites, notions, direct, sorryHere) := directDeps env propSet p
+    let (cites, direct, sorryHere) := directDeps env propSet p
+    let notions := allNotions env p
     let restsOnSorry := axs.contains ``sorryAx
     /- A proposition is not finished until its porism is. -/
     let por := Name.str p "porism"
     let (porSorry, porPending) ← if env.contains por then do
-        let (_, _, _, s) := directDeps env propSet por
+        let (_, _, s) := directDeps env propSet por
         pure (s, (← collectAxioms por).contains ``sorryAx)
       else pure (false, false)
     let status := if sorryHere || porSorry then "sketched"
@@ -200,7 +231,7 @@ run_cmd do
     propositions it brings in, in the order of the books. -/
     let mut shared : Array Json := #[]
     for s in (sharedSteps env propSet p).toList.toArray.qsort (nameStr · < nameStr ·) do
-      let (reached, _, _, _) := directDeps env propSet s
+      let (reached, _, _) := directDeps env propSet s
       if reached.isEmpty then continue
       let (file, line) ← declaredAt s
       shared := shared.push <| Json.mkObj [

@@ -174,3 +174,11 @@
   steps" under each table replaces the sentences STYLE's check 19 used to ask for; the
   titles are in Euclid's words, and the tacit list says "tacit rules". So Books I and II
   no longer render byte for byte as tagged; their statements and proofs are unchanged.
+- **Common Notions counted like the other rows.** The owner chose to count the Common
+  Notions on each certificate as the postulates, definitions and tacit rules are
+  counted, with those of the propositions a proof cites. Until now they counted only
+  those named in the proof and its shared steps, so I.5 showed C.N. 3 and 5 but not
+  the C.N. 1 and 4 that I.3 and I.4 bring in. `Certificate/Facts.lean` finds them by a
+  walk that goes everywhere `collectAxioms` goes; 76 of the 81 proved propositions gain
+  Common Notions, and nothing else in `facts.json` changes. The line under each
+  page's table now gives one rule for every row.

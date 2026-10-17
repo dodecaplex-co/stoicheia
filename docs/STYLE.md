@@ -68,16 +68,18 @@ numbers or matrices, one or two sentences, exactly right. If the modern route is
 Euclid's, say so (I.43, I.48; I.2's L lies on DA produced, so it is not
 A + (C − B)). Never repeat a neighbour's.
 
-**Bookkeeping.** The page's table shows what the proof rests on, and the generated
-line under it, "Brought in by shared steps", names what each shared step brings in.
-So the mishnah does not restate the table, say what the certificate "cites" or
-"records", explain what a cited proposition or shared step brings in, or trace the
-paths of Postulate 5, Postulates 1 to 4, Definition I.15 or the tacit rules. It
-speaks of them only when the reason is this proposition's story, and then says "the
-Lean cites": a departure from Euclid's route (I.2 and I.5 need no Postulate 2; the
-Lean cites I.10 in I.42 and I.17 in II.12, where Euclid gives no citation: one
-clause naming his step), a gap he leaves (I.1's circles, I.35's G), or a landmark
-(Postulate 5 at I.29, I.44 and II.10; I.31 without it).
+**Bookkeeping.** The page's table shows what the proof rests on, its postulates,
+definitions, Common Notions and tacit rules alike counting those of the propositions
+it cites, and the generated line under it, "Brought in by shared steps", names what
+each shared step brings in. So the mishnah does not restate the table, say what the
+certificate "cites" or "records", explain what a cited proposition or shared step
+brings in, or trace the paths of Postulate 5, Postulates 1 to 4, Definition I.15, the
+Common Notions or the tacit rules. It speaks of them only when the reason is this
+proposition's story, and then says "the Lean cites": a departure from Euclid's route
+(I.2 and I.5 need no Postulate 2; the Lean cites I.10 in I.42 and I.17 in II.12,
+where Euclid gives no citation: one clause naming his step), a gap he leaves (I.1's
+circles, I.35's G), or a landmark (Postulate 5 at I.29, I.44 and II.10; I.31 without
+it).
 
 **Told once.** Each book's shared machinery is told once, in the book's
 introduction, `mishnah/intro/<book>.md`, which `render.py` sets on the book's index

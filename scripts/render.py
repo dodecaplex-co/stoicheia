@@ -344,9 +344,8 @@ def shared_steps_line(p, book, up):
     return "Brought in by shared steps: " + "; ".join(parts) + "." if parts else ""
 
 
-TABLE_KEY = ("_Postulates, definitions and tacit rules include those of the propositions "
-             "this proof cites. Common Notions are those named in this proof and its shared "
-             "steps._")
+TABLE_KEY = ("_Postulates, definitions, Common Notions and tacit rules: all that this proof "
+             "rests on, counting those of the propositions it cites._")
 
 
 def definitions_not_counted(euclid, defs, book):
@@ -673,8 +672,9 @@ def certificate(facts, docs):
     out = [GENERATED, "# Certificate", "",
            "Everything on this page is computed from the Lean proofs themselves by "
            "[`Certificate/Facts.lean`](Certificate/Facts.lean): Lean's `#print axioms` tells us "
-           "exactly which postulates, definitions and tacit rules each proof rests on, "
-           "counting those of the propositions it cites. "
+           "exactly which postulates, definitions and tacit rules each proof rests on, and a "
+           "walk through the same proofs which Common Notions, in every case counting those "
+           "of the propositions it cites. "
            "The one exception is the column \"Euclid cites\": the propositions Euclid gives in "
            "brackets in Heath's translation, read from the text. Nothing here is typed in by hand.",
            "", shared, ""]
@@ -724,8 +724,9 @@ def certificate(facts, docs):
                        f"{posts} | {defs} | {cns} | {tacit} |")
         out.append("")
     out += ["The Common Notions are theorems in Lean (see "
-            "[`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so they are "
-            "counted where a proof cites them by name. Lean's own logical foundations "
+            "[`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so `#print "
+            "axioms` cannot see them; the walk that finds them goes everywhere `#print axioms` "
+            "goes. Lean's own logical foundations "
             "(`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and "
             "are left out.", ""]
     return "\n".join(out)
