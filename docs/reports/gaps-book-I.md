@@ -150,7 +150,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 ## I.23
 - I.22's condition is not repeated here. The three straight lines are the sides of the triangle DCE, so I.20 supplies it, as the bracket in I.22's enunciation suggests.
 - Heath: "the construction of the triangle assumed in this proposition is not exactly the construction given in I. 22" (vol. 1, p. 295). Our I.22 is stated with its corner at a given point, a side along a given ray and its third corner on a given side, which is what I.23 asks of it.
-- AFG is a triangle, as I.8 needs: F is on AB and is not A, and G is off AB (`OnRay.onLine`, `SameSideOf.triangle`, `Triangle.off_line`, `Triangle.of_line`).
+- AFG is a triangle, as I.8 needs: G is on AB and is not A, and F is off AB (`OnRay.onLine`, `SameSideOf.triangle`, `Triangle.off_line`, `Triangle.of_line`).
 - D and E are taken "at random", and the choice does not matter because an angle depends only on its rays (`angle_eq_of_onRay`).
 - DCE must be a triangle for I.20 and I.8, so D and E are not on one straight line with C. Definition 8 already asks this of a plane angle, whose lines "do not lie in a straight line"; a flat angle could not be copied this way, having no triangle to carry. The statement takes the given angle as the triangle DCE.
 - Which ray from A, and which side of AB, the new angle takes are left to the figure. The statement settles both, as I.24, I.31 and I.42 need.

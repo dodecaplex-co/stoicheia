@@ -219,11 +219,13 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     /- This is the construction of I.23, on the other side of MD. Its unlettered
        points Q, F', G' choose the side and the two arms; B is on the circle. -/
     obtain ⟨Q, hQK, -⟩ := exists_oppositeSidesOf hMKD.acb []
-    obtain ⟨F', G', hF', hG'Q, hang⟩ := BookI.Prop23 hDM.symm hMKD.bac hQK.triangle
+    obtain ⟨G', F', hF', hG'Q, hang⟩ := BookI.Prop23 hDM.symm hMKD.bac hQK.triangle
     obtain ⟨B, hB_ray, hMB⟩ :=
       OnRay.exists_len_eq (ne_of_centre_of_on hM hK).symm hG'Q.triangle.ne₁₃
     have hB : OnCircle B ABC := on_circle_of_len_eq hM hK hMB
-    have hDMB : ∠ D M B = ∠ K M D := (angle_eq_of_onRay hF'.symm hB_ray).trans hang
+    have hDMB : ∠ D M B = ∠ K M D :=
+      (angle_eq_of_onRay hF'.symm hB_ray).trans
+        ((angle_symm hF'.2.1 hG'Q.triangle.ne₁₃.symm).trans hang)
     have hBK : OppositeSidesOf B K M D :=
       (SameSideOf.of_onRay hB_ray hG'Q).trans_opposite hQK
     have hBK' : OppositeSidesOf B K D A :=

@@ -9,15 +9,15 @@
   <!-- DE joined, closing the triangle DCE -->
   <polygon points="240.0,80.0 344.6,46.0 319.9,140.2" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="1.6" stroke-linejoin="round"/>
   <!-- the triangle AFG, out of three straight lines equal to CD, DE, CE [I. 22]:
-       AF along AB equal to CD, AG equal to CE, FG equal to DE; G on the side of AB that was asked for -->
-  <polygon points="40.0,150.0 150.0,150.0 97.4,68.1" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2" stroke-linejoin="round"/>
+       AF equal to CD, AG along AB equal to CE, FG equal to DE; F on the side of AB that was asked for -->
+  <polygon points="40.0,150.0 103.1,59.9 140.0,150.0" fill="#e9dcc0" fill-opacity="0.55" stroke="#3b2f2f" stroke-width="2" stroke-linejoin="round"/>
   <!-- the angles FAG and DCE, proved equal [I. 8] -->
   <path d="M 62.00 150.00 A 22 22 0 0 0 52.62 131.98" fill="none" stroke="#a0522d" stroke-width="2.4"/>
   <path d="M 260.92 73.20 A 22 22 0 0 1 257.57 93.24" fill="none" stroke="#a0522d" stroke-width="2.4"/>
   <g fill="#3b2f2f">
-    <circle cx="40.0" cy="150.0" r="2.6"/><circle cx="205.0" cy="150.0" r="2.6"/><circle cx="150.0" cy="150.0" r="2.6"/><circle cx="97.4" cy="68.1" r="2.6"/>
+    <circle cx="40.0" cy="150.0" r="2.6"/><circle cx="205.0" cy="150.0" r="2.6"/><circle cx="140.0" cy="150.0" r="2.6"/><circle cx="103.1" cy="59.9" r="2.6"/>
     <circle cx="240.0" cy="80.0" r="2.6"/><circle cx="344.6" cy="46.0" r="2.6"/><circle cx="319.9" cy="140.2" r="2.6"/>
-    <text x="24" y="171">A</text><text x="200" y="171">B</text><text x="144" y="171">F</text><text x="91" y="57">G</text>
+    <text x="24" y="171">A</text><text x="200" y="171">B</text><text x="97" y="49">F</text><text x="134" y="171">G</text>
     <text x="222" y="86">C</text><text x="338" y="36">D</text><text x="302" y="157">E</text>
   </g>
 </svg>

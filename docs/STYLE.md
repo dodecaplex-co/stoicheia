@@ -222,7 +222,7 @@ the whole canvas), in Georgia.
 - **Heath's letters, all and only**, each point where the proof puts it (I.6: D on
   AB), clear of every stroke, nothing touching the frame. Where the Lean places a
   point otherwise than Heath's figure, draw the proof and say so in one line under
-  the figure, from `FIGURE_NOTES` in `render.py` (I.23, I.39, I.40), not in the
+  the figure, from `FIGURE_NOTES` in `render.py` (I.39, I.40), not in the
   mishnah.
 
 ## 5. Text and citations

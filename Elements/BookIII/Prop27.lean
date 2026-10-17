@@ -53,7 +53,7 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       -- Let the angle BGC be greater; and on the straight line BG, and at the point G on it, let
       -- the angle BGK be constructed equal to the angle EHF. [I. 23]
       have hGB : G ≠ B := (ne_of_centre_of_on hG hB).symm
-      obtain ⟨B', K', hB', hK'C, hBGK'⟩ := BookI.Prop23 hGB hHR.triangle.acb hGQ.triangle.cab
+      obtain ⟨K', B', hB', hK'C, hK'GB'⟩ := BookI.Prop23 hGB hHR.triangle.acb hGQ.triangle.cab
       /- I.23 gives the direction. Take K on that ray at the distance GB from G;
          System E, Diagram-segment 3, puts it on the given circle. -/
       have hK'G : K' ≠ G := hK'C.triangle.ne₁₃.symm
@@ -61,7 +61,7 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       have hK : OnCircle K ABC := on_circle_of_len_eq hG hB hGK
       have hBGK : ∠ B G K = ∠ E H F := by
         rw [angle_onRay_right hK_ray hGB.symm, ← angle_onRay_left hB' hK'G]
-        exact hBGK'
+        exact (angle_symm hB'.2.1 hK'G).trans hK'GB'
       have hGBK : Triangle G B K := (SameSideOf.of_onRay hK_ray hK'C).triangle
       -- Now equal angles stand on equal circumferences, when they are at the centres; [III. 26]
       /- III.26 names the circumference BK by a point P beyond it, and sets out a point of

@@ -50,10 +50,10 @@ theorem Prop34 {D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centr
   -- and on the straight line FB, and at the point B on it, let the angle FBC be constructed
   -- equal to the angle at D. [I. 23]
   /- Copy the given angle on the centre's side of EF. -/
-  obtain ⟨F', C', hF', hC'O, hFBC'⟩ := BookI.Prop23 hBF hD hOBF'.bca
+  obtain ⟨C', F', hF', hC'O, hC'BF'⟩ := BookI.Prop23 hBF hD hOBF'.bca
   have hC'B : C' ≠ B := hC'O.triangle.ne₁₃.symm
   have hcopy : ∠ F B C' = ∠ D₁ D D₂ :=
-    (angle_onRay_left hF' hC'B).symm.trans hFBC'
+    (angle_onRay_left hF' hC'B).symm.trans ((angle_symm hF'.2.1 hC'B).trans hC'BF')
   /- Euclid reads C off the figure. The straight line BC' passes within the circle
      by III.16, so it meets the circle again. -/
   obtain ⟨B', -, -, hB'OB⟩ :=

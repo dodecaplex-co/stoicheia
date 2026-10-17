@@ -292,8 +292,6 @@ def heath_figure_note(source):
 # Where our drawing of Euclid's figure places a point otherwise than Heath's, as the Lean
 # does, said under the figure (docs/STYLE.md, section 4).
 FIGURE_NOTES = {
-    ("I", 23): "F stands on AB and G off it, where our proof puts them; Heath's figure has "
-               "them the other way about.",
     ("I", 39): "AE is drawn level, as the proof supposes; Heath draws AD level.",
     ("I", 40): "F is drawn between C and D, with AF level, as the proof supposes; Heath "
                "draws AD level and AF sloping.",

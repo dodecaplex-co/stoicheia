@@ -52,9 +52,10 @@ theorem Prop31 {A B C : Point} (hBC : B ≠ C) (hA : ¬ Collinear B C A) :
      passes through a point D₁ of that ray) and the other through a point E on
      whichever side of AD we ask for. We ask for B's side, away from C. The angle
      D₁AE is the angle DAE, its arms being the same rays (`angle_onRay_left`). -/
-  obtain ⟨D₁, E, hD₁, hEB, hD₁AE⟩ := Prop23 hAD hADC hADB
+  obtain ⟨E, D₁, hD₁, hEB, hEAD₁⟩ := Prop23 hAD hADC hADB
   have hAE : A ≠ E := hEB.triangle.ne₁₃
-  have hDAE : ∠ D A E = ∠ A D C := (angle_onRay_left hD₁ hAE.symm).symm.trans hD₁AE
+  have hDAE : ∠ D A E = ∠ A D C :=
+    (angle_onRay_left hD₁ hAE.symm).symm.trans ((angle_symm hD₁.2.1 hAE.symm).trans hEAD₁)
   -- and let the straight line AF be produced in a straight line with EA.
   obtain ⟨F, hEAF⟩ := produce hAE.symm
   -- Then, since the straight line AD falling on the two straight lines BC, EF has made the

@@ -57,13 +57,14 @@ theorem Prop44.place {A B X P Q R S : Point} (hAB : A ≠ B) (hX : ¬ Collinear 
      equal to QP. -/
   have hX' : ¬ Collinear B E X := fun ⟨K, hB_K, hE_K, hX_K⟩ =>
     hX_AB ((line_unique hBE_ne hB_K hE_K hB_AB hE_AB) ▸ hX_K)
-  obtain ⟨E₂, G₁, hE₂, hG₁, hang⟩ := Prop23 hBE_ne hPQR.cba hX'
+  obtain ⟨G₁, E₂, hE₂, hG₁, hang⟩ := Prop23 hBE_ne hPQR.cba hX'
   obtain ⟨K₂, hBK₂⟩ := Prop2 B Q P hPQR.ne₁₂.symm
   obtain ⟨G, hG, hBG⟩ :=
     OnRay.exists_len_eq (ne_of_len_eq hBK₂ hPQR.ne₁₂.symm) hG₁.triangle.ne₁₃
   have hBG_QP : ‖B G‖ = ‖Q P‖ := hBG.trans hBK₂
   have hGX : SameSideOf G X B E := SameSideOf.of_onRay hG hG₁
-  have hEBG : ∠ E B G = ∠ R Q P := (angle_eq_of_onRay hE₂.symm hG).trans hang
+  have hEBG : ∠ E B G = ∠ R Q P :=
+    (angle_eq_of_onRay hE₂.symm hG).trans ((angle_symm hE₂.2.1 hG₁.triangle.ne₁₃.symm).trans hang)
   have hBEG : Triangle B E G := hGX.triangle
   /- Through G a parallel to BE, through E a parallel to BG, meeting at F. -/
   obtain ⟨ℓ₁, hG_ℓ₁, hℓ₁⟩ := Prop31.line (hBEG.off_line hB_AB hE_AB)

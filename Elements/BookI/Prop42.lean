@@ -37,7 +37,7 @@ theorem Prop42 {A B C D₁ D D₂ : Point} (hABC : Triangle A B C) (hD : Triangl
   -- on the straight line EC, and at the point E on it, let the angle CEF be constructed equal
   -- to the angle D; [I. 23]
   have hECA : Triangle E C A := Triangle.of_line hE hC hEC hA_BC
-  obtain ⟨C₁, F₁, hC₁, hF₁, hang⟩ := Prop23 hEC hD hECA
+  obtain ⟨F₁, C₁, hC₁, hF₁, hang⟩ := Prop23 hEC hD hECA
   /- C₁ lies on the ray EC, and F₁ on A's side of EC. The parallel through A
      will determine F on the ray from E through F₁. -/
   -- through A let AG be drawn parallel to EC, and [I. 31]
@@ -76,7 +76,8 @@ theorem Prop42 {A B C D₁ D D₂ : Point} (hABC : Triangle A B C) (hD : Triangl
   -- therefore the parallelogram FECG is equal to the triangle ABC.
   have hequal : quadArea F E C G = △ A B C := CommonNotion1 hFECG_double hABC_double
   -- And it has the angle CEF equal to the given angle D.
-  have hCEF : ∠ C E F = ∠ D₁ D D₂ := (angle_eq_of_onRay hC₁.symm hFray).trans hang
+  have hCEF : ∠ C E F = ∠ D₁ D D₂ :=
+    (angle_eq_of_onRay hC₁.symm hFray).trans ((angle_symm hC₁.2.1 hEF₁.symm).trans hang)
   -- Therefore the parallelogram FECG has been constructed equal to the given triangle ABC, in
   -- the angle CEF which is equal to D.
   exact ⟨E, F, G, hBEC, SameSideOf.of_line hABC.ne₂₃ hB hC hFA, hFECG, hCEF, hequal⟩

@@ -72,9 +72,10 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
     -- First let it be greater;
     -- and on the straight line BA, and at the point A on it, let the angle BAE be constructed
     -- equal to the angle ABD; let DB be drawn through to E, and let EC be joined.
-    obtain ⟨F, G, hF, hGD, hFAG⟩ := BookI.Prop23 hAB hABD hABD
+    obtain ⟨G, F, hF, hGD, hGAF⟩ := BookI.Prop23 hAB hABD hABD
     have hGA : G ≠ A := hGD.triangle.ne₁₃.symm
-    have hBAG : ∠ B A G = ∠ A B D := (angle_onRay_left hF hGA).symm.trans hFAG
+    have hBAG : ∠ B A G = ∠ A B D :=
+      (angle_onRay_left hF hGA).symm.trans ((angle_symm hF.2.1 hGA).trans hGAF)
     obtain ⟨M, hA_M, hB_M⟩ := Postulate1 A B hAB
     obtain ⟨K, hA_K, hG_K⟩ := Postulate1 A G hGA.symm
     /- AG and DB produced meet [Post. 5], for the angles GAB, ABD are less than two right
@@ -163,9 +164,10 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
     -- and if we construct, on the straight line BA and at the point A on it, an angle equal to
     -- the angle ABD, the centre will fall on DB within the segment ABC, and the segment ABC will
     -- clearly be greater than a semicircle.
-    obtain ⟨F, G, hF, hGD, hFAG⟩ := BookI.Prop23 hAB hABD hABD
+    obtain ⟨G, F, hF, hGD, hGAF⟩ := BookI.Prop23 hAB hABD hABD
     have hGA : G ≠ A := hGD.triangle.ne₁₃.symm
-    have hBAG : ∠ B A G = ∠ A B D := (angle_onRay_left hF hGA).symm.trans hFAG
+    have hBAG : ∠ B A G = ∠ A B D :=
+      (angle_onRay_left hF hGA).symm.trans ((angle_symm hF.2.1 hGA).trans hGAF)
     /- The straight line AG falls within the angle BAD, and crosses BD at E. -/
     have hGB : SameSideOf G B A D := BookI.Prop24.within hGD.symm (by rw [hBAG]; exact h)
     obtain ⟨E, hBED, hEray⟩ := crossbar hGD hGB
