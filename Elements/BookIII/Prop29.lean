@@ -18,7 +18,8 @@ open Tacit
 
 /-- Where the centre `M` lies as the straight line `XY` cuts off the circumference `XZY`:
 beyond it, and the circumference is less than a semicircle; on `XY`, a semicircle; on its
-side, greater. [I. 5, I. 32, III. 20, III. 21, III. 22] -/
+side, greater. Euclid's figure has the first; Lean takes all three.
+[I. 5, I. 32, III. 20, III. 21, III. 22] -/
 theorem Prop29.size {X Y Z M : Point} {α : Circle} (hM : Centre M α) (hX : OnCircle X α)
     (hY : OnCircle Y α) (hXYZ : Triangle X Y Z) :
     (OppositeSidesOf M Z X Y ∧ circumference α X Z Y < ∟ + ∟) ∨

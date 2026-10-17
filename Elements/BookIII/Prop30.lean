@@ -39,8 +39,8 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   have hC_L : OnLine C L := on_line_of_between_ends hACB hA_L hB_L
   obtain ⟨X, hXP, hX⟩ := BookI.Prop11 hAB ⟨L, hA_L, hB_L, hC_L⟩ hP
   /- `CX` meets the circumference on `P`'s side at `D`: `C` is within the circle
-     (`inside_of_between`), so `XC` produced beyond `C` and back meets it beyond `C` from
-     the far side (`line_circle_beyond`). -/
+     (`inside_of_between`), so, `XC` being produced beyond `C` to `Y`, the straight line
+     meets the circle at `D` beyond `C` from `Y`, on `X`'s side (`line_circle_beyond`). -/
   have hC_in : InsideCircle C ADB := inside_of_between (Or.inr hA) (Or.inr hB) hACB
   have hX_L : ¬ OnLine X L := hXP.triangle.off_line hA_L hB_L
   have hCX : C ≠ X := fun e => hX_L (e ▸ hC_L)
@@ -103,7 +103,7 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
     exact h17
   /- So the circumferences `ABD`, `DAB` on the other sides are greater, the two on each
      straight line making up the circle (`Circumference.whole`). -/
-  have le_of_lt : ∀ {x y : Angle}, x < ∟ + ∟ → x + y = ∟ + ∟ + (∟ + ∟) → x ≤ y := by
+  have not_greater : ∀ {x y : Angle}, x < ∟ + ∟ → x + y = ∟ + ∟ + (∟ + ∟) → x ≤ y := by
     intro x y hx hxy hyx
     have h1 := add_lt_add_right y hx
     have h2 := add_lt_add_right (∟ + ∟) (lt_trans hyx hx)
@@ -112,7 +112,7 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   have hw₁ := Circumference.whole ⟨O, hO⟩ hA hD hQB.symm
   have hw₂ := Circumference.whole ⟨O, hO⟩ hD hB hRA.symm
   -- therefore the circumference AD is equal to the circumference DB.
-  have hADDB := (h28 (le_of_lt hAQD hw₁) (le_of_lt hDRB hw₂)).2
+  have hADDB := (h28 (not_greater hAQD hw₁) (not_greater hDRB hw₂)).2
   -- Therefore the given circumference has been bisected at the point D.
   rw [standing_eq_circumference hQB.symm, standing_eq_circumference hRA.symm]
   exact hADDB
