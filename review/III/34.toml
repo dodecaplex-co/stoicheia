@@ -1,0 +1,16 @@
+[statement]
+scope = "full"
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["segment-with-circle", "centre-given"]
+note = "The given circle comes with a centre (`∃ O, Centre O ABC`), which the proof needs to draw EF touching it by III.16's porism; the segment cut off is named by its points B, A and C."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

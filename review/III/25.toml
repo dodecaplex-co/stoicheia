@@ -1,0 +1,32 @@
+[statement]
+scope = "full"
+note = "Handed the whole circle and that it has a centre; constructs B, D and E as Euclid does and proves E the centre, in each of his three cases."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["segment-with-circle", "centre-given"]
+note = "The given segment is the circle ABC, the straight line AC in it and a point P on the segment's side, so the statement is handed the circle and `∃ E, Centre E ABC`. Euclid's construction uses only points of the segment, but a statement handed the circle cannot show that."
+
+[[passage]]
+at = "And it is manifest that the segment ABC is less than a semicircle"
+kind = "unformalized"
+note = "The statement says where the centre falls, here across AC from B, which is Euclid's reason; it does not compare the segment with a semicircle."
+
+[[passage]]
+at = "and ABC will clearly be a semicircle"
+kind = "unformalized"
+note = "The statement says that D is the centre; it does not say that the segment is then a semicircle."
+
+[[passage]]
+at = "and the segment ABC will clearly be greater than a semicircle"
+kind = "unformalized"
+note = "The statement says that the centre falls on B's side of AC, between B and D; it does not compare the segment with a semicircle."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

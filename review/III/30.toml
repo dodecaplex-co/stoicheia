@@ -1,0 +1,17 @@
+[statement]
+scope = "full"
+note = "Handed the whole circle, the straight line AB and a point on the side of the given circumference; D bisects it in the angle measure."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["segment-with-circle", "angle-measure", "centre-given"]
+note = "The given circumference is put as a given segment is: its circle, the straight line AB and a point P on its side, with `∃ O, Centre O ADB` for the measure. Its halves are equal measures in one circle, by III.28."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"

@@ -1,0 +1,17 @@
+[statement]
+scope = "full"
+note = "\"The greater\" is taken as no less, so two diameters, which cut off four semicircles, are covered as well."
+fingerprint = ""
+
+[route]
+kind = "euclid"
+
+[representation]
+tags = ["angle-measure"]
+note = "The circumferences are compared by the angle measure, and here the equal circles do real work: equal straight lines in unequal circles cut off unequal measures."
+
+[review]
+stage = "exceptions"
+commit = "22e50b8"
+lean = ""
+reviewer = "Claude (classifier)"
