@@ -19,6 +19,7 @@ the book may end with a line or three from this list, chosen for its proposition
 [The theorem of Pythagoras](#the-theorem-of-pythagoras) ·
 [The golden section](#the-golden-section) ·
 [Was Book II algebra?](#was-book-ii-algebra) ·
+[The circle, and where Book III leads](#the-circle-and-where-book-iii-leads) ·
 [Ruler and compass, and what they cannot do](#ruler-and-compass-and-what-they-cannot-do) ·
 [The history of Greek mathematics](#the-history-of-greek-mathematics) ·
 [Diagrams and proof](#diagrams-and-proof) ·
@@ -27,7 +28,9 @@ the book may end with a line or three from this list, chosen for its proposition
 ## Euclid and his commentators
 
 Heath's notes, quoted all through the mishnah, gather what readers of the *Elements* have
-said of it since antiquity. These carry the conversation on.
+said of it since antiquity. These carry the conversation on. Robert Simson, Augustus De
+Morgan and Isaac Todhunter, whom Heath quotes again and again on Book III, can be read
+here in their own words.
 
 - <a id="morrow1970proclus"></a>Proclus, [*A Commentary on the First Book of Euclid's Elements*](https://press.princeton.edu/books/paperback/9780691020907/proclus),
   translated with an introduction and notes by Glenn R. Morrow (Princeton University
@@ -42,10 +45,32 @@ said of it since antiquity. These carry the conversation on.
   (MIT Press, 1981; Dover, 2006). Mueller charts, book by book, which propositions each
   proof rests on and what Euclid assumes without saying, the questions our certificate
   answers in Lean. A careful, scholarly book for going deeper.
+- <a id="simson1756elements"></a>Robert Simson, [*The Elements of Euclid, viz. the First Six Books, together with the Eleventh and Twelfth*](https://archive.org/details/bim_eighteenth-century_elements-english-sele_euclid_1756_0)
+  (Robert and Andrew Foulis, Glasgow, 1756). **Free.** The Glasgow first edition of
+  Simson's Euclid, whose notes Heath quotes again and again. In his short notes on Book III
+  (pp. 363–368) Simson explains in his own words why III.1 can only be proved indirectly,
+  why he added the second case of III.21, and why he restored the cases of III.35.
+- <a id="demorgan1849remarks"></a>Augustus De Morgan, ["Short Supplementary Remarks on the First Six Books of Euclid's Elements"](https://archive.org/details/sim_british-almanac-companion_1849),
+  in *The Companion to the Almanac; or, Year-Book of General Information for 1849*
+  (Charles Knight, 1849), 5–20. **Free.** Sixteen brisk pages of advice to teachers, from
+  which Heath draws his reports of De Morgan: the gaps in III.7 and III.8, the "state of
+  confusion" of touching circles, and the request that III.26 to III.29 be read as one
+  statement and III.35 with III.36 as another.
+- <a id="todhunter1872elements"></a>Isaac Todhunter, [*The Elements of Euclid for the Use of Schools and Colleges*](https://archive.org/details/todhuntereuclid00todhrich),
+  new edition (Macmillan, 1872; first edition 1862). **Free.** Simson's text revised, with
+  notes. The seven short, kindly pages on Book III (pp. 271–277) give in Todhunter's own
+  words the remarks Heath passes on to our mishnah, from his reading of touching circles to
+  the converse of III.22.
 - <a id="dodgson1879euclid"></a>Charles L. Dodgson, [*Euclid and His Modern Rivals*](https://archive.org/details/euclidandhismode000469mbp)
   (Macmillan, 1879; 2nd ed. 1885). **Free.** Lewis Carroll puts the new geometry
   textbooks of his day on trial, in a comic dialogue between Minos and a ghostly German
   professor, and makes a spirited case for keeping Euclid's order of propositions.
+- <a id="smith1911teaching"></a>David Eugene Smith, [*The Teaching of Geometry*](https://www.gutenberg.org/ebooks/37681)
+  (Ginn, 1911). **Free.** A warm, practical book for teachers, full of history and outdoor
+  uses: an engineer finds the centre of a railway curve as in III.1 and III.3, a
+  carpenter's square tests a semicircle as in III.31, and III.35 and III.36 become one
+  theorem by letting the point wander. Smith's Book II is Euclid's Book III, in the
+  American order.
 - <a id="wardhaugh2021encounters"></a>Benjamin Wardhaugh, [*Encounters with Euclid: How an Ancient Greek Geometry Text Shaped the World*](https://press.princeton.edu/books/hardcover/9780691211695/encounters-with-euclid)
   (Princeton University Press, 2021; published in Britain in 2020 as *The Book of
   Wonders: The Many Lives of Euclid's Elements*). A charming history of the *Elements*
@@ -97,6 +122,11 @@ with Yaglom and Klein.
   translated by David Eugene Smith and Marcia L. Latham, with a facsimile of the 1637
   original (Open Court, 1925; Dover, 1954). **Free.** The book in which Descartes turns
   ruler-and-compass problems into equations: geometry done by algebra, in his own words.
+- <a id="loney1895coordinate"></a>S. L. Loney, [*The Elements of Coordinate Geometry*](https://archive.org/details/elementsofcoordi00lone)
+  (Macmillan, 1895). **Free.** A clear Victorian textbook that does with equations what
+  Book III does with figures: its chapter on the circle puts the tangent at right angles to
+  the radius and gets the rectangle of III.35 and III.36 from the two roots of a quadratic,
+  as our modern ways do.
 - <a id="stillwell2005four"></a>John Stillwell, [*The Four Pillars of Geometry*](https://doi.org/10.1007/0-387-29052-4)
   (Springer, 2005). One plane seen four ways, through Euclid's straightedge and compass,
   coordinates and vectors, projective geometry and transformations: the road each modern
@@ -126,6 +156,11 @@ with Yaglom and Klein.
   short, gentle book that assumes nothing about complex numbers, then uses them in its
   chapter "Applications to Geometry" for quick, satisfying proofs of classical theorems of
   the plane.
+- <a id="andreescu2014complex"></a>Titu Andreescu and Dorin Andrica, [*Complex Numbers from A to ... Z*](https://doi.org/10.1007/978-0-8176-8415-0),
+  2nd ed. (Birkhäuser, 2014; first edition 2005). A cheerful problem book that teaches
+  complex numbers from scratch and then turns them on geometry, with a section of tests
+  for when points lie on one straight line, meet at right angles or lie on one circle
+  (§3.2).
 - <a id="nahin1998imaginary"></a>Paul J. Nahin, [*An Imaginary Tale: The Story of √−1*](https://doi.org/10.1515/9781400833894)
   (Princeton University Press, 1998; with a new preface, 2010). How mathematicians went
   from distrusting √−1 to drawing it as a quarter turn, told with real enthusiasm: a good
@@ -160,6 +195,12 @@ allows, and these books start from there.
   America). A slim, playful classic for curious school students: translations,
   half-turns, rotations and reflections, each put to work on clever construction problems,
   beside I.4, I.5, I.15 and I.34.
+- <a id="yaglom2009geometric"></a>I. M. Yaglom, [*Geometric Transformations IV: Circular Transformations*](https://doi.org/10.5948/UPO9780883859582),
+  translated by Abe Shenitzer (Mathematical Association of America, 2009; now MAA Press
+  and the American Mathematical Society). The last volume of the series begun above, which
+  introduces reflection in a circle by analogy with reflection in a line. Its chapter 3
+  calls the product MA · MB the power of M, d² − r², and finds the radical axis as the line
+  where two circles' powers agree.
 - <a id="martin1982transformation"></a>George E. Martin, [*Transformation Geometry: An Introduction to Symmetry*](https://doi.org/10.1007/978-1-4612-5680-9)
   (Springer, 1982). A clear, step-by-step book that builds congruence itself out of
   reflections (chapters 4 and 5), the modern sense of Euclid's superposition in I.4 and
@@ -272,6 +313,73 @@ Jens Høyrup's survey below is a gentle way in.
   and II.14; chapter 8, "Origin and Heritage", asks where the technique came from and
   where it went.
 
+## The circle, and where Book III leads
+
+Book III is Euclid's book of the circle: chords and tangents, touching circles, the angles
+in a segment, and the rectangles of III.35 and III.36. Geometers went on from there to the
+power of a point, the radical axis, coaxal circles and inversion. These books follow them,
+from school geometry to a university course.
+
+- <a id="casey1886sequel"></a>John Casey, [*A Sequel to the First Six Books of the Elements of Euclid, Containing an Easy Introduction to Modern Geometry, with Numerous Examples*](https://archive.org/details/sequeltofirstsix00caserich),
+  4th ed. (Hodges, Figgis, & Co., Dublin, 1886; first edition 1881). **Free.** Written in
+  Dublin for students who had finished Euclid, by the author whose *First Six Books* the
+  README thanks. Its supplement to Book III adds the propositions Euclid left out, from
+  equal tangents and touching circles to the radical axis, proved in Euclid's manner and
+  citing his propositions by number.
+- <a id="coolidge1916treatise"></a>Julian Lowell Coolidge, [*A Treatise on the Circle and the Sphere*](https://archive.org/details/cu31924001508955)
+  (Clarendon Press, 1916; Chelsea, 1971). **Free.** A great old treatise wholly about the
+  circle and the sphere. Its first chapter gives the power of a point a sign, just as
+  III.35's modern way does, and finds the radical axis of III.10 from it; its preface
+  remarks that had Euclid taken Lobachevsky's or Riemann's assumption in place of his
+  parallel postulate, he could not have proved that the angles in one segment are equal.
+  Scholarly, but rewarding to dip into.
+- <a id="johnson1929modern"></a>Roger A. Johnson, [*Modern Geometry: An Elementary Treatise on the Geometry of the Triangle and the Circle*](https://archive.org/details/bwb_P9-AFM-481)
+  (Houghton Mifflin, 1929; Dover, 1960 and 2007, as *Advanced Euclidean Geometry*).
+  **Free.** A classic that begins where Euclid's circles leave off: its third chapter joins
+  III.35 and III.36 into one theorem, defines the power of a point as OP² − r², the very
+  form of our modern way, and builds the radical axis, coaxal circles and inversion on it.
+- <a id="ogilvy1969excursions"></a>C. Stanley Ogilvy, [*Excursions in Geometry*](https://store.doverpublications.com/products/9780486265308)
+  (Oxford University Press, 1969; Dover, 1990). A pleasantly written little book for
+  readers who liked school geometry and wanted more. It states III.35 and III.36 as one
+  "basic theorem", then goes on to orthogonal circles, the radical axis, inversion,
+  Peaucellier's linkage and Steiner's chains of touching circles.
+- <a id="pedoe1995circles"></a>Dan Pedoe, [*Circles: A Mathematical View*](https://doi.org/10.1090/spec/012),
+  revised edition (Mathematical Association of America, 1995; first published 1957; now
+  MAA Press and the American Mathematical Society). A small, concise book given wholly to
+  the circle. Its gentle Chapter 0, new in this edition, retells the circle theorems of
+  Book III with only paper, pencil, compass and ruler; then the book turns, more
+  demandingly, to inversion, coaxal circles and the cross-ratio of four points on a circle.
+- <a id="hadamard2008lessons"></a>Jacques Hadamard, [*Lessons in Geometry, I: Plane Geometry*](https://doi.org/10.1090/mbk/057),
+  translated by Mark Saul from the 13th French edition of 1947 (American Mathematical
+  Society and Education Development Center, 2008; first edition 1898). Hadamard's school
+  geometry, revised by him twelve times and now in English. Its book on the circle walks
+  much of Book III's road, from chords and tangents and two circles meeting to the
+  inscribed angle, and its book on similarity reaches the power of a point and the radical
+  axis.
+- <a id="davis2011inversion"></a>Tom Davis, ["Inversion in a Circle"](http://www.geometer.org/mathcircles/inversion.pdf)
+  (handout, 2011). **Free.** One of the friendly handouts Tom Davis wrote for math circles
+  for high-school students, showing inversion in a circle at work, mostly in pictures
+  rather than proofs: the inverse of a point found with a straight line touching the
+  circle, as in III.17, touching circles turned into parallel lines, and the radical axis
+  put to use in proving Steiner's porism.
+- <a id="brannan2012geometry"></a>David A. Brannan, Matthew F. Esplen and Jeremy J. Gray, [*Geometry*](https://doi.org/10.1017/CBO9781139003001),
+  2nd ed. (Cambridge University Press, 2012; first edition 1999). For a reader ready for a
+  university course, a generous Open University textbook that follows Klein in studying
+  each geometry through its transformations. Its chapter 5, "Inversive Geometry", treats
+  circles and lines together, inverts touching circles, and gathers circles with a common
+  radical axis into coaxal families.
+- <a id="chen2016euclidean"></a>Evan Chen, [*Euclidean Geometry in Mathematical Olympiads*](https://doi.org/10.5948/9781614444114)
+  (Mathematical Association of America, 2016; now the American Mathematical Society).
+  Written for students preparing for olympiads, and more demanding than most books here,
+  but its first two chapters are a lively modern course in Book III's ideas: angles in
+  circles, cyclic quadrilaterals, tangents, the power of a point and the radical axis.
+- <a id="alsina2020cornucopia"></a>Claudi Alsina and Roger B. Nelsen, [*A Cornucopia of Quadrilaterals*](https://doi.org/10.1090/dol/055)
+  (MAA Press and the American Mathematical Society, 2020). A generous, picture-filled book
+  about four-sided figures, many of its results proved without words, in the spirit of
+  Nelsen's [*Proofs Without Words*](#nelsen1993proofs). Its chapter "Quadrilaterals and
+  their circles" takes the quadrilateral in a circle of III.22 on to Ptolemy's theorem and
+  Brahmagupta's formula for its area.
+
 ## Ruler and compass, and what they cannot do
 
 With nothing but ruler and compass, Euclid bisects any angle in I.9 and constructs a
@@ -311,6 +419,40 @@ circles. These histories set Euclid among the mathematicians before and after hi
   link, and [vol. II](https://archive.org/details/cu31924008704227), *From Aristarchus to
   Diophantus*. **Free.** Heath's own history, for when a mishnah points past the
   *Elements* to Pythagoras, Hippocrates or Eudoxus, or to Heron, Pappus, Theon and Proclus.
+- <a id="thomas1939selections"></a>Ivor Thomas (translator), [*Selections Illustrating the History of Greek Mathematics*](https://www.hup.harvard.edu/books/9780674993693),
+  2 vols., Loeb Classical Library 335 and 362 (Heinemann and Harvard University Press, 1939
+  and 1941): vol. I, *From Thales to Euclid*, at the link, and
+  [vol. II](https://www.hup.harvard.edu/books/9780674993990), *From Aristarchus to
+  Pappus*; Harvard sells them today as *Greek Mathematical Works*. The ancient witnesses
+  themselves, Greek and English on facing pages with patient notes: Eudemus' account of
+  Hippocrates' lunes, which judges a segment greater or less than a semicircle by the angle
+  in it, and Ptolemy proving his theorem on the quadrilateral in a circle with III.21.
+- <a id="mactutor_hippocrates"></a>J. J. O'Connor and E. F. Robertson, ["Hippocrates of Chios"](https://mathshistory.st-andrews.ac.uk/Biographies/Hippocrates/),
+  *MacTutor History of Mathematics Archive* (web page, University of St Andrews).
+  **Free.** A short, clear page on the first geometer known to have written *Elements*,
+  which quotes Eudemus' old account of his lunes and draws the first one, the lune on a
+  right-angled isosceles triangle in a semicircle, for you to follow.
+- <a id="aaboe1964episodes"></a>Asger Aaboe, [*Episodes from the Early History of Mathematics*](https://doi.org/10.5948/UPO9780883859285)
+  (Random House, 1964; now MAA Press and the American Mathematical Society). A slim
+  classic of the New Mathematical Library whose last chapter follows Ptolemy as he builds
+  his table of chords and puts it to use: the straight lines in a circle of III.15, III.28
+  and III.29, set out arc by arc.
+- <a id="dunham1990journey"></a>William Dunham, [*Journey through Genius: The Great Theorems of Mathematics*](https://www.wiley.com/en-us/Journey+through+Genius%3A+The+Great+Theorems+of+Mathematics-p-9780471500308)
+  (Wiley, 1990; Penguin, 1991). Great theorems told with their history. The warm,
+  story-filled opening chapter meets Thales, proves the right angle in a semicircle by an
+  argument taken from III.31, and follows Hippocrates of Chios as he squares a lune with
+  it.
+- <a id="ostermann2012geometry"></a>Alexander Ostermann and Gerhard Wanner, [*Geometry by Its History*](https://doi.org/10.1007/978-3-642-29163-0)
+  (Springer, 2012). Geometry learned from the old masters, roughly in the order it was
+  found, with a section on Book III that sets III.20, III.22, III.31, III.35 and III.36 side
+  by side and carries them on to the power of a point; its chapter on trigonometry then
+  begins from Ptolemy's chords.
+- <a id="koshkin2020bisecting"></a>Sergiy Koshkin, ["Bisecting Horn Angles"](https://arxiv.org/abs/2206.09499),
+  *The College Mathematics Journal* 51 (2020), 124–131, DOI 10.1080/07468342.2020.1700745;
+  the link is the author's preprint on arXiv. **Free.** A short paper that opens with a
+  page of history on the horn-like angle of III.16, from Proclus, who wondered whether it
+  could be bisected, to Edward Kasner, and then bisects it by means the Greeks had; its
+  later sections lean on conics and complex analysis.
 - <a id="katz2009history"></a>Victor J. Katz, [*A History of Mathematics: An Introduction*](https://openlibrary.org/books/OL22656816M),
   3rd ed. (Addison-Wesley, 2009). A clear, wide-ranging textbook history that sets Euclid
   beside the mathematics of Egypt, Mesopotamia, China, India and the Islamic world.
