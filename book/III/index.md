@@ -23,7 +23,7 @@
 
 ## The propositions
 
-Start with the [definitions](front.md).
+Start with the [definitions](front.md). What Euclid takes for granted along the way is gathered in [a catalogue](../../docs/reports/gaps-book-III.md).
 
 Books and papers to read alongside, from Proclus to Lean, are gathered by theme in [the reading list](../../docs/reading.md).
 

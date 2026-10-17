@@ -334,4 +334,5 @@ worth naming. The first mate's report has a note on every statement.
   be proved again for it. The captain's call.
 - **A circle's centre.** If Definition 15's other half becomes a rule, the
   `∃ O, Centre O α` hypotheses can go.
-- A gap catalogue for Book III.
+- A gap catalogue for Book III. (It now exists:
+  [gaps-book-III.md](../reports/gaps-book-III.md), and Book III's index page links it.)
