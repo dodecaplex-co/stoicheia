@@ -71,7 +71,7 @@ theorem Prop12 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
       rw [h1, len_symm A G, h2]
     -- so that the whole FG is greater than FA, AG;
     /- C cannot be within ADE: a point of CF sufficiently near C would be
-       within both circles. C and D may coincide, so "not less" suffices. -/
+       within both circles. C and D may be one point, so "not less" suffices. -/
     have hC_out : ¬ ‖G C‖ < ‖G A‖ := by
       intro h
       obtain ⟨P, hCPF, hP⟩ :=

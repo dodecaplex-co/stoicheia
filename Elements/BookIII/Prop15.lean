@@ -82,7 +82,7 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
   have hFKG : Between F K G := foot_between hE hF hG hE_FG hK hEK
   -- Then, since BC is nearer to the centre and FG more remote, EK is greater than
   -- EH. [III. Def. 5]
-  /- `hnearer`. -/
+  /- Given, as `hnearer`. -/
   -- Let EL be made equal to EH, through L let LM be drawn at right angles to EK and carried
   -- through to N, and let ME, EN, FE, EG be joined.
   /- Cut EL off EK [I. 3]. -/
