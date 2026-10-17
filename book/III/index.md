@@ -4,6 +4,25 @@
 
 **19 of 37 propositions proved in Lean.** Key to the table: ✅ proved · 🚧 stated.
 
+**From the centre to the tangent.** Book I drew circles to find points; Book III studies the circle itself: its centre, the straight lines in it, those that touch it, the angles in its segments, the right angle in a semicircle among them (III.31), and the circumferences those angles stand on. A diameter, in Books I and II often a parallelogram's diagonal, is the circle's again (Definition I.17). Each page reads as Book I's do, and [Book I's introduction](../I/index.md) says how.
+
+**"Let the centre of the circle ABC be taken."** Euclid says it in III.2, citing III.1, and often after. In Lean a given circle has a centre only by hypothesis (`∃ O, Centre O α`), and the proofs take it by III.1, as Euclid does: a circle has only one centre (`centre_unique`), so III.1 finds the one given. System E knows some of Book III already: its Circle 2 is III.2, and one centre with one radius makes one circle (`circle_eq`), so III.5 and III.6 are short.
+
+**"Nothing technically wrong."** Book III's words are definitions in [`DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean), none an axiom. Equal circles (`EqualCircles`) have equal radii, and Heath finds "nothing technically wrong in saying 'By *equal circles* I mean circles with equal radii'" (vol. 2, p. 2). A straight line touches a circle (`Touches`) "which, meeting the circle and being produced, does not cut the circle" (Definition III.2): it meets the circle, but never in two points. Circles touching one another (`TouchesInternally`, `TouchesExternally`) we read as Isaac Todhunter does, by Heath's report: they cut nowhere at all, as III.11's page tells.
+
+**How long is a circumference?** Lean has no magnitude for a curve, so we measure a circumference by twice the angle standing on it at the circumference (Definition III.9; `circumference`, `standing`): its angle at the centre, when it is less than a semicircle (III.20). Euclid compares circumferences only in one circle or in equal circles, where this measure says exactly when two are equal, and our statements keep his "in equal circles". Our angles are made by two straight lines, so the mixed angles of III.16 and III.31, "contained by a straight line and a circumference" (Definition III.7), stay in the page's words.
+
+**What Book III takes for granted.** We prove once what Euclid passes over again and again, and the line under each page's table names the steps its proof calls on:
+
+- In [`Squares.lean`](../../Elements/BookIII/Squares.lean), equal squares are on equal straight lines (`BookI.Prop46.sq`), Euclid's "therefore EF is equal to EG" (III.14); and the perpendicular from the centre falls between the ends of a straight line in the circle (`foot_between`). With the squares of I.46 and I.47, Postulate 5 first comes into Book III, at III.14.
+- In [`Circumferences.lean`](../../Elements/BookIII/Circumferences.lean), proved from III.20 to III.22, is what Euclid assumes of circumferences from III.23 on, such as that the two on a straight line make up the whole circle. Through I.32 in III.20, every circumference rests on Postulate 5.
+
+**"From this it is manifest."** So Euclid opens the porisms to III.1 and III.16, and later proofs cite them: the centre lies on a straight line bisecting a straight line in the circle at right angles (III.9, III.10), and the straight line at right angles to a diameter at its end touches the circle (III.17, III.33, III.37). Our tables count a citation of either as one of its proposition.
+
+**Where our statements part from Euclid's.** III.1 is stated for a circle that has a centre, and proves that the point it constructs is that centre. III.9 leaves out "within", which its proof never uses and III.25 cannot grant. III.12, which Heath prints in square brackets as Heron's addition to III.11, is stated and proved like the rest. III.16 and III.31 keep the facts about straight lines that Euclid proves their mixed angles by. Lean cannot give a segment without its circle, so III.25, given the circle, a straight line in it and the segment's side, finds the centre by Euclid's construction, in his three cases. Each page tells why.
+
+## The propositions
+
 Start with the [definitions](front.md).
 
 Books and papers to read alongside, from Proclus to Lean, are gathered by theme in [the reading list](../../docs/reading.md).
