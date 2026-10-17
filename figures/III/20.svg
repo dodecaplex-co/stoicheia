@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="310" viewBox="0 0 400 310">
+  <title>Euclid III.20: the angle at the centre is double</title>
+  <rect width="400" height="310" rx="10" fill="#fbf7ee"/>
+  <circle cx="200" cy="160" r="115" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <path d="M 270.801 250.621 A 115 115 0 0 0 315 160" fill="none" stroke="#a0522d" stroke-width="2.5"/>
+  <g fill="none" stroke="#3b2f2f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M 270.801 250.621 L 88.919 130.236 L 315 160"/>
+    <path d="M 88.919 130.236 L 311.081 189.764"/>
+    <path d="M 270.801 250.621 L 243.080 53.374 L 315 160"/>
+    <path d="M 243.080 53.374 L 156.920 266.626"/>
+  </g>
+  <path d="M 270.801 250.621 L 200 160 L 315 160" fill="none" stroke="#a0522d" stroke-width="2.5" stroke-linecap="round"/>
+  <g fill="none" stroke="#8c7b62" stroke-width="1.3">
+    <path d="M 222 160 A 22 22 0 0 1 213.545 177.336"/>
+    <path d="M 120.645 134.413 A 32 32 0 0 1 115.607 147.895"/>
+  </g>
+  <g fill="#3b2f2f">
+    <circle cx="88.919" cy="130.236" r="2.6"/>
+    <circle cx="270.801" cy="250.621" r="2.6"/>
+    <circle cx="315" cy="160" r="2.6"/>
+    <circle cx="243.080" cy="53.374" r="2.6"/>
+    <circle cx="200" cy="160" r="2.6"/>
+    <circle cx="311.081" cy="189.764" r="2.6"/>
+    <circle cx="156.920" cy="266.626" r="2.6"/>
+  </g>
+  <g font-family="Georgia, serif" font-size="17" font-style="italic" fill="#3b2f2f">
+    <text x="70" y="129">A</text>
+    <text x="278" y="268">B</text>
+    <text x="326" y="166">C</text>
+    <text x="245" y="41">D</text>
+    <text x="177" y="174">E</text>
+    <text x="323" y="201">F</text>
+    <text x="145" y="287">G</text>
+  </g>
+</svg>
