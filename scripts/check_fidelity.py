@@ -37,7 +37,7 @@ import heath
 ROOT = heath.ROOT
 BOOKS = heath.BOOKS
 # Books whose every proposition is proved: they must stay that way.
-COMPLETE = {"I", "II"}
+COMPLETE = {"I", "II", "III"}
 SUPERPOSITION_ALLOWED = {"I.4", "I.8"}
 EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # The first proposition of each book allowed to rest on Postulate 5. Euclid holds it

@@ -94,12 +94,12 @@ What the proofs show:
 
 ## Book III
 
-**19 of 37 propositions proved.**
+**37 of 37 propositions proved.**
 
-What the proofs show so far:
+What the proofs show:
 
-- **Postulate 5**: 17 propositions never need it; 2 use it, the first being III.14. Book III comes after I.29, where Euclid first calls on it, so any of its propositions may.
-- **Superposition** is used directly by: none yet. Only I.4 and I.8 are allowed to.
+- **Postulate 5**: 17 propositions never need it; 20 use it, the first being III.14. Book III comes after I.29, where Euclid first calls on it, so any of its propositions may.
+- **Superposition** is used directly by: none. Only I.4 and I.8 are allowed to.
 
 | | Prop | Euclid cites | Lean cites | Postulates | Definitions | C.N. | Tacit |
 |---|---|---|---|---|---|---|---|
@@ -122,23 +122,23 @@ What the proofs show so far:
 | ✅ | [III.17](book/III/17.md) | I.4, III.1, III.16 | I.4, I.11, III.1, III.16 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 59 |
 | ✅ | [III.18](book/III/18.md) | I.17, I.19 | I.12, I.17, I.19 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 55 |
 | ✅ | [III.19](book/III/19.md) | III.18 | III.18 | 1, 2, 3, 4 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
-| 🚧 | [III.20](book/III/20.md) | I.5, I.32 | | | | | |
-| 🚧 | [III.21](book/III/21.md) | III.20 | | | | | |
-| 🚧 | [III.22](book/III/22.md) | I.32, III.21 | | | | | |
-| 🚧 | [III.23](book/III/23.md) | I.16 | | | | | |
-| 🚧 | [III.24](book/III/24.md) | III.10 | | | | | |
-| 🚧 | [III.25](book/III/25.md) | I.6, III.9 | | | | | |
-| 🚧 | [III.26](book/III/26.md) | I.4, III.24 | | | | | |
-| 🚧 | [III.27](book/III/27.md) | I.23, III.20, III.26 | | | | | |
-| 🚧 | [III.28](book/III/28.md) | I.8, III.26 | | | | | |
-| 🚧 | [III.29](book/III/29.md) | I.4, III.27 | | | | | |
-| 🚧 | [III.30](book/III/30.md) | I.4, III.28 | | | | | |
-| 🚧 | [III.31](book/III/31.md) | I.5, I.17, I.32, III.22 | | | | | |
-| 🚧 | [III.32](book/III/32.md) | I.32, III.19, III.22, III.31 | | | | | |
-| 🚧 | [III.33](book/III/33.md) | I.4, III.16, III.31, III.32 | | | | | |
-| 🚧 | [III.34](book/III/34.md) | I.23, III.32 | | | | | |
-| 🚧 | [III.35](book/III/35.md) | I.47, II.5, III.3 | | | | | |
-| 🚧 | [III.36](book/III/36.md) | I.47, II.6, III.3, III.18 | | | | | |
-| 🚧 | [III.37](book/III/37.md) | I.8, III.16, III.18, III.36 | | | | | |
+| ✅ | [III.20](book/III/20.md) | I.5, I.32 | I.5, I.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [III.21](book/III/21.md) | III.20 | III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [III.22](book/III/22.md) | I.32, III.21 | I.32, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [III.23](book/III/23.md) | I.16 | I.16, III.10, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 |
+| ✅ | [III.24](book/III/24.md) | III.10 | I.5, I.26, I.32, III.20, III.21, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [III.25](book/III/25.md) | I.6, III.9 | I.4, I.6, I.10, I.11, I.17, I.23, III.9 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 61 |
+| ✅ | [III.26](book/III/26.md) | I.4, III.24 | I.4, I.5, I.32, III.20, III.21, III.22, III.24 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 |
+| ✅ | [III.27](book/III/27.md) | I.23, III.20, III.26 | I.23, III.20, III.21, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 |
+| ✅ | [III.28](book/III/28.md) | I.8, III.26 | I.5, I.8, I.20, I.32, III.20, III.21, III.22, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 |
+| ✅ | [III.29](book/III/29.md) | I.4, III.27 | I.4, I.5, I.32, III.20, III.21, III.22, III.27 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 |
+| ✅ | [III.30](book/III/30.md) | I.4, III.28 | I.4, I.10, I.11, I.17, III.21, III.22, III.28 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 |
+| ✅ | [III.31](book/III/31.md) | I.5, I.17, I.32, III.22 | I.5, I.17, I.32, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [III.32](book/III/32.md) | I.32, III.19, III.22, III.31 | I.11, I.13, I.32, III.19, III.21, III.22, III.31 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 59 |
+| ✅ | [III.33](book/III/33.md) | I.4, III.16, III.31, III.32 | I.4, I.10, I.11, I.23, III.16, III.31, III.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 61 |
+| ✅ | [III.34](book/III/34.md) | I.23, III.32 | I.11, I.23, III.16, III.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 61 |
+| ✅ | [III.35](book/III/35.md) | I.47, II.5, III.3 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.5, III.1, III.3 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 67 |
+| ✅ | [III.36](book/III/36.md) | I.47, II.6, III.3, III.18 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.6, III.1, III.3, III.18 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 69 |
+| ✅ | [III.37](book/III/37.md) | I.8, III.16, III.18, III.36 | I.3, I.4, I.8, I.20, I.28, I.34, I.46, III.1, III.16, III.17, III.18, III.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 69 |
 
 The Common Notions are theorems in Lean (see [`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so `#print axioms` cannot see them; the walk that finds them goes everywhere `#print axioms` goes. Lean's own logical foundations (`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and are left out.

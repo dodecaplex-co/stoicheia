@@ -2,7 +2,7 @@
 
 # Book III
 
-**19 of 37 propositions proved in Lean.** Key to the table: ✅ proved · 🚧 stated.
+**37 of 37 propositions proved in Lean.** Key to the table: ✅ proved.
 
 **From the centre to the tangent.** Book I drew circles to find points; Book III studies the circle itself: its centre, the straight lines in it, those that touch it, the angles in its segments, the right angle in a semicircle among them (III.31), and the circumferences those angles stand on. A diameter, in Books I and II often a parallelogram's diagonal, is the circle's again (Definition I.17). Each page reads as Book I's do, and [Book I's introduction](../I/index.md) says how.
 
@@ -48,21 +48,21 @@ Books and papers to read alongside, from Proclus to Lean, are gathered by theme 
 | ✅ | [III.17](17.md) **A straight line touching a given circle, from a given point** | From a given point to draw a straight line touching a given circle. |
 | ✅ | [III.18](18.md) **The straight line from the centre is perpendicular to the tangent** | If a straight line touch a circle, and a straight line be joined from the centre to the point of contact,… |
 | ✅ | [III.19](19.md) **The centre is on the straight line at right angles to the tangent** | If a straight line touch a circle, and from the point of contact a straight line be drawn at right angles… |
-| 🚧 | [III.20](20.md) **The angle at the centre is double of that at the circumference** | In a circle the angle at the centre is double of the angle at the circumference, when the angles have the… |
-| 🚧 | [III.21](21.md) **Angles in the same segment are equal** | In a circle the angles in the same segment are equal to one another. |
-| 🚧 | [III.22](22.md) **Opposite angles of quadrilaterals in circles equal two right angles** | The opposite angles of quadrilaterals in circles are equal to two right angles. |
-| 🚧 | [III.23](23.md) **Similar segments on the same straight line cannot be unequal** | On the same straight line there cannot be constructed two similar and unequal segments of circles on the… |
-| 🚧 | [III.24](24.md) **Similar segments on equal straight lines are equal** | Similar segments of circles on equal straight lines are equal to one another. |
-| 🚧 | [III.25](25.md) **The complete circle of a given segment** | Given a segment of a circle, to describe the complete circle of which it is a segment. |
-| 🚧 | [III.26](26.md) **Equal angles stand on equal circumferences** | In equal circles equal angles stand on equal circumferences, whether they stand at the centres or at the… |
-| 🚧 | [III.27](27.md) **Angles standing on equal circumferences are equal** | In equal circles angles standing on equal circumferences are equal to one another, whether they stand at… |
-| 🚧 | [III.28](28.md) **Equal straight lines cut off equal circumferences** | In equal circles equal straight lines cut off equal circumferences, the greater equal to the greater and… |
-| 🚧 | [III.29](29.md) **Equal circumferences are subtended by equal straight lines** | In equal circles equal circumferences are subtended by equal straight lines. |
-| 🚧 | [III.30](30.md) **A given circumference, bisected** | To bisect a given circumference. |
-| 🚧 | [III.31](31.md) **The angle in the semicircle is right** | In a circle the angle in the semicircle is right, that in a greater segment less than a right angle, and… |
-| 🚧 | [III.32](32.md) **Angles with the tangent equal those in the alternate segments** | If a straight line touch a circle, and from the point of contact there be drawn across, in the circle, a… |
-| 🚧 | [III.33](33.md) **A segment admitting a given angle, on a given straight line** | On a given straight line to describe a segment of a circle admitting an angle equal to a given rectilineal… |
-| 🚧 | [III.34](34.md) **A segment admitting a given angle, cut off from a given circle** | From a given circle to cut off a segment admitting an angle equal to a given rectilineal angle. |
-| 🚧 | [III.35](35.md) **The rectangles contained by the segments are equal** | If in a circle two straight lines cut one another, the rectangle contained by the segments of the one is… |
-| 🚧 | [III.36](36.md) **The rectangle equals the square on the tangent** | If a point be taken outside a circle and from it there fall on the circle two straight lines, and if one… |
-| 🚧 | [III.37](37.md) **If the rectangle equals the square, the straight line touches** | If a point be taken outside a circle and from the point there fall on the circle two straight lines, if… |
+| ✅ | [III.20](20.md) **The angle at the centre is double of that at the circumference** | In a circle the angle at the centre is double of the angle at the circumference, when the angles have the… |
+| ✅ | [III.21](21.md) **Angles in the same segment are equal** | In a circle the angles in the same segment are equal to one another. |
+| ✅ | [III.22](22.md) **Opposite angles of quadrilaterals in circles equal two right angles** | The opposite angles of quadrilaterals in circles are equal to two right angles. |
+| ✅ | [III.23](23.md) **Similar segments on the same straight line cannot be unequal** | On the same straight line there cannot be constructed two similar and unequal segments of circles on the… |
+| ✅ | [III.24](24.md) **Similar segments on equal straight lines are equal** | Similar segments of circles on equal straight lines are equal to one another. |
+| ✅ | [III.25](25.md) **The complete circle of a given segment** | Given a segment of a circle, to describe the complete circle of which it is a segment. |
+| ✅ | [III.26](26.md) **Equal angles stand on equal circumferences** | In equal circles equal angles stand on equal circumferences, whether they stand at the centres or at the… |
+| ✅ | [III.27](27.md) **Angles standing on equal circumferences are equal** | In equal circles angles standing on equal circumferences are equal to one another, whether they stand at… |
+| ✅ | [III.28](28.md) **Equal straight lines cut off equal circumferences** | In equal circles equal straight lines cut off equal circumferences, the greater equal to the greater and… |
+| ✅ | [III.29](29.md) **Equal circumferences are subtended by equal straight lines** | In equal circles equal circumferences are subtended by equal straight lines. |
+| ✅ | [III.30](30.md) **A given circumference, bisected** | To bisect a given circumference. |
+| ✅ | [III.31](31.md) **The angle in the semicircle is right** | In a circle the angle in the semicircle is right, that in a greater segment less than a right angle, and… |
+| ✅ | [III.32](32.md) **Angles with the tangent equal those in the alternate segments** | If a straight line touch a circle, and from the point of contact there be drawn across, in the circle, a… |
+| ✅ | [III.33](33.md) **A segment admitting a given angle, on a given straight line** | On a given straight line to describe a segment of a circle admitting an angle equal to a given rectilineal… |
+| ✅ | [III.34](34.md) **A segment admitting a given angle, cut off from a given circle** | From a given circle to cut off a segment admitting an angle equal to a given rectilineal angle. |
+| ✅ | [III.35](35.md) **The rectangles contained by the segments are equal** | If in a circle two straight lines cut one another, the rectangle contained by the segments of the one is… |
+| ✅ | [III.36](36.md) **The rectangle equals the square on the tangent** | If a point be taken outside a circle and from it there fall on the circle two straight lines, and if one… |
+| ✅ | [III.37](37.md) **If the rectangle equals the square, the straight line touches** | If a point be taken outside a circle and from the point there fall on the circle two straight lines, if… |
