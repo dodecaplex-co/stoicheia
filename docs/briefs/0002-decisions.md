@@ -493,17 +493,20 @@ findings:
   checklist (stage 6).
 - **Every proof checked again, by Lean's kernel and by nanoda.** A cold Claude review of
   18 October contributed [`scripts/check_kernel.py`](../../scripts/check_kernel.py), with
-  thanks. After `lake build`, it has `leanchecker` replay every declaration of the
-  `Elements` modules through Lean's kernel, loading Lean's own imports unchecked, and has
-  nanoda, a type checker written separately, check the whole export that `leanexport`
-  writes, Lean's own declarations included, admitting only the axioms of
-  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) and Lean's three. Its
-  self-test withholds Postulate 5, and nanoda must then fail. All three programs come with
-  the pinned toolchain. It is a check added, never a check weakened; the files it changes
+  thanks. After `lake build`, it has `leanchecker --fresh` (which began as Kim Morrison's
+  [lean4checker](https://github.com/leanprover/lean4checker)) replay the whole environment
+  of `Elements`, Lean's own declarations included, through Lean's kernel, and has Chris
+  Bailey's [nanoda](https://github.com/ammkrn/nanoda_lib), a type checker written
+  separately, check the whole export that `leanexport` writes, admitting only the axioms
+  of [`Certificate/axioms.lock`](../../Certificate/axioms.lock) and Lean's three. Its
+  self-test withholds Postulate 5, and nanoda must then fail, naming it. All three programs
+  come with the pinned toolchain; we thank their authors. It is a check added, never a check weakened; the files it changes
   are [`scripts/check_kernel.py`](../../scripts/check_kernel.py) (new),
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) (a step in the `check` job,
   after the certificate), [`scripts/safe_push.py`](../../scripts/safe_push.py) (the same
-  step in its sequence) and [WORKFLOW](../WORKFLOW.md), section 8; the README's table of
-  checks and its "Run it" list follow in a docs pull request of their own, after this one.
-  At `f17b427` nanoda checks all 59,902 declarations of the export, Lean's own included,
-  and the script runs in about 40 seconds (#62).
+  step in its sequence), [WORKFLOW](../WORKFLOW.md), section 8, and
+  [FORMALIZATION](../FORMALIZATION.md), section 9 (a row of its table of evidence); the
+  README's table of checks and its "Run it" list follow in a docs pull request of their
+  own, after this one.
+  At `f17b427` nanoda checks all 59,902 declarations of the export, and the script runs in
+  about a minute on a laptop; its time in CI is recorded on #62.

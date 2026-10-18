@@ -1,18 +1,23 @@
 """Check every proof again, from the compiled library, by Lean's kernel and by nanoda.
 
 `lake build` has Lean's kernel check each declaration as it is elaborated. This script
-checks the declarations of `Elements` a second and a third time, from the `.olean` files
-that the build wrote and the certificate reads:
+checks every declaration a second and a third time, from the `.olean` files that the build
+wrote and the certificate reads:
 
-1. **leanchecker** replays every declaration of the `Elements` modules through Lean's
-   kernel, each module against its imports, which it loads unchecked: Lean's own
-   declarations do not pass through it. It would catch a declaration of `Elements` that
-   reached the compiled files without the kernel's check.
-2. **nanoda**, a type checker for Lean written separately from Lean, in Rust, checks the
-   whole export that `leanexport` writes: every declaration of `Elements` and of Lean's
-   own library beneath it. It admits only the axioms of `Certificate/axioms.lock` and
-   Lean's three (`propext`, `Classical.choice`, `Quot.sound`): any declaration that needs
-   another axiom, as `sorryAx` or the compiler's `Lean.ofReduceBool`, is an error.
+1. **leanchecker**, run with `--fresh`, replays the whole environment of `Elements` from
+   nothing through Lean's kernel: every declaration of the edition and of Lean's own
+   library beneath it. It would catch a declaration that reached the compiled files
+   without the kernel's check. It began as Kim Morrison's lean4checker
+   (https://github.com/leanprover/lean4checker), and now ships with Lean.
+2. **nanoda**, Chris Bailey's type checker for Lean, written separately from Lean, in Rust
+   (https://github.com/ammkrn/nanoda_lib), checks the whole export that `leanexport`
+   writes, Lean's own declarations included. It admits only the axioms of
+   `Certificate/axioms.lock` and Lean's three (`propext`, `Classical.choice`,
+   `Quot.sound`): any declaration that needs another axiom, as `sorryAx` or the
+   compiler's `Lean.ofReduceBool`, is an error.
+
+A cold Claude review contributed this script on 18 October 2026; we are grateful. The
+two checkers are the work of their authors and of the Lean community, and we thank them.
 
 Both programs come with the Lean toolchain that `lean-toolchain` pins, in the folder
 `lean --print-prefix` names, so nothing is installed. Run it from anywhere, after
@@ -23,7 +28,8 @@ Both programs come with the Lean toolchain that `lean-toolchain` pins, in the fo
                                                   withheld, which must fail
 
 The self-test plants a fault of the kind the check exists to catch: a proof resting on an
-axiom it is not allowed. Exits 1 on any failure. Standard library only.
+axiom it is not allowed, and nanoda must fail naming that axiom. Exits 1 on any failure.
+Standard library only, with the lock read by `check_fidelity.read_lock`.
 """
 
 from __future__ import annotations
@@ -35,6 +41,8 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+
+import check_fidelity
 
 ROOT = Path(__file__).resolve().parent.parent
 LOCK = ROOT / "Certificate" / "axioms.lock"
@@ -62,15 +70,15 @@ def toolchain_bin() -> Path:
 
 
 def locked_axioms() -> list[str]:
-    """The axioms of the lock, by their full Lean names."""
-    text = LOCK.read_text(encoding="utf-8")
-    section = re.search(r"^\[axioms\][^\n]*\n(.*?)(?=^\[|\Z)", text, re.M | re.S)
-    if not section:
-        fail(f"no [axioms] section in {LOCK.relative_to(ROOT)}")
-    names = re.findall(r'^"([^"]+)" =', section.group(1), re.M)
-    if not names:
+    """The axioms of the lock, by their full Lean names, read as the fidelity check reads
+    them."""
+    try:
+        lock = check_fidelity.read_lock(LOCK)
+    except ValueError as e:
+        fail(str(e))
+    if not lock or not lock[0]:
         fail(f"no axioms read from {LOCK.relative_to(ROOT)}")
-    return [f"Elements.{n}" for n in names]
+    return [f"Elements.{n}" for n in lock[0]]
 
 
 def run(cmd: list[str], **kw) -> subprocess.CompletedProcess:
@@ -100,12 +108,12 @@ def main() -> None:
     bin_ = toolchain_bin()
     axioms = locked_axioms()
 
-    replay = run(["lake", "env", str(bin_ / "leanchecker"), "Elements"])
+    replay = run(["lake", "env", str(bin_ / "leanchecker"), "--fresh", "Elements"])
     if replay.returncode != 0:
         print(replay.stdout[-4000:], replay.stderr[-4000:], sep="\n", file=sys.stderr)
-        fail("leanchecker rejected a declaration of the Elements modules")
-    print("  leanchecker: every declaration of the Elements modules replays through Lean's "
-          "kernel, with Lean's own loaded unchecked")
+        fail("leanchecker rejected a declaration of the environment of Elements")
+    print("  leanchecker --fresh: the whole environment of Elements, Lean's own included, "
+          "replays through Lean's kernel")
 
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
@@ -129,11 +137,15 @@ def main() -> None:
         if args.self_test:
             planted = nanoda(bin_, export, [a for a in axioms if a != WITHHELD], work)
             if planted.returncode == 0:
-                fail(f"nanoda passed with {WITHHELD} withheld, which I.29 needs")
-            print(f"  self-test: with {WITHHELD} withheld, nanoda fails, as it must")
+                fail(f"nanoda passed with {WITHHELD} withheld, which I.29's proof uses")
+            if WITHHELD not in planted.stdout + planted.stderr:
+                print(planted.stdout[-4000:], planted.stderr[-4000:], sep="\n",
+                      file=sys.stderr)
+                fail(f"nanoda failed with {WITHHELD} withheld, but not by naming it")
+            print(f"  self-test: with {WITHHELD} withheld, nanoda fails on it, as it must")
 
-    print(f"✓ kernel: Lean's kernel accepts every declaration of Elements again, and nanoda "
-          f"all {summary.group(1)} of the export")
+    print(f"✓ kernel: Lean's kernel accepts the whole environment of Elements again, and "
+          f"nanoda all {summary.group(1)} declarations of the export")
 
 
 if __name__ == "__main__":
