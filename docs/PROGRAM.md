@@ -54,9 +54,9 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism | records (exceptions) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved | records (exceptions) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 | records (exceptions) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | release notes next, for Jack's approval |
+| I | 48 of 48 proved, and I.15's porism | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 | released (next: arcs and segments) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV–XIII | not begun | — | — | — | — | — |
 
 <!-- /status -->
@@ -77,8 +77,8 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 0 | The review, this page, the brief | done |
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
-| — | Release of Book III | next: notes in the new terms, approved by Jack |
-| 2 | I.40, I.45, II.1, II.14 in full generality | |
+| — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
+| 2 | I.40, I.45, II.1, II.14 in full generality | next: statements first (brief 0006) |
 | 3 | Arcs and segments; III.24 | |
 | 4 | III.14, III.15, III.25 | |
 | 5 | Consolidation review of all 99 | |
