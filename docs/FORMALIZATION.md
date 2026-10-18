@@ -105,7 +105,7 @@ three words are the home of these terms:
   claims more, is still full (III.9's point need not be within the circle), and is tagged
   `hypothesis-dropped`.
 - **restricted:** every clause, but only under extra hypotheses that exclude configurations
-  his words admit (I.40's bases end to end).
+  his words admit (I.40's main theorem alone, its bases end to end).
 - **partial:** some clause has no formal conclusion (III.16, III.31); the record quotes it
   and gives a clause map.
 
