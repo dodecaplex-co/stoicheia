@@ -5,7 +5,10 @@ its axioms, and a few of them already say what Euclid later proves, or give it i
 lines. III.2 is the clearest case. System E's Circle 2 says that between two points on or
 within a circle every point is within it, and III.2 is that rule for two points on the
 circle. Astra pointed this out in the [outside review](outside-review-01.md), with a
-one-line proof compiled in Lean, and asked for this catalogue. We are grateful.
+one-line proof compiled in Lean, and asked for this catalogue. We are grateful. Two later
+readings added to it, and we thank them too: a cold review by Claude saw that
+superposition supplies the steps of I.2 and I.3, and Argon's second review corrected our
+account of how each rule enters the proofs.
 
 A reconstruction within these foundations does not establish such a rule independently.
 Our III.2 follows Euclid's argument, and the proof is sound; but it rests, through III.1,
@@ -75,7 +78,7 @@ Nothing brings the rule into our I.2 or I.3, which come before I.4 and do not re
 The proofs are Euclid's: I.2 by the equilateral triangle of I.1 and two circles, I.3 by
 I.2 and a circle. Our Postulate 3 is Euclid's collapsing compass, and leaves carrying a
 distance to I.2; superposition, in the form we take it, carries one. What keeps I.2
-Euclid's is the certificate's policy, which lets only I.4 and I.8 cite the rule.
+Euclid's is the certificate's policy, which lets only I.4 and I.8 use the rule.
 `Audit.I_2` uses superposition with Postulates 1 and 3, Generalities 1 and 3, Points 7,
 Intersections 5, Circle 1 and Between 1 and 7, which draw a triangle on BC and a point off
 AB, since neither statement gives one. `Audit.I_3` draws the same way, and adds Between 6,
@@ -132,10 +135,10 @@ the circle BHF, and so within it. III.1 calls it next (next row). I.5 and I.9 ta
 "at random" with Book Zero's `exists_between_nearer`, which keeps the point near enough by
 the order of the points on the straight line and the adding of lengths, not by the rule;
 so no proposition of Book I rests on it, nor any of II.1–II.13. Of the entries III.2
-cites, III.1 alone rests on the rule, and calls it itself; I.5 (cited directly and through
-the shared step `Prop5.base`), I.16 and I.19 do not. So III.2 rests on the rule through
-III.1 only. The Lean of III.2 is Euclid's reductio, by I.5, I.16 and I.19, with the
-centre from III.1, and it never calls the rule itself.
+cites, III.1 alone rests on the rule, and calls it itself; I.5 (through the shared step
+`Prop5.base`), I.16 and I.19 do not. So III.2 rests on the rule through III.1 only. The
+Lean of III.2 is Euclid's reductio, by I.5, I.16 and I.19, with the centre from III.1, and
+it never calls the rule itself.
 
 Other proofs call the rule on two points of a circle, which is III.2's case. Before III.2,
 II.14 and III.1 do (next row). After it, III.10, III.15, III.21, III.22, III.23, III.25,
@@ -167,16 +170,21 @@ takes Euclid's steps and ends as he does, by the order of the points: F and G li
 ray from E, and the nearer would make the less equal to the greater (Henry Savile's
 argument, Book Zero's `OnRay.eq_of_len_eq`).
 
-Any proof of III.5 must use Diagram-segment 2 or Circle 4. Draw every circle twice over,
-as two circles with one centre and one radius, through the same points. Of the 24 rules
-about circles, only these two say when two circles are one circle or two, and every other
-rule we take still holds; but a circle and its copy are two circles, they cut one another,
-and they have one centre, so III.5 fails for them. That is a model argument, checked by
-hand rule by rule, not by Lean ([FORMALIZATION](../FORMALIZATION.md), section 9). Euclid's
-own ending needs one of the two rules as well, for the step he leaves tacit: that two
-different circles about one centre meet a straight line from it at different points, so
-that EF and EG are "the less to the greater". For a circle and its copy, F and G are one
-point, and EF is equal to EG without contradiction.
+Any proof of our III.5 must use Diagram-segment 2 or Circle 4. Draw every circle twice
+over, as two circles with one centre and one radius, through the same points. Of the 24
+rules about circles, only these two say when two circles are one circle or two, and every
+other rule we take still holds; but a circle and its copy are two circles, they cut one
+another, and they have one centre, so III.5 fails for them. That is a model argument,
+checked by hand rule by rule, not by Lean ([FORMALIZATION](../FORMALIZATION.md), section
+9). It is a fact about our statement, which reads "two circles" as two different circles
+(`ABC ≠ CDG`) and "cut" as meeting at two points (`CirclesMeet`). Read "cut" as a point of
+one circle within the other, with a point in common, and Definition I.15 and
+Diagram-segment 4, with a law of magnitude, give III.5 with neither rule
+(`Audit.III_5_crossing`). In our statement, Euclid's own ending needs one of the two rules
+as well, for the step he leaves tacit: that two different circles about one centre meet a
+straight line from it at different points, so that EF and EG are "the less to the
+greater". For a circle and its copy, F and G are one point, and EF is equal to EG without
+contradiction.
 
 #### III.6
 
@@ -185,13 +193,17 @@ supposed common centre would be within both circles (Generalities 3), and circle
 touch without have no such point. For contact within, the Lean is as III.5's, with
 Diagram-segment 2 for the step Euclid leaves tacit, that E and B are two points.
 
-Any proof of III.6 for contact within must use one of the same two rules, for the same
-reason: a circle and its copy, drawn twice over as under III.5, are two circles that meet,
-and no point of either lies outside the other, so by our Definition III.3 they touch
-within; and they have one centre. Euclid's ending, FE equal to FB, "the less to the
-greater", needs the same tacit step, that the two circles meet the straight line FEB at
-different points. For contact without, Generalities 3 alone is enough: a common centre
-would be a point within both circles, and circles that touch without have none.
+Any proof of our III.6 for contact within must use one of the same two rules, for the
+same reason: a circle and its copy, drawn twice over as under III.5, are two circles that
+meet, and no point of either lies outside the other, so by our Definition III.3 they touch
+within; and they have one centre. That too is our statement's reading, which asks of
+circles touching within only that they are two, that they meet, and that no point of the
+inner lies outside the outer; read with a point of the inner circle within the outer, the
+same proof (`Audit.III_5_crossing`) gives III.6 for contact within with neither rule. In
+our statement, Euclid's ending, FE equal to FB, "the less to the greater", needs the same
+tacit step, that the two circles meet the straight line FEB at different points. For
+contact without, Generalities 3 alone is enough: a common centre would be a point within
+both circles, and circles that touch without have none.
 
 ## How the rows were found
 
@@ -223,8 +235,15 @@ else. The screen cannot draw a figure, for `grind` works with the points and cir
 goal already names. I.7 needs two circles its statement never mentions, and I.23 a
 triangle laid down, so both came from reading. I.2 and I.3 need a triangle drawn and then
 laid down. The catalogue first listed them as near misses, since neither statement gives a
-triangle to move; but the same holds of I.7's circles. Claude, reading the work cold on
-18 October 2026, moved them to rows, with `Audit.I_2` and `Audit.I_3`.
+triangle to move; but the same holds of I.7's circles, and they are rows now, with
+`Audit.I_2` and `Audit.I_3`.
+
+**How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
+rule a proof reaches through a lemma as well as one its own Lean names, and found that
+II.14 and III.15 call Circle 2 on two points of a circle. The account of "First enters"
+above the table, the notes on I.13 in 17 proofs, III.1's porism and III.2, and II.14's
+place beside III.1 in the table rest on that reading, each point checked against Lean's
+proof terms.
 
 ## The rows checked
 
@@ -252,8 +271,10 @@ For each row we looked for a proof of the proposition's statement from at most t
   twenty-two: superposition does the work, and the others draw a triangle to lay down and
   a point off AB, and, for I.3, place the new point between A and B. Superposition alone
   does not give I.2: where there are no straight lines it holds, having nothing to speak
-  of, and no length from A need equal BC. So the rows say that superposition supplies
-  their step, as for I.7 and I.23.
+  of, and no length from A need equal BC. Nor does it give I.3: in that world, let no
+  point lie between two others, and let AB be the greater of two straight lines; then no
+  point lies between A and B to cut off the less. So the rows say that superposition
+  supplies their step, as for I.7 and I.23.
 - **The steps.** For III.1, its porism and I.13 we found no proof from three rules: each
   needs a construction Euclid makes by earlier propositions, a bisection or a
   perpendicular (I.10, I.11). In the other direction, Diagram-angle 3 is a theorem of
