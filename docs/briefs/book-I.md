@@ -112,7 +112,7 @@ the exceptions the outside review named, with the work that answers each:
 | Proposition | Scope | What is restricted | Tag | Planned |
 |---|---|---|---|---|
 | I.40 | restricted | the equal bases meet end to end, as BC and CE | `adjacent-bases` | stage 2: `Prop40.general` for bases anywhere on one straight line, with `Prop40.special` |
-| I.45 | restricted | the figure is two triangles | `two-triangles` | stage 2: `Prop45.figure` for a supplied dissection into triangles |
+| I.45 | restricted | the figure is two triangles | `two-triangles` | stage 2: `Prop45.apart` for any supplied division into triangles; `Prop45.figure` and `Prop45.fan` beside it |
 
 Both stay as Euclid's worked configuration, with the general theorem beside them as a
 companion ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
