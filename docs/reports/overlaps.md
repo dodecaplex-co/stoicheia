@@ -40,11 +40,13 @@ without taking it from a proposition it cites. It is read from
 ([Certificate/FIELDS.md](../../Certificate/FIELDS.md);
 [issue #65](https://github.com/jackChallis/stoicheia/issues/65)): `own_axioms` lists the
 rules a proof calls itself, those its own Lean or a helper written for its proposition
-(`Prop47.within`, for I.47) names, and `inherited` the rules it reaches only through a
-lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step, each with the lemma
-that brings it in. Each first user in the table calls its rule itself. A later proof may
-rest on a rule it never calls, as III.26, III.28 and III.29 rest on Generalities 2 only
-through Book Zero's `EqualCircles.radii`, and the note under the table names the lemma the
+(`Prop47.within`, for I.47) names, and `inherited` the rules its own Lean does not name
+but reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step,
+each with the lemma that brings it in. A proposition it cites may rest on such a rule too.
+Each first user in the table calls its rule itself. A later proof may rest on a rule it
+never calls, as III.26 rests on Generalities 2 only through Book Zero's
+`EqualCircles.radii`; III.28 and III.29 call that lemma too, and rest on the rule through
+III.26 and III.27 as well, which they cite. The note under the table names the lemma the
 rule comes through. Each proposition's page marks the same in its list of tacit rules:
 "(used here)" for a rule its own Lean calls, and the lemmas for one it inherits.
 
@@ -126,9 +128,10 @@ two of ours.
 III.1's porism calls the rule itself: it makes the centre III.1 finds the given centre,
 so that it lies on the cutting straight line. III.14, III.17 and III.36 call it
 themselves for the same step, making the centre III.1 finds the centre their statements
-speak of. III.26, III.28 and III.29 reach it only through Book Zero's
-`EqualCircles.radii`, that equal circles have equal radii: a circle has only one centre,
-so the centres the definition of equal circles names are the given ones.
+speak of. III.26 reaches it only through Book Zero's `EqualCircles.radii`, that equal
+circles have equal radii: a circle has only one centre, so the centres the definition of
+equal circles names are the given ones. III.28 and III.29 call that lemma too, and rest on
+the rule through III.26 and III.27 as well, which they cite.
 
 #### III.2
 
