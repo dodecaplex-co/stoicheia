@@ -515,3 +515,45 @@ findings:
   at about 1.3 GB of memory at most. Its time in CI is still to be measured, on this pull
   request's first run there, and recorded on #62, with the choice that follows from it:
   the `check` job, or a job of its own if it is slow.
+
+- **Brief 0006 frozen; I.45 and II.14 full; the definitions approved as a class; Staging's
+  proofs.** Astra's second answer (read-only, at `b48640c`, on [issue
+  #13](https://github.com/jackChallis/stoicheia/issues/13)) is the challenge of the
+  statements of [brief 0006](0006-statements.md) as they stood at `b48640c`. It accepts
+  `full` for I.45 and II.14 as stated there, under the convention that the figure comes with
+  a checked finite dissection, with `Prop45.apart` and `Prop14.square` the decisive
+  companions, and asked only for wording corrections, which are applied. After that answer,
+  at the coordinator's direction, `Prop45.fan` and `Prop14.fan` gained a conclusion: that
+  the fan's triangles are a fitted figure, besides the parallelogram (the square), so that
+  their two conditions do logical work. Astra did not read that change, which only adds a
+  conclusion; the independent review of `9c89bfe`, after the freeze, read it, found it
+  correct, and is its challenge. `full` rests on the `Apart` companions, which that change
+  leaves as they were. The coordinator approved the statements and froze brief 0006 on 18
+  October 2026; a later change is a revision of it (WORKFLOW, section 2, "Correcting a
+  frozen brief"). The owner's calls: I.45 and II.14 are `full`, by the checked fan and by
+  supplied divisions; and, as the tracking issue ([issue
+  #50](https://github.com/jackChallis/stoicheia/issues/50)) records them, "the definitions
+  the frozen briefs name are approved for the foundations, each recorded in its pull
+  request", and "the coordinator freezes briefs after their challenge". So the definitions
+  of every frozen brief, this one's and later ones', are approved as a class; each moves
+  with the first approved statement that uses it, and the pull request that moves it records
+  it. The rule on proofs in `Staging/` is amended, in its one home,
+  [WORKFLOW](../WORKFLOW.md), section 2, "What proofs `Staging/` may hold": besides the
+  checks of today's statements, `Staging/` may hold proofs that derive one staged statement
+  from others, which test their interfaces, and the proofs of a prototype the coordinator
+  has approved; a staged statement's own proof still waits for its brief's approval. The
+  coordinator added one sentence to the amended rule: a derivation from a stub proves
+  nothing until the stub is proved, and says so in its docstring or its brief. On the
+  independent review of `9c89bfe`, after the freeze and before landing, one more was added,
+  at the coordinator's direction: once its brief is approved, a staged fact whose proof
+  rests on no stub may be proved in place, and waits in `Staging/` until the definitions it
+  uses reach the foundations and the task its brief names for its home moves it (brief
+  0006's `Fitted.inside_pairwise`, `chord_cases` and `Placement.unique_off` are such facts).
+  On the same review, `Prop14.general` was renamed `Prop14.figure` ("II.14 figure"), as in
+  I.45, its statement unchanged, and `Rectilineal.toApart` and `Rectilineal.area_toApart`,
+  which no statement uses, were added for proofs. Staging also serves the stages of briefs
+  after 0005, the first being stage 4b of brief 0007, in draft when this was decided; the
+  module doc of [`Staging.lean`](../../Staging.lean) and the comment on the `Staging`
+  library in `lakefile.toml` say so, and that comment is the only change to
+  `lakefile.toml`. The orders for a statement wave ([orders](../templates/orders.md),
+  kind 2) and [FORMALIZATION](../FORMALIZATION.md), section 6, point to the rule.
