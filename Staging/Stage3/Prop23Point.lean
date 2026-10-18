@@ -71,22 +71,23 @@ theorem Prop23.point {A B E P : Point} {α : Circle} (hα : ∃ O : Point, Centr
   have hP_L : ¬ OnLine P L := hPE.triangle.off_line hA_L hB_L
   have hMP : M ≠ P := fun e => hP_L (e ▸ hM_L)
   obtain ⟨N, hM_N, hP_N⟩ := Postulate1 M P hMP
-  /- On the circle, APB and AEB are angles in the same segment [III.21]. -/
+  /- On the circle, APB and AEB are angles in the same segment [III. 21]. -/
   have on_angle (hP_on : OnCircle P α) : ∠ A P B = ∠ A E B :=
     Prop21 hα hP_on hA hB hE hPE
-  /- Outside, PM meets the circle at Q between M and P. Q lies within PAB,
-     so its angle is greater than the angle at P [I.21]. -/
+  /- Outside, PM meets the circle at Q between M and P. Q lies within the triangle
+     PAB, so the angle AQB is greater than the angle APB [I. 21]. -/
   have outside_angle (hP_out : OutsideCircle P α) : ∠ A P B < ∠ A E B := by
     obtain ⟨Q, hQ_on, -, hMQP⟩ := line_circle_between hM_in hM_N hP_out hP_N
     have hQ_in : InsideTriangle Q P A B :=
       Prop23.insideTriangle_of_between hPE.triangle hAMB hMQP
     have hangle : ∠ A P B < ∠ A Q B := (BookI.Prop21 hPE.triangle.cab hQ_in).2
-    /- Q is on E's side of AB, so AQB equals AEB [III.21]. -/
+    /- Q is on E's side of AB, so the angle AQB is equal to the angle AEB [III. 21]. -/
     have hQE : SameSideOf Q E A B := hQ_in.1.trans hPE
     rw [Prop21 hα hQ_on hA hB hE hQE] at hangle
     exact hangle
-  /- Within, MP produced beyond P meets the circle at Q. P and Q remain on
-     E's side of AB, and P lies within QAB [I.21]. -/
+  /- Within, MP produced beyond P meets the circle at Q. Q is on P's side of AB, and so
+     on E's; P lies within the triangle QAB, so the angle APB is greater than the angle
+     AQB [I. 21]. -/
   have inside_angle (hP_in : InsideCircle P α) : ∠ A E B < ∠ A P B := by
     obtain ⟨Q, hQ_on, -, hQPM⟩ := line_circle_beyond hP_in hP_N hM_N hMP
     have hPQ : SameSideOf P Q A B :=
@@ -95,11 +96,12 @@ theorem Prop23.point {A B E P : Point} {α : Circle} (hα : ∃ O : Point, Centr
     have hP_triangle : InsideTriangle P Q A B :=
       Prop23.insideTriangle_of_between hQE.triangle hAMB (between_symm hQPM)
     have hangle : ∠ A Q B < ∠ A P B := (BookI.Prop21 hQE.triangle.cab hP_triangle).2
-    /- AQB is again the angle in E's segment [III.21]. -/
+    /- The angle AQB is again equal to the angle AEB [III. 21]. -/
     rw [Prop21 hα hQ_on hA hB hE hQE] at hangle
     exact hangle
-  /- The cases exhaust the plane. Equality excludes both strict comparisons;
-     a greater angle excludes the circle and the outside case. -/
+  /- P is within the circle, on it, or outside it. Equal angles rule out within and
+     outside, and a greater angle rules out on and outside, since no angle is less than
+     itself. -/
   refine ⟨⟨on_angle, ?_⟩, ⟨inside_angle, ?_⟩⟩
   · intro heq
     apply Classical.byContradiction
