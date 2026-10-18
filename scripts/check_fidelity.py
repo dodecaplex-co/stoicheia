@@ -11,8 +11,8 @@
 4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
    `Elements/`, `Staging/` or `Audit/` (LEAN_TREES), since they get round the kernel,
    bring in an axiom without the word, run a program when a file is built or imported,
-   or stop Lean reading a file: `native_decide`, `decide +native`,
-   `set_option debug.…`, `#eval`, `#exit`, `run_cmd`, `elab`, `macro`,
+   or stop Lean reading a file: `native_decide`, `bv_decide`, the word `native`,
+   `(config := …)`, `set_option debug.…`, `#eval`, `#exit`, `run_cmd`, `elab`, `macro`,
    `implemented_by`, `extern`, `unsafe` and the rest of FORBIDDEN, below.
 5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
    fields are in `Certificate/FIELDS.md`):
@@ -94,12 +94,18 @@ LEAN_TREES = ("Elements", "Staging", "Audit")
 # meaning in code (`elab`, `macro` and the elaborator attributes), swap code in for a
 # definition, or stop Lean reading the file (`#exit`). Matched as whole words, in the Lean
 # with its comments taken out; FORMALIZATION.md, section 7, is their one home.
+# Lean 4.35 evaluates natively, and admits the result as an axiom, for `native_decide`, the
+# `bv_decide` family and `decide` with its `native` option, which `decide +zetaReduce
+# +native`, `decide (native := Bool.true)` or a whole configuration, `(config := ⟨false,
+# true, true, false⟩)`, also set: so the word `native` anywhere, and `(config := …)`, are
+# refused as well.
 FORBIDDEN = re.compile(
-    r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bnative\s*:=\s*true\b|"
+    r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bnative\s*:=\s*true\b|\bnative\b|"
+    r"\(\s*«?config»?\s*:=|"
     r"\bset_option\s+debug\.|#eval\b|#exit\b|"
-    r"\b(run_cmd|run_elab|run_meta|run_tac|by_elab|elab|elab_rules|macro|macro_rules|"
-    r"command_elab|term_elab|initialize|builtin_initialize|implemented_by|extern|"
-    r"unsafe)\b|"
+    r"\b(bv_decide|bv_check|run_cmd|run_elab|run_meta|run_tac|by_elab|elab|elab_rules|"
+    r"macro|macro_rules|command_elab|term_elab|initialize|builtin_initialize|"
+    r"implemented_by|extern|unsafe)\b|"
     r"(?:@|\battribute\s*)\[[^\]]*?\b(?P<attr>tactic|init)\b")
 # An axiom, declared anywhere in a line: Lean reads `example : True := trivial axiom
 # planted : False` as two commands, the second an axiom.

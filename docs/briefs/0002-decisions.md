@@ -643,12 +643,17 @@ findings:
   `addDecl` with no `axiom` in the source, or write any file. Now the scan reads every
   `.lean` file under `Elements/`, `Staging/` and `Audit/`, and the roots `Elements.lean`,
   `Staging.lean` and `Audit.lean`. Its list gains `#eval`, `#exit`, `run_tac`, `by_elab`,
-  `initialize`, `builtin_initialize`, `decide (config := { native := true })`, and the
-  attributes that stand behind `elab`, `macro` and `initialize`: `command_elab`,
-  `term_elab`, `tactic` and `init`. `set_option debug.…` already covered
-  `debug.skipKernelTC`, and with it `debug.byAsSorry`, `debug.proofAsSorry` and
-  `debug.terminalTacticsAsSorry`. The source check for an axiom outside
-  `Elements/Foundations/` now finds the word anywhere in a line, not only at its start:
+  `initialize`, `builtin_initialize`, and the attributes that stand behind `elab`, `macro`
+  and `initialize`: `command_elab`, `term_elab`, `tactic` and `init`. It gains, too, every
+  way Lean 4.35 has of evaluating natively and admitting the result as an axiom:
+  `bv_decide` and `bv_check`, and `decide` with its `native` option, which
+  `decide +zetaReduce +native`, `decide (native := Bool.true)` and a whole configuration,
+  `(config := ⟨false, true, true, false⟩)`, set without the words the list had; so the
+  word `native`, wherever it stands, and `(config := …)` are refused. `set_option debug.…`
+  already covered `debug.skipKernelTC`, and with it `debug.byAsSorry`,
+  `debug.proofAsSorry` and `debug.terminalTacticsAsSorry`. The source check for an axiom
+  outside `Elements/Foundations/` now finds the word anywhere in a line, not only at its
+  start:
   Lean reads `example : True := trivial axiom planted : False` as two commands, the second
   an axiom, which the old check missed (in `Elements/` the certificate caught it all the
   same). Each finding names its file and line. Nothing is loosened: the scan refuses all

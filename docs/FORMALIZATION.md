@@ -331,8 +331,10 @@ dependencies.
   `Elements/`, `Staging/` and `Audit/`, and in their roots, `Elements.lean`,
   `Staging.lean` and `Audit.lean`. `check_fidelity.py` matches each as a whole word, in
   the Lean with its comments taken out (`native_decide` even in a comment):
-  - `native_decide`, `decide +native` and `decide (config := { native := true })` have
-    the compiler vouch for a proof in the kernel's place;
+  - `native_decide`, `bv_decide` and `bv_check`, and `decide` with its `native` option,
+    have the compiler vouch for a proof in the kernel's place; since `decide +native`,
+    `decide (native := …)` and a whole configuration given by `(config := …)` all set
+    that option, the word `native`, wherever it stands, and `(config := …)` are refused;
   - `set_option debug.…`: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry`
     and its kin put `sorry` in place of a proof;
   - `#eval`, `run_cmd`, `run_elab`, `run_meta`, `run_tac`, `by_elab`, `initialize` and
@@ -368,11 +370,12 @@ file or an audit lemma declares no axiom and uses none of the forbidden commands
 there reaches the certificate, so the source scan is what enforces them:
 `check_fidelity.py`'s `check_rules` reads every `.lean` file under `Elements/`,
 `Staging/` and `Audit/`, and the three roots, and refuses an `axiom` anywhere outside
-`Elements/Foundations/` and every forbidden command. In `Elements/` the certificate reads
-the axioms from Lean itself as well. The checks' own Lean, `Certificate/Facts.lean`,
-which writes `facts.json`, is not scanned: it is a protected path
-([WORKFLOW.md](WORKFLOW.md), section 10), changed only with a decisions entry and a
-security review.
+`Elements/Foundations/` and every forbidden command. It reads words, not Lean's grammar,
+so it catches a slip but not a command disguised from it on purpose: review still reads
+every staged file and audit lemma. In `Elements/` the certificate reads the axioms from
+Lean itself as well. The checks' own Lean, `Certificate/Facts.lean`, which writes
+`facts.json`, is not scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section
+10), changed only with a decisions entry and a security review.
 
 ## 8. Completion claims
 

@@ -182,6 +182,12 @@ PLANTED_COMMANDS = (
     ("decide +native", "theorem planted_decide : 2 + 2 = 4 := by decide +native"),
     ("native := true",
      "theorem planted_config : 2 + 2 = 4 := by decide (config := { native := true })"),
+    ("native", "theorem planted_item : 10 * 10 = 100 := by decide +zetaReduce +native"),
+    ("native", "theorem planted_value : 11 * 11 = 121 := by decide (native := Bool.true)"),
+    ("(config :=", "theorem planted_whole : 12 * 12 = 144 := "
+     "by decide (config := ⟨false, true, true, false⟩)"),
+    ("bv_decide", "theorem planted_bv (x y : BitVec 8) : x * y = y * x := by bv_decide"),
+    ("bv_check", 'theorem planted_lrat (x : BitVec 8) : x = x := by bv_check "planted.lrat"'),
     ("set_option debug.",
      "set_option debug.skipKernelTC true in theorem planted_skip : True := trivial"),
     ("#eval", '#eval IO.println "planted"'),
