@@ -4,9 +4,9 @@ import Staging.Stage3.Definitions
 /-!
 # Stage 3, staged: Book Zero facts for arcs
 
-Statements before proofs (brief 0006, stage 3). Facts every arc needs, proved (or to be
-proved) from the foundations alone; destined for a new Book Zero file,
-`Elements/Figure/Chords.lean`, which cites no proposition.
+Statements frozen before their proofs (brief 0006, stage 3). Facts every arc needs, proved
+from the foundations alone; destined for a new Book Zero file, `Elements/Figure/Chords.lean`,
+which cites no proposition.
 
 An arc is named by a point on its side, which need not be on the circle: III.26 and III.28
 name their circumferences by such points. `Arc.congr_side` says that only the side matters,
@@ -39,7 +39,7 @@ theorem chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnC
 /-- **A straight line from within the base meets the arc.** For a drawn arc, a ray from a point
 X between the ends of the base, through a point Y on the arc's side, meets the arc.
 
-To be proved: X is within the circle (System E, Circle 2), so the straight line XY, produced
+Proved: X is within the circle (System E, Circle 2), so the straight line XY, produced
 beyond X backwards and then forwards, meets the circle on Y's side (Intersections 5, with
 Pasch 3 for the side). III.25's construction core reads this off the segment it is given. -/
 theorem Arc.meets {a : Arc} (ha : a.Drawn) {X Y : Point} (hX : Between a.B X a.C)

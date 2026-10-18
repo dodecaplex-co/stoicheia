@@ -6,7 +6,7 @@ import Elements.BookIII.Prop22
 /-!
 # Stage 3, staged: adding circumferences
 
-Statements before proofs (brief 0006, stage 3). Destined for
+Statements frozen before their proofs (brief 0006, stage 3), and proved here. Destined for
 `Elements/BookIII/Circumferences.lean`, for Book IV.
 -/
 
@@ -18,7 +18,7 @@ open Tacit
 of BD. Then the circumference BC away from D, and the circumference CD away from B, make up
 the circumference BD on K's side, the one through C.
 
-To be proved: measured at D and at B, the two are twice the angles BDC and CBD; measured at a
+Proved: measured at D and at B, the two are twice the angles BDC and CBD; measured at a
 point A on the other side of BD from C, the whole is twice the angle BAD [III. 21]; the three
 angles of BCD make two right angles [I. 32], and the angles at A and C make two right angles
 [III. 22].

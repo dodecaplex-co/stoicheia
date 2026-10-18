@@ -10,10 +10,11 @@ import Staging.Stage3.Prop28
 /-!
 # Stage 3, staged: what equal measures mean
 
-Statements before proofs (brief 0006, stage 3). Destined for `Elements/BookIII/Arcs.lean`,
-placed after III.29 so that the argument cannot go round in a circle: these bridge theorems
-justify the measure of a circumference (`circumference`, an angle carrying no radius) and the
-congruence of segments, and III.26–III.29 must not rest on them. Outside the placement files,
+Statements frozen before their proofs (brief 0006, stage 3), and proved here. Destined for
+`Elements/BookIII/Arcs.lean`, placed after III.29 so that the argument cannot go round in a
+circle: these bridge theorems justify the measure of a circumference (`circumference`, an
+angle carrying no radius) and the congruence of segments, and III.26–III.29 must not rest on
+them. Outside the placement files,
 this file and III.24 are the only places that may cite `placement` or any lemma of the
 `Placement` namespace.
 -/
@@ -26,8 +27,9 @@ open Tacit
 circles, the measures are equal exactly when the straight lines joining their ends are equal and
 the arcs are of the same kind (both less than semicircles, both semicircles, or both greater).
 
-To be proved by III.28 (equal chords, kind decided by the centre's side), III.29 (equal
-circumferences, equal chords), and the comparison of each kind with a semicircle
+Proved one way by III.29 (equal circumferences, equal chords), the kind read off from the
+measure (`Prop29.size`); and the other way by III.28 (equal chords, kind decided by the
+centre's side), with the comparison of each kind with a semicircle
 (`Circumference.lt_semicircle`, `.semicircle`, `.gt_semicircle`).
 
 A bridge theorem for the measure that III.26–III.29 compare. -/
@@ -103,11 +105,13 @@ theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
 /-- **Congruent is equal circles and equal measure.** Two drawn arcs are congruent exactly when
 their circles are equal and their measures are equal.
 
-To be proved: one way, the measures are equal by `Prop24.equalMeasure`, and the circles by
+Proved: one way, the measures are equal by `Prop24.equalMeasure`, and the circles by
 `Prop24.equalCircles`, the congruence keeping the chord and, at a point of the arc and its
-image, the angle in the segment [I. 8]; neither is proved again here. The other way, by
-`Arc.measure_eq_iff` the chords are equal and the kinds the same, so the angles in the segments
-are equal, and III.24 (restated) makes the segments congruent.
+image, the angle in the segment [I. 8] (`Prop24.image`); neither is proved again here. The
+other way, by `Arc.measure_eq_iff` the chords are equal; the circumferences on the other sides
+of the bases are the remainders of the whole circles [C.N. 3], each twice the angle in its
+segment (`Circumference.eq`), so the angles in the segments are equal, and III.24 (restated)
+makes the segments congruent.
 
 A bridge theorem for the congruence that III.24, III.26 and III.28 conclude. -/
 theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :

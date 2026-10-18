@@ -12,15 +12,16 @@ import Staging.Stage3.Prop24
 /-!
 # Stage 3, staged: III.26 upgraded
 
-Statements before proofs (brief 0006, stage 3). When frozen, this statement replaces
-`Elements.BookIII.Prop26`; here it is `Elements.BookIII.Staging.Prop26`. Each clause now
-concludes, besides the equal measures it concludes today, that the circumferences are
-congruent, so that "in equal circles" does real work. "Equal circumferences" is read as equal
+Statements frozen before their proofs (brief 0006, stage 3), and proved here. When it moves
+to `Elements/`, this statement replaces `Elements.BookIII.Prop26`; here it is
+`Elements.BookIII.Staging.Prop26`. Each clause now concludes, besides the equal measures it
+concludes today, that the circumferences are congruent, so that "in equal circles" does real
+work. "Equal circumferences" is read as equal
 in measure and congruent, which says more than Heath's words; equal, for arcs, is read through
 Common Notion 4 (brief 0006).
 
-The proof is planned along Euclid's route for the measures: the segments BAC, EDF are
-congruent [III. 24], so their circumferences are equal in measure (`Prop24.equalMeasure`),
+The proof follows Euclid's route for the measures: the segments BAC, EDF are congruent
+[III. 24], so their circumferences are equal in measure (`Prop24.equalMeasure`),
 and the remainders BKC, ELF are equal in measure, the wholes being equal [C.N. 3]. The
 congruence of the remainders cannot come by subtraction: it comes from III.24 applied to the
 remaining segments, which are similar, their angles making two right angles with the equal

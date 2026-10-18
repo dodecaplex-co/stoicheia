@@ -5,9 +5,9 @@ import Staging.Stage3.Definitions
 /-!
 # Stage 3, staged: arcs on one base
 
-Statements before proofs (brief 0006, stage 3). A shared step that cites I.7 and nothing of
-Book III, destined for `Elements/BookIII/Squares.lean`, the file of Book III's shared steps
-that cite Books I and II.
+Statements frozen before their proofs (brief 0006, stage 3), and proved here. A shared step
+that cites I.7 and nothing of Book III, destined for `Elements/BookIII/Squares.lean`, the
+file of Book III's shared steps that cite Books I and II.
 -/
 
 namespace Elements.BookIII
@@ -15,20 +15,14 @@ namespace Elements.BookIII
 open Tacit
 
 /-- A centre on the straight line through two different points of its circle lies
-between them: it differs from each, and if it lay beyond either, one of the equal radii
-would be less than the other. In the semicircle case this puts each centre between the
-ends of the base. -/
+between them: it is within the circle (`centre_inside`), and a point of that straight line
+within the circle lies between the two (`between_of_inside_chord`). In the semicircle case
+this puts each centre between the ends of the base. -/
 theorem Aligned.centre_between {B C O : Point} {α : Circle} (hBC : B ≠ C)
     (hO : Centre O α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hline : Collinear B C O) : Between B O C := by
   obtain ⟨L, hB_L, hC_L, hO_L⟩ := hline
-  have hBO : B ≠ O := ne_of_centre_of_on hO hB
-  have hCO : C ≠ O := ne_of_centre_of_on hO hC
-  have hradii : ‖O B‖ = ‖O C‖ := Definition15 hO hB hC
-  rcases between_cases hBO hCO.symm hBC hB_L hO_L hC_L with h | h | h
-  · exact h
-  · exact False.elim ((Magnitude.ne_of_lt (len_lt_of_between h)) hradii)
-  · exact False.elim ((Magnitude.ne_of_lt (len_lt_of_between (between_symm h))) hradii.symm)
+  exact between_of_inside_chord hO_L hB_L hC_L (centre_inside hO) hB hC hBC
 
 /-- Two points between B and C, equally far from B, coincide. Both lie on the ray
 from B through C, where a distance fixes one point. This identifies the two centres
@@ -49,10 +43,10 @@ theorem Aligned.eq_on_base {B C O O' : Point} (hO : Between B O C)
 same ends, on the same side of their base, in equal circles and of the same kind, lie in one
 circle, and have the same points and the same segment.
 
-To be proved: the centres are equally far from the two ends (the radii are equal), and lie
-alike, both on the arcs' side, both on the base, or both beyond it; so they are one point,
-by I.7 off the base and by the order of points on it; and a circle is fixed by its centre and
-radius (`circle_eq`).
+Proved: the centres are equally far from the two ends (the radii are equal), and lie alike,
+both on the arcs' side, both on the base, or both beyond it; so they are one point, by I.7 off
+the base and by the order of points on it; and a circle is fixed by its centre and radius
+(`circle_eq`).
 
 A shared step, not a companion: its hypotheses (equal circles, the same kind) are not
 III.23's (similar segments). Ground for the arcs (brief 0005, stage 3), for `Arcs.lean`
