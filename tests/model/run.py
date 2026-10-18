@@ -24,10 +24,10 @@ it saves each harness's output in results/, under a header naming the commit, th
 seeds and the Python; writes the axiom-by-axiom table to results/summary.txt; and brings
 the counts in MODEL.md up to date.
 
-The run passes when no harness finds a counterexample in the plane or reports a law
-twice, every mutation is caught, every axiom's hypotheses are met somewhere, and in the
-hyperbolic plane every axiom holds except those laws.toml says must fail there (Postulate
-5), which must fail.
+The run passes when every harness runs to its last line, no harness finds a counterexample
+in the plane or reports a law twice, every mutation is caught, every axiom's hypotheses
+are met somewhere, and in the hyperbolic plane every axiom holds except those laws.toml
+says must fail there (Postulate 5), which must fail.
 """
 import datetime
 import hashlib
@@ -198,6 +198,8 @@ def plan(full):
 
 
 EUCLIDEAN = ('search', 'exhaustive', 'structured')
+LAST_LINE = {'search': 'axioms checked:', 'exhaustive': 'exhaustive axioms run:',
+             'structured': 'structured total counterexamples:', 'hyperbolic': 'axioms checked:'}
 
 
 def judge(runs):
@@ -208,6 +210,9 @@ def judge(runs):
             bad.append(f'{r.key} exited with status {r.code}:\n{r.err.strip()[-2000:]}')
         for law in sorted(r.twice):
             bad.append(f'{r.key} reported {law} twice')
+        last = next((v for k, v in LAST_LINE.items() if r.key.startswith(k)), None)
+        if last and not re.search('^' + re.escape(last), r.out, re.M):
+            bad.append(f'{r.key} stopped before its last line')
     plane = [r for r in runs if r.key.startswith(EUCLIDEAN)]
     for r in plane:
         for law, (_, _, cex) in r.laws.items():

@@ -646,9 +646,10 @@ findings:
   in [`tests/model/model.py`](../../tests/model/model.py). Before anything runs, `run.py`
   checks the file against the axiom lock and against `facts.json` in both directions, and
   `search.py` and `hyperbolic.py` against it; `run.py --ties` runs those checks alone, in
-  a second; and a law that a program reports twice now fails the run. The number of axioms
-  is no value of the harness, which takes it from the lock, so nothing else had to move;
-  the docstrings that named 87 and 86 now name no number.
+  a second; and a law that a program reports twice, or a program that stops before its
+  last line, now fails the run. The number of axioms is no value of the harness, which
+  takes it from the lock, so nothing else had to move; the docstrings that named 87 and 86
+  now name no number.
   [`scripts/safe_push.py`](../../scripts/safe_push.py) counts the file as a value pinned
   to the edition, beside `Certificate/axioms.lock` and
   [`tests/model/lock.sha256`](../../tests/model/lock.sha256), while each line it changes
@@ -671,10 +672,13 @@ findings:
   a shared container under a second name (`d = DEN`, then `d[:] = [2]`), and a missing
   laws.toml or lock gave a traceback before Python 3.14, not the refusal. A law now changes
   a container only through a name that every binding in it gives a container it made
-  itself, and a missing file reads as nothing; each has its tests. MODEL.md, "Changing
-  the axioms", is now the one home of the steps for changing an axiom, or a word of the
-  lock, and the comment in `tests/model/lock.sha256`,
-  [FORMALIZATION](../FORMALIZATION.md), section 7, the [orders](../templates/orders.md)
+  itself, and a missing file reads as nothing; each has its tests. The no-mistakes review
+  found a third, and we thank it too: a law could end the structured run early with
+  `SystemExit(0)`, and the run still passed, so each program that runs the laws must now
+  reach its last line, and a test holds it there. MODEL.md, "Changing the axioms", is now
+  the one home of the steps for changing an axiom, or a word of the lock, and the comment
+  in `tests/model/lock.sha256`, [FORMALIZATION](../FORMALIZATION.md), section 7, the
+  [orders](../templates/orders.md)
   and [brief 0006](0006-statements.md) point to it; [WORKFLOW](../WORKFLOW.md), section
   10, step 4, gives the rule for landing them. Adding an axiom stays the owner's decision:
   this lets one land, and adds none.

@@ -170,6 +170,40 @@ SCRATCHPAD = "/private" + "/tmp/" + "claude" + "-501/" + FOLDED_HOME + "/0123/sc
 PASSING = [{"name": n, "bucket": "pass", "state": "SUCCESS", "workflow": "CI"}
            for n in ("check", "model", "negative")]
 
+# Judges the runs of a passing --fast run made by hand, then the same with the structured
+# run's last line dropped; prints the two lists of failures.
+JUDGE_RUNS = r'''
+import json, sys
+sys.path.insert(0, sys.argv[1])
+import run
+
+
+def made(key, script, laws, head='', tail=''):
+    r = run.Run(key, script)
+    r.code, r.err, r.twice, r.laws = 0, '', set(), laws
+    r.out = head + ''.join(f'{n} {t} {h} {c}\n' for n, (t, h, c) in laws.items()) + tail
+    return r
+
+
+def runs(structured_tail):
+    met = {law: (2000, 5, 0) for law in run.LAWS}
+    hyperbolic = {law: (300, 5, 3 if law in run.EXPECTED_TO_FAIL else 0) for law in run.LAWS}
+    return [made('search-seed1', 'search.py', met,
+                 tail=f'axioms checked: {len(met)}  total counterexamples: 0\n'),
+            made('structured', 'structured.py', {run.LAWS[0]: (5000, 7, 0)},
+                 tail=structured_tail + 'never met: []\n'),
+            made('mutations', 'mutations.py', {}, tail='15/15 mutations caught\n'),
+            made('grid_check', 'grid_check.py', {}, tail='failures 0 Counter()\n'),
+            made('angle_check', 'angle_check.py', {},
+                 tail='triple incidence grid failures: 0 []\nfloat failures: {}\n'),
+            made('hyperbolic', 'hyperbolic.py', hyperbolic, head='self-test: passed\n',
+                 tail=f'axioms checked: {len(hyperbolic)}  counterexamples to the other axioms: 0\n')]
+
+
+print(json.dumps([run.judge(runs('structured total counterexamples: 0\n')),
+                  run.judge(runs(''))]))
+'''
+
 # A stand-in for gh: pull requests in a JSON file; checks as each test sets them; a merge
 # made in the bare origin with a merge commit, as GitHub makes it.
 FAKE_GH = r'''#!@PYTHON@
@@ -3655,6 +3689,16 @@ class Units(unittest.TestCase):
         self.assertIsNone(safe_push.model_laws('[laws]\n"Tacit.len_self" = "len_self"\n'))
         laws = (SOURCE / safe_push.MODEL_LAWS).read_text()
         self.assertEqual(safe_push.model_laws(laws)["Postulate5"], ("Postulate5", True))
+
+    def test_a_harness_cut_short_fails_the_run(self):
+        # Issue #40, and the no-mistakes review's finding, with thanks: a harness that ends
+        # early with status 0, by SystemExit(0) among others, fails run.py's judge.
+        r = subprocess.run([sys.executable, "-I", "-c", JUDGE_RUNS, str(SOURCE / "tests/model")],
+                           cwd=SOURCE, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        whole, cut = json.loads(r.stdout)
+        self.assertEqual(whole, [])
+        self.assertEqual(cut, ["structured stopped before its last line"])
 
 
 if __name__ == "__main__":
