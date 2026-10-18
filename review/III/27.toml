@@ -5,7 +5,7 @@ fingerprint = "sha256:76827ffe8edda107"
 
 [route]
 kind = "modified"
-note = "Euclid's reductio for the angles at the centres, and his halving by III.20 where the angles at the circumferences are acute; where they are right or obtuse, Lean halves the measure of the circumference instead (`Circumference.standing`)."
+note = "Euclid's reductio for the angles at the centres, and his halving by III.20 where the angles at the circumferences are acute; where they are right or obtuse, the Lean halves the measure of the circumference instead (`Circumference.standing`)."
 
 [representation]
 tags = ["angle-measure", "redundant-hypothesis", "centre-given"]

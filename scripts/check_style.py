@@ -1,7 +1,7 @@
 """Check the house style's hard rules, and report its defaults.
 
-The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S18
-fail the script, and D1 to D13 are listed for a reader to judge and fail nothing.
+The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S19
+fail the script, and D1 to D11 and D13 are listed for a reader to judge and fail nothing.
 Run from anywhere; the paths are the repository's.
 
     python3 scripts/check_style.py              # every rule, S12 included
@@ -97,6 +97,7 @@ RULES = {
     "S16": "figure letters not all and only Heath's",
     "S17": "a further-reading file's shape or links",
     "S18": "a book with pages and no introduction",
+    "S19": "a book introduction that does not link the book's brief",
 }
 
 REPORTS = {
@@ -111,7 +112,6 @@ REPORTS = {
     "D9": "'need' joined to Postulate 5 (say 'uses')",
     "D10": "S6 or S7 outside their failing scope",
     "D11": "Euclid's figure strokes or dots off the usual widths",
-    "D12": "a book introduction that does not link the book's brief",
     "D13": "a reading line that does not begin 'For '",
 }
 
@@ -329,9 +329,11 @@ CREW = re.compile(words("crew", "captain", "first mate", "bosun", "sailor", "voy
 # "Book I was …" is a book, not a person.
 FIRST_PERSON = re.compile(r"(?<!Book )(?<!Books )\bI (?:am|was|have|think|found|would)\b|\b[Mm](?:y|e)\b")
 HEDGE = re.compile(r"\bnote that\b|\bstrictly speaking\b|\bit is worth noting\b", re.I)
+# "never need" or "never needs" with Postulate 5, a postulate, parallels or "it" later in
+# the same clause: "never need it", "I.1 to I.28 never need the fifth postulate".
 EUCLID_CITES = re.compile(
     r"\bEuclid cites\b|\bEuclid's own bracketed\b|"
-    r"\bnever needs? (?:it\b|Postulate 5\b|the parallel postulate\b)", re.I)
+    r"\bnever needs?\b(?=[^.;:!?]{0,40}?\b(?:it|postulates?|parallels?)\b)", re.I)
 TACIT = re.compile(r"\btacit (?:assumptions?|laws?)\b", re.I)
 DEFINITION = re.compile(r"\b(?:Definitions?|Defs?\.)\s+\d+\b")
 CURLY = re.compile("[“”‘’]")
@@ -559,7 +561,7 @@ def check_intros() -> None:
     for path in intro_files():
         raw = path.read_text(encoding="utf-8")
         if not re.search(rf"\]\([^)]*briefs/(?:\d{{4}}-)?book-{re.escape(path.stem)}\.md(?:#[^)]*)?\)", raw):
-            report("D12", path, 1, f"no link to Book {path.stem}'s brief in docs/briefs/")
+            fail("S19", path, 1, f"no link to Book {path.stem}'s brief in docs/briefs/")
 
 
 # ---------------------------------------------------------------------------------------
@@ -839,7 +841,7 @@ def main() -> int:
         print("  by rule: " + ", ".join(f"{r} {RULES[r]} ({k})"
                                        for r, k in sorted(by_rule.items(), key=lambda x: int(x[0][1:]))))
         return 1
-    rules = "S1–S18" if not args.no_lean else "S1–S11 and S13–S18"
+    rules = "S1–S19" if not args.no_lean else "S1–S11 and S13–S19"
     print(f"\n✓ style: the hard rules hold ({rules})")
     return 0
 

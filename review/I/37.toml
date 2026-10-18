@@ -1,7 +1,7 @@
 # review/I/37.toml
 [statement]
 scope = "full"
-note = "'In the same parallels' is read as two whole parallel straight lines, so the vertices A and D may be one point, as I.41 needs."
+note = "\"In the same parallels\" is read as two whole parallel straight lines, so the vertices A and D may be one point, as I.41 needs."
 fingerprint = "sha256:562b9178b7b445ef"
 
 [route]

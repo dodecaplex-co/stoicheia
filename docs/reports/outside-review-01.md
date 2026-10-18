@@ -1,6 +1,7 @@
 # An outside review: Astra, October 2026
 
-On 17 October 2026, at Jack Challis's request, Astra read Stoicheia cold at commit
+On 17 October 2026, at Jack Challis's request, Astra, an OpenAI model run in ChatGPT, read
+Stoicheia cold at commit
 [676244a](https://github.com/jackChallis/stoicheia/tree/676244a617e59e527b4ba0a3f33b8797c1552b90)
 and wrote four things: an assessment, a score against the README's own goal, a route to
 95/100 for each book, and a draft guide for contributors working in parallel. We are very

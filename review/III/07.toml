@@ -5,6 +5,7 @@ hypotheses = [
   "the two straight lines compared as nearer and more remote lie on one side of the diameter AD (`SameSideOf B C A D`). Across AD the comparison follows, Heath notes, from Euclid's equal and equally inclined straight line on the other side (vol. 2, p. 17); the statement gives that line's length but not its inclination.",
 ]
 note = "Nearer and more remote are compared only on one side of AD, as in Euclid's figure; a straight line on one side is not compared with one on the other."
+short = "compared on one side of AD only"
 fingerprint = "sha256:822f7a06d9330f45"
 
 [route]
@@ -12,7 +13,7 @@ kind = "euclid"
 
 [representation]
 tags = ["centre-given"]
-note = "The centre E is given, as Euclid's setting-out takes it. 'Nearer' is Euclid's meaning, the less angle at F with FA; the statement speaks of every point of the circle."
+note = "The centre E is given, as Euclid's setting-out takes it. \"Nearer\" is Euclid's meaning, the less angle at F with FA; the statement speaks of every point of the circle."
 
 [[passage]]
 at = "For the same reason"

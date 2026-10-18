@@ -2,10 +2,10 @@
 
 # Who uses whom
 
-Two graphs for each book, in which each arrow runs from a proposition to one that uses it. Green: proved in Lean; grey: stated; white: a proposition of an earlier book.
+Two graphs for each book, in which each arrow runs from a proposition to one that uses it, and a porism is drawn as its proposition. Green: proved in Lean; grey: stated in Lean, not yet proved; white: a proposition of an earlier book.
 
 - **From Heath's references.** An arrow for each earlier proposition that Heath's translation names in square brackets, such as "[I. 4]", in a proposition's enunciation or proof. The brackets are Heath's editorial references, not Euclid's words: as Heath says, "such specific quotations of earlier propositions are rare in Euclid" (vol. 1, p. 83, [scan leaf n103](https://archive.org/details/thirteenbookseu02heibgoog/page/n103)). A missing bracket does not mean that Euclid gave no reason, and a bracket is Heath's pointer, not a checked reconstruction of the argument.
-- **From the Lean.** An arrow for each proposition that a proof in Lean cites, as [the certificate](CERTIFICATE.md) records it; a porism is drawn as its proposition. Solid arrows are also among Heath's references; dashed ones only the Lean draws. A line under the graph names any of Heath's references that the Lean does not cite.
+- **From the Lean.** An arrow for each proposition that a proof in Lean cites, as [the certificate](CERTIFICATE.md) records it. Solid arrows are also among Heath's references; dashed ones only the Lean draws. Most dashed arrows come from shared steps, lemmas proved once and used by many proofs, which bring in the propositions they rest on ([the certificate](CERTIFICATE.md#shared-steps) says more). For each book after Book I the graph draws only the book's own propositions, and a table under it lists the earlier propositions each proof cites. A line under the graph names any of Heath's references that the Lean does not cite.
 
 Book I: [from Heath's references](#from-heaths-references), [from the Lean](#from-the-lean) · Book II: [from Heath's references](#from-heaths-references-1), [from the Lean](#from-the-lean-1) · Book III: [from Heath's references](#from-heaths-references-2), [from the Lean](#from-the-lean-2)
 
@@ -529,33 +529,10 @@ graph TD
 
 ### From the Lean
 
-138 arrows: 51 also among Heath's references (solid) and 87 only in the Lean (dashed).
+138 arrows: 51 also among Heath's references and 87 only in the Lean. The graph draws the 4 arrows between propositions of Book II, 4 solid and 0 dashed; the table under it lists the other 134, to propositions of earlier books.
 
 ```mermaid
 graph TD
-  I2["I.2"]
-  I3["I.3"]
-  I4["I.4"]
-  I5["I.5"]
-  I6["I.6"]
-  I10["I.10"]
-  I11["I.11"]
-  I13["I.13"]
-  I15["I.15"]
-  I17["I.17"]
-  I19["I.19"]
-  I20["I.20"]
-  I28["I.28"]
-  I29["I.29"]
-  I30["I.30"]
-  I31["I.31"]
-  I32["I.32"]
-  I34["I.34"]
-  I36["I.36"]
-  I43["I.43"]
-  I45["I.45"]
-  I46["I.46"]
-  I47["I.47"]
   II1["II.1"]
   II2["II.2"]
   II3["II.3"]
@@ -570,150 +547,35 @@ graph TD
   II12["II.12"]
   II13["II.13"]
   II14["II.14"]
-  I2 -.-> II1
-  I3 --> II1
-  I4 -.-> II1
-  I11 --> II1
-  I29 -.-> II1
-  I30 -.-> II1
-  I31 --> II1
-  I34 --> II1
-  I4 -.-> II2
-  I28 -.-> II2
-  I29 -.-> II2
-  I30 -.-> II2
-  I31 --> II2
-  I34 -.-> II2
-  I46 --> II2
-  I4 -.-> II3
-  I28 -.-> II3
-  I29 -.-> II3
-  I30 -.-> II3
-  I31 --> II3
-  I34 -.-> II3
-  I46 --> II3
-  I4 -.-> II4
-  I5 --> II4
-  I6 --> II4
-  I28 -.-> II4
-  I29 --> II4
-  I30 -.-> II4
-  I31 --> II4
-  I34 --> II4
-  I43 -.-> II4
-  I46 --> II4
-  I4 -.-> II5
-  I5 -.-> II5
-  I6 -.-> II5
-  I28 -.-> II5
-  I29 -.-> II5
-  I30 -.-> II5
-  I31 --> II5
-  I34 -.-> II5
-  I36 --> II5
-  I43 --> II5
-  I46 --> II5
-  I4 -.-> II6
-  I5 -.-> II6
-  I6 -.-> II6
-  I28 -.-> II6
-  I29 -.-> II6
-  I30 -.-> II6
-  I31 --> II6
-  I34 -.-> II6
-  I36 --> II6
-  I43 --> II6
-  I46 --> II6
-  I4 -.-> II7
-  I5 -.-> II7
-  I6 -.-> II7
-  I28 -.-> II7
-  I29 -.-> II7
-  I30 -.-> II7
-  I31 -.-> II7
-  I34 -.-> II7
-  I43 --> II7
-  I46 --> II7
-  I4 -.-> II8
-  I5 -.-> II8
-  I6 -.-> II8
-  I28 -.-> II8
-  I29 -.-> II8
-  I30 -.-> II8
-  I31 -.-> II8
-  I34 -.-> II8
-  I36 --> II8
-  I43 --> II8
-  I46 -.-> II8
-  I4 -.-> II9
-  I5 -.-> II9
-  I6 --> II9
-  I11 -.-> II9
-  I28 -.-> II9
-  I29 --> II9
-  I30 -.-> II9
-  I31 -.-> II9
-  I32 --> II9
-  I34 --> II9
-  I46 -.-> II9
-  I47 --> II9
-  I3 --> II10
-  I4 -.-> II10
-  I5 --> II10
-  I6 --> II10
-  I11 --> II10
-  I15 --> II10
-  I28 -.-> II10
-  I29 --> II10
-  I30 -.-> II10
-  I31 --> II10
-  I32 --> II10
-  I34 --> II10
-  I46 -.-> II10
-  I47 --> II10
-  I4 -.-> II11
-  I10 -.-> II11
-  I17 -.-> II11
-  I19 -.-> II11
-  I20 -.-> II11
-  I28 -.-> II11
-  I29 -.-> II11
-  I30 -.-> II11
-  I34 -.-> II11
-  I46 --> II11
-  I47 --> II11
   II6 --> II11
-  I4 -.-> II12
-  I17 -.-> II12
-  I28 -.-> II12
-  I34 -.-> II12
-  I46 -.-> II12
-  I47 --> II12
   II4 --> II12
-  I4 -.-> II13
-  I13 -.-> II13
-  I17 -.-> II13
-  I28 -.-> II13
-  I34 -.-> II13
-  I46 -.-> II13
-  I47 --> II13
   II7 --> II13
-  I4 -.-> II14
-  I10 -.-> II14
-  I11 -.-> II14
-  I28 -.-> II14
-  I29 -.-> II14
-  I34 -.-> II14
-  I45 --> II14
-  I46 -.-> II14
-  I47 --> II14
   II5 --> II14
   classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20
   classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242
-  classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242
-  class I2,I3,I4,I5,I6,I10,I11,I13,I15,I17,I19,I20,I28,I29,I30,I31,I32,I34,I36,I43,I45,I46,I47 earlier
   class II1,II2,II3,II4,II5,II6,II7,II8,II9,II10,II11,II12,II13,II14 proved
 ```
+
+<details><summary>The propositions of earlier books that each proof cites</summary>
+
+| Proposition | Lean cites | Of these, among Heath's references |
+|---|---|---|
+| [II.1](book/II/01.md) | I.2, I.3, I.4, I.11, I.29, I.30, I.31, I.34 | I.3, I.11, I.31, I.34 |
+| [II.2](book/II/02.md) | I.4, I.28, I.29, I.30, I.31, I.34, I.46 | I.31, I.46 |
+| [II.3](book/II/03.md) | I.4, I.28, I.29, I.30, I.31, I.34, I.46 | I.31, I.46 |
+| [II.4](book/II/04.md) | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.43, I.46 | I.5, I.6, I.29, I.31, I.34, I.46 |
+| [II.5](book/II/05.md) | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | I.31, I.36, I.43, I.46 |
+| [II.6](book/II/06.md) | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | I.31, I.36, I.43, I.46 |
+| [II.7](book/II/07.md) | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.43, I.46 | I.43, I.46 |
+| [II.8](book/II/08.md) | I.4, I.5, I.6, I.28, I.29, I.30, I.31, I.34, I.36, I.43, I.46 | I.36, I.43 |
+| [II.9](book/II/09.md) | I.4, I.5, I.6, I.11, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | I.6, I.29, I.32, I.34, I.47 |
+| [II.10](book/II/10.md) | I.3, I.4, I.5, I.6, I.11, I.15, I.28, I.29, I.30, I.31, I.32, I.34, I.46, I.47 | I.3, I.5, I.6, I.11, I.15, I.29, I.31, I.32, I.34, I.47 |
+| [II.11](book/II/11.md) | I.4, I.10, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47 | I.46, I.47 |
+| [II.12](book/II/12.md) | I.4, I.17, I.28, I.34, I.46, I.47 | I.47 |
+| [II.13](book/II/13.md) | I.4, I.13, I.17, I.28, I.34, I.46, I.47 | I.47 |
+| [II.14](book/II/14.md) | I.4, I.10, I.11, I.28, I.29, I.34, I.45, I.46, I.47 | I.45, I.47 |
+
+</details>
 
 The Lean cites all 51 of Heath's references.
 
@@ -892,34 +754,10 @@ graph TD
 
 ### From the Lean
 
-177 arrows: 85 also among Heath's references (solid) and 92 only in the Lean (dashed).
+177 arrows: 85 also among Heath's references and 92 only in the Lean. The graph draws the 63 arrows between propositions of Book III, 38 solid and 25 dashed; the table under it lists the other 114, to propositions of earlier books.
 
 ```mermaid
 graph TD
-  I3["I.3"]
-  I4["I.4"]
-  I5["I.5"]
-  I6["I.6"]
-  I8["I.8"]
-  I10["I.10"]
-  I11["I.11"]
-  I12["I.12"]
-  I13["I.13"]
-  I16["I.16"]
-  I17["I.17"]
-  I19["I.19"]
-  I20["I.20"]
-  I21["I.21"]
-  I23["I.23"]
-  I24["I.24"]
-  I26["I.26"]
-  I28["I.28"]
-  I32["I.32"]
-  I34["I.34"]
-  I46["I.46"]
-  I47["I.47"]
-  II5["II.5"]
-  II6["II.6"]
   III1["III.1"]
   III2["III.2"]
   III3["III.3"]
@@ -957,178 +795,64 @@ graph TD
   III35["III.35"]
   III36["III.36"]
   III37["III.37"]
-  I8 --> III1
-  I10 -.-> III1
-  I11 -.-> III1
-  I5 --> III2
-  I16 --> III2
-  I19 --> III2
   III1 --> III2
-  I5 --> III3
-  I8 --> III3
-  I26 --> III3
   III1 --> III4
   III3 --> III4
-  I4 --> III7
-  I20 --> III7
-  I23 --> III7
-  I24 --> III7
-  I4 --> III8
-  I20 --> III8
-  I21 --> III8
-  I23 -.-> III8
-  I24 --> III8
   III1 --> III8
-  I8 --> III9
-  I10 -.-> III9
-  I17 -.-> III9
   III1 --> III9
-  I10 -.-> III10
-  I11 -.-> III10
-  I17 -.-> III10
   III1 --> III10
   III5 --> III10
-  I20 -.-> III11
   III6 -.-> III11
-  I20 --> III12
   III6 -.-> III12
   III2 --> III13
   III11 --> III13
-  I3 -.-> III14
-  I4 -.-> III14
-  I17 -.-> III14
-  I19 -.-> III14
-  I28 -.-> III14
-  I34 -.-> III14
-  I46 -.-> III14
-  I47 --> III14
   III1 --> III14
   III3 --> III14
-  I3 -.-> III15
-  I11 -.-> III15
-  I17 -.-> III15
-  I19 -.-> III15
-  I20 --> III15
-  I24 --> III15
   III14 --> III15
-  I5 --> III16
-  I12 -.-> III16
-  I17 --> III16
-  I19 --> III16
-  I4 --> III17
-  I11 -.-> III17
   III1 --> III17
   III16 --> III17
-  I12 -.-> III18
-  I17 --> III18
-  I19 --> III18
   III18 --> III19
-  I5 --> III20
-  I32 --> III20
   III20 --> III21
-  I32 --> III22
   III21 --> III22
-  I16 --> III23
   III10 -.-> III23
   III21 -.-> III23
-  I5 -.-> III24
-  I26 -.-> III24
-  I32 -.-> III24
   III20 -.-> III24
   III21 -.-> III24
   III22 -.-> III24
-  I4 -.-> III25
-  I6 --> III25
-  I10 -.-> III25
-  I11 -.-> III25
-  I17 -.-> III25
-  I23 -.-> III25
   III9 --> III25
-  I4 --> III26
-  I5 -.-> III26
-  I32 -.-> III26
   III20 -.-> III26
   III21 -.-> III26
   III22 -.-> III26
   III24 --> III26
-  I23 --> III27
   III20 --> III27
   III21 -.-> III27
   III26 --> III27
-  I5 -.-> III28
-  I8 --> III28
-  I20 -.-> III28
-  I32 -.-> III28
   III20 -.-> III28
   III21 -.-> III28
   III22 -.-> III28
   III26 --> III28
-  I4 --> III29
-  I5 -.-> III29
-  I32 -.-> III29
   III20 -.-> III29
   III21 -.-> III29
   III22 -.-> III29
   III27 --> III29
-  I4 --> III30
-  I10 -.-> III30
-  I11 -.-> III30
-  I17 -.-> III30
   III21 -.-> III30
   III22 -.-> III30
   III28 --> III30
-  I5 --> III31
-  I17 --> III31
-  I32 --> III31
   III22 --> III31
-  I11 -.-> III32
-  I13 -.-> III32
-  I32 --> III32
   III19 --> III32
   III21 -.-> III32
   III22 --> III32
   III31 --> III32
-  I4 --> III33
-  I10 -.-> III33
-  I11 -.-> III33
-  I23 -.-> III33
   III16 --> III33
   III31 --> III33
   III32 --> III33
-  I11 -.-> III34
-  I23 --> III34
   III16 -.-> III34
   III32 --> III34
-  I4 -.-> III35
-  I12 -.-> III35
-  I17 -.-> III35
-  I19 -.-> III35
-  I28 -.-> III35
-  I34 -.-> III35
-  I46 -.-> III35
-  I47 --> III35
-  II5 --> III35
   III1 -.-> III35
   III3 --> III35
-  I4 -.-> III36
-  I12 -.-> III36
-  I17 -.-> III36
-  I19 -.-> III36
-  I28 -.-> III36
-  I34 -.-> III36
-  I46 -.-> III36
-  I47 --> III36
-  II6 --> III36
   III1 -.-> III36
   III3 --> III36
   III18 --> III36
-  I3 -.-> III37
-  I4 -.-> III37
-  I8 --> III37
-  I20 -.-> III37
-  I28 -.-> III37
-  I34 -.-> III37
-  I46 -.-> III37
   III1 -.-> III37
   III16 --> III37
   III17 -.-> III37
@@ -1136,10 +860,46 @@ graph TD
   III36 --> III37
   classDef proved fill:#d4edda,stroke:#2e7d32,color:#1b5e20
   classDef sketched fill:#eeeeee,stroke:#9e9e9e,color:#424242
-  classDef earlier fill:#ffffff,stroke:#9e9e9e,color:#424242
-  class I3,I4,I5,I6,I8,I10,I11,I12,I13,I16,I17,I19,I20,I21,I23,I24,I26,I28,I32,I34,I46,I47,II5,II6 earlier
   class III1,III2,III3,III4,III5,III6,III7,III8,III9,III10,III11,III12,III13,III14,III15,III16,III17,III18,III19,III20,III21,III22,III23,III24,III25,III26,III27,III28,III29,III30,III31,III32,III33,III34,III35,III36,III37 proved
 ```
+
+<details><summary>The propositions of earlier books that each proof cites</summary>
+
+| Proposition | Lean cites | Of these, among Heath's references |
+|---|---|---|
+| [III.1](book/III/01.md) | I.8, I.10, I.11 | I.8 |
+| [III.2](book/III/02.md) | I.5, I.16, I.19 | I.5, I.16, I.19 |
+| [III.3](book/III/03.md) | I.5, I.8, I.26 | I.5, I.8, I.26 |
+| [III.7](book/III/07.md) | I.4, I.20, I.23, I.24 | I.4, I.20, I.23, I.24 |
+| [III.8](book/III/08.md) | I.4, I.20, I.21, I.23, I.24 | I.4, I.20, I.21, I.24 |
+| [III.9](book/III/09.md) | I.8, I.10, I.17 | I.8 |
+| [III.10](book/III/10.md) | I.10, I.11, I.17 | none |
+| [III.11](book/III/11.md) | I.20 | none |
+| [III.12](book/III/12.md) | I.20 | I.20 |
+| [III.14](book/III/14.md) | I.3, I.4, I.17, I.19, I.28, I.34, I.46, I.47 | I.47 |
+| [III.15](book/III/15.md) | I.3, I.11, I.17, I.19, I.20, I.24 | I.20, I.24 |
+| [III.16](book/III/16.md) | I.5, I.12, I.17, I.19 | I.5, I.17, I.19 |
+| [III.17](book/III/17.md) | I.4, I.11 | I.4 |
+| [III.18](book/III/18.md) | I.12, I.17, I.19 | I.17, I.19 |
+| [III.20](book/III/20.md) | I.5, I.32 | I.5, I.32 |
+| [III.22](book/III/22.md) | I.32 | I.32 |
+| [III.23](book/III/23.md) | I.16 | I.16 |
+| [III.24](book/III/24.md) | I.5, I.26, I.32 | none |
+| [III.25](book/III/25.md) | I.4, I.6, I.10, I.11, I.17, I.23 | I.6 |
+| [III.26](book/III/26.md) | I.4, I.5, I.32 | I.4 |
+| [III.27](book/III/27.md) | I.23 | I.23 |
+| [III.28](book/III/28.md) | I.5, I.8, I.20, I.32 | I.8 |
+| [III.29](book/III/29.md) | I.4, I.5, I.32 | I.4 |
+| [III.30](book/III/30.md) | I.4, I.10, I.11, I.17 | I.4 |
+| [III.31](book/III/31.md) | I.5, I.17, I.32 | I.5, I.17, I.32 |
+| [III.32](book/III/32.md) | I.11, I.13, I.32 | I.32 |
+| [III.33](book/III/33.md) | I.4, I.10, I.11, I.23 | I.4 |
+| [III.34](book/III/34.md) | I.11, I.23 | I.23 |
+| [III.35](book/III/35.md) | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.5 | I.47, II.5 |
+| [III.36](book/III/36.md) | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.6 | I.47, II.6 |
+| [III.37](book/III/37.md) | I.3, I.4, I.8, I.20, I.28, I.34, I.46 | I.8 |
+
+</details>
 
 Heath's references that the Lean does not cite, 1 of his 86: [III.10](book/III/10.md) in [III.24](book/III/24.md).
 

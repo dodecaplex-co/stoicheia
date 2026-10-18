@@ -135,11 +135,9 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
         rw [add_comm (∠ A X C) ∟, add_comm (∠ A X C) (∠ A D C)]
         exact add_lt_add_right (∠ A X C) hobtuse
       exact absurd (h22 ▸ lt_trans h₁ h₂) (lt_irrefl _)
-  /- Our angles are made by two straight lines, so the angles of the greater and the
-     less segment, each contained by a circumference and a straight line, are left to
-     Euclid's words below, with no Lean beneath them. What he proves them by, that the
-     angles BAC and FAC are right, is `hright` above; the `exact` at the end returns
-     only the rectilineal claims of the statement. -/
+  /- The angles of the segments below stay in Euclid's words, with no Lean beneath them.
+     What he proves them by, that the angles BAC and FAC are right, is `hright` above;
+     the `exact` at the end returns only the claims of the statement. -/
   -- I say further that the angle of the greater segment, namely that contained by the
   -- circumference ABC and the straight line AC, is greater than a right angle;
   -- and the angle of the less segment, namely that contained by the circumference ADC and the

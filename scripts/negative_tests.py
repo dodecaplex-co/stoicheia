@@ -9,12 +9,14 @@ records current; CI runs it on every push.
 2. The README's "Try breaking it": I.1 takes its radii from the wrong circle, and
    Lean refuses the proof.
 3. Without a build, on a copy of `facts.json`: Postulate 1 weakened in the printed
-   statements no longer matches the axiom lock; and a changed statement of III.1's
-   porism makes III.1's review record stale.
+   statements no longer matches the axiom lock; a changed statement of III.1's porism
+   makes III.1's review record stale; and `Centre`, no longer among the opaque
+   primitives (as if it had been made a `def`), is caught.
 4. A changed Lean file makes its review record stale (I.1).
 5. III.16's review record without its unformalized passage leaves a run of `--` lines
    with no Lean beneath it undeclared.
-6. One build with planted assumptions, the certificate recomputed:
+6. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
+7. One build with planted assumptions, the certificate recomputed:
    - in I.16, Postulate 5, a planted Euclidean-only rule (`Tacit.Euclidean.planted`)
      and an axiom declared in I.16's own file after a docstring on the same line:
      each is caught, so are the count of Euclid's assumptions and the two planted
@@ -22,9 +24,13 @@ records current; CI runs it on every push.
    - in I.15's porism, which I.15 does not use: Postulate 5, superposition and the
      later I.22, each caught as the porism's, "I.15 Por.: …", and I.15 not blamed;
    - a helper of I.16 that mentions I.22 only in its statement: the certificate's
-     walk reads types as well as proofs, so I.16 is caught citing a later proposition.
+     walk reads types as well as proofs, so I.16 is caught citing a later proposition;
+   - a `sorry` in I.16's proof: Book I is complete, so I.16 not proved is caught.
 
-The files changed are restored, and so is `facts.json`; after test 6 the proofs are
+The checks these do not plant a fault for are named in README.md's table, "What the
+checks show": check_style.py, check_links.py, the pages' freshness and the audit lemmas.
+
+The files changed are restored, and so is `facts.json`; after test 7 the proofs are
 built again from the restored files. Exits non-zero if any change goes unnoticed.
 Standard library only; Python 3.11 or later, for the review records.
 """
@@ -131,6 +137,25 @@ def stale_statement() -> None:
                    "III.1: its statement has changed since it was reviewed")
 
 
+def primitive_not_opaque() -> None:
+    def change(facts):
+        facts["opaque"] = [w for w in facts["opaque"] if w != "Centre"]
+    expect_failure("a primitive word no longer opaque", with_facts(change),
+                   "Centre: no longer an opaque primitive")
+
+
+def native_decide() -> None:
+    rel = "Elements/BookI/Prop16.lean"
+    saved = replace_once(rel, "\nend Elements.BookI", "\n/-- Planted by scripts/negative_tests.py. "
+                         "-/\ntheorem planted_native : 2 + 2 = 4 := by native_decide\n\n"
+                         "end Elements.BookI")
+    try:
+        expect_failure("a native_decide in I.16's file", fidelity(),
+                       f"{rel}: uses native_decide")
+    finally:
+        (ROOT / rel).write_text(saved)
+
+
 def stale_lean() -> None:
     path = ROOT / "Elements" / "BookI" / "Prop01.lean"
     saved = path.read_text()
@@ -208,7 +233,8 @@ def planted_assumptions() -> None:
     text = text.replace(head, head + "  have _p5 := @Postulate5\n"
                         "  have _planted := @Elements.Tacit.Euclidean.planted\n"
                         "  have _sneaky := @Elements.BookI.sneaky\n"
-                        "  have _typeOnly : True := Prop16.typeOnly\n")
+                        "  have _typeOnly : True := Prop16.typeOnly\n"
+                        "  have _unproved : True := sorry\n")
 
     # I.15's porism: Postulate 5, superposition and the later I.22 (which does not
     # import I.15), none of them used by I.15 itself.
@@ -251,6 +277,8 @@ def planted_assumptions() -> None:
                                  "✗ I.15: cites"))
         expect_failure("a later proposition named only in a helper's statement", result,
                        "I.16: cites I.22, which does not come before it")
+        expect_failure("a sorry in I.16, in a complete book", result,
+                       "I.16: Book I is complete, but I.16 is not proved")
     finally:
         (ROOT / rel16).write_text(saved16)
         (ROOT / rel15).write_text(saved15)
@@ -266,8 +294,10 @@ def main() -> int:
     wrong_radii()
     weakened_postulate()
     stale_statement()
+    primitive_not_opaque()
     stale_lean()
     undeclared_run()
+    native_decide()
     planted_assumptions()
     if failures:
         print(f"{len(failures)} change(s) went unnoticed:")

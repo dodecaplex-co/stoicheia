@@ -4,7 +4,8 @@ scope = "partial"
 omitted = [
   "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
 ]
-note = "Proves that AE falls outside the circle and that no other straight line can be interposed; the angles of the semicircle and the horn are left to the text."
+note = "Proves that AE falls outside the circle and that no other straight line can be interposed; the clause map below shows what stays in Euclid's words."
+short = "the angle clauses stay in Euclid's words"
 fingerprint = "sha256:9fd59073303dbcdc"
 
 [route]
@@ -21,7 +22,7 @@ checked = [
   "Porism: AE touches the circle (III.16 Por.).",
 ]
 explains = [
-  "The second claim is what Euclid proves the angle clauses by: a rectilineal angle between them would need a straight line interposed.",
+  "The second claim is what Euclid proves the angle clauses by. A rectilineal angle between them would need a straight line interposed.",
 ]
 text_only = [
   "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
@@ -30,12 +31,18 @@ text_only = [
 [[passage]]
 at = "Similarly we can prove that neither will it fall on the circumference"
 kind = "grouped"
-note = "One step shows that no point of AE but A is on the circle; it gives both 'not within' and 'not on the circumference'."
+note = "One step shows that no point of AE but A is on the circle; it gives both \"not within\" and \"not on the circumference\"."
+
+[[passage]]
+at = "For, if possible, let another straight line be so interposed"
+kind = "case"
+helper = "Prop1.perpendicular"
+note = "Euclid's figure keeps FA off the centre and G, the foot of DG, away from A. If FA passes through the centre, D itself is the point within; and G is not A, for at A only one straight line is at right angles to AD, as in III.1."
 
 [[passage]]
 at = "But DA is equal to DH"
 kind = "grouped"
-note = "Lean needs no point H: DG, less than the radius DA, puts G within the circle (Diagram-segment 4), which the supposed interposition forbids. One step carries both sentences."
+note = "The Lean needs no point H: DG, less than the radius DA, puts G within the circle (Diagram-segment 4), which the supposed interposition forbids. One step carries both sentences."
 
 [[passage]]
 at = "Therefore another straight line cannot be interposed"
@@ -45,13 +52,16 @@ note = "The conclusion of the second reductio, which the contradiction above has
 [[passage]]
 at = "I say further that the angle of the semicircle"
 kind = "unformalized"
-note = "These angles are contained by a straight line and a circumference, which our angles are not, so this argument stays in Euclid's words."
+note = "Euclid's argument for the two angle clauses, which the clause map above accounts for."
 
 [[passage]]
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop16.porism"
 note = "Proved as its own theorem, III.16 Por., from the first part of the statement."
+
+[figure]
+note = "G is drawn within the circle and H beyond G, on the circumference, as the proof finds them; Heath's figure draws the supposition, with H between D and G."
 
 [review]
 stage = "exceptions"

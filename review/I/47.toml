@@ -12,7 +12,7 @@ kind = "euclid"
 
 [[passage]]
 at = "For let there be described on BC the square BDEC"
-kind = "different"
+kind = "given"
 note = "The three squares are given in the statement, standing outward from the triangle, so I.46 is not called here; `Prop28.square` shows that each is a parallelogram."
 
 [[passage]]

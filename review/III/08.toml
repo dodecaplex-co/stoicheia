@@ -5,6 +5,7 @@ hypotheses = [
   "the two straight lines compared as nearer and more remote, on the concave or on the convex circumference, lie on one side of DA (`SameSideOf E F D A`, `SameSideOf K L D A`). As in III.7, the statement gives the equal straight line on the other side by its length, not its inclination, so a comparison across DA does not follow from it.",
 ]
 note = "Nearer and more remote are compared only on one side of DA, as in Euclid's figure; a straight line on one side is not compared with one on the other."
+short = "compared on one side of DA only"
 fingerprint = "sha256:5924e258038472ae"
 
 [route]
@@ -28,7 +29,7 @@ note = "The comparison above is proved for any two points of the convex circumfe
 [[passage]]
 at = "that is, the nearer to the least DG equal to the more remote"
 kind = "different"
-note = "Lean does not appeal to the convex order, which misses a DN ending on the concave circumference or a DK touching the circle; I.24 at the centre M rules out equal straight lines on one side."
+note = "The Lean does not appeal to the convex order, which misses a DN ending on the concave circumference or a DK touching the circle; I.24 at the centre M rules out equal straight lines on one side."
 
 [review]
 stage = "exceptions"

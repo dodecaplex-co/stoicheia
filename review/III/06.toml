@@ -10,17 +10,18 @@ note = "Euclid's argument, but the last step does not order E and B as his figur
 
 [overlap]
 rule = "Tacit.circle_eq"
+also = ["Tacit.centre_inside"]
 note = "For contact within, System E's Diagram-segment 2 gives III.6 at once from the point of contact; for contact without, our definition of touching with Generalities 3 does. The proof follows Euclid."
 
 [[passage]]
 at = "therefore FE is also equal to FB, the less to the greater"
 kind = "different"
-note = "Lean does not order E and B: FE equal to FB makes the circles one (`circle_eq`), which contact within forbids, and contact without forbids F, within both."
+note = "The Lean does not order E and B: FE equal to FB makes the circles one (`circle_eq`), which contact within forbids, and contact without forbids F, within both."
 
 [[passage]]
 at = "Therefore F is not the centre of the circles ABC, CDE."
 kind = "grouped"
-note = "The reductio's conclusion. Lean supposed F the centre of both circles at the start and has reached the contradiction above, in each kind of contact."
+note = "The reductio's conclusion. The Lean supposed F the centre of both circles at the start and has reached the contradiction above, in each kind of contact."
 
 [figure]
 case = "the circles touching within, as in Heath's figure"

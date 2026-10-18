@@ -1,7 +1,7 @@
 # review/III/09.toml
 [statement]
 scope = "full"
-note = "Leaves out Euclid's 'within': any point from which three equal straight lines fall on the circle is its centre, as III.25 needs."
+note = "Leaves out Euclid's \"within\": any point from which three equal straight lines fall on the circle is its centre, as III.25 needs."
 fingerprint = "sha256:60fd9e5a7bed392d"
 
 [route]

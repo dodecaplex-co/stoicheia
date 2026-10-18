@@ -1,7 +1,7 @@
 # review/I/33.toml
 [statement]
 scope = "full"
-note = "'In the same directions' is stated as B and D lying on one side of AC (`hdir`)."
+note = "\"In the same directions\" is stated as B and D lying on one side of AC (`hdir`)."
 fingerprint = "sha256:baa852b497ce631e"
 
 [route]

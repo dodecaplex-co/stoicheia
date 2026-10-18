@@ -35,7 +35,8 @@ have something to say. Unknown sections and keys are faults, so a misspelling is
 | `scope` | `"full"`, `"restricted"` or `"partial"` | yes | How much of the enunciation the theorem proves, with the companions listed below. |
 | `hypotheses` | list of strings | when restricted | Each extra hypothesis that excludes a case Euclid's words admit, in plain words with the Lean hypothesis after it. |
 | `omitted` | list of strings | when partial | Each clause with no formal conclusion, quoted exactly from Heath's enunciation or porism. |
-| `note` | string, one line, at most 160 characters | unless full | What the theorem proves, in plain words, shown beside the badge. |
+| `note` | string, one line, at most 160 characters | unless full | What the theorem proves, in plain words, shown in the page's field table. |
+| `short` | string, one line, at most 70 characters, no full stop | unless full | The same in a few words, shown beside the badge: "bases that meet end to end". It follows a colon or a bracket, so it begins with a small letter. |
 | `fingerprint` | `"sha256:"` and 16 hex digits | stamp | The statements this record reviewed (below). |
 | `companions` | list of references | no | Companion theorems counted in the scope, as `"I.40 general"`. |
 
@@ -86,6 +87,7 @@ A tag of kind `scope` may appear only when the statement is restricted or partia
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `rule` | string | yes | The axiom, named as facts.json names it: `"Tacit.inside_of_between"`. |
+| `also` | list of strings | no | Any further axioms that contain the proposition only together with `rule`, as III.6 needs `"Tacit.centre_inside"`. |
 | `note` | string | no | What follows for the page: the proof reconstructs Euclid's reasoning within our foundations, and does not establish the rule. |
 
 The catalogue of overlaps, with their audit lemmas, is
@@ -116,23 +118,40 @@ One table for each passage declared, in the order of the proof.
   where that needs saying, as for a porism proved as its own theorem.
 - **helper**: a lemma supplies a step Euclid takes for granted; the note says which step.
 - **grouped**: several sentences carried by one argument, or a "similarly" by one lemma.
-- **different**: the Lean argues this passage another way; the note says how.
+- **case**: a case Euclid's figure leaves aside, or leaves to the reader, which the Lean
+  takes as well, in the same argument or in a step of its own (II.14's ED the greater,
+  III.2's AB through the centre); the note says how.
+- **given**: what the passage does is already given, by the statement or by how our
+  objects are put into Lean, so no Lean is needed beneath it (I.5's D and E, which come
+  with the statement); the note says what gives it.
+- **different**: the Lean argues this passage another way; the note says how. A
+  passage argued another way changes Euclid's route, so its record's route is
+  `modified` or `alternative`, never `euclid`.
 - **unformalized**: the passage has no formal counterpart; the note says why.
+
+The page lists the passages under "How the Lean follows the text", each led by a plain
+word for its kind: "Done by `Prop6.less`", "Carried together", "A further case",
+"Already given", "Argued another way", "Left in Euclid's words", or, for a porism,
+"Proved separately, as `Prop16.porism`".
 
 ### `[figure]`
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `case` | string | yes | The case the figure shows, when the theorem covers several. The caption names it. |
+| `case` | string | no | The case the figure shows, when the theorem covers several. The caption names it. |
+| `note` | string | no | Where our drawing of Euclid's figure places a point otherwise than Heath's, as the Lean does; shown under the figure (docs/STYLE.md, section 7). |
+
+The section needs at least one of the two, and is left out when it has neither.
 
 ### `[review]`: who read it, and what they read
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `stage` | `"exceptions"` or `"full"` | yes | See "Two stages". |
-| `commit` | git commit, 7 to 40 hex digits | stamp | The commit the reviewer read. |
+| `commit` | git commit, 7 to 40 hex digits | stamp | The commit whose files the record was last confirmed against: the reviewer's reading, or a later reading of each changed file against the record (docs/WORKFLOW.md, section 6). |
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
-| `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. |
+| `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
+| `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items (stage 6), each `"pass"`, `"fail"` or `"n/a"`. |
 
 The acceptance checklist, `docs/ACCEPTANCE.md`, will fix the item keys. Until it exists
@@ -160,7 +179,10 @@ require_stamp=False)` reads a record without them.
 - `companions` are companions of this proposition; tags are in terms.toml, with no
   scope tag on a full statement;
 - a modified or alternative route has a `note`, as does every passage not carried; a
-  helper passage names its `helper`;
+  helper passage names its `helper`; a passage argued another way (`different`) is not
+  under a route of `euclid`;
+- a restricted or partial statement has a `short`;
+- a record at stage `full` names its `run`, and its `reviewer` names a role;
 - stamps have their form.
 
 `python3 scripts/heath.py` checks the worked examples below and every record present.
@@ -187,7 +209,8 @@ scope = "partial"
 omitted = [
   "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
 ]
-note = "Proves that AE falls outside the circle and that no other straight line can be interposed; the angles of the semicircle and the horn are left to the text."
+note = "Proves that AE falls outside the circle and that no other straight line can be interposed; the clause map below shows what stays in Euclid's words."
+short = "the angle clauses stay in Euclid's words"
 fingerprint = "sha256:9fd59073303dbcdc"
 
 [route]
@@ -204,7 +227,7 @@ checked = [
   "Porism: AE touches the circle (III.16 Por.).",
 ]
 explains = [
-  "The second claim is what Euclid proves the angle clauses by: a rectilineal angle between them would need a straight line interposed.",
+  "The second claim is what Euclid proves the angle clauses by. A rectilineal angle between them would need a straight line interposed.",
 ]
 text_only = [
   "the angle of the semicircle is greater, and the remaining angle less, than any acute rectilineal angle",
@@ -213,12 +236,12 @@ text_only = [
 [[passage]]
 at = "Similarly we can prove that neither will it fall on the circumference"
 kind = "grouped"
-note = "One step shows that no point of AE but A is on the circle; it gives both 'not within' and 'not on the circumference'."
+note = "One step shows that no point of AE but A is on the circle; it gives both \"not within\" and \"not on the circumference\"."
 
 [[passage]]
 at = "I say further that the angle of the semicircle"
 kind = "unformalized"
-note = "These angles are contained by a straight line and a circumference, which our angles are not, so this argument stays in Euclid's words."
+note = "Euclid's argument for the two angle clauses, which the clause map above accounts for."
 
 [[passage]]
 at = "PORISM. From this it is manifest"
@@ -241,6 +264,7 @@ I.40 is restricted: the theorem takes the two bases end to end.
 scope = "restricted"
 hypotheses = ["the bases BC and CE meet at C (`hBCE : Between B C E`)"]
 note = "Proved for equal bases that meet end to end, as BC and CE; Euclid's bases may lie anywhere on one straight line."
+short = "bases that meet end to end"
 fingerprint = "sha256:5ea666d96871b7f8"
 
 [route]

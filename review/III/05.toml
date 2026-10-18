@@ -15,12 +15,12 @@ note = "System E's Diagram-segment 2, that one centre and one radius make one ci
 [[passage]]
 at = "therefore EF is also equal to EG, the less to the greater"
 kind = "different"
-note = "Lean does not order F and G as the figure does: EF equal to EG makes ABC and CDG one circle (`circle_eq`), and the statement says they are two."
+note = "The Lean does not order F and G as the figure does: EF equal to EG makes ABC and CDG one circle (`circle_eq`), and the statement says they are two."
 
 [[passage]]
 at = "Therefore the point E is not the centre of the circles ABC, CDG."
 kind = "grouped"
-note = "The reductio's conclusion. Lean supposed E the centre of both circles at the start and has reached the contradiction above, which proves it."
+note = "The reductio's conclusion. The Lean supposed E the centre of both circles at the start and has reached the contradiction above, which proves it."
 
 [review]
 stage = "exceptions"

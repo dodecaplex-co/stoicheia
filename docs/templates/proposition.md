@@ -89,12 +89,15 @@ Coverage and route:
 - Changes to the contract, with their approval.
 
 Proposed record entries (review/SCHEMA.md):
-- [statement] scope, hypotheses, omitted, note:
+- [statement] scope, hypotheses, omitted, note, short:
 - [route] kind, note:
 - [representation] tags:
-- [overlap] rule:
-- [[passage]] at, kind (helper / grouped / different / unformalized), helper, note:
-- [figure] case:
+- [overlap] rule, also:
+- [[passage]] at, kind (helper / grouped / case / given / different / unformalized), helper, note:
+- [figure] case, and note (a line for under the figure, where the drawing departs from Heath's):
+
+Records made stale: the review records whose Lean file or statement this change touched,
+even by a comment; their owner reads and stamps them (WORKFLOW.md, section 6).
 
 Dependencies:
 - Helpers added or changed, with their signatures.
@@ -103,9 +106,11 @@ Dependencies:
 - Requests for a shared owner (form 6).
 - Hypotheses the proof does not use, and why.
 
-Checks (exact commands, outcomes, and the revision checked):
-- lake build …
+Checks (exact commands, outcomes, and the revision checked; the full list is
+WORKFLOW.md, section 8):
+- lake build
 - lake env lean Certificate/Facts.lean && python3 scripts/check_fidelity.py
+- python3 scripts/check_style.py
 - Figures rendered and looked at; quotations checked against the scan.
 
 Open items:
@@ -159,6 +164,7 @@ scope = "full"                 # or "restricted", "partial"
 # hypotheses = ["plain words (`hX : …`)"]       # restricted
 # omitted = ["quoted exactly from Heath"]       # partial
 # note = "One line, at most 160 characters."    # unless full
+# short = "a few words for beside the badge"    # unless full; 70 characters at most
 # companions = ["<Book>.<N> general"]
 fingerprint = "sha256:…"
 
@@ -171,6 +177,7 @@ tags = []                      # from review/terms.toml
 
 # [overlap]
 # rule = "Tacit.…"
+# also = ["Tacit.…"]           # any rules that contain it only together with `rule`
 # note = "…"
 
 # [coverage]                   # required when partial
@@ -180,18 +187,20 @@ tags = []                      # from review/terms.toml
 
 # [[passage]]
 # at = "first words of the passage, quoted exactly"
-# kind = "helper"              # carried, helper, grouped, different, unformalized
+# kind = "helper"              # carried, helper, grouped, case, given, different, unformalized
 # helper = "PropN.something"
 # note = "One or two plain sentences, shown on the page."
 
 # [figure]
 # case = "the case the figure shows"
+# note = "where our drawing places a point otherwise than Heath's, and why"
 
 [review]
 stage = "exceptions"           # or "full"
 commit = "…"
 lean = "sha256:…"
-reviewer = "…"
+reviewer = "…"                 # from stage "full": the model or person, and the role
+# run = "brief …, stage …, workflow …"   # from stage "full"
 # [review.items]               # once docs/ACCEPTANCE.md fixes the keys:
 # statement, passages, representations, commentary, figures, signoff = "pass" / "fail" / "n/a"
 ```

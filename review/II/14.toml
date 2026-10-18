@@ -3,7 +3,8 @@ scope = "restricted"
 hypotheses = [
   "the rectilineal figure A is two triangles on a common side A₂A₄, as our I.45 takes it (`h₁ : Triangle A₁ A₂ A₄`, `h₂ : Triangle A₄ A₂ A₃`)",
 ]
-note = "Proved for a figure of two triangles on a common side, as our I.45 takes it, returning the side EH of the square; Euclid's figure may have any number of sides."
+note = "Proved for a figure of two triangles on a common side, as our I.45 takes it; Euclid's figure may have any number of sides."
+short = "a figure of two triangles"
 fingerprint = "sha256:164903fd832eae07"
 
 [route]
@@ -11,7 +12,7 @@ kind = "euclid"
 
 [[passage]]
 at = "Let BE be greater"
-kind = "grouped"
+kind = "case"
 note = "Euclid takes BE the greater; when ED is, the Lean reads the rectangle the other way round, so one argument serves for both."
 
 [representation]

@@ -18,8 +18,8 @@ note = "Euclid's figure makes DBF a triangle; the Lean proves it: B, with DB equ
 
 [[passage]]
 at = "And FB produced is a diameter"
-kind = "different"
-note = "Our porism to III.16 is said at the end of a radius, so Lean applies it to FB itself and does not produce FB to a diameter."
+kind = "given"
+note = "Our porism to III.16 is said at the end of a radius, so the Lean applies it to FB itself and does not produce FB to a diameter."
 
 [[passage]]
 at = "Similarly this can be proved to be the case even if the centre be on AC"

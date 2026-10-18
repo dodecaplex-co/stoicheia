@@ -115,6 +115,8 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
         (angle_symm hDBG.ne₁₂.symm hDBG.ne₁₃.symm)
     -- But, when a straight line set up on a straight line makes the adjacent angles equal to one
     -- another, each of the equal angles is right; [I. Def. 10]
+    /- Definition I.10 makes each of the equal adjacent angles right, and Postulate 4
+       makes it `∟`, as in I.11. -/
     have hADG : ∠ A D G = ∟ := Postulate4 ⟨B, hADB, hDAG.bac, h8⟩
     -- therefore the angle GDB is right.
     have hGDB : ∠ G D B = ∟ := h8 ▸ hADG

@@ -14,7 +14,7 @@ note = "Both circles come with centres, so the porism to III.1 puts each centre 
 [[passage]]
 at = "therefore the point P is the centre of the circle ABC"
 kind = "grouped"
-note = "The statement gives ABC its centre, which Lean names P at once; that AC and NO meet only there is the step above, so this sentence needs no Lean of its own."
+note = "The statement gives ABC its centre, which the Lean names P at once; that AC and NO meet only there is the step above, so this sentence needs no Lean of its own."
 
 [review]
 stage = "exceptions"

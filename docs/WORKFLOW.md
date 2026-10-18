@@ -135,12 +135,15 @@ files working in parallel, the renderers, and an integrator followed by blind re
 - **Each wave's orders name the owner of every file being changed.** Anything else is asked
   of its owner through the handback, never edited in passing.
 - **Standing owners.** The coordinator owns `Elements/Foundations/` (every `Definitions*`
-  file included), `Certificate/axioms.lock`, the decisions page, PROGRAM.md and the CI
-  workflow, and may hand the last four to a wave's integrator. The integrator owns the
-  generated edition: `facts.json`, `book/`, `CERTIFICATE.md` and `GRAPH.md`. Each wave names
-  owners for Book Zero and the shared helper
-  modules, `heath/`, the scripts, `Certificate/Facts.lean`, the review records, the reading
-  list and bibliography, and the book briefs.
+  file included), `Certificate/axioms.lock`, the toolchain and its dependencies
+  (`lean-toolchain`, `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md
+  and the CI workflow, and may hand the lock, the decisions page, PROGRAM.md and the CI
+  workflow to a wave's integrator. The integrator
+  owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, and
+  README.md's rows between the `<!-- scope:… -->` markers, which `render.py` fills; the
+  rest of README.md has an owner of its own, named in the orders. Each wave names owners
+  for Book Zero and the shared helper modules, `heath/`, the scripts, `Certificate/Facts.lean`,
+  the review records, the reading list and bibliography, and the book briefs.
 - **Ask for a shared lemma with a proposed type:** its purpose, a proof or a plan, where it
   may live in the dependency order, and who will use it
   ([template](templates/proposition.md)). That is far easier to integrate than "something
@@ -186,10 +189,27 @@ rendered page.
 
 **Review records are tied to a commit.** Every proposition has a record,
 `review/<book>/NN.toml` ([schema](../review/SCHEMA.md)). `scripts/review_stamp.py` stamps it
-with the commit read, a fingerprint of the statements reviewed and a hash of the Lean file.
-When either changes, `check_fidelity.py` reports "statement changed since reviewed", and the
-record is read again. At the stage `exceptions` a record declares every departure; at the
-stage `full` it classifies every substantive passage.
+with a fingerprint of the statements reviewed, a hash of the Lean file, and the commit whose
+files the record was last confirmed against. When the fingerprint or the hash no longer
+matches, `check_fidelity.py` reports that the statement or the Lean file has changed since
+it was reviewed, and the record is read again. At the stage `exceptions` a record declares
+every departure; at the stage `full` it classifies every substantive passage. The record's
+`reviewer` names who read it; from the stage `full` it names the model or person and the
+role, and `run` names the brief, stage and workflow, so that a reader can tell the reviewer
+from the authors of the proof.
+
+**Stamps.** A stamp says that a record has been read against the files as they now are.
+
+- The reviewer stamps, after reading, with the commit whose files were read:
+  `python3 scripts/review_stamp.py --commit <commit> III.16`. Commit the change first,
+  then stamp; the script checks that the Lean file at that commit is the file as it is now.
+- The integrator re-stamps only after reading each changed file against its record, and
+  then stamps with the commit read. A record the integrator cannot confirm goes back to the
+  records' owner.
+- On a contributor's branch, "changed since it was reviewed" is expected whenever a Lean
+  file under a record changes, even by a comment. The contributor lists the records made
+  stale in the handback (form 3, "Records made stale"), and never runs `review_stamp.py` on
+  a record they did not review.
 
 **What a reviewer of the Lean looks for:**
 
@@ -232,25 +252,42 @@ Ships' captains enforcing a few pages each do not, between them, make one voice.
 
 ## 8. Validation on the integrated revision
 
-The evidence belongs to the revision being delivered. On it, run:
+This section is the one home of the commands; every other page links here and keeps only
+the subset its reader runs. The evidence belongs to the revision being delivered. On it,
+run exactly what CI's `check` job runs, in its order:
 
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
 lake build
+lake build Audit
 lake env lean Certificate/Facts.lean
+python3 scripts/heath.py
 python3 scripts/check_fidelity.py
+python3 scripts/check_style.py
 python3 scripts/render.py
+git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md   # prints nothing
+python3 scripts/check_links.py
 ```
 
-Review the generated differences, commit them with their sources, and check that
-regenerating leaves them unchanged:
-`git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md` prints nothing. CI runs
-the same steps, with the checks each stage adds (`scripts/check_style.py`,
-`scripts/check_links.py` and the others the CI workflow lists).
+Review the generated differences and commit them with their sources, so that regenerating
+leaves them unchanged and the `git status` line prints nothing. Two more jobs run on their
+own, each in isolation:
+
+```sh
+python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
+python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
+```
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
   beside other contributors' builds in a shared tree.
+- **The model tests read the lock.** `tests/model/lock.sha256` pins
+  `Certificate/axioms.lock`, so a change to an axiom fails the `model` job until the model
+  is read again ([FORMALIZATION.md](FORMALIZATION.md), section 7).
+- **A contributor's subset.** Working on a proof, run the full `lake build` first (the
+  certificate imports all of `Elements`), then `Certificate/Facts.lean`, `check_fidelity.py`
+  and `check_style.py`; a stale record is expected (section 6), and the pages are the
+  integrator's.
 - **A guard defect gets a regression.** When a certificate or check defect is fixed, add a
   focused test that shows the defect would now be caught (a negative test, or an entry in
   `tests/certificate_expectations.json`). Tests that only repeat a trivial prose change are

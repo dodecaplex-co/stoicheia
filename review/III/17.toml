@@ -5,6 +5,7 @@ hypotheses = [
   "the given point A is outside the circle (`hA : OutsideCircle A BCD`), which leaves out a point on the circumference",
 ]
 note = "Proved for a point outside the circle; a point on the circumference, which Euclid leaves to III.16's porism, is not covered."
+short = "a point outside the circle"
 fingerprint = "sha256:32b9217d50bc0d85"
 
 [route]

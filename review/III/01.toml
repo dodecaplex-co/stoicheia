@@ -12,6 +12,18 @@ tags = ["centre-given"]
 note = "The circle comes with some centre G, Euclid's supposed centre, and with the two points A, B of the straight line he draws through it at random. The porism, too, is stated of a circle with a centre."
 
 [[passage]]
+at = "and let GA, GD, GB be joined"
+kind = "case"
+helper = "Prop1.middle"
+note = "Euclid's figure keeps the supposed centre G off AB. On AB it would be AB's middle point D, which is already on CE, so the Lean sets that case aside first; then DAG and DBG are triangles for I.8."
+
+[[passage]]
+at = "But the angle FDB is also right"
+kind = "helper"
+helper = "Prop1.perpendicular"
+note = "If AB passes through the centre, F is D and there is no angle FDB, so the Lean takes the angle CDB, right by construction. For \"the greater to the less\" it shows that at D only one straight line is at right angles to DB, wherever G lies, so G is on CE."
+
+[[passage]]
 at = "Therefore G is not the centre of the circle ABC."
 kind = "grouped"
 note = "The reductio shows that the supposed centre G lies on CE, and the Lean beneath makes it the middle point F. One argument, for any centre G, carries all three sentences."

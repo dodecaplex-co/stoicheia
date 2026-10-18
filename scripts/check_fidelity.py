@@ -5,16 +5,13 @@
    order, must be exactly Heath's proof (whitespace aside). Euclid's words go in
    `--` comments; our own remarks go in `/- … -/` blocks.
 2. Every `axiom` lives in `Elements/Foundations/`: a first look in the source here,
-   and the real check from Lean's own environment in 6.
+   and the real check from Lean's own environment in 5.
 3. Book Zero (`Elements/Figure/`) never imports a proposition.
 4. Nothing that gets round the kernel or adds an axiom without the word: no
    `native_decide` or `decide +native` (each adds an axiom Lean's kernel doesn't
    check), no `set_option debug.…`, and no `run_cmd`, `run_elab`, `elab`, `macro`,
    `implemented_by`, `extern` or `unsafe` under `Elements/`.
-5. Wording. README.md, CERTIFICATE.md, GRAPH.md and the books' index pages never say
-   "never need" (a proof uses Postulate 5 or does not), "Euclid cites" or "Euclid's
-   own bracketed" (the brackets are Heath's references: vol. 1, p. 83).
-6. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
+5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
    fields are in `Certificate/FIELDS.md`):
    - every axiom an entry rests on, other than Lean's own `propext`,
      `Classical.choice` and `Quot.sound`, is declared under `Elements.Foundations`,
@@ -88,13 +85,6 @@ FORBIDDEN = re.compile(
     r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bset_option\s+debug\.|"
     r"\b(run_cmd|run_elab|run_meta|elab|elab_rules|macro|macro_rules|implemented_by|"
     r"extern|unsafe)\b")
-# Words retired from the reader-facing pages (brief 0005, stage 1e), and what to say.
-RETIRED = {
-    "never need": "say what the proof does: 'this proof uses Postulate 5', or 'the proofs "
-                  "of 29 propositions do not use it'",
-    "euclid cites": "the brackets are Heath's references (Heath, vol. 1, p. 83)",
-    "euclid's own bracketed": "the brackets are Heath's editorial references",
-}
 
 errors: list[str] = []
 
@@ -188,24 +178,9 @@ def check_rules() -> None:
             fail(f"{rel}: Book Zero must not import a proposition")
 
 
-# Wording.
-
-def wording_pages() -> list[Path]:
-    pages = [ROOT / "README.md", ROOT / "CERTIFICATE.md", ROOT / "GRAPH.md"]
-    return pages + sorted((ROOT / "book").glob("*/index.md"))
-
-
-def check_wording() -> None:
-    """The retired phrases, anywhere on the reader-facing summary pages."""
-    for page in wording_pages():
-        if not page.exists():
-            continue
-        for number, line in enumerate(page.read_text().splitlines(), 1):
-            low = line.replace("’", "'").lower()  # one character for one: same places
-            for phrase, advice in RETIRED.items():
-                at = low.find(phrase)
-                if at >= 0:
-                    fail(f"{rel(page)}:{number}: says {line[at:at + len(phrase)]!r}; {advice}")
+# The words retired from the reader-facing pages ("Euclid cites", "never need" and their
+# kin) are checked by scripts/check_style.py, rule S5, whose home is docs/STYLE.md,
+# section 8.
 
 
 # The axiom lock, Certificate/axioms.lock.
@@ -712,9 +687,9 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
         if facts is not None and c not in by_ref:
             fail(f"{where}: companion {c} has no entry in facts.json")
     if facts is not None and "overlap" in record:
-        rule = record["overlap"]["rule"]
-        if rule not in facts.get("axiom_modules", {}):
-            fail(f"{where}: [overlap] rule {rule} is not one of the axioms in facts.json")
+        for rule in [record["overlap"]["rule"]] + record["overlap"].get("also", []):
+            if rule not in facts.get("axiom_modules", {}):
+                fail(f"{where}: [overlap] rule {rule} is not one of the axioms in facts.json")
 
     # The stamps: what the reviewer read is what there is now. (A facts.json with no
     # statements has been reported once already, by check_entries.)
@@ -727,7 +702,8 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
             if st["fingerprint"] != want:
                 fail(f"{ref}: its statement has changed since it was reviewed ({where} has "
                      f"{st['fingerprint']}, facts.json gives {want}): read the record "
-                     "again, then run scripts/review_stamp.py")
+                     "again, then stamp it with scripts/review_stamp.py --commit "
+                     "(WORKFLOW.md, section 6)")
     lean = heath.lean_path(book, n)
     if not lean.exists():
         return
@@ -735,7 +711,7 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
     if rv["lean"] != want:
         fail(f"{ref}: its Lean file has changed since it was reviewed ({where} has "
              f"{rv['lean']}, {rel(lean)} is {want}): read the record again, then run "
-             "scripts/review_stamp.py")
+             "scripts/review_stamp.py --commit (WORKFLOW.md, section 6)")
 
     # The passages begin at Euclid's sentences, and name helpers that exist.
     src = lean.read_text()
@@ -786,7 +762,6 @@ def main(argv=None) -> int:
         return write_lock(json.loads(args.facts.read_text()))
     check_fidelity()
     check_rules()
-    check_wording()
     check_facts(args.facts)
     if errors:
         print(f"{len(errors)} problem(s):")

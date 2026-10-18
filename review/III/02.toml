@@ -18,7 +18,13 @@ note = "System E's Circle 2 contains III.2. The Lean of III.2 never calls the ru
 [[passage]]
 at = "For suppose it does not, but, if possible, let it fall outside"
 kind = "grouped"
-note = "That DE is less than DB does not need the supposition, so Lean proves it first, and then refutes 'outside' and 'on the circumference' each by that one comparison."
+note = "That DE is less than DB does not need the supposition, so the Lean proves it first, and then refutes \"outside\" and \"on the circumference\" each by that one comparison."
+
+[[passage]]
+at = "Then, since DA is equal to DB"
+kind = "case"
+helper = "Prop2.through_centre"
+note = "Euclid's figure keeps the centre D off AB. When AB passes through D there are no triangles DAE and DEB, and `Prop2.through_centre` shows DE less than DB directly: DE is part of DA or of DB, which are equal."
 
 [review]
 stage = "exceptions"

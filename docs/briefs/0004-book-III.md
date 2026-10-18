@@ -1,9 +1,12 @@
 # Book III: circles
 
-*The design for Book III (16 October 2026): how Lean says Book III's words, where the
-facts about them live, and how its thirty-seven propositions are stated. Where it
-differs from the code, the code is right. The first mate's working detail, one note per
-proposition, is in [first-mate-III.md](../reports/crew/first-mate-III.md).*
+*The design for Book III (16 October 2026, brought up to date on 17 October): how Lean
+says Book III's words, where the facts about them live, and how its thirty-seven
+propositions are stated. The code states what we formalized; where the code, this brief,
+a review record and the pages disagree, the disagreement is recorded and every document
+it touches is reconciled ([FORMALIZATION.md](../FORMALIZATION.md), section 1). The first
+mate's working detail, one note per proposition, is in
+[first-mate-III.md](../reports/crew/first-mate-III.md).*
 
 ## What Book III needs
 
@@ -197,17 +200,19 @@ III.23–III.37:
 proves of the angle in a semicircle: III.28 and III.29 need it first. It argues at the
 point that measures the circumference, so it needs only I.5 and I.32, not III.21.
 
-**Porisms.** Two corollaries are cited before their propositions are proved, so their
-statements are fixed now, after their propositions: `Prop1.porism` (the centre lies on a
-straight line bisecting a straight line in the circle at right angles; III.9, III.10) and
+**Porisms.** Two corollaries are cited by later propositions, and are theorems of their
+own, after their propositions: `Prop1.porism` (the centre lies on a straight line
+bisecting a straight line in the circle at right angles; III.9, III.10) and
 `Prop16.porism` (the straight line at right angles to a radius at its end touches the
-circle; III.17, III.33, III.37 and Book IV). Heath's "[III. 1, Por.]" and
-"[III. 16, Por.]" are read as citations of III.1 and III.16, by the scripts and by the
-certificate alike: `Certificate/Facts.lean` counts a citation of `Prop1.porism` as one of
-III.1 and does not walk into it, as it does not walk into a proposition, and III.1 is not
-proved until its porism is. So a citer's record is final whatever the porism's proof, and
-reads "proved, citing propositions still to be proved" until III.1 is. Each porism's proof
-cites its proposition, "from this it is manifest".
+circle; III.17, III.33, III.37 and Book IV). Since brief 0005's stage 1, each porism is an
+entry of its own in the certificate, "III.1 Por." and "III.16 Por.", with its own axioms,
+citations and status, and every policy check applies to it as to a proposition. Heath's
+"[III. 1, Por.]" and "[III. 16, Por.]" are read as citations of those entries, by the
+scripts and by `Certificate/Facts.lean` alike, and the graph draws a porism as its
+proposition. A proposition counts as proved only when its porism is too, and its page
+shows the porism's certificate in a column of its own. III.1 Por. rests on one rule III.1
+does not, that a circle has one centre (`centre_unique`). Each porism's proof cites its
+proposition, "from this it is manifest".
 
 ## How the statements say Euclid's phrases
 
@@ -329,15 +334,51 @@ worth naming. The first mate's report has a note on every statement.
 - **Superposition** stays with I.4 and I.8. III.24 is proved without it.
 - **Citing earlier books.** A Book III proof cites `BookI.PropN` and `BookII.PropN`; a bare
   `Prop4` in a Book III file means III.4.
-- **The scripts.** `heath.BOOKS` has Book III, 37 propositions; `render.py` writes
-  `book/III/`, its sections of `CERTIFICATE.md` and `GRAPH.md`, and its titles and front
-  page; Book III's own definitions are written "Def. 11", another book's "Def. I.10". A
-  bracket "[III. 1, Por.]" is read as citing III.1. A proposition Heath prints wholly in
-  brackets (III.12) keeps its opening bracket in its heading, and its page shows it before
-  the enunciation (`heath.bracketed`). `scaffold_book.py` has `BOOK_III`, the porisms, and
-  imports Book III's circumference ground from III.23 on (`LATER_GROUNDWORK`).
-  `Certificate/Facts.lean` lists Book III, and reads a porism as its proposition. Books I
-  and II render byte for byte as tagged.
+- **The scripts.** `heath.BOOKS` has Book III, 37 propositions, and `heath.parse_ref`
+  reads "III.1 Por." as the porism of III.1; `render.py` writes `book/III/`, its sections
+  of `CERTIFICATE.md` and `GRAPH.md`, and its titles and front page; every definition keeps
+  its book, "Def. III.11", "Def. I.10". A bracket "[III. 1, Por.]" is read as citing III.1
+  Por. A proposition Heath prints wholly in brackets (III.12) keeps its opening bracket in
+  its heading, and its page shows it before the enunciation (`heath.bracketed`).
+  `scaffold_book.py` has `BOOK_III`, the porisms, and imports Book III's circumference
+  ground from III.23 on (`LATER_GROUNDWORK`). `Certificate/Facts.lean` lists Book III, and
+  gives each porism an entry of its own.
+
+## Exceptions
+
+The review records in `review/III/` are the authority, proposition by proposition, and
+each page shows its own in the line under the enunciation and the table under "In Lean".
+This table is generated from them as they stand on 17 October 2026 (the centre given by
+hypothesis, `centre-given`, is left out, being nearly everywhere):
+
+| Proposition | Statement | Argument | Overlap | Tags | Planned |
+|---|---|---|---|---|---|
+| [III.2](../../book/III/02.md) | whole | Euclid's | `inside_of_between` |  | kept, and catalogued |
+| [III.5](../../book/III/05.md) | whole | one step changed | `circle_eq` |  | kept, and catalogued |
+| [III.6](../../book/III/06.md) | whole | one step changed | `circle_eq`, `centre_inside` |  | kept, and catalogued |
+| [III.7](../../book/III/07.md) | restricted: compared on one side of AD only | Euclid's |  |  |  |
+| [III.8](../../book/III/08.md) | restricted: compared on one side of DA only | one step changed |  |  |  |
+| [III.9](../../book/III/09.md) | whole | Euclid's |  | `hypothesis-dropped` |  |
+| [III.10](../../book/III/10.md) | whole | Euclid's |  | `hypothesis-dropped` |  |
+| [III.14](../../book/III/14.md) | restricted: straight lines not through the centre | Euclid's |  | `diameters-excluded` | stage 4: diameters, at distance zero |
+| [III.16](../../book/III/16.md) | in part: the angle clauses stay in Euclid's words | Euclid's |  | `mixed-angles-omitted` | kept: a deliberate limitation |
+| [III.17](../../book/III/17.md) | restricted: a point outside the circle | Euclid's |  |  |  |
+| [III.21](../../book/III/21.md) | whole | one step changed |  |  |  |
+| [III.23](../../book/III/23.md) | whole | Euclid's |  | `segment-with-circle` |  |
+| [III.24](../../book/III/24.md) | in part: equal circles and measures; the segments stay in Euclid's words | different |  | `segment-with-circle`, `angle-measure`, `redundant-hypothesis` | stage 3: congruent segments by placement, the radius proof kept as an alternative |
+| [III.25](../../book/III/25.md) | restricted: handed the whole circle and its centre | Euclid's |  | `segment-with-circle` | stage 4: a construction that sees only the segment |
+| [III.26](../../book/III/26.md) | whole | one step changed |  | `angle-measure`, `redundant-hypothesis` | stage 3: equal circles made to do work (`Arc.Congruent`) |
+| [III.27](../../book/III/27.md) | whole | one step changed |  | `angle-measure`, `redundant-hypothesis` |  |
+| [III.28](../../book/III/28.md) | whole | Euclid's |  | `angle-measure` | stage 3: concludes congruent arcs too, through III.26 |
+| [III.29](../../book/III/29.md) | whole | one step changed |  | `angle-measure` |  |
+| [III.30](../../book/III/30.md) | whole | Euclid's |  | `segment-with-circle`, `angle-measure` |  |
+| [III.31](../../book/III/31.md) | in part: the angles of the segments stay in Euclid's words | Euclid's |  | `mixed-angles-omitted` | kept: a deliberate limitation |
+| [III.33](../../book/III/33.md) | whole | Euclid's |  | `segment-with-circle` |  |
+| [III.34](../../book/III/34.md) | whole | Euclid's |  | `segment-with-circle` |  |
+
+The overlaps are in the [catalogue](../reports/overlaps.md). The planned work is brief
+0005's ([0005-astra-review.md](0005-astra-review.md)); III.16 and III.31's mixed angles,
+and III.2's kind of overlap, are the deliberate limitations Book III keeps.
 
 ## Later
 

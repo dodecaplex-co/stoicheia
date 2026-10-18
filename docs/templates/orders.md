@@ -71,10 +71,10 @@ STYLE section 7; title "Euclid <B>.N: …"; no `<desc>`. <Who draws the figure a
 **Further reading.** By STYLE section 6, only from `docs/reading.md`, and only where a work
 truly helps with <B>.N. <Works to look at first.>
 
-**Verify.**
+**Verify.** The contributor's subset of `docs/WORKFLOW.md`, section 8:
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
-lake build Elements.Book<B>.PropNN
+lake build                          # the whole library first: Facts.lean imports it all
 lake env lean Certificate/Facts.lean && python3 scripts/check_fidelity.py
 python3 scripts/check_style.py
 rsvg-convert -w 800 figures/<B>/NN.svg -o "${TMPDIR:-/tmp}/figNN.png"   # then look at it
@@ -82,16 +82,20 @@ rsvg-convert -w 800 figures/<B>/NN.svg -o "${TMPDIR:-/tmp}/figNN.png"   # then l
 Then the reviewer's checklist of STYLE section 8, with `$HEATH_OCR` at <path> (Heath's
 volume <v>; page N is scan leaf N + <offset>). No `lake update` or `lake clean`. The pages
 are rendered after the merge, so CI's check of the generated pages fails on your branch
-until then; that is expected.
+until then; that is expected. So is "changed since it was reviewed" for your proposition's
+review record: list it under "Records made stale" in your handback, and never run
+`scripts/review_stamp.py` on it.
 
 **Finish.** Commit your files by name, "<B>.N: proof, figure, mishnah and further
-reading"; never `facts.json`, `book/`, `CERTIFICATE.md` or `GRAPH.md`. If your sandbox
+reading"; never `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md` or README.md's rows
+between the `<!-- scope:… -->` markers. If your sandbox
 cannot write to `.git`, leave the files for whoever runs you to commit, and say so. Do not
 push, merge or rebase.
 
 **Report** with the handback of `docs/templates/proposition.md`: proved, or where the
 `sorry` is; your helpers; citations beyond Heath's references, each with the step that
 brings it in; hypotheses you did not use; the record entries you propose; what <B>.N rests
-on; the checks you ran, with their outcomes; and anything in the statement, the ground or
-these orders that got in your way.
+on; the records made stale; the checks you ran, with their outcomes; a line for the
+figure note, if your figure departs from Heath's; and anything in the statement, the ground
+or these orders that got in your way.
 ````

@@ -5,6 +5,7 @@ hypotheses = [
   "neither AB nor CD passes through the centre (`hE_AB : ¬ Collinear A B E`, `hE_CD : ¬ Collinear C D E`)",
 ]
 note = "Proved for straight lines not through the centre; two diameters, or a diameter and another straight line, are not covered."
+short = "straight lines not through the centre"
 fingerprint = "sha256:ab5dba1e761e8618"
 
 [route]
@@ -17,12 +18,12 @@ note = "The centre E and the feet F, G of the perpendiculars are given, since De
 [[passage]]
 at = "But in a circle straight lines are said to be equally distant from the centre"
 kind = "carried"
-note = "Definition III.4 is how the statement says 'equally distant': its conclusion is that EF is equal to EG, which the Lean above has proved."
+note = "Definition III.4 is how the statement says \"equally distant\": its conclusion is that EF is equal to EG, which the Lean above has proved."
 
 [[passage]]
 at = "Next, let the straight lines AB, CD be equally distant from the centre"
 kind = "grouped"
-note = "The converse needs no Lean of its own until 'And, since AE is equal to CE': the halves, AB double of AF and CD of CG, were found once, before the two directions part."
+note = "The converse needs no Lean of its own until \"And, since AE is equal to CE\": the halves, AB double of AF and CD of CG, were found once, before the two directions part."
 
 [review]
 stage = "exceptions"

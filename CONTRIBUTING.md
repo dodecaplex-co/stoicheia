@@ -59,6 +59,9 @@ them at work.
 
 ## Before you open a pull request
 
+CI runs the commands listed in [WORKFLOW.md](docs/WORKFLOW.md), section 8. Before a pull
+request, run at least these:
+
 ```sh
 lake build
 lake env lean Certificate/Facts.lean
@@ -67,9 +70,12 @@ python3 scripts/check_style.py
 python3 scripts/render.py
 ```
 
+If you change a Lean file, its review record goes stale, even for a comment: say so in the
+pull request, and leave the stamp to a reviewer (WORKFLOW.md, section 6).
+
 Working alone on a pull request, you are its integrator: commit the regenerated `book/`,
-`CERTIFICATE.md`, `GRAPH.md` and `facts.json` with your change, and CI checks that they
-match. When several people work in parallel, only the integrator commits them
-([WORKFLOW.md](docs/WORKFLOW.md), section 4). In the pull request, say what you checked and
-what you did not; the handback in [docs/templates/proposition.md](docs/templates/proposition.md)
-is a good shape for it.
+`CERTIFICATE.md`, `GRAPH.md`, `facts.json` and README.md's rows between the
+`<!-- scope:… -->` markers with your change, and CI checks that they match. When several
+people work in parallel, only the integrator commits them ([WORKFLOW.md](docs/WORKFLOW.md),
+section 4). In the pull request, say what you checked and what you did not; the handback in
+[docs/templates/proposition.md](docs/templates/proposition.md) is a good shape for it.

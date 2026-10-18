@@ -1,7 +1,7 @@
 # review/III/04.toml
 [statement]
 scope = "full"
-note = "'Not through the centre' is said of every centre of the circle, and B is off AC, so that the two straight lines are really two."
+note = "\"Not through the centre\" is said of every centre of the circle, and B is off AC, so that the two straight lines are really two."
 fingerprint = "sha256:84c2e52c5d72734a"
 
 [route]
@@ -14,7 +14,7 @@ note = "The circle comes with a centre, which the proof takes by III.1, as Eucli
 [[passage]]
 at = "Therefore AC, BD do not bisect one another."
 kind = "grouped"
-note = "The reductio's conclusion. Lean supposed the bisection at the start and has reached the contradiction above, which proves it."
+note = "The reductio's conclusion. The Lean supposed the bisection at the start and has reached the contradiction above, which proves it."
 
 [review]
 stage = "exceptions"

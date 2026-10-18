@@ -9,11 +9,11 @@ kind = "euclid"
 
 [representation]
 tags = ["centre-given"]
-note = "The centre E and the perpendiculars EH, EK are given, since Definition III.5 measures from them, and 'nearer' is `‖E H‖ < ‖E K‖`."
+note = "The centre E and the perpendiculars EH, EK are given, since Definition III.5 measures from them, and \"nearer\" is `‖E H‖ < ‖E K‖`."
 
 [[passage]]
 at = "Then, since BC is nearer to the centre and FG more remote"
-kind = "different"
+kind = "given"
 note = "The statement assumes it (`hnearer : ‖E H‖ < ‖E K‖`), for Definition III.5 is how it says that BC is nearer; no Lean is needed beneath."
 
 [review]

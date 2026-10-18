@@ -4,16 +4,20 @@
 # ACE are two triangles.
 [statement]
 scope = "full"
-note = "'In the same parallels' is AD parallel to BC, so A and D are apart: on one base, ABC and DBC are two triangles only then."
+note = "\"In the same parallels\" is AD parallel to BC, so A and D are apart: on one base, ABC and DBC are two triangles only then."
 fingerprint = "sha256:e27bd8d22cd1f209"
 
 [route]
-kind = "euclid"
+kind = "modified"
+note = "Euclid's argument, made direct at its end: the parallel through A is shown to pass through D, so no other straight line needs refuting."
 
 [[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
 kind = "different"
 note = "Euclid supposes AD not parallel and refutes it. The Lean supposes nothing: the areas put E at D (`OnRay.eq_of_area_eq`), so the parallel through A is AD itself, and no other straight line needs trying."
+
+[figure]
+note = "AE is drawn level, as the proof supposes; Heath draws AD level."
 
 [review]
 stage = "exceptions"

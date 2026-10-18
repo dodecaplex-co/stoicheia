@@ -63,65 +63,64 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
 ## Scope and ownership
 
 - Work only in the files your task names: one writer per file. The integrator owns the
-  generated output; the coordinator owns the foundations (`Elements/Foundations/`),
-  `Certificate/axioms.lock`, the decisions page, PROGRAM.md and CI; your orders name the
-  owner of everything else.
+  generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md` and README.md's
+  rows between the `<!-- scope:… -->` markers); the coordinator owns the foundations
+  (`Elements/Foundations/`), `Certificate/axioms.lock`, the toolchain (`lean-toolchain`,
+  `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md and CI; your
+  orders name the owner of everything else ([WORKFLOW](docs/WORKFLOW.md), section 4).
 - Need something outside your files? Ask its owner in your handback, with a concrete
-  proposal. For a shared lemma: its type, purpose, a proof or plan, where it may live, and
-  who will use it.
-- An interface wrong? Stop work on what depends on it, propose a correction (the case that
-  fails, the current and proposed declarations, the reason, the consumers), and go on with
-  the work it does not affect.
+  proposal; a shared lemma is asked for with form 6 of the
+  [templates](docs/templates/proposition.md).
+- An interface wrong? Stop work on what depends on it, and propose a correction as
+  WORKFLOW, section 2, says; go on with the work it does not affect.
 - Commit your files by name; never `git add -A` in a tree others use.
 
 ## Never
 
-- Add an `axiom`, or anything that gets round the kernel: `native_decide`,
-  `decide +native`, `set_option debug.…`, `run_cmd`, `elab`, `macro`, `implemented_by`,
-  `extern`, `unsafe`.
-- Change a statement, a porism's statement or a definition without approval; change the
-  words of a `--` line; change `heath/` except against the page image.
-- Add a dummy citation (a call made only to match Heath's references) or an artificial
-  hypothesis use (a mention made only to silence a warning); hide a whole conclusion inside
-  a helper; cite a later proposition.
-- Weaken, skip or edit a check, test, expected value, lock or schema to let a change pass.
-- Commit generated files (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`) unless you
-  are the integrator.
+Each rule has one home, linked; this list only points to it.
+
+- Add an `axiom`, or anything that gets round the kernel (the forbidden commands are in
+  [FORMALIZATION](docs/FORMALIZATION.md), section 7).
+- Change a statement, a porism's statement or a definition without approval
+  (WORKFLOW, section 2); change the words of a `--` line; change `heath/` except against
+  the page image (STYLE, section 5).
+- Add a dummy citation or an artificial hypothesis use, hide a whole conclusion inside a
+  helper, or cite a later proposition (FORMALIZATION, section 5).
+- Weaken, skip or remove a check, test, expected value, lock or schema to let a change pass
+  (FORMALIZATION, section 1).
+- Commit generated files unless you are the integrator (WORKFLOW, section 4).
 - Publish: push, merge into main, tag, release, write release notes, change the GitHub
-  description, or send anything outside the repository. Each needs Jack Challis's OK.
+  description, or send anything outside the repository. Each needs Jack Challis's OK
+  (WORKFLOW, section 1).
 - Invent a quotation, a page or a reference; put crew talk where readers look; write
-  anything competitive.
+  anything competitive (STYLE, sections 1 and 5).
 
 No guide, this one included, grants authority to change the foundations, weaken a check or
 publish.
 
 ## Commands
 
+The full list, exactly as CI runs it, is in [WORKFLOW](docs/WORKFLOW.md), section 8. A
+contributor runs this much:
+
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
-lake build
+lake build                          # the whole library: the certificate imports it all
 lake env lean Certificate/Facts.lean
 python3 scripts/check_fidelity.py
-python3 scripts/render.py          # a preview; only the integrator commits its output
-python3 scripts/negative_tests.py  # in a disposable worktree only: it plants breaks
+python3 scripts/check_style.py
+python3 scripts/render.py           # a preview; only the integrator commits its output
 ```
 
-No `lake update` or `lake clean`.
+On your branch, a changed Lean file makes its review record stale: that is expected. List
+the records made stale in your handback, and never stamp a record you did not review
+(WORKFLOW, section 6). No `lake update` or `lake clean`.
 
 ## The handback
 
-End every task with a short, factual handback
-([template](docs/templates/proposition.md)):
-
-- **status:** ready for review, provisional (on unfinished dependencies), or blocked;
-- **what changed:** the revision delivered, and the files and declarations, porisms and
-  companions included;
-- **coverage and route:** what is proved, every qualification and where the reader sees it,
-  and the review-record entries you propose;
-- **dependencies:** helpers added; citations beyond Heath's references, each with the step
-  that brings it in; hypotheses not used; pending proof roots; requests for owners;
-- **checks:** each command run, its outcome, and the revision it ran on. A check not run is
-  not a pass;
-- **open items:** the exact failing goal or problem, and the next step.
+End every task with a short, factual handback, in the shape of form 3 of the
+[templates](docs/templates/proposition.md), its one home: status, what changed, coverage
+and route, the record entries you propose, the records made stale, dependencies, the checks
+run with their outcomes and revision (a check not run is not a pass), and open items.
 
 If your sandbox cannot write to `.git`, leave your files uncommitted and say so.

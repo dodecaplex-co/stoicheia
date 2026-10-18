@@ -26,12 +26,15 @@ publish. Those decisions belong to the project's owner, Jack Challis, working wi
 coordinator of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
 [0002-decisions.md](briefs/0002-decisions.md):
 
-- **The foundations:** everything in `Elements/Foundations/` (the postulates, Definition 15,
-  the tacit rules, the primitive words and magnitudes, the definitions of each book, the
-  phrases), and `Certificate/axioms.lock`.
-- **The checks:** `scripts/check_fidelity.py`, `scripts/negative_tests.py`,
-  `scripts/check_style.py`, `scripts/check_links.py`, `tests/`, and the CI workflow. A
-  check, an expected value or a schema is never loosened to let a change through.
+- **The foundations:** everything in `Elements/Foundations/` (the postulates, Definition
+  I.15, the tacit rules, the primitive words and magnitudes, the definitions of each book,
+  the phrases), and `Certificate/axioms.lock`.
+- **Weakening the checks:** weakening, skipping or removing a check, an expected value, a
+  lock or a schema (in `scripts/check_fidelity.py`, `scripts/negative_tests.py`,
+  `scripts/check_style.py`, `scripts/check_links.py`, `tests/` or the CI workflow). None is
+  ever loosened to let a change through. Adding or strengthening a check is ordinary work,
+  done by the owner the orders name, with a regression test where a guard defect is fixed
+  ([WORKFLOW.md](WORKFLOW.md), section 8).
 - **Publishing:** pushing to main, tags, releases and their notes, the GitHub description,
   and anything sent outside the repository.
 
@@ -236,9 +239,12 @@ his order, and nothing later. Some propositions can be reached by a shortcut he 
 route, for his inferences are the proposition's content.
 
 Where the Lean must part from him, keep his sentences, put Lean under them that does the same
-work, and label the change where it happens: a `/- … -/` remark in the Lean, a passage in the
-review record (`different`, `grouped`, `helper` or `unformalized`), and a route of `modified`
-or `alternative`. A substantial alternative proof is displayed as an alternative, with
+work, and label the change where it happens: a `/- … -/` remark in the Lean, and a passage in
+the review record. A step argued another way is a `different` passage, and makes the route
+`modified` or `alternative`; a lemma for a step he takes for granted (`helper`), sentences
+carried by one step (`grouped`), a case his figure leaves aside (`case`), a step the
+statement already gives (`given`) and a passage with no Lean (`unformalized`) leave his
+route as it is ([review/SCHEMA.md](../review/SCHEMA.md)). A substantial alternative proof is displayed as an alternative, with
 Euclid's text kept in full and no suggestion that unrelated Lean carries its sentences
 (III.24's proof by the radii, from stage 3 on). Where an axiom already contains the
 proposition (III.2), the proof reconstructs Euclid's reasoning within our foundations and does
@@ -287,11 +293,13 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition 15 and 81 tacit rules, 87 in all, each tacit rule from System E (or
+  Definition I.15 and 81 tacit rules, 87 in all, each tacit rule from System E (or
   LeanEuclid's corrections of it) with its citation. A new rule, or a change to one, is a
   foundation decision (section 1); `Certificate/axioms.lock` holds every axiom's exact
-  statement, and changes only through `check_fidelity.py --write-lock` together with a
-  decisions entry. Review an axiom's statement and strength, not only the count. An
+  statement, and changes only through `check_fidelity.py --write-lock`, together with a
+  decisions entry, and with `tests/model/lock.sha256` updated and
+  [tests/model/MODEL.md](../tests/model/MODEL.md) read again for the changed laws, in the
+  same change; otherwise CI's `model` job fails. Review an axiom's statement and strength, not only the count. An
   assignment to finish a proof is never permission to add an axiom that asserts its
   conclusion.
 - **Nothing gets round the kernel:** no `native_decide`, `decide +native`,
@@ -306,7 +314,13 @@ dependencies.
 - **Primitive words stay `opaque`,** so Lean knows of them only what the axioms say.
 
 `check_fidelity.py` enforces these for every certificate entry, porisms and companions
-included, and `negative_tests.py` plants a break of each kind to show it is caught.
+included. `negative_tests.py` plants a break of these kinds to show each is caught: an
+axiom declared outside the foundations; an axiom missing from the lock, and one weakened;
+Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4 and I.8; a
+later citation, one of them named only in a helper's statement; a `native_decide`; a
+`sorry` in a complete book; and a primitive word no longer opaque. The other forbidden
+commands, Book Zero's imports and a complete book's missing figure or mishnah have no
+planted break yet.
 
 ## 8. Completion claims
 

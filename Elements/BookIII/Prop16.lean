@@ -124,10 +124,9 @@ theorem Prop16 {A B D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCirc
     exact hFA ⟨G, ⟨M, hA_M, hF_M, hG_M⟩, inside_of_len_lt hD hA h19⟩
   -- Therefore another straight line cannot be interposed into the space between the straight
   -- line and the circumference.
-  /- Our angles are made by two straight lines, so the angle of the semicircle and the
-     horn-like angle are left to Euclid's words below, with no Lean beneath them. What
-     he proves them by, that every other straight line through A cuts the circle, is
-     the second part above. -/
+  /- The angle clauses below stay in Euclid's words, with no Lean beneath them. What he
+     proves them by, that every other straight line through A cuts the circle, is the
+     second part above. -/
   -- I say further that the angle of the semicircle contained by the straight line BA and the
   -- circumference CHA is greater than any acute rectilineal angle,
   -- and the remaining angle contained by the circumference CHA and the straight line AE is

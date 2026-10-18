@@ -4,21 +4,24 @@ A review record, review/<book>/NN.toml (review/SCHEMA.md), carries three stamps:
 `fingerprint` in [statement], a hash of the statements facts.json prints for the
 proposition and everything attached to it (`heath.review_fingerprint`); `lean` in
 [review], a hash of its Lean file (`heath.file_hash`); and `commit` in [review], the
-commit they were read at. scripts/check_fidelity.py fails when the first two no longer
-match, so a record is read again whenever a statement or a Lean file changes.
+commit whose files the record was last confirmed against. scripts/check_fidelity.py
+fails when the first two no longer match, so a record is read again whenever a
+statement or a Lean file changes.
 
 This script writes the stamps, so that nobody computes a hash by hand. A stamp says the
 record has been read against the statements and files as they are now: run it after
 a review, never just to quiet the check.
 
-    python3 scripts/review_stamp.py              # every record
-    python3 scripts/review_stamp.py III.16 I.40  # these records only
-    python3 scripts/review_stamp.py --dry-run    # say what would change; write nothing
+    python3 scripts/review_stamp.py --commit 1a2b3c4 III.16 I.40  # these records
+    python3 scripts/review_stamp.py --dry-run                     # say what would change
 
-`commit` is written when a record has none, or when its other stamps change: the
-current commit (`git rev-parse --short HEAD`), or the one `--commit` names. Each stamp
-stays on a line of its own, `key = "value"`, and is rewritten in place or added at the
-end of its section; nothing else in the file changes.
+`commit` changes only when `--commit` names one: the commit whose files the reviewer
+read. Commit the change first, then stamp with that commit. The script checks that the
+record's Lean file at that commit is the file as it is now, so a record never names a
+commit it was not read at. When a record's fingerprint or `lean` would change, or it
+has no commit yet, `--commit` is required; otherwise an existing commit is kept. Each
+stamp stays on a line of its own, `key = "value"`, and is rewritten in place or added at
+the end of its section; nothing else in the file changes.
 
 Run it after `lake env lean Certificate/Facts.lean`. Standard library only; reading
 the records needs Python 3.11 or later (tomllib).
@@ -66,13 +69,15 @@ def set_stamp(text: str, section: str, key: str, value: str) -> str:
     return "\n".join(lines)
 
 
-def current_commit() -> str | None:
+def hash_at(commit: str, path: Path) -> str | None:
+    """`heath.file_hash` of the file at `path` as it stands in `commit`, or None when the
+    commit or the file is not to be found there."""
     try:
-        out = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT,
-                             capture_output=True, text=True, check=True)
+        out = subprocess.run(["git", "show", f"{commit}:{rel(path)}"], cwd=ROOT,
+                             capture_output=True, check=True)
     except (OSError, subprocess.CalledProcessError):
         return None
-    return out.stdout.strip() or None
+    return heath._sha(out.stdout)
 
 
 def targets(refs: list[str]) -> list[tuple[str, int]]:
@@ -112,9 +117,15 @@ def stamp(facts: dict, book: str, n: int, commit: str | None, dry_run: bool) -> 
     if rv.get("lean") != lean:
         text = set_stamp(text, "review", "lean", lean)
         changes.append(f"lean {rv.get('lean', '(none)')} → {lean}")
-    if (changes or "commit" not in rv) and commit != rv.get("commit"):
-        if commit is None:
-            raise ValueError(f"{ref}: no commit to stamp (is this a git checkout?): pass --commit")
+    if (changes or "commit" not in rv) and commit is None:
+        raise ValueError(f"{ref}: its stamps change ({'; '.join(changes) or 'no commit yet'}): "
+                         "name the commit whose files you read with --commit")
+    if commit is not None and commit != rv.get("commit"):
+        at = hash_at(commit, heath.lean_path(book, n))
+        if at != lean:
+            raise ValueError(f"{ref}: {rel(heath.lean_path(book, n))} at {commit} "
+                             + ("is not to be found" if at is None else f"is {at}, not {lean}")
+                             + ": commit the change first, then stamp with that commit")
         text = set_stamp(text, "review", "commit", commit)
         changes.append(f"commit {rv.get('commit', '(none)')} → {commit}")
     if not changes:
@@ -136,7 +147,8 @@ def main(argv=None) -> int:
     parser.add_argument("refs", nargs="*", help="the propositions to stamp, as III.16 (default: every record)")
     parser.add_argument("--facts", type=Path, default=ROOT / "facts.json",
                         help="the facts.json to read the statements from")
-    parser.add_argument("--commit", help="the commit to stamp (default: git rev-parse --short HEAD)")
+    parser.add_argument("--commit", help="the commit whose files the reviewer read; required "
+                        "when a stamp changes, and an existing commit is kept without it")
     parser.add_argument("--dry-run", action="store_true", help="say what would change; write nothing")
     args = parser.parse_args(argv)
     if args.commit and not heath.COMMIT.fullmatch(args.commit):
@@ -146,7 +158,7 @@ def main(argv=None) -> int:
         print(f"{args.facts}: an entry has no `statement` (Certificate/FIELDS.md): rerun "
               "`lake env lean Certificate/Facts.lean` first")
         return 1
-    commit = args.commit or current_commit()
+    commit = args.commit
     try:
         todo = targets(args.refs)
     except ValueError as e:

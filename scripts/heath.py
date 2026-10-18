@@ -300,10 +300,11 @@ def file_hash(path) -> str:
 # means; this is the machine's half of it.
 
 REVIEW = ROOT / "review"
-NOTE_LIMIT = 160  # characters in [statement] note, which stands beside the badge
+NOTE_LIMIT = 160  # characters in [statement] note, shown in the page's field table
+SHORT_LIMIT = 70  # characters in [statement] short, which stands beside the badge
 SCOPES = ("full", "restricted", "partial")
 ROUTES = ("euclid", "modified", "alternative")
-PASSAGES = ("carried", "helper", "grouped", "different", "unformalized")
+PASSAGES = ("carried", "helper", "grouped", "case", "given", "different", "unformalized")
 STAGES = ("exceptions", "full")
 VERDICTS = ("pass", "fail", "n/a")
 TAG_KINDS = ("scope", "representation")
@@ -316,17 +317,18 @@ _STR, _LIST, _TABLE = "string", "list", "table"
 FIELDS = {
     "statement": {"scope": (_STR, True), "hypotheses": (_LIST, False),
                   "omitted": (_LIST, False), "note": (_STR, False),
-                  "fingerprint": (_STR, "stamp"), "companions": (_LIST, False)},
+                  "short": (_STR, False), "fingerprint": (_STR, "stamp"),
+                  "companions": (_LIST, False)},
     "route": {"kind": (_STR, True), "note": (_STR, False)},
     "representation": {"tags": (_LIST, True), "note": (_STR, False)},
-    "overlap": {"rule": (_STR, True), "note": (_STR, False)},
+    "overlap": {"rule": (_STR, True), "also": (_LIST, False), "note": (_STR, False)},
     "coverage": {"checked": (_LIST, False), "explains": (_LIST, False),
                  "text_only": (_LIST, False)},
     "passage": {"at": (_STR, True), "kind": (_STR, True), "helper": (_STR, False),
                 "note": (_STR, False)},
-    "figure": {"case": (_STR, True)},
+    "figure": {"case": (_STR, False), "note": (_STR, False)},
     "review": {"stage": (_STR, True), "commit": (_STR, "stamp"), "lean": (_STR, "stamp"),
-               "reviewer": (_STR, True), "items": (_TABLE, False)},
+               "reviewer": (_STR, True), "run": (_STR, False), "items": (_TABLE, False)},
 }
 REQUIRED = ("statement", "route", "review")
 
@@ -351,7 +353,9 @@ def _rel(path: Path) -> str:
 
 def load_terms() -> dict:
     """review/terms.toml: the tags a record's [representation] may carry, as
-    {tag: {"kind": "scope" | "representation", "meaning": "one line"}}."""
+    {tag: {"kind": "scope" | "representation", "meaning": "one line"}}, and, for a tag
+    that changes how a whole statement is read, a few words to stand beside the badge,
+    `badge`."""
     path = REVIEW / "terms.toml"
     tomllib = _toml()
     try:
@@ -365,9 +369,15 @@ def load_terms() -> dict:
     for name, t in tags.items():
         if not WORD.fullmatch(name):
             problems.append(f"tag {name!r}: a tag is lower-case words joined by hyphens")
-        if not isinstance(t, dict) or set(t) != {"kind", "meaning"}:
-            problems.append(f"tag {name!r}: needs `kind` and `meaning`, and nothing else")
+        if not isinstance(t, dict) or not {"kind", "meaning"} <= set(t) <= {
+                "kind", "meaning", "badge"}:
+            problems.append(f"tag {name!r}: needs `kind` and `meaning`, may have `badge`, "
+                            "and nothing else")
             continue
+        if "badge" in t and (not isinstance(t["badge"], str) or not t["badge"].strip()
+                             or "\n" in t["badge"] or len(t["badge"]) > SHORT_LIMIT):
+            problems.append(f"tag {name!r}: `badge` is a few plain words on one line, at "
+                            f"most {SHORT_LIMIT} characters")
         if t["kind"] not in TAG_KINDS:
             problems.append(f"tag {name!r}: `kind` is one of {', '.join(TAG_KINDS)}")
         if not isinstance(t["meaning"], str) or not t["meaning"].strip() or "\n" in t["meaning"]:
@@ -470,6 +480,17 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         bad(f"[statement]: `note` has {len(note)} characters; the limit is {NOTE_LIMIT}")
     if "\n" in note:
         bad("[statement]: `note` is one line")
+    short = st.get("short", "")
+    if scope in ("restricted", "partial") and not short:
+        bad(f"[statement]: a {scope} statement needs a `short`, a few words shown beside "
+            "the badge")
+    if len(short) > SHORT_LIMIT:
+        bad(f"[statement]: `short` has {len(short)} characters; the limit is {SHORT_LIMIT}")
+    if "\n" in short or short.rstrip().endswith("."):
+        bad("[statement]: `short` is a few words on one line, with no full stop")
+    if short[:1].isupper() and not re.match(r"[A-Z]{2}|[A-Z]\b|Euclid", short):
+        bad("[statement]: `short` begins with a small letter, since it follows a colon "
+            "or a bracket")
     if scope == "full" and (st["hypotheses"] or st["omitted"]):
         bad("[statement]: a full statement has no `hypotheses` and no `omitted`")
     if scope == "restricted" and not st["hypotheses"]:
@@ -516,8 +537,10 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
                 bad(f"[representation]: tag {t!r} narrows the statement, but its scope is full")
 
     # [overlap]
-    if "overlap" in record and re.search(r"\s", record["overlap"]["rule"]):
-        bad("[overlap]: `rule` is one axiom's name as facts.json writes it, "
+    if "overlap" in record and any(
+            re.search(r"\s", r)
+            for r in [record["overlap"]["rule"]] + record["overlap"].get("also", [])):
+        bad("[overlap]: `rule` and `also` name axioms as facts.json writes them, "
             "as 'Tacit.inside_of_between'")
 
     # [coverage]
@@ -528,6 +551,10 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         for q in cov["text_only"]:
             if plain(q) not in enunciation and plain(q) not in proof_text:
                 bad(f"[coverage]: text_only {q!r} is not quoted from Heath")
+
+    # [figure]
+    if "figure" in record and not record["figure"]:
+        bad("[figure]: give its `case`, its `note`, or both; or leave the section out")
 
     # [[passage]]
     seen = set()
@@ -540,6 +567,9 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
             bad(f"{label}: a {kind} passage needs a `note`, shown on the page")
         if kind == "helper" and "helper" not in p:
             bad(f"{label}: a helper passage names its `helper`")
+        if kind == "different" and route["kind"] == "euclid":
+            bad(f"{label}: a passage argued another way changes Euclid's route: make the "
+                "[route] modified (or alternative), or the passage another kind")
         if "helper" in p and re.search(r"\s", p["helper"]):
             bad(f"{label}: `helper` is one Lean name, as 'Prop1.middle'")
         at = plain(p["at"])
@@ -560,6 +590,9 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
         bad("[review]: `commit` is a git commit, 7 to 40 lower-case hex digits")
     if "lean" in rv and not HASH.fullmatch(rv["lean"]):
         bad("[review]: `lean` is 'sha256:' and 16 hex digits")
+    if rv["stage"] == "full" and ("run" not in rv or "," not in rv["reviewer"]):
+        bad("[review]: a full review names its `run`, and its `reviewer` with a role, as "
+            "'Claude Opus 5.5, records crew', so the reviewer can be told from the authors")
     for key, verdict in rv["items"].items():
         if not WORD.fullmatch(key):
             bad(f"[review]: items: {key!r} is not an item key (lower-case words and hyphens)")

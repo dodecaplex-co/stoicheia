@@ -115,5 +115,17 @@ the exceptions the outside review named, with the work that answers each:
 | I.45 | restricted | the figure is two triangles | `two-triangles` | stage 2: `Prop45.figure` for a supplied dissection into triangles |
 
 Both stay as Euclid's worked configuration, with the general theorem beside them as a
-companion ([FORMALIZATION.md](../FORMALIZATION.md), section 2). The stage-5 review will
-give the hardest formal blocks (I.7, I.35, I.47) a paragraph of their own in the mishnah.
+companion ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
+
+Two proofs follow Euclid with one step changed: I.39, and I.40 after it, make the end of
+his reductio direct, the parallel through A being shown to pass through D
+(`OnRay.eq_of_area_eq`). And two propositions are already contained in a rule, as the
+[overlap catalogue](../reports/overlaps.md) records:
+
+| Proposition | Rule | What the proof does |
+|---|---|---|
+| I.7 | Circle 4 (`not_same_side_of_circles_meet`) | Euclid's argument, by I.5; it never uses the rule |
+| I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly |
+
+The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
+their own in the mishnah.

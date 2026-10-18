@@ -12,8 +12,8 @@ note = "The circle comes with a centre (`∃ O, Centre O ABCD`), on which III.19
 
 [[passage]]
 at = "let a point C be taken at random on the circumference BD"
-kind = "different"
-note = "C is any point of the segment DCB: the second conclusion is said of every such point, and Lean takes C up where that conclusion is proved."
+kind = "carried"
+note = "C is any point of the segment DCB: the second conclusion is said of every such point, and the Lean takes C up where that conclusion is proved."
 
 [[passage]]
 at = "Therefore BA is a diameter of the circle ABCD"
@@ -23,7 +23,7 @@ note = "Euclid takes for granted that A and D lie on one side of EF; the Lean pr
 
 [[passage]]
 at = "therefore the angle ADB, being an angle in a semicircle, is right"
-kind = "different"
+kind = "case"
 note = "When D is A, BD is itself the diameter and there is no triangle ABD: every angle in either segment is right by III.31, as are the angles FBD and EBD."
 
 [review]
