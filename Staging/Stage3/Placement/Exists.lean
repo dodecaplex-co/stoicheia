@@ -41,7 +41,8 @@ theorem Placement.exists_off {A B C D F P : Point} (hlen : ‖A B‖ = ‖C D‖
   have hCD_BP_gt_AP : ‖A P‖ < ‖C D‖ + ‖B P‖ := by
     rw [← hlen]
     exact hAP_AB_BP
-  /- I.22 builds the triangle on the ray CD, on F's side: KC is AP, CG is CD, GK is BP. -/
+  /- I.22, its F, E and P being C, D and F here, builds the triangle on the ray CD, on F's
+     side: KC is AP, CG is CD, GK is BP. -/
   obtain ⟨G, K, hG_ray, hKF, hKC, hCG, hGK⟩ :=
     BookI.Prop22 (F := C) (E := D) (P := F)
       hAP_CD_gt_BP hAP_BP_gt_CD hCD_BP_gt_AP (Triangle.ne₁₂ hF) hF
