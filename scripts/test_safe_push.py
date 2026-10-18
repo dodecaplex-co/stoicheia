@@ -22,7 +22,8 @@ one commit and runs safe_push.py against that origin:
   body and the pre-flight's summary; then updated, keeping the coordinator's words;
 - --merge refuses a draft, an unticked or missing required box, red or missing CI, and a
   protected change without its label; reruns the pre-flight for a head it has not seen;
-  and merges with a merge commit, deleting the branch;
+  and merges with a merge commit, deleting the branch, its subject naming the owner
+  GitHub names for the head (issue #41);
 - the pre-push hook refuses every push to main and scans a push to any other branch;
 - the review's findings: the harness and the check scripts are origin/main's, an
   allow-list entry the push adds does not count, the heath/ leaves are origin/main's, an
@@ -1805,6 +1806,34 @@ class Merge(Edge):
         self.assertEqual(merges[0][merges[0].index("--body") + 1], "A good commit")
         self.assertEqual(git(ORIGIN, "log", "-1", "--format=%B", main).strip(),
                          f"{subject}\n\nA good commit")
+
+    def test_merge_subject_names_the_owner_github_names(self):
+        # Issue #41: after a transfer or a rename, which GitHub redirects, origin's URL names
+        # the old owner, and GitHub the new one for the head. The merge commit's subject is
+        # GitHub's own words, so it names the owner GitHub reports; when GitHub names none,
+        # the gates refuse, before gh is asked to merge.
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"]),
+                                                 headRepositoryOwner=None))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "subject"), "FAIL", out)
+        self.assertIn("GitHub names no owner for #1's head", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+        self.set_gh(lambda s: s["prs"][0].update(headRepositoryOwner={"login": "new-owner"}))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        subject = f"Merge pull request #1 from new-owner/{BRANCH}"
+        self.assertEqual(self.guard(out, "subject"), "ok", out)
+        self.assertIn(subject, out)
+        (call,) = self.merges()
+        self.assertEqual(call[call.index("--subject") + 1], subject)
+        main = self.origin_main()
+        self.assertEqual(git(ORIGIN, "rev-parse", f"{main}^2").strip(), sha)
+        self.assertEqual(git(ORIGIN, "log", "-1", "--format=%s", main).strip(), subject)
 
     def test_missing_required_box_refused(self):
         self.opened()

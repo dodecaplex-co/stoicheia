@@ -618,10 +618,12 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    nothing the secret scan refuses; it carries a label for its kind, and
    `security-review` when a protected path changes; and it is not a draft. Then
    `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
-   commit's subject and body given (GitHub's own words, with the branch name scanned,
-   and the title scanned; a branch renamed since the merge first read the pull request
-   is refused, as a head moved is), so main holds exactly what was scanned: a merge
-   commit, never a squash or a rebase, and the branch deleted. When gh fails, GitHub is
+   commit's subject and body given (GitHub's own words: the owner GitHub names for the
+   head, never the one in origin's URL, which names the old owner after a transfer, and
+   refused when GitHub names none; the branch name, scanned; and the title, scanned; a
+   branch renamed since the merge first read the pull request is refused, as a head moved
+   is), so main holds exactly what was scanned: a merge commit, never a squash or a
+   rebase, and the branch deleted. When gh fails, GitHub is
    asked whether the pull request merged before anything is said; once gh is asked to
    merge, the script says nothing merged only when GitHub says so, and an interruption,
    or a failure GitHub cannot be asked about, is reported as "merge state unknown", exit

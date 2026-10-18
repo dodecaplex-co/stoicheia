@@ -108,14 +108,15 @@ and branch name, which go into main's merge commit, hold nothing the scan refuse
 carries a label for its kind and `security-review` when a protected path changes, and it
 is not a draft; the pre-flight's notes are shown beside the checklist. Then
 `gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
-commit's subject and body given (GitHub's own words, with the branch name scanned, and
-the title scanned; a branch renamed since the merge first read it is refused, as a head
-moved is): a merge commit, never a squash or a rebase, since review records stamp the
-branch's commits. When gh fails, GitHub is asked whether the pull request merged before
-anything is said; once gh is asked to merge, the run says nothing merged only when GitHub
-says so, and an interruption, or a failure GitHub cannot be asked about, is "merge state
-unknown". Afterwards the merge commit is checked to join the base and the head checked,
-with the head's tree, on main.
+commit's subject and body given (GitHub's own words: the owner GitHub names for the head,
+never origin's URL's, which names the old owner after a transfer, and refused when GitHub
+names none; the branch name, scanned; and the title, scanned; a branch renamed since the
+merge first read it is refused, as a head moved is): a merge commit, never a squash or a
+rebase, since review records stamp the branch's commits. When gh fails, GitHub is asked
+whether the pull request merged before anything is said; once gh is asked to merge, the
+run says nothing merged only when GitHub says so, and an interruption, or a failure
+GitHub cannot be asked about, is "merge state unknown". Afterwards the merge commit is
+checked to join the base and the head checked, with the head's tree, on main.
 
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
 worktrees are removed at the end, on a failure too. The pre-push hook,
@@ -3148,19 +3149,20 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
 
 def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) -> dict:
     """Not a draft; every required box ticked; the coordinator's sections written; the
-    title and the branch name, which go into main's merge commit, clean; a label for its
-    kind, and security-review when a protected path changes; CI green on the head. Each
-    is reported; any failure refuses the merge. The template is origin/main's, or the
-    head's while origin/main has none (as generated_body reads it): any template is
-    stricter than none. The record's notes are shown beside the checklist: a check that
+    title and the branch name, which go into main's merge commit, clean; an owner GitHub
+    names for the head, which the merge commit's subject names (merge_subject); a label
+    for its kind, and security-review when a protected path changes; CI green on the
+    head. Each is reported; any failure refuses the merge. The template is origin/main's,
+    or the head's while origin/main has none (as generated_body reads it): any template
+    is stricter than none. The record's notes are shown beside the checklist: a check that
     failed with origin/main's copies, on a commit that changes nothing the checks judge
     (keep_apart refuses the rest), is for the security review to weigh. A head moved, a
     branch renamed or a pull request no longer open since the merge first read it is
     refused. Returns the pull request as read, for the merge: its title and its branch
-    name are the ones scanned."""
+    name are the ones scanned, and its owner the one the subject gate showed."""
     rep.heading("2. The gates")
     view = gh_json(ctx, "pr", "view", str(number), "--json",
-                   "isDraft,headRefOid,headRefName,body,labels,state,title")
+                   "isDraft,headRefOid,headRefName,headRepositoryOwner,body,labels,state,title")
     if view.get("headRefOid") != ctx.sha or view.get("headRefName") != ctx.branch \
             or view.get("state") != "OPEN":
         raise Refusal(f"#{number} changed meanwhile (head {str(view.get('headRefOid'))[:12]}, "
@@ -3180,6 +3182,14 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
         rep.add("G", "public names", "FAIL", f"{e}; they would go into main's merge commit "
                 f"for good: rename them (`gh pr edit {number} --title`, or a branch of "
                 "another name)")
+    subject = merge_subject(number, view)
+    if subject:
+        rep.add("G", "subject", "ok", f"\"{subject}\", GitHub's own words, with the owner "
+                "GitHub names for the head")
+    else:
+        rep.add("G", "subject", "FAIL", f"GitHub names no owner for #{number}'s head, and the "
+                "merge commit's subject names it: look with "
+                f"`gh pr view {number} --json headRepositoryOwner`")
     body = view.get("body") or ""
     template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
     problems = checklist_problems(body, template, bool(protected))
@@ -3214,6 +3224,17 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
     return view
 
 
+def merge_subject(number: int, view: dict) -> str | None:
+    """GitHub's own subject for a pull request's merge commit, "Merge pull request #<n> from
+    <owner>/<branch>", with the owner GitHub names for the head (headRepositoryOwner), never
+    the owner in origin's URL, which after a transfer or a rename, both of which GitHub
+    redirects, names the old one (issue #41). None when GitHub names no owner or no
+    branch."""
+    owner = (view.get("headRepositoryOwner") or {}).get("login")
+    branch = view.get("headRefName")
+    return f"Merge pull request #{number} from {owner}/{branch}" if owner and branch else None
+
+
 def revert_advice(ctx: Context, kind: str | None = None) -> str:
     """How to undo a merge commit `ctx.sha`, through a pull request of its own, with the
     merged pull request's label for its kind."""
@@ -3241,15 +3262,14 @@ def main_unmoved(ctx: Context) -> None:
 
 def merge(ctx: Context, number: int, view: dict) -> subprocess.CompletedProcess:
     """`gh pr merge`: a merge commit whose message is exactly what was scanned, GitHub's
-    own subject for it, of the branch name the gates read (`view`, as gates returns it),
-    and the title they read. gh's result, and nothing done after it returns, so that the
-    caller records the outcome before GitHub is asked about it (as push_branch does the
-    push)."""
-    owner = (ctx.github or "").split("/")[0]
+    own subject for it (merge_subject), of the owner and the branch name the gates read
+    (`view`, as gates returns it, which refuses one with no owner), and the title they
+    read. gh's result, and nothing done after it returns, so that the caller records the
+    outcome before GitHub is asked about it (as push_branch does the push)."""
     return gh_run(ctx, "pr", "merge", str(number), "--merge", "--delete-branch",
                   "--match-head-commit", ctx.sha,
-                  "--subject", f"Merge pull request #{number} from {owner}/"
-                  f"{view.get('headRefName')}", "--body", view.get("title") or "")
+                  "--subject", merge_subject(number, view) or "", "--body",
+                  view.get("title") or "")
 
 
 def merge_outcome(ctx: Context, number: int, rep: Report, r: subprocess.CompletedProcess,
