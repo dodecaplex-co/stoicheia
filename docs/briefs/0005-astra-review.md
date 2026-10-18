@@ -333,6 +333,8 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 
 ## Stages 2–4: representation and generality
 
+*Revised 18 October 2026: the statements and routes of stages 2 to 4 are brief 0006's, which revises this design. Where this section and brief 0006 differ, brief 0006 governs; this section is kept as the design as first planned.*
+
 **Design rule.** Every generalization is a **companion theorem** (`PropN.general`, `.figure`, `.square`) next to the unchanged, annotated `PropN`, which stays as Euclid's worked configuration.
 - check_fidelity reads only `theorem PropN`, so its Heath sentences stay put.
 - Companions get certificate entries through stage 1's `companions` list, and the page shows them with their own certificate column.
@@ -363,7 +365,7 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 - `Prop1.general`: induction over `InOrder (B :: ps)`, rect(A; B, end) = Σ rect over consecutive pieces. One and two pieces are included, and the three-piece result is `[D, E, C]`.
 
 *II.14 general* (revised 18 October, with I.45)
-- `Prop14.rectangle` applies Prop14 to the rectangle's two halves, keeping Euclid's semicircle and both cases.
+- `Prop14.rectangle` is proved directly, by the second part of Euclid's proof, keeping his semicircle and his cases (II.5 and I.47), and does not cite II.14. (Revised 18 October, as brief 0006 decides: the first text applied Prop14 to the rectangle's two halves, a route now withdrawn, since it would prove II.14 from II.14.)
 - `Prop14.general`, for a figure given by its corners, by `Prop45.figure` with a right angle, then the rectangle.
 - `Prop14.square` returns `Square P Q S T` with its area (I.46, `Square.described`), equal to the figure's triangles taken together. As in I.45, nothing is claimed of another division.
 - The old two-triangle form is the case of four corners. The first text had `Prop14.general (R : Rectilineal)`, and `Prop14.sum` for the two-triangle form.
