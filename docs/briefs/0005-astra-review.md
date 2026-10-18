@@ -408,13 +408,13 @@ Corrections to the design:
 - **The statement is strengthened.** The side clause becomes `SameSideOf P E A B ↔ SameSideOf (f P) F C D`, and `Between A P B ↔ Between C (f P) D` is added.
 - **The verification line is restated** (Verification, below). Placement's transitive axioms will include superposition, since every distance fact rests on I.4 and I.8.
 - **The I.20 degeneracy lemma** (three points lie on one straight line exactly when one of I.20's three inequalities is an equality) goes in a new Book I file, `Elements/BookI/HelpersTriangles.lean`, after I.20 and citing nothing later. FORMALIZATION, section 6, puts a shared step that cites a proposition at or after it, and `Elements/BookI/Helpers.lean` comes before I.20: I.7 imports it. The lemma's owner is step 2's task, below. Stage 4's `Prop15.le_diameter` needs it too.
-- **Placement is split across several files,** so that parallel provers never share one, each owned by the task of its step below: `Placement/Strict.lean` (step 1), `Placement/Exists.lean` (step 2), and `Placement/Unique.lean`, `Placement/OnLine.lean` and `Placement/Mixed.lean` (step 3), all under `Elements/BookIII/` and after Book I; then `Placement.lean` itself, the assembly (step 4), after them and before III.24. The policy check matches the `Placement.*` names, and lets only III.24, `Arcs.lean` and these placement files, whose assembly cites those names, cite `placement`.
+- **Placement is split across several files,** so that parallel provers never share one, each owned by the task of its step below: the cases under `Elements/BookIII/Placement/`, after Book I; then `Placement.lean` itself, the assembly (step 4), after them and before III.24. Brief 0006's table of homes and owners names each file and the step that owns it. The policy check matches the `Placement.*` names, and lets only III.24, `Arcs.lean` and these placement files, whose assembly cites those names, cite `placement`.
 
 The order of work, de-risking first:
 - **Step 0, a spike by the coordinator.** The definitions, the `placement` statement and every sub-lemma's signature, all with `sorry`. Then the assembly proved from the stubs, and III.24 restated and proved from a stubbed `placement` and `Prop23.point`. This tests the interfaces, which is where the real risk lies.
 - **Step 1, one strong prover:** the strict-angle case for two points off the line, and the choice of base end.
 - **Step 2, Codex, best of two, in parallel on separate files:** the I.20 lemmas, existence (through I.22, `Prop22`), `Prop23.point` and `Arc.eq_of_aligned`.
-- **Step 3, Codex:** uniqueness (I.7 off the line, and the I.20 lemma for the mixed cases), and both points on the line.
+- **Step 3, Codex:** uniqueness (I.7 off the line, and the I.20 lemma for the mixed cases), both points on the line, and the distance case with one point on the base and one off it (I.8, then I.4). Its files are those brief 0006's table assigns to placement step 3.
 - **Step 4, the strong prover:** the assembly, then III.24, III.26 and III.28, then `Arcs.lean`.
 
 *III.24 restated*
