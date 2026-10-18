@@ -114,9 +114,11 @@ recommends:
 
 Three choices matter. The angle carrier is all of `ℝ≥0`, since sums of angles must have
 somewhere to live, though each angle lies in [0, π]. An angle with a repeated point is 0,
-as in MODEL.md's reading, where Mathlib's angle is π/2; with π/2, all four angle conditions
-of `Square A A A A` would hold. And a line is a subspace, not an equation, since two
-equations can name one line and `line_unique` would fail.
+as in MODEL.md's reading. When an arm is a zero vector, that is when `A = B` or `C = B`,
+Mathlib's angle is π/2, and with π/2 all four angle conditions of `Square A A A A` would
+hold; so the reading takes Mathlib's angle only when both arms are nonzero. And a line is a
+subspace, not an equation, since two equations can name one line and `line_unique` would
+fail.
 
 Reading our words by Mathlib's own definitions, rather than by new ones, lets the proofs
 here stand on Mathlib's lemmas. Its betweenness, sides and spheres are the work of Joseph

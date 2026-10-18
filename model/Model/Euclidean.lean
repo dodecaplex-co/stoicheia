@@ -38,9 +38,9 @@ Three choices matter.
   Euclid adds angles (in I.13, "the angles CBA, ABD are either two right angles or equal to
   two right angles"), and a sum of angle magnitudes must have somewhere to live.
 * **An angle with a repeated point is 0,** as in MODEL.md's reading. Mathlib's
-  `EuclideanGeometry.angle` is π/2 there (the angle with a zero vector), which would make
-  all four angle conditions of `Square A A A A` hold; so the reading takes Mathlib's angle
-  only when both arms are nonzero.
+  `EuclideanGeometry.angle` is π/2 when an arm is a zero vector, that is when `A = B` or
+  `C = B`, which would make all four angle conditions of `Square A A A A` hold; so the
+  reading takes Mathlib's angle only when both arms are nonzero.
 * **A line is a subspace, not an equation.** Two equations can name one line, which would
   break `line_unique`; a subspace with extensional equality cannot.
 
