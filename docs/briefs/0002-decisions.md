@@ -650,15 +650,16 @@ findings:
   superposition still reads it, so no proof may reach that rule through a lemma either.
   [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) documents both fields.
   [`scripts/render.py`](../../scripts/render.py) shows them: each page's table gains the
-  rows "Its own Lean calls" and "Only through lemmas", and its list of tacit rules marks
-  a rule "(used here)" only when the proof's own Lean calls it, and otherwise names the
-  lemmas it comes in through; CERTIFICATE.md gains the columns "Own rules" and "Through
-  lemmas". That is a change to what it writes, which the regenerated pages show, and not
-  to what it accepts. [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) reads
-  a field of `tests/certificate_expectations.json` that is an object, as `inherited` is,
-  by its keys, and fails an expectation whose entry lacks its field, which it read as
-  empty before, so that an `excludes` could pass on a field that had gone. Both are
-  stricter, and nothing is loosened.
+  rows "Its own Lean calls" and "Through lemmas", and its list of tacit rules marks a
+  rule "(used here)" only when the proof's own Lean calls it, and otherwise names the
+  lemmas it comes in through; CERTIFICATE.md gains the columns "Own rules (all kinds)"
+  and "Through lemmas (all kinds)". That is a change to what it writes, which the
+  regenerated pages show, and not to what it accepts.
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) reads a field of
+  `tests/certificate_expectations.json` that is an object, as `inherited` is, by its
+  keys, and fails an expectation whose entry lacks its field, which it read as empty
+  before, so that an `excludes` could pass on a field that had gone. Both are stricter,
+  and nothing is loosened.
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
   its four expectations and gains five: III.2 rests on Circle 2 (`inside_of_between`),
   which neither its own Lean nor any lemma it calls brings in, so it comes only through
