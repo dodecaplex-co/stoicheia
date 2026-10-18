@@ -35,11 +35,12 @@ exists, so that Mathlib's lemmas about it can do the work:
 Three choices matter, and each follows Astra's third answer, with our thanks.
 
 * **The angle carrier is all of `ℝ≥0`,** not [0, π]. Single angles lie in [0, π], but
-  Euclid adds angles ("the angles ABC, CBD are equal to two right angles"), and a sum of
-  angle magnitudes must have somewhere to live.
-* **An angle with a repeated point is 0.** Mathlib's `EuclideanGeometry.angle` is π/2 there
-  (the angle with a zero vector), which would make `IsRightAngle` and `Square A A A A`
-  come out wrongly; so the reading takes Mathlib's angle only when both arms are nonzero.
+  Euclid adds angles (in I.13, "the angles CBA, ABD are either two right angles or equal to
+  two right angles"), and a sum of angle magnitudes must have somewhere to live.
+* **An angle with a repeated point is 0,** as in MODEL.md's reading. Mathlib's
+  `EuclideanGeometry.angle` is π/2 there (the angle with a zero vector), which would make
+  all four angle conditions of `Square A A A A` hold; so the reading takes Mathlib's angle
+  only when both arms are nonzero.
 * **A line is a subspace, not an equation.** Two equations can name one line, which would
   break `line_unique`; a subspace with extensional equality cannot.
 

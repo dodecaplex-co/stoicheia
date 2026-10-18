@@ -5,6 +5,7 @@ public import Model.Hand
 public import Model.Euclidean
 public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
+public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
 
 /-!
@@ -55,6 +56,54 @@ info: 'Model.Euclidean.circles_meet_opposite_side' depends on axioms: [propext, 
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.circles_meet_opposite_side
+
+/--
+info: 'Model.Euclidean.add_assoc' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.add_assoc
+
+/--
+info: 'Model.Euclidean.add_comm' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.add_comm
+
+/--
+info: 'Model.Euclidean.add_lt_add_right' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.add_lt_add_right
+
+/--
+info: 'Model.Euclidean.add_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.add_zero
+
+/--
+info: 'Model.Euclidean.lt_irrefl' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.lt_irrefl
+
+/--
+info: 'Model.Euclidean.lt_trans' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.lt_trans
+
+/--
+info: 'Model.Euclidean.lt_trichotomy' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.lt_trichotomy
+
+/--
+info: 'Model.Euclidean.not_lt_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.not_lt_zero
 
 /--
 info: 'Model.Euclidean.exists_centre' depends on axioms: [propext, Classical.choice, Quot.sound]

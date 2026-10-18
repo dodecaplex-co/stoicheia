@@ -20,7 +20,8 @@ The laws here are the circle-intersection rules: Intersection 5, the step Euclid
 granted in I.1; Intersection 4, in the corrected form we owe to LeanEuclid (Logan Murphy,
 Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si), with our thanks; and
 Intersections 8 and 9, which say on which side of the line of centres a crossing point
-lies.
+lies. With them are the eight magnitude laws, which test the translation of the instances
+and of the kinds of magnitude.
 -/
 
 @[expose] public section
@@ -85,6 +86,55 @@ def circles_meet_opposite_side : Prop :=
   ∀ {α β : S.Circle} {B C D : S.Point} {L : S.Line}, S.CirclesMeet α β → S.Centre C α →
     S.Centre D β → S.OnLine C L → S.OnLine D L → ¬ S.OnLine B L →
     ∃ A : S.Point, S.OnCircle A α ∧ S.OnCircle A β ∧ S.OppositeSides A B L
+
+/-! ## How magnitudes add and compare
+
+The eight magnitude laws quantify over the kind of magnitude. They are easy in the plane;
+they are here because they test the translation where it is most delicate, through the
+instances behind `+`, `0` and `<`, and through the two copies of `Kind`, whose round trip
+in `Check/Hand.lean` is an equivalence proved kind by kind rather than `rfl`. -/
+
+/-- `Elements.Tacit.add_assoc`, by hand. The lock prints it as `∀ {k : Elements.Kind}
+(a b c : Elements.Magnitude k), Eq (HAdd.hAdd (HAdd.hAdd a b) c) (HAdd.hAdd a (HAdd.hAdd b
+c))`. -/
+def add_assoc : Prop :=
+  ∀ {k : Kind} (a b c : S.Magnitude k), a + b + c = a + (b + c)
+
+/-- `Elements.Tacit.add_comm`, by hand. The lock prints it as `∀ {k : Elements.Kind}
+(a b : Elements.Magnitude k), Eq (HAdd.hAdd a b) (HAdd.hAdd b a)`. -/
+def add_comm : Prop :=
+  ∀ {k : Kind} (a b : S.Magnitude k), a + b = b + a
+
+/-- `Elements.Tacit.add_lt_add_right`, by hand. The lock prints it as `∀ {k : Elements.Kind}
+{a b : Elements.Magnitude k} (c : Elements.Magnitude k), LT.lt a b → LT.lt (HAdd.hAdd a c)
+(HAdd.hAdd b c)`. -/
+def add_lt_add_right : Prop :=
+  ∀ {k : Kind} {a b : S.Magnitude k} (c : S.Magnitude k), a < b → a + c < b + c
+
+/-- `Elements.Tacit.add_zero`, by hand. The lock prints it as `∀ {k : Elements.Kind}
+(a : Elements.Magnitude k), Eq (HAdd.hAdd a 0) a`. -/
+def add_zero : Prop :=
+  ∀ {k : Kind} (a : S.Magnitude k), a + 0 = a
+
+/-- `Elements.Tacit.lt_irrefl`, by hand. The lock prints it as `∀ {k : Elements.Kind}
+(a : Elements.Magnitude k), Not (LT.lt a a)`. -/
+def lt_irrefl : Prop :=
+  ∀ {k : Kind} (a : S.Magnitude k), ¬ a < a
+
+/-- `Elements.Tacit.lt_trans`, by hand. The lock prints it as `∀ {k : Elements.Kind}
+{a b c : Elements.Magnitude k}, LT.lt a b → LT.lt b c → LT.lt a c`. -/
+def lt_trans : Prop :=
+  ∀ {k : Kind} {a b c : S.Magnitude k}, a < b → b < c → a < c
+
+/-- `Elements.Tacit.lt_trichotomy`, by hand. The lock prints it as `∀ {k : Elements.Kind}
+(a b : Elements.Magnitude k), Or (LT.lt a b) (Or (Eq a b) (LT.lt b a))`. -/
+def lt_trichotomy : Prop :=
+  ∀ {k : Kind} (a b : S.Magnitude k), a < b ∨ a = b ∨ b < a
+
+/-- `Elements.Tacit.not_lt_zero`, by hand. The lock prints it as `∀ {k : Elements.Kind}
+(a : Elements.Magnitude k), Not (LT.lt a 0)`. -/
+def not_lt_zero : Prop :=
+  ∀ {k : Kind} (a : S.Magnitude k), ¬ a < 0
 
 /-! ## Proposed, and not yet in the library
 

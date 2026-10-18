@@ -10,10 +10,12 @@ package is the start of the proof: a Lake package of its own, with Mathlib, in w
 words are the fields of a structure, the ordinary plane fills them, and Lean checks that
 the plane satisfies each law.
 
-**Where it stands.** The package builds, with the signature, the plane, and the first hard
-laws: the circle-intersection rules, translated by hand for now and proved in the plane.
-The rest of the laws, and the generator that will translate them from the library's own
-declarations, are to come. Until every locked law is proved here, the evidence that the
+**Where it stands.** The package builds, with the signature, the plane, and the first
+laws, translated by hand for now and proved in the plane: the four circle-intersection
+rules, the hardest group, and the eight magnitude laws, which are easy in the plane but
+test the translation where it is most delicate. That is 12 of the 87. The rest of the
+laws, and the generator that will translate them from the library's own declarations, are
+to come. Until every locked law is proved here, the evidence that the
 laws have a model remains MODEL.md's hand arguments and numerical tests, and this package
 is a milestone in progress.
 
@@ -40,6 +42,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean.lean](Model/Euclidean.lean) | the ordinary plane as a `Signature` | Mathlib |
 | [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersections 4 and 5 proved in the plane | Mathlib |
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
+| [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane rests on | every module of `Model` |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration | `Elements.Foundations`, `Model.Hand` |
@@ -192,9 +195,9 @@ the original means. Three checks do that.
   proposition, up to unfolding definitions; a dropped guard, two swapped arguments or a
   change in the order of the binders fails it, and the build with it. (Both were tried:
   Intersection 4 in System E's printed form, with "on or inside", and Intersection 5 with
-  its two points exchanged.) Today this covers the four hand-translated laws and the three
-  words they reach; the generator will write one such line for each of the 87 laws and 37
-  words.
+  its two points exchanged.) Today this covers the 12 laws translated by hand and the 11
+  words they reach, the eight behind the magnitudes and three more; the generator will
+  write one such line for each of the 87 laws and 37 words.
 - **The round trip, by syntax.** The generator also translates each result back and
   compares it with the original expression exactly, which is stricter than the kernel's
   check: it notices a translation that is right only after unfolding.
@@ -202,11 +205,13 @@ the original means. Three checks do that.
   declared in `Elements.Foundations`, and exactly the lock's `[axioms]`, so that none is
   missing and none is extra.
 
-One small decision would make every round trip exact. The eight magnitude laws quantify
-over the kind (`∀ {k : Elements.Kind}`), and with two copies of `Kind` their round trip is
-an equivalence proved case by case rather than `rfl`. If `Elements.Kind` moved into a file
-of its own, with no opaque word, no axiom and no notation, the model could import that one
-file and share the library's `Kind`.
+The eight magnitude laws quantify over the kind (`∀ {k : Elements.Kind}`), and with two
+copies of `Kind` their round trip is an equivalence, not `rfl`. Each direction is the other
+statement itself, put at the matching kind, with no other step, so the check is the same
+up to relabelling the kinds; a wrong translation of `add_lt_add_right`, with `c` added on
+the left, fails it. One small decision would make even these round trips `rfl`: if
+`Elements.Kind` moved into a file of its own, with no opaque word, no axiom and no
+notation, the model could import that one file and share the library's `Kind`.
 
 ## How the lock ties it
 
@@ -261,6 +266,7 @@ come before the easy laws are shared out:
 | Group | Laws | State |
 |---|---|---|
 | Circle intersections | `circles_meet`, `circles_meet_of_on_inside_outside`, `circles_meet_same_side`, `circles_meet_opposite_side` | proved here |
+| Magnitudes | the eight laws of `Tacit/Magnitudes.lean`: easy in the plane, but they test the translation of the instances and of `Kind` | proved here |
 | Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides` | to do |
 | Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | to do |
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
