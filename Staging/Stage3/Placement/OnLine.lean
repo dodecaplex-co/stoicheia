@@ -13,8 +13,8 @@ open Tacit
 
 /-- **Opposite rays, read off from B.** For two points P, Q of the straight line AB, neither
 of them A, A lies between P and Q exactly when one of them, and not both, lies beyond A from
-B. This is the step Euclid's figure shows without words, and it is what lets the order of
-P, Q about A be decided by distances, and so carried to C (`dist_on_on`). -/
+B. A figure shows it at a glance. It is what lets the order of P, Q about A be decided by
+their distances from A and B, and so carried to C (`dist_on_on`). -/
 theorem Placement.dist_on_on.opposite {A B P Q : Point} (hAB : A ≠ B)
     (hP : Collinear A B P) (hQ : Collinear A B Q) (hPA : P ≠ A) (hQA : Q ≠ A) :
     Between P A Q ↔

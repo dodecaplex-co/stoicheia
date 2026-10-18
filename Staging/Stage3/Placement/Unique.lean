@@ -45,7 +45,8 @@ theorem Placement.unique_on {C D Q₁ Q₂ : Point} (hCD : C ≠ D) (hQ₁ : Col
   · /- On the ray CD, DQ is less than DC and CQ together, wherever Q falls. -/
     have shorter {Q : Point} (hQ : OnRay Q C D) : ‖D Q‖ < ‖D C‖ + ‖C Q‖ := by
       by_cases hQD : Q = D
-      · subst Q
+      · /- Q at D: DQ is nothing. -/
+        subst Q
         rw [len_self]
         exact lt_trans (len_pos hCD.symm) (CommonNotion5 (len_pos hCD))
       have hQL : OnLine Q L := hQ.onLine hCL hDL
@@ -53,7 +54,8 @@ theorem Placement.unique_on {C D Q₁ Q₂ : Point} (hCD : C ≠ D) (hQ₁ : Col
       · /- Q lies between C and D, so DQ is already less than DC. -/
         exact lt_trans (len_lt_of_between (between_symm h))
           (CommonNotion5 (len_pos hQ.2.1.symm))
-      · exact False.elim (hQ.2.2.2 h)
+      · /- C cannot lie between Q and D, for Q is on the ray CD. -/
+        exact False.elim (hQ.2.2.2 h)
       · /- Q lies beyond D, so DQ is less than CQ. -/
         have hpart : ‖D Q‖ < ‖C Q‖ := by
           simpa only [len_symm Q D, len_symm Q C] using
