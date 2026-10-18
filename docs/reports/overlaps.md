@@ -135,10 +135,10 @@ the circle BHF, and so within it. III.1 calls it next (next row). I.5 and I.9 ta
 "at random" with Book Zero's `exists_between_nearer`, which keeps the point near enough by
 the order of the points on the straight line and the adding of lengths, not by the rule;
 so no proposition of Book I rests on it, nor any of II.1–II.13. Of the entries III.2
-cites, III.1 alone rests on the rule, and calls it itself; I.5 (cited directly and through
-the shared step `Prop5.base`), I.16 and I.19 do not. So III.2 rests on the rule through
-III.1 only. The Lean of III.2 is Euclid's reductio, by I.5, I.16 and I.19, with the
-centre from III.1, and it never calls the rule itself.
+cites, III.1 alone rests on the rule, and calls it itself; I.5 (through the shared step
+`Prop5.base`), I.16 and I.19 do not. So III.2 rests on the rule through III.1 only. The
+Lean of III.2 is Euclid's reductio, by I.5, I.16 and I.19, with the centre from III.1, and
+it never calls the rule itself.
 
 Other proofs call the rule on two points of a circle, which is III.2's case. Before III.2,
 II.14 and III.1 do (next row). After it, III.10, III.15, III.21, III.22, III.23, III.25,
