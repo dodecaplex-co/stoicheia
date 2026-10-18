@@ -16,8 +16,11 @@ records current; CI runs it on every push.
 4. A changed Lean file makes its review record stale (I.1).
 5. III.16's review record without its unformalized passage leaves a run of `--` lines
    with no Lean beneath it undeclared.
-6. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
-7. One build with planted assumptions, the certificate recomputed:
+6. A remark planted in I.5 between two sentences that share one step of Lean leaves the
+   first with no Lean of its own: a remark ends a run and carries nothing. A second
+   remark, between the next sentence and its Lean, does not stop that Lean carrying it.
+7. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
+8. One build with planted assumptions, the certificate recomputed:
    - in I.16, Postulate 5, a planted Euclidean-only rule (`Tacit.Euclidean.planted`)
      and an axiom declared in I.16's own file after a docstring on the same line:
      each is caught, so are the count of Euclid's assumptions and the two planted
@@ -31,7 +34,7 @@ records current; CI runs it on every push.
 The checks these do not plant a fault for are named in README.md's table, "What the
 checks show": check_style.py, check_links.py, the pages' freshness and the audit lemmas.
 
-The files changed are restored, and so is `facts.json`; after test 7 the proofs are
+The files changed are restored, and so is `facts.json`; after test 8 the proofs are
 built again from the restored files. Exits non-zero if any change goes unnoticed.
 Standard library only; Python 3.11 or later, for the review records.
 """
@@ -220,6 +223,27 @@ def undeclared_run() -> None:
         record.write_text(saved)
 
 
+def remark_ends_run() -> None:
+    """A remark between two sentences of I.5 that share one step of Lean. The first
+    sentence then has no Lean before the next run of `--` lines, and must be caught; the
+    second keeps its Lean, beneath a remark of its own, and must not be."""
+    rel = "Elements/BookI/Prop05.lean"
+    first = "and in these AB is equal to AC,"
+    second = "the remainder BF is equal to the remainder CG."
+    saved = replace_once(rel, f"  -- {first}\n  -- {second}\n",
+                         f"  -- {first}\n"
+                         "  /- Planted by scripts/negative_tests.py: these words have no Lean. -/\n"
+                         f"  -- {second}\n"
+                         "  /- Planted too: a remark between a sentence and its Lean. -/\n")
+    line = saved[:saved.index(f"-- {first}")].count("\n") + 1
+    try:
+        expect_failure("a sentence with no Lean before a remark in I.5", fidelity(),
+                       f"I.5: the `--` lines from {first!r} ({rel}:{line}) have no Lean",
+                       unwanted=("I.5: the `--` lines from 'the remainder BF",))
+    finally:
+        (ROOT / rel).write_text(saved)
+
+
 def planted_assumptions() -> None:
     facts = (ROOT / "facts.json").read_text()
     PLANTED.write_text(
@@ -310,6 +334,7 @@ def main() -> int:
     primitive_not_opaque()
     stale_lean()
     undeclared_run()
+    remark_ends_run()
     native_decide()
     planted_assumptions()
     if failures:

@@ -36,8 +36,9 @@
    - the review records (`review/SCHEMA.md`): every proposition has one, valid; its
      stamps match the statements in facts.json and its Lean file, so a record goes
      stale when either changes; its passages begin at Euclid's sentences and name
-     helpers that exist; and every run of `--` lines with no Lean beneath it is
-     declared as a passage (`uncarried_runs`).
+     helpers that exist; and every run of `--` lines with no Lean beneath it before
+     the next run, a `/- … -/` remark ending a run and carrying none, is declared as a
+     passage (`uncarried_runs`).
 
 `--facts PATH` checks another copy of facts.json (scripts/negative_tests.py uses it);
 `--write-lock` writes `Certificate/axioms.lock` from facts.json and stops.
@@ -531,17 +532,19 @@ def _blank_remarks(text: str) -> str:
 def proof_lines(src: str, n: int) -> list:
     """Each line of `theorem PropN`'s statement and proof in the Lean file's text `src`,
     as (line number, kind, text): kind "words" for a full-line `--` comment, its text
-    Heath's words; "lean" for a line of Lean; "blank" for a blank line or a line of a
-    `/- … -/` remark. [] if there is no such theorem."""
+    Heath's words; "lean" for a line of Lean; "remark" for a line wholly within a
+    `/- … -/` remark; "blank" for a blank line. [] if there is no such theorem."""
     span = heath.theorem_span(src, n)
     if span is None:
         return []
     first = src.count("\n", 0, span.body) + 1
+    body = src[span.body:span.end]
     rows = []
-    for i, line in enumerate(_blank_remarks(src[span.body:span.end]).split("\n")):
+    for i, (line, raw) in enumerate(zip(_blank_remarks(body).split("\n"), body.split("\n"),
+                                        strict=True)):
         s = line.strip()
         if not s:
-            rows.append((first + i, "blank", ""))
+            rows.append((first + i, "remark" if raw.strip() else "blank", ""))
         elif s.startswith("--"):
             rows.append((first + i, "words", re.sub(r"^--\s?", "", s)))
         else:
@@ -584,16 +587,25 @@ class Run(NamedTuple):
 
 
 def uncarried_runs(src: str, n: int) -> list:
-    """The runs of `--` lines in `theorem PropN` with no Lean line after them before the
-    next run or the theorem's end. Blank lines and `/- … -/` remarks are transparent:
-    they neither end a run nor carry it. Euclid's formulas, which no Lean need carry, are
-    left out: "Q. E. D.", "Q. E. F.", "(Being) what it was required to do" (or "prove"),
-    "[If] therefore etc.", a lone "]", and a porism paragraph, which is proved as a
-    theorem of its own. A run left with no words is not returned.
+    """The runs of `--` lines in `theorem PropN` that no Lean carries. A run is a stretch
+    of `--` lines that no line of Lean and no `/- … -/` remark interrupts; blank lines do
+    not end it. A run is carried only by a line of Lean after it and before the next run
+    (or the theorem's end). A remark ends a run without carrying it: the sentences on
+    either side of a remark are two runs, and the Lean beneath the second does not carry
+    the first. Lean after the remark, before the next run, still carries the run before
+    it, so a remark may sit between a sentence and its Lean.
 
-    In Books I-III this finds the closing sentences of the reductios of III.4, III.5,
-    III.6, III.7 and III.19, and III.16's last part: its conclusion, then the angle of
-    the semicircle and the horn-like angle."""
+    Euclid's formulas, which no Lean need carry, are left out: "Q. E. D.", "Q. E. F.",
+    "(Being) what it was required to do" (or "prove"), "[If] therefore etc.", a lone "]",
+    and a porism paragraph, which is proved as a theorem of its own. A run left with no
+    words is not returned.
+
+    In Books I-III this finds the closing sentences of reductios (III.4, III.5, III.19),
+    a "similarly" that one argument already covers (I.14, III.37), a sentence that the
+    Lean above it carries (II.10, III.14), a setting-out or an "I say that" that the
+    statement gives (I.13, I.21, I.23), a join that needs no object of its own (I.6), and
+    III.16's last part: its conclusion, then the angle of the semicircle and the
+    horn-like angle."""
     runs, current = [], None
     for ln, kind, text in proof_lines(src, n):
         if kind == "words":
@@ -601,8 +613,11 @@ def uncarried_runs(src: str, n: int) -> list:
                 current = {"lines": [], "carried": False}
                 runs.append(current)
             current["lines"].append((ln, text))
-        elif kind == "lean" and current is not None:
-            current["carried"] = True
+        elif kind == "lean":
+            if runs:
+                runs[-1]["carried"] = True
+            current = None
+        elif kind == "remark":
             current = None
     found = []
     for run in (r["lines"] for r in runs if not r["carried"]):
@@ -732,16 +747,17 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
             fail(f"{where}: [[passage]] {i}: `helper` {p['helper']} is not declared under "
                  "Elements/")
 
-    # Every run of `--` lines with no Lean beneath it is declared: a passage begins on
-    # one of its lines.
+    # Every run of `--` lines with no Lean beneath it before the next run is declared: a
+    # passage begins on one of its lines.
     for run in uncarried_runs(src, n):
         declared = any(ln in run.lines and words.startswith(_plain(p["at"]))
                        for p in record["passage"] for ln, words in starts)
         if not declared:
             first = " ".join(run.text.split()[:8])
             fail(f"{ref}: the `--` lines from {first!r} ({rel(lean)}:{run.line}) have no "
-                 f"Lean beneath them; declare them in {where} with a [[passage]] whose "
-                 "`at` quotes where they begin")
+                 "Lean beneath them before the next `--` line (a `/- … -/` remark carries "
+                 "none); put the Lean that carries them under them, or declare them in "
+                 f"{where} with a [[passage]] whose `at` quotes where they begin")
 
 
 def check_facts(path: Path) -> None:
