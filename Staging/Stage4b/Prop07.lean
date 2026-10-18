@@ -62,7 +62,9 @@ theorem Prop7.general {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD)
   sorry
 
 /-- The check: today's statement of III.7 follows from `Prop7.general` (checked by Lean).
-Two points on one side of AD are off it. -/
+`Prop7.general` is still a `sorry` stub, so the check proves nothing of III.7 until the
+companion is proved: it shows only that the two statements fit. Two points on one side of
+AD are off it. -/
 example : type_of% @Elements.BookIII.Prop7 := by
   intro A D E F ABCD hE hA hD hAED hEFD
   obtain ⟨hgreatest, hleast, hnearer, hpartner⟩ := Prop7.general hE hA hD hAED hEFD

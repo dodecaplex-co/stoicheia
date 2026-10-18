@@ -2,9 +2,11 @@
 
 *18 October 2026. This brief settles the new statements that make the records of III.7,
 III.8 and III.17 full, before any proof work, as [WORKFLOW.md](../WORKFLOW.md), section 2,
-requires. Each statement below was written with `sorry` in the `Staging` library, compiled,
-read back in plain words, and challenged by two readers who did not write it. Both accepted
-`full`; every finding is applied or answered in the appendix. The coordinator approved the
+requires. Each statement of III.7, III.8 and III.17 below was written with `sorry` in the
+`Staging` library, compiled, read back in plain words, and challenged by two readers who did
+not write it. Both accepted `full`; every finding is applied or answered in the appendix.
+The shared step `Touches.contact` was staged later, after the challenge and the review
+before freezing, at the coordinator's request (question 5). The coordinator approved the
 brief, and it is frozen: others write against these statements, and a later change is a
 revision of this brief (WORKFLOW, section 2, "Correcting a frozen brief"), never a quiet
 edit. The code states what we formalized; where the code, this brief, a review record and a
@@ -12,16 +14,18 @@ page disagree, the disagreement is recorded and reconciled
 ([FORMALIZATION.md](../FORMALIZATION.md), section 1).*
 
 *Approved and frozen 18 October 2026. After the challenge, the coordinator answered the
-open questions on [issue #53](https://github.com/jackChallis/stoicheia/issues/53) and
-approved the brief. A review of the branch before freezing found gaps in this brief and in
-three docstrings, none in the statements: III.17's section gains its Construction and
-Representation items; `Prop17.inside` becomes a lemma rather than a companion (question 1,
-whose answer the coordinator revised after that review); `Prop8.general`'s docstring reads
-back only what the Lean claims, and the docstrings of `Prop7.partner` and `Prop8.partner`
-are shortened; the shared step `Touches.contact` is staged; and the open questions are
-marked answered. No statement of III.7, III.8 or III.17 changes. The appendix's second
-table lists what was done, and a note after it the editorial corrections made to the
-frozen text before it landed.*
+open questions on [issue #53](https://github.com/jackChallis/stoicheia/issues/53), whose
+second comment carries the revised answer to question 1, and approved the brief. #53
+records the answers, not the approval: the approval and the freeze are recorded in this
+note and in commit `4747488`. A review of the branch before freezing found gaps in this
+brief and in three docstrings, none in the statements: III.17's section gains its
+Construction and Representation items; `Prop17.inside` becomes a lemma rather than a
+companion (question 1, whose answer the coordinator revised after that review);
+`Prop8.general`'s docstring reads back only what the Lean claims, and the docstrings of
+`Prop7.partner` and `Prop8.partner` are shortened; the shared step `Touches.contact` is
+staged; and the open questions are marked answered. No statement of III.7, III.8 or III.17
+changes. The appendix's second table lists what was done, and the notes after it the
+editorial corrections made to the frozen text before it landed.*
 
 The readings are Astra's. Asked what a full statement would say for each of the five
 records that stages 2 to 4 leave short of full, Astra answered on
@@ -35,6 +39,13 @@ Base: the branch was written on main at `f17b427`. The statements are in
 files hold seven statements with `sorry` (six for the propositions, and the shared step
 `Touches.contact`) and three checks that today's statements follow from them. Nothing in
 `Elements/` changes, so main's records, lock and CI are untouched.
+
+`Staging/` holds these statements under [WORKFLOW.md](../WORKFLOW.md), section 2, as
+amended with the freeze of [brief 0006](0006-statements.md) (the decisions entry "Brief
+0006 frozen") to admit "a stage of brief 0005, or of a later brief". This brief lands after
+that amendment. Until the amendment lands, WORKFLOW, section 2, FORMALIZATION, section 6,
+the comment on the `Staging` library in `lakefile.toml` and `Staging.lean`'s module doc
+speak of brief 0005's stages alone.
 
 ## The owner's decision
 
@@ -61,8 +72,11 @@ needs a fact the axioms lack. The lock's `[axioms]` table stays at 87, and its
 configuration", defines them and lists what each gets; their certificate entries are named
 below in quotation marks ("III.7 general"). A check of the form
 `example : type_of% @Elements.BookIII.Prop7 := …` derives today's statement from the
-companion, so nothing is lost. `Prop7.partner` and `Prop8.partner` are steps of the
-companions, and `Prop17.inside` is a lemma beside III.17, not a companion (question 1).
+companion, so nothing is lost once the companion is proved. Until then the check rests on
+a `sorry` stub and proves nothing of the proposition: it shows only that the two statements
+fit (WORKFLOW, section 2), and each check's docstring says so. `Prop7.partner` and
+`Prop8.partner` are steps of the companions, and `Prop17.inside` is a lemma beside III.17,
+not a companion (question 1).
 
 **"Nearer" is an unsigned angle with a ray.** In III.7 and III.8 the nearer straight line
 is the one making the less angle, at the point, with the ray through the centre: the ray
@@ -101,6 +115,15 @@ before the theorem. The staged copies are `Staging/Stage4b/Prop07.lean`, `Prop08
 staged file imports and what builds it is in [FORMALIZATION.md](../FORMALIZATION.md),
 section 6. `Staging.lean`'s imports and its folder list are the integrator's, and are left
 as they are.
+
+The pages must name what these homes hold truly. Today the page generator
+(`scripts/render.py`, `lean_listing`) names every declaration after `theorem PropN` that is
+neither the porism nor a listed companion as one of the "theorems later propositions use".
+`Prop7.partner` and `Prop8.partner` are steps of their companions, and `Prop17.inside` is a
+lemma beside III.17; no later proposition uses any of them. So before they move, the
+scripts' owner named in the wave's orders teaches `lean_listing` to say "later propositions
+use" only of a declaration that one uses, and to name the others plainly (a step of the
+companion, a lemma beside the proposition). Each move waits for that change.
 
 ## III.7, compared on either side of the diameter
 
@@ -221,22 +244,23 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
   are read as today: the second and the first meeting of a straight line from D with the
   circle. Euclid's lines are "drawn through to the circle", and a straight line touching the
   circle from D does not meet it at two points (Definition III.2), so its point of contact
-  should have no point of the circle before it and none beyond it, and falls on neither
-  class. That step is not stated in Lean (question 2, answered: in words). The convention is
-  stated in words, in the staged file and in the record. The partner clause, kept from
-  today's statement, covers points of contact too: that stronger coverage stays, as Astra
-  advised.
+  has no point of the circle before it and none beyond it, and falls on neither class. That
+  step follows from Definition III.2, and is not stated in Lean (question 2, answered: in
+  words). The convention is stated in words, in the staged file and in the record. The
+  partner clause, kept from today's statement, covers points of contact too: that stronger
+  coverage stays, as Astra advised.
 - **No single order across the classes.** The two comparisons are separate clauses, and no
   statement combines them: the near and the far meeting of one straight line from D make the
   same angle with DA and are at different distances.
 - **Cases.** Both points on one side (today's clauses); on opposite sides; a point of contact
   of a tangent (on neither class; in the partner clause); A and G, the axial points, left to
   the greatest and least clauses.
-- **Route.** The greatest, least and partner clauses are today's [III. 1, I. 20, I. 21,
-  I. 24, I. 23, I. 4], with today's modified last step. Across the diameter: for E and F
-  concave on opposite sides, F's partner B is on E's side as far from D (today's last
-  clause); `Prop8.partner` makes the angle ADB equal to ADF, and B concave; today's
-  comparison on one side finishes. The convex case is the same. `Prop8.partner`: the equal
+- **Route.** The greatest, least and partner clauses are today's [III. 1, I. 20, I. 24,
+  I. 21, I. 4], with the angle DMB made equal to KMD by I.23 (Heath gives no reference
+  there), and today's modified last step. Across the diameter: for E and F concave on
+  opposite sides, F's partner B is on E's side as far from D (today's last clause);
+  `Prop8.partner` makes the angle ADB equal to ADF, and B concave; today's comparison on one
+  side finishes. The convex case is the same. `Prop8.partner`: the equal
   angle by Euclid's I.4 step at the centre M, as in III.7, with M on the ray DA (or I.8 at
   once, labelled). The class: if K is between D and a point C of the circle, C's partner C'
   makes the angle ADC' equal to ADC, which is ADK, which is ADB, so C' is on the ray DB
@@ -315,8 +339,10 @@ theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
   solution exists from a point within.
 - **Route.** For A outside, today's III.17. For A on the circle, as Heath and Astra say: E
   the given centre is not A; the straight line AX drawn at right angles to EA at A (I.11)
-  touches the circle [III. 16, Por.]. The case on the circle is Heath's (vol. 2, p. 44), not
-  Euclid's construction, and the record's route says so. `Prop17.inside` is Book Zero's
+  touches the circle [III. 16, Por.]. Euclid leaves the case on the circle out, Heath
+  explains, because III.16's porism so directly indicates its construction (vol. 2, p. 44);
+  the construction is not on Euclid's page, and the record declares it as a `case` passage
+  under a route of `euclid` (FORMALIZATION, section 5). `Prop17.inside` is Book Zero's
   `Touches.not_inside`, applied at A itself: a straight line through a point within a circle
   cuts it. It is a lemma beside III.17, not a companion: it generalizes no clause of the
   enunciation, so it is not listed in the record's `companions` and has no certificate entry
@@ -354,23 +380,34 @@ Nothing in `Elements/` changes on this branch, so no record is stale yet. When t
 companions move:
 
 - `review/III/07.toml`, `review/III/08.toml`, `review/III/17.toml`: the Lean file changes,
-  the companions are listed ("III.17 general" alone for III.17), and the scope goes from
-  `restricted` to `full`, with the representation notes above; III.8's route stays
-  `modified`. Each is read again by a reviewer, and stamped by no one who did not review it.
-- The prose that says these statements are restricted: `mishnah/III/17.md` ("Euclid's
-  construction needs A outside the circle, and our statement asks for it"),
-  `mishnah/intro/III.md` ("Five statements are restricted …"), `mishnah/III/07.md` and
-  `mishnah/III/08.md` where they speak of one side;
-  [brief 0004](0004-book-III.md)'s line on "nearer", "on one side of it", and its rows for
-  III.7, III.8 and III.17; `docs/reports/gaps-book-III.md` under III.17, for the boundary
-  case.
+  each record lists its companion ("III.7 general", "III.8 general", "III.17 general";
+  `Prop17.inside` is not listed), and the scope goes from `restricted` to `full`, with the
+  representation notes above. The route kinds stay as they are: III.7's `euclid`, III.8's
+  `modified`, III.17's `euclid`. The comparison across the diameter in III.7 and III.8, and
+  III.17's case on the circle, are cases Euclid's figure leaves aside, each declared as a
+  `case` passage, which leaves the route as it is (FORMALIZATION, section 5;
+  [review/SCHEMA.md](../../review/SCHEMA.md)). Each record is read again by a reviewer, and
+  stamped by no one who did not review it.
+- The prose that says these statements are restricted. `mishnah/III/17.md`: "Euclid's
+  construction needs A outside the circle, and our statement asks for it" becomes false;
+  the paragraph is rewritten to say that the companion takes a point on the circumference
+  too, and to give "not within the circle" as the condition for a solution, citing
+  `Prop17.inside` (question 1). `mishnah/intro/III.md`: "Five statements are restricted …" loses III.7,
+  III.8 and III.17, and its count changes. `mishnah/III/07.md` and `mishnah/III/08.md`: no
+  sentence becomes false (III.7's "on either side of AD" speaks of each side in turn, and
+  III.8's page speaks of no side), and the badge and the field table change with the
+  record. [Brief 0004](0004-book-III.md)'s line on "nearer", "on one side of it", and its
+  rows for III.7, III.8 and III.17; `docs/reports/gaps-book-III.md` under III.17, for the
+  boundary case.
 - The generated output (README's Book III scope row, the pages, the certificate), which the
   integrator regenerates, and PROGRAM.md's status table, the coordinator's.
 
 ## The checks at the end of stage 4b
 
-- Every companion proved and certified, and `Prop17.inside` proved; every check of today's
-  statement compiles where it moves.
+- Every companion proved and certified, and `Prop17.inside` proved; each staged copy, with
+  its check of today's statement, deleted in the change that moves it (WORKFLOW, section 2).
+- The pages name `Prop7.partner`, `Prop8.partner` and `Prop17.inside` truly ("Homes and
+  owners").
 - `[axioms]` at 87; the vocabulary unchanged.
 - Every touched record re-reviewed; III.7, III.8 and III.17 full.
 
@@ -378,8 +415,9 @@ companions move:
 
 The coordinator answered questions 1, 2, 3 and 5 on
 [issue #53](https://github.com/jackChallis/stoicheia/issues/53), after the challenge, and
-approved the brief. After the review before freezing, the coordinator revised the answer
-to question 1; the answer below gives the reason. Each question is kept exactly as it was
+approved the brief (the dated note at the head says where the approval is recorded). After
+the review before freezing, the coordinator revised the answer to question 1, in #53's
+second comment; the answer below gives the reason. Each question is kept exactly as it was
 asked of the coordinator, at `365d8a0`, with its answer after it.
 
 1. **`Prop17.inside`, a companion or a sentence?** It makes "not within" visibly the
@@ -407,7 +445,7 @@ asked of the coordinator, at `365d8a0`, with its answer after it.
    **Answered: in words,** in the staged file, the record and the page; no `Prop8.tangent`.
    The Lean claims nothing of a point of contact except in the partner clause, so nothing is
    overclaimed. The question's reason claims more than the Lean does: that the classes'
-   hypotheses exclude a point of contact holds in the standard model, and is not stated in
+   hypotheses exclude a point of contact follows from Definition III.2, and is not stated in
    Lean; `Prop8.general`'s docstring now says so.
 3. **The partner's angle, by I.4 or I.8?** Euclid's step is I.4, after his construction, and
    Heath and Astra describe the route that way; I.8 on three equal sides gives the angle at
@@ -451,7 +489,7 @@ two optional proposals in the last rows, which are answered.
 | `Prop8.general`'s "for it has no point of the circle before it or beyond it" is an unchecked claim | Marked as the convention read from "drawn through", resting on the classes' hypotheses; the module doc and the brief say the step from Definition III.2 is not stated in Lean (open question 2) |
 | `Prop17.general`'s docstring and plain words credit it with the perpendicular at A, which is III.18 | Reworded as the route: the proof draws AX at right angles to EA (I.11), and it touches by III.16's porism; the statement claims only the touching |
 | `Prop17.general`'s docstring cited "[III. 17]" inside III.17's own companion | "Today's `Prop17`" |
-| The case of A on the circle not labelled as Heath's | Said in the docstring and the Route: Heath's (vol. 2, p. 44), not Euclid's construction, and the record's route says so |
+| The case of A on the circle not labelled as Heath's | Said in the docstring and the Route: a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates its construction (vol. 2, p. 44), not on Euclid's page; the record declares it as a `case` passage. (First written as Heath's, which his page does not support: he adds no construction. Corrected after the freeze; see the note at the end.) |
 | "Exactly the condition" holds only for a circle with a centre | Qualified in the module doc, `Prop17.inside`'s docstring, the plain words and open question 1 |
 | `Prop17.inside` is a remark about solvability, not a generalization of a clause | Kept as a companion at the time; the coordinator revised the answer to a lemma before freezing (question 1, and the second table) |
 | The point of contact now sits inside `Touches`, costing every citer the unpacking | The statement kept; the cost stated under "The form of the conclusion"; `Touches.contact` proposed to the coordinator as question 5, and now staged |
@@ -469,7 +507,7 @@ the docstrings, and each was applied or answered.
 |---|---|
 | III.17 is a problem, but its section had no Construction item and no Representation notes (templates, form 1; FORMALIZATION, section 4); "Records made stale" promised notes that were not there, and the `centre-given` tag was not named | Both items added to III.17's section; the tag named there and in III.7's and III.8's notes |
 | `Prop17.inside` generalizes no clause, yet was listed as a companion (FORMALIZATION, section 2) | The coordinator revised the answer to question 1: now a lemma beside III.17, with no companion entry and no certificate entry; the record and the page state "not within" as the condition |
-| Staging was scoped to "a stage of brief 0005", and stage 4b is brief 0007's | Raised with the owner of WORKFLOW and FORMALIZATION, whose amendment (WORKFLOW, section 2, "or of a later brief") this brief relies on |
+| Staging was scoped to "a stage of brief 0005", and stage 4b is brief 0007's | Raised with the owner of WORKFLOW and FORMALIZATION, whose amendment (WORKFLOW, section 2, "or of a later brief") this brief relies on; the amendment comes with brief 0006's freeze, and this brief lands after it ("Base", above) |
 | `Prop8.general`'s docstring said the comparisons "do not take" a point of contact, which the Lean does not state | The docstring now says the comparisons speak only of points with a point of the circle before or beyond them, and that a point of contact has neither is not stated |
 | The brief was not frozen: the coordinator's answers on #53 and the approval were not recorded | The header and a dated note record the approval and the freeze; the questions are marked answered, question 5's answer aligned with "shared steps" |
 | The header still said the brief "now goes to readers"; the Conventions and Homes restated rules whose home is FORMALIZATION, sections 2 and 6 | Header updated; both paragraphs now link to their home |
@@ -477,7 +515,7 @@ the docstrings, and each was applied or answered.
 | Long lines in `Prop08.lean`, `Prop17.lean` and this brief, left by the challenge edits | Rewrapped at 100 characters, prose and docstrings |
 | The helper docstrings of `Prop7.partner` and `Prop8.partner` ran to four sentences, used "far (near)", and mixed "[I. 23]" with "by I.4" (STYLE, sections 1 and 4) | Cut to the setting, the claim and the route: two sentences for `Prop7.partner`, three for `Prop8.partner`; the two cases of the class written out; "I.23" and "I.4" in one form, as in `Prop17.general` and the module docs |
 | The convex and concave existentials repeat six times in `Prop08.lean` | Answered, not applied: the vocabulary is frozen, and a new word would be a foundations decision; the reviewer accepted it on that ground |
-| The tangent convention is stated in words only | Accepted, as the reviewer advised: the class hypotheses exclude a point of contact in the standard model, and the Lean claims nothing of it except in the partner clause (question 2) |
+| The tangent convention is stated in words only | Accepted, as the reviewer advised: that the class hypotheses exclude a point of contact follows from Definition III.2, though it is not stated in Lean, and the Lean claims nothing of a point of contact except in the partner clause (question 2) |
 
 After the freeze, a check of this brief at `4747488`, before it landed, found six editorial
 slips, each corrected here. The open questions are restored exactly as they were asked, each
@@ -486,3 +524,21 @@ answer. The III.17 section writes I.11 as our reference, not in Heath's bracket 
 Heath's text gives none for the perpendicular. The dated note and the second table count
 the docstrings and their sentences correctly, the table's last row agrees with question 2's
 answer, and three paragraphs are rewrapped. No statement changed, and no answer's substance.
+
+A review of the branch at `2cc5d03`, before it landed, found three material slips and eight
+editorial ones, each corrected here and in `Staging/Stage4b/`. The case of A on the circle
+was called Heath's addition; Heath adds no construction, and says that Euclid leaves the
+case out because III.16's porism so directly indicates it (vol. 2, p. 44), as the module
+doc and the III.17 page already said. `Prop17.general`'s docstring, the Route and the first
+table's row now say so. The planned homes would have made the pages call `Prop7.partner`,
+`Prop8.partner` and `Prop17.inside` theorems that later propositions use; "Homes and owners"
+now asks for the page generator to name them truly before they move. And this brief relied
+on an amendment of WORKFLOW, section 2, that main does not yet carry; "Base" now says so,
+and that this brief lands after it. The editorial corrections: the head says that
+`Touches.contact` was staged after the challenge, and where the approval is recorded; each
+check's docstring, and the Conventions, say that the check rests on a stub; III.8's Route
+writes I.23 as our reference; the end of stage 4b deletes each check with its staged copy,
+as the order of proof work says; the tangent convention follows from Definition III.2, and
+the brief and `Prop08.lean` no longer hedge it; "Records made stale" names each page's
+change and each record's route kind; and `Prop8.partner`'s docstring gives the step that
+makes the given B Euclid's point. No statement changed, and no answer's substance.

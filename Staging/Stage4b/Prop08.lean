@@ -20,11 +20,12 @@ make the same angle with DA, and are at different distances from D.
 
 A straight line touching the circle from D falls on neither class. This is a convention,
 read from Euclid's "drawn through to the circle": a straight line that touches does not
-meet the circle at two points (Definition III.2), so its point of contact should have no
-point of the circle between it and D and none beyond it. That step is not stated in Lean
-(brief 0007, question 2), and the comparisons say nothing of the point of contact. The
-last clause, kept from today's statement, does: every point of the circle off DA, a point
-of contact included, has one partner on the other side as far from D, and no third.
+meet the circle at two points (Definition III.2), so its point of contact has no point of
+the circle between it and D and none beyond it. That step follows from Definition III.2,
+and is not stated in Lean (brief 0007, question 2); the comparisons say nothing of the
+point of contact. The last clause, kept from today's statement, does: every point of the
+circle off DA, a point of contact included, has one partner on the other side as far from
+D, and no third.
 
 `Prop8.partner` is the step the route needs: the partner on the other side makes the same
 angle with DA, and is in the same class. Equal distance alone does not carry a comparison
@@ -45,9 +46,11 @@ opposite sides of DA, and DB is equal to DK, then the angles ADB and ADK are equ
 the convex circumference exactly when K is (the straight line from D meets the circle again
 beyond it); and B is on the concave circumference exactly when K is (it meets the circle
 before reaching it). Euclid's construction of B, the angle DMB made equal to KMD at the
-centre M (I.23), gives the equal angles at D by I.4, and the class follows from them: a
-point of the circle beyond K on the straight line DK has its partner on the ray DB beyond
-B, and a point of the circle between D and K has its partner between D and B. -/
+centre M (I.23), gives the equal angles at D by I.4, and today's last clause, that no
+third point of the circle is as far from D, shows that no other point is B; the class
+follows from the equal angles: a point of the circle beyond K on the straight line DK has
+its partner on the ray DB beyond B, and a point of the circle between D and K has its
+partner between D and B. -/
 theorem Prop8.partner {A D G K B : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A)
@@ -71,9 +74,9 @@ the circle beyond it) off DA, the one making the less angle is the nearer: if th
 is less than the angle ADL, then DK is less than DL. By convention, read from "drawn
 through", a point where a straight line from D touches the circle is on neither
 circumference; the comparisons speak only of points with a point of the circle before them
-or beyond them, and that a point of contact has neither is not stated here. Each point K of
-the circle off DA has one partner B on the other side with DB equal to DK, and no third
-point of the circle is as far from D. -/
+or beyond them, and that a point of contact has neither, which follows from Definition III.2,
+is not stated here. Each point K of the circle off DA has one partner B on the other side
+with DB equal to DK, and no third point of the circle is as far from D. -/
 theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A) :
@@ -93,7 +96,9 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
   sorry
 
 /-- The check: today's statement of III.8 follows from `Prop8.general` (checked by Lean).
-Two points on one side of DA are off it. -/
+`Prop8.general` is still a `sorry` stub, so the check proves nothing of III.8 until the
+companion is proved: it shows only that the two statements fit. Two points on one side of
+DA are off it. -/
 example : type_of% @Elements.BookIII.Prop8 := by
   intro A D G ABC hABC hD hA hG hDGA hGA
   obtain ⟨hgreatest, hconcave, hleast, hconvex, hpartner⟩ :=

@@ -34,8 +34,9 @@ A not within it, there is a point X such that the straight line AX touches the c
 meets the circle, and does not cut it. A may be outside the circle, and then the point of
 contact is another point (Euclid's case, today's `Prop17`); or on it, and then the point of
 contact is A itself: the proof draws AX at right angles to the radius EA (I.11), and it
-touches by III.16's porism. That case is Heath's addition (vol. 2, p. 44), not Euclid's
-construction. -/
+touches by III.16's porism. Euclid leaves that case out, Heath explains, because III.16's
+porism so directly indicates its construction (vol. 2, p. 44); the construction is not on
+Euclid's page. -/
 theorem Prop17.general {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD)
     (hA : ¬ InsideCircle A BCD) :
     ∃ X : Point, Touches A X BCD := by
@@ -51,8 +52,10 @@ theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
   sorry
 
 /-- The check: today's statement of III.17 follows from `Prop17.general` (checked by Lean).
-A is outside the circle, so the point where AX meets the circle is not A, and the straight
-line it names with A is AX. -/
+`Prop17.general` is still a `sorry` stub, so the check proves nothing of III.17 until the
+companion is proved: it shows only that the two statements fit. A is outside the circle,
+so the point where AX meets the circle is not A, and the straight line it names with A is
+AX. -/
 example : type_of% @Elements.BookIII.Prop17 := by
   intro A BCD hBCD hA
   obtain ⟨X, hAX, hX⟩ := Prop17.general hBCD hA.1
