@@ -93,35 +93,67 @@ as `rfl`, up to relabelling the kinds, and the kernel checks that every instance
 `+`, `0` and `<`, comes back as the library's. -/
 
 example : Model.Hand.add_assoc original ↔ type_of% @Elements.Tacit.add_assoc :=
-  ⟨fun h {k} => by cases k <;> first | exact @h .length | exact @h .angle | exact @h .area,
+  ⟨fun h {k} => by
+    cases k with
+    | length => exact @h .length
+    | angle => exact @h .angle
+    | area => exact @h .area,
     fun h => h⟩
 
 example : Model.Hand.add_comm original ↔ type_of% @Elements.Tacit.add_comm :=
-  ⟨fun h {k} => by cases k <;> first | exact @h .length | exact @h .angle | exact @h .area,
+  ⟨fun h {k} => by
+    cases k with
+    | length => exact @h .length
+    | angle => exact @h .angle
+    | area => exact @h .area,
     fun h => h⟩
 
 example : Model.Hand.add_lt_add_right original ↔ type_of% @Elements.Tacit.add_lt_add_right :=
-  ⟨fun h {k} => by cases k <;> first | exact @h .length | exact @h .angle | exact @h .area,
+  ⟨fun h {k} => by
+    cases k with
+    | length => exact @h .length
+    | angle => exact @h .angle
+    | area => exact @h .area,
     fun h => h⟩
 
 example : Model.Hand.add_zero original ↔ type_of% @Elements.Tacit.add_zero :=
-  ⟨fun h {k} => by cases k <;> first | exact @h .length | exact @h .angle | exact @h .area,
+  ⟨fun h {k} => by
+    cases k with
+    | length => exact @h .length
+    | angle => exact @h .angle
+    | area => exact @h .area,
     fun h => h⟩
 
 example : Model.Hand.lt_irrefl original ↔ type_of% @Elements.Tacit.lt_irrefl :=
-  ⟨fun h {k} => by cases k <;> first | exact @h .length | exact @h .angle | exact @h .area,
+  ⟨fun h {k} => by
+    cases k with
+    | length => exact @h .length
+    | angle => exact @h .angle
+    | area => exact @h .area,
     fun h => h⟩
 
 example : Model.Hand.lt_trans original ↔ type_of% @Elements.Tacit.lt_trans :=
-  ⟨fun h {k} => by cases k <;> first | exact @h .length | exact @h .angle | exact @h .area,
+  ⟨fun h {k} => by
+    cases k with
+    | length => exact @h .length
+    | angle => exact @h .angle
+    | area => exact @h .area,
     fun h => h⟩
 
 example : Model.Hand.lt_trichotomy original ↔ type_of% @Elements.Tacit.lt_trichotomy :=
-  ⟨fun h {k} => by cases k <;> first | exact @h .length | exact @h .angle | exact @h .area,
+  ⟨fun h {k} => by
+    cases k with
+    | length => exact @h .length
+    | angle => exact @h .angle
+    | area => exact @h .area,
     fun h => h⟩
 
 example : Model.Hand.not_lt_zero original ↔ type_of% @Elements.Tacit.not_lt_zero :=
-  ⟨fun h {k} => by cases k <;> first | exact @h .length | exact @h .angle | exact @h .area,
+  ⟨fun h {k} => by
+    cases k with
+    | length => exact @h .length
+    | angle => exact @h .angle
+    | area => exact @h .area,
     fun h => h⟩
 
 end Check

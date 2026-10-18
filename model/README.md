@@ -53,8 +53,11 @@ Nothing under `Model/` imports the library, and nothing under `Check/` imports M
 ## The signature
 
 [Model/Signature.lean](Model/Signature.lean) states the seventeen words as the fields of
-one structure, each with exactly the type of the opaque constant it stands for, the earlier
-fields standing in for the earlier words:
+one structure. Each field has the type of the opaque constant it stands for, with the
+earlier fields standing in for the earlier words, and with the library's defined words
+`Magnitude k`, `Length`, `Angle` and `Area` written out as what they unfold to,
+`(MagnitudeImpl k).type` at the matching kind, since a structure's fields cannot use a word
+defined from those fields:
 
 ```lean
 structure Signature where
@@ -81,9 +84,11 @@ The magnitudes are part of the signature, with their zero, addition and order, s
 laws are about them and many more compare them. The fields copy the library's words so
 closely that the translation of a law is a substitution, and putting the library's own
 words back in gives the original declaration, which is how the translation is checked
-(below). The one difference is the kinds of magnitude: the library's `Elements.Kind` is
-declared beside the opaque words and their notation, so the model declares `Model.Kind`,
-with the same three constructors, and the translation maps them by name.
+(below). So the types agree up to unfolding, which Lean checks when `Check.original` fills
+the fields with the library's words. Besides that unfolding, the one difference is the
+kinds of magnitude: the library's `Elements.Kind` is declared beside the opaque words and
+their notation, so the model declares `Model.Kind`, with the same three constructors, and
+the translation maps them by name.
 
 ## The plane
 
@@ -233,12 +238,17 @@ formal-model CI job ([below](#the-ci-job)) compares it with the lock:
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 ```
 
-Then any change to an axiom, or to a word an axiom reaches, fails the job until someone
-has brought the model up to date: the translation, its checks, and the proofs in the plane
-of the laws that changed. The round-trip checks tie each translated law to the declaration
-itself, more tightly than the hash can; the hash covers the laws the round trips do not yet
-reach. A law proposed for the foundations is proved here before it lands: `exists_centre`,
-proposed in issue #59, is already proved in the plane
+Then any change to `Certificate/axioms.lock` fails the job, not only a change to an axiom:
+the lock also holds every word that the statement of a proposition, a porism or a companion
+reaches. A change to an axiom's statement, or to a word an axiom reaches, sends someone
+back to the model: to the translation, its checks in `Check/`, and the proofs in the plane
+of the laws that changed. A change that touches neither, such as a word only a
+proposition's statement uses, moved into the foundations from `Staging/`, needs only the
+hash renewed. A change to the lock renews `model/lock.sha256` in the same change, as it
+renews `tests/model/lock.sha256`. The round-trip checks tie each translated law to the
+declaration itself, more tightly than the hash can; the hash covers the laws the round
+trips do not yet reach. A law proposed for the foundations is proved here before it lands:
+`exists_centre`, proposed in issue #59, is already proved in the plane
 ([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)), and its round-trip check
 joins `Check/Hand.lean` in the change that declares it.
 

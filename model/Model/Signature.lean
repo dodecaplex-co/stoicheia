@@ -11,13 +11,18 @@ that the axioms have a model. Here the same seventeen words are the fields of a 
 reading is a model when it satisfies the laws, the translated axioms
 ([README](../README.md)).
 
-Each field has exactly the type of the opaque constant it stands for, with the words before
-it in place of the library's: `Point`, `Line` and `Circle`; the six relations; the carrier
-of each kind of magnitude with its zero, addition and order; and length, angle, area and
-the right angle. The only change is the kinds of magnitude: the library's `Elements.Kind`
-lives in a file that also declares the opaque words and their notation, so the model has
-its own copy, `Model.Kind`, with the same three constructors, and the translation maps one
-to the other by name.
+Each field has the type of the opaque constant it stands for, with the words before it in
+place of the library's: `Point`, `Line` and `Circle`; the six relations; the carrier of
+each kind of magnitude with its zero, addition and order; and length, angle, area and the
+right angle. Where the library's type uses its defined words `Magnitude k`, `Length`,
+`Angle` and `Area`, the field's type writes out what they unfold to,
+`(MagnitudeImpl k).type` at the matching kind, since a structure's fields cannot use a word
+defined from those fields. So the types agree up to unfolding, which Lean checks when
+`Check.original` fills the fields with the library's words. Besides that unfolding, the one
+difference is the kinds of magnitude: the library's `Elements.Kind` lives in a file that
+also declares the opaque words and their notation, so the model has its own copy,
+`Model.Kind`, with the same three constructors, and the translation maps one to the other
+by name.
 
 This file is plain Lean, with no Mathlib and no import of the library, so that the
 translation checks in `Check/` can read it beside the original declarations.
@@ -36,7 +41,9 @@ inductive Kind where
 
 /-- A reading of the seventeen primitive words. Each field is named as the opaque
 constant it stands for in `Elements` (`Magnitude.zero` becomes `zero`, and so on), and has
-that constant's type with the earlier fields in place of the earlier words. -/
+that constant's type with the earlier fields in place of the earlier words, and with
+`Magnitude k`, `Length`, `Angle` and `Area` written out as `(MagnitudeImpl k).type` at the
+matching kind: the same type up to unfolding. -/
 structure Signature where
   /-- `Elements.Point`. -/
   Point : Type
