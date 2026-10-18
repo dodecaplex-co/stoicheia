@@ -7,7 +7,7 @@ The restriction theorem of [brief 0009](../../docs/briefs/0009-superposition.md)
 prototype. Astra's third answer asks for evidence that the represented derivation system
 cannot export the placement's objects as witnesses, nor take construction steps inside the
 placement. Here it is, in four parts, with a fifth in `Rule.lean`. Parts 1, 2, 3 and 5 are
-theorems; part 4 is a reading of the statement of `Rule.infer`, whose one theorem is
+theorems; part 4 is read off the statement of `Rule.infer`, and its one theorem is
 `Metric.holds_const`.
 
 1. **No symbol of the placement is exported** (`exportable_iff`, `not_exportable_second`,

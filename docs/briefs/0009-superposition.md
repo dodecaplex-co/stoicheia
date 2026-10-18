@@ -247,7 +247,7 @@ intersection rules and `superposition`):
 | Metric 3, Metric 4, Metric 9 | the axioms `len_symm`, `angle_symm`, `area_congruent` | none |
 | Distinct ends | Book Zero's `ne_of_len_eq` | none |
 | One point at one distance on a ray | Book Zero's `OnRay.eq_of_len_eq` | none |
-| One ray for one angle, both halves | `onLine_of_angle_eq_named`, new in `Derivations.lean` | none |
+| One ray for one angle, both halves | `onLine_of_angle_eq_named`, new in `Derivations.lean`, and Pasch 3 for the side | none |
 | I.7 | the edition's I.7, supplied by the theorem that cites it | Postulates 1, 2 and 3, seven other construction rules, and today `superposition`, through I.5 and I.4 |
 
 `Cited.holds_of_drawsNothing` proves every law but I.7 in one theorem; its `#print axioms`
@@ -560,9 +560,9 @@ Not proved, and not claimed:
 - that `Rule` is equivalent to System E's two rules;
 - the model obligation in Lean (it waits for `model/`, #73);
 - I.5 and I.7 from the staged I.4: the staged I.8 takes I.7's statement as a hypothesis.
-  The edition's I.5 and I.7 cite I.4 by name and never cite superposition directly (the
-  certificate's policy checks that), so once I.4's proof changes they rest on the
-  restricted rule with no edit;
+  The edition's I.5 cites I.4 by name, and I.7 cites I.5; neither cites superposition
+  directly (the certificate's policy checks that), so once I.4's proof changes they rest on
+  the restricted rule with no edit;
 - anything about the pages, the records or the generated files, which do not change.
 
 ## Landing, when complete
@@ -703,7 +703,7 @@ The reviews' scratch files are not committed.
 
 ## Checks
 
-At the branch's head, on the files committed with this brief:
+At `08b218b`, on the files committed with this brief:
 
 - `lake build Staging`: passes (173 jobs). The six files declare no axiom, use none of the
   forbidden commands and contain no `sorry`; the other staged files keep their own `sorry`s,
@@ -712,6 +712,10 @@ At the branch's head, on the files committed with this brief:
 - Heath's `--` lines and the docstrings of the staged I.4 and I.8 compared with the
   edition's: identical.
 - `python3 scripts/check_style.py` and `python3 scripts/check_links.py`: pass.
+
+The commits since then (`6aa4192` and the review fixes after it) change only this brief and
+doc comments in `Staging/Superposition/`: no statement, definition, proof or `--` line. The
+checks are run again on the revision delivered for landing, and recorded there.
 
 ## Thanks
 
