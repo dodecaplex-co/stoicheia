@@ -14,8 +14,8 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 Euclid draws one figure, with F below EG, and leaves the others to the reader.
-Lean cannot, so `Prop24.cases` sorts out where F can fall: on EG, within the
-triangle DEG, or beyond EG as in Euclid's figure. The first two are the cases
+Our theorem covers every placing of F, so `Prop24.cases` sorts out where F can
+fall: on EG, within the triangle DEG, or beyond EG as in Euclid's figure. The first two are the cases
 Proclus supplies, and Heath reports (vol. 1, p. 297): when F is on EG, EF is a
 part of EG; when it is within the triangle, I.21 does it.
 -/
