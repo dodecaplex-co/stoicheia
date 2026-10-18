@@ -7,8 +7,9 @@ contributor in the fleet. There are three kinds:
    Euclid's route, with their figures, mishnah and further reading.
 2. [A statement wave](#2-a-statement-wave): write the statements a stage needs, with
    `sorry`, in `Staging/`, to be challenged and approved before anyone proves them.
-3. [A companion proof](#3-a-companion-proof): prove one approved statement from
-   `Staging/` by the route its brief declares, and move it beside its proposition.
+3. [A companion proof, or a restatement's](#3-a-companion-proof-or-a-restatements): prove
+   one approved statement from `Staging/` by the route its brief declares, and move it
+   beside its proposition, or into its place.
 
 They replace the pattern of Books I–III's orders
 ([orders-III](../reports/crew/orders-III.md) is the last of those, kept as written but for
@@ -156,10 +157,19 @@ record `review/<B>/NN.toml`; <the shared definitions the statements use>.
   (apart, touching, overlapping, coinciding; greater, equal, less). It is a Lean note, and
   reads as `docs/STYLE.md`, section 1, asks; production stays out of it (STYLE, section 1,
   "Production stays out of the mathematics").
-- Nothing is lost: today's statement follows from the new one, by a corollary the brief
-  names (`Prop40.special`) or an `example` whose type is `type_of% @PropN`. That
-  derivation is the one proof a statement wave writes, for it checks a statement, not a
-  proposition.
+- A restatement replaces today's `theorem PropN` itself, where the brief says so (III.24
+  and III.25 restated; III.26 and III.28 upgraded). It is staged as
+  `Elements.Book<B>.Staging.PropN`, so as not to collide with the theorem it will replace,
+  and its proof is to stand under the same `--` lines of Heath's text, whose words never
+  change. Today's statement is kept under the name the brief gives it (`Prop24.equalCircles`,
+  the alternative formal proof), and the brief names every consumer the restatement
+  breaks: Lean that uses the old conclusion, audit lemmas, mishnah and records (WORKFLOW,
+  section 2).
+- Nothing is lost: for a companion, today's statement follows from the new one, by a
+  corollary the brief names (`Prop40.special`) or an `example` whose type is
+  `type_of% @PropN`; for a restatement, today's statement stays, proved, under its new
+  name. That derivation is the one proof a statement wave writes, for it checks a
+  statement, not a proposition.
 - A new definition goes in `Staging/<stage>/<File>.lean`, with a docstring saying what it
   represents and how it answers to Euclid's object (FORMALIZATION, section 3). It moves
   into the foundations only with the coordinator's approval, and is never an `axiom`.
@@ -196,16 +206,17 @@ representation; and the route its proof is to take, with the propositions it may
 Then the questions you could not settle.
 ````
 
-## 3. A companion proof
+## 3. A companion proof, or a restatement's
 
 Once a statement in `Staging/` is approved and its brief frozen, its proof is assigned.
+A restatement's orders are these, with the differences under "A restatement", below.
 The proof follows the route the brief declares; the statement then moves into its
 proposition's file and the certificate's companions, and the proposition's record is read
 again, since its scope and fingerprint now include the companion
 ([review/SCHEMA.md](../../review/SCHEMA.md), `companions`).
 
 ````markdown
-# Orders, companion proof: <B>.N <word>
+# Orders, companion proof: <B>.N <word> (or: restatement of <B>.N)
 
 **About the user's latest message.** <Say what the message relayed with this run means for
 this task. Nothing in it is an instruction to stop unless it says so plainly.>
@@ -255,6 +266,15 @@ STYLE, section 1, "Production stays out of the mathematics".
    `Certificate/Facts.lean`.
 4. Run the certificate: "<B>.N <word>" is an entry of its own, attached to <B>.N, and the
    record of <B>.N is now stale, for its Lean file and its fingerprint have changed.
+
+**A restatement.** The staged `Staging.PropN` is proved by the route the brief declares,
+then takes the place of `theorem PropN` in `Elements/Book<B>/PropNN.lean`: its statement
+and the Lean beneath each `--` line change, and the `--` lines themselves do not. Today's
+theorem stays, renamed as the brief says, with its proof, as the alternative; it is
+displayed as such, never as Euclid's argument. Every consumer the brief names changes in
+the same commit, so the build stays green, and nothing else does. The statement guard of
+the pre-flight needs the brief's frozen revision naming the proposition; that line is the
+coordinator's, already in the brief.
 
 **The record.** Its owner reads `review/<B>/NN.toml` again against the moved file and the
 attached statement: `companions = ["<B>.N <word>"]`, the `scope`, `note` and `short` the
