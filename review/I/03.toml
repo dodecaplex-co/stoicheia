@@ -6,8 +6,12 @@ fingerprint = "sha256:00f8573d2b42471e"
 [route]
 kind = "euclid"
 
+[overlap]
+rule = "Tacit.superposition"
+note = "Superposition lays a triangle on the less straight line down at A, along the ray AB, and so cuts off from AB a length equal to it, which is I.3; a proof from the rules alone takes twenty-two. Our proof is Euclid's, by I.2 and a circle, and never uses the rule."
+
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "f17b427"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:5d88634ef13cd7a4"
