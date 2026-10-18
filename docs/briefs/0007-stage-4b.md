@@ -33,9 +33,11 @@ Jack Challis decided on 18 October 2026, after Astra's answer:
    follow Astra's readings. III.16 and III.31, whose last clauses speak of mixed angles,
    wait for a prototype of mixed angles first, and are not in this brief.
 
-No new axiom is asked for, and none is needed: Astra found routes for all three through
-the existing angle construction, triangle congruence, the perpendicular construction and
-III.16's proved porism. The lock's `[axioms]` table stays at 87, and its `[vocabulary]` does
+No new axiom is asked for, and none is expected: Astra proposed routes for all three
+through the existing angle construction, triangle congruence, the perpendicular
+construction and III.16's proved porism. These are proposed routes, as Astra says, not yet
+a result checked by the kernel; the order of proof work below says what happens if a step
+needs a fact the axioms lack. The lock's `[axioms]` table stays at 87, and its `[vocabulary]` does
 not grow: the statements use only words already there (`Touches`, `OppositeSidesOf`,
 `Collinear`, `OutsideCircle`, `InsideCircle`, the angle and the length).
 
@@ -51,8 +53,8 @@ companion, so nothing is lost.
 
 **"Nearer" is an unsigned angle with a ray.** In III.7 and III.8 the nearer straight line
 is the one making the less angle, at the point, with the ray through the centre: the ray
-FA in III.7, the ray DA in III.8. Our angle `∠ A F B` is that angle, from nothing up to two
-right angles. It is not the distance from the centre, and not the angle with an undirected
+FA in III.7, the ray DA in III.8. Our angle `∠ A F B` is that angle, unsigned and less
+than two right angles for the points the comparison takes. It is not the distance from the centre, and not the angle with an undirected
 straight line: an obtuse angle with FA is not exchanged for its acute supplement. Astra
 asked for exactly this reading.
 
@@ -127,7 +129,10 @@ theorem Prop7.general {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD)
 - **Cases.** B and C on one side of AD (today's clause); on opposite sides, with the angle
   AFC acute, right or obtuse (no folding to a supplement); B or C at an end of the diameter,
   left to the greatest and least clauses; equal angles on opposite sides, where the
-  comparison is silent and the partner clause speaks.
+  comparison is silent: the partner clause gives one equal straight line on the other side,
+  and `Prop7.partner` shows that it is equally inclined to FA, as Heath reads the comparison
+  across AD (vol. 2, pp. 16–17). That equal angles across AD give equal straight lines is
+  not stated, and Euclid's enunciation does not claim it.
 - **Route.** The greatest, least and partner clauses are today's, by Euclid's argument
   [I. 20, I. 24, I. 23, I. 4]. Across the diameter: for B and C on opposite sides, C's
   partner H is on B's side with FH equal to FC (today's last clause); `Prop7.partner` makes
@@ -199,9 +204,10 @@ theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Cent
 - **The classes, and the convention for tangents.** The concave and the convex circumference
   are read as today: the second and the first meeting of a straight line from D with the
   circle. Euclid's lines are "drawn through to the circle", and a straight line touching the
-  circle from D meets it once, so its point of contact has no point of the circle before it
-  and none beyond it, and falls on neither class. This is stated as a convention, in the
-  staged file and in the record. The partner clause, kept from today's statement, covers
+  circle from D does not meet it at two points (Definition III.2), so its point of contact
+  should have no point of the circle before it and none beyond it, and falls on neither
+  class. That step is not stated in Lean (open question 2). The convention is stated in
+  words, in the staged file and in the record. The partner clause, kept from today's statement, covers
   points of contact too: that stronger coverage stays, as Astra advised.
 - **No single order across the classes.** The two comparisons are separate clauses, and no
   statement combines them: the near and the far meeting of one straight line from D make the
@@ -242,10 +248,11 @@ theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
 - **In plain words.** Given a circle BCD with a centre, and a point A not within it, there is
   a point X such that the straight line AX touches the circle: it meets the circle and does
   not cut it. A may be outside the circle, and then the point of contact is another point; or
-  on it, and then the point of contact is A, and AX is at right angles to the radius at A.
-  `Prop17.inside`: from a point within the circle, no straight line touches it. Together they
-  say that not being within the circle is exactly the condition for the problem to have a
-  solution. Today's III.17 follows from `Prop17.general` (checked by Lean).
+  on it, and then the point of contact is A itself; the proof draws AX at right angles to the
+  radius EA [I. 11], and it touches by III.16's porism. `Prop17.inside`: from a point within
+  the circle, no point X makes the straight line AX touch it. Together they say that, for a
+  circle with a centre, not being within the circle is exactly the condition for the problem
+  to have a solution. Today's III.17 follows from `Prop17.general` (checked by Lean).
 - **Coverage.** Heath: "From a given point to draw a straight line touching a given circle."
   Full: the point on the circumference, which Euclid leaves to III.16's porism and Heath
   names as the omitted case (vol. 2, p. 44), is included; the restriction "a point outside
@@ -261,14 +268,20 @@ theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
   porism concludes and III.18, III.19 and III.37 use; and it already contains the meeting:
   `Touches` asserts a point of the circle on the straight line, the point of contact, which a
   citer reads off it. A separate line and contact point would restate Definition III.2 in
-  other words beside it.
+  other words beside it. The cost is that the point of contact, which today's `Prop17`
+  returns as B, now sits inside `Touches`, after a straight line is named: the III.17 check
+  in the staged file takes four lines to read it off, and a later citer that needs it pays
+  the same. A Book Zero lemma would pay it once (open question 5).
 - **Cases.** A outside the circle (Euclid's construction; the point of contact is another
   point); A on the circle (the perpendicular to the radius at A); A within (no solution,
   `Prop17.inside`).
 - **Route.** For A outside, today's III.17. For A on the circle, as Heath and Astra say: E
   the given centre is not A; the straight line AX drawn at right angles to EA at A [I. 11]
-  touches the circle [III. 16, Por.]. `Prop17.inside` is Book Zero's `Touches.not_inside`,
-  applied at A itself: a straight line through a point within a circle cuts it.
+  touches the circle [III. 16, Por.]. The case on the circle is Heath's (vol. 2, p. 44), not
+  Euclid's construction, and the record's route says so. `Prop17.inside` is Book Zero's
+  `Touches.not_inside`, applied at A itself: a straight line through a point within a circle
+  cuts it. It is listed as a companion so that the condition for a solution appears on the
+  page with a certificate; it generalizes no clause of the enunciation.
 - **Dependencies.** III.17, I.11, III.16 Por.; `Touches.not_inside`.
 
 ## The order of proof work
@@ -318,8 +331,12 @@ companions move:
 
 1. **`Prop17.inside`, a companion or a sentence?** It makes "not within" visibly the
    condition for a solution, as Astra asked, and costs one line of proof. It is not a clause
-   of Euclid's enunciation, and III.17 is full without it. The recommendation is to keep it
-   as a companion; if the owner prefers, it becomes a sentence of the record and the page.
+   of Euclid's enunciation, and III.17 is full without it: it is a remark about when the
+   problem can be solved, not a generalization of a clause, and it is listed as a companion
+   so that the condition appears on the page with a certificate. "Exactly the condition"
+   holds for a circle with a centre, which `Prop17.general` asks for and `Prop17.inside`
+   does not. The recommendation is to keep it as a companion; if the owner prefers, it
+   becomes a sentence of the record and the page.
 2. **The tangent convention, in words or in Lean?** It is stated in words. A small statement,
    `Prop8.tangent`, that a point of contact of a straight line touching from D has no point of
    the circle before it or beyond it, would check the convention, at the cost of one more
@@ -331,3 +348,33 @@ companions move:
    I.4, following the page, and I.8 if the construction proves awkward, labelled in the Lean.
 4. **III.16 and III.31** are outside this brief: their mixed angles wait for the prototype the
    owner asked for, on Astra's reading of local containment near the vertex.
+5. **A lemma for the point of contact?** The coordinator could add to Book Zero
+   `Touches.contact (h : Touches A X α) : ∃ B, OnCircle B α ∧ Collinear A X B`, so that a
+   citer of `Prop17.general` (III.37 re-proved against it, say) reads the point of contact
+   off in one step. It is a request to the foundations' owner, not part of this brief's
+   statements, and nothing here waits for it.
+
+## Appendix: the challenges, and what was done
+
+Two readers challenged the staged statements and this brief on issue #53, at `e5549d8`.
+Both would accept "full" for III.7, III.8 and III.17 as staged; both checked each statement
+against Astra's readings, and found it true in the standard model and its check of today's
+statement sound. Every finding was editorial, about the wording of docstrings and of this
+brief; no statement changed. Each was applied, in `Staging/Stage4b/` and here, except the
+two optional proposals in the last rows, which are answered.
+
+| Finding | Done |
+|---|---|
+| III.7, Cases: "the partner clause speaks" of equal angles on opposite sides, but it speaks of equal lengths | Reworded: the comparison is silent; the partner clause gives one equal straight line, and `Prop7.partner` its equal inclination; the converse is not stated, and Euclid does not claim it |
+| "None is needed" states sufficiency before any proof; Astra calls it a proposed route | "None is expected", with Astra's own qualification that the routes are proposed, not checked by the kernel |
+| "From nothing up to two right angles" suggests the endpoints are in play | "Unsigned and less than two right angles", in the III.7 module doc and under Conventions |
+| `Prop17.inside`'s docstring gave the reason ("meets the circle at two points"), not the claim | Now the claim, with its reason by `Touches.not_inside` |
+| `Prop8.partner`'s docstring gave only the angle's route, not the class's | The class's route added: the far (near) meeting's own partner on the ray DB, and the order of lengths on the ray |
+| `Prop8.general`'s "for it has no point of the circle before it or beyond it" is an unchecked claim | Marked as the convention read from "drawn through", resting on the classes' hypotheses; the module doc and the brief say the step from Definition III.2 is not stated in Lean (open question 2) |
+| `Prop17.general`'s docstring and plain words credit it with the perpendicular at A, which is III.18 | Reworded as the route: the proof draws AX at right angles to EA [I. 11], and it touches by III.16's porism; the statement claims only the touching |
+| `Prop17.general`'s docstring cited "[III. 17]" inside III.17's own companion | "Today's `Prop17`" |
+| The case of A on the circle not labelled as Heath's | Said in the docstring and the Route: Heath's (vol. 2, p. 44), not Euclid's construction, and the record's route says so |
+| "Exactly the condition" holds only for a circle with a centre | Qualified in the module doc, `Prop17.inside`'s docstring, the plain words and open question 1 |
+| `Prop17.inside` is a remark about solvability, not a generalization of a clause | Kept as a companion; the brief and module doc say why: the condition appears on the page with a certificate |
+| The point of contact now sits inside `Touches`, costing every citer the unpacking | The statement kept; the cost stated under "The form of the conclusion"; `Touches.contact` proposed to the coordinator as open question 5 |
+| Optional: strengthen `Prop7.partner` to an iff, `‖F H‖ = ‖F G‖ ↔ ∠ A F H = ∠ A F G` | Answered, not applied: the companion needs only the forward direction, the reverse is no clause of Euclid's and would add a ray-meets-circle step to the proof; the Cases now say it is not stated |

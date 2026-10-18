@@ -17,9 +17,10 @@ since the point of contact is then A itself and `Touches` (Definition III.2) ask
 different points to name its straight line. `Touches` already says that the straight line
 meets the circle, and its witness is the point of contact, which may be A.
 
-Not being within the circle is the condition for the problem to have a solution, and
-`Prop17.inside` states the other half: from a point within the circle, no straight line
-touches it. They move into `Elements/BookIII/Prop17.lean` when proved, as "III.17 general"
+For a circle with a centre, not being within the circle is the condition for the problem
+to have a solution, and `Prop17.inside` states the other half: from a point within the
+circle, no straight line touches it. It is listed as a companion so that the condition
+appears on the page with a certificate; it generalizes no clause of the enunciation. They move into `Elements/BookIII/Prop17.lean` when proved, as "III.17 general"
 and "III.17 inside".
 -/
 
@@ -30,17 +31,20 @@ open Tacit
 /-- **III.17, general** (companion of III.17). Given a circle BCD with a centre, and a point
 A not within it, there is a point X such that the straight line AX touches the circle: it
 meets the circle, and does not cut it. A may be outside the circle, and then the point of
-contact is another point (Euclid's case [III. 17]); or on it, and then the point of contact
-is A, and AX is at right angles to the radius at A [III. 16, Por.]. -/
+contact is another point (Euclid's case, today's `Prop17`); or on it, and then the point of
+contact is A itself: the proof draws AX at right angles to the radius EA [I. 11], and it
+touches by III.16's porism. That case is Heath's addition (vol. 2, p. 44), not Euclid's
+construction. -/
 theorem Prop17.general {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD)
     (hA : ¬ InsideCircle A BCD) :
     ∃ X : Point, Touches A X BCD := by
   sorry
 
 /-- **III.17, inside** (companion of III.17). From a point A within the circle BCD, no
-straight line touches it: every straight line AX meets the circle at two points. So a point
-not within the circle is exactly the condition under which `Prop17.general` draws a
-straight line touching it. -/
+point X makes the straight line AX touch the circle, since a straight line through a point
+within a circle cuts it (`Touches.not_inside`). So, for a circle with a centre, a point not
+within it is exactly the condition under which `Prop17.general` draws a straight line
+touching it. -/
 theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
     ¬ ∃ X : Point, Touches A X BCD := by
   sorry

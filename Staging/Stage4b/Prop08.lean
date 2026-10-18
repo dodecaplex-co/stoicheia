@@ -18,10 +18,11 @@ straight line; on the convex, the less angle has the less. The two orders are ke
 apart, for they disagree: the two points where one straight line from D meets the circle
 make the same angle with DA, and are at different distances from D.
 
-A straight line touching the circle from D falls on neither class: its point of contact
-has no point of the circle between it and D, and none beyond it. This is a convention,
-read from Euclid's "drawn through to the circle", and the comparisons say nothing of the
-point of contact. The last clause, kept from today's statement, does: every point of the
+A straight line touching the circle from D falls on neither class. This is a convention,
+read from Euclid's "drawn through to the circle": a straight line that touches does not
+meet the circle at two points (Definition III.2), so its point of contact should have no
+point of the circle between it and D and none beyond it. That step is not stated in Lean
+(open question 2 of the brief), and the comparisons say nothing of the point of contact. The last clause, kept from today's statement, does: every point of the
 circle off DA, a point of contact included, has one partner on the other side as far from
 D, and no third.
 
@@ -45,7 +46,9 @@ the convex circumference exactly when K is (the straight line from D meets the c
 beyond it); and B is on the concave circumference exactly when K is (it meets the circle
 before reaching it). Euclid's construction of B, the angle DMB made equal to KMD at the
 centre M [I. 23], gives the equal angles at D by I.4, and his last step shows that no other
-point is B. -/
+point is B. The class follows from the angle: the far (near) meeting on the straight line
+DK has its own partner on the ray DB, at the same angle and as far from D, so the order of
+lengths on the ray carries over. -/
 theorem Prop8.partner {A D G K B : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A)
@@ -66,11 +69,11 @@ between it and D) off DA, on one side of it or on opposite sides, the one making
 angle with the ray DA at D is the farther: if the angle ADE is less than the angle ADF, then
 DF is less than DE. Of any two points K, L of the convex circumference (each with a point of
 the circle beyond it) off DA, the one making the less angle is the nearer: if the angle ADK
-is less than the angle ADL, then DK is less than DL. Neither comparison takes a point where
-a straight line from D touches the circle, for it has no point of the circle before it or
-beyond it. Each point K of the circle off DA
-has one partner B on the other side with DB equal to DK, and no third point of the circle is
-as far from D. -/
+is less than the angle ADL, then DK is less than DL. By convention, read from "drawn
+through", a point where a straight line from D touches the circle is on neither
+circumference, and the comparisons do not take it: their hypotheses ask for a point of the
+circle before the point or beyond it. Each point K of the circle off DA has one partner B on
+the other side with DB equal to DK, and no third point of the circle is as far from D. -/
 theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A) :

@@ -9,7 +9,7 @@ on one side of the diameter AD. His enunciation says "of the rest the nearer to 
 straight line through the centre is always greater than the more remote", of any two.
 `Prop7.general` compares any two straight lines from F whose ends are off the diameter, on
 one side or on opposite sides. "Nearer" is the less angle with the ray FA at F, the ray
-through the centre E: the angle AFB, unsigned, from nothing up to two right angles, and an
+through the centre E: the angle AFB, unsigned and less than two right angles, and an
 obtuse angle is not exchanged for its acute supplement. The ends A and D on the diameter
 are the greatest and the least clauses' business, and the comparison leaves them out.
 
