@@ -381,8 +381,10 @@ def main(argv):
         # "flag:<path>" makes the file <path> once merged. Three exit 0 with no merge on
         # main that GitHub vouches for (issue #42): "queue" merges nothing, as gh does
         # when a merge queue or auto-merge takes the pull request to merge later;
-        # "off-main" says merged, naming a merge commit that main does not hold; and
-        # "no-commit" merges, but GitHub names no merge commit.
+        # "off-main" says merged, naming a merge commit that main does not hold
+        # ("off-main:<ref>" puts it on <ref>, so that a fetch brings it, and only main's
+        # history can show it is not the merge); and "no-commit" merges, but GitHub names
+        # no merge commit.
         how = os.environ.get("STOICHEIA_FAKE_GH_MERGE", "")
         if "--merge" not in args or "--squash" in args or "--rebase" in args:
             return 1
@@ -409,7 +411,10 @@ def main(argv):
         merge = subprocess.run(["git", "commit-tree", sha + "^{tree}", "-p", main, "-p", sha,
                                 *message], cwd=ORIGIN, env=env,
                                capture_output=True, text=True, check=True).stdout.strip()
-        if how != "off-main":
+        if how.startswith("off-main:"):
+            subprocess.run(["git", "update-ref", how.split(":", 1)[1], merge], cwd=ORIGIN,
+                           check=True)
+        elif how != "off-main":
             subprocess.run(["git", "update-ref", "refs/heads/main", merge, main], cwd=ORIGIN,
                            check=True)
         if "--delete-branch" in args and how != "fail-after":
@@ -2157,8 +2162,12 @@ class Merge(Edge):
         # Issue #42: GitHub says merged, but names no merge commit, or one origin/main does
         # not hold. Nothing on main is known to be this merge, so the merge state is
         # unknown, exit 3, and no revert is advised, for it would name origin/main's last
-        # commit in place of the merge.
-        for how, why in (("off-main", "as its merge commit, which origin/main ("),
+        # commit in place of the merge. A merge commit main does not hold is refused
+        # whether or not a fetch brings it: on a merge queue's branch, say, it is a merge
+        # of the base and the head with the head's tree, and only main's history tells.
+        queued = "refs/heads/gh-readonly-queue/main/pr-1"
+        off = "as its merge commit, which origin/main ("
+        for how, why in (("off-main", off), (f"off-main:{queued}", off),
                          ("no-commit", "names no merge commit")):
             with self.subTest(how=how):
                 self.setUp()
@@ -2177,6 +2186,10 @@ class Merge(Edge):
                 self.assertNotIn("git revert", out)
                 self.assertNotIn("Merged, but", out)
                 self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+                if how.startswith("off-main:"):
+                    oid = self.gh_state()["prs"][0]["mergeCommit"]["oid"]
+                    self.assertEqual(git(WORK, "cat-file", "-t", oid).strip(), "commit",
+                                     "the fetch did not bring the merge commit GitHub names")
 
     def test_merge_github_cannot_be_asked_about_is_unknown(self):
         # gh fails after merging, and GitHub cannot be asked: the merge may have happened,
