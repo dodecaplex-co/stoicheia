@@ -667,14 +667,22 @@ findings:
   [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, names every
   command the scan refuses (`run_meta`, `elab_rules` and `macro_rules`, which it refused
   unnamed, among them), says why each is forbidden, and drops the known gap. The review of
-  this branch found three more routes the list lacked, and we thank it warmly: the simproc
-  commands (`simproc`, `dsimproc`, `simproc_decl`, `dsimproc_decl` and their kin), whose
-  code `simp` runs in the same file; the attributes beyond `tactic` and `init` that
-  register code Lean runs while a file is built or printed (`@[simproc]`, `@[doElem_elab]`,
-  `@[grind_tactic]`, `@[delab]`, `@[app_unexpander]`, `@[quot_precheck]` and their kin),
-  which the scan now knows by the end of their names; and the escaped spelling
-  `set_option «debug».…`, which Lean reads as `debug.…`. The scan refuses them all now,
-  and test 8 plants each in all three folders; again nothing is loosened. The protected
+  this branch found more routes the list lacked, and we thank it warmly: the simproc
+  commands (`simproc`, `dsimproc`, `simproc_decl`, `dsimproc_decl` and their kin) and
+  `set_library_suggestions`, whose code `simp` and the suggestion tactics run in the same
+  file; attributes beyond `tactic` and `init` that register code Lean runs while a file is
+  built or printed (`@[simproc]`, `@[doElem_elab]`, `@[grind_tactic]`, `@[delab]`,
+  `@[app_unexpander]`, `@[quot_precheck]`, `@[cpass]`, `@[term_parser]`, `@[doc_role]`,
+  `@[try_suggestion]` and others); and the escaped spelling `set_option «debug».…`, which
+  Lean reads as `debug.…`. The scan now refuses these commands and the attributes whose
+  names it lists, known by the end of the name or, for the `doc_` attributes, its start,
+  and test 8 plants each command, ending and prefix in all three folders; again nothing is
+  loosened. A list of names trails the attributes each Lean release adds, so this one may
+  not be complete, and review still reads every staged file and audit lemma. What would
+  hold for good, an allowlist of the attributes the edition uses (main's Lean uses only
+  `@[simp]` and `@[inherit_doc]`) or refusing imports from outside the project (each of
+  these routes needs an import of Lean's own modules, and on Lean 4.35 `simproc` and
+  `set_library_suggestions` fail without one), is left for the owner's decision. The protected
   files it changes are [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) and
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py). The README's table of
   checks, and the name of CI's step for the negative tests, can follow in a pull request

@@ -20,8 +20,9 @@ records current; CI runs it on every push.
    first with no Lean of its own: a remark ends a run and carries nothing. A second
    remark, between the next sentence and its Lean, does not stop that Lean carrying it.
 7. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
-8. Every command docs/FORMALIZATION.md, section 7, forbids, and an axiom declared twice,
-   once after another command on the same line, planted in a new file of each folder the
+8. Every command docs/FORMALIZATION.md, section 7, forbids, an attribute for each ending
+   and prefix by which the scan knows one, and an axiom declared twice, once after
+   another command on the same line, planted in a new file of each folder the
    scan reads, `Elements/`, `Staging/` (in a folder of its own) and `Audit/`, with
    `#exit` at the end of each root file, `Elements.lean`, `Staging.lean` and
    `Audit.lean`: each is caught on its own line. The files are read, not built.
@@ -212,6 +213,12 @@ PLANTED_COMMANDS = (
      "dsimproc_decl plantedDSimprocDecl (Nat.succ _) := fun _ => return .continue"),
     ("simproc_pattern", "simproc_pattern% Nat.succ _ => plantedSimprocDecl"),
     ("cbv_simproc", "cbv_simproc plantedCbv (Nat.succ _) := fun _ => return .continue"),
+    ("sym_simproc", "sym_simproc plantedSym (Nat.succ _) := fun _ => return .continue"),
+    ("builtin_simproc",
+     "builtin_simproc plantedBuiltinSimproc (Nat.succ _) := fun _ => return .continue"),
+    ("set_library_suggestions", "set_library_suggestions plantedSelector"),
+    ("command_elab", "def plantedCommandAttr : Lean.Name := `command_elab"),
+    ("term_elab", "def plantedTermAttr : Lean.Name := `term_elab"),
     ("@[command_elab]", "@[command_elab plantedStx] def plantedCommand : "
      "Lean.Elab.Command.CommandElab := fun _ => pure ()"),
     ("@[term_elab]", "@[term_elab plantedStx] def plantedTerm : Lean.Elab.Term.TermElab := "
@@ -236,6 +243,25 @@ PLANTED_COMMANDS = (
      "Lean.PrettyPrinter.Unexpander := fun _ => throw ()"),
     ("@[quot_precheck]", "@[quot_precheck plantedStx] def plantedPrecheck : "
      "Lean.Elab.Term.Quotation.Precheck := fun _ => pure ()"),
+    ("@[sym_discharger]", "@[sym_discharger plantedStx] def plantedDischarger := ()"),
+    ("@[formatter]", "@[formatter plantedK] def plantedFormatter : "
+     "Lean.PrettyPrinter.Formatter := pure ()"),
+    ("@[parenthesizer]", "@[parenthesizer plantedK] def plantedParenthesizer : "
+     "Lean.PrettyPrinter.Parenthesizer := pure ()"),
+    ("@[doElem_control_info]", "@[doElem_control_info plantedStx] def plantedControl : "
+     "Lean.Elab.Do.ControlInfoHandler := fun _ => pure {}"),
+    ("@[command_code_action]", "@[command_code_action plantedStx] def plantedAction := ()"),
+    ("@[server_rpc_method]", "@[server_rpc_method] def plantedRpc (_ : Nat) := ()"),
+    ("@[builtin_env_linter]", "@[builtin_env_linter] def plantedLinter := ()"),
+    ("@[term_parser]", "@[term_parser] def plantedParser : Lean.Parser.Parser := "
+     "Lean.Parser.skip"),
+    ("@[cpass]", "@[cpass] def plantedPass : Lean.Compiler.LCNF.PassInstaller := "
+     "{ phase := .base, install := pure }"),
+    ("@[doc_role]", "@[doc_role] def plantedRole := ()"),
+    ("@[deferred_doc_check]", "@[deferred_doc_check] def plantedDocCheck := ()"),
+    ("@[try_suggestion]", "@[try_suggestion] def plantedSuggestion := ()"),
+    ("@[library_suggestions]", "@[library_suggestions] def plantedSelector : "
+     "Lean.LibrarySuggestions.Selector := fun _ _ => pure #[]"),
     ("initialize", "initialize plantedRef : IO.Ref Nat ← IO.mkRef 0"),
     ("builtin_initialize", "builtin_initialize plantedBuiltin : IO.Ref Nat ← IO.mkRef 0"),
     ("@[init]", "@[init plantedInit] opaque plantedInitRef : IO.Ref Nat"),

@@ -346,14 +346,20 @@ dependencies.
     code, which could hide any of the others behind a new name. The simproc commands,
     `simproc`, `dsimproc`, `simproc_decl`, `dsimproc_decl` and `simproc_pattern%`, with
     their `builtin_`, `sym_` and `cbv_` forms, give `simp` code that runs the next time
-    it is used in the file. An attribute can register code that Lean runs while a file is
-    built or printed, so the scan refuses any attribute whose name ends in one of these
-    words: `elab` (`command_elab`, `term_elab`, `doElem_elab`,
-    `inductive_elab`), `tactic` (`tactic`, `grind_tactic`, `try_tactic`), `init`, `proc`
-    (`simproc`, `dsimproc`, `sym_simproc`, `sevalproc`), `discharger`, `delab` (`delab`,
-    `app_delab`), `unexpander` (`app_unexpander`), `precheck` (`quot_precheck`),
-    `formatter`, `parenthesizer`, `control_info`, `code_action`, `rpc_method` and
-    `linter`;
+    it is used in the file, and `set_library_suggestions` does the same for the tactics
+    that suggest lemmas. An attribute can register code that Lean runs while a file is
+    built or printed. The scan refuses the attributes whose names it lists: any whose
+    name ends in `elab` (`command_elab`, `term_elab`, `doElem_elab`, `inductive_elab`,
+    and so `delab` and `app_delab`), `tactic` (`tactic`, `grind_tactic`, `try_tactic`),
+    `init`, `proc` (`simproc`, `dsimproc`, `sym_simproc`, `sevalproc`), `discharger`,
+    `unexpander` (`app_unexpander`), `precheck` (`quot_precheck`), `formatter`,
+    `parenthesizer`, `control_info`, `code_action`, `rpc_method`, `linter`, `parser`
+    (`term_parser`, `command_parser`, `tactic_parser`), `pass` (`cpass`), `suggestion`
+    or `suggestions` (`try_suggestion`, `library_suggestions`) or `deferred_doc_check`,
+    and any whose name begins with `doc_` (`doc_role`, `doc_directive`,
+    `doc_code_block`, `doc_command` and the rest). A list of names trails the attributes
+    each Lean release adds, so this one may not be complete, and review still reads
+    every staged file and audit lemma;
   - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
@@ -370,8 +376,8 @@ axiom declared outside the foundations, in each of `Elements/`, `Staging/` and `
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
 and I.8; a later citation, one of them named only in a helper's statement; every
-forbidden command, in each of `Elements/`, `Staging/` and `Audit/`, and `#exit` at the
-end of each root; a `sorry` in a complete book; and a primitive word no longer opaque.
+forbidden command, and an attribute for each ending and prefix the scan knows, in each of
+`Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a `sorry` in a complete book; and a primitive word no longer opaque.
 Book Zero's imports and a complete book's missing figure or mishnah have no planted break
 yet.
 
@@ -380,9 +386,10 @@ file or an audit lemma declares no axiom and uses none of the forbidden commands
 there reaches the certificate, so the source scan is what enforces them:
 `check_fidelity.py`'s `check_rules` reads every `.lean` file under `Elements/`,
 `Staging/` and `Audit/`, and the three roots, and refuses an `axiom` anywhere outside
-`Elements/Foundations/` and every forbidden command. It reads words, not Lean's grammar,
-so it catches a slip but not a command disguised from it on purpose: review still reads
-every staged file and audit lemma. In `Elements/` the certificate reads the axioms from
+`Elements/Foundations/` and every command and attribute the list above names. It reads
+words, not Lean's grammar, so it catches a slip but not a command disguised from it on
+purpose, nor an attribute it does not list: review still reads every staged file and
+audit lemma. In `Elements/` the certificate reads the axioms from
 Lean itself as well. The checks' own Lean, `Certificate/Facts.lean`, which writes
 `facts.json`, is not scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section
 10), changed only with a decisions entry and a security review.
