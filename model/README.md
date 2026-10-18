@@ -227,8 +227,10 @@ copies of `Kind` their round trip is an equivalence, not `rfl`. Each direction i
 statement itself, put at the matching kind, with no other step, so the check is the same
 up to relabelling the kinds; a wrong translation of `add_lt_add_right`, with `c` added on
 the left, fails it. One small decision would make even these round trips `rfl`: if
-`Elements.Kind` moved into a file of its own, with no opaque word, no axiom and no
-notation, the model could import that one file and share the library's `Kind`.
+`Elements.Kind` moved into a file of its own, a Lean `module`, as every file of `Model/`
+is, with no opaque word, no axiom and no notation, the model could import that one file and
+share the library's `Kind`. It must be a module because a module cannot import a file that
+is not one, and no file of the library is one today.
 
 ## How the lock ties it
 
