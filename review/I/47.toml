@@ -4,7 +4,7 @@
 # outward squares are 'the squares on' the sides of every right-angled triangle.
 [statement]
 scope = "full"
-note = "Proved for squares standing outward, as Euclid describes them; inward squares are equal to these (`Prop46.square_eq`), and `Prop47.sq` states it of any."
+note = "Proved for squares standing outward, as Euclid describes them; inward squares on the same sides are equal to these, as proved after I.46."
 fingerprint = "sha256:d6269e6f56742e6b"
 
 [route]
@@ -16,6 +16,11 @@ kind = "given"
 note = "The three squares are given in the statement, standing outward from the triangle, so I.46 is not called here; `Prop28.square` shows that each is a parallelogram."
 
 [[passage]]
+at = "and let AD, FC be joined"
+kind = "given"
+note = "The triangles ABD and FBC, which I.4 takes below, are named by their corners, so the join needs no Lean here; `Prop47.within` draws AD and FC later, to place C and A within the angles at B."
+
+[[passage]]
 at = "let the angle ABC be added to each"
 kind = "helper"
 helper = "Prop47.within"
@@ -23,11 +28,11 @@ note = "Euclid reads off his figure that C lies within the angle DBA and A withi
 
 [[passage]]
 at = "And the square BDEC is described on BC"
-kind = "carried"
-note = "The statement is about the three given squares, so nothing remains to do; squares on one straight line are equal whichever side they stand on (`Prop46.square_eq`, `Prop47.sq`)."
+kind = "given"
+note = "The statement takes BDEC, GB and HC as the squares on BC, BA and AC; squares on one straight line are equal whichever side they stand on, as proved after I.46; Book II restates I.47 for the squares on straight lines, as Books II and III cite it."
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "3b6a3bc"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:a0fc7319bcdf680a"

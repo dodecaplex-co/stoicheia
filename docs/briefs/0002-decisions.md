@@ -557,3 +557,77 @@ findings:
   library in `lakefile.toml` say so, and that comment is the only change to
   `lakefile.toml`. The orders for a statement wave ([orders](../templates/orders.md),
   kind 2) and [FORMALIZATION](../FORMALIZATION.md), section 6, point to the rule.
+- **Overlaps: I.2 and I.3 supply a step, as I.23 does.** A cold Claude review of 18
+  October found it, with thanks: superposition lays a triangle down at A along AB, and so
+  carries a length. The shortest proofs we found of I.2 and I.3 from the rules alone use
+  ten and twenty-two of them (`Audit.I_2`, `Audit.I_3`); the rest draw a triangle and a
+  point off AB that the statements never give, and, for I.3, put the new point between A
+  and B. The catalogue lists both as supplying a step, and their records gain an
+  `[overlap]` on `Tacit.superposition`; our I.2 and I.3 are Euclid's constructions and
+  never use the rule. After Argon's second review of the Book III release, the catalogue
+  also says that its "First enters" column reads `direct_axioms`, which counts a rule a
+  proof reaches through a Book Zero lemma or a shared step, and its notes name that lemma
+  until #65 keeps the two apart; II.14 and III.15 join the III.2 entry. This extends the
+  list in "The overlap catalogue" above.
+
+- **A sentence is carried only by the Lean beneath it.** Argon's second review of the
+  book-III release found a hole in `uncarried_runs`, in
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py), and we thank Argon
+  warmly for reading the check so closely: a run of `--` lines counted as carried by any
+  Lean after it, and a `/- … -/` remark joined the runs on either side of it into one, so
+  a sentence with no Lean of its own could pass. Now a run is carried only by a line of
+  Lean after it and before the next run, and a remark ends a run without carrying it.
+  Lean after a remark, before the next run, still carries the run before the remark, so
+  a remark may stand between a sentence and its Lean, while one between two sentences
+  that share one step leaves the first with none. A closing `exact` is such Lean too, so
+  of Argon's two examples the rule finds the one in III.10; the one in III.31 stands
+  above the closing `exact`, and its record declares it all the same. The check is
+  strengthened, never weakened: every sentence the old rule found with no Lean, it still
+  finds, and a passage now declares only the run it begins in.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains a test that plants
+  a remark in I.5 between two sentences sharing one step of Lean, and expects the first
+  caught and the second not; the old rule misses it.
+  [`review/SCHEMA.md`](../../review/SCHEMA.md#two-stages), "Two stages", tells
+  contributors in one clause where a remark goes, and [FORMALIZATION](../FORMALIZATION.md),
+  section 5, points to it. On main's records the rule finds 15 runs not yet declared, in
+  I.5, I.6, I.13, I.14, I.21, I.23, I.39 to I.42, I.47 and II.10. The records' pull
+  request, [#82](https://github.com/jackChallis/stoicheia/pull/82), declares them, and
+  this change lands after it ([#61](https://github.com/jackChallis/stoicheia/issues/61)).
+- **Book I's definitions map, from Argon's second review.**
+  [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
+  accepts or checks: `FRONT_LEAN_I`, the Lean column of Book I's front page, now says what
+  the Lean has for each definition (I.17 and I.18 as III.15 and III.31 state them;
+  `Isosceles` and `RightAngledTriangle` defined but used by no statement or proof, as their
+  docstrings in `Elements/Foundations/Definitions.lean` now say; the oblong a `Rectangle`,
+  the rhomboid a `Parallelogram`; "none" where nothing stands for a word), and every front
+  page says that words with no Lean partner are never used in a Lean proof. It is not a
+  check change (WORKFLOW, section 10); the regenerated pages show it. III.15's record
+  becomes `restricted` until #26, and brief 0004's table of exceptions gains its row
+  ([#64](https://github.com/jackChallis/stoicheia/issues/64)).
+
+- **Mixed angles: the prototype approved, its proofs kept in Staging.** The owner approved
+  stage 4b on 18 October
+  ([the approval on issue #51](https://github.com/jackChallis/stoicheia/issues/51#issuecomment-6252155076)),
+  with a prototype of mixed angles first for III.16 and III.31: if it holds, they go full,
+  and if not, they stay partial with Astra's wording. The prototype is
+  [`Staging/Stage4b/MixedAngles.lean`](../../Staging/Stage4b/MixedAngles.lean), with its
+  account in [the report](../reports/mixed-angles-prototype.md)
+  ([issue #56](https://github.com/jackChallis/stoicheia/issues/56)): Astra's representation
+  from issue #51, a mixed angle as a geometric object, compared with a rectilineal angle by
+  containment near its vertex, in plain Lean on the existing foundations. It adds no axiom:
+  the report's census finds every theorem resting only on axioms already in
+  `Certificate/axioms.lock` and on Lean's own, and none on `sorry`. It was re-challenged and
+  verified on 18 October by readers who did not write it; the verifier read `dfb9291` and
+  handed back at `4705a9c` with a fix of its own. The coordinator takes placement in the
+  form the prototype proves, the invariance of the comparisons (`Segment.congruent`,
+  `Prop16.semicircle_congruent` and `Prop16.horn_congruent`, the report's section 3), as the
+  check of congruent placement that #56 asks for: no motion of a mixed angle is proved, and
+  III.16 and III.31, which compare at one vertex, need none. The coordinator approves the
+  prototype, and its proofs stay in `Staging/Stage4b/MixedAngles.lean` until
+  [issue #57](https://github.com/jackChallis/stoicheia/issues/57) decides their move into
+  `Elements/`: once brief 0006's pull request lands, that is what
+  [WORKFLOW](../WORKFLOW.md), section 2, "What proofs `Staging/` may hold", allows for the
+  proofs of a prototype the coordinator has approved. The approval is of the prototype
+  alone. The words it defines, the statements of III.16 and III.31 that would use them, and
+  their records wait for #57, on the conditions of the report's section 5; nothing in
+  `Elements/` changes.

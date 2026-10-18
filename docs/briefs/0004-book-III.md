@@ -348,8 +348,9 @@ worth naming. The first mate's report has a note on every statement.
 
 The review records in `review/III/` are the authority, proposition by proposition, and
 each page shows its own in the line under the enunciation and the table under "In Lean".
-This table is generated from them as they stand on 17 October 2026 (the centre given by
-hypothesis, `centre-given`, is left out, being nearly everywhere):
+This table is generated from them as they stand on 17 October 2026, with III.15 as it
+stands on 18 October (the centre given by hypothesis, `centre-given`, is left out, being
+nearly everywhere):
 
 | Proposition | Statement | Argument | Overlap | Tags | Planned |
 |---|---|---|---|---|---|
@@ -361,6 +362,7 @@ hypothesis, `centre-given`, is left out, being nearly everywhere):
 | [III.9](../../book/III/09.md) | whole | Euclid's |  | `hypothesis-dropped` |  |
 | [III.10](../../book/III/10.md) | whole | Euclid's |  | `hypothesis-dropped` |  |
 | [III.14](../../book/III/14.md) | restricted: straight lines not through the centre | Euclid's |  | `diameters-excluded` | stage 4: diameters, at distance zero |
+| [III.15](../../book/III/15.md) | restricted: the diameter's bound only beside a more remote straight line | Euclid's |  |  | stage 4: both clauses for every straight line |
 | [III.16](../../book/III/16.md) | in part: the angle clauses stay in Euclid's words | Euclid's |  | `mixed-angles-omitted` | kept: a deliberate limitation |
 | [III.17](../../book/III/17.md) | restricted: a point outside the circle | Euclid's |  |  |  |
 | [III.21](../../book/III/21.md) | whole | one step changed |  |  |  |
