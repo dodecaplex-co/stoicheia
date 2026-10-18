@@ -142,11 +142,16 @@ it never calls the rule itself.
 
 Other proofs call the rule on two points of a circle, which is III.2's case. Before III.2,
 II.14 and III.1 do (next row). After it, III.10, III.15, III.21, III.22, III.23, III.25,
-III.30 and III.32 (in its helper `Prop32.sameSide`) do, where III.2 would serve. So do
-two Book Zero lemmas: `Triangle.of_onCircle`, that three points of a circle are not on
-one straight line, first used in III.8, and `exists_onCircle_oppositeSidesOf`, that a
-straight line in a circle has a point of the circle on the other side of it from any
-point off it, first used in III.24. III.13 cites III.2, where Heath's reference is III.2.
+III.30 and III.32 (in its helper `Prop32.sameSide`) do, where III.2 would serve, and so
+does III.23's companion `Prop23.point`. So do three Book Zero lemmas:
+`Triangle.of_onCircle`, that three points of a circle are not on one straight line, first
+used in III.8; `exists_onCircle_oppositeSidesOf`, that a straight line in a circle has a
+point of the circle on the other side of it from any point off it, first used in III.24's
+companion `Prop24.equalCircles`; and `chord_cases`, that a point of the straight line
+through two points of a circle is within it exactly when it lies between them, first used
+in III.24. A fourth, `Arc.meets`, that a straight line from within the base of a segment
+meets its circumference, calls the rule too, and no proposition uses it yet. III.13 cites
+III.2, where Heath's reference is III.2.
 Wherever else the rule is called, an end is, or may be, within the circle (most often it
 is the centre), and III.2 alone would not serve.
 
@@ -291,14 +296,18 @@ For each row we looked for a proof of the proposition's statement from at most t
 - **I.4's last clause.** Metric 9 (`area_congruent`) makes the triangles equal once their
   sides and angles are. Euclid's reason there is that the triangles coincide (Common
   Notion 4), his own step in I.4, not a later proposition.
-- **Representation and scope.** III.24's second clause follows from its angle hypothesis
-  alone, and III.26 and III.27 hold without their equal circles, because of how a
-  circumference is measured: a definition, not a rule. `Audit.III_24_measure`,
-  `Audit.III_26_any` and `Audit.III_27_any` prove each so, with their axioms pinned, and
-  give back the propositions' own statements; they are meant to stop compiling when arcs
-  get a meaning of their own (brief 0005, stage 3). III.1 and III.25 take a centre from a
-  hypothesis. These belong to the review records, under `[representation]` and
-  `[statement]`.
+- **Representation and scope.** The measure clause of III.24's companion
+  `Prop24.equalCircles` follows from its angle hypothesis alone, and the equal measures of
+  III.26, and III.27 whole, hold without the equal circles, because of how a circumference
+  is measured: a definition, not a rule. `Audit.III_24_measure`, `Audit.III_26_any` and
+  `Audit.III_27_any` prove each so, with their axioms pinned, and the first and the last
+  give back the statements of `Prop24.equalCircles` and of III.27. Since arcs got a meaning
+  of their own (stage 3 of [brief 0006](../briefs/0006-statements.md)), III.24 concludes
+  that the segments are congruent, and III.26 and III.28 that the circumferences are
+  congruent too, which needs the equal bases and the equal circles: III.26 no longer holds
+  for any two circles, and its audit example has given way to a note saying so. III.1 and
+  III.25 take a centre from a hypothesis. These belong to the review records, under
+  `[representation]` and `[statement]`.
 
 ## A separate piece of work
 

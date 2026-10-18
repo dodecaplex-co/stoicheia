@@ -1,7 +1,7 @@
 # Book III: circles
 
-*The design for Book III (16 October 2026, brought up to date on 17 October): how Lean
-says Book III's words, where the facts about them live, and how its thirty-seven
+*The design for Book III (16 October 2026, brought up to date on 17 October, and on 18
+October for stage 3 of [brief 0006](0006-statements.md)): how Lean says Book III's words, where the facts about them live, and how its thirty-seven
 propositions are stated. The code states what we formalized; where the code, this brief,
 a review record and the pages disagree, the disagreement is recorded and every document
 it touches is reconciled ([FORMALIZATION.md](../FORMALIZATION.md), section 1). The first
@@ -35,11 +35,11 @@ assumption.
 | Def. 2, a straight line touching a circle | `Touches A B α`: `AB` meets the circle, and, produced either way, does not cut it (`¬ LineMeetsCircle`) | III.16 Por., III.17–III.19, III.32, III.36, III.37 |
 | Def. 3, circles touching | `TouchesInternally α β C` (they meet at `C`, are two circles, and no point of `β` is outside `α`), `TouchesExternally α β C` (they meet at `C`, and no point is within both), `CirclesTouch` (either within the other, or without) | III.6, III.11–III.13 |
 | Defs. 4, 5, equally distant, at a greater distance | no word: `‖E F‖ = ‖E G‖`, `‖E H‖ < ‖E K‖` for the feet of the perpendiculars from the centre `E` | III.14, III.15 |
-| Def. 6, a segment | no word: a circle, a straight line `AB` in it, and a point `E` of the circumference on one side, "the segment AEB" | III.23–III.25, III.33, III.34 |
+| Def. 6, a segment | a circle, a straight line `AB` in it, and a point `E` of the circumference on one side, "the segment AEB"; as a figure with its points, `Arc`: the circle, the ends of the base and a point naming the side, with the segment's points `InSegment` and its circumference's `OnArc`; segments that coincide, `Arc.Congruent` (Common Notion 4) | III.23–III.25, III.33, III.34; `Arc` in III.24, III.26, III.28 |
 | Def. 7, the angle of a segment | none: a mixed angle; no proof uses it | (III.16, III.31: the mishnah) |
 | Def. 8, the angle in a segment | `∠ A E B`, `E` on the circumference of the segment | III.21 on |
 | Def. 9, the angle standing on a circumference | `standing α B A C`, the circumference on which the angle `BAC` stands | III.27, III.30 |
-| (Def. 6, 9) the circumference BKC | `circumference α B K C`: the part of `α` from `B` to `C` on `K`'s side of `BC` | III.24, III.26, III.28, III.29 |
+| (Def. 6, 9) the circumference BKC | `circumference α B K C`: the part of `α` from `B` to `C` on `K`'s side of `BC`; for an `Arc`, `Arc.measure` | III.24's companions, III.26, III.28, III.29 |
 | Def. 10, a sector | none: no proposition of Book III uses it | |
 | Def. 11, similar segments | no word: `∠ A E B = ∠ C F D`, equal angles in them | III.23, III.24, III.26 |
 
@@ -106,10 +106,15 @@ What this costs, and what it does not:
   circles, for there the measures are tied to straight lines in the circles: equal
   straight lines in unequal circles cut off unequal measures. (Status note, 17 October
   2026, from [brief 0005](0005-astra-review.md); the review records tag these
-  `redundant-hypothesis` and `angle-measure`.)
-- III.24's second conclusion, the equal measures, likewise follows from its equal
-  angles alone; its first, equal circles, is the real content. It proves equal circles
-  and equal measures, not that one segment can be laid on the other (below).
+  `redundant-hypothesis` and `angle-measure`. On 18 October, stage 3 of
+  [brief 0006](0006-statements.md) has III.26 and III.28 conclude that the circumferences
+  are congruent as well, `Arc.Congruent`, so III.26 now needs its equal circles, and its
+  record no longer carries `redundant-hypothesis`; III.27 still holds for any two
+  circles.)
+- III.24 concludes Euclid's equal segments: laid one on the other, they coincide
+  (`Arc.Congruent`, below). Its companion `Prop24.equalCircles` proves equal circles and
+  equal measures, and its measure clause likewise follows from its equal angles alone; the
+  equal circles are its real content.
 - The facts Euclid takes for granted about circumferences (that a circumference and the
   one remaining make up the circle; that the less is less than a semicircle) are proved
   from III.20–III.22, in `Elements/BookIII/Circumferences.lean`, and so a proposition that
@@ -173,15 +178,29 @@ cites.
 `exists_onCircle_oppositeSidesOf`, `exists_onCircle_sameSideOf` (a straight line in a
 circle has points of it on each side), `circumference_congr`, `standing_congr`,
 `standing_eq_circumference`, `EqualCircles.radii`, `.symm`, `.refl`, `Touches.not_inside`,
-`Touches.of_collinear`.
+`Touches.of_collinear`. **`Elements/Figure/Chords.lean`**, from stage 3 of
+[brief 0006](0006-statements.md): `chord_cases` (a point of the straight line through two
+points of a circle is on the circle exactly when it is one of them, and within it exactly
+when between them), `Arc.meets`, `Arc.congr_side` and `Arc.Congruent.congr_side` (only the
+side names a segment).
 
 **Book III's ground, before III.1, `Elements/BookIII/Squares.lean`**: `sq_pos` (the square
 on a straight line is something) and `BookI.Prop46.sq` (equal squares are on equal
 straight lines), for III.14 and III.37, which add I.3, I.4, I.28, I.34, I.46; and
 `foot_between` (the perpendicular from the centre to a straight line in the circle falls
 between its ends), for III.14, III.35 and III.36 before they cite III.3, which adds I.17
-and I.19. The file imports Book II's ground, so every proposition of Book III has `rect`,
-`sq` and `BookI.Prop47.sq`.
+and I.19; and, from stage 3, `Arc.eq_of_aligned` (two segments on one base, on one side,
+in equal circles and of one kind, are one), which adds I.7. The file imports Book II's
+ground, so every proposition of Book III has `rect`, `sq` and `BookI.Prop47.sq`.
+
+**Placement, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`**, from
+stage 3, for III.24: `placement`, Euclid's application of one segment to another, from I.2,
+I.3, I.4, I.7, I.8, I.20, I.22 and I.24's step, with the lemmas of the `Placement`
+namespace, and I.20's degenerate case in `Elements/BookI/HelpersTriangles.lean`. Only
+III.24 and `Elements/BookIII/Arcs.lean`, after III.29, may cite them. `Arcs.lean` holds the
+bridge theorems: in equal circles, circumferences equal in measure are those on equal
+straight lines and of one kind (`Arc.measure_eq_iff`), and segments are congruent exactly
+when their circles are equal and their measures equal (`Arc.congruent_iff`).
 
 **Book III's ground, after III.22, `Elements/BookIII/Circumferences.lean`**, imported by
 III.23–III.37:
@@ -195,6 +214,7 @@ III.23–III.37:
 | `Circumference.semicircle` | a semicircle is two right angles | I.5, I.32 |
 | `Circumference.lt_semicircle` | the circumference beyond the centre is less than a semicircle | I.32, III.20, III.21 |
 | `Circumference.gt_semicircle` | the circumference on the centre's side is greater than a semicircle | I.32, III.20–III.22 |
+| `Circumference.add` | a circumference cut at a point of it is the two circumferences it is cut into, for Book IV (stage 3) | I.32, III.21, III.22 |
 
 `Circumference.semicircle` proves of circumferences, by Euclid's own argument, what III.31
 proves of the angle in a semicircle: III.28 and III.29 need it first. It argues at the
@@ -228,7 +248,8 @@ proposition, "from this it is manifest".
 | "the greater circumference ACB" (III.28) | `circumference ABC A G B ≤ circumference ABC A C B` |
 | "the rectangle contained by AE, EC" (III.35) | `rect A E E C`, Book II's |
 | "the angle at C, the given rectilineal angle" (III.33) | `∠ C₁ C C₂`, with `Triangle C₁ C C₂`, as I.42 takes the angle at `D` |
-| "the segment AEB is equal to the segment CFD" (III.24) | `EqualCircles AEB CFD ∧ circumference AEB A E B = circumference CFD C F D` |
+| "the segment AEB is equal to the segment CFD" (III.24) | `Arc.Congruent ⟨AEB, A, B, E⟩ ⟨CFD, C, D, F⟩`: one map puts A on C and B on D, the segment on the segment and the circumference on the circumference, keeping every distance between their points |
+| "the circumference BKC is equal to the circumference ELF" (III.26, III.28) | `circumference ABC B K C = circumference DEF E L F ∧ Arc.Congruent ⟨ABC, B, C, K⟩ ⟨DEF, E, F, L⟩`: equal in measure and congruent |
 | "similar segments ACB, ADB" | `∠ A C B = ∠ A D B` |
 | "the given segment ABC" (III.25), "the given circumference ADB" (III.30) | the circle, the straight line `AC` (or `AB`), and a point `P` on the side of the segment, for every such `P` |
 
@@ -286,15 +307,22 @@ worth naming. The first mate's report has a note on every statement.
   `BD` (joining opposite corners) separating `A` from `C`; that `AC` separates `B` from `D`
   follows.
 - **III.23** concludes that the circles are one, `ACB = ADB`: on one straight line and on
-  one side, similar segments coincide.
-- **III.24** concludes that the circles are equal and the circumferences of the segments
-  equal in measure. That is less than Euclid's equal segments: it does not say that one
-  segment can be laid on the other, and the equal measures follow from the equal angles
-  alone (above). Euclid proves it by applying one segment to the other, and our Lean
-  allows superposition only in I.4 and I.8. III.24 is proved without applying one
-  segment to another; [the scratch proof](https://github.com/jackChallis/stoicheia/blob/81d72f5/docs/reports/crew/scratch-III/T24.lean) does so, by the angles
-  at the centres (III.20, III.22) and the isosceles triangles on the equal bases (I.5,
-  I.26, I.32).
+  one side, similar segments coincide. Its companion, `Prop23.point`, says it point by
+  point, for III.24: on one side of AB, a point is on the circle exactly when AB subtends
+  at it the angle in the segment, and within it exactly when the angle is greater.
+- **III.24** concludes Euclid's equal segments, read through Common Notion 4 as
+  segments that coincide (`Arc.Congruent`). Euclid proves it by applying one segment to
+  the other, and our Lean allows superposition only in I.4 and I.8, so the application is
+  a theorem, `placement` (`Elements/BookIII/Placement.lean`), proved from I.4, I.7, I.8,
+  I.20 and I.22; III.23's companion then settles every point by the angles, in place of
+  Euclid's reductio, and III.10 is not needed. Until stage 3 of
+  [brief 0006](0006-statements.md), III.24 concluded only that the circles are equal and
+  the circumferences equal in measure, proved by the angles at the centres (III.20,
+  III.22) and the isosceles triangles on the equal bases (I.5, I.26, I.32), as in
+  [the scratch proof](https://github.com/jackChallis/stoicheia/blob/81d72f5/docs/reports/crew/scratch-III/T24.lean);
+  that statement and proof are now its companion `Prop24.equalCircles`, shown as the
+  alternative, and `Prop24.equalMeasure` gives the equal measures of congruent segments,
+  which III.26 takes from III.24.
 - **III.25** finds the centre of the circle of a given segment, with Euclid's construction
   and his three cases: the centre beyond the segment, at `D`, or within it, as the angle
   `ABD` is greater than, equal to, or less than `BAD`. A segment here is its circle, a
@@ -304,14 +332,20 @@ worth naming. The first mate's report has a note on every statement.
 - **III.26** says both of Euclid's cases as he enunciates them, "whether they stand at the
   centres or at the circumferences": equal angles at the centres (the circumferences less
   than semicircles) give equal circumferences, and so do equal angles at the
-  circumferences, of any size. IV.11 cites the second. As stated it holds for any two
-  circles (above).
+  circumferences, of any size. IV.11 cites the second. Since stage 3 of
+  [brief 0006](0006-statements.md), both conclude that the circumferences are congruent as
+  well as equal in measure, and that needs the equal circles; the remainders' congruence
+  comes from III.24 applied to the remaining segments, not by subtraction.
 - **III.27** likewise: equal circumferences give equal angles at the circumferences, of
   any size (IV.11 needs obtuse ones), and equal angles at the centres where those stand on
-  them. As stated it, too, holds for any two circles.
+  them. As stated it holds for any two circles (above).
 - **III.28** asks of "the greater" only that it be no less (`≤`), so that two diameters,
   which Heath says the proposition covers "as the proof can easily be supplied" (vol. 2,
-  p. 60), cut off semicircles.
+  p. 60), cut off semicircles. Since stage 3 of [brief 0006](0006-statements.md), it
+  concludes, for the greater and for the less, that the circumferences are congruent as
+  well as equal in measure: the greater by III.24, their angles the halves of the equal
+  angles at the centres (III.20), and two diameters by the right angle in each semicircle
+  (`Prop28.right`) and III.24.
 - **III.29** is said of circumferences of any size; Euclid's proof covers those less than
   a semicircle, and Heath the semicircles.
 - **III.31** keeps Euclid's figure: `BC` the diameter, `A` on the circle. "The angle in a
@@ -331,7 +365,9 @@ worth naming. The first mate's report has a note on every statement.
 
 - **Postulate 5.** Every proposition of Book III comes after I.29, so any may rest on it.
   `check_fidelity.py` sets `FIRST_EUCLIDEAN` for Book III as for Book II.
-- **Superposition** stays with I.4 and I.8. III.24 is proved without it.
+- **Superposition** stays with I.4 and I.8. III.24 is proved without it: `placement`,
+  which lays one segment on another, rests on I.4, I.7 and I.8 as propositions, and only
+  III.24 and `Elements/BookIII/Arcs.lean` may cite it, which `check_fidelity.py` checks.
 - **Citing earlier books.** A Book III proof cites `BookI.PropN` and `BookII.PropN`; a bare
   `Prop4` in a Book III file means III.4.
 - **The scripts.** `heath.BOOKS` has Book III, 37 propositions, and `heath.parse_ref`
@@ -349,8 +385,9 @@ worth naming. The first mate's report has a note on every statement.
 The review records in `review/III/` are the authority, proposition by proposition, and
 each page shows its own in the line under the enunciation and the table under "In Lean".
 This table is generated from them as they stand on 17 October 2026, with III.15 as it
-stands on 18 October (the centre given by hypothesis, `centre-given`, is left out, being
-nearly everywhere):
+stands on 18 October, and III.24, III.26 and III.28 as stage 3 of
+[brief 0006](0006-statements.md) leaves them (the centre given by hypothesis,
+`centre-given`, is left out, being nearly everywhere):
 
 | Proposition | Statement | Argument | Overlap | Tags | Planned |
 |---|---|---|---|---|---|
@@ -367,11 +404,11 @@ nearly everywhere):
 | [III.17](../../book/III/17.md) | restricted: a point outside the circle | Euclid's |  |  |  |
 | [III.21](../../book/III/21.md) | whole | one step changed |  |  |  |
 | [III.23](../../book/III/23.md) | whole | Euclid's |  | `segment-with-circle` |  |
-| [III.24](../../book/III/24.md) | in part: equal circles and measures; the segments stay in Euclid's words | different |  | `segment-with-circle`, `angle-measure`, `redundant-hypothesis` | stage 3: congruent segments by placement, the radius proof kept as an alternative |
+| [III.24](../../book/III/24.md) | whole | one step changed |  | `segment-with-circle`, `angle-measure`, `redundant-hypothesis` | done in stage 3: congruent segments by placement, the radius proof kept as an alternative |
 | [III.25](../../book/III/25.md) | restricted: handed the whole circle and its centre | Euclid's |  | `segment-with-circle` | stage 4: a construction that sees only the segment |
-| [III.26](../../book/III/26.md) | whole | one step changed |  | `angle-measure`, `redundant-hypothesis` | stage 3: equal circles made to do work (`Arc.Congruent`) |
+| [III.26](../../book/III/26.md) | whole | one step changed |  | `angle-measure` | done in stage 3: equal circles made to do work (`Arc.Congruent`) |
 | [III.27](../../book/III/27.md) | whole | one step changed |  | `angle-measure`, `redundant-hypothesis` |  |
-| [III.28](../../book/III/28.md) | whole | Euclid's |  | `angle-measure` | stage 3: concludes congruent arcs too, through III.26 |
+| [III.28](../../book/III/28.md) | whole | one step changed |  | `angle-measure` | done in stage 3: concludes congruent circumferences too |
 | [III.29](../../book/III/29.md) | whole | one step changed |  | `angle-measure` |  |
 | [III.30](../../book/III/30.md) | whole | Euclid's |  | `segment-with-circle`, `angle-measure` |  |
 | [III.31](../../book/III/31.md) | in part: the angles of the segments stay in Euclid's words | Euclid's |  | `mixed-angles-omitted` | kept: a deliberate limitation |
@@ -388,12 +425,14 @@ and III.2's kind of overlap, are the deliberate limitations Book III keeps.
   IV.16 takes a fifth and a third of a circle. The measure adds as angles do, but the fact
   that a circumference cut at a point of it is the two circumferences it is cut into is not
   yet proved; Book IV's ground will want `Circumference.add`, from III.21 and the angles at
-  a point of the remaining circumference.
+  a point of the remaining circumference. (18 October 2026: proved in stage 3 of
+  [brief 0006](0006-statements.md), `Circumference.add` in
+  `Elements/BookIII/Circumferences.lean`.)
 - **VI.33**, "angles have the same ratio as the circumferences", becomes short with the
   measure. Book VI's design should revisit circumferences then. `circumference` and
   `standing` are angles in Lean: no statement of Book III equates one with an angle or
-  adds one to an angle (they are compared only with each other, in III.24 and
-  III.26–III.30), but a statement could. A type of their own over `Angle` would forbid it
+  adds one to an angle (they are compared only with each other, in III.24's companions
+  and III.26–III.30), but a statement could. A type of their own over `Angle` would forbid it
   without new rules; every law of magnitudes, now axioms about `Magnitude k`, would have to
   be proved again for it. The captain's call.
 - **A circle's centre.** If Definition 15's other half becomes a rule, the

@@ -173,8 +173,8 @@ The representations Books I–III rest on:
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
 | a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
-| a circumference | twice the angle standing on it, `circumference`, `standing`; no radius | proved facts in `Circumferences.lean`; arcs with membership are stage 3's work | `angle-measure`, `redundant-hypothesis` |
-| a segment | its circle, a straight line in it and one side | stage 3 | `segment-with-circle` |
+| a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
+| a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
 | an angle of a straight line and a circumference | none | the rectilineal facts Euclid proves it by are stated | `mixed-angles-omitted` |
 | circles touching | not crossing anywhere (the whole-circle reading Heath reports as Todhunter's) | III.13 keeps its content | |
 
@@ -233,7 +233,7 @@ construction, its premises, and the diagram fact or lemma it needed.
   unused-variable warning.
 - **Unused hypotheses and surprising dependencies are review prompts, not verdicts.** An
   unused hypothesis may mean the route is not Euclid's, or that our representation makes it
-  redundant (III.26 and III.27 hold for any two circles as stated). Say so in the handback;
+  redundant (III.27 holds for any two circles as stated). Say so in the handback;
   the record tags it `redundant-hypothesis` where that is the truth.
 - A checked intermediate fact tied to a real sentence of Euclid is legitimate, even if the
   final proof term could do without it.
@@ -245,8 +245,8 @@ construction, its premises, and the diagram fact or lemma it needed.
 
 Where the page promises Euclid's argument, the Lean follows it: the propositions he uses, in
 his order, and nothing later. Some propositions can be reached by a shortcut he did not take
-(III.2 by an axiom; III.26, III.27 and III.30 by the circumference measure alone); take his
-route, for his inferences are the proposition's content.
+(III.2 by an axiom; III.27, III.30 and III.26's measures by the circumference measure
+alone); take his route, for his inferences are the proposition's content.
 
 Where the Lean must part from him, keep his sentences, put Lean under them that does the same
 work, and label the change where it happens: a `/- … -/` remark in the Lean, and a passage in

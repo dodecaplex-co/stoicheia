@@ -691,10 +691,11 @@ findings:
   commit of its own so that it can land before the statements it checks
   (WORKFLOW, section 10). FORMALIZATION, section 7, lists the policy and the two tests.
 
-- **Stage 3 in the edition: brief 0006's arc words in the foundations.** Every statement of
-  stage 3 of [brief 0006](0006-statements.md) is proved, and moves from `Staging/` to its
-  home in that brief's table, in the seven steps of its migration, a move the coordinator
-  delegated to the stage's integrator. The definitions they use are approved for the
+- **Stage 3 in the edition: brief 0006's arc words in the foundations, III.24 restated,
+  III.26 and III.28 upgraded.** Every statement of stage 3 of
+  [brief 0006](0006-statements.md) is proved, and moves from `Staging/` to its home in that
+  brief's table, in the seven steps of its migration, a move the coordinator delegated to
+  the stage's integrator. The definitions they use are approved for the
   foundations as a class (decision 4 of brief 0006: "the definitions the frozen briefs
   name are approved for the foundations, each recorded in its pull request", as the
   tracking issue, [#50](https://github.com/jackChallis/stoicheia/issues/50), records it).
@@ -703,8 +704,8 @@ findings:
   and its four fields, `Arc.Drawn`, `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.Less`,
   `Arc.Semicircle`, `Arc.Greater`, `Arc.SameKind`, `Arc.measure`, `Places` and
   `Arc.Congruent` (Definitions III.6 and III.9, and Common Notion 4 for congruence). None
-  is an assumption. The module's account gains a paragraph on segments
-  and arcs. The words join the lock with the first statements that use them, the companion
+  is an assumption. The module's account gains a paragraph on segments and arcs. The words
+  join the lock with the first statements that use them, the companion
   "III.24 equalMeasure", then III.24, III.26 and III.28 as restated. The ground goes to the
   homes the brief names: `Elements/Figure/Chords.lean` (new, Book Zero), I.20's degenerate
   case in `Elements/BookI/HelpersTriangles.lean` (new, after I.20), placement in
@@ -712,7 +713,7 @@ findings:
   `Arc.eq_of_aligned` in `Elements/BookIII/Squares.lean` and `Circumference.add` in
   `Elements/BookIII/Circumferences.lean`; and three companions join
   `Elements/Companions.lean`: "III.23 point", "III.24 equalCircles" and "III.24
-  equalMeasure". The protected files this changes are two.
+  equalMeasure". The protected files this changes are three.
   [`Certificate/axioms.lock`](../../Certificate/axioms.lock) is rewritten by
   `python3 scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the same 87, byte
   for byte, and its `[vocabulary]` grows from 91 words to 104, by `Arc` with its constructor
@@ -731,4 +732,23 @@ findings:
   measures equal, is its companion `Prop24.equalCircles`, with the proof by the radii, shown
   as the alternative; III.26 takes the equal measures from III.24 by `Prop24.equalMeasure`,
   and `Audit/Overlaps.lean`'s example of III.24 is pointed at `Prop24.equalCircles`, whose
-  measure clause still follows from the equal angles alone.
+  measure clause still follows from the equal angles alone. III.26 and III.28 are upgraded
+  as the brief froze them, each clause concluding that the circumferences are equal in
+  measure and congruent; III.27, III.28 and III.30 take the first conjunct where they cite
+  them, and `Audit/Overlaps.lean`'s example of III.26 gives way to a note that III.26 no
+  longer holds for any two circles. The records of III.23, III.24, III.26 and III.28 are
+  rewritten for their reviewer, and with those of III.27 and III.30 wait for its reading and
+  stamp. III.24's record carries `segment-with-circle`, `centre-given` and
+  `redundant-hypothesis`, but not `angle-measure`, which the brief plans for its
+  companions: that tag's badge would put "in our measure of circumferences" beside the main
+  theorem, which says nothing of a measure, and the record's note says how the companions
+  measure. The reviewer may restore it, if the badge is first kept to statements that use
+  the measure.
+  [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
+  accepts or checks, as the brief's list of consumers asks: `SUPERPOSITION_NOTE` no longer
+  says that our proof of III.24 compares the radii, but that it applies one segment to
+  another by `placement`, which uses superposition only through the propositions it cites;
+  and `FRONT_LEAN_III` gives Definition III.6 its words, `Arc`, `InSegment`, `OnArc` and
+  `Arc.Congruent`, and Definition III.9 `Arc.measure`. Definitions III.4 and III.5 keep their
+  lines until `Foot` joins the foundations with stage 4. It is not a check change (WORKFLOW,
+  section 10); the regenerated pages show it.

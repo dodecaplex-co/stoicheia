@@ -1363,14 +1363,15 @@ FRONT_LEAN_III = {
            "`CirclesTouch α β C`: they touch one another in one of these ways",
         4: "`‖E F‖ = ‖E G‖`, for the perpendiculars EF, EG from the centre E (III.14)",
         5: "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15)",
-        6: "a circle, a straight line AB in it, and a point E of the circumference on one "
-           "side: the segment AEB",
+        6: "`Arc`: a circle, the ends A, B of a straight line in it, and a point E naming "
+           "its side, the segment AEB; its points, `InSegment`, and its circumference's, "
+           "`OnArc`; segments that coincide, `Arc.Congruent` (III.24, III.26, III.28)",
         7: "none: a mixed angle, of a straight line and a curve; III.16 and III.31 speak of "
            "it, and their Lean states the straight-line facts Euclid proves them by",
         8: "`∠ A E B`, for a point E on the circumference of the segment",
         9: "`standing α B A C`, the circumference on which the angle BAC stands; the "
-           "circumference BKC is `circumference α B K C`; each measured as twice the angle "
-           "that stands on it at the circumference",
+           "circumference BKC is `circumference α B K C`, and an arc's is `Arc.measure`; each "
+           "measured as twice the angle that stands on it at the circumference",
         10: "none: no proposition of Book III uses a sector",
         11: "`∠ A E B = ∠ C F D`: equal angles in the segments AEB, CFD",
     },
@@ -1592,8 +1593,9 @@ def postulate5_bullet(book, facts, proved, entries):
 
 # What a book's line on superposition adds, where Euclid's text moves a figure that our
 # proof does not.
-SUPERPOSITION_NOTE = {"III": " Euclid's III.24 applies one segment to another, and our proof "
-                             "of it compares the radii instead."}
+SUPERPOSITION_NOTE = {"III": " Euclid's III.24 applies one segment to another, and so does our "
+                             "proof of it, by `placement`, which uses superposition only through "
+                             "the propositions it cites, I.4 and I.8 among them."}
 
 
 def superposition_bullet(book, sup, complete):
