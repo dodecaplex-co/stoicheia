@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.22 at a glance</title>
-  <desc>Split the bottom angle of the four-sided figure (red, blue): its parts equal the triangle's red and blue angles, standing on the same circumferences. With the yellow they make the triangle's three, so opposite angles make two right angles.</desc>
+  <desc>Split the angle ADC (red, blue): its parts equal the angles CAB and ACB of the triangle ABC, standing on the same circumferences. With the angle ABC (yellow) they make the triangle's three, so opposite angles make two right angles.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="152.0" r="112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <line x1="93.5" y1="117.4" x2="311.4" y2="140.3" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
@@ -14,4 +14,10 @@
   <line x1="196.1" y1="40.1" x2="311.4" y2="140.3" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
   <line x1="311.4" y1="140.3" x2="169.1" y2="259.7" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
   <line x1="169.1" y1="259.7" x2="93.5" y2="117.4" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="79.2" y="117.7">A</text>
+    <text x="195.6" y="30.0">B</text>
+    <text x="326.3" y="143.6">C</text>
+    <text x="165.0" y="279.0">D</text>
+  </g>
 </svg>

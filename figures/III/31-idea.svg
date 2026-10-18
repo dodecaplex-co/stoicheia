@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.31 at a glance: the angle in a semicircle</title>
-  <desc>Three equal radii (blue) cut the triangle into two with equal sides, so the angle in the semicircle equals the other two together (red and yellow). All three make two right angles, so it is a right angle.</desc>
+  <desc>The equal radii EA, EB, EC (blue) cut the triangle ABC into two with equal sides, so the angle BAC equals the angles at B and C together (red and yellow). All three make two right angles: BAC is right.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="160.0" r="116.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M84.0,160.0 L124.0,160.0 A40,40 0 0,0 104.6,125.7 Z" fill="#d0312d"/>
@@ -14,4 +14,10 @@
   <line x1="200.0" y1="160.0" x2="316.0" y2="160.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <polyline points="136.8,72.1 151.4,80.9 160.1,66.3" fill="none" stroke="#222222" stroke-width="1.6"/>
   <circle cx="200.0" cy="160.0" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="138.0" y="48.4">A</text>
+    <text x="69.0" y="164.9">B</text>
+    <text x="331.0" y="164.9">C</text>
+    <text x="200.0" y="181.9">E</text>
+  </g>
 </svg>

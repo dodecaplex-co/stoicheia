@@ -11,4 +11,9 @@
   <line x1="140" y1="170" x2="260" y2="170" stroke="#222222" stroke-width="4"/>
   <line x1="200" y1="40" x2="140" y2="170" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <line x1="200" y1="40" x2="260" y2="170" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="200" y="27.6">A</text><text x="125" y="170.1">B</text><text x="275" y="170.1">C</text><text x="86.4" y="282.9">D</text>
+    <text x="313.6" y="282.9">E</text>
+  </g>
 </svg>

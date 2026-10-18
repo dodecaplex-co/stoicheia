@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.31 at a glance</title>
-  <desc>Join the point to the given straight line and copy the angle this makes (yellow) at the point, on the other side: the straight line drawn through the point is parallel to the given one (blue).</desc>
+  <desc>Join A to a point D of BC and copy the angle ADC (yellow) at A, on the other side of AD: the straight line EAF is parallel to BC (blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M165.0,205.0 L181.1,179.7 A30,30 0 0,1 195.0,205.0 Z" fill="#f2b705"/>
   <path d="M235.0,95.0 L218.9,120.3 A30,30 0 0,1 205.0,95.0 Z" fill="#f2b705"/>
@@ -8,4 +8,8 @@
   <line x1="45.0" y1="205.0" x2="355.0" y2="205.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <line x1="45.0" y1="95.0" x2="355.0" y2="95.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <circle cx="235.0" cy="95.0" r="4.5" fill="#222222"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="29" y="100.6">E</text><text x="371" y="100.6">F</text><text x="29" y="210.6">B</text><text x="371" y="210.6">C</text><text x="235" y="84.6">A</text><text x="165" y="227.6">D</text>
+  </g>
 </svg>

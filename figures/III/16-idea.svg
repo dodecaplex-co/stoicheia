@@ -8,8 +8,17 @@
   <polyline points="132.00,150.00 132.00,138.00 120.00,138.00" fill="none" stroke="#222222" stroke-width="1.6"/>
   <polyline points="132.00,150.00 132.00,162.00 120.00,162.00" fill="none" stroke="#222222" stroke-width="1.6"/>
   <line x1="120.00" y1="150.00" x2="344.00" y2="150.00" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
-  <line x1="87.46" y1="76.92" x2="167.23" y2="256.07" stroke="#222222" stroke-width="3" stroke-dasharray="9 8" stroke-linecap="round"/>
-  <line x1="120.00" y1="28.00" x2="120.00" y2="272.00" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="87.46" y1="76.92" x2="120.00" y2="150.00" data-unlettered="the dashed straight line drawn on past A, where Heath's FA stops at A" stroke="#222222" stroke-width="3" stroke-dasharray="9 8" stroke-linecap="round"/>
+  <line x1="120.00" y1="150.00" x2="167.23" y2="256.07" stroke="#222222" stroke-width="3" stroke-dasharray="9 8" stroke-linecap="round"/>
+  <line x1="120.00" y1="28.00" x2="120.00" y2="150.00" data-unlettered="the red straight line drawn on above A, where Heath's AE stops at A" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
+  <line x1="120.00" y1="150.00" x2="120.00" y2="272.00" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
   <circle cx="232.00" cy="150.00" r="4.5" fill="#222222"/>
   <circle cx="120.00" cy="150.00" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="105" y="154.9">A</text>
+    <text x="358" y="154.9">B</text>
+    <text x="232" y="140.9">D</text>
+    <text x="106" y="274.9">E</text>
+    <text x="170.5" y="274.4">F</text>
+  </g>
 </svg>

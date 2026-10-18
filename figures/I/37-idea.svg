@@ -1,14 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.37 at a glance</title>
-  <desc>Two triangles on the same base and between the same parallels (blue) are equal; so when the part they share (yellow) is taken away, the pieces left over (red) are equal too.</desc>
+  <desc>The triangles ABC, DBC on the same base BC and between the same parallels (blue) are equal; so when the part they share (yellow) is taken away, the pieces left over (red) are equal too.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <polygon points="182.3,159.6 80.0,215.0 210.0,215.0" fill="#f2b705" fill-opacity="0.9"/>
-  <polygon points="145.0,85.0 80.0,215.0 182.3,159.6" fill="#d0312d" fill-opacity="0.9"/>
-  <polygon points="320.0,85.0 182.3,159.6 210.0,215.0" fill="#d0312d" fill-opacity="0.9"/>
+  <g data-unlettered="the pieces meet where AC crosses DB, a point Heath's figure leaves without a letter">
+    <polygon points="182.3,159.6 80.0,215.0 210.0,215.0" fill="#f2b705" fill-opacity="0.9"/>
+    <polygon points="145.0,85.0 80.0,215.0 182.3,159.6" fill="#d0312d" fill-opacity="0.9"/>
+    <polygon points="320.0,85.0 182.3,159.6 210.0,215.0" fill="#d0312d" fill-opacity="0.9"/>
+  </g>
   <line x1="145.0" y1="85.0" x2="80.0" y2="215.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="145.0" y1="85.0" x2="210.0" y2="215.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="320.0" y1="85.0" x2="80.0" y2="215.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="320.0" y1="85.0" x2="210.0" y2="215.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
-  <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
-  <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <g data-unlettered="the parallels drawn on past the figure, to ends that are no points of Heath's">
+    <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+    <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="145" y="74.2">A</text>
+    <text x="320" y="74.2">D</text>
+    <text x="80" y="236.2">B</text>
+    <text x="210" y="236.2">C</text>
+  </g>
 </svg>

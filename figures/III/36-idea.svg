@@ -1,18 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.36 at a glance</title>
-  <desc>From a point outside, let one straight line cut the circle (black outside, red within) and one touch it (blue): the whole cutting straight line and its outside piece contain a rectangle equal to the square on the other (both yellow).</desc>
+  <desc>From D outside the circle, let DCA cut it (DC black, CA red) and DB touch it (blue): the rectangle contained by AD, DC equals the square on DB (both yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="92.0" cy="122.0" r="68.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
-  <polygon points="218.5,79.8 262.0,79.8 262.0,250.0 218.5,250.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="300.0,164.0 386.0,164.0 386.0,250.0 300.0,250.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <line x1="206.5" y1="250.0" x2="206.5" y2="206.5" stroke="#222222" stroke-width="7" stroke-linecap="butt"/>
-  <line x1="206.5" y1="206.5" x2="206.5" y2="79.8" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
-  <line x1="218.5" y1="262.0" x2="262.0" y2="262.0" stroke="#222222" stroke-width="7" stroke-linecap="butt"/>
-  <line x1="288.0" y1="164.0" x2="288.0" y2="250.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
-  <line x1="300.0" y1="262.0" x2="386.0" y2="262.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
+  <g data-unlettered="the rectangle AD, DC and the square on DB drawn apart, which Heath's figure does not draw">
+    <polygon points="218.5,79.8 262.0,79.8 262.0,250.0 218.5,250.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="300.0,164.0 386.0,164.0 386.0,250.0 300.0,250.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <line x1="206.5" y1="250.0" x2="206.5" y2="206.5" stroke="#222222" stroke-width="7" stroke-linecap="butt"/>
+    <line x1="206.5" y1="206.5" x2="206.5" y2="79.8" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
+    <line x1="218.5" y1="262.0" x2="262.0" y2="262.0" stroke="#222222" stroke-width="7" stroke-linecap="butt"/>
+    <line x1="288.0" y1="164.0" x2="288.0" y2="250.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
+    <line x1="300.0" y1="262.0" x2="386.0" y2="262.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
+  </g>
   <line x1="142.8" y1="167.3" x2="85.2" y2="54.3" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
   <line x1="162.5" y1="206.0" x2="142.8" y2="167.3" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
   <line x1="162.5" y1="206.0" x2="78.2" y2="188.6" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <circle cx="162.5" cy="206.0" r="4.5" fill="#222222"/>
   <circle cx="142.8" cy="167.3" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="83.7" y="44.3">A</text>
+    <text x="75.2" y="208.2">B</text>
+    <text x="162.7" y="173.9">C</text>
+    <text x="172.1" y="222.4">D</text>
+  </g>
 </svg>

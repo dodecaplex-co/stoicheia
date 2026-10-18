@@ -4,9 +4,13 @@
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M200.0,187.0 L231.0,179.3 A32,32 0 0,0 209.9,156.6 Z" fill="#f2b705"/>
   <path d="M200.0,187.0 L209.9,156.6 A32,32 0 0,0 169.0,194.7 Z" fill="#d0312d"/>
-  <line x1="200.0" y1="187.0" x2="329.7" y2="196.1" stroke="#222222" stroke-width="3" stroke-dasharray="9 8" stroke-linecap="round"/>
+  <line x1="200.0" y1="187.0" x2="329.7" y2="196.1" data-unlettered="a bent arm, drawn only to be ruled out; Heath's E lies on CB produced, which here is the blue BD" stroke="#222222" stroke-width="3" stroke-dasharray="9 8" stroke-linecap="round"/>
   <line x1="200.0" y1="187.0" x2="237.1" y2="72.9" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
   <line x1="200.0" y1="187.0" x2="39.9" y2="226.9" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <line x1="200.0" y1="187.0" x2="360.1" y2="147.1" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <circle cx="200.0" cy="187.0" r="4.5" fill="#222222"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="200" y="209.6">B</text><text x="26.3" y="238.8">C</text><text x="374.7" y="149.1">D</text><text x="241.7" y="64.2">A</text>
+  </g>
 </svg>

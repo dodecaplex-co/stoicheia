@@ -4,8 +4,9 @@
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="242.00" cy="156.00" r="90.00" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
   <circle cx="139.73" cy="124.73" r="69.22" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>
-  <line x1="126.34" y1="120.64" x2="339.54" y2="185.82" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
-  <line x1="254.43" y1="54.76" x2="229.57" y2="257.24" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="126.34" y1="120.64" x2="176.07" y2="135.85" data-unlettered="the straight line CK drawn on past K, through the red circle's centre, to an end that is no point of Heath's" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="176.07" y1="135.85" x2="328.07" y2="182.31" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="252.97" y1="66.67" x2="231.03" y2="245.33" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <polyline points="187.54,139.35 191.05,127.88 179.58,124.37" fill="none" stroke="#222222" stroke-width="1.6"/>
   <polyline points="248.94,99.48 237.03,98.02 238.49,86.11" fill="none" stroke="#222222" stroke-width="1.6"/>
   <line x1="159.15" y1="191.17" x2="192.98" y2="80.52" stroke="#f2b705" stroke-width="6" stroke-linecap="round"/>
@@ -14,5 +15,16 @@
   <circle cx="192.98" cy="80.52" r="4.5" fill="#222222"/>
   <circle cx="307.82" cy="94.62" r="4.5" fill="#222222"/>
   <circle cx="242.00" cy="156.00" r="4.5" fill="#222222"/>
-  <circle cx="139.73" cy="124.73" r="4.5" fill="#222222"/>
+  <circle cx="139.73" cy="124.73" r="4.5" data-unlettered="the red circle's own centre: Heath's figure, drawn for the supposition, has P the centre of both" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="195" y="70.4">B</text>
+    <text x="341.5" y="191.3">C</text>
+    <text x="318.8" y="89.3">G</text>
+    <text x="150.5" y="209.6">H</text>
+    <text x="184" y="155.9">K</text>
+    <text x="261" y="105.9">L</text>
+    <text x="229.3" y="264.1">N</text>
+    <text x="254.7" y="57.7">O</text>
+    <text x="251.3" y="175.2">P</text>
+  </g>
 </svg>

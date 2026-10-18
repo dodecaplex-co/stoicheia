@@ -5,7 +5,13 @@
   <circle cx="212.0" cy="150.0" r="64.0" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75" stroke-dasharray="9 8"/>
   <circle cx="163.1" cy="132.2" r="64.0" fill="none" stroke="#d0312d" stroke-width="3" stroke-opacity="0.75"/>
   <circle cx="212.0" cy="150.0" r="116.0" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
-  <circle cx="163.1" cy="132.2" r="4.5" fill="#222222"/>
+  <circle cx="163.1" cy="132.2" r="4.5" data-unlettered="the red circle's own centre: Heath's figure, drawn for the supposition, has only the common centre F" fill="#222222"/>
   <circle cx="212.0" cy="150.0" r="4.5" fill="#222222"/>
   <circle cx="103.0" cy="110.3" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="249.7" y="278.3">A</text>
+    <text x="88.9" y="110.1">C</text>
+    <text x="130.7" y="175.9">D</text>
+    <text x="199.5" y="165.9">F</text>
+  </g>
 </svg>

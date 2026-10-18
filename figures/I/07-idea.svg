@@ -8,4 +8,8 @@
   <line x1="145.0" y1="152.0" x2="214.9" y2="92.2" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
   <line x1="265.0" y1="152.0" x2="214.9" y2="92.2" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <circle cx="214.9" cy="92.2" r="4.5" fill="#222222"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="131.1" y="165.6">A</text><text x="278.9" y="165.6">B</text><text x="214.9" y="79.8">C</text>
+  </g>
 </svg>

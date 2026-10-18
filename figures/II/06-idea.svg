@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.6 at a glance</title>
-  <desc>Halve a straight line and lengthen it (black): the rectangle contained by the lengthened line and the added piece (red and yellow) and the square on the half (blue) make the square on the half with the added piece, for the two reds are equal.</desc>
+  <desc>Halve AB at C and add BD (black): the rectangle contained by AD, DB (red and yellow) and the square on CB (blue) make the square on CD, for the two reds are equal.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="70.0,76.0 165.0,76.0 165.0,146.0 70.0,146.0" fill="#d0312d" fill-opacity="0.9"/>
   <polygon points="165.0,76.0 330.0,76.0 330.0,146.0 165.0,146.0" fill="#f2b705" fill-opacity="0.95"/>
@@ -12,4 +12,17 @@
   <line x1="70.0" y1="64.0" x2="330.0" y2="64.0" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
   <circle cx="165.0" cy="64.0" r="4.5" fill="#222222"/>
   <circle cx="260.0" cy="64.0" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222">
+    <text x="70" y="53" text-anchor="middle">A</text>
+    <text x="165" y="53" text-anchor="middle">C</text>
+    <text x="260" y="53" text-anchor="middle">B</text>
+    <text x="330" y="53" text-anchor="middle">D</text>
+    <text x="70" y="163" text-anchor="middle">K</text>
+    <text x="161" y="163" text-anchor="end">L</text>
+    <text x="260" y="141" text-anchor="middle">H</text>
+    <text x="335" y="151">M</text>
+    <text x="165" y="258" text-anchor="middle">E</text>
+    <text x="260" y="258" text-anchor="middle">G</text>
+    <text x="330" y="258" text-anchor="middle">F</text>
+  </g>
 </svg>

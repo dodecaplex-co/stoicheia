@@ -9,4 +9,11 @@
   <circle cx="133.22" cy="159.88" r="4.5" fill="#222222"/>
   <circle cx="292.78" cy="114.12" r="4.5" fill="#222222"/>
   <circle cx="225.50" cy="133.42" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="234" y="122.9">A</text>
+    <text x="53.2" y="90.7">B</text>
+    <text x="349.2" y="58.1">E</text>
+    <text x="119" y="164.9">F</text>
+    <text x="306.5" y="120.9">G</text>
+  </g>
 </svg>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.25 at a glance</title>
-  <desc>To complete a segment's circle (blue), halve its base at right angles and copy the angle at the top to one end (yellow). The new side meets the perpendicular at the centre, equally far (red) from all three points.</desc>
+  <desc>To complete the circle of the segment ABC (blue), halve AC at D at right angles and copy the angle ABD at A (yellow). AE meets BD produced at the centre E, equally far (red) from A, B and C.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M307.8,112.0 A118.0,118.0 0 1,1 92.2,112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6" stroke-linecap="round"/>
   <line x1="92.2" y1="112.0" x2="307.8" y2="112.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
@@ -13,4 +13,11 @@
   <line x1="200.0" y1="160.0" x2="200.0" y2="42.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
   <path d="M92.2,112.0 A118.0,118.0 0 0,1 307.8,112.0" fill="none" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <circle cx="200.0" cy="160.0" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="77.6" y="110.4">A</text>
+    <text x="200.0" y="31.9">B</text>
+    <text x="322.4" y="110.4">C</text>
+    <text x="187.0" y="129.9">D</text>
+    <text x="200.0" y="181.9">E</text>
+  </g>
 </svg>

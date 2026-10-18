@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.34 at a glance</title>
-  <desc>In a parallelogram the opposite sides are equal (blue, red), the opposite angles are equal (yellow, black), and the diagonal cuts it into two equal halves.</desc>
+  <desc>In the parallelogram ACDB the opposite sides are equal (blue, red), the opposite angles are equal (yellow, black), and the diagonal BC cuts it into two equal halves.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M140.0,80.0 L172.0,80.0 A32,32 0 0,1 125.7,108.6 Z" fill="#222222"/>
   <path d="M260.0,220.0 L228.0,220.0 A32,32 0 0,1 274.3,191.4 Z" fill="#222222"/>
@@ -11,4 +11,10 @@
   <line x1="330.0" y1="80.0" x2="260.0" y2="220.0" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
   <line x1="140.0" y1="80.0" x2="330.0" y2="80.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <line x1="70.0" y1="220.0" x2="260.0" y2="220.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="131.6" y="71.6">A</text>
+    <text x="343.6" y="76.8">B</text>
+    <text x="56.4" y="233.7">C</text>
+    <text x="268.4" y="238.9">D</text>
+  </g>
 </svg>

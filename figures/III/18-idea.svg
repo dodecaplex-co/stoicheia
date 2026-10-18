@@ -11,4 +11,13 @@
   <line x1="196.00" y1="118.00" x2="221.36" y2="206.44" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
   <line x1="62.75" y1="251.92" x2="379.97" y2="160.96" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
   <circle cx="196.00" cy="118.00" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="143.5" y="31.9">A</text>
+    <text x="293.3" y="154.9">B</text>
+    <text x="225.5" y="225.9">C</text>
+    <text x="377" y="151.9">D</text>
+    <text x="66" y="270.9">E</text>
+    <text x="185.4" y="112.3">F</text>
+    <text x="326.4" y="196.9">G</text>
+  </g>
 </svg>
