@@ -16,7 +16,8 @@ open Tacit
 
 /-- A centre on the straight line through two different points of its circle lies
 between them: it differs from each, and if it lay beyond either, one of the equal radii
-would be less than the other. This places the centre in the semicircle case. -/
+would be less than the other. In the semicircle case this puts each centre between the
+ends of the base. -/
 theorem Aligned.centre_between {B C O : Point} {α : Circle} (hBC : B ≠ C)
     (hO : Centre O α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hline : Collinear B C O) : Between B O C := by
