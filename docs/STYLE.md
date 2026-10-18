@@ -446,10 +446,14 @@ draws the figure proposes the line in the handback, and the records' owner write
 
 Run it from the repository's root. It reads the files below; "outside quotations" means
 with every `"…"` span, every link target `](…)`, every code span and every fenced code
-block removed first. A phrase in the tables below is found however a line or a comment
-wraps it: its words may stand apart by one line break, with the next line's indent and
-its comment leader (`--`, or a quotation's `>`), but not by a blank line. Before reading
-anything else, the script checks its own patterns against such wrapped phrases.
+block removed first. The words of a phrase in S2 to S7, S11 and D7 to D10 are found
+however a line or a comment wraps them: they may stand apart by spaces or tabs, or by one
+line break with the next line's indent and its comment leader (`--`, or a quotation's
+`>`). A blank line ends such a phrase, save S2's "first mate" and the "Definition N" of S7
+and D10, whose words may stand apart by any white space. A word that a rule seeks
+elsewhere in the clause or the sentence (what follows S5's "never need", S11's "Proclus",
+D9's "need") is found as its row says. Before reading anything else, the script checks its
+own patterns against such phrases.
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.
@@ -497,7 +501,7 @@ anything else, the script checks its own patterns against such wrapped phrases.
 | D4 | More than four distinct Lean names | Mishnah |
 | D5 | A caption over 40 words, or of more than two sentences | Idea figures |
 | D6 | Each "first", "only", "better", "best", "unlike", for a reader to judge as a comparison or a claim to priority | Prose, README |
-| D7 | "Lean cannot", "Lean can't" | Prose, Catalogues, Lean notes |
+| D7 | "Lean cannot", "Lean can't", "Lean can not" | Prose, Catalogues, Lean notes |
 | D8 | "gives no citation" (say "Heath gives no reference") | Prose, Catalogues |
 | D9 | A sentence that joins "need", "needs" or "needed" to Postulate 5 or the parallel postulate (say "uses"; a claim that a result holds without the postulate names its evidence) | Prose, Catalogues, README, Lean notes |
 | D10 | S6 and S7 outside their failing scope | Catalogues, README, Lean notes |
