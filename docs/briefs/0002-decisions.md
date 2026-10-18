@@ -491,3 +491,27 @@ findings:
   [brief 0005](0005-astra-review.md), in stage 1b's list of what `scripts/check_style.py`
   enforces, and "the idea figures have no letters" in item 7 of its planned acceptance
   checklist (stage 6).
+- **Every proof checked again, by Lean's kernel and by nanoda.** A cold Claude review of
+  18 October contributed [`scripts/check_kernel.py`](../../scripts/check_kernel.py), with
+  thanks. After `lake build`, it has `leanchecker --fresh` replay the whole environment of
+  `Elements`, Lean's own declarations included, through Lean's kernel, and has nanoda, a
+  type checker written separately, check the whole export that `leanexport` writes,
+  admitting only the axioms of [`Certificate/axioms.lock`](../../Certificate/axioms.lock)
+  and Lean's three. Its self-test withholds Postulate 5, and nanoda must then fail, naming
+  it. All three programs come with the pinned toolchain, and each is the generous work of
+  others: leanchecker is Kim Morrison's and Sebastian Ullrich's, and began as Kim
+  Morrison's [lean4checker](https://github.com/leanprover/lean4checker); leanexport is
+  Henrik Böving's, for the Lean FRO; nanoda is Chris Bailey's
+  [nanoda_lib](https://github.com/ammkrn/nanoda_lib). We are grateful to them all.
+  The script is a check added, never a check weakened; the files it changes are
+  [`scripts/check_kernel.py`](../../scripts/check_kernel.py) (new),
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) (a step in the `check` job,
+  after the certificate), [`scripts/safe_push.py`](../../scripts/safe_push.py) (the same
+  step in its sequence), [WORKFLOW](../WORKFLOW.md), section 8, and
+  [FORMALIZATION](../FORMALIZATION.md), section 9 (a row of its table of evidence); the
+  README's table of checks and its "Run it" list follow in a docs pull request of their
+  own, after this one. At `f17b427` nanoda checks all 59,902 declarations of the export,
+  and the script runs in about a minute on a laptop, with leanexport, its largest step,
+  at about 1.3 GB of memory at most. Its time in CI is still to be measured, on this pull
+  request's first run there, and recorded on #62, with the choice that follows from it:
+  the `check` job, or a job of its own if it is slow.
