@@ -20,8 +20,8 @@ namespace Elements.BookI
 open Tacit
 
 /-- The angles at the base, and only those. Our I.5 is stated as Euclid states it,
-with the equal sides produced and the angles under the base as well, so to cite it
-Lean must produce AB and AC (Post. 2). When only the angles at the base are
+with the equal sides produced and the angles under the base as well, so a proof that
+cites it must first produce AB and AC (Post. 2). When only the angles at the base are
 wanted, as in I.7, I.9, I.18, I.19, I.20 and I.24, any points beyond B and C
 will do, and this produces them once. [I. 5] -/
 theorem Prop5.base {A B C : Point} (hABC : Triangle A B C) (h : ‖A B‖ = ‖A C‖) :
