@@ -150,6 +150,12 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
   `Touches` or `rect` by name, so a new definition of either would have moved no review
   fingerprint. The lock now holds every word a statement reaches
   ([axioms.lock](../Certificate/axioms.lock)).
+- **17 Oct. A push needs no one's OK when the commit itself is checked.**
+  `scripts/safe_push.py` reads the commit alone, in a fresh worktree; it refuses a secret,
+  a statement or the lock changed without a decision, a Heath edit naming no scan leaf, a
+  stale record or a deleted directory, runs every CI check, and only then pushes, and
+  `test_safe_push.py` plants a bad commit for each guard ([WORKFLOW](WORKFLOW.md),
+  section 10).
 
 ## 6. Cost and time
 
