@@ -119,12 +119,12 @@ What the proofs show:
 
 ## Book III
 
-**All 37 propositions proved in Lean**: 28 as Euclid states them, 6 for a restricted statement ([III.7](book/III/07.md), [III.8](book/III/08.md), [III.14](book/III/14.md), [III.15](book/III/15.md), [III.17](book/III/17.md), [III.25](book/III/25.md)) and 3 in part, leaving clauses to Euclid's words ([III.16](book/III/16.md), [III.24](book/III/24.md), [III.31](book/III/31.md)). 31 proofs follow Euclid's argument, 5 follow it with one step changed ([III.8](book/III/08.md), [III.21](book/III/21.md), [III.26](book/III/26.md), [III.27](book/III/27.md), [III.29](book/III/29.md)) and 1 argues differently ([III.24](book/III/24.md)); each page says how. In [III.2](book/III/02.md), [III.5](book/III/05.md) and [III.6](book/III/06.md) our tacit rules already contain the proposition (in III.6, two of them together), and our proofs rest on them, so each retraces Euclid's argument within our rules and does not establish them. [The overlap catalogue](docs/reports/overlaps.md) gives each.
+**All 37 propositions proved in Lean**: 29 as Euclid states them, 6 for a restricted statement ([III.7](book/III/07.md), [III.8](book/III/08.md), [III.14](book/III/14.md), [III.15](book/III/15.md), [III.17](book/III/17.md), [III.25](book/III/25.md)) and 2 in part, leaving clauses to Euclid's words ([III.16](book/III/16.md), [III.31](book/III/31.md)). 30 proofs follow Euclid's argument and 7 follow it with one step changed ([III.8](book/III/08.md), [III.21](book/III/21.md), [III.24](book/III/24.md), [III.26](book/III/26.md), [III.27](book/III/27.md), [III.28](book/III/28.md), [III.29](book/III/29.md)); each page says how. In [III.2](book/III/02.md), [III.5](book/III/05.md) and [III.6](book/III/06.md) our tacit rules already contain the proposition (in III.6, two of them together), and our proofs rest on them, so each retraces Euclid's argument within our rules and does not establish them. [The overlap catalogue](docs/reports/overlaps.md) gives each.
 
 What the proofs show:
 
 - **Postulate 5**: The proofs of 17 propositions do not use it, and the proofs of 20 propositions do, the first being III.14's. Book III comes after I.29, where Euclid first calls on it, so any of its proofs may.
-- **Superposition**: no proof in Book III calls on it; in this project only I.4 and I.8 do. Euclid's III.24 applies one segment to another, and our proof of it compares the radii instead.
+- **Superposition**: no proof in Book III calls on it; in this project only I.4 and I.8 do. Euclid's III.24 applies one segment to another, and so does our proof of it, by `placement`, which uses superposition only through the propositions it cites, I.4 and I.8 among them.
 
 | | Prop | Statement | Argument | Heath's references | Lean cites | Postulates | Definitions | C.N. | Tacit rules (how many) |
 |---|---|---|---|---|---|---|---|---|---|
@@ -153,11 +153,14 @@ What the proofs show:
 | ✅ | [III.21](book/III/21.md) | whole | Euclid's, one step changed | III.20 | III.20 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
 | ✅ | [III.22](book/III/22.md) | whole | Euclid's | I.32, III.21 | I.32, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
 | ✅ | [III.23](book/III/23.md) | whole | Euclid's | I.16 | I.16, III.10, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 |
-| ✅ | [III.24](book/III/24.md) | in part† | different | III.10 | I.5, I.26, I.32, III.20, III.21, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | &emsp;[III.23 point](book/III/23.md#point) |  |  |  | I.21, III.21 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | [III.24](book/III/24.md) | whole | Euclid's, one step changed | III.10 | I.2, I.3, I.4, I.7, I.8, I.20, I.22, III.23 point | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | &emsp;[III.24 equalCircles](book/III/24.md#equalCircles) |  |  |  | I.5, I.26, I.32, III.20, III.21, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
+| ✅ | &emsp;[III.24 equalMeasure](book/III/24.md#equalMeasure) |  |  |  | I.8, III.21, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
 | ✅ | [III.25](book/III/25.md) | restricted | Euclid's | I.6, III.9 | I.4, I.6, I.10, I.11, I.17, I.23, III.9 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 61 |
-| ✅ | [III.26](book/III/26.md) | whole† | Euclid's, one step changed | I.4, III.24 | I.4, I.5, I.32, III.20, III.21, III.22, III.24 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 |
+| ✅ | [III.26](book/III/26.md) | whole† | Euclid's, one step changed | I.4, III.24 | I.4, I.5, I.32, III.20, III.21, III.22, III.24, III.24 equalMeasure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 |
 | ✅ | [III.27](book/III/27.md) | whole† | Euclid's, one step changed | I.23, III.20, III.26 | I.23, III.20, III.21, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 |
-| ✅ | [III.28](book/III/28.md) | whole† | Euclid's | I.8, III.26 | I.5, I.8, I.20, I.32, III.20, III.21, III.22, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 |
+| ✅ | [III.28](book/III/28.md) | whole† | Euclid's, one step changed | I.8, III.26 | I.5, I.8, I.20, I.32, III.20, III.21, III.22, III.24, III.26 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 |
 | ✅ | [III.29](book/III/29.md) | whole† | Euclid's, one step changed | I.4, III.27 | I.4, I.5, I.32, III.20, III.21, III.22, III.27 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 58 |
 | ✅ | [III.30](book/III/30.md) | whole† | Euclid's | I.4, III.28 | I.4, I.10, I.11, I.17, III.21, III.22, III.28 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 57 |
 | ✅ | [III.31](book/III/31.md) | in part | Euclid's | I.5, I.17, I.32, III.22 | I.5, I.17, I.32, III.22 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 |
