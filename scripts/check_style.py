@@ -1160,9 +1160,10 @@ def ink_fault(root, eff, centre: tuple[float, float], s: str) -> str | None:
 
 
 def check_idea_letters(path: Path, root, required: bool) -> int:
-    """S20: each letter is one of Heath's, as Euclid's figure draws it, italic, at 14, in
-    the figure's black, or in the parchment's colour where it stands on red, blue or
-    black. S21: each point the figure shows has a letter within 30 of it, or is marked
+    """S20: each letter is one of Heath's, as Euclid's figure draws it, upright (or, while
+    UPRIGHT_LETTERS_REQUIRED is False, italic, one style in the figure), at 14, in the
+    figure's black, or in the parchment's colour where it stands on red, blue or black.
+    S21: each point the figure shows has a letter within 30 of it, or is marked
     data-unlettered with its reason. Returns the points waiting for a letter while the
     figure is in the transition, else 0."""
     euclid = path.with_name(path.name.replace("-idea", ""))

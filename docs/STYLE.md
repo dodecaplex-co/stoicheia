@@ -340,10 +340,11 @@ and its renderer, tried with sample spans on 18 October, needs this much **[chec
 the dollars in pairs within the paragraph, and never `$$`; each span on one line, with no
 space just inside either dollar; the opening dollar at a line's start or after a space or
 "(", and the closing one before a space, a line's end or one of the punctuation marks that
-S10 lists (section 8); braces that balance; no backslash before a punctuation mark, which GitHub's Markdown removes (write
-`\lbrace`, `\rbrace`, `\thinspace` and `\Vert` for `\{`, `\}`, `\,` and `\|`); and `\lt`
-and `\gt` for < and >, which GitHub escapes twice inside a span. `scripts/render.py`
-copies the mishnah onto its page unchanged, so the page shows the same mathematics.
+S10 lists (section 8); braces that balance; no backslash before a punctuation mark, which
+GitHub's Markdown removes (write `\lbrace`, `\rbrace`, `\thinspace` and `\Vert` for `\{`,
+`\}`, `\,` and `\|`); and `\lt` and `\gt` for < and >, which GitHub escapes twice inside a
+span. `scripts/render.py` copies the mishnah onto its page unchanged, so the page shows the
+same mathematics.
 
 **System E and LeanEuclid** are thanked by name in every page's footer, so the mishnah
 does not thank them again; a particular debt is still said where it falls (Intersection 4
@@ -445,10 +446,10 @@ most **[checked]**.
 figures stand side by side (III.25, III.33, III.35, III.36) **[checked]**. Upright letters
 (section 4) at 17 **[checked]**; ink `#3b2f2f` for lines, dots and letters; circles
 `#8c7b62`; what the proposition is about in `#a0522d`, drawn heavier; triangle fills
-`#e9dcc0` at 0.55; no other colour **[checked]**. Dots of radius 2.6, lines 1.6, circles 1.3, what the
-proposition is about 2.4 to 2.6, angle marks in `#8c7b62` at 1.3 **[reported]**, and no
-stroke thinner than 1.2 or heavier than 3.2 **[checked]**. The title is "Euclid I.N: …",
-with no caption **[checked]**.
+`#e9dcc0` at 0.55; no other colour **[checked]**. Dots of radius 2.6, lines 1.6, circles
+1.3, what the proposition is about 2.4 to 2.6, angle marks in `#8c7b62` at 1.3
+**[reported]**, and no stroke thinner than 1.2 or heavier than 3.2 **[checked]**. The title
+is "Euclid I.N: …", with no caption **[checked]**.
 
 **Heath's letters, all and only [checked].** Each point stands where the proof puts it
 (I.6: D on AB), each letter clear of every stroke, nothing touching the frame. The Lean
