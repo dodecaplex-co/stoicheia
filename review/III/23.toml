@@ -1,10 +1,12 @@
 [statement]
 scope = "full"
-note = "Stated as an equality: two circles through A and B with similar segments on one side of AB are one circle."
+note = "Stated as an equality: two circles through A and B with similar segments on one side of AB are one circle; `Prop23.point` says it point by point."
+companions = ["III.23 point"]
 fingerprint = "sha256:3f7601e5fce9aeab"
 
 [route]
 kind = "euclid"
+note = "The companion `Prop23.point` goes through a point M between A and B, within the circle: a point on the circle subtends the angle in the segment [III. 21]; one outside it, or within it, subtends a less, or a greater, angle, through a point Q where MP meets the circle [I. 21, III. 21], with `Prop23.insideTriangle_of_between` for the step read off the figure."
 
 [representation]
 tags = ["segment-with-circle", "centre-given"]
