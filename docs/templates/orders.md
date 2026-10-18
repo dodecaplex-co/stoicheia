@@ -181,19 +181,22 @@ record `review/<B>/NN.toml`; <the shared definitions the statements use>.
   (FORMALIZATION, section 3). A definition moves into the foundations only with the
   coordinator's approval, and is never an `axiom`. One that an approved statement uses
   moves into `Elements/Foundations/`, the coordinator's, before or with that statement's
-  move, and joins the vocabulary of `Certificate/axioms.lock` with a decisions entry
-  (WORKFLOW, section 2, item 1): nothing in `Elements/` ever imports `Staging/`.
+  move: nothing in `Elements/` ever imports `Staging/`. It joins the vocabulary of
+  `Certificate/axioms.lock` in the commit where an entry's statement in `Elements/` first
+  uses it, which is the move, with `check_fidelity.py --write-lock`, a decisions entry,
+  `tests/model/lock.sha256` updated and `tests/model/MODEL.md` read again (WORKFLOW,
+  section 2, item 1; FORMALIZATION, section 7).
 
 **The rules.** Edit only your statements' files, `Staging/<stage>/Book<B>/PropNN.lean`,
-and your scratch proofs. `Staging.lean`'s imports and the shared definitions,
-`Staging/<stage>/<File>.lean`, are the integrator's (WORKFLOW, section 4): propose in
-your handback the import each new file needs, and any definition you need that is not
-there, with its type and docstring (WORKFLOW, section 4, "Ask for a shared lemma with a
-proposed type"); leave both files as they are. Never change a statement, a porism's or a
-definition in `Elements/` (WORKFLOW, section 2). Never add an
-`axiom`, `native_decide` or anything else that gets round the kernel. If the brief's form
-of a statement looks wrong or too weak, write it as the brief says and report the case
-that fails, with the declaration you propose (form 5 of `docs/templates/proposition.md`).
+and your scratch proofs. `Staging.lean`'s imports, which are for readers, and the shared
+definitions, `Staging/<stage>/<File>.lean`, are the integrator's (WORKFLOW, section 4):
+propose in your handback any definition you need that is not there, with its type and
+docstring (WORKFLOW, section 4, "Ask for a shared lemma with a proposed type"); leave
+both files as they are. Never change a statement, a porism's or a definition in
+`Elements/` (WORKFLOW, section 2). Never add an `axiom`, `native_decide` or anything else
+that gets round the kernel. If the brief's form of a statement looks wrong or too weak,
+write it as the brief says and report the case that fails, with the declaration you
+propose (form 5 of `docs/templates/proposition.md`).
 
 **The challenge.** For its readers, who did not write the statements: begin from Heath
 and the Lean, each read on its own, before the author's plain words. Set each statement
@@ -208,10 +211,10 @@ the one proposed. A statement is approved only once every finding is answered.
 export PATH=$HOME/.elan/bin:$PATH
 lake build                                  # Elements unchanged
 lake build Staging.<stage>.Book<B>.PropNN   # your file; `sorry` its only warning
-lake build Staging                          # the files Staging.lean already imports
+lake build Staging                          # every file under Staging/, yours included
 ```
-Yours is built by its module name until the integrator adds its import to `Staging.lean`.
-No `lake update` or `lake clean`.
+`lake build Staging` builds every file under `Staging/`, whether or not `Staging.lean`
+imports it. No `lake update` or `lake clean`.
 
 **Finish.** Commit your files by name, "<stage>: statements of <…>, with sorry". Do not
 push, merge or rebase.
@@ -220,8 +223,8 @@ push, merge or rebase.
 declaration; its meaning in plain words; its coverage, with any extra hypothesis or
 clause left out; the cases it admits and how each is covered; the construction data; the
 representation; and the route its proof is to take, with the propositions it may cite.
-Then, for the integrator, the import each new file needs and the shared definitions you
-propose; your scratch proofs, if any; and the questions you could not settle.
+Then, for the integrator, the shared definitions you propose; your scratch proofs, if
+any; and the questions you could not settle.
 ````
 
 ## 3. A companion proof, or a restatement's
@@ -271,12 +274,15 @@ configuration. Never add an `axiom`, `native_decide` or anything else that gets 
 kernel. Edit only the Staging file and `Elements/Book<B>/PropNN.lean` (the companion, its
 helpers and the imports they need). Nothing in `Elements/` ever imports `Staging/`: a
 staged definition the statement uses moves into the foundations, `Elements/Foundations/`,
-the coordinator's, before or with your move, and joins the vocabulary of
-`Certificate/axioms.lock` with a decisions entry. If the move would need an import from
-`Staging/`, stop and ask the coordinator in your handback. `Staging.lean`'s imports and
-the companions list, `Elements/Companions.lean`, are the integrator's (WORKFLOW, section
-4): propose their lines in your handback, and leave both files as they are. The record
-`review/<B>/NN.toml` is <owner>'s.
+the coordinator's, before or with your move. It joins the vocabulary of
+`Certificate/axioms.lock` in the commit where an entry's statement in `Elements/` first
+uses it, which is the move, with `check_fidelity.py --write-lock`, a decisions entry,
+`tests/model/lock.sha256` updated and `tests/model/MODEL.md` read again (FORMALIZATION,
+section 7). If the move would need an import from `Staging/`, stop and ask the
+coordinator in your handback. `Staging.lean`'s imports, which are for readers, and the
+companions list, `Elements/Companions.lean`, are the integrator's (WORKFLOW, section 4):
+propose the companion's entry in your handback, and leave both files as they are. The
+record `review/<B>/NN.toml` is <owner>'s.
 
 **The voice.** Your `/- … -/` remarks and your helpers' docstrings are Lean notes, and
 read as `docs/STYLE.md`, section 1, asks; what may be said about how the work was made is
@@ -288,12 +294,12 @@ STYLE, section 1, "Production stays out of the mathematics".
    porism, with the same type and no import from `Staging/`, and delete the staged file.
    A corollary the brief names (`Prop40.special`) moves with it. Leave the move
    uncommitted.
-3. Propose in your handback the two lines that go with the move: the staged file's
-   import, to come out of `Staging.lean`, and the companion's entry,
+3. Propose in your handback the line that goes with the move, the companion's entry,
    `(``Elements.Book<B>.PropN.<word>, "<B>.N <word>")`, for `Elements.companions` in
    `Elements/Companions.lean`, which then imports `Elements.Book<B>.PropNN`. The
-   integrator commits the move with both, in one commit, so that `lake build Staging`
-   stays green and the listing travels with the proof (WORKFLOW, section 4).
+   integrator commits the move with it, in one commit, and takes out of `Staging.lean`
+   any import of the deleted file, so that `lake build Staging` stays green and the
+   listing travels with the proof (WORKFLOW, section 4).
 4. Run the certificate on the move. The companion is not in it until the integrator lists
    it, so find what it rests on from `#print axioms Elements.Book<B>.PropN.<word>`, in a
    scratch file outside the build that imports `Elements.Book<B>.PropNN`
@@ -309,7 +315,7 @@ and the Lean beneath each `--` line change; its docstring, Heath's enunciation, 
 proof, as the alternative; it is displayed as such, never as Euclid's argument. Every
 consumer the brief names changes in the move, so the build stays green, and nothing else
 does: those files are yours for this task, save the records, which are their owners'. A
-restatement is not a companion, so of the two lines in step 3 it proposes only the import.
+restatement is not a companion, so it proposes no entry in step 3.
 Its commits are "<B>.N restated: proof, in Staging" and the integrator's "<B>.N restated,
 in place of PropN"; its record entries are the `scope`, the `[route]` and the
 `[[passage]]` entries, with no `companions` entry.
@@ -330,15 +336,19 @@ read.
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
 lake build && lake build Staging      # step 1, the proof in Staging/
-lake build                            # then the move
+lake build && lake build Staging      # then the move
 lake build Audit                      # a restatement: the audit lemmas its move changes
 lake env lean Certificate/Facts.lean && python3 scripts/check_fidelity.py
 python3 scripts/check_style.py
 ```
-No `lake update` or `lake clean`. After the move, `lake build Staging` fails on the
-deleted file until the integrator takes its import out; that is expected. So are these:
-until the record's owner stamps it, the record of <B>.N is "changed since it was
-reviewed", and the pages are rendered after the merge.
+No `lake update` or `lake clean`. `lake build Staging` builds every file under `Staging/`,
+whether or not `Staging.lean` imports it, so it still passes after the move; a failure
+there is real, and goes in your handback, unless it is only `Staging.lean`'s own import
+of the deleted file, which the integrator takes out. These are expected: until the
+record's owner stamps it, the record of <B>.N is "changed since it was reviewed"; the
+pages are rendered after the merge; and, for a restatement whose statement uses a
+definition moved into the foundations, `check_fidelity.py` finds that word missing from
+the lock until the move's commit adds it. Name the word in your handback.
 
 **Finish.** Commit the proof in `Staging/` by name, "<B>.N <word>: proof, in Staging", and
 leave the move for the integrator, who commits it as "<B>.N <word>: proof, moved beside
@@ -347,8 +357,8 @@ leave the move for the integrator, who commits it as "<B>.N <word>: proof, moved
 **Report** with the handback of `docs/templates/proposition.md`: proved, or where the
 `sorry` is; the route taken, and any step where it left the declared one; your helpers;
 citations beyond Heath's references, each with the step that brings it in; hypotheses
-your proof does not use; what "<B>.N <word>" rests on, found as step 4 says; the lines
-you propose for the integrator (the import to come out of `Staging.lean`, and the entry
-for `Elements/Companions.lean`); the record entries you propose (`companions`, `scope`,
-`note`, `short`); the records made stale; and the checks you ran, with their outcomes.
+your proof does not use; what "<B>.N <word>" rests on, found as step 4 says; the entry
+you propose for `Elements/Companions.lean`; the record entries you propose (`companions`,
+`scope`, `note`, `short`); the records made stale; and the checks you ran, with their
+outcomes.
 ````
