@@ -65,11 +65,11 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
 - Work only in the files your task names: one writer per file. The integrator owns the
   generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, README.md's rows
   between the `<!-- scope:… -->` markers and PROGRAM.md's status table between the
-  `<!-- status -->` markers) and the companions list (`Elements/Companions.lean`); the
-  coordinator owns the foundations (`Elements/Foundations/`), `Certificate/axioms.lock`,
-  the toolchain (`lean-toolchain`, `lakefile.toml`, `lake-manifest.json`), the decisions
-  page, PROGRAM.md and CI; your orders name the owner of everything else
-  ([WORKFLOW](docs/WORKFLOW.md), section 4).
+  `<!-- status -->` markers), and the stage's integrator the companions list
+  (`Elements/Companions.lean`); the coordinator owns the foundations
+  (`Elements/Foundations/`), `Certificate/axioms.lock`, the toolchain (`lean-toolchain`,
+  `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md and CI; your
+  orders name the owner of everything else ([WORKFLOW](docs/WORKFLOW.md), section 4).
 - Need something outside your files? Ask its owner in your handback, with a concrete
   proposal; a shared lemma is asked for with form 6 of the
   [templates](docs/templates/proposition.md).

@@ -22,7 +22,7 @@ contributor may hold several roles, save one: nobody reviews a claim they wrote.
 | Proof contributor | The assigned declarations with their helpers, porisms and companions, and how the Lean corresponds to the text. |
 | Edition contributor | Commentary, figures, source notes and further reading, written against the brief and reconciled with the finished proof. |
 | Independent reviewer | The changed claims, read against the source, the argument and the rendered page, with findings and their severity. |
-| Integrator | Merging a wave's branches, resolving conflicts, regenerating and committing the generated edition, and validating the integrated revision. |
+| Integrator | Merging a wave's branches, resolving conflicts, regenerating and committing the generated edition, validating the integrated revision, and, as the stage's integrator, the companions list (section 4). |
 
 A fresh context helps a reviewer, but a different model name does not by itself make a
 review independent: the reviewer must not have written, prompted or edited the claim.
