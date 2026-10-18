@@ -557,3 +557,15 @@ findings:
   library in `lakefile.toml` say so, and that comment is the only change to
   `lakefile.toml`. The orders for a statement wave ([orders](../templates/orders.md),
   kind 2) and [FORMALIZATION](../FORMALIZATION.md), section 6, point to the rule.
+- **Overlaps: I.2 and I.3 supply a step, as I.23 does.** A cold Claude review of 18
+  October found it, with thanks: superposition lays a triangle down at A along AB, and so
+  carries a length. The shortest proofs we found of I.2 and I.3 from the rules alone use
+  ten and twenty-two of them (`Audit.I_2`, `Audit.I_3`); the rest draw a triangle and a
+  point off AB that the statements never give, and, for I.3, put the new point between A
+  and B. The catalogue lists both as supplying a step, and their records gain an
+  `[overlap]` on `Tacit.superposition`; our I.2 and I.3 are Euclid's constructions and
+  never use the rule. After Argon's second review of the Book III release, the catalogue
+  also says that its "First enters" column reads `direct_axioms`, which counts a rule a
+  proof reaches through a Book Zero lemma or a shared step, and its notes name that lemma
+  until #65 keeps the two apart; II.14 and III.15 join the III.2 entry. This extends the
+  list in "The overlap catalogue" above.
