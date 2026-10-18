@@ -346,7 +346,9 @@ theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
   `Touches.not_inside`, applied at A itself: a straight line through a point within a circle
   cuts it. It is a lemma beside III.17, not a companion: it generalizes no clause of the
   enunciation, so it is not listed in the record's `companions` and has no certificate entry
-  (question 1).
+  (question 1). The kernel check holds it all the same: nanoda admits no `sorryAx` and no
+  axiom outside the lock, for every declaration of the library
+  ([`scripts/check_kernel.py`](../../scripts/check_kernel.py), #62).
 - **Dependencies.** III.17, I.11, III.16 Por.; `Touches.not_inside`. `Touches.contact` is
   for citers, and the companion does not need it.
 - **Representation notes for the record.** Tag: `centre-given`, as today: the circle comes
