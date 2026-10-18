@@ -491,11 +491,12 @@ findings:
   [brief 0005](0005-astra-review.md), in stage 1b's list of what `scripts/check_style.py`
   enforces, and "the idea figures have no letters" in item 7 of its planned acceptance
   checklist (stage 6).
-- **Every declaration checked twice more: leanchecker and nanoda.** A cold Claude review of
+- **Every proof checked again, by Lean's kernel and by nanoda.** A cold Claude review of
   18 October contributed [`scripts/check_kernel.py`](../../scripts/check_kernel.py), with
-  thanks. After `lake build`, it replays the environment of `Elements` through Lean's kernel
-  with `leanchecker`, and has nanoda, a type checker written separately, check the export
-  that `leanexport` writes, admitting only the axioms of
+  thanks. After `lake build`, it has `leanchecker` replay every declaration of the
+  `Elements` modules through Lean's kernel, loading Lean's own imports unchecked, and has
+  nanoda, a type checker written separately, check the whole export that `leanexport`
+  writes, Lean's own declarations included, admitting only the axioms of
   [`Certificate/axioms.lock`](../../Certificate/axioms.lock) and Lean's three. Its
   self-test withholds Postulate 5, and nanoda must then fail. All three programs come with
   the pinned toolchain. It is a check added, never a check weakened; the files it changes
@@ -503,5 +504,5 @@ findings:
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) (a step in the `check` job,
   after the certificate), [`scripts/safe_push.py`](../../scripts/safe_push.py) (the same
   step in its sequence), [WORKFLOW](../WORKFLOW.md), section 8, and the README's table of
-  checks and its "Run it" list. At `f17b427` it checks 59,902 declarations in about 40
-  seconds (#62).
+  checks and its "Run it" list. At `f17b427` nanoda checks all 59,902 declarations of the
+  export, Lean's own included, and the script runs in about 40 seconds (#62).

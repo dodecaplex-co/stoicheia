@@ -1,17 +1,18 @@
-"""Check every proof again, from the compiled library, with two kernels.
+"""Check every proof again, from the compiled library, by Lean's kernel and by nanoda.
 
 `lake build` has Lean's kernel check each declaration as it is elaborated. This script
-checks the result a second and a third time, from the `.olean` files that the build wrote
-and the certificate reads:
+checks the declarations of `Elements` a second and a third time, from the `.olean` files
+that the build wrote and the certificate reads:
 
-1. **leanchecker** replays the whole environment of `Elements`, every declaration down to
-   Lean's own, through Lean's kernel. It would catch a declaration that reached the
-   compiled files without the kernel's check.
+1. **leanchecker** replays every declaration of the `Elements` modules through Lean's
+   kernel, each module against its imports, which it loads unchecked: Lean's own
+   declarations do not pass through it. It would catch a declaration of `Elements` that
+   reached the compiled files without the kernel's check.
 2. **nanoda**, a type checker for Lean written separately from Lean, in Rust, checks the
-   same declarations, exported with `leanexport`. It admits only the axioms of
-   `Certificate/axioms.lock` and Lean's three (`propext`, `Classical.choice`,
-   `Quot.sound`): any declaration that needs another axiom, as `sorryAx` or the compiler's
-   `Lean.ofReduceBool`, is an error.
+   whole export that `leanexport` writes: every declaration of `Elements` and of Lean's
+   own library beneath it. It admits only the axioms of `Certificate/axioms.lock` and
+   Lean's three (`propext`, `Classical.choice`, `Quot.sound`): any declaration that needs
+   another axiom, as `sorryAx` or the compiler's `Lean.ofReduceBool`, is an error.
 
 Both programs come with the Lean toolchain that `lean-toolchain` pins, in the folder
 `lean --print-prefix` names, so nothing is installed. Run it from anywhere, after
@@ -102,8 +103,9 @@ def main() -> None:
     replay = run(["lake", "env", str(bin_ / "leanchecker"), "Elements"])
     if replay.returncode != 0:
         print(replay.stdout[-4000:], replay.stderr[-4000:], sep="\n", file=sys.stderr)
-        fail("leanchecker rejected the environment of Elements")
-    print("  leanchecker: the environment of Elements replays through Lean's kernel")
+        fail("leanchecker rejected a declaration of the Elements modules")
+    print("  leanchecker: every declaration of the Elements modules replays through Lean's "
+          "kernel, with Lean's own loaded unchecked")
 
     with tempfile.TemporaryDirectory() as tmp:
         work = Path(tmp)
@@ -121,8 +123,8 @@ def main() -> None:
         if checked.returncode != 0 or not summary:
             print(checked.stdout[-4000:], checked.stderr[-4000:], sep="\n", file=sys.stderr)
             fail("nanoda rejected a declaration, or one needs an axiom outside the lock")
-        print(f"  nanoda: {summary.group(1)} declarations check, with the {len(axioms)} "
-              f"axioms of the lock and Lean's three")
+        print(f"  nanoda: all {summary.group(1)} declarations of the export check, Lean's own "
+              f"included, with the {len(axioms)} axioms of the lock and Lean's three")
 
         if args.self_test:
             planted = nanoda(bin_, export, [a for a in axioms if a != WITHHELD], work)
@@ -130,7 +132,8 @@ def main() -> None:
                 fail(f"nanoda passed with {WITHHELD} withheld, which I.29 needs")
             print(f"  self-test: with {WITHHELD} withheld, nanoda fails, as it must")
 
-    print("✓ kernel: two kernels accept every declaration of Elements")
+    print(f"✓ kernel: Lean's kernel accepts every declaration of Elements again, and nanoda "
+          f"all {summary.group(1)} of the export")
 
 
 if __name__ == "__main__":
