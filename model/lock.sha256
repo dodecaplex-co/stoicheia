@@ -1,12 +1,12 @@
 # The sha256 of Certificate/axioms.lock: the exact laws the formal model was last checked
-# against. It is meant for the formal model's CI job (model/README.md, "The CI job"),
+# against. It is meant for the formal-model CI job (model/README.md, "The CI job"),
 # which compares it with the lock, from the repository's root,
 #     grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 # and fails when they differ, so that a change to any axiom, or to a word the axioms
 # reach, sends someone back to the model before CI is green: to the translation (by hand
 # in Model/Hand.lean today, generated later), its checks in Check/, and the proofs in the
-# plane. Until that job is added, nothing runs the comparison. tests/model/lock.sha256
-# does the same for the numerical harness, and CI's model job checks that one.
+# plane. tests/model/lock.sha256 does the same for the numerical harness, and CI's model
+# job checks that one.
 #
 # Filled in when the model package was started (18 October 2026), at the lock of main's
 # f17b427. When the lock changes, bring the model up to date, then replace the line

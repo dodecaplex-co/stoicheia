@@ -227,7 +227,7 @@ notation, the model could import that one file and share the library's `Kind`.
 
 [lock.sha256](lock.sha256) holds the sha256 of `Certificate/axioms.lock`, as
 [tests/model/lock.sha256](../tests/model/lock.sha256) does for the numerical harness. The
-model's CI job, once it is added ([below](#the-ci-job)), compares it with the lock:
+formal-model CI job ([below](#the-ci-job)) compares it with the lock:
 
 ```sh
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
@@ -235,12 +235,12 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 
 Then any change to an axiom, or to a word an axiom reaches, fails the job until someone
 has brought the model up to date: the translation, its checks, and the proofs in the plane
-of the laws that changed. Until the job is added, nothing runs this comparison. The
-round-trip checks tie each translated law to the declaration itself, more tightly than the
-hash can; the hash covers the laws the round trips do not yet reach. A law proposed for
-the foundations is proved here before it lands: `exists_centre`, proposed in issue #59, is
-already proved in the plane ([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)),
-and its round-trip check joins `Check/Hand.lean` in the change that declares it.
+of the laws that changed. The round-trip checks tie each translated law to the declaration
+itself, more tightly than the hash can; the hash covers the laws the round trips do not yet
+reach. A law proposed for the foundations is proved here before it lands: `exists_centre`,
+proposed in issue #59, is already proved in the plane
+([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)), and its round-trip check
+joins `Check/Hand.lean` in the change that declares it.
 
 ## What the proofs rest on
 
@@ -292,8 +292,10 @@ through it.
 
 ## The CI job
 
-The coordinator adds it, in the pull request that lands this package. What it should run,
-on `ubuntu-latest`, after checking out the repository and installing elan:
+The formal-model CI job is the job `formal-model` in
+[.github/workflows/ci.yml](../.github/workflows/ci.yml), not `model`, which is the
+numerical harness. On `ubuntu-latest`, after checking out the repository and installing
+elan, it runs:
 
 ```sh
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
@@ -307,9 +309,18 @@ trips), and fails if any check in them fails; there is nothing else to run. On t
 that built this package, from a fresh clone, `lake exe cache get` took about 65 seconds
 (cloning the pinned Mathlib and its dependencies, downloading 9,031 files, 452 MB, and
 unpacking them to 6.6 GB), and `lake build` 11 seconds, for this package and the library
-files `Check` reads. A runner should expect a few minutes in all. Caching
-`model/.lake/packages` between runs, keyed on `model/lake-manifest.json`, would save most
-of the download.
+files `Check` reads. A runner should expect a few minutes in all.
+
+Between runs the job caches two directories, keyed on `model/lake-manifest.json`:
+`model/.lake/packages`, which holds the pinned clones and the unpacked build, and
+`~/.cache/mathlib`, where `lake exe cache get` keeps what it downloads and looks before
+downloading again. After a restore, `lake exe cache get` downloads nothing and unpacks
+nothing. The job stops after 30 minutes, since without Mathlib's prebuilt files
+`lake build` would compile Mathlib from source for hours.
+
+It is not yet a required check: the ruleset on main requires `check`, `model` and
+`negative`, and making this one required is the owner's call
+([decisions](../docs/briefs/0002-decisions.md#18-october-2026), 18 October).
 
 ## Thanks
 
