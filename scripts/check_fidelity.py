@@ -11,7 +11,12 @@
    `native_decide` or `decide +native` (each adds an axiom Lean's kernel doesn't
    check), no `set_option debug.…`, and no `run_cmd`, `run_elab`, `elab`, `macro`,
    `implemented_by`, `extern` or `unsafe` under `Elements/`.
-5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
+5. Placement, Euclid's application of one figure to another (brief 0006): outside its
+   own files, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`, no
+   Lean under `Elements/` names `placement` or the `Placement` namespace but III.24's
+   file and `Elements/BookIII/Arcs.lean`, read from the source with its comments taken
+   out; and in 6, no entry but III.24 calls on one of them.
+6. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
    fields are in `Certificate/FIELDS.md`):
    - every axiom an entry rests on, other than Lean's own `propext`,
      `Classical.choice` and `Quot.sound`, is declared under `Elements.Foundations`,
@@ -29,7 +34,8 @@
    - for every entry, propositions, porisms and companions alike: none cites one that
      does not come before it; only I.4 and I.8 use superposition directly; none
      before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may);
+     after I.29, and may); only III.24 has placement, or a lemma of the `Placement`
+     namespace or of placement's files, among its shared steps;
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
    - the facts pinned in `tests/certificate_expectations.json` still hold;
@@ -87,6 +93,19 @@ FORBIDDEN = re.compile(
     r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bset_option\s+debug\.|"
     r"\b(run_cmd|run_elab|run_meta|elab|elab_rules|macro|macro_rules|implemented_by|"
     r"extern|unsafe)\b")
+# Placement (brief 0006, "Placement", the policy). `placement` carries the points on one
+# side of a straight line, and the line, onto those on one side of an equal straight line,
+# keeping every distance: Euclid's "let the segment AEB be applied to CFD" (III.24), with
+# no motion assumed beyond I.4 and I.8. The lemmas of its namespace carry the same content,
+# so the policy covers them all. Outside its own files, only III.24, which applies one
+# segment to another, and the bridge theorems of Arcs.lean may cite them: the source of no
+# other file under Elements/ names them, and no entry but III.24 calls on them.
+PLACEMENT_HOME = ("Elements/BookIII/Placement.lean", "Elements/BookIII/Placement/")
+PLACEMENT_CITERS = {"Elements/BookIII/Prop24.lean", "Elements/BookIII/Arcs.lean"}
+PLACEMENT_ENTRIES = {"III.24"}
+# `placement`, or the namespace `Placement`, as a whole name or a part of one
+# (`BookIII.placement`, `Placement.dist`), in the Lean with its comments taken out.
+PLACEMENT_NAME = re.compile(r"\b(placement|Placement)\b")
 
 errors: list[str] = []
 
@@ -178,6 +197,21 @@ def check_rules() -> None:
                      "round Lean's kernel or bring in an axiom unseen")
         if rel.startswith("Elements/Figure/") and re.search(r"^import Elements\.Book", src, re.M):
             fail(f"{rel}: Book Zero must not import a proposition")
+        if not rel.startswith(PLACEMENT_HOME) and rel not in PLACEMENT_CITERS:
+            for m in PLACEMENT_NAME.finditer(code):
+                line = code[: m.start()].count("\n") + 1
+                fail(f"{rel}:{line}: names `{m.group(0)}`, but outside placement's own files "
+                     "only III.24 and Elements/BookIII/Arcs.lean may cite placement or a "
+                     "lemma of the `Placement` namespace (brief 0006)")
+
+
+def placement_step(step: dict) -> bool:
+    """Is this shared step (facts.json, `shared_steps`) placement, a lemma of the
+    `Placement` namespace, or anything declared in placement's own files?"""
+    name, file = step.get("name", ""), step.get("file", "")
+    return (name == "BookIII.placement" or name.startswith(("BookIII.placement.",
+                                                            "BookIII.Placement."))
+            or file.startswith(PLACEMENT_HOME))
 
 
 # The words retired from the reader-facing pages ("Euclid cites", "never need" and their
@@ -434,6 +468,12 @@ def check_entries(facts, by_ref) -> None:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
             if bad:
                 fail(f"{ref}: rests on {', '.join(bad)} before {r.book}.{first}")
+        if ref not in PLACEMENT_ENTRIES:
+            for step in p.get("shared_steps", []):
+                if placement_step(step):
+                    fail(f"{ref}: calls on {step.get('name')} ({step.get('file')}), but only "
+                         "III.24 may call on placement or a lemma of the `Placement` "
+                         "namespace (brief 0006)")
 
     # A complete book stays complete: every proposition proved, with all it carries.
     for book in sorted(COMPLETE, key=heath.arabic):

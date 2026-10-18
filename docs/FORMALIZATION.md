@@ -330,6 +330,11 @@ dependencies.
   `set_option debug.…`, `run_cmd`, `run_elab`, `elab`, `macro`, `implemented_by`, `extern`
   or `unsafe` under `Elements/`.
 - **Superposition** only in I.4 and I.8.
+- **Placement,** Euclid's application of one figure to another, only in III.24 and the
+  bridge theorems of `Elements/BookIII/Arcs.lean` (brief 0006): outside its own files,
+  `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`, no other Lean names
+  `placement` or a lemma of the `Placement` namespace, and no entry but III.24 calls on
+  one.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
 - **No later citations:** no proof cites a proposition that does not come before it.
@@ -340,8 +345,10 @@ dependencies.
 `check_fidelity.py` enforces these for every certificate entry, porisms and companions
 included. `negative_tests.py` plants a break of these kinds to show each is caught: an
 axiom declared outside the foundations; an axiom missing from the lock, and one weakened;
-Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4 and I.8; a
-later citation, one of them named only in a helper's statement; a `native_decide`; a
+Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4 and I.8;
+placement among the shared steps of an entry other than III.24, and a lemma of its
+namespace named in another file; a later citation, one of them named only in a helper's
+statement; a `native_decide`; a
 `sorry` in a complete book; and a primitive word no longer opaque. The other forbidden
 commands, Book Zero's imports and a complete book's missing figure or mishnah have no
 planted break yet.

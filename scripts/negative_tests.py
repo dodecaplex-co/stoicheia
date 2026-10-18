@@ -11,8 +11,10 @@ records current; CI runs it on every push.
 3. Without a build, on a copy of `facts.json`: Postulate 1 weakened in the printed
    statements no longer matches the axiom lock; `Touches`, a word only Book III's
    statements use, given another meaning no longer matches it either; a changed
-   statement of III.1's porism makes III.1's review record stale; and `Centre`, no
-   longer among the opaque primitives (as if it had been made a `def`), is caught.
+   statement of III.1's porism makes III.1's review record stale; `Centre`, no
+   longer among the opaque primitives (as if it had been made a `def`), is caught; and
+   placement among III.26's shared steps is caught, while III.24, given it too, is not
+   blamed.
 4. A changed Lean file makes its review record stale (I.1).
 5. III.16's review record without its unformalized passage leaves a run of `--` lines
    with no Lean beneath it undeclared.
@@ -20,7 +22,10 @@ records current; CI runs it on every push.
    first with no Lean of its own: a remark ends a run and carries nothing. A second
    remark, between the next sentence and its Lean, does not stop that Lean carrying it.
 7. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
-8. One build with planted assumptions, the certificate recomputed:
+8. A lemma of the `Placement` namespace named in Book III's shared steps
+   (`Squares.lean`), outside placement's own files, III.24's and `Arcs.lean`, read from
+   the source, is caught; the word in a comment there is not.
+9. One build with planted assumptions, the certificate recomputed:
    - in I.16, Postulate 5, a planted Euclidean-only rule (`Tacit.Euclidean.planted`)
      and an axiom declared in I.16's own file after a docstring on the same line:
      each is caught, so are the count of Euclid's assumptions and the two planted
@@ -159,6 +164,22 @@ def primitive_not_opaque() -> None:
                    "Centre: no longer an opaque primitive")
 
 
+def placement_called() -> None:
+    """Placement among the shared steps of III.26, on a copy of facts.json, is caught; III.24,
+    the one entry that may call on it, is given the same step and is not blamed."""
+    step = {"name": "BookIII.placement", "brings_in": ["I.7"],
+            "file": "Elements/BookIII/Placement.lean", "line": 1}
+
+    def change(facts):
+        for ref in ("III.24", "III.26"):
+            steps = entry(facts, ref)["shared_steps"]
+            if not any(s.get("name") == step["name"] for s in steps):
+                steps.append(dict(step))
+    expect_failure("placement among III.26's shared steps in facts.json", with_facts(change),
+                   "III.26: calls on BookIII.placement",
+                   unwanted=("III.24: calls on",))
+
+
 def native_decide() -> None:
     rel = "Elements/BookI/Prop16.lean"
     saved = replace_once(rel, "\nend Elements.BookI", "\n/-- Planted by scripts/negative_tests.py. "
@@ -167,6 +188,26 @@ def native_decide() -> None:
     try:
         expect_failure("a native_decide in I.16's file", fidelity(),
                        f"{rel}: uses native_decide")
+    finally:
+        (ROOT / rel).write_text(saved)
+
+
+def placement_named() -> None:
+    """A lemma of the `Placement` namespace named in Squares.lean, Book III's shared steps,
+    read from the source: caught on its line. The word in a comment on the line before
+    cites nothing, and is not caught."""
+    rel = "Elements/BookIII/Squares.lean"
+    marker = "\nend Elements\n"
+    saved = replace_once(rel, marker,
+                         "\n-- The word placement, in a comment, cites nothing.\n"
+                         "/-- Planted by scripts/negative_tests.py. -/\n"
+                         "theorem planted_placement : True := (fun _ => trivial) @Placement.dist\n"
+                         + marker)
+    before = saved[:saved.index(marker)].count("\n") + 1
+    try:
+        expect_failure("a lemma of placement named in Squares.lean", fidelity(),
+                       f"{rel}:{before + 3}: names `Placement`",
+                       unwanted=(f"{rel}:{before + 1}:",))
     finally:
         (ROOT / rel).write_text(saved)
 
@@ -333,10 +374,12 @@ def main() -> int:
     changed_word()
     stale_statement()
     primitive_not_opaque()
+    placement_called()
     stale_lean()
     undeclared_run()
     remark_ends_run()
     native_decide()
+    placement_named()
     planted_assumptions()
     if failures:
         print(f"{len(failures)} change(s) went unnoticed:")
