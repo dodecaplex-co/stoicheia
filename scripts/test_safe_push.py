@@ -66,9 +66,10 @@ one commit and runs safe_push.py against that origin:
   and hyperbolic.py and the model's account lands as content, and the model's ties hold
   on it; while a law loosened beside it, a helper or tolerance of the harness changed, a
   line of laws.toml moved without its axiom, a new law's code that reaches outside
-  itself or changes a shared container under a second name, or laws.toml or the lock
-  deleted, is a check change, kept apart; and an axiom restated or removed with its law
-  lands as content too;
+  itself, prints or ends the run, or changes a shared container under a second name, or
+  laws.toml or the lock deleted, is a check change, kept apart; an axiom restated or
+  removed with its law lands as content too; and a harness of the model that stops
+  before its last line, with status 0, fails the model's run;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
