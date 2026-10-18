@@ -7,12 +7,17 @@ fingerprint = "sha256:c4fcfbf85a2ca03d"
 kind = "euclid"
 
 [[passage]]
+at = "I say that BD is in a straight line with CB"
+kind = "given"
+note = "The statement gives the goal; the note under the sentence says how our Lean puts it."
+
+[[passage]]
 at = "Similarly we can prove that neither is any other straight line"
 kind = "grouped"
 note = "No second argument is needed: E was any point on CB produced, and the one argument already puts D on CB produced, beyond B."
 
 [review]
 stage = "exceptions"
-commit = "2a34715"
+commit = "8a014a8"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:2cfa682b9005c5d9"
