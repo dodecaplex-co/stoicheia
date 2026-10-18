@@ -120,8 +120,9 @@ lake build Elements.BookII.PropNN
 lake env lean Certificate/Facts.lean && python3 scripts/check_fidelity.py
 rsvg-convert -w 800 figures/II/NN.svg -o "${TMPDIR:-/tmp}/figNN.png"   # then look at it
 ```
-Then STYLE §6, with `$HEATH_OCR` at
-`/private/tmp/claude-501/-Users-johnchallis/68e6b57d-6355-42a6-8303-c463406f082f/scratchpad/heath-src/heathV1.ocr.txt`
+Then STYLE §6, with `$HEATH_OCR` at the OCR text of Heath's volume 1, the Internet
+Archive scan `thirteenbookseu02heibgoog`, saved as `heath-src/heathV1.ocr.txt` in the
+captain's session scratchpad, outside the repository
 (Book II is pp. 370–410 of the same volume; page N is scan leaf N + 20). No
 `lake update` or `lake clean`. The generated pages are rendered after the merge, so
 CI's "generated pages up to date" step fails on your branch until then; that is

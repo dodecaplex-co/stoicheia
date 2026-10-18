@@ -30,15 +30,19 @@ coordinator of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
   I.15, the tacit rules, the primitive words and magnitudes, the definitions of each book,
   the phrases), and `Certificate/axioms.lock`.
 - **Weakening the checks:** weakening, skipping or removing a check, an expected value, a
-  lock or a schema (in `scripts/check_fidelity.py`, `scripts/negative_tests.py`,
-  `scripts/check_style.py`, `scripts/check_links.py`, `scripts/safe_push.py`, `tests/` or
-  the CI workflow). None is
-  ever loosened to let a change through. Adding or strengthening a check is ordinary work,
-  done by the owner the orders name, with a regression test where a guard defect is fixed
-  ([WORKFLOW.md](WORKFLOW.md), section 8).
+  lock or a schema, anywhere in the check inputs and protected paths that
+  [WORKFLOW.md](WORKFLOW.md), section 10, "Landing work: pull requests", lists (their one
+  home). None is ever loosened to let a change through. Adding or strengthening a check is
+  ordinary work, done by the owner the orders name, with a regression test where a guard
+  defect is fixed ([WORKFLOW.md](WORKFLOW.md), section 8). Either way a change to a
+  protected path ([WORKFLOW.md](WORKFLOW.md), section 10, "Protected paths") is named file
+  by file in a decisions entry and given a security review before it is merged; a check
+  change is a pull request of its own ([WORKFLOW.md](WORKFLOW.md), section 10, "Landing
+  work: pull requests").
 - **Publishing:** tags, releases and their notes, the GitHub description, and anything
-  sent outside the repository. Pushing to main is delegated to the coordinator, through
-  `scripts/safe_push.py` alone ([WORKFLOW.md](WORKFLOW.md), section 10).
+  sent outside the repository. Landing work on main is delegated to the coordinator: a
+  pull request, opened and merged with a merge commit through `scripts/safe_push.py`
+  alone ([WORKFLOW.md](WORKFLOW.md), section 10, "Landing work: pull requests").
 
 Within an authorized assignment, the coordinator makes the routine decisions delegated to
 that role ([WORKFLOW.md](WORKFLOW.md)).

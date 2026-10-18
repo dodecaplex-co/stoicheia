@@ -78,8 +78,8 @@ theorem Prop6 {A B C : Point} (hABC : Triangle A B C) (h : ∠ A B C = ∠ A C B
     have hAC_BA : ‖A C‖ < ‖B A‖ := by rw [len_symm B A]; exact hAC_AB
     obtain ⟨D, hBDA, hBD⟩ := Prop3 (A := B) (B := A) hABC.ne₁₃ hAC_BA
     -- let DC be joined.
-    /- Lean needs only the points D and C; the straight line DC is drawn for
-       the eye. -/
+    /- Our proof uses only the points D and C; the straight line DC is drawn
+       for the eye. -/
     -- Then, since DB is equal to AC,
     have hDB : ‖D B‖ = ‖A C‖ := (len_symm D B).trans hBD
     -- and BC is common,
