@@ -16,7 +16,7 @@ On each page, the notes under "How the Lean follows the text" open with a plain 
 
 ## Book I
 
-**All 48 propositions proved in Lean**: 46 as Euclid states them and 2 for a restricted statement ([I.40](book/I/40.md), [I.45](book/I/45.md)). 46 proofs follow Euclid's argument and 2 follow it with one step changed ([I.39](book/I/39.md), [I.40](book/I/40.md)); each page says how. In [I.23](book/I/23.md) one of our tacit rules already contains the proposition, and our proof rests on it, so the proof retraces Euclid's argument within our rules and does not establish the rule. In [I.7](book/I/07.md) one of our tacit rules contains the proposition too, but our proof never uses that rule. [The overlap catalogue](docs/reports/overlaps.md) gives each.
+**All 48 propositions proved in Lean**: 46 as Euclid states them and 2 for a restricted statement ([I.40](book/I/40.md), [I.45](book/I/45.md)). 46 proofs follow Euclid's argument and 2 follow it with one step changed ([I.39](book/I/39.md), [I.40](book/I/40.md)); each page says how. In [I.23](book/I/23.md) one of our tacit rules already contains the proposition, and our proof rests on it, so the proof retraces Euclid's argument within our rules and does not establish the rule. In [I.2](book/I/02.md), [I.3](book/I/03.md) and [I.7](book/I/07.md) our tacit rules contain the propositions too, but our proofs never use those rules. [The overlap catalogue](docs/reports/overlaps.md) gives each.
 
 What the proofs show:
 
