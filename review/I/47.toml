@@ -18,7 +18,7 @@ note = "The three squares are given in the statement, standing outward from the 
 [[passage]]
 at = "and let AD, FC be joined"
 kind = "given"
-note = "The triangles ABD and FBC, to which I.4 is applied below, are named by their corners, so no straight lines AD and FC are drawn."
+note = "The triangles ABD and FBC, which I.4 takes below, are named by their corners, so the join needs no Lean here; `Prop47.within` draws AD and FC later, to place C and A within the angles at B."
 
 [[passage]]
 at = "let the angle ABC be added to each"
