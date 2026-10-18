@@ -152,7 +152,7 @@ B and F, the ends of the diameter of the semicircle BHF, within the circle, so t
 produced meets it at H, a step Euclid takes without saying why
 ([gaps in Book II](gaps-book-II.md#ii14)). G, the centre, falls between B and E, so E lies
 between the centre and F, and Book Zero's `InsideCircle.of_between_centre` puts it within,
-by Definition 15 and the rules that relate "within" to the radius, with no proposition.
+by Definition I.15 and the rules that relate "within" to the radius, with no proposition.
 
 The later proofs that called Circle 2 take the step in one of three ways. Where both ends
 are on the circle, III.2's own case, they cite III.2: III.10, III.15, III.21, III.22,
@@ -322,7 +322,7 @@ piece of work, with its dependencies audited. It would need a check that no proo
 by any path, on a rule containing its own conclusion; a ban on citing later propositions
 by name cannot see that, as Astra observes. Two small steps are taken here. Diagram-angle
 3 is a theorem of the other rules, which I.13 gives back. And III.2 rests on neither rule
-that contains it: our proofs take its step by III.2, its corollaries or Definition 15, and
+that contains it: our proofs take its step by III.2, its corollaries or Definition I.15, and
 for a circle with a centre `Prop2.within` proves Circle 2 from the other rules. Lean's
 certificate shows that no entry rests on Circle 2 or Circle 3; no check yet keeps it so.
 
