@@ -18,7 +18,12 @@ Each statement carries `sorry` and two checks (checked by Lean):
 
 So, given the rule, each new statement says exactly what today's says. A statement that
 names its centre and uses it (III.3, III.7, III.14 and nine more) is not here: it keeps
-`Centre E α`, and does not change. The names sit in `Elements.BookIII.Staging.Centre` and
+`Centre E α`, and does not change.
+
+Three new lemmas, proposed with the brief for Lean users, are proved here: III.13's two
+clauses, each with only the two circles it speaks of (`Prop13.internally`,
+`Prop13.externally`), and `Centre.every`, which turns a fact about a named centre into the
+condition said of every centre that III.4 and III.8 ask for. The names sit in `Elements.BookIII.Staging.Centre` and
 `Elements.Staging.Centre`, apart from brief 0006's staged III.24 and III.25. When the
 restated statements are proved they replace today's, and this file is deleted.
 -/
@@ -118,6 +123,26 @@ theorem Prop13 {A B C D : Point} {ABDC EBFD ACK : Circle} :
 example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) : type_of% @Centre.Prop13 :=
   Elements.BookIII.Prop13 (exists_centre _) (exists_centre _) (exists_centre _)
 example : type_of% @Elements.BookIII.Prop13 := fun _ _ _ => Centre.Prop13
+
+/-- **III.13 for circles touching within**, with only the two circles it speaks of: circles
+touching within, either inside the other, have no common point but the point of contact. A
+lemma beside III.13, its first clause alone; it rests on whatever III.13 rests on. Without
+it, a citer of that clause names III.13's third circle, which the clause never mentions. -/
+theorem Prop13.internally {B D : Point} {α β : Circle}
+    (h : TouchesInternally α β D ∨ TouchesInternally β α D) (hBα : OnCircle B α)
+    (hBβ : OnCircle B β) : B = D :=
+  (Prop13 (A := D) (C := D) (ACK := α)).1 h hBα hBβ
+
+/-- **III.13 for circles touching without**, with only the two circles it speaks of: they
+have no common point but the point of contact. A lemma beside III.13, its second clause
+alone; it rests on whatever III.13 rests on. -/
+theorem Prop13.externally {A C : Point} {α β : Circle} (h : TouchesExternally α β A)
+    (hCα : OnCircle C α) (hCβ : OnCircle C β) : C = A :=
+  (Prop13 (B := A) (D := A) (EBFD := β)).2 h hCα hCβ
+
+/-- The check that the two lemmas give III.13 back (checked by Lean). -/
+example : type_of% @Centre.Prop13 := fun {_ _ _ _ _ _ _} =>
+  ⟨fun h hB₁ hB₂ => Prop13.internally h hB₁ hB₂, fun h hC₁ hC₂ => Prop13.externally h hC₁ hC₂⟩
 
 /-- From a given point to draw a straight line touching a given circle. -/
 theorem Prop17 {A : Point} {BCD : Circle} (hA : OutsideCircle A BCD) :
@@ -362,5 +387,24 @@ example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) :
   let ⟨_, hP, _⟩ := exists_point_on_circle α []
   Elements.EqualCircles.refl hG hP
 example : type_of% @Elements.EqualCircles.refl := fun _ _ => Centre.EqualCircles.refl _
+
+/-! ## Book Zero: what holds of one centre holds of every centre -/
+
+/-- What is true of one centre of a circle is true of every centre, since a circle has only
+one (`centre_unique`, Generalities 2). For a condition said of every centre, as III.4's
+"not through the centre" and III.8's "through the centre" are: a citer who has named the
+centre O passes `hO.every h`, with `h` the condition at O. -/
+theorem _root_.Elements.Centre.every {O : Point} {α : Circle} {p : Point → Prop}
+    (hO : Centre O α) (h : p O) : ∀ F : Point, Centre F α → p F :=
+  fun _ hF => centre_unique hO hF ▸ h
+
+/-- The check that it serves III.4 as stated, for a citer holding a named centre O (checked
+by Lean). -/
+example {A B C D E O : Point} {ABCD : Circle} (hO : Centre O ABCD) (hA : OnCircle A ABCD)
+    (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hD : OnCircle D ABCD)
+    (hAEC : Between A E C) (hBED : Between B E D) (hB_AC : ¬ Collinear A C B)
+    (hAC : ¬ Collinear A C O) (hBD : ¬ Collinear B D O) :
+    ¬ (‖A E‖ = ‖E C‖ ∧ ‖B E‖ = ‖E D‖) :=
+  BookIII.Staging.Centre.Prop4 hA hB hC hD hAEC hBED hB_AC (hO.every hAC) (hO.every hBD)
 
 end Elements.Staging.Centre
