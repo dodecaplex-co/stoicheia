@@ -14,12 +14,14 @@ page disagree, the disagreement is recorded and reconciled
 *Approved and frozen 18 October 2026. After the challenge, the coordinator answered the
 open questions on [issue #53](https://github.com/jackChallis/stoicheia/issues/53) and
 approved the brief. A review of the branch before freezing found gaps in this brief and in
-two docstrings, none in the statements: III.17's section gains its Construction and
+three docstrings, none in the statements: III.17's section gains its Construction and
 Representation items; `Prop17.inside` becomes a lemma rather than a companion (question 1,
-revised after that review); `Prop8.general`'s docstring reads back only what the Lean
-claims; the shared step `Touches.contact` is staged; and the open questions are marked
-answered. No statement of III.7, III.8 or III.17 changes. The appendix's second table lists
-what was done.*
+whose answer the coordinator revised after that review); `Prop8.general`'s docstring reads
+back only what the Lean claims, and the docstrings of `Prop7.partner` and `Prop8.partner`
+are shortened; the shared step `Touches.contact` is staged; and the open questions are
+marked answered. No statement of III.7, III.8 or III.17 changes. The appendix's second
+table lists what was done, and a note after it the editorial corrections made to the
+frozen text before it landed.*
 
 The readings are Astra's. Asked what a full statement would say for each of the five
 records that stages 2 to 4 leave short of full, Astra answered on
@@ -49,8 +51,8 @@ through the existing angle construction, triangle congruence, the perpendicular
 construction and III.16's proved porism. These are proposed routes, as Astra says, not yet
 a result checked by the kernel; the order of proof work below says what happens if a step
 needs a fact the axioms lack. The lock's `[axioms]` table stays at 87, and its
-`[vocabulary]` does not grow: the statements use only words already there (`Touches`, `OppositeSidesOf`,
-`Collinear`, `OutsideCircle`, `InsideCircle`, the angle and the length).
+`[vocabulary]` does not grow: the statements use only words already there (`Touches`,
+`OppositeSidesOf`, `Collinear`, `OutsideCircle`, `InsideCircle`, the angle and the length).
 
 ## Conventions
 
@@ -67,8 +69,7 @@ is the one making the less angle, at the point, with the ray through the centre:
 FA in III.7, the ray DA in III.8. Our angle `∠ A F B` is that angle, unsigned and less
 than two right angles for the points the comparison takes. It is not the distance from the
 centre, and not the angle with an undirected straight line: an obtuse angle with FA is not
-exchanged for its acute supplement. Astra
-asked for exactly this reading.
+exchanged for its acute supplement. Astra asked for exactly this reading.
 
 **The comparisons leave the diameter's own points to their own clauses.** The ends of the
 diameter are the greatest and the least, which separate clauses state. The comparison "of
@@ -267,7 +268,7 @@ theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
   a point X such that the straight line AX touches the circle: it meets the circle and does
   not cut it. A may be outside the circle, and then the point of contact is another point; or
   on it, and then the point of contact is A itself; the proof draws AX at right angles to the
-  radius EA [I. 11], and it touches by III.16's porism. `Prop17.inside`: from a point within
+  radius EA (I.11), and it touches by III.16's porism. `Prop17.inside`: from a point within
   the circle, no point X makes the straight line AX touch it. Together they say that, for a
   circle with a centre, not being within the circle is exactly the condition for the problem
   to have a solution. Today's III.17 follows from `Prop17.general` (checked by Lean).
@@ -301,18 +302,19 @@ theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
 - **Construction** (FORMALIZATION, section 4). Given: the circle BCD with a centre (`hBCD`),
   and the point A not within it (`hA`). Operations: for A outside, Euclid's: the centre E
   [III. 1]; the circle AFG with centre E and distance EA (Postulate 3); DF drawn at right
-  angles to EA from D, where EA meets BCD [I. 11]; EF and AB joined (Postulate 1), B being
-  where EF meets BCD. For A on the circle: the straight line at right angles to the radius
-  EA at A [I. 11]. Returned: a point X, which names with A the straight line AX. For A
-  outside the proof returns the point of contact B; for A on the circle, a point of the
-  perpendicular other than A, the point of contact being A itself. The point of contact is
-  not returned beside X: it sits inside `Touches`, and `Touches.contact` reads it off.
-  Shown: AX touches the circle (`Touches A X BCD`). For A outside, the triangles DEF and BEA
-  are equal [I. 4], so the angle EBA is right, and a straight line at right angles to a
-  radius at its end touches [III. 16, Por.]; for A on the circle, the same porism at A.
-  `Prop17.inside` constructs nothing: it shows that no solution exists from a point within.
+  angles to EA from D, where EA meets BCD (Heath gives no reference here: it is I.11); EF
+  and AB joined (Postulate 1), B being where EF meets BCD. For A on the circle: the
+  straight line at right angles to the radius EA at A (I.11). Returned: a point X, which
+  names with A the straight line AX. For A outside the proof returns the point of contact
+  B; for A on the circle, a point of the perpendicular other than A, the point of contact
+  being A itself. The point of contact is not returned beside X: it sits inside `Touches`,
+  and `Touches.contact` reads it off. Shown: AX touches the circle (`Touches A X BCD`). For
+  A outside, the triangles DEF and BEA are equal [I. 4], so the angle EBA is right, and a
+  straight line at right angles to a radius at its end touches [III. 16, Por.]; for A on
+  the circle, the same porism at A. `Prop17.inside` constructs nothing: it shows that no
+  solution exists from a point within.
 - **Route.** For A outside, today's III.17. For A on the circle, as Heath and Astra say: E
-  the given centre is not A; the straight line AX drawn at right angles to EA at A [I. 11]
+  the given centre is not A; the straight line AX drawn at right angles to EA at A (I.11)
   touches the circle [III. 16, Por.]. The case on the circle is Heath's (vol. 2, p. 44), not
   Euclid's construction, and the record's route says so. `Prop17.inside` is Book Zero's
   `Touches.not_inside`, applied at A itself: a straight line through a point within a circle
@@ -354,8 +356,7 @@ companions move:
 - `review/III/07.toml`, `review/III/08.toml`, `review/III/17.toml`: the Lean file changes,
   the companions are listed ("III.17 general" alone for III.17), and the scope goes from
   `restricted` to `full`, with the representation notes above; III.8's route stays
-  `modified`. Each is read again by a
-  reviewer, and stamped by no one who did not review it.
+  `modified`. Each is read again by a reviewer, and stamped by no one who did not review it.
 - The prose that says these statements are restricted: `mishnah/III/17.md` ("Euclid's
   construction needs A outside the circle, and our statement asks for it"),
   `mishnah/intro/III.md` ("Five statements are restricted …"), `mishnah/III/07.md` and
@@ -377,52 +378,57 @@ companions move:
 
 The coordinator answered questions 1, 2, 3 and 5 on
 [issue #53](https://github.com/jackChallis/stoicheia/issues/53), after the challenge, and
-approved the brief. Question 1's answer was revised after the review before freezing, as
-it says. Each question is kept as it was asked, with its answer.
+approved the brief. After the review before freezing, the coordinator revised the answer
+to question 1; the answer below gives the reason. Each question is kept exactly as it was
+asked of the coordinator, at `365d8a0`, with its answer after it.
 
 1. **`Prop17.inside`, a companion or a sentence?** It makes "not within" visibly the
    condition for a solution, as Astra asked, and costs one line of proof. It is not a clause
    of Euclid's enunciation, and III.17 is full without it: it is a remark about when the
-   problem can be solved, not a generalization of a clause. "Exactly the condition" holds
-   for a circle with a centre, which `Prop17.general` asks for and `Prop17.inside` does not.
-   The recommendation was to keep it as a companion.
+   problem can be solved, not a generalization of a clause, and it is listed as a companion
+   so that the condition appears on the page with a certificate. "Exactly the condition"
+   holds for a circle with a centre, which `Prop17.general` asks for and `Prop17.inside`
+   does not. The recommendation is to keep it as a companion; if the owner prefers, it
+   becomes a sentence of the record and the page.
    **Answered: a lemma, stated in Lean, beside the proposition.** The coordinator first
    answered on #53 that it stays a companion. The review before freezing pointed out that
    [FORMALIZATION.md](../FORMALIZATION.md), section 2, makes a companion the general result
    beside a narrower `PropN`, and `Prop17.inside` generalizes no clause: to list it would
-   widen what a companion is, without a decision to do so. So it stays in Lean as a plain
-   lemma, `Prop17.inside`, after `theorem Prop17`, with no entry in
-   `Elements/Companions.lean`, no certificate entry and no place in the record's
-   `companions`. The record and the page state "not within the circle" as the condition for
-   a solution, and cite the lemma.
+   widen what a companion is, without a decision to do so. So the coordinator revised the
+   answer. `Prop17.inside` stays in Lean as a plain lemma, after `theorem Prop17`, with no
+   entry in `Elements/Companions.lean`, no certificate entry and no place in the record's
+   `companions`; and, as the question's second choice offered, the record and the page state
+   "not within the circle" as the condition for a solution, and cite the lemma.
 2. **The tangent convention, in words or in Lean?** It is stated in words. A small statement,
    `Prop8.tangent`, that a point of contact of a straight line touching from D has no point of
    the circle before it or beyond it, would check the convention, at the cost of one more
-   entry. The recommendation was words.
+   entry. The classes' own hypotheses already exclude such a point, so the recommendation is
+   words.
    **Answered: in words,** in the staged file, the record and the page; no `Prop8.tangent`.
    The Lean claims nothing of a point of contact except in the partner clause, so nothing is
-   overclaimed. That the classes' hypotheses exclude a point of contact holds in the
-   standard model, and is not stated in Lean; `Prop8.general`'s docstring now says so.
+   overclaimed. The question's reason claims more than the Lean does: that the classes'
+   hypotheses exclude a point of contact holds in the standard model, and is not stated in
+   Lean; `Prop8.general`'s docstring now says so.
 3. **The partner's angle, by I.4 or I.8?** Euclid's step is I.4, after his construction, and
    Heath and Astra describe the route that way; I.8 on three equal sides gives the angle at
-   once. The steps are not under Heath's sentences, so either is honest. The recommendation
-   was I.4, following the page.
+   once. The steps are not under Heath's sentences, so either is honest. The recommendation is
+   I.4, following the page, and I.8 if the construction proves awkward, labelled in the Lean.
    **Answered: by I.4, as on Euclid's page,** for both `Prop7.partner` and `Prop8.partner`.
    The shorter way by I.8, mentioned under each Route, is not the plan; a proof that took it
    would label the departure.
 4. **III.16 and III.31** are outside this brief: their mixed angles wait for the prototype the
-   owner asked for, on Astra's reading of local containment near the vertex. Not a question
-   for this brief's approval.
-5. **A lemma for the point of contact?** `Touches.contact (h : Touches A X α) : ∃ B,
-   OnCircle B α ∧ Collinear A X B`, so that a citer of `Prop17.general` (III.37 re-proved
-   against it, say) reads the point of contact off in one step. Asked of the foundations'
-   owner, and not part of this brief's statements.
+   owner asked for, on Astra's reading of local containment near the vertex.
+   **No answer needed:** it is not a question for this brief's approval.
+5. **A lemma for the point of contact?** The coordinator could add to Book Zero
+   `Touches.contact (h : Touches A X α) : ∃ B, OnCircle B α ∧ Collinear A X B`, so that a
+   citer of `Prop17.general` (III.37 re-proved against it, say) reads the point of contact
+   off in one step. It is a request to the foundations' owner, not part of this brief's
+   statements, and nothing here waits for it.
    **Answered: added to the shared steps.** Its statement is staged with `sorry` in
    `Staging/Stage4b/Contact.lean`. It cites no proposition, so its home is Book Zero,
    `Elements/Figure/OnCircles.lean`, beside `Touches.not_inside`, and its proof falls to the
    owner of Book Zero named in the wave's orders. Book Zero is not the foundations
    (`Elements/Foundations/`), so the question's "foundations' owner" is corrected here.
-   Nothing in this brief waits for it.
 
 ## Appendix: the challenges, and what was done
 
@@ -443,11 +449,11 @@ two optional proposals in the last rows, which are answered.
 | `Prop17.inside`'s docstring gave the reason ("meets the circle at two points"), not the claim | Now the claim, with its reason by `Touches.not_inside` |
 | `Prop8.partner`'s docstring gave only the angle's route, not the class's | The class's route added: the far (near) meeting's own partner on the ray DB, and the order of lengths on the ray |
 | `Prop8.general`'s "for it has no point of the circle before it or beyond it" is an unchecked claim | Marked as the convention read from "drawn through", resting on the classes' hypotheses; the module doc and the brief say the step from Definition III.2 is not stated in Lean (open question 2) |
-| `Prop17.general`'s docstring and plain words credit it with the perpendicular at A, which is III.18 | Reworded as the route: the proof draws AX at right angles to EA [I. 11], and it touches by III.16's porism; the statement claims only the touching |
+| `Prop17.general`'s docstring and plain words credit it with the perpendicular at A, which is III.18 | Reworded as the route: the proof draws AX at right angles to EA (I.11), and it touches by III.16's porism; the statement claims only the touching |
 | `Prop17.general`'s docstring cited "[III. 17]" inside III.17's own companion | "Today's `Prop17`" |
 | The case of A on the circle not labelled as Heath's | Said in the docstring and the Route: Heath's (vol. 2, p. 44), not Euclid's construction, and the record's route says so |
 | "Exactly the condition" holds only for a circle with a centre | Qualified in the module doc, `Prop17.inside`'s docstring, the plain words and open question 1 |
-| `Prop17.inside` is a remark about solvability, not a generalization of a clause | Kept as a companion at the time; revised before freezing to a lemma (question 1, and the second table) |
+| `Prop17.inside` is a remark about solvability, not a generalization of a clause | Kept as a companion at the time; the coordinator revised the answer to a lemma before freezing (question 1, and the second table) |
 | The point of contact now sits inside `Touches`, costing every citer the unpacking | The statement kept; the cost stated under "The form of the conclusion"; `Touches.contact` proposed to the coordinator as question 5, and now staged |
 | Optional: strengthen `Prop7.partner` to an iff, `‖F H‖ = ‖F G‖ ↔ ∠ A F H = ∠ A F G` | Answered, not applied: the companion needs only the forward direction, the reverse is no clause of Euclid's and would add a ray-meets-circle step to the proof; the Cases now say it is not stated |
 
@@ -462,13 +468,21 @@ the docstrings, and each was applied or answered.
 | Finding | Done |
 |---|---|
 | III.17 is a problem, but its section had no Construction item and no Representation notes (templates, form 1; FORMALIZATION, section 4); "Records made stale" promised notes that were not there, and the `centre-given` tag was not named | Both items added to III.17's section; the tag named there and in III.7's and III.8's notes |
-| `Prop17.inside` generalizes no clause, yet was listed as a companion (FORMALIZATION, section 2) | Now a lemma beside III.17: no companion entry, no certificate entry; the record and the page state "not within" as the condition (question 1) |
+| `Prop17.inside` generalizes no clause, yet was listed as a companion (FORMALIZATION, section 2) | The coordinator revised the answer to question 1: now a lemma beside III.17, with no companion entry and no certificate entry; the record and the page state "not within" as the condition |
 | Staging was scoped to "a stage of brief 0005", and stage 4b is brief 0007's | Raised with the owner of WORKFLOW and FORMALIZATION, whose amendment (WORKFLOW, section 2, "or of a later brief") this brief relies on |
 | `Prop8.general`'s docstring said the comparisons "do not take" a point of contact, which the Lean does not state | The docstring now says the comparisons speak only of points with a point of the circle before or beyond them, and that a point of contact has neither is not stated |
-| The brief was not frozen: the coordinator's answers on #53 and the approval were not recorded | The header and a dated note record the approval and the freeze; the questions are marked answered, question 5 aligned with "shared steps" |
+| The brief was not frozen: the coordinator's answers on #53 and the approval were not recorded | The header and a dated note record the approval and the freeze; the questions are marked answered, question 5's answer aligned with "shared steps" |
 | The header still said the brief "now goes to readers"; the Conventions and Homes restated rules whose home is FORMALIZATION, sections 2 and 6 | Header updated; both paragraphs now link to their home |
 | The appendix said the challenges were made "on issue #53", where only the owner's summary is | Says where they were made |
 | Long lines in `Prop08.lean`, `Prop17.lean` and this brief, left by the challenge edits | Rewrapped at 100 characters, prose and docstrings |
-| The helper docstrings of `Prop7.partner` and `Prop8.partner` ran to four sentences, used "far (near)", and mixed "[I. 23]" with "by I.4" (STYLE, sections 1 and 4) | Two sentences each; the two cases of the class written out; "I.23" and "I.4" in one form, as in `Prop17.general` and the module docs |
+| The helper docstrings of `Prop7.partner` and `Prop8.partner` ran to four sentences, used "far (near)", and mixed "[I. 23]" with "by I.4" (STYLE, sections 1 and 4) | Cut to the setting, the claim and the route: two sentences for `Prop7.partner`, three for `Prop8.partner`; the two cases of the class written out; "I.23" and "I.4" in one form, as in `Prop17.general` and the module docs |
 | The convex and concave existentials repeat six times in `Prop08.lean` | Answered, not applied: the vocabulary is frozen, and a new word would be a foundations decision; the reviewer accepted it on that ground |
-| The tangent convention is stated in words only | Accepted, as the reviewer advised: the class hypotheses exclude a point of contact in the standard model, and the Lean claims nothing of it (question 2) |
+| The tangent convention is stated in words only | Accepted, as the reviewer advised: the class hypotheses exclude a point of contact in the standard model, and the Lean claims nothing of it except in the partner clause (question 2) |
+
+After the freeze, a check of this brief at `4747488`, before it landed, found six editorial
+slips, each corrected here. The open questions are restored exactly as they were asked, each
+with its answer after it, and the coordinator is named as the one who revised question 1's
+answer. The III.17 section writes I.11 as our reference, not in Heath's bracket form, since
+Heath's text gives none for the perpendicular. The dated note and the second table count
+the docstrings and their sentences correctly, the table's last row agrees with question 2's
+answer, and three paragraphs are rewrapped. No statement changed, and no answer's substance.
