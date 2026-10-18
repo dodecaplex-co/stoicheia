@@ -9,6 +9,6 @@ kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "9da1b6d"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:fec349a6407fd3c6"

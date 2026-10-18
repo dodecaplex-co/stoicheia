@@ -23,6 +23,6 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "9da1b6d"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:496640ba4c29abb0"
