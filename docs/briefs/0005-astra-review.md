@@ -342,7 +342,7 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 - `Elements/Figure/Sums.lean`, plain Lean: `Magnitude.sum` over lists, `sum_append`, `sum_singleton`, `InOrder`, `segments`, `endOf`, `InOrder.between_end`.
 - Brief 0006 (statements of every companion and of the Book III restatements).
 - The certificate and render support for companions.
-- A policy check that only III.24 and `Arcs.lean` may cite `placement`. It matches the `Placement.*` names, since placement is split across several files (revised 18 October; stage 3).
+- A policy check that only III.24, `Arcs.lean` and the placement files themselves (`Placement.lean` and its case files, whose assembly cites the `Placement.*` names) may cite `placement`. It matches the `Placement.*` names, since placement is split across several files (revised 18 October; stage 3).
 
 **Stage 2: Books I and II**
 
@@ -408,7 +408,7 @@ Corrections to the design:
 - **The statement is strengthened.** The side clause becomes `SameSideOf P E A B ↔ SameSideOf (f P) F C D`, and `Between A P B ↔ Between C (f P) D` is added.
 - **The verification line is restated** (Verification, below). Placement's transitive axioms will include superposition, since every distance fact rests on I.4 and I.8.
 - **The I.20 degeneracy lemma** (three points lie on one straight line exactly when one of I.20's three inequalities is an equality) goes in a new Book I file, `Elements/BookI/HelpersTriangles.lean`, after I.20 and citing nothing later. FORMALIZATION, section 6, puts a shared step that cites a proposition at or after it, and `Elements/BookI/Helpers.lean` comes before I.20: I.7 imports it. The lemma's owner is step 2's task, below. Stage 4's `Prop15.le_diameter` needs it too.
-- **Placement is split across several files,** so that parallel provers never share one, each owned by the task of its step below: `Placement/Strict.lean` (step 1), `Placement/Exists.lean` (step 2), and `Placement/Unique.lean`, `Placement/OnLine.lean` and `Placement/Mixed.lean` (step 3), all under `Elements/BookIII/` and after Book I; then `Placement.lean` itself, the assembly (step 4), after them and before III.24. The policy check matches the `Placement.*` names.
+- **Placement is split across several files,** so that parallel provers never share one, each owned by the task of its step below: `Placement/Strict.lean` (step 1), `Placement/Exists.lean` (step 2), and `Placement/Unique.lean`, `Placement/OnLine.lean` and `Placement/Mixed.lean` (step 3), all under `Elements/BookIII/` and after Book I; then `Placement.lean` itself, the assembly (step 4), after them and before III.24. The policy check matches the `Placement.*` names, and lets only III.24, `Arcs.lean` and these placement files, whose assembly cites those names, cite `placement`.
 
 The order of work, de-risking first:
 - **Step 0, a spike by the coordinator.** The definitions, the `placement` statement and every sub-lemma's signature, all with `sorry`. Then the assembly proved from the stubs, and III.24 restated and proved from a stubbed `placement` and `Prop23.point`. This tests the interfaces, which is where the real risk lies.
@@ -420,7 +420,7 @@ The order of work, de-risking first:
 *III.24 restated*
 - It now concludes `Arc.Congruent ⟨AEB,A,B,E⟩ ⟨CFD,C,D,F⟩`, following Euclid: placement (A on C, AB on CD), B on D, then each point of the arc lands on CFD by I.8 + III.21 + `Prop23.point`, and inside points go inside. III.10 is not needed, and the correspondence note says so.
 - The radius proof stays as `Prop24.equalCircles`, displayed as the **alternative formal proof**.
-- `Prop24.circumference` is derived from the congruence, so III.26's [III. 24] stays honest.
+- `Prop24.equalMeasure` is derived from the congruence, so III.26's [III. 24] stays honest. (Renamed 18 October, as brief 0006 renames it: the first text had `Prop24.circumference`, whose short name shadowed the definition `circumference` inside the namespace `Prop24`.)
 - **No fallback** (revised 18 October, to the owner's decision of 17 October): III.24 waits for a proved placement lemma, however long it takes, and the other work goes on in parallel. If a case of placement needs a fact the 87 axioms lack, work on it stops and the owner decides; no axiom is added quietly.
 
 *III.26 and III.28 upgraded* so that "in equal circles" does real work: each clause concludes equal measure ∧ `Arc.Congruent` (III.26 by III.24 on the remaining segments; III.28 through III.26). The mishnah notes the mild departure from Euclid's "whole minus part". The `.1` calls in Prop27, Prop28 and Prop30 are updated.
