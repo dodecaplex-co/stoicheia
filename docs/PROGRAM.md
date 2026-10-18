@@ -78,9 +78,9 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40, I.45, II.1, II.14 in full generality | statements staged, 18 Oct (brief 0006, [#11]); proofs next |
-| 3 | Arcs and segments; III.24 | statements staged, 18 Oct (brief 0006) |
-| 4 | III.14, III.15, III.25 | statements staged, 18 Oct (brief 0006) |
+| 2 | I.40, I.45, II.1, II.14 in full generality | statements staged ([#11]); approval next |
+| 3 | Arcs and segments; III.24 | statements staged ([#11]); approval next |
+| 4 | III.14, III.15, III.25 | statements staged ([#11]); approval next |
 | 5 | Consolidation review of all 99 | |
 | 6 | Acceptance, then a consolidation release of Books I–III | |
 
@@ -111,7 +111,8 @@ own, the figure letters as three:
 - **The figure letters, [#8], [#9] and [#10]:** the rule, with its switch off; the 598
   letters on the 99 figures at a glance; then the switch on, so that every point a figure
   shows is lettered.
-- **[#11], brief 0006:** the statements of stages 2 to 4, with `sorry`, in `Staging`.
+- **Brief 0006's statements staged in `Staging`, [#11]:** challenge, approval and freezing
+  of the statements are next.
 
 [#1]: https://github.com/jackChallis/stoicheia/pull/1
 [#2]: https://github.com/jackChallis/stoicheia/pull/2
@@ -127,18 +128,27 @@ own, the figure letters as three:
 
 ### Open items
 
-What remains after 18 October. A change to a check lands in a pull request of its own.
+What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), section 10,
+"Landing work: pull requests".
 
-- The owner's call on the scope of the I.45 and II.14 companions: `restricted` (recommended in brief 0006: a figure the straight lines from one of its corners divide) or `full`, with the departure recorded.
-- **Stage 2's proofs** are next: the companions of I.40, I.45, II.1 and II.14 from brief
-  0006, then placement.
-- **The companions list:** each entry needs its proposition's module imported in
-  `Elements/Companions.lean`.
+- **The owner's call on the scope of the I.45 and II.14 records:** `restricted`
+  (recommended by brief 0006: the figure divided by the straight lines from one of its
+  corners) or `full`, with the departure from FORMALIZATION section 2 recorded.
+- **Stage 2's proofs** follow brief 0006's order of proof work: its ground wave first (the
+  words into the foundations, with the lock and a decisions entry;
+  `Elements/Figure/Sums.lean`; the certificate and render support for companions; the
+  `Placement` policy check), then the companions of I.40, I.45, II.1 and II.14. Placement
+  belongs to stage 3, which works alongside on its own files.
+- **The rows for I.45 and II.14 in [book-I.md](briefs/book-I.md) and
+  [book-II.md](briefs/book-II.md)** still describe the withdrawn dissection, and change
+  with stage 2's restatement ([#7]).
 - **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
   `Audit/`, and does not list `#eval`: a check change of its own.
+- **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
+  request of its own ([#3]).
 - **A new axiom cannot yet land in any order:** the model's law names, in `tests/model`'s
   search and hyperbolic check, are code, not a pinned value; they move into a pinned data
-  file. Adding an axiom is the owner's decision in any case.
+  file. On adding one, see [AGENTS.md](../AGENTS.md), "Never".
 - **The merge commit's subject** takes the owner from origin's URL, which after a transfer
   would name the old owner (cosmetic).
 - **A guard for `gh` exiting 0 without merging,** needed if a merge queue or auto-merge is
@@ -236,8 +246,8 @@ What remains after 18 October. A change to a check lands in a pull request of it
 - **18 Oct. Reviews converge when the fixes are reviewed too.** Four rounds on the harness
   each found real defects. The last blocking one, an exemption that let a loosened
   expectation travel with the regression it guards, was in the previous round's fix; a
-  /no-mistakes run on that commit found nothing blocking, and only an adversarial check of
-  the fixes themselves caught it. The final /no-mistakes run then passed ([#1]).
+  `/no-mistakes` run on that commit found nothing blocking, and only an adversarial check
+  of the fixes themselves caught it. The final `/no-mistakes` run then passed ([#1]).
 - **18 Oct. A stricter rule that today's content fails lands with a switch.** The figure
   letters came as three pull requests: the rule with its switch off, the letters, then the
   switch on, so that no check travelled with what it judges ([#8], [#9], [#10]).
@@ -260,4 +270,4 @@ in the voyage logs).
 | Book III references research | 11 | 2.5M | 65 min |
 | Precision pass and standards (brief 0005, stages 1 and 1b): the build | 23 (3 stopped at an account-terms prompt and were run again) | 5.9M | 95 min |
 | Precision pass and standards: the finish (integration, readers, fixes) | 7 | 2.0M | 104 min |
-| The night of 18 October: 11 pull requests (#1 to #11), the harness after four review rounds and a final /no-mistakes run, every queued branch through /no-mistakes before landing | not logged | not logged | one night |
+| The night of 18 October: pull requests #1 to #11 | not logged | not logged | one night |
