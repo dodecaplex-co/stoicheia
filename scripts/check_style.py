@@ -28,15 +28,16 @@ What the scopes cover (STYLE, section 8):
 "Outside quotations" means with every "…" span (within one paragraph), every link
 target `](…)`, every code span and every fenced code block blanked first. HTML comments
 are never shown to a reader, and are blanked everywhere. Blanking keeps every line in
-its place, so each finding names its line.
+its place, so each finding names its line. A blanked span reads as spaces, so the words
+of a phrase may stand apart across one: S3 finds "I think" in 'as I "so" think'.
 
-The words of a phrase in S2 to S7, S11 and D7 to D10 are found however a line or a
-comment wraps them: they may stand apart by spaces or tabs, or by one line break with the
-next line's indent and comment leader ("--" in Lean, ">" in a Markdown quotation). A blank
-line ends such a phrase, save S2's "first mate" and the "Definition N" of S7 and D10,
-whose words may stand apart by any white space. On every run, before anything else, the
-script checks its own wording patterns against wrapped and unwrapped phrases
-(`self_check`), and stops if one is read wrongly.
+The words of a phrase in S2 to S7, S9, S11 and D7 to D10 are found however a line or a
+comment wraps them: they may stand apart by spaces or tabs (and commas, between S9's
+letters), or by one line break with the next line's indent and comment leader ("--" in
+Lean, ">" in a Markdown quotation). A blank line ends such a phrase, save S2's "first
+mate" and the "Definition N" of S7 and D10, whose words may stand apart by any white
+space. On every run, before anything else, the script checks its own wording patterns
+against wrapped and unwrapped phrases (`self_check`), and stops if one is read wrongly.
 
 S2's crew words match whole words in any case, plurals and possessives included ("the
 bosuns", "the crew's"). The figure rules also ask for a <title>: "I.N at a glance" on an
@@ -378,7 +379,11 @@ EUCLID_CITES = re.compile(phrase(
 TACIT = re.compile(phrase(r"\btacit (?:assumptions?|laws?)\b"), re.I)
 DEFINITION = re.compile(phrase(r"\b(?:Definitions?|Defs?\.) \d+\b", gap=ANY_GAP))
 CURLY = re.compile("[“”‘’]")
-ITALIC_LETTER = re.compile(r"(?:^|[^*])(\*[A-Z]+[′₀-₉]*(?:[ ,]+[A-Z]+[′₀-₉]*)*\*)(?:$|[^*])", re.M)
+# Between two letters of S9's run: GAP, with commas among its spaces and tabs ("*AB, CD*",
+# "*AB,\nCD*"). A blank line ends the run.
+LETTER_GAP = r"(?:[ \t,]+|[ \t,]*\n[ \t]*(?:(?:--|>)[ \t]*)?[ \t,]*)"
+ITALIC_LETTER = re.compile(r"(?:^|[^*])(\*[A-Z]+[′₀-₉]*(?:" + LETTER_GAP + r"[A-Z]+[′₀-₉]*)*\*)"
+                           r"(?:$|[^*])", re.M)
 TEX = re.compile(r"\\|\^\{|\$")
 LEAN_CANNOT = re.compile(phrase(r"\bLean (?:cannot|can't|can not)\b"), re.I)
 NO_CITATION = re.compile(phrase(r"\bno citations?\b"), re.I)
@@ -866,6 +871,10 @@ PHRASE_CASES = [   # (rule, its search, the text as the rule reads it, a finding
     ("S6", TACIT.search, "a tacit\nassumption", True),
     ("S7", DEFINITION.search, "by Definition\n15", True),
     ("S7", DEFINITION.search, "by Definition\n\n15", True),
+    ("S9", ITALIC_LETTER.search, "the line *AB, CD*", True),
+    ("S9", ITALIC_LETTER.search, "the line *AB,\nCD*", True),
+    ("S9", ITALIC_LETTER.search, "> the line *AB\n> CD*", True),
+    ("S9", ITALIC_LETTER.search, "the line *AB,\n\nCD*", False),
     ("D10", DEFINITION.search, "by Def.\n  -- 15", True),
     ("D8", NO_CITATION.search, "gives no\ncitation", True),
     ("D9", POSTULATE_5.search, "the parallel\npostulate", True),
@@ -880,7 +889,7 @@ PHRASE_CASES = [   # (rule, its search, the text as the rule reads it, a finding
 
 
 def self_check() -> tuple[int, list[str]]:
-    """PHRASE_CASES, and three cases read as the Lean notes and the prose are read; returns
+    """PHRASE_CASES, and four cases read as the Lean notes and the prose are read; returns
     the number of cases and the faults."""
     cases = PHRASE_CASES + [
         ("D7", LEAN_CANNOT.search,
@@ -890,6 +899,7 @@ def self_check() -> tuple[int, list[str]]:
          notes_text("theorem T : True := by\n  -- Lean\n  -- cannot\n  trivial\n"), False),
         ("D7", LEAN_CANNOT.search,
          blank_quotes(blank_code('He wrote "what Lean\ncannot" once.')), False),
+        ("S3", FIRST_PERSON.search, blank_quotes(blank_code('as I "so" think')), True),
     ]
     faults = []
     for rule, search, text, want in cases:

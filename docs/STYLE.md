@@ -446,11 +446,14 @@ draws the figure proposes the line in the handback, and the records' owner write
 
 Run it from the repository's root. It reads the files below; "outside quotations" means
 with every `"…"` span, every link target `](…)`, every code span and every fenced code
-block removed first. The words of a phrase in S2 to S7, S11 and D7 to D10 are found
-however a line or a comment wraps them: they may stand apart by spaces or tabs, or by one
-line break with the next line's indent and its comment leader (`--`, or a quotation's
-`>`). A blank line ends such a phrase, save S2's "first mate" and the "Definition N" of S7
-and D10, whose words may stand apart by any white space. A word that a rule seeks
+block removed first. What is removed is read as spaces, so the words of a phrase may
+stand apart across a code span, a quotation or a link target: S3 finds "I think" in
+`as I "so" think`. The words of a phrase in S2 to S7, S9, S11 and D7 to D10 are found
+however a line or a comment wraps them: they may stand apart by spaces or tabs (and
+commas, between S9's letters), or by one line break with the next line's indent and its
+comment leader (`--`, or a quotation's `>`). A blank line ends such a phrase, save S2's
+"first mate" and the "Definition N" of S7 and D10, whose words may stand apart by any
+white space. A word that a rule seeks
 elsewhere in the clause or the sentence (what follows S5's "never need", S11's "Proclus",
 D9's "need") is found as its row says. Before reading anything else, the script checks its
 own patterns against such phrases.
@@ -479,7 +482,7 @@ own patterns against such phrases.
 | S6 | "tacit assumption(s)", "tacit law(s)" (any case), outside quotations | Prose, Generated |
 | S7 | A definition without its book: "Definition N" or "Def. N", N a numeral, outside quotations and square brackets | Prose |
 | S8 | A curly quotation mark: “ ” ‘ ’ | Prose, Catalogues |
-| S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*([ ,]+[A-Z]+[′₀-₉]*)*\*($\|[^*])` | Prose, Catalogues, Lean notes |
+| S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*(([ \t,]+\|[ \t,]*\n[ \t]*((--\|>)[ \t]*)?[ \t,]*)[A-Z]+[′₀-₉]*)*\*($\|[^*])`: the letters may stand apart by spaces, tabs and commas, or by one line break, as above | Prose, Catalogues, Lean notes |
 | S10 | TeX in the mishnah: a backslash, `^{` or `$` | Mishnah |
 | S11 | A retired refrain of section 3, on a page not allowed it: "certificate cites", "certificate records", "Of the postulates", "besides Euclid's", "just Euclid's three" (nowhere); "comes in through" (I.29 only); "Lean wants it said", "Lean asks why", "Lean makes us say so" (I.1, I.5, I.22 only); "uses Postulate 1", "brings it in" (I.1, I.3 only); "with no letter", "proves it once", "We give his argument once", "and the Lean cites it.", and "under I.31" in a sentence naming Proclus (nowhere); a paragraph opening `**What Lean made us say.**`, `**What else Lean made us say.**`, `**What it rests on.**`, `**Where the parallels meet.**`, `**Naming the pieces.**`, or `**Where X falls.**` with X a run of capitals (nowhere) | Mishnah |
 | S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (the command is below). Run when the tree is built | Mishnah |
