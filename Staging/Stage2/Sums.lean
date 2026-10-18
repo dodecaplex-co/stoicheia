@@ -5,14 +5,17 @@ import Elements
 
 Brief 0006, stage 2: the words that let a statement say "any number". II.1 cuts a straight
 line "into any number of segments whatever", and I.45 and II.14 take "a given rectilineal
-figure", of any number of sides, given by its corners and divided into triangles by the
-straight lines from one of them. Lean says "any number" with a list, so it needs the sum of
-a list of magnitudes, the segments between successive points of a list (II.1's pieces of
-the straight line, and the sides of I.45's figure on which its triangles stand), and a way
-to say that a list of points lies in order along one straight line.
+figure", of any number of sides, given with any number of triangles. Lean says "any number"
+with a list, so it needs the sum of a list of magnitudes, the segments between successive
+points of a list, and a way to say that a list of points lies in order along one straight
+line. The segments are II.1's pieces of the straight line, and, in the companions of I.45
+and II.14 for a checked fan (`Prop45.fan`, `Prop14.fan`), the sides on which the triangles
+from one corner stand; the other companions of I.45 and II.14 take the figure as a list of
+triangles (`Staging/Stage2/Rectilineal.lean`).
 
-These are statements awaiting approval (WORKFLOW, section 2): the definitions are complete,
-and each theorem's proof is `sorry` until it is assigned. Where they go when adopted:
+These are statements of brief 0006, approved and frozen (WORKFLOW, section 2): the
+definitions are complete, and each theorem's proof is `sorry` until it is assigned. Where
+they go when they move:
 
 * `Magnitude.sum`, `InOrder`, `segments` and `endOf` are new words that companion
   statements use, so each is a definition in the foundations, with the lock and a decisions
@@ -63,10 +66,11 @@ def InOrder : List Point → Prop
 
 /-- **The segments** of a straight line cut at points in order: each point of the list with
 the next, as the ends of one segment. The segments of `[B, D, E, C]` are BD, DE and EC. The
-points need not be in order, or on one straight line: in I.45 and II.14 the segments of a
-figure's corners A₁, A₂, …, Aₙ are its sides A₁A₂, …, Aₙ₋₁Aₙ, those away from the corner A₀,
-and each side with A₀ makes one of the triangles into which the straight lines from A₀
-divide the figure. -/
+points need not be in order, or on one straight line: in the companions of I.45 and II.14
+for a checked fan (`Prop45.fan`, `Prop14.fan`), the segments of a figure's corners A₁, A₂,
+…, Aₙ are its sides A₁A₂, …, Aₙ₋₁Aₙ, those away from the corner A₀, and each side with A₀
+makes one of the triangles into which the straight lines from A₀ divide the figure, when the
+fan's conditions hold. -/
 def segments : List Point → List (Point × Point)
   | p :: q :: rest => (p, q) :: segments (q :: rest)
   | _ => []

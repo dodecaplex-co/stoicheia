@@ -20,7 +20,10 @@ exception, and most records are short.
 - **`exceptions`** (brief 0005, stage 1). Every departure is declared: the statement's
   scope, the route, the representation, an overlap with an axiom, and every passage that
   the Lean does not plainly carry beneath it. Each run of `--` lines with no Lean under
-  it must be declared as a passage.
+  it must be declared as a passage, and a `/- … -/` remark ends a run: a remark may stand
+  above a run's first sentence, between its last sentence and its Lean, or under the Lean,
+  while one between two sentences that share one step of Lean leaves the first with none,
+  so move the remark or declare that sentence (III.16 declares "But DA is equal to DH").
 - **`full`** (stage 5). Every substantive passage is classified as well.
 
 ## The sections
