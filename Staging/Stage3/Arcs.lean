@@ -37,7 +37,7 @@ theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
 /-- **Congruent is equal circles and equal measure.** Two drawn arcs are congruent exactly when
 their circles are equal and their measures are equal.
 
-To be proved: one way, the measures are equal by `Prop24.circumference`, and the circles by
+To be proved: one way, the measures are equal by `Prop24.equalMeasure`, and the circles by
 `Prop24.equalCircles`, the congruence keeping the chord and, at a point of the arc and its
 image, the angle in the segment [I. 8]; neither is proved again here. The other way, by
 `Arc.measure_eq_iff` the chords are equal and the kinds the same, so the angles in the segments

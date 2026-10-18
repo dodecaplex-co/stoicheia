@@ -16,7 +16,7 @@ in measure and congruent, which says more than Heath's words; equal, for arcs, i
 Common Notion 4 (brief 0006).
 
 The proof is planned along Euclid's route for the measures: the segments BAC, EDF are
-congruent [III. 24], so their circumferences are equal in measure (`Prop24.circumference`),
+congruent [III. 24], so their circumferences are equal in measure (`Prop24.equalMeasure`),
 and the remainders BKC, ELF are equal in measure, the wholes being equal [C.N. 3]. The
 congruence of the remainders cannot come by subtraction: it comes from III.24 applied to the
 remaining segments, which are similar, their angles making two right angles with the equal

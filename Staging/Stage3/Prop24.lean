@@ -26,7 +26,7 @@ segments coincide. No magnitude of a segment is defined (brief 0006).
 
 When frozen, this statement replaces `Elements.BookIII.Prop24` in
 `Elements/BookIII/Prop24.lean`. Today's statement and its proof by the radii stay beside it as
-the labelled alternative (`Prop24.equalCircles`), and `Prop24.circumference` gives the equal
+the labelled alternative (`Prop24.equalCircles`), and `Prop24.equalMeasure` gives the equal
 measures that III.26 takes from III.24. Here it is `Elements.BookIII.Staging.Prop24`, so as
 not to collide with the theorem it will replace; the `Staging` namespace is dropped when it
 moves.
@@ -174,7 +174,7 @@ unfolding definitions). -/
 example : type_of% @Elements.BookIII.Prop24 := @Prop24.equalCircles
 
 /-- **Congruent segments have equal circumferences** (companion of III.24, "III.24
-circumference"). If two drawn segments are congruent, their circumferences are equal in
+equalMeasure"). If two drawn segments are congruent, their circumferences are equal in
 measure. III.26 cites it after III.24, where Euclid passes from the equal segments to the
 equal circumferences [III. 24]; nothing before III.26 says it otherwise, for `Arc.congruent_iff`
 comes after III.29.
@@ -185,7 +185,7 @@ as P is, and `chord_cases`); the congruence keeps the distances from P to the en
 angle at P is the angle at its image [I. 8]; the circumference on the other side of each base
 is twice that angle (`Circumference.eq`), and with it each circumference makes up the whole
 circle (`Circumference.whole`); so the circumferences are equal [C.N. 3]. -/
-theorem Prop24.circumference {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
+theorem Prop24.equalMeasure {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (h : Arc.Congruent a b) : a.measure = b.measure := by
   sorry
 

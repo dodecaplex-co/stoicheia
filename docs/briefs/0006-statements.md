@@ -19,6 +19,12 @@ facts only they used are withdrawn, and so are the companions `Prop45.sum` and
 challenged in turn: the wording of I.45 and II.14 is corrected, no statement changes, and
 the scope recommended for their records is now `restricted` (open question 1).*
 
+*Revised 18 October 2026, before approval: the companion `Prop24.circumference` is renamed
+`Prop24.equalMeasure`, beside `Prop24.equalCircles`, because its short name shadowed the
+definition `circumference` inside the namespace `Prop24`. The gap entries planned for I.45
+and II.14 now name Gérard, F. Schur and O. Stolz as Hilbert's own note names them. No
+statement changes.*
+
 Base: main at `1e5b99a`. The statements are in `Staging/`, as committed with this brief.
 `lake build Staging` passes: 81 declarations, of which 36 carry `sorry` and the rest are
 definitions, checks or proofs. Nothing in `Elements/` changes, so main's records, lock and
@@ -174,7 +180,7 @@ and each wave's orders name the agent.
 | `Elements/BookIII/Squares.lean` | `Arc.eq_of_aligned` (cites I.7); in stage 4, `Foot.exists`, `Foot.unique` (cite I.12, I.17) | Book III's shared steps citing Books I and II | placement step 2; then stage 4 |
 | `Elements/BookIII/Circumferences.lean` | `Circumference.add` | after III.22, as now | stage 3 ground task |
 | `Elements/BookIII/Prop23.lean` | the companion `Prop23.point` ("III.23 point") | after III.23 | placement step 2 |
-| `Elements/BookIII/Prop24.lean` | III.24 restated; `Prop24.equalCircles`, `Prop24.circumference` | III.24 | placement step 4 |
+| `Elements/BookIII/Prop24.lean` | III.24 restated; `Prop24.equalCircles`, `Prop24.equalMeasure` | III.24 | placement step 4 |
 | `Elements/BookIII/Prop26.lean`, `Prop28.lean` | III.26 and III.28 upgraded; the `.1` calls in `Prop27.lean` and `Prop30.lean` | as now | placement step 4 |
 | `Elements/BookIII/Arcs.lean` (new) | `Arc.measure_eq_iff`, `Arc.congruent_iff` | after III.29, so that III.26–III.29 cannot rest on it | placement step 4 |
 | `Elements/BookI/Prop40.lean`, `Prop45.lean`; `Elements/BookII/Prop01.lean`, `Prop14.lean` | the stage 2 companions | after each proposition | one task each |
@@ -491,16 +497,18 @@ entries planned, for whoever writes stage 2's records:
   diameters cross, Book Zero proves it (`quadArea_rotate_of_cross`); for any figure and any
   cutting, David Hilbert proved it, for his measure of area (*The Foundations of Geometry*,
   ch. IV, "The Theory of Plane Areas", section 20), and his own note to the chapter credits
-  Gérard and F. Schur (1892 and 1898) with like theories. Our statement, and its
-  companion for a figure of any number of sides, divide the figure as Euclid and Byrne do,
-  by the straight lines from one corner, and make the parallelogram equal to those
-  triangles; they claim nothing of another cutting."
+  Gérard and F. Schur (1892 and 1898) with like theories and refers to an article by
+  O. Stolz (1894). Our statement, and its companion for a figure of any number of sides,
+  divide the figure as Euclid and Byrne do, by the straight lines from one corner, and make
+  the parallelogram equal to those triangles; they claim nothing of another cutting."
 - `docs/reports/gaps-book-II.md`, II.14, the first entry becomes: ""Let A be the given
   rectilineal figure": it may have any number of sides. Any rectilineal area, Heath says
   under I.45, "can of course be resolved into triangles" (vol. 1, p. 347). Our companions
   divide the figure as I.45's do, by the straight lines from one corner, and make the
   square equal to those triangles; that another cutting gives the same whole is the step
-  taken for granted under I.45, which David Hilbert proved, for his measure of area."
+  taken for granted under I.45, which David Hilbert proved, for his measure of area; his own
+  note credits Gérard and F. Schur (1892 and 1898) with like theories and refers to an
+  article by O. Stolz (1894)."
 
 ## Stage 3: arcs and segments
 
@@ -802,7 +810,7 @@ theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hα : ∃ O : Poi
 ### III.24 restated
 
 `Staging/Stage3/Prop24.lean`. The main theorem, with companions "III.24 equalCircles" and
-"III.24 circumference".
+"III.24 equalMeasure".
 
 ```lean
 /-- Similar segments of circles on equal straight lines are equal to one another. -/
@@ -820,7 +828,7 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle}
     (hF_CD : ¬ Collinear C D F) (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :
     EqualCircles AEB CFD ∧ circumference AEB A E B = circumference CFD C F D
 
-theorem Prop24.circumference {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
+theorem Prop24.equalMeasure {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (h : Arc.Congruent a b) : a.measure = b.measure
 ```
 
@@ -828,7 +836,7 @@ theorem Prop24.circumference {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
   map puts A on C and B on D, the segment on the segment and the arc on the arc, keeping
   every distance between their points. `Prop24.equalCircles` is today's statement, the
   circles equal and the circumferences equal in measure (checked against
-  `type_of% @Prop24`). `Prop24.circumference`: congruent segments have circumferences equal
+  `type_of% @Prop24`). `Prop24.equalMeasure`: congruent segments have circumferences equal
   in measure.
 - **Coverage.** Heath: "Similar segments of circles on equal straight lines are equal to one
   another." Full, with "equal" read as coincide (C.N. 4); the record's omitted clause "are
@@ -858,10 +866,10 @@ theorem Prop24.circumference {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
   shown on the page as the labelled alternative, with Euclid's text in full under the main
   proof (FORMALIZATION, section 5). The renderer's support for it is stage 3
   infrastructure.
-- **Why `Prop24.circumference`.** Today III.26 takes `.2` of III.24, the equal measures, for
+- **Why `Prop24.equalMeasure`.** Today III.26 takes `.2` of III.24, the equal measures, for
   its whole minus part (`Prop26.lean`, line 92). The restated III.24 gives only congruence,
   and the only other theorem from congruence to measure, `Arc.congruent_iff`, comes after
-  III.29, where III.26 may not cite it. III.26 cites `Prop24.circumference` after III.24.
+  III.29, where III.26 may not cite it. III.26 cites `Prop24.equalMeasure` after III.24.
   **Plan:** a point P of the first arc off its base [`exists_onCircle_sameSideOf`] goes to a
   point of the second arc off its base (neither end, by the distances and `chord_cases`);
   the angle at P is the angle at its image [I. 8]; the circumference beyond each base is
@@ -869,7 +877,7 @@ theorem Prop24.circumference {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
   (`Circumference.whole`); so the two are equal [C.N. 3].
 - **Dependencies.** III.24: `placement`, `Prop23.point`, `chord_cases`, I.8.
   `equalCircles`: today's (III.20, III.22, I.5, I.26, I.32, `Circumference.whole`,
-  `Circumference.eq`). `circumference`: I.8, `Circumference.eq`, `Circumference.whole`,
+  `Circumference.eq`). `equalMeasure`: I.8, `Circumference.eq`, `Circumference.whole`,
   `chord_cases`. Not III.10.
 
 ### III.26 upgraded
@@ -898,14 +906,14 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
   work: in unequal circles equal angles give no congruence. The `redundant-hypothesis` tag
   leaves III.26's record, and its audit example goes (below).
 - **Route.** Euclid's for the measures: the segments BAC, EDF are congruent [III. 24], so
-  their circumferences are equal in measure (`Prop24.circumference`), and the remainders
+  their circumferences are equal in measure (`Prop24.equalMeasure`), and the remainders
   BKC, ELF are equal, the wholes being equal [C.N. 3]. The congruence of the remainders
   cannot come by subtraction: it comes from III.24 applied to the remaining segments, which
   are similar, their angles making two right angles with the equal angles at A and D
   [III. 22], with `Arc.Congruent.congr_side` for K and L. That step is a `different`
   passage, a mild departure from Euclid's "whole minus part", disclosed in the Lean and the
   mishnah.
-- **Dependencies.** I.4, III.20, III.22, III.24, "III.24 circumference",
+- **Dependencies.** I.4, III.20, III.22, III.24, "III.24 equalMeasure",
   `Circumference.whole`, `Prop24.angle_type`, `Arc.Congruent.congr_side`.
 
 ### III.28 upgraded
@@ -961,7 +969,7 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
   chords are equal and they are of one kind. Two drawn arcs are congruent exactly when their
   circles are equal and their measures are equal.
 - **Plans.** `measure_eq_iff` by III.28, III.29 (`Prop29.size`) and the comparison of each
-  kind with a semicircle. `congruent_iff`: one way cites `Prop24.circumference` for the
+  kind with a semicircle. `congruent_iff`: one way cites `Prop24.equalMeasure` for the
   measures and `Prop24.equalCircles` for the circles (the congruence keeps the chord and,
   at a point of the arc and its image, the angle [I. 8]), and proves neither again; the
   other way, `measure_eq_iff`, then the angles in the segments, then III.24.
@@ -1133,7 +1141,7 @@ changed from brief 0005's in these ways:
 - **III.25's interfaces fit:** today's statement follows from the core, `Arc.meets` and
   `Prop25.complete`.
 
-The challenges then added what the restatements' consumers need: `Prop24.circumference` and
+The challenges then added what the restatements' consumers need: `Prop24.equalMeasure` and
 `Prop24.equalCircles` (III.26 and `Arcs.lean`), `Arc.congr_side` and its corollary (arcs
 named by side points), `Fitted.inside_pairwise` (the meaning of the gluing rule, since
 withdrawn with `Fitted`), and a plan for `Prop23.point` that does not fail at a tangent.
@@ -1172,9 +1180,9 @@ decides (decision 3).
 1. the arc words into `DefinitionsIII.lean`, with the lock and a decisions entry;
 2. the ground: `Chords.lean`, `HelpersTriangles.lean`, the placement files,
    `Prop23.point`, `Arc.eq_of_aligned`, `Circumference.add`;
-3. `Prop24.equalCircles` (today's proof, moved) and `Prop24.circumference`, beside today's
+3. `Prop24.equalCircles` (today's proof, moved) and `Prop24.equalMeasure`, beside today's
    III.24, both approved here before step 4;
-4. III.24 restated; `Prop26.lean`, line 92 switched to III.24 and `Prop24.circumference`;
+4. III.24 restated; `Prop26.lean`, line 92 switched to III.24 and `Prop24.equalMeasure`;
    `Audit/Overlaps.lean`'s III.24 example pointed at `Prop24.equalCircles`;
 5. III.26 upgraded (fix `Prop27.lean`, line 74 and `Prop28.lean`, line 108), with
    `Audit/Overlaps.lean`'s III.26 example replaced by a note that III.26 is no longer
@@ -1264,7 +1272,7 @@ changed.
 | `Prop20.collinear_iff` declared twice, with different statements; the merged library would not build | Stage 3's form kept, as the one statement; stage 2's copy deleted; one home, `HelpersTriangles.lean` |
 | III.25's core claims less than the enunciation it carries | The statement declared to be the pair, core with `Prop25.complete`, in this brief and the module doc |
 | III.24's route oversold as "Euclid's route" | Module doc and remarks reworded: the application kept, the reductio replaced; passages planned as `different`, route `modified` |
-| `Prop24.equalCircles` and `Prop24.circumference` not declared; III.26 cannot follow Euclid without the second | Both staged with `sorry`, plain-words docstrings, companions of III.24; checked against today's type |
+| `Prop24.equalCircles` and `Prop24.equalMeasure` not declared; III.26 cannot follow Euclid without the second | Both staged with `sorry`, plain-words docstrings, companions of III.24; checked against today's type |
 | `Prop23.point` and `Arc.eq_of_aligned` each called both companion and shared step | `Prop23.point` a companion of III.23, for `Prop23.lean`; `Arc.eq_of_aligned` a shared step, for `Squares.lean` |
 | The dissection limit not in the brief, nor tagged | Stated under Conventions; tag planned; page note planned. *Revised:* the limit is now Euclid's and Byrne's division, tag `figure-by-corners` |
 | "Equal" segments read as congruence, unstated | Stated under Conventions; in the III.24, III.26, III.28 module docs; for their records |
@@ -1283,7 +1291,8 @@ changed.
 | "exactly" in the checks | "checked by Lean, up to unfolding definitions" |
 | The stage 4 files under `Stage2/BookIII` | Moved to `Staging/Stage4/`, with III.25 |
 | `Prop14.general` left as `sorry` though it follows in a few lines | Proved from `Prop45.figure` and `Prop14.rectangle` |
-| No statement that congruent segments have equal circumferences before III.26 | `Prop24.circumference` (above) |
+| No statement that congruent segments have equal circumferences before III.26 | `Prop24.equalMeasure` (above) |
+| `Prop24.circumference` shadowed the definition `circumference` inside the namespace `Prop24`, so a later declaration there could not name the definition by its short name | Renamed `Prop24.equalMeasure`, its certificate entry "III.24 equalMeasure" |
 | `Arc.congr_side` missing | Staged and proved, with `Arc.Congruent.congr_side` |
 | `#print axioms placement` can never be free of superposition | The check reworded to direct use, and the lock |
 | The list of what the restatement breaks was incomplete | The consumers listed under the order of proof work |
@@ -1298,4 +1307,4 @@ changed.
 | "No dissection supplied as input (FORMALIZATION, section 4)": choosing the first corner supplies it, and nothing checks it | The reason given instead: the statement asks nothing of how the triangles lie, so that today's I.45 follows from it; the two conditions that would check it named |
 | Scope `full` overstates it | `restricted` recommended, with the hypothesis "the figure divided by the straight lines from one of its corners"; the tag's kind `scope` |
 | Nothing said plainly that the lines from A₀ need not run within the figure | Said in the tag's meaning, the I.45 module doc, under the figure by its corners and in open question 1, with Hilbert's proof for his measure of area |
-| The gap entry and open question 1 on credit and on `Prop45.sum` | Gérard and F. Schur credited as Hilbert's own note credits them; `Prop45.sum` described as a companion for any list of triangles that, like the fan, did not check that they divide the figure |
+| The gap entry and open question 1 on credit and on `Prop45.sum` | Hilbert credited, with Gérard, F. Schur and O. Stolz as Hilbert's own note names them, in the I.45 and II.14 entries; `Prop45.sum` described as a companion for any list of triangles that, like the fan, did not check that they divide the figure |
