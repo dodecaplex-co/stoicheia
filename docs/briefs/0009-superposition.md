@@ -464,11 +464,16 @@ Astra names three kinds. Their state at round 2:
    above*, for the symbolic calculus. Whether these parts are the right statement of the
    restriction is open question 2.
 3. **A carefully scoped non-derivability result, if claimed.** *Not claimed.* A route, for
-   whoever takes it up: every instance of `Rule` speaks of the figure's points and straight
-   lines, and its only existential, "some straight line passes through A, B and C", stands
-   negated, in the hypothesis that ABC is a triangle. So, true in the plane, it stays true in
-   any part of the plane that keeps the straight lines through two of its points and the
-   same lengths, angles and areas. Take the points with rational coordinates, the straight
+   whoever takes it up. Besides its hypotheses about the figure, an instance of `Rule`
+   assumes that each cited law holds, `∀ c ∈ cites, c.Holds`; that hypothesis quantifies
+   over every point and straight line, not only the figure's, and in hypothesis position it
+   is not a statement about the figure alone. But every law in `Cited` is true in the plane
+   outright, I.7's included, so in the plane each instance of `Rule` reduces to its part
+   about the figure. That part speaks only of the figure's points and straight lines, and
+   its only existential, "some straight line passes through A, B and C", stands negated, in
+   the hypothesis that ABC is a triangle. So that part, true in the plane, stays true in any
+   part of the plane that keeps the straight line through any two of its points and the same
+   lengths, angles and areas. Take the points with rational coordinates, the straight
    lines through two of them, and real magnitudes: the laws that do not mention circles
    appear to hold there, and so does every instance of `Rule`; but the triangle with corners
    (0, 0), (1, 0), (0, 1) cannot be laid along the ray from (0, 0) through (1, 1), for B′
@@ -481,8 +486,9 @@ and establishes none of the third kind by itself (Astra).
 
 **Still required before the rule lands:**
 
-- a review of round 2 by a reader who did not write it, under orders to break it, at the
-  revision delivered;
+- a reading of the revision delivered for landing, wherever it has changed since `08b218b`,
+  by a reader who did not write it, under orders to break it: round 2 was so read at
+  `08b218b` ("The reviews");
 - the owner's and Astra's answers to open questions 2, 4 and 5;
 - #40, the model's law names as a pinned data file;
 - the model's proof of the placement with its side, in `model/` (#73), and the decision on
@@ -635,7 +641,33 @@ rule leaves, adding Generalities 3, in its own commit. Its findings, and what ro
    push would target main; nothing was pushed, and the coordinator lands work only through
    `safe_push.py`.
 
-The reviews' scratch files are not committed. Round 2 has not yet had a review of its own.
+**The review of round 2.** An independent review read round 2 at `08b218b` in full, under
+orders to break it, and its findings are answered in `6aa4192`:
+
+1. *`Audit.I_2` and `Audit.I_3` also take a point the present rule returns,* as `Audit.I_23`
+   does. *Answered:* the landing plan retires all three audit lemmas and the rows for I.2
+   and I.3, retires or rewrites the row for I.23, and names the catalogue's owner.
+2. *The brief called all five parts of the restriction theorem proved.* *Answered:* parts 1,
+   2, 3 and 5 are theorems, and part 4 is a reading of `Rule.infer`'s statement, with
+   `Metric.holds_const` its one theorem (FORMALIZATION, section 9).
+3. *The brief gave Euclid the citation of I.7,* when the bracketed [I. 7] is Heath's (STYLE,
+   section 4). *Answered:* it says that Euclid's argument uses I.7.
+4. *The disclosure left out I.8's page,* which the owner's decision names. *Answered:* it
+   names `mishnah/I/08.md`.
+5. *Small points:* a law "asserts no existence" (it read "asserts that nothing exists"); the
+   catalogue's and the audit's places are named by section rather than by line numbers main
+   had moved; I.7's proof draws the six straight lines joining its points and finds a
+   crossing; `Symbols` is a class built on the rule; and the non-derivability route names
+   the existential an instance contains.
+
+Two items it left open stay open, for their owners: the coordinator's approval of the
+prototype in `Staging/` and its names ("Staging and naming"), and open questions 2 to 5. It
+hunted for escapes along the routes Astra names (a given fact encoding a proposition through
+the valuation, an opaque predicate among the atoms, an argument by contradiction, a cited
+law that constructs in its proof, a conclusion naming a placement symbol) and found no way
+out of the restriction.
+
+The reviews' scratch files are not committed.
 
 ## Open questions for the owner and the coordinator
 
@@ -689,4 +721,5 @@ Xujie Si, whose LeanEuclid gives the one-rule form our present rule follows; to 
 Savile, through Heath, for the argument on a ray that carries I.4's coincidences; to Astra,
 whose third answer set out this design, the two observations it guards against, and the
 evidence it asks for; and to the reviewers of round 1, the adversarial run and the verifier,
-whose findings made round 2. We are grateful to them all.
+and the reviewer of round 2, whose findings made round 2 and sharpened it. We are grateful
+to them all.

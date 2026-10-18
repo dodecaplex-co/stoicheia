@@ -6,7 +6,9 @@ import Staging.Superposition.Rule
 The restriction theorem of [brief 0009](../../docs/briefs/0009-superposition.md), for the
 prototype. Astra's third answer asks for evidence that the represented derivation system
 cannot export the placement's objects as witnesses, nor take construction steps inside the
-placement. Here it is, in four parts, with a fifth in `Rule.lean`.
+placement. Here it is, in four parts, with a fifth in `Rule.lean`. Parts 1, 2, 3 and 5 are
+theorems; part 4 is a reading of the statement of `Rule.infer`, whose one theorem is
+`Metric.holds_const`.
 
 1. **No symbol of the placement is exported** (`exportable_iff`, `not_exportable_second`,
    `not_exportable_third`). The rule's conclusion is a `Metric` over the figure's symbols; a
@@ -32,7 +34,8 @@ placement. Here it is, in four parts, with a fifth in `Rule.lean`.
    of the figure's symbols that satisfies the guards and the given facts. B′, C′ and the side
    occur only as symbols inside the derivation, and no hypothesis gives them a point or a
    straight line or quantifies over them; Astra's second observation needs a premise that
-   does. No exported formula is unsatisfiable (`Metric.holds_const`).
+   does. This part is read off the statement of `Rule.infer`, not proved; its one theorem,
+   `Metric.holds_const`, shows only that no exported formula is unsatisfiable.
 
 What part 4 does not say. A valuation can make a true given fact equivalent to any
 proposition the proof can name, "no placement exists" among them (`valuation_encodes`): the
@@ -130,7 +133,10 @@ theorem Derives.no_construction {cites : List Cited} (hcites : ∀ c ∈ cites, 
     (dℓ : Derives cites (branch Γ a b c d g h l) ℓ) : ℓ.Holds w :=
   Derives.sound hcites w hw dℓ
 
-/-! ## 4. No hypothesis speaks of the placement -/
+/-! ## 4. No hypothesis speaks of the placement
+
+Part 4 is a reading of the rule's statement, not a theorem; this section holds its one
+theorem, `Metric.holds_const`, and the warning `valuation_encodes`. -/
 
 /-- **Every exportable formula is satisfiable.** Every equality of magnitudes holds when all
 the symbols it names stand for one point X. So the rule never concludes `False` itself, nor
