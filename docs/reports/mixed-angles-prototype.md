@@ -314,8 +314,8 @@ go into `Elements.BookIII`, and the rest where condition 3 says.
 
 No. Every fact used is already in the foundations or proved from them: the postulates,
 Definition I.15, System E's rules for sides, betweenness, circles, lengths and angles
-(among them Circle 1 to 3, Pasch 2 to 4, Between 6, Triple incidence 1 to 3, Diagram-angle 3
-and Intersections 1, 4 and 5), the common notions, and I.8, I.11, I.12, I.13, I.17, I.19,
+(among them Circle 1 to 3, Pasch 2 to 4, Between 6, Triple incidence 1 to 3, Diagram-angle 3,
+Intersection 1, and Intersections 4 and 5), the common notions, and I.8, I.11, I.12, I.13, I.17, I.19,
 I.20, I.23, III.16 and III.31. The census of section 2 lists what each theorem rests on: 71
 axioms of `Elements/Foundations/`, all in `Certificate/axioms.lock`, besides Lean's own, and
 no `sorryAx`. Nothing goes to the owner as an axiom.
