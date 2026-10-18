@@ -45,8 +45,8 @@ theorem Prop45.figure {E₁ E E₂ : Point} (R : Rectilineal) (hE : Triangle E�
       quadArea K F L M = R.area :=
   Prop45.sum R.pieces R.fitted.ne_nil R.fitted.triangle hE
 
-/-- The check: today's statement of I.45, for the two triangles ABD, DBC, is
-`Prop45.sum` for the list of those two, exactly. -/
+/-- The check: today's statement of I.45, for the two triangles ABD, DBC, follows from
+`Prop45.sum` for the list of those two (checked by Lean). -/
 example : type_of% @Elements.BookI.Prop45 := by
   intro A B C D E₁ E E₂ hABD hDBC hE
   have hts : ∀ t ∈ [(A, B, D), (D, B, C)], Triangle t.1 t.2.1 t.2.2 := by

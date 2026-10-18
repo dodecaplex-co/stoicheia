@@ -21,15 +21,17 @@ namespace Elements
 
 /-- **The foot of the perpendicular** drawn from `E` to the straight line `AB`. `F` is on
 the straight line `AB`; if `E` is not on it, every other point `P` of the straight line makes
-the angle `EFP` right; and if `E` is on it, the foot is `E` itself. `EF` is then the distance
-of `AB` from `E` (Definitions III.4 and III.5), and it is nothing when `AB` passes through
-`E`. -/
+the angle `EFP` right; and if `E` is on it, the foot is `E` itself. If `A` and `B` are one
+point, every point is on a straight line with them, so the foot is `E`. `EF` is then the
+distance of `AB` from `E` (Definitions III.4 and III.5, extended: it is nothing when `AB`
+passes through `E`, a case Euclid's definitions do not take). -/
 def Foot (E A B F : Point) : Prop :=
   Collinear A B F ∧ (Collinear A B E → F = E) ∧
     (¬ Collinear A B E → ∀ P : Point, Collinear A B P → P ≠ F → ∠ E F P = ∟)
 
 /-- Every straight line has a foot of the perpendicular from any point: the perpendicular
-drawn to it [I. 12], or the point itself when it is on the straight line. -/
+drawn to it [I. 12], or the point itself when it is on the straight line (and when `A` and
+`B` are one point). -/
 theorem Foot.exists (E A B : Point) : ∃ F : Point, Foot E A B F := by
   sorry
 

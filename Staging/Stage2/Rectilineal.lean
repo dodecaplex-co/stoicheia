@@ -13,7 +13,11 @@ be convex or not.
 **The convention, stated on the page:** the figure comes with its dissection. That every
 rectilineal figure can be cut into triangles in this way is a separate theorem, not stated
 here; and that two dissections of one figure give one area is a fact about area that no
-statement here assumes.
+statement here assumes. So "equal to the given rectilineal figure", in I.45 and II.14, means
+equal to the sum of the triangles the figure is given with. That is a deliberate limit:
+brief 0006 states it, the records of I.45 and II.14 carry it as the tag
+`figure-with-dissection`, and their pages show it. The triangles do not overlap
+(`Fitted.inside_pairwise`), so their sum is the area of the figure they make up.
 
 "Meeting only along that side" is said with the predicates already in the foundations: a
 point is within or on a triangle when it is inside it (`InsideTriangle`), on a side between
@@ -23,9 +27,10 @@ meets the earlier triangles only along `PQ` when every point within or on it tha
 or on one of them is on the finite straight line `PQ`.
 
 The definitions here are new words, and go to the foundations when adopted, with the lock
-and a decisions entry (WORKFLOW, section 2). `Fitted.ne_nil` and `Fitted.triangle` only
-unfold the definition, and are proved here; `Fitted.two`, which connects the definition with
-Euclid's own figure, is a statement awaiting proof.
+and a decisions entry (WORKFLOW, section 2). `Fitted.ne_nil`, `Fitted.triangle` and
+`Fitted.inside_pairwise` follow from the definition, and are proved here; they go to Book
+Zero (`Elements/Figure/Rectilineal.lean`). `Fitted.two`, which connects the definition with
+Euclid's own figure, is a statement awaiting proof, for Book Zero too.
 -/
 
 namespace Elements
@@ -54,9 +59,17 @@ def Corners (t : Point × Point × Point) (P Q R : Point) : Prop :=
   `PQ`: a point within or on the new triangle, and within or on one of the earlier ones,
   lies on the finite straight line `PQ`.
 
-The new triangle goes at the end of the list. A figure made this way may be convex or not;
-a ring of triangles closing up round a point is not made this way, for its last triangle
-would meet the others along two sides. -/
+The new triangle goes at the end of the list. A figure made this way may be convex or not.
+Every figure made this way is bounded by one closed line that neither crosses nor touches
+itself, with no hole; and every such figure can be cut this way. Neither fact is stated in
+Lean: the first follows by induction on the gluing, and the second is the theorem that such
+a figure can be cut into triangles, listed so that each meets the earlier ones along one
+side. That no point is inside two of the triangles is stated, and proved
+(`Fitted.inside_pairwise`).
+
+A ring of triangles closing up round a point is not made this way, for its last triangle
+would meet the others along two sides. A triangle laid against part of a side, or against
+two sides in line, is not glued this way either; its figure is cut differently. -/
 inductive Fitted : List (Point × Point × Point) → Prop
   | single {A B C : Point} (h : Triangle A B C) : Fitted [(A, B, C)]
   | glue {ps : List (Point × Point × Point)} {t : Point × Point × Point} {P Q R X : Point}
@@ -66,15 +79,17 @@ inductive Fitted : List (Point × Point × Point) → Prop
         ∀ s ∈ ps, OnOrInsideTriangle Y s.1 s.2.1 s.2.2 → OnFiniteLine Y P Q) :
       Fitted (ps ++ [(P, Q, X)])
 
-/-- **A rectilineal figure, given with its triangles**: the triangles it is cut into, each
-named by its three corners, with the proof that they fit together. -/
+/-- **A rectilineal figure, given with its triangles** (Definition I.19: "Rectilineal figures
+are those which are contained by straight lines"): the triangles it is cut into, each named
+by its three corners, with the proof that they fit together. -/
 structure Rectilineal where
   /-- The triangles the figure is cut into, in the order they were fitted. -/
   pieces : List (Point × Point × Point)
   /-- They fit together into one figure. -/
   fitted : Fitted pieces
 
-/-- **The area of a rectilineal figure**: the sum of its triangles. -/
+/-- **The area of a rectilineal figure**: the sum of its triangles, which do not overlap
+(`Fitted.inside_pairwise`). -/
 noncomputable def Rectilineal.area (R : Rectilineal) : Area :=
   Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)
 
@@ -100,6 +115,30 @@ theorem Fitted.triangle {ps : List (Point × Point × Point)} (h : Fitted ps) :
     · rw [List.mem_singleton] at ht
       subst ht
       exact hX.triangle
+
+/-- **The triangles of a figure do not overlap**: no point is inside two of them. Each new
+triangle meets the earlier ones only along the side it is glued to, and a point inside a
+triangle is off its sides. This is what makes the sum of the triangles the area of the figure
+they make up (`Rectilineal.area`), and it pins that meaning of `Fitted` against a later
+change of the definition. -/
+theorem Fitted.inside_pairwise {ps : List (Point × Point × Point)} (h : Fitted ps) :
+    ps.Pairwise (fun s s' => ∀ Y : Point,
+      InsideTriangle Y s.1 s.2.1 s.2.2 → ¬ InsideTriangle Y s'.1 s'.2.1 s'.2.2) := by
+  induction h with
+  | single _ => exact List.pairwise_singleton _ _
+  | @glue ps t P Q R X hps ht hside hX hmeet ih =>
+    rw [List.pairwise_append]
+    refine ⟨ih, List.pairwise_singleton _ _, ?_⟩
+    intro s hs s' hs' Y hYs hYn
+    rw [List.mem_singleton] at hs'
+    subst hs'
+    have hY := hmeet Y (Or.inl hYn) s hs (Or.inl hYs)
+    obtain ⟨L, hP, hQ⟩ := Postulate1 P Q hX.1
+    have hoff : ¬ OnLine Y L := Tacit.not_on_line_of_same_side (hYn.2.2.sameSide hP hQ)
+    rcases hY with rfl | rfl | hb
+    · exact hoff hP
+    · exact hoff hQ
+    · exact hoff (Tacit.on_line_of_between_ends hb hP hQ)
 
 /-- **Euclid's figure is one.** The four-sided figure ABCD of I.45, with DB joined, is the
 triangles ABD, DBC fitted together, when A and C are on opposite sides of BD: DBC is laid

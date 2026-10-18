@@ -5,8 +5,13 @@ import Staging.Stage3.Definitions
 # Stage 3, staged: Book Zero facts for arcs
 
 Statements before proofs (brief 0006, stage 3). Facts every arc needs, proved (or to be
-proved) from the foundations alone; destined for a Book Zero file (`Elements/Figure/`), which
-cites no proposition.
+proved) from the foundations alone; destined for a new Book Zero file,
+`Elements/Figure/Chords.lean`, which cites no proposition.
+
+An arc is named by a point on its side, which need not be on the circle: III.26 and III.28
+name their circumferences by such points. `Arc.congr_side` says that only the side matters,
+and `Arc.Congruent.congr_side` carries a congruence from one naming point to another on the
+same side.
 -/
 
 namespace Elements
@@ -40,5 +45,37 @@ Pasch 3 for the side). III.25's construction core reads this off the segment it 
 theorem Arc.meets {a : Arc} (ha : a.Drawn) {X Y : Point} (hX : Between a.B X a.C)
     (hY : SameSideOf Y a.K a.B a.C) : ∃ Q : Point, OnArc Q a ∧ OnRay Q X Y := by
   sorry
+
+/-- **Only the side names an arc.** If K and K' are on one side of BC, the arc of a circle
+from B to C on the side of K has the same points as the arc on the side of K', and the
+segment the same points as the segment. -/
+theorem Arc.congr_side {α : Circle} {B C K K' : Point} (h : SameSideOf K K' B C) :
+    (∀ P : Point, OnArc P ⟨α, B, C, K⟩ ↔ OnArc P ⟨α, B, C, K'⟩) ∧
+      (∀ P : Point, InSegment P ⟨α, B, C, K⟩ ↔ InSegment P ⟨α, B, C, K'⟩) := by
+  have hside : ∀ P : Point, OnSideOrLine P K B C ↔ OnSideOrLine P K' B C := fun P =>
+    ⟨fun hP => hP.imp (fun hPK => hPK.trans h) id,
+      fun hP => hP.imp (fun hPK => hPK.trans h.symm) id⟩
+  exact ⟨fun P => and_congr Iff.rfl (hside P), fun P => and_congr Iff.rfl (hside P)⟩
+
+/-- **A congruence does not depend on the naming points.** If the segment of α on BC on the
+side of K is congruent to the segment of β on DE on the side of L, and K' is on the side of K
+and L' on the side of L, the segments named by K' and L' are congruent, by the same map. -/
+theorem Arc.Congruent.congr_side {α β : Circle} {B C K K' D E L L' : Point}
+    (h : Arc.Congruent ⟨α, B, C, K⟩ ⟨β, D, E, L⟩) (hK : SameSideOf K K' B C)
+    (hL : SameSideOf L L' D E) : Arc.Congruent ⟨α, B, C, K'⟩ ⟨β, D, E, L'⟩ := by
+  obtain ⟨a₁, a₂⟩ := Arc.congr_side (α := α) hK
+  obtain ⟨b₁, b₂⟩ := Arc.congr_side (α := β) hL
+  obtain ⟨f, hB, hC, ⟨s₁, s₂, s₃⟩, ⟨t₁, t₂, t₃⟩⟩ := h
+  refine ⟨f, hB, hC, ⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩⟩
+  · exact fun P hP => (b₂ _).mp (s₁ P ((a₂ P).mpr hP))
+  · intro Q hQ
+    obtain ⟨P, hP, hPQ⟩ := s₂ Q ((b₂ Q).mpr hQ)
+    exact ⟨P, (a₂ P).mp hP, hPQ⟩
+  · exact fun P Q hP hQ => s₃ P Q ((a₂ P).mpr hP) ((a₂ Q).mpr hQ)
+  · exact fun P hP => (b₁ _).mp (t₁ P ((a₁ P).mpr hP))
+  · intro Q hQ
+    obtain ⟨P, hP, hPQ⟩ := t₂ Q ((b₁ Q).mpr hQ)
+    exact ⟨P, (a₁ P).mp hP, hPQ⟩
+  · exact fun P Q hP hQ => t₃ P Q ((a₁ P).mpr hP) ((a₁ Q).mpr hQ)
 
 end Elements

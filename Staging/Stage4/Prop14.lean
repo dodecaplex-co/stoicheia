@@ -28,8 +28,8 @@ theorem Prop14.general {A B C D E F G : Point} {ABDC : Circle} (hE : Centre E AB
     ‖A B‖ = ‖C D‖ ↔ ‖E F‖ = ‖E G‖ := by
   sorry
 
-/-- The check: today's statement of III.14 is `Prop14.general` for two straight lines not
-through the centre, exactly. -/
+/-- The check: today's statement of III.14 follows from `Prop14.general` for two straight
+lines not through the centre (checked by Lean). -/
 example : type_of% @Elements.BookIII.Prop14 := by
   intro A B C D E F G ABDC hE hA hB hC hD hE_AB hE_CD hF hEF hG hEG
   exact Prop14.general hE hA hB hC hD (Triangle.ne₁₂ hE_AB) (Triangle.ne₁₂ hE_CD)

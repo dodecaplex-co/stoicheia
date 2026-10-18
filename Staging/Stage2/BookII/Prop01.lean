@@ -33,8 +33,8 @@ theorem Prop1.general {A₁ A₂ B : Point} {ps : List Point} (h : InOrder (B ::
       Magnitude.sum ((segments (B :: ps)).map fun s => rect A₁ A₂ s.1 s.2) := by
   sorry
 
-/-- The check: today's statement of II.1, BC cut at D and E, is `Prop1.general` for the
-points `[D, E, C]`, exactly. -/
+/-- The check: today's statement of II.1, BC cut at D and E, follows from `Prop1.general`
+for the points `[D, E, C]` (checked by Lean). -/
 example : type_of% @Elements.BookII.Prop1 := by
   intro A₁ A₂ B C D E _ hBDE hDEC
   have h : InOrder [B, D, E, C] :=

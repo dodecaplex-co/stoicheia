@@ -1,5 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop08
+import Elements.BookIII.Circumferences
+import Elements.BookIII.Prop24
 import Staging.Stage3.Definitions
 import Staging.Stage3.Chord
 import Staging.Stage3.Placement
@@ -9,13 +11,25 @@ import Staging.Stage3.Prop23Point
 # Stage 3, staged: III.24 restated
 
 Statements before proofs (brief 0006, stage 3), and the spike's real test: III.24 restated to
-conclude that the segments are congruent, proved here by Euclid's route from the stubbed
-`placement` and `Prop23.point`.
+conclude that the segments are congruent (`Arc.Congruent`), proved here from the stubbed
+`placement` and `Prop23.point`. The proof keeps Euclid's application of one segment to the
+other (`placement`: A on C, AB on CD, B on D), with the coincidence of the arcs argued by the
+angles (`Prop23.point`, III.23's companion) in place of his reductio. Euclid refutes a segment
+falling within the other, or outside it, by a tacit reference to III.23, as Heath notes
+(vol. 2, p. 54), and one falling awry by III.10; the Lean settles every point of the arc
+directly, and needs neither the reductio nor III.10. So the route is `modified`: the passage
+"it will either fall within it, or outside it" and the sentence citing III.10 are argued
+another way.
+
+"Equal", in the enunciation and the last sentence, is read through Common Notion 4: the
+segments coincide. No magnitude of a segment is defined (brief 0006).
 
 When frozen, this statement replaces `Elements.BookIII.Prop24` in
-`Elements/BookIII/Prop24.lean`, and today's proof by the radii stays beside it as the labelled
-alternative (`Prop24.equalCircles`). Here it is `Elements.BookIII.Staging.Prop24`, so as not
-to collide with the theorem it will replace; the `Staging` namespace is dropped when it moves.
+`Elements/BookIII/Prop24.lean`. Today's statement and its proof by the radii stay beside it as
+the labelled alternative (`Prop24.equalCircles`), and `Prop24.circumference` gives the equal
+measures that III.26 takes from III.24. Here it is `Elements.BookIII.Staging.Prop24`, so as
+not to collide with the theorem it will replace; the `Staging` namespace is dropped when it
+moves.
 
 Euclid's text, in Heath's translation: [`heath/III/24.md`](../../heath/III/24.md). Below,
 each of Euclid's sentences is a `--` comment, followed by the Lean that carries it out.
@@ -63,9 +77,10 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
       · left; rw [h, len_self] at h₁; exact (eq_of_len_eq_zero h₁.symm).symm
       · right; rw [h, len_self] at h₂; exact (eq_of_len_eq_zero h₂.symm).symm
   -- the segment AEB will also coincide with CFD.
-  /- It remains to see where the points off the base fall. A point P on E's side goes to a
-     point on F's side, and the triangles APB, C(fP)D have their three sides equal, so the
-     angle at P is the angle at its image [I. 8]. -/
+  /- The claim is shown by the sentences that follow; the Lean begins that argument here,
+     with where the points off the base fall. A point P on E's side goes to a point on F's
+     side, and the triangles APB, C(fP)D have their three sides equal, so the angle at P is
+     the angle at its image [I. 8]. -/
   have hang : ∀ P : Point, SameSideOf P E A B →
       SameSideOf (f P) F C D ∧ ∠ A P B = ∠ C (f P) D := by
     intro P hPE
@@ -77,12 +92,14 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
   -- For, if the straight line AB coincide with CD but the segment AEB do not coincide with
   -- CFD,
   -- it will either fall within it, or outside it;
-  /- Euclid's reductio is carried by the angles, point by point. On F's side of CD a point is
-     on the circle CFD exactly when the angle it subtends on CD is the angle at F, and within
-     it exactly when that angle is greater; on E's side of AB, alike for AEB (`Prop23.point`).
-     The angle at each point is the angle at its image, and the angles at E and F are equal,
-     the segments being similar; so no point of the arc AEB falls within CFD or outside it,
-     and the points within AEB fall within CFD, and back again. -/
+  /- In place of Euclid's reductio, the Lean argues directly, point by point, by the angles.
+     Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54);
+     here III.23's companion `Prop23.point` does that work. On F's side of CD a point is on
+     the circle CFD exactly when the angle it subtends on CD is the angle at F, and within it
+     exactly when that angle is greater; on E's side of AB, alike for AEB. The angle at each
+     point is the angle at its image, and the angles at E and F are equal, the segments being
+     similar; so no point of the arc AEB falls within CFD or outside it, and the points within
+     AEB fall within CFD, and back again. -/
   have hoff : ∀ P : Point, SameSideOf P E A B →
       (OnCircle P AEB ↔ OnCircle (f P) CFD) ∧ (InsideCircle P AEB ↔ InsideCircle (f P) CFD) := by
     intro P hPE
@@ -93,8 +110,8 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
     exact ⟨Iff.rfl, Iff.rfl⟩
   -- or it will fall awry, as CGD, and a circle cuts a circle at more points than two: which is
   -- impossible. [III. 10]
-  /- Nothing is left for III.10: the angles have settled every point of the arc, so the arc
-     cannot fall awry. -/
+  /- III.10 is not needed: the angles have settled every point of the arc, so the arc cannot
+     fall awry, and no third case is left to refute. -/
   -- Therefore, if the straight line AB be applied to CD, the segment AEB will not fail to
   -- coincide with CFD also;
   /- So every point of the half-plane is on the circle AEB, or within it, exactly when its
@@ -112,7 +129,8 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
       exact ⟨hends, hbet⟩
   -- therefore it will coincide with it and will be equal to it.
   /- One map puts A on C and B on D, the segment AEB on the segment CFD and the arc on the
-     arc, keeping every distance: the segments coincide, and are equal [C.N. 4]. -/
+     arc, keeping every distance between their points: the segments coincide, and are equal
+     [C.N. 4]. -/
   refine ⟨f, hAC, hBD, ⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩⟩
   · rintro P ⟨hio, hP⟩
     refine ⟨?_, hinto P hP⟩
@@ -136,5 +154,39 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
     exact hdist P Q hP.2 hQ.2
   -- Therefore etc.
   -- Q. E. D.
+
+/-- **III.24, the circles and the measures** (companion of III.24, "III.24 equalCircles").
+Today's statement of III.24: similar segments on equal straight lines lie in equal circles,
+and their circumferences are equal in measure. It keeps today's proof by the radii (the
+angles at the centres, III.20 and III.22, and isosceles triangles on the equal bases,
+`Prop24.isosceles`), shown on the page as the labelled alternative proof, with Euclid's text
+in full under the main one. `Arc.congruent_iff` cites it for the equal circles. -/
+theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle}
+    (hAEB : ∃ O : Point, Centre O AEB) (hCFD : ∃ O : Point, Centre O CFD)
+    (hA : OnCircle A AEB) (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD)
+    (hD : OnCircle D CFD) (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E)
+    (hF_CD : ¬ Collinear C D F) (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :
+    EqualCircles AEB CFD ∧ circumference AEB A E B = circumference CFD C F D := by
+  sorry
+
+/-- The check: `Prop24.equalCircles` has today's statement of III.24 (checked by Lean, up to
+unfolding definitions). -/
+example : type_of% @Elements.BookIII.Prop24 := @Prop24.equalCircles
+
+/-- **Congruent segments have equal circumferences** (companion of III.24, "III.24
+circumference"). If two drawn segments are congruent, their circumferences are equal in
+measure. III.26 cites it after III.24, where Euclid passes from the equal segments to the
+equal circumferences [III. 24]; nothing before III.26 says it otherwise, for `Arc.congruent_iff`
+comes after III.29.
+
+To be proved: take a point P of the first arc off its base [`exists_onCircle_sameSideOf`]; its
+image is a point of the second arc, off its base (it is neither end, being as far from each
+as P is, and `chord_cases`); the congruence keeps the distances from P to the ends, so the
+angle at P is the angle at its image [I. 8]; the circumference on the other side of each base
+is twice that angle (`Circumference.eq`), and with it each circumference makes up the whole
+circle (`Circumference.whole`); so the circumferences are equal [C.N. 3]. -/
+theorem Prop24.circumference {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
+    (h : Arc.Congruent a b) : a.measure = b.measure := by
+  sorry
 
 end Elements.BookIII.Staging

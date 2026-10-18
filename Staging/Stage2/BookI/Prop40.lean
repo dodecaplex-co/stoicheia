@@ -38,7 +38,7 @@ theorem Prop40.join {A B C D E F : Point} {L : Line} (hABC : Triangle A B C)
 
 /-- **I.40, special** (companion of I.40). Today's statement of I.40, with the bases BC, CE
 end to end, derived from `Prop40.general`: it shows that the general statement contains
-Euclid's configuration exactly. The second triangle, CDE, is the triangle DCE on the base
+Euclid's configuration. The second triangle, CDE, is the triangle DCE on the base
 CE, and L is the straight line BE. -/
 theorem Prop40.special {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Triangle C D E)
     (hBCE : Between B C E) (hbase : ‖B C‖ = ‖C E‖) (heq : △ A B C = △ C D E)
@@ -52,7 +52,8 @@ theorem Prop40.special {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Trian
       (hside.sameSide hB hE)
   exact AreParallel.of_parallel hAD hBE hA_M hD_M hB hE hM
 
-/-- The check: `Prop40.special` has today's statement of I.40, exactly. -/
+/-- The check: `Prop40.special` has today's statement of I.40 (checked by Lean, up to
+unfolding definitions). -/
 example : type_of% @Elements.BookI.Prop40 := @Prop40.special
 
 end Elements.BookI

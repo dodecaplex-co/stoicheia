@@ -8,7 +8,10 @@ configuration, a figure of two triangles, and returns the side of the square. Hi
 makes a rectangle equal to the figure [I. 45] and then a square equal to the rectangle.
 `Prop14.rectangle` is that second part, `Prop14.general` the proposition for any rectilineal
 figure (`Rectilineal`), `Prop14.square` the same with the square drawn, and `Prop14.sum`
-today's two-triangle statement, derived from the general steps. They move into
+today's two-triangle statement, derived from the general steps. `Prop14.rectangle` is proved
+directly, by Euclid's second part, and never cites II.14: otherwise `Prop14.sum` would prove
+II.14 from II.14, and `Prop14.general` and `Prop14.square` would rest on the two-triangle
+statement rather than on Euclid's square construction (brief 0006). They move into
 `Elements/BookII/Prop14.lean` when proved, as "II.14 rectangle", "II.14 general",
 "II.14 square" and "II.14 sum".
 -/
@@ -18,8 +21,12 @@ namespace Elements.BookII
 open Tacit
 
 /-- **II.14, for a rectangle** (companion of II.14). To construct a square equal to a given
-rectangle EBCD: the second part of Euclid's proof, with both of its cases, the rectangle
-already a square or not, and in the second his semicircle [II. 5, I. 47]. The square is the
+rectangle EBCD: the second part of Euclid's proof, with both of its cases. If BE is equal to
+ED, the rectangle is a square already. If not, the greater, say BE, is produced to F with EF
+equal to ED, BF is bisected at G, the semicircle BHF is described with centre G, and DE is
+produced to H; then the rectangle BE, EF with the square on EG is the square on GF [II. 5],
+which is the squares on HE, EG [I. 47], and the rectangle is the square on EH. This is
+today's proof of II.14 after the rectangle is made. It does not cite II.14. The square is the
 square on PQ. -/
 theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
     ∃ P Q : Point, sq P Q = quadArea E B C D := by
@@ -27,10 +34,20 @@ theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
 
 /-- **II.14, for any rectilineal figure** (companion of II.14). To construct a square equal
 to a given rectilineal figure, given with the triangles it is cut into: a rectangle equal to
-the figure [I. 45, `Prop45.figure`], then a square equal to the rectangle
-(`Prop14.rectangle`). The square is the square on PQ. -/
+the figure [I. 45, `Prop45.figure`, in a right angle from I.11], then a square equal to the
+rectangle (`Prop14.rectangle`). The square is the square on PQ. -/
 theorem Prop14.general (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area := by
-  sorry
+  obtain ⟨⟨A, B, C⟩, ht⟩ := List.exists_mem_of_ne_nil R.pieces R.fitted.ne_nil
+  have hABC : Triangle A B C := R.fitted.triangle _ ht
+  obtain ⟨L, hA, hB⟩ := Postulate1 A B hABC.ne₁₂
+  obtain ⟨X, hX, hright⟩ := BookI.Prop11 hABC.ne₁₂ ⟨L, hA, hB, hA⟩ hABC
+  have hX' : ∠ B A X = ∟ := hright B ⟨L, hA, hB, hB⟩ hABC.ne₁₂.symm
+  obtain ⟨E, F, G, H, hp, hang, harea⟩ := BookI.Prop45.figure R hX.triangle.bac
+  have hrect : Rectangle E F G H := by
+    refine Rectangle.of_right hp ?_
+    rw [angle_symm hp.2.2.1 hp.1.1.symm, hang, hX']
+  obtain ⟨P, Q, hPQ⟩ := Prop14.rectangle hrect
+  exact ⟨P, Q, hPQ.trans harea⟩
 
 /-- **II.14, with the square drawn** (companion of II.14). To construct a square PQST equal
 to a given rectilineal figure: the square on the side that `Prop14.general` finds,
@@ -40,7 +57,8 @@ theorem Prop14.square (R : Rectilineal) :
   sorry
 
 /-- **II.14, for two triangles** (companion of II.14). Today's statement of II.14, derived
-from the general steps: a rectangle equal to the two triangles ABD, DBC taken together
+from the general steps: a rectangle equal to the two triangles A₁A₂A₄, A₄A₂A₃ (I.45's ABD,
+DBC) taken together
 (`Prop45.sum`, in a right angle from I.11), then a square equal to the rectangle
 (`Prop14.rectangle`). The two triangles are any two; they need not fit together into one
 figure, so this does not follow from `Prop14.general`. -/
@@ -65,7 +83,8 @@ theorem Prop14.sum {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄
   rw [hPQ, hBD]
   simp only [List.map, Magnitude.sum, add_zero]
 
-/-- The check: `Prop14.sum` has today's statement of II.14, exactly. -/
+/-- The check: `Prop14.sum` has today's statement of II.14 (checked by Lean, up to
+unfolding definitions). -/
 example : type_of% @Elements.BookII.Prop14 := @Prop14.sum
 
 end Elements.BookII

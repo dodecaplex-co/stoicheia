@@ -12,14 +12,17 @@ import Staging.Stage3.Placement.Strict
 
 Statements before proofs (brief 0006, stage 3), and the spike's assembly: `placement` is
 proved here from the stubbed cases in `Staging/Stage3/Placement/`. Destined for
-`Elements/BookIII/Placement.lean`. Only III.24 and `Arcs.lean` may cite `placement`.
+`Elements/BookIII/Placement.lean`, with the cases in `Elements/BookIII/Placement/`. Outside
+those files, only III.24 and `Arcs.lean` may cite `placement` or any lemma of the
+`Placement` namespace: the sub-lemmas carry the same distance-keeping content, and the
+policy check covers them all (brief 0006).
 
 **What it says.** Euclid applies one figure to another: "let the point A be placed on C and
 the straight line AB on CD" (III.24). On equal straight lines AB, CD, the closed half-plane
 on E's side of AB (the side with the straight line itself) is carried onto the closed
-half-plane on F's side of CD, A on C and B on D, keeping every distance; each point goes to
-the point as far from C as it was from A, and as far from D as it was from B; and a point
-stays off the base, or between its ends, exactly when its image does.
+half-plane on F's side of CD, A on C and B on D, keeping every distance between them; each
+point goes to the point as far from C as it was from A, and as far from D as it was from B;
+and a point stays off the base, or between its ends, exactly when its image does.
 
 **How.** No motion is assumed beyond I.4 and I.8 (superposition, used by those two alone).
 The place of each point is chosen (`Classical.epsilon`): it exists (I.22, or I.3 and
@@ -131,7 +134,7 @@ A's place is C and B's is D; the map is onto because the construction runs back 
 AB, and the place found there is the one chosen.
 
 Ground for III.24 (Euclid's application of one segment to the other), and for `Arcs.lean`;
-no other proof may cite it. -/
+no other proof may cite it, or any lemma of the `Placement` namespace. -/
 theorem placement {A B C D E F : Point} (hE : ¬ Collinear A B E) (hF : ¬ Collinear C D F)
     (hlen : ‖A B‖ = ‖C D‖) :
     ∃ f : Point → Point, f A = C ∧ f B = D ∧

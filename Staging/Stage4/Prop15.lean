@@ -32,7 +32,8 @@ theorem Prop15.le_diameter {A B C D E : Point} {ABCD : Circle} (hE : Centre E AB
 /-- **III.15, the nearer is greater** (companion of III.15). Of two straight lines BC, FG in
 a circle, the one nearer to the centre E is the greater: if EH is less than EK, H and K being
 the feet of the perpendiculars from E, then FG is less than BC. The nearer, BC, may be a
-diameter, at no distance; the more remote cannot be. -/
+diameter, at no distance; the more remote cannot be. (Nor can FG be a point: its foot would
+be E, and EK nothing.) -/
 theorem Prop15.nearer {B C E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
     (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hF : OnCircle F ABCD)
     (hG : OnCircle G ABCD) (hBC : B ≠ C) (hH : Foot E B C H) (hK : Foot E F G K)
@@ -41,7 +42,8 @@ theorem Prop15.nearer {B C E F G H K : Point} {ABCD : Circle} (hE : Centre E ABC
   sorry
 
 /-- The check: today's statement of III.15 follows from `Prop15.le_diameter` and
-`Prop15.nearer`, exactly. BC is not through the centre, so it is less than the diameter. -/
+`Prop15.nearer` (checked by Lean). BC is not through the centre, so it is less than the
+diameter. -/
 example : type_of% @Elements.BookIII.Prop15 := by
   intro A B C D E F G H K ABCD hE hA hD hAED hB hC hF hG hE_BC hE_FG hH hEH hK hEK hnearer
   obtain ⟨hle, hiff⟩ := Prop15.le_diameter hE hA hD hAED hB hC

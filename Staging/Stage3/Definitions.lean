@@ -18,14 +18,20 @@ it, that lies on that side of AB or on AB itself.
 Its kind (less than a semicircle, a semicircle, greater) is decided by where the centre
 lies: beyond the base, on it, or on the arc's side, as III.25 decides it.
 
+Similar segments (Definition III.11, with the angle in a segment of Definition III.8) are
+read, as today, by equal angles at points of their arcs: III.24's `hsim`.
+
 Two segments are congruent, as Euclid's III.24 has one "coincide" with the other, when one
 map of the plane's points carries the ends to the ends, the segment onto the segment and
-the arc onto the arc, keeping every distance.
+the arc onto the arc, keeping every distance between points of the segment. No magnitude of
+a segment is defined, and no area of one: "equal" segments, and "equal" circumferences in
+III.26 and III.28, are read through Common Notion 4 ("things which coincide with one another
+are equal to one another") as segments, or arcs, that coincide (brief 0006).
 -/
 
 namespace Elements
 
-/-- **An arc of a circle** (Definitions III.6 and III.9): the circumference of the circle
+/-- **An arc of a circle** (Definition III.6): the circumference of the circle
 `circle` from `B` to `C`, on the side of the straight line `BC` where `K` is. `K` only names
 the side; it need not be on the circle. The segment on this arc is the figure contained by
 the straight line `BC` and this circumference. -/
@@ -42,7 +48,8 @@ def Arc.Drawn (a : Arc) : Prop :=
     ¬ Collinear a.B a.C a.K
 
 /-- `P` lies on `K`'s side of the straight line `BC`, or on that straight line: a closed
-half-plane. -/
+half-plane, for `B ≠ C`, as in a drawn arc. (When `B` and `C` are one point, every point
+is on a straight line with them, and so every point counts.) -/
 def OnSideOrLine (P K B C : Point) : Prop :=
   SameSideOf P K B C ∨ Collinear B C P
 
@@ -74,8 +81,8 @@ greater. -/
 def Arc.SameKind (a b : Arc) : Prop :=
   (a.Less ∧ b.Less) ∨ (a.Semicircle ∧ b.Semicircle) ∨ (a.Greater ∧ b.Greater)
 
-/-- The measure of the arc: the circumference `BKC` of its circle (twice the angle standing
-on it). It carries no radius. -/
+/-- The measure of the arc: the circumference `BKC` of its circle, twice the angle that
+stands on it (Definition III.9). It carries no radius. -/
 noncomputable def Arc.measure (a : Arc) : Angle :=
   circumference a.circle a.B a.K a.C
 

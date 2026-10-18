@@ -6,9 +6,13 @@ import Elements.BookI.Prop20
 
 Statements before proofs (brief 0006, stage 3). These are shared steps that cite I.20, so
 they go in a Book I helper file at or after I.20. `Elements/BookI/Helpers.lean` imports
-only I.5 and is imported by I.7, so it cannot take them without a cycle: they want a new
-helper file (proposed: `Elements/BookI/HelpersTriangles.lean`, named after nothing later
-than I.20). Stage 4's `Prop15.le_diameter` needs `Prop20.collinear_iff` too.
+only I.5 and is imported by I.7, so it cannot take them without a cycle: they go to a new
+helper file, `Elements/BookI/HelpersTriangles.lean`, after I.20 and citing nothing later.
+It has one owner, named in the orders of the wave that adds it (brief 0006).
+
+This is the one statement of `Prop20.collinear_iff` in Staging: placement uses it, and
+stage 4's `Prop14.general` and `Prop15.le_diameter` will cite it too. (Stage 2's draft had a
+second copy, with the distances in another order; it was removed when the two were merged.)
 
 `placement` uses them to carry "on the straight line AB" and "between A and B" across: both
 are decided by the three distances alone.

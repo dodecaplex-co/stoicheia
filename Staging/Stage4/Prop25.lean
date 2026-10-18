@@ -8,13 +8,15 @@ import Elements.BookI.Prop17
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
 import Elements.BookIII.Prop10
+import Elements.BookIII.Prop25
 import Staging.Stage3.Definitions
 import Staging.Stage3.Chord
 
 /-!
 # Stage 4, staged: III.25 restated
 
-Statements before proofs (brief 0006, stage 4; staged with stage 3 because it uses the arcs).
+Statements before proofs (brief 0006, stage 4). It uses stage 3's arcs (`Arc`, `OnArc`,
+`Arc.meets`).
 
 Today III.25 is handed the circle whose segment it completes. Restated, its construction core
 receives the segment only as a predicate `S` on points, with the meeting fact Euclid reads off
@@ -23,9 +25,18 @@ never sees a circle or a centre. It returns B, D, E and the circle γ described 
 (Postulate 3) through A, B and C. III.9 moves out: `Prop25.complete`, a separate theorem,
 shows that for the arc of a circle α, γ is α, and every point of the arc is on γ.
 
+**The statement is the pair.** The core's conclusion does not say that γ is the circle the
+segment came from: S need not lie on any circle, and nothing in the conclusion puts S on γ.
+Heath's "the complete circle of which it is a segment" is carried by `Prop25.complete`, for S
+the arc of a given circle α. So the statement brief 0006 freezes for III.25 is the core
+together with `Prop25.complete`: the record lists the companions, its scope describes the
+main theorem together with them, and its note and the page say which declaration carries
+which clause.
+
 When frozen, the core replaces `Elements.BookIII.Prop25`; here it is
 `Elements.BookIII.Staging.Prop25`. `Staging.Prop25.of_circle` checks the interfaces: from the
-core, `Arc.meets` and `Prop25.complete`, today's statement follows.
+core, `Arc.meets` and `Prop25.complete`, today's statement follows. It stays, as the companion
+"III.25 of_circle", so that today's statement keeps its certificate.
 -/
 
 namespace Elements.BookIII
@@ -39,7 +50,8 @@ centre, through A, B and C is α, and every point of the arc AC on P's side is o
 To be proved: α and γ meet at the three points A, B, C, so they are one circle [III. 10] (or
 E is the centre of α [III. 9], and `circle_eq`).
 
-A companion of III.25: its correctness argument, kept apart from the construction core. -/
+A companion of III.25 ("III.25 complete"): its correctness argument, kept apart from the
+construction core. It carries Heath's "of which it is a segment". -/
 theorem Prop25.complete {A C P B E : Point} {α γ : Circle} (hα : ∃ O : Point, Centre O α)
     (hA : OnCircle A α) (hC : OnCircle C α) (hB : OnArc B ⟨α, A, C, P⟩)
     (hBP : SameSideOf B P A C) (hE : Centre E γ) (hAγ : OnCircle A γ) (hBγ : OnCircle B γ)
@@ -67,10 +79,9 @@ theorem Prop25 {A C P : Point} {S : Point → Prop} (hP : ¬ Collinear A C P)
 /-- **Today's III.25, from the restated core.** Handed the circle ABC, the core run on the
 points of its arc on P's side (which meet every straight line from within the base, by
 `Arc.meets`) finds a circle that is ABC itself (`Prop25.complete`), so its centre E is the
-centre of ABC. This is the statement III.25 has today, and it checks that the pieces fit.
-
-A spike check beside III.25 (proved from the stubs); whether it stays, as a corollary for
-citers, is the brief's decision. -/
+centre of ABC. This is the statement III.25 has today (the `example` below checks it), and
+it checks that the pieces fit. A companion of III.25 ("III.25 of_circle"), proved from the
+core, `Arc.meets` and `Prop25.complete`. -/
 theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
     (hA : OnCircle A ABC) (hC : OnCircle C ABC) :
     ∀ P : Point, ¬ Collinear A C P → ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧
@@ -84,5 +95,9 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
   obtain ⟨hγ, -⟩ := BookIII.Prop25.complete hABC hA hC hSB hBP hE hAγ hBγ hCγ
   rw [hγ] at hE
   exact ⟨B, D, E, hSB.1, hBP, hADC, hAD, hADB, hE, hDBE, k₁, k₂, k₃⟩
+
+/-- The check: `Prop25.of_circle` has today's statement of III.25 (checked by Lean, up to
+unfolding definitions). -/
+example : type_of% @Elements.BookIII.Prop25 := @Prop25.of_circle
 
 end Elements.BookIII.Staging
