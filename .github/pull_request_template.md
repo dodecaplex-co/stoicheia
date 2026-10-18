@@ -7,7 +7,7 @@ coordinator writes the rest. `git safe-push --merge <n>` refuses while a box mar
 changes, while a required box of this template is missing from the body, and while "What
 and why", a row of the Reviews table (the security review's when a protected path
 changes) or "Needs the owner's OK" is unwritten. A box or a section counts only where
-GitHub shows it, not in a comment or a code block.
+GitHub shows it, as docs/WORKFLOW.md says under "The merge".
 -->
 
 ## What and why
