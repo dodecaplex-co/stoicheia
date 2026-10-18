@@ -126,10 +126,10 @@ theorem beside the unchanged `PropN`, which stays as Euclid's worked configurati
 sentences: `Prop40.general`, `Prop45.figure`, `Prop14.square`, and the old statement as a
 corollary (`Prop40.special`) where it helps citers. The fidelity check reads only
 `theorem PropN`, so Heath's sentences stay where they are. A companion is listed in the
-edition's companions list, [`Elements/Companions.lean`](../Elements/Companions.lean), in
-the commit that moves it, proved, beside its proposition; it gets a certificate entry
-("I.40 general"), and `Certificate/Facts.lean` checks the listing; it is named in the
-review record's `companions`, and is shown on the page with its own certificate. Each
+edition's companions list, [`Elements/Companions.lean`](../Elements/Companions.lean)
+(who adds its entry, and when: [WORKFLOW](WORKFLOW.md), section 4); it gets a certificate
+entry ("I.40 general"), which `Certificate/Facts.lean` checks; it is named in the review
+record's `companions`; and it is shown on the page with its own certificate. Each
 companion is approved as a statement with `sorry` before anyone proves it.
 
 ## 3. Representations
