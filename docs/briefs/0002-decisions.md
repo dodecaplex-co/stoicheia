@@ -631,3 +631,19 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+
+- **The case a figure shows, said under it.** Argon's second review found that the
+  `[figure] case` of a review record, which eleven records give, was never printed, so a
+  figure drawn for one case of several did not say so on its page; we thank Argon warmly for
+  reading the renderer and the records side by side.
+  [`scripts/render.py`](../../scripts/render.py) now prints it under Euclid's figure, before
+  the figure note, and in the figure's alternative text: "Drawn for one case: the bases BC and
+  CE meeting at C, as in Heath's figure." That is what
+  [review/SCHEMA.md](../../review/SCHEMA.md) already says of the key ("The caption names it")
+  and what [STYLE](../STYLE.md), section 7, asks of a figure drawn for one case. The
+  alternative text also writes a double quotation mark as `&quot;`, so that a record's words
+  cannot end the attribute early; no record has one today. It changes what render.py writes
+  and nothing it accepts or checks, so it is not a check change ([WORKFLOW](../WORKFLOW.md),
+  section 10); the regenerated pages of I.30, I.35 to I.38, I.40, I.41, II.5, II.9, II.14 and
+  III.6 show it, and no other page changes. The one protected file it changes is
+  `scripts/render.py` ([#30](https://github.com/jackChallis/stoicheia/issues/30)).
