@@ -91,7 +91,7 @@ figures at a glance carry Heath's letters came after them. On main, a GitHub rul
 requires a pull request and the checks `check`, `model` and `negative`, allows merge
 commits only, and blocks force pushes and deletion; secret scanning with push protection
 is on. On 18 October these items were open, each landing on main as a pull request of its
-own:
+own, the figure letters as three:
 
 - **The pull-request discipline, PR #1:** the safe-push hardening, with the reviewers'
   fixes, under `/security-review`. Once it is on main, the pre-push hook is reinstalled.
@@ -104,9 +104,10 @@ own:
 - **A scrub** of two private paths already on main, in old orders.
 - **The orders template:** `docs/templates/orders.md` gains a statements-only wave and
   companion proofs.
-- **The figure letters:** [STYLE.md](STYLE.md), section 7, rewritten from "no letters" to
-  the owner's decision; `check_style.py`'s S14 changed to match; and the figures at a
-  glance lettered.
+- **The figure letters,** to the owner's decision, as three pull requests in order: first
+  the style rule, [STYLE.md](STYLE.md), section 7, and `check_style.py`'s S14, with its
+  switch off (letters allowed, and checked where present); then the figures at a glance
+  lettered; then the switch on (letters required).
 
 Two more are not pull requests: the finished worktrees and their merged branches are
 removed, and the fleet script, kept outside the repository, is rebuilt from the orders

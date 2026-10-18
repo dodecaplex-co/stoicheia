@@ -498,7 +498,7 @@ This gates the consolidation release.
 - [machine] The completion summary is generated and true.
 - [machine] The gap catalogue and overlap catalogue are current.
 - [review] Reading the book straight through, it flows and the voice is common.
-- [review] The remaining limitations are deliberate, few and stated plainly. For Books I and II, I.45 and II.14 take the figure with its division by the straight lines from one corner, and do not prove that another division gives the same area. For Book III these are only the mixed-angle clauses of III.16/31 and the III.2-style overlaps. (Revised 18 October: with no fallback for placement, III.24's alternative proof is no longer a limitation, and the corners limit is added.)
+- [review] The remaining limitations are deliberate, few and stated plainly. For Books I and II, I.45 and II.14 cover only a figure that the straight lines from one of its corners divide, and do not prove that another division gives the same area. For Book III these are only the mixed-angle clauses of III.16/31 and the III.2-style overlaps. (Revised 18 October: with no fallback for placement, III.24's alternative proof is no longer a limitation, and the limits of the corners form are added.)
 
 **`scripts/check_acceptance.py`** checks every [machine] item across all 99 propositions. It reads every [review] item from the review records (each must be `pass` with a reviewer and a commit). It writes `docs/reports/acceptance-books-I-III.md`: a table per proposition and per book, with every failure listed. CI runs it, and **the consolidation tag requires zero failures**.
 
@@ -606,7 +606,7 @@ The same table, with each done-criterion, goes into `docs/reports/outside-review
 
 **Stages 2–4**
 - Every companion is proved and certified. Old statements follow as `.special`.
-- Superposition is not among `placement`'s direct axioms, and `Certificate/axioms.lock` is unchanged. (Revised 18 October: the first text asked `#print axioms` of `placement` to show no superposition, which can never pass, since every distance fact rests on I.4 and I.8.)
+- Superposition is not among `placement`'s direct axioms. The 87 axioms in `Certificate/axioms.lock` are unchanged; its vocabulary gains the stage's new words (`Arc` and the rest) through `check_fidelity.py --write-lock` and a decisions entry, as [FORMALIZATION](../FORMALIZATION.md), section 7, and the lock's header require. (Revised 18 October: the first text asked `#print axioms` of `placement` to show no superposition, which can never pass, since every distance fact rests on I.4 and I.8; and a lock unchanged in every line could not pass either, since the new statements reach new words.)
 - The `Audit/` file stops compiling where the old redundancy is gone (III.26 no longer provable without EqualCircles), which is the intended signal; update overlaps.md.
 - Statement fingerprints force a re-review of every touched record.
 
