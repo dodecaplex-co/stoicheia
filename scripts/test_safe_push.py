@@ -56,7 +56,7 @@ one commit and runs safe_push.py against that origin:
   check change, kept apart, while one moved with its content is a pinned value; a marker
   quoted in the coordinator's words is not one, so an update keeps every word; the gates
   read the body by CommonMark's rules, so a `<!--` in code hides nothing, and a box
-  counts only as a list item GitHub shows;
+  counts only as a list item GitHub shows; a branch renamed before the merge is refused;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -261,6 +261,19 @@ def main(argv):
         print("fake gh: no such pull request: %s" % argv, file=sys.stderr)
         return 1
     if cmd == ["pr", "view"]:
+        # "rename": {"views": n, "to": name}: after n views, the branch is renamed on
+        # GitHub, its head kept, as a rename in GitHub's page would leave it.
+        rename = s.get("rename")
+        if rename:
+            rename["seen"] = rename.get("seen", 0) + 1
+            if rename["seen"] > rename["views"] and pr["headRefName"] != rename["to"]:
+                head = head_of(pr["headRefName"])
+                subprocess.run(["git", "update-ref", "refs/heads/" + rename["to"], head],
+                               cwd=ORIGIN, check=True)
+                subprocess.run(["git", "update-ref", "-d", "refs/heads/" + pr["headRefName"]],
+                               cwd=ORIGIN, check=True)
+                pr["headRefName"] = rename["to"]
+            save(s)
         print(json.dumps(fields(pr, opt(args, "--json"))))
         return 0
     if cmd == ["pr", "edit"]:
@@ -1878,6 +1891,21 @@ class Merge(Edge):
                 self.assertEqual(r.returncode, 1, out)
                 self.assertEqual(self.guard(out, "public names"), "FAIL", out)
                 self.set_gh(lambda s: s["prs"].__setitem__(0, saved))
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_branch_renamed_meanwhile_refused(self):
+        # The re-review: the merge commit's subject names the branch, so the gates refuse a
+        # branch renamed on GitHub since the merge first read it, as a moved head is.
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        self.set_gh(lambda s: s.update(rename={"views": 1, "to": "renamed-branch"}))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("#1 changed meanwhile", out)
+        self.assertIn("branch renamed-branch", out)
+        self.assertEqual(self.origin_branch("renamed-branch"), sha, "the head moved too")
         self.assertEqual(self.merges(), [])
         self.assertEqual(self.origin_main(), BASE)
 

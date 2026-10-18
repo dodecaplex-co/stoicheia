@@ -106,8 +106,10 @@ and branch name, which go into main's merge commit, hold nothing the scan refuse
 carries a label for its kind and `security-review` when a protected path changes, and it
 is not a draft; the pre-flight's notes are shown beside the checklist. Then
 `gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
-commit's subject and body given (GitHub's own words, and the title scanned): a merge
-commit, never a squash or a rebase, since review records stamp the branch's commits.
+commit's subject and body given (GitHub's own words, with the branch name scanned, and
+the title scanned; a branch renamed since the merge first read it is refused, as a head
+moved is): a merge commit, never a squash or a rebase, since review records stamp the
+branch's commits.
 When gh fails, GitHub is asked whether the pull request merged before anything is said.
 Afterwards the merge commit is checked to join the base and the head checked, with the
 head's tree, on main.
@@ -2729,14 +2731,18 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
     head's while origin/main has none (as generated_body reads it): any template is
     stricter than none. The record's notes are shown beside the checklist: a check that
     failed with origin/main's copies, on a commit that changes nothing the checks judge
-    (keep_apart refuses the rest), is for the security review to weigh. Returns the pull
-    request as read, for the merge: its title is the one scanned."""
+    (keep_apart refuses the rest), is for the security review to weigh. A head moved, a
+    branch renamed or a pull request no longer open since the merge first read it is
+    refused. Returns the pull request as read, for the merge: its title and its branch
+    name are the ones scanned."""
     rep.heading("2. The gates")
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "isDraft,headRefOid,headRefName,body,labels,state,title")
-    if view.get("headRefOid") != ctx.sha or view.get("state") != "OPEN":
+    if view.get("headRefOid") != ctx.sha or view.get("headRefName") != ctx.branch \
+            or view.get("state") != "OPEN":
         raise Refusal(f"#{number} changed meanwhile (head {str(view.get('headRefOid'))[:12]}, "
-                      f"{view.get('state')}): run --merge again")
+                      f"branch {view.get('headRefName')}, {view.get('state')}): run --merge "
+                      "again")
     protected = protected_files(ctx.repo, ctx.base, ctx.sha)
     if view.get("isDraft"):
         rep.add("G", "draft", "FAIL", f"#{number} is a draft: when it is ready, "
@@ -2796,9 +2802,10 @@ def revert_advice(ctx: Context, kind: str | None = None) -> str:
         f"    git safe-push --branch {branch} --label {kind or '<kind>'}"])
 
 
-def merge(ctx: Context, number: int, rep: Report, title: str) -> str | None:
+def merge(ctx: Context, number: int, rep: Report, view: dict) -> str | None:
     """`gh pr merge`: a merge commit whose message is exactly what was scanned, GitHub's
-    own subject for it and the title the gates read. A non-zero exit is believed only
+    own subject for it, of the branch name the gates read (`view`, as gates returns it),
+    and the title they read. A non-zero exit is believed only
     when GitHub says the pull request is not merged: gh can fail after the merge (in
     deleting the branch, say). Returns the merge commit GitHub reports, if it reports
     one."""
@@ -2811,8 +2818,8 @@ def merge(ctx: Context, number: int, rep: Report, title: str) -> str | None:
     t = time.time()
     r = gh_run(ctx, "pr", "merge", str(number), "--merge", "--delete-branch",
                "--match-head-commit", ctx.sha,
-               "--subject", f"Merge pull request #{number} from {owner}/{ctx.branch}",
-               "--body", title)
+               "--subject", f"Merge pull request #{number} from {owner}/"
+               f"{view.get('headRefName')}", "--body", view.get("title") or "")
     said = (r.stdout + r.stderr).strip()
     try:
         view = gh_json(ctx, "pr", "view", str(number), "--json", "state,mergeCommit") or {}
@@ -3053,7 +3060,7 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                     f"({ctx.sha[:12]}) with a merge commit, and delete {ctx.branch}")
             result, code = "passed every gate (dry run, not merged)", 0
         else:
-            oid = merge(ctx, number, rep, view.get("title") or "")
+            oid = merge(ctx, number, rep, view)
             merged = True
             main_sha = verify_merge(ctx, rep, oid)
             code = 0 if not rep.failed() else 3
