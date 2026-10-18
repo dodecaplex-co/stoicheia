@@ -690,3 +690,20 @@ findings:
   `Elements/` naming placement yet, it passes on main. It is a check change, kept in a
   commit of its own so that it can land before the statements it checks
   (WORKFLOW, section 10). FORMALIZATION, section 7, lists the policy and the two tests.
+
+- **Stage 3 in the edition: brief 0006's arc words in the foundations.** Every statement of
+  stage 3 of [brief 0006](0006-statements.md) is proved, and moves from `Staging/` to its
+  home in that brief's table, in the seven steps of its migration, a move the coordinator
+  delegated to the stage's integrator. The definitions they use are approved for the
+  foundations as a class (decision 4 of brief 0006: "the definitions the frozen briefs
+  name are approved for the foundations, each recorded in its pull request", as the
+  tracking issue, [#50](https://github.com/jackChallis/stoicheia/issues/50), records it).
+  This entry records the ones this pull request moves, each as the brief froze it, into
+  `Elements/Foundations/DefinitionsIII.lean`, after `standing`: `Arc`, with its constructor
+  and its four fields, `Arc.Drawn`, `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.Less`,
+  `Arc.Semicircle`, `Arc.Greater`, `Arc.SameKind`, `Arc.measure`, `Places` and
+  `Arc.Congruent` (Definitions III.6 and III.9, and Common Notion 4 for congruence). None
+  is an assumption. The module's account gains a paragraph on segments
+  and arcs. No entry's statement uses the words yet, so the lock's vocabulary is unchanged
+  and facts.json is byte for byte as it was; the words join the lock with the first
+  statements that use them.

@@ -6,7 +6,7 @@ import Elements.BookIII.Prop20
 import Elements.BookIII.Prop24
 import Staging.Stage3.Chord
 import Staging.Stage3.Prop24
-import Staging.Stage3.Definitions
+import Elements.Foundations.DefinitionsIII
 import Staging.Stage3.Prop26
 
 /-!

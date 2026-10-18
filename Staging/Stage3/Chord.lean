@@ -1,5 +1,5 @@
 import Elements.Figure.Basics
-import Staging.Stage3.Definitions
+import Elements.Foundations.DefinitionsIII
 
 /-!
 # Stage 3, staged: Book Zero facts for arcs

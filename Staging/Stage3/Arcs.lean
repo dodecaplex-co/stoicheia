@@ -2,7 +2,7 @@ import Elements.Figure.Basics
 import Elements.BookIII.Prop29
 import Elements.BookIII.Circumferences
 import Staging.Stage3.Chord
-import Staging.Stage3.Definitions
+import Elements.Foundations.DefinitionsIII
 import Staging.Stage3.Placement
 import Staging.Stage3.Prop24
 import Staging.Stage3.Prop28

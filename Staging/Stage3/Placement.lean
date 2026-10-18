@@ -1,5 +1,5 @@
 import Elements.Figure.Basics
-import Staging.Stage3.Definitions
+import Elements.Foundations.DefinitionsIII
 import Staging.Stage3.Degenerate
 import Staging.Stage3.Placement.Exists
 import Staging.Stage3.Placement.Unique

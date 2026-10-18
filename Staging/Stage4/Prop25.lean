@@ -9,7 +9,7 @@ import Elements.BookI.Prop23
 import Elements.BookI.Prop24
 import Elements.BookIII.Prop10
 import Elements.BookIII.Prop25
-import Staging.Stage3.Definitions
+import Elements.Foundations.DefinitionsIII
 import Staging.Stage3.Chord
 
 /-!

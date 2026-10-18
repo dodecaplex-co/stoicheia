@@ -1,4 +1,3 @@
-import Staging.Stage3.Definitions
 import Staging.Stage3.Degenerate
 import Staging.Stage3.Placement
 import Staging.Stage3.Chord
@@ -24,10 +23,12 @@ the home and owner of each statement of brief 0005's stages; a later brief names
 its own.
 
 The folders follow the briefs' stages. Stage 2's statements, all proved, have moved to
-their homes in `Elements/`, and its folder with them. The others:
+their homes in `Elements/`, and its folder with them; so have the words of stage 3, the
+arcs and segments, now in `Elements/Foundations/DefinitionsIII.lean`. The others:
 
-* `Stage3/`: the arcs and segments, I.20's degenerate case, placement, III.23 point by
-  point, III.24 restated, III.26 and III.28 upgraded, and the bridge theorems of `Arcs.lean`;
+* `Stage3/`: the facts about arcs and segments, I.20's degenerate case, placement, III.23
+  point by point, III.24 restated, III.26 and III.28 upgraded, and the bridge theorems of
+  `Arcs.lean`;
 * `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated;
 * `Stage4b/`: III.7 and III.8 compared on either side of the diameter, III.17 for a point
   not within the circle, and the point of contact (brief 0007); and a prototype of mixed
