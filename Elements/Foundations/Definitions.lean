@@ -5,8 +5,10 @@ import Elements.Foundations.CommonNotions
 
 Most of Euclid's twenty-three definitions name things (a point, a line, a
 surface, an angle, a figure). The ones that do real work in the proofs are
-written out here. Definitions 1–9, 13, 14, 16 and 17–18 live as docstrings on
-the words in `Words.lean` or wait for the later books that use them.
+written out here, with two that no proof uses yet, the isosceles and
+right-angled triangles. Definitions 1–9, 13, 14, 16 and 17–18 live as
+docstrings on the words in `Words.lean` or wait for the later books that use
+them.
 
 Definition 15 is special: it is a definition that carries content ("all the
 straight lines falling upon it from one point ... are equal"), so it is an
@@ -50,14 +52,15 @@ def Equilateral (A B C : Point) : Prop :=
 
 /-- **Definition 20.** "... an isosceles triangle that which has two of its sides
 alone equal." (Here the two equal sides meet at `A`.) Euclid's "alone" is not
-kept: an equilateral triangle counts as isosceles here too. No proof in Book I
-yet uses this definition by name; I.5 and I.6 speak of the two equal sides
-directly. -/
+kept: an equilateral triangle counts as isosceles here too. No statement or
+proof of the edition uses this definition yet: I.5 and I.6 speak of the two
+equal sides directly. -/
 def Isosceles (A B C : Point) : Prop :=
   Triangle A B C ∧ ‖A B‖ = ‖A C‖
 
 /-- **Definition 21.** "... a right-angled triangle that which has a right
-angle." (Here the right angle is at `A`.) -/
+angle." (Here the right angle is at `A`.) No statement or proof of the edition
+uses this definition yet: I.47 says that the angle BAC is right. -/
 def RightAngledTriangle (A B C : Point) : Prop :=
   Triangle A B C ∧ ∠ B A C = ∟
 
