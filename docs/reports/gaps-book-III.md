@@ -19,7 +19,7 @@ within it (`centre_inside`, Generalities 3), and a circle has one centre
 (`centre_unique`, Generalities 2). A point within a circle, on a straight line that
 meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1).
 System E's Circle 2, that between two points on or within a circle every point is within
-it (`inside_of_between`), already contains III.2, and no proof uses it: a point between
+it (`inside_of_between`), already contains III.2, and no proposition rests on it: a point between
 the centre and a point on or within the circle is within it by Definition 15
 (`InsideCircle.of_between_centre`), a point between two points of the circle by III.2 (by
 III.2's own argument in III.1, `Prop1.within`), and a point between two points on or
