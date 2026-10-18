@@ -24,8 +24,8 @@ into triangles in these ways is a separate theorem. That two divisions of one fi
 one sum is the step Euclid takes for granted, which David Hilbert proved, for his measure of
 area; it goes in the gap catalogue (brief 0006), and no statement here assumes it. So "equal
 to the given rectilineal figure", in I.45 and II.14, means equal to the sum of the triangles
-the figure is given with, and the records of I.45 and II.14 carry that as the tag
-`figure-with-dissection`.
+the figure is given with. The records of I.45 and II.14 will carry that as the tag
+`figure-with-dissection`, which joins `review/terms.toml` when they change.
 
 **A figure with a hole, or in pieces.** Euclid defines a figure as "that which is contained
 by any boundary or boundaries" (Definition I.14), so a square with a smaller square cut from
@@ -38,19 +38,19 @@ makes the sum of the triangles the area of the figure they make up, and a fitted
 triangles lie apart (`Fitted.inside_pairwise`), so `Apart` takes every figure `Fitted` takes.
 `Fitted` stays, as the figure with one boundary, the triangles fitted together.
 
-**Euclid's and Byrne's division** is one such figure. Euclid's DB, drawn from the corner D
-of ABCD, and Byrne's two straight lines from one corner of his figure (1847, p. 46), cut it
-into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one corner A₀. `Fitted.fan` says when those
-triangles are a figure in this sense: each two neighbouring triangles lie on opposite sides
-of the straight line A₀Aᵢ they share, and the angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less
-than four right angles. Without the two conditions the triangles from A₀ may overlap or
-reach outside the figure, and their sum need not equal the area of their union: a pentagon
-whose second and fourth corners lie on one side of the straight line from the first corner
-to the third has three triangles from the first corner together greater than it, and the
-first condition fails there (brief 0006 gives its corners). That the figure the fan's
-triangles make is the one bounded by the closed line A₀A₁…AₙA₀, its corners in that order,
-is a reading of the conditions, true in the plane, and is not stated in Lean: `Fitted.fan`
-says only that the triangles fit together into one figure.
+**Euclid's and Oliver Byrne's division** is one such figure. Euclid's DB, drawn from the
+corner D of ABCD, and Byrne's two straight lines from one corner of his figure (1847,
+p. 46), cut it into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one corner A₀. `Fitted.fan`
+says when those triangles are a figure in this sense: each two neighbouring triangles lie on
+opposite sides of the straight line A₀Aᵢ they share, and the angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ
+together are less than four right angles. Without the two conditions the triangles from A₀
+may overlap or reach outside the figure, and their sum need not equal the area of their
+union: a pentagon whose second and fourth corners lie on one side of the straight line from
+the first corner to the third has three triangles from the first corner together greater
+than it, and the first condition fails there (brief 0006 gives its corners). That the figure
+the fan's triangles make is the one bounded by the closed line A₀A₁…AₙA₀, its corners in
+that order, is a reading of the conditions, true in the plane, and is not stated in Lean:
+`Fitted.fan` says only that the triangles fit together into one figure.
 
 "Meeting only along that side" is said with the predicates already in the foundations: a
 point is within or on a triangle when it is inside it (`InsideTriangle`), on a side between
@@ -222,17 +222,18 @@ theorem Fitted.inside_pairwise {ps : List (Point × Point × Point)} (h : Fitted
     · exact hoff hQ
     · exact hoff (Tacit.on_line_of_between_ends hb hP hQ)
 
-/-- **Euclid's and Byrne's division is a figure, when it is checked.** A figure given by its
-corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ, and divided by the straight lines
-from A₀ into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one on each side
+/-- **Euclid's and Oliver Byrne's division is a figure, when it is checked.** A figure given
+by its corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ, and divided by the straight
+lines from A₀ into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one on each side
 `segments (A₁ :: A₂ :: ps)`. Suppose each is a triangle; each two neighbouring triangles,
 A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁, lie on opposite sides of the straight line A₀Aᵢ they share, that is,
-Aᵢ₋₁ and Aᵢ₊₁ are on opposite sides of it (one condition for each of `triples (A₁ :: A₂ ::
-ps)`); and the angles A₁A₀A₂, A₂A₀A₃, …, Aₙ₋₁A₀Aₙ at A₀ together are less than four right
-angles. Then those triangles, in that order, are fitted together into one figure: each is
-laid across the straight line A₀Aᵢ against the one before it, and meets the earlier ones only
-along that straight line. The figure they make is read as the figure with corners A₀, A₁, …,
-Aₙ in order round it; that its boundary is the closed line A₀A₁…AₙA₀ is not stated in Lean.
+Aᵢ₋₁ and Aᵢ₊₁ are on opposite sides of it (one condition for each of
+`triples (A₁ :: A₂ :: ps)`); and the angles A₁A₀A₂, A₂A₀A₃, …, Aₙ₋₁A₀Aₙ at A₀ together are
+less than four right angles. Then those triangles, in that order, are fitted together into
+one figure: each is laid across the straight line A₀Aᵢ against the one before it, and meets
+the earlier ones only along that straight line. The figure they make is read as the figure
+with corners A₀, A₁, …, Aₙ in order round it; that its boundary is the closed line A₀A₁…AₙA₀
+is not stated in Lean.
 
 The two conditions are what make the triangles turn one way round A₀ and not come round on
 themselves, so that they do not overlap. Euclid's ABCD, divided from D by DB, is the figure

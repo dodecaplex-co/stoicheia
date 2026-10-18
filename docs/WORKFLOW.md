@@ -73,11 +73,11 @@ that statement. So statements and representations are settled first.
    stage of [brief 0005](briefs/0005-astra-review.md), or of a later brief, adds or changes
    is written first in the `Staging` library instead ([`Staging.lean`](../Staging.lean)),
    with `sorry` where its proof is due, and is challenged and approved there before any
-   proof is assigned. When it is proved, it leaves `Staging/` for its home in `Elements/`,
-   and its staged copy, with any staged check that names the old statement, is deleted in
-   the same change, so that no name is declared twice and `lake build Staging` still
-   passes. Where staged files live, what they import and what they are named is in
-   [FORMALIZATION.md](FORMALIZATION.md), section 6.
+   proof is assigned. When it is proved, it leaves `Staging/` for its home in `Elements/`
+   (save a fact proved in place, below), and its staged copy, with any staged check that
+   names the old statement, is deleted in the same change, so that no name is declared
+   twice and `lake build Staging` still passes. Where staged files live, what they import
+   and what they are named is in [FORMALIZATION.md](FORMALIZATION.md), section 6.
 
    **What proofs `Staging/` may hold** (this is the rule's one home). A staged statement's
    own proof waits for its brief's approval. Before that, `Staging/` may hold two kinds of
@@ -86,6 +86,10 @@ that statement. So statements and representations are settled first.
    [orders](templates/orders.md), is one; a companion derived from a wider one is another);
    and the proofs of a prototype the coordinator has approved. A derivation from a stub
    proves nothing until the stub is proved, and says so in its docstring or its brief.
+   After its brief is approved, a staged fact whose proof rests on no stub may be proved in
+   place. It waits in `Staging/` until the definitions it uses reach the foundations and
+   the task its brief names for its home moves it there, its staged copy deleted in that
+   change: the one case in which a proved statement stays in `Staging/`.
 3. **It is challenged** by readers who did not write it (Book III's statements answered
    twenty-six challenges before its voyage), and **tested** by scratch proofs where the route
    is in doubt. Scratch proofs are committed unbuilt in `docs/reports/crew/scratch-<book>/`,

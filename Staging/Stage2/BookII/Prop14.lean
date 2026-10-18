@@ -14,13 +14,13 @@ rectangle.
 * `Prop14.apart` is the proposition for any rectilineal figure, with any boundaries, given
   with any division into triangles that lie apart (`Apart`), as in I.45's `Prop45.apart`;
   the figure may have a hole. `Prop14.square` is the same with the square drawn.
-* `Prop14.general` is the proposition for a figure with one boundary, given with triangles
+* `Prop14.figure` is the proposition for a figure with one boundary, given with triangles
   fitted together in a suitable order (`Rectilineal`), as in I.45's `Prop45.figure`; it
   follows from `Prop14.apart`, since fitted triangles lie apart (`Fitted.inside_pairwise`).
 * `Prop14.fan`, the main companion, is the proposition for a figure divided as Euclid and
-  Byrne divide it, from one corner, with the division checked as in `Prop45.fan`. As there,
-  it concludes that the triangles are fitted together into one figure (`Fitted.fan`), and
-  the square is equal to that figure (`Prop14.general`).
+  Oliver Byrne divide it, from one corner, with the division checked as in `Prop45.fan`. As
+  there, it concludes that the triangles are fitted together into one figure (`Fitted.fan`),
+  and the square is equal to that figure (`Prop14.figure`).
 
 As in I.45, the square is equal to the triangles the figure is given with, taken together,
 and nothing is claimed of another division. Today's II.14 is an area-sum theorem: it
@@ -31,7 +31,7 @@ Its checked case is `Prop14.fan` for the corners D, A, B, C.
 otherwise the companions would rest on the two-triangle statement rather than on Euclid's
 square construction, and the check that today's II.14 follows from `Prop14.sum` would prove
 II.14 from II.14 (brief 0006). They move into `Elements/BookII/Prop14.lean` when proved, as
-"II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 general", "II.14 square" and
+"II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square" and
 "II.14 fan".
 -/
 
@@ -90,7 +90,7 @@ only along it (`Rectilineal`), as in `Prop45.figure`: the square on PQ is equal 
 triangles taken together (`Rectilineal.area`). It is `Prop14.apart` for the figure's
 triangles, which lie apart (`Fitted.inside_pairwise`). Nothing is claimed of another
 division of the figure. -/
-theorem Prop14.general (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area :=
+theorem Prop14.figure (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area :=
   Prop14.apart ⟨R.pieces, R.fitted.ne_nil, R.fitted.triangle, R.fitted.inside_pairwise⟩
 
 /-- **II.14, with the square drawn** (companion of II.14). To construct a square PQST equal
@@ -104,15 +104,15 @@ theorem Prop14.square (R : Apart) :
   sorry
 
 /-- **II.14, for a figure divided from one corner** (companion of II.14), as Euclid and
-Byrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, divided by the straight lines from
-A₀ into the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ, with the division checked as in `Prop45.fan`:
-each piece a triangle, each two neighbouring triangles on opposite sides of the straight
-line A₀Aᵢ they share, and the angles at A₀ together less than four right angles. Then those
-triangles, in that order, are fitted together into one figure (`Fitted.fan`), and the
-square on PQ is equal to that figure, that is, to the triangles taken together. The figure
-is read as the one with corners A₀, A₁, …, Aₙ in order round it (that its boundary is that
-closed line is not stated in Lean). The square drawn is `Prop14.square` for that figure's
-triangles, which lie apart.
+Oliver Byrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, divided by the straight
+lines from A₀ into the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ, with the division checked as in
+`Prop45.fan`: each piece a triangle, each two neighbouring triangles on opposite sides of
+the straight line A₀Aᵢ they share, and the angles at A₀ together less than four right
+angles. Then those triangles, in that order, are fitted together into one figure
+(`Fitted.fan`), and the square on PQ is equal to that figure, that is, to the triangles
+taken together. The figure is read as the one with corners A₀, A₁, …, Aₙ in order round it
+(that its boundary is that closed line is not stated in Lean). The square drawn is
+`Prop14.square` for that figure's triangles, which lie apart.
 
 As in `Prop45.fan`, the first conclusion is what the two conditions are for; the square
 alone would follow from each piece being a triangle, by `Prop14.sum`. -/
@@ -124,7 +124,7 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
     ∃ R : Rectilineal,
       R.pieces = (segments (A₁ :: A₂ :: ps)).map (fun s => (A₀, s.1, s.2)) ∧
       ∃ P Q : Point, sq P Q = R.area :=
-  ⟨⟨_, Fitted.fan htri hopp hA₀⟩, rfl, Prop14.general _⟩
+  ⟨⟨_, Fitted.fan htri hopp hA₀⟩, rfl, Prop14.figure _⟩
 
 /-- The check: today's statement of II.14, for I.45's two triangles A₁A₂A₄ and A₄A₂A₃ (ABD
 and DBC), follows from `Prop14.sum` for the list of those two (checked by Lean, up to

@@ -85,12 +85,24 @@ figure, proved through `Fitted.fan`, so that the fan's two conditions do logical
 change only adds a conclusion, and Lean checks it from `Fitted.fan`; Astra did not read it.
 The coordinator approved the statements and froze this brief on 18 October 2026, with the
 owner's decisions: `full` for I.45 and II.14 (decision 1, as revised), and the definitions
-this brief names approved for the foundations as a class (decision 4). The rule on proofs in
-`Staging/` is amended in [WORKFLOW.md](../WORKFLOW.md), section 2, "What proofs `Staging/`
-may hold", so that the proofs this brief lists as proved here stand under it: derivations
-of one staged statement from others, and, with this brief's approval, a few staged facts'
-own proofs, which rest on no stub. After the freeze, before the brief landed, an
-independent verifier's editorial findings were applied to its wording; no statement
+that frozen briefs name, this brief's among them, approved for the foundations as a class
+(decision 4). The rule on proofs in `Staging/` is amended in [WORKFLOW.md](../WORKFLOW.md),
+section 2, "What proofs `Staging/` may hold", so that the proofs this brief lists as proved
+here stand under it: derivations of one staged statement from others, and, with this brief's
+approval, a few staged facts' own proofs, which rest on no stub and wait in `Staging/` for
+their homes. After the freeze, before the brief landed, an independent verifier's editorial
+findings were applied to its wording; no statement changed.*
+
+*Corrected after the freeze, before the brief landed, on the independent review of
+`9c89bfe` (the last table of the appendix). That review read the two fan companions as they
+were changed after Astra's answer, found them correct, and checked in a scratch Lean file
+that their new conclusion gives back the area equality they had before (by
+`List.map_map`), so that the change only adds a conclusion: that read is the challenge of
+the change. On its findings, `Prop14.general` is renamed `Prop14.figure`, "II.14 figure",
+as in I.45, so that "general" does not name a form narrower than `Prop14.apart` (the notes
+above and the appendix keep the name it had then); WORKFLOW, section 2, gains the sentence
+under which a staged fact proved in place waits in `Staging/` for its home; and decision 4
+is given as the tracking issue records it. No statement's hypotheses or conclusions
 changed.*
 
 Base: the branch was written on main at `1e5b99a`, and has main merged in; the revision of
@@ -146,10 +158,14 @@ decided a fourth on 18 October; this brief is written to them:
    placement turns out to need a fact the 87 axioms lack, work on it stops and the case is
    reported to Jack. Brief 0005's "timeboxed", its fallback congruence and "if the
    fallback was used" are withdrawn.
-4. **The definitions this brief names are approved for the foundations as a class**
-   (18 October 2026), each recorded in its pull request: the words listed under
-   Conventions, "No new axioms". Each still moves with the first approved statement that
-   uses it, as the staging rule below says.
+4. **The definitions that frozen briefs name are approved for the foundations as a
+   class** (18 October 2026). The tracking issue,
+   [#50](https://github.com/jackChallis/stoicheia/issues/50), records the call: "the
+   definitions the frozen briefs name are approved for the foundations, each recorded in
+   its pull request", beside "the coordinator freezes briefs after their challenge". This
+   brief's are the words listed under Conventions, "No new axioms". Each still moves with
+   the first approved statement that uses it, as the staging rule below says, and the pull
+   request that moves it records it.
 
 ## The staging rule
 
@@ -174,7 +190,9 @@ decided a fourth on 18 October; this brief is written to them:
   from `Prop20.collinear_iff`). A staged statement's own proof waits for that approval.
   What this brief lists as proved here is of both kinds: derivations, and a few staged
   facts' own proofs, which rest on no stub (`Fitted.inside_pairwise`, `chord_cases` and
-  `Placement.unique_off` among them) and stand under the approval.
+  `Placement.unique_off` among them). Those were written with their statements; with this
+  brief's approval they stand, as facts proved in place, and wait in `Staging/` for their
+  homes, as that section's last sentence says.
 - **When a statement is proved, it leaves `Staging/`.** A companion moves into its
   `PropNN.lean`, after the proposition, and its entry into the companions list,
   `Elements/Companions.lean`, which the integrator writes (AGENTS.md; WORKFLOW, section 4)
@@ -774,7 +792,7 @@ theorem Prop1.general {A₁ A₂ B : Point} {ps : List Point} (h : InOrder (B ::
 ### II.14, for any rectilineal figure, with a drawn square
 
 `Staging/Stage2/BookII/Prop14.lean`. Companions "II.14 rectangle", "II.14 sum",
-"II.14 apart", "II.14 general", "II.14 square", "II.14 fan".
+"II.14 apart", "II.14 figure", "II.14 square", "II.14 fan".
 
 ```lean
 theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
@@ -786,7 +804,7 @@ theorem Prop14.sum (ts : List (Point × Point × Point)) (hne : ts ≠ [])
 
 theorem Prop14.apart (R : Apart) : ∃ P Q : Point, sq P Q = R.area
 
-theorem Prop14.general (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area
+theorem Prop14.figure (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area
 
 theorem Prop14.square (R : Apart) :
     ∃ P Q S T : Point, Square P Q S T ∧ Parallelogram P Q S T ∧ quadArea P Q S T = R.area
@@ -806,13 +824,12 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   square equal to a rectilineal figure, with any boundaries, given with any division into
   triangles that lie apart, that is, to those triangles together (`apart`); a square equal
   to a rectilineal figure with one boundary, given with its triangles glued edge to edge in
-  a suitable order (`general`); a square drawn as four corners, equal to a figure given with
-  triangles that lie apart (`square`); and, for a figure divided from one corner A₀ and
-  checked as in `Prop45.fan`, that the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ are a fitted figure and
-  a square equal to it, that is, to those triangles together (`fan`), read as the figure
-  with those corners in order, as in I.45. Today's
-  II.14 follows from `Prop14.sum` for I.45's two triangles A₁A₂A₄ and A₄A₂A₃, which are
-  ABD and DBC (checked by Lean).
+  a suitable order (`figure`, as in I.45); a square drawn as four corners, equal to a figure
+  given with triangles that lie apart (`square`); and, for a figure divided from one corner
+  A₀ and checked as in `Prop45.fan`, that the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ are a fitted
+  figure and a square equal to it, that is, to those triangles together (`fan`), read as the
+  figure with those corners in order, as in I.45. Today's II.14 follows from `Prop14.sum`
+  for I.45's two triangles A₁A₂A₄ and A₄A₂A₃, which are ABD and DBC (checked by Lean).
 - **`Prop14.sum` restored, in a new form.** On 17 October `Prop14.sum` was today's
   two-triangle statement, kept as a companion, and was withdrawn when the division from a
   corner made it unnecessary. It now takes any list of triangles, as `Prop45.sum` does, and
@@ -828,9 +845,9 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   today's II.14 prove II.14 from II.14, and no check would catch it.
 - **Proved here:** `Prop14.sum` (a right angle by I.11 at the corner A of the first triangle
   ABC, on AB, then `Prop45.sum` and `Prop14.rectangle`), from the stubs; `Prop14.apart`,
-  from `Prop14.sum` for the figure's triangles; `Prop14.general`, from `Prop14.apart` with
+  from `Prop14.sum` for the figure's triangles; `Prop14.figure`, from `Prop14.apart` with
   `Fitted.inside_pairwise`; `Prop14.fan`, the figure that `Fitted.fan` gives, with
-  `Prop14.general` for it. As in I.45, the fan's two conditions do logical work:
+  `Prop14.figure` for it. As in I.45, the fan's two conditions do logical work:
   `Prop14.fan` concludes that the fan's triangles are a fitted figure, which needs them,
   while the square alone would follow from each piece being a triangle, by `Prop14.sum`. If
   `Fitted.fan` stalls, `Prop14.fan` stays unproved in `Staging/`, the fitting implication is
@@ -847,7 +864,7 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   answer, on the statements of `b48640c`, accepts, in I.45's representation
   `figure-with-dissection`. `Prop14.apart` and `Prop14.square` carry it: any rectilineal
   figure, with any boundaries, given with any division into triangles that lie apart, the
-  square drawn. `Prop14.general` takes a figure with one boundary, glued edge to edge in a
+  square drawn. `Prop14.figure` takes a figure with one boundary, glued edge to edge in a
   suitable order; `Prop14.fan`, the main companion, Euclid's and Byrne's division from one
   corner, checked, and concludes that it is a fitted figure. Neither of the last two carries
   `full` on its own. The `two-triangles` restriction goes, and `Prop14.square` answers
@@ -859,7 +876,7 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   and full coverage carried by `Prop14.apart` and `Prop14.square`.
 - **Cases.** The rectangle a square already; BE the greater; ED the greater. The figure's
   are I.45's: a triangle, Euclid's four corners, Byrne's five, any number, convex or not,
-  a figure that no corner divides, by `Prop14.general`, and a figure with a hole, by
+  a figure that no corner divides, by `Prop14.figure`, and a figure with a hole, by
   `Prop14.apart`.
 - **Dependencies.** I.11, I.45 (`Prop45.sum`), II.5, I.47, I.46, `Rectangle.of_right`,
   `Square.described`; `Apart`, `Rectilineal`, `Fitted.ne_nil`, `Fitted.triangle`,
@@ -1677,7 +1694,7 @@ stamped by anyone who did not review it.
    two companions each, the checked fan and any supplied division (decision 1, as revised).
    So the division is now checked, in three forms: Euclid's and Byrne's from one corner,
    with the two conditions (`Prop45.fan`, `Prop14.fan`); a figure with one boundary, its
-   triangles glued edge to edge in a suitable order (`Prop45.figure`, `Prop14.general`),
+   triangles glued edge to edge in a suitable order (`Prop45.figure`, `Prop14.figure`),
    which takes the figures that no corner divides; and, after the challenge to that
    revision, any division, as triangles that lie apart (`Prop45.apart`, `Prop14.apart`,
    `Prop14.square`), so that `full` does not rest on the one-boundary reading of open
@@ -1716,7 +1733,7 @@ stamped by anyone who did not review it.
    of them, say it with `InsideTriangle`, already in the foundations, and that is exactly
    the condition that makes the sum of the triangles the area of the figure they make up. So
    `Apart`, `Apart.area`, `Prop45.apart` and `Prop14.apart` are staged; `Prop45.figure` and
-   `Prop14.general` follow from them by `Fitted.inside_pairwise`; `Prop14.square` takes the
+   `Prop14.figure` follow from them by `Fitted.inside_pairwise`; `Prop14.square` takes the
    new form; and the tag's sentence "A figure with a hole is not taken" goes. The
    one-boundary reading is not needed for `full`, and `Fitted` stays as the form for a
    figure with one boundary. A figure in more than one piece is taken too, which only claims
@@ -1826,3 +1843,17 @@ done:
 | The fan is the owner's "main one", yet the coverage paragraphs derive it last, "in particular" | The coverage of I.45 and II.14, the names and the module docs call `fan` the main companion, and `apart` the one that carries `full` |
 | The owner's first call on #13 asked that a departure from FORMALIZATION, section 2, be recorded, and the brief was silent | Open question 1's answer says why none is recorded: with `Apart`, no configuration is left out, and the supplied division is the convention of section 4 |
 | Lean notes carried production: "as revised on 18 October 2026", "Astra's pentagon (brief 0006, the revision of 18 October)" | Dates removed from the module docs of `Rectilineal.lean`, `Prop45.lean` and `Prop14.lean`; the pentagon described by its corners' placing, with a pointer to this brief; the fan docstrings name the hypotheses in words |
+
+The independent review of `9c89bfe`, after the freeze and before the brief landed, read the
+branch whole against main at `f17b427`. Its findings that held, and what was done:
+
+| Finding | Done |
+|---|---|
+| Material: the rule's one home, WORKFLOW, section 2, names only two kinds of proof, derivations and an approved prototype's proofs, and says a proved statement leaves `Staging/`; yet this brief's proved staged facts that rest on no stub (`Fitted.inside_pairwise`, `chord_cases`, `Placement.unique_off`) stay there, and the staging rule above added a kind of its own | WORKFLOW, section 2, gains one sentence: after its brief is approved, a staged fact whose proof rests on no stub may be proved in place, and waits in `Staging/` until the definitions it uses reach the foundations and the task its brief names for its home moves it; item 2 points to it. The staging rule above points to that sentence, and the decisions entry gives it |
+| Material: decision 4 read "the definitions this brief names" here, and "the definitions named in frozen briefs" on the decisions page | Both now give the call as the tracking issue, #50, records it: "the definitions the frozen briefs name are approved for the foundations, each recorded in its pull request"; the decisions page says that this covers later frozen briefs too |
+| Material: `Prop14.general` named the form for a figure with one boundary, narrower than `Prop14.apart` and `Prop14.square`, though I.45 calls that form `Prop45.figure`, and `Staging/Stage4/Prop14.lean` has another `Prop14.general`, for III.14 | Renamed `Prop14.figure`, "II.14 figure", in `Prop14.lean`, the II.14 section, the open questions and the Book II brief's row, whose plan now names `Prop14.apart` for any supplied division; the Book I brief's row names `Prop45.apart` likewise. The notes at the head and the rows above keep the name it then had |
+| The three conditions of a fan are written out in three statements (`Fitted.fan`, `Prop45.fan`, `Prop14.fan`), so a change to them is made three times | Kept: each statement shows its conditions in full, as its page will, and one word for them would change three frozen statements and add a word to the lock |
+| Claims ahead of the revision: the records "carry" the tag `figure-with-dissection`; `Sums.lean` says its statements await approval; `lakefile.toml` and `Staging.lean` describe statements "before their proofs" | "Will carry", the tag joining `review/terms.toml` when the records change; `Sums.lean` says its statements are approved and frozen; the comment, the module doc and FORMALIZATION, section 6, say that a staged statement stays until it moves to `Elements/`, beside the few proofs WORKFLOW, section 2, allows |
+| STYLE, section 1: Byrne named without his first name at his first mention | "Oliver Byrne" at the first mention in the module docs and the fan docstrings of `Rectilineal.lean`, `Prop45.lean` and `Prop14.lean` |
+| Nobody was named as having challenged the fan companions as changed after Astra's answer | The note at the head names this review's read as that challenge |
+| For the owner: `Fitted` and the words only it needs join the lock for one consumer that carries weight, the fan's conclusion, and a fan concluding `Apart` would make the conditions do the same logical work with six fewer words; and open question 1's answer records no departure from FORMALIZATION, section 2, though the owner's first call on #13 asked for one | No change: both are put to the owner in the pull request, the first as this brief's disclosed choice, the second for the owner's OK |

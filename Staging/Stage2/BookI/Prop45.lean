@@ -7,7 +7,7 @@ Brief 0006, stage 2. Companions of `Elements.BookI.Prop45`, which stays as Eucli
 configuration: the four-sided figure ABCD, cut by DB into the triangles ABD and DBC.
 Euclid's proof makes a parallelogram for the first triangle [I. 42], applies one for the
 second to its side [I. 44], and shows that the two make one parallelogram; a figure of more
-triangles repeats the second step, as Byrne draws it for three (1847, p. 46).
+triangles repeats the second step, as Oliver Byrne draws it for three (1847, p. 46).
 
 * `Prop45.append` is that second step.
 * `Prop45.sum` repeats it, for any number of triangles. It is the construction, and claims
@@ -133,17 +133,17 @@ theorem Prop45.figure {E₁ E E₂ : Point} (R : Rectilineal) (hE : Triangle E�
       quadArea K F L M = R.area :=
   Prop45.apart ⟨R.pieces, R.fitted.ne_nil, R.fitted.triangle, R.fitted.inside_pairwise⟩ hE
 
-/-- **I.45, for a figure divided from one corner** (companion of I.45), as Euclid and Byrne
-divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ (empty for
-a triangle), divided by the straight lines from A₀ into the triangles A₀A₁A₂, A₀A₂A₃, …,
-A₀Aₙ₋₁Aₙ, one on each side `segments (A₁ :: A₂ :: ps)`. The division is checked: each
-piece is a triangle; each two neighbouring triangles A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁ lie on opposite
-sides of the straight line A₀Aᵢ they share (one condition for each of
+/-- **I.45, for a figure divided from one corner** (companion of I.45), as Euclid and Oliver
+Byrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ
+(empty for a triangle), divided by the straight lines from A₀ into the triangles A₀A₁A₂,
+A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one on each side `segments (A₁ :: A₂ :: ps)`. The division is checked:
+each piece is a triangle; each two neighbouring triangles A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁ lie on
+opposite sides of the straight line A₀Aᵢ they share (one condition for each of
 `triples (A₁ :: A₂ :: ps)`); and the angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less than four
 right angles. Then those triangles, in that order, are fitted together into one figure
-(`Fitted.fan`); and, given a rectilineal angle E, there is a parallelogram KFLM, its angle at
-K equal to E, equal to that figure, that is, to the triangles taken together. The figure is
-read as the one with corners A₀, A₁, …, Aₙ in order round it; that its boundary is that
+(`Fitted.fan`); and, given a rectilineal angle E, there is a parallelogram KFLM, its angle
+at K equal to E, equal to that figure, that is, to the triangles taken together. The figure
+is read as the one with corners A₀, A₁, …, Aₙ in order round it; that its boundary is that
 closed line is not stated in Lean. Nothing is claimed of another division.
 
 The first conclusion is what the two conditions are for: without them the triangles from
