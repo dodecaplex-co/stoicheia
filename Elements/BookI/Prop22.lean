@@ -29,8 +29,9 @@ open Tacit
 /-- None of the three given straight lines is nothing. If `a` were nothing, the
 other two would each be greater than the other: `c` less than `b` (from `a`, `b`
 greater than `c`) and `b` less than `c` (from `a`, `c` greater than `b`). Euclid
-calls A, B, C straight lines, so for him the question never arises; in Lean
-a finite straight line may have both ends at one point, and I.3 wants them apart. -/
+calls A, B, C straight lines, so for him the question never arises; in our
+foundations a finite straight line is a pair of points, which may coincide, and
+I.3 wants them apart. -/
 theorem Prop22.ne_zero {k : Kind} {a b c : Magnitude k} (h₁ : c < a + b) (h₂ : b < a + c) :
     a ≠ 0 := by
   intro h
@@ -40,10 +41,10 @@ theorem Prop22.ne_zero {k : Kind} {a b c : Magnitude k} (h₁ : c < a + b) (h₂
   exact lt_irrefl _ (lt_trans h₁ h₂)
 
 /-- Room to cut off a given straight line. Euclid's DE is "of infinite length in
-the direction of E", so that whatever is to be cut off from it, there is room. A
-straight line in Lean has no length to cut from, and I.3 cuts off only from a
-greater finite straight line; so we find a point Z on DF produced beyond F
-with FZ greater than the given straight line X₁X₂. At F place a straight
+the direction of E", so that whatever is to be cut off from it, there is room.
+Our `Line` is a whole straight line, with no length to cut from, and I.3 cuts off
+only from a greater finite straight line; so we find a point Z on DF produced
+beyond F with FZ greater than the given straight line X₁X₂. At F place a straight
 line FY equal to X₁X₂ [I. 2], and produce DF beyond F further than FY
 (`produce_longer`, as in I.11). -/
 theorem Prop22.room {D F X₁ X₂ : Point} (hDF : D ≠ F) (hX : X₁ ≠ X₂) :

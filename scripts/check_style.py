@@ -29,7 +29,16 @@ What the scopes cover (STYLE, section 8):
 "Outside quotations" means with every "…" span (within one paragraph), every link
 target `](…)`, every code span and every fenced code block blanked first. HTML comments
 are never shown to a reader, and are blanked everywhere. Blanking keeps every line in
-its place, so each finding names its line.
+its place, so each finding names its line. A blanked span reads as spaces, so the words
+of a phrase may stand apart across one: S3 finds "I think" in 'as I "so" think'.
+
+The words of a phrase in S2 to S7, S9, S11 and D7 to D10 are found however a line or a
+comment wraps them: they may stand apart by spaces or tabs (and commas, between S9's
+letters), or by one line break with the next line's indent and comment leader ("--" in
+Lean, ">" in a Markdown quotation). A blank line ends such a phrase, save S2's "first
+mate" and the "Definition N" of S7 and D10, whose words may stand apart by any white
+space. On every run, before anything else, the script checks its own wording patterns
+against wrapped and unwrapped phrases (`self_check`), and stops if one is read wrongly.
 
 S2's crew words match whole words in any case, plurals and possessives included ("the
 bosuns", "the crew's"). The figure rules also ask for a <title>: "I.N at a glance" on an
@@ -294,11 +303,17 @@ def lean_notes(path: Path) -> str:
     """The Lean file with everything but its notes blanked: the text inside each `/- … -/`
     block and docstring (nested blocks included), save the docstring of `theorem PropN`,
     which is Heath's enunciation. The `--` lines outside blocks are Heath's proof."""
-    src = path.read_text(encoding="utf-8")
-    skip = None
     m = re.fullmatch(r"Prop(\d+)\.lean", path.name)
-    if m and path.parent.name.startswith("Book"):
-        span = heath.theorem_span(src, int(m.group(1)))
+    n = int(m.group(1)) if m and path.parent.name.startswith("Book") else None
+    return notes_text(path.read_text(encoding="utf-8"), n)
+
+
+def notes_text(src: str, n: int | None = None) -> str:
+    """`lean_notes` of a Lean source; `n` names the `theorem PropN` whose docstring is
+    blanked."""
+    skip = None
+    if n is not None:
+        span = heath.theorem_span(src, n)
         if span is not None:
             skip = span.start
     spans = []   # (first, last) character of each note's text
@@ -334,52 +349,98 @@ def lean_files() -> list[Path]:
 # The text rules. Each pattern is matched on the text the rule names (raw, without code,
 # or outside quotations); every match is one finding.
 
+# Between two words of a phrase: spaces, or one line break with the next line's indent
+# and its comment leader ("--" in Lean, ">" in a Markdown quotation), so that a phrase is
+# found however a line or a comment wraps it. A blank line ends the phrase. ANY_GAP is
+# GAP or any white space, a blank line included: the gap of S2's "first mate" and of
+# "Definition N", which have always been found across one.
+GAP = r"(?:[ \t]+|[ \t]*\n[ \t]*(?:(?:--|>)[ \t]*)?)"
+ANY_GAP = rf"(?:\s+|{GAP})"
+LEADER = re.compile(r"\n[ \t]*(?:--|>)")
+
+
+def flat(s: str) -> str:
+    """A match on one line, as a finding shows it: "Lean\\n  -- cannot" is "Lean cannot"."""
+    return " ".join(LEADER.sub(" ", s).split())
+
+
+def phrase(*ps: str, gap: str = GAP) -> str:
+    """The alternatives `ps`, each a pattern whose spaces stand for `gap`: "Lean cannot"
+    matches "Lean cannot", "Lean\\ncannot" and "Lean\\n  -- cannot"."""
+    return "(?:" + "|".join(p.replace(" ", gap) for p in ps) + ")"
+
+
 def words(*ws: str) -> str:
-    """Whole words of a list, plurals and possessives allowed: crew, crews, crew's."""
-    return r"\b(?:" + "|".join(w.replace(" ", r"\s+") for w in ws) + r")(?:s|es)?\b"
+    """Whole words of a list, plurals and possessives allowed: crew, crews, crew's. The
+    words of "first mate" may stand apart by any white space, or wrap as GAP allows."""
+    return r"\b" + phrase(*ws, gap=ANY_GAP) + r"(?:s|es)?\b"
 
 
 EM_DASH = re.compile("—")
 CREW = re.compile(words("crew", "captain", "first mate", "bosun", "sailor", "voyage", "fleet",
                         "enforcer", "polisher"), re.I)
-# "Book I was …" is a book, not a person.
-FIRST_PERSON = re.compile(r"(?<!Book )(?<!Books )\bI (?:am|was|have|think|found|would)\b|\b[Mm](?:y|e)\b")
-HEDGE = re.compile(r"\bnote that\b|\bstrictly speaking\b|\bit is worth noting\b", re.I)
+# "Book I was …" is a book, not a person: an "I" right after the word "Book" or "Books"
+# and one space, on one line, is passed over. After any other gap ("Book  I", "Book\nI")
+# it is found, as it always was.
+FIRST_PERSON = re.compile(r"(?<!\bBook )(?<!\bBooks )"
+                          + phrase(r"\bI (?:am|was|have|think|found|would)\b")
+                          + r"|\b[Mm](?:y|e)\b")
+HEDGE = re.compile(phrase(r"\bnote that\b", r"\bstrictly speaking\b", r"\bit is worth noting\b"),
+                   re.I)
 # "never need" or "never needs" with Postulate 5, a postulate, parallels or "it" later in
 # the same clause: "never need it", "I.1 to I.28 never need the fifth postulate".
-EUCLID_CITES = re.compile(
-    r"\bEuclid cites\b|\bEuclid's own bracketed\b|"
-    r"\bnever needs?\b(?=[^.;:!?]{0,40}?\b(?:it|postulates?|parallels?)\b)", re.I)
-TACIT = re.compile(r"\btacit (?:assumptions?|laws?)\b", re.I)
-DEFINITION = re.compile(r"\b(?:Definitions?|Defs?\.)\s+\d+\b")
+EUCLID_CITES = re.compile(phrase(
+    r"\bEuclid cites\b", r"\bEuclid's own bracketed\b",
+    r"\bnever needs?\b(?=[^.;:!?]{0,40}?\b(?:it|postulates?|parallels?)\b)"), re.I)
+TACIT = re.compile(phrase(r"\btacit (?:assumptions?|laws?)\b"), re.I)
+DEFINITION = re.compile(phrase(r"\b(?:Definitions?|Defs?\.) \d+\b", gap=ANY_GAP))
 CURLY = re.compile("[“”‘’]")
-ITALIC_LETTER = re.compile(r"(?:^|[^*])(\*[A-Z]+[′₀-₉]*(?:[ ,]+[A-Z]+[′₀-₉]*)*\*)(?:$|[^*])", re.M)
+# Between two letters of S9's run: GAP, with commas among its spaces and tabs ("*AB, CD*",
+# "*AB,\nCD*"). A blank line ends the run.
+LETTER_GAP = r"(?:[ \t,]+|[ \t,]*\n[ \t]*(?:(?:--|>)[ \t]*)?[ \t,]*)"
+ITALIC_LETTER = re.compile(r"(?:^|[^*])(\*[A-Z]+[′₀-₉]*(?:" + LETTER_GAP + r"[A-Z]+[′₀-₉]*)*\*)"
+                           r"(?:$|[^*])", re.M)
 TEX = re.compile(r"\\|\^\{|\$")
-LEAN_CANNOT = re.compile(r"\bLean (?:cannot|can't|can not)\b", re.I)
-NO_CITATION = re.compile(r"\bno citations?\b", re.I)
+LEAN_CANNOT = re.compile(phrase(r"\bLean (?:cannot|can't|can not)\b"), re.I)
+NO_CITATION = re.compile(phrase(r"\bno citations?\b"), re.I)
 COMPARISON = re.compile(r"\b(?:first|only|better|best|unlike)\b", re.I)
 NEED = re.compile(r"\bneed(?:s|ed)?\b", re.I)
-POSTULATE_5 = re.compile(r"\bPostulate 5\b|\bPost\. 5\b|\bparallel postulate\b|\bfifth postulate\b", re.I)
+POSTULATE_5 = re.compile(phrase(r"\bPostulate 5\b", r"\bPost\. 5\b", r"\bparallel postulate\b",
+                                r"\bfifth postulate\b"), re.I)
 
 # S11: retired refrains of STYLE section 3, and the mishnah allowed each ("nowhere" is
 # the empty set).
 REFRAINS = [
-    (re.compile(r"\bcertificate (?:cites|records)\b"), set()),
-    (re.compile(r"\bOf the postulates\b"), set()),
-    (re.compile(r"\bbesides Euclid's\b"), set()),
-    (re.compile(r"\bjust Euclid's three\b"), set()),
-    (re.compile(r"\bcomes in through\b"), {"I.29"}),
-    (re.compile(r"\bLean (?:wants it said|asks why|makes us say so)\b"), {"I.1", "I.5", "I.22"}),
-    (re.compile(r"\b[Uu]ses Postulate 1\b"), {"I.1", "I.3"}),
-    (re.compile(r"\bbrings it in\b"), {"I.1", "I.3"}),
-    (re.compile(r"\bwith no letter\b"), set()),
-    (re.compile(r"\bproves it once\b"), set()),
-    (re.compile(r"\bWe give his argument once\b"), set()),
-    (re.compile(r"\band the Lean cites it\."), set()),
+    (re.compile(phrase(r"\bcertificate (?:cites|records)\b")), set()),
+    (re.compile(phrase(r"\bOf the postulates\b")), set()),
+    (re.compile(phrase(r"\bbesides Euclid's\b")), set()),
+    (re.compile(phrase(r"\bjust Euclid's three\b")), set()),
+    (re.compile(phrase(r"\bcomes in through\b")), {"I.29"}),
+    (re.compile(phrase(r"\bLean (?:wants it said|asks why|makes us say so)\b")),
+     {"I.1", "I.5", "I.22"}),
+    (re.compile(phrase(r"\b[Uu]ses Postulate 1\b")), {"I.1", "I.3"}),
+    (re.compile(phrase(r"\bbrings it in\b")), {"I.1", "I.3"}),
+    (re.compile(phrase(r"\bwith no letter\b")), set()),
+    (re.compile(phrase(r"\bproves it once\b")), set()),
+    (re.compile(phrase(r"\bWe give his argument once\b")), set()),
+    (re.compile(phrase(r"\band the Lean cites it\.")), set()),
 ]
 RETIRED_LEADS = re.compile(
-    r"^\*\*(?:What Lean made us say\.|What else Lean made us say\.|What it rests on\.|"
-    r"Where the parallels meet\.|Naming the pieces\.|Where [A-Z]+ falls\.)\*\*", re.M)
+    r"^\*\*" + phrase(r"What Lean made us say\.", r"What else Lean made us say\.",
+                      r"What it rests on\.", r"Where the parallels meet\.", r"Naming the pieces\.",
+                      r"Where [A-Z]+ falls\.") + r"\*\*", re.M)
+UNDER_I31 = re.compile(phrase(r"\bunder I\.31\b"))
+PROCLUS = re.compile(r"\bProclus\b")
+
+
+def proclus_under_i31(text: str) -> list[tuple[int, int]]:
+    """S11's "under I.31" in a sentence naming Proclus: the span of each in `text`."""
+    spans = []
+    for off, sent in sentences(text):
+        m = UNDER_I31.search(sent)
+        if m and PROCLUS.search(sent):
+            spans.append((off + m.start(), off + m.end()))
+    return spans
 
 
 def find_all(rule: str, pattern: re.Pattern, path: Path, text: str, shown: str | None = None,
@@ -389,7 +450,7 @@ def find_all(rule: str, pattern: re.Pattern, path: Path, text: str, shown: str |
     shown = text if shown is None else shown
     for m in pattern.finditer(text):
         a, b = (m.span(1) if m.groups() and m.group(1) else m.span())
-        found = " ".join((m.group(1) if m.groups() and m.group(1) else m.group(0)).split())
+        found = flat(m.group(1) if m.groups() and m.group(1) else m.group(0))
         msg = f'{what}"{found}": {excerpt(shown, a, b)}'
         (fail if failing else report)(rule, path, line_of(text, a), msg)
 
@@ -466,14 +527,12 @@ def check_mishnah(path: Path, raw: str) -> None:
         for m in pattern.finditer(text):
             where = ("only " + ", ".join(sorted(allowed, key=heath.prop_key))) if allowed else "nowhere"
             fail("S11", path, line_of(text, m.start()),
-                 f'"{m.group(0)}" (allowed {where}): {excerpt(raw, m.start(), m.end())}')
-    for off, sent in sentences(text):
-        m = re.search(r"\bunder I\.31\b", sent)
-        if m and re.search(r"\bProclus\b", sent):
-            fail("S11", path, line_of(text, off + m.start()),
-                 f'"under I.31" beside Proclus (allowed nowhere): {excerpt(raw, off + m.start(), off + m.end())}')
+                 f'"{flat(m.group(0))}" (allowed {where}): {excerpt(raw, m.start(), m.end())}')
+    for a, b in proclus_under_i31(text):
+        fail("S11", path, line_of(text, a),
+             f'"under I.31" beside Proclus (allowed nowhere): {excerpt(raw, a, b)}')
     for m in RETIRED_LEADS.finditer(text):
-        fail("S11", path, line_of(text, m.start()), f"retired lead {m.group(0)}")
+        fail("S11", path, line_of(text, m.start()), f"retired lead {flat(m.group(0))}")
 
     # Its usual shape (reported).
     count = len(text.split())
@@ -1235,6 +1294,78 @@ def ink_self_check() -> tuple[int, list[str]]:
 
 
 # ---------------------------------------------------------------------------------------
+# The script's own check, run first on every run: each wording rule finds its phrase
+# however a line or a comment wraps it, and not across a blank line (save S2's and S7's),
+# inside a quotation or in one of Heath's `--` lines; and S3 still finds an "I" after
+# "Book" when anything but one space stands between them. (D7 once let "Lean\ncannot"
+# through, in a docstring.)
+
+PHRASE_CASES = [   # (rule, its search, the text as the rule reads it, a finding?)
+    ("D7", LEAN_CANNOT.search, "as if picking it up. Lean\ncannot move a figure", True),
+    ("D7", LEAN_CANNOT.search, "the note says Lean\n  -- cannot move it", True),
+    ("D7", LEAN_CANNOT.search, "> what Lean\n> can't do", True),
+    ("D7", LEAN_CANNOT.search, "Lean  can not", True),
+    ("D7", LEAN_CANNOT.search, "what Lean\n\ncannot", False),
+    ("D7", LEAN_CANNOT.search, "Leancannot", False),
+    ("S2", CREW.search, "the first\n  -- mate", True),
+    ("S2", CREW.search, "the first\n\nmate", True),
+    ("S3", FIRST_PERSON.search, "as I\nthink", True),
+    ("S3", FIRST_PERSON.search, "as I\n  -- would say", True),
+    ("S3", FIRST_PERSON.search, "Book I was proved", False),
+    ("S3", FIRST_PERSON.search, "Books I have read", False),
+    ("S3", FIRST_PERSON.search, "Book I\nwas proved", False),
+    ("S3", FIRST_PERSON.search, "in Book  I was", True),
+    ("S3", FIRST_PERSON.search, "in Book\tI was", True),
+    ("S3", FIRST_PERSON.search, "in Book\nI was", True),
+    ("S3", FIRST_PERSON.search, "the Book\n  -- I would say", True),
+    ("S3", FIRST_PERSON.search, "Books\n> I have", True),
+    ("S3", FIRST_PERSON.search, "the eBook I have", True),
+    ("S4", HEDGE.search, "strictly\nspeaking", True),
+    ("S4", HEDGE.search, "it is worth\n   noting", True),
+    ("S5", EUCLID_CITES.search, "Euclid\ncites I.3", True),
+    ("S5", EUCLID_CITES.search, "I.1 to I.28 never\n  -- need it", True),
+    ("S6", TACIT.search, "a tacit\nassumption", True),
+    ("S7", DEFINITION.search, "by Definition\n15", True),
+    ("S7", DEFINITION.search, "by Definition\n\n15", True),
+    ("S9", ITALIC_LETTER.search, "the line *AB, CD*", True),
+    ("S9", ITALIC_LETTER.search, "the line *AB,\nCD*", True),
+    ("S9", ITALIC_LETTER.search, "> the line *AB\n> CD*", True),
+    ("S9", ITALIC_LETTER.search, "the line *AB,\n\nCD*", False),
+    ("D10", DEFINITION.search, "by Def.\n  -- 15", True),
+    ("D8", NO_CITATION.search, "gives no\ncitation", True),
+    ("D9", POSTULATE_5.search, "the parallel\npostulate", True),
+    ("S11", REFRAINS[0][0].search, "the certificate\nrecords", True),
+    ("S11", RETIRED_LEADS.search, "**What it\nrests on.**", True),
+    ("S11", proclus_under_i31, "Proclus puts it under I.31.", True),
+    ("S11", proclus_under_i31, "Proclus puts it under\nI.31.", True),
+    ("S11", proclus_under_i31, "As Proclus says, it falls\n> under\n> I.31.", True),
+    ("S11", proclus_under_i31, "Proclus puts it under\n\nI.31.", False),
+    ("S11", proclus_under_i31, "Proclus says so. It falls under\nI.31.", False),
+]
+
+
+def self_check() -> tuple[int, list[str]]:
+    """PHRASE_CASES, and four cases read as the Lean notes and the prose are read; returns
+    the number of cases and the faults."""
+    cases = PHRASE_CASES + [
+        ("D7", LEAN_CANNOT.search,
+         notes_text("/-- We build it, for Lean\ncannot move a figure. -/\n"
+                    "theorem T : True := trivial\n"), True),
+        ("D7", LEAN_CANNOT.search,
+         notes_text("theorem T : True := by\n  -- Lean\n  -- cannot\n  trivial\n"), False),
+        ("D7", LEAN_CANNOT.search,
+         blank_quotes(blank_code('He wrote "what Lean\ncannot" once.')), False),
+        ("S3", FIRST_PERSON.search, blank_quotes(blank_code('as I "so" think')), True),
+    ]
+    faults = []
+    for rule, search, text, want in cases:
+        found = bool(search(text))
+        if found != want:
+            faults.append(f"{rule} {'misses' if want else 'wrongly finds'} {text!r}")
+    return len(cases), faults
+
+
+# ---------------------------------------------------------------------------------------
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -1256,6 +1387,15 @@ def main() -> int:
             print("  ✗ " + f)
         return 1
     print(f"self-check: S20 reads the ink of {count} letters on angles' wedges rightly")
+
+    count, faults = self_check()
+    if faults:
+        print(f"{len(faults)} fault(s) in the script's own wording patterns; nothing else "
+              "was checked:")
+        for f in faults:
+            print("  ✗ " + f)
+        return 1
+    print(f"self-check: the wording rules read {count} wrapped and unwrapped phrases rightly")
 
     mishnah = mishnah_files()
     for path in mishnah:
