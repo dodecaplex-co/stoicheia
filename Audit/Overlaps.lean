@@ -10,8 +10,8 @@ The catalogue in `docs/reports/overlaps.md` lists every case we found, and this 
 proves each "states it" or "gives it at once" row again, from the rules alone, and I.2,
 I.3, I.7 and I.23, whose rules supply their step in a longer proof. After III.6,
 `III_5_crossing` shows that III.5 needs neither of its rules when "cut" is read as
-crossing. A second section proves III.24, III.26 and III.27 without the hypotheses our measure of
-circumferences leaves idle, the catalogue's near misses of representation.
+crossing. A second section proves III.24, III.26 and III.27 without the hypotheses our
+measure of circumferences leaves idle, the catalogue's near misses of representation.
 
 Each theorem's type is the proposition's own (`type_of% @Elements.BookIII.Prop2`), so a
 change to a statement shows up here too. At the end, `#guard_msgs` pins the axioms Lean
