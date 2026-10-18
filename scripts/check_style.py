@@ -37,7 +37,9 @@ idea figure, "Euclid I.N: …" on Euclid's (STYLE, section 7). A known departure
 cannot see is right is listed below with its reason, and printed on every run; one that
 no longer applies fails. An idea figure marks a point Heath leaves without a letter in the
 figure itself, with `data-unlettered` and its reason (S21), and those are printed too.
-Standard library only.
+S20 judges a letter's ink by the fill under it, an angle's wedge included. On every run,
+before anything else, the script checks that reading against letters on and beside an
+angle's wedge (`ink_self_check`), and stops if one is read wrongly. Standard library only.
 """
 
 from __future__ import annotations
@@ -588,7 +590,9 @@ WHITE = {"#fff", "#ffffff", "white"}
 EUCLID_COLOURS = {"#fbf7ee", "#3b2f2f", "#8c7b62", "#a0522d", "#e9dcc0"}
 COLOUR_ATTRS = ("fill", "stroke", "stop-color", "color", "flood-color", "lighting-color")
 DRAWN = {"line", "path", "polyline", "polygon", "circle", "ellipse", "rect"}
-INHERITED = ("fill", "stroke", "stroke-width", "font-size", "font-style", "text-anchor")
+FILLED = DRAWN - {"line"}
+INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "font-size", "font-style",
+             "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
 
 # The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
@@ -605,6 +609,15 @@ DOT = 6.0        # a filled circle of this radius at most is a dot
 UNLETTERED = "data-unlettered"
 NUM = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
 IDENTITY = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+
+# A path's `d`, read for the fill a letter stands on (S20): its commands, the numbers each
+# takes, and how finely its arcs and curves are followed in straight pieces.
+PATH_COMMAND = re.compile(r"[\s,]*([MmZzLlHhVvCcSsQqTtAa])")
+PATH_NUMBER = re.compile(r"[\s,]*(" + NUM.pattern + ")")
+PATH_FLAG = re.compile(r"[\s,]*([01])")
+PATH_ARITY = {"m": 2, "l": 2, "h": 1, "v": 1, "c": 6, "s": 4, "q": 4, "t": 2, "a": 7}
+ARC_STEP = math.radians(3)   # an arc, in a straight piece to each 3 degrees of its sweep
+CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
 
 # data-unlettered marks in the idea figures, printed on every run:
 # {(file, reason): [elements, points]}
@@ -627,13 +640,8 @@ def style_of(el) -> dict[str, str]:
 
 def walk(el, inherited=None):
     """(element, its own attributes, its effective inherited ones) for the whole tree."""
-    inherited = dict(inherited or {})
-    own = style_of(el)
-    eff = dict(inherited)
-    eff.update({k: own[k] for k in INHERITED if k in own})
-    yield el, own, eff
-    for child in el:
-        yield from walk(child, eff)
+    for el, own, eff, _, _ in placed(el, IDENTITY, inherited):
+        yield el, own, eff
 
 
 def placed(el, m=IDENTITY, inherited=None, exempt=None):
@@ -719,18 +727,127 @@ def back(m, x: float, y: float) -> tuple[float, float] | None:
     return ((m[3] * x - m[2] * y) / det, (m[0] * y - m[1] * x) / det)
 
 
-def inside(el, own, x: float, y: float) -> bool:
-    """Whether (x, y), in the element's own coordinates, lies within a polygon, rect,
-    circle or ellipse."""
-    t = tag(el)
-    if t == "polygon":
-        v = [float(n) for n in NUM.findall(own.get("points", ""))]
-        pts = list(zip(v[0::2], v[1::2]))
-        hit = False
-        for (x1, y1), (x2, y2) in zip(pts, pts[1:] + pts[:1]):
+def bezier(ps, t: float) -> tuple[float, float]:
+    """The point at t of the Bézier curve with control points ps (de Casteljau)."""
+    while len(ps) > 1:
+        ps = [(a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])) for a, b in zip(ps, ps[1:])]
+    return ps[0]
+
+
+def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: float,
+               sweep: float, x2: float, y2: float) -> list[tuple[float, float]]:
+    """An elliptical arc of a path, from (x1, y1) to (x2, y2), as the points along it after
+    the first, its centre found from its ends as SVG's implementation notes find it."""
+    if (x1, y1) == (x2, y2):
+        return []
+    rx, ry = abs(rx), abs(ry)
+    if rx == 0 or ry == 0:
+        return [(x2, y2)]
+    c, s = math.cos(math.radians(phi)), math.sin(math.radians(phi))
+    dx, dy = (x1 - x2) / 2, (y1 - y2) / 2
+    px, py = c * dx + s * dy, -s * dx + c * dy
+    grow = (px / rx) ** 2 + (py / ry) ** 2
+    if grow > 1:
+        rx, ry = rx * math.sqrt(grow), ry * math.sqrt(grow)
+    num = (rx * ry) ** 2 - (rx * py) ** 2 - (ry * px) ** 2
+    k = math.sqrt(max(0.0, num / ((rx * py) ** 2 + (ry * px) ** 2)))
+    if large == sweep:
+        k = -k
+    qx, qy = k * rx * py / ry, -k * ry * px / rx
+    cx, cy = c * qx - s * qy + (x1 + x2) / 2, s * qx + c * qy + (y1 + y2) / 2
+    start = math.atan2((py - qy) / ry, (px - qx) / rx)
+    turn = (math.atan2((-py - qy) / ry, (-px - qx) / rx) - start) % math.tau
+    if not sweep and turn > 0:
+        turn -= math.tau
+    n = max(1, math.ceil(abs(turn) / ARC_STEP))
+    pts = []
+    for i in range(1, n):
+        a = start + turn * i / n
+        ex, ey = rx * math.cos(a), ry * math.sin(a)
+        pts.append((cx + c * ex - s * ey, cy + s * ex + c * ey))
+    return pts + [(x2, y2)]
+
+
+def path_rings(d: str) -> list[list[tuple[float, float]]]:
+    """A path's subpaths as the rings of points its fill closes: straight segments as they
+    are, arcs and curves in short straight pieces. A path is read as far as it is well
+    formed, as SVG draws it."""
+    rings: list[list[tuple[float, float]]] = []
+    ring: list[tuple[float, float]] = []
+    x = y = sx = sy = 0.0
+    cmd, ctrl, pos = "", None, 0
+    while True:
+        found = PATH_COMMAND.match(d, pos)
+        if found:
+            cmd, pos = found.group(1), found.end()
+        elif cmd in ("", "Z", "z"):
+            break
+        kind = cmd.lower()
+        if kind == "z":
+            if len(ring) > 1:
+                rings.append(ring)
+            ring, x, y, ctrl = [(sx, sy)], sx, sy, None
+            continue
+        args = []
+        for i in range(PATH_ARITY[kind]):
+            got = (PATH_FLAG if kind == "a" and i in (3, 4) else PATH_NUMBER).match(d, pos)
+            if not got:
+                break
+            args.append(float(got.group(1)))
+            pos = got.end()
+        if len(args) < PATH_ARITY[kind]:
+            break
+        ox, oy = (x, y) if cmd.islower() else (0.0, 0.0)
+        pairs = [(ox + args[i], oy + args[i + 1]) for i in range(0, len(args) - 1, 2)]
+        if kind == "m":
+            if len(ring) > 1:
+                rings.append(ring)
+            (x, y), ctrl = pairs[0], None
+            sx, sy, ring = x, y, [(x, y)]
+            cmd = "l" if cmd == "m" else "L"
+            continue
+        if kind == "h":
+            pts, ctrl = [(ox + args[0], y)], None
+        elif kind == "v":
+            pts, ctrl = [(x, oy + args[0])], None
+        elif kind == "l":
+            pts, ctrl = pairs, None
+        elif kind == "a":
+            pts = arc_points(x, y, *args[:5], ox + args[5], oy + args[6])
+            ctrl = None
+        else:
+            if kind in "st":
+                same = ctrl is not None and ctrl[0] == ("c" if kind == "s" else "q")
+                pairs.insert(0, (2 * x - ctrl[1][0], 2 * y - ctrl[1][1]) if same else (x, y))
+            curve = [(x, y)] + pairs
+            pts = [bezier(curve, i / CURVE_STEPS) for i in range(1, CURVE_STEPS + 1)]
+            ctrl = ("c" if kind in "cs" else "q", curve[-2])
+        ring += pts
+        x, y = ring[-1]
+    if len(ring) > 1:
+        rings.append(ring)
+    return rings
+
+
+def enclosed(rings, x: float, y: float, evenodd: bool) -> bool:
+    """Whether (x, y) lies within the rings by SVG's fill rule, nonzero or evenodd."""
+    winding = 0
+    for ring in rings:
+        for (x1, y1), (x2, y2) in zip(ring, ring[1:] + ring[:1]):
             if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
-                hit = not hit
-        return hit
+                winding += 1 if y2 > y1 else -1
+    return winding % 2 == 1 if evenodd else winding != 0
+
+
+def inside(el, own, x: float, y: float, evenodd: bool = False) -> bool:
+    """Whether (x, y), in the element's own coordinates, lies within the fill of a polygon,
+    polyline, path, rect, circle or ellipse."""
+    t = tag(el)
+    if t in ("polygon", "polyline"):
+        v = [float(n) for n in NUM.findall(own.get("points", ""))]
+        return enclosed([list(zip(v[0::2], v[1::2]))], x, y, evenodd)
+    if t == "path":
+        return enclosed(path_rings(own.get("d", "")), x, y, evenodd)
     if t == "rect":
         x0, y0 = coord(own.get("x")), coord(own.get("y"))
         return x0 <= x <= x0 + coord(own.get("width")) and y0 <= y <= y0 + coord(own.get("height"))
@@ -744,19 +861,20 @@ def inside(el, own, x: float, y: float) -> bool:
 
 
 def fill_under(root, x: float, y: float) -> str:
-    """The colour a letter's middle stands on: the fill of the last polygon, rect, circle
-    or ellipse drawn over it, not transparent (transforms applied), or else the parchment.
-    Paths, the angles' wedges, are not read: no letter stands on one."""
+    """The colour a letter's middle stands on: the fill of the last polygon, polyline,
+    path (an angle's wedge), rect, circle or ellipse drawn over it, not transparent
+    (transforms applied), or else the parchment."""
     under = "#fbf7ee"
     for el, own, eff, m, _ in placed(root):
         fill = (eff.get("fill") or "black").strip().lower()
-        if tag(el) not in ("polygon", "rect", "circle", "ellipse") or fill == "none":
+        if tag(el) not in FILLED or fill == "none":
             continue
         opacity = number(own.get("fill-opacity"))
         if opacity is not None and opacity < 0.5:
             continue
         p = back(m, x, y)
-        if p is not None and inside(el, own, *p):
+        evenodd = (eff.get("fill-rule") or "nonzero").strip() == "evenodd"
+        if p is not None and inside(el, own, *p, evenodd):
             under = fill
     return under
 
@@ -869,6 +987,17 @@ def idea_points(root) -> list[tuple[str, tuple[float, float], tuple | None]]:
     return out
 
 
+def ink_fault(root, eff, centre: tuple[float, float], s: str) -> str | None:
+    """S20's ink for letter s, its glyph's middle at `centre`: what is wrong with it, or
+    None. It is #222222 on the parchment or yellow, and #fbf7ee on red, blue or black."""
+    dark = fill_under(root, *centre) in DARK
+    ink = IDEA_INK_ON_DARK if dark else IDEA_INK
+    if (eff.get("fill") or "black").strip().lower() == ink:
+        return None
+    return (f"letter {s} in {eff.get('fill') or 'black'}, not {ink}: a letter "
+            f"on {'red, blue or black' if dark else 'the parchment or yellow'} is in {ink}")
+
+
 def check_idea_letters(path: Path, root, required: bool) -> int:
     """S20: each letter is one of Heath's, as Euclid's figure draws it, italic, at 14, in
     the figure's black, or in the parchment's colour where it stands on red, blue or
@@ -894,11 +1023,9 @@ def check_idea_letters(path: Path, root, required: bool) -> int:
             fail("S20", path, 0, f"letter {s} is not one of Heath's letters as {euclid.name} "
                  f"draws them ({', '.join(sorted(heaths))})")
         centre = letter_centre(own, eff, m, s)
-        dark = fill_under(root, *centre) in DARK
-        ink = IDEA_INK_ON_DARK if dark else IDEA_INK
-        if (eff.get("fill") or "black").strip().lower() != ink:
-            fail("S20", path, 0, f"letter {s} in {eff.get('fill') or 'black'}, not {ink}: a letter "
-                 f"on {'red, blue or black' if dark else 'the parchment or yellow'} is in {ink}")
+        fault = ink_fault(root, eff, centre, s)
+        if fault:
+            fail("S20", path, 0, fault)
         if number(eff.get("font-size")) != IDEA_LETTER_SIZE:
             fail("S20", path, 0, f"letter {s} at font-size {eff.get('font-size')}, not {IDEA_LETTER_SIZE}")
         if (eff.get("font-style") or "normal").strip() != "italic":
@@ -1054,6 +1181,61 @@ def check_figures(required: bool) -> None:
 
 
 # ---------------------------------------------------------------------------------------
+# The script's own check of S20's ink, run first on every run: a letter on an angle's
+# wedge, a filled path, is judged by the wedge's fill, within its three ends and beyond
+# its chord out to its arc, and not beyond the arc; however the wedge is spelled (an
+# absolute arc, a relative arc, a cubic curve), and wherever a transform moves it. (S20
+# once read no paths, and let a black letter on a blue wedge through.)
+
+INK_WEDGES = (   # a quarter wedge of radius 34 at (200, 150), below and right of it
+    "M200,150 L234,150 A34,34 0 0,1 200,184 Z",
+    "m200,150 l34,0 a34,34 0 0,1 -34,34 z",
+    "M200,150 H234 C234,168.78 218.78,184 200,184 Z",
+)
+BLUE_WEDGE = '<path d="{wedge}" fill="#1f5aa6"/>'
+YELLOW_ON_RED = ('<polygon points="150,100 300,100 300,250 150,250" fill="#d0312d"/>'
+                 '<path d="{wedge}" fill="#f2b705"/>')
+MOVED_WEDGE = '<g transform="translate(-100,20)"><path d="{wedge}" fill="#1f5aa6"/></g>'
+WITHIN, ON_ARC, BEYOND = (215.0, 160.0), (221.2, 171.2), (226.9, 176.9)
+MOVED = (121.2, 191.2)   # ON_ARC, where MOVED_WEDGE stands
+
+INK_CASES = [   # (what is drawn under the letter, its glyph's middle, its ink, a finding?)
+    (BLUE_WEDGE, WITHIN, IDEA_INK, True),
+    (BLUE_WEDGE, WITHIN, IDEA_INK_ON_DARK, False),
+    (BLUE_WEDGE, ON_ARC, IDEA_INK, True),
+    (BLUE_WEDGE, ON_ARC, IDEA_INK_ON_DARK, False),
+    (BLUE_WEDGE, BEYOND, IDEA_INK, False),
+    (BLUE_WEDGE, BEYOND, IDEA_INK_ON_DARK, True),
+    (YELLOW_ON_RED, ON_ARC, IDEA_INK, False),
+    (YELLOW_ON_RED, ON_ARC, IDEA_INK_ON_DARK, True),
+    (MOVED_WEDGE, MOVED, IDEA_INK, True),
+    (MOVED_WEDGE, MOVED, IDEA_INK_ON_DARK, False),
+    (MOVED_WEDGE, ON_ARC, IDEA_INK, False),
+]
+
+
+def ink_self_check() -> tuple[int, list[str]]:
+    """INK_CASES, each with each spelling of the wedge, read as S20 reads a figure's
+    letters; returns the number of cases and the faults."""
+    faults = []
+    size = IDEA_LETTER_SIZE
+    for under, (x, y), ink, want in INK_CASES:
+        for wedge in INK_WEDGES:
+            drawn = under.format(wedge=wedge)
+            root = ET.fromstring(
+                f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                f'<rect width="400" height="300" fill="#fbf7ee"/>{drawn}'
+                f'<text x="{x}" y="{y + 0.35 * size}" text-anchor="middle" font-size="{size}" '
+                f'font-style="italic" fill="{ink}">A</text></svg>')
+            found = any(ink_fault(root, eff, letter_centre(own, eff, m, "A"), "A")
+                        for el, own, eff, m, _ in placed(root) if tag(el) == "text")
+            if found != want:
+                faults.append(f"S20 {'misses' if want else 'wrongly finds'} a letter in {ink} "
+                              f"at ({x:g}, {y:g}) on {drawn}")
+    return len(INK_CASES) * len(INK_WEDGES), faults
+
+
+# ---------------------------------------------------------------------------------------
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -1066,6 +1248,15 @@ def main() -> int:
                              "will; while it is off, this shows what S21 would find")
     args = parser.parse_args()
     required = IDEA_LETTERS_REQUIRED or args.require_idea_letters
+
+    count, faults = ink_self_check()
+    if faults:
+        print(f"{len(faults)} fault(s) in the script's reading of S20's ink; nothing else "
+              "was checked:")
+        for f in faults:
+            print("  ✗ " + f)
+        return 1
+    print(f"self-check: S20 reads the ink of {count} letters on angles' wedges rightly")
 
     mishnah = mishnah_files()
     for path in mishnah:
