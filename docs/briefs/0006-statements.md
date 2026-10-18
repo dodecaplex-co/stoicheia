@@ -49,9 +49,23 @@ II.14 follow. The coverage is full, by the companions together, under the tag
 figures with a hole. The tag `figure-by-corners` and the recommendation `restricted` are
 withdrawn, and the rows of the appendix that they overtook are marked.*
 
+*Revised again 18 October 2026, after two readers challenged that revision: both would
+accept `full` once open question 2 was closed. A square with a smaller square cut from its
+middle is a given rectilineal figure in Euclid's words (Definition I.14: "contained by any
+boundary or boundaries"), and gluing cannot make it. So I.45 and II.14 each gain a
+companion for a figure given with triangles that lie apart, no point inside two of them
+(`Apart`, `Apart.area`, `Prop45.apart`, `Prop14.apart`); `Prop45.figure` and
+`Prop14.general` are now proved from them by `Fitted.inside_pairwise`, and `Prop14.square`
+takes the new form, so that the square is drawn for a figure with a hole too. Open question
+2 is closed by the companions, and the tag's sentence "A figure with a hole is not taken"
+goes. The wording changes too: the main theorems' two triangles stay unchecked, and the
+records keep a representation note saying so; the brief and the fan docstrings say that the
+construction does not use the fan's two conditions, and that the polygon the fan's
+triangles make is a reading, not a Lean statement.*
+
 Base: the branch was written on main at `1e5b99a`, and has main merged in; the revision of
 18 October was written on main at `f17b427`. The statements are in `Staging/`, as committed
-with this brief. `lake build Staging` passes: 96 declarations, of which 37 carry `sorry`
+with this brief. `lake build Staging` passes: 100 declarations, of which 37 carry `sorry`
 and the rest are definitions, checks or proofs. Nothing in `Elements/` changes, so main's
 records, lock and CI are untouched.
 
@@ -144,11 +158,11 @@ the new words below, each with a decisions entry and `check_fidelity.py --write-
 `tests/model/lock.sha256` updated and `tests/model/MODEL.md` read again in the same change
 (FORMALIZATION, section 7). The words: `Magnitude.sum` (with its auxiliary `match_`
 declarations), `InOrder`, `segments`, `endOf`, `OnFiniteLine`, `OnOrInsideTriangle`,
-`Corners`, `Fitted` (with its constructors), `Rectilineal`, `Rectilineal.area`, `triples`,
-`Arc`, `Arc.Drawn`, `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.Less`, `Arc.Semicircle`,
+`Corners`, `Fitted` (with its constructors), `Rectilineal`, `Rectilineal.area`, `Apart`,
+`Apart.area`, `triples`, `Arc`, `Arc.Drawn`, `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.Less`, `Arc.Semicircle`,
 `Arc.Greater`, `Arc.SameKind`, `Arc.measure`, `Places`, `Arc.Congruent` and `Foot`, as far
 as frozen statements reach them. (Until the revision of 18 October, I.45 and II.14 needed
-no word of their own; the checked division needs the seven words of the rectilineal
+no word of their own; the checked division needs the nine words of the rectilineal
 figure.)
 
 **Where things live.** A new word is a definition in the foundations, owned by the
@@ -171,36 +185,55 @@ III.26 and III.28 records will say so.
 marked.)* A rectilineal figure is given with the triangles it is cut into, and "a
 parallelogram (a square) equal to the given rectilineal figure", in I.45 and II.14, means
 equal to those triangles taken together. That sum is what Euclid adds up when he calls ABD
-and DBC "the whole rectilineal figure ABCD". The division is supplied in one of two ways,
-and checked geometrically in both, as FORMALIZATION, section 4, asks of a dissection
+and DBC "the whole rectilineal figure ABCD". The division is supplied in one of three ways,
+and checked geometrically in each, as FORMALIZATION, section 4, asks of a dissection
 supplied as input:
 
-- **any division**, as triangles glued edge to edge (`Fitted`): each new triangle lies
+- **any figure, with any boundaries**, as triangles that lie apart (`Apart`): no point is
+  inside two of them, which is exactly what makes their sum the area of the figure they make
+  up. The figure is the triangles together; it may have a hole (Definition I.14: "contained
+  by any boundary or boundaries"), touch itself at a corner, or be in more than one piece,
+  which only claims more;
+- **a figure with one boundary**, as triangles glued edge to edge (`Fitted`): each new triangle lies
   across a side of an earlier one and meets the earlier ones only along that side, so the
-  triangles do not overlap (`Fitted.inside_pairwise`, proved) and together make one figure;
+  triangles do not overlap (`Fitted.inside_pairwise`, proved), so lie apart, and together
+  make one figure;
 - **Euclid's and Byrne's division**, by the straight lines from one corner A₀, with the two
   conditions that make it a division: each two neighbouring triangles lie on opposite sides
   of the straight line A₀Aᵢ they share, and the angles A₁A₀A₂, A₂A₀A₃, …, Aₙ₋₁A₀Aₙ together
   are less than four right angles. Such a fan is a fitted figure (`Fitted.fan`, to prove),
-  so the two ways agree.
+  and a fitted figure's triangles lie apart, so the three ways agree. That the figure a
+  checked fan makes is the one bounded by the closed line A₀A₁…AₙA₀, its corners in that
+  order, is a reading of the two conditions, true in the plane; no statement says it, and
+  the docstrings say so.
 
 Astra's pentagon (the revision note above) fails the first condition at its third corner,
 and so is no longer taken as a fan: its triangles from the first corner overlap. A figure
-that no corner divides is taken, by the first way. What is not proved, and is stated: that
-every rectilineal figure can be cut into triangles glued in this way (it can, by straight
-lines joining its corners, but no statement here says so); and that another division of
+that no corner divides is taken, by gluing; a figure with a hole, by triangles that lie
+apart. What is not proved, and is stated: that every rectilineal figure can be cut into
+triangles that lie apart, and every figure with one boundary into triangles glued in this
+way (both can, by straight lines joining corners, but no statement here says so); and that another division of
 the same figure gives the same sum, the tacit step below, which Hilbert proved for his
 measure of area. `Rectilineal.area` is therefore the area of the figure with its division,
-not a measure of the figure alone, and its docstring says so, as Astra asked. A figure made
-by gluing is bounded by one closed line that neither crosses nor touches itself, with no
-hole; Definition I.19 counts rectilineal figures by the straight lines that contain them,
-and the reading that a figure with a hole is not one of them is open question 2.
+not a measure of the figure alone, and its docstring says so, as Astra asked; `Apart.area`
+likewise. A figure made by gluing is bounded by one closed line that neither crosses nor
+touches itself, with no hole; a figure with a hole, or touching itself at a corner, is taken
+by the first way (open question 2, closed).
 
 Today's I.45, whose ABD and DBC need only be triangles, follows from neither checked
 companion, since it asks less of its triangles. It follows from the construction for any
 list of triangles, `Prop45.sum`, which claims nothing of a figure; II.14 likewise from
-`Prop14.sum`. So nothing is lost, and no statement presents an unchecked list of triangles
-as the figure.
+`Prop14.sum`. So nothing is lost, and no companion presents an unchecked list of triangles
+as the figure. The main theorems, `Prop45` and `Prop14`, stay as Euclid's worked
+configuration, and their two triangles ABD and DBC stay unchecked: nothing asks that A and C
+lie on opposite sides of DB, so the triangles may overlap, and their sum then measures no
+single figure. The checked form of today's statement is `Prop45.fan` (`Prop14.fan`) for the
+corners D, A, B, C, the list `ps` being [C]: there the condition on neighbours is exactly
+that A and C lie on opposite sides of DB, and the angles at D, each less than two right
+angles, are together less than four. So the I.45 and II.14 records keep a representation
+note beside the tag, as the record of I.45 has one today: "The main theorem takes ABD and
+DBC unchecked, and they may overlap; the checked case is `Prop45.fan` (`Prop14.fan`) for the
+corners D, A, B, C." The tag `two-triangles` goes from them; the note stays.
 
 The owner decided (open question 1, answered) that the I.45 and II.14 records are `full`,
 by the companions together, in this representation. As FORMALIZATION, section 3, requires,
@@ -212,7 +245,7 @@ it). Its kind is `representation`:
 ```toml
 [tag.figure-with-dissection]
 kind = "representation"
-meaning = "A rectilineal figure is given with its division into triangles, checked: triangles glued edge to edge, each across a side of an earlier one and meeting the earlier ones only along it, or, as Euclid and Byrne divide it, the triangles from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles. Equal to the figure means equal to those triangles together. That every figure can be so divided, and that another division gives the same sum, are not proved here; Hilbert proved the second, for his measure of area. A figure with a hole is not taken (I.45, II.14)."
+meaning = "A rectilineal figure is given with its division into triangles, checked: triangles that lie apart, no point inside two of them, so that the figure may have a hole; or triangles glued edge to edge, each across a side of an earlier one and meeting the earlier ones only along it; or, as Euclid and Byrne divide it, the triangles from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles. Equal to the figure means equal to those triangles together. That every figure can be so divided, and that another division gives the same sum, are not proved here; Hilbert proved the second, for his measure of area (I.45, II.14)."
 ```
 
 The page note goes in the field table's Representation row, and the mishnah of I.45 and
@@ -237,7 +270,7 @@ and each wave's orders name the agent.
 | Module | What goes in it | Place in the dependency order | Owner |
 |---|---|---|---|
 | `Elements/Foundations/Magnitudes.lean` | `Magnitude.sum` | the foundations | coordinator |
-| `Elements/Foundations/Phrases.lean` | `InOrder`, `segments`, `endOf`, `OnFiniteLine`, `OnOrInsideTriangle`, `Corners`, `triples`; then `Fitted`, `Rectilineal`, `Rectilineal.area` (Definition I.19), after `InsideTriangle` and `OppositeSidesOf`, which they use | the foundations | coordinator |
+| `Elements/Foundations/Phrases.lean` | `InOrder`, `segments`, `endOf`, `OnFiniteLine`, `OnOrInsideTriangle`, `Corners`, `triples`; then `Fitted`, `Rectilineal`, `Rectilineal.area`, `Apart`, `Apart.area` (Definitions I.14, I.19), after `InsideTriangle` and `OppositeSidesOf`, which they use | the foundations | coordinator |
 | `Elements/Foundations/DefinitionsIII.lean` | the arc words of stage 3; `Foot` (Definitions III.4, III.5) | the foundations | coordinator |
 | `Elements/Figure/Sums.lean` (new) | `Magnitude.sum_singleton`, `Magnitude.sum_append`, `InOrder.between_end` | Book Zero: imports no proposition | stage 2 ground task |
 | `Elements/Figure/Rectilineal.lean` (new) | `Fitted.ne_nil`, `Fitted.triangle`, `Fitted.inside_pairwise`; `Fitted.fan` if its proof cites no proposition | Book Zero: imports no proposition | stage 2 ground task |
@@ -310,8 +343,10 @@ theorem InOrder.between_end {B P : Point} {ps : List Point} (h : InOrder (B :: P
 
 `Staging/Stage2/Rectilineal.lean`, restored on 18 October 2026 from the design of 17
 October (the file as it stood before commit `a3fbb16`), with `triples` and `Fitted.fan`
-added. Definition I.19: "Rectilineal figures are those which are contained by straight
-lines". The owner's decision 1, as revised, as definitions:
+added, and then `Apart` and `Apart.area`, for a figure with any boundaries. Definition I.14:
+"A figure is that which is contained by any boundary or boundaries"; Definition I.19:
+"Rectilineal figures are those which are contained by straight lines". The owner's
+decision 1, as revised, as definitions:
 
 ```lean
 def OnFiniteLine (Y P Q : Point) : Prop := Y = P ∨ Y = Q ∨ Between P Y Q
@@ -338,6 +373,16 @@ structure Rectilineal where
   fitted : Fitted pieces
 
 noncomputable def Rectilineal.area (R : Rectilineal) : Area :=
+  Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)
+
+structure Apart where
+  pieces : List (Point × Point × Point)
+  ne : pieces ≠ []
+  triangle : ∀ t ∈ pieces, Triangle t.1 t.2.1 t.2.2
+  apart : pieces.Pairwise fun s s' => ∀ Y : Point,
+    InsideTriangle Y s.1 s.2.1 s.2.2 → ¬ InsideTriangle Y s'.1 s'.2.1 s'.2.2
+
+noncomputable def Apart.area (R : Apart) : Area :=
   Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)
 
 def triples : List Point → List (Point × Point × Point)
@@ -367,13 +412,30 @@ theorem Fitted.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   triangle that is within or on an earlier one lies on the finite straight line PQ. A
   rectilineal figure is such a list, and the figure is its triangles together; its area,
   as given, is the sum of its triangles. Every figure has a triangle, each piece is a
-  triangle, and no point is inside two pieces. The triples of a list of corners are each
+  triangle, and no point is inside two pieces. **A figure with any boundaries** is given
+  with triangles that lie apart: at least one, each a triangle, and no point inside two of
+  them; the figure is the triangles together, and its area, as given, is their sum
+  (`Apart`, `Apart.area`). The triples of a list of corners are each
   corner with the next two. **A figure divided from one corner**, with corners A₀, A₁, …,
   Aₙ, the list `ps` being A₃, …, Aₙ, and its triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ, one on each side
   `segments (A₁ :: A₂ :: ps)`, is a figure in this sense when each piece is a triangle,
   each two neighbouring triangles A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁ lie on opposite sides of the
   straight line A₀Aᵢ they share, and the angles at A₀ together are less than four right
-  angles (`Fitted.fan`).
+  angles (`Fitted.fan`). That figure is read as the one with corners A₀, A₁, …, Aₙ in order
+  round it; that its boundary is the closed line A₀A₁…AₙA₀ is true under the two
+  conditions, but no statement says it, and `Fitted.fan` proves only that the triangles fit
+  together into one figure. The docstrings of `Fitted.fan`, `Prop45.fan` and `Prop14.fan`
+  say so, as `Fitted`'s does of what the rule accepts and rejects.
+- **Why `Apart` beside `Fitted`** (18 October, after the challenge to the revision). A
+  square with a smaller square cut from its middle is contained by two boundaries, and so is
+  a given rectilineal figure in Euclid's words; no list of its triangles is fitted, since
+  the last triangle of the ring meets the earlier ones along two sides. Lying apart takes
+  it, needs no new predicate (`InsideTriangle` is in the foundations), and is exactly the
+  condition that makes the sum of the triangles the area of the figure they make up. It
+  also takes a figure touching itself at a corner, a triangle laid against part of a side of
+  another, and a figure in more than one piece, which only claims more. `Fitted` stays, as
+  the figure with one boundary, the triangles fitted together, because it names what
+  Euclid's and Byrne's figures are, and a checked fan is connected to it (`Fitted.fan`).
 - **What the gluing rule accepts and rejects** (checked by a challenger, by hand, on 17
   October; the argument is now in `Fitted`'s docstring). Any cutting of a figure bounded by
   one closed line that neither crosses nor touches itself into triangles, by straight lines
@@ -383,8 +445,8 @@ theorem Fitted.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   a line, with no hole and no pinch. Rejected: a ring of triangles closing round a point or
   a hole (the last would meet the others along two sides), and a triangle laid against part
   of a side, or against two sides in line. A figure cut in a ring round a point, or in the
-  second way, can be cut again so that the rule accepts it; a figure with a hole cannot
-  (open question 2). Neither direction is stated
+  second way, can be cut again so that the rule accepts it; a figure with a hole cannot, and
+  is taken by `Apart` (open question 2, closed). Neither direction is stated
   in Lean; `Fitted.inside_pairwise` is, and pins the no-overlap meaning of the rule against
   a later edit of `hmeet`.
 - **What the two conditions on a fan do.** Opposite sides at each shared straight line make
@@ -425,7 +487,8 @@ theorem Fitted.fan {A₀ A₁ A₂ : Point} {ps : List Point}
 - **Euclid's figure.** `Fitted.two` of 17 October, Euclid's ABCD as the list ABD, DBC, is not
   restored: `Fitted.fan` for the corners D, A, B, C says it, with the triangle ABD named
   DAB from D.
-- **Homes.** The words to the foundations; `Fitted.ne_nil`, `Fitted.triangle`,
+- **Homes.** The words, `Apart` and `Apart.area` among them, to the foundations;
+  `Fitted.ne_nil`, `Fitted.triangle`,
   `Fitted.inside_pairwise` to `Elements/Figure/Rectilineal.lean`; `Fitted.fan` there too if
   its proof cites no proposition, and otherwise in `Elements/BookI/Prop45.lean`, before
   `Prop45.fan`.
@@ -483,8 +546,8 @@ theorem Prop40.special {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Trian
 
 ### I.45, for any rectilineal figure
 
-`Staging/Stage2/BookI/Prop45.lean`. Companions "I.45 append", "I.45 sum", "I.45 figure",
-"I.45 fan".
+`Staging/Stage2/BookI/Prop45.lean`. Companions "I.45 append", "I.45 sum", "I.45 apart",
+"I.45 figure", "I.45 fan".
 
 ```lean
 theorem Prop45.append {A B C K F L M E₁ E E₂ : Point} (hKFLM : Parallelogram K F L M)
@@ -496,6 +559,10 @@ theorem Prop45.sum {E₁ E E₂ : Point} (ts : List (Point × Point × Point)) (
     (hts : ∀ t ∈ ts, Triangle t.1 t.2.1 t.2.2) (hE : Triangle E₁ E E₂) :
     ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
       quadArea K F L M = Magnitude.sum (ts.map fun t => △ t.1 t.2.1 t.2.2)
+
+theorem Prop45.apart {E₁ E E₂ : Point} (R : Apart) (hE : Triangle E₁ E E₂) :
+    ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
+      quadArea K F L M = R.area
 
 theorem Prop45.figure {E₁ E E₂ : Point} (R : Rectilineal) (hE : Triangle E₁ E E₂) :
     ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
@@ -515,17 +582,22 @@ theorem Prop45.fan {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
 - **In plain words.** Given a parallelogram in the angle E and a triangle, a parallelogram
   in the same angle equal to both together (`append`). Given any number of triangles, at
   least one, a parallelogram in the angle E equal to all of them together; they need not
-  fit together, and nothing is said of a figure (`sum`). Given a rectilineal figure with
-  the triangles it is cut into, glued edge to edge, a parallelogram in the angle E equal to
-  it, that is, to those triangles together (`figure`). Given a rectilineal figure by its
-  corners A₀, A₁, …, Aₙ, divided by the straight lines from A₀, with each piece a triangle,
+  fit together, and nothing is said of a figure (`sum`). Given a rectilineal figure, with
+  any boundaries, and the triangles it is cut into, no point inside two of them, a
+  parallelogram in the angle E equal to it, that is, to those triangles together (`apart`).
+  Given a rectilineal figure with the triangles it is cut into, glued edge to edge, a
+  parallelogram in the angle E equal to it, that is, to those triangles together
+  (`figure`). Given a rectilineal figure by its corners A₀, A₁, …, Aₙ, divided by the straight lines from A₀, with each piece a triangle,
   each two neighbouring triangles on opposite sides of the straight line A₀Aᵢ they share,
   and the angles at A₀ together less than four right angles, a parallelogram in the angle E
   equal to the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ together, which is the figure as given
-  (`fan`). Today's I.45 follows from `Prop45.sum` for the list ABD, DBC (checked by Lean).
-- **Why `figure` and `fan`.** `figure` is Euclid's word for what is given, "a given
-  rectilineal figure", and so it names the companion for any figure, as in the design of 17
-  October and in FORMALIZATION, section 2's list of companions; `fan` names the division
+  (`fan`); that the triangles make the figure with those corners in order is a reading, not
+  a Lean statement. Today's I.45 follows from `Prop45.sum` for the list ABD, DBC (checked by
+  Lean).
+- **Why `apart`, `figure` and `fan`.** `figure` is Euclid's word for what is given, "a given
+  rectilineal figure", and so it names the companion for any figure glued together, as in
+  the design of 17 October and in FORMALIZATION, section 2's list of companions; `apart`
+  names the figure whose triangles lie apart, the widest form; `fan` names the division
   Euclid draws in his proof and Byrne in his figure, from one corner, which not every
   figure admits. On 17 October `Prop45.figure` was, for a day, the unchecked division from
   a corner; that statement is withdrawn, and its form lives on in `Prop45.fan`, with the
@@ -533,16 +605,22 @@ theorem Prop45.fan {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
 - **Coverage.** Heath: "To construct, in a given rectilineal angle, a parallelogram equal
   to a given rectilineal figure." **Full, by the companions together,** as the owner decided
   on 18 October after Astra's answer, in the representation `figure-with-dissection`: any
-  rectilineal figure, given with a division into triangles that is checked to be one
-  (`Prop45.figure`), and in particular Euclid's and Byrne's division from one corner, checked
-  (`Prop45.fan`, which follows from `Prop45.figure` by `Fitted.fan`). The `two-triangles`
-  restriction goes. What the representation leaves unproved is stated with the tag: that
-  every figure can be so divided, and that another division gives the same sum (the tacit
-  step, below). A figure with a hole is not taken (open question 2).
+  rectilineal figure, with any boundaries, given with triangles that lie apart
+  (`Prop45.apart`); any figure with one boundary, given with a division into triangles
+  glued edge to edge (`Prop45.figure`, which follows from `Prop45.apart`); and in particular
+  Euclid's and Byrne's division from one corner, checked (`Prop45.fan`, which follows from
+  `Prop45.figure` by `Fitted.fan`). The `two-triangles` restriction goes. What the
+  representation leaves unproved is stated with the tag: that every figure can be so
+  divided, and that another division gives the same sum (the tacit step, below). A figure
+  with a hole is taken, by `Prop45.apart` (open question 2, closed). The main theorem keeps
+  its unchecked two triangles, and the record a representation note saying so, with the
+  checked case, `Prop45.fan` for the corners D, A, B, C (the limit, under Conventions).
 - **Cases.** A triangle (I.42 alone; for the fan, the list `ps` empty and no triple);
   Euclid's four corners, divided from D; Byrne's five, divided from his re-entrant corner,
   where the angles at A₀ together exceed two right angles; any number of corners; a figure
-  convex or not; a figure that no corner divides, by `Prop45.figure` alone. Astra's
+  convex or not; a figure that no corner divides, by `Prop45.figure`; a square with a square
+  hole, cut into eight triangles, and a figure touching itself at a corner, by
+  `Prop45.apart` alone. Astra's
   pentagon, divided from its first corner, is not a fan (its triangles overlap); divided
   otherwise it is a figure for `Prop45.figure`.
 - **Construction.** Given: the angle (the triangle E₁EE₂) and the figure, with its division.
@@ -554,16 +632,27 @@ theorem Prop45.fan {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
   after. `Prop45.append` is that second step, and `Prop45.sum` takes the triangles one at a
   time, in order. **Proved here:** `Prop45.sum`, by induction on the list, from I.42 and
   the stubbed `Prop45.append` (the proof `Prop45.figure` had on 17 October, for any list);
-  `Prop45.figure`, from `Prop45.sum` with `Fitted.ne_nil` and `Fitted.triangle`;
-  `Prop45.fan`, from `Prop45.figure` for the figure that the stubbed `Fitted.fan` gives,
-  whose area is the fan's sum by unfolding. Euclid shows two triangles; the repetition is
-  noted in the record.
+  `Prop45.apart`, from `Prop45.sum` with the figure's own `ne` and `triangle`;
+  `Prop45.figure`, from `Prop45.apart` with `Fitted.ne_nil`, `Fitted.triangle` and
+  `Fitted.inside_pairwise`; `Prop45.fan`, from `Prop45.figure` for the figure that the
+  stubbed `Fitted.fan` gives, whose area is the fan's sum by unfolding. Euclid shows two
+  triangles; the repetition is noted in the record.
+- **The fan's two conditions carry meaning, not the construction.** The construction does
+  not use `hopp` and `hA₀`: `Prop45.fan`'s conclusion follows from `htri` alone, by
+  `Prop45.sum`. The two conditions make the triangles a division of the figure, and the
+  proof goes through `Fitted.fan` on purpose, so that the fan companion is the general one
+  applied to a checked fan, and the two agree. The cost is that "I.45 fan" waits for
+  `Fitted.fan`, the hardest stub of stage 2. If `Fitted.fan` stalls, `Prop45.fan` is proved
+  from `Prop45.sum` instead, and its record notes the two conditions as meaning-only
+  (`redundant-hypothesis`, with this explanation); no statement changes. The record says
+  this in either case, since FORMALIZATION, section 5, treats a hypothesis the conclusion
+  does not need as a review prompt.
 - **Restored:** `Prop45.sum`, withdrawn on 17 October when nothing used it. Today's I.45
   asks only that ABD and DBC be triangles, so it follows from neither checked companion,
   and `Prop45.sum` is what it follows from; it is also the one construction that both
   `figure` and `fan` repeat.
-- **Dependencies.** I.42, I.44 and the steps of today's I.45; `Rectilineal`, `Fitted.ne_nil`,
-  `Fitted.triangle`, `Fitted.fan`; `segments`, `triples`, `Magnitude.sum`, and the magnitude
+- **Dependencies.** I.42, I.44 and the steps of today's I.45; `Apart`, `Rectilineal`,
+  `Fitted.ne_nil`, `Fitted.triangle`, `Fitted.inside_pairwise`, `Fitted.fan`; `segments`, `triples`, `Magnitude.sum`, and the magnitude
   laws `add_zero` and `add_assoc`.
 
 ### II.1, for any number of segments
@@ -599,7 +688,7 @@ theorem Prop1.general {A₁ A₂ B : Point} {ps : List Point} (h : InOrder (B ::
 ### II.14, for any rectilineal figure, with a drawn square
 
 `Staging/Stage2/BookII/Prop14.lean`. Companions "II.14 rectangle", "II.14 sum",
-"II.14 general", "II.14 square", "II.14 fan".
+"II.14 apart", "II.14 general", "II.14 square", "II.14 fan".
 
 ```lean
 theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
@@ -609,9 +698,11 @@ theorem Prop14.sum (ts : List (Point × Point × Point)) (hne : ts ≠ [])
     (hts : ∀ t ∈ ts, Triangle t.1 t.2.1 t.2.2) :
     ∃ P Q : Point, sq P Q = Magnitude.sum (ts.map fun t => △ t.1 t.2.1 t.2.2)
 
+theorem Prop14.apart (R : Apart) : ∃ P Q : Point, sq P Q = R.area
+
 theorem Prop14.general (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area
 
-theorem Prop14.square (R : Rectilineal) :
+theorem Prop14.square (R : Apart) :
     ∃ P Q S T : Point, Square P Q S T ∧ Parallelogram P Q S T ∧ quadArea P Q S T = R.area
 
 theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
@@ -625,10 +716,12 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
 
 - **In plain words.** A square equal to a given rectangle (`rectangle`); a square equal to
   any number of triangles together, at least one, which need not fit together (`sum`); a
-  square equal to a rectilineal figure given with its triangles, glued edge to edge, that
-  is, to those triangles together (`general`); the same with the square drawn as four
-  corners (`square`); and a square equal to a figure divided from one corner A₀, checked as
-  in `Prop45.fan`, that is, to the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ together (`fan`). Today's
+  square equal to a rectilineal figure, with any boundaries, given with triangles that lie
+  apart, that is, to those triangles together (`apart`); a square equal to a rectilineal
+  figure given with its triangles, glued edge to edge (`general`); a square drawn as four
+  corners, equal to a figure given with triangles that lie apart (`square`); and a square equal to a figure divided from one corner A₀, checked as
+  in `Prop45.fan`, that is, to the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ together (`fan`), read as
+  the figure with those corners in order, as in I.45. Today's
   II.14 follows from `Prop14.sum` for I.45's two triangles A₁A₂A₄ and A₄A₂A₃, which are
   ABD and DBC (checked by Lean).
 - **`Prop14.sum` restored, in a new form.** On 17 October `Prop14.sum` was today's
@@ -646,23 +739,37 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   today's II.14 prove II.14 from II.14, and no check would catch it.
 - **Proved here:** `Prop14.sum` (a right angle by I.11 at the corner A of the first
   triangle ABC, on AB, then `Prop45.sum` and `Prop14.rectangle`), from the stubs;
-  `Prop14.general`, from `Prop14.sum` for the figure's triangles; `Prop14.fan`, from
-  `Prop14.general` for the figure that `Fitted.fan` gives. **To prove:**
-  `Prop14.rectangle`; `Prop14.square`, the square on PQ described on it [I. 46] with
-  `Square.described`. The square drawn for a fan is `Prop14.square` for the figure that
-  `Fitted.fan` gives, and needs no statement of its own.
+  `Prop14.apart`, from `Prop14.sum` for the figure's triangles; `Prop14.general`, from
+  `Prop14.apart` with `Fitted.inside_pairwise`; `Prop14.fan`, from `Prop14.general` for the
+  figure that `Fitted.fan` gives. As in I.45, the construction does not use the fan's two
+  conditions: `Prop14.fan`'s conclusion follows from `htri` alone, by `Prop14.sum`, and the
+  proof goes through `Fitted.fan` on purpose, so that the fan companion is the general one
+  applied to a checked fan; if `Fitted.fan` stalls, `Prop14.fan` is proved from
+  `Prop14.sum`, and its record notes the two conditions as meaning-only. **To prove:**
+  `Prop14.rectangle`; `Prop14.square`, the square on the side `Prop14.apart` finds,
+  described on it [I. 46] with `Square.described`. `Prop14.square` takes the widest form,
+  `Apart`, so that the square is drawn for a figure with a hole too (revised 18 October; it
+  took `Rectilineal` before). The square drawn for a figure glued together, or for a fan, is
+  `Prop14.square` for that figure's triangles, which lie apart (`Fitted.inside_pairwise`),
+  with the same sum by unfolding, and needs no statement of its own.
 - **Coverage.** Heath: "To construct a square equal to a given rectilineal figure." **Full,
   by the companions together,** as the owner decided on 18 October, in I.45's
-  representation `figure-with-dissection`: any rectilineal figure given with a checked
-  division (`Prop14.general`, `Prop14.square`), and Euclid's and Byrne's division from one
+  representation `figure-with-dissection`: any rectilineal figure, with any boundaries,
+  given with triangles that lie apart (`Prop14.apart`, `Prop14.square`); any figure with one
+  boundary, glued edge to edge (`Prop14.general`); and Euclid's and Byrne's division from one
   corner, checked (`Prop14.fan`). The `two-triangles` restriction goes, and `Prop14.square`
   answers `side-not-square`, which stays for the main theorem. The unproved steps are
-  I.45's, stated with the tag; a figure with a hole is not taken (open question 2).
+  I.45's, stated with the tag; a figure with a hole is taken, by `Prop14.apart` (open
+  question 2, closed). The main theorem keeps its unchecked two triangles, and the record a
+  representation note saying so, with the checked case, `Prop14.fan` for the corners D, A,
+  B, C.
 - **Cases.** The rectangle a square already; BE the greater; ED the greater. The figure's
   are I.45's: a triangle, Euclid's four corners, Byrne's five, any number, convex or not,
-  and a figure that no corner divides, by `Prop14.general`.
+  a figure that no corner divides, by `Prop14.general`, and a figure with a hole, by
+  `Prop14.apart`.
 - **Dependencies.** I.11, I.45 (`Prop45.sum`), II.5, I.47, I.46, `Rectangle.of_right`,
-  `Square.described`; `Rectilineal`, `Fitted.ne_nil`, `Fitted.triangle`, `Fitted.fan`.
+  `Square.described`; `Apart`, `Rectilineal`, `Fitted.ne_nil`, `Fitted.triangle`,
+  `Fitted.inside_pairwise`, `Fitted.fan`.
 
 ### The tacit step, for the gap catalogues
 
@@ -700,8 +807,8 @@ division):
   ch. IV, "The Theory of Plane Areas", section 20), and his own note to the chapter credits
   Gérard and F. Schur (1892 and 1898) with like theories and refers to an article by
   O. Stolz (1894). Our companions take the figure with a division into triangles that is
-  checked to be one: any division, glued edge to edge, or Euclid's and Byrne's, by the
-  straight lines from one corner; they make the parallelogram equal to those triangles, and
+  checked to be one: triangles that lie apart, for a figure with any boundaries; triangles
+  glued edge to edge; or Euclid's and Byrne's, by the straight lines from one corner; they make the parallelogram equal to those triangles, and
   claim nothing of another cutting."
 - `docs/reports/gaps-book-II.md`, II.14, the first entry becomes: ""Let A be the given
   rectilineal figure": it may have any number of sides. Any rectilineal area, Heath says
@@ -1363,7 +1470,9 @@ leaves `lake build`, `lake build Audit` and `lake build Staging` green.
    policies to companions.
 2. I.40, II.1, I.45 in parallel (best of two each); II.14 after I.45's statements are
    stable, against `Prop45.sum`. `Fitted.fan` alongside, by one prover: `Prop45.fan` and
-   `Prop14.fan` wait for it.
+   `Prop14.fan` wait for it, and if it stalls they are proved from `Prop45.sum` and
+   `Prop14.sum` instead, with the two conditions noted as meaning-only (I.45, the fan's two
+   conditions).
 3. Records, pages, mishnah notes; the `figure-with-dissection` tag added before the I.45
    and II.14 records use it; the gap catalogue entries for I.45 and II.14, as planned above.
 
@@ -1473,7 +1582,9 @@ stamped by anyone who did not review it.
    figures that no corner divides. The records' scope is `full`, by the companions
    together, with the tag `figure-with-dissection`, of kind `representation`. The
    recommendation `restricted` and the tag `figure-by-corners` are withdrawn, and the
-   companion for any division, "not planned" above, is staged.
+   companion for any division, "not planned" above, is staged. After the challenge to that
+   revision, the companions for triangles that lie apart (`Prop45.apart`, `Prop14.apart`)
+   were added, so that `full` does not rest on the one-boundary reading of open question 2.
 
 2. **A figure with a hole** (new, 18 October 2026). A figure made by gluing is bounded by
    one closed line, with no hole, so a square with a square hole cut from it is not taken
@@ -1485,6 +1596,21 @@ stamped by anyone who did not review it.
    boundary, stated in the tag; the alternative, a gluing rule that lets a last triangle
    close a ring round a hole, would cost a second constructor and a weaker form of
    `hmeet`. The recommendation is to keep the reading and state it, as the tag does.
+
+   **Closed, 18 October 2026, after the challenge to the revision.** Both readers held that
+   `full` cannot stand while a figure Euclid's words admit is left out: Definition I.14
+   allows "any boundary or boundaries", Definition I.19 calls rectilineal those "contained
+   by straight lines", and FORMALIZATION, section 2, calls a statement that excludes such
+   configurations `restricted`; a tag of kind `representation` cannot carry an excluded
+   configuration. The cost estimate above was also wrong: taking a figure with a hole needs
+   no second constructor and no new predicate. Triangles that lie apart, no point inside two
+   of them, say it with `InsideTriangle`, already in the foundations, and that is exactly the
+   condition that makes the sum of the triangles the area of the figure they make up. So
+   `Apart`, `Apart.area`, `Prop45.apart` and `Prop14.apart` are staged; `Prop45.figure` and
+   `Prop14.general` follow from them by `Fitted.inside_pairwise`; `Prop14.square` takes the
+   new form; and the tag's sentence "A figure with a hole is not taken" goes. The one-boundary
+   reading is not needed for `full`, and `Fitted` stays as the form for a figure with one
+   boundary. A figure in more than one piece is taken too, which only claims more.
 
 ## Appendix: the challenges, and what was done
 
@@ -1545,4 +1671,16 @@ the last of the six are the findings of that revision.
 | Astra: independence from another division is needed before presenting the sum as the polygon's area, and credit cannot discharge it in Lean | `Rectilineal.area`'s docstring calls it the area of the figure with its division, not a measure of the figure alone; the step stays in the gap catalogue, crediting Hilbert, Gérard, F. Schur and O. Stolz; no statement claims it |
 | Today's I.45 and II.14 ask only that ABD and DBC be triangles, and follow from neither checked companion | `Prop45.sum` restored, and `Prop14.sum` in the list form; the `type_of%` checks derive today's statements from them |
 | `Fitted.two` duplicated what `Fitted.fan` says of Euclid's figure | Not restored; `Fitted.fan` for the corners D, A, B, C |
-| A figure with a hole is not made by gluing | Stated in `Fitted`'s docstring and the tag; open question 2 |
+| A figure with a hole is not made by gluing | Stated in `Fitted`'s docstring and the tag; open question 2. *Revised:* taken by `Apart` (below) |
+
+The revision of 18 October was challenged in turn by two readers of I.45 and II.14, who
+built `Staging` at `fdc56e9` (37 `sorry` warnings and nothing else), ran `check_style.py`
+and `check_links.py`, and found `Fitted.fan` true in the plane; both would accept `full`
+once open question 2 was closed. Their findings, and what was done:
+
+| Finding | Done |
+|---|---|
+| Material, both readers: `full` while a figure Euclid's words admit is left out. A square with a square hole is a given rectilineal figure (Definitions I.14, I.19), no list of its triangles is fitted, and a tag of kind `representation` cannot carry an excluded configuration; open question 2's cost estimate overstated the fix | `Apart` and `Apart.area` staged, in the form the first reader proposed, with thanks; `Prop45.apart` and `Prop14.apart` proved from `Prop45.sum` and `Prop14.sum`; `Prop45.figure` and `Prop14.general` now proved from them by `Fitted.inside_pairwise`; `Prop14.square` takes `Apart`; open question 2 closed and its cost estimate corrected; the tag's sentence on a hole removed; the limit, the vocabulary, the homes, the coverage and the cases revised |
+| Editorial: the main theorems still take two unchecked triangles, which may overlap, and the brief planned no place for the record note that says so once `two-triangles` goes | The limit, under Conventions, and the I.45 and II.14 coverage now plan a representation note beside the tag in both records, naming the checked case: `Prop45.fan` (`Prop14.fan`) for the corners D, A, B, C, where the condition on neighbours is that A and C lie on opposite sides of DB; the module docs say it too |
+| Editorial: `hopp` and `hA₀` carry meaning, not logic; the fan conclusions follow from `htri` by `Prop45.sum` (`Prop14.sum`), yet the certificates wait on `Fitted.fan`, the hardest stub of stage 2 | Said under I.45 ("The fan's two conditions carry meaning, not the construction"), II.14's proved items, the proof order, and the docstrings of `Prop45.fan` and `Prop14.fan`: the route through `Fitted.fan` is on purpose; if it stalls, the fan companions are proved from the sums and their records note the conditions as meaning-only (`redundant-hypothesis`, with the explanation). No statement changes |
+| Editorial: the fan docstrings speak of a figure "with corners A₀, A₁, …, Aₙ in order round it" and say the triangles are fitted "into the figure", though `Fitted.fan` proves only that they fit together into one figure | The docstrings of `Fitted.fan`, `Prop45.fan` and `Prop14.fan`, the module doc of `Rectilineal.lean`, the plain words and the limit now say that the identification with the polygon by its corners is a reading, true under the two conditions, and not a Lean statement |

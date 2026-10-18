@@ -24,6 +24,17 @@ rectilineal figure", in I.45 and II.14, means equal to the sum of the triangles 
 is given with, and the records of I.45 and II.14 carry that as the tag
 `figure-with-dissection`.
 
+**A figure with a hole, or in pieces.** Euclid defines a figure as "that which is contained
+by any boundary or boundaries" (Definition I.14), so a square with a smaller square cut from
+its middle is a rectilineal figure, contained by two boundaries. Gluing cannot make it: a
+ring of triangles round the hole cannot close. So the figure is also taken given with
+triangles that lie apart (`Apart`): no point is inside two of them, and nothing else is
+asked. The figure is the triangles together, which may have a hole, touch itself at a
+corner, or be in more than one piece, which only claims more. Lying apart is exactly what
+makes the sum of the triangles the area of the figure they make up, and a fitted figure's
+triangles lie apart (`Fitted.inside_pairwise`), so `Apart` takes every figure `Fitted` takes.
+`Fitted` stays, as the figure with one boundary, the triangles fitted together.
+
 **Euclid's and Byrne's division** is one such figure. Euclid's DB, drawn from the corner D
 of ABCD, and Byrne's two straight lines from one corner of his figure (1847, p. 46), cut it
 into triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ from one corner A₀. `Fitted.fan` says when those
@@ -34,7 +45,10 @@ reach outside the figure, and their sum is then more than the figure: Astra's pe
 (brief 0006, the revision of 18 October) is such a figure, its three triangles from the
 first corner together greater than it, because its second and fourth corners lie on one
 side of the straight line from the first corner to the third, and the first condition
-fails there.
+fails there. That the figure the fan's triangles make is the one bounded by the closed line
+A₀A₁…AₙA₀, its corners in that order, is a reading of the conditions, true in the plane,
+and is not stated in Lean: `Fitted.fan` says only that the triangles fit together into one
+figure.
 
 "Meeting only along that side" is said with the predicates already in the foundations: a
 point is within or on a triangle when it is inside it (`InsideTriangle`), on a side between
@@ -43,7 +57,7 @@ straight line when it is an end or between the ends (`OnFiniteLine`). The new tr
 meets the earlier triangles only along `PQ` when every point within or on it that is within
 or on one of them is on the finite straight line `PQ`.
 
-The definitions here are new words, and go to the foundations when adopted, with the lock
+The definitions here (`Apart` and `Apart.area` among them) are new words, and go to the foundations when adopted, with the lock
 and a decisions entry (WORKFLOW, section 2). `Fitted.ne_nil`, `Fitted.triangle` and
 `Fitted.inside_pairwise` follow from the definition, and are proved here; they go to Book
 Zero (`Elements/Figure/Rectilineal.lean`). `Fitted.fan`, which connects the definition with
@@ -88,7 +102,8 @@ proved (`Fitted.inside_pairwise`).
 A ring of triangles closing up round a point, or round a hole, is not made this way, for its
 last triangle would meet the others along two sides. A triangle laid against part of a
 side, or against two sides in line, is not glued this way either; its figure is cut
-differently. -/
+differently. A figure with a hole cannot be cut so as to be glued, and is taken given with
+triangles that lie apart (`Apart`), as every figure made this way can be too. -/
 inductive Fitted : List (Point × Point × Point) → Prop
   | single {A B C : Point} (h : Triangle A B C) : Fitted [(A, B, C)]
   | glue {ps : List (Point × Point × Point)} {t : Point × Point × Point} {P Q R X : Point}
@@ -114,6 +129,34 @@ division of the same figure gives the same sum is not proved here (brief 0006, t
 catalogue), so this is the area of the figure with its division, not yet a measure of the
 figure alone. -/
 noncomputable def Rectilineal.area (R : Rectilineal) : Area :=
+  Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)
+
+/-- **A rectilineal figure, given with triangles that lie apart** (Definition I.14: a figure
+is "that which is contained by any boundary or boundaries"; Definition I.19: rectilineal
+figures are "those which are contained by straight lines"): the triangles it is cut into,
+each named by its three corners, at least one; each a triangle; and no point inside two of
+them. The figure is the triangles together. It may have a hole, as a square with a smaller
+square cut from its middle has, may touch itself at a corner, and may be in more than one
+piece. No order of the triangles is asked, and a triangle may lie against part of a side of
+another. A figure given by gluing is one of these, its triangles lying apart by
+`Fitted.inside_pairwise`. That every rectilineal figure, with any boundaries, can be cut
+into triangles that lie apart is not stated in Lean. -/
+structure Apart where
+  /-- The triangles the figure is cut into. -/
+  pieces : List (Point × Point × Point)
+  /-- There is at least one. -/
+  ne : pieces ≠ []
+  /-- Each is a triangle: its corners are not on one straight line. -/
+  triangle : ∀ t ∈ pieces, Triangle t.1 t.2.1 t.2.2
+  /-- No point is inside two of them. -/
+  apart : pieces.Pairwise fun s s' => ∀ Y : Point,
+    InsideTriangle Y s.1 s.2.1 s.2.2 → ¬ InsideTriangle Y s'.1 s'.2.1 s'.2.2
+
+/-- **The area of a figure given with triangles that lie apart, as given**: the sum of its
+triangles. As with `Rectilineal.area`, that another division of the same figure gives the
+same sum is not proved here (brief 0006, the gap catalogue), so this is the area of the
+figure with its division, not yet a measure of the figure alone. -/
+noncomputable def Apart.area (R : Apart) : Area :=
   Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)
 
 /-- **The corners three at a time**: each corner of the list with the next two. The triples
@@ -180,7 +223,8 @@ Aᵢ₋₁ and Aᵢ₊₁ are on opposite sides of it (one condition for each of
 ps)`); and the angles A₁A₀A₂, A₂A₀A₃, …, Aₙ₋₁A₀Aₙ at A₀ together are less than four right
 angles. Then those triangles, in that order, are fitted together into one figure: each is
 laid across the straight line A₀Aᵢ against the one before it, and meets the earlier ones only
-along that straight line.
+along that straight line. The figure they make is read as the figure with corners A₀, A₁, …,
+Aₙ in order round it; that its boundary is the closed line A₀A₁…AₙA₀ is not stated in Lean.
 
 The two conditions are what make the triangles turn one way round A₀ and not come round on
 themselves, so that they do not overlap. Euclid's ABCD, divided from D by DB, is the figure
