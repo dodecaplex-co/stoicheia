@@ -7,8 +7,8 @@ Some of System E's rules, which we take as axioms, already say what Euclid later
 or give it in a few lines. Astra found the clearest case, III.2, in the outside review
 (`docs/reports/outside-review-01.md`), and compiled its one-line proof; we are grateful.
 The catalogue in `docs/reports/overlaps.md` lists every case we found, and this file
-proves each "states it" or "gives it at once" row again, from the rules alone, and I.7 and
-I.23, whose rules supply their step in a proof that needs seven and eight. A second
+proves each "states it" or "gives it at once" row again, from the rules alone, and I.2,
+I.3, I.7 and I.23, whose rules supply their step in a longer proof. A second
 section proves III.24, III.26 and III.27 without the hypotheses our measure of
 circumferences leaves idle, the catalogue's near misses of representation.
 
@@ -29,6 +29,70 @@ namespace Audit
 open Elements Elements.Tacit
 
 /-! ## Rules that state a proposition, give it at once, or supply its step -/
+
+/-- A point off the straight line through B and C, drawn from the rules alone, for the
+triangle that superposition needs and I.2 and I.3 do not give. The circle about B
+through C meets the straight line again at C', beyond B (Intersections 5); a third point
+X of the circle cannot be on the straight line, for B would then lie between X and C,
+and between X and C' (Circle 1), and C and C' would lie on one side of B (Between 7),
+where B lies between them. -/
+private theorem off_line {B C : Point} {M : Line} (hBC : B ≠ C) (hB : OnLine B M)
+    (hC : OnLine C M) : ∃ X : Point, ¬ OnLine X M := by
+  obtain ⟨α, hBα, hCα⟩ := Postulate3 B C hBC
+  have hBin : InsideCircle B α := centre_inside hBα
+  obtain ⟨C', hC'α, hC'M, hC'BC⟩ := line_circle_beyond hBin hB hC hBC.symm
+  obtain ⟨X, hXα, hX⟩ := exists_point_on_circle α [C, C']
+  refine ⟨X, fun hXM => ?_⟩
+  have hXC : X ≠ C := by rintro rfl; exact hX (by simp)
+  have hXC' : X ≠ C' := by rintro rfl; exact hX (by simp)
+  have h₁ : Between X B C := between_of_inside_chord hB hXM hC hBin hXα hCα hXC
+  have h₂ : Between X B C' := between_of_inside_chord hB hXM hC'M hBin hXα hC'α hXC'
+  exact not_between_of_between_between h₁ h₂ (between_symm hC'BC)
+
+/-- **I.2 from superposition.** The rule lays a triangle down with a corner on a given
+point of a straight line and a side along a given ray, keeping its sides
+(`superposition`). Laid down at A along AB, a triangle on BC carries the length of BC
+to A: that is I.2, the step a collapsing compass (Postulate 3) cannot take. Neither the
+triangle nor a point off AB is given, so both are drawn (`off_line`). The certificate
+lets only I.4 and I.8 use superposition, as System E asks; our I.2 is Euclid's
+construction, by I.1, and does not rest on the rule. -/
+theorem I_2 : type_of% @Elements.BookI.Prop2 := by
+  intro A B C hBC
+  by_cases hAB : A = B
+  · exact ⟨C, by rw [hAB]⟩
+  obtain ⟨M, hBM, hCM⟩ := Postulate1 B C hBC
+  obtain ⟨X, hX⟩ := off_line hBC hBM hCM
+  have hBCX : Triangle B C X := fun ⟨N, hB, hC, hXN⟩ =>
+    hX (line_unique hBC hB hC hBM hCM ▸ hXN)
+  obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hAB
+  obtain ⟨H, hH⟩ := off_line hAB hAL hBL
+  obtain ⟨L', -, -, -, -, hAL', -⟩ := superposition hBCX hAL hBL hAB hH
+  exact ⟨L', hAL'⟩
+
+/-- **I.3 from superposition.** Laid down at A along the ray from A through B, a
+triangle on C₁C₂ carries the length of C₁C₂ onto that ray, at E. E is neither A, for
+C₁C₂ is something, nor B, for AB is the greater; nor is B between A and E, for then AE
+would be greater than AB. So E lies between A and B (Between 6): that is I.3. Our I.3 is
+Euclid's, by I.2, and does not rest on the rule. -/
+theorem I_3 : type_of% @Elements.BookI.Prop3 := by
+  intro A B C₁ C₂ hC h
+  have hAB : A ≠ B := ne_of_len_gt h
+  obtain ⟨M, hC₁M, hC₂M⟩ := Postulate1 C₁ C₂ hC
+  obtain ⟨X, hX⟩ := off_line hC hC₁M hC₂M
+  have hCX : Triangle C₁ C₂ X := fun ⟨N, h₁, h₂, hXN⟩ =>
+    hX (line_unique hC h₁ h₂ hC₁M hC₂M ▸ hXN)
+  obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hAB
+  obtain ⟨H, hH⟩ := off_line hAB hAL hBL
+  obtain ⟨E, -, hEL, hEAB, -, hAE, -⟩ := superposition hCX hAL hBL hAB hH
+  refine ⟨E, ?_, hAE⟩
+  have hAE_ne : A ≠ E := ne_of_len_eq hAE hC
+  have hEB : E ≠ B := by
+    rintro rfl
+    exact lt_irrefl _ (hAE ▸ h)
+  rcases between_cases hAE_ne hEB hAB hAL hEL hBL with h' | h' | h'
+  · exact h'
+  · exact absurd h' hEAB
+  · exact absurd (lt_trans (hAE ▸ len_lt_of_between h') h) (lt_irrefl _)
 
 /-- **I.7 from Circle 4.** Two circles that cut one another do so on opposite sides of
 the straight line through their centres (`not_same_side_of_circles_meet`, Circle 4).
@@ -215,6 +279,53 @@ end Audit
 Lean's own report, pinned. `Classical.choice` comes in with any rule that speaks of a
 length, an angle or an area, for the magnitudes are chosen (`Foundations/Magnitudes.lean`);
 `propext` and `Quot.sound` with the proofs that argue by cases. -/
+
+/--
+info: 'Audit.I_2' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Postulate1,
+ Elements.Postulate3,
+ Quot.sound,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.centre_inside,
+ Elements.Tacit.exists_point_on_circle,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.line_unique,
+ Elements.Tacit.not_between_of_between_between,
+ Elements.Tacit.superposition]
+-/
+#guard_msgs in
+#print axioms Audit.I_2
+
+/--
+info: 'Audit.I_3' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Postulate1,
+ Elements.Postulate3,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.between_cases,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.centre_inside,
+ Elements.Tacit.eq_of_len_eq_zero,
+ Elements.Tacit.exists_point_on_circle,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_self,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.line_unique,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.ne_of_between,
+ Elements.Tacit.not_between_of_between_between,
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.superposition]
+-/
+#guard_msgs in
+#print axioms Audit.I_3
 
 /--
 info: 'Audit.I_7' depends on axioms: [propext,

@@ -24,10 +24,11 @@ Each row is one of three kinds:
   name the figure.
 - **Supplies a step**: inside some proof, the rule carries a step that is a proposition's
   content, or a case of it. The first column says which proposition, and in which proofs.
-  For I.7 and I.23 the proof is the audit lemma: the rule carries the proposition's
-  content, but the shortest proof we found from the rules alone takes seven and eight of
-  them, the rest drawing a figure the statement never mentions and telling its parts
-  apart, which is more than "at once".
+  For I.2, I.3, I.7 and I.23 the proof is the audit lemma: the rule carries the
+  proposition's content, but the shortest proof we found from the rules alone takes ten,
+  twenty-two, seven and eight of them, the rest drawing a figure the statement never
+  mentions and telling its parts apart (and, for I.3, ordering three points by their
+  lengths), which is more than "at once".
 
 "First enters" names the first proposition, in Euclid's order, whose own proof uses the
 rule, from `direct_axioms` in [facts.json](../../facts.json) as committed. Each audit
@@ -38,6 +39,8 @@ reaches the proof, read from Lean's proof terms, and what the Lean proof does.
 
 | Proposition | Rule(s) | Kind | First enters | Audit lemma |
 |---|---|---|---|---|
+| [I.2](#i2-and-i3) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_2`: laid down at A along AB, a triangle on BC carries the length of BC to A, and drawing that triangle and a point off AB takes nine axioms more | I.4 | `Audit.I_2` |
+| [I.3](#i2-and-i3) | Superposition (`superposition`) | Supplies a step, in `Audit.I_3`: laid down at A along the ray AB, a triangle on the less straight line carries its length onto the ray, and drawing the figure and placing the new point between A and B takes twenty-one axioms more | I.4 | `Audit.I_3` |
 | [I.7](#i7) | Circle 4 (`not_same_side_of_circles_meet`): two circles cut one another on opposite sides of the straight line through their centres | Supplies a step, in `Audit.I_7`: I.7 is the rule with its two circles left undrawn, and drawing them and telling them apart takes six rules more | Nowhere: no proof uses it | `Audit.I_7` |
 | [I.13, a case of it, in 17 proofs from II.1 on](#i13-in-17-proofs) | Diagram-angle 3 (`adjacent_eq_of_right`): the angle beside a right angle is right | Supplies a step: I.13 makes the two angles two right angles, so the second is right | II.1 | `Audit.adjacent_eq_of_right` runs the other way: the rule, proved from I.13 |
 | [I.13, a consequence of it, in I.47](#i13-in-i47) | Metric 5 (`angle_le_two_right`): no angle exceeds two right angles | Supplies a step: for an angle between two straight lines, I.13 gives it | I.47, its only user | None |
@@ -52,6 +55,19 @@ The review records point here: a proposition's `[overlap]` names its rule
 ([review/SCHEMA.md](../../review/SCHEMA.md)).
 
 ### Row by row
+
+#### I.2 and I.3
+
+Nothing brings the rule into our I.2 or I.3, which come before I.4 and do not rest on it.
+The proofs are Euclid's: I.2 by the equilateral triangle of I.1 and two circles, I.3 by
+I.2 and a circle. Our Postulate 3 is Euclid's collapsing compass, and leaves carrying a
+distance to I.2; superposition, in the form we take it, carries one. What keeps I.2
+Euclid's is the certificate's policy, which lets only I.4 and I.8 cite the rule.
+`Audit.I_2` uses superposition with Postulates 1 and 3, Generalities 1 and 3, Points 7,
+Intersections 5, Circle 1 and Between 1 and 7, which draw a triangle on BC and a point off
+AB, since neither statement gives one. `Audit.I_3` draws the same way, and adds Between 6,
+Diagram-segment 1, Metric 1 and the laws of magnitude, which put the new point between A
+and B.
 
 #### I.7
 
@@ -140,7 +156,10 @@ pair of the 24 rules about circles, and every pair of families: 40,698 attempts 
 99 propositions and the three porisms. It closed III.2, III.5 and III.6, and nothing
 else. The screen cannot draw a figure, for `grind` works with the points and circles a
 goal already names. I.7 needs two circles its statement never mentions, and I.23 a
-triangle laid down, so both came from reading.
+triangle laid down, so both came from reading. I.2 and I.3 need a triangle drawn and then
+laid down. The catalogue first listed them as near misses, since neither statement gives a
+triangle to move; but the same holds of I.7's circles. Claude, reading the work cold on
+18 October 2026, moved them to rows, with `Audit.I_2` and `Audit.I_3`.
 
 ## The rows checked
 
@@ -164,6 +183,12 @@ For each row we looked for a proof of the proposition's statement from at most t
   Superposition alone does not give I.23: where there are no straight lines it holds,
   having nothing to speak of, and no point lies on a ray from A through B. So the row says
   that superposition supplies I.23's step, as for I.7.
+- **I.2 and I.3**: not found from three. `Audit.I_2` uses ten axioms and `Audit.I_3`
+  twenty-two: superposition does the work, and the others draw a triangle to lay down and
+  a point off AB, and, for I.3, place the new point between A and B. Superposition alone
+  does not give I.2: where there are no straight lines it holds, having nothing to speak
+  of, and no length from A need equal BC. So the rows say that superposition supplies
+  their step, as for I.7 and I.23.
 - **The steps.** For III.1, its porism and I.13 we found no proof from three rules: each
   needs a construction Euclid makes by earlier propositions, a bisection or a
   perpendicular (I.10, I.11). In the other direction, Diagram-angle 3 is a theorem of
@@ -180,9 +205,6 @@ For each row we looked for a proof of the proposition's statement from at most t
 - **I.4's last clause.** Metric 9 (`area_congruent`) makes the triangles equal once their
   sides and angles are. Euclid's reason there is that the triangles coincide (Common
   Notion 4), his own step in I.4, not a later proposition.
-- **I.2 and I.3.** A rule that moves triangles could carry a length as well, but it needs a
-  triangle to move, and neither statement gives one, so the proof is longer than "at once".
-  The certificate keeps superposition to I.4 and I.8 in any case.
 - **Representation and scope.** III.24's second clause follows from its angle hypothesis
   alone, and III.26 and III.27 hold without their equal circles, because of how a
   circumference is measured: a definition, not a rule. `Audit.III_24_measure`,
