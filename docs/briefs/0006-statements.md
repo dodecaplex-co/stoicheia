@@ -1854,11 +1854,14 @@ stage branches, docstring edits among them, are outside it.
   companion rests there on today's III.14, not on III.14 general, and cites neither `Foot`
   lemma. *The statement stands:* a companion may cite its own proposition, which comes before
   it, as III.14 general does, and the check that today's III.15 follows from the two
-  companions depends only on what they state. This is not the route withdrawn under II.14
-  above, which would have proved the rectangle, Euclid's own second part, from today's
-  two-triangle statement rather than by his construction: here Euclid's configuration is
-  proved by his argument, in today's III.15, and the companion adds only the case of a
-  diameter, by `le_diameter`.
+  companions depends only on what they state. Unlike the route withdrawn under II.14 above,
+  which would have proved the rectangle, Euclid's own second part, from today's two-triangle
+  statement rather than by his construction, this one proves Euclid's configuration by his
+  argument, in today's III.15, and adds only the case of a diameter, by `le_diameter`. Like
+  that route, it makes the check of today's III.15 pass through III.15 itself, as III.14
+  general's route does for III.14's check, and the II.14 passage counted that against its
+  route; whether it is accepted here is the coordinator's call, recorded in the III.15 record
+  when it is read again.
 
 **Settled by the proofs, and two consequences.**
 
