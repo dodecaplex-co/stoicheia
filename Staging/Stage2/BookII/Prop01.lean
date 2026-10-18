@@ -1,4 +1,4 @@
-import Staging.Stage2.Sums
+import Elements
 
 /-!
 # Staging: II.1 for any number of segments
