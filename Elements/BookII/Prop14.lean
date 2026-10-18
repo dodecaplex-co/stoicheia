@@ -72,7 +72,7 @@ theorem Prop14 {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h
       on_circle_of_len_eq hG_BHF hB_BHF (by rw [← hBG, len_symm G B])
     have hlt' : ‖E F‖ < ‖B E‖ := by rw [hEF, len_symm B E]; exact hlt
     /- G lies between B and E because BE is greater than EF, so E lies between
-       the centre G and F and is within the circle by Definition 15. -/
+       the centre G and F and is within the circle by Definition I.15. -/
     have hBGE : Between B G E := by
       have hBF : ‖B F‖ = ‖B G‖ + ‖B G‖ := by
         rw [← len_add_of_between hBGF, ← hBG]

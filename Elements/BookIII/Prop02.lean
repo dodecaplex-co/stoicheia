@@ -109,7 +109,6 @@ theorem Prop2 {A B : Point} {ABC : Circle} (hABC : ∃ D : Point, Centre D ABC) 
   -- Therefore etc.
   -- Q. E. D.
 
-
 /-- III.2 for points on or within the circle: a point between two such points is within
 it. Produced beyond each end that is within, the straight line meets the circle (System E,
 Intersections 5), and the point lies between the two points where it meets it, so within
@@ -143,10 +142,10 @@ theorem Prop2.triangle {A B C : Point} {α : Circle} (hα : ∃ O : Point, Centr
   · exact inside_not_on (Prop2 hα hB hC A h) hA
   · exact inside_not_on (Prop2 hα hA hB C h) hC
 
-/-- A straight line `BC` in a circle has a point of the circle on the other side of it
-from any point `K` off it. Take `M` between `B` and `C`; it is within the circle [III. 2],
-so the straight line `KM`, produced beyond `M`, meets the circle (System E, Intersections
-5), on the other side of `BC` from `K` (Pasch 3). -/
+/-- A straight line BC in a circle has a point of the circle on the other side of it from
+any point K off it. Take M between B and C; it is within the circle [III. 2], so the
+straight line KM, produced beyond M, meets the circle (System E, Intersections 5), on the
+other side of BC from K (Pasch 3). -/
 theorem Prop2.oppositeSide {B C K : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
     (hB : OnCircle B α) (hC : OnCircle C α) (hK : Triangle B C K) :
     ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C := by
@@ -157,17 +156,17 @@ theorem Prop2.oppositeSide {B C K : Point} {α : Circle} (hα : ∃ O : Point, C
   have hKM : K ≠ M := fun e => hK_L (e ▸ hM_L)
   obtain ⟨N, hK_N, hM_N⟩ := Postulate1 K M hKM
   obtain ⟨A, hA_α, hA_N, hAMK⟩ := line_circle_beyond hM_in hM_N hK_N hKM
-  /- `A` is off `BC`: the straight lines `KM` and `BC` meet only at `M`, and `A` is on
-     the circle, not within it. -/
+  /- A is off BC: the straight lines KM and BC meet only at M, and A is on the circle,
+     not within it. -/
   have hAM : A ≠ M := fun e => inside_not_on hM_in (e ▸ hA_α)
   have hA_L : ¬ OnLine A L := fun hA_L =>
     hK_L ((line_unique hAM hA_N hM_N hA_L hM_L) ▸ hK_N)
   exact ⟨A, hA_α, OppositeSidesOf.of_line hK.ne₁₂ hB_L hC_L
     ⟨hA_L, hK_L, pasch3 hAMK hM_L⟩⟩
 
-/-- A straight line `BC` in a circle has a point of the circle on the same side of it as
-any point `K` off it: take a point on the other side from `K`, and a point of the circle
-on the other side from that (`Prop2.oppositeSide`). [III. 2] -/
+/-- A straight line BC in a circle has a point of the circle on the same side of it as any
+point K off it: take a point on the other side from K, and a point of the circle on the
+other side from that (`Prop2.oppositeSide`). [III. 2] -/
 theorem Prop2.sameSide {B C K : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
     (hB : OnCircle B α) (hC : OnCircle C α) (hK : Triangle B C K) :
     ∃ A : Point, OnCircle A α ∧ SameSideOf A K B C := by

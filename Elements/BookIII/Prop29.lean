@@ -46,14 +46,15 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
   -- and let the straight lines BC, EF be joined;
   have hBCG : Triangle B C G := hG
   have hEFH : Triangle E F H := hH
-  /- A and D are points of the circles beyond BC and EF from G and H, as Heath draws
-     them. -/
+  /- Equal circles come with their centres, which III.2 needs to find A and D. -/
   have hABC : ∃ O : Point, Centre O ABC := by
     obtain ⟨K, _, _, _, hK, _⟩ := hcircles
     exact ⟨K, hK⟩
   have hDEF : ∃ O : Point, Centre O DEF := by
     obtain ⟨_, L, _, _, _, hL, _⟩ := hcircles
     exact ⟨L, hL⟩
+  /- A and D are points of the circles beyond BC and EF from G and H, as Heath draws
+     them. -/
   obtain ⟨A, hA, hAG⟩ := Prop2.oppositeSide hABC hB hC hBCG
   obtain ⟨D, hD, hDH⟩ := Prop2.oppositeSide hDEF hE hF hEFH
   -- I say that BC is equal to EF.
