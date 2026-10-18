@@ -5,29 +5,34 @@ note = "Covers circles touching within, whichever is the inner, and circles touc
 fingerprint = "sha256:6300244ecb552653"
 
 [route]
-kind = "modified"
-note = "Euclid's argument, but the last step does not order E and B as his figure does: FE equal to FB makes the circles one (`circle_eq`), which each kind of contact forbids."
+kind = "euclid"
 
 [overlap]
 rule = "Tacit.circle_eq"
 also = ["Tacit.centre_inside"]
-note = "For contact within, System E's Diagram-segment 2 gives III.6 at once from the point of contact; for contact without, our definition of touching with Generalities 3 does. The proof follows Euclid."
+note = "For contact within, System E's Diagram-segment 2 gives III.6 at once from the point of contact; for contact without, our definition of touching with Generalities 3 does. The proof follows Euclid, and calls on Diagram-segment 2 only for the step he leaves tacit, that E and B are two points."
+
+[[passage]]
+at = "For, if possible, let it be F"
+kind = "case"
+note = "Contact without, which Euclid leaves to the reader, ends here: F would be within both circles, as a centre is within its circle, and circles touching without have no point within both. Euclid's argument then runs for contact within, either circle the inner."
 
 [[passage]]
 at = "therefore FE is also equal to FB, the less to the greater"
-kind = "different"
-note = "The Lean does not order E and B: FE equal to FB makes the circles one (`circle_eq`), which contact within forbids, and contact without forbids F, within both."
+kind = "helper"
+helper = "Tacit.circle_eq"
+note = "That E and B are two points is the step Euclid leaves tacit: were they one, the circles, about the one centre F, would be one circle (System E, Diagram-segment 2), and circles touching within are two. Then whichever of E and B is the nearer F gives the less, as in his figure, where E is."
 
 [[passage]]
 at = "Therefore F is not the centre of the circles ABC, CDE."
 kind = "grouped"
-note = "The reductio's conclusion. The Lean supposed F the centre of both circles at the start and has reached the contradiction above, in each kind of contact."
+note = "The reductio's conclusion. The Lean supposed F the centre of both circles at the start and has reached a contradiction in each kind of contact: at once for contact without, and by Euclid's argument for contact within."
 
 [figure]
 case = "the circles touching within, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "7339460"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:e3eb4136d1f071c4"
+lean = "sha256:3a32d05edc76a5c7"
