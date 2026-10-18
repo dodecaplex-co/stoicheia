@@ -114,7 +114,7 @@ A **`Law`** is a list of premises and one conclusion, literals in a fixed alphab
 letters (`Letter`: A, B, C, D, E, F, P; `LineLetter`: L, M, N). What it asserts
 (`Law.Holds`) is that whatever points and straight lines the letters stand for, if the
 premises hold so does the conclusion. A law has no field in which an existential claim
-could be written, so it asserts that nothing exists (`Cited.holds_iff`). In round 1 a law
+could be written, so it asserts no existence (`Cited.holds_iff`). In round 1 a law
 was a Lean proposition, which a reviewer had to read to see that it constructed nothing; now
 the datatype enforces it.
 
@@ -134,9 +134,9 @@ each. There are two reasons.
    Metric 9, Savile's argument and the rest had vanished into the hypothesis, and the rule
    had silently grown to contain them. With the laws cited, the staged I.4 rests on exactly
    the axioms of the edition's I.4, less `superposition` (below).
-2. *The order of the propositions.* Euclid cites I.7 inside the placement of I.8, and I.7
-   cites I.5, which rests on I.4. Were I.7 a rule of the derivation, the foundations would
-   assume what Book I proves. Cited, it is supplied by the edition's I.7.
+2. *The order of the propositions.* Euclid's argument for I.8 uses I.7 inside the placement,
+   and I.7 cites I.5, which rests on I.4. Were I.7 a rule of the derivation, the foundations
+   would assume what Book I proves. Cited, it is supplied by the edition's I.7.
 
 **Why the list is fixed.** A law whose premises can never hold together holds vacuously.
 Were any law with any proof allowed, one whose premises describe a placement and whose
@@ -258,12 +258,14 @@ laid-down C′, that drew through a point of the placement. Round 2 states the l
 three straight lines named, the third the side laid down, and proves it again with no
 construction.
 
-**I.7 remains.** Its proof draws three straight lines (CD, AD, BD), produces AC and AD
+**I.7 remains.** Its proof, with its helpers, draws the six straight lines joining its four
+points (Postulate 1), finds where AD and CB cross (an intersection rule), produces AC and AD
 (Postulate 2), and cites I.5, which cuts off with I.3 and so uses its circles (Postulate 3).
 Inside I.8's placement, I.7's point C is G, the laid-down corner. The I.7 *statement* asserts
 no existence, and citing it draws nothing in the placement. Every law I.4's derivation
-cites draws nothing (`Prop4.cites_drawNothing`); I.8's cites I.7, as Euclid does ("But they
-cannot be so constructed. [I. 7]"). Open question 4 asks which reading the rule adopts.
+cites draws nothing (`Prop4.cites_drawNothing`); I.8's cites I.7, where Euclid's argument
+uses it ("But they cannot be so constructed. [I. 7]", the reference Heath's). Open question 4
+asks which reading the rule adopts.
 
 ## How I.4 and I.8 keep Euclid's arguments
 
@@ -324,7 +326,9 @@ unchanged.
 ## The restriction theorem
 
 [`Staging/Superposition/Restriction.lean`](../../Staging/Superposition/Restriction.lean),
-with `Rule.of_placement` in `Rule.lean`. What is proved, in five parts:
+with `Rule.of_placement` in `Rule.lean`. The restriction, in five parts: parts 1, 2, 3 and 5
+are theorems; part 4 is read off the statement of `Rule.infer`, and its one theorem is
+`Metric.holds_const`.
 
 1. **No symbol of the placement is exported.** `exportable_iff`: a formula of the placement
    is the image of an exportable conclusion exactly when every symbol in it is the figure's.
@@ -397,16 +401,18 @@ For the formal model (#73), in `model/` with Mathlib:
   `Lit`, `Metric`, `Val`, `Name`, `LineName`, `Letter`, `LineLetter`, `Law`, `Cited`,
   `Derives`), so the generator that translates the laws from their elaborated declarations
   must translate those too, or the model package must state the rule for its signature by
-  hand with a checked correspondence. `Symbols` and `Rule.apply` are theorems about the rule
-  and need no translation. This is new work for #73, and should be settled before the rule
-  lands.
+  hand with a checked correspondence. `Symbols` and `Rule.apply` are built on the rule and
+  are not part of its statement, so they need no translation. This is new work for #73, and
+  should be settled before the rule lands.
 
 ## What it clears, and what it does not
 
 **It clears the direct construction shortcut.** No conclusion of the restricted rule names a
 symbol of the placement, so the temporary placement points can no longer be returned as the
-answer to I.2, I.3 or I.23. `Audit.I_23` cannot be written against it: the overlap row for
-I.23 would be retired, or rewritten to say how the rule enters I.23's proof through I.8.
+answer to I.2, I.3 or I.23. `Audit.I_2`, `Audit.I_3` and `Audit.I_23` each take a point the
+present rule returns, and none of them can be written against it. The overlap rows for I.2
+and I.3 would be retired, since neither proposition rests on superposition; the row for I.23
+would be retired, or rewritten to say how the rule enters I.23's proof through I.8.
 
 **It does not:**
 
@@ -428,13 +434,18 @@ System E's:
 
 - `Elements/Foundations/Tacit/Superposition.lean`, lines 21 and 22: "To respect System E's
   restriction, the certificate's checks allow only I.4 and I.8 to cite it." (the coordinator)
-- `docs/reports/overlaps.md`, line 113, and `Audit/Overlaps.lean`, lines 61 and 128: "The
-  certificate lets only I.4 and I.8 use superposition, as System E asks." (the catalogue's
-  owner)
+- `docs/reports/overlaps.md`, in the note under I.23, and `Audit/Overlaps.lean`, in the
+  docstrings of `I_2` and `I_23`: "The certificate lets only I.4 and I.8 use superposition,
+  as System E asks." (the catalogue's owner)
 - `mishnah/I/04.md`, line 1: "the rule of System E §3.7, in the combined form LeanEuclid
   gives it, which only I.4 and I.8 may cite", which a reader may take to mean that our rule
   carries System E's restriction (the mishnah's owner; `book/I/04.md` follows from it, and
   the integrator regenerates it).
+
+The owner's decision also names where the disclosure goes: "the overlap catalogue and the
+I.4 and I.8 pages" (#75). I.8's mishnah (`mishnah/I/08.md`, line 1) says only that the
+moving is our rule, and claims nothing of System E; it is to carry the disclosure too (the
+mishnah's owner; `book/I/08.md` follows from it).
 
 The text Astra proposes, for those owners to place: "Our superposition axiom asserts that a
 congruent triangle can be placed on a given ray and side. The edition permits its direct use
@@ -453,8 +464,9 @@ Astra names three kinds. Their state at round 2:
    above*, for the symbolic calculus. Whether these parts are the right statement of the
    restriction is open question 2.
 3. **A carefully scoped non-derivability result, if claimed.** *Not claimed.* A route, for
-   whoever takes it up: every instance of `Rule` is a universal statement about the figure's
-   points and straight lines, with no existential, so, true in the plane, it stays true in
+   whoever takes it up: every instance of `Rule` speaks of the figure's points and straight
+   lines, and its only existential, "some straight line passes through A, B and C", stands
+   negated, in the hypothesis that ABC is a triangle. So, true in the plane, it stays true in
    any part of the plane that keeps the straight lines through two of its points and the
    same lengths, angles and areas. Take the points with rational coordinates, the straight
    lines through two of them, and real magnitudes: the laws that do not mention circles
@@ -530,7 +542,9 @@ Proved, with no `sorry` and no axiom added (`lake build Staging`; `#print axioms
   construction rule, and I.7's law from I.7's statement;
 - `Rule.of_placement`, on Lean's logical axioms alone, and the check that the present rule
   with Postulate 1 satisfies its hypothesis;
-- the restriction theorem's five parts, `valuation_encodes`, and Astra's two observations;
+- the restriction theorem's parts 1, 2, 3 and 5, part 4's `Metric.holds_const` (the rest of
+  part 4 is read off the rule's statement), `valuation_encodes`, and Astra's two
+  observations;
 - I.4's whole conclusion and I.8's whole conclusion from the rule, by Euclid's coincidence
   arguments.
 
@@ -573,7 +587,9 @@ Each step belongs to its owner (AGENTS.md, "Scope and ownership"); none is taken
 - **The proofs.** `Elements/BookI/Prop04.lean` and `Prop08.lean` take the prototype's proofs,
   with the rule as an axiom; their statements are unchanged. The staged copies are deleted
   in the same change.
-- **The catalogue and the audit.** `Audit.I_23` and the I.23 row are retired or rewritten.
+- **The catalogue and the audit (the catalogue's owner).** `Audit.I_2`, `Audit.I_3` and
+  `Audit.I_23`, which call the present rule and would no longer compile, are retired, with
+  the rows for I.2 and I.3; the I.23 row is retired or rewritten.
 - **Records made stale.** `review/I/04.toml` and `review/I/08.toml`, whose proofs change; the
   integrator regenerates the generated files, since the statement of the axiom that 96
   entries rest on changes.
@@ -635,13 +651,13 @@ The reviews' scratch files are not committed. Round 2 has not yet had a review o
    equivalent, and the axiom's statement would be longer. We recommend the numbered rule.
 4. **Laws whose proofs draw.** Every law I.4 cites is proved with no construction rule. I.7's
    proof draws, produces and, through I.5 and I.3, uses circles, and I.8 cites I.7 inside the
-   placement, as Euclid does. The prototype's reading: a law whose statement asserts no
-   existence may be cited in the placement, whatever its proof draws, as a proposition once
-   proved is cited anywhere. The stricter reading: only laws proved with no construction
-   rule may be cited there (`∀ c ∈ cites, c.drawsNothing = true`, added to the rule). Under
-   it, I.4 stands as it is, and I.8 cannot follow Euclid's route, which cites I.7 inside the
-   placement: I.8 would need another argument, labelled as one. Which reading should the
-   rule adopt?
+   placement, where Euclid's argument uses it. The prototype's reading: a law whose statement
+   asserts no existence may be cited in the placement, whatever its proof draws, as a
+   proposition once proved is cited anywhere. The stricter reading: only laws proved with no
+   construction rule may be cited there (`∀ c ∈ cites, c.drawsNothing = true`, added to the
+   rule). Under it, I.4 stands as it is, and I.8 cannot follow Euclid's route, which uses I.7
+   inside the placement: I.8 would need another argument, labelled as one. Which reading
+   should the rule adopt?
 5. **The side laid down.** Round 2 adds to the kept facts that the side AC laid down is a
    straight line through D and C′, Euclid's "the straight line AC", so that nothing is drawn
    inside the placement. The model obligation then includes Postulate 1 for that side. The

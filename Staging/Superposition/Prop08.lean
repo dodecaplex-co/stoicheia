@@ -8,9 +8,9 @@ A prototype of Book I, Proposition 8 proved from the restricted rule of superpos
 ([brief 0009](../../docs/briefs/0009-superposition.md)), beside the edition's
 `Elements.BookI.Prop8`, which uses the present rule. The statement is I.8's, word for word,
 with two more hypotheses: the rule itself, `S : Rule`, and I.7's statement, `h7`, which
-Euclid cites inside the placement. In the edition I.7 is proved before I.8: it cites I.5,
-and rests on I.4 through it. Once I.4 is proved from the restricted rule, the library's
-`Prop7` supplies `h7` (the `example` at the end checks that it fits).
+Euclid's argument uses inside the placement. In the edition I.7 is proved before I.8: it
+cites I.5, and rests on I.4 through it. Once I.4 is proved from the restricted rule, the
+library's `Prop7` supplies `h7` (the `example` at the end checks that it fits).
 
 Euclid's argument is kept. The triangle ABC is laid down with B on E and BC along EF, on D's
 side. The derivation works on symbols, written in lower case: `a`, …, `f` for the corners of
@@ -20,7 +20,7 @@ valuation `v`; it gives nothing to `c'` or `g`. Euclid's coincidences are steps 
 derivation (c′ is f because BC is EF; g is d by I.7), and what leaves the placement is one
 equality of angles among the figure's symbols.
 
-I.7 is the one law cited here whose own proof draws: it draws three straight lines, produces
+I.7 is the one law cited here whose own proof draws: it draws six straight lines, produces
 two and cites I.5. Citing it draws nothing in the placement. Brief 0009, open question 4,
 asks whether a stricter reading should forbid it there; Euclid's route needs it.
 -/

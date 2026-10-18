@@ -12,8 +12,8 @@ its hypotheses, its theorem applications and its conclusions controlled.
 **A law is data.** A law the derivation may cite (`Law`) is a list of premises and one
 conclusion, literals written in a fixed alphabet of letters (`Letter`, `LineLetter`). What
 it asserts (`Law.Holds`) is that, whatever points and straight lines the letters stand for,
-if the premises hold so does the conclusion. A law therefore asserts that nothing exists: it
-has no field in which an existential claim could be written.
+if the premises hold so does the conclusion. A law therefore asserts no existence: it has
+no field in which an existential claim could be written.
 
 **What a step may do.** There are two kinds of rule, and neither introduces a symbol.
 
@@ -44,9 +44,9 @@ proof, a universal statement proved outside it, may. Every law here but I.7 is p
 no rule that constructs (`Cited.holds_of_drawsNothing`; brief 0009 lists the axioms). The
 law of one ray for one angle names all three of its straight lines, the third the one
 through the point it speaks of, so that its proof draws nothing: in I.4 that straight line
-is the side AC laid down, which the placement supplies. I.7's proof draws three straight
-lines, produces two and cites I.5; Euclid cites I.7 inside the placement of I.8 (brief 0009,
-open question 4).
+is the side AC laid down, which the placement supplies. I.7's proof draws the six straight
+lines joining its points, produces two and cites I.5; Euclid's I.8 uses I.7 inside the
+placement (brief 0009, open question 4).
 
 `Derives.sound` shows that every step holds of the very points its symbols stand for, under
 any valuation that makes the context true: the derivation needs no point and no straight
@@ -93,7 +93,7 @@ inductive Cited where
   /-- The same, for the side of the point: it is not behind the corner. -/
   | rayOfAngleSide
   /-- I.7: two points on one side of a straight line, as far from each of its ends as one
-  another, are one point. Euclid cites it inside the placement of I.8. -/
+  another, are one point. Euclid's I.8 uses it inside the placement. -/
   | prop7
   deriving DecidableEq
 
