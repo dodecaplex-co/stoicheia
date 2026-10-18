@@ -7,9 +7,9 @@ Copying their leads, their rhythm or their sentences onto another page would mak
 the voice passes were run to remove. Take from them how a decision was made, and make your
 own for your proposition.
 
-Each was read again at commit `2c83342`, after the precision pass of brief 0005 and its
-readers' notes. When one of them changes, it is read again and its commit here brought up
-to date, or it is replaced.
+Each was read again at commit `a5f9c3c`, after the precision pass of brief 0005, its
+readers' notes and its wording sweep. When one of them changes, it is read again and its
+commit here brought up to date, or it is replaced.
 
 ## A short construction: I.1
 
