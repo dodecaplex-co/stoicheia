@@ -23,7 +23,7 @@ theorem Prop12.centre_outside {A F G : Point} {α β : Circle}
     (hout : ∀ P, InsideCircle P α → ¬ InsideCircle P β) : OutsideCircle F β := by
   refine ⟨hout F (centre_inside hF), ?_⟩
   intro hF_on
-  obtain ⟨P, hFPG, hP⟩ := exists_between_nearer (O := F) (C := A) hFG
+  obtain ⟨P, hFPG, hP⟩ := exists_between_nearer (O := F) (C := A) hFG (Or.inl rfl)
     (by rw [len_self]; exact len_pos (ne_of_centre_of_on hF hA).symm)
   exact hout P (inside_of_len_lt hF hA hP)
     (inside_of_between (Or.inr hF_on) (Or.inl (centre_inside hG)) hFPG)
@@ -75,7 +75,8 @@ theorem Prop12 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
     have hC_out : ¬ ‖G C‖ < ‖G A‖ := by
       intro h
       obtain ⟨P, hCPF, hP⟩ :=
-        exists_between_nearer (O := G) (C := A) (ne_of_between hFCG).symm h
+        exists_between_nearer (O := G) (C := A) (ne_of_between hFCG).symm
+          (Or.inr (between_symm hFCG)) h
       exact hout P (inside_of_between (Or.inr hC) (Or.inl (centre_inside hF)) hCPF)
         (inside_of_len_lt hG hA₂ hP)
     have h4 : ‖F A‖ + ‖A G‖ ≤ ‖F G‖ := by

@@ -8,9 +8,10 @@ or give it in a few lines. Astra found the clearest case, III.2, in the outside 
 (`docs/reports/outside-review-01.md`), and compiled its one-line proof; we are grateful.
 The catalogue in `docs/reports/overlaps.md` lists every case we found, and this file
 proves each "states it" or "gives it at once" row again, from the rules alone, and I.2,
-I.3, I.7 and I.23, whose rules supply their step in a longer proof. A second
-section proves III.24, III.26 and III.27 without the hypotheses our measure of
-circumferences leaves idle, the catalogue's near misses of representation.
+I.3, I.7 and I.23, whose rules supply their step in a longer proof. After III.6,
+`III_5_crossing` shows that III.5 needs neither of its rules when "cut" is read as
+crossing. A second section proves III.24, III.26 and III.27 without the hypotheses our
+measure of circumferences leaves idle, the catalogue's near misses of representation.
 
 Each theorem's type is the proposition's own (`type_of% @Elements.BookIII.Prop2`), so a
 change to a statement shows up here too. At the end, `#guard_msgs` pins the axioms Lean
@@ -34,13 +35,14 @@ open Elements Elements.Tacit
 from the rules alone: superposition needs a triangle to lay down and a point to name the
 side, and neither I.2 nor I.3 gives one. Book Zero's `exists_off_line` draws such a point
 too, by two circles that cut one another and a comparison of lengths, but would bring
-I.2's audit proof from ten axioms to twenty-one. The circle about B through C meets the
-straight line again at C', beyond B (Intersections 5); a third point X of the circle
-cannot be on the straight line, for B would then lie between X and C, and between X and
-C' (Circle 1), and C and C' would lie on one side of B (Between 7), where B lies between
-them. Book Zero's `Triangle.of_line` makes BCX a triangle. -/
-private theorem point_off_line {B C : Point} {M : Line} (hBC : B ≠ C) (hB : OnLine B M)
-    (hC : OnLine C M) : ∃ X : Point, ¬ OnLine X M ∧ Triangle B C X := by
+I.2's audit proof from ten axioms to twenty-one; the catalogue's counts are made with
+this one. The circle about B through C meets the straight line again at C', beyond B
+(Intersections 5); a third point X of the circle cannot be on the straight line, for B
+would then lie between X and C, and between X and C' (Circle 1), and C and C' would lie
+on one side of B (Between 7), where B lies between them. Book Zero's `Triangle.of_line`
+makes BCX a triangle. -/
+private theorem exists_point_off_line {B C : Point} {M : Line} (hBC : B ≠ C)
+    (hB : OnLine B M) (hC : OnLine C M) : ∃ X : Point, ¬ OnLine X M ∧ Triangle B C X := by
   obtain ⟨α, hBα, hCα⟩ := Postulate3 B C hBC
   have hBin : InsideCircle B α := centre_inside hBα
   obtain ⟨C', hC'α, hC'M, hC'BC⟩ := line_circle_beyond hBin hB hC hBC.symm
@@ -57,32 +59,33 @@ private theorem point_off_line {B C : Point} {M : Line} (hBC : B ≠ C) (hB : On
 point of a straight line and a side along a given ray, keeping its sides
 (`superposition`). Laid down at A along AB, a triangle on BC carries the length of BC
 to A: that is I.2, which a collapsing compass (Postulate 3) cannot do at once. Neither
-the triangle nor a point off AB is given, so both are drawn (`point_off_line`). The
-certificate lets only I.4 and I.8 use superposition, as System E asks; our I.2 is
+the triangle nor a point off AB is given, so both are drawn (`exists_point_off_line`).
+The certificate lets only I.4 and I.8 use superposition, as System E asks; our I.2 is
 Euclid's construction, by I.1, and does not rest on the rule. -/
 theorem I_2 : type_of% @Elements.BookI.Prop2 := by
   intro A B C hBC
   by_cases hAB : A = B
   · exact ⟨C, by rw [hAB]⟩
   obtain ⟨M, hBM, hCM⟩ := Postulate1 B C hBC
-  obtain ⟨X, -, hBCX⟩ := point_off_line hBC hBM hCM
+  obtain ⟨X, -, hBCX⟩ := exists_point_off_line hBC hBM hCM
   obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hAB
-  obtain ⟨H, hH, -⟩ := point_off_line hAB hAL hBL
+  obtain ⟨H, hH, -⟩ := exists_point_off_line hAB hAL hBL
   obtain ⟨L', -, -, -, -, hAL', -⟩ := superposition hBCX hAL hBL hAB hH
   exact ⟨L', hAL'⟩
 
 /-- **I.3 from superposition.** Laid down at A along the ray from A through B, a
-triangle on C₁C₂ carries the length of C₁C₂ onto that ray, at E. E is neither A, for
-C₁C₂ is something, nor B, for AB is the greater; nor is B between A and E, for then AE
-would be greater than AB. So E lies between A and B (Between 6): that is I.3. Our I.3 is
-Euclid's, by I.2, and does not rest on the rule. -/
+triangle on C₁C₂ carries the length of C₁C₂ onto that ray, at E. E is not A, for C₁ and
+C₂ differ and AE is as long as C₁C₂; it lies on the ray from A through B, so A is not
+between E and B; it is not B, for AB is the greater; nor is B between A and E, for then
+AE would be greater than AB. So E lies between A and B (Between 6): that is I.3. Our
+I.3 is Euclid's, by I.2, and does not rest on the rule. -/
 theorem I_3 : type_of% @Elements.BookI.Prop3 := by
   intro A B C₁ C₂ hC h
   have hAB : A ≠ B := ne_of_len_gt h
   obtain ⟨M, hC₁M, hC₂M⟩ := Postulate1 C₁ C₂ hC
-  obtain ⟨X, -, hCX⟩ := point_off_line hC hC₁M hC₂M
+  obtain ⟨X, -, hCX⟩ := exists_point_off_line hC hC₁M hC₂M
   obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hAB
-  obtain ⟨H, hH, -⟩ := point_off_line hAB hAL hBL
+  obtain ⟨H, hH, -⟩ := exists_point_off_line hAB hAL hBL
   obtain ⟨E, -, hEL, hEAB, -, hAE, -⟩ := superposition hCX hAL hBL hAB hH
   refine ⟨E, ?_, hAE⟩
   have hAE_ne : A ≠ E := ne_of_len_eq hAE hC
@@ -165,20 +168,39 @@ theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
 /-- **III.5 from Diagram-segment 2.** A circle is fixed by its centre and radius
 (`circle_eq`, Diagram-segment 2). Two circles about one centre through one point are
 one circle, so two circles that cut one another cannot share a centre. Our III.5 takes
-Euclid's steps and ends with this rule. -/
+Euclid's steps, and uses this rule only for the step he leaves tacit, that F and G are two
+points. -/
 theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
   fun hne ⟨_, _, _, hC₁, hC₂, _, _⟩ ⟨hE₁, hE₂⟩ => hne (circle_eq hE₁ hE₂ hC₁ hC₂ rfl)
 
 /-- **III.6 from Diagram-segment 2 and Generalities 3.** Circles touching within are two
 circles through one point, so Diagram-segment 2 again forbids a common centre. Circles
 touching without have no point within both, and a common centre would be one, since a
-centre is within its circle (`centre_inside`, Generalities 3). Our III.6 takes Euclid's
-steps and ends with these rules. -/
+centre is within its circle (`centre_inside`, Generalities 3). Our III.6 ends contact
+without with Generalities 3, before anything is drawn; for contact within it takes Euclid's
+steps, and uses Diagram-segment 2 only for the step he leaves tacit, that E and B are two
+points. -/
 theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
   rintro C F ABC CDE (⟨hC₁, hC₂, hne, -⟩ | ⟨hC₂, hC₁, hne, -⟩ | ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
   · exact hne (circle_eq hF₁ hF₂ hC₁ hC₂ rfl)
   · exact hne (circle_eq hF₂ hF₁ hC₂ hC₁ rfl)
   · exact hout F (centre_inside hF₁) (centre_inside hF₂)
+
+/-- **III.5 read with crossing.** If a point P of one circle is within the other, and the
+two circles have a point C in common, they have no common centre: P is nearer the centre
+than C is (`len_lt_of_inside`, Diagram-segment 4), and yet, both being on the one circle,
+as far from it (Definition I.15). A circle and its copy, drawn twice over, do not cross
+so, for neither has a point within the other. Our III.5 reads "cut" as meeting at two
+points (`CirclesMeet`), which a circle and its copy do, and there Diagram-segment 2 or
+Circle 4 is needed (the catalogue, under III.5). The same proof gives III.6 for circles
+touching within, read with a point of the inner circle within the outer. -/
+theorem III_5_crossing {C P E : Point} {ABC CDG : Circle} (hC₁ : OnCircle C ABC)
+    (hC₂ : OnCircle C CDG) (hP₂ : OnCircle P CDG) (hP₁ : InsideCircle P ABC) :
+    ¬ (Centre E ABC ∧ Centre E CDG) := by
+  rintro ⟨hE₁, hE₂⟩
+  have h : ‖E P‖ < ‖E C‖ := len_lt_of_inside hE₁ hC₁ hP₁
+  rw [Definition15 hE₂ hP₂ hC₂] at h
+  exact lt_irrefl _ h
 
 /-! ## Hypotheses our measure of circumferences leaves idle
 
@@ -372,6 +394,15 @@ info: 'Audit.III_6' depends on axioms: [Classical.choice, Elements.Tacit.centre_
 -/
 #guard_msgs in
 #print axioms Audit.III_6
+
+/--
+info: 'Audit.III_5_crossing' depends on axioms: [Classical.choice,
+ Elements.Definition15,
+ Elements.Tacit.len_lt_of_inside,
+ Elements.Tacit.lt_irrefl]
+-/
+#guard_msgs in
+#print axioms Audit.III_5_crossing
 
 /--
 info: 'Audit.III_26_any' depends on axioms: [propext,
@@ -612,7 +643,6 @@ info: 'Audit.adjacent_eq_of_right' depends on axioms: [propext,
  Elements.Tacit.eq_of_len_eq_zero,
  Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_between,
- Elements.Tacit.inside_of_between,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_lt_of_inside,
