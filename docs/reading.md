@@ -12,6 +12,7 @@ the README, under [Standing on shoulders](../README.md#standing-on-shoulders). A
 the book may end with a line or three from this list, chosen for its proposition.
 
 [Euclid and his commentators](#euclid-and-his-commentators) ·
+[Lincoln and the six books](#lincoln-and-the-six-books) ·
 [The foundations of geometry](#the-foundations-of-geometry) ·
 [Coordinates, vectors and complex numbers](#coordinates-vectors-and-complex-numbers) ·
 [Transformations](#transformations) ·
@@ -80,6 +81,119 @@ here in their own words.
   (web page, University of British Columbia). **Free.** A scrap of papyrus from
   Oxyrhynchus, written around AD 100, carries the statement and figure of II.5; this short
   page shows it and tells its story, a reminder of how old and how fragile our text is.
+
+## Lincoln and the six books
+
+Abraham Lincoln reckoned that all his schooling "did not amount to one year", and he did
+not hide it: asked in 1858 for a sketch of his life for the *Dictionary of Congress*, he
+wrote "Education defective." In the longer sketch he wrote in 1860, for John L. Scripps's
+campaign biography, he speaks of himself in the third person: "What he has in the way of
+education, he has picked up." Then comes the sentence the README quotes, and the one after
+it: "He studied and nearly mastered the Six-books of Euclid, since he was a member of
+Congress. He regrets his want of education, and does what he can to supply the want." His
+one term in Congress had ended in March 1849, a few weeks after his fortieth birthday (the
+[*Collected Works*](#basler1953collected), vol. 2, p. 459, and vol. 4, pp. 62 and 66). The
+six books are Books I to VI, which Oliver Byrne printed on their own as
+[*The First Six Books*](#oechslin2010byrne) in 1847, and Robert Simson
+[with the eleventh and twelfth](#simson1756elements). Stoicheia has the first three so far.
+
+William H. Herndon, his law partner in Springfield, often rode the circuit with him, the
+round of county courts that, Herndon reckoned, kept Lincoln on the road for over half the
+year. In [*Herndon's Lincoln*](#herndon1889lincoln), written with Jesse William Weik, he
+remembered the country inns, the beds too short for Lincoln, and the candle on a chair at
+the head of the bed: "On the circuit in this way he studied Euclid until he could with ease
+demonstrate all the propositions in the six books. How he could maintain his mental
+equilibrium or concentrate his thoughts on an abstract mathematical proposition, while
+Davis, Logan, Swett, Edwards, and I so industriously and volubly filled the air with our
+interminable snoring was a problem none of us could ever solve." And: "Along with his
+Euclid therefore he carried a well-worn copy of Shakespeare" (vol. 2, pp. 308–309 and 319).
+Herndon's "with ease" and "all" are more generous than Lincoln's "nearly mastered", and his
+book came out in 1889, a quarter of a century after Lincoln's death; but the two agree that
+the study came after Congress.
+
+Euclid came into Lincoln's arguments too. Closing the fourth of his debates with Stephen A.
+Douglas, at Charleston, Illinois, on 18 September 1858, he answered Douglas, who had called
+Lyman Trumbull a liar: Trumbull, he said, had only "arrayed the evidence and told you what
+follows as a matter of reasoning". Then: "If you have ever studied geometry, you remember
+that by a course of reasoning Euclid proves that all the angles in a triangle are equal to
+two right angles. Euclid has shown you how to work it out. Now, if you undertake to
+disprove that proposition, and to show that it is erroneous, would you prove it to be false
+by calling Euclid a liar?" The *Press and Tribune*'s report has "Roars of laughter and
+enthusiastic cheers" (vol. 3, p. 186). The proposition is [I.32](../book/I/32.md), worked
+out here once more, in Lean.
+
+The next spring, declining an invitation from Henry L. Pierce and others to a festival in
+Boston for Thomas Jefferson's birthday, he wrote: "One would start with great confidence
+that he could convince any sane child that the simpler propositions of Euclid are true;
+but, nevertheless, he would fail, utterly, with one who should deny the definitions and
+axioms. The principles of Jefferson are the definitions and axioms of free society" (vol.
+3, p. 375). At Columbus, Ohio, that September, he set demonstration against authority:
+"There are two ways of establishing a proposition. One is by trying to demonstrate it upon
+reason; and the other is, to show that great men in former times have thought so and so,
+and thus to pass it by the weight of pure authority." If Douglas would "demonstrate it as
+Euclid demonstrated propositions", Lincoln had no objection (vol. 3, pp. 416–417). Every
+proof in Stoicheia starts from Euclid's [definitions, postulates and common
+notions](../book/I/front.md) and our tacit rules, and the certificate on its page lists
+what it rests on.
+
+One more story is told, and it comes to us at second hand. On 1 September 1864, in the
+middle of the presidential campaign, the New York weekly *The Independent* printed
+["A Talk with Abraham Lincoln"](#gulliver1864talk) by the Rev. John P. Gulliver of
+Norwich, Connecticut. Gulliver remembered riding the train with Lincoln the morning after
+Lincoln spoke at Norwich, in March 1860, and asking him where his power of putting an
+argument came from. In Gulliver's telling, Lincoln said that he had read law as a lawyer's
+clerk in Springfield, and kept meeting the word *demonstrate*, which no dictionary could
+explain to him: "You might as well have defined *blue* to a blind man." At last he said
+to himself, "Lincoln, you can never make a lawyer if you do not understand what
+*demonstrate* means"; so, as Gulliver reports him, "I left my situation in Springfield,
+went home to my father's house", and stayed there "till I could give any proposition in
+the six books of Euclid at sight. I then found out what 'demonstrate' means, and went back
+to my law studies." When Gulliver said
+that Euclid would be one of the best books for the Tract Society's catalogue, if only
+people could be got to read it, Lincoln laughed: "I vote for Euclid."
+
+Gulliver set this down four and a half years after the conversation, with the election in
+view, as his first sentence says, and the words he gives Lincoln are his memory of them.
+Some details do not fit the sketch Lincoln wrote a few months after that train ride: there
+he borrowed his law books from John T. Stuart and "studied with nobody", moved to
+Springfield only in 1837, after he was licensed, and came to Euclid after Congress, more
+than a decade later, as Herndon remembered too (vol. 4, pp. 62 and 65). How much of the
+story is Lincoln's own wording, and when the study it tells of took place, we cannot say.
+What it adds to his own sentence is a reason: in this telling he went to Euclid to learn
+what it is to demonstrate, and his speeches at Charleston and Columbus show the same
+regard for demonstration in his own words. Francis B. Carpenter reprinted the article in
+1866 with some words changed, so the passage is met in more than one form; we quote
+*The Independent*.
+
+- <a id="basler1953collected"></a>Roy P. Basler (ed.), [*The Collected Works of Abraham Lincoln*](https://quod.lib.umich.edu/l/lincoln/),
+  with Marion Dolores Pratt and Lloyd A. Dunlap, assistant editors, 8 vols. (Rutgers
+  University Press, for the Abraham Lincoln Association, 1953), and an index volume
+  (1955). **Free** online at the University of Michigan. Lincoln's own words, each piece
+  with a first note naming its source, a manuscript or a printed report: the sketch for
+  Scripps is in vol. 4, pp. 60–67, the Charleston debate in vol. 3, pp. 145–201, the letter
+  to Pierce in vol. 3, pp. 374–376, and the speech at Columbus in vol. 3, pp. 400–425.
+- <a id="herndon1889lincoln"></a>William H. Herndon and Jesse William Weik, [*Herndon's Lincoln: The True Story of a Great Life*](https://archive.org/details/herndonslincolnt02inhern),
+  3 vols. (Belford, Clarke & Company, Chicago, 1889): vol. 2 at the link. **Free.** The
+  recollections of the man its title page calls Lincoln's friend and law partner for twenty
+  years; Euclid by candlelight on the circuit is in vol. 2, pp. 308–309.
+- <a id="lincoln1860debates"></a>Abraham Lincoln and Stephen A. Douglas, [*Political Debates Between Hon. Abraham Lincoln and Hon. Stephen A. Douglas, in the Celebrated Campaign of 1858, in Illinois*](https://archive.org/details/politicaldebat00linc)
+  (Follett, Foster and Company, Columbus, 1860). **Free.** The seven debates and the
+  speeches around them, with Lincoln's two Ohio speeches of 1859, printed from the copies
+  Lincoln sent with the request that the reprint be "precisely as the copies I send,
+  without any comment whatever". The Euclid of Charleston is on p. 160, and that of
+  Columbus on p. 249. Lincoln struck the crowd's laughter and cheers from his copies; the
+  *Collected Works* puts them back.
+- <a id="gulliver1864talk"></a>John P. Gulliver, ["A Talk with Abraham Lincoln"](https://archive.org/details/sim_independent_1864-09-01_16_822),
+  *The Independent* (New York) 16, no. 822 (1 September 1864), front page. **Free.** The
+  whole conversation as Gulliver remembered it, the "demonstrate" story among the rest; the
+  scan is worn in places at the edge of a column. Francis B. Carpenter reprinted
+  it, with some words changed, in
+  [*Six Months at the White House with Abraham Lincoln*](https://archive.org/details/sixmonthsatwhite00carpuoft)
+  (Hurd and Houghton, New York, 1866), also **Free**.
+- <a id="fehrenbacher1996recollected"></a>Don E. Fehrenbacher and Virginia Fehrenbacher (eds.), [*Recollected Words of Abraham Lincoln*](https://doi.org/10.1515/9780804764889)
+  (Stanford University Press, 1996). The remarks that Lincoln's contemporaries remembered
+  him making, gathered in one book: the place to begin in weighing a remembered remark,
+  such as those Gulliver reports, against what Lincoln wrote.
 
 ## The foundations of geometry
 
