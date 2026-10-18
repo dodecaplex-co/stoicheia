@@ -1646,16 +1646,21 @@ def law_code(text: str | None) -> tuple[list[str], dict, set[str]] | None:
 
 
 # What a law's code may not name: the builtins that reach a namespace, run code, open a
-# file or print (a printed line could pass for another law's result), the two modules the
-# harnesses import that reach every other module, the environment and a shell (`sys`,
-# `os`), and the registry of laws but for its own decorator. The methods that change a container in place, and the
-# one that shuffles the container it is given. Those that reseed the random numbers every
+# file or print (a printed line could pass for another law's result), and those that
+# write to standard output without `print` (`help`, `license`, `credits`, `copyright`),
+# whose words could pass for a harness's last line or another law's result, or that end
+# the run cleanly (`exit`, `quit`, `SystemExit`), so that a harness would stop before the
+# laws that follow; the two modules the harnesses import that reach every other module,
+# the environment and a shell (`sys`, `os`); and the registry of laws but for its own
+# decorator. The methods that change a container in place, and the one that shuffles the
+# container it is given. Those that reseed the random numbers every
 # law draws from, which reach a law through its configuration. The calls that make a new
 # container, beside a display or a comprehension. And the augmented assignments that a
 # container of Python's own makes in place (a list's `+=`, a set's `|=`).
 LAW_REACH = frozenset({"globals", "vars", "locals", "getattr", "setattr", "delattr", "exec",
-                       "eval", "compile", "open", "print", "input", "breakpoint", "sys", "os",
-                       "AXIOMS", "axiom"})
+                       "eval", "compile", "open", "print", "input", "breakpoint", "help",
+                       "license", "credits", "copyright", "exit", "quit", "SystemExit",
+                       "sys", "os", "AXIOMS", "axiom"})
 MUTATORS = frozenset({"append", "extend", "insert", "pop", "remove", "clear", "update",
                       "setdefault", "popitem", "add", "discard", "sort", "reverse", "write"})
 SHUFFLES = frozenset({"shuffle"})

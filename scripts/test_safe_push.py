@@ -2629,6 +2629,13 @@ class ProtectedPaths(Edge):
             "the new law printing a result": lambda p: dict(p, **{
                 self.SEARCH: self.planted_law(self.SEARCH,
                                               first="    print('len_self 1 1 0')\n")}),
+            "the new law printing through help": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(
+                    self.SEARCH, first="    help(type('len_self 1 1 0', (), {}))\n")}),
+            "the new law ending the run with exit": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first="    exit(0)\n")}),
+            "the new law raising SystemExit": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first="    raise SystemExit(0)\n")}),
             "the new law reseeding the search": lambda p: dict(p, **{
                 self.SEARCH: self.planted_law(self.SEARCH, first="    c['_rng'].seed(0)\n")}),
             # The verifier of #40 found these two: a second name for a shared container.

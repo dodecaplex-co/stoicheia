@@ -534,12 +534,14 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       two harnesses that check every law, count as pinned values only where the same pull
       request adds, removes or restates that axiom's entry in the lock, the law's code
       keeps to itself (a function `_` under its one decorator `@axiom('<name>', …)`, which
-      binds no global, imports and prints nothing, names neither `sys` nor `os`, and
-      changes no container but one it made in its own body, through the name it gave it),
-      and nothing else in the harness changes but its comments and docstring; a law
-      changed while its axiom stands is a check change. Check code changed with judged
-      content is kept apart, pinned values or not. The guards' two checks in step 3 run the
-      same way.
+      binds no global, imports and prints nothing, ends no run, names neither `sys` nor
+      `os`, and changes no container but one it made in its own body, through the name it
+      gave it), and nothing else in the harness changes but its comments and docstring; a
+      law changed while its axiom stands is a check change. The pre-flight's check reads
+      the law's code and does not run it, so it refuses the plain routes but not every one
+      (reflection, for example); the security review, which reads the law, is what keeps
+      it to itself. Check code changed with judged content is kept apart, pinned values or
+      not. The guards' two checks in step 3 run the same way.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the
