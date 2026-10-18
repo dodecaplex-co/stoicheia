@@ -145,7 +145,7 @@ files working in parallel, the renderers, and an integrator followed by blind re
   between the `<!-- status -->` markers, which `render.py` fills; the rest of README.md has
   an owner of its own, named in the orders. The integrator also owns the companions list,
   `Elements/Companions.lean`, which the certificate reads and checks, and adds a
-  companion's entry in the commit that proves the companion beside its proposition, so
+  companion's entry in the commit that moves the companion beside its proposition, so
   that the listing travels with the proof and its record's stamp
   ([FORMALIZATION](FORMALIZATION.md), section 2). Each wave names owners
   for Book Zero and the shared helper modules, `heath/`, the scripts, `Certificate/Facts.lean`,
