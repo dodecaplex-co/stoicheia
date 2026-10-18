@@ -511,7 +511,7 @@ findings:
   [FORMALIZATION](../FORMALIZATION.md), section 9 (a row of its table of evidence); the
   README's table of checks and its "Run it" list follow in a docs pull request of their
   own, after this one. At `f17b427` nanoda checks all 59,902 declarations of the export,
-  and the script runs in about a minute on a laptop, in under 1 GB of memory. Its time in
-  CI is still to be measured, on this pull request's first run there, and recorded on
-  #62, with the choice that follows from it: the `check` job, or a job of its own if it
-  is slow.
+  and the script runs in about a minute on a laptop, with leanexport, its largest step,
+  at about 1.3 GB of memory at most. Its time in CI is still to be measured, on this pull
+  request's first run there, and recorded on #62, with the choice that follows from it:
+  the `check` job, or a job of its own if it is slow.
