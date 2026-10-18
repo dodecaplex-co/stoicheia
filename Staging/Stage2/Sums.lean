@@ -5,9 +5,11 @@ import Elements
 
 Brief 0006, stage 2: the words that let a statement say "any number". II.1 cuts a straight
 line "into any number of segments whatever", and I.45 and II.14 take "a given rectilineal
-figure", made of any number of triangles. Lean says "any number" with a list, so it needs
-the sum of a list of magnitudes, and a way to say that a list of points lies in order along
-one straight line.
+figure", of any number of sides, given by its corners and divided into triangles by the
+straight lines from one of them. Lean says "any number" with a list, so it needs the sum of
+a list of magnitudes, the segments between successive points of a list (II.1's pieces of
+the straight line, and the sides of I.45's figure on which its triangles stand), and a way
+to say that a list of points lies in order along one straight line.
 
 These are statements awaiting approval (WORKFLOW, section 2): the definitions are complete,
 and each theorem's proof is `sorry` until it is assigned. Where they go when adopted:
@@ -60,7 +62,11 @@ def InOrder : List Point → Prop
   | p :: q :: r :: rest => p ≠ q ∧ Between p q r ∧ InOrder (q :: r :: rest)
 
 /-- **The segments** of a straight line cut at points in order: each point of the list with
-the next, as the ends of one segment. The segments of `[B, D, E, C]` are BD, DE and EC. -/
+the next, as the ends of one segment. The segments of `[B, D, E, C]` are BD, DE and EC. The
+points need not be in order, or on one straight line: in I.45 and II.14 the segments of a
+figure's corners A₁, A₂, …, Aₙ are its sides A₁A₂, …, Aₙ₋₁Aₙ, those away from the corner A₀,
+and each side with A₀ makes one of the triangles into which the straight lines from A₀
+divide the figure. -/
 def segments : List Point → List (Point × Point)
   | p :: q :: rest => (p, q) :: segments (q :: rest)
   | _ => []

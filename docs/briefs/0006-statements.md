@@ -12,8 +12,13 @@ states what we formalized; where the code, this brief, a review record and a pag
 disagree, the disagreement is recorded and reconciled ([FORMALIZATION.md](../FORMALIZATION.md),
 section 1).*
 
+*Revised the same day, before approval: the owner revised decision 1, and I.45 and II.14
+are now stated as Euclid and Byrne state them. `Rectilineal`, `Fitted` and the words and
+facts only they used are withdrawn, and so are the companions `Prop45.sum` and
+`Prop14.sum`; the appendix marks the findings the revision overtook.*
+
 Base: main at `1e5b99a`. The statements are in `Staging/`, as committed with this brief.
-`lake build Staging` passes: 93 declarations, of which 38 carry `sorry` and the rest are
+`lake build Staging` passes: 81 declarations, of which 36 carry `sorry` and the rest are
 definitions, checks or proofs. Nothing in `Elements/` changes, so main's records, lock and
 CI are untouched.
 
@@ -21,10 +26,16 @@ CI are untouched.
 
 Jack Challis decided three things on 17 October 2026, and this brief is written to them:
 
-1. **I.45 and II.14 take a figure with a general dissection.** The figure is given as
-   triangles glued edge to edge: each new triangle is laid across a side of an earlier
-   one, and meets the triangles already there only along that side. The figure may be
-   non-convex. (The draft's alternative, convex fans only, is gone.)
+1. **I.45 and II.14 are stated as Euclid and Byrne state them.** The figure is given by
+   its corners and divided into triangles by the straight lines from one corner: Euclid's
+   DB, from D, makes the two triangles ABD and DBC, and Byrne's two straight lines from one
+   corner, in his I.45, make three. The parallelogram, and in II.14 the square, is equal to
+   those triangles taken together, and is built one triangle at a time: I.42 for the first,
+   I.44 for each of the rest. Nothing is claimed of another division of the figure: that it gives the
+   same sum is a step Euclid takes for granted, and it goes in the gap catalogue, with the
+   credit to David Hilbert, who proved it. This replaces the decision taken earlier that
+   day, a figure of triangles glued edge to edge in any dissection (`Fitted`), which is
+   withdrawn.
 2. **III.24 is restated** to conclude that the segments are congruent, by Euclid's route:
    one segment is applied to the other. Today's proof by the radii is kept, as the
    labelled alternative proof, `Prop24.equalCircles`.
@@ -54,9 +65,8 @@ Jack Challis decided three things on 17 October 2026, and this brief is written 
   `lake build Staging` stays green. Every review record whose statement or Lean file
   changes is re-reviewed (WORKFLOW, section 6).
 - **Folders follow brief 0005's stages:** `Staging/Stage2/` (I.40, I.45, II.1, II.14, and
-  the sums and figure they need), `Staging/Stage3/` (arcs, placement, III.23 point,
-  III.24, III.26, III.28, `Arcs.lean`) and `Staging/Stage4/` (`Foot`, III.14, III.15,
-  III.25).
+  the sums they need), `Staging/Stage3/` (arcs, placement, III.23 point, III.24, III.26,
+  III.28, `Arcs.lean`) and `Staging/Stage4/` (`Foot`, III.14, III.15, III.25).
 - **CI does not build `Staging` yet,** so a change on main could break a staged statement
   silently before it moves. A CI step running `lake build Staging` is proposed to the
   coordinator, who owns CI; `sorry` warnings do not fail it.
@@ -68,22 +78,21 @@ stays as Euclid's worked configuration under his sentences; the fidelity check r
 `theorem PropN` ([FORMALIZATION.md](../FORMALIZATION.md), section 2). Each companion gets a
 certificate entry, named below in quotation marks ("I.40 general"), is listed in the review
 record's `companions`, and is shown on the page with its own certificate. Where today's
-statement is kept as a companion (`Prop40.special`, `Prop14.sum`, `Prop24.equalCircles`,
+statement is kept as a companion (`Prop40.special`, `Prop24.equalCircles`,
 `Prop25.of_circle`), a check of the form `example : type_of% @Elements.BookI.Prop40 := …`
 confirms that it is today's statement, checked by Lean up to unfolding definitions. The
-same kind of check derives today's I.45, II.1, III.14, III.15, III.26 and III.28 from the
-new statements.
+same kind of check derives today's I.45, II.1, II.14, III.14, III.15, III.26 and III.28 from
+the new statements.
 
 **No new axioms.** The lock's `[axioms]` table stays at 87. Its `[vocabulary]` table, which
 holds every definition a proposition's, porism's or companion's statement reaches, grows by
 the new words below, each with a decisions entry and `check_fidelity.py --write-lock`, with
 `tests/model/lock.sha256` updated and `tests/model/MODEL.md` read again in the same change
 (FORMALIZATION, section 7). The words: `Magnitude.sum` (with its auxiliary `match_`
-declarations), `InOrder`, `segments`, `endOf`, `OnFiniteLine`, `OnOrInsideTriangle`,
-`Corners`, `Fitted` (with its constructors), `Rectilineal`, `Rectilineal.area`, `Arc`,
-`Arc.Drawn`, `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.Less`, `Arc.Semicircle`,
-`Arc.Greater`, `Arc.SameKind`, `Arc.measure`, `Places`, `Arc.Congruent` and `Foot`, as
-far as frozen statements reach them.
+declarations), `InOrder`, `segments`, `endOf`, `Arc`, `Arc.Drawn`, `OnSideOrLine`, `OnArc`,
+`InSegment`, `Arc.Less`, `Arc.Semicircle`, `Arc.Greater`, `Arc.SameKind`, `Arc.measure`,
+`Places`, `Arc.Congruent` and `Foot`, as far as frozen statements reach them. I.45 and
+II.14 need no word of their own: they use `segments` and `Magnitude.sum`.
 
 **Where things live.** A new word is a definition in the foundations, owned by the
 coordinator (WORKFLOW, section 2, item 1). A fact proved from the foundations alone goes to
@@ -100,21 +109,24 @@ that. III.26 and III.28 now read "equal circumferences" as equal in measure and 
 which says more than Heath's words; a statement that claims more is still full. The III.24,
 III.26 and III.28 records will say so.
 
-**A deliberate limit: the figure comes with its dissection.** A rectilineal figure is its
-list of triangles, and its area is defined as their sum (`Rectilineal.area`). The triangles
-do not overlap (`Fitted.inside_pairwise`, proved), so the sum is the area of the figure they
-make up. But no theorem says that two dissections of one figure give one area, so "a
-parallelogram (a square) equal to the given rectilineal figure", in I.45 and II.14, means
-equal to the sum of the triangles the figure is given with. As FORMALIZATION, section 3,
-requires, the limit is stated here, carried by a tag of `review/terms.toml` in the I.45 and
-II.14 records, and shown on both pages. The tag replaces `two-triangles` for them, and is
-added to `review/terms.toml` when their records change (a tag is added before any record
-uses it):
+**A deliberate limit: the figure is divided as Euclid and Byrne divide it.** A rectilineal
+figure is given by its corners A₀, A₁, …, Aₙ, and "a parallelogram (a square) equal to the
+given rectilineal figure", in I.45 and II.14, means equal to the triangles A₀A₁A₂,
+A₀A₂A₃, …, A₀Aₙ₋₁Aₙ into which the straight lines from A₀ divide it, taken together. That
+sum is what Euclid adds up when he calls ABD and DBC "the whole rectilineal figure ABCD".
+No area of the figure is defined apart from this division, and no statement says that
+another division gives the same sum; that is the tacit step below, which Hilbert proved.
+The division is fixed by the corners and the choice of the first, so no dissection is
+supplied as input (FORMALIZATION, section 4). As FORMALIZATION, section 3, requires, the
+limit is stated here, carried by a tag of `review/terms.toml` in the I.45 and II.14
+records, and shown on both pages. The tag replaces `two-triangles` for them, and is added
+to `review/terms.toml` when their records change (a tag is added before any record uses
+it):
 
 ```toml
-[tag.figure-with-dissection]
+[tag.figure-by-corners]
 kind = "representation"
-meaning = "A rectilineal figure is given as triangles glued edge to edge, and its area is the sum of those triangles; that every figure can be so cut, and that two cuttings give one area, are not proved (I.45, II.14)."
+meaning = "A rectilineal figure is given by its corners A₀, A₁, …, Aₙ and divided, as Euclid and Byrne divide it, by the straight lines from A₀ into the triangles A₀AᵢAᵢ₊₁; equal to the figure means equal to those triangles together, and a figure that no corner so divides is not taken. That another division gives the same sum is not proved here; Hilbert proved it (I.45, II.14)."
 ```
 
 The page note goes in the field table's Representation row, and the mishnah of I.45 and
@@ -130,10 +142,9 @@ and each wave's orders name the agent.
 | Module | What goes in it | Place in the dependency order | Owner |
 |---|---|---|---|
 | `Elements/Foundations/Magnitudes.lean` | `Magnitude.sum` | the foundations | coordinator |
-| `Elements/Foundations/Phrases.lean` | `InOrder`, `segments`, `endOf`, `OnFiniteLine`, `OnOrInsideTriangle`, `Corners`; then `Fitted`, `Rectilineal`, `Rectilineal.area` (Definition I.19), after `InsideTriangle` and `OppositeSidesOf`, which they use (`Definitions.lean` comes before them) | the foundations | coordinator |
+| `Elements/Foundations/Phrases.lean` | `InOrder`, `segments`, `endOf` | the foundations | coordinator |
 | `Elements/Foundations/DefinitionsIII.lean` | the arc words of stage 3; `Foot` (Definitions III.4, III.5) | the foundations | coordinator |
 | `Elements/Figure/Sums.lean` (new) | `Magnitude.sum_singleton`, `Magnitude.sum_append`, `InOrder.between_end` | Book Zero: imports no proposition | stage 2 ground task |
-| `Elements/Figure/Rectilineal.lean` (new) | `Fitted.ne_nil`, `Fitted.triangle`, `Fitted.inside_pairwise`, `Fitted.two` | Book Zero | stage 2 ground task |
 | `Elements/Figure/Chords.lean` (new) | `chord_cases`, `Arc.meets`, `Arc.congr_side`, `Arc.Congruent.congr_side` | Book Zero, after `DefinitionsIII` | stage 3 ground task |
 | `Elements/BookI/HelpersTriangles.lean` (new) | `Prop20.collinear_iff`, `Prop20.collinear_congr`, `Prop20.between_iff`, `Prop20.between_congr` | after I.20; cites nothing later. Not `Helpers.lean`, which I.7 imports before I.20 exists | placement step 2 |
 | `Elements/BookIII/Placement/Exists.lean` (new) | `Placement.exists_off`, `Placement.exists_on` | after Book I (cites I.3, I.20, I.22) | placement step 2 |
@@ -157,7 +168,7 @@ and each wave's orders name the agent.
 ### Sums, and points in order
 
 `Staging/Stage2/Sums.lean`. II.1 cuts a straight line "into any number of segments
-whatever", and I.45 and II.14 take a figure of any number of triangles. Lean says "any
+whatever", and I.45 and II.14 take a figure of any number of sides. Lean says "any
 number" with a list.
 
 ```lean
@@ -192,79 +203,59 @@ theorem InOrder.between_end {B P : Point} {ps : List Point} (h : InOrder (B :: P
   list. Points in order: each differs from the next, and of any three in a row the middle
   is between the others, so `InOrder [B, D, E, C]` is II.1's BC cut at D and E. The
   segments of `[B, D, E, C]` are BD, DE, EC; `endOf B [D, E, C]` is C. Of three or more
-  points in order, the second is between the first and the last.
+  points in order, the second is between the first and the last. In I.45 and II.14 the
+  segments of a figure's corners A₁, …, Aₙ, which need not be in order on a straight line,
+  are its sides away from the corner A₀.
 - **Homes.** The four words to the foundations; the three facts to `Elements/Figure/Sums.lean`.
 - **Proof plan.** By induction on the lists, from the magnitude laws and System E's rules
   of order (Between 6, Diagram-segment 1). No proposition.
 
-### A rectilineal figure, given with its triangles
+### A rectilineal figure, given by its corners
 
-`Staging/Stage2/Rectilineal.lean`. Definition I.19: "Rectilineal figures are those which
-are contained by straight lines". The owner's decision 1, as a definition:
+No new word, and no staged file of its own. Definition I.19: "Rectilineal figures are those
+which are contained by straight lines". As the owner decided (decision 1), a figure is given
+by its corners A₀, A₁, A₂, …, Aₙ, at least three, in order round it: in Lean, the points
+`A₀ A₁ A₂` and the list `ps` of the rest, A₃, …, Aₙ. The straight lines from A₀ divide it
+into the triangles A₀AᵢAᵢ₊₁, one on each of its sides `segments (A₁ :: A₂ :: ps)`, II.1's
+word. A statement asks that each of them be a triangle,
 
 ```lean
-def OnFiniteLine (Y P Q : Point) : Prop := Y = P ∨ Y = Q ∨ Between P Y Q
-
-def OnOrInsideTriangle (Y A B C : Point) : Prop :=
-  InsideTriangle Y A B C ∨ Between A Y B ∨ Between B Y C ∨ Between C Y A ∨
-    Y = A ∨ Y = B ∨ Y = C
-
-def Corners (t : Point × Point × Point) (P Q R : Point) : Prop :=
-  t = (P, Q, R) ∨ t = (Q, R, P) ∨ t = (R, P, Q) ∨ t = (Q, P, R) ∨ t = (P, R, Q) ∨
-    t = (R, Q, P)
-
-inductive Fitted : List (Point × Point × Point) → Prop
-  | single {A B C : Point} (h : Triangle A B C) : Fitted [(A, B, C)]
-  | glue {ps : List (Point × Point × Point)} {t : Point × Point × Point} {P Q R X : Point}
-      (hps : Fitted ps) (ht : t ∈ ps) (hside : Corners t P Q R)
-      (hX : OppositeSidesOf X R P Q)
-      (hmeet : ∀ Y : Point, OnOrInsideTriangle Y P Q X →
-        ∀ s ∈ ps, OnOrInsideTriangle Y s.1 s.2.1 s.2.2 → OnFiniteLine Y P Q) :
-      Fitted (ps ++ [(P, Q, X)])
-
-structure Rectilineal where
-  pieces : List (Point × Point × Point)
-  fitted : Fitted pieces
-
-noncomputable def Rectilineal.area (R : Rectilineal) : Area :=
-  Magnitude.sum (R.pieces.map fun t => △ t.1 t.2.1 t.2.2)
-
-theorem Fitted.ne_nil {ps : List (Point × Point × Point)} (h : Fitted ps) : ps ≠ []
-
-theorem Fitted.triangle {ps : List (Point × Point × Point)} (h : Fitted ps) :
-    ∀ t ∈ ps, Triangle t.1 t.2.1 t.2.2
-
-theorem Fitted.inside_pairwise {ps : List (Point × Point × Point)} (h : Fitted ps) :
-    ps.Pairwise (fun s s' => ∀ Y : Point,
-      InsideTriangle Y s.1 s.2.1 s.2.2 → ¬ InsideTriangle Y s'.1 s'.2.1 s'.2.2)
-
-theorem Fitted.two {A B C D : Point} (hABD : Triangle A B D) (hAC : OppositeSidesOf C A D B) :
-    Fitted [(A, B, D), (D, B, C)]
+(htri : ∀ s ∈ segments (A₁ :: A₂ :: ps), Triangle A₀ s.1 s.2)
 ```
 
-- **In plain words.** One triangle is a figure. A figure with a new triangle PQX laid
-  against the side PQ of one of its triangles, X on the other side of PQ from that
-  triangle's third corner R, is a figure, provided every point within or on the new
-  triangle that is within or on an earlier one lies on the finite straight line PQ. A
-  rectilineal figure is such a list; its area is the sum of its triangles. Every figure
-  has a triangle, each piece is a triangle, no point is inside two pieces, and Euclid's
-  four-sided figure ABCD with DB joined (A and C on opposite sides of DB) is one.
-- **What the rule accepts and rejects** (checked by a challenger, by hand). Any cutting of
-  a figure bounded by one closed line that neither crosses nor touches itself into
-  triangles, listed along the tree of their shared sides, satisfies the rule: a later
-  triangle can meet an earlier one that is not its neighbour only at an end of its glued
-  side. Every figure the rule makes is bounded by such a line, with no hole and no pinch.
-  Rejected: a ring of triangles closing round a point (the last would meet the others along
-  two sides), and a triangle laid against part of a side, or against two sides in line;
-  such a figure can be cut again so that the rule accepts it. Neither direction is stated
-  in Lean; `Fitted.inside_pairwise` is, and pins the no-overlap meaning of the rule against
-  a later edit of `hmeet`, which no other statement uses.
-- **The limit**, as stated under Conventions: area as the sum of the given triangles.
-- **Proved here:** `Fitted.ne_nil`, `Fitted.triangle` and `Fitted.inside_pairwise` (the
-  last from the challenger's scratch proof, with thanks). **To prove:** `Fitted.two`, from
-  the sides alone: each point of ABD is on A's side of DB or on it, each of DBC on C's side
-  or on it, so a common point is on DB, and between D and B or at one of them.
-- **Homes.** The words to the foundations; the four facts to `Elements/Figure/Rectilineal.lean`.
+and says "equal to the figure" as equal to their sum:
+
+```lean
+Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => △ A₀ s.1 s.2)
+```
+
+- **In plain words.** The corners of a figure, A₀, A₁, …, Aₙ, in order round it; the
+  straight lines from A₀ to A₂, …, Aₙ₋₁ divide it into the triangles A₀A₁A₂, A₀A₂A₃, …,
+  A₀Aₙ₋₁Aₙ, each with its corners off one straight line; and those triangles taken
+  together. Euclid's ABCD with DB joined is the figure with corners D, A, B, C, whose
+  triangles are DAB and DBC (ABD named from D); Byrne's figure in his I.45 has five corners
+  and three triangles.
+- **What the sum is, and is not.** It is what Euclid adds up when he calls ABD and DBC "the
+  whole rectilineal figure ABCD", and what Byrne adds up with three triangles. It is not
+  defined as an area of the figure, and no statement says that another division gives the
+  same sum (the limit, under Conventions; the tacit step, below). The statements ask only
+  that each piece be a triangle. When the straight lines from A₀ run within the figure, as
+  they do from any corner of a convex figure and in Euclid's and Byrne's figures, the
+  triangles fill it without overlapping, and the sum is what Euclid calls the figure. When
+  they do not, the theorems still hold of the triangles, but the triangles are not the
+  figure's pieces. A figure that is not convex may need its first corner chosen, one from
+  which the straight line to every other corner runs within the figure, and some figures
+  have no such corner; they are divided into triangles in other ways, which these
+  statements do not take (open question 1).
+- **Why no new word.** A structure holding the corners would be one more word in the lock
+  for what one hypothesis says; `segments` and `Magnitude.sum` are II.1's already. The
+  corners and the choice of the first fix the division, so no dissection is supplied as
+  input (FORMALIZATION, section 4).
+- **Withdrawn,** with the earlier decision 1: `OnFiniteLine`, `OnOrInsideTriangle`,
+  `Corners`, `Fitted`, `Rectilineal`, `Rectilineal.area`, and the facts `Fitted.ne_nil`,
+  `Fitted.triangle`, `Fitted.inside_pairwise` and `Fitted.two`. Nothing else used them.
+  `Staging/Stage2/Rectilineal.lean` is deleted, and `Elements/Figure/Rectilineal.lean` will
+  not be made.
 
 ### I.40, for bases anywhere on one straight line
 
@@ -306,9 +297,9 @@ theorem Prop40.special {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Trian
 - **Dependencies.** I.31, I.38, `Prop30.meet` (HelpersParallels), `Prop31.line`,
   `OnRay.eq_of_area_eq`; `AreParallel.of_parallel` for `special`.
 
-### I.45, for any rectilineal figure
+### I.45, for a figure of any number of sides
 
-`Staging/Stage2/BookI/Prop45.lean`. Companions "I.45 append", "I.45 sum", "I.45 figure".
+`Staging/Stage2/BookI/Prop45.lean`. Companions "I.45 append", "I.45 figure".
 
 ```lean
 theorem Prop45.append {A B C K F L M E₁ E E₂ : Point} (hKFLM : Parallelogram K F L M)
@@ -316,35 +307,40 @@ theorem Prop45.append {A B C K F L M E₁ E E₂ : Point} (hKFLM : Parallelogram
     ∃ K' F' L' M' : Point, Parallelogram K' F' L' M' ∧ ∠ F' K' M' = ∠ E₁ E E₂ ∧
       quadArea K' F' L' M' = quadArea K F L M + △ A B C
 
-theorem Prop45.sum {E₁ E E₂ : Point} (ts : List (Point × Point × Point)) (hne : ts ≠ [])
-    (hts : ∀ t ∈ ts, Triangle t.1 t.2.1 t.2.2) (hE : Triangle E₁ E E₂) :
+theorem Prop45.figure {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
+    (htri : ∀ s ∈ segments (A₁ :: A₂ :: ps), Triangle A₀ s.1 s.2) (hE : Triangle E₁ E E₂) :
     ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
-      quadArea K F L M = Magnitude.sum (ts.map fun t => △ t.1 t.2.1 t.2.2)
-
-theorem Prop45.figure {E₁ E E₂ : Point} (R : Rectilineal) (hE : Triangle E₁ E E₂) :
-    ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
-      quadArea K F L M = R.area
+      quadArea K F L M =
+        Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => △ A₀ s.1 s.2)
 ```
 
 - **In plain words.** Given a parallelogram in the angle E and a triangle, a parallelogram
-  in the same angle equal to both together. Given any number of triangles, a parallelogram
-  in the angle E equal to all of them (they need not fit together). Given a rectilineal
-  figure, a parallelogram in the angle E equal to it. `Prop45.figure` is proved from
-  `Prop45.sum`, and today's I.45 follows from `Prop45.sum` for the list `[ABD, DBC]`
-  (checked by Lean).
+  in the same angle equal to both together. Given a rectilineal figure by its corners A₀,
+  A₁, …, Aₙ, a parallelogram in the angle E equal to the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ into
+  which the straight lines from A₀ divide it, taken together. Today's I.45 follows from
+  `Prop45.figure` for the corners D, A, B, C (checked by Lean, the triangle DAB named ABD by
+  `area_bca`).
 - **Coverage.** Heath: "To construct, in a given rectilineal angle, a parallelogram equal
   to a given rectilineal figure." Full, with the companions, in the representation
-  `figure-with-dissection`. The `two-triangles` restriction goes.
-- **Cases.** One triangle (I.42 alone); any number; convex or not.
-- **Construction.** Given: the angle (the triangle E₁EE₂) and the figure. Returned: the
-  parallelogram KFLM. Shown: it is a parallelogram, its angle at K is the given angle, and
-  its area is the figure's.
-- **Route.** Euclid's: a parallelogram for the first triangle [I. 42], one for the next
-  applied to its side [I. 44], and his proof that the two make one parallelogram (I.29,
-  I.14, I.34, I.33). `Prop45.append` is that second step; `Prop45.sum` repeats it. Euclid
-  shows two triangles; the repetition for more is noted in the record.
-- **Dependencies.** I.42, I.44 and the steps of today's I.45; `Fitted.ne_nil`,
-  `Fitted.triangle`; the sum lemmas.
+  `figure-by-corners`: a figure of any number of sides, divided as Euclid and Byrne divide
+  it. The `two-triangles` restriction goes.
+- **Cases.** A triangle (I.42 alone, the list `ps` empty); Euclid's four corners; Byrne's
+  five; any number. The figure need not be convex, so long as each piece is a triangle.
+- **Construction.** Given: the angle (the triangle E₁EE₂) and the figure's corners.
+  Returned: the parallelogram KFLM. Shown: it is a parallelogram, its angle at K is the
+  given angle, and it is equal to the figure's triangles taken together.
+- **Route.** Euclid's, as Byrne draws it for three triangles: a parallelogram for the first
+  triangle [I. 42], one for the next applied to its side [I. 44], and Euclid's proof that
+  the two make one parallelogram (I.29, I.14, I.34, I.33); then the same for each triangle
+  after. `Prop45.append` is that second step, and `Prop45.figure` takes the triangles one at
+  a time, in order along the sides. **Proved here:** `Prop45.figure`, by induction on the
+  list, from I.42 and the stubbed `Prop45.append`. Euclid shows two triangles; the
+  repetition is noted in the record.
+- **Withdrawn:** `Prop45.sum`, a parallelogram equal to any list of triangles. It was the
+  repetition when the figure was a `Fitted` list; `Prop45.figure` now repeats
+  `Prop45.append` itself, and nothing else used it.
+- **Dependencies.** I.42, I.44 and the steps of today's I.45; `segments`, `Magnitude.sum`,
+  and the magnitude laws `add_zero` and `add_assoc`.
 
 ### II.1, for any number of segments
 
@@ -376,46 +372,90 @@ theorem Prop1.general {A₁ A₂ B : Point} {ps : List Point} (h : InOrder (B ::
   noted in the record.
 - **Dependencies.** I.3, I.11, I.31, I.34; `Rectangle.contained`; the sums.
 
-### II.14, for any rectilineal figure, with a drawn square
+### II.14, for a figure of any number of sides, with a drawn square
 
 `Staging/Stage2/BookII/Prop14.lean`. Companions "II.14 rectangle", "II.14 general",
-"II.14 square", "II.14 sum".
+"II.14 square".
 
 ```lean
 theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
     ∃ P Q : Point, sq P Q = quadArea E B C D
 
-theorem Prop14.general (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area
+theorem Prop14.general {A₀ A₁ A₂ : Point} {ps : List Point}
+    (htri : ∀ s ∈ segments (A₁ :: A₂ :: ps), Triangle A₀ s.1 s.2) :
+    ∃ P Q : Point,
+      sq P Q = Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => △ A₀ s.1 s.2)
 
-theorem Prop14.square (R : Rectilineal) :
-    ∃ P Q S T : Point, Square P Q S T ∧ Parallelogram P Q S T ∧ quadArea P Q S T = R.area
-
-theorem Prop14.sum {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h₂ : Triangle A₄ A₂ A₃) :
-    ∃ E H : Point, sq E H = △ A₁ A₂ A₄ + △ A₄ A₂ A₃
+theorem Prop14.square {A₀ A₁ A₂ : Point} {ps : List Point}
+    (htri : ∀ s ∈ segments (A₁ :: A₂ :: ps), Triangle A₀ s.1 s.2) :
+    ∃ P Q S T : Point, Square P Q S T ∧ Parallelogram P Q S T ∧
+      quadArea P Q S T =
+        Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => △ A₀ s.1 s.2)
 ```
 
-- **In plain words.** A square equal to a given rectangle; a square equal to a given
-  rectilineal figure; the same with the square drawn as four corners; and today's
-  statement, for two triangles that need not fit together (checked by Lean).
+- **In plain words.** A square equal to a given rectangle; a square equal to a rectilineal
+  figure given by its corners A₀, A₁, …, Aₙ, that is, to the triangles into which the
+  straight lines from A₀ divide it, taken together; and the same with the square drawn as
+  four corners. Today's II.14 follows from `Prop14.general` for the corners A₄, A₁, A₂, A₃,
+  which are I.45's D, A, B, C (checked by Lean).
+- **Withdrawn:** `Prop14.sum`, today's statement kept as a companion. It was needed because
+  today's two triangles need not fit together as `Fitted` asked; the division from a corner
+  asks no more of them than today's statement does, so the check derives today's II.14 from
+  `Prop14.general` directly.
 - **The route of `Prop14.rectangle` is decided:** it is proved directly by the second part
   of Euclid's proof, today's proof of II.14 after the rectangle is made. If BE is equal to
   ED, the rectangle is a square. If not, the greater, BE, is produced to F with EF equal to
   ED, BF is bisected at G, the semicircle BHF is described, DE is produced to H, and II.5
   and I.47 make the rectangle the square on EH. **It does not cite II.14.** Brief 0005's
-  "applies Prop14 to the rectangle's two halves" is withdrawn: it would make
-  `Prop14.sum` prove II.14 from II.14, and rest `Prop14.general` and `Prop14.square` on the
-  two-triangle statement rather than on Euclid's construction, and no check would catch it.
-- **Proved here:** `Prop14.general` (a right angle by I.11 on a side of the first triangle,
-  then `Prop45.figure` and `Prop14.rectangle`) and `Prop14.sum` (the same with
-  `Prop45.sum`), both from the stubs. **To prove:** `Prop14.rectangle`; `Prop14.square`, the
-  square on PQ described on it [I. 46] with `Square.described`.
+  "applies Prop14 to the rectangle's two halves" is withdrawn: it would rest
+  `Prop14.general` and `Prop14.square` on the two-triangle statement rather than on
+  Euclid's construction, and make the check of today's II.14 prove II.14 from II.14, and no
+  check would catch it.
+- **Proved here:** `Prop14.general` (a right angle by I.11 at A₀ on A₀A₁, then
+  `Prop45.figure` and `Prop14.rectangle`), from the stubs. **To prove:**
+  `Prop14.rectangle`; `Prop14.square`, the square on PQ described on it [I. 46] with
+  `Square.described`.
 - **Coverage.** Heath: "To construct a square equal to a given rectilineal figure." Full,
-  with the companions, in the representation `figure-with-dissection`; the `two-triangles`
+  with the companions, in the representation `figure-by-corners`; the `two-triangles`
   restriction goes, and `Prop14.square` answers `side-not-square`, which stays for the main
   theorem.
 - **Cases.** The rectangle a square already; BE the greater; ED the greater.
-- **Dependencies.** I.11, I.45 (`Prop45.figure`, `Prop45.sum`), II.5, I.47, I.46,
-  `Rectangle.of_right`, `Square.described`.
+- **Dependencies.** I.11, I.45 (`Prop45.figure`), II.5, I.47, I.46, `Rectangle.of_right`,
+  `Square.described`.
+
+### The tacit step, for the gap catalogues
+
+Euclid takes "the whole rectilineal figure ABCD" to be ABD and DBC together, and so takes
+for granted that the whole is the same however the figure is cut into triangles: AC would
+have given ABC and ACD. For a four-sided figure whose diameters cross, as in Euclid's
+figure, Book Zero proves it (`quadArea_rotate_of_cross`). For any polygon and any division
+into triangles, David Hilbert proved it, for the measure of area he builds from his axioms,
+in *Grundlagen der Geometrie* (1899), chapter IV. In E. J. Townsend's translation,
+[*The Foundations of Geometry*](https://www.gutenberg.org/ebooks/17384) (1902), that is
+chapter IV, "The Theory of Plane Areas", section 20, "The measure of area of triangles and
+polygons", where theorem 29 and the definition after it give that the measure of area of a
+polygon "is independent of the manner of decomposition into triangles and, consequently, is
+definitely determined by the polygon itself" (checked against the Project Gutenberg text).
+The statements here claim nothing of it. The entries planned, for whoever writes stage 2's
+records:
+
+- `docs/reports/gaps-book-I.md`, I.45, the first entry becomes: "Euclid cuts the
+  rectilineal figure ABCD by DB into the triangles ABD and DBC, and takes "the whole
+  rectilineal figure ABCD" to be the two together. Any rectilineal area, Heath says, "can
+  of course be resolved into triangles" (vol. 1, p. 347). Taken for granted is that every
+  cutting gives the same whole: AC would give ABC and ACD. For a four-sided figure whose
+  diameters cross, Book Zero proves it (`quadArea_rotate_of_cross`); for any figure and any
+  cutting, David Hilbert proved it (*The Foundations of Geometry*, ch. IV, "The Theory of
+  Plane Areas", section 20). Our statement, and its companion for a figure of any number of
+  sides, divide the figure as Euclid and Byrne do, by the straight lines from one corner,
+  and make the parallelogram equal to those triangles; they claim nothing of another
+  cutting."
+- `docs/reports/gaps-book-II.md`, II.14, the first entry becomes: ""Let A be the given
+  rectilineal figure": it may have any number of sides. Any rectilineal area, Heath says
+  under I.45, "can of course be resolved into triangles" (vol. 1, p. 347). Our companions
+  divide the figure as I.45's do, by the straight lines from one corner, and make the
+  square equal to those triangles; that another cutting gives the same whole is the step
+  taken for granted under I.45, which David Hilbert proved."
 
 ## Stage 3: arcs and segments
 
@@ -1050,8 +1090,8 @@ changed from brief 0005's in these ways:
 
 The challenges then added what the restatements' consumers need: `Prop24.circumference` and
 `Prop24.equalCircles` (III.26 and `Arcs.lean`), `Arc.congr_side` and its corollary (arcs
-named by side points), `Fitted.inside_pairwise` (the meaning of the gluing rule), and a
-plan for `Prop23.point` that does not fail at a tangent.
+named by side points), `Fitted.inside_pairwise` (the meaning of the gluing rule, since
+withdrawn with `Fitted`), and a plan for `Prop23.point` that does not fail at a tangent.
 
 ## The order of proof work
 
@@ -1060,12 +1100,12 @@ leaves `lake build`, `lake build Audit` and `lake build Staging` green.
 
 **Stage 2.**
 1. Ground (wave R1): the words into the foundations, with the lock and a decisions entry;
-   `Elements/Figure/Sums.lean` and `Elements/Figure/Rectilineal.lean`; the certificate and
-   render support for companions, and the `Placement` policy check.
+   `Elements/Figure/Sums.lean`; the certificate and render support for companions, and the
+   `Placement` policy check.
 2. I.40, II.1, I.45 in parallel (best of two each); II.14 after I.45's statements are
-   stable, against `Prop45.sum` and `Prop45.figure`.
-3. Records, pages, mishnah notes; the `figure-with-dissection` tag added before the I.45 and
-   II.14 records use it.
+   stable, against `Prop45.figure`.
+3. Records, pages, mishnah notes; the `figure-by-corners` tag added before the I.45 and
+   II.14 records use it; the gap catalogue entries for I.45 and II.14, as planned above.
 
 **Stage 3: placement, steps 1–4** (step 0, the spike, is done):
 1. **One strong prover:** `Placement.base_choice` and `Placement.dist_strict`
@@ -1117,6 +1157,8 @@ asks a correction to name its consumers):
   `docs/briefs/book-I.md` and `docs/briefs/book-II.md` (the rows for I.40, I.45, II.1 and
   II.14), and `docs/briefs/0005-astra-review.md`'s lines that this brief withdraws.
 - `review/terms.toml`: the new tag.
+- `docs/reports/gaps-book-I.md` (I.45) and `docs/reports/gaps-book-II.md` (II.14): the
+  entries planned above.
 
 ## Records made stale
 
@@ -1139,20 +1181,26 @@ stamped by anyone who did not review it.
 
 ## Open questions for the owner
 
-1. **Is "equal to the given figure" read as "equal to the sum of its given triangles" an
-   accepted deliberate limit for the consolidation release?** The challenges settled how to
-   state it (the tag `figure-with-dissection`, the page note, this brief). They could not
-   settle whether Books I and II may carry it at the 95 bar, or whether a theorem that two
-   dissections give one area should be planned (substantial: it needs a common refinement
-   of two dissections). The recommendation is to accept it as a stated limit, like
-   `centre-given`, and leave the theorem for later.
+1. **Figures that no corner divides into triangles.** The owner's decision 1 settles the
+   reading of I.45 and II.14: the figure divided by the straight lines from one corner, as
+   Euclid and Byrne divide it, and no claim about another division. Every convex figure is
+   so divided from any corner, and so are Euclid's and Byrne's; a figure that is not convex
+   may need its first corner chosen, and some figures (a comb of narrow teeth, say) have no
+   corner from which the straight line to every other corner runs within the figure. For
+   those the statements still hold of the triangles, but the triangles are not the
+   figure's pieces. Is the records' scope `full` in the representation `figure-by-corners`,
+   whose meaning names both the division and the figures it does not take, or
+   `restricted`? The recommendation is `full` in the representation, as this brief writes
+   it. A companion for any division into triangles would cost little, since
+   `Prop45.append` takes any triangle (it is the withdrawn `Prop45.sum`), and it is not
+   planned.
 
 ## Appendix: the challenges, and what was done
 
 Three readers challenged the staged statements and the draft of this brief: a translator,
 who read each statement back into plain words against Heath, and one reader each for
 stages 2 and 4 and for stage 3. Every finding that held was applied, in `Staging/` and
-here.
+here. Rows marked *withdrawn* or *revised* were overtaken by the revision of decision 1.
 
 | Finding | Done |
 |---|---|
@@ -1161,20 +1209,20 @@ here.
 | III.24's route oversold as "Euclid's route" | Module doc and remarks reworded: the application kept, the reductio replaced; passages planned as `different`, route `modified` |
 | `Prop24.equalCircles` and `Prop24.circumference` not declared; III.26 cannot follow Euclid without the second | Both staged with `sorry`, plain-words docstrings, companions of III.24; checked against today's type |
 | `Prop23.point` and `Arc.eq_of_aligned` each called both companion and shared step | `Prop23.point` a companion of III.23, for `Prop23.lean`; `Arc.eq_of_aligned` a shared step, for `Squares.lean` |
-| The dissection limit not in the brief, nor tagged | Stated under Conventions; tag `figure-with-dissection` planned; page note planned |
+| The dissection limit not in the brief, nor tagged | Stated under Conventions; tag planned; page note planned. *Revised:* the limit is now Euclid's and Byrne's division, tag `figure-by-corners` |
 | "Equal" segments read as congruence, unstated | Stated under Conventions; in the III.24, III.26, III.28 module docs; for their records |
 | "keeping every distance" said of the whole plane | "between points of the segment" (Definitions), "between them" (Placement) |
 | `Arc` cited Definition III.9 | III.6 on `Arc`, III.9 on `Arc.measure`; III.8 and III.11 where similarity is read |
-| `Prop14.sum`'s docstring used other letters | "A₁A₂A₄, A₄A₂A₃ (I.45's ABD, DBC)" |
+| `Prop14.sum`'s docstring used other letters | "A₁A₂A₄, A₄A₂A₃ (I.45's ABD, DBC)". *Withdrawn* with `Prop14.sum`; the II.14 check's docstring keeps the letters |
 | `Foot` with A = B; "Definitions III.4 and III.5" read as covering distance nothing | Docstrings say the foot is then E; "extended" |
 | III.28's doc said "as Euclid's does" | The departures for the greater circumferences and the semicircle case disclosed |
 | No machine check that `of_circle` is today's III.25, nor for III.26 and III.28 | Three `type_of%` checks added |
 | The draft: Book Zero for sums; timebox and fallback; decided questions left open; II.14's route | All revised: words to the foundations; decisions recorded; one route for `Prop14.rectangle` |
-| `Prop14.rectangle`'s route unsettled, and one route makes `Prop14.sum` hollow | Decided: Euclid's second part, never citing II.14, in the docstring and here |
-| `Fitted`'s content (`hmeet`) used by no theorem | `Fitted.inside_pairwise` added and proved |
+| `Prop14.rectangle`'s route unsettled, and one route makes `Prop14.sum` hollow | Decided: Euclid's second part, never citing II.14, in the docstring and here. *Revised:* the other route would now make the II.14 check circular |
+| `Fitted`'s content (`hmeet`) used by no theorem | `Fitted.inside_pairwise` added and proved. *Withdrawn* with `Fitted` |
 | "The axiom lock must not change" | Reworded: `[axioms]` stays at 87; `[vocabulary]` grows, with the words listed |
 | The draft did not list every staged declaration, nor homes and owners | Every declaration pasted above; the homes and owners table |
-| `Fitted`'s docstring said too little of what the rule accepts | Accepted and rejected figures stated, with what is and is not proved |
+| `Fitted`'s docstring said too little of what the rule accepts | Accepted and rejected figures stated, with what is and is not proved. *Withdrawn* with `Fitted` |
 | "exactly" in the checks | "checked by Lean, up to unfolding definitions" |
 | The stage 4 files under `Stage2/BookIII` | Moved to `Staging/Stage4/`, with III.25 |
 | `Prop14.general` left as `sorry` though it follows in a few lines | Proved from `Prop45.figure` and `Prop14.rectangle` |

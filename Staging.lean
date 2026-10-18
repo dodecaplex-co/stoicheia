@@ -1,5 +1,4 @@
 import Staging.Stage2.Sums
-import Staging.Stage2.Rectilineal
 import Staging.Stage2.BookI.Prop40
 import Staging.Stage2.BookI.Prop45
 import Staging.Stage2.BookII.Prop01
@@ -32,7 +31,7 @@ to its home in `Elements/` (brief 0006 names each one's file and owner), a compa
 
 The folders follow brief 0005's stages:
 
-* `Stage2/`: I.40, I.45, II.1 and II.14, with the sums and the rectilineal figure they need;
+* `Stage2/`: I.40, I.45, II.1 and II.14, with the sums and the points in order they need;
 * `Stage3/`: the arcs and segments, I.20's degenerate case, placement, III.23 point by
   point, III.24 restated, III.26 and III.28 upgraded, and the bridge theorems of `Arcs.lean`;
 * `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated.
