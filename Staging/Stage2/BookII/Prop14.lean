@@ -49,7 +49,104 @@ today's proof of II.14 after the rectangle is made. It does not cite II.14. The 
 square on PQ. -/
 theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
     ∃ P Q : Point, sq P Q = quadArea E B C D := by
-  sorry
+  /- If BE equals ED, the rectangle is already the square on EB. -/
+  by_cases heq : ‖B E‖ = ‖E D‖
+  · exact ⟨E, B, (h.eq_rect rfl ((len_symm E B).trans heq).symm).symm⟩
+  /- Otherwise one side is greater. -/
+  have hlt : ‖E D‖ < ‖E B‖ ∨ ‖E B‖ < ‖E D‖ := by
+    rcases lt_trichotomy ‖E D‖ ‖E B‖ with h' | h' | h'
+    · exact Or.inl h'
+    · exact False.elim (heq ((len_symm B E).trans h'.symm))
+    · exact Or.inr h'
+  /- Euclid's figure has BE greater. The same construction serves when ED is
+     greater, by reading the rectangle the other way round. -/
+  have greater : ∀ {E B C D : Point}, Rectangle E B C D → ‖E D‖ < ‖E B‖ →
+      ∃ P Q : Point, sq P Q = quadArea E B C D := by
+    intro E B C D h hlt
+    /- Produce BE beyond E, and take EF equal to ED on that ray. -/
+    have hEB : E ≠ B := h.1.1.1
+    have hDE : D ≠ E := h.1.2.2.1
+    obtain ⟨X, hBEX⟩ := produce hEB.symm
+    obtain ⟨F, hF, hEF⟩ :=
+      OnRay.exists_len_eq hDE.symm (ne_of_between (between_symm hBEX)).symm
+    have hBEF : Between B E F := hF.between hBEX
+    /- Bisect BF at G [I. 10]. -/
+    obtain ⟨G, hBGF, hBG⟩ := BookI.Prop10 (ne_of_between_ends hBEF)
+    /- The circle with centre G through B also passes through F (Postulate 3).
+       E is inside it, between the ends of its diameter BF. -/
+    obtain ⟨BHF, hG_BHF, hB_BHF⟩ := Postulate3 G B (ne_of_between hBGF).symm
+    have hF_BHF : OnCircle F BHF :=
+      on_circle_of_len_eq hG_BHF hB_BHF (by rw [← hBG, len_symm G B])
+    have hE_BHF : InsideCircle E BHF :=
+      inside_of_between (Or.inr hB_BHF) (Or.inr hF_BHF) hBEF
+    /- Produce DE to H beyond E, on the semicircle BHF away from the rectangle. -/
+    obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hDE
+    obtain ⟨H, hH_BHF, hH_DE, hHED⟩ := line_circle_beyond hE_BHF hE_DE hD_DE hDE
+    /- G lies between B and E: the half BG of BF is less than BE, since BE is
+       greater than the remaining part EF. Thus E is the unequal cut of BF that
+       II.5 needs, distinct from the midpoint G. -/
+    have hlt' : ‖E F‖ < ‖B E‖ := by rw [hEF, len_symm B E]; exact hlt
+    have hBGE : Between B G E := by
+      have hBF : ‖B F‖ = ‖B G‖ + ‖B G‖ := by
+        rw [← len_add_of_between hBGF, ← hBG]
+      have hBF' : ‖B F‖ = ‖B E‖ + ‖E F‖ := (len_add_of_between hBEF).symm
+      refine OnRay.between_of_len_lt (OnRay.of_between hBGF) (OnRay.of_between hBEF) ?_
+      rcases lt_trichotomy ‖B G‖ ‖B E‖ with h' | h' | h'
+      · exact h'
+      · exfalso
+        rw [h', hBF'] at hBF
+        have : ‖E F‖ = ‖B E‖ := CommonNotion3 (by rw [add_comm]; exact hBF) rfl
+        exact lt_irrefl _ (this ▸ hlt')
+      · exfalso
+        have := Magnitude.add_self_lt_add_self h'
+        rw [← hBF, hBF'] at this
+        exact lt_irrefl _ (lt_trans hlt' (Magnitude.lt_of_add_lt_add_left this))
+    have hEG : E ≠ G := ne_of_between (between_symm hBGE)
+    /- BF is cut equally at G and unequally at E: the rectangle BE, EF with the
+       square on GE equals the square on GF [II. 5]. -/
+    have h5 : rect B E E F + sq G E = sq G F := Prop5 hBGF hBG hBEF hEG
+    /- GF and GH are radii of the same circle (Definition 15), so the same sum
+       equals the square on GH. -/
+    have hGF_GH : ‖G F‖ = ‖G H‖ := Definition15 hG_BHF hF_BHF hH_BHF
+    have hsum : rect B E E F + sq G E = sq G H := h5.trans (sq_congr hGF_GH)
+    /- H is off BF: otherwise the straight line through H and E would be BF, and
+       D on it, contrary to the rectangle's triangle DEB. So HEG is a triangle,
+       with GH as its third side. -/
+    obtain ⟨BF, hB_BF, hF_BF⟩ := Postulate1 B F (ne_of_between_ends hBEF)
+    have hE_BF : OnLine E BF := on_line_of_between_ends hBEF hB_BF hF_BF
+    have hG_BF : OnLine G BF := on_line_of_between_ends hBGF hB_BF hF_BF
+    have hDEB : Triangle D E B := h.1.rotate.rotate.rotate.triangle
+    have hD_BF : ¬ OnLine D BF := hDEB.bca.off_line hE_BF hB_BF
+    have hHE : H ≠ E := ne_of_between hHED
+    have hH_BF : ¬ OnLine H BF := fun hH =>
+      hD_BF ((line_unique hHE hH_DE hE_DE hH hE_BF) ▸ hD_DE)
+    /- HEG is right: HEB is adjacent to the rectangle's right angle DEB,
+       and G lies on the ray EB. -/
+    have hBEH : ∠ B E H = ∟ := by
+      rw [← adjacent_eq_of_right hD_DE hH_DE (between_symm hHED)
+        (hDEB.off_line hD_DE hE_DE) h.2.1]
+      exact h.2.1
+    have hHEG : ∠ H E G = ∟ := by
+      rw [angle_symm hHE (Ne.symm hEG),
+        angle_onRay_left (OnRay.of_between (between_symm hBGE)) hHE]
+      exact hBEH
+    /- The squares on HE and EG equal the square on GH [I. 47]. Thus they
+       equal the rectangle BE, EF together with the square on GE. -/
+    have h47 := BookI.Prop47.sq (Triangle.of_line hE_BF hG_BF hEG hH_BF).acb hHEG
+    have hequal : rect B E E F + sq G E = sq H E + sq E G :=
+      hsum.trans ((sq_symm G H).trans h47)
+    /- Subtract the square on GE from each: the rectangle BE, EF is the square
+       on HE, hence on EH (Common Notion 3). -/
+    have hrem : rect B E E F = sq H E := CommonNotion3 hequal (sq_symm G E)
+    have hEH : rect B E E F = sq E H := hrem.trans (sq_symm H E)
+    /- EF equals ED, so the rectangle BE, EF is the given rectangle EBCD. -/
+    have hrectangle : quadArea E B C D = rect B E E F :=
+      h.eq_rect (len_symm E B) hEF.symm
+    exact ⟨E, H, (hrectangle.trans hEH).symm⟩
+  rcases hlt with hlt | hlt
+  · exact greater h hlt
+  · obtain ⟨P, Q, hPQ⟩ := greater h.reverse hlt
+    exact ⟨P, Q, hPQ.trans (quadArea_reverse E B C D)⟩
 
 /-- **II.14, any number of triangles** (companion of II.14). To construct a square equal to
 any number of given triangles taken together, at least one: a rectangle equal to them
@@ -93,6 +190,26 @@ claimed of another division of the figure. -/
 theorem Prop14.figure (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area :=
   Prop14.apart R.toApart
 
+/-- The figure's area is something: its first triangle has positive area, and adding
+the rest cannot make it nothing. This makes the side found by `Prop14.apart` a straight
+line, not a point, so I.46 can describe the square on it. -/
+theorem Prop14.area_pos (R : Apart) : 0 < R.area := by
+  unfold Apart.area
+  match R.pieces, R.ne, R.triangle with
+  | (A, B, C) :: rest, _, htri =>
+    /- The sum is the first triangle together with the sum of the rest. -/
+    have hfirst : 0 < △ A B C := (htri (A, B, C) (List.mem_cons_self ..)).area_pos
+    change 0 < △ A B C + Magnitude.sum (rest.map fun t => △ t.1 t.2.1 t.2.2)
+    /- Adding the first triangle makes the rest greater (Common Notion 5).
+       If the whole were nothing, the rest would be less than nothing. -/
+    have hwhole := CommonNotion5
+      (a := Magnitude.sum (rest.map fun t => △ t.1 t.2.1 t.2.2)) hfirst
+    rw [add_comm] at hwhole
+    apply Magnitude.pos_of_ne_zero
+    intro hzero
+    rw [hzero] at hwhole
+    exact not_lt_zero _ hwhole
+
 /-- **II.14, with the square drawn** (companion of II.14). To construct a square PQST equal
 to a given rectilineal figure, given with triangles that lie apart as in `Prop14.apart`: the
 square on the side that `Prop14.apart` finds, described on it [I. 46]. The square is a
@@ -102,7 +219,23 @@ with the same sum (`Rectilineal.area_toApart`); so is the glued figure that `Pro
 returns for a checked fan. -/
 theorem Prop14.square (R : Apart) :
     ∃ P Q S T : Point, Square P Q S T ∧ Parallelogram P Q S T ∧ quadArea P Q S T = R.area := by
-  sorry
+  /- Take the side whose square equals the given figure. Its ends differ because
+     the figure has positive area, while the square on a point is nothing. -/
+  obtain ⟨P, Q, hPQ⟩ := Prop14.apart R
+  have hne : P ≠ Q := by
+    intro heq
+    subst Q
+    rw [sq_self] at hPQ
+    have hpos := Prop14.area_pos R
+    rw [← hPQ] at hpos
+    exact lt_irrefl 0 hpos
+  /- Choose a point off PQ and describe the square on PQ [I. 46]. Its corners
+     occur in the order P, S, T, Q. -/
+  obtain ⟨X, hX, -⟩ := exists_off_line hne []
+  obtain ⟨S, T, hsq, hS, hT⟩ := BookI.Prop46 hne hX
+  /- The described square is a parallelogram with area sq P Q. -/
+  obtain ⟨hp, harea⟩ := Square.described hsq hS hT
+  exact ⟨P, S, T, Q, hsq, hp, harea.trans hPQ⟩
 
 /-- **II.14, for a figure divided from one corner** (companion of II.14), as Euclid and
 Oliver Byrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, divided by the straight
