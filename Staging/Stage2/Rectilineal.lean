@@ -338,9 +338,9 @@ theorem Fitted.fan.within {O B C Y : Point} (hOBC : Triangle O B C)
 and let C be on the other side of OB from A, so that the ray OC turns on from OB, away from
 OA. Then OC stays on B's side of AA', B is within the angle AOC, on A's side of OC, and the
 angles AOB and BOC make up AOC; or C lies on OA', and AOB and BOC make two right angles
-(I.13); or C passes beyond, to the other side of AA', B is on A''s side of OC, and AOB and
-BOC make two right angles and the angle A'OC (I.13). Triple incidence places the rays; no
-straight angle is measured. -/
+(I.13); or C passes beyond, to the other side of AA', B is on the same side of OC as A',
+and AOB and BOC make two right angles and the angle A'OC (I.13). Triple incidence places
+the rays; no straight angle is measured. -/
 theorem Fitted.fan.advance {O A A' B C : Point} (hAOA' : Between A O A')
     (hOAB : Triangle O A B) (hAC : OppositeSidesOf A C O B) :
     (SameSideOf B C O A ∧ SameSideOf B A O C ∧
@@ -448,8 +448,8 @@ theorem Fitted.fan.along {O A A' D B Y : Point} {p : Point → Angle}
 
 /-- **A step round O.** Let B be at position S, with the corner P before it behind B: on A's
 side of OB when B is on D's side of OA, on D's side of OA when B is on the ray OA', and on
-A''s side of OB when B is on the other side of OA. These are the three cases of the
-running sum S: less than two right angles, exactly two, and more than two. If C is on the
+the same side of OB as A' when B is on the other side of OA. These are the three cases of
+the running sum S: less than two right angles, exactly two, and more than two. If C is on the
 other side of OB from P, and S together with the angle BOC is less than four right angles,
 then C is at the position S together with BOC, and B is behind C in the same sense. In the
 first case the step is the half turn from OA; in the second, OC leaves the ray OA' for the
