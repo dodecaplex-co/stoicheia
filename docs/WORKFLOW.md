@@ -534,9 +534,9 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       two harnesses that check every law, count as pinned values only where the same pull
       request adds, removes or restates that axiom's entry in the lock, the law's code
       keeps to itself (a function `_` under its one decorator `@axiom('<name>', …)`, which
-      binds no global, imports and prints nothing, and changes no container but one it
-      made in its own body, through the name it gave it), and nothing else in the harness
-      changes but its comments and docstring; a law
+      binds no global, imports and prints nothing, names neither `sys` nor `os`, and
+      changes no container but one it made in its own body, through the name it gave it),
+      and nothing else in the harness changes but its comments and docstring; a law
       changed while its axiom stands is a check change. Check code changed with judged
       content is kept apart, pinned values or not. The guards' two checks in step 3 run the
       same way.

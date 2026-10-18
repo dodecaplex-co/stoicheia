@@ -3622,6 +3622,8 @@ class Units(unittest.TestCase):
             "a dunder method": "class K:\n    def __radd__(self, o):\n        return 0",
             "the shared name itself": "DEN[:] = [2]",
             "the shared name, by a method": "SEEDS.clear()",
+            "another module, reached": "sys.modules['decimal'].setcontext(None)",
+            "a shell": "os.system('true')",
         }
         for name, body in refused.items():
             with self.subTest(refused=name):

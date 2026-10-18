@@ -656,9 +656,9 @@ findings:
   in the lock. A law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`,
   the two programs that check every law, moves the same way, while it keeps to itself (a
   function `_` under its one decorator `@axiom('<name>', …)`, binding no global, importing
-  and printing nothing, and changing no container but one it made in its own body, through
-  the name it gave it) and nothing else in the file changes but comments and its
-  docstring. The model's account, [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
+  and printing nothing, naming neither `sys` nor `os`, and changing no container but one it
+  made in its own body, through the name it gave it) and nothing else in the file changes
+  but comments and its docstring. The model's account, [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
   and `tests/model/results/`, which no check reads, moves with its content as well. A law
   changed while its axiom stands, a helper or tolerance of the harness, and every other
   change to the checks are kept apart as before.

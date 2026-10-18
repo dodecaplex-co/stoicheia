@@ -499,11 +499,11 @@ the axiom in the same pull request as the Lean:
 3. **The law.** [search.py](search.py) and [hyperbolic.py](hyperbolic.py) each implement
    every law, so each gains, loses or changes it, written as every law there is: a
    function `_` under `@axiom('<name>', …)`. Its helpers go inside it, and it keeps to
-   itself: it binds no global, imports and prints nothing, and changes no container but
-   one it made in its own body (`ws = []`, then `ws.append(w)`), and that through the
-   name it gave it: never through a second name for a container it did not make
-   (`d = DEN`, or `for d in (DEN,)`), nor through an element of its own (`x[0].clear()`).
-   The pre-flight checks this (`self_contained` in
+   itself: it binds no global, imports and prints nothing, names neither `sys` nor `os`,
+   and changes no container but one it made in its own body (`ws = []`, then
+   `ws.append(w)`), and that through the name it gave it: never through a second name for
+   a container it did not make (`d = DEN`, or `for d in (DEN,)`), nor through an element
+   of its own (`x[0].clear()`). The pre-flight checks this (`self_contained` in
    [safe_push.py](../../scripts/safe_push.py)), and the security review reads the law.
    The other programs check some laws only, and can follow later, in a pull request of
    their own.
