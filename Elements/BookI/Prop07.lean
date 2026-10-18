@@ -270,7 +270,7 @@ theorem Prop7 {A B C D : Point} (hCD : SameSideOf C D A B) (hCA : ‖C A‖ = �
      within the triangle ABD, Euclid's argument does not apply as it stands: that is the case
      Proclus answers with the second part of I. 5, proved in `Prop7.within`. From here on, C
      and D are named as in Euclid's figure, and X is the point where AD and CB cross.
-     Lean needs no straight line CD drawn here: `Prop7.figure` draws its own. -/
+     Our proof draws no straight line CD here: `Prop7.figure` draws its own. -/
   obtain ⟨C, D, hCD, hCA, hCB, hne, X, hAXD, hBXC⟩ :
       ∃ C D : Point, SameSideOf C D A B ∧ ‖C A‖ = ‖D A‖ ∧ ‖C B‖ = ‖D B‖ ∧ C ≠ D ∧
         ∃ X : Point, Between A X D ∧ Between B X C := by

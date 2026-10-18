@@ -31,7 +31,7 @@ the inference follows. Keep sentences short and plain. Three that have the voice
 - "So the tacit rule is doing real work: it says the plane has the square roots that ruler
   and compass need." (I.1)
 - "Generations of schoolchildren knew it as the *pons asinorum*, the bridge of asses." (I.5)
-- "Our statement gives the perpendicular, and Lean has to find its foot." (II.12)
+- "Our statement gives the perpendicular, and our proof has to find its foot." (II.12)
 
 **State facts directly; qualify uncertainty precisely.** A proved equality is said plainly.
 A conjecture about the history of the text sounds like one, and says whose it is. A
@@ -44,7 +44,7 @@ for a checker: no "note that", "strictly speaking" or "it is worth noting" **[ch
 ("our I.1 lets the side be named"), and it may take the reader along ("Postulate 3 lets us
 draw a circle"). Use it where it comes naturally; there is no count. "Euclid" is the
 historical argument, "Heath" the translation and its notes, and "Lean" the language and
-its checker ("Lean has to find its foot"); "the Lean" is our proof's code, where a
+its checker ("Lean checks the formal derivation"); "the Lean" is our proof's code, where a
 sentence needs it ("the Lean cites I.10"). No "I", "me" or "my" outside quotations
 **[checked]**.
 
@@ -446,10 +446,16 @@ draws the figure proposes the line in the handback, and the records' owner write
 
 Run it from the repository's root. It reads the files below; "outside quotations" means
 with every `"…"` span, every link target `](…)`, every code span and every fenced code
-block removed first. A phrase in the tables below is found however a line or a comment
-wraps it: its words may stand apart by one line break, with the next line's indent and
-its comment leader (`--`, or a quotation's `>`), but not by a blank line. Before reading
-anything else, the script checks its own patterns against such wrapped phrases.
+block removed first. What is removed is read as spaces, so the words of a phrase may
+stand apart across a code span, a quotation or a link target: S3 finds "I think" in
+`as I "so" think`. The words of a phrase in S2 to S7, S9, S11 and D7 to D10 are found
+however a line or a comment wraps them: they may stand apart by spaces or tabs (and
+commas, between S9's letters), or by one line break with the next line's indent and its
+comment leader (`--`, or a quotation's `>`). A blank line ends such a phrase, save S2's
+"first mate" and the "Definition N" of S7 and D10, whose words may stand apart by any
+white space. A word that a rule seeks elsewhere in the clause or the sentence (what
+follows S5's "never need", S11's "Proclus", D9's "need") is found as its row says. Before
+reading anything else, the script checks its own patterns against such phrases.
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.
@@ -475,7 +481,7 @@ anything else, the script checks its own patterns against such wrapped phrases.
 | S6 | "tacit assumption(s)", "tacit law(s)" (any case), outside quotations | Prose, Generated |
 | S7 | A definition without its book: "Definition N" or "Def. N", N a numeral, outside quotations and square brackets | Prose |
 | S8 | A curly quotation mark: “ ” ‘ ’ | Prose, Catalogues |
-| S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*([ ,]+[A-Z]+[′₀-₉]*)*\*($\|[^*])` | Prose, Catalogues, Lean notes |
+| S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*(([ \t,]+\|[ \t,]*\n[ \t]*((--\|>)[ \t]*)?[ \t,]*)[A-Z]+[′₀-₉]*)*\*($\|[^*])`: the letters may stand apart by spaces, tabs and commas, or by one line break, as above | Prose, Catalogues, Lean notes |
 | S10 | TeX in the mishnah: a backslash, `^{` or `$` | Mishnah |
 | S11 | A retired refrain of section 3, on a page not allowed it: "certificate cites", "certificate records", "Of the postulates", "besides Euclid's", "just Euclid's three" (nowhere); "comes in through" (I.29 only); "Lean wants it said", "Lean asks why", "Lean makes us say so" (I.1, I.5, I.22 only); "uses Postulate 1", "brings it in" (I.1, I.3 only); "with no letter", "proves it once", "We give his argument once", "and the Lean cites it.", and "under I.31" in a sentence naming Proclus (nowhere); a paragraph opening `**What Lean made us say.**`, `**What else Lean made us say.**`, `**What it rests on.**`, `**Where the parallels meet.**`, `**Naming the pieces.**`, or `**Where X falls.**` with X a run of capitals (nowhere) | Mishnah |
 | S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (the command is below). Run when the tree is built | Mishnah |
@@ -497,7 +503,7 @@ anything else, the script checks its own patterns against such wrapped phrases.
 | D4 | More than four distinct Lean names | Mishnah |
 | D5 | A caption over 40 words, or of more than two sentences | Idea figures |
 | D6 | Each "first", "only", "better", "best", "unlike", for a reader to judge as a comparison or a claim to priority | Prose, README |
-| D7 | "Lean cannot", "Lean can't" | Prose, Catalogues, Lean notes |
+| D7 | "Lean cannot", "Lean can't", "Lean can not" | Prose, Catalogues, Lean notes |
 | D8 | "gives no citation" (say "Heath gives no reference") | Prose, Catalogues |
 | D9 | A sentence that joins "need", "needs" or "needed" to Postulate 5 or the parallel postulate (say "uses"; a claim that a result holds without the postulate names its evidence) | Prose, Catalogues, README, Lean notes |
 | D10 | S6 and S7 outside their failing scope | Catalogues, README, Lean notes |

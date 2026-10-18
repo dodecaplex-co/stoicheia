@@ -1,14 +1,31 @@
 # False positives of the secret scan in scripts/safe_push.py, each with its reason.
 #
-# safe_push.py reads this file from the commit it pushes. An entry lets a flagged line
-# through when its file matches `path` (a glob), the line (or, for a file-name rule, the
-# file's path) contains `match`, and, if `rule` is given, the rule that flagged it is
-# that one. Every entry needs a `reason`; one without is refused. The allow-listed lines
-# are printed in safe_push's report, so they stay visible. Commit messages are scanned
-# too, as the path "commit <sha12> message".
+# safe_push.py reads this file from origin/main, never from the commit it checks: an entry
+# lands in a pull request of its own (a protected change, with a decisions entry naming
+# this file and the label security-review) before the line it lets through. Every entry is
+# narrow, and one that is not is refused:
+#
+#   path    one file, named exactly (no *, ? or [); a commit's message or identity, the
+#           pull request's body, its title and the branch name cannot be allowed, so a
+#           flagged message is reworded instead, and the commit rewritten;
+#   rule    the rule that flagged the line, by its name in the report;
+#   match   a part of the flagged line (or, for a file-name rule, the path), at least 8
+#           characters long;
+#   sha256  the SHA-256 of the flagged value itself, the part the report masks
+#           (printf %s '<the value>' | shasum -a 256), so that the entry excuses that
+#           value alone and not another one on a similar line. It may be left out only
+#           when match holds the whole value; but a value written here is usually flagged
+#           here in turn, in this file's own pull request, where its entry does not count
+#           yet, so name it by its SHA-256;
+#   reason  why it is not a secret.
+#
+# Each allowed finding stays visible: its line is printed, masked, in safe_push's report,
+# and it is noted in the pull request by its place, its rule, the SHA-256 of its value and
+# its reason, never by its line.
 #
 # [[allow]]
 # path = "docs/reports/example.md"
-# match = "the part of the line that was flagged"
 # rule = "key, token or secret"
+# match = "a part of the line, such as the name before the value"
+# sha256 = "the 64 hex digits of the flagged value's SHA-256"
 # reason = "Why this is not a secret."

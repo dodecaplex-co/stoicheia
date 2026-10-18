@@ -396,3 +396,76 @@ findings:
   the planted breaks, and then GitHub's CI. A pre-push hook refuses any other push to main.
   Tags, releases, release notes, the GitHub description and anything sent outside the
   repository still need the owner's OK.
+- **Landing work: pull requests, judged by origin/main's harness.** The owner, on 17
+  October: "Seems like it should have some proper PR discipline already ... maybe we need
+  a little more discipline around that." This supersedes the entry "Pushing to main,
+  safely and without asking" above: nothing is pushed to main any more, by the coordinator
+  or anyone. Work lands on main only as a pull request, merged with a merge commit,
+  through [`scripts/safe_push.py`](../../scripts/safe_push.py) alone:
+  `safe_push.py --branch <name>` checks the exact commit, pushes it to its branch and
+  opens or updates its pull request, and `safe_push.py --merge <n>` merges it only when
+  the secret scan and the guards pass again on its head, CI is green, the required boxes of
+  `.github/pull_request_template.md` are ticked and the coordinator's sections written,
+  the pull request carries a label for its kind and is not a draft, and a protected change
+  carries `security-review`. A check change lands in a pull request of its own: when
+  origin/main's copies of the checks fail on a pull request that also changes what they
+  judge, the pre-flight refuses it, unless the only check inputs it changes are the values
+  pinned to the edition (the axiom lock, the model's hash of it, and the counts and
+  values of the certificate's expectations, none of them dropped or loosened), which move
+  with the content they pin. `scripts/hooks/pre-push` refuses
+  every push to main, and scans, with origin/main's copy of the scan whichever remote it
+  goes to, a push to any other branch and a tag the owner allows; and the ruleset on main
+  is on: a pull request, the checks `check`, `model` and `negative`, and no force push or
+  deletion. The pre-flight and the merge run as `git safe-push`, the launcher
+  `scripts/hooks/safe-push`, which `scripts/install_hooks.sh` installs outside the tracked
+  tree with the hook, and which runs origin/main's copy of the harness, so that a branch
+  cannot judge itself. A false positive of the scan goes in
+  `scripts/safe_push_allow.toml`, pinned to its value (held in its match, or named by its
+  SHA-256), and `scripts/test_safe_push.py` plants a bad commit for every guard, gate and
+  edge case, the reviewers' notes among them. Agents never push, or open, merge or approve
+  a pull request; tags, releases, release notes, the GitHub description and anything sent
+  outside the repository still need the owner's OK ([WORKFLOW](../WORKFLOW.md), section
+  10, "Landing work: pull requests").
+
+## 18 October 2026
+
+- **The phrase rules read across a line break.**
+  [`scripts/check_style.py`](../../scripts/check_style.py) now finds a phrase of its tables
+  however a line or a comment wraps it: the words of a phrase may stand apart by spaces,
+  tabs or one line break, and a blank line ends the phrase. This covers S2 to S7, S9, S11
+  and D7 to D10 ([STYLE](../STYLE.md), section 8). Nothing is loosened: S3 catches at least
+  what it caught before, and the self-check holds a case for each rule, run on every
+  check. It lands after the wording sweep, on whose text it passes.
+- **Staging: statements before their proofs, built by CI.** Statements are settled before
+  proofs ([WORKFLOW](../WORKFLOW.md), section 2), and a stage's new or changed statements
+  are now written first in a library of their own, `Staging`, each with `sorry` where its
+  proof is due, then challenged and approved before any proof is assigned. A statement
+  leaves Staging when it is proved. The library is a `[[lean_lib]]` in `lakefile.toml`,
+  beside Audit and like it outside `defaultTargets`, with its root
+  [`Staging.lean`](../../Staging.lean). Unlike Audit's, its `globs` take every file under
+  `Staging/`, so a staged file is built whether or not the root imports it, and
+  `Staging/.gitkeep` keeps the directory when nothing is staged. Its files import
+  `Elements`, and nothing outside `Staging/` imports them, so nothing staged reaches a
+  proof or the certificate. CI's `check` job builds it after `lake build Audit`
+  (`.github/workflows/ci.yml`), so that a change to main which breaks a staged statement
+  fails at once, not when the statement moves. It is a build check, not a check that
+  anything is proved: `sorry` warnings do not fail it. The step joins the full sequence of
+  [WORKFLOW](../WORKFLOW.md), section 8, and the `CHECKS` list of
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), which runs that sequence. The
+  library lands empty, as a change of its own, before any statement is staged in it.
+
+- **The companions list, in the edition.** The list of companions the certificate reads,
+  each declaration with its reference ("I.40 general"), moves out of
+  `Certificate/Facts.lean` and into the edition, as `Elements.companions` in
+  [`Elements/Companions.lean`](../../Elements/Companions.lean), which `Elements.lean`
+  imports last. `Certificate/Facts.lean` now reads that list, and checks every entry
+  exactly as before: declared, in a proposition's namespace, listed by the reference its
+  name gives, and never a porism. The reason is the pull-request discipline. A check change
+  travels alone, in a pull request of its own, while a companion's listing must travel with
+  its proof and with its record's stamp; with the list inside a check, listing a proved
+  companion would have been a check change. Now it is a change to the edition, made by the
+  integrator in the commit that moves the companion beside its proposition, and the
+  checks stay where they were. The list is still empty, and `facts.json` is byte for byte
+  as it was. This moves the list of the 17 October entry "Porisms are entries of the
+  certificate"; [FORMALIZATION](../FORMALIZATION.md), section 2, WORKFLOW, section 4, and
+  AGENTS.md say where it lives and whose it is.
