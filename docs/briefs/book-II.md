@@ -103,7 +103,7 @@ review named, with the work that answers each:
 | Proposition | Scope | What is restricted | Tags | Planned |
 |---|---|---|---|---|
 | II.1 | restricted | the straight line is cut into exactly three pieces, where Euclid's words allow any number | `three-pieces` | stage 2: `Prop1.two` and `Prop1.general`, for any number of pieces in order |
-| II.14 | restricted | the figure is two triangles; the construction returns the side of the square | `two-triangles`, `side-not-square` | stage 2: `Prop14.general` for a supplied dissection, and `Prop14.square`, returning a drawn square |
+| II.14 | restricted | the figure is two triangles; the construction returns the side of the square | `two-triangles`, `side-not-square` | stage 2: `Prop14.apart` for any supplied division into triangles, and `Prop14.square`, returning a drawn square; `Prop14.figure` and `Prop14.fan` beside them |
 
 Each keeps Euclid's worked configuration, with the general theorem beside it as a
 companion. `rect` has as yet no lemma that a rectangle contained by any two straight lines
