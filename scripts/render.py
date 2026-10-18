@@ -1320,23 +1320,25 @@ FRONT_LEAN_I = {
         1: "`Point`", 2: "`Line`", 3: "`Line`", 4: "`Line`", 5: "none", 6: "none", 7: "none",
         8: "`∠ A B C`", 9: "`∠ A B C`",
         10: "`IsRightAngle`, with Postulate 4", 11: "`IsObtuse`", 12: "`IsAcute`",
-        13: "none", 14: "none: the figures of the proofs are rectilineal (Def. I.19) or circles",
+        13: "none",
+        14: "none: the proofs name their figures (rectilineal, circles, segments) without a "
+            "general word",
         15: "`Definition15` (an axiom: radii are equal)", 16: "`Centre`",
         17: "a straight line AD with the centre E between its ends on the circle: "
-            "`Between A E D`, with `Centre E α`, `OnCircle A α`, `OnCircle D α` (III.15); "
+            "`Between A E D`, with `Centre E ABCD`, `OnCircle A ABCD`, `OnCircle D ABCD` (III.15); "
             "that it bisects the circle is said of the circumference, each side two right "
             "angles (`Circumference.semicircle`). Book I uses the word of a parallelogram "
             "(I.34): its diameter AC cuts `quadArea A B C D` into two triangles",
         18: "a segment (Def. III.6) on a diameter: in III.31 the base BC passes through the "
             "centre E (`Between B E C`), the centre of both; its circumference is two right "
             "angles (`Circumference.semicircle`)",
-        19: "`Triangle`; four-sided, `quadArea`",
+        19: "`Triangle`; four-sided, `quadArea`; multilateral, none",
         20: "`Equilateral`; `Isosceles` is defined, but no statement or proof uses it: I.5 and "
             "I.6 say that the two sides are equal; scalene, none",
         21: "`RightAngledTriangle` is defined, but no statement or proof uses it: I.47 says "
             "that the angle BAC is right; obtuse and acute angles are `IsObtuse` (II.12) and "
             "`IsAcute` (II.13)",
-        22: "`Square`; a trapezium (I.35), `quadArea`",
+        22: "`Square`; a trapezium (I.35), `quadArea`; oblong, rhombus, rhomboid, none",
         23: "`Parallel`",
     },
     "Postulates": {i: f"`Postulate{i}`" for i in range(1, 6)},

@@ -24,7 +24,7 @@ note = "Euclid reads off his figure that C lies within the angle DBA and A withi
 [[passage]]
 at = "And the square BDEC is described on BC"
 kind = "carried"
-note = "The statement is about the three given squares, so nothing remains to do; squares on one straight line are equal whichever side they stand on, as proved after I.46; Book II restates I.47 for the squares on straight lines, as II.9 to II.14 use it."
+note = "The statement is about the three given squares, so nothing remains to do; squares on one straight line are equal whichever side they stand on, as proved after I.46; Book II restates I.47 for the squares on straight lines, as Books II and III cite it."
 
 [review]
 stage = "exceptions"
