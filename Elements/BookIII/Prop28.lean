@@ -105,7 +105,7 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   obtain ⟨Y, hY, hYH⟩ := exists_onCircle_oppositeSidesOf hD hE hFH.symm.triangle
   -- therefore the circumference AGB is equal to DHE.
   have hless : circumference ABC A G B = circumference DEF D H E :=
-    (Prop26 hcircles hK hL hX hA hB hY hD hE hXG hYH).1 hKG hLH hAKB
+    ((Prop26 hcircles hK hL hX hA hB hY hD hE hXG hYH).1 hKG hLH hAKB).1
   -- And the whole circle ABC is also equal to the whole circle DEF;
   have hw₁ := Circumference.whole ⟨K, hK⟩ hA hB hCG.symm
   have hw₂ := Circumference.whole ⟨L, hL⟩ hD hE hFH.symm

@@ -62,10 +62,12 @@ The measure carries no radius. In one circle, or in equal circles, two circumfer
 are equal exactly when their measures are, and that is all Euclid ever asks of them; in
 unequal circles equal measures do not make equal circumferences. So the propositions
 that compare circumferences say "in equal circles", as he does, though not all of them
-need it as stated. III.26 and III.27 hold for any two circles as stated: equal angles
-give equal measures whatever the radii, and their proofs keep the equal circles only
-along Euclid's route. III.28 and III.29 need equal circles, for there the measures are
-tied to straight lines in the circles. III.24 proves Euclid's equal segments: one laid
+need it as stated. III.27 holds for any two circles as stated: equal measures give equal
+angles whatever the radii, and its proof keeps the equal circles only along Euclid's
+route. III.26 needs them, for it concludes that the circumferences are congruent as well
+as equal in measure (`Arc.Congruent`, below), and in unequal circles equal angles give no
+congruence. III.28 and III.29 need equal circles, for there the measures are tied to
+straight lines in the circles. III.24 proves Euclid's equal segments: one laid
 on the other, they coincide (`Arc.Congruent`, below); its companion
 `Prop24.equalCircles` proves the circles equal and the measures equal, by the radii.
 

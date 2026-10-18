@@ -6,7 +6,7 @@ import Elements.BookIII.Prop20
 import Elements.BookIII.Prop24
 import Elements.Figure.Chords
 import Elements.Foundations.DefinitionsIII
-import Staging.Stage3.Prop26
+import Elements.BookIII.Prop26
 
 /-!
 # Stage 3, staged: III.28 upgraded
