@@ -20,8 +20,8 @@ records current; CI runs it on every push.
    first with no Lean of its own: a remark ends a run and carries nothing. A second
    remark, between the next sentence and its Lean, does not stop that Lean carrying it.
 7. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
-8. Every command docs/FORMALIZATION.md, section 7, forbids, and an axiom (one of them
-   after another command on the same line), planted in a new file of each folder the
+8. Every command docs/FORMALIZATION.md, section 7, forbids, and an axiom declared twice,
+   once after another command on the same line, planted in a new file of each folder the
    scan reads, `Elements/`, `Staging/` (in a folder of its own) and `Audit/`, with
    `#exit` at the end of each root file, `Elements.lean`, `Staging.lean` and
    `Audit.lean`: each is caught on its own line. The files are read, not built.
