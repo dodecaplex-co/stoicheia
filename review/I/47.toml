@@ -28,6 +28,6 @@ note = "The statement is about the three given squares, so nothing remains to do
 
 [review]
 stage = "exceptions"
-commit = "9da1b6d"
+commit = "dee2243"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:a0fc7319bcdf680a"
