@@ -195,8 +195,9 @@ def toml_blocks(text: str) -> list[str]:
 
 
 def undeclared_run() -> None:
-    """Drop the [[passage]] tables that begin within III.16's run of `--` lines with no
-    Lean beneath it (the unformalized angle clauses), and the run must be caught."""
+    """Drop the [[passage]] tables that begin within III.16's runs of `--` lines with no
+    Lean beneath them, and the run of the unformalized angle clauses must be caught: the
+    message names it by its first words, since the runs before it are caught too."""
     import tomllib
     record = heath.review_path("III", 16)
     src = heath.lean_path("III", 16).read_text()
@@ -218,7 +219,7 @@ def undeclared_run() -> None:
     record.write_text("".join(kept))
     try:
         expect_failure("III.16's record without its unformalized passage", fidelity(),
-                       "III.16: the `--` lines from")
+                       "III.16: the `--` lines from 'I say further that the angle of the'")
     finally:
         record.write_text(saved)
 
