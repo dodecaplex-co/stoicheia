@@ -704,6 +704,24 @@ findings:
   `Arc.Semicircle`, `Arc.Greater`, `Arc.SameKind`, `Arc.measure`, `Places` and
   `Arc.Congruent` (Definitions III.6 and III.9, and Common Notion 4 for congruence). None
   is an assumption. The module's account gains a paragraph on segments
-  and arcs. No entry's statement uses the words yet, so the lock's vocabulary is unchanged
-  and facts.json is byte for byte as it was; the words join the lock with the first
-  statements that use them.
+  and arcs. The words join the lock with the first statements that use them, the companion
+  "III.24 equalMeasure", then III.24, III.26 and III.28 as restated. The ground goes to the
+  homes the brief names: `Elements/Figure/Chords.lean` (new, Book Zero), I.20's degenerate
+  case in `Elements/BookI/HelpersTriangles.lean` (new, after I.20), placement in
+  `Elements/BookIII/Placement.lean` and its cases in `Elements/BookIII/Placement/` (new),
+  `Arc.eq_of_aligned` in `Elements/BookIII/Squares.lean` and `Circumference.add` in
+  `Elements/BookIII/Circumferences.lean`; and three companions join
+  `Elements/Companions.lean`: "III.23 point", "III.24 equalCircles" and "III.24
+  equalMeasure". The protected files this changes are two.
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) is rewritten by
+  `python3 scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the same 87, byte
+  for byte, and its `[vocabulary]` grows from 91 words to 104, by `Arc` with its constructor
+  `Arc.mk` and its fields `Arc.circle`, `Arc.B`, `Arc.C`, `Arc.K`, and by `Arc.Drawn`,
+  `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.measure`, `Places` and `Arc.Congruent`. The
+  kinds, `Arc.Less`, `Arc.Semicircle`, `Arc.Greater` and `Arc.SameKind`, are in the
+  foundations but not in the lock, which holds the words that the axioms' and the entries'
+  statements reach: only `Arc.eq_of_aligned` and the bridge theorems of
+  `Elements/BookIII/Arcs.lean` use them, and those are not entries of the certificate.
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is renewed, and
+  [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an axiom reaches,
+  has changed, so its account stands, and `tests/model/run.py --fast` passes.

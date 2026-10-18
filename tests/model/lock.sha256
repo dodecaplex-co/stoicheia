@@ -16,4 +16,9 @@
 # vocabulary: 30 new words, the definitions and their auxiliary declarations; the 87 axioms
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
-9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock
+#
+# Renewed on 18 October 2026, when the words of stage 3's statements (brief 0006) joined the
+# vocabulary: 13 new words, the arcs and segments with the structure's constructor and fields;
+# the 87 axioms and every word already locked are unchanged, byte for byte, so MODEL.md's
+# account stands as it was.
+cdf1645a48283ee7ed63eeff759e4e9aefb86ddd03c7d86df0c2cfaeb3fdcbd6  Certificate/axioms.lock

@@ -124,9 +124,9 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
        on equal bases (`Prop24.image`, by I.8): so the circles are equal, by III.24's
        companion `Prop24.equalCircles`, and the measures, by `Prop24.equalMeasure`. -/
     obtain ⟨P, hP, hPK⟩ := exists_onCircle_sameSideOf hB hC hK
-    obtain ⟨hBC, Q, hQ, hQL, hPQ⟩ := Staging.Prop24.image ha hb h hP hPK
-    exact ⟨(Staging.Prop24.equalCircles hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle
-      hBC hPQ).1, Staging.Prop24.equalMeasure ha hb h⟩
+    obtain ⟨hBC, Q, hQ, hQL, hPQ⟩ := Prop24.image ha hb h hP hPK
+    exact ⟨(Prop24.equalCircles hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle
+      hBC hPQ).1, Prop24.equalMeasure ha hb h⟩
   · rintro ⟨hcircles, hm⟩
     /- The chords are equal (`Arc.measure_eq_iff`). -/
     have hBC : ‖a.B a.C‖ = ‖b.B b.C‖ := ((Arc.measure_eq_iff ha hb hcircles).mp hm).1
