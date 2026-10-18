@@ -446,7 +446,10 @@ draws the figure proposes the line in the handback, and the records' owner write
 
 Run it from the repository's root. It reads the files below; "outside quotations" means
 with every `"…"` span, every link target `](…)`, every code span and every fenced code
-block removed first.
+block removed first. A phrase in the tables below is found however a line or a comment
+wraps it: its words may stand apart by one line break, with the next line's indent and
+its comment leader (`--`, or a quotation's `>`), but not by a blank line. Before reading
+anything else, the script checks its own patterns against such wrapped phrases.
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.

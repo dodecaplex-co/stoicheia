@@ -30,6 +30,12 @@ target `](…)`, every code span and every fenced code block blanked first. HTML
 are never shown to a reader, and are blanked everywhere. Blanking keeps every line in
 its place, so each finding names its line.
 
+A rule's phrase is found however a line or a comment wraps it: its words may stand apart
+by one line break, with the next line's indent and comment leader ("--" in Lean, ">" in a
+Markdown quotation), but not by a blank line. On every run, before anything else, the
+script checks its own wording patterns against wrapped and unwrapped phrases
+(`self_check`), and stops if one is read wrongly.
+
 S2's crew words match whole words in any case, plurals and possessives included ("the
 bosuns", "the crew's"). The figure rules also ask for a <title>: "I.N at a glance" on an
 idea figure, "Euclid I.N: …" on Euclid's (STYLE, section 7). A known departure a rule
@@ -278,11 +284,17 @@ def lean_notes(path: Path) -> str:
     """The Lean file with everything but its notes blanked: the text inside each `/- … -/`
     block and docstring (nested blocks included), save the docstring of `theorem PropN`,
     which is Heath's enunciation. The `--` lines outside blocks are Heath's proof."""
-    src = path.read_text(encoding="utf-8")
-    skip = None
     m = re.fullmatch(r"Prop(\d+)\.lean", path.name)
-    if m and path.parent.name.startswith("Book"):
-        span = heath.theorem_span(src, int(m.group(1)))
+    n = int(m.group(1)) if m and path.parent.name.startswith("Book") else None
+    return notes_text(path.read_text(encoding="utf-8"), n)
+
+
+def notes_text(src: str, n: int | None = None) -> str:
+    """`lean_notes` of a Lean source; `n` names the `theorem PropN` whose docstring is
+    blanked."""
+    skip = None
+    if n is not None:
+        span = heath.theorem_span(src, n)
         if span is not None:
             skip = span.start
     spans = []   # (first, last) character of each note's text
@@ -318,62 +330,97 @@ def lean_files() -> list[Path]:
 # The text rules. Each pattern is matched on the text the rule names (raw, without code,
 # or outside quotations); every match is one finding.
 
+# Between two words of a phrase: spaces, or one line break with the next line's indent
+# and its comment leader ("--" in Lean, ">" in a Markdown quotation), so that a phrase is
+# found however a line or a comment wraps it. A blank line ends the phrase.
+GAP = r"(?:[ \t]+|[ \t]*\n[ \t]*(?:(?:--|>)[ \t]*)?)"
+LEADER = re.compile(r"\n[ \t]*(?:--|>)")
+
+
+def flat(s: str) -> str:
+    """A match on one line, as a finding shows it: "Lean\\n  -- cannot" is "Lean cannot"."""
+    return " ".join(LEADER.sub(" ", s).split())
+
+
+def phrase(*ps: str) -> str:
+    """The alternatives `ps`, each a pattern whose spaces stand for GAP: "Lean cannot"
+    matches "Lean cannot", "Lean\\ncannot" and "Lean\\n  -- cannot"."""
+    return "(?:" + "|".join(p.replace(" ", GAP) for p in ps) + ")"
+
+
 def words(*ws: str) -> str:
-    """Whole words of a list, plurals and possessives allowed: crew, crews, crew's."""
-    return r"\b(?:" + "|".join(w.replace(" ", r"\s+") for w in ws) + r")(?:s|es)?\b"
+    """Whole words of a list, plurals and possessives allowed: crew, crews, crew's. The
+    words of "first mate" may stand apart by any white space, or wrap as GAP allows."""
+    return (r"\b(?:" + "|".join(w.replace(" ", rf"(?:\s+|{GAP})") for w in ws)
+            + r")(?:s|es)?\b")
 
 
 EM_DASH = re.compile("—")
 CREW = re.compile(words("crew", "captain", "first mate", "bosun", "sailor", "voyage", "fleet",
                         "enforcer", "polisher"), re.I)
-# "Book I was …" is a book, not a person.
-FIRST_PERSON = re.compile(r"(?<!Book )(?<!Books )\bI (?:am|was|have|think|found|would)\b|\b[Mm](?:y|e)\b")
-HEDGE = re.compile(r"\bnote that\b|\bstrictly speaking\b|\bit is worth noting\b", re.I)
+# "Book I was …" is a book, not a person: first_person() passes over an "I" after "Book"
+# or "Books", on its line or the line before.
+FIRST_PERSON = re.compile(phrase(r"\bI (?:am|was|have|think|found|would)\b") + r"|\b[Mm](?:y|e)\b")
+BOOK_BEFORE = re.compile(phrase(r"\bBooks? ") + r"\Z")
+HEDGE = re.compile(phrase(r"\bnote that\b", r"\bstrictly speaking\b", r"\bit is worth noting\b"),
+                   re.I)
 # "never need" or "never needs" with Postulate 5, a postulate, parallels or "it" later in
 # the same clause: "never need it", "I.1 to I.28 never need the fifth postulate".
-EUCLID_CITES = re.compile(
-    r"\bEuclid cites\b|\bEuclid's own bracketed\b|"
-    r"\bnever needs?\b(?=[^.;:!?]{0,40}?\b(?:it|postulates?|parallels?)\b)", re.I)
-TACIT = re.compile(r"\btacit (?:assumptions?|laws?)\b", re.I)
+EUCLID_CITES = re.compile(phrase(
+    r"\bEuclid cites\b", r"\bEuclid's own bracketed\b",
+    r"\bnever needs?\b(?=[^.;:!?]{0,40}?\b(?:it|postulates?|parallels?)\b)"), re.I)
+TACIT = re.compile(phrase(r"\btacit (?:assumptions?|laws?)\b"), re.I)
 DEFINITION = re.compile(r"\b(?:Definitions?|Defs?\.)\s+\d+\b")
 CURLY = re.compile("[“”‘’]")
 ITALIC_LETTER = re.compile(r"(?:^|[^*])(\*[A-Z]+[′₀-₉]*(?:[ ,]+[A-Z]+[′₀-₉]*)*\*)(?:$|[^*])", re.M)
 TEX = re.compile(r"\\|\^\{|\$")
-LEAN_CANNOT = re.compile(r"\bLean (?:cannot|can't|can not)\b", re.I)
-NO_CITATION = re.compile(r"\bno citations?\b", re.I)
+LEAN_CANNOT = re.compile(phrase(r"\bLean (?:cannot|can't|can not)\b"), re.I)
+NO_CITATION = re.compile(phrase(r"\bno citations?\b"), re.I)
 COMPARISON = re.compile(r"\b(?:first|only|better|best|unlike)\b", re.I)
 NEED = re.compile(r"\bneed(?:s|ed)?\b", re.I)
-POSTULATE_5 = re.compile(r"\bPostulate 5\b|\bPost\. 5\b|\bparallel postulate\b|\bfifth postulate\b", re.I)
+POSTULATE_5 = re.compile(phrase(r"\bPostulate 5\b", r"\bPost\. 5\b", r"\bparallel postulate\b",
+                                r"\bfifth postulate\b"), re.I)
 
 # S11: retired refrains of STYLE section 3, and the mishnah allowed each ("nowhere" is
 # the empty set).
 REFRAINS = [
-    (re.compile(r"\bcertificate (?:cites|records)\b"), set()),
-    (re.compile(r"\bOf the postulates\b"), set()),
-    (re.compile(r"\bbesides Euclid's\b"), set()),
-    (re.compile(r"\bjust Euclid's three\b"), set()),
-    (re.compile(r"\bcomes in through\b"), {"I.29"}),
-    (re.compile(r"\bLean (?:wants it said|asks why|makes us say so)\b"), {"I.1", "I.5", "I.22"}),
-    (re.compile(r"\b[Uu]ses Postulate 1\b"), {"I.1", "I.3"}),
-    (re.compile(r"\bbrings it in\b"), {"I.1", "I.3"}),
-    (re.compile(r"\bwith no letter\b"), set()),
-    (re.compile(r"\bproves it once\b"), set()),
-    (re.compile(r"\bWe give his argument once\b"), set()),
-    (re.compile(r"\band the Lean cites it\."), set()),
+    (re.compile(phrase(r"\bcertificate (?:cites|records)\b")), set()),
+    (re.compile(phrase(r"\bOf the postulates\b")), set()),
+    (re.compile(phrase(r"\bbesides Euclid's\b")), set()),
+    (re.compile(phrase(r"\bjust Euclid's three\b")), set()),
+    (re.compile(phrase(r"\bcomes in through\b")), {"I.29"}),
+    (re.compile(phrase(r"\bLean (?:wants it said|asks why|makes us say so)\b")),
+     {"I.1", "I.5", "I.22"}),
+    (re.compile(phrase(r"\b[Uu]ses Postulate 1\b")), {"I.1", "I.3"}),
+    (re.compile(phrase(r"\bbrings it in\b")), {"I.1", "I.3"}),
+    (re.compile(phrase(r"\bwith no letter\b")), set()),
+    (re.compile(phrase(r"\bproves it once\b")), set()),
+    (re.compile(phrase(r"\bWe give his argument once\b")), set()),
+    (re.compile(phrase(r"\band the Lean cites it\.")), set()),
 ]
 RETIRED_LEADS = re.compile(
-    r"^\*\*(?:What Lean made us say\.|What else Lean made us say\.|What it rests on\.|"
-    r"Where the parallels meet\.|Naming the pieces\.|Where [A-Z]+ falls\.)\*\*", re.M)
+    r"^\*\*" + phrase(r"What Lean made us say\.", r"What else Lean made us say\.",
+                      r"What it rests on\.", r"Where the parallels meet\.", r"Naming the pieces\.",
+                      r"Where [A-Z]+ falls\.") + r"\*\*", re.M)
 
 
-def find_all(rule: str, pattern: re.Pattern, path: Path, text: str, shown: str | None = None,
+def first_person(text: str):
+    """S3's matches in `text`, save an "I" that follows "Book" or "Books" (Book I)."""
+    for m in FIRST_PERSON.finditer(text):
+        if m.group(0)[0] == "I" and BOOK_BEFORE.search(text, max(0, m.start() - 40), m.start()):
+            continue
+        yield m
+
+
+def find_all(rule: str, pattern, path: Path, text: str, shown: str | None = None,
              *, failing: bool = True, what: str = "") -> None:
-    """Each match of `pattern` in `text` (already blanked as the rule asks) is a finding.
+    """Each match of `pattern` in `text` (already blanked as the rule asks) is a finding;
+    `pattern` is a compiled pattern, or a function giving the matches (`first_person`).
     `shown` is the text the excerpt is taken from, so the reader sees the words."""
     shown = text if shown is None else shown
-    for m in pattern.finditer(text):
+    for m in (pattern(text) if callable(pattern) else pattern.finditer(text)):
         a, b = (m.span(1) if m.groups() and m.group(1) else m.span())
-        found = " ".join((m.group(1) if m.groups() and m.group(1) else m.group(0)).split())
+        found = flat(m.group(1) if m.groups() and m.group(1) else m.group(0))
         msg = f'{what}"{found}": {excerpt(shown, a, b)}'
         (fail if failing else report)(rule, path, line_of(text, a), msg)
 
@@ -390,7 +437,7 @@ def check_text(path: Path, raw: str, scopes: set[str]) -> None:
     if prose or cat or readme or notes:
         find_all("S1", EM_DASH, path, blank_code(raw), raw)
         find_all("S2", CREW, path, outside, raw)
-        find_all("S3", FIRST_PERSON, path, outside, raw)
+        find_all("S3", first_person, path, outside, raw)
     if prose or cat or notes:
         find_all("S4", HEDGE, path, outside, raw)
     if prose or cat or readme or notes or gen:
@@ -450,14 +497,14 @@ def check_mishnah(path: Path, raw: str) -> None:
         for m in pattern.finditer(text):
             where = ("only " + ", ".join(sorted(allowed, key=heath.prop_key))) if allowed else "nowhere"
             fail("S11", path, line_of(text, m.start()),
-                 f'"{m.group(0)}" (allowed {where}): {excerpt(raw, m.start(), m.end())}')
+                 f'"{flat(m.group(0))}" (allowed {where}): {excerpt(raw, m.start(), m.end())}')
     for off, sent in sentences(text):
         m = re.search(r"\bunder I\.31\b", sent)
         if m and re.search(r"\bProclus\b", sent):
             fail("S11", path, line_of(text, off + m.start()),
                  f'"under I.31" beside Proclus (allowed nowhere): {excerpt(raw, off + m.start(), off + m.end())}')
     for m in RETIRED_LEADS.finditer(text):
-        fail("S11", path, line_of(text, m.start()), f"retired lead {m.group(0)}")
+        fail("S11", path, line_of(text, m.start()), f"retired lead {flat(m.group(0))}")
 
     # Its usual shape (reported).
     count = len(text.split())
@@ -779,6 +826,52 @@ def check_figures() -> None:
 
 
 # ---------------------------------------------------------------------------------------
+# The script's own check, run first on every run: each wording rule finds its phrase
+# however a line or a comment wraps it, and not across a blank line, inside a quotation
+# or in one of Heath's `--` lines. (D7 once let "Lean\ncannot" through, in a docstring.)
+
+WRAPPED = [   # (rule, pattern or matcher, the text as the rule reads it, a finding?)
+    ("D7", LEAN_CANNOT, "as if picking it up. Lean\ncannot move a figure", True),
+    ("D7", LEAN_CANNOT, "the note says Lean\n  -- cannot move it", True),
+    ("D7", LEAN_CANNOT, "> what Lean\n> can't do", True),
+    ("D7", LEAN_CANNOT, "Lean  can not", True),
+    ("D7", LEAN_CANNOT, "what Lean\n\ncannot", False),
+    ("D7", LEAN_CANNOT, "Leancannot", False),
+    ("S2", CREW, "the first\n  -- mate", True),
+    ("S3", first_person, "as I\nthink", True),
+    ("S3", first_person, "Book I\nwas proved", False),
+    ("S3", first_person, "in Book\nI was", False),
+    ("S4", HEDGE, "strictly\nspeaking", True),
+    ("S4", HEDGE, "it is worth\n   noting", True),
+    ("S5", EUCLID_CITES, "Euclid\ncites I.3", True),
+    ("S5", EUCLID_CITES, "I.1 to I.28 never\n  -- need it", True),
+    ("S6", TACIT, "a tacit\nassumption", True),
+    ("D8", NO_CITATION, "gives no\ncitation", True),
+    ("D9", POSTULATE_5, "the parallel\npostulate", True),
+    ("S11", REFRAINS[0][0], "the certificate\nrecords", True),
+    ("S11", RETIRED_LEADS, "**What it\nrests on.**", True),
+]
+
+
+def self_check() -> tuple[int, list[str]]:
+    """WRAPPED, and three cases read as the Lean notes and the prose are read; returns the
+    number of cases and the faults."""
+    cases = WRAPPED + [
+        ("D7", LEAN_CANNOT, notes_text("/-- We build it, for Lean\ncannot move a figure. -/\n"
+                                       "theorem T : True := trivial\n"), True),
+        ("D7", LEAN_CANNOT, notes_text("theorem T : True := by\n  -- Lean\n  -- cannot\n"
+                                       "  trivial\n"), False),
+        ("D7", LEAN_CANNOT, blank_quotes(blank_code('He wrote "what Lean\ncannot" once.')), False),
+    ]
+    faults = []
+    for rule, p, text, want in cases:
+        found = any(True for _ in (p(text) if callable(p) else p.finditer(text)))
+        if found != want:
+            faults.append(f"{rule} {'misses' if want else 'wrongly finds'} {text!r}")
+    return len(cases), faults
+
+
+# ---------------------------------------------------------------------------------------
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -787,6 +880,15 @@ def main() -> int:
     parser.add_argument("--quiet", action="store_true",
                         help="give the reports as counts, without each finding")
     args = parser.parse_args()
+
+    count, faults = self_check()
+    if faults:
+        print(f"{len(faults)} fault(s) in the script's own wording patterns; nothing else "
+              "was checked:")
+        for f in faults:
+            print("  ✗ " + f)
+        return 1
+    print(f"self-check: the wording rules read {count} wrapped and unwrapped phrases rightly")
 
     mishnah = mishnah_files()
     for path in mishnah:
