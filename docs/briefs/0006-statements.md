@@ -1763,11 +1763,13 @@ edited. The declarations stay as frozen, so each entry gives the discrepancy, wh
 does and why the statement stands; the consumers are the records listed at the end.*
 
 The proofs were written against the frozen statements on 18 October 2026, and each was read
-by a verifier who did not write it. Every staged statement of stages 2 and 3 is now proved,
-on the stage branches at `d895ca8` and `d465ced`, and of stage 4 every one but III.25's, at
-`5220bda`: `Foot.exists`, `Foot.unique`, `Prop14.general`, `Prop15.le_diameter` and
-`Prop15.nearer` are proved; III.25's core and `Prop25.complete` are not yet, nor
-`Prop25.of_circle`, which rests on them. Most items follow the routes and dependencies
+by a verifier who did not write it. Every staged statement of stages 2 and 3 is proved, on
+the stage branches at `d895ca8` and `d465ced` (landed in #88 and #89), and of stage 4 every
+one but III.25's at `5220bda`: `Foot.exists`, `Foot.unique`, `Prop14.general`,
+`Prop15.le_diameter` and `Prop15.nearer`. III.25's core, `Prop25.complete` and
+`Prop25.of_circle` were proved afterwards and landed with the rest of stage 4 in #90;
+`Prop25.complete` goes by III.9 where the brief planned III.10, which is one more departure
+of route, recorded here. Most items follow the routes and dependencies
 planned above. Most of the departures below were pointed out by the item's prover or its
 verifier, with thanks to both; the rest came to light in reading the Lean for this section,
 against which every entry was checked. Every departure is in a proof, and the verifiers
