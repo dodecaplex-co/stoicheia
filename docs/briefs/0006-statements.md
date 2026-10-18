@@ -1794,9 +1794,9 @@ certificates and the records' notes, and no statement.
   I.31, I.34; `Rectangle.contained`; the sums". *As proved:* today's construction for one
   point of section, which also cites I.2, to place A₁A₂ at B before I.3 cuts off BG, and
   I.30, to make DK parallel to CH; the rectangles are named by `Rectangle.of_right` and
-  `Rectangle.eq_rect` rather than `Rectangle.contained`. Today's II.1 cites the same
-  propositions. *The statement stands:* the list gave Heath's references, and the Lean cites
-  what today's proof cites.
+  `Rectangle.eq_rect`, which rests on `Rectangle.contained`, as in today's II.1. Today's
+  II.1 cites the same propositions. *The statement stands:* the list gave Heath's
+  references, and the Lean cites what today's proof cites.
 - **`Prop14.rectangle`** (II.14). *Planned:* the route names the bisection of BF and the
   semicircle BHF, and the Dependencies list "I.11, I.45 (`Prop45.sum`), II.5, I.47, I.46,
   `Rectangle.of_right`, `Square.described`". *As proved:* Euclid's second part, as planned,
