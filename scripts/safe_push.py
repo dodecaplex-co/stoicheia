@@ -12,25 +12,34 @@ fails stops the push with a message saying why:
    the commit, so the push is a fast-forward (it is never forced). No tag or release is
    made: those stay manual, with the owner's OK.
 2. A secret scan of every line the push adds (`git diff origin/main..<sha>`), of every
-   file it adds or changes, and of its commit messages: private keys, API-key-like
-   tokens, Authorization headers with values, `.env` and key files, and the owner's
-   private paths. A false positive goes in `scripts/safe_push_allow.toml`, with its
-   reason.
+   file it adds or changes, and of its commit messages, and then of each commit's own
+   change, since the push publishes the history: a secret added and taken out again, or
+   a key file added and then renamed, is found in the commit that brings it. It looks
+   for private keys, API-key-like tokens, Authorization headers with values, `.env` and
+   key files, and the owner's private paths: in each line, across consecutive lines (a
+   value split over two lines), inside base64 that decodes to text, and in symlinks,
+   which may not point out of the repository. A false positive goes in
+   `scripts/safe_push_allow.toml`, with its reason.
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit:
    - every statement (facts.json's `statement`, and the Lean source of `theorem PropN`,
-     its porism and its companions) is unchanged, unless the push adds a line to
-     `docs/briefs/` (a brief's revision, or an entry in 0002-decisions.md) naming it;
-   - `Certificate/axioms.lock` is unchanged, unless 0002-decisions.md gains a line
+     its porism and its companions, up to its own `:=`, whitespace aside) is unchanged,
+     unless the push adds a new line to `docs/briefs/` (a brief's revision, or an entry
+     in 0002-decisions.md) naming it; an old line edited in place does not count;
+   - `Certificate/axioms.lock` is unchanged, unless 0002-decisions.md gains a new line
      mentioning the lock;
    - every changed file under `heath/` carries, in the change, a comment naming a scan
      leaf of its own pages (docs/STYLE.md, section 5);
    - no review record is stale (`check_fidelity.py`, on the commit as committed);
+   - the generated pages are current (`render.py`, on the commit as committed, changes
+     nothing);
    - no whole directory under Elements/, heath/, review/, figures/ or mishnah/ is
-     deleted unless 0002-decisions.md gains a line naming it.
+     deleted unless 0002-decisions.md gains a new line naming it.
 4. The full local check sequence of docs/WORKFLOW.md, section 8, in that worktree, and
    `negative_tests.py` in a second one; each step's outcome and time is recorded.
-5. `git push origin <sha>:refs/heads/main`, never forced, then a wait for the GitHub
-   Actions run of that commit (`gh run list --commit`, `gh run watch --exit-status`).
+5. `git push origin <sha>:refs/heads/main`, never forced, once origin/main is seen to be
+   where the checks found it (and git's own push refuses it if main moves in the last
+   moment), then a wait for the GitHub Actions run of that commit (`gh run list
+   --commit`, `gh run watch --exit-status`).
    On a failure it prints the revert command, and reverts nothing itself.
 6. A summary, printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
    repository (`STOICHEIA_PUSH_LOG` names another file); each step's full output is
@@ -39,7 +48,9 @@ fails stops the push with a message saying why:
 `--dry-run` does everything but the push. The temporary worktrees are removed at the
 end, on a failure too. The pre-push hook, `scripts/hooks/pre-push` (installed by
 `scripts/install_hooks.sh`), refuses a push to main unless STOICHEIA_SAFE_PUSH names the
-commit pushed, which this script sets for its own push alone.
+commit pushed, which this script sets for its own push alone, and the push is a
+fast-forward; it refuses a tag unless STOICHEIA_TAG_PUSH names it, which the owner's OK
+alone sets.
 
 Exit status: 0 when pushed and CI passed, when a dry run passed, or when there is nothing
 to push; 1 when refused before the push; 2 for a usage error; 3 when pushed but CI failed
@@ -49,12 +60,15 @@ or could not be followed. Standard library, git and gh; Python 3.11 or later.
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 import contextlib
 import datetime
 import fnmatch
 import json
 import math
 import os
+import posixpath
 import re
 import shutil
 import signal
@@ -212,13 +226,21 @@ def _unquote(path: str) -> str:
 HUNK = re.compile(r"^@@ -\d+(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 
 
-def added_lines(repo, base: str, sha: str, *pathspec: str) -> list[Added]:
-    """Every line the diff base..sha adds, with its file and line number. Parsed by the
-    hunk counts, so an added line that itself begins "+++" is not taken for a header."""
+class Hunk(NamedTuple):
+    path: str | None        # the new file's path; None when the hunk deletes the file
+    removed: list[str]
+    added: list[Added]
+
+
+def diff_hunks(repo, old: str, new: str, *pathspec: str) -> list[Hunk]:
+    """Every hunk of the diff from `old` to `new` (commits or trees), with the lines it
+    removes and the lines it adds, each added line with its file and line number. Parsed
+    by the hunk counts, so an added line that itself begins "+++" is not taken for a
+    header."""
     out = git(repo, "diff", "--no-color", "--no-ext-diff", "--no-textconv", "--no-renames",
-              "--unified=0", "--src-prefix=a/", "--dst-prefix=b/", f"{base}..{sha}",
+              "--unified=0", "--src-prefix=a/", "--dst-prefix=b/", old, new,
               "--", *pathspec, binary=True).decode("utf-8", errors="replace")
-    found: list[Added] = []
+    hunks: list[Hunk] = []
     path = None
     old_left = new_left = 0
     line_no = 0
@@ -226,10 +248,11 @@ def added_lines(repo, base: str, sha: str, *pathspec: str) -> list[Added]:
         if old_left > 0 or new_left > 0:
             if line.startswith("+"):
                 if path is not None:
-                    found.append(Added(path, line_no, line[1:]))
+                    hunks[-1].added.append(Added(path, line_no, line[1:]))
                 line_no += 1
                 new_left -= 1
             elif line.startswith("-"):
+                hunks[-1].removed.append(line[1:])
                 old_left -= 1
             elif line.startswith("\\"):
                 pass        # "\ No newline at end of file"
@@ -247,27 +270,55 @@ def added_lines(repo, base: str, sha: str, *pathspec: str) -> list[Added]:
                 old_left = int(m.group(1)) if m.group(1) is not None else 1
                 line_no = int(m.group(2))
                 new_left = int(m.group(3)) if m.group(3) is not None else 1
-    return found
+                hunks.append(Hunk(path, [], []))
+    return hunks
 
 
-def changed_files(repo, base: str, sha: str, *pathspec: str) -> list[tuple[str, str]]:
+def added_lines(repo, old: str, new: str, *pathspec: str) -> list[Added]:
+    """Every line the diff from `old` to `new` adds, with its file and line number."""
+    return [a for h in diff_hunks(repo, old, new, *pathspec) for a in h.added]
+
+
+def changed_files(repo, old: str, new: str, *pathspec: str) -> list[tuple[str, str]]:
     """(status, path) for each file the diff changes, renames shown as delete and add."""
-    out = git(repo, "diff", "--name-status", "-z", "--no-renames", f"{base}..{sha}", "--",
-              *pathspec)
+    out = git(repo, "diff", "--name-status", "-z", "--no-renames", old, new, "--", *pathspec)
     parts = out.split("\0")
     return [(parts[i][0], parts[i + 1]) for i in range(0, len(parts) - 1, 2)]
 
 
-def binary_files(repo, base: str, sha: str) -> set[str]:
-    out = git(repo, "diff", "--numstat", "-z", "--no-renames", f"{base}..{sha}")
+def binary_files(repo, old: str, new: str) -> set[str]:
+    out = git(repo, "diff", "--numstat", "-z", "--no-renames", old, new)
     return {rec.split("\t", 2)[2] for rec in out.split("\0")
             if rec.startswith("-\t-\t")}
 
 
-def added_text(repo, base, sha, *pathspec) -> str:
-    """The lines the push adds under `pathspec`, joined, so that a name broken across
-    two lines of a wrapped paragraph is still found."""
-    return " ".join(a.text.strip() for a in added_lines(repo, base, sha, *pathspec))
+def symlinks(repo, old: str, new: str) -> dict[str, str]:
+    """{path: blob} for each symlink the diff adds, or changes, or makes of a file."""
+    out = git(repo, "diff", "--raw", "-z", "--no-renames", "--no-abbrev", old, new)
+    parts = out.split("\0")
+    links = {}
+    for meta, path in zip(parts[0::2], parts[1::2]):
+        fields = meta.lstrip(":").split()
+        if len(fields) >= 5 and fields[1] == "120000" and fields[4] != "D":
+            links[path] = fields[3]
+    return links
+
+
+def empty_tree(repo) -> str:
+    return git(repo, "hash-object", "-t", "tree", os.devnull).strip()
+
+
+def gains(hunks: list[Hunk], count) -> bool:
+    """Does the diff add a new mention? True when some hunk's added lines hold more
+    mentions (as `count` counts them in the lines joined, so that a name broken across a
+    wrapped line is still found) than its removed lines: a line edited in place that
+    still names the same thing adds none."""
+    for h in hunks:
+        added = " ".join(a.text.strip() for a in h.added)
+        removed = " ".join(line.strip() for line in h.removed)
+        if count(added) > count(removed):
+            return True
+    return False
 
 
 # --------------------------------------------------------------------------------------
@@ -288,12 +339,23 @@ TOKEN_RULES = [
         r"(?:(?:bearer|basic|token|digest)\s+)?[A-Za-z0-9+/=._~-]{8,}")),
     ("bearer token", re.compile(r"(?i)\bbearer\s+[A-Za-z0-9+/=._~-]{20,}")),
 ]
-# A long base64 or hex run after a word naming a key, token, secret or password.
-# The name is bounded, and must start a word, so a long run of letters (an image's
-# base64 in an SVG) costs linear time, not quadratic.
+WEAK_RULES = ("Authorization header", "bearer token")   # not looked for in binary files
+# A long base64 or hex run after a word naming a key, token, secret or password, perhaps
+# with an opening bracket between (a value continued in parentheses). The name is
+# bounded, and must start a word, so a long run of letters (an image's base64 in an SVG)
+# costs linear time, not quadratic.
 KEYWORD = re.compile(
     r"(?i)(?<![\w-])[\w-]{0,40}(?:key|token|secret|passw(?:or)?d|bearer)[\w-]{0,40}[\"']?"
-    r"\s*(?:=>|:=|[:=]|\s)\s*[\"'`]?([A-Za-z0-9+/_=.~-]{20,})")
+    r"\s*(?:=>|:=|[:=]|\s)\s*(?:[(\[{]\s*)?[\"'`]?([A-Za-z0-9+/_=.~-]{20,})")
+# A run that may be base64 (standard or URL-safe): decoded, and scanned again, when it
+# decodes to text.
+B64_RUN = re.compile(r"[A-Za-z0-9+/_-]{24,}={0,2}")
+B64_DEPTH = 2           # base64 within base64, and no deeper
+# Where two lines join: a string closed at the end of one and reopened at the start of
+# the next (with `+`, `.`, `&` or `||` between, or a backslash), so that "abc" "def"
+# reads as abcdef.
+QUOTE_END = re.compile(r"""(["'`])\s*(?:\+|\.|&|\|\|)?\s*\\?$""")
+QUOTE_START = re.compile(r"""^(?:\+|\.|&|\|\|)?\s*(["'`])""")
 # The owner's private paths, in pieces for the reason above.
 PRIVATE_PATHS = [
     re.compile("(?i)secret" + "s20"),
@@ -332,8 +394,10 @@ class Finding(NamedTuple):
     rule: str
     path: str
     line: int | None
-    text: str           # the whole line, for the allow-list to match
+    text: str           # the whole line (or lines), for the allow-list to match
     span: tuple[int, int]
+    end: int | None = None          # the last line, for a finding across lines
+    commit: str | None = None       # the commit that brings it, if the push takes it out
 
     def shown(self) -> str:
         """The line with the secret masked, so the report does not repeat it."""
@@ -344,30 +408,151 @@ class Finding(NamedTuple):
         if len(line) > 140:
             line = line[:140] + "…"
         where = f"{self.path}:{self.line}" if self.line else self.path
+        if self.end and self.end != self.line:
+            where += f"-{self.end}"
+        if self.commit:
+            where += f" (in commit {self.commit[:12]})"
         return f"{where}: {self.rule}: {line}"
 
 
-def scan_text(path: str, line_no: int | None, text: str, *, strong_only=False) -> list[Finding]:
+def readable(raw: bytes) -> bool:
+    """Bytes that read as text: printable ASCII and line breaks, nearly all of them."""
+    text = sum(32 <= b < 127 or b in (9, 10, 13) for b in raw)
+    return len(raw) >= 12 and text >= 0.9 * len(raw)
+
+
+def b64_text(run: str) -> str | None:
+    """A base64 run decoded, if it decodes to readable text; else None. The first 48
+    bytes are decoded first, so that an image's base64 costs little."""
+    body = run.rstrip("=")
+    if len(body) % 4 == 1:
+        return None
+    if "-" in body or "_" in body:
+        if "+" in body or "/" in body:
+            return None
+        body = body.replace("-", "+").replace("_", "/")
+    padded = body + "=" * (-len(body) % 4)
+    try:
+        if not readable(base64.b64decode(padded[:64], validate=True)):
+            return None
+        raw = base64.b64decode(padded, validate=True)
+    except (binascii.Error, ValueError):
+        return None
+    return raw.decode("utf-8", errors="replace") if readable(raw) else None
+
+
+def hits(text: str, *, strong_only=False, depth=0) -> list[tuple[str, tuple, tuple]]:
+    """(rule, the span of the match, the span to mask) for each possible secret in text,
+    base64 decoded and looked through too (not in binary files: `strong_only`)."""
     found = []
     for rule, pattern in TOKEN_RULES:
-        if strong_only and rule in ("Authorization header", "bearer token"):
+        if strong_only and rule in WEAK_RULES:
             continue
         for m in pattern.finditer(text):
-            found.append(Finding(rule, path, line_no, text, m.span()))
+            found.append((rule, m.span(), m.span()))
     if not strong_only:
         for m in KEYWORD.finditer(text):
             if looks_secret(m.group(1)):
-                found.append(Finding("key, token or secret", path, line_no, text, m.span(1)))
+                found.append(("key, token or secret", m.span(), m.span(1)))
     for pattern in PRIVATE_PATHS:
         for m in pattern.finditer(text):
-            found.append(Finding("private path", path, line_no, text, m.span()))
+            found.append(("private path", m.span(), m.span()))
+    if not strong_only and depth < B64_DEPTH:
+        for m in B64_RUN.finditer(text):
+            plain = b64_text(m.group(0))
+            if plain is None:
+                continue
+            for rule in dict.fromkeys(r for r, _, _ in hits(plain, depth=depth + 1)):
+                rule = rule.removeprefix("base64-encoded ")
+                found.append((f"base64-encoded {rule}", m.span(), m.span()))
+    return found
+
+
+def scan_text(path: str, line_no: int | None, text: str, *, strong_only=False) -> list[Finding]:
     # One finding per place: a token can match two rules.
-    seen, unique = set(), []
-    for f in found:
-        if f.span not in seen:
-            seen.add(f.span)
-            unique.append(f)
-    return unique
+    found, seen = [], set()
+    for rule, _, mask in hits(text, strong_only=strong_only):
+        if mask not in seen:
+            seen.add(mask)
+            found.append(Finding(rule, path, line_no, text, mask))
+    return found
+
+
+def joined_views(texts: list[str]) -> list[tuple[str, list[int], list[int]]]:
+    """A run of lines read as one, two ways: with a space between lines (a key word at the
+    end of one line, its value on the next), and closed up (a value broken across lines,
+    or a string continued with quotes, `+` or a backslash). Each view comes with the
+    offset and length of each line's piece of it."""
+    spaced = [t.strip() for t in texts]
+    tight = list(spaced)
+    for i in range(len(tight) - 1):
+        a, b = tight[i], tight[i + 1]
+        ma, mb = QUOTE_END.search(a), QUOTE_START.match(b)
+        if ma and mb and ma.group(1) == mb.group(1):
+            tight[i], tight[i + 1] = a[:ma.start()], b[mb.end():]
+        elif a.endswith("\\"):
+            tight[i] = a[:-1].rstrip()
+    views = []
+    for pieces, sep in ((spaced, " "), (tight, "")):
+        starts, pos = [], 0
+        for p in pieces:
+            starts.append(pos)
+            pos += len(p) + len(sep)
+        views.append((sep.join(pieces), starts, [len(p) for p in pieces]))
+    return views
+
+
+def runs(numbered: list[tuple[int, str]]) -> list[list[tuple[int, str]]]:
+    """Numbered lines cut into runs of consecutive line numbers."""
+    out: list[list[tuple[int, str]]] = []
+    for no, text in numbered:
+        if out and no == out[-1][-1][0] + 1:
+            out[-1].append((no, text))
+        else:
+            out.append([(no, text)])
+    return out
+
+
+def pieces_in(starts: list[int], lengths: list[int], a: int, b: int) -> list[int]:
+    """The pieces of a joined view (by index) that the span a..b touches."""
+    return [i for i, (s, n) in enumerate(zip(starts, lengths)) if s < b and s + n > a]
+
+
+def scan_block(path: str, numbered: list[tuple[int, str]]) -> list[Finding]:
+    """The lines a diff adds to one file (or a commit message's lines), each alone and
+    then each run of consecutive lines read as one, for a secret split across lines.
+    A finding across lines is kept unless what it masks lies in one line that is
+    already flagged alone for the same text; and once, in the widest run of lines it is
+    seen in."""
+    found = []
+    alone: set[tuple[int, str]] = set()
+    for no, text in numbered:
+        for f in scan_text(path, no, text):
+            found.append(f)
+            alone.add((no, text[f.span[0]:f.span[1]]))
+    for run in runs(numbered):
+        if len(run) < 2:
+            continue
+        across: dict[tuple, Finding] = {}
+        for joined, starts, lengths in joined_views([t for _, t in run]):
+            for rule, (a, b), (ma, mb) in hits(joined):
+                lines = pieces_in(starts, lengths, a, b)
+                if len(lines) < 2:
+                    continue
+                first, last = lines[0], lines[-1]
+                masked = pieces_in(starts, lengths, ma, mb)
+                if len(masked) == 1 and (run[masked[0]][0], joined[ma:mb]) in alone:
+                    continue
+                lo, hi = starts[first], starts[last] + lengths[last]
+                mask = (max(ma, lo) - lo, min(mb, hi) - lo)
+                key = (run[first][0], run[last][0], mask)
+                across.setdefault(key, Finding(rule, path, run[first][0], joined[lo:hi], mask,
+                                               end=run[last][0]))
+        wide = list(across.values())
+        found += [f for f in wide if not any((g.line, g.end) != (f.line, f.end)
+                                             and g.line <= f.line and g.end >= f.end
+                                             for g in wide)]
+    return found
 
 
 def scan_path(path: str) -> list[Finding]:
@@ -377,6 +562,19 @@ def scan_path(path: str) -> list[Finding]:
         for m in pattern.finditer(path):
             found.append(Finding("private path in a file name", path, None, path, m.span()))
     return found
+
+
+def scan_link(path: str, target: str) -> list[Finding]:
+    """A symlink that points out of the repository: to an absolute path, to a home
+    directory, or up past the top. (Its target is an added line too, so the text rules,
+    the private paths among them, see it as well.)"""
+    t = target.strip()
+    up = posixpath.normpath(posixpath.join(posixpath.dirname(path), t.replace("\\", "/")))
+    if t.startswith(("/", "\\", "~")) or re.match(r"^[A-Za-z]:", t) or up == ".." \
+            or up.startswith("../"):
+        text = f"{path} -> {t}"
+        return [Finding("symlink out of the repository", path, None, text, (0, 0))]
+    return []
 
 
 class Allow(NamedTuple):
@@ -425,33 +623,85 @@ def allowed(f: Finding, allow: list[Allow]) -> Allow | None:
     return None
 
 
+class Introduced(NamedTuple):
+    """What a diff brings in: the files it adds or changes, the lines it adds, which of
+    those files are binary, and the symlinks it adds or changes ({path: blob})."""
+    files: set[str]
+    lines: list[Added]
+    binaries: set[str]
+    links: dict[str, str]
+
+
+def introduced(repo, old: str, new: str) -> Introduced:
+    files = {p for s, p in changed_files(repo, old, new) if s != "D"}
+    return Introduced(files, added_lines(repo, old, new), binary_files(repo, old, new) & files,
+                      symlinks(repo, old, new))
+
+
+def commit_introduced(repo, commit: str, parents: list[str]) -> Introduced:
+    """What one commit brings in that none of its parents has. For a merge, that is what
+    it adds against every parent (its own resolution): each side's commits are scanned
+    on their own, or are on origin already."""
+    each = [introduced(repo, p, commit) for p in parents or [empty_tree(repo)]]
+    if len(each) == 1:
+        return each[0]
+    keys = set.intersection(*({(a.path, a.text) for a in e.lines} for e in each))
+    return Introduced(set.intersection(*(e.files for e in each)),
+                      [a for a in each[0].lines if (a.path, a.text) in keys],
+                      set.intersection(*(e.binaries for e in each)),
+                      {p: b for p, b in each[0].links.items()
+                       if all(e.links.get(p) == b for e in each)})
+
+
+def scan_introduced(repo, rev: str, d: Introduced) -> list[Finding]:
+    found = []
+    for path in sorted(d.files):
+        found += scan_path(path)
+    by_file: dict[str, list[tuple[int, str]]] = {}
+    for a in d.lines:
+        by_file.setdefault(a.path, []).append((a.line, a.text))
+    for path, numbered in by_file.items():
+        found += scan_block(path, numbered)
+    for path in sorted(d.binaries):
+        blob = git(repo, "cat-file", "blob", f"{rev}:{path}", binary=True)
+        found += scan_text(path, None, blob.decode("latin-1"), strong_only=True)
+    for path, blob in sorted(d.links.items()):
+        target = git(repo, "cat-file", "blob", blob, binary=True)
+        found += scan_link(path, target.decode("utf-8", errors="replace"))
+    return found
+
+
 def secret_scan(repo, base, sha, rep: Report):
+    """The net change of the push, then each commit's own change and its message: a
+    secret added and taken out again, or a key file added and then renamed, is still
+    in the history the push publishes."""
     rep.heading("2. Secret scan")
     t = time.time()
     allow = load_allowlist(repo, sha)
+    commits = [line.split() for line in
+               git(repo, "rev-list", "--reverse", "--parents", f"{base}..{sha}").splitlines()]
+    diffs = [(None, sha, introduced(repo, base, sha))]
+    if [c[1:] for c in commits] != [[base]]:    # one commit on origin/main: the same diff
+        diffs += [(c, c, commit_introduced(repo, c, parents)) for c, *parents in commits]
     findings: list[Finding] = []
-    files = changed_files(repo, base, sha)
-    for status, path in files:
-        if status != "D":
-            findings += scan_path(path)
-    lines = added_lines(repo, base, sha)
-    for a in lines:
-        findings += scan_text(a.path, a.line, a.text)
-    binaries = binary_files(repo, base, sha)
-    present = {p for s, p in files if s != "D"}
-    for path in sorted(binaries & present):
-        blob = git(repo, "cat-file", "blob", f"{sha}:{path}", binary=True)
-        findings += scan_text(path, None, blob.decode("latin-1"), strong_only=True)
-    commits = git(repo, "rev-list", f"{base}..{sha}").split()
-    for c in commits:
+    for commit, rev, d in diffs:
+        findings += [f._replace(commit=commit) for f in scan_introduced(repo, rev, d)]
+    for c, *_ in commits:
         message = git(repo, "log", "-1", "--format=%B", c)
-        for i, line in enumerate(message.splitlines(), 1):
-            findings += scan_text(f"commit {c[:12]} message", i, line)
+        findings += scan_block(f"commit {c[:12]} message",
+                               list(enumerate(message.splitlines(), 1)))
+    # Each finding once: where the push leaves it if it does, else in its commit.
+    unique: dict[tuple, Finding] = {}
+    for f in findings:
+        unique.setdefault((f.rule, f.path, f.text, f.span), f)
+    findings = list(unique.values())
     refused = [f for f in findings if not allowed(f, allow)]
     passed = [(f, allowed(f, allow)) for f in findings if allowed(f, allow)]
     seconds = time.time() - t
-    scanned = (f"{plural(len(lines), 'added line')} in {plural(len(present), 'file')} "
-               f"({len(binaries & present)} binary), {plural(len(commits), 'commit message')}")
+    net = diffs[0][2]
+    scanned = (f"{plural(len(net.lines), 'added line')} in {plural(len(net.files), 'file')} "
+               f"({len(net.binaries)} binary), and each of {plural(len(commits), 'commit')} "
+               "on its own, with its message")
     for f, a in passed:
         rep.add("2", "allow-listed", "note", f"{f.shown()}\nreason: {a.reason}")
     if refused:
@@ -467,10 +717,50 @@ def secret_scan(repo, base, sha, rep: Report):
 # Step 3: the invariant guards
 
 
+OPEN, CLOSE = "([{⟨⦃⦗", ")]}⟩⦄⦘"
+
+
+def statement_end(text: str) -> int:
+    """Where a declaration's statement ends: at its own `:=`, the first one outside
+    brackets, comments and strings, so that a binder's default value (`(h : p := by
+    simp)`) or a comment holding `:=` does not end it early. The end of `text` if none."""
+    depth, i, n = 0, 0, len(text)
+    while i < n:
+        if text.startswith("--", i):
+            nl = text.find("\n", i)
+            i = n if nl < 0 else nl
+            continue
+        if text.startswith("/-", i):
+            level, i = 1, i + 2
+            while i < n and level:
+                if text.startswith("/-", i):
+                    level, i = level + 1, i + 2
+                elif text.startswith("-/", i):
+                    level, i = level - 1, i + 2
+                else:
+                    i += 1
+            continue
+        c = text[i]
+        if c == '"':
+            i += 1
+            while i < n and text[i] != '"':
+                i += 2 if text[i] == "\\" else 1
+        elif c in OPEN:
+            depth += 1
+        elif c in CLOSE:
+            depth = max(0, depth - 1)
+        elif depth == 0 and text.startswith(":=", i):
+            return i
+        i += 1
+    return n
+
+
 def source_statement(src: str, n: int, name: str | None) -> str | None:
     """The statement of `theorem PropN` (or `PropN.<name>`) as written in the Lean: its
-    binders and type, up to `:=`, whitespace made single. The docstring is left out: it
-    is Heath's enunciation, which check_fidelity compares with heath/."""
+    binders and type, up to its own `:=`, whitespace made single (so a re-wrapped
+    statement is the same statement, and a changed binder on a re-wrapped line is not).
+    The docstring is left out: it is Heath's enunciation, which check_fidelity compares
+    with heath/."""
     if name is None:
         span = heath.theorem_span(src, n)
         if span is None:
@@ -481,8 +771,7 @@ def source_statement(src: str, n: int, name: str | None) -> str | None:
         if not m:
             return None
         text = src[m.end():]
-    cut = text.find(":=")
-    return " ".join((text[:cut] if cut >= 0 else text).split())
+    return " ".join(text[:statement_end(text)].split())
 
 
 def facts_statements(text: str | None) -> dict[str, str | None]:
@@ -508,14 +797,18 @@ def lean_files(repo, rev) -> dict[tuple[str, int], str]:
     return found
 
 
-def names_ref(text: str, ref: str) -> bool:
-    """Does `text` name the proposition of `ref`: "III.16", "III. 16" or
-    `BookIII.Prop16`? A porism or companion is named by its proposition. "III.1" is
-    not named by "III.16", nor "I.1" by "III.1"."""
+def ref_count(text: str, ref: str) -> int:
+    """How often `text` names the proposition of `ref`: "III.16", "III. 16" or
+    `BookIII.Prop16`. A porism or companion is named by its proposition. "III.1" is
+    not named by "III.16", nor "I.1" by "III.1" or "I.10"."""
     r = heath.parse_ref(ref)
     plain = r"(?<![\w.])%s\.\s?%d(?!\d)" % (r.book, r.n)
-    lean = r"Book%s\.Prop%d(?!\d)" % (r.book, r.n)
-    return re.search(plain, text) is not None or re.search(lean, text) is not None
+    lean = r"(?<!\w)Book%s\.Prop%d(?!\d)" % (r.book, r.n)
+    return len(re.findall(plain, text)) + len(re.findall(lean, text))
+
+
+def names_ref(text: str, ref: str) -> bool:
+    return ref_count(text, ref) > 0
 
 
 def guard_statements(repo, base, sha, wt: Path, rep: Report) -> None:
@@ -533,7 +826,7 @@ def guard_statements(repo, base, sha, wt: Path, rep: Report) -> None:
             refs.add(f"{book}.{n}")
             if re.search(r"(?m)^theorem Prop%d\.porism\s" % n, src):
                 refs.add(f"{book}.{n} Por.")
-    briefs = added_text(repo, base, sha, BRIEFS)
+    briefs = diff_hunks(repo, base, sha, BRIEFS)
     changed, approved, new = [], [], []
     for ref in sorted(refs, key=lambda r: (heath.prop_key(r), r)):
         r = heath.parse_ref(ref)
@@ -555,11 +848,12 @@ def guard_statements(repo, base, sha, wt: Path, rep: Report) -> None:
             if old_sig is None and ref not in old_facts:
                 new.append(ref)
             continue
-        if names_ref(briefs, ref):
+        if gains(briefs, lambda text: ref_count(text, ref)):
             approved.append(f"{ref} ({'; '.join(why)}), named in the docs/briefs/ lines added")
         else:
-            changed.append(f"{ref}: {'; '.join(why)}, and no line added to docs/briefs/ "
-                           f"(a brief's revision or a decisions entry) names {r.parent}")
+            changed.append(f"{ref}: {'; '.join(why)}, and no new line in docs/briefs/ "
+                           f"(a brief's revision or a decisions entry) names {r.parent}; "
+                           "an old line edited in place does not count")
     seconds = time.time() - t
     count = len(refs) - len(new)
     notes = []
@@ -575,19 +869,20 @@ def guard_statements(repo, base, sha, wt: Path, rep: Report) -> None:
                 seconds)
 
 
-LOCK_MENTION = re.compile(r"(?i)axioms\.lock|axiom lock")
+LOCK_MENTION = re.compile(r"(?i)\baxioms\.lock\b|\baxiom lock\b")
 
 
 def guard_lock(repo, base, sha, rep: Report) -> None:
     if git_ok(repo, "diff", "--quiet", f"{base}..{sha}", "--", LOCK):
         rep.add("3", "axiom lock", "ok", f"{LOCK} unchanged")
         return
-    if LOCK_MENTION.search(added_text(repo, base, sha, DECISIONS)):
+    if gains(diff_hunks(repo, base, sha, DECISIONS), lambda t: len(LOCK_MENTION.findall(t))):
         rep.add("3", "axiom lock", "ok", f"{LOCK} changed, and {DECISIONS} gains a line "
                 "mentioning the lock")
     else:
-        rep.add("3", "axiom lock", "FAIL", f"{LOCK} changed, and no line added to "
-                f"{DECISIONS} mentions the lock (\"axioms.lock\" or \"axiom lock\")")
+        rep.add("3", "axiom lock", "FAIL", f"{LOCK} changed, and no new line in {DECISIONS} "
+                "mentions the lock (\"axioms.lock\" or \"axiom lock\"; an old line edited in "
+                "place does not count)")
 
 
 COMMENT = re.compile(r"<!--.*?-->", re.S)
@@ -658,11 +953,15 @@ def guard_directories(repo, base, sha, rep: Report) -> None:
     if not top:
         rep.add("3", "directories", "ok", f"none deleted under {', '.join(GUARDED_DIRS)}")
         return
-    decisions = added_text(repo, base, sha, DECISIONS)
-    unnamed = [d for d in top
-               if not re.search(r"(?<![\w/.-])%s/?(?![\w./-])" % re.escape(d), decisions)]
+    decisions = diff_hunks(repo, base, sha, DECISIONS)
+
+    def named(d):
+        pattern = re.compile(r"(?<![\w/.-])%s/?(?![\w./-])" % re.escape(d))
+        return gains(decisions, lambda text: len(pattern.findall(text)))
+
+    unnamed = [d for d in top if not named(d)]
     if unnamed:
-        rep.add("3", "directories", "FAIL", f"deleted with no line added to {DECISIONS} "
+        rep.add("3", "directories", "FAIL", f"deleted with no new line in {DECISIONS} "
                 f"naming them: {', '.join(d + '/' for d in unnamed)}")
     else:
         rep.add("3", "directories", "ok", f"deleted, each named in {DECISIONS}: "
@@ -683,6 +982,29 @@ def guard_fidelity(wt: Path, rep: Report, logs: Path) -> None:
                 "check_fidelity.py fails on the commit as committed:\n" + tail(out, 25), seconds)
 
 
+def guard_generated(wt: Path, rep: Report, logs: Path) -> None:
+    """The generated pages are current: render.py, run on the commit as committed (its
+    facts.json as committed), changes nothing. It needs no Lean, so it runs here, before
+    the full checks, which run it again after the build."""
+    t = time.time()
+    r = run([PY, "scripts/render.py"], wt, env=tool_env())
+    out = (r.stdout or "") + (r.stderr or "")
+    status = run(["git", "status", "--porcelain"], wt)
+    (logs / "03-render.log").write_text(f"{out}\n$ git status --porcelain\n{status.stdout}")
+    seconds = time.time() - t
+    if r.returncode != 0:
+        rep.add("3", "generated pages", "FAIL",
+                "render.py fails on the commit as committed:\n" + tail(out, 25), seconds)
+    elif status.returncode != 0 or status.stdout.strip():
+        rep.add("3", "generated pages", "FAIL", "stale: render.py, on the commit as "
+                "committed, changes them; regenerate with python3 scripts/render.py and "
+                "commit the result with its sources (docs/WORKFLOW.md, section 8):\n"
+                + tail(status.stdout + status.stderr, 25), seconds)
+    else:
+        rep.add("3", "generated pages", "ok", "render.py changes nothing on the commit as "
+                "committed", seconds)
+
+
 def guard_foundations(repo, base, sha, rep: Report) -> None:
     """Not a guard: the foundations are the coordinator's, so their changes are listed."""
     files = changed_files(repo, base, sha, "Elements/Foundations")
@@ -698,6 +1020,7 @@ def guards(repo, base, sha, wt: Path, rep: Report, logs: Path) -> None:
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
     guard_fidelity(wt, rep, logs)
+    guard_generated(wt, rep, logs)
     guard_foundations(repo, base, sha, rep)
     failed = [s.name for s in rep.failed() if s.stage == "3"]
     if failed:

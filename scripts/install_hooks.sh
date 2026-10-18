@@ -5,7 +5,8 @@
 #     sh scripts/install_hooks.sh --force    # keeps yours as pre-push.local-backup
 #
 # For now there is one, scripts/hooks/pre-push, which refuses a push to main that does not
-# come from scripts/safe_push.py (docs/WORKFLOW.md, section 10). It goes where git looks
+# come from scripts/safe_push.py or is not a fast-forward, and a tag pushed or deleted
+# without the owner's OK (docs/WORKFLOW.md, section 10). It goes where git looks
 # for hooks (`git rev-parse --git-path hooks`), shared by every worktree of the clone. It
 # is copied, not linked, so it keeps working when the worktree it came from is removed;
 # run this again after the hook changes.

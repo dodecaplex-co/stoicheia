@@ -391,27 +391,39 @@ dirty working tree makes no difference. It stops, saying why, at the first step 
    release.
 2. **Secrets.** Every line, file and commit message the push adds is scanned for private
    keys, API-key-like tokens, Authorization headers with values, `.env` and key files,
-   and the owner's private paths. A false positive goes in `scripts/safe_push_allow.toml`,
-   with its reason.
+   and the owner's private paths, and so is each commit's own change, since the push
+   publishes the history (a secret taken out again by a later commit, or a key file
+   renamed, is still found). Lines are read alone and run together, so a value split
+   over two lines is found; base64 that decodes to text is read through; and a symlink
+   may not point out of the repository. A false positive goes in
+   `scripts/safe_push_allow.toml`, with its reason.
 3. **Invariant guards,** against origin/main, in the temporary worktree:
    - no statement changed (facts.json's `statement`, and the Lean source of the theorem,
-     its porism and its companions) unless the push adds a line to `docs/briefs/`, a
-     brief's revision or a decisions entry, that names the proposition (section 2);
+     its porism and its companions, to its own `:=`, whitespace aside) unless the push
+     adds a new line to `docs/briefs/`, a brief's revision or a decisions entry, that
+     names the proposition (section 2); an old line edited in place does not count;
    - `Certificate/axioms.lock` unchanged unless
-     [0002-decisions.md](briefs/0002-decisions.md) gains an entry mentioning the lock;
+     [0002-decisions.md](briefs/0002-decisions.md) gains a new entry mentioning the lock;
    - every change to `heath/` carries a comment naming a scan leaf of its own pages
      ([STYLE.md](STYLE.md), section 5);
    - no review record stale (`check_fidelity.py`, on the commit as committed);
+   - the generated pages current (`render.py`, on the commit as committed, changes
+     nothing);
    - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
-     deleted unless the decisions page gains an entry naming it.
+     deleted unless the decisions page gains a new entry naming it.
 4. **The full checks** of section 8 in that worktree, and `negative_tests.py` in a second,
    with each step's outcome and time recorded.
-5. **The push,** `git push origin <sha>:refs/heads/main`, then the GitHub Actions run for
-   that commit, followed to its conclusion. If CI fails, the script prints the revert
-   (`git revert --no-edit <sha>`, then `safe_push.py` again) and reverts nothing itself.
+5. **The push,** `git push origin <sha>:refs/heads/main`, if origin/main is still where
+   the checks found it (git refuses the push itself if main moves in the last moment),
+   then the GitHub Actions run for that commit, followed to its conclusion. If CI fails,
+   the script prints the revert (`git revert --no-edit <sha>`, then `safe_push.py` again)
+   and reverts nothing itself.
 
 The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
 repository, with each step's full output beside it in `logs/`. `sh scripts/install_hooks.sh`
-installs a pre-push hook that refuses any push to main that safe_push did not check.
-`python3 scripts/test_safe_push.py` plants a bad commit for each guard on a throwaway
-clone, and checks that each is refused and a good one pushed.
+installs a pre-push hook that refuses any push to main that safe_push did not check, and
+any that is not a fast-forward, and refuses to push or delete a tag. With the owner's OK
+for a tag, it is pushed by name: `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`.
+`python3 scripts/test_safe_push.py` plants a bad commit for each guard and each edge case
+on a throwaway clone, and checks that each is refused and a good one pushed;
+`STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all.
