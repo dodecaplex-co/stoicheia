@@ -606,7 +606,7 @@ The same table, with each done-criterion, goes into `docs/reports/outside-review
 
 **Stages 2–4**
 - Every companion is proved and certified. Old statements follow as `.special`.
-- Superposition is not among `placement`'s direct axioms. The 87 axioms in `Certificate/axioms.lock` are unchanged; its vocabulary gains the stage's new words (`Arc` and the rest) through `check_fidelity.py --write-lock` and a decisions entry, as [FORMALIZATION](../FORMALIZATION.md), section 7, and the lock's header require. (Revised 18 October: the first text asked `#print axioms` of `placement` to show no superposition, which can never pass, since every distance fact rests on I.4 and I.8; and a lock unchanged in every line could not pass either, since the new statements reach new words.)
+- Superposition is not among `placement`'s direct axioms. The 87 axioms in `Certificate/axioms.lock` are unchanged; its vocabulary gains the stage's new words (`Arc` and the rest) through `check_fidelity.py --write-lock` and a decisions entry, with `tests/model/lock.sha256` updated and [tests/model/MODEL.md](../../tests/model/MODEL.md) read again in the same change, as [FORMALIZATION](../FORMALIZATION.md), section 7, and the lock's header require. (Revised 18 October: the first text asked `#print axioms` of `placement` to show no superposition, which can never pass, since every distance fact rests on I.4 and I.8; and a lock unchanged in every line could not pass either, since the new statements reach new words.)
 - The `Audit/` file stops compiling where the old redundancy is gone (III.26 no longer provable without EqualCircles), which is the intended signal; update overlaps.md.
 - Statement fingerprints force a re-review of every touched record.
 
