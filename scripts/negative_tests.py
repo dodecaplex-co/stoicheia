@@ -192,7 +192,7 @@ def edited_note() -> None:
     after the records are migrated; then the first letter of its first note changes case,
     and the check must say the record changed. With a comment added and its stamp moved,
     and its words as they were, the check must say what it says of the record unchanged:
-    the same outcome, nothing of I.1 or its record, and no traceback."""
+    the same outcome, the same lines naming I.1 or its record, and no traceback."""
     path = heath.review_path("I", 1)
     saved = path.read_text()
     stamped = review_stamp.set_stamp(saved, "review", "text", heath.text_hash(saved))
@@ -215,6 +215,7 @@ def edited_note() -> None:
         # The words as they were, under a current `text` stamp: what the check says then.
         path.write_text(stamped)
         baseline = fidelity()
+        before = naming_i1(baseline.stdout + baseline.stderr)
         # The same words with a comment above them and the `text` stamp first in
         # [review]: comments and layout are not the record's text.
         moved = [line for line in lines if not line.startswith("text = ")]
@@ -224,15 +225,21 @@ def edited_note() -> None:
         path.write_text("\n".join(moved))
         result = fidelity()
         out = result.stdout + result.stderr
-        named = [line for line in out.splitlines()
-                 if re.search(r"\bI\.1\b|review/I/01\.toml", line)]
-        if result.returncode != baseline.returncode or named or "Traceback" in out:
+        # On a contributor's branch the baseline may name I.1 too, say for a changed
+        # Prop01.lean: only a line it does not print, or one it prints that is now
+        # missing, is the doing of the comment or the moved stamp.
+        after = naming_i1(out)
+        new_lines = [line for line in after if line not in before]
+        gone = [line for line in before if line not in after]
+        if result.returncode != baseline.returncode or new_lines or gone or "Traceback" in out:
             detail = []
             if result.returncode != baseline.returncode:
                 detail.append(f"exit {result.returncode}, not {baseline.returncode} as with "
                               "the record unchanged")
-            if named:
-                detail.append(f"says {named[0]!r}")
+            if new_lines:
+                detail.append(f"says {new_lines[0]!r}")
+            if gone:
+                detail.append(f"no longer says {gone[0]!r}")
             if "Traceback" in out:
                 detail.append("a traceback")
             failures.append("a comment and a moved stamp in I.1's record: not as the record "
@@ -242,6 +249,12 @@ def edited_note() -> None:
             print("✓ a comment and a moved stamp in I.1's record: not called a change")
     finally:
         path.write_text(saved)
+
+
+def naming_i1(out: str) -> list[str]:
+    """The lines of a check's output that name I.1 or its review record."""
+    return [line for line in out.splitlines()
+            if re.search(r"\bI\.1\b|review/I/01\.toml", line)]
 
 
 def toml_blocks(text: str) -> list[str]:
