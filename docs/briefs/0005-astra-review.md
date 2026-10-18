@@ -354,7 +354,7 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 - A rectilineal figure is given by its corners A₀, A₁, …, Aₙ, in order round it, and taken as one that the straight lines from A₀ divide into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, as Euclid and Byrne divide it: Euclid's DB divides his ABCD into ABD and DBC. Every convex figure is so divided from any corner, Euclid's ABCD among them. Byrne's I.45 figure is not convex, and both his lines start from its re-entrant corner. A figure that is not convex may need its first corner chosen, and some figures have no such corner.
 - `Prop45.append`: the parallelogram so far plus one triangle, preserving the angle (the second half of I.45's proof).
 - `Prop45.figure`: a parallelogram in the given angle equal to those triangles taken together, built one triangle at a time, I.42 for the first and `Prop45.append` for each of the rest. Euclid's ABCD with DB joined is the case of four corners, D, A, B and C.
-- Nothing is claimed of another division of the figure. That every division gives the same sum is a step Euclid takes for granted; it goes in the gap catalogues of Books I and II, with thanks to David Hilbert, whose [treatment of area](../reading.md#hilbert1902foundations) proves it.
+- Nothing is claimed of another division of the figure. That every division gives the same sum is a step Euclid takes for granted; it goes in the gap catalogues of Books I and II, with thanks to David Hilbert, who proved it for the measure of area he builds from his own axioms ([*The Foundations of Geometry*](../reading.md#hilbert1902foundations), chapter IV), not for this edition's area.
 - A pentagon needs no change of statement. The iteration is a departure to note.
 - This replaces the design first written here, which the owner had chosen earlier on 17 October: a `Rectilineal` figure of pieces glued edge to edge in any dissection (`Fitted`), with `Prop45.sum` and `Prop45.figure (R : Rectilineal)`. `Rectilineal` and `Fitted` are withdrawn, and brief 0006 will give the statements in full.
 
@@ -555,7 +555,7 @@ Jev must meet a stated accuracy bar on it. Below the bar, Jev's answers become a
 
 ## Landing work: pull requests
 
-*Added 18 October 2026, to the owner's decision of 17 October.* The rules live in the pull-request discipline of [docs/WORKFLOW.md, section 10](../WORKFLOW.md#10-how-a-book-is-made-and-released), their one home. The discipline lands with pull request #1, which writes it there in place of direct pushes to main; from then on, every change reaches main as a pull request. Stages 2, 3 and 4 each work on a branch of their own, with a draft pull request onto main.
+*Added 18 October 2026, to the owner's decision of 17 October.* The rules live in the pull-request discipline of [docs/WORKFLOW.md, section 10](../WORKFLOW.md#10-how-a-book-is-made-and-released), their one home. The ruleset on main already requires a pull request; pull request #1 writes the discipline there, in place of direct pushes to main. Stages 2, 3 and 4 each work on a branch of their own, and each piece of a stage lands as its own reviewed pull request; a change to a check lands first, on its own, before the code it checks.
 
 ## Astra's recommendations, traced
 

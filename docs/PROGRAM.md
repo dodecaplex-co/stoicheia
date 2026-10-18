@@ -91,17 +91,18 @@ figures at a glance carry Heath's letters came after them. On main, a GitHub rul
 requires a pull request and the checks `check`, `model` and `negative`, allows merge
 commits only, and blocks force pushes and deletion; secret scanning with push protection
 is on. On 18 October these items were open, each landing on main as a pull request of its
-own, the figure letters as three:
+own, the figure letters as three, in this order:
 
 - **The pull-request discipline, PR #1:** the safe-push hardening, with the reviewers'
   fixes, under `/security-review`. Once it is on main, the pre-push hook is reinstalled.
-- **Wording:** the last old phrases. "Lean cannot …" in the mishnah of I.2; "I.17 needs no
-  Postulate 5" in the mishnah of I.17, and "needs Postulate 5" in the further reading of
-  I.26; "Lean never needs …" in the mishnah of I.43 and the Book I gap catalogue; and the
-  docstrings of the helpers `Prop44.place`, `Prop22.room` and `Prop22.ne_zero`.
-- **check_style's D7 pattern,** so that it also catches a phrase broken across a line. It
-  changes a check, so it travels alone.
-- **A scrub** of two private paths already on main, in old orders.
+- **The sweep,** one pull request: the last old phrases, and a scrub of two private paths
+  already on main, in old orders. The phrases are "Lean cannot …" in the mishnah of I.2;
+  "I.17 needs no Postulate 5" in the mishnah of I.17, and "needs Postulate 5" in the
+  further reading of I.26; "Lean never needs …" in the mishnah of I.43 and the Book I gap
+  catalogue; and the docstrings of the helpers `Prop44.place`, `Prop22.room` and
+  `Prop22.ne_zero`.
+- **check_style's D7 pattern,** after the sweep, so that it also catches a phrase broken
+  across a line; it also tightens S3 and S9. It changes a check, so it travels alone.
 - **The orders template:** `docs/templates/orders.md` gains a statements-only wave and
   companion proofs.
 - **The figure letters,** to the owner's decision, as three pull requests in order: first
