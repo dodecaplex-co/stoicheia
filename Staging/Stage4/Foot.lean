@@ -33,13 +33,35 @@ def Foot (E A B F : Point) : Prop :=
 drawn to it [I. 12], or the point itself when it is on the straight line (and when `A` and
 `B` are one point). -/
 theorem Foot.exists (E A B : Point) : ∃ F : Point, Foot E A B F := by
-  sorry
+  by_cases hE_AB : Collinear A B E
+  · /- E is on AB, including when A and B coincide: E itself is the foot. -/
+    exact ⟨E, hE_AB, fun _ => rfl, fun h => False.elim (h hE_AB)⟩
+  · /- E is off AB: I.12 draws the perpendicular to the whole straight line. -/
+    obtain ⟨F, hF, hEF⟩ := BookI.Prop12 (Triangle.ne₁₂ hE_AB) hE_AB
+    exact ⟨F, hF, fun h => False.elim (hE_AB h), fun _ => hEF⟩
 
 /-- The foot of the perpendicular is one point: two perpendiculars from `E` to one straight
 line would make a triangle with two right angles, and two angles of a triangle are less
 than two right angles [I. 17]. -/
 theorem Foot.unique {E A B F F' : Point} (hF : Foot E A B F) (hF' : Foot E A B F') :
     F = F' := by
-  sorry
+  by_cases hE_AB : Collinear A B E
+  · /- E is on AB, so both feet are E. -/
+    exact (hF.2.1 hE_AB).trans (hF'.2.1 hE_AB).symm
+  · /- E is off AB. Two different feet would make two right angles in EFF'. -/
+    apply Classical.byContradiction
+    intro (hFF' : F ≠ F')
+    obtain ⟨L, hA_L, hB_L, hF_L⟩ := hF.1
+    obtain ⟨M, hA_M, hB_M, hF'_M⟩ := hF'.1
+    have hF'_L : OnLine F' L :=
+      Tacit.line_unique (Triangle.ne₁₂ hE_AB) hA_M hB_M hA_L hB_L ▸ hF'_M
+    have hE_L : ¬ OnLine E L := Triangle.off_line hE_AB hA_L hB_L
+    have hEFF' : Triangle E F F' := (Triangle.of_line hF_L hF'_L hFF' hE_L).cab
+    have hrightF : ∠ E F F' = ∟ := hF.2.2 hE_AB F' hF'.1 hFF'.symm
+    have hrightF' : ∠ F F' E = ∟ :=
+      (Tacit.angle_symm hFF' hEFF'.ne₁₃).trans (hF'.2.2 hE_AB F hF.1 hFF')
+    have htwo := (BookI.Prop17 hEFF').1
+    rw [hrightF, hrightF'] at htwo
+    exact Tacit.lt_irrefl _ htwo
 
 end Elements
