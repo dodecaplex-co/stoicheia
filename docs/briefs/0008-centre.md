@@ -18,11 +18,17 @@ model; and a Claude challenger (Claude Opus 5.5), whose one blocking finding was
 tag could not leave the records as planned. This revision answers every finding of both,
 and Appendix B gives each, with its source and what was done. Warm thanks to both.*
 
-Base: main at `f17b427`. `lake build Staging` passes with the files in `Staging/Centre/`:
-30 statements with `sorry`, one definition, five proved declarations (the construction of
-III.1; its circle-only entry point, from the staged III.1; III.13's two clauses as lemmas,
-from the staged III.13; and `Centre.every`), and 65 checks. Nothing in `Elements/` changes,
-so main's records, lock and CI are untouched.
+*Brought up to main at `e04f318` (#79 to #86) on 18 October, for the freeze: brief 0007's
+companions, now on main, are staged without their centre; the mixed-angle prototype's
+theorem `exists_centre` is listed, with the pull request that renames it; the line
+references are renewed and the prose list completed. Each open question of section 7 is
+marked for the coordinator, who decides it at the freeze.*
+
+Base: main at `f17b427`, merged with main at `e04f318`. `lake build Staging` passes there
+with the files in `Staging/Centre/`: 33 statements with `sorry`, one definition, five proved
+declarations (the construction of III.1; its circle-only entry point, from the staged III.1;
+III.13's two clauses as lemmas, from the staged III.13; and `Centre.every`), and 73 checks.
+Nothing in `Elements/` changes, so main's records, lock and CI are untouched.
 
 The reading is Astra's. Asked by the owner, Astra answered three foundation questions at
 `f17b427`, the first of them this one, with a precise account of what the rule adds, which
@@ -92,8 +98,11 @@ axiom exists_centre (α : Circle) : ∃ O : Point, Centre O α
   outside a circle; `centre_unique` and `centre_inside` (Generalities 2 and 3) are next door,
   in `Diagram.lean`. Its full name is `Elements.Tacit.exists_centre`, `Tacit.exists_centre`
   in the lock and the certificate, and every proposition file reaches it as `exists_centre`
-  through its `open Tacit`. Question 1 weighs a home beside Definition 15, as the challenge
-  asked, and keeps this one.
+  through its `open Tacit`, provided no declaration of `Elements` or of its proposition
+  namespaces takes the same name (question 12). Question 1 weighs a home beside Definition
+  15, as the challenge asked, and keeps this one; the opening note of `Definitions.lean`,
+  which says that Definition 15 carries content, gains a sentence pointing to the rule, so
+  that a reader who looks for it among the definitions finds it.
 - **Its family.** The first tacit rule that is neither a rule of System E nor LeanEuclid's
   correction of one. The docstring says so without brackets, since the page's key to the
   list of tacit rules says that "the names in brackets are System E's"; the file's opening
@@ -165,12 +174,13 @@ theorem Prop1.of_circle (ABC : Circle) :
   carries three sentences he writes; and it hides no conclusion, since that F is the centre
   is argued in `Prop1`, under his sentences. So the record shows it as a `grouped` passage
   that names it, which the schema allows today (the page reads "Carried together, by
-  `Prop1.construction`"). For the coordinator's approval, FORMALIZATION section 5, "Helpers",
-  gains one sentence: "A construction core kept apart under section 4, as III.1's
-  `Prop1.construction`, carries Euclid's sentences of construction, not a step he takes for
-  granted; the record shows it as a `grouped` passage naming it, and the proposition keeps
-  the correctness argument under his sentences." It is proved in the staged file by today's
-  construction steps, unchanged.
+  `Prop1.construction`"). For the coordinator's approval (question 14), FORMALIZATION section
+  5, "Helpers", gains one sentence, with step 3 of section 6, where the construction first
+  lands: "A construction core kept apart under section 4, as III.1's `Prop1.construction`,
+  carries Euclid's sentences of construction, not a step he takes for granted; the record
+  shows it as a `grouped` passage naming it, and the proposition keeps the correctness
+  argument under his sentences." It is proved in the staged file by today's construction
+  steps, unchanged (question 13).
 - **The correctness, with the rule.** In `Prop1`, the three sentences of the construction
   are carried by one call of `Prop1.construction`; "let G be the centre" takes
   `obtain ⟨G, hG⟩ := exists_centre ABC`; and Euclid's reductio follows under his sentences,
@@ -283,7 +293,13 @@ variable, with whether E occurs anywhere else in the statement, every conclusion
 definition with such an existential inside, and every declaration that cites one of the
 statements changed. The branches `docs/brief-0007` and `lean/i45-ii14-full` were read
 against main. Astra's count holds: of the 31 records tagged `centre-given`, 19 main
-statements have an existence hypothesis and 12 name their centre and use it.
+statements have an existence hypothesis and 12 name their centre and use it. Main has since
+gained #79 to #86, read against this list at `e04f318`. Two of them bring consumers, and
+the count of records stands: brief 0007's staged companions (#85), three of whose
+statements take an existence hypothesis (below); and the mixed-angle prototype (#86), whose
+theorem named `exists_centre` must be renamed before the rule lands (question 12), and six
+of whose facts take a centre that nothing else in their statements mentions (section 6,
+"Other branches"). The rest add no centre clause.
 
 **The rule for each.** An existence hypothesis is dropped. A named centre that appears
 elsewhere in the statement is kept: existence of some centre does not identify it. A named
@@ -369,18 +385,20 @@ would still be left for a citer of the first. `Centre.every`, in Book Zero besid
 | `Arc.Drawn` | brief 0006, `Staging/Stage3/Definitions.lean` | the clause "its circle has a centre" goes; it was there because `Prop23.point` needed one (question 5) |
 | `Arc.eq_of_aligned`, `Arc.meets`, `Arc.measure_eq_iff`, `Arc.congruent_iff`, `Prop24.equalMeasure` | brief 0006, `Staging/Stage3/Aligned.lean`, `Chord.lean`, `Arcs.lean`, `Prop24.lean` | their text does not change, but their `Drawn` hypotheses ask less, so each statement says more; all are `sorry` today, and their proofs must not use the clause that goes |
 | `Prop25.of_circle`'s proof | brief 0006, `Staging/Stage4/Prop25.lean:92` | `⟨hABC, hA, hC, hP⟩ : Arc.Drawn …` becomes `⟨hA, hC, hP⟩` |
-| `Prop8.partner`, `Prop8.general` | brief 0007, branch `docs/brief-0007` | drop `hABC : ∃ M, Centre M ABC`; `hGA` stays |
-| `Prop17.general` | brief 0007, branch `docs/brief-0007` | drops `hBCD : ∃ E, Centre E BCD`; its condition "not within" stays |
+| `Prop8.partner`, `Prop8.general` | brief 0007, `Staging/Stage4b/Prop08.lean` (#85) | drop `hABC : ∃ M, Centre M ABC`; `hGA` stays |
+| `Prop17.general` | brief 0007, `Staging/Stage4b/Prop17.lean` (#85) | drops `hBCD : ∃ E, Centre E BCD`; its condition "not within" stays |
+| the prototype's `exists_centre` | `Staging/Stage4b/MixedAngles.lean` (#86) | renamed, for instance `exists_circle_about`, with its fifteen uses; its statement, `∃ γ, Centre A γ`, does not change (question 12) |
 | `Audit.III_2`, `Audit.III_24_measure` | `Audit/Overlaps.lean` | `III_2`'s type is III.2's, and its proof loses one argument; `III_24_measure` drops `hAEB`, `hCFD`, as III.24 does |
 
-`lean/i45-ii14-full` adds no centre clause. Brief 0006's and brief 0007's statements are
-frozen, so this is a revision of each, for the coordinator to approve with this brief, made
-in their files by their owners, after the rule lands. Two of brief 0006's changes are forced,
-not chosen: its staged checks show that `Prop24.equalCircles` and `Prop25.of_circle` have
-today's III.24 and III.25, and they break the moment those lose their hypotheses, so the
-four move together. `Staging/Centre/Brief0006.lean` stages brief 0006's new statements, and
-checks that the pattern survives. Brief 0007's companions are not staged here, since they
-are not on main; if they land first, their checks of today's III.8 and III.17 force the same.
+`lean/i45-ii14-full` (#80) adds no centre clause. Brief 0006's and brief 0007's statements
+are frozen, so this is a revision of each, for the coordinator to approve with this brief,
+made in their files by their owners, after the rule lands. Some of the changes are forced,
+not chosen: brief 0006's staged checks show that `Prop24.equalCircles` and
+`Prop25.of_circle` have today's III.24 and III.25, and brief 0007's that `Prop8.general`
+and `Prop17.general` have today's III.8 and III.17; each check breaks the moment its
+proposition loses its hypotheses, so each companion moves with its proposition.
+`Staging/Centre/Brief0006.lean` and `Staging/Centre/Brief0007.lean` stage the two briefs'
+new statements, and check that each pattern survives.
 
 ### The twelve that name their centre, and stay
 
@@ -460,34 +478,44 @@ the rule, nor do III.5, III.6 and III.19.
     System E, or LeanEuclid's corrections of it", a policy that gains "or, by the owner's
     decision, a rule of our own, as `exists_centre`"); `README.md`, line 148 ("whose System E
     is the source of our tacit rules", of all but one) and `NOTICE`, line 11 (our tacit rules
-    follow System E, save `exists_centre`, which is ours); MODEL.md and the harness (section
-    2).
+    follow System E, save `exists_centre`, which is ours); the opening note of
+    `Elements/Foundations/Definitions.lean` (section 2); MODEL.md and the harness (section
+    2). `scripts/check_kernel.py` (#79) reads the lock, so nanoda admits the rule by its
+    name with no change.
   - *With the restatements:* FORMALIZATION section 3 (the rows for a circle's centre, now
     "every circle has one, by our rule `exists_centre`; III.1 finds it", and for circles
-    touching, now tagged), section 4 ("a circle known to have one") and section 5 (the
-    sentence of section 3 above, if approved); [STYLE.md](../STYLE.md), line 232 (Book III's
+    touching, now tagged) and section 4 ("a circle known to have one"); section 5's
+    sentence of section 3 above, if approved, goes earlier, with step 3;
+    [STYLE.md](../STYLE.md), line 232 (Book III's
     introduction "tells a circle's centre by hypothesis and III.1"); a dated note in
     [brief 0004](0004-book-III.md) on "Circles and their centres" (line 134) and its other
-    mentions of a centre by hypothesis (lines 22, 152, 241, 265, 301 and 352), pointing here;
+    mentions of a centre by hypothesis (lines 22, 152, 241, 265, 301, 327, 352 and the
+    III.25 row at 371), pointing here;
     the mishnah of III.1 (section 3), of III.17 (line 5: "our statement names none. So we
     first find two", false once question 8 is adopted) and of III.34 (line 5: "our statement
     gives the circle its centre"); Book III's introduction, whose paragraph on "Let the
     centre of the circle ABC be taken" becomes one rule, Heath's bracket for III.1 and the
     rule otherwise, and whose count of statements "worded for our foundations" changes;
     [gaps-book-III.md](../reports/gaps-book-III.md), line 47 ("Our circles have a centre only
-    when a hypothesis gives one"); [overlaps.md](../reports/overlaps.md), its new row and
+    when a hypothesis gives one"), line 149 (III.17's search for two points through the given
+    centre, which question 8 removes) and line 243 (III.34's "our statement gives the circle
+    its centre"); [overlaps.md](../reports/overlaps.md), its new row and
     opening, its sentence that "III.1 and III.25 take a centre from a hypothesis" (lines
-    191–192), and its sweep of every rule (line 135, "We read each of the 81 tacit rules"),
+    255–256), and its sweep of every rule (line 184, "We read each of the 81 tacit rules"),
     for which `Audit/screen.py` runs again, about ten minutes, with `Tacit.exists_centre`
     added to its list of rules about circles and the counts in its docstring and the
     report renewed; `Certificate/FIELDS.md`, the `axioms` row ("III.1's still has 56 tacit
     rules, and III.1 Por.'s has 57"); `tests/certificate_expectations.json`, values and `why`
     strings (section 3); and `scripts/scaffold_book.py`, lines 188–197 and its Book III
     signatures, which would scaffold the old interface. Brief 0006's "[axioms] stays at 87"
-    (`docs/briefs/0006-statements.md`, lines 104 and 1242) and brief 0007's commentary on
-    `Prop17.inside` ("for a circle with a centre", lines 291, 297, 326 and 353 of
-    `docs/briefs/0007-stage-4b.md` on its branch, though the lemma's statement needs no
-    change) change with those briefs' revisions, by their owners.
+    (`docs/briefs/0006-statements.md`, lines 228 and 1674) and its tags for III.24 (line
+    1279, `centre-given` among them); brief 0007's commentary on `Prop17.inside` ("for a
+    circle with a centre", lines 291, 297, 326, 354 and 430 of
+    `docs/briefs/0007-stage-4b.md`, and the module note and docstrings of
+    `Staging/Stage4b/Prop17.lean`, lines 20, 32 and 48, though the lemma's statement needs no
+    change) and its representation notes, which keep `centre-given` "as today" for III.7,
+    III.8 and III.17 (lines 186, 275 and 354, against question 9): these change with those
+    briefs' revisions, by their owners.
 - **Generated pages,** regenerated by the integrator: 34 of Book III's pages, its
   introduction and scope row, CERTIFICATE.md and GRAPH.md.
 
@@ -524,15 +552,24 @@ between the construction it names and the restatement it guards. The order:
    - `[overlap]`'s `kind = "step"`: `review/SCHEMA.md`, `heath.py` and both of `render.py`'s
      displays (question 3).
    - `review/terms.toml` gains `touching-whole-circles` (question 9).
-   - `lean/mixed-angle-prototype` renames its theorem `exists_centre (A : Point) : ∃ γ,
-     Centre A γ`, in `Elements.MixedAngles`, which opens `Tacit`, for instance to
-     `exists_circle_about`, so that the two never meet.
+   - **The prototype's rename,** before step 5 (question 12): a `lean` pull request of its
+     own, from the owner of `Staging/Stage4b/MixedAngles.lean` (#86), renames its theorem
+     `exists_centre (A : Point) : ∃ γ, Centre A γ`, in `Elements.MixedAngles`, for instance
+     to `exists_circle_about`, with its fifteen uses in that file and the row of
+     `docs/reports/mixed-angles-prototype.md` (line 231) that names it; nothing else
+     changes. Within `Elements.MixedAngles`, which opens `Tacit`, the bare name means the
+     prototype's theorem, so the rule could not be cited there as `exists_centre`; and were
+     the theorem to reach `Elements/` under its name (#57 would move it to Book Zero), every
+     proposition file's `exists_centre α` would resolve to it and fail. Both were tried in
+     Lean on a small model of the two names.
 2. **This brief,** challenged (Appendix B) and frozen by the coordinator, with brief 0006's
    and brief 0007's revisions and the three lemmas of section 4 if approved.
 3. **III.1's construction, apart, under today's statement.** `Prop1.construction` goes before
    `Prop1` in `Elements/BookIII/Prop01.lean`, and today's `Prop1`, its hypothesis kept, calls
    it under Euclid's three sentences. No statement changes; III.1's record gains its
-   `grouped` passage, and is read again and stamped.
+   `grouped` passage, and is read again and stamped; FORMALIZATION section 5 gains the
+   sentence of section 3, if approved (question 14), so that the passage's warrant lands
+   with it.
 4. **The guard,** on its own: `Audit/Centre.lean`, imported by `Audit.lean`.
 5. **The rule,** in one pull request, the coordinator's own: the axiom with its docstring;
    the lock (`--write-lock`); `tests/model/lock.sha256`; the law's line in `laws.toml` and the
@@ -552,7 +589,9 @@ between the construction it names and the restatement it guards. The order:
      from the start. Its owner is told when the rule lands.
 6. **The restatements,** in one pull request, so that each record is read once: every
    statement of section 4, and III.1 of section 3, each moved from `Staging/Centre/` into its
-   home; every citer's call; brief 0006's staged files (and brief 0007's, if landed);
+   home; every citer's call; brief 0006's staged files and brief 0007's
+   (`Staging/Stage4b/Prop08.lean` and `Prop17.lean`), or their homes in `Elements/` if they
+   have moved by then;
    `Audit/Overlaps.lean` and its pins; the screen run again; the records, read again and
    stamped by their reviewers; the prose of section 4 that goes with the restatements;
    `tests/certificate_expectations.json`'s III.1 values, which move with the content;
@@ -570,19 +609,28 @@ Steps 3 and 4 may come before or after step 5; steps 1, 3, 4 and 5 all come befo
 If a step needs a fact the axioms lack, work on it stops and the case goes to Jack, as for
 every stage.
 
-**Other branches.** `lean/iii5-iii6-ending`, `lean/iii5-iii6-euclid` and
-`text/overlaps-i2-i3` rewrite `Audit/Overlaps.lean` and `docs/reports/overlaps.md`, and the
-first two `review/III/02.toml` and `12.toml`, all of which step 6 edits: step 6 starts from
-main after them, or merges them in, and the guard has a file of its own so as not to meet
-them. `lean/model-skeleton` is #73 (step 5) and `tooling/model-law-names` is #40 (step 1).
-On `lean/mixed-angle-prototype`, besides the rename, `surrounds_inside` and
-`surrounds_outside` take a centre O that nothing else in their statements mentions, which
-the rule lets go by question 2's reading: a note for its owner. `lean/i45-ii14-full` edits
-FORMALIZATION.md, which steps 5 and 6 edit too.
+**Other branches.** `lean/iii5-iii6-ending` and `lean/iii5-iii6-euclid` rewrite
+`Audit/Overlaps.lean`, `docs/reports/overlaps.md`, `review/III/02.toml` and `12.toml`, all
+of which step 6 edits: step 6 starts from main after them, or merges them in, and the guard
+has a file of its own so as not to meet them. `text/overlaps-i2-i3` (#81) and
+`lean/i45-ii14-full` (#80) are on main, and the line references above are to main at
+`e04f318`. `lean/model-skeleton` is #73 (step 5) and `tooling/model-law-names` is #40
+(step 1). In the mixed-angle prototype (#86), besides the rename, six facts take a centre O
+that nothing else in their statements mentions: `surrounds_inside`, `surrounds_outside`,
+`near_across`, `Segment.exceeds_iff`, `Segment.nearVertexOpen` and `Segment.fallsShort_iff`.
+Their proofs are complete and stay true as they stand; question 2's reading lets the centre
+go when #57 moves them into `Elements/`: a note for #57. Brief 0006's stage 3 and stage 4
+proofs are under way: their statements keep the hypotheses that go until step 6, and their
+proofs should not use `Arc.Drawn`'s centre clause (question 5).
 
 ## 7. Open questions, for the freeze
 
-1. **Where the rule sits.** Recommended: `Tacit/Constructions.lean`, as
+Each question is the coordinator's to decide at the freeze, and is marked so; the
+recommendation is the brief's. Astra's answer to the draft agrees with the recommendations
+of questions 1 to 10, and asked for the lemmas of question 11; questions 12 to 14 arose
+after the challenge.
+
+1. **Where the rule sits.** *For the coordinator.* Recommended: `Tacit/Constructions.lean`, as
    `Tacit.exists_centre`, beside the other rules that a point exists. Weighed against a home
    beside Definition 15, as the challenge asked:
    - *For the definitions:* the rule's content is Euclid's Definition I.15, and a reader of a
@@ -602,14 +650,16 @@ FORMALIZATION.md, which steps 5 and 6 edit too.
    So the rule stays a tacit rule and says what it is (section 2), and the prose that calls
    every tacit rule System E's changes (section 4). The name goes into the lock, #40's
    `laws.toml`, facts.json and the expectations, so it is settled at the freeze.
-2. **A named centre that nothing else mentions.** `Prop25.complete`'s E and
+2. **A named centre that nothing else mentions.** *For the coordinator.* `Prop25.complete`'s E and
    `EqualCircles.refl`'s G are named, but appear nowhere else in their statements.
    Recommended, as a rule for this brief and later ones: a named centre that appears nowhere
    else in the statement is dropped, since it asks only that a centre exist; one that
    appears anywhere else is kept. This reads the owner's "those that name the centre keep it"
    by its substance; by its letter the two would stay. `EqualCircles.refl`'s point P goes
-   with it, by Points 7.
-3. **The line and the summary for III.1.** Recommended: an optional key in `[overlap]`,
+   with it, by Points 7. The prototype's six facts of section 6 come under the same rule when
+   #57 moves them. Since it reads the owner's words beyond their letter, the decisions entry
+   states it as a rule, in those words.
+3. **The line and the summary for III.1.** *For the coordinator.* Recommended: an optional key in `[overlap]`,
    `kind = "step"`, after the catalogue's "supplies a step", for a rule that carries one step
    of the proof and does not contain the proposition, written as section 3 says in both of
    `render.py`'s displays. `heath.py` accepts only that value and requires a `note` with it,
@@ -620,21 +670,23 @@ FORMALIZATION.md, which steps 5 and 6 edit too.
    "contains", since there the rule carries the proposition's content, in the catalogue's
    words, and their audit lemmas prove the propositions from the rules. The alternative is no
    `[overlap]` for III.1, the note in its statement row and the catalogue only.
-4. **III.33's clause.** Its conclusion says that the circle described has a centre, so that a
+4. **III.33's clause.** *For the coordinator.* Its conclusion says that the circle described has a centre, so that a
    citer could hand it on. Recommended: drop it, since it adds nothing once every circle has
    one; it is our clause, not Euclid's. Keeping it costs nothing but the question a reader
    would ask.
-5. **`Arc.Drawn`.** Recommended: its centre clause goes, in brief 0006's file, before the
-   definition joins the foundations if it has not yet, with its five users listed in section
-   4; after, it is a change of definition, with its lock entry and decisions entry.
-6. **`Prop1.of_circle`, a lemma or a companion.** Recommended: a lemma, after the porism,
+5. **`Arc.Drawn`.** *For the coordinator.* Recommended: its centre clause goes, in brief
+   0006's file, before the definition joins the foundations if it has not yet, with its five
+   users listed in section 4; after, it is a change of definition, with its lock entry and
+   decisions entry. Either way the clause goes only once the rule is there to stand in for
+   it, and the stage 3 proofs under way should not use it, so that its going breaks none.
+6. **`Prop1.of_circle`, a lemma or a companion.** *For the coordinator.* Recommended: a lemma, after the porism,
    with no certificate entry, as for `Prop17.inside`: it generalizes no clause. III.1's
    overlap note makes it findable from the page, and section 3 gives its closure, 58 rules.
    A companion would show it on the page with its own certificate. The name is kept: as in
    Lean's `of_` names, it says what it is given, a circle, as brief 0006's `Prop25.of_circle`
    is given the circle rather than the segment. A distinct name, such as `Prop1.any_chord`,
    is the alternative if the coordinator prefers.
-7. **The guard.** Recommended: the targeted check of section 3, with the construction's
+7. **The guard.** *For the coordinator.* Recommended: the targeted check of section 3, with the construction's
    type fixed beside it. A `#guard_msgs` pin of the construction's whole list of axioms (62
    names) would catch the same names, but must be renewed whenever a Book I proof beneath it
    changes, and a renewal could carry an added name in a long diff. A companion with a
@@ -642,22 +694,47 @@ FORMALIZATION.md, which steps 5 and 6 edit too.
    proposition, which may not cite it, and `Prop1` cites the construction. Keeping the
    construction inline, as today, reads more closely as Euclid, and leaves the separation to
    review alone.
-8. **III.17.** Recommended: its proof takes the centre by `Prop1.of_circle`, under Euclid's
+8. **III.17.** *For the coordinator.* Recommended: its proof takes the centre by `Prop1.of_circle`, under Euclid's
    "[III. 1]", then draws EA and takes D on it, which removes today's search for two points
    through a given centre and its use of `centre_unique`. The smallest change takes the
    centre from the rule and keeps the search.
-9. **The tag.** Recommended: `centre-given` leaves all 31 records, and the 19 records in
+9. **The tag.** *For the coordinator.* Recommended: `centre-given` leaves all 31 records, and the 19 records in
    which it is the only tag are rehomed as section 4's table says, with a new tag,
    `touching-whole-circles`, for III.11–III.13. Rejected: keeping `centre-given` on the twelve
    that name a centre, with a new meaning, since a named centre is no difference from
    Euclid's words; and letting `[representation]` carry a note with no tag, which would
    weaken a schema check to let this change pass.
-10. **One pull request or several, for the restatements.** Recommended: one, after steps 1
+10. **One pull request or several, for the restatements.** *For the coordinator.*
+    Recommended: one, after steps 1
     to 5. Each change is small, the citers of III.1, III.21 and III.22 run through most of
     Book III, and a record touched twice would be read twice.
-11. **The three lemmas of section 4.** Recommended: approve `Prop13.internally`,
-    `Prop13.externally` and `Centre.every` with this brief, so that they land with the
-    restatements and no Lean user ever passes `(ACK := α)`.
+11. **The three lemmas of section 4.** *For the coordinator.* Recommended: approve
+    `Prop13.internally`, `Prop13.externally` and `Centre.every` with this brief, so that they
+    land with the restatements and no Lean user ever passes `(ACK := α)`.
+12. **The prototype's rename, and who makes it.** *For the coordinator.* Recommended: a
+    `lean` pull request of its own, from the owner of `Staging/Stage4b/MixedAngles.lean`,
+    landed before the rule (section 6, step 1), renaming the theorem to
+    `exists_circle_about`, a name that says what it gives: a circle about A, by Postulate 3.
+    The coordinator, who approved the prototype, approves the new name, with this brief or in
+    that pull request, whichever comes first. The alternative is to carry the rename in the rule's own pull request, as step 5
+    carries the model's files; a pull request of its own keeps the rule's to the rule, and
+    lets #57 build on the new name at once.
+13. **The proofs staged here.** *For the coordinator.* WORKFLOW section 2, "What proofs
+    `Staging/` may hold", which reached main after this brief's base, has a staged
+    statement's own proof wait for its brief's approval. Most proofs here are derivations,
+    which it allows: the checks, `Prop1.of_circle` from the staged III.1, and III.13's two
+    lemmas from the staged III.13, which Appendix A says prove nothing until their stubs are
+    proved. Two are a statement's
+    own: `Prop1.construction`, by today's construction steps, and `Centre.every`, from
+    `centre_unique`. Recommended: the freeze approves them as staged facts resting on no
+    stub, which the same section then lets stand, proved in place, until the steps that move
+    them (steps 3 and 6). The alternative is to make both `sorry` until the freeze, at the
+    cost of the first check of III.1 and the guard's trial, which use the construction.
+14. **FORMALIZATION section 5's sentence.** *For the coordinator.* Recommended: approve the
+    sentence of section 3 on a construction core kept apart, landed with step 3, so that the
+    first `grouped` passage naming a construction has its warrant on main, and a later book's
+    constructions can follow it. The alternative is III.1's record alone, citing
+    FORMALIZATION section 4.
 
 ## Appendix A: what is staged, and why
 
@@ -667,19 +744,26 @@ hypothesis of a check, named `exists_centre`, so that the same words refer to th
 it lands. Staging, rather than code blocks in this brief, is for the checks: they show that
 each new statement is well formed, that it says what today's says given the rule, and so
 that it needs no new mathematics, and, for III.1, that the construction and the correctness
-fit. The checks of brief 0006's statements show that the interfaces agree, not that those
-statements are proved: several are `sorry` in brief 0006 itself. The names sit in
+fit. The checks of brief 0006's and brief 0007's statements show that the interfaces agree,
+not that those statements are proved: several are `sorry` in those briefs themselves. The names sit in
 `Elements.BookIII.Staging.Centre` (and `Elements.Staging.Centre` for Book Zero and the
 definition), not `Elements.BookIII.Staging`, where brief 0006's restated III.24 and III.25
 already are; `Centre.every` is declared at its future name, `Elements.Centre.every`, so that
 the check can use it as `hO.every`. `Staging.lean`'s imports are the integrator's and are
 left as they are; `lake build Staging` builds the folder by its glob.
 
+Under WORKFLOW section 2, "What proofs `Staging/` may hold", most proofs here derive one
+staged statement from others, and prove nothing until the stubs they rest on are proved:
+the checks, `Prop1.of_circle` from the staged III.1, and `Prop13.internally` and
+`Prop13.externally` from the staged III.13. Two are a statement's own and rest on no stub,
+`Prop1.construction` and `Centre.every`; they stand on the freeze's approval (question 13).
+
 | File | What it holds |
 |---|---|
 | `Staging/Centre/Prop01.lean` | `Prop1.construction`, proved, with the right angles ADC and BDC; III.1 restated; a check proving it from the construction and the rule's content; a check that today's III.1 follows; `Prop1.of_circle`, proved from the staged III.1 |
 | `Staging/Centre/Restated.lean` | the other eighteen propositions, III.33, the three steps of `Circumferences.lean` and `EqualCircles.refl`, each with its two checks; `Prop13.internally` and `Prop13.externally`, proved from the staged III.13, with a check that they give it back; `Centre.every`, proved, with a check against the restated III.4 |
 | `Staging/Centre/Brief0006.lean` | brief 0006's six statements and `Arc.Drawn` without the centre, with their checks, and the two checks that `Prop24.equalCircles` and `Prop25.of_circle` still have today's III.24 and III.25, restated |
+| `Staging/Centre/Brief0007.lean` | brief 0007's three statements without the centre, `Prop8.partner`, `Prop8.general` and `Prop17.general`, with their checks, and the two checks that III.8 and III.17, restated, still follow from `Prop8.general` and `Prop17.general` |
 
 ## Appendix B: the challenge, finding by finding
 
