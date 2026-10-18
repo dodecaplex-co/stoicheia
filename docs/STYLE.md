@@ -417,11 +417,11 @@ stroke thinner than 1.2 or heavier than 3.2 **[checked]**. The title is "Euclid 
 with no caption **[checked]**.
 
 **Heath's letters, all and only [checked].** Each point stands where the proof puts it
-(I.6: D on AB), each letter clear of every stroke, nothing touching the frame. The Lean
-uses the same letters, save in a helper written once over any letters (`Prop44.place`). A
-point Heath leaves without a letter gets a name in the Lean and none in the figure; a
-letter Heath gives a point the Lean does not need (III.3's C and D) is still drawn; the
-letters inside shared steps do not count; and "PORISM" is not a letter.
+(I.6: D on AB), each letter 2 clear of every stroke **[reported]**, nothing touching the
+frame. The Lean uses the same letters, save in a helper written once over any letters
+(`Prop44.place`). A point Heath leaves without a letter gets a name in the Lean and none in
+the figure; a letter Heath gives a point the Lean does not need (III.3's C and D) is still
+drawn; the letters inside shared steps do not count; and "PORISM" is not a letter.
 
 **The same letters at a glance [checked].** Byrne's book uses coloured diagrams and
 symbols "instead of letters for the greater ease of learners", as its title says, and its
@@ -431,14 +431,15 @@ text, so that the yellow angle at B is the angle ABC of I.5's proof. The figure 
 glance carries Heath's letters, the same names as Euclid's figure and the Lean, at every
 point it shows, so that a reader can follow it however it turns or reflects Euclid's
 figure. Each letter is one that `NN.svg` draws, italic, at 14, small and beside its point,
-in the figure's black `#222222`, and clear of every colour and stroke where there is room.
-A point inside a coloured piece, with no parchment near it, takes its letter on the fill
-(I.43's K, II.4's G): in black on yellow, and in the parchment's `#fbf7ee` on red, blue or
-black (II.12's D), where black would hardly show. A point is shown when it is drawn as a
-dot, ends a straight line or is a corner of a coloured figure, and its letter stands
-within 30 of it; a straight line shorter than 25 is a mark, such as an equals sign, and
-shows no point. A point Heath leaves without a letter stays without one here too, and what
-draws it says why, on the element or on a `<g>` round several:
+in the figure's black `#222222`, clear of every colour where there is room, and 2 clear
+of every stroke **[reported]**. A point inside a coloured piece, with no parchment near it,
+takes its letter on the fill (I.43's K, II.4's G): in black on yellow, and in the
+parchment's `#fbf7ee` on red, blue or black (II.12's D), where black would hardly show.
+A point is shown when it is drawn as a dot, ends a straight line or is a corner of a
+coloured figure, and its letter stands within 30 of it; a straight line shorter than 25 is
+a mark, such as an equals sign, and shows no point. A point Heath leaves without a letter
+stays without one here too, and what draws it says why, on the element or on a `<g>`
+round several:
 `data-unlettered="the squares of the reading in areas, which Heath's figure does not draw"`
 (II.9). A letter Heath gives a straight line or a figure (I.3's C, II.14's A) may stand
 beside it or within it. How the script reads this, and the switch that held the figures
@@ -535,6 +536,7 @@ reading anything else, the script checks its own patterns against such phrases.
 | D11 | Euclid's figure strokes other than lines 1.6, circles 1.3, the subject 2.4 to 2.6, angle marks 1.3, or dots of radius other than 2.6 | Euclid's figures |
 | D13 | A reading line that does not begin "For " | `reading/<book>/NN.md` |
 | D14 | The figures at a glance with no letter yet, book by book, with the points each has to letter, while the switch is off (below) | Idea figures |
+| D15 | A letter within 2 of a stroke: its capital as Georgia Italic draws it, measured by the convex hull of its outline's points, against every line, polyline, polygon, path, rect, circle and ellipse drawn with a stroke, dashed or not, transforms applied | Idea figures, Euclid's figures |
 
 **The switch for S21.** The figures at a glance were lettered one by one, and while they
 were, `IDEA_LETTERS_REQUIRED` in `scripts/check_style.py` was `False`: S20 held every

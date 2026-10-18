@@ -631,3 +631,20 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+
+- **Each letter 2 clear of every stroke, reported.** Argon's second review of the book-III
+  release found letters crossed by strokes in seven of Euclid's figures, and asked for a
+  check of each letter's clearance; we thank Argon warmly for so careful an audit.
+  [`scripts/check_style.py`](../../scripts/check_style.py) gains a report, D15: each letter
+  of a figure, Euclid's or at a glance, is measured as Georgia Italic, the figures' first
+  font, draws its capital, by the convex hull of the points of its outline, against every
+  stroke of the figure (lines, polylines, polygons, paths, rects, circles and ellipses,
+  dashed strokes read whole, transforms applied), and a letter within 2 of one is listed.
+  It is a report and not a rule because a reader's browser may draw the letters in another
+  font. The script carries the hulls as numbers (`GLYPHS`), and so still needs only
+  Python's standard library; `path_rings` now also says which subpaths a Z closes, and
+  what S20 reads is unchanged. A self-check of eleven strokes beside a letter runs first.
+  [STYLE](../STYLE.md), sections 7 and 8, gives the report. On main it lists Argon's seven
+  and six more letters as near; the figures' change for
+  [#68](https://github.com/jackChallis/stoicheia/issues/68) moves all thirteen and lands
+  first, after which D15 lists none. The check adds a report and weakens nothing.

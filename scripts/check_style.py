@@ -1,7 +1,7 @@
 """Check the house style's hard rules, and report its defaults.
 
 The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S21
-fail the script, and D1 to D11, D13 and D14 are listed for a reader to judge and fail
+fail the script, and D1 to D11 and D13 to D15 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
     python3 scripts/check_style.py              # every rule, S12 included
@@ -48,7 +48,10 @@ no longer applies fails. An idea figure marks a point Heath leaves without a let
 figure itself, with `data-unlettered` and its reason (S21), and those are printed too.
 S20 judges a letter's ink by the fill under it, an angle's wedge included. On every run,
 before anything else, the script checks that reading against letters on and beside an
-angle's wedge (`ink_self_check`), and stops if one is read wrongly. Standard library only.
+angle's wedge (`ink_self_check`), and stops if one is read wrongly. D15 measures a
+letter as Georgia Italic draws its capital (GLYPHS) against every stroke of its figure,
+and is checked the same way against strokes through, near and clear of a letter
+(`clearance_self_check`). Standard library only.
 """
 
 from __future__ import annotations
@@ -138,6 +141,7 @@ REPORTS = {
     "D11": "Euclid's figure strokes or dots off the usual widths",
     "D13": "a reading line that does not begin 'For '",
     "D14": "figures at a glance not yet lettered (S21 holds them once the switch is on)",
+    "D15": "a figure's letter within 2 of a stroke",
 }
 
 
@@ -677,6 +681,57 @@ PATH_ARITY = {"m": 2, "l": 2, "h": 1, "v": 1, "c": 6, "s": 4, "q": 4, "t": 2, "a
 ARC_STEP = math.radians(3)   # an arc, in a straight piece to each 3 degrees of its sweep
 CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
 
+# How near a letter comes to a stroke (D15; STYLE, sections 7 and 8). A letter is measured
+# as Georgia Italic, the figures' first font, draws its capital: by the convex hull of the
+# points of the capital's outline, on its curves and off them, which holds the outline.
+# GLYPHS gives each capital's advance and that hull's corners, x and y in turn with y up,
+# in the font's units, EM to the em, read from the font with fontTools so that the script
+# needs neither. At 17 the hull stands at most 0.4 outside the outline, and only round a
+# curve. A prime or a subscript after the capital is not measured.
+CLEAR = 2.0     # a letter nearer than this to a stroke is reported
+EM = 2048
+GLYPHS = {
+    "A": (1374, (-160, 0, 1302, 0, 1317, 66, 952, 1439, 872, 1439, -145, 66)),
+    "B": (1339, (-29, 0, 768, 0, 965, 55, 1051, 113, 1131, 167, 1236, 340, 1298, 1077, 1298,
+            1234, 1236, 1333, 1126, 1394, 1003, 1419, 306, 1419, 290, 1353)),
+    "C": (1315, (100, 400, 183, 190, 328, 43, 522, -33, 830, -33, 1140, 143, 1266, 358,
+            1427, 1419, 1041, 1452, 751, 1452, 448, 1302, 340, 1178, 228, 1049, 100, 721)),
+    "D": (1534, (-29, 0, 769, 0, 1096, 116, 1229, 229, 1357, 338, 1515, 669, 1515, 1024,
+            1398, 1241, 1209, 1368, 997, 1419, 306, 1419, -14, 66)),
+    "E": (1338, (-37, 0, 1141, 0, 1264, 418, 1388, 1419, 290, 1419, -22, 66)),
+    "F": (1227, (-35, 0, 583, 0, 963, 444, 1322, 1064, 1404, 1419, 291, 1419, 275, 1353)),
+    "G": (1485, (100, 403, 187, 191, 341, 43, 547, -33, 745, -33, 874, -13, 1021, 24, 1124,
+            64, 1190, 91, 1481, 572, 1496, 640, 1482, 1419, 1093, 1452, 781, 1452, 467,
+            1311, 235, 1064, 100, 733)),
+    "H": (1669, (-25, 0, 1444, 0, 1756, 1353, 1771, 1419, 302, 1419, -10, 66)),
+    "I": (798, (-44, 0, 595, 0, 907, 1353, 922, 1419, 283, 1419, -29, 66)),
+    "J": (1060, (-50, 106, 118, -34, 373, -34, 545, 44, 679, 166, 762, 315, 1194, 1353,
+            1209, 1419, 579, 1419, -50, 329)),
+    "K": (1422, (-21, 0, 1336, 0, 1353, 66, 1597, 1419, 306, 1419, -6, 66)),
+    "L": (1236, (-25, 0, 1084, 0, 1211, 422, 901, 1419, 302, 1419, -10, 66)),
+    "M": (1899, (-76, 0, 1682, 0, 1698, 66, 1993, 1353, 2008, 1419, 260, 1419)),
+    "N": (1571, (-75, 0, 1109, -14, 1199, -14, 1743, 1353, 1759, 1419, 229, 1419, 213,
+            1353)),
+    "O": (1496, (100, 288, 404, -34, 811, -34, 1108, 107, 1224, 229, 1337, 348, 1477, 683,
+            1477, 1138, 1169, 1453, 766, 1453, 465, 1311, 240, 1067, 100, 734)),
+    "P": (1249, (-25, 0, 584, 0, 1205, 822, 1312, 1012, 1312, 1266, 1097, 1419, 295, 1419,
+            280, 1353)),
+    "Q": (1496, (100, 290, 393, -24, 780, -386, 1000, -386, 1171, -357, 1232, -338, 1477,
+            683, 1477, 1138, 1169, 1453, 766, 1453, 465, 1311, 240, 1067, 100, 734)),
+    "R": (1437, (-26, 0, 1354, 0, 1370, 66, 1330, 1219, 1269, 1323, 1168, 1385, 1026, 1419,
+            302, 1419)),
+    "S": (1149, (-9, -1, 370, -29, 614, -29, 815, 41, 973, 169, 1065, 353, 1199, 1419, 825,
+            1451, 641, 1451, 448, 1383, 380, 1326, 310, 1267, 225, 1105, 89, 485)),
+    "T": (1267, (130, 1034, 174, 0, 844, 0, 1366, 1034, 1455, 1419, 219, 1419)),
+    "U": (1549, (212, 144, 449, -34, 749, -34, 931, 8, 1016, 57, 1104, 108, 1245, 289, 1721,
+            1353, 1737, 1419, 278, 1419, 262, 1353, 212, 313)),
+    "V": (1365, (151, 1353, 501, -18, 584, -18, 1599, 1353, 1614, 1419, 166, 1419)),
+    "W": (1998, (182, 1353, 408, -18, 1322, -18, 2217, 1353, 2232, 1419, 197, 1419)),
+    "X": (1455, (-110, 0, 1321, 0, 1336, 66, 1614, 1419, 243, 1419, -95, 66)),
+    "Y": (1260, (143, 1353, 169, 0, 833, 0, 1501, 1353, 1517, 1419, 159, 1419)),
+    "Z": (1232, (-90, 0, 1048, 0, 1198, 443, 1387, 1419, 326, 1419, 190, 1018, -81, 35)),
+}
+
 # data-unlettered marks in the idea figures, printed on every run:
 # {(file, reason): [elements, points]}
 idea_exemptions: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
@@ -826,12 +881,20 @@ def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: fl
     return pts + [(x2, y2)]
 
 
-def path_rings(d: str) -> list[list[tuple[float, float]]]:
+def path_rings(d: str, closed: list[bool] | None = None) -> list[list[tuple[float, float]]]:
     """A path's subpaths as the rings of points its fill closes: straight segments as they
     are, arcs and curves in short straight pieces. A path is read as far as it is well
-    formed, as SVG draws it."""
+    formed, as SVG draws it. Given a list `closed`, it gains a flag for each ring: whether
+    a Z closes it, as its stroke is drawn (D15)."""
     rings: list[list[tuple[float, float]]] = []
     ring: list[tuple[float, float]] = []
+
+    def keep(shut: bool) -> None:
+        if len(ring) > 1:
+            rings.append(ring)
+            if closed is not None:
+                closed.append(shut)
+
     x = y = sx = sy = 0.0
     cmd, ctrl, pos = "", None, 0
     while True:
@@ -842,8 +905,7 @@ def path_rings(d: str) -> list[list[tuple[float, float]]]:
             break
         kind = cmd.lower()
         if kind == "z":
-            if len(ring) > 1:
-                rings.append(ring)
+            keep(True)
             ring, x, y, ctrl = [(sx, sy)], sx, sy, None
             continue
         args = []
@@ -858,8 +920,7 @@ def path_rings(d: str) -> list[list[tuple[float, float]]]:
         ox, oy = (x, y) if cmd.islower() else (0.0, 0.0)
         pairs = [(ox + args[i], oy + args[i + 1]) for i in range(0, len(args) - 1, 2)]
         if kind == "m":
-            if len(ring) > 1:
-                rings.append(ring)
+            keep(False)
             (x, y), ctrl = pairs[0], None
             sx, sy, ring = x, y, [(x, y)]
             cmd = "l" if cmd == "m" else "L"
@@ -882,8 +943,7 @@ def path_rings(d: str) -> list[list[tuple[float, float]]]:
             ctrl = ("c" if kind in "cs" else "q", curve[-2])
         ring += pts
         x, y = ring[-1]
-    if len(ring) > 1:
-        rings.append(ring)
+    keep(False)
     return rings
 
 
@@ -997,6 +1057,7 @@ def check_idea(path: Path, ref: str, required: bool) -> int:
         if n > 40 or ends > 2:
             report("D5", path, 0, f"caption of {n} words, {ends} sentence(s)")
     colours(path, root, IDEA_COLOURS | WHITE, "S14")
+    check_clearance(path, root)
     return check_idea_letters(path, root, required)
 
 
@@ -1221,6 +1282,119 @@ def check_euclid(path: Path, ref: str) -> None:
         if stale:
             fail("S16", path, 0, f"the exception for {', '.join(sorted(stale))} in "
                  "LETTER_EXCEPTIONS no longer applies; remove it")
+    check_clearance(path, root)
+
+
+def glyph_ring(own, eff, m, s: str) -> list[tuple[float, float]]:
+    """The corners of the hull of letter s's capital (GLYPHS), where the text element
+    puts it: x and y give the start of its baseline (its middle or its end, by
+    text-anchor), at its font-size, transforms applied."""
+    advance, corners = GLYPHS[s[0]]
+    k = (number(eff.get("font-size")) or 16.0) / EM
+    x = coord(own.get("x")) + {"middle": -advance * k / 2, "end": -advance * k}.get(
+        (eff.get("text-anchor") or "start").strip(), 0.0)
+    y = coord(own.get("y"))
+    return [at(m, x + corners[i] * k, y - corners[i + 1] * k) for i in range(0, len(corners), 2)]
+
+
+def strokes(root):
+    """(kind, points, half the stroke's width) for each stroke a figure draws, as a run of
+    straight pieces: a line, a polyline, a polygon or a rect's outline, each subpath of a
+    path (closed where a Z closes it), a circle or an ellipse in short straight pieces;
+    transforms applied, and a dashed stroke read as whole."""
+    for el, own, eff, m, _ in placed(root):
+        t = tag(el)
+        w = number(eff.get("stroke-width"))
+        w = 1.0 if w is None else w
+        if t not in DRAWN or (eff.get("stroke") or "none").strip().lower() == "none" or w <= 0:
+            continue
+        if t == "line":
+            runs = [[(coord(own.get("x1")), coord(own.get("y1"))),
+                     (coord(own.get("x2")), coord(own.get("y2")))]]
+        elif t in ("polyline", "polygon"):
+            v = [float(n) for n in NUM.findall(own.get("points", ""))]
+            run = list(zip(v[0::2], v[1::2]))
+            runs = [run + run[:1] if t == "polygon" else run]
+        elif t == "path":
+            closed: list[bool] = []
+            rings = path_rings(own.get("d", ""), closed)
+            runs = [ring + ring[:1] if shut else ring for ring, shut in zip(rings, closed)]
+        elif t == "rect":
+            x0, y0 = coord(own.get("x")), coord(own.get("y"))
+            x1, y1 = x0 + coord(own.get("width")), y0 + coord(own.get("height"))
+            runs = [[(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)]]
+        else:
+            cx, cy = coord(own.get("cx")), coord(own.get("cy"))
+            rx = coord(own.get("r")) if t == "circle" else coord(own.get("rx"))
+            ry = coord(own.get("r")) if t == "circle" else coord(own.get("ry"))
+            steps = round(math.tau / ARC_STEP)
+            runs = [[(cx + rx * math.cos(i * ARC_STEP), cy + ry * math.sin(i * ARC_STEP))
+                     for i in range(steps + 1)]]
+        half = w / 2 * math.sqrt(abs(m[0] * m[3] - m[1] * m[2]))
+        for run in runs:
+            yield t, [at(m, x, y) for x, y in run], half
+
+
+def point_gap(p, a, b) -> float:
+    """How far the point p stands from the straight piece ab."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    n = dx * dx + dy * dy
+    t = 0.0 if n == 0 else max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / n))
+    return math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy)
+
+
+def crosses(a, b, c, d) -> bool:
+    """Whether the straight pieces ab and cd cross."""
+    def side(p, q, r):
+        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+    return side(a, b, c) * side(a, b, d) < 0 and side(c, d, a) * side(c, d, b) < 0
+
+
+def ring_gap(ring, a, b) -> float:
+    """How far the straight piece ab stands from the convex polygon `ring`: 0 if it meets
+    it."""
+    if enclosed([ring], *a, False) or enclosed([ring], *b, False):
+        return 0.0
+    gap = math.inf
+    for c, d in zip(ring, ring[1:] + ring[:1]):
+        if crosses(a, b, c, d):
+            return 0.0
+        gap = min(gap, point_gap(c, a, b), point_gap(a, c, d), point_gap(b, c, d))
+    return gap
+
+
+def nearest_stroke(ring, pieces) -> tuple[float, str] | None:
+    """How near the strokes come to a letter's hull, less half each stroke's width, and
+    the kind of the nearest; None if none comes within CLEAR."""
+    xs, ys = [p[0] for p in ring], [p[1] for p in ring]
+    best = None
+    for kind, run, half in pieces:
+        reach = CLEAR + half
+        lo_x, hi_x, lo_y, hi_y = min(xs) - reach, max(xs) + reach, min(ys) - reach, max(ys) + reach
+        for a, b in zip(run, run[1:]):
+            if max(a[0], b[0]) < lo_x or min(a[0], b[0]) > hi_x \
+                    or max(a[1], b[1]) < lo_y or min(a[1], b[1]) > hi_y:
+                continue
+            gap = ring_gap(ring, a, b) - half
+            if gap < CLEAR and (best is None or gap < best[0]):
+                best = (gap, kind)
+    return best
+
+
+def check_clearance(path: Path, root) -> None:
+    """D15: each letter of a figure at least CLEAR from every stroke, its capital measured
+    as Georgia Italic draws it (GLYPHS)."""
+    pieces = list(strokes(root))
+    for el, own, eff, m, _ in placed(root):
+        s = text_of(el)
+        if tag(el) != "text" or not LETTER.fullmatch(s) or s[0] not in GLYPHS:
+            continue
+        near = nearest_stroke(glyph_ring(own, eff, m, s), pieces)
+        if near:
+            gap, kind = near
+            where = f"letter {s} at ({coord(own.get('x')):g}, {coord(own.get('y')):g})"
+            report("D15", path, 0, f"{where} meets a {kind}" if gap <= 0
+                   else f"{where} is {gap:.1f} from a {kind}")
 
 
 def check_figures(required: bool) -> None:
@@ -1291,6 +1465,46 @@ def ink_self_check() -> tuple[int, list[str]]:
                 faults.append(f"S20 {'misses' if want else 'wrongly finds'} a letter in {ink} "
                               f"at ({x:g}, {y:g}) on {drawn}")
     return len(INK_CASES) * len(INK_WEDGES), faults
+
+
+# ---------------------------------------------------------------------------------------
+# The script's own check of D15, run first on every run: a stroke through a letter, or
+# nearer it than CLEAR, is found, and one clear of it is not; a stroke of none is no
+# stroke, and a dashed one is read whole; an open path is not closed by the straight
+# piece its fill would add, and a closed one is; a circle round a letter is clear of it,
+# and one through it is not; and a transform moves a stroke onto a letter.
+
+CLEAR_LETTER = '<text x="150" y="100" font-size="17" font-style="italic">A</text>'
+CLEAR_CASES = [   # (what is drawn beside a letter A at (150, 100), at 17; a finding?)
+    ('<line x1="100" y1="90" x2="200" y2="90" stroke="#3b2f2f" stroke-width="1.6"/>', True),
+    ('<line x1="100" y1="110" x2="200" y2="110" stroke="#3b2f2f" stroke-width="1.6"/>', False),
+    ('<line x1="100" y1="101.5" x2="200" y2="101.5" stroke="#3b2f2f" stroke-width="1.6"/>', True),
+    ('<line x1="100" y1="90" x2="200" y2="90" stroke="none"/>', False),
+    ('<line x1="100" y1="90" x2="200" y2="90" stroke="#3b2f2f" stroke-dasharray="2 5"/>', True),
+    ('<path d="M110,94 V150 H200 V94" fill="none" stroke="#3b2f2f"/>', False),
+    ('<path d="M110,94 V150 H200 V94 Z" fill="none" stroke="#3b2f2f"/>', True),
+    ('<circle cx="155" cy="94" r="30" fill="none" stroke="#8c7b62"/>', False),
+    ('<circle cx="155" cy="94" r="6" fill="none" stroke="#8c7b62"/>', True),
+    ('<line x1="100" y1="114" x2="200" y2="114" stroke="#3b2f2f"/>', False),
+    ('<g transform="translate(0,-20)"><line x1="100" y1="114" x2="200" y2="114" '
+     'stroke="#3b2f2f"/></g>', True),
+]
+
+
+def clearance_self_check() -> tuple[int, list[str]]:
+    """CLEAR_CASES, each read as D15 reads a figure; returns the number of cases and the
+    faults."""
+    faults = []
+    for drawn, want in CLEAR_CASES:
+        root = ET.fromstring(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                             f'{drawn}{CLEAR_LETTER}</svg>')
+        pieces = list(strokes(root))
+        found = any(nearest_stroke(glyph_ring(own, eff, m, "A"), pieces) is not None
+                    for el, own, eff, m, _ in placed(root) if tag(el) == "text")
+        if found != want:
+            faults.append(f"D15 {'misses' if want else 'wrongly finds'} a stroke near a "
+                          f"letter: {drawn}")
+    return len(CLEAR_CASES), faults
 
 
 # ---------------------------------------------------------------------------------------
@@ -1387,6 +1601,15 @@ def main() -> int:
             print("  ✗ " + f)
         return 1
     print(f"self-check: S20 reads the ink of {count} letters on angles' wedges rightly")
+
+    count, faults = clearance_self_check()
+    if faults:
+        print(f"{len(faults)} fault(s) in the script's reading of D15's strokes; nothing "
+              "else was checked:")
+        for f in faults:
+            print("  ✗ " + f)
+        return 1
+    print(f"self-check: D15 reads {count} strokes beside a letter rightly")
 
     count, faults = self_check()
     if faults:
