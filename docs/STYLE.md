@@ -401,7 +401,7 @@ whole canvas), in Georgia. Section 2 says why there are two.
 **`NN-idea.svg`, the figure at a glance.** A canvas of 400 × 300 **[checked]**. Byrne's
 red `#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for
 grid lines and for numbers on a fill, as in I.47 **[checked]**. Equal things share a
-colour, and Heath's letters name the points it shows (below). The title is "I.N at a
+colour, and Heath's letters name the points, lines and figures it shows (below). The title is "I.N at a
 glance", with a name if it has one (": the bridge of asses"). The `<desc>` is the caption
 on the page: one or two short sentences in the house voice, the colours named in
 brackets, about 40 words **[reported]** and 50 at most **[checked]**.
@@ -505,7 +505,7 @@ block removed first.
 | S17 | A reading file of no lines or more than three, a line that is not a list item ("- "), or a web link that `docs/reading.md` does not give | `reading/<book>/NN.md` |
 | S18 | A book with pages and no `mishnah/intro/<book>.md` | `mishnah/intro/` |
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
-| S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not italic, not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black polygon, rect or circle | Idea figures |
+| S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not italic, not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.

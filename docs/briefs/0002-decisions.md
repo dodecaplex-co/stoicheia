@@ -399,17 +399,18 @@ findings:
 
 ## 18 October 2026
 
-- **Heath's letters at a glance: the rule, with its switch off.** A figure at a glance may
-  now carry Heath's letters, the names Euclid's figure and the Lean use, so that a reader
-  passes from Byrne's colours to the proof by the same A and B ([STYLE](../STYLE.md),
-  sections 2, 7 and 8). [`scripts/check_style.py`](../../scripts/check_style.py) drops
-  S14's ban on a letter in a figure at a glance and checks the letters instead: S20, each
-  letter one that Euclid's figure draws, italic, at 14, in the ink of what it stands on;
-  S21, each point the figure shows lettered within 30 of it, or marked `data-unlettered`
-  with its reason. Its switch, `IDEA_LETTERS_REQUIRED`, is `False` for now: S21 holds a
-  figure only once it carries a letter, and D14 lists the figures with none yet. The
-  figures are lettered in a change of their own, and the switch is turned on once every
-  figure passes S21.
+- **Heath's letters at a glance: the rule, with its switch off.** The owner, on 17 October:
+  "Proof without words is one thing - proof without Point labeling is quite another!" A
+  figure at a glance may now carry Heath's letters, the names Euclid's figure and the Lean
+  use, so that a reader passes from Byrne's colours to the proof by the same A and B
+  ([STYLE](../STYLE.md), sections 2, 7 and 8). On the owner's word,
+  [`scripts/check_style.py`](../../scripts/check_style.py) drops S14's ban on a letter in a
+  figure at a glance, and checks the letters instead: S20, each letter one that Euclid's
+  figure draws, italic, at 14, in the ink of what it stands on; S21, each point the figure
+  shows lettered within 30 of it, or marked `data-unlettered` with its reason. Its switch,
+  `IDEA_LETTERS_REQUIRED`, is `False` for now: S21 holds a figure only once it carries a
+  letter, and D14 lists the figures with none yet. The figures are lettered in a change of
+  their own, and the switch is turned on once every figure passes S21.
 - **Heath's letters at a glance: required.** Every figure at a glance now carries Heath's
   letters, 597 on the 99 figures of Books I to III, and passes S21, so the switch
   `IDEA_LETTERS_REQUIRED` in [`scripts/check_style.py`](../../scripts/check_style.py) is
