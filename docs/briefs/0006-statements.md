@@ -1771,9 +1771,11 @@ on the stage branches at `d895ca8` and `d465ced`, and of stage 4 every one but I
 planned above. Most of the departures below were pointed out by the item's prover or its
 verifier, with thanks to both; the rest came to light in reading the Lean for this section,
 against which every entry was checked. Every departure is in a proof, and the verifiers
-found the frozen signatures and their docstrings unchanged. "A changed proof of the same
-type can still change its route and its certificate" (WORKFLOW, section 2): so these change
-certificates and the records' notes, and no statement.
+found the frozen signatures and their docstrings unchanged at those commits. "A changed
+proof of the same type can still change its route and its certificate" (WORKFLOW,
+section 2): so these change certificates and the records' notes, and no statement. The
+section describes the Lean at `d895ca8`, `d465ced` and `5220bda`; later commits on the
+stage branches, docstring edits among them, are outside it.
 
 **The departures**, in the order of the stages:
 
@@ -1810,8 +1812,8 @@ certificates and the records' notes, and no statement.
   before laying it off, since `OnRay.exists_len_eq` lays off only a length already there;
   Euclid's own I.3 begins the same way. The file cites I.2 and imports
   `Elements.BookI.Prop02`. *The statement stands:* it asks only for the point, and I.2 comes
-  before the file's place after Book I. The docstring of `exists_on` names `produce` and
-  `OnRay.exists_len_eq`, not I.2; the task that moves it can add I.2.
+  before the file's place after Book I. At `d465ced` the docstring of `exists_on` names
+  `produce` and `OnRay.exists_len_eq`, not I.2; the task that moves it can add I.2.
 - **III.28 upgraded** (`Staging.Prop28`). *Planned:* the congruence of the greater
   circumferences "from III.24, or III.26's clause at the circumference, applied to the
   greater segments", and the diameter case by `Prop24.angle_type` and III.24; Dependencies
@@ -1851,8 +1853,12 @@ certificates and the records' notes, and no statement.
   through III.15's proof, not repeated, as III.14 general takes Euclid's case from III.14; the
   companion rests there on today's III.14, not on III.14 general, and cites neither `Foot`
   lemma. *The statement stands:* a companion may cite its own proposition, which comes before
-  it, and the check that today's III.15 follows from the two companions depends only on what
-  they state.
+  it, as III.14 general does, and the check that today's III.15 follows from the two
+  companions depends only on what they state. This is not the route withdrawn under II.14
+  above, which would have proved the rectangle, Euclid's own second part, from today's
+  two-triangle statement rather than by his construction: here Euclid's configuration is
+  proved by his argument, in today's III.15, and the companion adds only the case of a
+  diameter, by `le_diameter`.
 
 **Settled by the proofs, and two consequences.**
 
