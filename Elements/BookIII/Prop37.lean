@@ -41,7 +41,7 @@ theorem Prop37.triangle {B D E F : Point} {ABC : Circle} (hF : Centre F ABC)
     have h20 : ‖D F‖ < ‖D E‖ + ‖E F‖ := (BookI.Prop20 hDEF).2.1
     rw [← h1, hDE_DB, len_symm E F, hFE_FB, len_symm F B] at h20
     exact lt_irrefl _ h20
-  · exact hD.1 (inside_of_between (Or.inr hB) (Or.inl (centre_inside hF)) h)
+  · exact hD.1 (InsideCircle.of_between_centre hF (Or.inr hB) (between_symm h))
   · have h1 : ‖D F‖ + ‖F B‖ = ‖D B‖ := len_add_of_between h
     have h20 : ‖D E‖ < ‖E F‖ + ‖F D‖ := (BookI.Prop20 hDEF).2.2
     rw [hDE_DB, ← h1, len_symm E F, hFE_FB, len_symm F D, add_comm] at h20

@@ -6,6 +6,7 @@ import Elements.BookI.Prop21
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
 import Elements.BookIII.Prop01
+import Elements.BookIII.Prop02
 
 /-!
 # Book III, Proposition 8
@@ -28,7 +29,7 @@ theorem Prop8.outside {D M E F H : Point} {α : Circle} (hM : Centre M α) (hE :
     (hlt : ∠ M D E < ∠ M D F) : ∠ F M D < ∠ E M D := by
   have hEM : SameSideOf E M D F := BookI.Prop24.within hEF.symm hlt
   obtain ⟨Y, hMYF, hY⟩ := crossbar hEF hEM
-  have hY_in : InsideCircle Y α := inside_of_between (Or.inl (centre_inside hM)) (Or.inr hF) hMYF
+  have hY_in : InsideCircle Y α := InsideCircle.of_between_centre hM (Or.inr hF) hMYF
   obtain ⟨-, -, ⟨L, hD_L, hE_L, hY_L⟩, -⟩ := hY
   have hH_L : OnLine H L := on_line_of_between_ends hDHE hD_L hE_L
   have hHE : H ≠ E := ne_of_between (between_symm hDHE) |>.symm
@@ -45,7 +46,7 @@ theorem Prop8.within {D M K L C : Point} {α : Circle} (hM : Centre M α) (hK : 
     (hlt : ∠ M D K < ∠ M D L) : InsideTriangle K L M D := by
   have hKM : SameSideOf K M D L := BookI.Prop24.within hKL.symm hlt
   obtain ⟨Z, hMZL, hZ⟩ := crossbar hKL hKM
-  have hZ_in : InsideCircle Z α := inside_of_between (Or.inl (centre_inside hM)) (Or.inr hL) hMZL
+  have hZ_in : InsideCircle Z α := InsideCircle.of_between_centre hM (Or.inr hL) hMZL
   obtain ⟨-, -, ⟨N, hD_N, hK_N, hZ_N⟩, -⟩ := hZ
   have hC_N : OnLine C N := on_line_of_between hDKC hD_N hK_N
   have hKC : K ≠ C := (ne_of_between (between_symm hDKC)).symm
@@ -62,13 +63,14 @@ theorem Prop8.within {D M K L C : Point} {α : Circle} (hM : Centre M α) (hK : 
 
 /-- A point of the circle on the straight line DA is A or G, for no three points of a
 circle lie on one straight line. -/
-theorem Prop8.on_diameter {A G N : Point} {α : Circle} {L : Line} (hA : OnCircle A α)
+theorem Prop8.on_diameter {A G N : Point} {α : Circle} {L : Line}
+    (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α)
     (hG : OnCircle G α) (hN : OnCircle N α) (hAG : A ≠ G) (hA_L : OnLine A L)
     (hG_L : OnLine G L) (hN_L : OnLine N L) : N = A ∨ N = G := by
   refine Classical.byContradiction fun h => ?_
   have hNA : N ≠ A := fun e => h (Or.inl e)
   have hNG : N ≠ G := fun e => h (Or.inr e)
-  exact Triangle.of_onCircle hA hG hN hAG hNG.symm hNA.symm ⟨L, hA_L, hG_L, hN_L⟩
+  exact Prop2.triangle hα hA hG hN hAG hNG.symm hNA.symm ⟨L, hA_L, hG_L, hN_L⟩
 
 /-- If a point be taken outside a circle and from the point straight lines be drawn through to the
 circle, one of which is through the centre and the others are drawn at random, then, of the
@@ -129,7 +131,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     intro E hE hEA
     /- On DA, E must be G: the part DG is less than the whole DA. -/
     by_cases hE_Ld : OnLine E Ld
-    · rcases Prop8.on_diameter hA hG hE hAG hA_Ld hG_Ld hE_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hABC hA hG hE hAG hA_Ld hG_Ld hE_Ld with rfl | rfl
       · exact absurd rfl hEA
       · exact len_lt_of_between hDGA
     -- Then, since AM is equal to EM,
@@ -174,7 +176,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
     intro K hK hKG
     /- On DA, K must be A, and DG is a part of DA. -/
     by_cases hK_Ld : OnLine K Ld
-    · rcases Prop8.on_diameter hA hG hK hAG hA_Ld hG_Ld hK_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hABC hA hG hK hAG hA_Ld hG_Ld hK_Ld with rfl | rfl
       · exact len_lt_of_between hDGA
       · exact absurd rfl hKG
     -- Next, since MK, KD are greater than MD, [I. 20]
@@ -282,7 +284,7 @@ theorem Prop8 {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC
         rw [len_symm N D, len_symm P D, hDN] at h24
         exact absurd h24 (lt_irrefl _)
     by_cases hN_Ld : OnLine N Ld
-    · rcases Prop8.on_diameter hA hG hN hAG hA_Ld hG_Ld hN_Ld with rfl | rfl
+    · rcases Prop8.on_diameter hABC hA hG hN hAG hA_Ld hG_Ld hN_Ld with rfl | rfl
       · have hlt := greatest K hK (fun e => hK_Ld (e ▸ hA_Ld))
         rw [← hDN] at hlt
         exact absurd hlt (lt_irrefl _)

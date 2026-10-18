@@ -70,16 +70,9 @@ theorem Prop14 {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h
     obtain ⟨BHF, hG_BHF, hB_BHF⟩ := Postulate3 G B (ne_of_between hBGF).symm
     have hF_BHF : OnCircle F BHF :=
       on_circle_of_len_eq hG_BHF hB_BHF (by rw [← hBG, len_symm G B])
-    have hE_BHF : InsideCircle E BHF :=
-      inside_of_between (Or.inr hB_BHF) (Or.inr hF_BHF) hBEF
-    obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hDE
-    obtain ⟨H, hH_BHF, hH_DE, hHED⟩ := line_circle_beyond hE_BHF hE_DE hD_DE hDE
-    /- H lies beyond E from D, on the semicircle away from the rectangle.
-       GH is the side of the triangle used below. -/
-    -- Then, since the straight line BF has been cut into equal segments at G, and into unequal
-    -- segments at E,
     have hlt' : ‖E F‖ < ‖B E‖ := by rw [hEF, len_symm B E]; exact hlt
-    /- G lies between B and E because BE is greater than EF. -/
+    /- G lies between B and E because BE is greater than EF, so E lies between
+       the centre G and F and is within the circle by Definition 15. -/
     have hBGE : Between B G E := by
       have hBF : ‖B F‖ = ‖B G‖ + ‖B G‖ := by
         rw [← len_add_of_between hBGF, ← hBG]
@@ -95,6 +88,14 @@ theorem Prop14 {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h
         have := Magnitude.add_self_lt_add_self h'
         rw [← hBF, hBF'] at this
         exact lt_irrefl _ (lt_trans hlt' (Magnitude.lt_of_add_lt_add_left this))
+    have hE_BHF : InsideCircle E BHF :=
+      InsideCircle.of_between_centre hG_BHF (Or.inr hF_BHF) (between_inner hBGE hBEF)
+    obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hDE
+    obtain ⟨H, hH_BHF, hH_DE, hHED⟩ := line_circle_beyond hE_BHF hE_DE hD_DE hDE
+    /- H lies beyond E from D, on the semicircle away from the rectangle.
+       GH is the side of the triangle used below. -/
+    -- Then, since the straight line BF has been cut into equal segments at G, and into unequal
+    -- segments at E,
     have hEG : E ≠ G := ne_of_between (between_symm hBGE)
     -- the rectangle contained by BE, EF together with the square on EG is equal to the square on
     -- GF. [II. 5]

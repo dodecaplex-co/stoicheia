@@ -87,7 +87,7 @@ theorem Prop20 {A B C E : Point} {ABC : Circle} (hE : Centre E ABC) (hA : OnCirc
     obtain ⟨L, hD_L, hB_L⟩ := Postulate1 D B hDB
     obtain ⟨Y, hY_L, hEYC⟩ := (hEC.2 L hD_L hB_L).exists_between
     have hY_in : InsideCircle Y ABC :=
-      inside_of_between (Or.inl (centre_inside hE)) (Or.inr hC) hEYC
+      InsideCircle.of_between_centre hE (Or.inr hC) hEYC
     have hDYB : Between D Y B := between_of_inside_chord hY_L hD_L hB_L hY_in hD hB hDB
     have hDBE : Triangle D B E := hEC.triangle
     have hDBC : Triangle D B C := hEC.symm.triangle
