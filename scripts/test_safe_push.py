@@ -23,7 +23,9 @@ one commit and runs safe_push.py against that origin:
 - --merge refuses a draft, an unticked or missing required box, red or missing CI, and a
   protected change without its label; reruns the pre-flight for a head it has not seen;
   and merges with a merge commit, deleting the branch, its subject naming the owner
-  GitHub names for the head (issue #41);
+  GitHub names for the head (issue #41); and believes gh's exit 0 only once GitHub says
+  the pull request merged and origin/main holds the merge commit GitHub names, the merge
+  state otherwise unknown, with no revert advised (issue #42);
 - the pre-push hook refuses every push to main and scans a push to any other branch;
 - the review's findings: the harness and the check scripts are origin/main's, an
   allow-list entry the push adds does not count, the heath/ leaves are origin/main's, an
@@ -376,7 +378,11 @@ def main(argv):
         # STOICHEIA_FAKE_GH_MERGE: "fail-before" refuses; "fail-after" merges and then
         # fails, as gh does when it cannot delete the branch; "main-first:<sha>" moves
         # main to <sha> first, as another merge landing at that moment would;
-        # "flag:<path>" makes the file <path> once merged.
+        # "flag:<path>" makes the file <path> once merged. Three exit 0 with no merge on
+        # main that GitHub vouches for (issue #42): "queue" merges nothing, as gh does
+        # when a merge queue or auto-merge takes the pull request to merge later;
+        # "off-main" says merged, naming a merge commit that main does not hold; and
+        # "no-commit" merges, but GitHub names no merge commit.
         how = os.environ.get("STOICHEIA_FAKE_GH_MERGE", "")
         if "--merge" not in args or "--squash" in args or "--rebase" in args:
             return 1
@@ -387,6 +393,9 @@ def main(argv):
         if opt(args, "--match-head-commit") != sha:
             print("head moved", file=sys.stderr)
             return 1
+        if how == "queue":
+            print("Pull request #%d will be added to the merge queue for main when ready" % n)
+            return 0
         if how.startswith("main-first:"):
             subprocess.run(["git", "update-ref", "refs/heads/main", how.split(":", 1)[1]],
                            cwd=ORIGIN, check=True)
@@ -400,12 +409,14 @@ def main(argv):
         merge = subprocess.run(["git", "commit-tree", sha + "^{tree}", "-p", main, "-p", sha,
                                 *message], cwd=ORIGIN, env=env,
                                capture_output=True, text=True, check=True).stdout.strip()
-        subprocess.run(["git", "update-ref", "refs/heads/main", merge, main], cwd=ORIGIN,
-                       check=True)
+        if how != "off-main":
+            subprocess.run(["git", "update-ref", "refs/heads/main", merge, main], cwd=ORIGIN,
+                           check=True)
         if "--delete-branch" in args and how != "fail-after":
             subprocess.run(["git", "update-ref", "-d", "refs/heads/" + pr["headRefName"]],
                            cwd=ORIGIN, check=True)
-        pr["state"], pr["mergedHead"], pr["mergeCommit"] = "MERGED", sha, {"oid": merge}
+        pr["state"], pr["mergedHead"] = "MERGED", sha
+        pr["mergeCommit"] = None if how == "no-commit" else {"oid": merge}
         save(s)
         if how.startswith("flag:"):
             open(how.split(":", 1)[1], "w").close()
@@ -1217,6 +1228,8 @@ def gh_json(ctx, *args):
         raise KeyboardInterrupt("a test interruption")
     if "state,mergeCommit" in args and action == "merge-view-fail":
         raise safe_push.Refusal("`gh pr view` failed: a test failure")
+    if "state,mergeCommit" in args and action == "merge-view-empty":
+        return {}
     return real_gh_json(ctx, *args)
 def gh_run(ctx, *args):
     r = real_gh_run(ctx, *args)
@@ -2072,16 +2085,98 @@ class Merge(Edge):
                                BASE, "--_test-skip-checks", "--merge", "1"], cwd=WORK,
                               env=env or clean_env(), capture_output=True, text=True)
 
-    def test_interrupted_after_gh_merged_is_merged(self):
-        # The re-review: `gh pr merge` exiting 0 is a merge, recorded before GitHub is
-        # asked about it, so an interruption while it is asked is exit 3, "merged".
+    def test_interrupted_after_gh_exits_0_is_unknown(self):
+        # The re-review made an interruption after gh's exit 0 exit 3, never exit 1. Since
+        # issue #42, gh's exit 0 is no merge until GitHub says so, so an interruption while
+        # GitHub is asked is exit 3 with the merge state unknown, not "merged".
         sha = self.opened()
         r = self.driven_merge("merge-view-interrupt")
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 3, out)
-        self.assertIn("Interrupted: interrupted (a test interruption); merged.", out)
+        self.assertIn("Interrupted once `gh pr merge` was run: the merge may have happened",
+                      out)
+        self.assertNotIn("; merged", out)
         self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
-        self.assertIn("; merged", LOG.read_text().splitlines()[-1])
+        self.assertIn("merge state unknown (interrupted", LOG.read_text().splitlines()[-1])
+
+    def test_gh_exiting_0_github_unasked_is_unknown(self):
+        # Issue #42: gh exits 0, and GitHub cannot be asked whether the pull request merged.
+        # gh's exit 0 alone is no merge, so the merge state is unknown, exit 3, though here
+        # it did merge; the run says to look before anything else.
+        sha = self.opened()
+        r = self.driven_merge("merge-view-fail")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertEqual(self.guard(out, "gh pr merge"), "FAIL", out)
+        self.assertIn("The merge may have happened: `gh pr merge` exited 0, and GitHub could "
+                      "not be asked whether #1 merged", out)
+        self.assertNotIn("REFUSED", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+        self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_github_giving_no_state_is_unknown(self):
+        # Issue #42: after gh failed, GitHub answers with no state for the pull request.
+        # That says nothing of the merge, so it is no "nothing was merged", exit 1: the
+        # merge state is unknown, exit 3.
+        self.opened()
+        env = clean_env()
+        env["STOICHEIA_FAKE_GH_MERGE"] = "fail-before"
+        r = self.driven_merge("merge-view-empty", env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("`gh pr merge` failed, and GitHub could not be asked whether #1 merged "
+                      "(it gave no state for #1)", out)
+        self.assertNotIn("nothing was merged", out)
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_gh_exiting_0_without_merging_is_unknown(self):
+        # Issue #42: with a merge queue or auto-merge on, `gh pr merge` exits 0 having only
+        # queued the pull request. GitHub says it is still open, so the merge state is
+        # unknown, exit 3, and no revert is advised: it would name origin/main's last
+        # commit, which is not this merge.
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        env = clean_env()
+        env["STOICHEIA_FAKE_GH_MERGE"] = "queue"
+        r = self.safe_push("--merge", "1", env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertEqual(self.guard(out, "gh pr merge"), "FAIL", out)
+        self.assertIn("The merge state is unknown: `gh pr merge` exited 0, but GitHub says #1 "
+                      "is OPEN, not merged", out)
+        self.assertIn("will be added to the merge queue", out)
+        self.assertIsNone(self.step(out, "main"), out)
+        self.assertNotIn("git revert", out)
+        self.assertNotIn("REFUSED", out)
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), sha)
+        self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_merge_commit_github_names_must_be_on_main(self):
+        # Issue #42: GitHub says merged, but names no merge commit, or one origin/main does
+        # not hold. Nothing on main is known to be this merge, so the merge state is
+        # unknown, exit 3, and no revert is advised, for it would name origin/main's last
+        # commit in place of the merge.
+        for how, why in (("off-main", "as its merge commit, which origin/main ("),
+                         ("no-commit", "names no merge commit")):
+            with self.subTest(how=how):
+                self.setUp()
+                self.opened()
+                self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+                env = clean_env()
+                env["STOICHEIA_FAKE_GH_MERGE"] = how
+                r = self.safe_push("--merge", "1", env=env)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertEqual(self.guard(out, "gh pr merge"), "ok", out)
+                self.assertEqual(self.guard(out, "main"), "FAIL", out)
+                self.assertIn("The merge state is unknown: GitHub says #1 is merged, but it "
+                              "names ", out)
+                self.assertIn(why, out)
+                self.assertNotIn("git revert", out)
+                self.assertNotIn("Merged, but", out)
+                self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
 
     def test_merge_github_cannot_be_asked_about_is_unknown(self):
         # gh fails after merging, and GitHub cannot be asked: the merge may have happened,
