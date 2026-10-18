@@ -792,26 +792,39 @@ def in_lean_line(p, record, book, n):
     return "**In Lean:** " + " · ".join(parts)
 
 
-def proof_cell(p, attached):
-    """The Proof row: the proposition's status, and its porism's and companions'."""
+def proof_cell(p, attached, order=()):
+    """The Proof row: the proposition's status, and its porism's and companions'. The
+    companions that share the proposition's status are named together, in one clause, in
+    the order the review record lists them (`order`, references such as "I.45 apart")."""
     if not p:
         return STATUS["sketched"]
     text = STATUS[p["status"]]
+    same, other = [], []
+    rank = {ref: i for i, ref in enumerate(order)}
+    attached = sorted(attached, key=lambda a: (heath.parse_ref(a["ref"]).kind != "porism",
+                                               rank.get(a["ref"], len(rank))))
     for a in attached:
         r = heath.parse_ref(a["ref"])
-        what = "its porism" if r.kind == "porism" else f"its companion `Prop{r.n}.{r.name}`"
         link = prop_link(a["ref"], r.book)
-        if a["status"] == p["status"]:
-            text += f", and {what}, {link}"
+        if r.kind == "porism":
+            if a["status"] == p["status"]:
+                text += f", and its porism, {link}"
+            else:
+                text += f"; its porism, {link}: {STATUS[a['status']]}"
+        elif a["status"] == p["status"]:
+            same.append(f"`Prop{r.n}.{r.name}` ({link})")
         else:
-            text += f"; {what}, {link}: {STATUS[a['status']]}"
-    return text
+            other.append(f"; its companion `Prop{r.n}.{r.name}`, {link}: {STATUS[a['status']]}")
+    if same:
+        text += f", and its companion{'s' if len(same) > 1 else ''} {and_list(same)}"
+    return text + "".join(other)
 
 
 def field_table(book, n, p, record, attached, docs):
     """The table under "## In Lean": proof, statement, extra hypotheses, argument,
     representation, overlap and the review, each row from facts.json or the record."""
-    rows = [("Proof", proof_cell(p, attached))]
+    order = (record or {}).get("statement", {}).get("companions", [])
+    rows = [("Proof", proof_cell(p, attached, order))]
     if record is None:
         rows.append(("Reviewed", "not yet: the statement has not been read against "
                                  "Euclid's enunciation"))
@@ -971,10 +984,23 @@ def how_to_read(p, record, proof_text=""):
             "listing explain smaller adjustments.")
 
 
+def used_elsewhere(name, own):
+    """Whether a declaration, named as a page lists it (`Prop46.square_eq`,
+    `Fitted.fan`), is used in a Lean file of the edition other than its own: so that a
+    page says "later propositions use" only of what they use. A longer name that merely
+    begins with this one (`Fitted.fan.part` for `Fitted.fan`) does not count."""
+    pat = re.compile(r"(?<![\w.])(?:[\w.]*\.)?" + re.escape(name) + r"(?!\w|\.\w)")
+    for path in sorted((heath.ROOT / "Elements").rglob("*.lean")):
+        if path != own and pat.search(path.read_text()):
+            return True
+    return False
+
+
 def lean_listing(book, n, facts):
     """The Lean of a page: the main theorem open; the lemmas before it folded in one
     <details>, with their names and line count; and the porism, companions and other
-    theorems after it folded in another."""
+    theorems after it folded in another, those that later propositions use named apart
+    from the lemmas only this proposition's proofs use."""
     parts = lean_parts(book, n)
     companions = {f"Prop{n}.{heath.parse_ref(a).name}"
                   for a in facts.get(f"{book}.{n}", {}).get("attached", [])
@@ -1002,21 +1028,31 @@ def lean_listing(book, n, facts):
         porism = [x for x in parts.after_names if x == f"Prop{n}.porism"]
         comp = [x for x in parts.after_names if x in companions]
         rest = [x for x in parts.after_names if x not in porism + comp]
+        own = heath.lean_path(book, n)
+        later = [x for x in rest if used_elsewhere(x, own)]
+        local = [x for x in rest if x not in later]
         what = []
         if porism:
             what.append(f"its porism, {names(porism)}")
         if comp:
             what.append(f"its companion{'s' if len(comp) > 1 else ''}, {names(comp)}")
-        if rest:
-            k = len(rest)
+        if later:
+            k = len(later)
             more = "more " if porism or comp else ""
             what.append(f"{number_word(k)} {more}theorem{'s' if k > 1 else ''} "
-                        f"later propositions use, {names(rest)}")
+                        f"later propositions use, {names(later)}")
+        if local:
+            k = len(local)
+            what.append(f"{number_word(k)} lemma{'s' if k > 1 else ''} for its own "
+                        f"proofs, {names(local)}")
         anchors = "".join(f'<a name="{x.split(".", 1)[1]}"></a>' for x in comp)
         if anchors:
             out += [anchors, ""]
-        out += fold(f"After the theorem, {and_list(what) if what else 'more Lean'} "
-                    f"({lines(parts.after)})", parts.after)
+        if len(what) > 1 and any(" and " in w or ", " in w.split(", ", 1)[1] for w in what):
+            summary = "; ".join(what[:-1]) + "; and " + what[-1]
+        else:
+            summary = and_list(what) if what else "more Lean"
+        out += fold(f"After the theorem, {summary} ({lines(parts.after)})", parts.after)
     return "\n".join(out).rstrip("\n")
 
 

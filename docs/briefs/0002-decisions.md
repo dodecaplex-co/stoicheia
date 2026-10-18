@@ -631,3 +631,13 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+- **Pages name what follows a theorem truly.** [`scripts/render.py`](../../scripts/render.py)
+  called every declaration after a theorem that is neither its porism nor a companion one
+  of the "theorems later propositions use". With stage 2's companions in the edition, that
+  would have covered `Fitted.fan`'s fourteen helpers on I.45's page and
+  `Prop14.area_pos` on II.14's, which no later proposition uses. The listing now says
+  "later propositions use" only of a declaration that another Lean file of the edition
+  uses, and calls the rest lemmas for the proposition's own proofs; the Proof row names
+  the companions together, in the order the review record lists them. It changes what the
+  page generator writes and nothing it checks; no page on main changes, since every such
+  label there is true (#94, found in the review of brief 0007 and of stage 2's move).
