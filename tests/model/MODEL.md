@@ -454,41 +454,44 @@ this run suggests that one should be.
 
 The evidence here is strong, but it is not a proof. The proof is to be a Lean model of
 the axioms, begun on 18 October 2026
-([#73](https://github.com/jackChallis/stoicheia/issues/73)) in `model/`, a Lake package of
-its own in this repository, with a pinned Mathlib and a CI job of its own. Stoicheia
-itself stays plain Lean: nothing in the main library imports the model. One repository
-keeps the laws, their reading in the plane and the proofs that the reading satisfies
-them at a single revision, as Astra advised, with our thanks. The model has four parts.
+([#73](https://github.com/jackChallis/stoicheia/issues/73)) in a separate package,
+`model/`: a Lake package of its own in this repository, with a pinned Mathlib, which is
+to land in its own pull request, with a required CI job of its own once it builds.
+Stoicheia itself stays plain Lean: nothing in the main library will import the model. One
+repository will keep the laws, their reading in the plane and the proofs that the reading
+satisfies them at a single revision, as Astra advised, with our thanks. The model is to
+have four parts.
 
 1. **The words as a signature.** Today the 17 words are `opaque` constants and the
    axioms are `axiom`s about them, so nothing can be plugged in for them. The model
-   states the same words as the fields of a Lean structure, the carriers of the
+   will state the same words as the fields of a Lean structure, the carriers of the
    magnitudes with their zero, addition and order among them, and the laws as a
-   proposition about any such structure. The laws are generated from the elaborated
-   declarations themselves, not from their printed text, and the translation is checked:
+   proposition about any such structure. The laws will be generated from the elaborated
+   declarations themselves, not from their printed text, and the translation checked:
    specialized back to the original words, each law must be exactly the locked
    statement, and no word of the project may be left untranslated.
-2. **A plane instance, with Mathlib.** The package reads points as
+2. **A plane instance, with Mathlib.** The package will read points as
    `EuclideanSpace ℝ (Fin 2)`, lines as its one-dimensional affine subspaces, circles as
    a centre and a positive radius, magnitudes as `NNReal`, length as `dist`, the area by
    the determinant, and `∟` as π/2. One care: Mathlib's unoriented angle
    `EuclideanGeometry.angle` is π/2 when a point is repeated, and our model needs 0
-   there, so the instance defines the angle by cases.
+   there, so the instance will define the angle by cases.
 3. **Every law of the lock proved for that instance**, degenerate cases included, each
    one the locked statement, with no axiom of the project and no `sorryAx` beneath the
-   proofs. The hardest laws come first, since they may shape the representation: where
-   circles meet, and on which side; angle addition, both ways; the side on which
+   proofs. The hardest laws are to come first, since they may shape the representation:
+   where circles meet, and on which side; angle addition, both ways; the side on which
    Postulate 5's lines meet; superposition, reflections included; the area rules; and
    the finite `avoid` lists.
 4. **The lock's hash tying them**, as [lock.sha256](lock.sha256) does here, so that any
-   change to an axiom breaks the model's build until the model is repaired.
+   change to an axiom will break the model's build until the model is repaired.
 
 When the model is complete, Lean will check that the ordinary Euclidean plane satisfies
 every law in that revision's foundation. That establishes a model relative to Lean's
 logical foundations and Mathlib's construction of the real numbers; it does not
 establish that every formal statement captures Euclid's intended meaning. A hyperbolic
-instance of every law but Postulate 5, planned after the Euclidean one, would make the
-independence of Postulate 5 from the other laws a theorem too.
+instance of every law but Postulate 5, with Postulate 5 proved false there, planned after
+the Euclidean one, would make the independence of Postulate 5 from the other laws a
+theorem too.
 
 ## What this shows, and what it does not
 

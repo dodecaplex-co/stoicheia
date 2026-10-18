@@ -383,12 +383,14 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The 87 axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of them were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| A formal model (in progress, [#73](https://github.com/jackChallis/stoicheia/issues/73): `model/`, a Lake package of its own in this repository, with a pinned Mathlib) | When complete, every law of the lock, generated from the elaborated declarations with the translation checked, proved in the ordinary plane, relative to Lean's logic and Mathlib's real numbers, and tied to the lock so that any change to an axiom breaks it. Until then, nothing: [MODEL.md](../tests/model/MODEL.md#what-this-shows-and-what-it-does-not) says what may be claimed meanwhile. | That the formal statements capture Euclid's meaning. |
+| A formal model (in progress, [#73](https://github.com/jackChallis/stoicheia/issues/73): being built in `model/`, a Lake package of its own in this repository, with a pinned Mathlib, to land in its own pull request) | When complete, every law of the lock, generated from the elaborated declarations with the translation checked, proved in the ordinary plane, relative to Lean's logic and Mathlib's real numbers, and tied to the lock so that any change to an axiom breaks it. Until then, nothing: [MODEL.md](../tests/model/MODEL.md#what-this-shows-and-what-it-does-not) says what may be claimed meanwhile. | That the formal statements capture Euclid's meaning. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of
 the foundations, nor the necessity of an axiom, nor the independence of the parallel
-postulate, nor that the Lean means what Euclid meant. A claim that a result holds without the
-postulate names its evidence (an interpretation in which the other axioms hold and the
-postulate fails) and its kind, numerical until a proof replaces it, and even then the pages
-keep "this proof uses".
+postulate, nor that the Lean means what Euclid meant. A claim that a result cannot be
+proved without the postulate names its evidence and its kind. The evidence is an
+interpretation in which the other axioms hold and the result's own statement fails, its
+hypotheses met; that the postulate fails there is not enough, and a result whose statement
+stays true there needs a different analysis. The kind is numerical until a proof replaces
+it, and even then the pages keep "this proof uses".

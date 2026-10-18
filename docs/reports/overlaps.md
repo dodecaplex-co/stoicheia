@@ -110,10 +110,13 @@ twice.
 
 I.8 calls the rule itself, and I.20 rests on it through I.5 and I.4. Our proof is Euclid's
 construction: a triangle from three straight lines (I.22), and I.8 for its angle. The
-certificate lets only I.4 and I.8 use superposition, as System E asks. `Audit.I_23` uses
-superposition, with Postulate 1, Generalities 1, Metric 1, Metric 4, Points 1 and Same
-side 3 to name the ray and the side: eight axioms in all, since System E's Metric 1 is
-two of ours.
+certificate lets only I.4 and I.8 use superposition. That limits where the rule is used,
+not what it can do: as a construction principle it is stronger than System E's restricted
+inference rule, whose placed points never become constructed ones
+([Superposition.lean](../../Elements/Foundations/Tacit/Superposition.lean)).
+`Audit.I_23` uses superposition, with Postulate 1, Generalities 1, Metric 1, Metric 4,
+Points 1 and Same side 3 to name the ray and the side: eight axioms in all, since System
+E's Metric 1 is two of ours.
 
 #### III.1 Por.
 
