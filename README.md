@@ -16,7 +16,7 @@ For every proposition of Books I to III you get:
 - **A certificate**, computed by Lean itself, of exactly what the proof rests on: which postulates, which common notions, and which of the many things Euclid takes for granted without saying so.
 - **A mishnah**: commentary on what Euclid assumed, what Lean made us say out loud, and how the same result looks with modern tools.
 
-The proofs use no coordinates, real numbers or complex numbers; only the last paragraph of each commentary, "The modern way", reaches for them. The geometry is the geometry Euclid wrote, the kind Lincoln would recognise. Lengths, angles and areas are *magnitudes*, which can be added and compared and nothing more, just as in the *Elements*.
+The proofs use no coordinates, real numbers or complex numbers; only "The modern way", a paragraph that closes a commentary where one helps, reaches for them. The geometry is the geometry Euclid wrote, the kind Lincoln would recognise. Lengths, angles and areas are *magnitudes*, which can be added and compared and nothing more, just as in the *Elements*.
 
 ## Where things stand
 
