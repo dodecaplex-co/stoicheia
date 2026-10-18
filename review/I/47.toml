@@ -4,7 +4,7 @@
 # outward squares are 'the squares on' the sides of every right-angled triangle.
 [statement]
 scope = "full"
-note = "Proved for squares standing outward, as Euclid describes them; inward squares are equal to these (`Prop46.square_eq`), and `Prop47.sq` states it of any."
+note = "Proved for squares standing outward, as Euclid describes them; inward squares on the same sides are equal to these, as proved after I.46."
 fingerprint = "sha256:d6269e6f56742e6b"
 
 [route]
@@ -24,7 +24,7 @@ note = "Euclid reads off his figure that C lies within the angle DBA and A withi
 [[passage]]
 at = "And the square BDEC is described on BC"
 kind = "carried"
-note = "The statement is about the three given squares, so nothing remains to do; squares on one straight line are equal whichever side they stand on (`Prop46.square_eq`, `Prop47.sq`)."
+note = "The statement is about the three given squares, so nothing remains to do; squares on one straight line are equal whichever side they stand on, as proved after I.46; Book II restates I.47 for the squares on straight lines, as II.9 to II.14 use it."
 
 [review]
 stage = "exceptions"
