@@ -482,3 +482,12 @@ findings:
   `IDEA_LETTERS_REQUIRED`, is `False` for now: S21 holds a figure only once it carries a
   letter, and D14 lists the figures with none yet. The figures are lettered in a change of
   their own, and the switch is turned on once every figure passes S21.
+- **Heath's letters at a glance: required.** Every figure at a glance now carries Heath's
+  letters, 598 on the 99 figures of Books I to III, and passes S21, so the switch
+  `IDEA_LETTERS_REQUIRED` in [`scripts/check_style.py`](../../scripts/check_style.py) is
+  `True`: S21 holds every figure at a glance, and D14 is empty. [STYLE](../STYLE.md),
+  sections 2, 7 and 8, say so now. The switch is never turned back to quiet a figure: the
+  figure is lettered. This supersedes the line "no letters in idea figures" of
+  [brief 0005](0005-astra-review.md), in stage 1b's list of what `scripts/check_style.py`
+  enforces, and "the idea figures have no letters" in item 7 of its planned acceptance
+  checklist (stage 6).
