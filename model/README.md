@@ -12,10 +12,10 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and the first
 laws, translated by hand for now and proved in the plane: the four circle-intersection
-rules, the hardest group, and the eight magnitude laws, which are easy in the plane but
-test the translation where it is most delicate. That is 12 of the 87. The rest of the
-laws, and the generator that will translate them from the library's own declarations, are
-to come. Until every locked law is proved here, the evidence that the
+rules, the first of the hard groups, and the eight magnitude laws, which are easy in the
+plane but test the translation where it is most delicate. That is 12 of the 87. The rest
+of the laws, and the generator that will translate them from the library's own
+declarations, are to come. Until every locked law is proved here, the evidence that the
 laws have a model remains MODEL.md's hand arguments and numerical tests, and this package
 is a milestone in progress.
 
@@ -142,8 +142,9 @@ declarations, not from their printed text.
    constructors by `Model.Kind`'s. A project definition the law reaches, such as
    `Triangle`, `Collinear`, `CirclesMeet`, `IsRightAngle` or the magnitude instances,
    among them the present definition of `≤`, is translated the same way, once, into a
-   definition over `S` in dependency order: these are the 37 words of the lock's
-   vocabulary that the axioms reach. Lean's own constants (`Eq`, `Ne`, `And`, `Or`,
+   definition over `S` in dependency order. The axioms reach 37 words of the lock's
+   vocabulary: the seventeen opaque words, `Kind` and its three constructors, and 16
+   such definitions. Lean's own constants (`Eq`, `Ne`, `And`, `Or`,
    `Not`, `Exists`, `List`, `Membership.mem`, `LT.lt`, `HAdd.hAdd`, `OfNat.ofNat` and the
    like) stay as they are. **Any other constant of the project is an error**, so nothing
    untranslated can reach the model.
@@ -199,9 +200,11 @@ the original means. Three checks do that.
   proposition, up to unfolding definitions; a dropped guard, two swapped arguments or a
   change in the order of the binders fails it, and the build with it. (Both were tried:
   Intersection 4 in System E's printed form, with "on or inside", and Intersection 5 with
-  its two points exchanged.) Today this covers the 12 laws translated by hand and the 11
-  words they reach, the eight behind the magnitudes and three more; the generator will
-  write one such line for each of the 87 laws and 37 words.
+  its two points exchanged.) Today this covers the 12 laws translated by hand and 11
+  defined words: the eight behind the magnitudes (these laws reach `Magnitude` and the
+  instances for `+`, `0` and `<`; `Length`, `Angle`, `Area` and `≤` are checked ahead of
+  the laws that use them) and the three the circle laws reach. The generator will write
+  one such line for each of the 87 laws and each defined word they reach.
 - **The round trip, by syntax.** The generator also translates each result back and
   compares it with the original expression exactly, which is stricter than the kernel's
   check: it notices a translation that is right only after unfolding, and a binder made
@@ -232,12 +235,12 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 
 Then any change to an axiom, or to a word an axiom reaches, fails the job until someone
 has brought the model up to date: the translation, its checks, and the proofs in the plane
-of the laws that changed. Until the job is added, nothing runs this comparison. The round-trip checks then tie each translated law to the
-declaration itself, more tightly than the hash can; the hash covers what the generator does
-not yet reach. A law proposed for the foundations is proved here before it lands:
-`exists_centre`, proposed in issue #59, is already proved in the plane
-([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)), and its round-trip check
-joins `Check/Hand.lean` in the change that declares it.
+of the laws that changed. Until the job is added, nothing runs this comparison. The
+round-trip checks tie each translated law to the declaration itself, more tightly than the
+hash can; the hash covers the laws the round trips do not yet reach. A law proposed for
+the foundations is proved here before it lands: `exists_centre`, proposed in issue #59, is
+already proved in the plane ([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)),
+and its round-trip check joins `Check/Hand.lean` in the change that declares it.
 
 ## What the proofs rest on
 
@@ -257,8 +260,10 @@ Three things make sure of that.
 - **The library's rules on commands.** `Model/` uses none of the commands the library
   forbids ([FORMALIZATION](../docs/FORMALIZATION.md#7-the-foundations-and-the-policies-the-checks-enforce),
   section 7: `native_decide`, `implemented_by`, `unsafe` and the rest), and the audit
-  catches a `sorry` beneath any listed proof. The generator is a Lean program and needs
-  metaprogramming, so it will live in `Check/`, apart from the proofs.
+  catches a `sorry` beneath any listed proof. That `Model/` and `Check/` use none of those
+  commands rests on review today: `check_fidelity.py` scans `Elements/` alone, and a
+  `set_option debug.…` would not show in `#print axioms`. The generator is a Lean program
+  and needs metaprogramming, so it will live in `Check/`, apart from the proofs.
 
 When every law is proved, the claim this package supports will be: Lean checks that the
 ordinary Euclidean plane satisfies every law in this revision's foundations, relative to
