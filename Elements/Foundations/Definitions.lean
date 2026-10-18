@@ -5,8 +5,8 @@ import Elements.Foundations.CommonNotions
 
 Most of Euclid's twenty-three definitions name things (a point, a line, a
 surface, an angle, a figure). The ones that do real work in the proofs are
-written out here, with two that no proof uses yet, the isosceles and
-right-angled triangles. Definitions 1–9, 13, 14, 16 and 17–18 live as
+written out here, with two that no statement or proof uses yet, the isosceles
+and right-angled triangles. Definitions 1–9, 13, 14, 16 and 17–18 live as
 docstrings on the words in `Words.lean` or wait for the later books that use
 them.
 
