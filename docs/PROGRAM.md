@@ -174,7 +174,7 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 - **Incommensurables** (Book X): X.1 prototyped first.
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
 - **A formal model** of the axioms in Lean with Mathlib, as a separate package, defined
-  in [MODEL.md](../tests/model/MODEL.md#a-formal-model-a-later-milestone). Until then the
+  in [MODEL.md](../tests/model/MODEL.md#a-formal-model-in-progress). Until then the
   evidence is numerical: [tests/model](../tests/model/), in CI, with the hyperbolic check.
 - **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
   axioms' statements or the entries' statements reach: 61, the 37 of the axioms and 24

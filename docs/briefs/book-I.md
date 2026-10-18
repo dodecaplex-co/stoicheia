@@ -53,7 +53,11 @@ Hypotheses come from the setting-out, conclusions from "I say that".
 - **Right angles.** Definition 10 is a predicate, and Postulate 4 makes every right angle
   equal to `∟`, so that each use of Postulate 4 shows on the certificate.
 - **Superposition** is one rule, after LeanEuclid's form of System E's two, allowed in I.4
-  and I.8 alone.
+  and I.8 alone. That limits where it is used, not what it can do: as a construction
+  principle it is stronger than System E's restricted inference rule
+  ([Superposition.lean](../../Elements/Foundations/Tacit/Superposition.lean)), and a
+  restricted rule is being prototyped
+  ([#75](https://github.com/jackChallis/stoicheia/issues/75)).
 - **What the figure shows** is a tacit rule, a named axiom, from System E: an Intersection
   rule says when straight lines and circles must meet, and an Intersections rule lets a
   proof take a point where they do.

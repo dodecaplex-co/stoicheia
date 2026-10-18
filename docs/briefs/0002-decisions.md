@@ -491,3 +491,113 @@ findings:
   [brief 0005](0005-astra-review.md), in stage 1b's list of what `scripts/check_style.py`
   enforces, and "the idea figures have no letters" in item 7 of its planned acceptance
   checklist (stage 6).
+- **The voice rules loosened, and `$…$` in "the modern way".** On 18 October, after
+  Argon's second review of the book-III release, the owner decided, with thanks to Argon
+  ([#70](https://github.com/jackChallis/stoicheia/issues/70)): drop the reports of length,
+  paragraph count and bold leads; make "the modern way" optional; let the reading lines
+  vary; allow `$…$` in "the modern way"; write angles in radians throughout; and give the
+  letters one style in the text and in the figures. [STYLE](../STYLE.md) and its script
+  change in stage 5, in a pull request of their own, with the `$…$` rendering checked on
+  GitHub and a decisions entry naming each file it changes; the language and notation
+  passes ([#46](https://github.com/jackChallis/stoicheia/issues/46),
+  [#48](https://github.com/jackChallis/stoicheia/issues/48)) then rewrite the pages under
+  the new rules. Until that pull request lands, STYLE's present rules hold.
+- **The Lean notation, settled once before Book IV.** On 18 October, after the same
+  review, the owner decided, with thanks to Argon
+  ([#69](https://github.com/jackChallis/stoicheia/issues/69)): settle the notation in a
+  short brief (keep, rename, or add readable notation) and apply it once, between the
+  consolidation release and Book IV, so that the records of Books I to III are re-stamped
+  once. Argon's examples: `‖A B‖` reads as a norm; `△ A B C` is an area while
+  `Triangle A B C` says that the points are not in line; `circumference` and `standing`
+  take their arguments in different orders; circles are named `ABCD` beside points A, B,
+  C, D; and Euclid's straight line C is written as points `C₁ C₂`. The old names stay as
+  deprecated aliases for one release, so that nobody's code breaks without warning, and
+  [FORMALIZATION](../FORMALIZATION.md)'s vocabulary changes with them.
+- **The reviews of 18 October, published with responses.** The owner approved, on 18
+  October, `docs/reports/outside-review-02.md`
+  ([#71](https://github.com/jackChallis/stoicheia/issues/71)): Astra's two answers, Argon's
+  two reviews of the book-III release, and a cold Claude review with its scorecard and ten
+  fixes. Each reviewer is credited warmly, each finding is answered with its issue or pull
+  request, and a claim that does not hold is answered plainly and politely. It is merged
+  after the owner has read it, with every response linking a real issue or pull request.
+- **Every circle has a centre: approved, to land after #40 and brief 0008.** On 18
+  October, after Astra's third answer
+  ([#59](https://github.com/jackChallis/stoicheia/issues/59)), the owner approved the rule
+  as Astra proposed it, with warm thanks to Astra: one axiom,
+  `exists_centre (α : Circle) : ∃ O : Point, Centre O α`, uniqueness keeping its own axiom,
+  `centre_unique`. It is a real addition, not a restatement: Astra's hand argument adds to
+  the plane one circle with no centre, and every present law still holds there; and System
+  E itself allows a circle to be given without its centre (§4.2). III.1 keeps its
+  construction-rich conclusion, the centre F found by bisecting the perpendicular chord,
+  with the bisections and the perpendicular it certifies, and drops its existence
+  hypothesis; an entry point beside it takes only the circle and chooses two points on it.
+  Statements that only assume a centre exists drop that hypothesis; those that name the
+  centre keep it, since the existence of some centre does not identify the point named;
+  and the existential centre clauses inside definitions such as `EqualCircles` stay, since
+  their witnesses compare the radii. III.1 gains an overlap note for bare centre
+  existence, which the rule assumes and the construction goes beyond, and its page says,
+  in Astra's words: "Our foundations assume that every circle has a centre. This
+  proposition proves that Euclid's construction finds it: bisecting the perpendicular
+  chord gives the centre F." The tag `centre-given` is retired where it only explained the
+  missing rule; any other restriction a record carries stays. Nothing lands yet: the axiom
+  comes only in the coordinator's own pull request, after
+  [#40](https://github.com/jackChallis/stoicheia/issues/40) (the model's law names as a
+  pinned data file, without which no new axiom can land) and brief 0008 (the statement
+  changes, approved before any proof changes). Until then the hypothesis stays, disclosed
+  as now.
+- **Superposition: a restricted rule prototyped now, our rule disclosed meanwhile.** On 18
+  October, after Astra's third answer
+  ([#75](https://github.com/jackChallis/stoicheia/issues/75)), the owner chose Astra's
+  course, with thanks to Astra: prototype a genuinely restricted rule now, land it only
+  when it is complete, and meanwhile say plainly that our rule is stronger, as a
+  construction principle, than System E's. The limit to I.4 and I.8 controls where
+  `Tacit.superposition` is used, not its strength: it returns the placed corners as
+  points. Astra checked in Lean that the tempting replacements, a continuation into any
+  proposition or into conclusions with no fresh points, give back the existential rule,
+  the second by way of classical logic; so the prototype is a checked inference over
+  explicitly represented geometric formulas and derivations, in which a hypothetical
+  placement proves facts about the triangles already given and never returns its corners
+  as constructed points. It lands when it is complete: the checked inference itself; I.4
+  and I.8 proved from it, with their statements and Euclid's coincidence arguments; a
+  restriction theorem, that the represented derivations cannot export a placed corner or
+  construct inside the restricted branch; and the model's justification of the rule,
+  reflections included. A claim that I.2, I.3 or I.23 no longer follow from the rule, if
+  one is made, is scoped to a stated fragment of the rules and proved, not read off a
+  failed compilation. Until then the edition says, in Astra's words: "Our superposition
+  axiom asserts that a congruent triangle can be placed on a given ray and side. The
+  edition permits its direct use only in I.4 and I.8. This axiom is stronger as a
+  construction principle than System E's restricted inference rule." Its home is the
+  module docstring of
+  [`Elements/Foundations/Tacit/Superposition.lean`](../../Elements/Foundations/Tacit/Superposition.lean),
+  where it replaces the sentence that the checks' limit respects System E's restriction;
+  the axiom, its statement and the lock are unchanged, and the docstring keeps its length,
+  so the pages' links to the axiom's line still hold. Book I's introduction, I.4's
+  mishnah, the README, [FORMALIZATION](../FORMALIZATION.md), section 3, and
+  [Book I's brief](book-I.md) point to it.
+- **The formal model: begun now, in `model/`.** On 18 October, after Astra's third answer
+  ([#73](https://github.com/jackChallis/stoicheia/issues/73)), the owner chose to start
+  the formal model now, as Astra advised, with thanks to Astra: in `model/`, a Lake
+  package of its own in this repository, with a pinned Mathlib and a CI job of its own,
+  while the main library stays plain Lean. The laws are generated from the elaborated
+  declarations by a structural translation, and the translation is checked: specialized
+  back to the original words, each law must be exactly the locked statement, no word of
+  the project may stay untranslated, and the vocabulary is pinned with the statements.
+  The model is a separate parameterized theory, a signature of the words (the magnitudes'
+  carriers, zero, addition and order among them) with its laws, and the plane as
+  `EuclideanSpace ℝ (Fin 2)`; the proofs of Books I to III are unchanged, and no axiom of
+  the project and no `sorryAx` may lie beneath the model's proofs. The hardest laws come
+  first: where circles meet, and on which side; angle addition, both ways; the side on
+  which Postulate 5's lines meet; superposition, reflections included; the area rules;
+  and the finite `avoid` lists. A hyperbolic model follows the Euclidean one. Until the
+  model is complete, the edition claims what Astra gave: "The axioms have an informal
+  interpretation in the ordinary plane, supported by numerical and exact finite tests. A
+  kernel-checked proof that this interpretation satisfies every locked law is in
+  progress." So [`tests/model/MODEL.md`](../../tests/model/MODEL.md), a protected file,
+  softens to that the conclusions of its hyperbolic section, of its milestone section, now
+  "A formal model: in progress", and of "What this shows, and what it does not", and says
+  plainly that numerical tests establish neither consistency nor non-derivability; the
+  README's table of checks and [FORMALIZATION](../FORMALIZATION.md), sections 3 and 9,
+  follow, and [PROGRAM.md](../PROGRAM.md)'s link to the milestone moves with its heading.
+  A release made before the model is complete names the milestone as incomplete. This
+  supersedes "a later milestone" in the 17 October entry "The model harness lives in the
+  repository".
