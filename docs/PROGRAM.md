@@ -138,6 +138,11 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   proved with no new axiom, including `Fitted.fan` (#14 to #18). Next is the move into
   `Elements/`: the words into their homes with the lock and a decisions entry, the
   companions beside their propositions, and the records, pages and gap entries (#19).
+- **Stage 3's proofs** are done in `Staging/Stage3`, every statement of brief 0006's stage 3
+  proved with no new axiom: placement in all its cases, with superposition not among its
+  direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
+  route, III.26 and III.28 upgraded, and `Arcs.lean` (#20 to #24). Next is the migration
+  into `Elements/`, in brief 0006's seven steps (#25).
 - **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull

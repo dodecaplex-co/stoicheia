@@ -4,9 +4,9 @@ import Staging.Stage3.Definitions
 /-!
 # Stage 3, staged: Book Zero facts for arcs
 
-Statements before proofs (brief 0006, stage 3). Facts every arc needs, proved (or to be
-proved) from the foundations alone; destined for a new Book Zero file,
-`Elements/Figure/Chords.lean`, which cites no proposition.
+Statements frozen before their proofs (brief 0006, stage 3). Facts every arc needs, proved
+from the foundations alone; destined for a new Book Zero file, `Elements/Figure/Chords.lean`,
+which cites no proposition.
 
 An arc is named by a point on its side, which need not be on the circle: III.26 and III.28
 name their circumferences by such points. `Arc.congr_side` says that only the side matters,
@@ -39,12 +39,45 @@ theorem chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnC
 /-- **A straight line from within the base meets the arc.** For a drawn arc, a ray from a point
 X between the ends of the base, through a point Y on the arc's side, meets the arc.
 
-To be proved: X is within the circle (System E, Circle 2), so the straight line XY, produced
+Proved: X is within the circle (System E, Circle 2), so the straight line XY, produced
 beyond X backwards and then forwards, meets the circle on Y's side (Intersections 5, with
 Pasch 3 for the side). III.25's construction core reads this off the segment it is given. -/
 theorem Arc.meets {a : Arc} (ha : a.Drawn) {X Y : Point} (hX : Between a.B X a.C)
     (hY : SameSideOf Y a.K a.B a.C) : ∃ Q : Point, OnArc Q a ∧ OnRay Q X Y := by
-  sorry
+  /- X lies within the circle, since it is between the ends of the base (System E,
+     Circle 2), and Y is off the straight line BC. -/
+  have hX_in : InsideCircle X a.circle :=
+    inside_of_between (Or.inr ha.2.1) (Or.inr ha.2.2.1) hX
+  obtain ⟨L, hB_L, hC_L⟩ := Postulate1 a.B a.C hY.1
+  have hX_L : OnLine X L := on_line_of_between_ends hX hB_L hC_L
+  have hY_L : ¬ OnLine Y L := hY.triangle.off_line hB_L hC_L
+  have hXY : X ≠ Y := fun e => hY_L (e ▸ hX_L)
+  /- Draw XY, and produce it backwards, beyond X away from Y, to meet the circle at A
+     (Intersections 5). -/
+  obtain ⟨N, hX_N, hY_N⟩ := Postulate1 X Y hXY
+  obtain ⟨A, hA, hA_N, hAXY⟩ := line_circle_beyond hX_in hX_N hY_N hXY.symm
+  /- A is off BC: otherwise XY and BC would share A and X, and Y would lie on BC. So BC,
+     through X, separates A from Y (Pasch 3). -/
+  have hAX : A ≠ X := fun e => inside_not_on hX_in (e ▸ hA)
+  have hA_L : ¬ OnLine A L := fun hA_L =>
+    hY_L ((line_unique hAX hA_N hX_N hA_L hX_L) ▸ hY_N)
+  have hAY : OppositeSidesOf A Y a.B a.C :=
+    OppositeSidesOf.of_line hY.1 hB_L hC_L ⟨hA_L, hY_L, pasch3 hAXY hX_L⟩
+  /- Produce AX forwards, beyond X, to meet the circle at Q (Intersections 5). Q is off
+     BC for the same reason. -/
+  obtain ⟨Q, hQ, hQ_N, hQXA⟩ := line_circle_beyond hX_in hX_N hA_N hAX
+  have hQX : Q ≠ X := fun e => inside_not_on hX_in (e ▸ hQ)
+  have hQ_L : ¬ OnLine Q L := fun hQ_L =>
+    hY_L ((line_unique hQX hQ_N hX_N hQ_L hX_L) ▸ hY_N)
+  /- BC separates Q from A too (Pasch 3), so Q is on Y's side, hence on K's side. -/
+  have hQA : OppositeSidesOf Q A a.B a.C :=
+    OppositeSidesOf.of_line hY.1 hB_L hC_L ⟨hQ_L, hA_L, pasch3 hQXA hX_L⟩
+  have hQY : SameSideOf Q Y a.B a.C := hQA.symm.sameSideOf hAY
+  /- Q lies on the arc and on XY. X cannot lie between Q and Y, since they are on one
+     side of BC (Pasch 3); so Q lies on the ray from X through Y. -/
+  exact ⟨Q, ⟨hQ, Or.inl (hQY.trans hY)⟩,
+    hXY, hQX, ⟨N, hX_N, hY_N, hQ_N⟩,
+    fun hQXY => pasch3 hQXY hX_L (hQY.sameSide hB_L hC_L)⟩
 
 /-- **Only the side names an arc.** If K and K' are on one side of BC, the arc of a circle
 from B to C on the side of K has the same points as the arc on the side of K', and the
