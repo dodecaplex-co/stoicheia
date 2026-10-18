@@ -295,13 +295,13 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   it: in a Book III file a bare `Prop4` means III.4.
 - **Staging,** `Staging/`, holds the statements that a stage of brief 0005 adds or
   changes, each with `sorry`, until it is proved ([WORKFLOW.md](WORKFLOW.md), section 2).
-  Its files import the modules of `Elements` they need. `lake build Staging` builds every file under `Staging/`,
-  whether or not the root `Staging.lean` imports it, so a staged file need not be added to
-  the root; nothing outside `Staging/` imports them, so nothing staged reaches a proof or
-  the certificate. `Staging/.gitkeep` keeps the directory, which the build reads, when
-  nothing is staged. A changed main theorem is staged as `Elements.Book<B>.Staging.PropN`,
-  since the `PropN` it replaces is still declared in `Elements`; it takes the name
-  `Elements.Book<B>.PropN` when it moves.
+  Its files import the modules of `Elements` they need. `lake build Staging` builds every
+  file under `Staging/`, whether or not the root `Staging.lean` imports it, so a staged
+  file need not be added to the root; nothing outside `Staging/` imports them, so nothing
+  staged reaches a proof or the certificate. `Staging/.gitkeep` keeps the directory, which
+  the build reads, when nothing is staged. A changed main theorem is staged as
+  `Elements.Book<B>.Staging.PropN`, since the `PropN` it replaces is still declared in
+  `Elements`; it takes the name `Elements.Book<B>.PropN` when it moves.
 
 Moving a theorem or an axiom behind a helper does not remove its logical contribution: the
 certificate walks through helpers and shared steps, and the review reads transitive

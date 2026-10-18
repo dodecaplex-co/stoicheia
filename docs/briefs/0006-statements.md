@@ -58,11 +58,13 @@ Jack Challis decided three things on 17 October 2026, and this brief is written 
 
 - **Statements before proofs live in `Staging/`,** a library of their own
   (`[[lean_lib]] name = "Staging"` in `lakefile.toml`, with a comment like Audit's). It is
-  not in `defaultTargets`; `lake build Staging` checks it, `sorry` warnings and all. Its
-  files import the modules of `Elements` they need, mirroring each file's future home, so
-  that the order of proof, in which nothing cites a later proposition, holds in `Staging/`
-  too; `Sums.lean`, `Stage2/BookI/Prop40.lean` and `Foot.lean` import all of `Elements`
-  until they move. Nothing imports the staged files.
+  not in `defaultTargets`; `lake build Staging` checks it, `sorry` warnings and all. Most
+  of its files import only the modules of `Elements` they need, mirroring their future
+  homes. Three, `Sums.lean`, `Stage2/BookI/Prop40.lean` and `Stage4/Foot.lean`, import all
+  of `Elements`, and the files that import them see it too. So the order of proof, in
+  which nothing cites a later proposition, is not enforced inside `Staging/`: it is checked
+  when each statement moves into `Elements/`, where `check_fidelity.py` refuses a later
+  citation. Nothing imports the staged files.
 - **Each staged declaration has a docstring in plain words,** and a companion says which
   proposition it accompanies and its certificate name ("companion of I.40").
 - **A restated main theorem** is staged as `Elements.Book<book>.Staging.PropN`, so as not to
