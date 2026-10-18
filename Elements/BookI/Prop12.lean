@@ -57,9 +57,9 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
   have hHE : H ≠ E := (ne_of_between hEHG).symm
   have hCH : C ≠ H := fun e => hC_AB (e ▸ hH_AB)
   -- and let the straight lines CG, CH, CE be joined. [Post. 1]
-  /- Lean needs only the points; the straight lines are drawn for the eye. It
-     does need the two triangles they make with HG and HE: C is off AB, and H, G,
-     E are on it. -/
+  /- Our proof uses only the points; the straight lines are drawn for the eye.
+     It does use the two triangles they make with HG and HE: C is off AB, and H,
+     G, E are on it. -/
   have hHGC : Triangle H G C := Triangle.of_line hH_AB hG_AB hHG hC_AB
   have hHEC : Triangle H E C := Triangle.of_line hH_AB hE_AB hHE hC_AB
   -- I say that CH has been drawn perpendicular to the given infinite straight line AB from the

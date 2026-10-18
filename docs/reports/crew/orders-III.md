@@ -179,8 +179,8 @@ lake build Elements.BookIII.PropNN
 lake env lean Certificate/Facts.lean && python3 scripts/check_fidelity.py
 rsvg-convert -w 800 figures/III/NN.svg -o "${TMPDIR:-/tmp}/figNN.png"   # then look at it
 ```
-Then STYLE §6, with `$HEATH_OCR` at
-`/private/tmp/claude-501/-Users-johnchallis/68e6b57d-6355-42a6-8303-c463406f082f/scratchpad/heath-src/heathV2.ocr.txt`
+Then STYLE §6, with `$HEATH_OCR` at `heath-src/heathV2.ocr.txt` in the captain's
+session scratchpad, outside the repository
 (Heath's volume 2, the Internet Archive scan `thirteenbookseu00heibgoog`; Book III is
 pp. 1–76; page N is scan leaf N + 12). No `lake update` or `lake clean`. The generated
 pages are rendered after the merge, so CI's "generated pages up to date" step fails on

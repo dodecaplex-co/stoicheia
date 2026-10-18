@@ -36,7 +36,7 @@ theorem Prop4 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
   -- the angle ACB to the angle DFE.
   -- For, if the triangle ABC be applied to the triangle DEF,
   /- Euclid lays the triangle along the straight line DE, on the side where F
-     is. Lean needs that line by name, and F off it. -/
+     is. Our superposition rule takes that line by name, and F off it. -/
   obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hDE
   have hF_DE : ¬ OnLine F DE := fun hF => hDEF ⟨DE, hD_DE, hE_DE, hF⟩
   -- and if the point A be placed on the point D

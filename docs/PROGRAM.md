@@ -181,6 +181,11 @@ Heath's references be cited.
   stale record or a deleted directory, runs every CI check, and only then pushes, and
   `test_safe_push.py` plants a bad commit for each guard ([WORKFLOW](WORKFLOW.md),
   section 10).
+- **17 Oct. Move to pull requests as soon as a repository has CI and readers; we were
+  late.** A checked push left no place for its reviews. Every change is now a pull
+  request: `safe_push.py` is its pre-flight and its merge gate, the template records its
+  reviews, and a ruleset on main requires it ([WORKFLOW](WORKFLOW.md), section 10,
+  "Landing work: pull requests").
 
 ## 6. Cost and time
 
