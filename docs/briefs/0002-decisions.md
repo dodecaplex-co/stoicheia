@@ -388,3 +388,11 @@ findings:
   from [program.toml](../program.toml), which the coordinator keeps by hand. CI's check of
   the generated pages covers it, and the integrator commits it with the other generated
   files. Acceptance reads "—" until the acceptance report of brief 0005's stage 6.
+- **Pushing to main, safely and without asking.** The owner, on 17 October: "you definitely
+  don't need my push for every one; build a harness that makes pushes safe." The coordinator
+  pushes to main without asking, and only through [`scripts/safe_push.py`](../../scripts/safe_push.py),
+  which checks the exact commit from end to end before it pushes: a fast-forward of main, a
+  secret scan, the statement, lock, Heath and directory guards, the full CI sequence including
+  the planted breaks, and then GitHub's CI. A pre-push hook refuses any other push to main.
+  Tags, releases, release notes, the GitHub description and anything sent outside the
+  repository still need the owner's OK.
