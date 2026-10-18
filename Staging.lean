@@ -1,4 +1,3 @@
-import Staging.Stage3.Arcs
 import Staging.Stage4.Foot
 import Staging.Stage4.Prop14
 import Staging.Stage4.Prop15
@@ -13,12 +12,9 @@ the few proofs this library may hold, are in `docs/WORKFLOW.md`, section 2. Brie
 the home and owner of each statement of brief 0005's stages; a later brief names those of
 its own.
 
-The folders follow the briefs' stages. Stage 2's statements, all proved, have moved to
-their homes in `Elements/`, and its folder with them; so have stage 3's words for arcs and
-segments, its ground, placement among it, III.24 restated with its companions, and III.26
-and III.28 upgraded. The others:
+The folders follow the briefs' stages. The statements of stages 2 and 3, all proved, have
+moved to their homes in `Elements/`, and their folders with them. The others:
 
-* `Stage3/`: the bridge theorems of `Arcs.lean`;
 * `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated;
 * `Stage4b/`: III.7 and III.8 compared on either side of the diameter, III.17 for a point
   not within the circle, and the point of contact (brief 0007); and a prototype of mixed

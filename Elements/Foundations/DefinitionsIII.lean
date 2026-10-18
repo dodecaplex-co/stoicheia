@@ -92,8 +92,12 @@ Two segments are congruent, as Euclid's III.24 has one "coincide" with the other
 map of the plane's points carries the ends to the ends, the segment onto the segment and
 the arc onto the arc, keeping every distance between points of the segment
 (`Arc.Congruent`). No magnitude of a segment is defined, and no area of one: "equal"
-segments are read through Common Notion 4 ("things which coincide with one another are
-equal to one another") as segments that coincide.
+segments, and "equal" circumferences in III.26 and III.28, are read through Common Notion
+4 ("things which coincide with one another are equal to one another") as segments, or
+circumferences, that coincide. `Elements/BookIII/Arcs.lean` says what the measure and the
+congruence come to: in equal circles, circumferences equal in measure are those cut off by
+equal straight lines and of one kind; and two segments are congruent exactly when their
+circles are equal and their circumferences equal in measure.
 
 None of these is an assumption; they are only definitions.
 -/

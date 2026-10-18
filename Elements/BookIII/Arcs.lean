@@ -1,22 +1,24 @@
 import Elements.Figure.Basics
-import Elements.BookIII.Prop29
 import Elements.BookIII.Circumferences
-import Elements.Figure.Chords
-import Elements.Foundations.DefinitionsIII
-import Elements.BookIII.Placement
 import Elements.BookIII.Prop24
 import Elements.BookIII.Prop28
+import Elements.BookIII.Prop29
 
 /-!
-# Stage 3, staged: what equal measures mean
+# Book III: what equal circumferences and equal segments come to
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. Destined for
-`Elements/BookIII/Arcs.lean`, placed after III.29 so that the argument cannot go round in a
-circle: these bridge theorems justify the measure of a circumference (`circumference`, an
-angle carrying no radius) and the congruence of segments, and III.26–III.29 must not rest on
-them. Outside the placement files,
-this file and III.24 are the only places that may cite `placement` or any lemma of the
-`Placement` namespace.
+A circumference is measured by twice the angle that stands on it (`circumference`), a
+measure that carries no radius, and two segments are equal when they coincide
+(`Arc.Congruent`). These bridge theorems say what each comes to. In equal circles, two
+circumferences are equal in measure exactly when the straight lines that cut them off are
+equal and they are of one kind, both less than semicircles, both semicircles, or both
+greater (`Arc.measure_eq_iff`). And two segments are congruent exactly when their circles
+are equal and their circumferences equal in measure (`Arc.congruent_iff`).
+
+They stand after III.29 so that the argument cannot go round in a circle: they rest on
+III.24, III.28 and III.29, and III.26–III.29 must not rest on them. With III.24, this file
+is one of the two places outside placement's own files that may cite `placement` or a lemma
+of the `Placement` namespace; its theorems reach placement only through III.24.
 -/
 
 namespace Elements.BookIII

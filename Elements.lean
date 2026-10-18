@@ -131,6 +131,7 @@ import Elements.BookIII.Prop26
 import Elements.BookIII.Prop27
 import Elements.BookIII.Prop28
 import Elements.BookIII.Prop29
+import Elements.BookIII.Arcs
 import Elements.BookIII.Prop30
 import Elements.BookIII.Prop31
 import Elements.BookIII.Prop32
