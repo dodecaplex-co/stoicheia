@@ -13,6 +13,6 @@ note = "Our triangles ABE and AEC are named by their corners, so no straight lin
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "2e1d5c1"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:69828f783bc4393e"

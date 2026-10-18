@@ -14,6 +14,6 @@ note = "The statement gives the point D within the triangle, and BD and DC are n
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "2e1d5c1"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:043c9336dae4f96b"

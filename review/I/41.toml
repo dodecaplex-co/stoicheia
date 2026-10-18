@@ -17,6 +17,6 @@ case = "E on AD produced beyond D, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "2e1d5c1"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:920a7dc2766794ce"
