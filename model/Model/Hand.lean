@@ -86,6 +86,19 @@ def circles_meet_opposite_side : Prop :=
     S.Centre D β → S.OnLine C L → S.OnLine D L → ¬ S.OnLine B L →
     ∃ A : S.Point, S.OnCircle A α ∧ S.OnCircle A β ∧ S.OppositeSides A B L
 
+/-! ## Proposed, and not yet in the library
+
+A law proposed for the foundations is proved in the model before it lands, so that its
+model obligation is met when the library first rests on it. -/
+
+/-- Every circle has a centre: the law proposed in issue #59, to be declared as
+`axiom exists_centre (α : Circle) : ∃ O : Point, Centre O α`, which Lean would print as
+`∀ (α : Elements.Circle), Exists fun (O : Elements.Point) => Elements.Centre O α`. It is
+not in the library or the lock yet, so `Check/Hand.lean` has no original to compare it
+with; its check joins that file in the change that declares the axiom. -/
+def exists_centre : Prop :=
+  ∀ (α : S.Circle), ∃ O : S.Point, S.Centre O α
+
 end Hand
 
 end Model

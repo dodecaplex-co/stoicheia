@@ -34,10 +34,12 @@ In the plane every vector has a perpendicular of the same length: turn it a quar
 /-- The vector `u` turned a quarter turn: `(-u₁, u₀)`. -/
 noncomputable def quarterTurn (u : Plane) : Plane := !₂[-u 1, u 0]
 
+/-- A vector and its quarter turn are perpendicular. -/
 theorem inner_quarterTurn (u : Plane) : ⟪u, quarterTurn u⟫ = 0 := by
   simp [quarterTurn, PiLp.inner_apply, Fin.sum_univ_two]
   ring
 
+/-- A quarter turn keeps a vector's length. -/
 theorem norm_quarterTurn (u : Plane) : ‖quarterTurn u‖ = ‖u‖ := by
   simp only [quarterTurn, EuclideanSpace.norm_eq, Fin.sum_univ_two]
   simp
@@ -73,7 +75,7 @@ theorem exists_two_common_points {c₁ c₂ : Plane} {r s : ℝ}
     rw [key]
     apply div_pos _ (by positivity)
     apply mul_pos (mul_pos (mul_pos _ _) _) _ <;> linarith
-  set k : ℝ := Real.sqrt (r ^ 2 / d ^ 2 - t ^ 2) with hk_def
+  set k : ℝ := Real.sqrt (r ^ 2 / d ^ 2 - t ^ 2)
   have hk : 0 < k := Real.sqrt_pos.2 hk2pos
   have hkk : k ^ 2 = r ^ 2 / d ^ 2 - t ^ 2 := Real.sq_sqrt hk2pos.le
   -- The squared length of `a • u + b • w`.
