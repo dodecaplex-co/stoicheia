@@ -302,16 +302,20 @@ python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Two more jobs run on their
-own, each in isolation:
+leaves them unchanged and the `git status` line prints nothing. Three more jobs run on
+their own, each in isolation:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
+grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
+                                       # CI's `formal-model` job: the formal model, with Mathlib
 ```
 
-`scripts/safe_push.py` runs all of these on the head commit of every pull request (section
-10), so a change to this list is made there too, and in the CI workflow.
+`scripts/safe_push.py` runs the first two groups on the head commit of every pull request
+(section 10), so a change to them is made there too, and in the CI workflow. It leaves the
+`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files; its merge
+gate still waits for that job, like every other ([model/README.md](../model/README.md#the-ci-job)).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never

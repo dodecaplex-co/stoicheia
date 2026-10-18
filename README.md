@@ -81,7 +81,7 @@ Each check answers one question and leaves others open. Here is what each one sh
 | **The hyperbolic check** ([`tests/model/hyperbolic.py`](tests/model/hyperbolic.py)) | Every axiom but Postulate 5 holds, numerically, in the hyperbolic plane, and Postulate 5 fails there | That the other axioms provably cannot give Postulate 5: it is numerical evidence, not a proof |
 | **The model argument** ([`tests/model/MODEL.md`](tests/model/MODEL.md)) | An argument, law by law, that every axiom holds in the ordinary plane, degenerate cases included; if it is right, the axioms cannot contradict one another unless the real numbers do | A checked proof: readers must follow it for themselves |
 | **The overlap audit** (`lake build Audit`) | Each overlap in the [catalogue](docs/reports/overlaps.md) is real: the proposition is proved from the rules named, with the axioms Lean reports pinned | That there are no other overlaps |
-| **A formal model** (to come) | Would prove in Lean, in a separate package, that the exact axioms of the lock hold in a model of the plane, so that any change to an axiom breaks the model's proof | Nothing yet: it is a later milestone |
+| **A formal model** (in progress, [`model/`](model/README.md)) | Proves in Lean, with Mathlib, in a package of its own, that the axioms of the lock hold in the Euclidean plane, so that any change to an axiom breaks the model's proof; CI's `formal-model` job builds it | Until every locked law is proved there, the consistency of the axioms rests partly on the numerical evidence of `tests/model`; and nothing about whether a statement says what Euclid says |
 
 Each proposition's page shows, under Euclid's enunciation, what its Lean statement covers and whose argument its proof follows, from its review record.
 
