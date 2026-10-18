@@ -72,8 +72,9 @@ theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
     have hBEF : Between B E F := hF.between hBEX
     /- Bisect BF at G [I. 10]. -/
     obtain ⟨G, hBGF, hBG⟩ := BookI.Prop10 (ne_of_between_ends hBEF)
-    /- The circle with centre G through B also passes through F (Postulate 3).
-       E is inside it, between the ends of its diameter BF. -/
+    /- Describe the circle with centre G through B (Postulate 3); it passes
+       through F too, since GF equals GB. E is inside it, between the ends of
+       its diameter BF. -/
     obtain ⟨BHF, hG_BHF, hB_BHF⟩ := Postulate3 G B (ne_of_between hBGF).symm
     have hF_BHF : OnCircle F BHF :=
       on_circle_of_len_eq hG_BHF hB_BHF (by rw [← hBG, len_symm G B])
