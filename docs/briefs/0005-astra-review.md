@@ -290,7 +290,7 @@ Then:
 - `docs/templates/proposition.md`: task, handback and review templates, matching `review/SCHEMA.md`.
 - `scripts/check_style.py` enforces hard rules only:
   - every link on docs/reading.md;
-  - letters in NN.svg all and only Heath's; the idea figures, first held to no letters, now carry Heath's letters (revised 18 October, below);
+  - letters in NN.svg all and only Heath's; the idea figures, first held to no letters, now carry Heath's letters at every point they show, each one that Euclid's figure draws (revised 18 October, below);
   - palette and strokes;
   - no em dashes, retired refrains or crew talk;
   - caption length;
@@ -311,7 +311,7 @@ Then:
   - nothing competitive: no unsupported claims of novelty or superiority, and related work cited accurately and warmly (this keeps Jack's rule);
   - further reading only where apt, verified, never to fill a slot;
   - figures: departures from Heath's figure in the page's figure note, a one-case figure never implying the other cases, a reductio's impossible figure explained.
-- **The colour figures carry Heath's letters** (revised 18 October). The owner decided on 17 October that each figure at a glance, in Byrne's colours, carries Heath's letters at every point it shows, the same names as Euclid's figure, the text and the Lean: "proof without words is one thing; proof without point labeling is quite another." Byrne's diagrams use colours in place of letters, as his title says, and are a delight without them; the letters are added because a proof is read by its points, so that a reader passes from the colours to the proof by the same A and B. This replaces "no letters in idea figures" in the first text. The rule goes into STYLE.md, section 7, its one home, and into `check_style.py`, as the figures are lettered.
+- **The colour figures carry Heath's letters** (revised 18 October). The owner decided on 17 October that the figures at a glance, in Byrne's colours, carry Heath's letters at every point they show, each one that Euclid's figure draws, with the same names as Euclid's figure, the text and the Lean. In his words that day: "Proof without words is one thing - proof without Point labeling is quite another!" Byrne's diagrams use colours in place of letters, as his title says, and are a delight without them; the letters are added because a proof is read by its points, so that a reader passes from the colours to the proof by the same A and B. This replaces "no letters in idea figures" in the first text. The rule goes into STYLE.md, section 7, its one home, and into `check_style.py`, as the figures are lettered.
 - **Book briefs, one home per book's decisions.** Refresh 0004 (Book III) with the arc and segment representation, construction inputs and exceptions. Gather Books I and II's vocabulary, representations, shared lemmas and exceptions (now scattered over 0001–0003) into short book briefs. Each book's introduction links its brief.
 - **Reviewed examples** (docs/examples.md), each tied to a commit and a reason:
   - a short construction (I.1);
@@ -331,9 +331,9 @@ The review records carry tags for these: `redundant-hypothesis`, `angle-measure`
 
 ## Open items
 
-*Added 18 October 2026, and current as of that date.* Stages 1 and 1b are done, and the book-III release is made. These are what remain of them. Each change to the repository lands as a pull request ([Landing work: pull requests](#landing-work-pull-requests)), and none has reached main yet:
-- **Pull request #1, the harness.** The safe-push hardening, with the reviewers' fixes, merged under `/security-review`. Then a GitHub ruleset on main (a pull request required, the checks `check`, `model` and `negative` required, no force push or deletion) and secret scanning with push protection turned on, and the pre-push hook reinstalled.
-- **Wording.** The last old phrases: "Lean cannot …" in the mishnah of I.2; "needs Postulate 5" in the mishnah of I.17 and the further reading of I.26; "Lean never needs …" in the mishnah of I.43 and the Book I gap catalogue; and the docstrings of the helpers `Prop44.place`, `Prop22.room` and `Prop22.ne_zero`.
+*Added 18 October 2026, and current as of that date.* Stages 1 and 1b are done, and the book-III release is made. The GitHub ruleset on main (a pull request required, the checks `check`, `model` and `negative` required, merge commits only, no force push or deletion) and secret scanning with push protection are on. What remains of stages 1 and 1b is below. Each change to the repository lands as a pull request ([Landing work: pull requests](#landing-work-pull-requests)), and none has reached main yet:
+- **Pull request #1, the harness.** Still to be merged, under `/security-review`: the safe-push hardening, with the reviewers' fixes. After it merges, the pre-push hook is reinstalled.
+- **Wording.** The last old phrases: "Lean cannot …" in the mishnah of I.2; "I.17 needs no Postulate 5" in the mishnah of I.17, and "needs Postulate 5" in the further reading of I.26; "Lean never needs …" in the mishnah of I.43 and the Book I gap catalogue; and the docstrings of the helpers `Prop44.place`, `Prop22.room` and `Prop22.ne_zero`.
 - **check_style's D7 pattern,** so that it also catches a phrase broken across a line. It changes a check, so it goes in a pull request of its own.
 - **A scrub** of two private paths already on main, in old orders.
 - **Housekeeping:** the finished worktrees and their merged branches removed.
@@ -361,12 +361,12 @@ The wording, the scrub, the D7 pattern and the orders template are written and w
 - Proof: Euclid's own argument (`Prop31.line`, `Prop30.meet`, I.38 already general, `OnRay.eq_of_area_eq`). It covers separated, touching, overlapping and oppositely named bases.
 
 *I.45 for a figure given by its corners* (revised 18 October, to the owner's decision later on 17 October)
-- A rectilineal figure is given by its corners A₀, A₁, …, Aₙ, in order round it. The straight lines from A₀, a fan of diagonals, divide it into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, as Euclid and Byrne divide it: Euclid's DB divides his ABCD into ABD and DBC.
+- A rectilineal figure is given by its corners A₀, A₁, …, Aₙ, in order round it, and taken as one that the straight lines from A₀ divide into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, as Euclid and Byrne divide it: Euclid's DB divides his ABCD into ABD and DBC. Every convex figure is so divided from any corner, Euclid's ABCD among them. Byrne's I.45 figure is not convex, and both his lines start from its re-entrant corner. A figure that is not convex may need its first corner chosen, and some figures have no such corner.
 - `Prop45.append`: the parallelogram so far plus one triangle, preserving the angle (the second half of I.45's proof).
 - `Prop45.figure`: a parallelogram in the given angle equal to those triangles taken together, built one triangle at a time, I.42 for the first and `Prop45.append` for each of the rest. Euclid's ABCD with DB joined is the case of four corners, D, A, B and C.
 - Nothing is claimed of another division of the figure. That every division gives the same sum is a step Euclid takes for granted; it goes in the gap catalogues of Books I and II, with thanks to David Hilbert, whose [treatment of area](../reading.md#hilbert1902foundations) proves it.
 - A pentagon needs no change of statement. The iteration is a departure to note.
-- This replaces the design first written here, which the owner had chosen earlier on 17 October: a `Rectilineal` figure of pieces glued edge to edge in any dissection (`Fitted`), with `Prop45.sum` and `Prop45.figure (R : Rectilineal)`. `Rectilineal` and `Fitted` are withdrawn, and the statements in full are brief 0006's.
+- This replaces the design first written here, which the owner had chosen earlier on 17 October: a `Rectilineal` figure of pieces glued edge to edge in any dissection (`Fitted`), with `Prop45.sum` and `Prop45.figure (R : Rectilineal)`. `Rectilineal` and `Fitted` are withdrawn, and brief 0006 will give the statements in full.
 
 *II.1 general*
 - `Prop1.two`, one cut, re-running II.1's construction.
@@ -396,7 +396,7 @@ The 4-argument `circumference` and `standing` stay as Heath's measure words.
 - Book Zero: `Arc.congr_side`; `Arc.meets` (a ray from inside the chord meets the arc).
 - `Elements/BookIII/Placement.lean`, the long pole, prototyped first, with its cases in files of their own (revised 18 October; below):
   - `placement`: equal bases AB = CD carry E's closed half-plane onto F's, preserving distances to the base ends, and carrying the side of the base and betweenness on it both ways;
-  - `f` is chosen by epsilon. Existence from I.23, `OnRay.exists_len_eq` and I.4, or through I.22, as step 2 below plans; uniqueness from I.7 and I.20; distances from I.8, `Prop24.within`, C.N. 3 and I.4; onto by the reverse construction.
+  - `f` is chosen by epsilon. Existence through I.22 (`Prop22`), as step 2 below plans; uniqueness from I.7 and I.20; distances from I.8, `Prop24.within`, C.N. 3 and I.4; onto by the reverse construction.
   - **No new axiom, no time limit and no fallback.**
 - `Arc.eq_of_aligned` (same chord, same side, equal radii, same kind ⇒ the circles, arcs and segments coincide), by I.7 and `circle_eq`.
 - `Prop23.point` (on the circle ↔ equal angle; inside ↔ greater angle), by I.16, I.21 and III.21.
@@ -508,7 +508,7 @@ This gates the consolidation release.
 - [machine] The completion summary is generated and true.
 - [machine] The gap catalogue and overlap catalogue are current.
 - [review] Reading the book straight through, it flows and the voice is common.
-- [review] The remaining limitations are deliberate, few and stated plainly. For Books I and II, I.45's and II.14's figure divided by the straight lines from one corner. For Book III these are only the mixed-angle clauses of III.16/31 and the III.2-style overlaps. (Revised 18 October: with no fallback for placement, III.24's alternative proof is no longer a limitation, and the corners limit is added.)
+- [review] The remaining limitations are deliberate, few and stated plainly. For Books I and II, I.45 and II.14 take the figure with its division by the straight lines from one corner, and do not prove that another division gives the same area. For Book III these are only the mixed-angle clauses of III.16/31 and the III.2-style overlaps. (Revised 18 October: with no fallback for placement, III.24's alternative proof is no longer a limitation, and the corners limit is added.)
 
 **`scripts/check_acceptance.py`** checks every [machine] item across all 99 propositions. It reads every [review] item from the review records (each must be `pass` with a reviewer and a commit). It writes `docs/reports/acceptance-books-I-III.md`: a table per proposition and per book, with every failure listed. CI runs it, and **the consolidation tag requires zero failures**.
 
@@ -567,7 +567,7 @@ Jev must meet a stated accuracy bar on it. Below the bar, Jev's answers become a
 
 *Added 18 October 2026, to the owner's decision of 17 October.* The rules live in the pull-request discipline of [docs/WORKFLOW.md, section 10](../WORKFLOW.md#10-how-a-book-is-made-and-released), their one home. The discipline lands with pull request #1, which writes it there in place of direct pushes to main; from then on, every change reaches main as a pull request. In short:
 - **Every change is a pull request,** prepared by `scripts/safe_push.py`, the pre-flight: it checks the exact commit with the full check sequence, pushes the branch (never main) and opens or updates the pull request. Each pull request holds one coherent change. Agents never open, merge or approve one; the coordinator does.
-- **Reviews:** `/code-review` on every pull request; `/security-review` when it changes a protected path (`scripts/`, `.github/`, `Certificate/`, `tests/`, `review/SCHEMA.md`, `review/terms.toml`, `.gitattributes`, `.gitignore` and the toolchain files); `/no-mistakes` before the merge. Each blocking or material finding is fixed on the branch or answered in the pull request, and the reviews run again on the fix.
+- **Reviews:** `/code-review` on every pull request; `/security-review` when it changes one of the protected paths that section 10 lists; `/no-mistakes` before the merge. Each blocking or material finding is fixed on the branch or answered in the pull request, and the reviews run again on the fix.
 - **Merge commits only,** never a squash or a rebase: review records stamp a branch's commits by their hashes, and a rebase would orphan the stamps.
 - **A check change travels alone.** A change to a check, an expected value, a schema or CI goes in a pull request of its own, ahead of the code it judges. A change to a protected path needs a new line in [the decisions page](0002-decisions.md) naming each file changed.
 - **Drafts until reviewed.** A pull request opens as a draft and stays one until its reviews are done. Stages 2, 3 and 4 each work on a branch with a draft pull request; a companion that still carries `sorry` is not listed among the certificate's companions until it is proved, so main stays green.
