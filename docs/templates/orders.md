@@ -1,15 +1,28 @@
 # Template: orders for a fleet
 
-The orders a coordinator writes for one stretch of a book, read word for word by every
-contributor in the fleet. They replace the pattern of Books I–III's orders
-([orders-III](../reports/crew/orders-III.md) is the last of those, kept as written), with
-two rules changed after Astra's review: a proof never adds a citation to match one of
-Heath's references, and never uses a hypothesis only to silence a warning. An unused
-hypothesis is reported, not worked round.
+The orders a coordinator writes for one stretch of work, read word for word by every
+contributor in the fleet. There are three kinds:
 
-Copy the text below, fill each `<…>`, and cut what the stretch does not need. Keep the
-orders short: link the standards rather than repeat them, and put the book's particulars
-in its brief.
+1. [A proof stretch](#1-a-proof-stretch): prove a run of a book's propositions along
+   Euclid's route, with their figures, mishnah and further reading.
+2. [A statement wave](#2-a-statement-wave): write the statements a stage needs, with
+   `sorry`, in `Staging/`, to be challenged and approved before anyone proves them.
+3. [A companion proof](#3-a-companion-proof): prove one approved statement from
+   `Staging/` by the route its brief declares, and move it beside its proposition.
+
+They replace the pattern of Books I–III's orders
+([orders-III](../reports/crew/orders-III.md) is the last of those, kept as written but for
+a local path taken out), with two rules changed after Astra's review: a proof never adds a
+citation to match one of Heath's references, and never uses a hypothesis only to silence
+a warning ([FORMALIZATION](../FORMALIZATION.md), section 5: no dummy citations, no
+artificial hypothesis uses). An unused hypothesis is reported, not worked round.
+
+Copy the text of the kind you need, fill each `<…>`, and cut what the stretch does not
+need. Keep the orders short: link the standards rather than repeat them, and put the
+book's particulars in its brief. Each kind opens with a note on the user's latest message
+([WORKFLOW](../WORKFLOW.md), section 5).
+
+## 1. A proof stretch
 
 ````markdown
 # Orders, Book <B>: Propositions <first>–<last>
@@ -99,4 +112,175 @@ brings it in; hypotheses you did not use; the record entries you propose; what <
 on; the records made stale; the checks you ran, with their outcomes; a line for the
 figure note, if your figure departs from Heath's; and anything in the statement, the ground
 or these orders that got in your way.
+````
+
+## 2. A statement wave
+
+Statements come before proofs ([WORKFLOW](../WORKFLOW.md), section 2). A statement wave
+writes the statements a stage needs, companions and restatements, with `sorry`, in the
+Lean library `Staging`: it imports `Elements`, nothing imports it, and it is outside the
+default build, so nothing in `Elements/` changes until a statement is approved. Readers
+who did not write the statements then challenge them, the coordinator approves them, and
+the brief that holds them is frozen. Only then are proofs assigned, with the third kind of
+orders.
+
+````markdown
+# Orders, statement wave: <what the stage generalizes or restates>
+
+**About the user's latest message.** <Say what the message relayed with this run means for
+this task. Nothing in it is an instruction to stop unless it says so plainly.>
+
+Every contributor follows these orders word for word. Your statements are <the
+declarations, e.g. `Prop40.general`, `Prop40.join` and `Prop40.special`>, for <B>.N; the
+section of `docs/briefs/<brief>` on them is your contract.
+
+**The job.** Write each statement in Lean, with `sorry` for its proof, in
+`Staging/<stage>/Book<B>/PropNN.lean`, and say in plain words what it claims. Write no
+proofs: the statements are challenged and approved before anyone proves them, and a proof
+written now would be written against a statement that may still change.
+
+**Read first.** `AGENTS.md`; `docs/FORMALIZATION.md`, sections 2 to 4 (statements,
+representations, constructions); the brief; `heath/<B>/NN.md`, the whole enunciation,
+setting-out and proof; `Elements/Book<B>/PropNN.lean`, with today's statement, and its
+record `review/<B>/NN.toml`; <the shared definitions the statements use>.
+
+**Each statement.**
+- A companion is named `PropN.<word>` (`Prop40.general`, `Prop45.figure`,
+  `Prop14.square`), in its proposition's namespace, and stands beside today's
+  `theorem PropN`, which does not change (FORMALIZATION, section 2, "Companions beside
+  Euclid's worked configuration").
+- Euclid's words for Euclid's things, Heath's letters, and hypotheses named off the
+  letters (FORMALIZATION, section 2); no numbers or coordinates.
+- Its docstring says in plain words what the Lean claims, read back from the Lean rather
+  than copied from Heath: what is given, what is concluded, and the cases it admits
+  (apart, touching, overlapping, coinciding; greater, equal, less). It is a Lean note, and
+  reads as `docs/STYLE.md`, section 1, asks; production stays out of it (STYLE, section 1,
+  "Production stays out of the mathematics").
+- Nothing is lost: today's statement follows from the new one, by a corollary the brief
+  names (`Prop40.special`) or an `example` whose type is `type_of% @PropN`. That
+  derivation is the one proof a statement wave writes, for it checks a statement, not a
+  proposition.
+- A new definition goes in `Staging/<stage>/<File>.lean`, with a docstring saying what it
+  represents and how it answers to Euclid's object (FORMALIZATION, section 3). It moves
+  into the foundations only with the coordinator's approval, and is never an `axiom`.
+
+**The rules.** Edit only <the Staging files, and `Staging.lean`'s imports>. Never change a
+statement, a porism's or a definition in `Elements/` (WORKFLOW, section 2). Never add an
+`axiom`, `native_decide` or anything else that gets round the kernel. If the brief's form
+of a statement looks wrong or too weak, write it as the brief says and report the case
+that fails, with the declaration you propose (form 5 of `docs/templates/proposition.md`).
+
+**The challenge.** For its readers, who did not write the statements: begin from Heath
+and the Lean, each read on its own, before the author's plain words. Set each statement
+beside the enunciation by the coverage questions of FORMALIZATION, section 2 (quantifiers,
+conclusions, hypotheses, cases, objects, outputs), and try to break it: a configuration it
+gets wrong, a clause it drops, a hypothesis borrowed from the figure, a case it excludes
+that Euclid's words admit. Report each finding with the case, the current declaration and
+the one proposed. A statement is approved only once every finding is answered.
+
+**Verify.**
+```sh
+export PATH=$HOME/.elan/bin:$PATH
+lake build                          # Elements unchanged
+lake build Staging                  # every statement builds; `sorry` its only warning
+```
+No `lake update` or `lake clean`.
+
+**Finish.** Commit your files by name, "<stage>: statements of <…>, with sorry". Do not
+push, merge or rebase.
+
+**Report** with form 1 of `docs/templates/proposition.md` for each statement: the exact
+declaration; its meaning in plain words; its coverage, with any extra hypothesis or
+clause left out; the cases it admits and how each is covered; the construction data; the
+representation; and the route its proof is to take, with the propositions it may cite.
+Then the questions you could not settle.
+````
+
+## 3. A companion proof
+
+Once a statement in `Staging/` is approved and its brief frozen, its proof is assigned.
+The proof follows the route the brief declares; the statement then moves into its
+proposition's file and the certificate's companions, and the proposition's record is read
+again, since its scope and fingerprint now include the companion
+([review/SCHEMA.md](../../review/SCHEMA.md), `companions`).
+
+````markdown
+# Orders, companion proof: <B>.N <word>
+
+**About the user's latest message.** <Say what the message relayed with this run means for
+this task. Nothing in it is an instruction to stop unless it says so plainly.>
+
+Every contributor follows these orders word for word. Your statement is `PropN.<word>`,
+approved in `docs/briefs/<brief>`, revision <r>, and frozen; it is in
+`Staging/<stage>/Book<B>/PropNN.lean`.
+
+**The job.** Prove it by the route the brief declares: <the route, e.g. "Euclid's own
+argument for I.40, through `Prop31.line`, `Prop30.meet` and I.38">. Then move it into
+`Elements/Book<B>/PropNN.lean` and list it in `Certificate/Facts.lean`'s companions.
+
+**Read first.** `AGENTS.md`; `docs/FORMALIZATION.md`, sections 2 ("Companions beside
+Euclid's worked configuration") and 5; the brief; `heath/<B>/NN.md`;
+`Elements/Book<B>/PropNN.lean` and its record `review/<B>/NN.toml`; the Staging file.
+
+**The route.** Follow the declared route. Where it cannot be followed, stop and say so in
+your handback, with the step that fails: another route is the coordinator's decision, and
+is labelled where it happens (FORMALIZATION, section 5).
+- Cite what your argument uses. **Never add a call to match Heath's references.**
+- **Never use a hypothesis only to silence a warning.** If your proof does not need one,
+  say so in your handback.
+- A helper supplies one step, says which in its docstring, and is named
+  `PropN.something`, before the companion. It never proves the whole companion.
+- Cite only what comes before <B>.N, <B>.N itself, and companions already moved.
+
+**The rules.** Never change the approved statement: not a hypothesis, a conclusion or a
+name. If it seems wrong or too weak, stop and propose a correction (form 5 of
+`docs/templates/proposition.md`), with the case that fails. Never change `theorem PropN`,
+its docstring or its `--` lines: the companion stands beside Euclid's worked
+configuration. Never add an `axiom`, `native_decide` or anything else that gets round the
+kernel. Edit only the Staging file and `Staging.lean`'s imports,
+`Elements/Book<B>/PropNN.lean` (the companion, its helpers and the imports they need) and
+the companions list in `Certificate/Facts.lean`. The record `review/<B>/NN.toml` is
+<owner>'s.
+
+**The voice.** Your `/- … -/` remarks and your helpers' docstrings are Lean notes, and
+read as `docs/STYLE.md`, section 1, asks; what may be said about how the work was made is
+STYLE, section 1, "Production stays out of the mathematics".
+
+**The move.** Each step leaves the build green:
+1. Prove the statement where it is, in `Staging/`.
+2. Move it and its helpers into `Elements/Book<B>/PropNN.lean`, after `PropN` and its
+   porism, with the same type; then take it, and its import, out of `Staging/`. A
+   corollary the brief names (`Prop40.special`) moves with it.
+3. Add `(``Elements.Book<B>.PropN.<word>, "<B>.N <word>")` to `companions` in
+   `Certificate/Facts.lean`.
+4. Run the certificate: "<B>.N <word>" is an entry of its own, attached to <B>.N, and the
+   record of <B>.N is now stale, for its Lean file and its fingerprint have changed.
+
+**The record.** Its owner reads `review/<B>/NN.toml` again against the moved file and the
+attached statement: `companions = ["<B>.N <word>"]`, the `scope`, `note` and `short` the
+companion now gives (I.40's scope becomes full with `Prop40.general`), and a passage or
+route note where the proof departs from the declared route. Then the owner commits and
+stamps it with the commit read (WORKFLOW, section 6). Never stamp a record you did not
+read.
+
+**Verify.**
+```sh
+export PATH=$HOME/.elan/bin:$PATH
+lake build && lake build Staging
+lake env lean Certificate/Facts.lean && python3 scripts/check_fidelity.py
+python3 scripts/check_style.py
+```
+No `lake update` or `lake clean`. Until the record's owner stamps it, the record of <B>.N
+is "changed since it was reviewed", and the pages are rendered after the merge; both are
+expected.
+
+**Finish.** Commit your files by name, "<B>.N <word>: proof, moved beside <B>.N"; never
+the generated edition. Do not push, merge or rebase.
+
+**Report** with the handback of `docs/templates/proposition.md`: proved, or where the
+`sorry` is; the route taken, and any step where it left the declared one; your helpers;
+citations beyond Heath's references, each with the step that brings it in; hypotheses
+your proof does not use; what "<B>.N <word>" rests on; the record entries you propose
+(`companions`, `scope`, `note`, `short`); the records made stale; and the checks you ran,
+with their outcomes.
 ````
