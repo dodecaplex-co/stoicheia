@@ -478,12 +478,12 @@ def heath_figure_note(source):
 
 def figure_note(record):
     """What the page says under Euclid's figure (docs/STYLE.md, section 7), from the review
-    record's `[figure]`: the case the figure shows, when the theorem covers several
-    ("Drawn for one case: D between C and B, as in Heath's figure."), then its `note`, as
-    where our drawing places a point otherwise than Heath's, as the Lean does. Nothing
-    when the record gives neither."""
+    record's `[figure]`, whose keys review/SCHEMA.md defines: its `case`, as "Drawn for one
+    case: D between C and B, as in Heath's figure." (one full stop, whether or not the case
+    ends with its own), then its `note`. Nothing when the record gives neither."""
     figure = (record or {}).get("figure") or {}
-    said = [f"Drawn for one case: {figure['case']}."] if figure.get("case") else []
+    said = ([f"Drawn for one case: {figure['case'].rstrip('.')}."] if figure.get("case")
+            else [])
     return " ".join(said + ([figure["note"]] if figure.get("note") else []))
 
 
@@ -1075,8 +1075,9 @@ def page(book, n, count, titles, facts, docs, records):
     out += [in_lean_line(p, record, book, n), ""]
     if idea.exists():
         caption = svg_desc(idea)
+        alt = caption.replace('"', "&quot;")
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "
-                f"alt=\"{caption}\" width=\"420\"></p>", "",
+                f"alt=\"{alt}\" width=\"420\"></p>", "",
                 f"<p align=\"center\"><em>{caption}</em></p>", ""]
     out += ["## Euclid's proof", ""]
     if figure.exists():

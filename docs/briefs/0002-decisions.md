@@ -641,9 +641,10 @@ findings:
   CE meeting at C, as in Heath's figure." That is what
   [review/SCHEMA.md](../../review/SCHEMA.md) already says of the key ("The caption names it")
   and what [STYLE](../STYLE.md), section 7, asks of a figure drawn for one case. The
-  alternative text also writes a double quotation mark as `&quot;`, so that a record's words
-  cannot end the attribute early; no record has one today. It changes what render.py writes
-  and nothing it accepts or checks, so it is not a check change ([WORKFLOW](../WORKFLOW.md),
-  section 10); the regenerated pages of I.30, I.35 to I.38, I.40, I.41, II.5, II.9, II.14 and
-  III.6 show it, and no other page changes. The one protected file it changes is
+  alternative text of both figures also writes a double quotation mark as `&quot;`, so that
+  a record's or a caption's words cannot end the attribute early; none has one today. It
+  changes what render.py writes and nothing it accepts or checks, so it is not a check change
+  ([WORKFLOW](../WORKFLOW.md), section 10); the regenerated pages of I.30, I.35 to I.38,
+  I.40, I.41, II.5, II.9, II.14 and III.6 show it, and no other page changes. The one
+  protected file it changes is
   `scripts/render.py` ([#30](https://github.com/jackChallis/stoicheia/issues/30)).
