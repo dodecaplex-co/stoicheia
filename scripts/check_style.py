@@ -7,7 +7,7 @@ nothing. Run from anywhere; the paths are the repository's.
     python3 scripts/check_style.py              # every rule, S12 included
     python3 scripts/check_style.py --no-lean    # S12 skipped, for an unbuilt tree
     python3 scripts/check_style.py --quiet      # the reports as counts only
-    python3 scripts/check_style.py --require-idea-letters   # S21 on every figure, as the switch on will be
+    python3 scripts/check_style.py --require-idea-letters   # S21 on every figure, as the switch is
 
 S12 asks Lean whether each backticked name in the mishnah exists, so it needs a built
 tree (`lake build`) and `lake` on the PATH; without them the script fails and says so,
@@ -76,13 +76,12 @@ LETTER_EXCEPTIONS = {
     },
 }
 
-# S21, the switch (STYLE, sections 7 and 8). Until the figures at a glance carry Heath's
-# letters, this is False: S20 holds every letter drawn, S21 holds an idea figure only once
-# it carries a letter, and D14 lists, book by book, the figures with none yet. A later
-# pull request turns it on, once every figure is lettered, and S21 then fails every idea
-# figure with a point unlettered. Once on, never set it back to quiet a figure: letter
-# the figure.
-IDEA_LETTERS_REQUIRED = False
+# S21, the switch (STYLE, sections 7 and 8). While the figures at a glance were gaining
+# Heath's letters, this was False: S21 held an idea figure only once it carried a letter,
+# and D14 listed, book by book, the figures with none yet. Every figure now carries its
+# letters, so it is True, and S21 fails every idea figure with a point unlettered; D14 is
+# empty. Never set it back to quiet a figure: letter the figure.
+IDEA_LETTERS_REQUIRED = True
 
 # ---------------------------------------------------------------------------------------
 # Findings.
@@ -1063,7 +1062,7 @@ def main() -> int:
                         help="give the reports as counts, without each finding")
     parser.add_argument("--require-idea-letters", action="store_true",
                         help="hold every idea figure to S21, as IDEA_LETTERS_REQUIRED = True "
-                             "will; while it is off, this shows what S21 would find")
+                             "does; it is on, so this changes nothing unless it is turned off")
     args = parser.parse_args()
     required = IDEA_LETTERS_REQUIRED or args.require_idea_letters
 

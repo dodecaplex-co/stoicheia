@@ -147,12 +147,11 @@ where to look:
 
 **Why two figures.** The figure at a glance, in Oliver Byrne's colours, shows the main
 relation before a word is read: equal things share a colour, and a reader sees what the
-proposition is about. Euclid's figure, with Heath's letters, is the one to follow the
-proof by, sentence by sentence. Each does what the other cannot, and neither is decoration.
-The figure at a glance may carry the same letters, the names the text and the Lean use, so
-a reader passes from the colours to the proof by the same A and B (section 7). Colour may
-carry an equality, but never alone: the caption names the colours, so that a reader who
-cannot tell them apart still has the point.
+proposition is about. Euclid's figure is the one to follow the proof by, sentence by
+sentence. Each does what the other cannot, and neither is decoration. Both carry Heath's
+letters, the names the text and the Lean use, so a reader passes from the colours to the
+proof by the same A and B (section 7). Colour may carry an equality, but never alone: the
+caption names the colours, so that a reader who cannot tell them apart still has the point.
 
 **Each thing in one place.** Scope and exceptions go at the top, in the status line and
 the table. Citations, postulates and rules go in the certificate and the line under it.
@@ -402,7 +401,7 @@ whole canvas), in Georgia. Section 2 says why there are two.
 **`NN-idea.svg`, the figure at a glance.** A canvas of 400 × 300 **[checked]**. Byrne's
 red `#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for
 grid lines and for numbers on a fill, as in I.47 **[checked]**. Equal things share a
-colour, and any letter is Heath's, naming a point it shows (below). The title is "I.N at a
+colour, and Heath's letters name the points it shows (below). The title is "I.N at a
 glance", with a name if it has one (": the bridge of asses"). The `<desc>` is the caption
 on the page: one or two short sentences in the house voice, the colours named in
 brackets, about 40 words **[reported]** and 50 at most **[checked]**.
@@ -427,11 +426,10 @@ letters inside shared steps do not count; and "PORISM" is not a letter.
 symbols "instead of letters for the greater ease of learners", as its title says, and its
 pages are a delight without them. We add Heath's letters all the same, because a proof is
 read by its points: the colours carry the equalities, and the letters tie them to the
-text, so that the yellow angle at B is the angle ABC of I.5's proof. A figure at a glance
-that carries a letter carries Heath's letters, the same names as Euclid's figure and the
-Lean, at every point it shows, so that a reader can follow it however it turns or reflects
-Euclid's figure. Once every figure is lettered, each must carry them (section 8). Each
-letter is one that `NN.svg` draws, italic, at 14, small and beside its point,
+text, so that the yellow angle at B is the angle ABC of I.5's proof. The figure at a
+glance carries Heath's letters, the same names as Euclid's figure and the Lean, at every
+point it shows, so that a reader can follow it however it turns or reflects Euclid's
+figure. Each letter is one that `NN.svg` draws, italic, at 14, small and beside its point,
 in the figure's black `#222222`, and clear of every colour and stroke where there is room.
 A point inside a coloured piece, with no parchment near it, takes its letter on the fill
 (I.43's K, II.4's G): in black on yellow, and in the parchment's `#fbf7ee` on red, blue or
@@ -442,8 +440,8 @@ shows no point. A point Heath leaves without a letter stays without one here too
 draws it says why, on the element or on a `<g>` round several:
 `data-unlettered="the squares of the reading in areas, which Heath's figure does not draw"`
 (II.9). A letter Heath gives a straight line or a figure (I.3's C, II.14's A) may stand
-beside it or within it. How the script reads this, and the switch that holds the figures
-until they are lettered, are in section 8.
+beside it or within it. How the script reads this, and the switch that held the figures
+while they were being lettered, are in section 8.
 
 **Checked as geometry, not only as a picture.** A label count or a colour check does not
 validate a figure. Before a changed figure is signed off, render it
@@ -508,7 +506,7 @@ block removed first.
 | S18 | A book with pages and no `mishnah/intro/<book>.md` | `mishnah/intro/` |
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
 | S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not italic, not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black polygon, rect or circle | Idea figures |
-| S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. While the switch is off (below), as it is until every figure at a glance is lettered, a figure with no letter is held only to the rule for its marks; with the switch on, S21 holds every figure | Idea figures |
+| S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 
@@ -528,12 +526,12 @@ block removed first.
 | D13 | A reading line that does not begin "For " | `reading/<book>/NN.md` |
 | D14 | The figures at a glance with no letter yet, book by book, with the points each has to letter, while the switch is off (below) | Idea figures |
 
-**The switch for S21.** Until every figure at a glance carries Heath's letters,
-`IDEA_LETTERS_REQUIRED` in `scripts/check_style.py` is `False`: S20 holds every figure,
-S21 holds each figure that carries at least one letter, so a figure once begun is lettered
-whole, and D14 lists the rest. Once every figure is lettered, the switch is set to `True`:
-S21 then fails any figure with a point unlettered, and D14 is empty. Once on, the switch
-is never turned back to quiet a figure: the figure is lettered.
+**The switch for S21.** The figures at a glance were lettered one by one, and while they
+were, `IDEA_LETTERS_REQUIRED` in `scripts/check_style.py` was `False`: S20 held every
+figure, S21 held each figure that carried at least one letter, so a figure once begun was
+lettered whole, and D14 listed the rest. Every figure now carries its letters, and the
+switch is `True`: S21 fails any figure with a point unlettered, and D14 is empty. The
+switch is never turned back to quiet a figure: the figure is lettered.
 
 ### The reviewer's checklist
 
