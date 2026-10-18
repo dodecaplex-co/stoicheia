@@ -1,8 +1,3 @@
-import Staging.Stage2.Rectilineal
-import Staging.Stage2.BookI.Prop40
-import Staging.Stage2.BookI.Prop45
-import Staging.Stage2.BookII.Prop01
-import Staging.Stage2.BookII.Prop14
 import Staging.Stage3.Definitions
 import Staging.Stage3.Degenerate
 import Staging.Stage3.Placement
@@ -28,11 +23,9 @@ the few proofs this library may hold, are in `docs/WORKFLOW.md`, section 2. Brie
 the home and owner of each statement of brief 0005's stages; a later brief names those of
 its own.
 
-The folders follow the briefs' stages:
+The folders follow the briefs' stages. Stage 2's statements, all proved, have moved to
+their homes in `Elements/`, and its folder with them. The others:
 
-* `Stage2/`: the companions of I.40, I.45, II.1 and II.14, and the bridge `Fitted.fan`,
-  all proved, waiting to move beside their propositions; their words are in the
-  foundations, and the facts about them in Book Zero;
 * `Stage3/`: the arcs and segments, I.20's degenerate case, placement, III.23 point by
   point, III.24 restated, III.26 and III.28 upgraded, and the bridge theorems of `Arcs.lean`;
 * `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated;

@@ -120,9 +120,9 @@ takes. `Fitted` is the figure with one boundary, its triangles fitted together.
 "Meeting only along that side" is said with the predicates already in the foundations: a
 point is within or on a triangle when it is inside it (`InsideTriangle`), on a side between
 two corners (`Between`), or at a corner (`OnOrInsideTriangle`); a point is on a finite
-straight line when it is an end or between the ends (`OnFiniteLine`). The new triangle `PQX` meets the
-earlier triangles only along `PQ` when every point within or on it that is within or on one
-of them is on the finite straight line `PQ`.
+straight line when it is an end or between the ends (`OnFiniteLine`). The new triangle
+`PQX` meets the earlier triangles only along `PQ` when every point within or on it that is
+within or on one of them is on the finite straight line `PQ`.
 
 Euclid's and Oliver Byrne's division of a figure by the straight lines from one corner is
 one such figure when two conditions hold; `Fitted.fan`, beside I.45, proves it.

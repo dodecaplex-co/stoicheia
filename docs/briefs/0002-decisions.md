@@ -631,3 +631,34 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+
+- **Stage 2 in the edition: brief 0006's words in the foundations, the axiom lock's
+  vocabulary grown.** Every statement of stage 2 of [brief 0006](0006-statements.md) is
+  proved, and moves from `Staging/` to its home in that brief's table, in a move the
+  coordinator delegated to the stage's integrator. The definitions they use are approved for
+  the foundations as a class: the owner's call, as the tracking issue
+  ([#50](https://github.com/jackChallis/stoicheia/issues/50)) records it, is that "the
+  definitions the frozen briefs name are approved for the foundations, each recorded in its
+  pull request" (decision 4 of brief 0006). This entry records the ones this pull request
+  moves, each as the brief froze it: `Magnitude.sum`, into
+  `Elements/Foundations/Magnitudes.lean`; and `InOrder`, `segments`, `endOf`,
+  `OnFiniteLine`, `OnOrInsideTriangle`, `Corners`, `triples`, `Fitted` with its two
+  constructors, `Rectilineal`, `Rectilineal.area`, `Apart` and `Apart.area`, into
+  `Elements/Foundations/Phrases.lean`. None is an assumption. Their facts go to Book Zero,
+  in two new files that `Basics.lean` gathers, `Elements/Figure/Sums.lean` and
+  `Elements/Figure/Rectilineal.lean`; the bridge `Fitted.fan`, whose proof cites I.13, goes to
+  `Elements/BookI/Prop45.lean`, before `Prop45.fan`, as the brief provides. The sixteen
+  companions of I.40, I.45, II.1 and II.14 move beside their propositions and join
+  `Elements/Companions.lean`; the statements of I.40, I.45, II.1 and II.14 themselves do not
+  change. `Staging/Stage2/` is gone, and `Staging.lean` says so. The routes as proved are
+  those the brief declares, save one detail of a plan: `InOrder.between_end` uses Between 5
+  (`between_of_between_right`), where the brief names Between 6 and Diagram-segment 1. The
+  protected files this changes are two. [`Certificate/axioms.lock`](../../Certificate/axioms.lock)
+  is rewritten by `python3 scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the
+  same 87, byte for byte, and its `[vocabulary]` grows from 61 words to 91, by the words above
+  and what Lean declares for them, each structure's constructor and the projection the
+  companions use (`Apart.mk`, `Apart.pieces`, `Rectilineal.mk`, `Rectilineal.pieces`), and
+  the auxiliary declarations of the five definitions by recursion (`._f`, `.match_1` and
+  `segments._sparseCasesOn_1`). [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is
+  renewed, and [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an
+  axiom reaches, has changed, so its account stands, and `tests/model/run.py --fast` passes.
