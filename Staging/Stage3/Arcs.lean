@@ -1,9 +1,9 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Prop29
 import Elements.BookIII.Circumferences
-import Staging.Stage3.Chord
+import Elements.Figure.Chords
 import Elements.Foundations.DefinitionsIII
-import Staging.Stage3.Placement
+import Elements.BookIII.Placement
 import Staging.Stage3.Prop24
 import Staging.Stage3.Prop28
 

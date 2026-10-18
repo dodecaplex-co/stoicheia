@@ -13,6 +13,7 @@ import Elements.Figure.Rectangles
 import Elements.Figure.OnCircles
 import Elements.Figure.Sums
 import Elements.Figure.Rectilineal
+import Elements.Figure.Chords
 
 /-!
 # Book Zero: small facts every figure needs
@@ -71,6 +72,11 @@ Every proposition file imports this one, and through it:
 * `Rectilineal`: a figure fitted together from triangles has at least one, each a
   triangle, and no point inside two of them, so its triangles lie apart, with the
   same sum.
+* `Chords`: a point of the straight line through two points of a circle is on the
+  circle exactly when it is one of them, and within it exactly when it lies between
+  them; a straight line from within the base of a segment, towards its side, meets
+  its circumference; only the side names a segment, and a congruence of segments
+  carries over to other points naming the same sides.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is
 an axiom.

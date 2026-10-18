@@ -10,7 +10,7 @@ import Elements.BookI.Prop24
 import Elements.BookIII.Prop10
 import Elements.BookIII.Prop25
 import Elements.Foundations.DefinitionsIII
-import Staging.Stage3.Chord
+import Elements.Figure.Chords
 
 /-!
 # Stage 4, staged: III.25 restated

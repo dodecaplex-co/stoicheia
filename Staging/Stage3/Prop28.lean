@@ -4,7 +4,7 @@ import Elements.BookIII.Prop28
 import Elements.BookI.Prop08
 import Elements.BookIII.Prop20
 import Elements.BookIII.Prop24
-import Staging.Stage3.Chord
+import Elements.Figure.Chords
 import Staging.Stage3.Prop24
 import Elements.Foundations.DefinitionsIII
 import Staging.Stage3.Prop26

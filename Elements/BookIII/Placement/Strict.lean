@@ -4,10 +4,10 @@ import Elements.BookI.Prop08
 import Elements.BookI.Prop24
 
 /-!
-# Stage 3, staged: placement, two points off the base
+# Placement: two points off the base
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. One file of
-`Elements/BookIII/Placement/`. This is the hardest case (brief 0005, Step 1).
+One of the five files of placement's cases (`Elements/BookIII/Placement.lean` gathers them),
+and the hardest.
 
 Two points P, Q on one side of AB are sent to P', Q' on one side of CD. Compare the angles
 that AP, AQ make with AB: if they differ, the lesser ray lies within the greater angle, the

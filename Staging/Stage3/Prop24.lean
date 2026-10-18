@@ -5,9 +5,9 @@ import Elements.BookIII.Prop24
 import Elements.BookIII.Prop20
 import Elements.BookIII.Prop22
 import Elements.Foundations.DefinitionsIII
-import Staging.Stage3.Chord
-import Staging.Stage3.Placement
-import Staging.Stage3.Prop23Point
+import Elements.Figure.Chords
+import Elements.BookIII.Placement
+import Elements.BookIII.Prop23
 
 /-!
 # Stage 3, staged: III.24 restated

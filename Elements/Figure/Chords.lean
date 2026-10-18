@@ -1,17 +1,21 @@
-import Elements.Figure.Basics
-import Elements.Foundations.DefinitionsIII
+import Elements.Figure.OnCircles
 
 /-!
-# Stage 3, staged: Book Zero facts for arcs
+# Book Zero: the points of a segment
 
-Statements frozen before their proofs (brief 0006, stage 3). Facts every arc needs, proved
-from the foundations alone; destined for a new Book Zero file, `Elements/Figure/Chords.lean`,
-which cites no proposition.
+A segment of a circle is named by its circle, the two ends of its base and a point on the
+side of its circumference (`Arc`, in `Foundations/DefinitionsIII.lean`, which says how).
+These are the facts about its points that need no proposition. A point of the straight
+line through two points of a circle is on the circle exactly when it is one of them, and
+within it exactly when it lies between them (`chord_cases`): III.24 decides the points of
+the base by it. A straight line drawn from a point between the ends of the base, towards
+the side of the segment, meets its circumference (`Arc.meets`), which III.25's construction
+reads off the segment it is given. And only the side names a segment: points on one side
+of the base name the same segment, and a congruence carries over to them by the same map
+(`Arc.congr_side`, `Arc.Congruent.congr_side`). III.26 and III.28 name their circumferences
+by points that need not be on the circle, and use the last.
 
-An arc is named by a point on its side, which need not be on the circle: III.26 and III.28
-name their circumferences by such points. `Arc.congr_side` says that only the side matters,
-and `Arc.Congruent.congr_side` carries a congruence from one naming point to another on the
-same side.
+Nothing in Book Zero cites a proposition of the *Elements*.
 -/
 
 namespace Elements
