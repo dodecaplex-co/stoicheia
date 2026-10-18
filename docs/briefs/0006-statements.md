@@ -1162,8 +1162,11 @@ leaves `lake build`, `lake build Audit` and `lake build Staging` green.
 
 **Stage 2.**
 1. Ground (wave R1): the words into the foundations, with the lock and a decisions entry;
-   `Elements/Figure/Sums.lean`; the certificate and render support for companions, and the
-   `Placement` policy check.
+   `Elements/Figure/Sums.lean`; and the `Placement` policy check. The certificate and
+   render support for companions is already in place: it landed on 17 October 2026, and
+   `Certificate/Facts.lean` checks each entry of `Elements/Companions.lean`,
+   `scripts/render.py` shows each companion and `scripts/check_fidelity.py` applies the
+   policies to companions.
 2. I.40, II.1, I.45 in parallel (best of two each); II.14 after I.45's statements are
    stable, against `Prop45.figure`.
 3. Records, pages, mishnah notes; the `figure-by-corners` tag added before the I.45 and
