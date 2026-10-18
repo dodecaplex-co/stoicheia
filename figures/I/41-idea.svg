@@ -1,9 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.41 at a glance</title>
-  <desc>On the same base and between the same parallels (blue), the parallelogram is double the triangle (yellow): the two corners left over (red) together are as big as the triangle.</desc>
+  <desc>On the same base BC and between the same parallels (blue), here with E between A and D, the parallelogram ABCD is double the triangle EBC (yellow): the two corners left over (red) together are as big as the triangle.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="147.5,85.0 102.5,215.0 252.5,215.0 297.5,85.0" fill="#d0312d" fill-opacity="0.9"/>
   <polygon points="197.5,85.0 102.5,215.0 252.5,215.0" fill="#f2b705" fill-opacity="0.95"/>
-  <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
-  <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <g data-unlettered="the parallels drawn on past the figure, to ends that are no points of Heath's">
+    <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+    <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="147.5" y="74.2">A</text>
+    <text x="197.5" y="74.2">E</text>
+    <text x="297.5" y="74.2">D</text>
+    <text x="102.5" y="236.2">B</text>
+    <text x="252.5" y="236.2">C</text>
+  </g>
 </svg>

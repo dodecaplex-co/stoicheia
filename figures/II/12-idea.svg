@@ -1,14 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.12 at a glance</title>
-  <desc>In a triangle, the square across from an obtuse angle (red) equals the other two squares (yellow, blue) and two rectangles (black), each as tall as the yellow side and as wide as the piece the perpendicular cuts off outside.</desc>
+  <desc>In the triangle ABC, obtuse at A, the square on BC (red) equals the squares on BA, AC (blue, yellow) and two rectangles contained by CA, AD (black), D the foot of the perpendicular from B.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <polygon points="148.0,196.0 260.0,138.0 202.0,26.0 90.0,84.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="226.0,196.0 260.0,138.0 318.0,172.0 284.0,230.0" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="148.0,196.0 226.0,196.0 226.0,274.0 148.0,274.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="114.0,274.0 148.0,274.0 148.0,196.0 114.0,196.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="80.0,274.0 114.0,274.0 114.0,196.0 80.0,196.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <g data-unlettered="the squares on the sides and the rectangles, which Heath's figure does not draw">
+    <polygon points="148.0,196.0 260.0,138.0 202.0,26.0 90.0,84.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="226.0,196.0 260.0,138.0 318.0,172.0 284.0,230.0" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="148.0,196.0 226.0,196.0 226.0,274.0 148.0,274.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="114.0,274.0 148.0,274.0 148.0,196.0 114.0,196.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="80.0,274.0 114.0,274.0 114.0,196.0 80.0,196.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  </g>
   <line x1="226.0" y1="196.0" x2="260.0" y2="196.0" stroke="#222222" stroke-width="2" stroke-linecap="butt"/>
   <line x1="260.0" y1="196.0" x2="260.0" y2="138.0" stroke="#222222" stroke-width="2" stroke-linecap="butt"/>
   <polyline points="250.0,196.0 250.0,186.0 260.0,186.0" fill="none" stroke="#222222" stroke-width="1.6"/>
   <polygon points="226.0,196.0 260.0,138.0 148.0,196.0" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
+  <g font-style="italic" font-size="14" fill="#222222">
+    <text x="265" y="131">B</text>
+    <text x="135" y="190" text-anchor="end">C</text>
+    <text x="219" y="190" text-anchor="end">A</text>
+    <text x="264" y="211" fill="#fbf7ee">D</text>
+  </g>
 </svg>

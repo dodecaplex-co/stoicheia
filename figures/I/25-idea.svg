@@ -10,4 +10,8 @@
   <line x1="272.2" y1="199.6" x2="365.0" y2="199.6" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
   <line x1="284.2" y1="100.4" x2="272.2" y2="199.6" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
   <line x1="284.2" y1="100.4" x2="365.0" y2="199.6" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="110.4" y="123.1">A</text><text x="25" y="220.6">B</text><text x="224" y="221.6">C</text><text x="284.2" y="89.6">D</text><text x="268" y="221.6">E</text><text x="375" y="220.6">F</text>
+  </g>
 </svg>

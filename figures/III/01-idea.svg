@@ -12,4 +12,12 @@
   <line x1="161.7" y1="44.8" x2="200.0" y2="150.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <line x1="200.0" y1="150.0" x2="238.3" y2="255.2" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <circle cx="200.0" cy="150.0" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="115.8" y="251.2">A</text>
+    <text x="325.5" y="174.4">B</text>
+    <text x="156.6" y="35.6">C</text>
+    <text x="210.9" y="221.9">D</text>
+    <text x="243.4" y="274.2">E</text>
+    <text x="184" y="153.9">F</text>
+  </g>
 </svg>

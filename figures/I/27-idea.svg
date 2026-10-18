@@ -4,7 +4,11 @@
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M222.6,107.5 L208.5,134.0 A30,30 0 0,1 192.6,107.5 Z" fill="#f2b705"/>
   <path d="M177.4,192.5 L191.5,166.0 A30,30 0 0,1 207.4,192.5 Z" fill="#f2b705"/>
-  <line x1="251.7" y1="52.8" x2="148.3" y2="247.2" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="251.7" y1="52.8" x2="148.3" y2="247.2" data-unlettered="EF runs on past E and F, to ends Heath leaves without letters" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="45.0" y1="107.5" x2="355.0" y2="107.5" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <line x1="45.0" y1="192.5" x2="355.0" y2="192.5" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="29" y="113.1">A</text><text x="371" y="113.1">B</text><text x="29" y="198.1">C</text><text x="371" y="198.1">D</text><text x="208" y="96.6">E</text><text x="191" y="214.6">F</text>
+  </g>
 </svg>

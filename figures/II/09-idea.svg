@@ -1,17 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.9 at a glance</title>
-  <desc>Cut a straight line in half, and again unequally: the squares on the unequal pieces (left) are twice the squares on the half (yellow) and on the piece between the cuts (blue), for the red and black pieces make a second yellow and blue.</desc>
+  <desc>Cut AB in half at C, and unequally at D: the squares on AD, DB (left) are twice the squares on AC (yellow) and CD (blue), for the red and black pieces make a second yellow and blue.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <polygon points="109.0,195.5 139.0,195.5 139.0,119.5 109.0,119.5" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="33.0,119.5 109.0,119.5 109.0,89.5 33.0,89.5" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="33.0,195.5 109.0,195.5 109.0,119.5 33.0,119.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="109.0,119.5 139.0,119.5 139.0,89.5 109.0,89.5" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="139.0,195.5 185.0,195.5 185.0,149.5 139.0,149.5" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="261.0,142.0 337.0,142.0 337.0,66.0 261.0,66.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="337.0,142.0 367.0,142.0 367.0,112.0 337.0,112.0" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="291.0,234.0 367.0,234.0 367.0,204.0 291.0,204.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="261.0,234.0 291.0,234.0 291.0,158.0 261.0,158.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
-  <polygon points="291.0,204.0 337.0,204.0 337.0,158.0 291.0,158.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  <g data-unlettered="the squares of the reading in areas, which Heath's figure does not draw">
+    <polygon points="109.0,195.5 139.0,195.5 139.0,119.5 109.0,119.5" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="33.0,119.5 109.0,119.5 109.0,89.5 33.0,89.5" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="33.0,195.5 109.0,195.5 109.0,119.5 33.0,119.5" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="109.0,119.5 139.0,119.5 139.0,89.5 109.0,89.5" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="139.0,195.5 185.0,195.5 185.0,149.5 139.0,149.5" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="261.0,142.0 337.0,142.0 337.0,66.0 261.0,66.0" fill="#f2b705" fill-opacity="0.95" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="337.0,142.0 367.0,142.0 367.0,112.0 337.0,112.0" fill="#1f5aa6" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="291.0,234.0 367.0,234.0 367.0,204.0 291.0,204.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="261.0,234.0 291.0,234.0 291.0,158.0 261.0,158.0" fill="#d0312d" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+    <polygon points="291.0,204.0 337.0,204.0 337.0,158.0 291.0,158.0" fill="#222222" fill-opacity="0.9" stroke="#fbf7ee" stroke-width="2" stroke-linejoin="miter"/>
+  </g>
   <line x1="33.0" y1="207.5" x2="109.0" y2="207.5" stroke="#f2b705" stroke-width="6" stroke-linecap="butt"/>
   <line x1="109.0" y1="207.5" x2="139.0" y2="207.5" stroke="#1f5aa6" stroke-width="6" stroke-linecap="butt"/>
   <line x1="139.0" y1="207.5" x2="185.0" y2="207.5" stroke="#222222" stroke-width="6" stroke-linecap="butt"/>
@@ -21,4 +23,10 @@
   <circle cx="185.0" cy="207.5" r="4.5" fill="#222222"/>
   <line x1="211.0" y1="144.5" x2="235.0" y2="144.5" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
   <line x1="211.0" y1="155.5" x2="235.0" y2="155.5" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
+  <g font-style="italic" font-size="14" fill="#222222">
+    <text x="33" y="228" text-anchor="middle">A</text>
+    <text x="109" y="228" text-anchor="middle">C</text>
+    <text x="139" y="228" text-anchor="middle">D</text>
+    <text x="185" y="228" text-anchor="middle">B</text>
+  </g>
 </svg>

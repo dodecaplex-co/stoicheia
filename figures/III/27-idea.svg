@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.27 at a glance</title>
-  <desc>Turn III.26 round: in equal circles, stand angles on equal circumferences (red), and they come out equal, at the centres (yellow) and at the circumferences (blue).</desc>
+  <desc>Turn III.26 round: in the equal circles ABC, DEF, stand angles on the equal circumferences BC, EF (red), and they come out equal, at the centres G, H (yellow) and at the circumferences, at A and D (blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="106.0" cy="150.0" r="82.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M106.0,150.0 L83.9,132.8 A28,28 0 0,1 128.1,132.8 Z" fill="#f2b705"/>
@@ -20,4 +20,14 @@
   <line x1="226.8" y1="197.0" x2="312.4" y2="70.1" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="226.8" y1="197.0" x2="367.1" y2="187.2" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <circle cx="294.0" cy="150.0" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="76.1" y="247.2">A</text>
+    <text x="182.4" y="95.2">B</text>
+    <text x="29.6" y="95.2">C</text>
+    <text x="214.5" y="210.5">D</text>
+    <text x="380.5" y="198.9">E</text>
+    <text x="315.8" y="60.4">F</text>
+    <text x="106.0" y="170.9">G</text>
+    <text x="279.5" y="155.9">H</text>
+  </g>
 </svg>

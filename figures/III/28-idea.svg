@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.28 at a glance</title>
-  <desc>Draw equal straight lines (blue) in equal circles: they cut off equal circumferences, the smaller pieces equal (red) and the larger equal (yellow).</desc>
+  <desc>Draw the equal straight lines AB, DE (blue) in equal circles: they cut off equal circumferences, the less AGB, DHE equal (red) and the greater ACB, DFE equal (yellow).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M157.6,86.3 A82.0,82.0 0 1,1 25.5,134.4" fill="none" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
   <path d="M25.5,134.4 A82.0,82.0 0 0,1 157.6,86.3" fill="none" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
@@ -8,4 +8,14 @@
   <path d="M212.6,140.0 A82.0,82.0 0 1,1 323.4,226.6" fill="none" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
   <path d="M323.4,226.6 A82.0,82.0 0 0,1 212.6,140.0" fill="none" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
   <line x1="323.4" y1="226.6" x2="212.6" y2="140.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="168.9" y="77.2">A</text>
+    <text x="41.0" y="153.9">B</text>
+    <text x="140.2" y="248.9">C</text>
+    <text x="230.6" y="138.9">D</text>
+    <text x="329.8" y="248.3">E</text>
+    <text x="355.6" y="76.1">F</text>
+    <text x="71.8" y="60.9">G</text>
+    <text x="232.4" y="233.7">H</text>
+  </g>
 </svg>

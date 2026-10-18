@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.19 at a glance</title>
-  <desc>At the point where a straight line touches the circle (red), stand a straight line at right angles to it (yellow): it runs through the centre (black).</desc>
+  <desc>Where DE touches the circle at C (red), draw CA at right angles to it (yellow): it runs through the centre F (black), where the conclusion puts it. Heath's F is a centre supposed off CA, which the proof rules out.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="206.00" cy="136.00" r="98.00" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M175.72,229.20 L149.09,220.55 A28,28 0 0,1 184.37,202.57 Z" fill="#f2b705"/>
@@ -10,4 +10,12 @@
   <line x1="175.72" y1="229.20" x2="236.28" y2="42.80" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
   <line x1="33.06" y1="182.85" x2="318.37" y2="275.56" stroke="#d0312d" stroke-width="7" stroke-linecap="round"/>
   <circle cx="206.00" cy="136.00" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="241.2" y="32.5">A</text>
+    <text x="312.5" y="175.5">B</text>
+    <text x="170.2" y="251.2">C</text>
+    <text x="25.6" y="204.3">D</text>
+    <text x="332.6" y="285.1">E</text>
+    <text x="219.0" y="141.9">F</text>
+  </g>
 </svg>

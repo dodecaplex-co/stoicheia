@@ -1,17 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.34 at a glance</title>
-  <desc>Draw a straight line touching the circle (blue) and lay the given angle (red) against it where it touches: the straight line across cuts off a segment (yellow) whose angles all equal the given one.</desc>
+  <desc>Draw EF touching the circle at B (blue) and lay the given angle at D (red) against it there, as FBC: BC cuts off a segment BAC (yellow) whose angles all equal the angle at D.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="252.0" cy="140.0" r="100.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <path d="M32.0,96.0 L62.0,96.0 A30,30 0 0,0 47.9,70.6 Z" fill="#d0312d"/>
   <path d="M252.0,240.0 L282.0,240.0 A30,30 0 0,0 267.9,214.6 Z" fill="#d0312d"/>
   <path d="M154.2,119.2 L178.1,148.7 A38,38 0 0,0 191.9,114.6 Z" fill="#d0312d"/>
-  <line x1="32.0" y1="96.0" x2="118.0" y2="96.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
-  <line x1="32.0" y1="96.0" x2="77.6" y2="23.1" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+  <line data-unlettered="the arms of the given angle at D, which Heath's figure leaves without letters" x1="32.0" y1="96.0" x2="118.0" y2="96.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+  <line data-unlettered="the arms of the given angle at D, which Heath's figure leaves without letters" x1="32.0" y1="96.0" x2="77.6" y2="23.1" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
   <path d="M341.9,96.2 A100.0,100.0 0 1,0 252.0,240.0" fill="none" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
   <line x1="154.2" y1="119.2" x2="252.0" y2="240.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="154.2" y1="119.2" x2="341.9" y2="96.2" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="252.0" y1="240.0" x2="341.9" y2="96.2" stroke="#222222" stroke-width="5" stroke-linecap="round"/>
   <line x1="134.0" y1="240.0" x2="370.0" y2="240.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <circle cx="252.0" cy="240.0" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="138.6" y="120.8">A</text>
+    <text x="252.0" y="261.9">B</text>
+    <text x="355.4" y="94.5">C</text>
+    <text x="28.0" y="116.9">D</text>
+    <text x="137.0" y="260.9">E</text>
+    <text x="367.0" y="260.9">F</text>
+  </g>
 </svg>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.35 at a glance</title>
-  <desc>Two parallelograms on the same base and between the same parallels (blue) are equal: each is the yellow piece plus a red triangle, and the two red triangles are equal.</desc>
+  <desc>The parallelograms ABCD, EBCF on base BC between the same parallels (blue), here with E between A and D, are equal: each is the yellow EBCD plus a red triangle, and the red triangles ABE, DCF are equal.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="167.5,85.0 62.5,215.0 232.5,215.0 247.5,85.0" fill="#f2b705" fill-opacity="0.9"/>
   <polygon points="77.5,85.0 62.5,215.0 167.5,85.0" fill="#d0312d" fill-opacity="0.9"/>
@@ -9,6 +9,16 @@
   <line x1="247.5" y1="85.0" x2="232.5" y2="215.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="167.5" y1="85.0" x2="62.5" y2="215.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="337.5" y1="85.0" x2="232.5" y2="215.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
-  <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
-  <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <g data-unlettered="the parallels drawn on past the figure, to ends that are no points of Heath's">
+    <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+    <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  </g>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="77.5" y="74.2">A</text>
+    <text x="167.5" y="74.2">E</text>
+    <text x="247.5" y="74.2">D</text>
+    <text x="337.5" y="74.2">F</text>
+    <text x="62.5" y="236.2">B</text>
+    <text x="232.5" y="236.2">C</text>
+  </g>
 </svg>

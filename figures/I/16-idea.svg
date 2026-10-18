@@ -7,4 +7,8 @@
   <path d="M45.0,223.1 L77.0,223.1 A32,32 0 0,0 69.5,202.5 Z" fill="#1f5aa6"/>
   <line x1="245.0" y1="223.1" x2="355.0" y2="223.1" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <polygon points="219.2,76.9 45.0,223.1 245.0,223.1" fill="none" stroke="#222222" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="225" y="66.5">A</text><text x="29.6" y="235.9">B</text><text x="242" y="245.4">C</text><text x="369.1" y="233.8">D</text>
+  </g>
 </svg>

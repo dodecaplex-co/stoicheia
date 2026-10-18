@@ -31,4 +31,15 @@
   <polygon points="170,200 258,200 170,134" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
   <polyline points="182,200 182,188 170,188" fill="none" stroke="#222222" stroke-width="1.6"/>
   </g>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="137.4" y="207.9">A</text>
+    <text x="246.6" y="207.9">B</text>
+    <text x="137.4" y="120.6">C</text>
+    <text x="316.8" y="107.1">D</text>
+    <text x="211.9" y="28.4">E</text>
+    <text x="251" y="285.2">F</text>
+    <text x="133" y="285.2">G</text>
+    <text x="71.4" y="207.9">H</text>
+    <text x="71.4" y="120.6">K</text>
+  </g>
 </svg>

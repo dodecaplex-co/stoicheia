@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.13 at a glance</title>
-  <desc>However one straight line stands on another, the two angles it makes (red and blue) together equal two right angles (yellow).</desc>
+  <desc>However one straight line stands on another, the two angles it makes (red and blue) together equal two right angles (yellow), drawn apart from B on the right; Heath's E, on BE at right angles to CD, is not drawn.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M100.0,205.0 L132.0,205.0 A32,32 0 0,0 83.0,177.9 Z" fill="#1f5aa6"/>
   <path d="M100.0,205.0 L83.0,177.9 A32,32 0 0,0 68.0,205.0 Z" fill="#d0312d"/>
@@ -10,8 +10,14 @@
   <polyline points="300.0,193.0 288.0,193.0 288.0,205.0" fill="none" stroke="#222222" stroke-width="1.6"/>
   <line x1="30.0" y1="205.0" x2="170.0" y2="205.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
   <line x1="100.0" y1="205.0" x2="39.1" y2="107.5" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
-  <line x1="230.0" y1="205.0" x2="370.0" y2="205.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
-  <line x1="300.0" y1="205.0" x2="300.0" y2="90.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+  <g data-unlettered="two right angles drawn apart from B; Heath's figure draws them at B, as the angles CBE, EBD">
+    <line x1="230.0" y1="205.0" x2="370.0" y2="205.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+    <line x1="300.0" y1="205.0" x2="300.0" y2="90.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
+  </g>
   <line x1="188.0" y1="175.0" x2="212.0" y2="175.0" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
   <line x1="188.0" y1="186.0" x2="212.0" y2="186.0" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="100" y="227.6">B</text><text x="34" y="227.6">C</text><text x="166" y="227.6">D</text><text x="28.5" y="102.5">A</text>
+  </g>
 </svg>
