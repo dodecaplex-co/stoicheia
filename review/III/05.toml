@@ -5,17 +5,17 @@ note = "The circles are taken to be two (`ABC ≠ CDG`), as Euclid's figure take
 fingerprint = "sha256:d7cdfb6a9d4b4196"
 
 [route]
-kind = "modified"
-note = "Euclid's argument, but the last step does not order F and G as his figure does: EF equal to EG makes the two circles one (`circle_eq`), and they are two."
+kind = "euclid"
 
 [overlap]
 rule = "Tacit.circle_eq"
-note = "System E's Diagram-segment 2, that one centre and one radius make one circle, gives III.5 at once from a common point. The proof follows Euclid and closes with that rule."
+note = "System E's Diagram-segment 2, that one centre and one radius make one circle, gives III.5 at once from a common point. The proof follows Euclid, and calls on that rule only for the step he leaves tacit, that F and G are two points."
 
 [[passage]]
 at = "therefore EF is also equal to EG, the less to the greater"
-kind = "different"
-note = "The Lean does not order F and G as the figure does: EF equal to EG makes ABC and CDG one circle (`circle_eq`), and the statement says they are two."
+kind = "helper"
+helper = "Tacit.circle_eq"
+note = "That F and G are two points is the step Euclid leaves tacit: were they one, ABC and CDG, about the one centre E, would be one circle (System E, Diagram-segment 2), and the statement says they are two. Then whichever of F and G is the nearer E gives the less, as in his figure, where F is."
 
 [[passage]]
 at = "Therefore the point E is not the centre of the circles ABC, CDG."
@@ -24,6 +24,6 @@ note = "The reductio's conclusion. The Lean supposed E the centre of both circle
 
 [review]
 stage = "exceptions"
-commit = "2a34715"
+commit = "7339460"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:bf0acb5df6a50c14"
+lean = "sha256:51a2558ef848cac3"

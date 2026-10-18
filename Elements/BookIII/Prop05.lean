@@ -26,9 +26,9 @@ theorem Prop5 {E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : Circles
   obtain ⟨P, hP⟩ := exists_point [E]
   have hPE : P ≠ E := fun h => hP (h ▸ List.mem_singleton_self P)
   obtain ⟨EFG, hE_EFG, hP_EFG⟩ := Postulate1 E P hPE.symm
-  obtain ⟨F, hF_ABC, -, -⟩ :=
+  obtain ⟨F, hF_ABC, hF_EFG, hFEP⟩ :=
     line_circle_beyond (centre_inside hE_ABC) hE_EFG hP_EFG hPE
-  obtain ⟨G, hG_CDG, -, -⟩ :=
+  obtain ⟨G, hG_CDG, hG_EFG, hGEP⟩ :=
     line_circle_beyond (centre_inside hE_CDG) hE_EFG hP_EFG hPE
   -- Then, since the point E is the centre of the circle ABC,
   -- EC is equal to EF. [I. Def. 15]
@@ -39,10 +39,21 @@ theorem Prop5 {E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : Circles
   -- But EC was proved equal to EF also;
   -- therefore EF is also equal to EG, the less to the greater: which is impossible.
   have hEFG : ‖E F‖ = ‖E G‖ := hECF.symm.trans hECG
-  /- Euclid sees F before G in the figure. We give the reason the supposed common centre
-     cannot be: equal radii about one centre make one circle (System E, Diagram-segment 2),
-     and ABC and CDG are two. -/
-  exact hne (circle_eq hE_ABC hE_CDG hF_ABC hG_CDG hEFG)
+  /- That F and G are two points is the step Euclid leaves tacit. Were they one, the
+     circles ABC and CDG, about the one centre E, would pass through one point, and a
+     centre and a radius fix a circle (`circle_eq`, System E, Diagram-segment 2): they
+     would be one circle, and they are two. -/
+  have hFG : F ≠ G := by
+    rintro rfl
+    exact hne (circle_eq hE_ABC hE_CDG hF_ABC hG_CDG rfl)
+  /- F and G both lie beyond E from the unlettered point, so G is on the ray from E
+     through F. On a ray only one point is at a given distance from its start, by Henry
+     Savile's argument (`OnRay.eq_of_len_eq` in Book Zero): whichever is the nearer, the
+     less would be equal to the greater. Euclid's figure has F the nearer. -/
+  have hG_ray : OnRay G E F := ⟨(ne_of_between hFEP).symm, ne_of_between hGEP,
+    ⟨EFG, hE_EFG, hF_EFG, hG_EFG⟩,
+    not_between_of_between_between (between_symm hGEP) (between_symm hFEP)⟩
+  exact hFG (OnRay.eq_of_len_eq hG_ray hEFG.symm).symm
   -- Therefore the point E is not the centre of the circles ABC, CDG.
   -- Therefore etc.
   -- Q. E. D.
