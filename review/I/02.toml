@@ -12,11 +12,6 @@ rule = "Tacit.superposition"
 note = "Superposition lays a triangle on BC down at A, along AB, and so carries the length of BC to A, which is I.2; a proof from the rules alone takes ten. Our proof is Euclid's, by I.1 and two circles, and never uses the rule."
 
 [[passage]]
-at = "Let A be the given point, and BC the given straight line"
-kind = "case"
-note = "Euclid's figure has A apart from B, as the triangle on AB needs. The Lean first takes the case where A is B itself, in a step of its own: BC is then the straight line placed."
-
-[[passage]]
 at = "Let the straight lines AE, BF be produced in a straight line with DA, DB"
 kind = "given"
 note = "Our straight lines DA and DB are whole lines already, so nothing is produced and Postulate 2 is not used: G and L are where they meet the circles beyond B and A (System E, Intersections 5)."
