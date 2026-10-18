@@ -6,22 +6,26 @@ wrote and the certificate reads:
 
 1. **leanchecker**, run with `--fresh`, replays the whole environment of `Elements` from
    nothing through Lean's kernel: every declaration of the edition and of Lean's own
-   library beneath it. It would catch a declaration that reached the compiled files
-   without the kernel's check. It began as Kim Morrison's lean4checker
+   library beneath it. It is the same kernel that `lake build` runs, so it catches a
+   declaration that reached the compiled files without the kernel's check, not a fault
+   in the kernel; and it replays any axiom it meets. Kim Morrison and Sebastian Ullrich
+   wrote it; it began as Kim Morrison's lean4checker
    (https://github.com/leanprover/lean4checker), and now ships with Lean.
 2. **nanoda**, Chris Bailey's type checker for Lean, written separately from Lean, in Rust
    (https://github.com/ammkrn/nanoda_lib), checks the whole export that `leanexport`
-   writes, Lean's own declarations included. It admits only the axioms of
-   `Certificate/axioms.lock` and Lean's three (`propext`, `Classical.choice`,
-   `Quot.sound`): any declaration that needs another axiom, as `sorryAx` or the
-   compiler's `Lean.ofReduceBool`, is an error.
+   (Henrik Böving's, for the Lean FRO) writes, Lean's own declarations included. It
+   admits only the axioms of `Certificate/axioms.lock` and Lean's three (`propext`,
+   `Classical.choice`, `Quot.sound`), by name: any declaration that needs another axiom,
+   as `sorryAx` or the compiler's `Lean.ofReduceBool`, is an error. Whether a locked
+   axiom states what the lock records is `check_fidelity.py`'s check, not this one's.
 
 A cold Claude review contributed this script on 18 October 2026; we are grateful. The
-two checkers are the work of their authors and of the Lean community, and we thank them.
+three programs it runs are the work of their authors and of the Lean community, and we
+thank them warmly.
 
-Both programs come with the Lean toolchain that `lean-toolchain` pins, in the folder
-`lean --print-prefix` names, so nothing is installed. Run it from anywhere, after
-`lake build`:
+All three come with the Lean toolchain that `lean-toolchain` pins, in the folder
+`lean --print-prefix` names, so nothing is installed. Run it from anywhere, with Python
+3.11 or later, after `lake build`:
 
     python3 scripts/check_kernel.py               both checks
     python3 scripts/check_kernel.py --self-test   both, then nanoda again with Postulate 5
@@ -44,9 +48,7 @@ from pathlib import Path
 
 import check_fidelity
 
-ROOT = Path(__file__).resolve().parent.parent
-LOCK = ROOT / "Certificate" / "axioms.lock"
-STANDARD = ["propext", "Classical.choice", "Quot.sound"]
+ROOT = check_fidelity.ROOT
 WITHHELD = "Elements.Postulate5"
 
 
@@ -73,11 +75,11 @@ def locked_axioms() -> list[str]:
     """The axioms of the lock, by their full Lean names, read as the fidelity check reads
     them."""
     try:
-        lock = check_fidelity.read_lock(LOCK)
-    except ValueError as e:
+        lock = check_fidelity.read_lock()
+    except (ValueError, RuntimeError) as e:
         fail(str(e))
     if not lock or not lock[0]:
-        fail(f"no axioms read from {LOCK.relative_to(ROOT)}")
+        fail(f"no axioms read from {check_fidelity.rel(check_fidelity.LOCK)}")
     return [f"Elements.{n}" for n in lock[0]]
 
 
@@ -90,7 +92,7 @@ def nanoda(bin_: Path, export: Path, permitted: list[str], work: Path) -> subpro
     config.write_text(json.dumps({
         "export_file_path": str(export),
         "use_stdin": False,
-        "permitted_axioms": STANDARD + permitted,
+        "permitted_axioms": sorted(check_fidelity.LEAN_FOUNDATIONS) + permitted,
         "unpermitted_axiom_hard_error": False,
         "nat_extension": True,
         "string_extension": True,
@@ -135,6 +137,9 @@ def main() -> None:
               f"included, with the {len(axioms)} axioms of the lock and Lean's three")
 
         if args.self_test:
+            if WITHHELD not in axioms:
+                fail(f"the lock no longer names {WITHHELD}, so the self-test would withhold "
+                     "nothing: name the axiom it withholds afresh")
             planted = nanoda(bin_, export, [a for a in axioms if a != WITHHELD], work)
             if planted.returncode == 0:
                 fail(f"nanoda passed with {WITHHELD} withheld, which I.29's proof uses")
