@@ -10,7 +10,7 @@ kind = "euclid"
 [[passage]]
 at = "I say that the angles CBA, ABD are either two right angles"
 kind = "given"
-note = "The statement gives the goal: the two angles together equal to two right angles. Each angle right is the case of it where the two are equal (Postulate 4)."
+note = "The statement gives the goal, in Euclid's second form, as the table above says."
 
 [[passage]]
 at = "Then, since the angle CBE is equal to the two angles CBA, ABE"

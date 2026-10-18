@@ -9,7 +9,7 @@ kind = "euclid"
 [[passage]]
 at = "I say that BD is in a straight line with CB"
 kind = "given"
-note = "The statement gives the goal: in our Lean, BD in a straight line with CB is B between C and D."
+note = "The statement gives the goal; the note under the sentence says how our Lean puts it."
 
 [[passage]]
 at = "Similarly we can prove that neither is any other straight line"

@@ -8,7 +8,7 @@ kind = "euclid"
 [[passage]]
 at = "therefore EB, FD, if produced in the direction B, D, will meet"
 kind = "grouped"
-note = "One application of Postulate 5, under the sentence before, carries both the citation and this conclusion; the Lean then takes the meeting point G."
+note = "One application of Postulate 5, under the sentence before, carries both that sentence and this conclusion; the Lean then takes the meeting point G."
 
 [[passage]]
 at = "and let AG be joined"
