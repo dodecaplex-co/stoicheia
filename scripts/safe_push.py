@@ -1558,8 +1558,12 @@ def kept_expectations(old: str | None, new: str | None) -> bool:
 
 
 def locked_axioms(text: str | None) -> dict | None:
-    """The lock's [axioms] table, {name: statement}; None when it does not read."""
+    """The lock's [axioms] table, {name: statement}; None when it does not read, or the
+    file is absent (`text` None: tomllib.loads(None) raises AttributeError before Python
+    3.14, and TypeError from it)."""
     import tomllib
+    if text is None:
+        return None
     try:
         table = tomllib.loads(text)["axioms"]
     except (TypeError, KeyError, tomllib.TOMLDecodeError):
@@ -1570,8 +1574,11 @@ def locked_axioms(text: str | None) -> dict | None:
 def model_laws(text: str | None) -> dict | None:
     """laws.toml, as {axiom: (the name of its law, whether it must fail in the hyperbolic
     plane)}; None unless it is a [laws] table of names and a [hyperbolic] table holding
-    `fails`, a list of some of those axioms, and nothing else."""
+    `fails`, a list of some of those axioms, and nothing else; None, too, when the file is
+    absent (`text` None, as in locked_axioms)."""
     import tomllib
+    if text is None:
+        return None
     try:
         data = tomllib.loads(text)
     except (TypeError, tomllib.TOMLDecodeError):
@@ -1640,36 +1647,94 @@ def law_code(text: str | None) -> tuple[list[str], dict, set[str]] | None:
 
 # What a law's code may not name: the builtins that reach a namespace, run code, open a
 # file or print (a printed line could pass for another law's result), and the registry of
-# laws but for its own decorator. The methods that change a container in place. And those
-# that reseed the random numbers every law draws from, which reach a law through its
-# configuration.
+# laws but for its own decorator. The methods that change a container in place, and the
+# one that shuffles the container it is given. Those that reseed the random numbers every
+# law draws from, which reach a law through its configuration. The calls that make a new
+# container, beside a display or a comprehension. And the augmented assignments that a
+# container of Python's own makes in place (a list's `+=`, a set's `|=`).
 LAW_REACH = frozenset({"globals", "vars", "locals", "getattr", "setattr", "delattr", "exec",
                        "eval", "compile", "open", "print", "input", "breakpoint", "AXIOMS",
                        "axiom"})
 MUTATORS = frozenset({"append", "extend", "insert", "pop", "remove", "clear", "update",
                       "setdefault", "popitem", "add", "discard", "sort", "reverse", "write"})
+SHUFFLES = frozenset({"shuffle"})
 RESEED = frozenset({"seed", "setstate"})
+CONSTRUCTORS = frozenset({"list", "dict", "set", "bytearray"})
+IN_PLACE = (ast.Add, ast.Sub, ast.Mult, ast.BitOr, ast.BitAnd, ast.BitXor)
 
 
 def self_contained(fn: ast.FunctionDef, module: set[str]) -> bool:
     """Does a law's code keep to itself, so that it changes no other law's check when it
     runs? No `global`, `nonlocal`, import or `:=`; no name in LAW_REACH (its own decorator
-    aside) and no dunder name; nothing stored into an attribute or deleted from one; no
-    method in RESEED; and no container changed, by a subscript or a method in MUTATORS,
-    unless the law made it: a name it binds itself, and not one the file binds at its top
-    level (`module`)."""
-    own: set[str] = set()
-    for node in ast.walk(fn):
-        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
-            own.add(node.id)
-        elif isinstance(node, ast.arg):
-            own.add(node.arg)
-    own -= module
+    aside), and no dunder name, attribute or function; nothing stored into an attribute or
+    deleted from one; no method in RESEED. And it changes only a container it made in its
+    own body: a name that every binding in the law gives a new container (a list, dict or
+    set display, a comprehension, or a call of one of CONSTRUCTORS that nothing rebinds),
+    and that the file does not bind at its top level (`module`). Only through that name
+    itself may a container change: by a subscript stored or deleted, a method in MUTATORS,
+    an augmented assignment in IN_PLACE, or as the container a method in SHUFFLES is
+    given. So a second name for a shared container (`d = DEN`, `for d in (DEN,)`, an
+    argument) changes nothing, and nor does an element of the law's own container
+    (`x[0].clear()`, `x[0] += [1]`). An augmented assignment that a container of Python's
+    own never makes in place (`t /= 2`), or one to a name every binding gives a constant
+    (`j += 1`), changes nothing either."""
+    bound = module | {node.id for node in ast.walk(fn) if isinstance(node, ast.Name)
+                      and not isinstance(node.ctx, ast.Load)}
+    makers = CONSTRUCTORS - bound
 
-    def root(node) -> str | None:
-        while isinstance(node, (ast.Attribute, ast.Subscript, ast.Call)):
-            node = node.func if isinstance(node, ast.Call) else node.value
-        return node.id if isinstance(node, ast.Name) else None
+    def new_container(value) -> bool:
+        return isinstance(value, (ast.List, ast.Dict, ast.Set, ast.ListComp, ast.DictComp,
+                                  ast.SetComp)) \
+            or (isinstance(value, ast.Call) and isinstance(value.func, ast.Name)
+                and value.func.id in makers)
+
+    made, constant, other, seen = set(), set(), set(), set()
+
+    def bind(target, value) -> None:
+        """A target of an assignment and its value, where it is known; a tuple or list
+        target takes a display of as many values, one each."""
+        seen.add(id(target))
+        if isinstance(target, ast.Name):
+            kind = made if new_container(value) else \
+                constant if isinstance(value, ast.Constant) else other
+            kind.add(target.id)
+        elif isinstance(target, (ast.Tuple, ast.List)):
+            elts = value.elts if isinstance(value, (ast.Tuple, ast.List)) \
+                and len(value.elts) == len(target.elts) \
+                and not any(isinstance(e, ast.Starred) for e in value.elts) else None
+            for i, t in enumerate(target.elts):
+                bind(t, elts[i] if elts else None)
+        elif isinstance(target, ast.Starred):
+            bind(target.value, None)
+
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                bind(target, node.value)
+        elif isinstance(node, ast.AnnAssign) and node.value is not None:
+            bind(node.target, node.value)
+        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
+            seen.add(id(node.target))   # the same name, judged below
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load) \
+                and id(node) not in seen:
+            other.add(node.id)  # a loop, a comprehension, `with … as`, `del`
+        elif isinstance(node, ast.arg):
+            other.add(node.arg)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) \
+                and node is not fn:
+            other.add(node.name)
+        elif isinstance(node, ast.ExceptHandler) and node.name:
+            other.add(node.name)
+        elif isinstance(node, (ast.MatchAs, ast.MatchStar)) and node.name:
+            other.add(node.name)
+        elif isinstance(node, ast.MatchMapping) and node.rest:
+            other.add(node.rest)
+    own = made - constant - other - module
+    constants = constant - made - other - module
+
+    def mine(node) -> bool:
+        return isinstance(node, ast.Name) and node.id in own
 
     decorator = fn.decorator_list[0].func
     for node in ast.walk(fn):
@@ -1679,13 +1744,25 @@ def self_contained(fn: ast.FunctionDef, module: set[str]) -> bool:
         if isinstance(node, ast.Name) and node is not decorator \
                 and (node.id in LAW_REACH or node.id.startswith("__")):
             return False
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) \
+                and node.name.startswith("__"):
+            return False
         if isinstance(node, ast.Attribute) and (
                 node.attr.startswith("__") or node.attr in RESEED
                 or isinstance(node.ctx, (ast.Store, ast.Del))
-                or (node.attr in MUTATORS and root(node.value) not in own)):
+                or (node.attr in MUTATORS and not mine(node.value))):
             return False
         if isinstance(node, ast.Subscript) and isinstance(node.ctx, (ast.Store, ast.Del)) \
-                and root(node) not in own:
+                and not mine(node.value):
+            return False
+        if isinstance(node, ast.AugAssign) and isinstance(node.op, IN_PLACE) \
+                and not mine(node.target) and not (isinstance(node.target, ast.Name)
+                                                   and node.target.id in constants):
+            return False
+        if isinstance(node, ast.Call) and (
+                (isinstance(node.func, ast.Attribute) and node.func.attr in SHUFFLES)
+                or (isinstance(node.func, ast.Name) and node.func.id in SHUFFLES)) \
+                and not (node.args and mine(node.args[0])):
             return False
     return True
 

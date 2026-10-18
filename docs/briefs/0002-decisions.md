@@ -656,17 +656,25 @@ findings:
   in the lock. A law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`,
   the two programs that check every law, moves the same way, while it keeps to itself (a
   function `_` under its one decorator `@axiom('<name>', …)`, binding no global, importing
-  and printing nothing, and changing nothing it did not make) and nothing else in the file
-  changes but comments and its docstring. The model's account,
-  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and `tests/model/results/`, which
-  no check reads, moves with its content as well. A law changed while its axiom stands, a
-  helper or tolerance of the harness, and every other change to the checks are kept apart
-  as before. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) plants an
+  and printing nothing, and changing no container but one it made in its own body, through
+  the name it gave it) and nothing else in the file changes but comments and its
+  docstring. The model's account, [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
+  and `tests/model/results/`, which no check reads, moves with its content as well. A law
+  changed while its axiom stands, a helper or tolerance of the harness, and every other
+  change to the checks are kept apart as before.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) plants an
   axiom added with its entry in the lock, the new hash, its line of `laws.toml`, its law's
   code in both programs and a line of MODEL.md: it lands as content, and the model's ties
   hold on it. With another law loosened beside it, the same change is kept apart, and a
-  table of thirteen loosenings and five moves checks each way round. MODEL.md, "Changing
-  the axioms", is now the one home of the steps for changing an axiom, and the comment in
-  `tests/model/lock.sha256` points to it; [WORKFLOW](../WORKFLOW.md), section 10, step 4,
-  gives the rule for landing them. Adding an axiom stays the owner's decision: this lets
-  one land, and adds none.
+  table of seventeen loosenings and five moves checks each way round. The independent
+  verifier of the change found two gaps, and we thank them for it: a new law could change
+  a shared container under a second name (`d = DEN`, then `d[:] = [2]`), and a missing
+  laws.toml or lock gave a traceback before Python 3.14, not the refusal. A law now changes
+  a container only through a name that every binding in it gives a container it made
+  itself, and a missing file reads as nothing; each has its tests. MODEL.md, "Changing
+  the axioms", is now the one home of the steps for changing an axiom, or a word of the
+  lock, and the comment in `tests/model/lock.sha256`,
+  [FORMALIZATION](../FORMALIZATION.md), section 7, the [orders](../templates/orders.md)
+  and [brief 0006](0006-statements.md) point to it; [WORKFLOW](../WORKFLOW.md), section
+  10, step 4, gives the rule for landing them. Adding an axiom stays the owner's decision:
+  this lets one land, and adds none.

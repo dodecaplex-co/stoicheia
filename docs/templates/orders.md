@@ -186,8 +186,8 @@ record `review/<B>/NN.toml`; <the shared definitions the statements use>.
   move: nothing in `Elements/` ever imports `Staging/`. It joins the vocabulary of
   `Certificate/axioms.lock` in the commit where an entry's statement in `Elements/` first
   uses it, which is the move, with `check_fidelity.py --write-lock`, a decisions entry,
-  `tests/model/lock.sha256` updated and `tests/model/MODEL.md` read again (WORKFLOW,
-  section 2, item 1; FORMALIZATION, section 7).
+  and the model brought to the new lock as `tests/model/MODEL.md`, "Changing the axioms",
+  says (WORKFLOW, section 2, item 1; FORMALIZATION, section 7).
 
 **The rules.** Edit only your statements' files, `Staging/<stage>/Book<B>/PropNN.lean`,
 and your scratch proofs. `Staging.lean`'s imports, which are for readers, and the shared
@@ -279,8 +279,8 @@ staged definition the statement uses moves into the foundations, `Elements/Found
 the coordinator's, before or with your move. It joins the vocabulary of
 `Certificate/axioms.lock` in the commit where an entry's statement in `Elements/` first
 uses it, which is the move, with `check_fidelity.py --write-lock`, a decisions entry,
-`tests/model/lock.sha256` updated and `tests/model/MODEL.md` read again (FORMALIZATION,
-section 7). If the move would need an import from `Staging/`, stop and ask the
+and the model brought to the new lock as `tests/model/MODEL.md`, "Changing the axioms",
+says (FORMALIZATION, section 7). If the move would need an import from `Staging/`, stop and ask the
 coordinator in your handback. `Staging.lean`'s imports, which are for readers, and the
 companions list, `Elements/Companions.lean`, are the integrator's (WORKFLOW, section 4):
 propose the companion's entry in your handback, and leave both files as they are. The

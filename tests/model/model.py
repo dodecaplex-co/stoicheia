@@ -34,7 +34,8 @@ def read_laws(path=LAWS_FILE):
         raise ValueError(f'{where} is not valid TOML: {e}') from None
     laws, hyperbolic = data.get('laws'), data.get('hyperbolic')
     fails = hyperbolic.get('fails') if isinstance(hyperbolic, dict) else None
-    if (set(data) != {'laws', 'hyperbolic'} or set(hyperbolic) != {'fails'}
+    if (set(data) != {'laws', 'hyperbolic'} or not isinstance(hyperbolic, dict)
+            or set(hyperbolic) != {'fails'}
             or not isinstance(laws, dict) or not all(isinstance(v, str) for v in laws.values())
             or not isinstance(fails, list) or not all(isinstance(k, str) for k in fails)):
         raise ValueError(f'{where}: expected a [laws] table of names and a [hyperbolic] table '

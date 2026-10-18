@@ -320,12 +320,12 @@ dependencies.
   statement, with every definition that the axioms' statements or the propositions',
   porisms' and companions' statements reach (`Touches`, `rect`, `Parallel`), so that no
   word can change what an axiom or a claim says. It changes only through
-  `check_fidelity.py --write-lock`, together with a decisions entry, and with
-  `tests/model/lock.sha256` updated and
-  [tests/model/MODEL.md](../tests/model/MODEL.md) read again for the changed laws, in the
-  same change; otherwise CI's `model` job fails. Review an axiom's statement and strength, not only the count. An
-  assignment to finish a proof is never permission to add an axiom that asserts its
-  conclusion.
+  `check_fidelity.py --write-lock`, together with a decisions entry, and with the model
+  brought to it in the same change, as
+  [tests/model/MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
+  says; otherwise CI's `model` job fails. Review an axiom's statement and strength, not
+  only the count. An assignment to finish a proof is never permission to add an axiom that
+  asserts its conclusion.
 - **Nothing gets round the kernel:** no `native_decide`, `decide +native`,
   `set_option debug.…`, `run_cmd`, `run_elab`, `elab`, `macro`, `implemented_by`, `extern`
   or `unsafe` under `Elements/`.

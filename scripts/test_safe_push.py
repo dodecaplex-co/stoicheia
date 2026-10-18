@@ -65,8 +65,9 @@ one commit and runs safe_push.py against that origin:
   lock, the lock's hash, its line of tests/model/laws.toml, its law's code in search.py
   and hyperbolic.py and the model's account lands as content, and the model's ties hold
   on it; while a law loosened beside it, a helper or tolerance of the harness changed, a
-  line of laws.toml moved without its axiom, or a new law's code that reaches outside
-  itself, is a check change, kept apart; and an axiom restated or removed with its law
+  line of laws.toml moved without its axiom, a new law's code that reaches outside
+  itself or changes a shared container under a second name, or laws.toml or the lock
+  deleted, is a check change, kept apart; and an axiom restated or removed with its law
   lands as content too;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
@@ -91,6 +92,7 @@ pre-flight. Python 3.11 or later; standard library and git.
 
 from __future__ import annotations
 
+import ast
 import base64
 import contextlib
 import hashlib
@@ -2545,13 +2547,16 @@ class ProtectedPaths(Edge):
 
     def law_commit(self, change) -> str:
         """A commit from origin/main of what `change` returns, given the planted axiom's
-        changes, with a line of the foundations, which the checks judge, if it has none."""
+        changes (a path given None is deleted), with a line of the foundations, which the
+        checks judge, if it has none."""
         git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
         planted = self.planted_axiom()
         git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
         write = change(planted)
         write.setdefault(self.METRIC, self.text(self.METRIC) + "\n-- A line for the test.\n")
-        return self.commit("An axiom and the model's laws, for the test", write)
+        return self.commit("An axiom and the model's laws, for the test",
+                           {p: v for p, v in write.items() if v is not None},
+                           remove=[p for p, v in write.items() if v is None])
 
     def test_only_laws_moving_with_their_axioms_are_pinned_values(self):
         # A law of the model, its line of laws.toml and its code in search.py and
@@ -2592,6 +2597,17 @@ class ProtectedPaths(Edge):
                                               first="    print('len_self 1 1 0')\n")}),
             "the new law reseeding the search": lambda p: dict(p, **{
                 self.SEARCH: self.planted_law(self.SEARCH, first="    c['_rng'].seed(0)\n")}),
+            # The verifier of #40 found these two: a second name for a shared container.
+            "the new law changing a shared container through a second name": lambda p: dict(
+                p, **{self.HYPERBOLIC: self.planted_law(
+                    self.HYPERBOLIC, first="    d = DEN\n    d[:] = [2]\n")}),
+            "the new law changing a shared container through a loop": lambda p: dict(p, **{
+                self.HYPERBOLIC: self.planted_law(
+                    self.HYPERBOLIC, first="    for d in (DEN,):\n        d.clear()\n")}),
+            # And a file the laws are read from deleted, with a law's code changed: refused,
+            # not a traceback (tomllib.loads(None) raises AttributeError before 3.14).
+            "laws.toml deleted": lambda p: dict(p, **{self.LAWS: None}),
+            "the lock deleted": lambda p: dict(p, **{self.LOCK: None}),
         }
         for name, change in weakened.items():
             with self.subTest(name):
@@ -3561,6 +3577,82 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING[:2])[0], "missing")
         self.assertEqual(judge(PASSING + [{"name": "check", "bucket": "fail"}])[0], "failure")
         self.assertEqual(judge(PASSING + [{"name": "other", "bucket": "pending"}])[0], "pending")
+
+    def test_a_law_changes_only_containers_it_made(self):
+        # Issue #40, and its verifier's finding, with thanks: a law's code may change a
+        # container only through a name it bound to a container made in its own body. A
+        # second name for a shared one, an element of its own, its argument, or a shuffle
+        # of what it did not make, is refused; every law of the two harnesses passes.
+        laws = {}
+        for path in safe_push.MODEL_LAW_CODE:
+            _, found, module = safe_push.law_code((SOURCE / path).read_text())
+            laws[path] = module
+            for name, fn in found.items():
+                self.assertTrue(safe_push.self_contained(fn, module), f"{path}: {name}")
+        module = laws["tests/model/hyperbolic.py"]
+
+        def law(body: str) -> bool:
+            lines = "".join(f"    {line}\n" for line in body.split("\n"))
+            fn = ast.parse(f"@axiom('x', dict(A=P))\ndef _(c):\n{lines}    return True\n")
+            return safe_push.self_contained(fn.body[0], module)
+        refused = {
+            "a second name": "d = DEN\nd[:] = [2]",
+            "a loop's name": "for d in (DEN,):\n    d.clear()",
+            "a comprehension's name": "[d.clear() for d in (DEN,)]",
+            "a name bound by with": "with c['_rng'] as d:\n    d.clear()",
+            "a second name, added to": "d = DEN\nd += [2]",
+            "a second name, by a method": "d = DEN\nd.append(1)",
+            "a second name, merged into": "d = SEEDS\nd |= {1: 2}",
+            "a second name, deleted from": "d = SEEDS\ndel d[1]",
+            "one of two names unpacked": "a, b = [], DEN\nb.clear()",
+            "a starred name": "a, *b = [], DEN\nb.clear()",
+            "a name bound twice": "ws = []\nfor ws in (DEN,):\n    pass\nws.clear()",
+            "a name bound to a choice": "d = DEN or []\nd.clear()",
+            "a copy made by a method": "ws = DEN.copy()\nws.clear()",
+            "a constructor rebound": "list = lambda: DEN\nws = list()\nws.clear()",
+            "an element of its own": "x = [DEN]\nx[0].clear()",
+            "an element of its own, by a slice": "x = [DEN]\nx[0][:] = []",
+            "an element of its own, added to": "x = [DEN]\nx[0] += [1]",
+            "an element of a tuple": "d = (DEN,)\nd[0].clear()",
+            "its argument": "c['A'] = 1",
+            "a second name for its argument": "d = c\nd['x'] = 1",
+            "a helper's argument": "def h(x):\n    x.clear()\nh(DEN)",
+            "a method kept for later": "m = DEN.clear\nm()",
+            "a shuffle": "c['_rng'].shuffle(DEN)",
+            "a dunder method": "class K:\n    def __radd__(self, o):\n        return 0",
+            "the shared name itself": "DEN[:] = [2]",
+            "the shared name, by a method": "SEEDS.clear()",
+        }
+        for name, body in refused.items():
+            with self.subTest(refused=name):
+                self.assertFalse(law(body), body)
+        accepted = {
+            "a list of its own": "ws = []\nws.append(1)",
+            "unpacked, with a number halved": "ws, t = [], Fr(1, 2)\nt /= 2\nws.append(t)",
+            "a counter": "j = 1\nj += 1",
+            "a set made by a call": "s = set()\ns.add(1)",
+            "a dict made by a call": "d = dict(a=1)\nd['b'] = 2",
+            "a comprehension sorted": "xs = [y for y in range(3)]\nxs.sort()",
+            "a copy of a shared list, shuffled": "own = list(DEN)\nc['_rng'].shuffle(own)",
+            "one list under two names": "a = b = []\na.append(1)\nb.append(2)",
+            "a list added to": "ws = []\nws += [1]",
+            "an annotated list": "x: list = []\nx.append(1)",
+            "a dict merged into and deleted from": "d = {}\nd |= {1: 2}\ndel d[1]",
+        }
+        for name, body in accepted.items():
+            with self.subTest(accepted=name):
+                self.assertTrue(law(body), body)
+
+    def test_the_laws_files_absent_read_as_none(self):
+        # The verifier of #40 found it: a file absent (show gives None) reads as None, not a
+        # traceback; tomllib.loads(None) raises AttributeError before Python 3.14.
+        self.assertIsNone(safe_push.locked_axioms(None))
+        self.assertIsNone(safe_push.model_laws(None))
+        self.assertIsNone(safe_push.law_code(None))
+        self.assertIsNone(safe_push.locked_axioms("not = [toml"))
+        self.assertIsNone(safe_push.model_laws('[laws]\n"Tacit.len_self" = "len_self"\n'))
+        laws = (SOURCE / safe_push.MODEL_LAWS).read_text()
+        self.assertEqual(safe_push.model_laws(laws)["Postulate5"], ("Postulate5", True))
 
 
 if __name__ == "__main__":

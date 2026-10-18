@@ -499,15 +499,26 @@ the axiom in the same pull request as the Lean:
 3. **The law.** [search.py](search.py) and [hyperbolic.py](hyperbolic.py) each implement
    every law, so each gains, loses or changes it, written as every law there is: a
    function `_` under `@axiom('<name>', …)`. Its helpers go inside it, and it keeps to
-   itself: it binds no global, imports and prints nothing, and changes nothing it did
-   not make. The other programs check some laws only, and can follow later, in a pull
-   request of their own.
+   itself: it binds no global, imports and prints nothing, and changes no container but
+   one it made in its own body (`ws = []`, then `ws.append(w)`), and that through the
+   name it gave it: never through a second name for a container it did not make
+   (`d = DEN`, or `for d in (DEN,)`), nor through an element of its own (`x[0].clear()`).
+   The pre-flight checks this (`self_contained` in
+   [safe_push.py](../../scripts/safe_push.py)), and the security review reads the law.
+   The other programs check some laws only, and can follow later, in a pull request of
+   their own.
 4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with
    the reason it holds in the plane, a word on the hyperbolic plane where it needs one,
    and the counts in the prose. `run.py --full --write` brings the numbers above and
    [results/](results/) up to date.
 5. **The run.** `python3 -I tests/model/run.py --ties` checks the names and the hash in a
    second, and `--fast` runs what CI runs.
+
+A word that joins the lock's vocabulary, as a definition does when a statement first uses
+it, changes the lock and so its hash, while every axiom, and every word an axiom reaches,
+stays as it was: then step 1 and step 5 are all, with a line in the comment of
+[lock.sha256](lock.sha256) saying so, as its renewal of 17 October does. A word an axiom
+reaches that changes is a changed definition (below).
 
 These are values pinned to the axioms, and the pre-flight lets them land with the change
 they follow; a law changed while its axiom stands, or any other change to the programs,
