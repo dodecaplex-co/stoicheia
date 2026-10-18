@@ -631,3 +631,39 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+
+- **The certificate keeps a proof's own axioms apart from those it inherits.** Argon's
+  second review of the book-III release found that `direct_axioms` lists, as a
+  proposition's own, every axiom its proof term names together with those of the Book
+  Zero lemmas and shared steps it calls, so that a reader asking which rules a proof calls
+  got a longer list than the proof's own; we thank Argon for it
+  ([#65](https://github.com/jackChallis/stoicheia/issues/65)).
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) now writes two more fields for
+  every entry: `own_axioms`, the axioms named in the proof's own declarations (the
+  declaration, the helpers in its proposition's namespace, and Lean's auxiliary
+  declarations), and `inherited`, each other axiom it uses itself with every lemma, of
+  Book Zero or shared, that brings it in. A second self-check joins the first: the run
+  fails unless an entry's `direct_axioms`, Lean's foundations aside, are exactly its
+  `own_axioms` and its inherited axioms, so that its `axioms` are still exactly its own,
+  those it inherits, its Common Notions' and those of what it cites. Every field that was
+  there before is byte for byte as it was, `direct_axioms` among them, and the policy on
+  superposition still reads it, so no proof may reach that rule through a lemma either.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) documents both fields.
+  [`scripts/render.py`](../../scripts/render.py) shows them: each page's table gains the
+  rows "Its own Lean calls" and "Only through lemmas", and its list of tacit rules marks
+  a rule "(used here)" only when the proof's own Lean calls it, and otherwise names the
+  lemmas it comes in through; CERTIFICATE.md gains the columns "Own rules" and "Through
+  lemmas". That is a change to what it writes, which the regenerated pages show, and not
+  to what it accepts. [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) reads
+  a field of `tests/certificate_expectations.json` that is an object, as `inherited` is,
+  by its keys, and fails an expectation whose entry lacks its field, which it read as
+  empty before, so that an `excludes` could pass on a field that had gone. Both are
+  stricter, and nothing is loosened.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  its four expectations and gains five: III.2 rests on Circle 2 (`inside_of_between`),
+  which neither its own Lean nor any lemma it calls brings in, so it comes only through
+  III.1; and I.5's own Lean never calls Postulate 3, which it inherits through Book Zero's
+  `exists_between_nearer`. The protected files this changes are `Certificate/Facts.lean`,
+  `Certificate/FIELDS.md`, `scripts/render.py`, `scripts/check_fidelity.py` and
+  `tests/certificate_expectations.json`. The overlap catalogue's "First enters" moves to
+  the new fields in a text pull request of its own, after this one.

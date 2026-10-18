@@ -530,10 +530,17 @@ def shared_steps_line(p, book, up):
 
 
 TABLE_KEY = ("_Postulates, definitions, Common Notions and tacit rules: all that this proof "
-             "rests on, counting those of the propositions it cites._")
+             "rests on, counting those of the propositions it cites. The last two rows say "
+             "which of the postulates, definitions and tacit rules its own Lean calls, in "
+             "the proof or a helper written for it, and which come in only through lemmas, "
+             "of Book Zero or shared; the rest come through the propositions it cites._")
 # The same key when the table has a column for a porism or a companion as well.
 TABLE_KEY_EACH = ("_Postulates, definitions, Common Notions and tacit rules: all that each "
-                  "proof rests on, counting those of the propositions it cites._")
+                  "proof rests on, counting those of the propositions it cites. The last two "
+                  "rows say which of the postulates, definitions and tacit rules its own Lean "
+                  "calls, in the proof or a helper written for it, and which come in only "
+                  "through lemmas, of Book Zero or shared; the rest come through the "
+                  "propositions it cites._")
 
 
 # What a definition Euclid cites, but the Definitions row does not count, is in Lean:
@@ -573,16 +580,51 @@ def definitions_not_counted(refs, defs, book):
     return "_Euclid's " + " and ".join(parts) + f", {what}._"
 
 
-def tacit_key(book, up, cited):
-    """The line that opens a page's list of tacit rules: what "(used here)" marks, when
-    the list marks it, and how the names in brackets are read."""
+def tacit_key(book, up, cited, marked):
+    """The line that opens a page's list of tacit rules: what "(used here)" and
+    "(through …)" mark, when the list marks them, and how the names in brackets are
+    read. `cited`: the proof cites a proposition; `marked`: the list marks its rules."""
     intro = "index.md" if book == "I" else "../I/index.md"
-    used = ("_(used here) marks a rule this proof calls on itself or through a lemma, its "
-            f"own, a shared one or one of [Book Zero]({up}Elements/Figure)'s, and not only "
-            "through a proposition it cites. " if cited else "_")
+    used = ("_(used here) marks a rule this proof's own Lean calls, in the proof or a helper "
+            "written for it; (through …) marks one that comes in only through the lemmas "
+            f"named, of [Book Zero]({up}Elements/Figure) or shared"
+            + ("; and a rule with no mark comes only through a proposition it cites. "
+               if cited else ". ") if marked else "_")
     return (used + "The names in brackets are System E's: an Intersection rule says when "
             "straight lines and circles must meet, and an Intersections rule takes a point "
             f"where they do (see [Book I's introduction]({intro}))._")
+
+
+def through_mark(lemmas, book, up):
+    """A rule's mark in a page's list when it comes in only through lemmas (facts.json's
+    `inherited`): "(through [`exists_between_nearer`](…))", each lemma linked to its line;
+    after three, how many more."""
+    named = [f"[`{step_name(s['name'], book)}`]({up}{s['file']}#L{s['line']})"
+             for s in sorted(lemmas, key=lambda s: natural_key(step_name(s["name"], book)))]
+    if len(named) > 3:
+        more = len(named) - 3
+        named = named[:3] + [f"{more} other lemma" + ("" if more == 1 else "s")]
+    return f" (through {and_list(named)})"
+
+
+def rules_summary(names, book):
+    """Postulates, definitions and tacit rules in a few words, for a table cell:
+    "Postulates 1 and 3, Def. I.15 and 9 tacit rules"; "none" for none."""
+    posts = [a for a in names if a.startswith("Postulate")]
+    defs = [a for a in names if a.startswith("Definition")]
+    tacit = [a for a in names if a.startswith("Tacit.")]
+    other = [a for a in names if a not in posts + defs + tacit]
+    parts = []
+    if posts:
+        nums = roman_list(posts, "Postulate").split(", ")
+        parts.append(("Postulate " if len(nums) == 1 else "Postulates ") + and_list(nums))
+    if defs:
+        parts.append(and_list(definition_list(defs, book).split(", ")))
+    if tacit:
+        parts.append(f"{len(tacit)} tacit rule" + ("" if len(tacit) == 1 else "s"))
+    if other:
+        parts.append(f"{len(other)} other axiom" + ("" if len(other) == 1 else "s"))
+    return and_list(parts) if parts else "none"
 
 
 def axiom_groups(entry):
@@ -636,6 +678,9 @@ def rests_on(p, docs, depth, book, refs, attached=()):
     row("Tacit rules", lean(lambda e: f"{len(groups[e['ref']][2])} (listed below)"))
     if any(groups[e["ref"]][3] for e, _ in done):
         row("Other axioms", lean(lambda e: f"{len(groups[e['ref']][3])} (listed below)"))
+    # What the proof uses itself, split (facts.json's `own_axioms` and `inherited`).
+    row("Its own Lean calls", lean(lambda e: rules_summary(e["own_axioms"], book)))
+    row("Only through lemmas", lean(lambda e: rules_summary(list(e["inherited"]), book)))
     out = "\n".join(lines) + "\n"
     # One line for the shared steps of every column, each step named once.
     steps = {}
@@ -670,8 +715,12 @@ def rests_on(p, docs, depth, book, refs, attached=()):
         rules = "tacit rule" if len(tacit) == 1 else "tacit rules"
         if other:
             rules += f" and {len(other)} other axiom" + ("" if len(other) == 1 else "s")
-        # A proof that cites no proposition uses every rule beneath it itself.
+        # A proof that cites no proposition uses every rule beneath it itself: in its own
+        # Lean, or through lemmas. When it cites none and calls no lemma that brings one
+        # in, every rule is its own, and none is marked.
         cited = bool(p["cites"])
+        inherited = p["inherited"]
+        marked = cited or bool(inherited)
         summary = f"The {len(tacit)} {rules} beneath this proof" + (
             ", counting those of the propositions it cites" if cited else "")
         if only:
@@ -681,7 +730,7 @@ def rests_on(p, docs, depth, book, refs, attached=()):
             where = re.sub(r"`([^`]+)`", r"<code>\1</code>", where)
             summary += f", and {len(only)} more beneath {where}"
         out += f"\n<details><summary>{summary}</summary>\n\n"
-        out += tacit_key(book, up, cited) + "\n\n"
+        out += tacit_key(book, up, cited, marked) + "\n\n"
         for kind in ["Reading the figure", "Lengths, angles and areas", "Superposition",
                      "Laws of magnitude", "Other"]:
             if kind not in by_kind:
@@ -691,8 +740,14 @@ def rests_on(p, docs, depth, book, refs, attached=()):
                 name = a.replace('Tacit.', '')
                 if a in only:
                     here = f" ({only[a]})"
+                elif not marked:
+                    here = ""
+                elif a in p["own_axioms"]:
+                    here = " (used here)"
+                elif a in inherited:
+                    here = through_mark(inherited[a], book, up)
                 else:
-                    here = " (used here)" if cited and a in p["direct_axioms"] else ""
+                    here = ""
                 out += (f"- [`{name}`]({up}{path}#L{line}){here}: {doc}\n" if path else
                         f"- `{name}`{here}: not declared in `Elements/Foundations/`\n")
             out += "\n"
@@ -1502,8 +1557,14 @@ def certificate_intro(facts, records):
         "Notions. None of this is typed in by hand. Definitions that Lean defines rather "
         "than assumes (the right angle and parallels of Book I, Book II's rectangle and "
         "square, Book III's equal circles and touching) are not assumptions, and so do not "
-        f"appear: the only definition taken as an axiom is {assumed}. Each proposition's "
-        "page lists its tacit rules by name.",
+        f"appear: the only definition taken as an axiom is {assumed}. Of the postulates, "
+        "definitions and tacit rules, \"Own rules\" counts those the proof's own Lean "
+        "calls, in the proof or a helper written for its proposition, and \"Through "
+        "lemmas\" those that come in only through a lemma it calls, of "
+        "[Book Zero](Elements/Figure) or a [shared step](#shared-steps); the rest come "
+        "through the propositions it cites. Each proposition's page lists its tacit rules "
+        "by name, and marks each one its own Lean calls, or the lemmas it comes in "
+        "through.",
         "- **The reconstruction of the argument.** What each Lean statement covers of "
         "Euclid's enunciation, and whose argument each proof follows, is a reviewer's "
         "reading, not the machine's. The columns \"Statement\" and \"Argument\" come from the "
@@ -1546,14 +1607,14 @@ def certificate_row(entry, link, refs, record=None):
     argument = route_word(record, r.book, r.n) if record and r else ""
     heath_cell = ", ".join(refs["props"])
     if not entry or entry["status"] == "sketched":
-        return f"| {status} | {link} | {statement} | {argument} | {heath_cell} | | | | | |"
+        return f"| {status} | {link} | {statement} | {argument} | {heath_cell} | | | | | | | |"
     posts, defs, tacit, _ = axiom_groups(entry)
     book = heath.parse_ref(entry["ref"]).book
     cns = ", ".join(c.replace("C.N. ", "") for c in sorted(set(entry["common_notions"])))
     cites = ", ".join(sorted(entry["cites"], key=prop_key))
     return (f"| {status} | {link} | {statement} | {argument} | {heath_cell} | {cites} | "
             f"{roman_list(posts, 'Postulate')} | {definition_list(defs, book)} | {cns} | "
-            f"{len(tacit)} |")
+            f"{len(tacit)} | {len(entry['own_axioms'])} | {len(entry['inherited'])} |")
 
 
 def postulate5_bullet(book, facts, proved, entries):
@@ -1626,8 +1687,9 @@ def certificate(facts, docs, records):
         out.append(postulate5_bullet(book, facts, proved, entries))
         out.append(superposition_bullet(book, sup, len(proved) == count))
         out += ["", "| | Prop | Statement | Argument | Heath's references | Lean cites | "
-                "Postulates | Definitions | C.N. | Tacit rules (how many) |",
-                "|---|---|---|---|---|---|---|---|---|---|"]
+                "Postulates | Definitions | C.N. | Tacit rules (how many) | Own rules | "
+                "Through lemmas |",
+                "|---|---|---|---|---|---|---|---|---|---|---|---|"]
         for n, p in enumerate(props, 1):
             ref = f"{book}.{n}"
             own, porism_text = split_porism(book, n)

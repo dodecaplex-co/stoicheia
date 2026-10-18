@@ -456,7 +456,8 @@ def check_entries(facts, by_ref) -> None:
 def check_expectations(by_ref, path: Path = EXPECTATIONS) -> None:
     """Each expectation names an entry (`ref`) and a list `field`, and asks that the
     list `includes` some names, `excludes` others, or holds exactly `count` names
-    beginning with `prefix`; `equals` compares any field with a value."""
+    beginning with `prefix`; `equals` compares any field with a value. A field that is
+    an object, as `inherited` is, is read by its keys: the axioms it names."""
     if not path.exists():
         fail(f"{rel(path)} is missing")
         return
@@ -477,10 +478,15 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS) -> None:
         if ref not in by_ref:
             fail(f"{ref}: pinned by {label}, but facts.json has no such entry")
             continue
+        if field not in by_ref[ref][1]:
+            # Read as empty, a missing field would let every `excludes` pass.
+            fail(f"{ref}: pinned by {label}, but its entry has no field `{field}`")
+            continue
         value = by_ref[ref][1].get(field)
         if "equals" in x and value != x["equals"]:
             fail(f"{ref}: its {field} is {value!r}, not {x['equals']!r} ({label}: {why})")
-        listed = value if isinstance(value, list) else []
+        listed = value if isinstance(value, list) else list(value) if isinstance(value, dict) \
+            else []
         for name in x.get("includes", []):
             if name not in listed:
                 fail(f"{ref}: its {field} should include {name} ({label}: {why})")
