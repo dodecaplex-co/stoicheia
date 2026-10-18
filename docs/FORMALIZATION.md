@@ -212,7 +212,9 @@ of constructions is a separate project.
   comments inside `theorem PropN`'s proof are Heath's proof exactly (indentation aside), and
   the docstring is his enunciation; `check_fidelity.py` fails on any difference. A porism's
   sentence is a `--` line in its proposition's proof.
-- **The Lean for each sentence sits directly under it.**
+- **The Lean for each sentence sits directly under it.** Sentences with no Lean under
+  them, and where a `/- … -/` remark may stand among them, are in
+  [review/SCHEMA.md](../review/SCHEMA.md#two-stages), "Two stages".
 - **Our words are `/- … -/` remarks and docstrings**, in the voice STYLE asks for.
 
 ### Correspondence, not resemblance

@@ -491,3 +491,26 @@ findings:
   [brief 0005](0005-astra-review.md), in stage 1b's list of what `scripts/check_style.py`
   enforces, and "the idea figures have no letters" in item 7 of its planned acceptance
   checklist (stage 6).
+- **A sentence is carried only by the Lean beneath it.** Argon's second review of the
+  book-III release found a hole in `uncarried_runs`, in
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py), and we thank Argon
+  warmly for reading the check so closely: a run of `--` lines counted as carried by any
+  Lean after it, and a `/- … -/` remark joined the runs on either side of it into one, so
+  a sentence with no Lean of its own could pass. Now a run is carried only by a line of
+  Lean after it and before the next run, and a remark ends a run without carrying it.
+  Lean after a remark, before the next run, still carries the run before the remark, so
+  a remark may stand between a sentence and its Lean, while one between two sentences
+  that share one step leaves the first with none. A closing `exact` is such Lean too, so
+  of Argon's two examples the rule finds the one in III.10; the one in III.31 stands
+  above the closing `exact`, and its record declares it all the same. The check is
+  strengthened, never weakened: every sentence the old rule found with no Lean, it still
+  finds, and a passage now declares only the run it begins in.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains a test that plants
+  a remark in I.5 between two sentences sharing one step of Lean, and expects the first
+  caught and the second not; the old rule misses it.
+  [`review/SCHEMA.md`](../../review/SCHEMA.md#two-stages), "Two stages", tells
+  contributors in one clause where a remark goes, and [FORMALIZATION](../FORMALIZATION.md),
+  section 5, points to it. On main's records the rule finds 15 runs not yet declared, in
+  I.5, I.6, I.13, I.14, I.21, I.23, I.39 to I.42, I.47 and II.10. The records' change,
+  `text/declare-runs`, declares them, and this change lands after it
+  ([#61](https://github.com/jackChallis/stoicheia/issues/61)).
