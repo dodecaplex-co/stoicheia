@@ -136,9 +136,10 @@ declarations, e.g. `Prop40.general`, `Prop40.join` and `Prop40.special`>, for <B
 section of `docs/briefs/<brief>` on them is your contract.
 
 **The job.** Write each statement in Lean, with `sorry` for its proof, in
-`Staging/<stage>/Book<B>/PropNN.lean`, and say in plain words what it claims. Write no
-proofs: the statements are challenged and approved before anyone proves them, and a proof
-written now would be written against a statement that may still change.
+`Staging/<stage>/Book<B>/PropNN.lean`, and say in plain words what it claims. The
+statements live in the `Staging` library: `lake build Staging` builds it, and CI does too.
+Write no proofs: the statements are challenged and approved before anyone proves them, and
+a proof written now would be written against a statement that may still change.
 
 **Read first.** `AGENTS.md`; `docs/FORMALIZATION.md`, sections 2 to 4 (statements,
 representations, constructions); the brief; `heath/<B>/NN.md`, the whole enunciation,
@@ -211,8 +212,9 @@ Then the questions you could not settle.
 Once a statement in `Staging/` is approved and its brief frozen, its proof is assigned.
 A restatement's orders are these, with the differences under "A restatement", below.
 The proof follows the route the brief declares; the statement then moves into its
-proposition's file and the certificate's companions, and the proposition's record is read
-again, since its scope and fingerprint now include the companion
+proposition's file, the stage's integrator lists it in the edition's companions,
+`Elements/Companions.lean`, and the proposition's record is read again, since its scope
+and fingerprint now include the companion
 ([review/SCHEMA.md](../../review/SCHEMA.md), `companions`).
 
 ````markdown
@@ -227,7 +229,8 @@ approved in `docs/briefs/<brief>`, revision <r>, and frozen; it is in
 
 **The job.** Prove it by the route the brief declares: <the route, e.g. "Euclid's own
 argument for I.40, through `Prop31.line`, `Prop30.meet` and I.38">. Then move it into
-`Elements/Book<B>/PropNN.lean` and list it in `Certificate/Facts.lean`'s companions.
+`Elements/Book<B>/PropNN.lean`; the stage's integrator lists it in
+`Elements/Companions.lean`, with the move, from the entry you propose in your handback.
 
 **Read first.** `AGENTS.md`; `docs/FORMALIZATION.md`, sections 2 ("Companions beside
 Euclid's worked configuration") and 5; the brief; `heath/<B>/NN.md`;
@@ -248,10 +251,11 @@ name. If it seems wrong or too weak, stop and propose a correction (form 5 of
 `docs/templates/proposition.md`), with the case that fails. Never change `theorem PropN`,
 its docstring or its `--` lines: the companion stands beside Euclid's worked
 configuration. Never add an `axiom`, `native_decide` or anything else that gets round the
-kernel. Edit only the Staging file and `Staging.lean`'s imports,
-`Elements/Book<B>/PropNN.lean` (the companion, its helpers and the imports they need) and
-the companions list in `Certificate/Facts.lean`. The record `review/<B>/NN.toml` is
-<owner>'s.
+kernel. Edit only the Staging file and `Staging.lean`'s imports, and
+`Elements/Book<B>/PropNN.lean` (the companion, its helpers and the imports they need).
+The companions list, `Elements/Companions.lean`, is the stage's integrator's, who lists
+the companion with the move: propose its entry in your handback, and leave the list as it
+is. The record `review/<B>/NN.toml` is <owner>'s.
 
 **The voice.** Your `/- … -/` remarks and your helpers' docstrings are Lean notes, and
 read as `docs/STYLE.md`, section 1, asks; what may be said about how the work was made is
@@ -262,10 +266,13 @@ STYLE, section 1, "Production stays out of the mathematics".
 2. Move it and its helpers into `Elements/Book<B>/PropNN.lean`, after `PropN` and its
    porism, with the same type; then take it, and its import, out of `Staging/`. A
    corollary the brief names (`Prop40.special`) moves with it.
-3. Add `(``Elements.Book<B>.PropN.<word>, "<B>.N <word>")` to `companions` in
-   `Certificate/Facts.lean`.
-4. Run the certificate: "<B>.N <word>" is an entry of its own, attached to <B>.N, and the
-   record of <B>.N is now stale, for its Lean file and its fingerprint have changed.
+3. Propose its entry in your handback,
+   `(``Elements.Book<B>.PropN.<word>, "<B>.N <word>")`. The stage's integrator adds it,
+   with the move, to `Elements.companions` in `Elements/Companions.lean`, which then
+   imports `Elements.Book<B>.PropNN`; the list is the integrator's, not yours.
+4. Run the certificate. Once the entry is listed, "<B>.N <word>" is an entry of its own,
+   attached to <B>.N; and the record of <B>.N is now stale, for its Lean file and its
+   fingerprint have changed.
 
 **A restatement.** The staged `Staging.PropN` is proved by the route the brief declares,
 then takes the place of `theorem PropN` in `Elements/Book<B>/PropNN.lean`: its statement
@@ -300,7 +307,7 @@ the generated edition. Do not push, merge or rebase.
 **Report** with the handback of `docs/templates/proposition.md`: proved, or where the
 `sorry` is; the route taken, and any step where it left the declared one; your helpers;
 citations beyond Heath's references, each with the step that brings it in; hypotheses
-your proof does not use; what "<B>.N <word>" rests on; the record entries you propose
-(`companions`, `scope`, `note`, `short`); the records made stale; and the checks you ran,
-with their outcomes.
+your proof does not use; what "<B>.N <word>" rests on; the entry you propose for
+`Elements/Companions.lean`; the record entries you propose (`companions`, `scope`, `note`,
+`short`); the records made stale; and the checks you ran, with their outcomes.
 ````
