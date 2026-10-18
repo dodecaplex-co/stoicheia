@@ -266,7 +266,7 @@ lean = "sha256:061379c1f0411141"
 reviewer = "Claude Opus 5.5"
 ```
 
-I.40, at that commit, was restricted: the theorem took the two bases end to end.
+I.40 is restricted: the theorem takes the two bases end to end.
 
 ```toml
 # review/I/40.toml
@@ -293,6 +293,6 @@ lean = "sha256:5f353abf9022b4fd"
 reviewer = "Claude Opus 5.5"
 ```
 
-Stage 2 has since added `Prop40.general`, with `Prop40.join` and `Prop40.special`. I.40's
-record lists them as `companions`, its scope is full, and its fingerprint changed with the
-new attached statements, so the record was read again.
+Once stage 2 adds `Prop40.general`, I.40's record would list `companions =
+["I.40 general"]`, its scope would become full, and its fingerprint would change with the
+new attached statement, so the record would be read again.
