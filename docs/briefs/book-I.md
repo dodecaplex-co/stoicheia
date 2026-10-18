@@ -18,7 +18,7 @@ Book I's words are the foundations every later book uses, in `Elements/Foundatio
 |---|---|
 | `Words.lean` | The words Euclid leaves undefined, each `opaque`: `Point`, `Line`, `Circle`, `OnLine`, `SameSide`, `Between`, `OnCircle`, `InsideCircle`, `Centre`; and words defined from them, `Collinear`, `OppositeSides`, `OutsideCircle`, `LinesMeet`, `LineMeetsCircle`, `CirclesMeet`. |
 | `Magnitudes.lean` | Lengths, angles and areas: `Magnitude` of each kind, which can be added and compared and nothing more, with `‖A B‖`, `∠ A B C`, `△ A B C` and the right angle `∟`. Each kind has a `0`, a convenience from System E for the "line" from a point to itself. |
-| `Definitions.lean` | The definitions that do work: Definition 10 (`IsRightAngle`, with `IsAcute` and `IsObtuse`), Definition 15 (an axiom, `Definition15`: the radii of a circle are equal), the triangles (`Triangle`, `Equilateral`, `Isosceles`, `RightAngledTriangle`), the square of Definition 22 (`Square`) and parallels (`Parallel`, Definition 23). |
+| `Definitions.lean` | The definitions that do work: Definition 10 (`IsRightAngle`, with `IsAcute` and `IsObtuse`), Definition 15 (an axiom, `Definition15`: the radii of a circle are equal), the triangles (`Triangle`, `Equilateral`), the square of Definition 22 (`Square`) and parallels (`Parallel`, Definition 23); and two that no statement or proof uses yet, the isosceles and right-angled triangles of Definitions 20 and 21 (`Isosceles`, `RightAngledTriangle`). |
 | `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`. |
 | `Postulates.lean` | The five postulates, each an `axiom`. |
 | `CommonNotions.lean` | The five Common Notions, each a theorem; Common Notions 3 and 5 rest on tacit laws of magnitudes. |
@@ -112,18 +112,20 @@ the exceptions the outside review named, with the work that answers each:
 | Proposition | Scope | What is restricted | Tag | Planned |
 |---|---|---|---|---|
 | I.40 | restricted | the equal bases meet end to end, as BC and CE | `adjacent-bases` | stage 2: `Prop40.general` for bases anywhere on one straight line, with `Prop40.special` |
-| I.45 | restricted | the figure is two triangles | `two-triangles` | stage 2: `Prop45.figure` for a supplied dissection into triangles |
+| I.45 | restricted | the figure is two triangles | `two-triangles` | stage 2: `Prop45.apart` for any supplied division into triangles; `Prop45.figure` and `Prop45.fan` beside it |
 
 Both stay as Euclid's worked configuration, with the general theorem beside them as a
 companion ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
 
 Two proofs follow Euclid with one step changed: I.39, and I.40 after it, make the end of
 his reductio direct, the parallel through A being shown to pass through D
-(`OnRay.eq_of_area_eq`). And two propositions are already contained in a rule, as the
+(`OnRay.eq_of_area_eq`). And four propositions are already contained in a rule, as the
 [overlap catalogue](../reports/overlaps.md) records:
 
 | Proposition | Rule | What the proof does |
 |---|---|---|
+| I.2 | superposition | Euclid's construction, by I.1 and two circles; it never uses the rule |
+| I.3 | superposition | Euclid's construction, by I.2 and a circle; it never uses the rule |
 | I.7 | Circle 4 (`not_same_side_of_circles_meet`) | Euclid's argument, by I.5; it never uses the rule |
 | I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly |
 
