@@ -30,42 +30,44 @@ open Elements Elements.Tacit
 
 /-! ## Rules that state a proposition, give it at once, or supply its step -/
 
-/-- A point off the straight line through B and C, drawn from the rules alone, for the
-triangle that superposition needs and I.2 and I.3 do not give. The circle about B
-through C meets the straight line again at C', beyond B (Intersections 5); a third point
-X of the circle cannot be on the straight line, for B would then lie between X and C,
-and between X and C' (Circle 1), and C and C' would lie on one side of B (Between 7),
-where B lies between them. -/
-private theorem off_line {B C : Point} {M : Line} (hBC : B ≠ C) (hB : OnLine B M)
-    (hC : OnLine C M) : ∃ X : Point, ¬ OnLine X M := by
+/-- Draws a point X off the straight line through B and C, and with it the triangle BCX,
+from the rules alone: superposition needs a triangle to lay down and a point to name the
+side, and neither I.2 nor I.3 gives one. Book Zero's `exists_off_line` draws such a point
+too, by two circles that cut one another and a comparison of lengths, but would bring
+I.2's audit proof from ten axioms to twenty-one. The circle about B through C meets the
+straight line again at C', beyond B (Intersections 5); a third point X of the circle
+cannot be on the straight line, for B would then lie between X and C, and between X and
+C' (Circle 1), and C and C' would lie on one side of B (Between 7), where B lies between
+them. Book Zero's `Triangle.of_line` makes BCX a triangle. -/
+private theorem point_off_line {B C : Point} {M : Line} (hBC : B ≠ C) (hB : OnLine B M)
+    (hC : OnLine C M) : ∃ X : Point, ¬ OnLine X M ∧ Triangle B C X := by
   obtain ⟨α, hBα, hCα⟩ := Postulate3 B C hBC
   have hBin : InsideCircle B α := centre_inside hBα
   obtain ⟨C', hC'α, hC'M, hC'BC⟩ := line_circle_beyond hBin hB hC hBC.symm
   obtain ⟨X, hXα, hX⟩ := exists_point_on_circle α [C, C']
-  refine ⟨X, fun hXM => ?_⟩
-  have hXC : X ≠ C := by rintro rfl; exact hX (by simp)
-  have hXC' : X ≠ C' := by rintro rfl; exact hX (by simp)
-  have h₁ : Between X B C := between_of_inside_chord hB hXM hC hBin hXα hCα hXC
-  have h₂ : Between X B C' := between_of_inside_chord hB hXM hC'M hBin hXα hC'α hXC'
-  exact not_between_of_between_between h₁ h₂ (between_symm hC'BC)
+  have hXM : ¬ OnLine X M := fun hXM => by
+    have hXC : X ≠ C := by rintro rfl; exact hX (by simp)
+    have hXC' : X ≠ C' := by rintro rfl; exact hX (by simp)
+    have h₁ : Between X B C := between_of_inside_chord hB hXM hC hBin hXα hCα hXC
+    have h₂ : Between X B C' := between_of_inside_chord hB hXM hC'M hBin hXα hC'α hXC'
+    exact not_between_of_between_between h₁ h₂ (between_symm hC'BC)
+  exact ⟨X, hXM, Triangle.of_line hB hC hBC hXM⟩
 
 /-- **I.2 from superposition.** The rule lays a triangle down with a corner on a given
 point of a straight line and a side along a given ray, keeping its sides
 (`superposition`). Laid down at A along AB, a triangle on BC carries the length of BC
-to A: that is I.2, the step a collapsing compass (Postulate 3) cannot take. Neither the
-triangle nor a point off AB is given, so both are drawn (`off_line`). The certificate
-lets only I.4 and I.8 use superposition, as System E asks; our I.2 is Euclid's
-construction, by I.1, and does not rest on the rule. -/
+to A: that is I.2, which a collapsing compass (Postulate 3) cannot do at once. Neither
+the triangle nor a point off AB is given, so both are drawn (`point_off_line`). The
+certificate lets only I.4 and I.8 use superposition, as System E asks; our I.2 is
+Euclid's construction, by I.1, and does not rest on the rule. -/
 theorem I_2 : type_of% @Elements.BookI.Prop2 := by
   intro A B C hBC
   by_cases hAB : A = B
   · exact ⟨C, by rw [hAB]⟩
   obtain ⟨M, hBM, hCM⟩ := Postulate1 B C hBC
-  obtain ⟨X, hX⟩ := off_line hBC hBM hCM
-  have hBCX : Triangle B C X := fun ⟨N, hB, hC, hXN⟩ =>
-    hX (line_unique hBC hB hC hBM hCM ▸ hXN)
+  obtain ⟨X, -, hBCX⟩ := point_off_line hBC hBM hCM
   obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hAB
-  obtain ⟨H, hH⟩ := off_line hAB hAL hBL
+  obtain ⟨H, hH, -⟩ := point_off_line hAB hAL hBL
   obtain ⟨L', -, -, -, -, hAL', -⟩ := superposition hBCX hAL hBL hAB hH
   exact ⟨L', hAL'⟩
 
@@ -78,11 +80,9 @@ theorem I_3 : type_of% @Elements.BookI.Prop3 := by
   intro A B C₁ C₂ hC h
   have hAB : A ≠ B := ne_of_len_gt h
   obtain ⟨M, hC₁M, hC₂M⟩ := Postulate1 C₁ C₂ hC
-  obtain ⟨X, hX⟩ := off_line hC hC₁M hC₂M
-  have hCX : Triangle C₁ C₂ X := fun ⟨N, h₁, h₂, hXN⟩ =>
-    hX (line_unique hC h₁ h₂ hC₁M hC₂M ▸ hXN)
+  obtain ⟨X, -, hCX⟩ := point_off_line hC hC₁M hC₂M
   obtain ⟨L, hAL, hBL⟩ := Postulate1 A B hAB
-  obtain ⟨H, hH⟩ := off_line hAB hAL hBL
+  obtain ⟨H, hH, -⟩ := point_off_line hAB hAL hBL
   obtain ⟨E, -, hEL, hEAB, -, hAE, -⟩ := superposition hCX hAL hBL hAB hH
   refine ⟨E, ?_, hAE⟩
   have hAE_ne : A ≠ E := ne_of_len_eq hAE hC
