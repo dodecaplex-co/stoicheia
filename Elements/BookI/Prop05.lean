@@ -42,7 +42,8 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   have hAB_AE : ‖A B‖ < ‖A E‖ := by
     rw [hAB]
     exact len_lt_of_between hE
-  obtain ⟨F, hBFD, hAF_AE⟩ := exists_between_nearer (ne_of_between (between_symm hD)).symm hAB_AE
+  obtain ⟨F, hBFD, hAF_AE⟩ :=
+    exists_between_nearer (ne_of_between (between_symm hD)).symm (Or.inr hD) hAB_AE
   have hABF : Between A B F := between_cut hD hBFD
   have hF_AB : OnLine F AB := on_line_of_between hABF hA_AB hB_AB
   have hA_F : A ≠ F := ne_of_between_ends hABF
