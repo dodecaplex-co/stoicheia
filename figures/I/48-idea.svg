@@ -1,10 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.48 at a glance: the converse of the theorem of Pythagoras</title>
-  <desc>Turn Pythagoras round: whenever the squares on two sides, 9 (yellow) and 16 (blue), together make the square on the third, 25 (red), the angle between those two sides is right.</desc>
+  <desc>Turn Pythagoras round: when the squares on BA, AC, 9 (yellow) and 16 (blue), together make the square on BC, 25 (red), the angle BAC is right.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
-  <polygon points="142.5,156.9 183.9,101.7 128.7,60.3 87.3,115.5" fill="#f2b705" fill-opacity="0.95"/>
-  <polygon points="183.9,101.7 257.5,156.9 312.7,83.3 239.1,28.1" fill="#1f5aa6" fill-opacity="0.9"/>
-  <polygon points="142.5,156.9 257.5,156.9 257.5,271.9 142.5,271.9" fill="#d0312d" fill-opacity="0.9"/>
+  <g data-unlettered="the squares on the sides, which Heath's figure does not draw">
+    <polygon points="142.5,156.9 183.9,101.7 128.7,60.3 87.3,115.5" fill="#f2b705" fill-opacity="0.95"/>
+    <polygon points="183.9,101.7 257.5,156.9 312.7,83.3 239.1,28.1" fill="#1f5aa6" fill-opacity="0.9"/>
+    <polygon points="142.5,156.9 257.5,156.9 257.5,271.9 142.5,271.9" fill="#d0312d" fill-opacity="0.9"/>
+  </g>
   <line x1="124.1" y1="143.1" x2="165.5" y2="87.9" stroke="#fff" stroke-width="1.2" stroke-opacity="0.8"/>
   <line x1="156.3" y1="138.5" x2="101.1" y2="97.1" stroke="#fff" stroke-width="1.2" stroke-opacity="0.8"/>
   <line x1="105.7" y1="129.3" x2="147.1" y2="74.1" stroke="#fff" stroke-width="1.2" stroke-opacity="0.8"/>
@@ -29,4 +31,9 @@
   <polygon points="142.5,156.9 257.5,156.9 183.9,101.7" fill="#fbf7ee" fill-opacity="1"/>
   <polygon points="142.5,156.9 257.5,156.9 183.9,101.7" fill="none" stroke="#222222" stroke-width="3" stroke-linejoin="round"/>
   <polyline points="176.7,111.3 186.3,118.5 193.5,108.9" fill="none" stroke="#222222" stroke-width="1.6"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="183.9" y="88">A</text>
+    <text x="129" y="168.7">B</text>
+    <text x="271.7" y="166.9">C</text>
+  </g>
 </svg>

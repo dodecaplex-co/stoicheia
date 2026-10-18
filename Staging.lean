@@ -20,14 +20,11 @@ import Staging.Stage4.Prop15
 import Staging.Stage4.Prop25
 
 /-!
-# Staging: statements awaiting approval
+# Staging: statements before their proofs
 
-Statements are settled before proofs (docs/WORKFLOW.md, section 2). Each new or changed
-statement of brief 0006 is written here first, with `sorry` where its proof is due, and
-reviewed in plain words. Nothing here changes `Elements/`: these files import it, and
-nothing imports them. `lake build Staging` checks them. When a statement is proved, it moves
-to its home in `Elements/` (brief 0006 names each one's file and owner), a companion joins
-`Certificate/Facts.lean`'s companions, and the records it touches are read again.
+The statements that a stage of brief 0005 adds or changes, each with `sorry` where its
+proof is due, until it is proved and moves to `Elements/`. The rules for them are in
+`docs/WORKFLOW.md`, section 2; brief 0006 names each statement's home and owner.
 
 The folders follow brief 0005's stages:
 

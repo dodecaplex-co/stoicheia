@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.2 at a glance</title>
-  <desc>The small circle turns the given straight line (blue, upper right) to run on from one red side; the big circle carries it round to the given point, on the other (blue, left). The red sides are equal, so the blue pieces beyond them are equal.</desc>
+  <desc>The small circle turns the given straight line BC (blue) into BG, running on from one red side; the big circle carries it round to the given point A, as AL (blue). The red sides are equal, so the blue pieces beyond them are equal.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="146.0" r="110.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <circle cx="231.0" cy="199.7" r="48.0" fill="none" stroke="#1f5aa6" stroke-width="3" stroke-opacity="0.75"/>
@@ -15,4 +15,10 @@
   <line x1="169.0" y1="199.7" x2="145.0" y2="241.3" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
   <circle cx="169.0" cy="199.7" r="4.5" fill="#222222"/>
   <circle cx="231.0" cy="199.7" r="4.5" fill="#222222"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="200" y="134.6">D</text><text x="155.1" y="197.3">A</text><text x="237.5" y="183.5">B</text><text x="289.1" y="179.5">C</text>
+    <text x="271" y="252.7">G</text><text x="275.1" y="267.7">F</text><text x="129.3" y="250.2">L</text><text x="124.9" y="267.7">E</text>
+    <text x="252.2" y="147">H</text><text x="324" y="151.6">K</text>
+  </g>
 </svg>

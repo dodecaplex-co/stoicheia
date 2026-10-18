@@ -27,6 +27,11 @@ jobs:
         # Audit/ is a library nothing imports, outside the default build.
         run: lake build Audit
 
+      - name: Check the staged statements, which await their proofs, still build
+        # Staging is a library nothing imports, outside the default build
+        # (docs/WORKFLOW.md, section 2).
+        run: lake build Staging
+
       - name: Compute the certificate, and check its dependency walk against Lean's
         # Facts.lean exits 1 if any entry's axioms differ from its own and its citations'.
         run: lake env lean Certificate/Facts.lean

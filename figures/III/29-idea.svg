@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.29 at a glance</title>
-  <desc>Cut off equal circumferences (yellow) in equal circles: the angles at the centres are equal (blue), and so are the straight lines joining the ends (red).</desc>
+  <desc>Cut off the equal circumferences BGC, EHF (yellow) in the equal circles ABC, DEF: the angles BKC, ELF at the centres K, L are equal (blue), and so are the straight lines BC, EF (red).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="107.0" cy="150.0" r="80.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
   <circle cx="293.0" cy="150.0" r="80.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
@@ -16,4 +16,16 @@
   <line x1="295.8" y1="230.0" x2="371.3" y2="133.4" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
   <circle cx="107.0" cy="150.0" r="4.5" fill="#222222"/>
   <circle cx="293.0" cy="150.0" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="142.6" y="243.0">A</text>
+    <text x="152.6" y="69.3">B</text>
+    <text x="16.0" y="125.9">C</text>
+    <text x="218.1" y="96.4">D</text>
+    <text x="296.4" y="251.9">E</text>
+    <text x="385.5" y="135.4">F</text>
+    <text x="70.3" y="64.1">G</text>
+    <text x="370.2" y="215.3">H</text>
+    <text x="107.0" y="170.9">K</text>
+    <text x="280.0" y="144.9">L</text>
+  </g>
 </svg>

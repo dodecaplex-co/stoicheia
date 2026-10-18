@@ -31,7 +31,7 @@ the inference follows. Keep sentences short and plain. Three that have the voice
 - "So the tacit rule is doing real work: it says the plane has the square roots that ruler
   and compass need." (I.1)
 - "Generations of schoolchildren knew it as the *pons asinorum*, the bridge of asses." (I.5)
-- "Our statement gives the perpendicular, and Lean has to find its foot." (II.12)
+- "Our statement gives the perpendicular, and our proof has to find its foot." (II.12)
 
 **State facts directly; qualify uncertainty precisely.** A proved equality is said plainly.
 A conjecture about the history of the text sounds like one, and says whose it is. A
@@ -44,7 +44,7 @@ for a checker: no "note that", "strictly speaking" or "it is worth noting" **[ch
 ("our I.1 lets the side be named"), and it may take the reader along ("Postulate 3 lets us
 draw a circle"). Use it where it comes naturally; there is no count. "Euclid" is the
 historical argument, "Heath" the translation and its notes, and "Lean" the language and
-its checker ("Lean has to find its foot"); "the Lean" is our proof's code, where a
+its checker ("Lean checks the formal derivation"); "the Lean" is our proof's code, where a
 sentence needs it ("the Lean cites I.10"). No "I", "me" or "my" outside quotations
 **[checked]**.
 
@@ -147,10 +147,11 @@ where to look:
 
 **Why two figures.** The figure at a glance, in Oliver Byrne's colours, shows the main
 relation before a word is read: equal things share a colour, and a reader sees what the
-proposition is about. Euclid's figure, with Heath's letters, is the one to follow the
-proof by, sentence by sentence. Each does what the other cannot, and neither is decoration.
-Colour may carry an equality, but never alone: the caption names the colours, so that a
-reader who cannot tell them apart still has the point.
+proposition is about. Euclid's figure is the one to follow the proof by, sentence by
+sentence. Each does what the other cannot, and neither is decoration. Both carry Heath's
+letters, the names the text and the Lean use, so a reader passes from the colours to the
+proof by the same A and B (section 7). Colour may carry an equality, but never alone: the
+caption names the colours, so that a reader who cannot tell them apart still has the point.
 
 **Each thing in one place.** Scope and exceptions go at the top, in the status line and
 the table. Citations, postulates and rules go in the certificate and the line under it.
@@ -397,13 +398,14 @@ would fit any page of the book is left out.
 Two per proposition, on the parchment card (`#fbf7ee`, a rect with `rx="10"` over the
 whole canvas), in Georgia. Section 2 says why there are two.
 
-**`NN-idea.svg`, the figure at a glance.** A canvas of 400 × 300 **[checked]**. Byrne's
-red `#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for
-grid lines and for numbers on a fill, as in I.47 **[checked]**. Equal things share a
-colour, and there are no letters **[checked]**. The title is "I.N at a glance", with a name
-if it has one (": the bridge of asses"). The `<desc>` is the caption on the page: one or
-two short sentences in the house voice, the colours named in brackets, about 40 words
-**[reported]** and 50 at most **[checked]**.
+**`NN-idea.svg`, the figure at a glance.** A canvas of 400 × 300 **[checked]**. Byrne's red
+`#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for grid
+lines and for numbers on a fill, as in I.47 **[checked]**. Equal things share a colour, and
+Heath's letters name every point it shows; any letter is Heath's, and may name a line or a
+figure as well (below). The title is "I.N at a glance", with a name if it has one (": the
+bridge of asses"). The `<desc>` is the caption on the page: one or two short sentences in
+the house voice, the colours named in brackets, about 40 words **[reported]** and 50 at
+most **[checked]**.
 
 **`NN.svg`, Euclid's figure.** 400 wide, and 440 at most where two or three of Heath's
 figures stand side by side (III.25, III.33, III.35, III.36) **[checked]**. Italic letters
@@ -420,6 +422,27 @@ uses the same letters, save in a helper written once over any letters (`Prop44.p
 point Heath leaves without a letter gets a name in the Lean and none in the figure; a
 letter Heath gives a point the Lean does not need (III.3's C and D) is still drawn; the
 letters inside shared steps do not count; and "PORISM" is not a letter.
+
+**The same letters at a glance [checked].** Byrne's book uses coloured diagrams and
+symbols "instead of letters for the greater ease of learners", as its title says, and its
+pages are a delight without them. We add Heath's letters all the same, because a proof is
+read by its points: the colours carry the equalities, and the letters tie them to the
+text, so that the yellow angle at B is the angle ABC of I.5's proof. The figure at a
+glance carries Heath's letters, the same names as Euclid's figure and the Lean, at every
+point it shows, so that a reader can follow it however it turns or reflects Euclid's
+figure. Each letter is one that `NN.svg` draws, italic, at 14, small and beside its point,
+in the figure's black `#222222`, and clear of every colour and stroke where there is room.
+A point inside a coloured piece, with no parchment near it, takes its letter on the fill
+(I.43's K, II.4's G): in black on yellow, and in the parchment's `#fbf7ee` on red, blue or
+black (II.12's D), where black would hardly show. A point is shown when it is drawn as a
+dot, ends a straight line or is a corner of a coloured figure, and its letter stands
+within 30 of it; a straight line shorter than 25 is a mark, such as an equals sign, and
+shows no point. A point Heath leaves without a letter stays without one here too, and what
+draws it says why, on the element or on a `<g>` round several:
+`data-unlettered="the squares of the reading in areas, which Heath's figure does not draw"`
+(II.9). A letter Heath gives a straight line or a figure (I.3's C, II.14's A) may stand
+beside it or within it. How the script reads this, and the switch that held the figures
+while they were being lettered, are in section 8.
 
 **Checked as geometry, not only as a picture.** A label count or a colour check does not
 validate a figure. Before a changed figure is signed off, render it
@@ -446,7 +469,16 @@ draws the figure proposes the line in the handback, and the records' owner write
 
 Run it from the repository's root. It reads the files below; "outside quotations" means
 with every `"…"` span, every link target `](…)`, every code span and every fenced code
-block removed first.
+block removed first. What is removed is read as spaces, so the words of a phrase may
+stand apart across a code span, a quotation or a link target: S3 finds "I think" in
+`as I "so" think`. The words of a phrase in S2 to S7, S9, S11 and D7 to D10 are found
+however a line or a comment wraps them: they may stand apart by spaces or tabs (and
+commas, between S9's letters), or by one line break with the next line's indent and its
+comment leader (`--`, or a quotation's `>`). A blank line ends such a phrase, save S2's
+"first mate" and the "Definition N" of S7 and D10, whose words may stand apart by any
+white space. A word that a rule seeks elsewhere in the clause or the sentence (what
+follows S5's "never need", S11's "Proclus", D9's "need") is found as its row says. Before
+reading anything else, the script checks its own patterns against such phrases.
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.
@@ -472,17 +504,19 @@ block removed first.
 | S6 | "tacit assumption(s)", "tacit law(s)" (any case), outside quotations | Prose, Generated |
 | S7 | A definition without its book: "Definition N" or "Def. N", N a numeral, outside quotations and square brackets | Prose |
 | S8 | A curly quotation mark: “ ” ‘ ’ | Prose, Catalogues |
-| S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*([ ,]+[A-Z]+[′₀-₉]*)*\*($\|[^*])` | Prose, Catalogues, Lean notes |
+| S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*(([ \t,]+\|[ \t,]*\n[ \t]*((--\|>)[ \t]*)?[ \t,]*)[A-Z]+[′₀-₉]*)*\*($\|[^*])`: the letters may stand apart by spaces, tabs and commas, or by one line break, as above | Prose, Catalogues, Lean notes |
 | S10 | TeX in the mishnah: a backslash, `^{` or `$` | Mishnah |
 | S11 | A retired refrain of section 3, on a page not allowed it: "certificate cites", "certificate records", "Of the postulates", "besides Euclid's", "just Euclid's three" (nowhere); "comes in through" (I.29 only); "Lean wants it said", "Lean asks why", "Lean makes us say so" (I.1, I.5, I.22 only); "uses Postulate 1", "brings it in" (I.1, I.3 only); "with no letter", "proves it once", "We give his argument once", "and the Lean cites it.", and "under I.31" in a sentence naming Proclus (nowhere); a paragraph opening `**What Lean made us say.**`, `**What else Lean made us say.**`, `**What it rests on.**`, `**Where the parallels meet.**`, `**Naming the pieces.**`, or `**Where X falls.**` with X a run of capitals (nowhere) | Mishnah |
 | S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (the command is below). Run when the tree is built | Mishnah |
 | S13 | A caption (`<desc>`) missing, or over 50 words | Idea figures |
-| S14 | A viewBox other than `0 0 400 300`; a `<text>` holding a Latin letter; a colour other than `#fbf7ee`, `#d0312d`, `#f2b705`, `#1f5aa6`, `#222222` and white; a missing `<title>`, or one other than "I.N at a glance", with a name after a colon if it has one | Idea figures |
+| S14 | A viewBox other than `0 0 400 300`; a colour other than `#fbf7ee`, `#d0312d`, `#f2b705`, `#1f5aa6`, `#222222` and white; a missing `<title>`, or one other than "I.N at a glance", with a name after a colon if it has one | Idea figures |
 | S15 | A viewBox width outside 400–440; a letter not at font-size 17; a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than "Euclid I.N: …" | Euclid's figures |
 | S16 | Letters drawn that are not Heath's, or Heath's letters not drawn: the letters of the figure's `<text>` elements against the capital letters of `heath/<book>/NN.md`, with comments, Heath's references, "Q. E. D.", "Q. E. F.", "I say" and "PORISM." taken out (the command is below). An exception is listed in the script with its reason | Euclid's figures |
 | S17 | A reading file of no lines or more than three, a line that is not a list item ("- "), or a web link that `docs/reading.md` does not give | `reading/<book>/NN.md` |
 | S18 | A book with pages and no `mishnah/intro/<book>.md` | `mishnah/intro/` |
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
+| S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not italic, not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
+| S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 
@@ -494,12 +528,20 @@ block removed first.
 | D4 | More than four distinct Lean names | Mishnah |
 | D5 | A caption over 40 words, or of more than two sentences | Idea figures |
 | D6 | Each "first", "only", "better", "best", "unlike", for a reader to judge as a comparison or a claim to priority | Prose, README |
-| D7 | "Lean cannot", "Lean can't" | Prose, Catalogues, Lean notes |
+| D7 | "Lean cannot", "Lean can't", "Lean can not" | Prose, Catalogues, Lean notes |
 | D8 | "gives no citation" (say "Heath gives no reference") | Prose, Catalogues |
 | D9 | A sentence that joins "need", "needs" or "needed" to Postulate 5 or the parallel postulate (say "uses"; a claim that a result holds without the postulate names its evidence) | Prose, Catalogues, README, Lean notes |
 | D10 | S6 and S7 outside their failing scope | Catalogues, README, Lean notes |
 | D11 | Euclid's figure strokes other than lines 1.6, circles 1.3, the subject 2.4 to 2.6, angle marks 1.3, or dots of radius other than 2.6 | Euclid's figures |
 | D13 | A reading line that does not begin "For " | `reading/<book>/NN.md` |
+| D14 | The figures at a glance with no letter yet, book by book, with the points each has to letter, while the switch is off (below) | Idea figures |
+
+**The switch for S21.** The figures at a glance were lettered one by one, and while they
+were, `IDEA_LETTERS_REQUIRED` in `scripts/check_style.py` was `False`: S20 held every
+figure, S21 held each figure that carried at least one letter, so a figure once begun was
+lettered whole, and D14 listed the rest. Every figure now carries its letters, and the
+switch is `True`: S21 fails any figure with a point unlettered, and D14 is empty. The
+switch is never turned back to quiet a figure: the figure is lettered.
 
 ### The reviewer's checklist
 
@@ -559,15 +601,19 @@ proposition, and a later book's numeral replaces `I` in the paths.
 16. The Lean uses the figure's letters: S16 checks the figure against Heath, and
     `grep -oE '\{[^}]*: Point\}|obtain ⟨[^⟩]*⟩' Elements/BookI/PropNN.lean` shows the
     Lean's own.
-17. A departure from Heath's figure has its line in the figure note, and a figure of one
+17. On the figure at a glance, rendered beside Euclid's, each letter is the one Euclid's
+    figure gives that point, beside it and clear of every colour and stroke, or on the fill
+    as section 7 says; S21 sees only that a letter is near. Each `data-unlettered` reason
+    is true of Heath's figure.
+18. A departure from Heath's figure has its line in the figure note, and a figure of one
     case among several names it.
 
 **Heath's text**
 
-18. `git diff main -- heath/` is empty, or each change carries a comment naming the leaf
+19. `git diff main -- heath/` is empty, or each change carries a comment naming the leaf
     checked.
 
 **Further reading**
 
-19. Each line helps with this proposition, follows the pattern of section 6, and describes
+20. Each line helps with this proposition, follows the pattern of section 6, and describes
     a work in full only at its first appearance in the book.

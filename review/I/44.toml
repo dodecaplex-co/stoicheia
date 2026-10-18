@@ -15,6 +15,6 @@ note = "Our foundations keep superposition for I.4 and I.8, so nothing is moved:
 
 [review]
 stage = "exceptions"
-commit = "9d0bdcb"
+commit = "6e7c20b"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:b0a15af77902e62d"
+lean = "sha256:a2b5c0ae2745773e"

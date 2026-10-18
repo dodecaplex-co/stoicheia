@@ -65,7 +65,8 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
 - Work only in the files your task names: one writer per file. The integrator owns the
   generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, README.md's rows
   between the `<!-- scope:… -->` markers and PROGRAM.md's status table between the
-  `<!-- status -->` markers); the coordinator owns the foundations
+  `<!-- status -->` markers) and the companions list (`Elements/Companions.lean`); the
+  coordinator owns the foundations
   (`Elements/Foundations/`), `Certificate/axioms.lock`, the toolchain (`lean-toolchain`,
   `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md and CI; your
   orders name the owner of everything else ([WORKFLOW](docs/WORKFLOW.md), section 4).
@@ -90,8 +91,9 @@ Each rule has one home, linked; this list only points to it.
 - Weaken, skip or remove a check, test, expected value, lock or schema to let a change pass
   (FORMALIZATION, section 1).
 - Commit generated files unless you are the integrator (WORKFLOW, section 4).
-- Push, or merge into main: agents never push. The coordinator pushes to main only through
-  `scripts/safe_push.py` (WORKFLOW, section 10).
+- Push, or open, merge or approve a pull request: agents never do. The coordinator lands
+  work on main only as a pull request, through `scripts/safe_push.py` (WORKFLOW, section
+  10, "Landing work: pull requests").
 - Publish: tag, release, write release notes, change the GitHub description, or send
   anything outside the repository. Each needs Jack Challis's OK (WORKFLOW, section 1).
 - Invent a quotation, a page or a reference; put crew talk where readers look; write

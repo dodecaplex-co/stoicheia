@@ -5,7 +5,13 @@
   <line x1="100.0" y1="150.0" x2="300.0" y2="150.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
   <line x1="179.8" y1="60.3" x2="100.0" y2="150.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <line x1="179.8" y1="60.3" x2="300.0" y2="150.0" stroke="#f2b705" stroke-width="6" stroke-linecap="round"/>
-  <line x1="65.0" y1="206.0" x2="185.0" y2="206.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
-  <line x1="185.0" y1="206.0" x2="335.0" y2="206.0" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
-  <line x1="65.0" y1="236.0" x2="265.0" y2="236.0" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
+  <g data-unlettered="BA and AC copied end to end beneath the triangle; Heath's figure lays them along BA produced, to D">
+    <line x1="65.0" y1="206.0" x2="185.0" y2="206.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="butt"/>
+    <line x1="185.0" y1="206.0" x2="335.0" y2="206.0" stroke="#f2b705" stroke-width="7" stroke-linecap="butt"/>
+    <line x1="65.0" y1="236.0" x2="265.0" y2="236.0" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
+  </g>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="179.8" y="50.1">A</text><text x="88" y="169.6">B</text><text x="312" y="169.6">C</text>
+  </g>
 </svg>

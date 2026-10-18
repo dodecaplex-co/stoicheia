@@ -7,9 +7,9 @@ Copying their leads, their rhythm or their sentences onto another page would mak
 the voice passes were run to remove. Take from them how a decision was made, and make your
 own for your proposition.
 
-Each was read again at commit `2c83342`, after the precision pass of brief 0005 and its
-readers' notes. When one of them changes, it is read again and its commit here brought up
-to date, or it is replaced.
+Each was read again at commit `a5f9c3c`, after the precision pass of brief 0005, its
+readers' notes and its wording sweep. When one of them changes, it is read again and its
+commit here brought up to date, or it is replaced.
 
 ## A short construction: I.1
 
@@ -29,7 +29,7 @@ page does.
 - **The gap is a named rule, credited.** The circles' meeting is System E's Intersection 5
   (`circles_meet`), and the remark above it says why the circles cross and why the side can
   be chosen. The remark also says plainly that the straight lines CA, CB are drawn for the
-  eye: the Lean needs only the point C.
+  eye: our proof uses only the point C.
 - **The mishnah does all four things in four paragraphs:** the move (must the circles
   meet?), the history (Zeno's worries, reported by Heath, with the chain of report clear),
   the formal decision (C off AB, and the side), and a modern way that earns its place: the

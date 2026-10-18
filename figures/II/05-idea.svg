@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>II.5 at a glance</title>
-  <desc>Cut a straight line in half, and again unequally (black): the rectangle contained by the unequal pieces (red and yellow) and the square on the piece between the cuts (blue) make the square on the half, for the two reds are equal.</desc>
+  <desc>Cut AB in half at C, and unequally at D (black): the rectangle contained by AD, DB (red and yellow) and the square on CD (blue) make the square on CB, for the two reds are equal.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="50.0,83.5 200.0,83.5 200.0,178.5 50.0,178.5" fill="#d0312d" fill-opacity="0.9"/>
   <polygon points="200.0,83.5 255.0,83.5 255.0,178.5 200.0,178.5" fill="#f2b705" fill-opacity="0.95"/>
@@ -12,4 +12,16 @@
   <line x1="50.0" y1="71.5" x2="350.0" y2="71.5" stroke="#222222" stroke-width="4" stroke-linecap="butt"/>
   <circle cx="200.0" cy="71.5" r="4.5" fill="#222222"/>
   <circle cx="255.0" cy="71.5" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222">
+    <text x="50" y="60" text-anchor="middle">A</text>
+    <text x="200" y="60" text-anchor="middle">C</text>
+    <text x="255" y="60" text-anchor="middle">D</text>
+    <text x="350" y="60" text-anchor="middle">B</text>
+    <text x="50" y="195" text-anchor="middle">K</text>
+    <text x="196" y="195" text-anchor="end">L</text>
+    <text x="248" y="172" text-anchor="end">H</text>
+    <text x="200" y="250" text-anchor="middle">E</text>
+    <text x="255" y="250" text-anchor="middle">G</text>
+    <text x="350" y="250" text-anchor="middle">F</text>
+  </g>
 </svg>

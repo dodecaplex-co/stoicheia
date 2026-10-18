@@ -7,4 +7,8 @@
   <line x1="184.4" y1="94.5" x2="345.0" y2="207.0" stroke="#222222" stroke-width="4" stroke-linecap="round"/>
   <line x1="55.0" y1="207.0" x2="345.0" y2="207.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
   <line x1="184.4" y1="94.5" x2="55.0" y2="207.0" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="43" y="226.6">A</text><text x="184.4" y="84.1">B</text><text x="357" y="226.6">C</text>
+  </g>
 </svg>

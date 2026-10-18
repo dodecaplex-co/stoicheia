@@ -1,11 +1,21 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>I.38 at a glance</title>
-  <desc>Two triangles on equal bases (red) and between the same parallels (blue) are equal in area (yellow), however differently they lean.</desc>
+  <desc>The triangles ABC, DEF on equal bases BC, EF (red) and between the same parallels (blue) are equal in area (yellow), however differently they lean.</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <polygon points="125.0,85.0 60.0,215.0 160.0,215.0" fill="#f2b705" fill-opacity="0.9"/>
   <polygon points="195.0,85.0 240.0,215.0 340.0,215.0" fill="#f2b705" fill-opacity="0.9"/>
-  <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
-  <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <g data-unlettered="the parallels drawn on past the figure, to ends that are no points of Heath's">
+    <line x1="45.0" y1="85.0" x2="355.0" y2="85.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+    <line x1="45.0" y1="215.0" x2="355.0" y2="215.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  </g>
   <line x1="60.0" y1="215.0" x2="160.0" y2="215.0" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
   <line x1="240.0" y1="215.0" x2="340.0" y2="215.0" stroke="#d0312d" stroke-width="7" stroke-linecap="butt"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="125" y="74.2">A</text>
+    <text x="195" y="74.2">D</text>
+    <text x="60" y="236.2">B</text>
+    <text x="160" y="236.2">C</text>
+    <text x="240" y="236.2">E</text>
+    <text x="340" y="236.2">F</text>
+  </g>
 </svg>

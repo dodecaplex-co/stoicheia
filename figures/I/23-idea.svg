@@ -4,9 +4,8 @@
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M44.0,100.0 L69.2,119.7 A32,32 0 0,0 75.3,93.3 Z" fill="#f2b705"/>
   <path d="M196.0,228.0 L228.0,228.0 A32,32 0 0,0 216.6,203.5 Z" fill="#f2b705"/>
-  <line x1="44.0" y1="100.0" x2="171.7" y2="199.7" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
-  <line x1="44.0" y1="100.0" x2="173.1" y2="72.6" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
-  <line x1="196.0" y1="228.0" x2="280.8" y2="126.9" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="44.0" y1="100.0" x2="171.7" y2="199.7" data-unlettered="the arm CE runs on past E, to an end Heath leaves without a letter" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
+  <line x1="44.0" y1="100.0" x2="173.1" y2="72.6" data-unlettered="the arm CD runs on past D, to an end Heath leaves without a letter" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="196.0" y1="228.0" x2="366.0" y2="228.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="146.4" y1="180.0" x2="141.8" y2="79.2" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
   <line x1="44.0" y1="100.0" x2="146.4" y2="180.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
@@ -15,4 +14,8 @@
   <line x1="196.0" y1="228.0" x2="326.0" y2="228.0" stroke="#d0312d" stroke-width="6" stroke-linecap="round"/>
   <line x1="196.0" y1="228.0" x2="260.3" y2="151.4" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <circle cx="196.0" cy="228.0" r="4.5" fill="#222222"/>
+  <!-- Heath's letters -->
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="29" y="106.6">C</text><text x="141" y="68.6">D</text><text x="136" y="202.6">E</text><text x="194" y="251.6">A</text><text x="326" y="251.6">G</text><text x="366" y="251.6">B</text><text x="247" y="143.6">F</text>
+  </g>
 </svg>

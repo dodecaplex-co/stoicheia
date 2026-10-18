@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia, 'Times New Roman', serif">
   <title>III.24 at a glance</title>
-  <desc>Lay a segment on another with an equal base (blue) and an equal angle in it (yellow): the two fit exactly, and are equal (red).</desc>
+  <desc>Lay the segment AEB on CFD, A on C and B on D: with equal bases AB, CD (blue) and equal angles AEB, CFD in them (yellow), the two fit exactly, and are equal (red).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <path d="M50.0,220.0 A74.7,74.7 0 1,1 182.0,220.0 Z" fill="#d0312d"/>
   <path d="M78.7,120.3 L100.2,141.1 A30,30 0 0,1 70.4,149.2 Z" fill="#f2b705"/>
@@ -12,4 +12,12 @@
   <line x1="327.5" y1="94.7" x2="241.7" y2="217.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="327.5" y1="94.7" x2="358.2" y2="155.0" stroke="#222222" stroke-width="3" stroke-linecap="round"/>
   <line x1="241.7" y1="217.0" x2="358.2" y2="155.0" stroke="#1f5aa6" stroke-width="7" stroke-linecap="round"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="47.0" y="241.9">A</text>
+    <text x="185.0" y="241.9">B</text>
+    <text x="249.7" y="236.9">C</text>
+    <text x="368.8" y="171.2">D</text>
+    <text x="70.7" y="111.3">E</text>
+    <text x="336.9" y="86.7">F</text>
+  </g>
 </svg>

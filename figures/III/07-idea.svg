@@ -3,7 +3,7 @@
   <desc>Stand at a point of a diameter, off the centre: the straight line through the centre is longest (red), the rest of the diameter shortest (yellow), and in between they shrink as they turn, equal only in pairs (black, blue).</desc>
   <rect x="0" y="0" width="400" height="300" rx="10" fill="#fbf7ee"/>
   <circle cx="200.0" cy="150.0" r="112.0" fill="none" stroke="#222222" stroke-width="3" stroke-opacity="0.6"/>
-  <line x1="246.0" y1="150.0" x2="163.3" y2="255.8" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
+  <line x1="246.0" y1="150.0" x2="163.3" y2="255.8" data-unlettered="the straight line equal to FC on the other side of the diameter, which Heath's figure does not draw" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
   <line x1="246.0" y1="150.0" x2="163.3" y2="44.2" stroke="#222222" stroke-width="6" stroke-linecap="round"/>
   <line x1="246.0" y1="150.0" x2="288.7" y2="218.4" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
   <line x1="246.0" y1="150.0" x2="288.7" y2="81.6" stroke="#1f5aa6" stroke-width="6" stroke-linecap="round"/>
@@ -11,4 +11,13 @@
   <line x1="246.0" y1="150.0" x2="312.0" y2="150.0" stroke="#f2b705" stroke-width="7" stroke-linecap="round"/>
   <circle cx="200.0" cy="150.0" r="4.5" fill="#222222"/>
   <circle cx="246.0" cy="150.0" r="4.5" fill="#222222"/>
+  <g font-style="italic" font-size="14" fill="#222222" text-anchor="middle">
+    <text x="74" y="154.9">A</text>
+    <text x="158.4" y="34.9">C</text>
+    <text x="326" y="154.9">D</text>
+    <text x="200" y="169.4">E</text>
+    <text x="246.8" y="132.4">F</text>
+    <text x="300.6" y="77.3">G</text>
+    <text x="300.6" y="232.5">H</text>
+  </g>
 </svg>
