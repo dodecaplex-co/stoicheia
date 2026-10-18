@@ -31,8 +31,9 @@ theorem Prop40.general {A B C D E F : Point} {L : Line} (hABC : Triangle A B C)
   /- "let AF be drawn through A parallel to BE [I. 31]": K is the parallel
      through A to the straight line L carrying both bases. -/
   obtain ⟨K, hA_K, hKL⟩ := Prop31.line hA_L
-  /- "and let FE be joined": G, playing Euclid's F, is where K meets ED
-     (`Prop30.meet`). The triangle GEF plays his FCE. -/
+  /- "and let FE be joined": G, playing Euclid's F, is where K meets ED, as
+     his F lies on CD (`Prop30.meet`). His FE is our GF, which closes the
+     triangle GEF, his FCE. -/
   obtain ⟨ED, hE_ED, hD_ED⟩ := Postulate1 E D hDEF.ne₁₂.symm
   obtain ⟨G, hG_ED, hG_K⟩ :=
     Prop30.meet hKL hE hE_ED (fun e => hD_L (e ▸ hD_ED))
