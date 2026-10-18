@@ -4,9 +4,10 @@
 #     sh scripts/install_hooks.sh            # refuses to replace a hook of your own
 #     sh scripts/install_hooks.sh --force    # keeps yours as pre-push.local-backup
 #
-# For now there is one, scripts/hooks/pre-push, which refuses a push to main that does not
-# come from scripts/safe_push.py or is not a fast-forward, and a tag pushed or deleted
-# without the owner's OK (docs/WORKFLOW.md, section 10). It goes where git looks
+# For now there is one, scripts/hooks/pre-push, which refuses every push to main (main
+# changes only by a pull request's merge commit), scans a push to any other branch for
+# secrets with origin/main's scan, and refuses a tag pushed or deleted without the owner's
+# OK (docs/WORKFLOW.md, "Landing work: pull requests"). It goes where git looks
 # for hooks (`git rev-parse --git-path hooks`), shared by every worktree of the clone. It
 # is copied, not linked, so it keeps working when the worktree it came from is removed;
 # run this again after the hook changes.

@@ -1,14 +1,22 @@
 # False positives of the secret scan in scripts/safe_push.py, each with its reason.
 #
-# safe_push.py reads this file from the commit it pushes. An entry lets a flagged line
-# through when its file matches `path` (a glob), the line (or, for a file-name rule, the
-# file's path) contains `match`, and, if `rule` is given, the rule that flagged it is
-# that one. Every entry needs a `reason`; one without is refused. The allow-listed lines
-# are printed in safe_push's report, so they stay visible. Commit messages are scanned
-# too, as the path "commit <sha12> message".
+# safe_push.py reads this file from origin/main, never from the commit it checks: an entry
+# lands in a pull request of its own (a protected change, with a decisions entry naming
+# this file and the label security-review) before the line it lets through. Every entry is
+# narrow, and one that is not is refused:
+#
+#   path    one file, named exactly (no *, ? or [); a commit message cannot be allowed,
+#           so a flagged message is reworded instead;
+#   rule    the rule that flagged the line, by its name in the report;
+#   match   a part of the flagged line (or, for a file-name rule, of the path), at least
+#           8 characters long;
+#   reason  why it is not a secret.
+#
+# The allow-listed lines are printed in safe_push's report and noted in the pull request,
+# so they stay visible.
 #
 # [[allow]]
 # path = "docs/reports/example.md"
-# match = "the part of the line that was flagged"
 # rule = "key, token or secret"
+# match = "the part of the line that was flagged"
 # reason = "Why this is not a secret."

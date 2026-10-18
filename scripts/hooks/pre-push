@@ -1,17 +1,47 @@
 #!/bin/sh
 # Stoicheia's pre-push hook (STOICHEIA_SAFE_PUSH), installed by scripts/install_hooks.sh.
 #
-# A push to main goes through scripts/safe_push.py, which checks the commit from end to
-# end and sets STOICHEIA_SAFE_PUSH to the commit it checked, for its own push alone.
-# Any other push to main is refused here, however it is spelled (HEAD:main, main,
-# refs/heads/main, --mirror), and so is a push of a commit other than the one checked, a
-# push to main that is not a fast-forward (a forced one) even of the commit checked, and
-# every deletion of main. A tag is pushed or deleted only with the owner's OK, by name:
-# STOICHEIA_TAG_PUSH=<tag> git push origin <tag> (docs/WORKFLOW.md, sections 1 and 10).
-# Pushes to other branches pass. (The owner can still go round it with
-# `git push --no-verify`; the hook is a guard rail, not a lock.)
+# Main changes only by a pull request's merge commit, made on GitHub by
+# `python3 scripts/safe_push.py --merge <n>`, so every push to main is refused here,
+# however it is spelled (HEAD:main, main, refs/heads/main, --mirror, forced), and so is
+# every deletion of main; the ruleset on GitHub enforces the same, and this hook backs it
+# up locally. A push to any other branch is scanned for secrets first, with origin/main's
+# own copy of the scan (`safe_push.py --scan-push`), so a branch cannot weaken the scan
+# that judges it. A tag is pushed or deleted only with the owner's OK, by name:
+# STOICHEIA_TAG_PUSH=<tag> git push origin <tag> (docs/WORKFLOW.md, section 1). (The
+# owner can still go round it with `git push --no-verify`; the hook is a guard rail, not
+# a lock.)
 #
 # git gives the hook one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
+
+remote_name=$1
+top=$(git rev-parse --show-toplevel 2>/dev/null)
+tmp=
+cleanup() { [ -n "$tmp" ] && rm -rf "$tmp"; }
+trap cleanup EXIT
+
+# The scan: origin/main's safe_push.py and heath.py, copied out of git; the working
+# tree's copy only while origin/main's has no --scan-push.
+scan() {
+    base=refs/remotes/$remote_name/main
+    git rev-parse --verify --quiet "$base" >/dev/null || base=refs/remotes/origin/main
+    if [ -z "$tmp" ]; then
+        tmp=$(mktemp -d "${TMPDIR:-/tmp}/stoicheia-pre-push.XXXXXX") || return 1
+        if git show "$base:scripts/safe_push.py" > "$tmp/safe_push.py" 2>/dev/null &&
+                grep -q -e "--scan-push" "$tmp/safe_push.py" &&
+                git show "$base:scripts/heath.py" > "$tmp/heath.py" 2>/dev/null; then
+            harness=$tmp/safe_push.py
+        elif [ -f "$top/scripts/safe_push.py" ]; then
+            echo "pre-push: origin/main's safe_push.py has no --scan-push yet; using the" >&2
+            echo "    working tree's copy." >&2
+            harness=$top/scripts/safe_push.py
+        else
+            echo "pre-push: no safe_push.py to scan the push with." >&2
+            return 1
+        fi
+    fi
+    python3 "$harness" --scan-push "$1" "$2" "$3"
+}
 
 status=0
 while read -r local_ref local_sha remote_ref remote_sha; do
@@ -26,37 +56,27 @@ while read -r local_ref local_sha remote_ref remote_sha; do
             fi
             continue
             ;;
-        refs/heads/main) ;;
-        *) continue ;;
-    esac
-    case "$local_sha" in
-        *[!0]*) ;;
-        *)
-            echo "pre-push: refusing to delete main on $1." >&2
+        refs/heads/main)
+            case "$local_sha" in
+                *[!0]*)
+                    echo "pre-push: refusing a push to main on $1: main changes only by a pull" >&2
+                    echo "    request's merge commit. Push a branch and open one with the pre-flight:" >&2
+                    echo "    python3 scripts/safe_push.py --branch <name>" >&2
+                    echo "    then merge it with python3 scripts/safe_push.py --merge <pr-number>" >&2
+                    echo "    (docs/WORKFLOW.md, \"Landing work: pull requests\")." >&2
+                    ;;
+                *)
+                    echo "pre-push: refusing to delete main on $1." >&2
+                    ;;
+            esac
             status=1
             continue
             ;;
     esac
-    if [ -z "$STOICHEIA_SAFE_PUSH" ]; then
-        echo "pre-push: refusing a push to main: push to main only through" >&2
-        echo "    python3 scripts/safe_push.py [--commit <sha>] [--dry-run]" >&2
-        echo "which checks the commit from end to end (docs/WORKFLOW.md, section 10)." >&2
-        status=1
-    elif [ "$STOICHEIA_SAFE_PUSH" != "$local_sha" ]; then
-        echo "pre-push: refusing a push to main: safe_push.py checked $STOICHEIA_SAFE_PUSH," >&2
-        echo "but this push sends $local_sha." >&2
-        status=1
-    else
-        case "$remote_sha" in
-            *[!0]*)
-                if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
-                    echo "pre-push: refusing a push to main that is not a fast-forward:" >&2
-                    echo "    $1's main is $remote_sha, not an ancestor of $local_sha" >&2
-                    echo "    (or not fetched). safe_push.py never forces a push." >&2
-                    status=1
-                fi
-                ;;
-        esac
-    fi
+    case "$local_sha" in
+        *[!0]*) ;;
+        *) continue ;;          # deleting a branch other than main publishes nothing
+    esac
+    scan "$local_sha" "$remote_sha" "$remote_ref" || status=1
 done
 exit $status
