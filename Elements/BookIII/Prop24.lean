@@ -7,6 +7,8 @@ import Elements.BookI.Prop26
 import Elements.BookI.Prop32
 import Elements.BookIII.Prop20
 import Elements.BookIII.Prop22
+import Elements.BookIII.Prop23
+import Elements.BookIII.Placement
 
 /-!
 # Book III, Proposition 24
@@ -14,11 +16,142 @@ import Elements.BookIII.Prop22
 Euclid's text, in Heath's translation: [`heath/III/24.md`](../../heath/III/24.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
+
+"Equal", in the enunciation and the last sentence, is read through Common Notion 4: the
+segments coincide (`Arc.Congruent`), one map putting A on C and B on D, the segment on the
+segment and the circumference on the circumference, keeping every distance between their
+points. No magnitude of a segment is defined. The proof keeps Euclid's application of one
+segment to the other (`placement`: A on C, AB on CD, B on D), and argues the coincidence of
+the circumferences by the angles, point by point (`Prop23.point`, III.23's companion), in
+place of his reductio. Euclid refutes a segment falling within the other, or outside it, by
+a tacit reference to III.23, as Heath notes (vol. 2, p. 54), and one falling awry by III.10;
+the Lean settles every point directly, and needs neither the reductio nor III.10.
+
+After it come its companions: `Prop24.equalCircles`, that the circles are equal and the
+circumferences equal in measure, proved by the radii, an alternative to Euclid's argument;
+and `Prop24.equalMeasure`, that congruent segments have circumferences equal in measure,
+which III.26 cites where Euclid passes from the equal segments to the equal circumferences.
 -/
 
 namespace Elements.BookIII
 
 open Tacit
+
+/-- Similar segments of circles on equal straight lines are equal to one another. -/
+theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, Centre O AEB)
+    (hCFD : ∃ O : Point, Centre O CFD) (hA : OnCircle A AEB) (hB : OnCircle B AEB)
+    (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)
+    (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E) (hF_CD : ¬ Collinear C D F)
+    (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :
+    Arc.Congruent ⟨AEB, A, B, E⟩ ⟨CFD, C, D, F⟩ := by
+  -- For let AEB, CFD be similar segments of circles on equal straight lines AB, CD;
+  have hA_B : A ≠ B := (show Triangle A B E from hE_AB).ne₁₂
+  have hC_D : C ≠ D := (show Triangle C D F from hF_CD).ne₁₂
+  -- I say that the segment AEB is equal to the segment CFD.
+  -- For, if the segment AEB be applied to CFD, and if the point A be placed on C and the
+  -- straight line AB on CD,
+  /- The application is `placement`: E's side of AB, with AB itself, is carried onto F's side
+     of CD, with CD, keeping every distance, and A goes to C. -/
+  obtain ⟨f, hAC, hBD, ⟨hinto, honto, hdist⟩, hf⟩ := placement hE_AB hF_CD hAB
+  -- the point B will also coincide with the point D, because AB is equal to CD;
+  /- `hBD`: the placement on the equal straight lines AB, CD puts B on D. -/
+  -- and, AB coinciding with CD,
+  /- The points of AB go to points of CD: a point of the base is an end, or between the ends,
+     exactly when its image is. -/
+  have hbase : ∀ P : Point, OnSideOrLine P E A B → Collinear A B P →
+      Collinear C D (f P) ∧ (P = A ∨ P = B ↔ f P = C ∨ f P = D) ∧
+        (Between A P B ↔ Between C (f P) D) := by
+    intro P hP hPl
+    obtain ⟨h₁, h₂, hside, hbet⟩ := hf P hP
+    have hcol : Collinear C D (f P) := by
+      rcases hinto P hP with h | h
+      · exact absurd hPl (hside.mpr h).triangle
+      · exact h
+    refine ⟨hcol, ⟨?_, ?_⟩, hbet⟩
+    · rintro (h | h)
+      · left; rw [h]; exact hAC
+      · right; rw [h]; exact hBD
+    · rintro (h | h)
+      · left; rw [h, len_self] at h₁; exact (eq_of_len_eq_zero h₁.symm).symm
+      · right; rw [h, len_self] at h₂; exact (eq_of_len_eq_zero h₂.symm).symm
+  -- the segment AEB will also coincide with CFD.
+  /- The claim is shown by the sentences that follow; the Lean begins that argument here,
+     with where the points off the base fall. A point P on E's side goes to a point on F's
+     side, and the triangles APB, C(fP)D have their three sides equal, so the angle at P is
+     the angle at its image [I. 8]. -/
+  have hang : ∀ P : Point, SameSideOf P E A B →
+      SameSideOf (f P) F C D ∧ ∠ A P B = ∠ C (f P) D := by
+    intro P hPE
+    obtain ⟨h₁, h₂, hside, -⟩ := hf P (Or.inl hPE)
+    have hQF : SameSideOf (f P) F C D := hside.mp hPE
+    exact ⟨hQF, BookI.Prop8 hPE.triangle.cab hQF.triangle.cab
+      (by rw [len_symm P A, ← h₁, len_symm C (f P)])
+      (by rw [len_symm P B, ← h₂, len_symm D (f P)]) hAB⟩
+  -- For, if the straight line AB coincide with CD but the segment AEB do not coincide with
+  -- CFD,
+  -- it will either fall within it, or outside it;
+  /- In place of Euclid's reductio, the Lean argues directly, point by point, by the angles.
+     Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54);
+     here III.23's companion `Prop23.point` does that work. On F's side of CD a point is on
+     the circle CFD exactly when the angle it subtends on CD is the angle at F, and within it
+     exactly when that angle is greater; on E's side of AB, alike for AEB. The angle at each
+     point is the angle at its image, and the angles at E and F are equal, the segments being
+     similar; so no point of the arc AEB falls within CFD or outside it, and the points within
+     AEB fall within CFD, and back again. -/
+  have hoff : ∀ P : Point, SameSideOf P E A B →
+      (OnCircle P AEB ↔ OnCircle (f P) CFD) ∧ (InsideCircle P AEB ↔ InsideCircle (f P) CFD) := by
+    intro P hPE
+    obtain ⟨hQF, hPQ⟩ := hang P hPE
+    obtain ⟨on₁, in₁⟩ := Prop23.point hAEB hA hB hE hPE
+    obtain ⟨on₂, in₂⟩ := Prop23.point hCFD hC hD hF hQF
+    rw [on₁, on₂, in₁, in₂, hPQ, hsim]
+    exact ⟨Iff.rfl, Iff.rfl⟩
+  -- or it will fall awry, as CGD, and a circle cuts a circle at more points than two: which is
+  -- impossible. [III. 10]
+  /- III.10 is not needed: the angles have settled every point of the arc, so the arc cannot
+     fall awry, and no third case is left to refute. -/
+  -- Therefore, if the straight line AB be applied to CD, the segment AEB will not fail to
+  -- coincide with CFD also;
+  /- So every point of the half-plane is on the circle AEB, or within it, exactly when its
+     image is on the circle CFD, or within it: off the base by the angles, on the base by its
+     ends and their order (`chord_cases`). -/
+  have hcirc : ∀ P : Point, OnSideOrLine P E A B →
+      (OnCircle P AEB ↔ OnCircle (f P) CFD) ∧ (InsideCircle P AEB ↔ InsideCircle (f P) CFD) := by
+    intro P hP
+    rcases hP with hPE | hPl
+    · exact hoff P hPE
+    · obtain ⟨hQl, hends, hbet⟩ := hbase P (Or.inr hPl) hPl
+      obtain ⟨on₁, in₁⟩ := chord_cases hA hB hA_B hPl
+      obtain ⟨on₂, in₂⟩ := chord_cases hC hD hC_D hQl
+      rw [on₁, on₂, in₁, in₂]
+      exact ⟨hends, hbet⟩
+  -- therefore it will coincide with it and will be equal to it.
+  /- One map puts A on C and B on D, the segment AEB on the segment CFD and the arc on the
+     arc, keeping every distance between their points: the segments coincide, and are equal
+     [C.N. 4]. -/
+  refine ⟨f, hAC, hBD, ⟨?_, ?_, ?_⟩, ⟨?_, ?_, ?_⟩⟩
+  · rintro P ⟨hio, hP⟩
+    refine ⟨?_, hinto P hP⟩
+    rcases hio with h | h
+    · exact Or.inl ((hcirc P hP).2.mp h)
+    · exact Or.inr ((hcirc P hP).1.mp h)
+  · rintro Q ⟨hio, hQ⟩
+    obtain ⟨P, hP, rfl⟩ := honto Q hQ
+    refine ⟨P, ⟨?_, hP⟩, rfl⟩
+    rcases hio with h | h
+    · exact Or.inl ((hcirc P hP).2.mpr h)
+    · exact Or.inr ((hcirc P hP).1.mpr h)
+  · intro P Q hP hQ
+    exact hdist P Q hP.2 hQ.2
+  · rintro P ⟨hon, hP⟩
+    exact ⟨(hcirc P hP).1.mp hon, hinto P hP⟩
+  · rintro Q ⟨hon, hQ⟩
+    obtain ⟨P, hP, rfl⟩ := honto Q hQ
+    exact ⟨P, ⟨(hcirc P hP).1.mpr hon, hP⟩, rfl⟩
+  · intro P Q hP hQ
+    exact hdist P Q hP.2 hQ.2
+  -- Therefore etc.
+  -- Q. E. D.
 
 /-- The halves of unequal things are unequal, the less to the less: if `a` and `a` together
 are less than `b` and `b` together, then `a` is less than `b`. Were `a` equal to `b`, or
@@ -77,92 +210,6 @@ theorem Prop24.isosceles {A B G C D H : Point} (hABG : Triangle A B G) (hCDH : T
   have hB : ∠ A B G = ∠ C D H := by
     rw [angle_symm hABG.ne₁₂ hABG.ne₂₃.symm, ← b₁, hA, b₂, angle_symm hCDH.ne₂₃.symm hCDH.ne₁₂]
   exact (BookI.Prop26 hABG.cab hCDH.cab hA hB (Or.inl hAB)).1
-
-/-- Similar segments of circles on equal straight lines are equal to one another. -/
-theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, Centre O AEB)
-    (hCFD : ∃ O : Point, Centre O CFD) (hA : OnCircle A AEB) (hB : OnCircle B AEB)
-    (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)
-    (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E) (hF_CD : ¬ Collinear C D F)
-    (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :
-    EqualCircles AEB CFD ∧ circumference AEB A E B = circumference CFD C F D := by
-  -- For let AEB, CFD be similar segments of circles on equal straight lines AB, CD;
-  obtain ⟨M, hM⟩ := hAEB
-  obtain ⟨N, hN⟩ := hCFD
-  have hABE : Triangle A B E := hE_AB
-  have hCDF : Triangle C D F := hF_CD
-  obtain ⟨X, hX, hXE⟩ := exists_onCircle_oppositeSidesOf hA hB hABE
-  obtain ⟨Y, hY, hYF⟩ := exists_onCircle_oppositeSidesOf hC hD hCDF
-  -- I say that the segment AEB is equal to the segment CFD.
-  -- For, if the segment AEB be applied to CFD, and if the point A be placed on C and the
-  -- straight line AB on CD,
-  /- In place of applying the segment, we compare the circles by their radii MA, NC, from
-     the centres M, N. -/
-  have hMA : ‖M A‖ = ‖M B‖ := Definition15 hM hA hB
-  have hNC : ‖N C‖ = ‖N D‖ := Definition15 hN hC hD
-  -- the point B will also coincide with the point D, because AB is equal to CD;
-  /- On the equal bases AB, CD, equal angles at the centres make the radii equal, by III.20
-     and `Prop24.isosceles`; and so do two diameters, each the double of a radius. -/
-  have central : ∀ {P Q : Point}, OnCircle P AEB → OnCircle Q CFD → SameSideOf M P A B →
-      SameSideOf N Q C D → ∠ A P B = ∠ C Q D → ‖M A‖ = ‖N C‖ := by
-    intro P Q hP hQ hMP hNQ hPQ
-    exact Prop24.isosceles hMP.triangle hNQ.triangle hMA hNC hAB (by
-      rw [Prop20 hM hP hA hB hMP, Prop20 hN hQ hC hD hNQ, hPQ])
-  have diam : Between A M B → Between C N D → ‖M A‖ = ‖N C‖ := by
-    intro hAMB hCND
-    have d₁ : ‖A B‖ = ‖M A‖ + ‖M A‖ := by
-      rw [← len_add_of_between hAMB, len_symm A M, ← hMA]
-    have d₂ : ‖C D‖ = ‖N C‖ + ‖N C‖ := by
-      rw [← len_add_of_between hCND, len_symm C N, ← hNC]
-    exact Magnitude.eq_of_add_self_eq (d₁.symm.trans (hAB.trans d₂))
-  -- and, AB coinciding with CD,
-  /- The segments on the other sides of AB, CD, at X and Y, are similar too: the angle in
-     each makes two right angles with the angle at E or F [III. 22]. -/
-  have q₁ : ∠ A E B + ∠ A X B = ∟ + ∟ := by
-    have := (Prop22 ⟨M, hM⟩ hE hA hX hB hXE.symm).2
-    rwa [angle_symm hXE.triangle.ne₂₃ hXE.triangle.ne₁₃] at this
-  have q₂ : ∠ C F D + ∠ C Y D = ∟ + ∟ := by
-    have := (Prop22 ⟨N, hN⟩ hF hC hY hD hYF.symm).2
-    rwa [angle_symm hYF.triangle.ne₂₃ hYF.triangle.ne₁₃] at this
-  have hXY : ∠ A X B = ∠ C Y D := by
-    apply CommonNotion3 (c := ∠ A E B) (d := ∠ C F D) _ hsim
-    rw [add_comm (∠ A X B), q₁, add_comm (∠ C Y D), q₂]
-  -- the segment AEB will also coincide with CFD.
-  /- The circles are equal. The equal angles at E, F are both less than a right angle,
-     both right, or both greater, so the centres lie alike: on the sides of E and F, on the
-     bases, or beyond them, where X and Y serve. -/
-  have hrad : ‖M A‖ = ‖N C‖ := by
-    rcases Prop24.angle_type hM hA hB hE hABE with ⟨hME, hlt⟩ | ⟨hAMB, hrt⟩ | ⟨hME, hgt⟩ <;>
-      rcases Prop24.angle_type hN hC hD hF hCDF with ⟨hNF, hlt'⟩ | ⟨hCND, hrt'⟩ | ⟨hNF, hgt'⟩
-    · exact central hE hF hME hNF hsim
-    · rw [hsim, hrt'] at hlt; exact absurd hlt (lt_irrefl _)
-    · rw [hsim] at hlt; exact absurd (lt_trans hlt hgt') (lt_irrefl _)
-    · rw [← hsim, hrt] at hlt'; exact absurd hlt' (lt_irrefl _)
-    · exact diam hAMB hCND
-    · rw [← hsim, hrt] at hgt'; exact absurd hgt' (lt_irrefl _)
-    · rw [hsim] at hgt; exact absurd (lt_trans hlt' hgt) (lt_irrefl _)
-    · rw [hsim, hrt'] at hgt; exact absurd hgt (lt_irrefl _)
-    · exact central hX hY (OppositeSidesOf.sameSideOf hME.symm hXE.symm)
-        (OppositeSidesOf.sameSideOf hNF.symm hYF.symm) hXY
-  -- For, if the straight line AB coincide with CD but the segment AEB do not coincide with
-  -- CFD,
-  -- it will either fall within it, or outside it;
-  -- or it will fall awry, as CGD, and a circle cuts a circle at more points than two: which is
-  -- impossible. [III. 10]
-  /- The radii are already equal, by the angles at the centres, so nothing is left for
-     III.10 to refute. -/
-  -- Therefore, if the straight line AB be applied to CD, the segment AEB will not fail to
-  -- coincide with CFD also;
-  refine ⟨⟨M, N, A, C, hM, hN, hA, hC, hrad⟩, ?_⟩
-  -- therefore it will coincide with it and will be equal to it.
-  /- Each circumference, with the one on the other side of its base, which is twice the
-     angle at E or F, makes up the whole circle; so the remainders are equal [C.N. 3]. -/
-  have w₁ := Circumference.whole ⟨M, hM⟩ hA hB hXE
-  have w₂ := Circumference.whole ⟨N, hN⟩ hC hD hYF
-  rw [Circumference.eq ⟨M, hM⟩ hE hA hB hXE.symm] at w₁
-  rw [Circumference.eq ⟨N, hN⟩ hF hC hD hYF.symm, ← hsim] at w₂
-  exact CommonNotion3 (w₁.trans w₂.symm) rfl
-  -- Therefore etc.
-  -- Q. E. D.
 
 /-- **III.24, the circles and the measures** (companion of III.24, "III.24 equalCircles").
 Similar segments on equal straight lines lie in equal circles, and their circumferences are
@@ -237,10 +284,6 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle}
   rw [Circumference.eq ⟨M, hM⟩ hE hA hB hXE.symm] at w₁
   rw [Circumference.eq ⟨N, hN⟩ hF hC hD hYF.symm, ← hsim] at w₂
   exact CommonNotion3 (w₁.trans w₂.symm) rfl
-
-/-- The check: `Prop24.equalCircles` has the statement of `Prop24` (checked by Lean, up to
-unfolding definitions). -/
-example : type_of% @Elements.BookIII.Prop24 := @Prop24.equalCircles
 
 /-- **A point of the arc, and its image.** In two congruent drawn segments, the map carries a
 point P of the first arc, off its base, to a point Q of the second arc, off its base, and the

@@ -725,3 +725,10 @@ findings:
   [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is renewed, and
   [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an axiom reaches,
   has changed, so its account stands, and `tests/model/run.py --fast` passes.
+  III.24 is restated as the brief froze it, to conclude that the segments are congruent
+  (the owner's decision 2 in that brief): `placement` applies the one to the other, and
+  III.23's companion settles every point. Its statement before, the circles equal and the
+  measures equal, is its companion `Prop24.equalCircles`, with the proof by the radii, shown
+  as the alternative; III.26 takes the equal measures from III.24 by `Prop24.equalMeasure`,
+  and `Audit/Overlaps.lean`'s example of III.24 is pointed at `Prop24.equalCircles`, whose
+  measure clause still follows from the equal angles alone.

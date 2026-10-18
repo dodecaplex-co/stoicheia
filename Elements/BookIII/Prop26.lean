@@ -88,15 +88,21 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
   -- another; [III. 24]
   -- therefore the segment BAC is equal to EDF.
   have seg : ‖B C‖ = ‖E F‖ → ∠ B A C = ∠ E D F →
+      Arc.Congruent ⟨ABC, B, C, A⟩ ⟨DEF, E, F, D⟩ :=
+    fun hBC h => Prop24 ⟨G, hG⟩ ⟨H, hH⟩ hB hC hA hE hF hD hBCA hEFD hBC h
+  /- So their circumferences are equal in measure (`Prop24.equalMeasure`). -/
+  have hBAC : ‖B C‖ = ‖E F‖ → ∠ B A C = ∠ E D F →
       circumference ABC B A C = circumference DEF E D F :=
-    fun hBC h => (Prop24 ⟨G, hG⟩ ⟨H, hH⟩ hB hC hA hE hF hD hBCA hEFD hBC h).2
+    fun hBC h => Prop24.equalMeasure (a := ⟨ABC, B, C, A⟩) (b := ⟨DEF, E, F, D⟩)
+      ⟨⟨G, hG⟩, hB, hC, hBCA⟩
+      ⟨⟨H, hH⟩, hE, hF, hEFD⟩ (seg hBC h)
   -- But the whole circle ABC is also equal to the whole circle DEF;
   have w₁ := Circumference.whole ⟨G, hG⟩ hB hC hAK
   have w₂ := Circumference.whole ⟨H, hH⟩ hE hF hDL
   -- therefore the circumference BKC which remains is equal to the circumference ELF.
   have rest : ‖B C‖ = ‖E F‖ → ∠ B A C = ∠ E D F →
       circumference ABC B K C = circumference DEF E L F :=
-    fun hBC h => CommonNotion3 (w₁.trans w₂.symm) (seg hBC h)
+    fun hBC h => CommonNotion3 (w₁.trans w₂.symm) (hBAC hBC h)
   -- Therefore etc.
   exact ⟨fun hGK hHL h => rest (base hGK.triangle.cab hHL.triangle.cab h) (atA hGK hHL h),
     fun h => rest (base' h) h⟩

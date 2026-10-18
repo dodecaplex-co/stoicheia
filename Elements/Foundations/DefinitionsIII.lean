@@ -65,9 +65,9 @@ that compare circumferences say "in equal circles", as he does, though not all o
 need it as stated. III.26 and III.27 hold for any two circles as stated: equal angles
 give equal measures whatever the radii, and their proofs keep the equal circles only
 along Euclid's route. III.28 and III.29 need equal circles, for there the measures are
-tied to straight lines in the circles. III.24 proves that the circles are equal and the
-measures equal, which is less than Euclid's equal segments: that one segment can be
-laid on the other is not stated.
+tied to straight lines in the circles. III.24 proves Euclid's equal segments: one laid
+on the other, they coincide (`Arc.Congruent`, below); its companion
+`Prop24.equalCircles` proves the circles equal and the measures equal, by the radii.
 
 `circumference` chooses one such angle (`Classical.epsilon`), as `rect` chooses one
 area. That every point `A` gives the same angle is III.21, the angles in the same

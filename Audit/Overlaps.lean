@@ -10,8 +10,9 @@ The catalogue in `docs/reports/overlaps.md` lists every case we found, and this 
 proves each "states it" or "gives it at once" row again, from the rules alone, and I.2,
 I.3, I.7 and I.23, whose rules supply their step in a longer proof. After III.6,
 `III_5_crossing` shows that III.5 needs neither of its rules when "cut" is read as
-crossing. A second section proves III.24, III.26 and III.27 without the hypotheses our
-measure of circumferences leaves idle, the catalogue's near misses of representation.
+crossing. A second section proves III.24's companion `Prop24.equalCircles`, III.26 and
+III.27 without the hypotheses our measure of circumferences leaves idle, the catalogue's
+near misses of representation.
 
 Each theorem's type is the proposition's own (`type_of% @Elements.BookIII.Prop2`), so a
 change to a statement shows up here too. At the end, `#guard_msgs` pins the axioms Lean
@@ -206,8 +207,9 @@ theorem III_5_crossing {C P E : Point} {ABC CDG : Circle} (hC₁ : OnCircle C AB
 
 Not overlaps with a rule, but with a definition: a circumference is measured by twice the
 angle standing on it (`circumference`, Definition III.9), a measure with no radius in it.
-So III.26 and III.27 hold in any two circles, and III.24's second clause follows from its
-angle hypothesis alone (the catalogue's "Near misses"). Each theorem below states the
+So III.26 and III.27 hold in any two circles, and the second clause of III.24's companion
+`Prop24.equalCircles` follows from its angle hypothesis alone (the catalogue's "Near
+misses"). Each theorem below states the
 proposition without the hypothesis, and an `example` beneath it gives back the
 proposition's own statement from it, so a change to either statement shows up here. When
 arcs get a meaning of their own (brief 0005, stage 3), these are meant to stop compiling. -/
@@ -253,11 +255,12 @@ theorem III_27_any {A B C D E F G H : Point} {ABC DEF : Circle}
 example : type_of% @Elements.BookIII.Prop27 :=
   fun _ hG hH hA hB hC hD hE hF hBAC hEDF heq => III_27_any hG hH hA hB hC hD hE hF hBAC hEDF heq
 
-/-- **III.24's second clause from its angles alone.** Segments with equal angles AEB, CFD
-have circumferences of equal measure, whatever their bases: each circumference, with the
-one on the other side of its base, which is twice the angle at E or F, makes up the whole
-circle (`Circumference.whole`). III.24's first clause, that the circles are equal, needs
-the equal bases. -/
+/-- **The second clause of III.24's companion from its angles alone.** Segments with equal
+angles AEB, CFD have circumferences of equal measure, whatever their bases: each
+circumference, with the one on the other side of its base, which is twice the angle at E or
+F, makes up the whole circle (`Circumference.whole`). The first clause of
+`Prop24.equalCircles`, that the circles are equal, needs the equal bases, and so does III.24
+itself, which concludes that the segments are congruent. -/
 theorem III_24_measure {A B C D E F : Point} {AEB CFD : Circle}
     (hAEB : ∃ O : Point, Centre O AEB) (hCFD : ∃ O : Point, Centre O CFD)
     (hA : OnCircle A AEB) (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD)
@@ -272,9 +275,9 @@ theorem III_24_measure {A B C D E F : Point} {AEB CFD : Circle}
   rw [BookIII.Circumference.eq hCFD hF hC hD hYF.symm, ← hsim] at w₂
   exact CommonNotion3 (w₁.trans w₂.symm) rfl
 
-example : type_of% @Elements.BookIII.Prop24 :=
+example : type_of% @Elements.BookIII.Prop24.equalCircles :=
   fun hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim =>
-    ⟨(BookIII.Prop24 hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
+    ⟨(BookIII.Prop24.equalCircles hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
      III_24_measure hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hsim⟩
 
 /-! ## A rule that a proposition gives back -/

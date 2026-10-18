@@ -4,7 +4,7 @@ import Elements.BookIII.Circumferences
 import Elements.Figure.Chords
 import Elements.Foundations.DefinitionsIII
 import Elements.BookIII.Placement
-import Staging.Stage3.Prop24
+import Elements.BookIII.Prop24
 import Staging.Stage3.Prop28
 
 /-!
@@ -147,7 +147,7 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
     have hPQ : ∠ a.B P a.C = ∠ b.B Q b.C := Magnitude.eq_of_add_self_eq hXY
     /- So the segments named by P and Q are similar, and on equal bases they are congruent
        [III. 24]; only the side names a segment (`Arc.Congruent.congr_side`). -/
-    exact (Staging.Prop24 hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle hBC
+    exact (Prop24 hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle hBC
       hPQ).congr_side hPK hQL
 
 end Elements.BookIII
