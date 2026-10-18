@@ -32,7 +32,7 @@ theorem Prop18 {A B C : Point} (hABC : Triangle A B C) (h : ‖A B‖ < ‖A C�
   -- I say that the angle ABC is also greater than the angle BCA.
   -- For, since AC is greater than AB, let AD be made equal to AB [I. 3], and let BD be joined.
   /- I.3 cuts off from AC, beginning at A, a straight line AD equal to AB; D lies
-     between A and C. Joining BD is Postulate 1; Lean needs only the points. -/
+     between A and C. Joining BD is Postulate 1; our proof uses only the points. -/
   obtain ⟨D, hADC, hAD_AB⟩ := Prop3 hA_B h
   have hD_AC : OnLine D AC := on_line_of_between_ends hADC hA_AC hC_AC
   have hD_C : D ≠ C := (ne_of_between (between_symm hADC)).symm

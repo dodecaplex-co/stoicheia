@@ -56,8 +56,8 @@ theorem Prop1 (A B : Point) (hAB : A ≠ B) (P : Point) :
      other's centre, and a centre lies inside its circle, so they must cross
      (System E, Intersection 5). They cross on both sides of AB, so C may
      be taken on whichever side we please: on P's side, when P is off AB
-     (System E, Intersections 8). Lean needs only the point C; the straight
-     lines CA, CB are drawn for the eye. -/
+     (System E, Intersections 8). Our proof uses only the point C; the
+     straight lines CA, CB are drawn for the eye. -/
   have hmeet := circles_meet hB_BCD (centre_inside hA_BCD) (centre_inside hB_ACE) hA_ACE
   obtain ⟨C, hC_BCD, hC_ACE, hside⟩ : ∃ C : Point, OnCircle C BCD ∧ OnCircle C ACE ∧
       (¬ Collinear A B P → SameSideOf C P A B) := by
