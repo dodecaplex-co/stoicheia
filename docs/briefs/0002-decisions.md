@@ -657,15 +657,17 @@ findings:
   `exists_centre`. Its proofs stand on Mathlib, and the README thanks those whose work
   the plane's readings use. Outside `model/`, only CI and this page change: the main
   package depends on nothing in `model/`, and its `lakefile.toml` and `lake-manifest.json`
-  are unchanged, so `lake build` at the root never sees Mathlib. The CI job is a new job,
-  `formal-model`, in [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml); its id
-  is not `model`, which is the numerical harness's. After installing elan, it checks
-  `model/lock.sha256` against the lock, restores `model/.lake/packages` and
-  `~/.cache/mathlib` from a cache keyed on `model/lake-manifest.json`, and runs
-  `lake exe cache get` and `lake build` in `model/`, stopping after 30 minutes. It is not
-  yet a required check: `REQUIRED_CHECKS` in
-  [`scripts/safe_push.py`](../../scripts/safe_push.py) and the ruleset on main still name
-  `check`, `model` and `negative`, and making `formal-model` required, as the decision
-  foresees once it builds, is the owner's call. Even so, `git safe-push --merge` refuses a
-  pull request while any of its checks fails or is still running, so a red or running
-  `formal-model` already holds a merge there.
+  are unchanged, so `lake build` at the root never sees Mathlib. Softening MODEL.md's
+  conclusions, as the decision asks, is a change of its own:
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) is unchanged here. The CI job is a
+  new job, `formal-model`, in
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml); its id is not `model`,
+  which is the numerical harness's. After installing elan, it checks `model/lock.sha256`
+  against the lock, restores `model/.lake/packages` and `~/.cache/mathlib` from a cache
+  keyed on `model/lake-manifest.json`, and runs `lake exe cache get` and `lake build` in
+  `model/`, stopping after 30 minutes. It is not yet a required check: `REQUIRED_CHECKS`
+  in [`scripts/safe_push.py`](../../scripts/safe_push.py) and the ruleset on main still
+  name `check`, `model` and `negative`, and making `formal-model` required, as the
+  decision foresees once it builds, is the owner's call. Even so, `git safe-push --merge`
+  refuses a pull request while any of its checks fails or is still running, so a red or
+  running `formal-model` already holds a merge there.
