@@ -264,6 +264,7 @@ run exactly what CI's `check` job runs, in its order:
 export PATH=$HOME/.elan/bin:$PATH
 lake build
 lake build Audit
+lake build Staging
 lake env lean Certificate/Facts.lean
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -291,6 +292,10 @@ to this list is made there too, and in the CI workflow.
 - **The model tests read the lock.** `tests/model/lock.sha256` pins
   `Certificate/axioms.lock`, so a change to an axiom fails the `model` job until the model
   is read again ([FORMALIZATION.md](FORMALIZATION.md), section 7).
+- **Staging builds; it is not proved.** `lake build Staging` checks that the statements
+  awaiting approval (section 2), each with `sorry` where its proof is due, still build
+  against the library they import. Their `sorry` warnings are expected and do not fail
+  it; nothing the certificate reads imports them.
 - **A contributor's subset.** Working on a proof, run the full `lake build` first (the
   certificate imports all of `Elements`), then `Certificate/Facts.lean`, `check_fidelity.py`
   and `check_style.py`; a stale record is expected (section 6), and the pages are the

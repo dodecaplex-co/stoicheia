@@ -396,3 +396,20 @@ findings:
   the planted breaks, and then GitHub's CI. A pre-push hook refuses any other push to main.
   Tags, releases, release notes, the GitHub description and anything sent outside the
   repository still need the owner's OK.
+
+## 18 October 2026
+
+- **Staging: statements before their proofs, built by CI.** Statements are settled before
+  proofs ([WORKFLOW](../WORKFLOW.md), section 2), and a stage's new or changed statements
+  are now written first in a library of their own, `Staging`, each with `sorry` where its
+  proof is due, then challenged and approved before any proof is assigned. A statement
+  leaves Staging when it is proved. The library is a `[[lean_lib]]` in `lakefile.toml`,
+  beside Audit and like it outside `defaultTargets`, with its root
+  [`Staging.lean`](../../Staging.lean); its files import `Elements`, and nothing imports
+  them, so nothing staged reaches a proof or the certificate. CI's `check` job builds it
+  after `lake build Audit` (`.github/workflows/ci.yml`), so that a change to main which
+  breaks a staged statement fails at once, not when the statement moves. It is a build
+  check, not a check that anything is proved: `sorry` warnings do not fail it. The step
+  joins the full sequence of [WORKFLOW](../WORKFLOW.md), section 8, and the `CHECKS` list
+  of [`scripts/safe_push.py`](../../scripts/safe_push.py), which runs that sequence. The
+  library lands empty, as a change of its own, before any statement is staged in it.
