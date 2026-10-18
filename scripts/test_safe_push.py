@@ -57,6 +57,7 @@ one commit and runs safe_push.py against that origin:
   quoted in the coordinator's words is not one, so an update keeps every word; the gates
   read the body by CommonMark's rules, so a `<!--` in code hides nothing, and a box
   counts only as a list item GitHub shows; a branch renamed before the merge is refused;
+  and a merge that happened, or may have, is never exit 1;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -1149,9 +1150,24 @@ def watch_checks(*args, **kwargs):
     if action == "watch-fail":
         raise RuntimeError("gh went away")
     return real_watch(*args, **kwargs)
+real_gh_json, real_gh_run = safe_push.gh_json, safe_push.gh_run
+def gh_json(ctx, *args):
+    # The look at GitHub after `gh pr merge`, interrupted or failing.
+    if "state,mergeCommit" in args and action == "merge-view-interrupt":
+        raise KeyboardInterrupt("a test interruption")
+    if "state,mergeCommit" in args and action == "merge-view-fail":
+        raise safe_push.Refusal("`gh pr view` failed: a test failure")
+    return real_gh_json(ctx, *args)
+def gh_run(ctx, *args):
+    r = real_gh_run(ctx, *args)
+    if action == "merge-interrupt" and args[:2] == ("pr", "merge"):
+        raise KeyboardInterrupt("a test interruption")
+    return r
 safe_push.guards = guards
 safe_push.gates = gates
 safe_push.watch_checks = watch_checks
+safe_push.gh_json = gh_json
+safe_push.gh_run = gh_run
 sys.exit(safe_push.main(sys.argv[5:]))
 """
 
@@ -1929,6 +1945,51 @@ class Merge(Edge):
         self.assertEqual(self.guard(out, "main"), "ok", out)
         self.assertEqual(self.guard(out, "branch"), "note", out)
         self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+
+    def driven_merge(self, action: str, env=None) -> subprocess.CompletedProcess:
+        """--merge 1 of the open pull request, its body completed, with DRIVER's `action`
+        playing what GitHub or a signal does after the merge is asked of gh."""
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        return subprocess.run([sys.executable, "-c", DRIVER, str(HERE), action, str(ORIGIN),
+                               BASE, "--_test-skip-checks", "--merge", "1"], cwd=WORK,
+                              env=env or clean_env(), capture_output=True, text=True)
+
+    def test_interrupted_after_gh_merged_is_merged(self):
+        # The re-review: `gh pr merge` exiting 0 is a merge, recorded before GitHub is
+        # asked about it, so an interruption while it is asked is exit 3, "merged".
+        sha = self.opened()
+        r = self.driven_merge("merge-view-interrupt")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("Interrupted: interrupted (a test interruption); merged.", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+        self.assertIn("; merged", LOG.read_text().splitlines()[-1])
+
+    def test_merge_github_cannot_be_asked_about_is_unknown(self):
+        # gh fails after merging, and GitHub cannot be asked: the merge may have happened,
+        # exit 3, never "refused" with exit 1, which says nothing merged.
+        sha = self.opened()
+        env = clean_env()
+        env["STOICHEIA_FAKE_GH_MERGE"] = "fail-after"
+        r = self.driven_merge("merge-view-fail", env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("The merge may have happened: `gh pr merge` failed, and GitHub could "
+                      "not be asked whether #1 merged", out)
+        self.assertNotIn("REFUSED", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+        self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_interrupted_while_gh_merges_is_unknown(self):
+        # An interruption once gh has been asked to merge, before it is known whether it
+        # did: the merge may have happened, exit 3.
+        sha = self.opened()
+        r = self.driven_merge("merge-interrupt")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("the merge may have happened", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+        self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
 
     def test_failed_fetch_after_the_merge_is_not_success(self):
         # Origin stops answering right after the merge: main is not checked, and the run

@@ -110,7 +110,9 @@ commit's subject and body given (GitHub's own words, with the branch name scanne
 the title scanned; a branch renamed since the merge first read it is refused, as a head
 moved is): a merge commit, never a squash or a rebase, since review records stamp the
 branch's commits.
-When gh fails, GitHub is asked whether the pull request merged before anything is said.
+When gh fails, GitHub is asked whether the pull request merged before anything is said;
+once gh is asked to merge, the run says nothing merged only when GitHub says so, and an
+interruption, or a failure GitHub cannot be asked about, is "merge state unknown".
 Afterwards the merge commit is checked to join the base and the head checked, with the
 head's tree, on main.
 
@@ -123,8 +125,9 @@ scans the tag then.
 
 Exit status: 0 when done (a pull request opened or updated with CI green, a merge, a dry
 run passed, or nothing to do); 1 when refused before any push or merge; 2 for a usage
-error; 3 when pushed but CI failed or was not followed, or merged but main is not the
-tree checked or could not be read. Standard library, git and gh; Python 3.11 or later.
+error; 3 when pushed but CI failed or was not followed, merged but main is not the tree
+checked or could not be read, or when the merge may have happened (its state unknown).
+Standard library, git and gh; Python 3.11 or later.
 """
 
 from __future__ import annotations
@@ -2802,24 +2805,40 @@ def revert_advice(ctx: Context, kind: str | None = None) -> str:
         f"    git safe-push --branch {branch} --label {kind or '<kind>'}"])
 
 
-def merge(ctx: Context, number: int, rep: Report, view: dict) -> str | None:
-    """`gh pr merge`: a merge commit whose message is exactly what was scanned, GitHub's
-    own subject for it, of the branch name the gates read (`view`, as gates returns it),
-    and the title they read. A non-zero exit is believed only
-    when GitHub says the pull request is not merged: gh can fail after the merge (in
-    deleting the branch, say). Returns the merge commit GitHub reports, if it reports
-    one."""
-    rep.heading("4. Merge")
+class NotMerged(Refusal):
+    """GitHub says the pull request is not merged, after `gh pr merge` failed: nothing was
+    merged, for certain."""
+
+
+def main_unmoved(ctx: Context) -> None:
+    """The last look at main before the merge: --match-head-commit pins the head, not the
+    base, so origin/main must still be the base checked."""
     now = remote_refs(ctx.repo, "refs/heads/main").get("refs/heads/main")
     if now != ctx.base:
         raise Refusal(f"origin/main moved from {ctx.base[:12]} to {str(now)[:12]}: run "
                       "--merge again")
+
+
+def merge(ctx: Context, number: int, view: dict) -> subprocess.CompletedProcess:
+    """`gh pr merge`: a merge commit whose message is exactly what was scanned, GitHub's
+    own subject for it, of the branch name the gates read (`view`, as gates returns it),
+    and the title they read. gh's result, and nothing done after it returns, so that the
+    caller records the outcome before GitHub is asked about it (as push_branch does the
+    push)."""
     owner = (ctx.github or "").split("/")[0]
-    t = time.time()
-    r = gh_run(ctx, "pr", "merge", str(number), "--merge", "--delete-branch",
-               "--match-head-commit", ctx.sha,
-               "--subject", f"Merge pull request #{number} from {owner}/"
-               f"{view.get('headRefName')}", "--body", view.get("title") or "")
+    return gh_run(ctx, "pr", "merge", str(number), "--merge", "--delete-branch",
+                  "--match-head-commit", ctx.sha,
+                  "--subject", f"Merge pull request #{number} from {owner}/"
+                  f"{view.get('headRefName')}", "--body", view.get("title") or "")
+
+
+def merge_outcome(ctx: Context, number: int, rep: Report, r: subprocess.CompletedProcess,
+                  started: float) -> str | None:
+    """What came of `gh pr merge` (its result `r`), by GitHub's word. gh's exit 0 is a
+    merge. A non-zero exit is believed only when GitHub says the pull request is not
+    merged (NotMerged), since gh can fail after the merge (in deleting the branch, say);
+    when GitHub cannot be asked then, the refusal says so, and the merge may have
+    happened. Returns the merge commit GitHub reports, if it reports one."""
     said = (r.stdout + r.stderr).strip()
     try:
         view = gh_json(ctx, "pr", "view", str(number), "--json", "state,mergeCommit") or {}
@@ -2827,20 +2846,20 @@ def merge(ctx: Context, number: int, rep: Report, view: dict) -> str | None:
         if r.returncode == 0:
             view = {"state": "MERGED"}
         else:
-            rep.add("4", "gh pr merge", "FAIL", said, time.time() - t)
+            rep.add("4", "gh pr merge", "FAIL", said, time.time() - started)
             raise Refusal(f"`gh pr merge` failed, and GitHub could not be asked whether #{number} "
                           f"merged ({e}): look with `gh pr view {number}` before anything else")
     merged = view.get("state") == "MERGED"
     if r.returncode == 0:
         rep.add("4", "gh pr merge", "ok", f"#{number} merged with a merge commit",
-                time.time() - t)
+                time.time() - started)
     elif merged:
         rep.add("4", "gh pr merge", "note", f"gh exited {r.returncode}, but GitHub says #{number} "
-                f"is merged: {(said.splitlines() or [''])[0]}", time.time() - t)
+                f"is merged: {(said.splitlines() or [''])[0]}", time.time() - started)
     else:
-        rep.add("4", "gh pr merge", "FAIL", said, time.time() - t)
-        raise Refusal(f"`gh pr merge` refused; nothing was merged (#{number} is "
-                      f"{view.get('state')})")
+        rep.add("4", "gh pr merge", "FAIL", said, time.time() - started)
+        raise NotMerged(f"`gh pr merge` refused; nothing was merged (#{number} is "
+                        f"{view.get('state')})")
     return (view.get("mergeCommit") or {}).get("oid") if merged else None
 
 
@@ -3001,7 +3020,9 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
     rep = Report()
     sha = base = ""
     result, code = "refused", 1
-    merged = False
+    # "asked" once gh is asked to merge, "merged" once it is known to have: from "asked"
+    # on, the run says nothing merged only when GitHub says so (NotMerged).
+    merging = ""
     try:
         ctx, view = merge_preconditions(repo, number, test_mode, rep)
         sha, base = ctx.sha, ctx.base
@@ -3054,14 +3075,19 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                         "its pre-flight summary and the parts safe_push wrote, of this head")
         if rep.failed():
             raise Refusal("the pull request's body could not be brought up to date")
+        rep.heading("4. Merge")
         if dry_run:
-            rep.heading("4. Merge")
             rep.add("4", "gh pr merge", "skip", f"dry run: would merge #{number} "
                     f"({ctx.sha[:12]}) with a merge commit, and delete {ctx.branch}")
             result, code = "passed every gate (dry run, not merged)", 0
         else:
-            oid = merge(ctx, number, rep, view)
-            merged = True
+            main_unmoved(ctx)
+            merging, started = "asked", time.time()
+            r = merge(ctx, number, view)
+            if r.returncode == 0:
+                merging = "merged"      # recorded before GitHub is asked about it
+            oid = merge_outcome(ctx, number, rep, r, started)
+            merging = "merged"
             main_sha = verify_merge(ctx, rep, oid)
             code = 0 if not rep.failed() else 3
             if main_sha is None:
@@ -3074,13 +3100,23 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                     print("\nMerged, but main is not what was checked.\n"
                           + revert_advice(ctx._replace(sha=main_sha), kind))
     except Refusal as e:
-        result = f"refused ({e})" if not merged else f"merged, then {e}"
-        code = 1 if not merged else 3
-        print(f"\nREFUSED: {e}")
+        if merging == "asked" and not isinstance(e, NotMerged):
+            result, code = f"merge state unknown ({e})", 3
+            print(f"\nThe merge may have happened: {e}")
+        else:
+            done = merging == "merged"
+            result, code = (f"merged, then {e}", 3) if done else (f"refused ({e})", 1)
+            print(f"\nREFUSED: {e}")
     except KeyboardInterrupt as e:
-        result = f"interrupted ({e or 'Ctrl-C'})" + ("; merged" if merged else "")
-        code = 3 if merged else 1
-        print(f"\nInterrupted: {result}.")
+        if merging == "asked":
+            result, code = f"merge state unknown (interrupted: {e or 'Ctrl-C'})", 3
+            print(f"\nInterrupted once `gh pr merge` was run: the merge may have happened. "
+                  f"Look with `gh pr view {number}` before anything else.")
+        else:
+            done = merging == "merged"
+            result = f"interrupted ({e or 'Ctrl-C'})" + ("; merged" if done else "")
+            code = 3 if done else 1
+            print(f"\nInterrupted: {result}.")
     summary(rep, mode, sha, base, result, "")
     return code
 
