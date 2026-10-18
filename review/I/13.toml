@@ -8,12 +8,17 @@ fingerprint = "sha256:75b80d518e57f424"
 kind = "euclid"
 
 [[passage]]
+at = "I say that the angles CBA, ABD are either two right angles"
+kind = "given"
+note = "The statement gives the goal, in Euclid's second form, as the table above says."
+
+[[passage]]
 at = "Then, since the angle CBE is equal to the two angles CBA, ABE"
-kind = "grouped"
+kind = "case"
 note = "Euclid's figure has AB leaning towards C; leaning towards D is his figure with C and D exchanged (`Prop13.cases`), so one argument serves for both."
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "a7b8d90"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:aa3108c6a122b530"

@@ -125,23 +125,20 @@ own, the figure letters as three:
 [#9]: https://github.com/jackChallis/stoicheia/pull/9
 [#10]: https://github.com/jackChallis/stoicheia/pull/10
 [#11]: https://github.com/jackChallis/stoicheia/pull/11
+[#13]: https://github.com/jackChallis/stoicheia/issues/13
 
 ### Open items
 
 What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), section 10,
 "Landing work: pull requests".
 
-- **The owner's call on the scope of the I.45 and II.14 records:** `restricted`
-  (recommended by brief 0006: the figure divided by the straight lines from one of its
-  corners) or `full`, with the departure from FORMALIZATION section 2 recorded.
+- **The scope of the I.45 and II.14 records** is decided: `full`, by the checked fan and
+  any supplied division (the owner, 18 October; brief 0006, decision 1 as revised, [#13]).
 - **Stage 2's proofs** follow brief 0006's order of proof work: its ground wave first (the
   words into the foundations, with the lock and a decisions entry;
   `Elements/Figure/Sums.lean`; the certificate and render support for companions; the
   `Placement` policy check), then the companions of I.40, I.45, II.1 and II.14. Placement
   belongs to stage 3, which works alongside on its own files.
-- **The rows for I.45 and II.14 in [book-I.md](briefs/book-I.md) and
-  [book-II.md](briefs/book-II.md)** still describe the withdrawn dissection, and change
-  with stage 2's restatement ([#7]).
 - **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull

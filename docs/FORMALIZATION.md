@@ -295,8 +295,10 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   and the module of every shared step cited (`Elements.BookI.Helpers`,
   `Elements.BookI.HelpersParallels`). A proof cites an earlier book as `BookI.PropN`, `BookII.PropN`, and does not open
   it: in a Book III file a bare `Prop4` means III.4.
-- **Staging,** `Staging/`, holds the statements that a stage of brief 0005 adds or
-  changes, each with `sorry`, until it is proved ([WORKFLOW.md](WORKFLOW.md), section 2).
+- **Staging,** `Staging/`, holds the statements that a stage of brief 0005, or of a later
+  brief, adds or changes, each with `sorry` where its proof is due, until it moves to
+  `Elements/`, and only the proofs that [WORKFLOW.md](WORKFLOW.md), section 2, "What proofs
+  `Staging/` may hold", allows there.
   Its files import the modules of `Elements` they need. `lake build Staging` builds every
   file under `Staging/`, whether or not the root `Staging.lean` imports it, so a staged
   file need not be added to the root; nothing outside `Staging/` imports them, so nothing
@@ -369,6 +371,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | Evidence | What it establishes | What it leaves to review |
 |---|---|---|
 | Lean accepts the theorem | The formal derivation is accepted by the kernel, under its dependencies. | Whether the statement and its hypotheses express the intended claim. |
+| The kernel replays pass (`scripts/check_kernel.py`) | Every declaration of the compiled library, Lean's own included, is accepted again: by Lean's kernel, replayed from nothing (`leanchecker --fresh`), so no declaration reached the compiled files without the kernel's check; and by nanoda, a checker written separately, which admits only the locked axioms and Lean's three, by name. | Only nanoda stands apart from a fault in the code of Lean's kernel: leanchecker runs the same kernel as `lake build`. The axioms nanoda admits are matched by name, so whether each states what the lock records is the lock check's question. Both check Lean's logic, so a fault in the logic itself would pass them both; and they establish nothing about meaning. |
 | No `sorryAx` in the dependency closure | No admitted proof hole remains in that closure. | Whether an assumption or a definition already contains the result (an overlap). |
 | The fidelity check passes | The `--` lines and the enunciation match Heath's text, under the checker's normalization. | Whether the Lean beneath them carries those sentences and follows their argument. |
 | The policy and lock checks pass | Superposition, the Postulate 5 boundary, citation order, axiom placement, forbidden commands and the axioms' exact statements are as recorded. | Whether helpers fill gaps faithfully, and whether a policy captures what it is meant to. |
