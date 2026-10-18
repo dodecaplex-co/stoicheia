@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop08
+import Elements.BookI.Prop11
 import Elements.BookI.Prop12
 import Elements.BookI.Prop13
 import Elements.BookI.Prop17
@@ -46,20 +47,36 @@ containment of their regions near that vertex. There is no new magnitude, and no
 Astra asked for checks on the interpretation before anything is called full, and they are
 proved here in that order: (a) for rectilineal angles with a common arm the comparison is
 the ordinary order of angles, and it is a strict order; (b) it does not depend on the points
-that name the arms, equal angles placed on one side of one arm give one region, and the
-angle of contact is the same, near its vertex, whatever straight line into the circle names
-its branch; (c) the horn-like angle of III.16, the angle of the semicircle and the angle of
-the less segment of III.31 are not empty: each holds whole small circles as near its vertex
-as we please, though no straight ray from the vertex runs within the horn. Then (d) the
-comparisons of III.16 and III.31 themselves, for every acute or right rectilineal angle
-placed at the vertex, and Heath's "remaining angle" as what is left of the right angle.
-Last, placement at another vertex: the angle of a segment exceeds exactly the angles less
-than the angle its straight line makes with the tangent, so in equal circles, on equal
-straight lines, it compares alike with equal rectilineal angles (I.8); the angle of the
-semicircle and the angle of contact compare alike in any two circles.
+that name the arms, and equal angles placed on one side of one arm give one region; in
+III.16's figure, where AE is at right angles to the diameter AB, the angle of contact is the
+same near its vertex whatever straight line from A into the circle names its branch (for a
+touching straight line in general this is not proved here); (c) the horn-like angle of
+III.16, the angle of the semicircle and the angle of the less segment of III.31 are not
+empty: each holds whole small circles as near its vertex as we please, though no straight
+ray from the vertex runs within the horn. Then (d) the comparisons of III.16 and III.31
+themselves, for every acute or right rectilineal angle placed at the vertex, and Heath's
+"remaining angle" as what is left of the right angle. `MixedAngle.WellFormed` says when the
+named points give the angle Euclid draws, and the four angles compared are shown to have it.
 
-Staging holds these proofs under WORKFLOW, section 2, as amended for prototypes: they test
-a representation, and nothing in `Elements/` uses them. The account is
+Last, placement at another vertex. The angle of a segment exceeds a rectilineal angle CAR,
+placed along its straight line AC on the segment's side, exactly when the angle CAR is less
+than the angle CAT, where AT is drawn at right angles to the radius at A on that side
+(`Segment.exceeds_iff`, `Segment.fallsShort_iff`). So take two equal circles, a straight line
+in each, the two equal and neither through its centre, and a segment on each, the two of one
+kind (both greater, or both less); place equal rectilineal angles along the two straight
+lines, each on its segment's side: the angles of the segments compare alike with them
+(`Segment.congruent`, by I.8). The segments must be of one kind: the greater segment's angle
+exceeds a right angle and the less segment's falls short of it (III.31). In any two circles,
+whatever their radii, the angles of the semicircles compare alike with equal rectilineal
+angles placed along the diameters on their sides (`Prop16.semicircle_congruent`), and the
+angles of contact with rectilineal angles placed along the touching straight lines on
+corresponding sides (`Prop16.horn_congruent`). This is placement of the rectilineal angle; a
+mixed angle itself is never moved.
+
+These proofs test a representation before it is adopted, as WORKFLOW, section 2, asks of a
+new foundation ("Prototype each new foundation"), and nothing in `Elements/` uses them. They
+are in `Staging/` so that `lake build Staging` checks them; whether they stay there is the
+coordinator's decision under that section. The account is
 `docs/reports/mixed-angles-prototype.md`.
 -/
 
@@ -93,8 +110,10 @@ Euclid uses two kinds, one for each side of the circumference.
 * `ofContact A E α B`: **the angle of contact**, contained by a straight line AE that touches
   `α` at A and the circumference: III.16's "remaining angle", the horn-like angle of Proclus.
   Its straight arm is the ray from A through E; its branch is the one on E's side of a
-  straight line AB that passes within the circle; its side is without the circle. Which such
-  straight line names the branch does not matter near A (`Prop16.horn_locallyEqual`).
+  straight line AB that passes within the circle; its side is without the circle. In
+  III.16's figure, where AE is at right angles to a diameter, which such straight line names
+  the branch does not matter near A (`Prop16.horn_locallyEqual`); for a touching straight
+  line in general that is not yet proved.
 
 Nothing about the kinds is assumed when they are formed. `MixedAngle.WellFormed` says what
 Euclid's figure asks, and the angles that III.16 and III.31 compare are shown to have it
@@ -173,15 +192,21 @@ namespace MixedAngle
 /-- **The mixed angle `m` is greater than the rectilineal angle BXC**, where X is the vertex
 of `m`: BXC is a true angle (B, X, C not on one straight line), and, placed at that vertex,
 it is locally less than `m`. The vertex is the mixed angle's own, so the comparison cannot be
-made at another point; and a straight angle, whose region is empty, cannot be exceeded. That
-`m` itself is something follows from the excess (`Exceeds.nearVertexOpen`). -/
+made at another point. The first condition does work here: the region of a straight angle is
+empty, so without it every mixed angle that is something would exceed a straight angle. That
+`m` itself is something follows from the excess (`Exceeds.nearVertexOpen`). As III.16 and
+III.31 compare, B is on the straight arm of `m` and C on its region's side; the definition
+does not ask for that, and `FallsShort` is used the same way. -/
 def Exceeds (m : MixedAngle) (B C : Point) : Prop :=
   ¬ Collinear B m.vertex C ∧ LocallyLess m.vertex (WithinAngle B m.vertex C) m.region
 
 /-- **The mixed angle `m` is less than the rectilineal angle BXC**, where X is the vertex of
 `m`: BXC is a true angle, `m` comes as near its vertex as we please, and `m` is locally less
 than BXC placed at its vertex. Without the second condition an empty region would fall short
-of every angle; without the first, every mixed angle would fall short of nothing. -/
+of every true angle. The first condition follows from the third, for the region of a
+straight angle is empty and holds no circle of excess (`not_collinear_of_locallyLess`); it
+is kept so that `Exceeds` and `FallsShort` both say that BXC is a true angle, and a proof
+that has `FallsShort` has that fact to hand. -/
 def FallsShort (m : MixedAngle) (B C : Point) : Prop :=
   ¬ Collinear B m.vertex C ∧ NearVertexOpen m.vertex m.region ∧
     LocallyLess m.vertex m.region (WithinAngle B m.vertex C)
@@ -191,7 +216,18 @@ end MixedAngle
 /-! ## Small facts the checks need
 
 These are Book Zero's kind of fact, proved from the foundations and Book Zero, with I.12,
-I.17, I.19 and I.20 for the facts about circles about a point. -/
+I.17, I.19 and I.20 for the facts about circles about a point.
+
+Two of them overlap statements that brief 0006 stages. `foot_nearest` takes the foot of the
+perpendicular as I.12 gives it: a point N of BC such that every other point X of BC makes
+the angle ANX right. For A off BC that is the staged `Foot A B C N`
+(`Staging/Stage4/Foot.lean`). It is not stated through `Foot`, which is not yet approved and
+whose existence and uniqueness are still stubs; on adoption it can take `Foot` as its
+hypothesis and go with `Foot.exists` and `Foot.unique` to `Elements/BookIII/Squares.lean`.
+`len_lt_of_add_lt` is I.20 with its degenerate case, which `Staging/Stage3/Degenerate.lean`
+states as an equality, `Prop20.collinear_iff`, still a stub. Derived from that, it would rest
+on the stub, so it is proved here from `between_cases`; on adoption it goes beside
+`Prop20.collinear_iff` in `Elements/BookI/HelpersTriangles.lean`, which brief 0006 adds. -/
 
 variable {A B C D E F P Q : Point} {α γ : Circle}
 
@@ -697,9 +733,9 @@ theorem WithinAngle.locallyLess_of_lt (hDC : SameSideOf D C A B) (h : ∠ B A D 
   exact (WithinAngle.nearVertexOpen hD.2.triangle.cab).mono fun P hP =>
     ⟨WithinAngle.mono_right hD hP, fun h' => hD.not_sameSideOf (h'.2.symm.trans hP.1)⟩
 
-/-- **Check (a), less.** For two rectilineal angles BAD, BAC with the common arm AB and D, C
-on the same side of it, the angle BAD is locally less than the angle BAC exactly when it is
-less as an angle. -/
+/-- **Locally less is less.** For two rectilineal angles BAD, BAC with the common arm AB and
+D, C on the same side of it, the angle BAD is locally less than the angle BAC exactly when it
+is less as an angle. -/
 theorem WithinAngle.locallyLess_iff (hDC : SameSideOf D C A B) :
     LocallyLess A (WithinAngle B A D) (WithinAngle B A C) ↔ ∠ B A D < ∠ B A C := by
   refine ⟨fun hL => ?_, WithinAngle.locallyLess_of_lt hDC⟩
@@ -711,8 +747,9 @@ theorem WithinAngle.locallyLess_iff (hDC : SameSideOf D C A B) :
     exact hD ((WithinAngle.eq_of_angle_eq hDC h).2 hC)
   · exact (not_locallyWithin hL.1 (WithinAngle.locallyLess_of_lt hDC.symm h).2.nearVertex).elim
 
-/-- **Check (a), equal.** For two rectilineal angles BAD, BAC with the common arm AB and D, C
-on the same side of it, the angles are locally equal exactly when they are equal as angles. -/
+/-- **Locally equal is equal.** For two rectilineal angles BAD, BAC with the common arm AB
+and D, C on the same side of it, the angles are locally equal exactly when they are equal as
+angles. -/
 theorem WithinAngle.locallyEqual_iff (hDC : SameSideOf D C A B) :
     LocallyEqual A (WithinAngle B A D) (WithinAngle B A C) ↔ ∠ B A D = ∠ B A C := by
   constructor
@@ -727,9 +764,8 @@ theorem WithinAngle.locallyEqual_iff (hDC : SameSideOf D C A B) :
     exact ⟨⟨γ, hγ, fun P _ hP => (WithinAngle.eq_of_angle_eq (P := P) hDC h).1 hP⟩,
       ⟨γ, hγ, fun P _ hP => (WithinAngle.eq_of_angle_eq (P := P) hDC h).2 hP⟩⟩
 
-/-- **Check (a), edges add nothing.** A true angle is not locally less than itself with one
-arm added: the added points lie on a straight line, which holds no circle
-(`Surrounds.not_line`). -/
+/-- **An arm adds nothing.** A true angle is not locally less than itself with one arm added:
+the added points lie on a straight line, which holds no circle (`Surrounds.not_line`). -/
 theorem not_locallyLess_arm (h : Triangle B A C) :
     ¬ LocallyLess A (WithinAngle B A C) (fun P => WithinAngle B A C P ∨ OnRay P A C) := by
   intro hL
@@ -738,7 +774,7 @@ theorem not_locallyLess_arm (h : Triangle B A C) :
   exact Surrounds.not_line h.ne₂₃ (P := P)
     ⟨δ, hδ, fun Q hQ => ((hT Q hQ).1.resolve_left (hT Q hQ).2).2.2.1⟩
 
-/-- **Check (a), slits add nothing.** An angle with the ray AD taken out, for D within it, is
+/-- **A slit takes nothing away.** An angle with the ray AD taken out, for D within it, is
 not locally less than the angle: what is taken out lies on a straight line. -/
 theorem not_locallyLess_slit (hD : WithinAngle B A C D) :
     ¬ LocallyLess A (fun P => WithinAngle B A C P ∧ ¬ OnRay P A D) (WithinAngle B A C) := by
@@ -844,6 +880,17 @@ theorem not_fallsShort_straight {m : MixedAngle} (h : Between B m.vertex C) :
   obtain ⟨L, hB_L, hC_L⟩ := Postulate1 B C (ne_of_between_ends h)
   exact hm.1 ⟨L, hB_L, on_line_of_between_ends h hB_L hC_L, hC_L⟩
 
+/-- **What a mixed angle is locally less than is a true angle.** If `m` is locally less than
+the angle BXC placed at its vertex X, then B, X and C are not on one straight line: the
+excess holds points within the angle BXC, and a straight angle has none. So the first
+condition of `FallsShort` follows from its third. -/
+theorem not_collinear_of_locallyLess {m : MixedAngle}
+    (h : LocallyLess m.vertex m.region (WithinAngle B m.vertex C)) :
+    ¬ Collinear B m.vertex C := by
+  obtain ⟨γ, hγ⟩ := exists_centre m.vertex
+  obtain ⟨P, -, hP, -⟩ := h.2.nearVertex γ hγ
+  exact hP.1.symm.triangle.bac
+
 end MixedAngle
 
 /-! ## Check (b): the naming points do not matter -/
@@ -856,10 +903,10 @@ namespace MixedAngle
 @[simp] theorem region_ofContact :
     (ofContact A E α B).region P ↔ WithinAngle E A B P ∧ OutsideCircle P α := Iff.rfl
 
-/-- **Check (b), the angle of a segment.** Naming the straight arm by another point B′ of the
-straight line AB, or the side by another point S′ on S's side, gives the same region. (A
-comparison still reads the ray from A through the naming point, so B′ on the ray AB names
-the same angle; see `MixedAngle`.) -/
+/-- **The naming points of the angle of a segment do not matter.** Naming the straight arm
+by another point B′ of the straight line AB, or the side by another point S′ on S's side,
+gives the same region. (A comparison still reads the ray from A through the naming point, so
+B′ on the ray AB names the same angle; see `MixedAngle`.) -/
 theorem ofSegment_congr_collinear {B' S S' : Point} (hAB : A ≠ B) (hB'A : B' ≠ A)
     (hB : Collinear A B B') (hS : SameSideOf S' S A B) :
     (ofSegment A B' α S').region P ↔ (ofSegment A B α S).region P := by
@@ -872,9 +919,10 @@ theorem ofSegment_congr {B' S S' : Point} (hB : OnRay B' A B) (hS : SameSideOf S
     (ofSegment A B' α S').region P ↔ (ofSegment A B α S).region P :=
   ofSegment_congr_collinear hB.1 hB.2.1 hB.2.2.1 hS
 
-/-- **Check (b), the angle of contact.** Naming the straight arm by another point E′ of the
-ray AE, or the branch by another point B′ of the ray AB, gives the same region. Another
-straight line into the circle gives the same angle near A (`Prop16.horn_locallyEqual`). -/
+/-- **The naming points of the angle of contact do not matter.** Naming the straight arm by
+another point E′ of the ray AE, or the branch by another point B′ of the ray AB, gives the
+same region. In III.16's figure, another straight line from A into the circle gives the same
+angle near A (`Prop16.horn_locallyEqual`). -/
 theorem ofContact_congr {E' B' : Point} (hE : OnRay E' A E) (hB : OnRay B' A B) :
     (ofContact A E' α B').region P ↔ (ofContact A E α B).region P := by
   simp only [region_ofContact]
@@ -882,10 +930,10 @@ theorem ofContact_congr {E' B' : Point} (hE : OnRay E' A E) (hB : OnRay B' A B) 
 
 end MixedAngle
 
-/-- **Check (b), placement.** Compared with any region `S`, a rectilineal angle placed along
-AB depends only on its size: if D and C are on the same side of AB and the angles BAD, BAC
-are equal, BAD is locally less than `S` exactly when BAC is, and `S` locally less than BAD
-exactly when it is less than BAC. -/
+/-- **Equal angles placed alike compare alike.** Compared with any region `S`, a rectilineal
+angle placed along AB depends only on its size: if D and C are on the same side of AB and
+the angles BAD, BAC are equal, BAD is locally less than `S` exactly when BAC is, and `S`
+locally less than BAD exactly when it is less than BAC. -/
 theorem WithinAngle.locallyLess_placement {S : Point → Prop} (hDC : SameSideOf D C A B)
     (h : ∠ B A D = ∠ B A C) :
     (LocallyLess A (WithinAngle B A D) S ↔ LocallyLess A (WithinAngle B A C) S) ∧
@@ -909,7 +957,7 @@ theorem near_inside_of_angle (hA : InsideCircle A α ∨ OnCircle A α)
     LocallyWithin A (fun P => WithinAngle B A C P ∨ OnRay P A B ∨ OnRay P A C)
       (fun P => InsideCircle P α) := by
   have hBC : B ≠ C := hBAC.ne₁₃
-  have hA_BC : ¬ Collinear B C A := fun ⟨L, h1, h2, h3⟩ => hBAC ⟨L, h1, h3, h2⟩
+  have hA_BC : ¬ Collinear B C A := fun ⟨L, hB_L, hC_L, hA_L⟩ => hBAC ⟨L, hB_L, hA_L, hC_L⟩
   obtain ⟨N, hN, hright⟩ := BookI.Prop12 hBC hA_BC
   obtain ⟨L, hB_L, hC_L⟩ := Postulate1 B C hBC
   have hA_L : ¬ OnLine A L := fun h => hA_BC ⟨L, hB_L, hC_L, h⟩
@@ -1169,6 +1217,45 @@ theorem tangent_parts {O T : Point} (hO : Centre O α) (hA : OnCircle A α)
   have hABT : ¬ Collinear A B T := ((sameSideOf_congr_line hBray).2 (sameSideOf_self hAOT)).triangle
   exact BookIII.Prop16 hO hA hAOB hABT hBAT
 
+/-- **The straight line at right angles to the radius, on the segment's side.** Let AC be a
+straight line in a circle about O, not through the centre, and S a point off AC. A straight
+line AT can be drawn at right angles to OA, with T on S's side of AC: the perpendicular at A
+[I. 11], produced beyond A if it falls on the other side (System E, Diagram-angle 3). It is
+not AC itself, for every point of it but A is without the circle (`tangent_parts`), and C is
+on it. -/
+theorem exists_tangent {C O S : Point} (hO : Centre O α) (hA : OnCircle A α)
+    (hC : OnCircle C α) (hACO : ¬ Collinear A C O) (hS : ¬ Collinear A C S) :
+    ∃ T : Point, ¬ Collinear A O T ∧ ∠ O A T = ∟ ∧ SameSideOf T S A C := by
+  have hACO' : Triangle A C O := hACO
+  have hACS : Triangle A C S := hS
+  have hAO : A ≠ O := hACO'.ne₁₃
+  have hAC : A ≠ C := hACO'.ne₁₂
+  obtain ⟨N, hA_N, hO_N⟩ := Postulate1 A O hAO
+  obtain ⟨F, hFC, hright⟩ := BookI.Prop11 hAO ⟨N, hA_N, hO_N, hA_N⟩ hACO'.acb
+  have hOAF : ∠ O A F = ∟ := hright O ⟨N, hA_N, hO_N, hO_N⟩ hAO.symm
+  have hAOF : Triangle A O F := hFC.triangle
+  have hAF : A ≠ F := hAOF.ne₁₃
+  /- F is off AC: were it on AC, C would be a point of AF other than A, without the circle. -/
+  have hACF : Triangle A C F := by
+    rintro ⟨L, hA_L, hC_L, hF_L⟩
+    exact (((tangent_parts hO hA hAOF hOAF).1 C ⟨L, hA_L, hF_L, hC_L⟩ hAC.symm).2) hC
+  by_cases hFS : SameSideOf F S A C
+  · exact ⟨F, hAOF, hOAF, hFS⟩
+  /- Otherwise FA is produced beyond A to T, on S's side, and the angle OAT is right too. -/
+  obtain ⟨T, hFAT⟩ := produce hAF.symm
+  have hFT : OppositeSidesOf F T A C := (OppositeSidesOf.of_between hACF.bac hFAT).swap
+  have hFS' : OppositeSidesOf F S A C :=
+    oppositeSidesOf_of_not_sameSideOf hACF (sameSideOf_self hACS) hFS
+  have hTS : SameSideOf T S A C := (OppositeSidesOf.sameSideOf hFS' hFT).symm
+  obtain ⟨M, hF_M, hA_M⟩ := Postulate1 F A hAF.symm
+  have hT_M : OnLine T M := on_line_of_between hFAT hF_M hA_M
+  have hO_M : ¬ OnLine O M := fun h => hAOF ⟨M, hA_M, h, hF_M⟩
+  have hFAO : ∠ F A O = ∟ := by rw [angle_symm hAF.symm hAO.symm]; exact hOAF
+  have hOAT : ∠ O A T = ∟ := (adjacent_eq_of_right hF_M hT_M hFAT hO_M hFAO).symm.trans hFAO
+  exact ⟨T, fun ⟨L, hA_L, hO_L, hT_L⟩ =>
+    hO_M (line_unique (ne_of_between (between_symm hFAT)).symm hA_L hT_L hA_M hT_M ▸ hO_L),
+    hOAT, hTS⟩
+
 /-- **The angle with the tangent, the centre on the segment's side.** If the centre O is on T's
 side of AC, O is within the angle CAT (the circle is on O's side of AT), and the angle CAT is
 the angle OAC and a right angle. -/
@@ -1205,8 +1292,8 @@ theorem angle_tangent_of_oppositeSidesOf {C O T : Point} (hO : Centre O α) (hA 
     hAT_out P ⟨L, hA_L, hT_L, onLine_of_collinear hAT₁ hP hA_L hT₁_L⟩ hPA
   have hTAO : ∠ T A O = ∟ := by rw [angle_symm hAT.symm hOA]; exact hOAT
   have hOAT₁ : ∠ O A T₁ = ∟ :=
-    (adjacent_eq_of_right hT_L hT₁_L hTAT₁ (hoffL O (Or.inl (centre_inside hO)) hOA) hTAO).symm.trans
-      hTAO
+    (adjacent_eq_of_right hT_L hT₁_L hTAT₁ (hoffL O (Or.inl (centre_inside hO)) hOA)
+      hTAO).symm.trans hTAO
   have h₁ := angle_tangent_of_sameSideOf hO hA hC hAC hAT₁_out hOAT₁ hOT₁
   have hC_L : ¬ OnLine C L := hoffL C (Or.inr hC) hAC.symm
   have h₁₃ := BookI.Prop13 hTAT₁ (fun ⟨M, hT_M, hT₁_M, hC_M⟩ =>
@@ -1215,31 +1302,34 @@ theorem angle_tangent_of_oppositeSidesOf {C O T : Point} (hO : Centre O α) (hA 
   exact h₁₃
 
 /-- **Placement at another vertex, for the angle of a segment.** Take two circles `α`, `α'`
-equal to one another, about O and O′, with straight lines AC and A′C′ in them, equal, and not
-through the centres; at A and A′ let AT and A′T′ be drawn at right angles to the radii, on
-the sides S and S′ of the segments, and let the segments be of one kind (the centre on the
-segment's side in both, or in neither). Then a rectilineal angle CAR placed along AC on S's
-side and an equal angle C′A′R′ placed along A′C′ on S′'s side are compared alike: the angle
-of the one segment exceeds, or falls short of, the one exactly when the angle of the other
-segment exceeds, or falls short of, the other.
+equal to one another, about O and O′, with straight lines AC and A′C′ in them, equal to one
+another, and neither through its centre. Let the segment on S's side of AC and the segment on
+S′'s side of A′C′ be of one kind: the centre on the segment's side in both, or in neither.
+Then a rectilineal angle CAR placed along AC on S's side and an equal angle C′A′R′ placed
+along A′C′ on S′'s side are compared alike: the angle of the one segment exceeds, or falls
+short of, the one exactly when the angle of the other segment exceeds, or falls short of, the
+other. The segments must be of one kind: on one straight line in one circle, the angle of
+the greater segment exceeds a right angle, and the angle of the less segment falls short of
+it (III.31).
 
-By `exceeds_iff` and `fallsShort_iff`, each comparison is decided by whether the angle CAR is
-less than the angle CAT. The triangles OAC, O′A′C′ have their sides equal, so the angles OAC,
-O′A′C′ are equal [I. 8], and so are the angles CAT, C′A′T′
+Let AT, A′T′ be drawn at right angles to the radii, on the segments' sides
+(`exists_tangent`). By `exceeds_iff` and `fallsShort_iff`, each comparison is decided by
+whether the angle CAR is less than the angle CAT. The triangles OAC, O′A′C′ have their sides
+equal, so the angles OAC, O′A′C′ are equal [I. 8], and so are the angles CAT, C′A′T′
 (`angle_tangent_of_sameSideOf`, `angle_tangent_of_oppositeSidesOf`, C.N. 3). No figure is
 moved but the triangles of I.8. -/
-theorem congruent {C O R S T A' C' O' R' S' T' : Point} {α' : Circle}
+theorem congruent {C O R S A' C' O' R' S' : Point} {α' : Circle}
     (hO : Centre O α) (hA : OnCircle A α) (hC : OnCircle C α) (hACO : ¬ Collinear A C O)
-    (hT : ¬ Collinear A O T) (hOAT : ∠ O A T = ∟) (hTS : SameSideOf T S A C)
     (hO' : Centre O' α') (hA' : OnCircle A' α') (hC' : OnCircle C' α')
-    (hA'C'O' : ¬ Collinear A' C' O') (hT' : ¬ Collinear A' O' T') (hO'A'T' : ∠ O' A' T' = ∟)
-    (hT'S' : SameSideOf T' S' A' C') (hαα' : EqualCircles α α') (hAC : ‖A C‖ = ‖A' C'‖)
+    (hA'C'O' : ¬ Collinear A' C' O') (hαα' : EqualCircles α α') (hAC : ‖A C‖ = ‖A' C'‖)
     (hkind : SameSideOf O S A C ↔ SameSideOf O' S' A' C')
     (hRS : SameSideOf R S A C) (hR'S' : SameSideOf R' S' A' C') (hCAR : ∠ C A R = ∠ C' A' R') :
     ((MixedAngle.ofSegment A C α S).Exceeds C R ↔
         (MixedAngle.ofSegment A' C' α' S').Exceeds C' R') ∧
       ((MixedAngle.ofSegment A C α S).FallsShort C R ↔
         (MixedAngle.ofSegment A' C' α' S').FallsShort C' R') := by
+  obtain ⟨T, hT, hOAT, hTS⟩ := exists_tangent hO hA hC hACO hRS.symm.triangle
+  obtain ⟨T', hT', hO'A'T', hT'S'⟩ := exists_tangent hO' hA' hC' hA'C'O' hR'S'.symm.triangle
   have hACO' : Triangle A C O := hACO
   have hA'C'O'' : Triangle A' C' O' := hA'C'O'
   have hparts := tangent_parts hO hA hT hOAT
@@ -1283,8 +1373,9 @@ the straight line AE.
 The steps take III.16's two parts as hypotheses (`Prop16.Outside A E ABC` and
 `Prop16.FallsWithin A E ABC`), and do not cite III.16. So a restatement of III.16 with the
 comparisons can prove its two parts first and then these, in its own file, with the steps
-before it. The forms for any acute angle at the end, which are companions, supply the parts
-from `BookIII.Prop16`. -/
+before it. The forms for any acute angle (`semicircle_gt_acute`, `horn_lt_acute`),
+`horn_wellFormed`, and the placement theorems at the end cite `BookIII.Prop16` or its
+porism, and so go after III.16; the forms and the placement theorems are companions. -/
 
 namespace Prop16
 
@@ -1295,7 +1386,8 @@ theorem inside_sameSideOf {A B D E Q : Point} {ABC : Circle} (hD : Centre D ABC)
     (hAE_out : Outside A E ABC) (hQ : InsideCircle Q ABC) : SameSideOf Q B A E :=
   (sameSideOf_of_inside hA hAE_out (centre_inside hD) (Or.inl hQ)
     (fun e => inside_not_on (e ▸ hQ) hA)).trans
-    (SameSideOf.of_onRay (OnRay.of_between hADB) (sameSideOf_self (show Triangle A B E from hE).acb))
+    (SameSideOf.of_onRay (OnRay.of_between hADB)
+      (sameSideOf_self (show Triangle A B E from hE).acb))
 
 /-- **No straight line between, near A.** For a point F within the angle EAB, some circle
 about A holds no point within the angle FAB, nor on the ray AF, that is not within the
@@ -1324,11 +1416,11 @@ theorem near_inside {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
   · exact Or.inl ((WithinAngle.congr hGray hDray).2 hW)
   · exact Or.inr (Or.inl (OnRay.of_sameRay hR hGray))
 
-/-- **Check (c): the horn-like angle is not nothing.** Every circle about A, however small,
-holds a whole circle within the remaining angle of III.16: within the angle EAB and without
-the circle. (Points of AB near A are within the circle, every point of AE but A is without
-it, and the circumference crosses between them: `near_across`.) So the upper bounds below
-are not satisfied by an empty region, nor by an edge. -/
+/-- **The horn-like angle is not nothing.** Every circle about A, however small, holds a
+whole circle within the remaining angle of III.16: within the angle EAB and without the
+circle. (Points of AB near A are within the circle, every point of AE but A is without it,
+and the circumference crosses between them: `near_across`.) So the upper bounds below are not
+satisfied by an empty region, nor by an edge. -/
 theorem horn_nearVertex {A B D E : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hAE_out : Outside A E ABC) :
@@ -1338,9 +1430,9 @@ theorem horn_nearVertex {A B D E : Point} {ABC : Circle} (hD : Centre D ABC)
     (outside_of_onRay hAE_out)).2.mono fun _ hP =>
       MixedAngle.region_ofContact.2 ⟨WithinAngle.comm.1 hP.1, hP.2⟩
 
-/-- **Check (c): the angle of the semicircle is not nothing.** Every circle about A holds a
-whole circle within the angle BAE and within the circle, which is in the angle of the
-semicircle (`near_across`). -/
+/-- **The angle of the semicircle is not nothing.** Every circle about A holds a whole circle
+within the angle BAE and within the circle, which is in the angle of the semicircle
+(`near_across`). -/
 theorem semicircle_nearVertex {A B D E : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hAE_out : Outside A E ABC) :
@@ -1350,10 +1442,10 @@ theorem semicircle_nearVertex {A B D E : Point} {ABC : Circle} (hD : Centre D AB
     (outside_of_onRay hAE_out)).1.mono fun _ hP =>
       MixedAngle.region_ofSegment.2 ⟨hP.1.1, hP.2⟩
 
-/-- **Check (c): no straight ray runs within the horn.** For every point F within the angle
-EAB, the points of the ray AF near A are not in the remaining angle: they are within the
-circle. So the horn is not the region of any rectilineal angle, though it holds whole circles
-as near A as we please (`horn_nearVertex`). -/
+/-- **No straight ray runs within the horn.** For every point F within the angle EAB, the
+points of the ray AF near A are not in the remaining angle: they are within the circle. So
+the horn is not the region of any rectilineal angle, though it holds whole circles as near A
+as we please (`horn_nearVertex`). -/
 theorem horn_no_ray {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hAE_out : Outside A E ABC) (hAE_in : FallsWithin A E ABC) (hF : WithinAngle E A B F) :
@@ -1391,14 +1483,15 @@ theorem horn_within {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
   · exact absurd (hnear P hPγ (Or.inl ⟨SameSideOf.of_line hAF hA_M hF_M (same_side_symm h),
       hW.2.trans hFw.2.symm⟩)) hout.1
 
-/-- **Check (b): the angle of contact does not depend on the straight line that names its
-branch.** For any point B′ on B's side of AE, that is, any straight line AB′ from A into the
-circle, the angle of contact named by B′ is locally equal to the one named by the diameter.
-If B′ is on the ray AB, the regions are the same (`ofContact_congr`). If it is within the
-angle EAB, the one region lies within the other, and the rest, between AB′ and AB, is within
-the circle near A (`horn_within`). If it is on the other side of AB, the same holds with AE
-produced beyond A to E′, which is at right angles to AB as well: the rest, between AB and
-AB′, is within the circle near A (`near_inside`, for E′). -/
+/-- **The angle of contact does not depend on the straight line that names its branch**, in
+III.16's figure, where AE is at right angles to the diameter AB. For any point B′ on B's side
+of AE, that is, any straight line AB′ from A into the circle, the angle of contact named by
+B′ is locally equal to the one named by the diameter. If B′ is on the ray AB, the regions are
+the same (`ofContact_congr`). If it is within the angle EAB, the one region lies within the
+other, and the rest, between AB′ and AB, is within the circle near A (`horn_within`). If it
+is on the other side of AB, the same holds with AE produced beyond A to E′, which is at right
+angles to AB as well: the rest, between AB and AB′, is within the circle near A
+(`near_inside`, for E′). -/
 theorem horn_locallyEqual {A B B' D E : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hAE_out : Outside A E ABC) (hAE_in : FallsWithin A E ABC) (hB' : SameSideOf B' B A E) :
@@ -1808,11 +1901,11 @@ theorem greater_gt_right {A B C E R : Point} {ABCD : Circle} (hE : Centre E ABCD
   exact ((hopp.oppositeSides hA_N hB_N).2.2)
     (same_side_trans (h'.2.sameSide hA_N hB_N) (hPw.1.sameSide hA_N hB_N))
 
-/-- **Check (c): the angle of the less segment is not nothing.** For a point D on the other
-side of AC from B, every circle about A holds a whole circle within the angle of the less
-segment: BA produced to F, the points of AC near A are within the circle, those of AF are
-without it, and the circumference crosses between them, within the angle CAF, which is on
-D's side of AC (`near_across`). So the bound `less_lt_right` is not met by an empty region. -/
+/-- **The angle of the less segment is not nothing.** For a point D on the other side of AC
+from B, every circle about A holds a whole circle within the angle of the less segment: BA
+produced to F, the points of AC near A are within the circle, those of AF are without it, and
+the circumference crosses between them, within the angle CAF, which is on D's side of AC
+(`near_across`). So the bound `less_lt_right` is not met by an empty region. -/
 theorem less_nearVertex {A B C D E : Point} {ABCD : Circle} (hE : Centre E ABCD)
     (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hC : OnCircle C ABCD)
     (hBEC : Between B E C) (hAB : A ≠ B) (hAC : A ≠ C) (hBD : OppositeSidesOf B D A C) :
