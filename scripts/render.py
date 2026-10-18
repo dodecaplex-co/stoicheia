@@ -1321,24 +1321,26 @@ FRONT_LEAN_I = {
         8: "`∠ A B C`", 9: "`∠ A B C`",
         10: "`IsRightAngle`, with Postulate 4", 11: "`IsObtuse`", 12: "`IsAcute`",
         13: "none",
-        14: "none: the proofs name their figures (rectilineal, circles, segments) without a "
-            "general word",
+        14: "none: the Lean names each kind of figure (`Triangle`, `quadArea`, `Circle`, "
+            "segments) and has no general word",
         15: "`Definition15` (an axiom: radii are equal)", 16: "`Centre`",
         17: "a straight line AD with the centre E between its ends on the circle: "
             "`Between A E D`, with `Centre E ABCD`, `OnCircle A ABCD`, `OnCircle D ABCD` (III.15); "
             "that it bisects the circle is said of the circumference, each side two right "
             "angles (`Circumference.semicircle`). Book I uses the word of a parallelogram "
             "(I.34): its diameter AC cuts `quadArea A B C D` into two triangles",
-        18: "a segment (Def. III.6) on a diameter: in III.31 the base BC passes through the "
-            "centre E (`Between B E C`), the centre of both; its circumference is two right "
-            "angles (`Circumference.semicircle`)",
+        18: "a segment (Def. III.6) on a diameter: in III.31 the base BC passes through E "
+            "(`Between B E C`), the circle's centre, which Euclid calls the semicircle's too; "
+            "the semicircle's circumference is two right angles (`Circumference.semicircle`)",
         19: "`Triangle`; four-sided, `quadArea`; multilateral, none",
         20: "`Equilateral`; `Isosceles` is defined, but no statement or proof uses it: I.5 and "
             "I.6 say that the two sides are equal; scalene, none",
         21: "`RightAngledTriangle` is defined, but no statement or proof uses it: I.47 says "
-            "that the angle BAC is right; obtuse and acute angles are `IsObtuse` (II.12) and "
-            "`IsAcute` (II.13)",
-        22: "`Square`; a trapezium (I.35), `quadArea`; oblong, rhombus, rhomboid, none",
+            "that the angle BAC is right; an obtuse-angled triangle is a `Triangle` with an "
+            "`IsObtuse` angle (II.12); of an acute-angled triangle, II.13 asks `IsAcute` only "
+            "of the two angles at the ends of the side on which the perpendicular falls",
+        22: "`Square`; oblong, `Rectangle` (Def. II.1), which counts a square too; rhombus "
+            "and rhomboid, none; a trapezium (I.35), `quadArea`",
         23: "`Parallel`",
     },
     "Postulates": {i: f"`Postulate{i}`" for i in range(1, 6)},
@@ -1373,9 +1375,10 @@ FRONT_LEAN_III = {
     },
 }
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
-# Book III's Euclid speaks of a mixed angle (Def. 7) in III.16 and III.31, so its front
-# page says that the words with no Lean partner are never used in a Lean proof.
-FRONT_UNUSED = {"III": "Words with no Lean partner are never used in a Lean proof."}
+# Euclid's own proofs use some words with no Lean partner (Definition I.14's figure in
+# I.45, II.7 and II.8; Definition III.7's mixed angle in III.16 and III.31), so every
+# front page says only that the Lean proofs never use them.
+FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 
 
 def front(book):
@@ -1385,7 +1388,7 @@ def front(book):
     out = [GENERATED, f"[Book {book}](index.md)", "",
            f"# Book {book}: {', '.join(front_sections(book))}", "",
            "Euclid's words on the left, the Lean that stands for them on the right. "
-           + FRONT_UNUSED.get(book, "Words with no Lean partner are never used in a proof."), ""]
+           + FRONT_UNUSED, ""]
     section = None
     for line in text.splitlines():
         if line.startswith("## "):
