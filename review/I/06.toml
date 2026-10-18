@@ -7,6 +7,11 @@ fingerprint = "sha256:c1797ee9c0db3d8e"
 kind = "euclid"
 
 [[passage]]
+at = "let DC be joined"
+kind = "given"
+note = "Our triangle DBC is named by its corners, so no straight line DC is drawn: the proof uses only the points D and C."
+
+[[passage]]
 at = "the less to the greater"
 kind = "helper"
 helper = "Prop6.less"

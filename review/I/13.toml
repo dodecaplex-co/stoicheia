@@ -8,6 +8,11 @@ fingerprint = "sha256:75b80d518e57f424"
 kind = "euclid"
 
 [[passage]]
+at = "I say that the angles CBA, ABD are either two right angles"
+kind = "given"
+note = "The statement gives the goal: the two angles together equal to two right angles. Each angle right is the case of it where the two are equal (Postulate 4)."
+
+[[passage]]
 at = "Then, since the angle CBE is equal to the two angles CBA, ABE"
 kind = "grouped"
 note = "Euclid's figure has AB leaning towards C; leaning towards D is his figure with C and D exchanged (`Prop13.cases`), so one argument serves for both."

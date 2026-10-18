@@ -12,6 +12,11 @@ kind = "modified"
 note = "Euclid's argument, made direct at its end: the parallel through A is shown to pass through D, so no other straight line needs refuting."
 
 [[passage]]
+at = "I say that they are also in the same parallels"
+kind = "given"
+note = "The statement gives the goal, AD parallel to BC, and nothing is drawn here: the parallel through A, drawn next, will pass through D and so be AD."
+
+[[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
 kind = "different"
 note = "Euclid supposes AD not parallel and refutes it. The Lean supposes nothing: the areas put E at D (`OnRay.eq_of_area_eq`), so the parallel through A is AD itself, and no other straight line needs trying."

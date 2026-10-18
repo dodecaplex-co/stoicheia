@@ -6,6 +6,11 @@ fingerprint = "sha256:141737cc26d36b0f"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and let AE be joined"
+kind = "given"
+note = "Our triangles ABE and AEC are named by their corners, so no straight line AE is drawn."
+
 [review]
 stage = "exceptions"
 commit = "dcb1767"

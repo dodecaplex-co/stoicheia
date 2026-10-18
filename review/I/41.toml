@@ -7,6 +7,11 @@ fingerprint = "sha256:70bbb69cc030970d"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "I say that the parallelogram ABCD is double of the triangle BEC"
+kind = "given"
+note = "The statement gives the goal, and AC needs no drawing: `quadArea A B C D` already measures ABCD by its diameter AC, as the triangles ABC and ACD together."
+
 [figure]
 case = "E on AD produced beyond D, as in Heath's figure"
 
