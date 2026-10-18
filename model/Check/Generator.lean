@@ -32,6 +32,12 @@ to the library's axiom. The [README](../README.md) says why, and how the pieces 
 
 This file is a metaprogram, so it lives in `Check/`, apart from the proofs: nothing under
 `Model/` imports it, and it imports nothing but Lean.
+
+The plan it carries out, reading the elaborated declarations rather than their text,
+translating by structure, refusing any untranslated constant, checking that each law put back
+in the library's words is the library's, and pinning the vocabulary, is Astra's, from the third
+outside answer, on issue #73; our warm thanks. Its walk of the vocabulary and its printing of
+the lock's statements follow `Certificate/Facts.lean`, so that the two read the lock alike.
 -/
 
 open Lean Meta Elab Command
@@ -548,8 +554,8 @@ def plan (env : Environment) : Except String Plan := do
         vocab := vocab.insert w { name := generatedName w, overS := true }
     | some (.opaqueInfo _) =>
       bad := bad.push s!"`{w}` is an opaque word with no field in the signature"
-    | some ci => bad := bad.push s!"`{w}` is a {lockKind env ci} of the project, which the \
-        generator does not translate"
+    | some ci => bad := bad.push s!"`{w}` is declared as `{lockKind env ci}` in the project, \
+        and the generator translates no such word"
   for (lib, _) in fields ++ kinds ++ signatureWords do
     unless env.contains lib do bad := bad.push s!"the library has no `{lib}`"
   unless bad.isEmpty do throw ("; ".intercalate bad.toList)
