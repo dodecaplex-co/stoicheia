@@ -12,6 +12,12 @@ tags = ["centre-given"]
 note = "The circle comes with some centre G, Euclid's supposed centre, and with the two points A, B of the straight line he draws through it at random. The porism, too, is stated of a circle with a centre."
 
 [[passage]]
+at = "from D let DC be drawn at right angles to AB and let it be drawn through to E"
+kind = "helper"
+helper = "Prop1.within"
+note = "Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes. `Prop1.within` takes it by III.2's own argument, by I.5, I.16 and I.19, from the centre the hypothesis gives; were the centre on AB, it would be D itself."
+
+[[passage]]
 at = "and let GA, GD, GB be joined"
 kind = "case"
 helper = "Prop1.middle"
