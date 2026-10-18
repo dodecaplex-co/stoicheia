@@ -141,7 +141,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - The angle CED is the angle CEB, and BAE is BAC, because each pair of points lies on one ray (`angle_onRay_right`).
 
 ## I.22
-- The circles meet. Heath: "It was early observed that Euclid assumes, without giving any reason, that the circles drawn as described will meet" when the condition holds (vol. 1, p. 293). Proclus argued it but missed the case of one circle within the other, and Robert Simson thought no beginner so dull as not to see it. `Prop22.meet` follows Heath's own argument (vol. 1, p. 294): the circle about G has a point outside the circle about F and a point inside it, so they cut one another (System E's Intersection rule 4, `circles_meet_of_on_inside_outside`, in the corrected form Logan Murphy and his colleagues gave it in LeanEuclid). Lean also needs the case Heath passes over, where the inside point is the centre F itself.
+- The circles meet. Heath: "It was early observed that Euclid assumes, without giving any reason, that the circles drawn as described will meet" when the condition holds (vol. 1, p. 293). Proclus argued it but missed the case of one circle within the other, and Robert Simson thought no beginner so dull as not to see it. `Prop22.meet` follows Heath's own argument (vol. 1, p. 294): the circle about G has a point outside the circle about F and a point inside it, so they cut one another (System E's Intersection rule 4, `circles_meet_of_on_inside_outside`, in the corrected form Logan Murphy and his colleagues gave it in LeanEuclid). Our proof also takes the case Heath passes over, where the inside point is the centre F itself.
 - DE is "of infinite length in the direction of E", but I.3 cuts off only from a greater finite straight line, so each cut needs room first (`Prop22.room`: I.2, then `produce_longer`). That is why I.2 is among the propositions I.22 cites.
 - None of A, B, C is nothing, which I.3 needs (`Prop22.ne_zero`).
 - DF, FG and GH are cut off one after another, so that D, F, G, H lie in that order along DE, as in Euclid's figure (`between_cut`). Heath's argument that the circles meet needs it, since FH must be FG and GH together.
@@ -234,7 +234,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 ## I.39
 - E, where the parallel through A meets BD, comes from `Prop30.meet`: BD meets BC at B, so it meets the parallel to BC.
 - "The greater to the less" needs to know where E falls. The parallel puts E on A's side of BC, and so on D's, on the ray from B through D (`OnRay.of_sameSideOf`). Euclid's figure has E between B and D; Proclus points out that the proof is as easy when it falls beyond D (Heath, vol. 1, p. 337). Either way one triangle is a part of the other (`area_lt_of_cut`, C.N. 5).
-- "Similarly we can prove that neither is any other straight line except AD" asks for an argument about every straight line through A. Lean needs it about one: the parallel I.31 draws through A meets BD at D itself (`OnRay.eq_of_len_eq`), and so it is AD.
+- "Similarly we can prove that neither is any other straight line except AD" asks for an argument about every straight line through A. Our proof makes it about one: the parallel I.31 draws through A meets BD at D itself (`OnRay.eq_of_len_eq`), and so it is AD.
 
 ## I.40
 - As in I.39: F, where the parallel through A meets CD, comes from `Prop30.meet`; the same-side hypothesis puts F on the ray from C through D (`OnRay.of_sameSideOf`); and the case Proclus adds under I.39, F beyond D, is taken with Euclid's (`area_lt_of_cut`).
@@ -285,8 +285,8 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 brackets, beside what the Lean uses, for every proposition; where the two differ
 over a postulate, the reason is one of these.
 
-- **Postulate 1**: Lean must name a straight line before it can say a point is on
-  it or off it, or lay a figure along it. This is a difference in bookkeeping, not
+- **Postulate 1**: our proofs name a straight line before they can say a point is
+  on it or off it, or lay a figure along it. This is a difference in bookkeeping, not
   in geometry: Euclid's "the straight line AB" names the same line implicitly.
 - **Postulate 2**: a straight line produced where Heath gives no bracket (I.14,
   I.31, and BE laid along AB in I.44); the given straight lines of I.30, produced
@@ -300,8 +300,8 @@ over a postulate, the reason is one of these.
   (`AreParallel.figure_alternate`, `AreParallel.figure_interior`,
   `Prop28.interior`, and AC and DB in I.33). In I.2 the rule that a straight line
   through the inside of a circle meets it (System E, Intersections 5) does the
-  producing, and in I.5 the statement hands us the produced sides, so Lean has no
-  use for Heath's bracket.
+  producing, and in I.5 the statement hands us the produced sides, so neither proof
+  uses Postulate 2, though Heath's bracket gives it.
 - **Postulate 3 and Definition 15**: circles Euclid does not draw, which keep a
   chance point near enough (`exists_between_nearer`, I.5 and I.9), give a straight
   line room to be cut from (`produce_longer`), or lay a length along a ray
