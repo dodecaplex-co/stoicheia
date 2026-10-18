@@ -756,8 +756,9 @@ def check_review(facts, by_ref, book: str, n: int) -> None:
             first = " ".join(run.text.split()[:8])
             fail(f"{ref}: the `--` lines from {first!r} ({rel(lean)}:{run.line}) have no "
                  "Lean beneath them before the next `--` line (a `/- … -/` remark carries "
-                 "none); put the Lean that carries them under them, or declare them in "
-                 f"{where} with a [[passage]] whose `at` quotes where they begin")
+                 "none): move a remark that stands between them and the next sentence, put "
+                 f"their Lean under them, or declare them in {where} with a [[passage]] "
+                 "whose `at` quotes where they begin")
 
 
 def check_facts(path: Path) -> None:

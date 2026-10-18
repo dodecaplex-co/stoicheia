@@ -511,6 +511,6 @@ findings:
   [`review/SCHEMA.md`](../../review/SCHEMA.md#two-stages), "Two stages", tells
   contributors in one clause where a remark goes, and [FORMALIZATION](../FORMALIZATION.md),
   section 5, points to it. On main's records the rule finds 15 runs not yet declared, in
-  I.5, I.6, I.13, I.14, I.21, I.23, I.39 to I.42, I.47 and II.10. The records' change,
-  `text/declare-runs`, declares them, and this change lands after it
+  I.5, I.6, I.13, I.14, I.21, I.23, I.39 to I.42, I.47 and II.10. The records' pull
+  request declares them, and this change lands after it
   ([#61](https://github.com/jackChallis/stoicheia/issues/61)).
