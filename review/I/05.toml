@@ -14,6 +14,6 @@ note = "D and E come with the statement, already produced, so the Lean draws onl
 
 [review]
 stage = "exceptions"
-commit = "2a34715"
+commit = "8ff656b"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:62634b553e268244"
+lean = "sha256:434da0bb3337847c"
