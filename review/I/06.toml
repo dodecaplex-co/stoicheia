@@ -7,6 +7,11 @@ fingerprint = "sha256:c1797ee9c0db3d8e"
 kind = "euclid"
 
 [[passage]]
+at = "let DC be joined"
+kind = "given"
+note = "Our triangle DBC is named by its corners, so no straight line DC is drawn: the proof uses only the points D and C."
+
+[[passage]]
 at = "the less to the greater"
 kind = "helper"
 helper = "Prop6.less"
@@ -14,6 +19,6 @@ note = "Euclid takes for granted that DBC is less than ACB; the Lean proves it w
 
 [review]
 stage = "exceptions"
-commit = "2a34715"
+commit = "2e1d5c1"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:1bc56cc167c58dff"
