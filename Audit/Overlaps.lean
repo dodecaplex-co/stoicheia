@@ -158,7 +158,7 @@ theorem I_23 : type_of% @Elements.BookI.Prop23 := by
 within it (`inside_of_between`, Circle 2). With both points on the circle, that is III.2.
 This is Astra's proof, from the outside review. Our III.2 follows Euclid, by I.5, I.16
 and I.19, and never calls the rule; but III.1, which finds its centre, does, to put the
-middle point of a chord within the circle. -/
+middle point of a straight line in the circle within it. -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
   fun _ hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
 
@@ -260,8 +260,9 @@ example : type_of% @Elements.BookIII.Prop24 :=
 /-- **Diagram-angle 3 from I.13.** The angle beside a right angle is right
 (`adjacent_eq_of_right`, Diagram-angle 3). I.13 makes the two angles together two right
 angles, and Common Notion 3 takes the one right angle away. I.13 does not rest on the
-rule, so the rule is a theorem of the others; seventeen proofs from II.1 on, III.1's
-porism among them, call it where I.13 would serve. -/
+rule, so the rule is a theorem of the others. Seventeen proofs from II.1 on, III.1's
+porism among them, use it where I.13 would serve: sixteen call it themselves, and III.19
+reaches it only through III.1's helper `Prop1.perpendicular`. -/
 theorem adjacent_eq_of_right : type_of% @Elements.Tacit.adjacent_eq_of_right := by
   intro A B C D L hA hB hACB hD hright
   have hAB : A ≠ B := ne_of_between_ends hACB
