@@ -536,7 +536,7 @@ reading anything else, the script checks its own patterns against such phrases.
 | D11 | Euclid's figure strokes other than lines 1.6, circles 1.3, the subject 2.4 to 2.6, angle marks 1.3, or dots of radius other than 2.6 | Euclid's figures |
 | D13 | A reading line that does not begin "For " | `reading/<book>/NN.md` |
 | D14 | The figures at a glance with no letter yet, book by book, with the points each has to letter, while the switch is off (below) | Idea figures |
-| D15 | A letter within 2 of a stroke: its capital as Georgia Italic draws it, measured by the convex hull of its outline's points, against every line, polyline, polygon, path, rect, circle and ellipse drawn with a stroke, dashed or not, transforms applied | Idea figures, Euclid's figures |
+| D15 | A letter within 2 of a stroke: its capital as Georgia Italic draws it, measured by the convex hull of its outline's points, against every line, polyline, polygon, path, rect, circle and ellipse drawn with a stroke, dashed or not, transforms applied. The hull misses no stroke, but it spans a letter's hollows (an L's corner, a K's notch), so a stroke that ends in one may be listed while the ink is clear | Idea figures, Euclid's figures |
 
 **The switch for S21.** The figures at a glance were lettered one by one, and while they
 were, `IDEA_LETTERS_REQUIRED` in `scripts/check_style.py` was `False`: S20 held every

@@ -686,8 +686,12 @@ CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
 # points of the capital's outline, on its curves and off them, which holds the outline.
 # GLYPHS gives each capital's advance and that hull's corners, x and y in turn with y up,
 # in the font's units, EM to the em, read from the font with fontTools so that the script
-# needs neither. At 17 the hull stands at most 0.4 outside the outline, and only round a
-# curve. A prime or a subscript after the capital is not measured.
+# needs neither. Each corner of the hull stands within 0.4 of the ink at 17 (an off-curve
+# point, round a curve), so a stroke that runs straight past a letter is measured to
+# within 0.4, and no stroke nearer than CLEAR is missed. But the hull also spans a
+# letter's hollows, up to 4.4 from the ink at 17 (K's notch, L's corner, the space under
+# T's arms), so a stroke that ends or bends within one may be listed while the ink is
+# clear. A prime or a subscript after the capital is not measured.
 CLEAR = 2.0     # a letter nearer than this to a stroke is reported
 EM = 2048
 GLYPHS = {
@@ -1028,8 +1032,8 @@ def colours(path: Path, root, allowed: set[str], rule: str) -> None:
 
 
 def check_idea(path: Path, ref: str, required: bool) -> int:
-    """S13, S14, S20 and S21 for one idea figure. Returns how many of its points wait for
-    a letter while it is in the transition (no letter yet, the switch off), else 0."""
+    """S13, S14, S20, S21 and D15 for one idea figure. Returns how many of its points wait
+    for a letter while it is in the transition (no letter yet, the switch off), else 0."""
     root = svg_root(path)
     if root is None:
         return 0

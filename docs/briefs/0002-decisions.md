@@ -644,7 +644,7 @@ findings:
   font. The script carries the hulls as numbers (`GLYPHS`), and so still needs only
   Python's standard library; `path_rings` now also says which subpaths a Z closes, and
   what S20 reads is unchanged. A self-check of eleven strokes beside a letter runs first.
-  [STYLE](../STYLE.md), sections 7 and 8, gives the report. On main it lists Argon's seven
-  and six more letters as near; the figures' change for
-  [#68](https://github.com/jackChallis/stoicheia/issues/68) moves all thirteen and lands
-  first, after which D15 lists none. The check adds a report and weakens nothing.
+  [STYLE](../STYLE.md), sections 7 and 8, gives the report. Before the figures' change for
+  [#68](https://github.com/jackChallis/stoicheia/issues/68), which lands first, it listed
+  Argon's seven and six more letters as near; that change moves all thirteen, after which
+  D15 lists none. The check adds a report and weakens nothing.
