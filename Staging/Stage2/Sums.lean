@@ -57,6 +57,7 @@ theorem Magnitude.sum_append {k : Kind} (l₁ l₂ : List (Magnitude k)) :
       change Magnitude.sum l₂ = 0 + Magnitude.sum l₂
       rw [add_comm 0, add_zero]
   | cons a as ih =>
+      /- A first magnitude `a`: the induction, then the law for adding three in a row. -/
       change a + Magnitude.sum (as ++ l₂) = (a + Magnitude.sum as) + Magnitude.sum l₂
       rw [ih, add_assoc]
 
@@ -93,7 +94,9 @@ def endOf (B : Point) : List Point → Point
 theorem InOrder.between_end {B P : Point} {ps : List Point} (h : InOrder (B :: P :: ps))
     (hps : ps ≠ []) : Between B P (endOf P ps) := by
   induction ps generalizing B P with
-  | nil => exact absurd rfl hps
+  | nil =>
+      /- No point after P: `hps` rules this case out. -/
+      exact absurd rfl hps
   | cons Q qs ih =>
       cases qs with
       | nil =>
