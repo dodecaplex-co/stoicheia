@@ -398,13 +398,14 @@ would fit any page of the book is left out.
 Two per proposition, on the parchment card (`#fbf7ee`, a rect with `rx="10"` over the
 whole canvas), in Georgia. Section 2 says why there are two.
 
-**`NN-idea.svg`, the figure at a glance.** A canvas of 400 × 300 **[checked]**. Byrne's
-red `#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for
-grid lines and for numbers on a fill, as in I.47 **[checked]**. Equal things share a
-colour, and Heath's letters name the points, lines and figures it shows (below). The title is "I.N at a
-glance", with a name if it has one (": the bridge of asses"). The `<desc>` is the caption
-on the page: one or two short sentences in the house voice, the colours named in
-brackets, about 40 words **[reported]** and 50 at most **[checked]**.
+**`NN-idea.svg`, the figure at a glance.** A canvas of 400 × 300 **[checked]**. Byrne's red
+`#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for grid
+lines and for numbers on a fill, as in I.47 **[checked]**. Equal things share a colour, and
+Heath's letters name every point it shows; any letter is Heath's, and may name a line or a
+figure as well (below). The title is "I.N at a glance", with a name if it has one (": the
+bridge of asses"). The `<desc>` is the caption on the page: one or two short sentences in
+the house voice, the colours named in brackets, about 40 words **[reported]** and 50 at
+most **[checked]**.
 
 **`NN.svg`, Euclid's figure.** 400 wide, and 440 at most where two or three of Heath's
 figures stand side by side (III.25, III.33, III.35, III.36) **[checked]**. Italic letters
