@@ -5,12 +5,15 @@
    order, must be exactly Heath's proof (whitespace aside). Euclid's words go in
    `--` comments; our own remarks go in `/- … -/` blocks.
 2. Every `axiom` lives in `Elements/Foundations/`: a first look in the source here,
-   and the real check from Lean's own environment in 5.
+   which reads `Staging/` and `Audit/` too, and the real check from Lean's own
+   environment in 5.
 3. Book Zero (`Elements/Figure/`) never imports a proposition.
-4. Nothing that gets round the kernel or adds an axiom without the word: no
-   `native_decide` or `decide +native` (each adds an axiom Lean's kernel doesn't
-   check), no `set_option debug.…`, and no `run_cmd`, `run_elab`, `elab`, `macro`,
-   `implemented_by`, `extern` or `unsafe` under `Elements/`.
+4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
+   `Elements/`, `Staging/` or `Audit/` (LEAN_TREES), since they get round the kernel,
+   bring in an axiom without the word, run a program when a file is built or imported,
+   or stop Lean reading a file: `native_decide`, `decide +native`,
+   `set_option debug.…`, `#eval`, `#exit`, `run_cmd`, `elab`, `macro`,
+   `implemented_by`, `extern`, `unsafe` and the rest of FORBIDDEN, below.
 5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
    fields are in `Certificate/FIELDS.md`):
    - every axiom an entry rests on, other than Lean's own `propext`,
@@ -81,12 +84,26 @@ PRIMITIVES = {
 }
 # Lean's own logical foundations, which every proof may use.
 LEAN_FOUNDATIONS = {"propext", "Classical.choice", "Quot.sound"}
-# Commands that could get round the kernel, or bring in an axiom without the keyword.
-# Matched as whole words, in the Lean with its comments taken out.
+# The Lean the edition builds, which the source scan (check_rules) reads: the library, the
+# statements staged before their proofs, and the audit lemmas, each folder with its root
+# file (`Staging.lean`). The checks' own Lean, `Certificate/Facts.lean`, is not among them.
+LEAN_TREES = ("Elements", "Staging", "Audit")
+# Commands that could get round the kernel (`native_decide` and the `debug.` options, among
+# them `debug.skipKernelTC`), bring in an axiom without the keyword, run a program when the
+# file is built or imported (`#eval`, `run_cmd` and their kin, `initialize`), give syntax a
+# meaning in code (`elab`, `macro` and the elaborator attributes), swap code in for a
+# definition, or stop Lean reading the file (`#exit`). Matched as whole words, in the Lean
+# with its comments taken out; FORMALIZATION.md, section 7, is their one home.
 FORBIDDEN = re.compile(
-    r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bset_option\s+debug\.|"
-    r"\b(run_cmd|run_elab|run_meta|elab|elab_rules|macro|macro_rules|implemented_by|"
-    r"extern|unsafe)\b")
+    r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bnative\s*:=\s*true\b|"
+    r"\bset_option\s+debug\.|#eval\b|#exit\b|"
+    r"\b(run_cmd|run_elab|run_meta|run_tac|by_elab|elab|elab_rules|macro|macro_rules|"
+    r"command_elab|term_elab|initialize|builtin_initialize|implemented_by|extern|"
+    r"unsafe)\b|"
+    r"(?:@|\battribute\s*)\[[^\]]*?\b(?P<attr>tactic|init)\b")
+# An axiom, declared anywhere in a line: Lean reads `example : True := trivial axiom
+# planted : False` as two commands, the second an axiom.
+AXIOM = re.compile(r"\baxiom\b")
 
 errors: list[str] = []
 
@@ -161,21 +178,34 @@ def without_comments(src: str) -> str:
     return "".join(out)
 
 
+def lean_sources() -> list[Path]:
+    """Every `.lean` file of LEAN_TREES: each folder's root file, then the folder."""
+    paths = []
+    for tree in LEAN_TREES:
+        root = ROOT / f"{tree}.lean"
+        paths += [root] if root.exists() else []
+        paths += sorted((ROOT / tree).rglob("*.lean"))
+    return paths
+
+
 def check_rules() -> None:
-    for path in sorted((ROOT / "Elements").rglob("*.lean")):
+    for path in lean_sources():
         rel = path.relative_to(ROOT).as_posix()
         src = path.read_text()
         code = without_comments(src)
-        if re.search(r"^\s*(@\[[^\]]*\]\s*)?((private|protected|noncomputable|unsafe|partial)\s+)*axiom\s",
-                     code, re.M) and not rel.startswith("Elements/Foundations/"):
-            fail(f"{rel}: declares an axiom outside Elements/Foundations/")
+        if not rel.startswith("Elements/Foundations/"):
+            for m in AXIOM.finditer(code):
+                line = code[: m.start()].count("\n") + 1
+                fail(f"{rel}:{line}: declares an axiom outside Elements/Foundations/")
         if "native_decide" in src:
             fail(f"{rel}: uses native_decide")
         for m in FORBIDDEN.finditer(code):
             if m.group(0) != "native_decide":
                 line = code[: m.start()].count("\n") + 1
-                fail(f"{rel}:{line}: uses `{' '.join(m.group(0).split())}`, which could get "
-                     "round Lean's kernel or bring in an axiom unseen")
+                word = f"@[{m['attr']}]" if m["attr"] else " ".join(m.group(0).split())
+                fail(f"{rel}:{line}: uses `{word}`, which could get round Lean's kernel, bring "
+                     "in an axiom unseen, run a program when the file is built or imported, "
+                     "or stop Lean reading it (docs/FORMALIZATION.md, section 7)")
         if rel.startswith("Elements/Figure/") and re.search(r"^import Elements\.Book", src, re.M):
             fail(f"{rel}: Book Zero must not import a proposition")
 

@@ -20,7 +20,12 @@ records current; CI runs it on every push.
    first with no Lean of its own: a remark ends a run and carries nothing. A second
    remark, between the next sentence and its Lean, does not stop that Lean carrying it.
 7. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
-8. One build with planted assumptions, the certificate recomputed:
+8. Every command docs/FORMALIZATION.md, section 7, forbids, and an axiom (one of them
+   after another command on the same line), planted in a new file of each folder the
+   scan reads, `Elements/`, `Staging/` (in a folder of its own) and `Audit/`, with
+   `#exit` at the end of each root file, `Elements.lean`, `Staging.lean` and
+   `Audit.lean`: each is caught on its own line. The files are read, not built.
+9. One build with planted assumptions, the certificate recomputed:
    - in I.16, Postulate 5, a planted Euclidean-only rule (`Tacit.Euclidean.planted`)
      and an axiom declared in I.16's own file after a docstring on the same line:
      each is caught, so are the count of Euclid's assumptions and the two planted
@@ -34,7 +39,7 @@ records current; CI runs it on every push.
 The checks these do not plant a fault for are named in README.md's table, "What the
 checks show": check_style.py, check_links.py, the pages' freshness and the audit lemmas.
 
-The files changed are restored, and so is `facts.json`; after test 8 the proofs are
+The files changed are restored, and so is `facts.json`; after test 9 the proofs are
 built again from the restored files. Exits non-zero if any change goes unnoticed.
 Standard library only; Python 3.11 or later, for the review records.
 """
@@ -169,6 +174,98 @@ def native_decide() -> None:
                        f"{rel}: uses native_decide")
     finally:
         (ROOT / rel).write_text(saved)
+
+
+# Each command docs/FORMALIZATION.md, section 7, forbids, as check_fidelity.py names it,
+# with a line of Lean that uses it; `#exit` comes last, as it would in a file.
+PLANTED_COMMANDS = (
+    ("decide +native", "theorem planted_decide : 2 + 2 = 4 := by decide +native"),
+    ("native := true",
+     "theorem planted_config : 2 + 2 = 4 := by decide (config := { native := true })"),
+    ("set_option debug.",
+     "set_option debug.skipKernelTC true in theorem planted_skip : True := trivial"),
+    ("#eval", '#eval IO.println "planted"'),
+    ("run_cmd", "run_cmd pure ()"),
+    ("run_elab", "run_elab pure ()"),
+    ("run_meta", "run_meta pure ()"),
+    ("run_tac", "theorem planted_tac : True := by run_tac pure ()"),
+    ("by_elab", "def plantedByElab : Nat := by_elab pure (Lean.mkNatLit 4)"),
+    ("elab", 'elab "planted_elab" : term => pure (Lean.mkNatLit 4)'),
+    ("elab_rules", "elab_rules : term | `(planted_elab) => pure (Lean.mkNatLit 4)"),
+    ("macro", 'macro "planted_macro" : term => `(4)'),
+    ("macro_rules", "macro_rules | `(planted_macro) => `(4)"),
+    ("command_elab", "@[command_elab plantedStx] def plantedCommand : "
+     "Lean.Elab.Command.CommandElab := fun _ => pure ()"),
+    ("term_elab", "@[term_elab plantedStx] def plantedTerm : Lean.Elab.Term.TermElab := "
+     "fun _ _ => pure (Lean.mkNatLit 4)"),
+    ("@[tactic]", "@[tactic plantedStx] def plantedTactic : Lean.Elab.Tactic.Tactic := "
+     "fun _ => pure ()"),
+    ("@[tactic]", "attribute [tactic plantedStx] plantedTactic"),
+    ("initialize", "initialize plantedRef : IO.Ref Nat ← IO.mkRef 0"),
+    ("builtin_initialize", "builtin_initialize plantedBuiltin : IO.Ref Nat ← IO.mkRef 0"),
+    ("@[init]", "@[init plantedInit] opaque plantedInitRef : IO.Ref Nat"),
+    ("implemented_by", "@[implemented_by plantedSpec] def plantedImpl : Nat := 4"),
+    ("extern", '@[extern "planted"] opaque plantedExtern : Nat'),
+    ("unsafe", "unsafe def plantedUnsafe : Nat := 4"),
+    ("#exit", "#exit"),
+)
+# A new file in each folder the scan reads; Staging's in a folder of its own, which
+# shows that the scan reads every folder beneath.
+PLANTED_FILES = ("Elements/Planted.lean", "Staging/Planted/Commands.lean", "Audit/Planted.lean")
+
+
+def forbidden_commands() -> None:
+    """Every forbidden command, and an axiom declared twice, once after another command
+    on the same line, in a new file of each folder `check_fidelity.py` scans, and `#exit`
+    at the end of each root file. Each must be caught, by its file and line."""
+    header = ["/-! Planted by scripts/negative_tests.py: every line below must be caught. -/",
+              ""]
+    body = [("axiom", "example : True := trivial axiom planted_inline : True"),
+            ("axiom", "axiom planted_axiom : True"),
+            ("native_decide", "theorem planted_native : 2 + 2 = 4 := by native_decide"),
+            *PLANTED_COMMANDS]
+    text = "\n".join(header + [line for _, line in body]) + "\n"
+
+    def caught(rel: str, line: int, word: str) -> str:
+        if word == "axiom":
+            return f"{rel}:{line}: declares an axiom outside Elements/Foundations/"
+        if word == "native_decide":
+            return f"{rel}: uses native_decide"
+        return f"{rel}:{line}: uses `{word}`"
+
+    wanted: dict[str, list[str]] = {}
+    planted: list[Path] = []          # files, then the folders made for them
+    roots: dict[Path, str] = {}
+    try:
+        for rel in PLANTED_FILES:
+            path = ROOT / rel
+            assert not path.exists(), f"{rel} exists; update this test"
+            if not path.parent.exists():
+                path.parent.mkdir()
+                planted.append(path.parent)
+            path.write_text(text)
+            planted.insert(0, path)
+            wanted[rel.split("/")[0]] = [caught(rel, len(header) + i, word)
+                                         for i, (word, _) in enumerate(body, 1)]
+        for tree in wanted:
+            root = ROOT / f"{tree}.lean"
+            roots[root] = root.read_text()
+            changed = roots[root] + "\n#exit\n"
+            root.write_text(changed)
+            line = changed[:changed.rindex("#exit")].count("\n") + 1
+            wanted[tree].append(caught(f"{tree}.lean", line, "#exit"))
+        result = fidelity()
+        for tree, messages in wanted.items():
+            expect_failure(f"every forbidden command and an axiom in {tree}/ and {tree}.lean",
+                           result, *messages)
+    finally:
+        for root, saved in roots.items():
+            root.write_text(saved)
+        for path in planted:
+            if path.is_dir():
+                path.rmdir()
+            else:
+                path.unlink(missing_ok=True)
 
 
 def stale_lean() -> None:
@@ -337,6 +434,7 @@ def main() -> int:
     undeclared_run()
     remark_ends_run()
     native_decide()
+    forbidden_commands()
     planted_assumptions()
     if failures:
         print(f"{len(failures)} change(s) went unnoticed:")

@@ -327,8 +327,23 @@ dependencies.
   assignment to finish a proof is never permission to add an axiom that asserts its
   conclusion.
 - **Nothing gets round the kernel:** no `native_decide`, `decide +native`,
-  `set_option debug.…`, `run_cmd`, `run_elab`, `elab`, `macro`, `implemented_by`, `extern`
-  or `unsafe` under `Elements/`.
+  or any other command of the kinds below, in any Lean file the edition builds: under
+  `Elements/`, `Staging/` and `Audit/`, and in their roots, `Elements.lean`,
+  `Staging.lean` and `Audit.lean`. `check_fidelity.py` matches each as a whole word, in
+  the Lean with its comments taken out (`native_decide` even in a comment):
+  - `native_decide`, `decide +native` and `decide (config := { native := true })` have
+    the compiler vouch for a proof in the kernel's place;
+  - `set_option debug.…`: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry`
+    and its kin put `sorry` in place of a proof;
+  - `#eval`, `run_cmd`, `run_elab`, `run_meta`, `run_tac`, `by_elab`, `initialize` and
+    `builtin_initialize` run a program when the file is built or imported, which could
+    declare an axiom without the word, or write any file, a check or `facts.json` among
+    them;
+  - `elab`, `elab_rules`, `macro` and `macro_rules`, with the attributes behind them and
+    `initialize` (`command_elab`, `term_elab`, `tactic` and `init`), give syntax a
+    meaning written in code, which could hide any of the others behind a new name;
+  - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
+  - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
@@ -339,19 +354,25 @@ dependencies.
 
 `check_fidelity.py` enforces these for every certificate entry, porisms and companions
 included. `negative_tests.py` plants a break of these kinds to show each is caught: an
-axiom declared outside the foundations; an axiom missing from the lock, and one weakened;
-Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4 and I.8; a
-later citation, one of them named only in a helper's statement; a `native_decide`; a
-`sorry` in a complete book; and a primitive word no longer opaque. The other forbidden
-commands, Book Zero's imports and a complete book's missing figure or mishnah have no
-planted break yet.
+axiom declared outside the foundations, in each of `Elements/`, `Staging/` and `Audit/`,
+one of them after another command on its line; an axiom missing from the lock, and one
+weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
+and I.8; a later citation, one of them named only in a helper's statement; every
+forbidden command, in each of `Elements/`, `Staging/` and `Audit/`, and `#exit` at the
+end of each root; a `sorry` in a complete book; and a primitive word no longer opaque.
+Book Zero's imports and a complete book's missing figure or mishnah have no planted break
+yet.
 
-The first two policies hold in `Staging/` (section 6) by rule: a staged file declares no
-axiom and uses none of the forbidden commands. That no check enforces them there is a
-known gap: `check_fidelity.py`'s scan for them (`check_rules`) covers `Elements/` alone
-today, so in `Staging/` they rest on review. Extending the scan to `Staging/` is a change
-to a check, and lands in a pull request of its own
-([WORKFLOW.md](WORKFLOW.md), section 10).
+The first two policies hold in `Staging/` (section 6) and in `Audit/` as well: a staged
+file or an audit lemma declares no axiom and uses none of the forbidden commands. Nothing
+there reaches the certificate, so the source scan is what enforces them:
+`check_fidelity.py`'s `check_rules` reads every `.lean` file under `Elements/`,
+`Staging/` and `Audit/`, and the three roots, and refuses an `axiom` anywhere outside
+`Elements/Foundations/` and every forbidden command. In `Elements/` the certificate reads
+the axioms from Lean itself as well. The checks' own Lean, `Certificate/Facts.lean`,
+which writes `facts.json`, is not scanned: it is a protected path
+([WORKFLOW.md](WORKFLOW.md), section 10), changed only with a decisions entry and a
+security review.
 
 ## 8. Completion claims
 

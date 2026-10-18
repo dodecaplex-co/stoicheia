@@ -631,3 +631,38 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+
+- **The forbidden-command scan reads `Staging/` and `Audit/`, and knows `#eval`.** The
+  security review of the Staging library noted two gaps in the source scan of
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py), `check_rules`, and we
+  are grateful for the close reading
+  ([#39](https://github.com/jackChallis/stoicheia/issues/39)). The scan read `Elements/`
+  alone, so in `Staging/` and `Audit/`, which the certificate never reaches, "no axiom and
+  no forbidden command" rested on review. And its list lacked `#eval`, which runs a
+  program while a file is built: on Lean 4.35 an `#eval` can declare an axiom through
+  `addDecl` with no `axiom` in the source, or write any file. Now the scan reads every
+  `.lean` file under `Elements/`, `Staging/` and `Audit/`, and the roots `Elements.lean`,
+  `Staging.lean` and `Audit.lean`. Its list gains `#eval`, `#exit`, `run_tac`, `by_elab`,
+  `initialize`, `builtin_initialize`, `decide (config := { native := true })`, and the
+  attributes that stand behind `elab`, `macro` and `initialize`: `command_elab`,
+  `term_elab`, `tactic` and `init`. `set_option debug.…` already covered
+  `debug.skipKernelTC`, and with it `debug.byAsSorry`, `debug.proofAsSorry` and
+  `debug.terminalTacticsAsSorry`. The source check for an axiom outside
+  `Elements/Foundations/` now finds the word anywhere in a line, not only at its start:
+  Lean reads `example : True := trivial axiom planted : False` as two commands, the second
+  an axiom, which the old check missed (in `Elements/` the certificate caught it all the
+  same). Each finding names its file and line. Nothing is loosened: the scan refuses all
+  it refused before, in more places, and on main it refuses nothing.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains test 8, which
+  plants every forbidden command, and an axiom twice, once after another command on its
+  line, in a new file of each of the three folders (Staging's in a folder of its own), and
+  `#exit` at the end of each root, and expects each caught on its own line. origin/main's
+  scan misses every one of them in `Staging/` and `Audit/`, and in `Elements/` the
+  commands the list gains and the axiom after another command.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, names every
+  command the scan refuses (`run_meta`, `elab_rules` and `macro_rules`, which it refused
+  unnamed, among them), says why each is forbidden, and drops the known gap. The protected
+  files it changes are [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) and
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py). The README's table of
+  checks, and the name of CI's step for the negative tests, can follow in a pull request
+  of their own.
