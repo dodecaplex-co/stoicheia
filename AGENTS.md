@@ -63,8 +63,9 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
 ## Scope and ownership
 
 - Work only in the files your task names: one writer per file. The integrator owns the
-  generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md` and README.md's
-  rows between the `<!-- scope:… -->` markers); the coordinator owns the foundations
+  generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, README.md's rows
+  between the `<!-- scope:… -->` markers and PROGRAM.md's status table between the
+  `<!-- status -->` markers); the coordinator owns the foundations
   (`Elements/Foundations/`), `Certificate/axioms.lock`, the toolchain (`lean-toolchain`,
   `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md and CI; your
   orders name the owner of everything else ([WORKFLOW](docs/WORKFLOW.md), section 4).

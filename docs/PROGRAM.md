@@ -50,16 +50,25 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 ## 3. Status
 
+<!-- status -->
+
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism | records (exceptions) | 48 of 48 current, at stage "exceptions": 46 full, 2 restricted | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved | records (exceptions) | 14 of 14 current, at stage "exceptions": 12 full, 2 restricted | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 | records (exceptions) | 37 of 37 current, at stage "exceptions": 29 full, 5 restricted, 3 in part | — | 80 (Astra, 676244a) | release notes next, for Jack's approval |
+| I | 48 of 48 proved, and I.15's porism | records (exceptions) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved | records (exceptions) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 | records (exceptions) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | release notes next, for Jack's approval |
 | IV–XIII | not begun | — | — | — | — | — |
 
-The scope of each book, generated from `facts.json` and `review/`, stands in the
-[README](../README.md) and on [the certificate](../CERTIFICATE.md), and CI checks that it
-is current. This table is still kept by hand: `render.py` does not yet generate it.
+<!-- /status -->
+
+`render.py` writes this table, and CI checks that it is current. The propositions come
+from `facts.json`; the records from `review/`, current when their stamps match the
+statements and the Lean files, at the stage `exceptions` or `full`
+([review/SCHEMA.md](../review/SCHEMA.md)); and the stage, the outside score and the
+release from [program.toml](program.toml), which the coordinator keeps with this page.
+Acceptance stays "—" until brief 0005's stage 6 gives the acceptance report. The scope of
+each book's statements, whole, restricted or in part, stands in the
+[README](../README.md) and on [the certificate](../CERTIFICATE.md).
 
 The work under way is [brief 0005](briefs/0005-astra-review.md):
 
@@ -91,12 +100,12 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 - **A formal model** of the axioms in Lean with Mathlib, as a separate package, defined
   in [MODEL.md](../tests/model/MODEL.md#a-formal-model-a-later-milestone). Until then the
   evidence is numerical: [tests/model](../tests/model/), in CI, with the hyperbolic check.
-- **The statements' vocabulary.** The axiom lock covers the 37 words the axioms reach.
-  24 definitions reached only from the propositions' statements (`Touches`,
-  `EqualCircles`, `circumference`, `rect`, `Parallel` and others) are in no lock or
-  fingerprint, so a change to one of them changes no printed statement. To decide:
-  extend `vocabulary` to them, or lock them separately; either needs a FIELDS.md change
-  and a decisions entry.
+- **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
+  axioms' statements or the entries' statements reach: 61, the 37 of the axioms and 24
+  that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
+  `Parallel` and others). A change to one is a decision, as a changed axiom is
+  ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).
+  Each later book's definitions join the lock with its statements.
 
 ## 5. Lessons
 
@@ -137,6 +146,10 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 - **17 Oct. One home per rule needs one owner per rule.** Two scripts grew the same lint:
   `check_fidelity.py` (`check_wording`) and `check_style.py` (S5) both reject "Euclid
   cites" and "never need". Who owns a rule is settled before the wave starts.
+- **17 Oct. A statement can change while its print stays the same.** A statement prints
+  `Touches` or `rect` by name, so a new definition of either would have moved no review
+  fingerprint. The lock now holds every word a statement reaches
+  ([axioms.lock](../Certificate/axioms.lock)).
 
 ## 6. Cost and time
 
@@ -154,4 +167,5 @@ in the voyage logs).
 | Book III close-out (I.23, logs, catalogue, status) | 8 | 1.6M | 48 min |
 | Pre-release checks | 6 | 1.4M | 57 min |
 | Book III references research | 11 | 2.5M | 65 min |
-| Precision pass and standards (brief 0005, stages 1 and 1b) | *for the captain* | *for the captain* | *for the captain* |
+| Precision pass and standards (brief 0005, stages 1 and 1b): the build | 23 (3 stopped at an account-terms prompt and were run again) | 5.9M | 95 min |
+| Precision pass and standards: the finish (integration, readers, fixes) | 7 | 2.0M | 104 min |

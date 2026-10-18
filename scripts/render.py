@@ -12,6 +12,9 @@ every book in `heath.BOOKS`:
     GRAPH.md           who uses whom, book by book
     README.md          only the text between `<!-- scope:I -->` and `<!-- /scope:I -->`
                        (and likewise for each book): the book's completion summary
+    docs/PROGRAM.md    only the status table between `<!-- status -->` and
+                       `<!-- /status -->`, with the stage, the outside score and the
+                       release read from `docs/program.toml`
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
@@ -1645,6 +1648,153 @@ def readme(text, facts, records):
     return SCOPE_MARKERS.sub(fill, text)
 
 
+# docs/PROGRAM.md is generated in part: its status table, one row for each book, stands
+# between `<!-- status -->` and `<!-- /status -->`. The propositions come from facts.json
+# and the records from review/; the stage, the outside score and the release, which no
+# file of the edition holds, from docs/program.toml, kept by hand.
+PROGRAM = ROOT / "docs" / "PROGRAM.md"
+PROGRAM_TOML = ROOT / "docs" / "program.toml"
+STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)", re.S)
+PROGRAM_STAGES = ("brief", "statements", "proofs", "voice", "records", "acceptance",
+                  "released")
+PROGRAM_KEYS = {"stage", "outside", "tag", "release"}
+OUTSIDE_KEYS = {"score", "by", "commit"}
+
+
+def load_program():
+    """docs/program.toml, checked: {book: its table}. A fault stops the render, naming
+    each table and key at fault."""
+    where = PROGRAM_TOML.relative_to(ROOT).as_posix()
+    tomllib = heath._toml()
+    try:
+        data = tomllib.loads(PROGRAM_TOML.read_text())
+    except (OSError, tomllib.TOMLDecodeError) as e:
+        raise SystemExit(f"{where}: {e}")
+    faults = []
+    for book, row in data.items():
+        if book not in heath.ROMAN or not isinstance(row, dict):
+            faults.append(f"[{book}] is not a table named for a book of the Elements")
+            continue
+        for key in sorted(set(row) - PROGRAM_KEYS):
+            faults.append(f"[{book}] has an unknown key `{key}`")
+        stage = row.get("stage")
+        if not isinstance(stage, str) or stage.split(" (")[0] not in PROGRAM_STAGES:
+            faults.append(f"[{book}] stage must begin with one of {', '.join(PROGRAM_STAGES)}")
+        outside = row.get("outside")
+        if outside is not None and not (
+                isinstance(outside, dict) and set(outside) == OUTSIDE_KEYS
+                and isinstance(outside["score"], int) and isinstance(outside["by"], str)
+                and heath.COMMIT.fullmatch(str(outside["commit"]))):
+            faults.append(f'[{book}] outside must be {{ score = <a whole number>, by = '
+                          f'"<who read>", commit = "<7 to 40 hex digits>" }}')
+        if "tag" in row and "release" in row:
+            faults.append(f"[{book}] gives a tag and a release: the tag, once there is one")
+        for key in ("tag", "release"):
+            if key in row and not (isinstance(row[key], str) and row[key].strip()):
+                faults.append(f"[{book}] {key} must be a string")
+    for book in BOOKS:
+        if book not in data:
+            faults.append(f"Book {book} is in the edition but has no [{book}] table")
+    if faults:
+        raise SystemExit(f"{where}: " + "; ".join(faults))
+    return data
+
+
+def record_current(ref, record, facts):
+    """Do a record's stamps still match the statements in facts.json and its Lean file
+    (review/SCHEMA.md)? check_fidelity.py fails when they do not; the status table
+    counts them."""
+    r = heath.parse_ref(ref)
+    try:
+        want = heath.review_fingerprint({"propositions": list(facts.values())}, ref)
+    except KeyError:
+        return False
+    return (record["statement"].get("fingerprint") == want and
+            record["review"].get("lean") == heath.file_hash(heath.lean_path(r.book, r.n)))
+
+
+def propositions_cell(book, count, facts):
+    """"48 of 48 proved, and I.15's porism": the propositions proved, with the porisms
+    and companions proved beside them."""
+    refs = [f"{book}.{n}" for n in range(1, count + 1)]
+    proved = [r for r in refs if facts.get(r, {}).get("status") == "proved"]
+    attached = [facts[a] for r in refs for a in facts.get(r, {}).get("attached", [])
+                if facts.get(a, {}).get("status") == "proved"]
+    porisms = [e["of"] for e in attached if e["kind"] == "porism"]
+    companions = [e for e in attached if e["kind"] == "companion"]
+    extras = []
+    if porisms:
+        extras.append(f"{porisms[0]}'s porism" if len(porisms) == 1
+                      else f"the porisms of {and_list(porisms)}")
+    if companions:
+        k = len(companions)
+        extras.append(f"{number_word(k)} companion theorem{'' if k == 1 else 's'}")
+    return f"{len(proved)} of {count} proved" + (f", and {and_list(extras)}" if extras else "")
+
+
+def records_cell(book, count, facts, records):
+    """"48 of 48 current: 0 at "full", 48 at "exceptions"": how many propositions have a
+    record, how many of those are current, and at which stage they stand."""
+    refs = [f"{book}.{n}" for n in range(1, count + 1)]
+    present = [r for r in refs if records.get(r)]
+    if not present:
+        return "none yet"
+    current = [r for r in present if record_current(r, records[r], facts)]
+    stages = {s: sum(1 for r in present if records[r]["review"]["stage"] == s)
+              for s in heath.STAGES}
+    head = f"{len(present)} of {count}" + (" current" if len(current) == len(present)
+                                           else f", {len(current)} current")
+    return f'{head}: {stages["full"]} at "full", {stages["exceptions"]} at "exceptions"'
+
+
+def roman_ranges(books):
+    """["IV", "V", …, "XIII"] ↦ ["IV–XIII"]: runs of consecutive books."""
+    out, run = [], []
+    for book in books:
+        if run and heath.ROMAN.index(book) != heath.ROMAN.index(run[-1]) + 1:
+            out.append(run)
+            run = []
+        run.append(book)
+    if run:
+        out.append(run)
+    return [r[0] if len(r) == 1 else f"{r[0]}–{r[-1]}" for r in out]
+
+
+def status_table(facts, records, program):
+    """PROGRAM.md's status table: a row for each book begun, then one for the books not
+    begun. Acceptance reads "—" until brief 0005's stage 6 gives the acceptance report."""
+    out = ["| Book | Propositions | Stage | Records | Acceptance | Outside score | Release |",
+           "|---|---|---|---|---|---|---|"]
+    begun = [b for b in heath.ROMAN if b in BOOKS or b in program]
+    for book in begun:
+        row = program.get(book, {})
+        count = BOOKS[book][0] if book in BOOKS else 0
+        props = propositions_cell(book, count, facts) if count else "not stated"
+        recs = records_cell(book, count, facts, records) if count else "—"
+        outside = row.get("outside")
+        score = f"{outside['score']} ({outside['by']}, {outside['commit']})" if outside else "—"
+        if "tag" in row:
+            release = f"[{row['tag']}]({REPO}/releases/tag/{row['tag']})"
+        else:
+            release = row.get("release", "—")
+        out.append(f"| {book} | {props} | {row.get('stage', '—')} | {recs} | — | {score} "
+                   f"| {release} |")
+    for books in roman_ranges([b for b in heath.ROMAN if b not in begun]):
+        out.append(f"| {books} | not begun | — | — | — | — | — |")
+    return "\n".join(out)
+
+
+def program_page(text, facts, records, program):
+    """PROGRAM.md's text with the status table filled in between its markers; the rest
+    of the file is left as it is."""
+    if not STATUS_MARKERS.search(text):
+        raise SystemExit("docs/PROGRAM.md has lost its <!-- status --> and <!-- /status --> "
+                         "markers, between which render.py writes the status table")
+    table = status_table(facts, records, program)
+    return STATUS_MARKERS.sub(lambda m: m.group(1) + "\n" + table + "\n\n" + m.group(3), text,
+                              count=1)
+
+
 def heath_edges(book, count):
     """The arrows of a book's graph from Heath's references: a (cited, citing) pair of
     propositions for each earlier proposition that a proposition's enunciation or proof
@@ -1839,7 +1989,12 @@ def main() -> None:
     filled = readme(text, facts, records)
     if filled != text:
         path.write_text(filled)
-    print("rendered book pages, CERTIFICATE.md, GRAPH.md and README.md's scope summaries")
+    text = PROGRAM.read_text()
+    filled = program_page(text, facts, records, load_program())
+    if filled != text:
+        PROGRAM.write_text(filled)
+    print("rendered book pages, CERTIFICATE.md, GRAPH.md, README.md's scope summaries and "
+          "PROGRAM.md's status table")
 
 
 if __name__ == "__main__":

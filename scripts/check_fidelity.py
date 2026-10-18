@@ -16,11 +16,12 @@
    - every axiom an entry rests on, other than Lean's own `propext`,
      `Classical.choice` and `Quot.sound`, is declared under `Elements.Foundations`,
      and so is every axiom declared anywhere in `Elements`, as Lean itself reports;
-   - the axiom lock: every axiom's statement, and every definition those statements
-     reach, is exactly as `Certificate/axioms.lock` has it, in both directions. The
-     number of Euclid's assumptions is the lock's, and the 17 primitive words of
-     `Words.lean` and `Magnitudes.lean` are still `opaque`. Changing either is a
-     decision, recorded in `docs/briefs/0002-decisions.md`; then
+   - the axiom lock: every axiom's statement, and every definition that the axioms'
+     statements or the entries' statements reach, is exactly as
+     `Certificate/axioms.lock` has it, in both directions. The number of Euclid's
+     assumptions is the lock's, and the 17 primitive words of `Words.lean` and
+     `Magnitudes.lean` are still `opaque`. Changing any of these is a decision,
+     recorded in `docs/briefs/0002-decisions.md`; then
      `python3 scripts/check_fidelity.py --write-lock` writes the new lock;
    - the entries are the propositions of `heath.BOOKS`, a porism entry for each of
      Heath's porisms (`heath.heath_porisms`) and nothing else, and companions of
@@ -191,9 +192,10 @@ LOCK_HEADER = """\
 # The exact statement of every assumption the propositions may rest on: Euclid's
 # postulates, Definition 15 and the tacit rules, all declared in Elements/Foundations/.
 # After them, every definition, instance, structure and opaque word of this project that
-# those statements reach, so that no assumption can change its meaning through a word it
-# uses. Lean prints both, as Certificate/FIELDS.md says: full names, no notation, one
-# line each.
+# those statements reach, or that the statement of a proposition, a porism or a
+# companion reaches, so that neither an assumption nor a claim can change its meaning
+# through a word it uses. Lean prints both, as Certificate/FIELDS.md says: full names,
+# no notation, one line each.
 #
 # scripts/check_fidelity.py compares this file with facts.json in both directions, and
 # takes the number of Euclid's assumptions from it. Change it only with a decision,
@@ -266,13 +268,18 @@ def check_lock(facts, path: Path = LOCK):
         if types[name] != locked_axioms[name]:
             fail(f"{name}: its statement is not the one in {where}:\n      "
                  + first_difference(types[name], locked_axioms[name]))
+    # The vocabulary: the words of the axioms' statements and of the entries'.
     for name in sorted(set(vocabulary) - set(locked_vocabulary)):
-        fail(f"{name}: in the axioms' vocabulary but not in {where}")
+        fail(f"{name}: a word of the statements, the axioms' or the entries', not in "
+             f"{where} (a new word is a decision: record it in docs/briefs/0002-decisions.md, "
+             "then run `python3 scripts/check_fidelity.py --write-lock`)")
     for name in sorted(set(locked_vocabulary) - set(vocabulary)):
-        fail(f"{name}: in the lock but no longer in the axioms' vocabulary ({where})")
+        fail(f"{name}: in the lock but no longer a word of any statement ({where})")
     for name in sorted(set(vocabulary) & set(locked_vocabulary)):
         if vocabulary[name] != locked_vocabulary[name]:
-            fail(f"{name}: its definition is not the one in {where}:\n      "
+            fail(f"{name}: its definition is not the one in {where} (a changed word changes "
+                 "what every statement using it says: a decision for "
+                 "docs/briefs/0002-decisions.md):\n      "
                  + first_difference(vocabulary[name], locked_vocabulary[name]))
     return len(locked_axioms)
 

@@ -29,10 +29,11 @@ Common Notions it calls on. If they ever differ, the run fails.
 
 For the whole environment it also records the module that declares every axiom of
 this project, and of every axiom an entry rests on; the `opaque` words; the exact
-statement of every axiom; and the vocabulary those statements are written in. So
-`scripts/check_fidelity.py` can check from Lean itself, not from the source text, that
-every axiom lives in `Elements/Foundations/`, that the primitive words stay opaque, and
-that no axiom has changed what it says.
+statement of every axiom; and the vocabulary that the axioms' statements and the
+entries' statements are written in. So `scripts/check_fidelity.py` can check from Lean
+itself, not from the source text, that every axiom lives in `Elements/Foundations/`,
+that the primitive words stay opaque, that no axiom has changed what it says, and that
+no word a statement uses (`Touches`, `rect`, `Parallel`) has changed what it means.
 
 The results go to `facts.json`, which `scripts/render.py` turns into
 `CERTIFICATE.md`, `GRAPH.md` and the pages under `book/`.
@@ -231,15 +232,17 @@ def projectDecls (env : Environment) : Array (Name × String) × Array Name := I
     if let .opaqueInfo _ := ci then opaques := opaques.push n
   return (axs, opaques)
 
-/-- The words the axioms are stated in: every definition, instance, theorem, opaque,
-inductive type, structure and constructor of this project that the axioms' statements
-reach. The walk starts from the constants of the statements of `axs`, goes on through a
-definition's or an instance's type and value and through an inductive type's
-constructors, and stops at Lean's own constants and at the axioms themselves. An
-opaque's value is not read: that Lean cannot see it is the point. -/
-def vocabulary (env : Environment) (axs : Array Name) : Array Name := Id.run do
+/-- The words the axioms and the entries are stated in: every definition, instance,
+theorem, opaque, inductive type, structure and constructor of this project that the
+statement of an axiom, a proposition, a porism or a companion reaches. The walk starts
+from the constants of the statements of `roots`, goes on through every word's type, a
+definition's or an instance's value and an inductive type's constructors, and stops at
+Lean's own constants and at the axioms themselves. An opaque's value is not read: that
+Lean cannot see it is the point. So `Touches`, which only Book III's statements use, is a
+word, and a change to it fails the lock as a changed axiom would. -/
+def vocabulary (env : Environment) (roots : Array Name) : Array Name := Id.run do
   let mut todo : Array Name := #[]
-  for a in axs do
+  for a in roots do
     if let some ci := env.find? a then todo := todo ++ ci.type.getUsedConstants
   let mut seen : NameSet := {}
   let mut words : Array Name := #[]
@@ -252,8 +255,9 @@ def vocabulary (env : Environment) (axs : Array Name) : Array Name := Id.run do
     let some ci := env.find? c | continue
     if ci.isAxiom then continue
     words := words.push c
+    todo := todo ++ ci.type.getUsedConstants
     match ci with
-    | .defnInfo v => todo := todo ++ v.type.getUsedConstants ++ v.value.getUsedConstants
+    | .defnInfo v => todo := todo ++ v.value.getUsedConstants
     | .inductInfo v => todo := todo ++ v.ctors.toArray
     | _ => pure ()
   return words
@@ -423,13 +427,15 @@ run_cmd do
       ("enunciation", Json.str (doc.getD "")),
       ("statement", Json.str statement)]
   let axiomModules := modules.toArray.qsort (fun a b => a.1 < b.1)
-  /- The statement of every axiom, and every word those statements are written in. -/
+  /- The statement of every axiom, and every word those statements and the entries'
+     statements are written in. -/
   let mut axiomTypes : Array (String × Json) := #[]
   for (key, _) in axiomModules do
     let some ci := (axiomNames.get? key).bind env.find? | throwError "axiom {key} vanished"
     axiomTypes := axiomTypes.push (key, Json.str (← Elab.Command.liftTermElabM <| printExpr ci.type))
   let mut words : Array (String × Json) := #[]
-  for w in vocabulary env (axiomModules.filterMap fun (key, _) => axiomNames.get? key) do
+  let roots := (axiomModules.filterMap fun (key, _) => axiomNames.get? key) ++ subjects.map (·.name)
+  for w in vocabulary env roots do
     let some ci := env.find? w | continue
     let kind := kindOf env ci
     let type ← Elab.Command.liftTermElabM <| printExpr ci.type
@@ -448,4 +454,4 @@ run_cmd do
   let count (k : String) := (subjects.filter (·.kind == k)).size
   logInfo m!"certificate: {count "proposition"} propositions, {count "porism"} porisms and \
     {count "companion"} companions written to facts.json, with {axiomTypes.size} axioms and \
-    {words.size} words of their vocabulary"
+    {words.size} words of the vocabulary they and the entries are stated in"

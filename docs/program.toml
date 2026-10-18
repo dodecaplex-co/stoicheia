@@ -1,0 +1,30 @@
+# docs/program.toml: the columns of PROGRAM.md's status table that the edition's own
+# files cannot give. scripts/render.py reads it, with facts.json (the propositions proved)
+# and review/ (the records, current or stale, at stage "full" or "exceptions"), and writes
+# the table between <!-- status --> and <!-- /status --> in docs/PROGRAM.md; CI checks
+# that the table is current. The coordinator keeps this file with PROGRAM.md, and brings
+# it up to date at the end of every stage and every book (docs/WORKFLOW.md, section 10).
+#
+# One table for each book begun, named by its numeral:
+#   stage    where the book stands, one of brief, statements, proofs, voice, records,
+#            acceptance or released, with a few words in brackets where they help:
+#            "records (exceptions)".
+#   outside  the latest cold outside reading: its score, who read, and the commit read.
+#   tag      the release tag, once there is one; or else
+#   release  a few words on the release still to come.
+# A book with no table here and nothing in facts.json is shown as not begun.
+
+[I]
+stage = "records (exceptions)"
+outside = { score = 90, by = "Astra", commit = "676244a" }
+tag = "book-I"
+
+[II]
+stage = "records (exceptions)"
+outside = { score = 85, by = "Astra", commit = "676244a" }
+tag = "book-II"
+
+[III]
+stage = "records (exceptions)"
+outside = { score = 80, by = "Astra", commit = "676244a" }
+release = "release notes next, for Jack's approval"

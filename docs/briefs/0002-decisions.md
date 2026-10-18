@@ -310,3 +310,81 @@ Astra's [outside review](../reports/outside-review-01.md), with our thanks:
   University Press and not marked free, since the translation is still in copyright;
   Koshkin's article is linked to its free arXiv preprint, with its DOI in the text; Tom
   Davis's handout on inversion is linked over http, which is the address that works.
+
+The follow-ups to the precision pass, from its integrator's notes and the readers'
+findings:
+
+- **Two more kinds of passage, and what "argued another way" means.** A record's passages
+  may also be `case`, a case Euclid's figure leaves aside, or leaves to the reader, which
+  the Lean takes as well (II.14's ED the greater, III.2's AB through the centre), and
+  `given`, a step the statement or our representation already gives, so that no Lean
+  stands beneath it (I.5's D and E). A `different` passage, one the Lean argues another
+  way, changes Euclid's route, so its record's route is `modified` or `alternative`, never
+  `euclid`, and `heath.load_review` refuses the pair. I.39 and I.40, whose Lean makes the
+  end of Euclid's reductio direct, are therefore "one step changed" on their pages and in
+  Book I's summary. [review/SCHEMA.md](../../review/SCHEMA.md) gives the kinds.
+- **A short line beside the badge.** `[statement] short`, at most 70 characters and
+  required when a statement is restricted or partial, is the few words beside the badge
+  under each enunciation ("bases that meet end to end"); the `note`, of up to 160
+  characters, stays in the page's table under "In Lean".
+- **Records with the statements.** A new book's review records are written at the stage
+  "exceptions" together with its statements ([WORKFLOW](../WORKFLOW.md), section 10, step
+  3), so that the scope, the route expected, the representation and every exception known
+  are challenged before any proof is assigned. Each is read again when its proof lands,
+  and brought to the stage "full" before the book's acceptance. Books I–III, whose records
+  came after their proofs, reach "full" in brief 0005's stage 5.
+- **One home for the line between the crew and the reader.** [STYLE](../STYLE.md), section
+  1, "Production stays out of the mathematics", is the one home of the rule that readers
+  meet Euclid, Heath and the proof, not the people and agents who made the page.
+  AGENTS.md, the [orders template](../templates/orders.md) and every fleet prompt point
+  to it instead of restating it, and `check_style.py` (S2) checks its words.
+- **I.47 and I.43 stay whole.** I.47's statement takes the squares standing outward, as
+  Euclid describes them; squares on one straight line are equal whichever side they stand
+  on (`Prop46.square_eq`, after Proclus), and `Prop47.sq` says it of any squares. A choice
+  of figure backed by a proved equality counts as full. I.43's parallelograms about the
+  diameter meet at a point of it, as Heath reads Euclid's words (vol. 1, p. 341); Proclus's
+  cases, with the parallelograms apart or overlapping, are commentary, not scope, and the
+  mishnah tells them. SCHEMA's "full" says both.
+- **When a route is "one step changed".** A record's route is `modified` when the Lean
+  argues another way a real case within Euclid's statement, or one of his steps. When a
+  case is trivial, or lies beyond his statement, the route stays `euclid`, and the case is
+  declared as a passage. SCHEMA's `[route]` says so.
+- **Overlaps: I.7 and I.23 supply a step.** The shortest proofs we found of I.7 and I.23
+  from System E's rules alone take seven and eight of them: Circle 4 and superposition do
+  the work, and the rest draw a figure the statement never mentions and tell its parts
+  apart. That is more than "at once", so [the overlap catalogue](../reports/overlaps.md)
+  lists both as supplying a step, and "gives it at once" now means a proof from at most
+  three rules. Their records keep their `[overlap]`, since each rule still carries its
+  proposition's content. Diagram-angle 3 (`adjacent_eq_of_right`) follows from the other
+  86 axioms by I.13 (`Audit.adjacent_eq_of_right`), and stays an axiom, as System E has
+  it. This corrects the list "I.7, I.23, III.2, III.5, III.6" in the entry "The overlap
+  catalogue" above: III.2, III.5 and III.6 are the rows a rule states or gives at once.
+- **The order of facts.json.** `facts.json` lists the propositions of every book, then the
+  porisms, then the companions, each group in `heath.prop_key` order, and
+  [FIELDS.md](../../Certificate/FIELDS.md) asks every reader to find an entry by its
+  `ref`, so nothing depends on the order.
+- **The statements' words in the lock.** The axiom lock now holds every word that the
+  statement of a proposition, a porism or a companion reaches, as well as those the
+  axioms' statements reach: 24 more, 61 in all. They are `AreParallel`, `CirclesTouch`,
+  `Contain`, `EqualCircles`, `Equilateral`, `InsideTriangle`, `IsAcute`, `IsObtuse`,
+  `OnRay`, `OppositeSidesOf`, `Parallel`, `Parallelogram`, `Rectangle`, `SameSideOf`,
+  `Square`, `Touches`, `TouchesExternally`, `TouchesInternally`, `circumference`,
+  `instNonemptyMagnitude`, `quadArea`, `rect`, `sq` and `standing`. A statement prints
+  such a word by name, so a new definition of `Touches` would have changed no printed
+  statement and no review fingerprint; now it fails `check_fidelity.py`, as a changed
+  axiom does, until it is a decision recorded here. `Certificate/Facts.lean` walks from
+  the entries' statements as well as the axioms', and reads every word's type; the 87
+  axioms and the 37 words they reach are byte for byte as they were, so
+  [MODEL.md](../../tests/model/MODEL.md) stands, and
+  [lock.sha256](../../tests/model/lock.sha256) is renewed. The lock was rewritten with
+  `python3 scripts/check_fidelity.py --write-lock`; [FIELDS.md](../../Certificate/FIELDS.md)
+  says how the vocabulary is found, and a negative test gives `Touches` another meaning
+  in a copy of facts.json and checks that the lock catches it. This settles the question
+  PROGRAM.md left open.
+- **PROGRAM.md's status table, generated.** `render.py` writes the status table of
+  [PROGRAM.md](../PROGRAM.md) between its `<!-- status -->` markers: the propositions
+  proved from `facts.json`; the records, how many are current and how many stand at "full"
+  and at "exceptions", from `review/`; and the stage, the outside score and the release
+  from [program.toml](../program.toml), which the coordinator keeps by hand. CI's check of
+  the generated pages covers it, and the integrator commits it with the other generated
+  files. Acceptance reads "—" until the acceptance report of brief 0005's stage 6.

@@ -3,9 +3,10 @@
 # The exact statement of every assumption the propositions may rest on: Euclid's
 # postulates, Definition 15 and the tacit rules, all declared in Elements/Foundations/.
 # After them, every definition, instance, structure and opaque word of this project that
-# those statements reach, so that no assumption can change its meaning through a word it
-# uses. Lean prints both, as Certificate/FIELDS.md says: full names, no notation, one
-# line each.
+# those statements reach, or that the statement of a proposition, a porism or a
+# companion reaches, so that neither an assumption nor a claim can change its meaning
+# through a word it uses. Lean prints both, as Certificate/FIELDS.md says: full names,
+# no notation, one line each.
 #
 # scripts/check_fidelity.py compares this file with facts.json in both directions, and
 # takes the number of Euclid's assumptions from it. Change it only with a decision,
@@ -102,15 +103,23 @@
 "Tacit.triple_incidence2" = "∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Not (Elements.SameSide B D M) → Not (Elements.OnLine D M) → Ne B A → Elements.SameSide B C N"
 "Tacit.triple_incidence3" = "∀ {A B C D E : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N → Elements.SameSide D E M → Elements.SameSide C E N → Elements.SameSide C E L"
 
-[vocabulary]  # 37
+[vocabulary]  # 61
 "Angle" = "def : Type := Elements.Magnitude Elements.Kind.angle"
+"AreParallel" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C D : Elements.Point) => And (Ne A B) (And (Ne C D) (∀ (L M : Elements.Line), Elements.OnLine A L → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D M → Elements.Parallel L M))"
 "Area" = "def : Type := Elements.Magnitude Elements.Kind.area"
 "Between" = "opaque : Elements.Point → Elements.Point → Elements.Point → Prop"
 "Centre" = "opaque : Elements.Point → Elements.Circle → Prop"
 "Circle" = "opaque : Type"
 "CirclesMeet" = "def : Elements.Circle → Elements.Circle → Prop := fun (α β : Elements.Circle) => Exists fun (A : Elements.Point) => Exists fun (B : Elements.Point) => And (Ne A B) (And (Elements.OnCircle A α) (And (Elements.OnCircle A β) (And (Elements.OnCircle B α) (Elements.OnCircle B β))))"
+"CirclesTouch" = "def : Elements.Circle → Elements.Circle → Elements.Point → Prop := fun (α β : Elements.Circle) (C : Elements.Point) => Or (Elements.TouchesInternally α β C) (Or (Elements.TouchesInternally β α C) (Elements.TouchesExternally α β C))"
 "Collinear" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"
+"Contain" = "def : Elements.Length → Elements.Length → Elements.Area → Prop := fun (a b : Elements.Length) (x : Elements.Area) => Or (And (Or (Eq a 0) (Eq b 0)) (Eq x 0)) (Exists fun (P : Elements.Point) => Exists fun (Q : Elements.Point) => Exists fun (R : Elements.Point) => Exists fun (S : Elements.Point) => And (Elements.Rectangle P Q R S) (And (Eq (Elements.len P Q) a) (And (Eq (Elements.len P S) b) (Eq (Elements.quadArea P Q R S) x))))"
+"EqualCircles" = "def : Elements.Circle → Elements.Circle → Prop := fun (α β : Elements.Circle) => Exists fun (G : Elements.Point) => Exists fun (H : Elements.Point) => Exists fun (P : Elements.Point) => Exists fun (Q : Elements.Point) => And (Elements.Centre G α) (And (Elements.Centre H β) (And (Elements.OnCircle P α) (And (Elements.OnCircle Q β) (Eq (Elements.len G P) (Elements.len H Q)))))"
+"Equilateral" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => And (Elements.Triangle A B C) (And (Eq (Elements.len A B) (Elements.len B C)) (Eq (Elements.len B C) (Elements.len C A)))"
 "InsideCircle" = "opaque : Elements.Point → Elements.Circle → Prop"
+"InsideTriangle" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (D A B C : Elements.Point) => And (Elements.SameSideOf D A B C) (And (Elements.SameSideOf D B C A) (Elements.SameSideOf D C A B))"
+"IsAcute" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => LT.lt (Elements.ang A B C) Elements.rightAngle"
+"IsObtuse" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => LT.lt Elements.rightAngle (Elements.ang A B C)"
 "IsRightAngle" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (D : Elements.Point) => And (Elements.Between A B D) (And (Not (Elements.Collinear A B C)) (Eq (Elements.ang A B C) (Elements.ang C B D)))"
 "Kind" = "inductive : Type"
 "Kind.angle" = "constructor : Elements.Kind"
@@ -127,16 +136,32 @@
 "MagnitudeImpl" = "opaque : Elements.Kind → NonemptyType"
 "OnCircle" = "opaque : Elements.Point → Elements.Circle → Prop"
 "OnLine" = "opaque : Elements.Point → Elements.Line → Prop"
+"OnRay" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (P A B : Elements.Point) => And (Ne A B) (And (Ne P A) (And (Elements.Collinear A B P) (Not (Elements.Between P A B))))"
 "OppositeSides" = "def : Elements.Point → Elements.Point → Elements.Line → Prop := fun (A B : Elements.Point) (L : Elements.Line) => And (Not (Elements.OnLine A L)) (And (Not (Elements.OnLine B L)) (Not (Elements.SameSide A B L)))"
+"OppositeSidesOf" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (P Q A B : Elements.Point) => And (Ne A B) (∀ (L : Elements.Line), Elements.OnLine A L → Elements.OnLine B L → Elements.OppositeSides P Q L)"
 "OutsideCircle" = "def : Elements.Point → Elements.Circle → Prop := fun (A : Elements.Point) (α : Elements.Circle) => And (Not (Elements.InsideCircle A α)) (Not (Elements.OnCircle A α))"
+"Parallel" = "def : Elements.Line → Elements.Line → Prop := fun (L M : Elements.Line) => And (Ne L M) (Not (Exists fun (P : Elements.Point) => And (Elements.OnLine P L) (Elements.OnLine P M)))"
+"Parallelogram" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C D : Elements.Point) => And (Elements.AreParallel A B C D) (Elements.AreParallel B C D A)"
 "Point" = "opaque : Type"
+"Rectangle" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C D : Elements.Point) => And (Elements.Parallelogram A B C D) (And (Eq (Elements.ang D A B) Elements.rightAngle) (And (Eq (Elements.ang A B C) Elements.rightAngle) (And (Eq (Elements.ang B C D) Elements.rightAngle) (Eq (Elements.ang C D A) Elements.rightAngle))))"
 "SameSide" = "opaque : Elements.Point → Elements.Point → Elements.Line → Prop"
+"SameSideOf" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (P Q A B : Elements.Point) => And (Ne A B) (∀ (L : Elements.Line), Elements.OnLine A L → Elements.OnLine B L → Elements.SameSide P Q L)"
+"Square" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C D : Elements.Point) => And (Eq (Elements.len A B) (Elements.len B C)) (And (Eq (Elements.len B C) (Elements.len C D)) (And (Eq (Elements.len C D) (Elements.len D A)) (And (Eq (Elements.ang D A B) Elements.rightAngle) (And (Eq (Elements.ang A B C) Elements.rightAngle) (And (Eq (Elements.ang B C D) Elements.rightAngle) (Eq (Elements.ang C D A) Elements.rightAngle))))))"
+"Touches" = "def : Elements.Point → Elements.Point → Elements.Circle → Prop := fun (A B : Elements.Point) (α : Elements.Circle) => And (Ne A B) (∀ (L : Elements.Line), Elements.OnLine A L → Elements.OnLine B L → And (Exists fun (P : Elements.Point) => And (Elements.OnLine P L) (Elements.OnCircle P α)) (Not (Elements.LineMeetsCircle L α)))"
+"TouchesExternally" = "def : Elements.Circle → Elements.Circle → Elements.Point → Prop := fun (α β : Elements.Circle) (C : Elements.Point) => And (Elements.OnCircle C α) (And (Elements.OnCircle C β) (∀ (P : Elements.Point), Elements.InsideCircle P α → Not (Elements.InsideCircle P β)))"
+"TouchesInternally" = "def : Elements.Circle → Elements.Circle → Elements.Point → Prop := fun (α β : Elements.Circle) (C : Elements.Point) => And (Elements.OnCircle C α) (And (Elements.OnCircle C β) (And (Ne α β) (∀ (P : Elements.Point), Elements.OnCircle P β → Not (Elements.OutsideCircle P α))))"
 "Triangle" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Not (Elements.Collinear A B C)"
 "ang" = "opaque : Elements.Point → Elements.Point → Elements.Point → Elements.Angle"
 "area" = "opaque : Elements.Point → Elements.Point → Elements.Point → Elements.Area"
+"circumference" = "def : Elements.Circle → Elements.Point → Elements.Point → Elements.Point → Elements.Angle := fun (α : Elements.Circle) (B K C : Elements.Point) => Classical.epsilon fun (x : Elements.Angle) => Exists fun (A : Elements.Point) => And (Elements.OnCircle A α) (And (Elements.OppositeSidesOf A K B C) (Eq x (HAdd.hAdd (Elements.ang B A C) (Elements.ang B A C))))"
 "instAddMagnitude" = "instance : {k : Elements.Kind} → Add (Elements.Magnitude k) := fun {k : Elements.Kind} => Add.mk Elements.Magnitude.add"
 "instLEMagnitude" = "instance : {k : Elements.Kind} → LE (Elements.Magnitude k) := fun {k : Elements.Kind} => LE.mk fun (a b : Elements.Magnitude k) => Not (LT.lt b a)"
 "instLTMagnitude" = "instance : {k : Elements.Kind} → LT (Elements.Magnitude k) := fun {k : Elements.Kind} => LT.mk Elements.Magnitude.lt"
+"instNonemptyMagnitude" = "instance : ∀ {k : Elements.Kind}, Nonempty (Elements.Magnitude k) := fun {k : Elements.Kind} => Subtype.property (Elements.MagnitudeImpl k)"
 "instOfNatMagnitudeOfNatNat" = "instance : {k : Elements.Kind} → OfNat (Elements.Magnitude k) 0 := fun {k : Elements.Kind} => OfNat.mk Elements.Magnitude.zero"
 "len" = "opaque : Elements.Point → Elements.Point → Elements.Length"
+"quadArea" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Elements.Area := fun (A B C D : Elements.Point) => HAdd.hAdd (Elements.area A B C) (Elements.area A C D)"
+"rect" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Elements.Area := fun (A B C D : Elements.Point) => Classical.epsilon (Elements.Contain (Elements.len A B) (Elements.len C D))"
 "rightAngle" = "opaque : Elements.Angle"
+"sq" = "def : Elements.Point → Elements.Point → Elements.Area := fun (A B : Elements.Point) => Elements.rect A B A B"
+"standing" = "def : Elements.Circle → Elements.Point → Elements.Point → Elements.Point → Elements.Angle := fun (α : Elements.Circle) (B A C : Elements.Point) => Classical.epsilon fun (x : Elements.Angle) => Exists fun (X : Elements.Point) => And (Elements.OnCircle X α) (And (Elements.SameSideOf X A B C) (Eq x (HAdd.hAdd (Elements.ang B X C) (Elements.ang B X C))))"
