@@ -19,8 +19,8 @@ straight line joining two parallels "in the same directions" leaves their other
 ends on either side of it. These are those facts, together with the figure of I.29
 drawn about any straight line falling on two parallels.
 
-None of them needs Postulate 5. They say only what "do not meet" means, read with
-System E's rules for sides (Avigad, Dean and Mumma, §3.4).
+None of their proofs uses Postulate 5. They say only what "do not meet" means,
+read with System E's rules for sides (Avigad, Dean and Mumma, §3.4).
 -/
 
 namespace Elements

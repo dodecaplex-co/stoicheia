@@ -54,7 +54,10 @@ book introductions, the Lean comments, the gap catalogues and the README carry n
 talk **[checked]**: "Book Zero proves it once", not "the first mate added it". Roles,
 model names and how the work was shared belong in [WORKFLOW.md](WORKFLOW.md),
 [PROGRAM.md](PROGRAM.md), the briefs, `docs/reports/crew/` and the README's "How it was
-made", which says plainly how the work is done.
+made", which says plainly how the work is done. This paragraph is the one home of that
+boundary between the crew and the reader: [AGENTS.md](../AGENTS.md), the
+[orders](templates/orders.md) and every fleet prompt point here instead of restating it,
+and `scripts/check_style.py` checks its words (S2, section 8).
 
 **People by name,** spelled as Heath spells them (Proclus, an-Nairīzī, van Pesch). A
 modern author in full at the first mention on each page, then by surname:

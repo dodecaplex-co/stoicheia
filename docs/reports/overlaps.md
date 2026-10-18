@@ -19,10 +19,15 @@ where it first enters the development, and how it reaches the proposition's own 
 Each row is one of three kinds:
 
 - **States it**: the rule, read for the proposition's figure, is its statement, or says more.
-- **Gives it at once**: the proposition follows from the rule in a short proof that cites
-  no proposition. Any other rules in that proof only draw or name the figure.
+- **Gives it at once**: the proposition follows from the rule in a short proof, from at
+  most three rules, that cites no proposition. Any other rules in that proof only draw or
+  name the figure.
 - **Supplies a step**: inside some proof, the rule carries a step that is a proposition's
   content, or a case of it. The first column says which proposition, and in which proofs.
+  For I.7 and I.23 the proof is the audit lemma: the rule carries the proposition's
+  content, but the shortest proof we found from the rules alone takes seven and eight of
+  them, the rest drawing a figure the statement never mentions and telling its parts
+  apart, which is more than "at once".
 
 "First enters" names the first proposition, in Euclid's order, whose own proof uses the
 rule, from `direct_axioms` in [facts.json](../../facts.json) as committed. Each audit
@@ -33,10 +38,10 @@ reaches the proof, read from Lean's proof terms, and what the Lean proof does.
 
 | Proposition | Rule(s) | Kind | First enters | Audit lemma |
 |---|---|---|---|---|
-| [I.7](#i7) | Circle 4 (`not_same_side_of_circles_meet`): two circles cut one another on opposite sides of the straight line through their centres | Gives it at once: I.7 is the rule with its two circles left undrawn | Nowhere: no proof uses it | `Audit.I_7` |
+| [I.7](#i7) | Circle 4 (`not_same_side_of_circles_meet`): two circles cut one another on opposite sides of the straight line through their centres | Supplies a step, in `Audit.I_7`: I.7 is the rule with its two circles left undrawn, and drawing them and telling them apart takes six rules more | Nowhere: no proof uses it | `Audit.I_7` |
 | [I.13, a case of it, in 17 proofs from II.1 on](#i13-in-17-proofs) | Diagram-angle 3 (`adjacent_eq_of_right`): the angle beside a right angle is right | Supplies a step: I.13 makes the two angles two right angles, so the second is right | II.1 | `Audit.adjacent_eq_of_right` runs the other way: the rule, proved from I.13 |
 | [I.13, a consequence of it, in I.47](#i13-in-i47) | Metric 5 (`angle_le_two_right`): no angle exceeds two right angles | Supplies a step: for an angle between two straight lines, I.13 gives it | I.47, its only user | None |
-| [I.23](#i23) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Gives it at once: laid down at A along AB, the triangle DCE carries its angle at C to A | I.4 | `Audit.I_23` |
+| [I.23](#i23) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_23`: laid down at A along AB, the triangle DCE carries its angle at C to A, and naming the ray and the side takes seven axioms more | I.4 | `Audit.I_23` |
 | [III.1's corollary, in III.1 Por.](#iii1-por) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.1's porism; of the propositions themselves, III.14 | None |
 | [III.2](#iii2) | Circle 2 (`inside_of_between`): between two points on or within a circle, every point is within it | States it, and more: the ends may be within the circle as well as on it | I.5 and I.9 | `Audit.III_2`, Astra's proof: Circle 2 alone |
 | [III.2, in III.1](#iii2-in-iii1) | Circle 2 (`inside_of_between`) | Supplies a step: the middle point D of the chord AB is within the circle, "a fact which Euclid first demonstrates in III. 2", as Isaac Todhunter observes (Heath, vol. 2, p. 7) | I.5 and I.9, as above | None |
@@ -152,16 +157,18 @@ For each row we looked for a proof of the proposition's statement from at most t
   Circle 4 does the work, and the others draw two circles the statement never mentions and
   tell them apart. Circle 4 alone does not give I.7: where there are no circles and every
   length is nothing, it holds, having nothing to speak of, and I.7 fails for any two points
-  on one side of AB.
+  on one side of AB. So the row says that Circle 4 supplies I.7's step, not that it gives
+  I.7 at once.
 - **I.23**: not found from three. `Audit.I_23` uses eight axioms (System E's Metric 1 is two
   of them): superposition does the work, and the others name the ray and the side.
   Superposition alone does not give I.23: where there are no straight lines it holds,
-  having nothing to speak of, and no point lies on a ray from A through B.
+  having nothing to speak of, and no point lies on a ray from A through B. So the row says
+  that superposition supplies I.23's step, as for I.7.
 - **The steps.** For III.1, its porism and I.13 we found no proof from three rules: each
   needs a construction Euclid makes by earlier propositions, a bisection or a
   perpendicular (I.10, I.11). In the other direction, Diagram-angle 3 is a theorem of
   the remaining axioms: `Audit.adjacent_eq_of_right` proves it from I.13, and Lean's list
-  of what that proof rests on does not include it.
+  of what that proof rests on does not include it. It stays an axiom, as System E has it.
 
 ## Near misses
 

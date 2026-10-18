@@ -9,7 +9,7 @@ kind = "euclid"
 
 [overlap]
 rule = "Tacit.superposition"
-note = "Superposition lays the triangle DCE down at A, along AB and on P's side, and so gives I.23 at once. Our proof is Euclid's, by I.22 and I.8; it rests on the rule through I.8, and does not establish it."
+note = "Superposition lays the triangle DCE down at A, along AB and on P's side, and so supplies I.23's step; a proof from the rules alone takes eight. Our proof is Euclid's, by I.22 and I.8; it rests on the rule through I.8, and does not establish it."
 
 [review]
 stage = "exceptions"

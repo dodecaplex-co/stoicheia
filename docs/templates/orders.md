@@ -62,8 +62,9 @@ kernel. <Superposition and Postulate 5 as the book allows.> Import `Elements.Fig
 the book's ground and every proposition you cite. Search Book Zero before writing a helper,
 and never copy one that exists.
 
-**The voice.** `docs/STYLE.md`, sections 1 to 6, and `docs/examples.md`. <The faults the
-last pass found, if any, in a line each.>
+**The voice.** `docs/STYLE.md`, sections 1 to 6, and `docs/examples.md`. What may and may
+not be said about how the work was made is STYLE, section 1, "Production stays out of the
+mathematics": read it there. <The faults the last pass found, if any, in a line each.>
 
 **The figure.** Heath's letters, all and only, each point where your proof puts it, by
 STYLE section 7; title "Euclid <B>.N: …"; no `<desc>`. <Who draws the figure at a glance.>
@@ -87,8 +88,8 @@ review record: list it under "Records made stale" in your handback, and never ru
 `scripts/review_stamp.py` on it.
 
 **Finish.** Commit your files by name, "<B>.N: proof, figure, mishnah and further
-reading"; never `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md` or README.md's rows
-between the `<!-- scope:… -->` markers. If your sandbox
+reading"; never `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, README.md's rows
+between the `<!-- scope:… -->` markers or PROGRAM.md's status table. If your sandbox
 cannot write to `.git`, leave the files for whoever runs you to commit, and say so. Do not
 push, merge or rebase.
 

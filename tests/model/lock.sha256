@@ -7,4 +7,8 @@
 # with the output of
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
-d2767507d0e41c6fcafc20f798fa571f6c56a2a79029c15a928b7c34fedaefa7  Certificate/axioms.lock
+#
+# Renewed on 17 October 2026, when the words of the propositions' statements joined the lock's
+# vocabulary: the 87 axioms and the 37 words they reach are unchanged, byte for byte, so
+# MODEL.md's account stands as it was.
+ea46c571028b5e62da2c71f97bfbc09b40b83e7758f8f687dd3747097a528bd6  Certificate/axioms.lock

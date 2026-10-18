@@ -34,7 +34,8 @@ jobs:
       - name: Check the contracts (references, porisms, review terms and records)
         run: python3 scripts/heath.py
 
-      - name: Check the Lean still quotes Heath; the house rules, the policies for every entry, the axiom lock, the review records and the wording
+      - name: Check the Lean still quotes Heath; the house rules, the policies for every entry, the lock of the axioms and the statements' words, and the review records
+        # The wording of the reader-facing pages is check_style.py's (S5), the next step.
         run: python3 scripts/check_fidelity.py
 
       - name: Check the house style's hard rules
@@ -42,12 +43,13 @@ jobs:
         run: python3 scripts/check_style.py
 
       - name: Check the generated pages are up to date
-        # `git status` sees new and deleted pages as well as changed ones. README.md is
-        # generated in part: render.py fills its scope markers.
+        # `git status` sees new and deleted pages as well as changed ones. README.md and
+        # docs/PROGRAM.md are generated in part: render.py fills README's scope markers
+        # and PROGRAM.md's status table.
         run: |
           python3 scripts/render.py
-          git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md
-          test -z "$(git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md)"
+          git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md
+          test -z "$(git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md)"
 
       - name: Check every relative link and anchor
         run: python3 scripts/check_links.py
@@ -72,7 +74,7 @@ jobs:
           lake build
           lake env lean Certificate/Facts.lean
 
-      - name: An edited Heath word, wrong radii in I.1, a weakened axiom, stale and incomplete review records, and planted assumptions in I.15's porism and I.16
+      - name: An edited Heath word, wrong radii in I.1, a weakened axiom, a statements' word changed, a primitive no longer opaque, stale and incomplete review records, a native_decide, planted assumptions in I.15's porism and I.16, and a sorry in a complete book
         run: python3 scripts/negative_tests.py
 
   model:

@@ -62,8 +62,9 @@ that statement. So statements and representations are settled first.
 1. **The book's brief** (`docs/briefs/`) settles the vocabulary, the representations and
    their bridge theorems, the construction inputs, the shared ground, the conventions and
    the exceptions expected. The coordinator approves it before any statement is written. A
-   new word is a definition in the foundations, owned by the coordinator; a new axiom is a
-   foundation decision ([FORMALIZATION.md](FORMALIZATION.md), section 1).
+   new word is a definition in the foundations, owned by the coordinator, and joins
+   `Certificate/axioms.lock` with a decisions entry once a statement uses it; a new axiom
+   is a foundation decision ([FORMALIZATION.md](FORMALIZATION.md), section 1).
 2. **Each proposition's statement** is written with `sorry`, under Heath's sentences
    (`scripts/scaffold_book.py`), with a proposition brief
    ([template](templates/proposition.md)) for anything not routine: the declaration, its
@@ -137,11 +138,12 @@ files working in parallel, the renderers, and an integrator followed by blind re
 - **Standing owners.** The coordinator owns `Elements/Foundations/` (every `Definitions*`
   file included), `Certificate/axioms.lock`, the toolchain and its dependencies
   (`lean-toolchain`, `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md
-  and the CI workflow, and may hand the lock, the decisions page, PROGRAM.md and the CI
-  workflow to a wave's integrator. The integrator
-  owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, and
-  README.md's rows between the `<!-- scope:… -->` markers, which `render.py` fills; the
-  rest of README.md has an owner of its own, named in the orders. Each wave names owners
+  with `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions page,
+  PROGRAM.md and the CI workflow to a wave's integrator. The integrator
+  owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
+  README.md's rows between the `<!-- scope:… -->` markers and PROGRAM.md's status table
+  between the `<!-- status -->` markers, which `render.py` fills; the rest of README.md has
+  an owner of its own, named in the orders. Each wave names owners
   for Book Zero and the shared helper modules, `heath/`, the scripts, `Certificate/Facts.lean`,
   the review records, the reading list and bibliography, and the book briefs.
 - **Ask for a shared lemma with a proposed type:** its purpose, a proof or a plan, where it
@@ -163,7 +165,8 @@ A voyage is one stretch of a book, run as a workflow:
   stretch, and every sailor follows them word for word. They open with a note on what the
   user's latest relayed message means for the task, so that a short message ("continue",
   "ignore") is read as it was meant: a relayed "Ignore" once made a fleet stand down. They
-  carry the voice of [STYLE.md](STYLE.md) into every prompt.
+  carry the voice of [STYLE.md](STYLE.md) into every prompt, and point to STYLE, section 1,
+  for the line between the crew and the reader, rather than restate it.
 - **Best of two.** Each proposition goes to two Codex sailors working independently, at the
   usual and the highest reasoning setting. The bosun builds both, keeps the proof that
   follows Euclid more closely, and may take a piece of the other. The highest setting has won
@@ -266,7 +269,7 @@ python3 scripts/heath.py
 python3 scripts/check_fidelity.py
 python3 scripts/check_style.py
 python3 scripts/render.py
-git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md   # prints nothing
+git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
 python3 scripts/check_links.py
 ```
 
@@ -345,14 +348,18 @@ looked into.
 1. **Ground.** Heath's text is transcribed from the scans and checked against the page
    images; the scripts and the certificate are taught the new book.
 2. **The brief**, its definitions and its ground lemmas, approved (section 2).
-3. **Statements** with `sorry`, scratch proofs, challenges, and the orders.
+3. **Statements** with `sorry`, each with its review record at the stage `exceptions`
+   ([schema](../review/SCHEMA.md)): the statement's scope, the route expected, the
+   representation and every exception known, written by the statement's owner; then
+   scratch proofs, challenges to the statements and their records, and the orders.
 4. **Voyages:** fleets prove the book in parallel (section 5). Book III's thirty-seven
    propositions took two fleets of four ships.
 5. **Close-out:** the figures at a glance, the gap catalogue, the book's introduction, the
    reading lines, a decisions entry, the scratch proofs retired, and the logs.
 6. **One voice** (section 7).
-7. **Review records** for every proposition, at least at the stage `exceptions`, and `full`
-   before a consolidation release.
+7. **Review records** completed: each record written in step 3 is read again against its
+   finished proof (section 6), and every one reaches the stage `full` before acceptance.
+   Books I–III, whose records came after their proofs, reach it in brief 0005's stage 5.
 8. **A read-through.**
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book.

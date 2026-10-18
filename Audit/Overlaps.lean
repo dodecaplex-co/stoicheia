@@ -7,7 +7,8 @@ Some of System E's rules, which we take as axioms, already say what Euclid later
 or give it in a few lines. Astra found the clearest case, III.2, in the outside review
 (`docs/reports/outside-review-01.md`), and compiled its one-line proof; we are grateful.
 The catalogue in `docs/reports/overlaps.md` lists every case we found, and this file
-proves each "states it" or "gives it at once" row again, from the rules alone. A second
+proves each "states it" or "gives it at once" row again, from the rules alone, and I.7 and
+I.23, whose rules supply their step in a proof that needs seven and eight. A second
 section proves III.24, III.26 and III.27 without the hypotheses our measure of
 circumferences leaves idle, the catalogue's near misses of representation.
 
@@ -27,7 +28,7 @@ namespace Audit
 
 open Elements Elements.Tacit
 
-/-! ## Rules that state a proposition, or give it at once -/
+/-! ## Rules that state a proposition, give it at once, or supply its step -/
 
 /-- **I.7 from Circle 4.** Two circles that cut one another do so on opposite sides of
 the straight line through their centres (`not_same_side_of_circles_meet`, Circle 4).

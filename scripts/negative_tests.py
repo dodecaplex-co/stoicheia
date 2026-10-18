@@ -9,9 +9,10 @@ records current; CI runs it on every push.
 2. The README's "Try breaking it": I.1 takes its radii from the wrong circle, and
    Lean refuses the proof.
 3. Without a build, on a copy of `facts.json`: Postulate 1 weakened in the printed
-   statements no longer matches the axiom lock; a changed statement of III.1's porism
-   makes III.1's review record stale; and `Centre`, no longer among the opaque
-   primitives (as if it had been made a `def`), is caught.
+   statements no longer matches the axiom lock; `Touches`, a word only Book III's
+   statements use, given another meaning no longer matches it either; a changed
+   statement of III.1's porism makes III.1's review record stale; and `Centre`, no
+   longer among the opaque primitives (as if it had been made a `def`), is caught.
 4. A changed Lean file makes its review record stale (I.1).
 5. III.16's review record without its unformalized passage leaves a run of `--` lines
    with no Lean beneath it undeclared.
@@ -127,6 +128,17 @@ def weakened_postulate() -> None:
             else "False → " + s
     expect_failure("Postulate 1 weakened in facts.json", with_facts(weaken),
                    "Postulate1: its statement is not the one in Certificate/axioms.lock")
+
+
+def changed_word() -> None:
+    def change(facts):
+        # A straight line "touches" a circle without the clause that A and B differ. The
+        # statements name the word without its meaning, so no printed statement and no
+        # review fingerprint moves: only the lock can see it.
+        words = facts["vocabulary"]
+        words["Touches"] = words["Touches"].replace("And (Ne A B) ", "", 1) + " "
+    expect_failure("Touches given another meaning in facts.json", with_facts(change),
+                   "Touches: its definition is not the one in Certificate/axioms.lock")
 
 
 def stale_statement() -> None:
@@ -293,6 +305,7 @@ def main() -> int:
     heath_word()
     wrong_radii()
     weakened_postulate()
+    changed_word()
     stale_statement()
     primitive_not_opaque()
     stale_lean()

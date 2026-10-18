@@ -13,8 +13,8 @@ import Elements.Foundations.Definitions
 >    if produced indefinitely, meet on that side on which are the angles less
 >    than the two right angles.
 
-Each one is an `axiom`. The certificate reports exactly which propositions use
-which postulates; most famously, Postulate 5 is not needed until I.29.
+Each one is an `axiom`. The certificate reports exactly which proofs use which
+postulates; most famously, no proof before I.29 uses Postulate 5.
 -/
 
 namespace Elements

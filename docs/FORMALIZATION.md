@@ -298,8 +298,11 @@ dependencies.
   Definition I.15 and 81 tacit rules, 87 in all, each tacit rule from System E (or
   LeanEuclid's corrections of it) with its citation. A new rule, or a change to one, is a
   foundation decision (section 1); `Certificate/axioms.lock` holds every axiom's exact
-  statement, and changes only through `check_fidelity.py --write-lock`, together with a
-  decisions entry, and with `tests/model/lock.sha256` updated and
+  statement, with every definition that the axioms' statements or the propositions',
+  porisms' and companions' statements reach (`Touches`, `rect`, `Parallel`), so that no
+  word can change what an axiom or a claim says. It changes only through
+  `check_fidelity.py --write-lock`, together with a decisions entry, and with
+  `tests/model/lock.sha256` updated and
   [tests/model/MODEL.md](../tests/model/MODEL.md) read again for the changed laws, in the
   same change; otherwise CI's `model` job fails. Review an axiom's statement and strength, not only the count. An
   assignment to finish a proof is never permission to add an axiom that asserts its

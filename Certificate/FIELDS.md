@@ -34,7 +34,7 @@ in Books I-III, I.15, III.1 and III.16.
 | `axiom_modules` | object, name to module | Every axiom this project declares, and every other axiom an entry rests on, with the module that declares it. Lean's `propext`, `Classical.choice`, `Quot.sound` and `sorryAx` are not listed. |
 | `opaque` | list of names | Every `opaque` constant this project declares. |
 | `axiom_types` | object, name to string | **New.** The printed statement of every axiom in `axiom_modules`, with exactly the same keys. 87 at commit d040117. |
-| `vocabulary` | object, name to string | **New.** Every definition, instance, structure, inductive type and opaque of this project that an axiom's statement reaches (below). |
+| `vocabulary` | object, name to string | **New.** Every definition, instance, structure, inductive type and opaque of this project that the statement of an axiom, or of an entry, reaches (below). |
 
 Names here are Lean's full names without the leading `Elements.`, as `axiom_modules`
 has always written them: `"Postulate1"`, `"Tacit.centre_unique"`, `"Magnitude.add"`.
@@ -106,12 +106,20 @@ can be checked against these.
 
 ## The vocabulary
 
-Start from the statements of the axioms in `axiom_modules`. Take every constant they
-mention; for a definition or instance, also every constant in its type and value, and
-for an inductive type or structure, its constructors; and go on until nothing new
-appears. Keep what this project declares, apart from the axioms themselves (they are in
-`axiom_types`). Stop at anything from outside the project (`Eq`, `Exists`, `HAdd.hAdd`):
-Lean's own constants are fixed by the toolchain.
+Start from the statements of the axioms in `axiom_modules` and the `statement` of every
+entry: the propositions, the porisms and the companions. Take every constant they
+mention; for each word found, every constant in its type; for a definition or instance,
+also every constant in its value; and for an inductive type or structure, its
+constructors; and go on until nothing new appears. Keep what this project declares, apart
+from the axioms themselves (they are in `axiom_types`). Stop at anything from outside the
+project (`Eq`, `Exists`, `HAdd.hAdd`): Lean's own constants are fixed by the toolchain.
+
+So the vocabulary holds the words the assumptions are stated in and the words the claims
+are stated in. A word that only the entries' statements use, as `Touches`,
+`EqualCircles`, `circumference`, `rect` or `Parallel`, appears in them by name alone, so a
+change to what it means would leave the printed statements, and every review
+fingerprint, as they were. The lock catches it instead: `Certificate/axioms.lock` holds
+every word, and a changed word fails `check_fidelity.py` until the change is a decision.
 
 Each value is `"<kind> : <type>"`, with `" := <value>"` after it for a `def` or
 `instance`. The kinds are `def` (abbreviations and noncomputable definitions included),
@@ -119,7 +127,8 @@ Each value is `"<kind> : <type>"`, with `" := <value>"` after it for a `def` or
 value is not printed: that Lean cannot see it is the point. An inductive type's or a
 structure's constructors are entries of their own.
 
-At commit d040117 there are 37, among them:
+At commit d040117 there were 37, all reached from the axioms; with the entries'
+statements, from 17 October 2026, there are 61. Among them:
 
 ```text
 "Collinear": "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"
@@ -127,6 +136,7 @@ At commit d040117 there are 37, among them:
 "Magnitude": "def : Elements.Kind → Type := fun (k : Elements.Kind) => NonemptyType.type (Elements.MagnitudeImpl k)"
 "Point": "opaque : Type"
 "instAddMagnitude": "instance : {k : Elements.Kind} → Add (Elements.Magnitude k) := fun {k : Elements.Kind} => Add.mk Elements.Magnitude.add"
+"sq": "def : Elements.Point → Elements.Point → Elements.Area := fun (A B : Elements.Point) => Elements.rect A B A B"
 ```
 
 The instances matter even though the printed statements do not show them: `a + b` in an

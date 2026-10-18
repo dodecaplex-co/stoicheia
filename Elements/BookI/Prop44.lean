@@ -19,9 +19,10 @@ Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
 "Let it be placed so that BE is in a straight line with AB": Euclid moves the
-parallelogram I.42 has made. Lean cannot move a figure, so `Prop44.place` builds
-an equal parallelogram where Euclid puts his, and the proof cites it at that
-sentence.
+parallelogram I.42 has made. Our one rule that moves a figure, superposition,
+moves a triangle, and the certificate lets only I.4 and I.8 call on it; so
+`Prop44.place` builds an equal parallelogram where Euclid puts his, and the proof
+cites it at that sentence.
 -/
 
 namespace Elements.BookI

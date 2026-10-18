@@ -43,7 +43,11 @@ have something to say. Unknown sections and keys are faults, so a misspelling is
 - **full**: every clause of the enunciation, and of the porism if there is one, for every
   configuration Euclid's words admit, in the meaning the representation gives them. A
   statement that leaves out one of Euclid's hypotheses, and so claims more, is still
-  full (tag it `hypothesis-dropped`).
+  full (tag it `hypothesis-dropped`). So is a statement that takes one placing of the
+  figure, when a proved equality carries it to every other: I.47's squares stand outward,
+  as Euclid describes them, and squares on one straight line are equal whichever side
+  they stand on (`Prop46.square_eq`). Cases a commentator adds beyond Euclid's words, as
+  Proclus's for I.43, are commentary, not scope.
 - **restricted**: every clause is proved, but only under extra hypotheses that exclude
   configurations Euclid's words admit. `hypotheses` lists them. Hypotheses that only name
   what his words already presuppose, as that a triangle's corners are not on one
@@ -67,9 +71,12 @@ If it no longer matches, a statement changed after the review.
 | `note` | string | unless euclid | How the route differs from Euclid's. |
 
 - **euclid**: the Lean follows Euclid's argument. Helpers, groupings and cases he leaves
-  to the reader do not change the route; they are declared as passages.
+  to the reader do not change the route; they are declared as passages. Nor does a case
+  that is trivial, or lies beyond his statement, which the Lean takes as well: it is
+  declared as a passage (`case`, `helper` or `given`).
 - **modified**: Euclid's argument, with a step done materially differently: another
-  construction, or a case argued another way.
+  construction, or one of his steps, or a real case within his statement, argued another
+  way (I.39 and I.40, whose Lean makes the end of his reductio direct).
 - **alternative**: a different proof altogether, labelled as one on the page (III.24's
   proof by the radii, once stage 3 gives Euclid's own).
 

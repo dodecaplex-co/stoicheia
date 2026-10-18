@@ -15,8 +15,8 @@ crossing diameters or two sides that cross; or that a parallelogram cut by a
 straight line parallel to two of its sides is the two parallelograms it is cut
 into. These are those facts.
 
-None of them needs Postulate 5: they are read from System E's rules for sides
-(Avigad, Dean and Mumma, §3.4) and its rules for areas (§3.6).
+None of their proofs uses Postulate 5: they are read from System E's rules for
+sides (Avigad, Dean and Mumma, §3.4) and its rules for areas (§3.6).
 -/
 
 namespace Elements

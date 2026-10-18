@@ -6,7 +6,7 @@ import Elements.Foundations.CommonNotions
 Most of Euclid's twenty-three definitions name things (a point, a line, a
 surface, an angle, a figure). The ones that do real work in the proofs are
 written out here. Definitions 1–9, 13, 14, 16 and 17–18 live as docstrings on
-the words in `Words.lean` or are not needed until later books.
+the words in `Words.lean` or wait for the later books that use them.
 
 Definition 15 is special: it is a definition that carries content ("all the
 straight lines falling upon it from one point ... are equal"), so it is an
