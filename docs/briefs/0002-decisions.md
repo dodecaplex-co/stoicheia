@@ -631,3 +631,54 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+- **The voice rules loosened, and `$…$` in the modern way: the check change.** The owner's
+  decisions of 18 October, after Argon's second review of the book-III release, as
+  [#70](https://github.com/jackChallis/stoicheia/issues/70) records them: "drop the
+  length, paragraph-count and bold-lead reports; make 'the modern way' optional; let
+  reading lines vary; allow `$…$` in 'the modern way'; radians throughout; one style for
+  letters in text and figures"; and as
+  [#48](https://github.com/jackChallis/stoicheia/issues/48) records them: "S10 is relaxed
+  so that 'the modern way' may use `$…$` (III.20 can then write $e^{i\theta}$); angles
+  are in radians throughout …; letters take one style in text and figures, written once
+  in STYLE". Our warm thanks to Argon, whose counts across the 99 pages showed what the
+  quotas had done. [STYLE](../STYLE.md) writes the new rules once (sections 3, 4, 6, 7 and
+  8), and the table of defaults in [AGENTS.md](../../AGENTS.md) follows it. The one
+  protected file changed is [`scripts/check_style.py`](../../scripts/check_style.py), and
+  this, exactly, is loosened:
+  - the reports D1 (a mishnah outside 250–450 words), D2 (fewer than three or more than
+    five paragraphs, or one over 120 words) and D3 (a paragraph without a bold lead, or a
+    last paragraph not "The modern way") are removed: a mishnah has no count, its leads are
+    optional, and so is "the modern way";
+  - the report D13 (a reading line not beginning "For ") is removed: a line gives the same
+    facts in its own words and order. S17, which fails a reading file's shape and links,
+    is unchanged;
+  - S10 lets TeX stand within `$…$` in a paragraph that opens `**The modern way.**`, and
+    nowhere else: TeX outside those spans, in that paragraph or in any other, fails as
+    before. A span passes only in the form GitHub's renderer was found, with sample spans
+    on 18 October, to show as written: the dollars paired within the paragraph, never
+    `$$`; one line, no white space just inside a dollar; the opening dollar at a line's
+    start or after white space or "(", the closing one before white space, a line's end or
+    a punctuation mark; balanced braces; no backslash before an ASCII punctuation mark,
+    which GitHub's Markdown removes; and no `<`, `>` or `&`, which it escapes twice. Before
+    anything else, the script's self-check reads 26 sample mishnahs, six on the allowed
+    side and twenty refused, among them TeX outside the dollars in the modern way, `$…$`
+    in another paragraph, and each malformed span;
+  - S20, which held the letters of a figure at a glance italic, now holds them upright, and
+    S15 holds Euclid's figures to the same (it read no style before); the owner's "one
+    style" is read as upright, the style the text already has (S9) and the only one the
+    Lean can show, since Heath's sentences stand on every page as `--` lines in a code
+    block. While the figures are set upright, in a change of their own, the new switch
+    `UPRIGHT_LETTERS_REQUIRED` is `False`: a figure's letters may all be italic, as every
+    figure's are now, or all upright, never mixed, and a new report, D15, lists the
+    figures still italic. The switch is turned on once every figure is upright, and never
+    turned back to quiet a figure.
+
+  Nothing else is loosened: every other rule reads what it read. Radians, and upright
+  letters within a formula (`$\mathrm{A}$`), are rules of STYLE, section 4, for a reader
+  to judge; no check reads them. GitHub renders `$…$`: III.20's modern way, rewritten with
+  `$e^{i\beta}$` and `$\frac{\mathrm{C} - \mathrm{A}}{\mathrm{B} - \mathrm{A}}$` (a trial,
+  not committed), passed S10, went onto `book/III/20.md` through `scripts/render.py`
+  byte for byte, and GitHub's Markdown API set each of its spans as mathematics with the
+  TeX intact. This supersedes the line "usually 250–450 words, with reasons for
+  exceptions" in stage 1b of [brief 0005](0005-astra-review.md). The pages are rewritten
+  under the new rules by #46 and #48.

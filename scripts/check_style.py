@@ -1,7 +1,7 @@
 """Check the house style's hard rules, and report its defaults.
 
 The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S21
-fail the script, and D1 to D11, D13 and D14 are listed for a reader to judge and fail
+fail the script, and D4 to D11, D14 and D15 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
     python3 scripts/check_style.py              # every rule, S12 included
@@ -39,6 +39,10 @@ Lean, ">" in a Markdown quotation). A blank line ends such a phrase, save S2's "
 mate" and the "Definition N" of S7 and D10, whose words may stand apart by any white
 space. On every run, before anything else, the script checks its own wording patterns
 against wrapped and unwrapped phrases (`self_check`), and stops if one is read wrongly.
+
+S10 refuses TeX in the mishnah, save `$…$` in a paragraph that opens
+`**The modern way.**`, and there only spans that GitHub renders as written (STYLE, section
+4, "Mathematics"); the self-check holds cases on both sides of that boundary.
 
 S2's crew words match whole words in any case, plurals and possessives included ("the
 bosuns", "the crew's"). The figure rules also ask for a <title>: "I.N at a glance" on an
@@ -94,6 +98,15 @@ LETTER_EXCEPTIONS = {
 # empty. Never set it back to quiet a figure: letter the figure.
 IDEA_LETTERS_REQUIRED = True
 
+# Upright letters, the switch (STYLE, sections 4, 7 and 8). Heath's letters take one style
+# in the text and in the figures, upright, by the owner's decision of 18 October. The
+# figures were drawn with italic letters and are set upright in a change of their own;
+# while they are, this is False: S15 and S20 take a figure's letters italic or upright, one
+# style in each figure, and D15 lists the figures still italic. Once every figure is
+# upright it is True, and S15 and S20 fail an italic letter. Never set it back to quiet a
+# figure: set the figure upright.
+UPRIGHT_LETTERS_REQUIRED = False
+
 # ---------------------------------------------------------------------------------------
 # Findings.
 
@@ -110,7 +123,7 @@ RULES = {
     "S7": "a definition without its book",
     "S8": "a curly quotation mark",
     "S9": "an italic letter",
-    "S10": "TeX in the mishnah",
+    "S10": "TeX in the mishnah, outside a well-formed $…$ of the modern way",
     "S11": "a retired refrain",
     "S12": "a backticked Lean name that Lean does not know",
     "S13": "an idea figure's caption missing or over 50 words",
@@ -120,14 +133,11 @@ RULES = {
     "S17": "a further-reading file's shape or links",
     "S18": "a book with pages and no introduction",
     "S19": "a book introduction that does not link the book's brief",
-    "S20": "an idea figure's letter not Heath's, or not italic, 14 and in the ink of what it stands on",
+    "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
 }
 
 REPORTS = {
-    "D1": "a mishnah outside 250–450 words",
-    "D2": "a mishnah's paragraph count, or a paragraph over 120 words",
-    "D3": "a mishnah paragraph without a bold lead, or the modern way not last",
     "D4": "a mishnah with more than four distinct Lean names",
     "D5": "an idea caption over 40 words, or of more than two sentences",
     "D6": "'first', 'only', 'better', 'best', 'unlike': a comparison or a claim to priority?",
@@ -136,8 +146,8 @@ REPORTS = {
     "D9": "'need' joined to Postulate 5 (say 'uses')",
     "D10": "S6 or S7 outside their failing scope",
     "D11": "Euclid's figure strokes or dots off the usual widths",
-    "D13": "a reading line that does not begin 'For '",
     "D14": "figures at a glance not yet lettered (S21 holds them once the switch is on)",
+    "D15": "figures whose letters are still italic (S15 and S20 hold them upright once the switch is on)",
 }
 
 
@@ -500,7 +510,84 @@ def check_text(path: Path, raw: str, scopes: set[str]) -> None:
 
 
 # ---------------------------------------------------------------------------------------
-# The mishnah: TeX, refrains, shape, Lean names.
+# The mishnah: TeX, refrains, Lean names.
+
+# S10's one exception (STYLE, section 4, "Mathematics"): in a paragraph that opens
+# MODERN_WAY, mathematics may stand between single dollars, in spans that GitHub renders
+# as written. Its renderer, read with sample spans on 18 October, opens a span only at a
+# line's start, after white space or after "(", and closes it only before white space, a
+# line's end or a mark of MATH_CLOSES_BEFORE; it renders no span that crosses a line or
+# begins or ends with a space; its Markdown takes away a backslash before a punctuation
+# mark (\{ becomes {, \, becomes ,); and it escapes <, > and & inside a span twice.
+MODERN_WAY = "**The modern way.**"
+MATH_OPENS_AFTER = " \t\n("
+MATH_CLOSES_BEFORE = " \t\n.,;:!?)]'\"’”–-/"
+MATH_ESCAPE = re.compile(r"\\[!-/:-@\[-`{-~]")      # a backslash before ASCII punctuation
+MATH_HTML = re.compile(r"[<>&]")
+
+
+def math_fault(text: str, a: int, b: int) -> str | None:
+    """What keeps the span from the `$` at `a` to the `$` at `b` of `text` from rendering on
+    GitHub as written, or None."""
+    body = text[a + 1:b]
+    if not body:
+        return "$$: display mathematics is not allowed; write $…$ within the sentence"
+    if "\n" in body:
+        return "a $…$ across a line break, which GitHub does not render; keep it on one line"
+    if body[0].isspace() or body[-1].isspace():
+        return "a space just inside a $: GitHub renders $x$, not $ x $"
+    before = text[a - 1] if a else "\n"
+    if before not in MATH_OPENS_AFTER:
+        return (f"the opening $ follows {before!r}: GitHub opens $…$ only at a line's start, "
+                "after a space or after (")
+    after = text[b + 1] if b + 1 < len(text) else "\n"
+    if after not in MATH_CLOSES_BEFORE:
+        return (f"the closing $ comes before {after!r}: GitHub closes $…$ only before a space, "
+                "a line's end or one of . , ; : ! ? ) ] ' \" - – /")
+    m = MATH_ESCAPE.search(body)
+    if m:
+        return (f"{m.group(0)} inside $…$: GitHub's Markdown takes away a backslash before a "
+                "punctuation mark; write \\lbrace, \\rbrace, \\thinspace, \\Vert")
+    depth = 0
+    for c in body:
+        depth += {"{": 1, "}": -1}.get(c, 0)
+        if depth < 0:
+            break
+    if depth:
+        return "the braces { } inside $…$ do not balance"
+    m = MATH_HTML.search(body)
+    if m:
+        return (f"{m.group(0)} inside $…$, which GitHub escapes twice; write \\lt, \\gt, "
+                "\\le, \\ge")
+    return None
+
+
+def tex_findings(text: str) -> list[tuple[int, int, str]]:
+    """S10 on a mishnah, fenced blocks and HTML comments already blanked: (start, end,
+    message) for each finding. TeX (a backslash, `^{` or `$`) is refused everywhere, save
+    in a `$…$` span of a paragraph that opens MODERN_WAY; there every `$` pairs with the
+    next, and each span must render as written (math_fault)."""
+    found, outside = [], text
+    for off, p in paragraphs(text):
+        if not p.startswith(MODERN_WAY):
+            continue
+        dollars = [off + m.start() for m in re.finditer(r"\$", p)]
+        for k in range(0, len(dollars), 2):
+            a = dollars[k]
+            if k + 1 == len(dollars):
+                found.append((a, a + 1, "an unpaired $: each $ that opens mathematics in the "
+                              "modern way closes it in the same paragraph"))
+                b = a
+            else:
+                b = dollars[k + 1]
+                fault = math_fault(text, a, b)
+                if fault:
+                    found.append((a, b + 1, fault))
+            outside = outside[:a] + re.sub(r"[^\n]", " ", outside[a:b + 1]) + outside[b + 1:]
+    for m in TEX.finditer(outside):
+        found.append((m.start(), m.end(), f'"{m.group(0)}", TeX outside a $…$ of the modern way'))
+    return sorted(found)
+
 
 IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_.₀-₉]*")
 FILE_NAME = re.compile(r".*\.(?:lean|json|md|svg|py|toml|txt|lock)$")
@@ -519,8 +606,8 @@ def lean_names(text: str) -> list[str]:
 def check_mishnah(path: Path, raw: str) -> None:
     ref = ref_of(path)
     text = FENCE.sub(_blank, HTML_COMMENT.sub(_blank, raw))
-    for m in TEX.finditer(text):
-        fail("S10", path, line_of(text, m.start()), f'"{m.group(0)}": {excerpt(raw, m.start(), m.end())}')
+    for a, b, msg in tex_findings(text):
+        fail("S10", path, line_of(text, a), f"{msg}: {excerpt(raw, a, b)}")
     for pattern, allowed in REFRAINS:
         if ref in allowed:
             continue
@@ -533,22 +620,6 @@ def check_mishnah(path: Path, raw: str) -> None:
              f'"under I.31" beside Proclus (allowed nowhere): {excerpt(raw, a, b)}')
     for m in RETIRED_LEADS.finditer(text):
         fail("S11", path, line_of(text, m.start()), f"retired lead {flat(m.group(0))}")
-
-    # Its usual shape (reported).
-    count = len(text.split())
-    if not 250 <= count <= 450:
-        report("D1", path, 1, f"{count} words")
-    paras = list(paragraphs(text))
-    if not 3 <= len(paras) <= 5:
-        report("D2", path, 1, f"{len(paras)} paragraphs")
-    for k, (off, p) in enumerate(paras, 1):
-        n = len(p.split())
-        if n > 120:
-            report("D2", path, line_of(text, off), f"paragraph {k} is {n} words")
-        if not re.match(r'\*\*(?:[^*]|\*[^*]+\*)+?[.?]["\']?\*\*(?:\s|$)', p):
-            report("D3", path, line_of(text, off), f"paragraph {k} has no bold lead: {p[:60]}…")
-    if paras and not paras[-1][1].startswith("**The modern way.**"):
-        report("D3", path, line_of(text, paras[-1][0]), "the last paragraph is not **The modern way.**")
     names = lean_names(raw)
     if len(names) > 4:
         report("D4", path, 1, f"{len(names)} Lean names: {', '.join(names)}")
@@ -618,8 +689,6 @@ def check_reading(path: Path, raw: str, allowed: set[str]) -> None:
     for k, l in lines:
         if not l.startswith("- "):
             fail("S17", path, k, f"not a list item: {l[:60]}")
-        elif not l.startswith("- For "):
-            report("D13", path, k, l[2:62] + "…")
     for m in WEB_LINK.finditer(raw):
         url = m.group(1) or m.group(2)
         if url not in allowed:
@@ -680,6 +749,40 @@ CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
 # data-unlettered marks in the idea figures, printed on every run:
 # {(file, reason): [elements, points]}
 idea_exemptions: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
+
+# The figures whose letters are still italic, while UPRIGHT_LETTERS_REQUIRED is False (D15):
+# {book: {"of Euclid's figures": [NN, …], "figures at a glance": [NN, …]}}
+italic_figures: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+
+
+def letter_style(eff) -> str:
+    """A letter's font-style: "normal" (upright, SVG's default) or what it is set to."""
+    return (eff.get("font-style") or "normal").strip().lower()
+
+
+def check_letter_style(path: Path, rule: str, found: list[tuple[str, str]]) -> None:
+    """S15's and S20's style of a figure's letters, each (letter, its font-style): upright,
+    or, while UPRIGHT_LETTERS_REQUIRED is False, italic, one style in each figure (STYLE,
+    sections 4 and 7). A figure still italic is listed for D15."""
+    styles: dict[str, list[str]] = defaultdict(list)
+    for s, style in found:
+        styles[style].append(s)
+    for style, letters in sorted(styles.items()):
+        if style not in ("normal", "italic"):
+            fail(rule, path, 0, f"letter(s) {', '.join(letters)} in font-style {style}: "
+                 "Heath's letters are upright (STYLE, section 4)")
+    if "italic" not in styles:
+        return
+    if UPRIGHT_LETTERS_REQUIRED:
+        fail(rule, path, 0, f"letter(s) {', '.join(styles['italic'])} italic: Heath's letters "
+             "are upright (STYLE, section 4)")
+    elif "normal" in styles:
+        fail(rule, path, 0, f"letter(s) {', '.join(styles['italic'])} italic beside "
+             f"{', '.join(styles['normal'])} upright: one style in each figure, upright as "
+             "the figure is converted (STYLE, section 8)")
+    else:
+        kind = "figures at a glance" if path.stem.endswith("-idea") else "of Euclid's figures"
+        italic_figures[path.parent.name][kind].append(path.name[:2])
 
 
 def tag(el) -> str:
@@ -1064,7 +1167,7 @@ def check_idea_letters(path: Path, root, required: bool) -> int:
     figure is in the transition, else 0."""
     euclid = path.with_name(path.name.replace("-idea", ""))
     heaths = drawn_letters(euclid)
-    letters = []
+    letters, styles = [], []
     for el, own, eff, m, _ in placed(root):
         if tag(el) != "text":
             continue
@@ -1086,9 +1189,9 @@ def check_idea_letters(path: Path, root, required: bool) -> int:
             fail("S20", path, 0, fault)
         if number(eff.get("font-size")) != IDEA_LETTER_SIZE:
             fail("S20", path, 0, f"letter {s} at font-size {eff.get('font-size')}, not {IDEA_LETTER_SIZE}")
-        if (eff.get("font-style") or "normal").strip() != "italic":
-            fail("S20", path, 0, f"letter {s} is not italic")
+        styles.append((s, letter_style(eff)))
         letters.append(centre)
+    check_letter_style(path, "S20", styles)
 
     points = idea_points(root)
     for el in root.iter():
@@ -1168,7 +1271,7 @@ def check_euclid(path: Path, ref: str) -> None:
         fail("S15", path, 0, "a caption (<desc>): Euclid's figure has none")
     colours(path, root, EUCLID_COLOURS, "S15")
 
-    drawn = set()
+    drawn, styles = set(), []
     thin, heavy = defaultdict(int), defaultdict(int)
     usual = defaultdict(int)
     for el, own, eff in walk(root):
@@ -1177,6 +1280,7 @@ def check_euclid(path: Path, ref: str) -> None:
             s = text_of(el)
             if LETTER.fullmatch(s):
                 drawn.add(s[0])
+                styles.append((s, letter_style(eff)))
                 size = number(eff.get("font-size"))
                 if size != 17:
                     fail("S15", path, 0, f"letter {s} at font-size {eff.get('font-size')}, not 17")
@@ -1205,6 +1309,7 @@ def check_euclid(path: Path, ref: str) -> None:
         fail("S15", path, 0, f"stroke-width {w:g} ({k}×) is over 3.2")
     if usual:
         report("D11", path, 0, "; ".join(f"{what} ×{k}" for what, k in sorted(usual.items())))
+    check_letter_style(path, "S15", styles)
 
     # S16: all and only Heath's letters.
     text = heath_letters(book, n)
@@ -1236,6 +1341,8 @@ def check_figures(required: bool) -> None:
         if waiting:
             report("D14", d, 0, f"{len(waiting)} without letters, with the points each "
                    f"has to letter: {', '.join(waiting)}")
+        for kind, names in sorted(italic_figures[book].items()):
+            report("D15", d, 0, f"{len(names)} {kind} with italic letters: " + ", ".join(names))
 
 
 # ---------------------------------------------------------------------------------------
@@ -1366,6 +1473,52 @@ def self_check() -> tuple[int, list[str]]:
 
 
 # ---------------------------------------------------------------------------------------
+# The script's own check of S10, run first on every run: `$…$` passes in a paragraph that
+# opens "**The modern way.**", and only there, and only in a span that GitHub renders as
+# written; TeX outside such a span still fails, in the modern way as elsewhere.
+
+MW = MODERN_WAY + " "
+TEX_CASES = [   # (a mishnah, as S10 reads it, a finding?)
+    (MW + r"Then $e^{i\theta}$ turns B through $\theta$.", False),
+    (MW + r"Put $\mathrm{A}$ at $0$; the angle is $\pi/2$, and $a_1 + b_1$ is real.", False),
+    (MW + r"It is $\frac{e^{i\gamma}-e^{i\alpha}}{e^{i\beta}-e^{i\alpha}}$, and ($x$) too.", False),
+    (MW + r"For $0 \lt b \lt a$, $a\thinspace b$ and $\lbrace x \rbrace$ hold.", False),
+    ("**A lead.** Plain words.\n\n" + MW + r"It is $z \mapsto e^{i\theta} z$.", False),
+    ("Plain words, with θ and π and (a + b)², and no lead.", False),
+    (r"**A lead.** Then $e^{i\theta}$ turns it.", True),
+    (r"Then e^{iθ} turns it, in a paragraph with no lead.", True),
+    (MW + r"Then e^{iθ} turns it.", True),
+    (MW + r"Then \theta turns it.", True),
+    (MW + r"Then $e^{i\theta}$ turns it, and \pi is half a turn.", True),
+    (MW + r"Then $e^{i\theta}$ and $x turn it.", True),
+    (MW + r"Then $e^{i\theta$ turns it.", True),
+    (MW + r"Then $e^{i\theta}}{$ turns it.", True),
+    (MW + r"Then $$x^2$$ is a square.", True),
+    (MW + r"Then $ x $ is padded.", True),
+    (MW + "Then $x +\ny$ crosses a line.", True),
+    (MW + r"Then the$x$ is glued before.", True),
+    (MW + r"Then $x$s is glued after.", True),
+    (MW + r'Then "$x$" is quoted.', True),
+    (MW + r"Then $\{x\}$ loses its backslashes.", True),
+    (MW + r"Then $a\,b$ loses its backslash.", True),
+    (MW + r"Then $a < b$ is escaped twice.", True),
+    ("**A lead.** A paragraph.\n" + MW + r"Then $x$ is in the lead's paragraph.", True),
+    (MW + "Plain words.\n\nThen $x$ is in the next paragraph.", True),
+    (r"**The modern way** without its full stop: $x$.", True),
+]
+
+
+def tex_self_check() -> tuple[int, list[str]]:
+    """TEX_CASES, each read as S10 reads a mishnah; returns the number of cases and the
+    faults."""
+    faults = []
+    for text, want in TEX_CASES:
+        if bool(tex_findings(text)) != want:
+            faults.append(f"S10 {'misses' if want else 'wrongly finds'} {text!r}")
+    return len(TEX_CASES), faults
+
+
+# ---------------------------------------------------------------------------------------
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -1397,6 +1550,15 @@ def main() -> int:
         return 1
     print(f"self-check: the wording rules read {count} wrapped and unwrapped phrases rightly")
 
+    count, faults = tex_self_check()
+    if faults:
+        print(f"{len(faults)} fault(s) in the script's reading of S10; nothing else was "
+              "checked:")
+        for f in faults:
+            print("  ✗ " + f)
+        return 1
+    print(f"self-check: S10 reads {count} mishnahs on either side of the modern way's $…$ rightly")
+
     mishnah = mishnah_files()
     for path in mishnah:
         raw = path.read_text(encoding="utf-8")
@@ -1421,6 +1583,9 @@ def main() -> int:
     if "D14" in reports:
         print("note: S21 holds only the idea figures that carry a letter, until "
               "IDEA_LETTERS_REQUIRED is set (STYLE, section 8); D14 lists the rest")
+    if "D15" in reports:
+        print("note: S15 and S20 take italic letters, one style in each figure, until "
+              "UPRIGHT_LETTERS_REQUIRED is set (STYLE, section 8); D15 lists the figures")
     if args.no_lean:
         print("note: S12 skipped (--no-lean); the mishnah's Lean names were not checked")
     elif shutil.which("lake") is None:
