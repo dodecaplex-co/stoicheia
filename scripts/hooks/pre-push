@@ -15,12 +15,34 @@
 # owner can still go round it with `git push --no-verify`; the hook is a guard rail, not
 # a lock.)
 #
+# The interpreter, as the launcher picks it: STOICHEIA_PYTHON if set, else the first of
+# python3.14, python3.13, python3.12, python3.11 and python3 that is Python 3.11 or later
+# (safe_push reads TOML with tomllib). Without one, the push is refused.
+#
 # git gives the hook one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
 
 tmp=
 harness=
+python=
 cleanup() { [ -n "$tmp" ] && rm -rf "$tmp"; }
 trap cleanup EXIT
+
+# The interpreter (the launcher, scripts/hooks/safe-push, picks it the same way).
+find_python() {
+    if [ -n "${STOICHEIA_PYTHON:-}" ]; then
+        echo "$STOICHEIA_PYTHON"
+        return 0
+    fi
+    for candidate in python3.14 python3.13 python3.12 python3.11 python3; do
+        if command -v "$candidate" >/dev/null 2>&1 &&
+                "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 11))' \
+                    >/dev/null 2>&1; then
+            command -v "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
 
 # The scan: origin/main's safe_push.py and heath.py, copied out of git. Only origin's main
 # is trusted: the remote pushed to may be anyone's fork. Without them, the push is refused.
@@ -38,7 +60,16 @@ scan() {
         fi
     fi
     [ -n "$harness" ] || return 1
-    python3 "$harness" --scan-push "$1" "$2" "$3"
+    if [ -z "$python" ]; then
+        if ! python=$(find_python); then
+            echo "pre-push: refusing the push: no Python 3.11 or later found (python3.14," >&2
+            echo "    python3.13, python3.12, python3.11 or python3); name one in" >&2
+            echo "    STOICHEIA_PYTHON." >&2
+            harness=
+            return 1
+        fi
+    fi
+    "$python" "$harness" --scan-push "$1" "$2" "$3"
 }
 
 status=0
@@ -65,7 +96,7 @@ while read -r local_ref local_sha remote_ref remote_sha; do
                 *[!0]*)
                     echo "pre-push: refusing a push to main on $1: main changes only by a pull" >&2
                     echo "    request's merge commit. Push a branch and open one with the pre-flight:" >&2
-                    echo "    git safe-push --branch <name>" >&2
+                    echo "    git safe-push --branch <name> --label <kind>" >&2
                     echo "    then merge it with git safe-push --merge <pr-number>" >&2
                     echo "    (docs/WORKFLOW.md, \"Landing work: pull requests\")." >&2
                     ;;

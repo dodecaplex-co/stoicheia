@@ -4,7 +4,9 @@
 # $(git rev-parse --git-common-dir)/stoicheia/safe-push, and run as `git safe-push`:
 #
 #     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
+#                   [--commit <sha>] [--dry-run]
 #     git safe-push --merge <pr-number> [--dry-run]
+#     git safe-push --dry-run [--commit <sha>]
 #
 # It runs origin/main's scripts/safe_push.py whatever the checkout holds, so that a branch
 # cannot judge itself, even one whose own copy no longer hands over to origin/main's: it
@@ -13,11 +15,35 @@
 # STOICHEIA_PUSH_LOG when that is set), writing each afresh, and execs it with the
 # arguments given, so its signals and its exit status are the run's own. While
 # origin/main's copy predates running from origin/main (no HARNESS_PROTOCOL in it), the
-# checkout's copy runs, and the launcher says so. STOICHEIA_PYTHON names the interpreter
-# (python3 by default; 3.11 or later).
+# checkout's copy runs, and the launcher says so.
+#
+# The interpreter, as the pre-push hook picks it: STOICHEIA_PYTHON if set, else the first
+# of python3.14, python3.13, python3.12, python3.11 and python3 that is Python 3.11 or
+# later (safe_push reads TOML with tomllib). Without one, it refuses.
 set -eu
 
-python=${STOICHEIA_PYTHON:-python3}
+# The interpreter (the pre-push hook, scripts/hooks/pre-push, picks it the same way).
+find_python() {
+    if [ -n "${STOICHEIA_PYTHON:-}" ]; then
+        echo "$STOICHEIA_PYTHON"
+        return 0
+    fi
+    for candidate in python3.14 python3.13 python3.12 python3.11 python3; do
+        if command -v "$candidate" >/dev/null 2>&1 &&
+                "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 11))' \
+                    >/dev/null 2>&1; then
+            command -v "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+if ! python=$(find_python); then
+    echo "safe-push: no Python 3.11 or later found (python3.14, python3.13, python3.12," >&2
+    echo "    python3.11 or python3); name one in STOICHEIA_PYTHON." >&2
+    exit 1
+fi
 top=$(git rev-parse --show-toplevel)
 git fetch --quiet origin
 base=refs/remotes/origin/main
