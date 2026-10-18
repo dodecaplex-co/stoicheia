@@ -17,6 +17,6 @@ note = "Our triangles AEG and ADG are named by their corners, so no straight lin
 
 [review]
 stage = "exceptions"
-commit = "2e1d5c1"
+commit = "8a014a8"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:3884ca872c6802f9"

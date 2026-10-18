@@ -33,6 +33,6 @@ note = "The statement takes BDEC, GB and HC as the squares on BC, BA and AC; squ
 
 [review]
 stage = "exceptions"
-commit = "0226c65"
+commit = "8a014a8"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:a0fc7319bcdf680a"
