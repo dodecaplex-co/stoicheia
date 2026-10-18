@@ -541,10 +541,10 @@ findings:
   chord gives the centre F." The tag `centre-given` is retired where it only explained the
   missing rule; any other restriction a record carries stays. Nothing lands yet: the axiom
   comes only in the coordinator's own pull request, after
-  [#40](https://github.com/jackChallis/stoicheia/issues/40) (the model's law names as a
-  pinned data file, without which no new axiom can land) and brief 0008 (the statement
-  changes, approved before any proof changes). Until then the hypothesis stays, disclosed
-  as now.
+  [#40](https://github.com/jackChallis/stoicheia/issues/40) (the law names of
+  `tests/model` as a pinned data file, without which no new axiom can land) and
+  brief 0008 (the statement changes, approved before any proof changes). Until then the
+  hypothesis stays, disclosed as now.
 - **Superposition: a restricted rule prototyped now, our rule disclosed meanwhile.** On 18
   October, after Astra's third answer
   ([#75](https://github.com/jackChallis/stoicheia/issues/75)), the owner chose Astra's
@@ -593,11 +593,12 @@ findings:
   interpretation in the ordinary plane, supported by numerical and exact finite tests. A
   kernel-checked proof that this interpretation satisfies every locked law is in
   progress." So [`tests/model/MODEL.md`](../../tests/model/MODEL.md), a protected file,
-  softens to that the conclusions of its hyperbolic section, of its milestone section, now
-  "A formal model: in progress", and of "What this shows, and what it does not", and says
-  plainly that numerical tests establish neither consistency nor non-derivability; the
-  README's table of checks and [FORMALIZATION](../FORMALIZATION.md), sections 3 and 9,
-  follow, and [PROGRAM.md](../PROGRAM.md)'s link to the milestone moves with its heading.
+  softens to that claim the conclusions of its hyperbolic section, of its milestone
+  section, now "A formal model: in progress", and of "What this shows, and what it does
+  not", and says plainly that numerical tests establish neither consistency nor
+  non-derivability; the README's table of checks and [FORMALIZATION](../FORMALIZATION.md),
+  sections 3 and 9, follow, and [PROGRAM.md](../PROGRAM.md)'s link to the milestone moves
+  with its heading.
   A release made before the model is complete names the milestone as incomplete. This
   supersedes "a later milestone" in the 17 October entry "The model harness lives in the
   repository".
