@@ -16,6 +16,9 @@ at = "therefore the point P is the centre of the circle ABC"
 kind = "grouped"
 note = "The statement gives ABC its centre, which the Lean names P at once; that AC and NO meet only there is the step above, so this sentence needs no Lean of its own."
 
+[figure]
+note = "Like Heath's, this figure draws the impossible supposition: DEF meeting ABC at four points, B, G, F, H, and so drawn as an oval, since no circle can."
+
 [review]
 stage = "exceptions"
 commit = "dcb1767"
