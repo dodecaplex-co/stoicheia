@@ -1,4 +1,5 @@
 import Staging.Stage4.Foot
+import Staging.Stage4.Prop14
 
 /-!
 # Staging: III.15, its two clauses for every straight line in the circle
@@ -27,7 +28,35 @@ theorem Prop15.le_diameter {A B C D E : Point} {ABCD : Circle} (hE : Centre E AB
     (hA : OnCircle A ABCD) (hD : OnCircle D ABCD) (hAED : Between A E D)
     (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) :
     ‖B C‖ ≤ ‖A D‖ ∧ (‖B C‖ = ‖A D‖ ↔ Between B E C) := by
-  sorry
+  have hAD_sum : ‖A D‖ = ‖B E‖ + ‖E C‖ :=
+    Prop14.diameter_sum hE hA hD hB hC hAED
+  by_cases hBC : B = C
+  · /- BC is a point: its length is nothing, and E cannot lie between its equal ends. -/
+    subst C
+    rw [len_self]
+    refine ⟨not_lt_zero _, ?_⟩
+    exact ⟨fun h => False.elim (len_ne_zero (ne_of_between_ends hAED) h.symm),
+      fun h => False.elim (ne_of_between_ends h rfl)⟩
+  · by_cases hE_BC : Collinear B C E
+    · /- BC passes through E: it too is a diameter, equal to the same two radii. -/
+      obtain ⟨L, hB_L, hC_L, hE_L⟩ := hE_BC
+      have hBEC : Between B E C :=
+        between_of_inside_chord hE_L hB_L hC_L (centre_inside hE) hB hC hBC
+      have hBC_AD : ‖B C‖ = ‖A D‖ := (len_add_of_between hBEC).symm.trans hAD_sum.symm
+      refine ⟨?_, ⟨fun _ => hBEC, fun _ => hBC_AD⟩⟩
+      rw [hBC_AD]
+      exact lt_irrefl _
+    · /- BC does not pass through E: BE and EC together exceed BC by I.20. -/
+      have hBC_AD : ‖B C‖ < ‖A D‖ := by
+        rw [hAD_sum]
+        exact (BookI.Prop20 (Triangle.cab hE_BC)).1
+      have hnot_between : ¬ Between B E C := by
+        intro hBEC
+        obtain ⟨L, hB_L, hE_L, hC_L⟩ := collinear_of_between hBEC
+        exact hE_BC ⟨L, hB_L, hC_L, hE_L⟩
+      exact ⟨fun h => lt_irrefl _ (lt_trans hBC_AD h),
+        ⟨fun h => False.elim (Magnitude.ne_of_lt hBC_AD h),
+          fun h => False.elim (hnot_between h)⟩⟩
 
 /-- **III.15, the nearer is greater** (companion of III.15). Of two straight lines BC, FG in
 a circle, the one nearer to the centre E is the greater: if EH is less than EK, H and K being
@@ -39,7 +68,32 @@ theorem Prop15.nearer {B C E F G H K : Point} {ABCD : Circle} (hE : Centre E ABC
     (hG : OnCircle G ABCD) (hBC : B ≠ C) (hH : Foot E B C H) (hK : Foot E F G K)
     (hnearer : ‖E H‖ < ‖E K‖) :
     ‖F G‖ < ‖B C‖ := by
-  sorry
+  /- FG cannot pass through E, even with coincident ends: its foot would be E. -/
+  have hE_FG : ¬ Collinear F G E := by
+    intro h
+    have hK_E : K = E := hK.2.1 h
+    rw [hK_E, len_self] at hnearer
+    exact not_lt_zero _ hnearer
+  by_cases hE_BC : Collinear B C E
+  · /- BC is a diameter. The diameter bound is strict for FG, which does not pass through E. -/
+    obtain ⟨L, hB_L, hC_L, hE_L⟩ := hE_BC
+    have hBEC : Between B E C :=
+      between_of_inside_chord hE_L hB_L hC_L (centre_inside hE) hB hC hBC
+    obtain ⟨hbound, hequal⟩ := Prop15.le_diameter hE hB hC hBEC hF hG
+    have hunequal : ‖F G‖ ≠ ‖B C‖ := by
+      intro h
+      obtain ⟨M, hF_M, hE_M, hG_M⟩ := collinear_of_between (hequal.mp h)
+      exact hE_FG ⟨M, hF_M, hG_M, hE_M⟩
+    rcases lt_trichotomy ‖F G‖ ‖B C‖ with h | h | h
+    · exact h
+    · exact False.elim (hunequal h)
+    · exact False.elim (hbound h)
+  · /- Neither straight line passes through E. Draw a diameter and use III.15's argument. -/
+    have hB_E : B ≠ E := ne_of_centre_of_on hE hB
+    obtain ⟨L, hE_L, hB_L⟩ := Postulate1 E B hB_E.symm
+    obtain ⟨A, hA, -, hAEB⟩ := line_circle_beyond (centre_inside hE) hE_L hB_L hB_E
+    exact (Prop15 hE hA hB hAEB hB hC hF hG hE_BC hE_FG
+      hH.1 (hH.2.2 hE_BC) hK.1 (hK.2.2 hE_FG) hnearer).2
 
 /-- The check: today's statement of III.15 follows from `Prop15.le_diameter` and
 `Prop15.nearer` (checked by Lean). BC is not through the centre, so it is less than the
