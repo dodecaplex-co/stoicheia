@@ -112,7 +112,7 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   have hw₁ := Circumference.whole ⟨O, hO⟩ hA hD hQB.symm
   have hw₂ := Circumference.whole ⟨O, hO⟩ hD hB hRA.symm
   -- therefore the circumference AD is equal to the circumference DB.
-  have hADDB := (h28 (not_greater hAQD hw₁) (not_greater hDRB hw₂)).2
+  have hADDB := (h28 (not_greater hAQD hw₁) (not_greater hDRB hw₂)).2.1
   -- Therefore the given circumference has been bisected at the point D.
   rw [standing_eq_circumference hQB.symm, standing_eq_circumference hRA.symm]
   exact hADDB

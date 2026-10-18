@@ -1,4 +1,3 @@
-import Staging.Stage3.Prop28
 import Staging.Stage3.Arcs
 import Staging.Stage4.Foot
 import Staging.Stage4.Prop14
@@ -17,9 +16,9 @@ its own.
 The folders follow the briefs' stages. Stage 2's statements, all proved, have moved to
 their homes in `Elements/`, and its folder with them; so have stage 3's words for arcs and
 segments, its ground, placement among it, III.24 restated with its companions, and III.26
-upgraded. The others:
+and III.28 upgraded. The others:
 
-* `Stage3/`: III.28 upgraded, and the bridge theorems of `Arcs.lean`;
+* `Stage3/`: the bridge theorems of `Arcs.lean`;
 * `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated;
 * `Stage4b/`: III.7 and III.8 compared on either side of the diameter, III.17 for a point
   not within the circle, and the point of contact (brief 0007); and a prototype of mixed

@@ -5,7 +5,7 @@ import Elements.Figure.Chords
 import Elements.Foundations.DefinitionsIII
 import Elements.BookIII.Placement
 import Elements.BookIII.Prop24
-import Staging.Stage3.Prop28
+import Elements.BookIII.Prop28
 
 /-!
 # Stage 3, staged: what equal measures mean
@@ -82,7 +82,7 @@ theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
       have hle₂ : circumference b.circle b.B b.K b.C ≤ circumference b.circle b.B Y b.C :=
         fun hlt => lt_irrefl _ (lt_trans hlt (lt_trans (Circumference.lt_semicircle hH hD hE hHL)
           (Circumference.gt_semicircle hH hD hE hHY)))
-      exact (Staging.Prop28 hcircles hB hC hD hE hXK hYL hBC hle₁ hle₂).2.1
+      exact (Prop28 hcircles hB hC hD hE hXK hYL hBC hle₁ hle₂).2.1
     · /- Both arcs are semicircles: a centre on the base lies between its ends, within the
          circle, and each measure is two right angles (`Circumference.semicircle`). -/
       have hBGC := between_of_inside_chord hG_N hB_N hC_N (centre_inside hG) hB hC hBCK.ne₁₂
@@ -100,7 +100,7 @@ theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
       have hle₂ : circumference b.circle b.B Y b.C ≤ circumference b.circle b.B b.K b.C :=
         fun hlt => lt_irrefl _ (lt_trans hlt (lt_trans (Circumference.lt_semicircle hH hD hE hHY)
           (Circumference.gt_semicircle hH hD hE hHL)))
-      exact (Staging.Prop28 hcircles hB hC hD hE hXK.symm hYL.symm hBC hle₁ hle₂).1.1
+      exact (Prop28 hcircles hB hC hD hE hXK.symm hYL.symm hBC hle₁ hle₂).1.1
 
 /-- **Congruent is equal circles and equal measure.** Two drawn arcs are congruent exactly when
 their circles are equal and their measures are equal.
