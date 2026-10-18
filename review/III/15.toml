@@ -1,7 +1,11 @@
 # review/III/15.toml
 [statement]
-scope = "full"
+scope = "restricted"
+hypotheses = [
+  "the diameter AD is shown greater than BC only beside a second straight line FG in the circle, more remote from the centre than BC: F and G on the circle, K the foot of the perpendicular EK, and `hnearer : ‖E H‖ < ‖E K‖`",
+]
 note = "The diameter's bound on BC is proved beside a straight line FG more remote than BC, as Euclid sets it out; that some such FG exists is not proved in Lean."
+short = "the diameter's bound only beside a more remote straight line"
 fingerprint = "sha256:8f609380c65c4ddf"
 
 [route]
@@ -18,6 +22,6 @@ note = "The statement assumes it (`hnearer : ‖E H‖ < ‖E K‖`), for Defini
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "9e16c59"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:ec3b76bb968a6d6b"

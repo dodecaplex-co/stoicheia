@@ -138,11 +138,13 @@ section of `docs/briefs/<brief>` on them is your contract.
 **The job.** Write each statement in Lean, with `sorry` for its proof, in
 `Staging/<stage>/Book<B>/PropNN.lean`, and say in plain words what it claims. The
 statements live in the `Staging` library: `lake build Staging` builds it, and CI does too.
-Write no proofs in `Staging/` but the derivation under "Nothing is lost", below: the
-statements are challenged and approved before anyone proves them, and a proof written now
-would be written against a statement that may still change. A scratch proof that tests a
-statement, where its route is in doubt, is welcome: it is committed unbuilt in
-`docs/reports/crew/scratch-<B>/`, never in `Staging/` (WORKFLOW, section 2).
+Write no proof of your statements themselves: they are challenged and approved before
+anyone proves them, and a proof written now would be written against a statement that may
+still change. The proofs `Staging/` may hold, the derivation under "Nothing is lost" among
+them, are listed in WORKFLOW, section 2, "What proofs `Staging/` may hold", the rule's one
+home. A scratch proof that tests a statement, where its route is in doubt, is welcome: it is
+committed unbuilt in `docs/reports/crew/scratch-<B>/`, never in `Staging/` (WORKFLOW,
+section 2).
 
 **Read first.** `AGENTS.md`; `docs/FORMALIZATION.md`, sections 2 to 4 (statements,
 representations, constructions); the brief; `heath/<B>/NN.md`, the whole enunciation,
@@ -174,8 +176,8 @@ record `review/<B>/NN.toml`; <the shared definitions the statements use>.
 - Nothing is lost: for a companion, today's statement follows from the new one, by a
   corollary the brief names (`Prop40.special`) or an `example` whose type is
   `type_of% @PropN`; for a restatement, today's statement stays, proved, under its new
-  name. That derivation is the one proof a statement wave writes in `Staging/`, for it
-  checks a statement, not a proposition.
+  name. That derivation checks a statement, not a proposition, and so may be written in
+  `Staging/` (WORKFLOW, section 2, "What proofs `Staging/` may hold").
 - The definitions the statements share are in `Staging/<stage>/<File>.lean`, each with a
   docstring saying what it represents and how it answers to Euclid's object
   (FORMALIZATION, section 3). A definition moves into the foundations only with the
