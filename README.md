@@ -72,6 +72,7 @@ Each check answers one question and leaves others open. Here is what each one sh
 | Evidence | What it shows | What it does not show |
 |---|---|---|
 | **Lean's kernel accepts the proof** (`lake build`) | The Lean statement follows, by steps the kernel has checked, from the axioms the proof rests on | That the statement says what Euclid says, or that the axioms are true of the plane |
+| **Two more kernels** (`scripts/check_kernel.py`) | Every declaration of the library, Lean's own included, is checked again from the compiled files: replayed through Lean's kernel by `leanchecker`, and checked by nanoda, a type checker written separately, which admits only the axioms of the lock and Lean's three. Its self-test withholds Postulate 5, and nanoda then fails | That the statements say what Euclid says; and both kernels check Lean's logic, so a fault in the logic itself would pass them both |
 | **No `sorryAx`** in anything a proof rests on, as each ✅ on the [certificate](CERTIFICATE.md) says | Nothing was left unproved, in the proof or in anything it cites; and each proposition's page lists every axiom it rests on | That no other proof could rest on fewer: "this proof uses Postulate 5" is not "this proposition needs it" |
 | **The fidelity check** (`scripts/check_fidelity.py`) | Each enunciation, and each sentence of Euclid's proofs, stands in the Lean word for word and in order, as Heath has them; and the house rules hold: no axiom outside the foundations, each axiom, and each definition the statements use, as [`Certificate/axioms.lock`](Certificate/axioms.lock) records it, superposition only in I.4 and I.8, Postulate 5 in no proof before I.29, and no proof citing a later proposition | That the Lean beneath a sentence does what the sentence says: it checks wording, not meaning; nor that no proof rests on a rule containing a later proposition: the [overlap catalogue](docs/reports/overlaps.md) lists where one does |
 | **The review records** ([`review/`](review)) | Claude has read each Lean statement against Euclid's enunciation and recorded every departure (its scope, route, representation and any passage not plainly carried), tied to the commit read; each record names its reviewer, and CI flags a record whose statement or Lean has changed since | A machine check of meaning: a record is a careful reader's judgment, and a reader can be wrong. A full review of every passage, and one by a reviewer other than the authors, are to come |
@@ -101,6 +102,7 @@ Each proposition's page shows, under Euclid's enunciation, what its Lean stateme
    tests break files on purpose and put them back, so run them on a clean checkout:
    ```sh
    lake build Audit
+   python3 scripts/check_kernel.py --self-test
    python3 scripts/check_style.py
    python3 scripts/check_links.py
    python3 scripts/negative_tests.py
