@@ -302,7 +302,8 @@ to this list is made there too, and in the CI workflow.
   is read again ([FORMALIZATION.md](FORMALIZATION.md), section 7).
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
-  build against the library they import. Their `sorry` warnings are expected and do not
+  build against the library they import. It builds every file under `Staging/`, whether or
+  not the root `Staging.lean` imports it. Their `sorry` warnings are expected and do not
   fail it; nothing the certificate reads imports them.
 - **A contributor's subset.** Working on a proof, run the full `lake build` first (the
   certificate imports all of `Elements`), then `Certificate/Facts.lean`, `check_fidelity.py`

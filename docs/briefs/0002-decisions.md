@@ -405,11 +405,14 @@ findings:
   proof is due, then challenged and approved before any proof is assigned. A statement
   leaves Staging when it is proved. The library is a `[[lean_lib]]` in `lakefile.toml`,
   beside Audit and like it outside `defaultTargets`, with its root
-  [`Staging.lean`](../../Staging.lean); its files import `Elements`, and nothing imports
-  them, so nothing staged reaches a proof or the certificate. CI's `check` job builds it
-  after `lake build Audit` (`.github/workflows/ci.yml`), so that a change to main which
-  breaks a staged statement fails at once, not when the statement moves. It is a build
-  check, not a check that anything is proved: `sorry` warnings do not fail it. The step
-  joins the full sequence of [WORKFLOW](../WORKFLOW.md), section 8, and the `CHECKS` list
-  of [`scripts/safe_push.py`](../../scripts/safe_push.py), which runs that sequence. The
+  [`Staging.lean`](../../Staging.lean). Unlike Audit's, its `globs` take every file under
+  `Staging/`, so a staged file is built whether or not the root imports it, and
+  `Staging/.gitkeep` keeps the directory when nothing is staged. Its files import
+  `Elements`, and nothing outside `Staging/` imports them, so nothing staged reaches a
+  proof or the certificate. CI's `check` job builds it after `lake build Audit`
+  (`.github/workflows/ci.yml`), so that a change to main which breaks a staged statement
+  fails at once, not when the statement moves. It is a build check, not a check that
+  anything is proved: `sorry` warnings do not fail it. The step joins the full sequence of
+  [WORKFLOW](../WORKFLOW.md), section 8, and the `CHECKS` list of
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), which runs that sequence. The
   library lands empty, as a change of its own, before any statement is staged in it.
