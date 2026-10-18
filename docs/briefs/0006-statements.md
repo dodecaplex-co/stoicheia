@@ -476,11 +476,12 @@ polygons", where theorem 29 and the definition after it give that the measure of
 polygon "is independent of the manner of decomposition into triangles and, consequently, is
 definitely determined by the polygon itself" (checked against the Project Gutenberg text).
 Hilbert's own note to the chapter, at section 18 (from the French edition), names others
-who developed such a theory: M. Gérard, in his thesis (1892) and *Géométrie plane* (1898),
+who developed such a theory: Gérard, in his thesis (1892) and *Géométrie plane* (1898),
 with parallel transversals where Hilbert's run from a vertex, and F. Schur, in the
 proceedings of the Dorpat naturalists' society (1892) and his *Lehrbuch der analytischen
-Geometrie* (1898). The statements here claim nothing of it. The entries planned, for
-whoever writes stage 2's records:
+Geometrie* (1898). The note also refers to an article by O. Stolz in the *Monatshefte für
+Mathematik und Physik* (1894). The statements here claim nothing of another cutting. The
+entries planned, for whoever writes stage 2's records:
 
 - `docs/reports/gaps-book-I.md`, I.45, the first entry becomes: "Euclid cuts the
   rectilineal figure ABCD by DB into the triangles ABD and DBC, and takes "the whole
@@ -490,7 +491,7 @@ whoever writes stage 2's records:
   diameters cross, Book Zero proves it (`quadArea_rotate_of_cross`); for any figure and any
   cutting, David Hilbert proved it, for his measure of area (*The Foundations of Geometry*,
   ch. IV, "The Theory of Plane Areas", section 20), and his own note to the chapter credits
-  M. Gérard and F. Schur (1892 and 1898) with like theories. Our statement, and its
+  Gérard and F. Schur (1892 and 1898) with like theories. Our statement, and its
   companion for a figure of any number of sides, divide the figure as Euclid and Byrne do,
   by the straight lines from one corner, and make the parallelogram equal to those
   triangles; they claim nothing of another cutting."
@@ -1246,7 +1247,7 @@ stamped by anyone who did not review it.
    departure is recorded, and the tag's kind is `representation`. A companion for any
    division into triangles would cost little, since `Prop45.append` takes any triangle;
    the withdrawn `Prop45.sum` was a companion for any list of triangles and, like the fan,
-   did not check that they divide the figure. It is not planned.
+   did not check that they divide the figure. Such a companion is not planned.
 
 ## Appendix: the challenges, and what was done
 
