@@ -287,6 +287,12 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   and the module of every shared step cited (`Elements.BookI.Helpers`,
   `Elements.BookI.HelpersParallels`). A proof cites an earlier book as `BookI.PropN`, `BookII.PropN`, and does not open
   it: in a Book III file a bare `Prop4` means III.4.
+- **Staging,** `Staging/`, holds the statements that a stage of brief 0005 adds or
+  changes, each with `sorry`, until it is proved ([WORKFLOW.md](WORKFLOW.md), section 2).
+  Its files import `Elements`, and the root `Staging.lean` imports each of them; nothing
+  else imports them, so nothing staged reaches a proof or the certificate. A changed main
+  theorem is staged as `Elements.Book<B>.Staging.PropN`, since the `PropN` it replaces is
+  still declared in `Elements`; it takes the name `Elements.Book<B>.PropN` when it moves.
 
 Moving a theorem or an axiom behind a helper does not remove its logical contribution: the
 certificate walks through helpers and shared steps, and the review reads transitive
@@ -326,6 +332,13 @@ later citation, one of them named only in a helper's statement; a `native_decide
 `sorry` in a complete book; and a primitive word no longer opaque. The other forbidden
 commands, Book Zero's imports and a complete book's missing figure or mishnah have no
 planted break yet.
+
+The first two policies hold in `Staging/` (section 6) by rule: a staged file declares no
+axiom and uses none of the forbidden commands. That no check enforces them there is a
+known gap: `check_fidelity.py`'s scan for them (`check_rules`) covers `Elements/` alone
+today, so in `Staging/` they rest on review. Extending the scan to `Staging/` is a change
+to a check, and lands in a pull request of its own
+([WORKFLOW.md](WORKFLOW.md), section 10).
 
 ## 8. Completion claims
 
