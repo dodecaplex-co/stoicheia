@@ -108,7 +108,8 @@ Neither fact is stated in Lean. That no point is inside two of the triangles is 
 proved (`Fitted.inside_pairwise`). So every such figure has a division that is fitted, but
 not every division of it is: a ring of triangles round a point inside it is not (below),
 nor is a list whose later triangle is named from the wrong corner, as the square ABCD cut
-along AC and listed ABC, ADC (the second must be named ACD).
+along AC and listed ABC, ADC (the second must be named with AC as its first two corners,
+ACD or CAD).
 
 A ring of triangles closing up round a point, or round a hole, is not made this way, for its
 last triangle would meet the others along two sides. A triangle laid against part of a

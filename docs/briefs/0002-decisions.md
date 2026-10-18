@@ -525,10 +525,10 @@ findings:
   uses reach the foundations and the task its brief names for its home moves it (brief
   0006's `Fitted.inside_pairwise`, `chord_cases` and `Placement.unique_off` are such facts).
   On the same review, `Prop14.general` was renamed `Prop14.figure` ("II.14 figure"), as in
-  I.45, its statement unchanged, and `Rectilineal.toApart`, which no statement uses, was
-  added for proofs. Staging also serves the stages of briefs after 0005, the first being
-  stage 4b of brief 0007, in draft when this was decided; the module doc of
-  [`Staging.lean`](../../Staging.lean) and the comment on the `Staging` library in
-  `lakefile.toml` say so, and that comment is the only change to `lakefile.toml`. The orders
-  for a statement wave ([orders](../templates/orders.md), kind 2) and
-  [FORMALIZATION](../FORMALIZATION.md), section 6, point to the rule.
+  I.45, its statement unchanged, and `Rectilineal.toApart` and `Rectilineal.area_toApart`,
+  which no statement uses, were added for proofs. Staging also serves the stages of briefs
+  after 0005, the first being stage 4b of brief 0007, in draft when this was decided; the
+  module doc of [`Staging.lean`](../../Staging.lean) and the comment on the `Staging`
+  library in `lakefile.toml` say so, and that comment is the only change to
+  `lakefile.toml`. The orders for a statement wave ([orders](../templates/orders.md),
+  kind 2) and [FORMALIZATION](../FORMALIZATION.md), section 6, point to the rule.
