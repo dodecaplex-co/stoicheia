@@ -36,7 +36,7 @@ jobs:
         # Facts.lean exits 1 if any entry's axioms differ from its own and its citations'.
         run: lake env lean Certificate/Facts.lean
 
-      - name: Check every proof again, by Lean's kernel and by nanoda, admitting only the locked axioms
+      - name: Check every proof again, by Lean's kernel and by nanoda, admitting only the locked axioms and Lean's three
         # leanchecker replays every declaration of the Elements modules through Lean's
         # kernel, loading Lean's own imports unchecked; nanoda, written separately, checks
         # the whole export, Lean's own declarations included. --self-test withholds

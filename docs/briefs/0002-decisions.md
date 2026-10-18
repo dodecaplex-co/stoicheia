@@ -503,6 +503,7 @@ findings:
   are [`scripts/check_kernel.py`](../../scripts/check_kernel.py) (new),
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml) (a step in the `check` job,
   after the certificate), [`scripts/safe_push.py`](../../scripts/safe_push.py) (the same
-  step in its sequence), [WORKFLOW](../WORKFLOW.md), section 8, and the README's table of
-  checks and its "Run it" list. At `f17b427` nanoda checks all 59,902 declarations of the
-  export, Lean's own included, and the script runs in about 40 seconds (#62).
+  step in its sequence) and [WORKFLOW](../WORKFLOW.md), section 8; the README's table of
+  checks and its "Run it" list follow in a docs pull request of their own, after this one.
+  At `f17b427` nanoda checks all 59,902 declarations of the export, Lean's own included,
+  and the script runs in about 40 seconds (#62).
