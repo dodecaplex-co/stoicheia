@@ -453,10 +453,9 @@ however a line or a comment wraps them: they may stand apart by spaces or tabs (
 commas, between S9's letters), or by one line break with the next line's indent and its
 comment leader (`--`, or a quotation's `>`). A blank line ends such a phrase, save S2's
 "first mate" and the "Definition N" of S7 and D10, whose words may stand apart by any
-white space. A word that a rule seeks
-elsewhere in the clause or the sentence (what follows S5's "never need", S11's "Proclus",
-D9's "need") is found as its row says. Before reading anything else, the script checks its
-own patterns against such phrases.
+white space. A word that a rule seeks elsewhere in the clause or the sentence (what
+follows S5's "never need", S11's "Proclus", D9's "need") is found as its row says. Before
+reading anything else, the script checks its own patterns against such phrases.
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.
