@@ -5,7 +5,11 @@ its axioms, and a few of them already say what Euclid later proves, or give it i
 lines. III.2 is the clearest case. System E's Circle 2 says that between two points on or
 within a circle every point is within it, and III.2 is that rule for two points on the
 circle. Astra pointed this out in the [outside review](outside-review-01.md), with a
-one-line proof compiled in Lean, and asked for this catalogue. We are grateful.
+one-line proof compiled in Lean, and asked for this catalogue. We are grateful. Two later
+readings added to it, and we thank them too: a cold review by Claude saw that
+superposition supplies the steps of I.2 and I.3, and Argon's second review saw that some
+notes said a proof calls a rule it reaches only through a lemma, and that II.14 and III.15
+call Circle 2 as well.
 
 A reconstruction within these foundations does not establish such a rule independently.
 Our III.2 follows Euclid's argument, and the proof is sound; but it rests, through III.1,
@@ -164,29 +168,38 @@ III.1 its second.
 III.5 calls the rule itself, at its last step. The Lean takes Euclid's steps and ends with
 the rule: the supposed common centre makes the two circles one.
 
-Any proof of III.5 must use Diagram-segment 2 or Circle 4. Draw every circle twice over,
-as two circles with one centre and one radius, through the same points. Of the 24 rules
-about circles, only these two say when two circles are one circle or two, and every other
-rule we take still holds; but a circle and its copy are two circles, they cut one another,
-and they have one centre, so III.5 fails for them. That is a model argument, checked by
-hand rule by rule, not by Lean ([FORMALIZATION](../FORMALIZATION.md), section 9). Euclid's
-own ending needs one of the two rules as well, for the step he leaves tacit: that two
-different circles about one centre meet a straight line from it at different points, so
-that EF and EG are "the less to the greater". For a circle and its copy, F and G are one
-point, and EF is equal to EG without contradiction.
+Any proof of our III.5 must use Diagram-segment 2 or Circle 4. Draw every circle twice
+over, as two circles with one centre and one radius, through the same points. Of the 24
+rules about circles, only these two say when two circles are one circle or two, and every
+other rule we take still holds; but a circle and its copy are two circles, they cut one
+another, and they have one centre, so III.5 fails for them. That is a model argument,
+checked by hand rule by rule, not by Lean ([FORMALIZATION](../FORMALIZATION.md), section
+9). It is a fact about our statement, which reads "two circles" as two different circles
+(`ABC ≠ CDG`) and "cut" as meeting at two points (`CirclesMeet`). Read "cut" as a point of
+one circle within the other, with a point in common, and Definition I.15 and
+Diagram-segment 4, with a law of magnitude, give III.5 with neither rule
+(`Audit.III_5_crossing`). In our statement, Euclid's own ending needs one of the two rules
+as well, for the step he leaves tacit: that two different circles about one centre meet a
+straight line from it at different points, so that EF and EG are "the less to the
+greater". For a circle and its copy, F and G are one point, and EF is equal to EG without
+contradiction.
 
 #### III.6
 
 III.6 calls both rules itself. The Lean is as III.5's, with Generalities 3 for contact
 without.
 
-Any proof of III.6 for contact within must use one of the same two rules, for the same
-reason: a circle and its copy, drawn twice over as under III.5, are two circles that meet,
-and no point of either lies outside the other, so by our Definition III.3 they touch
-within; and they have one centre. Euclid's ending, FE equal to FB, "the less to the
-greater", needs the same tacit step, that the two circles meet the straight line FEB at
-different points. For contact without, Generalities 3 alone is enough: a common centre
-would be a point within both circles, and circles that touch without have none.
+Any proof of our III.6 for contact within must use one of the same two rules, for the
+same reason: a circle and its copy, drawn twice over as under III.5, are two circles that
+meet, and no point of either lies outside the other, so by our Definition III.3 they touch
+within; and they have one centre. That too is our statement's reading, which asks of
+circles touching within only that they are two and that no point of the inner lies outside
+the outer; read with a point of the inner circle within the outer, the same proof
+(`Audit.III_5_crossing`) gives III.6 for contact within with neither rule. In our
+statement, Euclid's ending, FE equal to FB, "the less to the greater", needs the same
+tacit step, that the two circles meet the straight line FEB at different points. For
+contact without, Generalities 3 alone is enough: a common centre would be a point within
+both circles, and circles that touch without have none.
 
 ## How the rows were found
 
@@ -215,8 +228,8 @@ else. The screen cannot draw a figure, for `grind` works with the points and cir
 goal already names. I.7 needs two circles its statement never mentions, and I.23 a
 triangle laid down, so both came from reading. I.2 and I.3 need a triangle drawn and then
 laid down. The catalogue first listed them as near misses, since neither statement gives a
-triangle to move; but the same holds of I.7's circles. Claude, reading the work cold on
-18 October 2026, moved them to rows, with `Audit.I_2` and `Audit.I_3`.
+triangle to move; but the same holds of I.7's circles, and they are rows now, with
+`Audit.I_2` and `Audit.I_3`.
 
 ## The rows checked
 
