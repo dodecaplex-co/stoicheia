@@ -13,7 +13,7 @@ reconciled ([FORMALIZATION.md](../FORMALIZATION.md), section 1).*
 
 Base: the branch `lean/superposition-prototype` was cut from main at `f17b427`, and main was
 merged into it at `e04f318` (pull requests #79 to #86). The prototype is six files in
-`Staging/Superposition/`, 1,691 lines, and `lake build Staging` passes with them.
+`Staging/Superposition/`, 1,697 lines, and `lake build Staging` passes with them.
 
 **Round 2.** The first prototype named points by Lean points. Its verification showed that
 this let a given fact say "no placement exists", through a name such as `if Q then X else
@@ -662,8 +662,8 @@ orders to break it, and its findings are answered in `6aa4192`:
 
 Two items it left open stay open, for their owners: the coordinator's approval of the
 prototype in `Staging/` and its names ("Staging and naming"), and open questions 2 to 5. It
-hunted for escapes along the routes Astra names (a given fact encoding a proposition through
-the valuation, an opaque predicate among the atoms, an argument by contradiction, a cited
+hunted for escapes along the routes that Astra's answer and round 1's verification name (a
+given fact encoding a proposition through the valuation, an opaque predicate among the atoms, an argument by contradiction, a cited
 law that constructs in its proof, a conclusion naming a placement symbol) and found no way
 out of the restriction.
 
