@@ -69,17 +69,21 @@ that statement. So statements and representations are settled first.
    (`scripts/scaffold_book.py`), with a proposition brief
    ([template](templates/proposition.md)) for anything not routine: the declaration, its
    meaning in plain words, its coverage, cases, construction data, representation, route and
-   dependencies.
+   dependencies. A new book's statements are scaffolded in `Elements/`; a statement that a
+   stage of [brief 0005](briefs/0005-astra-review.md) adds or changes is written first in
+   the `Staging` library instead ([`Staging.lean`](../Staging.lean)), with `sorry` where its
+   proof is due, and is challenged and approved there before any proof is assigned. When it
+   is proved, it leaves `Staging/` for its home in `Elements/`, and its staged copy, with
+   any staged check that names the old statement, is deleted in the same change, so that no
+   name is declared twice and `lake build Staging` still passes. Where staged files live,
+   what they import and what they are named is in [FORMALIZATION.md](FORMALIZATION.md),
+   section 6.
 3. **It is challenged** by readers who did not write it (Book III's statements answered
    twenty-six challenges before its voyage), and **tested** by scratch proofs where the route
    is in doubt. Scratch proofs are committed unbuilt in `docs/reports/crew/scratch-<book>/`,
    and retired once the book is proved; the history keeps them.
 4. **The coordinator approves it,** and it is frozen.
 5. **Only then are proofs assigned.**
-
-A statement that a stage adds or changes is written first, with `sorry`, in the `Staging`
-library ([`Staging.lean`](../Staging.lean)), and is challenged and approved there before
-any proof is assigned.
 
 A reviewed brief is reused while the statement, representation and route stay the same. An
 editorial task needs only its baseline, its owned files, the change asked for and the checks

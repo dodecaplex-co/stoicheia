@@ -10,9 +10,8 @@ name = "Elements"
 [[lean_lib]]
 name = "Audit"
 
-# Statements before their proofs, written with `sorry` where each proof is due, and approved
-# before any proof is assigned (docs/WORKFLOW.md, section 2). They import Elements, and
-# nothing imports them; they are not in the default build. `lake build Staging` checks
-# them, `sorry` warnings and all. A statement leaves Staging when it is proved.
+# Statements that a stage of brief 0005 adds or changes, before their proofs
+# (docs/WORKFLOW.md, section 2). Nothing imports them and they are not in the default
+# build; `lake build Staging` builds them.
 [[lean_lib]]
 name = "Staging"
