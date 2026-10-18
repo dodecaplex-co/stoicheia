@@ -77,6 +77,10 @@ that statement. So statements and representations are settled first.
 4. **The coordinator approves it,** and it is frozen.
 5. **Only then are proofs assigned.**
 
+A statement that a stage adds or changes is written first, with `sorry`, in the `Staging`
+library ([`Staging.lean`](../Staging.lean)), and is challenged and approved there before
+any proof is assigned.
+
 A reviewed brief is reused while the statement, representation and route stay the same. An
 editorial task needs only its baseline, its owned files, the change asked for and the checks
 to run.
@@ -293,9 +297,9 @@ to this list is made there too, and in the CI workflow.
   `Certificate/axioms.lock`, so a change to an axiom fails the `model` job until the model
   is read again ([FORMALIZATION.md](FORMALIZATION.md), section 7).
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
-  awaiting approval (section 2), each with `sorry` where its proof is due, still build
-  against the library they import. Their `sorry` warnings are expected and do not fail
-  it; nothing the certificate reads imports them.
+  staged before their proofs (section 2), each with `sorry` where its proof is due, still
+  build against the library they import. Their `sorry` warnings are expected and do not
+  fail it; nothing the certificate reads imports them.
 - **A contributor's subset.** Working on a proof, run the full `lake build` first (the
   certificate imports all of `Elements`), then `Certificate/Facts.lean`, `check_fidelity.py`
   and `check_style.py`; a stale record is expected (section 6), and the pages are the

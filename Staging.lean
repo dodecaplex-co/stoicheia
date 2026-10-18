@@ -1,12 +1,11 @@
 /-!
-# Staging: statements awaiting approval
+# Staging: statements before their proofs
 
-Statements are settled before proofs (docs/WORKFLOW.md, section 2). A new or changed
-statement is written here first, in a stage's statement wave, with `sorry` where its proof
-is due; it is challenged by readers who did not write it, and approved, before any proof is
-assigned (docs/templates/orders.md, kind 2). The staged files import `Elements`, and
-nothing imports them, so nothing here changes what `Elements/` proves or what the
-certificate reads.
+A statement that a stage adds or changes is written here first, in the stage's statement
+wave, with `sorry` where its proof is due; it is challenged by readers who did not write it,
+and approved, before any proof is assigned (docs/WORKFLOW.md, section 2). The staged files
+import `Elements`, and nothing imports them, so nothing here changes what `Elements/` proves
+or what the certificate reads.
 
 The library is not in the default build. `lake build Staging` checks that each staged
 statement is well formed, `sorry` warnings and all: it is a build check, not a check that
