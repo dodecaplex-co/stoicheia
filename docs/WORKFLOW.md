@@ -280,6 +280,7 @@ lake build
 lake build Audit
 lake build Staging
 lake env lean Certificate/Facts.lean
+python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
 python3 scripts/check_style.py
