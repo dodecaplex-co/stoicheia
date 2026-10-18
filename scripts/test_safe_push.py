@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for scripts/safe_push.py, on a throwaway clone with a bare origin.
 
-    python3 scripts/test_safe_push.py        # five minutes or so; no Lean, no network
+    python3 scripts/test_safe_push.py        # seven minutes or so; no Lean, no network
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
 The clone is made with `git clone --local` of this repository into a temporary
@@ -40,6 +40,18 @@ one commit and runs safe_push.py against that origin:
   lakefile.lean and .gitignore are protected; a recased source comment names no leaf; a
   hand edit to PROGRAM.md is not a generated change; an allowed tag is still scanned;
   and an installed hook that differs from origin/main's is noted;
+- the final review's findings: values pinned to the edition move with their content,
+  while check code with content is kept apart, in step 4's own wiring too; a crash of
+  origin/main's render.py is a verdict, and a check failing its own pass refuses; the
+  gates read the head's template while origin/main has none, and only what GitHub shows;
+  a refusal after the push is exit 3, and a failing `gh pr merge` is believed only when
+  nothing merged; every part safe_push wrote in the body is refreshed; the title and the
+  branch name are scanned before the merge, whose message is the one scanned, and the
+  hook scans a ref's name; an allowed finding's note holds no flagged line, and the home
+  directory is written as ~; the hook and the launcher find a Python 3.11 or later; CI
+  that appears late is still followed; main moving after the gates, or under the merge;
+  a pull request the merge may not merge; the re-run that takes its kind from the open
+  pull request; and step 4's notes carried to the merge;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -77,6 +89,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 HERE = Path(__file__).resolve().parent
 SAFE_PUSH = HERE / "safe_push.py"
@@ -119,7 +132,8 @@ def clean_env() -> dict:
                STOICHEIA_FAKE_GH_STATE=str(GH_STATE), STOICHEIA_FAKE_GH_ORIGIN=str(ORIGIN),
                STOICHEIA_PYTHON=sys.executable)
     for name in ("STOICHEIA_SAFE_PUSH", "STOICHEIA_HARNESS", "STOICHEIA_TAG_PUSH",
-                 "STOICHEIA_FAKE_GH_KILL"):
+                 "STOICHEIA_FAKE_GH_KILL", "STOICHEIA_FAKE_GH_MERGE", "STOICHEIA_TEST_CI_POLL",
+                 "STOICHEIA_TEST_CI_APPEAR"):
         env.pop(name, None)
     return env
 
@@ -251,6 +265,9 @@ def main(argv):
         if opt(args, "--title"):
             pr["title"] = opt(args, "--title")
         for label in opts(args, "--add-label"):
+            if label not in s["labels"]:
+                print("'%s' not found" % label, file=sys.stderr)
+                return 1
             if label not in pr["labels"]:
                 pr["labels"].append(label)
         save(s)
@@ -262,32 +279,61 @@ def main(argv):
     if cmd == ["pr", "checks"]:
         sha = head_of(pr["headRefName"])
         checks = s["checks"].get(sha, s["checks"]["*"])
+        if "--watch" not in args:
+            # Real gh, until CI registers on a new head: nothing on stdout, exit 1.
+            asked = s.setdefault("asked", {})
+            asked[sha] = asked.get(sha, 0) + 1
+            save(s)
+            if asked[sha] <= s.get("nochecks", 0):
+                print("no checks reported on the '%s' branch" % pr["headRefName"],
+                      file=sys.stderr)
+                return 1
         if "--watch" in args:
             kill_on_watch()
             return 0 if all(c["bucket"] == "pass" for c in checks) else 1
         print(json.dumps(checks))
         return 0
     if cmd == ["pr", "merge"]:
+        # STOICHEIA_FAKE_GH_MERGE: "fail-before" refuses; "fail-after" merges and then
+        # fails, as gh does when it cannot delete the branch; "main-first:<sha>" moves
+        # main to <sha> first, as another merge landing at that moment would;
+        # "flag:<path>" makes the file <path> once merged.
+        how = os.environ.get("STOICHEIA_FAKE_GH_MERGE", "")
         if "--merge" not in args or "--squash" in args or "--rebase" in args:
+            return 1
+        if how == "fail-before":
+            print("GraphQL: Base branch was modified", file=sys.stderr)
             return 1
         sha = head_of(pr["headRefName"])
         if opt(args, "--match-head-commit") != sha:
             print("head moved", file=sys.stderr)
             return 1
+        if how.startswith("main-first:"):
+            subprocess.run(["git", "update-ref", "refs/heads/main", how.split(":", 1)[1]],
+                           cwd=ORIGIN, check=True)
         main = subprocess.run(["git", "rev-parse", "refs/heads/main"], cwd=ORIGIN,
                               capture_output=True, text=True, check=True).stdout.strip()
         env = dict(os.environ, GIT_AUTHOR_NAME="GitHub", GIT_AUTHOR_EMAIL="noreply@github.com",
                    GIT_COMMITTER_NAME="GitHub", GIT_COMMITTER_EMAIL="noreply@github.com")
+        message = ["-m", opt(args, "--subject") or "Merge pull request #%d" % n]
+        if opt(args, "--body"):
+            message += ["-m", opt(args, "--body")]
         merge = subprocess.run(["git", "commit-tree", sha + "^{tree}", "-p", main, "-p", sha,
-                                "-m", "Merge pull request #%d" % n], cwd=ORIGIN, env=env,
+                                *message], cwd=ORIGIN, env=env,
                                capture_output=True, text=True, check=True).stdout.strip()
         subprocess.run(["git", "update-ref", "refs/heads/main", merge, main], cwd=ORIGIN,
                        check=True)
-        if "--delete-branch" in args:
+        if "--delete-branch" in args and how != "fail-after":
             subprocess.run(["git", "update-ref", "-d", "refs/heads/" + pr["headRefName"]],
                            cwd=ORIGIN, check=True)
-        pr["state"], pr["mergedHead"] = "MERGED", sha
+        pr["state"], pr["mergedHead"], pr["mergeCommit"] = "MERGED", sha, {"oid": merge}
         save(s)
+        if how.startswith("flag:"):
+            open(how.split(":", 1)[1], "w").close()
+        if how == "fail-after":
+            print("failed to delete remote branch %s: connection reset" % pr["headRefName"],
+                  file=sys.stderr)
+            return 1
         return 0
     print("fake gh: not understood: %s" % argv, file=sys.stderr)
     return 2
@@ -399,6 +445,15 @@ class Clone(unittest.TestCase):
         """The outcome a step's line reports: "ok", "FAIL", "note", or None if absent."""
         m = re.search(r"^\s+(ok|FAIL|note)\s+%s:" % re.escape(name), out, re.M)
         return m.group(1) if m else None
+
+    def step(self, out: str, name: str) -> str | None:
+        """A step's outcome, whether or not its line carries a detail after a colon."""
+        m = re.search(r"^\s+(ok|FAIL|skip|note)\s+%s(:|\s+\(|$)" % re.escape(name), out, re.M)
+        return m.group(1) if m else None
+
+    def merges(self) -> list[list[str]]:
+        """The `gh pr merge` calls the stand-in for gh has had."""
+        return [c for c in self.gh_state()["calls"] if c[:2] == ["pr", "merge"]]
 
     def assertRefused(self, r, *wanted):
         out = r.stdout + r.stderr
@@ -686,7 +741,7 @@ class Hook(Clone):
         sha = self.commit("A commit", {"docs/reading.md": self.text("docs/reading.md") + "\nX.\n"})
         r = self.push(f"{sha}:refs/heads/main")
         self.assertNotEqual(r.returncode, 0)
-        self.assertIn("git safe-push --branch", r.stderr)
+        self.assertIn("git safe-push --branch <name> --label <kind>", r.stderr)
         r = self.push(f"{sha}:refs/heads/main", STOICHEIA_SAFE_PUSH=sha)
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("refusing a push to main", r.stderr)
@@ -744,6 +799,16 @@ class Hook(Clone):
         self.assertIn("origin/main has no scripts/safe_push.py with", r.stderr)
         self.assertIsNone(self.origin_branch("a-branch"))
 
+    def test_hook_scans_the_ref_name(self):
+        # A branch's name is published with it: one the scan flags is refused, its commits
+        # clean or not.
+        sha = self.commit("A commit", {"docs/reading.md": self.text("docs/reading.md") + "\nX.\n"})
+        name = "secret" + "s2026-notes"
+        r = self.push(f"{sha}:refs/heads/{name}")
+        self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("its name holds what the secret scan refuses", r.stderr)
+        self.assertIsNone(self.origin_branch(name))
+
     def test_hook_scans_with_origin_mains_copy(self):
         # A branch that empties its own copy of the scan is still scanned by origin/main's.
         lame = self.replaced("scripts/safe_push.py", "def scan_push_main(",
@@ -796,6 +861,18 @@ class Edge(Clone):
     def good_commit(self, line: str = "A line for the test.") -> str:
         return self.commit("A good commit", {
             "docs/reading.md": self.text("docs/reading.md") + f"\n{line}\n"})
+
+    def regenerated_commit(self, message: str, changes: dict) -> str:
+        """The changes, with the pages render.py regenerates from them, committed."""
+        for rel, text in changes.items():
+            (WORK / rel).parent.mkdir(parents=True, exist_ok=True)
+            (WORK / rel).write_text(text)
+            git(WORK, "add", "--", rel)
+        r = subprocess.run([sys.executable, "scripts/render.py"], cwd=WORK,
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        git(WORK, "add", "-u")
+        return self.commit(message)
 
 
 class SplitSecrets(Edge):
@@ -1027,7 +1104,7 @@ class GeneratedPages(Edge):
         self.assertEqual(self.guard(r.stdout, "generated pages"), "ok", r.stdout)
 
 
-# Runs safe_push in a subprocess with `guards` or `watch_checks` wrapped, so that
+# Runs safe_push in a subprocess with `guards`, `gates` or `watch_checks` wrapped, so that
 # something happens at a chosen moment: origin's main moves, or an interruption.
 DRIVER = r"""
 import subprocess, sys
@@ -1035,6 +1112,12 @@ sys.path.insert(0, sys.argv[1])
 import safe_push
 action, origin, target = sys.argv[2], sys.argv[3], sys.argv[4]
 real_guards, real_watch = safe_push.guards, safe_push.watch_checks
+real_gates = safe_push.gates
+def gates(ctx, number, rep, record=None):
+    result = real_gates(ctx, number, rep, record)
+    if action == "move-at-merge" and record is not None:
+        subprocess.run(["git", "update-ref", "refs/heads/main", target], cwd=origin, check=True)
+    return result
 def guards(*args, **kwargs):
     result = real_guards(*args, **kwargs)
     if action == "move":
@@ -1049,6 +1132,7 @@ def watch_checks(*args, **kwargs):
         raise RuntimeError("gh went away")
     return real_watch(*args, **kwargs)
 safe_push.guards = guards
+safe_push.gates = gates
 safe_push.watch_checks = watch_checks
 sys.exit(safe_push.main(sys.argv[5:]))
 """
@@ -1347,6 +1431,81 @@ class PullRequests(Edge):
         self.assertEqual(pr["body"].count("safe_push:preflight begin"), 1)
         self.assertEqual(self.origin_branch(), second)
 
+    def test_update_refreshes_the_generated_parts(self):
+        # The final review: every part safe_push wrote is written afresh on an update (the
+        # commits, the statements changed, the records), and the coordinator's words stay.
+        self.good_commit()
+        self.assertEqual(self.safe_push().returncode, 0)
+        words = "A change for the test, in the coordinator's words."
+        self.set_gh(lambda s: s["prs"][0].update(body=s["prs"][0]["body"].replace(
+            "## What and why\n", f"## What and why\n\n{words}\n", 1)))
+
+        def part(body, heading, after):
+            return body[body.index(f"## {heading}"):body.index(f"## {after}")]
+        body = self.gh_state()["prs"][0]["body"]
+        self.assertIn("None.", part(body, "Statements changed", "Review records"))
+        self.assertIn("None.", part(body, "Review records", "Protected paths"))
+        # The fix: I.1's statement changes, with a decision naming it, and its record is
+        # re-stamped.
+        lean, record = "Elements/BookI/Prop01.lean", "review/I/01.toml"
+        new_lean = self.replaced(lean, SIGNATURE_OLD, SIGNATURE_NEW)
+        stamped = re.sub(r'(?m)^lean = "[^"]*"',
+                         f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
+        stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
+        changes = {lean: new_lean, record: stamped}
+        changes.update(self.decision("I.1 names its side point Q."))
+        second = self.regenerated_commit("I.1 names its side point Q", changes)
+        r = self.safe_push()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        body = self.gh_state()["prs"][0]["body"]
+        self.assertIn(words, body)
+        statements = part(body, "Statements changed", "Review records")
+        self.assertIn("I.1 (the Lean statement changed), named in the docs/briefs/ lines added",
+                      statements)
+        self.assertNotIn("None.", statements)
+        self.assertIn("`review/I/01.toml`: re-stamped at `abc1234`",
+                      part(body, "Review records", "Protected paths"))
+        self.assertIn(f"`{second[:7]}` I.1 names its side point Q", body)
+        for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
+            self.assertEqual(body.count(f"<!-- safe_push:{name} begin"), 1, name)
+
+    def test_update_creates_a_label_the_open_pull_request_now_needs(self):
+        # A later commit changes a protected path: the label security-review is made before
+        # `gh pr edit --add-label` asks for it (gh refuses a label that does not exist).
+        self.good_commit()
+        self.assertEqual(self.safe_push().returncode, 0)
+        path = "scripts/check_style.py"
+        change = {path: self.text(path) + "\n# A comment for the test.\n"}
+        change.update(self.decision(f"A comment in `{path}`, for the test."))
+        self.commit("A protected change on the open branch", change)
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("security-review", self.gh_state()["prs"][0]["labels"])
+
+    def test_ci_followed_when_its_checks_appear_late(self):
+        # Real gh says "no checks reported" (stderr, exit 1) until CI registers on a new
+        # head: the pre-flight waits for them, then follows and judges them.
+        self.good_commit()
+        self.set_gh(lambda s: s.update(nochecks=2))
+        env = clean_env()
+        env["STOICHEIA_TEST_CI_POLL"] = "0"
+        r = self.safe_push(env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "CI"), "ok", out)
+        asked = [c for c in self.gh_state()["calls"] if c[:2] == ["pr", "checks"]
+                 and "--watch" not in c]
+        self.assertGreaterEqual(len(asked), 4, asked)     # twice none, then found, then judged
+        # When none ever appear: CI not followed, exit 3.
+        self.good_commit("A second line, the fix.")
+        self.set_gh(lambda s: s.update(nochecks=10 ** 6))
+        env.update(STOICHEIA_TEST_CI_POLL="0.2", STOICHEIA_TEST_CI_APPEAR="1")
+        r = self.safe_push(env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("no checks appeared", out)
+
     def test_body_file(self):
         self.good_commit()
         body = TMP / "body.md"
@@ -1479,12 +1638,20 @@ class Merge(Edge):
         self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", main).split()[1:],
                          [BASE, sha], "not a merge commit of main and the head")
         self.assertIsNone(self.origin_branch(), "the branch was not deleted")
-        merges = [c for c in self.gh_state()["calls"] if c[:2] == ["pr", "merge"]]
+        merges = self.merges()
         self.assertEqual(len(merges), 1)
         self.assertIn("--merge", merges[0])
         self.assertIn(sha, merges[0])               # --match-head-commit
         self.assertFalse({"--squash", "--rebase", "--admin", "--auto"} & set(merges[0]))
         self.assertEqual(self.guard(out, "main"), "ok", out)
+        # The merge commit's message is the one scanned: GitHub's subject, and the title.
+        subject = f"Merge pull request #1 from test/{BRANCH}"
+        self.assertIn("--subject", merges[0])
+        self.assertIn("--body", merges[0])
+        self.assertEqual(merges[0][merges[0].index("--subject") + 1], subject)
+        self.assertEqual(merges[0][merges[0].index("--body") + 1], "A good commit")
+        self.assertEqual(git(ORIGIN, "log", "-1", "--format=%B", main).strip(),
+                         f"{subject}\n\nA good commit")
 
     def test_missing_required_box_refused(self):
         self.opened()
@@ -1633,6 +1800,193 @@ class Merge(Edge):
         self.assertNotIn("the review /security-review", out)   # nothing protected changes
         self.assertEqual(self.origin_main(), BASE)
 
+    def test_gates_read_the_heads_template_while_main_has_none(self):
+        # PR #1's own case: origin/main has no template yet, and the head brings it. The
+        # gates read the head's, as the body was made from it: a box deleted and the
+        # sections unwritten are refused.
+        template = ".github/pull_request_template.md"
+        text = self.text(template)
+        git(WORK, "rm", "-q", "--", template)
+        git(WORK, "commit", "-q", "-m", "A main without the template")
+        main = git(WORK, "rev-parse", "HEAD").strip()
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{main}:refs/heads/main")
+        git(WORK, "fetch", "--quiet", "origin")
+        changes = {template: text}
+        changes.update(self.decision(f"`{template}` comes back, for the test."))
+        self.opened(**changes)
+        drop = "- [ ] **Required:** Nothing public goes out without the owner's OK.\n"
+        self.set_gh(lambda s: s["prs"][0].update(
+            body=boxes_ticked(s["prs"][0]["body"].replace(drop, ""))))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "checklist"), "FAIL", out)
+        self.assertIn("missing from the body: Required: Nothing public", out)
+        self.assertEqual(self.guard(out, "sections"), "FAIL", out)
+        self.assertIn('not written: the section "What and why"', out)
+        self.assertEqual(self.origin_main(), main)
+        self.assertEqual(self.merges(), [])
+
+    def test_title_and_branch_name_scanned_before_the_merge(self):
+        # Both go into main's merge commit for good: a title edited on GitHub, or a branch
+        # pushed by hand, holding what the scan refuses, is refused at the merge.
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        saved = self.gh_state()["prs"][0]
+        name = "secret" + "s2026-notes"
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{sha}:refs/heads/{name}")
+        for change in ({"title": f"Notes from {PRIVATE_DIR}"}, {"headRefName": name}):
+            with self.subTest(change=change):
+                self.set_gh(lambda s: s["prs"][0].update(change))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "public names"), "FAIL", out)
+                self.set_gh(lambda s: s["prs"].__setitem__(0, saved))
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_gh_failing_is_believed_only_if_nothing_merged(self):
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        env = clean_env()
+        env["STOICHEIA_FAKE_GH_MERGE"] = "fail-before"
+        r = self.safe_push("--merge", "1", env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("nothing was merged (#1 is OPEN)", out)
+        self.assertEqual(self.origin_main(), BASE)
+        # gh fails after the merge (in deleting the branch): merged, and main checked.
+        env["STOICHEIA_FAKE_GH_MERGE"] = "fail-after"
+        r = self.safe_push("--merge", "1", env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "gh pr merge"), "note", out)
+        self.assertIn("but GitHub says #1 is merged", out)
+        self.assertEqual(self.guard(out, "main"), "ok", out)
+        self.assertEqual(self.guard(out, "branch"), "note", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+
+    def test_failed_fetch_after_the_merge_is_not_success(self):
+        # Origin stops answering right after the merge: main is not checked, and the run
+        # says so (exit 3) rather than judging a stale origin/main.
+        self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        flag = TMP / "merged"
+        flag.unlink(missing_ok=True)
+        self.addCleanup(lambda: flag.unlink(missing_ok=True))
+        bindir = Path(tempfile.mkdtemp(prefix="bin-", dir=TMP))
+        (bindir / "git").write_text(
+            '#!/bin/sh\nfor a in "$@"; do\n'
+            f'    if [ "$a" = fetch ] && [ -e "{flag}" ]; then\n'
+            '        echo "fatal: unable to access origin: Connection reset" >&2\n'
+            '        exit 128\n    fi\ndone\n'
+            f'exec "{shutil.which("git")}" "$@"\n')
+        (bindir / "git").chmod(0o755)
+        env = clean_env()
+        env["PATH"] = f"{bindir}{os.pathsep}{env['PATH']}"
+        env["STOICHEIA_FAKE_GH_MERGE"] = f"flag:{flag}"
+        r = self.safe_push("--merge", "1", env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertEqual(self.guard(out, "main"), "FAIL", out)
+        self.assertIn("not checked: `git fetch origin` failed", out)
+        self.assertIn("main could not be checked", out)
+        self.assertNotIn("git revert", out)
+
+    def test_main_moving_after_the_gates_refused(self):
+        # --match-head-commit pins the head, not the base: origin/main moving after the
+        # gates, before `gh pr merge`, is refused, and gh is never asked to merge.
+        side = self.side_commit()
+        self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        r = subprocess.run([sys.executable, "-c", DRIVER, str(HERE), "move-at-merge",
+                            str(ORIGIN), side, "--_test-skip-checks", "--merge", "1"],
+                           cwd=WORK, env=clean_env(), capture_output=True, text=True)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("origin/main moved", out)
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), side)
+        self.assertIsNotNone(self.origin_branch())
+
+    def test_main_moving_under_the_merge_advises_a_revert(self):
+        # Another merge lands between the last look at main and GitHub's merge: the merge
+        # commit does not join the base checked, so the run says how to revert it.
+        side = self.side_commit()
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        env = clean_env()
+        env["STOICHEIA_FAKE_GH_MERGE"] = f"main-first:{side}"
+        r = self.safe_push("--merge", "1", env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertEqual(self.guard(out, "main"), "FAIL", out)
+        self.assertIn("Merged, but main is not what was checked", out)
+        merge = self.origin_main()
+        self.assertEqual(git(ORIGIN, "rev-list", "--parents", "-n", "1", merge).split()[1:],
+                         [side, sha])
+        self.assertIn(f"git revert --no-edit -m 1 {merge}", out)
+        self.assertIn(f"git safe-push --branch revert-{merge[:12]} --label docs", out)
+
+    def test_merge_refuses_a_pull_request_it_may_not_merge(self):
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        saved = self.gh_state()["prs"][0]
+        onto = "does not propose a branch of origin onto main"
+        for change, why in (({"state": "CLOSED"}, "is not open"),
+                            ({"state": "MERGED"}, "is not open"),
+                            ({"baseRefName": "next"}, onto),
+                            # a fork's head, here as after `gh pr checkout <n>`
+                            ({"isCrossRepository": True, "forkHead": sha,
+                              "headRepositoryOwner": {"login": "stranger"}}, onto)):
+            with self.subTest(change=change):
+                self.set_gh(lambda s: s["prs"][0].update(change))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertIn(why, out)
+                self.set_gh(lambda s: s["prs"].__setitem__(0, saved))
+        self.assertEqual(self.merges(), [])
+        self.assertEqual(self.origin_main(), BASE)
+
+    def test_step_4_notes_reach_the_merge(self):
+        # When the pre-flight's record stands in for step 4 at the merge, its step-4 notes
+        # (a check that failed with origin/main's copies) are shown beside the checklist.
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        path = LOG.parent / "preflight" / f"{sha}-{BASE}.json"
+        record = json.loads(path.read_text())
+        note = ["python3 scripts/check_links.py (origin/main's checks)", "full output in a log"]
+        record["notes"].append(note)
+        path.write_text(json.dumps(record))
+        r = self.merge("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("the full checks are not repeated", out)
+        self.assertEqual(self.guard(out, "pre-flight notes"), "note", out)
+        self.assertIn(f"{note[0]}: {note[1]}", out[out.index("pre-flight notes"):])
+
+    def test_rerun_takes_the_kind_from_the_open_pull_request(self):
+        # The documented re-run after a fix, `--branch <name>` with no --label.
+        self.opened(ready=False)
+        second = self.good_commit("A second line, the fix.")
+        r = self.safe_push("--branch", BRANCH)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "kind label"), "ok", out)
+        self.assertIn("kind label: on #1", out)
+        self.assertIn("#1 updated", out)
+        self.assertEqual(self.origin_branch(), second)
+        # With no label for its kind on the open one, the re-run is refused before the push.
+        self.set_gh(lambda s: s["prs"][0].update(labels=["stage-2"]))
+        self.good_commit("A third line.")
+        r = self.safe_push("--branch", BRANCH)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("the pull request has no label for its kind", out)
+        self.assertEqual(self.origin_branch(), second)
+
 
 # --------------------------------------------------------------------------------------
 # B: the review's findings, each with a planted commit
@@ -1720,8 +2074,149 @@ class ProtectedPaths(Edge):
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 0, out)
         self.assertEqual(self.guard(out, "generated pages (origin/main's checks)"), "note", out)
+        self.assertIn("generated pages (origin/main's checks): stale", out)
+        self.assertIsNone(self.guard(out, "render.py (origin/main's checks)"), out)
         self.assertIsNone(self.guard(out, "check change kept apart"), out)
         self.assertEqual(self.origin_branch(), sha)
+
+    def test_renderer_validation_loosened_with_content_is_kept_apart(self):
+        # render.py checks docs/program.toml: a stage it did not know, allowed in render.py
+        # and used in program.toml in one commit, makes origin/main's render.py fail
+        # outright. That is a verdict, not stale pages.
+        path = "scripts/render.py"
+        changes = {path: self.replaced(path, 'PROGRAM_STAGES = ("brief",',
+                                       'PROGRAM_STAGES = ("anything", "brief",'),
+                   "docs/program.toml": self.replaced(
+                       "docs/program.toml",
+                       'stage = "released (next: I.40 and I.45 in full generality)"',
+                       'stage = "anything"')}
+        changes.update(self.decision(f"`{path}` is changed for the test."))
+        self.regenerated_commit("Loosen render.py's check of program.toml, and use it", changes)
+        out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
+                                 "docs/program.toml")
+        self.assertEqual(self.guard(out, "render.py (origin/main's checks)"), "note", out)
+        self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
+
+    def test_check_change_failing_its_own_pass_refused(self):
+        # render.py's output changes and the pages are not regenerated: origin/main's
+        # render.py finds them current, the commit's own finds them stale, and that refuses.
+        path = "scripts/render.py"
+        changes = {path: self.replaced(path, '"This page keeps three things apart."',
+                                       '"This page keeps three things apart, for the test."')}
+        changes.update(self.decision(f"`{path}` is changed for the test."))
+        self.commit("Reword render.py, the pages not regenerated", changes)
+        out = self.assertRefused(self.safe_push("--dry-run"),
+                                 "generated pages (the commit's checks)")
+        self.assertEqual(self.guard(out, "generated pages (origin/main's checks)"), "ok", out)
+        self.assertEqual(self.guard(out, "generated pages (the commit's checks)"), "FAIL", out)
+
+    def reproof(self) -> dict:
+        """III.1 re-proved without one tacit rule (as a re-proof would leave it, Lean
+        aside): its Lean file, its record re-stamped, facts.json without the rule; and the
+        certificate's expectations moved with it, with a decisions line naming them."""
+        lean, record = "Elements/BookIII/Prop01.lean", "review/III/01.toml"
+        expect = "tests/certificate_expectations.json"
+        new_lean = self.text(lean) + "\n-- A re-proof that no longer needs area_swap.\n"
+        stamped = re.sub(r'(?m)^lean = "[^"]*"',
+                         f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
+        stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
+        facts = json.loads(self.text("facts.json"))
+        for p in facts["propositions"]:
+            if p["ref"] in ("III.1", "III.1 Por."):
+                p["axioms"].remove("Tacit.area_swap")
+        changes = {lean: new_lean, record: stamped,
+                   "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
+                   expect: self.text(expect).replace('"is": 56}', '"is": 55}')
+                                            .replace('"is": 57}', '"is": 56}')}
+        changes.update(self.decision(f"`{expect}`: III.1's re-proof uses one tacit rule fewer."))
+        return changes
+
+    def test_pinned_values_move_with_their_content(self):
+        # The final review's blocking finding: a re-proof that moves an expected count
+        # could land in no order. The expectations are pinned values: they change with
+        # the content, origin/main's failure is noted, and the commit's own pass holds.
+        self.regenerated_commit("Re-prove III.1, its expectations with it", self.reproof())
+        r = self.safe_push("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
+        self.assertIn("has 55 names beginning 'Tacit.', not 56", out)
+        self.assertEqual(self.guard(out, "review records (the commit's checks)"), "ok", out)
+        self.assertEqual(self.guard(out, "pinned values"), "note", out)
+        self.assertIsNone(self.guard(out, "check change kept apart"), out)
+
+    def test_pinned_values_with_check_code_kept_apart(self):
+        # The same, with a change to check code as well: kept apart, pinned values or not.
+        path = "scripts/check_fidelity.py"
+        changes = self.reproof()
+        changes[path] = self.text(path) + "\n# A comment for the test.\n"
+        changes[DECISIONS] += f"\n- **Another decision for the test.** `{path}` gains a line.\n"
+        self.regenerated_commit("Re-prove III.1, and change check_fidelity.py", changes)
+        out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
+                                 "Elements/BookIII/Prop01.lean")
+        self.assertIsNone(self.guard(out, "pinned values"), out)
+
+    STYLE = ("python3 scripts/check_style.py",
+             [sys.executable, "scripts/check_style.py", "--no-lean"])
+
+    def full_checks(self, sha: str, checks: list, negative: list) -> tuple[str | None, str]:
+        """safe_push.full_checks on `sha`, as step 4 runs it, in a throwaway worktree, with
+        CHECKS and NEGATIVE cut to the steps given (no Lean): its refusal, if any, and its
+        report."""
+        rep, out = safe_push.Report(), io.StringIO()
+        ctx = safe_push.Context(WORK, sha, BASE, 1, str(ORIGIN), None, {})
+        inputs = [(st, p) for st, p in safe_push.changed_files(WORK, BASE, sha)
+                  if safe_push.under(p, safe_push.CHECK_INPUTS)]
+        refusal = None
+        with tempfile.TemporaryDirectory(dir=TMP) as tmp, \
+                mock.patch.object(safe_push, "CHECKS", checks), \
+                mock.patch.object(safe_push, "NEGATIVE", negative), \
+                contextlib.redirect_stdout(out):
+            parent = Path(tmp)
+            (parent / "logs").mkdir()
+            with safe_push.worktree(WORK, sha, parent, "check") as wt:
+                try:
+                    safe_push.full_checks(ctx, wt, parent, inputs, rep, parent / "logs")
+                except safe_push.Refusal as e:
+                    refusal = str(e)
+        return refusal, out.getvalue()
+
+    def test_stage_4_keeps_a_check_change_apart(self):
+        # Step 4's own wiring of keep_apart, which the internal flag skips: check_style.py
+        # made to pass whatever it finds, with a page of the edition it would refuse.
+        path = "scripts/check_style.py"
+        base_name = "python3 scripts/check_style.py (origin/main's checks)"
+        loosened = {path: self.replaced(path, "    sys.exit(main())", "    sys.exit(0)")}
+        loosened.update(self.decision(f"`{path}` passes whatever it finds, for the test."))
+        sha = self.commit("Loosen check_style.py, and break one of its rules", dict(loosened, **{
+            "mishnah/I/01.md": self.text("mishnah/I/01.md") + "\nA tacit assumption, here.\n"}))
+        # Refused after the checks, before the negative tests run.
+        ran = TMP / "negative-ran"
+        ran.unlink(missing_ok=True)
+        marker = ("negative: a marker", [sys.executable, "-c", f"open({str(ran)!r}, 'w')"])
+        refusal, out = self.full_checks(sha, [self.STYLE], [marker])
+        self.assertEqual(refusal, "a check changed together with what it checks", out)
+        self.assertEqual(self.guard(out, base_name), "note", out)
+        self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
+        self.assertIn("mishnah/I/01.md", out[out.index("check change kept apart"):])
+        self.assertFalse(ran.exists(), f"the negative tests ran after the refusal was due:\n{out}")
+        # A check failing in the negative tests' pass alone is kept apart there.
+        name, cmd = self.STYLE
+        refusal, out = self.full_checks(sha, [], [("negative: " + name, cmd)])
+        self.assertEqual(refusal, "a check changed together with what it checks", out)
+        self.assertEqual(self.guard(out, "negative: " + base_name), "note", out)
+        self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
+        # The check change alone, with a generated page it would refuse (not judged):
+        # noted for the security review, not refused, and the commit's own pass holds.
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        sha = self.commit("Loosen check_style.py, and a page it would refuse", dict(loosened, **{
+            "CERTIFICATE.md": self.text("CERTIFICATE.md") + "\nA tacit assumption, here.\n"}))
+        refusal, out = self.full_checks(sha, [self.STYLE], [])
+        self.assertIsNone(refusal, out)
+        self.assertEqual(self.guard(out, base_name), "note", out)
+        self.assertEqual(self.step(out, "python3 scripts/check_style.py (the commit's checks)"),
+                         "ok", out)
+        self.assertIsNone(self.guard(out, "check change kept apart"), out)
 
     def kept_apart(self, sha: str, *failed: str) -> tuple[bool, str]:
         """keep_apart on `sha`, after these steps failed with origin/main's copies."""
@@ -1736,11 +2231,12 @@ class ProtectedPaths(Edge):
         sha = self.commit("A check, and a line of reading", {
             "scripts/check_links.py": self.text("scripts/check_links.py") + "\n# for the test\n",
             "docs/reading.md": self.text("docs/reading.md") + "\nA line for the test.\n"})
-        refused, _ = self.kept_apart(sha, "python3 scripts/render.py", "generated pages",
-                                     "git status --porcelain is empty")
+        refused, _ = self.kept_apart(sha, "generated pages", "git status --porcelain is empty")
         self.assertFalse(refused)
+        # render.py failing outright is a verdict (its check of docs/program.toml, say).
         for verdict in ("python3 scripts/check_fidelity.py", "negative: python3 "
-                        "scripts/negative_tests.py", "lake env lean Certificate/Facts.lean"):
+                        "scripts/negative_tests.py", "lake env lean Certificate/Facts.lean",
+                        "python3 scripts/render.py", "render.py"):
             with self.subTest(verdict=verdict):
                 refused, out = self.kept_apart(sha, verdict)
                 self.assertTrue(refused, out)
@@ -1769,16 +2265,6 @@ class ProtectedPaths(Edge):
             "README.md": "A hand-written line.\n" + self.text("README.md")})
         self.assertEqual(safe_push.judged_files(WORK, BASE, sha),
                          ["Elements/BookI/Prop01.lean", "README.md", "review/I/02.toml"])
-
-    def regenerated_commit(self, message: str, changes: dict) -> str:
-        """The changes, with the pages render.py regenerates from them, committed."""
-        for rel, text in changes.items():
-            (WORK / rel).write_text(text)
-        r = subprocess.run([sys.executable, "scripts/render.py"], cwd=WORK,
-                           capture_output=True, text=True)
-        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        git(WORK, "add", "-u")
-        return self.commit(message)
 
     def test_harness_runs_from_origin_main(self):
         # The commit empties its own copy of the secret scan and plants a token; run from
@@ -1815,8 +2301,9 @@ class ProtectedPaths(Edge):
             self.assertIn(f"`{path}`", home, path)
         # And step 4 there names the check inputs, as CHECK_INPUTS holds them.
         step4 = workflow[workflow.index("4. *The full checks*"):workflow.index("5. *The push")]
-        for path in safe_push.CHECK_INPUTS:
+        for path in safe_push.CHECK_INPUTS + safe_push.PINNED:
             self.assertIn(f"`{path}`", step4, path)
+        self.assertTrue(all(safe_push.under(p, safe_push.CHECK_INPUTS) for p in safe_push.PINNED))
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
         self.assertIn('"Protected paths"', template)
         self.assertNotIn("lake-manifest.json", template)
@@ -1850,6 +2337,86 @@ class InterruptedAfterThePush(Edge):
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 3, out)
         self.assertIn("pushed; CI not followed (RuntimeError: gh went away)", out)
+
+    def test_failure_right_after_the_push(self):
+        # The final review: the push lands, and origin stops answering before the branch
+        # is seen there. The branch is public from the moment `git push` returns 0.
+        sha = self.good_commit()
+        flag, hook = TMP / "origin-gone", ORIGIN / "hooks" / "post-receive"
+        hook.write_text(f'#!/bin/sh\ntouch "{flag}"\n')
+        hook.chmod(0o755)
+        self.addCleanup(lambda: (hook.unlink(missing_ok=True), flag.unlink(missing_ok=True)))
+        bindir = Path(tempfile.mkdtemp(prefix="bin-", dir=TMP))
+        (bindir / "git").write_text(
+            '#!/bin/sh\nfor a in "$@"; do\n'
+            f'    if [ "$a" = ls-remote ] && [ -e "{flag}" ]; then\n'
+            '        echo "fatal: unable to access origin: Connection reset" >&2\n'
+            '        exit 128\n    fi\ndone\n'
+            f'exec "{shutil.which("git")}" "$@"\n')
+        (bindir / "git").chmod(0o755)
+        env = clean_env()
+        env["PATH"] = f"{bindir}{os.pathsep}{env['PATH']}"
+        r = self.safe_push(env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("Pushed; CI not followed", out)
+        self.assertNotIn("REFUSED", out)
+        self.assertEqual(self.origin_branch(), sha)
+        self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+
+
+class Interpreter(Edge):
+    """The pre-push hook and the launcher find a Python 3.11 or later (STOICHEIA_PYTHON, or
+    the first of python3.14 ... python3 that is), or refuse; never an older python3."""
+
+    OLD = "exit 1\n"        # a python3 older than 3.11: its version check fails
+
+    def bin_with(self, programs: dict) -> Path:
+        """A directory for PATH alone: git and the few tools the hook uses, and the
+        programs given (name: a shell script's body)."""
+        where = Path(tempfile.mkdtemp(prefix="bin-", dir=TMP))
+        for tool in ("git", "grep", "mktemp", "rm"):
+            os.symlink(shutil.which(tool), where / tool)
+        for name, body in programs.items():
+            (where / name).write_text("#!/bin/sh\n" + body)
+            (where / name).chmod(0o755)
+        return where
+
+    def hook(self, bindir: Path, python: str | None = None) -> subprocess.CompletedProcess:
+        sha = self.good_commit()
+        env = clean_env()
+        env.pop("STOICHEIA_PYTHON")
+        env["PATH"] = str(bindir)
+        if python:
+            env["STOICHEIA_PYTHON"] = python
+        return subprocess.run(["/bin/sh", str(HERE / "hooks" / "pre-push"), "origin", str(ORIGIN)],
+                              cwd=WORK, env=env, input=f"x {sha} refs/heads/x {'0' * 40}\n",
+                              capture_output=True, text=True)
+
+    def test_hook_refuses_without_python_3_11(self):
+        r = self.hook(self.bin_with({"python3": self.OLD}))
+        self.assertNotEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("no Python 3.11 or later found", r.stderr)
+
+    def test_hook_finds_a_newer_python(self):
+        newer = f'exec "{sys.executable}" "$@"\n'
+        for programs, python in (({"python3": self.OLD, "python3.12": newer}, None),
+                                 ({"python3": self.OLD}, sys.executable)):
+            with self.subTest(programs=sorted(programs), python=python):
+                git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                r = self.hook(self.bin_with(programs), python)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 0, out)
+                self.assertIn("the secret scan of the push to refs/heads/x", out)
+
+    def test_launcher_refuses_without_python_3_11(self):
+        env = clean_env()
+        env.pop("STOICHEIA_PYTHON")
+        env["PATH"] = str(self.bin_with({"python3": self.OLD}))
+        r = subprocess.run(["/bin/sh", str(HERE / "hooks" / "safe-push"), "--dry-run"], cwd=WORK,
+                           env=env, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("no Python 3.11 or later found", r.stderr)
 
 
 class HandOver(Edge):
@@ -2054,6 +2621,34 @@ class AllowList(Edge):
         self.assertNotIn("FARAWAY", out)
         self.assertNotIn(GH_TOKEN, out)
 
+    def test_allow_listed_notes_name_no_flagged_line(self):
+        # The final review: an allowed finding's note goes into the public body, and its
+        # line may hold a value too short to mask, or a second flagged value. The note
+        # names its place, rule and the value's SHA-256 instead, and the body passes.
+        bare, key = "/" + "Users" + "/", "AK" + "IA" + "IOSFODNN7EXAMPLE"
+
+        def entry(rule: str, value: str, match: str) -> str:
+            return (f'[[allow]]\npath = "docs/notes.md"\nmatch = "{match}"\nrule = "{rule}"\n'
+                    f'sha256 = "{hashlib.sha256(value.encode()).hexdigest()}"\n'
+                    'reason = "A fixture for the test."\n')
+        self.new_base("Allow three fixtures", {"scripts/safe_push_allow.toml": (
+            entry("private path", bare, "The scan refuses any path")
+            + entry("AWS access key", key, "A fixture line:")
+            + entry("private path", FOLDED_HOME, "A fixture line:"))})
+        self.commit("Lines holding allowed values", {"docs/notes.md": (
+            f"The scan refuses any path under {bare} in a page.\n\n"
+            f"A fixture line: {key} beside {FOLDED_HOME} here.\n")})
+        r = self.safe_push()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "secrets"), "ok", out)
+        body = self.gh_state()["prs"][0]["body"]
+        safe_push.check_body(body)
+        self.assertEqual(body.count("- allow-listed: docs/notes.md:"), 3, body)
+        self.assertIn("(value sha256 ", body)
+        for value in (bare, key, FOLDED_HOME):
+            self.assertNotIn(value, body)
+
     def test_the_committed_allow_list_is_narrow(self):
         text = (SOURCE / "scripts" / "safe_push_allow.toml").read_text()
         import tomllib
@@ -2069,11 +2664,6 @@ class AllowList(Edge):
 class FullChecks(Edge):
     """Step 4 for real: the whole sequence once, on a good commit, without the internal
     flag, as a dry run of the pre-flight (the real gh is never called by the tests)."""
-
-    def step(self, out: str, name: str) -> str | None:
-        """A step's outcome, whether or not its line carries a detail after a colon."""
-        m = re.search(r"^\s+(ok|FAIL|skip)\s+%s(:|\s+\(|$)" % re.escape(name), out, re.M)
-        return m.group(1) if m else None
 
     def test_full_sequence_on_a_good_commit(self):
         self.good_commit()
@@ -2251,11 +2841,60 @@ class Units(unittest.TestCase):
         self.assertTrue(porism.startswith("{A B C D G : Point}"), porism)
         self.assertNotIn(":=", main + porism)
 
+    def test_gates_read_what_github_shows(self):
+        # The final review: a box or a heading GitHub does not show (in a comment, or in
+        # code by CommonMark's rules) counts for neither gate.
+        template = (SOURCE / ".github" / "pull_request_template.md").read_text()
+        full = ticked(template)
+
+        def both(body):
+            return (safe_push.checklist_problems(body, template, True),
+                    safe_push.section_problems(body, template, True))
+        self.assertEqual(both(full), ([], []))
+        head, _, checklist = full.partition("## Checklist\n")
+        hidden = {
+            "the checklist in a comment": head + "## Checklist\n\n<!--\n" + checklist + "\n-->\n",
+            "a comment never closed": head + "## Checklist\n\n<!--\n" + checklist,
+            "a fence never closed": "```\n" + full,
+            "a fence of four holding three": "````\n```\n" + full + "\n````\n",
+            "a tilde fence closed by backticks": "~~~\n" + full + "\n```\n",
+            "a fence closed with an info string": "```\n" + full + "\n```text\n",
+            "indented code": head + "## Checklist\n\n"
+                             + "\n".join("    " + line for line in checklist.splitlines()),
+        }
+        for name, body in hidden.items():
+            with self.subTest(name):
+                boxes, written = both(body)
+                self.assertTrue(boxes, name)
+                if name not in ("the checklist in a comment", "a comment never closed",
+                                "indented code"):
+                    self.assertTrue(written, name)
+        # What GitHub does show still counts: a fence of four holding three, inside "What
+        # and why", closed; boxes nested in a list item, indented four.
+        shown = full.replace("A change for the test.\n",
+                             "A change for the test.\n\n````\n```\nx\n```\n````\n", 1)
+        self.assertEqual(both(shown), ([], []))
+        nested = full.replace("## Checklist\n\n", "## Checklist\n\n- The boxes:\n\n", 1) \
+            .replace("- [x] **Required", "    - [x] **Required")
+        self.assertEqual(both(nested)[0], [])
+
+    def test_preflight_block_writes_the_home_directory_as_tilde(self):
+        # A step-4 note names its log, under the home directory: the public body has ~.
+        log = f"{Path.home()}/.cache/stoicheia/logs/x/18-git-status-is-empty.log"
+        record = {"steps": [], "full": True,
+                  "notes": [["git status --porcelain is empty (origin/main's checks)",
+                             f"full output in {log}"]]}
+        block = safe_push.preflight_block("a" * 40, "b" * 40, record)
+        self.assertNotIn(str(Path.home()), block)
+        self.assertIn("full output in ~/.cache/stoicheia/logs/x/", block)
+        safe_push.check_body(block)
+
     def test_revert_advice_and_slug(self):
         ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 3, "", None, {})
         advice = safe_push.revert_advice(ctx)
         self.assertIn(f"git revert --no-edit -m 1 {'a' * 40}", advice)
-        self.assertIn("git safe-push --branch", advice)
+        self.assertIn(f"git safe-push --branch revert-{'a' * 12} --label <kind>", advice)
+        self.assertIn("--label tooling", safe_push.revert_advice(ctx, "tooling"))
         self.assertEqual(safe_push.github_slug("https://github.com/jackChallis/stoicheia.git"),
                          "jackChallis/stoicheia")
         self.assertEqual(safe_push.github_slug("git@github.com:jackChallis/stoicheia.git"),

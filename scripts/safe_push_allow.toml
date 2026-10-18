@@ -19,8 +19,9 @@
 #           yet, so name it by its SHA-256;
 #   reason  why it is not a secret.
 #
-# The allow-listed lines are printed in safe_push's report and noted in the pull request,
-# masked, so they stay visible.
+# Each allowed finding stays visible: its line is printed, masked, in safe_push's report,
+# and it is noted in the pull request by its place, its rule, the SHA-256 of its value and
+# its reason, never by its line.
 #
 # [[allow]]
 # path = "docs/reports/example.md"
