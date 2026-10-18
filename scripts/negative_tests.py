@@ -37,7 +37,9 @@ records current; CI runs it on every push.
    - a `sorry` in I.16's proof: Book I is complete, so I.16 not proved is caught.
 
 The checks these do not plant a fault for are named in README.md's table, "What the
-checks show": check_style.py, check_links.py, the pages' freshness and the audit lemmas.
+checks show": check_style.py, check_links.py, the pages' freshness, the audit lemmas and
+leanchecker's replay in check_kernel.py, whose own `--self-test` plants its fault,
+Postulate 5 withheld, for nanoda alone.
 
 The files changed are restored, and so is `facts.json`; after test 9 the proofs are
 built again from the restored files. Exits non-zero if any change goes unnoticed.
