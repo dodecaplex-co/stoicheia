@@ -220,20 +220,21 @@ rendered page.
 **Review records are tied to a commit.** Every proposition has a record,
 `review/<book>/NN.toml` ([schema](../review/SCHEMA.md)). `scripts/review_stamp.py` stamps it
 with a fingerprint of the statements reviewed, a hash of the Lean file, a hash of the
-record's own text, and the commit whose files the record was last confirmed against. When
-any of the three no longer matches, `check_fidelity.py` reports that the statement, the Lean
-file or the record has changed since it was reviewed, and the record is read again. At the
-stage `exceptions` a record declares every departure; at the stage `full` it classifies
-every substantive passage. The record's `reviewer` names who read it; from the stage `full`
-it names the model or person and the role, and `run` names the brief, stage and workflow,
-so that a reader can tell the reviewer from the authors of the proof.
+record's own text without its `[review]` table and fingerprint, and the commit whose files
+the record was last confirmed against. When any of the three no longer matches,
+`check_fidelity.py` reports that the statement, the Lean file or the record has changed
+since it was reviewed, and the record is read again. At the stage `exceptions` a record
+declares every departure; at the stage `full` it classifies every substantive passage. The
+record's `reviewer` names who read it; from the stage `full` it names the model or person
+and the role, and `run` names the brief, stage and workflow, so that a reader can tell the
+reviewer from the authors of the proof.
 
 **Stamps.** A stamp says that a record has been read against the files as they now are.
 
 - The reviewer stamps, after reading, with the commit whose files were read:
   `python3 scripts/review_stamp.py --commit <commit> III.16`. Commit the change first,
   then stamp; the script checks that the Lean file and the record at that commit are as
-  they are now, the record's stamps aside.
+  they are now, the record's `[review]` table and fingerprint aside.
 - The integrator re-stamps only after reading each changed file against its record, and
   then stamps with the commit read. A record the integrator cannot confirm goes back to the
   records' owner.

@@ -652,10 +652,14 @@ findings:
   record as not current, and writes nothing new;
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants an edited note in
   I.1's record and expects it caught, and a comment and a moved stamp not;
-  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts a `text` line as a stamp,
-  and a stamp line added as a stamp alone while none is taken away, which
-  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) tests. Nothing is
-  loosened. The existing records are not stamped as read: `review_stamp.py
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts a `text` line as a stamp.
+  That widens its `stamp_only` a little: a stamp line added or moved now counts as a stamp
+  alone, where before it was judged, so that the records' `text` stamps travel past
+  `keep_apart` as the other stamps do. Two guards hold it, and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) tests both: no stamp key
+  is taken away, and the record as TOML reads it, its stamps set aside, is unchanged, so
+  that a line shaped as a stamp inside a multi-line string, which changes the record's
+  words, is judged. The existing records are not stamped as read: `review_stamp.py
   --migrate-text` writes `text` alone, and only where a record's text at its own stamp
   commit is its text now, which records no new reading ([WORKFLOW](../WORKFLOW.md),
   section 6). On main at `1caff82` it writes 83 records; 16 were edited after their stamp

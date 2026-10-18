@@ -4,10 +4,10 @@ A review record, review/<book>/NN.toml (review/SCHEMA.md), carries four stamps:
 `fingerprint` in [statement], a hash of the statements facts.json prints for the
 proposition and everything attached to it (`heath.review_fingerprint`); `lean` in
 [review], a hash of its Lean file (`heath.file_hash`); `text` in [review], a hash of the
-record's own text, without its stamps (`heath.text_hash`); and `commit` in [review], the
-commit whose files the record was last confirmed against. scripts/check_fidelity.py
-fails when a hash no longer matches, so a record is read again whenever a statement, a
-Lean file or the record itself changes.
+record's own text, without its [review] table and fingerprint (`heath.text_hash`); and
+`commit` in [review], the commit whose files the record was last confirmed against.
+scripts/check_fidelity.py fails when a hash no longer matches, so a record is read again
+whenever a statement, a Lean file or the record itself changes.
 
 This script writes the stamps, so that nobody computes a hash by hand. A stamp says the
 record has been read against the statements and files as they are now: run it after
@@ -19,12 +19,12 @@ a review, never just to quiet the check.
 
 `commit` changes only when `--commit` names one: the commit whose files the reviewer
 read. Commit the change first, then stamp with that commit. The script checks that the
-record's Lean file and the record itself, its stamps aside, are at that commit as they
-are now, so a record never names a commit it was not read at. When a record's
-fingerprint, `lean` or `text` would change, or it has no commit yet, `--commit` is
-required; otherwise an existing commit is kept. Each stamp stays on a line of its own,
-`key = "value"`, and is rewritten in place or added at the end of its section; nothing
-else in the file changes.
+record's Lean file and the record itself, its [review] table and fingerprint aside, are
+at that commit as they are now, so a record never names a commit it was not read at.
+When a record's fingerprint, `lean` or `text` would change, or it has no commit yet,
+`--commit` is required; otherwise an existing commit is kept. Each stamp stays on a line
+of its own, `key = "value"`, and is rewritten in place or added at the end of its
+section; nothing else in the file changes.
 
 `--migrate-text` is for the records stamped before `text` was (18 October 2026). It
 writes `text` alone, and only for a record whose text at its own stamp `commit` is its
@@ -159,11 +159,18 @@ def stamp(facts: dict, book: str, n: int, commit: str | None, dry_run: bool) -> 
         text = set_stamp(text, "review", "text", own)
         changes.append(f"text {rv.get('text', '(none)')} → {own}")
     if (changes or "commit" not in rv) and commit is None:
-        only_text = "text" not in rv and "commit" in rv and len(changes) == 1
-        raise ValueError(f"{ref}: its stamps change ({'; '.join(changes) or 'no commit yet'}): "
-                         "name the commit whose files you read with --commit"
-                         + ("; or, as it was stamped before `text` was, write `text` with "
-                            "--migrate-text" if only_text else ""))
+        why = f"{ref}: its stamps change ({'; '.join(changes) or 'no commit yet'}): "
+        ask = "name the commit whose files you read with --commit"
+        then = text_at(rv["commit"], path) \
+            if "text" not in rv and "commit" in rv and len(changes) == 1 else None
+        if then == own:
+            raise ValueError(why + ask + "; or, as it was stamped before `text` was, write "
+                             "`text` with --migrate-text")
+        if then is not None:
+            raise ValueError(why + f"the record was edited after its stamp commit "
+                             f"{rv['commit']}, so it needs a reader, who reads it and stamps "
+                             "it with --commit (docs/WORKFLOW.md, section 6)")
+        raise ValueError(why + ask)
     if commit is not None and (changes or commit != rv.get("commit")):
         # Whatever the stamps record, the files at the commit named are the files now.
         at = hash_at(commit, heath.lean_path(book, n))
@@ -174,8 +181,9 @@ def stamp(facts: dict, book: str, n: int, commit: str | None, dry_run: bool) -> 
         then = text_at(commit, path)
         if then != own:
             raise ValueError(f"{ref}: {rel(path)} at {commit} "
-                             + ("is not to be found" if then is None
-                                else "says something other than it says now")
+                             + ("is not to be found, or does not read" if then is None
+                                else "says something other than it says now, its [review] "
+                                "table and fingerprint aside")
                              + ": commit the change first, then stamp with that commit")
         if commit != rv.get("commit"):
             text = set_stamp(text, "review", "commit", commit)

@@ -1505,7 +1505,12 @@ class PullRequests(Edge):
         stamped = re.sub(r'(?m)^lean = "[^"]*"',
                          f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
-        changes = {lean: new_lean, record: stamped}
+        # And I.3's record gains its `text` stamp alone, its commit kept, as
+        # review_stamp.py --migrate-text writes it.
+        texted = "review/I/03.toml"
+        kept = re.search(r'(?m)^commit = "([^"]*)"', self.text(texted)).group(1)
+        changes = {lean: new_lean, record: stamped, texted: self.text(texted).rstrip("\n")
+                   + f'\ntext = "{safe_push.heath.text_hash(self.text(texted))}"\n'}
         changes.update(self.decision("I.1 names its side point Q."))
         second = self.regenerated_commit("I.1 names its side point Q", changes)
         r = self.safe_push()
@@ -1517,8 +1522,10 @@ class PullRequests(Edge):
         self.assertIn("I.1 (the Lean statement changed), named in the docs/briefs/ lines added",
                       statements)
         self.assertNotIn("None.", statements)
-        self.assertIn("`review/I/01.toml`: re-stamped at `abc1234`",
-                      part(body, "Review records", "Protected paths"))
+        records = part(body, "Review records", "Protected paths")
+        self.assertIn("`review/I/01.toml`: re-stamped at `abc1234`", records)
+        self.assertIn(f"`review/I/03.toml`: its stamps written, its commit kept at `{kept[:12]}`",
+                      records)
         self.assertIn(f"`{second[:7]}` I.1 names its side point Q", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(body.count(f"<!-- safe_push:{name} begin"), 1, name)
@@ -2542,6 +2549,21 @@ class ProtectedPaths(Edge):
         self.assertEqual(safe_push.judged_files(WORK, BASE, sha),
                          ["Elements/BookI/Prop01.lean", "README.md", "review/I/02.toml",
                           "review/I/04.toml"])
+
+    def test_a_stamp_line_inside_a_string_is_no_stamp(self):
+        # A line shaped as a stamp, added inside a multi-line string, changes the note it
+        # is in: the record is judged. The same line added to [review] is a stamp alone.
+        path, line = "review/I/03.toml", 'text = "sha256:0123456789abcdef"'
+        noted = self.replaced(path, 'scope = "full"\n', 'scope = "full"\n'
+                              'note = """\nA note on two lines,\nfor the test."""\n')
+        first = self.commit("A record with a multi-line note", {path: noted})
+        inside = self.commit("A stamp-shaped line inside the note", {
+            path: noted.replace("A note on two lines,\n", f"A note on two lines,\n{line}\n", 1)})
+        self.assertFalse(safe_push.stamp_only(WORK, first, inside, path))
+        git(WORK, "checkout", "--quiet", "--force", "--detach", first)
+        stamped = self.commit("A `text` stamp in [review]", {
+            path: noted.rstrip("\n") + f"\n{line}\n"})
+        self.assertTrue(safe_push.stamp_only(WORK, first, stamped, path))
 
     def test_harness_runs_from_origin_main(self):
         # The commit empties its own copy of the secret scan and plants a token; run from

@@ -42,6 +42,7 @@ Standard library only; Python 3.11 or later, for the review records.
 """
 
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -188,22 +189,32 @@ def stale_lean() -> None:
 def edited_note() -> None:
     """An edited note under a current `text` stamp. I.1's record is given its `text` stamp
     first if it has none yet (docs/WORKFLOW.md, section 6), so the test holds before and
-    after the records are migrated; then its first note gains a planted word, and the
-    check must say the record changed. With a comment added and its stamp moved, and its
-    words as they were, the record must not be called changed."""
+    after the records are migrated; then the first letter of its first note changes case,
+    and the check must say the record changed. With a comment added and its stamp moved,
+    and its words as they were, the check must say what it says of the record unchanged:
+    the same outcome, nothing of I.1 or its record, and no traceback."""
     path = heath.review_path("I", 1)
     saved = path.read_text()
     stamped = review_stamp.set_stamp(saved, "review", "text", heath.text_hash(saved))
     lines = stamped.split("\n")
     at = next((i for i, line in enumerate(lines) if line.startswith('note = "')), None)
-    if at is None:
-        failures.append("an edited note: review/I/01.toml has no `note`; update this test")
+    # One letter changed, not a word added: the note keeps its length, so it stays within
+    # heath.NOTE_LIMIT, and the check finds the edit, not the length.
+    start = len('note = "')
+    planted = None if at is None else \
+        lines[at][:start] + lines[at][start:start + 1].swapcase() + lines[at][start + 1:]
+    if planted is None or planted == lines[at]:
+        failures.append("an edited note: review/I/01.toml has no `note` beginning with a "
+                        "letter; update this test")
         return
-    edited = lines[:at] + [lines[at].replace('note = "', 'note = "Planted: ', 1)] + lines[at + 1:]
+    edited = lines[:at] + [planted] + lines[at + 1:]
     try:
         path.write_text("\n".join(edited))
         expect_failure("an edited note in a review record", fidelity(),
                        "I.1: its record has changed since it was reviewed")
+        # The words as they were, under a current `text` stamp: what the check says then.
+        path.write_text(stamped)
+        baseline = fidelity()
         # The same words with a comment above them and the `text` stamp first in
         # [review]: comments and layout are not the record's text.
         moved = [line for line in lines if not line.startswith("text = ")]
@@ -212,10 +223,21 @@ def edited_note() -> None:
         moved.insert(0, "# A comment planted by scripts/negative_tests.py.")
         path.write_text("\n".join(moved))
         result = fidelity()
-        if "I.1: its record has changed" in result.stdout + result.stderr:
-            failures.append("a comment and a moved stamp in I.1's record: wrongly called a "
-                            "changed record")
-            print((result.stdout + result.stderr)[-3000:])
+        out = result.stdout + result.stderr
+        named = [line for line in out.splitlines()
+                 if re.search(r"\bI\.1\b|review/I/01\.toml", line)]
+        if result.returncode != baseline.returncode or named or "Traceback" in out:
+            detail = []
+            if result.returncode != baseline.returncode:
+                detail.append(f"exit {result.returncode}, not {baseline.returncode} as with "
+                              "the record unchanged")
+            if named:
+                detail.append(f"says {named[0]!r}")
+            if "Traceback" in out:
+                detail.append("a traceback")
+            failures.append("a comment and a moved stamp in I.1's record: not as the record "
+                            f"unchanged ({'; '.join(detail)})")
+            print(out[-3000:])
         else:
             print("✓ a comment and a moved stamp in I.1's record: not called a change")
     finally:

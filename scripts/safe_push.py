@@ -1478,23 +1478,42 @@ def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
 # the commentary, the records, the figures, the reports and the reading list.
 GUIDES = ("AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/WORKFLOW.md",
           "docs/FORMALIZATION.md", "docs/STYLE.md", "docs/briefs/", "docs/templates/")
-# A review record's stamp: its reviewer's reading of a statement and a Lean file, as a
-# change to the certificate's output asks for (WORKFLOW, section 6). Not its stage.
+# A review record's stamp: its reviewer's reading of a statement, a Lean file and the
+# record's own text, as a change to the certificate's output asks for (WORKFLOW, section
+# 6). Not its stage. STAMPS names the keys that are stamps in each section.
 STAMP_LINE = re.compile(r'(?m)^(fingerprint|commit|lean|text|reviewer)\s*=\s*"[^"]*"[ \t]*$\n?')
+STAMPS = {"statement": ("fingerprint",), "review": ("commit", "lean", "text", "reviewer")}
 
 
 def stamp_only(repo, base, sha, path: str) -> bool:
     """Is the change to `path` a review record's stamp alone: its stamp lines rewritten
-    or added (as `text`, review/SCHEMA.md), none taken away, and nothing else changed?"""
+    or added (as `text`, review/SCHEMA.md), none taken away, and nothing else changed?
+    The lines are compared, and so is the record as TOML reads it, with the STAMPS keys
+    set aside in their sections, so that a stamp-shaped line inside a multi-line string
+    is no stamp. A record that does not read as TOML, before or after, is judged."""
     if not re.fullmatch(r"review/[IVX]+/\d+\.toml", path):
         return False
     old, new = show(repo, base, path), show(repo, sha, path)
     if old is None or new is None:
         return False
+    import tomllib
 
     def keys(text: str) -> set[str]:
         return {m.group(1) for m in STAMP_LINE.finditer(text)}
-    return STAMP_LINE.sub("", old) == STAMP_LINE.sub("", new) and keys(old) <= keys(new)
+
+    def unstamped(text: str) -> dict:
+        record = tomllib.loads(text)
+        for section, stamps in STAMPS.items():
+            if isinstance(record.get(section), dict):
+                for key in stamps:
+                    record[section].pop(key, None)
+        return record
+    if STAMP_LINE.sub("", old) != STAMP_LINE.sub("", new) or not keys(old) <= keys(new):
+        return False
+    try:
+        return unstamped(old) == unstamped(new)
+    except tomllib.TOMLDecodeError:
+        return False
 
 
 def judged_files(repo, base, sha) -> list[str]:
