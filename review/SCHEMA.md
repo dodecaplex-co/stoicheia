@@ -8,9 +8,9 @@ The page shows it under the enunciation, before the reader meets the green check
 
 A record is tied to what its reviewer read by three hashes: one of the statements, one of
 the Lean file, and one of the record's own text. When any of them changes, the record has
-to be read again. Python reads
-the records with `tomllib` (Python 3.11 or later), and `heath.load_review(book, n)` checks
-each against this page. The record's tags come from [terms.toml](terms.toml).
+to be read again. Python reads the records with `tomllib` (Python 3.11 or later), and
+`heath.load_review(book, n)` checks each against this page. The record's tags come from
+[terms.toml](terms.toml).
 
 Where to begin: with Heath's enunciation and the Lean statement, each read on its own,
 before any commentary about how they agree. "None" is a perfectly good answer for an
