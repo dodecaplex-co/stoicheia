@@ -13,7 +13,7 @@ carries it out.
 There is no figure to build here. Euclid divides the cases ("by means of
 division", says Proclus): if AC is not greater than AB, it is equal to it or
 less, and I.5 and I.18, already proved, each rule one of them out. The Lean
-needs no helper of its own; `Prop5.base` hands I.5 the produced sides its
+has no helper of its own; `Prop5.base` hands I.5 the produced sides its
 statement asks for.
 -/
 
