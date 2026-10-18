@@ -25,7 +25,8 @@ definition `circumference` inside the namespace `Prop24`. The gap entries planne
 and II.14 now name Gérard, F. Schur and O. Stolz as Hilbert's own note names them. No
 statement changes.*
 
-Base: main at `1e5b99a`. The statements are in `Staging/`, as committed with this brief.
+Base: the branch was written on main at `1e5b99a`, and has main merged in. The statements
+are in `Staging/`, as committed with this brief.
 `lake build Staging` passes: 81 declarations, of which 36 carry `sorry` and the rest are
 definitions, checks or proofs. Nothing in `Elements/` changes, so main's records, lock and
 CI are untouched.
@@ -58,15 +59,20 @@ Jack Challis decided three things on 17 October 2026, and this brief is written 
 - **Statements before proofs live in `Staging/`,** a library of their own
   (`[[lean_lib]] name = "Staging"` in `lakefile.toml`, with a comment like Audit's). It is
   not in `defaultTargets`; `lake build Staging` checks it, `sorry` warnings and all. Its
-  files import `Elements`, and nothing imports them.
+  files import the modules of `Elements` they need, mirroring each file's future home, so
+  that the order of proof, in which nothing cites a later proposition, holds in `Staging/`
+  too; `Sums.lean`, `Stage2/BookI/Prop40.lean` and `Foot.lean` import all of `Elements`
+  until they move. Nothing imports the staged files.
 - **Each staged declaration has a docstring in plain words,** and a companion says which
   proposition it accompanies and its certificate name ("companion of I.40").
 - **A restated main theorem** is staged as `Elements.Book<book>.Staging.PropN`, so as not to
   collide with the theorem it will replace; the `Staging` namespace is dropped when it
   moves.
 - **When a statement is proved, it leaves `Staging/`.** A companion moves into its
-  `PropNN.lean`, after the proposition, and into `Certificate/Facts.lean`'s `companions`
-  list; a shared step moves to the file named below; a definition moves to the
+  `PropNN.lean`, after the proposition, and its entry into the companions list,
+  `Elements/Companions.lean`, which the integrator writes (AGENTS.md; WORKFLOW, section 4)
+  and `Certificate/Facts.lean` reads and checks; a shared step moves to the file named
+  below; a definition moves to the
   foundations, joins the lock's vocabulary with a decisions entry, and its consumers'
   records are read again. Its staged copy, and any staged check that names the old
   statement, is deleted in the same change, so that no name is declared twice and
@@ -75,9 +81,10 @@ Jack Challis decided three things on 17 October 2026, and this brief is written 
 - **Folders follow brief 0005's stages:** `Staging/Stage2/` (I.40, I.45, II.1, II.14, and
   the sums they need), `Staging/Stage3/` (arcs, placement, III.23 point, III.24, III.26,
   III.28, `Arcs.lean`) and `Staging/Stage4/` (`Foot`, III.14, III.15, III.25).
-- **CI does not build `Staging` yet,** so a change on main could break a staged statement
-  silently before it moves. A CI step running `lake build Staging` is proposed to the
-  coordinator, who owns CI; `sorry` warnings do not fail it.
+- **CI builds `Staging`.** Since the `Staging` library landed (pull request #4), CI's
+  `check` job runs `lake build Staging`, which builds every file under `Staging/`, and so
+  does the pre-flight's check sequence (WORKFLOW, section 8), so a change on main cannot
+  break a staged statement silently before it moves; `sorry` warnings do not fail it.
 
 ## Conventions
 
@@ -185,7 +192,7 @@ and each wave's orders name the agent.
 | `Elements/BookIII/Arcs.lean` (new) | `Arc.measure_eq_iff`, `Arc.congruent_iff` | after III.29, so that III.26–III.29 cannot rest on it | placement step 4 |
 | `Elements/BookI/Prop40.lean`, `Prop45.lean`; `Elements/BookII/Prop01.lean`, `Prop14.lean` | the stage 2 companions | after each proposition | one task each |
 | `Elements/BookIII/Prop14.lean`, `Prop15.lean`, `Prop25.lean` | the stage 4 companions; III.25 restated | after each proposition | one task each |
-| `Certificate/Facts.lean` | the `companions` list | | each stage's integrator |
+| `Elements/Companions.lean` | the companions list, which `Certificate/Facts.lean` reads and checks | | each stage's integrator |
 
 ## Stage 2: Books I and II
 

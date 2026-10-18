@@ -295,7 +295,7 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   it: in a Book III file a bare `Prop4` means III.4.
 - **Staging,** `Staging/`, holds the statements that a stage of brief 0005 adds or
   changes, each with `sorry`, until it is proved ([WORKFLOW.md](WORKFLOW.md), section 2).
-  Its files import `Elements`. `lake build Staging` builds every file under `Staging/`,
+  Its files import the modules of `Elements` they need. `lake build Staging` builds every file under `Staging/`,
   whether or not the root `Staging.lean` imports it, so a staged file need not be added to
   the root; nothing outside `Staging/` imports them, so nothing staged reaches a proof or
   the certificate. `Staging/.gitkeep` keeps the directory, which the build reads, when
