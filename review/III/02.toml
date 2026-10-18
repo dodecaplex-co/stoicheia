@@ -13,7 +13,7 @@ note = "The circle comes with a centre (`∃ D, Centre D ABC`), which the proof 
 
 [overlap]
 rule = "Tacit.inside_of_between"
-note = "System E's Circle 2 contains III.2. The Lean of III.2 never calls the rule, but rests on it through III.1 and through I.5, so it reconstructs Euclid's reasoning within our foundations and does not establish the rule."
+note = "System E's Circle 2 contains III.2. The Lean of III.2 never calls the rule, but rests on it through III.1, so it reconstructs Euclid's reasoning within our foundations and does not establish the rule."
 
 [[passage]]
 at = "For suppose it does not, but, if possible, let it fall outside"
@@ -28,6 +28,6 @@ note = "Euclid's figure keeps the centre D off AB. When AB passes through D ther
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "7339460"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:6b6b3ba8e21df612"
