@@ -30,11 +30,11 @@ namespace Elements.BookIII
 open Tacit
 
 /-- **III.7, the partner equally inclined** (a step of III.7 general). F is on the diameter
-AD of the circle ABCD with centre E, between E and D. If G and H are points of the circle on
-opposite sides of AD, and FH is equal to FG, then the angles AFH and AFG are equal: the
-partner of a straight line from F, on the other side of the diameter, makes the same angle
-with the ray FA. Euclid's construction of H, the angle FEH made equal to GEF [I. 23], gives
-the equal angles at F by I.4, and his last step shows that no other point is H. -/
+AD of the circle ABCD with centre E, between E and D; if G and H are points of the circle on
+opposite sides of AD, and FH is equal to FG, then the angles AFH and AFG are equal, so the
+partner of a straight line from F makes the same angle with the ray FA. Euclid's
+construction of H, the angle FEH made equal to GEF (I.23), gives the equal angles at F by
+I.4, and his last step shows that no other point is H. -/
 theorem Prop7.partner {A D E F G H : Point} {ABCD : Circle} (hE : Centre E ABCD)
     (hA : OnCircle A ABCD) (hD : OnCircle D ABCD) (hAED : Between A E D) (hEFD : Between E F D)
     (hG : OnCircle G ABCD) (hH : OnCircle H ABCD) (hHG : OppositeSidesOf H G A D)

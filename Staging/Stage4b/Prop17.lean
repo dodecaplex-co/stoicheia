@@ -9,7 +9,7 @@ enunciation says "a given point"; from a point within the circle no straight lin
 it, and a point on the circumference Euclid leaves to III.16's porism, as Heath explains
 (vol. 2, p. 44). `Prop17.general` takes every point not within the circle: outside it, by
 Euclid's construction, or on it, where the straight line drawn at right angles to the
-radius touches [III. 16, Por.].
+radius touches by III.16's porism.
 
 The conclusion is `∃ X, Touches A X BCD`: a straight line AX touching the circle. Today's
 form, a point B of the circle with `Touches A B BCD`, cannot hold for A on the circle,
@@ -19,9 +19,10 @@ meets the circle, and its witness is the point of contact, which may be A.
 
 For a circle with a centre, not being within the circle is the condition for the problem
 to have a solution, and `Prop17.inside` states the other half: from a point within the
-circle, no straight line touches it. It is listed as a companion so that the condition
-appears on the page with a certificate; it generalizes no clause of the enunciation. They move into `Elements/BookIII/Prop17.lean` when proved, as "III.17 general"
-and "III.17 inside".
+circle, no straight line touches it. It is a lemma, not a companion, since it generalizes
+no clause of the enunciation; the record and the page state "not within" as the condition
+for a solution. When proved, `Prop17.general` moves into `Elements/BookIII/Prop17.lean` as
+"III.17 general", and `Prop17.inside` after it, with no certificate entry of its own.
 -/
 
 namespace Elements.BookIII
@@ -32,7 +33,7 @@ open Tacit
 A not within it, there is a point X such that the straight line AX touches the circle: it
 meets the circle, and does not cut it. A may be outside the circle, and then the point of
 contact is another point (Euclid's case, today's `Prop17`); or on it, and then the point of
-contact is A itself: the proof draws AX at right angles to the radius EA [I. 11], and it
+contact is A itself: the proof draws AX at right angles to the radius EA (I.11), and it
 touches by III.16's porism. That case is Heath's addition (vol. 2, p. 44), not Euclid's
 construction. -/
 theorem Prop17.general {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD)
@@ -40,11 +41,11 @@ theorem Prop17.general {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre 
     ∃ X : Point, Touches A X BCD := by
   sorry
 
-/-- **III.17, inside** (companion of III.17). From a point A within the circle BCD, no
-point X makes the straight line AX touch the circle, since a straight line through a point
-within a circle cuts it (`Touches.not_inside`). So, for a circle with a centre, a point not
-within it is exactly the condition under which `Prop17.general` draws a straight line
-touching it. -/
+/-- **III.17, from a point within** (a lemma beside III.17). From a point A within the
+circle BCD, no point X makes the straight line AX touch the circle, since a straight line
+through a point within a circle cuts it (`Touches.not_inside`). So, for a circle with a
+centre, a point not within it is exactly the condition under which `Prop17.general` draws a
+straight line touching it. -/
 theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
     ¬ ∃ X : Point, Touches A X BCD := by
   sorry

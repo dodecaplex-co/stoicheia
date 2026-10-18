@@ -22,9 +22,9 @@ A straight line touching the circle from D falls on neither class. This is a con
 read from Euclid's "drawn through to the circle": a straight line that touches does not
 meet the circle at two points (Definition III.2), so its point of contact should have no
 point of the circle between it and D and none beyond it. That step is not stated in Lean
-(open question 2 of the brief), and the comparisons say nothing of the point of contact. The last clause, kept from today's statement, does: every point of the
-circle off DA, a point of contact included, has one partner on the other side as far from
-D, and no third.
+(brief 0007, question 2), and the comparisons say nothing of the point of contact. The
+last clause, kept from today's statement, does: every point of the circle off DA, a point
+of contact included, has one partner on the other side as far from D, and no third.
 
 `Prop8.partner` is the step the route needs: the partner on the other side makes the same
 angle with DA, and is in the same class. Equal distance alone does not carry a comparison
@@ -45,10 +45,9 @@ opposite sides of DA, and DB is equal to DK, then the angles ADB and ADK are equ
 the convex circumference exactly when K is (the straight line from D meets the circle again
 beyond it); and B is on the concave circumference exactly when K is (it meets the circle
 before reaching it). Euclid's construction of B, the angle DMB made equal to KMD at the
-centre M [I. 23], gives the equal angles at D by I.4, and his last step shows that no other
-point is B. The class follows from the angle: the far (near) meeting on the straight line
-DK has its own partner on the ray DB, at the same angle and as far from D, so the order of
-lengths on the ray carries over. -/
+centre M (I.23), gives the equal angles at D by I.4, and the class follows from them: a
+point of the circle beyond K on the straight line DK has its partner on the ray DB beyond
+B, and a point of the circle between D and K has its partner between D and B. -/
 theorem Prop8.partner {A D G K B : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A)
@@ -71,9 +70,10 @@ DF is less than DE. Of any two points K, L of the convex circumference (each wit
 the circle beyond it) off DA, the one making the less angle is the nearer: if the angle ADK
 is less than the angle ADL, then DK is less than DL. By convention, read from "drawn
 through", a point where a straight line from D touches the circle is on neither
-circumference, and the comparisons do not take it: their hypotheses ask for a point of the
-circle before the point or beyond it. Each point K of the circle off DA has one partner B on
-the other side with DB equal to DK, and no third point of the circle is as far from D. -/
+circumference; the comparisons speak only of points with a point of the circle before them
+or beyond them, and that a point of contact has neither is not stated here. Each point K of
+the circle off DA has one partner B on the other side with DB equal to DK, and no third
+point of the circle is as far from D. -/
 theorem Prop8.general {A D G : Point} {ABC : Circle} (hABC : ∃ M : Point, Centre M ABC)
     (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hG : OnCircle G ABC)
     (hDGA : Between D G A) (hGA : ∀ M : Point, Centre M ABC → Between G M A) :
