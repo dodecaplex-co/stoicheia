@@ -405,12 +405,13 @@ lake build
 there is nothing else to run, since the generator runs inside the build. On the machine that
 built this package, from a fresh clone, `lake exe cache get` took about 65 seconds (cloning
 the pinned Mathlib and its dependencies, downloading 9,031 files, 452 MB, and unpacking them
-to 6.6 GB). With the generator, `lake build` took 13 seconds of wall time, for this package
-and the library files `Check` reads. Of the modules the generator added, `Check/Generator.lean`
-took 2.3 seconds to compile, `Check/Generated.lean` 1.3 to run the generator and compare its
-output, `Check/RoundTrip.lean` 1.2, `Check/Laws.lean` 0.4 and `Model/Assembly.lean` 1.9, much
-of it alongside the proofs in the plane; a build with nothing changed took 1.5 seconds. A
-runner should expect a few minutes in all.
+to 6.6 GB). With the generator, `lake build` took 11 to 13 seconds of wall time in two runs,
+for this package and the library files `Check` reads. Of the modules the generator added,
+`Check/Generator.lean` took about 2 seconds to compile, `Check/Generated.lean` about 1 to run
+the generator and compare its output, `Check/RoundTrip.lean` about 1, `Check/Laws.lean` under
+half a second and `Model/Assembly.lean` 1 to 2, much of it alongside the proofs in the plane;
+a build with nothing changed took a second or so. A runner should expect a few minutes in
+all.
 
 Between runs the job caches two directories, keyed on `model/lake-manifest.json`:
 `model/.lake/packages`, which holds the pinned clones and the unpacked build, and
