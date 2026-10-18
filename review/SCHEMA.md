@@ -161,7 +161,7 @@ The section needs at least one of the two, and is left out when it has neither.
 | `stage` | `"exceptions"` or `"full"` | yes | See "Two stages". |
 | `commit` | git commit, 7 to 40 hex digits | stamp | The commit whose files the record was last confirmed against: the reviewer's reading, or a later reading of each changed file against the record (docs/WORKFLOW.md, section 6). |
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
-| `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its stamps (below). |
+| `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its `[review]` table and fingerprint. A record stamped before it may lack it for now (below). |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items (stage 6), each `"pass"`, `"fail"` or `"n/a"`. |

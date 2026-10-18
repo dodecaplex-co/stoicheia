@@ -98,7 +98,8 @@ Proposed record entries (review/SCHEMA.md):
 - [figure] case, and note (a line for under the figure, where the drawing departs from Heath's):
 
 Records made stale: the review records whose Lean file or statement this change touched,
-even by a comment; their owner reads and stamps them (WORKFLOW.md, section 6).
+even by a comment, and those whose own text it edited; their owner reads and stamps them
+(WORKFLOW.md, section 6).
 
 Dependencies:
 - Helpers added or changed, with their signatures.
