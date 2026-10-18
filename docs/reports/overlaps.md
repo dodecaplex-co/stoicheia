@@ -8,8 +8,8 @@ circle. Astra pointed this out in the [outside review](outside-review-01.md), wi
 one-line proof compiled in Lean, and asked for this catalogue. We are grateful.
 
 A reconstruction within these foundations does not establish such a rule independently.
-Our III.2 follows Euclid's argument, and the proof is sound; but it rests, through III.1
-and through I.5, on a rule at least as strong as its own conclusion. So it shows that
+Our III.2 follows Euclid's argument, and the proof is sound; but it rests, through III.1,
+on a rule at least as strong as its own conclusion. So it shows that
 Euclid's reasoning goes through within System E, not that III.2 holds without the rule.
 This catalogue shows where System E gives early what Euclid later proves: which rule,
 where it first enters the development, and how it reaches the proposition's own proof.
@@ -35,8 +35,9 @@ without taking it from a proposition it cites. It is read from `direct_axioms` i
 [facts.json](../../facts.json) as committed, and that list counts a rule the proof
 reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step, as
 well as a rule its own Lean names ([Certificate/FIELDS.md](../../Certificate/FIELDS.md)).
-So the first user of a rule need not call it: Circle 2 first enters I.5 and I.9, through
-Book Zero's `exists_between_nearer`. Until facts.json keeps the two apart
+So a proof may rest on a rule it never calls, as III.26, III.28 and III.29 rest on
+Generalities 2 only through Book Zero's `EqualCircles.radii`; each first user in the
+table, though, calls its rule itself. Until facts.json keeps the two apart
 ([issue #65](https://github.com/jackChallis/stoicheia/issues/65)), the notes under the
 table do. A proof calls a rule itself when its own Lean, or a helper written for its
 proposition (`Prop47.within`, for I.47), names the rule; otherwise the note names the
@@ -58,8 +59,8 @@ rule's Lean name finds the same calls.
 | [I.13, a consequence of it, in I.47](#i13-in-i47) | Metric 5 (`angle_le_two_right`): no angle exceeds two right angles | Supplies a step: for an angle between two straight lines, I.13 gives it | I.47, its only user | None |
 | [I.23](#i23) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_23`: laid down at A along AB, the triangle DCE carries its angle at C to A, and naming the ray and the side takes seven axioms more | I.4 | `Audit.I_23` |
 | [III.1's corollary, in III.1 Por.](#iii1-por) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.1's porism; of the propositions themselves, III.14 | None |
-| [III.2](#iii2) | Circle 2 (`inside_of_between`): between two points on or within a circle, every point is within it | States it, and more: the ends may be within the circle as well as on it | I.5 and I.9, through Book Zero's `exists_between_nearer`; II.14 is the first proof to call it itself | `Audit.III_2`, Astra's proof: Circle 2 alone |
-| [III.2, in II.14 and III.1](#iii2-in-ii14-and-iii1) | Circle 2 (`inside_of_between`) | Supplies a step: a point between two points of a circle is within it. In III.1 it is the middle point D of AB, a straight line in the circle, "a fact which Euclid first demonstrates in III. 2", as Isaac Todhunter observes (Heath, vol. 2, p. 7); in II.14, the point E of the diameter BF | I.5 and I.9, as above | None |
+| [III.2](#iii2) | Circle 2 (`inside_of_between`): between two points on or within a circle, every point is within it | States it, and more: the ends may be within the circle as well as on it | II.14, which calls it itself; then III.1 | `Audit.III_2`, Astra's proof: Circle 2 alone |
+| [III.2, in II.14 and III.1](#iii2-in-ii14-and-iii1) | Circle 2 (`inside_of_between`) | Supplies a step: a point between two points of a circle is within it. In III.1 it is the middle point D of AB, a straight line in the circle, "a fact which Euclid first demonstrates in III. 2", as Isaac Todhunter observes (Heath, vol. 2, p. 7); in II.14, the point E of the diameter BF | II.14, as above | None |
 | [III.5](#iii5) | Diagram-segment 2 (`circle_eq`): a circle is fixed by its centre and radius | Gives it at once: two circles about one centre through one point are one circle | III.5 | `Audit.III_5`: Diagram-segment 2 alone |
 | [III.6](#iii6) | Diagram-segment 2 (`circle_eq`), and Generalities 3 (`centre_inside`): a circle's centre is within it | Gives it at once: circles touching within are two circles through one point; circles touching without have no point within both, and a common centre would be one | Diagram-segment 2: III.5. Generalities 3: I.1 | `Audit.III_6`: the two rules alone |
 
@@ -126,12 +127,15 @@ so the centres the definition of equal circles names are the given ones.
 
 #### III.2
 
-The rule first enters I.5 and I.9, though neither calls it: each takes a point "at
-random" with Book Zero's `exists_between_nearer`, which calls the rule to keep the point
-near enough. Of the entries III.2 cites, III.1 calls the rule itself; I.5, cited directly
-and through the shared step `Prop5.base`, reaches it through `exists_between_nearer`; and
-I.16 and I.19 rest on it through I.5 and I.9. The Lean of III.2 is Euclid's reductio, by
-I.5, I.16 and I.19, with the centre from III.1, and it never calls the rule itself.
+The rule first enters II.14, which calls it itself: E lies between B and F, two points of
+the circle BHF, and so within it. III.1 calls it next (next row). I.5 and I.9 take a point
+"at random" with Book Zero's `exists_between_nearer`, which keeps the point near enough by
+the order of the points on the straight line and the adding of lengths, not by the rule;
+so no proposition of Book I rests on it, nor any of II.1–II.13. Of the entries III.2
+cites, III.1 alone rests on the rule, and calls it itself; I.5 (cited directly and through
+the shared step `Prop5.base`), I.16 and I.19 do not. So III.2 rests on the rule through
+III.1 only. The Lean of III.2 is Euclid's reductio, by I.5, I.16 and I.19, with the
+centre from III.1, and it never calls the rule itself.
 
 Other proofs call the rule on two points of a circle, which is III.2's case. Before III.2,
 II.14 and III.1 do (next row). After it, III.10, III.15, III.21, III.22, III.23, III.25,
@@ -151,18 +155,38 @@ circle (Intersections 5). In III.1 the point is D, the middle of AB, and the str
 line drawn through D at right angles to AB meets the circle on both sides of it. In
 II.14 it is E, between B and F, the ends of the diameter of the semicircle BHF, and DE
 produced meets the semicircle at H, a step Euclid takes without saying why
-([gaps in Book II](gaps-book-II.md#ii14)). Of the propositions the two cite, all but I.4
-rest on the rule, through I.5, I.9 or both.
+([gaps in Book II](gaps-book-II.md#ii14)). None of the propositions the two cite rests
+on the rule, so in each it enters with the proof's own call: II.14 is its first user, and
+III.1 its second.
 
 #### III.5
 
 III.5 calls the rule itself, at its last step. The Lean takes Euclid's steps and ends with
 the rule: the supposed common centre makes the two circles one.
 
+Any proof of III.5 must use Diagram-segment 2 or Circle 4. Draw every circle twice over,
+as two circles with one centre and one radius, through the same points. Of the 24 rules
+about circles, only these two say when two circles are one circle or two, and every other
+rule we take still holds; but a circle and its copy are two circles, they cut one another,
+and they have one centre, so III.5 fails for them. That is a model argument, checked by
+hand rule by rule, not by Lean ([FORMALIZATION](../FORMALIZATION.md), section 9). Euclid's
+own ending needs one of the two rules as well, for the step he leaves tacit: that two
+different circles about one centre meet a straight line from it at different points, so
+that EF and EG are "the less to the greater". For a circle and its copy, F and G are one
+point, and EF is equal to EG without contradiction.
+
 #### III.6
 
 III.6 calls both rules itself. The Lean is as III.5's, with Generalities 3 for contact
 without.
+
+Any proof of III.6 for contact within must use one of the same two rules, for the same
+reason: a circle and its copy, drawn twice over as under III.5, are two circles that meet,
+and no point of either lies outside the other, so by our Definition III.3 they touch
+within; and they have one centre. Euclid's ending, FE equal to FB, "the less to the
+greater", needs the same tacit step, that the two circles meet the straight line FEB at
+different points. For contact without, Generalities 3 alone is enough: a common centre
+would be a point within both circles, and circles that touch without have none.
 
 ## How the rows were found
 
