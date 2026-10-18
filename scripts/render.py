@@ -1339,8 +1339,9 @@ FRONT_LEAN_I = {
             "that the angle BAC is right; an obtuse-angled triangle is a `Triangle` with an "
             "`IsObtuse` angle (II.12); of an acute-angled triangle, II.13 asks `IsAcute` only "
             "of the two angles at the ends of the side on which the perpendicular falls",
-        22: "`Square`; oblong, `Rectangle` (Def. II.1), which counts a square too; rhombus "
-            "and rhomboid, none; a trapezium (I.35), `quadArea`",
+        22: "`Square`; oblong, `Rectangle` (Def. II.1), which counts a square too; rhombus, "
+            "none; rhomboid, `Parallelogram` (I.34), which counts the others too; a trapezium "
+            "(I.35), `quadArea`",
         23: "`Parallel`",
     },
     "Postulates": {i: f"`Postulate{i}`" for i in range(1, 6)},
