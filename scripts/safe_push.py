@@ -80,8 +80,9 @@ order, and the first that fails stops it with a message saying why:
    name is never touched), or a new one; its body, --body-file or generated from
    .github/pull_request_template.md (the commits, the statements, the review records
    touched, the generated files, the protected paths, and the pre-flight's summary, each
-   between its markers; on an update without --body-file, each marked part is written
-   afresh and the coordinator's words are left as they are), scanned. Then
+   between its markers, each on a line of its own; on an update without --body-file,
+   each marked part is written afresh and the coordinator's words are left as they are,
+   a marker they quote among them), scanned. Then
    `git push origin <sha>:refs/heads/<name>`, never forced; then `gh pr create --base
    main --head <name>`, a draft unless --ready, or `gh pr edit` of the open one; then its
    CI, followed to its conclusion (`gh pr checks --watch`). Its label for its kind
@@ -2026,10 +2027,19 @@ def ensure_labels(ctx: Context, labels) -> None:
             raise Refusal(f"could not create the label {name}: {r.stderr.strip()}")
 
 
-# The pre-flight's summary sits between these markers in the body, and is replaced there.
-BLOCK = re.compile(r"<!-- safe_push:preflight begin(?: sha=(\w+) base=(\w+))? -->.*?"
-                   r"<!-- safe_push:preflight end -->", re.S)
-PLACEHOLDER = re.compile(r"<!-- safe_push: (\w+) -->")
+# The parts safe_push writes in the body stand between markers on lines of their own
+# (describe, preflight_block), and the template's places for them are lines of their own:
+# a marker counts only there, so one quoted in the coordinator's words (in a code span,
+# say) is not one, and a part never runs over another begin marker of its name. A line may
+# end in "\r": GitHub keeps a body edited in its page with CRLF line ends.
+OWN_PART = re.compile(r"(?ms)^<!-- safe_push:(\w+) begin\b[^\n]*?-->[ \t\r]*$"
+                      r"(?:(?!<!-- safe_push:\1 begin).)*?"
+                      r"^<!-- safe_push:\1 end -->[ \t\r]*$")
+# The pre-flight's summary, one of those parts, is replaced there.
+BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin(?: sha=(\w+) base=(\w+))? -->"
+                   r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
+                   r"^<!-- safe_push:preflight end -->[ \t\r]*$")
+PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
 STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean)\s*=\s*"([^"]*)"')
 
 
@@ -2066,8 +2076,9 @@ def put_block(body: str, block: str) -> str:
     template's placeholder, or appended."""
     if BLOCK.search(body):
         return BLOCK.sub(lambda m: block, body, count=1)
-    if "<!-- safe_push: preflight -->" in body:
-        return body.replace("<!-- safe_push: preflight -->", block, 1)
+    place = next((m for m in PLACEHOLDER.finditer(body) if m.group(1) == "preflight"), None)
+    if place:
+        return body[:place.start()] + block + body[place.end():]
     return body.rstrip() + "\n\n## Checks run on the exact commit\n\n" + block + "\n"
 
 
@@ -2459,7 +2470,6 @@ def checklist_problems(body: str, template: str | None, protected: bool) -> list
 SECTION = re.compile(r"(?m)^## +(.+?) *$")
 # The sections the coordinator writes, which --merge needs written when the template has them.
 WRITTEN = ("What and why", "Reviews", "Needs the owner's OK")
-OWN_PART = re.compile(r"<!-- safe_push:(\w+) begin\b.*?<!-- safe_push:\1 end -->", re.S)
 # A fence's opening line (CommonMark): three or more backticks or tildes, indented three
 # spaces at most, and, after backticks, an info string with no backtick in it.
 FENCE_OPEN = re.compile(r"^ {0,3}(`{3,}(?=[^`]*$)|~{3,})")

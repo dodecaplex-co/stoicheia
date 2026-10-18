@@ -53,7 +53,8 @@ one commit and runs safe_push.py against that origin:
   a pull request the merge may not merge; the re-run that takes its kind from the open
   pull request; and step 4's notes carried to the merge;
 - the re-reviews' findings: an expectation of the certificate dropped or loosened is a
-  check change, kept apart, while one moved with its content is a pinned value;
+  check change, kept apart, while one moved with its content is a pinned value; a marker
+  quoted in the coordinator's words is not one, so an update keeps every word;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -1471,6 +1472,36 @@ class PullRequests(Edge):
         self.assertIn(f"`{second[:7]}` I.1 names its side point Q", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(body.count(f"<!-- safe_push:{name} begin"), 1, name)
+
+    def test_update_keeps_the_words_around_a_quoted_marker(self):
+        # The re-review: a marker the coordinator quotes in "What and why", before the part
+        # it names, is not a marker. The update refreshes safe_push's parts and leaves every
+        # word and section of the coordinator's in place.
+        self.good_commit()
+        self.assertEqual(self.safe_push().returncode, 0)
+        words = ("Moves the records: safe_push writes them after "
+                 "`<!-- safe_push:records begin -->`.\n\nMore of the coordinator's reasoning.")
+        approval = "I.1: the decisions entry of 18 October."
+
+        def edit(s):
+            body = s["prs"][0]["body"].replace("## What and why\n",
+                                               f"## What and why\n\n{words}\n", 1)
+            s["prs"][0]["body"] = body.replace("## Statements changed\n",
+                                               f"## Statements changed\n\n{approval}\n", 1)
+        self.set_gh(edit)
+        before = self.gh_state()["prs"][0]["body"]
+        second = self.good_commit("A second line, the fix.")
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        body = self.gh_state()["prs"][0]["body"]
+        for text in (words, approval):
+            self.assertIn(text, body)
+        self.assertEqual(re.findall(r"(?m)^## .*$", body), re.findall(r"(?m)^## .*$", before))
+        self.assertIn(f"`{second[:7]}` A good commit", body)
+        self.assertIn(f"sha={second}", body)
+        for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
+            self.assertEqual(len(re.findall(rf"(?m)^<!-- safe_push:{name} begin", body)), 1,
+                             name)
 
     def test_update_creates_a_label_the_open_pull_request_now_needs(self):
         # A later commit changes a protected path: the label security-review is made before
@@ -2983,6 +3014,54 @@ class Units(unittest.TestCase):
         nested = full.replace("## Checklist\n\n", "## Checklist\n\n- The boxes:\n\n", 1) \
             .replace("- [x] **Required", "    - [x] **Required")
         self.assertEqual(both(nested)[0], [])
+
+    def test_markers_count_only_on_lines_of_their_own(self):
+        # The re-review: safe_push writes its markers on lines of their own; one quoted in
+        # the coordinator's words (in a code span) is not one. Refreshing the parts, placing
+        # the summary and reading the body for the gates keep every word and section.
+        template = (SOURCE / ".github" / "pull_request_template.md").read_text()
+        names = ("commits", "statements", "records", "protected", "generated")
+
+        def part(name, text):
+            return f"<!-- safe_push:{name} begin -->\n{text}\n<!-- safe_push:{name} end -->"
+
+        def block(text):
+            return part("preflight", text).replace("preflight begin", "preflight begin "
+                                                   "sha=a base=b", 1)
+
+        def place(text, after, words):
+            self.assertEqual(text.count(after), 1, after)
+            return text.replace(after, f"{after}\n{words}\n", 1)
+        why = ("Moves the records: safe_push writes them after "
+               "`<!-- safe_push:records begin -->`, and its summary after "
+               "`<!-- safe_push:preflight begin -->` (the template's "
+               "`<!-- safe_push: preflight -->`).\n\nMore of the coordinator's reasoning.")
+        approval = "I.1: the decisions entry of 18 October."
+        words = place(place(template, "code it checks. -->\n", why),
+                      'or "None". -->\n', approval)
+        # A body file with the quotes: the summary goes to the template's place for it.
+        filled = safe_push.put_block(words, block("OLD-summary"))
+        self.assertIn(why, filled)
+        self.assertGreater(filled.index("\n<!-- safe_push:preflight begin sha=a base=b -->\n"),
+                           filled.index("## Checks run on the exact commit"))
+        for name in names:
+            filled = filled.replace(f"<!-- safe_push: {name} -->", part(name, f"OLD-{name}"))
+        for body in (filled, filled.replace("\n", "\r\n")):
+            with self.subTest(crlf="\r" in body):
+                new = safe_push.put_block(
+                    safe_push.refreshed(body, {n: part(n, f"NEW-{n}") for n in names}),
+                    block("NEW-summary"))
+                for text in (why, approval):
+                    self.assertIn(text.replace("\n", "\r\n") if "\r" in body else text, new)
+                self.assertEqual(re.findall(r"(?m)^## [^\r\n]*", new),
+                                 re.findall(r"(?m)^## [^\r\n]*", body))
+                for name in names + ("summary",):
+                    self.assertIn(f"NEW-{name}", new)
+                    self.assertNotIn(f"OLD-{name}", new)
+                shown = safe_push.sections(body)
+                self.assertIn("More of the coordinator's reasoning.", shown["What and why"])
+                self.assertNotIn("OLD-", shown["What and why"])
+                self.assertEqual(shown["Statements changed"], approval)
 
     def test_preflight_block_writes_the_home_directory_as_tilde(self):
         # A step-4 note names its log, under the home directory: the public body has ~.

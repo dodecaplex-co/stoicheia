@@ -503,9 +503,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       changed, the review records touched and re-stamped, the protected paths, the
       generated files (README.md and PROGRAM.md only when the text between their markers
       changes), and the pre-flight's summary, every step with its outcome and time. Each
-      of these parts stands between markers of its own, and on an update without
-      `--body-file` each is written afresh for the new head, while the coordinator's
-      words, outside the markers, stay. The body is scanned before anything is pushed;
+      of these parts stands between markers of its own, each marker on a line of its own,
+      and on an update without `--body-file` each is written afresh for the new head,
+      while the coordinator's words, outside the markers, stay: a marker quoted in them
+      (in a code span, say) is not one. The body is scanned before anything is pushed;
       the label for its kind, given or on the open pull request, was settled in step 1,
       before the checks. Then the branch is pushed, and the pull request opened as a
       draft with `gh pr create --base main --draft` (or `gh pr edit` of the open one; `--ready`
