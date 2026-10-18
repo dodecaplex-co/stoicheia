@@ -4,14 +4,16 @@ Stoicheia's pull request template (docs/WORKFLOW.md, "Landing work: pull request
 marked `safe_push` and writes its pre-flight summary between the preflight markers; the
 coordinator writes the rest. `git safe-push --merge <n>` refuses while a box marked
 **Required** is unticked, or one marked **Required if protected** when a protected path
-changes, and while a required box of this template is missing from the body.
+changes, while a required box of this template is missing from the body, and while "What
+and why", a row of the Reviews table or "Needs the owner's OK" is unwritten.
 -->
 
 ## What and why
 
-<!-- One coherent change. Link the brief and the decision it carries out: a section of
-docs/briefs/, an entry of docs/briefs/0002-decisions.md. A check is never changed in the
-same pull request as the code it checks. -->
+<!-- One coherent change, in your words, above the commits safe_push lists. Link the brief
+and the decision it carries out: a section of docs/briefs/, an entry of
+docs/briefs/0002-decisions.md. A check is never changed in the same pull request as the
+code it checks. -->
 
 <!-- safe_push: commits -->
 
@@ -29,10 +31,8 @@ same pull request as the code it checks. -->
 
 ## Protected paths
 
-<!-- scripts/, .github/, Certificate/, tests/, review/SCHEMA.md, review/terms.toml,
-.gitattributes, .gitignore and the toolchain files (lakefile.toml, lakefile.lean,
-lean-toolchain, lake-manifest.json): each changed file is named in a decisions entry,
-and the pull request carries the label security-review. -->
+<!-- The paths docs/WORKFLOW.md lists under "Protected paths": each changed file is named
+in a decisions entry, and the pull request carries the label security-review. -->
 
 <!-- safe_push: protected -->
 

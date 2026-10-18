@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
-    git safe-push --branch <name> [--title T] [--body-file F] [--draft] [--label L]...
-                  [--commit <sha>] [--dry-run]
+    git safe-push --branch <name> --label <kind> [--label L]... [--title T]
+                  [--body-file F] [--ready] [--commit <sha>] [--dry-run]
     git safe-push --merge <pr-number> [--dry-run]
     git safe-push --dry-run [--commit <sha>]                      # the checks alone
 
@@ -49,10 +49,9 @@ order, and the first that fails stops it with a message saying why:
      unless the push adds a new line to `docs/briefs/` naming it;
    - `Certificate/axioms.lock` is unchanged, unless 0002-decisions.md gains a new line
      mentioning the lock;
-   - a protected path (scripts/, .github/, Certificate/, tests/, review/SCHEMA.md,
-     review/terms.toml, .gitattributes, .gitignore and the toolchain files, lakefile.lean
-     among them) changes only with a new line in 0002-decisions.md naming each file
-     changed, and the pull request then carries the label `security-review`;
+   - a protected path (PROTECTED, below, as docs/WORKFLOW.md lists them) changes only
+     with a new line in 0002-decisions.md naming each file changed, and the pull request
+     then carries the label `security-review`;
    - every changed file under `heath/` carries, in the change, a comment naming a scan
      leaf of its own pages, as origin/main's copy of the file lists them;
    - no review record is stale, and the generated pages are current (check_fidelity.py
@@ -61,18 +60,22 @@ order, and the first that fails stops it with a message saying why:
      deleted unless 0002-decisions.md gains a new line naming it.
 4. The full check sequence of docs/WORKFLOW.md, section 8, in that worktree, and
    `negative_tests.py` in a second one, each step timed. The checks run with
-   origin/main's copies of the check scripts and their expected values (scripts/,
-   tests/, Certificate/, review/SCHEMA.md, review/terms.toml); when the commit changes
-   any of those, they run again with the commit's own copies, which must pass, and each
-   check that fails with origin/main's copies is noted for the security review.
+   origin/main's copies of the check scripts and their expected values (CHECK_INPUTS,
+   below); when the commit changes any of those, they run again with the commit's own
+   copies, which must pass. A check that fails with origin/main's copies is noted for the
+   security review, and refuses the commit when it also changes what the checks judge
+   (anything but the checks, the protected paths, the decisions page and the generated
+   pages): a check change lands in a pull request of its own, before the code it checks.
+   Step 3's two checks run the same way.
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
    .github/pull_request_template.md (the commits, the statements, the review records
    touched, the protected paths, and the pre-flight's summary between its markers; on an
    update without --body-file, only that summary is replaced), scanned. Then
    `git push origin <sha>:refs/heads/<name>`, never forced; then `gh pr create --base
-   main --head <name>`, or `gh pr edit` of the open one; then its CI, followed to its
-   conclusion (`gh pr checks --watch`).
+   main --head <name>`, a draft unless --ready, or `gh pr edit` of the open one; it needs
+   a label for its kind (tooling, text, lean or docs), given or already on it; then its
+   CI, followed to its conclusion (`gh pr checks --watch`).
 6. A summary, printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
    repository (`STOICHEIA_PUSH_LOG` names another file); each step's output is kept
    beside it in `logs/`, and the pre-flight's record in `preflight/`, for --merge.
@@ -83,8 +86,10 @@ local file, so it stands in for the full checks alone, and only when origin/main
 harness made it; else they run again too), CI on that head is green (`gh pr checks`:
 check, model and negative pass, nothing fails or waits), no required box of its
 checklist is unticked (the template's own required boxes included, so deleting one does
-not help), it carries `security-review` when a protected path changes, and it is not a
-draft; the pre-flight's notes are shown beside the checklist. Then `gh pr merge <n>
+not help), the coordinator has written its "What and why", its reviews (each with its
+commit and its findings) and its "Needs the owner's OK", it carries a label for its kind
+and `security-review` when a protected path changes, and it is not a draft; the
+pre-flight's notes are shown beside the checklist. Then `gh pr merge <n>
 --merge --delete-branch --match-head-commit <head>`: a merge commit, never a squash or a
 rebase, since review records stamp the branch's commits. Afterwards main is checked to
 hold the tree checked.
@@ -138,6 +143,7 @@ ALLOWLIST = "scripts/safe_push_allow.toml"
 TEMPLATE = ".github/pull_request_template.md"
 GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # A change to any of these needs a decisions entry naming the file, and the label below.
+# docs/WORKFLOW.md's "Protected paths" names each of them (test_safe_push checks it).
 # lakefile.lean is here although the repository has none: Lake reads it in preference to
 # lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
 # files from `git status`, and so from the check that the generated pages are current.
@@ -155,6 +161,7 @@ LABELS = {
     "docs": "Guides, briefs and reports",
     SECURITY_LABEL: "Changes a protected path: needs /security-review before merge",
 }
+KIND_LABELS = ("tooling", "text", "lean", "docs")      # every pull request carries one
 REQUIRED_CHECKS = ("check", "model", "negative")
 GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
 # Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
@@ -504,6 +511,19 @@ PRIVATE_PATHS = [
     # An agent's scratchpad, under the temporary directory.
     re.compile("(?:/private)?/tmp/" + "claude" + "-"),
 ]
+# A private path is flagged whole, from the space, quote or bracket before it to the one
+# after, so that an allow-list entry pins that path and no other on its line.
+PATH_EDGE = frozenset(" \t\r\n\"'`<>()[]{},;|")
+
+
+def path_span(text: str, a: int, b: int) -> tuple[int, int]:
+    while a > 0 and text[a - 1] not in PATH_EDGE:
+        a -= 1
+    while b < len(text) and text[b] not in PATH_EDGE:
+        b += 1
+    return a, b
+
+
 # An identity git made up from the machine's name, when none was configured.
 MACHINE_IDENTITY = re.compile(r"(?i)@[^\s<>@]+\.(?:local|localdomain|lan)>?$|\(none\)")
 SECRET_FILES = [
@@ -609,7 +629,8 @@ def hits(text: str, *, strong_only=False, depth=0) -> list[tuple[str, tuple, tup
                 found.append(("key, token or secret", m.span(), m.span(1)))
     for pattern in PRIVATE_PATHS:
         for m in pattern.finditer(text):
-            found.append(("private path", m.span(), m.span()))
+            span = path_span(text, *m.span())
+            found.append(("private path", span, span))
     if not strong_only and depth < B64_DEPTH:
         for m in B64_RUN.finditer(text):
             plain = b64_text(m.group(0))
@@ -771,7 +792,8 @@ def scan_path(path: str) -> list[Finding]:
              if pattern.search(path)]
     for pattern in PRIVATE_PATHS:
         for m in pattern.finditer(path):
-            found.append(Finding("private path in a file name", path, None, path, m.span()))
+            found.append(Finding("private path in a file name", path, None, path,
+                                 path_span(path, *m.span())))
     return found
 
 
@@ -1167,7 +1189,7 @@ def guard_protected(repo, base, sha, rep: Report) -> list[str]:
     """A protected path changes only with a new line in the decisions page naming the
     file; the pull request then carries the label security-review. The files, for the
     body and the merge."""
-    files = sorted({p for _, p in changed_files(repo, base, sha) if is_protected(p)})
+    files = protected_files(repo, base, sha)
     if not files:
         rep.add("3", "protected paths", "ok", "none changed")
         return []
@@ -1369,17 +1391,60 @@ def base_copies(repo, base, wt: Path, changes: list[tuple[str, str]]):
         run(["git", "clean", "-fdq"], wt)
 
 
+BASE_PASS = " (origin/main's checks)"
+
+
 def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
     """(label, the outcome of a failure, status excludes) for each pass of the checks:
     with origin/main's copies of the check inputs; and, when the commit changes any,
     with the commit's own, which must pass, while a failure with origin/main's is noted
-    for the security review."""
+    for the security review (and refuses the commit, if it changes what the checks
+    judge as well: keep_apart)."""
     if not changes:
         yield "", "FAIL", []
         return
     with base_copies(repo, base, wt, changes) as excludes:
-        yield " (origin/main's checks)", "note", excludes
+        yield BASE_PASS, "note", excludes
     yield " (the commit's checks)", "FAIL", []
+
+
+def hand_written_changed(repo, base, sha, path: str) -> bool:
+    """For README.md and PROGRAM.md: does the change touch the text outside their
+    markers, which is written by hand? (The other generated files are all render.py's.)"""
+    pattern = GENERATED_REGIONS.get(path)
+    if pattern is None:
+        return False
+    old, new = show(repo, base, path) or "", show(repo, sha, path) or ""
+    return pattern.sub("", old) != pattern.sub("", new)
+
+
+def judged_files(repo, base, sha) -> list[str]:
+    """The files the commit changes that the checks judge: all but the check inputs and
+    the other protected paths, the decisions page, and what render.py writes."""
+    return sorted(p for _, p in changed_files(repo, base, sha)
+                  if not under(p, CHECK_INPUTS + PROTECTED) and p != DECISIONS
+                  and not (under(p, GENERATED) and not hand_written_changed(repo, base, sha, p)))
+
+
+def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
+    """A check change is a pull request of its own, landed before the code it checks
+    (docs/WORKFLOW.md, "Landing work: pull requests"). So when a check fails with
+    origin/main's copies, the commit may change nothing the checks judge: a check
+    weakened in the same pull request as the code it would catch is refused, not only
+    noted. True when it refuses."""
+    failed = [s.name.removesuffix(BASE_PASS) for s in rep.steps
+              if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)]
+    judged = judged_files(repo, base, sha) if failed else []
+    if not judged:
+        return False
+    shown = ", ".join(judged[:8]) + (f" and {len(judged) - 8} more" if len(judged) > 8 else "")
+    rep.add(stage, "check change kept apart", "FAIL",
+            f"origin/main's checks fail on the commit ({', '.join(failed)}), and it changes "
+            f"what they judge as well as the checks: {shown}. Land the check change first, in "
+            "a pull request of its own (the checks, their expected values, the decisions "
+            "entry and the regenerated pages), and the rest after it (docs/WORKFLOW.md, "
+            "\"Landing work: pull requests\")")
+    return True
 
 
 class Guarded(NamedTuple):
@@ -1400,6 +1465,7 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     for label, fail, excludes in passes(repo, base, wt, inputs):
         guard_fidelity(wt, rep, logs, label, fail)
         guard_generated(wt, rep, logs, label, fail, excludes)
+    keep_apart(repo, base, sha, rep, "3")
     guard_foundations(repo, base, sha, rep)
     failed = [s.name for s in rep.failed() if s.stage == "3"]
     if failed:
@@ -1428,7 +1494,7 @@ def worktree(repo, sha, parent: Path, name: str):
 def run_step(stage, name, cmd, cwd: Path, rep: Report, logs: Path, index: int,
              fail="FAIL", excludes=()) -> None:
     t = time.time()
-    log = logs / f"{index:02d}-{re.sub(r'[^A-Za-z0-9]+', '-', name).strip('-')}.log"
+    log = logs / f"{index:02d}{slug_of(name)}.log"
     if cmd is None:     # the generated pages are current
         r = status_lines(cwd, list(excludes))
         out, ok = r.stdout + r.stderr, r.returncode == 0 and not r.stdout.strip()
@@ -1459,11 +1525,15 @@ def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) ->
     for label, fail, excludes in passes(ctx.repo, ctx.base, wt, inputs):
         for i, (name, cmd) in enumerate(CHECKS, 1):
             run_step("4", name + label, cmd, wt, rep, logs, 10 + i, fail, excludes)
+        if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
+            raise Refusal("a check changed together with what it checks")
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)
         for label, fail, excludes in passes(ctx.repo, ctx.base, neg, inputs):
             for i, (name, cmd) in enumerate(NEGATIVE, 1):
                 run_step("4", name + label, cmd, neg, rep, logs, 30 + i, fail, excludes)
+            if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
+                raise Refusal("a check changed together with what it checks")
 
 
 class Preflight(NamedTuple):
@@ -1674,8 +1744,6 @@ def check_branch_name(repo, branch: str) -> None:
 def preconditions(repo: Path, commit: str, branch: str | None, dry_run: bool,
                   test_mode: bool, rep: Report, title: str | None = None) -> Context:
     rep.heading("1. Preconditions")
-    if sys.version_info < (3, 11):
-        raise Refusal("safe_push needs Python 3.11 or later (tomllib)")
     if branch:
         check_branch_name(repo, branch)
         branch = branch.removeprefix("refs/heads/")
@@ -1881,7 +1949,8 @@ def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
                  and generated_changed(repo, base, sha, p)]
     gen_dirs = sorted({p.split("/")[0] + "/" if p.startswith("book/") else p for p in generated})
     return {
-        "commits": f"Commits (`{base[:12]}..{sha[:12]}`):\n\n{log}",
+        "commits": f"<!-- safe_push:commits begin -->\nCommits (`{base[:12]}..{sha[:12]}`):"
+                   f"\n\n{log}\n<!-- safe_push:commits end -->",
         "statements": "\n".join(f"- {s}" for s in pre.statements) or "None.",
         "records": "\n".join(records) or "None.",
         "generated": ("Changed: " + ", ".join(f"`{p}`" for p in gen_dirs)) if gen_dirs
@@ -1970,10 +2039,15 @@ def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
     new pull request's body, or --body-file, is known in full; an open one's is fetched."""
     labels = set(args.label) | ({SECURITY_LABEL} if pre.protected else set())
     listed = gh_json(ctx, "pr", "list", "--head", ctx.branch, "--base", "main", "--state",
-                     "open", "--json", "number,url,isDraft,isCrossRepository,"
+                     "open", "--json", "number,url,isDraft,labels,isCrossRepository,"
                      "headRepositoryOwner,headRefName") or []
     mine = own_prs(ctx, listed)
     existing = mine[0] if mine else None
+    have = labels | {item.get("name") for item in (existing or {}).get("labels") or []}
+    if not have & set(KIND_LABELS):
+        raise Refusal("the pull request needs a label for its kind, one of "
+                      f"{', '.join(KIND_LABELS)}: --label <kind> (docs/WORKFLOW.md, "
+                      "\"Landing work: pull requests\")")
     if args.body_file:
         body = fill_body(ctx, pre, record, Path(args.body_file).read_text())
     elif existing:
@@ -2003,12 +2077,14 @@ def open_pr(ctx: Context, plan: PRPlan, args, rep: Report, logs: Path) -> PR:
         r = gh_run(ctx, *edit)
         if r.returncode != 0:
             raise Refusal(f"`gh pr edit` failed: {r.stderr.strip()}")
-        if args.draft and not existing.get("isDraft"):
-            gh_run(ctx, "pr", "ready", str(pr.number), "--undo")
+        if args.ready and existing.get("isDraft"):
+            r = gh_run(ctx, "pr", "ready", str(pr.number))
+            if r.returncode != 0:
+                raise Refusal(f"`gh pr ready` failed: {r.stderr.strip()}")
     else:
         create = ["pr", "create", "--base", "main", "--head", ctx.branch, "--title",
                   plan.title, "--body-file", str(body_path)]
-        if args.draft:
+        if not args.ready:
             create.append("--draft")
         for label in sorted(labels):
             create += ["--label", label]
@@ -2036,7 +2112,7 @@ def open_pr(ctx: Context, plan: PRPlan, args, rep: Report, logs: Path) -> PR:
         raise Refusal(f"pull request #{pr.number} does not propose the commit checked")
     pr = pr._replace(url=view.get("url") or pr.url)
     rep.add("6", "pull request", "ok", f"#{pr.number} {'opened' if pr.created else 'updated'}"
-            f"{' as a draft' if args.draft else ''}: {pr.url}"
+            f"{' as a draft' if pr.created and not args.ready else ''}: {pr.url}"
             + (f"; labels {', '.join(sorted(labels))}" if labels else ""), time.time() - t)
     return pr
 
@@ -2180,14 +2256,60 @@ def checklist_problems(body: str, template: str | None, protected: bool) -> list
     return problems
 
 
+SECTION = re.compile(r"(?m)^## +(.+?) *$")
+# The sections the coordinator writes, which --merge needs written when the template has them.
+WRITTEN = ("What and why", "Reviews", "Needs the owner's OK")
+OWN_PART = re.compile(r"<!-- safe_push:(\w+) begin\b.*?<!-- safe_push:\1 end -->", re.S)
+
+
+def sections(body: str) -> dict[str, str]:
+    parts = SECTION.split(body or "")
+    return {parts[i].strip(): parts[i + 1] for i in range(1, len(parts) - 1, 2)}
+
+
+def own_words(text: str) -> str:
+    """A section's words, without its comments and without what safe_push wrote."""
+    return COMMENT.sub("", OWN_PART.sub("", text)).strip()
+
+
+def review_rows(text: str) -> dict[str, list[str]]:
+    """{review: its cells after the first} for each row of a Reviews table."""
+    rows = {}
+    for line in text.splitlines():
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if line.strip().startswith("|") and cells[0].startswith("/"):
+            rows[cells[0]] = cells[1:]
+    return rows
+
+
+def section_problems(body: str, template: str | None, protected: bool) -> list[str]:
+    """What the coordinator has still to write: "What and why", each review's commit and
+    findings (the security review's only when a protected path changes), and "Needs the
+    owner's OK"."""
+    wanted, have = sections(template or ""), sections(body)
+    problems = []
+    for name in (n for n in WRITTEN if n in wanted):
+        if name not in have:
+            problems.append(f"missing from the body: the section \"{name}\"")
+        elif name == "Reviews":
+            rows = review_rows(have[name])
+            for review in review_rows(wanted[name]):
+                cells = rows.get(review, [])
+                if (review != "/security-review" or protected) and not (
+                        len(cells) >= 2 and all(cells[:2])):
+                    problems.append(f"not written: the review {review}, its commit and its "
+                                    "findings")
+        elif not own_words(have[name]):
+            problems.append(f"not written: the section \"{name}\"")
+    return problems
+
+
 def protected_files(repo, base, sha) -> list[str]:
     return sorted({p for _, p in changed_files(repo, base, sha) if is_protected(p)})
 
 
 def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
     rep.heading("1. Preconditions")
-    if sys.version_info < (3, 11):
-        raise Refusal("safe_push needs Python 3.11 or later (tomllib)")
     origin = git(repo, "remote", "get-url", "origin", check=False).strip()
     if not origin:
         raise Refusal("this repository has no remote called origin")
@@ -2225,10 +2347,12 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
 
 
 def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) -> dict:
-    """Not a draft; every required box ticked; the label when a protected path changes;
-    CI green on the head. Each is reported; any failure refuses the merge. The record's
-    notes are shown beside the checklist: a check that failed with origin/main's copies
-    is the only sign that a check changed together with the code it checks."""
+    """Not a draft; every required box ticked; the coordinator's sections written; a
+    label for its kind, and security-review when a protected path changes; CI green on
+    the head. Each is reported; any failure refuses the merge. The record's notes are
+    shown beside the checklist: a check that failed with origin/main's copies, on a
+    commit that changes nothing the checks judge (keep_apart refuses the rest), is for
+    the security review to weigh."""
     rep.heading("2. The gates")
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "isDraft,headRefOid,body,labels,state")
@@ -2241,12 +2365,17 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
                 f"`gh pr ready {number}`")
     else:
         rep.add("G", "draft", "ok", "ready for review")
-    problems = checklist_problems(view.get("body") or "", show(ctx.repo, ctx.base, TEMPLATE),
-                                  bool(protected))
+    body, template = view.get("body") or "", show(ctx.repo, ctx.base, TEMPLATE)
+    problems = checklist_problems(body, template, bool(protected))
     if problems:
         rep.add("G", "checklist", "FAIL", "\n".join(problems))
     else:
         rep.add("G", "checklist", "ok", "every required box ticked")
+    unwritten = section_problems(body, template, bool(protected))
+    if unwritten:
+        rep.add("G", "sections", "FAIL", "\n".join(unwritten))
+    else:
+        rep.add("G", "sections", "ok", "what and why, the reviews and the owner's OK written")
     notes = [n for n in (record or {}).get("notes", []) if len(n) == 2 and n[0] != "pre-flight"]
     if notes:
         rep.add("G", "pre-flight notes", "note", f"{plural(len(notes), 'note')} of the "
@@ -2257,6 +2386,9 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
                 f"#{number} lacks the label {SECURITY_LABEL}")
     elif protected:
         rep.add("G", "label", "ok", f"{SECURITY_LABEL}, for {', '.join(protected)}")
+    kinds = sorted(labels & set(KIND_LABELS))
+    rep.add("G", "kind label", "ok" if kinds else "FAIL", ", ".join(kinds) if kinds else
+            f"#{number} has no label for its kind: one of {', '.join(KIND_LABELS)}")
     verdict, detail = judge_checks(pr_checks(ctx, number))
     rep.add("G", "CI", "ok" if verdict == "success" else "FAIL",
             f"{verdict} on {ctx.sha[:12]}: {detail}")
@@ -2507,9 +2639,6 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
     return code
 
 
-ZERO = "0" * 40
-
-
 def scan_push_main(repo: Path, local: str, remote: str, ref: str) -> int:
     """The pre-push hook's scan of a push to any branch, or of a tag the owner allowed:
     the commits it carries that the branch on origin, or else origin/main, lacks, with
@@ -2552,7 +2681,7 @@ REFUSE_DIRECT = """REFUSED: safe_push.py no longer pushes to main: main changes 
 request's merge commit (docs/WORKFLOW.md, "Landing work: pull requests"). Open one with
 the pre-flight, and merge it when its gates pass:
 
-    git safe-push --branch <name> [--title T] [--body-file F] [--draft]
+    git safe-push --branch <name> --label <kind> [--title T] [--body-file F] [--ready]
     git safe-push --merge <pr-number>
 
 or check the commit alone, pushing nothing: git safe-push --dry-run
@@ -2573,9 +2702,11 @@ def main(argv=None) -> int:
     parser.add_argument("--title", help="the pull request's title (default: the commit's subject)")
     parser.add_argument("--body-file", help="the pull request's body (default: generated from "
                         f"{TEMPLATE})")
-    parser.add_argument("--draft", action="store_true", help="open the pull request as a draft")
+    parser.add_argument("--ready", action="store_true", help="open the pull request ready for "
+                        "review, or mark the open one ready (a new one is otherwise a draft)")
     parser.add_argument("--label", action="append", default=[], choices=sorted(LABELS),
-                        help="a label for the pull request (repeatable)")
+                        help="a label for the pull request (repeatable); one names its kind, "
+                        f"{', '.join(KIND_LABELS)}, unless the open one has it")
     parser.add_argument("--merge", type=int, metavar="PR", help="merge this pull request, if "
                         "its gates pass")
     parser.add_argument("--commit", default="HEAD", help="the commit to check (default HEAD)")
@@ -2589,11 +2720,11 @@ def main(argv=None) -> int:
     parser.add_argument("--_test-skip-checks", dest="test_mode", action="store_true",
                         help=argparse.SUPPRESS)
     args = parser.parse_args(ARGV)
-    if args.merge is not None and (args.branch or args.title or args.body_file or args.draft
+    if args.merge is not None and (args.branch or args.title or args.body_file or args.ready
                                    or args.label or args.commit != "HEAD"):
         parser.error("--merge takes only --dry-run")
-    if not args.branch and (args.title or args.body_file or args.draft or args.label):
-        parser.error("--title, --body-file, --draft and --label go with --branch")
+    if not args.branch and (args.title or args.body_file or args.ready or args.label):
+        parser.error("--title, --body-file, --ready and --label go with --branch")
     if args.body_file and not Path(args.body_file).is_file():
         parser.error(f"--body-file {args.body_file}: no such file")
 

@@ -405,9 +405,13 @@ findings:
   checks the exact commit, pushes it to its branch and opens or updates its pull request,
   and `safe_push.py --merge <n>` merges it only when the secret scan and the guards pass
   again on its head, CI is green, the required boxes of
-  `.github/pull_request_template.md` are ticked, and a protected change carries
-  `security-review`. `scripts/hooks/pre-push` refuses every push to main, and scans a push
-  to any other branch and a tag the owner allows; and the ruleset on main is on: a pull
+  `.github/pull_request_template.md` are ticked and the coordinator's sections written,
+  the pull request carries a label for its kind and is not a draft, and a protected change
+  carries `security-review`. A check change lands in a pull request of its own: when
+  origin/main's copies of the checks fail on a pull request that also changes what they
+  judge, the pre-flight refuses it. `scripts/hooks/pre-push` refuses every push to main,
+  and scans, with origin/main's copy of the scan whichever remote it goes to, a push to
+  any other branch and a tag the owner allows; and the ruleset on main is on: a pull
   request, the checks `check`, `model` and `negative`, and no force push or deletion. Both
   run as `git safe-push`, the launcher `scripts/hooks/safe-push`, which
   `scripts/install_hooks.sh` installs outside the tracked tree with the hook, and which

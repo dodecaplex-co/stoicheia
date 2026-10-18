@@ -383,15 +383,20 @@ OK, and stay manual.
 
 **One coherent change per pull request,** that a reviewer can hold in mind: a stretch of
 proofs, a wording pass, a guard. A check is never changed in the same pull request as the
-code it checks: the check lands first, on its own, and the code follows it. Each pull
-request carries one label for its kind: a stage of brief 0005 (`stage-2` to `stage-6`), or
-`tooling`, `text`, `lean` or `docs`; a change to a protected path carries
-`security-review` as well. A pull request is a draft until its reviews are done.
+code it checks: the check lands first, on its own, and the code follows it. The pre-flight
+holds to this: when a check fails with origin/main's copies, the pull request may change
+nothing else the checks judge (step 4, below). Listing a proved companion in
+`Certificate/Facts.lean` is such a change, so it follows the proof's pull request in one
+of its own. Each pull request carries a label for its kind, `tooling`, `text`, `lean` or
+`docs`, and the pre-flight and the merge refuse one without; stage work carries its
+stage's label as well (`stage-2` to `stage-6` of brief 0005), and a change to a protected
+path carries `security-review`. A pull request opens as a draft, and stays one until its
+reviews are done.
 
 ```sh
 sh scripts/install_hooks.sh                        # once per clone, from a checkout of origin/main
 git safe-push --branch <name> --dry-run            # every check; nothing pushed
-git safe-push --branch <name> --draft --label <l>  # the pre-flight, the push, the pull request
+git safe-push --branch <name> --label <kind>       # the pre-flight, the push, a draft pull request
 git safe-push --branch <name>                      # after a fix: again, on the new head
 gh pr ready <n>                                    # when the reviews are done
 git safe-push --merge <n> --dry-run                # the gates, and no merge
@@ -462,8 +467,11 @@ and says so.
       second, each step timed. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
-      copies, which must pass, and a check that fails with origin/main's copies is noted
-      in the pull request for the security review.
+      copies, which must pass. A check that fails with origin/main's copies is noted in
+      the pull request for the security review, and refuses the pull request if it also
+      changes what the checks judge (anything but the checks, the protected paths, the
+      decisions page and the generated pages): the check change goes first, in a pull
+      request of its own. The guards' two checks in step 3 run the same way.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the
@@ -473,9 +481,11 @@ and says so.
       changes), and the pre-flight's summary, every step with its outcome and time,
       between its markers. On an update without `--body-file`, only that summary is
       replaced, so the coordinator's words stay. The body is scanned before anything is
-      pushed. Then the branch is pushed, and the pull request opened with
-      `gh pr create --base main` (or `gh pr edit` of the open one), with the labels
-      given and `security-review` when a protected path changes. Then its CI is followed
+      pushed; so is the label for its kind, given or on the open pull request. Then the
+      branch is pushed, and the pull request opened as a draft with
+      `gh pr create --base main --draft` (or `gh pr edit` of the open one; `--ready`
+      opens it ready, or marks the open one ready), with the labels given and
+      `security-review` when a protected path changes. Then its CI is followed
       to its conclusion. An interruption, or a failure to follow CI, after the push is
       reported as "pushed; CI not followed", exit 3, never as a refusal.
 3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
@@ -494,8 +504,11 @@ and says so.
    fails or is still running); no box marked **Required** in its checklist is unticked,
    nor one marked **Required if protected** when a protected path changes, and none of
    the template's required boxes is missing (the pre-flight's notes, such as a check
-   that failed with origin/main's copies, are shown beside the checklist); it carries
-   `security-review` when a protected path changes; and it is not a draft. Then
+   that failed with origin/main's copies, are shown beside the checklist); the
+   coordinator has written "What and why", each review's commit and findings in the
+   Reviews table (the security review's when a protected path changes) and "Needs the
+   owner's OK"; it carries a label for its kind, and `security-review` when a protected
+   path changes; and it is not a draft. Then
    `gh pr merge --merge --delete-branch
    --match-head-commit <head>`: a merge commit, never a squash or a rebase, and the branch
    deleted. Afterwards main is checked to be a merge of the main and the head checked,
@@ -524,7 +537,9 @@ in `preflight/`, which `--merge` reads; origin/main's harness, when it runs in p
 another copy, is written to `harness/`, named by its blobs. `sh scripts/install_hooks.sh`
 installs the launcher and the pre-push hook: the hook refuses every push to main, scans a
 push to any other branch with origin/main's copy of the secret scan
-(`safe_push.py --scan-push`), and refuses to push or delete a tag. With the owner's OK for
+(`safe_push.py --scan-push`), whichever remote it goes to (another remote's main is never
+run, and without origin/main's copy the push is refused), and refuses to push or delete a
+tag. With the owner's OK for
 a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`,
 and the hook still scans the commits it points to and an annotated tag's message.
 `python3 scripts/test_safe_push.py` plants a bad commit for each guard, gate and edge case

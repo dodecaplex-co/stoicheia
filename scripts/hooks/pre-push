@@ -7,41 +7,37 @@
 # however it is spelled (HEAD:main, main, refs/heads/main, --mirror, forced), and so is
 # every deletion of main; the ruleset on GitHub enforces the same, and this hook backs it
 # up locally. A push to any other branch is scanned for secrets first, with origin/main's
-# own copy of the scan (`safe_push.py --scan-push`), so a branch cannot weaken the scan
-# that judges it. A tag is pushed or deleted only with the owner's OK, by name:
-# STOICHEIA_TAG_PUSH=<tag> git push origin <tag> (docs/WORKFLOW.md, section 1); even
+# own copy of the scan (`safe_push.py --scan-push`), whichever remote the push goes to, so
+# a branch cannot weaken the scan that judges it, and another remote's main is never run.
+# A tag is pushed or deleted only with the owner's OK, by name:
+# STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag> (docs/WORKFLOW.md, section 1); even
 # then the commits it points to, and an annotated tag's message, are scanned. (The
 # owner can still go round it with `git push --no-verify`; the hook is a guard rail, not
 # a lock.)
 #
 # git gives the hook one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
 
-remote_name=$1
-top=$(git rev-parse --show-toplevel 2>/dev/null)
 tmp=
+harness=
 cleanup() { [ -n "$tmp" ] && rm -rf "$tmp"; }
 trap cleanup EXIT
 
-# The scan: origin/main's safe_push.py and heath.py, copied out of git; the working
-# tree's copy only while origin/main's has no --scan-push.
+# The scan: origin/main's safe_push.py and heath.py, copied out of git. Only origin's main
+# is trusted: the remote pushed to may be anyone's fork. Without them, the push is refused.
 scan() {
-    base=refs/remotes/$remote_name/main
-    git rev-parse --verify --quiet "$base" >/dev/null || base=refs/remotes/origin/main
+    base=refs/remotes/origin/main
     if [ -z "$tmp" ]; then
         tmp=$(mktemp -d "${TMPDIR:-/tmp}/stoicheia-pre-push.XXXXXX") || return 1
         if git show "$base:scripts/safe_push.py" > "$tmp/safe_push.py" 2>/dev/null &&
                 grep -q -e "--scan-push" "$tmp/safe_push.py" &&
                 git show "$base:scripts/heath.py" > "$tmp/heath.py" 2>/dev/null; then
             harness=$tmp/safe_push.py
-        elif [ -f "$top/scripts/safe_push.py" ]; then
-            echo "pre-push: origin/main's safe_push.py has no --scan-push yet; using the" >&2
-            echo "    working tree's copy." >&2
-            harness=$top/scripts/safe_push.py
         else
-            echo "pre-push: no safe_push.py to scan the push with." >&2
-            return 1
+            echo "pre-push: refusing the push: origin/main has no scripts/safe_push.py with" >&2
+            echo "    --scan-push to scan it with (git fetch origin, and push again)." >&2
         fi
     fi
+    [ -n "$harness" ] || return 1
     python3 "$harness" --scan-push "$1" "$2" "$3"
 }
 
