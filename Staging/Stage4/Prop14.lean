@@ -1,4 +1,4 @@
-import Staging.Stage2.BookIII.Foot
+import Staging.Stage4.Foot
 
 /-!
 # Staging: III.14 with diameters

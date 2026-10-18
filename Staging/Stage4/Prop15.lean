@@ -1,4 +1,4 @@
-import Staging.Stage2.BookIII.Foot
+import Staging.Stage4.Foot
 
 /-!
 # Staging: III.15, its two clauses for every straight line in the circle

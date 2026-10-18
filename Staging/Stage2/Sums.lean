@@ -18,9 +18,10 @@ and each theorem's proof is `sorry` until it is assigned. Where they go when ado
 * `Magnitude.sum_singleton`, `Magnitude.sum_append` and `InOrder.between_end` are facts
   every figure may need, proved from the foundations alone, for Book Zero,
   `Elements/Figure/Sums.lean`;
-* `Prop20.collinear_iff` cites I.20, so it lives after I.20 in the dependency order: not in
-  `Elements/BookI/Helpers.lean`, which I.20 itself imports, but in a file of shared steps
-  after it.
+* the fact that three points are on one straight line exactly when one distance among them
+  is the sum of the other two, which III.14, III.15 and placement share, has one statement,
+  `Prop20.collinear_iff` in `Staging/Stage3/Degenerate.lean`, bound for
+  `Elements/BookI/HelpersTriangles.lean`.
 -/
 
 namespace Elements
@@ -74,23 +75,5 @@ def endOf (B : Point) : List Point → Point
 theorem InOrder.between_end {B P : Point} {ps : List Point} (h : InOrder (B :: P :: ps))
     (hps : ps ≠ []) : Between B P (endOf P ps) := by
   sorry
-
-/-! ## When three points lie on one straight line -/
-
-namespace BookI
-
-/-- **Three points lie on one straight line exactly when one distance among them is the sum
-of the other two**: when X is on CD (CX, XD together equal to CD), or D is on CX, or C is on
-DX. One way is order on a straight line (System E, Between 6 and Diagram-segment 1); the
-other is I.20, for if C, D, X made a triangle, any two of its sides would be greater than
-the third. Later proofs share it: the diameters of III.14 and III.15, and placement in
-stage 3. No hypothesis is needed: when C and D are one point, every X is on a straight line
-with them, and CD, DX together equal CX. [I. 20] -/
-theorem Prop20.collinear_iff {C D X : Point} :
-    Collinear C D X ↔
-      ‖C X‖ + ‖X D‖ = ‖C D‖ ∨ ‖C D‖ + ‖D X‖ = ‖C X‖ ∨ ‖D C‖ + ‖C X‖ = ‖D X‖ := by
-  sorry
-
-end BookI
 
 end Elements
