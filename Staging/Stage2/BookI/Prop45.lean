@@ -56,7 +56,106 @@ theorem Prop45.append {A B C K F L M E₁ E E₂ : Point} (hKFLM : Parallelogram
     (hang : ∠ F K M = ∠ E₁ E E₂) (hABC : Triangle A B C) (hE : Triangle E₁ E E₂) :
     ∃ K' F' L' M' : Point, Parallelogram K' F' L' M' ∧ ∠ F' K' M' = ∠ E₁ E E₂ ∧
       quadArea K' F' L' M' = quadArea K F L M + △ A B C := by
-  sorry
+  /- Here M is Euclid's H and L is G; the new corners L', M' are his L, M.
+     Read the given parallelogram as FKML, and apply the new one to LM across
+     that side from K, so that I.14 can join KM to MM'. -/
+  have hFKML : Parallelogram F K M L := hKFLM.rotate.reverse
+  have hLMK : Triangle L M K := hFKML.1.symm.swap_right.triangle.bac
+  obtain ⟨P, hPK, -⟩ := exists_oppositeSidesOf hLMK []
+  obtain ⟨L', M', hM'P, hLMM'L', hLMM', hadded⟩ :=
+    Prop44 hLMK.ne₁₂ hABC hE hPK.triangle
+  have hM'K : OppositeSidesOf M' K L M := hM'P.trans_opposite hPK
+  have hKM : K ≠ M := hLMK.ne₂₃.symm
+  have hLM : L ≠ M := hLMK.ne₁₂
+  have hFK : F ≠ K := hFKML.1.1
+
+  /- The angles FKM and LMM' both equal E. Add KML to each; I.29 makes
+     the first pair two right angles, hence the second pair also. -/
+  have hFKM_LMM' : ∠ F K M = ∠ L M M' := CommonNotion1 hang hLMM'
+  have hsum₁ : ∠ F K M + ∠ K M L = ∠ K M L + ∠ L M M' := by
+    rw [hFKM_LMM', add_comm]
+  have hFL_KM : SameSideOf F L K M := hFKML.rotate.sameSideOf.symm
+  have hFKM_KML : ∠ F K M + ∠ K M L = ∟ + ∟ :=
+    Prop29.interior hFKML.1.swap_left hFL_KM
+  have hKML_LMM' : ∠ K M L + ∠ L M M' = ∟ + ∟ :=
+    hsum₁.symm.trans hFKM_KML
+
+  /- K and M' lie on opposite sides of LM, and the angles KML, LMM' are two
+     right angles, so I.14 puts KM in a straight line with MM', with M
+     between K and M'. -/
+  have hKMM' : Between K M M' := Prop14 hM'K.symm (by
+    rw [angle_symm hLM hKM]
+    exact hKML_LMM')
+
+  /- ML falls on the parallels KM' and FL, so I.29 equates the alternate
+     angles M'ML and MLF. -/
+  have hFK_ML : SameSideOf F K M L := hFKML.rotate.rotate.sameSideOf
+  have hM'M : M' ≠ M := ne_of_between (between_symm hKMM')
+  obtain ⟨KM', hK_KM', hM'_KM'⟩ := Postulate1 K M' (ne_of_between_ends hKMM')
+  have hM_KM' : OnLine M KM' := on_line_of_between_ends hKMM' hK_KM' hM'_KM'
+  obtain ⟨FL, hF_FL, hL_FL⟩ := Postulate1 F L hFKML.2.2.1.symm
+  have hKM'_FL : Parallel KM' FL := hFKML.2.parallel hK_KM' hM_KM' hL_FL hF_FL
+  have hM'MLF : AreParallel M' M L F :=
+    AreParallel.of_parallel hM'M hFKML.2.2.1 hM'_KM' hM_KM' hL_FL hF_FL hKM'_FL
+  have hM'F : OppositeSidesOf M' F M L := (hFK_ML.trans_opposite hM'K.symm.swap).symm
+  have hM'ML_MLF : ∠ M' M L = ∠ M L F := Prop29.alternate hM'MLF hM'F
+
+  /- Add MLL' to each. I.29 makes M'ML and MLL' two right angles,
+     so MLF and MLL' are two right angles too. -/
+  have hsum₂ : ∠ M' M L + ∠ M L L' = ∠ M L F + ∠ M L L' :=
+    CommonNotion2 hM'ML_MLF rfl
+  have hM'L'_ML : SameSideOf M' L' M L := hLMM'L'.sameSideOf.swap
+  have hM'ML_MLL' : ∠ M' M L + ∠ M L L' = ∟ + ∟ :=
+    Prop29.interior hLMM'L'.2.swap_right hM'L'_ML
+  have hMLF_MLL' : ∠ M L F + ∠ M L L' = ∟ + ∟ :=
+    CommonNotion1 hsum₂.symm hM'ML_MLL'.symm
+
+  /- F and L' lie on opposite sides of ML, so I.14 puts FL and LL'
+     in one straight line. -/
+  have hFL' : OppositeSidesOf F L' M L :=
+    hFK_ML.trans_opposite (hM'L'_ML.symm.trans_opposite hM'K.swap).symm
+  have hFLL' : Between F L L' := Prop14 hFL' hMLF_MLL'
+
+  /- I.34 gives FK equal to LM and LM equal to L'M'. The outer sides FK
+     and L'M' are parallel to LM; I.30 makes KF parallel to M'L'. -/
+  obtain ⟨-, hFK_LM, -, -, -⟩ := Prop34 (A := F) (B := L) (C := K) (D := M) hFKML
+  obtain ⟨-, hLM_L'M', -, -, -⟩ :=
+    Prop34 (A := L) (B := L') (C := M) (D := M') hLMM'L'
+  have hlen : ‖K F‖ = ‖M' L'‖ :=
+    CommonNotion1 ((len_symm K F).trans hFK_LM) (hLM_L'M'.trans (len_symm L' M')).symm
+  obtain ⟨KF, hK_KF, hF_KF⟩ := Postulate1 K F hFK.symm
+  obtain ⟨M'L', hM'_M'L', hL'_M'L'⟩ := Postulate1 M' L' hLMM'L'.1.2.1
+  obtain ⟨LM, hL_LM, hM_LM⟩ := Postulate1 L M hLM
+  have hKF_LM : Parallel KF LM := hFKML.1.swap_left.parallel hK_KF hF_KF hM_LM hL_LM
+  have hM'L'_LM : Parallel M'L' LM :=
+    hLMM'L'.1.symm.parallel hM'_M'L' hL'_M'L' hL_LM hM_LM
+  have hKF_M'L' : KF ≠ M'L' := fun e => by
+    have hK_M'L' : OnLine K M'L' := e ▸ hK_KF
+    have hline : M'L' = KM' :=
+      line_unique (ne_of_between_ends hKMM') hK_M'L' hM'_M'L' hK_KM' hM'_KM'
+    exact hM'L'_LM.not_onLine (hline ▸ hM_KM') hM_LM
+  have hpar : AreParallel K F M' L' :=
+    AreParallel.of_parallel hFK.symm hLMM'L'.1.2.1 hK_KF hF_KF hM'_M'L' hL'_M'L'
+      (Prop30.parallel hKF_LM hM'L'_LM hKF_M'L')
+
+  /- KM' and FL' join the equal parallels in the same direction. By I.33
+     they too are parallel, completing the parallelogram KFL'M'. -/
+  have hdir : SameSideOf F L' K M' := by
+    have hF : SameSide F L KM' := hFL_KM.sameSide hK_KM' hM_KM'
+    have hL' : SameSide L' L KM' := hLMM'L'.rotate.sameSideOf.sameSide hM_KM' hM'_KM'
+    exact SameSideOf.of_line (ne_of_between_ends hKMM') hK_KM' hM'_KM'
+      (same_side_trans (same_side_symm hF) (same_side_symm hL'))
+  obtain ⟨-, h33⟩ := Prop33 hpar hlen hdir
+  have hwhole : Parallelogram K F L' M' := ⟨hpar.swap_right, h33.symm.swap_right⟩
+
+  /- The whole is the two parallelograms together, and the added one equals
+     ABC. The ray KM' is the ray KM, so the angle at K remains E. -/
+  have harea : quadArea K F L' M' = quadArea K F L M + △ A B C := by
+    rw [quadArea_add_of_parallelograms hKFLM hLMM'L'.rotate.reverse hKMM' hFLL',
+      quadArea_reverse M M' L' L, hLMM'L'.quadArea_rotate, hadded]
+  refine ⟨K, F, L', M', hwhole, ?_, harea⟩
+  rw [angle_onRay_right (OnRay.of_beyond hKMM') hFK]
+  exact hang
 
 /-- **I.45, any number of triangles** (companion of I.45). To construct, in a given
 rectilineal angle E, a parallelogram equal to any number of given triangles taken together,
