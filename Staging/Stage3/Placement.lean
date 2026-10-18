@@ -10,8 +10,8 @@ import Staging.Stage3.Placement.Strict
 /-!
 # Stage 3, staged: placement
 
-Statements before proofs (brief 0006, stage 3), and the spike's assembly: `placement` is
-proved here from the stubbed cases in `Staging/Stage3/Placement/`. Destined for
+Statements frozen before their proofs (brief 0006, stage 3), and the spike's assembly:
+`placement` is proved here from the cases proved in `Staging/Stage3/Placement/`. Destined for
 `Elements/BookIII/Placement.lean`, with the cases in `Elements/BookIII/Placement/`. Outside
 those files, only III.24 and `Arcs.lean` may cite `placement` or any lemma of the
 `Placement` namespace: the sub-lemmas carry the same distance-keeping content, and the
@@ -129,7 +129,7 @@ such point P goes to a point as far from C as P is from A, and from D as P is fr
 on E's side exactly when its image is on F's side; and P is between A and B exactly when
 its image is between C and D.
 
-Proved from the stubbed cases: each point's place is chosen; it exists and is unique;
+Proved from its cases: each point's place is chosen; it exists and is unique;
 A's place is C and B's is D; the map is onto because the construction runs back from CD to
 AB, and the place found there is the one chosen.
 

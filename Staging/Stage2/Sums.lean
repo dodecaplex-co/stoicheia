@@ -13,9 +13,9 @@ and II.14 for a checked fan (`Prop45.fan`, `Prop14.fan`), the sides on which the
 from one corner stand; the other companions of I.45 and II.14 take the figure as a list of
 triangles (`Staging/Stage2/Rectilineal.lean`).
 
-These are statements of brief 0006, approved and frozen (WORKFLOW, section 2): the
-definitions are complete, and each theorem's proof is `sorry` until it is assigned. Where
-they go when they move:
+These are statements of brief 0006, approved and frozen (WORKFLOW, section 2). The
+definitions in this file are complete, and each of its theorems is proved here from the
+rules of order and of magnitudes alone. Where they go when they move:
 
 * `Magnitude.sum`, `InOrder`, `segments` and `endOf` are new words that companion
   statements use, so each is a definition in the foundations, with the lock and a decisions
@@ -44,13 +44,22 @@ noncomputable def Magnitude.sum {k : Kind} : List (Magnitude k) → Magnitude k
 
 /-- The sum of one magnitude is that magnitude. -/
 theorem Magnitude.sum_singleton {k : Kind} (a : Magnitude k) : Magnitude.sum [a] = a := by
-  sorry
+  change a + 0 = a
+  exact add_zero a
 
 /-- The sum of two lists, one after the other, is the sum of the first added to the sum of
 the second. -/
 theorem Magnitude.sum_append {k : Kind} (l₁ l₂ : List (Magnitude k)) :
     Magnitude.sum (l₁ ++ l₂) = Magnitude.sum l₁ + Magnitude.sum l₂ := by
-  sorry
+  induction l₁ with
+  | nil =>
+      /- Nothing added to a magnitude: the laws give `a + 0 = a`, so turn the sum round. -/
+      change Magnitude.sum l₂ = 0 + Magnitude.sum l₂
+      rw [add_comm 0, add_zero]
+  | cons a as ih =>
+      /- A first magnitude `a`: the induction, then the law for adding three in a row. -/
+      change a + Magnitude.sum (as ++ l₂) = (a + Magnitude.sum as) + Magnitude.sum l₂
+      rw [ih, add_assoc]
 
 /-! ## Points in order on a straight line -/
 
@@ -84,6 +93,19 @@ def endOf (B : Point) : List Point → Point
 /-- Of three or more points in order, the second lies between the first and the last. -/
 theorem InOrder.between_end {B P : Point} {ps : List Point} (h : InOrder (B :: P :: ps))
     (hps : ps ≠ []) : Between B P (endOf P ps) := by
-  sorry
+  induction ps generalizing B P with
+  | nil =>
+      /- No point after P: `hps` rules this case out. -/
+      exact absurd rfl hps
+  | cons Q qs ih =>
+      cases qs with
+      | nil =>
+          /- Three points B, P, Q: the last is Q, and P is between B and Q. -/
+          exact h.2.1
+      | cons R rest =>
+          /- P is between B and Q; by the induction, Q is between P and the last point E;
+          so, by Between 5, P is between B and E. -/
+          have hQE : Between P Q (endOf Q (R :: rest)) := ih h.2.2 (List.cons_ne_nil R rest)
+          exact between_of_between_right h.2.1 hQE
 
 end Elements

@@ -226,8 +226,8 @@ the angle ANX right. For A off BC that is the staged `Foot A B C N`
 whose existence and uniqueness are still stubs; on adoption it can take `Foot` as its
 hypothesis and go with `Foot.exists` and `Foot.unique` to `Elements/BookIII/Squares.lean`.
 `len_lt_of_add_lt` is I.20 with its degenerate case, which `Staging/Stage3/Degenerate.lean`
-states as an equality, `Prop20.collinear_iff`, still a stub. Derived from that, it would rest
-on the stub, so it is proved here from `between_cases`; on adoption it goes beside
+states as an equality, `Prop20.collinear_iff`, now proved there. It keeps its proof here from
+`between_cases`, which needs nothing from the stage 3 files; on adoption it goes beside
 `Prop20.collinear_iff` in `Elements/BookI/HelpersTriangles.lean`, which brief 0006 adds. -/
 
 variable {A B C D E F P Q : Point} {α γ : Circle}

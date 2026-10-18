@@ -1759,6 +1759,179 @@ stamped by anyone who did not review it.
    figure with one boundary. A figure in more than one piece is taken too, which only claims
    more.
 
+## Routes as proved (18 October 2026)
+
+*A correction after the freeze, under [WORKFLOW.md](../WORKFLOW.md), section 2, "Correcting a
+frozen brief": the code and this brief disagree on some routes and dependencies, and
+FORMALIZATION, section 1, asks that such a disagreement be recorded, not settled by a quiet
+edit. No statement, definition or `--` line changes, and nothing above this section is
+edited. The declarations stay as frozen, so each entry gives the discrepancy, what the Lean
+does and why the statement stands; the consumers are the records listed at the end.*
+
+The proofs were written against the frozen statements on 18 October 2026, and each was read
+by a verifier who did not write it. Every staged statement of stages 2 and 3 is proved, on
+the stage branches at `d895ca8` and `d465ced` (landed in #88 and #89), and of stage 4 every
+one but III.25's at `5220bda`: `Foot.exists`, `Foot.unique`, `Prop14.general`,
+`Prop15.le_diameter` and `Prop15.nearer`. III.25's core, `Prop25.complete` and
+`Prop25.of_circle` were proved afterwards and landed with the rest of stage 4 in #90;
+`Prop25.complete` goes by III.9 where the brief planned III.10, which is one more departure
+of route, recorded here. Most items follow the routes and dependencies
+planned above. Most of the departures below were pointed out by the item's prover or its
+verifier, with thanks to both; the rest came to light in reading the Lean for this section,
+against which every entry was checked. Every departure is in a proof, and the verifiers
+found the frozen signatures and their docstrings unchanged at those commits. "A changed
+proof of the same type can still change its route and its certificate" (WORKFLOW,
+section 2): so these change certificates and the records' notes, and no statement. The
+section describes the Lean at `d895ca8`, `d465ced` and `5220bda`; later commits on the
+stage branches, docstring edits among them, are outside it.
+
+**The departures**, in the order of the stages:
+
+- **`InOrder.between_end`** ("Sums, and points in order"). *Planned:* by induction, "from
+  the magnitude laws and System E's rules of order (Between 6, Diagram-segment 1)". *As
+  proved:* by induction on the list with one rule, Between 5 (`between_of_between_right`): P
+  between B and Q, and Q between P and the last point E, put P between B and E. Neither
+  Between 6 (`between_cases`) nor Diagram-segment 1 (`len_add_of_between`) is used. *The
+  statement stands:* only the plan's citation was wrong; the route, an induction from the
+  rules of order that cites no proposition, and the home in Book Zero are as planned.
+- **`Prop45.append`** (I.45, "Route"). *Planned:* Euclid's proof that the two parallelograms
+  make one, "(I.29, I.14, I.34, I.33)". *As proved:* the second half of today's I.45, the
+  first parallelogram given: I.44, then I.29, I.14, I.29, I.14, I.34, I.30 and I.33. *The
+  statement stands:* I.30 is Euclid's own citation ("[C.N. 1; I. 30]") and today's proof's;
+  the route's list leaves it out, and the Dependencies, "the steps of today's I.45", include
+  it.
+- **`Prop1.two`** (II.1). *Planned:* "[I. 11, I. 3, I. 31, I. 34]"; Dependencies "I.3, I.11,
+  I.31, I.34; `Rectangle.contained`; the sums". *As proved:* today's construction for one
+  point of section, which also cites I.2, to place A₁A₂ at B before I.3 cuts off BG, and
+  I.30, to make DK parallel to CH; the rectangles are named by `Rectangle.of_right` and
+  `Rectangle.eq_rect`, which rests on `Rectangle.contained`, as in today's II.1. Today's
+  II.1 cites the same propositions. *The statement stands:* the list gave Heath's
+  references, and the Lean cites what today's proof cites.
+- **`Prop14.rectangle`** (II.14). *Planned:* the route names the bisection of BF and the
+  semicircle BHF, and the Dependencies list "I.11, I.45 (`Prop45.sum`), II.5, I.47, I.46,
+  `Rectangle.of_right`, `Square.described`". *As proved:* Euclid's second part, as planned,
+  citing I.10 for the bisection, and Postulate 3 and Definition 15 for the circle about G, as
+  today's II.14 does. *The statement stands:* the step is in the planned route; only the list
+  leaves out I.10.
+- **`Placement.exists_on`** ("Placement"). *Planned:* "on the base by I.3, or by producing CD
+  (`produce`, `OnRay.exists_len_eq`)"; in the homes table, `Placement/Exists.lean` "cites
+  I.3, I.20, I.22". *As proved:* a point beyond either end of AB goes to a point beyond D or
+  C, found by a new helper, `Placement.exists_on_beyond`, which places the length at D by I.2
+  before laying it off, since `OnRay.exists_len_eq` lays off only a length already there;
+  Euclid's own I.3 begins the same way. The file cites I.2 and imports
+  `Elements.BookI.Prop02`. *The statement stands:* it asks only for the point, and I.2 comes
+  before the file's place after Book I. At `d465ced` the docstring of `exists_on` names
+  `produce` and `OnRay.exists_len_eq`, not I.2; the task that moves it can add I.2.
+- **III.28 upgraded** (`Staging.Prop28`). *Planned:* the congruence of the greater
+  circumferences "from III.24, or III.26's clause at the circumference, applied to the
+  greater segments", and the diameter case by `Prop24.angle_type` and III.24; Dependencies
+  "I.8, III.24, III.26, `Prop28.diameter`, `Prop28.sides`, `Prop24.angle_type`,
+  `Arc.Congruent.congr_side`". *As proved:* the angles AXB, DYE at points X, Y of the greater
+  arcs are the halves of the equal angles AKB, DLE at the centres [III. 20], so the greater
+  segments are similar, and III.24 makes them congruent, named by C and F through
+  `Arc.Congruent.congr_side`. The diameter case takes the right angle in a semicircle from a
+  new helper, `Prop28.right` (from `Prop24.angle_type`, since III.31 comes later), then
+  III.24, as planned. `Prop28.beyond`, as in today's proof, keeps the centre off the less
+  circumference's side. Both departures from Euclid are labelled where they happen, as
+  planned. *The statement stands:* III.20 comes before III.28, and the proof keeps today's
+  17 `--` lines; the list gains III.20, `Prop28.right` and today's `Prop28.beyond`.
+- **III.14 general** (`Prop14.general`). *Planned:* Dependencies "III.14, I.20
+  (`Prop20.collinear_iff`), `Foot.unique`". *As proved:* the planned cases. A straight
+  line through the centre is a diameter (`between_of_inside_chord`, with `centre_inside`),
+  two radii together by a new helper, `Prop14.diameter_sum` (Definition 15 and
+  Diagram-segment 1), and its foot is E by `Foot`'s own second clause; a diameter is greater
+  than a straight line not through the centre by I.20, cited directly; and two straight lines
+  not through the centre are Euclid's case, by III.14 itself, as planned. Neither
+  `Prop20.collinear_iff` nor `Foot.unique` is cited. *The statement stands:* it names
+  neither, and `Foot`'s clauses give each foot without them.
+- **III.15 le_diameter** (`Prop15.le_diameter`). *Planned:* "by Euclid's step, BE, EC
+  together greater than BC [I. 20], with the equality case from `Prop20.collinear_iff`". *As
+  proved:* AD is two radii by `Prop14.diameter_sum`, III.14 general's helper, so
+  `Prop15.lean` imports III.14's staged file. Then three cases: B and C one point, and BC
+  nothing; BC through E, a diameter by `between_of_inside_chord`, equal to AD; otherwise
+  less, by Euclid's step [I. 20]. The case split does in place what `collinear_iff` would
+  have done. *The statement stands:* its equality clause, `Between B E C`, is the same; only
+  the way to it differs.
+- **III.15 nearer** (`Prop15.nearer`). *Planned:* "by his argument [III. 14, I. 24], with the
+  diameter case by `le_diameter`"; Dependencies "I.20, I.24, III.14 general, `Foot.exists`,
+  `Foot.unique`". *As proved:* FG cannot pass through E, for its foot would be E and EK
+  nothing. If BC is a diameter, `le_diameter` gives the result, strictly, as planned.
+  Otherwise the diameter through B is drawn (Postulate 1, `line_circle_beyond`), and III.15's
+  own second conclusion gives FG less than BC. So Euclid's argument [III. 14, I. 24] comes in
+  through III.15's proof, not repeated, as III.14 general takes Euclid's case from III.14; the
+  companion rests there on today's III.14, not on III.14 general, and cites neither `Foot`
+  lemma. *The statement stands:* a companion may cite its own proposition, which comes before
+  it, as III.14 general does, and the check that today's III.15 follows from the two
+  companions depends only on what they state. Unlike the route withdrawn under II.14 above,
+  which would have proved the rectangle, Euclid's own second part, from today's two-triangle
+  statement rather than by his construction, this one proves Euclid's configuration by his
+  argument, in today's III.15, and adds only the case of a diameter, by `le_diameter`. Like
+  that route, it makes the check of today's III.15 pass through III.15 itself, as III.14
+  general's route does for III.14's check, and the II.14 passage counted that against its
+  route; whether it is accepted here is the coordinator's call, recorded in the III.15 record
+  when it is read again.
+
+**Settled by the proofs, and two consequences.**
+
+- `Fitted.fan` cites one proposition, I.13 (in `Fitted.fan.advance`, so that no straight
+  angle is ever measured), so its home is `Elements/BookI/Prop45.lean`, before `Prop45.fan`,
+  as the homes under "A rectilineal figure, given with its triangles" provide, not Book Zero.
+- The users of I.20's degenerate case, "Placement; stage 4's `Prop14.general` and
+  `Prop15.le_diameter`" under that heading, are now placement alone, through the two `congr`
+  forms: the assembly cites `collinear_congr` and `between_congr`, and `dist_on_on` and
+  `dist_on_off` cite `between_congr`.
+- `Foot.exists` and `Foot.unique` are proved as planned [I. 12, I. 17], and no companion now
+  cites them. They stay as the facts that the foot exists and is one point, which is what
+  lets `Foot E A B F` be read as "F is the foot", and go to `Squares.lean` as planned.
+
+**One slip in the plan, not a route as proved.** III.25's "Construction" bullet says "the
+angle ABE equal to BAD [I. 23]". Heath has "let the angle BAE be constructed equal to the
+angle ABD" (`heath/III/25.md`), and so do the `--` lines of today's proof; the bullet is to
+be read so. No statement mentions the angle. III.25's route is recorded when it is proved.
+
+**Helpers the proofs added**, each with a docstring naming the step it supplies, to move
+with its item: fourteen for `Fitted.fan` (`Fitted.fan.part` to `Fitted.fan.sweep`) and
+`Prop14.area_pos` (for II.14's square); `Placement.exists_on_beyond`,
+`Placement.dist_on_on.opposite`, `Placement.dist_on_off.from_ray`,
+`Prop23.insideTriangle_of_between`, `Aligned.centre_between`, `Aligned.eq_on_base`,
+`Prop24.image` and `Prop28.right`; and `Prop14.diameter_sum` (for III.14 general and III.15).
+The verifiers noted that some cite no proposition (`Prop14.area_pos`, `Prop14.diameter_sum`,
+`Placement.dist_on_on.opposite` and several of `Fitted.fan`'s), and so could go to Book Zero
+under general names; the task that moves them decides.
+
+**The records** whose route and dependency notes are to say this when the companions move
+into `Elements/`, each read again then, as "Records made stale" says:
+
+- I.40 (`review/I/40.toml`): nothing departs. The route stays `modified`, the end of the
+  reductio direct; "I.40 general" is Euclid's argument for bases anywhere on L, his F being
+  the meeting point G, and "I.40 join" follows from it.
+- I.45 (`review/I/45.toml`): "I.45 append" cites I.30 with Euclid; "I.45 fan" rests on I.13
+  through `Fitted.fan`, which moves into `Prop45.lean`.
+- II.1 (`review/II/01.toml`): "II.1 two" cites I.2 and I.30, as today's II.1 does; "II.1
+  general" as planned.
+- II.14 (`review/II/14.toml`): "II.14 rectangle" cites I.10; "II.14 square" uses
+  `Prop14.area_pos` before I.46.
+- III.14 (`review/III/14.toml`): "III.14 general" rests on III.14, I.20,
+  `between_of_inside_chord` and `Prop14.diameter_sum`, not on `Prop20.collinear_iff` or
+  `Foot.unique`.
+- III.15 (`review/III/15.toml`): "III.15 le_diameter" rests on I.20 and
+  `Prop14.diameter_sum`, not on `Prop20.collinear_iff`; "III.15 nearer" rests on III.15
+  itself, and so on III.14 and I.24 through it, and on `le_diameter`, not on III.14 general
+  or the `Foot` lemmas.
+- III.23 (`review/III/23.toml`): as planned, by I.21 and III.21, with
+  `Prop23.insideTriangle_of_between` for the one step read off the figure.
+- III.24 (`review/III/24.toml`): as planned; the restated III.24 now rests on no stub, and
+  "III.24 equalMeasure" goes through `Prop24.image` (I.8 and `chord_cases`).
+- III.25 (`review/III/25.toml`): not yet proved; the construction reads BAE equal to ABD,
+  and `Arc.meets`, on which "III.25 of_circle" rests, is proved.
+- III.26 (`review/III/26.toml`): as planned, by the propositions its Dependencies name, with
+  the remainders' congruence the planned `different` passage.
+- III.27 (`review/III/27.toml`), and III.30 with it: nothing of their own; their Lean
+  changes only at the `.1` calls.
+- III.28 (`review/III/28.toml`): III.20 for the greater segments' similarity,
+  `Prop28.right` for the diameter case and `Prop28.beyond` as today; the route `modified` by
+  the two planned `different` passages.
+
 ## Appendix: the challenges, and what was done
 
 Three readers challenged the staged statements and the draft of this brief: a translator,
