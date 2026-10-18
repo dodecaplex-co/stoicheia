@@ -13,7 +13,7 @@ There is no figure to build here. As in I.19, Euclid divides the cases: if the
 angle BAC is not greater than the angle EDF, it is equal to it or less, and
 I.4 and I.24, already proved, each rule one of them out. I.24 is cited with the
 triangles exchanged, DEF as its first triangle and ABC as its second. The
-Lean needs no helper of its own.
+Lean has no helper of its own.
 -/
 
 namespace Elements.BookI
