@@ -41,6 +41,6 @@ note = "Euclid's argument for the angles of the segments, which the clause map a
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "2c83342"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:c490589add26d39f"
+lean = "sha256:e480b09398343158"

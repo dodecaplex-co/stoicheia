@@ -65,6 +65,6 @@ note = "G is drawn within the circle and H beyond G, on the circumference, as th
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "2c83342"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:02e5d011702152e1"
+lean = "sha256:e2b137f61ace1a23"

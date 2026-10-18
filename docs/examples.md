@@ -7,8 +7,9 @@ Copying their leads, their rhythm or their sentences onto another page would mak
 the voice passes were run to remove. Take from them how a decision was made, and make your
 own for your proposition.
 
-Each was read at commit `d040117`. When one of them changes, it is read again and its
-commit here brought up to date, or it is replaced.
+Each was read again at commit `2c83342`, after the precision pass of brief 0005 and its
+readers' notes. When one of them changes, it is read again and its commit here brought up
+to date, or it is replaced.
 
 ## A short construction: I.1
 
@@ -107,13 +108,17 @@ proof where a later citer needs it.
   at B, but IV.5 needs it at any point. The statement says it of every point of the segment,
   the Lean reaches the other points through III.22, and the mishnah's fourth paragraph says
   why.
-- **What stage 1 adds.** The review record, `review/III/31.toml`, declares the statement
-  partial, quotes the omitted clause, tags it `mixed-angles-omitted` and declares the bare
-  sentences as an unformalized passage; the page then shows the exception in its status line
-  and a clause map before the Lean, and the Lean gains a remark at the omitted clause. Until
-  that lands, the page's generic sentence about "the Lean that carries it out" overclaims
-  here, which is the defect Astra found. This entry is read again, and its commit brought
-  up to date, once stage 1 is integrated.
+- **The record, and what the page makes of it.** The review record, `review/III/31.toml`,
+  declares the statement partial, quotes the two omitted clauses, tags them
+  `mixed-angles-omitted`, and says how "in the segment" is put in Lean: a point on B's side
+  of AC, or on the other side. It declares two passages: the further case, where the Lean
+  reaches every point of the greater segment through III.22, and the closing sentences, left
+  in Euclid's words. The page says the exception in a few words in its status line, says it
+  in full once, in the clause map before the Lean, and points to that map from the table
+  and from the notes; the reason, that our angles are made by two straight lines, is given
+  in the Representation row and in the mishnah, and the Lean has a short remark where the
+  clause is left. The sentence above the listing names the passage the Lean does not carry
+  out, which is the defect Astra found in the page's old, generic sentence.
 
 After stage 3, III.24, with its alternative proof by the radii displayed as an alternative,
 may join or replace this example.
