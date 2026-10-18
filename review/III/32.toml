@@ -38,6 +38,6 @@ note = "Euclid's A is the end of the diameter; the statement says this of every 
 
 [review]
 stage = "exceptions"
-commit = "0226c65"
+commit = "c900c89"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:a7314b11b9bdd460"
+lean = "sha256:f90e259b1de276c5"

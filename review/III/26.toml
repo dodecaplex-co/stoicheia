@@ -18,6 +18,6 @@ note = "Given the angles at A and D, the Lean sorts them as acute, right or obtu
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "c900c89"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:4e05d0d69b1b03e1"
+lean = "sha256:5a67a2f1e380c06e"

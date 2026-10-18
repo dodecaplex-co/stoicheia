@@ -24,6 +24,6 @@ case = "BE greater than ED, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "c900c89"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:85fb27ad1e21f491"
+lean = "sha256:9000380f6390d30c"

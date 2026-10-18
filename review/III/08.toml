@@ -33,6 +33,6 @@ note = "The Lean does not appeal to the convex order, which misses a DN ending o
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "c900c89"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:2a04a14da07328ec"
+lean = "sha256:2bb66d822b89efd3"

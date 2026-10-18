@@ -18,6 +18,6 @@ note = "The statement gives ABC its centre, which the Lean names P at once; that
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "c900c89"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:825188ba27852255"
+lean = "sha256:5427e28b878c322d"

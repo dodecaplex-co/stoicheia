@@ -18,6 +18,6 @@ note = "Euclid assumes that AE and FG meet, as Heath notes (vol. 2, p. 70); Post
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "c900c89"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:41de75450361e99e"
+lean = "sha256:2df05f6321d8a79f"

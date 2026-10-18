@@ -28,6 +28,6 @@ note = "Euclid's figure keeps the centre D off AB. When AB passes through D ther
 
 [review]
 stage = "exceptions"
-commit = "7339460"
+commit = "c900c89"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:6b6b3ba8e21df612"
+lean = "sha256:0f14d525b38befe4"
