@@ -40,7 +40,20 @@ Euclid's page. -/
 theorem Prop17.general {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD)
     (hA : ¬ InsideCircle A BCD) :
     ∃ X : Point, Touches A X BCD := by
-  sorry
+  by_cases hon : OnCircle A BCD
+  · /- A is on the circle. Its centre E is within it, so E is not A. -/
+    obtain ⟨E, hE⟩ := hBCD
+    have hEA : E ≠ A := (ne_of_centre_of_on hE hon).symm
+    obtain ⟨L, hE_L, hA_L⟩ := Postulate1 E A hEA
+    /- Choose Q off EA, then draw AX at right angles to EA on Q's side by I.11. -/
+    obtain ⟨Q, hQ, -⟩ := exists_off_line hEA []
+    obtain ⟨X, hXQ, hX⟩ := BookI.Prop11 hEA ⟨L, hE_L, hA_L, hA_L⟩ hQ
+    have hEAX : ∠ E A X = ∟ := hX E ⟨L, hE_L, hA_L, hE_L⟩ hEA
+    /- X is off EA, since it lies on Q's side; AX touches the circle by III.16's porism. -/
+    exact ⟨X, Prop16.porism hE hon hXQ.triangle hEAX⟩
+  · /- A is outside the circle, so III.17 gives its point of contact B. -/
+    obtain ⟨B, -, hB⟩ := Prop17 hBCD ⟨hA, hon⟩
+    exact ⟨B, hB⟩
 
 /-- **III.17, from a point within** (a lemma beside III.17). From a point A within the
 circle BCD, no point X makes the straight line AX touch the circle, since a straight line
@@ -49,11 +62,14 @@ centre, a point not within it is exactly the condition under which `Prop17.gener
 straight line touching it. -/
 theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
     ¬ ∃ X : Point, Touches A X BCD := by
-  sorry
+  rintro ⟨X, hAX⟩
+  /- A lies on AX, and no point of a straight line that touches a circle lies within it. -/
+  obtain ⟨L, hA_L, hX_L⟩ := Postulate1 A X hAX.1
+  exact hAX.not_inside ⟨L, hA_L, hX_L, hA_L⟩ hA
 
 /-- The check: today's statement of III.17 follows from `Prop17.general` (checked by Lean).
-`Prop17.general` is still a `sorry` stub, so the check proves nothing of III.17 until the
-companion is proved: it shows only that the two statements fit. A is outside the circle,
+`Prop17.general` is proved above, so the check derives today's III.17 from the companion,
+and shows that the two statements fit. A is outside the circle,
 so the point where AX meets the circle is not A, and the straight line it names with A is
 AX. -/
 example : type_of% @Elements.BookIII.Prop17 := by
