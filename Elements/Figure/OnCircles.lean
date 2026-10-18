@@ -13,6 +13,11 @@ either side of the straight line that cuts it off; equal circles have equal radi
 straight line that touches a circle has no point within it. They follow from Definition
 15, System E's rules for circles, and the definitions of Book III.
 
+The first two, proved here for any circle, rest on System E's Circle 2, which contains
+III.2. The propositions take them from III.2 instead, for a circle with a centre
+(`BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide`, `BookIII.Prop2.sameSide`), and so
+rest on neither Circle 2 nor Circle 3.
+
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.
 -/
@@ -26,7 +31,8 @@ variable {A B C D K P Q : Point} {α β : Circle}
 /-! ## Points of a circle -/
 
 /-- Three points of a circle are not on one straight line. Were they, one would lie
-between the other two, and so within the circle (System E, Circle 2), not on it. -/
+between the other two, and so within the circle (System E, Circle 2), not on it. For a
+circle with a centre, `BookIII.Prop2.triangle` gives the same by III.2. -/
 theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) : Triangle A B C := by
   rintro ⟨L, hA_L, hB_L, hC_L⟩
