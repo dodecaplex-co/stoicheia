@@ -214,6 +214,7 @@ TAIL = 40                 # lines of a failed step's output to print
 CHECKS = [
     ("lake build", ["lake", "build"]),
     ("lake build Audit", ["lake", "build", "Audit"]),
+    ("lake build Staging", ["lake", "build", "Staging"]),
     ("lake env lean Certificate/Facts.lean", ["lake", "env", "lean", "Certificate/Facts.lean"]),
     ("python3 scripts/heath.py", [PY, "scripts/heath.py"]),
     ("python3 scripts/check_fidelity.py", [PY, "scripts/check_fidelity.py"]),

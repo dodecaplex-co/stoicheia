@@ -69,7 +69,15 @@ that statement. So statements and representations are settled first.
    (`scripts/scaffold_book.py`), with a proposition brief
    ([template](templates/proposition.md)) for anything not routine: the declaration, its
    meaning in plain words, its coverage, cases, construction data, representation, route and
-   dependencies.
+   dependencies. A new book's statements are scaffolded in `Elements/`; a statement that a
+   stage of [brief 0005](briefs/0005-astra-review.md) adds or changes is written first in
+   the `Staging` library instead ([`Staging.lean`](../Staging.lean)), with `sorry` where its
+   proof is due, and is challenged and approved there before any proof is assigned. When it
+   is proved, it leaves `Staging/` for its home in `Elements/`, and its staged copy, with
+   any staged check that names the old statement, is deleted in the same change, so that no
+   name is declared twice and `lake build Staging` still passes. Where staged files live,
+   what they import and what they are named is in [FORMALIZATION.md](FORMALIZATION.md),
+   section 6.
 3. **It is challenged** by readers who did not write it (Book III's statements answered
    twenty-six challenges before its voyage), and **tested** by scratch proofs where the route
    is in doubt. Scratch proofs are committed unbuilt in `docs/reports/crew/scratch-<book>/`,
@@ -266,6 +274,7 @@ run exactly what CI's `check` job runs, in its order:
 export PATH=$HOME/.elan/bin:$PATH
 lake build
 lake build Audit
+lake build Staging
 lake env lean Certificate/Facts.lean
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -293,6 +302,11 @@ python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 - **The model tests read the lock.** `tests/model/lock.sha256` pins
   `Certificate/axioms.lock`, so a change to an axiom fails the `model` job until the model
   is read again ([FORMALIZATION.md](FORMALIZATION.md), section 7).
+- **Staging builds; it is not proved.** `lake build Staging` checks that the statements
+  staged before their proofs (section 2), each with `sorry` where its proof is due, still
+  build against the library they import. It builds every file under `Staging/`, whether or
+  not the root `Staging.lean` imports it. Their `sorry` warnings are expected and do not
+  fail it; nothing the certificate reads imports them.
 - **A contributor's subset.** Working on a proof, run the full `lake build` first (the
   certificate imports all of `Elements`), then `Certificate/Facts.lean`, `check_fidelity.py`
   and `check_style.py`; a stale record is expected (section 6), and the pages are the

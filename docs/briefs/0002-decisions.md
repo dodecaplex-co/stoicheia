@@ -436,3 +436,20 @@ findings:
   and D7 to D10 ([STYLE](../STYLE.md), section 8). Nothing is loosened: S3 catches at least
   what it caught before, and the self-check holds a case for each rule, run on every
   check. It lands after the wording sweep, on whose text it passes.
+- **Staging: statements before their proofs, built by CI.** Statements are settled before
+  proofs ([WORKFLOW](../WORKFLOW.md), section 2), and a stage's new or changed statements
+  are now written first in a library of their own, `Staging`, each with `sorry` where its
+  proof is due, then challenged and approved before any proof is assigned. A statement
+  leaves Staging when it is proved. The library is a `[[lean_lib]]` in `lakefile.toml`,
+  beside Audit and like it outside `defaultTargets`, with its root
+  [`Staging.lean`](../../Staging.lean). Unlike Audit's, its `globs` take every file under
+  `Staging/`, so a staged file is built whether or not the root imports it, and
+  `Staging/.gitkeep` keeps the directory when nothing is staged. Its files import
+  `Elements`, and nothing outside `Staging/` imports them, so nothing staged reaches a
+  proof or the certificate. CI's `check` job builds it after `lake build Audit`
+  (`.github/workflows/ci.yml`), so that a change to main which breaks a staged statement
+  fails at once, not when the statement moves. It is a build check, not a check that
+  anything is proved: `sorry` warnings do not fail it. The step joins the full sequence of
+  [WORKFLOW](../WORKFLOW.md), section 8, and the `CHECKS` list of
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), which runs that sequence. The
+  library lands empty, as a change of its own, before any statement is staged in it.
