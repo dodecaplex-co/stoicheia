@@ -119,8 +119,10 @@ jobs:
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
       - name: Check the model was last brought up to date against the present lock of the axioms
-        # model/lock.sha256 holds the sha256 of Certificate/axioms.lock, so any change to an
-        # axiom fails here until the model is brought up to date and the hash renewed.
+        # model/lock.sha256 holds the sha256 of Certificate/axioms.lock, so any change to
+        # the lock fails here until the hash is renewed, after the model is brought up to
+        # date wherever an axiom or a word an axiom reaches changed (model/README.md, "How
+        # the lock ties it").
         run: grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 
       - name: Restore Mathlib, its prebuilt files and their downloads from an earlier run

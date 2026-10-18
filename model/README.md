@@ -240,15 +240,15 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 
 Then any change to `Certificate/axioms.lock` fails the job, not only a change to an axiom:
 the lock also holds every word that the statement of a proposition, a porism or a companion
-reaches. A change to an axiom's statement, or to a word an axiom reaches, sends someone
-back to the model: to the translation, its checks in `Check/`, and the proofs in the plane
-of the laws that changed. A change that touches neither, such as a word only a
-proposition's statement uses, moved into the foundations from `Staging/`, needs only the
-hash renewed. A change to the lock renews `model/lock.sha256` in the same change, as it
-renews `tests/model/lock.sha256`. The round-trip checks tie each translated law to the
-declaration itself, more tightly than the hash can; the hash covers the laws the round
-trips do not yet reach. A law proposed for the foundations is proved here before it lands:
-`exists_centre`, proposed in issue #59, is already proved in the plane
+reaches. A change to the axioms (one added, removed or restated), or to a word an axiom
+reaches, sends someone back to the model: to the translation, its checks in `Check/`, and
+the proofs in the plane of the laws that changed. A change that touches none of these, such
+as a word only a proposition's statement uses, moved into the foundations from `Staging/`,
+needs only the hash renewed. A change to the lock renews `model/lock.sha256` in the same
+change, as it renews `tests/model/lock.sha256`. The round-trip checks tie each translated
+law to the declaration itself, more tightly than the hash can; the hash covers the laws
+the round trips do not yet reach. A law proposed for the foundations is proved here before
+it lands: `exists_centre`, proposed in issue #59, is already proved in the plane
 ([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)), and its round-trip check
 joins `Check/Hand.lean` in the change that declares it.
 
