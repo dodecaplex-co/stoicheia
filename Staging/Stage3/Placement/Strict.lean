@@ -30,7 +30,20 @@ the ray BP, and those straight lines, different because ABP is a triangle, meet 
 (System E, Generalities 1). -/
 theorem Placement.base_choice {A B P Q : Point} (hPQ : SameSideOf P Q A B) (hne : P ≠ Q) :
     ∠ B A P ≠ ∠ B A Q ∨ ∠ A B P ≠ ∠ A B Q := by
-  sorry
+  by_cases hBAP : ∠ B A P = ∠ B A Q
+  · right
+    intro hABP
+    /- If both pairs of angles were equal, Q would lie on the rays AP and BP
+       (`onRay_of_angle_eq` in Book Zero). -/
+    have hQ_AP : OnRay Q A P := onRay_of_angle_eq hPQ.symm hBAP.symm
+    have hQ_BP : OnRay Q B P := onRay_of_angle_eq hPQ.symm.swap hABP.symm
+    obtain ⟨-, -, ⟨L, hA_L, hP_L, hQ_L⟩, -⟩ := hQ_AP
+    obtain ⟨-, -, ⟨M, hB_M, hP_M, hQ_M⟩, -⟩ := hQ_BP
+    /- AP and BP are different straight lines, since ABP is a triangle. But two
+       straight lines through the different points P and Q are one (Generalities 1). -/
+    have hLM : L ≠ M := fun h => hPQ.triangle ⟨M, h ▸ hA_L, hB_M, hP_M⟩
+    exact hLM (line_unique hne hP_L hQ_L hP_M hQ_M)
+  · exact Or.inl hBAP
 
 /-- **Two points off the base keep their distance, when the angles at A differ.** On equal
 straight lines AB, CD, let P, Q be on one side of AB and P', Q' on one side of CD, each as
@@ -46,6 +59,33 @@ theorem Placement.dist_strict {A B C D P Q P' Q' : Point} (hlen : ‖A B‖ = �
     (hPQ : SameSideOf P Q A B) (hP'Q' : SameSideOf P' Q' C D)
     (hP₁ : ‖C P'‖ = ‖A P‖) (hP₂ : ‖D P'‖ = ‖B P‖) (hQ₁ : ‖C Q'‖ = ‖A Q‖)
     (hQ₂ : ‖D Q'‖ = ‖B Q‖) (hlt : ∠ B A P < ∠ B A Q) : ‖P' Q'‖ = ‖P Q‖ := by
-  sorry
+  /- ABP and CDP' have their three sides equal, as do ABQ and CDQ'. Thus the
+     angles they make with the bases are equal [I. 8]. -/
+  have hBAP : ∠ B A P = ∠ D C P' :=
+    BookI.Prop8 hPQ.triangle hP'Q'.triangle hlen hP₁.symm hP₂.symm
+  have hBAQ : ∠ B A Q = ∠ D C Q' :=
+    BookI.Prop8 hPQ.symm.triangle hP'Q'.symm.triangle hlen hQ₁.symm hQ₂.symm
+  /- These equalities carry the strict inequality from A to C. -/
+  have hDCP' : ∠ D C P' < ∠ D C Q' := by
+    rw [← hBAP, ← hBAQ]
+    exact hlt
+  /- The lesser ray lies within the greater angle (`Prop24.within`): P is on
+     B's side of AQ, and P' on D's side of CQ'. -/
+  have hPB : SameSideOf P B A Q := BookI.Prop24.within hPQ.symm hlt
+  have hP'D : SameSideOf P' D C Q' := BookI.Prop24.within hP'Q'.symm hDCP'
+  /- Each whole angle is made up of its two parts (`angle_add_of_within`). -/
+  have hBAQ_sum : ∠ B A Q = ∠ B A P + ∠ P A Q := angle_add_of_within hPQ hPB
+  have hDCQ'_sum : ∠ D C Q' = ∠ D C P' + ∠ P' C Q' := angle_add_of_within hP'Q' hP'D
+  /- Subtract the equal angles BAP and DCP' from the equal wholes BAQ and DCQ'.
+     The remainders PAQ and P'CQ' are equal [C.N. 3]. -/
+  have hwholes : ∠ P A Q + ∠ B A P = ∠ P' C Q' + ∠ D C P' := by
+    rw [add_comm (∠ P A Q), add_comm (∠ P' C Q'), ← hBAQ_sum, ← hDCQ'_sum]
+    exact hBAQ
+  have hPAQ : ∠ P A Q = ∠ P' C Q' := CommonNotion3 hwholes hBAP
+  /- P is off AQ and P' off CQ', so APQ and CP'Q' are triangles. Their sides
+     about the equal angles are equal, and I.4 gives their bases equal. -/
+  have hAPQ : Triangle A P Q := hPB.triangle.acb
+  have hCP'Q' : Triangle C P' Q' := hP'D.triangle.acb
+  exact (BookI.Prop4 hAPQ hCP'Q' hP₁.symm hQ₁.symm hPAQ).1.symm
 
 end Elements.BookIII
