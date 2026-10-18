@@ -10,11 +10,11 @@ name = "Elements"
 [[lean_lib]]
 name = "Audit"
 
-# Statements that a stage of brief 0005 adds or changes, before their proofs
-# (docs/WORKFLOW.md, section 2). Nothing imports them and they are not in the default
-# build; `lake build Staging` builds the root and every file under Staging/, whether or
-# not the root imports it. The glob reads Staging/, which Staging/.gitkeep keeps when
-# nothing is staged.
+# Statements that a stage of brief 0005, or of a later brief, adds or changes, before their
+# proofs (docs/WORKFLOW.md, section 2). Nothing imports them and they are not in the
+# default build; `lake build Staging` builds the root and every file under Staging/,
+# whether or not the root imports it. The glob reads Staging/, which Staging/.gitkeep keeps
+# when nothing is staged.
 [[lean_lib]]
 name = "Staging"
 globs = ["Staging.*"]

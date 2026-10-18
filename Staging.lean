@@ -23,11 +23,13 @@ import Staging.Stage4.Prop25
 /-!
 # Staging: statements before their proofs
 
-The statements that a stage of brief 0005 adds or changes, each with `sorry` where its
-proof is due, until it is proved and moves to `Elements/`. The rules for them are in
-`docs/WORKFLOW.md`, section 2; brief 0006 names each statement's home and owner.
+The statements that a stage of brief 0005, or of a later brief, adds or changes, each with
+`sorry` where its proof is due, until it is proved and moves to `Elements/`. The rules for
+them, and for the few proofs this library may hold, are in `docs/WORKFLOW.md`, section 2.
+Brief 0006 names the home and owner of each statement of brief 0005's stages; a later brief
+names those of its own.
 
-The folders follow brief 0005's stages:
+The folders follow the briefs' stages:
 
 * `Stage2/`: I.40, I.45, II.1 and II.14, with the sums and the points in order they need,
   and the rectilineal figure given with its triangles;

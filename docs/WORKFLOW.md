@@ -70,14 +70,14 @@ that statement. So statements and representations are settled first.
    ([template](templates/proposition.md)) for anything not routine: the declaration, its
    meaning in plain words, its coverage, cases, construction data, representation, route and
    dependencies. A new book's statements are scaffolded in `Elements/`; a statement that a
-   stage of [brief 0005](briefs/0005-astra-review.md), or of a later brief (brief 0007's
-   stage 4b), adds or changes is written first in the `Staging` library instead
-   ([`Staging.lean`](../Staging.lean)), with `sorry` where its proof is due, and is
-   challenged and approved there before any proof is assigned. When it is proved, it leaves
-   `Staging/` for its home in `Elements/`, and its staged copy, with any staged check that
-   names the old statement, is deleted in the same change, so that no name is declared twice
-   and `lake build Staging` still passes. Where staged files live, what they import and what
-   they are named is in [FORMALIZATION.md](FORMALIZATION.md), section 6.
+   stage of [brief 0005](briefs/0005-astra-review.md), or of a later brief, adds or changes
+   is written first in the `Staging` library instead ([`Staging.lean`](../Staging.lean)),
+   with `sorry` where its proof is due, and is challenged and approved there before any
+   proof is assigned. When it is proved, it leaves `Staging/` for its home in `Elements/`,
+   and its staged copy, with any staged check that names the old statement, is deleted in
+   the same change, so that no name is declared twice and `lake build Staging` still
+   passes. Where staged files live, what they import and what they are named is in
+   [FORMALIZATION.md](FORMALIZATION.md), section 6.
 
    **What proofs `Staging/` may hold** (this is the rule's one home). A staged statement's
    own proof waits for its brief's approval. Before that, `Staging/` may hold two kinds of

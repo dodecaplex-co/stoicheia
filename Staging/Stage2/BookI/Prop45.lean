@@ -109,11 +109,11 @@ theorem Prop45.sum {E₁ E E₂ : Point} (ts : List (Point × Point × Point)) (
 /-- **I.45, for any rectilineal figure, with any boundaries** (companion of I.45). To
 construct, in a given rectilineal angle E, a parallelogram KFLM, its angle at K equal to E,
 equal to a given rectilineal figure: the figure given with any division of it into
-triangles, no point inside two of them (`Apart`), and "equal to the figure" meaning equal to those
-triangles taken together (`Apart.area`). The figure may have a hole, touch itself at a
-corner, or be in more than one piece. It is `Prop45.sum` for the figure's triangles; lying
-apart is what makes their sum the figure's. Nothing is claimed of another division of the
-figure. -/
+triangles, no point inside two of them (`Apart`), and "equal to the figure" meaning equal
+to those triangles taken together (`Apart.area`). The figure may have a hole, touch itself
+at a corner, or be in more than one piece. It is `Prop45.sum` for the figure's triangles;
+lying apart is what makes their sum the figure's. Nothing is claimed of another division of
+the figure. -/
 theorem Prop45.apart {E₁ E E₂ : Point} (R : Apart) (hE : Triangle E₁ E E₂) :
     ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
       quadArea K F L M = R.area :=
