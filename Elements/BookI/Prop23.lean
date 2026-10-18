@@ -45,7 +45,7 @@ theorem Prop23 {A B C D E P : Point} (hAB : A ≠ B) (hDCE : Triangle D C E) (hP
      take those. Any others would do as well: an angle depends only on its two rays
      (`angle_eq_of_onRay` in Book Zero). -/
   -- let DE be joined,
-  /- Lean needs only the points D and E; the straight line DE is drawn for the eye.
+  /- Our proof uses only the points D and E; the straight line DE is drawn for the eye.
      Joined, it closes the triangle DCE, whose three sides are the three straight
      lines that I.22 is about to take. -/
   -- and out of three straight lines which are equal to the three straight lines CD, DE, CE let

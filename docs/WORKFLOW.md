@@ -16,8 +16,8 @@ contributor may hold several roles, save one: nobody reviews a claim they wrote.
 
 | Role | Responsible for |
 |---|---|
-| Owner | Jack Challis. Every public action but a checked push to main (tags, releases and their notes, the GitHub description, anything sent outside the repository), and the foundation decisions, made with the coordinator. |
-| Coordinator | The plan, the baseline, and the decisions delegated to the role: approving statements and brief corrections, the files of the foundations, `Certificate/axioms.lock`, [0002-decisions.md](briefs/0002-decisions.md), PROGRAM.md, CI, merging, and pushing to main through `scripts/safe_push.py` alone (section 10). |
+| Owner | Jack Challis. Every public action but landing a checked pull request (tags, releases and their notes, the GitHub description, anything sent outside the repository), and the foundation decisions, made with the coordinator. |
+| Coordinator | The plan, the baseline, and the decisions delegated to the role: approving statements and brief corrections, the files of the foundations, `Certificate/axioms.lock`, [0002-decisions.md](briefs/0002-decisions.md), PROGRAM.md, CI, and opening and merging pull requests, through `scripts/safe_push.py` alone (section 10, "Landing work: pull requests"). |
 | Statement and representation owner | A book's brief and each proposition's statement: vocabulary, hypotheses, conclusions, cases, and the exceptions allowed. |
 | Proof contributor | The assigned declarations with their helpers, porisms and companions, and how the Lean corresponds to the text. |
 | Edition contributor | Commentary, figures, source notes and further reading, written against the brief and reconciled with the finished proof. |
@@ -69,7 +69,15 @@ that statement. So statements and representations are settled first.
    (`scripts/scaffold_book.py`), with a proposition brief
    ([template](templates/proposition.md)) for anything not routine: the declaration, its
    meaning in plain words, its coverage, cases, construction data, representation, route and
-   dependencies.
+   dependencies. A new book's statements are scaffolded in `Elements/`; a statement that a
+   stage of [brief 0005](briefs/0005-astra-review.md) adds or changes is written first in
+   the `Staging` library instead ([`Staging.lean`](../Staging.lean)), with `sorry` where its
+   proof is due, and is challenged and approved there before any proof is assigned. When it
+   is proved, it leaves `Staging/` for its home in `Elements/`, and its staged copy, with
+   any staged check that names the old statement, is deleted in the same change, so that no
+   name is declared twice and `lake build Staging` still passes. Where staged files live,
+   what they import and what they are named is in [FORMALIZATION.md](FORMALIZATION.md),
+   section 6.
 3. **It is challenged** by readers who did not write it (Book III's statements answered
    twenty-six challenges before its voyage), and **tested** by scratch proofs where the route
    is in doubt. Scratch proofs are committed unbuilt in `docs/reports/crew/scratch-<book>/`,
@@ -98,9 +106,11 @@ survive. A proposed correction carries:
 - the reason;
 - the consumers it affects.
 
-The coordinator decides within the authority delegated to the role, records a new revision
-of the brief (and an entry in [0002-decisions.md](briefs/0002-decisions.md) when a
-statement changes), and tells the contributors affected. Useful independent work goes on
+The coordinator decides within the authority delegated to the role, records the
+correction in a new revision of the brief or an entry in
+[0002-decisions.md](briefs/0002-decisions.md), naming each statement it changes (the
+pre-flight looks for that new line: section 10, "Landing work: pull requests"), and tells
+the contributors affected. Useful independent work goes on
 meanwhile.
 
 A changed statement or representation makes stale every proof, commentary, figure and
@@ -158,8 +168,8 @@ files working in parallel, the renderers, and an integrator followed by blind re
   generated edition, regenerated from the integrated sources. This avoids merging separately
   generated copies of the same pages.
 - **Commit by name** (`git add` the files you own), never `git add -A` in a tree others use.
-  Do not push, merge into main or rebase a shared branch: the coordinator merges, and
-  pushes (section 10).
+  Do not push, open, merge or approve a pull request, or rebase a shared branch: the
+  coordinator lands work, as pull requests (section 10, "Landing work: pull requests").
 
 ## 5. Proving in parallel: a voyage
 
@@ -268,6 +278,7 @@ run exactly what CI's `check` job runs, in its order:
 export PATH=$HOME/.elan/bin:$PATH
 lake build
 lake build Audit
+lake build Staging
 lake env lean Certificate/Facts.lean
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -286,8 +297,8 @@ python3 scripts/negative_tests.py      # CI's `negative` job, after lake build a
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 ```
 
-`scripts/safe_push.py` runs all of these on the commit it pushes (section 10), so a change
-to this list is made there too, and in the CI workflow.
+`scripts/safe_push.py` runs all of these on the head commit of every pull request (section
+10), so a change to this list is made there too, and in the CI workflow.
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -295,6 +306,11 @@ to this list is made there too, and in the CI workflow.
 - **The model tests read the lock.** `tests/model/lock.sha256` pins
   `Certificate/axioms.lock`, so a change to an axiom fails the `model` job until the model
   is read again ([FORMALIZATION.md](FORMALIZATION.md), section 7).
+- **Staging builds; it is not proved.** `lake build Staging` checks that the statements
+  staged before their proofs (section 2), each with `sorry` where its proof is due, still
+  build against the library they import. It builds every file under `Staging/`, whether or
+  not the root `Staging.lean` imports it. Their `sorry` warnings are expected and do not
+  fail it; nothing the certificate reads imports them.
 - **A contributor's subset.** Working on a proof, run the full `lake build` first (the
   certificate imports all of `Elements`), then `Certificate/Facts.lean`, `check_fidelity.py`
   and `check_style.py`; a stale record is expected (section 6), and the pages are the
@@ -374,48 +390,217 @@ looked into.
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
 
-### Pushing to main
+### Landing work: pull requests
 
-The coordinator may push to main without asking, through `scripts/safe_push.py` and in no
-other way. Tags, releases, release notes, the GitHub description, and anything sent
-outside the repository still need the owner's OK, and stay manual. Contributors and crew
-agents never push.
+Work reaches main only as a pull request, merged with a merge commit. On GitHub, a ruleset
+on main requires a pull request and the checks `check`, `model` and `negative`, and blocks
+force pushes and deletion; locally, the pre-push hook refuses every push to main. Agents
+never open, merge or approve a pull request: the coordinator does. The account cannot
+approve its own pull requests, so a merge is gated by the checks and by the review
+findings recorded in the pull request, not by approvals. Tags, releases, release notes,
+the GitHub description and anything sent outside the repository still need the owner's
+OK, and stay manual.
+
+**One coherent change per pull request,** that a reviewer can hold in mind: a stretch of
+proofs, a wording pass, a guard. A check is never changed in the same pull request as the
+code it checks: the check lands first, on its own, and the code follows it. The pre-flight
+holds to this: when a check fails with origin/main's copies, the pull request may change
+nothing else the checks judge (step 4, below). A change to what `render.py` writes is not
+a check change in this sense, since the pages it regenerates show it; a change to what it
+accepts, such as its check of `docs/program.toml`, is. Each pull request carries a label
+for its kind, `tooling`, `text`, `lean` or `docs`, and the pre-flight and the merge refuse
+one without; stage work carries its stage's label as well (`stage-2` to `stage-6` of
+brief 0005), and a change to a protected path carries `security-review`. A pull request
+opens as a draft (unless `--ready` is given), and is marked ready when its reviews are
+done; `--merge` refuses a draft.
 
 ```sh
-python3 scripts/safe_push.py --dry-run          # every check, and no push
-python3 scripts/safe_push.py                    # HEAD: the checks, the push, then CI
-python3 scripts/safe_push.py --commit <sha>     # another commit
+sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
+                                                   # clone, and after the hook or launcher changes
+git safe-push --branch <name> --dry-run            # every check; nothing pushed
+git safe-push --branch <name> --label <kind>       # the pre-flight, the push, a draft pull request
+git safe-push --branch <name>                      # after a fix: again, on the new head
+gh pr ready <n>                                    # when the reviews are done
+git safe-push --merge <n> --dry-run                # the gates, and no merge
+git safe-push --merge <n>                          # the gates, then a merge commit
 ```
 
-The script reads the commit alone, through git and a fresh temporary worktree of it, so a
-dirty working tree makes no difference. It stops, saying why, at the first step that fails:
+`git safe-push` is a launcher that `install_hooks.sh` puts outside the tracked tree
+(`scripts/hooks/safe-push`, copied to `.git/stoicheia/safe-push`, with the alias): it
+fetches origin and runs origin/main's `scripts/safe_push.py`, whatever the checkout holds,
+so a branch cannot judge itself. `python3 scripts/safe_push.py` from a checkout runs that
+checkout's copy, which hands over to origin/main's when it differs; that protection holds
+only while the copy run is one that hands over, so the launcher is the way in. While
+origin/main's copy predates running from origin/main, the launcher runs the checkout's,
+and says so. The launcher and the pre-push hook run Python 3.11 or later:
+`STOICHEIA_PYTHON` when it is set, else the first of `python3.14`, `python3.13`,
+`python3.12`, `python3.11` and `python3` that is; without one, they refuse.
 
-1. **Preconditions.** The commit exists; `git fetch origin`; origin/main is an ancestor of
-   the commit, so the push is a fast-forward. It never forces a push, and makes no tag or
-   release.
-2. **Secrets.** Every line, file and commit message the push adds is scanned for private
-   keys, API-key-like tokens, Authorization headers with values, `.env` and key files,
-   and the owner's private paths. A false positive goes in `scripts/safe_push_allow.toml`,
-   with its reason.
-3. **Invariant guards,** against origin/main, in the temporary worktree:
-   - no statement changed (facts.json's `statement`, and the Lean source of the theorem,
-     its porism and its companions) unless the push adds a line to `docs/briefs/`, a
-     brief's revision or a decisions entry, that names the proposition (section 2);
-   - `Certificate/axioms.lock` unchanged unless
-     [0002-decisions.md](briefs/0002-decisions.md) gains an entry mentioning the lock;
-   - every change to `heath/` carries a comment naming a scan leaf of its own pages
-     ([STYLE.md](STYLE.md), section 5);
-   - no review record stale (`check_fidelity.py`, on the commit as committed);
-   - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
-     deleted unless the decisions page gains an entry naming it.
-4. **The full checks** of section 8 in that worktree, and `negative_tests.py` in a second,
-   with each step's outcome and time recorded.
-5. **The push,** `git push origin <sha>:refs/heads/main`, then the GitHub Actions run for
-   that commit, followed to its conclusion. If CI fails, the script prints the revert
-   (`git revert --no-edit <sha>`, then `safe_push.py` again) and reverts nothing itself.
+1. **A branch.** The change is committed on a branch from origin/main. When main moves,
+   origin/main is merged into the branch, never rebased onto: review records stamp the
+   branch's commits, and a rebase would orphan the stamps.
+2. **The pre-flight.** `git safe-push --branch <name>` checks the exact commit (HEAD, or
+   `--commit <sha>`), then pushes it to that branch, never to main and never forced, and
+   opens the pull request onto main, or updates the open one. It reads the commit alone,
+   through git and a fresh temporary worktree, so a dirty working tree makes no
+   difference; and it is origin/main's copy of the harness (by the launcher, or by a
+   checkout's copy handing over, which replaces its own process with origin/main's), so
+   that a branch cannot weaken the harness that judges it. It stops, saying why, at the
+   first step that fails:
+   1. *Preconditions.* The commit exists; `git fetch origin`; origin/main is an ancestor
+      of the commit, so that the merge commit holds exactly the tree checked; the
+      branch, if origin has it, is an ancestor of the commit too; the branch is not main;
+      the branch name and the title, which are public, hold nothing the secret scan
+      refuses. No tag or release is made. The installed hook and launcher are compared
+      with origin/main's copies, and a difference is noted.
+   2. *Secrets.* Every line, file and commit message the push adds is scanned for private
+      keys, API-key-like tokens, Authorization headers with values, `.env` and key
+      files, and the owner's private paths, an agent's scratchpad paths among them; each
+      commit's author and committer are scanned for private paths and for identities git
+      made up from the machine's name; and so is each commit's own change, since the push
+      publishes the history (a secret taken out again by a later commit, or a key file
+      renamed, is still found). Lines are read alone and run together, so a value split
+      over two lines is found; base64 that decodes to text is read through; a symlink may
+      not point out of the repository. Whether a file is text or binary is read from its
+      bytes, never from `.gitattributes`: a NUL anywhere makes it binary, and a binary
+      file is read whole, its printable runs and its runs of UTF-16 text, wherever they
+      stand, as lines. A false positive goes in `scripts/safe_push_allow.toml` on
+      origin/main, in a pull request of its own: one file, one rule, a part of the line,
+      and the flagged value itself, pinned (held in that part, or named by its SHA-256),
+      to an entry, with its reason; so the entry excuses that value alone. A broad entry
+      is refused, a commit's message or identity cannot be allowed, and an entry added by
+      the push itself does not count. An allowed finding is noted in the pull request by
+      its place, its rule, its value's SHA-256 and the reason, never by its line.
+   3. *Invariant guards,* against origin/main, in the temporary worktree:
+      - no statement changed (facts.json's `statement`, and the Lean source of the
+        theorem, its porism and its companions, to its own `:=`, whitespace aside) unless
+        the push adds a new line to `docs/briefs/`, a brief's revision or a decisions
+        entry, that names the proposition (section 2);
+      - `Certificate/axioms.lock` unchanged unless
+        [0002-decisions.md](briefs/0002-decisions.md) gains a new line mentioning the
+        lock;
+      - no protected path changed unless 0002-decisions.md gains a new line naming each
+        file changed (below);
+      - every change to `heath/` carries a comment naming a scan leaf of its own pages, as
+        origin/main's copy of the file lists them ([STYLE.md](STYLE.md), section 5);
+      - no review record stale (`check_fidelity.py`, on the commit as committed);
+      - the generated pages current (`render.py`, on the commit as committed, changes
+        nothing);
+      - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
+        deleted unless the decisions page gains a new line naming it.
+
+      For each of these, the push must add a mention: an old line that already named the
+      thing, edited in place, does not count.
+   4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
+      second, each step timed. The check scripts and what they expect (`scripts/`,
+      `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
+      copies; when the pull request changes any of them, the checks run again with its own
+      copies, which must pass. A check that fails with origin/main's copies is noted in
+      the pull request for the security review, and refuses the pull request if it also
+      changes what the checks judge (anything but the protected paths, the guides and
+      briefs, the generated pages and a review record's stamp): the check change goes
+      first, in a pull request of its own. Two kinds of failure are only noted. Pages gone
+      stale under origin/main's `render.py`, or `facts.json` rewritten by origin/main's
+      certificate, show the generator's change in the pages' diff; a failure of
+      `render.py` itself, its check of `docs/program.toml` among them, is a verdict. And
+      the values pinned to the edition, `tests/certificate_expectations.json`,
+      `Certificate/axioms.lock` and `tests/model/lock.sha256`, move with the content they
+      pin (a re-proof that changes an expected count, a new word in the lock): when they
+      are the only check inputs a pull request changes, origin/main's failure is noted,
+      and its own copies must pass. The expectations are checked one way only, each for
+      what it says, so they count as pinned values only while every one of origin/main's
+      stays, by its `ref` and `field`, with its `includes` and `excludes` the same or
+      grown and only the values of `count.is` and `equals` changed (new expectations are
+      fine); an expectation dropped or loosened is a check change. Check code changed with
+      judged content is kept apart, pinned values or not. The guards' two checks in step 3
+      run the same way.
+   5. *The push and the pull request.* First the pull request is settled: our open one
+      for the branch (a fork's pull request of the same name is never touched), or a new
+      one. Its body is `--body-file`, or is generated from the
+      [template](../.github/pull_request_template.md): the commits, the statements
+      changed, the review records touched and re-stamped, the protected paths, the
+      generated files (README.md and PROGRAM.md only when the text between their markers
+      changes), and the pre-flight's summary, every step with its outcome and time. Each
+      of these parts stands between markers of its own, each marker on a line of its own,
+      and on an update without `--body-file` each is written afresh for the new head,
+      while the coordinator's words, outside the markers, stay: a marker quoted in them
+      (in a code span, say) is not one. The body is scanned before anything is pushed;
+      the label for its kind, given or on the open pull request, was settled in step 1,
+      before the checks. Then the branch is pushed, and the pull request opened as a
+      draft with `gh pr create --base main --draft` (or `gh pr edit` of the open one; `--ready`
+      opens it ready, or marks the open one ready), with the labels given and
+      `security-review` when a protected path changes. Then its CI is followed to its
+      conclusion. Once `git push` succeeds, an interruption, a failure to follow CI or a
+      refusal is reported as "pushed; CI not followed", exit 3, never as a refusal before
+      the push.
+3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
+   always; `/security-review` when a protected path changes; `/no-mistakes` before the
+   merge, run without its push and pull request steps, since `git safe-push` alone
+   pushes and opens pull requests. Each blocking or material finding (section 9) is
+   resolved, and the pull request says how. A fix is a new commit on the branch, and the
+   pre-flight runs again.
+4. **The merge.** `git safe-push --merge <n>` runs the secret scan and the guards on the
+   pull request's head against the current origin/main again, every time: the
+   pre-flight's record is a local file, which code the pre-flight ran (a commit's
+   checks, Lean at elaboration) could have written, so it stands in only for the full
+   checks, which CI runs as well, and only when origin/main's harness made it; otherwise
+   they run again too. The body's summary is written afresh when the full checks ran
+   again or when it is not of this head and origin/main, and the other parts safe_push
+   wrote whenever they are out of date. It merges only when those pass; CI on that head
+   is green (`check`, `model` and `negative` pass, and nothing fails or is still
+   running); no box marked **Required** in its checklist is unticked, nor one marked
+   **Required if protected** when a protected path changes, and none of the template's
+   required boxes is missing (origin/main's template, or the head's while origin/main
+   has none; the pre-flight's notes, such as a check that failed with origin/main's
+   copies, are shown beside the checklist); the coordinator has written "What and why",
+   each review's commit and findings in the Reviews table (the security review's when a
+   protected path changes) and "Needs the owner's OK"; boxes and sections count only
+   where GitHub shows them, by CommonMark's rules: not in a comment, an HTML block or
+   code, and a box only as a list item (a `<!--` in a code span is text, and hides
+   nothing); the title and the branch name, which go into main's merge commit, hold
+   nothing the secret scan refuses; it carries a label for its kind, and
+   `security-review` when a protected path changes; and it is not a draft. Then
+   `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
+   commit's subject and body given (GitHub's own words, with the branch name scanned,
+   and the title scanned; a branch renamed since the merge first read the pull request
+   is refused, as a head moved is), so main holds exactly what was scanned: a merge
+   commit, never a squash or a rebase, and the branch deleted. When gh fails, GitHub is
+   asked whether the pull request merged before anything is said; once gh is asked to
+   merge, the script says nothing merged only when GitHub says so, and an interruption,
+   or a failure GitHub cannot be asked about, is reported as "merge state unknown", exit
+   3, since the merge may have happened. Afterwards the merge commit is checked to join
+   the base and the head checked, with the head's tree, on main; if it does not, the
+   script prints how to revert it in a pull request of its own, with the merged pull
+   request's label for its kind, and reverts nothing itself.
+5. **Generated files** are regenerated from the integrated sources and committed by the
+   integrator (section 4), so the pull request that changes their sources carries them.
+
+**Protected paths.** `scripts/` (the hook and the launcher included), `.github/`,
+`Certificate/` (the lock included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`,
+`.gitattributes`, `.gitignore` (a rule added there hides untracked files from
+`git status`, and so from the check that the generated pages are current), and the
+toolchain files (`lakefile.toml`, `lakefile.lean`, which Lake reads in preference to
+`lakefile.toml` and runs, `lean-toolchain`, `lake-manifest.json`). A change to any of them
+needs a new line in the decisions page naming each file changed, the label
+`security-review`, and a `/security-review` recorded in the pull request; weakening a
+check stays a decision of the owner's ([FORMALIZATION.md](FORMALIZATION.md), section 1).
+
+**A pull request from a fork** is not merged by `--merge`: the coordinator brings its
+commits to a branch of origin with the pre-flight, which opens a pull request of its own,
+and closes the fork's with a link to it.
 
 The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
-repository, with each step's full output beside it in `logs/`. `sh scripts/install_hooks.sh`
-installs a pre-push hook that refuses any push to main that safe_push did not check.
-`python3 scripts/test_safe_push.py` plants a bad commit for each guard on a throwaway
-clone, and checks that each is refused and a good one pushed.
+repository, with each step's full output beside it in `logs/`, and the pre-flight's record
+in `preflight/`, which `--merge` reads; origin/main's harness, when it runs in place of
+another copy, is written to `harness/`, named by its blobs. `sh scripts/install_hooks.sh`
+installs the launcher and the pre-push hook: the hook refuses every push to main, scans a
+push to any other branch (its name included) with origin/main's copy of the secret scan
+(`safe_push.py --scan-push`), whichever remote it goes to (another remote's main is never
+run, and without origin/main's copy the push is refused), and refuses to push or delete a
+tag. With the owner's OK for
+a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`,
+and the hook still scans the commits it points to and an annotated tag's message.
+`python3 scripts/test_safe_push.py` plants a bad commit for each guard, gate and edge case
+on a throwaway clone, with a stand-in for gh, and checks that each is refused and a good
+one proposed and merged; `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and
+all.

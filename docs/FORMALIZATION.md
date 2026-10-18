@@ -30,15 +30,19 @@ coordinator of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
   I.15, the tacit rules, the primitive words and magnitudes, the definitions of each book,
   the phrases), and `Certificate/axioms.lock`.
 - **Weakening the checks:** weakening, skipping or removing a check, an expected value, a
-  lock or a schema (in `scripts/check_fidelity.py`, `scripts/negative_tests.py`,
-  `scripts/check_style.py`, `scripts/check_links.py`, `scripts/safe_push.py`, `tests/` or
-  the CI workflow). None is
-  ever loosened to let a change through. Adding or strengthening a check is ordinary work,
-  done by the owner the orders name, with a regression test where a guard defect is fixed
-  ([WORKFLOW.md](WORKFLOW.md), section 8).
+  lock or a schema, anywhere in the check inputs and protected paths that
+  [WORKFLOW.md](WORKFLOW.md), section 10, "Landing work: pull requests", lists (their one
+  home). None is ever loosened to let a change through. Adding or strengthening a check is
+  ordinary work, done by the owner the orders name, with a regression test where a guard
+  defect is fixed ([WORKFLOW.md](WORKFLOW.md), section 8). Either way a change to a
+  protected path ([WORKFLOW.md](WORKFLOW.md), section 10, "Protected paths") is named file
+  by file in a decisions entry and given a security review before it is merged; a check
+  change is a pull request of its own ([WORKFLOW.md](WORKFLOW.md), section 10, "Landing
+  work: pull requests").
 - **Publishing:** tags, releases and their notes, the GitHub description, and anything
-  sent outside the repository. Pushing to main is delegated to the coordinator, through
-  `scripts/safe_push.py` alone ([WORKFLOW.md](WORKFLOW.md), section 10).
+  sent outside the repository. Landing work on main is delegated to the coordinator: a
+  pull request, opened and merged with a merge commit through `scripts/safe_push.py`
+  alone ([WORKFLOW.md](WORKFLOW.md), section 10, "Landing work: pull requests").
 
 Within an authorized assignment, the coordinator makes the routine decisions delegated to
 that role ([WORKFLOW.md](WORKFLOW.md)).
@@ -289,6 +293,15 @@ helper another page has proved is imported and cited with a pointer ("as in III.
   and the module of every shared step cited (`Elements.BookI.Helpers`,
   `Elements.BookI.HelpersParallels`). A proof cites an earlier book as `BookI.PropN`, `BookII.PropN`, and does not open
   it: in a Book III file a bare `Prop4` means III.4.
+- **Staging,** `Staging/`, holds the statements that a stage of brief 0005 adds or
+  changes, each with `sorry`, until it is proved ([WORKFLOW.md](WORKFLOW.md), section 2).
+  Its files import `Elements`. `lake build Staging` builds every file under `Staging/`,
+  whether or not the root `Staging.lean` imports it, so a staged file need not be added to
+  the root; nothing outside `Staging/` imports them, so nothing staged reaches a proof or
+  the certificate. `Staging/.gitkeep` keeps the directory, which the build reads, when
+  nothing is staged. A changed main theorem is staged as `Elements.Book<B>.Staging.PropN`,
+  since the `PropN` it replaces is still declared in `Elements`; it takes the name
+  `Elements.Book<B>.PropN` when it moves.
 
 Moving a theorem or an axiom behind a helper does not remove its logical contribution: the
 certificate walks through helpers and shared steps, and the review reads transitive
@@ -328,6 +341,13 @@ later citation, one of them named only in a helper's statement; a `native_decide
 `sorry` in a complete book; and a primitive word no longer opaque. The other forbidden
 commands, Book Zero's imports and a complete book's missing figure or mishnah have no
 planted break yet.
+
+The first two policies hold in `Staging/` (section 6) by rule: a staged file declares no
+axiom and uses none of the forbidden commands. That no check enforces them there is a
+known gap: `check_fidelity.py`'s scan for them (`check_rules`) covers `Elements/` alone
+today, so in `Staging/` they rest on review. Extending the scan to `Staging/` is a change
+to a check, and lands in a pull request of its own
+([WORKFLOW.md](WORKFLOW.md), section 10).
 
 ## 8. Completion claims
 

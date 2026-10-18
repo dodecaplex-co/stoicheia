@@ -11,6 +11,6 @@ kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "2a34715"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:f274bc9695e362c7"
+lean = "sha256:664aca971683e75b"

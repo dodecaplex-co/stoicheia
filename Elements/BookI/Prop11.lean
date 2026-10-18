@@ -25,7 +25,7 @@ open Tacit
 theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬ Collinear A B Q) :
     ∃ F : Point, SameSideOf F Q A B ∧ ∀ P : Point, Collinear A B P → P ≠ C → ∠ P C F = ∟ := by
   -- Let AB be the given straight line, and C the given point on it.
-  /- Lean needs the straight line AB by name (Post. 1), with C on it and Q off it. -/
+  /- Our proof names the straight line AB (Post. 1), with C on it and Q off it. -/
   obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
   have on_AB : ∀ {P : Point}, Collinear A B P → OnLine P AB := by
     rintro P ⟨M, hA_M, hB_M, hP_M⟩
