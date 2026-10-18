@@ -105,7 +105,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - Heath's bracketed Porism (four angles about a point make four right angles) is also proved, as `Prop15.porism`.
 
 ## I.16
-- CF falls within the angle ECD, so that "the angle ECD is greater than the angle ECF" (C.N. 5). Heath notes this fails in Bernhard Riemann's closed, sphere-like geometry (vol. 1, p. 280); in Lean it comes from Pasch's rules and the two sides of a line (`Prop16.within`), and then `angle_add_of_within` and `Triangle.angle_pos`.
+- CF falls within the angle ECD, so that "the angle ECD is greater than the angle ECF" (C.N. 5). Heath notes this fails in Bernhard Riemann's closed, sphere-like geometry (vol. 1, p. 280); in our proof it comes from Pasch's rules and the two sides of a line (`Prop16.within`), and then `angle_add_of_within` and `Triangle.angle_pos`.
 - BE produced must be long enough for I.3 to cut EF off it (`produce_longer`, as in I.11), which takes a circle (Post. 3) that Euclid does not draw.
 - "Similarly" becomes one argument applied twice, the second time with AC produced, and I.15 finishes it.
 - The angle ECD becomes the angle ACD, and BAE the triangle's angle BAC, without a word, since E lies on the ray from C through A and on the ray from A through C (`angle_onRay_left`, `angle_onRay_right`).
@@ -114,7 +114,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - "Let the angle ACB be added to each" has no bracket, and no Common Notion adds the same thing to unequals. It is the tacit law of magnitudes `add_lt_add_right` (System E §3.5). Heath points to this step as the one the rejected axiom "*If equals be added to unequals*" was after (vol. 1, p. 223).
 - I.13 needs AC to stand on BD with A off it: D is on BC produced, and A is off BC because ABC is a triangle (`Triangle.off_line`, `Triangle.of_line`). To say so, the straight line BC is named (Post. 1) before Postulate 2 produces it.
 - "Similarly" becomes one argument applied three times, to the triangles ABC, BAC and CAB, the triangle named afresh each time (`Triangle.bac`, `Triangle.cab`).
-- Euclid names one angle two ways (ACB, then BCA in the sum; ABC where I.16 gives CBA) and adds in either order. Lean turns each angle round (`angle_symm`, System E, Metric 4) and reorders the sums (`add_comm`).
+- Euclid names one angle two ways (ACB, then BCA in the sum; ABC where I.16 gives CBA) and adds in either order. Our proof turns each angle round (`angle_symm`, System E, Metric 4) and reorders the sums (`add_comm`).
 
 ## I.18
 - "The angle ADB is equal to the angle ABD, since the side AB is equal to AD" is I.5, given without a bracket. Our I.5 also speaks of the angles under the base, so the sides are produced for it (`Prop5.base`).
@@ -156,7 +156,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - Which ray from A, and which side of AB, the new angle takes are left to the figure. The statement settles both, as I.24, I.31 and I.42 need.
 
 ## I.24
-- Euclid gives one case, F below EG. Simson added a sentence to make it the only one, and Heath leaves it out (vol. 1, p. 297). Lean takes all three: F lies within the angle EDG (`Prop24.within`), DF drawn on crosses EG at a point X (`crossbar`), and `Prop24.cases` puts F on EG, within the triangle DEG, or beyond EG. The first two are Proclus' cases (Heath, vol. 1, p. 297): the whole greater than the part (`len_lt_of_between`), and I.21, which no bracket names here.
+- Euclid gives one case, F below EG. Simson added a sentence to make it the only one, and Heath leaves it out (vol. 1, p. 297). Our proof takes all three: F lies within the angle EDG (`Prop24.within`), DF drawn on crosses EG at a point X (`crossbar`), and `Prop24.cases` puts F on EG, within the triangle DEG, or beyond EG. The first two are Proclus' cases (Heath, vol. 1, p. 297): the whole greater than the part (`len_lt_of_between`), and I.21, which no bracket names here.
 - "Let DG be made equal to either of the two straight lines AC, DF" has no bracket; a circle about D lays it off (`OnRay.exists_len_eq`).
 - G is on the same side of DE as F. I.23 lets us ask for that side, and `SameSideOf.of_onRay` keeps the point laid off along the arm there.
 - "The angle DFG is greater than the angle EGF", and "much greater", are each the whole greater than the part, because X lies between D and F and between E and G (`angle_lt_of_between`).
@@ -189,7 +189,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - I.13 and I.15 need H off AB and B off EH. Both follow from B's being off GH, which comes from the statement's same-side hypothesis and not from the parallels.
 
 ## I.30
-- Heath's figure puts EF between AB and CD, so that GK crosses it at H (`OppositeSides.exists_between`). The enunciation also covers EF lying outside both, where a straight line from one to the other need not cross it. For that case Lean proves from I.29 that two straight lines through one point, each parallel to a third, are one straight line (`Prop30.unique`): Playfair's axiom, of which I.30 is the logical equivalent, as Heath reports Augustus De Morgan pointing out (vol. 1, p. 314).
+- Heath's figure puts EF between AB and CD, so that GK crosses it at H (`OppositeSides.exists_between`). The enunciation also covers EF lying outside both, where a straight line from one to the other need not cross it. For that case we prove from I.29 that two straight lines through one point, each parallel to a third, are one straight line (`Prop30.unique`): Playfair's axiom, of which I.30 is the logical equivalent, as Heath reports Augustus De Morgan pointing out (vol. 1, p. 314).
 - The given points need not stand where Heath's do, so `Prop30.point_on_side` takes an end of each straight line on whichever side of GK his figure wants, producing it if it must.
 - Each citation of I.29 needs Euclid's whole figure: the falling straight line meets each parallel between two of its points, and itself goes on beyond both. Book Zero produces the straight lines to make it (`AreParallel.figure_alternate`, `AreParallel.figure_interior`), and later proofs reach it through `Prop29.alternate`, `Prop29.interior` and `Prop29.exterior`.
 - "And they are alternate. Therefore AB is parallel to CD" is I.27, though Heath gives no bracket for it.
@@ -214,8 +214,8 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 
 ## I.35
 - Heath: "Euclid speaks of the triangle DGE without any explanation that, in the case which he takes (where AD, EF have no point in common), BE, CD must meet at a point G between the two parallels" (vol. 1, p. 327). `Prop35.figure` proves it from Book Zero's `AreParallel.cross_or`, and puts E between D and F, as "the whole DF" needs.
-- Euclid gives one arrangement. Proclus, "observing that Euclid has given only the most difficult of the three possible cases, adds the other two with separate proofs" (Heath, vol. 1, p. 328): E between A and D (`Prop35.between`), and E at D (`Prop35.same`). Lean also takes E at A, where F is D (`OnRay.eq_of_len_eq`), and each case the other way along AF, by exchanging the parallelograms (`AreParallel.sameSideOf_or`).
-- Heath points out "the further *tacit* assumption that it is indifferent to *what part* or from *what part* of the same or equal areas the same or equal areas are added or subtracted", a postulate De Morgan thought particularly important (vol. 1, p. 328). In Lean an area is a magnitude, so where it is added or taken away does not matter; what must be said is what a figure is made of. A straight line from a corner cuts a triangle into two that make it up (`area_cut`, System E, Diagram-area 2), and a four-sided figure is the two triangles a diameter cuts it into (`quadArea`): the trapezium ABGD by its diameter BD.
+- Euclid gives one arrangement. Proclus, "observing that Euclid has given only the most difficult of the three possible cases, adds the other two with separate proofs" (Heath, vol. 1, p. 328): E between A and D (`Prop35.between`), and E at D (`Prop35.same`). Our proof also takes E at A, where F is D (`OnRay.eq_of_len_eq`), and each case the other way along AF, by exchanging the parallelograms (`AreParallel.sameSideOf_or`).
+- Heath points out "the further *tacit* assumption that it is indifferent to *what part* or from *what part* of the same or equal areas the same or equal areas are added or subtracted", a postulate De Morgan thought particularly important (vol. 1, p. 328). In our foundations an area is a magnitude, so where it is added or taken away does not matter; what must be said is what a figure is made of. A straight line from a corner cuts a triangle into two that make it up (`area_cut`, System E, Diagram-area 2), and a four-sided figure is the two triangles a diameter cuts it into (`quadArea`): the trapezium ABGD by its diameter BD.
 - A parallelogram has one area, whichever diameter cuts it: Book Zero shows that two diameters which cross give the same measure (`quadArea_rotate_of_cross`, `Parallelogram.quadArea_rotate`).
 
 ## I.36
@@ -254,13 +254,13 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 ## I.44
 - "Let it be placed so that BE is in a straight line with AB": Euclid moves the parallelogram I.42 has made. Our Lean moves a figure only by superposition, which is kept for I.4 and I.8, so `Prop44.place` builds an equal one where Euclid puts it: I.2 copies its sides and I.23 its angle, I.31 and `Prop30.meet` complete it, and I.4 and I.34 make it equal. Which side of AB it stands on is left to the figure; the statement names it with a point P, and G goes on the other side, so that M falls on P's.
 - H, L and M, where straight lines meet the parallels, come from `Prop30.meet`, and "parallel to either", said twice, is I.30 (`Prop30.parallel`); Heath's bracket names only I.31.
-- Lean has to state the orders Euclid reads off his figure, H, G, F; H, B, K; F, E, K; K, M, L; L, A, H; and G, B, M, before I.43 and I.15 apply. Parallels keep order (`Between.of_sameSide`).
+- Our proof must state the orders Euclid reads off his figure, H, G, F; H, B, K; F, E, K; K, M, L; L, A, H; and G, B, M, before I.43 and I.15 apply. Parallels keep order (`Between.of_sameSide`).
 - "Therefore the angles BHG, GFE are less than two right angles" has no bracket: HB falls within the angle AHF (`angle_add_of_within`), and the part is less than the whole (C.N. 5).
 
 ## I.45
 - Euclid cuts the rectilineal figure ABCD by DB into the triangles ABD and DBC, and takes "the whole rectilineal figure ABCD" to be the two together. Any rectilineal area, Heath says, "can of course be resolved into triangles" (vol. 1, p. 347); our statement gives the figure's area as those two triangles together.
 - "KH, HM not lying on the same side" needs GM applied on the side of GH away from K, which Euclid leaves to the figure. Our I.44 is asked for that side, through a point across GH from K with no letter in Heath; the same choice puts F and L on either side of GH, as the second use of I.14 needs.
-- Before I.30, Lean shows that KF and ML are different straight lines: were they one, it would be KM, and D, which is on KM, would lie on ML, a parallel to GD (`line_unique`, `Parallel.not_onLine`); before I.33, that F and L lie on one side of KM, each being on G's side (`same_side_trans`), so that KM and FL join them in the same directions.
+- Before I.30, our proof shows that KF and ML are different straight lines: were they one, it would be KM, and D, which is on KM, would lie on ML, a parallel to GD (`line_unique`, `Parallel.not_onLine`); before I.33, that F and L lie on one side of KM, each being on G's side (`same_side_trans`), so that KM and FL join them in the same directions.
 - "The whole parallelogram KFLM" is FH and GM together, which needs K, H, M and F, G, L in order, as the two uses of I.14 give (`quadArea_add_of_parallelograms`).
 
 ## I.46
@@ -276,7 +276,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 
 ## I.48
 - "Let AD be drawn from the point A at right angles to the straight line AC" is I.11, though no bracket names it, and "let AD be made equal to BA" is a circle about A (`OnRay.exists_len_eq`, Post. 3).
-- Euclid speaks of the squares on DA, AC and DC without describing them. Lean describes them by I.46, outward from the triangle DAC, as I.47 asks.
+- Euclid speaks of the squares on DA, AC and DC without describing them. Our proof describes them by I.46, outward from the triangle DAC, as I.47 asks.
 - "Since DA is equal to AB, the square on DA is also equal to the square on AB", and later "so that the side DC is also equal to BC": squares on equal straight lines are equal, and equal squares stand on equal straight lines. Euclid assumes both; Heath reports Proclus proving them under I.46 (vol. 1, pp. 348–349). They are `Prop46.square_eq` and `Prop46.side_eq`.
 
 ## The postulates: what the Lean uses and what Heath's brackets give

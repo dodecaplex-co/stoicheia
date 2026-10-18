@@ -31,7 +31,7 @@ the inference follows. Keep sentences short and plain. Three that have the voice
 - "So the tacit rule is doing real work: it says the plane has the square roots that ruler
   and compass need." (I.1)
 - "Generations of schoolchildren knew it as the *pons asinorum*, the bridge of asses." (I.5)
-- "Our statement gives the perpendicular, and Lean has to find its foot." (II.12)
+- "Our statement gives the perpendicular, and our proof has to find its foot." (II.12)
 
 **State facts directly; qualify uncertainty precisely.** A proved equality is said plainly.
 A conjecture about the history of the text sounds like one, and says whose it is. A
@@ -44,7 +44,7 @@ for a checker: no "note that", "strictly speaking" or "it is worth noting" **[ch
 ("our I.1 lets the side be named"), and it may take the reader along ("Postulate 3 lets us
 draw a circle"). Use it where it comes naturally; there is no count. "Euclid" is the
 historical argument, "Heath" the translation and its notes, and "Lean" the language and
-its checker ("Lean has to find its foot"); "the Lean" is our proof's code, where a
+its checker ("Lean checks the formal derivation"); "the Lean" is our proof's code, where a
 sentence needs it ("the Lean cites I.10"). No "I", "me" or "my" outside quotations
 **[checked]**.
 
