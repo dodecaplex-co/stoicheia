@@ -29,7 +29,7 @@ page does.
 - **The gap is a named rule, credited.** The circles' meeting is System E's Intersection 5
   (`circles_meet`), and the remark above it says why the circles cross and why the side can
   be chosen. The remark also says plainly that the straight lines CA, CB are drawn for the
-  eye: the Lean needs only the point C.
+  eye: our proof uses only the point C.
 - **The mishnah does all four things in four paragraphs:** the move (must the circles
   meet?), the history (Zeno's worries, reported by Heath, with the chain of report clear),
   the formal decision (C off AB, and the side), and a modern way that earns its place: the

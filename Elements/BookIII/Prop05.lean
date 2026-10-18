@@ -21,7 +21,7 @@ theorem Prop5 {E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : Circles
   -- I say that they will not have the same centre.
   -- For, if possible, let it be E; let EC be joined, and let EFG be drawn through at random.
   rintro ⟨hE_ABC, hE_CDG⟩
-  /- EC is drawn for the eye; Lean needs only its ends. An unlettered point
+  /- EC is drawn for the eye; our proof uses only its ends. An unlettered point
      chooses the direction of EFG, which meets both circles beyond E. -/
   obtain ⟨P, hP⟩ := exists_point [E]
   have hPE : P ≠ E := fun h => hP (h ▸ List.mem_singleton_self P)
