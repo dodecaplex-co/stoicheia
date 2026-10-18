@@ -159,7 +159,7 @@ theorem Prop9 {A B C : Point} (hBAC : Triangle B A C) :
   have hAA_AC : ‖A A‖ < ‖A C‖ := by
     rw [len_self]
     exact len_pos hAC
-  obtain ⟨D, hADB, hAD_AC⟩ := exists_between_nearer hAB hAA_AC
+  obtain ⟨D, hADB, hAD_AC⟩ := exists_between_nearer hAB (Or.inl rfl) hAA_AC
   have hAD : A ≠ D := ne_of_between hADB
   have hD_AB : OnLine D AB := on_line_of_between_ends hADB hA_AB hB_AB
   -- let AE be cut off from AC equal to AD; [I. 3]

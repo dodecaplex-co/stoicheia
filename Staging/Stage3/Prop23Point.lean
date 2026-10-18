@@ -5,8 +5,9 @@ import Elements.BookIII.Prop21
 /-!
 # Stage 3, staged: III.23, point by point
 
-Statements before proofs (brief 0006, stage 3). A companion of III.23, destined for
-`Elements/BookIII/Prop23.lean`, after III.23, and certified as "III.23 point" (brief 0006).
+Statements frozen before their proofs (brief 0006, stage 3), and proved here. A companion of
+III.23, destined for `Elements/BookIII/Prop23.lean`, after III.23, and certified as "III.23
+point" (brief 0006).
 
 III.23 says that on one straight line, on one side, there cannot be two similar and unequal
 segments. Point by point: on one side of a chord, a point is on the circle exactly when the
@@ -52,7 +53,7 @@ point on E's side of AB. Then P is on the circle exactly when the angle APB is e
 angle AEB, and P is within the circle exactly when the angle APB is greater than the angle
 AEB.
 
-To be proved through a point M between A and B, which is within the circle. On the circle,
+Proved through a point M between A and B, which is within the circle. On the circle,
 the angles in the same segment are equal [III. 21]. Outside it, the finite straight line PM
 meets the arc at a point Q, which is within the triangle ABP, so the angle AQB is greater
 than the angle APB [I. 21]. Within it, MP produced beyond P meets the circle at a point Q,

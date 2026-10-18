@@ -4,7 +4,8 @@ import Elements.BookI.Prop07
 /-!
 # Stage 3, staged: placement, only one place
 
-Statements before proofs (brief 0006, stage 3). One file of `Elements/BookIII/Placement/`.
+Statements frozen before their proofs (brief 0006, stage 3), and proved here. One file of
+`Elements/BookIII/Placement/`.
 
 A point is fixed by its distances from C and D together with whether it is on F's side of
 CD or on CD: on one side, by I.7; on the straight line, by the order of points on it. (A
@@ -26,7 +27,7 @@ theorem Placement.unique_off {C D F Q₁ Q₂ : Point} (hQ₁ : SameSideOf Q₁ 
 /-- **Only one place on the base.** Two points of the straight line CD, equally far from C
 and equally far from D, are one point.
 
-To be proved from the order of points on a straight line: on one ray from C only one point
+Proved from the order of points on a straight line: on one ray from C only one point
 lies at a given distance (`OnRay.eq_of_len_eq`), and two points on opposite rays from C at
 the same distance are told apart by their distances from D (`len_add_of_between`). -/
 theorem Placement.unique_on {C D Q₁ Q₂ : Point} (hCD : C ≠ D) (hQ₁ : Collinear C D Q₁)

@@ -134,11 +134,15 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 
 - **The scope of the I.45 and II.14 records** is decided: `full`, by the checked fan and
   any supplied division (the owner, 18 October; brief 0006, decision 1 as revised, [#13]).
-- **Stage 2's proofs** follow brief 0006's order of proof work: its ground wave first (the
-  words into the foundations, with the lock and a decisions entry;
-  `Elements/Figure/Sums.lean`; the certificate and render support for companions; the
-  `Placement` policy check), then the companions of I.40, I.45, II.1 and II.14. Placement
-  belongs to stage 3, which works alongside on its own files.
+- **Stage 2's proofs** are done in `Staging/Stage2`, every statement of brief 0006's stage 2
+  proved with no new axiom, including `Fitted.fan` (#14 to #18). Next is the move into
+  `Elements/`: the words into their homes with the lock and a decisions entry, the
+  companions beside their propositions, and the records, pages and gap entries (#19).
+- **Stage 3's proofs** are done in `Staging/Stage3`, every statement of brief 0006's stage 3
+  proved with no new axiom: placement in all its cases, with superposition not among its
+  direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
+  route, III.26 and III.28 upgraded, and `Arcs.lean` (#20 to #24). Next is the migration
+  into `Elements/`, in brief 0006's seven steps (#25).
 - **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull

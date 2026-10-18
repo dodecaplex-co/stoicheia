@@ -12,11 +12,11 @@ import Staging.Stage3.Prop23Point
 /-!
 # Stage 3, staged: III.24 restated
 
-Statements before proofs (brief 0006, stage 3), and the spike's real test: III.24 restated to
-conclude that the segments are congruent (`Arc.Congruent`), proved here from the stubbed
-`placement` and `Prop23.point`. The proof keeps Euclid's application of one segment to the
-other (`placement`: A on C, AB on CD, B on D), with the coincidence of the arcs argued by the
-angles (`Prop23.point`, III.23's companion) in place of his reductio. Euclid refutes a segment
+Statements frozen before their proofs (brief 0006, stage 3), and the spike's real test:
+III.24 restated to conclude that the segments are congruent (`Arc.Congruent`), proved here
+from `placement` and `Prop23.point`. The proof keeps Euclid's application of one segment to
+the other (`placement`: A on C, AB on CD, B on D), with the coincidence of the arcs argued by
+the angles (`Prop23.point`, III.23's companion) in place of his reductio. Euclid refutes a segment
 falling within the other, or outside it, by a tacit reference to III.23, as Heath notes
 (vol. 2, p. 54), and one falling awry by III.10; the Lean settles every point of the arc
 directly, and needs neither the reductio nor III.10. So the route is `modified`: the passage
@@ -26,7 +26,7 @@ another way.
 "Equal", in the enunciation and the last sentence, is read through Common Notion 4: the
 segments coincide. No magnitude of a segment is defined (brief 0006).
 
-When frozen, this statement replaces `Elements.BookIII.Prop24` in
+When it moves to `Elements/`, this statement replaces `Elements.BookIII.Prop24` in
 `Elements/BookIII/Prop24.lean`. Today's statement and its proof by the radii stay beside it as
 the labelled alternative (`Prop24.equalCircles`), and `Prop24.equalMeasure` gives the equal
 measures that III.26 takes from III.24. Here it is `Elements.BookIII.Staging.Prop24`, so as
@@ -284,12 +284,13 @@ measure. III.26 cites it after III.24, where Euclid passes from the equal segmen
 equal circumferences [III. 24]; nothing before III.26 says it otherwise, for `Arc.congruent_iff`
 comes after III.29.
 
-To be proved: take a point P of the first arc off its base [`exists_onCircle_sameSideOf`]; its
+Proved: take a point P of the first arc off its base [`exists_onCircle_sameSideOf`]; its
 image is a point of the second arc, off its base (it is neither end, being as far from each
 as P is, and `chord_cases`); the congruence keeps the distances from P to the ends, so the
-angle at P is the angle at its image [I. 8]; the circumference on the other side of each base
-is twice that angle (`Circumference.eq`), and with it each circumference makes up the whole
-circle (`Circumference.whole`); so the circumferences are equal [C.N. 3]. -/
+angle at P is the angle at its image [I. 8] (these steps are `Prop24.image`); the
+circumference on the other side of each base is twice that angle (`Circumference.eq`), and
+with it each circumference makes up the whole circle (`Circumference.whole`); so the
+circumferences are equal [C.N. 3]. -/
 theorem Prop24.equalMeasure {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (h : Arc.Congruent a b) : a.measure = b.measure := by
   obtain ⟨hα, hB, hC, hK⟩ := id ha
