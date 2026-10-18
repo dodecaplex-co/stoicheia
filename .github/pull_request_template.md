@@ -1,10 +1,10 @@
 <!--
 Stoicheia's pull request template (docs/WORKFLOW.md, "Landing work: pull requests").
-`python3 scripts/safe_push.py --branch <name>` fills the places marked `safe_push` and
-writes its pre-flight summary between the preflight markers; the coordinator writes the
-rest. `python3 scripts/safe_push.py --merge <n>` refuses while a box marked **Required**
-is unticked, or one marked **Required if protected** when a protected path changes, and
-while a required box of this template is missing from the body.
+`git safe-push --branch <name>` (origin/main's scripts/safe_push.py) fills the places
+marked `safe_push` and writes its pre-flight summary between the preflight markers; the
+coordinator writes the rest. `git safe-push --merge <n>` refuses while a box marked
+**Required** is unticked, or one marked **Required if protected** when a protected path
+changes, and while a required box of this template is missing from the body.
 -->
 
 ## What and why
@@ -30,7 +30,8 @@ same pull request as the code it checks. -->
 ## Protected paths
 
 <!-- scripts/, .github/, Certificate/, tests/, review/SCHEMA.md, review/terms.toml,
-.gitattributes and the toolchain files: each changed file is named in a decisions entry,
+.gitattributes, .gitignore and the toolchain files (lakefile.toml, lakefile.lean,
+lean-toolchain, lake-manifest.json): each changed file is named in a decisions entry,
 and the pull request carries the label security-review. -->
 
 <!-- safe_push: protected -->
@@ -44,8 +45,9 @@ and the pull request carries the label security-review. -->
 ## Reviews
 
 <!-- /code-review always; /security-review when a protected path changes; /no-mistakes
-before merge. Give the commit each ran on, and how each blocking or material finding was
-resolved (docs/WORKFLOW.md, section 9). -->
+before merge, without its push and pull request steps (git safe-push does those). Give
+the commit each ran on, and how each blocking or material finding was resolved
+(docs/WORKFLOW.md, section 9). -->
 
 | Review | Commit | Blocking or material findings, and how each was resolved |
 |---|---|---|

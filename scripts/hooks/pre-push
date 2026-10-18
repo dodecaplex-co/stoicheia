@@ -2,13 +2,15 @@
 # Stoicheia's pre-push hook (STOICHEIA_SAFE_PUSH), installed by scripts/install_hooks.sh.
 #
 # Main changes only by a pull request's merge commit, made on GitHub by
-# `python3 scripts/safe_push.py --merge <n>`, so every push to main is refused here,
+# `git safe-push --merge <n>` (origin/main's scripts/safe_push.py, by the launcher that
+# scripts/install_hooks.sh installs beside this hook), so every push to main is refused here,
 # however it is spelled (HEAD:main, main, refs/heads/main, --mirror, forced), and so is
 # every deletion of main; the ruleset on GitHub enforces the same, and this hook backs it
 # up locally. A push to any other branch is scanned for secrets first, with origin/main's
 # own copy of the scan (`safe_push.py --scan-push`), so a branch cannot weaken the scan
 # that judges it. A tag is pushed or deleted only with the owner's OK, by name:
-# STOICHEIA_TAG_PUSH=<tag> git push origin <tag> (docs/WORKFLOW.md, section 1). (The
+# STOICHEIA_TAG_PUSH=<tag> git push origin <tag> (docs/WORKFLOW.md, section 1); even
+# then the commits it points to, and an annotated tag's message, are scanned. (The
 # owner can still go round it with `git push --no-verify`; the hook is a guard rail, not
 # a lock.)
 #
@@ -53,7 +55,13 @@ while read -r local_ref local_sha remote_ref remote_sha; do
                 echo "    releases need the owner's OK (docs/WORKFLOW.md, section 1). With it:" >&2
                 echo "    STOICHEIA_TAG_PUSH=$tag git push $1 refs/tags/$tag" >&2
                 status=1
+                continue
             fi
+            # Allowed, and still scanned: a tag publishes the commits it points to, and
+            # an annotated tag its message.
+            case "$local_sha" in
+                *[!0]*) scan "$local_sha" "$remote_sha" "$remote_ref" || status=1 ;;
+            esac
             continue
             ;;
         refs/heads/main)
@@ -61,8 +69,8 @@ while read -r local_ref local_sha remote_ref remote_sha; do
                 *[!0]*)
                     echo "pre-push: refusing a push to main on $1: main changes only by a pull" >&2
                     echo "    request's merge commit. Push a branch and open one with the pre-flight:" >&2
-                    echo "    python3 scripts/safe_push.py --branch <name>" >&2
-                    echo "    then merge it with python3 scripts/safe_push.py --merge <pr-number>" >&2
+                    echo "    git safe-push --branch <name>" >&2
+                    echo "    then merge it with git safe-push --merge <pr-number>" >&2
                     echo "    (docs/WORKFLOW.md, \"Landing work: pull requests\")." >&2
                     ;;
                 *)

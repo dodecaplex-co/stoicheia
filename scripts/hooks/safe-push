@@ -1,0 +1,43 @@
+#!/bin/sh
+# Stoicheia's launcher for the pre-flight (STOICHEIA_SAFE_PUSH_LAUNCHER), installed by
+# scripts/install_hooks.sh outside the tracked tree, at
+# $(git rev-parse --git-common-dir)/stoicheia/safe-push, and run as `git safe-push`:
+#
+#     git safe-push --branch <name> [--title T] [--body-file F] [--draft] [--label L]...
+#     git safe-push --merge <pr-number> [--dry-run]
+#
+# It runs origin/main's scripts/safe_push.py whatever the checkout holds, so that a branch
+# cannot judge itself, even one whose own copy no longer hands over to origin/main's: it
+# fetches origin, copies origin/main's safe_push.py and heath.py out of git into a
+# directory named by their blobs (~/.cache/stoicheia/harness/<blob>-<blob>/, beside
+# STOICHEIA_PUSH_LOG when that is set), writing each afresh, and execs it with the
+# arguments given, so its signals and its exit status are the run's own. While
+# origin/main's copy predates running from origin/main (no HARNESS_PROTOCOL in it), the
+# checkout's copy runs, and the launcher says so. STOICHEIA_PYTHON names the interpreter
+# (python3 by default; 3.11 or later).
+set -eu
+
+python=${STOICHEIA_PYTHON:-python3}
+top=$(git rev-parse --show-toplevel)
+git fetch --quiet origin
+base=refs/remotes/origin/main
+own=$(git rev-parse --verify --quiet "$base:scripts/safe_push.py" || true)
+own_heath=$(git rev-parse --verify --quiet "$base:scripts/heath.py" || true)
+if [ -n "$own" ] && [ -n "$own_heath" ] &&
+        git cat-file blob "$own" | grep -q HARNESS_PROTOCOL; then
+    if [ -n "${STOICHEIA_PUSH_LOG:-}" ]; then
+        cache=$(dirname "$STOICHEIA_PUSH_LOG")
+    else
+        cache=$HOME/.cache/stoicheia
+    fi
+    dir=$cache/harness/$own-$own_heath
+    mkdir -p "$dir"
+    git cat-file blob "$own" > "$dir/.safe_push.py.$$"
+    mv -f "$dir/.safe_push.py.$$" "$dir/safe_push.py"
+    git cat-file blob "$own_heath" > "$dir/.heath.py.$$"
+    mv -f "$dir/.heath.py.$$" "$dir/heath.py"
+    exec "$python" "$dir/safe_push.py" "$@"
+fi
+echo "safe-push: origin/main's scripts/safe_push.py does not yet run from origin/main;" >&2
+echo "    running the checkout's copy, $top/scripts/safe_push.py." >&2
+exec "$python" "$top/scripts/safe_push.py" "$@"

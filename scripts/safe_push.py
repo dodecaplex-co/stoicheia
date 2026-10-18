@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
-    python3 scripts/safe_push.py --branch <name> [--title T] [--body-file F] [--draft]
-                                 [--label L]... [--commit <sha>] [--dry-run]
-    python3 scripts/safe_push.py --merge <pr-number> [--dry-run]
-    python3 scripts/safe_push.py --dry-run [--commit <sha>]        # the checks alone
+    git safe-push --branch <name> [--title T] [--body-file F] [--draft] [--label L]...
+                  [--commit <sha>] [--dry-run]
+    git safe-push --merge <pr-number> [--dry-run]
+    git safe-push --dry-run [--commit <sha>]                      # the checks alone
+
+`git safe-push` is the launcher scripts/install_hooks.sh installs outside the tracked
+tree (scripts/hooks/safe-push): it runs origin/main's copy of this file, whatever the
+checkout holds. `python3 scripts/safe_push.py ...` runs the checkout's copy, which hands
+over to origin/main's when it differs; that holds only while the copy run is one that
+hands over, so the launcher is the way in.
 
 Nothing is pushed to main: main changes only by a pull request's merge commit
 (docs/WORKFLOW.md, "Landing work: pull requests"). Run with none of --branch, --merge
@@ -18,9 +24,10 @@ order, and the first that fails stops it with a message saying why:
 1. Preconditions. The commit exists; `git fetch origin`; origin/main is an ancestor of
    the commit, so that the merge commit will hold exactly the tree checked; the branch,
    if origin has it, is an ancestor too, for nothing is ever forced; the branch is not
-   main. The harness is origin/main's: when this copy of safe_push.py or heath.py
-   differs from origin/main's, origin/main's runs in its place, so that a branch cannot
-   weaken the guards that judge it.
+   main; the branch name and the title hold nothing the scan refuses. The harness is
+   origin/main's: when this copy of safe_push.py or heath.py differs from origin/main's,
+   origin/main's replaces this process (os.execve), so that a branch cannot weaken the
+   guards that judge it, and an interruption reaches the copy that pushed.
 2. A secret scan of every line the push adds, of every file it adds or changes, of its
    commit messages, and of each commit's author and committer, and then of each commit's
    own change, since the push publishes the history: a secret added and taken out again,
@@ -29,10 +36,13 @@ order, and the first that fails stops it with a message saying why:
    key files, the owner's private paths (an agent's scratchpad among them) and
    machine-made identities: in each line, across consecutive lines, inside base64 that
    decodes to text, and in symlinks, which may not point out of the repository. Whether
-   a file is text or binary is read from its bytes, and the diff is read as text, so a
-   .gitattributes line cannot take a file out of the scan. A false positive goes in
-   origin/main's `scripts/safe_push_allow.toml`, one file, one rule and one line to an
-   entry, with its reason: an entry added by the push itself does not count.
+   a file is text or binary is read from its bytes (a NUL anywhere makes it binary, and
+   a binary file is read whole: its printable runs and its UTF-16 runs, wherever they
+   stand), and the diff is read as text, so a .gitattributes line cannot take a file out
+   of the scan. A false positive goes in origin/main's `scripts/safe_push_allow.toml`:
+   one file, one rule, a part of the line, and the flagged value itself, pinned by its
+   SHA-256, to an entry, with its reason. A commit's message or identity cannot be
+   allowed, and an entry added by the push itself does not count.
 3. Invariant guards against origin/main, in a fresh temporary worktree of the commit:
    - every statement (facts.json's `statement`, and the Lean source of `theorem PropN`,
      its porism and its companions, up to its own `:=`, whitespace aside) is unchanged,
@@ -40,9 +50,9 @@ order, and the first that fails stops it with a message saying why:
    - `Certificate/axioms.lock` is unchanged, unless 0002-decisions.md gains a new line
      mentioning the lock;
    - a protected path (scripts/, .github/, Certificate/, tests/, review/SCHEMA.md,
-     review/terms.toml, .gitattributes and the toolchain files) changes only with a new
-     line in 0002-decisions.md naming each file changed, and the pull request then
-     carries the label `security-review`;
+     review/terms.toml, .gitattributes, .gitignore and the toolchain files, lakefile.lean
+     among them) changes only with a new line in 0002-decisions.md naming each file
+     changed, and the pull request then carries the label `security-review`;
    - every changed file under `heath/` carries, in the change, a comment naming a scan
      leaf of its own pages, as origin/main's copy of the file lists them;
    - no review record is stale, and the generated pages are current (check_fidelity.py
@@ -55,30 +65,36 @@ order, and the first that fails stops it with a message saying why:
    tests/, Certificate/, review/SCHEMA.md, review/terms.toml); when the commit changes
    any of those, they run again with the commit's own copies, which must pass, and each
    check that fails with origin/main's copies is noted for the security review.
-5. `git push origin <sha>:refs/heads/<name>`, never forced; then the pull request,
-   `gh pr create --base main --head <name>`, or `gh pr edit` of the open one. Its body
-   is --body-file, or is generated from .github/pull_request_template.md: the commits,
-   the statements, the review records touched, the protected paths, and the pre-flight's
-   summary between its markers (on an update without --body-file, only that summary is
-   replaced). Then its CI, followed to its conclusion (`gh pr checks --watch`).
+5. The pull request settled first: our open one for the branch (a fork's of the same
+   name is never touched), or a new one; its body, --body-file or generated from
+   .github/pull_request_template.md (the commits, the statements, the review records
+   touched, the protected paths, and the pre-flight's summary between its markers; on an
+   update without --body-file, only that summary is replaced), scanned. Then
+   `git push origin <sha>:refs/heads/<name>`, never forced; then `gh pr create --base
+   main --head <name>`, or `gh pr edit` of the open one; then its CI, followed to its
+   conclusion (`gh pr checks --watch`).
 6. A summary, printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
    repository (`STOICHEIA_PUSH_LOG` names another file); each step's output is kept
    beside it in `logs/`, and the pre-flight's record in `preflight/`, for --merge.
 
---merge <n> merges a pull request only when its head is a commit the pre-flight checked
-against the current origin/main (if not, the pre-flight's checks run on it now), CI on
-that head is green (`gh pr checks`: check, model and negative pass, nothing fails or
-waits), no required box of its checklist is unticked (the template's own required boxes
-included, so deleting one does not help), it carries `security-review` when a protected
-path changes, and it is not a draft. Then `gh pr merge <n> --merge --delete-branch
---match-head-commit <head>`: a merge commit, never a squash or a rebase, since review
-records stamp the branch's commits. Afterwards main is checked to hold the tree checked.
+--merge <n> merges a pull request only when its head passes the secret scan and the
+guards against the current origin/main, run again then (a record of the pre-flight is a
+local file, so it stands in for the full checks alone, and only when origin/main's
+harness made it; else they run again too), CI on that head is green (`gh pr checks`:
+check, model and negative pass, nothing fails or waits), no required box of its
+checklist is unticked (the template's own required boxes included, so deleting one does
+not help), it carries `security-review` when a protected path changes, and it is not a
+draft; the pre-flight's notes are shown beside the checklist. Then `gh pr merge <n>
+--merge --delete-branch --match-head-commit <head>`: a merge commit, never a squash or a
+rebase, since review records stamp the branch's commits. Afterwards main is checked to
+hold the tree checked.
 
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
 worktrees are removed at the end, on a failure too. The pre-push hook,
 `scripts/hooks/pre-push` (installed by `scripts/install_hooks.sh`), runs origin/main's
 secret scan (`--scan-push`) on a push to any branch, refuses every push to main, and
-refuses a tag unless STOICHEIA_TAG_PUSH names it, which the owner's OK alone sets.
+refuses a tag unless STOICHEIA_TAG_PUSH names it, which the owner's OK alone sets, and
+scans the tag then.
 
 Exit status: 0 when done (a pull request opened or updated with CI green, a merge, a dry
 run passed, or nothing to do); 1 when refused before any push or merge; 2 for a usage
@@ -122,9 +138,12 @@ ALLOWLIST = "scripts/safe_push_allow.toml"
 TEMPLATE = ".github/pull_request_template.md"
 GUARDED_DIRS = ("Elements", "heath", "review", "figures", "mishnah")
 # A change to any of these needs a decisions entry naming the file, and the label below.
+# lakefile.lean is here although the repository has none: Lake reads it in preference to
+# lakefile.toml, and runs it. .gitignore is here because an added rule hides untracked
+# files from `git status`, and so from the check that the generated pages are current.
 PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md",
-             "review/terms.toml", ".gitattributes", "lakefile.toml", "lean-toolchain",
-             "lake-manifest.json")
+             "review/terms.toml", ".gitattributes", ".gitignore", "lakefile.toml",
+             "lakefile.lean", "lean-toolchain", "lake-manifest.json")
 # The checks and what they expect: origin/main's copies judge the commit (step 4).
 CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml")
 SECURITY_LABEL = "security-review"
@@ -138,6 +157,12 @@ LABELS = {
 }
 REQUIRED_CHECKS = ("check", "model", "negative")
 GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
+# Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
+# STATUS_MARKERS); the rest of each is written by hand.
+GENERATED_REGIONS = {
+    "README.md": re.compile(r"<!-- scope:([IVX]+) -->.*?<!-- /scope:\1 -->", re.S),
+    "docs/PROGRAM.md": re.compile(r"<!-- status -->\n.*?<!-- /status -->", re.S),
+}
 CI_APPEAR_TIMEOUT = 300   # seconds to wait for the checks to appear after the push
 CI_POLL = 10              # seconds between looks for them
 CI_WATCH_INTERVAL = "30"  # seconds between `gh pr checks --watch` refreshes
@@ -169,6 +194,7 @@ NEGATIVE = [
 
 ARGV: list[str] = []      # this run's arguments, for origin/main's harness to run with
 HARNESS = "this copy of `scripts/safe_push.py`"   # which harness ran, for the record
+HARNESS_BLOB: str | None = None     # its blob, when it is origin/main's
 
 
 class Refusal(Exception):
@@ -177,14 +203,6 @@ class Refusal(Exception):
 
 class NothingToPush(Exception):
     """origin/main is already the commit."""
-
-
-class Reexec(Exception):
-    """origin/main's harness ran in this copy's place; its exit status is the result."""
-
-    def __init__(self, code: int):
-        super().__init__(code)
-        self.code = code
 
 
 # --------------------------------------------------------------------------------------
@@ -407,8 +425,10 @@ def read_blobs(repo, ids) -> dict[str, bytes]:
 
 
 def is_binary(data: bytes) -> bool:
-    """git's own test of content: a NUL byte in the first 8000."""
-    return b"\0" in data[:8000]
+    """A NUL byte anywhere. (git looks only at the first 8000 bytes, so a file of prose
+    with UTF-16 text after it would read as text, and its tail, a NUL between every
+    character, would match no rule. A binary file is read whole, so nothing is lost.)"""
+    return b"\0" in data
 
 
 def empty_tree(repo) -> str:
@@ -491,8 +511,12 @@ SECRET_FILES = [
     (re.compile(r"\.(key|pem|p12|pfx)$", re.I), "key file"),
     (re.compile(r"(^|/)id_(rsa|dsa|ecdsa|ed25519)$"), "SSH private key file"),
 ]
-# Printable runs in a binary file, read as lines of text.
-PRINTABLE_RUN = re.compile(rb"[\x20-\x7e\t]{8,}")
+# Printable runs in a binary file, line breaks included, read as lines of text; and runs
+# of UTF-16 text, little- and big-endian, wherever they stand in it.
+PRINTABLE_RUN = re.compile(rb"[\x20-\x7e\t\r\n]{8,}")
+UTF16_RUNS = ((re.compile(rb"(?:[\x20-\x7e\t\r\n]\x00){8,}"), "utf-16-le"),
+              (re.compile(rb"(?:\x00[\x20-\x7e\t\r\n]){8,}"), "utf-16-be"))
+WINDOW = 40             # bytes kept on each side of a hit in a binary file, for the report
 KNOWN_RULES = ({rule for rule, _ in TOKEN_RULES} | {rule for _, rule in SECRET_FILES}
                | {"key, token or secret", "private path", "private path in a file name",
                   "private path in an identity", "machine-made identity",
@@ -697,21 +721,48 @@ def utf16_text(data: bytes) -> str | None:
     return None
 
 
+def printable(text: str) -> str:
+    """Text with every character outside printable ASCII shown as a dot, one for one, so
+    that spans into it still hold."""
+    return re.sub(r"[^\x20-\x7e]", ".", text)
+
+
 def scan_binary(path: str, data: bytes) -> list[Finding]:
-    """A binary file, read whole: the strong rules over its bytes; its printable runs
-    read as lines, with every rule, so that a NUL planted in a text file does not hide
-    it; and, if it is UTF-16 text, its lines."""
-    found = scan_text(path, None, data.decode("latin-1"), strong_only=True)
+    """A binary file, read whole: the strong rules over its bytes, each hit with a window
+    of WINDOW bytes on each side as its text (never the whole file, which an allow-list
+    match would otherwise find anywhere, and which the report would print); its
+    printable runs, line breaks included, read as lines with every rule, so that a NUL
+    planted in a text file does not hide it, nor a value split over two lines; its runs
+    of UTF-16 text, wherever they stand, read the same way; and, if the whole of it is
+    UTF-16 text, its lines."""
+    raw = data.decode("latin-1")
+    found = []
+    for f in scan_text(path, None, raw, strong_only=True):
+        a, b = f.span
+        lo, hi = max(0, a - WINDOW), min(len(raw), b + WINDOW)
+        found.append(f._replace(text=printable(raw[lo:hi]), span=(a - lo, b - lo)))
     seen = {(f.rule, f.text[f.span[0]:f.span[1]]) for f in found}
-    for m in PRINTABLE_RUN.finditer(data):
-        for f in scan_text(path, None, m.group(0).decode("ascii")):
+
+    def add(more: list[Finding]) -> None:
+        for f in more:
             key = (f.rule, f.text[f.span[0]:f.span[1]])
             if key not in seen:
                 seen.add(key)
                 found.append(f)
+
+    def lines_of(text: str, first: int) -> list[tuple[int, str]]:
+        return list(enumerate(text.splitlines(), first))
+
+    line, pos = 1, 0        # the line each run starts on, counted as the runs go
+    for m in PRINTABLE_RUN.finditer(data):
+        line, pos = line + data.count(b"\n", pos, m.start()), m.start()
+        add(scan_block(path, lines_of(m.group(0).decode("ascii"), line)))
+    for pattern, codec in UTF16_RUNS:
+        for m in pattern.finditer(data):
+            add(scan_block(path, lines_of(m.group(0).decode(codec, errors="replace"), 1)))
     text = utf16_text(data)
     if text is not None:
-        found += scan_block(path, list(enumerate(text.splitlines(), 1)))
+        add(scan_block(path, lines_of(text, 1)))
     return found
 
 
@@ -753,12 +804,22 @@ class Allow(NamedTuple):
     match: str
     rule: str
     reason: str
+    sha256: str | None      # the SHA-256 of the flagged value, when match does not hold it
+
+
+# Places the scan reads that no entry may allow: a flagged commit message or identity is
+# rewritten, and the pull request's body, title and branch name are the coordinator's to
+# change.
+UNALLOWABLE = re.compile(r"^commit |^the pull request's body$|^the title$|^the branch name$")
+SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
 def load_allowlist(repo, rev) -> list[Allow]:
     """The allow-list as `rev` (origin/main) has it. Each entry is narrow: one file named
-    exactly (no glob), one rule, a part of the flagged line at least eight characters
-    long, and a reason. A broad entry is refused, not read."""
+    exactly (no glob, and never a commit's message or identity, nor the pull request's
+    body), one rule, a part of the flagged line at least eight characters long, the
+    flagged value pinned (held in that part, or named by its SHA-256), and a reason. A
+    broad entry is refused, not read."""
     text = show(repo, rev, ALLOWLIST) if rev else None
     if text is None:
         return []
@@ -773,31 +834,54 @@ def load_allowlist(repo, rev) -> list[Allow]:
             problems.append(f"entry {i} is not a table")
             continue
         path, match = entry.get("path"), entry.get("match")
-        reason, rule = entry.get("reason"), entry.get("rule")
+        reason, rule, digest = entry.get("reason"), entry.get("rule"), entry.get("sha256")
         bad = []
         if not isinstance(path, str) or not path:
             bad.append("has no path")
         elif any(c in path for c in "*?["):
             bad.append("names more than one file (a glob in path)")
+        elif UNALLOWABLE.search(path):
+            bad.append(f"names {path!r}, which cannot be allowed (reword or rewrite it)")
         if not isinstance(match, str) or len(match) < 8:
             bad.append("has no match of at least 8 characters")
         if not isinstance(rule, str) or rule.removeprefix("base64-encoded ") not in KNOWN_RULES:
             bad.append("names no rule of the scan")
+        if digest is not None and not (isinstance(digest, str) and SHA256.fullmatch(digest)):
+            bad.append("has a sha256 that is not 64 lowercase hex digits")
         if not isinstance(reason, str) or not reason.strip():
             bad.append("has no reason")
         if bad:
             problems.append(f"entry {i} " + ", ".join(bad))
         else:
-            entries.append(Allow(path, match, rule, reason.strip()))
+            entries.append(Allow(path, match, rule, reason.strip(), digest))
     if problems:
         raise Refusal(f"origin/main's {ALLOWLIST} has a broad or incomplete entry: "
                       + "; ".join(problems))
     return entries
 
 
+def flagged_value(f: Finding) -> str:
+    """What a finding flags: the matched text, or, for a rule on the whole file name or
+    link (an empty span), its whole text."""
+    a, b = f.span
+    return f.text[a:b] if b > a else f.text
+
+
+def value_sha256(f: Finding) -> str:
+    return hashlib.sha256(flagged_value(f).encode("utf-8", errors="surrogatepass")).hexdigest()
+
+
 def allowed(f: Finding, allow: list[Allow]) -> Allow | None:
+    """The entry that excuses the finding: the same file and rule, a match found in the
+    flagged line, and the flagged value itself pinned, held in the match or named by its
+    SHA-256; so another value on a similar line is still refused. (A value written into
+    the allow-list would be flagged there in turn, in the allow-list's own pull request,
+    where its new entry does not count yet: hence the SHA-256.)"""
+    if UNALLOWABLE.search(f.path):
+        return None
     for a in allow:
-        if a.path == f.path and a.rule == f.rule and a.match in f.text:
+        if a.path == f.path and a.rule == f.rule and a.match in f.text and (
+                flagged_value(f) in a.match or a.sha256 == value_sha256(f)):
             return a
     return None
 
@@ -900,7 +984,8 @@ def secret_scan(repo, base: str | None, sha: str, rep: Report, allow_rev: str | 
         raise Refusal(f"the secret scan found {len(refused)} possible secret(s) or private "
                       f"path(s). Remove them (and rewrite the commits that hold them), or, for "
                       f"a false positive, add a narrow entry with its reason to {ALLOWLIST} "
-                      "in a pull request of its own, before this one.")
+                      "in a pull request of its own, before this one, pinning the value by "
+                      "its SHA-256 (printf %s '<the value>' | shasum -a 256).")
     rep.add("2", "secrets", "ok", f"nothing found in {scanned}", seconds)
 
 
@@ -1109,7 +1194,7 @@ COMMENT = re.compile(r"<!--.*?-->", re.S)
 LEAF_RANGE = re.compile(r"\bn(\d+)\s*[–-]\s*n(\d+)\b")
 LEAF = re.compile(r"\bn(\d+)\b")
 LEAF_WORD = re.compile(r"(?i)\bleaf\b|\bleaves\b")
-SOURCE_COMMENT = re.compile(r"<!--\s*Source:")
+SOURCE_COMMENT = re.compile(r"(?i)<!--\s*source\s*:")
 
 
 def own_leaves(text: str) -> set[int]:
@@ -1145,9 +1230,13 @@ def guard_heath(repo, base, sha, wt: Path, rep: Report) -> None:
         leaves = own_leaves(old if old is not None else text)
         lines = added.get(path, set())
         named = set()
+        source = COMMENT.search(text)
         for m in COMMENT.finditer(text):
-            if SOURCE_COMMENT.match(m.group(0)):
-                continue    # the source comment lists the leaves; it does not check one
+            # The source comment, the file's first, lists the leaves; it does not check
+            # one. It is known by its place, so that "Source:" rewritten as "source:"
+            # does not make it count; and any comment that reads as one is skipped too.
+            if m.start() == source.start() or SOURCE_COMMENT.match(m.group(0)):
+                continue
             first = text.count("\n", 0, m.start()) + 1
             last = first + m.group(0).count("\n")
             if lines & set(range(first, last + 1)) and LEAF_WORD.search(m.group(0)):
@@ -1382,15 +1471,23 @@ class Preflight(NamedTuple):
     protected: list[str]
 
 
-def check_commit(ctx, rep: Report, logs: Path, test_mode: bool) -> Preflight:
-    """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks."""
+def check_commit(ctx, rep: Report, logs: Path, test_mode: bool,
+                 checked: dict | None = None) -> Preflight:
+    """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
+    `checked`, a record of the full checks of this commit against this origin/main by
+    origin/main's harness, stands in for step 4 alone (--merge); steps 2 and 3 always
+    run."""
     secret_scan(ctx.repo, ctx.base, ctx.sha, rep, allow_rev=ctx.base)
     with tempfile.TemporaryDirectory(prefix="stoicheia-push-") as tmp:
         parent = Path(tmp)
         with worktree(ctx.repo, ctx.sha, parent, "check") as wt:
             g = guards(ctx, wt, rep, logs)
             rep.heading("4. The full local checks (docs/WORKFLOW.md, section 8)")
-            if test_mode:
+            if checked is not None:
+                rep.add("4", "full local checks", "skip", f"run on {ctx.sha[:12]} against "
+                        f"origin/main {ctx.base[:12]} by {checked.get('harness')}, "
+                        f"{checked.get('time')}")
+            elif test_mode:
                 rep.add("4", "full local checks", "skip", "internal test flag, local origin")
             else:
                 full_checks(ctx, wt, parent, g.check_inputs, rep, logs)
@@ -1436,55 +1533,98 @@ def remote_refs(repo, *args) -> dict[str, str]:
     return refs
 
 
-def hook_installed(repo) -> bool:
+HOOK, LAUNCHER = "scripts/hooks/pre-push", "scripts/hooks/safe-push"
+
+
+def installed_paths(repo) -> dict[str, Path]:
+    """Where install_hooks.sh puts the pre-push hook and the launcher, outside the
+    tracked tree, shared by every worktree of the clone."""
     out = git(repo, "rev-parse", "--git-path", "hooks", check=False).strip()
-    hook = Path(out) if os.path.isabs(out) else Path(repo) / out
-    hook = hook / "pre-push"
-    try:
-        return "STOICHEIA_SAFE_PUSH" in hook.read_text()
-    except OSError:
-        return False
+    hooks = Path(out) if os.path.isabs(out) else Path(repo) / out
+    common = git(repo, "rev-parse", "--path-format=absolute", "--git-common-dir",
+                 check=False).strip()
+    return {HOOK: hooks / "pre-push", LAUNCHER: Path(common) / "stoicheia" / "safe-push"}
+
+
+def check_installed(repo, base: str, rep: Report) -> None:
+    """A note when the hook or the launcher is missing, or differs from origin/main's
+    copy: code the pre-flight ran (a commit's checks, Lean at elaboration) could have
+    rewritten either, and the marker alone would not show it."""
+    for source, path in installed_paths(repo).items():
+        name = "pre-push hook" if source == HOOK else "launcher (git safe-push)"
+        try:
+            data = path.read_bytes()
+        except OSError:
+            data = None
+        theirs = show_bytes(repo, base, source)
+        if data is None:
+            rep.add("1", name, "note", "not installed here (sh scripts/install_hooks.sh)")
+        elif theirs is not None and data != theirs:
+            rep.add("1", name, "note", f"the installed copy differs from origin/main's "
+                    f"{source}: install it again, from a checkout of origin/main "
+                    "(sh scripts/install_hooks.sh --force)")
+
+
+def harness_copy(theirs: bytes, theirs_heath: bytes) -> Path:
+    """origin/main's safe_push.py and heath.py, written to a directory named by their
+    blobs, beside the log (~/.cache/stoicheia/harness/<blob>-<blob>/): it needs no
+    cleaning up, since the same harness always lands in the same place, and each file is
+    written afresh, through a rename, so that nothing left there earlier is run."""
+    path = log_path().parent / "harness" / f"{blob_id(theirs)}-{blob_id(theirs_heath)}"
+    path.mkdir(parents=True, exist_ok=True)
+    for name, data in (("safe_push.py", theirs), ("heath.py", theirs_heath)):
+        fd, tmp = tempfile.mkstemp(prefix=f".{name}.", dir=path)
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        os.replace(tmp, path / name)
+    return path
 
 
 def harness(repo, base: str, rep: Report) -> None:
     """origin/main's safe_push.py and heath.py judge the commit. When this copy differs
-    from them, origin/main's run in its place, with the same arguments, and this run
-    ends with theirs (Reexec). A copy of origin/main's that predates the marker is not
-    run: this copy runs, once, while the harness that runs from origin/main lands."""
-    global HARNESS
+    from them, origin/main's replaces this process (os.execve), with the same arguments:
+    its signals, its summary and its exit status are the run's own, so an interruption
+    after its push is still "pushed; CI not followed". A copy of origin/main's that
+    predates the marker is not run: this copy runs, once, while the harness that runs
+    from origin/main lands. STOICHEIA_HARNESS, which the hand-over sets, is believed only
+    when this file's bytes are origin/main's."""
+    global HARNESS, HARNESS_BLOB
     here = Path(__file__).resolve().parent
     own, own_heath = (here / "safe_push.py").read_bytes(), (here / "heath.py").read_bytes()
-    if os.environ.get("STOICHEIA_HARNESS") == "origin/main":
-        HARNESS = f"origin/main's `scripts/safe_push.py` (blob `{blob_id(own)[:12]}`)"
-        rep.add("1", "harness", "ok", "origin/main's scripts/safe_push.py, run in place of a "
-                "copy that differs from it")
-        return
     theirs = show_bytes(repo, base, "scripts/safe_push.py")
     theirs_heath = show_bytes(repo, base, "scripts/heath.py")
+    same = (theirs, theirs_heath) == (own, own_heath)
+    if os.environ.get("STOICHEIA_HARNESS"):
+        if not same:
+            raise Refusal("STOICHEIA_HARNESS says this is origin/main's harness, but this "
+                          "copy of scripts/safe_push.py or heath.py is not origin/main's "
+                          f"(blob {blob_id(own)[:12]}): origin/main moved since the hand-over, "
+                          "or the variable was set by hand. Run safe_push again, with the "
+                          "variable unset.")
+        HARNESS = f"origin/main's `scripts/safe_push.py` (blob `{blob_id(own)[:12]}`)"
+        HARNESS_BLOB = blob_id(own)
+        rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py (blob "
+                f"{blob_id(own)[:12]}), run in place of a copy that differs from it")
+        return
     if theirs is None or theirs_heath is None or b"HARNESS_PROTOCOL" not in theirs:
         HARNESS = (f"this copy of `scripts/safe_push.py` (blob `{blob_id(own)[:12]}`), since "
                    "origin/main's predates running from origin/main")
         rep.add("1", "harness", "note", "origin/main's scripts/safe_push.py does not yet run "
                 "from origin/main: this copy runs, while the change that makes it do so lands")
         return
-    if (theirs, theirs_heath) == (own, own_heath):
+    if same:
         HARNESS = f"origin/main's `scripts/safe_push.py` (blob `{blob_id(own)[:12]}`)"
+        HARNESS_BLOB = blob_id(own)
         rep.add("1", "harness", "ok", f"origin/main's scripts/safe_push.py "
                 f"(blob {blob_id(own)[:12]})")
         return
     print("  this copy of safe_push.py or heath.py differs from origin/main's: running "
           "origin/main's in its place", flush=True)
-    with tempfile.TemporaryDirectory(prefix="stoicheia-harness-") as tmp:
-        (Path(tmp) / "safe_push.py").write_bytes(theirs)
-        (Path(tmp) / "heath.py").write_bytes(theirs_heath)
-        env = dict(os.environ, STOICHEIA_HARNESS="origin/main")
-        try:
-            r = subprocess.run([PY, str(Path(tmp) / "safe_push.py"), *ARGV], cwd=Path.cwd(),
-                               env=env)
-            code = r.returncode
-        except KeyboardInterrupt:
-            code = 1
-    raise Reexec(code)
+    path = harness_copy(theirs, theirs_heath) / "safe_push.py"
+    env = dict(os.environ, STOICHEIA_HARNESS="origin/main")
+    sys.stdout.flush()
+    sys.stderr.flush()
+    os.execve(PY, [PY, str(path), *ARGV], env)
 
 
 def gh_command(test_mode: bool) -> tuple:
@@ -1532,7 +1672,7 @@ def check_branch_name(repo, branch: str) -> None:
 
 
 def preconditions(repo: Path, commit: str, branch: str | None, dry_run: bool,
-                  test_mode: bool, rep: Report) -> Context:
+                  test_mode: bool, rep: Report, title: str | None = None) -> Context:
     rep.heading("1. Preconditions")
     if sys.version_info < (3, 11):
         raise Refusal("safe_push needs Python 3.11 or later (tomllib)")
@@ -1551,6 +1691,11 @@ def preconditions(repo: Path, commit: str, branch: str | None, dry_run: bool,
         raise Refusal("this repository has no remote called origin")
     base = fetch_base(repo, origin, test_mode, rep)
     harness(repo, base, rep)
+    if branch or title:
+        check_public_names(branch, title)
+        rep.add("1", "public names", "ok", "nothing the scan refuses in "
+                + " or ".join(n for n, v in (("the branch name", branch), ("the title", title))
+                              if v))
     if base == sha:
         rep.add("1", "fast-forward", "ok", f"origin/main is already {sha[:12]}")
         raise NothingToPush(sha)
@@ -1592,9 +1737,7 @@ def preconditions(repo: Path, commit: str, branch: str | None, dry_run: bool,
         gh = gh_command(test_mode)
         gh_ready(gh, repo, test_mode)
         tags = remote_refs(repo, "--tags")
-    if not hook_installed(repo):
-        rep.add("1", "pre-push hook", "note", "not installed here (sh scripts/install_hooks.sh); "
-                "safe_push does not need it")
+    check_installed(repo, base, rep)
     return Context(repo, sha, base, commits, origin, slug, tags, branch, gh, remote_branch)
 
 
@@ -1686,7 +1829,7 @@ def preflight_block(sha: str, base: str, record: dict) -> str:
         lines.append(f"| {stage}. {name} | {outcome} | {took} |")
     notes = record.get("notes", [])
     if notes:
-        lines += ["", "Noted by the guards:"]
+        lines += ["", "Noted by the pre-flight:"]
         lines += [f"- {sanitized(name)}: {sanitized(first)}" for name, first in notes]
     if record.get("protected"):
         lines += ["", f"Protected paths changed: {', '.join(f'`{p}`' for p in record['protected'])}"
@@ -1703,6 +1846,18 @@ def put_block(body: str, block: str) -> str:
     if "<!-- safe_push: preflight -->" in body:
         return body.replace("<!-- safe_push: preflight -->", block, 1)
     return body.rstrip() + "\n\n## Checks run on the exact commit\n\n" + block + "\n"
+
+
+def generated_changed(repo, base, sha, path: str) -> bool:
+    """Does the change touch what render.py writes in `path`? For README.md and
+    PROGRAM.md, only the text between their markers; a hand edit elsewhere in them is
+    not a generated change."""
+    pattern = GENERATED_REGIONS.get(path)
+    if pattern is None:
+        return True
+    old, new = show(repo, base, path) or "", show(repo, sha, path) or ""
+    return [m.group(0) for m in pattern.finditer(old)] != \
+        [m.group(0) for m in pattern.finditer(new)]
 
 
 def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
@@ -1722,7 +1877,8 @@ def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
             records.append(f"- `{path}`: re-stamped at `{new['commit'][:12]}`")
         else:
             records.append(f"- `{path}`: touched, not re-stamped")
-    generated = [p for _, p in changed_files(repo, base, sha) if under(p, GENERATED)]
+    generated = [p for _, p in changed_files(repo, base, sha) if under(p, GENERATED)
+                 and generated_changed(repo, base, sha, p)]
     gen_dirs = sorted({p.split("/")[0] + "/" if p.startswith("book/") else p for p in generated})
     return {
         "commits": f"Commits (`{base[:12]}..{sha[:12]}`):\n\n{log}",
@@ -1765,31 +1921,80 @@ def check_body(body: str) -> None:
                       + "; ".join(f.shown() for f in found))
 
 
+def check_public_names(branch: str | None, title: str | None) -> None:
+    """The branch name is pushed as a public ref, and the title is posted: each is
+    scanned, with no allow-list, before anything is pushed."""
+    found = []
+    if title:
+        found += scan_text("the title", None, title)
+    if branch:
+        found += scan_text("the branch name", None, branch)
+    if found:
+        raise Refusal("a public name holds what the secret scan refuses: "
+                      + "; ".join(f.shown() for f in found))
+
+
 class PR(NamedTuple):
     number: int
     url: str
     created: bool
 
 
-def open_pr(ctx: Context, pre: Preflight, record: dict, args, rep: Report, logs: Path) -> PR:
-    rep.heading("6. Pull request")
-    t = time.time()
+class PRPlan(NamedTuple):
+    """The pull request as it will be: the open one of ours to update, if any, and its
+    body, labels and title, all known and checked before the push."""
+    existing: dict | None
+    body: str
+    labels: set
+    title: str
+
+
+def own_prs(ctx: Context, prs: list[dict]) -> list[dict]:
+    """The pull requests whose head is a branch of origin itself. `gh pr list --head`
+    matches on the branch's name alone, so it finds a fork's pull request of the same
+    name too; and on a public repository anyone can open one in advance."""
+    owner = (ctx.github or "").split("/")[0].lower()
+    mine = []
+    for p in prs:
+        if p.get("isCrossRepository") is not False:
+            continue
+        login = str((p.get("headRepositoryOwner") or {}).get("login") or owner).lower()
+        if login == owner and p.get("headRefName", ctx.branch) == ctx.branch:
+            mine.append(p)
+    return mine
+
+
+def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
+    """Everything the pull request will carry, settled before the push: our open pull
+    request for the branch (never a fork's of the same name), and the body, scanned. A
+    new pull request's body, or --body-file, is known in full; an open one's is fetched."""
     labels = set(args.label) | ({SECURITY_LABEL} if pre.protected else set())
-    ensure_labels(ctx, labels)
-    existing = gh_json(ctx, "pr", "list", "--head", ctx.branch, "--base", "main", "--state",
-                       "open", "--json", "number,url,isDraft") or []
-    body_path = logs / "pr-body.md"
+    listed = gh_json(ctx, "pr", "list", "--head", ctx.branch, "--base", "main", "--state",
+                     "open", "--json", "number,url,isDraft,isCrossRepository,"
+                     "headRepositoryOwner,headRefName") or []
+    mine = own_prs(ctx, listed)
+    existing = mine[0] if mine else None
     if args.body_file:
         body = fill_body(ctx, pre, record, Path(args.body_file).read_text())
     elif existing:
-        view = gh_json(ctx, "pr", "view", str(existing[0]["number"]), "--json", "body")
+        view = gh_json(ctx, "pr", "view", str(existing["number"]), "--json", "body")
         body = put_block(view.get("body") or "", preflight_block(ctx.sha, ctx.base, record))
     else:
         body = generated_body(ctx, pre, record)
     check_body(body)
-    body_path.write_text(body)
+    title = args.title or git(ctx.repo, "log", "-1", "--format=%s", ctx.sha).strip()
+    return PRPlan(existing, body, labels, title)
+
+
+def open_pr(ctx: Context, plan: PRPlan, args, rep: Report, logs: Path) -> PR:
+    rep.heading("6. Pull request")
+    t = time.time()
+    labels, existing = plan.labels, plan.existing
+    ensure_labels(ctx, labels)
+    body_path = logs / "pr-body.md"
+    body_path.write_text(plan.body)
     if existing:
-        pr = PR(int(existing[0]["number"]), existing[0].get("url", ""), False)
+        pr = PR(int(existing["number"]), existing.get("url", ""), False)
         edit = ["pr", "edit", str(pr.number), "--body-file", str(body_path)]
         if args.title:
             edit += ["--title", args.title]
@@ -1798,12 +2003,11 @@ def open_pr(ctx: Context, pre: Preflight, record: dict, args, rep: Report, logs:
         r = gh_run(ctx, *edit)
         if r.returncode != 0:
             raise Refusal(f"`gh pr edit` failed: {r.stderr.strip()}")
-        if args.draft and not existing[0].get("isDraft"):
+        if args.draft and not existing.get("isDraft"):
             gh_run(ctx, "pr", "ready", str(pr.number), "--undo")
     else:
-        title = args.title or git(ctx.repo, "log", "-1", "--format=%s", ctx.sha).strip()
-        create = ["pr", "create", "--base", "main", "--head", ctx.branch, "--title", title,
-                  "--body-file", str(body_path)]
+        create = ["pr", "create", "--base", "main", "--head", ctx.branch, "--title",
+                  plan.title, "--body-file", str(body_path)]
         if args.draft:
             create.append("--draft")
         for label in sorted(labels):
@@ -1900,17 +2104,38 @@ def record_path(sha: str, base: str) -> Path:
     return log_path().parent / "preflight" / f"{sha}-{base}.json"
 
 
-def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool) -> dict:
+def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool,
+                checked: dict | None = None) -> dict:
+    """The pre-flight's record. `checked`, the earlier record whose full checks stood in
+    for step 4 (--merge), gives its step 4 and its notes."""
+    steps = [[s.stage, s.name, s.outcome, s.seconds] for s in rep.steps
+             if s.outcome in ("ok", "FAIL", "skip") and s.stage in ("2", "3", "4")]
+    notes = [[s.name, (s.detail.splitlines() or [""])[0]] for s in rep.steps
+             if s.outcome == "note"]
+    if checked is not None:
+        steps = [s for s in steps if s[0] != "4"] + \
+            [list(s) for s in checked.get("steps", []) if s and s[0] == "4"]
+        notes += [list(n) for n in checked.get("notes", []) if list(n) not in notes]
     return {
-        "sha": ctx.sha, "base": ctx.base, "branch": ctx.branch, "full": full,
+        "sha": ctx.sha, "base": ctx.base, "branch": ctx.branch,
+        "full": full or bool(checked and checked.get("full")),
         "time": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
-        "harness": HARNESS,
-        "steps": [(s.stage, s.name, s.outcome, s.seconds) for s in rep.steps
-                  if s.outcome in ("ok", "FAIL", "skip") and s.stage in ("2", "3", "4")],
-        "notes": [(s.name, (s.detail.splitlines() or [""])[0]) for s in rep.steps
-                  if s.outcome == "note"],
+        "harness": HARNESS, "harness_blob": HARNESS_BLOB,
+        "steps": steps, "notes": notes,
         "protected": pre.protected, "statements": pre.statements,
     }
+
+
+def checks_record(record: dict | None, test_mode: bool) -> dict | None:
+    """The record, if its full checks may stand in for step 4 at the merge: they were run
+    (or skipped by the internal test flag, under it) by origin/main's harness, the one
+    running now. The record is a local file anything run as the user could write, so it
+    never stands in for the secret scan or the guards, and CI runs the same checks."""
+    if record is None or HARNESS_BLOB is None:
+        return None
+    if record.get("harness_blob") != HARNESS_BLOB or not (record.get("full") or test_mode):
+        return None
+    return record
 
 
 def save_record(record: dict) -> None:
@@ -1995,12 +2220,15 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
     commits = int(git(repo, "rev-list", "--count", f"{base}..{head}").strip())
     rep.add("1", "pull request", "ok", f"#{number} \"{view.get('title')}\": {branch} at "
             f"{head[:12]}, {plural(commits, 'commit')} onto origin/main {base[:12]}")
+    check_installed(repo, base, rep)
     return ctx._replace(sha=head, commits=commits, branch=branch), view
 
 
-def gates(ctx: Context, number: int, rep: Report) -> dict:
+def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) -> dict:
     """Not a draft; every required box ticked; the label when a protected path changes;
-    CI green on the head. Each is reported; any failure refuses the merge."""
+    CI green on the head. Each is reported; any failure refuses the merge. The record's
+    notes are shown beside the checklist: a check that failed with origin/main's copies
+    is the only sign that a check changed together with the code it checks."""
     rep.heading("2. The gates")
     view = gh_json(ctx, "pr", "view", str(number), "--json",
                    "isDraft,headRefOid,body,labels,state")
@@ -2019,6 +2247,10 @@ def gates(ctx: Context, number: int, rep: Report) -> dict:
         rep.add("G", "checklist", "FAIL", "\n".join(problems))
     else:
         rep.add("G", "checklist", "ok", "every required box ticked")
+    notes = [n for n in (record or {}).get("notes", []) if len(n) == 2 and n[0] != "pre-flight"]
+    if notes:
+        rep.add("G", "pre-flight notes", "note", f"{plural(len(notes), 'note')} of the "
+                "pre-flight, for the reviews:\n" + "\n".join(f"{n}: {d}" for n, d in notes))
     labels = {item.get("name") for item in view.get("labels") or []}
     if protected and SECURITY_LABEL not in labels:
         rep.add("G", "label", "FAIL", f"protected paths change ({', '.join(protected)}), and "
@@ -2041,7 +2273,7 @@ def revert_advice(ctx: Context) -> str:
         "Nothing has been reverted. To undo the merge, in a pull request of its own:",
         f"    git switch -c {branch} origin/main",
         f"    git revert --no-edit -m 1 {ctx.sha}",
-        f"    python3 scripts/safe_push.py --branch {branch}"])
+        f"    git safe-push --branch {branch}"])
 
 
 def merge(ctx: Context, number: int, rep: Report) -> None:
@@ -2132,7 +2364,8 @@ def preflight_main(repo: Path, args) -> int:
     result, ci, code = "refused", "", 1
     pushed, pr = False, None
     try:
-        ctx = preconditions(repo, args.commit, args.branch, args.dry_run, args.test_mode, rep)
+        ctx = preconditions(repo, args.commit, args.branch, args.dry_run, args.test_mode, rep,
+                            title=args.title)
         sha, base = ctx.sha, ctx.base
         logs = logs_dir(sha)
         pre = check_commit(ctx, rep, logs, args.test_mode)
@@ -2142,16 +2375,21 @@ def preflight_main(repo: Path, args) -> int:
             rep.heading("5. Push")
             where = f"refs/heads/{ctx.branch}, and open or update its pull request" \
                 if ctx.branch else "nowhere: no --branch given"
-            rep.add("5", "git push", "skip", f"dry run: would push {sha[:12]} to {where}")
             if ctx.branch:
-                (logs / "pr-body.md").write_text(generated_body(ctx, pre, record))
+                body = fill_body(ctx, pre, record, Path(args.body_file).read_text()) \
+                    if args.body_file else generated_body(ctx, pre, record)
+                check_body(body)
+                (logs / "pr-body.md").write_text(body)
                 print(f"  the body it would post: {logs / 'pr-body.md'}")
+            rep.add("5", "git push", "skip", f"dry run: would push {sha[:12]} to {where}")
             result, code = "passed every check (dry run, not pushed)", 0
         else:
+            # The pull request is settled, its body scanned, before anything is public.
+            plan = plan_pr(ctx, pre, record, args)
             push_branch(ctx, rep)
             pushed = True
             result = f"pushed to {ctx.branch}"
-            pr = open_pr(ctx, pre, record, args, rep, logs)
+            pr = open_pr(ctx, plan, args, rep, logs)
             result = f"pushed to {ctx.branch}; pull request #{pr.number} " \
                      f"{'opened' if pr.created else 'updated'}"
             ci = watch_checks(ctx, pr, rep)
@@ -2161,8 +2399,6 @@ def preflight_main(repo: Path, args) -> int:
                 code = 3
                 print("\nCI did not pass for the pull request. Nothing is merged, and main is "
                       f"unchanged: fix {ctx.branch}, then run the pre-flight again.")
-    except Reexec as e:
-        return e.code
     except NothingToPush as e:
         sha = base = str(e)
         result, code = "nothing to push", 0
@@ -2203,20 +2439,32 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
     try:
         ctx, view = merge_preconditions(repo, number, test_mode, rep)
         sha, base = ctx.sha, ctx.base
-        gates(ctx, number, rep)
+        earlier = load_record(ctx.sha, ctx.base)
+        checked = checks_record(earlier, test_mode)
+        if checked is None:
+            gates(ctx, number, rep)     # before the long checks, so a draft fails at once
         rep.heading("3. The pre-flight of the head")
-        record = load_record(ctx.sha, ctx.base)
-        if record is None or (not record.get("full") and not test_mode):
+        # The secret scan and the guards run on the head every time: the record is a
+        # local file, and the pre-flight ran the commit's own code (its checks, and Lean
+        # at elaboration), which could have written it. Only the full checks, which CI
+        # runs as well, may be taken from it.
+        if earlier is None:
             rep.add("3", "pre-flight", "note", f"none of {ctx.sha[:12]} against origin/main "
                     f"{ctx.base[:12]}: it runs now")
-            logs = logs_dir(ctx.sha)
-            pre = check_commit(ctx, rep, logs, test_mode)
-            record = make_record(ctx, pre, rep, full=not test_mode)
-            save_record(record)
-            gates(ctx, number, rep)
+        elif checked is None:
+            rep.add("3", "pre-flight", "note", f"the record of {ctx.sha[:12]} against "
+                    f"origin/main {ctx.base[:12]} is not of the full checks by origin/main's "
+                    "harness: they run now")
         else:
             rep.add("3", "pre-flight", "ok", f"{ctx.sha[:12]} checked against origin/main "
-                    f"{ctx.base[:12]} ({record.get('time')})")
+                    f"{ctx.base[:12]} ({checked.get('time')}): the secret scan and the guards "
+                    "run again; the full checks are not repeated")
+        logs = logs_dir(ctx.sha)
+        pre = check_commit(ctx, rep, logs, test_mode, checked=checked)
+        record = make_record(ctx, pre, rep, full=not test_mode and checked is None,
+                             checked=checked)
+        save_record(record)
+        gates(ctx, number, rep, record)
         body = gh_json(ctx, "pr", "view", str(number), "--json", "body").get("body") or ""
         m = BLOCK.search(body)
         if not m or (m.group(1), m.group(2)) != (ctx.sha, ctx.base):
@@ -2247,8 +2495,6 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
             if code:
                 print("\nMerged, but main is not what was checked.\n"
                       + revert_advice(ctx._replace(sha=main_sha)))
-    except Reexec as e:
-        return e.code
     except Refusal as e:
         result = f"refused ({e})" if not merged else f"merged, then {e}"
         code = 1 if not merged else 3
@@ -2265,11 +2511,29 @@ ZERO = "0" * 40
 
 
 def scan_push_main(repo: Path, local: str, remote: str, ref: str) -> int:
-    """The pre-push hook's scan of a push to any branch: the commits it carries that the
-    branch on origin, or else origin/main, lacks, with origin/main's allow-list."""
+    """The pre-push hook's scan of a push to any branch, or of a tag the owner allowed:
+    the commits it carries that the branch on origin, or else origin/main, lacks, with
+    origin/main's allow-list; and an annotated tag's message."""
     print(f"pre-push: the secret scan of the push to {ref}", flush=True)
     rep = Report()
     main = rev_parse(repo, "refs/remotes/origin/main^{commit}")
+    tag_message: list[Finding] = []
+    if git(repo, "cat-file", "-t", local, check=False).strip() == "tag":
+        # An annotated tag: its message is published with it, and its target is scanned.
+        body = git(repo, "cat-file", "tag", local, check=False).split("\n\n", 1)
+        tag_message = scan_block(f"tag {ref.removeprefix('refs/tags/')} message",
+                                 list(enumerate((body[1] if len(body) > 1 else "")
+                                                .splitlines(), 1)))
+    commit = rev_parse(repo, f"{local}^{{commit}}")
+    if commit is None:
+        print(f"pre-push: refusing the push to {ref}: {local[:12]} is not a commit, nor a tag "
+              "of one", file=sys.stderr)
+        return 1
+    local = commit
+    if tag_message:
+        print(f"pre-push: refusing the push to {ref}: its message holds what the secret scan "
+              "refuses: " + "; ".join(f.shown() for f in tag_message), file=sys.stderr)
+        return 1
     base = None
     if remote.strip("0") and rev_parse(repo, f"{remote}^{{commit}}"):
         base = remote if git_ok(repo, "merge-base", "--is-ancestor", remote, local) else \
@@ -2288,10 +2552,11 @@ REFUSE_DIRECT = """REFUSED: safe_push.py no longer pushes to main: main changes 
 request's merge commit (docs/WORKFLOW.md, "Landing work: pull requests"). Open one with
 the pre-flight, and merge it when its gates pass:
 
-    python3 scripts/safe_push.py --branch <name> [--title T] [--body-file F] [--draft]
-    python3 scripts/safe_push.py --merge <pr-number>
+    git safe-push --branch <name> [--title T] [--body-file F] [--draft]
+    git safe-push --merge <pr-number>
 
-or check the commit alone, pushing nothing: python3 scripts/safe_push.py --dry-run"""
+or check the commit alone, pushing nothing: git safe-push --dry-run
+(`git safe-push` runs origin/main's copy of this script: sh scripts/install_hooks.sh)"""
 
 
 def main(argv=None) -> int:

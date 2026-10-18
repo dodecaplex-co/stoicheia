@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for scripts/safe_push.py, on a throwaway clone with a bare origin.
 
-    python3 scripts/test_safe_push.py        # three minutes or so; no Lean, no network
+    python3 scripts/test_safe_push.py        # five minutes or so; no Lean, no network
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
 The clone is made with `git clone --local` of this repository into a temporary
@@ -29,6 +29,17 @@ one commit and runs safe_push.py against that origin:
   interruption after the push is "pushed; CI not followed", scratchpad paths and
   machine-made identities are refused, .gitattributes cannot hide a file, and a broad
   allow-list entry is refused;
+- the second review's notes: an interruption (Ctrl-C, or SIGTERM to the process alone)
+  after the push of a run handed over to origin/main's harness is still exit 3; the
+  launcher (`git safe-push`) runs origin/main's copy even when the checkout's never hands
+  over, and STOICHEIA_HARNESS is checked; UTF-16 text after 8 KB of prose or binary junk
+  is found; an allow-list entry excuses its own value alone, in a binary file too, and
+  never a commit message; --merge runs the scan and the guards again whatever the record
+  says, and shows its notes; a fork's pull request of the same name is left alone; the
+  title, the branch name and an open pull request's body are scanned before the push;
+  lakefile.lean and .gitignore are protected; a recased source comment names no leaf; a
+  hand edit to PROGRAM.md is not a generated change; an allowed tag is still scanned;
+  and an installed hook that differs from origin/main's is noted;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -58,6 +69,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -82,7 +94,7 @@ BRANCH = "test-pr"
 DECISIONS = "docs/briefs/0002-decisions.md"
 # The files of the harness under test, committed on top of HEAD as origin's main.
 HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_push.py",
-                 "scripts/hooks/pre-push", "scripts/install_hooks.sh",
+                 "scripts/hooks/pre-push", "scripts/hooks/safe-push", "scripts/install_hooks.sh",
                  "scripts/safe_push_allow.toml", ".github/pull_request_template.md")
 
 
@@ -95,8 +107,10 @@ def git(cwd, *args, env=None, check=True) -> str:
 
 def clean_env() -> dict:
     env = dict(os.environ, STOICHEIA_PUSH_LOG=str(LOG), STOICHEIA_TEST_GH=str(GH),
-               STOICHEIA_FAKE_GH_STATE=str(GH_STATE), STOICHEIA_FAKE_GH_ORIGIN=str(ORIGIN))
-    for name in ("STOICHEIA_SAFE_PUSH", "STOICHEIA_HARNESS", "STOICHEIA_TAG_PUSH"):
+               STOICHEIA_FAKE_GH_STATE=str(GH_STATE), STOICHEIA_FAKE_GH_ORIGIN=str(ORIGIN),
+               STOICHEIA_PYTHON=sys.executable)
+    for name in ("STOICHEIA_SAFE_PUSH", "STOICHEIA_HARNESS", "STOICHEIA_TAG_PUSH",
+                 "STOICHEIA_FAKE_GH_KILL"):
         env.pop(name, None)
     return env
 
@@ -118,7 +132,7 @@ PASSING = [{"name": n, "bucket": "pass", "state": "SUCCESS", "workflow": "CI"}
 # A stand-in for gh: pull requests in a JSON file; checks as each test sets them; a merge
 # made in the bare origin with a merge commit, as GitHub makes it.
 FAKE_GH = r'''#!@PYTHON@
-import json, os, subprocess, sys
+import json, os, subprocess, sys, time
 
 STATE = os.environ["STOICHEIA_FAKE_GH_STATE"]
 ORIGIN = os.environ["STOICHEIA_FAKE_GH_ORIGIN"]
@@ -149,9 +163,30 @@ def opts(args, name):
 
 
 def fields(pr, wanted):
-    full = dict(pr, headRefOid=head_of(pr["headRefName"]) or pr.get("mergedHead", ""),
-                labels=[{"name": n} for n in pr["labels"]], isCrossRepository=False)
+    # A fork's pull request has a head of its own, never origin's branch of that name.
+    fork = pr.get("isCrossRepository", False)
+    head = pr.get("forkHead", "") if fork else \
+        (head_of(pr["headRefName"]) or pr.get("mergedHead", ""))
+    full = dict(pr, headRefOid=head, labels=[{"name": n} for n in pr["labels"]],
+                isCrossRepository=fork,
+                headRepositoryOwner=pr.get("headRepositoryOwner", {"login": "test"}))
     return {k: full.get(k) for k in wanted.split(",")}
+
+
+def kill_on_watch():
+    """STOICHEIA_FAKE_GH_KILL=<pid file>:<signal>: while following CI, signal the
+    process the pid file names, as a Ctrl-C or a supervisor's timeout would, and go on
+    watching until killed."""
+    spec = os.environ.get("STOICHEIA_FAKE_GH_KILL")
+    if not spec:
+        return
+    pidfile, signum = spec.rsplit(":", 1)
+    for _ in range(100):
+        if os.path.exists(pidfile) and open(pidfile).read().strip():
+            break
+        time.sleep(0.1)
+    os.kill(int(open(pidfile).read()), int(signum))
+    time.sleep(60)
 
 
 def main(argv):
@@ -219,6 +254,7 @@ def main(argv):
         sha = head_of(pr["headRefName"])
         checks = s["checks"].get(sha, s["checks"]["*"])
         if "--watch" in args:
+            kill_on_watch()
             return 0 if all(c["bucket"] == "pass" for c in checks) else 1
         print(json.dumps(checks))
         return 0
@@ -484,8 +520,10 @@ class Secrets(Clone):
             "docs/reading.md": self.text("docs/reading.md") + "\nA line.\n"})
         self.assertRefused(self.safe_push(), "message", "private path")
 
+    # The value is pinned by its SHA-256: written here, it would be flagged in turn.
     ALLOW = ('[[allow]]\npath = "docs/notes.md"\nmatch = "api_token"\n'
              'rule = "key, token or secret"\n'
+             f'sha256 = "{hashlib.sha256(TOKEN.encode()).hexdigest()}"\n'
              'reason = "A fixture for the test, not a real token."\n')
 
     def test_allow_list_with_a_reason(self):
@@ -604,6 +642,14 @@ class Heath(Clone):
                                  "origin/main's copy")
         self.assertEqual(self.guard(out, "heath/"), "FAIL", out)
 
+    def test_source_comment_recased_does_not_name_a_leaf(self):
+        # Review note 10: the source comment is the file's first, known by its place; with
+        # "Source:" written "source:", it still lists the leaves and checks none.
+        text = self.replaced("heath/I/01.md", *self.WORD).replace("<!-- Source:", "<!-- source:")
+        self.commit("Edit a Heath word, and recase the source comment", {"heath/I/01.md": text})
+        out = self.assertRefused(self.safe_push(), "no comment in the change naming the scan leaf")
+        self.assertEqual(self.guard(out, "heath/"), "FAIL", out)
+
 
 class Directories(Clone):
     def test_directory_deleted_without_a_decision_refused(self):
@@ -632,7 +678,7 @@ class Hook(Clone):
         sha = self.commit("A commit", {"docs/reading.md": self.text("docs/reading.md") + "\nX.\n"})
         r = self.push(f"{sha}:refs/heads/main")
         self.assertNotEqual(r.returncode, 0)
-        self.assertIn("safe_push.py --branch", r.stderr)
+        self.assertIn("git safe-push --branch", r.stderr)
         r = self.push(f"{sha}:refs/heads/main", STOICHEIA_SAFE_PUSH=sha)
         self.assertNotEqual(r.returncode, 0)
         self.assertIn("refusing a push to main", r.stderr)
@@ -1102,6 +1148,27 @@ class HookRefspecs(Edge):
         git(ORIGIN, "update-ref", "-d", "refs/tags/stoicheia-test-light")
         r = self.push("origin", "stoicheia-test-light", STOICHEIA_TAG_PUSH="stoicheia-test-light")
         self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("the secret scan of the push to refs/tags/stoicheia-test-light",
+                      r.stdout + r.stderr)
+
+    def test_allowed_tag_still_scanned(self):
+        # Review note 12: the owner's OK for a tag does not publish an unscanned commit, nor
+        # an annotated tag's message holding a private path.
+        self.commit("Plant a token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        self.tag("stoicheia-test-secret")
+        r = self.push("origin", "refs/tags/stoicheia-test-secret",
+                      STOICHEIA_TAG_PUSH="stoicheia-test-secret")
+        self.assertNotEqual(r.returncode, 0, r.stderr)
+        self.assertIn("pre-push: refusing the push to refs/tags/stoicheia-test-secret", r.stderr)
+        self.assertNotIn(TOKEN, r.stdout + r.stderr)
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        self.good_commit()
+        self.tag("stoicheia-test-message", "-a", "-m", f"Notes in {PRIVATE_DIR}")
+        r = self.push("origin", "refs/tags/stoicheia-test-message",
+                      STOICHEIA_TAG_PUSH="stoicheia-test-message")
+        self.assertNotEqual(r.returncode, 0, r.stderr)
+        self.assertIn("its message holds what the secret scan refuses", r.stderr)
+        self.assertEqual(git(ORIGIN, "tag", "--list", "stoicheia-test-*"), "")
 
 
 class DryRun(Edge):
@@ -1253,6 +1320,62 @@ class PullRequests(Edge):
         self.assertIn("has commits", out)
         self.assertEqual(self.origin_branch(), theirs, "the branch was forced")
 
+    def test_a_forks_pull_request_of_the_same_name_is_left_alone(self):
+        # Review note 7: `gh pr list --head` matches a fork's branch of the same name; the
+        # pre-flight opens a pull request of its own, and never edits the stranger's.
+        sha = self.good_commit()
+        stranger = {"number": 1, "title": "A stranger's", "body": "A stranger's body.\n",
+                    "headRefName": BRANCH, "baseRefName": "main", "isDraft": False,
+                    "labels": [], "state": "OPEN", "isCrossRepository": True,
+                    "headRepositoryOwner": {"login": "stranger"}, "forkHead": "f" * 40,
+                    "url": "https://github.invalid/test/stoicheia/pull/1"}
+        self.set_gh(lambda s: s["prs"].append(stranger))
+        r = self.safe_push()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertIn("#2 opened", out)
+        theirs, ours = self.gh_state()["prs"]
+        self.assertEqual((theirs["body"], theirs["labels"]), (stranger["body"], []))
+        self.assertIn(f"sha={sha}", ours["body"])
+        edits = [c for c in self.gh_state()["calls"] if c[:2] == ["pr", "edit"]]
+        self.assertEqual(edits, [], "the stranger's pull request was edited")
+
+    def test_public_names_scanned_before_the_push(self):
+        # Review note 9: the title is posted, and the branch name pushed as a ref.
+        self.good_commit()
+        self.assertRefused(self.safe_push("--title", f"Notes from {PRIVATE_DIR}"),
+                           "a public name", "the title")
+        name = "secret" + "s2026-notes"
+        out = self.assertRefused(self.safe_push("--branch", name), "the branch name")
+        self.assertIsNone(self.origin_branch(name), out)
+        self.assertEqual(self.gh_state()["calls"], [])
+
+    def test_open_pull_requests_body_scanned_before_the_push(self):
+        first = self.good_commit()
+        self.assertEqual(self.safe_push().returncode, 0)
+        self.set_gh(lambda s: s["prs"][0].update(body=s["prs"][0]["body"]
+                                                 + f"\nSee {PRIVATE_DIR}.\n"))
+        self.good_commit("A second line, the fix.")
+        r = self.safe_push()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("the pull request's body holds what the secret scan refuses", out)
+        self.assertEqual(self.origin_branch(), first, "the fix was pushed before the body "
+                         "was checked")
+
+    def test_hand_edit_to_program_md_is_not_a_generated_change(self):
+        # Review note 11: README.md and PROGRAM.md are generated only between markers.
+        path = "docs/PROGRAM.md"
+        self.commit("A lesson, by hand", {path: self.replaced(
+            path, "## 6. Cost and time", "- **A lesson for the test.**\n\n## 6. Cost and time")})
+        r = self.safe_push("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        body = Path(re.search(r"the body it would post: (\S+)", out).group(1)).read_text()
+        generated = body[body.index("## Generated files"):body.index("## Needs the owner's OK")]
+        self.assertIn("None.", generated)
+        self.assertNotIn("PROGRAM.md", generated)
+
     def test_ci_failing_after_the_push(self):
         sha = self.good_commit()
         failing = [dict(c, bucket="fail", state="FAILURE") if c["name"] == "negative" else c
@@ -1337,6 +1460,47 @@ class Merge(Edge):
         self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), newer)
         self.assertIn(f"sha={newer}", self.gh_state()["prs"][0]["body"])
 
+    def test_merge_runs_the_scan_and_the_guards_again(self):
+        # Review note 6: the pre-flight's record stands in for the full checks alone.
+        self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        out = self.merge("--dry-run").stdout
+        self.assertIn("the full checks are not repeated", out)
+        for name in ("secrets", "statements", "protected paths", "heath/", "review records"):
+            self.assertEqual(self.guard(out, name), "ok", f"{name}:\n{out}")
+
+    def test_forged_record_does_not_skip_the_scan_or_the_guards(self):
+        # A record in the local store, as code the pre-flight ran could write it, for a
+        # head pushed by hand that plants a token and edits Heath with no leaf named.
+        self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        bad = self.commit("A head pushed by hand", {
+            "docs/notes.md": f"api_token = \"{TOKEN}\"\n",
+            "heath/I/01.md": self.replaced("heath/I/01.md", *Heath.WORD)})
+        git(WORK, "push", "--quiet", "--no-verify", "origin", f"{bad}:refs/heads/{BRANCH}")
+        harness = safe_push.blob_id(SAFE_PUSH.read_bytes())
+        record = {"sha": bad, "base": BASE, "branch": BRANCH, "full": True,
+                  "time": "forged", "harness": "origin/main's", "harness_blob": harness,
+                  "steps": [["2", "secrets", "ok", 0.1], ["4", "lake build", "ok", 1.0]],
+                  "notes": [], "protected": [], "statements": []}
+        path = LOG.parent / "preflight" / f"{bad}-{BASE}.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(record))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "secrets"), "FAIL", out)
+        self.assertEqual(self.origin_main(), BASE)
+        # A record of another harness stands in for nothing: the full checks run again.
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        record.update(harness_blob="0" * 40, sha=self.good_commit("Another line."))
+        git(WORK, "push", "--quiet", "--no-verify", "origin",
+            f"+{record['sha']}:refs/heads/{BRANCH}")
+        (LOG.parent / "preflight" / f"{record['sha']}-{BASE}.json").write_text(json.dumps(record))
+        r = self.merge("--dry-run")
+        self.assertIn("is not of the full checks by origin/main's harness", r.stdout)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
     def test_bad_new_head_refused_at_the_merge(self):
         self.opened()
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
@@ -1384,7 +1548,8 @@ class ProtectedPaths(Edge):
 
     def test_protected_change_without_a_decision_refused(self):
         for path in ("scripts/check_style.py", ".github/workflows/ci.yml",
-                     "tests/model/MODEL.md", "review/terms.toml", ".gitattributes"):
+                     "tests/model/MODEL.md", "review/terms.toml", ".gitattributes",
+                     ".gitignore", "lakefile.lean"):
             with self.subTest(path=path):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 old = self.text(path) if (WORK / path).exists() else ""
@@ -1427,6 +1592,14 @@ class ProtectedPaths(Edge):
         self.assertIn("security-review", pr["labels"])
         self.assertIn("review records (origin/main's checks): check_fidelity.py fails", pr["body"])
         self.assertEqual(len(git(WORK, "worktree", "list").splitlines()), 1)
+        # Review note 11: --merge shows the notes beside the checklist, for the reviews.
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        r = self.safe_push("--merge", "1", "--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "pre-flight notes"), "note", out)
+        notes = out[out.index("pre-flight notes"):]
+        self.assertIn("review records (origin/main's checks): check_fidelity.py fails", notes)
 
     def test_harness_runs_from_origin_main(self):
         # The commit empties its own copy of the secret scan and plants a token; run from
@@ -1451,8 +1624,15 @@ class ProtectedPaths(Edge):
                      ".github/pull_request_template.md", "Certificate/axioms.lock",
                      "Certificate/Facts.lean", "tests/certificate_expectations.json",
                      "review/SCHEMA.md", "review/terms.toml", ".gitattributes",
-                     "lakefile.toml", "lean-toolchain"):
+                     ".gitignore", "lakefile.toml", "lakefile.lean", "lean-toolchain",
+                     "lake-manifest.json", "scripts/hooks/safe-push"):
             self.assertTrue(safe_push.is_protected(path), path)
+        # The guides and the template name the same paths.
+        workflow = (SOURCE / "docs" / "WORKFLOW.md").read_text()
+        template = (SOURCE / ".github" / "pull_request_template.md").read_text()
+        for name in ("lakefile.lean", ".gitignore"):
+            self.assertIn(f"`{name}`", workflow, name)
+            self.assertIn(name, template, name)
         for path in ("docs/WORKFLOW.md", "review/I/01.toml", "Elements/BookI/Prop01.lean",
                      "heath/I/01.md", "scriptsx/a.py", "book/I/01.md"):
             self.assertFalse(safe_push.is_protected(path), path)
@@ -1483,6 +1663,88 @@ class InterruptedAfterThePush(Edge):
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 3, out)
         self.assertIn("pushed; CI not followed (RuntimeError: gh went away)", out)
+
+
+class HandOver(Edge):
+    """Review notes 2, 3 and 6: origin/main's harness replaces a copy that differs, so an
+    interruption after its push is still exit 3; the launcher runs origin/main's copy
+    whatever the checkout holds; STOICHEIA_HARNESS is checked; the installed hook and
+    launcher are compared with origin/main's."""
+
+    def differing_copy(self, change=None) -> Path:
+        """A copy of the harness outside the clone that differs from origin/main's."""
+        where = Path(tempfile.mkdtemp(prefix="differing-", dir=TMP))
+        text = SAFE_PUSH.read_text()
+        text = change(text) if change else text + "\n# A copy that differs.\n"
+        (where / "safe_push.py").write_text(text)
+        shutil.copy(HERE / "heath.py", where / "heath.py")
+        return where / "safe_push.py"
+
+    def interrupted(self, signum: int) -> None:
+        sha = self.good_commit()
+        pidfile = TMP / f"safe-push-{signum}.pid"
+        pidfile.unlink(missing_ok=True)
+        env = clean_env()
+        env["STOICHEIA_FAKE_GH_KILL"] = f"{pidfile}:{signum}"
+        proc = subprocess.Popen(
+            [sys.executable, str(self.differing_copy()), "--_test-skip-checks", "--branch",
+             BRANCH], cwd=WORK, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            text=True, preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL))
+        pidfile.write_text(str(proc.pid))
+        out, _ = proc.communicate(timeout=300)
+        self.assertIn("running origin/main's in its place", out)
+        self.assertEqual(proc.returncode, 3, out)
+        self.assertIn("Pushed; CI not followed: interrupted", out)
+        self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+        self.assertEqual(self.origin_branch(), sha)
+        self.assertEqual(len(git(WORK, "worktree", "list").splitlines()), 1)
+
+    def test_ctrl_c_after_the_push_of_a_handed_over_run(self):
+        self.interrupted(signal.SIGINT)
+
+    def test_sigterm_after_the_push_of_a_handed_over_run(self):
+        # A supervisor's timeout signals the process it started, and nothing else.
+        self.interrupted(signal.SIGTERM)
+
+    def test_launcher_runs_origin_mains_copy(self):
+        # The checkout's copy never hands over, and does not scan; a token is planted. The
+        # launcher runs origin/main's copy, which refuses it.
+        lame = self.replaced("scripts/safe_push.py", "def harness(repo, base: str, rep: Report)"
+                             " -> None:\n", "def harness(repo, base, rep):\n    return None\n\n\n"
+                             "def _unused(repo, base: str, rep: Report) -> None:\n")
+        lame = lame.replace("def secret_scan(", "def secret_scan(*a, **k):\n    return None\n\n\n"
+                            "def _unused_scan(", 1)
+        self.commit("A harness that judges itself, and a token", {
+            "scripts/safe_push.py": lame, "docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
+        r = subprocess.run(["git", "safe-push", "--_test-skip-checks", "--branch", BRANCH],
+                           cwd=WORK / "docs", env=clean_env(), capture_output=True, text=True)
+        out = self.assertRefused(r, "secret scan")
+        self.assertEqual(self.guard(out, "harness"), "ok", out)
+        self.assertNotIn("running origin/main's in its place", out)
+
+    def test_install_hooks_installs_the_launcher(self):
+        common = Path(git(WORK, "rev-parse", "--path-format=absolute",
+                          "--git-common-dir").strip())
+        launcher = common / "stoicheia" / "safe-push"
+        self.assertEqual(launcher.read_bytes(), (HERE / "hooks" / "safe-push").read_bytes())
+        self.assertIn("stoicheia/safe-push", git(WORK, "config", "--get", "alias.safe-push"))
+
+    def test_harness_variable_checked(self):
+        self.good_commit()
+        env = clean_env()
+        env["STOICHEIA_HARNESS"] = "origin/main"
+        r = subprocess.run([sys.executable, str(self.differing_copy()), "--_test-skip-checks",
+                            "--branch", BRANCH], cwd=WORK, env=env, capture_output=True,
+                           text=True)
+        self.assertRefused(r, "STOICHEIA_HARNESS says this is origin/main's harness")
+
+    def test_installed_hook_that_differs_is_noted(self):
+        hook = hooks_dir() / "pre-push"
+        self.swap_hook(hook.read_text() + "\n# STOICHEIA_SAFE_PUSH, and something else\n")
+        self.good_commit()
+        out = self.safe_push("--dry-run").stdout
+        self.assertEqual(self.guard(out, "pre-push hook"), "note", out)
+        self.assertIn("differs from origin/main's scripts/hooks/pre-push", out)
 
 
 class PrivatePaths(Edge):
@@ -1528,6 +1790,21 @@ class HiddenFiles(Edge):
         out = self.assertRefused(self.safe_push(), "secret scan")
         self.assertFlagged(out, "docs/nul.md", "docs/wide.md")
 
+    def test_utf16_after_8_kb_of_prose_or_binary_junk_refused(self):
+        # Review note 4: a NUL anywhere makes a file binary, and UTF-16 text is read
+        # wherever it stands, not only at the start.
+        prose = ("An ordinary line of prose, of the kind a guide is made of.\n" * 160).encode()
+        self.assertGreater(len(prose), 8000)
+        wide = f"token = {GH_TOKEN}\n".encode("utf-16-le")
+        junk = bytes(range(256)) * 4
+        self.commit("Two files with UTF-16 text late in them", {
+            "docs/early.md": prose, "docs/late.md": prose + wide,
+            "docs/junk.bin": junk + f"api_token = \"{TOKEN}\"\n".encode("utf-16-be")})
+        out = self.assertRefused(self.safe_push(), "secret scan")
+        self.assertFlagged(out, "docs/late.md", "docs/junk.bin")
+        self.assertFalse(self.flagged(out, "docs/early.md"), out)
+        self.assertNotIn(GH_TOKEN, out)
+
 
 class AllowList(Edge):
     """(7) An allow-list entry is narrow: one file, one rule, a long enough match, a reason."""
@@ -1538,7 +1815,11 @@ class AllowList(Edge):
                                (narrow.replace('rule = "key, token or secret"\n', ""),
                                 "names no rule"),
                                (narrow.replace('match = "api_token"', 'match = "api"'),
-                                "match of at least 8")):
+                                "match of at least 8"),
+                               (narrow.replace('"docs/notes.md"', '"commit 0123456789ab message"'),
+                                "cannot be allowed"),
+                               (narrow.replace('"docs/notes.md"', '"the pull request\'s body"'),
+                                "cannot be allowed")):
             with self.subTest(problem=problem):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 git(ORIGIN, "update-ref", "refs/heads/main", BASE)
@@ -1550,6 +1831,41 @@ class AllowList(Edge):
                 self.assertIn("broad or incomplete entry", out)
                 self.assertIn(problem, out)
                 self.assertEqual(self.origin_main(), main)
+
+    def test_an_entry_excuses_its_own_value_alone(self):
+        # Review note 5: an entry pins the value it excuses; another token on a line like
+        # it, added later, is still refused.
+        self.new_base("Allow a fixture", {"scripts/safe_push_allow.toml": Secrets.ALLOW})
+        other = base64.b64encode(hashlib.sha256(b"another planted token").digest()).decode()
+        self.commit("The allowed line, and another like it", {
+            "docs/notes.md": f"api_token = \"{TOKEN}\"\napi_token = \"{other}\"\n"})
+        r = self.safe_push("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        fail = out[out.index("FAIL  secrets:"):out.index("REFUSED")]
+        self.assertIn("docs/notes.md:2: key, token or secret", fail)
+        self.assertNotIn("docs/notes.md:1:", fail)
+        self.assertIn("A fixture for the test", out)       # line 1, allowed
+
+    def test_a_binary_files_entry_is_as_narrow(self):
+        # In a binary file a finding's text is a window around the hit, not the whole
+        # file: eight bytes from elsewhere in it excuse nothing, and the report prints
+        # no more than the window.
+        far = b"FARAWAY-WORDS-" * 20
+        blob = far + b"\0" + b"x" * 100 + b"\0\x01\x02" + GH_TOKEN.encode() + b"\0\x03" \
+            + b"PADDING!" * 20
+        allow = ('[[allow]]\npath = "docs/blob.bin"\nmatch = "FARAWAY-WORDS-"\n'
+                 'rule = "GitHub token"\n'
+                 f'sha256 = "{hashlib.sha256(b"something else").hexdigest()}"\n'
+                 'reason = "A fixture for the test."\n')
+        self.new_base("Allow a fixture in a binary file", {"scripts/safe_push_allow.toml": allow})
+        self.commit("A binary file holding a token", {"docs/blob.bin": blob})
+        r = self.safe_push("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertTrue(self.flagged(out, "docs/blob.bin"), out)
+        self.assertNotIn("FARAWAY", out)
+        self.assertNotIn(GH_TOKEN, out)
 
     def test_the_committed_allow_list_is_narrow(self):
         text = (SOURCE / "scripts" / "safe_push_allow.toml").read_text()
@@ -1649,6 +1965,34 @@ class Units(unittest.TestCase):
                                                                         path.read_bytes())],
                              [], path)
 
+    def test_allow_list_pins_the_value(self):
+        (f,) = safe_push.scan_text("docs/x.md", 3, f"example_token: {HEXKEY}")
+        other = hashlib.sha256(b"another").hexdigest()
+        (g,) = safe_push.scan_text("docs/x.md", 4, f"example_token: {other}")
+
+        def entry(match, digest=None):
+            return [safe_push.Allow("docs/x.md", match, "key, token or secret", "A fixture.",
+                                    digest)]
+        self.assertIsNone(safe_push.allowed(f, entry("example_token:")))
+        self.assertTrue(safe_push.allowed(f, entry(f"example_token: {HEXKEY}")))
+        self.assertIsNone(safe_push.allowed(g, entry(f"example_token: {HEXKEY}")))
+        pinned = entry("example_token:", hashlib.sha256(HEXKEY.encode()).hexdigest())
+        self.assertTrue(safe_push.allowed(f, pinned))
+        self.assertIsNone(safe_push.allowed(g, pinned))
+        # A commit message is never allowed, whatever the entry says.
+        message = f._replace(path="commit 0123456789ab message")
+        self.assertIsNone(safe_push.allowed(message, [safe_push.Allow(
+            message.path, f"example_token: {HEXKEY}", "key, token or secret", "x", None)]))
+
+    def test_binary_findings_carry_a_window(self):
+        data = b"A" * 500 + b"\0" + GH_TOKEN.encode() + b"\0" + b"B" * 500
+        found = [f for f in safe_push.scan_binary("x.bin", data) if f.rule == "GitHub token"]
+        self.assertTrue(found)
+        for f in found:
+            self.assertLessEqual(len(f.text), len(GH_TOKEN) + 2 * safe_push.WINDOW)
+            self.assertEqual(safe_push.flagged_value(f), GH_TOKEN)
+            self.assertNotIn(GH_TOKEN, f.shown())
+
     def test_secret_files(self):
         for path in (".env", "deploy/.env.local", "keys/server.key", "a/b.pem", "id_ed25519"):
             self.assertTrue(safe_push.scan_path(path), path)
@@ -1676,7 +2020,7 @@ class Units(unittest.TestCase):
         ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 3, "", None, {})
         advice = safe_push.revert_advice(ctx)
         self.assertIn(f"git revert --no-edit -m 1 {'a' * 40}", advice)
-        self.assertIn("python3 scripts/safe_push.py --branch", advice)
+        self.assertIn("git safe-push --branch", advice)
         self.assertEqual(safe_push.github_slug("https://github.com/jackChallis/stoicheia.git"),
                          "jackChallis/stoicheia")
         self.assertEqual(safe_push.github_slug("git@github.com:jackChallis/stoicheia.git"),

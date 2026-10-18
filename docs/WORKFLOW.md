@@ -389,27 +389,41 @@ request carries one label for its kind: a stage of brief 0005 (`stage-2` to `sta
 `security-review` as well. A pull request is a draft until its reviews are done.
 
 ```sh
-python3 scripts/safe_push.py --branch <name> --dry-run          # every check; nothing pushed
-python3 scripts/safe_push.py --branch <name> --draft --label <l> # the pre-flight, the push, the pull request
-python3 scripts/safe_push.py --branch <name>                    # after a fix: again, on the new head
-gh pr ready <n>                                                 # when the reviews are done
-python3 scripts/safe_push.py --merge <n> --dry-run              # the gates, and no merge
-python3 scripts/safe_push.py --merge <n>                        # the gates, then a merge commit
+sh scripts/install_hooks.sh                        # once per clone, from a checkout of origin/main
+git safe-push --branch <name> --dry-run            # every check; nothing pushed
+git safe-push --branch <name> --draft --label <l>  # the pre-flight, the push, the pull request
+git safe-push --branch <name>                      # after a fix: again, on the new head
+gh pr ready <n>                                    # when the reviews are done
+git safe-push --merge <n> --dry-run                # the gates, and no merge
+git safe-push --merge <n>                          # the gates, then a merge commit
 ```
+
+`git safe-push` is a launcher that `install_hooks.sh` puts outside the tracked tree
+(`scripts/hooks/safe-push`, copied to `.git/stoicheia/safe-push`, with the alias): it
+fetches origin and runs origin/main's `scripts/safe_push.py`, whatever the checkout holds,
+so a branch cannot judge itself. `python3 scripts/safe_push.py` from a checkout runs that
+checkout's copy, which hands over to origin/main's when it differs; that protection holds
+only while the copy run is one that hands over, so the launcher is the way in. While
+origin/main's copy predates running from origin/main, the launcher runs the checkout's,
+and says so.
 
 1. **A branch.** The change is committed on a branch from origin/main. When main moves,
    origin/main is merged into the branch, never rebased onto: review records stamp the
    branch's commits, and a rebase would orphan the stamps.
-2. **The pre-flight.** `safe_push.py --branch <name>` checks the exact commit (HEAD, or
+2. **The pre-flight.** `git safe-push --branch <name>` checks the exact commit (HEAD, or
    `--commit <sha>`), then pushes it to that branch, never to main and never forced, and
    opens the pull request onto main, or updates the open one. It reads the commit alone,
    through git and a fresh temporary worktree, so a dirty working tree makes no
-   difference; and it runs origin/main's copy of itself, so that a branch cannot weaken
-   the harness that judges it. It stops, saying why, at the first step that fails:
+   difference; and it is origin/main's copy of the harness (by the launcher, or by a
+   checkout's copy handing over, which replaces its own process with origin/main's), so
+   that a branch cannot weaken the harness that judges it. It stops, saying why, at the
+   first step that fails:
    1. *Preconditions.* The commit exists; `git fetch origin`; origin/main is an ancestor
       of the commit, so that the merge commit holds exactly the tree checked; the
-      branch, if origin has it, is an ancestor of the commit too; the branch is not main.
-      No tag or release is made.
+      branch, if origin has it, is an ancestor of the commit too; the branch is not main;
+      the branch name and the title, which are public, hold nothing the secret scan
+      refuses. No tag or release is made. The installed hook and launcher are compared
+      with origin/main's copies, and a difference is noted.
    2. *Secrets.* Every line, file and commit message the push adds is scanned for private
       keys, API-key-like tokens, Authorization headers with values, `.env` and key
       files, and the owner's private paths, an agent's scratchpad paths among them; each
@@ -419,11 +433,13 @@ python3 scripts/safe_push.py --merge <n>                        # the gates, the
       renamed, is still found). Lines are read alone and run together, so a value split
       over two lines is found; base64 that decodes to text is read through; a symlink may
       not point out of the repository. Whether a file is text or binary is read from its
-      bytes, never from `.gitattributes`, and a binary file's printable runs, or its text
-      if it is UTF-16, are read as lines. A false positive goes in
-      `scripts/safe_push_allow.toml` on origin/main, in a pull request of its own: one
-      file, one rule and a part of the line to an entry, with its reason. A broad entry is
-      refused, and an entry added by the push itself does not count.
+      bytes, never from `.gitattributes`: a NUL anywhere makes it binary, and a binary
+      file is read whole, its printable runs and its runs of UTF-16 text, wherever they
+      stand, as lines. A false positive goes in `scripts/safe_push_allow.toml` on
+      origin/main, in a pull request of its own: one file, one rule, a part of the line,
+      and the flagged value itself, pinned by its SHA-256, to an entry, with its reason;
+      so the entry excuses that value alone. A broad entry is refused, a commit's message
+      or identity cannot be allowed, and an entry added by the push itself does not count.
    3. *Invariant guards,* against origin/main, in the temporary worktree:
       - no statement changed (facts.json's `statement`, and the Lean source of the
         theorem, its porism and its companions, to its own `:=`, whitespace aside) unless
@@ -448,29 +464,39 @@ python3 scripts/safe_push.py --merge <n>                        # the gates, the
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass, and a check that fails with origin/main's copies is noted
       in the pull request for the security review.
-   5. *The push and the pull request.* The branch is pushed; the pull request is opened
-      with `gh pr create --base main` (or `gh pr edit` of the open one), with the labels
-      given and `security-review` when a protected path changes. Its body is
-      `--body-file`, or is generated from the
+   5. *The push and the pull request.* First the pull request is settled: our open one
+      for the branch (a fork's pull request of the same name is never touched), or a new
+      one. Its body is `--body-file`, or is generated from the
       [template](../.github/pull_request_template.md): the commits, the statements
       changed, the review records touched and re-stamped, the protected paths, the
-      generated files, and the pre-flight's summary, every step with its outcome and time,
+      generated files (README.md and PROGRAM.md only when the text between their markers
+      changes), and the pre-flight's summary, every step with its outcome and time,
       between its markers. On an update without `--body-file`, only that summary is
-      replaced, so the coordinator's words stay. Then its CI is followed to its
-      conclusion. An interruption, or a failure to follow CI, after the push is reported
-      as "pushed; CI not followed", never as a refusal.
+      replaced, so the coordinator's words stay. The body is scanned before anything is
+      pushed. Then the branch is pushed, and the pull request opened with
+      `gh pr create --base main` (or `gh pr edit` of the open one), with the labels
+      given and `security-review` when a protected path changes. Then its CI is followed
+      to its conclusion. An interruption, or a failure to follow CI, after the push is
+      reported as "pushed; CI not followed", exit 3, never as a refusal.
 3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
    always; `/security-review` when a protected path changes; `/no-mistakes` before the
-   merge. Each blocking or material finding (section 9) is resolved, and the pull request
-   says how. A fix is a new commit on the branch, and the pre-flight runs again.
-4. **The merge.** `safe_push.py --merge <n>` merges only when the pull request's head is a
-   commit the pre-flight checked against the current origin/main (if not, the
-   pre-flight's checks run on it then, and its summary in the body is replaced); CI on
-   that head is green (`check`, `model` and `negative` pass, and nothing fails or is still
-   running); no box marked **Required** in its checklist is unticked, nor one marked
-   **Required if protected** when a protected path changes, and none of the template's
-   required boxes is missing; it carries `security-review` when a protected path
-   changes; and it is not a draft. Then `gh pr merge --merge --delete-branch
+   merge, run without its push and pull request steps, since `git safe-push` alone
+   pushes and opens pull requests. Each blocking or material finding (section 9) is
+   resolved, and the pull request says how. A fix is a new commit on the branch, and the
+   pre-flight runs again.
+4. **The merge.** `git safe-push --merge <n>` runs the secret scan and the guards on the
+   pull request's head against the current origin/main again, every time: the
+   pre-flight's record is a local file, which code the pre-flight ran (a commit's
+   checks, Lean at elaboration) could have written, so it stands in only for the full
+   checks, which CI runs as well, and only when origin/main's harness made it; otherwise
+   they run again too, and the summary in the body is replaced. It merges only when those
+   pass; CI on that head is green (`check`, `model` and `negative` pass, and nothing
+   fails or is still running); no box marked **Required** in its checklist is unticked,
+   nor one marked **Required if protected** when a protected path changes, and none of
+   the template's required boxes is missing (the pre-flight's notes, such as a check
+   that failed with origin/main's copies, are shown beside the checklist); it carries
+   `security-review` when a protected path changes; and it is not a draft. Then
+   `gh pr merge --merge --delete-branch
    --match-head-commit <head>`: a merge commit, never a squash or a rebase, and the branch
    deleted. Afterwards main is checked to be a merge of the main and the head checked,
    with the head's tree; if it is not, the script prints how to revert the merge in a
@@ -478,10 +504,13 @@ python3 scripts/safe_push.py --merge <n>                        # the gates, the
 5. **Generated files** are regenerated from the integrated sources and committed by the
    integrator (section 4), so the pull request that changes their sources carries them.
 
-**Protected paths.** `scripts/` (the hook included), `.github/`, `Certificate/` (the lock
-included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`, `.gitattributes`, and the
-toolchain files (`lakefile.toml`, `lean-toolchain`, `lake-manifest.json`). A change to any
-of them needs a new line in the decisions page naming each file changed, the label
+**Protected paths.** `scripts/` (the hook and the launcher included), `.github/`,
+`Certificate/` (the lock included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`,
+`.gitattributes`, `.gitignore` (a rule added there hides untracked files from
+`git status`, and so from the check that the generated pages are current), and the
+toolchain files (`lakefile.toml`, `lakefile.lean`, which Lake reads in preference to
+`lakefile.toml` and runs, `lean-toolchain`, `lake-manifest.json`). A change to any of them
+needs a new line in the decisions page naming each file changed, the label
 `security-review`, and a `/security-review` recorded in the pull request; weakening a
 check stays a decision of the owner's ([FORMALIZATION.md](FORMALIZATION.md), section 1).
 
@@ -491,11 +520,13 @@ and closes the fork's with a link to it.
 
 The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
 repository, with each step's full output beside it in `logs/`, and the pre-flight's record
-in `preflight/`, which `--merge` reads. `sh scripts/install_hooks.sh` installs the pre-push
-hook: it refuses every push to main, scans a push to any other branch with origin/main's
-copy of the secret scan (`safe_push.py --scan-push`), and refuses to push or delete a tag.
-With the owner's OK for a tag, it is pushed by name:
-`STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`.
+in `preflight/`, which `--merge` reads; origin/main's harness, when it runs in place of
+another copy, is written to `harness/`, named by its blobs. `sh scripts/install_hooks.sh`
+installs the launcher and the pre-push hook: the hook refuses every push to main, scans a
+push to any other branch with origin/main's copy of the secret scan
+(`safe_push.py --scan-push`), and refuses to push or delete a tag. With the owner's OK for
+a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`,
+and the hook still scans the commits it points to and an annotated tag's message.
 `python3 scripts/test_safe_push.py` plants a bad commit for each guard, gate and edge case
 on a throwaway clone, with a stand-in for gh, and checks that each is refused and a good
 one proposed and merged; `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and
