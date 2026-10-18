@@ -3,7 +3,7 @@
 # scripts/install_hooks.sh outside the tracked tree, at
 # $(git rev-parse --git-common-dir)/stoicheia/safe-push, and run as `git safe-push`:
 #
-#     git safe-push --branch <name> [--title T] [--body-file F] [--draft] [--label L]...
+#     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
 #     git safe-push --merge <pr-number> [--dry-run]
 #
 # It runs origin/main's scripts/safe_push.py whatever the checkout holds, so that a branch

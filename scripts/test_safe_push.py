@@ -64,7 +64,9 @@ pre-flight. Python 3.11 or later; standard library and git.
 from __future__ import annotations
 
 import base64
+import contextlib
 import hashlib
+import io
 import json
 import os
 import re
@@ -96,6 +98,13 @@ DECISIONS = "docs/briefs/0002-decisions.md"
 HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_push.py",
                  "scripts/hooks/pre-push", "scripts/hooks/safe-push", "scripts/install_hooks.sh",
                  "scripts/safe_push_allow.toml", ".github/pull_request_template.md")
+
+
+def with_branch(args) -> tuple:
+    """The pre-flight for BRANCH, labelled `docs`, unless the arguments say otherwise."""
+    if {"--branch", "--merge", "--scan-push"} & set(args):
+        return tuple(args)
+    return ("--branch", BRANCH, *args) + (() if "--label" in args else ("--label", "docs"))
 
 
 def git(cwd, *args, env=None, check=True) -> str:
@@ -374,8 +383,7 @@ class Clone(unittest.TestCase):
     def safe_push(self, *args, env=None, script=SAFE_PUSH) -> subprocess.CompletedProcess:
         """safe_push.py under the internal test flag; the pre-flight for BRANCH unless the
         arguments name --branch, --merge or --scan-push."""
-        if not {"--branch", "--merge", "--scan-push"} & set(args):
-            args = ("--branch", BRANCH, *args) + (() if "--label" in args else ("--label", "docs"))
+        args = with_branch(args)
         return subprocess.run([sys.executable, str(script), "--_test-skip-checks", *args],
                               cwd=WORK, env=env or clean_env(), capture_output=True, text=True)
 
@@ -1051,8 +1059,7 @@ class Ancestry(Edge):
     the check and the push."""
 
     def drive(self, action: str, target: str, *args, env=None) -> subprocess.CompletedProcess:
-        if not {"--branch", "--merge"} & set(args):
-            args = ("--branch", BRANCH, *args) + (() if "--label" in args else ("--label", "docs"))
+        args = with_branch(args)
         return subprocess.run([sys.executable, "-c", DRIVER, str(HERE), action, str(ORIGIN),
                                target, "--_test-skip-checks", *args], cwd=WORK,
                               env=env or clean_env(), capture_output=True, text=True)
@@ -1595,7 +1602,11 @@ class Merge(Edge):
         # one) and at the merge.
         self.good_commit()
         out = self.assertRefused(self.safe_push("--branch", BRANCH, "--label", "stage-2"),
-                                 "needs a label for its kind")
+                                 "no label for its kind")
+        self.assertNotIn("4. The full local checks", out, "the label is settled first")
+        r = self.safe_push("--branch", BRANCH, "--dry-run")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "kind label"), "note", r.stdout)
         self.assertEqual(self.gh_state()["prs"], [], out)
         self.opened()
         self.set_gh(lambda s: s["prs"][0].update(labels=["stage-2"],
@@ -1695,6 +1706,70 @@ class ProtectedPaths(Edge):
         notes = out[out.index("pre-flight notes"):]
         self.assertIn("generated pages (origin/main's checks)", notes)
 
+    def test_renderer_change_with_content_is_not_kept_apart(self):
+        # Pages gone stale under origin/main's render.py show a renderer change, not a
+        # check's verdict: render.py may change with what it renders (a restatement's
+        # note does), and the commit's own pass still needs the pages current.
+        path = "scripts/render.py"
+        changes = {path: self.replaced(path, '"This page keeps three things apart."',
+                                       '"This page keeps three things apart, for the test."'),
+                   "docs/reading.md": self.text("docs/reading.md") + "\nA line for the test.\n"}
+        changes.update(self.decision(f"`{path}` is changed for the test."))
+        sha = self.regenerated_commit("Reword render.py, with a line of reading", changes)
+        r = self.safe_push("--label", "tooling")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "generated pages (origin/main's checks)"), "note", out)
+        self.assertIsNone(self.guard(out, "check change kept apart"), out)
+        self.assertEqual(self.origin_branch(), sha)
+
+    def kept_apart(self, sha: str, *failed: str) -> tuple[bool, str]:
+        """keep_apart on `sha`, after these steps failed with origin/main's copies."""
+        rep, out = safe_push.Report(), io.StringIO()
+        with contextlib.redirect_stdout(out):
+            for name in failed:
+                rep.add("4", name + safe_push.BASE_PASS, "note", "failed")
+            refused = safe_push.keep_apart(WORK, BASE, sha, rep, "4")
+        return refused, out.getvalue()
+
+    def test_kept_apart_counts_verdicts_not_freshness(self):
+        sha = self.commit("A check, and a line of reading", {
+            "scripts/check_links.py": self.text("scripts/check_links.py") + "\n# for the test\n",
+            "docs/reading.md": self.text("docs/reading.md") + "\nA line for the test.\n"})
+        refused, _ = self.kept_apart(sha, "python3 scripts/render.py", "generated pages",
+                                     "git status --porcelain is empty")
+        self.assertFalse(refused)
+        for verdict in ("python3 scripts/check_fidelity.py", "negative: python3 "
+                        "scripts/negative_tests.py", "lake env lean Certificate/Facts.lean"):
+            with self.subTest(verdict=verdict):
+                refused, out = self.kept_apart(sha, verdict)
+                self.assertTrue(refused, out)
+                self.assertIn("docs/reading.md", out)
+
+    def test_kept_apart_judges_the_edition_not_the_guides_or_stamps(self):
+        # The stage 2 pattern: the certificate changes, the pages and a record's stamp
+        # follow, and the guides say why; none of that is judged. A record's other lines,
+        # a Lean file, and README.md's hand-written part are.
+        record = self.text("review/I/01.toml")
+        stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "0123456"', record)
+        changes = {
+            "Certificate/Facts.lean": self.text("Certificate/Facts.lean") + "\n-- for the test\n",
+            "review/I/01.toml": stamped,
+            "book/I/01.md": self.text("book/I/01.md") + "\nA generated line.\n",
+            "docs/WORKFLOW.md": self.text("docs/WORKFLOW.md") + "\nA line for the test.\n",
+            "AGENTS.md": self.text("AGENTS.md") + "\nA line for the test.\n",
+            "docs/briefs/0006-test.md": "A brief for the test.\n"}
+        sha = self.commit("The certificate, its pages, a stamp, the guides", changes)
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
+        refused, out = self.kept_apart(sha, "python3 scripts/check_fidelity.py")
+        self.assertFalse(refused, out)
+        sha = self.commit("And the edition", {
+            "review/I/02.toml": self.text("review/I/02.toml") + "\n# A line for the test.\n",
+            "Elements/BookI/Prop01.lean": self.text("Elements/BookI/Prop01.lean") + "\n-- x\n",
+            "README.md": "A hand-written line.\n" + self.text("README.md")})
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha),
+                         ["Elements/BookI/Prop01.lean", "README.md", "review/I/02.toml"])
+
     def regenerated_commit(self, message: str, changes: dict) -> str:
         """The changes, with the pages render.py regenerates from them, committed."""
         for rel, text in changes.items():
@@ -1738,6 +1813,10 @@ class ProtectedPaths(Edge):
         home = home[:home.index("\n\n")]
         for path in safe_push.PROTECTED:
             self.assertIn(f"`{path}`", home, path)
+        # And step 4 there names the check inputs, as CHECK_INPUTS holds them.
+        step4 = workflow[workflow.index("4. *The full checks*"):workflow.index("5. *The push")]
+        for path in safe_push.CHECK_INPUTS:
+            self.assertIn(f"`{path}`", step4, path)
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
         self.assertIn('"Protected paths"', template)
         self.assertNotIn("lake-manifest.json", template)
@@ -1752,8 +1831,7 @@ class InterruptedAfterThePush(Edge):
 
     def drive(self, action: str) -> subprocess.CompletedProcess:
         return subprocess.run([sys.executable, "-c", DRIVER, str(HERE), action, str(ORIGIN),
-                               BASE, "--_test-skip-checks", "--branch", BRANCH, "--label",
-                               "docs"], cwd=WORK,
+                               BASE, "--_test-skip-checks", *with_branch(())], cwd=WORK,
                               env=clean_env(), capture_output=True, text=True)
 
     def test_interrupt_while_following_ci(self):
@@ -1796,8 +1874,8 @@ class HandOver(Edge):
         env = clean_env()
         env["STOICHEIA_FAKE_GH_KILL"] = f"{pidfile}:{signum}"
         proc = subprocess.Popen(
-            [sys.executable, str(self.differing_copy()), "--_test-skip-checks", "--branch",
-             BRANCH, "--label", "docs"], cwd=WORK, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            [sys.executable, str(self.differing_copy()), "--_test-skip-checks",
+             *with_branch(())], cwd=WORK, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             text=True, preexec_fn=lambda: signal.signal(signal.SIGINT, signal.SIG_DFL))
         pidfile.write_text(str(proc.pid))
         out, _ = proc.communicate(timeout=300)
@@ -1825,7 +1903,7 @@ class HandOver(Edge):
                             "def _unused_scan(", 1)
         self.commit("A harness that judges itself, and a token", {
             "scripts/safe_push.py": lame, "docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
-        r = subprocess.run(["git", "safe-push", "--_test-skip-checks", "--branch", BRANCH],
+        r = subprocess.run(["git", "safe-push", "--_test-skip-checks", *with_branch(())],
                            cwd=WORK / "docs", env=clean_env(), capture_output=True, text=True)
         out = self.assertRefused(r, "secret scan")
         self.assertEqual(self.guard(out, "harness"), "ok", out)
@@ -2105,6 +2183,19 @@ class Units(unittest.TestCase):
         self.assertEqual([safe_push.allowed(f, entry) is not None for f in found],
                          [safe_push.flagged_value(f) == PRIVATE_DIR for f in found])
 
+    def test_private_path_does_not_hide_a_key_on_the_next_lines(self):
+        # Security review of the fixes: a private path, flagged whole, runs on into the
+        # next lines when they are read as one; the key across those lines is still found.
+        lines = [(1, "/" + "Users" + "/someone/" + "a" * 45), (2, "api_key"), (3, f'= "{TOKEN}"')]
+        found = safe_push.scan_block("docs/x.md", lines)
+        self.assertTrue([f for f in found if f.rule == "key, token or secret"
+                         and TOKEN in safe_push.flagged_value(f)], found)
+
+    def test_private_paths_end_at_colons_and_equals(self):
+        a, b = "/" + "Users" + "/someone/a", "/" + "Users" + "/someone/b"
+        found = safe_push.scan_text("docs/x.md", 1, f"PATH={a}:{b}")
+        self.assertEqual(sorted(safe_push.flagged_value(f) for f in found), [a, b])
+
     def test_sections(self):
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
         self.assertEqual(len(safe_push.section_problems(template, template, False)), 4)
@@ -2117,6 +2208,16 @@ class Units(unittest.TestCase):
         self.assertIn('not written: the section "What and why"',
                       safe_push.section_problems(body, template, False))
         self.assertEqual(safe_push.section_problems(ticked(template), None, False), [])
+        # A fenced block of filled-in headings at the end does not write the sections.
+        fenced = template + "\n```\n" + ticked(template) + "\n```\n"
+        self.assertEqual(len(safe_push.section_problems(fenced, template, False)), 4)
+        # Backticked review names are read; a dash holds a place.
+        rows = ticked(template).replace("| /code-review |", "| `/code-review` |")
+        self.assertEqual(safe_push.section_problems(rows, template, False), [])
+        dash = ticked(template).replace("| /no-mistakes | abc1234 | None. |",
+                                        "| /no-mistakes | - | - |")
+        self.assertEqual(safe_push.section_problems(dash, template, False),
+                         ["not written: the review /no-mistakes, its commit and its findings"])
 
     def test_binary_findings_carry_a_window(self):
         data = b"A" * 500 + b"\0" + GH_TOKEN.encode() + b"\0" + b"B" * 500

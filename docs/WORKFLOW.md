@@ -385,9 +385,9 @@ OK, and stay manual.
 proofs, a wording pass, a guard. A check is never changed in the same pull request as the
 code it checks: the check lands first, on its own, and the code follows it. The pre-flight
 holds to this: when a check fails with origin/main's copies, the pull request may change
-nothing else the checks judge (step 4, below). Listing a proved companion in
-`Certificate/Facts.lean` is such a change, so it follows the proof's pull request in one
-of its own. Each pull request carries a label for its kind, `tooling`, `text`, `lean` or
+nothing else the checks judge (step 4, below). A change to `render.py` alone is not a
+check change in this sense: the pages it regenerates show what it changed. Each pull
+request carries a label for its kind, `tooling`, `text`, `lean` or
 `docs`, and the pre-flight and the merge refuse one without; stage work carries its
 stage's label as well (`stage-2` to `stage-6` of brief 0005), and a change to a protected
 path carries `security-review`. A pull request opens as a draft, and stays one until its
@@ -469,9 +469,11 @@ and says so.
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
-      changes what the checks judge (anything but the checks, the protected paths, the
-      decisions page and the generated pages): the check change goes first, in a pull
-      request of its own. The guards' two checks in step 3 run the same way.
+      changes what the checks judge (anything but the protected paths, the guides and
+      briefs, the generated pages and a review record's stamp): the check change goes
+      first, in a pull request of its own. Pages gone stale under origin/main's `render.py` are only
+      noted, since a renderer's change shows there. The guards' two checks in step 3 run
+      the same way.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the

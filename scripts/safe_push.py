@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
-    git safe-push --branch <name> --label <kind> [--label L]... [--title T]
-                  [--body-file F] [--ready] [--commit <sha>] [--dry-run]
+    git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
+                  [--commit <sha>] [--dry-run]
     git safe-push --merge <pr-number> [--dry-run]
     git safe-push --dry-run [--commit <sha>]                      # the checks alone
 
@@ -64,18 +64,21 @@ order, and the first that fails stops it with a message saying why:
    below); when the commit changes any of those, they run again with the commit's own
    copies, which must pass. A check that fails with origin/main's copies is noted for the
    security review, and refuses the commit when it also changes what the checks judge
-   (anything but the checks, the protected paths, the decisions page and the generated
-   pages): a check change lands in a pull request of its own, before the code it checks.
-   Step 3's two checks run the same way.
+   (keep_apart, below): a check change lands in a pull request of its own, before the
+   code it checks.
+   Pages gone stale under origin/main's render.py are noted only: that shows a change to
+   the renderer, which the pages' diff shows in full, not a verdict on the commit. Step
+   3's two checks run the same way.
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
    .github/pull_request_template.md (the commits, the statements, the review records
    touched, the protected paths, and the pre-flight's summary between its markers; on an
    update without --body-file, only that summary is replaced), scanned. Then
    `git push origin <sha>:refs/heads/<name>`, never forced; then `gh pr create --base
-   main --head <name>`, a draft unless --ready, or `gh pr edit` of the open one; it needs
-   a label for its kind (tooling, text, lean or docs), given or already on it; then its
-   CI, followed to its conclusion (`gh pr checks --watch`).
+   main --head <name>`, a draft unless --ready, or `gh pr edit` of the open one; then its
+   CI, followed to its conclusion (`gh pr checks --watch`). Its label for its kind
+   (tooling, text, lean or docs), given or already on the open one, is settled in step 1,
+   before the checks; a dry run, which does not ask GitHub, notes a missing one.
 6. A summary, printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
    repository (`STOICHEIA_PUSH_LOG` names another file); each step's output is kept
    beside it in `logs/`, and the pre-flight's record in `preflight/`, for --merge.
@@ -162,6 +165,7 @@ LABELS = {
     SECURITY_LABEL: "Changes a protected path: needs /security-review before merge",
 }
 KIND_LABELS = ("tooling", "text", "lean", "docs")      # every pull request carries one
+assert set(KIND_LABELS) <= set(LABELS)
 REQUIRED_CHECKS = ("check", "model", "negative")
 GENERATED = ("facts.json", "book/", "CERTIFICATE.md", "GRAPH.md", "README.md", "docs/PROGRAM.md")
 # Of these, two are generated only between their markers (render.py's SCOPE_MARKERS and
@@ -513,7 +517,7 @@ PRIVATE_PATHS = [
 ]
 # A private path is flagged whole, from the space, quote or bracket before it to the one
 # after, so that an allow-list entry pins that path and no other on its line.
-PATH_EDGE = frozenset(" \t\r\n\"'`<>()[]{},;|")
+PATH_EDGE = frozenset(" \t\r\n\"'`<>()[]{},;|:=")
 
 
 def path_span(text: str, a: int, b: int) -> tuple[int, int]:
@@ -697,7 +701,9 @@ def scan_block(path: str, numbered: list[tuple[int, str]]) -> list[Finding]:
     then each run of consecutive lines read as one, for a secret split across lines.
     A finding across lines is kept unless what it masks lies in one line that is
     already flagged alone for the same text; and once, in the widest run of lines it is
-    seen in."""
+    seen in: a wider finding stands in for it only by the same rule, masking what it
+    masks (a private path, flagged whole, may run on into the next line, and must not
+    stand in for a key there)."""
     found = []
     alone: set[tuple[int, str]] = set()
     for no, text in numbered:
@@ -723,9 +729,12 @@ def scan_block(path: str, numbered: list[tuple[int, str]]) -> list[Finding]:
                 across.setdefault(key, Finding(rule, path, run[first][0], joined[lo:hi], mask,
                                                end=run[last][0]))
         wide = list(across.values())
-        found += [f for f in wide if not any((g.line, g.end) != (f.line, f.end)
-                                             and g.line <= f.line and g.end >= f.end
-                                             for g in wide)]
+
+        def covers(g: Finding, f: Finding) -> bool:
+            return ((g.line, g.end) != (f.line, f.end) and g.line <= f.line
+                    and g.end >= f.end and g.rule == f.rule
+                    and f.text[f.span[0]:f.span[1]] in g.text[g.span[0]:g.span[1]])
+        found += [f for f in wide if not any(covers(g, f) for g in wide)]
     return found
 
 
@@ -1392,6 +1401,9 @@ def base_copies(repo, base, wt: Path, changes: list[tuple[str, str]]):
 
 
 BASE_PASS = " (origin/main's checks)"
+# Steps whose failure with origin/main's copies shows only that the pages' generator
+# changed (render.py, or the certificate that writes facts.json), not a check's verdict.
+FRESHNESS = ("generated pages", "python3 scripts/render.py", "git status --porcelain is empty")
 
 
 def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
@@ -1408,22 +1420,33 @@ def passes(repo, base, wt: Path, changes: list[tuple[str, str]]):
     yield " (the commit's checks)", "FAIL", []
 
 
-def hand_written_changed(repo, base, sha, path: str) -> bool:
-    """For README.md and PROGRAM.md: does the change touch the text outside their
-    markers, which is written by hand? (The other generated files are all render.py's.)"""
-    pattern = GENERATED_REGIONS.get(path)
-    if pattern is None:
+# The guides: the rules' text, which changes with the checks it describes; the decisions
+# page and the briefs among them. The edition itself stays judged: the Lean, Heath's text,
+# the commentary, the records, the figures, the reports and the reading list.
+GUIDES = ("AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/WORKFLOW.md",
+          "docs/FORMALIZATION.md", "docs/STYLE.md", "docs/briefs/", "docs/templates/")
+# A review record's stamp: its reviewer's reading of a statement and a Lean file, as a
+# change to the certificate's output asks for (WORKFLOW, section 6). Not its stage.
+STAMP_LINE = re.compile(r'(?m)^(?:fingerprint|commit|lean|reviewer)\s*=\s*"[^"]*"[ \t]*$')
+
+
+def stamp_only(repo, base, sha, path: str) -> bool:
+    """Is the change to `path` a review record's stamp alone?"""
+    if not re.fullmatch(r"review/[IVX]+/\d+\.toml", path):
         return False
-    old, new = show(repo, base, path) or "", show(repo, sha, path) or ""
-    return pattern.sub("", old) != pattern.sub("", new)
+    old, new = show(repo, base, path), show(repo, sha, path)
+    return old is not None and new is not None \
+        and STAMP_LINE.sub("", old) == STAMP_LINE.sub("", new)
 
 
 def judged_files(repo, base, sha) -> list[str]:
-    """The files the commit changes that the checks judge: all but the check inputs and
-    the other protected paths, the decisions page, and what render.py writes."""
+    """The files the commit changes that the checks judge: all but the protected paths
+    (the check inputs among them), the guides, what render.py writes, and a review
+    record's stamp alone."""
     return sorted(p for _, p in changed_files(repo, base, sha)
-                  if not under(p, CHECK_INPUTS + PROTECTED) and p != DECISIONS
-                  and not (under(p, GENERATED) and not hand_written_changed(repo, base, sha, p)))
+                  if not under(p, PROTECTED + GUIDES)
+                  and not (under(p, GENERATED) and not generated_parts(repo, base, sha, p)[1])
+                  and not stamp_only(repo, base, sha, p))
 
 
 def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
@@ -1431,9 +1454,12 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     (docs/WORKFLOW.md, "Landing work: pull requests"). So when a check fails with
     origin/main's copies, the commit may change nothing the checks judge: a check
     weakened in the same pull request as the code it would catch is refused, not only
-    noted. True when it refuses."""
-    failed = [s.name.removesuffix(BASE_PASS) for s in rep.steps
-              if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)]
+    noted. Pages gone stale under origin/main's copies (FRESHNESS) are not a verdict,
+    and do not count: a renderer's change shows in the pages it regenerates, and the
+    commit's own pass still needs them current. True when it refuses."""
+    failed = [name for s in rep.steps
+              if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
+              and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
     judged = judged_files(repo, base, sha) if failed else []
     if not judged:
         return False
@@ -1441,9 +1467,9 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     rep.add(stage, "check change kept apart", "FAIL",
             f"origin/main's checks fail on the commit ({', '.join(failed)}), and it changes "
             f"what they judge as well as the checks: {shown}. Land the check change first, in "
-            "a pull request of its own (the checks, their expected values, the decisions "
-            "entry and the regenerated pages), and the rest after it (docs/WORKFLOW.md, "
-            "\"Landing work: pull requests\")")
+            "a pull request of its own (the checks, their expected values, the guides, the "
+            "regenerated pages and the records' stamps), and the rest after it "
+            "(docs/WORKFLOW.md, \"Landing work: pull requests\")")
     return True
 
 
@@ -1462,9 +1488,10 @@ def guards(ctx, wt: Path, rep: Report, logs: Path) -> Guarded:
     guard_heath(repo, base, sha, wt, rep)
     guard_directories(repo, base, sha, rep)
     inputs = [(s, p) for s, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS)]
-    for label, fail, excludes in passes(repo, base, wt, inputs):
-        guard_fidelity(wt, rep, logs, label, fail)
-        guard_generated(wt, rep, logs, label, fail, excludes)
+    with contextlib.closing(passes(repo, base, wt, inputs)) as each:
+        for label, fail, excludes in each:
+            guard_fidelity(wt, rep, logs, label, fail)
+            guard_generated(wt, rep, logs, label, fail, excludes)
     keep_apart(repo, base, sha, rep, "3")
     guard_foundations(repo, base, sha, rep)
     failed = [s.name for s in rep.failed() if s.stage == "3"]
@@ -1522,18 +1549,24 @@ def copy_build(src: Path, dst: Path) -> None:
 
 
 def full_checks(ctx, wt: Path, parent: Path, inputs, rep: Report, logs: Path) -> None:
-    for label, fail, excludes in passes(ctx.repo, ctx.base, wt, inputs):
-        for i, (name, cmd) in enumerate(CHECKS, 1):
-            run_step("4", name + label, cmd, wt, rep, logs, 10 + i, fail, excludes)
+    def kept_apart(label):
         if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
             raise Refusal("a check changed together with what it checks")
+
+    # A refusal inside origin/main's pass leaves passes() at its yield: closing it puts
+    # the worktree back before the worktree is removed.
+    with contextlib.closing(passes(ctx.repo, ctx.base, wt, inputs)) as each:
+        for label, fail, excludes in each:
+            for i, (name, cmd) in enumerate(CHECKS, 1):
+                run_step("4", name + label, cmd, wt, rep, logs, 10 + i, fail, excludes)
+            kept_apart(label)
     with worktree(ctx.repo, ctx.sha, parent, "negative") as neg:
         copy_build(wt, neg)
-        for label, fail, excludes in passes(ctx.repo, ctx.base, neg, inputs):
-            for i, (name, cmd) in enumerate(NEGATIVE, 1):
-                run_step("4", name + label, cmd, neg, rep, logs, 30 + i, fail, excludes)
-            if label == BASE_PASS and keep_apart(ctx.repo, ctx.base, ctx.sha, rep, "4"):
-                raise Refusal("a check changed together with what it checks")
+        with contextlib.closing(passes(ctx.repo, ctx.base, neg, inputs)) as each:
+            for label, fail, excludes in each:
+                for i, (name, cmd) in enumerate(NEGATIVE, 1):
+                    run_step("4", name + label, cmd, neg, rep, logs, 30 + i, fail, excludes)
+                kept_apart(label)
 
 
 class Preflight(NamedTuple):
@@ -1916,16 +1949,21 @@ def put_block(body: str, block: str) -> str:
     return body.rstrip() + "\n\n## Checks run on the exact commit\n\n" + block + "\n"
 
 
-def generated_changed(repo, base, sha, path: str) -> bool:
-    """Does the change touch what render.py writes in `path`? For README.md and
-    PROGRAM.md, only the text between their markers; a hand edit elsewhere in them is
-    not a generated change."""
+def generated_parts(repo, base, sha, path: str) -> tuple[bool, bool]:
+    """Does the change touch what render.py writes in `path`, and does it touch the rest,
+    written by hand? Only README.md and PROGRAM.md have a rest: render.py writes them only
+    between their markers, and every other generated file whole."""
     pattern = GENERATED_REGIONS.get(path)
     if pattern is None:
-        return True
+        return True, False
     old, new = show(repo, base, path) or "", show(repo, sha, path) or ""
-    return [m.group(0) for m in pattern.finditer(old)] != \
-        [m.group(0) for m in pattern.finditer(new)]
+    return ([m.group(0) for m in pattern.finditer(old)]
+            != [m.group(0) for m in pattern.finditer(new)],
+            pattern.sub("", old) != pattern.sub("", new))
+
+
+def generated_changed(repo, base, sha, path: str) -> bool:
+    return generated_parts(repo, base, sha, path)[0]
 
 
 def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
@@ -2033,21 +2071,47 @@ def own_prs(ctx: Context, prs: list[dict]) -> list[dict]:
     return mine
 
 
+def find_own_pr(ctx: Context) -> dict | None:
+    """Our open pull request for the branch, if any (never a fork's of the same name)."""
+    listed = gh_json(ctx, "pr", "list", "--head", ctx.branch, "--base", "main", "--state",
+                     "open", "--json", "number,url,isDraft,labels,isCrossRepository,"
+                     "headRepositoryOwner,headRefName") or []
+    mine = own_prs(ctx, listed)
+    return mine[0] if mine else None
+
+
+def kind_problem(labels) -> str | None:
+    """What is wrong with a pull request's labels, or None: it needs one for its kind."""
+    if set(labels) & set(KIND_LABELS):
+        return None
+    return (f"no label for its kind, one of {', '.join(KIND_LABELS)}: --label <kind> "
+            "(docs/WORKFLOW.md, \"Landing work: pull requests\")")
+
+
+def check_kind_label(ctx: Context, args, rep: Report) -> None:
+    """The label for the pull request's kind, given or on the open one, settled before
+    the checks, so that a forgotten --label costs no Lean run. A dry run does not ask
+    GitHub, and notes a missing one."""
+    if not kind_problem(args.label):
+        return
+    if args.dry_run:
+        rep.add("1", "kind label", "note", f"none given ({kind_problem([])}); enough if "
+                "the open pull request has one")
+        return
+    existing = find_own_pr(ctx)
+    problem = kind_problem({item.get("name") for item in (existing or {}).get("labels") or []})
+    if problem:
+        rep.add("1", "kind label", "FAIL", f"the pull request has {problem}")
+        raise Refusal(f"the pull request has {problem}")
+    rep.add("1", "kind label", "ok", f"on #{existing['number']}")
+
+
 def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
     """Everything the pull request will carry, settled before the push: our open pull
     request for the branch (never a fork's of the same name), and the body, scanned. A
     new pull request's body, or --body-file, is known in full; an open one's is fetched."""
     labels = set(args.label) | ({SECURITY_LABEL} if pre.protected else set())
-    listed = gh_json(ctx, "pr", "list", "--head", ctx.branch, "--base", "main", "--state",
-                     "open", "--json", "number,url,isDraft,labels,isCrossRepository,"
-                     "headRepositoryOwner,headRefName") or []
-    mine = own_prs(ctx, listed)
-    existing = mine[0] if mine else None
-    have = labels | {item.get("name") for item in (existing or {}).get("labels") or []}
-    if not have & set(KIND_LABELS):
-        raise Refusal("the pull request needs a label for its kind, one of "
-                      f"{', '.join(KIND_LABELS)}: --label <kind> (docs/WORKFLOW.md, "
-                      "\"Landing work: pull requests\")")
+    existing = find_own_pr(ctx)
     if args.body_file:
         body = fill_body(ctx, pre, record, Path(args.body_file).read_text())
     elif existing:
@@ -2262,24 +2326,39 @@ WRITTEN = ("What and why", "Reviews", "Needs the owner's OK")
 OWN_PART = re.compile(r"<!-- safe_push:(\w+) begin\b.*?<!-- safe_push:\1 end -->", re.S)
 
 
+FENCE = re.compile(r"(?ms)^(```|~~~).*?^\1[^\n]*$")
+# Cells that hold a place, not a review's commit or findings.
+EMPTY_CELL = {"", "-", "–", "—", "...", "…", "tbd", "todo"}
+
+
 def sections(body: str) -> dict[str, str]:
-    parts = SECTION.split(body or "")
-    return {parts[i].strip(): parts[i + 1] for i in range(1, len(parts) - 1, 2)}
-
-
-def own_words(text: str) -> str:
-    """A section's words, without its comments and without what safe_push wrote."""
-    return COMMENT.sub("", OWN_PART.sub("", text)).strip()
+    """{heading: words} for the body's `## ` sections, the first of each name, read
+    without what safe_push wrote, without comments and without code blocks: the
+    coordinator's own words."""
+    plain = FENCE.sub("", COMMENT.sub("", OWN_PART.sub("", body or "")))
+    parts = SECTION.split(plain)
+    found: dict[str, str] = {}
+    for i in range(1, len(parts) - 1, 2):
+        found.setdefault(parts[i].strip(), parts[i + 1].strip())
+    return found
 
 
 def review_rows(text: str) -> dict[str, list[str]]:
-    """{review: its cells after the first} for each row of a Reviews table."""
-    rows = {}
+    """{review: its cells after the first} for each row of a Reviews table, the first
+    row of each review."""
+    rows: dict[str, list[str]] = {}
     for line in text.splitlines():
+        if not line.strip().startswith("|"):
+            continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
-        if line.strip().startswith("|") and cells[0].startswith("/"):
-            rows[cells[0]] = cells[1:]
+        name = cells[0].strip("`*_ ")
+        if name.startswith("/"):
+            rows.setdefault(name, cells[1:])
     return rows
+
+
+def written(cell: str) -> bool:
+    return cell.strip("`*_ ").lower() not in EMPTY_CELL
 
 
 def section_problems(body: str, template: str | None, protected: bool) -> list[str]:
@@ -2296,10 +2375,10 @@ def section_problems(body: str, template: str | None, protected: bool) -> list[s
             for review in review_rows(wanted[name]):
                 cells = rows.get(review, [])
                 if (review != "/security-review" or protected) and not (
-                        len(cells) >= 2 and all(cells[:2])):
+                        len(cells) >= 2 and all(written(c) for c in cells[:2])):
                     problems.append(f"not written: the review {review}, its commit and its "
                                     "findings")
-        elif not own_words(have[name]):
+        elif not have[name]:
             problems.append(f"not written: the section \"{name}\"")
     return problems
 
@@ -2386,9 +2465,9 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
                 f"#{number} lacks the label {SECURITY_LABEL}")
     elif protected:
         rep.add("G", "label", "ok", f"{SECURITY_LABEL}, for {', '.join(protected)}")
-    kinds = sorted(labels & set(KIND_LABELS))
-    rep.add("G", "kind label", "ok" if kinds else "FAIL", ", ".join(kinds) if kinds else
-            f"#{number} has no label for its kind: one of {', '.join(KIND_LABELS)}")
+    problem = kind_problem(labels)
+    rep.add("G", "kind label", "FAIL" if problem else "ok", f"#{number} has {problem}"
+            if problem else ", ".join(sorted(labels & set(KIND_LABELS))))
     verdict, detail = judge_checks(pr_checks(ctx, number))
     rep.add("G", "CI", "ok" if verdict == "success" else "FAIL",
             f"{verdict} on {ctx.sha[:12]}: {detail}")
@@ -2499,6 +2578,8 @@ def preflight_main(repo: Path, args) -> int:
         ctx = preconditions(repo, args.commit, args.branch, args.dry_run, args.test_mode, rep,
                             title=args.title)
         sha, base = ctx.sha, ctx.base
+        if ctx.branch:
+            check_kind_label(ctx, args, rep)
         logs = logs_dir(sha)
         pre = check_commit(ctx, rep, logs, args.test_mode)
         record = make_record(ctx, pre, rep, full=not args.test_mode)

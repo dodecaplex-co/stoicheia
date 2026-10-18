@@ -37,9 +37,9 @@ coordinator of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
   done by the owner the orders name, with a regression test where a guard defect is fixed
   ([WORKFLOW.md](WORKFLOW.md), section 8). Either way a change to a protected path
   ([WORKFLOW.md](WORKFLOW.md), section 10, "Protected paths") is named file by file in a
-  decisions entry and given a security review before it is merged, and a check change
-  lands in a pull request of its own, before the code it checks
-  ([WORKFLOW.md](WORKFLOW.md), section 10, "Landing work: pull requests").
+  decisions entry and given a security review before it is merged; a check change is a
+  pull request of its own ([WORKFLOW.md](WORKFLOW.md), section 10, "Landing work: pull
+  requests").
 - **Publishing:** tags, releases and their notes, the GitHub description, and anything
   sent outside the repository. Landing work on main is delegated to the coordinator: a
   pull request, opened and merged with a merge commit through `scripts/safe_push.py`
