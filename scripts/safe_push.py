@@ -109,12 +109,11 @@ is not a draft; the pre-flight's notes are shown beside the checklist. Then
 commit's subject and body given (GitHub's own words, with the branch name scanned, and
 the title scanned; a branch renamed since the merge first read it is refused, as a head
 moved is): a merge commit, never a squash or a rebase, since review records stamp the
-branch's commits.
-When gh fails, GitHub is asked whether the pull request merged before anything is said;
-once gh is asked to merge, the run says nothing merged only when GitHub says so, and an
-interruption, or a failure GitHub cannot be asked about, is "merge state unknown".
-Afterwards the merge commit is checked to join the base and the head checked, with the
-head's tree, on main.
+branch's commits. When gh fails, GitHub is asked whether the pull request merged before
+anything is said; once gh is asked to merge, the run says nothing merged only when GitHub
+says so, and an interruption, or a failure GitHub cannot be asked about, is "merge state
+unknown". Afterwards the merge commit is checked to join the base and the head checked,
+with the head's tree, on main.
 
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
 worktrees are removed at the end, on a failure too. The pre-push hook,
@@ -183,7 +182,8 @@ CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "revie
 # moves them with it, in the same pull request; they stay protected (a decisions line,
 # security-review, the lock's guard), and the commit's own checks must pass.
 EXPECTATIONS = "tests/certificate_expectations.json"
-PINNED = (EXPECTATIONS, LOCK, "tests/model/lock.sha256")
+MODEL_HASH = "tests/model/lock.sha256"
+PINNED = (EXPECTATIONS, LOCK, MODEL_HASH)
 SECURITY_LABEL = "security-review"
 LABELS = {
     **{f"stage-{n}": f"Brief 0005, stage {n}" for n in range(2, 7)},
@@ -1586,7 +1586,7 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
                "check change" if loosened else "")
             + ". Land the check change first, in a pull request of its own (the check code, "
             "the guides, the regenerated pages and the records' stamps), and the rest after "
-            f"it; values pinned to the edition ({LOCK}, {PINNED[2]}, and the counts and "
+            f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, and the counts and "
             f"values of {EXPECTATIONS}, none of its expectations dropped or loosened) move "
             "with the content they pin (docs/WORKFLOW.md, \"Landing work: pull requests\")")
     return True
