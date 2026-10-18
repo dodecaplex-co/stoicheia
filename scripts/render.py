@@ -608,8 +608,9 @@ def through_mark(lemmas, book, up):
 
 
 def rules_summary(names, book):
-    """Postulates, definitions and tacit rules in a few words, for a table cell:
-    "Postulates 1 and 3, Def. I.15 and 9 tacit rules"; "none" for none."""
+    """Postulates, definitions and tacit rules in a few words, for a table cell, the
+    kinds kept apart by semicolons, so that a count never reads as a postulate's number:
+    "Postulates 1 and 3; Def. I.15; 9 tacit rules"; "none" for none."""
     posts = [a for a in names if a.startswith("Postulate")]
     defs = [a for a in names if a.startswith("Definition")]
     tacit = [a for a in names if a.startswith("Tacit.")]
@@ -624,7 +625,7 @@ def rules_summary(names, book):
         parts.append(f"{len(tacit)} tacit rule" + ("" if len(tacit) == 1 else "s"))
     if other:
         parts.append(f"{len(other)} other axiom" + ("" if len(other) == 1 else "s"))
-    return and_list(parts) if parts else "none"
+    return "; ".join(parts) if parts else "none"
 
 
 def axiom_groups(entry):
