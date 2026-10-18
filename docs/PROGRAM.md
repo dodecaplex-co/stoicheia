@@ -78,9 +78,9 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40, I.45, II.1, II.14 in full generality | statements staged ([#11]); approval next |
-| 3 | Arcs and segments; III.24 | statements staged ([#11]); approval next |
-| 4 | III.14, III.15, III.25 | statements staged ([#11]); approval next |
+| 2 | I.40, I.45, II.1, II.14 in full generality | proved in Staging ([#88]); the move into `Elements/` next ([#19]) |
+| 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
+| 4 | III.14, III.15, III.25 | proved in Staging (this pull request); the move into `Elements/` next ([#28]) |
 | 5 | Consolidation review of all 99 | |
 | 6 | Acceptance, then a consolidation release of Books I–III | |
 
@@ -143,6 +143,10 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
   route, III.26 and III.28 upgraded, and `Arcs.lean` (#20 to #24). Next is the migration
   into `Elements/`, in brief 0006's seven steps (#25).
+- **Stage 4's proofs** are done in `Staging/Stage4`: III.14 with diameters, III.15 both
+  clauses for every straight line, the foot of the perpendicular, and III.25's construction
+  core, which never sees a circle or a centre, with its correctness (#26, #27). Next is the
+  move into `Elements/` with the records (#28).
 - **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
@@ -272,3 +276,8 @@ in the voyage logs).
 | Precision pass and standards (brief 0005, stages 1 and 1b): the build | 23 (3 stopped at an account-terms prompt and were run again) | 5.9M | 95 min |
 | Precision pass and standards: the finish (integration, readers, fixes) | 7 | 2.0M | 104 min |
 | The night of 18 October: pull requests #1 to #11 | not logged | not logged | one night |
+[#88]: https://github.com/jackChallis/stoicheia/pull/88
+[#89]: https://github.com/jackChallis/stoicheia/pull/89
+[#19]: https://github.com/jackChallis/stoicheia/issues/19
+[#25]: https://github.com/jackChallis/stoicheia/issues/25
+[#28]: https://github.com/jackChallis/stoicheia/issues/28
