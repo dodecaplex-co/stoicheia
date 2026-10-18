@@ -59,7 +59,8 @@ one commit and runs safe_push.py against that origin:
   counts only as a list item GitHub shows; a branch renamed before the merge is refused;
   a merge that happened, or may have, is never exit 1; the allow-list test reads the
   committed list through load_allowlist, and the dry-run refusals name the step that
-  refused;
+  refused; and the stand-in for gh refuses a second pull request for a head, as gh does,
+  while ours is found whatever owner GitHub names for its head;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -244,6 +245,14 @@ def main(argv):
         print(json.dumps([fields(p, opt(args, "--json")) for p in found]))
         return 0
     if cmd == ["pr", "create"]:
+        # As GitHub: one open pull request for a head (origin's branch) and a base.
+        head, base = opt(args, "--head"), opt(args, "--base")
+        same = [p for p in s["prs"] if p["state"] == "OPEN" and p["headRefName"] == head
+                and p["baseRefName"] == base and not p.get("isCrossRepository")]
+        if same:
+            print('a pull request for branch "%s" into branch "%s" already exists:\n%s'
+                  % (head, base, same[0]["url"]), file=sys.stderr)
+            return 1
         n = len(s["prs"]) + 1
         labels = opts(args, "--label")
         if any(n_ not in s["labels"] for n_ in labels):
@@ -1623,6 +1632,28 @@ class PullRequests(Edge):
         self.assertIn(f"sha={sha}", ours["body"])
         edits = [c for c in self.gh_state()["calls"] if c[:2] == ["pr", "edit"]]
         self.assertEqual(edits, [], "the stranger's pull request was edited")
+
+    def test_our_pull_request_found_whatever_owner_github_names(self):
+        # The no-mistakes review: after a rename or a transfer, which GitHub redirects,
+        # origin's URL names the old owner, and GitHub the new one as the head's. Our pull
+        # request (the head a branch of origin itself) is still found and updated, never
+        # opened a second time.
+        self.good_commit()
+        self.assertEqual(self.safe_push().returncode, 0)
+        self.set_gh(lambda s: s["prs"][0].update(headRepositoryOwner={"login": "new-owner"}))
+        for args, line in ((("--label", "docs"), "A second line, the fix."),
+                           (("--branch", BRANCH), "A third line, its kind from the open one.")):
+            with self.subTest(args=args):
+                sha = self.good_commit(line)
+                r = self.safe_push(*args)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 0, out)
+                self.assertIn("#1 updated", out)
+                (pr,) = self.gh_state()["prs"]
+                self.assertIn(f"sha={sha}", pr["body"])
+        self.assertIn("kind label: on #1", out)
+        creates = [c for c in self.gh_state()["calls"] if c[:2] == ["pr", "create"]]
+        self.assertEqual(len(creates), 1, creates)
 
     def test_public_names_scanned_before_the_push(self):
         # Review note 9: the title is posted, and the branch name pushed as a ref.
@@ -3270,6 +3301,20 @@ class Units(unittest.TestCase):
         self.assertNotIn(str(Path.home()), block)
         self.assertIn("full output in ~/.cache/stoicheia/logs/x/", block)
         safe_push.check_body(block)
+
+    def test_own_pull_requests(self):
+        # Ours: the head a branch of the base repository itself (isCrossRepository false),
+        # of the branch's name, whatever owner GitHub names; never a fork's of that name.
+        ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 1, "", "test/stoicheia", {},
+                                "test-pr")
+
+        def pr(number, cross, login, branch="test-pr"):
+            p = {"number": number, "headRefName": branch,
+                 "headRepositoryOwner": {"login": login}}
+            return p if cross is None else dict(p, isCrossRepository=cross)
+        prs = [pr(1, False, "test"), pr(2, False, "new-owner"), pr(3, True, "stranger"),
+               pr(4, True, "test"), pr(5, None, "test"), pr(6, False, "test", "other")]
+        self.assertEqual([p["number"] for p in safe_push.own_prs(ctx, prs)], [1, 2])
 
     def test_revert_advice_and_slug(self):
         ctx = safe_push.Context(Path("."), "a" * 40, "b" * 40, 3, "", None, {})

@@ -2209,23 +2209,21 @@ class PRPlan(NamedTuple):
 def own_prs(ctx: Context, prs: list[dict]) -> list[dict]:
     """The pull requests whose head is a branch of origin itself. `gh pr list --head`
     matches on the branch's name alone, so it finds a fork's pull request of the same
-    name too; and on a public repository anyone can open one in advance."""
-    owner = (ctx.github or "").split("/")[0].lower()
-    mine = []
-    for p in prs:
-        if p.get("isCrossRepository") is not False:
-            continue
-        login = str((p.get("headRepositoryOwner") or {}).get("login") or owner).lower()
-        if login == owner and p.get("headRefName", ctx.branch) == ctx.branch:
-            mine.append(p)
-    return mine
+    name too; and on a public repository anyone can open one in advance. GitHub's
+    isCrossRepository tells them apart: it is false only when the head is a branch of the
+    base repository itself, which only those who may push to it can make. The head's
+    owner is not compared with the owner in origin's URL: after a rename or a transfer,
+    which GitHub redirects, the URL names the old owner, and our own pull request would be
+    missed, the branch pushed, and `gh pr create` refused."""
+    return [p for p in prs if p.get("isCrossRepository") is False
+            and p.get("headRefName", ctx.branch) == ctx.branch]
 
 
 def find_own_pr(ctx: Context) -> dict | None:
     """Our open pull request for the branch, if any (never a fork's of the same name)."""
     listed = gh_json(ctx, "pr", "list", "--head", ctx.branch, "--base", "main", "--state",
                      "open", "--json", "number,url,isDraft,labels,isCrossRepository,"
-                     "headRepositoryOwner,headRefName") or []
+                     "headRefName") or []
     mine = own_prs(ctx, listed)
     return mine[0] if mine else None
 
