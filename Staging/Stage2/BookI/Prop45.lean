@@ -3,47 +3,44 @@ import Staging.Stage2.Rectilineal
 /-!
 # Staging: I.45 for any rectilineal figure
 
-Brief 0006, stage 2, as revised on 18 October 2026. Companions of `Elements.BookI.Prop45`,
-which stays as Euclid's worked configuration: the four-sided figure ABCD, cut by DB into
-the triangles ABD and DBC. Euclid's proof makes a parallelogram for the first triangle
-[I. 42], applies one for the second to its side [I. 44], and shows that the two make one
-parallelogram; a figure of more triangles repeats the second step, as Byrne draws it for
-three (1847, p. 46).
+Brief 0006, stage 2. Companions of `Elements.BookI.Prop45`, which stays as Euclid's worked
+configuration: the four-sided figure ABCD, cut by DB into the triangles ABD and DBC.
+Euclid's proof makes a parallelogram for the first triangle [I. 42], applies one for the
+second to its side [I. 44], and shows that the two make one parallelogram; a figure of more
+triangles repeats the second step, as Byrne draws it for three (1847, p. 46).
 
 * `Prop45.append` is that second step.
 * `Prop45.sum` repeats it, for any number of triangles. It is the construction, and claims
   nothing of a figure: the triangles need not fit together.
 * `Prop45.apart` is the proposition for any rectilineal figure, with any boundaries, given
-  with triangles that lie apart, no point inside two of them (`Apart`). The figure may have
-  a hole (Definition I.14: "any boundary or boundaries").
-* `Prop45.figure` is the proposition for a figure with one boundary, given with a division
-  into triangles fitted together (`Rectilineal`, `Fitted`). It follows from `Prop45.apart`,
-  since fitted triangles lie apart (`Fitted.inside_pairwise`).
-* `Prop45.fan` is the proposition for a figure divided as Euclid and Byrne divide it, by the
-  straight lines from one corner A₀, with the two conditions that make those triangles a
-  division of the figure: neighbouring triangles on opposite sides of the straight line
-  they share, and the angles at A₀ together less than four right angles. It follows from
-  `Prop45.figure`, since such a division is fitted (`Fitted.fan`). The construction does not
-  use the two conditions: they make the triangles a division of the figure, and the proof
-  goes through `Fitted.fan` on purpose, so that the fan companion is the general one applied
-  to a checked fan.
+  with any division into triangles that lie apart, no point inside two of them (`Apart`).
+  The figure may have a hole (Definition I.14: "any boundary or boundaries").
+* `Prop45.figure` is the proposition for a figure with one boundary, given with triangles
+  fitted together in a suitable order (`Rectilineal`, `Fitted`). It follows from
+  `Prop45.apart`, since fitted triangles lie apart (`Fitted.inside_pairwise`).
+* `Prop45.fan`, the main companion, is the proposition for a figure divided as Euclid and
+  Byrne divide it, by the straight lines from one corner A₀, with the two conditions that
+  make those triangles a figure: neighbouring triangles on opposite sides of the straight
+  line they share, and the angles at A₀ together less than four right angles. It concludes
+  that the triangles are fitted together into one figure (`Fitted.fan`), and that the
+  parallelogram is equal to that figure (`Prop45.figure`). The two conditions are what the
+  first conclusion needs.
 
 The names: `figure` is Euclid's word for what is given ("a given rectilineal figure"), so the
-companion for any figure glued together has it; `apart` names the figure whose triangles
-lie apart; `fan` names the division Euclid draws, from one corner,
-which not every figure admits. The two agree, since a checked fan is a fitted figure and its
-triangles are the figure's. They move into `Elements/BookI/Prop45.lean` when proved, as
-"I.45 append", "I.45 sum", "I.45 apart", "I.45 figure" and "I.45 fan".
+companion for a figure glued together has it; `apart` names the figure whose triangles lie
+apart; `fan` names the division Euclid draws, from one corner, which not every figure
+admits. A checked fan is a fitted figure, and a fitted figure's triangles lie apart, so the
+three agree on the figures they share. They move into `Elements/BookI/Prop45.lean` when
+proved, as "I.45 append", "I.45 sum", "I.45 apart", "I.45 figure" and "I.45 fan".
 
 **What "equal to the figure" means here.** The parallelogram is equal to the triangles the
 figure is given with, taken together. That sum is what Euclid adds up when he calls ABD and
 DBC "the whole rectilineal figure ABCD". Nothing here says that another division of the
 figure gives the same sum: Euclid takes that for granted, and David Hilbert proved it, for
-his measure of area (brief 0006, for the gap catalogue). Today's I.45, whose ABD and DBC
-need only be triangles, follows from `Prop45.sum` (the check at the end). Those two triangles
-are not checked, and may overlap; the checked case of today's figure is `Prop45.fan` for the
-corners D, A, B, C, where the condition on neighbours is that A and C lie on opposite sides
-of DB.
+his measure of area (brief 0006, for the gap catalogue). Today's I.45 is an area-sum
+theorem: it follows from `Prop45.sum` (the check at the end), and its ABD and DBC need only
+be triangles, which may overlap. It represents Euclid's pictured division when A and C lie
+on opposite sides of DB, and that checked case is `Prop45.fan` for the corners D, A, B, C.
 -/
 
 namespace Elements.BookI
@@ -111,8 +108,8 @@ theorem Prop45.sum {E₁ E E₂ : Point} (ts : List (Point × Point × Point)) (
 
 /-- **I.45, for any rectilineal figure, with any boundaries** (companion of I.45). To
 construct, in a given rectilineal angle E, a parallelogram KFLM, its angle at K equal to E,
-equal to a given rectilineal figure: the figure given with the triangles it is cut into, no
-point inside two of them (`Apart`), and "equal to the figure" meaning equal to those
+equal to a given rectilineal figure: the figure given with any division of it into
+triangles, no point inside two of them (`Apart`), and "equal to the figure" meaning equal to those
 triangles taken together (`Apart.area`). The figure may have a hole, touch itself at a
 corner, or be in more than one piece. It is `Prop45.sum` for the figure's triangles; lying
 apart is what makes their sum the figure's. Nothing is claimed of another division of the
@@ -124,36 +121,34 @@ theorem Prop45.apart {E₁ E E₂ : Point} (R : Apart) (hE : Triangle E₁ E E�
 
 /-- **I.45, for any rectilineal figure with one boundary** (companion of I.45). To
 construct, in a given rectilineal angle E, a parallelogram KFLM, its angle at K equal to E,
-equal to a given rectilineal figure: the figure given with the triangles it is cut into, each
-glued across a side of an earlier one and meeting the earlier ones only along it
-(`Rectilineal`), and "equal to the figure" meaning equal to those triangles taken together
-(`Rectilineal.area`). The figure may be convex or not, and need have no corner from which the
-straight lines to the others divide it. It is `Prop45.apart` for the figure's triangles,
-which lie apart (`Fitted.inside_pairwise`). Nothing is claimed of another division of the
-figure. -/
+equal to a given rectilineal figure: the figure given with triangles fitted together in a
+suitable order, each glued across a side of an earlier one and meeting the earlier ones only
+along it (`Rectilineal`), and "equal to the figure" meaning equal to those triangles taken
+together (`Rectilineal.area`). The figure may be convex or not, and need have no corner from
+which the straight lines to the others divide it. It is `Prop45.apart` for the figure's
+triangles, which lie apart (`Fitted.inside_pairwise`). Nothing is claimed of another
+division of the figure. -/
 theorem Prop45.figure {E₁ E E₂ : Point} (R : Rectilineal) (hE : Triangle E₁ E E₂) :
     ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
       quadArea K F L M = R.area :=
   Prop45.apart ⟨R.pieces, R.fitted.ne_nil, R.fitted.triangle, R.fitted.inside_pairwise⟩ hE
 
 /-- **I.45, for a figure divided from one corner** (companion of I.45), as Euclid and Byrne
-divide it. To construct, in a given rectilineal angle E, a parallelogram KFLM, its angle at
-K equal to E, equal to a given rectilineal figure with corners A₀, A₁, A₂, …, Aₙ, the list
-`ps` being A₃, …, Aₙ (empty for a triangle), divided by the straight lines from A₀ into the
-triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one on each side
-`segments (A₁ :: A₂ :: ps)`. The division is checked: each piece is a triangle; each two
-neighbouring triangles A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁ lie on opposite sides of the straight line
-A₀Aᵢ they share (`hopp`, over `triples (A₁ :: A₂ :: ps)`); and the angles A₁A₀A₂, …,
-Aₙ₋₁A₀Aₙ together are less than four right angles (`hA₀`). Then the triangles are fitted
-together into one figure (`Fitted.fan`), read as the figure with corners A₀, A₁, …, Aₙ in
-order round it (that its boundary is that closed line is not stated in Lean), and the
-parallelogram is equal to them taken together, which is the figure as given. It claims
-nothing of another division.
+divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ (empty for
+a triangle), divided by the straight lines from A₀ into the triangles A₀A₁A₂, A₀A₂A₃, …,
+A₀Aₙ₋₁Aₙ, one on each side `segments (A₁ :: A₂ :: ps)`. The division is checked: each
+piece is a triangle; each two neighbouring triangles A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁ lie on opposite
+sides of the straight line A₀Aᵢ they share (one condition for each of
+`triples (A₁ :: A₂ :: ps)`); and the angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less than four
+right angles. Then those triangles, in that order, are fitted together into one figure
+(`Fitted.fan`); and, given a rectilineal angle E, there is a parallelogram KFLM, its angle at
+K equal to E, equal to that figure, that is, to the triangles taken together. The figure is
+read as the one with corners A₀, A₁, …, Aₙ in order round it; that its boundary is that
+closed line is not stated in Lean. Nothing is claimed of another division.
 
-The construction does not use `hopp` and `hA₀`: its conclusion follows from `htri` alone, by
-`Prop45.sum`. The two conditions make the triangles a division of the figure, and the proof
-goes through `Fitted.fan` on purpose, so that this companion is `Prop45.figure` applied to a
-checked fan.
+The first conclusion is what the two conditions are for: without them the triangles from
+A₀ may overlap, and need not be fitted. The parallelogram alone would follow from each
+piece being a triangle, by `Prop45.sum`.
 
 Euclid's ABCD with DB joined is the figure with corners D, A, B, C, its triangles DAB and
 DBC: A and C lie on opposite sides of DB. Byrne's figure has its corners listed from its
@@ -164,14 +159,11 @@ theorem Prop45.fan {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
     (hA₀ : Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => ∠ s.1 A₀ s.2) <
       ∟ + ∟ + (∟ + ∟))
     (hE : Triangle E₁ E E₂) :
-    ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
-      quadArea K F L M =
-        Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => △ A₀ s.1 s.2) := by
-  obtain ⟨K, F, L, M, hp, hang, harea⟩ :=
-    Prop45.figure ⟨_, Fitted.fan htri hopp hA₀⟩ hE
-  refine ⟨K, F, L, M, hp, hang, ?_⟩
-  rw [harea, Rectilineal.area, List.map_map]
-  rfl
+    ∃ R : Rectilineal,
+      R.pieces = (segments (A₁ :: A₂ :: ps)).map (fun s => (A₀, s.1, s.2)) ∧
+      ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
+        quadArea K F L M = R.area :=
+  ⟨⟨_, Fitted.fan htri hopp hA₀⟩, rfl, Prop45.figure _ hE⟩
 
 /-- The check: today's statement of I.45, for the two triangles ABD, DBC, follows from
 `Prop45.sum` for the list of those two (checked by Lean, up to unfolding definitions). -/

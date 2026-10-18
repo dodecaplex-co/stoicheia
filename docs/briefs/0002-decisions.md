@@ -491,3 +491,25 @@ findings:
   [brief 0005](0005-astra-review.md), in stage 1b's list of what `scripts/check_style.py`
   enforces, and "the idea figures have no letters" in item 7 of its planned acceptance
   checklist (stage 6).
+- **Brief 0006 frozen; I.45 and II.14 full; the definitions approved as a class; Staging's
+  proofs.** Astra's second answer (read-only, at `b48640c`, on
+  [issue #13](https://github.com/jackChallis/stoicheia/issues/13)) is the challenge of the
+  final statements of [brief 0006](0006-statements.md). It accepts `full` for I.45 and II.14 under
+  the convention that the figure comes with a checked finite dissection, with `Prop45.apart`
+  and `Prop14.square` the decisive companions, and asked only for wording corrections, which
+  are applied. With them, at the coordinator's direction, `Prop45.fan` and `Prop14.fan` now
+  conclude that the fan's triangles are a fitted figure, besides the parallelogram (the
+  square), so that their two conditions do logical work. The coordinator approved the
+  statements and froze brief 0006 on 18 October 2026; a later change is a revision of it
+  (WORKFLOW, section 2, "Correcting a frozen brief"). The owner's calls: I.45 and II.14 are
+  `full`, by the checked fan and by supplied divisions, under the tag
+  `figure-with-dissection`; and the definitions named in frozen briefs are approved for the
+  foundations as a class, each recorded in the pull request that moves it. The rule on
+  proofs in `Staging/` is amended, in its one home, [WORKFLOW](../WORKFLOW.md), section 2,
+  "What proofs `Staging/` may hold": besides the checks of today's statements, `Staging/`
+  may hold proofs that derive one staged statement from others, which test their interfaces,
+  and the proofs of a prototype the coordinator has approved; a staged statement's own proof
+  still waits for its brief's approval. Staging also serves a stage of a later brief than
+  0005 (brief 0007's stage 4b). The orders for a statement wave
+  ([orders](../templates/orders.md), kind 2) and [FORMALIZATION](../FORMALIZATION.md),
+  section 6, point to the rule.
