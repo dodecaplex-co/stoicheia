@@ -7,9 +7,8 @@ within a circle every point is within it, and III.2 is that rule for two points 
 circle. Astra pointed this out in the [outside review](outside-review-01.md), with a
 one-line proof compiled in Lean, and asked for this catalogue. We are grateful. Two later
 readings added to it, and we thank them too: a cold review by Claude saw that
-superposition supplies the steps of I.2 and I.3, and Argon's second review saw that some
-notes said a proof calls a rule it reaches only through a lemma, and that II.14 and III.15
-call Circle 2 as well.
+superposition supplies the steps of I.2 and I.3, and Argon's second review corrected our
+account of how each rule enters the proofs.
 
 A reconstruction within these foundations does not establish such a rule independently.
 Our III.2 follows Euclid's argument, and the proof is sound; but it rests, through III.1,
@@ -193,10 +192,10 @@ Any proof of our III.6 for contact within must use one of the same two rules, fo
 same reason: a circle and its copy, drawn twice over as under III.5, are two circles that
 meet, and no point of either lies outside the other, so by our Definition III.3 they touch
 within; and they have one centre. That too is our statement's reading, which asks of
-circles touching within only that they are two and that no point of the inner lies outside
-the outer; read with a point of the inner circle within the outer, the same proof
-(`Audit.III_5_crossing`) gives III.6 for contact within with neither rule. In our
-statement, Euclid's ending, FE equal to FB, "the less to the greater", needs the same
+circles touching within only that they are two, that they meet, and that no point of the
+inner lies outside the outer; read with a point of the inner circle within the outer, the
+same proof (`Audit.III_5_crossing`) gives III.6 for contact within with neither rule. In
+our statement, Euclid's ending, FE equal to FB, "the less to the greater", needs the same
 tacit step, that the two circles meet the straight line FEB at different points. For
 contact without, Generalities 3 alone is enough: a common centre would be a point within
 both circles, and circles that touch without have none.
@@ -231,12 +230,12 @@ laid down. The catalogue first listed them as near misses, since neither stateme
 triangle to move; but the same holds of I.7's circles, and they are rows now, with
 `Audit.I_2` and `Audit.I_3`.
 
-**How each rule enters.** Argon, a Google Gemini model, reviewing the Book III release on
-18 October 2026, pointed out that `direct_axioms` counts a rule a proof reaches through a
-lemma as well as one its own Lean names, and found that II.14 and III.15 call Circle 2 on
-two points of a circle. The account of "First enters" above the table, the notes on I.13
-in 17 proofs, III.1's porism and III.2, and II.14's place beside III.1 in the table rest
-on its reading, each point checked against Lean's proof terms. We thank it warmly.
+**How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
+rule a proof reaches through a lemma as well as one its own Lean names, and found that
+II.14 and III.15 call Circle 2 on two points of a circle. The account of "First enters"
+above the table, the notes on I.13 in 17 proofs, III.1's porism and III.2, and II.14's
+place beside III.1 in the table rest on that reading, each point checked against Lean's
+proof terms.
 
 ## The rows checked
 
