@@ -492,17 +492,24 @@ findings:
   enforces, and "the idea figures have no letters" in item 7 of its planned acceptance
   checklist (stage 6).
 - **Mixed angles: the prototype approved, its proofs kept in Staging.** The owner approved
-  stage 4b on 18 October, with III.16 and III.31 "via a mixed-angle prototype first". The
-  prototype is [`Staging/Stage4b/MixedAngles.lean`](../../Staging/Stage4b/MixedAngles.lean),
-  with its account in [the report](../reports/mixed-angles-prototype.md)
+  stage 4b on 18 October
+  ([the approval on issue #51](https://github.com/jackChallis/stoicheia/issues/51#issuecomment-6252155076)),
+  with a prototype of mixed angles first for III.16 and III.31: if it holds, they go full,
+  and if not, they stay partial with Astra's wording. The prototype is
+  [`Staging/Stage4b/MixedAngles.lean`](../../Staging/Stage4b/MixedAngles.lean), with its
+  account in [the report](../reports/mixed-angles-prototype.md)
   ([issue #56](https://github.com/jackChallis/stoicheia/issues/56)): Astra's representation
-  from [issue #51](https://github.com/jackChallis/stoicheia/issues/51), a mixed angle as a
-  geometric object, compared with a rectilineal angle by containment near its vertex, in
-  plain Lean on the existing foundations. It adds no axiom: the report's census finds every
-  theorem resting only on axioms already in `Certificate/axioms.lock` and on Lean's own, and
-  none on `sorry`. It was re-challenged and verified on 18 October by readers who did not
-  write it, the verification at `4705a9c`. The coordinator approves the prototype, and its
-  proofs stay in `Staging/Stage4b/MixedAngles.lean` until
+  from issue #51, a mixed angle as a geometric object, compared with a rectilineal angle by
+  containment near its vertex, in plain Lean on the existing foundations. It adds no axiom:
+  the report's census finds every theorem resting only on axioms already in
+  `Certificate/axioms.lock` and on Lean's own, and none on `sorry`. It was re-challenged and
+  verified on 18 October by readers who did not write it; the verifier read `dfb9291` and
+  handed back at `4705a9c` with a fix of its own. The coordinator takes placement in the
+  form the prototype proves, the invariance of the comparisons (`Segment.congruent`,
+  `Prop16.semicircle_congruent` and `Prop16.horn_congruent`, the report's section 3), as the
+  check of congruent placement that #56 asks for: no motion of a mixed angle is proved, and
+  III.16 and III.31, which compare at one vertex, need none. The coordinator approves the
+  prototype, and its proofs stay in `Staging/Stage4b/MixedAngles.lean` until
   [issue #57](https://github.com/jackChallis/stoicheia/issues/57) decides their move into
   `Elements/`: once brief 0006's pull request lands, that is what
   [WORKFLOW](../WORKFLOW.md), section 2, "What proofs `Staging/` may hold", allows for the

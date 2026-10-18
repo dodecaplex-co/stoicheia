@@ -1,10 +1,9 @@
 # Mixed angles: a prototype for III.16 and III.31
 
 Issue #56, for the decision on issue #57. The Lean is
-[`Staging/Stage4b/MixedAngles.lean`](../../Staging/Stage4b/MixedAngles.lean), on the branch
-`lean/mixed-angle-prototype`. It follows the design in Astra's answer on issue #51, whose
-III.16 and III.31 parts it implements; thanks to Astra for a design that turned out to need
-no new assumption at all.
+[`Staging/Stage4b/MixedAngles.lean`](../../Staging/Stage4b/MixedAngles.lean). It follows the
+design in Astra's answer on issue #51, whose III.16 and III.31 parts it implements; thanks
+to Astra for a design that turned out to need no new assumption at all.
 
 *Revised 18 October 2026, twice. The first revision answered the challenge on #56: the
 strict comparison asks for whole small circles of excess, and in III.16's figure the angle
@@ -13,9 +12,10 @@ answers the re-challenge and two reviews of that revision: `FallsShort` now cert
 the mixed angle is something, both comparisons refuse a straight angle,
 `MixedAngle.WellFormed` says when the named points give Euclid's angle, and placement at
 another vertex is proved in the form section 3 states. A verifier who did not write the
-second revision then read it, at `4705a9c`; its editorial findings are answered, and the
-coordinator's decision on where the proofs live is recorded (condition 6). The appendix
-lists every finding and what was done.*
+second revision then read it at `dfb9291` and handed back at `4705a9c` with a fix of its
+own; its editorial findings are answered, and the coordinator's decisions on placement and
+on where the proofs live are recorded (section 3, condition 6). The appendix lists every
+finding and what was done.*
 
 **In short.** The representation Astra proposed works in plain Lean on the existing
 foundations, with no new axiom and no `sorry`. Proved: Astra's checks (a) and (c) in full;
@@ -286,8 +286,10 @@ angle of the semicircle and the angle of contact this holds in any two circles
   assembled from cases still stubbed with `sorry`, and brief 0006 lets only III.24 and
   `Arcs.lean` cite it; the route by I.8 does without it.
 
-Whether this form answers Astra's "congruent placement" is for Astra and the coordinator to
-judge. III.16 and III.31 make every comparison at one vertex, so they need nothing more.
+The coordinator takes this form as the check of "congruent placement" that Astra asked for
+and #56 lists ([decisions](../briefs/0002-decisions.md), 18 October 2026, "Mixed angles: the
+prototype approved, its proofs kept in Staging"). III.16 and III.31 make every comparison at
+one vertex, so they need nothing more.
 
 **The general angle of contact.** `Prop16.horn_locallyEqual` is proved in III.16's figure,
 where AE is at right angles to the diameter AB. For a straight line given only as touching
@@ -368,25 +370,31 @@ What is not proved is named in section 3, and neither proposition needs it. The 
    - What cites no proposition goes to Book Zero, or beside the words: the facts on sides,
      rays and circles, the other `WithinAngle`, `Surrounds` and `NearVertexOpen` facts,
      `exists_near_across`, `near_inside_of_ray`, `near_inside_of_onRay`, and the other
-     checks and laws.
-   - The `Prop16.` and `Prop31.` steps go before their propositions, in their files
-     (FORMALIZATION, section 6). The `Segment.` steps that do not cite III.16 take III.16's
-     first part, or both, as hypotheses, as the `Prop16.` steps do, and use those steps, so
-     they go in III.16's file after them: `Segment.exceeds_iff`, `.fallsShort_iff` and
-     `.nearVertexOpen`, which rest on I.12, I.17, I.19 and I.20;
-     `.angle_tangent_of_oppositeSidesOf`, which cites I.13; and
-     `.angle_tangent_of_sameSideOf`, which cites no proposition. The theorems that cite
-     III.16 or III.31 (section 2) go after them; `Segment.congruent` also cites I.8, I.11 and
-     I.13.
+     checks and laws. The `Prop16.` and `Prop31.` steps are not among them, even where they
+     cite no proposition: the next bullet governs them.
+   - The `Prop16.` and `Prop31.` steps are helpers for one proposition, and go before it, in
+     its file (FORMALIZATION, section 6); among them `Prop16.Outside.ne`,
+     `Prop16.outside_of_onRay` and `Prop16.sameSideOf_of_inside`, which cite no proposition.
+     The `Segment.` steps that do not cite III.16 take III.16's first part, or both, as
+     hypotheses, as the `Prop16.` steps do, and use those three, so they go in III.16's file
+     after them: `Segment.exceeds_iff`, `.fallsShort_iff` and `.nearVertexOpen`, which rest
+     on I.12, I.17, I.19 and I.20; `.angle_tangent_of_oppositeSidesOf`, which cites I.13;
+     and `.angle_tangent_of_sameSideOf`, which cites no proposition. These homes follow from
+     the choice of this bullet, and depart from the list of FORMALIZATION, section 6, for
+     shared steps, under which the four that rest on Book I would go to `Squares.lean` and
+     the fifth to Book Zero. The theorems that cite III.16 or III.31 (section 2) go after
+     those propositions; `Segment.congruent` also cites I.8, I.11 and I.13.
 4. **The records.** III.16 and III.31 drop `mixed-angles-omitted` and take a new tag, defined
    in `review/terms.toml` before use, carrying Astra's wording: the comparisons use local
    containment of curved angular regions, and no general arithmetic or ratio theory of mixed
    angles is claimed. The passage for the local bound is a `helper`.
 5. **The challenge.** As with every new representation, readers who did not write these
    definitions challenge them before approval. This revision answers the re-challenge and
-   two reviews (appendix), and a verifier who did not write it has read it, at `4705a9c`,
-   checking the census, every claim of "proved" and the homes of condition 3 against the
-   Lean. Its findings are answered in the appendix; the changes since are editorial.
+   two reviews (appendix), and a verifier who did not write it has read it at `dfb9291` and
+   handed back at `4705a9c` with a fix of its own, checking the census, every claim of
+   "proved" and the homes of condition 3 against the Lean. Its findings are answered in the
+   appendix; the changes since are editorial, and the record of the coordinator's
+   decisions.
 6. **Where the proofs live.** Recorded: the coordinator's decision of section 3 is on the
    [decisions](../briefs/0002-decisions.md) page, 18 October 2026. It rests on WORKFLOW,
    section 2, "What proofs `Staging/` may hold", which brief 0006's pull request adds.
@@ -459,9 +467,23 @@ handed back at `4705a9c`.
 |---|---|
 | *Material, for the coordinator.* The proofs sit in `Staging/`, and the rule on main has staged files hold statements with `sorry` | The coordinator's decision is recorded (section 3, condition 6). Condition 5 now counts this verification |
 | *Editorial.* `surrounds_inside` and `surrounds_outside` named their rules "Intersection 5" and "Intersection 4", which are not the rules they use, and section 4 merged two families of rules | Fixed by the verifier: the docstrings now name "Intersections 5" and "Intersections 4", the labels of the construction rules the proofs use (`line_circle_beyond`, `line_circle_between`), and section 4 reads "Intersection 1, and Intersections 4 and 5". `exists_near_across`'s "Circles 2 and 3", a family the foundations do not have, now reads "Circle 2 and 3" |
-| *Editorial.* Condition 3 gave no home to five `Segment.` steps | Added: they go in III.16's file, after the `Prop16.` steps they use. Not `Squares.lean`, as proposed: III.16's file imports it, and these steps use `Prop16.` steps |
+| *Editorial.* Condition 3 gave no home to five `Segment.` steps | Added: they go in III.16's file, after the `Prop16.` steps they use. Not `Squares.lean`, as proposed: III.16's file imports it, and these steps use `Prop16.` steps, which condition 3 puts in III.16's file, those that cite no proposition included. Condition 3 says that this departs from FORMALIZATION, section 6's list for shared steps |
 | *Editorial.* The row for `Segment.exists_tangent` left out that C is on the circle and that AC does not pass through the centre | Both stated |
 | *Editorial.* `Staging.lean`'s module doc does not list `Stage4b/`; the comment on #56 gives 47 theorems | `Stage4b/` is listed. The comment on #56 is outside the repository, for the coordinator; the census is in section 2 (117 theorems, 109 written and 8 generated) |
 | *Editorial.* The page of "(Heath, vol. 2, p. 40)" was not checked against the scan | Checked by the verifier: in the archive.org text of the scan, the running head "40 BOOK III [III. 16" stands above Proclus's argument on the angle of contact. No change |
 | *Editorial.* Every finding of the previous verification, and the census, the closure and the tables, read against the Lean | Resolved, and no defect found |
 | *Editorial, found in answering these.* The revision note said that the angle of contact does not depend on its naming line, without "in III.16's figure" | Scoped, as everywhere else |
+
+### The review of the commit that recorded the decision
+
+Readers who did not write it reviewed `eb5c88b`, against the guides and against #56.
+
+| Finding | Done |
+|---|---|
+| *Material.* The decisions page put words in quotation marks as the owner's that the owner did not write | The quotation marks are gone: the entry says what the owner approved, and links the approval on #51 |
+| *Material.* The decision rests on the paragraph "What proofs `Staging/` may hold", which only brief 0006's pull request adds | No change to the text: the prototype's pull request comes after brief 0006's, and says so |
+| *Editorial.* `Staging.lean`'s module doc still speaks of brief 0005's stages and of statements with `sorry` | Left to brief 0006's change to those lines, which rewrites them. The `Stage4b/` line is widened when brief 0007's staged statements join the prototype there |
+| *Editorial.* Condition 3 left open whether a `Prop16.` step that cites no proposition goes to Book Zero or to III.16's file, and the homes of the five `Segment.` steps rest on that choice | Condition 3 now says that `Prop16.` and `Prop31.` steps go in their propositions' files, and that the `Segment.` homes follow from it and depart from FORMALIZATION, section 6's list for shared steps |
+| *Editorial.* Three places put the verification at `4705a9c`, though the verifier read `dfb9291` and `4705a9c` is its own fix | Reworded in all three: read `dfb9291`, handed back at `4705a9c` with a fix of its own |
+| *Editorial.* The report named the branch, which is deleted on landing | The branch is no longer named; the link to the Lean is kept |
+| *Spec, editorial.* Section 3 left to Astra and the coordinator whether the proved form answers "congruent placement", and the decision said nothing on it | The coordinator takes the proved form as that check: one sentence in the decisions entry, and section 3 says so |
