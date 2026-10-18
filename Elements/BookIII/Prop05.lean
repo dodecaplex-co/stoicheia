@@ -46,20 +46,14 @@ theorem Prop5 {E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : Circles
   have hFG : F ≠ G := by
     rintro rfl
     exact hne (circle_eq hE_ABC hE_CDG hF_ABC hG_CDG rfl)
-  /- F and G both lie beyond E from the unlettered point, so E is not between them, and
-     one of them lies between E and the other. Euclid's figure has F the nearer; we take
-     either order, and the nearer makes the less equal to the greater. -/
-  have hnot : ¬ Between F E G :=
-    not_between_of_between_between (between_symm hFEP) (between_symm hGEP)
-  rcases between_cases (ne_of_between hFEP).symm hFG (ne_of_between hGEP).symm
-      hE_EFG hF_EFG hG_EFG with h | h | h
-  · have hlt : ‖E F‖ < ‖E G‖ := len_lt_of_between h
-    rw [hEFG] at hlt
-    exact lt_irrefl _ hlt
-  · exact hnot h
-  · have hlt : ‖E G‖ < ‖E F‖ := len_lt_of_between h
-    rw [hEFG] at hlt
-    exact lt_irrefl _ hlt
+  /- F and G both lie beyond E from the unlettered point, so G is on the ray from E
+     through F. On a ray only one point is at a given distance from its start, by Henry
+     Savile's argument (`OnRay.eq_of_len_eq` in Book Zero): whichever is the nearer, the
+     less would be equal to the greater. Euclid's figure has F the nearer. -/
+  have hG_ray : OnRay G E F := ⟨(ne_of_between hFEP).symm, ne_of_between hGEP,
+    ⟨EFG, hE_EFG, hF_EFG, hG_EFG⟩,
+    not_between_of_between_between (between_symm hGEP) (between_symm hFEP)⟩
+  exact hFG (OnRay.eq_of_len_eq hG_ray hEFG.symm).symm
   -- Therefore the point E is not the centre of the circles ABC, CDG.
   -- Therefore etc.
   -- Q. E. D.

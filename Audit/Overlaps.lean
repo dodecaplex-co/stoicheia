@@ -165,15 +165,18 @@ theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
 /-- **III.5 from Diagram-segment 2.** A circle is fixed by its centre and radius
 (`circle_eq`, Diagram-segment 2). Two circles about one centre through one point are
 one circle, so two circles that cut one another cannot share a centre. Our III.5 takes
-Euclid's steps and ends with this rule. -/
+Euclid's steps, and uses this rule only for the step he leaves tacit, that F and G are two
+points. -/
 theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
   fun hne ⟨_, _, _, hC₁, hC₂, _, _⟩ ⟨hE₁, hE₂⟩ => hne (circle_eq hE₁ hE₂ hC₁ hC₂ rfl)
 
 /-- **III.6 from Diagram-segment 2 and Generalities 3.** Circles touching within are two
 circles through one point, so Diagram-segment 2 again forbids a common centre. Circles
 touching without have no point within both, and a common centre would be one, since a
-centre is within its circle (`centre_inside`, Generalities 3). Our III.6 takes Euclid's
-steps and ends with these rules. -/
+centre is within its circle (`centre_inside`, Generalities 3). Our III.6 ends contact
+without with Generalities 3, before anything is drawn; for contact within it takes Euclid's
+steps, and uses Diagram-segment 2 only for the step he leaves tacit, that E and B are two
+points. -/
 theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
   rintro C F ABC CDE (⟨hC₁, hC₂, hne, -⟩ | ⟨hC₂, hC₁, hne, -⟩ | ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
   · exact hne (circle_eq hF₁ hF₂ hC₁ hC₂ rfl)

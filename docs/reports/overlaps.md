@@ -161,8 +161,11 @@ III.1 its second.
 
 #### III.5
 
-III.5 calls the rule itself, at its last step. The Lean takes Euclid's steps and ends with
-the rule: the supposed common centre makes the two circles one.
+III.5 calls the rule itself, for the step Euclid leaves tacit: were F and G one point, the
+circles ABC and CDG, about one centre through one point, would be one circle. The Lean
+takes Euclid's steps and ends as he does, by the order of the points: F and G lie on one
+ray from E, and the nearer would make the less equal to the greater (Henry Savile's
+argument, Book Zero's `OnRay.eq_of_len_eq`).
 
 Any proof of III.5 must use Diagram-segment 2 or Circle 4. Draw every circle twice over,
 as two circles with one centre and one radius, through the same points. Of the 24 rules
@@ -177,8 +180,10 @@ point, and EF is equal to EG without contradiction.
 
 #### III.6
 
-III.6 calls both rules itself. The Lean is as III.5's, with Generalities 3 for contact
-without.
+III.6 calls both rules itself. Contact without ends at once, before anything is drawn: the
+supposed common centre would be within both circles (Generalities 3), and circles that
+touch without have no such point. For contact within, the Lean is as III.5's, with
+Diagram-segment 2 for the step Euclid leaves tacit, that E and B are two points.
 
 Any proof of III.6 for contact within must use one of the same two rules, for the same
 reason: a circle and its copy, drawn twice over as under III.5, are two circles that meet,
@@ -190,20 +195,23 @@ would be a point within both circles, and circles that touch without have none.
 
 ## How the rows were found
 
-**What the project already says.** The [gap catalogue for Book III](gaps-book-III.md)
-says that Circle 2 "is III.2", in its introduction, and "is III.2 itself", under III.1,
-where it also gives Generalities 2 as the corollary Heath would add to III.1. III.2's
-commentary has a paragraph headed "A rule that is III.2", and III.6's names `circle_eq`
-as III.5's last step. The axiom docstrings name one more of Euclid's steps: Intersection 5
-is "the step Euclid takes for granted in I.1". That is a gap Euclid leaves and the rule
-fills, not a proposition he proves later, and it belongs to the
-[gap catalogue for Book I](gaps-book-I.md).
+**What the project already says.** The [gap catalogue for Book III](gaps-book-III.md) says
+that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
+gives Generalities 2 as the corollary Heath would add to III.1. III.2's commentary has a
+paragraph headed "A rule that contains III.2", and III.5's and III.6's name `circle_eq` as
+the rule that supplies the step Euclid leaves tacit there. The axiom docstrings name one
+more of Euclid's steps: Intersection 5 is "the step Euclid takes for granted in I.1". That
+is a gap Euclid leaves and the rule fills, not a proposition he proves later, and it
+belongs to the [gap catalogue for Book I](gaps-book-I.md).
 
 **Small certificates.** Four certificates cite no proposition: I.1 and I.4, Euclid's own
 beginnings, which rest on Postulate 3 with Intersection 5 and on superposition; and III.5
-and III.6, which rest on six rules each and are rows of the catalogue. Three others, I.23,
-I.25 and I.41, have the fewest rules in `direct_axioms`, three to five, but each cites
-propositions and carries Euclid's argument.
+and III.6, which are rows of the catalogue. When the catalogue was made, III.5 and III.6
+rested on six rules each, ending with Diagram-segment 2; now that they end by the order of
+the points, as Euclid does, each rests on eighteen, as many as I.1, and on Common Notion 5,
+so their certificates no longer stand out. Three others, I.23, I.25 and I.41, have the
+fewest rules in `direct_axioms`, three to five, but each cites propositions and carries
+Euclid's argument.
 
 **A sweep of every rule.** We read each of the 81 tacit rules, with the postulates and
 Definition 15, against the 99 statements and the three porisms. Then a mechanical screen,
