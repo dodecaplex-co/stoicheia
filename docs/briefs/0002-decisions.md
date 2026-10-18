@@ -426,3 +426,13 @@ findings:
   a pull request; tags, releases, release notes, the GitHub description and anything sent
   outside the repository still need the owner's OK ([WORKFLOW](../WORKFLOW.md), section
   10, "Landing work: pull requests").
+
+## 18 October 2026
+
+- **The phrase rules read across a line break.**
+  [`scripts/check_style.py`](../../scripts/check_style.py) now finds a phrase of its tables
+  however a line or a comment wraps it: the words of a phrase may stand apart by spaces,
+  tabs or one line break, and a blank line ends the phrase. This covers S2 to S7, S9, S11
+  and D7 to D10 ([STYLE](../STYLE.md), section 8). Nothing is loosened: S3 catches at least
+  what it caught before, and the self-check holds a case for each rule, run on every
+  check. It lands after the wording sweep, on whose text it passes.
