@@ -19,6 +19,6 @@ note = "Euclid's figure has AB leaning towards C; leaning towards D is his figur
 
 [review]
 stage = "exceptions"
-commit = "2e1d5c1"
+commit = "a7b8d90"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:aa3108c6a122b530"
