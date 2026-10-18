@@ -42,7 +42,7 @@ note = "Euclid's figure keeps FA off the centre and G, the foot of DG, away from
 [[passage]]
 at = "But DA is equal to DH"
 kind = "grouped"
-note = "The Lean needs no point H: DG, less than the radius DA, puts G within the circle (Diagram-segment 4), which the supposed interposition forbids. One step carries both sentences."
+note = "Our proof names no point H: DG, less than the radius DA, puts G within the circle (Diagram-segment 4), which the supposed interposition forbids. One step carries both sentences."
 
 [[passage]]
 at = "Therefore another straight line cannot be interposed"

@@ -1,5 +1,13 @@
 # Brief 0005: answering Astra's review
 
+*Written and committed on 17 October 2026 (d040117), and revised on 18 October 2026 to the owner's decisions taken after it. The first text stands in the history, and each revised passage says so where it stands. What changed, and why:*
+
+- **Placement has no time limit and no fallback.** The owner decided on 17 October that III.24 waits for a proved placement lemma, and that a fact the axioms lack is a decision for the owner, never a quiet new axiom. "Timeboxed", the fallback congruence and "if the fallback was used" are removed; the verification line for placement, which could never pass, is restated; the corrections to the design and the order of work, spike first, are added under stage 3.
+- **I.45 and II.14 are stated as Euclid and Byrne state them.** The owner's decision, later on 17 October, replaces the general dissection (`Rectilineal`, `Fitted`) with a figure given by its corners and taken as divided by the straight lines from one corner (stage 2, and the places that named a dissection).
+- **Landing work: pull requests,** a new section: a pointer to the pull-request discipline of docs/WORKFLOW.md, section 10, which lands with pull request #1, and the branches stages 2, 3 and 4 work on.
+- **The colour figures are to carry Heath's letters,** the owner's decision of 17 October, taken after stage 1b was done (stages 1b, 5 and 6).
+- **What remains of stages 1 and 1b** is kept in docs/PROGRAM.md, with the state of the work; a line at the end of stage 1b points to it.
+
 ## Context
 
 Astra reviewed Stoicheia at commit 676244a in four parts:
@@ -55,6 +63,12 @@ We verified every claim against the code with three read-only explorers. All hol
 - Adopt Astra's layered contributor guide.
 - Voice rules become defaults, not quotas.
 
+**Later the same day, after this brief was committed** (added 18 October; each is set out where it applies):
+- Placement has no fallback and no time limit; III.24 waits for a proved placement lemma (stage 3).
+- I.45 and II.14 are stated as Euclid and Byrne state them, for a figure given by its corners (stage 2).
+- The colour figures are to carry Heath's letters (stage 1b).
+- All work lands on main through a pull request, with reviews ([Landing work: pull requests](#landing-work-pull-requests)).
+
 ## Stages and releases
 
 | Stage | What | Ends with |
@@ -68,7 +82,7 @@ We verified every claim against the code with three read-only explorers. All hol
 | 5 | Consolidation review of all 99 (full semantic records, figures against the scans, read-through) | — |
 | 6 | **Acceptance**: `docs/ACCEPTANCE.md` checklist, `check_acceptance.py` with zero failures, an independent Jev audit (a fresh client), and a cold re-score by Astra | **consolidation release of Books I–III** (notes approved by Jack) |
 
-Each stage runs as a workflow (ultracode): crews in git worktrees, adversarial verifiers, an integrator, and the captain merging and pushing after full CI. Nothing public (tags, releases, release notes, the GitHub description) happens without Jack's OK.
+Each stage runs as a workflow (ultracode): crews in git worktrees, adversarial verifiers, an integrator, and the coordinator landing each piece as a reviewed pull request (revised 18 October; the first text had the captain merging and pushing after full CI, and [Landing work: pull requests](#landing-work-pull-requests) points to the rules now). Nothing public (tags, releases, release notes, the GitHub description) happens without Jack's OK.
 
 ## The standing document: `docs/PROGRAM.md`
 
@@ -276,7 +290,7 @@ Then:
 - `docs/templates/proposition.md`: task, handback and review templates, matching `review/SCHEMA.md`.
 - `scripts/check_style.py` enforces hard rules only:
   - every link on docs/reading.md;
-  - letters in NN.svg all and only Heath's, and no letters in idea figures;
+  - letters in NN.svg all and only Heath's, and no letters in idea figures, as stage 1b made it; by the owner's decision taken after it, the idea figures are to carry Heath's letters at every point they show, each one that Euclid's figure draws, and the check is to change with them (revised 18 October, below);
   - palette and strokes;
   - no em dashes, retired refrains or crew talk;
   - caption length;
@@ -297,6 +311,7 @@ Then:
   - nothing competitive: no unsupported claims of novelty or superiority, and related work cited accurately and warmly (this keeps Jack's rule);
   - further reading only where apt, verified, never to fill a slot;
   - figures: departures from Heath's figure in the page's figure note, a one-case figure never implying the other cases, a reductio's impossible figure explained.
+- **The colour figures are to carry Heath's letters** (revised 18 October). The owner decided on 17 October, after stage 1b was done, that the figures at a glance, in Byrne's colours, are to carry Heath's letters at every point they show, each one that Euclid's figure draws, with the same names as Euclid's figure, the text and the Lean. In his words that day: "Proof without words is one thing - proof without Point labeling is quite another!" Byrne's diagrams use colours in place of letters, as his title says, and are a delight without them; the letters are wanted because a proof is read by its points, so that a reader passes from the colours to the proof by the same A and B. This replaces "no letters in idea figures" in the first text. The rule is to go into STYLE.md, section 7, its one home, in place of its "no letters", and `check_style.py`'s S14 is to change with it, as the figures are lettered.
 - **Book briefs, one home per book's decisions.** Refresh 0004 (Book III) with the arc and segment representation, construction inputs and exceptions. Gather Books I and II's vocabulary, representations, shared lemmas and exceptions (now scattered over 0001–0003) into short book briefs. Each book's introduction links its brief.
 - **Reviewed examples** (docs/examples.md), each tied to a commit and a reason:
   - a short construction (I.1);
@@ -314,7 +329,11 @@ Stage 1 also carries these status notes, with no Lean change:
 
 The review records carry tags for these: `redundant-hypothesis`, `angle-measure`, `segment-with-circle`.
 
+What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), section 3, with the state of the work (added 18 October).
+
 ## Stages 2–4: representation and generality
+
+*Revised 18 October 2026: the statements and routes of stages 2 to 4 are brief 0006's, which revises this design. This section keeps the design with its dated revisions, and brief 0006 governs where the two differ.*
 
 **Design rule.** Every generalization is a **companion theorem** (`PropN.general`, `.figure`, `.square`) next to the unchanged, annotated `PropN`, which stays as Euclid's worked configuration.
 - check_fidelity reads only `theorem PropN`, so its Heath sentences stay put.
@@ -325,7 +344,7 @@ The review records carry tags for these: `redundant-hypothesis`, `angle-measure`
 - `Elements/Figure/Sums.lean`, plain Lean: `Magnitude.sum` over lists, `sum_append`, `sum_singleton`, `InOrder`, `segments`, `endOf`, `InOrder.between_end`.
 - Brief 0006 (statements of every companion and of the Book III restatements).
 - The certificate and render support for companions.
-- A policy check that only III.24 and `Arcs.lean` may cite `placement`.
+- A policy check that only III.24, `Arcs.lean` and the placement files themselves (`Placement.lean` and its case files, whose assembly cites the `Placement.*` names) may cite `placement`. It matches the `Placement.*` names, since placement is split across several files (revised 18 October; stage 3).
 
 **Stage 2: Books I and II**
 
@@ -333,21 +352,23 @@ The review records carry tags for these: `redundant-hypothesis`, `angle-measure`
 - `Prop40.general`: four base ends on one line L, equal bases, equal areas, same side ⇒ ∃ M parallel to L through A and D. Plus `Prop40.join` (A ≠ D ⇒ AD ∥ BC) and `Prop40.special` (the current statement as a corollary).
 - Proof: Euclid's own argument (`Prop31.line`, `Prop30.meet`, I.38 already general, `OnRay.eq_of_area_eq`). It covers separated, touching, overlapping and oppositely named bases.
 
-*I.45 figure*
-- `Rectilineal`: pieces, plus `Fitted` (inductive: a single triangle, or glue a piece against a side of an earlier piece, across that side, meeting earlier pieces only along it). `area` is the sum.
+*I.45 for a figure given by its corners* (revised 18 October, to the owner's decision later on 17 October)
+- A rectilineal figure is given by its corners A₀, A₁, …, Aₙ, in order round it, and taken as one that the straight lines from A₀ divide into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, as Euclid and Byrne divide it: Euclid's DB divides his ABCD into ABD and DBC. Every convex figure is so divided from any corner, Euclid's ABCD among them. Byrne's I.45 figure is not convex, and both his lines start from its re-entrant corner. A figure that is not convex may need its first corner chosen, and some figures have no such corner.
 - `Prop45.append`: the parallelogram so far plus one triangle, preserving the angle (the second half of I.45's proof).
-- `Prop45.sum` (any nonempty list, from I.42 then append) and `Prop45.figure (R : Rectilineal)`.
+- `Prop45.figure`: a parallelogram in the given angle equal to those triangles taken together, built one triangle at a time, I.42 for the first and `Prop45.append` for each of the rest. Euclid's ABCD with DB joined is the case of four corners, D, A, B and C.
+- Nothing is claimed of another division of the figure. That every division gives the same sum is a step Euclid takes for granted; it goes in the gap catalogues of Books I and II, with thanks to David Hilbert, who proved it for the measure of area he builds from his own axioms ([*The Foundations of Geometry*](../reading.md#hilbert1902foundations), chapter IV), not for this edition's area.
 - A pentagon needs no change of statement. The iteration is a departure to note.
+- This replaces the design first written here, which the owner had chosen earlier on 17 October: a `Rectilineal` figure of pieces glued edge to edge in any dissection (`Fitted`), with `Prop45.sum` and `Prop45.figure (R : Rectilineal)`. `Rectilineal` and `Fitted` are withdrawn, and brief 0006 will give the statements in full.
 
 *II.1 general*
 - `Prop1.two`, one cut, re-running II.1's construction.
 - `Prop1.general`: induction over `InOrder (B :: ps)`, rect(A; B, end) = Σ rect over consecutive pieces. One and two pieces are included, and the three-piece result is `[D, E, C]`.
 
-*II.14 general*
-- `Prop14.rectangle` applies Prop14 to the rectangle's two halves, keeping Euclid's semicircle and both cases.
-- `Prop14.general (R : Rectilineal)`, by `Prop45.figure` with a right angle, then the rectangle.
-- `Prop14.square` returns `Square P Q S T` with its area (I.46, `Square.described`).
-- `Prop14.sum` keeps the old two-triangle form as a specialization.
+*II.14 general* (revised 18 October, with I.45)
+- `Prop14.rectangle` is proved directly, by the second part of Euclid's proof, keeping his semicircle and his cases (II.5 and I.47), and does not cite II.14. (Revised 18 October, as brief 0006 decides: the first text applied Prop14 to the rectangle's two halves, a route now withdrawn, since it would prove II.14 from II.14.)
+- `Prop14.general`, for a figure given by its corners, by `Prop45.figure` with a right angle, then the rectangle.
+- `Prop14.square` returns `Square P Q S T` with its area (I.46, `Square.described`), equal to the figure's triangles taken together. As in I.45, nothing is claimed of another division.
+- The old two-triangle form is the case of four corners. The first text had `Prop14.general (R : Rectilineal)`, and `Prop14.sum` for the two-triangle form.
 
 Book II's area correspondence is reviewed as part of stage 5.
 
@@ -365,19 +386,44 @@ The 4-argument `circumference` and `standing` stay as Heath's measure words.
 
 *Ground*
 - Book Zero: `Arc.congr_side`; `Arc.meets` (a ray from inside the chord meets the arc).
-- `Elements/BookIII/Placement.lean`, the long pole, prototyped first and **timeboxed**:
-  - `placement`: equal bases AB = CD carry E's closed half-plane onto F's, preserving distances to the base ends;
-  - `f` is chosen by epsilon. Existence from I.23, `OnRay.exists_len_eq` and I.4; uniqueness from I.7 and I.20; distances from I.8, `Prop24.within`, C.N. 3 and I.4; onto by the reverse construction.
-  - **No new axiom.**
+- `Elements/BookIII/Placement.lean`, the long pole, prototyped first, with its cases in files of their own under `Elements/BookIII/Placement/` (revised 18 October; below):
+  - `placement`: equal bases AB = CD carry E's closed half-plane onto F's, preserving distances to the base ends, and carrying the side of the base and betweenness on it both ways;
+  - `f` is chosen by epsilon. Existence through I.22 (`Prop22`), as step 2 below plans; uniqueness from I.7 and I.20; distances from I.8, `Prop24.within`, C.N. 3 and I.4; onto by the reverse construction.
+  - **No new axiom, no time limit and no fallback.**
 - `Arc.eq_of_aligned` (same chord, same side, equal radii, same kind ⇒ the circles, arcs and segments coincide), by I.7 and `circle_eq`.
 - `Prop23.point` (on the circle ↔ equal angle; inside ↔ greater angle), by I.16, I.21 and III.21.
 - `Circumference.add` (for Book IV).
 
+*Placement: the concern, and how it is de-risked* (added 18 October)
+
+The concern was never time. It was whether every case of carrying one segment onto another can be proved from the 87 axioms, with no motion axiom beyond I.4 and I.8. The feasibility analysis says it can:
+- every case closes with lemmas already proved;
+- no Postulate 5 is used, and no continuity beyond what I.22 uses;
+- each piece is a first-order ruler-and-compass statement of the kind System E's completeness theorem covers.
+
+Placement is about 450–600 lines of Lean, and the whole of stage 3 about 850–1,100.
+
+The owner decided on 17 October that placement has no fallback and no time limit: III.24 waits for a proved placement lemma, and the other work goes on in parallel. If a case turns out to need a fact the axioms lack (it is not expected), the proof stops and the owner decides. No axiom is ever added quietly.
+
+Corrections to the design:
+- **The comparison is based at whichever end, A or B, avoids the bad case.** This removes the equal-angle and supplementary-angle branches.
+- **The statement is strengthened.** The side clause becomes `SameSideOf P E A B ↔ SameSideOf (f P) F C D`, and `Between A P B ↔ Between C (f P) D` is added.
+- **The verification line is restated** (Verification, below). Placement's transitive axioms will include superposition, since every distance fact rests on I.4 and I.8.
+- **The I.20 degeneracy lemma** (three points lie on one straight line exactly when one of I.20's three inequalities is an equality) goes in a new Book I file, `Elements/BookI/HelpersTriangles.lean`, after I.20 and citing nothing later. FORMALIZATION, section 6, puts a shared step that cites a proposition at or after it, and `Elements/BookI/Helpers.lean` comes before I.20: I.7 imports it. The lemma's owner is step 2's task, below. Stage 4's `Prop15.le_diameter` needs it too.
+- **Placement is split across several files,** so that parallel provers never share one, each owned by the task of its step below: the cases under `Elements/BookIII/Placement/`, after Book I; then `Placement.lean` itself, the assembly (step 4), after them and before III.24. Brief 0006's table of homes and owners names each file and the step that owns it. The policy check matches the `Placement.*` names, and lets only III.24, `Arcs.lean` and these placement files, whose assembly cites those names, cite `placement`.
+
+The order of work, de-risking first:
+- **Step 0, a spike by the coordinator.** The definitions, the `placement` statement and every sub-lemma's signature, all with `sorry`. Then the assembly proved from the stubs, and III.24 restated and proved from a stubbed `placement` and `Prop23.point`. This tests the interfaces, which is where the real risk lies.
+- **Step 1, one strong prover:** the strict-angle case for two points off the line, and the choice of base end.
+- **Step 2, Codex, best of two, in parallel on separate files:** the I.20 lemmas, existence (through I.22, `Prop22`), `Prop23.point` and `Arc.eq_of_aligned`.
+- **Step 3, Codex:** uniqueness (I.7 off the line, and the I.20 lemma for the mixed cases), both points on the line, and the distance case with one point on the base and one off it (I.8, then I.4). Its files are those brief 0006's table assigns to placement step 3.
+- **Step 4, the strong prover:** the assembly, then III.24, III.26 and III.28, then `Arcs.lean`.
+
 *III.24 restated*
 - It now concludes `Arc.Congruent ⟨AEB,A,B,E⟩ ⟨CFD,C,D,F⟩`, following Euclid: placement (A on C, AB on CD), B on D, then each point of the arc lands on CFD by I.8 + III.21 + `Prop23.point`, and inside points go inside. III.10 is not needed, and the correspondence note says so.
 - The radius proof stays as `Prop24.equalCircles`, displayed as the **alternative formal proof**.
-- `Prop24.circumference` is derived from the congruence, so III.26's [III. 24] stays honest.
-- *Fallback* if placement overruns its timebox: congruence := EqualCircles ∧ equal chord ∧ SameKind, with the radius proof, flagged on the page.
+- `Prop24.equalMeasure` is derived from the congruence, so III.26's [III. 24] stays honest. (Renamed 18 October, as brief 0006 renames it: the first text had `Prop24.circumference`, whose short name shadowed the definition `circumference` inside the namespace `Prop24`.)
+- **No fallback** (revised 18 October, to the owner's decision of 17 October): III.24 waits for a proved placement lemma, however long it takes, and the other work goes on in parallel. If a case of placement needs a fact the 87 axioms lack, work on it stops and the owner decides; no axiom is added quietly.
 
 *III.26 and III.28 upgraded* so that "in equal circles" does real work: each clause concludes equal measure ∧ `Arc.Congruent` (III.26 by III.24 on the remaining segments; III.28 through III.26). The mishnah notes the mild departure from Euclid's "whole minus part". The `.1` calls in Prop27, Prop28 and Prop30 are updated.
 
@@ -409,12 +455,12 @@ The 4-argument `circumference` and `standing` stay as Heath's measure words.
 ## Stage 5: the consolidation review, then the consolidation release
 - **Full semantic records for all 99.** Every passage is classified as carried / helper / grouped / different / unformalized, with `stage = "full"` keyed to the reviewed commit.
 - **Records:** about 6 reviewers, one per range, plus 3 adversarial verifiers. Book II's area correspondence gets particular attention: which expression is which drawn piece, why the pieces subdivide, and the order and incidence facts.
-- **Figures:** each lettered figure against Heath's scan. Captions name the case shown when a theorem covers several (`[figure].case`).
+- **Figures:** each lettered figure against Heath's scan, the colour figures' letters included (revised 18 October). Captions name the case shown when a theorem covers several (`[figure].case`).
 - **Hardest blocks:** a mishnah paragraph only for the hardest formal blocks (I.7, I.35, I.47, III.8, and others), saying what obstacle the block resolves and why Euclid didn't need to say it.
 - **A start-to-finish read-through:** 6 sequential readers, a measurer, 3 figure auditors, a judge, a critic and a fixer. Its findings feed the standards documents.
 - **The pilot check Astra asks for.** The guide is piloted on three kinds of task in stages 2–4, each worked by parallel contributors with disjoint files:
   - a straightforward one (II.1 general);
-  - a construction or generalization (I.45 and II.14 over a dissection);
+  - a construction or generalization (I.45 and II.14 for a figure given by its corners; revised 18 October, from "over a dissection");
   - a representation or route exception (III.24 with its alternative proof).
 
   An independent editor then reads the resulting pages consecutively, for shared voice, consistent terms, truthful scope and an even depth of explanation. The defaults and examples are adjusted before stage 5 applies the guide to all 99.
@@ -441,11 +487,11 @@ This gates the consolidation release.
 4. [machine] Policies hold: no superposition outside I.4/I.8; placement cited only by III.24 and Arcs; no later citations; Postulate 5 boundaries; the axiom lock matches.
 5. [machine] Every `--` run is carried or declared, and every passage note is rendered.
 6. [machine] Heath's text and the enunciation match; quotations are checked; letters are plain; links are on docs/reading.md; scan links resolve.
-7. [machine] The figure letters are all and only Heath's; the idea figures have no letters; the palette and strokes are right; a `[figure].case` is given when a theorem covers several cases.
+7. [machine] The figure letters are all and only Heath's; the idea figures carry Heath's letters at every point they show, each one that Euclid's figure draws (revised 18 October; the first text had no letters in the idea figures); the palette and strokes are right; a `[figure].case` is given when a theorem covers several cases.
 8. [machine] Style hard rules pass (check_style), and the pages are regenerated clean.
 9. [review] The statement says what Euclid's enunciation says, or the qualification is exact. Quantifiers, conclusions, hypotheses and cases have been checked.
 10. [review] Each substantive passage is carried, or its helper, grouping, alternative or omission is named truly. There are no dummy citations, no artificial hypothesis uses and no concealing helpers.
-11. [review] Representations used here (rect/sq, arcs, segments, dissections) have their bridge theorems, sitting correctly in the dependency order.
+11. [review] Representations used here (rect/sq, arcs, segments, figures given by their corners) have their bridge theorems, sitting correctly in the dependency order (revised 18 October; the first text had "dissections").
 12. [review] The commentary is accurate, specific to this proposition, in the common voice, and explains the hardest block. Attributions are checked.
 13. [review] The figures agree with the proof's geometry and scope.
 14. [review] A reviewer other than the author signs off; the reviewer and the commit are recorded.
@@ -454,7 +500,7 @@ This gates the consolidation release.
 - [machine] The completion summary is generated and true.
 - [machine] The gap catalogue and overlap catalogue are current.
 - [review] Reading the book straight through, it flows and the voice is common.
-- [review] The remaining limitations are deliberate, few and stated plainly. For Book III these are only the mixed-angle clauses of III.16/31; III.24's alternative proof, if the fallback was used; and the III.2-style overlaps.
+- [review] The remaining limitations are deliberate, few and stated plainly. For Books I and II, I.45 and II.14 cover only a figure that the straight lines from one of its corners divide, and do not prove that another division gives the same area. For Book III these are only the mixed-angle clauses of III.16/31 and the III.2-style overlaps. (Revised 18 October: with no fallback for placement, III.24's alternative proof is no longer a limitation, and the limits of the corners form are added.)
 
 **`scripts/check_acceptance.py`** checks every [machine] item across all 99 propositions. It reads every [review] item from the review records (each must be `pass` with a reviewer and a commit). It writes `docs/reports/acceptance-books-I-III.md`: a table per proposition and per book, with every failure listed. CI runs it, and **the consolidation tag requires zero failures**.
 
@@ -479,7 +525,7 @@ This gates the consolidation release.
 - The moderate confidence on a correct answer is why every low-confidence answer goes to adjudication.
 
 *Figures too.* Jev's image input makes a cheap independent check of all 198 figures possible:
-- letters present and placed as Heath's text needs;
+- letters present and placed as Heath's text needs, in both figures (revised 18 October);
 - incidences (C where the circles meet);
 - the idea figure's colours against its caption.
 
@@ -503,11 +549,15 @@ Jev must meet a stated accuracy bar on it. Below the bar, Jev's answers become a
 **Cold re-score.** Finally Astra re-reviews the tagged candidate cold, with the same question as before: how well do Books I–III meet the README's goal, 0–100. Jack runs this in ChatGPT. The target is about 95 for each book, and any defect named goes back through the loop.
 
 ## Crew, tools and safety
-- **Lean proofs:** Codex sailors, best of two, with Claude bosuns and reviewers, as on the Book III voyages. Placement goes to the strongest prover with a timebox. The sailors read AGENTS.md automatically.
+- **Lean proofs:** Codex sailors, best of two, with Claude bosuns and reviewers, as on the Book III voyages. Placement goes to the strongest prover and to Codex in the order under stage 3, with no time limit (revised 18 October). The sailors read AGENTS.md automatically.
 - **Prose, records, review and design:** Claude agents.
 - **Ownership:** the captain owns Foundations/Definitions*, the lock, decisions and merges; one writer per file; the integrator owns the generated output. Negative and mutation tests run in isolated worktrees.
 - **Rough scale:** stage 1 is about 22 agent slots, stages 2–4 about 13 tasks in 3 voyages, and stage 5 about 20 agents.
 - **Public actions need Jack's OK:** the release notes for book-III, the book-I/II note corrections, the consolidation release, and any GitHub description change.
+
+## Landing work: pull requests
+
+*Added 18 October 2026, to the owner's decision of 17 October.* The rules live in the pull-request discipline of [docs/WORKFLOW.md, section 10](../WORKFLOW.md#10-how-a-book-is-made-and-released), their one home. The ruleset on main already requires a pull request; pull request #1 writes the discipline there, in place of direct pushes to main. Stages 2, 3 and 4 each work on a branch of their own, and each piece of a stage lands as its own reviewed pull request; a change to a check lands first, on its own, before the code it checks.
 
 ## Astra's recommendations, traced
 
@@ -526,7 +576,7 @@ The same table, with each done-criterion, goes into `docs/reports/outside-review
 | Jump links, bottom nav, fold helpers, scope by the badge, scan links | 1d, 1f |
 | Prototype each new foundation; settle Book IV interfaces first | 5 (after) |
 | 95: semantic review of all 99 with the five relationships, records keyed to a revision, exceptions near the status | 1d (exceptions), 5 (full), 1k (visible notes) |
-| 95: I.40 general; I.45 over a supplied dissection | 2 |
+| 95: I.40 general; I.45 over a supplied dissection | 2 (I.45 for a figure given by its corners, divided as Euclid and Byrne divide it; revised 18 October) |
 | 95: II.1 any number; II.14 general with a drawn Square; Book II area correspondence | 2, 5 |
 | 95: arcs by membership, kinds by the centre, theorems (i) and (ii) | 3 |
 | 95: III.24 congruence, alternative proof displayed, Euclid's proof in full | 3 |
@@ -558,7 +608,7 @@ The same table, with each done-criterion, goes into `docs/reports/outside-review
 
 **Stages 2–4**
 - Every companion is proved and certified. Old statements follow as `.special`.
-- `#print axioms` of `placement` shows no superposition and no new axiom.
+- Superposition is not among `placement`'s direct axioms. The 87 axioms in `Certificate/axioms.lock` are unchanged; its vocabulary gains the stage's new words (`Arc` and the rest) through `check_fidelity.py --write-lock` and a decisions entry, with `tests/model/lock.sha256` updated and [tests/model/MODEL.md](../../tests/model/MODEL.md) read again in the same change, as [FORMALIZATION](../FORMALIZATION.md), section 7, and the lock's header require. (Revised 18 October: the first text asked `#print axioms` of `placement` to show no superposition, which can never pass, since every distance fact rests on I.4 and I.8; and a lock unchanged in every line could not pass either, since the new statements reach new words.)
 - The `Audit/` file stops compiling where the old redundancy is gone (III.26 no longer provable without EqualCircles), which is the intended signal; update overlaps.md.
 - Statement fingerprints force a re-review of every touched record.
 
@@ -571,7 +621,7 @@ The same table, with each done-criterion, goes into `docs/reports/outside-review
 - Certificate/Facts.lean
 - scripts/check_fidelity.py, render.py, heath.py, negative_tests.py, plus new check_style.py and check_links.py
 - review/ (new), tests/model/ (new), Audit/ (new), Certificate/axioms.lock (new)
-- Elements/Foundations/DefinitionsIII.lean, Elements/Figure/Sums.lean (new), Elements/BookIII/Placement.lean and Arcs.lean (new)
+- Elements/Foundations/DefinitionsIII.lean, Elements/Figure/Sums.lean (new), Elements/BookIII/Placement.lean with its case files Placement/Strict.lean, Exists.lean, Unique.lean, OnLine.lean and Mixed.lean, and Arcs.lean (new), and Elements/BookI/HelpersTriangles.lean for the I.20 degeneracy lemma (new) (revised 18 October)
 - Elements/BookI/Prop40.lean and Prop45.lean; BookII/Prop01.lean and Prop14.lean; BookIII/Prop14, 15, 24, 25, 26, 28.lean
 - README.md, CONTRIBUTING.md, AGENTS.md and CLAUDE.md (new), docs/STYLE.md, docs/FORMALIZATION.md and WORKFLOW.md (new), docs/templates/, docs/reports/outside-review-01.md, overlaps.md and model notes
 - mishnah/intro/{I,III}.md

@@ -12,7 +12,8 @@ exception, and most entries of a routine proposition are one line. Link an exist
 rather than copy it. For an editorial task (a sentence, a figure, a quotation), the task
 form's first block and its checks are enough.
 
-Fleet orders, which assign a whole stretch at once, have [their own template](orders.md).
+Fleet orders, for a proof stretch, a statement wave, or a companion proof or a
+restatement's, have [their own template](orders.md).
 
 ## 1. Proposition brief
 

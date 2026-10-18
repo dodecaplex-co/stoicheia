@@ -84,6 +84,31 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 5 | Consolidation review of all 99 | |
 | 6 | Acceptance, then a consolidation release of Books I–III | |
 
+### Open items, 18 October
+
+Stages 1 and 1b are done, and the book-III release is made; the owner's decision that the
+figures at a glance carry Heath's letters came after them. On main, a GitHub ruleset
+requires a pull request and the checks `check`, `model` and `negative`, allows merge
+commits only, and blocks force pushes and deletion; secret scanning with push protection
+is on. On 18 October these items were open, each landing on main as a pull request of its
+own, the figure letters as three, in this order:
+
+- **The pull-request discipline, PR #1:** the safe-push hardening, with the reviewers'
+  fixes, under `/security-review`. Once it is on main, the pre-push hook is reinstalled.
+- **The sweep,** one pull request: the reader-facing wording sweep and the scrub of two
+  private paths, with the review records it re-reads.
+- **check_style's D7 pattern,** after the sweep, so that it also catches a phrase broken
+  across a line; it also tightens S3 and S9. It changes a check, so it travels alone.
+- **The orders template:** `docs/templates/orders.md` gains a statements-only wave and
+  companion proofs.
+- **The figure letters,** three pull requests in order: the letters rule (letters allowed,
+  and checked where drawn), the lettered figures, then every point lettered (required).
+
+Two more are not pull requests: the finished worktrees and their merged branches are
+removed, and the fleet script, kept outside the repository, is rebuilt from the orders
+template, without "every hypothesis should be used" and without the rule that every one of
+Heath's references be cited.
+
 ## 4. Decisions later books depend on
 
 - **Arcs and segments** (stage 3) are what Book IV will inscribe and circumscribe with;
@@ -156,6 +181,11 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
   stale record or a deleted directory, runs every CI check, and only then pushes, and
   `test_safe_push.py` plants a bad commit for each guard ([WORKFLOW](WORKFLOW.md),
   section 10).
+- **17 Oct. Move to pull requests as soon as a repository has CI and readers; we were
+  late.** A checked push left no place for its reviews. Every change is now a pull
+  request: `safe_push.py` is its pre-flight and its merge gate, the template records its
+  reviews, and a ruleset on main requires it ([WORKFLOW](WORKFLOW.md), section 10,
+  "Landing work: pull requests").
 
 ## 6. Cost and time
 

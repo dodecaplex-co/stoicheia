@@ -7,8 +7,8 @@ import Elements
 Run with `lake env lean Certificate/Facts.lean` (after `lake build`). It writes
 `facts.json`, whose fields `Certificate/FIELDS.md` sets out. There is an entry for
 every proposition, for every porism (`Prop1.porism`, "III.1 Por."), and for every
-companion theorem proved beside a proposition (none yet). For each it records, straight
-from Lean's own proof terms:
+companion that `Elements/Companions.lean` lists, each checked here. For each it records,
+straight from Lean's own proof terms:
 
 * its statement, printed with every name written out and no notation;
 * whether the proof is finished, or still has a `sorry` in it;
@@ -60,11 +60,11 @@ own book: `"I.47"` among the citations of II.9. -/
 def books : List (String × Name × Nat) :=
   [("I", `Elements.BookI, 48), ("II", `Elements.BookII, 14), ("III", `Elements.BookIII, 37)]
 
-/-- The theorems proved beside a proposition, each with its reference: a more general
-form of its statement, say, as `(``Elements.BookI.Prop40.general, "I.40 general")`. Each
-is an entry of its own, attached to its proposition, whose namespace it lives in. There
-are none yet; stage 2 of brief 0005 adds them. -/
-def companions : List (Name × String) := []
+/-- The companions, as the edition lists them: `Elements.companions`, whose note in
+`Elements/Companions.lean` says what they are. The checks are this file's: the run below
+refuses an entry that is not declared, is not in a proposition's namespace, is a porism,
+or is not listed by the reference its name gives. -/
+def companions : List (Name × String) := Elements.companions
 
 /-- Is `n` declared in one of this project's own modules (or in this file)? -/
 def isLocal (env : Environment) (n : Name) : Bool :=

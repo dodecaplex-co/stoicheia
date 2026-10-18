@@ -1,34 +1,117 @@
 #!/bin/sh
 # Stoicheia's pre-push hook (STOICHEIA_SAFE_PUSH), installed by scripts/install_hooks.sh.
 #
-# A push to main goes through scripts/safe_push.py, which checks the commit from end to
-# end and sets STOICHEIA_SAFE_PUSH to the commit it checked, for its own push alone.
-# Any other push to main is refused here, and so is a push of a commit other than the
-# one checked, and every deletion of main. Pushes to other branches pass. (The owner can
-# still go round it with `git push --no-verify`; the hook is a guard rail, not a lock.)
+# Main changes only by a pull request's merge commit, made on GitHub by
+# `git safe-push --merge <n>` (origin/main's scripts/safe_push.py, by the launcher that
+# scripts/install_hooks.sh installs beside this hook), so every push to main is refused here,
+# however it is spelled (HEAD:main, main, refs/heads/main, --mirror, forced), and so is
+# every deletion of main; the ruleset on GitHub enforces the same, and this hook backs it
+# up locally. A push to any other branch is scanned for secrets first, with origin/main's
+# own copy of the scan (`safe_push.py --scan-push`), whichever remote the push goes to, so
+# a branch cannot weaken the scan that judges it, and another remote's main is never run.
+# A tag is pushed or deleted only with the owner's OK, by name:
+# STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag> (docs/WORKFLOW.md, section 1); even
+# then the commits it points to, and an annotated tag's message, are scanned. (The
+# owner can still go round it with `git push --no-verify`; the hook is a guard rail, not
+# a lock.)
+#
+# The interpreter, as the launcher picks it: STOICHEIA_PYTHON if set, else the first of
+# python3.14, python3.13, python3.12, python3.11 and python3 that is Python 3.11 or later
+# (safe_push reads TOML with tomllib). Without one, the push is refused.
 #
 # git gives the hook one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
 
+tmp=
+harness=
+python=
+cleanup() { [ -n "$tmp" ] && rm -rf "$tmp"; }
+trap cleanup EXIT
+
+# The interpreter (the launcher, scripts/hooks/safe-push, picks it the same way).
+find_python() {
+    if [ -n "${STOICHEIA_PYTHON:-}" ]; then
+        echo "$STOICHEIA_PYTHON"
+        return 0
+    fi
+    for candidate in python3.14 python3.13 python3.12 python3.11 python3; do
+        if command -v "$candidate" >/dev/null 2>&1 &&
+                "$candidate" -c 'import sys; sys.exit(sys.version_info < (3, 11))' \
+                    >/dev/null 2>&1; then
+            command -v "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+# The scan: origin/main's safe_push.py and heath.py, copied out of git. Only origin's main
+# is trusted: the remote pushed to may be anyone's fork. Without them, the push is refused.
+scan() {
+    base=refs/remotes/origin/main
+    if [ -z "$tmp" ]; then
+        tmp=$(mktemp -d "${TMPDIR:-/tmp}/stoicheia-pre-push.XXXXXX") || return 1
+        if git show "$base:scripts/safe_push.py" > "$tmp/safe_push.py" 2>/dev/null &&
+                grep -q -e "--scan-push" "$tmp/safe_push.py" &&
+                git show "$base:scripts/heath.py" > "$tmp/heath.py" 2>/dev/null; then
+            harness=$tmp/safe_push.py
+        else
+            echo "pre-push: refusing the push: origin/main has no scripts/safe_push.py with" >&2
+            echo "    --scan-push to scan it with (git fetch origin, and push again)." >&2
+        fi
+    fi
+    [ -n "$harness" ] || return 1
+    if [ -z "$python" ]; then
+        if ! python=$(find_python); then
+            echo "pre-push: refusing the push: no Python 3.11 or later found (python3.14," >&2
+            echo "    python3.13, python3.12, python3.11 or python3); name one in" >&2
+            echo "    STOICHEIA_PYTHON." >&2
+            harness=
+            return 1
+        fi
+    fi
+    "$python" "$harness" --scan-push "$1" "$2" "$3"
+}
+
 status=0
 while read -r local_ref local_sha remote_ref remote_sha; do
-    [ "$remote_ref" = "refs/heads/main" ] || continue
-    case "$local_sha" in
-        *[!0]*) ;;
-        *)
-            echo "pre-push: refusing to delete main on $1." >&2
+    case "$remote_ref" in
+        refs/tags/*)
+            tag=${remote_ref#refs/tags/}
+            if [ "${STOICHEIA_TAG_PUSH:-}" != "$tag" ]; then
+                echo "pre-push: refusing to push or delete the tag $tag on $1: tags and" >&2
+                echo "    releases need the owner's OK (docs/WORKFLOW.md, section 1). With it:" >&2
+                echo "    STOICHEIA_TAG_PUSH=$tag git push $1 refs/tags/$tag" >&2
+                status=1
+                continue
+            fi
+            # Allowed, and still scanned: a tag publishes the commits it points to, and
+            # an annotated tag its message.
+            case "$local_sha" in
+                *[!0]*) scan "$local_sha" "$remote_sha" "$remote_ref" || status=1 ;;
+            esac
+            continue
+            ;;
+        refs/heads/main)
+            case "$local_sha" in
+                *[!0]*)
+                    echo "pre-push: refusing a push to main on $1: main changes only by a pull" >&2
+                    echo "    request's merge commit. Push a branch and open one with the pre-flight:" >&2
+                    echo "    git safe-push --branch <name> --label <kind>" >&2
+                    echo "    then merge it with git safe-push --merge <pr-number>" >&2
+                    echo "    (docs/WORKFLOW.md, \"Landing work: pull requests\")." >&2
+                    ;;
+                *)
+                    echo "pre-push: refusing to delete main on $1." >&2
+                    ;;
+            esac
             status=1
             continue
             ;;
     esac
-    if [ -z "$STOICHEIA_SAFE_PUSH" ]; then
-        echo "pre-push: refusing a push to main: push to main only through" >&2
-        echo "    python3 scripts/safe_push.py [--commit <sha>] [--dry-run]" >&2
-        echo "which checks the commit from end to end (docs/WORKFLOW.md, section 10)." >&2
-        status=1
-    elif [ "$STOICHEIA_SAFE_PUSH" != "$local_sha" ]; then
-        echo "pre-push: refusing a push to main: safe_push.py checked $STOICHEIA_SAFE_PUSH," >&2
-        echo "but this push sends $local_sha." >&2
-        status=1
-    fi
+    case "$local_sha" in
+        *[!0]*) ;;
+        *) continue ;;          # deleting a branch other than main publishes nothing
+    esac
+    scan "$local_sha" "$remote_sha" "$remote_ref" || status=1
 done
 exit $status
