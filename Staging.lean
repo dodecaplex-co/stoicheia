@@ -35,5 +35,9 @@ The folders follow the briefs' stages:
   and the rectilineal figure given with its triangles;
 * `Stage3/`: the arcs and segments, I.20's degenerate case, placement, III.23 point by
   point, III.24 restated, III.26 and III.28 upgraded, and the bridge theorems of `Arcs.lean`;
-* `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated.
+* `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated;
+* `Stage4b/`: III.7 and III.8 compared on either side of the diameter, III.17 for a point
+  not within the circle, and the point of contact (brief 0007); and a prototype of mixed
+  angles for III.16 and III.31, with its proofs, which the coordinator approved on 18
+  October 2026 (`docs/reports/mixed-angles-prototype.md`).
 -/

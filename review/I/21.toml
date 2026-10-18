@@ -7,8 +7,13 @@ fingerprint = "sha256:171c59e2c1b86814"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "On BC, one of the sides of the triangle ABC"
+kind = "given"
+note = "The statement gives the point D within the triangle, and BD and DC are named by their ends, so nothing is constructed here."
+
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "2e1d5c1"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:043c9336dae4f96b"
