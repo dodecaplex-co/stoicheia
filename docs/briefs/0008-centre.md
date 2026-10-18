@@ -626,9 +626,11 @@ proofs should not use `Arc.Drawn`'s centre clause (question 5).
 ## 7. Open questions, for the freeze
 
 Each question is the coordinator's to decide at the freeze, and is marked so; the
-recommendation is the brief's. Astra's answer to the draft agrees with the recommendations
-of questions 1 to 10, and asked for the lemmas of question 11; questions 12 to 14 arose
-after the challenge.
+recommendation is the brief's. Astra's answer to the draft at `afe0ee9` took the same side
+on questions 1 to 6, 8 and 10, and on question 9's removal of the tag; on question 7 it
+endorsed the draft's pin of the whole list of axioms, which the revision replaced by a
+targeted check on the Claude challenger's advice; and it asked for the lemmas of question
+11. Questions 12 to 14 arose after the challenge.
 
 1. **Where the rule sits.** *For the coordinator.* Recommended: `Tacit/Constructions.lean`, as
    `Tacit.exists_centre`, beside the other rules that a point exists. Weighed against a home
