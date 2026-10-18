@@ -22,7 +22,7 @@ contributor may hold several roles, save one: nobody reviews a claim they wrote.
 | Proof contributor | The assigned declarations with their helpers, porisms and companions, and how the Lean corresponds to the text. |
 | Edition contributor | Commentary, figures, source notes and further reading, written against the brief and reconciled with the finished proof. |
 | Independent reviewer | The changed claims, read against the source, the argument and the rendered page, with findings and their severity. |
-| Integrator | Merging a wave's branches, resolving conflicts, regenerating and committing the generated edition, and validating the integrated revision. |
+| Integrator | Merging a wave's branches, resolving conflicts, regenerating and committing the generated edition, validating the integrated revision, and keeping the companions list (section 4). |
 
 A fresh context helps a reviewer, but a different model name does not by itself make a
 review independent: the reviewer must not have written, prompted or edited the claim.
@@ -153,7 +153,11 @@ files working in parallel, the renderers, and an integrator followed by blind re
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
   README.md's rows between the `<!-- scope:… -->` markers and PROGRAM.md's status table
   between the `<!-- status -->` markers, which `render.py` fills; the rest of README.md has
-  an owner of its own, named in the orders. Each wave names owners
+  an owner of its own, named in the orders. The integrator also owns the companions list,
+  `Elements/Companions.lean`, which the certificate reads and checks, and adds a
+  companion's entry in the commit that moves the companion beside its proposition, so
+  that the listing travels with the proof and its record's stamp
+  ([FORMALIZATION](FORMALIZATION.md), section 2). Each wave names owners
   for Book Zero and the shared helper modules, `heath/`, the scripts, `Certificate/Facts.lean`,
   the review records, the reading list and bibliography, and the book briefs.
 - **Ask for a shared lemma with a proposed type:** its purpose, a proof or a plan, where it

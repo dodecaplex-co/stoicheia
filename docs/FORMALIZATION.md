@@ -129,9 +129,11 @@ Where a statement is narrower than Euclid's words, the general result is a compa
 theorem beside the unchanged `PropN`, which stays as Euclid's worked configuration under his
 sentences: `Prop40.general`, `Prop45.figure`, `Prop14.square`, and the old statement as a
 corollary (`Prop40.special`) where it helps citers. The fidelity check reads only
-`theorem PropN`, so Heath's sentences stay where they are. A companion is listed in
-`Certificate/Facts.lean`'s companions, gets a certificate entry ("I.40 general"), is named
-in the review record's `companions`, and is shown on the page with its own certificate. Each
+`theorem PropN`, so Heath's sentences stay where they are. A companion is listed in the
+edition's companions list, [`Elements/Companions.lean`](../Elements/Companions.lean)
+(who adds its entry, and when: [WORKFLOW](WORKFLOW.md), section 4); it gets a certificate
+entry ("I.40 general"), which `Certificate/Facts.lean` checks; it is named in the review
+record's `companions`; and it is shown on the page with its own certificate. Each
 companion is approved as a statement with `sorry` before anyone proves it.
 
 ## 3. Representations
