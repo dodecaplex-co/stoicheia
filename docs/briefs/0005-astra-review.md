@@ -3,10 +3,10 @@
 *Written and committed on 17 October 2026 (d040117), and revised on 18 October 2026 to the owner's decisions taken after it. The first text stands in the history, and each revised passage says so where it stands. What changed, and why:*
 
 - **Placement has no time limit and no fallback.** The owner decided on 17 October that III.24 waits for a proved placement lemma, and that a fact the axioms lack is a decision for the owner, never a quiet new axiom. "Timeboxed", the fallback congruence and "if the fallback was used" are removed; the verification line for placement, which could never pass, is restated; the corrections to the design and the order of work, spike first, are added under stage 3.
-- **I.45 and II.14 are stated as Euclid and Byrne state them.** The owner's decision, later on 17 October, replaces the general dissection (`Rectilineal`, `Fitted`) with a figure given by its corners and divided by the straight lines from one corner (stage 2, and the places that named a dissection).
-- **Landing work: pull requests,** a new section, summarizing the pull-request discipline of docs/WORKFLOW.md, section 10, which lands with pull request #1.
-- **The colour figures carry Heath's letters,** the owner's decision of 17 October (stages 1b, 5 and 6).
-- **Open items,** a new section: what remains of stage 1, as of 18 October.
+- **I.45 and II.14 are stated as Euclid and Byrne state them.** The owner's decision, later on 17 October, replaces the general dissection (`Rectilineal`, `Fitted`) with a figure given by its corners and taken as divided by the straight lines from one corner (stage 2, and the places that named a dissection).
+- **Landing work: pull requests,** a new section: a pointer to the pull-request discipline of docs/WORKFLOW.md, section 10, which lands with pull request #1, and the branches stages 2, 3 and 4 work on.
+- **The colour figures are to carry Heath's letters,** the owner's decision of 17 October, taken after stage 1b was done (stages 1b, 5 and 6).
+- **What remains of stages 1 and 1b** is kept in docs/PROGRAM.md, with the state of the work; a line at the end of stage 1b points to it.
 
 ## Context
 
@@ -66,7 +66,7 @@ We verified every claim against the code with three read-only explorers. All hol
 **Later the same day, after this brief was committed** (added 18 October; each is set out where it applies):
 - Placement has no fallback and no time limit; III.24 waits for a proved placement lemma (stage 3).
 - I.45 and II.14 are stated as Euclid and Byrne state them, for a figure given by its corners (stage 2).
-- The colour figures carry Heath's letters (stage 1b).
+- The colour figures are to carry Heath's letters (stage 1b).
 - All work lands on main through a pull request, with reviews ([Landing work: pull requests](#landing-work-pull-requests)).
 
 ## Stages and releases
@@ -82,7 +82,7 @@ We verified every claim against the code with three read-only explorers. All hol
 | 5 | Consolidation review of all 99 (full semantic records, figures against the scans, read-through) | — |
 | 6 | **Acceptance**: `docs/ACCEPTANCE.md` checklist, `check_acceptance.py` with zero failures, an independent Jev audit (a fresh client), and a cold re-score by Astra | **consolidation release of Books I–III** (notes approved by Jack) |
 
-Each stage runs as a workflow (ultracode): crews in git worktrees, adversarial verifiers, an integrator, and the coordinator landing each piece as a reviewed pull request (revised 18 October; the first text had the captain merging and pushing after full CI, and [Landing work: pull requests](#landing-work-pull-requests) gives the rules now). Nothing public (tags, releases, release notes, the GitHub description) happens without Jack's OK.
+Each stage runs as a workflow (ultracode): crews in git worktrees, adversarial verifiers, an integrator, and the coordinator landing each piece as a reviewed pull request (revised 18 October; the first text had the captain merging and pushing after full CI, and [Landing work: pull requests](#landing-work-pull-requests) points to the rules now). Nothing public (tags, releases, release notes, the GitHub description) happens without Jack's OK.
 
 ## The standing document: `docs/PROGRAM.md`
 
@@ -290,7 +290,7 @@ Then:
 - `docs/templates/proposition.md`: task, handback and review templates, matching `review/SCHEMA.md`.
 - `scripts/check_style.py` enforces hard rules only:
   - every link on docs/reading.md;
-  - letters in NN.svg all and only Heath's; the idea figures, first held to no letters, now carry Heath's letters at every point they show, each one that Euclid's figure draws (revised 18 October, below);
+  - letters in NN.svg all and only Heath's, and no letters in idea figures, as stage 1b made it; by the owner's decision taken after it, the idea figures are to carry Heath's letters at every point they show, each one that Euclid's figure draws, and the check is to change with them (revised 18 October, below);
   - palette and strokes;
   - no em dashes, retired refrains or crew talk;
   - caption length;
@@ -311,7 +311,7 @@ Then:
   - nothing competitive: no unsupported claims of novelty or superiority, and related work cited accurately and warmly (this keeps Jack's rule);
   - further reading only where apt, verified, never to fill a slot;
   - figures: departures from Heath's figure in the page's figure note, a one-case figure never implying the other cases, a reductio's impossible figure explained.
-- **The colour figures carry Heath's letters** (revised 18 October). The owner decided on 17 October that the figures at a glance, in Byrne's colours, carry Heath's letters at every point they show, each one that Euclid's figure draws, with the same names as Euclid's figure, the text and the Lean. In his words that day: "Proof without words is one thing - proof without Point labeling is quite another!" Byrne's diagrams use colours in place of letters, as his title says, and are a delight without them; the letters are added because a proof is read by its points, so that a reader passes from the colours to the proof by the same A and B. This replaces "no letters in idea figures" in the first text. The rule goes into STYLE.md, section 7, its one home, and into `check_style.py`, as the figures are lettered.
+- **The colour figures are to carry Heath's letters** (revised 18 October). The owner decided on 17 October, after stage 1b was done, that the figures at a glance, in Byrne's colours, are to carry Heath's letters at every point they show, each one that Euclid's figure draws, with the same names as Euclid's figure, the text and the Lean. In his words that day: "Proof without words is one thing - proof without Point labeling is quite another!" Byrne's diagrams use colours in place of letters, as his title says, and are a delight without them; the letters are wanted because a proof is read by its points, so that a reader passes from the colours to the proof by the same A and B. This replaces "no letters in idea figures" in the first text. The rule is to go into STYLE.md, section 7, its one home, in place of its "no letters", and `check_style.py`'s S14 is to change with it, as the figures are lettered.
 - **Book briefs, one home per book's decisions.** Refresh 0004 (Book III) with the arc and segment representation, construction inputs and exceptions. Gather Books I and II's vocabulary, representations, shared lemmas and exceptions (now scattered over 0001–0003) into short book briefs. Each book's introduction links its brief.
 - **Reviewed examples** (docs/examples.md), each tied to a commit and a reason:
   - a short construction (I.1);
@@ -329,17 +329,7 @@ Stage 1 also carries these status notes, with no Lean change:
 
 The review records carry tags for these: `redundant-hypothesis`, `angle-measure`, `segment-with-circle`.
 
-## Open items
-
-*Added 18 October 2026, and current as of that date.* Stages 1 and 1b are done, and the book-III release is made. The GitHub ruleset on main (a pull request required, the checks `check`, `model` and `negative` required, merge commits only, no force push or deletion) and secret scanning with push protection are on. What remains of stages 1 and 1b is below. Each change to the repository lands as a pull request ([Landing work: pull requests](#landing-work-pull-requests)), and none has reached main yet:
-- **Pull request #1, the harness.** Still to be merged, under `/security-review`: the safe-push hardening, with the reviewers' fixes. After it merges, the pre-push hook is reinstalled.
-- **Wording.** The last old phrases: "Lean cannot …" in the mishnah of I.2; "I.17 needs no Postulate 5" in the mishnah of I.17, and "needs Postulate 5" in the further reading of I.26; "Lean never needs …" in the mishnah of I.43 and the Book I gap catalogue; and the docstrings of the helpers `Prop44.place`, `Prop22.room` and `Prop22.ne_zero`.
-- **check_style's D7 pattern,** so that it also catches a phrase broken across a line. It changes a check, so it goes in a pull request of its own.
-- **A scrub** of two private paths already on main, in old orders.
-- **Housekeeping:** the finished worktrees and their merged branches removed.
-- **Orders.** `docs/templates/orders.md` gains a statements-only wave and companion proofs. The fleet script, kept outside the repository, is rebuilt from it, without "every hypothesis should be used" and without the rule that every one of Heath's references be cited.
-
-The wording, the scrub, the D7 pattern and the orders template are written and wait for their pull requests, after #1; the housekeeping and the fleet script remain.
+What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), section 3, with the state of the work (added 18 October).
 
 ## Stages 2–4: representation and generality
 
@@ -394,7 +384,7 @@ The 4-argument `circumference` and `standing` stay as Heath's measure words.
 
 *Ground*
 - Book Zero: `Arc.congr_side`; `Arc.meets` (a ray from inside the chord meets the arc).
-- `Elements/BookIII/Placement.lean`, the long pole, prototyped first, with its cases in files of their own (revised 18 October; below):
+- `Elements/BookIII/Placement.lean`, the long pole, prototyped first, with its cases in files of their own under `Elements/BookIII/Placement/` (revised 18 October; below):
   - `placement`: equal bases AB = CD carry E's closed half-plane onto F's, preserving distances to the base ends, and carrying the side of the base and betweenness on it both ways;
   - `f` is chosen by epsilon. Existence through I.22 (`Prop22`), as step 2 below plans; uniqueness from I.7 and I.20; distances from I.8, `Prop24.within`, C.N. 3 and I.4; onto by the reverse construction.
   - **No new axiom, no time limit and no fallback.**
@@ -417,8 +407,8 @@ Corrections to the design:
 - **The comparison is based at whichever end, A or B, avoids the bad case.** This removes the equal-angle and supplementary-angle branches.
 - **The statement is strengthened.** The side clause becomes `SameSideOf P E A B ↔ SameSideOf (f P) F C D`, and `Between A P B ↔ Between C (f P) D` is added.
 - **The verification line is restated** (Verification, below). Placement's transitive axioms will include superposition, since every distance fact rests on I.4 and I.8.
-- **The I.20 degeneracy lemma** (three points lie on one straight line exactly when one of I.20's three inequalities is an equality) goes in a Book I helper file. Stage 4's `Prop15.le_diameter` needs it too.
-- **Placement is split across several files,** so that parallel provers never share one. The policy check matches the `Placement.*` names.
+- **The I.20 degeneracy lemma** (three points lie on one straight line exactly when one of I.20's three inequalities is an equality) goes in a new Book I file, `Elements/BookI/HelpersTriangles.lean`, after I.20 and citing nothing later. FORMALIZATION, section 6, puts a shared step that cites a proposition at or after it, and `Elements/BookI/Helpers.lean` comes before I.20: I.7 imports it. The lemma's owner is step 2's task, below. Stage 4's `Prop15.le_diameter` needs it too.
+- **Placement is split across several files,** so that parallel provers never share one, each owned by the task of its step below: `Placement/Strict.lean` (step 1), `Placement/Exists.lean` (step 2), and `Placement/Unique.lean`, `Placement/OnLine.lean` and `Placement/Mixed.lean` (step 3), all under `Elements/BookIII/` and after Book I; then `Placement.lean` itself, the assembly (step 4), after them and before III.24. The policy check matches the `Placement.*` names.
 
 The order of work, de-risking first:
 - **Step 0, a spike by the coordinator.** The definitions, the `placement` statement and every sub-lemma's signature, all with `sorry`. Then the assembly proved from the stubs, and III.24 restated and proved from a stubbed `placement` and `Prop23.point`. This tests the interfaces, which is where the real risk lies.
@@ -499,7 +489,7 @@ This gates the consolidation release.
 8. [machine] Style hard rules pass (check_style), and the pages are regenerated clean.
 9. [review] The statement says what Euclid's enunciation says, or the qualification is exact. Quantifiers, conclusions, hypotheses and cases have been checked.
 10. [review] Each substantive passage is carried, or its helper, grouping, alternative or omission is named truly. There are no dummy citations, no artificial hypothesis uses and no concealing helpers.
-11. [review] Representations used here (rect/sq, arcs, segments, figures given by their corners) have their bridge theorems, sitting correctly in the dependency order.
+11. [review] Representations used here (rect/sq, arcs, segments, figures given by their corners) have their bridge theorems, sitting correctly in the dependency order (revised 18 October; the first text had "dissections").
 12. [review] The commentary is accurate, specific to this proposition, in the common voice, and explains the hardest block. Attributions are checked.
 13. [review] The figures agree with the proof's geometry and scope.
 14. [review] A reviewer other than the author signs off; the reviewer and the commit are recorded.
@@ -533,7 +523,7 @@ This gates the consolidation release.
 - The moderate confidence on a correct answer is why every low-confidence answer goes to adjudication.
 
 *Figures too.* Jev's image input makes a cheap independent check of all 198 figures possible:
-- letters present and placed as Heath's text needs, in both figures;
+- letters present and placed as Heath's text needs, in both figures (revised 18 October);
 - incidences (C where the circles meet);
 - the idea figure's colours against its caption.
 
@@ -565,15 +555,7 @@ Jev must meet a stated accuracy bar on it. Below the bar, Jev's answers become a
 
 ## Landing work: pull requests
 
-*Added 18 October 2026, to the owner's decision of 17 October.* The rules live in the pull-request discipline of [docs/WORKFLOW.md, section 10](../WORKFLOW.md#10-how-a-book-is-made-and-released), their one home. The discipline lands with pull request #1, which writes it there in place of direct pushes to main; from then on, every change reaches main as a pull request. In short:
-- **Every change is a pull request,** prepared by `scripts/safe_push.py`, the pre-flight: it checks the exact commit with the full check sequence, pushes the branch (never main) and opens or updates the pull request. Each pull request holds one coherent change. Agents never open, merge or approve one; the coordinator does.
-- **Reviews:** `/code-review` on every pull request; `/security-review` when it changes one of the protected paths that section 10 lists; `/no-mistakes` before the merge. Each blocking or material finding is fixed on the branch or answered in the pull request, and the reviews run again on the fix.
-- **Merge commits only,** never a squash or a rebase: review records stamp a branch's commits by their hashes, and a rebase would orphan the stamps.
-- **A check change travels alone.** A change to a check, an expected value, a schema or CI goes in a pull request of its own, ahead of the code it judges. A change to a protected path needs a new line in [the decisions page](0002-decisions.md) naming each file changed.
-- **Drafts until reviewed.** A pull request opens as a draft and stays one until its reviews are done. Stages 2, 3 and 4 each work on a branch with a draft pull request; a companion that still carries `sorry` is not listed among the certificate's companions until it is proved, so main stays green.
-- **Labels:** one for the kind of change (`tooling`, `text`, `lean` or `docs`), the stage's (`stage-2` to `stage-6`) for stage work, and `security-review` when a protected path changes.
-
-Tags, releases, release notes and the GitHub description still need the owner's OK.
+*Added 18 October 2026, to the owner's decision of 17 October.* The rules live in the pull-request discipline of [docs/WORKFLOW.md, section 10](../WORKFLOW.md#10-how-a-book-is-made-and-released), their one home. The discipline lands with pull request #1, which writes it there in place of direct pushes to main; from then on, every change reaches main as a pull request. Stages 2, 3 and 4 each work on a branch of their own, with a draft pull request onto main.
 
 ## Astra's recommendations, traced
 
@@ -637,7 +619,7 @@ The same table, with each done-criterion, goes into `docs/reports/outside-review
 - Certificate/Facts.lean
 - scripts/check_fidelity.py, render.py, heath.py, negative_tests.py, plus new check_style.py and check_links.py
 - review/ (new), tests/model/ (new), Audit/ (new), Certificate/axioms.lock (new)
-- Elements/Foundations/DefinitionsIII.lean, Elements/Figure/Sums.lean (new), Elements/BookIII/Placement.lean, its case files and Arcs.lean (new), and a Book I helper file for the I.20 degeneracy lemma (new)
+- Elements/Foundations/DefinitionsIII.lean, Elements/Figure/Sums.lean (new), Elements/BookIII/Placement.lean with its case files Placement/Strict.lean, Exists.lean, Unique.lean, OnLine.lean and Mixed.lean, and Arcs.lean (new), and Elements/BookI/HelpersTriangles.lean for the I.20 degeneracy lemma (new) (revised 18 October)
 - Elements/BookI/Prop40.lean and Prop45.lean; BookII/Prop01.lean and Prop14.lean; BookIII/Prop14, 15, 24, 25, 26, 28.lean
 - README.md, CONTRIBUTING.md, AGENTS.md and CLAUDE.md (new), docs/STYLE.md, docs/FORMALIZATION.md and WORKFLOW.md (new), docs/templates/, docs/reports/outside-review-01.md, overlaps.md and model notes
 - mishnah/intro/{I,III}.md

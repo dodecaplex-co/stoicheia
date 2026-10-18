@@ -84,6 +84,35 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 5 | Consolidation review of all 99 | |
 | 6 | Acceptance, then a consolidation release of Books I–III | |
 
+### Open items, 18 October
+
+Stages 1 and 1b are done, and the book-III release is made; the owner's decision that the
+figures at a glance carry Heath's letters came after them. On main, a GitHub ruleset
+requires a pull request and the checks `check`, `model` and `negative`, allows merge
+commits only, and blocks force pushes and deletion; secret scanning with push protection
+is on. On 18 October these items were open, each landing on main as a pull request of its
+own:
+
+- **The pull-request discipline, PR #1:** the safe-push hardening, with the reviewers'
+  fixes, under `/security-review`. Once it is on main, the pre-push hook is reinstalled.
+- **Wording:** the last old phrases. "Lean cannot …" in the mishnah of I.2; "I.17 needs no
+  Postulate 5" in the mishnah of I.17, and "needs Postulate 5" in the further reading of
+  I.26; "Lean never needs …" in the mishnah of I.43 and the Book I gap catalogue; and the
+  docstrings of the helpers `Prop44.place`, `Prop22.room` and `Prop22.ne_zero`.
+- **check_style's D7 pattern,** so that it also catches a phrase broken across a line. It
+  changes a check, so it travels alone.
+- **A scrub** of two private paths already on main, in old orders.
+- **The orders template:** `docs/templates/orders.md` gains a statements-only wave and
+  companion proofs.
+- **The figure letters:** [STYLE.md](STYLE.md), section 7, rewritten from "no letters" to
+  the owner's decision; `check_style.py`'s S14 changed to match; and the figures at a
+  glance lettered.
+
+Two more are not pull requests: the finished worktrees and their merged branches are
+removed, and the fleet script, kept outside the repository, is rebuilt from the orders
+template, without "every hypothesis should be used" and without the rule that every one of
+Heath's references be cited.
+
 ## 4. Decisions later books depend on
 
 - **Arcs and segments** (stage 3) are what Book IV will inscribe and circumscribe with;
