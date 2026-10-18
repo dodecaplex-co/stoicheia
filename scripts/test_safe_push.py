@@ -61,6 +61,13 @@ one commit and runs safe_push.py against that origin:
   committed list through load_allowlist, and the dry-run refusals name the step that
   refused; and the stand-in for gh refuses a second pull request for a head, as gh does,
   while ours is found whatever owner GitHub names for its head;
+- the model's laws (issue #40): an axiom added in one pull request with its entry in the
+  lock, the lock's hash, its line of tests/model/laws.toml, its law's code in search.py
+  and hyperbolic.py and the model's account lands as content, and the model's ties hold
+  on it; while a law loosened beside it, a helper or tolerance of the harness changed, a
+  line of laws.toml moved without its axiom, or a new law's code that reaches outside
+  itself, is a check change, kept apart; and an axiom restated or removed with its law
+  lands as content too;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -2425,6 +2432,205 @@ class ProtectedPaths(Edge):
                 self.assertFalse(refused, out)
                 self.assertIn("pinned values", out)
 
+    # The model's laws (issue #40): an axiom moves with its law, in one pull request.
+    LOCK, HASH = "Certificate/axioms.lock", "tests/model/lock.sha256"
+    LAWS, PAGE = "tests/model/laws.toml", "tests/model/MODEL.md"
+    SEARCH, HYPERBOLIC = "tests/model/search.py", "tests/model/hyperbolic.py"
+    RESULTS = "tests/model/results/summary.txt"
+    METRIC = "Elements/Foundations/Tacit/Metric.lean"
+    MODEL_RUN = "python3 -I tests/model/run.py --fast"
+    RUN_MARK = "\n# ======================= run =======================\n"
+    CENTRE_UNIQUE = ("@axiom('centre_unique', dict(A=P, B=P, al=C_))\ndef _(c):\n"
+                     "    if not (is_centre(c['A'], c['al']) and is_centre(c['B'], c['al'])):\n"
+                     "        return None\n    return c['A'] == c['B']\n")
+    LEN_SELF = {SEARCH: "@axiom('len_self', dict(A=P))\ndef _(c):\n"
+                        "    return d2(c['A'], c['A']) == 0\n\n\n",
+                HYPERBOLIC: "@axiom('len_self', dict(A=P))\ndef _(c):\n"
+                            "    return ch2(c['A'], c['A']) == 1\n\n\n"}
+    PLANTED_LAW = {SEARCH: "d2(c['A'], c['A']) == 0", HYPERBOLIC: "ch2(c['A'], c['A']) == 1"}
+
+    def planted_law(self, path: str, fn: str = "_", first: str = "", before: str = "") -> str:
+        """`path`, a harness, with the planted law's code added before its run section: a
+        function `fn` under `@axiom('planted_law', …)`, its body beginning with `first`, and
+        `before` at the top level ahead of it."""
+        law = (f"\n{before}@axiom('planted_law', dict(A=P))\ndef {fn}(c):\n{first}"
+               f"    return {self.PLANTED_LAW[path]}\n\n")
+        return self.replaced(path, self.RUN_MARK, law + self.RUN_MARK)
+
+    def planted_axiom(self) -> dict:
+        """An axiom added as the coordinator adds one, Lean aside: its declaration in the
+        foundations; facts.json, and the lock written from it by `check_fidelity.py
+        --write-lock`; the lock's new hash; its line in the model's laws.toml, and its law's
+        code in search.py and hyperbolic.py; a line of MODEL.md and of the results; and a
+        decisions line naming the lock and each protected file."""
+        name, statement = "Tacit.planted_law", ("∀ (A : Elements.Point), "
+                                                "Eq (Elements.len A A) (Elements.len A A)")
+        facts = json.loads(self.text("facts.json"))
+        facts["axiom_modules"][name] = "Elements.Foundations.Tacit.Metric"
+        facts["axiom_types"][name] = statement
+        changes = {"facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n"}
+        (WORK / "facts.json").write_text(changes["facts.json"])
+        r = subprocess.run([sys.executable, "scripts/check_fidelity.py", "--write-lock"],
+                           cwd=WORK, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        lock = self.text(self.LOCK)
+        self.assertIn(f'"{name}" = "{statement}"', lock)
+        digest = hashlib.sha256(lock.encode()).hexdigest()
+        changes.update({
+            self.METRIC: self.text(self.METRIC)
+            + "\n/-- A law planted for the test. -/\naxiom planted_law (A : Point) : ‖A A‖ = ‖A A‖\n",
+            self.LOCK: lock,
+            self.HASH: re.sub(r"(?m)^[0-9a-f]{64}(?=  Certificate/axioms\.lock$)", digest,
+                              self.text(self.HASH)),
+            self.LAWS: self.replaced(self.LAWS, '"Tacit.pasch4" = "pasch4"\n',
+                                     '"Tacit.pasch4" = "pasch4"\n'
+                                     '"Tacit.planted_law" = "planted_law"\n'),
+            self.SEARCH: self.planted_law(self.SEARCH),
+            self.HYPERBOLIC: self.planted_law(self.HYPERBOLIC),
+            self.PAGE: self.text(self.PAGE) + "\nThe planted law: a point is no distance "
+                                              "from itself, for the test.\n",
+            self.RESULTS: self.text(self.RESULTS) + "planted_law: a line for the test\n"})
+        changes.update(self.decision(
+            "`Tacit.planted_law` joins the axiom lock, with its law: " + ", ".join(
+                f"`{p}`" for p in (self.LOCK, self.HASH, self.LAWS, self.SEARCH,
+                                   self.HYPERBOLIC, self.PAGE, self.RESULTS)) + "."))
+        return changes
+
+    def test_axiom_lands_with_its_law(self):
+        # Issue #40's test: an axiom added moves in one pull request with its entry in the
+        # lock, the lock's hash, its law's name in laws.toml, its law's code in the two
+        # harnesses that check every law, and the model's account. origin/main's checks
+        # fail on it, which is noted; the commit's own pass holds; it lands as content.
+        sha = self.regenerated_commit("Add an axiom, with its law", self.planted_axiom())
+        r = self.safe_push("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "axiom lock"), "ok", out)
+        self.assertEqual(self.guard(out, "protected paths"), "ok", out)
+        self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
+        self.assertIn("Tacit.planted_law: an assumption not in Certificate/axioms.lock", out)
+        self.assertEqual(self.guard(out, "review records (the commit's checks)"), "ok", out)
+        self.assertEqual(self.guard(out, "pinned values"), "note", out)
+        note = out[out.index("pinned values"):]
+        for path in (self.LOCK, self.HASH, self.LAWS, self.SEARCH, self.HYPERBOLIC, self.PAGE):
+            self.assertIn(path, note)
+        self.assertIsNone(self.guard(out, "check change kept apart"), out)
+        # And the model takes it: its ties to the Lean hold on the commit, and the planted
+        # law runs, and holds, in the plane and in the hyperbolic plane.
+        self.assertEqual(git(WORK, "rev-parse", "HEAD").strip(), sha)
+        r = subprocess.run([sys.executable, "-I", "tests/model/run.py", "--ties"], cwd=WORK,
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("laws.toml names 88 laws; facts.json declares 88 axioms", r.stdout)
+        for path, samples in ((self.SEARCH, 200), (self.HYPERBOLIC, 100)):
+            r = subprocess.run([sys.executable, "-I", path, str(samples), "1"], cwd=WORK,
+                               env=dict(os.environ, ONLY="planted_law"),
+                               capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertRegex(r.stdout, rf"(?m)^planted_law +{samples} +[1-9]\d* +0$")
+
+    def test_law_loosened_beside_an_axiom_kept_apart(self):
+        # The same pull request, with centre_unique's law in search.py made to pass whatever
+        # it meets: a law changed while its axiom stands is a check change, kept apart.
+        changes = self.planted_axiom()
+        changes[self.SEARCH] = changes[self.SEARCH].replace(
+            self.CENTRE_UNIQUE, self.CENTRE_UNIQUE.replace("c['A'] == c['B']", "True"))
+        self.regenerated_commit("Add an axiom, and loosen another's law", changes)
+        out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
+                                 self.METRIC, "beyond the laws that move with their axioms",
+                                 f"the model's laws in {self.SEARCH}")
+        self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
+        self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
+        self.assertIsNone(self.guard(out, "pinned values"), out)
+
+    def law_commit(self, change) -> str:
+        """A commit from origin/main of what `change` returns, given the planted axiom's
+        changes, with a line of the foundations, which the checks judge, if it has none."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        planted = self.planted_axiom()
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        write = change(planted)
+        write.setdefault(self.METRIC, self.text(self.METRIC) + "\n-- A line for the test.\n")
+        return self.commit("An axiom and the model's laws, for the test", write)
+
+    def test_only_laws_moving_with_their_axioms_are_pinned_values(self):
+        # A law of the model, its line of laws.toml and its code in search.py and
+        # hyperbolic.py, moves only with its axiom's entry in the lock, and its code keeps to
+        # itself; the rest of each harness stays as it was. Anything else is a check change.
+        def edit(path, old, new):
+            return lambda p: dict(p, **{path: p[path].replace(old, new, 1)})
+        loose = self.CENTRE_UNIQUE.replace("c['A'] == c['B']", "True")
+        mine = "    pts = [c['A']]\n    pts.append(c['A'])\n"
+        weakened = {
+            "another law loosened in search.py": edit(self.SEARCH, self.CENTRE_UNIQUE, loose),
+            "another law loosened in hyperbolic.py": edit(self.HYPERBOLIC, self.CENTRE_UNIQUE,
+                                                          loose),
+            "the search's box shrunk, outside any law": edit(self.SEARCH, "BOX = 6\n",
+                                                             "BOX = 1\n"),
+            "a tolerance loosened in model.py": lambda p: dict(p, **{
+                "tests/model/model.py": self.replaced("tests/model/model.py", "EPS = 1e-9\n",
+                                                      "EPS = 1e-3\n")}),
+            "an axiom that stands made to fail in the hyperbolic plane": edit(
+                self.LAWS, 'fails = ["Postulate5"]', 'fails = ["Postulate5", "Tacit.centre_unique"]'),
+            "two laws swapped": edit(self.LAWS, '"Tacit.len_self" = "len_self"\n'
+                                     '"Tacit.len_symm" = "len_symm"\n',
+                                     '"Tacit.len_self" = "len_symm"\n'
+                                     '"Tacit.len_symm" = "len_self"\n'),
+            "the law added without its axiom": lambda p: {
+                k: v for k, v in p.items() if k not in (self.LOCK, self.HASH, "facts.json")},
+            "the new law's code named for a helper": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, fn="on_line")}),
+            "the new law with a helper beside it": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, before="def helper():\n"
+                                              "    return 0\n\n\n")}),
+            "the new law reaching outside itself": lambda p: dict(p, **{
+                self.HYPERBOLIC: self.planted_law(self.HYPERBOLIC, first="    SEEDS.clear()\n")}),
+            "the new law declaring a global": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first="    global BOX\n    BOX = 1\n")}),
+            "the new law printing a result": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH,
+                                              first="    print('len_self 1 1 0')\n")}),
+            "the new law reseeding the search": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first="    c['_rng'].seed(0)\n")}),
+        }
+        for name, change in weakened.items():
+            with self.subTest(name):
+                refused, out = self.kept_apart(self.law_commit(change), self.MODEL_RUN)
+                self.assertTrue(refused, out)
+                self.assertNotIn("pinned values", out)
+                if name != "a tolerance loosened in model.py":
+                    self.assertIn("beyond the laws that move with their axioms", out)
+
+        def restated(_):
+            old = '"Tacit.len_self" = "∀ (A : Elements.Point), Eq (Elements.len A A) 0"'
+            new = ('"Tacit.len_self" = "∀ (A B : Elements.Point), Eq A B → '
+                   'Eq (Elements.len A B) 0"')
+            law = ("@axiom('len_self', dict(A=P, B=P))\ndef _(c):\n    if c['A'] != c['B']:\n"
+                   "        return None\n    return d2(c['A'], c['B']) == 0\n\n\n")
+            return {self.LOCK: self.replaced(self.LOCK, old, new),
+                    self.SEARCH: self.replaced(self.SEARCH, self.LEN_SELF[self.SEARCH], law)}
+
+        def removed(_):
+            lock = [line for line in self.text(self.LOCK).splitlines(keepends=True)
+                    if not line.startswith('"Tacit.len_self" = ')]
+            return {self.LOCK: "".join(lock),
+                    self.LAWS: self.replaced(self.LAWS, '"Tacit.len_self" = "len_self"\n', ""),
+                    **{p: self.replaced(p, self.LEN_SELF[p], "") for p in self.LEN_SELF}}
+        kept = {
+            "an axiom added with its law": lambda p: p,
+            "and a comment beside it": edit(self.SEARCH, self.RUN_MARK,
+                                            "\n# A comment for the test.\n" + self.RUN_MARK),
+            "the new law making a container of its own": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first=mine)}),
+            "an axiom restated with its law": restated,
+            "an axiom removed with its law": removed,
+        }
+        for name, change in kept.items():
+            with self.subTest(name):
+                refused, out = self.kept_apart(self.law_commit(change), self.MODEL_RUN)
+                self.assertFalse(refused, out)
+                self.assertIn("pinned values", out)
+
     STYLE = ("python3 scripts/check_style.py",
              [sys.executable, "scripts/check_style.py", "--no-lean"])
 
@@ -2570,9 +2776,10 @@ class ProtectedPaths(Edge):
             self.assertIn(f"`{path}`", home, path)
         # And step 4 there names the check inputs, as CHECK_INPUTS holds them.
         step4 = workflow[workflow.index("4. *The full checks*"):workflow.index("5. *The push")]
-        for path in safe_push.CHECK_INPUTS + safe_push.PINNED:
+        for path in safe_push.CHECK_INPUTS + safe_push.PINNED + safe_push.MODEL_LAW_CODE:
             self.assertIn(f"`{path}`", step4, path)
-        self.assertTrue(all(safe_push.under(p, safe_push.CHECK_INPUTS) for p in safe_push.PINNED))
+        self.assertTrue(all(safe_push.under(p, safe_push.CHECK_INPUTS)
+                            for p in safe_push.PINNED + safe_push.MODEL_LAW_CODE))
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
         self.assertIn('"Protected paths"', template)
         self.assertNotIn("lake-manifest.json", template)

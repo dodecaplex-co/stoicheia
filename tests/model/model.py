@@ -4,14 +4,46 @@ Points: pairs of ints or Fractions.  Lines: normalized integer (a,b,c), a x + b 
 Circles: (cx, cy, R) with R = radius^2 > 0.  Between: strict.  SameSide: open half-plane.
 len = Euclidean distance, ang in [0, pi] (degenerate angle := 0), area = |cross|/2,
 rightAngle = pi/2.  Magnitudes = non-negative reals.
+
+read_laws() reads laws.toml, the names of the laws the harness checks.
 """
 import math
+import os
 import random
 from fractions import Fraction as Fr
 from math import gcd
 
 EPS = 1e-9
 RA = math.pi / 2
+LAWS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'laws.toml')
+
+
+def read_laws(path=LAWS_FILE):
+    """laws.toml, as ({the axiom's name in the lock: the name of its law in the harness},
+    the names of the laws that must fail in the hyperbolic plane).  Raises ValueError when
+    the file cannot be read, or is anything but a [laws] table of names, no law named
+    twice, and a [hyperbolic] table whose `fails` lists some of those axioms, each once."""
+    import tomllib
+    where = 'tests/model/laws.toml'
+    try:
+        with open(path, 'rb') as f:
+            data = tomllib.load(f)
+    except OSError as e:
+        raise ValueError(f'{where} cannot be read ({e.strerror})') from None
+    except tomllib.TOMLDecodeError as e:
+        raise ValueError(f'{where} is not valid TOML: {e}') from None
+    laws, hyperbolic = data.get('laws'), data.get('hyperbolic')
+    fails = hyperbolic.get('fails') if isinstance(hyperbolic, dict) else None
+    if (set(data) != {'laws', 'hyperbolic'} or set(hyperbolic) != {'fails'}
+            or not isinstance(laws, dict) or not all(isinstance(v, str) for v in laws.values())
+            or not isinstance(fails, list) or not all(isinstance(k, str) for k in fails)):
+        raise ValueError(f'{where}: expected a [laws] table of names and a [hyperbolic] table '
+                         'holding `fails`, a list of names, and nothing else')
+    if len(set(laws.values())) != len(laws):
+        raise ValueError(f'{where} gives two axioms the same law')
+    if len(set(fails)) != len(fails) or not set(fails) <= set(laws):
+        raise ValueError(f"{where}: [hyperbolic]'s `fails` must name axioms of [laws], each once")
+    return laws, {laws[k] for k in fails}
 
 
 def sub(P, Q):

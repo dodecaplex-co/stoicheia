@@ -491,3 +491,42 @@ findings:
   [brief 0005](0005-astra-review.md), in stage 1b's list of what `scripts/check_style.py`
   enforces, and "the idea figures have no letters" in item 7 of its planned acceptance
   checklist (stage 6).
+
+- **An axiom lands with its law: the model's law names, a pinned value.** Under the rule
+  that keeps a check change apart from what it checks, a change of axioms could land in no
+  order ([#40](https://github.com/jackChallis/stoicheia/issues/40)): the model's law names
+  lived in its code, so a pull request moving the lock, its hash and the law together was
+  a check change made with content, and a law landed first would name an axiom the lock
+  did not hold. The names move into a data file,
+  [`tests/model/laws.toml`](../../tests/model/laws.toml): a line for each axiom, under the
+  lock's name, with the name of its law in the harness, and the laws that must fail in the
+  hyperbolic plane (Postulate 5), which
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) and
+  [`tests/model/run.py`](../../tests/model/run.py) now read from it, through `read_laws`
+  in [`tests/model/model.py`](../../tests/model/model.py). Before anything runs, `run.py`
+  checks the file against the axiom lock and against `facts.json` in both directions, and
+  `search.py` and `hyperbolic.py` against it; `run.py --ties` runs those checks alone, in
+  a second; and a law that a program reports twice now fails the run. The number of axioms
+  is no value of the harness, which takes it from the lock, so nothing else had to move;
+  the docstrings that named 87 and 86 now name no number.
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts the file as a value pinned
+  to the edition, beside `Certificate/axioms.lock` and
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256), while each line it changes
+  moves with its axiom: the same pull request adds, removes or restates that axiom's entry
+  in the lock. A law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`,
+  the two programs that check every law, moves the same way, while it keeps to itself (a
+  function `_` under its one decorator `@axiom('<name>', …)`, binding no global, importing
+  and printing nothing, and changing nothing it did not make) and nothing else in the file
+  changes but comments and its docstring. The model's account,
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and `tests/model/results/`, which
+  no check reads, moves with its content as well. A law changed while its axiom stands, a
+  helper or tolerance of the harness, and every other change to the checks are kept apart
+  as before. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) plants an
+  axiom added with its entry in the lock, the new hash, its line of `laws.toml`, its law's
+  code in both programs and a line of MODEL.md: it lands as content, and the model's ties
+  hold on it. With another law loosened beside it, the same change is kept apart, and a
+  table of thirteen loosenings and five moves checks each way round. MODEL.md, "Changing
+  the axioms", is now the one home of the steps for changing an axiom, and the comment in
+  `tests/model/lock.sha256` points to it; [WORKFLOW](../WORKFLOW.md), section 10, step 4,
+  gives the rule for landing them. Adding an axiom stays the owner's decision: this lets
+  one land, and adds none.

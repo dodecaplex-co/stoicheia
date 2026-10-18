@@ -73,8 +73,10 @@ order, and the first that fails stops it with a message saying why:
    pages gone stale under origin/main's render.py (or facts.json rewritten by its
    certificate), which the pages' diff shows in full; and a failure on a commit whose
    only check inputs changed are values pinned to the edition (PINNED, below; the
-   certificate's expectations only while none of origin/main's is dropped or loosened),
-   which move with the content they pin. A crash of origin/main's render.py, its check of
+   certificate's expectations only while none of origin/main's is dropped or loosened;
+   the model's law names, and a law's code in the two harnesses that check every law
+   (MODEL_LAW_CODE), only while each law changed moves with its axiom), which move with
+   the content they pin. A crash of origin/main's render.py, its check of
    docs/program.toml among them, is a verdict. Step 3's two checks run the same way.
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
@@ -132,6 +134,7 @@ Standard library, git and gh; Python 3.11 or later.
 from __future__ import annotations
 
 import argparse
+import ast
 import base64
 import binascii
 import contextlib
@@ -176,14 +179,26 @@ PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md
 CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
-# model's run its hash with the lock. The certificate's expectations are checked one way
-# only, each for what it says, so a change to them is a pinned value only while it keeps
-# every expectation origin/main has (kept_expectations). A change to the content they pin
-# moves them with it, in the same pull request; they stay protected (a decisions line,
-# security-review, the lock's guard), and the commit's own checks must pass.
+# model's run its hash with the lock. The model's page and results are its account of the
+# laws, which no check reads. The certificate's expectations are checked one way only, each
+# for what it says, so a change to them is a pinned value only while it keeps every
+# expectation origin/main has (kept_expectations). The model's law names are compared with
+# the lock both ways, but a line of them changed while its axiom stands would loosen the
+# model's check of that axiom, so a change to them is a pinned value only while each line
+# changed moves with its axiom's entry in the lock (laws_move_with_axioms). A change to
+# the content they pin moves them with it, in the same pull request; they stay protected
+# (a decisions line, security-review, the lock's guard), and the commit's own checks must
+# pass.
 EXPECTATIONS = "tests/certificate_expectations.json"
 MODEL_HASH = "tests/model/lock.sha256"
-PINNED = (EXPECTATIONS, LOCK, MODEL_HASH)
+MODEL_LAWS = "tests/model/laws.toml"
+MODEL_PAGE = "tests/model/MODEL.md"
+MODEL_RESULTS = "tests/model/results/"
+PINNED = (EXPECTATIONS, LOCK, MODEL_HASH, MODEL_LAWS, MODEL_PAGE, MODEL_RESULTS)
+# The two harnesses that implement every law of the model. They are check code; but a
+# law's code in them moves with its axiom, as its line of laws.toml does, while it keeps to
+# itself and the rest of the file stays as it was (laws_move_with_axioms).
+MODEL_LAW_CODE = ("tests/model/search.py", "tests/model/hyperbolic.py")
 SECURITY_LABEL = "security-review"
 LABELS = {
     **{f"stage-{n}": f"Brief 0005, stage {n}" for n in range(2, 7)},
@@ -1540,13 +1555,182 @@ def kept_expectations(old: str | None, new: str | None) -> bool:
     return all(any(asks_as_much(y, x) for y in news) for x in olds)
 
 
+def locked_axioms(text: str | None) -> dict | None:
+    """The lock's [axioms] table, {name: statement}; None when it does not read."""
+    import tomllib
+    try:
+        table = tomllib.loads(text)["axioms"]
+    except (TypeError, KeyError, tomllib.TOMLDecodeError):
+        return None
+    return table if isinstance(table, dict) else None
+
+
+def model_laws(text: str | None) -> dict | None:
+    """laws.toml, as {axiom: (the name of its law, whether it must fail in the hyperbolic
+    plane)}; None unless it is a [laws] table of names and a [hyperbolic] table holding
+    `fails`, a list of some of those axioms, and nothing else."""
+    import tomllib
+    try:
+        data = tomllib.loads(text)
+    except (TypeError, tomllib.TOMLDecodeError):
+        return None
+    laws, hyperbolic = data.get("laws"), data.get("hyperbolic")
+    fails = hyperbolic.get("fails") if isinstance(hyperbolic, dict) else None
+    if set(data) != {"laws", "hyperbolic"} or not isinstance(hyperbolic, dict) \
+            or set(hyperbolic) != {"fails"} or not isinstance(laws, dict) \
+            or not all(isinstance(v, str) for v in laws.values()) \
+            or not isinstance(fails, list) or not all(isinstance(k, str) for k in fails) \
+            or not set(fails) <= set(laws):
+        return None
+    return {k: (v, k in fails) for k, v in laws.items()}
+
+
+def law_of(node: ast.stmt) -> str | None:
+    """The law a statement of a harness defines: a function named `_` whose one decorator is
+    `axiom('<name>', …)`; None for any other statement."""
+    if not isinstance(node, ast.FunctionDef) or node.name != "_" or len(node.decorator_list) != 1:
+        return None
+    d = node.decorator_list[0]
+    if isinstance(d, ast.Call) and isinstance(d.func, ast.Name) and d.func.id == "axiom" \
+            and d.args and isinstance(d.args[0], ast.Constant) and isinstance(d.args[0].value, str):
+        return d.args[0].value
+    return None
+
+
+def law_code(text: str | None) -> tuple[list[str], dict, set[str]] | None:
+    """A harness file's code: the statements at its top level that are not laws, each as
+    its syntax tree prints (comments and its docstring, which are prose, aside); its laws,
+    by name; and the names it binds at its top level. None when it does not parse, or
+    defines a law twice."""
+    try:
+        tree = ast.parse(text)
+    except (TypeError, ValueError, SyntaxError):
+        return None
+    body = tree.body
+    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) \
+            and isinstance(body[0].value.value, str):
+        body = body[1:]
+    rest, laws = [], {}
+    for node in body:
+        name = law_of(node)
+        if name is None:
+            rest.append(ast.dump(node))
+        elif name in laws:
+            return None
+        else:
+            laws[name] = node
+    names, todo = set(), list(tree.body)
+    while todo:     # the module's own scope: not the bodies of its functions
+        node = todo.pop()
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            names.add(node.name)
+            todo.extend(node.decorator_list)
+            continue
+        if isinstance(node, ast.Lambda):
+            continue
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            names.add(node.id)
+        elif isinstance(node, ast.alias):
+            names.add((node.asname or node.name).split(".")[0])
+        todo.extend(ast.iter_child_nodes(node))
+    return rest, laws, names
+
+
+# What a law's code may not name: the builtins that reach a namespace, run code, open a
+# file or print (a printed line could pass for another law's result), and the registry of
+# laws but for its own decorator. The methods that change a container in place. And those
+# that reseed the random numbers every law draws from, which reach a law through its
+# configuration.
+LAW_REACH = frozenset({"globals", "vars", "locals", "getattr", "setattr", "delattr", "exec",
+                       "eval", "compile", "open", "print", "input", "breakpoint", "AXIOMS",
+                       "axiom"})
+MUTATORS = frozenset({"append", "extend", "insert", "pop", "remove", "clear", "update",
+                      "setdefault", "popitem", "add", "discard", "sort", "reverse", "write"})
+RESEED = frozenset({"seed", "setstate"})
+
+
+def self_contained(fn: ast.FunctionDef, module: set[str]) -> bool:
+    """Does a law's code keep to itself, so that it changes no other law's check when it
+    runs? No `global`, `nonlocal`, import or `:=`; no name in LAW_REACH (its own decorator
+    aside) and no dunder name; nothing stored into an attribute or deleted from one; no
+    method in RESEED; and no container changed, by a subscript or a method in MUTATORS,
+    unless the law made it: a name it binds itself, and not one the file binds at its top
+    level (`module`)."""
+    own: set[str] = set()
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
+            own.add(node.id)
+        elif isinstance(node, ast.arg):
+            own.add(node.arg)
+    own -= module
+
+    def root(node) -> str | None:
+        while isinstance(node, (ast.Attribute, ast.Subscript, ast.Call)):
+            node = node.func if isinstance(node, ast.Call) else node.value
+        return node.id if isinstance(node, ast.Name) else None
+
+    decorator = fn.decorator_list[0].func
+    for node in ast.walk(fn):
+        if isinstance(node, (ast.Global, ast.Nonlocal, ast.Import, ast.ImportFrom,
+                             ast.NamedExpr)):
+            return False
+        if isinstance(node, ast.Name) and node is not decorator \
+                and (node.id in LAW_REACH or node.id.startswith("__")):
+            return False
+        if isinstance(node, ast.Attribute) and (
+                node.attr.startswith("__") or node.attr in RESEED
+                or isinstance(node.ctx, (ast.Store, ast.Del))
+                or (node.attr in MUTATORS and root(node.value) not in own)):
+            return False
+        if isinstance(node, ast.Subscript) and isinstance(node.ctx, (ast.Store, ast.Del)) \
+                and root(node) not in own:
+            return False
+    return True
+
+
+def laws_move_with_axioms(repo, base, sha, path: str) -> bool:
+    """Does each law the commit changes in `path` move with its axiom, whose entry in the
+    lock the commit adds, removes or restates? In laws.toml, a line: the law's name, or
+    whether it must fail in the hyperbolic plane. In one of MODEL_LAW_CODE, a law's code
+    (law_of), which must keep to itself (self_contained), while the rest of the file, its
+    comments and docstring aside, stays as it was. Anything else, a law changed while its
+    axiom stands among them, is a check change."""
+    old_lock, new_lock = locked_axioms(show(repo, base, LOCK)), locked_axioms(show(repo, sha, LOCK))
+    old_laws = model_laws(show(repo, base, MODEL_LAWS))
+    new_laws = model_laws(show(repo, sha, MODEL_LAWS))
+    if None in (old_lock, new_lock, old_laws, new_laws):
+        return False
+    moved = {k for k in old_lock.keys() | new_lock.keys() if old_lock.get(k) != new_lock.get(k)}
+    if path == MODEL_LAWS:
+        return all(k in moved for k in old_laws.keys() | new_laws.keys()
+                   if old_laws.get(k) != new_laws.get(k))
+    old, new = law_code(show(repo, base, path)), law_code(show(repo, sha, path))
+    if old is None or new is None or old[0] != new[0]:
+        return False
+    for name in old[1].keys() | new[1].keys():
+        was, now = old[1].get(name), new[1].get(name)
+        if was is not None and now is not None and ast.dump(was) == ast.dump(now):
+            continue
+        if now is not None and not self_contained(now, new[2]):
+            return False
+        axioms = {k for laws in (old_laws, new_laws) for k, (law, _) in laws.items()
+                  if law == name}
+        if not axioms or not axioms <= moved:
+            return False
+    return True
+
+
 def pinned(repo, base, sha, path: str) -> bool:
     """Is the commit's change to the check input `path` a value pinned to the edition? The
-    lock and the model's hash of it, always; the certificate's expectations, while the
-    change keeps every one origin/main has (kept_expectations)."""
+    lock, the model's hash of it, and its page and results, always; the certificate's
+    expectations, while the change keeps every one origin/main has (kept_expectations);
+    the model's law names, and a law's code in the two harnesses that check every law,
+    while each law changed moves with its axiom (laws_move_with_axioms)."""
     if path == EXPECTATIONS:
         return kept_expectations(show(repo, base, path), show(repo, sha, path))
-    return path in PINNED
+    if path == MODEL_LAWS or path in MODEL_LAW_CODE:
+        return laws_move_with_axioms(repo, base, sha, path)
+    return under(path, PINNED)
 
 
 def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
@@ -1562,8 +1746,9 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     content, in no other order, and the commit's own pass still needs them to agree. An
     expectation dropped or loosened is no pinned value: check_fidelity.py checks only
     what each expectation says, so the commit's own pass could never catch it. Check code
-    changed with judged content is kept apart, pinned values or not. True when it
-    refuses."""
+    changed with judged content is kept apart, pinned values or not; and so is a law of
+    the model changed while its axiom stands, for the commit's own pass could not catch
+    that either. True when it refuses."""
     failed = [name for s in rep.steps
               if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
               and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
@@ -1575,21 +1760,30 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
         if not any(s.stage == stage and s.name == "pinned values" for s in rep.steps):
             rep.add(stage, "pinned values", "note", f"origin/main's checks fail on the commit "
                     f"({', '.join(failed)}), and the only check inputs it changes are values "
-                    f"pinned to the edition ({', '.join(inputs)}), which move with the "
-                    "content they pin: for the security review")
+                    f"pinned to the edition, and laws of the model that move with their axioms "
+                    f"({', '.join(inputs)}), which move with the content they pin: for the "
+                    "security review, which reads each law's code")
         return False
     shown = ", ".join(judged[:8]) + (f" and {len(judged) - 8} more" if len(judged) > 8 else "")
     loosened = EXPECTATIONS in inputs and not pinned(repo, base, sha, EXPECTATIONS)
+    laws = [p for p in inputs if (p == MODEL_LAWS or p in MODEL_LAW_CODE)
+            and not pinned(repo, base, sha, p)]
     rep.add(stage, "check change kept apart", "FAIL",
             f"origin/main's checks fail on the commit ({', '.join(failed)}), and it changes "
             f"what they judge as well as the checks: {shown}"
             + (f"; and it drops or loosens an expectation of {EXPECTATIONS}, which is a "
                "check change" if loosened else "")
+            + (f"; and it changes the model's laws in {', '.join(laws)} beyond the laws that "
+               "move with their axioms (or a law's code reaches outside itself), which is a "
+               "check change" if laws else "")
             + ". Land the check change first, in a pull request of its own (the check code, "
             "the guides, the regenerated pages and the records' stamps), and the rest after "
-            f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, and the counts and "
-            f"values of {EXPECTATIONS}, none of its expectations dropped or loosened) move "
-            "with the content they pin (docs/WORKFLOW.md, \"Landing work: pull requests\")")
+            f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, the counts and values "
+            f"of {EXPECTATIONS}, none of its expectations dropped or loosened, and the "
+            f"model's account, {MODEL_PAGE} and {MODEL_RESULTS}) move with the content they "
+            f"pin, and so does a law of the model, its line of {MODEL_LAWS} and its code in "
+            f"{' and '.join(MODEL_LAW_CODE)}, with its axiom (docs/WORKFLOW.md, \"Landing "
+            "work: pull requests\")")
     return True
 
 

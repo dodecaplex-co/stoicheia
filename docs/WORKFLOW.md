@@ -303,9 +303,11 @@ python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
   beside other contributors' builds in a shared tree.
-- **The model tests read the lock.** `tests/model/lock.sha256` pins
-  `Certificate/axioms.lock`, so a change to an axiom fails the `model` job until the model
-  is read again ([FORMALIZATION.md](FORMALIZATION.md), section 7).
+- **The model tests read the lock.** `tests/model/laws.toml` names a law for each axiom of
+  `Certificate/axioms.lock`, and `tests/model/lock.sha256` pins the lock's hash, so a
+  change to an axiom fails the `model` job until the model follows it, in the same pull
+  request: [MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
+  says how.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
   build against the library they import. It builds every file under `Staging/`, whether or
@@ -503,17 +505,27 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       stale under origin/main's `render.py`, or `facts.json` rewritten by origin/main's
       certificate, show the generator's change in the pages' diff; a failure of
       `render.py` itself, its check of `docs/program.toml` among them, is a verdict. And
-      the values pinned to the edition, `tests/certificate_expectations.json`,
-      `Certificate/axioms.lock` and `tests/model/lock.sha256`, move with the content they
-      pin (a re-proof that changes an expected count, a new word in the lock): when they
-      are the only check inputs a pull request changes, origin/main's failure is noted,
-      and its own copies must pass. The expectations are checked one way only, each for
-      what it says, so they count as pinned values only while every one of origin/main's
-      stays, by its `ref` and `field`, with its `includes` and `excludes` the same or
-      grown and only the values of `count.is` and `equals` changed (new expectations are
-      fine); an expectation dropped or loosened is a check change. Check code changed with
-      judged content is kept apart, pinned values or not. The guards' two checks in step 3
-      run the same way.
+      the values pinned to the edition move with the content they pin (a re-proof that
+      changes an expected count, a new word in the lock, an axiom added):
+      `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
+      `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
+      account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which no
+      check reads. When they are the only check inputs a pull request changes,
+      origin/main's failure is noted, and its own copies must pass. The expectations are
+      checked one way only, each for what it says, so they count as pinned values only
+      while every one of origin/main's stays, by its `ref` and `field`, with its
+      `includes` and `excludes` the same or grown and only the values of `count.is` and
+      `equals` changed (new expectations are fine); an expectation dropped or loosened is
+      a check change. A law of the model moves only with its axiom: a line of `laws.toml`,
+      and the law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`, the
+      two harnesses that check every law, count as pinned values only where the same pull
+      request adds, removes or restates that axiom's entry in the lock, the law's code
+      keeps to itself (a function `_` under its one decorator `@axiom('<name>', …)`, which
+      binds no global, imports and prints nothing, and changes nothing it did not make),
+      and nothing else in the harness changes but its comments and docstring; a law
+      changed while its axiom stands is a check change. Check code changed with judged
+      content is kept apart, pinned values or not. The guards' two checks in step 3 run the
+      same way.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the
