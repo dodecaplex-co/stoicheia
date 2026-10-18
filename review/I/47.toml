@@ -28,8 +28,8 @@ note = "Euclid reads off his figure that C lies within the angle DBA and A withi
 
 [[passage]]
 at = "And the square BDEC is described on BC"
-kind = "carried"
-note = "The statement is about the three given squares, so nothing remains to do; squares on one straight line are equal whichever side they stand on (`Prop46.square_eq`, `Prop47.sq`)."
+kind = "given"
+note = "The statement takes BDEC, GB and HC as the squares on BC, BA and AC; squares on one straight line are equal whichever side they stand on (`Prop46.square_eq`, `Prop47.sq`)."
 
 [review]
 stage = "exceptions"
