@@ -12,13 +12,16 @@ passes through a point inside the other, so they cross. Intersection 4
 (`circles_meet_of_on_inside_outside`) is its companion, in LeanEuclid's corrected form.
 
 Both come down to one fact about the plane. Put the centres at distance `d` apart, with
-radii `r` and `s`. Two circles cut one another in two points exactly when
+radii `r` and `s`. Two different circles cut one another in two points exactly when
 `|r - s| < d < r + s`: the strict inequalities rule out circles that only touch, one
-inside the other, and concentric circles (`d = 0`). In each law the hypotheses give those
+inside the other, and concentric circles (`d = 0`). (A circle also meets itself in two
+points, with `d = 0`; neither law's hypotheses allow that case, since each asks for a
+point on one circle and inside the other.) In each law the hypotheses give those
 inequalities through the triangle inequality, and the crossing points are found by
-coordinates: along the line of centres at distance `a = (d² + r² - s²) / (2d)` from the
-first centre, and off it by `±h`, with `h² = r² - a²`. The strict inequalities are what
-make `h` positive, and so give two points, not one.
+coordinates: at the signed distance `a = (d² + r² - s²) / (2d)` from the first centre
+along the line of centres, negative when the foot falls behind the first centre, and off
+that line by `±h`, with `h² = r² - a²`. The strict inequalities are what make `h`
+positive, and so give two points, not one.
 -/
 
 @[expose] public section

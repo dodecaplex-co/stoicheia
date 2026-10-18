@@ -32,7 +32,7 @@ exists, so that Mathlib's lemmas about it can do the work:
 | `area A B C` | half the absolute value of the determinant of `B - A` and `C - A` |
 | `rightAngle` | π/2 |
 
-Three choices matter, and each follows Astra's third answer, with our thanks.
+Three choices matter.
 
 * **The angle carrier is all of `ℝ≥0`,** not [0, π]. Single angles lie in [0, π], but
   Euclid adds angles (in I.13, "the angles CBA, ABD are either two right angles or equal to

@@ -149,7 +149,7 @@ declarations, not from their printed text.
    untranslated can reach the model.
 3. **Write a file a reader can read.** The output is `Model/Laws.lean`, plain Lean with no
    Mathlib, holding the translated words and a structure with one field for each law,
-   named as in the lock:
+   named as in the lock, in place of `Model/Hand.lean`:
 
    ```lean
    structure Laws (S : Signature) : Prop where
@@ -165,12 +165,16 @@ declarations, not from their printed text.
    5 stands apart from the other 86, as a structure of its own beside them, so that a
    hyperbolic plane can later satisfy the rest and fail it.
 4. **Assemble the model.** Each law is proved in the plane as a theorem of its own, as
-   here, and the generated file ends with
+   here, in modules that import `Model/Laws.lean` and Mathlib. A last module, also
+   generated, imports them all and ends with
 
    ```lean
    theorem euclidean_laws : Laws Euclidean.plane := ⟨Euclidean.Postulate1, ...⟩
    theorem model_exists : ∃ S : Signature, Laws S := ⟨Euclidean.plane, euclidean_laws⟩
    ```
+
+   It stands apart from `Model/Laws.lean`, which the proofs import, so that no import goes
+   round in a circle and the laws stay free of Mathlib.
 
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
@@ -200,7 +204,10 @@ the original means. Three checks do that.
   write one such line for each of the 87 laws and 37 words.
 - **The round trip, by syntax.** The generator also translates each result back and
   compares it with the original expression exactly, which is stricter than the kernel's
-  check: it notices a translation that is right only after unfolding.
+  check: it notices a translation that is right only after unfolding, and a binder made
+  explicit where the original's is implicit, which the kernel does not see, since it does
+  not change the proposition. Until the generator exists, the binder kinds of the hand
+  translations are checked by reading them against the lock's printed statements.
 - **Completeness.** The generator checks that the laws it wrote are exactly the axioms
   declared in `Elements.Foundations`, and exactly the lock's `[axioms]`, so that none is
   missing and none is extra.
@@ -217,15 +224,15 @@ notation, the model could import that one file and share the library's `Kind`.
 
 [lock.sha256](lock.sha256) holds the sha256 of `Certificate/axioms.lock`, as
 [tests/model/lock.sha256](../tests/model/lock.sha256) does for the numerical harness. The
-model's CI job compares it with the lock:
+model's CI job, once it is added ([below](#the-ci-job)), compares it with the lock:
 
 ```sh
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 ```
 
-So any change to an axiom, or to a word an axiom reaches, fails the job until someone has
-brought the model up to date: the translation, its checks, and the proofs in the plane of
-the laws that changed. The round-trip checks then tie each translated law to the
+Then any change to an axiom, or to a word an axiom reaches, fails the job until someone
+has brought the model up to date: the translation, its checks, and the proofs in the plane
+of the laws that changed. Until the job is added, nothing runs this comparison. The round-trip checks then tie each translated law to the
 declaration itself, more tightly than the hash can; the hash covers what the generator does
 not yet reach. A law proposed for the foundations is proved here before it lands:
 `exists_centre`, proposed in issue #59, is already proved in the plane
