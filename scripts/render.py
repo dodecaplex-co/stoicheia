@@ -1375,9 +1375,10 @@ FRONT_LEAN_III = {
     },
 }
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
-# Euclid's own proofs use some words with no Lean partner (Definition I.14's figure in
-# I.45, II.7 and II.8; Definition III.7's mixed angle in III.16 and III.31), so every
-# front page says only that the Lean proofs never use them.
+# Euclid's own proofs use some words with no Lean partner (Definition I.14's figure, as
+# "the given rectilineal figure" of I.45 and II.14; Definition III.7's mixed angle in
+# III.16 and III.31), so every front page says only that the Lean proofs never use them.
+# Helpers such as `Prop1.figure` are named for the diagram, not for Definition I.14.
 FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 
 
