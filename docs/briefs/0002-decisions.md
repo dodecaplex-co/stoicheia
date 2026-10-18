@@ -593,3 +593,14 @@ findings:
   I.5, I.6, I.13, I.14, I.21, I.23, I.39 to I.42, I.47 and II.10. The records' pull
   request, [#82](https://github.com/jackChallis/stoicheia/pull/82), declares them, and
   this change lands after it ([#61](https://github.com/jackChallis/stoicheia/issues/61)).
+- **Book I's definitions map, from Argon's second review.**
+  [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
+  accepts or checks: `FRONT_LEAN_I`, the Lean column of Book I's front page, now says what
+  the Lean has for each definition (I.17 and I.18 as III.15 and III.31 state them;
+  `Isosceles` and `RightAngledTriangle` defined but used by no statement or proof, as their
+  docstrings in `Elements/Foundations/Definitions.lean` now say; the oblong a `Rectangle`,
+  the rhomboid a `Parallelogram`; "none" where nothing stands for a word), and every front
+  page says that words with no Lean partner are never used in a Lean proof. It is not a
+  check change (WORKFLOW, section 10); the regenerated pages show it. III.15's record
+  becomes `restricted` until #26, and brief 0004's table of exceptions gains its row
+  ([#64](https://github.com/jackChallis/stoicheia/issues/64)).

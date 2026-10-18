@@ -4,7 +4,7 @@
 
 # Book II: Definitions
 
-Euclid's words on the left, the Lean that stands for them on the right. Words with no Lean partner are never used in a proof.
+Euclid's words on the left, the Lean that stands for them on the right. Words with no Lean partner are never used in a Lean proof.
 
 
 ## Definitions

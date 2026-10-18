@@ -4,7 +4,7 @@
 
 # Book I: Definitions, Postulates, Common Notions
 
-Euclid's words on the left, the Lean that stands for them on the right. Words with no Lean partner are never used in a proof.
+Euclid's words on the left, the Lean that stands for them on the right. Words with no Lean partner are never used in a Lean proof.
 
 
 ## Definitions
@@ -15,24 +15,24 @@ Euclid's words on the left, the Lean that stands for them on the right. Words wi
 | 2 | A line is breadthless length. | `Line` |
 | 3 | The extremities of a line are points. | `Line` |
 | 4 | A straight line is a line which lies evenly with the points on itself. | `Line` |
-| 5 | A surface is that which has length and breadth only. |  |
-| 6 | The extremities of a surface are lines. |  |
-| 7 | A plane surface is a surface which lies evenly with the straight lines on itself. |  |
+| 5 | A surface is that which has length and breadth only. | none |
+| 6 | The extremities of a surface are lines. | none |
+| 7 | A plane surface is a surface which lies evenly with the straight lines on itself. | none |
 | 8 | A plane angle is the inclination to one another of two lines in a plane which meet one another and do not lie in a straight line. | `∠ A B C` |
 | 9 | And when the lines containing the angle are straight, the angle is called rectilineal. | `∠ A B C` |
 | 10 | When a straight line set up on a straight line makes the adjacent angles equal to one another, each of the equal angles is right, and the straight line standing on the other is called a perpendicular to that on which it stands. | `IsRightAngle`, with Postulate 4 |
 | 11 | An obtuse angle is an angle greater than a right angle. | `IsObtuse` |
 | 12 | An acute angle is an angle less than a right angle. | `IsAcute` |
-| 13 | A boundary is that which is an extremity of anything. |  |
-| 14 | A figure is that which is contained by any boundary or boundaries. |  |
+| 13 | A boundary is that which is an extremity of anything. | none |
+| 14 | A figure is that which is contained by any boundary or boundaries. | none: the Lean names each kind of figure (`Triangle`, `quadArea`, `Circle`, segments) and has no general word |
 | 15 | A circle is a plane figure contained by one line such that all the straight lines falling upon it from one point among those lying within the figure are equal to one another; | `Definition15` (an axiom: radii are equal) |
 | 16 | And the point is called the centre of the circle. | `Centre` |
-| 17 | A diameter of the circle is any straight line drawn through the centre and terminated in both directions by the circumference of the circle, and such a straight line also bisects the circle. | `quadArea A B C D` cuts the figure by its diameter `AC` (Euclid says it of a parallelogram, from I.34) |
-| 18 | A semicircle is the figure contained by the diameter and the circumference cut off by it. And the centre of the semicircle is the same as that of the circle. |  |
-| 19 | Rectilineal figures are those which are contained by straight lines, trilateral figures being those contained by three, quadrilateral those contained by four, and multilateral those contained by more than four straight lines. | `Triangle`; four-sided, `quadArea` |
-| 20 | Of trilateral figures, an equilateral triangle is that which has its three sides equal, an isosceles triangle that which has two of its sides alone equal, and a scalene triangle that which has its three sides unequal. | `Equilateral`, `Isosceles` |
-| 21 | Further, of trilateral figures, a right-angled triangle is that which has a right angle, an obtuse-angled triangle that which has an obtuse angle, and an acute-angled triangle that which has its three angles acute. | `RightAngledTriangle` |
-| 22 | Of quadrilateral figures, a square is that which is both equilateral and right-angled; an oblong that which is right-angled but not equilateral; a rhombus that which is equilateral but not right-angled; and a rhomboid that which has its opposite sides and angles equal to one another but is neither equilateral nor right-angled. And let quadrilaterals other than these be called trapezia. | `Square`; a trapezium (I.35), `quadArea` |
+| 17 | A diameter of the circle is any straight line drawn through the centre and terminated in both directions by the circumference of the circle, and such a straight line also bisects the circle. | a straight line AD with the centre E between its ends on the circle: `Between A E D`, with `Centre E ABCD`, `OnCircle A ABCD`, `OnCircle D ABCD` (III.15); that it bisects the circle is said of the circumference, each side two right angles (`Circumference.semicircle`). Book I uses the word of a parallelogram (I.34): its diameter AC cuts `quadArea A B C D` into two triangles |
+| 18 | A semicircle is the figure contained by the diameter and the circumference cut off by it. And the centre of the semicircle is the same as that of the circle. | a segment (Def. III.6) on a diameter: in III.31 the base BC passes through E (`Between B E C`), the circle's centre, which Euclid calls the semicircle's too; the semicircle's circumference is two right angles (`Circumference.semicircle`) |
+| 19 | Rectilineal figures are those which are contained by straight lines, trilateral figures being those contained by three, quadrilateral those contained by four, and multilateral those contained by more than four straight lines. | `Triangle`; four-sided, `quadArea`; multilateral, none |
+| 20 | Of trilateral figures, an equilateral triangle is that which has its three sides equal, an isosceles triangle that which has two of its sides alone equal, and a scalene triangle that which has its three sides unequal. | `Equilateral`; `Isosceles` is defined, but no statement or proof uses it: I.5 and I.6 say that the two sides are equal; scalene, none |
+| 21 | Further, of trilateral figures, a right-angled triangle is that which has a right angle, an obtuse-angled triangle that which has an obtuse angle, and an acute-angled triangle that which has its three angles acute. | `RightAngledTriangle` is defined, but no statement or proof uses it: I.47 says that the angle BAC is right; an obtuse-angled triangle is a `Triangle` with an `IsObtuse` angle (II.12); of an acute-angled triangle, II.13 asks `IsAcute` only of the two angles at the ends of the side on which the perpendicular falls |
+| 22 | Of quadrilateral figures, a square is that which is both equilateral and right-angled; an oblong that which is right-angled but not equilateral; a rhombus that which is equilateral but not right-angled; and a rhomboid that which has its opposite sides and angles equal to one another but is neither equilateral nor right-angled. And let quadrilaterals other than these be called trapezia. | `Square`; oblong, `Rectangle` (Def. II.1), which counts a square too; rhombus, none; rhomboid, `Parallelogram` (I.34), which counts the others too; a trapezium (I.35), `quadArea` |
 | 23 | Parallel straight lines are straight lines which, being in the same plane and being produced indefinitely in both directions, do not meet one another in either direction. | `Parallel` |
 
 ## Postulates
