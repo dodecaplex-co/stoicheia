@@ -2,7 +2,7 @@
 scope = "full"
 note = "With its companions: `Prop1.general` cuts the straight line at any number of points in order, `Prop1.two` at one; `Prop1` keeps Euclid's two, D and E."
 companions = ["II.1 two", "II.1 general"]
-fingerprint = "sha256:df4a1ce92437b4e3"
+fingerprint = "sha256:cce87676f32541bb"
 
 [route]
 kind = "euclid"
@@ -17,6 +17,6 @@ case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "5d6b1f6"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:5b2b78012ab7bade"
+lean = "sha256:2642bf8e58a5ea62"

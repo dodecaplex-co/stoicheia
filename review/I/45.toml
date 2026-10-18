@@ -3,7 +3,7 @@
 scope = "full"
 note = "With its companions: `Prop45.apart` takes any figure given with triangles that lie apart, `Prop45.fan` Euclid's division from one corner; `Prop45` his ABD, DBC."
 companions = ["I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
-fingerprint = "sha256:e599e6b4d1c90fac"
+fingerprint = "sha256:82f17d662afe1ed5"
 
 [route]
 kind = "euclid"
@@ -24,6 +24,6 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "exceptions"
-commit = "9da1b6d"
+commit = "5d6b1f6"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:496640ba4c29abb0"
+lean = "sha256:b695b9572f39b180"

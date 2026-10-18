@@ -3,7 +3,7 @@
 scope = "full"
 note = "With its companions: `Prop40.general` takes equal bases anywhere on one straight line, `Prop40.join` gives AD parallel; `Prop40` keeps BC, CE end to end."
 companions = ["I.40 general", "I.40 join", "I.40 special"]
-fingerprint = "sha256:5ea666d96871b7f8"
+fingerprint = "sha256:52e7cf8ad9eff8f3"
 
 [route]
 kind = "modified"
@@ -25,6 +25,6 @@ note = "F is drawn between C and D, with AF level, as the proof supposes; Heath 
 
 [review]
 stage = "exceptions"
-commit = "2e1d5c1"
+commit = "5d6b1f6"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:5f353abf9022b4fd"
+lean = "sha256:26f3e7e66e5dc512"
