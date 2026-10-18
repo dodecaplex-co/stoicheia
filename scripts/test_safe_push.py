@@ -57,7 +57,9 @@ one commit and runs safe_push.py against that origin:
   quoted in the coordinator's words is not one, so an update keeps every word; the gates
   read the body by CommonMark's rules, so a `<!--` in code hides nothing, and a box
   counts only as a list item GitHub shows; a branch renamed before the merge is refused;
-  and a merge that happened, or may have, is never exit 1;
+  a merge that happened, or may have, is never exit 1; the allow-list test reads the
+  committed list through load_allowlist, and the dry-run refusals name the step that
+  refused;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -1374,15 +1376,23 @@ class DryRun(Edge):
         self.assertIn("would push", r.stdout)
 
     def test_dry_run_refused_in_the_guards(self):
+        # Refused by the axiom lock's guard, not by an earlier step.
         self.commit("Weaken Postulate 1 in the lock", self.weakened())
         r, _ = self.run_dry()
-        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
-        self.assertIn("REFUSED", r.stdout)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "secrets"), "ok", out)
+        self.assertEqual(self.guard(out, "axiom lock"), "FAIL", out)
+        self.assertIn("REFUSED: the invariant guards refused: axiom lock", out)
 
     def test_dry_run_refused_in_the_secret_scan(self):
+        # Refused by the secret scan, which names the planted file.
         self.commit("Plant a token", {"docs/notes.md": f"api_token = \"{TOKEN}\"\n"})
         r, _ = self.run_dry()
-        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertFlagged(out, "docs/notes.md")
+        self.assertIn("REFUSED: the secret scan found 1 possible secret", out)
 
     def test_dry_run_interrupted(self):
         self.good_commit()
@@ -2878,13 +2888,26 @@ class AllowList(Edge):
             self.assertNotIn(value, body)
 
     def test_the_committed_allow_list_is_narrow(self):
-        text = (SOURCE / "scripts" / "safe_push_allow.toml").read_text()
+        # The no-mistakes review: the committed allow-list (origin/main's here, BASE) is read
+        # by load_allowlist itself, which refuses a broad entry, so the test bites whether
+        # or not the list has entries: every entry it holds is read, and an entry planted
+        # in it is read when narrow and refused when broad.
         import tomllib
-        for entry in tomllib.loads(text).get("allow", []):
-            self.assertFalse(set("*?[") & set(entry["path"]), entry)
-            self.assertIn(entry["rule"].removeprefix("base64-encoded "), safe_push.KNOWN_RULES)
-            self.assertGreaterEqual(len(entry["match"]), 8, entry)
-            self.assertTrue(entry["reason"].strip(), entry)
+        path = safe_push.ALLOWLIST
+        text = (SOURCE / path).read_text()
+        self.assertEqual(safe_push.show(WORK, BASE, path), text)
+        held = safe_push.load_allowlist(WORK, BASE)
+        self.assertEqual(len(held), len(tomllib.loads(text).get("allow", [])))
+        narrow = self.commit("A narrow entry", {path: text + "\n" + Secrets.ALLOW})
+        digest = hashlib.sha256(TOKEN.encode()).hexdigest()
+        self.assertEqual(safe_push.load_allowlist(WORK, narrow)[len(held):], [safe_push.Allow(
+            "docs/notes.md", "api_token", "key, token or secret",
+            "A fixture for the test, not a real token.", digest)])
+        broad = self.commit("A broad entry", {path: text + "\n" + Secrets.ALLOW.replace(
+            '"docs/notes.md"', '"docs/*"')})
+        with self.assertRaises(safe_push.Refusal) as refused:
+            safe_push.load_allowlist(WORK, broad)
+        self.assertIn("a glob in path", str(refused.exception))
 
 
 @unittest.skipUnless(os.environ.get("STOICHEIA_SLOW_TESTS") == "1",
