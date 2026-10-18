@@ -129,6 +129,7 @@ own, the figure letters as three:
 
 What remains after 18 October. A change to a check lands in a pull request of its own.
 
+- The owner's call on the scope of the I.45 and II.14 companions: `restricted` (recommended in brief 0006: a figure the straight lines from one of its corners divide) or `full`, with the departure recorded.
 - **Stage 2's proofs** are next: the companions of I.40, I.45, II.1 and II.14 from brief
   0006, then placement.
 - **The companions list:** each entry needs its proposition's module imported in
