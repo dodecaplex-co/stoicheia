@@ -95,20 +95,14 @@ own, the figure letters as three, in this order:
 
 - **The pull-request discipline, PR #1:** the safe-push hardening, with the reviewers'
   fixes, under `/security-review`. Once it is on main, the pre-push hook is reinstalled.
-- **The sweep,** one pull request: the last old phrases, and a scrub of two private paths
-  already on main, in old orders. The phrases are "Lean cannot …" in the mishnah of I.2;
-  "I.17 needs no Postulate 5" in the mishnah of I.17, and "needs Postulate 5" in the
-  further reading of I.26; "Lean never needs …" in the mishnah of I.43 and the Book I gap
-  catalogue; and the docstrings of the helpers `Prop44.place`, `Prop22.room` and
-  `Prop22.ne_zero`.
+- **The sweep,** one pull request: the reader-facing wording sweep and the scrub of two
+  private paths, with the review records it re-reads.
 - **check_style's D7 pattern,** after the sweep, so that it also catches a phrase broken
   across a line; it also tightens S3 and S9. It changes a check, so it travels alone.
 - **The orders template:** `docs/templates/orders.md` gains a statements-only wave and
   companion proofs.
-- **The figure letters,** to the owner's decision, as three pull requests in order: first
-  the style rule, [STYLE.md](STYLE.md), section 7, and `check_style.py`'s S14, with its
-  switch off (letters allowed, and checked where present); then the figures at a glance
-  lettered; then the switch on (letters required).
+- **The figure letters,** three pull requests in order: the letters rule (letters allowed,
+  and checked where drawn), the lettered figures, then every point lettered (required).
 
 Two more are not pull requests: the finished worktrees and their merged branches are
 removed, and the fleet script, kept outside the repository, is rebuilt from the orders
