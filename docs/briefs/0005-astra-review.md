@@ -333,7 +333,7 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 
 ## Stages 2–4: representation and generality
 
-*Revised 18 October 2026: the statements and routes of stages 2 to 4 are brief 0006's, which revises this design. Where this section and brief 0006 differ, brief 0006 governs; this section is kept as the design as first planned.*
+*Revised 18 October 2026: the statements and routes of stages 2 to 4 are brief 0006's, which revises this design. This section keeps the design with its dated revisions, and brief 0006 governs where the two differ.*
 
 **Design rule.** Every generalization is a **companion theorem** (`PropN.general`, `.figure`, `.square`) next to the unchanged, annotated `PropN`, which stays as Euclid's worked configuration.
 - check_fidelity reads only `theorem PropN`, so its Heath sentences stay put.
