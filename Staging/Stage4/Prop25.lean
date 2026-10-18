@@ -7,6 +7,7 @@ import Elements.BookI.Prop11
 import Elements.BookI.Prop17
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
+import Elements.BookIII.Prop09
 import Elements.BookIII.Prop10
 import Elements.BookIII.Prop25
 import Staging.Stage3.Definitions
@@ -57,10 +58,14 @@ theorem Prop25.complete {A C P B E : Point} {α γ : Circle} (hα : ∃ O : Poin
     (hBP : SameSideOf B P A C) (hE : Centre E γ) (hAγ : OnCircle A γ) (hBγ : OnCircle B γ)
     (hCγ : OnCircle C γ) :
     γ = α ∧ ∀ X : Point, OnArc X ⟨α, A, C, P⟩ → OnCircle X γ := by
-  /- B is on P's side of AC, so off the straight line AC: A, C and B are three different
-     points, each on γ and on α. Circles that meet at three points are one [III. 10]. -/
-  have hACB : Triangle A C B := hBP.triangle
-  have hγ : γ = α := Prop10 ⟨E, hE⟩ hα hAγ hA hCγ hC hBγ hB.1 hACB.ne₁₂ hACB.ne₁₃ hACB.ne₂₃
+  /- B is on P's side of AC, so off the straight line AC: A, B and C are three different
+     points of α. They are on γ too, so EA, EB and EC are equal, being radii of γ
+     [Def. 15], and E is the centre of α [III. 9]. -/
+  have hABC : Triangle A B C := hBP.triangle.acb
+  have hEα : Centre E α := Prop9 hα hA hB.1 hC hABC.ne₁₂ hABC.ne₂₃ hABC.ne₁₃
+    (Definition15 hE hAγ hBγ) (Definition15 hE hBγ hCγ)
+  /- So γ and α have one centre, E, and one radius, EA: they are one circle. -/
+  have hγ : γ = α := circle_eq hE hEα hAγ hA rfl
   /- Every point of the arc is on α, and so on γ. -/
   refine ⟨hγ, ?_⟩
   intro X hX
