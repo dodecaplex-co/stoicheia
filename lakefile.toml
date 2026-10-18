@@ -9,3 +9,6 @@ name = "Elements"
 # default build; `lake build Audit` checks them.
 [[lean_lib]]
 name = "Audit"
+
+[[lean_lib]]
+name = "Staging"

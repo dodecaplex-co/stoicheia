@@ -1,0 +1,12 @@
+import Staging.Stage3.Definitions
+import Staging.Stage3.Degenerate
+import Staging.Stage3.Placement
+import Staging.Stage3.Chord
+import Staging.Stage3.Prop23Point
+import Staging.Stage3.Aligned
+import Staging.Stage3.CircumferenceAdd
+import Staging.Stage3.Prop24
+import Staging.Stage3.Prop25
+import Staging.Stage3.Prop26
+import Staging.Stage3.Prop28
+import Staging.Stage3.Arcs
