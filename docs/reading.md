@@ -88,28 +88,36 @@ Abraham Lincoln reckoned that all his schooling "did not amount to one year", an
 not hide it: asked in 1858 for a sketch of his life for the *Dictionary of Congress*, he
 wrote "Education defective." In the longer sketch he wrote in 1860, for John L. Scripps's
 campaign biography, he speaks of himself in the third person: "What he has in the way of
-education, he has picked up." Then comes the sentence the README quotes, and the one after
-it: "He studied and nearly mastered the Six-books of Euclid, since he was a member of
-Congress. He regrets his want of education, and does what he can to supply the want." His
-one term in Congress had ended in March 1849, a few weeks after his fortieth birthday (the
-[*Collected Works*](#basler1953collected), vol. 2, p. 459, and vol. 4, pp. 62 and 66). The
+education, he has picked up." After a sentence on English grammar comes the one the README
+quotes, and the one after it: "He studied and nearly mastered the Six-books of Euclid,
+since he was a member of Congress. He regrets his want of education, and does what he can
+to supply the want." His one term in Congress had ended in March 1849, a few weeks after
+his fortieth birthday (the [*Collected Works*](#basler1953collected), vol. 2, p. 459, and
+vol. 4, pp. 62 and 66). The
 six books are Books I to VI, which Oliver Byrne printed on their own as
 [*The First Six Books*](#oechslin2010byrne) in 1847, and Robert Simson
-[with the eleventh and twelfth](#simson1756elements). Stoicheia has the first three so far.
+[with the eleventh and twelfth](#simson1756elements). Lincoln does not say which edition
+he used. His son Robert, writing in 1917, remembered seeing him with "Playfield's"
+*Elements of Geometry*, which Glenn W. LaFantasie, in the
+[article listed below](#lafantasie2020satisfaction), takes to be John Playfair's
+*Elements of Geometry: Containing the First Six Books of Euclid* (p. 33). Stoicheia has the
+first three so far.
 
-William H. Herndon, his law partner in Springfield, often rode the circuit with him, the
-round of county courts that, Herndon reckoned, kept Lincoln on the road for over half the
-year. In [*Herndon's Lincoln*](#herndon1889lincoln), written with Jesse William Weik, he
-remembered the country inns, the beds too short for Lincoln, and the candle on a chair at
-the head of the bed: "On the circuit in this way he studied Euclid until he could with ease
+William H. Herndon, his law partner in Springfield, was out on the circuit with him
+"probably one-fourth of the time": the round of county courts that kept Lincoln on the
+road, Herndon says, "for at least six months out of the year". In
+[*Herndon's Lincoln*](#herndon1889lincoln), written with Jesse William Weik, he remembered
+the country inns, the beds too short for Lincoln, and the candle on a chair at the head of
+the bed: "On the circuit in this way he studied Euclid until he could with ease
 demonstrate all the propositions in the six books. How he could maintain his mental
 equilibrium or concentrate his thoughts on an abstract mathematical proposition, while
 Davis, Logan, Swett, Edwards, and I so industriously and volubly filled the air with our
 interminable snoring was a problem none of us could ever solve." And: "Along with his
-Euclid therefore he carried a well-worn copy of Shakespeare" (vol. 2, pp. 308–309 and 319).
-Herndon's "with ease" and "all" are more generous than Lincoln's "nearly mastered", and his
-book came out in 1889, a quarter of a century after Lincoln's death; but the two agree that
-the study came after Congress.
+Euclid therefore he carried a well-worn copy of Shakespeare" (vol. 2, pp. 308–309, 319 and
+337). Herndon's "with ease" and "all" are more generous than Lincoln's "nearly mastered",
+and his book came out in 1889, a quarter of a century after Lincoln's death; but the two
+agree that the study came after Congress, though Milton Hay and John T. Stuart each
+remembered a Euclid with him some years before (LaFantasie, pp. 38–39, note 32).
 
 Euclid came into Lincoln's arguments too. Closing the fourth of his debates with Stephen A.
 Douglas, at Charleston, Illinois, on 18 September 1858, he answered Douglas, who had called
@@ -148,28 +156,37 @@ to himself, "Lincoln, you can never make a lawyer if you do not understand what
 *demonstrate* means"; so, as Gulliver reports him, "I left my situation in Springfield,
 went home to my father's house", and stayed there "till I could give any proposition in
 the six books of Euclid at sight. I then found out what 'demonstrate' means, and went back
-to my law studies." When Gulliver said
-that Euclid would be one of the best books for the Tract Society's catalogue, if only
-people could be got to read it, Lincoln laughed: "I vote for Euclid."
+to my law studies." When Gulliver said that Euclid would be one of the best books for the
+Tract Society's catalogue, if only people could be got to read it, Lincoln laughed: "I vote
+for Euclid."
 
 Gulliver set this down four and a half years after the conversation, with the election in
 view, as his first sentence says, and the words he gives Lincoln are his memory of them.
 Some details do not fit the sketch Lincoln wrote a few months after that train ride: there
 he borrowed his law books from John T. Stuart and "studied with nobody", moved to
 Springfield only in 1837, after he was licensed, and came to Euclid after Congress, more
-than a decade later, as Herndon remembered too (vol. 4, pp. 62 and 65). How much of the
-story is Lincoln's own wording, and when the study it tells of took place, we cannot say.
-What it adds to his own sentence is a reason: in this telling he went to Euclid to learn
-what it is to demonstrate, and his speeches at Charleston and Columbus show the same
-regard for demonstration in his own words. Francis B. Carpenter reprinted the article in
-1866 with some words changed, so the passage is met in more than one form; we quote
-*The Independent*.
+than a decade later, as Herndon remembered too (vol. 4, pp. 62 and 65). Herndon, in an
+unpublished note, doubted the story on some of the same grounds, and Don E. and Virginia
+Fehrenbacher, in [*Recollected Words*](#fehrenbacher1996recollected), grade it E, "a
+quotation that is probably not authentic". Yet Gulliver had sent Lincoln a proof before
+it ran, asking for his corrections, and wrote to him again after; no answer is known.
+LaFantasie, who sets all this out, judges that the talk took place but that Gulliver put
+words in Lincoln's mouth (pp. 27–29 and 33–34). How much of the story is Lincoln's own
+wording, and when the study it tells of took place, we cannot say. Francis B. Carpenter
+reprinted the article in 1866 with some words changed, so the passage is met in more than
+one form; we quote *The Independent*.
+
+What the story adds to Lincoln's own sentence is a reason: in this telling he went to
+Euclid to learn what it is to demonstrate, and his speeches at Charleston and Columbus show
+the same regard for demonstration in his own words. LaFantasie finds the reasons wider
+than one word, and ends on what the six books gave Lincoln: the satisfaction of a hard
+thing done on his own (pp. 37 and 45–46).
 
 - <a id="basler1953collected"></a>Roy P. Basler (ed.), [*The Collected Works of Abraham Lincoln*](https://quod.lib.umich.edu/l/lincoln/),
   with Marion Dolores Pratt and Lloyd A. Dunlap, assistant editors, 8 vols. (Rutgers
   University Press, for the Abraham Lincoln Association, 1953), and an index volume
   (1955). **Free** online at the University of Michigan. Lincoln's own words, each piece
-  with a first note naming its source, a manuscript or a printed report: the sketch for
+  with a first note naming its source, a manuscript or a printed text: the sketch for
   Scripps is in vol. 4, pp. 60–67, the Charleston debate in vol. 3, pp. 145–201, the letter
   to Pierce in vol. 3, pp. 374–376, and the speech at Columbus in vol. 3, pp. 400–425.
 - <a id="herndon1889lincoln"></a>William H. Herndon and Jesse William Weik, [*Herndon's Lincoln: The True Story of a Great Life*](https://archive.org/details/herndonslincolnt02inhern),
@@ -194,6 +211,13 @@ regard for demonstration in his own words. Francis B. Carpenter reprinted the ar
   (Stanford University Press, 1996). The remarks that Lincoln's contemporaries remembered
   him making, gathered in one book: the place to begin in weighing a remembered remark,
   such as those Gulliver reports, against what Lincoln wrote.
+- <a id="lafantasie2020satisfaction"></a>Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104),
+  *Journal of the Abraham Lincoln Association* 41, no. 1 (2020), 24–46, DOI
+  10.5406/19457987.41.1.04; the link is the free text at the University of Michigan.
+  **Free.** A thoughtful essay on why Lincoln took up Euclid and what it gave him: it
+  weighs Gulliver's story against Herndon's doubts and Gulliver's own letters to Lincoln,
+  and sets the six books in the life of a man who taught himself. This section draws on it
+  with thanks.
 
 ## The foundations of geometry
 
