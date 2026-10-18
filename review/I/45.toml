@@ -1,17 +1,17 @@
 # review/I/45.toml
 [statement]
-scope = "restricted"
-hypotheses = ["the given rectilineal figure is two triangles ABD and DBC on the common side DB, and its area their sum (`hABD : Triangle A B D`, `hDBC : Triangle D B C`, and `△ A B D + △ D B C` in the conclusion)"]
-note = "Proved for a figure given as two triangles ABD, DBC on the side DB, which may overlap; Euclid's figure may have any number of sides."
-short = "a figure of two triangles"
+scope = "full"
+note = "With its companions: `Prop45.apart` takes any figure given with triangles that lie apart, `Prop45.fan` Euclid's division from one corner; `Prop45` his ABD, DBC."
+companions = ["I.45 append", "I.45 sum", "I.45 apart", "I.45 figure", "I.45 fan"]
 fingerprint = "sha256:e599e6b4d1c90fac"
 
 [route]
 kind = "euclid"
+note = "Euclid shows two triangles. The companions repeat his second step for each triangle after the first, as Oliver Byrne draws it for three: `Prop45.append` is the second half of his proof, with the parallelogram so far given in place of the one I.42 makes, and `Prop45.sum` applies it to one triangle after another."
 
 [representation]
-tags = ["two-triangles"]
-note = "The figure is its two triangles' areas added. Nothing asks that A and C lie on opposite sides of DB, so the triangles may overlap, and their sum then measures no single figure."
+tags = ["figure-with-dissection"]
+note = "A rectilineal figure is given with its division into triangles, and the division is checked: as triangles that lie apart, no point inside two of them, for any figure, a figure with a hole among them (`Prop45.apart`); as triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or as Euclid and Oliver Byrne divide it, from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles, the triangles then shown to fit together (`Prop45.fan`, by `Fitted.fan`). Equal to the figure means equal to those triangles together. That every figure can be so divided, and that another division gives the same sum, are not proved here; David Hilbert proved the second, for his measure of area. The construction does not use that the triangles lie apart, which is what makes their sum the figure's: it is `Prop45.sum`'s, for any triangles. The main theorem is an area-sum theorem: it takes ABD and DBC unchecked, and they may overlap. It represents Euclid's pictured division when A and C lie on opposite sides of DB; that checked case is `Prop45.fan` for the corners D, A, B, C. Full coverage is carried by `Prop45.apart`, for any figure given with any division into triangles that lie apart."
 
 [[passage]]
 at = "Let DB be joined, and let the parallelogram FH be constructed equal to the triangle ABD"
@@ -19,6 +19,7 @@ kind = "carried"
 note = "I.42 builds FH on half of BD itself, so H falls on D: the Lean writes D wherever Euclid writes H, and its parallelogram KFLM overlaps ABCD."
 
 [figure]
+case = "Euclid's figure ABCD, cut by DB into the two triangles ABD and DBC"
 note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart."
 
 [review]

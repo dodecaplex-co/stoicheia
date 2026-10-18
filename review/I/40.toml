@@ -1,20 +1,13 @@
 # review/I/40.toml
 [statement]
-scope = "restricted"
-hypotheses = [
-  "the bases BC and CE meet at C (`hBCE : Between B C E`)",
-  "the vertices A and D are different points (`hAD : A ≠ D`), so that AD is a straight line; Euclid's words also admit two triangles sharing their vertex, as ABC and ACE",
-]
-note = "Proved for equal bases that meet end to end, as BC and CE, with A and D different points; Euclid's bases may lie anywhere on one straight line."
-short = "bases that meet end to end, and A and D apart"
+scope = "full"
+note = "With its companions: `Prop40.general` takes equal bases anywhere on one straight line, `Prop40.join` gives AD parallel; `Prop40` keeps BC, CE end to end."
+companions = ["I.40 general", "I.40 join", "I.40 special"]
 fingerprint = "sha256:5ea666d96871b7f8"
 
 [route]
 kind = "modified"
-note = "Heath prints the whole proposition in brackets, as an interpolation (vol. 1, p. 338). It is I.39's argument with I.38 for I.37, and the Lean makes its end direct, as in I.39."
-
-[representation]
-tags = ["adjacent-bases"]
+note = "Heath prints the whole proposition in brackets, as an interpolation (vol. 1, p. 338). It is I.39's argument with I.38 for I.37, and the Lean makes its end direct, as in I.39. The companions follow the same argument for equal bases anywhere on one straight line: the parallel through A meets ED, and the areas put that point at D (`Prop40.general`)."
 
 [[passage]]
 at = "I say that they are also in the same parallels"

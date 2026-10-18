@@ -653,7 +653,7 @@ findings:
   change. `Staging/Stage2/` is gone, and `Staging.lean` says so. The routes as proved are
   those the brief declares, save one detail of a plan: `InOrder.between_end` uses Between 5
   (`between_of_between_right`), where the brief names Between 6 and Diagram-segment 1. The
-  protected files this changes are two. [`Certificate/axioms.lock`](../../Certificate/axioms.lock)
+  protected files this changes are three. [`Certificate/axioms.lock`](../../Certificate/axioms.lock)
   is rewritten by `python3 scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the
   same 87, byte for byte, and its `[vocabulary]` grows from 61 words to 91, by the words above
   and what Lean declares for them, each structure's constructor and the projection the
@@ -662,3 +662,8 @@ findings:
   `segments._sparseCasesOn_1`). [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is
   renewed, and [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an
   axiom reaches, has changed, so its account stands, and `tests/model/run.py --fast` passes.
+  [`review/terms.toml`](../../review/terms.toml) gains the tag `figure-with-dissection`, of
+  kind `representation`, word for word as brief 0006 gives it, before the records of I.45 and
+  II.14 use it. Those records, with I.40's and II.1's, become `full` by their companions,
+  and wait for their reviewer's reading and stamp; the tags `adjacent-bases`, `two-triangles`
+  and `three-pieces` stay in the file, though no record carries them now.
