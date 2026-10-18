@@ -31,12 +31,14 @@ coordinator of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
   the phrases), and `Certificate/axioms.lock`.
 - **Weakening the checks:** weakening, skipping or removing a check, an expected value, a
   lock or a schema (in `scripts/check_fidelity.py`, `scripts/negative_tests.py`,
-  `scripts/check_style.py`, `scripts/check_links.py`, `tests/` or the CI workflow). None is
+  `scripts/check_style.py`, `scripts/check_links.py`, `scripts/safe_push.py`, `tests/` or
+  the CI workflow). None is
   ever loosened to let a change through. Adding or strengthening a check is ordinary work,
   done by the owner the orders name, with a regression test where a guard defect is fixed
   ([WORKFLOW.md](WORKFLOW.md), section 8).
-- **Publishing:** pushing to main, tags, releases and their notes, the GitHub description,
-  and anything sent outside the repository.
+- **Publishing:** tags, releases and their notes, the GitHub description, and anything
+  sent outside the repository. Pushing to main is delegated to the coordinator, through
+  `scripts/safe_push.py` alone ([WORKFLOW.md](WORKFLOW.md), section 10).
 
 Within an authorized assignment, the coordinator makes the routine decisions delegated to
 that role ([WORKFLOW.md](WORKFLOW.md)).

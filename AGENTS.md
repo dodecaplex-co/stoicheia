@@ -89,9 +89,10 @@ Each rule has one home, linked; this list only points to it.
 - Weaken, skip or remove a check, test, expected value, lock or schema to let a change pass
   (FORMALIZATION, section 1).
 - Commit generated files unless you are the integrator (WORKFLOW, section 4).
-- Publish: push, merge into main, tag, release, write release notes, change the GitHub
-  description, or send anything outside the repository. Each needs Jack Challis's OK
-  (WORKFLOW, section 1).
+- Push, or merge into main: agents never push. The coordinator pushes to main only through
+  `scripts/safe_push.py` (WORKFLOW, section 10).
+- Publish: tag, release, write release notes, change the GitHub description, or send
+  anything outside the repository. Each needs Jack Challis's OK (WORKFLOW, section 1).
 - Invent a quotation, a page or a reference; put crew talk where readers look; write
   anything competitive (STYLE, sections 1 and 5).
 

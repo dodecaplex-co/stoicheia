@@ -16,8 +16,8 @@ contributor may hold several roles, save one: nobody reviews a claim they wrote.
 
 | Role | Responsible for |
 |---|---|
-| Owner | Jack Challis. Every public action (pushes to main, tags, releases and their notes, the GitHub description, anything sent outside the repository), and the foundation decisions, made with the coordinator. |
-| Coordinator | The plan, the baseline, and the decisions delegated to the role: approving statements and brief corrections, the files of the foundations, `Certificate/axioms.lock`, [0002-decisions.md](briefs/0002-decisions.md), PROGRAM.md, CI, and merging. |
+| Owner | Jack Challis. Every public action but a checked push to main (tags, releases and their notes, the GitHub description, anything sent outside the repository), and the foundation decisions, made with the coordinator. |
+| Coordinator | The plan, the baseline, and the decisions delegated to the role: approving statements and brief corrections, the files of the foundations, `Certificate/axioms.lock`, [0002-decisions.md](briefs/0002-decisions.md), PROGRAM.md, CI, merging, and pushing to main through `scripts/safe_push.py` alone (section 10). |
 | Statement and representation owner | A book's brief and each proposition's statement: vocabulary, hypotheses, conclusions, cases, and the exceptions allowed. |
 | Proof contributor | The assigned declarations with their helpers, porisms and companions, and how the Lean corresponds to the text. |
 | Edition contributor | Commentary, figures, source notes and further reading, written against the brief and reconciled with the finished proof. |
@@ -152,7 +152,8 @@ files working in parallel, the renderers, and an integrator followed by blind re
   generated edition, regenerated from the integrated sources. This avoids merging separately
   generated copies of the same pages.
 - **Commit by name** (`git add` the files you own), never `git add -A` in a tree others use.
-  Do not push, merge into main or rebase a shared branch: the coordinator merges.
+  Do not push, merge into main or rebase a shared branch: the coordinator merges, and
+  pushes (section 10).
 
 ## 5. Proving in parallel: a voyage
 
@@ -278,6 +279,9 @@ python3 scripts/negative_tests.py      # CI's `negative` job, after lake build a
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 ```
 
+`scripts/safe_push.py` runs all of these on the commit it pushes (section 10), so a change
+to this list is made there too, and in the CI workflow.
+
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
   beside other contributors' builds in a shared tree.
@@ -358,3 +362,49 @@ looked into.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
+
+### Pushing to main
+
+The coordinator may push to main without asking, through `scripts/safe_push.py` and in no
+other way. Tags, releases, release notes, the GitHub description, and anything sent
+outside the repository still need the owner's OK, and stay manual. Contributors and crew
+agents never push.
+
+```sh
+python3 scripts/safe_push.py --dry-run          # every check, and no push
+python3 scripts/safe_push.py                    # HEAD: the checks, the push, then CI
+python3 scripts/safe_push.py --commit <sha>     # another commit
+```
+
+The script reads the commit alone, through git and a fresh temporary worktree of it, so a
+dirty working tree makes no difference. It stops, saying why, at the first step that fails:
+
+1. **Preconditions.** The commit exists; `git fetch origin`; origin/main is an ancestor of
+   the commit, so the push is a fast-forward. It never forces a push, and makes no tag or
+   release.
+2. **Secrets.** Every line, file and commit message the push adds is scanned for private
+   keys, API-key-like tokens, Authorization headers with values, `.env` and key files,
+   and the owner's private paths. A false positive goes in `scripts/safe_push_allow.toml`,
+   with its reason.
+3. **Invariant guards,** against origin/main, in the temporary worktree:
+   - no statement changed (facts.json's `statement`, and the Lean source of the theorem,
+     its porism and its companions) unless the push adds a line to `docs/briefs/`, a
+     brief's revision or a decisions entry, that names the proposition (section 2);
+   - `Certificate/axioms.lock` unchanged unless
+     [0002-decisions.md](briefs/0002-decisions.md) gains an entry mentioning the lock;
+   - every change to `heath/` carries a comment naming a scan leaf of its own pages
+     ([STYLE.md](STYLE.md), section 5);
+   - no review record stale (`check_fidelity.py`, on the commit as committed);
+   - no whole directory of `Elements/`, `heath/`, `review/`, `figures/` or `mishnah/`
+     deleted unless the decisions page gains an entry naming it.
+4. **The full checks** of section 8 in that worktree, and `negative_tests.py` in a second,
+   with each step's outcome and time recorded.
+5. **The push,** `git push origin <sha>:refs/heads/main`, then the GitHub Actions run for
+   that commit, followed to its conclusion. If CI fails, the script prints the revert
+   (`git revert --no-edit <sha>`, then `safe_push.py` again) and reverts nothing itself.
+
+The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
+repository, with each step's full output beside it in `logs/`. `sh scripts/install_hooks.sh`
+installs a pre-push hook that refuses any push to main that safe_push did not check.
+`python3 scripts/test_safe_push.py` plants a bad commit for each guard on a throwaway
+clone, and checks that each is refused and a good one pushed.

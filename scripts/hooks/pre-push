@@ -1,0 +1,34 @@
+#!/bin/sh
+# Stoicheia's pre-push hook (STOICHEIA_SAFE_PUSH), installed by scripts/install_hooks.sh.
+#
+# A push to main goes through scripts/safe_push.py, which checks the commit from end to
+# end and sets STOICHEIA_SAFE_PUSH to the commit it checked, for its own push alone.
+# Any other push to main is refused here, and so is a push of a commit other than the
+# one checked, and every deletion of main. Pushes to other branches pass. (The owner can
+# still go round it with `git push --no-verify`; the hook is a guard rail, not a lock.)
+#
+# git gives the hook one line per ref: <local ref> <local sha> <remote ref> <remote sha>.
+
+status=0
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ "$remote_ref" = "refs/heads/main" ] || continue
+    case "$local_sha" in
+        *[!0]*) ;;
+        *)
+            echo "pre-push: refusing to delete main on $1." >&2
+            status=1
+            continue
+            ;;
+    esac
+    if [ -z "$STOICHEIA_SAFE_PUSH" ]; then
+        echo "pre-push: refusing a push to main: push to main only through" >&2
+        echo "    python3 scripts/safe_push.py [--commit <sha>] [--dry-run]" >&2
+        echo "which checks the commit from end to end (docs/WORKFLOW.md, section 10)." >&2
+        status=1
+    elif [ "$STOICHEIA_SAFE_PUSH" != "$local_sha" ]; then
+        echo "pre-push: refusing a push to main: safe_push.py checked $STOICHEIA_SAFE_PUSH," >&2
+        echo "but this push sends $local_sha." >&2
+        status=1
+    fi
+done
+exit $status
