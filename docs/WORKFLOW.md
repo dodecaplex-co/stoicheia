@@ -537,10 +537,11 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    copies, are shown beside the checklist); the coordinator has written "What and why",
    each review's commit and findings in the Reviews table (the security review's when a
    protected path changes) and "Needs the owner's OK"; boxes and sections count only
-   where GitHub shows them, not in a comment or a code block; the title and the branch
-   name, which go into main's merge commit, hold nothing the secret scan refuses; it
-   carries a label for its kind, and `security-review` when a protected path changes;
-   and it is not a draft. Then
+   where GitHub shows them, by CommonMark's rules: not in a comment, an HTML block or
+   code, and a box only as a list item (a `<!--` in a code span is text, and hides
+   nothing); the title and the branch name, which go into main's merge commit, hold
+   nothing the secret scan refuses; it carries a label for its kind, and
+   `security-review` when a protected path changes; and it is not a draft. Then
    `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
    commit's subject and body given (GitHub's own words, and the title scanned), so main
    holds exactly what was scanned: a merge commit, never a squash or a rebase, and the

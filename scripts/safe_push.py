@@ -100,16 +100,17 @@ check, model and negative pass, nothing fails or waits), no required box of its
 checklist is unticked (the template's own required boxes included, so deleting one does
 not help; origin/main's template, or the head's while origin/main has none), the
 coordinator has written its "What and why", its reviews (each with its commit and its
-findings) and its "Needs the owner's OK", each read as GitHub shows it (not in a comment
-or a code block), its title and branch name, which go into main's merge commit, hold
-nothing the scan refuses, it carries a label for its kind and `security-review` when a
-protected path changes, and it is not a draft; the pre-flight's notes are shown beside
-the checklist. Then `gh pr merge <n> --merge --delete-branch --match-head-commit <head>`
-with the merge commit's subject and body given (GitHub's own words, and the title
-scanned): a merge commit, never a squash or a rebase, since review records stamp the
-branch's commits. When gh fails, GitHub is asked whether the pull request merged before
-anything is said. Afterwards the merge commit is checked to join the base and the head
-checked, with the head's tree, on main.
+findings) and its "Needs the owner's OK", each read as GitHub shows it by CommonMark's
+rules (not in a comment, an HTML block or code, and a box only as a list item), its title
+and branch name, which go into main's merge commit, hold nothing the scan refuses, it
+carries a label for its kind and `security-review` when a protected path changes, and it
+is not a draft; the pre-flight's notes are shown beside the checklist. Then
+`gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
+commit's subject and body given (GitHub's own words, and the title scanned): a merge
+commit, never a squash or a rebase, since review records stamp the branch's commits.
+When gh fails, GitHub is asked whether the pull request merged before anything is said.
+Afterwards the merge commit is checked to join the base and the head checked, with the
+head's tree, on main.
 
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
 worktrees are removed at the end, on a failure too. The pre-push hook,
@@ -2441,23 +2442,31 @@ def load_record(sha: str, base: str) -> dict | None:
 # --merge: the gates, then a merge commit
 
 
-BOX = re.compile(r"(?m)^\s*[-*]\s+\[([ xX])\]\s+\*\*(Required(?: if protected)?):\*\*\s*(.*?)\s*$")
+# A required box of a checklist: the first line of a list item (boxes, below).
+BOX = re.compile(r"^\s*[-*][ \t]{1,4}\[([ xX])\]\s+\*\*(Required(?: if protected)?):\*\*"
+                 r"\s*(.*?)\s*$")
 
 
 def boxes(body: str) -> list[tuple[bool, str, str]]:
-    """(ticked, kind, text) for each required box of a checklist."""
-    return [(m.group(1) != " ", m.group(2), " ".join(m.group(3).split()))
-            for m in BOX.finditer(body or "")]
+    """(ticked, kind, text) for each required box of a checklist, where GitHub shows one:
+    a task-list item, so the first line of a list item as shown reads it, never a line of
+    a paragraph, of code or of HTML."""
+    found = []
+    for line, item in shown(body or ""):
+        m = BOX.match(line) if item else None
+        if m:
+            found.append((m.group(1) != " ", m.group(2), " ".join(m.group(3).split())))
+    return found
 
 
 def checklist_problems(body: str, template: str | None, protected: bool) -> list[str]:
     """The required boxes unticked, or missing from the body, counted where GitHub shows
-    them (visible): a box in a comment or a code block is not a box."""
+    them (boxes): a box in a comment, in code or in a paragraph is not a box."""
     def needed(kind):
         return kind == "Required" or protected
 
-    have = boxes(visible(body))
-    wanted = [(k, x) for _, k, x in boxes(visible(template or "")) if needed(k)]
+    have = boxes(body)
+    wanted = [(k, x) for _, k, x in boxes(template or "") if needed(k)]
     if not have and not wanted:
         return ["the body has no checklist of required boxes: use "
                 f"{TEMPLATE}"]
@@ -2470,59 +2479,153 @@ def checklist_problems(body: str, template: str | None, protected: bool) -> list
 SECTION = re.compile(r"(?m)^## +(.+?) *$")
 # The sections the coordinator writes, which --merge needs written when the template has them.
 WRITTEN = ("What and why", "Reviews", "Needs the owner's OK")
-# A fence's opening line (CommonMark): three or more backticks or tildes, indented three
-# spaces at most, and, after backticks, an info string with no backtick in it.
-FENCE_OPEN = re.compile(r"^ {0,3}(`{3,}(?=[^`]*$)|~{3,})")
-FENCE_CLOSE = re.compile(r"^ {0,3}(`{3,}|~{3,})[ \t]*$")
-LIST_ITEM = re.compile(r"^ *(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)")
-HEADING = re.compile(r"^ {0,3}#{1,6}(?:[ \t]|$)")
+# CommonMark's blocks, read from a line less the indentation of its containers (shown,
+# below). A fence opens with three or more backticks or tildes, and, after backticks, an
+# info string with no backtick in it; it closes with the same character, at least as
+# many, and nothing after them.
+FENCE_OPEN = re.compile(r"(`{3,}(?=[^`]*$)|~{3,})")
+FENCE_CLOSE = re.compile(r"(`{3,}|~{3,})[ \t]*$")
+LIST_ITEM = re.compile(r"(?:[-*+]|\d{1,9}[.)])(?=[ \t]|$)")
+HEADING = re.compile(r"#{1,6}(?:[ \t]|$)")
+# The HTML blocks (CommonMark 0.29, section 4.6, which GitHub follows): what starts one,
+# and what ends it, None for a blank line. GitHub shows their lines as HTML, never as
+# Markdown, so a box or a heading in one is neither. A seventh kind, a whole tag alone on
+# its line, cannot interrupt a paragraph.
+BLOCK_TAGS = ("address|article|aside|base|basefont|blockquote|body|caption|center|col|"
+              "colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|"
+              "form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|"
+              "menu|menuitem|nav|noframes|ol|optgroup|option|p|param|section|source|summary|"
+              "table|tbody|td|tfoot|th|thead|title|tr|track|ul")
+HTML_BLOCKS = (
+    (re.compile(r"<(?:pre|script|style|textarea)(?:[ \t>]|$)", re.I),
+     re.compile(r"</(?:pre|script|style|textarea)>", re.I)),
+    (re.compile(r"<!--"), re.compile(r"-->")),
+    (re.compile(r"<\?"), re.compile(r"\?>")),
+    (re.compile(r"<![A-Za-z]"), re.compile(r">")),
+    (re.compile(r"<!\[CDATA\["), re.compile(r"\]\]>")),
+    (re.compile(rf"</?(?:{BLOCK_TAGS})(?:[ \t>]|/>|$)", re.I), None),
+)
+HTML_TAG_LINE = re.compile(r"(?:<[A-Za-z][A-Za-z0-9-]*(?:\s+[A-Za-z_:][\w.:-]*"
+                           r"(?:\s*=\s*(?:[^\s\"'=<>`]+|'[^']*'|\"[^\"]*\"))?)*\s*/?>"
+                           r"|</[A-Za-z][A-Za-z0-9-]*\s*>)[ \t]*$")
+# Inline, in a paragraph (CommonMark, section 6), left to right, whichever starts first: a
+# backslash escape; a code span, a run of backticks to the next run of as many; a run of
+# backticks left unmatched, which is text; an HTML comment closed within the paragraph.
+# So "<!--" in a code span is code, and an unclosed "<!--" is text.
+INLINE = re.compile(r"\\[!-/:-@\[-`{-~]|(`+)(?!`).*?(?<!`)\1(?!`)|`+|<!--.*?-->", re.S)
 # Cells that hold a place, not a review's commit or findings.
 EMPTY_CELL = {"", "-", "–", "—", "...", "…", "tbd", "todo"}
 
 
-def visible(body: str) -> str:
-    """The body as GitHub shows it, less what is not the coordinator's: without the parts
-    safe_push wrote, without HTML comments (one never closed hides the rest), and without
-    code. Fenced code by CommonMark's rules: it opens with three or more backticks or
-    tildes, and closes only with the same character, at least as many, and nothing after
-    them; a fence never closed runs to the end. Indented code: lines indented four spaces
-    or more after a blank line or a heading, unless they continue a list. Both
-    checklist_problems and sections read the body through it, so a box or a heading in a
-    comment or in code does not count."""
-    text = COMMENT.sub("", OWN_PART.sub("", body or ""))
-    if "<!--" in text:
-        text = text[:text.index("<!--")]
-    kept: list[str] = []
-    fence = None            # the open fence's marker
-    indented = False        # inside indented code
-    in_list = False         # the last line with words was part of a list
-    opens = True            # the line before was blank or a heading, or there was none
-    for line in text.splitlines():
+def shown(body: str) -> list[tuple[str, bool]]:
+    """The lines of the body GitHub shows as Markdown, less what is not the coordinator's,
+    each with whether it starts a list item: CommonMark's blocks, read line by line. The
+    parts safe_push wrote go first. Then fenced code (closed only by its own character, at
+    least as many, and nothing after them; never closed, it runs to the end), indented code
+    (four spaces or more past its container, unless it goes on with a paragraph) and HTML
+    blocks, a comment among them: a line that starts with "<!--", three spaces in at most,
+    hides the lines to the one that holds "-->", or to the end. A list item starts three
+    spaces at most past its container: the top level, or the list item it is nested in, by
+    that item's content column. In a paragraph, a code span is kept as it is and a comment
+    closed within the paragraph is dropped; an unclosed "<!--" there is text (INLINE)."""
+    lines: list[tuple[str, bool]] = []
+    para: list[tuple[str, bool]] = []       # the open paragraph's lines
+    items: list[int] = []   # the content columns of the open list items, outermost first
+    fence = None            # an open fence: its marker, and its container's column
+    html = None             # an open HTML block: its end (None, a blank line), and column
+
+    def close() -> None:
+        """The paragraph ends: its lines as GitHub shows them."""
+        if para:
+            text = INLINE.sub(lambda m: "" if m.group(0).startswith("<!--") else m.group(0),
+                              "\n".join(t for t, _ in para)).split("\n")
+            lines.append((text[0], para[0][1]))
+            lines.extend((t, False) for t in text[1:])
+            para.clear()
+
+    for line in OWN_PART.sub("", body or "").splitlines():
+        text = line.expandtabs(4)
+        spaces = len(text) - len(text.lstrip(" "))
+        blank = not text.strip()
         if fence is not None:
-            m = FENCE_CLOSE.match(line)
-            if m and m.group(1)[0] == fence[0] and len(m.group(1)) >= len(fence):
-                fence = None
+            marker, col = fence
+            if blank or spaces >= col:
+                m = FENCE_CLOSE.match(text[spaces:])
+                if m and spaces - col <= 3 and m.group(1)[0] == marker[0] \
+                        and len(m.group(1)) >= len(marker):
+                    fence = None
+                continue
+            fence = None                    # its container ends, and the fence with it
+        if html is not None:
+            end, col = html
+            if blank and end is None:
+                html = None                 # a blank line ends it, and is read below
+            elif blank or spaces >= col:
+                if end is not None and end.search(text):
+                    html = None
+                continue
+            else:
+                html = None                 # its container ends, and the block with it
+        if blank:
+            close()
+            lines.append(("", False))
             continue
-        spaces = len(line.expandtabs(4)) - len(line.expandtabs(4).lstrip(" "))
-        if not line.strip():
-            opens = True
-            kept.append("")
+        depth = 0
+        while depth < len(items) and spaces >= items[depth]:
+            depth += 1
+        col = items[depth - 1] if depth else 0
+        content = text[spaces:]
+        starts = spaces - col <= 3 and bool(
+            FENCE_OPEN.match(content) or HEADING.match(content) or LIST_ITEM.match(content)
+            or any(start.match(content) for start, _ in HTML_BLOCKS))
+        if depth < len(items):
+            if para and not starts:
+                para.append((line, False))  # a lazy line: it goes on with the paragraph
+                continue
+            del items[depth:]
+            close()
+        if spaces - col >= 4:
+            if para:
+                para.append((line, False))  # it goes on with the paragraph; else code
             continue
-        if spaces >= 4 and (indented or (opens and not in_list)):
-            indented = True
-            continue
-        indented = False
-        m = FENCE_OPEN.match(line)
+        m = FENCE_OPEN.match(content)
         if m:
-            fence, opens = m.group(1), False
+            close()
+            fence = (m.group(1), col)
             continue
-        if LIST_ITEM.match(line):
-            in_list = True
-        elif spaces == 0:
-            in_list = False
-        opens = HEADING.match(line) is not None
-        kept.append(line)
-    return "\n".join(kept)
+        end = next((e for start, e in HTML_BLOCKS if start.match(content)), False)
+        if end is False and not para and HTML_TAG_LINE.match(content):
+            end = None
+        if end is not False:
+            close()
+            if end is None or not end.search(content):
+                html = (end, col)
+            continue
+        m = LIST_ITEM.match(content)
+        if HEADING.match(content) or content.startswith("|"):
+            close()                         # a heading, or a table's row: read alone
+            para.append((line, False))
+            close()
+        elif m:
+            close()
+            rest = content[m.end():]
+            gap = len(rest) - len(rest.lstrip(" "))
+            items.append(spaces + m.end() + (gap if 1 <= gap <= 4 else 1))
+            para.append((line, True))
+            if not rest.strip():
+                close()
+        else:
+            para.append((line, False))
+    close()
+    return lines
+
+
+def visible(body: str) -> str:
+    """The body as GitHub shows it, less what is not the coordinator's (shown): without the
+    parts safe_push wrote, HTML comments and blocks, and code. Both checklist_problems and
+    sections read the body through it, so a box or a heading in a comment or in code does
+    not count."""
+    return "\n".join(line for line, _ in shown(body))
 
 
 def sections(body: str) -> dict[str, str]:

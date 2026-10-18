@@ -54,7 +54,9 @@ one commit and runs safe_push.py against that origin:
   pull request; and step 4's notes carried to the merge;
 - the re-reviews' findings: an expectation of the certificate dropped or loosened is a
   check change, kept apart, while one moved with its content is a pinned value; a marker
-  quoted in the coordinator's words is not one, so an update keeps every word;
+  quoted in the coordinator's words is not one, so an update keeps every word; the gates
+  read the body by CommonMark's rules, so a `<!--` in code hides nothing, and a box
+  counts only as a list item GitHub shows;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -3014,6 +3016,89 @@ class Units(unittest.TestCase):
         nested = full.replace("## Checklist\n\n", "## Checklist\n\n- The boxes:\n\n", 1) \
             .replace("- [x] **Required", "    - [x] **Required")
         self.assertEqual(both(nested)[0], [])
+
+    def test_gates_read_comments_and_code_spans_as_github_does(self):
+        # The re-review: "<!--" in a code span or a fenced block is text, as GitHub shows
+        # it, and hides nothing. A comment that starts a line still hides the rest when it
+        # is never closed; one opened mid-line and closed within its paragraph is dropped,
+        # and one never closed there is text.
+        template = (SOURCE / ".github" / "pull_request_template.md").read_text()
+        full = ticked(template)
+
+        def swap(old, new):
+            self.assertEqual(full.count(old), 1, old)
+            return full.replace(old, new)
+
+        def both(body):
+            return (safe_push.checklist_problems(body, template, True),
+                    safe_push.section_problems(body, template, True))
+        why, ok = "A change for the test.\n", '"Nothing". -->\n'
+        cell = "| /no-mistakes | abc1234 | None. |"
+        shown = {
+            "an opener and a closer in a cell's code spans": swap(
+                cell, "| /no-mistakes | abc1234 | `<!--` then `-->` |"),
+            "an escaped comment in a cell": swap(
+                cell, "| /no-mistakes | abc1234 | \\<!-- shown as it is --> |"),
+            "a code span in Needs the owner's OK": swap(
+                ok, ok + "\nThis only changes how `<!--` is read.\n"),
+            "an opener mid-line in Needs the owner's OK": swap(
+                ok, ok + "\nThis only changes how <!-- is read.\n"),
+            "a code span in the /code-review cell": swap(
+                "| /code-review | abc1234 | None. |",
+                "| /code-review | abc1234 | fixed: an unclosed `<!--` in code hid the rest |"),
+            "a fenced block before the checklist": swap(
+                "## Checklist\n", "```html\n<!-- an opener\n```\n\n## Checklist\n"),
+            "an opener and a closer in two code spans": swap(
+                why, "A change: `<!--` opens a comment, and `-->` closes it.\n"),
+            "a code span of two backticks": swap(why, "A change to `` `<!--` `` spans.\n"),
+            "an opener mid-line, never closed": swap(why, "A change: strips each <!-- note.\n"),
+            "an escaped opener": swap(why, "A change to \\<!-- notes.\n"),
+        }
+        for name, body in shown.items():
+            with self.subTest(name):
+                self.assertEqual(both(body), ([], []))
+        hidden = swap("## Checklist\n", "<!-- a note never closed\n\n## Checklist\n")
+        self.assertEqual(len(both(hidden)[0]), 9, both(hidden))
+        commented = swap(cell, "| /no-mistakes | abc1234 | <!-- x --> |")
+        self.assertEqual(both(commented), ([], ["not written: the review /no-mistakes, its "
+                                                "commit and its findings"]))
+        across = swap(why, "A change <!-- begun here\nand ended here --> for the test.\n")
+        self.assertEqual(safe_push.sections(across)["What and why"], "A change  for the test.")
+        escaped = swap(why, "A change to \\<!-- these notes --> for the test.\n")
+        self.assertIn("<!-- these notes -->", safe_push.sections(escaped)["What and why"])
+
+    def test_a_box_counts_only_where_github_shows_one(self):
+        # The no-mistakes review: a box counts only as a task-list item GitHub shows, a list
+        # item indented three spaces at most at the top level, or nested in a list item by
+        # its content column; never a paragraph's line, code or raw HTML.
+        template = (SOURCE / ".github" / "pull_request_template.md").read_text()
+        head, _, checklist = ticked(template).partition("## Checklist\n")
+        boxes = [line for line in checklist.splitlines() if line.startswith("- [x]")]
+        self.assertEqual(len(boxes), 9)
+
+        def problems(lines, indent=""):
+            body = head + "## Checklist\n\n" + lines + "\n".join(indent + b for b in boxes)
+            return safe_push.checklist_problems(body + "\n", template, True)
+        hidden = {
+            "four spaces under a paragraph's line": ("See below.\n", "    "),
+            "four past a list item's content": ("- The boxes:\n\n", "      "),
+            "in a fence nested in a list item": ("- The boxes:\n\n    ```\n", "    "),
+            "in a <pre> block": ("<pre>\n", ""),
+            "in an HTML block": ("<details>\n", ""),
+        }
+        for name, (lines, indent) in hidden.items():
+            with self.subTest(name):
+                self.assertEqual(len(problems(lines, indent)), 9)
+        shown = {
+            "three spaces under a paragraph's line": ("See below.\n", "   "),
+            "nested by its item's content column": ("1. The boxes:\n\n", "   "),
+            "after a fence its list item ends": ("- A note:\n\n  ```\n  code\n", ""),
+            "after an HTML block a blank line ends": ("<details>\n<summary>Boxes</summary>\n\n",
+                                                      ""),
+        }
+        for name, (lines, indent) in shown.items():
+            with self.subTest(name):
+                self.assertEqual(problems(lines, indent), [])
 
     def test_markers_count_only_on_lines_of_their_own(self):
         # The re-review: safe_push writes its markers on lines of their own; one quoted in
