@@ -397,28 +397,31 @@ findings:
   Tags, releases, release notes, the GitHub description and anything sent outside the
   repository still need the owner's OK.
 - **Landing work: pull requests, judged by origin/main's harness.** The owner, on 17
-  October: "Seems like it should have some proper PR discipline already ... maybe we need a
-  little more discipline around that." This supersedes the entry "Pushing to main, safely
-  and without asking" above: nothing is pushed to main any more, by the coordinator or
-  anyone. Work lands on main only as a pull request, merged with a merge commit, through
-  [`scripts/safe_push.py`](../../scripts/safe_push.py) alone: `safe_push.py --branch <name>`
-  checks the exact commit, pushes it to its branch and opens or updates its pull request,
-  and `safe_push.py --merge <n>` merges it only when the secret scan and the guards pass
-  again on its head, CI is green, the required boxes of
+  October: "Seems like it should have some proper PR discipline already ... maybe we need
+  a little more discipline around that." This supersedes the entry "Pushing to main,
+  safely and without asking" above: nothing is pushed to main any more, by the coordinator
+  or anyone. Work lands on main only as a pull request, merged with a merge commit,
+  through [`scripts/safe_push.py`](../../scripts/safe_push.py) alone:
+  `safe_push.py --branch <name>` checks the exact commit, pushes it to its branch and
+  opens or updates its pull request, and `safe_push.py --merge <n>` merges it only when
+  the secret scan and the guards pass again on its head, CI is green, the required boxes of
   `.github/pull_request_template.md` are ticked and the coordinator's sections written,
   the pull request carries a label for its kind and is not a draft, and a protected change
   carries `security-review`. A check change lands in a pull request of its own: when
   origin/main's copies of the checks fail on a pull request that also changes what they
-  judge, the pre-flight refuses it. `scripts/hooks/pre-push` refuses every push to main,
-  and scans, with origin/main's copy of the scan whichever remote it goes to, a push to
-  any other branch and a tag the owner allows; and the ruleset on main is on: a pull
-  request, the checks `check`, `model` and `negative`, and no force push or deletion. Both
-  run as `git safe-push`, the launcher `scripts/hooks/safe-push`, which
-  `scripts/install_hooks.sh` installs outside the tracked tree with the hook, and which
-  runs origin/main's copy of the harness, so that a branch cannot judge itself. A false
-  positive of the scan goes in `scripts/safe_push_allow.toml`, pinned to its value by its
-  SHA-256, and `scripts/test_safe_push.py` plants a bad commit for every guard, gate and
+  judge, the pre-flight refuses it, unless the only check inputs it changes are the values
+  pinned to the edition (the certificate's expectations, the axiom lock and the model's
+  hash of it), which move with the content they pin. `scripts/hooks/pre-push` refuses
+  every push to main, and scans, with origin/main's copy of the scan whichever remote it
+  goes to, a push to any other branch and a tag the owner allows; and the ruleset on main
+  is on: a pull request, the checks `check`, `model` and `negative`, and no force push or
+  deletion. The pre-flight and the merge run as `git safe-push`, the launcher
+  `scripts/hooks/safe-push`, which `scripts/install_hooks.sh` installs outside the tracked
+  tree with the hook, and which runs origin/main's copy of the harness, so that a branch
+  cannot judge itself. A false positive of the scan goes in
+  `scripts/safe_push_allow.toml`, pinned to its value (held in its match, or named by its
+  SHA-256), and `scripts/test_safe_push.py` plants a bad commit for every guard, gate and
   edge case, the reviewers' notes among them. Agents never push, or open, merge or approve
   a pull request; tags, releases, release notes, the GitHub description and anything sent
-  outside the repository still need the owner's OK ([WORKFLOW](../WORKFLOW.md), section 10,
-  "Landing work: pull requests").
+  outside the repository still need the owner's OK ([WORKFLOW](../WORKFLOW.md), section
+  10, "Landing work: pull requests").
