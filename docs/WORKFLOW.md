@@ -489,8 +489,13 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       `Certificate/axioms.lock` and `tests/model/lock.sha256`, move with the content they
       pin (a re-proof that changes an expected count, a new word in the lock): when they
       are the only check inputs a pull request changes, origin/main's failure is noted,
-      and its own copies must pass. Check code changed with judged content is kept apart,
-      pinned values or not. The guards' two checks in step 3 run the same way.
+      and its own copies must pass. The expectations are checked one way only, each for
+      what it says, so they count as pinned values only while every one of origin/main's
+      stays, by its `ref` and `field`, with its `includes` and `excludes` the same or
+      grown and only the values of `count.is` and `equals` changed (new expectations are
+      fine); an expectation dropped or loosened is a check change. Check code changed with
+      judged content is kept apart, pinned values or not. The guards' two checks in step 3
+      run the same way.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the

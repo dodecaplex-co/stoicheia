@@ -52,6 +52,8 @@ one commit and runs safe_push.py against that origin:
   that appears late is still followed; main moving after the gates, or under the merge;
   a pull request the merge may not merge; the re-run that takes its kind from the open
   pull request; and step 4's notes carried to the merge;
+- the re-reviews' findings: an expectation of the certificate dropped or loosened is a
+  check change, kept apart, while one moved with its content is a pinned value;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -2155,6 +2157,110 @@ class ProtectedPaths(Edge):
         out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
                                  "Elements/BookIII/Prop01.lean")
         self.assertIsNone(self.guard(out, "pinned values"), out)
+
+    EXPECT = "tests/certificate_expectations.json"
+
+    def test_expectation_dropped_with_its_regression_kept_apart(self):
+        # The re-review's blocking finding: III.1's certificate gains the porism's
+        # centre_unique, the regression its expectation exists to catch, and the same commit
+        # drops that expectation. check_fidelity.py checks only what each expectation says,
+        # so the commit's own pass holds: the drop is a check change, kept apart.
+        lean, record = "Elements/BookIII/Prop01.lean", "review/III/01.toml"
+        new_lean = self.text(lean) + "\n-- A re-proof that uses centre_unique.\n"
+        stamped = re.sub(r'(?m)^lean = "[^"]*"',
+                         f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
+        stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
+        facts = json.loads(self.text("facts.json"))
+        for p in facts["propositions"]:
+            if p["ref"] == "III.1":
+                p["axioms"] = sorted(p["axioms"] + ["Tacit.centre_unique"])
+        data = json.loads(self.text(self.EXPECT))
+        data["expectations"] = [x for x in data["expectations"]
+                                if (x["ref"], x["field"]) != ("III.1", "axioms")]
+        changes = {lean: new_lean, record: stamped,
+                   "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
+                   self.EXPECT: json.dumps(data, indent=2, ensure_ascii=False) + "\n"}
+        changes.update(self.decision(f"`{self.EXPECT}`: tidied."))
+        self.regenerated_commit("III.1 uses centre_unique, its expectation dropped", changes)
+        out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
+                                 "drops or loosens an expectation")
+        self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
+        self.assertIn("should not include Tacit.centre_unique", out)
+        self.assertEqual(self.guard(out, "review records (the commit's checks)"), "ok", out)
+        self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
+        self.assertIsNone(self.guard(out, "pinned values"), out)
+
+    def expectations_changed(self, change) -> str:
+        """A commit that changes a Lean file, which the checks judge, and the certificate's
+        expectations by `change`: given the parsed file, it edits it in place and returns
+        None, or returns the file's new text, or False to delete the file."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        data = json.loads(self.text(self.EXPECT))
+        result = change(data)
+        lean = "Elements/BookIII/Prop01.lean"
+        write = {lean: self.text(lean) + "\n-- A line for the test.\n"}
+        if result is not False:
+            write[self.EXPECT] = result if isinstance(result, str) else \
+                json.dumps(data, indent=2, ensure_ascii=False) + "\n"
+        return self.commit("A Lean line, and the expectations changed", write,
+                           remove=[self.EXPECT] if result is False else ())
+
+    def test_only_expectations_kept_whole_are_pinned_values(self):
+        # Each of origin/main's expectations stays, by its ref and field, its includes and
+        # excludes the same or grown, and only count.is and equals take other values: then
+        # the change moves with the content. Anything else is a check change.
+        def entry(data, ref, field="axioms"):
+            return next(x for x in data["expectations"] if (x["ref"], x["field"]) == (ref, field))
+
+        def drop(key, ref="III.1", field="axioms"):
+            def change(data):
+                del entry(data, ref, field)[key]
+            return change
+
+        def moved(data):
+            for x in data["expectations"]:
+                if "count" in x:
+                    x["count"]["is"] -= 1
+        weakened = {
+            "an expectation removed": lambda d: d["expectations"].remove(entry(d, "III.1")),
+            "every expectation removed": lambda d: d.update(expectations=[]),
+            "its excludes removed": drop("excludes"),
+            "its includes emptied": lambda d: entry(d, "III.1 Por.").update(includes=[]),
+            "its excludes emptied": lambda d: entry(d, "III.1").update(excludes=[]),
+            "its count removed": drop("count"),
+            "its equals removed": drop("equals", "III.1 Por.", "of"),
+            "its count's prefix changed": lambda d: entry(d, "III.1")["count"].update(
+                prefix="Tacit.centre"),
+            "its ref changed": lambda d: entry(d, "III.1").update(ref="III.2"),
+            "the file deleted": lambda d: False,
+            "the file unreadable": lambda d: "{ not JSON\n",
+        }
+        for name, change in weakened.items():
+            with self.subTest(name):
+                refused, out = self.kept_apart(self.expectations_changed(change),
+                                               "python3 scripts/check_fidelity.py")
+                self.assertTrue(refused, out)
+                self.assertIn("drops or loosens an expectation", out)
+                self.assertNotIn("pinned values", out)
+        kept = {
+            "the counts moved": moved,
+            "an equals moved": lambda d: entry(d, "III.1 Por.", "of").update(equals="III.2"),
+            "its includes grown": lambda d: entry(d, "III.1 Por.")["includes"].append(
+                "Tacit.area_swap"),
+            "its excludes grown": lambda d: entry(d, "III.1")["excludes"].append(
+                "Tacit.area_swap"),
+            "a field added": lambda d: entry(d, "III.1", "attached").update(excludes=["III.2"]),
+            "an expectation added": lambda d: d["expectations"].append(
+                {"ref": "III.2", "field": "axioms", "includes": ["Tacit.area_swap"],
+                 "why": "A new expectation, for the test."}),
+            "a why reworded": lambda d: entry(d, "III.1").update(why="Reworded."),
+        }
+        for name, change in kept.items():
+            with self.subTest(name):
+                refused, out = self.kept_apart(self.expectations_changed(change),
+                                               "python3 scripts/check_fidelity.py")
+                self.assertFalse(refused, out)
+                self.assertIn("pinned values", out)
 
     STYLE = ("python3 scripts/check_style.py",
              [sys.executable, "scripts/check_style.py", "--no-lean"])

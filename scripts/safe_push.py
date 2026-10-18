@@ -72,8 +72,9 @@ order, and the first that fails stops it with a message saying why:
    code it checks. Two kinds of failure are not a check's verdict, and are noted only:
    pages gone stale under origin/main's render.py (or facts.json rewritten by its
    certificate), which the pages' diff shows in full; and a failure on a commit whose
-   only check inputs changed are values pinned to the edition (PINNED, below), which
-   move with the content they pin. A crash of origin/main's render.py, its check of
+   only check inputs changed are values pinned to the edition (PINNED, below; the
+   certificate's expectations only while none of origin/main's is dropped or loosened),
+   which move with the content they pin. A crash of origin/main's render.py, its check of
    docs/program.toml among them, is a verdict. Step 3's two checks run the same way.
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
@@ -167,13 +168,15 @@ PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md
              "lakefile.lean", "lean-toolchain", "lake-manifest.json")
 # The checks and what they expect: origin/main's copies judge the commit (step 4).
 CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml")
-# Of those, the values pinned to the edition, exactly, not code: check_fidelity.py compares
-# the expectations and the lock with facts.json both ways, and the model's run compares
-# its hash of the lock with the lock. A change to the content they pin moves them with it,
-# in the same pull request; they stay protected (a decisions line, security-review, the
-# lock's guard), and the commit's own checks must pass.
-PINNED = ("tests/certificate_expectations.json", "Certificate/axioms.lock",
-          "tests/model/lock.sha256")
+# Of those, the values pinned to the edition, not code. The lock and the model's hash of it
+# are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
+# model's run its hash with the lock. The certificate's expectations are checked one way
+# only, each for what it says, so a change to them is a pinned value only while it keeps
+# every expectation origin/main has (kept_expectations). A change to the content they pin
+# moves them with it, in the same pull request; they stay protected (a decisions line,
+# security-review, the lock's guard), and the commit's own checks must pass.
+EXPECTATIONS = "tests/certificate_expectations.json"
+PINNED = (EXPECTATIONS, LOCK, "tests/model/lock.sha256")
 SECURITY_LABEL = "security-review"
 LABELS = {
     **{f"stage-{n}": f"Brief 0005, stage {n}" for n in range(2, 7)},
@@ -1489,6 +1492,55 @@ def judged_files(repo, base, sha) -> list[str]:
                   and not stamp_only(repo, base, sha, p))
 
 
+def kept_expectations(old: str | None, new: str | None) -> bool:
+    """Does the expectations file `new` keep every expectation of `old`, origin/main's
+    (None when it has none)? Each of old's is still there, matched by its ref and field:
+    its includes and excludes the same or grown, its count's prefix the same, its equals
+    still there; only the values of count.is and equals may differ, and its why, the words
+    shown when it fails. New expectations are fine. A removed expectation or field, a list
+    shrunk, or a file that does not read, is not kept."""
+    def entries(text: str | None) -> list[dict] | None:
+        try:
+            found = json.loads(text)["expectations"]
+        except (TypeError, KeyError, json.JSONDecodeError):
+            return None
+        ok = isinstance(found, list) and all(isinstance(x, dict) for x in found)
+        return found if ok else None
+
+    def asks_as_much(y: dict, x: dict) -> bool:
+        for key, want in x.items():
+            have = y.get(key)
+            if key == "why":
+                continue
+            if key not in y:
+                return False
+            if key in ("includes", "excludes") and isinstance(want, list) \
+                    and isinstance(have, list):
+                if any(name not in have for name in want):
+                    return False
+            elif key == "count" and isinstance(want, dict) and isinstance(have, dict):
+                if want.keys() != have.keys() or any(want[k] != have[k] for k in want
+                                                     if k != "is"):
+                    return False
+            elif key != "equals" and have != want:
+                return False
+        return True
+
+    olds, news = ([] if old is None else entries(old)), entries(new)
+    if olds is None or news is None:
+        return False
+    return all(any(asks_as_much(y, x) for y in news) for x in olds)
+
+
+def pinned(repo, base, sha, path: str) -> bool:
+    """Is the commit's change to the check input `path` a value pinned to the edition? The
+    lock and the model's hash of it, always; the certificate's expectations, while the
+    change keeps every one origin/main has (kept_expectations)."""
+    if path == EXPECTATIONS:
+        return kept_expectations(show(repo, base, path), show(repo, sha, path))
+    return path in PINNED
+
+
 def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     """A check change is a pull request of its own, landed before the code it checks
     (docs/WORKFLOW.md, "Landing work: pull requests"). So when a check fails with
@@ -1497,11 +1549,13 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     noted. Two failures are not a verdict, and do not count. Pages gone stale under
     origin/main's copies (FRESHNESS): a renderer's change shows in the pages it
     regenerates, and the commit's own pass still needs them current. And any failure on a
-    commit whose only check inputs changed are pinned values (PINNED): a re-proof that
+    commit whose only check inputs changed are pinned values (pinned): a re-proof that
     moves an expected count, or a new word in the lock, changes the value with the
-    content, in no other order, and the commit's own pass still needs them to agree.
-    Check code changed with judged content is kept apart, pinned values or not. True
-    when it refuses."""
+    content, in no other order, and the commit's own pass still needs them to agree. An
+    expectation dropped or loosened is no pinned value: check_fidelity.py checks only
+    what each expectation says, so the commit's own pass could never catch it. Check code
+    changed with judged content is kept apart, pinned values or not. True when it
+    refuses."""
     failed = [name for s in rep.steps
               if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
               and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
@@ -1509,7 +1563,7 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     if not judged:
         return False
     inputs = sorted(p for _, p in changed_files(repo, base, sha) if under(p, CHECK_INPUTS))
-    if inputs and all(p in PINNED for p in inputs):
+    if inputs and all(pinned(repo, base, sha, p) for p in inputs):
         if not any(s.stage == stage and s.name == "pinned values" for s in rep.steps):
             rep.add(stage, "pinned values", "note", f"origin/main's checks fail on the commit "
                     f"({', '.join(failed)}), and the only check inputs it changes are values "
@@ -1517,13 +1571,17 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
                     "content they pin: for the security review")
         return False
     shown = ", ".join(judged[:8]) + (f" and {len(judged) - 8} more" if len(judged) > 8 else "")
+    loosened = EXPECTATIONS in inputs and not pinned(repo, base, sha, EXPECTATIONS)
     rep.add(stage, "check change kept apart", "FAIL",
             f"origin/main's checks fail on the commit ({', '.join(failed)}), and it changes "
-            f"what they judge as well as the checks: {shown}. Land the check change first, in "
-            "a pull request of its own (the check code, the guides, the regenerated pages "
-            "and the records' stamps), and the rest after it; values pinned to the edition "
-            f"({', '.join(PINNED)}) move with the content they pin (docs/WORKFLOW.md, "
-            "\"Landing work: pull requests\")")
+            f"what they judge as well as the checks: {shown}"
+            + (f"; and it drops or loosens an expectation of {EXPECTATIONS}, which is a "
+               "check change" if loosened else "")
+            + ". Land the check change first, in a pull request of its own (the check code, "
+            "the guides, the regenerated pages and the records' stamps), and the rest after "
+            f"it; values pinned to the edition ({LOCK}, {PINNED[2]}, and the counts and "
+            f"values of {EXPECTATIONS}, none of its expectations dropped or loosened) move "
+            "with the content they pin (docs/WORKFLOW.md, \"Landing work: pull requests\")")
     return True
 
 

@@ -410,8 +410,9 @@ findings:
   carries `security-review`. A check change lands in a pull request of its own: when
   origin/main's copies of the checks fail on a pull request that also changes what they
   judge, the pre-flight refuses it, unless the only check inputs it changes are the values
-  pinned to the edition (the certificate's expectations, the axiom lock and the model's
-  hash of it), which move with the content they pin. `scripts/hooks/pre-push` refuses
+  pinned to the edition (the axiom lock, the model's hash of it, and the counts and
+  values of the certificate's expectations, none of them dropped or loosened), which move
+  with the content they pin. `scripts/hooks/pre-push` refuses
   every push to main, and scans, with origin/main's copy of the scan whichever remote it
   goes to, a push to any other branch and a tag the owner allows; and the ruleset on main
   is on: a pull request, the checks `check`, `model` and `negative`, and no force push or
