@@ -13,6 +13,6 @@ note = "Heiberg brackets this as an early scholium. A finite straight line enter
 
 [review]
 stage = "exceptions"
-commit = "2a34715"
+commit = "6237881"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:c01ca138d7746c62"
+lean = "sha256:9aaf00e4e29e5634"
