@@ -126,12 +126,12 @@ suitable order, each glued across a side of an earlier one and meeting the earli
 along it (`Rectilineal`), and "equal to the figure" meaning equal to those triangles taken
 together (`Rectilineal.area`). The figure may be convex or not, and need have no corner from
 which the straight lines to the others divide it. It is `Prop45.apart` for the figure's
-triangles, which lie apart (`Fitted.inside_pairwise`). Nothing is claimed of another
-division of the figure. -/
+triangles, which lie apart (`Fitted.inside_pairwise`, `Rectilineal.toApart`). Nothing is
+claimed of another division of the figure. -/
 theorem Prop45.figure {E₁ E E₂ : Point} (R : Rectilineal) (hE : Triangle E₁ E E₂) :
     ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
       quadArea K F L M = R.area :=
-  Prop45.apart ⟨R.pieces, R.fitted.ne_nil, R.fitted.triangle, R.fitted.inside_pairwise⟩ hE
+  Prop45.apart R.toApart hE
 
 /-- **I.45, for a figure divided from one corner** (companion of I.45), as Euclid and Oliver
 Byrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ

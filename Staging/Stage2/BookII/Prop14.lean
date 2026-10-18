@@ -88,17 +88,18 @@ construct a square equal to a given rectilineal figure, given with triangles fit
 in a suitable order, each glued across a side of an earlier one and meeting the earlier ones
 only along it (`Rectilineal`), as in `Prop45.figure`: the square on PQ is equal to those
 triangles taken together (`Rectilineal.area`). It is `Prop14.apart` for the figure's
-triangles, which lie apart (`Fitted.inside_pairwise`). Nothing is claimed of another
-division of the figure. -/
+triangles, which lie apart (`Fitted.inside_pairwise`, `Rectilineal.toApart`). Nothing is
+claimed of another division of the figure. -/
 theorem Prop14.figure (R : Rectilineal) : ∃ P Q : Point, sq P Q = R.area :=
-  Prop14.apart ⟨R.pieces, R.fitted.ne_nil, R.fitted.triangle, R.fitted.inside_pairwise⟩
+  Prop14.apart R.toApart
 
 /-- **II.14, with the square drawn** (companion of II.14). To construct a square PQST equal
 to a given rectilineal figure, given with triangles that lie apart as in `Prop14.apart`: the
 square on the side that `Prop14.apart` finds, described on it [I. 46]. The square is a
-parallelogram, and it is equal to the figure's triangles taken together. A figure given by
-gluing (`Rectilineal`), or a checked fan, is taken here through its triangles, which lie
-apart (`Fitted.inside_pairwise`), with the same sum. -/
+parallelogram, and it is equal to the figure's triangles taken together. A figure `R` given
+by gluing (`Rectilineal`) is taken here as `R.toApart`, the same triangles, which lie apart,
+with the same sum (`Rectilineal.area_toApart`); so is the glued figure that `Prop14.fan`
+returns for a checked fan. -/
 theorem Prop14.square (R : Apart) :
     ∃ P Q S T : Point, Square P Q S T ∧ Parallelogram P Q S T ∧ quadArea P Q S T = R.area := by
   sorry
@@ -112,7 +113,7 @@ angles. Then those triangles, in that order, are fitted together into one figure
 (`Fitted.fan`), and the square on PQ is equal to that figure, that is, to the triangles
 taken together. The figure is read as the one with corners A₀, A₁, …, Aₙ in order round it
 (that its boundary is that closed line is not stated in Lean). The square drawn is
-`Prop14.square` for that figure's triangles, which lie apart.
+`Prop14.square R.toApart`, for the glued figure `R` returned.
 
 As in `Prop45.fan`, the first conclusion is what the two conditions are for; the square
 alone would follow from each piece being a triangle, by `Prop14.sum`. -/

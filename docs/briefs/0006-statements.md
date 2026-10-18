@@ -101,14 +101,15 @@ that their new conclusion gives back the area equality they had before (by
 the change. On its findings, `Prop14.general` is renamed `Prop14.figure`, "II.14 figure",
 as in I.45, so that "general" does not name a form narrower than `Prop14.apart` (the notes
 above and the appendix keep the name it had then); WORKFLOW, section 2, gains the sentence
-under which a staged fact proved in place waits in `Staging/` for its home; and decision 4
-is given as the tracking issue records it. No statement's hypotheses or conclusions
-changed.*
+under which a staged fact proved in place waits in `Staging/` for its home; decision 4 is
+given as the tracking issue records it; and `Rectilineal.toApart`, with
+`Rectilineal.area_toApart`, is added for proofs, so that a glued figure goes to the `Apart`
+companions in one step. No statement's hypotheses or conclusions changed.*
 
 Base: the branch was written on main at `1e5b99a`, and has main merged in; the revision of
 18 October was written on main at `f17b427`, and the corrections after Astra's second answer
 on `b48640c`. The statements are in `Staging/`, as committed with this brief.
-`lake build Staging` passes: 100 declarations, of which 37 carry `sorry` and the rest are
+`lake build Staging` passes: 102 declarations, of which 37 carry `sorry` and the rest are
 definitions, checks or proofs. Nothing in `Elements/` changes, so main's records, lock and
 CI are untouched.
 
@@ -353,7 +354,7 @@ and each wave's orders name the agent.
 | `Elements/Foundations/Phrases.lean` | `InOrder`, `segments`, `endOf`, `OnFiniteLine`, `OnOrInsideTriangle`, `Corners`, `triples`; then `Fitted`, `Rectilineal`, `Rectilineal.area`, `Apart`, `Apart.area` (Definitions I.14, I.19), after `InsideTriangle` and `OppositeSidesOf`, which they use | the foundations | coordinator |
 | `Elements/Foundations/DefinitionsIII.lean` | the arc words of stage 3; `Foot` (Definitions III.4, III.5) | the foundations | coordinator |
 | `Elements/Figure/Sums.lean` (new) | `Magnitude.sum_singleton`, `Magnitude.sum_append`, `InOrder.between_end` | Book Zero: imports no proposition | stage 2 ground task |
-| `Elements/Figure/Rectilineal.lean` (new) | `Fitted.ne_nil`, `Fitted.triangle`, `Fitted.inside_pairwise`; `Fitted.fan` if its proof cites no proposition | Book Zero: imports no proposition | stage 2 ground task |
+| `Elements/Figure/Rectilineal.lean` (new) | `Fitted.ne_nil`, `Fitted.triangle`, `Fitted.inside_pairwise`, `Rectilineal.toApart`, `Rectilineal.area_toApart`; `Fitted.fan` if its proof cites no proposition | Book Zero: imports no proposition | stage 2 ground task |
 | `Elements/Figure/Chords.lean` (new) | `chord_cases`, `Arc.meets`, `Arc.congr_side`, `Arc.Congruent.congr_side` | Book Zero, after `DefinitionsIII` | stage 3 ground task |
 | `Elements/BookI/HelpersTriangles.lean` (new) | `Prop20.collinear_iff`, `Prop20.collinear_congr`, `Prop20.between_iff`, `Prop20.between_congr` | after I.20; cites nothing later. Not `Helpers.lean`, which I.7 imports before I.20 exists | placement step 2 |
 | `Elements/BookIII/Placement/Exists.lean` (new) | `Placement.exists_off`, `Placement.exists_on` | after Book I (cites I.3, I.20, I.22) | placement step 2 |
@@ -478,6 +479,11 @@ theorem Fitted.inside_pairwise {ps : List (Point × Point × Point)} (h : Fitted
     ps.Pairwise (fun s s' => ∀ Y : Point,
       InsideTriangle Y s.1 s.2.1 s.2.2 → ¬ InsideTriangle Y s'.1 s'.2.1 s'.2.2)
 
+def Rectilineal.toApart (R : Rectilineal) : Apart :=
+  ⟨R.pieces, R.fitted.ne_nil, R.fitted.triangle, R.fitted.inside_pairwise⟩
+
+theorem Rectilineal.area_toApart (R : Rectilineal) : R.toApart.area = R.area
+
 theorem Fitted.fan {A₀ A₁ A₂ : Point} {ps : List Point}
     (htri : ∀ s ∈ segments (A₁ :: A₂ :: ps), Triangle A₀ s.1 s.2)
     (hopp : ∀ t ∈ triples (A₁ :: A₂ :: ps), OppositeSidesOf t.1 t.2.2 A₀ t.2.1)
@@ -559,7 +565,12 @@ theorem Fitted.fan {A₀ A₁ A₂ : Point} {ps : List Point}
 - **The limit**, as stated under Conventions: the figure comes with its division, checked.
 - **Proved here:** `Fitted.ne_nil`, `Fitted.triangle` and `Fitted.inside_pairwise` (the
   last from the challenger's scratch proof of 17 October, with thanks), restored as they
-  were. **To prove:** `Fitted.fan`. Its route: by induction along the corners, each new
+  were; and `Rectilineal.area_toApart`, by unfolding. `Rectilineal.toApart` takes a glued
+  figure as one whose triangles lie apart, so that a companion that takes `Apart` takes it
+  in one step; no statement uses it, and `Rectilineal.area_toApart` ties the two sums,
+  `Rectilineal.area` and `Apart.area`, together, so that neither can change alone (added
+  after the freeze, on the review of `9c89bfe`).
+  **To prove:** `Fitted.fan`. Its route: by induction along the corners, each new
   triangle glued to the one before it along A₀Aᵢ, with R = Aᵢ₋₁ and X = Aᵢ₊₁ on opposite
   sides of A₀Aᵢ by the condition on neighbours. For `hmeet`, the invariant is the region
   the earlier triangles fill: the cumulative sector at A₀ swept from the ray A₀A₁ to the ray
@@ -580,9 +591,9 @@ theorem Fitted.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   restored: `Fitted.fan` for the corners D, A, B, C says it, with the triangle ABD named
   DAB from D.
 - **Homes.** The words, `Apart` and `Apart.area` among them, to the foundations;
-  `Fitted.ne_nil`, `Fitted.triangle`,
-  `Fitted.inside_pairwise` to `Elements/Figure/Rectilineal.lean`; `Fitted.fan` there too if
-  its proof cites no proposition, and otherwise in `Elements/BookI/Prop45.lean`, before
+  `Fitted.ne_nil`, `Fitted.triangle`, `Fitted.inside_pairwise`, `Rectilineal.toApart` and
+  `Rectilineal.area_toApart` to `Elements/Figure/Rectilineal.lean`; `Fitted.fan` there too
+  if its proof cites no proposition, and otherwise in `Elements/BookI/Prop45.lean`, before
   `Prop45.fan`.
 
 *The figure given by its corners, 17 October, as it stood until the revision.* A figure was
@@ -730,14 +741,15 @@ theorem Prop45.fan {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
   triangle [I. 42], one for the next applied to its side [I. 44], and Euclid's proof that
   the two make one parallelogram (I.29, I.14, I.34, I.33); then the same for each triangle
   after. `Prop45.append` is that second step, and `Prop45.sum` takes the triangles one at a
-  time, in order. **Proved here:** `Prop45.sum`, by induction on the list, from I.42 and
-  the stubbed `Prop45.append` (the proof `Prop45.figure` had on 17 October, for any list);
+  time, in order. **Proved here:** `Prop45.sum`, by induction on the list, from I.42 and the
+  stubbed `Prop45.append` (the proof `Prop45.figure` had on 17 October, for any list);
   `Prop45.apart`, from `Prop45.sum` with the figure's own `ne` and `triangle`;
-  `Prop45.figure`, from `Prop45.apart` with `Fitted.ne_nil`, `Fitted.triangle` and
-  `Fitted.inside_pairwise`; `Prop45.fan`, the figure that the stubbed `Fitted.fan` gives,
-  with `Prop45.figure` for it. Each is a derivation of one staged statement from others,
-  as WORKFLOW, section 2, allows in `Staging/`, and rests on the stubs until they are
-  proved. Euclid shows two triangles; the repetition is noted in the record.
+  `Prop45.figure`, from `Prop45.apart` for `R.toApart` (by `Fitted.ne_nil`,
+  `Fitted.triangle` and `Fitted.inside_pairwise`); `Prop45.fan`, the figure that the stubbed
+  `Fitted.fan` gives, with `Prop45.figure` for it. Each is a derivation of one staged
+  statement from others, as WORKFLOW, section 2, allows in `Staging/`, and rests on the
+  stubs until they are proved. Euclid shows two triangles; the repetition is noted in the
+  record.
 - **The fan's two conditions do logical work.** `Prop45.fan` concludes, besides the
   parallelogram, that the fan's triangles are a fitted figure, and that conclusion needs
   the condition on neighbours and the condition on the angles at A₀: without them the
@@ -756,8 +768,9 @@ theorem Prop45.fan {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
   and `Prop45.sum` is what it follows from; it is also the one construction that both
   `figure` and `fan` repeat.
 - **Dependencies.** I.42, I.44 and the steps of today's I.45; `Apart`, `Rectilineal`,
-  `Fitted.ne_nil`, `Fitted.triangle`, `Fitted.inside_pairwise`, `Fitted.fan`; `segments`,
-  `triples`, `Magnitude.sum`, and the magnitude laws `add_zero` and `add_assoc`.
+  `Fitted.ne_nil`, `Fitted.triangle`, `Fitted.inside_pairwise`, `Rectilineal.toApart`,
+  `Fitted.fan`; `segments`, `triples`, `Magnitude.sum`, and the magnitude laws `add_zero`
+  and `add_assoc`.
 
 ### II.1, for any number of segments
 
@@ -845,9 +858,9 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   today's II.14 prove II.14 from II.14, and no check would catch it.
 - **Proved here:** `Prop14.sum` (a right angle by I.11 at the corner A of the first triangle
   ABC, on AB, then `Prop45.sum` and `Prop14.rectangle`), from the stubs; `Prop14.apart`,
-  from `Prop14.sum` for the figure's triangles; `Prop14.figure`, from `Prop14.apart` with
-  `Fitted.inside_pairwise`; `Prop14.fan`, the figure that `Fitted.fan` gives, with
-  `Prop14.figure` for it. As in I.45, the fan's two conditions do logical work:
+  from `Prop14.sum` for the figure's triangles; `Prop14.figure`, from `Prop14.apart` for
+  `R.toApart` (by `Fitted.inside_pairwise`); `Prop14.fan`, the figure that `Fitted.fan`
+  gives, with `Prop14.figure` for it. As in I.45, the fan's two conditions do logical work:
   `Prop14.fan` concludes that the fan's triangles are a fitted figure, which needs them,
   while the square alone would follow from each piece being a triangle, by `Prop14.sum`. If
   `Fitted.fan` stalls, `Prop14.fan` stays unproved in `Staging/`, the fitting implication is
@@ -856,9 +869,10 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   `Prop14.rectangle`; `Prop14.square`, the square on the side `Prop14.apart` finds,
   described on it [I. 46] with `Square.described`. `Prop14.square` takes the widest form,
   `Apart`, so that the square is drawn for a figure with a hole too (revised 18 October; it
-  took `Rectilineal` before). The square drawn for a figure glued together, or for a fan, is
-  `Prop14.square` for that figure's triangles, which lie apart (`Fitted.inside_pairwise`),
-  with the same sum by unfolding, and needs no statement of its own.
+  took `Rectilineal` before). The square drawn for a figure `R` glued together, or for the
+  glued figure a fan returns, is `Prop14.square R.toApart`, the same triangles, which lie
+  apart (`Fitted.inside_pairwise`), with the same sum (`Rectilineal.area_toApart`), and
+  needs no statement of its own.
 - **Coverage.** Heath: "To construct a square equal to a given rectilineal figure." **Full,
   by the companions together,** as the owner decided on 18 October, and as Astra's second
   answer, on the statements of `b48640c`, accepts, in I.45's representation
@@ -880,7 +894,7 @@ theorem Prop14.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   `Prop14.apart`.
 - **Dependencies.** I.11, I.45 (`Prop45.sum`), II.5, I.47, I.46, `Rectangle.of_right`,
   `Square.described`; `Apart`, `Rectilineal`, `Fitted.ne_nil`, `Fitted.triangle`,
-  `Fitted.inside_pairwise`, `Fitted.fan`.
+  `Fitted.inside_pairwise`, `Rectilineal.toApart`, `Fitted.fan`.
 
 ### The tacit step, for the gap catalogues
 
@@ -1852,6 +1866,7 @@ branch whole against main at `f17b427`. Its findings that held, and what was don
 | Material: the rule's one home, WORKFLOW, section 2, names only two kinds of proof, derivations and an approved prototype's proofs, and says a proved statement leaves `Staging/`; yet this brief's proved staged facts that rest on no stub (`Fitted.inside_pairwise`, `chord_cases`, `Placement.unique_off`) stay there, and the staging rule above added a kind of its own | WORKFLOW, section 2, gains one sentence: after its brief is approved, a staged fact whose proof rests on no stub may be proved in place, and waits in `Staging/` until the definitions it uses reach the foundations and the task its brief names for its home moves it; item 2 points to it. The staging rule above points to that sentence, and the decisions entry gives it |
 | Material: decision 4 read "the definitions this brief names" here, and "the definitions named in frozen briefs" on the decisions page | Both now give the call as the tracking issue, #50, records it: "the definitions the frozen briefs name are approved for the foundations, each recorded in its pull request"; the decisions page says that this covers later frozen briefs too |
 | Material: `Prop14.general` named the form for a figure with one boundary, narrower than `Prop14.apart` and `Prop14.square`, though I.45 calls that form `Prop45.figure`, and `Staging/Stage4/Prop14.lean` has another `Prop14.general`, for III.14 | Renamed `Prop14.figure`, "II.14 figure", in `Prop14.lean`, the II.14 section, the open questions and the Book II brief's row, whose plan now names `Prop14.apart` for any supplied division; the Book I brief's row names `Prop45.apart` likewise. The notes at the head and the rows above keep the name it then had |
+| `Rectilineal.area` and `Apart.area` have one body, the `Apart` of a glued figure was built by hand twice (`Prop45.figure`, `Prop14.figure`), and `Prop14.square` left anyone holding a glued figure or a fan to build it | `Rectilineal.toApart` added, the glued figure's triangles taken as lying apart, with `Rectilineal.area_toApart : R.toApart.area = R.area`, by unfolding, which ties the two sums together so that neither can change alone; both `figure` companions use it, and `Prop14.square R.toApart` draws the square for a glued figure or a fan. No statement uses it, so the lock gains no word; it goes to Book Zero with `Fitted.inside_pairwise` |
 | The three conditions of a fan are written out in three statements (`Fitted.fan`, `Prop45.fan`, `Prop14.fan`), so a change to them is made three times | Kept: each statement shows its conditions in full, as its page will, and one word for them would change three frozen statements and add a word to the lock |
 | Claims ahead of the revision: the records "carry" the tag `figure-with-dissection`; `Sums.lean` says its statements await approval; `lakefile.toml` and `Staging.lean` describe statements "before their proofs" | "Will carry", the tag joining `review/terms.toml` when the records change; `Sums.lean` says its statements are approved and frozen; the comment, the module doc and FORMALIZATION, section 6, say that a staged statement stays until it moves to `Elements/`, beside the few proofs WORKFLOW, section 2, allows |
 | STYLE, section 1: Byrne named without his first name at his first mention | "Oliver Byrne" at the first mention in the module docs and the fan docstrings of `Rectilineal.lean`, `Prop45.lean` and `Prop14.lean` |

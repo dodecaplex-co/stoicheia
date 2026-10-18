@@ -59,10 +59,14 @@ straight line when it is an end or between the ends (`OnFiniteLine`). The new tr
 meets the earlier triangles only along `PQ` when every point within or on it that is within
 or on one of them is on the finite straight line `PQ`.
 
-The definitions here (`Apart` and `Apart.area` among them) are new words, and go to the
-foundations when adopted, with the lock and a decisions entry (WORKFLOW, section 2).
+The definitions here (`Apart` and `Apart.area` among them), all but `Rectilineal.toApart`,
+are new words, and go to the foundations when adopted, with the lock and a decisions entry
+(WORKFLOW, section 2).
 `Fitted.ne_nil`, `Fitted.triangle` and `Fitted.inside_pairwise` follow from the definition,
-and are proved here; they go to Book Zero (`Elements/Figure/Rectilineal.lean`).
+and are proved here; they go to Book Zero (`Elements/Figure/Rectilineal.lean`). So do
+`Rectilineal.toApart`, which takes a figure glued together as one whose triangles lie apart,
+and `Rectilineal.area_toApart`, that its area is the same sum; no statement uses them, and
+they let a companion that takes `Apart` take a glued figure in one step.
 `Fitted.fan`, which connects the definition with Euclid's and Byrne's division, is a
 statement awaiting proof.
 -/
@@ -221,6 +225,18 @@ theorem Fitted.inside_pairwise {ps : List (Point × Point × Point)} (h : Fitted
     · exact hoff hP
     · exact hoff hQ
     · exact hoff (Tacit.on_line_of_between_ends hb hP hQ)
+
+/-- **A figure glued together, taken with triangles that lie apart**: the same triangles,
+which lie apart by `Fitted.inside_pairwise`. A companion that takes `Apart` takes a glued
+figure `R` as `R.toApart`: `Prop45.figure` and `Prop14.figure` are `Prop45.apart` and
+`Prop14.apart` for it, and `Prop14.square R.toApart` draws its square. -/
+def Rectilineal.toApart (R : Rectilineal) : Apart :=
+  ⟨R.pieces, R.fitted.ne_nil, R.fitted.triangle, R.fitted.inside_pairwise⟩
+
+/-- **The area is the same sum**: the area of a glued figure taken with triangles that lie
+apart is its area as a glued figure. Lean checks it by unfolding, so the two definitions of
+the sum, `Apart.area` and `Rectilineal.area`, cannot drift apart. -/
+theorem Rectilineal.area_toApart (R : Rectilineal) : R.toApart.area = R.area := rfl
 
 /-- **Euclid's and Oliver Byrne's division is a figure, when it is checked.** A figure given
 by its corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ, and divided by the straight
