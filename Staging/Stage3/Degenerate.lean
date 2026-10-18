@@ -115,8 +115,9 @@ theorem Prop20.between_iff {A B P : Point} :
     obtain ⟨L, hA, hB, hP⟩ := hcol
     rcases between_cases hAP hPB hAB hA hP hB with hAPB | hPAB | hABP
     · exact hAPB
-    · /- If A were between P and B, removing AB from the two sums would leave
-         AP and PA equal to nothing (C.N. 3). But their sum is greater than AP. -/
+    · /- If A were between P and B, PA and AB would make PB, so AP, PA and AB together
+         would make AB; removing AB would leave AP and PA together equal to nothing
+         (C.N. 3). But together they are greater than AP (C.N. 5). -/
       have hPB_sum : ‖P A‖ + ‖A B‖ = ‖P B‖ := len_add_of_between hPAB
       have hzero : ‖A P‖ + ‖P A‖ = 0 := by
         apply CommonNotion3 (c := ‖A B‖) (d := ‖A B‖) ?_ rfl
@@ -127,8 +128,9 @@ theorem Prop20.between_iff {A B P : Point} :
       have hAP_lt : ‖A P‖ < ‖A P‖ + ‖P A‖ := CommonNotion5 (len_pos hAP.symm)
       rw [hzero] at hAP_lt
       exact False.elim (not_lt_zero _ hAP_lt)
-    · /- If B were between A and P, removing AB would leave BP and PB equal
-         to nothing. Their sum is greater than BP by C.N. 5. -/
+    · /- If B were between A and P, AB and BP would make AP, so BP, PB and AB together
+         would make AB; removing AB would leave BP and PB together equal to nothing
+         (C.N. 3). But together they are greater than BP (C.N. 5). -/
       have hAP_sum : ‖A B‖ + ‖B P‖ = ‖A P‖ := len_add_of_between hABP
       have hzero : ‖B P‖ + ‖P B‖ = 0 := by
         apply CommonNotion3 (c := ‖A B‖) (d := ‖A B‖) ?_ rfl
