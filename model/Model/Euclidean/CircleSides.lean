@@ -107,7 +107,7 @@ theorem onCircle_radius_smul {α : Circle} {v : Plane} (hv : v ≠ 0) :
   rw [onCircle_iff, dist_eq_norm_vsub, vadd_vsub, norm_smul, Real.norm_eq_abs,
     abs_of_pos (div_pos α.2 (norm_pos_iff.2 hv)), div_mul_cancel₀ _ (norm_ne_zero_iff.2 hv)]
 
-/-- **Intersection 8 holds in the plane.** -/
+/-- **Intersections 8 holds in the plane.** -/
 theorem circles_meet_same_side : Hand.circles_meet_same_side plane := by
   intro α β B C D L hmeet hC hD hCL hDL hB
   obtain ⟨P, Q, hPQ, hPα, hPβ, hQα, hQβ⟩ := hmeet
@@ -134,7 +134,7 @@ theorem circles_meet_same_side : Hand.circles_meet_same_side plane := by
     · exact ⟨P, hPα, hPβ, hPB⟩
     · exact ⟨Q, hQα, hQβ, hPQside.symm.trans hPB⟩
 
-/-- **Intersection 9 holds in the plane.** -/
+/-- **Intersections 9 holds in the plane.** -/
 theorem circles_meet_opposite_side : Hand.circles_meet_opposite_side plane := by
   intro α β B C D L hmeet hC hD hCL hDL hB
   obtain ⟨P, Q, hPQ, hPα, hPβ, hQα, hQβ⟩ := hmeet

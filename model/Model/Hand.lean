@@ -67,7 +67,7 @@ def circles_meet_of_on_inside_outside : Prop :=
     S.InsideCircle B α ∨ S.OnCircle B α → S.InsideCircle A β → S.OutsideCircle B β →
     S.CirclesMeet α β
 
-/-- `Elements.Tacit.circles_meet_same_side` (Intersection 8), by hand. The lock prints it
+/-- `Elements.Tacit.circles_meet_same_side` (Intersections 8), by hand. The lock prints it
 as `∀ {α β : Elements.Circle} {B C D : Elements.Point} {L : Elements.Line},
 Elements.CirclesMeet α β → Elements.Centre C α → Elements.Centre D β → Elements.OnLine C L →
 Elements.OnLine D L → Not (Elements.OnLine B L) → Exists fun (A : Elements.Point) => And
@@ -77,7 +77,7 @@ def circles_meet_same_side : Prop :=
     S.Centre D β → S.OnLine C L → S.OnLine D L → ¬ S.OnLine B L →
     ∃ A : S.Point, S.OnCircle A α ∧ S.OnCircle A β ∧ S.SameSide A B L
 
-/-- `Elements.Tacit.circles_meet_opposite_side` (Intersection 9), by hand. The lock prints
+/-- `Elements.Tacit.circles_meet_opposite_side` (Intersections 9), by hand. The lock prints
 it as `∀ {α β : Elements.Circle} {B C D : Elements.Point} {L : Elements.Line},
 Elements.CirclesMeet α β → Elements.Centre C α → Elements.Centre D β → Elements.OnLine C L →
 Elements.OnLine D L → Not (Elements.OnLine B L) → Exists fun (A : Elements.Point) => And

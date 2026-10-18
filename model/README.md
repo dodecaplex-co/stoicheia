@@ -40,7 +40,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Signature.lean](Model/Signature.lean) | the seventeen words as the fields of `Signature` | nothing |
 | [Model/Hand.lean](Model/Hand.lean) | the laws translated so far, and the defined words they reach, **by hand** | `Signature` |
 | [Model/Euclidean.lean](Model/Euclidean.lean) | the ordinary plane as a `Signature` | Mathlib |
-| [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersections 4 and 5 proved in the plane | Mathlib |
+| [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersection 4 and Intersection 5 proved in the plane | Mathlib |
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
