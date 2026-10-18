@@ -75,8 +75,9 @@ mixed angle itself is never moved.
 
 These proofs test a representation before it is adopted, as WORKFLOW, section 2, asks of a
 new foundation ("Prototype each new foundation"), and nothing in `Elements/` uses them. They
-are in `Staging/` so that `lake build Staging` checks them; whether they stay there is the
-coordinator's decision under that section. The account is
+are in `Staging/` so that `lake build Staging` checks them. The coordinator approved the
+prototype on 18 October 2026 and decided that they stay here until issue #57 decides their
+move into `Elements/` (`docs/briefs/0002-decisions.md`). The account is
 `docs/reports/mixed-angles-prototype.md`.
 -/
 
@@ -987,7 +988,7 @@ with the points of the ray AU near A within the circle `α`, and every point of 
 without it. Then every circle about A holds a point within the angle UAV and within `α`, and
 another within the angle and without `α`: on the straight line from a point Y of AU to a
 point W of AV, both near A, on either side of the point where it crosses the circumference
-(System E, Intersections 4, Circles 2 and 3). -/
+(System E, Intersections 4, Circle 2 and 3). -/
 theorem exists_near_across {U V : Point} (hUAV : Triangle U A V)
     (hU : LocallyWithin A (fun P => OnRay P A U) (fun P => InsideCircle P α))
     (hV : ∀ P : Point, OnRay P A V → OutsideCircle P α) (hγ : Centre A γ) :

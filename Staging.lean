@@ -31,5 +31,7 @@ The folders follow brief 0005's stages:
 * `Stage2/`: I.40, I.45, II.1 and II.14, with the sums and the points in order they need;
 * `Stage3/`: the arcs and segments, I.20's degenerate case, placement, III.23 point by
   point, III.24 restated, III.26 and III.28 upgraded, and the bridge theorems of `Arcs.lean`;
-* `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated.
+* `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated;
+* `Stage4b/`: a prototype of mixed angles for III.16 and III.31, with its proofs, which the
+  coordinator approved on 18 October 2026 (`docs/reports/mixed-angles-prototype.md`).
 -/

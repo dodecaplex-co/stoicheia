@@ -7,12 +7,15 @@ III.16 and III.31 parts it implements; thanks to Astra for a design that turned 
 no new assumption at all.
 
 *Revised 18 October 2026, twice. The first revision answered the challenge on #56: the
-strict comparison asks for whole small circles of excess, and the angle of contact is shown
-not to depend on the straight line that names its branch. The second answers the
-re-challenge and two reviews of that revision: `FallsShort` now certifies that the mixed
-angle is something, both comparisons refuse a straight angle, `MixedAngle.WellFormed` says
-when the named points give Euclid's angle, and placement at another vertex is proved in the
-form section 3 states. The appendix lists every finding and what was done.*
+strict comparison asks for whole small circles of excess, and in III.16's figure the angle
+of contact is shown not to depend on the straight line that names its branch. The second
+answers the re-challenge and two reviews of that revision: `FallsShort` now certifies that
+the mixed angle is something, both comparisons refuse a straight angle,
+`MixedAngle.WellFormed` says when the named points give Euclid's angle, and placement at
+another vertex is proved in the form section 3 states. A verifier who did not write the
+second revision then read it, at `4705a9c`; its editorial findings are answered, and the
+coordinator's decision on where the proofs live is recorded (condition 6). The appendix
+lists every finding and what was done.*
 
 **In short.** The representation Astra proposed works in plain Lean on the existing
 foundations, with no new axiom and no `sorry`. Proved: Astra's checks (a) and (c) in full;
@@ -205,7 +208,7 @@ containment is local.
 |---|---|
 | `Segment.exceeds_iff`, `Segment.fallsShort_iff` | Let A be on a circle, the ray AC run into it, AT satisfy III.16's two parts, and T and R be on S's side of AC. The angle of the segment exceeds the angle CAR exactly when R is within the angle CAT, and falls short of it exactly when R is not. |
 | `Segment.congruent` | Two equal circles; in each a straight line, the two equal and neither through its centre; on each a segment, the two of one kind (the centre on the segment's side in both, or in neither); equal rectilineal angles CAR, C′A′R′ placed along the two straight lines, each on its segment's side. Then the angle of the one segment exceeds, or falls short of, the one angle exactly when the angle of the other does so of the other. |
-| `Segment.exists_tangent`, `Segment.tangent_parts` | At A a straight line AT can be drawn at right angles to the radius, on any given side of AC [I. 11]; it satisfies III.16's two parts. |
+| `Segment.exists_tangent`, `Segment.tangent_parts` | Let A and C be on a circle, the straight line AC not through the centre. At A a straight line AT can be drawn at right angles to the radius, on any given side of AC [I. 11]. A straight line at right angles to the radius at a point of the circle satisfies III.16's two parts. |
 | `Segment.angle_tangent_of_sameSideOf`, `.angle_tangent_of_oppositeSidesOf` | The angle CAT is the angle OAC and a right angle, or, with the centre across AC, makes two right angles with it [I. 13]. |
 | `Prop16.semicircle_exceeds_iff`, `.semicircle_fallsShort_iff`, `.semicircle_congruent` | For F on E's side of the diameter AB, the angle of the semicircle exceeds the angle BAF exactly when it is acute, and falls short of it exactly when it is not; so in any two circles, whatever their radii, the angles of the semicircles compare alike with equal angles placed along the diameters on their sides. |
 | `Prop16.horn_fallsShort_iff`, `.horn_not_exceeds`, `.horn_congruent` | The angle of contact falls short of the true angle EAF exactly when F is on the circle's side of AE, and exceeds no rectilineal angle; so in any two circles the angles of contact compare alike with angles placed along AE on corresponding sides. |
@@ -300,11 +303,12 @@ here asserts one, as Astra advised (Heath, vol. 2, p. 40).
 
 **Where the proofs live.** Other staged files hold statements with `sorry`. This file holds
 proofs because it tests a representation, as WORKFLOW, section 2, asks of each new
-foundation ("Prototype each new foundation"). Whether a prototype's proofs stay in
-`Staging/` is the coordinator's decision under that section (where the section has the
-paragraph "What proofs `Staging/` may hold", that paragraph is the rule); the decision is to
-be recorded before this branch merges. The alternatives are `docs/reports/crew/` as a
-scratch proof, or a split between the foundations and `Elements/BookIII/` on adoption.
+foundation ("Prototype each new foundation"). The coordinator approved the prototype on 18
+October, and decided that its proofs stay in `Staging/Stage4b/MixedAngles.lean` until #57
+decides their move into `Elements/` ([decisions](../briefs/0002-decisions.md), 18 October
+2026, "Mixed angles: the prototype approved, its proofs kept in Staging"). The rule that
+allows it is WORKFLOW, section 2, "What proofs `Staging/` may hold", which brief 0006's pull
+request adds: `Staging/` may hold the proofs of a prototype the coordinator has approved.
 
 **The namespace.** While staged, every declaration is in `Elements.MixedAngles`, so that
 nothing enters a proposition's namespace before #57 is decided. On adoption the companions
@@ -315,10 +319,10 @@ go into `Elements.BookIII`, and the rest where condition 3 says.
 No. Every fact used is already in the foundations or proved from them: the postulates,
 Definition I.15, System E's rules for sides, betweenness, circles, lengths and angles
 (among them Circle 1 to 3, Pasch 2 to 4, Between 6, Triple incidence 1 to 3, Diagram-angle 3,
-Intersection 1, and Intersections 4 and 5), the common notions, and I.8, I.11, I.12, I.13, I.17, I.19,
-I.20, I.23, III.16 and III.31. The census of section 2 lists what each theorem rests on: 71
-axioms of `Elements/Foundations/`, all in `Certificate/axioms.lock`, besides Lean's own, and
-no `sorryAx`. Nothing goes to the owner as an axiom.
+Intersection 1, and Intersections 4 and 5), the common notions, and I.8, I.11, I.12, I.13,
+I.17, I.19, I.20, I.23, III.16 and III.31. The census of section 2 lists what each theorem
+rests on: 71 axioms of `Elements/Foundations/`, all in `Certificate/axioms.lock`, besides
+Lean's own, and no `sorryAx`. Nothing goes to the owner as an axiom.
 
 ## 5. Recommendation for #57
 
@@ -366,17 +370,26 @@ What is not proved is named in section 3, and neither proposition needs it. The 
      `exists_near_across`, `near_inside_of_ray`, `near_inside_of_onRay`, and the other
      checks and laws.
    - The `Prop16.` and `Prop31.` steps go before their propositions, in their files
-     (FORMALIZATION, section 6). The theorems that cite III.16 or III.31 (section 2) go after
-     them; `Segment.congruent` also cites I.8, I.11 and I.13.
+     (FORMALIZATION, section 6). The `Segment.` steps that do not cite III.16 take III.16's
+     first part, or both, as hypotheses, as the `Prop16.` steps do, and use those steps, so
+     they go in III.16's file after them: `Segment.exceeds_iff`, `.fallsShort_iff` and
+     `.nearVertexOpen`, which rest on I.12, I.17, I.19 and I.20;
+     `.angle_tangent_of_oppositeSidesOf`, which cites I.13; and
+     `.angle_tangent_of_sameSideOf`, which cites no proposition. The theorems that cite
+     III.16 or III.31 (section 2) go after them; `Segment.congruent` also cites I.8, I.11 and
+     I.13.
 4. **The records.** III.16 and III.31 drop `mixed-angles-omitted` and take a new tag, defined
    in `review/terms.toml` before use, carrying Astra's wording: the comparisons use local
    containment of curved angular regions, and no general arithmetic or ratio theory of mixed
    angles is claimed. The passage for the local bound is a `helper`.
 5. **The challenge.** As with every new representation, readers who did not write these
    definitions challenge them before approval. This revision answers the re-challenge and
-   two reviews (appendix); it has not yet been read by someone who did not write it.
-6. **Where the proofs live.** The coordinator's decision of section 3 is recorded before the
-   branch merges.
+   two reviews (appendix), and a verifier who did not write it has read it, at `4705a9c`,
+   checking the census, every claim of "proved" and the homes of condition 3 against the
+   Lean. Its findings are answered in the appendix; the changes since are editorial.
+6. **Where the proofs live.** Recorded: the coordinator's decision of section 3 is on the
+   [decisions](../briefs/0002-decisions.md) page, 18 October 2026. It rests on WORKFLOW,
+   section 2, "What proofs `Staging/` may hold", which brief 0006's pull request adds.
 
 ## Appendix: the challenges and reviews, and what was done
 
@@ -436,3 +449,19 @@ Every finding below was answered with a change, in
 | *Editorial.* The independence of the angle of contact claimed beyond III.16's figure | Scoped in the `MixedAngle`, `ofContact_congr` and module docstrings |
 | *Editorial.* The WORKFLOW citation true only after a later revision | Rephrased so that it is true before and after |
 | *Editorial.* Issue numbers and check labels; the overlaps; local names `h1 h2 h3` | Done as in the rows above; the locals renamed off the letters |
+
+### The verification of the second revision
+
+A verifier who did not write it read the second revision, fixed one finding itself, and
+handed back at `4705a9c`.
+
+| Finding | Done |
+|---|---|
+| *Material, for the coordinator.* The proofs sit in `Staging/`, and the rule on main has staged files hold statements with `sorry` | The coordinator's decision is recorded (section 3, condition 6). Condition 5 now counts this verification |
+| *Editorial.* `surrounds_inside` and `surrounds_outside` named their rules "Intersection 5" and "Intersection 4", which are not the rules they use, and section 4 merged two families of rules | Fixed by the verifier: the docstrings now name "Intersections 5" and "Intersections 4", the labels of the construction rules the proofs use (`line_circle_beyond`, `line_circle_between`), and section 4 reads "Intersection 1, and Intersections 4 and 5". `exists_near_across`'s "Circles 2 and 3", a family the foundations do not have, now reads "Circle 2 and 3" |
+| *Editorial.* Condition 3 gave no home to five `Segment.` steps | Added: they go in III.16's file, after the `Prop16.` steps they use. Not `Squares.lean`, as proposed: III.16's file imports it, and these steps use `Prop16.` steps |
+| *Editorial.* The row for `Segment.exists_tangent` left out that C is on the circle and that AC does not pass through the centre | Both stated |
+| *Editorial.* `Staging.lean`'s module doc does not list `Stage4b/`; the comment on #56 gives 47 theorems | `Stage4b/` is listed. The comment on #56 is outside the repository, for the coordinator; the census is in section 2 (117 theorems, 109 written and 8 generated) |
+| *Editorial.* The page of "(Heath, vol. 2, p. 40)" was not checked against the scan | Checked by the verifier: in the archive.org text of the scan, the running head "40 BOOK III [III. 16" stands above Proclus's argument on the angle of contact. No change |
+| *Editorial.* Every finding of the previous verification, and the census, the closure and the tables, read against the Lean | Resolved, and no defect found |
+| *Editorial, found in answering these.* The revision note said that the angle of contact does not depend on its naming line, without "in III.16's figure" | Scoped, as everywhere else |

@@ -491,3 +491,22 @@ findings:
   [brief 0005](0005-astra-review.md), in stage 1b's list of what `scripts/check_style.py`
   enforces, and "the idea figures have no letters" in item 7 of its planned acceptance
   checklist (stage 6).
+- **Mixed angles: the prototype approved, its proofs kept in Staging.** The owner approved
+  stage 4b on 18 October, with III.16 and III.31 "via a mixed-angle prototype first". The
+  prototype is [`Staging/Stage4b/MixedAngles.lean`](../../Staging/Stage4b/MixedAngles.lean),
+  with its account in [the report](../reports/mixed-angles-prototype.md)
+  ([issue #56](https://github.com/jackChallis/stoicheia/issues/56)): Astra's representation
+  from [issue #51](https://github.com/jackChallis/stoicheia/issues/51), a mixed angle as a
+  geometric object, compared with a rectilineal angle by containment near its vertex, in
+  plain Lean on the existing foundations. It adds no axiom: the report's census finds every
+  theorem resting only on axioms already in `Certificate/axioms.lock` and on Lean's own, and
+  none on `sorry`. It was re-challenged and verified on 18 October by readers who did not
+  write it, the verification at `4705a9c`. The coordinator approves the prototype, and its
+  proofs stay in `Staging/Stage4b/MixedAngles.lean` until
+  [issue #57](https://github.com/jackChallis/stoicheia/issues/57) decides their move into
+  `Elements/`: once brief 0006's pull request lands, that is what
+  [WORKFLOW](../WORKFLOW.md), section 2, "What proofs `Staging/` may hold", allows for the
+  proofs of a prototype the coordinator has approved. The approval is of the prototype
+  alone. The words it defines, the statements of III.16 and III.31 that would use them, and
+  their records wait for #57, on the conditions of the report's section 5; nothing in
+  `Elements/` changes.
