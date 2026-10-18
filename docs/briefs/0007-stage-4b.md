@@ -95,7 +95,7 @@ both points are on that side. To compare points on opposite sides, one point is 
 its equal partner on the other side, and the partner is shown to make the same angle with
 the ray through the centre. Euclid's own I.4 step, by which he makes the partner equal,
 gives the equal angle too, and Heath explains the comparison across the diameter this way
-(vol. 2, pp. 16–17). In III.8 the partner must also lie in the same class, first or second
+(vol. 2, p. 17). In III.8 the partner must also lie in the same class, first or second
 meeting; that is a geometric step to prove, not something to assume.
 
 ## Homes and owners
@@ -169,8 +169,8 @@ theorem Prop7.general {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD)
   left to the greatest and least clauses; equal angles on opposite sides, where the
   comparison is silent: the partner clause gives one equal straight line on the other side,
   and `Prop7.partner` shows that it is equally inclined to FA, as Heath reads the comparison
-  across AD (vol. 2, pp. 16–17). That equal angles across AD give equal straight lines is
-  not stated, and Euclid's enunciation does not claim it.
+  across AD (vol. 2, p. 17). That equal angles across AD give equal straight lines is not
+  stated, and Euclid's enunciation does not claim it.
 - **Route.** The greatest, least and partner clauses are today's, by Euclid's argument
   [I. 20, I. 24, I. 23, I. 4]. Across the diameter: for B and C on opposite sides, C's
   partner H is on B's side with FH equal to FC (today's last clause); `Prop7.partner` makes
@@ -337,13 +337,13 @@ theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
   straight line at right angles to a radius at its end touches [III. 16, Por.]; for A on
   the circle, the same porism at A. `Prop17.inside` constructs nothing: it shows that no
   solution exists from a point within.
-- **Route.** For A outside, today's III.17. For A on the circle, as Heath and Astra say: E
-  the given centre is not A; the straight line AX drawn at right angles to EA at A (I.11)
-  touches the circle [III. 16, Por.]. Euclid leaves the case on the circle out, Heath
-  explains, because III.16's porism so directly indicates its construction (vol. 2, p. 44);
-  the construction is not on Euclid's page, and the record declares it as a `case` passage
-  under a route of `euclid` (FORMALIZATION, section 5). `Prop17.inside` is Book Zero's
-  `Touches.not_inside`, applied at A itself: a straight line through a point within a circle
+- **Route.** For A outside, today's III.17. For A on the circle, as Astra says, and as III.16's
+  porism directly indicates (Heath, vol. 2, p. 44): E the given centre is not A; the straight line
+  AX drawn at right angles to EA at A (I.11) touches the circle by III.16's porism. Euclid leaves
+  the case on the circle out, Heath explains, because III.16's porism so directly indicates its
+  construction (vol. 2, p. 44); the construction is not on Euclid's page, and the record declares it
+  as a `case` passage under a route of `euclid` (FORMALIZATION, section 5). `Prop17.inside` is Book
+  Zero's `Touches.not_inside`, applied at A itself: a straight line through a point within a circle
   cuts it. It is a lemma beside III.17, not a companion: it generalizes no clause of the
   enunciation, so it is not listed in the record's `companions` and has no certificate entry
   (question 1).
@@ -392,13 +392,12 @@ companions move:
   construction needs A outside the circle, and our statement asks for it" becomes false;
   the paragraph is rewritten to say that the companion takes a point on the circumference
   too, and to give "not within the circle" as the condition for a solution, citing
-  `Prop17.inside` (question 1). `mishnah/intro/III.md`: "Five statements are restricted …" loses III.7,
-  III.8 and III.17, and its count changes. `mishnah/III/07.md` and `mishnah/III/08.md`: no
-  sentence becomes false (III.7's "on either side of AD" speaks of each side in turn, and
-  III.8's page speaks of no side), and the badge and the field table change with the
-  record. [Brief 0004](0004-book-III.md)'s line on "nearer", "on one side of it", and its
-  rows for III.7, III.8 and III.17; `docs/reports/gaps-book-III.md` under III.17, for the
-  boundary case.
+  `Prop17.inside` (question 1). `mishnah/intro/III.md`: "Five statements are restricted …" loses
+  III.7, III.8 and III.17, and its count changes. `mishnah/III/07.md` and `mishnah/III/08.md`: no
+  sentence becomes false (III.7's "on either side of AD" speaks of each side in turn, and III.8's
+  page never restricts the comparison to one side), and the badge and the field table change with
+  the record. [Brief 0004](0004-book-III.md)'s line on "nearer", "on one side of it", and its rows
+  for III.7, III.8 and III.17; `docs/reports/gaps-book-III.md` under III.17, for the boundary case.
 - The generated output (README's Book III scope row, the pages, the certificate), which the
   integrator regenerates, and PROGRAM.md's status table, the coordinator's.
 
@@ -542,3 +541,11 @@ as the order of proof work says; the tangent convention follows from Definition 
 the brief and `Prop08.lean` no longer hedge it; "Records made stale" names each page's
 change and each record's route kind; and `Prop8.partner`'s docstring gives the step that
 makes the given B Euclid's point. No statement changed, and no answer's substance.
+
+A further review at `18942e6` found three editorial slips, each corrected here. The III.17 Route
+credited Heath with the construction for a point on the circle, and wrote III.16's porism in Heath's
+bracket form for a step that is not on Euclid's page; it now says that Astra gives the construction
+and that III.16's porism directly indicates it (Heath, vol. 2, p. 44). Heath's reading of the
+comparison across the diameter is cited at p. 17, where it stands, here and in the module doc of
+`Staging/Stage4b/Prop07.lean`, as the record of III.7 cites it. And "Records made stale" no longer
+says that III.8's page speaks of no side. No statement changed.

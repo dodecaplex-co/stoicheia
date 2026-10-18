@@ -21,7 +21,7 @@ nothing. The order E, F, D only names the ends: the end beyond F from the centre
 `Prop7.partner` is the step the route needs: a straight line from F and its equal partner
 on the other side of the diameter are equally inclined to FA. Euclid's I.4 step, which
 makes FH equal to FG, makes the angles at F equal too; Heath reads the comparison across
-the diameter from it (vol. 2, pp. 16–17). They move into `Elements/BookIII/Prop07.lean` when
+the diameter from it (vol. 2, p. 17). They move into `Elements/BookIII/Prop07.lean` when
 proved, as "III.7 general", with `Prop7.partner` as a helper before it.
 -/
 
