@@ -14,7 +14,7 @@ For every proposition of Books I to III you get:
 - **Two figures**: one "at a glance", in the bold red, yellow and blue of Oliver Byrne's 1847 Euclid, to show the idea before you read a word; and Heath's figure, redrawn with his letters, to follow the proof by.
 - **The proof in Lean**, written to follow Euclid sentence by sentence. Each of his sentences is a comment, and the Lean beneath carries it out, sometimes several sentences together. Where the Lean takes another step, or leaves a passage in Euclid's words with no Lean beneath it (as in I.4, III.16, III.25 and III.31), the page says so beside the listing; and III.24 follows a different argument altogether.
 - **A certificate**, computed by Lean itself, of exactly what the proof rests on: which postulates, which common notions, and which of the many things Euclid takes for granted without saying so.
-- **A mishnah**: commentary on what Euclid assumed, what our proofs must say out loud, and how the same result looks with modern tools.
+- **A mishnah**: commentary on what Euclid assumed, what Lean made us say out loud, and how the same result looks with modern tools.
 
 The proofs use no coordinates, real numbers or complex numbers; only the last paragraph of each commentary, "The modern way", reaches for them. The geometry is the geometry Euclid wrote, the kind Lincoln would recognise. Lengths, angles and areas are *magnitudes*, which can be added and compared and nothing more, just as in the *Elements*.
 
@@ -48,7 +48,7 @@ Here is the heart of I.1. Euclid's sentences are the comments:
   have hAC : ‖A C‖ = ‖A B‖ := Definition15 hA_BCD hC_BCD hB_BCD
 ```
 
-That `circles_meet` is a step Euclid never justifies. Heath: "It is a commonplace that Euclid has no right to assume, without premising some postulate, that the two circles *will* meet in a point C." In Lean it has to be a named rule, and so it appears on I.1's page, under "What it rests on".
+That `circles_meet` is a step Euclid never justifies. Heath: "It is a commonplace that Euclid has no right to assume, without premising some postulate, that the two circles *will* meet in a point C." In our foundations it has to be a named rule, and so it appears on I.1's page, under "What it rests on".
 
 To read further, a page may end with a line or three chosen for its proposition, and [the reading list](docs/reading.md) gathers books, papers and a few web pages by theme, from Proclus and Hilbert to Lean, marking the ones free online.
 
