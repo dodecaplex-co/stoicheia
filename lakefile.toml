@@ -9,3 +9,10 @@ name = "Elements"
 # default build; `lake build Audit` checks them.
 [[lean_lib]]
 name = "Audit"
+
+# Statements awaiting approval, written with `sorry` before any proof is assigned
+# (docs/WORKFLOW.md, section 2; brief 0006). They import Elements, and nothing imports them;
+# they are not in the default build. `lake build Staging` checks them, `sorry` warnings and
+# all. A statement leaves Staging when it is proved: a companion moves into its PropNN.lean.
+[[lean_lib]]
+name = "Staging"
