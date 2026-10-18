@@ -79,7 +79,7 @@ Nothing brings the rule into our I.2 or I.3, which come before I.4 and do not re
 The proofs are Euclid's: I.2 by the equilateral triangle of I.1 and two circles, I.3 by
 I.2 and a circle. Our Postulate 3 is Euclid's collapsing compass, and leaves carrying a
 distance to I.2; superposition, in the form we take it, carries one. What keeps I.2
-Euclid's is the certificate's policy, which lets only I.4 and I.8 cite the rule.
+Euclid's is the certificate's policy, which lets only I.4 and I.8 use the rule.
 `Audit.I_2` uses superposition with Postulates 1 and 3, Generalities 1 and 3, Points 7,
 Intersections 5, Circle 1 and Between 1 and 7, which draw a triangle on BC and a point off
 AB, since neither statement gives one. `Audit.I_3` draws the same way, and adds Between 6,
@@ -231,6 +231,13 @@ laid down. The catalogue first listed them as near misses, since neither stateme
 triangle to move; but the same holds of I.7's circles, and they are rows now, with
 `Audit.I_2` and `Audit.I_3`.
 
+**How each rule enters.** Argon, a Google Gemini model, reviewing the Book III release on
+18 October 2026, pointed out that `direct_axioms` counts a rule a proof reaches through a
+lemma as well as one its own Lean names, and found that II.14 and III.15 call Circle 2 on
+two points of a circle. The account of "First enters" above the table, the notes on I.13
+in 17 proofs, III.1's porism and III.2, and II.14's place beside III.1 in the table rest
+on its reading, each point checked against Lean's proof terms. We thank it warmly.
+
 ## The rows checked
 
 For each row we looked for a proof of the proposition's statement from at most three rules.
@@ -257,8 +264,10 @@ For each row we looked for a proof of the proposition's statement from at most t
   twenty-two: superposition does the work, and the others draw a triangle to lay down and
   a point off AB, and, for I.3, place the new point between A and B. Superposition alone
   does not give I.2: where there are no straight lines it holds, having nothing to speak
-  of, and no length from A need equal BC. So the rows say that superposition supplies
-  their step, as for I.7 and I.23.
+  of, and no length from A need equal BC. Nor does it give I.3: in that world, let no
+  point lie between two others, and let AB be the greater of two straight lines; then no
+  point lies between A and B to cut off the less. So the rows say that superposition
+  supplies their step, as for I.7 and I.23.
 - **The steps.** For III.1, its porism and I.13 we found no proof from three rules: each
   needs a construction Euclid makes by earlier propositions, a bisection or a
   perpendicular (I.10, I.11). In the other direction, Diagram-angle 3 is a theorem of
