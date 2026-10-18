@@ -15,6 +15,6 @@ note = "Euclid reads off his figure that AF falls within the angle; the Lean pro
 
 [review]
 stage = "exceptions"
-commit = "8ff656b"
+commit = "7339460"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:d385f2716fd5a8ad"

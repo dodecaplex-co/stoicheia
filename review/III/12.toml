@@ -18,6 +18,6 @@ note = "C and D may be one point, as Heath allows (vol. 2, p. 28), so the Lean p
 
 [review]
 stage = "exceptions"
-commit = "8ff656b"
+commit = "7339460"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:8d7f4eb22ee591e6"

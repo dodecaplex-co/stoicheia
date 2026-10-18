@@ -19,6 +19,6 @@ note = "BC is one straight line, the base of both triangles, so nothing is prove
 
 [review]
 stage = "exceptions"
-commit = "2e1d5c1"
+commit = "7339460"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:434da0bb3337847c"

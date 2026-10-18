@@ -33,6 +33,6 @@ case = "the circles touching within, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "6a794e1"
+commit = "7339460"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:3a32d05edc76a5c7"
