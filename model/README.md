@@ -320,7 +320,10 @@ nothing. The job stops after 30 minutes, since without Mathlib's prebuilt files
 
 It is not yet a required check: the ruleset on main requires `check`, `model` and
 `negative`, and making this one required is the owner's call
-([decisions](../docs/briefs/0002-decisions.md#18-october-2026), 18 October).
+([decisions](../docs/briefs/0002-decisions.md#18-october-2026), 18 October). Even so,
+`git safe-push --merge`, which lands every pull request, refuses one while any of its
+checks fails or is still running, this one among them
+([WORKFLOW](../docs/WORKFLOW.md#landing-work-pull-requests), section 10).
 
 ## Thanks
 

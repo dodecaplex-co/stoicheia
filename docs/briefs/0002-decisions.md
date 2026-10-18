@@ -666,4 +666,6 @@ findings:
   yet a required check: `REQUIRED_CHECKS` in
   [`scripts/safe_push.py`](../../scripts/safe_push.py) and the ruleset on main still name
   `check`, `model` and `negative`, and making `formal-model` required, as the decision
-  foresees once it builds, is the owner's call.
+  foresees once it builds, is the owner's call. Even so, `git safe-push --merge` refuses a
+  pull request while any of its checks fails or is still running, so a red or running
+  `formal-model` already holds a merge there.
