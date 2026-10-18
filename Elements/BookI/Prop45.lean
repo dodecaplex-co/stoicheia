@@ -362,9 +362,13 @@ fan's triangles make is the one bounded by the closed line A₀A₁…AₙA₀, 
 order, is a reading of the conditions, true in the plane, and is not stated in Lean:
 `Fitted.fan` says only that the triangles fit together into one figure.
 
-Its proof cites I.13, so it stands here, beside I.45 and before `Prop45.fan`, which uses it,
-rather than in Book Zero. The helpers before it, `Fitted.fan.<word>`, each supply one of its
-steps, named in its docstring.
+Its proof goes by induction along the corners, each new triangle glued to the one before it
+along A₀Aᵢ. It carries the sector at A₀ swept from the ray A₀A₁, in the one orientation the
+condition on neighbours fixes, in three cases as the sum of the angles so far is less than two
+right angles, equal to two, or greater; the bound of four right angles does its work only in
+the last. It cites I.13, so it stands here, beside I.45 and before `Prop45.fan`, which uses
+it, rather than in Book Zero. The helpers before it, `Fitted.fan.<word>`, each supply one of
+its steps, named in its docstring.
 -/
 
 /-- If x and y together are less than z, then x alone is less than z, being not greater than
