@@ -60,7 +60,7 @@ theorem Prop25.complete {A C P B E : Point} {α γ : Circle} (hα : ∃ O : Poin
     γ = α ∧ ∀ X : Point, OnArc X ⟨α, A, C, P⟩ → OnCircle X γ := by
   /- B is on P's side of AC, so off the straight line AC: A, B and C are three different
      points of α. They are on γ too, so EA, EB and EC are equal, being radii of γ
-     [Def. 15], and E is the centre of α [III. 9]. -/
+     [I. Def. 15], and E is the centre of α [III. 9]. -/
   have hABC : Triangle A B C := hBP.triangle.acb
   have hEα : Centre E α := Prop9 hα hA hB.1 hC hABC.ne₁₂ hABC.ne₂₃ hABC.ne₁₃
     (Definition15 hE hAγ hBγ) (Definition15 hE hBγ hCγ)
@@ -102,7 +102,7 @@ theorem Prop25 {A C P : Point} {S : Point → Prop} (hP : ¬ Collinear A C P)
   obtain ⟨B, hB, hBray⟩ := hmeet D X hADC hXP
   have hAD' : A ≠ D := ne_of_between hADC
   have hCD' : C ≠ D := ne_of_between (between_symm hADC)
-  /- The ray DB leaves AC at D on P's side, so B is on that side too. -/
+  /- The ray from D through X lies on P's side of AC, so B, on it, is on that side too. -/
   have hBP_DA : SameSideOf B P D A := SameSideOf.of_onRay hBray
     (SameSideOf.of_line hAD'.symm hD_L hA_L (hXP.sameSide hA_L hC_L))
   have hBP : SameSideOf B P A C :=
@@ -187,8 +187,8 @@ theorem Prop25 {A C P : Point} {S : Point → Prop} (hP : ¬ Collinear A C P)
     -- therefore the three straight lines AE, EB, EC are equal to one another.
     -- Therefore the circle drawn with centre E and distance one of the straight lines AE, EB, EC
     -- will also pass through the remaining points and will have been completed. [III. 9]
-    /- Describe the circle γ with centre E through A [Post. 3]; EB and EC are equal to EA,
-       so B and C are on it too. That γ is the given circle, Heath's [III. 9] step, is
+    /- Postulate 3 describes the circle γ with centre E through A; EB and EC are equal to
+       EA, so B and C are on it too. That γ is the given circle, Heath's [III. 9] step, is
        carried by `Prop25.complete`. -/
     obtain ⟨γ, hE, hAγ⟩ := Postulate3 E A hEA
     have hBγ : OnCircle B γ := on_circle_of_len_eq hE hAγ h1.symm
@@ -209,9 +209,9 @@ theorem Prop25 {A C P : Point} {S : Point → Prop} (hP : ¬ Collinear A C P)
     -- the three straight lines DA, DB, DC will be equal to one another,
     have hDB_DC : ‖D B‖ = ‖D C‖ := by rw [← hDA_DB, len_symm D A, hAD]
     -- D will be the centre of the completed circle,
-    /- Describe the circle γ with centre D through A [Post. 3]; DB and DC are equal to DA,
-       so B and C are on it too. `Prop25.complete` identifies it with the given circle,
-       carrying Heath's [III. 9] step in this case too. -/
+    /- Postulate 3 describes the circle γ with centre D through A; DB and DC are equal to
+       DA, so B and C are on it too. Heath gives no reference here: that γ is the given
+       circle is III.9's step, as in the first case, and `Prop25.complete` carries it. -/
     obtain ⟨γ, hD, hAγ⟩ := Postulate3 D A hAD'.symm
     have hBγ : OnCircle B γ := on_circle_of_len_eq hD hAγ hDA_DB.symm
     have hCγ : OnCircle C γ := on_circle_of_len_eq hD hAγ (hDA_DB.trans hDB_DC).symm
@@ -256,9 +256,9 @@ theorem Prop25 {A C P : Point} {S : Point → Prop} (hP : ¬ Collinear A C P)
     /- So the three straight lines AE, EB, EC are equal. -/
     have h1 : ‖E A‖ = ‖E B‖ := hEB_EA.symm
     have h2 : ‖E B‖ = ‖E C‖ := by rw [hEB_EA, len_symm E A, hAE, len_symm C E]
-    /- Describe the circle γ with centre E through A [Post. 3]; EB and EC are equal to EA,
-       so B and C are on it too. That γ is the given circle, Heath's [III. 9] step, is
-       carried by `Prop25.complete`. -/
+    /- Postulate 3 describes the circle γ with centre E through A; EB and EC are equal to
+       EA, so B and C are on it too. Heath gives no reference here: that γ is the given
+       circle is III.9's step, as in the first case, and `Prop25.complete` carries it. -/
     obtain ⟨γ, hE, hAγ⟩ := Postulate3 E A hEA
     have hBγ : OnCircle B γ := on_circle_of_len_eq hE hAγ h1.symm
     have hCγ : OnCircle C γ := on_circle_of_len_eq hE hAγ (h1.trans h2).symm
