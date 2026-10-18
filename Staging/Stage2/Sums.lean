@@ -13,9 +13,9 @@ and II.14 for a checked fan (`Prop45.fan`, `Prop14.fan`), the sides on which the
 from one corner stand; the other companions of I.45 and II.14 take the figure as a list of
 triangles (`Staging/Stage2/Rectilineal.lean`).
 
-These are statements of brief 0006, approved and frozen (WORKFLOW, section 2), and each
-is proved here from the rules of order and of magnitudes alone. Where they go when they
-move:
+These are statements of brief 0006, approved and frozen (WORKFLOW, section 2). The
+definitions in this file are complete, and each of its theorems is proved here from the
+rules of order and of magnitudes alone. Where they go when they move:
 
 * `Magnitude.sum`, `InOrder`, `segments` and `endOf` are new words that companion
   statements use, so each is a definition in the foundations, with the lock and a decisions

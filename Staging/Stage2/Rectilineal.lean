@@ -67,8 +67,13 @@ and are proved here; they go to Book Zero (`Elements/Figure/Rectilineal.lean`). 
 `Rectilineal.toApart`, which takes a figure glued together as one whose triangles lie apart,
 and `Rectilineal.area_toApart`, that its area is the same sum; no statement uses them, and
 they let a companion that takes `Apart` take a glued figure in one step.
-`Fitted.fan`, which connects the definition with Euclid's and Byrne's division, is a
-statement awaiting proof.
+`Fitted.fan`, which connects the definition with Euclid's and Byrne's division, is proved
+here by the route brief 0006 gives: the sector at A₀ swept from the ray A₀A₁ in the one
+orientation the condition on neighbours fixes, in three cases as the sum of the angles so
+far is less than two right angles, equal to two, or greater. Its proof cites I.13, in
+`Fitted.fan.advance`, so it goes, with the lemmas `Fitted.fan.*` its proof uses, to
+`Elements/BookI/Prop45.lean`, before `Prop45.fan`, and not to Book Zero (brief 0006,
+Homes).
 -/
 
 namespace Elements
