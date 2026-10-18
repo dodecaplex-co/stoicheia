@@ -315,8 +315,8 @@ would be retired, or rewritten to say how the rule enters I.23's proof through I
 - make I.23, I.2 or I.3 unprovable, nor should it: I.2 and I.3 already rest on no
   superposition, and I.23 must stay provable through I.22 and I.8;
 - touch the other overlap rows: Circle 2 and III.2, Diagram-segment 2 and III.5 and III.6,
-  Generalities 2 and III.1's porism, Diagram-angle 3 and I.13, Metric 5 and I.47, Circle 4
-  and I.7;
+  Generalities 3 and III.6, Generalities 2 and III.1's porism, Diagram-angle 3 and I.13,
+  Metric 5 and I.47, Circle 4 and I.7;
 - shrink the certificate: 96 of the 102 entries in the committed `facts.json` rest on
   superposition today (all but I.1, I.2, I.3, I.22, III.5 and III.6), and after landing the
   same entries would rest on the restricted rule, which enters at I.4.
