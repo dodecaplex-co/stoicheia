@@ -37,8 +37,9 @@ idea figure, "Euclid I.N: …" on Euclid's (STYLE, section 7). A known departure
 cannot see is right is listed below with its reason, and printed on every run; one that
 no longer applies fails. An idea figure marks a point Heath leaves without a letter in the
 figure itself, with `data-unlettered` and its reason (S21), and those are printed too.
-S20 judges a letter's ink by the fill under it, an angle's wedge included;
-`python3 scripts/test_check_style.py` tests that reading. Standard library only.
+S20 judges a letter's ink by the fill under it, an angle's wedge included. On every run,
+before anything else, the script checks that reading against letters on and beside an
+angle's wedge (`ink_self_check`), and stops if one is read wrongly. Standard library only.
 """
 
 from __future__ import annotations
@@ -986,6 +987,17 @@ def idea_points(root) -> list[tuple[str, tuple[float, float], tuple | None]]:
     return out
 
 
+def ink_fault(root, eff, centre: tuple[float, float], s: str) -> str | None:
+    """S20's ink for letter s, its glyph's middle at `centre`: what is wrong with it, or
+    None. It is #222222 on the parchment or yellow, and #fbf7ee on red, blue or black."""
+    dark = fill_under(root, *centre) in DARK
+    ink = IDEA_INK_ON_DARK if dark else IDEA_INK
+    if (eff.get("fill") or "black").strip().lower() == ink:
+        return None
+    return (f"letter {s} in {eff.get('fill') or 'black'}, not {ink}: a letter "
+            f"on {'red, blue or black' if dark else 'the parchment or yellow'} is in {ink}")
+
+
 def check_idea_letters(path: Path, root, required: bool) -> int:
     """S20: each letter is one of Heath's, as Euclid's figure draws it, italic, at 14, in
     the figure's black, or in the parchment's colour where it stands on red, blue or
@@ -1011,11 +1023,9 @@ def check_idea_letters(path: Path, root, required: bool) -> int:
             fail("S20", path, 0, f"letter {s} is not one of Heath's letters as {euclid.name} "
                  f"draws them ({', '.join(sorted(heaths))})")
         centre = letter_centre(own, eff, m, s)
-        dark = fill_under(root, *centre) in DARK
-        ink = IDEA_INK_ON_DARK if dark else IDEA_INK
-        if (eff.get("fill") or "black").strip().lower() != ink:
-            fail("S20", path, 0, f"letter {s} in {eff.get('fill') or 'black'}, not {ink}: a letter "
-                 f"on {'red, blue or black' if dark else 'the parchment or yellow'} is in {ink}")
+        fault = ink_fault(root, eff, centre, s)
+        if fault:
+            fail("S20", path, 0, fault)
         if number(eff.get("font-size")) != IDEA_LETTER_SIZE:
             fail("S20", path, 0, f"letter {s} at font-size {eff.get('font-size')}, not {IDEA_LETTER_SIZE}")
         if (eff.get("font-style") or "normal").strip() != "italic":
@@ -1171,6 +1181,61 @@ def check_figures(required: bool) -> None:
 
 
 # ---------------------------------------------------------------------------------------
+# The script's own check of S20's ink, run first on every run: a letter on an angle's
+# wedge, a filled path, is judged by the wedge's fill, within its three ends and beyond
+# its chord out to its arc, and not beyond the arc; however the wedge is spelled (an
+# absolute arc, a relative arc, a cubic curve), and wherever a transform moves it. (S20
+# once read no paths, and let a black letter on a blue wedge through.)
+
+INK_WEDGES = (   # a quarter wedge of radius 34 at (200, 150), below and right of it
+    "M200,150 L234,150 A34,34 0 0,1 200,184 Z",
+    "m200,150 l34,0 a34,34 0 0,1 -34,34 z",
+    "M200,150 H234 C234,168.78 218.78,184 200,184 Z",
+)
+BLUE_WEDGE = '<path d="{wedge}" fill="#1f5aa6"/>'
+YELLOW_ON_RED = ('<polygon points="150,100 300,100 300,250 150,250" fill="#d0312d"/>'
+                 '<path d="{wedge}" fill="#f2b705"/>')
+MOVED_WEDGE = '<g transform="translate(-100,20)"><path d="{wedge}" fill="#1f5aa6"/></g>'
+WITHIN, ON_ARC, BEYOND = (215.0, 160.0), (221.2, 171.2), (226.9, 176.9)
+MOVED = (121.2, 191.2)   # ON_ARC, where MOVED_WEDGE stands
+
+INK_CASES = [   # (what is drawn under the letter, its glyph's middle, its ink, a finding?)
+    (BLUE_WEDGE, WITHIN, IDEA_INK, True),
+    (BLUE_WEDGE, WITHIN, IDEA_INK_ON_DARK, False),
+    (BLUE_WEDGE, ON_ARC, IDEA_INK, True),
+    (BLUE_WEDGE, ON_ARC, IDEA_INK_ON_DARK, False),
+    (BLUE_WEDGE, BEYOND, IDEA_INK, False),
+    (BLUE_WEDGE, BEYOND, IDEA_INK_ON_DARK, True),
+    (YELLOW_ON_RED, ON_ARC, IDEA_INK, False),
+    (YELLOW_ON_RED, ON_ARC, IDEA_INK_ON_DARK, True),
+    (MOVED_WEDGE, MOVED, IDEA_INK, True),
+    (MOVED_WEDGE, MOVED, IDEA_INK_ON_DARK, False),
+    (MOVED_WEDGE, ON_ARC, IDEA_INK, False),
+]
+
+
+def ink_self_check() -> tuple[int, list[str]]:
+    """INK_CASES, each with each spelling of the wedge, read as S20 reads a figure's
+    letters; returns the number of cases and the faults."""
+    faults = []
+    size = IDEA_LETTER_SIZE
+    for under, (x, y), ink, want in INK_CASES:
+        for wedge in INK_WEDGES:
+            drawn = under.format(wedge=wedge)
+            root = ET.fromstring(
+                f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                f'<rect width="400" height="300" fill="#fbf7ee"/>{drawn}'
+                f'<text x="{x}" y="{y + 0.35 * size}" text-anchor="middle" font-size="{size}" '
+                f'font-style="italic" fill="{ink}">A</text></svg>')
+            found = any(ink_fault(root, eff, letter_centre(own, eff, m, "A"), "A")
+                        for el, own, eff, m, _ in placed(root) if tag(el) == "text")
+            if found != want:
+                faults.append(f"S20 {'misses' if want else 'wrongly finds'} a letter in {ink} "
+                              f"at ({x:g}, {y:g}) on {drawn}")
+    return len(INK_CASES) * len(INK_WEDGES), faults
+
+
+# ---------------------------------------------------------------------------------------
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -1183,6 +1248,15 @@ def main() -> int:
                              "will; while it is off, this shows what S21 would find")
     args = parser.parse_args()
     required = IDEA_LETTERS_REQUIRED or args.require_idea_letters
+
+    count, faults = ink_self_check()
+    if faults:
+        print(f"{len(faults)} fault(s) in the script's reading of S20's ink; nothing else "
+              "was checked:")
+        for f in faults:
+            print("  ✗ " + f)
+        return 1
+    print(f"self-check: S20 reads the ink of {count} letters on angles' wedges rightly")
 
     mishnah = mishnah_files()
     for path in mishnah:
