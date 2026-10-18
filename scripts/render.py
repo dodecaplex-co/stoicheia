@@ -533,14 +533,15 @@ TABLE_KEY = ("_Postulates, definitions, Common Notions and tacit rules: all that
              "rests on, counting those of the propositions it cites. The last two rows say "
              "which of the postulates, definitions and tacit rules its own Lean calls, in "
              "the proof or a helper written for it, and which come in only through lemmas, "
-             "of Book Zero or shared; the rest come through the propositions it cites._")
+             "of Book Zero or shared; the rest come through the propositions it cites or the "
+             "Common Notions._")
 # The same key when the table has a column for a porism or a companion as well.
 TABLE_KEY_EACH = ("_Postulates, definitions, Common Notions and tacit rules: all that each "
                   "proof rests on, counting those of the propositions it cites. The last two "
                   "rows say which of the postulates, definitions and tacit rules its own Lean "
                   "calls, in the proof or a helper written for it, and which come in only "
                   "through lemmas, of Book Zero or shared; the rest come through the "
-                  "propositions it cites._")
+                  "propositions it cites or the Common Notions._")
 
 
 # What a definition Euclid cites, but the Definitions row does not count, is in Lean:
@@ -580,16 +581,19 @@ def definitions_not_counted(refs, defs, book):
     return "_Euclid's " + " and ".join(parts) + f", {what}._"
 
 
-def tacit_key(book, up, cited, marked):
+def tacit_key(book, up, cited, marked, unmarked):
     """The line that opens a page's list of tacit rules: what "(used here)" and
     "(through …)" mark, when the list marks them, and how the names in brackets are
-    read. `cited`: the proof cites a proposition; `marked`: the list marks its rules."""
+    read. `cited`: the proof cites a proposition; `marked`: the list marks its rules;
+    `unmarked`: some rule of the proof has neither mark, and comes in through a
+    proposition it cites or a Common Notion (C.N. 3 and C.N. 5 rest on tacit rules)."""
     intro = "index.md" if book == "I" else "../I/index.md"
+    rest = ("a proposition it cites or a Common Notion" if cited else "a Common Notion")
     used = ("_(used here) marks a rule this proof's own Lean calls, in the proof or a helper "
             "written for it; (through …) marks one that comes in only through the lemmas "
             f"named, of [Book Zero]({up}Elements/Figure) or shared"
-            + ("; and a rule with no mark comes only through a proposition it cites. "
-               if cited else ". ") if marked else "_")
+            + (f"; and a rule with no mark comes in only through {rest}. " if unmarked
+               else ". ") if marked else "_")
     return (used + "The names in brackets are System E's: an Intersection rule says when "
             "straight lines and circles must meet, and an Intersections rule takes a point "
             f"where they do (see [Book I's introduction]({intro}))._")
@@ -716,12 +720,15 @@ def rests_on(p, docs, depth, book, refs, attached=()):
         rules = "tacit rule" if len(tacit) == 1 else "tacit rules"
         if other:
             rules += f" and {len(other)} other axiom" + ("" if len(other) == 1 else "s")
-        # A proof that cites no proposition uses every rule beneath it itself: in its own
-        # Lean, or through lemmas. When it cites none and calls no lemma that brings one
-        # in, every rule is its own, and none is marked.
+        # A rule the proof's own Lean calls is marked "(used here)", and one it inherits
+        # names its lemmas. Any other comes in through a proposition it cites or a Common
+        # Notion: C.N. 5 brings three laws of magnitude into I.1, which cites none. When
+        # every rule listed is its own, none is marked.
         cited = bool(p["cites"])
         inherited = p["inherited"]
-        marked = cited or bool(inherited)
+        unmarked = [a for a in tacit + other
+                    if a not in p["own_axioms"] and a not in inherited]
+        marked = any(a not in p["own_axioms"] for a in tacit + other)
         summary = f"The {len(tacit)} {rules} beneath this proof" + (
             ", counting those of the propositions it cites" if cited else "")
         if only:
@@ -731,7 +738,7 @@ def rests_on(p, docs, depth, book, refs, attached=()):
             where = re.sub(r"`([^`]+)`", r"<code>\1</code>", where)
             summary += f", and {len(only)} more beneath {where}"
         out += f"\n<details><summary>{summary}</summary>\n\n"
-        out += tacit_key(book, up, cited, marked) + "\n\n"
+        out += tacit_key(book, up, cited, marked, bool(unmarked)) + "\n\n"
         for kind in ["Reading the figure", "Lengths, angles and areas", "Superposition",
                      "Laws of magnitude", "Other"]:
             if kind not in by_kind:
@@ -1563,7 +1570,8 @@ def certificate_intro(facts, records):
         "calls, in the proof or a helper written for its proposition, and \"Through "
         "lemmas\" those that come in only through a lemma it calls, of "
         "[Book Zero](Elements/Figure) or a [shared step](#shared-steps); the rest come "
-        "through the propositions it cites. Each proposition's page lists its tacit rules "
+        "through the propositions it cites or the Common Notions (C.N. 3 and C.N. 5 rest "
+        "on tacit rules). Each proposition's page lists its tacit rules "
         "by name, and marks each one its own Lean calls, or the lemmas it comes in "
         "through.",
         "- **The reconstruction of the argument.** What each Lean statement covers of "
