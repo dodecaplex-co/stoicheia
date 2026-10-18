@@ -117,7 +117,8 @@ theorem Prop45.append {A B C K F L M E₁ E E₂ : Point} (hKFLM : Parallelogram
   have hFLL' : Between F L L' := Prop14 hFL' hMLF_MLL'
 
   /- I.34 gives FK equal to LM and LM equal to L'M'. The outer sides FK
-     and L'M' are parallel to LM; I.30 makes KF parallel to M'L'. -/
+     and L'M' are parallel to LM, and are not one straight line, for that
+     line would be KM', which meets LM at M; I.30 makes KF parallel to M'L'. -/
   obtain ⟨-, hFK_LM, -, -, -⟩ := Prop34 (A := F) (B := L) (C := K) (D := M) hFKML
   obtain ⟨-, hLM_L'M', -, -, -⟩ :=
     Prop34 (A := L) (B := L') (C := M) (D := M') hLMM'L'
