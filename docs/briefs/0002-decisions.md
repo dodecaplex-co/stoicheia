@@ -396,3 +396,21 @@ findings:
   the planted breaks, and then GitHub's CI. A pre-push hook refuses any other push to main.
   Tags, releases, release notes, the GitHub description and anything sent outside the
   repository still need the owner's OK.
+
+## 18 October 2026
+
+- **The companions list, in the edition.** The list of companions the certificate reads,
+  each declaration with its reference ("I.40 general"), moves out of
+  `Certificate/Facts.lean` and into the edition, as `Elements.companions` in
+  [`Elements/Companions.lean`](../../Elements/Companions.lean), which `Elements.lean`
+  imports last. `Certificate/Facts.lean` now reads that list, and checks every entry
+  exactly as before: declared, in a proposition's namespace, listed by the reference its
+  name gives, and never a porism. The reason is the pull-request discipline. A check change
+  travels alone, in a pull request of its own, while a companion's listing must travel with
+  its proof and with its record's stamp; with the list inside a check, listing a proved
+  companion would have been a check change. Now it is a change to the edition, made by the
+  stage's integrator in the commit that moves the companion beside its proposition, and the
+  checks stay where they were. The list is still empty, and `facts.json` is byte for byte
+  as it was. This moves the list of the 17 October entry "Porisms are entries of the
+  certificate"; [FORMALIZATION](../FORMALIZATION.md), section 2, WORKFLOW, section 4, and
+  AGENTS.md say where it lives and whose it is.
