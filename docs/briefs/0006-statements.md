@@ -15,7 +15,9 @@ section 1).*
 *Revised the same day, before approval: the owner revised decision 1, and I.45 and II.14
 are now stated as Euclid and Byrne state them. `Rectilineal`, `Fitted` and the words and
 facts only they used are withdrawn, and so are the companions `Prop45.sum` and
-`Prop14.sum`; the appendix marks the findings the revision overtook.*
+`Prop14.sum`; the appendix marks the findings the revision overtook. The revision was
+challenged in turn: the wording of I.45 and II.14 is corrected, no statement changes, and
+the scope recommended for their records is now `restricted` (open question 1).*
 
 Base: main at `1e5b99a`. The statements are in `Staging/`, as committed with this brief.
 `lake build Staging` passes: 81 declarations, of which 36 carry `sorry` and the rest are
@@ -115,18 +117,34 @@ given rectilineal figure", in I.45 and II.14, means equal to the triangles A₀A
 A₀A₂A₃, …, A₀Aₙ₋₁Aₙ into which the straight lines from A₀ divide it, taken together. That
 sum is what Euclid adds up when he calls ABD and DBC "the whole rectilineal figure ABCD".
 No area of the figure is defined apart from this division, and no statement says that
-another division gives the same sum; that is the tacit step below, which Hilbert proved.
-The division is fixed by the corners and the choice of the first, so no dissection is
-supplied as input (FORMALIZATION, section 4). As FORMALIZATION, section 3, requires, the
-limit is stated here, carried by a tag of `review/terms.toml` in the I.45 and II.14
-records, and shown on both pages. The tag replaces `two-triangles` for them, and is added
-to `review/terms.toml` when their records change (a tag is added before any record uses
-it):
+another division gives the same sum; that is the tacit step below, which Hilbert proved
+for his measure of area.
+
+Choosing the first corner is how the division is supplied, and nothing checks it: nothing
+asks the straight lines from A₀ to run within the figure. From a corner where they do not,
+the triangles overlap or reach outside the figure, and together they are not the figure;
+a figure that no corner divides is not taken. The statements ask nothing of how the
+triangles lie, and for a reason: today's I.45, whose ABD and DBC need only be triangles, is
+to follow from its companion, and a statement that asked more would not give it.
+FORMALIZATION, section 4, accepts a dissection supplied as input when it is stated and
+checked geometrically; this one is stated and not checked, and so it is a deliberate
+limit, as section 3 has it. Checking it would take two more conditions: that each two
+neighbouring triangles lie on opposite sides of the straight line A₀Aᵢ they share, and
+that the angles A₁A₀A₂, A₂A₀A₃, …, Aₙ₋₁A₀Aₙ together be less than four right angles. The
+scope recommended for the I.45 and II.14 records is therefore `restricted`, with the
+hypothesis "the figure divided by the straight lines from one of its corners" (open
+question 1).
+
+As FORMALIZATION, section 3, requires, the limit is stated here, carried by a tag of
+`review/terms.toml` in the I.45 and II.14 records, and shown on both pages. The tag
+replaces `two-triangles` for them, and is added to `review/terms.toml` when their records
+change (a tag is added before any record uses it). Its kind is `scope`, as the
+recommendation has it; if the owner decides on `full`, it is `representation`:
 
 ```toml
 [tag.figure-by-corners]
-kind = "representation"
-meaning = "A rectilineal figure is given by its corners A₀, A₁, …, Aₙ and divided, as Euclid and Byrne divide it, by the straight lines from A₀ into the triangles A₀AᵢAᵢ₊₁; equal to the figure means equal to those triangles together, and a figure that no corner so divides is not taken. That another division gives the same sum is not proved here; Hilbert proved it (I.45, II.14)."
+kind = "scope"
+meaning = "A rectilineal figure is given by its corners A₀, A₁, …, Aₙ and divided, as Euclid and Byrne divide it, by the straight lines from A₀ into the triangles A₀AᵢAᵢ₊₁; equal to the figure means equal to those triangles together. Nothing asks the straight lines from A₀ to run within the figure: from a corner where they do not, the triangles overlap or reach outside it, and together they are not the figure. A figure that no corner divides is not taken. That another division gives the same sum is not proved here; Hilbert proved it, for his measure of area (I.45, II.14)."
 ```
 
 The page note goes in the field table's Representation row, and the mishnah of I.45 and
@@ -238,19 +256,28 @@ Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => △ A₀ s.1 s.2)
 - **What the sum is, and is not.** It is what Euclid adds up when he calls ABD and DBC "the
   whole rectilineal figure ABCD", and what Byrne adds up with three triangles. It is not
   defined as an area of the figure, and no statement says that another division gives the
-  same sum (the limit, under Conventions; the tacit step, below). The statements ask only
-  that each piece be a triangle. When the straight lines from A₀ run within the figure, as
-  they do from any corner of a convex figure and in Euclid's and Byrne's figures, the
-  triangles fill it without overlapping, and the sum is what Euclid calls the figure. When
-  they do not, the theorems still hold of the triangles, but the triangles are not the
-  figure's pieces. A figure that is not convex may need its first corner chosen, one from
-  which the straight line to every other corner runs within the figure, and some figures
-  have no such corner; they are divided into triangles in other ways, which these
-  statements do not take (open question 1).
+  same sum (the limit, under Conventions; the tacit step, below); Hilbert proved, for his
+  measure of area, that it does. The statements ask only that each piece be a triangle:
+  nothing asks the straight lines from A₀ to run within the figure. When they do, the
+  triangles fill it without overlapping, and the sum is what Euclid calls the figure. Every
+  convex figure is so divided from any corner, and so is Euclid's ABCD, from D. Byrne's
+  figure is not convex (Oliver Byrne, *The First Six Books of the Elements of Euclid*,
+  London, 1847, p. 46; `byrne1847first` in [references.bib](../references.bib)): it has
+  one re-entrant corner, and both his straight lines start from it, a corner from which
+  the straight lines to all the other corners run within the figure; from his top corner,
+  the straight line to the far left corner runs outside it. From a corner where they do
+  not all run within, the triangles overlap or reach outside the figure, and together they
+  are not the figure, though the theorems still hold of them. A figure that is not convex
+  may need its first corner chosen, as Byrne chose his, and some figures (a comb of narrow
+  teeth, say) have no such corner; a figure that no corner divides is not taken (open
+  question 1).
 - **Why no new word.** A structure holding the corners would be one more word in the lock
-  for what one hypothesis says; `segments` and `Magnitude.sum` are II.1's already. The
-  corners and the choice of the first fix the division, so no dissection is supplied as
-  input (FORMALIZATION, section 4).
+  for what one hypothesis says; `segments` and `Magnitude.sum` are II.1's already.
+- **Why nothing checks the division.** Choosing the first corner is how the division is
+  supplied, and nothing checks it. The statement asks nothing of how the triangles lie, so
+  that today's I.45, whose ABD and DBC need only be triangles, follows from it
+  (FORMALIZATION, sections 3 and 4; the limit, under Conventions, with the two conditions
+  that would check it).
 - **Withdrawn,** with the earlier decision 1: `OnFiniteLine`, `OnOrInsideTriangle`,
   `Corners`, `Fitted`, `Rectilineal`, `Rectilineal.area`, and the facts `Fitted.ne_nil`,
   `Fitted.triangle`, `Fitted.inside_pairwise` and `Fitted.two`. Nothing else used them.
@@ -321,11 +348,16 @@ theorem Prop45.figure {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
   `Prop45.figure` for the corners D, A, B, C (checked by Lean, the triangle DAB named ABD by
   `area_bca`).
 - **Coverage.** Heath: "To construct, in a given rectilineal angle, a parallelogram equal
-  to a given rectilineal figure." Full, with the companions, in the representation
-  `figure-by-corners`: a figure of any number of sides, divided as Euclid and Byrne divide
-  it. The `two-triangles` restriction goes.
+  to a given rectilineal figure." Restricted (recommended), as FORMALIZATION, section 2,
+  defines it: Euclid's "given rectilineal figure" is taken as one divided from one of its
+  corners; the owner may decide otherwise, and a departure is then recorded. With the
+  companions, a figure of any number of sides, divided as Euclid and Byrne divide it; the
+  hypothesis is "the figure divided by the straight lines from one of its corners", carried
+  by the tag `figure-by-corners`, which replaces the `two-triangles` restriction.
 - **Cases.** A triangle (I.42 alone, the list `ps` empty); Euclid's four corners; Byrne's
-  five; any number. The figure need not be convex, so long as each piece is a triangle.
+  five; any number. The figure need not be convex, so long as the straight lines from A₀
+  run within it, as Byrne's do from his re-entrant corner; the statement itself asks only
+  that each piece be a triangle (see "What the sum is, and is not").
 - **Construction.** Given: the angle (the triangle E₁EE₂) and the figure's corners.
   Returned: the parallelogram KFLM. Shown: it is a parallelogram, its angle at K is the
   given angle, and it is equal to the figure's triangles taken together.
@@ -415,11 +447,18 @@ theorem Prop14.square {A₀ A₁ A₂ : Point} {ps : List Point}
   `Prop45.figure` and `Prop14.rectangle`), from the stubs. **To prove:**
   `Prop14.rectangle`; `Prop14.square`, the square on PQ described on it [I. 46] with
   `Square.described`.
-- **Coverage.** Heath: "To construct a square equal to a given rectilineal figure." Full,
-  with the companions, in the representation `figure-by-corners`; the `two-triangles`
-  restriction goes, and `Prop14.square` answers `side-not-square`, which stays for the main
-  theorem.
-- **Cases.** The rectangle a square already; BE the greater; ED the greater.
+- **Coverage.** Heath: "To construct a square equal to a given rectilineal figure."
+  Restricted (recommended), as FORMALIZATION, section 2, defines it: Euclid's "given
+  rectilineal figure" is taken as one divided from one of its corners; the owner may decide
+  otherwise, and a departure is then recorded. With the companions, the hypothesis is
+  I.45's, "the figure divided by the straight lines from one of its corners", carried by
+  the tag `figure-by-corners`, which replaces the `two-triangles` restriction;
+  `Prop14.square` answers `side-not-square`, which stays for the main theorem.
+- **Cases.** The rectangle a square already; BE the greater; ED the greater. The figure's
+  are I.45's: a triangle, Euclid's four corners, Byrne's five, any number. The figure need
+  not be convex, so long as the straight lines from A₀ run within it, as Byrne's do from his
+  re-entrant corner; the statement itself asks only that each piece be a triangle (see
+  "What the sum is, and is not").
 - **Dependencies.** I.11, I.45 (`Prop45.figure`), II.5, I.47, I.46, `Rectangle.of_right`,
   `Square.described`.
 
@@ -436,8 +475,12 @@ chapter IV, "The Theory of Plane Areas", section 20, "The measure of area of tri
 polygons", where theorem 29 and the definition after it give that the measure of area of a
 polygon "is independent of the manner of decomposition into triangles and, consequently, is
 definitely determined by the polygon itself" (checked against the Project Gutenberg text).
-The statements here claim nothing of it. The entries planned, for whoever writes stage 2's
-records:
+Hilbert's own note to the chapter, at section 18 (from the French edition), names others
+who developed such a theory: M. Gérard, in his thesis (1892) and *Géométrie plane* (1898),
+with parallel transversals where Hilbert's run from a vertex, and F. Schur, in the
+proceedings of the Dorpat naturalists' society (1892) and his *Lehrbuch der analytischen
+Geometrie* (1898). The statements here claim nothing of it. The entries planned, for
+whoever writes stage 2's records:
 
 - `docs/reports/gaps-book-I.md`, I.45, the first entry becomes: "Euclid cuts the
   rectilineal figure ABCD by DB into the triangles ABD and DBC, and takes "the whole
@@ -445,17 +488,18 @@ records:
   of course be resolved into triangles" (vol. 1, p. 347). Taken for granted is that every
   cutting gives the same whole: AC would give ABC and ACD. For a four-sided figure whose
   diameters cross, Book Zero proves it (`quadArea_rotate_of_cross`); for any figure and any
-  cutting, David Hilbert proved it (*The Foundations of Geometry*, ch. IV, "The Theory of
-  Plane Areas", section 20). Our statement, and its companion for a figure of any number of
-  sides, divide the figure as Euclid and Byrne do, by the straight lines from one corner,
-  and make the parallelogram equal to those triangles; they claim nothing of another
-  cutting."
+  cutting, David Hilbert proved it, for his measure of area (*The Foundations of Geometry*,
+  ch. IV, "The Theory of Plane Areas", section 20), and his own note to the chapter credits
+  M. Gérard and F. Schur (1892 and 1898) with like theories. Our statement, and its
+  companion for a figure of any number of sides, divide the figure as Euclid and Byrne do,
+  by the straight lines from one corner, and make the parallelogram equal to those
+  triangles; they claim nothing of another cutting."
 - `docs/reports/gaps-book-II.md`, II.14, the first entry becomes: ""Let A be the given
   rectilineal figure": it may have any number of sides. Any rectilineal area, Heath says
   under I.45, "can of course be resolved into triangles" (vol. 1, p. 347). Our companions
   divide the figure as I.45's do, by the straight lines from one corner, and make the
   square equal to those triangles; that another cutting gives the same whole is the step
-  taken for granted under I.45, which David Hilbert proved."
+  taken for granted under I.45, which David Hilbert proved, for his measure of area."
 
 ## Stage 3: arcs and segments
 
@@ -1181,19 +1225,28 @@ stamped by anyone who did not review it.
 
 ## Open questions for the owner
 
-1. **Figures that no corner divides into triangles.** The owner's decision 1 settles the
-   reading of I.45 and II.14: the figure divided by the straight lines from one corner, as
-   Euclid and Byrne divide it, and no claim about another division. Every convex figure is
-   so divided from any corner, and so are Euclid's and Byrne's; a figure that is not convex
-   may need its first corner chosen, and some figures (a comb of narrow teeth, say) have no
-   corner from which the straight line to every other corner runs within the figure. For
-   those the statements still hold of the triangles, but the triangles are not the
-   figure's pieces. Is the records' scope `full` in the representation `figure-by-corners`,
-   whose meaning names both the division and the figures it does not take, or
-   `restricted`? The recommendation is `full` in the representation, as this brief writes
-   it. A companion for any division into triangles would cost little, since
-   `Prop45.append` takes any triangle (it is the withdrawn `Prop45.sum`), and it is not
-   planned.
+1. **Figures that no corner divides into triangles, and the records' scope.** The owner's
+   decision 1 settles the reading of I.45 and II.14: the figure divided by the straight
+   lines from one corner, as Euclid and Byrne divide it, and no claim about another
+   division. Every convex figure is so divided from any corner, and so is Euclid's ABCD.
+   Byrne's figure (1847, p. 46) is not convex, and both his straight lines start from its
+   re-entrant corner, a corner from which the straight lines to all the other corners run
+   within the figure. A figure that is not convex may need its first corner chosen, as
+   Byrne chose his, and some figures (a comb of narrow teeth, say) have no such corner.
+   Nothing asks the straight lines from A₀ to run within the figure: from a corner where
+   they do not, the triangles overlap or reach outside it, and together they are not the
+   figure, though the statements still hold of them. A figure that no corner divides is not
+   taken. Hilbert proved, for his measure of area, that another division gives the same
+   sum. Is the records' scope `restricted`, with the hypothesis "the figure divided by the
+   straight lines from one of its corners", or `full` in the representation
+   `figure-by-corners`? The recommendation is `restricted`, as FORMALIZATION, section 2,
+   defines it: Euclid's "given rectilineal figure" is any, and here it is taken as one
+   divided from one of its corners, a division supplied by the choice of the first corner
+   and not checked (the limit, under Conventions). If the owner decides otherwise, the
+   departure is recorded, and the tag's kind is `representation`. A companion for any
+   division into triangles would cost little, since `Prop45.append` takes any triangle;
+   the withdrawn `Prop45.sum` was a companion for any list of triangles and, like the fan,
+   did not check that they divide the figure. It is not planned.
 
 ## Appendix: the challenges, and what was done
 
@@ -1201,6 +1254,9 @@ Three readers challenged the staged statements and the draft of this brief: a tr
 who read each statement back into plain words against Heath, and one reader each for
 stages 2 and 4 and for stage 3. Every finding that held was applied, in `Staging/` and
 here. Rows marked *withdrawn* or *revised* were overtaken by the revision of decision 1.
+The revision was challenged in turn, by a reader of I.45 and II.14 as revised; those
+findings are the last six rows, and all were applied, in the wording only: no statement
+changed.
 
 | Finding | Done |
 |---|---|
@@ -1236,3 +1292,9 @@ here. Rows marked *withdrawn* or *revised* were overtaken by the revision of dec
 | `Prop23.point`'s plan fails at a tangent | Planned through a point between A and B |
 | CI never builds `Staging`; the lakefile entry lacked a comment | The comment kept from stage 2's draft; a CI step proposed to the coordinator |
 | The policy covers only `placement`; `OnSideOrLine` is a half-plane only when B ≠ C | The policy covers the `Placement` namespace; the docstring says "for B ≠ C" |
+| Byrne's I.45 figure (1847, p. 46) is not convex, yet was grouped with the convex figures | Said so, under the figure by its corners, I.45's cases and open question 1: both his lines start from its one re-entrant corner, from which every line to a corner runs within; cited from `references.bib` |
+| "Need not be convex, so long as each piece is a triangle" is not enough: every piece can be a triangle while the lines from A₀ run outside | I.45's and II.14's cases: so long as the lines from A₀ run within it, as Byrne's do; the statement asks only that each piece be a triangle |
+| "No dissection supplied as input (FORMALIZATION, section 4)": choosing the first corner supplies it, and nothing checks it | The reason given instead: the statement asks nothing of how the triangles lie, so that today's I.45 follows from it; the two conditions that would check it named |
+| Scope `full` overstates it | `restricted` recommended, with the hypothesis "the figure divided by the straight lines from one of its corners"; the tag's kind `scope` |
+| Nothing said plainly that the lines from A₀ need not run within the figure | Said in the tag's meaning, the I.45 module doc, under the figure by its corners and in open question 1, with Hilbert's proof for his measure of area |
+| The gap entry and open question 1 on credit and on `Prop45.sum` | Gérard and F. Schur credited as Hilbert's own note credits them; `Prop45.sum` described as a companion for any list of triangles that, like the fan, did not check that they divide the figure |

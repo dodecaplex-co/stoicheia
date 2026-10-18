@@ -10,7 +10,10 @@ makes a rectangle equal to the figure [I. 45] and then a square equal to the rec
 any number of sides, given by its corners and divided by the straight lines from its first
 corner, as in I.45's companion `Prop45.figure`; and `Prop14.square` is the same with the
 square drawn. As there, the square is equal to the triangles of that division taken
-together, and nothing is claimed of another division. Today's II.14 follows from
+together, and nothing is claimed of another division. As there too, nothing asks the
+straight lines from the first corner to run within the figure: from a corner where they do
+not, the triangles overlap or reach outside the figure, and together they are not the
+figure; a figure that no corner divides is not taken. Today's II.14 follows from
 `Prop14.general` (the check at the end).
 
 `Prop14.rectangle` is proved directly, by Euclid's second part, and never cites II.14:

@@ -10,23 +10,30 @@ sides, as the owner decided (brief 0006, decision 1). The figure is given by its
 A₀, A₁, …, Aₙ, at least three of them, in order round it, and the straight lines from the
 first corner A₀ to the others divide it into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one
 on each side A₁A₂, A₂A₃, …, Aₙ₋₁Aₙ. Euclid's DB, drawn from D, makes two such triangles;
-Byrne's two straight lines from one corner, in his I.45, make three. The parallelogram is
-built one triangle at a time, as Byrne builds it: I.42 for the first triangle, and for each of
-the rest a parallelogram applied to a side of the one built so far [I. 44], the two making one
-parallelogram, as Euclid's proof shows. `Prop45.append` is that step, and `Prop45.figure` the
-proposition. They move into `Elements/BookI/Prop45.lean` when proved, as "I.45 append" and
-"I.45 figure".
+Byrne's two straight lines from one corner, in his I.45 (1847, p. 46), make three. The
+parallelogram is built one triangle at a time, as Byrne builds it: I.42 for the first
+triangle, and for each of the rest a parallelogram applied to a side of the one built so far
+[I. 44], the two making one parallelogram, as Euclid's proof shows. `Prop45.append` is that
+step, and `Prop45.figure` the proposition. They move into `Elements/BookI/Prop45.lean` when
+proved, as "I.45 append" and "I.45 figure".
 
 **What "equal to the figure" means here.** The parallelogram is equal to the triangles
 A₀A₁A₂, …, A₀Aₙ₋₁Aₙ taken together. That sum is what Euclid adds up when he calls the
 triangles ABD and DBC "the whole rectilineal figure ABCD". Nothing here defines an area of
 the figure apart from this division, or says that another division into triangles gives the
-same sum: Euclid takes that for granted, and David Hilbert proved it (brief 0006, for the gap
-catalogue). Each triangle is asked to have its corners off one straight line, and nothing
-more. When the straight lines from A₀ run within the figure, as they do in every convex
-figure and in Euclid's and Byrne's, the triangles fill it without overlapping, and the sum is
-what Euclid calls the figure. When they do not, the theorem still holds of the triangles, but
-they are not the figure's pieces.
+same sum: Euclid takes that for granted, and David Hilbert proved it, for his measure of area
+(brief 0006, for the gap catalogue). Each triangle is asked to have its corners off one
+straight line, and nothing more: nothing asks the straight lines from A₀ to run within the
+figure. When they do, the triangles fill it without overlapping, and the sum is what Euclid
+calls the figure. Every convex figure is so divided from any corner, and so is Euclid's ABCD,
+from D. Byrne's figure is not convex: both his straight lines start from its one re-entrant
+corner, a corner from which the straight lines to all the other corners run within the
+figure. From a corner where they do not all run within, the triangles overlap or reach
+outside the figure, and together they are not the figure; the theorem still holds of the
+triangles. A figure that is not convex may need its first corner chosen, as Byrne chose his,
+and a figure that no corner divides is not taken. The statement asks nothing of how the
+triangles lie, so that today's I.45, whose ABD and DBC need only be triangles, follows from
+it (the check at the end).
 -/
 
 namespace Elements.BookI
@@ -51,7 +58,9 @@ and the straight lines from A₀ divide it into the triangles A₀A₁A₂, A₀
 `segments (A₁ :: A₂ :: ps)` are the sides A₁A₂, A₂A₃, …, Aₙ₋₁Aₙ, as in II.1, and each side
 with A₀ makes a triangle, its corners not on one straight line. The parallelogram KFLM, its
 angle at K equal to E, is equal to those triangles taken together, which is what this
-statement means by the figure; it claims nothing of another division.
+statement means by the figure; it claims nothing of another division. Nothing asks the
+straight lines from A₀ to run within the figure: from a corner where they do not, the
+triangles are not the figure (the module doc).
 
 The parallelogram is built one triangle at a time: one for A₀A₁A₂ by I.42, then
 `Prop45.append` for each triangle after it, in order. Euclid's ABCD with DB joined is the
