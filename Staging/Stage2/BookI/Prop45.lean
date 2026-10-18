@@ -1,39 +1,38 @@
-import Staging.Stage2.Sums
+import Staging.Stage2.Rectilineal
 
 /-!
-# Staging: I.45 for a figure of any number of sides
+# Staging: I.45 for any rectilineal figure
 
-Brief 0006, stage 2. Companions of `Elements.BookI.Prop45`, which stays as Euclid's worked
-configuration: the four-sided figure ABCD, cut by DB into the triangles ABD and DBC. The
-companions state the proposition as Euclid and Byrne show it, for a figure of any number of
-sides, as the owner decided (brief 0006, decision 1). The figure is given by its corners
-A₀, A₁, …, Aₙ, at least three of them, in order round it, and the straight lines from the
-first corner A₀ to the others divide it into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one
-on each side A₁A₂, A₂A₃, …, Aₙ₋₁Aₙ. Euclid's DB, drawn from D, makes two such triangles;
-Byrne's two straight lines from one corner, in his I.45 (1847, p. 46), make three. The
-parallelogram is built one triangle at a time, as Byrne builds it: I.42 for the first
-triangle, and for each of the rest a parallelogram applied to a side of the one built so far
-[I. 44], the two making one parallelogram, as Euclid's proof shows. `Prop45.append` is that
-step, and `Prop45.figure` the proposition. They move into `Elements/BookI/Prop45.lean` when
-proved, as "I.45 append" and "I.45 figure".
+Brief 0006, stage 2, as revised on 18 October 2026. Companions of `Elements.BookI.Prop45`,
+which stays as Euclid's worked configuration: the four-sided figure ABCD, cut by DB into
+the triangles ABD and DBC. Euclid's proof makes a parallelogram for the first triangle
+[I. 42], applies one for the second to its side [I. 44], and shows that the two make one
+parallelogram; a figure of more triangles repeats the second step, as Byrne draws it for
+three (1847, p. 46).
 
-**What "equal to the figure" means here.** The parallelogram is equal to the triangles
-A₀A₁A₂, …, A₀Aₙ₋₁Aₙ taken together. That sum is what Euclid adds up when he calls the
-triangles ABD and DBC "the whole rectilineal figure ABCD". Nothing here defines an area of
-the figure apart from this division, or says that another division into triangles gives the
-same sum: Euclid takes that for granted, and David Hilbert proved it, for his measure of area
-(brief 0006, for the gap catalogue). Each triangle is asked to have its corners off one
-straight line, and nothing more: nothing asks the straight lines from A₀ to run within the
-figure. When they do, the triangles fill it without overlapping, and the sum is what Euclid
-calls the figure. Every convex figure is so divided from any corner, and so is Euclid's ABCD,
-from D. Byrne's figure is not convex: both his straight lines start from its one re-entrant
-corner, a corner from which the straight lines to all the other corners run within the
-figure. From a corner where they do not all run within, the triangles overlap or reach
-outside the figure, and together they are not the figure; the theorem still holds of the
-triangles. A figure that is not convex may need its first corner chosen, as Byrne chose his,
-and a figure that no corner divides is not taken. The statement asks nothing of how the
-triangles lie, so that today's I.45, whose ABD and DBC need only be triangles, follows from
-it (the check at the end).
+* `Prop45.append` is that second step.
+* `Prop45.sum` repeats it, for any number of triangles. It is the construction, and claims
+  nothing of a figure: the triangles need not fit together.
+* `Prop45.figure` is the proposition for any rectilineal figure, given with a division into
+  triangles that is checked to be one (`Rectilineal`, `Fitted`).
+* `Prop45.fan` is the proposition for a figure divided as Euclid and Byrne divide it, by the
+  straight lines from one corner A₀, with the two conditions that make those triangles a
+  division of the figure: neighbouring triangles on opposite sides of the straight line
+  they share, and the angles at A₀ together less than four right angles. It follows from
+  `Prop45.figure`, since such a division is fitted (`Fitted.fan`).
+
+The names: `figure` is Euclid's word for what is given ("a given rectilineal figure"), so the
+companion for any figure has it; `fan` names the division Euclid draws, from one corner,
+which not every figure admits. The two agree, since a checked fan is a fitted figure and its
+triangles are the figure's. They move into `Elements/BookI/Prop45.lean` when proved, as
+"I.45 append", "I.45 sum", "I.45 figure" and "I.45 fan".
+
+**What "equal to the figure" means here.** The parallelogram is equal to the triangles the
+figure is given with, taken together. That sum is what Euclid adds up when he calls ABD and
+DBC "the whole rectilineal figure ABCD". Nothing here says that another division of the
+figure gives the same sum: Euclid takes that for granted, and David Hilbert proved it, for
+his measure of area (brief 0006, for the gap catalogue). Today's I.45, whose ABD and DBC
+need only be triangles, follows from `Prop45.sum` (the check at the end).
 -/
 
 namespace Elements.BookI
@@ -51,78 +50,110 @@ theorem Prop45.append {A B C K F L M E₁ E E₂ : Point} (hKFLM : Parallelogram
       quadArea K' F' L' M' = quadArea K F L M + △ A B C := by
   sorry
 
-/-- **I.45, for a figure of any number of sides** (companion of I.45). To construct, in a
-given rectilineal angle E, a parallelogram equal to a given rectilineal figure. The figure is
-given by its corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ (empty for a triangle),
-and the straight lines from A₀ divide it into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ:
-`segments (A₁ :: A₂ :: ps)` are the sides A₁A₂, A₂A₃, …, Aₙ₋₁Aₙ, as in II.1, and each side
-with A₀ makes a triangle, its corners not on one straight line. The parallelogram KFLM, its
-angle at K equal to E, is equal to those triangles taken together, which is what this
-statement means by the figure; it claims nothing of another division. Nothing asks the
-straight lines from A₀ to run within the figure: from a corner where they do not, the
-triangles are not the figure (the module doc).
-
-The parallelogram is built one triangle at a time: one for A₀A₁A₂ by I.42, then
-`Prop45.append` for each triangle after it, in order. Euclid's ABCD with DB joined is the
-figure with corners D, A, B, C, and its triangles DAB and DBC (the check below). -/
-theorem Prop45.figure {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
-    (htri : ∀ s ∈ segments (A₁ :: A₂ :: ps), Triangle A₀ s.1 s.2) (hE : Triangle E₁ E E₂) :
+/-- **I.45, any number of triangles** (companion of I.45). To construct, in a given
+rectilineal angle E, a parallelogram equal to any number of given triangles taken together,
+at least one: I.42 for the first, then `Prop45.append` for each of the rest, in order. The
+triangles are any triangles, each with its corners off one straight line; they need not fit
+together into one figure, and the statement claims nothing of a figure. -/
+theorem Prop45.sum {E₁ E E₂ : Point} (ts : List (Point × Point × Point)) (hne : ts ≠ [])
+    (hts : ∀ t ∈ ts, Triangle t.1 t.2.1 t.2.2) (hE : Triangle E₁ E E₂) :
     ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
-      quadArea K F L M =
-        Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => △ A₀ s.1 s.2) := by
+      quadArea K F L M = Magnitude.sum (ts.map fun t => △ t.1 t.2.1 t.2.2) := by
   /- One triangle after another: a parallelogram in the angle E equal to X, with the
-     triangles on the sides from P onwards added one at a time by `Prop45.append`. -/
-  have step : ∀ (rest : List Point) (P K F L M : Point) (X : Area),
+     triangles of `rest` added one at a time by `Prop45.append`. -/
+  have step : ∀ (rest : List (Point × Point × Point)) (K F L M : Point) (X : Area),
       Parallelogram K F L M → ∠ F K M = ∠ E₁ E E₂ → quadArea K F L M = X →
-      (∀ s ∈ segments (P :: rest), Triangle A₀ s.1 s.2) →
+      (∀ t ∈ rest, Triangle t.1 t.2.1 t.2.2) →
       ∃ K' F' L' M' : Point, Parallelogram K' F' L' M' ∧ ∠ F' K' M' = ∠ E₁ E E₂ ∧
-        quadArea K' F' L' M' =
-          X + Magnitude.sum ((segments (P :: rest)).map fun s => △ A₀ s.1 s.2) := by
+        quadArea K' F' L' M' = X + Magnitude.sum (rest.map fun t => △ t.1 t.2.1 t.2.2) := by
     intro rest
     induction rest with
     | nil =>
-      intro P K F L M X hp hang harea _
+      intro K F L M X hp hang harea _
       refine ⟨K, F, L, M, hp, hang, ?_⟩
       rw [harea]
       exact (add_zero X).symm
-    | cons Q rest ih =>
-      intro P K F L M X hp hang harea hts
-      have hPQ : Triangle A₀ P Q := hts (P, Q) (List.mem_cons_self ..)
-      obtain ⟨K', F', L', M', hp', hang', harea'⟩ := Prop45.append hp hang hPQ hE
+    | cons t rest ih =>
+      intro K F L M X hp hang harea hts
+      obtain ⟨K', F', L', M', hp', hang', harea'⟩ :=
+        Prop45.append hp hang (hts t (List.mem_cons_self ..)) hE
       obtain ⟨K'', F'', L'', M'', hp'', hang'', harea''⟩ :=
-        ih Q K' F' L' M' (X + △ A₀ P Q) hp' hang' (by rw [harea', harea])
+        ih K' F' L' M' (X + △ t.1 t.2.1 t.2.2) hp' hang' (by rw [harea', harea])
           (fun s hs => hts s (List.mem_cons_of_mem _ hs))
       refine ⟨K'', F'', L'', M'', hp'', hang'', ?_⟩
       rw [harea'']
-      exact add_assoc X (△ A₀ P Q) _
-  /- The first triangle, A₀A₁A₂, by I.42. Its parallelogram FGA₂H, with its angle at G
-     equal to E, is named from G, as GFHA₂. -/
-  have h₁ : Triangle A₀ A₁ A₂ := htri (A₁, A₂) (List.mem_cons_self ..)
-  obtain ⟨G, F, H, -, -, hp, hang, harea⟩ := Prop42 h₁ hE
-  have hFG : F ≠ G := hp.1.1
-  have hGA₂ : G ≠ A₂ := hp.2.1
-  obtain ⟨K, F', L, M, hp', hang', harea'⟩ :=
-    step ps A₂ G F H A₂ (△ A₀ A₁ A₂) hp.reverse.rotate.rotate.rotate
-      (by rw [angle_symm hFG hGA₂.symm]; exact hang)
-      (by rw [quadArea_reverse G A₂ H F, hp.quadArea_rotate, harea])
-      (fun s hs => htri s (List.mem_cons_of_mem _ hs))
-  exact ⟨K, F', L, M, hp', hang', harea'⟩
+      exact add_assoc X (△ t.1 t.2.1 t.2.2) _
+  match ts, hne, hts with
+  | (A, B, C) :: rest, _, hts =>
+    /- The first triangle, ABC, by I.42. Its parallelogram FGCH, with its angle at G equal
+       to E, is named from G, as GFHC. -/
+    have h₁ : Triangle A B C := hts (A, B, C) (List.mem_cons_self ..)
+    obtain ⟨G, F, H, -, -, hp, hang, harea⟩ := Prop42 h₁ hE
+    have hFG : F ≠ G := hp.1.1
+    have hGC : G ≠ C := hp.2.1
+    obtain ⟨K, F', L, M, hp', hang', harea'⟩ :=
+      step rest G F H C (△ A B C) hp.reverse.rotate.rotate.rotate
+        (by rw [angle_symm hFG hGC.symm]; exact hang)
+        (by rw [quadArea_reverse G C H F, hp.quadArea_rotate, harea])
+        (fun s hs => hts s (List.mem_cons_of_mem _ hs))
+    exact ⟨K, F', L, M, hp', hang', harea'⟩
 
-/-- The check: today's statement of I.45, for the triangles ABD and DBC, follows from
-`Prop45.figure` for the figure with corners D, A, B, C, whose triangles are DAB and DBC
-(checked by Lean, up to unfolding definitions and naming the triangle ABD from D). -/
+/-- **I.45, for any rectilineal figure** (companion of I.45). To construct, in a given
+rectilineal angle E, a parallelogram KFLM, its angle at K equal to E, equal to a given
+rectilineal figure: the figure given with the triangles it is cut into, each glued across a
+side of an earlier one and meeting the earlier ones only along it (`Rectilineal`), and
+"equal to the figure" meaning equal to those triangles taken together (`Rectilineal.area`).
+The figure may be convex or not, and need have no corner from which the straight lines to
+the others divide it. It is `Prop45.sum` for the figure's triangles. Nothing is claimed of
+another division of the figure. -/
+theorem Prop45.figure {E₁ E E₂ : Point} (R : Rectilineal) (hE : Triangle E₁ E E₂) :
+    ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
+      quadArea K F L M = R.area :=
+  Prop45.sum R.pieces R.fitted.ne_nil R.fitted.triangle hE
+
+/-- **I.45, for a figure divided from one corner** (companion of I.45), as Euclid and Byrne
+divide it. To construct, in a given rectilineal angle E, a parallelogram KFLM, its angle at
+K equal to E, equal to a given rectilineal figure with corners A₀, A₁, A₂, …, Aₙ in order
+round it, the list `ps` being A₃, …, Aₙ (empty for a triangle), divided by the straight lines
+from A₀ into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one on each side
+`segments (A₁ :: A₂ :: ps)`. The division is checked: each piece is a triangle; each two
+neighbouring triangles A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁ lie on opposite sides of the straight line
+A₀Aᵢ they share (`hopp`, over `triples (A₁ :: A₂ :: ps)`); and the angles A₁A₀A₂, …,
+Aₙ₋₁A₀Aₙ together are less than four right angles (`hA₀`). Then the triangles are fitted
+together into the figure (`Fitted.fan`), and the parallelogram is equal to them taken
+together, which is the figure as given. It claims nothing of another division.
+
+Euclid's ABCD with DB joined is the figure with corners D, A, B, C, its triangles DAB and
+DBC: A and C lie on opposite sides of DB. Byrne's figure has its corners listed from its
+re-entrant corner, from which both his straight lines are drawn. -/
+theorem Prop45.fan {A₀ A₁ A₂ E₁ E E₂ : Point} {ps : List Point}
+    (htri : ∀ s ∈ segments (A₁ :: A₂ :: ps), Triangle A₀ s.1 s.2)
+    (hopp : ∀ t ∈ triples (A₁ :: A₂ :: ps), OppositeSidesOf t.1 t.2.2 A₀ t.2.1)
+    (hA₀ : Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => ∠ s.1 A₀ s.2) <
+      ∟ + ∟ + (∟ + ∟))
+    (hE : Triangle E₁ E E₂) :
+    ∃ K F L M : Point, Parallelogram K F L M ∧ ∠ F K M = ∠ E₁ E E₂ ∧
+      quadArea K F L M =
+        Magnitude.sum ((segments (A₁ :: A₂ :: ps)).map fun s => △ A₀ s.1 s.2) := by
+  obtain ⟨K, F, L, M, hp, hang, harea⟩ :=
+    Prop45.figure ⟨_, Fitted.fan htri hopp hA₀⟩ hE
+  refine ⟨K, F, L, M, hp, hang, ?_⟩
+  rw [harea, Rectilineal.area, List.map_map]
+  rfl
+
+/-- The check: today's statement of I.45, for the two triangles ABD, DBC, follows from
+`Prop45.sum` for the list of those two (checked by Lean, up to unfolding definitions). -/
 example : type_of% @Elements.BookI.Prop45 := by
   intro A B C D E₁ E E₂ hABD hDBC hE
-  have htri : ∀ s ∈ segments [A, B, C], Triangle D s.1 s.2 := by
-    intro s hs
-    simp only [segments, List.mem_cons, List.not_mem_nil, or_false] at hs
-    rcases hs with rfl | rfl
-    · exact hABD.cab
+  have hts : ∀ t ∈ [(A, B, D), (D, B, C)], Triangle t.1 t.2.1 t.2.2 := by
+    intro t ht
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at ht
+    rcases ht with rfl | rfl
+    · exact hABD
     · exact hDBC
-  obtain ⟨K, F, L, M, hp, hang, harea⟩ := Prop45.figure (A₀ := D) htri hE
+  obtain ⟨K, F, L, M, hp, hang, harea⟩ := Prop45.sum _ (List.cons_ne_nil _ _) hts hE
   refine ⟨K, F, L, M, hp, hang, ?_⟩
   rw [harea]
-  simp only [segments, List.map, Magnitude.sum, add_zero]
-  rw [area_bca D A B]
+  simp only [List.map, Magnitude.sum, add_zero]
 
 end Elements.BookI
