@@ -49,6 +49,11 @@ jobs:
         # The wording of the reader-facing pages is check_style.py's (S5), the next step.
         run: python3 scripts/check_fidelity.py
 
+      - name: Check the style check's own reading, case by case, of phrases however a line wraps them and of letters on angles' wedges
+        # tests/test_check_style.py needs no Lean; it runs first, so that a rule found
+        # reading its cases wrongly stops the job before the style check's verdict.
+        run: python3 -I tests/test_check_style.py
+
       - name: Check the house style's hard rules
         # S12 asks Lean about the names in the mishnah, so it runs on the built tree.
         run: python3 scripts/check_style.py

@@ -295,6 +295,7 @@ lake env lean Certificate/Facts.lean
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
+python3 -I tests/test_check_style.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
@@ -329,9 +330,16 @@ python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
   and `check_style.py`; a stale record is expected (section 6), and the pages are the
   integrator's.
 - **A guard defect gets a regression.** When a certificate or check defect is fixed, add a
-  focused test that shows the defect would now be caught (a negative test, or an entry in
-  `tests/certificate_expectations.json`). Tests that only repeat a trivial prose change are
-  not added.
+  focused test that shows the defect would now be caught (a negative test, an entry in
+  `tests/certificate_expectations.json`, or, for the style check's reading of a phrase or
+  of a letter's ink, a case in `tests/test_check_style.py`). Tests that only repeat a
+  trivial prose change are not added.
+- **The style check's cases run before it.** `tests/test_check_style.py` puts the
+  wording rules of `scripts/check_style.py`, and S20's reading of a letter's ink, to short
+  texts and small figures, each with the finding the rule should make, and needs no Lean.
+  It runs just before the script, so a rule that reads a case wrongly stops the checks
+  before the script's findings are read. The script does not run them itself: whoever
+  changes it runs the file too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
