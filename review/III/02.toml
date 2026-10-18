@@ -27,7 +27,7 @@ helper = "Prop2.through_centre"
 note = "Euclid's figure keeps the centre D off AB. When AB passes through D there are no triangles DAE and DEB, and `Prop2.through_centre` shows DE less than DB directly: DE is part of DA or of DB, which are equal."
 
 [figure]
-note = "Like Heath's, this figure draws the impossible supposition: the straight line AEB falling outside the circle, bent to make room for it."
+note = "Like Heath's, this figure draws the impossible supposition: the straight line AEB falling outside the circle, and so drawn bent, since no straight line can."
 
 [review]
 stage = "exceptions"
