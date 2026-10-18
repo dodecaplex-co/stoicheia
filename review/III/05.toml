@@ -24,6 +24,6 @@ note = "The reductio's conclusion. The Lean supposed E the centre of both circle
 
 [review]
 stage = "exceptions"
-commit = "2a34715"
+commit = "6a794e1"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:bf0acb5df6a50c14"
+lean = "sha256:51a2558ef848cac3"
