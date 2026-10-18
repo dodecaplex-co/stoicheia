@@ -17,9 +17,9 @@ Book I's words are the foundations every later book uses, in `Elements/Foundatio
 | File | What it holds |
 |---|---|
 | `Words.lean` | The words Euclid leaves undefined, each `opaque`: `Point`, `Line`, `Circle`, `OnLine`, `SameSide`, `Between`, `OnCircle`, `InsideCircle`, `Centre`; and words defined from them, `Collinear`, `OppositeSides`, `OutsideCircle`, `LinesMeet`, `LineMeetsCircle`, `CirclesMeet`. |
-| `Magnitudes.lean` | Lengths, angles and areas: `Magnitude` of each kind, which can be added and compared and nothing more, with `‖A B‖`, `∠ A B C`, `△ A B C` and the right angle `∟`. Each kind has a `0`, a convenience from System E for the "line" from a point to itself. |
+| `Magnitudes.lean` | Lengths, angles and areas: `Magnitude` of each kind, which can be added and compared and nothing more, with `‖A B‖`, `∠ A B C`, `△ A B C` and the right angle `∟`. Each kind has a `0`, a convenience from System E for the "line" from a point to itself. The sum of a list of magnitudes, `Magnitude.sum`, says "any number" (II.1, I.45, II.14). |
 | `Definitions.lean` | The definitions that do work: Definition 10 (`IsRightAngle`, with `IsAcute` and `IsObtuse`), Definition 15 (an axiom, `Definition15`: the radii of a circle are equal), the triangles (`Triangle`, `Equilateral`), the square of Definition 22 (`Square`) and parallels (`Parallel`, Definition 23); and two that no statement or proof uses yet, the isosceles and right-angled triangles of Definitions 20 and 21 (`Isosceles`, `RightAngledTriangle`). |
-| `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`. |
+| `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`; points in order on a straight line, `InOrder`, with `segments` and `endOf` (II.1); and a rectilineal figure given with its triangles (Definitions I.14 and I.19), as triangles that lie apart, `Apart`, or fitted together, `Fitted` and `Rectilineal`, each with its area as given, with `OnFiniteLine`, `OnOrInsideTriangle`, `Corners` and `triples`. |
 | `Postulates.lean` | The five postulates, each an `axiom`. |
 | `CommonNotions.lean` | The five Common Notions, each a theorem; Common Notions 3 and 5 rest on tacit laws of magnitudes. |
 | `Tacit/` | 81 tacit rules, from System E: `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
@@ -57,8 +57,17 @@ Hypotheses come from the setting-out, conclusions from "I say that".
 - **What the figure shows** is a tacit rule, a named axiom, from System E: an Intersection
   rule says when straight lines and circles must meet, and an Intersections rule lets a
   proof take a point where they do.
-- **A rectilineal figure** (I.45) is two triangles. That is the figure Euclid's proof takes;
-  his words allow any figure (see the exceptions).
+- **A rectilineal figure** (I.45) is given with its division into triangles, and the division
+  is checked: triangles that lie apart (`Apart`), for any figure, a figure with a hole among
+  them; triangles fitted together in a suitable order (`Fitted`, `Rectilineal`), for a figure
+  with one boundary; or Euclid's and Oliver Byrne's triangles from one corner, under two
+  conditions that `Fitted.fan` shows make them fit together. Equal to the figure means equal
+  to those triangles together. That every figure can be so divided, and that another division
+  gives the same sum, are not proved: the second is the step Euclid takes for granted, which
+  David Hilbert proved, for his measure of area ([the gap catalogue](../reports/gaps-book-I.md#i45)).
+  The tag is `figure-with-dissection`. The main theorem keeps Euclid's two triangles ABD and
+  DBC, unchecked: an area-sum theorem, whose checked case is `Prop45.fan` for the corners D,
+  A, B, C.
 
 ## Shared steps
 
@@ -67,8 +76,10 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
 - **Book Zero**, `Elements/Figure/`, proved from the foundations alone: `Basics.lean`
   (imports the rest), `Lines.lean` (order on a straight line; `produce_longer`),
   `Sides.lean`, `Rays.lean`, `Angles.lean`, `Lengths.lean`, `Triangles.lean`,
-  `Circles.lean`, `Parallels.lean`, `Parallelograms.lean` and `Areas.lean`
-  (`OnRay.eq_of_area_eq`, the "greater to the less" of I.39 and I.40).
+  `Circles.lean`, `Parallels.lean`, `Parallelograms.lean`, `Areas.lean`
+  (`OnRay.eq_of_area_eq`, the "greater to the less" of I.39 and I.40), `Sums.lean` (the sums
+  of lists, and `InOrder.between_end`) and `Rectilineal.lean` (a fitted figure's triangles
+  lie apart, `Fitted.inside_pairwise`).
 - **Shared steps that cite a proposition:** `Elements/BookI/Helpers.lean`, with
   `Prop5.base` (I.5's angles at the base, with the sides produced anywhere); and
   `Elements/BookI/HelpersParallels.lean`, for those that cite I.28, I.30 or I.31, with
@@ -79,6 +90,8 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   `Prop29.interior`, `Prop29.exterior`, `Prop31.line`, `Prop34.bisect`, and
   `Prop46.square_eq` with `Prop46.side_eq` (squares on equal straight lines are equal, and
   conversely, as Heath reports Proclus proving under I.46).
+- **Companions after their propositions** (the exceptions, below): I.40's and I.45's; and,
+  in `Prop45.lean` before `Prop45.fan`, the bridge `Fitted.fan`, which cites I.13.
 
 ## The statements' choices
 
@@ -107,15 +120,17 @@ Each was approved before its voyage, and the reasons are in the first mates' rep
 ## Exceptions
 
 The review records in `review/I/` are the authority, proposition by proposition. These are
-the exceptions the outside review named, with the work that answers each:
+the exceptions the outside review named, and stage 2 of
+[brief 0006](0006-statements.md) answers both with companions, so that each record's scope
+is `full`:
 
-| Proposition | Scope | What is restricted | Tag | Planned |
-|---|---|---|---|---|
-| I.40 | restricted | the equal bases meet end to end, as BC and CE | `adjacent-bases` | stage 2: `Prop40.general` for bases anywhere on one straight line, with `Prop40.special` |
-| I.45 | restricted | the figure is two triangles | `two-triangles` | stage 2: `Prop45.apart` for any supplied division into triangles; `Prop45.figure` and `Prop45.fan` beside it |
+| Proposition | Main theorem | Companions | Tag |
+|---|---|---|---|
+| I.40 | the equal bases meet end to end, as BC and CE | `Prop40.general`, for equal bases anywhere on one straight line; `Prop40.join` and `Prop40.special` | |
+| I.45 | the figure is two triangles, unchecked | `Prop45.apart`, for any figure given with triangles that lie apart; `Prop45.figure` and `Prop45.fan`, the main companion, beside it; `Prop45.append` and `Prop45.sum`, the construction | `figure-with-dissection` |
 
-Both stay as Euclid's worked configuration, with the general theorem beside them as a
-companion ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
+Both main theorems stay as Euclid's worked configuration, with the general theorems beside
+them as companions ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
 
 Two proofs follow Euclid with one step changed: I.39, and I.40 after it, make the end of
 his reductio direct, the parallel through A being shown to pass through D
