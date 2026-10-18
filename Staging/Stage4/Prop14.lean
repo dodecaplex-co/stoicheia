@@ -15,8 +15,9 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- A diameter is two radii together. This replaces its two parts by the radii to C and D
-when comparing it with another straight line in the same circle. -/
+/-- A diameter is two radii together, and any two radii of the circle will do: with E between
+A and B, AB is CE, ED (Definition 15). This is Euclid's step in III.15, "AD is equal to ME,
+EN"; here it compares a diameter with another straight line in the same circle. -/
 theorem Prop14.diameter_sum {A B C D E : Point} {α : Circle} (hE : Centre E α)
     (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hD : OnCircle D α) (hAEB : Between A E B) :

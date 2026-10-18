@@ -28,6 +28,7 @@ theorem Prop15.le_diameter {A B C D E : Point} {ABCD : Circle} (hE : Centre E AB
     (hA : OnCircle A ABCD) (hD : OnCircle D ABCD) (hAED : Between A E D)
     (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) :
     ‖B C‖ ≤ ‖A D‖ ∧ (‖B C‖ = ‖A D‖ ↔ Between B E C) := by
+  /- AD is two radii, BE and EC (`Prop14.diameter_sum`, as in III.14 general). -/
   have hAD_sum : ‖A D‖ = ‖B E‖ + ‖E C‖ :=
     Prop14.diameter_sum hE hA hD hB hC hAED
   by_cases hBC : B = C
@@ -88,7 +89,9 @@ theorem Prop15.nearer {B C E F G H K : Point} {ABCD : Circle} (hE : Centre E ABC
     · exact h
     · exact False.elim (hunequal h)
     · exact False.elim (hbound h)
-  · /- Neither straight line passes through E. Draw a diameter and use III.15's argument. -/
+  · /- Neither straight line passes through E: this is III.15's worked configuration. Draw
+       the diameter through B, carrying BE on through the centre to A on the circle; III.15's
+       second conclusion is then that FG is less than BC. -/
     have hB_E : B ≠ E := ne_of_centre_of_on hE hB
     obtain ⟨L, hE_L, hB_L⟩ := Postulate1 E B hB_E.symm
     obtain ⟨A, hA, -, hAEB⟩ := line_circle_beyond (centre_inside hE) hE_L hB_L hB_E
