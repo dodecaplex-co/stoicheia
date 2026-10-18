@@ -335,16 +335,25 @@ grows from 0 to π"); Euclid's right angles stay in Euclid's words, outside the 
 A formula may be written in plain characters, (a + b)² = a² + b² + 2ab, or, in the modern
 way alone, in TeX between single dollars, `$e^{i\theta}$`, which GitHub renders as
 mathematics. TeX stands nowhere else in the mishnah: not in another paragraph, and not
-outside the dollars **[checked]**. A span is mathematics only where GitHub reads it so,
-and its renderer, tried with sample spans on 18 October, needs this much **[checked]**:
-the dollars in pairs within the paragraph, and never `$$`; each span on one line, with no
-space just inside either dollar; the opening dollar at a line's start or after a space or
-"(", and the closing one before a space, a line's end or one of the punctuation marks that
-S10 lists (section 8); braces that balance; no backslash before a punctuation mark, which
-GitHub's Markdown removes (write `\lbrace`, `\rbrace`, `\thinspace` and `\Vert` for `\{`,
-`\}`, `\,` and `\|`); and `\lt` and `\gt` for < and >, which GitHub escapes twice inside a
-span. `scripts/render.py` copies the mishnah onto its page unchanged, so the page shows the
-same mathematics.
+outside the dollars **[checked]**. The modern way's paragraph ends at a blank line, or at a
+line that opens a heading, a list item or a table row **[checked]**. A span is mathematics
+only where GitHub reads it so, and the check refuses the shapes known to break one
+**[checked]**. GitHub's renderer, tried with sample spans on 18 October, needs the dollars
+in pairs within the paragraph, and never `$$`; each span on one line, with no space just
+inside either dollar; the opening dollar at a line's start or after a space or "(", and the
+closing one before a space, a line's end or one of the punctuation marks that S10 lists
+(section 8); braces that balance; no backslash before a punctuation mark, which GitHub's
+Markdown removes (write `\lbrace`, `\rbrace`, `\thinspace` and `\Vert` for `\{`, `\}`, `\,`
+and `\|`); and `\lt` and `\gt` for < and >, which GitHub escapes twice inside a span. Those
+lost backslashes show that GitHub's Markdown reads inside a span, and by CommonMark's rules
+for emphasis, checked with a CommonMark parser and not tried on GitHub, a `*`, or a `_`
+after anything but a letter or a digit, pairs with another across two spans. So a span
+holds no `*` (write `\ast`), no `~`, which GitHub can read as strikethrough (write a space
+or `\sim`), and no backtick, which opens code; and a `_` stands straight after a letter or
+a digit: `x_{1}^{2}`, not `x^{2}_{1}`, and `\mathrm{A_1}`, not `\mathrm{A}_1`. A shape not
+yet found may still break, so the reviewer sees each span rendered on GitHub (section 8,
+the reviewer's checklist, item 5). `scripts/render.py` copies the mishnah onto its page
+unchanged, so the page shows the same mathematics.
 
 **System E and LeanEuclid** are thanked by name in every page's footer, so the mishnah
 does not thank them again; a particular debt is still said where it falls (Intersection 4
@@ -541,7 +550,7 @@ reading anything else, the script checks its own patterns against such phrases.
 | S7 | A definition without its book: "Definition N" or "Def. N", N a numeral, outside quotations and square brackets | Prose |
 | S8 | A curly quotation mark: “ ” ‘ ’ | Prose, Catalogues |
 | S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*(([ \t,]+\|[ \t,]*\n[ \t]*((--\|>)[ \t]*)?[ \t,]*)[A-Z]+[′₀-₉]*)*\*($\|[^*])`: the letters may stand apart by spaces, tabs and commas, or by one line break, as above | Prose, Catalogues, Lean notes |
-| S10 | TeX in the mishnah: a backslash, `^{` or `$`, save within a `$…$` span of a paragraph that opens `**The modern way.**`; and there, a span that GitHub would not render as written (section 4, "Mathematics"): a `$` unpaired in the paragraph, `$$`, a span across a line break or with white space just inside a dollar, an opening `$` not at a line's start or after white space or `(`, a closing `$` not before white space, a line's end or one of `. , ; : ! ? ) ] ' " - – /`, braces that do not balance, a backslash before an ASCII punctuation mark, or `<`, `>` or `&` within it. Before reading anything else, the script checks its reading of this boundary against sample mishnahs on both sides of it | Mishnah |
+| S10 | TeX in the mishnah: a backslash, `^{` or `$`, save within a `$…$` span of a paragraph that opens `**The modern way.**`, a paragraph that ends at a blank line or at a line opening a heading, list item or table row; and there, a span of a shape known to break on GitHub (section 4, "Mathematics"): a `$` unpaired in the paragraph, `$$`, a span across a line break or with white space just inside a dollar, an opening `$` not at a line's start or after white space or `(`, a closing `$` not before white space, a line's end or one of `. , ; : ! ? ) ] ' " - – /`, braces that do not balance, a backslash before an ASCII punctuation mark, `<`, `>` or `&`, a `*`, `~` or backtick, or a `_` first in the span or after anything but a letter or digit within it. Before reading anything else, the script checks its reading of this boundary against sample mishnahs on both sides of it | Mishnah |
 | S11 | A retired refrain of section 3, on a page not allowed it: "certificate cites", "certificate records", "Of the postulates", "besides Euclid's", "just Euclid's three" (nowhere); "comes in through" (I.29 only); "Lean wants it said", "Lean asks why", "Lean makes us say so" (I.1, I.5, I.22 only); "uses Postulate 1", "brings it in" (I.1, I.3 only); "with no letter", "proves it once", "We give his argument once", "and the Lean cites it.", and "under I.31" in a sentence naming Proclus (nowhere); a paragraph opening `**What Lean made us say.**`, `**What else Lean made us say.**`, `**What it rests on.**`, `**Where the parallels meet.**`, `**Naming the pieces.**`, or `**Where X falls.**` with X a run of capitals (nowhere) | Mishnah |
 | S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (the command is below). Run when the tree is built | Mishnah |
 | S13 | A caption (`<desc>`) missing, or over 50 words | Idea figures |

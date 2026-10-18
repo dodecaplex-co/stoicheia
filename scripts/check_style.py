@@ -41,8 +41,16 @@ space. On every run, before anything else, the script checks its own wording pat
 against wrapped and unwrapped phrases (`self_check`), and stops if one is read wrongly.
 
 S10 refuses TeX in the mishnah, save `$…$` in a paragraph that opens
-`**The modern way.**`, and there only spans that GitHub renders as written (STYLE, section
-4, "Mathematics"); the self-check holds cases on both sides of that boundary.
+`**The modern way.**`, which a blank line or a line opening a heading, list item or table
+row ends; and there it refuses the shapes of span known to break on GitHub (STYLE, section
+4, "Mathematics"). Sample spans tried on GitHub on 18 October found most of them, and
+showed its Markdown taking away backslashes inside a span, so Markdown reads there; by
+CommonMark's rules for emphasis, checked with a CommonMark parser and not tried on GitHub,
+a `*`, or a `_` after anything but a letter or a digit, pairs with another across two
+spans, so a span holds no `*`, `~` or backtick, and a `_` only straight after a letter or
+a digit. A shape not yet found may still break: the reviewer's checklist, item 5 (STYLE,
+section 8), which sees each span rendered on GitHub, stays the guard. The self-check holds
+cases on both sides of that boundary.
 
 S2's crew words match whole words in any case, plurals and possessives included ("the
 bosuns", "the crew's"). The figure rules also ask for a <title>: "I.N at a glance" on an
@@ -513,12 +521,19 @@ def check_text(path: Path, raw: str, scopes: set[str]) -> None:
 # The mishnah: TeX, refrains, Lean names.
 
 # S10's one exception (STYLE, section 4, "Mathematics"): in a paragraph that opens
-# MODERN_WAY, mathematics may stand between single dollars, in spans that GitHub renders
-# as written. Its renderer, read with sample spans on 18 October, opens a span only at a
-# line's start, after white space or after "(", and closes it only before white space, a
-# line's end or a mark of MATH_CLOSES_BEFORE; it renders no span that crosses a line or
-# begins or ends with a space; its Markdown takes away a backslash before a punctuation
-# mark (\{ becomes {, \, becomes ,); and it escapes <, > and & inside a span twice.
+# MODERN_WAY, and ends at a BLOCK_BREAK, mathematics may stand between single dollars, and
+# the check refuses the shapes of span known to break on GitHub. Its renderer, read with
+# sample spans on 18 October, opens a span only at a line's start, after white space or
+# after "(", and closes it only before white space, a line's end or a mark of
+# MATH_CLOSES_BEFORE; it renders no span that crosses a line or begins or ends with a
+# space; its Markdown takes away a backslash before a punctuation mark (\{ becomes {, \,
+# becomes ,); and it escapes <, > and & inside a span twice. The lost backslashes show
+# that its Markdown reads inside a span, so the refusals of *, _, ~ and a backtick follow
+# CommonMark's rules, checked with a CommonMark parser and not tried on GitHub: a *, or a
+# _ after anything but a letter or a digit, can open emphasis and pair with another across
+# two spans; GFM reads ~ as strikethrough; and a backtick opens code. A shape not found
+# here may still break, and the reviewer's checklist, item 5 (STYLE, section 8: each span
+# seen rendered on GitHub), stays the guard.
 MODERN_WAY = "**The modern way.**"
 MATH_OPENS_AFTER = " \t\n("
 MATH_CLOSES_BEFORE = " \t\n.,;:!?)]'\"’”–-/"
@@ -527,8 +542,8 @@ MATH_HTML = re.compile(r"[<>&]")
 
 
 def math_fault(text: str, a: int, b: int) -> str | None:
-    """What keeps the span from the `$` at `a` to the `$` at `b` of `text` from rendering on
-    GitHub as written, or None."""
+    """The shape known to break on GitHub that the span from the `$` at `a` to the `$` at
+    `b` of `text` has, or None."""
     body = text[a + 1:b]
     if not body:
         return "$$: display mathematics is not allowed; write $…$ within the sentence"
@@ -548,6 +563,19 @@ def math_fault(text: str, a: int, b: int) -> str | None:
     if m:
         return (f"{m.group(0)} inside $…$: GitHub's Markdown takes away a backslash before a "
                 "punctuation mark; write \\lbrace, \\rbrace, \\thinspace, \\Vert")
+    if "*" in body:
+        return "* inside $…$, which GitHub's Markdown can read as emphasis; write \\ast"
+    for i, c in enumerate(body):
+        if c == "_" and not (i and body[i - 1].isalnum()):
+            where = f"after {body[i - 1]!r} inside" if i else "first in"
+            return (f"a _ {where} $…$, which GitHub's Markdown can read as emphasis; "
+                    "put a subscript straight after a letter or digit, x_{1}^{2} rather "
+                    "than x^{2}_{1}, \\mathrm{A_1} rather than \\mathrm{A}_1")
+    if "~" in body:
+        return ("~ inside $…$, which GitHub's Markdown can read as strikethrough; write a "
+                "space or \\sim")
+    if "`" in body:
+        return "a backtick inside $…$, which GitHub's Markdown reads as code"
     depth = 0
     for c in body:
         depth += {"{": 1, "}": -1}.get(c, 0)
@@ -565,13 +593,18 @@ def math_fault(text: str, a: int, b: int) -> str | None:
 def tex_findings(text: str) -> list[tuple[int, int, str]]:
     """S10 on a mishnah, fenced blocks and HTML comments already blanked: (start, end,
     message) for each finding. TeX (a backslash, `^{` or `$`) is refused everywhere, save
-    in a `$…$` span of a paragraph that opens MODERN_WAY; there every `$` pairs with the
-    next, and each span must render as written (math_fault)."""
+    in a `$…$` span of a paragraph that opens MODERN_WAY, a paragraph ended by a
+    BLOCK_BREAK; there every `$` pairs with the next, and no span may have a shape known to
+    break on GitHub (math_fault)."""
     found, outside = [], text
-    for off, p in paragraphs(text):
-        if not p.startswith(MODERN_WAY):
+    start = 0
+    for brk in list(BLOCK_BREAK.finditer(text)) + [None]:
+        end = brk.start() if brk else len(text)
+        block, at = text[start:end], start
+        start = brk.end() if brk else len(text)
+        if not block.lstrip().startswith(MODERN_WAY):
             continue
-        dollars = [off + m.start() for m in re.finditer(r"\$", p)]
+        dollars = [at + m.start() for m in re.finditer(r"\$", block)]
         for k in range(0, len(dollars), 2):
             a = dollars[k]
             if k + 1 == len(dollars):
@@ -1475,8 +1508,8 @@ def self_check() -> tuple[int, list[str]]:
 
 # ---------------------------------------------------------------------------------------
 # The script's own check of S10, run first on every run: `$…$` passes in a paragraph that
-# opens "**The modern way.**", and only there, and only in a span that GitHub renders as
-# written; TeX outside such a span still fails, in the modern way as elsewhere.
+# opens "**The modern way.**", and only there, and only in a span of no shape known to
+# break on GitHub; TeX outside such a span still fails, in the modern way as elsewhere.
 
 MW = MODERN_WAY + " "
 TEX_CASES = [   # (a mishnah, as S10 reads it, a finding?)
@@ -1486,6 +1519,9 @@ TEX_CASES = [   # (a mishnah, as S10 reads it, a finding?)
     (MW + r"For $0 \lt b \lt a$, $a\thinspace b$ and $\lbrace x \rbrace$ hold.", False),
     ("**A lead.** Plain words.\n\n" + MW + r"It is $z \mapsto e^{i\theta} z$.", False),
     ("Plain words, with θ and π and (a + b)², and no lead.", False),
+    (MW + r"Then $z^\ast$ and $w^\ast$ are conjugates.", False),
+    (MW + r"Then $x_{1}^{2}$ and $a_{n}$ are terms.", False),
+    (MW + r"Then $\theta_1$ and $\vec{u_1}$ are given.", False),
     (r"**A lead.** Then $e^{i\theta}$ turns it.", True),
     (r"Then e^{iθ} turns it, in a paragraph with no lead.", True),
     (MW + r"Then e^{iθ} turns it.", True),
@@ -1503,8 +1539,16 @@ TEX_CASES = [   # (a mishnah, as S10 reads it, a finding?)
     (MW + r"Then $\{x\}$ loses its backslashes.", True),
     (MW + r"Then $a\,b$ loses its backslash.", True),
     (MW + r"Then $a < b$ is escaped twice.", True),
+    (MW + r"Then $z^*$ and $w^*$ are read as emphasis.", True),
+    (MW + r"Then $a*b*c$ is read as emphasis.", True),
+    (MW + r"Then $\vec{u}_{1}$ and $\vec{v}_{2}$ are read as emphasis.", True),
+    (MW + r"Then $x^{2}_{1}$ has its subscript after a brace.", True),
+    (MW + r"Then $x~y$ is read as strikethrough.", True),
+    (MW + r"Then $a`b$ holds a backtick.", True),
     ("**A lead.** A paragraph.\n" + MW + r"Then $x$ is in the lead's paragraph.", True),
     (MW + "Plain words.\n\nThen $x$ is in the next paragraph.", True),
+    (MW + "Then $x$ holds.\n- and $y$ in a list item.", True),
+    (MW + "Then $x$ holds.\n# $y$ a heading", True),
     (r"**The modern way** without its full stop: $x$.", True),
 ]
 

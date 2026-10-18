@@ -654,15 +654,23 @@ findings:
     is unchanged;
   - S10 lets TeX stand within `$…$` in a paragraph that opens `**The modern way.**`, and
     nowhere else: TeX outside those spans, in that paragraph or in any other, fails as
-    before. A span passes only in the form GitHub's renderer was found, with sample spans
-    on 18 October, to show as written: the dollars paired within the paragraph, never
-    `$$`; one line, no white space just inside a dollar; the opening dollar at a line's
-    start or after white space or "(", the closing one before white space, a line's end or
-    a punctuation mark; balanced braces; no backslash before an ASCII punctuation mark,
-    which GitHub's Markdown removes; and no `<`, `>` or `&`, which it escapes twice. Before
-    anything else, the script's self-check reads 26 sample mishnahs, six on the allowed
-    side and twenty refused, among them TeX outside the dollars in the modern way, `$…$`
-    in another paragraph, and each malformed span;
+    before. The paragraph ends at a blank line or at a line that opens a heading, list item
+    or table row. Within it, S10 refuses the shapes of span known to break on GitHub. Its
+    renderer, tried with sample spans on 18 October, needs the dollars paired within the
+    paragraph, never `$$`; one line, no white space just inside a dollar; the opening
+    dollar at a line's start or after white space or "(", the closing one before white
+    space, a line's end or a punctuation mark; balanced braces; no backslash before an
+    ASCII punctuation mark, which GitHub's Markdown removes; and no `<`, `>` or `&`, which
+    it escapes twice. Those lost backslashes show that GitHub's Markdown reads inside a
+    span, and by CommonMark's rules for emphasis, checked with a CommonMark parser and not
+    tried on GitHub, a `*`, or a `_` after anything but a letter or a digit, pairs with
+    another across two spans: so a span holds no `*`, `~` or backtick, and a `_` only
+    straight after a letter or a digit. A shape not yet found may still break, and the
+    reviewer's checklist (STYLE, section 8, item 5), which sees each span rendered on
+    GitHub, stays the guard. Before anything else, the script's self-check reads 37 sample
+    mishnahs, nine on the allowed side and twenty-eight refused, among them TeX outside
+    the dollars in the modern way, `$…$` in another paragraph or in a list item or heading
+    just under the modern way, and each malformed span;
   - S20, which held the letters of a figure at a glance italic, now holds them upright, and
     S15 holds Euclid's figures to the same (it read no style before); the owner's "one
     style" is read as upright, the style the text already has (S9) and the only one the
