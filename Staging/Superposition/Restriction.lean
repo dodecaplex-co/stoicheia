@@ -14,14 +14,23 @@ placement. Here it is, in four parts:
 2. **The conclusions say nothing of where the corners went** (`Metric.holds_lift`): an
    exported formula reads the same whatever points B′ and C′ are taken to be. So the rule
    asserts no point exists, here or anywhere.
-3. **No construction step** (`Derives.map`, with `Derives.sound`): every rule of a
-   derivation is a scheme in its names, carried along any renaming, even one that merges
-   names; and whatever it proves holds of the very points its names stand for. A step that
-   built a point would need a name for it, and no rule supplies one.
-4. **Nothing refutable is exported** (`Metric.holds_const`): every exportable formula
-   holds when all its points are one point, so neither `False` nor any formula false in
-   every figure can be a conclusion. This closes the door Astra's second observation
-   opens, below.
+3. **No construction step in the represented calculus** (`Derives.map`, with
+   `Derives.sound`): every rule of a derivation is a scheme in its names, carried along any
+   renaming, even one that merges names; and whatever it proves holds of the very points
+   its names stand for. A step that built a point would need a name for it, and no rule
+   supplies one. This is a fact about the calculus: a cited law is a universal statement,
+   proved outside the placement, and its proof may draw what it likes (brief 0009, open
+   question 4, on `Cited.law_rayOfAngle`).
+4. **No exportable formula is unsatisfiable, and absence is no premise**
+   (`Metric.holds_const`): every exportable formula holds when all its points are one
+   point, so neither `False` nor any formula false in every figure is a conclusion. An
+   exportable formula can still contradict the given facts (AA equal to AB, with A not
+   B), and since a name may be any point, a formula can even be made to say any
+   proposition the proof can name. What stops the rule from turning a contradiction into
+   points is that a derivation's premises are literals about named points, so "no
+   placement exists" is never one of them, and that every instance of the rule is a
+   statement about given points with no existential over points. Astra's second
+   observation, below, needs a premise of that kind.
 
 The two observations of Astra's answer are kept as theorems, as warnings for anyone who
 tries a shorter road: a Prop-valued eliminator over every conclusion is the existential
@@ -155,10 +164,10 @@ end Derives
 
 /-! ## 4. Nothing refutable is exported -/
 
-/-- **No exported formula is `False` in disguise.** Every equality of magnitudes holds when
-all the points it names are one point X. So the rule never concludes `False`, nor any
-formula that fails in every figure: the contradiction Astra's second observation turns
-into points is not a conclusion it can reach. -/
+/-- **Every exportable formula is satisfiable.** Every equality of magnitudes holds when
+all the points it names are one point X. So the rule never concludes `False` itself, nor
+any formula that fails in every figure. (Under the given points an exported formula can
+still be false, and can contradict the given facts; see the module's note, part 4.) -/
 theorem Metric.holds_const {V : Type} (m : Metric V) (X : Point) : m.Holds (fun _ => X) := by
   cases m <;> exact rfl
 
@@ -173,9 +182,10 @@ theorem eliminator_iff_exists (placed : Point → Point → Prop) :
 
 /-- **Astra's second observation.** Even an eliminator allowed only the conclusion `False`,
 which names no point, gives the points back: it says their absence is absurd, and Lean's
-classical logic turns that into existence. This is why the exported conclusions are
-equalities of magnitudes (`Metric.holds_const`), and why no rule of a derivation concludes
-anything from a contradiction. -/
+classical logic turns that into existence. Its premise is the absence of the points. This
+is why a derivation's premises are literals about named points, which cannot say that no
+placement exists, and why no rule of a derivation concludes anything from a
+contradiction. -/
 theorem eliminator_false_gives_exists (placed : Point → Point → Prop)
     (h : (∀ B' C' : Point, placed B' C' → False) → False) : ∃ B' C' : Point, placed B' C' :=
   Classical.byContradiction fun hne => h fun B' C' hp => hne ⟨B', C', hp⟩

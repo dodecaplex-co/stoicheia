@@ -34,7 +34,8 @@ namespace Elements.Superposition
 lays down. When the triangle ABC is laid down with A on D, `second` is where B comes down
 and `third` is where C comes down. -/
 inductive Name where
-  /-- A point of the figure already drawn. -/
+  /-- A point the proof already holds. Any point may be named so: naming a point it holds
+  constructs nothing. -/
   | given (P : Point)
   /-- Where the second corner of the triangle comes down. -/
   | second

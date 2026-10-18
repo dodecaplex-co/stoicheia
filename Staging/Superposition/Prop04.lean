@@ -28,9 +28,11 @@ abbrev B' : Name := .second
 /-- C′: where C comes down. A name in the derivation. -/
 abbrev C' : Name := .third
 
-/-- The laws the derivation cites: Metric 3, Metric 4, Metric 9, one point at one distance
-on a ray, and one ray for one angle. -/
-abbrev cites : List Cited := [.lenSymm, .angleSymm, .areaCongruent, .rayUnique, .rayOfAngle]
+/-- The laws the derivation cites: Metric 3, Metric 4, Metric 9, that a straight line
+equal to one with distinct ends has distinct ends, one point at one distance on a ray, and
+one ray for one angle. -/
+abbrev cites : List Cited :=
+  [.lenSymm, .angleSymm, .areaCongruent, .neOfLen, .rayUnique, .rayOfAngle]
 
 end Prop4
 
@@ -44,6 +46,9 @@ theorem Prop4 (S : Rule) {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : T
     ‖B C‖ = ‖E F‖ ∧ △ A B C = △ D E F ∧ ∠ A B C = ∠ D E F ∧ ∠ A C B = ∠ D F E := by
   -- Let ABC, DEF be two triangles having the two sides AB, AC equal to the two sides DE, DF
   -- respectively, namely AB to DE and AC to DF, and the angle BAC equal to the angle EDF.
+  have hAB' : A ≠ B := hABC.ne₁₂
+  have hBC' : B ≠ C := hABC.ne₂₃
+  have hAC' : A ≠ C := hABC.ne₁₃
   have hDE : D ≠ E := hDEF.ne₁₂
   have hDF : D ≠ F := hDEF.ne₁₃
   have hEF : E ≠ F := hDEF.ne₂₃
@@ -62,11 +67,12 @@ theorem Prop4 (S : Rule) {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : T
   /- The facts given, as literals the placement may use. -/
   let Γ : List (Lit Point) :=
     [pos (.len A B D E), pos (.len A C D F), pos (.angle B A C E D F),
-     pos (.onLine D DF), pos (.onLine F DF), neg (.eq D F), neg (.eq E F)]
+     pos (.onLine D DF), pos (.onLine F DF), neg (.eq D F), neg (.eq E F),
+     neg (.eq A B), neg (.eq B C), neg (.eq A C)]
   have hΓ : ∀ ℓ ∈ Γ, ℓ.Holds id := by
     intro ℓ hℓ
     simp only [Γ, List.mem_cons, List.mem_nil_iff, or_false] at hℓ
-    rcases hℓ with rfl | rfl | rfl | rfl | rfl | rfl | rfl
+    rcases hℓ with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
     · exact hAB
     · exact hAC
     · exact hA
@@ -74,6 +80,9 @@ theorem Prop4 (S : Rule) {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : T
     · exact hF_DF
     · exact hDF
     · exact hEF
+    · exact hAB'
+    · exact hBC'
+    · exact hAC'
   -- and if the point A be placed on the point D
   -- and the straight line AB on DE,
   /- The restricted rule of superposition: the triangle ABC, laid down with A on D, is
@@ -83,13 +92,21 @@ theorem Prop4 (S : Rule) {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : T
   /- Δ is the context of the placement: the facts given, the guards, and what the
      placement keeps (`branch`). -/
   let Δ := branch Γ A B C D E F DE
+  have hAB_ : Derives cites Δ (neg (.eq A B)) := Branch.given (ℓ := neg (.eq A B)) (by simp [Γ])
+  have hBC_ : Derives cites Δ (neg (.eq B C)) := Branch.given (ℓ := neg (.eq B C)) (by simp [Γ])
+  have hAC_ : Derives cites Δ (neg (.eq A C)) := Branch.given (ℓ := neg (.eq A C)) (by simp [Γ])
+  /- The corners laid down are three points: DB′, B′C′, C′D are AB, BC, CA, whose ends
+     are distinct. -/
+  have hB'D : Derives cites Δ (neg (.eq B' D)) := .ne_of_len (.len_trans .len_comm Kept.len₁) hAB_
+  have hC'D : Derives cites Δ (neg (.eq C' D)) := .ne_of_len Kept.len₃ (.ne_symm hAC_)
+  have hB'C' : Derives cites Δ (neg (.eq B' C')) := .ne_of_len Kept.len₂ hBC_
   -- then the point B will also coincide with E, because AB is equal to DE.
   /- On the ray from D through E, the one point as far from D as E is, is E itself
      (Savile's argument). -/
   have hDB'_DE : Derives cites Δ (pos (.len D B' D E)) :=
     .len_trans Kept.len₁ (Branch.given (ℓ := pos (.len A B D E)) (by simp [Γ]))
   have hB'E : Derives cites Δ (pos (.eq B' E)) :=
-    .ray_unique Guard.ne_DG Kept.ne₁ Guard.on_D Guard.on_G Kept.on_line Kept.not_between
+    .ray_unique Guard.ne_DG hB'D Guard.on_D Guard.on_G Kept.on_line Kept.not_between
       hDB'_DE
   -- Again, AB coinciding with DE,
   have hEDC' : Derives cites Δ (pos (.angle E D C' B' D C')) :=
@@ -116,7 +133,7 @@ theorem Prop4 (S : Rule) {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : T
     .len_trans Kept.len₃ <|
     .len_trans .len_comm (Branch.given (ℓ := pos (.len A C D F)) (by simp [Γ]))
   have hC'F : Derives cites Δ (pos (.eq C' F)) :=
-    .ray_unique (Branch.given (ℓ := neg (.eq D F)) (by simp [Γ])) Kept.ne₂ hD_DF' hF_DF'
+    .ray_unique (Branch.given (ℓ := neg (.eq D F)) (by simp [Γ])) hC'D hD_DF' hF_DF'
       hC'_DF hC'_ray hDC'_DF
   -- But B also coincided with E;
   -- hence the base BC will coincide with the base EF.
@@ -136,20 +153,19 @@ theorem Prop4 (S : Rule) {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : T
      ABC, so the same area (System E, Metric 9). -/
   have hmoved : Derives cites Δ (pos (.area A B C D B' C')) :=
     .area_of_congruent (.len_symm Kept.len₁) (.len_symm Kept.len₂) (.len_symm Kept.len₃)
-      (.angle_trans (.angle_comm Guard.ne_AB (.ne_symm Guard.ne_BC)) <|
-        .angle_trans (.angle_symm Kept.angle₃) (.angle_comm (.ne_symm Kept.ne₃)
-          (.ne_symm Kept.ne₁)))
-      (.angle_trans (.angle_comm Guard.ne_BC Guard.ne_AC) <|
-        .angle_trans (.angle_symm Kept.angle₂) (.angle_comm (.ne_symm Kept.ne₂) Kept.ne₃))
-      (.angle_trans (.angle_comm (.ne_symm Guard.ne_AC) (.ne_symm Guard.ne_AB)) <|
-        .angle_trans (.angle_symm Kept.angle₁) (.angle_comm Kept.ne₁ Kept.ne₂))
+      (.angle_trans (.angle_comm hAB_ (.ne_symm hBC_)) <|
+        .angle_trans (.angle_symm Kept.angle₃) (.angle_comm (.ne_symm hB'C') (.ne_symm hB'D)))
+      (.angle_trans (.angle_comm hBC_ hAC_) <|
+        .angle_trans (.angle_symm Kept.angle₂) (.angle_comm (.ne_symm hC'D) hB'C'))
+      (.angle_trans (.angle_comm (.ne_symm hAC_) (.ne_symm hAB_)) <|
+        .angle_trans (.angle_symm Kept.angle₁) (.angle_comm hB'D hC'D))
   have harea : Derives cites Δ (pos (.area A B C D E F)) :=
     .area_trans hmoved hcoincide
   -- And the remaining angles will also coincide with the remaining angles and will be equal to
   -- them,
   -- the angle ABC to the angle DEF,
   have hB : Derives cites Δ (pos (.angle A B C D E F)) :=
-    .angle_trans (.angle_comm Guard.ne_AB (.ne_symm Guard.ne_BC)) <|
+    .angle_trans (.angle_comm hAB_ (.ne_symm hBC_)) <|
     .angle_trans (.angle_symm Kept.angle₃) <|
     .angle_trans (.angle_congr hC'F hB'E .eq_refl) <|
       .angle_comm (.ne_symm (Branch.given (ℓ := neg (.eq E F)) (by simp [Γ]))) Guard.ne_DG
@@ -162,10 +178,11 @@ theorem Prop4 (S : Rule) {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : T
   have hcites : ∀ c ∈ cites, c.Law := by
     intro c hc
     simp only [cites, List.mem_cons, List.mem_nil_iff, or_false] at hc
-    rcases hc with rfl | rfl | rfl | rfl | rfl
+    rcases hc with rfl | rfl | rfl | rfl | rfl | rfl
     · exact Cited.law_lenSymm
     · exact Cited.law_angleSymm
     · exact Cited.law_areaCongruent
+    · exact Cited.law_neOfLen
     · exact Cited.law_rayUnique
     · exact Cited.law_rayOfAngle
   have hout := S.infer hcites hABC hD_DE hE_DE hDE hF_DE hΓ
