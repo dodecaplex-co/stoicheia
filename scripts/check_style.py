@@ -1,12 +1,13 @@
 """Check the house style's hard rules, and report its defaults.
 
-The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S19
-fail the script, and D1 to D11 and D13 are listed for a reader to judge and fail nothing.
-Run from anywhere; the paths are the repository's.
+The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S21
+fail the script, and D1 to D11, D13 and D14 are listed for a reader to judge and fail
+nothing. Run from anywhere; the paths are the repository's.
 
     python3 scripts/check_style.py              # every rule, S12 included
     python3 scripts/check_style.py --no-lean    # S12 skipped, for an unbuilt tree
     python3 scripts/check_style.py --quiet      # the reports as counts only
+    python3 scripts/check_style.py --require-idea-letters   # S21 on every figure, as the switch on will be
 
 S12 asks Lean whether each backticked name in the mishnah exists, so it needs a built
 tree (`lake build`) and `lake` on the PATH; without them the script fails and says so,
@@ -34,12 +35,15 @@ S2's crew words match whole words in any case, plurals and possessives included 
 bosuns", "the crew's"). The figure rules also ask for a <title>: "I.N at a glance" on an
 idea figure, "Euclid I.N: …" on Euclid's (STYLE, section 7). A known departure a rule
 cannot see is right is listed below with its reason, and printed on every run; one that
-no longer applies fails. Standard library only.
+no longer applies fails. An idea figure marks a point Heath leaves without a letter in the
+figure itself, with `data-unlettered` and its reason (S21), and those are printed too.
+Standard library only.
 """
 
 from __future__ import annotations
 
 import argparse
+import math
 import re
 import shutil
 import subprocess
@@ -72,6 +76,14 @@ LETTER_EXCEPTIONS = {
     },
 }
 
+# S21, the switch (STYLE, sections 7 and 8). Until the figures at a glance carry Heath's
+# letters, this is False: S20 holds every letter drawn, S21 holds an idea figure only once
+# it carries a letter, and D14 lists, book by book, the figures with none yet. A later
+# pull request turns it on, once every figure is lettered, and S21 then fails every idea
+# figure with a point unlettered. Once on, never set it back to quiet a figure: letter
+# the figure.
+IDEA_LETTERS_REQUIRED = False
+
 # ---------------------------------------------------------------------------------------
 # Findings.
 
@@ -92,12 +104,14 @@ RULES = {
     "S11": "a retired refrain",
     "S12": "a backticked Lean name that Lean does not know",
     "S13": "an idea figure's caption missing or over 50 words",
-    "S14": "an idea figure's canvas, letters, colours or title",
+    "S14": "an idea figure's canvas, colours or title",
     "S15": "a Euclid's figure's canvas, letters, colours, strokes, caption or title",
     "S16": "figure letters not all and only Heath's",
     "S17": "a further-reading file's shape or links",
     "S18": "a book with pages and no introduction",
     "S19": "a book introduction that does not link the book's brief",
+    "S20": "an idea figure's letter not Heath's, or not italic, 14 and in the ink of what it stands on",
+    "S21": "a point of an idea figure without its letter",
 }
 
 REPORTS = {
@@ -113,6 +127,7 @@ REPORTS = {
     "D10": "S6 or S7 outside their failing scope",
     "D11": "Euclid's figure strokes or dots off the usual widths",
     "D13": "a reading line that does not begin 'For '",
+    "D14": "figures at a glance not yet lettered (S21 holds them once the switch is on)",
 }
 
 
@@ -573,8 +588,27 @@ WHITE = {"#fff", "#ffffff", "white"}
 EUCLID_COLOURS = {"#fbf7ee", "#3b2f2f", "#8c7b62", "#a0522d", "#e9dcc0"}
 COLOUR_ATTRS = ("fill", "stroke", "stop-color", "color", "flood-color", "lighting-color")
 DRAWN = {"line", "path", "polyline", "polygon", "circle", "ellipse", "rect"}
-INHERITED = ("fill", "stroke", "stroke-width", "font-size")
+INHERITED = ("fill", "stroke", "stroke-width", "font-size", "font-style", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
+
+# The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
+# canvas's units, 400 × 300.
+IDEA_INK = "#222222"            # a letter on the parchment or on yellow
+IDEA_INK_ON_DARK = "#fbf7ee"    # a letter on red, blue or black, in the parchment's colour
+DARK = {"#d0312d", "#1f5aa6", "#222222"}
+IDEA_LETTER_SIZE = 14
+BYRNE = {"#d0312d", "#f2b705", "#1f5aa6", "#222222"}
+NEAR = 30.0      # the farthest a letter's centre may stand from its point
+MARK = 25.0      # a straight line shorter than this is a mark (an equals sign), not a point
+SAME = 8.0       # points nearer than this are one point (a corner where two lines end)
+DOT = 6.0        # a filled circle of this radius at most is a dot
+UNLETTERED = "data-unlettered"
+NUM = re.compile(r"[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?")
+IDENTITY = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
+
+# data-unlettered marks in the idea figures, printed on every run:
+# {(file, reason): [elements, points]}
+idea_exemptions: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
 
 
 def tag(el) -> str:
@@ -602,6 +636,22 @@ def walk(el, inherited=None):
         yield from walk(child, eff)
 
 
+def placed(el, m=IDENTITY, inherited=None, exempt=None):
+    """walk(), with each element's place: (element, own attributes, effective inherited
+    ones, its transform composed with its ancestors', and the data-unlettered in force as
+    (the element that carries it, its reason), or None)."""
+    inherited = dict(inherited or {})
+    own = style_of(el)
+    eff = dict(inherited)
+    eff.update({k: own[k] for k in INHERITED if k in own})
+    m = compose(m, transform_of(own.get("transform")))
+    if UNLETTERED in el.attrib:
+        exempt = (el, " ".join(el.attrib[UNLETTERED].split()))
+    yield el, own, eff, m, exempt
+    for child in el:
+        yield from placed(child, m, eff, exempt)
+
+
 def text_of(el) -> str:
     return "".join(el.itertext()).strip()
 
@@ -611,6 +661,104 @@ def number(value: str | None) -> float | None:
         return None
     m = re.fullmatch(r"\s*([0-9.]+)\s*(?:px)?\s*", value)
     return float(m.group(1)) if m else None
+
+
+def coord(value: str | None) -> float:
+    """A coordinate attribute's first number (x="10" or x="10 24"), or 0, SVG's default."""
+    m = NUM.search(value or "")
+    return float(m.group(0)) if m else 0.0
+
+
+def compose(a, b):
+    """The affine map a after b, each as the six numbers of SVG's matrix(a b c d e f)."""
+    return (a[0] * b[0] + a[2] * b[1], a[1] * b[0] + a[3] * b[1],
+            a[0] * b[2] + a[2] * b[3], a[1] * b[2] + a[3] * b[3],
+            a[0] * b[4] + a[2] * b[5] + a[4], a[1] * b[4] + a[3] * b[5] + a[5])
+
+
+def transform_of(value: str | None):
+    """A `transform` attribute as one affine map: translate, scale, rotate, skewX, skewY
+    and matrix, applied as SVG applies them, the last first."""
+    m = IDENTITY
+    for name, args in re.findall(r"([A-Za-z]+)\s*\(([^)]*)\)", value or ""):
+        v = [float(x) for x in NUM.findall(args)]
+        if not v:
+            continue
+        if name == "translate":
+            t = (1.0, 0.0, 0.0, 1.0, v[0], v[1] if len(v) > 1 else 0.0)
+        elif name == "scale":
+            t = (v[0], 0.0, 0.0, v[1] if len(v) > 1 else v[0], 0.0, 0.0)
+        elif name == "rotate":
+            c, s = math.cos(math.radians(v[0])), math.sin(math.radians(v[0]))
+            t = (c, s, -s, c, 0.0, 0.0)
+            if len(v) >= 3:
+                t = compose(compose((1.0, 0.0, 0.0, 1.0, v[1], v[2]), t),
+                            (1.0, 0.0, 0.0, 1.0, -v[1], -v[2]))
+        elif name == "skewX":
+            t = (1.0, 0.0, math.tan(math.radians(v[0])), 1.0, 0.0, 0.0)
+        elif name == "skewY":
+            t = (1.0, math.tan(math.radians(v[0])), 0.0, 1.0, 0.0, 0.0)
+        elif name == "matrix" and len(v) == 6:
+            t = tuple(v)
+        else:
+            continue
+        m = compose(m, t)
+    return m
+
+
+def at(m, x: float, y: float) -> tuple[float, float]:
+    return (m[0] * x + m[2] * y + m[4], m[1] * x + m[3] * y + m[5])
+
+
+def back(m, x: float, y: float) -> tuple[float, float] | None:
+    """The point that the affine map m takes to (x, y), or None if m flattens the plane."""
+    det = m[0] * m[3] - m[1] * m[2]
+    if abs(det) < 1e-12:
+        return None
+    x, y = x - m[4], y - m[5]
+    return ((m[3] * x - m[2] * y) / det, (m[0] * y - m[1] * x) / det)
+
+
+def inside(el, own, x: float, y: float) -> bool:
+    """Whether (x, y), in the element's own coordinates, lies within a polygon, rect,
+    circle or ellipse."""
+    t = tag(el)
+    if t == "polygon":
+        v = [float(n) for n in NUM.findall(own.get("points", ""))]
+        pts = list(zip(v[0::2], v[1::2]))
+        hit = False
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:] + pts[:1]):
+            if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+                hit = not hit
+        return hit
+    if t == "rect":
+        x0, y0 = coord(own.get("x")), coord(own.get("y"))
+        return x0 <= x <= x0 + coord(own.get("width")) and y0 <= y <= y0 + coord(own.get("height"))
+    if t == "circle":
+        return math.dist((x, y), (coord(own.get("cx")), coord(own.get("cy")))) <= coord(own.get("r"))
+    if t == "ellipse":
+        rx, ry = coord(own.get("rx")), coord(own.get("ry"))
+        return rx > 0 and ry > 0 and ((x - coord(own.get("cx"))) / rx) ** 2 + (
+            (y - coord(own.get("cy"))) / ry) ** 2 <= 1
+    return False
+
+
+def fill_under(root, x: float, y: float) -> str:
+    """The colour a letter's middle stands on: the fill of the last polygon, rect, circle
+    or ellipse drawn over it, not transparent (transforms applied), or else the parchment.
+    Paths, the angles' wedges, are not read: no letter stands on one."""
+    under = "#fbf7ee"
+    for el, own, eff, m, _ in placed(root):
+        fill = (eff.get("fill") or "black").strip().lower()
+        if tag(el) not in ("polygon", "rect", "circle", "ellipse") or fill == "none":
+            continue
+        opacity = number(own.get("fill-opacity"))
+        if opacity is not None and opacity < 0.5:
+            continue
+        p = back(m, x, y)
+        if p is not None and inside(el, own, *p):
+            under = fill
+    return under
 
 
 def svg_root(path: Path):
@@ -643,10 +791,12 @@ def colours(path: Path, root, allowed: set[str], rule: str) -> None:
         fail(rule, path, 0, f"colour {what} ({n}×) is not in the palette")
 
 
-def check_idea(path: Path, ref: str) -> None:
+def check_idea(path: Path, ref: str, required: bool) -> int:
+    """S13, S14, S20 and S21 for one idea figure. Returns how many of its points wait for
+    a letter while it is in the transition (no letter yet, the switch off), else 0."""
     root = svg_root(path)
     if root is None:
-        return
+        return 0
     vb = " ".join(root.get("viewBox", "").replace(",", " ").split())
     if vb != "0 0 400 300":
         fail("S14", path, 0, f"viewBox {vb or 'missing'}, not 0 0 400 300")
@@ -670,10 +820,129 @@ def check_idea(path: Path, ref: str) -> None:
         ends = len(re.findall(r"[.?!][\"')]*(?=\s|$)", text))
         if n > 40 or ends > 2:
             report("D5", path, 0, f"caption of {n} words, {ends} sentence(s)")
-    for el, _, _ in walk(root):
-        if tag(el) == "text" and re.search(r"[A-Za-z]", text_of(el)):
-            fail("S14", path, 0, f"a letter in an idea figure: <text>{text_of(el)}</text>")
     colours(path, root, IDEA_COLOURS | WHITE, "S14")
+    return check_idea_letters(path, root, required)
+
+
+def drawn_letters(path: Path) -> set[str] | None:
+    """The letters Euclid's figure draws, which S16 holds to Heath's text; None when there
+    is no figure to read (S15 says why)."""
+    try:
+        root = ET.parse(path).getroot()
+    except (OSError, ET.ParseError):
+        return None
+    return {text_of(el) for el in root.iter() if tag(el) == "text" and LETTER.fullmatch(text_of(el))}
+
+
+def letter_centre(own, eff, m, s: str) -> tuple[float, float]:
+    """About where a letter's glyph stands: x and y give the start of its baseline (its
+    middle or its end, by text-anchor), and a capital in Georgia is about 0.6 em wide and
+    0.7 em high."""
+    size = number(eff.get("font-size")) or 16.0
+    w = 0.6 * size * len(s)
+    shift = {"middle": 0.0, "end": -w / 2}.get((eff.get("text-anchor") or "start").strip(), w / 2)
+    return at(m, coord(own.get("x")) + shift, coord(own.get("y")) - 0.35 * size)
+
+
+def idea_points(root) -> list[tuple[str, tuple[float, float], tuple | None]]:
+    """(kind, where, exemption) for each point an idea figure shows (S21): a dot (a filled
+    circle of radius 6 at most), each end of a straight line drawn in a Byrne colour or
+    black and 25 long at least, and each corner of a polygon filled or stroked in one.
+    White grid lines, parchment dividers, paths (the angles and arcs) and polylines (the
+    right-angle marks) show no points. `exemption` is the data-unlettered in force."""
+    out = []
+    for el, own, eff, m, exempt in placed(root):
+        t = tag(el)
+        fill = (eff.get("fill") or "black").strip().lower()
+        stroke = (eff.get("stroke") or "none").strip().lower()
+        if t == "circle":
+            if 0 < coord(own.get("r")) <= DOT and fill != "none":
+                out.append(("a dot", at(m, coord(own.get("cx")), coord(own.get("cy"))), exempt))
+        elif t == "line" and stroke in BYRNE:
+            a = at(m, coord(own.get("x1")), coord(own.get("y1")))
+            b = at(m, coord(own.get("x2")), coord(own.get("y2")))
+            if math.dist(a, b) >= MARK:
+                out += [("an end of a straight line", a, exempt), ("an end of a straight line", b, exempt)]
+        elif t == "polygon" and (fill in BYRNE or stroke in BYRNE):
+            v = [float(x) for x in NUM.findall(own.get("points", ""))]
+            out += [("a corner of a polygon", at(m, x, y), exempt) for x, y in zip(v[0::2], v[1::2])]
+    return out
+
+
+def check_idea_letters(path: Path, root, required: bool) -> int:
+    """S20: each letter is one of Heath's, as Euclid's figure draws it, italic, at 14, in
+    the figure's black, or in the parchment's colour where it stands on red, blue or
+    black. S21: each point the figure shows has a letter within 30 of it, or is marked
+    data-unlettered with its reason. Returns the points waiting for a letter while the
+    figure is in the transition, else 0."""
+    euclid = path.with_name(path.name.replace("-idea", ""))
+    heaths = drawn_letters(euclid)
+    letters = []
+    for el, own, eff, m, _ in placed(root):
+        if tag(el) != "text":
+            continue
+        s = text_of(el)
+        if not re.search(r"[A-Za-z]", s):
+            continue
+        if not LETTER.fullmatch(s):
+            fail("S20", path, 0, f"<text>{s}</text>: an idea figure's text is Heath's letters, "
+                 "one to a <text>, or numbers on a fill")
+            continue
+        if heaths is None:
+            fail("S20", path, 0, f"letter {s}, and no {euclid.name} to take Heath's letters from")
+        elif s not in heaths:
+            fail("S20", path, 0, f"letter {s} is not one of Heath's letters as {euclid.name} "
+                 f"draws them ({', '.join(sorted(heaths))})")
+        centre = letter_centre(own, eff, m, s)
+        dark = fill_under(root, *centre) in DARK
+        ink = IDEA_INK_ON_DARK if dark else IDEA_INK
+        if (eff.get("fill") or "black").strip().lower() != ink:
+            fail("S20", path, 0, f"letter {s} in {eff.get('fill') or 'black'}, not {ink}: a letter "
+                 f"on {'red, blue or black' if dark else 'the parchment or yellow'} is in {ink}")
+        if number(eff.get("font-size")) != IDEA_LETTER_SIZE:
+            fail("S20", path, 0, f"letter {s} at font-size {eff.get('font-size')}, not {IDEA_LETTER_SIZE}")
+        if (eff.get("font-style") or "normal").strip() != "italic":
+            fail("S20", path, 0, f"letter {s} is not italic")
+        letters.append(centre)
+
+    points = idea_points(root)
+    for el in root.iter():
+        if UNLETTERED not in el.attrib:
+            continue
+        why = " ".join(el.attrib[UNLETTERED].split())
+        excused = sum(1 for _, _, ex in points if ex is not None and ex[0] is el)
+        if len(why.split()) < 2:
+            fail("S21", path, 0, f'<{tag(el)} {UNLETTERED}="{why}">: give the reason Heath '
+                 "leaves these points without letters, in words")
+        if not excused:
+            fail("S21", path, 0, f'<{tag(el)} {UNLETTERED}="{why}"> marks no point a letter '
+                 "would go to (a dot, an end of a straight line, a corner); remove it")
+        tally = idea_exemptions[(rel(path), why)]
+        tally[0] += 1
+        tally[1] += excused
+
+    groups: list[list] = []
+    for p in points:
+        for g in groups:
+            if math.dist(g[0][1], p[1]) < SAME:
+                g.append(p)
+                break
+        else:
+            groups.append([p])
+    waiting = []
+    for g in groups:
+        shown = [p for p in g if p[2] is None]
+        if shown and not any(math.dist(p[1], c) <= NEAR for p in shown for c in letters):
+            waiting.append(shown)
+    if not letters and not required:
+        return len(waiting)
+    for shown in waiting:
+        kinds = " and ".join(sorted({k for k, _, _ in shown}))
+        x, y = shown[0][1]
+        fail("S21", path, 0, f"the point at ({x:.0f}, {y:.0f}), {kinds}, has no letter "
+             f"within {NEAR:g}: give it Heath's letter, or mark what draws it {UNLETTERED} "
+             "with the reason his figure gives it none")
+    return 0
 
 
 def heath_letters(book: str, n: int) -> set[str]:
@@ -769,13 +1038,19 @@ def check_euclid(path: Path, ref: str) -> None:
                  "LETTER_EXCEPTIONS no longer applies; remove it")
 
 
-def check_figures() -> None:
+def check_figures(required: bool) -> None:
     for book in books_with_pages():
         d = ROOT / "figures" / book
+        waiting = []
         for path in numbered(d, "-idea.svg"):
-            check_idea(path, ref_of(path))
+            left = check_idea(path, ref_of(path), required)
+            if left:
+                waiting.append(f"{path.name[:2]} ({left})")
         for path in numbered(d, ".svg"):
             check_euclid(path, ref_of(path))
+        if waiting:
+            report("D14", d, 0, f"{len(waiting)} without letters, with the points each "
+                   f"has to letter: {', '.join(waiting)}")
 
 
 # ---------------------------------------------------------------------------------------
@@ -786,7 +1061,11 @@ def main() -> int:
                         help="skip S12, which needs a built tree")
     parser.add_argument("--quiet", action="store_true",
                         help="give the reports as counts, without each finding")
+    parser.add_argument("--require-idea-letters", action="store_true",
+                        help="hold every idea figure to S21, as IDEA_LETTERS_REQUIRED = True "
+                             "will; while it is off, this shows what S21 would find")
     args = parser.parse_args()
+    required = IDEA_LETTERS_REQUIRED or args.require_idea_letters
 
     mishnah = mishnah_files()
     for path in mishnah:
@@ -808,7 +1087,10 @@ def main() -> int:
     for path in generated_files():
         check_text(path, path.read_text(encoding="utf-8"), {"generated"})
     check_intros()
-    check_figures()
+    check_figures(required)
+    if "D14" in reports:
+        print("note: S21 holds only the idea figures that carry a letter, until "
+              "IDEA_LETTERS_REQUIRED is set (STYLE, section 8); D14 lists the rest")
     if args.no_lean:
         print("note: S12 skipped (--no-lean); the mishnah's Lean names were not checked")
     elif shutil.which("lake") is None:
@@ -822,6 +1104,8 @@ def main() -> int:
         for (book, n), exc in sorted(LETTER_EXCEPTIONS.items(), key=lambda x: heath.prop_key(f"{x[0][0]}.{x[0][1]}")):
             letters = sorted(exc.get("extra", set()) | exc.get("missing", set()))
             print(f"  S16 figures/{book}/{n:02d}.svg ({', '.join(letters)}): {exc['why']}")
+        for (f, why), (elements, points) in sorted(idea_exemptions.items()):
+            print(f"  S21 {f} ({elements} marked {UNLETTERED}, {points} point(s)): {why}")
     if reports:
         total = sum(len(v) for v in reports.values())
         print(f"Reported for a reader to judge ({total}; these fail nothing):")
@@ -841,7 +1125,7 @@ def main() -> int:
         print("  by rule: " + ", ".join(f"{r} {RULES[r]} ({k})"
                                        for r, k in sorted(by_rule.items(), key=lambda x: int(x[0][1:]))))
         return 1
-    rules = "S1–S19" if not args.no_lean else "S1–S11 and S13–S19"
+    rules = "S1–S21" if not args.no_lean else "S1–S11 and S13–S21"
     print(f"\n✓ style: the hard rules hold ({rules})")
     return 0
 
