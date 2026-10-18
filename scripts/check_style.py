@@ -41,8 +41,8 @@ space. On every run, before anything else, the script checks its own wording pat
 against wrapped and unwrapped phrases (`self_check`), and stops if one is read wrongly.
 
 S10 refuses TeX in the mishnah, save `$…$` in a paragraph that opens
-`**The modern way.**`, which a blank line or a line opening a heading, list item or table
-row ends; and there it refuses the shapes of span known to break on GitHub (STYLE, section
+`**The modern way.**`, which ends where Markdown ends a paragraph (`MODERN_WAY_ENDS`);
+and there it refuses the shapes of span known to break on GitHub (STYLE, section
 4, "Mathematics"). Sample spans tried on GitHub on 18 October found most of them, and
 showed its Markdown taking away backslashes inside a span, so Markdown reads there; by
 CommonMark's rules for emphasis, checked with a CommonMark parser and not tried on GitHub,
@@ -521,8 +521,8 @@ def check_text(path: Path, raw: str, scopes: set[str]) -> None:
 # The mishnah: TeX, refrains, Lean names.
 
 # S10's one exception (STYLE, section 4, "Mathematics"): in a paragraph that opens
-# MODERN_WAY, and ends at a BLOCK_BREAK, mathematics may stand between single dollars, and
-# the check refuses the shapes of span known to break on GitHub. Its renderer, read with
+# MODERN_WAY, and ends at MODERN_WAY_ENDS, mathematics may stand between single dollars,
+# and the check refuses the shapes of span known to break on GitHub. Its renderer, read with
 # sample spans on 18 October, opens a span only at a line's start, after white space or
 # after "(", and closes it only before white space, a line's end or a mark of
 # MATH_CLOSES_BEFORE; it renders no span that crosses a line or begins or ends with a
@@ -535,6 +535,20 @@ def check_text(path: Path, raw: str, scopes: set[str]) -> None:
 # here may still break, and the reviewer's checklist, item 5 (STYLE, section 8: each span
 # seen rendered on GitHub), stays the guard.
 MODERN_WAY = "**The modern way.**"
+# Where the modern way's paragraph ends, as CommonMark ends a paragraph, with GFM's
+# tables: at a blank line, or before a line, indented at most three spaces, that opens a
+# block allowed to interrupt a paragraph. Those are an ATX heading; a bullet list item, or
+# an ordered one numbered 1, with some text; a block quotation; a code fence; an HTML
+# block, read here as any line opening a tag, "<!" or "<?", a little wider than
+# CommonMark's (it lets "<span>" go on); a thematic break or a setext underline; and a
+# table, whose next line is a delimiter row. Any other line, "|z| is one", "2. So" or
+# "#check", goes on with it.
+MODERN_WAY_ENDS = re.compile(
+    r"\n[ \t]*\n|\n(?= {0,3}(?:#{1,6}(?:[ \t]|$)"
+    r"|[-+*][ \t]+\S|0{0,8}1[.)][ \t]+\S|>|```|~~~|<[A-Za-z/!?]"
+    r"|([-*_])(?:[ \t]*\1){2,}[ \t]*$|(?:=+|-+)[ \t]*$"
+    r"|[^\n]*\n {0,3}(?=[^\n]*\|)\|?(?:[ \t]*:?-+:?[ \t]*\|)*[ \t]*:?-+:?[ \t]*\|?[ \t]*$))",
+    re.M)
 MATH_OPENS_AFTER = " \t\n("
 MATH_CLOSES_BEFORE = " \t\n.,;:!?)]'\"’”–-/"
 MATH_ESCAPE = re.compile(r"\\[!-/:-@\[-`{-~]")      # a backslash before ASCII punctuation
@@ -593,12 +607,12 @@ def math_fault(text: str, a: int, b: int) -> str | None:
 def tex_findings(text: str) -> list[tuple[int, int, str]]:
     """S10 on a mishnah, fenced blocks and HTML comments already blanked: (start, end,
     message) for each finding. TeX (a backslash, `^{` or `$`) is refused everywhere, save
-    in a `$…$` span of a paragraph that opens MODERN_WAY, a paragraph ended by a
-    BLOCK_BREAK; there every `$` pairs with the next, and no span may have a shape known to
-    break on GitHub (math_fault)."""
+    in a `$…$` span of a paragraph that opens MODERN_WAY, a paragraph ended as
+    MODERN_WAY_ENDS says; there every `$` pairs with the next, and no span may have a shape
+    known to break on GitHub (math_fault)."""
     found, outside = [], text
     start = 0
-    for brk in list(BLOCK_BREAK.finditer(text)) + [None]:
+    for brk in list(MODERN_WAY_ENDS.finditer(text)) + [None]:
         end = brk.start() if brk else len(text)
         block, at = text[start:end], start
         start = brk.end() if brk else len(text)
@@ -1522,6 +1536,9 @@ TEX_CASES = [   # (a mishnah, as S10 reads it, a finding?)
     (MW + r"Then $z^\ast$ and $w^\ast$ are conjugates.", False),
     (MW + r"Then $x_{1}^{2}$ and $a_{n}$ are terms.", False),
     (MW + r"Then $\theta_1$ and $\vec{u_1}$ are given.", False),
+    (MW + "Then $x$ holds, and the modulus\n|z| is one, so $y$ is too.", False),
+    (MW + "Then $x$ holds, and the sum is\n2. So $y$ is two.", False),
+    (MW + "Then $x$ holds, as Lean's\n#check shows for $y$ too.", False),
     (r"**A lead.** Then $e^{i\theta}$ turns it.", True),
     (r"Then e^{iθ} turns it, in a paragraph with no lead.", True),
     (MW + r"Then e^{iθ} turns it.", True),
@@ -1549,6 +1566,10 @@ TEX_CASES = [   # (a mishnah, as S10 reads it, a finding?)
     (MW + "Plain words.\n\nThen $x$ is in the next paragraph.", True),
     (MW + "Then $x$ holds.\n- and $y$ in a list item.", True),
     (MW + "Then $x$ holds.\n# $y$ a heading", True),
+    (MW + "Then $x$ holds.\n+ and $y$ in a list item.", True),
+    (MW + "Then $x$ holds.\n1) and $y$ in a list item.", True),
+    (MW + "Then $x$ holds.\n> and $y$ in a quotation.", True),
+    (MW + "Then $x$ holds.\n| $y$ | z |\n| --- | --- |", True),
     (r"**The modern way** without its full stop: $x$.", True),
 ]
 

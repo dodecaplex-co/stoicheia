@@ -654,8 +654,10 @@ findings:
     is unchanged;
   - S10 lets TeX stand within `$…$` in a paragraph that opens `**The modern way.**`, and
     nowhere else: TeX outside those spans, in that paragraph or in any other, fails as
-    before. The paragraph ends at a blank line or at a line that opens a heading, list item
-    or table row. Within it, S10 refuses the shapes of span known to break on GitHub. Its
+    before. The paragraph ends where Markdown ends it: at a blank line, or at a line that
+    opens a heading, a list item (a numbered list only from 1), a quotation, a code fence,
+    an HTML block, a rule or a table; a line that only looks like one, such as `|z| is one`,
+    goes on with it. Within it, S10 refuses the shapes of span known to break on GitHub. Its
     renderer, tried with sample spans on 18 October, needs the dollars paired within the
     paragraph, never `$$`; one line, no white space just inside a dollar; the opening
     dollar at a line's start or after white space or "(", the closing one before white
@@ -667,10 +669,11 @@ findings:
     another across two spans: so a span holds no `*`, `~` or backtick, and a `_` only
     straight after a letter or a digit. A shape not yet found may still break, and the
     reviewer's checklist (STYLE, section 8, item 5), which sees each span rendered on
-    GitHub, stays the guard. Before anything else, the script's self-check reads 37 sample
-    mishnahs, nine on the allowed side and twenty-eight refused, among them TeX outside
-    the dollars in the modern way, `$…$` in another paragraph or in a list item or heading
-    just under the modern way, and each malformed span;
+    GitHub, stays the guard. Before anything else, the script's self-check reads 44 sample
+    mishnahs, twelve on the allowed side and thirty-two refused, among them TeX outside
+    the dollars in the modern way, `$…$` in another paragraph or in a list item, heading,
+    quotation or table just under the modern way, `$…$` on a wrapped line that only looks
+    like one, and each malformed span;
   - S20, which held the letters of a figure at a glance italic, now holds them upright, and
     S15 holds Euclid's figures to the same (it read no style before); the owner's "one
     style" is read as upright, the style the text already has (S9) and the only one the
