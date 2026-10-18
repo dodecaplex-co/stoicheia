@@ -335,15 +335,25 @@ dependencies.
     have the compiler vouch for a proof in the kernel's place; since `decide +native`,
     `decide (native := …)` and a whole configuration given by `(config := …)` all set
     that option, the word `native`, wherever it stands, and `(config := …)` are refused;
-  - `set_option debug.…`: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry`
-    and its kin put `sorry` in place of a proof;
+  - `set_option debug.…`, and its escaped spelling `set_option «debug».…`, which Lean
+    reads the same way: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry` and
+    its kin put `sorry` in place of a proof;
   - `#eval`, `run_cmd`, `run_elab`, `run_meta`, `run_tac`, `by_elab`, `initialize` and
     `builtin_initialize` run a program when the file is built or imported, which could
     declare an axiom without the word, or write any file, a check or `facts.json` among
     them;
-  - `elab`, `elab_rules`, `macro` and `macro_rules`, with the attributes behind them and
-    `initialize` (`command_elab`, `term_elab`, `tactic` and `init`), give syntax a
-    meaning written in code, which could hide any of the others behind a new name;
+  - `elab`, `elab_rules`, `macro` and `macro_rules` give syntax a meaning written in
+    code, which could hide any of the others behind a new name. The simproc commands,
+    `simproc`, `dsimproc`, `simproc_decl`, `dsimproc_decl` and `simproc_pattern%`, with
+    their `builtin_`, `sym_` and `cbv_` forms, give `simp` code that runs the next time
+    it is used in the file. An attribute can register code that Lean runs while a file is
+    built or printed, so the scan refuses any attribute whose name ends in one of these
+    words: `elab` (`command_elab`, `term_elab`, `doElem_elab`,
+    `inductive_elab`), `tactic` (`tactic`, `grind_tactic`, `try_tactic`), `init`, `proc`
+    (`simproc`, `dsimproc`, `sym_simproc`, `sevalproc`), `discharger`, `delab` (`delab`,
+    `app_delab`), `unexpander` (`app_unexpander`), `precheck` (`quot_precheck`),
+    `formatter`, `parenthesizer`, `control_info`, `code_action`, `rpc_method` and
+    `linter`;
   - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.

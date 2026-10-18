@@ -666,7 +666,15 @@ findings:
   commands the list gains and the axiom after another command.
   [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, names every
   command the scan refuses (`run_meta`, `elab_rules` and `macro_rules`, which it refused
-  unnamed, among them), says why each is forbidden, and drops the known gap. The protected
+  unnamed, among them), says why each is forbidden, and drops the known gap. The review of
+  this branch found three more routes the list lacked, and we thank it warmly: the simproc
+  commands (`simproc`, `dsimproc`, `simproc_decl`, `dsimproc_decl` and their kin), whose
+  code `simp` runs in the same file; the attributes beyond `tactic` and `init` that
+  register code Lean runs while a file is built or printed (`@[simproc]`, `@[doElem_elab]`,
+  `@[grind_tactic]`, `@[delab]`, `@[app_unexpander]`, `@[quot_precheck]` and their kin),
+  which the scan now knows by the end of their names; and the escaped spelling
+  `set_option «debug».…`, which Lean reads as `debug.…`. The scan refuses them all now,
+  and test 8 plants each in all three folders; again nothing is loosened. The protected
   files it changes are [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) and
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py). The README's table of
   checks, and the name of CI's step for the negative tests, can follow in a pull request

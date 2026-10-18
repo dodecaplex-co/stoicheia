@@ -192,6 +192,8 @@ PLANTED_COMMANDS = (
     ("bv_check", 'theorem planted_lrat (x : BitVec 8) : x = x := by bv_check "planted.lrat"'),
     ("set_option debug.",
      "set_option debug.skipKernelTC true in theorem planted_skip : True := trivial"),
+    ("set_option «debug».",
+     "set_option «debug».skipKernelTC true in theorem planted_escaped : True := trivial"),
     ("#eval", '#eval IO.println "planted"'),
     ("run_cmd", "run_cmd pure ()"),
     ("run_elab", "run_elab pure ()"),
@@ -202,13 +204,38 @@ PLANTED_COMMANDS = (
     ("elab_rules", "elab_rules : term | `(planted_elab) => pure (Lean.mkNatLit 4)"),
     ("macro", 'macro "planted_macro" : term => `(4)'),
     ("macro_rules", "macro_rules | `(planted_macro) => `(4)"),
-    ("command_elab", "@[command_elab plantedStx] def plantedCommand : "
+    ("simproc", "simproc ↓ plantedSimproc (Nat.succ _) := fun _ => return .continue"),
+    ("dsimproc", "dsimproc plantedDSimproc (Nat.succ _) := fun _ => return .continue"),
+    ("simproc_decl",
+     "simproc_decl plantedSimprocDecl (Nat.succ _) := fun _ => return .continue"),
+    ("dsimproc_decl",
+     "dsimproc_decl plantedDSimprocDecl (Nat.succ _) := fun _ => return .continue"),
+    ("simproc_pattern", "simproc_pattern% Nat.succ _ => plantedSimprocDecl"),
+    ("cbv_simproc", "cbv_simproc plantedCbv (Nat.succ _) := fun _ => return .continue"),
+    ("@[command_elab]", "@[command_elab plantedStx] def plantedCommand : "
      "Lean.Elab.Command.CommandElab := fun _ => pure ()"),
-    ("term_elab", "@[term_elab plantedStx] def plantedTerm : Lean.Elab.Term.TermElab := "
+    ("@[term_elab]", "@[term_elab plantedStx] def plantedTerm : Lean.Elab.Term.TermElab := "
      "fun _ _ => pure (Lean.mkNatLit 4)"),
+    ("@[doElem_elab]", "@[doElem_elab plantedStx] def plantedDoElem : "
+     "Lean.Elab.Do.DoElab := fun _ _ => failure"),
+    ("@[inductive_elab]", "@[inductive_elab plantedStx] def plantedInductive : "
+     "Lean.Elab.Command.InductiveElabDescr := default"),
     ("@[tactic]", "@[tactic plantedStx] def plantedTactic : Lean.Elab.Tactic.Tactic := "
      "fun _ => pure ()"),
     ("@[tactic]", "attribute [tactic plantedStx] plantedTactic"),
+    ("@[grind_tactic]", "@[grind_tactic plantedStx] def plantedGrind : "
+     "Lean.Elab.Tactic.Grind.GrindTactic := fun _ => pure ()"),
+    ("@[try_tactic]", "@[try_tactic plantedStx] def plantedTry : "
+     "Lean.Elab.Tactic.Try.TryTactic := fun _ => failure"),
+    ("@[simproc]", "@[simproc] def plantedSimprocAttr : Lean.Meta.Simp.Simproc := "
+     "fun _ => return .continue"),
+    ("@[sevalproc]", "attribute [sevalproc] plantedSimprocAttr"),
+    ("@[delab]", "@[delab app.plantedK] def plantedDelab : "
+     "Lean.PrettyPrinter.Delaborator.Delab := failure"),
+    ("@[app_unexpander]", "@[app_unexpander plantedK] def plantedUnexpander : "
+     "Lean.PrettyPrinter.Unexpander := fun _ => throw ()"),
+    ("@[quot_precheck]", "@[quot_precheck plantedStx] def plantedPrecheck : "
+     "Lean.Elab.Term.Quotation.Precheck := fun _ => pure ()"),
     ("initialize", "initialize plantedRef : IO.Ref Nat ← IO.mkRef 0"),
     ("builtin_initialize", "builtin_initialize plantedBuiltin : IO.Ref Nat ← IO.mkRef 0"),
     ("@[init]", "@[init plantedInit] opaque plantedInitRef : IO.Ref Nat"),

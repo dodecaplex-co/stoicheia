@@ -12,8 +12,10 @@
    `Elements/`, `Staging/` or `Audit/` (LEAN_TREES), since they get round the kernel,
    bring in an axiom without the word, run a program when a file is built or imported,
    or stop Lean reading a file: `native_decide`, `bv_decide`, the word `native`,
-   `(config := …)`, `set_option debug.…`, `#eval`, `#exit`, `run_cmd`, `elab`, `macro`,
-   `implemented_by`, `extern`, `unsafe` and the rest of FORBIDDEN, below.
+   `(config := …)`, `set_option debug.…` (or `«debug».…`), `#eval`, `#exit`, `run_cmd`,
+   `elab`, `macro`, `simproc` and its kin, `implemented_by`, `extern`, `unsafe`, any
+   attribute whose name ends in a word for one that registers code (`elab`, `tactic`,
+   `init`, `proc`, `delab`, `unexpander` and others), and the rest of FORBIDDEN, below.
 5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
    fields are in `Certificate/FIELDS.md`):
    - every axiom an entry rests on, other than Lean's own `propext`,
@@ -89,11 +91,15 @@ LEAN_FOUNDATIONS = {"propext", "Classical.choice", "Quot.sound"}
 # file (`Staging.lean`). The checks' own Lean, `Certificate/Facts.lean`, is not among them.
 LEAN_TREES = ("Elements", "Staging", "Audit")
 # Commands that could get round the kernel (`native_decide` and the `debug.` options, among
-# them `debug.skipKernelTC`), bring in an axiom without the keyword, run a program when the
-# file is built or imported (`#eval`, `run_cmd` and their kin, `initialize`), give syntax a
-# meaning in code (`elab`, `macro` and the elaborator attributes), swap code in for a
-# definition, or stop Lean reading the file (`#exit`). Matched as whole words, in the Lean
-# with its comments taken out; FORMALIZATION.md, section 7, is their one home.
+# them `debug.skipKernelTC`, spelled `debug.` or `«debug».`), bring in an axiom without the
+# keyword, run a program when the file is built or imported (`#eval`, `run_cmd` and their
+# kin, `initialize`, and the simproc commands, whose code `simp` runs), give syntax a
+# meaning in code (`elab`, `macro`), swap code in for a definition, or stop Lean reading the
+# file (`#exit`). Matched as whole words, in the Lean with its comments taken out; so is an
+# attribute that registers code Lean runs while a file is built or printed, known by the
+# end of its name (`command_elab`, `grind_tactic`, `init`, `sym_simproc`, `app_unexpander`,
+# `quot_precheck` and the rest) and named in full in the finding. FORMALIZATION.md,
+# section 7, is their one home.
 # Lean 4.35 evaluates natively, and admits the result as an axiom, for `native_decide`, the
 # `bv_decide` family and `decide` with its `native` option, which `decide +zetaReduce
 # +native`, `decide (native := Bool.true)` or a whole configuration, `(config := ⟨false,
@@ -102,11 +108,14 @@ LEAN_TREES = ("Elements", "Staging", "Audit")
 FORBIDDEN = re.compile(
     r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bnative\s*:=\s*true\b|\bnative\b|"
     r"\(\s*«?config»?\s*:=|"
-    r"\bset_option\s+debug\.|#eval\b|#exit\b|"
+    r"\bset_option\s+«?debug»?\.|#eval\b|#exit\b|"
     r"\b(bv_decide|bv_check|run_cmd|run_elab|run_meta|run_tac|by_elab|elab|elab_rules|"
     r"macro|macro_rules|command_elab|term_elab|initialize|builtin_initialize|"
+    r"(?:builtin_)?(?:sym_|cbv_)?d?simproc(?:_decl|_pattern)?|"
     r"implemented_by|extern|unsafe)\b|"
-    r"(?:@|\battribute\s*)\[[^\]]*?\b(?P<attr>tactic|init)\b")
+    r"(?:@|\battribute\s*)\[[^\]]*?\b(?P<attr>\w*(?:elab|tactic|init|proc|discharger|delab|"
+    r"unexpander|precheck|formatter|parenthesizer|control_info|code_action|rpc_method|"
+    r"linter))\b")
 # An axiom, declared anywhere in a line: Lean reads `example : True := trivial axiom
 # planted : False` as two commands, the second an axiom.
 AXIOM = re.compile(r"\baxiom\b")
