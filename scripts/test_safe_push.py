@@ -2517,9 +2517,12 @@ class ProtectedPaths(Edge):
         # a Lean file, and README.md's hand-written part are.
         record = self.text("review/I/01.toml")
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "0123456"', record)
+        # A `text` stamp added on a line of its own is a stamp too (review/SCHEMA.md).
+        texted = self.text("review/I/03.toml").rstrip("\n") + '\ntext = "sha256:0123456789abcdef"\n'
         changes = {
             "Certificate/Facts.lean": self.text("Certificate/Facts.lean") + "\n-- for the test\n",
             "review/I/01.toml": stamped,
+            "review/I/03.toml": texted,
             "book/I/01.md": self.text("book/I/01.md") + "\nA generated line.\n",
             "docs/WORKFLOW.md": self.text("docs/WORKFLOW.md") + "\nA line for the test.\n",
             "AGENTS.md": self.text("AGENTS.md") + "\nA line for the test.\n",
@@ -2528,12 +2531,17 @@ class ProtectedPaths(Edge):
         self.assertEqual(safe_push.judged_files(WORK, BASE, sha), [])
         refused, out = self.kept_apart(sha, "python3 scripts/check_fidelity.py")
         self.assertFalse(refused, out)
+        # A stamp taken away is not a stamp: the record is judged.
+        unstamped = re.sub(r'(?m)^lean = "[^"]*"\n', "", self.text("review/I/04.toml"))
+        self.assertNotEqual(unstamped, self.text("review/I/04.toml"))
         sha = self.commit("And the edition", {
             "review/I/02.toml": self.text("review/I/02.toml") + "\n# A line for the test.\n",
+            "review/I/04.toml": unstamped,
             "Elements/BookI/Prop01.lean": self.text("Elements/BookI/Prop01.lean") + "\n-- x\n",
             "README.md": "A hand-written line.\n" + self.text("README.md")})
         self.assertEqual(safe_push.judged_files(WORK, BASE, sha),
-                         ["Elements/BookI/Prop01.lean", "README.md", "review/I/02.toml"])
+                         ["Elements/BookI/Prop01.lean", "README.md", "review/I/02.toml",
+                          "review/I/04.toml"])
 
     def test_harness_runs_from_origin_main(self):
         # The commit empties its own copy of the secret scan and plants a token; run from

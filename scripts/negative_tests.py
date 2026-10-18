@@ -14,13 +14,15 @@ records current; CI runs it on every push.
    statement of III.1's porism makes III.1's review record stale; and `Centre`, no
    longer among the opaque primitives (as if it had been made a `def`), is caught.
 4. A changed Lean file makes its review record stale (I.1).
-5. III.16's review record without its unformalized passage leaves a run of `--` lines
+5. An edited note makes its review record stale (I.1); a comment added and a stamp
+   moved do not.
+6. III.16's review record without its unformalized passage leaves a run of `--` lines
    with no Lean beneath it undeclared.
-6. A remark planted in I.5 between two sentences that share one step of Lean leaves the
+7. A remark planted in I.5 between two sentences that share one step of Lean leaves the
    first with no Lean of its own: a remark ends a run and carries nothing. A second
    remark, between the next sentence and its Lean, does not stop that Lean carrying it.
-7. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
-8. One build with planted assumptions, the certificate recomputed:
+8. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
+9. One build with planted assumptions, the certificate recomputed:
    - in I.16, Postulate 5, a planted Euclidean-only rule (`Tacit.Euclidean.planted`)
      and an axiom declared in I.16's own file after a docstring on the same line:
      each is caught, so are the count of Euclid's assumptions and the two planted
@@ -34,7 +36,7 @@ records current; CI runs it on every push.
 The checks these do not plant a fault for are named in README.md's table, "What the
 checks show": check_style.py, check_links.py, the pages' freshness and the audit lemmas.
 
-The files changed are restored, and so is `facts.json`; after test 8 the proofs are
+The files changed are restored, and so is `facts.json`; after test 9 the proofs are
 built again from the restored files. Exits non-zero if any change goes unnoticed.
 Standard library only; Python 3.11 or later, for the review records.
 """
@@ -47,6 +49,7 @@ from pathlib import Path
 
 import check_fidelity
 import heath
+import review_stamp
 
 ROOT = heath.ROOT
 PLANTED = ROOT / "Elements" / "Foundations" / "Tacit" / "Planted.lean"
@@ -178,6 +181,43 @@ def stale_lean() -> None:
     try:
         expect_failure("a changed Lean file under a review record", fidelity(),
                        "I.1: its Lean file has changed since it was reviewed")
+    finally:
+        path.write_text(saved)
+
+
+def edited_note() -> None:
+    """An edited note under a current `text` stamp. I.1's record is given its `text` stamp
+    first if it has none yet (docs/WORKFLOW.md, section 6), so the test holds before and
+    after the records are migrated; then its first note gains a planted word, and the
+    check must say the record changed. With a comment added and its stamp moved, and its
+    words as they were, the record must not be called changed."""
+    path = heath.review_path("I", 1)
+    saved = path.read_text()
+    stamped = review_stamp.set_stamp(saved, "review", "text", heath.text_hash(saved))
+    lines = stamped.split("\n")
+    at = next((i for i, line in enumerate(lines) if line.startswith('note = "')), None)
+    if at is None:
+        failures.append("an edited note: review/I/01.toml has no `note`; update this test")
+        return
+    edited = lines[:at] + [lines[at].replace('note = "', 'note = "Planted: ', 1)] + lines[at + 1:]
+    try:
+        path.write_text("\n".join(edited))
+        expect_failure("an edited note in a review record", fidelity(),
+                       "I.1: its record has changed since it was reviewed")
+        # The same words with a comment above them and the `text` stamp first in
+        # [review]: comments and layout are not the record's text.
+        moved = [line for line in lines if not line.startswith("text = ")]
+        review = moved.index("[review]")
+        moved.insert(review + 1, f'text = "{heath.text_hash(saved)}"')
+        moved.insert(0, "# A comment planted by scripts/negative_tests.py.")
+        path.write_text("\n".join(moved))
+        result = fidelity()
+        if "I.1: its record has changed" in result.stdout + result.stderr:
+            failures.append("a comment and a moved stamp in I.1's record: wrongly called a "
+                            "changed record")
+            print((result.stdout + result.stderr)[-3000:])
+        else:
+            print("✓ a comment and a moved stamp in I.1's record: not called a change")
     finally:
         path.write_text(saved)
 
@@ -334,6 +374,7 @@ def main() -> int:
     stale_statement()
     primitive_not_opaque()
     stale_lean()
+    edited_note()
     undeclared_run()
     remark_ends_run()
     native_decide()

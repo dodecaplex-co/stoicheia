@@ -154,7 +154,7 @@ defect nobody has looked into.
 ### The record
 
 What the review leaves in the repository: `review/<book>/NN.toml`, read by
-`heath.load_review`. The stamps (`fingerprint`, `commit`, `lean`) are written by
+`heath.load_review`. The stamps (`fingerprint`, `commit`, `lean`, `text`) are written by
 `scripts/review_stamp.py`, never by hand. Delete the sections that have nothing to say;
 `[statement]`, `[route]` and `[review]` are always present.
 
@@ -200,6 +200,7 @@ tags = []                      # from review/terms.toml
 stage = "exceptions"           # or "full"
 commit = "…"
 lean = "sha256:…"
+text = "sha256:…"
 reviewer = "…"                 # from stage "full": the model or person, and the role
 # run = "brief …, stage …, workflow …"   # from stage "full"
 # [review.items]               # once docs/ACCEPTANCE.md fixes the keys:

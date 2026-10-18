@@ -6,8 +6,9 @@ Lean quotes Heath word for word; the record says whether the Lean statement mean
 Euclid's enunciation means, and how each passage of his argument appears in the Lean.
 The page shows it under the enunciation, before the reader meets the green check.
 
-A record is tied to what its reviewer read by two hashes, one of the statements and one
-of the Lean file. When either changes, the record has to be read again. Python reads
+A record is tied to what its reviewer read by three hashes: one of the statements, one of
+the Lean file, and one of the record's own text. When any of them changes, the record has
+to be read again. Python reads
 the records with `tomllib` (Python 3.11 or later), and `heath.load_review(book, n)` checks
 each against this page. The record's tags come from [terms.toml](terms.toml).
 
@@ -160,6 +161,7 @@ The section needs at least one of the two, and is left out when it has neither.
 | `stage` | `"exceptions"` or `"full"` | yes | See "Two stages". |
 | `commit` | git commit, 7 to 40 hex digits | stamp | The commit whose files the record was last confirmed against: the reviewer's reading, or a later reading of each changed file against the record (docs/WORKFLOW.md, section 6). |
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
+| `text` | `"sha256:"` and 16 hex digits | stamp | `heath.text_hash` of the record itself: what it says, without its stamps (below). |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
 | `items` | table | no | Acceptance items (stage 6), each `"pass"`, `"fail"` or `"n/a"`. |
@@ -170,10 +172,22 @@ The acceptance checklist, `docs/ACCEPTANCE.md`, will fix the item keys. Until it
 
 ## Stamps
 
-`fingerprint`, `commit` and `lean` are stamps: `scripts/review_stamp.py` writes them, so
-nobody computes a hash by hand. Keep each on a line of its own, `key = "value"`, so the
-script can rewrite it in place. Before stamping, `heath.load_review(book, n,
+`fingerprint`, `commit`, `lean` and `text` are stamps: `scripts/review_stamp.py` writes
+them, so nobody computes a hash by hand. Keep each on a line of its own, `key = "value"`,
+so the script can rewrite it in place. Before stamping, `heath.load_review(book, n,
 require_stamp=False)` reads a record without them.
+
+`text` covers the record's own words, so that an edit to a note, a scope or a passage
+makes the record stale as surely as a change to the Lean. It is `heath.text_hash` of the
+record as TOML reads it, with `[review]` set aside, which holds the stamps and the
+reviewer's account of the reading, and with `fingerprint` set aside, which stamps the
+statements: so writing a stamp never changes the text it stamps. Comments, layout and the
+order of keys are not part of the text; every key and value of the other sections is.
+
+A record stamped before `text` was (18 October 2026) may lack it until it gains it as
+[WORKFLOW](../docs/WORKFLOW.md), section 6, says; `scripts/check_fidelity.py` names each
+record without it in a note. Once every record carries `text`, it is required like the
+other stamps.
 
 ## What the machine checks
 
@@ -197,8 +211,9 @@ require_stamp=False)` reads a record without them.
 
 `python3 scripts/heath.py` checks the worked examples below and every record present.
 `scripts/check_fidelity.py` adds what needs facts.json and the Lean files: that every
-proposition has a record, that the stamps are current (if not, "statement changed since
-reviewed"), and that every run of `--` lines with no Lean beneath it is declared.
+proposition has a record, that the stamps are current (if not, that its statement, its
+Lean file or its record "has changed since it was reviewed"), and that every run of `--`
+lines with no Lean beneath it is declared.
 
 ## Worked examples
 
@@ -206,7 +221,8 @@ These two show the shape of a record; they are not the records themselves, which
 `review/III/16.toml` and `review/I/40.toml`. Their stamps were computed at commit
 d040117, and serve as test values: at that commit, `heath.review_fingerprint` gives
 `sha256:9fd59073303dbcdc` for III.16 (its statement, then III.16 Por.'s) and
-`sha256:5ea666d96871b7f8` for I.40.
+`sha256:5ea666d96871b7f8` for I.40. Their `text` is `heath.text_hash` of each example as
+printed here, which `python3 scripts/heath.py` checks.
 
 III.16 is partial: the clause about the angle of the semicircle and the horn-like angle
 is not stated, its porism is proved on its own, and one run of sentences has no Lean
@@ -263,6 +279,7 @@ note = "Proved as its own theorem, with its own certificate entry, III.16 Por."
 stage = "exceptions"
 commit = "d040117"
 lean = "sha256:061379c1f0411141"
+text = "sha256:47c9097b39a8fcc7"
 reviewer = "Claude Opus 5.5"
 ```
 
@@ -290,6 +307,7 @@ case = "the bases BC and CE meeting at C, as in Heath's figure"
 stage = "exceptions"
 commit = "d040117"
 lean = "sha256:5f353abf9022b4fd"
+text = "sha256:1cd54525e1a8a857"
 reviewer = "Claude Opus 5.5"
 ```
 

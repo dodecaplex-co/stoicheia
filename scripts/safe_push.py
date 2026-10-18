@@ -1480,16 +1480,21 @@ GUIDES = ("AGENTS.md", "CLAUDE.md", "CONTRIBUTING.md", "docs/WORKFLOW.md",
           "docs/FORMALIZATION.md", "docs/STYLE.md", "docs/briefs/", "docs/templates/")
 # A review record's stamp: its reviewer's reading of a statement and a Lean file, as a
 # change to the certificate's output asks for (WORKFLOW, section 6). Not its stage.
-STAMP_LINE = re.compile(r'(?m)^(?:fingerprint|commit|lean|reviewer)\s*=\s*"[^"]*"[ \t]*$')
+STAMP_LINE = re.compile(r'(?m)^(fingerprint|commit|lean|text|reviewer)\s*=\s*"[^"]*"[ \t]*$\n?')
 
 
 def stamp_only(repo, base, sha, path: str) -> bool:
-    """Is the change to `path` a review record's stamp alone?"""
+    """Is the change to `path` a review record's stamp alone: its stamp lines rewritten
+    or added (as `text`, review/SCHEMA.md), none taken away, and nothing else changed?"""
     if not re.fullmatch(r"review/[IVX]+/\d+\.toml", path):
         return False
     old, new = show(repo, base, path), show(repo, sha, path)
-    return old is not None and new is not None \
-        and STAMP_LINE.sub("", old) == STAMP_LINE.sub("", new)
+    if old is None or new is None:
+        return False
+
+    def keys(text: str) -> set[str]:
+        return {m.group(1) for m in STAMP_LINE.finditer(text)}
+    return STAMP_LINE.sub("", old) == STAMP_LINE.sub("", new) and keys(old) <= keys(new)
 
 
 def judged_files(repo, base, sha) -> list[str]:
@@ -2049,7 +2054,7 @@ BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin(?: sha=(\w+) base=(\w+
                    r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
                    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
-STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean)\s*=\s*"([^"]*)"')
+STAMP_FIELD = re.compile(r'(?m)^(fingerprint|commit|lean|text)\s*=\s*"([^"]*)"')
 
 
 def sanitized(text: str) -> str:
@@ -2121,6 +2126,9 @@ def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
         new = dict(STAMP_FIELD.findall(show(repo, sha, path) or ""))
         if status == "D":
             records.append(f"- `{path}`: deleted")
+        elif old != new and new.get("commit") and new["commit"] == old.get("commit"):
+            records.append(f"- `{path}`: its stamps written, its commit kept at "
+                           f"`{new['commit'][:12]}`")
         elif old != new and new.get("commit"):
             records.append(f"- `{path}`: re-stamped at `{new['commit'][:12]}`")
         else:

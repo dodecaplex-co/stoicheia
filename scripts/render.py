@@ -1720,16 +1720,20 @@ def load_program():
 
 
 def record_current(ref, record, facts):
-    """Do a record's stamps still match the statements in facts.json and its Lean file
-    (review/SCHEMA.md)? check_fidelity.py fails when they do not; the status table
-    counts them."""
+    """Do a record's stamps still match the statements in facts.json, its Lean file and
+    its own text (review/SCHEMA.md)? check_fidelity.py fails when they do not; the status
+    table counts them. A record with no `text` stamp yet counts as current, as the check
+    only names it (docs/WORKFLOW.md, section 6)."""
     r = heath.parse_ref(ref)
     try:
         want = heath.review_fingerprint({"propositions": list(facts.values())}, ref)
     except KeyError:
         return False
+    text = record["review"].get("text")
     return (record["statement"].get("fingerprint") == want and
-            record["review"].get("lean") == heath.file_hash(heath.lean_path(r.book, r.n)))
+            record["review"].get("lean") == heath.file_hash(heath.lean_path(r.book, r.n)) and
+            (text is None
+             or text == heath.text_hash(heath.review_path(r.book, r.n).read_text())))
 
 
 def propositions_cell(book, count, facts):

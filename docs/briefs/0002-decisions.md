@@ -631,3 +631,39 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+- **A review stamp covers the record's own text.** A record's stamps went stale when its
+  statements or its Lean file changed, but not when the record itself was edited, so a
+  note, a scope or a passage could change under "Reviewed at" with no one reading it. Two
+  lanes found it on 18 October, the one correcting the errors from Argon's review
+  ([#64](https://github.com/jackChallis/stoicheia/issues/64)) and the fidelity runs
+  ([#61](https://github.com/jackChallis/stoicheia/issues/61)), and we thank them both
+  ([#77](https://github.com/jackChallis/stoicheia/issues/77)). A record now carries a
+  fourth stamp, `text` in `[review]`: `heath.text_hash` of the record as TOML reads it,
+  with `[review]` and `fingerprint` set aside, so that writing a stamp never changes the
+  text it stamps, and with comments and layout aside
+  ([`review/SCHEMA.md`](../../review/SCHEMA.md#stamps), "Stamps", whose two worked
+  examples now carry it as test values). [`scripts/review_stamp.py`](../../scripts/review_stamp.py)
+  writes it with the other stamps, and, whenever a stamp changes, checks both the Lean
+  file and the record at the commit named (before, it checked the Lean file only, and
+  only when the commit changed). [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py)
+  reports a record whose text no longer matches its stamp: "its record has changed since
+  it was reviewed". [`scripts/heath.py`](../../scripts/heath.py) knows the key and checks
+  the examples' values; [`scripts/render.py`](../../scripts/render.py) counts such a
+  record as not current, and writes nothing new;
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants an edited note in
+  I.1's record and expects it caught, and a comment and a moved stamp not;
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts a `text` line as a stamp,
+  and a stamp line added as a stamp alone while none is taken away, which
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) tests. Nothing is
+  loosened. The existing records are not stamped as read: `review_stamp.py
+  --migrate-text` writes `text` alone, and only where a record's text at its own stamp
+  commit is its text now, which records no new reading ([WORKFLOW](../WORKFLOW.md),
+  section 6). On main at `1caff82` it writes 83 records; 16 were edited after their stamp
+  commit and need a reader: I.37, I.38, II.1, II.14, III.4, III.7, III.8, III.9, III.10,
+  III.14, III.16, III.17, III.24, III.25, III.27 and III.37. Failing on them would stop
+  main, so until every record carries `text` the check names each record without it in a
+  note, and fails on a `text` that no longer matches; once every record carries it, a
+  check change of its own makes `text` required like the other stamps. The order of
+  landing: this change; then the records' `text` stamps, by `--migrate-text` run again on
+  main at landing, after the branches that change records (stages 2 and 3's migrations);
+  then the remaining records read and stamped by a reader; then `text` required.
