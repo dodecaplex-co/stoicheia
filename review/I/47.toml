@@ -50,7 +50,15 @@ note = "The statement takes BDEC, GB and HC as the squares on BC, BA and AC; squ
 
 [review]
 stage = "full"
-commit = "3b6a3bc"
+commit = "ab90f7e"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:a0fc7319bcdf680a"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
