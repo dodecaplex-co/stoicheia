@@ -1357,9 +1357,10 @@ findings:
   each, a corner's radius spelled 5e1 read as none, and a line of no length with butt caps
   read as drawn; and, from the independent review, cases for what none of them had pinned:
   an ellipse, a polyline, a dot or a stroke wholly within a letter, the canvas's right, top
-  and foot, a letter's size and transform, and a prime; and, from a later review, three
-  that name a line dashed by itself or by its group as a dashed line. A corner's radius is
-  now read in one pass, so that no attribute can make the script slow. And
+  and foot, a letter's size and transform, and a prime; and, from a later review, three on
+  what a line through a letter is called: two dashed by itself or by its group, called a
+  dashed line, and one whose dasharray is none, called a line. A corner's radius is now
+  read in one pass, so that no attribute can make the script slow. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures, as [ACCEPTANCE](../ACCEPTANCE.md) now says.
   [STYLE](../STYLE.md), sections 7 and 8, gives the rule, and the reviewer's checklist, item
