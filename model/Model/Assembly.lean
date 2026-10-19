@@ -11,6 +11,7 @@ public import Model.Euclidean.CircleRules
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Circles
 public import Model.Euclidean.Incidence
+public import Model.Euclidean.Lengths
 public import Model.Euclidean.LineCircle
 public import Model.Euclidean.LineSides
 public import Model.Euclidean.Magnitudes
@@ -21,6 +22,7 @@ public import Model.Euclidean.Postulate5
 public import Model.Euclidean.Segments
 public import Model.Euclidean.Sides
 public import Model.Euclidean.Superposition
+public import Model.Euclidean.TripleIncidence
 
 /-!
 # The plane satisfies the laws
@@ -33,25 +35,16 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-So far 81 of the 87 laws are proved in the plane. Until the rest are,
-`euclidean_laws` takes them as hypotheses, so that it states exactly what is proved: the plane
-satisfies every law, given the 6 that are not yet proved in it. When none is left,
-the generator writes it with no hypothesis, and `model_exists` after it.
+All 87 laws are proved in the plane, so `euclidean_laws` has no hypothesis, and
+`model_exists` follows from it.
 -/
 
 @[expose] public section
 
 namespace Model
 
-/-- **The plane satisfies the laws,** given the 6 not yet proved in it. -/
-theorem euclidean_laws
-    (eq_of_len_eq_zero : Law.Tacit.eq_of_len_eq_zero Euclidean.plane)
-    (len_self : Law.Tacit.len_self Euclidean.plane)
-    (len_symm : Law.Tacit.len_symm Euclidean.plane)
-    (triple_incidence1 : Law.Tacit.triple_incidence1 Euclidean.plane)
-    (triple_incidence2 : Law.Tacit.triple_incidence2 Euclidean.plane)
-    (triple_incidence3 : Law.Tacit.triple_incidence3 Euclidean.plane) :
-    Laws Euclidean.plane where
+/-- **The plane satisfies every law.** -/
+theorem euclidean_laws : Laws Euclidean.plane where
   Definition15 := Euclidean.Definition15
   Postulate1 := Euclidean.Postulate1
   Postulate2 := Euclidean.Postulate2
@@ -87,7 +80,7 @@ theorem euclidean_laws
   circles_meet_of_on_inside_outside := Euclidean.circles_meet_of_on_inside_outside
   circles_meet_opposite_side := Euclidean.circles_meet_opposite_side
   circles_meet_same_side := Euclidean.circles_meet_same_side
-  eq_of_len_eq_zero := eq_of_len_eq_zero
+  eq_of_len_eq_zero := Euclidean.eq_of_len_eq_zero
   exists_point := Euclidean.exists_point
   exists_point_between := Euclidean.exists_point_between
   exists_point_inside_circle := Euclidean.exists_point_inside_circle
@@ -103,8 +96,8 @@ theorem euclidean_laws
   inside_of_len_lt := Euclidean.inside_of_len_lt
   len_add_of_between := Euclidean.len_add_of_between
   len_lt_of_inside := Euclidean.len_lt_of_inside
-  len_self := len_self
-  len_symm := len_symm
+  len_self := Euclidean.len_self
+  len_symm := Euclidean.len_symm
   line_circle_between := Euclidean.line_circle_between
   line_circle_beyond := Euclidean.line_circle_beyond
   line_meets_circle_of_inside := Euclidean.line_meets_circle_of_inside
@@ -136,8 +129,12 @@ theorem euclidean_laws
   same_side_symm := Euclidean.same_side_symm
   same_side_trans := Euclidean.same_side_trans
   superposition := Euclidean.superposition
-  triple_incidence1 := triple_incidence1
-  triple_incidence2 := triple_incidence2
-  triple_incidence3 := triple_incidence3
+  triple_incidence1 := Euclidean.triple_incidence1
+  triple_incidence2 := Euclidean.triple_incidence2
+  triple_incidence3 := Euclidean.triple_incidence3
+
+/-- **The laws have a model:** the ordinary plane. -/
+theorem model_exists : ∃ S : Signature, Laws S :=
+  ⟨Euclidean.plane, euclidean_laws⟩
 
 end Model

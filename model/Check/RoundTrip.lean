@@ -20,6 +20,7 @@ import Model.Laws.circles
 import Model.Laws.sides
 import Model.Laws.order
 import Model.Laws.incidence
+import Model.Laws.lengths
 import Check.Original
 import Check.Generator
 

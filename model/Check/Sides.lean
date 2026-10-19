@@ -4,10 +4,10 @@ import Model.Laws.sides
 /-!
 # Checking the hand translation of the side rules against the library
 
-`Model/Laws/sides.lean` translates the five same-side rules and the four Pasch rules by
-hand. As in `Check/Hand.lean`, the library's own words are put in for the signature's
-fields (`Check.original`), and Lean is asked whether each translated law then is the
-library's declaration, read through `type_of%`, which takes a declaration's statement and
+`Model/Laws/sides.lean` translates the five same-side rules, four Pasch rules and three
+triple-incidence rules by hand. As in `Check/Hand.lean`, the library's own words are put
+in for the signature's fields (`Check.original`), and Lean is asked whether each translated
+law then is the library's declaration, read through `type_of%`, which takes a declaration's statement and
 does not use it. Each check is `rfl`; a dropped guard, two swapped arguments or a change in
 the order of the binders fails it, and the build with it.
 -/
@@ -34,6 +34,13 @@ example : Model.Hand.pasch3 original = type_of% @Elements.Tacit.pasch3 := rfl
 
 example : Model.Hand.pasch4 original = type_of% @Elements.Tacit.pasch4 := rfl
 
+example : Model.Hand.triple_incidence1 original =
+    type_of% @Elements.Tacit.triple_incidence1 := rfl
+example : Model.Hand.triple_incidence2 original =
+    type_of% @Elements.Tacit.triple_incidence2 := rfl
+example : Model.Hand.triple_incidence3 original =
+    type_of% @Elements.Tacit.triple_incidence3 := rfl
+
 /-! ## The hand translations against the generated laws -/
 
 example (S : Model.Signature) : Model.Hand.same_side_refl S =
@@ -54,5 +61,12 @@ example (S : Model.Signature) : Model.Hand.pasch3 S =
     Model.Law.Tacit.pasch3 S := rfl
 example (S : Model.Signature) : Model.Hand.pasch4 S =
     Model.Law.Tacit.pasch4 S := rfl
+
+example (S : Model.Signature) : Model.Hand.triple_incidence1 S =
+    Model.Law.Tacit.triple_incidence1 S := rfl
+example (S : Model.Signature) : Model.Hand.triple_incidence2 S =
+    Model.Law.Tacit.triple_incidence2 S := rfl
+example (S : Model.Signature) : Model.Hand.triple_incidence3 S =
+    Model.Law.Tacit.triple_incidence3 S := rfl
 
 end Check

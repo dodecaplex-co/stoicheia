@@ -3,10 +3,10 @@ module
 public import Model.Signature
 
 /-!
-# The same-side rules and Pasch's rules, translated by hand
+# The same-side, Pasch and triple-incidence rules, translated by hand
 
 **This file is written by hand, and so is every translation in it.** It holds, for now, the
-translations of the five same-side rules and the four Pasch rules of
+translations of the five same-side rules, four Pasch rules and three triple-incidence rules of
 `Elements/Foundations/Tacit/Diagram.lean`. The generator described in the
 [README](../../README.md) writes every law from its elaborated declaration, and
 `Check/Sides.lean` compares each translation here with its generated field.
@@ -20,8 +20,8 @@ each law, from `Certificate/axioms.lock` (the same text as `axiom_types` in `fac
 result is the original declaration; the build fails if it is not.
 
 The rules come from System E, the diagrammatic system of Jeremy Avigad, Edward Dean and
-John Mumma, with our thanks; the numbering (Same side 1 to 5, Pasch 1 to 4) is theirs and
-the library's.
+John Mumma, with our thanks; the numbering (Same side 1 to 5, Pasch 1 to 4 and
+Triple incidence 1 to 3) is theirs and the library's.
 -/
 
 @[expose] public section
@@ -94,6 +94,38 @@ Ne C B → Not (Elements.SameSide A C L) → Elements.Between A B C`. -/
 def pasch4 : Prop :=
   ∀ {A B C : S.Point} {L M : S.Line}, L ≠ M → S.OnLine B L → S.OnLine B M → S.OnLine A M →
     S.OnLine C M → A ≠ C → A ≠ B → C ≠ B → ¬ S.SameSide A C L → S.Between A B C
+
+/-! ## Triple incidence -/
+
+/-- `Elements.Tacit.triple_incidence1`, translated by hand. The lock prints it as
+`∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L →
+Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M →
+Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N →
+Not (Elements.SameSide B D M)`. -/
+def triple_incidence1 : Prop :=
+  ∀ {A B C D : S.Point} {L M N : S.Line}, S.OnLine A L → S.OnLine A M → S.OnLine A N →
+    S.OnLine B L → S.OnLine C M → S.OnLine D N → S.SameSide C D L → S.SameSide B C N →
+    ¬ S.SameSide B D M
+
+/-- `Elements.Tacit.triple_incidence2`, translated by hand. The lock prints it as
+`∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L →
+Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M →
+Elements.OnLine D N → Elements.SameSide C D L → Not (Elements.SameSide B D M) →
+Not (Elements.OnLine D M) → Ne B A → Elements.SameSide B C N`. -/
+def triple_incidence2 : Prop :=
+  ∀ {A B C D : S.Point} {L M N : S.Line}, S.OnLine A L → S.OnLine A M → S.OnLine A N →
+    S.OnLine B L → S.OnLine C M → S.OnLine D N → S.SameSide C D L →
+    ¬ S.SameSide B D M → ¬ S.OnLine D M → B ≠ A → S.SameSide B C N
+
+/-- `Elements.Tacit.triple_incidence3`, translated by hand. The lock prints it as
+`∀ {A B C D E : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L →
+Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M →
+Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N →
+Elements.SameSide D E M → Elements.SameSide C E N → Elements.SameSide C E L`. -/
+def triple_incidence3 : Prop :=
+  ∀ {A B C D E : S.Point} {L M N : S.Line}, S.OnLine A L → S.OnLine A M → S.OnLine A N →
+    S.OnLine B L → S.OnLine C M → S.OnLine D N → S.SameSide C D L → S.SameSide B C N →
+    S.SameSide D E M → S.SameSide C E N → S.SameSide C E L
 
 end Hand
 

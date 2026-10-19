@@ -4,6 +4,7 @@ public import Model.Signature
 public import Model.Laws
 public import Model.Hand
 public import Model.Laws.incidence
+public import Model.Laws.lengths
 public import Model.Laws.sides
 public import Model.Laws.intersections
 public import Model.Laws.«areas-p5»
@@ -16,6 +17,8 @@ public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
 public import Model.Assembly
 public import Model.Euclidean.Incidence
+public import Model.Euclidean.Lengths
+public import Model.Euclidean.TripleIncidence
 public import Model.Euclidean.Avoidance
 public import Model.Laws.order
 public import Model.Euclidean.Order

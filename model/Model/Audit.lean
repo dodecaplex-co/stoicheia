@@ -39,6 +39,9 @@ public import Model.Euclidean.Segments
 public import Model.Laws.sides
 public import Model.Euclidean.Sides
 public import Model.Euclidean.Pasch
+public import Model.Laws.lengths
+public import Model.Euclidean.Lengths
+public import Model.Euclidean.TripleIncidence
 
 /-!
 # What the model's proofs rest on
@@ -651,13 +654,55 @@ info: 'Model.Euclidean.superposition' depends on axioms: [propext, Classical.cho
 #guard_msgs in
 #print axioms Model.Euclidean.superposition
 
+/--
+info: 'Model.Euclidean.eq_of_len_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.eq_of_len_eq_zero
+
+/--
+info: 'Model.Euclidean.len_self' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.len_self
+
+/--
+info: 'Model.Euclidean.len_symm' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.len_symm
+
+/--
+info: 'Model.Euclidean.triple_incidence1' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.triple_incidence1
+
+/--
+info: 'Model.Euclidean.triple_incidence2' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.triple_incidence2
+
+/--
+info: 'Model.Euclidean.triple_incidence3' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.triple_incidence3
+
 /-! ## What the assembled model rests on
 
-`euclidean_laws` gathers every theorem that proves a law in the plane, with the laws not yet
-proved there as hypotheses, so what it rests on is what all those proofs rest on. -/
+`euclidean_laws` gathers proofs of all 87 locked laws, with no remaining hypothesis.
+It and `model_exists` rest on what those proofs rest on. -/
 
 /--
 info: 'Model.euclidean_laws' depends on axioms: [propext, Classical.choice, Quot.sound]
 -/
 #guard_msgs in
 #print axioms Model.euclidean_laws
+
+/--
+info: 'Model.model_exists' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.model_exists
