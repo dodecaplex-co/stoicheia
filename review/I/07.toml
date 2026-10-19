@@ -6,11 +6,7 @@ fingerprint = "sha256:4ebf3fea121843e1"
 
 [route]
 kind = "euclid"
-
-[overlap]
-rule = "Tacit.not_same_side_of_circles_meet"
-kind = "step"
-note = "System E's Circle 4 says I.7 of two circles: they cut one another on opposite sides of the straight line through their centres. So it supplies I.7's step in the shortest proof we found from the rules alone (`Audit.I_7`), which draws the two circles and takes seven. Our proof follows Euclid, through I.5, and never uses the rule."
+note = "The proof follows Euclid through I.5. After it, `Elements/BookI/Prop07.lean` proves `Tacit.not_same_side_of_circles_meet` (System E, Circle 4) from I.7, Definition I.15 and `Tacit.circle_eq`; the reverse derivation `Audit.I_7` is therefore circular and establishes no independent overlap."
 
 [[passage]]
 at = "For, if possible, given two straight lines AC, CB"

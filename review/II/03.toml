@@ -27,7 +27,7 @@ note = "Euclid treats AE as a rectangle, with BE equal to BC. The Lean proves BA
 at = "AD is the rectangle AC, CB"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid treats AD as a rectangle, with DC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right`, the rule we assume as System E, Diagram-angle 3, then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AD."
+note = "Euclid treats AD as a rectangle, with DC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AD."
 
 [review]
 stage = "full"

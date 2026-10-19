@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For let a point D be taken at random on the other side of the straight line AB"
 kind = "helper"
 helper = "Tacit.line_meets_circle_of_opposite_sides"
-note = "Euclid takes the circle's crossings E and G with AB for granted. After choosing D on the other side by `exists_oppositeSidesOf` and drawing the circle by Postulate 3, the Lean obtains them from `Tacit.centre_inside` and `Tacit.line_meets_circle_of_opposite_sides`, rules we assume (System E, Generalities 3 and Intersection 2)."
+note = "Euclid takes the circle's crossings E and G with AB for granted. After choosing D on the other side by `exists_oppositeSidesOf` and drawing the circle by Postulate 3, the Lean uses the assumed `Tacit.centre_inside` (System E, Generalities 3) and `Tacit.line_meets_circle_of_opposite_sides` (Intersection 2), now proved in `Elements/Figure/Circles.lean` from Circle 3, Intersection 1, collinear order, Pasch 2 and Intersections 5."
 
 [[passage]]
 at = "and let the straight lines CG, CH, CE be joined"

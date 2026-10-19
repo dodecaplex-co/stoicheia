@@ -38,7 +38,7 @@ note = "The reductio shows that the supposed centre G lies on CE, and the Lean b
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop1.porism"
-note = "Proved as its own theorem, III.1 Por., from this construction. It uses that a circle has one centre (`centre_unique`), which III.1 itself does not."
+note = "Proved as its own theorem, III.1 Por., from this construction. It uses `Tacit.centre_unique`, now proved from the foundations in `Elements/Figure/Circles.lean` using circle intersections, equal radii (Definition I.15) and the order of lengths; III.1 itself does not use this theorem."
 
 [review]
 stage = "exceptions"
