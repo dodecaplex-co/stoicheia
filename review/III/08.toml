@@ -1,20 +1,17 @@
 # review/III/08.toml
 [statement]
-scope = "restricted"
-hypotheses = [
-  "the two straight lines compared as nearer and more remote, on the concave or on the convex circumference, lie on one side of DA (`SameSideOf E F D A`, `SameSideOf K L D A`). As in III.7, the statement gives the equal straight line on the other side by its length, not its inclination, so a comparison across DA does not follow from it.",
-]
-note = "Nearer and more remote are compared only on one side of DA, as in Euclid's figure; a straight line on one side is not compared with one on the other."
-short = "compared on one side of DA only"
-fingerprint = "sha256:5924e258038472ae"
+scope = "full"
+note = "With its companion: `Prop8.general` compares any two of a class, on one side of DA or on opposite sides; `Prop8` keeps two on one side."
+companions = ["III.8 general"]
+fingerprint = "sha256:407ebb1e80f5d884"
 
 [route]
 kind = "modified"
-note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24, which reaches every point of the circle."
+note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24, which reaches every point of the circle. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
 [representation]
 tags = ["centre-given"]
-note = "The circle comes with a centre, which the proof takes by III.1. The convex circumference is read as where a straight line from D first meets the circle, the concave as where it meets it again. A straight line touching the circle from D falls on neither, as Euclid's lines are drawn through."
+note = "The circle comes with a centre, which the proof takes by III.1. \"Nearer\" is the less angle at D with the ray DA, unsigned. The convex circumference is read as where a straight line from D first meets the circle, the concave as where it meets it again, and the two orders are kept apart: the two meetings of one straight line make one angle with DA. A straight line touching the circle from D falls on neither, by convention, as Euclid's lines are drawn through; that its point of contact has no point of the circle before it or beyond it follows from Definition III.2, and is not stated in Lean. The last clause covers a point of contact too."
 
 [[passage]]
 at = "Similarly we can prove that FD is greater than CD"
@@ -22,14 +19,27 @@ kind = "grouped"
 note = "The comparison above is proved for any two points of the concave circumference on one side of DA, F and C among them, so these sentences need no Lean of their own."
 
 [[passage]]
+at = "therefore DA is greatest, while DE is greater than DF"
+kind = "case"
+note = "Euclid compares DE, DF and DC on one side of DA, as his figure has them. `Prop8.general` compares any two points of the concave circumference on opposite sides too, through the partner on the other side, as far from D, as near DA and concave too (`Prop8.partner`)."
+
+[[passage]]
 at = "Similarly we can prove that DL is also less than DH"
 kind = "grouped"
 note = "The comparison above is proved for any two points of the convex circumference on one side of DA, L and H among them, so these sentences need no Lean of their own."
 
 [[passage]]
+at = "therefore DG is least, while DK is less than DL"
+kind = "case"
+note = "Euclid compares DK, DL and DH on one side of DA. `Prop8.general` compares any two points of the convex circumference on opposite sides too, through the partner on the other side, as far from D, as near DA and convex too (`Prop8.partner`)."
+
+[[passage]]
 at = "that is, the nearer to the least DG equal to the more remote"
 kind = "different"
 note = "The Lean does not appeal to the convex order, which misses a DN ending on the concave circumference or a DK touching the circle; I.24 at the centre M rules out equal straight lines on one side."
+
+[figure]
+case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figure"
 
 [review]
 stage = "exceptions"
