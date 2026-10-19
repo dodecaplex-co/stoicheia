@@ -1345,7 +1345,9 @@ findings:
   failures main still has (742 at #111) are reported and hold nothing back. Main is checked
   beside the pull request, in a worktree of the merge commit's first parent, with the pull
   request's own checks copied in (`scripts/`, `tests/`, `Certificate/`, `review/SCHEMA.md`
-  and `review/terms.toml`), keeping main's own values pinned to its content, so that one
+  and `review/terms.toml`), keeping main's own values pinned to its content. The new
+  `scripts/copy_acceptance_checks.sh` is the helper that CI and the behavioural tests share
+  to copy the pull request's checker code while preserving those pinned values, so that one
   copy of the checks judges both, and a check made stricter, which lands on its own before
   the content it judges, holds nothing back. Main's
   run leaves out the kernel replay and the model tests (E1 and E4), which the `check` and
@@ -1377,8 +1379,9 @@ findings:
   The pre-flight's `CHECKS` are unchanged too, since the job builds main beside the
   pull request: like `formal-model`, it is CI's alone. [ACCEPTANCE](../ACCEPTANCE.md), in a
   new section, "In CI", and [WORKFLOW](../WORKFLOW.md), sections 8 and 10, say so.
-  The review's correction changes `.github/workflows/ci.yml` and
-  `tests/test_check_acceptance.py`: main keeps its axiom lock, certificate expectations,
-  model hash, law names and account of the laws (WORKFLOW, section 10, step 4), and a
-  regression runs the workflow's copy commands and the certificate checks to show that
-  an updated definition or expected count cannot hide a pull request's E2 failure.
+  The review's correction changes `.github/workflows/ci.yml`,
+  `scripts/copy_acceptance_checks.sh` and `tests/test_check_acceptance.py`: main keeps its
+  axiom lock, certificate expectations, model hash, law names and account of the laws
+  (WORKFLOW, section 10, step 4), and a regression runs the shared helper and the certificate
+  checks to show that an updated definition or expected count cannot hide a pull request's
+  E2 failure.
