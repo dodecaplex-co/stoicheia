@@ -22,9 +22,10 @@ namespace Audit
 
 open Elements Elements.Tacit Elements.BookIII
 
-/-- Of two different circles that meet at B and C, a point of α is within β: the end of
-α's diameter on the line of the centres that is nearer O' (III.7 when O' is within α,
-III.8 when it is outside; O' itself when it is on α). -/
+/-- Let O and O' be the centres of two different circles α and β, and let B and C be
+distinct points common to both circles. A point of α is within β: the end of α's diameter
+on the line of the centres that is nearer O' (III.7 when O' is within α, III.8 when it is
+outside; O' itself when it is on α). -/
 theorem cut_point {α β : Circle} {O O' B C : Point} (hO : Centre O α) (hO' : Centre O' β)
     (hne : α ≠ β) (hBC : B ≠ C) (hBα : OnCircle B α) (hBβ : OnCircle B β)
     (hCα : OnCircle C α) (hCβ : OnCircle C β) :
@@ -62,7 +63,8 @@ theorem cut_point {α β : Circle} {O O' B C : Point} (hO : Centre O α) (hO' : 
     have hO'GO : Between O' G O := by
       rcases between_cases hGO'.symm hGO hOO'.symm hO'_L hG_L hO_L with h | h | h
       · exact h
-      · exact absurd (inside_of_between (Or.inr hG) (Or.inl (centre_inside hO)) h) hin
+      · exact absurd
+          (Prop2.within ⟨O, hO⟩ (Or.inr hG) (Or.inl (centre_inside hO)) h) hin
       · exact absurd hGOA (not_between_of_between_between h (between_symm hAOO'))
     have hO'GA : Between O' G A := between_of_between_right hO'GO hGOA
     exact finish G hG (Prop8 ⟨O, hO⟩ hout hA hG hO'GA
@@ -96,14 +98,16 @@ theorem within_point {α β : Circle} (hα : ∃ O : Point, Centre O α)
   have hYZ : Y ≠ Z := fun e => hZXY (e ▸ List.mem_cons_of_mem _ (List.mem_singleton_self Y))
   exact hne (Prop10 hα hβ (on X hX) hX (on Y hY) hY (on Z hZ) hZ hXY hXZ hYZ)
 
-/-- The earlier III.5 follows from the restated one when each circle has a centre. -/
+/-- Two different circles ABC and CDG, each with a centre and meeting at two distinct
+points, cannot have E as a common centre. This follows from the restated III.5. -/
 example {E : Point} {ABC CDG : Circle} (hα : ∃ O : Point, Centre O ABC)
     (hβ : ∃ O : Point, Centre O CDG) (hne : ABC ≠ CDG) (hcut : CirclesMeet ABC CDG) :
     ¬ (Centre E ABC ∧ Centre E CDG) :=
   Prop5 (CirclesCut.of_meet hα hβ hne hcut)
 
-/-- The earlier III.5 follows without a further hypothesis: the supposed common centre
-E is the centre each circle needs for the bridge. -/
+/-- Two different circles ABC and CDG meeting at two distinct points cannot have E as a
+common centre. This recovers the earlier III.5 without a further hypothesis: the supposed
+common centre E is the centre each circle needs for the bridge. -/
 theorem III_5_today {E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG)
     (hcut : CirclesMeet ABC CDG) : ¬ (Centre E ABC ∧ Centre E CDG) :=
   fun ⟨h₁, h₂⟩ => Prop5 (CirclesCut.of_meet ⟨E, h₁⟩ ⟨E, h₂⟩ hne hcut) ⟨h₁, h₂⟩
@@ -113,7 +117,10 @@ circle is outside the outer. -/
 def TouchesInternallyToday (α β : Circle) (C : Point) : Prop :=
   OnCircle C α ∧ OnCircle C β ∧ α ≠ β ∧ ∀ P : Point, OnCircle P β → ¬ OutsideCircle P α
 
-/-- The earlier III.6 follows from the restated III.6 and the bridge, with the supposed
+/-- If ABC and CDE touch at C under the earlier reading, either one within the other or
+without, they cannot have F as a common centre. For contact within the circles are
+different and no point of the inner is outside the outer; for contact without no point is
+within both. The restated III.6 and the bridge recover this conclusion, with the supposed
 common centre supplying a centre for each circle. -/
 theorem III_6_today {C F : Point} {ABC CDE : Circle}
     (htouch : TouchesInternallyToday ABC CDE C ∨ TouchesInternallyToday CDE ABC C ∨
@@ -125,15 +132,20 @@ theorem III_6_today {C F : Point} {ABC CDE : Circle}
   · exact Or.inr (Or.inl ⟨hC₂, hC₁, within_point ⟨F, h₂⟩ ⟨F, h₁⟩ hne hnot, hnot⟩)
   · exact Or.inr (Or.inr h)
 
-/-- The earlier III.11 follows from III.11 read with the new contact within: the given
-centres supply those the bridge needs. -/
+/-- Let F and G be the centres of ABC and ADE. If the circles are different, meet at A,
+and no point of ADE is outside ABC, then G lies between F and A. This recovers the earlier
+III.11 from III.11 read with the new contact within; the given centres supply those the
+bridge needs. -/
 theorem III_11_today {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Centre G ADE)
     (htouch : TouchesInternallyToday ABC ADE A) : Between F G A := by
   obtain ⟨hA₁, hA₂, hne, hnot⟩ := htouch
   exact Prop11 hF hG ⟨hA₁, hA₂, within_point ⟨F, hF⟩ ⟨G, hG⟩ hne hnot, hnot⟩
 
-/-- The earlier III.13 follows from III.13 read with the new contact within. The given
-centres supply those the bridge needs; the conclusion about contact without is unchanged. -/
+/-- Let ABDC, EBFD and ACK each have a centre. If ABDC and EBFD are different, meet at D,
+and no point of one is outside the other, any common point B equals D. If ACK and ABDC
+meet at A and no point is within both, any common point C equals A. This recovers the
+earlier III.13 from the restated III.13: the given centres supply those the bridge needs,
+and the conclusion about contact without is unchanged. -/
 theorem III_13_today {A B C D : Point} {ABDC EBFD ACK : Circle}
     (hABDC : ∃ G : Point, Centre G ABDC) (hEBFD : ∃ H : Point, Centre H EBFD)
     (hACK : ∃ O : Point, Centre O ACK) :
@@ -157,8 +169,9 @@ end Audit
 
 These lists include Diagram-segment 2. They check the bridges' dependencies, separately
 from the lists for III.5 and III.6 below, whose proofs use neither Diagram-segment 2 nor
-Circle 4. The bridge through III.7 and III.8 also uses Circle 2 to order the points on the
-straight line through the centres. Nothing in this file enters the certificate.
+Circle 4. The bridge through III.7 and III.8 uses III.2 (`Prop2.within`), with the given
+centre, to order the points on the straight line through the centres. None of these lists
+includes Circle 2 or Circle 3. Nothing in this file enters the certificate.
 -/
 
 /--
@@ -198,7 +211,6 @@ info: 'Audit.III_5_today' depends on axioms: [propext,
  Elements.Tacit.exists_point_opposite_side,
  Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_between,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_lt_of_inside,
@@ -488,7 +500,6 @@ info: 'Audit.cut_point' depends on axioms: [propext,
  Elements.Tacit.exists_point_opposite_side,
  Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_between,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_lt_of_inside,
@@ -562,7 +573,6 @@ info: 'Audit.CirclesCut.of_meet' depends on axioms: [propext,
  Elements.Tacit.exists_point_opposite_side,
  Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_between,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_lt_of_inside,

@@ -1382,14 +1382,18 @@ findings:
   first entry to III.10. It discloses that Generalities 3 ends III.6's contact without:
   this is Definition I.15's clause putting the centre within the figure. The other
   short routes are not the proofs used by III.5 and III.6. The mishnah, introduction,
-  gaps report, FORMALIZATION section 3, brief 0004's dated notes, scaffold and render
-  descriptions follow the new readings, and `Audit/screen.py` unfolds `CirclesCut`.
+  gaps report, FORMALIZATION section 3 and brief 0004's dated notes follow the new
+  readings, and `Audit/screen.py` unfolds `CirclesCut`. The renderer's and the scaffold's
+  words for this content come in a separate tooling change that lands first, in
+  `scripts/render.py` and `scripts/scaffold_book.py`. The meaning of
+  `touching-whole-circles` in `review/terms.toml` is brought up to date by a later tooling
+  change: the inner circle has a point within the outer, and no point outside it.
 
   III.5, III.6 and III.10 require fresh review stamps by an independent reader; III.11,
   III.12 and III.13 require deliberate semantic re-reading, even where their hashes
   do not change. III.6 takes `touching-whole-circles`. The lock change is vocabulary
   only, still 87 axioms, with both lock hashes renewed and no model law changed.
   Protected files carried with this change: `Certificate/axioms.lock`,
-  `tests/model/lock.sha256`, `model/lock.sha256`, `scripts/render.py` and
-  `scripts/scaffold_book.py`; the audit changes also reach `Audit/`. The labels and
+  `tests/model/lock.sha256`, `model/lock.sha256`, `Audit.lean`, `Audit/Crossing.lean`,
+  `Audit/Overlaps.lean` and `Audit/screen.py`. The labels and
   security review required by WORKFLOW remain part of integration.

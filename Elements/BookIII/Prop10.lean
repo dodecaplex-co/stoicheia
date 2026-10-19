@@ -151,6 +151,8 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
   obtain rfl : P' = P := hmeet P' hP'_AC hP'_NO
   -- therefore the two circles ABC, DEF which cut one another have the same centre P: which is
   -- impossible. [III. 5]
+  /- The common centre P and common point B identify the circles by `circle_eq`.
+     The restated III.5 requires crossing, while this statement allows circles that only meet. -/
   exact hne (circle_eq hP hP' hB₁ hB₂ rfl)
   -- Therefore etc.
   -- Q. E. D.

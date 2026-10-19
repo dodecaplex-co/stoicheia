@@ -8,7 +8,7 @@ fingerprint = "sha256:d8295ba59c1312b2"
 kind = "euclid"
 
 [representation]
-tags = ["centre-given"]
+tags = ["centre-given", "touching-whole-circles"]
 note = "Each circle comes with a centre. Touching is read of the whole circles: for contact within a point of the inner circle is within the outer and none is outside it. Both clauses carry unchanged from contact at D to a supposed second common point B, so the circles touch within at B too; III.13 applies III.11 at both points to show that they cannot meet again. Contact without is unchanged."
 
 [figure]
