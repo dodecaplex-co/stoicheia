@@ -12,8 +12,8 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and all 87 laws,
 written by a generator from the library's elaborated declarations into one structure,
-`Laws`, and checked against those declarations. The plane satisfies 58 of the 87 locked
-laws. `Model/Assembly.lean` gathers these proofs, with the 29 remaining laws as hypotheses.
+`Laws`, and checked against those declarations. The plane satisfies 62 of the 87 locked
+laws. `Model/Assembly.lean` gathers these proofs, with the 25 remaining laws as hypotheses.
 Until every locked law is proved here, the evidence that the laws have a model remains
 MODEL.md's hand arguments and numerical tests, and this package is a milestone in progress.
 
@@ -42,6 +42,8 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean.lean](Model/Euclidean.lean) | the ordinary plane as a `Signature` | Mathlib |
 | [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersection 4 and Intersection 5 proved in the plane | Mathlib |
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
+| [Model/Euclidean/LineCircle.lean](Model/Euclidean/LineCircle.lean) | Intersection 3, Intersections 4 and 5 of the constructions, and Circle 1, proved in the plane | Mathlib |
+| [Model/Euclidean/LineSides.lean](Model/Euclidean/LineSides.lean) | Intersections 1 and 2, and Circles 2, 3 and 4, proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
 | [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, the proofs in the plane gathered into `Laws`, with the laws not yet proved as hypotheses | Mathlib |
@@ -70,6 +72,8 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | Postulate 3, Definition 15 and the generalities of a centre and of the inside of a circle, proved in the plane | Mathlib |
 | [Model/Euclidean/CircleRules.lean](Model/Euclidean/CircleRules.lean) | System E's Circle 1 to 4 proved in the plane, and `CirclesMeet α α` | Mathlib |
 | [Check/Circles.lean](Check/Circles.lean) | the same for the circle rules of `Model/Laws/circles.lean` | `Elements.Foundations`, `Model.Laws.circles` |
+| [Model/Laws/intersections.lean](Model/Laws/intersections.lean) | the five line intersection rules and the four circle rules, and the two defined words they add, **by hand** | `Hand` |
+| [Check/Intersections.lean](Check/Intersections.lean) | the same for `Model/Laws/intersections.lean` | `Check.Hand`, `Model.Laws.intersections` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib. The
@@ -392,7 +396,7 @@ come before the easy laws are shared out. A law proved here is gathered into
 | Circle intersections | `circles_meet`, `circles_meet_of_on_inside_outside`, `circles_meet_same_side`, `circles_meet_opposite_side` | proved here |
 | Magnitudes | the eight laws of `Tacit/Magnitudes.lean`: easy in the plane, but they test the translation of the instances and of `Kind` | proved here |
 | Order | the ten laws of Between 1 to 7 and the five diagram-segment laws (`len_add_of_between`, `circle_eq`, `on_circle_of_len_eq`, `inside_of_len_lt`, `len_lt_of_inside`): not among the hard groups, but the proof of every one of the 99 propositions rests on some of them | proved here |
-| Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides` | to do |
+| Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides`, `lines_meet_of_opposite_sides` | proved here |
 | Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | to do |
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
 | Superposition | an isometry, with a reflection where the side needs one; and the soundness of whichever restricted rule is adopted | to do |
@@ -404,6 +408,19 @@ side laws are proved for that case too, where both centres are one point and the
 through them is any line through it. Circle 4 (`not_same_side_of_circles_meet`) asks that
 the circles differ, and needs to: for a circle and itself, two common points can lie on
 one side of a line through the centre.
+
+The five line laws rest on one calculation
+([Model/Euclidean/LineCircle.lean](Model/Euclidean/LineCircle.lean)): along a line through
+a point inside a circle, the squared distance from the centre, less the squared radius, is
+a quadratic in the line's parameter, negative at that point, so it has one root on each
+side of it, and the points inside are exactly those between the roots. That gives the two
+crossings of Intersection 3, the crossing beyond the inside point and the one before an
+outside point, and, for Circle 1, that a chord's ends are the two roots. A line through the
+centre is no special case. Intersections 1 and 2 and Circles 2 and 3 rest instead on the
+strict convexity of the disc (`Sbtw.dist_lt_max_dist`, Joseph Myers's): a point strictly
+between two points on or inside a circle is strictly inside it. Circle 4 asks for two
+different circles, so their centres differ, and the line of centres is the perpendicular
+bisector of the common points, as in Intersections 8 and 9.
 
 ## The CI job
 

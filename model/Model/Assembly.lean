@@ -8,6 +8,8 @@ public import Model.Euclidean.CircleRules
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Circles
 public import Model.Euclidean.Incidence
+public import Model.Euclidean.LineCircle
+public import Model.Euclidean.LineSides
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Order
 public import Model.Euclidean.OrderLines
@@ -26,9 +28,9 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-So far 58 of the 87 laws are proved in the plane. Until the rest are,
+So far 62 of the 87 laws are proved in the plane. Until the rest are,
 `euclidean_laws` takes them as hypotheses, so that it states exactly what is proved: the plane
-satisfies every law, given the 29 that are not yet proved in it. When none is left,
+satisfies every law, given the 25 that are not yet proved in it. When none is left,
 the generator writes it with no hypothesis, and `model_exists` after it.
 -/
 
@@ -36,7 +38,7 @@ the generator writes it with no hypothesis, and `model_exists` after it.
 
 namespace Model
 
-/-- **The plane satisfies the laws,** given the 29 not yet proved in it. -/
+/-- **The plane satisfies the laws,** given the 25 not yet proved in it. -/
 theorem euclidean_laws
     (Postulate4 : Law.Postulate4 Euclidean.plane)
     (Postulate5 : Law.Postulate5 Euclidean.plane)
@@ -57,11 +59,6 @@ theorem euclidean_laws
     (inside_of_angle_add : Law.Tacit.inside_of_angle_add Euclidean.plane)
     (len_self : Law.Tacit.len_self Euclidean.plane)
     (len_symm : Law.Tacit.len_symm Euclidean.plane)
-    (line_circle_between : Law.Tacit.line_circle_between Euclidean.plane)
-    (line_circle_beyond : Law.Tacit.line_circle_beyond Euclidean.plane)
-    (line_meets_circle_of_inside : Law.Tacit.line_meets_circle_of_inside Euclidean.plane)
-    (line_meets_circle_of_opposite_sides :
-      Law.Tacit.line_meets_circle_of_opposite_sides Euclidean.plane)
     (on_line_of_area_eq_zero : Law.Tacit.on_line_of_area_eq_zero Euclidean.plane)
     (same_ray_of_angle_eq_zero : Law.Tacit.same_ray_of_angle_eq_zero Euclidean.plane)
     (superposition : Law.Tacit.superposition Euclidean.plane)
@@ -122,10 +119,10 @@ theorem euclidean_laws
   len_lt_of_inside := Euclidean.len_lt_of_inside
   len_self := len_self
   len_symm := len_symm
-  line_circle_between := line_circle_between
-  line_circle_beyond := line_circle_beyond
-  line_meets_circle_of_inside := line_meets_circle_of_inside
-  line_meets_circle_of_opposite_sides := line_meets_circle_of_opposite_sides
+  line_circle_between := Euclidean.line_circle_between
+  line_circle_beyond := Euclidean.line_circle_beyond
+  line_meets_circle_of_inside := Euclidean.line_meets_circle_of_inside
+  line_meets_circle_of_opposite_sides := Euclidean.line_meets_circle_of_opposite_sides
   line_unique := Euclidean.line_unique
   lines_meet_of_opposite_sides := Euclidean.lines_meet_of_opposite_sides
   lt_irrefl := Euclidean.lt_irrefl

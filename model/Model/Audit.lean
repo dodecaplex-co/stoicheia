@@ -1,5 +1,9 @@
 module
 
+public import Model.Laws.intersections
+public import Model.Euclidean.LineCircle
+public import Model.Euclidean.LineSides
+
 public import Model.Laws.circles
 public import Model.Euclidean.CircleBasics
 public import Model.Euclidean.CircleRules
@@ -460,6 +464,60 @@ info: 'Model.Euclidean.exists_point_on_circle' depends on axioms: [propext, Clas
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.exists_point_on_circle
+
+/--
+info: 'Model.Euclidean.lines_meet_of_opposite_sides_intersections' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.lines_meet_of_opposite_sides_intersections
+
+/--
+info: 'Model.Euclidean.line_meets_circle_of_opposite_sides' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.line_meets_circle_of_opposite_sides
+
+/--
+info: 'Model.Euclidean.line_meets_circle_of_inside' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.line_meets_circle_of_inside
+
+/--
+info: 'Model.Euclidean.line_circle_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.line_circle_between
+
+/--
+info: 'Model.Euclidean.line_circle_beyond' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.line_circle_beyond
+
+/--
+info: 'Model.Euclidean.between_of_inside_chord_intersections' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.between_of_inside_chord_intersections
+
+/--
+info: 'Model.Euclidean.inside_of_between_intersections' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.inside_of_between_intersections
+
+/--
+info: 'Model.Euclidean.outside_of_between_intersections' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.outside_of_between_intersections
+
+/--
+info: 'Model.Euclidean.not_same_side_of_circles_meet_intersections' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.not_same_side_of_circles_meet_intersections
 
 /-! ## What the assembled model rests on
 
