@@ -1104,6 +1104,18 @@ findings:
   (doc-gen4, in CI) comes in a change of its own, and nothing of it is published without
   the owner's OK.
 
+- **Using the library and keeping its names.** The table of names lands first;
+  its guide and links follow separately (keep_apart). The README gains "Use it": the `require` for a
+  `lakefile.toml`, pinned to the release tag `book-III`, its one-line form for a
+  `lakefile.lean`, and a short example, each built in a fresh project against the tag on
+  18 October; and, for a project that already has a `lake-manifest.json`,
+  `lake update stoicheia` first, since Lake 4.35's `lake build` does not add a new
+  dependency to a manifest that exists. FORMALIZATION, section 2, gains "Names, and how they change": how names are
+  made; a released name never renamed or removed without a deprecated alias for one
+  release; a changed statement keeping its proposition's name, with the old one kept as a
+  companion where citers need it; and the release notes listing every name deprecated and
+  every statement changed.
+
 - **The Jev audit's client.** Brief 0005's stage 6 asks for an
   independent audit by Jev, TypeSafe's decision model, through a fresh client
   ([#36](https://github.com/jackChallis/stoicheia/issues/36)).
@@ -1130,7 +1142,6 @@ findings:
   request has been sent yet; the accuracy bar Jev must meet on the set is the
   coordinator's to state before the first run, and `score --bar` counts it met only when
   every row of the set is answered and no request failed.
-
 - **The Jev calibration set.** The calibration set the brief describes is
   [`docs/reports/acceptance/jev/calibration.jsonl`](../reports/acceptance/jev/calibration.jsonl)
   (new), quoted from the files at `4d02d50`: fourteen rows, five seeded and nine controls.
