@@ -58,18 +58,26 @@ porisms; then the companions, each group in `prop_key` order. Read an entry by i
 | `cites` | list of refs | The entries the proof uses directly. **Changed**: a use of a porism is now recorded as the porism, `"III.1 Por."`, where it was recorded as `"III.1"`, and a use of a companion by its own ref. Sorted by string, as before. |
 | `common_notions` | list of strings | Every Common Notion beneath the proof, through what it cites too: `"C.N. 1"` and so on. |
 | `axioms` | list of names | Lean's `collectAxioms` of this declaration alone, without Lean's three foundations and `sorryAx`. For the 99 propositions this list does not change: III.1's still has 56 tacit rules, and III.1 Por.'s has 57, `Tacit.centre_unique` among them. |
-| `direct_axioms` | list of names | The axioms the proof uses itself, through its helpers and shared steps, but not through another entry it cites or a Common Notion. |
+| `direct_axioms` | list of names | The axioms the proof uses itself, through its helpers and shared steps, but not through another entry it cites or a Common Notion: exactly `own_axioms` together with the keys of `inherited`, besides any of Lean's own foundations it lists (`propext`, in II.2, II.5, III.27, III.29 and III.30), which those two leave out, as `axioms` does. The policy on superposition reads it, so a proof may not reach that rule through a lemma either. |
+| `own_axioms` | list of names | **New** (18 October 2026, [#65](https://github.com/jackChallis/stoicheia/issues/65)). The axioms the proof's own Lean names: in the declaration itself, in a helper written for its proposition (in the proposition's namespace: `Prop7.figure`; for a porism or companion, its proposition's, as `Prop1.middle` is III.1 Por.'s), or in Lean's auxiliary declarations for them; Lean's three foundations and `sorryAx` left out, as in `axioms`. Sorted by string. III.2's has 17, Circle 2 (`Tacit.inside_of_between`) not among them. |
+| `inherited` | object, name to list of objects | **New** (18 October 2026, #65). The rest of `direct_axioms`, Lean's foundations aside: each axiom the proof's own Lean does not name but reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step (`Prop5.base`, or another proposition's helper, as `Prop1.perpendicular` is for III.19), with each such lemma: `name`, `file`, `line`, as in `shared_steps`, sorted by name. An axiom the proof's own Lean names is in `own_axioms` alone, even when a lemma brings it in too. I.5's has `"Postulate3": [{"name": "exists_between_nearer", "file": "Elements/Figure/Circles.lean", …}]`: its own Lean draws no circle, and the lemma that keeps a point taken at random near enough does. A proposition it cites may bring the same axiom in as well, as I.3 brings Postulate 3 into I.5. |
 | `lean_foundations` | list of names | Which of `propext`, `Classical.choice` and `Quot.sound` it rests on. |
 | `shared_steps` | list of objects | The project's own lemmas outside the declaration's namespace that bring in at least one proposition: `name`, `brings_in` (refs), `file`, `line`. For a porism or companion, the parent's own helpers (`Prop1.middle`) count as its own, not as shared steps. |
 | `enunciation` | string | The declaration's docstring. For a proposition it is Heath's enunciation (check_fidelity insists on it); for a porism, our docstring, which quotes Heath's porism; for a companion, our docstring saying what it adds. |
 | `statement` | string | **New.** The declaration's type, printed as below. Review records are fingerprinted from it (`heath.review_fingerprint`). |
 
-One walk, `mentions` (stage 1b), gives `cites`, `direct_axioms`, `common_notions` and
-`shared_steps`: it reads each declaration's type and value, opaque values included, and
-an inductive type's constructors. Facts.lean checks itself against Lean: each entry's
-`axioms` are exactly its `direct_axioms`, the axioms of its Common Notions and the
-`axioms` of every entry in `cites`. The Common Notions count because they are theorems,
-and some rest on tacit rules (C.N. 3 and C.N. 5 use `Tacit.add_lt_add_right`).
+One walk, `mentions` (stage 1b), gives `cites`, `direct_axioms`, `own_axioms`,
+`inherited`, `common_notions` and `shared_steps`: it reads each declaration's type and
+value, opaque values included, and an inductive type's constructors. `own_axioms` comes
+from the walk that gives `direct_axioms`, stopped at each lemma the proof's own
+declarations call, as the walk for `shared_steps` is; what a lemma brings in is found by
+the walk for `direct_axioms`, started from the lemma. Facts.lean checks itself against
+Lean: each entry's `axioms` are exactly its `direct_axioms`, the axioms of its Common
+Notions and the `axioms` of every entry in `cites`; and its `direct_axioms`, Lean's
+foundations aside, are exactly its `own_axioms` and the keys of its `inherited`. So its
+`axioms` are its own, those it inherits, its Common Notions' and those of what it cites.
+The Common Notions count because they are theorems, and some rest on tacit rules (C.N. 3
+and C.N. 5 use `Tacit.add_lt_add_right`).
 
 ## Printing a statement
 
@@ -147,5 +155,8 @@ axiom is `HAdd.hAdd a b`, and which addition it is lives in `instAddMagnitude`.
 - `scripts/check_fidelity.py`: the policies, for every entry; that the porism entries are
   exactly Heath's porisms; that every attached entry of a complete book is proved; the
   axiom lock; the review stamps.
-- `scripts/render.py`: the pages, CERTIFICATE.md and GRAPH.md.
+- `scripts/render.py`: the pages, CERTIFICATE.md and GRAPH.md. A page's table splits
+  what the proof uses itself by `own_axioms` and `inherited`, and its list of tacit
+  rules marks each, with the lemmas an inherited rule comes in through; CERTIFICATE.md
+  counts both.
 - `scripts/review_stamp.py` and `heath.review_fingerprint`: the review records' stamps.
