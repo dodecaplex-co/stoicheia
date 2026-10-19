@@ -49,7 +49,7 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 | [I.10](../../book/I/10.md) | [n287](https://archive.org/download/thirteenbookseu02heibgoog/page/n287.jpg) | As Heath's. |
 | [I.11](../../book/I/11.md) | [n289](https://archive.org/download/thirteenbookseu02heibgoog/page/n289.jpg) | As Heath's. |
 | [I.12](../../book/I/12.md) | [n291](https://archive.org/download/thirteenbookseu02heibgoog/page/n291.jpg) | As Heath's. |
-| [I.13](../../book/I/13.md) | [n295](https://archive.org/download/thirteenbookseu02heibgoog/page/n295.jpg) | Reflected: C on the left and D on the right. AB leans towards C in both, the case Heath draws, which the record does not yet name (the line is proposed below). |
+| [I.13](../../book/I/13.md) | [n295](https://archive.org/download/thirteenbookseu02heibgoog/page/n295.jpg) | Reflected: C on the left and D on the right. AB leans towards C in both, the case Heath draws, which the record does not yet name (the line is proposed above). |
 | [I.14](../../book/I/14.md) | [n296](https://archive.org/download/thirteenbookseu02heibgoog/page/n296.jpg) | As Heath's. It draws an impossible supposition, BE in a straight line with CB, and says so nowhere yet (a note is proposed above). |
 | [I.15](../../book/I/15.md) | [n297](https://archive.org/download/thirteenbookseu02heibgoog/page/n297.jpg) | As Heath's. |
 | [I.16](../../book/I/16.md) | [n299](https://archive.org/download/thirteenbookseu02heibgoog/page/n299.jpg) | As Heath's. |
