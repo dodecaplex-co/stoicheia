@@ -61,6 +61,10 @@ one commit and runs safe_push.py against that origin:
   committed list through load_allowlist, and the dry-run refusals name the step that
   refused; and the stand-in for gh refuses a second pull request for a head, as gh does,
   while ours is found whatever owner GitHub names for its head;
+- issue #95: the tests of an interruption after the push read no wall clock (DRIVER's
+  clock, standing still and then leaping an hour at each reading), and DRIVER runs the
+  harness committed at BASE, so that neither the machine's load nor a change to this
+  checkout's harness while the tests run can move their outcome;
 - the model's laws (issue #40): an axiom added in one pull request with its entry in the
   lock, the lock's hash, its line of tests/model/laws.toml, its law's code in search.py
   and hyperbolic.py and the model's account lands as content, and the model's ties hold
@@ -132,6 +136,7 @@ LOG: Path
 BASE: str
 GH: Path
 GH_STATE: Path
+UNDER_TEST: Path      # the harness committed at BASE, which DRIVER runs (setUpModule)
 BRANCH = "test-pr"
 DECISIONS = "docs/briefs/0002-decisions.md"
 # The files of the harness under test, committed on top of HEAD as origin's main.
@@ -160,7 +165,7 @@ def clean_env() -> dict:
                STOICHEIA_PYTHON=sys.executable)
     for name in ("STOICHEIA_SAFE_PUSH", "STOICHEIA_HARNESS", "STOICHEIA_TAG_PUSH",
                  "STOICHEIA_FAKE_GH_KILL", "STOICHEIA_FAKE_GH_MERGE", "STOICHEIA_TEST_CI_POLL",
-                 "STOICHEIA_TEST_CI_APPEAR"):
+                 "STOICHEIA_TEST_CI_APPEAR", "STOICHEIA_TEST_CLOCK"):
         env.pop(name, None)
     return env
 
@@ -431,7 +436,7 @@ def reset_gh() -> None:
 
 
 def setUpModule():
-    global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE
+    global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST
     TMP = Path(tempfile.mkdtemp(prefix="stoicheia-safe-push-test-"))
     ORIGIN, WORK, LOG = TMP / "origin.git", TMP / "work", TMP / "cache" / "pushes.log"
     GH, GH_STATE = TMP / "fake-gh", TMP / "fake-gh.json"
@@ -457,6 +462,15 @@ def setUpModule():
         git(WORK, "commit", "-q", "-m", "The harness under test")
         git(WORK, "push", "--quiet", "--no-verify", "origin", "HEAD:refs/heads/main")
     BASE = git(WORK, "rev-parse", "HEAD").strip()
+    # DRIVER runs the harness as BASE holds it, from a directory of its own, as a hand-over
+    # runs origin/main's: had it run this checkout's copy, a change to that copy while the
+    # tests run would make it hand over to origin/main's, out of DRIVER's reach (#95).
+    UNDER_TEST = TMP / "harness-under-test"
+    UNDER_TEST.mkdir()
+    for name in ("safe_push.py", "heath.py"):
+        (UNDER_TEST / name).write_bytes(subprocess.run(
+            ["git", "show", f"{BASE}:scripts/{name}"], cwd=WORK, capture_output=True,
+            check=True).stdout)
     git(WORK, "fetch", "--quiet", "origin")
     r = subprocess.run(["sh", str(INSTALL_HOOKS)], cwd=WORK, capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -1189,10 +1203,26 @@ class GeneratedPages(Edge):
 # Runs safe_push in a subprocess with `guards`, `gates` or `watch_checks` wrapped, so that
 # something happens at a chosen moment: origin's main moves, or an interruption.
 DRIVER = r"""
-import subprocess, sys
+import os, subprocess, sys
 sys.path.insert(0, sys.argv[1])
 import safe_push
 action, origin, target = sys.argv[2], sys.argv[3], sys.argv[4]
+class Clock:
+    # STOICHEIA_TEST_CLOCK: a stand-in for safe_push's clock, time.time and time.sleep, by
+    # which it times its steps and its waits (datetime, which only stamps the log and the
+    # pre-flight's record, stays).
+    # It never reads the wall clock and never waits. "still": time stands, but for the
+    # sleeps; "leap": each reading is an hour after the last, past every deadline safe_push
+    # keeps, as on a machine so loaded that each step takes an hour.
+    def __init__(self, leap):
+        self.now, self.leap = 1e9, leap
+    def time(self):
+        self.now += self.leap
+        return self.now
+    def sleep(self, seconds):
+        self.now += seconds
+if os.environ.get("STOICHEIA_TEST_CLOCK"):
+    safe_push.time = Clock({"still": 0.0, "leap": 3600.0}[os.environ["STOICHEIA_TEST_CLOCK"]])
 real_guards, real_watch = safe_push.guards, safe_push.watch_checks
 real_gates = safe_push.gates
 def gates(ctx, number, rep, record=None):
@@ -1241,7 +1271,7 @@ class Ancestry(Edge):
 
     def drive(self, action: str, target: str, *args, env=None) -> subprocess.CompletedProcess:
         args = with_branch(args)
-        return subprocess.run([sys.executable, "-c", DRIVER, str(HERE), action, str(ORIGIN),
+        return subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), action, str(ORIGIN),
                                target, "--_test-skip-checks", *args], cwd=WORK,
                               env=env or clean_env(), capture_output=True, text=True)
 
@@ -1412,7 +1442,7 @@ class DryRun(Edge):
         env["TMPDIR"] = str(tmp)
         refs = git(ORIGIN, "for-each-ref")
         if driver:
-            r = subprocess.run([sys.executable, "-c", DRIVER, str(HERE), driver, str(ORIGIN),
+            r = subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), driver, str(ORIGIN),
                                 BASE, "--_test-skip-checks", "--dry-run", *args], cwd=WORK,
                                env=env, capture_output=True, text=True)
         else:
@@ -2043,7 +2073,7 @@ class Merge(Edge):
         """--merge 1 of the open pull request, its body completed, with DRIVER's `action`
         playing what GitHub or a signal does after the merge is asked of gh."""
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
-        return subprocess.run([sys.executable, "-c", DRIVER, str(HERE), action, str(ORIGIN),
+        return subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), action, str(ORIGIN),
                                BASE, "--_test-skip-checks", "--merge", "1"], cwd=WORK,
                               env=env or clean_env(), capture_output=True, text=True)
 
@@ -2117,7 +2147,7 @@ class Merge(Edge):
         side = self.side_commit()
         self.opened()
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
-        r = subprocess.run([sys.executable, "-c", DRIVER, str(HERE), "move-at-merge",
+        r = subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), "move-at-merge",
                             str(ORIGIN), side, "--_test-skip-checks", "--merge", "1"],
                            cwd=WORK, env=clean_env(), capture_output=True, text=True)
         out = r.stdout + r.stderr
@@ -2940,37 +2970,66 @@ class ProtectedPaths(Edge):
 
 class InterruptedAfterThePush(Edge):
     """(4) An interruption or a failure to follow CI after the push is "pushed; CI not
-    followed", exit 3; never "interrupted", exit 1."""
+    followed", exit 3; never "interrupted", exit 1.
 
-    def drive(self, action: str) -> subprocess.CompletedProcess:
-        return subprocess.run([sys.executable, "-c", DRIVER, str(HERE), action, str(ORIGIN),
-                               BASE, "--_test-skip-checks", *with_branch(())], cwd=WORK,
-                              env=clean_env(), capture_output=True, text=True)
+    None of these depends on time (#95): each runs through DRIVER on its clock, which never
+    reads the wall clock and never waits, twice, once with time standing still and once
+    leaping an hour at each reading, past every deadline safe_push keeps, and asks the same
+    outcome of both, its reason included, so that neither clock can reach exit 3 by another
+    path; and DRIVER runs the harness committed at BASE, so that the run is origin/main's
+    harness, never handed over to it out of DRIVER's reach."""
+
+    CLOCKS = ("still", "leap")
+
+    def drive(self, action: str, clock: str, env=None) -> subprocess.CompletedProcess:
+        env = env or clean_env()
+        env["STOICHEIA_TEST_CLOCK"] = clock
+        return subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), action,
+                               str(ORIGIN), BASE, "--_test-skip-checks", *with_branch(())],
+                              cwd=WORK, env=env, capture_output=True, text=True)
+
+    def assertOnTheClock(self, out: str, clock: str) -> None:
+        """The run was origin/main's harness, under DRIVER, on the clock named: its total
+        is 0 s while time stands still, and an hour or more when it leaps."""
+        self.assertEqual(self.guard(out, "harness"), "ok", out)
+        self.assertNotIn("running origin/main's in its place", out)
+        total = re.search(r"^Summary: .* \((\d+) s\)$", out, re.M)
+        self.assertIsNotNone(total, out)
+        if clock == "still":
+            self.assertEqual(int(total.group(1)), 0, out)
+        else:
+            self.assertGreaterEqual(int(total.group(1)), 3600, out)
 
     def test_interrupt_while_following_ci(self):
-        sha = self.good_commit()
-        r = self.drive("watch-interrupt")
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 3, out)
-        self.assertIn("pushed; CI not followed", out)
-        self.assertNotIn("Interrupted:", out)
-        self.assertEqual(self.origin_branch(), sha)
-        self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+        for clock in self.CLOCKS:
+            with self.subTest(clock=clock):
+                self.setUp()
+                sha = self.good_commit()
+                r = self.drive("watch-interrupt", clock)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn("Pushed; CI not followed: interrupted (a test interruption)", out)
+                self.assertNotIn("Interrupted:", out)
+                self.assertEqual(self.origin_branch(), sha)
+                self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+                self.assertOnTheClock(out, clock)
 
     def test_failure_while_following_ci(self):
-        self.good_commit()
-        r = self.drive("watch-fail")
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 3, out)
-        self.assertIn("pushed; CI not followed (RuntimeError: gh went away)", out)
+        for clock in self.CLOCKS:
+            with self.subTest(clock=clock):
+                self.setUp()
+                sha = self.good_commit()
+                r = self.drive("watch-fail", clock)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn("pushed; CI not followed (RuntimeError: gh went away)", out)
+                self.assertEqual(self.origin_branch(), sha)
+                self.assertOnTheClock(out, clock)
 
     def test_failure_right_after_the_push(self):
         # The final review: the push lands, and origin stops answering before the branch
         # is seen there. The branch is public from the moment `git push` returns 0.
-        sha = self.good_commit()
         flag, hook = TMP / "origin-gone", ORIGIN / "hooks" / "post-receive"
-        hook.write_text(f'#!/bin/sh\ntouch "{flag}"\n')
-        hook.chmod(0o755)
         self.addCleanup(lambda: (hook.unlink(missing_ok=True), flag.unlink(missing_ok=True)))
         bindir = Path(tempfile.mkdtemp(prefix="bin-", dir=TMP))
         (bindir / "git").write_text(
@@ -2980,15 +3039,25 @@ class InterruptedAfterThePush(Edge):
             '        exit 128\n    fi\ndone\n'
             f'exec "{shutil.which("git")}" "$@"\n')
         (bindir / "git").chmod(0o755)
-        env = clean_env()
-        env["PATH"] = f"{bindir}{os.pathsep}{env['PATH']}"
-        r = self.safe_push(env=env)
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 3, out)
-        self.assertIn("Pushed; CI not followed", out)
-        self.assertNotIn("REFUSED", out)
-        self.assertEqual(self.origin_branch(), sha)
-        self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+        for clock in self.CLOCKS:
+            with self.subTest(clock=clock):
+                self.setUp()
+                flag.unlink(missing_ok=True)
+                hook.write_text(f'#!/bin/sh\ntouch "{flag}"\n')
+                hook.chmod(0o755)
+                sha = self.good_commit()
+                env = clean_env()
+                env["PATH"] = f"{bindir}{os.pathsep}{env['PATH']}"
+                r = self.drive("push", clock, env=env)
+                hook.unlink()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn("Pushed; CI not followed: `git ls-remote origin refs/heads/"
+                              f"{BRANCH}` failed: fatal: unable to access origin", out)
+                self.assertNotIn("REFUSED", out)
+                self.assertEqual(self.origin_branch(), sha)
+                self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+                self.assertOnTheClock(out, clock)
 
 
 class Interpreter(Edge):
