@@ -26,7 +26,7 @@ theorem Prop12.centre_outside {A F G : Point} {α β : Circle}
   obtain ⟨P, hFPG, hP⟩ := exists_between_nearer (O := F) (C := A) hFG (Or.inl rfl)
     (by rw [len_self]; exact len_pos (ne_of_centre_of_on hF hA).symm)
   exact hout P (inside_of_len_lt hF hA hP)
-    (inside_of_between (Or.inr hF_on) (Or.inl (centre_inside hG)) hFPG)
+    (InsideCircle.of_between_centre hG hF_on (between_symm hFPG))
 
 /-- If two circles touch one another externally, the straight line joining their centres will pass
 through the point of contact. -/
@@ -52,8 +52,8 @@ theorem Prop12 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
       rcases between_cases hFA hGA.symm hFG hF_L hA_L hG_L with h | h | h
       · exact hFAG h
       · exact hout F (centre_inside hF)
-          (inside_of_between (Or.inr hA₂) (Or.inl (centre_inside hG)) h)
-      · exact hout G (inside_of_between (Or.inl (centre_inside hF)) (Or.inr hA₁) h)
+          (InsideCircle.of_between_centre hG hA₂ (between_symm h))
+      · exact hout G (InsideCircle.of_between_centre hF hA₁ h)
           (centre_inside hG)
     obtain ⟨C, hC, -, hFCG⟩ := line_circle_between (centre_inside hF) hF_L
       (Prop12.centre_outside hG hF hA₂ hFG.symm (fun P h₁ h₂ => hout P h₂ h₁)) hG_L
@@ -77,7 +77,7 @@ theorem Prop12 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
       obtain ⟨P, hCPF, hP⟩ :=
         exists_between_nearer (O := G) (C := A) (ne_of_between hFCG).symm
           (Or.inr (between_symm hFCG)) h
-      exact hout P (inside_of_between (Or.inr hC) (Or.inl (centre_inside hF)) hCPF)
+      exact hout P (InsideCircle.of_between_centre hF hC (between_symm hCPF))
         (inside_of_len_lt hG hA₂ hP)
     have h4 : ‖F A‖ + ‖A G‖ ≤ ‖F G‖ := by
       intro h

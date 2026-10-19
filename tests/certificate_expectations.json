@@ -50,6 +50,24 @@
       "field": "inherited",
       "includes": ["Postulate3"],
       "why": "Postulate 3 reaches I.5's proof through Book Zero's exists_between_nearer, which keeps a point taken at random near enough with a circle; a lemma's axioms are inherited, not the proof's own (Argon's second review; #65)."
+    },
+    {
+      "ref": "III.2",
+      "field": "axioms",
+      "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
+      "why": "III.2 rests on neither Circle 2 nor Circle 3: its own Lean calls neither, and III.1, which it cites, shows its middle point within the circle by III.2's own argument (#60)."
+    },
+    {
+      "ref": "III.1",
+      "field": "axioms",
+      "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
+      "why": "III.1 shows the middle point of its chord within the circle by I.5, I.16 and I.19, as III.2 does, and so rests on neither Circle 2 nor Circle 3 (#60)."
+    },
+    {
+      "ref": "II.14",
+      "field": "axioms",
+      "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
+      "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and rests on neither Circle 2 nor Circle 3 (#60)."
     }
   ]
 }

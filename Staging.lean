@@ -32,5 +32,9 @@ their homes in `Elements/`, and its folder with them. The others:
 * `Stage4b/`: III.7 and III.8 compared on either side of the diameter, III.17 for a point
   not within the circle, and the point of contact (brief 0007); and a prototype of mixed
   angles for III.16 and III.31, with its proofs, which the coordinator approved on 18
-  October 2026 (`docs/reports/mixed-angles-prototype.md`).
+  October 2026 (`docs/reports/mixed-angles-prototype.md`);
+* `Centre/`: brief 0008's statements, every circle has a centre, with III.1 kept as
+  Euclid's construction and III.5 and III.6 read with crossing and contact within;
+* `Superposition/`: the prototype of a restricted superposition rule (brief 0009), carried
+  as a hypothesis, with its proofs, which the coordinator approved on 18 October 2026.
 -/

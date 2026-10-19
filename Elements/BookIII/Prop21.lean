@@ -1,5 +1,6 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop20
 
 /-!
@@ -70,10 +71,10 @@ theorem Prop21 {A B D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre 
   obtain ⟨Z, hZ_L, hEZC⟩ := hEC_L.exists_between
   have hBYD : Between B Y D :=
     between_of_inside_chord hY_L hB_L hD_L
-      (inside_of_between (Or.inr hA) (Or.inr hC) hAYC) hB hD hBD
+      (Prop2 ⟨F, hF⟩ hA hC Y hAYC) hB hD hBD
   have hBZD : Between B Z D :=
     between_of_inside_chord hZ_L hB_L hD_L
-      (inside_of_between (Or.inr hE) (Or.inr hC) hEZC) hB hD hBD
+      (Prop2 ⟨F, hF⟩ hE hC Z hEZC) hB hD hBD
   have hBDA : Triangle B D A := Triangle.of_line hB_L hD_L hBD hA_L
   have hBDE : Triangle B D E := Triangle.of_line hB_L hD_L hBD hEC_L.1
   have hBDC : Triangle B D C := Triangle.of_line hB_L hD_L hBD hAC_L.2.1
