@@ -81,7 +81,7 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   (imports the rest), `Lines.lean` (order on a straight line; `produce_longer`),
   `Sides.lean`, `Rays.lean`, `Angles.lean`, `Lengths.lean`, `Triangles.lean`,
   `Circles.lean`, `Parallels.lean`, `Parallelograms.lean`, `Areas.lean`
-  (`OnRay.eq_of_area_eq`, the "greater to the less" of I.39 and I.40), `Sums.lean` (the sums
+  (`area_lt_of_cut`, the strict area comparison in I.39 and I.40), `Sums.lean` (the sums
   of lists, and `InOrder.between_end`) and `Rectilineal.lean` (a fitted figure's triangles
   lie apart, `Fitted.inside_pairwise`).
 - **Shared steps that cite a proposition:** `Elements/BookI/Helpers.lean`, with
@@ -136,10 +136,13 @@ is `full`:
 Both main theorems stay as Euclid's worked configuration, with the general theorems beside
 them as companions ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
 
-Two proofs follow Euclid with one step changed: I.39, and I.40 after it, make the end of
-his reductio direct, the parallel through A being shown to pass through D
-(`OnRay.eq_of_area_eq`). And four propositions are already contained in a rule, as the
-[overlap catalogue](../reports/overlaps.md) records:
+Reconciled 19 October 2026: I.39 and I.40 follow Euclid's closing reductio. The contrary
+supposition makes the constructed intersection differ from D; either order on the same
+ray contradicts equal areas. I.40's general companion uses the same argument for equal
+bases anywhere on one straight line, including coincident vertices.
+
+The [overlap catalogue](../reports/overlaps.md) also records rules supplying a step in
+audit proofs of I.2, I.3, I.7 and I.23:
 
 | Proposition | Rule | What the proof does |
 |---|---|---|
