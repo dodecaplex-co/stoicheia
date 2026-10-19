@@ -6,8 +6,29 @@ fingerprint = "sha256:32e62ca8384f52dd"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and AC has fallen upon them"
+kind = "helper"
+helper = "AreParallel.oppositeSidesOf"
+note = "Euclid treats BAC and ACE as alternate; `AreParallel.oppositeSidesOf` proves that B and E lie on opposite sides of AC, using the choice of E on A's side of BC by `Prop32.choose_end`."
+
+[[passage]]
+at = "therefore the whole angle ACD is equal to the two interior and opposite angles BAC, ABC"
+kind = "helper"
+helper = "angle_add_of_within"
+note = "Euclid adds ACE and ECD to make ACD; `angle_add_of_within` justifies the sum after the Lean puts E inside ACD. `OppositeSidesOf.of_between` puts D opposite B across AC, so E and D share a side of AC, while E and A share a side of CD."
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "915600b"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:fd7240af23c4b9fc"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
