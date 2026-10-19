@@ -18,13 +18,20 @@ the former ones. The earlier catalogue and its measurements follow as history.
 | III.5 | Diagram-segment 2 (`circle_eq`) | Gives it at once: circles about one centre through one point coincide | III.5 | `Audit.III_5` |
 | III.6 | Diagram-segment 2 (`circle_eq`) and Generalities 3 (`centre_inside`) | Gives it at once: one rule settles contact within, the other contact without | Diagram-segment 2: III.5. Generalities 3: I.1 | `Audit.III_6` |
 
-The fresh certificate at `1e713bb` gives Circle 3 to I.12 through
-`line_meets_circle_of_opposite_sides`, now a theorem in `Elements/Figure/Circles.lean`.
-It reaches 13 entries in all: I.12, III.16–III.19, III.32–III.37, III.16 Por. and
-III.17 general. The old claim that no proposition rests on Circle 3 no longer holds.
-II.14, III.1, III.1 Por. and III.2 still avoid it. Our III.2 follows Euclid through
-I.5, I.16 and I.19; its overlap with an available axiom is distinct from what its
-published proof uses.
+Fresh certificate facts at `d4306441`, compared with `facts.json` at `1843e6b`, show
+that Circle 3 now supports 13 entries where it supported none before: I.12,
+III.16, III.17, III.18, III.19, III.32, III.33, III.34, III.35, III.36, III.37,
+III.16 Por. and III.17 general. These are exactly I.12 and every certificate entry
+that rests on it. I.12 reaches Circle 3 through
+`line_meets_circle_of_opposite_sides`, now proved from Circle 3 and the crossing
+rules in `Elements/Figure/Circles.lean`; the other twelve entries inherit it
+through I.12. Retiring Intersection 2 therefore brings Circle 3 into these proofs.
+
+II.14, III.1, III.1 Por. and III.2 still avoid Circle 3. So do III.2's corollaries
+`Prop2.triangle`, `Prop2.oppositeSide` and `Prop2.sameSide`, as `#print axioms`
+confirms; using one of them does not keep a proof from reaching Circle 3 through
+another step. Our III.2 follows Euclid through I.5, I.16 and I.19; its overlap with
+an available axiom is distinct from what its published proof uses.
 
 ## Former axiom overlaps
 

@@ -15,9 +15,11 @@ from Definition 15, System E's rules for circles, and the definitions of Book II
 
 The first two, proved here for any circle, use Circle 2, now proved from System E's
 Circle 3 in `Elements.Figure.Circles`. Circle 3 therefore still gives III.2 at once.
-The propositions take them from III.2 instead, for a circle with a centre
-(`BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide`, `BookIII.Prop2.sameSide`), and so
-rest on neither Circle 2 nor Circle 3.
+The propositions take these facts from III.2 instead, for a circle with a centre.
+Its corollaries `BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide` and
+`BookIII.Prop2.sameSide`, like III.2 itself, avoid Circle 3. A proof using them may
+still rest on Circle 3 through another step: I.12 now uses it through the proved
+Intersection 2.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.
