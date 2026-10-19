@@ -47,6 +47,41 @@ theorem Prop37.triangle {B D E F : Point} {ABC : Circle} (hF : Centre F ABC)
     rw [hDE_DB, ← h1, len_symm E F, hFE_FB, len_symm F D, add_comm] at h20
     exact lt_irrefl _ h20
 
+/-- The centre-on-AC case left to the reader at the end of III.37. The diameter
+calculation of III.36 and the given rectangle equality give equal squares on DE and DB.
+Euclid's equal radii and I.8 then carry the right angle at E to B, where III.16's porism
+gives the tangent. -/
+theorem Prop37.centre_on_secant {A B C D F : Point} {ABC : Circle}
+    (hF : Centre F ABC) (hD : OutsideCircle D ABC)
+    (hA : OnCircle A ABC) (hB : OnCircle B ABC)
+    (hC : OnCircle C ABC)
+    (hDCA : Between D C A) (hACF : Collinear A C F)
+    (h : rect A D D C = sq D B) :
+    Touches D B ABC := by
+  /- Draw DE touching the circle, then use the diameter case of III.36. -/
+  obtain ⟨E, hE, hDE⟩ := Prop17 ⟨F, hF⟩ hD
+  obtain ⟨L, hD_L, hE_L⟩ := Postulate1 D E hDE.1
+  have hFED : ∠ F E D = ∟ :=
+    Prop18 hF hE hDE ⟨L, hD_L, hE_L, hE_L⟩ D ⟨L, hD_L, hE_L, hD_L⟩ hDE.1
+  have h36 : rect A D D C = sq D E :=
+    Prop36.through_centre hF hA hE hC hDCA hACF hDE
+  /- Equal squares give equal lengths. With the equal radii and the common base FD,
+     I.8 identifies the angles of the two triangles. -/
+  have hDE_DB : ‖D E‖ = ‖D B‖ := BookI.Prop46.sq (h36.symm.trans h)
+  have hFE_FB : ‖F E‖ = ‖F B‖ := Definition15 hF hE hB
+  have hDEF : Triangle D E F := fun hc => hDE.not_inside hc (centre_inside hF)
+  have hDBF : Triangle D B F := Prop37.triangle hF hD hB hE hDEF hDE_DB
+  have hED_BD : ‖E D‖ = ‖B D‖ := by rw [len_symm E D, hDE_DB, len_symm]
+  have hEF_BF : ‖E F‖ = ‖B F‖ := by rw [len_symm E F, hFE_FB, len_symm]
+  have h8 : ∠ D E F = ∠ D B F := BookI.Prop8 hDEF.bac hDBF.bac hED_BD hEF_BF rfl
+  have hDBF_right : ∠ D B F = ∟ :=
+    h8.symm.trans ((angle_symm hDEF.ne₁₂ hDEF.ne₂₃.symm).trans hFED)
+  /- The right angle at B gives touching by III.16's porism, stated for a radius. -/
+  have hBD : Touches B D ABC := Prop16.porism hF hB hDBF.cba
+    ((angle_symm hDBF.ne₂₃.symm hDBF.ne₁₂).trans hDBF_right)
+  obtain ⟨M, hB_M, hD_M⟩ := Postulate1 B D hDBF.ne₁₂.symm
+  exact hBD.of_collinear ⟨M, hB_M, hD_M, hD_M⟩ ⟨M, hB_M, hD_M, hB_M⟩ hDBF.ne₁₂
+
 /-- If a point be taken outside a circle and from the point there fall on the circle two straight
 lines, if one of them cut the circle, and the other fall on it, and if further the rectangle
 contained by the whole of the straight line which cuts the circle and the straight line
@@ -61,55 +96,60 @@ theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
   -- DB fall on the circle ACB; let DCA cut the circle and DB fall on it; and let the rectangle
   -- AD, DC be equal to the square on DB.
   -- I say that DB touches the circle ABC.
-  -- For let DE be drawn touching ABC; let the centre of the circle ABC be taken, and let it be
-  -- F; let FE, FB, FD be joined.
-  obtain ⟨E, hE, hDE⟩ := Prop17 hABC hD
-  obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hABC hA hC (ne_of_between (between_symm hDCA))
-  have hDE' : D ≠ E := hDE.1
-  have hDB : D ≠ B := fun e => hD.2 (e ▸ hB)
-  have hFE : F ≠ E := fun e => inside_not_on (centre_inside hF) (e ▸ hE)
-  have hFB : F ≠ B := fun e => inside_not_on (centre_inside hF) (e ▸ hB)
-  -- Thus the angle FED is right. [III. 18]
-  obtain ⟨L, hD_L, hE_L⟩ := Postulate1 D E hDE'
-  have hFED : ∠ F E D = ∟ :=
-    Prop18 hF hE hDE ⟨L, hD_L, hE_L, hE_L⟩ D ⟨L, hD_L, hE_L, hD_L⟩ hDE'
-  -- Now, since DE touches the circle ABC, and DCA cuts it,
-  -- the rectangle AD, DC is equal to the square on DE. [III. 36]
-  have h36 : rect A D D C = sq D E := Prop36 hABC hD hA hE hC hDCA hDE
-  -- But the rectangle AD, DC was also equal to the square on DB;
-  -- therefore the square on DE is equal to the square on DB;
-  have hsq : sq D E = sq D B := CommonNotion1 h36.symm h.symm
-  -- therefore DE is equal to DB.
-  have hDE_DB : ‖D E‖ = ‖D B‖ := BookI.Prop46.sq hsq
-  -- And FE is equal to FB;
-  have hFE_FB : ‖F E‖ = ‖F B‖ := Definition15 hF hE hB
-  -- therefore the two sides DE, EF are equal to the two sides DB, BF;
-  have hED_BD : ‖E D‖ = ‖B D‖ := by rw [len_symm E D, hDE_DB, len_symm]
-  have hEF_BF : ‖E F‖ = ‖B F‖ := by rw [len_symm E F, hFE_FB, len_symm]
-  -- and FD is the common base of the triangles;
-  have hDEF : Triangle D E F := fun hcol => hDE.not_inside hcol (centre_inside hF)
-  have hDBF : Triangle D B F := Prop37.triangle hF hD hB hE hDEF hDE_DB
-  -- therefore the angle DEF is equal to the angle DBF. [I. 8]
-  have h8 : ∠ D E F = ∠ D B F := BookI.Prop8 hDEF.bac hDBF.bac hED_BD hEF_BF rfl
-  -- But the angle DEF is right;
-  have hDEF_right : ∠ D E F = ∟ := (angle_symm hDE' hFE).trans hFED
-  -- therefore the angle DBF is also right.
-  have hDBF_right : ∠ D B F = ∟ := h8.symm.trans hDEF_right
-  -- And FB produced is a diameter;
-  /- Our porism of III.16 is stated at the end of a radius, so we need not produce FB. -/
-  -- and the straight line drawn at right angles to the diameter of a circle, from its
-  -- extremity, touches the circle; [III. 16, Por.]
-  have hBD : Touches B D ABC :=
-    Prop16.porism hF hB hDBF.cba ((angle_symm hFB hDB).trans hDBF_right)
-  -- therefore DB touches the circle.
-  obtain ⟨M, hB_M, hD_M⟩ := Postulate1 B D hDB.symm
-  have hDB_touch : Touches D B ABC :=
-    hBD.of_collinear ⟨M, hB_M, hD_M, hD_M⟩ ⟨M, hB_M, hD_M, hB_M⟩ hDB
+  have hresult : Touches D B ABC := by
+    by_cases hthrough : ∃ F : Point, Centre F ABC ∧ Collinear A C F
+    · obtain ⟨F, hF, hACF⟩ := hthrough
+      exact Prop37.centre_on_secant hF hD hA hB hC hDCA hACF h
+    -- For let DE be drawn touching ABC; let the centre of the circle ABC be taken, and let it be
+    -- F; let FE, FB, FD be joined.
+    · obtain ⟨E, hE, hDE⟩ := Prop17 hABC hD
+      obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hABC hA hC (ne_of_between (between_symm hDCA))
+      have hDE' : D ≠ E := hDE.1
+      have hDB : D ≠ B := fun e => hD.2 (e ▸ hB)
+      have hFE : F ≠ E := fun e => inside_not_on (centre_inside hF) (e ▸ hE)
+      have hFB : F ≠ B := fun e => inside_not_on (centre_inside hF) (e ▸ hB)
+      -- Thus the angle FED is right. [III. 18]
+      obtain ⟨L, hD_L, hE_L⟩ := Postulate1 D E hDE'
+      have hFED : ∠ F E D = ∟ :=
+        Prop18 hF hE hDE ⟨L, hD_L, hE_L, hE_L⟩ D ⟨L, hD_L, hE_L, hD_L⟩ hDE'
+      -- Now, since DE touches the circle ABC, and DCA cuts it,
+      -- the rectangle AD, DC is equal to the square on DE. [III. 36]
+      have h36 : rect A D D C = sq D E := Prop36 hABC hD hA hE hC hDCA hDE
+      -- But the rectangle AD, DC was also equal to the square on DB;
+      -- therefore the square on DE is equal to the square on DB;
+      have hsq : sq D E = sq D B := CommonNotion1 h36.symm h.symm
+      -- therefore DE is equal to DB.
+      have hDE_DB : ‖D E‖ = ‖D B‖ := BookI.Prop46.sq hsq
+      -- And FE is equal to FB;
+      have hFE_FB : ‖F E‖ = ‖F B‖ := Definition15 hF hE hB
+      -- therefore the two sides DE, EF are equal to the two sides DB, BF;
+      have hED_BD : ‖E D‖ = ‖B D‖ := by rw [len_symm E D, hDE_DB, len_symm]
+      have hEF_BF : ‖E F‖ = ‖B F‖ := by rw [len_symm E F, hFE_FB, len_symm]
+      -- and FD is the common base of the triangles;
+      have hDEF : Triangle D E F := fun hcol => hDE.not_inside hcol (centre_inside hF)
+      have hDBF : Triangle D B F := Prop37.triangle hF hD hB hE hDEF hDE_DB
+      -- therefore the angle DEF is equal to the angle DBF. [I. 8]
+      have h8 : ∠ D E F = ∠ D B F := BookI.Prop8 hDEF.bac hDBF.bac hED_BD hEF_BF rfl
+      -- But the angle DEF is right;
+      have hDEF_right : ∠ D E F = ∟ := (angle_symm hDE' hFE).trans hFED
+      -- therefore the angle DBF is also right.
+      have hDBF_right : ∠ D B F = ∟ := h8.symm.trans hDEF_right
+      -- And FB produced is a diameter;
+      /- Our porism of III.16 is stated at the end of a radius, so we need not produce FB. -/
+      -- and the straight line drawn at right angles to the diameter of a circle, from its
+      -- extremity, touches the circle; [III. 16, Por.]
+      have hBD : Touches B D ABC :=
+        Prop16.porism hF hB hDBF.cba ((angle_symm hFB hDB).trans hDBF_right)
+      -- therefore DB touches the circle.
+      obtain ⟨M, hB_M, hD_M⟩ := Postulate1 B D hDB.symm
+      have hDB_touch : Touches D B ABC :=
+        hBD.of_collinear ⟨M, hB_M, hD_M, hD_M⟩ ⟨M, hB_M, hD_M, hB_M⟩ hDB
+      exact hDB_touch
   -- Similarly this can be proved to be the case even if the centre be on AC.
-  /- We need no second case: III.36 is cited by its statement, which holds wherever the
-     centre lies, and nothing else above looks at AC. -/
+  /- The first branch proves this case explicitly in `Prop37.centre_on_secant`,
+     using the diameter calculation shared with III.36. -/
   -- Therefore etc.
-  exact hDB_touch
   -- Q. E. D.
+  exact hresult
 
 end Elements.BookIII

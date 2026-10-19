@@ -8,7 +8,7 @@ kind = "euclid"
 
 [representation]
 tags = ["centre-given"]
-note = "The circle comes with a centre (`∃ F, Centre F ABC`), and the proof finds it by III.1 where Euclid takes it."
+note = "The circle comes with a centre (`∃ F, Centre F ABC`). The explicit case names a centre on AC; the other branch retains the III.1 call where Euclid takes the centre."
 
 [[passage]]
 at = "and FD is the common base of the triangles"
@@ -23,8 +23,12 @@ note = "Our porism to III.16 is said at the end of a radius, so the Lean applies
 
 [[passage]]
 at = "Similarly this can be proved to be the case even if the centre be on AC"
-kind = "grouped"
-note = "No second case is needed: III.36 is cited by its statement, which holds wherever the centre lies, and nothing else in the argument looks at AC."
+kind = "helper"
+helper = "Prop37.centre_on_secant"
+note = "The first branch makes this already covered case explicit: the diameter calculation of III.36 and the given equality give equal squares on DE and DB, and Euclid's two-triangle argument finishes the proof. The other branch keeps the argument through the general III.36 statement."
+
+[figure]
+case = "the centre F off AC, with DE and DB touching on opposite sides of DF"
 
 [review]
 stage = "exceptions"
