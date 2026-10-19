@@ -1165,6 +1165,11 @@ def backslashes_before(text: str, at: int) -> int:
     return at - len(text[:at].rstrip("\\"))
 
 
+def escapes_punctuation(text: str, at: int) -> bool:
+    return (text[at:at + 1] == "\\" and at + 1 < len(text)
+            and text[at + 1] in string.punctuation)
+
+
 AUTOLINK = re.compile(
     r"<(?:[A-Za-z][A-Za-z0-9+.-]{1,31}:[^<>\x00-\x20]*"
     r"|[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
@@ -1181,7 +1186,7 @@ def reference_title(text: str) -> bool:
     closer = text[-1]
     at = 1
     while at < len(text) - 1:
-        if text[at] == "\\":
+        if escapes_punctuation(text, at):
             at += 2
         elif text[at] == closer:
             return False
@@ -1205,7 +1210,7 @@ def reference_definition(line: str) -> bool:
         while at < len(line) and line[at] != ">":
             if line[at] == "<" or ord(line[at]) < 0x20:
                 return False
-            at += 2 if line[at] == "\\" and at + 1 < len(line) else 1
+            at += 2 if escapes_punctuation(line, at) else 1
         if at == len(line):
             return False
         at += 1
@@ -1213,7 +1218,7 @@ def reference_definition(line: str) -> bool:
         depth = 0
         start = at
         while at < len(line) and line[at] not in " \t":
-            if line[at] == "\\" and at + 1 < len(line):
+            if escapes_punctuation(line, at):
                 at += 2
                 continue
             if line[at] == "(":
@@ -1266,8 +1271,7 @@ def inline_destination_end(text: str, start: int) -> int | None:
         closer = pairs[opener]
         at += 1
         while at < len(text):
-            if (text[at] == "\\" and at + 1 < len(text)
-                    and text[at + 1] in string.punctuation):
+            if escapes_punctuation(text, at):
                 at += 2
             elif text[at] == closer:
                 return at + 1
@@ -1287,8 +1291,7 @@ def inline_destination_end(text: str, start: int) -> int | None:
     if text[at] == "<":
         at += 1
         while at < len(text):
-            if (text[at] == "\\" and at + 1 < len(text)
-                    and text[at + 1] in string.punctuation):
+            if escapes_punctuation(text, at):
                 at += 2
                 continue
             if text[at] == ">":
@@ -1304,8 +1307,7 @@ def inline_destination_end(text: str, start: int) -> int | None:
         began = at
         while at < len(text):
             char = text[at]
-            if (char == "\\" and at + 1 < len(text)
-                    and text[at + 1] in string.punctuation):
+            if escapes_punctuation(text, at):
                 at += 2
                 continue
             if char == "(":
@@ -1380,12 +1382,15 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
         openers = [m.start() for m in re.finditer("<!--", block.text)
                    if backslashes_before(block.text, m.start()) % 2 == 0]
         links = link_destination_ranges(block.text)
+        consumed: list[tuple[int, int]] = []
         i, pos = 0, 0
         while True:
             while i < len(ticks) and ticks[i][0] < pos:
                 i += 1
             opener = next((at for at in openers if at >= pos), len(block.text))
-            link = next(((a, b, label) for a, b, label in links if a >= pos),
+            link = next(((a, b, label) for a, b, label in links
+                         if a >= pos and not any(start <= label < end
+                                                for start, end in consumed)),
                         (len(block.text), len(block.text), len(block.text)))
             if i < len(ticks) and ticks[i][0] < min(opener, link[0]):
                 raw_start, opened = ticks[i]
@@ -1403,6 +1408,7 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
                     content = content[1:-1]
                 source = block.offsets[start:end]
                 spans.append(CodeSpan(source[0], source[-1] + 1, content, source))
+                consumed.append((start, end))
                 pos = end
                 continue
             if link[0] < opener:
@@ -1416,6 +1422,7 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
                 openers = []
                 continue
             comments.extend(offset_runs(block.offsets[opener:close + 3]))
+            consumed.append((opener, close + 3))
             pos = close + 3
     return MarkdownSyntax(spans, comments, destinations)
 
@@ -1788,6 +1795,7 @@ class NamedText(NamedTuple):
     opens: str
     held: bool = False
     line_at: object = None   # the file's line of an offset in the text, if taken from a file
+    hypothesis: bool = False
 
 
 def book_opens(book: str) -> str:
@@ -1949,6 +1957,13 @@ def s12_plan(texts: list[NamedText], audit_built: bool,
         report_text = is_report(t.path) and not t.held
         seen: set[str] = set()
         for occurrence in lean_name_occurrences(t.text, all_uses=report_text):
+            if t.hypothesis and occurrence.binder:
+                line = t.line_at(occurrence.at) if t.line_at else line_of(t.text, occurrence.at)
+                content = occurrence.span.content.strip()
+                fail("S12", t.path, line, f"`{content}`: write the hypothesis in words, "
+                     "not as a Lean binder (STYLE, section 1, \"Hypotheses in words\")",
+                     new=True)
+                continue
             name = occurrence.name
             if name in seen:
                 continue
@@ -2765,7 +2780,8 @@ def main() -> int:
         for note in review_texts(path.read_text(encoding="utf-8"), terms=is_terms):
             check_text(path, note.text, {"review"}, line_at=note.line_at, new=True)
             named.append(NamedText(path, note.text, every_book_opens() if is_terms
-                                   else book_opens(path.parent.name), line_at=note.line_at))
+                                   else book_opens(path.parent.name), line_at=note.line_at,
+                                   hypothesis=note.key == "statement.hypotheses"))
     for path in catalogue_files():
         raw = path.read_text(encoding="utf-8")
         book = re.fullmatch(r"gaps-book-(\w+)\.md", path.name)

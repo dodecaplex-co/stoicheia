@@ -332,8 +332,8 @@ def s22(text: str) -> list[str]:
             for m in style.LETTERS_IN_CODE.finditer(style.letter_spans(text))]
 
 
-def main_named_texts() -> dict[Path, str]:
-    """The paths and namespaces main gives S12, with other checks replaced by stubs."""
+def main_named_records() -> list[style.NamedText]:
+    """The records main gives S12, with other checks replaced by stubs."""
     captured = []
 
     def remember(texts):
@@ -352,7 +352,12 @@ def main_named_texts() -> dict[Path, str]:
         stack.enter_context(patch.object(sys, "argv", ["check_style.py"]))
         with redirect_stdout(StringIO()):
             style.main()
-    return {text.path: text.opens for text in captured}
+    return captured
+
+
+def main_named_texts() -> dict[Path, str]:
+    """The paths and namespaces main gives S12."""
+    return {text.path: text.opens for text in main_named_records()}
 
 
 def failure_lines(text: str, rule: str) -> list[int]:
@@ -399,6 +404,34 @@ def lean_failure(text: str, line_at=None) -> list[tuple[int, bool]]:
         style.subprocess.run = saved[2]
 
 
+def review_s12_failures(raw: str) -> list[tuple[int, str]]:
+    """The S12 failures after known names in reader-visible review fields pass Lean."""
+    saved = (list(style.failures), dict(style.reports), set(style.reach_found),
+             style.subprocess.run)
+    path = style.ROOT / "review" / "I" / "99.toml"
+    try:
+        style.failures.clear()
+        style.reports.clear()
+        style.reach_found.clear()
+        notes = style.review_texts(raw)
+        named = [style.NamedText(path, note.text, style.book_opens("I"),
+                                 line_at=note.line_at,
+                                 hypothesis=note.key == "statement.hypotheses")
+                 for note in notes]
+        _, new, _, _ = style.s12_plan(named, False)
+        style.subprocess.run = lambda *_args, **_kwargs: SimpleNamespace(
+            returncode=0, stdout="", stderr="")
+        style.lean_probe(new, ["Elements"])
+        return [(line, message) for rule, _, line, message in style.failures if rule == "S12"]
+    finally:
+        style.failures[:] = saved[0]
+        style.reports.clear()
+        style.reports.update(saved[1])
+        style.reach_found.clear()
+        style.reach_found.update(saved[2])
+        style.subprocess.run = saved[3]
+
+
 def spans_of(src: str, line: int, doc: str) -> str | None:
     """The text of the docstring `docstring_span` finds above line `line`, or None."""
     span = style.docstring_span(src, line, doc)
@@ -437,11 +470,13 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S12", style.lean_names, "[x]: /baz extra`\nvisible `Missing.name`", ["visible"]),
     ("S12", style.lean_names,
      "[x]: /one\n[y]: https://example.test/`\nvisible `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, r"[x]: a\ `Missing.name`", ["Missing.name"]),
     ("S12", style.lean_names, "<https://example.test/`> visible `Missing.name`",
      ["Missing.name"]),
     ("S12", style.lean_names, "``[x](url`)`` `Missing.name`", ["Missing.name"]),
     ("S12", style.lean_names, "[x `](url`) visible `Missing.name`", ["Missing.name"]),
     ("S12", style.lean_names, "[see `foo](bar)` and `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, "`[` x](<u`Missing.name`>)", ["Missing.name"]),
     ("S22", lambda t: [content for _, _, content in style.markdown_code_spans(t)],
      "[see `foo](bar)` and `Missing.name`", ["foo](bar)", "Missing.name"]),
     ("S22", s22, "[`AB](x)` `CD`", ["CD"]),
@@ -716,6 +751,25 @@ class Scopes(unittest.TestCase):
 
     test_scope_cases.__doc__ = (f"The new scopes read {len(SCOPE_CASES)} records, docstrings, "
                                 "names and letters rightly")
+
+    def test_review_hypothesis_binders_are_words(self):
+        """A known declaration cannot make binder syntax pass in a hypothesis field."""
+        raw = ('[statement]\n'
+               'note = "The postulate is `Postulate5`."\n'
+               'hypotheses = ["the condition (`Postulate5 : P`)"]\n')
+        found = review_s12_failures(raw)
+        self.assertEqual(len(found), 1)
+        self.assertEqual(found[0][0], 3)
+        self.assertIn("write the hypothesis in words", found[0][1])
+
+    def test_review_hypothesis_fields_reach_s12(self):
+        """Main retains which reader-visible review strings are hypotheses."""
+        actual = sorted((str(text.path), text.text) for text in main_named_records()
+                        if text.hypothesis)
+        expected = sorted((str(path), note.text) for path in style.review_files()
+                          for note in style.review_texts(path.read_text(encoding="utf-8"))
+                          if note.key == "statement.hypotheses")
+        self.assertEqual(actual, expected)
 
     def test_reports_reach_s12(self):
         """Every eligible ordinary report is among the texts main gives S12."""
