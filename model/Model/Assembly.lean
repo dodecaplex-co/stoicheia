@@ -2,6 +2,8 @@ module
 
 public import Model.Laws
 public import Model.Euclidean
+public import Model.Euclidean.AngleAdd
+public import Model.Euclidean.Angles
 public import Model.Euclidean.Avoidance
 public import Model.Euclidean.CircleBasics
 public import Model.Euclidean.CircleRules
@@ -28,9 +30,9 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-So far 62 of the 87 laws are proved in the plane. Until the rest are,
+So far 71 of the 87 laws are proved in the plane. Until the rest are,
 `euclidean_laws` takes them as hypotheses, so that it states exactly what is proved: the plane
-satisfies every law, given the 25 that are not yet proved in it. When none is left,
+satisfies every law, given the 16 that are not yet proved in it. When none is left,
 the generator writes it with no hypothesis, and `model_exists` after it.
 -/
 
@@ -38,16 +40,9 @@ the generator writes it with no hypothesis, and `model_exists` after it.
 
 namespace Model
 
-/-- **The plane satisfies the laws,** given the 25 not yet proved in it. -/
+/-- **The plane satisfies the laws,** given the 16 not yet proved in it. -/
 theorem euclidean_laws
-    (Postulate4 : Law.Postulate4 Euclidean.plane)
     (Postulate5 : Law.Postulate5 Euclidean.plane)
-    (adjacent_eq_of_right : Law.Tacit.adjacent_eq_of_right Euclidean.plane)
-    (angle_add_of_inside : Law.Tacit.angle_add_of_inside Euclidean.plane)
-    (angle_eq_of_same_rays : Law.Tacit.angle_eq_of_same_rays Euclidean.plane)
-    (angle_eq_zero_of_same_ray : Law.Tacit.angle_eq_zero_of_same_ray Euclidean.plane)
-    (angle_le_two_right : Law.Tacit.angle_le_two_right Euclidean.plane)
-    (angle_symm : Law.Tacit.angle_symm Euclidean.plane)
     (area_add_of_between : Law.Tacit.area_add_of_between Euclidean.plane)
     (area_congruent : Law.Tacit.area_congruent Euclidean.plane)
     (area_degenerate : Law.Tacit.area_degenerate Euclidean.plane)
@@ -56,11 +51,9 @@ theorem euclidean_laws
     (area_swap : Law.Tacit.area_swap Euclidean.plane)
     (between_of_area_add : Law.Tacit.between_of_area_add Euclidean.plane)
     (eq_of_len_eq_zero : Law.Tacit.eq_of_len_eq_zero Euclidean.plane)
-    (inside_of_angle_add : Law.Tacit.inside_of_angle_add Euclidean.plane)
     (len_self : Law.Tacit.len_self Euclidean.plane)
     (len_symm : Law.Tacit.len_symm Euclidean.plane)
     (on_line_of_area_eq_zero : Law.Tacit.on_line_of_area_eq_zero Euclidean.plane)
-    (same_ray_of_angle_eq_zero : Law.Tacit.same_ray_of_angle_eq_zero Euclidean.plane)
     (superposition : Law.Tacit.superposition Euclidean.plane)
     (triple_incidence1 : Law.Tacit.triple_incidence1 Euclidean.plane)
     (triple_incidence2 : Law.Tacit.triple_incidence2 Euclidean.plane)
@@ -70,18 +63,18 @@ theorem euclidean_laws
   Postulate1 := Euclidean.Postulate1
   Postulate2 := Euclidean.Postulate2
   Postulate3 := Euclidean.Postulate3
-  Postulate4 := Postulate4
+  Postulate4 := Euclidean.Postulate4
   Postulate5 := Postulate5
   add_assoc := Euclidean.add_assoc
   add_comm := Euclidean.add_comm
   add_lt_add_right := Euclidean.add_lt_add_right
   add_zero := Euclidean.add_zero
-  adjacent_eq_of_right := adjacent_eq_of_right
-  angle_add_of_inside := angle_add_of_inside
-  angle_eq_of_same_rays := angle_eq_of_same_rays
-  angle_eq_zero_of_same_ray := angle_eq_zero_of_same_ray
-  angle_le_two_right := angle_le_two_right
-  angle_symm := angle_symm
+  adjacent_eq_of_right := Euclidean.adjacent_eq_of_right
+  angle_add_of_inside := Euclidean.angle_add_of_inside
+  angle_eq_of_same_rays := Euclidean.angle_eq_of_same_rays
+  angle_eq_zero_of_same_ray := Euclidean.angle_eq_zero_of_same_ray
+  angle_le_two_right := Euclidean.angle_le_two_right
+  angle_symm := Euclidean.angle_symm
   area_add_of_between := area_add_of_between
   area_congruent := area_congruent
   area_degenerate := area_degenerate
@@ -112,7 +105,7 @@ theorem euclidean_laws
   exists_point_outside_circle := Euclidean.exists_point_outside_circle
   exists_point_same_side := Euclidean.exists_point_same_side
   inside_not_on := Euclidean.inside_not_on
-  inside_of_angle_add := inside_of_angle_add
+  inside_of_angle_add := Euclidean.inside_of_angle_add
   inside_of_between := Euclidean.inside_of_between
   inside_of_len_lt := Euclidean.inside_of_len_lt
   len_add_of_between := Euclidean.len_add_of_between
@@ -144,7 +137,7 @@ theorem euclidean_laws
   pasch2 := Euclidean.pasch2
   pasch3 := Euclidean.pasch3
   pasch4 := Euclidean.pasch4
-  same_ray_of_angle_eq_zero := same_ray_of_angle_eq_zero
+  same_ray_of_angle_eq_zero := Euclidean.same_ray_of_angle_eq_zero
   same_side_or := Euclidean.same_side_or
   same_side_refl := Euclidean.same_side_refl
   same_side_symm := Euclidean.same_side_symm

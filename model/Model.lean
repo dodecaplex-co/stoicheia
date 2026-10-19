@@ -25,4 +25,8 @@ public import Model.Euclidean.Pasch
 public import Model.Laws.circles
 public import Model.Euclidean.CircleBasics
 public import Model.Euclidean.CircleRules
+public import Model.Laws.angles
+public import Model.Euclidean.AngleBasics
+public import Model.Euclidean.Angles
+public import Model.Euclidean.AngleAdd
 public import Model.Audit

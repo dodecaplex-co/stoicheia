@@ -12,8 +12,8 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and all 87 laws,
 written by a generator from the library's elaborated declarations into one structure,
-`Laws`, and checked against those declarations. The plane satisfies 62 of the 87 locked
-laws. `Model/Assembly.lean` gathers these proofs, with the 25 remaining laws as hypotheses.
+`Laws`, and checked against those declarations. The plane satisfies 71 of the 87 locked
+laws. `Model/Assembly.lean` gathers these proofs, with the 16 remaining laws as hypotheses.
 Until every locked law is proved here, the evidence that the laws have a model remains
 MODEL.md's hand arguments and numerical tests, and this package is a milestone in progress.
 
@@ -74,6 +74,11 @@ at the repository's root builds the library exactly as before.
 | [Check/Circles.lean](Check/Circles.lean) | the same for the circle rules of `Model/Laws/circles.lean` | `Elements.Foundations`, `Model.Laws.circles` |
 | [Model/Laws/intersections.lean](Model/Laws/intersections.lean) | the five line intersection rules and the four circle rules, and the two defined words they add, **by hand** | `Hand` |
 | [Check/Intersections.lean](Check/Intersections.lean) | the same for `Model/Laws/intersections.lean` | `Check.Hand`, `Model.Laws.intersections` |
+| [Model/Laws/angles.lean](Model/Laws/angles.lean) | the ten angle laws, with `Collinear` and `IsRightAngle`, translated **by hand** | `Signature` |
+| [Model/Euclidean/AngleBasics.lean](Model/Euclidean/AngleBasics.lean) | the bridge from the plane's angle to Mathlib's, and the line through two points | Mathlib |
+| [Model/Euclidean/Angles.lean](Model/Euclidean/Angles.lean) | Definition 15, Postulate 4, the two metric angle laws and diagram-angle rules 1, 3 and 4 proved in the plane | Mathlib |
+| [Model/Euclidean/AngleAdd.lean](Model/Euclidean/AngleAdd.lean) | angle addition, both ways (diagram-angle rule 2), proved in the plane | Mathlib |
+| [Check/Angles.lean](Check/Angles.lean) | the same for the angle laws of `Model/Laws/angles.lean` | `Elements.Foundations`, `Model.Laws.angles` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib. The
@@ -157,8 +162,10 @@ Reading our words by Mathlib's own definitions, rather than by new ones, lets th
 here stand on Mathlib's lemmas. Its betweenness, sides and spheres are the work of Joseph
 Myers; its unoriented angle, of Joseph Myers and Manuel Candales; its perpendicular
 bisector, of Yury Kudryashov and Joseph Myers; and its Euclidean plane, `EuclideanSpace`,
-of Joseph Myers, Sébastien Gouëzel and Heather Macbeth, as their files record. Our thanks
-to them all.
+of Joseph Myers, Sébastien Gouëzel and Heather Macbeth, as their files record. Angle
+addition in both directions stands on the exact case of equality in the triangle inequality
+for angles, the work of Ilmārs Cīrulis, Alex Meiburg and Jovan Gerbscheid. Our thanks to
+them all.
 
 A model of the laws is one obligation, and a faithful reading of every word the
 propositions use is another. The plane here is checked against the laws; whether
@@ -397,7 +404,7 @@ come before the easy laws are shared out. A law proved here is gathered into
 | Magnitudes | the eight laws of `Tacit/Magnitudes.lean`: easy in the plane, but they test the translation of the instances and of `Kind` | proved here |
 | Order | the ten laws of Between 1 to 7 and the five diagram-segment laws (`len_add_of_between`, `circle_eq`, `on_circle_of_len_eq`, `inside_of_len_lt`, `len_lt_of_inside`): not among the hard groups, but the proof of every one of the 99 propositions rests on some of them | proved here |
 | Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides`, `lines_meet_of_opposite_sides` | proved here |
-| Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | to do |
+| Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | proved here |
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
 | Superposition | an isometry, with a reflection where the side needs one; and the soundness of whichever restricted rule is adopted | to do |
 | Areas | `area_congruent`, `area_add_of_between`, `between_of_area_add`, with collinear and repeated corners | to do |

@@ -8,3 +8,4 @@ import Check.Order
 import Check.Sides
 import Check.Circles
 import Check.Intersections
+import Check.Angles

@@ -1,5 +1,10 @@
 module
 
+public import Model.Laws.angles
+public import Model.Euclidean.AngleBasics
+public import Model.Euclidean.Angles
+public import Model.Euclidean.AngleAdd
+
 public import Model.Laws.intersections
 public import Model.Euclidean.LineCircle
 public import Model.Euclidean.LineSides
@@ -518,6 +523,66 @@ info: 'Model.Euclidean.not_same_side_of_circles_meet_intersections' depends on a
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.not_same_side_of_circles_meet_intersections
+
+/--
+info: 'Model.Euclidean.Definition15_angles' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.Definition15_angles
+
+/--
+info: 'Model.Euclidean.Postulate4' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.Postulate4
+
+/--
+info: 'Model.Euclidean.angle_symm' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.angle_symm
+
+/--
+info: 'Model.Euclidean.angle_le_two_right' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.angle_le_two_right
+
+/--
+info: 'Model.Euclidean.angle_eq_zero_of_same_ray' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.angle_eq_zero_of_same_ray
+
+/--
+info: 'Model.Euclidean.same_ray_of_angle_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.same_ray_of_angle_eq_zero
+
+/--
+info: 'Model.Euclidean.angle_add_of_inside' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.angle_add_of_inside
+
+/--
+info: 'Model.Euclidean.inside_of_angle_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.inside_of_angle_add
+
+/--
+info: 'Model.Euclidean.adjacent_eq_of_right' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.adjacent_eq_of_right
+
+/--
+info: 'Model.Euclidean.angle_eq_of_same_rays' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.angle_eq_of_same_rays
 
 /-! ## What the assembled model rests on
 
