@@ -3,7 +3,7 @@
 scope = "full"
 note = "With its companion: `Prop17.general` draws a touching straight line from any point not within the circle; `Prop17` keeps A outside."
 companions = ["III.17 general"]
-fingerprint = "sha256:32b9217d50bc0d85"
+fingerprint = "sha256:5dafebad74ae3ff0"
 
 [route]
 kind = "euclid"
@@ -22,6 +22,6 @@ case = "A outside the circle, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "f698a81"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:c8f0af46b16ac039"
+lean = "sha256:dc8853c814f5707f"

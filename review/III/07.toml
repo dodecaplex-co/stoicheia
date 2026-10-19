@@ -3,7 +3,7 @@
 scope = "full"
 note = "With its companion: `Prop7.general` compares any two of the rest, on one side of AD or on opposite sides; `Prop7` keeps two on one side."
 companions = ["III.7 general"]
-fingerprint = "sha256:822f7a06d9330f45"
+fingerprint = "sha256:089a6993dc3354e9"
 
 [route]
 kind = "euclid"
@@ -33,6 +33,6 @@ case = "FB, FC and FG compared on one side of AD, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "f698a81"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:9a75b001019fe0f1"
+lean = "sha256:15905366472223eb"

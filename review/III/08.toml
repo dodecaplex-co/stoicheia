@@ -3,7 +3,7 @@
 scope = "full"
 note = "With its companion: `Prop8.general` compares any two of a class, on one side of DA or on opposite sides; `Prop8` keeps two on one side."
 companions = ["III.8 general"]
-fingerprint = "sha256:5924e258038472ae"
+fingerprint = "sha256:407ebb1e80f5d884"
 
 [route]
 kind = "modified"
@@ -43,6 +43,6 @@ case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figu
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "f698a81"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:2a04a14da07328ec"
+lean = "sha256:cfa5c5166fbd1205"
