@@ -113,7 +113,7 @@ of the parallel postulate.
 
 ## Coordinates, vectors and complex numbers
 
-A mishnah may end with the modern way: the same fact in coordinates, vectors or complex
+Every mishnah ends with the modern way: the same fact in coordinates, vectors or complex
 numbers, in a sentence or three. These books walk that road at leisure. The turns,
 reflections and slides those ways use have [a section of their own](#transformations),
 with Yaglom and Klein.
