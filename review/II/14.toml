@@ -9,9 +9,51 @@ kind = "euclid"
 note = "`Prop14.rectangle` is the second part of Euclid's proof, the main theorem's argument after the rectangle is made, written out again so as not to cite II.14; `Prop14.sum` makes the rectangle for any number of triangles by I.45's `Prop45.sum`, in a right angle from I.11; and `Prop14.square` describes the square on the side found, by I.46, as Euclid's last words name it."
 
 [[passage]]
+at = "For let there be constructed the rectangular parallelogram BD"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid asks I.45 for a rectangular parallelogram. The Lean first constructs a right angle by I.11, for which Heath gives no reference here, applies I.45 in it, and uses `Rectangle.of_right` (I.29) to prove the other three angles right."
+
+[[passage]]
+at = "But, if not, one of the straight lines BE, ED is greater."
+kind = "helper"
+helper = "Tacit.lt_trichotomy"
+note = "Euclid takes for granted that one of the unequal straight lines BE and ED is greater. The Lean obtains the two alternatives from `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E, section 3.5), not a proved lemma."
+
+[[passage]]
 at = "Let BE be greater"
 kind = "case"
 note = "Euclid takes BE the greater; when ED is, the Lean reads the rectangle the other way round, so one argument serves for both."
+
+[[passage]]
+at = "let EF be made equal to ED"
+kind = "helper"
+helper = "OnRay.exists_len_eq"
+note = "Euclid makes EF equal to ED on BE produced, then bisects BF; Heath gives no reference for either step here. The Lean chooses F by `OnRay.exists_len_eq`, using Postulate 3 and `Tacit.line_circle_beyond` (the rule we assume as System E, Intersections 5), places E between B and F by `OnRay.between`, and bisects BF by I.10."
+
+[[passage]]
+at = "With centre G and distance one of the straight lines GB, GF"
+kind = "helper"
+helper = "Tacit.on_circle_of_len_eq"
+note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the whole circle with centre G through B, and `Tacit.on_circle_of_len_eq`, the rule we assume as System E, Diagram-segment 3, puts F on it because GF equals GB."
+
+[[passage]]
+at = "let DE be produced to H"
+kind = "helper"
+helper = "Tacit.line_circle_beyond"
+note = "Euclid takes DE produced to meet the semicircle at H; since BE is greater than ED = EF and G bisects BF, the Lean puts G between B and E by `OnRay.between_of_len_lt`, also giving E different from G for the unequal cut in II.5. The Lean then puts E inside the circle by `between_inner` and `InsideCircle.of_between_centre`; `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, finds H beyond E from D, and GH is named by its ends."
+
+[[passage]]
+at = "But GF is equal to GH"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of the radii GF and GH without giving a reason. The Lean obtains their equality from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
+
+[[passage]]
+at = "But the squares on HE, EG are equal to the square on GH"
+kind = "helper"
+helper = "Tacit.adjacent_eq_of_right"
+note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, the rule we assume as System E, Diagram-angle 3, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `BookI.Prop47.sq`."
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]
@@ -21,7 +63,16 @@ note = "A rectilineal figure is given with its division into triangles, checked,
 case = "BE greater than ED, as in Heath's figure, with the figure A of two triangles"
 
 [review]
-stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "7921e32"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:b4bbc1cc94524069"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
