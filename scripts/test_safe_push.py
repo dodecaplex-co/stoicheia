@@ -1487,6 +1487,11 @@ class PullRequests(Edge):
     def test_update_refreshes_the_generated_parts(self):
         # The final review: every part safe_push wrote is written afresh on an update (the
         # commits, the statements changed, the records), and the coordinator's words stay.
+        # I.3's record as it stood before `text` stamps, if it carries one already.
+        texted = "review/I/03.toml"
+        untexted = re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text(texted))
+        if untexted != self.text(texted):
+            self.new_base("I.3's record before its `text` stamp", {texted: untexted})
         self.good_commit()
         self.assertEqual(self.safe_push().returncode, 0)
         words = "A change for the test, in the coordinator's words."
@@ -1507,7 +1512,6 @@ class PullRequests(Edge):
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
         # And I.3's record gains its `text` stamp alone, its commit kept, as
         # review_stamp.py --migrate-text writes it.
-        texted = "review/I/03.toml"
         kept = re.search(r'(?m)^commit = "([^"]*)"', self.text(texted)).group(1)
         changes = {lean: new_lean, record: stamped, texted: self.text(texted).rstrip("\n")
                    + f'\ntext = "{safe_push.heath.text_hash(self.text(texted))}"\n'}
@@ -2524,8 +2528,10 @@ class ProtectedPaths(Edge):
         # a Lean file, and README.md's hand-written part are.
         record = self.text("review/I/01.toml")
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "0123456"', record)
-        # A `text` stamp added on a line of its own is a stamp too (review/SCHEMA.md).
-        texted = self.text("review/I/03.toml").rstrip("\n") + '\ntext = "sha256:0123456789abcdef"\n'
+        # A `text` stamp added, or rewritten, on a line of its own is a stamp too
+        # (review/SCHEMA.md).
+        texted = re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text("review/I/03.toml")) \
+            .rstrip("\n") + '\ntext = "sha256:0123456789abcdef"\n'
         changes = {
             "Certificate/Facts.lean": self.text("Certificate/Facts.lean") + "\n-- for the test\n",
             "review/I/01.toml": stamped,
@@ -2556,6 +2562,7 @@ class ProtectedPaths(Edge):
         path, line = "review/I/03.toml", 'text = "sha256:0123456789abcdef"'
         noted = self.replaced(path, 'scope = "full"\n', 'scope = "full"\n'
                               'note = """\nA note on two lines,\nfor the test."""\n')
+        noted = re.sub(r'(?m)^text = "[^"]*"\n?', "", noted)
         first = self.commit("A record with a multi-line note", {path: noted})
         inside = self.commit("A stamp-shaped line inside the note", {
             path: noted.replace("A note on two lines,\n", f"A note on two lines,\n{line}\n", 1)})
