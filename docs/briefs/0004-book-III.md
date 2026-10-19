@@ -313,8 +313,8 @@ worth naming. The first mate's report has a note on every statement.
 - **III.24** concludes Euclid's equal segments, read through Common Notion 4 as
   segments that coincide (`Arc.Congruent`). Euclid proves it by applying one segment to
   the other, and our Lean allows superposition only in I.4 and I.8, so the application is
-  a theorem, `placement` (`Elements/BookIII/Placement.lean`), proved from I.4, I.7, I.8,
-  I.20 and I.22; III.23's companion then settles every point by the angles, in place of
+  a theorem, `placement` (`Elements/BookIII/Placement.lean`), proved from I.2, I.3, I.4,
+  I.7, I.8, I.20 and I.22; III.23's companion then settles every point by the angles, in place of
   Euclid's reductio, and III.10 is not needed. Until stage 3 of
   [brief 0006](0006-statements.md), III.24 concluded only that the circles are equal and
   the circumferences equal in measure, proved by the angles at the centres (III.20,
@@ -404,7 +404,7 @@ stands on 18 October, and III.24, III.26 and III.28 as stage 3 of
 | [III.17](../../book/III/17.md) | restricted: a point outside the circle | Euclid's |  |  |  |
 | [III.21](../../book/III/21.md) | whole | one step changed |  |  |  |
 | [III.23](../../book/III/23.md) | whole | Euclid's |  | `segment-with-circle` |  |
-| [III.24](../../book/III/24.md) | whole | one step changed |  | `segment-with-circle`, `angle-measure`, `redundant-hypothesis` | done in stage 3: congruent segments by placement, the radius proof kept as an alternative |
+| [III.24](../../book/III/24.md) | whole | one step changed |  | `segment-with-circle`, `redundant-hypothesis` | done in stage 3: congruent segments by placement, the radius proof kept as an alternative |
 | [III.25](../../book/III/25.md) | restricted: handed the whole circle and its centre | Euclid's |  | `segment-with-circle` | stage 4: a construction that sees only the segment |
 | [III.26](../../book/III/26.md) | whole | one step changed |  | `angle-measure` | done in stage 3: equal circles made to do work (`Arc.Congruent`) |
 | [III.27](../../book/III/27.md) | whole | one step changed |  | `angle-measure`, `redundant-hypothesis` |  |
