@@ -601,7 +601,7 @@ equilateral.
 
 A definition chooses a meaning; a bridge theorem shows that it agrees with what Euclid's
 words need ([FORMALIZATION.md](../FORMALIZATION.md), section 3). These are Book IV's, each
-in the scratch file with `sorry` but the first, proved as a prototype (section 9):
+in the scratch file with `sorry`, and the first proved as a prototype too (section 9):
 
 | Bridge | Says | From | Home |
 |---|---|---|---|
@@ -629,7 +629,7 @@ once would conceal his argument ([FORMALIZATION.md](../FORMALIZATION.md), sectio
 | `Elements/Foundations/DefinitionsIV.lean` | the words of section 3, each with its docstring; they join `Certificate/axioms.lock` with the first frozen statement that reaches them, by `check_fidelity.py --write-lock` and a decisions entry | after `DefinitionsIII.lean` | the coordinator |
 | `Elements/Figure/Polygons.lean` | Book Zero: the list facts about `Polygon.sides` and `Polygon.cornerTriples`, `Polygon.triangle_iff`, a figure's corners read from any corner (rotation), `Polygon.arcs_measure` | Book Zero, after `OnCircles.lean`; cites no proposition | the owner of Book Zero named in the wave's orders |
 | `Elements/BookIII/Circumferences.lean` | `Circumference.add`, from stage 3 | already its home (brief 0006) | stage 3's move ([#25]) |
-| `Elements/BookIV/Arcs.lean` | the three bridges that cite Book III | Book IV's ground, after Book III, before IV.1 | Book IV's ground task |
+| `Elements/BookIV/Arcs.lean` | the three bridges that cite Book III, with the corner-deletion and separation lemmas of `Polygon.arcs_sum`'s proof and the addition of neighbouring circumferences (section 9) | Book IV's ground, after Book III, before IV.1 | Book IV's ground task |
 | `Elements/BookIV/PropNN.lean` | each proposition, its helpers before it, its porism (IV.15) and companions (IV.12, IV.13, IV.14, IV.16) after it | one file each | each proposition's task |
 | `Elements/Companions.lean` | the four companions' entries | | the integrator |
 | `heath/IV/` | Heath's text and the definitions, from the scans: vol. 2, pp. 78–111, the Internet Archive's `thirteenbookseu00heibgoog`, leaves n90 to n123 (page N is leaf N + 12) | | the transcribers |
@@ -728,8 +728,9 @@ otherwise; the recommendation is the brief's.
 - `lake env lean` on [`Statements.lean`](../reports/crew/scratch-IV/Statements.lean), at
   `89c5da4`, with `Staging` built: the words and the twenty-seven statements (sixteen
   propositions, the porism, four companions, five bridges and IV.16's helper
-  `Prop16.contiguity`) elaborate, each with its `sorry` and no other message. That `Polygon.sides`, `Polygon.cornerTriples` and `Polygon.arcs` compute as their
-  docstrings say was checked by `rfl` on four and five corners.
+  `Prop16.contiguity`) elaborate, each with its `sorry` and no other message. That
+  `Polygon.sides`, `Polygon.cornerTriples` and `Polygon.arcs` compute as their docstrings
+  say was checked by `rfl` on four and five corners.
 - Each prototype by `lake env lean` at `89c5da4`, with no error and no warning, and
   `#print axioms` on its theorem: no `sorryAx`, and no axiom outside the lock. The
   prototypes of IV.4, IV.6 and the circle divided rest on superposition through the
@@ -742,8 +743,7 @@ otherwise; the recommendation is the brief's.
   `Circumference.add` to reach `Elements/` without it (stage 3's move, [#25]).
 - Heath's definitions (p. 78), the sixteen enunciations, the order of each figure's corners
   in his figures, and every passage of his quoted here (pp. 81, 83, 84, 85, 90, 101, 102, 104,
-  109, 110),
-  against the page images of the scan.
+  109, 110), against the page images of the scan.
 
 ## Appendix: the challenge of 19 October
 
