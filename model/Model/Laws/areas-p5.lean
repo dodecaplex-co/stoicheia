@@ -35,7 +35,7 @@ variable (S : Signature)
 
 /-! ## Areas -/
 
-/-- `Elements.Tacit.area_degenerate` (Metric 7), by hand. The lock prints it as
+/-- `Elements.Tacit.area_degenerate` (Metric 6), by hand. The lock prints it as
 `∀ (A B : Elements.Point), Eq (Elements.area A A B) 0`. -/
 def area_degenerate : Prop :=
   ∀ (A B : S.Point), S.area A A B = (0 : S.Area)
