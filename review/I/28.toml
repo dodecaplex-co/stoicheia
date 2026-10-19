@@ -10,7 +10,7 @@ kind = "euclid"
 at = "and they are alternate; therefore AB is parallel to CD. [I. 27] Again,"
 kind = "helper"
 helper = "SameSideOf.oppositeSidesOf_of_between"
-note = "Euclid reads the angles as alternate from the figure. `SameSideOf.oppositeSidesOf_of_between` puts A and D on opposite sides of GH, since G lies between A and B and B and D are on the same side of GH."
+note = "Euclid reads the angles as alternate from the figure. `SameSideOf.oppositeSidesOf_of_between` puts A and D on opposite sides of GH, since G lies between A and B, and since B and D lie on the same side of GH."
 
 [[passage]]
 at = "and they are alternate; therefore AB is parallel to CD. [I. 27] Therefore etc."

@@ -17,6 +17,12 @@ at = "Therefore the angle AGH is not unequal to the angle GHD"
 kind = "case"
 note = "Euclid supposes AGH greater than GHD; the Lean proves his argument once over any letters and applies it again from H's end, with D, C, B, A for A, B, C, D and H, G for G, H, to rule out GHD greater than AGH. `SameSideOf.oppositeSidesOf_of_between` and `OppositeSidesOf.sameSideOf_of_between` put C and A on one side of HG for that second application."
 
+[[passage]]
+at = "and is therefore equal to it"
+kind = "helper"
+helper = "Tacit.lt_trichotomy"
+note = "Euclid concludes that the angles AGH and GHD are equal. The Lean uses both refutations with `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E, section 3.5), not a proof: of two unequal angles, one is greater."
+
 [review]
 stage = "full"
 commit = "dcb1767"
