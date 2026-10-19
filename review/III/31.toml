@@ -18,15 +18,15 @@ note = "Euclid shows the angle in the greater segment less than a right angle at
 
 [[passage]]
 at = "I say further that the angle of the greater segment"
-kind = "carried"
+kind = "helper"
 helper = "Prop31.greater"
-note = "Proved after the theorem, for every straight line in the circle not through the centre, at either end; Euclid's figure is the case in which B is the far end of the diameter through C. What he calls manifest is proved: near A the right angle BAC lies within the circle, and so within the angle of the greater segment."
+note = "What Euclid calls manifest, that near A the right angle BAC lies within the circle and so within the angle of the greater segment, is proved after the theorem, by the companion, for every straight line in the circle not through the centre, at either end; his figure is the case in which B is the far end of the diameter through C."
 
 [[passage]]
 at = "Again, since the angle contained by the straight lines AC, AF is right"
-kind = "carried"
+kind = "helper"
 helper = "Prop31.less"
-note = "Proved after the theorem, as for the greater segment: the less segment lies wholly within the right angle CAF. The `exact` beneath these sentences returns only the claims of the statement."
+note = "Likewise, that the less segment lies wholly within the right angle CAF is proved after the theorem, by the companion. The `exact` beneath these sentences returns only the claims of the statement."
 
 [review]
 stage = "exceptions"

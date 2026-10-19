@@ -196,8 +196,9 @@ theorem Prop31.less {A C D E : Point} {ABCD : Circle} (hE : Centre E ABCD)
   companions prove the manifest containments, the right angle BAC within the circle near A
   by the perpendicular's bound and the less segment within the right angle CAF (System E,
   Circle 1, Pasch 2 and 3). The steps take the right angle BAC as a hypothesis, and each
-  companion takes it from III.31, with the diameter through C. The route stays `euclid`;
-  the passage is `carried`, proved separately as the porism of III.16 is.
+  companion takes it from III.31, with the diameter through C. The route stays `euclid`:
+  the record's two passages are `helper` passages, each naming its companion for the
+  containment Euclid calls manifest.
 - **Dependencies.** III.31, and through the steps I.12, I.17, I.19, I.20 and III.2. Through
   III.31, which cites I.32, the companions' proofs use Postulate 5, as III.31's does.
 
@@ -283,10 +284,9 @@ the staged file at that revision, and "R" the report.
   so their fingerprints change. This branch writes their new entries (full, the companions,
   the passages, the tag); a reviewer who did not write them reads and stamps them. They use
   the new tag, so they land after `tooling/mixed-angles-tag`.
-- `mishnah/III/16.md`, `mishnah/III/31.md`: the paragraphs that said the clauses stay in
-  Euclid's words are rewritten on this branch.
-- For their owners, each now false or stale once this lands: `mishnah/intro/III.md` ("Three
-  are proved in part ... III.16 and III.31 leave their mixed angles ... to Euclid's words");
+- `mishnah/III/16.md`, `mishnah/III/31.md` and `mishnah/intro/III.md`: the sentences that
+  said the clauses stay in Euclid's words are rewritten on this branch.
+- For their owners, each now false or stale once this lands:
   [FORMALIZATION.md](../FORMALIZATION.md), section 2's examples of partial statements
   (III.16, III.31) and section 3's table row for an angle of a straight line and a
   circumference; [brief 0004](0004-book-III.md)'s rows for Definition III.7, III.16 and

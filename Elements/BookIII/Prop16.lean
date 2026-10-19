@@ -224,7 +224,7 @@ theorem Prop16.sameSideOf_of_inside {A E K Q : Point} {α : Circle}
     (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α) (hAE_out : Outside A E α)
     (hK : InsideCircle K α) (hQ : InsideCircle Q α ∨ OnCircle Q α) (hQA : Q ≠ A) :
     SameSideOf Q K A E := by
-  have hAE : A ≠ E := hAE_out.ne hA hK
+  have hAE : A ≠ E := Prop16.Outside.ne hA hK hAE_out
   obtain ⟨L, hA_L, hE_L⟩ := Postulate1 A E hAE
   have hoff : ∀ X : Point, InsideCircle X α → ¬ OnLine X L := fun X hX hX_L =>
     (hAE_out X ⟨L, hA_L, hE_L, hX_L⟩ (fun e => inside_not_on (e ▸ hX) hA)).1 hX
@@ -777,7 +777,7 @@ theorem Segment.angle_tangent_of_oppositeSidesOf {A C O T : Point} {α : Circle}
     (hO : Centre O α) (hA : OnCircle A α) (hC : OnCircle C α) (hAC : A ≠ C)
     (hAT_out : Prop16.Outside A T α) (hOAT : ∠ O A T = ∟) (hOT : OppositeSidesOf O T A C) :
     ∠ C A T + (∠ O A C + ∟) = ∟ + ∟ := by
-  have hAT : A ≠ T := hAT_out.ne hA (centre_inside hO)
+  have hAT : A ≠ T := Prop16.Outside.ne hA (centre_inside hO) hAT_out
   have hOA : O ≠ A := (ne_of_centre_of_on hO hA).symm
   obtain ⟨T₁, hTAT₁⟩ := produce hAT.symm
   have hAT₁ : A ≠ T₁ := ne_of_between (between_symm hTAT₁) |>.symm
