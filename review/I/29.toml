@@ -29,10 +29,10 @@ note = "The drawing marks AGH, GHD and EGB equal, as the proof establishes."
 
 [review]
 stage = "full"
-commit = "790b53f"
-reviewer = "Claude Opus 5.5, records review"
+commit = "522c39e2e26bfa17ee1822bbe25e0114eda7283b"
+reviewer = "Claude Opus 5.5, independent correction review"
 lean = "sha256:78a65285e619e2f8"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II, correction review 522c39e"
 
 [review.items]
 statement = "pass"
