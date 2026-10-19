@@ -29,12 +29,6 @@
     },
     {
       "ref": "III.2",
-      "field": "axioms",
-      "includes": ["Tacit.inside_of_between"],
-      "why": "III.2 rests on Circle 2, the rule that contains it (docs/reports/overlaps.md), through III.1, which calls the rule itself."
-    },
-    {
-      "ref": "III.2",
       "field": "own_axioms",
       "excludes": ["Tacit.inside_of_between"],
       "why": "III.2's own Lean never calls Circle 2 (Argon's second review; #65): its own axioms are those its proof and its helpers name, not those of the propositions it cites."
@@ -43,7 +37,7 @@
       "ref": "III.2",
       "field": "inherited",
       "excludes": ["Tacit.inside_of_between"],
-      "why": "No lemma III.2 calls brings Circle 2 in, so it comes only through III.1 (#65)."
+      "why": "No lemma III.2 calls brings Circle 2 in (#65)."
     },
     {
       "ref": "I.5",
