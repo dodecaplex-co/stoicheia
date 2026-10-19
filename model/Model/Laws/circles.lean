@@ -5,7 +5,7 @@ public import Model.Hand
 /-!
 # The circle rules, translated by hand
 
-**Hand-translated, for now.** Each statement here is the library's law, word for word, with
+**Hand-translated.** Each statement here is the library's law, word for word, with
 `S.Point` for `Elements.Point`, `S.OnCircle` for `Elements.OnCircle`, and so on, as in
 `Model/Hand.lean`. The printed original is quoted above each law, from
 `Certificate/axioms.lock`. `Check/Circles.lean` puts the library's own words in for `S` and

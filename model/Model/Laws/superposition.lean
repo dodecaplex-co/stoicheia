@@ -5,7 +5,7 @@ public import Model.Signature
 /-!
 # Superposition, translated by hand
 
-**Hand-translated, for now.** This file holds the translation of one law, the rule of
+**Hand-translated.** This file holds the translation of one law, the rule of
 superposition (`Elements.Tacit.superposition`), and of the two defined words it reaches,
 `Collinear` and `Triangle`. The generator described in the [README](../../README.md)
 writes every law from its elaborated declaration. `Check/Superposition.lean` compares

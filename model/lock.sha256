@@ -5,9 +5,9 @@
 # and fails when they differ: on any change to the lock, since it also holds every word
 # the statement of a proposition, a porism or a companion reaches. A change to the axioms
 # (one added, removed or restated), or to a word an axiom reaches, sends someone back to
-# the model before CI is green: to the translation (by hand in Model/Hand.lean today,
-# generated later), its checks in Check/, and the proofs in the plane of the laws that
-# changed. A change that touches none of these, such as a word only a proposition's
+# the model before CI is green: to the translation (generated in Model/Laws.lean, with
+# the hand translations of Model/Hand.lean and Model/Laws/), its checks in Check/, and the
+# proofs in the plane of the laws that changed. A change that touches none of these, such as a word only a proposition's
 # statement uses, moved into the foundations from Staging/, needs only this hash renewed.
 # tests/model/lock.sha256 does the same for the numerical harness, and CI's model job
 # checks that one.

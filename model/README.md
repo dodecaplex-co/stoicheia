@@ -74,21 +74,21 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/TripleIncidence.lean](Model/Euclidean/TripleIncidence.lean) | Triple incidence 1 to 3 proved by signed determinants and affine sides | Mathlib |
 | [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all 87 proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane, and the assembly, rests on | every module of `Model` |
-| [Check/Angles.lean](Check/Angles.lean) | the same for the angle laws of `Model/Laws/angles.lean` | `Elements.Foundations`, `Model.Laws.angles` |
-| [Check/AreasP5.lean](Check/AreasP5.lean) | the hand translations compared with the library and the generated laws | `Elements.Foundations`, `Model.Laws.areas-p5` |
-| [Check/Circles.lean](Check/Circles.lean) | the same for the circle rules of `Model/Laws/circles.lean` | `Elements.Foundations`, `Model.Laws.circles` |
+| [Check/Angles.lean](Check/Angles.lean) | the hand-translated angle laws and their two words compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.angles` |
+| [Check/AreasP5.lean](Check/AreasP5.lean) | the hand-translated area laws and Postulate 5 compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.«areas-p5»` |
+| [Check/Circles.lean](Check/Circles.lean) | the hand-translated circle rules compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.circles` |
 | [Check/Generated.lean](Check/Generated.lean) | checked at every build: the lock, its hash and the axioms, and that the generated files are what the generator writes | `Elements.Foundations`, `Model.Signature`, the generator |
 | [Check/Generator.lean](Check/Generator.lean) | the generator: reading the library, translating, writing, and the checks it makes | Lean alone |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration and with the generated law | `Elements.Foundations`, `Model.Hand` |
-| [Check/Incidence.lean](Check/Incidence.lean) | the same for the incidence and line laws | `Elements.Foundations`, `Model.Laws.incidence` |
-| [Check/Intersections.lean](Check/Intersections.lean) | the same for `Model/Laws/intersections.lean` | `Check.Hand`, `Model.Laws.intersections` |
+| [Check/Incidence.lean](Check/Incidence.lean) | the hand-translated incidence and line laws, and `Hand.LinesMeet`, compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.incidence` |
+| [Check/Intersections.lean](Check/Intersections.lean) | the hand-translated intersection rules and their two words compared with the library and the generated laws | `Check.Hand`, `Model.Laws.intersections` |
 | [Check/Laws.lean](Check/Laws.lean) | **generated:** each generated law and word compared with the library's by the kernel | `Elements.Foundations`, `Model.Laws` |
-| [Check/Lengths.lean](Check/Lengths.lean) | the hand-translated metric length laws compared with the library and the generated laws | `Elements.Foundations`, `Model.Laws.lengths` |
-| [Check/Order.lean](Check/Order.lean) | each hand-translated order law compared with the library's declaration | `Elements.Foundations`, `Model.Laws.order` |
+| [Check/Lengths.lean](Check/Lengths.lean) | the hand-translated metric length laws compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.lengths` |
+| [Check/Order.lean](Check/Order.lean) | the hand-translated order laws compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.order` |
 | [Check/Original.lean](Check/Original.lean) | `original`, the library's own words as a signature | `Elements.Foundations`, `Model.Signature` |
-| [Check/RoundTrip.lean](Check/RoundTrip.lean) | checked at every build: each generated law and word translated back and compared with the library's by syntax; planted faults it must refuse | `Elements.Foundations`, `Model.Laws`, `Model.Hand`, the generator |
-| [Check/Sides.lean](Check/Sides.lean) | the same for the side rules | `Elements.Foundations`, `Model.Laws.sides` |
-| [Check/Superposition.lean](Check/Superposition.lean) | the hand translation of superposition compared with the library's declaration | `Elements.Foundations`, `Model.Laws.superposition` |
+| [Check/RoundTrip.lean](Check/RoundTrip.lean) | checked at every build: each generated law and word translated back and compared with the library's by syntax; planted faults it must refuse | `Elements.Foundations`, `Model.Laws`, `Model.Hand`, seven files of `Model/Laws/` (all but angles and superposition), the generator |
+| [Check/Sides.lean](Check/Sides.lean) | the hand-translated same-side, Pasch and triple-incidence rules compared with the library and the generated laws | `Check.Hand`, `Model.Laws.sides` |
+| [Check/Superposition.lean](Check/Superposition.lean) | the hand translation of superposition and its two words compared with the library and the generated law | `Elements.Foundations`, `Check.Hand`, `Model.Laws.superposition` |
 | [Check/Write.lean](Check/Write.lean) | run by hand, never built: writes the generated files | as `Check/Generated.lean` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
@@ -263,9 +263,9 @@ what it writes.
    with no remaining hypothesis. The generator then writes
    `theorem model_exists : ∃ S : Signature, Laws S := ⟨Euclidean.plane, euclidean_laws⟩`. The
    assembly stands apart from `Model/Laws.lean`, which the proofs import, so that no import
-   goes round in a circle and the laws stay free of Mathlib. The integrated families keep
-   their hand-translated statements in `Model/Hand.lean` and
-   `Model/Laws/`; their files in `Check/` compare every one with its generated field.
+   goes round in a circle and the laws stay free of Mathlib. The proofs are stated with the
+   hand-translated laws of `Model/Hand.lean` and `Model/Laws/`, and the files of `Check/`
+   compare every one of those with its generated field.
 
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
@@ -308,12 +308,13 @@ the original means. These checks do that, at every build.
   is right only after unfolding a word, and a binder made explicit where the original's is
   implicit, which the kernel does not see, since neither changes the proposition. The same
   file checks the words written by hand in `Model/Signature.lean`, exactly, the type of each
-  field of the signature against the library's opaque word, each hand translation imported here under its law
-  name in `Model.Hand` against the law the generator wrote for it, binder kinds included, and that `original`
-  gives each field the library's word. This includes the incidence, length, order, sides, circles,
-  intersections and area families. Copies given distinct names to retain overlapping
-  translations, and the angle and superposition translations with their own helper words,
-  are compared with the generated laws by the kernel in their family check files.
+  field of the signature against the library's opaque word, each hand translation imported
+  here under its law name in `Model.Hand` against the law the generator wrote for it, binder
+  kinds included, and that `original` gives each field the library's word. That covers the
+  hand translations of `Model/Hand.lean` and of seven files of `Model/Laws/`. The hand
+  translations kept under suffixed names ([below](#proved-laws)), and the angle and
+  superposition translations, which use words of their own written by hand, are compared
+  with the generated laws by the kernel in their files of `Check/`.
 - **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
   declared in `Elements.Foundations` are exactly the lock's `[axioms]`, so that none is
   missing and none is extra, and `Check/RoundTrip.lean` that `Neutral` and `Laws` have
@@ -401,8 +402,8 @@ formal statement captures what Euclid meant: that is the work of the review reco
 
 ## The order of the work: hardest laws first
 
-Astra's third answer lists the laws whose proofs will settle the representation, and they
-come before the easy laws are shared out. A law proved here is gathered into
+Astra's third answer listed the laws whose proofs would settle the representation, and they
+were taken first. A law proved here is gathered into
 `euclidean_laws` by the generator, and `lake build` fails until it has been
 (`lake lean Check/Write.lean`).
 

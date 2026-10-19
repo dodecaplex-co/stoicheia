@@ -18,8 +18,10 @@ declaration, and asks too whether each is the law the generator writes, the fiel
 `Laws` it stands for; `Check/RoundTrip.lean` compares each with the generated law by syntax,
 binder kinds and names included. The build fails if any of these fails. The proofs in the
 plane of these laws are stated with them, and Lean checks, where `Model/Assembly.lean`
-gathers them, that each proves its field of `Laws`. A law proved in the plane from now on
-is stated with the generated law, `Law.Tacit.line_unique plane`, and needs nothing here.
+gathers them, that each proves its field of `Laws`. The other laws are stated the same way,
+with the hand translations of `Model/Laws/`, each checked against its generated law in
+`Check/`. A proof may instead be stated with the generated law itself,
+`Law.Tacit.line_unique plane`, and then needs no hand translation.
 
 The laws here are the circle-intersection rules: Intersection 5, the step Euclid takes for
 granted in I.1; Intersection 4, in the corrected form we owe to LeanEuclid (Logan Murphy,

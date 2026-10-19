@@ -5,7 +5,7 @@ public import Model.Signature
 /-!
 # The same-side, Pasch and triple-incidence rules, translated by hand
 
-**This file is written by hand, and so is every translation in it.** It holds, for now, the
+**This file is written by hand, and so is every translation in it.** It holds the
 translations of the five same-side rules, four Pasch rules and three triple-incidence rules of
 `Elements/Foundations/Tacit/Diagram.lean`. The generator described in the
 [README](../../README.md) writes every law from its elaborated declaration, and

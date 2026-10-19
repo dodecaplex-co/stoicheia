@@ -5,7 +5,7 @@ public import Model.Signature
 /-!
 # The order laws, translated by hand
 
-**Hand-translated.** This file holds, translated by hand for now, the fifteen laws about
+**Hand-translated.** This file holds, translated by hand, the fifteen laws about
 betweenness and its measure: the ten axioms of System E's Between rules 1 to 7 (Between 1
 says four things, so it is four axioms), and the five of the diagram-segment rules 1 to 4
 (Diagram-segment 4 is two axioms, one for each direction; rule 3's forward half is

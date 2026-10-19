@@ -60,8 +60,8 @@ If either changes, the message changes, `#guard_msgs` fails, and so does the bui
 module of `Model` is imported here. `Model.euclidean_laws`, which `Model/Assembly.lean`
 generates from every theorem that proves a law in the plane, is audited last, so a law's
 theorem is audited through it as soon as the generator gathers it; the theorems listed one by
-one before it include every integrated family and the proposed `exists_centre`, which is
-no law yet.
+one before it are every law's, the copies kept under suffixed names, `circlesMeet_self`, and
+the proposed `exists_centre`, which is no law yet.
 -/
 
 /-! ## The library is not imported -/
