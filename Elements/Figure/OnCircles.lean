@@ -10,8 +10,9 @@ and the points of the circle lie. These are the facts it takes for granted that 
 proposition: three points of a circle are not on one straight line; a straight line in a
 circle has points of the circle on each side of it; a circumference may be named from
 either side of the straight line that cuts it off; equal circles have equal radii; and a
-straight line that touches a circle has no point within it. They follow from Definition
-15, System E's rules for circles, and the definitions of Book III.
+straight line that touches a circle meets it at a point of contact and has no point within
+it. They follow from Definition 15, System E's rules for circles, and the definitions of
+Book III.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.
@@ -144,6 +145,17 @@ theorem Touches.not_inside (h : Touches A B α) (hP : Collinear A B P) :
   obtain ⟨M, hA_M, hB_M, hP_M⟩ := hP
   have hP_L : OnLine P L := (line_unique h.1 hA_M hB_M hA_L hB_L) ▸ hP_M
   exact fun hin => (h.2 L hA_L hB_L).2 (line_meets_circle_of_inside hin hP_L)
+
+/-- The point of contact of a straight line touching a circle. If the straight line AX
+touches the circle α, some point B of α is on it; B may be A or X. Definition III.2 holds
+the point inside `Touches`, behind a straight line named by A and X, and this reads it off
+in one step, for a citer of III.17's companion `Prop17.general`. -/
+theorem Touches.contact {A X : Point} {α : Circle} (h : Touches A X α) :
+    ∃ B : Point, OnCircle B α ∧ Collinear A X B := by
+  /- Name the straight line AX. Definition III.2 gives a point of the circle on it. -/
+  obtain ⟨L, hA_L, hX_L⟩ := Postulate1 A X h.1
+  obtain ⟨B, hB_L, hB⟩ := (h.2 L hA_L hX_L).1
+  exact ⟨B, hB, ⟨L, hA_L, hX_L, hB_L⟩⟩
 
 /-- A straight line that touches a circle, named by any two of its points. -/
 theorem Touches.of_collinear (h : Touches A B α) (hC : Collinear A B C) (hD : Collinear A B D)
