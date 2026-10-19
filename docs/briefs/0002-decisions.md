@@ -1384,3 +1384,15 @@ findings:
   The proposition template's `[overlap]` lines say the key is always named. Nothing a
   reader sees changes: the pages render the same at the branch's base. This is a check
   change on its own; it changes no record.
+
+- **The negative tests read the count of assumptions from the lock.** The planted-assumption
+  test of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) expected
+  `check_fidelity.py` to say "declares 88 axioms, not 87", a count fixed in the script. It
+  now reads the number of axioms in
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) before it plants anything, and
+  expects one more than that, so the test keeps its meaning when an approved rule joins the
+  lock. This is step 1's third item in [brief 0008](0008-centre.md), section 6: without it,
+  the pull request that adds the rule that every circle has a centre could not pass. Today
+  the lock holds 87, so the test expects what it expected before; nothing else in the
+  script, and no check, changes. The one protected file it changes is
+  `scripts/negative_tests.py`.
