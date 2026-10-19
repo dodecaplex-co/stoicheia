@@ -8,6 +8,7 @@ nothing. Run from anywhere; the paths are the repository's.
     python3 scripts/check_style.py --no-lean    # S12 skipped, for an unbuilt tree
     python3 scripts/check_style.py --quiet      # the reports as counts only
     python3 scripts/check_style.py --require-idea-letters   # S21 on every figure, as the switch is
+    python3 -I tests/test_check_style.py        # the rules' cases, which CI runs first
 
 S12 asks Lean whether each backticked name in the mishnah exists, so it needs a built
 tree (`lake build`) and `lake` on the PATH; without them the script fails and says so,
@@ -37,8 +38,7 @@ comment wraps them: they may stand apart by spaces or tabs (and commas, between 
 letters), or by one line break with the next line's indent and comment leader ("--" in
 Lean, ">" in a Markdown quotation). A blank line ends such a phrase, save S2's "first
 mate" and the "Definition N" of S7 and D10, whose words may stand apart by any white
-space. On every run, before anything else, the script checks its own wording patterns
-against wrapped and unwrapped phrases (`self_check`), and stops if one is read wrongly.
+space. Those patterns are tested on such phrases, case by case (below).
 
 S2's crew words match whole words in any case, plurals and possessives included ("the
 bosuns", "the crew's"). The figure rules also ask for a <title>: "I.N at a glance" on an
@@ -46,9 +46,12 @@ idea figure, "Euclid I.N: …" on Euclid's (STYLE, section 7). A known departure
 cannot see is right is listed below with its reason, and printed on every run; one that
 no longer applies fails. An idea figure marks a point Heath leaves without a letter in the
 figure itself, with `data-unlettered` and its reason (S21), and those are printed too.
-S20 judges a letter's ink by the fill under it, an angle's wedge included. On every run,
-before anything else, the script checks that reading against letters on and beside an
-angle's wedge (`ink_self_check`), and stops if one is read wrongly. Standard library only.
+S20 judges a letter's ink by the fill under it, an angle's wedge included.
+
+How the rules read a phrase, and how S20 reads a letter on and beside an angle's wedge,
+are tested case by case in tests/test_check_style.py, which needs no Lean. CI runs it just
+before this script, in the order of docs/WORKFLOW.md, section 8; a defect fixed in that
+reading comes with a case there. Standard library only.
 """
 
 from __future__ import annotations
@@ -1239,133 +1242,6 @@ def check_figures(required: bool) -> None:
 
 
 # ---------------------------------------------------------------------------------------
-# The script's own check of S20's ink, run first on every run: a letter on an angle's
-# wedge, a filled path, is judged by the wedge's fill, within its three ends and beyond
-# its chord out to its arc, and not beyond the arc; however the wedge is spelled (an
-# absolute arc, a relative arc, a cubic curve), and wherever a transform moves it. (S20
-# once read no paths, and let a black letter on a blue wedge through.)
-
-INK_WEDGES = (   # a quarter wedge of radius 34 at (200, 150), below and right of it
-    "M200,150 L234,150 A34,34 0 0,1 200,184 Z",
-    "m200,150 l34,0 a34,34 0 0,1 -34,34 z",
-    "M200,150 H234 C234,168.78 218.78,184 200,184 Z",
-)
-BLUE_WEDGE = '<path d="{wedge}" fill="#1f5aa6"/>'
-YELLOW_ON_RED = ('<polygon points="150,100 300,100 300,250 150,250" fill="#d0312d"/>'
-                 '<path d="{wedge}" fill="#f2b705"/>')
-MOVED_WEDGE = '<g transform="translate(-100,20)"><path d="{wedge}" fill="#1f5aa6"/></g>'
-WITHIN, ON_ARC, BEYOND = (215.0, 160.0), (221.2, 171.2), (226.9, 176.9)
-MOVED = (121.2, 191.2)   # ON_ARC, where MOVED_WEDGE stands
-
-INK_CASES = [   # (what is drawn under the letter, its glyph's middle, its ink, a finding?)
-    (BLUE_WEDGE, WITHIN, IDEA_INK, True),
-    (BLUE_WEDGE, WITHIN, IDEA_INK_ON_DARK, False),
-    (BLUE_WEDGE, ON_ARC, IDEA_INK, True),
-    (BLUE_WEDGE, ON_ARC, IDEA_INK_ON_DARK, False),
-    (BLUE_WEDGE, BEYOND, IDEA_INK, False),
-    (BLUE_WEDGE, BEYOND, IDEA_INK_ON_DARK, True),
-    (YELLOW_ON_RED, ON_ARC, IDEA_INK, False),
-    (YELLOW_ON_RED, ON_ARC, IDEA_INK_ON_DARK, True),
-    (MOVED_WEDGE, MOVED, IDEA_INK, True),
-    (MOVED_WEDGE, MOVED, IDEA_INK_ON_DARK, False),
-    (MOVED_WEDGE, ON_ARC, IDEA_INK, False),
-]
-
-
-def ink_self_check() -> tuple[int, list[str]]:
-    """INK_CASES, each with each spelling of the wedge, read as S20 reads a figure's
-    letters; returns the number of cases and the faults."""
-    faults = []
-    size = IDEA_LETTER_SIZE
-    for under, (x, y), ink, want in INK_CASES:
-        for wedge in INK_WEDGES:
-            drawn = under.format(wedge=wedge)
-            root = ET.fromstring(
-                f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
-                f'<rect width="400" height="300" fill="#fbf7ee"/>{drawn}'
-                f'<text x="{x}" y="{y + 0.35 * size}" text-anchor="middle" font-size="{size}" '
-                f'font-style="italic" fill="{ink}">A</text></svg>')
-            found = any(ink_fault(root, eff, letter_centre(own, eff, m, "A"), "A")
-                        for el, own, eff, m, _ in placed(root) if tag(el) == "text")
-            if found != want:
-                faults.append(f"S20 {'misses' if want else 'wrongly finds'} a letter in {ink} "
-                              f"at ({x:g}, {y:g}) on {drawn}")
-    return len(INK_CASES) * len(INK_WEDGES), faults
-
-
-# ---------------------------------------------------------------------------------------
-# The script's own check, run first on every run: each wording rule finds its phrase
-# however a line or a comment wraps it, and not across a blank line (save S2's and S7's),
-# inside a quotation or in one of Heath's `--` lines; and S3 still finds an "I" after
-# "Book" when anything but one space stands between them. (D7 once let "Lean\ncannot"
-# through, in a docstring.)
-
-PHRASE_CASES = [   # (rule, its search, the text as the rule reads it, a finding?)
-    ("D7", LEAN_CANNOT.search, "as if picking it up. Lean\ncannot move a figure", True),
-    ("D7", LEAN_CANNOT.search, "the note says Lean\n  -- cannot move it", True),
-    ("D7", LEAN_CANNOT.search, "> what Lean\n> can't do", True),
-    ("D7", LEAN_CANNOT.search, "Lean  can not", True),
-    ("D7", LEAN_CANNOT.search, "what Lean\n\ncannot", False),
-    ("D7", LEAN_CANNOT.search, "Leancannot", False),
-    ("S2", CREW.search, "the first\n  -- mate", True),
-    ("S2", CREW.search, "the first\n\nmate", True),
-    ("S3", FIRST_PERSON.search, "as I\nthink", True),
-    ("S3", FIRST_PERSON.search, "as I\n  -- would say", True),
-    ("S3", FIRST_PERSON.search, "Book I was proved", False),
-    ("S3", FIRST_PERSON.search, "Books I have read", False),
-    ("S3", FIRST_PERSON.search, "Book I\nwas proved", False),
-    ("S3", FIRST_PERSON.search, "in Book  I was", True),
-    ("S3", FIRST_PERSON.search, "in Book\tI was", True),
-    ("S3", FIRST_PERSON.search, "in Book\nI was", True),
-    ("S3", FIRST_PERSON.search, "the Book\n  -- I would say", True),
-    ("S3", FIRST_PERSON.search, "Books\n> I have", True),
-    ("S3", FIRST_PERSON.search, "the eBook I have", True),
-    ("S4", HEDGE.search, "strictly\nspeaking", True),
-    ("S4", HEDGE.search, "it is worth\n   noting", True),
-    ("S5", EUCLID_CITES.search, "Euclid\ncites I.3", True),
-    ("S5", EUCLID_CITES.search, "I.1 to I.28 never\n  -- need it", True),
-    ("S6", TACIT.search, "a tacit\nassumption", True),
-    ("S7", DEFINITION.search, "by Definition\n15", True),
-    ("S7", DEFINITION.search, "by Definition\n\n15", True),
-    ("S9", ITALIC_LETTER.search, "the line *AB, CD*", True),
-    ("S9", ITALIC_LETTER.search, "the line *AB,\nCD*", True),
-    ("S9", ITALIC_LETTER.search, "> the line *AB\n> CD*", True),
-    ("S9", ITALIC_LETTER.search, "the line *AB,\n\nCD*", False),
-    ("D10", DEFINITION.search, "by Def.\n  -- 15", True),
-    ("D8", NO_CITATION.search, "gives no\ncitation", True),
-    ("D9", POSTULATE_5.search, "the parallel\npostulate", True),
-    ("S11", REFRAINS[0][0].search, "the certificate\nrecords", True),
-    ("S11", RETIRED_LEADS.search, "**What it\nrests on.**", True),
-    ("S11", proclus_under_i31, "Proclus puts it under I.31.", True),
-    ("S11", proclus_under_i31, "Proclus puts it under\nI.31.", True),
-    ("S11", proclus_under_i31, "As Proclus says, it falls\n> under\n> I.31.", True),
-    ("S11", proclus_under_i31, "Proclus puts it under\n\nI.31.", False),
-    ("S11", proclus_under_i31, "Proclus says so. It falls under\nI.31.", False),
-]
-
-
-def self_check() -> tuple[int, list[str]]:
-    """PHRASE_CASES, and four cases read as the Lean notes and the prose are read; returns
-    the number of cases and the faults."""
-    cases = PHRASE_CASES + [
-        ("D7", LEAN_CANNOT.search,
-         notes_text("/-- We build it, for Lean\ncannot move a figure. -/\n"
-                    "theorem T : True := trivial\n"), True),
-        ("D7", LEAN_CANNOT.search,
-         notes_text("theorem T : True := by\n  -- Lean\n  -- cannot\n  trivial\n"), False),
-        ("D7", LEAN_CANNOT.search,
-         blank_quotes(blank_code('He wrote "what Lean\ncannot" once.')), False),
-        ("S3", FIRST_PERSON.search, blank_quotes(blank_code('as I "so" think')), True),
-    ]
-    faults = []
-    for rule, search, text, want in cases:
-        found = bool(search(text))
-        if found != want:
-            faults.append(f"{rule} {'misses' if want else 'wrongly finds'} {text!r}")
-    return len(cases), faults
-
-
-# ---------------------------------------------------------------------------------------
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
@@ -1378,24 +1254,6 @@ def main() -> int:
                              "does; it is on, so this changes nothing unless it is turned off")
     args = parser.parse_args()
     required = IDEA_LETTERS_REQUIRED or args.require_idea_letters
-
-    count, faults = ink_self_check()
-    if faults:
-        print(f"{len(faults)} fault(s) in the script's reading of S20's ink; nothing else "
-              "was checked:")
-        for f in faults:
-            print("  ✗ " + f)
-        return 1
-    print(f"self-check: S20 reads the ink of {count} letters on angles' wedges rightly")
-
-    count, faults = self_check()
-    if faults:
-        print(f"{len(faults)} fault(s) in the script's own wording patterns; nothing else "
-              "was checked:")
-        for f in faults:
-            print("  ✗ " + f)
-        return 1
-    print(f"self-check: the wording rules read {count} wrapped and unwrapped phrases rightly")
 
     mishnah = mishnah_files()
     for path in mishnah:

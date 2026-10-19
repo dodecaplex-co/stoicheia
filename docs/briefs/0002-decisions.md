@@ -632,6 +632,32 @@ findings:
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
 
+- **The style check's cases, in `tests/`.** The cases with which
+  [`scripts/check_style.py`](../../scripts/check_style.py) checked its own reading, on
+  every run and before anything else, move to a test file of their own,
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (new). This settles
+  [issue #44](https://github.com/jackChallis/stoicheia/issues/44), the question that
+  [#3](https://github.com/jackChallis/stoicheia/pull/3) left open. They are the 44 phrase
+  cases, each wording rule's phrases wrapped and unwrapped, and S20's 11 ink cases, each
+  read with three spellings of an angle's wedge, 33 in all. Every case moves as it was,
+  its rule, its search, its text and its expected finding the same and in the same order,
+  and none is added or dropped: compared with origin/main's copy, they are identical one
+  for one, and the file fails when D7's pattern stops wrapping, when S3 passes over an "I"
+  after "Book" across a tab or a line break, or when S20 stops reading paths. The home is
+  the one [WORKFLOW](../WORKFLOW.md), section 8, gives a guard's regression, and that
+  section now names the file: a defect fixed in the style check's reading of a phrase or
+  of a letter's ink comes with a case there. WORKFLOW asks for no start-up self-check, so
+  the script's is removed. In CI and in the pre-flight nothing runs less often: the file
+  needs no Lean and runs in well under a second, so it stands where the cases ran before,
+  just before `check_style.py`, in CI's `check` job
+  ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), a step of its own), in
+  the `CHECKS` list of [`scripts/safe_push.py`](../../scripts/safe_push.py), and in the
+  sequence of WORKFLOW, section 8, and a case read wrongly stops the checks before the
+  style check's findings are read, as the self-check did. A contributor who runs
+  `check_style.py` alone no longer runs the cases, so WORKFLOW asks whoever changes the
+  script to run the file too. The check is moved, never weakened. The script's docstring
+  and [STYLE](../STYLE.md), section 8, say where the cases are.
+
 - **The formal model, begun in `model/`.** The owner decided on 18 October, after Astra's
   third answer on [issue #73](https://github.com/jackChallis/stoicheia/issues/73), for
   which we thank Astra warmly
@@ -671,7 +697,6 @@ findings:
   decision foresees once it builds, is the owner's call. Even so, `git safe-push --merge`
   refuses a pull request while any of its checks fails or is still running, so a red or
   running `formal-model` already holds a merge there.
-
 - **Pages name what follows a theorem truly.** [`scripts/render.py`](../../scripts/render.py)
   called every declaration after a theorem that is neither its porism nor a companion one
   of the "theorems later propositions use". With stage 2's companions in the edition, that
