@@ -12,8 +12,8 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and all 87 laws,
 written by a generator from the library's elaborated declarations into one structure,
-`Laws`, and checked against those declarations. The plane satisfies 80 of the 87 locked
-laws. `Model/Assembly.lean` gathers these proofs, with the 7 remaining laws as hypotheses.
+`Laws`, and checked against those declarations. The plane satisfies 81 of the 87 locked
+laws. `Model/Assembly.lean` gathers these proofs, with the 6 remaining laws as hypotheses.
 Until every locked law is proved here, the evidence that the laws have a model remains
 MODEL.md's hand arguments and numerical tests, and this package is a milestone in progress.
 
@@ -39,50 +39,53 @@ at the repository's root builds the library exactly as before.
 | [Model/Signature.lean](Model/Signature.lean) | the seventeen words as the fields of `Signature`, and the words behind the magnitudes | nothing |
 | [Model/Laws.lean](Model/Laws.lean) | **generated:** every law, and the defined words they reach, translated from the library; the structures `Neutral` and `Laws` | `Signature` |
 | [Model/Hand.lean](Model/Hand.lean) | the laws first proved in the plane, translated **by hand**, and the proposed `exists_centre` | `Laws` |
+| [Model/Laws/angles.lean](Model/Laws/angles.lean) | the ten angle laws, with `Collinear` and `IsRightAngle`, translated **by hand** | `Signature` |
+| [Model/Laws/areas-p5.lean](Model/Laws/areas-p5.lean) | the eight area laws and Postulate 5, translated **by hand** | `Signature` |
+| [Model/Laws/circles.lean](Model/Laws/circles.lean) | the 19 circle rules, translated **by hand** | `Model.Hand` |
+| [Model/Laws/incidence.lean](Model/Laws/incidence.lean) | the incidence and line laws, and `Hand.LinesMeet`, **by hand** | `Signature`, `Hand` |
+| [Model/Laws/intersections.lean](Model/Laws/intersections.lean) | the five line intersection rules and the four circle rules, and separate hand copies of `LinesMeet` and `LineMeetsCircle` | `Hand` |
+| [Model/Laws/order.lean](Model/Laws/order.lean) | the fifteen order laws, Between 1 to 7 and the diagram-segment rules, **hand-translated** | `Signature` |
+| [Model/Laws/sides.lean](Model/Laws/sides.lean) | the five same-side rules and the four Pasch rules, translated **by hand** | `Signature` |
+| [Model/Laws/superposition.lean](Model/Laws/superposition.lean) | the rule of superposition, and the words `Collinear` and `Triangle` it reaches, **by hand** | `Signature` |
 | [Model/Euclidean.lean](Model/Euclidean.lean) | the ordinary plane as a `Signature` | Mathlib |
-| [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersection 4 and Intersection 5 proved in the plane | Mathlib |
+| [Model/Euclidean/AngleAdd.lean](Model/Euclidean/AngleAdd.lean) | angle addition, both ways (diagram-angle rule 2), proved in the plane | Mathlib |
+| [Model/Euclidean/AngleBasics.lean](Model/Euclidean/AngleBasics.lean) | the bridge from the plane's angle to Mathlib's, and the line through two points | Mathlib |
+| [Model/Euclidean/Angles.lean](Model/Euclidean/Angles.lean) | Definition 15, Postulate 4, the two metric angle laws and diagram-angle rules 1, 3 and 4 proved in the plane | Mathlib |
+| [Model/Euclidean/Areas.lean](Model/Euclidean/Areas.lean) | the eight area laws, including collinear and repeated corners, proved by determinants | Mathlib |
+| [Model/Euclidean/Avoidance.lean](Model/Euclidean/Avoidance.lean) | Postulate 2 and all finite avoidance rules for lines, regions and circumferences proved in the plane | Mathlib |
+| [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
+| [Model/Euclidean/CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | Postulate 3, Definition 15 and the generalities of a centre and of the inside of a circle, proved in the plane | Mathlib |
+| [Model/Euclidean/CircleRules.lean](Model/Euclidean/CircleRules.lean) | System E's Circle 1 to 4 proved in the plane, and `CirclesMeet α α` | Mathlib |
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
+| [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersection 4 and Intersection 5 proved in the plane | Mathlib |
+| [Model/Euclidean/Incidence.lean](Model/Euclidean/Incidence.lean) | Postulate 1, `line_unique`, the other generalities and Intersection 1 proved in the plane | Mathlib |
 | [Model/Euclidean/LineCircle.lean](Model/Euclidean/LineCircle.lean) | Intersection 3, Intersections 4 and 5 of the constructions, and Circle 1, proved in the plane | Mathlib |
 | [Model/Euclidean/LineSides.lean](Model/Euclidean/LineSides.lean) | Intersections 1 and 2, and Circles 2, 3 and 4, proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
-| [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
-| [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, the proofs in the plane gathered into `Laws`, with the laws not yet proved as hypotheses | Mathlib |
-| [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane, and the assembly, rests on | every module of `Model` |
-| [Check/Generator.lean](Check/Generator.lean) | the generator: reading the library, translating, writing, and the checks it makes | Lean alone |
-| [Check/Generated.lean](Check/Generated.lean) | checked at every build: the lock, its hash and the axioms, and that the generated files are what the generator writes | `Elements.Foundations`, `Model.Signature`, the generator |
-| [Check/RoundTrip.lean](Check/RoundTrip.lean) | checked at every build: each generated law and word translated back and compared with the library's by syntax; planted faults it must refuse | `Elements.Foundations`, `Model.Laws`, `Model.Hand`, the generator |
-| [Check/Laws.lean](Check/Laws.lean) | **generated:** each generated law and word compared with the library's by the kernel | `Elements.Foundations`, `Model.Laws` |
-| [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration and with the generated law | `Elements.Foundations`, `Model.Hand` |
-| [Check/Original.lean](Check/Original.lean) | `original`, the library's own words as a signature | `Elements.Foundations`, `Model.Signature` |
-| [Check/Write.lean](Check/Write.lean) | run by hand, never built: writes the generated files | as `Check/Generated.lean` |
-| [Model/Laws/incidence.lean](Model/Laws/incidence.lean) | the incidence and line laws, and `Hand.LinesMeet`, **by hand** | `Signature`, `Hand` |
-| [Model/Euclidean/Incidence.lean](Model/Euclidean/Incidence.lean) | Postulate 1, `line_unique`, the other generalities and Intersection 1 proved in the plane | Mathlib |
-| [Model/Euclidean/Avoidance.lean](Model/Euclidean/Avoidance.lean) | Postulate 2 and all finite avoidance rules for lines, regions and circumferences proved in the plane | Mathlib |
-| [Check/Incidence.lean](Check/Incidence.lean) | the same for the incidence and line laws | `Elements.Foundations`, `Model.Laws.incidence` |
-| [Model/Laws/order.lean](Model/Laws/order.lean) | the fifteen order laws, Between 1 to 7 and the diagram-segment rules, **hand-translated** | `Signature` |
 | [Model/Euclidean/Order.lean](Model/Euclidean/Order.lean) | Between 1, 4, 5 and 7 proved in the plane | Mathlib |
 | [Model/Euclidean/OrderLines.lean](Model/Euclidean/OrderLines.lean) | Between 2, 3 and 6, which bring in a straight line, proved in the plane | Mathlib |
-| [Model/Euclidean/Segments.lean](Model/Euclidean/Segments.lean) | the diagram-segment rules 1 to 4 proved in the plane | Mathlib |
-| [Check/Order.lean](Check/Order.lean) | each hand-translated order law compared with the library's declaration | `Elements.Foundations`, `Model.Laws.order` |
-| [Model/Laws/sides.lean](Model/Laws/sides.lean) | the five same-side rules and the four Pasch rules, translated **by hand** | `Signature` |
-| [Model/Euclidean/Sides.lean](Model/Euclidean/Sides.lean) | `SameSide` read as `SSameSide`, and Same side 1 to 5 proved in the plane | Mathlib |
 | [Model/Euclidean/Pasch.lean](Model/Euclidean/Pasch.lean) | Pasch 1 to 4 proved in the plane | Mathlib |
-| [Check/Sides.lean](Check/Sides.lean) | the same for the side rules | `Elements.Foundations`, `Model.Laws.sides` |
-| [Model/Laws/circles.lean](Model/Laws/circles.lean) | the 19 circle rules, translated **by hand** | `Model.Hand` |
-| [Model/Euclidean/CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | Postulate 3, Definition 15 and the generalities of a centre and of the inside of a circle, proved in the plane | Mathlib |
-| [Model/Euclidean/CircleRules.lean](Model/Euclidean/CircleRules.lean) | System E's Circle 1 to 4 proved in the plane, and `CirclesMeet α α` | Mathlib |
-| [Check/Circles.lean](Check/Circles.lean) | the same for the circle rules of `Model/Laws/circles.lean` | `Elements.Foundations`, `Model.Laws.circles` |
-| [Model/Laws/intersections.lean](Model/Laws/intersections.lean) | the five line intersection rules and the four circle rules, and the two defined words they add, **by hand** | `Hand` |
-| [Check/Intersections.lean](Check/Intersections.lean) | the same for `Model/Laws/intersections.lean` | `Check.Hand`, `Model.Laws.intersections` |
-| [Model/Laws/angles.lean](Model/Laws/angles.lean) | the ten angle laws, with `Collinear` and `IsRightAngle`, translated **by hand** | `Signature` |
-| [Model/Euclidean/AngleBasics.lean](Model/Euclidean/AngleBasics.lean) | the bridge from the plane's angle to Mathlib's, and the line through two points | Mathlib |
-| [Model/Euclidean/Angles.lean](Model/Euclidean/Angles.lean) | Definition 15, Postulate 4, the two metric angle laws and diagram-angle rules 1, 3 and 4 proved in the plane | Mathlib |
-| [Model/Euclidean/AngleAdd.lean](Model/Euclidean/AngleAdd.lean) | angle addition, both ways (diagram-angle rule 2), proved in the plane | Mathlib |
-| [Check/Angles.lean](Check/Angles.lean) | the same for the angle laws of `Model/Laws/angles.lean` | `Elements.Foundations`, `Model.Laws.angles` |
-| [Model/Laws/areas-p5.lean](Model/Laws/areas-p5.lean) | the eight area laws and Postulate 5, translated **by hand** | `Signature` |
-| [Model/Euclidean/Areas.lean](Model/Euclidean/Areas.lean) | the eight area laws, including collinear and repeated corners, proved by determinants | Mathlib |
 | [Model/Euclidean/Postulate5.lean](Model/Euclidean/Postulate5.lean) | Postulate 5, with the meeting on the stated side, proved in the plane | Mathlib |
+| [Model/Euclidean/Segments.lean](Model/Euclidean/Segments.lean) | the diagram-segment rules 1 to 4 proved in the plane | Mathlib |
+| [Model/Euclidean/Sides.lean](Model/Euclidean/Sides.lean) | `SameSide` read as `SSameSide`, and Same side 1 to 5 proved in the plane | Mathlib |
+| [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | superposition proved in the plane: an isometry, with a reflection when the side needs one | Mathlib |
+| [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, the proofs in the plane gathered into `Laws`, with the laws not yet proved as hypotheses | Mathlib |
+| [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane, and the assembly, rests on | every module of `Model` |
+| [Check/Angles.lean](Check/Angles.lean) | the same for the angle laws of `Model/Laws/angles.lean` | `Elements.Foundations`, `Model.Laws.angles` |
 | [Check/AreasP5.lean](Check/AreasP5.lean) | the hand translations compared with the library and the generated laws | `Elements.Foundations`, `Model.Laws.areas-p5` |
+| [Check/Circles.lean](Check/Circles.lean) | the same for the circle rules of `Model/Laws/circles.lean` | `Elements.Foundations`, `Model.Laws.circles` |
+| [Check/Generated.lean](Check/Generated.lean) | checked at every build: the lock, its hash and the axioms, and that the generated files are what the generator writes | `Elements.Foundations`, `Model.Signature`, the generator |
+| [Check/Generator.lean](Check/Generator.lean) | the generator: reading the library, translating, writing, and the checks it makes | Lean alone |
+| [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration and with the generated law | `Elements.Foundations`, `Model.Hand` |
+| [Check/Incidence.lean](Check/Incidence.lean) | the same for the incidence and line laws | `Elements.Foundations`, `Model.Laws.incidence` |
+| [Check/Intersections.lean](Check/Intersections.lean) | the same for `Model/Laws/intersections.lean` | `Check.Hand`, `Model.Laws.intersections` |
+| [Check/Laws.lean](Check/Laws.lean) | **generated:** each generated law and word compared with the library's by the kernel | `Elements.Foundations`, `Model.Laws` |
+| [Check/Order.lean](Check/Order.lean) | each hand-translated order law compared with the library's declaration | `Elements.Foundations`, `Model.Laws.order` |
+| [Check/Original.lean](Check/Original.lean) | `original`, the library's own words as a signature | `Elements.Foundations`, `Model.Signature` |
+| [Check/RoundTrip.lean](Check/RoundTrip.lean) | checked at every build: each generated law and word translated back and compared with the library's by syntax; planted faults it must refuse | `Elements.Foundations`, `Model.Laws`, `Model.Hand`, the generator |
+| [Check/Sides.lean](Check/Sides.lean) | the same for the side rules | `Elements.Foundations`, `Model.Laws.sides` |
+| [Check/Superposition.lean](Check/Superposition.lean) | the hand translation of superposition compared with the library's declaration | `Elements.Foundations`, `Model.Laws.superposition` |
+| [Check/Write.lean](Check/Write.lean) | run by hand, never built: writes the generated files | as `Check/Generated.lean` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib. The
@@ -247,11 +250,11 @@ what it writes.
 
    ```lean
    theorem euclidean_laws
-       (Definition15 : Law.Definition15 Euclidean.plane)
+       (eq_of_len_eq_zero : Law.Tacit.eq_of_len_eq_zero Euclidean.plane)
        ...
        (triple_incidence3 : Law.Tacit.triple_incidence3 Euclidean.plane) :
        Laws Euclidean.plane where
-     Definition15 := Definition15
+     Definition15 := Euclidean.Definition15
      ...
      circles_meet := Euclidean.circles_meet
      ...
@@ -262,7 +265,8 @@ what it writes.
    `theorem model_exists : ∃ S : Signature, Laws S := ⟨Euclidean.plane, euclidean_laws⟩`. The
    assembly stands apart from `Model/Laws.lean`, which the proofs import, so that no import
    goes round in a circle and the laws stay free of Mathlib. A law proved from now on is
-   stated with the generated law, `theorem line_unique : Law.Tacit.line_unique plane`; the
+   stated with the generated law, such as
+   `theorem len_self : Law.Tacit.len_self plane`; the
    integrated families keep their hand-translated statements in `Model/Hand.lean` and
    `Model/Laws/`; their files in `Check/` compare every one with its generated field.
 
@@ -307,9 +311,12 @@ the original means. These checks do that, at every build.
   is right only after unfolding a word, and a binder made explicit where the original's is
   implicit, which the kernel does not see, since neither changes the proposition. The same
   file checks the words written by hand in `Model/Signature.lean`, exactly, the type of each
-  field of the signature against the library's opaque word, each imported law of `Model/Hand.lean` and the family modules in `Model/Laws/`
-  against the law the generator wrote for it, binder kinds included, and that `original`
-  gives each field the library's word.
+  field of the signature against the library's opaque word, each hand translation imported here under its law
+  name in `Model.Hand` against the law the generator wrote for it, binder kinds included, and that `original`
+  gives each field the library's word. This includes the incidence, order, sides, circles,
+  intersections and area families. Copies given distinct names to retain overlapping
+  translations, and the angle and superposition translations with their own helper words,
+  are compared with the generated laws by the kernel in their family check files.
 - **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
   declared in `Elements.Foundations` are exactly the lock's `[axioms]`, so that none is
   missing and none is extra, and `Check/RoundTrip.lean` that `Neutral` and `Laws` have
@@ -410,7 +417,7 @@ come before the easy laws are shared out. A law proved here is gathered into
 | Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides`, `lines_meet_of_opposite_sides` | proved here |
 | Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | proved here |
 | Postulate 5 | the meeting on the stated side, not only a meeting | proved here |
-| Superposition | an isometry, with a reflection where the side needs one; and the soundness of whichever restricted rule is adopted | to do |
+| Superposition | `superposition`, as locked: an isometry, with a reflection where the side needs one | proved here; a restricted replacement rule would need its own proof |
 | Areas | all eight area laws, including `area_congruent`, `area_add_of_between` and `between_of_area_add`, with collinear and repeated corners | proved here |
 | Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | proved here: infinite real intervals on a line, and injective families indexed by ℕ for regions and circumferences |
 
@@ -420,18 +427,57 @@ through them is any line through it. Circle 4 (`not_same_side_of_circles_meet`) 
 the circles differ, and needs to: for a circle and itself, two common points can lie on
 one side of a line through the centre.
 
-The five line laws rest on one calculation
+The line-circle constructions rest on one calculation
 ([Model/Euclidean/LineCircle.lean](Model/Euclidean/LineCircle.lean)): along a line through
 a point inside a circle, the squared distance from the centre, less the squared radius, is
 a quadratic in the line's parameter, negative at that point, so it has one root on each
 side of it, and the points inside are exactly those between the roots. That gives the two
 crossings of Intersection 3, the crossing beyond the inside point and the one before an
 outside point, and, for Circle 1, that a chord's ends are the two roots. A line through the
-centre is no special case. Intersections 1 and 2 and Circles 2 and 3 rest instead on the
-strict convexity of the disc (`Sbtw.dist_lt_max_dist`, Joseph Myers's): a point strictly
+centre is no special case. Intersection 1 uses the crossing between points on opposite
+sides of a line. Intersection 2 and Circles 2 and 3 use the strict convexity of the disc (`Sbtw.dist_lt_max_dist`, Joseph Myers's): a point strictly
 between two points on or inside a circle is strictly inside it. Circle 4 asks for two
 different circles, so their centres differ, and the line of centres is the perpendicular
 bisector of the common points, as in Intersections 8 and 9.
+
+## Proved and remaining laws
+
+The generated [assembly](Model/Assembly.lean) supplies **81 of the 87 locked laws** from
+proofs in the plane. This list counts each law once, even where two families supply a proof.
+Names other than `Definition15` and the postulates are in `Elements.Tacit` in the lock.
+The proposed `exists_centre` is proved too, but is not a locked law and is not counted here.
+
+| Proof file in `Model/Euclidean/` | Count | Locked laws proved |
+|---|---:|---|
+| [AngleAdd.lean](Model/Euclidean/AngleAdd.lean) | 2 | `angle_add_of_inside`, `inside_of_angle_add` |
+| [Angles.lean](Model/Euclidean/Angles.lean) | 7 | `Postulate4`, `adjacent_eq_of_right`, `angle_eq_of_same_rays`, `angle_eq_zero_of_same_ray`, `angle_le_two_right`, `angle_symm`, `same_ray_of_angle_eq_zero` |
+| [Areas.lean](Model/Euclidean/Areas.lean) | 8 | `area_add_of_between`, `area_congruent`, `area_degenerate`, `area_eq_zero_of_on_line`, `area_rotate`, `area_swap`, `between_of_area_add`, `on_line_of_area_eq_zero` |
+| [Avoidance.lean](Model/Euclidean/Avoidance.lean) | 10 | `Postulate2`, `exists_point`, `exists_point_between`, `exists_point_inside_circle`, `exists_point_on_circle`, `exists_point_on_line`, `exists_point_on_line_off_line`, `exists_point_opposite_side`, `exists_point_outside_circle`, `exists_point_same_side` |
+| [CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | 2 | `Definition15`, `Postulate3` |
+| [CircleRules.lean](Model/Euclidean/CircleRules.lean) | 4 | `between_of_inside_chord`, `inside_of_between`, `not_same_side_of_circles_meet`, `outside_of_between` |
+| [CircleSides.lean](Model/Euclidean/CircleSides.lean) | 2 | `circles_meet_opposite_side`, `circles_meet_same_side` |
+| [Circles.lean](Model/Euclidean/Circles.lean) | 2 | `circles_meet`, `circles_meet_of_on_inside_outside` |
+| [Incidence.lean](Model/Euclidean/Incidence.lean) | 6 | `Postulate1`, `centre_inside`, `centre_unique`, `inside_not_on`, `line_unique`, `lines_meet_of_opposite_sides` |
+| [LineCircle.lean](Model/Euclidean/LineCircle.lean) | 3 | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside` |
+| [LineSides.lean](Model/Euclidean/LineSides.lean) | 1 | `line_meets_circle_of_opposite_sides` |
+| [Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | 8 | `add_assoc`, `add_comm`, `add_lt_add_right`, `add_zero`, `lt_irrefl`, `lt_trans`, `lt_trichotomy`, `not_lt_zero` |
+| [Order.lean](Model/Euclidean/Order.lean) | 7 | `between_of_between_left`, `between_of_between_right`, `between_symm`, `ne_of_between`, `ne_of_between_ends`, `not_between_of_between`, `not_between_of_between_between` |
+| [OrderLines.lean](Model/Euclidean/OrderLines.lean) | 3 | `between_cases`, `on_line_of_between`, `on_line_of_between_ends` |
+| [Pasch.lean](Model/Euclidean/Pasch.lean) | 4 | `pasch1`, `pasch2`, `pasch3`, `pasch4` |
+| [Postulate5.lean](Model/Euclidean/Postulate5.lean) | 1 | `Postulate5` |
+| [Segments.lean](Model/Euclidean/Segments.lean) | 5 | `circle_eq`, `inside_of_len_lt`, `len_add_of_between`, `len_lt_of_inside`, `on_circle_of_len_eq` |
+| [Sides.lean](Model/Euclidean/Sides.lean) | 5 | `not_on_line_of_same_side`, `same_side_or`, `same_side_refl`, `same_side_symm`, `same_side_trans` |
+| [Superposition.lean](Model/Euclidean/Superposition.lean) | 1 | `superposition` |
+
+**Six remain:** `eq_of_len_eq_zero`, `len_self`, `len_symm`, `triple_incidence1`, `triple_incidence2`, `triple_incidence3`. They are the six hypotheses of `euclidean_laws`; the package does not yet
+provide an unconditional `model_exists` theorem.
+
+The overlapping circle and intersection proofs are retained with `_circles` and
+`_intersections` suffixes, and the second proof of Definition 15 with `_angles`.
+Their hand translations retain the same statements under corresponding names. Each has
+its own original-declaration and generated-law checks, and its own pinned axiom audit.
+The hand copies of `LinesMeet` and `LineMeetsCircle` also remain under distinct names,
+with equality checks against the generated words over every signature.
 
 ## The CI job
 

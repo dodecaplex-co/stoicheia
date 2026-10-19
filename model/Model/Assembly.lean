@@ -20,6 +20,7 @@ public import Model.Euclidean.Pasch
 public import Model.Euclidean.Postulate5
 public import Model.Euclidean.Segments
 public import Model.Euclidean.Sides
+public import Model.Euclidean.Superposition
 
 /-!
 # The plane satisfies the laws
@@ -32,9 +33,9 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-So far 80 of the 87 laws are proved in the plane. Until the rest are,
+So far 81 of the 87 laws are proved in the plane. Until the rest are,
 `euclidean_laws` takes them as hypotheses, so that it states exactly what is proved: the plane
-satisfies every law, given the 7 that are not yet proved in it. When none is left,
+satisfies every law, given the 6 that are not yet proved in it. When none is left,
 the generator writes it with no hypothesis, and `model_exists` after it.
 -/
 
@@ -42,12 +43,11 @@ the generator writes it with no hypothesis, and `model_exists` after it.
 
 namespace Model
 
-/-- **The plane satisfies the laws,** given the 7 not yet proved in it. -/
+/-- **The plane satisfies the laws,** given the 6 not yet proved in it. -/
 theorem euclidean_laws
     (eq_of_len_eq_zero : Law.Tacit.eq_of_len_eq_zero Euclidean.plane)
     (len_self : Law.Tacit.len_self Euclidean.plane)
     (len_symm : Law.Tacit.len_symm Euclidean.plane)
-    (superposition : Law.Tacit.superposition Euclidean.plane)
     (triple_incidence1 : Law.Tacit.triple_incidence1 Euclidean.plane)
     (triple_incidence2 : Law.Tacit.triple_incidence2 Euclidean.plane)
     (triple_incidence3 : Law.Tacit.triple_incidence3 Euclidean.plane) :
@@ -135,7 +135,7 @@ theorem euclidean_laws
   same_side_refl := Euclidean.same_side_refl
   same_side_symm := Euclidean.same_side_symm
   same_side_trans := Euclidean.same_side_trans
-  superposition := superposition
+  superposition := Euclidean.superposition
   triple_incidence1 := triple_incidence1
   triple_incidence2 := triple_incidence2
   triple_incidence3 := triple_incidence3

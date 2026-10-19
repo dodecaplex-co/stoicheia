@@ -9,10 +9,9 @@ public import Model.Signature
 betweenness and its measure: the ten axioms of System E's Between rules 1 to 7 (Between 1
 says four things, so it is four axioms), and the five of the diagram-segment rules 1 to 4
 (Diagram-segment 4 is two axioms, one for each direction; rule 3's forward half is
-Definition 15, which is not among them). When the generator described in the
-[README](../../README.md) lands, its `Model/Laws.lean` writes each of these from the elaborated
-declaration, and each definition here is to be checked against the generated law with `rfl`
-before the proofs move over to it.
+Definition 15, which is not among them). The generator described in the
+[README](../../README.md) writes each law in `Model/Laws.lean` from its elaborated declaration.
+`Check/Order.lean` compares every hand translation here with its generated law by `rfl`.
 
 Each declaration is the library's, word for word, with `S.Point` for `Elements.Point`,
 `S.Between` for `Elements.Between`, and so on. The printed original is quoted above each

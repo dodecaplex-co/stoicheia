@@ -10,9 +10,9 @@ public import Model.Hand
 `Model/Hand.lean`. The printed original is quoted above each law, from
 `Certificate/axioms.lock`. `Check/Circles.lean` puts the library's own words in for `S` and
 asks the kernel whether each result is the original declaration; the build fails if it is
-not. When the generator described in the [README](../../README.md) writes the laws from the
-elaborated declarations, its fields replace these, and the proofs in the plane are stated
-against them instead.
+not. The generator described in the [README](../../README.md) writes the laws from the
+elaborated declarations, and `Check/Circles.lean` also compares each translation here with
+its generated field. Overlapping translations keep their statements under distinct names.
 
 The laws here are those about a single circle, or about where a circle and its points lie:
 

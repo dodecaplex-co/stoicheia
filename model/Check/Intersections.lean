@@ -11,8 +11,8 @@ it reaches, is then the library's declaration. Each check is `rfl`: the kernel a
 only if the two are the same proposition, up to unfolding definitions, so a dropped guard,
 two swapped arguments or a change in the order of the binders fails here, and the build
 with it. Binder kinds, which the kernel does not see, are checked by reading each
-statement against the lock's printed one, quoted above it, until the generator's syntactic
-round trip covers them.
+statement against the lock's printed one, quoted above it. The generator's syntactic
+round trip also covers the laws imported under their original names in `Model.Hand`.
 
 This file reads the library's axioms only through `type_of%`, which takes a declaration's
 statement and does not use it. Nothing in `Model/` imports this file.

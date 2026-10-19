@@ -32,4 +32,6 @@ public import Model.Euclidean.Angles
 public import Model.Euclidean.AngleAdd
 public import Model.Euclidean.Areas
 public import Model.Euclidean.Postulate5
+public import Model.Laws.superposition
+public import Model.Euclidean.Superposition
 public import Model.Audit

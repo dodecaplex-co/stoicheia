@@ -6,10 +6,11 @@ public import Model.Hand
 # The intersection rules, translated by hand
 
 **This file is written by hand: hand-translated.** It holds the translation of the
-intersection rules that `Model/Hand.lean` does not yet hold, and of the two defined words
-they reach, until the generator described in the [README](../../README.md) writes every
-law from the elaborated declarations; its output is then checked against each statement
-here, and replaces this file.
+intersection rules beyond `Model/Hand.lean`, and separate hand copies of the two defined
+words they reach in `Hand.Intersections`. The generator described in the
+[README](../../README.md) writes every law from its elaborated declaration.
+`Check/Intersections.lean` compares each statement and hand word here with its generated
+counterpart. Overlapping translations keep their statements under distinct names.
 
 Each declaration is the library's, word for word, with `S.Point` for `Elements.Point`,
 `S.OnLine` for `Elements.OnLine`, and so on. The printed original is quoted above each

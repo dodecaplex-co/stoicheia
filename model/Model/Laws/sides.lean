@@ -7,9 +7,9 @@ public import Model.Signature
 
 **This file is written by hand, and so is every translation in it.** It holds, for now, the
 translations of the five same-side rules and the four Pasch rules of
-`Elements/Foundations/Tacit/Diagram.lean`, until the generator described in the
-[README](../../README.md) writes every law from the elaborated declarations; the generator
-will then check each translation here against the field it writes, and replace this file.
+`Elements/Foundations/Tacit/Diagram.lean`. The generator described in the
+[README](../../README.md) writes every law from its elaborated declaration, and
+`Check/Sides.lean` compares each translation here with its generated field.
 
 Each law is the library's, word for word, with `S.Point` for `Elements.Point`, `S.OnLine`
 for `Elements.OnLine`, `S.SameSide` for `Elements.SameSide`, `S.Between` for

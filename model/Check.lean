@@ -10,3 +10,4 @@ import Check.Circles
 import Check.Intersections
 import Check.Angles
 import Check.AreasP5
+import Check.Superposition

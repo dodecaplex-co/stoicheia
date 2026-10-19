@@ -1,5 +1,8 @@
 module
 
+public import Model.Laws.superposition
+public import Model.Euclidean.Superposition
+
 public import Model.Laws.«areas-p5»
 public import Model.Euclidean.Areas
 public import Model.Euclidean.Postulate5
@@ -641,6 +644,12 @@ info: 'Model.Euclidean.Postulate5' depends on axioms: [propext, Classical.choice
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.Postulate5
+
+/--
+info: 'Model.Euclidean.superposition' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.superposition
 
 /-! ## What the assembled model rests on
 

@@ -6,9 +6,9 @@ public import Model.Signature
 # Areas and Postulate 5, translated by hand
 
 **This file is written by hand.** Like [Model/Hand.lean](../Hand.lean), it holds laws
-translated by hand from `Certificate/axioms.lock`, until the generator described in the
-[README](../../README.md) writes every law from the elaborated declarations; the generator
-will check each statement here against the field it generates, and replace this file.
+translated by hand from `Certificate/axioms.lock`. The generator described in the
+[README](../../README.md) writes every law from its elaborated declaration, and
+`Check/AreasP5.lean` compares each statement here with its generated field.
 
 Each declaration is the library's, word for word, with `S.Point` for `Elements.Point`,
 `S.area` for `Elements.area`, and so on, and keeps the original's binders, their kinds and
