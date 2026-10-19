@@ -505,8 +505,11 @@ def review_texts(raw: str, terms: bool = False) -> list[tuple[int, str, str, int
         except tomllib.TOMLDecodeError:
             continue
         # A multi-line string's text starts on the next line when a line break follows its
-        # opening quotes, which TOML drops.
-        starts_below = re.match(r'("""|' + "'''" + r')\r?\n', m.group(0)) is not None
+        # opening quotes, which TOML drops, or a backslash ending their line. (A backslash
+        # ending a later line joins two lines of the text, and a finding after it is put on
+        # the line before its own, at worst.)
+        starts_below = re.match(r'("""|' + "'''" + r')(\\[ \t]*)?\r?\n',
+                                m.group(0)) is not None
         first = line_of(raw, m.start())
         where[text].append((first - (0 if starts_below else 1), line_of(raw, m.end() - 1)))
     found = []
@@ -585,34 +588,38 @@ def check_lean_notes(path: Path, src: str, rendered: list) -> list:
     before #66, the rendered docstrings among them; then S6 and S7 over each rendered
     docstring as the pages show it, its white space made one space. Returns the rendered
     docstrings as texts for S12."""
+    texts = []
+    replaced: dict[str, set[int]] = defaultdict(set)
+    for r in rendered:
+        offset = shown_offsets(src, r.first, r.last)
+        at = lambda x, offset=offset: line_of(src, offset(x))   # noqa: E731
+        found: list[tuple[str, int]] = []
+        check_text(path, r.doc, {"rendered"}, line_at=at, collect=found)
+        for rule, x in found:
+            replaced[rule].add(offset(x))
+        texts.append(NamedText(path, r.doc, FOUNDATIONS_OPENS, line_at=at))
     m = re.fullmatch(r"Prop(\d+)\.lean", path.name)
     n = int(m.group(1)) if m and path.parent.name.startswith("Book") else None
-    check_text(path, notes_text(src, n), {"lean"},
-               rendered_spans=[(r.first, r.last) for r in rendered])
-    texts = []
-    for r in rendered:
-        at = shown_lines(src, r.first, r.last)
-        check_text(path, r.doc, {"rendered"}, line_at=at)
-        texts.append(NamedText(path, r.doc, FOUNDATIONS_OPENS, line_at=at))
+    check_text(path, notes_text(src, n), {"lean"}, replaced=replaced)
     return texts
 
 
-def shown_lines(src: str, first: int, last: int):
+def shown_offsets(src: str, first: int, last: int):
     """For a docstring whose text is `src[first:last]`, shown with its white space made
-    one space: the file's line of an offset in the text as shown."""
+    one space: the offset in `src` of an offset in the text as shown."""
     words = [(m.start(), m.end()) for m in re.finditer(r"\S+", src[first:last])]
     starts, at = [], 0
     for a, b in words:
         starts.append(at)
         at += b - a + 1
 
-    def line(x: int) -> int:
+    def offset(x: int) -> int:
         if not words:
-            return line_of(src, first)
+            return first
         k = max(i for i, n in enumerate(starts) if n <= x) if x >= 0 else 0
         a, b = words[k]
-        return line_of(src, first + a + min(x - starts[k], b - a))
-    return line
+        return first + a + min(x - starts[k], b - a)
+    return offset
 
 
 # render.load_axiom_docs's pattern for an axiom's docstring: the text, then the name.
@@ -807,19 +814,21 @@ def proclus_under_i31(text: str) -> list[tuple[int, int]]:
 
 def find_all(rule: str, pattern: re.Pattern, path: Path, text: str, shown: str | None = None,
              *, failing: bool = True, what: str = "", line_at=None, new: bool = False,
-             within=()) -> None:
+             passed=frozenset(), collect=None) -> None:
     """Each match of `pattern` in `text` (already blanked as the rule asks) is a finding.
     `shown` is the text the excerpt is taken from, so the reader sees the words;
     `line_at` gives the file's line of an offset in `text`, for a text taken from a file
     (a review note, a rendered docstring); `new` marks a finding of the reach of #66
-    (REACH_PENDING); a match that lies wholly within one of the spans `within` is passed
-    by."""
+    (REACH_PENDING); a match that starts at an offset of `passed` is passed by; and
+    `collect`, a list, gains (rule, offset) for each finding."""
     shown = text if shown is None else shown
     line_at = line_at or (lambda a: line_of(text, a))
     for m in pattern.finditer(text):
         a, b = (m.span(1) if m.groups() and m.group(1) else m.span())
-        if any(x <= a and b <= y for x, y in within):
+        if a in passed:
             continue
+        if collect is not None:
+            collect.append((rule, a))
         found = flat(m.group(1) if m.groups() and m.group(1) else m.group(0))
         msg = f'{what}"{found}": {excerpt(shown, a, b)}'
         if failing:
@@ -839,14 +848,16 @@ def text_lines(text: str, line0: int = 0, last: int | None = None):
 
 
 def check_text(path: Path, raw: str, scopes: set[str], *, line0: int = 0,
-               new: bool = False, rendered_spans=(), line_at=None) -> None:
+               new: bool = False, replaced=None, line_at=None, collect=None) -> None:
     """The text rules for one file, or for one text of it that starts after its line
     `line0` (a review note), by the scopes it belongs to. `new` marks a text that came
     under the rules with the reach of #66, whose every finding is of that reach; in the
     other texts, the reach is S7 where it was D10, S6 in the rendered docstrings, and
-    S22. `rendered_spans` are a Lean file's rendered docstrings, which the "rendered"
-    scope reads for S6 and S7, so D10 passes by a match wholly within one. `line_at`
-    gives the file's line of an offset in `raw`, when `line0` alone cannot."""
+    S22. `replaced` gives, for S6 and S7, the offsets in `raw` where they found something
+    in a Lean file's rendered docstrings, read as the pages show them, so D10 passes by
+    the match there that the failure replaces. `line_at` gives the file's line of an
+    offset in `raw`, when `line0` alone cannot; `collect`, a list, gains (rule, offset)
+    for each finding."""
     raw = raw.replace("\r\n", "\n")
     straight = straighten(raw)
     code_free = blank_code(straight)
@@ -857,9 +868,11 @@ def check_text(path: Path, raw: str, scopes: set[str], *, line0: int = 0,
 
     line_at = line_at or text_lines(raw, line0)
 
-    def find(rule, pattern, text, *, failing=True, reach=False, within=()):
+    replaced = replaced or {}
+
+    def find(rule, pattern, text, *, failing=True, reach=False, passed=frozenset()):
         find_all(rule, pattern, path, text, raw, failing=failing, line_at=line_at,
-                 new=new or reach, within=within)
+                 new=new or reach, passed=passed, collect=collect)
 
     if prose or review or cat or readme or notes or reports_:
         find("S1", EM_DASH, blank_code(raw))
@@ -873,12 +886,12 @@ def check_text(path: Path, raw: str, scopes: set[str], *, line0: int = 0,
     if prose or review or rendered or gen:
         find("S6", TACIT, outside, reach=rendered)
     elif cat or readme or notes:
-        find("D10", TACIT, outside, failing=False, within=rendered_spans)
+        find("D10", TACIT, outside, failing=False, passed=replaced.get("S6", frozenset()))
     defs = SQUARE.sub(_blank, outside)
     if prose or review or cat or reports_ or rendered or gen:
         find("S7", DEFINITION, defs, reach=cat or rendered or gen)
     elif readme or notes:
-        find("D10", DEFINITION, defs, failing=False, within=rendered_spans)
+        find("D10", DEFINITION, defs, failing=False, passed=replaced.get("S7", frozenset()))
     if prose or review or cat or reports_:
         find("S8", CURLY, blank_code(raw))
     if prose or review or cat or notes:

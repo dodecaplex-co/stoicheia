@@ -321,6 +321,8 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     # A line break after a backslash, and quotation marks before the closing three.
     ("S4", lambda raw: note_lines(raw, style.HEDGE), SAMPLE_TOML_MORE, []),
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_MORE, [6]),
+    ("S7", lambda raw: note_lines(raw, style.DEFINITION),
+     '[statement]\nnote = """\\\nDefinition 3."""\n', [3]),
     ("S7", lambda raw: style.review_texts(raw), "statement = 1\nfigure = [1]\n", []),
     ("S7", lambda raw: style.review_texts(raw, terms=True), "tag = 1\n", []),
     # The mishnah is asked as before: every name, with Elements alone.
@@ -343,6 +345,10 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("D10", lean_note_findings, "/-- A tacit\nassumption. -/\naxiom a : True\n", ["D10"]),
     ("D10", lambda src: lean_note_findings(src, [("a", "assumption here.")]),
      "/- A tacit -/\n/-- assumption here. -/\naxiom a : True\n", ["D10"]),
+    ("D10", lambda src: lean_note_findings(src, [("a", "Apply `Definition 8`.")]),
+     "/-- Apply `Definition\n8`. -/\naxiom a : True\n", ["D10"]),
+    ("S7", lambda src: lean_note_findings(src, [("a", "As Definition 8 says.")]),
+     "/-- As Definition\n8 says. -/\naxiom a : True\n", ["S7"]),
     ("D10", lambda src: lean_note_findings(src, [("a", "A point exists.")]),
      "/- A tacit -/\n/-- A point exists. -/\naxiom a : True\n/- assumption -/\n", []),
     ("S7", lambda src: lean_note_findings(src, [("r", "A point at the radius is on the circle "

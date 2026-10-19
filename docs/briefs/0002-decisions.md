@@ -1368,12 +1368,12 @@ findings:
   a listed file. An entry whose file has nothing left is reported as done, and comes out in
   a change to the check; the list goes once it is empty. The protected files changed are
   [`scripts/check_style.py`](../../scripts/check_style.py),
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) (50 scope cases and 5
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (53 scope cases and 5
   reach cases), [`review/SCHEMA.md`](../../review/SCHEMA.md) and
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), whose comment on S12 now
   says what it reads. Astra read the first draft cold, through the Codex CLI, and found
-  nine faults, and five more in a second reading of the mends, each now mended with a
-  case of its own: among them, a phrase that runs from one Lean note into a rendered
-  docstring, a docstring read with other white space than its page shows, a mishnah name
-  excused that used to fail, a TOML comment taken for a note, and a D10 report lost.
-  Our warm thanks to Astra.
+  nine faults, five more in a second reading of the mends and one in a third, each now
+  mended with a case of its own: among them, a phrase that runs from one Lean note into a
+  rendered docstring, a docstring read with other white space than its page shows, a
+  mishnah name excused that used to fail, a TOML comment taken for a note, and a D10
+  report lost. Our warm thanks to Astra.
