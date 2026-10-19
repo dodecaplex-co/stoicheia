@@ -179,7 +179,7 @@ names are an interface, and they change only in the open.
   statement changes only by an approved correction (WORKFLOW, section 2). `PropN` names
   Euclid's proposition whatever its statement, so the name goes with the new statement,
   and where citers need the old one it stays beside it as a companion, as
-  [brief 0006](briefs/0006-statements.md) keeps III.24's present statement as
+  [brief 0006](briefs/0006-statements.md) keeps III.24's statement before stage 3 as
   `Prop24.equalCircles`. A helper's or a Book Zero fact's statement may change between
   releases; its name follows the rule above.
 - **The release notes list the changes:** every name deprecated or removed, and every

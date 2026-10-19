@@ -1,12 +1,12 @@
 # Book III: circles
 
 *The design for Book III (16 October 2026, brought up to date on 17 October, and on 18
-October for stage 3 of [brief 0006](0006-statements.md)): how Lean says Book III's words, where the facts about them live, and how its thirty-seven
-propositions are stated. The code states what we formalized; where the code, this brief,
-a review record and the pages disagree, the disagreement is recorded and every document
-it touches is reconciled ([FORMALIZATION.md](../FORMALIZATION.md), section 1). The first
-mate's working detail, one note per proposition, is in
-[first-mate-III.md](../reports/crew/first-mate-III.md).*
+October for stage 3 of [brief 0006](0006-statements.md)): how Lean says Book III's words,
+where the facts about them live, and how its thirty-seven propositions are stated. The
+code states what we formalized; where the code, this brief, a review record and the pages
+disagree, the disagreement is recorded and every document it touches is reconciled
+([FORMALIZATION.md](../FORMALIZATION.md), section 1). The first mate's working detail, one
+note per proposition, is in [first-mate-III.md](../reports/crew/first-mate-III.md).*
 
 ## What Book III needs
 
