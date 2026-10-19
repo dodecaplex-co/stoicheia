@@ -56,6 +56,6 @@ case = "AB not through F, with the supposed centre G off CE in the reductio"
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "bb1589c5"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:49fd7a425f9aeb86"
+lean = "sha256:01e4cde2b50cd281"

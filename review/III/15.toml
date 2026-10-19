@@ -3,7 +3,7 @@
 scope = "full"
 note = "With its companions: `Prop15.le_diameter` bounds every straight line by the diameter, `Prop15.nearer` compares any two; `Prop15` keeps Euclid's figure."
 companions = ["III.15 le_diameter", "III.15 nearer"]
-fingerprint = "sha256:8f609380c65c4ddf"
+fingerprint = "sha256:c0f5cead6405c5bd"
 
 [route]
 kind = "euclid"
@@ -33,6 +33,6 @@ case = "AD a diameter, neither BC nor FG through E, and EH less than EK"
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "bb1589c5"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:d6d2b6b0dcaa6bb6"
+lean = "sha256:63a0eafb567d5839"

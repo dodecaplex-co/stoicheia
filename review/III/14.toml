@@ -3,7 +3,7 @@
 scope = "full"
 note = "With its companion: `Prop14.general` takes any two straight lines in the circle, a diameter at no distance; `Prop14` keeps two not through the centre."
 companions = ["III.14 general"]
-fingerprint = "sha256:ab5dba1e761e8618"
+fingerprint = "sha256:ce986697315c50ff"
 
 [route]
 kind = "euclid"
@@ -33,6 +33,6 @@ case = "two equal straight lines AB and CD, neither through E"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "bb1589c5"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:2c5b7de80bddf235"
+lean = "sha256:39ec7343c9e88e1a"
