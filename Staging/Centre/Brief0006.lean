@@ -18,9 +18,9 @@ or after those statements move into `Elements/`, whichever comes first.
 As in `Restated.lean`, each statement carries `sorry` and two checks (checked by Lean): given
 the rule's content, taken as a hypothesis, brief 0006's statement gives the new one; and the
 new one gives brief 0006's. Two more checks show that brief 0006's pattern survives: the
-companions `Prop24.equalCircles` and `Prop25.of_circle` still have today's statements of
-III.24 and III.25, restated as `Restated.lean` restates them. The names sit in
-`Elements.BookIII.Staging.Centre.Stage3` and `.Stage4`, after brief 0006's folders.
+companions `Prop24.equalCircles` and `Prop25.of_circle` still have the statements of III.24
+before stage 3 and of III.25 today, restated as `Restated.lean` restates them. The names
+sit in `Elements.BookIII.Staging.Centre.Stage3` and `.Stage4`, after brief 0006's folders.
 -/
 
 namespace Elements.BookIII.Staging.Centre.Stage3
@@ -84,8 +84,8 @@ example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) :
 example : type_of% @Elements.BookIII.Prop24.equalCircles :=
   fun _ _ => Stage3.Prop24.equalCircles
 
-/-- The check of brief 0006's pattern: `Prop24.equalCircles` has III.24's statement of today,
-restated without its centres (`Restated.lean`). -/
+/-- The check of brief 0006's pattern: `Prop24.equalCircles` has III.24's statement before
+stage 3, restated without its centres (`Restated.lean`). -/
 example : type_of% @Centre.Prop24 := @Stage3.Prop24.equalCircles
 
 end Elements.BookIII.Staging.Centre.Stage3
