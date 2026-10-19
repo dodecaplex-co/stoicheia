@@ -1358,7 +1358,7 @@ findings:
     docstrings and the front pages, each text with its book's namespace (every book's for
     a text with none, and the foundations' for the Rendered docstrings), and the name
     before the colon of a backticked `name : type`, which B2 and E2 of
-    `scripts/check_acceptance.py`, unchanged, now read in the gap catalogues and the
+    `scripts/check_acceptance.py` now read in the gap catalogues and the
     overlap catalogue too, as S12 does, since they take their names from
     `check_style.lean_names`. `NOT_DECLARED` lists the two tactics and the three fields
     of facts.json it cannot `#check`, each with its reason, and fails an entry that no
@@ -1391,7 +1391,10 @@ findings:
   aside when Lean is not asked, under `--no-lean` or for want of `lake`), and comes out
   of its entry in a change to the check, and the entry with its last rule; the list goes
   once it is empty.
+  `scripts/check_acceptance.py` also sends every style finding in a proposition's review
+  record to P9 before it classifies findings by rule.
   The protected files changed are [`scripts/check_style.py`](../../scripts/check_style.py),
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py),
   [`tests/test_check_style.py`](../../tests/test_check_style.py) (54 scope cases and 14
   reach cases), [`review/SCHEMA.md`](../../review/SCHEMA.md) and
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), whose comment on S12 now

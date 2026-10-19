@@ -1247,16 +1247,85 @@ def reference_destination_ranges(text: str) -> list[tuple[int, int, int]]:
 
 
 def inline_destination_end(text: str, start: int) -> int | None:
-    """The end of a balanced inline link target whose opening `(` is at `start`."""
-    depth = 0
-    for at in range(start, len(text)):
-        if text[at] == "\n" and text[at:at + 2] == "\n\n":
+    """The end of a valid CommonMark inline link target opened at `start`."""
+    def space(at: int) -> int:
+        while at < len(text) and text[at] in " \t":
+            at += 1
+        if at < len(text) and text[at] == "\n":
+            at += 1
+            while at < len(text) and text[at] in " \t":
+                at += 1
+        return at
+
+    def title(at: int) -> int | None:
+        pairs = {'"': '"', "'": "'", '(': ')'}
+        if at >= len(text) or text[at] not in pairs:
             return None
-        if text[at] in "()" and backslashes_before(text, at) % 2 == 0:
-            depth += 1 if text[at] == "(" else -1
-            if depth == 0:
+        closer = pairs[text[at]]
+        at += 1
+        while at < len(text):
+            if text[at] == "\\" and at + 1 < len(text):
+                at += 2
+            elif text[at] == closer:
                 return at + 1
-    return None
+            elif text[at] == "\n" and text[at:at + 2] == "\n\n":
+                return None
+            else:
+                at += 1
+        return None
+
+    at = space(start + 1)
+    if at >= len(text):
+        return None
+    if text[at] == ")":
+        return at + 1
+    empty = at > start + 1 and text[at] in "\"'("
+    if not empty and text[at] == "<":
+        at += 1
+        while at < len(text) and text[at] != ">":
+            if text[at] == "\n" or text[at] == "<" or ord(text[at]) < 0x20:
+                return None
+            at += 2 if text[at] == "\\" and at + 1 < len(text) else 1
+        if at == len(text):
+            return None
+        at += 1
+    elif not empty:
+        depth = 0
+        began = at
+        while at < len(text):
+            char = text[at]
+            if char == "\\" and at + 1 < len(text):
+                at += 2
+                continue
+            if char == "(":
+                depth += 1
+            elif char == ")":
+                if depth == 0:
+                    break
+                depth -= 1
+            elif char.isspace() or ord(char) < 0x20:
+                break
+            at += 1
+        if at == began or depth:
+            return None
+    if empty:
+        titled = title(at)
+        if titled is None:
+            return None
+        closed = space(titled)
+        return closed + 1 if closed < len(text) and text[closed] == ")" else None
+    if at < len(text) and text[at] == ")":
+        return at + 1
+    separated = space(at)
+    if separated == at or separated >= len(text):
+        return None
+    if text[separated] == ")":
+        return separated + 1
+    titled = title(separated)
+    if titled is None:
+        return None
+    closed = space(titled)
+    return closed + 1 if closed < len(text) and text[closed] == ")" else None
 
 
 def matching_link_label(text: str, close: int) -> int | None:
@@ -1639,6 +1708,18 @@ IDENT = re.compile(rf"{IDENT_PART}(?:\.{IDENT_PART})*\.?")
 FILE_NAME = re.compile(r".*\.(?:lean|json|md|svg|py|toml|txt|lock)$")
 
 
+def tracked_file_index() -> tuple[frozenset[str], frozenset[str]]:
+    """The repository's tracked files, by path and by basename."""
+    run = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, text=True)
+    if run.returncode:
+        raise RuntimeError(f"could not list tracked files: {run.stderr.strip()}")
+    paths = frozenset(path for path in run.stdout.split("\0") if path)
+    return paths, frozenset(Path(path).name for path in paths)
+
+
+TRACKED_FILE_PATHS, TRACKED_FILE_NAMES = tracked_file_index()
+
+
 # A backticked hypothesis or variable with its type, `hBCE : Between B C E`: the name
 # before the colon (not `:=`, `::` or a link's `://`) is read as a name too.
 BINDER = re.compile(r"([A-Za-z_][A-Za-z0-9_.'!?₀-₉]*)[ \t]*:(?![=:/])")
@@ -1802,11 +1883,12 @@ def report_non_declaration(t: NamedText, occurrence: LeanName,
     # Markdown and Python files are often named without their extension in reports, so
     # a name is read as a file only by its shape (a numeric location, an extension) or
     # by prose that calls it one.
-    folders = (ROOT, t.path.parent, ROOT / 'scripts', ROOT / 'docs')
     called_file = (binder or re.search(rf'\b{CONTEXT_WORD.format(FILE_WORDS)}$', before, re.I)
                    or re.match(rf'\s*{FILE_WORDS}s?\b', after, re.I))
     exts = ('', '.md', '.py') if called_file else ('',) if '.' in name.strip('.') else ()
-    if any((folder / (name + ext)).is_file() for folder in folders for ext in exts):
+    candidates = {name + ext for ext in exts}
+    if any(candidate in TRACKED_FILE_PATHS or Path(candidate).name in TRACKED_FILE_NAMES
+           for candidate in candidates):
         return 'a repository file or a numeric location in it'
     if binder:
         return None
