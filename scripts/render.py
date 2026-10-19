@@ -817,9 +817,25 @@ def overlap_rules(overlap):
 
 
 def overlap_rests(p, overlap):
-    """Does the proof rest on the rules its [overlap] names (facts.json's `axioms`)?
-    Neither I.7's nor III.2's proof rests on its overlapping rule."""
-    return bool(p) and all(r in p.get("axioms", []) for r in overlap_rules(overlap))
+    """Which rules its [overlap] names the proof rests on, from facts.json's `axioms`,
+    in the record's order. Using some of the rules is distinct from using all or none."""
+    axioms = (p or {}).get("axioms", [])
+    return [r for r in overlap_rules(overlap) if r in axioms]
+
+
+def overlap_use(p, overlap):
+    """A clause saying whether the proof uses all, some or none of the named rules."""
+    rules = overlap_rules(overlap)
+    used = overlap_rests(p, overlap)
+    if used == rules:
+        return "our proof rests on " + ("the rule" if len(rules) == 1 else "all these rules")
+    if not used:
+        return "our proof does not use " + ("the rule" if len(rules) == 1 else "any of these rules")
+    unused = [r for r in rules if r not in used]
+    def names(rs):
+        return and_list(f"`{r.removeprefix('Tacit.')}`" for r in rs)
+    return (f"of these rules, our proof rests on {names(used)} and does not use "
+            f"{names(unused)}")
 
 
 def overlap_steps(overlap):
@@ -876,11 +892,17 @@ def in_lean_line(p, record, book, n):
                       "alternative": "a different argument"}[route["kind"]])
     if "overlap" in record:
         ov = record["overlap"]
-        one = len(overlap_rules(ov)) == 1
+        rules = overlap_rules(ov)
+        used = overlap_rests(p, ov)
+        one = len(rules) == 1
         rule = "the rule" if one else "the rules"
-        if overlap_steps(ov):
+        if used and used != rules:
+            claim = ("supply a step of a proof of it" if overlap_steps(ov)
+                     else "already contain it")
+            parts.append(f"{overlap_word(ov)} {claim}; {overlap_use(p, ov)} (see Overlap)")
+        elif overlap_steps(ov):
             verb = "supplies" if one else "supply"
-            if overlap_rests(p, ov):
+            if used:
                 parts.append(f"{overlap_word(ov)} {verb} a step of a proof of it, and our "
                              f"proof rests on {rule} (see Overlap)")
             else:
@@ -888,7 +910,7 @@ def in_lean_line(p, record, book, n):
                              f"proof does not use {rule} (see Overlap)")
         else:
             verb = "contains" if one else "contain"
-            if overlap_rests(p, ov):
+            if used:
                 parts.append(f"{overlap_word(ov)} already {verb} it (see Overlap)")
             else:
                 parts.append(f"{overlap_word(ov)} {verb} it too, though this proof does not "
@@ -975,6 +997,10 @@ def field_table(book, n, p, record, attached, docs):
                         "proposition.")
             else:
                 text = f"{name} already {'contains' if one else 'contain'} this proposition."
+            used = overlap_rests(p, ov)
+            if used and used != overlap_rules(ov):
+                use = overlap_use(p, ov)
+                text += f" {use[0].upper()}{use[1:]}."
             if (ROOT / "docs" / "reports" / "overlaps.md").exists():
                 text += " See [the overlap catalogue](../../docs/reports/overlaps.md)."
             rows.append(("Overlap", text))
@@ -1508,13 +1534,13 @@ def postulate5_sentence(book, facts, proved):
 def overlap_sentences(overlap, facts, records, links, up):
     """What a book's summary says of the propositions an axiom already contains, or
     supplies a step of a proof of, told apart by the record's [overlap] `kind` and by
-    whether the proof rests on that axiom (facts.json's `axioms`): "In III.2, III.5 and
-    III.6 our tacit rules already contain the proposition…, and our proofs rest on them…";
+    whether the proof rests on all, some or none of those axioms (facts.json's `axioms`):
     "In I.23 one of our tacit rules supplies a step of a proof of the proposition, and our
     proof rests on it"; "In I.7 one of our tacit rules supplies a step of a proof of the
     proposition, but our proof never uses that rule." Only a rule that states the
     proposition or gives it at once is said to contain it, as in the overlap catalogue.
-    Where a proposition needs two rules together (III.6), it says so."""
+    Where an overlap names several rules together, it says so; partial use names the
+    rules used and unused separately for each proposition."""
     def rules(r):
         return overlap_rules(records[r]["overlap"])
 
@@ -1527,7 +1553,9 @@ def overlap_sentences(overlap, facts, records, links, up):
               else "axioms")
     contain = [r for r in overlap if not overlap_steps(records[r]["overlap"])]
     step = [r for r in overlap if r not in contain]
-    rests = [r for r in overlap if overlap_rests(facts.get(r), records[r]["overlap"])]
+    used_rules = {r: overlap_rests(facts.get(r), records[r]["overlap"]) for r in overlap}
+    rests = [r for r in overlap if used_rules[r] == rules(r)]
+    partial = [r for r in overlap if used_rules[r] and r not in rests]
     out = []
     used = [r for r in contain if r in rests]
     if used:
@@ -1540,14 +1568,15 @@ def overlap_sentences(overlap, facts, records, links, up):
             out.append(f"In {and_list(links([r]) for r in used)} our {family} already contain "
                        f"the proposition{extra}, and our proofs rest on them, so each retraces "
                        "Euclid's argument within our rules and does not establish them.")
-    unused = [r for r in contain if r not in rests]
+    unused = [r for r in contain if not used_rules[r]]
     if unused:
-        if len(unused) == 1:
+        extra = together(unused)
+        if len(unused) == 1 and not extra:
             out.append(f"In {links(unused)} one of our {family} contains the proposition too, "
                        "but our proof never uses that rule.")
         else:
             out.append(f"In {and_list(links([r]) for r in unused)} our {family} contain the "
-                       "propositions too, but our proofs never use those rules.")
+                       f"propositions too{extra}, but our proofs never use those rules.")
     used = [r for r in step if r in rests]
     if used:
         extra = together(used)
@@ -1557,7 +1586,7 @@ def overlap_sentences(overlap, facts, records, links, up):
         else:
             out.append(f"In {and_list(links([r]) for r in used)} our {family} supply a step of "
                        f"a proof of each proposition{extra}, and our proofs rest on them.")
-    unused = [r for r in step if r not in rests]
+    unused = [r for r in step if not used_rules[r]]
     if unused:
         extra = together(unused)
         if len(unused) == 1 and not extra:
@@ -1567,6 +1596,12 @@ def overlap_sentences(overlap, facts, records, links, up):
             out.append(f"In {and_list(links([r]) for r in unused)} our {family} supply a step "
                        f"of a proof of each proposition{extra}, but our proofs never use those "
                        "rules.")
+    for r in partial:
+        ov = records[r]["overlap"]
+        claim = ("supply a step of a proof of the proposition" if overlap_steps(ov)
+                 else "already contain the proposition")
+        out.append(f"In {links([r])} {overlap_word(ov)} {claim}; "
+                   f"{overlap_use(facts.get(r), ov)}.")
     out.append(f"[The overlap catalogue]({up}docs/reports/overlaps.md) gives each.")
     return " ".join(out)
 
@@ -2001,6 +2036,15 @@ def content_wording():
              "and no point of β falls outside α; `TouchesExternally α β C`: they meet at C, "
              "and no point is within both; `CirclesTouch α β C`: either touches the other "
              "within, or they touch without. Touching is read of the whole circles"),
+        )),
+        ("Foot" in words, (
+            (definitions[4],
+             "`‖E F‖ = ‖E G‖`, for the perpendiculars EF, EG from the centre E (III.14); "
+             "`Foot E A B F`: F is the foot of the perpendicular from E to AB, or E itself "
+             "when AB passes through E, so that a diameter is at no distance (III.14 general)"),
+            (definitions[5],
+             "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15), "
+             "or for the feet H, K, `Foot` (III.15 nearer)"),
         )),
         (placement, (
             (SUPERPOSITION_NOTE["III"],
