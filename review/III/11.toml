@@ -11,6 +11,9 @@ kind = "euclid"
 tags = ["centre-given"]
 note = "The centres F and G are given, as the enunciation takes them. Touching within is read of the whole circles: no point of ADE is outside ABC, which carries what Heath says Euclid assumes, that touching circles cross nowhere."
 
+[figure]
+note = "Like Heath's, this figure draws the impossible supposition: FG produced falling as FGH, away from A, so the G drawn is not the centre of ADE."
+
 [review]
 stage = "exceptions"
 commit = "dcb1767"

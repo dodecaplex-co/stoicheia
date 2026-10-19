@@ -136,6 +136,55 @@ entry ("I.40 general"), which `Certificate/Facts.lean` checks; it is named in th
 record's `companions`; and it is shown on the page with its own certificate. Each
 companion is approved as a statement with `sorry` before anyone proves it.
 
+### Names, and how they change
+
+The library is used as well as read ([README](../README.md#use-it), "Use it"), so its
+names are an interface, and they change only in the open.
+
+- **How names are made.** A proposition is `Elements.Book<book>.Prop<n>`, declared in its
+  file's module, `Elements.Book<book>.Prop<nn>`; its porism and its companions are
+  `PropN.porism` and `PropN.<word>`, in the same file. A helper is named for the step it
+  supplies (section 6). Other new names follow Lean's own conventions, as the community's
+  [naming guide](https://leanprover-community.github.io/contribute/naming.html) sets them
+  out: a theorem in `snake_case` (`Prop5.base`, `collinear_of_between`), a predicate or a
+  type in `UpperCamelCase` (`OnCircle`, `Parallelogram`), written in `lowerCamelCase`
+  where it is part of a theorem's name (`OnRay.of_sameSideOf`, after `SameSideOf`), any
+  other definition in `lowerCamelCase` (`quadArea`). A companion is a theorem, so its
+  `<word>` follows the same rule: `Prop25.of_circle`, and `Prop24.equalCircles` after the
+  predicate `EqualCircles`. `PropN`, `PostulateN`, `Definition15` and `CommonNotionN`
+  keep Euclid's numbers.
+  [The table of names](../book/names.md), which `scripts/render.py` writes from
+  `facts.json`, gives every proposition, porism and companion with its module, its page
+  and its certificate.
+- **A released name stays, or is deprecated first.** A released name is one that a
+  release tag's `Elements` declares (`book-I`, `book-II`, `book-III` and each after),
+  helpers and Book Zero included. It is never renamed or removed without a deprecated
+  alias for one release: the old name stays, marked deprecated and pointing to its
+  replacement, through the next release, and may go in the release after. Lean then warns
+  at every use and names the replacement. Plain Lean has no `alias` command (Batteries
+  supplies one), so the alias is written out, dated the day it reaches main:
+
+  ```lean
+  @[deprecated NewName (since := "YYYY-MM-DD")]
+  theorem OldName : type_of% @NewName := @NewName
+  ```
+
+  A definition's alias is an `abbrev` under the same attribute
+  (`abbrev OldName := @NewName`), and a declaration
+  removed with nothing to replace it stays as it was for that release, marked
+  `@[deprecated (since := "YYYY-MM-DD")]`. A change in the foundations is still the
+  owner's decision (section 1). `Staging/` and `Audit/` are not released, and their
+  names promise nothing.
+- **A statement that changes keeps its name.** A proposition's, porism's or companion's
+  statement changes only by an approved correction (WORKFLOW, section 2). `PropN` names
+  Euclid's proposition whatever its statement, so the name goes with the new statement,
+  and where citers need the old one it stays beside it as a companion, as
+  [brief 0006](briefs/0006-statements.md) keeps III.24's present statement as
+  `Prop24.equalCircles`. A helper's or a Book Zero fact's statement may change between
+  releases; its name follows the rule above.
+- **The release notes list the changes:** every name deprecated or removed, and every
+  statement changed, with where its old form now stands.
+
 ## 3. Representations
 
 **A definition chooses a meaning; it does not prove agreement with Euclid's object.** For a
@@ -159,8 +208,9 @@ in a circle.
 **A deliberate limit is stated** in the book's brief, carried as a tag of
 [review/terms.toml](../review/terms.toml) in each affected record, and shown on each
 affected page. A new tag is added there, with its meaning, before any record uses it. A full
-formal model of every axiom is valuable further assurance, and a separate milestone; it is
-not a prerequisite for each new representation.
+formal model of every axiom is valuable further assurance, and a milestone of its own, now
+in progress ([MODEL.md](../tests/model/MODEL.md#a-formal-model-in-progress)); it is not a
+prerequisite for each new representation.
 
 The representations Books I–III rest on:
 
@@ -169,7 +219,7 @@ The representations Books I–III rest on:
 | a straight line | a whole straight line, `Line`, named by any two points (Postulate 1) | producing it costs nothing | |
 | lengths, angles, areas | `Magnitude` of one kind each, added and compared only | Common Notions proved as theorems | |
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
-| superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | | |
+| superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | stronger as a construction principle than System E's restricted inference rule, as [its file](../Elements/Foundations/Tacit/Superposition.lean) says; a restricted rule is being prototyped ([#75](https://github.com/jackChallis/stoicheia/issues/75)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
 | a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
@@ -320,12 +370,12 @@ dependencies.
   statement, with every definition that the axioms' statements or the propositions',
   porisms' and companions' statements reach (`Touches`, `rect`, `Parallel`), so that no
   word can change what an axiom or a claim says. It changes only through
-  `check_fidelity.py --write-lock`, together with a decisions entry, and with
-  `tests/model/lock.sha256` updated and
-  [tests/model/MODEL.md](../tests/model/MODEL.md) read again for the changed laws, in the
-  same change; otherwise CI's `model` job fails. Review an axiom's statement and strength, not only the count. An
-  assignment to finish a proof is never permission to add an axiom that asserts its
-  conclusion.
+  `check_fidelity.py --write-lock`, together with a decisions entry, and with the model
+  brought to it in the same change, as
+  [tests/model/MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
+  says; otherwise CI's `model` job fails. Review an axiom's statement and strength, not
+  only the count. An assignment to finish a proof is never permission to add an axiom that
+  asserts its conclusion.
 - **Nothing gets round the kernel:** no `native_decide`, `decide +native`,
   `set_option debug.…`, `run_cmd`, `run_elab`, `elab`, `macro`, `implemented_by`, `extern`
   or `unsafe` under `Elements/`.
@@ -378,7 +428,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | Evidence | What it establishes | What it leaves to review |
 |---|---|---|
 | Lean accepts the theorem | The formal derivation is accepted by the kernel, under its dependencies. | Whether the statement and its hypotheses express the intended claim. |
-| The kernel replays pass (`scripts/check_kernel.py`) | Every declaration of the compiled library, Lean's own included, is accepted again: by Lean's kernel, replayed from nothing (`leanchecker --fresh`), so no declaration reached the compiled files without the kernel's check; and by nanoda, a checker written separately, which admits only the locked axioms and Lean's three, by name. | Only nanoda stands apart from a fault in the code of Lean's kernel: leanchecker runs the same kernel as `lake build`. The axioms nanoda admits are matched by name, so whether each states what the lock records is the lock check's question. Both check Lean's logic, so a fault in the logic itself would pass them both; and they establish nothing about meaning. |
+| The kernel replays pass (`scripts/check_kernel.py`) | Every declaration of the compiled `Elements` library, Lean's own included, is accepted again: by Lean's kernel, replayed from nothing (`leanchecker --fresh`), so no declaration reached the compiled files without the kernel's check; and by nanoda, a checker written separately, which admits only the locked axioms and Lean's three, by name. | Only nanoda stands apart from a fault in the code of Lean's kernel: leanchecker runs the same kernel as `lake build`. The axioms nanoda admits are matched by name, so whether each states what the lock records is the lock check's question. Both check Lean's logic, so a fault in the logic itself would pass them both; and they establish nothing about meaning. |
 | No `sorryAx` in the dependency closure | No admitted proof hole remains in that closure. | Whether an assumption or a definition already contains the result (an overlap). |
 | The fidelity check passes | The `--` lines and the enunciation match Heath's text, under the checker's normalization. | Whether the Lean beneath them carries those sentences and follows their argument. |
 | The policy and lock checks pass | Superposition, the Postulate 5 boundary, citation order, axiom placement, forbidden commands and the axioms' exact statements are as recorded. | Whether helpers fill gaps faithfully, and whether a policy captures what it is meant to. |
@@ -386,13 +436,17 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The edition review | Commentary, quotations, figures and scope descriptions agree with the reviewed mathematics. | |
 | Regeneration is clean | The pages, certificate and graph match the sources and the generator. | Whether their descriptions of scope and meaning are accurate. |
 | The figure checks pass | The files display, and their letters, palette and strokes meet the structural rules. | Whether the drawn geometry and the case shown agree with the proof. |
-| The numerical model tests (`tests/model/`) | The 87 axioms held in the configurations sampled from a standard model of the plane, and planted mutations of them were caught. | A proof of consistency: laws no harness reaches rest on a hand argument. |
+| The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of them were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
+| The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| A formal interpretation (a later milestone, a separate package with Mathlib) | The exact 87 laws proved in a model of the plane, tied to the lock so that any change to an axiom breaks it. | |
+| A formal model (in progress, [#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | When complete, every law of the lock, generated from the elaborated declarations with the translation checked, proved in the ordinary plane, relative to Lean's logic and Mathlib's real numbers, and tied to the lock so that any change to an axiom breaks it. Until then, nothing: [MODEL.md](../tests/model/MODEL.md#what-this-shows-and-what-it-does-not) says what may be claimed meanwhile. | That the formal statements capture Euclid's meaning. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of
 the foundations, nor the necessity of an axiom, nor the independence of the parallel
-postulate, nor that the Lean means what Euclid meant. A claim that a result holds without the
-postulate names its evidence (an interpretation in which the other axioms hold and the
-postulate fails), and even then the pages keep "this proof uses".
+postulate, nor that the Lean means what Euclid meant. A claim that a result cannot be
+proved without the postulate names its evidence and its kind. The evidence is an
+interpretation in which the other axioms hold and the result's own statement fails, its
+hypotheses met; that the postulate fails there is not enough, and a result whose statement
+stays true there needs a different analysis. The kind is numerical until a proof replaces
+it, and even then the pages keep "this proof uses".

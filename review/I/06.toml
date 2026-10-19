@@ -19,6 +19,6 @@ note = "Euclid takes for granted that DBC is less than ACB; the Lean proves it w
 
 [review]
 stage = "exceptions"
-commit = "2e1d5c1"
+commit = "6237881"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:1bc56cc167c58dff"
+lean = "sha256:8c6d2e5ec99a02cf"
