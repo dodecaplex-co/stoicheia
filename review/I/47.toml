@@ -5,7 +5,7 @@
 scope = "full"
 companions = ["I.47 general"]
 note = "Prop47 keeps Euclid's outward squares; Prop47.general proves the same area identity for squares on either side of each base."
-fingerprint = "sha256:d6269e6f56742e6b"
+fingerprint = "sha256:0443415760ef83f5"
 
 [route]
 kind = "euclid"
@@ -37,6 +37,6 @@ case = "the three squares standing outward from the right-angled triangle, as in
 
 [review]
 stage = "exceptions"
-commit = "3b6a3bc"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:a0fc7319bcdf680a"
+commit = "7503779"
+reviewer = "GPT-6 Astra, independent reader"
+lean = "sha256:a33b4ea884666a1b"
