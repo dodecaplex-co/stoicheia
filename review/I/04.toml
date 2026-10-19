@@ -8,9 +8,9 @@ kind = "euclid"
 
 [[passage]]
 at = "For, if the triangle ABC be applied to the triangle DEF"
-kind = "grouped"
+kind = "helper"
 helper = "Tacit.superposition"
-note = "Euclid applies ABC by placing A on D and AB along DE. The Lean first names DE and its side containing F, then carries out both placements together in `Tacit.superposition`, a rule we assume in LeanEuclid's form of System E section 3.7, keeping every side and angle."
+note = "Euclid relies on being able to lay ABC along DE on F's side with every side and angle intact. The Lean obtains the placed triangle DB'C' from `Tacit.superposition`, a rule we assume rather than prove, in LeanEuclid's stronger construction form of System E §3.7: it names DE with `Postulate1`, proves F is off DE, places A at D, B' on the ray from D through E and C' on F's side, and uses `ne_of_len_eq` to establish that D, B' and C' differ."
 
 [[passage]]
 at = "then the point B will also coincide with E"

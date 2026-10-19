@@ -20,13 +20,13 @@ note = "D and E come with the statement, already produced, so the Lean draws onl
 at = "Let a point F be taken at random on BD"
 kind = "helper"
 helper = "exists_between_nearer"
-note = "Euclid chooses F on BD and then treats AF as less than AE. The Lean uses `exists_between_nearer` to take F between B and D with AF < AE, and `between_cut` to put B between A and F."
+note = "Euclid assumes he can find F on BD near enough to B that AF remains less than AE. The Lean applies `exists_between_nearer` to AB = AC < AE, using `len_lt_of_between` for C between A and E, and obtains F between B and D with AF < AE; it then derives the order A, B, F by `between_cut` and puts F on AB by `Tacit.on_line_of_between`, a rule we assume (System E, Between 2)."
 
 [[passage]]
 at = "and they contain a common angle"
 kind = "helper"
 helper = "OnRay.between_of_len_lt"
-note = "Euclid reads the common angle FAG from the figure. The Lean uses Common Notion 5 and AG = AF to show AC < AG, then `OnRay.between_of_len_lt` puts C between A and G, allowing `angle_onRay_left` to identify FAC and GAB."
+note = "Euclid reads B between A and F and C between A and G from the figure, giving the triangles the same angle at A. The Lean uses `Tacit.ne_of_between` (System E, Between 1) and `Tacit.len_add_of_between` (System E, Diagram-segment 1), rules we assume, with `len_pos` and `CommonNotion5` to show AB is less than AF; after substituting AC for AB and AG for AF, `OnRay.of_between` and `OnRay.between_of_len_lt` put C between A and G, and `OnRay.of_beyond` with `angle_onRay_left` identifies the angles."
 
 [[passage]]
 at = "And, since the whole AF is equal to the whole AG"
