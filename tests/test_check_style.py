@@ -228,14 +228,14 @@ def note_lines(raw: str, rule, *, names: bool = False) -> list[int]:
     check_text reads a note for S7 (outside quotations and square brackets), or, with
     `names`, in which S12 finds a name."""
     out = []
-    for line0, _, text in style.review_texts(raw):
+    for line0, _, text, last in style.review_texts(raw):
         read = style.SQUARE.sub(style._blank, style.blank_quotes(style.blank_code(
             style.straighten(text))))
         m = None if names else rule.search(read)
         if names and style.lean_names(text):
             out.append(line0 + 1)
         elif m:
-            out.append(line0 + style.line_of(read, m.start()))
+            out.append(style.text_lines(read, line0, last)(m.start()))
     return out
 
 
@@ -248,11 +248,19 @@ short = "As Definition 8 says."
 hypotheses = ["one\\nDefinition 9"]
 """
 
+SAMPLE_TOML_MORE = """[statement]
+note = \"\"\"Note
 
-def lean_note_findings(src: str, rendered=()) -> list[str]:
+that one is \\
+  given.\"\"\"
+short = \"\"\"As Definition 8 says, "so\"\"\"\"\"
+"""
+
+
+def lean_note_findings(src: str, rendered=(), lines: bool = False) -> list:
     """The failures and reports of check_lean_notes on a Lean source, as a file of the
-    foundations, with `rendered` its rendered docstrings, (axiom, doc) each; the script's
-    own lists are left as they were."""
+    foundations, with `rendered` its rendered docstrings, (axiom, doc) each, or, with
+    `lines`, each failure as (rule, line); the script's own lists are left as they were."""
     saved = (list(style.failures), dict(style.reports))
     try:
         style.failures.clear()
@@ -264,6 +272,8 @@ def lean_note_findings(src: str, rendered=()) -> list[str]:
             docs.append(style.Rendered(name, *span, doc))
         style.check_lean_notes(style.ROOT / "Elements" / "Foundations" / "Sample.lean", src,
                                docs)
+        if lines:
+            return sorted((r, line) for r, _, line, _ in style.failures)
         return sorted([r for r, *_ in style.failures] + [r for r in style.reports])
     finally:
         style.failures[:] = saved[0]
@@ -306,14 +316,17 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     # A comment's quotation is no string; a multi-line string starts below its quotes;
     # an escaped line break in a one-line string reads as a space.
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_EDGES, [5, 6, 7]),
-    ("S7", lambda raw: [t for _, k, t in style.review_texts(raw) if k == "statement.hypotheses"],
-     SAMPLE_TOML_EDGES, ["one Definition 9"]),
+    ("S7", lambda raw: [t for _, k, t, _ in style.review_texts(raw)
+                        if k == "statement.hypotheses"], SAMPLE_TOML_EDGES, ["one\nDefinition 9"]),
+    # A line break after a backslash, and quotation marks before the closing three.
+    ("S4", lambda raw: note_lines(raw, style.HEDGE), SAMPLE_TOML_MORE, []),
+    ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_MORE, [6]),
     ("S7", lambda raw: style.review_texts(raw), "statement = 1\nfigure = [1]\n", []),
     ("S7", lambda raw: style.review_texts(raw, terms=True), "tag = 1\n", []),
     # The mishnah is asked as before: every name, with Elements alone.
     ("S12", lambda ts: s12_asks(ts, False),
      [style.NamedText(MISHNAH, "`direct_axioms`, `Audit.x`, `hX : T`", "E", held=True)],
-     (["Audit.x", "direct_axioms", "hX"], [], [], [])),
+     (["Audit.x", "direct_axioms", "hX"], [], [], ["direct_axioms"])),
     ("S12", lambda ts: s12_asks(ts, False),
      [style.NamedText(CATALOGUE, "`direct_axioms`, `Audit.x`, `Prop5.base`", "E")],
      ([], ["Prop5.base"], ["Audit.x"], ["direct_axioms"])),
@@ -328,10 +341,18 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S6", lambda src: lean_note_findings(src, [("a", "A tacit assumption.")]),
      "/-- A tacit\n\nassumption. -/\naxiom a : True\n", ["S6"]),
     ("D10", lean_note_findings, "/-- A tacit\nassumption. -/\naxiom a : True\n", ["D10"]),
+    ("D10", lambda src: lean_note_findings(src, [("a", "assumption here.")]),
+     "/- A tacit -/\n/-- assumption here. -/\naxiom a : True\n", ["D10"]),
+    ("D10", lambda src: lean_note_findings(src, [("a", "A point exists.")]),
+     "/- A tacit -/\n/-- A point exists. -/\naxiom a : True\n/- assumption -/\n", []),
+    ("S7", lambda src: lean_note_findings(src, [("r", "A point at the radius is on the circle "
+                                                     "(Definition 15).")], lines=True),
+     "namespace Elements.Tacit\n/-- A point at the radius\nis on the circle (Definition 15). -/"
+     "\naxiom r : True\n", [("S7", 3)]),
     ("D4", lambda t: style.lean_names(t, binders=False), "(`hBCE : Between B C E`)", []),
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_RECORD, [5, 15]),
     ("S12", lambda raw: note_lines(raw, None, names=True), SAMPLE_RECORD, [4, 12]),
-    ("S7", lambda raw: [k for _, k, _ in style.review_texts(raw)], SAMPLE_RECORD,
+    ("S7", lambda raw: [k for _, k, _, _ in style.review_texts(raw)], SAMPLE_RECORD,
      ["statement.hypotheses", "statement.note", "statement.short", "passage.note",
       "figure.case"]),
     ("S7", lambda raw: style.review_texts("not = [toml"), "", []),
@@ -349,7 +370,9 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S22", s22, "the copy `G E C'` of ABC", ["G E C'"]),
     ("S22", s22, "`∠ A B C`, `Prop5.base`, `Centre E ABCD`, `B ≠ C`, `hAB`", []),
     ("S22", s22, "`x` AB `y`", []),
-    ("S22", s22, "`AB,CD` and ``AB`CD`` and `A\nB`", ["AB,CD", "A\nB"]),
+    ("S22", s22, "`AB,CD` and ``AB`CD`` and `A\nB`", ["AB,CD"]),
+    ("S22", s22, "`AB\n# `CD`", ["CD"]),
+    ("S22", s22, "\\`X and `AB`", ["AB"]),
     ("S22", lambda t: s22(style.FENCE.sub(style._blank, t)), "```\n`AB`\n```\n`CD`",
      ["CD"]),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "overlaps.md", True),
