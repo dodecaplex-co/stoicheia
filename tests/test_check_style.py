@@ -417,6 +417,19 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S12", style.lean_names, "the edition at `https://example.org/x`", []),
     ("S12", style.lean_names, r"`not\` `Missing.name`", ["Missing.name"]),
     ("S12", style.lean_names, "`x\n2. y` `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, "`x\n01. y` `Missing.name`", []),
+    ("S12", style.lean_names, "`x\n1. \n` `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, "[x](https://example.test/`) visible `Missing.name`",
+     ["Missing.name"]),
+    ("S12", style.lean_names, "[x]: https://example.test/`\nvisible `Missing.name`",
+     ["Missing.name"]),
+    ("S12", style.lean_names, "<https://example.test/`> visible `Missing.name`",
+     ["Missing.name"]),
+    ("S12", style.lean_names, "``[x](url`)`` `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, "[x `](url`) visible `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, "`Missing.name'`", ["Missing.name'"]),
+    ("S12", style.lean_names, "`Missing'.name'`", ["Missing'.name'"]),
+    ("S12", style.lean_names, "'the `foo` 's", ["foo"]),
     ("S12", style.lean_names, "`Missing.name\n1. `", []),
     ("S12", style.lean_names, "2. `Missing.name\n3. `", []),
     ("S12", style.lean_names,
@@ -690,6 +703,8 @@ class Scopes(unittest.TestCase):
             ("The files `NOTICE` and `README`.", []),
             ("It passes `check_fidelity`.", ["check_fidelity"]),
             ("The declaration `README` is missing.", ["README"]),
+            ("The declaration `README.md` is missing.", ["README.md"]),
+            ("The declaration `grind` is missing.", ["grind"]),
             ("The declaration `references.bib`, the `NOTICE` theorem and the files "
              "`README`, `check_fidelity`.", ["NOTICE", "references.bib"]),
             ("The declarations `Elements` and `axiom`.", ["Elements", "axiom"]),
@@ -722,6 +737,21 @@ class Scopes(unittest.TestCase):
                 self.assertFalse(old)
                 self.assertFalse(unchecked)
                 self.assertEqual(sorted(n for g in new.values() for n in g), want)
+
+    def test_explicit_declaration_does_not_use_exemption(self):
+        """An explicit declaration use is checked rather than satisfying NOT_DECLARED."""
+        path = style.REPORTS_DIR / "sample.md"
+        named = style.NamedText(path, "The declaration `grind` is missing.",
+                                style.every_book_opens())
+        _, new, _, used = style.s12_plan([named], True, ({"grind"}, set()))
+        self.assertEqual(sorted(n for group in new.values() for n in group), ["grind"])
+        self.assertNotIn("grind", used)
+
+    def test_only_page_axioms_have_rendered_docstrings(self):
+        """Rendered-docstring scope follows the axioms shown on proposition pages."""
+        shown = {doc.name for docs in style.rendered_docstrings().values() for doc in docs}
+        self.assertIn("Tacit.add_assoc", shown)
+        self.assertNotIn("Tacit.exists_point_inside_circle", shown)
 
     def test_report_classification_keeps_mishnah_enforcement(self):
         """The report's syntax and namespace classification cannot excuse a mishnah name."""

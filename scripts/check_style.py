@@ -314,8 +314,6 @@ def _blank(m: re.Match) -> str:
 
 
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.S)
-# The "(…)" after a link's "]", one level of parentheses inside allowed.
-LINK_TARGET = re.compile(r"(?<=\])\((?:[^()\n]|\([^()\n]*\))*\)")
 PARAGRAPH_BREAK = re.compile(r"(\n[ \t]*\n)")
 QUOTATION = re.compile(r'"[^"]*"')
 # Square brackets that are not a link's text: Heath's references, [Def. 15].
@@ -325,10 +323,11 @@ SQUARE = re.compile(r"\[[^\[\]\n]*\](?![(\[])")
 def blank_code(text: str) -> str:
     """Fenced blocks, code spans and HTML comments blanked: what a reader reads as prose,
     quotations included."""
-    text = blank_html_comments(text)
-    text = blank_fences(text)
-    text = blank_ranges(text, ((span.start, span.end) for span in code_span_details(text)))
-    return LINK_TARGET.sub(_blank, text)
+    syntax = markdown_syntax(text)
+    ranges = (syntax.comments + syntax.destinations
+              + [(span.start, span.end) for span in syntax.spans]
+              + markdown_blocks(text).fences)
+    return blank_ranges(text, ranges)
 
 
 def blank_quotes(text: str) -> str:
@@ -696,11 +695,25 @@ def rendered_docstrings() -> dict[str, list[Rendered]]:
     and of any other axiom that is not a postulate or a definition (`render.axiom_groups`),
     as `render.load_axiom_docs` reads them, each found again in its file by
     `docstring_span`."""
+    facts = render.load_facts()
+    shown = set()
+    for book, count in heath.BOOKS.items():
+        for n in range(1, count + 1):
+            proposition = facts.get(f"{book}.{n}")
+            if not proposition or proposition["status"] == "sketched":
+                continue
+            entries = [proposition] + [
+                entry for entry in render.attached_entries(proposition, facts)
+                if entry["status"] != "sketched"
+            ]
+            for entry in entries:
+                _, _, tacit, other = render.axiom_groups(entry)
+                shown.update(tacit + other)
+
     found: dict[str, list[Rendered]] = defaultdict(list)
     sources: dict[str, str] = {}
     for name, (doc, path, line) in sorted(render.load_axiom_docs().items()):
-        _, _, tacit, other = render.axiom_groups({"axioms": [name]})
-        if not (tacit or other) or not path:
+        if name not in shown or not path:
             continue
         src = sources.setdefault(path, (ROOT / path).read_text(encoding="utf-8"))
         span = docstring_span(src, line, doc)
@@ -947,9 +960,12 @@ def markdown_blocks(text: str) -> MarkdownBlocks:
             body, source = base_body, base_source
             literal = fence is not None or comment is not None
             listed = LIST_LINE.match(body)
-            if (listed and listed.group("number") not in (None, "1")
-                    and container is not None
-                    and not (list_item and list_item[0] == quote)):
+            interrupts = (container is not None
+                          and not (list_item and list_item[0] == quote))
+            if (listed and interrupts
+                    and (not listed.group("body").strip()
+                         or (listed.group("number") is not None
+                             and int(listed.group("number")) != 1))):
                 listed = None
             if listed and not literal:
                 list_number += 1
@@ -1061,6 +1077,7 @@ def blank_fences(text: str) -> str:
 class MarkdownSyntax(NamedTuple):
     spans: list[CodeSpan]
     comments: list[tuple[int, int]]
+    destinations: list[tuple[int, int]]
 
 
 def offset_runs(offsets: list[int]) -> list[tuple[int, int]]:
@@ -1079,6 +1096,60 @@ def backslashes_before(text: str, at: int) -> int:
     return at - len(text[:at].rstrip("\\"))
 
 
+AUTOLINK = re.compile(
+    r"<(?:[A-Za-z][A-Za-z0-9+.-]{1,31}:[^<>\x00-\x20]*"
+    r"|[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
+    r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
+    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*)>"
+)
+REFERENCE_DESTINATION = re.compile(r"(?m)^ {0,3}\[(?:\\.|[^\]\n])+\]:[^\n]*")
+
+
+def inline_destination_end(text: str, start: int) -> int | None:
+    """The end of a balanced inline link target whose opening `(` is at `start`."""
+    depth = 0
+    for at in range(start, len(text)):
+        if text[at] == "\n" and text[at:at + 2] == "\n\n":
+            return None
+        if text[at] in "()" and backslashes_before(text, at) % 2 == 0:
+            depth += 1 if text[at] == "(" else -1
+            if depth == 0:
+                return at + 1
+    return None
+
+
+def matching_link_label(text: str, close: int) -> int | None:
+    """The unescaped `[` matched by the `]` at `close`, if there is one."""
+    depth = 0
+    for at in range(close - 1, -1, -1):
+        if text[at] == "\n" and at and text[at - 1] == "\n":
+            return False
+        if backslashes_before(text, at) % 2:
+            continue
+        if text[at] == "]":
+            depth += 1
+        elif text[at] == "[":
+            if depth == 0:
+                return at
+            depth -= 1
+    return None
+
+
+def link_destination_ranges(text: str) -> list[tuple[int, int, int]]:
+    """Link destinations and their label starts in one inline block."""
+    found = [(m.start(), m.end(), m.start()) for m in REFERENCE_DESTINATION.finditer(text)]
+    found += [(m.start(), m.end(), m.start()) for m in AUTOLINK.finditer(text)]
+    for match in re.finditer(r"\]\(", text):
+        close = match.start()
+        label = matching_link_label(text, close)
+        if backslashes_before(text, close) % 2 or label is None:
+            continue
+        end = inline_destination_end(text, close + 1)
+        if end is not None:
+            found.append((close, end, label))
+    return sorted(found)
+
+
 def markdown_syntax(text: str) -> MarkdownSyntax:
     """The CommonMark code spans and HTML comments of a Markdown text, with source offsets.
     Comments are the container-bounded comment blocks and the closed inline comments. In
@@ -1088,21 +1159,27 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
     parsed = markdown_blocks(text)
     spans: list[CodeSpan] = []
     comments = list(parsed.comments)
+    destinations = []
     for block in parsed.inline:
         ticks = [(m.start(), m.end()) for m in BACKTICKS.finditer(block.text)]
         openers = [m.start() for m in re.finditer("<!--", block.text)
                    if backslashes_before(block.text, m.start()) % 2 == 0]
+        links = link_destination_ranges(block.text)
         i, pos = 0, 0
         while True:
             while i < len(ticks) and ticks[i][0] < pos:
                 i += 1
             opener = next((at for at in openers if at >= pos), len(block.text))
-            if i < len(ticks) and ticks[i][0] < opener:
+            link = next(((a, b, label) for a, b, label in links if a >= pos),
+                        (len(block.text), len(block.text), len(block.text)))
+            if i < len(ticks) and ticks[i][0] < min(opener, link[0]):
                 raw_start, opened = ticks[i]
                 start = raw_start + backslashes_before(block.text, raw_start) % 2
                 width = opened - start
+                before = link[0] if link[2] <= raw_start < link[0] else len(block.text)
                 close = next((j for j in range(i + 1, len(ticks))
-                              if ticks[j][1] - ticks[j][0] == width), None) if width else None
+                              if ticks[j][0] < before
+                              and ticks[j][1] - ticks[j][0] == width), None) if width else None
                 if close is None:
                     i += 1
                     continue
@@ -1115,6 +1192,10 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
                 spans.append(CodeSpan(source[0], source[-1] + 1, content, source))
                 pos = end
                 continue
+            if link[0] < opener:
+                destinations.extend(offset_runs(block.offsets[link[0]:link[1]]))
+                pos = link[1]
+                continue
             if opener == len(block.text):
                 break
             close = block.text.find("-->", opener + 4)
@@ -1123,7 +1204,7 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
                 continue
             comments.extend(offset_runs(block.offsets[opener:close + 3]))
             pos = close + 3
-    return MarkdownSyntax(spans, comments)
+    return MarkdownSyntax(spans, comments, destinations)
 
 
 def code_span_details(text: str) -> list[CodeSpan]:
@@ -1412,7 +1493,8 @@ def tex_findings(text: str) -> list[tuple[int, int, str]]:
     return sorted(found)
 
 
-IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_.₀-₉]*")
+IDENT_PART = r"[A-Za-z_][A-Za-z0-9_₀-₉]*(?:'[A-Za-z0-9_₀-₉']*)*"
+IDENT = re.compile(rf"{IDENT_PART}(?:\.{IDENT_PART})*\.?")
 FILE_NAME = re.compile(r".*\.(?:lean|json|md|svg|py|toml|txt|lock)$")
 
 
@@ -1436,7 +1518,7 @@ def lean_name_occurrences(text: str, binders: bool = True, *, all_uses: bool = F
         inner = span.content.strip()
         binder = BINDER.match(inner) if binders else None
         name = inner if IDENT.fullmatch(inner) else binder.group(1) if binder else None
-        if (name and not FILE_NAME.fullmatch(name)
+        if (name and (all_uses or not FILE_NAME.fullmatch(name))
                 and (all_uses or name not in {use.name for use in names})):
             names.append(LeanName(name, span.start, binder is not None, span))
     return names
@@ -1557,6 +1639,13 @@ FILE_WORDS = r"(?:file|script|page|document)"
 CONTEXT_WORD = r"{}s?\s+(?:`+[^`\n]+`+\s*(?:/|,|and|or)\s*)*"
 
 
+def report_declaration_context(t: NamedText, occurrence: LeanName) -> bool:
+    """Whether report prose explicitly identifies an occurrence as a declaration."""
+    before, after = t.text[:occurrence.at], t.text[occurrence.span.end:]
+    return bool(re.search(rf'\b{CONTEXT_WORD.format(DECLARATION_WORDS)}$', before, re.I)
+                or re.match(rf'\s*{DECLARATION_WORDS}s?\b', after, re.I))
+
+
 def report_non_declaration(t: NamedText, occurrence: LeanName,
                            vocabulary: tuple[set[str], set[str]]) -> str | None:
     """Classify report tokens by their source or explicit prose context, never by a list
@@ -1567,8 +1656,7 @@ def report_non_declaration(t: NamedText, occurrence: LeanName,
     if binder and not re.fullmatch(re.escape(name) + r":\d+(?:-\d+)?", span.content.strip()):
         return None
     before, after = t.text[:at], t.text[span.end:]
-    if (re.search(rf'\b{CONTEXT_WORD.format(DECLARATION_WORDS)}$', before, re.I)
-            or re.match(rf'\s*{DECLARATION_WORDS}s?\b', after, re.I)):
+    if report_declaration_context(t, occurrence):
         return None
     # Markdown and Python files are often named without their extension in reports, so
     # a name is read as a file only by its shape (a numeric location, an extension) or
@@ -1639,11 +1727,12 @@ def s12_plan(texts: list[NamedText], audit_built: bool,
             if name in seen:
                 continue
             use = NameUse(t, occurrence.at, occurrence.binder)
-            if name in NOT_DECLARED:
+            declared = report_text and report_declaration_context(t, occurrence)
+            if name in NOT_DECLARED and not declared:
                 used.add(name)
             if t.held:
                 old[t.opens][name].append(use)
-            elif name in NOT_DECLARED:
+            elif name in NOT_DECLARED and not declared:
                 continue
             elif report_text and report_non_declaration(t, occurrence, vocabulary):
                 continue
