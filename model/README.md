@@ -12,8 +12,12 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and the first
 laws, translated by hand for now and proved in the plane: the four circle-intersection
-rules, the first of the hard groups, and the eight magnitude laws, which are easy in the
-plane but test the translation where it is most delicate. That is 12 of the 87. The rest
+rules, the first of the hard groups; the eight magnitude laws, which are easy in the
+plane but test the translation where it is most delicate; and the 19 circle rules:
+Postulate 3, Definition 15, the generalities of a centre and of the inside of a circle,
+System E's Circle 1 to 4, and the finite avoidance rules for the plane, the two sides of a
+straight line, the inside and outside of a circle and its circumference. That is 31 of the
+87. The rest
 of the laws, and the generator that will translate them from the library's own
 declarations, are to come. Until every locked law is proved here, the evidence that the
 laws have a model remains MODEL.md's hand arguments and numerical tests, and this package
@@ -44,8 +48,13 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
+| [Model/Laws/circles.lean](Model/Laws/circles.lean) | the 19 circle rules, translated **by hand** | `Model.Hand` |
+| [Model/Euclidean/CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | Postulate 3, Definition 15 and the generalities of a centre and of the inside of a circle, proved in the plane | Mathlib |
+| [Model/Euclidean/CircleRules.lean](Model/Euclidean/CircleRules.lean) | System E's Circle 1 to 4 proved in the plane, and `CirclesMeet α α` | Mathlib |
+| [Model/Euclidean/Avoidance.lean](Model/Euclidean/Avoidance.lean) | the finite avoidance rules for the open regions and the circumference, proved in the plane | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane rests on | every module of `Model` |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration | `Elements.Foundations`, `Model.Hand` |
+| [Check/Circles.lean](Check/Circles.lean) | the same for the circle rules of `Model/Laws/circles.lean` | `Elements.Foundations`, `Model.Laws.circles` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib.
@@ -135,8 +144,8 @@ review records, not for this package.
 ## How the laws will be generated
 
 Today the laws proved here are translated by hand, in
-[Model/Hand.lean](Model/Hand.lean), each with the lock's printed statement above it. The
-next step replaces that file with one generated from the library's elaborated
+[Model/Hand.lean](Model/Hand.lean) and [Model/Laws/circles.lean](Model/Laws/circles.lean),
+each with the lock's printed statement above it. The next step replaces those files with one generated from the library's elaborated
 declarations, not from their printed text.
 
 1. **Read the declarations, not the text.** A Lean program in `Check/` imports
@@ -207,7 +216,8 @@ the original means. Three checks do that.
   proposition, up to unfolding definitions; a dropped guard, two swapped arguments or a
   change in the order of the binders fails it, and the build with it. (Both were tried:
   Intersection 4 in System E's printed form, with "on or inside", and Intersection 5 with
-  its two points exchanged.) Today this covers the 12 laws translated by hand and 11
+  its two points exchanged.) Today this covers the 31 laws translated by hand (19 of them
+in [Check/Circles.lean](Check/Circles.lean)) and 11
   defined words: the eight behind the magnitudes (these laws reach `Magnitude` and the
   instances for `+`, `0` and `<`; `Length`, `Angle`, `Area` and `≤` are checked ahead of
   the laws that use them) and the three the circle laws reach. The generator will write
@@ -298,11 +308,13 @@ come before the easy laws are shared out:
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
 | Superposition | an isometry, with a reflection where the side needs one; and the soundness of whichever restricted rule is adopted | to do |
 | Areas | `area_congruent`, `area_add_of_between`, `between_of_area_add`, with collinear and repeated corners | to do |
-| Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | to do |
+| Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | the open regions and the circumference proved here (`exists_point`, `exists_point_same_side`, `exists_point_opposite_side`, `exists_point_inside_circle`, `exists_point_outside_circle`, `exists_point_on_circle`), each by an injective family of points indexed by ℕ; the lines (`Postulate2`, `exists_point_on_line`, `exists_point_on_line_off_line`, `exists_point_between`) to do |
 
-`CirclesMeet α α` is true, since a circle has two distinct points; the side laws are proved
-for that case too, where both centres are one point and the line through them is any line
-through it.
+`CirclesMeet α α` is true, since a circle has two distinct points (`circlesMeet_self`); the
+side laws are proved for that case too, where both centres are one point and the line
+through them is any line through it. Circle 4 (`not_same_side_of_circles_meet`) asks that
+the circles differ, and needs to: for a circle and itself, two common points can lie on
+one side of a line through the centre.
 
 ## The CI job
 
@@ -346,4 +358,6 @@ pitfalls, the translation checks and the order of the hard laws. To Jeremy Aviga
 Dean and John Mumma, whose System E gives most of the laws, and to LeanEuclid (Logan
 Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si), whose
 corrected Intersection 4 is the form proved here. And to Mathlib's authors and
-maintainers, on whose plane every proof here stands.
+maintainers, on whose plane every proof here stands: among them, for the circle rules,
+Yaël Dillies and Yury Kudryashov, whose strict convexity gives Circle 1 to 3, and Johannes
+Hölzl, Mario Carneiro and Kyle Miller, whose finite sets give the avoidance rules.
