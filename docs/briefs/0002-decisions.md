@@ -1353,17 +1353,21 @@ findings:
   [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py),
   [`tests/model/structured.py`](../../tests/model/structured.py) and
   [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
-  laws, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only a
-  description; `model/Check/` compares the eight hand translations directly with the
+  laws, [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records that independent
+  contract, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only
+  a description; `model/Check/` compares the eight hand translations directly with the
   Elements declarations, so the comparisons hold whether those are axioms or theorems.
-- **One certificate pin dropped, pending the owner's word.** The retirement makes
+- **One certificate pin dropped, with the owner's approval.** The retirement makes
   `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
   in [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json),
-  that III.1 Por.'s assumptions include it, must go first, as the pin dropped for #60 did.
-  Its count stays, so deleting that dependency still fails, but a substitution that keeps
-  the count would no longer be caught. This is a relaxation, in a commit of its own, and it
-  lands only if the owner approves this pin specifically; the retirement then adds stronger
-  pins, that III.1, III.1 Por., III.2 and II.14 rest on none of the eight.
+  that III.1 Por.'s assumptions include it, had to go first, as the pin dropped for #60 did.
+  On 19 October 2026 the owner approved this first step of a two-step pin flip: commit
+  `5d200cf` removes the `includes: ["Tacit.centre_unique"]` pin while retaining its count.
+  Deleting that dependency still fails, but a substitution that keeps the count would no
+  longer be caught. C6's full `equals` pin remains pending; the retirement then adds stronger
+  pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight. This approval is for
+  the first pin change alone; the retirement itself remains pending the evidence and the
+  owner's separate decision.
 - **Eight axioms retired, 87 to 79.** The owner asked,
   "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
   principle on 19 October 2026, pending the evidence; this lands only when the owner has
