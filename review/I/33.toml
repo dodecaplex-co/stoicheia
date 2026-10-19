@@ -7,8 +7,15 @@ fingerprint = "sha256:baa852b497ce631e"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and BC has fallen upon them"
+kind = "helper"
+helper = "AreParallel.oppositeSidesOf"
+note = "Euclid treats ABC and BCD as alternate angles; `AreParallel.oppositeSidesOf` puts A and D on opposite sides of BC. It uses the given parallels and B and D lying on one side of AC, the statement's meaning of joining in the same directions."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "9da1b6d"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:fec349a6407fd3c6"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
