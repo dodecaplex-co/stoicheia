@@ -13,6 +13,6 @@ note = "The circle comes with a centre (`∃ F, Centre F ABCD`), which Euclid ta
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "66e9871"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:bc1d1c7450d6237e"
+lean = "sha256:9d325961baa79035"

@@ -243,10 +243,13 @@ worth naming. The first mate's report has a note on every statement.
   its own centre.
 - **III.7, III.8** say "greatest", "least", "the nearer is greater" and "only two equal"
   of every straight line from the point, with Euclid's meaning of "nearer": the less angle
-  at the point with the straight line through the centre, on one side of it. Heath
-  discusses the other readings and prefers Euclid's (vol. 2, pp. 15–16). III.8 says which
-  lines fall on the concave and which on the convex circumference by where the straight
-  line from `D` meets the circle again.
+  at the point with the ray through the centre, unsigned. Heath discusses the other
+  readings and prefers Euclid's (vol. 2, pp. 15–16). `Prop7` and `Prop8` compare two
+  straight lines on one side of the diameter, as Euclid's figures do; their companions,
+  `Prop7.general` and `Prop8.general`, compare any two, on either side
+  ([brief 0007](0007-stage-4b.md)), III.8's within each class. III.8 says which lines fall
+  on the concave and which on the convex circumference by where the straight line from `D`
+  meets the circle again.
 - **III.9** leaves out Euclid's "within". His proof draws `ED` and `FD` through from the
   middle points `E`, `F` of `AB`, `BC`, which are within the circle, and never uses that
   `D` is; and III.25 cites III.9 for a point not yet known to be within, the centre found
@@ -349,22 +352,23 @@ worth naming. The first mate's report has a note on every statement.
 The review records in `review/III/` are the authority, proposition by proposition, and
 each page shows its own in the line under the enunciation and the table under "In Lean".
 This table is generated from them as they stand on 17 October 2026, with III.15 as it
-stands on 18 October (the centre given by hypothesis, `centre-given`, is left out, being
-nearly everywhere):
+stands on 18 October, and III.7, III.8 and III.17 as stage 4b of
+[brief 0007](0007-stage-4b.md) leaves them (the centre given by hypothesis, `centre-given`,
+is left out, being nearly everywhere):
 
 | Proposition | Statement | Argument | Overlap | Tags | Planned |
 |---|---|---|---|---|---|
 | [III.2](../../book/III/02.md) | whole | Euclid's | `inside_of_between` |  | kept, and catalogued |
 | [III.5](../../book/III/05.md) | whole | one step changed | `circle_eq` |  | kept, and catalogued |
 | [III.6](../../book/III/06.md) | whole | one step changed | `circle_eq`, `centre_inside` |  | kept, and catalogued |
-| [III.7](../../book/III/07.md) | restricted: compared on one side of AD only | Euclid's |  |  |  |
-| [III.8](../../book/III/08.md) | restricted: compared on one side of DA only | one step changed |  |  |  |
+| [III.7](../../book/III/07.md) | whole | Euclid's |  |  | done in stage 4b: compared on either side of AD (`Prop7.general`) |
+| [III.8](../../book/III/08.md) | whole | one step changed |  |  | done in stage 4b: compared on either side of DA, within each class (`Prop8.general`) |
 | [III.9](../../book/III/09.md) | whole | Euclid's |  | `hypothesis-dropped` |  |
 | [III.10](../../book/III/10.md) | whole | Euclid's |  | `hypothesis-dropped` |  |
 | [III.14](../../book/III/14.md) | restricted: straight lines not through the centre | Euclid's |  | `diameters-excluded` | stage 4: diameters, at distance zero |
 | [III.15](../../book/III/15.md) | restricted: the diameter's bound only beside a more remote straight line | Euclid's |  |  | stage 4: both clauses for every straight line |
 | [III.16](../../book/III/16.md) | in part: the angle clauses stay in Euclid's words | Euclid's |  | `mixed-angles-omitted` | kept: a deliberate limitation |
-| [III.17](../../book/III/17.md) | restricted: a point outside the circle | Euclid's |  |  |  |
+| [III.17](../../book/III/17.md) | whole | Euclid's |  |  | done in stage 4b: from any point not within the circle (`Prop17.general`) |
 | [III.21](../../book/III/21.md) | whole | one step changed |  |  |  |
 | [III.23](../../book/III/23.md) | whole | Euclid's |  | `segment-with-circle` |  |
 | [III.24](../../book/III/24.md) | in part: equal circles and measures; the segments stay in Euclid's words | different |  | `segment-with-circle`, `angle-measure`, `redundant-hypothesis` | stage 3: congruent segments by placement, the radius proof kept as an alternative |

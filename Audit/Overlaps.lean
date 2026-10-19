@@ -16,7 +16,8 @@ measure of circumferences leaves idle, the catalogue's near misses of representa
 Each theorem's type is the proposition's own (`type_of% @Elements.BookIII.Prop2`), so a
 change to a statement shows up here too. At the end, `#guard_msgs` pins the axioms Lean
 reports for each theorem: the rules named in the catalogue, and nothing else. The last
-theorem runs the other way: it proves a rule from a proposition.
+theorems run the other way: one proves a rule from a proposition, and two prove Circle 2
+and Circle 3, each from the other.
 
 Nothing imports this file, and it is not part of the default build. `lake build Audit`
 checks it. If a statement or a rule changes so that one of these proofs fails, that is
@@ -160,10 +161,20 @@ theorem I_23 : type_of% @Elements.BookI.Prop23 := by
 /-- **III.2 from Circle 2.** Between two points on or within a circle, every point is
 within it (`inside_of_between`, Circle 2). With both points on the circle, that is III.2.
 This is Astra's proof, from the outside review. Our III.2 follows Euclid, by I.5, I.16
-and I.19, and never calls the rule; but III.1, which finds its centre, does, to put the
-middle point of a straight line in the circle within it. -/
+and I.19, and rests on neither this rule nor Circle 3: III.1, which finds its centre, puts
+the middle point of a straight line in the circle within it by III.2's own argument
+(`Prop1.within`). -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
   fun _ hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
+
+/-- **III.2 from Circle 3.** A straight line that has left a circle does not come back
+(`outside_of_between`, Circle 3): with one point on or within the circle and a second
+point not within it, any point beyond the second is outside. It is Circle 2 turned round.
+Were a point between two points of the circle not within it, the second point of the
+circle would be outside the circle, and so not on it. -/
+theorem III_2_outside : type_of% @Elements.BookIII.Prop2 :=
+  fun _ hA hB _ hAEB => Classical.byContradiction fun hE =>
+    (outside_of_between (Or.inr hA) hE hAEB).2 hB
 
 /-- **III.5 from Diagram-segment 2.** A circle is fixed by its centre and radius
 (`circle_eq`, Diagram-segment 2). Two circles about one centre through one point are
@@ -264,8 +275,8 @@ theorem III_24_measure {A B C D E F : Point} {AEB CFD : Circle}
     (hD : OnCircle D CFD) (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E)
     (hF_CD : ¬ Collinear C D F) (hsim : ∠ A E B = ∠ C F D) :
     circumference AEB A E B = circumference CFD C F D := by
-  obtain ⟨X, hX, hXE⟩ := exists_onCircle_oppositeSidesOf hA hB hE_AB
-  obtain ⟨Y, hY, hYF⟩ := exists_onCircle_oppositeSidesOf hC hD hF_CD
+  obtain ⟨X, hX, hXE⟩ := BookIII.Prop2.oppositeSide hAEB hA hB hE_AB
+  obtain ⟨Y, hY, hYF⟩ := BookIII.Prop2.oppositeSide hCFD hC hD hF_CD
   have w₁ := BookIII.Circumference.whole hAEB hA hB hXE
   have w₂ := BookIII.Circumference.whole hCFD hC hD hYF
   rw [BookIII.Circumference.eq hAEB hE hA hB hXE.symm] at w₁
@@ -294,6 +305,21 @@ theorem adjacent_eq_of_right : type_of% @Elements.Tacit.adjacent_eq_of_right := 
   rw [hright, add_comm ∟] at h13
   rw [hright]
   exact (CommonNotion3 h13 rfl).symm
+
+/-! ## Circle 2 and Circle 3, one rule turned round -/
+
+/-- **Circle 2 from Circle 3.** Were a point between two points on or within a circle not
+within it, the straight line would have left the circle there, and the second point would
+be outside it (`outside_of_between`, Circle 3), neither within the circle nor on it. -/
+theorem inside_of_between : type_of% @Elements.Tacit.inside_of_between :=
+  fun hA hB h => Classical.byContradiction fun hC =>
+    hB.elim (outside_of_between hA hC h).1 (outside_of_between hA hC h).2
+
+/-- **Circle 3 from Circle 2.** Were the point beyond within the circle or on it, the point
+between would be within the circle (`inside_of_between`, Circle 2), which it is not. -/
+theorem outside_of_between : type_of% @Elements.Tacit.outside_of_between :=
+  fun hA hC h => ⟨fun hB => hC (Elements.Tacit.inside_of_between hA (Or.inl hB) h),
+    fun hB => hC (Elements.Tacit.inside_of_between hA (Or.inr hB) h)⟩
 
 end Audit
 
@@ -385,6 +411,12 @@ info: 'Audit.I_23' depends on axioms: [propext,
 #guard_msgs in
 #print axioms Audit.III_2
 
+/--
+info: 'Audit.III_2_outside' depends on axioms: [propext, Classical.choice, Quot.sound, Elements.Tacit.outside_of_between]
+-/
+#guard_msgs in
+#print axioms Audit.III_2_outside
+
 /-- info: 'Audit.III_5' depends on axioms: [Classical.choice, Elements.Tacit.circle_eq] -/
 #guard_msgs in
 #print axioms Audit.III_5
@@ -418,6 +450,7 @@ info: 'Audit.III_26_any' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
+ Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -437,8 +470,8 @@ info: 'Audit.III_26_any' depends on axioms: [propext,
  Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_between,
  Elements.Tacit.exists_point_opposite_side,
+ Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_between,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_lt_of_inside,
@@ -488,6 +521,7 @@ info: 'Audit.III_27_any' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
+ Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -507,8 +541,8 @@ info: 'Audit.III_27_any' depends on axioms: [propext,
  Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_between,
  Elements.Tacit.exists_point_opposite_side,
+ Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_between,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_lt_of_inside,
@@ -558,6 +592,7 @@ info: 'Audit.III_24_measure' depends on axioms: [propext,
  Elements.Tacit.add_comm,
  Elements.Tacit.add_lt_add_right,
  Elements.Tacit.add_zero,
+ Elements.Tacit.adjacent_eq_of_right,
  Elements.Tacit.angle_add_of_inside,
  Elements.Tacit.angle_eq_of_same_rays,
  Elements.Tacit.angle_symm,
@@ -577,8 +612,8 @@ info: 'Audit.III_24_measure' depends on axioms: [propext,
  Elements.Tacit.exists_point,
  Elements.Tacit.exists_point_between,
  Elements.Tacit.exists_point_opposite_side,
+ Elements.Tacit.exists_point_same_side,
  Elements.Tacit.inside_not_on,
- Elements.Tacit.inside_of_between,
  Elements.Tacit.inside_of_len_lt,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_lt_of_inside,
@@ -676,3 +711,13 @@ info: 'Audit.adjacent_eq_of_right' depends on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms Audit.adjacent_eq_of_right
+
+/--
+info: 'Audit.inside_of_between' depends on axioms: [propext, Classical.choice, Quot.sound, Elements.Tacit.outside_of_between]
+-/
+#guard_msgs in
+#print axioms Audit.inside_of_between
+
+/-- info: 'Audit.outside_of_between' depends on axioms: [Elements.Tacit.inside_of_between] -/
+#guard_msgs in
+#print axioms Audit.outside_of_between

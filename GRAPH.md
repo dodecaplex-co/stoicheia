@@ -755,7 +755,7 @@ graph TD
 
 ### From the Lean
 
-177 arrows: 85 also among Heath's references and 92 only in the Lean. The graph draws the 63 arrows between propositions of Book III, 38 solid and 25 dashed; the table under it lists the other 114, to propositions of earlier books.
+200 arrows: 85 also among Heath's references and 115 only in the Lean. The graph draws the 83 arrows between propositions of Book III, 38 solid and 45 dashed; the table under it lists the other 117, to propositions of earlier books.
 
 ```mermaid
 graph TD
@@ -799,54 +799,74 @@ graph TD
   III1 --> III2
   III1 --> III4
   III3 --> III4
+  III2 -.-> III7
   III1 --> III8
+  III2 -.-> III8
   III1 --> III9
+  III2 -.-> III9
   III1 --> III10
+  III2 -.-> III10
   III5 --> III10
+  III2 -.-> III11
   III6 -.-> III11
   III6 -.-> III12
   III2 --> III13
   III11 --> III13
   III1 --> III14
   III3 --> III14
+  III2 -.-> III15
   III14 --> III15
   III1 --> III17
   III16 --> III17
   III18 --> III19
+  III2 -.-> III21
   III20 --> III21
+  III2 -.-> III22
   III21 --> III22
+  III2 -.-> III23
   III10 -.-> III23
   III21 -.-> III23
+  III2 -.-> III24
   III20 -.-> III24
   III21 -.-> III24
   III22 -.-> III24
+  III2 -.-> III25
   III9 --> III25
+  III2 -.-> III26
   III20 -.-> III26
   III21 -.-> III26
   III22 -.-> III26
   III24 --> III26
+  III2 -.-> III27
   III20 --> III27
   III21 -.-> III27
   III26 --> III27
+  III2 -.-> III28
   III20 -.-> III28
   III21 -.-> III28
   III22 -.-> III28
   III26 --> III28
+  III2 -.-> III29
   III20 -.-> III29
   III21 -.-> III29
   III22 -.-> III29
   III27 --> III29
+  III2 -.-> III30
   III21 -.-> III30
   III22 -.-> III30
   III28 --> III30
+  III2 -.-> III31
   III22 --> III31
+  III2 -.-> III32
   III19 --> III32
   III21 -.-> III32
   III22 --> III32
   III31 --> III32
+  III2 -.-> III33
   III16 --> III33
   III31 --> III33
   III32 --> III33
+  III2 -.-> III34
   III16 -.-> III34
   III32 --> III34
   III1 -.-> III35
@@ -868,7 +888,7 @@ graph TD
 
 | Proposition | Lean cites | Of these, among Heath's references |
 |---|---|---|
-| [III.1](book/III/01.md) | I.8, I.10, I.11 | I.8 |
+| [III.1](book/III/01.md) | I.5, I.8, I.10, I.11, I.16, I.19 | I.8 |
 | [III.2](book/III/02.md) | I.5, I.16, I.19 | I.5, I.16, I.19 |
 | [III.3](book/III/03.md) | I.5, I.8, I.26 | I.5, I.8, I.26 |
 | [III.7](book/III/07.md) | I.4, I.20, I.23, I.24 | I.4, I.20, I.23, I.24 |

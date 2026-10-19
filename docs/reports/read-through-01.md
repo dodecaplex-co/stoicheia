@@ -1,6 +1,6 @@
 # Read-through 01: Books I to III
 
-*Correction, 18 October 2026: this report's conclusions that the axioms are consistent and that no other rule brings in Postulate 5 rest on numerical tests, which support them but do not prove them ([MODEL.md](../../tests/model/MODEL.md#what-this-shows-and-what-it-does-not)); a proof checked by Lean is being built in `model/` (#73).*
+*Correction, 18 October 2026: this report's conclusions that the axioms are consistent and that no other rule brings in Postulate 5 rest on numerical tests, which support them but do not prove them ([MODEL.md](../../tests/model/MODEL.md#what-this-shows-and-what-it-does-not)). The consistency is now proved in `model/` (#73), where Lean checks that the ordinary plane satisfies every axiom, relative to Lean's logic and Mathlib's construction of the real numbers; that no other rule brings in Postulate 5 still rests on the numerical tests.*
 
 *16 October 2026, at main `5541197`. Books I and II are released; Book III is stated.
 What has been done about it since is at the end, under "What was done".*
@@ -167,7 +167,7 @@ Postulates, definitions and tacit rules include everything the cited proposition
 - superposition appears on every page after I.8;
 - I.29 shows 51 rules where its own steps use 16.
 
-CERTIFICATE.md explains the Common Notions; no proposition page does. **Fix:** clearer labels and a key under each table. Splitting the tacit list is for Jack.
+CERTIFICATE.md explains the Common Notions; no proposition page does. **Fix:** clearer labels and a key under each table. Splitting the tacit list is for the owner.
 
 ### 4. Credits and provenance
 
@@ -196,7 +196,7 @@ A later check found a third, the same kind of slip. Eight Book II mishnahs say t
 - "any straight-sided figure" for II.14, which is proved for two triangles;
 - "every proposition stated as Euclid states it", though II.1 is stated for two points of section.
 
-**book-I's** "Twenty-nine" reads like an off-by-one error until the reader is told the 29th is I.31. Drafts are in the discussion list, for Jack's OK.
+**book-I's** "Twenty-nine" reads like an off-by-one error until the reader is told the 29th is I.31. Drafts are in the discussion list, for the owner's OK.
 
 ### 7. The README claims a little more than is true
 
@@ -257,7 +257,7 @@ Books I and II "render byte for byte as tagged" (0002, 0004), and the book-II re
 - the glosses;
 - the table labels.
 
-We suggest one deliberate reader's-edition pass on main, recorded in 0002, with optional tags `book-I.1` and `book-II.1`. The original tags would keep the text as released. Until Jack decides, the fixes marked "after decision 1" wait.
+We suggest one deliberate reader's-edition pass on main, recorded in 0002, with optional tags `book-I.1` and `book-II.1`. The original tags would keep the text as released. Until the owner decides, the fixes marked "after decision 1" wait.
 
 ## Fixes a bosun can make now
 
@@ -336,7 +336,7 @@ None of these touches a released page, a statement or an axiom.
    - "Def. I.15".
 6. **Glosses:** what each page holds, on the Book I index; System E in I.1; "diameter"; plain words for "associative" and "transitive"; "straight line" in the tacit docstrings.
 
-## For Jack to decide
+## For the owner to decide
 
 1. Decision 1, above.
 2. **The release notes:** approve the drafted book-II "How it was made" and thanks, the II.14 and II.1 scope, and book-I's "twenty-nine" and "used directly".
@@ -357,7 +357,7 @@ None of these touches a released page, a statement or an axiom.
 10. **Book I** titles in Euclid's words, and the front page's Defs. 17 and 18.
 11. **Ground files:** one naming and namespace scheme.
 12. **When to draw Book III's lettered figures**, and when to write `gaps-book-II.md`.
-13. **Only Jack can confirm** the ChatGPT sentence, and whether LeanEuclid's area rules were adapted, which NOTICE would then name.
+13. **Only the owner can confirm** the ChatGPT sentence, and whether LeanEuclid's area rules were adapted, which NOTICE would then name.
 
 ## What holds
 

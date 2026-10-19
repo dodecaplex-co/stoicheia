@@ -4,6 +4,7 @@ import Elements.BookIII.Circumferences
 import Elements.BookI.Helpers
 import Elements.BookI.Prop26
 import Elements.BookI.Prop32
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop20
 import Elements.BookIII.Prop22
 
@@ -34,7 +35,7 @@ theorem Prop24.angle_type {X Y Z M : Point} {α : Circle} (hM : Centre M α) (hX
     (hY : OnCircle Y α) (hZ : OnCircle Z α) (hXYZ : Triangle X Y Z) :
     (SameSideOf M Z X Y ∧ ∠ X Z Y < ∟) ∨ (Between X M Y ∧ ∠ X Z Y = ∟) ∨
       (OppositeSidesOf M Z X Y ∧ ∟ < ∠ X Z Y) := by
-  obtain ⟨W, hW, hWZ⟩ := exists_onCircle_oppositeSidesOf hX hY hXYZ
+  obtain ⟨W, hW, hWZ⟩ := Prop2.oppositeSide ⟨M, hM⟩ hX hY hXYZ
   have hm : circumference α X W Y = ∠ X Z Y + ∠ X Z Y := Circumference.eq ⟨M, hM⟩ hZ hX hY hWZ.symm
   obtain ⟨L, hX_L, hY_L⟩ := Postulate1 X Y hXYZ.ne₁₂
   by_cases hM_L : OnLine M L
@@ -89,8 +90,8 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
   obtain ⟨N, hN⟩ := hCFD
   have hABE : Triangle A B E := hE_AB
   have hCDF : Triangle C D F := hF_CD
-  obtain ⟨X, hX, hXE⟩ := exists_onCircle_oppositeSidesOf hA hB hABE
-  obtain ⟨Y, hY, hYF⟩ := exists_onCircle_oppositeSidesOf hC hD hCDF
+  obtain ⟨X, hX, hXE⟩ := Prop2.oppositeSide ⟨M, hM⟩ hA hB hABE
+  obtain ⟨Y, hY, hYF⟩ := Prop2.oppositeSide ⟨N, hN⟩ hC hD hCDF
   -- I say that the segment AEB is equal to the segment CFD.
   -- For, if the segment AEB be applied to CFD, and if the point A be placed on C and the
   -- straight line AB on CD,

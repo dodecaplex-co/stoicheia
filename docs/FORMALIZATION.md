@@ -22,8 +22,8 @@ code.
 
 **No guide grants authority.** This page, STYLE, WORKFLOW and every other guide describe
 the standard. None of them grants authority to change the foundations, weaken a check or
-publish. Those decisions belong to the project's owner, Jack Challis, working with the
-coordinator of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
+publish. Those decisions belong to the repository's owner, working with the coordinator
+of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
 [0002-decisions.md](briefs/0002-decisions.md):
 
 - **The foundations:** everything in `Elements/Foundations/` (the postulates, Definition
@@ -136,6 +136,55 @@ entry ("I.40 general"), which `Certificate/Facts.lean` checks; it is named in th
 record's `companions`; and it is shown on the page with its own certificate. Each
 companion is approved as a statement with `sorry` before anyone proves it.
 
+### Names, and how they change
+
+The library is used as well as read ([README](../README.md#use-it), "Use it"), so its
+names are an interface, and they change only in the open.
+
+- **How names are made.** A proposition is `Elements.Book<book>.Prop<n>`, declared in its
+  file's module, `Elements.Book<book>.Prop<nn>`; its porism and its companions are
+  `PropN.porism` and `PropN.<word>`, in the same file. A helper is named for the step it
+  supplies (section 6). Other new names follow Lean's own conventions, as the community's
+  [naming guide](https://leanprover-community.github.io/contribute/naming.html) sets them
+  out: a theorem in `snake_case` (`Prop5.base`, `collinear_of_between`), a predicate or a
+  type in `UpperCamelCase` (`OnCircle`, `Parallelogram`), written in `lowerCamelCase`
+  where it is part of a theorem's name (`OnRay.of_sameSideOf`, after `SameSideOf`), any
+  other definition in `lowerCamelCase` (`quadArea`). A companion is a theorem, so its
+  `<word>` follows the same rule: `Prop25.of_circle`, and `Prop24.equalCircles` after the
+  predicate `EqualCircles`. `PropN`, `PostulateN`, `Definition15` and `CommonNotionN`
+  keep Euclid's numbers.
+  [The table of names](../book/names.md), which `scripts/render.py` writes from
+  `facts.json`, gives every proposition, porism and companion with its module, its page
+  and its certificate.
+- **A released name stays, or is deprecated first.** A released name is one that a
+  release tag's `Elements` declares (`book-I`, `book-II`, `book-III` and each after),
+  helpers and Book Zero included. It is never renamed or removed without a deprecated
+  alias for one release: the old name stays, marked deprecated and pointing to its
+  replacement, through the next release, and may go in the release after. Lean then warns
+  at every use and names the replacement. Plain Lean has no `alias` command (Batteries
+  supplies one), so the alias is written out, dated the day it reaches main:
+
+  ```lean
+  @[deprecated NewName (since := "YYYY-MM-DD")]
+  theorem OldName : type_of% @NewName := @NewName
+  ```
+
+  A definition's alias is an `abbrev` under the same attribute
+  (`abbrev OldName := @NewName`), and a declaration
+  removed with nothing to replace it stays as it was for that release, marked
+  `@[deprecated (since := "YYYY-MM-DD")]`. A change in the foundations is still the
+  owner's decision (section 1). `Staging/` and `Audit/` are not released, and their
+  names promise nothing.
+- **A statement that changes keeps its name.** A proposition's, porism's or companion's
+  statement changes only by an approved correction (WORKFLOW, section 2). `PropN` names
+  Euclid's proposition whatever its statement, so the name goes with the new statement,
+  and where citers need the old one it stays beside it as a companion, as
+  [brief 0006](briefs/0006-statements.md) keeps III.24's present statement as
+  `Prop24.equalCircles`. A helper's or a Book Zero fact's statement may change between
+  releases; its name follows the rule above.
+- **The release notes list the changes:** every name deprecated or removed, and every
+  statement changed, with where its old form now stands.
+
 ## 3. Representations
 
 **A definition chooses a meaning; it does not prove agreement with Euclid's object.** For a
@@ -160,8 +209,10 @@ in a circle.
 [review/terms.toml](../review/terms.toml) in each affected record, and shown on each
 affected page. A new tag is added there, with its meaning, before any record uses it. A full
 formal model of every axiom is valuable further assurance, and a milestone of its own, now
-in progress ([MODEL.md](../tests/model/MODEL.md#a-formal-model-in-progress)); it is not a
-prerequisite for each new representation.
+complete: Lean checks, in [`model/`](../model/README.md), that the ordinary plane satisfies
+every locked law ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). It is not a
+prerequisite for each new representation, and it does not show that a representation
+captures the object in the text.
 
 The representations Books I–III rest on:
 
@@ -328,8 +379,57 @@ dependencies.
   only the count. An assignment to finish a proof is never permission to add an axiom that
   asserts its conclusion.
 - **Nothing gets round the kernel:** no `native_decide`, `decide +native`,
-  `set_option debug.…`, `run_cmd`, `run_elab`, `elab`, `macro`, `implemented_by`, `extern`
-  or `unsafe` under `Elements/`.
+  or any other command of the kinds below, in any Lean file the edition builds: under
+  `Elements/`, `Staging/` and `Audit/`, and in their roots, `Elements.lean`,
+  `Staging.lean` and `Audit.lean`. `check_fidelity.py` matches each as a whole word, in
+  the Lean with its comments and the text of its string and character literals taken
+  out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
+  in a comment or a string). The code in an interpolated string's `{…}` holes is read
+  too; a string whose braces Lean could read either as text or as holes of code, one not
+  just after `s!`, `m!`, `f!` or `throwError` whose two readings end in different places,
+  is refused, since the scan cannot tell which Lean will do:
+  - `native_decide`, `bv_decide` and `bv_check`, and `decide` with its `native` option,
+    have the compiler vouch for a proof in the kernel's place; since `decide +native`,
+    `decide (native := …)` and a whole configuration given by `(config := …)` all set
+    that option, the word `native`, wherever it stands, and `(config := …)`, spelled
+    `config` or `«config»`, are refused;
+  - `set_option debug.…`, and its escaped spelling `set_option «debug».…`, which Lean
+    reads the same way: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry` and
+    its kin put `sorry` in place of a proof;
+  - `set_option doc.…`, and its escaped spelling `set_option «doc».…`: with `doc.verso`
+    or `doc.verso.module` on, Lean reads a docstring as Verso and runs the Lean in its
+    code blocks, an `#eval` among it, while the file is built, though the scan takes
+    docstrings out with the comments; refusing the options keeps every docstring inert;
+  - `#eval`, `run_cmd`, `run_elab`, `run_meta`, `run_tac`, `by_elab`, `initialize` and
+    `builtin_initialize` run a program when the file is built or imported, which could
+    declare an axiom without the word, or write any file, a check or `facts.json` among
+    them;
+  - `elab`, `elab_rules`, `macro` and `macro_rules` give syntax a meaning written in
+    code, which could hide any of the others behind a new name. The simproc commands,
+    `simproc`, `dsimproc`, `simproc_decl`, `dsimproc_decl` and `simproc_pattern%`, with
+    their `builtin_`, `sym_` and `cbv_` forms, give `simp` code that runs the next time
+    it is used in the file, and `set_library_suggestions` does the same for the tactics
+    that suggest lemmas. An attribute can register code that Lean runs while a file is
+    built or printed. The scan refuses the attributes whose names it lists: any whose
+    name ends in `elab` (`command_elab`, `term_elab`, `doElem_elab`, `inductive_elab`,
+    and so `delab` and `app_delab`), `macro` (`builtin_macro`), `tactic` (`tactic`,
+    `grind_tactic`, `try_tactic`), `init`, `proc` (`simproc`, `dsimproc`, `sym_simproc`,
+    `sevalproc`), `discharger`, `unexpander` (`app_unexpander`), `precheck`
+    (`quot_precheck`), `formatter`, `parenthesizer`, `control_info`, `code_action`,
+    `rpc_method`, `linter`, `parser` (`term_parser`, `command_parser`, `tactic_parser`),
+    `pass` (`cpass`), `suggestion` or `suggestions` (`try_suggestion`,
+    `library_suggestions`), `check` (`deferred_doc_check`, `package_code_quality_check`),
+    `handler` (`missing_docs_handler`), `provider` (`code_action_provider`), `fn`
+    (`unused_variables_ignore_fn`), `module` (`widget_module`), `hooks`
+    (`run_parser_attribute_hooks`) or `Attr` (`simprocAttr`, `cbvSimprocAttr` and the
+    other names Lean gives its simproc attributes); `builtin_doc`; and any whose name
+    begins with `doc_` or `builtin_doc_` (`doc_role`, `doc_directive`, `doc_code_block`,
+    `doc_command` and the rest). A reading of Lean 4.35's attributes found these to
+    register code that Lean, its editor or Lake runs. A list of names trails the
+    attributes each Lean release adds, so this one may not be complete, and review still
+    reads every staged file and audit lemma;
+  - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
+  - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
@@ -340,19 +440,33 @@ dependencies.
 
 `check_fidelity.py` enforces these for every certificate entry, porisms and companions
 included. `negative_tests.py` plants a break of these kinds to show each is caught: an
-axiom declared outside the foundations; an axiom missing from the lock, and one weakened;
-Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4 and I.8; a
-later citation, one of them named only in a helper's statement; a `native_decide`; a
-`sorry` in a complete book; and a primitive word no longer opaque. The other forbidden
-commands, Book Zero's imports and a complete book's missing figure or mishnah have no
-planted break yet.
+axiom declared outside the foundations, in each of `Elements/`, `Staging/` and `Audit/`,
+one of them after another command on its line; an axiom missing from the lock, and one
+weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
+and I.8; a later citation, one of them named only in a helper's statement; every
+forbidden command, and an attribute for each ending and prefix the scan knows, in each of
+`Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a proposition
+imported by Book Zero; a `sorry` in a complete book; and a primitive word no longer
+opaque. Some of the forbidden commands stand after a string, a raw string or a character
+literal holding `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, and a
+string whose braces Lean could read as code is planted too. Each finding of the source
+scan names its file and line. A complete book's missing figure or mishnah has no planted
+break yet.
 
-The first two policies hold in `Staging/` (section 6) by rule: a staged file declares no
-axiom and uses none of the forbidden commands. That no check enforces them there is a
-known gap: `check_fidelity.py`'s scan for them (`check_rules`) covers `Elements/` alone
-today, so in `Staging/` they rest on review. Extending the scan to `Staging/` is a change
-to a check, and lands in a pull request of its own
-([WORKFLOW.md](WORKFLOW.md), section 10).
+The first two policies hold in `Staging/` (section 6) and in `Audit/` as well: a staged
+file or an audit lemma declares no axiom and uses none of the forbidden commands. Nothing
+there reaches the certificate, so the source scan is what enforces them:
+`check_fidelity.py`'s `check_rules` reads every `.lean` file under `Elements/`,
+`Staging/` and `Audit/`, and the three roots, and refuses an `axiom` anywhere outside
+`Elements/Foundations/` and every command and attribute the list above names. It reads
+comments and literals as Lean's tokenizer does, so a string cannot hide a command from it
+by opening a comment or ending an attribute's brackets. Beyond that it reads words, not
+Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
+disguised from it on purpose, nor an attribute it does not list: review still reads every
+staged file and audit lemma. In `Elements/` the certificate reads the axioms from Lean itself as well.
+The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is not
+scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only
+with a decisions entry and a security review.
 
 ## 8. Completion claims
 
@@ -383,7 +497,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of them were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| A formal model (in progress, [#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | When complete, every law of the lock, generated from the elaborated declarations with the translation checked, proved in the ordinary plane, relative to Lean's logic and Mathlib's real numbers, and tied to the lock so that any change to an axiom breaks it. Until then, nothing: [MODEL.md](../tests/model/MODEL.md#what-this-shows-and-what-it-does-not) says what may be claimed meanwhile. | That the formal statements capture Euclid's meaning. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all 87 laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of

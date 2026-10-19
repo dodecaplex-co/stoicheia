@@ -19,10 +19,10 @@ Mumma ("A formal system for Euclid's *Elements*", Review of Symbolic Logic,
 ## The plane they describe
 
 No proof uses numbers, but the axioms are read in a model, the ordinary plane: numerical
-and exact finite tests support it (`tests/model/`), and a proof checked by Lean that the
-plane satisfies every locked law is being built in `model/` (#73). Read the words
-in the ordinary plane, and every postulate, Definition 15 and every tacit rule
-holds, degenerate cases included:
+and exact finite tests support it (`tests/model/`), and Lean checks, in `model/` (#73),
+that the plane satisfies every locked law, relative to Lean's logic and Mathlib's real
+numbers. Read the words in the ordinary plane, and every postulate, Definition 15 and
+every tacit rule holds, degenerate cases included:
 
 * a `Point` is a point of the plane, a `Line` a whole straight line, and a `Circle`
   a circle of positive radius, with its `Centre`; `OnCircle` is lying on it and

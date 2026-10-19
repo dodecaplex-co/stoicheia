@@ -19,7 +19,7 @@ note = "The statement's second conclusion is said of every point C of the segmen
 at = "Therefore BA is a diameter of the circle ABCD"
 kind = "helper"
 helper = "Prop32.sameSide"
-note = "Euclid takes for granted that A and D lie on one side of EF; the Lean proves it, since no point of a straight line touching a circle is within it, as in III.18."
+note = "Euclid takes for granted that A and D lie on one side of EF; the Lean proves it: on opposite sides, AD would cross EF within the circle (III.2), and no point of a straight line touching a circle is within it, as in III.18."
 
 [[passage]]
 at = "therefore the angle ADB, being an angle in a semicircle, is right"
@@ -38,6 +38,6 @@ note = "Euclid's A is the end of the diameter; the statement says this of every 
 
 [review]
 stage = "exceptions"
-commit = "0226c65"
+commit = "66e9871"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:a7314b11b9bdd460"
+lean = "sha256:f90e259b1de276c5"
