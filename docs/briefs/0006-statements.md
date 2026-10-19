@@ -1566,6 +1566,53 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
 - **Dependencies.** The core: I.4, I.6, I.10, I.11, I.23, Postulate 3. `complete`: III.9 or
   III.10, `circle_eq`. `of_circle`: the core, `Arc.meets`, `complete`.
 
+#### Addition, 19 October 2026: III.25's segment kinds
+
+Proposed for the coordinator's approval; reviewed by both first mates. Brief 0006
+freezes III.25; this is the addition to its frozen statements requested in plan lane 9.
+The construction core and its existing companions keep their statements. The new
+companion lives in `Elements/BookIII/Prop25.lean`, immediately after `Prop25.complete`,
+in `Elements.BookIII`. The reviewed declaration is reproduced unchanged below.
+
+```lean
+theorem Prop25.kind {A B C D E P : Point} {γ : Circle}
+    (hBP : SameSideOf B P A C) (hADC : Between A D C)
+    (hE : Centre E γ) (hAγ : OnCircle A γ) (hCγ : OnCircle C γ)
+    (hless : ∠ B A D < ∠ A B D → OppositeSidesOf E B A C)
+    (hequal : ∠ A B D = ∠ B A D → E = D)
+    (hgreater : ∠ A B D < ∠ B A D → SameSideOf E B A C) :
+    Arc.Drawn ⟨γ, A, C, P⟩ ∧
+      (∠ B A D < ∠ A B D →
+        Arc.Less ⟨γ, A, C, P⟩ ∧
+          circumference γ A P C < ∟ + ∟) ∧
+      (∠ A B D = ∠ B A D →
+        Arc.Semicircle ⟨γ, A, C, P⟩ ∧
+          circumference γ A P C = ∟ + ∟) ∧
+      (∠ A B D < ∠ B A D →
+        Arc.Greater ⟨γ, A, C, P⟩ ∧
+          ∟ + ∟ < circumference γ A P C) := by
+  sorry
+```
+
+In plain words, take the points and circle returned by III.25’s construction. The arc AC on P’s side is drawn. When ABD exceeds BAD, that arc is less than a semicircle and measures less than two right angles. When the angles are equal, it is a semicircle and measures two right angles. When ABD is smaller, it is greater than a semicircle and measures more than two right angles. The displayed circumference is exactly this arc’s `Arc.measure`.
+
+Every hypothesis is available from the construction:
+
+- `hBP` connects the constructed point B with the given side P. It transfers the centre’s position relative to B to its position relative to P and ensures that P is off AC.
+- `hADC` places D between A and C. Together with `E = D`, it supplies the diameter condition for `Circumference.semicircle`.
+- `hE`, `hAγ` and `hCγ` identify the constructed circle, its centre and the arc’s endpoints.
+- `hless`, `hequal` and `hgreater` are precisely the construction’s three existing centre-position conclusions.
+
+The midpoint equality, perpendicularity and incidence of B on γ need not be repeated as hypotheses of this consequence. They remain available from the core; B’s incidence is used by `Prop25.complete`.
+
+**Connection to the given segment.** For a drawn arc `⟨α, A, C, P⟩`, run the core with `S := OnArc · ⟨α, A, C, P⟩`, using `Prop25.meets` for its meeting hypothesis. Keep its witnesses B, D, E and γ. Apply `Prop25.kind` to their returned properties. Then `Prop25.complete` gives `γ = α`; rewriting by this equality transfers the entire kind-and-measure conclusion to the given arc. Thus the classification concerns the same circle that the construction describes and correctness identifies.
+
+**Coverage, route and certificate.** This supplies the three classifications currently left `unformalized`, including both meanings requested in lane 9. The planned proof unfolds the kind definitions and uses `Circumference.lt_semicircle`, `.semicircle` and `.gt_semicircle`.
+
+Register **`Elements.BookIII.Prop25.kind` as `"III.25 kind"`**, through the integrator’s `Elements/Companions.lean`. It is a companion for display and certification, while supplying the steps named by the three `helper` passages. Its certificate will expose its own circumference-lemma dependencies. Neither III.25’s construction nor `Prop25.complete` enters that certificate merely because this lemma consumes their conclusions; their existing entries supply that evidence separately.
+
+After proof and review, add `"III.25 kind"` to the record’s companions and change all three existing kind passages to `kind = "helper"`, `helper = "Prop25.kind"`. Their notes should name the corresponding kind and measure comparison and explain the transport through `Prop25.complete`. Keep the construction and correctness companions displayed.
+
 ## What the spike found
 
 The stage 3 spike (brief 0005's step 0) stated the definitions, `placement` and every case

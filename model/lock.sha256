@@ -46,4 +46,8 @@
 # Renewed on 19 October 2026 for stage 4 with stage 3, mixed angles and brief 0008,
 # section 7: 88 axioms, byte-identical to the preceding integration, and its 121 words
 # plus Foot, 122 words of vocabulary. No model law changes.
-212da1958bf10b0b37bdf94bd0ab7ccc187712125a4e6bd80a871d3a064f2051  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026 for III.25's kind companion (brief 0006): Arc.Less,
+# Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in all. The 88 axioms
+# and every previously locked word are byte-identical; no model law changes.
+4d9993cc4a91f2251a38eeb4cfea86db688d75585f7d635fc0fd22abd365e849  Certificate/axioms.lock
