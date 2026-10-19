@@ -116,10 +116,6 @@ distinguishes this sustained effort from reports of earlier encounters with Eucl
 (Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
 *Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 38–39 and
 note 32, citing the manuscript in the Herndon-Weik Collection at the Library of Congress).
-In a letter to Ward H. Lamon of 16 December 1887, Herndon recalled finding him absorbed
-at their office, with paper, a compass, a rule, pencils and inks of various colours spread
-out before him (LaFantasie, p. 39 and note 33, which also cites Jesse W. Weik's *The Real
-Lincoln*, pp. 240–241).
 
 In *Herndon's Lincoln* he remembered the circuit's "little country inns", where he and
 others shared Lincoln's room. Lincoln would set a candle on a chair at the head of the
@@ -129,7 +125,20 @@ wrote, "he studied Euclid until he could with ease demonstrate all the propositi
 the six books", a more generous estimate than Lincoln's own "nearly mastered" (Herndon and
 Jesse William Weik, [*Herndon's Lincoln*](#herndon1889lincoln), vol. 2, pp. 308–309;
 in the 2006 edition, edited by Douglas L. Wilson and Rodney O. Davis, p. 194, as cited
-by LaFantasie, p. 39 and note 34).
+by Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 39, note 34).
+
+Herndon remembered one more problem of geometry, and it was not Euclid's. Arriving at
+their office one morning, he found Lincoln there before him, with "a quantity of blank
+paper, large heavy sheets, a compass, a rule, numerous pencils, several bottles of ink of
+various colors" spread out on the table, so absorbed that he "scarcely looked up". Later
+that day Lincoln told him that he "was trying to solve the difficult problem of squaring
+the circle", and he kept at it for the better part of two days. Herndon added that he had
+since been told "the so-called squaring of the circle is a practical impossibility"
+(Jesse W. Weik, *The Real Lincoln: A Portrait*, Houghton Mifflin, Boston and New York,
+1922, pp. 240–241). The sources of the scene are Herndon's letter to Ward H. Lamon of
+16 December 1887 and Weik's book, as given by Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 39, note 33.
 
 Judge David Davis remembered Euclid too. In his interview with Herndon on 20 September
 1866, he said that Lincoln "was not a well read Man", and went on in short phrases:
