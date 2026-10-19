@@ -1315,3 +1315,16 @@ findings:
   [`scripts/safe_push.py`](../../scripts/safe_push.py), still name `check`, `model` and
   `negative`, and making `formal-model` required, as the decision of 18 October foresees
   once the package builds, is the owner's call.
+
+## 19 October 2026
+
+- **The negative tests read the count of assumptions from the lock.** The planted-assumption
+  test of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) expected
+  `check_fidelity.py` to say "declares 88 axioms, not 87", a count fixed in the script. It
+  now reads the number of axioms in
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) before it plants anything, and
+  expects one more than that, so the test keeps its meaning when an approved rule joins the
+  lock. This is step 1's third item in [brief 0008](0008-centre.md), section 6: without it,
+  the pull request that adds the rule that every circle has a centre could not pass. Today
+  the lock holds 87, so the test expects what it expected before; nothing else in the
+  script, and no check, changes. Protected file changed: `scripts/negative_tests.py`.
