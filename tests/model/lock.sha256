@@ -3,12 +3,17 @@
 # to an axiom's statement sends someone back to the harness and MODEL.md before CI is green.
 #
 # Filled in when the lock was first written (brief 0005, stage 1c, 17 October 2026). When the
-# lock changes, check MODEL.md's law-by-law account against it, then replace the line below
-# with the output of
+# lock changes, bring the model to it as MODEL.md, "Changing the axioms", says, then replace
+# the line below with the output of
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
 #
 # Renewed on 17 October 2026, when the words of the propositions' statements joined the lock's
 # vocabulary: the 87 axioms and the 37 words they reach are unchanged, byte for byte, so
 # MODEL.md's account stands as it was.
-ea46c571028b5e62da2c71f97bfbc09b40b83e7758f8f687dd3747097a528bd6  Certificate/axioms.lock
+#
+# Renewed on 18 October 2026, when the words of stage 2's companions (brief 0006) joined the
+# vocabulary: 30 new words, the definitions and their auxiliary declarations; the 87 axioms
+# and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
+# as it was.
+9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock

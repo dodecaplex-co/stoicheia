@@ -1,13 +1,14 @@
 """Check the house style's hard rules, and report its defaults.
 
 The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S21
-fail the script, and D1 to D11 and D13 to D15 are listed for a reader to judge and fail
+fail the script, and D4 to D11, D14 and D15 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
     python3 scripts/check_style.py              # every rule, S12 included
     python3 scripts/check_style.py --no-lean    # S12 skipped, for an unbuilt tree
     python3 scripts/check_style.py --quiet      # the reports as counts only
     python3 scripts/check_style.py --require-idea-letters   # S21 on every figure, as the switch is
+    python3 -I tests/test_check_style.py        # the rules' cases, which CI runs first
 
 S12 asks Lean whether each backticked name in the mishnah exists, so it needs a built
 tree (`lake build`) and `lake` on the PATH; without them the script fails and says so,
@@ -37,8 +38,19 @@ comment wraps them: they may stand apart by spaces or tabs (and commas, between 
 letters), or by one line break with the next line's indent and comment leader ("--" in
 Lean, ">" in a Markdown quotation). A blank line ends such a phrase, save S2's "first
 mate" and the "Definition N" of S7 and D10, whose words may stand apart by any white
-space. On every run, before anything else, the script checks its own wording patterns
-against wrapped and unwrapped phrases (`self_check`), and stops if one is read wrongly.
+space. Those patterns are tested on such phrases, case by case (below).
+
+S10 refuses TeX in the mishnah, save `$…$` in a paragraph that opens
+`**The modern way.**`, which ends where Markdown ends a paragraph (`MODERN_WAY_ENDS`);
+and there it refuses the shapes of span known to break on GitHub (STYLE, section
+4, "Mathematics"). Sample spans tried on GitHub on 18 October found most of them, and
+showed its Markdown taking away backslashes inside a span, so Markdown reads there; by
+CommonMark's rules for emphasis, checked with a CommonMark parser and not tried on GitHub,
+a `*`, or a `_` after anything but a letter or a digit, pairs with another across two
+spans, so a span holds no `*`, `~` or backtick, and a `_` only straight after a letter or
+a digit. A shape not yet found may still break: the reviewer's checklist, item 5 (STYLE,
+section 8), which sees each span rendered on GitHub, stays the guard. The tests hold
+cases on both sides of that boundary.
 
 S2's crew words match whole words in any case, plurals and possessives included ("the
 bosuns", "the crew's"). The figure rules also ask for a <title>: "I.N at a glance" on an
@@ -46,12 +58,12 @@ idea figure, "Euclid I.N: …" on Euclid's (STYLE, section 7). A known departure
 cannot see is right is listed below with its reason, and printed on every run; one that
 no longer applies fails. An idea figure marks a point Heath leaves without a letter in the
 figure itself, with `data-unlettered` and its reason (S21), and those are printed too.
-S20 judges a letter's ink by the fill under it, an angle's wedge included. On every run,
-before anything else, the script checks that reading against letters on and beside an
-angle's wedge (`ink_self_check`), and stops if one is read wrongly. D15 measures a
-letter as Georgia Italic draws its capital (GLYPHS) against every stroke of its figure,
-and is checked the same way against strokes through, near and clear of a letter
-(`clearance_self_check`). Standard library only.
+S20 judges a letter's ink by the fill under it, an angle's wedge included.
+
+How the rules read a phrase, S10's boundary for TeX, and how S20 reads a letter on and
+beside an angle's wedge are tested case by case in tests/test_check_style.py, which needs
+no Lean. CI runs it just before this script, in the order of docs/WORKFLOW.md, section 8;
+a defect fixed in that reading comes with a case there. Standard library only.
 """
 
 from __future__ import annotations
@@ -97,6 +109,15 @@ LETTER_EXCEPTIONS = {
 # empty. Never set it back to quiet a figure: letter the figure.
 IDEA_LETTERS_REQUIRED = True
 
+# Upright letters, the switch (STYLE, sections 4, 7 and 8). Heath's letters take one style
+# in the text and in the figures, upright, by the owner's decision of 18 October. The
+# figures were drawn with italic letters and are set upright in a change of their own;
+# while they are, this is False: S15 and S20 take a figure's letters italic or upright, one
+# style in each figure, and D15 lists the figures still italic. Once every figure is
+# upright it is True, and S15 and S20 fail an italic letter. Never set it back to quiet a
+# figure: set the figure upright.
+UPRIGHT_LETTERS_REQUIRED = False
+
 # ---------------------------------------------------------------------------------------
 # Findings.
 
@@ -113,7 +134,7 @@ RULES = {
     "S7": "a definition without its book",
     "S8": "a curly quotation mark",
     "S9": "an italic letter",
-    "S10": "TeX in the mishnah",
+    "S10": "TeX in the mishnah, outside a well-formed $…$ of the modern way",
     "S11": "a retired refrain",
     "S12": "a backticked Lean name that Lean does not know",
     "S13": "an idea figure's caption missing or over 50 words",
@@ -123,14 +144,11 @@ RULES = {
     "S17": "a further-reading file's shape or links",
     "S18": "a book with pages and no introduction",
     "S19": "a book introduction that does not link the book's brief",
-    "S20": "an idea figure's letter not Heath's, or not italic, 14 and in the ink of what it stands on",
+    "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
 }
 
 REPORTS = {
-    "D1": "a mishnah outside 250–450 words",
-    "D2": "a mishnah's paragraph count, or a paragraph over 120 words",
-    "D3": "a mishnah paragraph without a bold lead, or the modern way not last",
     "D4": "a mishnah with more than four distinct Lean names",
     "D5": "an idea caption over 40 words, or of more than two sentences",
     "D6": "'first', 'only', 'better', 'best', 'unlike': a comparison or a claim to priority?",
@@ -139,9 +157,8 @@ REPORTS = {
     "D9": "'need' joined to Postulate 5 (say 'uses')",
     "D10": "S6 or S7 outside their failing scope",
     "D11": "Euclid's figure strokes or dots off the usual widths",
-    "D13": "a reading line that does not begin 'For '",
     "D14": "figures at a glance not yet lettered (S21 holds them once the switch is on)",
-    "D15": "a figure's letter within 2 of a stroke",
+    "D15": "figures whose letters are still italic (S15 and S20 hold them upright once the switch is on)",
 }
 
 
@@ -504,7 +521,123 @@ def check_text(path: Path, raw: str, scopes: set[str]) -> None:
 
 
 # ---------------------------------------------------------------------------------------
-# The mishnah: TeX, refrains, shape, Lean names.
+# The mishnah: TeX, refrains, Lean names.
+
+# S10's one exception (STYLE, section 4, "Mathematics"): in a paragraph that opens
+# MODERN_WAY, and ends at MODERN_WAY_ENDS, mathematics may stand between single dollars,
+# and the check refuses the shapes of span known to break on GitHub. Its renderer, read with
+# sample spans on 18 October, opens a span only at a line's start, after white space or
+# after "(", and closes it only before white space, a line's end or a mark of
+# MATH_CLOSES_BEFORE; it renders no span that crosses a line or begins or ends with a
+# space; its Markdown takes away a backslash before a punctuation mark (\{ becomes {, \,
+# becomes ,); and it escapes <, > and & inside a span twice. The lost backslashes show
+# that its Markdown reads inside a span, so the refusals of *, _, ~ and a backtick follow
+# CommonMark's rules, checked with a CommonMark parser and not tried on GitHub: a *, or a
+# _ after anything but a letter or a digit, can open emphasis and pair with another across
+# two spans; GFM reads ~ as strikethrough; and a backtick opens code. A shape not found
+# here may still break, and the reviewer's checklist, item 5 (STYLE, section 8: each span
+# seen rendered on GitHub), stays the guard.
+MODERN_WAY = "**The modern way.**"
+# Where the modern way's paragraph ends, as CommonMark ends a paragraph, with GFM's
+# tables: at a blank line, or before a line, indented at most three spaces, that opens a
+# block allowed to interrupt a paragraph. Those are an ATX heading; a bullet list item, or
+# an ordered one numbered 1, with some text; a block quotation; a code fence; an HTML
+# block, read here as any line opening a tag, "<!" or "<?", a little wider than
+# CommonMark's (it lets "<span>" go on); a thematic break or a setext underline; and a
+# table, whose next line is a delimiter row. Any other line, "|z| is one", "2. So" or
+# "#check", goes on with it.
+MODERN_WAY_ENDS = re.compile(
+    r"\n[ \t]*\n|\n(?= {0,3}(?:#{1,6}(?:[ \t]|$)"
+    r"|[-+*][ \t]+\S|0{0,8}1[.)][ \t]+\S|>|```|~~~|<[A-Za-z/!?]"
+    r"|([-*_])(?:[ \t]*\1){2,}[ \t]*$|(?:=+|-+)[ \t]*$"
+    r"|[^\n]*\n {0,3}(?=[^\n]*\|)\|?(?:[ \t]*:?-+:?[ \t]*\|)*[ \t]*:?-+:?[ \t]*\|?[ \t]*$))",
+    re.M)
+MATH_OPENS_AFTER = " \t\n("
+MATH_CLOSES_BEFORE = " \t\n.,;:!?)]'\"’”–-/"
+MATH_ESCAPE = re.compile(r"\\[!-/:-@\[-`{-~]")      # a backslash before ASCII punctuation
+MATH_HTML = re.compile(r"[<>&]")
+
+
+def math_fault(text: str, a: int, b: int) -> str | None:
+    """The shape known to break on GitHub that the span from the `$` at `a` to the `$` at
+    `b` of `text` has, or None."""
+    body = text[a + 1:b]
+    if not body:
+        return "$$: display mathematics is not allowed; write $…$ within the sentence"
+    if "\n" in body:
+        return "a $…$ across a line break, which GitHub does not render; keep it on one line"
+    if body[0].isspace() or body[-1].isspace():
+        return "a space just inside a $: GitHub renders $x$, not $ x $"
+    before = text[a - 1] if a else "\n"
+    if before not in MATH_OPENS_AFTER:
+        return (f"the opening $ follows {before!r}: GitHub opens $…$ only at a line's start, "
+                "after a space or after (")
+    after = text[b + 1] if b + 1 < len(text) else "\n"
+    if after not in MATH_CLOSES_BEFORE:
+        return (f"the closing $ comes before {after!r}: GitHub closes $…$ only before a space, "
+                "a line's end or one of . , ; : ! ? ) ] ' \" - – /")
+    m = MATH_ESCAPE.search(body)
+    if m:
+        return (f"{m.group(0)} inside $…$: GitHub's Markdown takes away a backslash before a "
+                "punctuation mark; write \\lbrace, \\rbrace, \\thinspace, \\Vert")
+    if "*" in body:
+        return "* inside $…$, which GitHub's Markdown can read as emphasis; write \\ast"
+    for i, c in enumerate(body):
+        if c == "_" and not (i and body[i - 1].isalnum()):
+            where = f"after {body[i - 1]!r} inside" if i else "first in"
+            return (f"a _ {where} $…$, which GitHub's Markdown can read as emphasis; "
+                    "put a subscript straight after a letter or digit, x_{1}^{2} rather "
+                    "than x^{2}_{1}, \\mathrm{A_1} rather than \\mathrm{A}_1")
+    if "~" in body:
+        return ("~ inside $…$, which GitHub's Markdown can read as strikethrough; write a "
+                "space or \\sim")
+    if "`" in body:
+        return "a backtick inside $…$, which GitHub's Markdown reads as code"
+    depth = 0
+    for c in body:
+        depth += {"{": 1, "}": -1}.get(c, 0)
+        if depth < 0:
+            break
+    if depth:
+        return "the braces { } inside $…$ do not balance"
+    m = MATH_HTML.search(body)
+    if m:
+        return (f"{m.group(0)} inside $…$, which GitHub escapes twice; write \\lt, \\gt, "
+                "\\le, \\ge")
+    return None
+
+
+def tex_findings(text: str) -> list[tuple[int, int, str]]:
+    """S10 on a mishnah, fenced blocks and HTML comments already blanked: (start, end,
+    message) for each finding. TeX (a backslash, `^{` or `$`) is refused everywhere, save
+    in a `$…$` span of a paragraph that opens MODERN_WAY, a paragraph ended as
+    MODERN_WAY_ENDS says; there every `$` pairs with the next, and no span may have a shape
+    known to break on GitHub (math_fault)."""
+    found, outside = [], text
+    start = 0
+    for brk in list(MODERN_WAY_ENDS.finditer(text)) + [None]:
+        end = brk.start() if brk else len(text)
+        block, at = text[start:end], start
+        start = brk.end() if brk else len(text)
+        if not block.lstrip().startswith(MODERN_WAY):
+            continue
+        dollars = [at + m.start() for m in re.finditer(r"\$", block)]
+        for k in range(0, len(dollars), 2):
+            a = dollars[k]
+            if k + 1 == len(dollars):
+                found.append((a, a + 1, "an unpaired $: each $ that opens mathematics in the "
+                              "modern way closes it in the same paragraph"))
+                b = a
+            else:
+                b = dollars[k + 1]
+                fault = math_fault(text, a, b)
+                if fault:
+                    found.append((a, b + 1, fault))
+            outside = outside[:a] + re.sub(r"[^\n]", " ", outside[a:b + 1]) + outside[b + 1:]
+    for m in TEX.finditer(outside):
+        found.append((m.start(), m.end(), f'"{m.group(0)}", TeX outside a $…$ of the modern way'))
+    return sorted(found)
+
 
 IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_.₀-₉]*")
 FILE_NAME = re.compile(r".*\.(?:lean|json|md|svg|py|toml|txt|lock)$")
@@ -523,8 +656,8 @@ def lean_names(text: str) -> list[str]:
 def check_mishnah(path: Path, raw: str) -> None:
     ref = ref_of(path)
     text = FENCE.sub(_blank, HTML_COMMENT.sub(_blank, raw))
-    for m in TEX.finditer(text):
-        fail("S10", path, line_of(text, m.start()), f'"{m.group(0)}": {excerpt(raw, m.start(), m.end())}')
+    for a, b, msg in tex_findings(text):
+        fail("S10", path, line_of(text, a), f"{msg}: {excerpt(raw, a, b)}")
     for pattern, allowed in REFRAINS:
         if ref in allowed:
             continue
@@ -537,22 +670,6 @@ def check_mishnah(path: Path, raw: str) -> None:
              f'"under I.31" beside Proclus (allowed nowhere): {excerpt(raw, a, b)}')
     for m in RETIRED_LEADS.finditer(text):
         fail("S11", path, line_of(text, m.start()), f"retired lead {flat(m.group(0))}")
-
-    # Its usual shape (reported).
-    count = len(text.split())
-    if not 250 <= count <= 450:
-        report("D1", path, 1, f"{count} words")
-    paras = list(paragraphs(text))
-    if not 3 <= len(paras) <= 5:
-        report("D2", path, 1, f"{len(paras)} paragraphs")
-    for k, (off, p) in enumerate(paras, 1):
-        n = len(p.split())
-        if n > 120:
-            report("D2", path, line_of(text, off), f"paragraph {k} is {n} words")
-        if not re.match(r'\*\*(?:[^*]|\*[^*]+\*)+?[.?]["\']?\*\*(?:\s|$)', p):
-            report("D3", path, line_of(text, off), f"paragraph {k} has no bold lead: {p[:60]}…")
-    if paras and not paras[-1][1].startswith("**The modern way.**"):
-        report("D3", path, line_of(text, paras[-1][0]), "the last paragraph is not **The modern way.**")
     names = lean_names(raw)
     if len(names) > 4:
         report("D4", path, 1, f"{len(names)} Lean names: {', '.join(names)}")
@@ -622,8 +739,6 @@ def check_reading(path: Path, raw: str, allowed: set[str]) -> None:
     for k, l in lines:
         if not l.startswith("- "):
             fail("S17", path, k, f"not a list item: {l[:60]}")
-        elif not l.startswith("- For "):
-            report("D13", path, k, l[2:62] + "…")
     for m in WEB_LINK.finditer(raw):
         url = m.group(1) or m.group(2)
         if url not in allowed:
@@ -681,64 +796,43 @@ PATH_ARITY = {"m": 2, "l": 2, "h": 1, "v": 1, "c": 6, "s": 4, "q": 4, "t": 2, "a
 ARC_STEP = math.radians(3)   # an arc, in a straight piece to each 3 degrees of its sweep
 CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
 
-# How near a letter comes to a stroke (D15; STYLE, sections 7 and 8). A letter is measured
-# as Georgia Italic, the figures' first font, draws its capital: by the convex hull of the
-# points of the capital's outline, on its curves and off them, which holds the outline.
-# GLYPHS gives each capital's advance and that hull's corners, x and y in turn with y up,
-# in the font's units, EM to the em, read from the font with fontTools so that the script
-# needs neither. Each corner of the hull stands within 0.4 of the ink at 17 (an off-curve
-# point, round a curve), so a stroke that runs straight past a letter is measured to
-# within 0.4, and no stroke nearer than CLEAR is missed. But the hull also spans a
-# letter's hollows, up to 4.4 from the ink at 17 (K's notch, L's corner, the space under
-# T's arms), so a stroke that ends or bends within one may be listed while the ink is
-# clear. A prime or a subscript after the capital is not measured.
-CLEAR = 2.0     # a letter nearer than this to a stroke is reported
-EM = 2048
-GLYPHS = {
-    "A": (1374, (-160, 0, 1302, 0, 1317, 66, 952, 1439, 872, 1439, -145, 66)),
-    "B": (1339, (-29, 0, 768, 0, 965, 55, 1051, 113, 1131, 167, 1236, 340, 1298, 1077, 1298,
-            1234, 1236, 1333, 1126, 1394, 1003, 1419, 306, 1419, 290, 1353)),
-    "C": (1315, (100, 400, 183, 190, 328, 43, 522, -33, 830, -33, 1140, 143, 1266, 358,
-            1427, 1419, 1041, 1452, 751, 1452, 448, 1302, 340, 1178, 228, 1049, 100, 721)),
-    "D": (1534, (-29, 0, 769, 0, 1096, 116, 1229, 229, 1357, 338, 1515, 669, 1515, 1024,
-            1398, 1241, 1209, 1368, 997, 1419, 306, 1419, -14, 66)),
-    "E": (1338, (-37, 0, 1141, 0, 1264, 418, 1388, 1419, 290, 1419, -22, 66)),
-    "F": (1227, (-35, 0, 583, 0, 963, 444, 1322, 1064, 1404, 1419, 291, 1419, 275, 1353)),
-    "G": (1485, (100, 403, 187, 191, 341, 43, 547, -33, 745, -33, 874, -13, 1021, 24, 1124,
-            64, 1190, 91, 1481, 572, 1496, 640, 1482, 1419, 1093, 1452, 781, 1452, 467,
-            1311, 235, 1064, 100, 733)),
-    "H": (1669, (-25, 0, 1444, 0, 1756, 1353, 1771, 1419, 302, 1419, -10, 66)),
-    "I": (798, (-44, 0, 595, 0, 907, 1353, 922, 1419, 283, 1419, -29, 66)),
-    "J": (1060, (-50, 106, 118, -34, 373, -34, 545, 44, 679, 166, 762, 315, 1194, 1353,
-            1209, 1419, 579, 1419, -50, 329)),
-    "K": (1422, (-21, 0, 1336, 0, 1353, 66, 1597, 1419, 306, 1419, -6, 66)),
-    "L": (1236, (-25, 0, 1084, 0, 1211, 422, 901, 1419, 302, 1419, -10, 66)),
-    "M": (1899, (-76, 0, 1682, 0, 1698, 66, 1993, 1353, 2008, 1419, 260, 1419)),
-    "N": (1571, (-75, 0, 1109, -14, 1199, -14, 1743, 1353, 1759, 1419, 229, 1419, 213,
-            1353)),
-    "O": (1496, (100, 288, 404, -34, 811, -34, 1108, 107, 1224, 229, 1337, 348, 1477, 683,
-            1477, 1138, 1169, 1453, 766, 1453, 465, 1311, 240, 1067, 100, 734)),
-    "P": (1249, (-25, 0, 584, 0, 1205, 822, 1312, 1012, 1312, 1266, 1097, 1419, 295, 1419,
-            280, 1353)),
-    "Q": (1496, (100, 290, 393, -24, 780, -386, 1000, -386, 1171, -357, 1232, -338, 1477,
-            683, 1477, 1138, 1169, 1453, 766, 1453, 465, 1311, 240, 1067, 100, 734)),
-    "R": (1437, (-26, 0, 1354, 0, 1370, 66, 1330, 1219, 1269, 1323, 1168, 1385, 1026, 1419,
-            302, 1419)),
-    "S": (1149, (-9, -1, 370, -29, 614, -29, 815, 41, 973, 169, 1065, 353, 1199, 1419, 825,
-            1451, 641, 1451, 448, 1383, 380, 1326, 310, 1267, 225, 1105, 89, 485)),
-    "T": (1267, (130, 1034, 174, 0, 844, 0, 1366, 1034, 1455, 1419, 219, 1419)),
-    "U": (1549, (212, 144, 449, -34, 749, -34, 931, 8, 1016, 57, 1104, 108, 1245, 289, 1721,
-            1353, 1737, 1419, 278, 1419, 262, 1353, 212, 313)),
-    "V": (1365, (151, 1353, 501, -18, 584, -18, 1599, 1353, 1614, 1419, 166, 1419)),
-    "W": (1998, (182, 1353, 408, -18, 1322, -18, 2217, 1353, 2232, 1419, 197, 1419)),
-    "X": (1455, (-110, 0, 1321, 0, 1336, 66, 1614, 1419, 243, 1419, -95, 66)),
-    "Y": (1260, (143, 1353, 169, 0, 833, 0, 1501, 1353, 1517, 1419, 159, 1419)),
-    "Z": (1232, (-90, 0, 1048, 0, 1198, 443, 1387, 1419, 326, 1419, 190, 1018, -81, 35)),
-}
-
 # data-unlettered marks in the idea figures, printed on every run:
 # {(file, reason): [elements, points]}
 idea_exemptions: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
+
+# The figures whose letters are still italic, while UPRIGHT_LETTERS_REQUIRED is False (D15):
+# {book: {"of Euclid's figures": [NN, …], "figures at a glance": [NN, …]}}
+italic_figures: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
+
+
+def letter_style(eff) -> str:
+    """A letter's font-style: "normal" (upright, SVG's default) or what it is set to."""
+    return (eff.get("font-style") or "normal").strip().lower()
+
+
+def check_letter_style(path: Path, rule: str, found: list[tuple[str, str]]) -> None:
+    """S15's and S20's style of a figure's letters, each (letter, its font-style): upright,
+    or, while UPRIGHT_LETTERS_REQUIRED is False, italic, one style in each figure (STYLE,
+    sections 4 and 7). A figure still italic is listed for D15."""
+    styles: dict[str, list[str]] = defaultdict(list)
+    for s, style in found:
+        styles[style].append(s)
+    for style, letters in sorted(styles.items()):
+        if style not in ("normal", "italic"):
+            fail(rule, path, 0, f"letter(s) {', '.join(letters)} in font-style {style}: "
+                 "Heath's letters are upright (STYLE, section 4)")
+    if "italic" not in styles:
+        return
+    if UPRIGHT_LETTERS_REQUIRED:
+        fail(rule, path, 0, f"letter(s) {', '.join(styles['italic'])} italic: Heath's letters "
+             "are upright (STYLE, section 4)")
+    elif "normal" in styles:
+        fail(rule, path, 0, f"letter(s) {', '.join(styles['italic'])} italic beside "
+             f"{', '.join(styles['normal'])} upright: one style in each figure, upright as "
+             "the figure is converted (STYLE, section 8)")
+    else:
+        kind = "figures at a glance" if path.stem.endswith("-idea") else "of Euclid's figures"
+        italic_figures[path.parent.name][kind].append(path.name[:2])
 
 
 def tag(el) -> str:
@@ -885,20 +979,12 @@ def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: fl
     return pts + [(x2, y2)]
 
 
-def path_rings(d: str, closed: list[bool] | None = None) -> list[list[tuple[float, float]]]:
+def path_rings(d: str) -> list[list[tuple[float, float]]]:
     """A path's subpaths as the rings of points its fill closes: straight segments as they
     are, arcs and curves in short straight pieces. A path is read as far as it is well
-    formed, as SVG draws it. Given a list `closed`, it gains a flag for each ring: whether
-    a Z closes it, as its stroke is drawn (D15)."""
+    formed, as SVG draws it."""
     rings: list[list[tuple[float, float]]] = []
     ring: list[tuple[float, float]] = []
-
-    def keep(shut: bool) -> None:
-        if len(ring) > 1:
-            rings.append(ring)
-            if closed is not None:
-                closed.append(shut)
-
     x = y = sx = sy = 0.0
     cmd, ctrl, pos = "", None, 0
     while True:
@@ -909,7 +995,8 @@ def path_rings(d: str, closed: list[bool] | None = None) -> list[list[tuple[floa
             break
         kind = cmd.lower()
         if kind == "z":
-            keep(True)
+            if len(ring) > 1:
+                rings.append(ring)
             ring, x, y, ctrl = [(sx, sy)], sx, sy, None
             continue
         args = []
@@ -924,7 +1011,8 @@ def path_rings(d: str, closed: list[bool] | None = None) -> list[list[tuple[floa
         ox, oy = (x, y) if cmd.islower() else (0.0, 0.0)
         pairs = [(ox + args[i], oy + args[i + 1]) for i in range(0, len(args) - 1, 2)]
         if kind == "m":
-            keep(False)
+            if len(ring) > 1:
+                rings.append(ring)
             (x, y), ctrl = pairs[0], None
             sx, sy, ring = x, y, [(x, y)]
             cmd = "l" if cmd == "m" else "L"
@@ -947,7 +1035,8 @@ def path_rings(d: str, closed: list[bool] | None = None) -> list[list[tuple[floa
             ctrl = ("c" if kind in "cs" else "q", curve[-2])
         ring += pts
         x, y = ring[-1]
-    keep(False)
+    if len(ring) > 1:
+        rings.append(ring)
     return rings
 
 
@@ -1032,8 +1121,8 @@ def colours(path: Path, root, allowed: set[str], rule: str) -> None:
 
 
 def check_idea(path: Path, ref: str, required: bool) -> int:
-    """S13, S14, S20, S21 and D15 for one idea figure. Returns how many of its points wait
-    for a letter while it is in the transition (no letter yet, the switch off), else 0."""
+    """S13, S14, S20 and S21 for one idea figure. Returns how many of its points wait for
+    a letter while it is in the transition (no letter yet, the switch off), else 0."""
     root = svg_root(path)
     if root is None:
         return 0
@@ -1061,7 +1150,6 @@ def check_idea(path: Path, ref: str, required: bool) -> int:
         if n > 40 or ends > 2:
             report("D5", path, 0, f"caption of {n} words, {ends} sentence(s)")
     colours(path, root, IDEA_COLOURS | WHITE, "S14")
-    check_clearance(path, root)
     return check_idea_letters(path, root, required)
 
 
@@ -1122,14 +1210,15 @@ def ink_fault(root, eff, centre: tuple[float, float], s: str) -> str | None:
 
 
 def check_idea_letters(path: Path, root, required: bool) -> int:
-    """S20: each letter is one of Heath's, as Euclid's figure draws it, italic, at 14, in
-    the figure's black, or in the parchment's colour where it stands on red, blue or
-    black. S21: each point the figure shows has a letter within 30 of it, or is marked
+    """S20: each letter is one of Heath's, as Euclid's figure draws it, upright (or, while
+    UPRIGHT_LETTERS_REQUIRED is False, italic, one style in the figure), at 14, in the
+    figure's black, or in the parchment's colour where it stands on red, blue or black.
+    S21: each point the figure shows has a letter within 30 of it, or is marked
     data-unlettered with its reason. Returns the points waiting for a letter while the
     figure is in the transition, else 0."""
     euclid = path.with_name(path.name.replace("-idea", ""))
     heaths = drawn_letters(euclid)
-    letters = []
+    letters, styles = [], []
     for el, own, eff, m, _ in placed(root):
         if tag(el) != "text":
             continue
@@ -1151,9 +1240,9 @@ def check_idea_letters(path: Path, root, required: bool) -> int:
             fail("S20", path, 0, fault)
         if number(eff.get("font-size")) != IDEA_LETTER_SIZE:
             fail("S20", path, 0, f"letter {s} at font-size {eff.get('font-size')}, not {IDEA_LETTER_SIZE}")
-        if (eff.get("font-style") or "normal").strip() != "italic":
-            fail("S20", path, 0, f"letter {s} is not italic")
+        styles.append((s, letter_style(eff)))
         letters.append(centre)
+    check_letter_style(path, "S20", styles)
 
     points = idea_points(root)
     for el in root.iter():
@@ -1233,7 +1322,7 @@ def check_euclid(path: Path, ref: str) -> None:
         fail("S15", path, 0, "a caption (<desc>): Euclid's figure has none")
     colours(path, root, EUCLID_COLOURS, "S15")
 
-    drawn = set()
+    drawn, styles = set(), []
     thin, heavy = defaultdict(int), defaultdict(int)
     usual = defaultdict(int)
     for el, own, eff in walk(root):
@@ -1242,6 +1331,7 @@ def check_euclid(path: Path, ref: str) -> None:
             s = text_of(el)
             if LETTER.fullmatch(s):
                 drawn.add(s[0])
+                styles.append((s, letter_style(eff)))
                 size = number(eff.get("font-size"))
                 if size != 17:
                     fail("S15", path, 0, f"letter {s} at font-size {eff.get('font-size')}, not 17")
@@ -1270,6 +1360,7 @@ def check_euclid(path: Path, ref: str) -> None:
         fail("S15", path, 0, f"stroke-width {w:g} ({k}×) is over 3.2")
     if usual:
         report("D11", path, 0, "; ".join(f"{what} ×{k}" for what, k in sorted(usual.items())))
+    check_letter_style(path, "S15", styles)
 
     # S16: all and only Heath's letters.
     text = heath_letters(book, n)
@@ -1286,119 +1377,6 @@ def check_euclid(path: Path, ref: str) -> None:
         if stale:
             fail("S16", path, 0, f"the exception for {', '.join(sorted(stale))} in "
                  "LETTER_EXCEPTIONS no longer applies; remove it")
-    check_clearance(path, root)
-
-
-def glyph_ring(own, eff, m, s: str) -> list[tuple[float, float]]:
-    """The corners of the hull of letter s's capital (GLYPHS), where the text element
-    puts it: x and y give the start of its baseline (its middle or its end, by
-    text-anchor), at its font-size, transforms applied."""
-    advance, corners = GLYPHS[s[0]]
-    k = (number(eff.get("font-size")) or 16.0) / EM
-    x = coord(own.get("x")) + {"middle": -advance * k / 2, "end": -advance * k}.get(
-        (eff.get("text-anchor") or "start").strip(), 0.0)
-    y = coord(own.get("y"))
-    return [at(m, x + corners[i] * k, y - corners[i + 1] * k) for i in range(0, len(corners), 2)]
-
-
-def strokes(root):
-    """(kind, points, half the stroke's width) for each stroke a figure draws, as a run of
-    straight pieces: a line, a polyline, a polygon or a rect's outline, each subpath of a
-    path (closed where a Z closes it), a circle or an ellipse in short straight pieces;
-    transforms applied, and a dashed stroke read as whole."""
-    for el, own, eff, m, _ in placed(root):
-        t = tag(el)
-        w = number(eff.get("stroke-width"))
-        w = 1.0 if w is None else w
-        if t not in DRAWN or (eff.get("stroke") or "none").strip().lower() == "none" or w <= 0:
-            continue
-        if t == "line":
-            runs = [[(coord(own.get("x1")), coord(own.get("y1"))),
-                     (coord(own.get("x2")), coord(own.get("y2")))]]
-        elif t in ("polyline", "polygon"):
-            v = [float(n) for n in NUM.findall(own.get("points", ""))]
-            run = list(zip(v[0::2], v[1::2]))
-            runs = [run + run[:1] if t == "polygon" else run]
-        elif t == "path":
-            closed: list[bool] = []
-            rings = path_rings(own.get("d", ""), closed)
-            runs = [ring + ring[:1] if shut else ring for ring, shut in zip(rings, closed)]
-        elif t == "rect":
-            x0, y0 = coord(own.get("x")), coord(own.get("y"))
-            x1, y1 = x0 + coord(own.get("width")), y0 + coord(own.get("height"))
-            runs = [[(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)]]
-        else:
-            cx, cy = coord(own.get("cx")), coord(own.get("cy"))
-            rx = coord(own.get("r")) if t == "circle" else coord(own.get("rx"))
-            ry = coord(own.get("r")) if t == "circle" else coord(own.get("ry"))
-            steps = round(math.tau / ARC_STEP)
-            runs = [[(cx + rx * math.cos(i * ARC_STEP), cy + ry * math.sin(i * ARC_STEP))
-                     for i in range(steps + 1)]]
-        half = w / 2 * math.sqrt(abs(m[0] * m[3] - m[1] * m[2]))
-        for run in runs:
-            yield t, [at(m, x, y) for x, y in run], half
-
-
-def point_gap(p, a, b) -> float:
-    """How far the point p stands from the straight piece ab."""
-    dx, dy = b[0] - a[0], b[1] - a[1]
-    n = dx * dx + dy * dy
-    t = 0.0 if n == 0 else max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / n))
-    return math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy)
-
-
-def crosses(a, b, c, d) -> bool:
-    """Whether the straight pieces ab and cd cross."""
-    def side(p, q, r):
-        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
-    return side(a, b, c) * side(a, b, d) < 0 and side(c, d, a) * side(c, d, b) < 0
-
-
-def ring_gap(ring, a, b) -> float:
-    """How far the straight piece ab stands from the convex polygon `ring`: 0 if it meets
-    it."""
-    if enclosed([ring], *a, False) or enclosed([ring], *b, False):
-        return 0.0
-    gap = math.inf
-    for c, d in zip(ring, ring[1:] + ring[:1]):
-        if crosses(a, b, c, d):
-            return 0.0
-        gap = min(gap, point_gap(c, a, b), point_gap(a, c, d), point_gap(b, c, d))
-    return gap
-
-
-def nearest_stroke(ring, pieces) -> tuple[float, str] | None:
-    """How near the strokes come to a letter's hull, less half each stroke's width, and
-    the kind of the nearest; None if none comes within CLEAR."""
-    xs, ys = [p[0] for p in ring], [p[1] for p in ring]
-    best = None
-    for kind, run, half in pieces:
-        reach = CLEAR + half
-        lo_x, hi_x, lo_y, hi_y = min(xs) - reach, max(xs) + reach, min(ys) - reach, max(ys) + reach
-        for a, b in zip(run, run[1:]):
-            if max(a[0], b[0]) < lo_x or min(a[0], b[0]) > hi_x \
-                    or max(a[1], b[1]) < lo_y or min(a[1], b[1]) > hi_y:
-                continue
-            gap = ring_gap(ring, a, b) - half
-            if gap < CLEAR and (best is None or gap < best[0]):
-                best = (gap, kind)
-    return best
-
-
-def check_clearance(path: Path, root) -> None:
-    """D15: each letter of a figure at least CLEAR from every stroke, its capital measured
-    as Georgia Italic draws it (GLYPHS)."""
-    pieces = list(strokes(root))
-    for el, own, eff, m, _ in placed(root):
-        s = text_of(el)
-        if tag(el) != "text" or not LETTER.fullmatch(s) or s[0] not in GLYPHS:
-            continue
-        near = nearest_stroke(glyph_ring(own, eff, m, s), pieces)
-        if near:
-            gap, kind = near
-            where = f"letter {s} at ({coord(own.get('x')):g}, {coord(own.get('y')):g})"
-            report("D15", path, 0, f"{where} meets a {kind}" if gap <= 0
-                   else f"{where} is {gap:.1f} from a {kind}")
 
 
 def check_figures(required: bool) -> None:
@@ -1414,173 +1392,8 @@ def check_figures(required: bool) -> None:
         if waiting:
             report("D14", d, 0, f"{len(waiting)} without letters, with the points each "
                    f"has to letter: {', '.join(waiting)}")
-
-
-# ---------------------------------------------------------------------------------------
-# The script's own check of S20's ink, run first on every run: a letter on an angle's
-# wedge, a filled path, is judged by the wedge's fill, within its three ends and beyond
-# its chord out to its arc, and not beyond the arc; however the wedge is spelled (an
-# absolute arc, a relative arc, a cubic curve), and wherever a transform moves it. (S20
-# once read no paths, and let a black letter on a blue wedge through.)
-
-INK_WEDGES = (   # a quarter wedge of radius 34 at (200, 150), below and right of it
-    "M200,150 L234,150 A34,34 0 0,1 200,184 Z",
-    "m200,150 l34,0 a34,34 0 0,1 -34,34 z",
-    "M200,150 H234 C234,168.78 218.78,184 200,184 Z",
-)
-BLUE_WEDGE = '<path d="{wedge}" fill="#1f5aa6"/>'
-YELLOW_ON_RED = ('<polygon points="150,100 300,100 300,250 150,250" fill="#d0312d"/>'
-                 '<path d="{wedge}" fill="#f2b705"/>')
-MOVED_WEDGE = '<g transform="translate(-100,20)"><path d="{wedge}" fill="#1f5aa6"/></g>'
-WITHIN, ON_ARC, BEYOND = (215.0, 160.0), (221.2, 171.2), (226.9, 176.9)
-MOVED = (121.2, 191.2)   # ON_ARC, where MOVED_WEDGE stands
-
-INK_CASES = [   # (what is drawn under the letter, its glyph's middle, its ink, a finding?)
-    (BLUE_WEDGE, WITHIN, IDEA_INK, True),
-    (BLUE_WEDGE, WITHIN, IDEA_INK_ON_DARK, False),
-    (BLUE_WEDGE, ON_ARC, IDEA_INK, True),
-    (BLUE_WEDGE, ON_ARC, IDEA_INK_ON_DARK, False),
-    (BLUE_WEDGE, BEYOND, IDEA_INK, False),
-    (BLUE_WEDGE, BEYOND, IDEA_INK_ON_DARK, True),
-    (YELLOW_ON_RED, ON_ARC, IDEA_INK, False),
-    (YELLOW_ON_RED, ON_ARC, IDEA_INK_ON_DARK, True),
-    (MOVED_WEDGE, MOVED, IDEA_INK, True),
-    (MOVED_WEDGE, MOVED, IDEA_INK_ON_DARK, False),
-    (MOVED_WEDGE, ON_ARC, IDEA_INK, False),
-]
-
-
-def ink_self_check() -> tuple[int, list[str]]:
-    """INK_CASES, each with each spelling of the wedge, read as S20 reads a figure's
-    letters; returns the number of cases and the faults."""
-    faults = []
-    size = IDEA_LETTER_SIZE
-    for under, (x, y), ink, want in INK_CASES:
-        for wedge in INK_WEDGES:
-            drawn = under.format(wedge=wedge)
-            root = ET.fromstring(
-                f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
-                f'<rect width="400" height="300" fill="#fbf7ee"/>{drawn}'
-                f'<text x="{x}" y="{y + 0.35 * size}" text-anchor="middle" font-size="{size}" '
-                f'font-style="italic" fill="{ink}">A</text></svg>')
-            found = any(ink_fault(root, eff, letter_centre(own, eff, m, "A"), "A")
-                        for el, own, eff, m, _ in placed(root) if tag(el) == "text")
-            if found != want:
-                faults.append(f"S20 {'misses' if want else 'wrongly finds'} a letter in {ink} "
-                              f"at ({x:g}, {y:g}) on {drawn}")
-    return len(INK_CASES) * len(INK_WEDGES), faults
-
-
-# ---------------------------------------------------------------------------------------
-# The script's own check of D15, run first on every run: a stroke through a letter, or
-# nearer it than CLEAR, is found, and one clear of it is not; a stroke of none is no
-# stroke, and a dashed one is read whole; an open path is not closed by the straight
-# piece its fill would add, and a closed one is; a circle round a letter is clear of it,
-# and one through it is not; and a transform moves a stroke onto a letter.
-
-CLEAR_LETTER = '<text x="150" y="100" font-size="17" font-style="italic">A</text>'
-CLEAR_CASES = [   # (what is drawn beside a letter A at (150, 100), at 17; a finding?)
-    ('<line x1="100" y1="90" x2="200" y2="90" stroke="#3b2f2f" stroke-width="1.6"/>', True),
-    ('<line x1="100" y1="110" x2="200" y2="110" stroke="#3b2f2f" stroke-width="1.6"/>', False),
-    ('<line x1="100" y1="101.5" x2="200" y2="101.5" stroke="#3b2f2f" stroke-width="1.6"/>', True),
-    ('<line x1="100" y1="90" x2="200" y2="90" stroke="none"/>', False),
-    ('<line x1="100" y1="90" x2="200" y2="90" stroke="#3b2f2f" stroke-dasharray="2 5"/>', True),
-    ('<path d="M110,94 V150 H200 V94" fill="none" stroke="#3b2f2f"/>', False),
-    ('<path d="M110,94 V150 H200 V94 Z" fill="none" stroke="#3b2f2f"/>', True),
-    ('<circle cx="155" cy="94" r="30" fill="none" stroke="#8c7b62"/>', False),
-    ('<circle cx="155" cy="94" r="6" fill="none" stroke="#8c7b62"/>', True),
-    ('<line x1="100" y1="114" x2="200" y2="114" stroke="#3b2f2f"/>', False),
-    ('<g transform="translate(0,-20)"><line x1="100" y1="114" x2="200" y2="114" '
-     'stroke="#3b2f2f"/></g>', True),
-]
-
-
-def clearance_self_check() -> tuple[int, list[str]]:
-    """CLEAR_CASES, each read as D15 reads a figure; returns the number of cases and the
-    faults."""
-    faults = []
-    for drawn, want in CLEAR_CASES:
-        root = ET.fromstring(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
-                             f'{drawn}{CLEAR_LETTER}</svg>')
-        pieces = list(strokes(root))
-        found = any(nearest_stroke(glyph_ring(own, eff, m, "A"), pieces) is not None
-                    for el, own, eff, m, _ in placed(root) if tag(el) == "text")
-        if found != want:
-            faults.append(f"D15 {'misses' if want else 'wrongly finds'} a stroke near a "
-                          f"letter: {drawn}")
-    return len(CLEAR_CASES), faults
-
-
-# ---------------------------------------------------------------------------------------
-# The script's own check, run first on every run: each wording rule finds its phrase
-# however a line or a comment wraps it, and not across a blank line (save S2's and S7's),
-# inside a quotation or in one of Heath's `--` lines; and S3 still finds an "I" after
-# "Book" when anything but one space stands between them. (D7 once let "Lean\ncannot"
-# through, in a docstring.)
-
-PHRASE_CASES = [   # (rule, its search, the text as the rule reads it, a finding?)
-    ("D7", LEAN_CANNOT.search, "as if picking it up. Lean\ncannot move a figure", True),
-    ("D7", LEAN_CANNOT.search, "the note says Lean\n  -- cannot move it", True),
-    ("D7", LEAN_CANNOT.search, "> what Lean\n> can't do", True),
-    ("D7", LEAN_CANNOT.search, "Lean  can not", True),
-    ("D7", LEAN_CANNOT.search, "what Lean\n\ncannot", False),
-    ("D7", LEAN_CANNOT.search, "Leancannot", False),
-    ("S2", CREW.search, "the first\n  -- mate", True),
-    ("S2", CREW.search, "the first\n\nmate", True),
-    ("S3", FIRST_PERSON.search, "as I\nthink", True),
-    ("S3", FIRST_PERSON.search, "as I\n  -- would say", True),
-    ("S3", FIRST_PERSON.search, "Book I was proved", False),
-    ("S3", FIRST_PERSON.search, "Books I have read", False),
-    ("S3", FIRST_PERSON.search, "Book I\nwas proved", False),
-    ("S3", FIRST_PERSON.search, "in Book  I was", True),
-    ("S3", FIRST_PERSON.search, "in Book\tI was", True),
-    ("S3", FIRST_PERSON.search, "in Book\nI was", True),
-    ("S3", FIRST_PERSON.search, "the Book\n  -- I would say", True),
-    ("S3", FIRST_PERSON.search, "Books\n> I have", True),
-    ("S3", FIRST_PERSON.search, "the eBook I have", True),
-    ("S4", HEDGE.search, "strictly\nspeaking", True),
-    ("S4", HEDGE.search, "it is worth\n   noting", True),
-    ("S5", EUCLID_CITES.search, "Euclid\ncites I.3", True),
-    ("S5", EUCLID_CITES.search, "I.1 to I.28 never\n  -- need it", True),
-    ("S6", TACIT.search, "a tacit\nassumption", True),
-    ("S7", DEFINITION.search, "by Definition\n15", True),
-    ("S7", DEFINITION.search, "by Definition\n\n15", True),
-    ("S9", ITALIC_LETTER.search, "the line *AB, CD*", True),
-    ("S9", ITALIC_LETTER.search, "the line *AB,\nCD*", True),
-    ("S9", ITALIC_LETTER.search, "> the line *AB\n> CD*", True),
-    ("S9", ITALIC_LETTER.search, "the line *AB,\n\nCD*", False),
-    ("D10", DEFINITION.search, "by Def.\n  -- 15", True),
-    ("D8", NO_CITATION.search, "gives no\ncitation", True),
-    ("D9", POSTULATE_5.search, "the parallel\npostulate", True),
-    ("S11", REFRAINS[0][0].search, "the certificate\nrecords", True),
-    ("S11", RETIRED_LEADS.search, "**What it\nrests on.**", True),
-    ("S11", proclus_under_i31, "Proclus puts it under I.31.", True),
-    ("S11", proclus_under_i31, "Proclus puts it under\nI.31.", True),
-    ("S11", proclus_under_i31, "As Proclus says, it falls\n> under\n> I.31.", True),
-    ("S11", proclus_under_i31, "Proclus puts it under\n\nI.31.", False),
-    ("S11", proclus_under_i31, "Proclus says so. It falls under\nI.31.", False),
-]
-
-
-def self_check() -> tuple[int, list[str]]:
-    """PHRASE_CASES, and four cases read as the Lean notes and the prose are read; returns
-    the number of cases and the faults."""
-    cases = PHRASE_CASES + [
-        ("D7", LEAN_CANNOT.search,
-         notes_text("/-- We build it, for Lean\ncannot move a figure. -/\n"
-                    "theorem T : True := trivial\n"), True),
-        ("D7", LEAN_CANNOT.search,
-         notes_text("theorem T : True := by\n  -- Lean\n  -- cannot\n  trivial\n"), False),
-        ("D7", LEAN_CANNOT.search,
-         blank_quotes(blank_code('He wrote "what Lean\ncannot" once.')), False),
-        ("S3", FIRST_PERSON.search, blank_quotes(blank_code('as I "so" think')), True),
-    ]
-    faults = []
-    for rule, search, text, want in cases:
-        found = bool(search(text))
-        if found != want:
-            faults.append(f"{rule} {'misses' if want else 'wrongly finds'} {text!r}")
-    return len(cases), faults
+        for kind, names in sorted(italic_figures[book].items()):
+            report("D15", d, 0, f"{len(names)} {kind} with italic letters: " + ", ".join(names))
 
 
 # ---------------------------------------------------------------------------------------
@@ -1596,33 +1409,6 @@ def main() -> int:
                              "does; it is on, so this changes nothing unless it is turned off")
     args = parser.parse_args()
     required = IDEA_LETTERS_REQUIRED or args.require_idea_letters
-
-    count, faults = ink_self_check()
-    if faults:
-        print(f"{len(faults)} fault(s) in the script's reading of S20's ink; nothing else "
-              "was checked:")
-        for f in faults:
-            print("  ✗ " + f)
-        return 1
-    print(f"self-check: S20 reads the ink of {count} letters on angles' wedges rightly")
-
-    count, faults = clearance_self_check()
-    if faults:
-        print(f"{len(faults)} fault(s) in the script's reading of D15's strokes; nothing "
-              "else was checked:")
-        for f in faults:
-            print("  ✗ " + f)
-        return 1
-    print(f"self-check: D15 reads {count} strokes beside a letter rightly")
-
-    count, faults = self_check()
-    if faults:
-        print(f"{len(faults)} fault(s) in the script's own wording patterns; nothing else "
-              "was checked:")
-        for f in faults:
-            print("  ✗ " + f)
-        return 1
-    print(f"self-check: the wording rules read {count} wrapped and unwrapped phrases rightly")
 
     mishnah = mishnah_files()
     for path in mishnah:
@@ -1648,6 +1434,9 @@ def main() -> int:
     if "D14" in reports:
         print("note: S21 holds only the idea figures that carry a letter, until "
               "IDEA_LETTERS_REQUIRED is set (STYLE, section 8); D14 lists the rest")
+    if "D15" in reports:
+        print("note: S15 and S20 take italic letters, one style in each figure, until "
+              "UPRIGHT_LETTERS_REQUIRED is set (STYLE, section 8); D15 lists the figures")
     if args.no_lean:
         print("note: S12 skipped (--no-lean); the mishnah's Lean names were not checked")
     elif shutil.which("lake") is None:

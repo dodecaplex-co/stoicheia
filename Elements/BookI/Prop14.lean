@@ -64,9 +64,10 @@ theorem Prop14 {A B C D : Point} (hCD : OppositeSidesOf C D A B) (h : ∠ A B C 
       CommonNotion3 (c := ∠ C B A) (d := ∠ C B A) (by rw [add_comm, hsum, add_comm]) rfl
     -- the less to the greater: which is impossible.
     /- In Euclid's figure BE falls within the angle ABD, so that ABE is a part
-       of ABD; Lean must allow too for BD falling within ABE. Both figures are
-       settled by `onRay_of_angle_eq` in Book Zero: on one side of a straight
-       line, only one ray from a point of it makes a given angle with it, for
+       of ABD; his supposition allows BD to fall within ABE as well, and our
+       proof takes that figure too. Both figures are settled by
+       `onRay_of_angle_eq` in Book Zero: on one side of a straight line, only
+       one ray from a point of it makes a given angle with it, for
        otherwise one of two equal angles would be a part of the other, the less
        equal to the greater. E and D are on the same side of AB, both being on
        the other side from C (`OppositeSidesOf.of_between`,

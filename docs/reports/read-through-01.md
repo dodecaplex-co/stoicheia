@@ -1,5 +1,7 @@
 # Read-through 01: Books I to III
 
+*Correction, 18 October 2026: this report's conclusions that the axioms are consistent and that no other rule brings in Postulate 5 rest on numerical tests, which support them but do not prove them ([MODEL.md](../../tests/model/MODEL.md#what-this-shows-and-what-it-does-not)). The consistency is now proved in `model/` (#73), where Lean checks that the ordinary plane satisfies every axiom, relative to Lean's logic and Mathlib's construction of the real numbers; that no other rule brings in Postulate 5 still rests on the numerical tests.*
+
 *16 October 2026, at main `5541197`. Books I and II are released; Book III is stated.
 What has been done about it since is at the end, under "What was done".*
 
