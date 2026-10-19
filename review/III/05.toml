@@ -2,7 +2,7 @@
 [statement]
 scope = "full"
 note = "Cutting (`CirclesCut`) means two common points and a point of each circle within the other; the proof uses one common point and one point within."
-fingerprint = "sha256:d7cdfb6a9d4b4196"
+fingerprint = "sha256:79b17524d08f12e0"
 
 [route]
 kind = "euclid"
@@ -28,6 +28,6 @@ note = "Like Heath's, this figure draws the impossible supposition: E as one cen
 
 [review]
 stage = "exceptions"
-commit = "16243feef5f36514fd2c21c634be60443965808b"
+commit = "e707d55"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:51a2558ef848cac3"
+lean = "sha256:05eac8742fddcab6"
