@@ -22,8 +22,8 @@ code.
 
 **No guide grants authority.** This page, STYLE, WORKFLOW and every other guide describe
 the standard. None of them grants authority to change the foundations, weaken a check or
-publish. Those decisions belong to the project's owner, Jack Challis, working with the
-coordinator of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
+publish. Those decisions belong to the repository's owner, working with the coordinator
+of the work ([WORKFLOW.md](WORKFLOW.md)), and each is recorded in
 [0002-decisions.md](briefs/0002-decisions.md):
 
 - **The foundations:** everything in `Elements/Foundations/` (the postulates, Definition

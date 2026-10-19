@@ -1,19 +1,17 @@
 # review/III/07.toml
 [statement]
-scope = "restricted"
-hypotheses = [
-  "the two straight lines compared as nearer and more remote lie on one side of the diameter AD (`SameSideOf B C A D`). Across AD the comparison follows, Heath notes, from Euclid's equal and equally inclined straight line on the other side (vol. 2, p. 17); the statement gives that line's length but not its inclination.",
-]
-note = "Nearer and more remote are compared only on one side of AD, as in Euclid's figure; a straight line on one side is not compared with one on the other."
-short = "compared on one side of AD only"
-fingerprint = "sha256:822f7a06d9330f45"
+scope = "full"
+note = "With its companion: `Prop7.general` compares any two of the rest, on one side of AD or on opposite sides; `Prop7` keeps two on one side."
+companions = ["III.7 general"]
+fingerprint = "sha256:089a6993dc3354e9"
 
 [route]
 kind = "euclid"
+note = "Across AD the companion moves C to its partner on B's side, as far from F. Euclid's own I.4 step, which makes FH equal to FG, makes the angles at F equal too, so the partner is as near FA as C (`Prop7.partner`), as Heath reads the comparison across the diameter (vol. 2, p. 17); the comparison on one side finishes."
 
 [representation]
 tags = ["centre-given"]
-note = "The centre E is given, as Euclid's setting-out takes it. \"Nearer\" is Euclid's meaning, the less angle at F with FA; the statement speaks of every point of the circle."
+note = "The centre E is given, as Euclid's setting-out takes it. \"Nearer\" is Euclid's meaning, the less angle at F with the ray FA, unsigned: an obtuse angle is not exchanged for its acute supplement. F is a point strictly within the diameter, between E and D, so not the centre, since F at an end would make the least straight line nothing. The statement speaks of every point of the circle."
 
 [[passage]]
 at = "For the same reason"
@@ -21,12 +19,20 @@ kind = "grouped"
 note = "Euclid's argument above is proved for any two points B, C of the circle on one side of AD; C and G are such a pair, so these words need no Lean of their own."
 
 [[passage]]
+at = "Therefore FA is greatest, FD is least, and FB is greater than FC"
+kind = "case"
+note = "Euclid compares FB, FC and FG on one side of AD, as his figure has them. `Prop7.general` compares any two of the rest on opposite sides too, through the partner on the other side, as far from F and as near FA (`Prop7.partner`)."
+
+[[passage]]
 at = "Therefore another straight line equal to GF will not fall"
 kind = "grouped"
 note = "The conclusion of the argument above, which has shown that every point K of the circle with FK equal to FG is G or H."
 
+[figure]
+case = "FB, FC and FG compared on one side of AD, as in Heath's figure"
+
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:a47f18d36bccb5e8"
+lean = "sha256:bef720567502d812"

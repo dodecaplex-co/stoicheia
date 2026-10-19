@@ -93,6 +93,7 @@ Heath's brackets give in most of the propositions of Book III.
 - A point of the circle on AD itself is A or D (Circle 1), the greatest or the least, which "the rest" leaves aside.
 - "Let the angle FEH be constructed equal to the angle GEF [I. 23]": I.23 gives a ray, not a point of the circle. H is where that ray meets the circle (`line_circle_beyond`), so that "GE is equal to EH" is Definition I.15.
 - "The nearer to the straight line through the centre being thus equal to the more remote": a second point on one side of AD as far from F as G is G itself, for were they two, one would be the nearer and the greater.
+- Euclid compares the straight lines on one side of AD, as his figure has them. Across AD the comparison follows, Heath notes, from the equal straight line on the other side being equally inclined to the diameter (vol. 2, p. 17). The companion `Prop7.general` proves it so: Euclid's I.4 step, which makes FH equal to FG, makes the angles at F equal too (`Prop7.partner`).
 
 ## III.8
 - Euclid speaks of the concave and the convex circumference, "terms which are not defined but taken as understood", as Heath remarks under III.7 (vol. 2, p. 16). We read the convex as where a straight line from D first meets the circle, and the concave as where it meets it again.
@@ -100,6 +101,7 @@ Heath's brackets give in most of the propositions of Book III.
 - Our statement compares DA and DG with every point of the circle, and a point on DA itself makes no triangle for I.20. It is A or G (`Prop8.on_diameter`), and the part DG is less than the whole DA.
 - "Let the angle DMB be constructed equal to the angle KMD": Heath gives no bracket for it: it is I.23. B is laid off on its arm at the distance of the radius (`OnRay.exists_len_eq`), and System E's Diagram-segment 3 (`on_circle_of_len_eq`) puts it on the circle. Definition I.15 gives only the other half: that a point of the circle is a radius away.
 - "Which was proved impossible" looks back to the convex circumference, but a third straight line DN might end on the concave one, or DK touch the circle. Our proof compares the angles at M instead: by I.24, unequal angles there give unequal straight lines from D.
+- Across DA, as in III.7, the companion `Prop8.general` compares through the partner on the other side, which Euclid's I.4 step at M makes equally inclined to DA; that it is in the same class, the convex or the concave circumference, is a step of its own (`Prop8.partner`), from the partners of the points of the circle beyond it or before it.
 
 ## III.9
 - "Let AB, BC be joined and bisected at the points E, F": Heath gives no bracket for it: it is I.10.
@@ -155,6 +157,7 @@ Heath's brackets give in most of the propositions of Book III.
 - "Let the centre E of the circle be taken [III. 1]": III.1 needs two points of the circle, and our statement names none. Our proof finds two on the straight line from the given centre to A: one between the centre and A, since A is outside (`line_circle_between`), and one beyond the centre (`line_circle_beyond`). III.1's centre is then the given one (`centre_unique`), and the first point is Euclid's D.
 - "From D let DF be drawn at right angles to EA": Heath gives no bracket for it: it is I.11. I.11's straight line need not end on the circle AFG; F is where it, produced beyond D, meets that circle, and the angle there is right too (`adjacent_eq_of_right`).
 - B, where EF meets the circle BCD, is read off the figure. F is farther from E than D, so outside BCD, and EF meets the circle between E and F (`line_circle_between`).
+- A point on the circumference Euclid leaves out, Heath explains, as "so directly indicated by III. 16, Por. as to be scarcely worth a separate statement" (vol. 2, p. 44). The companion `Prop17.general` takes it: the straight line at right angles to the radius EA at A (I.11) touches by III.16's porism, and the point of contact is A itself. From a point within, no straight line touches (`Prop17.inside`, by `Touches.not_inside`).
 
 ## III.18
 - "Let FG be drawn from F perpendicular to DE": Heath gives no bracket for it: it is I.12.
