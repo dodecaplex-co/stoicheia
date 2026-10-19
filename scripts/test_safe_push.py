@@ -64,15 +64,16 @@ one commit and runs safe_push.py against that origin:
 - the model's laws (issue #40): an axiom added in one pull request with its entry in the
   lock, the lock's hash, its line of tests/model/laws.toml, its law's code in search.py
   and hyperbolic.py and the model's account lands as content, and the model's ties hold
-  on it; while a law loosened beside it, a helper or tolerance of the harness changed, a
-  line of laws.toml moved without its axiom, a new law's code that uses what its
-  allow-list does not name (a global, a frame, a lookup by string, a print, the end of
-  the run) or changes a shared container under a second name, or laws.toml or the lock
-  deleted, is a check change, kept apart; the pre-flight treats an axiom restated or
-  removed with its law as content too, while structured.py and exhaustive.py, which name
-  some laws, must drop or re-key such a law first; every law of the two harnesses keeps
-  to the allow-list, and each entry of the list is one a law needs; and a harness of the
-  model that stops before its last line, with status 0, fails the model's run;
+  on it; while a law loosened beside it, a helper or tolerance of the harness changed
+  (hidden in a comment by a coding cookie, too), two laws of a harness reordered, a line
+  of laws.toml moved without its axiom, a new law's code that uses what its allow-list
+  does not name (a global, a frame, a lookup by string, a print, the end of the run) or
+  changes a shared container under a second name, or laws.toml or the lock deleted, is a
+  check change, kept apart; the pre-flight treats an axiom restated or removed with its
+  law as content too, while structured.py and exhaustive.py, which name some laws, must
+  drop or re-key such a law first; every law of the two harnesses keeps to the
+  allow-list, and each entry of the list is one a law needs; and a harness of the model
+  that stops before its last line, with status 0, fails the model's run;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
