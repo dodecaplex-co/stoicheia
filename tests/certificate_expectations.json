@@ -4,25 +4,15 @@
     {
       "ref": "III.1 Por.",
       "field": "axioms",
-      "includes": [
-        "Tacit.centre_unique"
-      ],
-      "count": {
-        "prefix": "Tacit.",
-        "is": 57
-      },
+      "includes": ["Tacit.centre_unique"],
+      "count": {"prefix": "Tacit.", "is": 57},
       "why": "III.1's porism proves that the centre lies on the cutting line by `centre_unique`, which III.1's construction does not use. The review found the porism's assumptions missing from III.1's certificate; the porism's own entry must carry them: 57 tacit rules, centre_unique among them."
     },
     {
       "ref": "III.1",
       "field": "axioms",
-      "excludes": [
-        "Tacit.centre_unique"
-      ],
-      "count": {
-        "prefix": "Tacit.",
-        "is": 56
-      },
+      "excludes": ["Tacit.centre_unique"],
+      "count": {"prefix": "Tacit.", "is": 56},
       "why": "III.1's own certificate is its construction alone: 56 tacit rules, without the porism's centre_unique."
     },
     {
@@ -34,41 +24,31 @@
     {
       "ref": "III.1",
       "field": "attached",
-      "equals": [
-        "III.1 Por."
-      ],
+      "equals": ["III.1 Por."],
       "why": "A proposition lists its porism, so that it is not complete until the porism is proved."
     },
     {
       "ref": "III.2",
       "field": "own_axioms",
-      "excludes": [
-        "Tacit.inside_of_between"
-      ],
+      "excludes": ["Tacit.inside_of_between"],
       "why": "III.2's own Lean never calls Circle 2 (Argon's second review; #65): its own axioms are those its proof and its helpers name, not those of the propositions it cites."
     },
     {
       "ref": "III.2",
       "field": "inherited",
-      "excludes": [
-        "Tacit.inside_of_between"
-      ],
+      "excludes": ["Tacit.inside_of_between"],
       "why": "No lemma III.2 calls brings Circle 2 in (#65)."
     },
     {
       "ref": "I.5",
       "field": "own_axioms",
-      "excludes": [
-        "Postulate3"
-      ],
+      "excludes": ["Postulate3"],
       "why": "I.5's own Lean never calls Postulate 3: like Euclid's proof, it draws no circle (#65)."
     },
     {
       "ref": "I.5",
       "field": "inherited",
-      "includes": [
-        "Postulate3"
-      ],
+      "includes": ["Postulate3"],
       "why": "Postulate 3 reaches I.5's proof through Book Zero's exists_between_nearer, which keeps a point taken at random near enough with a circle; a lemma's axioms are inherited, not the proof's own (Argon's second review; #65)."
     }
   ]
