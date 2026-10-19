@@ -14,8 +14,8 @@ records current; CI runs it on every push.
    statement of III.1's porism makes III.1's review record stale; and `Centre`, no
    longer among the opaque primitives (as if it had been made a `def`), is caught.
 4. A changed Lean file makes its review record stale (I.1).
-5. III.16's review record without its unformalized passage leaves a run of `--` lines
-   with no Lean beneath it undeclared.
+5. III.16's review record without the passage that declares its angle clauses, of
+   whatever kind, leaves a run of `--` lines with no Lean beneath it undeclared.
 6. A remark planted in I.5 between two sentences that share one step of Lean leaves the
    first with no Lean of its own: a remark ends a run and carries nothing. A second
    remark, between the next sentence and its Lean, does not stop that Lean carrying it.
@@ -196,8 +196,10 @@ def toml_blocks(text: str) -> list[str]:
 
 def undeclared_run() -> None:
     """Drop the [[passage]] tables that begin within III.16's runs of `--` lines with no
-    Lean beneath them, and the run of the unformalized angle clauses must be caught: the
-    message names it by its first words, since the runs before it are caught too."""
+    Lean beneath them, and the run of the angle clauses must be caught: the message names
+    it by its first words, since the runs before it are caught too. The passage that
+    declares that run may be of any kind (left in Euclid's words, or argued another way
+    by a companion); what is tested is that a run no passage declares is caught."""
     import tomllib
     record = heath.review_path("III", 16)
     src = heath.lean_path("III", 16).read_text()
@@ -209,16 +211,18 @@ def undeclared_run() -> None:
         table = tomllib.loads(block).get("passage", [{}])[0] if block.lstrip().startswith("[[passage]]") else {}
         at = check_fidelity._plain(table.get("at", "")) if table else None
         if at and any(ln in run.lines and words.startswith(at) for run in runs for ln, words in starts):
-            dropped.append(table.get("kind"))
+            dropped.append(at)
         else:
             kept.append(block)
-    if "unformalized" not in dropped:
-        failures.append("III.16's unformalized passage: review/III/16.toml declares none in "
-                        "the run of `--` lines with no Lean beneath it; update this test")
+    angles = check_fidelity._plain("I say further that the angle of the")
+    if not any(at.startswith(angles) for at in dropped):
+        failures.append("III.16's angle clauses: review/III/16.toml declares no passage in "
+                        "the run of `--` lines with no Lean beneath it that begins 'I say "
+                        "further that the angle of the'; update this test")
         return
     record.write_text("".join(kept))
     try:
-        expect_failure("III.16's record without its unformalized passage", fidelity(),
+        expect_failure("III.16's record without the passage on its angle clauses", fidelity(),
                        "III.16: the `--` lines from 'I say further that the angle of the'")
     finally:
         record.write_text(saved)
