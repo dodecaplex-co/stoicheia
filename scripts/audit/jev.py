@@ -70,9 +70,9 @@ audit traffic:
 
     export STOICHEIA_JEV_KEY_FILE=<a file outside the repository, holding the key>
     python3 scripts/audit/jev.py smoke
-    python3 scripts/audit/jev.py run FILE \\
-        --out OUT
-    python3 scripts/audit/jev.py score OUT
+    python3 scripts/audit/jev.py run docs/reports/acceptance/jev/calibration.jsonl \\
+        --out docs/reports/acceptance/jev/calibration-<model>-<date>.jsonl
+    python3 scripts/audit/jev.py score docs/reports/acceptance/jev/calibration-<model>-<date>.jsonl
 
 `score` lists every answer that disagrees with its expected answer, has a confidence under
 `--low` (0.5 by default, the threshold under which the example on TypeSafe's Confidence

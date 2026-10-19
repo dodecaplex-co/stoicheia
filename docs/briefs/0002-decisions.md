@@ -1104,6 +1104,18 @@ findings:
   (doc-gen4, in CI) comes in a change of its own, and nothing of it is published without
   the owner's OK.
 
+- **Using the library and keeping its names.** The table of names lands first;
+  its guide and links follow separately (keep_apart). The README gains "Use it": the `require` for a
+  `lakefile.toml`, pinned to the release tag `book-III`, its one-line form for a
+  `lakefile.lean`, and a short example, each built in a fresh project against the tag on
+  18 October; and, for a project that already has a `lake-manifest.json`,
+  `lake update stoicheia` first, since Lake 4.35's `lake build` does not add a new
+  dependency to a manifest that exists. FORMALIZATION, section 2, gains "Names, and how they change": how names are
+  made; a released name never renamed or removed without a deprecated alias for one
+  release; a changed statement keeping its proposition's name, with the old one kept as a
+  companion where citers need it; and the release notes listing every name deprecated and
+  every statement changed.
+
 - **The Jev audit's client.** Brief 0005's stage 6 asks for an
   independent audit by Jev, TypeSafe's decision model, through a fresh client
   ([#36](https://github.com/jackChallis/stoicheia/issues/36)).
@@ -1130,3 +1142,16 @@ findings:
   request has been sent yet; the accuracy bar Jev must meet on the set is the
   coordinator's to state before the first run, and `score --bar` counts it met only when
   every row of the set is answered and no request failed.
+- **The Jev calibration set.** The calibration set the brief describes is
+  [`docs/reports/acceptance/jev/calibration.jsonl`](../reports/acceptance/jev/calibration.jsonl)
+  (new), quoted from the files at `4d02d50`: fourteen rows, five seeded and nine controls.
+  Item 9's question, framed as the brief frames it, is asked of the I.40, II.1, III.14 and
+  III.24 statements as they stand before stages 2 to 4 move their new statements in, each
+  once labelled "full" (seeded) and once with its own record (a control), and of four full
+  statements with their records, each beside a seeded statement of its kind: I.39, I.6,
+  II.4 and III.3. Item 10's question is asked of I.41, once with a planted dummy citation
+  (I.37's result bound to `_` and never used, the step done by I.38: it compiles without a
+  warning, and its proof term still names I.37, so the certificate would list it) and once
+  as proved. It follows the client in a separate change (keep_apart). The examples in
+  `scripts/audit/jev.py` now name the calibration file; only that documentation changes,
+  with every check preserved. No request has been sent.
