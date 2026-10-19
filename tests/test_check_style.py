@@ -228,12 +228,59 @@ def note_lines(raw: str, rule, *, names: bool = False) -> list[int]:
     check_text reads a note for S7 (outside quotations and square brackets), or, with
     `names`, in which S12 finds a name."""
     out = []
-    for line, _, text in style.review_texts(raw):
+    for line0, _, text in style.review_texts(raw):
         read = style.SQUARE.sub(style._blank, style.blank_quotes(style.blank_code(
             style.straighten(text))))
-        if style.lean_names(text) if names else rule.search(read):
-            out.append(line)
+        m = None if names else rule.search(read)
+        if names and style.lean_names(text):
+            out.append(line0 + 1)
+        elif m:
+            out.append(line0 + style.line_of(read, m.start()))
     return out
+
+
+SAMPLE_TOML_EDGES = """[statement]
+scope = "restricted" # "As Definition 8 says." in a comment
+note = \"\"\"
+The first line,
+then Definition 8.\"\"\"
+short = "As Definition 8 says."
+hypotheses = ["one\\nDefinition 9"]
+"""
+
+
+def lean_note_findings(src: str, rendered=()) -> list[str]:
+    """The failures and reports of check_lean_notes on a Lean source, as a file of the
+    foundations, with `rendered` its rendered docstrings, (axiom, doc) each; the script's
+    own lists are left as they were."""
+    saved = (list(style.failures), dict(style.reports))
+    try:
+        style.failures.clear()
+        style.reports.clear()
+        docs = []
+        for name, doc in rendered:
+            line = next(k for k, l in enumerate(src.splitlines(), 1) if f"axiom {name}" in l)
+            span = style.docstring_span(src, line, doc)
+            docs.append(style.Rendered(name, *span, doc))
+        style.check_lean_notes(style.ROOT / "Elements" / "Foundations" / "Sample.lean", src,
+                               docs)
+        return sorted([r for r, *_ in style.failures] + [r for r in style.reports])
+    finally:
+        style.failures[:] = saved[0]
+        style.reports.clear()
+        style.reports.update(saved[1])
+
+
+def s12_asks(texts, audit_built: bool):
+    """What s12_plan asks of Lean: the names of its old groups and of its new ones, the
+    audit lemmas left unchecked and the words of NOT_DECLARED in use."""
+    old, new, unchecked, used = style.s12_plan(texts, audit_built)
+    return (sorted(n for g in old.values() for n in g), sorted(n for g in new.values() for n in g),
+            unchecked, sorted(used))
+
+
+MISHNAH = style.ROOT / "mishnah" / "I" / "99.md"
+CATALOGUE = style.REPORTS_DIR / "overlaps.md"
 
 
 def s22(text: str) -> list[str]:
@@ -254,6 +301,33 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S12", style.lean_names, "(`Between B C E`)", []),
     ("S12", style.lean_names, "(`∠ A B C`)", []),
     ("S12", style.lean_names, "`x := 1`", []),
+    ("S12", style.lean_names, "(`hBCE:Between B C E`, `hBCE' : P`)", ["hBCE", "hBCE'"]),
+    ("S12", style.lean_names, "`a :: l`", []),
+    # A comment's quotation is no string; a multi-line string starts below its quotes;
+    # an escaped line break in a one-line string reads as a space.
+    ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_EDGES, [5, 6, 7]),
+    ("S7", lambda raw: [t for _, k, t in style.review_texts(raw) if k == "statement.hypotheses"],
+     SAMPLE_TOML_EDGES, ["one Definition 9"]),
+    ("S7", lambda raw: style.review_texts(raw), "statement = 1\nfigure = [1]\n", []),
+    ("S7", lambda raw: style.review_texts(raw, terms=True), "tag = 1\n", []),
+    # The mishnah is asked as before: every name, with Elements alone.
+    ("S12", lambda ts: s12_asks(ts, False),
+     [style.NamedText(MISHNAH, "`direct_axioms`, `Audit.x`, `hX : T`", "E", held=True)],
+     (["Audit.x", "direct_axioms", "hX"], [], [], [])),
+    ("S12", lambda ts: s12_asks(ts, False),
+     [style.NamedText(CATALOGUE, "`direct_axioms`, `Audit.x`, `Prop5.base`", "E")],
+     ([], ["Prop5.base"], ["Audit.x"], ["direct_axioms"])),
+    ("S12", lambda ts: s12_asks(ts, True),
+     [style.NamedText(CATALOGUE, "`Audit.x`", "E")], ([], ["Audit.x"], [], [])),
+    # Every rule of the Lean notes reads all of them, the rendered docstrings among them,
+    # and S6 and S7 read a rendered docstring as the pages show it.
+    ("S4", lean_note_findings, "/- Note -/\n/-- that it lies on a line. -/\naxiom a : True\n",
+     ["S4"]),
+    ("S4", lambda src: lean_note_findings(src, [("a", "that it lies on a line.")]),
+     "/- Note -/\n/-- that it lies on a line. -/\naxiom a : True\n", ["S4"]),
+    ("S6", lambda src: lean_note_findings(src, [("a", "A tacit assumption.")]),
+     "/-- A tacit\n\nassumption. -/\naxiom a : True\n", ["S6"]),
+    ("D10", lean_note_findings, "/-- A tacit\nassumption. -/\naxiom a : True\n", ["D10"]),
     ("D4", lambda t: style.lean_names(t, binders=False), "(`hBCE : Between B C E`)", []),
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_RECORD, [5, 15]),
     ("S12", lambda raw: note_lines(raw, None, names=True), SAMPLE_RECORD, [4, 12]),
@@ -265,6 +339,8 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
                                 "Definition 15 does not give)."), SAMPLE_TACIT,
      " A point at the radius is on the circle\n(the half Definition 15 does not give). "),
     ("S7", lambda src: spans_of(src, 5, "Another docstring."), SAMPLE_TACIT, None),
+    ("S7", lambda src: spans_of(src, 2, "On one line."), "namespace Elements.Tacit\n"
+     "/-- On one line. -/ axiom one : True\n", " On one line. "),
     ("S7", lambda src: spans_of(src, 2, "The transfer rules: Definition 15 here is in no "
                                 "page."), SAMPLE_TACIT, None),
     ("S22", s22, "the straight line `PQ` and the circle `ABCD`", ["PQ", "ABCD"]),
@@ -273,10 +349,12 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S22", s22, "the copy `G E C'` of ABC", ["G E C'"]),
     ("S22", s22, "`∠ A B C`, `Prop5.base`, `Centre E ABCD`, `B ≠ C`, `hAB`", []),
     ("S22", s22, "`x` AB `y`", []),
+    ("S22", s22, "`AB,CD` and ``AB`CD`` and `A\nB`", ["AB,CD", "A\nB"]),
     ("S22", lambda t: s22(style.FENCE.sub(style._blank, t)), "```\n`AB`\n```\n`CD`",
      ["CD"]),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "overlaps.md", True),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-II.md", True),
+    ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-I-supplement.md", True),
     ("S7", style.is_report, style.REPORTS_DIR / "read-through-01.md", True),
     ("S7", style.is_report, style.REPORTS_DIR / "gaps-book-II.md", False),
     ("S7", style.is_report, style.REPORTS_DIR / "outside-review-02.md", False),

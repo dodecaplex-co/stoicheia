@@ -1343,7 +1343,8 @@ findings:
     before the colon of a backticked `name : type`. `NOT_DECLARED` lists the two tactics
     and the three fields of facts.json it cannot `#check`, each with its reason, and fails
     an entry that no text uses any more. The overlap catalogue's audit lemmas are put to
-    Lean once `lake build Audit` has run, as CI runs it;
+    Lean once `lake build Audit` has run, as CI runs it. The mishnah is asked as it always
+    was, every name with `import Elements` alone, and neither excuse holds there;
   - S22, new: a code span of letters alone (`P`, `PQ`, `ABCD`), in all of these and the
     Lean notes. The owner's second comment on #66 asked that Book Zero's backticked pairs
     of letters be swept, or excepted in STYLE: they are swept, with the lone letters
@@ -1367,7 +1368,11 @@ findings:
   a listed file. An entry whose file has nothing left is reported as done, and comes out in
   a change to the check; the list goes once it is empty. The protected files changed are
   [`scripts/check_style.py`](../../scripts/check_style.py),
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) (27 scope cases and 5
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (43 scope cases and 5
   reach cases), [`review/SCHEMA.md`](../../review/SCHEMA.md) and
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), whose comment on S12 now
-  says what it reads.
+  says what it reads. Astra read the first draft cold, through the Codex CLI, and found
+  nine faults, each now mended with a case of its own: among them, a phrase that runs
+  from one Lean note into a rendered docstring, a docstring read with other white space
+  than its page shows, a mishnah name excused that used to fail, and a TOML comment
+  taken for a note. Our warm thanks to Astra.

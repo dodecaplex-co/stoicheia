@@ -84,11 +84,11 @@ does. Each is a full sentence or two, and may say "we". Heath's letters are plai
 letters of a step written once over any letters, as Book Zero's and the foundations' are,
 the Lean's variables among them: the point P, the straight line PQ, the circle ABCD. A
 code span of letters alone fails **[checked]**. Backticks are for Lean names and
-expressions alone (`Prop30.meet`, `∠ A B C`), and hypotheses are said in words (below). A shared step is explained once,
-where it is first used or in the book's introduction, and pointed to elsewhere: "I.5
-(`Prop5.base`)", "as in III.1 (`Prop1.perpendicular`)". A note does not retell the
-mishnah: the note says how, the mishnah says why. Where the comments go, and what the `--`
-lines are, is [FORMALIZATION.md](FORMALIZATION.md)'s business.
+expressions alone (`Prop30.meet`, `∠ A B C`), and hypotheses are said in words (below). A
+shared step is explained once, where it is first used or in the book's introduction, and
+pointed to elsewhere: "I.5 (`Prop5.base`)", "as in III.1 (`Prop1.perpendicular`)". A note
+does not retell the mishnah: the note says how, the mishnah says why. Where the comments
+go, and what the `--` lines are, is [FORMALIZATION.md](FORMALIZATION.md)'s business.
 
 **Hypotheses in words.** This paragraph is the rule's one home. A hypothesis is said in
 words, never by its local name: "the bases BC and CE meet at C", not `hBCE`, a name Lean
@@ -542,8 +542,9 @@ comment leader (`--`, or a quotation's `>`). A blank line ends such a phrase, sa
 white space. A word that a rule seeks elsewhere in the clause or the sentence (what
 follows S5's "never need", S11's "Proclus", D9's "need") is found as its row says. The
 patterns are tested on such phrases, case by case, with S20's reading of a letter on an
-angle's wedge, in `tests/test_check_style.py`, which CI runs just before the script
-([WORKFLOW](WORKFLOW.md), section 8).
+angle's wedge, and the scopes' reading of a review record, a rendered docstring, a
+`name : type` and letters in backticks, in `tests/test_check_style.py`, which CI runs
+just before the script ([WORKFLOW](WORKFLOW.md), section 8).
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.
@@ -588,7 +589,7 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 | S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*(([ \t,]+\|[ \t,]*\n[ \t]*((--\|>)[ \t]*)?[ \t,]*)[A-Z]+[′₀-₉]*)*\*($\|[^*])`: the letters may stand apart by spaces, tabs and commas, or by one line break, as above | Prose, Review notes, Catalogues, Lean notes |
 | S10 | TeX in the mishnah: a backslash, `^{` or `$`, save within a `$…$` span of a paragraph that opens `**The modern way.**`, a paragraph that ends where Markdown ends it, at a blank line or at a line opening a heading, a list item (a numbered list only from 1), a quotation, a code fence, an HTML block, a rule or a table; and there, a span of a shape known to break on GitHub (section 4, "Mathematics"): a `$` unpaired in the paragraph, `$$`, a span across a line break or with white space just inside a dollar, an opening `$` not at a line's start or after white space or `(`, a closing `$` not before white space, a line's end or one of `. , ; : ! ? ) ] ' " - – /`, braces that do not balance, a backslash before an ASCII punctuation mark, `<`, `>` or `&`, a `*`, `~` or backtick, or a `_` first in the span or after anything but a letter or digit within it. Before reading anything else, the script checks its reading of this boundary against sample mishnahs on both sides of it | Mishnah |
 | S11 | A retired refrain of section 3, on a page not allowed it: "certificate cites", "certificate records", "Of the postulates", "besides Euclid's", "just Euclid's three" (nowhere); "comes in through" (I.29 only); "Lean wants it said", "Lean asks why", "Lean makes us say so" (I.1, I.5, I.22 only); "uses Postulate 1", "brings it in" (I.1, I.3 only); "with no letter", "proves it once", "We give his argument once", "and the Lean cites it.", and "under I.31" in a sentence naming Proclus (nowhere); a paragraph opening `**What Lean made us say.**`, `**What else Lean made us say.**`, `**What it rests on.**`, `**Where the parallels meet.**`, `**Naming the pieces.**`, or `**Where X falls.**` with X a run of capitals (nowhere) | Mishnah |
-| S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open; every book's namespace for a text with no book (the overlap catalogue, `review/terms.toml`), so that a name two books share is written with its book; and `Elements` and `Elements.Tacit` alone for the Rendered docstrings. The name before the colon of a backticked `name : type` is read as well (section 1, "Hypotheses in words"). A word that is Lean's but no declaration, as a tactic or a field of `facts.json`, is listed in the script with its reason, and fails once no text uses it. Run when the tree is built; the overlap catalogue's audit lemmas once `lake build Audit` has run, and listed as not checked till then | Prose, Review notes, Catalogues, Rendered docstrings, `book/<book>/front.md` |
+| S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open; every book's namespace for a text with no book (the overlap catalogue, `review/terms.toml`), so that a name two books share is written with its book; and `Elements` and `Elements.Tacit` alone for the Rendered docstrings. The name before the colon of a backticked `name : type` is read as well (section 1, "Hypotheses in words"). A word that is Lean's but no declaration, as a tactic or a field of `facts.json`, is listed in the script with its reason, and fails once no text uses it. Run when the tree is built; the overlap catalogue's audit lemmas once `lake build Audit` has run, and listed as not checked till then. The mishnah is asked as it always was, every name with `import Elements` alone: neither excuse holds there | Prose, Review notes, Catalogues, Rendered docstrings, `book/<book>/front.md` |
 | S13 | A caption (`<desc>`) missing, or over 50 words | Idea figures |
 | S14 | A viewBox other than `0 0 400 300`; a colour other than `#fbf7ee`, `#d0312d`, `#f2b705`, `#1f5aa6`, `#222222` and white; a missing `<title>`, or one other than "I.N at a glance", with a name after a colon if it has one | Idea figures |
 | S15 | A viewBox width outside 400–440; a letter not at font-size 17, or not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic); a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than "Euclid I.N: …" | Euclid's figures |
