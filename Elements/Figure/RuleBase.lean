@@ -216,7 +216,7 @@ theorem Tacit.triple_incidence1 (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnL
 /-- A straight line through a point between A and C separates them. (Pasch 3) Join A and C to
 another point of the line: Pasch 2 puts B within the angle they make there, and Triple
 incidence 1 then forbids A and C one side. -/
-theorem Tacit.pasch3 (h : Between A B C) (hBL : OnLine B L) : ¬ SameSide A C L := by
+theorem Tacit.pasch3 (h : Between A B C) (hB : OnLine B L) : ¬ SameSide A C L := by
   intro hAC
   have hAL := not_on_line_of_same_side hAC
   have hCL := not_on_line_of_same_side (same_side_symm hAC)
@@ -228,11 +228,11 @@ theorem Tacit.pasch3 (h : Between A B C) (hBL : OnLine B L) : ¬ SameSide A C L 
   obtain ⟨N, hYN, hCN⟩ := Postulate1 Y C hYC
   have hBM : ¬ OnLine B M := by
     intro hBM
-    exact hAL (line_unique hYB hYM hBM hYL hBL ▸ hAM)
+    exact hAL (line_unique hYB hYM hBM hYL hB ▸ hAM)
   have hBN : ¬ OnLine B N := by
     intro hBN
-    exact hCL (line_unique hYB hYN hBN hYL hBL ▸ hCN)
-  exact triple_incidence1 hYM hYL hYN hAM hBL hCN
+    exact hCL (line_unique hYB hYN hBN hYL hB ▸ hCN)
+  exact triple_incidence1 hYM hYL hYN hAM hB hCN
     (pasch2 h hAM hBM)
     (same_side_symm (pasch2 (between_symm h) hCN hBN)) hAC
 
