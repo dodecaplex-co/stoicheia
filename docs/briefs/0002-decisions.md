@@ -759,3 +759,11 @@ findings:
   its own, with one pre-flight, one CI run and one merge ([WORKFLOW](../WORKFLOW.md),
   section 10, "Trains"). Nothing in the checks changes: a train is an ordinary branch to
   safe_push, keep_apart still holds within it, and strict status checks stay on.
+- **A representation tag for a figure given with its triangles.**
+  [`review/terms.toml`](../../review/terms.toml) gains `figure-with-dissection`, which brief
+  0006 froze, so that the records of I.45 and II.14 can name how their figure is given
+  (any division into triangles that lie apart; a figure with one boundary, its triangles
+  glued edge to edge; or Euclid's and Byrne's triangles from one corner), and that every
+  figure can be so divided and another division gives the same sum are not proved here.
+  It lands on its own, before the records that use it, since safe_push keeps a check's
+  data apart from the content it judges (#19).
