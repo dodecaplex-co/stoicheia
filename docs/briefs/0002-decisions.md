@@ -1456,11 +1456,11 @@ findings:
   --write-lock`: main's 87 axioms and 91 words are unchanged. With the 16 mixed-angle
   words and `Tacit.exists_centre` from brief 0008, step 5, the integrated lock holds
   88 axioms and 107 words. Both model hash files keep that lock's hash, and
-  `model/Model/Laws.lean` is regenerated to record it; no other law changes.
-  [`scripts/render.py`](../../scripts/render.py), a protected file, now describes
-  Definition III.7 by `MixedAngle.ofSegment` and the companions' comparisons near the
-  vertex. Its examples of partial coverage and overlap dependencies are brought to the
-  same state. This changes the rendered wording alone, with no check changed.
+  `model/Model/Laws.lean` is regenerated to record it; no other law changes. The
+  renderer's row for Definition III.7, by `MixedAngle.ofSegment` and the companions'
+  comparisons near the vertex, comes ahead of the move in a tooling change of its own
+  (the entry "The renderer's words follow the content", below), so that this move
+  changes no check input but the values pinned to it.
 
 - **Every circle has a centre: the rule lands (brief 0008, step 5).** The owner approved it
   on 18 October, on issue #59: "approved, as Astra recommends.
@@ -1659,3 +1659,32 @@ findings:
   `tests/model/lock.sha256`, `model/lock.sha256`, `Audit.lean`, `Audit/Crossing.lean`,
   `Audit/Overlaps.lean` and `Audit/screen.py`. The labels and
   security review required by WORKFLOW remain part of integration.
+- **The renderer's words follow the content.** The protected file
+  [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
+  `facts.json`: `MixedAngle.ofSegment` enables the mixed-angle row; `Arc`, `InSegment`,
+  `OnArc` and `Arc.Congruent` enable the segment row; `Arc` with `Arc.measure` enables the
+  circumference row; `CirclesCut` enables the cutting and touching rows; `Foot` enables
+  the account of perpendicular feet in Definitions III.4 and III.5, including a diameter
+  at no distance from the centre; and III.24's
+  shared step `BookIII.placement` enables the account of its application of one segment
+  to another. Each keeps the present wording until its named content is there. Comments
+  about III.2's unused overlapping rule are corrected, and the clause-map docstring no
+  longer names particular propositions. The renderer distinguishes all, some and none of
+  a record's overlapping rules, using `facts.json`'s `axioms` for the proof's full
+  dependencies. When the proof uses all or none, the status line and Overlap row keep
+  their exact wording, with no added sentence repeating the record's note. Only partial
+  use adds a clause naming both the rules used and those unused in the status line, the
+  Overlap row and the book summaries. This applies to every record, including both kinds
+  that contain the proposition and rules that supply a step. On main's present content,
+  every generated page stays byte for byte unchanged.
+  The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
+  brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
+  inequality of circles) and its comment on cutting and contact within and without,
+  exactly as the supplied scaffold patch specifies. A search of `scripts/` and `tests/`
+  found no check that reads the scaffold's Book III strings. The scaffold records the
+  approved statements; it was not run to rewrite any Lean file.
+  This tooling change precedes train C6a so that its
+  content pull request changes no check input beyond the values pinned to that content:
+  the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
+  apart from an accompanying change to `scripts/render.py`. No check, statement, lock
+  or review record changes here, apart from the approved signature in the scaffold.
