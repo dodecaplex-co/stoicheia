@@ -8,21 +8,53 @@ kind = "euclid"
 
 [[passage]]
 at = "I say that ABCD is equal to the parallelogram EBCF"
-kind = "helper"
-helper = "Prop35.between"
-note = "Euclid argues one arrangement, with AD and EF apart. The Lean adds Proclus's two others, E between A and D (`Prop35.between`) and E at D (`Prop35.same`), each either way along AF; when E is A, F is D."
+kind = "case"
+note = "Euclid argues one arrangement, with AD and EF apart; the Lean also takes Proclus's two others, E between A and D (`Prop35.between`) and E at D (`Prop35.same`). Apart from E at A, when F is D, `AreParallel.sameSideOf_or` puts E on C's side of AB, towards D, or A on C's side of EB; the Lean applies the three cases directly in the first direction and exchanges the parallelograms in the second, covering Euclid's arrangement with EF before AD as well as Proclus's."
 
 [[passage]]
 at = "and DE is common"
 kind = "helper"
 helper = "Prop35.figure"
-note = "Euclid lets his figure show that EB and DC meet at G between the parallels; the Lean proves it from the diameters of EBCD, and E between D and F with it."
+note = "Euclid lets his figure show that EB and DC meet at G between the parallels, and that E lies between D and F. `Prop35.figure` uses `AreParallel.cross_or` to rule out a crossing of EC and BD and obtain G on EB and DC, then proves E between D and F."
+
+[[passage]]
+at = "therefore the whole AE is equal to the whole DF"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid takes AE as AD and DE together, and DF as DE and EF together. The Lean uses `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1), with D between A and E and E between D and F, to identify the sums that Common Notion 2 makes equal."
+
+[[passage]]
+at = "and the angle FDC is equal to the angle EAB"
+kind = "helper"
+helper = "Tacit.between_of_between_right"
+note = "Euclid treats F as lying beyond D from A, so that FDC is an exterior angle. The Lean puts D between A and F by `Tacit.between_of_between_right`, a rule we assume (System E, Between 5), and C and B on one side of AD by `AreParallel.sameSideOf` from BC parallel to AD; `Prop29.exterior` then gives FDC equal to DAB, while `OnRay.of_beyond` puts E on the ray from A through D since D lies between A and E, so `angle_onRay_left` identifies DAB with EAB."
+
+[[passage]]
+at = "Let DGE be subtracted from each"
+kind = "helper"
+helper = "area_cut"
+note = "Euclid takes each equal triangle as its remaining trapezium and DGE together. `area_cut` proves both divisions from D between A and E and the orders proved by `Prop35.figure`, so Common Notion 3 can remove DGE in the next sentence."
+
+[[passage]]
+at = "therefore the whole parallelogram ABCD is equal to the whole parallelogram EBCF"
+kind = "helper"
+helper = "area_cut"
+note = "Euclid takes each parallelogram as its trapezium and GBC together. The Lean changes the diameter measuring ABCD with `Parallelogram.quadArea_rotate`, and `area_cut` proves both divisions, so the preceding addition by Common Notion 2 gives equal wholes."
 
 [figure]
 case = "AD and EF apart, with D between A and E, as in Heath's figure"
 
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "e8b6113"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:faf82eb7b41ef5a1"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "fail"
+figures = "pass"
+signoff = "pass"
