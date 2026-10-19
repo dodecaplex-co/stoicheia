@@ -338,11 +338,11 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
 - **A guard defect gets a regression.** When a certificate or check defect is fixed, add a
   focused test that shows the defect would now be caught (a negative test, an entry in
   `tests/certificate_expectations.json`, or, for the style check's reading of a phrase or
-  of a letter's ink, a case in `tests/test_check_style.py`). Tests that only repeat a
-  trivial prose change are not added.
-- **The style check's cases run before it.** `tests/test_check_style.py` puts the
-  wording rules of `scripts/check_style.py`, and S20's reading of a letter's ink, to short
-  texts and small figures, each with the finding the rule should make, and needs no Lean.
+  of a figure, a case in `tests/test_check_style.py`). Tests that only repeat a trivial
+  prose change are not added.
+- **The style check's cases run before it.** `tests/test_check_style.py` puts the readings
+  of `scripts/check_style.py` that [STYLE.md](STYLE.md), section 8, names to short texts
+  and small figures, each with the finding the rule should make, and needs no Lean.
   It runs just before the script, so a rule that reads a case wrongly stops the checks
   before the script's findings are read. The script does not run them itself: whoever
   changes it runs the file too.
