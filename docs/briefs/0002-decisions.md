@@ -1103,8 +1103,9 @@ findings:
   on the rule. The pages said that superposition and Circle 4 contain I.2, I.3, I.7 and
   I.23, where the catalogue says only that each supplies a step, in an audit lemma that
   takes seven axioms or more; so the words are "a proof of it", not "its proof", since our
-  own proofs of I.2, I.3 and I.7 never use the rule, and I.23's rests on it only through
-  I.8 (#93, found in the review of the Circle 2 branch, #87). Astra's probe in the
+  own proofs of I.2, I.3 and I.7 never use the rule, and I.23's never calls it, resting on
+  it only through I.8 and I.20, which it cites (#93, found in the review of the Circle 2
+  branch, #87). Astra's probe in the
   challenge of brief 0008 showed that both displays had to read the key, and we are
   grateful. The key is optional so that this check lands first, on its own: a record
   that names no kind is worded as before, so no page changes here, and the records name
