@@ -12,7 +12,7 @@ note = "Heath prints the whole proposition in brackets, as an interpolation (vol
 [[passage]]
 at = "I say that they are also in the same parallels"
 kind = "given"
-note = "The statement gives the goal, AD parallel to BE, and nothing is drawn here: the parallel through A, drawn next, will pass through D and so be AD."
+note = "The statement gives the goal, AD parallel to BE. The distinct vertices A and D name AD; its parallelism remains to be proved, so nothing is drawn here."
 
 [[passage]]
 at = "But the triangle ABC is equal to the triangle DCE"

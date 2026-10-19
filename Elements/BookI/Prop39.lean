@@ -24,7 +24,8 @@ theorem Prop39 {A B C D : Point} (hABC : Triangle A B C) (hDBC : Triangle D B C)
   obtain ⟨BC, hB, hC⟩ := Postulate1 B C hABC.ne₂₃
   -- [I say that they are also in the same parallels.]
   -- And [For] let AD be joined;
-  /- The parallel drawn through A will pass through D, and so be AD. -/
+  /- AD names the straight line through the distinct vertices A and D; that it is
+     parallel to BC remains to be proved. -/
   -- I say that AD is parallel to BC.
   have hpar : AreParallel A D B C := by
     -- For, if not, let AE be drawn through the point A parallel to the straight line BC, [I. 31]

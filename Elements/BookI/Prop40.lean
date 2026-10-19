@@ -36,7 +36,8 @@ theorem Prop40 {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Triangle C D 
   have hD_BE : ¬ OnLine D BE := hCDE.acb.off_line hC hE
   -- I say that they are also in the same parallels.
   -- For let AD be joined;
-  /- The parallel drawn through A will pass through D, and so be AD. -/
+  /- AD names the straight line through the distinct vertices A and D; that it is
+     parallel to BE remains to be proved. -/
   -- I say that AD is parallel to BE.
   have hpar : AreParallel A D B E := by
     -- For, if not, let AF be drawn through A parallel to BE [I. 31], and let FE be joined.

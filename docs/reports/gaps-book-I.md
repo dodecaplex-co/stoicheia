@@ -234,7 +234,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 ## I.39
 - E, where the parallel through A meets BD, comes from `Prop30.meet`: BD meets BC at B, so it meets the parallel to BC.
 - "The greater to the less" needs to know where E falls. The parallel puts E on A's side of BC, and so on D's, on the ray from B through D (`OnRay.of_sameSideOf`). Euclid's figure has E between B and D; Proclus points out that the proof is as easy when it falls beyond D (Heath, vol. 1, p. 337). Either way one triangle is a part of the other (`area_lt_of_cut`, C.N. 5).
-- Reconciled 19 October 2026: supposing AD not parallel to BC makes E differ from D. Both orders on the ray from B through D make one triangle strictly less than the other (`between_cases`, `area_lt_of_cut`), contradicting their equality. This excludes a proposed parallel through A meeting BD away from D and carries the closing "Similarly".
+- Supposing AD not parallel to BC makes E differ from D. Both orders on the ray from B through D make one triangle strictly less than the other (`between_cases`, `area_lt_of_cut`), contradicting their equality. This excludes a proposed parallel through A meeting BD away from D and carries the closing "Similarly".
 
 ## I.40
 - As in I.39: F, where the parallel through A meets CD, comes from `Prop30.meet`; the same-side hypothesis puts F on the ray from C through D (`OnRay.of_sameSideOf`); and the case Proclus adds under I.39, F beyond D, is taken with Euclid's (`area_lt_of_cut`).
