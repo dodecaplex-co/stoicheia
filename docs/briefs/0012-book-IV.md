@@ -163,8 +163,11 @@ Euclid's words presuppose, and is not a restriction ([FORMALIZATION.md](../FORMA
 section 2, "Hypotheses").
 
 Stage 2's `Rectilineal` and `Apart` give a figure for its area, cut into triangles. No
-statement of Book IV compares the areas of figures, so it needs neither; when Book XII does, a convex figure's triangles from
-one corner are a checked division (`Fitted.fan`), and a Book Zero lemma can say so.
+statement of Book IV compares the areas of figures, so it needs neither; when Book XII
+does, a lemma can show that a convex figure's triangles from one corner are a checked
+division using `Fitted.fan`. A lemma invoking `Fitted.fan` belongs after I.45, where it
+lives: its proof cites I.13. Book Zero keeps only facts proved from the foundations alone
+([FORMALIZATION.md](../FORMALIZATION.md), section 6).
 
 Two other ways were weighed. Separate points for each figure (`A B C D E : Point`) read
 well for the pentagon, but give no word for a figure of fifteen sides, and none for the
@@ -205,8 +208,9 @@ the angle standing on it (`circumference`, `standing`; [the Book III brief](0004
 circumference beyond it, away from the figure; it is the one on which the angle at any
 other corner stands, and Definition III.9 names it so: `standing α P R Q` for the side PQ
 and a corner R. `Polygon.arcs ps α` lists them, one for each side, each named by the next
-corner. III.21 makes the choice of corner immaterial (Book Zero's `standing_congr`, since
-every other corner is on one side of PQ), and stage 3's arcs measure the same
+corner. Book Zero's `standing_congr` makes the choice of corner immaterial, since every
+other corner is on one side of PQ. III.21, through `Circumference.standing`, identifies
+that measure with twice the angle at the chosen corner. Stage 3's arcs measure the same
 circumference: `standing α P R Q` is `Arc.measure ⟨α, P, Q, K⟩` for a point K beyond PQ
 from R (`standing_eq_circumference`). `Polygon.arcs` is a list of measures, angles in Lean,
 not of stage 3's `Arc` objects; the bridges of section 7 tie the two together, and to Book
@@ -647,7 +651,7 @@ which the final statement drops.
 | what a construction is given (section 5) | IV.1, Euclid's construction under his sentences | `PrototypeIV1.lean` | proved: Euclid's two cases under his twelve sentences; helpers for the diameter and for the meeting of the circles EAF and ABC, which he leaves tacit |
 | a figure by its corners, inscribed in a circle (`Polygon`, Defs. 3 and 6) | IV.6: the hard part every inscribing proof meets is proving `Polygon` for the figure it builds | `PrototypeIV6.lean` | proved: Euclid's route under his twenty sentences; `Prop6.polygon_of_cross` proves `Polygon` for four corners whose diagonals cross, a shared step for every quadrilateral of Book IV |
 | a figure circumscribed, a circle inscribed (Defs. 4 and 5: touching within each side) | IV.4 | `PrototypeIV4.lean` | proved: Euclid's route under his eighteen sentences, by I.9, I.12, I.26, Postulate 3 and III.16's porism; helpers for the bisectors meeting within the triangle, each half-angle acute, and each point of contact within its side, the step Definition IV.4's second clause asks for |
-| the circle divided (`Polygon.arcs`, the bridges) | `Polygon.arcs_sum`, for any number of sides | `PrototypeArcs.lean` | proved for any number of corners, by taking away one corner at a time. A second sailor, working independently, reported a complete proof too; the shorter was kept, and only it was checked here. Its steps (a figure less a corner is a figure; the circumferences of two neighbouring sides add) are Book Zero's and the ground's to keep. Its own steps take a point of a chord within the circle by III.2 (`BookIII.Prop2.within`, `BookIII.Prop2.triangle`), put in place of Circle 2 in review; it rests on Circle 2 still through stage 3's staged `Circumference.add` alone |
+| the circle divided (`Polygon.arcs`, the bridges) | `Polygon.arcs_sum`, for any number of sides | `PrototypeArcs.lean` | proved for any number of corners, by taking away one corner at a time. A second sailor, working independently, reported a complete proof too; the shorter was kept, and only it was checked here. Its corner-deletion and separation lemmas, and the addition of neighbouring circumferences, belong in Book IV's supporting module, `Elements/BookIV/Arcs.lean`; Book Zero keeps only facts proved from the foundations alone. The deletion and separation argument takes a point of a chord within the circle by III.2 (`BookIII.Prop2.within`, `BookIII.Prop2.triangle`), put in place of Circle 2 in review; it rests on Circle 2 still through stage 3's staged `Circumference.add` alone |
 | counting parts of the circle (IV.16) | `fifteenth`: if three of AC and five of AB make the circle, and BC, the rest, is bisected at E, fifteen of BE make it | `PrototypeIV16.lean` | proved; it is arithmetic of magnitudes only |
 | (recommended by the challenge) straight lines fitted in contiguity close up | `Prop16.contiguity`, IV.16's last step | to be written | not yet done: the next geometric prototype, before the fleet sails; the arithmetic above does not show the fitting, the order or the closure |
 
