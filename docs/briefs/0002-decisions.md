@@ -1155,3 +1155,38 @@ findings:
   as proved. It follows the client in a separate change (keep_apart). The examples in
   `scripts/audit/jev.py` now name the calibration file; only that documentation changes,
   with every check preserved. No request has been sent.
+- **The formal model, complete.** All 87 locked laws are proved in the ordinary Euclidean
+  plane in [`model/`](../../model/README.md), and `model_exists : ∃ S : Signature, Laws S`
+  is proved with no hypothesis left
+  ([#73](https://github.com/jackChallis/stoicheia/issues/73);
+  [the owner's note](https://github.com/jackChallis/stoicheia/issues/73#issuecomment-6258608865)).
+  The owner had made it a gate for the consolidation release
+  ([his words](https://github.com/jackChallis/stoicheia/issues/73#issuecomment-6256202836):
+  "the formal model is a gate for the consolidation release, not a target: every locked
+  law proved in the model before #38"). What it establishes is what Astra wrote for this
+  case, with our thanks: "Lean checks that the ordinary Euclidean plane satisfies every
+  law in this revision's foundation. This establishes a model relative to Lean's logical
+  foundations and Mathlib's construction of the real numbers. It does not establish that
+  every formal statement captures Euclid's intended meaning." So the consistency of the
+  axioms is a theorem, relative to Lean's logic and Mathlib's real numbers. The
+  independence of Postulate 5 is not: that the other laws cannot give it, or that a
+  statement failing in the hyperbolic plane cannot be proved without it, still rests on
+  the numerical hyperbolic check until a hyperbolic model is built. The pages that said
+  the model was in progress now say this, adapted to each:
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md), a protected file, whose opening
+  points to the model, whose section "A formal model: in progress" is now "The formal
+  model" (what is proved, where, how the lock ties it and what it does not show; the
+  links to its anchor move with it), and whose "What this shows, and what it does not"
+  keeps the consistency, now proved, apart from non-derivability, still numerical; the
+  formal model's row of the README's table of checks;
+  [FORMALIZATION](../FORMALIZATION.md), sections 3 and 9; the milestone in
+  [PROGRAM.md](../PROGRAM.md), section 4, marked done; the module docstring of
+  [`Elements/Foundations/Words.lean`](../../Elements/Foundations/Words.lean), which keeps
+  its length, so that no line a page links to moves, with no statement and nothing in the
+  lock changed; and the dated correction at the head of
+  [read-through 01](../reports/read-through-01.md). The numerical harness, its results
+  and its hash are unchanged. The `formal-model` CI job is not yet a required check: the
+  ruleset on main, and `REQUIRED_CHECKS` in
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), still name `check`, `model` and
+  `negative`, and making `formal-model` required, as the decision of 18 October foresees
+  once the package builds, is the owner's call.
