@@ -138,7 +138,7 @@ them as companions ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
 
 Two proofs follow Euclid with one step changed: I.39, and I.40 after it, make the end of
 his reductio direct, the parallel through A being shown to pass through D
-(`OnRay.eq_of_area_eq`). And for four propositions a rule supplies a step, as the
+(`OnRay.eq_of_area_eq`). And four propositions are already contained in a rule, as the
 [overlap catalogue](../reports/overlaps.md) records:
 
 | Proposition | Rule | What the proof does |
@@ -146,7 +146,7 @@ his reductio direct, the parallel through A being shown to pass through D
 | I.2 | superposition | Euclid's construction, by I.1 and two circles; it never uses the rule |
 | I.3 | superposition | Euclid's construction, by I.2 and a circle; it never uses the rule |
 | I.7 | Circle 4 (`not_same_side_of_circles_meet`) | Euclid's argument, by I.5; it never uses the rule |
-| I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly, and through I.20 |
+| I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly |
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
 their own in the mishnah.
