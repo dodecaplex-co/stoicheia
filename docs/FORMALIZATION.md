@@ -136,55 +136,6 @@ entry ("I.40 general"), which `Certificate/Facts.lean` checks; it is named in th
 record's `companions`; and it is shown on the page with its own certificate. Each
 companion is approved as a statement with `sorry` before anyone proves it.
 
-### Names, and how they change
-
-The library is used as well as read ([README](../README.md#use-it), "Use it"), so its
-names are an interface, and they change only in the open.
-
-- **How names are made.** A proposition is `Elements.Book<book>.Prop<n>`, declared in its
-  file's module, `Elements.Book<book>.Prop<nn>`; its porism and its companions are
-  `PropN.porism` and `PropN.<word>`, in the same file. A helper is named for the step it
-  supplies (section 6). Other new names follow Lean's own conventions, as the community's
-  [naming guide](https://leanprover-community.github.io/contribute/naming.html) sets them
-  out: a theorem in `snake_case` (`Prop5.base`, `collinear_of_between`), a predicate or a
-  type in `UpperCamelCase` (`OnCircle`, `Parallelogram`), written in `lowerCamelCase`
-  where it is part of a theorem's name (`OnRay.of_sameSideOf`, after `SameSideOf`), any
-  other definition in `lowerCamelCase` (`quadArea`). A companion is a theorem, so its
-  `<word>` follows the same rule: `Prop25.of_circle`, and `Prop24.equalCircles` after the
-  predicate `EqualCircles`. `PropN`, `PostulateN`, `Definition15` and `CommonNotionN`
-  keep Euclid's numbers.
-  [The table of names](../book/names.md), which `scripts/render.py` writes from
-  `facts.json`, gives every proposition, porism and companion with its module, its page
-  and its certificate.
-- **A released name stays, or is deprecated first.** A released name is one that a
-  release tag's `Elements` declares (`book-I`, `book-II`, `book-III` and each after),
-  helpers and Book Zero included. It is never renamed or removed without a deprecated
-  alias for one release: the old name stays, marked deprecated and pointing to its
-  replacement, through the next release, and may go in the release after. Lean then warns
-  at every use and names the replacement. Plain Lean has no `alias` command (Batteries
-  supplies one), so the alias is written out, dated the day it reaches main:
-
-  ```lean
-  @[deprecated NewName (since := "YYYY-MM-DD")]
-  theorem OldName : type_of% @NewName := @NewName
-  ```
-
-  A definition's alias is an `abbrev` under the same attribute
-  (`abbrev OldName := @NewName`), and a declaration
-  removed with nothing to replace it stays as it was for that release, marked
-  `@[deprecated (since := "YYYY-MM-DD")]`. A change in the foundations is still the
-  owner's decision (section 1). `Staging/` and `Audit/` are not released, and their
-  names promise nothing.
-- **A statement that changes keeps its name.** A proposition's, porism's or companion's
-  statement changes only by an approved correction (WORKFLOW, section 2). `PropN` names
-  Euclid's proposition whatever its statement, so the name goes with the new statement,
-  and where citers need the old one it stays beside it as a companion, as
-  [brief 0006](briefs/0006-statements.md) keeps III.24's present statement as
-  `Prop24.equalCircles`. A helper's or a Book Zero fact's statement may change between
-  releases; its name follows the rule above.
-- **The release notes list the changes:** every name deprecated or removed, and every
-  statement changed, with where its old form now stands.
-
 ## 3. Representations
 
 **A definition chooses a meaning; it does not prove agreement with Euclid's object.** For a
