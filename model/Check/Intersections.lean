@@ -14,15 +14,18 @@ fields (`original`), and Lean is asked whether each translated law, and each def
 it reaches, is then the library's declaration. Each kernel check is `rfl`: the kernel accepts it
 only if the two are the same proposition, up to unfolding definitions, so a dropped guard,
 two swapped arguments or a change in the order of the binders fails here, and the build
-with it. Binder kinds, which the kernel does not see, are checked by reading each
-statement against the lock's printed one, quoted above it. The generator's syntactic
-round trip also covers the laws imported under their original names in `Model.Hand`.
+with it. The generator's syntactic round trip checks binder kinds for the locked laws
+imported under their original names in `Model.Hand`; the comparisons with generated laws
+below also cover the copies kept under suffixed names, up to unfolding.
 
 The kernel comparisons read the library's declarations through `type_of%`. For the
 properties retained through axiom retirement, `comparePlanted` also translates the
 hand definition back and compares it directly with the declaration's type, including
-binder kinds. Both checks read only the statement, whether it is an axiom or a theorem.
-Nothing in `Model/` imports this file.
+binder kinds. This includes Intersections 2 and 3: before translating their hand
+`LineMeetsCircle`, it compares that word's type and body with the library's definition,
+including binder kinds and without unfolding. The rule comparisons read only the
+statement, whether it is an axiom or a theorem. A planted explicit binder below passes
+`rfl` but must be refused by the syntactic comparison. Nothing in `Model/` imports this file.
 -/
 
 namespace Check
@@ -70,9 +73,13 @@ example : Model.Hand.Intersections.LineMeetsCircle original = Elements.LineMeets
 
 example (S : Model.Signature) : Model.Hand.lines_meet_of_opposite_sides_intersections S =
     Model.Law.Tacit.lines_meet_of_opposite_sides S := rfl
--- Intersections 2 and 3, retired, reach `LineMeetsCircle`, which no locked law reaches since
--- 19 October 2026 and the generator no longer translates; they are compared with the library
--- above, through `original`, and their hand word with the library's word.
+/- Intersections 2 and 3 reach the hand `LineMeetsCircle`, whose type and body are checked
+before it is translated back. Both rules are compared with their declaration types,
+including binder kinds, even though no locked law reaches this word. -/
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.line_meets_circle_of_opposite_sides
+  ``Elements.Tacit.line_meets_circle_of_opposite_sides)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.line_meets_circle_of_inside
+  ``Elements.Tacit.line_meets_circle_of_inside)
 example (S : Model.Signature) : Model.Hand.line_circle_between S =
     Model.Law.Tacit.line_circle_between S := rfl
 example (S : Model.Signature) : Model.Hand.line_circle_beyond S =
@@ -85,5 +92,23 @@ example (S : Model.Signature) : Model.Hand.outside_of_between_intersections S =
     Model.Law.Tacit.outside_of_between S := rfl
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.not_same_side_of_circles_meet_intersections
   ``Elements.Tacit.not_same_side_of_circles_meet)
+
+/-! ## A binder fault that the kernel does not see -/
+
+namespace IntersectionsPlanted
+
+/-- Intersection 3 with the point A explicit instead of implicit. -/
+def explicit (S : Model.Signature) : Prop :=
+  ∀ (A : S.Point) {L : S.Line} {α : S.Circle}, S.InsideCircle A α → S.OnLine A L →
+    Model.Hand.Intersections.LineMeetsCircle S L α
+
+example : explicit original = type_of% @Elements.Tacit.line_meets_circle_of_inside := rfl
+
+end IntersectionsPlanted
+
+/-- error: `Check.IntersectionsPlanted.explicit`: the binder `A` is explicit where the library's `A` is implicit -/
+#guard_msgs in
+run_cmd (Check.Generator.comparePlanted ``Check.IntersectionsPlanted.explicit
+  ``Elements.Tacit.line_meets_circle_of_inside)
 
 end Check
