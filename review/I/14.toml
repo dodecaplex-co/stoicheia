@@ -29,7 +29,8 @@ helper = "OnRay.between"
 note = "Euclid concludes that CB and BD form one straight line; `OnRay.between` turns D's lying on the ray from B through E, with B between C and E, into B's lying between C and D."
 
 [figure]
-case = "BE lying within the angle ABD"
+case = "BE within the angle ABD, as in Heath's figure"
+note = "Like Heath's, this figure draws the impossible supposition: BE in a straight line with CB while BD is not. BE is drawn rising away from the straight line CBD, so the drawn C, B and E are not in a straight line."
 
 [review]
 stage = "full"
