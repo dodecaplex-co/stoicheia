@@ -8,7 +8,8 @@ that a point lies between two others, that two points are on the same side of a
 straight line, that a straight line through the inside of a circle must cut it.
 He never states these facts or proves them. These are the diagrammatic inferences
 of System E, §3.4 (Avigad, Dean and Mumma, 2009). Each retained assumption is an
-axiom: most rules say one thing, and Between 1, which says four, is four axioms.
+axiom: most rules say one thing. Between 1 says four, and was four axioms; one of
+them, `not_between_of_between`, remains one, and the other three are proved.
 Generalities 2, Circle 2, Triple incidence 3 and Intersection 2 are proved in
 `Elements.Figure.Circles`; Circle 4 is proved after I.7 in `Elements.BookI.Prop07`.
 
@@ -20,11 +21,13 @@ authors, Logan Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and
 Xujie Si, for spotting it.
 
 The following former assumptions are proved in Book Zero:
-* `Elements.Figure.RuleBase`: `ne_of_between`, `on_line_of_between_ends`, `pasch4`,
-  `same_side_refl`, `triple_incidence1`, `inside_not_on`.
-* `Elements.Figure.Incidence`: `ne_of_between_ends`, `on_line_of_between`, `triple_incidence2`,
+* `Elements.Figure.RuleBase`: `centre_inside`, `same_side_symm`, `ne_of_between`,
+  `on_line_of_between_ends`, `pasch4`, `same_side_refl`, `triple_incidence1`, `pasch3`,
+  `inside_not_on`.
+* `Elements.Figure.Incidence`: `ne_of_between_ends`, `on_line_of_between`,
   `between_of_between_left`, `between_of_between_right`, `circles_meet_of_on_inside_outside`,
-  `line_meets_circle_of_inside`, `not_between_of_between_between`, `pasch1`.
+  `line_meets_circle_of_inside`, `not_between_of_between_between`, `same_side_or`,
+  `triple_incidence2`, `pasch1`.
 -/
 
 namespace Elements.Tacit
@@ -36,9 +39,6 @@ variable {A B C D E : Point} {L M N : Line} {α β : Circle}
 /-- Two points determine a straight line. (Generalities 1) -/
 axiom line_unique (hAB : A ≠ B) (hAL : OnLine A L) (hBL : OnLine B L) (hAM : OnLine A M)
     (hBM : OnLine B M) : L = M
-
-/-- The centre of a circle is inside it. (Generalities 3) -/
-axiom centre_inside (hA : Centre A α) : InsideCircle A α
 
 /-! ## Between -/
 
@@ -55,10 +55,6 @@ axiom between_cases (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) (hA : OnLine
 
 /-! ## Same side -/
 
-/-- If A is on the same side of a straight line as B, then B is on the same side
-as A. (Same side 2) -/
-axiom same_side_symm (h : SameSide A B L) : SameSide B A L
-
 /-- Points on one side of a straight line are not on it. (Same side 3) -/
 axiom not_on_line_of_same_side (h : SameSide A B L) : ¬ OnLine A L
 
@@ -66,19 +62,12 @@ axiom not_on_line_of_same_side (h : SameSide A B L) : ¬ OnLine A L
 side as each other. (Same side 4) -/
 axiom same_side_trans (h₁ : SameSide A B L) (h₂ : SameSide A C L) : SameSide B C L
 
-/-- A straight line has only two sides. (Same side 5) -/
-axiom same_side_or (hA : ¬ OnLine A L) (hB : ¬ OnLine B L) (hC : ¬ OnLine C L)
-    (h : ¬ SameSide A B L) : SameSide A C L ∨ SameSide B C L
-
 /-! ## Pasch -/
 
 /-- If B is between A and C, A is on L and B is off it, then B and C are
 on the same side of L: a straight line that leaves L at A does not cross it
 again. (Pasch 2) -/
 axiom pasch2 (h : Between A B C) (hA : OnLine A L) (hB : ¬ OnLine B L) : SameSide B C L
-
-/-- A straight line through a point between A and C separates them. (Pasch 3) -/
-axiom pasch3 (h : Between A B C) (hB : OnLine B L) : ¬ SameSide A C L
 
 /-! ## Triple incidence
 

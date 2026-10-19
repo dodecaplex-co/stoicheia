@@ -299,16 +299,19 @@ info: 'Elements.BookIII.Staging.Centre.Prop5' depends on axioms: [propext,
  Elements.Tacit.add_zero,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.centre_inside,
+ Elements.Tacit.circle_eq,
  Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
  Elements.Tacit.line_circle_beyond,
  Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_lt_zero,
- Elements.Tacit.on_circle_of_len_eq]
+ Elements.Tacit.not_lt_zero]
 -/
 #guard_msgs in
 #print axioms Elements.BookIII.Staging.Centre.Prop5
@@ -325,16 +328,19 @@ info: 'Elements.BookIII.Staging.Centre.Prop6' depends on axioms: [propext,
  Elements.Tacit.add_zero,
  Elements.Tacit.between_of_inside_chord,
  Elements.Tacit.between_symm,
- Elements.Tacit.centre_inside,
+ Elements.Tacit.circle_eq,
  Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_inside_circle,
  Elements.Tacit.len_add_of_between,
  Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
  Elements.Tacit.line_circle_beyond,
  Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
  Elements.Tacit.lt_trichotomy,
  Elements.Tacit.not_between_of_between,
- Elements.Tacit.not_lt_zero,
- Elements.Tacit.on_circle_of_len_eq]
+ Elements.Tacit.not_lt_zero]
 -/
 #guard_msgs in
 #print axioms Elements.BookIII.Staging.Centre.Prop6

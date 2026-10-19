@@ -81,37 +81,6 @@ theorem Tacit.on_line_of_between (h : Between A B C) (hA : OnLine A L) (hB : OnL
   have e : M = L := line_unique (ne_of_between h) hAM hBM hA hB
   exact e ▸ hCM
 
-/-- Take B on L, C on M and D on N, three straight lines through A, with B other than A and D
-off M. If C and D are on the same side of L, and B and D are not on the same side of M, then
-B and C are on the same side of N: C lies within the angle BAD. (Triple incidence 2) Extend
-BA through A. The two-side rule locates the extension, and Triple incidence 1 excludes the
-contrary arrangement. -/
-theorem Tacit.triple_incidence2 (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
-    (hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
-    (hBD : ¬ SameSide B D M) (hDM : ¬ OnLine D M) (hBA : B ≠ A) : SameSide B C N := by
-  have hCL := not_on_line_of_same_side hCD
-  have hDL := not_on_line_of_same_side (same_side_symm hCD)
-  have hBM : ¬ OnLine B M := fun hBM =>
-    hCL (line_unique hBA hBM hAM hB hAL ▸ hC)
-  have hBN : ¬ OnLine B N := fun hBN =>
-    hDL (line_unique hBA hBN hAN hB hAL ▸ hD)
-  have hCA : C ≠ A := fun e => hCL (e ▸ hAL)
-  have hCN : ¬ OnLine C N := fun hCN =>
-    hDM (line_unique hCA hCN hAN hC hAM ▸ hD)
-  apply Classical.byContradiction
-  intro hBC
-  obtain ⟨P, hPL, hBAP, _⟩ := Postulate2 hB hAL hBA []
-  have hPM : ¬ OnLine P M := fun hPM =>
-    hBM (on_line_of_between (between_symm hBAP) hPM hAM)
-  have hPN : ¬ OnLine P N := fun hPN =>
-    hBN (on_line_of_between (between_symm hBAP) hPN hAN)
-  have hDP : SameSide D P M :=
-    (same_side_or hBM hDM hPM hBD).resolve_left (pasch3 hBAP hAM)
-  have hCP : SameSide C P N :=
-    (same_side_or hBN hCN hPN hBC).resolve_left (pasch3 hBAP hAN)
-  exact triple_incidence1 hAL hAM hAN hPL hC hD hCD
-    (same_side_symm hCP) (same_side_symm hDP)
-
 namespace RuleProofs.Order
 
 /-- Distinct endpoints have positive length. -/
@@ -335,18 +304,6 @@ theorem Tacit.circles_meet_opposite_side {α β : Circle} {B C D : Point} {L : L
   exact ⟨A, hAα, hAβ, not_on_line_of_same_side hA, hB,
     fun hAB => hP.2.2 (same_side_trans hA hAB)⟩
 
-namespace RuleProofs.Construction
-
-/-- If two radii differed, the nearer circumference point would be inside the circle. -/
-theorem definition15 : type_of% @Elements.Definition15 := by
-  intro A B C α hA hB hC
-  rcases lt_trichotomy ‖A B‖ ‖A C‖ with h | h | h
-  · exact False.elim (inside_not_on (inside_of_len_lt hA hC h) hB)
-  · exact h
-  · exact False.elim (inside_not_on (inside_of_len_lt hA hB h) hC)
-
-end RuleProofs.Construction
-
 /-- Let a point be taken between B and C. (Points 3) A smaller concentric circle supplies one
 interior division; repeat within a smaller segment to avoid each forbidden point. -/
 theorem Tacit.exists_point_between {B C : Point} {L : Line} (hB : OnLine B L) (hC : OnLine C L)
@@ -365,7 +322,7 @@ theorem Tacit.exists_point_between {B C : Point} {L : Line} (hB : OnLine B L) (h
         · intro h
           exact lt_irrefl _ (lt_trans hlt (len_lt_of_inside hBβ hDβ h))
         · intro h
-          exact lt_irrefl _ ((RuleProofs.Construction.definition15 hBβ hDβ h) ▸ hlt)
+          exact lt_irrefl _ ((Definition15 hBβ hDβ h) ▸ hlt)
       obtain ⟨A, _, hAL, hBAC⟩ := line_circle_between (centre_inside hBβ) hB hCβ hC
       exact ⟨A, hAL, hBAC, by simp⟩
   | cons P avoid ih =>
@@ -388,37 +345,6 @@ theorem Tacit.line_meets_circle_of_inside (hA : InsideCircle A α) (hAL : OnLine
   exact ⟨Q, P, ne_of_between_ends hQAP, hQL, hQ, hPL, hP⟩
 
 namespace RuleProofs.Separation
-
-/-- A circle about the middle point locates a shorter distance on either ray. -/
-theorem between_cases_of_len_lt {A B C : Point} {L : Line}
-    (hBA : B ≠ A) (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
-    (hlt : ‖B A‖ < ‖B C‖) : Between A B C ∨ Between B A C := by
-  obtain ⟨α, hcenter, hAon⟩ := Postulate3 B A hBA
-  have hCout : OutsideCircle C α := by
-    constructor
-    · intro hCin
-      exact lt_irrefl _ (lt_trans hlt (len_lt_of_inside hcenter hAon hCin))
-    · intro hCon
-      exact Magnitude.ne_of_lt hlt (Definition15 hcenter hAon hCon)
-  obtain ⟨X, hXon, hXL, hBXC⟩ := line_circle_between (centre_inside hcenter) hB hCout hC
-  by_cases hAX : A = X
-  · exact Or.inr (hAX ▸ hBXC)
-  · have hABX := between_of_inside_chord hB hA hXL (centre_inside hcenter) hAon hXon hAX
-    exact Or.inl (between_of_between_right hABX hBXC)
-
-
-/-- Trichotomy of distances and Circle 1 give the three collinear orders. -/
-theorem between_cases : type_of% @Elements.Tacit.between_cases := by
-  intro A B C L hAB hBC hAC hA hB hC
-  rcases lt_trichotomy ‖B A‖ ‖B C‖ with hlt | heq | hgt
-  · exact (between_cases_of_len_lt hAB.symm hA hB hC hlt).elim Or.inl (Or.inr ∘ Or.inl)
-  · obtain ⟨α, hcenter, hAon⟩ := Postulate3 B A hAB.symm
-    have hCon := on_circle_of_len_eq hcenter hAon heq.symm
-    exact Or.inl (between_of_inside_chord hB hA hC (centre_inside hcenter) hAon hCon hAC)
-  · rcases between_cases_of_len_lt hBC hC hB hA hgt with hCBA | hBCA
-    · exact Or.inl (between_symm hCBA)
-    · exact Or.inr (Or.inr (between_symm hBCA))
-
 
 /-- Two strict length comparisons contradict equal decompositions of the whole. -/
 theorem spoke_order_impossible {A B C D : Point}
@@ -446,7 +372,7 @@ theorem Tacit.not_between_of_between_between (h₁ : Between A B C) (h₂ : Betw
   obtain ⟨L, hA, hB⟩ := Postulate1 A B (ne_of_between h₁)
   have hC := on_line_of_between h₁ hA hB
   have hD := on_line_of_between h₂ hA hB
-  rcases RuleProofs.Separation.between_cases (ne_of_between_ends h₁) (ne_of_between_ends hCBD)
+  rcases between_cases (ne_of_between_ends h₁) (ne_of_between_ends hCBD)
     (ne_of_between_ends h₂) hA hC hD with hACD | hCAD | hADC
   · exact RuleProofs.Separation.spoke_order_impossible h₁ h₂ hCBD hACD
   · exact RuleProofs.Separation.spoke_order_impossible (between_symm h₁) hCBD h₂ hCAD
@@ -454,42 +380,10 @@ theorem Tacit.not_between_of_between_between (h₁ : Between A B C) (h₂ : Betw
 
 namespace RuleProofs.Pasch
 
-/-- Triple incidence 1 excludes a same-side relation whose second point is on the line. -/
-theorem same_side_right_off {A B : Point} {L : Line} (hAB : SameSide A B L) :
-    ¬ OnLine B L := by
-  intro hB
-  have hBB := same_side_trans hAB hAB
-  exact triple_incidence1 hB hB hB hB hB hB hBB hBB hBB
-
-
-/-- A small segment through a point on the line contradicts Triple incidence 2 if its side
-relation is asserted. -/
-theorem not_on_line_of_same_side : type_of% @Elements.Tacit.not_on_line_of_same_side := by
-  intro A B L hAB hAL
-  have hB := same_side_right_off hAB
-  obtain ⟨C, hCL, havoid⟩ := exists_point_on_line L [A]
-  have hCA : C ≠ A := fun e => havoid (e ▸ List.mem_singleton_self A)
-  have hCB : C ≠ B := fun e => hB (e ▸ hCL)
-  have hABne : A ≠ B := fun e => hB (e ▸ hAL)
-  obtain ⟨N, hCN, hBN⟩ := Postulate1 C B hCB
-  obtain ⟨X, _, hCXB, _⟩ := exists_point_between hCN hBN hCB []
-  have hX : ¬ OnLine X L := fun hXL => hB (on_line_of_between hCXB hCL hXL)
-  obtain ⟨K, hAK, hXK⟩ := Postulate1 A X (fun e => hX (e ▸ hAL))
-  obtain ⟨M, hAM, hBM⟩ := Postulate1 A B hABne
-  have hBK : ¬ OnLine B K := by
-    intro hBK
-    have hCK := on_line_of_between (between_symm hCXB) hBK hXK
-    exact hB (line_unique hCA hCK hAK hCL hAL ▸ hBK)
-  have hCA_M := triple_incidence2 hAL hAK hAM hCL hAK hBM hAB
-    (Elements.Tacit.pasch3 hCXB hXK) hBK hCA
-  exact same_side_right_off hCA_M hAM
-
-
 /-- The intersection rule and Pasch 4 locate the crossing between opposite endpoints. -/
-theorem opposite_sides_exists_between
-    (hrefl : type_of% @Elements.Tacit.same_side_refl) {P Q : Point} {L : Line}
+theorem opposite_sides_exists_between {P Q : Point} {L : Line}
     (h : OppositeSides P Q L) : ∃ X : Point, OnLine X L ∧ Between P X Q := by
-  have hPQ : P ≠ Q := fun e => h.2.2 (e ▸ hrefl h.1)
+  have hPQ : P ≠ Q := fun e => h.2.2 (e ▸ same_side_refl h.1)
   obtain ⟨M, hP, hQ⟩ := Postulate1 P Q hPQ
   obtain ⟨hLM, X, hXL, hXM⟩ := lines_meet_of_opposite_sides h hP hQ
   exact ⟨X, hXL, pasch4 hLM hXL hXM hP hQ hPQ (fun e => h.1 (e ▸ hXL))
@@ -497,74 +391,147 @@ theorem opposite_sides_exists_between
 
 end RuleProofs.Pasch
 
+namespace RuleProofs.Sides
+
+theorem not_collinear_cba (h : ¬ Collinear A B C) : ¬ Collinear C B A := by
+  rintro ⟨L, hC, hB, hA⟩
+  exact h ⟨L, hA, hB, hC⟩
+
+theorem not_collinear_cab (h : ¬ Collinear A B C) : ¬ Collinear C A B := by
+  rintro ⟨L, hC, hA, hB⟩
+  exact h ⟨L, hA, hB, hC⟩
+
+theorem not_collinear_acb (h : ¬ Collinear A B C) : ¬ Collinear A C B := by
+  rintro ⟨L, hA, hC, hB⟩
+  exact h ⟨L, hA, hB, hC⟩
+
+theorem not_collinear_bac (h : ¬ Collinear A B C) : ¬ Collinear B A C := by
+  rintro ⟨L, hB, hA, hC⟩
+  exact h ⟨L, hA, hB, hC⟩
+
+/-- A point between two vertices of a triangle is off the straight line through the first and
+the third. -/
+theorem crossing_off_line {A B C X : Point} {M : Line}
+    (hABC : ¬ Collinear A B C) (hAXB : Between A X B)
+    (hA : OnLine A M) (hC : OnLine C M) : ¬ OnLine X M := by
+  intro hX
+  exact hABC ⟨M, hA, on_line_of_between hAXB hA hX, hC⟩
+
+/-- A straight line cannot cross all three sides of a triangle with the middle crossing between
+the other two: the outer crossings would lie on one side of the third side's line. -/
+theorem three_crossings_order_impossible {A B C X Y Z : Point}
+    (hABC : ¬ Collinear A B C) (hAXB : Between A X B)
+    (hAYC : Between A Y C) (hBZC : Between B Z C)
+    (hXYZ : Between X Y Z) : False := by
+  obtain ⟨M, hA, hC⟩ := Postulate1 A C (ne_of_between_ends hAYC)
+  have hX := crossing_off_line hABC hAXB hA hC
+  have hZ := crossing_off_line (not_collinear_cba hABC) (between_symm hBZC) hC hA
+  have hXB := pasch2 hAXB hA hX
+  have hZB := pasch2 (between_symm hBZC) hC hZ
+  exact pasch3 hXYZ (on_line_of_between_ends hAYC hA hC)
+    (same_side_trans (same_side_symm hXB) (same_side_symm hZB))
+
+end RuleProofs.Sides
+
+/-- A straight line has only two sides. (Same side 5) Were A, B and C on three sides, the line
+would cross all three sides of the triangle ABC, or, when the three are in a straight line,
+cross it at one point between each pair; neither can be. -/
+theorem Tacit.same_side_or (hA : ¬ OnLine A L) (hB : ¬ OnLine B L) (hC : ¬ OnLine C L)
+    (hAB : ¬ SameSide A B L) : SameSide A C L ∨ SameSide B C L := by
+  by_cases hAC : SameSide A C L
+  · exact Or.inl hAC
+  apply Or.inr
+  apply Classical.byContradiction
+  intro hBC
+  have hACne : A ≠ C := fun e => hAC (e ▸ same_side_refl hA)
+  have hBCne : B ≠ C := fun e => hBC (e ▸ same_side_refl hB)
+  obtain ⟨X, hXL, hAXB⟩ := RuleProofs.Pasch.opposite_sides_exists_between ⟨hA, hB, hAB⟩
+  by_cases hcol : Collinear A B C
+  · obtain ⟨M, hAM, hBM, hCM⟩ := hcol
+    have hXM := on_line_of_between_ends hAXB hAM hBM
+    have hLM : L ≠ M := fun e => hA (e ▸ hAM)
+    have hAX : A ≠ X := fun e => hA (e ▸ hXL)
+    have hBX : B ≠ X := fun e => hB (e ▸ hXL)
+    have hCX : C ≠ X := fun e => hC (e ▸ hXL)
+    have hAXC := pasch4 hLM hXL hXM hAM hCM hACne hAX hCX hAC
+    have hBXC := pasch4 hLM hXL hXM hBM hCM hBCne hBX hCX hBC
+    exact not_between_of_between_between hAXB hAXC hBXC
+  · obtain ⟨Y, hYL, hAYC⟩ := RuleProofs.Pasch.opposite_sides_exists_between ⟨hA, hC, hAC⟩
+    obtain ⟨Z, hZL, hBZC⟩ := RuleProofs.Pasch.opposite_sides_exists_between ⟨hB, hC, hBC⟩
+    have hXY : X ≠ Y := by
+      obtain ⟨M, hAM, hCM⟩ := Postulate1 A C hACne
+      have hXM := RuleProofs.Sides.crossing_off_line hcol hAXB hAM hCM
+      intro e
+      exact hXM (e ▸ on_line_of_between_ends hAYC hAM hCM)
+    have hYZ : Y ≠ Z := by
+      obtain ⟨M, hBM, hCM⟩ := Postulate1 B C hBCne
+      have hYM := RuleProofs.Sides.crossing_off_line (RuleProofs.Sides.not_collinear_cab hcol)
+        (between_symm hAYC) hCM hBM
+      intro e
+      exact hYM (e ▸ on_line_of_between_ends hBZC hBM hCM)
+    have hXZ : X ≠ Z := by
+      obtain ⟨M, hBM, hCM⟩ := Postulate1 B C hBCne
+      have hXM := RuleProofs.Sides.crossing_off_line (RuleProofs.Sides.not_collinear_bac hcol)
+        (between_symm hAXB) hBM hCM
+      intro e
+      exact hXM (e ▸ on_line_of_between_ends hBZC hBM hCM)
+    rcases between_cases hXY hYZ hXZ hXL hYL hZL with hXYZ | hYXZ | hXZY
+    · exact RuleProofs.Sides.three_crossings_order_impossible hcol hAXB hAYC hBZC hXYZ
+    · exact RuleProofs.Sides.three_crossings_order_impossible
+        (RuleProofs.Sides.not_collinear_acb hcol) hAYC hAXB (between_symm hBZC) hYXZ
+    · exact RuleProofs.Sides.three_crossings_order_impossible
+        (RuleProofs.Sides.not_collinear_bac hcol) (between_symm hAXB) hBZC hAYC hXZY
+
+/-- Take B on L, C on M and D on N, three straight lines through A, with B other than A and D
+off M. If C and D are on the same side of L, and B and D are not on the same side of M, then
+B and C are on the same side of N: C lies within the angle BAD. (Triple incidence 2) Extend
+BA through A. The two-side rule locates the extension, and Triple incidence 1 excludes the
+contrary arrangement. -/
+theorem Tacit.triple_incidence2 (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
+    (hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
+    (hBD : ¬ SameSide B D M) (hDM : ¬ OnLine D M) (hBA : B ≠ A) : SameSide B C N := by
+  have hCL := not_on_line_of_same_side hCD
+  have hDL := not_on_line_of_same_side (same_side_symm hCD)
+  have hBM : ¬ OnLine B M := fun hBM =>
+    hCL (line_unique hBA hBM hAM hB hAL ▸ hC)
+  have hBN : ¬ OnLine B N := fun hBN =>
+    hDL (line_unique hBA hBN hAN hB hAL ▸ hD)
+  have hCA : C ≠ A := fun e => hCL (e ▸ hAL)
+  have hCN : ¬ OnLine C N := fun hCN =>
+    hDM (line_unique hCA hCN hAN hC hAM ▸ hD)
+  apply Classical.byContradiction
+  intro hBC
+  obtain ⟨P, hPL, hBAP, _⟩ := Postulate2 hB hAL hBA []
+  have hPM : ¬ OnLine P M := fun hPM =>
+    hBM (on_line_of_between (between_symm hBAP) hPM hAM)
+  have hPN : ¬ OnLine P N := fun hPN =>
+    hBN (on_line_of_between (between_symm hBAP) hPN hAN)
+  have hDP : SameSide D P M :=
+    (same_side_or hBM hDM hPM hBD).resolve_left (pasch3 hBAP hAM)
+  have hCP : SameSide C P N :=
+    (same_side_or hBN hCN hPN hBC).resolve_left (pasch3 hBAP hAN)
+  exact triple_incidence1 hAL hAM hAN hPL hC hD hCD
+    (same_side_symm hCP) (same_side_symm hDP)
+
 /-- If A and C are on the same side of L, so is any point between them: if B is between A and C,
 then A and B are on the same side of L. (Pasch 1) Opposite sides would give a crossing
 before B, contradicting Pasch 3 on the full segment. -/
 theorem Tacit.pasch1 (h : Between A B C) (hAC : SameSide A C L) : SameSide A B L := by
-  have hA := RuleProofs.Pasch.not_on_line_of_same_side hAC
+  have hA := not_on_line_of_same_side hAC
   have hB : ¬ OnLine B L := fun hB => Elements.Tacit.pasch3 h hB hAC
   apply Classical.byContradiction
   intro hAB
-  obtain ⟨X, hX, hAXB⟩ := RuleProofs.Pasch.opposite_sides_exists_between @same_side_refl ⟨hA, hB, hAB⟩
+  obtain ⟨X, hX, hAXB⟩ := RuleProofs.Pasch.opposite_sides_exists_between ⟨hA, hB, hAB⟩
   exact Elements.Tacit.pasch3 (between_of_between_left h hAXB) hX hAC
-
-namespace RuleProofs.Construction
-
-/-- A circle about the last endpoint extends a segment; iteration avoids a finite list. -/
-theorem postulate2 : type_of% @Elements.Postulate2 := by
-  intro B C L hB hC hBC avoid
-  induction avoid generalizing B C with
-  | nil =>
-      obtain ⟨α, hα, hBα⟩ := Postulate3 C B hBC.symm
-      obtain ⟨A, _, hAL, hACB⟩ := line_circle_beyond (centre_inside hα) hC hB hBC
-      exact ⟨A, hAL, between_symm hACB, by simp⟩
-  | cons P avoid ih =>
-      obtain ⟨X, hXL, hBCX, hX⟩ := ih hB hC hBC
-      by_cases hXP : X = P
-      · obtain ⟨Y, hYL, hCXY, hY⟩ :=
-          ih hC hXL (ne_of_between (between_symm hBCX)).symm
-        have hYP : Y ≠ P := hXP ▸ ne_of_between (between_symm hCXY)
-        exact ⟨Y, hYL, between_of_between_right hBCX hCXY, by simp [hYP, hY]⟩
-      · exact ⟨X, hXL, hBCX, by simp [hXP, hX]⟩
-
-
-/-- An opposite-side crossing gives a point of the line; a circle through it and extensions
-avoid a finite list. -/
-theorem exists_point_on_line : type_of% @Elements.Tacit.exists_point_on_line := by
-  intro L avoid
-  obtain ⟨A, _⟩ := Elements.Tacit.exists_point []
-  have hP : ∃ P : Point, OnLine P L := by
-    by_cases hAL : OnLine A L
-    · exact ⟨A, hAL⟩
-    · obtain ⟨B, hB, _⟩ := exists_point_opposite_side hAL []
-      have hAB : A ≠ B := by
-        intro h
-        subst B
-        exact hB.2.2 (same_side_refl hAL)
-      obtain ⟨M, hAM, hBM⟩ := Postulate1 A B hAB
-      obtain ⟨P, hPL, _⟩ := (lines_meet_of_opposite_sides hB hBM hAM).2
-      exact ⟨P, hPL⟩
-  obtain ⟨P, hPL⟩ := hP
-  obtain ⟨Q, hQ⟩ := Elements.Tacit.exists_point [P]
-  have hPQ : P ≠ Q := by
-    intro h
-    exact hQ (by simp [h])
-  obtain ⟨α, hPα, _⟩ := Postulate3 P Q hPQ
-  obtain ⟨B, C, hBC, hBL, _, hCL, _⟩ :=
-    line_meets_circle_of_inside (centre_inside hPα) hPL
-  obtain ⟨R, hRL, _, hR⟩ := postulate2 hBL hCL hBC avoid
-  exact ⟨R, hRL, hR⟩
-
-end RuleProofs.Construction
 
 /-- Let a point be taken on L, not on the different straight line M. (Points 2, with "distinct
 from M") Choose a point of L; if it is on M, a second point of L differs from it and cannot
 also be on M. -/
 theorem Tacit.exists_point_on_line_off_line {L M : Line} (h : L ≠ M) (avoid : List Point) :
     ∃ A : Point, OnLine A L ∧ ¬ OnLine A M ∧ A ∉ avoid := by
-  obtain ⟨A, hAL, hA⟩ := RuleProofs.Construction.exists_point_on_line L avoid
+  obtain ⟨A, hAL, hA⟩ := exists_point_on_line L avoid
   by_cases hAM : OnLine A M
-  · obtain ⟨B, hBL, hB⟩ := RuleProofs.Construction.exists_point_on_line L (A :: avoid)
+  · obtain ⟨B, hBL, hB⟩ := exists_point_on_line L (A :: avoid)
     have hBA : B ≠ A := fun e => hB (by simp [e])
     have hBM : ¬ OnLine B M := fun hBM => h (line_unique hBA hBL hAL hBM hAM)
     exact ⟨B, hBL, hBM, fun hmem => hB (List.mem_cons_of_mem A hmem)⟩

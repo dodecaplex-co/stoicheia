@@ -11,6 +11,7 @@ diagram-segment rule 3 is Definition 15. Diagram-angle rule 3 and the converse
 of Diagram-angle rule 2 are proved after I.13 in `Elements.BookI.Prop13`.
 
 The following former assumptions are proved in Book Zero:
+* `Elements.Figure.RuleBase`: `on_circle_of_len_eq`.
 * `Elements.Figure.Incidence`: `inside_of_len_lt`, `len_lt_of_inside`.
 * `Elements.Figure.AreaRules`: `between_of_area_add`.
 -/
@@ -28,11 +29,6 @@ axiom len_add_of_between (h : Between A B C) : ‖A B‖ + ‖B C‖ = ‖A C‖
 /-- A circle is fixed by its centre and its radius. (Diagram-segment 2) -/
 axiom circle_eq (hα : Centre A α) (hβ : Centre A β) (hB : OnCircle B α) (hC : OnCircle C β)
     (h : ‖A B‖ = ‖A C‖) : α = β
-
-/-- A point at the distance of the radius from the centre is on the circle.
-(Diagram-segment 3, the half that Definition 15 doesn't give) -/
-axiom on_circle_of_len_eq (hA : Centre A α) (hB : OnCircle B α) (h : ‖A C‖ = ‖A B‖) :
-    OnCircle C α
 
 /-! ## Angles -/
 
