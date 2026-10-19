@@ -24,7 +24,7 @@ helper = "Tacit.lt_trichotomy"
 note = "Euclid concludes that the angles AGH and GHD are equal. The Lean uses both refutations with `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E, section 3.5), not a proof: of two unequal angles, one is greater."
 
 [figure]
-case = "Euclid supposes AGH greater than GHD and argues at G on the side of EF containing B and D, as in Heath's figure"
+case = "EF crosses the parallel straight lines AB and CD at G and H, with B and D on the same side of EF"
 note = "The drawing marks AGH, GHD and EGB equal, as the proof establishes."
 
 [review]
