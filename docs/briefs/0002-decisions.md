@@ -1364,7 +1364,7 @@ findings:
   the count would no longer be caught. This is a relaxation, in a commit of its own, and it
   lands only if the owner approves this pin specifically; the retirement then adds stronger
   pins, that III.1, III.1 Por., III.2 and II.14 rest on none of the eight.
-- **Eight axioms retired, 87 to 79 (proposed, pending the evidence).** The owner asked,
+- **Eight axioms retired, 87 to 79.** The owner asked,
   "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
   principle on 19 October 2026, pending the evidence; this lands only when the owner has
   seen it. Each of the eight keeps its name and exact type and becomes a theorem at the
@@ -1390,10 +1390,25 @@ findings:
   [`tests/model/laws.toml`](../../tests/model/laws.toml), and the eight laws' code in
   [`tests/model/search.py`](../../tests/model/search.py) and
   [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py), the other laws in their
-  order; [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and
-  [`tests/model/results/`](../../tests/model/results/), from `run.py --full --write`; and
-  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json): the
-  measured counts of III.1 and its porism (55 tacit rules each) and new pins that III.1,
+  order. [`tests/model/MODEL.md`](../../tests/model/MODEL.md) follows the smaller lock.
+  The results of `run.py --full --write` are recorded in
+  [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
+  [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
+  [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
+  [`tests/model/results/hyperbolic.txt`](../../tests/model/results/hyperbolic.txt),
+  [`tests/model/results/mutations.txt`](../../tests/model/results/mutations.txt),
+  [`tests/model/results/search-seed1.txt`](../../tests/model/results/search-seed1.txt),
+  [`tests/model/results/search-seed2.txt`](../../tests/model/results/search-seed2.txt),
+  [`tests/model/results/search-seed3.txt`](../../tests/model/results/search-seed3.txt),
+  [`tests/model/results/structured.txt`](../../tests/model/results/structured.txt) and
+  [`tests/model/results/summary.txt`](../../tests/model/results/summary.txt).
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates its axiom examples and
+  the counts for III.1 and its porism because `centre_unique` and Circle 2 are now theorems.
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) updates its overlap examples to distinguish
+  current axioms from proved rules; its fields, requirements and worked TOML examples stay
+  unchanged.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  the measured counts of III.1 and its porism (55 tacit rules each) and new pins that III.1,
   III.1 Por., III.2 and II.14 rest on none of the eight. The formal model's generated
   laws, checks and assembly follow from its generator; its proofs in the plane stay, as
   derived facts. Proposition and porism statements, definitions and `--` lines are
