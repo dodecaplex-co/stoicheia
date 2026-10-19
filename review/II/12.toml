@@ -14,7 +14,15 @@ note = "Euclid takes the foot D on CA produced beyond A; Heath gives no referenc
 
 [review]
 stage = "full"
-commit = "dcb1767"
+commit = "7921e32"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:c8056e07b2db5b7d"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
