@@ -16,8 +16,12 @@
    `«doc».…`), `#eval`, `#exit`, `run_cmd`, `elab`, `macro`, `simproc` and its kin,
    `implemented_by`, `extern`, `unsafe`, the attributes it knows to register code (by a
    name ending in `elab`, `tactic`, `init`, `proc`, `parser`, `handler`, `unexpander` and
-   others, or beginning `doc_`), and the rest of FORBIDDEN, below. Each finding of 2, 3
-   and 4 names its file and line.
+   others, or beginning `doc_`), and the rest of FORBIDDEN, below. The scan reads Lean's
+   comments and its string and character literals as Lean does (`read_lean`), so a
+   literal's text never opens a comment or ends an attribute's brackets, and is not read
+   as code, while the code in an interpolated string's `{…}` holes is; a string whose
+   braces Lean could read either way is refused. Each finding of 2, 3 and 4 names its
+   file and line.
 5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
    fields are in `Certificate/FIELDS.md`):
    - every axiom an entry rests on, other than Lean's own `propext`,
@@ -99,8 +103,8 @@ LEAN_TREES = ("Elements", "Staging", "Audit")
 # and the suggestion tactics run, and the `doc.` options, spelled `doc.` or `«doc».`: with
 # `doc.verso` on, Lean runs the Lean in a docstring, which the scan takes out with the
 # comments), give syntax a meaning in code (`elab`, `macro`), swap code in for a definition,
-# or stop Lean reading the file (`#exit`). Matched as whole words, in the Lean with its
-# comments taken out; so is an attribute that registers code Lean runs while a file is
+# or stop Lean reading the file (`#exit`). Matched as whole words, in the Lean as
+# `read_lean` gives it; so is an attribute that registers code Lean runs while a file is
 # built or printed, known by the end of its name (`command_elab`, `grind_tactic`, `init`,
 # `sym_simproc`, `app_unexpander`, `term_parser`, `cpass`, `missing_docs_handler`,
 # `simprocAttr` and the rest) or, for `builtin_doc` and the `doc_` attributes, its start,
@@ -180,25 +184,122 @@ def check_fidelity() -> None:
                      + first_difference(got, expected))
 
 
-def without_comments(src: str) -> str:
-    """The Lean with its comments taken out: `/- … -/` blocks (docstrings among them,
-    nested ones too) and `--` to the end of the line."""
-    out, depth, i = [], 0, 0
+# Lean's tokens, as its tokenizer starts them: an identifier begins with a letter or `_`,
+# a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
+# digit, so that the `'` after one begins a character literal. A string just after one of
+# INTERPOLATED is read with its `{…}` holes, as Lean reads it.
+IDENT = re.compile(r"[^\W\d][\w'!?.]*|\d[\w.]*")
+RAW = re.compile(r'r(#*)"')
+CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)|[^\\\n'])'")
+INTERPOLATED = {"s!", "m!", "f!", "throwError"}
+
+
+def read_lean(src: str) -> tuple[str, list[int]]:
+    """The Lean as Lean's tokenizer reads it, with its comments (`--` to the end of the
+    line, and `/- … -/` blocks, docstrings and nested ones among them), the text of its
+    string and character literals, raw strings among them, and each `[` or `]` in a «…»
+    name blanked; the code in an interpolated string's `{…}` holes is kept. Newlines stay,
+    so lines keep their numbers. Also the offset of each string the scan cannot read for
+    certain: one with a `{`, not after INTERPOLATED, whose two readings, plain and with
+    holes, end in different places, since its braces may be text or holes of code."""
+    marks: list[tuple[str, int, int]] = []
+    _read_code(src, 0, marks)
+    out, unsure = list(src), []
+    for kind, i, j in marks:
+        if kind == "unsure":
+            unsure.append(i)
+            continue
+        for k in range(i, j):
+            if out[k] != "\n" and (kind == "text" or out[k] in "[]"):
+                out[k] = " "
+    return "".join(out), unsure
+
+
+def _find(src: str, s: str, i: int) -> int:
+    """The offset of `s` in `src` from `i` on, or the end of `src`."""
+    k = src.find(s, i)
+    return len(src) if k < 0 else k
+
+
+def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
+    """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
+    that offset. `marks` gains the text of each comment and literal ("text"), each «…»
+    name ("name") and each string the scan cannot read for certain ("unsure")."""
+    depth, previous = 0, ""
     while i < len(src):
-        if src.startswith("/-", i):
-            depth, i = depth + 1, i + 2
-        elif depth and src.startswith("-/", i):
-            depth, i = depth - 1, i + 2
-        elif depth:
-            out.append(" " if src[i] != "\n" else "\n")
-            i += 1
-        elif src.startswith("--", i):
-            j = src.find("\n", i)
-            i = len(src) if j < 0 else j
+        c, j = src[i], i + 1
+        if src.startswith("--", i):
+            j = _find(src, "\n", i)
+            marks.append(("text", i, j))
+        elif src.startswith("/-", i):
+            j, nested = i + 2, 1
+            while j < len(src) and nested:
+                pair = src[j:j + 2]
+                nested += (pair == "/-") - (pair == "-/")
+                j += 2 if pair in ("/-", "-/") else 1
+            marks.append(("text", i, j))
+        elif c == '"':
+            j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
+        elif m := RAW.match(src, i):
+            close = '"' + m[1]
+            k = _find(src, close, m.end())
+            marks.append(("text", m.end(), k))
+            j, previous = min(k + len(close), len(src)), c
+        elif c == "«":
+            j = min(_find(src, "»", i) + 1, len(src))
+            marks.append(("name", i, j))
+            previous = src[i:j]
+        elif m := IDENT.match(src, i):
+            j, previous = m.end(), m[0]
+        elif c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
+            marks.append(("text", i + 1, m.end() - 1))
+            j, previous = m.end(), c
+        elif c == "}" and hole and not depth:
+            return i
+        elif not c.isspace():
+            depth += (c == "{") - (c == "}")
+            previous = c
+        i = j
+    return len(src)
+
+
+def _read_string(src: str, i: int, marks: list, interpolated: bool) -> int:
+    """Read the string at `i` and return the offset past it: with its holes, as an
+    interpolated string, if it follows INTERPOLATED or both readings end in one place."""
+    plain = i + 1
+    while plain < len(src) and src[plain] != '"':
+        plain += 2 if src[plain] == "\\" else 1
+    plain = min(plain + 1, len(src))
+    holes: list[tuple[str, int, int]] = []
+    end = _read_interpolated(src, i, holes)
+    if end == plain or (interpolated and end is not None):
+        marks += holes
+        return end
+    marks.append(("text", i + 1, plain))
+    if "{" in src[i:plain]:
+        marks.append(("unsure", i, plain))
+    return plain
+
+
+def _read_interpolated(src: str, i: int, marks: list) -> int | None:
+    """The offset past the string at `i` read as an interpolated string, with its text
+    marked and its holes read as code; None if it does not close."""
+    j = start = i + 1
+    while j < len(src):
+        if src[j] == "\\":
+            j += 2
+        elif src[j] == '"':
+            marks.append(("text", start, j))
+            return j + 1
+        elif src[j] == "{":
+            marks.append(("text", start, j))
+            j = _read_code(src, j + 1, marks, hole=True)
+            if j >= len(src):
+                return None
+            j = start = j + 1
         else:
-            out.append(src[i])
-            i += 1
-    return "".join(out)
+            j += 1
+    return None
 
 
 def lean_sources() -> list[Path]:
@@ -211,29 +312,35 @@ def lean_sources() -> list[Path]:
     return paths
 
 
-def line_of(text: str, m: re.Match) -> int:
-    return text[: m.start()].count("\n") + 1
+def line_of(text: str, offset: int) -> int:
+    return text[:offset].count("\n") + 1
 
 
 def check_rules() -> None:
     for path in lean_sources():
         rel = path.relative_to(ROOT).as_posix()
         src = path.read_text()
-        code = without_comments(src)
+        code, unsure = read_lean(src)
         if not rel.startswith("Elements/Foundations/"):
             for m in AXIOM.finditer(code):
-                fail(f"{rel}:{line_of(code, m)}: declares an axiom outside Elements/Foundations/")
+                fail(f"{rel}:{line_of(code, m.start())}: declares an axiom outside "
+                     "Elements/Foundations/")
         for m in re.finditer("native_decide", src):
-            fail(f"{rel}:{line_of(src, m)}: uses native_decide")
+            fail(f"{rel}:{line_of(src, m.start())}: uses native_decide")
         for m in FORBIDDEN.finditer(code):
             if m.group(0) != "native_decide":
                 word = f"@[{m['attr']}]" if m["attr"] else " ".join(m.group(0).split())
-                fail(f"{rel}:{line_of(code, m)}: uses `{word}`, which could get round Lean's "
-                     "kernel, bring in an axiom unseen, run a program when the file is built or "
-                     "imported, or stop Lean reading it (docs/FORMALIZATION.md, section 7)")
+                fail(f"{rel}:{line_of(code, m.start())}: uses `{word}`, which could get round "
+                     "Lean's kernel, bring in an axiom unseen, run a program when the file is "
+                     "built or imported, or stop Lean reading it (docs/FORMALIZATION.md, "
+                     "section 7)")
+        for offset in unsure:
+            fail(f"{rel}:{line_of(src, offset)}: a string the scan cannot read for certain, "
+                 "since Lean could read its braces as holes of code (docs/FORMALIZATION.md, "
+                 "section 7)")
         if rel.startswith("Elements/Figure/"):
             for m in re.finditer(r"^import Elements\.Book", src, re.M):
-                fail(f"{rel}:{line_of(src, m)}: Book Zero must not import a proposition")
+                fail(f"{rel}:{line_of(src, m.start())}: Book Zero must not import a proposition")
 
 
 # The words retired from the reader-facing pages ("Euclid cites", "never need" and their
@@ -700,7 +807,7 @@ def declared_names() -> frozenset:
     names = set()
     for path in (ROOT / "Elements").rglob("*.lean"):
         stack: list[list[str]] = []
-        for line in without_comments(path.read_text()).splitlines():
+        for line in read_lean(path.read_text())[0].splitlines():
             m = re.match(r"^\s*(namespace|section|end)\b\s*(\S*)", line)
             if m:
                 word, name = m.groups()

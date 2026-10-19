@@ -26,7 +26,10 @@ records current; CI runs it on every push.
    scan reads, `Elements/`, `Staging/` (in a folder of its own) and `Audit/`, with
    `#exit` at the end of each root file, `Elements.lean`, `Staging.lean` and
    `Audit.lean`, and a new Book Zero file that imports a proposition: each is caught on
-   its own line. The files are read, not built.
+   its own line. Some of the commands stand after a string, a raw string or a character
+   literal holding `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, so
+   the scan must read Lean's literals as Lean does; a string whose braces Lean could
+   read as code is caught too. The files are read, not built.
 9. One build with planted assumptions, the certificate recomputed:
    - in I.16, Postulate 5, a planted Euclidean-only rule (`Tacit.Euclidean.planted`)
      and an axiom declared in I.16's own file after a docstring on the same line:
@@ -183,7 +186,9 @@ def native_decide() -> None:
 
 
 # Each command docs/FORMALIZATION.md, section 7, forbids, as check_fidelity.py names it,
-# with a line of Lean that uses it; `#exit` comes last, as it would in a file.
+# with a line of Lean that uses it, some behind a literal that a scan blind to Lean's
+# literals would misread, and a string whose braces Lean could read as code ("string");
+# `#exit` comes last, as it would in a file.
 PLANTED_COMMANDS = (
     ("decide +native", "theorem planted_decide : 2 + 2 = 4 := by decide +native"),
     ("native := true",
@@ -291,6 +296,16 @@ PLANTED_COMMANDS = (
     ("implemented_by", "@[implemented_by plantedSpec] def plantedImpl : Nat := 4"),
     ("extern", '@[extern "planted"] opaque plantedExtern : Nat'),
     ("unsafe", "unsafe def plantedUnsafe : Nat := 4"),
+    ("@[tactic]", '@[deprecated "]" (since := "2026-01-01"), tactic plantedStx] '
+     "def plantedHidden : Lean.Elab.Tactic.Tactic := fun _ => pure ()"),
+    ("@[tactic]", 'attribute [deprecated "]", tactic plantedStx] plantedHidden'),
+    ("#eval", 'def plantedOpen := "/-" #eval IO.println "planted"'),
+    ("#eval", '#eval IO.println "-/"'),
+    ("#eval", 'def plantedRaw := r#"]"/-"# #eval IO.println r"-/"'),
+    ("#eval", "def plantedChar := '\"' #eval IO.println \"planted\""),
+    ("by_elab",
+     'def plantedHole : String := s!"{(by_elab pure (Lean.mkStrLit "x") : String)}"'),
+    ("string", 'def plantedBraces := "{" ++ "}"'),
     ("#exit", "#exit"),
 )
 # A new file in each folder the scan reads; Staging's in a folder of its own, which
@@ -319,6 +334,8 @@ def forbidden_commands() -> None:
             return f"{rel}:{line}: declares an axiom outside Elements/Foundations/"
         if word == "native_decide":
             return f"{rel}:{line}: uses native_decide"
+        if word == "string":
+            return f"{rel}:{line}: a string the scan cannot read for certain"
         return f"{rel}:{line}: uses `{word}`"
 
     wanted: dict[str, list[str]] = {}

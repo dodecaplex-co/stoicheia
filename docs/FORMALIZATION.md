@@ -330,7 +330,12 @@ dependencies.
   or any other command of the kinds below, in any Lean file the edition builds: under
   `Elements/`, `Staging/` and `Audit/`, and in their roots, `Elements.lean`,
   `Staging.lean` and `Audit.lean`. `check_fidelity.py` matches each as a whole word, in
-  the Lean with its comments taken out (`native_decide` even in a comment):
+  the Lean with its comments and the text of its string and character literals taken
+  out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
+  in a comment or a string). The code in an interpolated string's `{…}` holes is read
+  too; a string whose braces Lean could read either as text or as holes of code, one not
+  just after `s!`, `m!`, `f!` or `throwError` whose two readings end in different places,
+  is refused, since the scan cannot tell which Lean will do:
   - `native_decide`, `bv_decide` and `bv_check`, and `decide` with its `native` option,
     have the compiler vouch for a proof in the kernel's place; since `decide +native`,
     `decide (native := …)` and a whole configuration given by `(config := …)` all set
@@ -390,8 +395,11 @@ and I.8; a later citation, one of them named only in a helper's statement; every
 forbidden command, and an attribute for each ending and prefix the scan knows, in each of
 `Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a proposition
 imported by Book Zero; a `sorry` in a complete book; and a primitive word no longer
-opaque. Each finding of the source scan names its file and line. A complete book's
-missing figure or mishnah has no planted break yet.
+opaque. Some of the forbidden commands stand after a string, a raw string or a character
+literal holding `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, and a
+string whose braces Lean could read as code is planted too. Each finding of the source
+scan names its file and line. A complete book's missing figure or mishnah has no planted
+break yet.
 
 The first two policies hold in `Staging/` (section 6) and in `Audit/` as well: a staged
 file or an audit lemma declares no axiom and uses none of the forbidden commands. Nothing
@@ -399,9 +407,11 @@ there reaches the certificate, so the source scan is what enforces them:
 `check_fidelity.py`'s `check_rules` reads every `.lean` file under `Elements/`,
 `Staging/` and `Audit/`, and the three roots, and refuses an `axiom` anywhere outside
 `Elements/Foundations/` and every command and attribute the list above names. It reads
-words, not Lean's grammar, so it catches a slip but not a command disguised from it on
-purpose, nor an attribute it does not list: review still reads every staged file and
-audit lemma. In `Elements/` the certificate reads the axioms from Lean itself as well.
+comments and literals as Lean's tokenizer does, so a string cannot hide a command from it
+by opening a comment or ending an attribute's brackets. Beyond that it reads words, not
+Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
+disguised from it on purpose, nor an attribute it does not list: review still reads every
+staged file and audit lemma. In `Elements/` the certificate reads the axioms from Lean itself as well.
 The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is not
 scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only
 with a decisions entry and a security review.

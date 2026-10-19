@@ -655,8 +655,9 @@ findings:
   outside `Elements/Foundations/` now finds the word anywhere in a line, not only at its
   start: Lean reads `example : True := trivial axiom planted : False` as two commands, the
   second an axiom, which the old check missed (in `Elements/` the certificate caught it
-  all the same). Each finding names its file and line. Nothing is loosened: the scan refuses all
-  it refused before, in more places, and on main it refuses nothing.
+  all the same). Each finding names its file and line. Nothing is loosened but the text of a
+  literal (below): the scan refuses all else it refused before, in more places, and on main
+  it refuses nothing.
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains test 8, which
   plants every forbidden command, and an axiom twice, once after another command on its
   line, in a new file of each of the three folders (Staging's in a folder of its own), and
@@ -689,7 +690,20 @@ findings:
   `builtin_doc_` attributes; test 8 plants each, and a Book Zero file that imports a
   proposition. The findings for `native_decide` and for Book Zero's imports, which named
   the file alone, now name the line as well, so every finding of the scan names its file
-  and line. A list of names trails the attributes each Lean release adds, so this one may
+  and line. The last round found that the scan did not know Lean's string literals: on
+  Lean 4.35 a `]` in a string ended an attribute's brackets early, so
+  `@[deprecated "]" (since := …), tactic …]` registered a tactic unseen, and a `"/-"`
+  opened a comment that hid the `#eval` after it. The scan now reads comments and string
+  and character literals as Lean's tokenizer does, raw strings, escapes and the `{…}`
+  holes of interpolated strings among them: a literal's text never opens or ends a
+  comment, an attribute or a command, and the code in a hole is still read. A string
+  whose braces Lean could read either as text or as holes of code, one not just after
+  `s!`, `m!`, `f!` or `throwError` whose two readings end in different places, is
+  refused, since the scan cannot tell which Lean will do. The one thing the scan now
+  refuses less is a forbidden word inside a literal's text, which Lean never runs as
+  code. Test 8 plants each disguise the review found, one behind a raw string and one
+  behind a character literal, a command in an interpolated string's hole, and a string
+  of the kind refused. A list of names trails the attributes each Lean release adds, so this one may
   not be complete, and review still reads every staged file and audit lemma. What would
   hold for good, an allowlist of the attributes the edition uses (main's Lean uses only
   `@[simp]` and `@[inherit_doc]`) or refusing imports from outside the project (each of
