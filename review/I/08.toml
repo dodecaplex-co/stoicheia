@@ -29,9 +29,9 @@ note = "This figure draws the impossible supposition: G distinct from D on the s
 
 [review]
 stage = "full"
-commit = "2ac1625"
-reviewer = "Claude Opus 5.5, records review"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
+run = "brief 0005 stage 5, ship C5 re-read"
 lean = "sha256:fcb1ba2567bc9c46"
 
 [review.items]
