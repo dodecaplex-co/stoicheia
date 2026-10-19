@@ -14,6 +14,7 @@ import Elements.Foundations.Tacit.Transfer
 import Elements.Foundations.Words
 import Model.Laws
 import Model.Hand
+import Model.Laws.incidence
 import Check.Original
 import Check.Generator
 

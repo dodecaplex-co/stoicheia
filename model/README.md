@@ -11,14 +11,11 @@ words are the fields of a structure, the ordinary plane fills them, and Lean che
 the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and all 87 laws,
-written by a generator from the library's own elaborated declarations into one structure,
-`Laws`, and checked against those declarations. The first laws are proved in the plane: the
-four circle-intersection rules, the first of the hard groups, and the eight magnitude laws,
-which are easy in the plane but test the translation where it is most delicate. That is 12
-of the 87, and `Model/Assembly.lean` states exactly that: the plane satisfies every law,
-given the 75 not yet proved in it. Until every locked law is proved here, the evidence that
-the laws have a model remains MODEL.md's hand arguments and numerical tests, and this
-package is a milestone in progress.
+written by a generator from the library's elaborated declarations into one structure,
+`Laws`, and checked against those declarations. The plane satisfies 23 of the 87 locked
+laws. `Model/Assembly.lean` gathers these proofs, with the 64 remaining laws as hypotheses.
+Until every locked law is proved here, the evidence that the laws have a model remains
+MODEL.md's hand arguments and numerical tests, and this package is a milestone in progress.
 
 ## Building it
 
@@ -56,6 +53,10 @@ at the repository's root builds the library exactly as before.
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration and with the generated law | `Elements.Foundations`, `Model.Hand` |
 | [Check/Original.lean](Check/Original.lean) | `original`, the library's own words as a signature | `Elements.Foundations`, `Model.Signature` |
 | [Check/Write.lean](Check/Write.lean) | run by hand, never built: writes the generated files | as `Check/Generated.lean` |
+| [Model/Laws/incidence.lean](Model/Laws/incidence.lean) | the incidence and line laws, and `Hand.LinesMeet`, **by hand** | `Signature`, `Hand` |
+| [Model/Euclidean/Incidence.lean](Model/Euclidean/Incidence.lean) | Postulate 1, `line_unique`, the other generalities and Intersection 1 proved in the plane | Mathlib |
+| [Model/Euclidean/Avoidance.lean](Model/Euclidean/Avoidance.lean) | Postulate 2 and the Points rules for lines proved in the plane, by the infinitude of a line | Mathlib |
+| [Check/Incidence.lean](Check/Incidence.lean) | the same for the incidence and line laws | `Elements.Foundations`, `Model.Laws.incidence` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib. The
@@ -234,8 +235,8 @@ what it writes.
    assembly stands apart from `Model/Laws.lean`, which the proofs import, so that no import
    goes round in a circle and the laws stay free of Mathlib. A law proved from now on is
    stated with the generated law, `theorem line_unique : Law.Tacit.line_unique plane`; the
-   twelve proved before the generator keep their statements from `Model/Hand.lean`, which
-   Lean checks against the generated laws.
+   integrated families keep their hand-translated statements in `Model/Hand.lean` and
+   `Model/Laws/`; their files in `Check/` compare every one with its generated field.
 
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
@@ -262,7 +263,9 @@ the original means. These checks do that, at every build.
   declaration's statement and does not use the axiom. The kernel accepts the `rfl` only if
   the two are the same proposition, up to unfolding definitions; a dropped guard, two
   swapped arguments or a change in the order of the binders fails it, and the build with
-  it. This covers all 87 laws and all 16 defined words they reach.
+  it. This covers all 87 laws and all 16 defined words they reach. The family checks in
+  `Check/` also compare each hand-translated law with its generated field over any signature,
+  and retain the original library checks.
 - **The round trip, by syntax.** [Check/RoundTrip.lean](Check/RoundTrip.lean) takes each
   law and word as Lean elaborated them from `Model/Laws.lean`, translates each back, every
   field of `S` and every word over it replaced by the library's word, and compares it with
@@ -276,7 +279,7 @@ the original means. These checks do that, at every build.
   is right only after unfolding a word, and a binder made explicit where the original's is
   implicit, which the kernel does not see, since neither changes the proposition. The same
   file checks the words written by hand in `Model/Signature.lean`, exactly, the type of each
-  field of the signature against the library's opaque word, each law of `Model/Hand.lean`
+  field of the signature against the library's opaque word, each imported law of `Model/Hand.lean` and the family modules in `Model/Laws/`
   against the law the generator wrote for it, binder kinds included, and that `original`
   gives each field the library's word.
 - **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
@@ -380,7 +383,7 @@ come before the easy laws are shared out. A law proved here is gathered into
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
 | Superposition | an isometry, with a reflection where the side needs one; and the soundness of whichever restricted rule is adopted | to do |
 | Areas | `area_congruent`, `area_add_of_between`, `between_of_area_add`, with collinear and repeated corners | to do |
-| Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | to do |
+| Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | on a line, proved here (Postulate 2, `exists_point`, `exists_point_on_line`, `exists_point_on_line_off_line`, `exists_point_between`); in a region and on a circumference, to do |
 
 `CirclesMeet α α` is true, since a circle has two distinct points; the side laws are proved
 for that case too, where both centres are one point and the line through them is any line

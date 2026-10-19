@@ -2,8 +2,10 @@ module
 
 public import Model.Laws
 public import Model.Euclidean
+public import Model.Euclidean.Avoidance
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Circles
+public import Model.Euclidean.Incidence
 public import Model.Euclidean.Magnitudes
 
 /-!
@@ -17,9 +19,9 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-So far 12 of the 87 laws are proved in the plane. Until the rest are,
+So far 23 of the 87 laws are proved in the plane. Until the rest are,
 `euclidean_laws` takes them as hypotheses, so that it states exactly what is proved: the plane
-satisfies every law, given the 75 that are not yet proved in it. When none is left,
+satisfies every law, given the 64 that are not yet proved in it. When none is left,
 the generator writes it with no hypothesis, and `model_exists` after it.
 -/
 
@@ -27,11 +29,9 @@ the generator writes it with no hypothesis, and `model_exists` after it.
 
 namespace Model
 
-/-- **The plane satisfies the laws,** given the 75 not yet proved in it. -/
+/-- **The plane satisfies the laws,** given the 64 not yet proved in it. -/
 theorem euclidean_laws
     (Definition15 : Law.Definition15 Euclidean.plane)
-    (Postulate1 : Law.Postulate1 Euclidean.plane)
-    (Postulate2 : Law.Postulate2 Euclidean.plane)
     (Postulate3 : Law.Postulate3 Euclidean.plane)
     (Postulate4 : Law.Postulate4 Euclidean.plane)
     (Postulate5 : Law.Postulate5 Euclidean.plane)
@@ -53,20 +53,13 @@ theorem euclidean_laws
     (between_of_between_right : Law.Tacit.between_of_between_right Euclidean.plane)
     (between_of_inside_chord : Law.Tacit.between_of_inside_chord Euclidean.plane)
     (between_symm : Law.Tacit.between_symm Euclidean.plane)
-    (centre_inside : Law.Tacit.centre_inside Euclidean.plane)
-    (centre_unique : Law.Tacit.centre_unique Euclidean.plane)
     (circle_eq : Law.Tacit.circle_eq Euclidean.plane)
     (eq_of_len_eq_zero : Law.Tacit.eq_of_len_eq_zero Euclidean.plane)
-    (exists_point : Law.Tacit.exists_point Euclidean.plane)
-    (exists_point_between : Law.Tacit.exists_point_between Euclidean.plane)
     (exists_point_inside_circle : Law.Tacit.exists_point_inside_circle Euclidean.plane)
     (exists_point_on_circle : Law.Tacit.exists_point_on_circle Euclidean.plane)
-    (exists_point_on_line : Law.Tacit.exists_point_on_line Euclidean.plane)
-    (exists_point_on_line_off_line : Law.Tacit.exists_point_on_line_off_line Euclidean.plane)
     (exists_point_opposite_side : Law.Tacit.exists_point_opposite_side Euclidean.plane)
     (exists_point_outside_circle : Law.Tacit.exists_point_outside_circle Euclidean.plane)
     (exists_point_same_side : Law.Tacit.exists_point_same_side Euclidean.plane)
-    (inside_not_on : Law.Tacit.inside_not_on Euclidean.plane)
     (inside_of_angle_add : Law.Tacit.inside_of_angle_add Euclidean.plane)
     (inside_of_between : Law.Tacit.inside_of_between Euclidean.plane)
     (inside_of_len_lt : Law.Tacit.inside_of_len_lt Euclidean.plane)
@@ -79,8 +72,6 @@ theorem euclidean_laws
     (line_meets_circle_of_inside : Law.Tacit.line_meets_circle_of_inside Euclidean.plane)
     (line_meets_circle_of_opposite_sides :
       Law.Tacit.line_meets_circle_of_opposite_sides Euclidean.plane)
-    (line_unique : Law.Tacit.line_unique Euclidean.plane)
-    (lines_meet_of_opposite_sides : Law.Tacit.lines_meet_of_opposite_sides Euclidean.plane)
     (ne_of_between : Law.Tacit.ne_of_between Euclidean.plane)
     (ne_of_between_ends : Law.Tacit.ne_of_between_ends Euclidean.plane)
     (not_between_of_between : Law.Tacit.not_between_of_between Euclidean.plane)
@@ -107,8 +98,8 @@ theorem euclidean_laws
     (triple_incidence3 : Law.Tacit.triple_incidence3 Euclidean.plane) :
     Laws Euclidean.plane where
   Definition15 := Definition15
-  Postulate1 := Postulate1
-  Postulate2 := Postulate2
+  Postulate1 := Euclidean.Postulate1
+  Postulate2 := Euclidean.Postulate2
   Postulate3 := Postulate3
   Postulate4 := Postulate4
   Postulate5 := Postulate5
@@ -134,24 +125,24 @@ theorem euclidean_laws
   between_of_between_right := between_of_between_right
   between_of_inside_chord := between_of_inside_chord
   between_symm := between_symm
-  centre_inside := centre_inside
-  centre_unique := centre_unique
+  centre_inside := Euclidean.centre_inside
+  centre_unique := Euclidean.centre_unique
   circle_eq := circle_eq
   circles_meet := Euclidean.circles_meet
   circles_meet_of_on_inside_outside := Euclidean.circles_meet_of_on_inside_outside
   circles_meet_opposite_side := Euclidean.circles_meet_opposite_side
   circles_meet_same_side := Euclidean.circles_meet_same_side
   eq_of_len_eq_zero := eq_of_len_eq_zero
-  exists_point := exists_point
-  exists_point_between := exists_point_between
+  exists_point := Euclidean.exists_point
+  exists_point_between := Euclidean.exists_point_between
   exists_point_inside_circle := exists_point_inside_circle
   exists_point_on_circle := exists_point_on_circle
-  exists_point_on_line := exists_point_on_line
-  exists_point_on_line_off_line := exists_point_on_line_off_line
+  exists_point_on_line := Euclidean.exists_point_on_line
+  exists_point_on_line_off_line := Euclidean.exists_point_on_line_off_line
   exists_point_opposite_side := exists_point_opposite_side
   exists_point_outside_circle := exists_point_outside_circle
   exists_point_same_side := exists_point_same_side
-  inside_not_on := inside_not_on
+  inside_not_on := Euclidean.inside_not_on
   inside_of_angle_add := inside_of_angle_add
   inside_of_between := inside_of_between
   inside_of_len_lt := inside_of_len_lt
@@ -163,8 +154,8 @@ theorem euclidean_laws
   line_circle_beyond := line_circle_beyond
   line_meets_circle_of_inside := line_meets_circle_of_inside
   line_meets_circle_of_opposite_sides := line_meets_circle_of_opposite_sides
-  line_unique := line_unique
-  lines_meet_of_opposite_sides := lines_meet_of_opposite_sides
+  line_unique := Euclidean.line_unique
+  lines_meet_of_opposite_sides := Euclidean.lines_meet_of_opposite_sides
   lt_irrefl := Euclidean.lt_irrefl
   lt_trans := Euclidean.lt_trans
   lt_trichotomy := Euclidean.lt_trichotomy
