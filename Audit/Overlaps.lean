@@ -13,6 +13,9 @@ I.3, I.7 and I.23, whose rules supply their step in a longer proof. After III.6,
 crossing. A second section proves III.24, III.26 and III.27 without the hypotheses our
 measure of circumferences leaves idle, the catalogue's near misses of representation.
 
+A third section proves III.30 by the same measure, without III.28 (`III_30_measure`),
+another near miss of representation.
+
 Each theorem's type is the proposition's own (`type_of% @Elements.BookIII.Prop2`), so a
 change to a statement shows up here too. At the end, `#guard_msgs` pins the axioms Lean
 reports for each theorem: the rules named in the catalogue, and nothing else. The last
@@ -287,6 +290,73 @@ example : type_of% @Elements.BookIII.Prop24 :=
   fun hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim =>
     ⟨(BookIII.Prop24 hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
      III_24_measure hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hsim⟩
+
+/-! ## III.30 by the measure
+
+The same measure saves III.30 a step. Its two halves are measured by the angles that stand
+on them, each taken twice (`Circumference.standing`, by III.21), so they are equal once
+those angles are, which I.4 gives. Euclid goes instead from the equal straight lines AD and
+DB, by III.28, with his step that each half is less than a semicircle; his own III.26
+would take him from the equal angles to equal halves without either. What the measure
+saves is III.26's step at the circumference, which it reduces to its definition and
+III.21. `III_30_measure` has III.30's own statement, which keeps the measure when arcs get
+a meaning of their own (brief 0006, stage 3), so it stays. Our III.30 follows Euclid, by
+III.28. -/
+
+/-- **III.30 without III.28.** The halves AD and DB are measured by the angles ABD and DAB
+that stand on them, each taken twice, so they are equal once those angles are. The
+construction is Euclid's: AB is bisected at C (I.10), CD drawn at right angles to it (I.11)
+meets the given circumference at D, C being within the circle (III.2), and I.4 makes the
+angles at A and B equal. -/
+theorem III_30_measure : type_of% @Elements.BookIII.Prop30 := by
+  intro A B ADB hADB hA hB P hP
+  have hABP : Triangle A B P := hP
+  have hAB : A ≠ B := hABP.ne₁₂
+  /- C bisects AB; CX is at right angles to it, on P's side. -/
+  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
+  obtain ⟨C, hACB, hAC⟩ := BookI.Prop10 hAB
+  have hC_L : OnLine C L := on_line_of_between_ends hACB hA_L hB_L
+  obtain ⟨X, hXP, hX⟩ := BookI.Prop11 hAB ⟨L, hA_L, hB_L, hC_L⟩ hP
+  /- C is within the circle (III.2), so XC produced beyond C to Y meets the circle at D,
+     beyond C from Y, on X's side of AB. -/
+  have hC_in : InsideCircle C ADB := BookIII.Prop2 hADB hA hB C hACB
+  have hX_L : ¬ OnLine X L := hXP.triangle.off_line hA_L hB_L
+  have hCX : C ≠ X := fun e => hX_L (e ▸ hC_L)
+  obtain ⟨N, hC_N, hX_N⟩ := Postulate1 C X hCX
+  obtain ⟨Y, hY_N, hXCY, -⟩ := Postulate2 hX_N hC_N hCX.symm []
+  obtain ⟨D, hD, hD_N, hDCY⟩ :=
+    line_circle_beyond hC_in hC_N hY_N (ne_of_between (between_symm hXCY))
+  have hDC : D ≠ C := fun e => inside_not_on hC_in (e ▸ hD)
+  have hD_L : ¬ OnLine D L := fun hD_L =>
+    hX_L ((line_unique hDC hD_N hC_N hD_L hC_L) ▸ hX_N)
+  have hY_L : ¬ OnLine Y L := fun hY_L =>
+    hX_L ((line_unique (ne_of_between (between_symm hXCY)) hY_N hC_N hY_L hC_L) ▸ hX_N)
+  have hDX : SameSide D X L := same_side_of_opposite_sides
+    ⟨hY_L, hD_L, fun h => pasch3 hDCY hC_L (same_side_symm h)⟩
+    ⟨hY_L, hX_L, fun h => pasch3 hXCY hC_L (same_side_symm h)⟩
+  refine ⟨D, hD, (SameSideOf.of_line hAB hA_L hB_L hDX).trans hXP, ?_⟩
+  have hABD : Triangle A B D := Triangle.of_line hA_L hB_L hAB hD_L
+  /- The triangles CAD, CBD have their sides about the right angles at C equal, so the
+     angles at A and B are equal (I.4). -/
+  have hCA : ‖C A‖ = ‖C B‖ := by rw [len_symm C A, hAC]
+  have hDray : OnRay D C X := OnRay.of_between_between (between_symm hXCY) (between_symm hDCY)
+  have hACD : ∠ A C D = ∟ := by
+    rw [angle_onRay_right hDray (ne_of_between hACB)]
+    exact hX A ⟨L, hA_L, hB_L, hA_L⟩ (ne_of_between hACB)
+  have hBCD : ∠ B C D = ∟ := by
+    rw [angle_onRay_right hDray (ne_of_between (between_symm hACB))]
+    exact hX B ⟨L, hA_L, hB_L, hB_L⟩ (ne_of_between (between_symm hACB))
+  have hCAD : Triangle C A D := Triangle.of_line hC_L hA_L (ne_of_between hACB).symm hD_L
+  have hCBD : Triangle C B D :=
+    Triangle.of_line hC_L hB_L (ne_of_between (between_symm hACB)).symm hD_L
+  obtain ⟨-, -, hA₁, -⟩ := BookI.Prop4 hCAD hCBD hCA rfl (hACD.trans hBCD.symm)
+  have hbase : ∠ D A B = ∠ A B D := by
+    rw [angle_symm hABD.ne₁₃.symm hAB.symm,
+      ← angle_onRay_left (OnRay.of_between hACB) hABD.ne₁₃.symm, hA₁,
+      angle_onRay_left (OnRay.of_between (between_symm hACB)) hABD.ne₂₃.symm]
+  /- Each half is twice the angle standing on it, and the angles are equal. -/
+  rw [BookIII.Circumference.standing hADB hB hA hD hABD.acb,
+    BookIII.Circumference.standing hADB hA hD hB hABD.cba, hbase]
 
 /-! ## A rule that a proposition gives back -/
 
@@ -648,6 +718,77 @@ info: 'Audit.III_24_measure' depends on axioms: [propext,
 -/
 #guard_msgs in
 #print axioms Audit.III_24_measure
+
+/--
+info: 'Audit.III_30_measure' depends on axioms: [propext,
+ Classical.choice,
+ Elements.Definition15,
+ Elements.Postulate1,
+ Elements.Postulate2,
+ Elements.Postulate3,
+ Elements.Postulate4,
+ Elements.Postulate5,
+ Quot.sound,
+ Elements.Tacit.add_assoc,
+ Elements.Tacit.add_comm,
+ Elements.Tacit.add_lt_add_right,
+ Elements.Tacit.add_zero,
+ Elements.Tacit.adjacent_eq_of_right,
+ Elements.Tacit.angle_add_of_inside,
+ Elements.Tacit.angle_eq_of_same_rays,
+ Elements.Tacit.angle_symm,
+ Elements.Tacit.area_congruent,
+ Elements.Tacit.area_rotate,
+ Elements.Tacit.area_swap,
+ Elements.Tacit.between_cases,
+ Elements.Tacit.between_of_between_left,
+ Elements.Tacit.between_of_between_right,
+ Elements.Tacit.between_of_inside_chord,
+ Elements.Tacit.between_symm,
+ Elements.Tacit.centre_inside,
+ Elements.Tacit.circles_meet,
+ Elements.Tacit.circles_meet_of_on_inside_outside,
+ Elements.Tacit.circles_meet_same_side,
+ Elements.Tacit.eq_of_len_eq_zero,
+ Elements.Tacit.exists_point,
+ Elements.Tacit.exists_point_between,
+ Elements.Tacit.exists_point_opposite_side,
+ Elements.Tacit.exists_point_same_side,
+ Elements.Tacit.inside_not_on,
+ Elements.Tacit.inside_of_len_lt,
+ Elements.Tacit.len_add_of_between,
+ Elements.Tacit.len_lt_of_inside,
+ Elements.Tacit.len_self,
+ Elements.Tacit.len_symm,
+ Elements.Tacit.line_circle_between,
+ Elements.Tacit.line_circle_beyond,
+ Elements.Tacit.line_unique,
+ Elements.Tacit.lines_meet_of_opposite_sides,
+ Elements.Tacit.lt_irrefl,
+ Elements.Tacit.lt_trans,
+ Elements.Tacit.lt_trichotomy,
+ Elements.Tacit.ne_of_between,
+ Elements.Tacit.ne_of_between_ends,
+ Elements.Tacit.not_between_of_between,
+ Elements.Tacit.not_between_of_between_between,
+ Elements.Tacit.not_lt_zero,
+ Elements.Tacit.not_on_line_of_same_side,
+ Elements.Tacit.on_line_of_between,
+ Elements.Tacit.on_line_of_between_ends,
+ Elements.Tacit.pasch2,
+ Elements.Tacit.pasch3,
+ Elements.Tacit.pasch4,
+ Elements.Tacit.same_ray_of_angle_eq_zero,
+ Elements.Tacit.same_side_or,
+ Elements.Tacit.same_side_refl,
+ Elements.Tacit.same_side_symm,
+ Elements.Tacit.same_side_trans,
+ Elements.Tacit.superposition,
+ Elements.Tacit.triple_incidence1,
+ Elements.Tacit.triple_incidence2]
+-/
+#guard_msgs in
+#print axioms Audit.III_30_measure
 
 /--
 info: 'Audit.adjacent_eq_of_right' depends on axioms: [propext,
