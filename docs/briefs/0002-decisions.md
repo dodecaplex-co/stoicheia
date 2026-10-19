@@ -1112,4 +1112,4 @@ findings:
   it read the root's `lakefile.toml` in the removed line too.
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains the cases: each new
   path refused without its line, a longer path's mention refused, a relative link
-  accepted, and the new paths still judged. Every refusal it made before still stands.
+  accepted, and the new paths still judged. None of the cases it held before is loosened.
