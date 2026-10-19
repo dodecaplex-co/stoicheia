@@ -15,7 +15,7 @@ circumference ELF" (III.26), "BK is also equal to BC, the less to the greater" (
 remains" (III.28). Lean measures the circumference BKC by the angle that stands on it
 at the circumference, taken twice (`circumference`, Definitions III.6 and III.9). What
 Euclid takes for granted about circumferences then follows from the three propositions
-before them:
+before them, III.2's corollaries supplying the points of the circle on either side of BC:
 
 * any point of the circle on the other side measures it, the angles in a segment being
   equal (III.21): `Circumference.eq`, `Circumference.standing`;
@@ -104,8 +104,8 @@ make the angles at B and C equal to the two parts of the angle at A [I. 5], and 
 three angles of the triangle ABC are two right angles [I. 32]. Since that holds at
 every point, it holds at the one that measures the circumference, and the angles in a
 segment being equal (III.21) is not needed. Euclid proves the same of the angle in a
-semicircle in III.31; III.28 and III.29 need it of circumferences first. [I. 5, I. 32,
-III. 2] -/
+semicircle in III.31; III.28 and III.29 need it of circumferences first.
+[I. 5, I. 32, III. 2] -/
 theorem Circumference.semicircle (hG : Centre G α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hBGC : Between B G C) (hK : Triangle B C K) : circumference α B K C = ∟ + ∟ := by
   /- Lean measured the circumference at some point A of the circle on the other side of BC
