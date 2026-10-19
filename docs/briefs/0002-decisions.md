@@ -1333,6 +1333,19 @@ findings:
   safe_push keeps a check's data apart from the content it judges, as
   `figure-with-dissection` did; `mixed-angles-omitted` stays while a record uses it. The
   protected file this changes is `review/terms.toml`.
+- **The negative test of an undeclared run reads the passage of any kind.**
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py)'s fifth test drops the
+  passages that declare III.16's runs of `--` lines with no Lean beneath them, and expects
+  `check_fidelity.py` to catch the run of the angle clauses. It required that run's passage
+  to be `unformalized`; once the companions of III.16 state those clauses (brief 0011, in
+  the move of the mixed angles,
+  [#57](https://github.com/jackChallis/stoicheia/issues/57)), the record declares the run
+  as argued another way, and the test would fail on a precondition while the check it
+  tests still works. It now requires only that a dropped passage begins that run, of
+  whatever kind, and expects the same failure, so it plants the same break and catches it
+  on today's record and on the record to come; nothing is loosened. It lands on its own,
+  before the records it reads, since safe_push keeps a check apart from the content it
+  judges. The protected file this changes is `scripts/negative_tests.py`.
 
 ## 19 October 2026
 
