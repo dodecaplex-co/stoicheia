@@ -234,10 +234,11 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 ## I.39
 - E, where the parallel through A meets BD, comes from `Prop30.meet`: BD meets BC at B, so it meets the parallel to BC.
 - "The greater to the less" needs to know where E falls. The parallel puts E on A's side of BC, and so on D's, on the ray from B through D (`OnRay.of_sameSideOf`). Euclid's figure has E between B and D; Proclus points out that the proof is as easy when it falls beyond D (Heath, vol. 1, p. 337). Either way one triangle is a part of the other (`area_lt_of_cut`, C.N. 5).
-- "Similarly we can prove that neither is any other straight line except AD" asks for an argument about every straight line through A. Our proof makes it about one: the parallel I.31 draws through A meets BD at D itself (`OnRay.eq_of_len_eq`), and so it is AD.
+- Supposing AD not parallel to BC makes E differ from D. Both orders on the ray from B through D make one triangle strictly less than the other (`between_cases`, `area_lt_of_cut`), contradicting their equality. This excludes a proposed parallel through A meeting BD away from D and carries the closing "Similarly".
 
 ## I.40
 - As in I.39: F, where the parallel through A meets CD, comes from `Prop30.meet`; the same-side hypothesis puts F on the ray from C through D (`OnRay.of_sameSideOf`); and the case Proclus adds under I.39, F beyond D, is taken with Euclid's (`area_lt_of_cut`).
+- `Prop40.general` follows the same reductio for equal bases anywhere on one straight line, including coincident vertices.
 
 ## I.41
 - E may lie anywhere on the straight line AD, at A or at D among them. One argument serves, since our I.37 takes "in the same parallels" as two whole straight lines and lets its two triangles share their vertex.

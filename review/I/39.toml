@@ -8,24 +8,35 @@ note = "\"In the same parallels\" is AD parallel to BC, so A and D are apart: on
 fingerprint = "sha256:e27bd8d22cd1f209"
 
 [route]
-kind = "modified"
-note = "Euclid's argument, made direct at its end: the parallel through A is shown to pass through D, so no other straight line needs refuting."
+kind = "euclid"
+note = "Euclid's reductio: supposing AD not parallel to BC makes the parallel through A meet BD away from D. I.37 and Common Notion 1 give equal areas, contradicted by a strict area comparison in either order on the ray from B through D."
 
 [[passage]]
 at = "I say that they are also in the same parallels"
 kind = "given"
-note = "The statement gives the goal, AD parallel to BC, and nothing is drawn here: the parallel through A, drawn next, will pass through D and so be AD."
+note = "The statement gives the goal, AD parallel to BC. The distinct vertices A and D name AD; its parallelism remains to be proved, so nothing is drawn here."
+
+[[passage]]
+at = "But ABC is equal to DBC"
+kind = "case"
+note = "The same-side hypothesis puts E on the ray from B through D, and the contrary supposition excludes E = D. If E is between B and D, EBC is less than DBC; if E is beyond D, DBC is less than EBC, so either order contradicts their equal areas."
+
+[[passage]]
+at = "Therefore AE is not parallel to BC"
+kind = "grouped"
+note = "The preceding strict-area contradiction rules out the proposed parallel meeting BD away from D."
 
 [[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
-kind = "different"
-note = "Euclid supposes AD not parallel and refutes it. The Lean supposes nothing: the areas put E at D (`OnRay.eq_of_area_eq`), so the parallel through A is AD itself, and no other straight line needs trying."
+kind = "grouped"
+note = "The same contradiction excludes any proposed parallel through A meeting BD away from D, discharging the supposition that AD is not parallel to BC. The final step returns this conclusion."
 
 [figure]
 note = "AE is drawn level, as the proof supposes; Heath draws AD level."
 
 [review]
 stage = "exceptions"
-commit = "2e1d5c1"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:a7efb796f39c1124"
+commit = "06138bcb"
+reviewer = "GPT-6 Astra, independent reader"
+run = "issue #29, no-mistakes review round 3: independent reading of Heath, Prop39, Prop40 with Prop40.general, the records and the rendered pages at 86751ad0"
+lean = "sha256:ed110b7f428be948"

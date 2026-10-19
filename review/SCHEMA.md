@@ -79,7 +79,7 @@ If it no longer matches, a statement changed after the review.
   declared as a passage (`case`, `helper` or `given`).
 - **modified**: Euclid's argument, with a step done materially differently: another
   construction, or one of his steps, or a real case within his statement, argued another
-  way (I.39 and I.40, whose Lean makes the end of his reductio direct).
+  way (III.8, whose last step compares the angles at the centre by I.24).
 - **alternative**: a different proof altogether, labelled as one on the page (III.24's
   proof by the radii, once stage 3 gives Euclid's own).
 
