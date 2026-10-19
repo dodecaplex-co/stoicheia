@@ -22,7 +22,7 @@ note = "Euclid draws BG and FH and takes their meetings with AD at G and H from 
 at = "But the halves of equal things are equal to one another"
 kind = "helper"
 helper = "Magnitude.eq_of_add_self_eq"
-note = "Euclid takes equality of halves for granted in the sentence J. L. Heiberg brackets as added later. The Lean applies `Magnitude.eq_of_add_self_eq`, which rules out unequal halves by comparing their doubles using the order and addition laws for magnitudes."
+note = "Euclid passes from equal parallelograms to equal triangles without stating or proving that halves of equal things are equal; J. L. Heiberg brackets the sentence that states this as an interpolation. The Lean applies `Magnitude.eq_of_add_self_eq`, which rules out unequal halves by comparing their doubles using the order and addition laws for magnitudes."
 
 [figure]
 case = "the bases BC and EF apart, and the vertices A and D apart"

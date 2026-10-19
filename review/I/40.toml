@@ -37,7 +37,7 @@ note = "As in I.39, the Lean argues directly: the areas put F at D (`OnRay.eq_of
 
 [figure]
 case = "the bases BC and CE meeting at C, with F on CD between C and D, as in Heath's figure"
-note = "F is drawn between C and D, with AF level, as the proof supposes; Heath draws AD level and AF sloping."
+note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the proof supposes."
 
 [review]
 stage = "full"
