@@ -17,13 +17,14 @@ about them that cite no proposition:
 * the region of a rectilineal angle: it does not depend on the points that name its arms,
   equal angles placed alike have one region, the less angle on one side lies within the
   greater, and every circle about the vertex holds points of it;
-* the comparison is a strict order, and an arm or a slit adds or takes away nothing;
+* no angle is less than itself, and of two angles not each is less than the other; an arm
+  or a slit adds or takes away nothing;
 * the regions of a mixed angle, which do not depend on the points that name them, and what
   a comparison says of the angles it compares: they are something, and neither is
   straight.
 
-The facts that need a proposition, the order of rectilineal angles among them, are in
-`BookIII/MixedAngles.lean`. Nothing here cites a proposition of the *Elements*, and nothing
+The facts that need a proposition, the order of rectilineal angles among them, and that
+comparisons chain (`LocallyLess.trans`, by I.20), are in `BookIII/MixedAngles.lean`. Nothing here cites a proposition of the *Elements*, and nothing
 in it is an axiom.
 -/
 

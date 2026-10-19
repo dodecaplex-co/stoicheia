@@ -75,7 +75,7 @@ Every proposition file imports this one, and through it:
 * `Regions`: an angle as the region it opens near its vertex: the sides of a straight
   line named by other points of it; circles about a point; the region of a rectilineal
   angle, and of a mixed angle, named by any points of their arms; the comparison near a
-  vertex, a strict order to which an arm or a slit adds nothing.
+  vertex, which no angle bears to itself and to which an arm or a slit adds nothing.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is
 an axiom.
