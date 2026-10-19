@@ -13,6 +13,10 @@ import Elements.Figure.Rectangles
 import Elements.Figure.OnCircles
 import Elements.Figure.Sums
 import Elements.Figure.Rectilineal
+import Elements.Figure.RuleBase
+import Elements.Figure.Incidence
+import Elements.Figure.AreaRules
+import Elements.Figure.CirclePoints
 
 /-!
 # Book Zero: small facts every figure needs

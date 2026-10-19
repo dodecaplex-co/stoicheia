@@ -1,4 +1,5 @@
 import Elements.Figure.Circles
+import Elements.Figure.CirclePoints
 import Elements
 
 /-!

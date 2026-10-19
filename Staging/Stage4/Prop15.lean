@@ -1,4 +1,5 @@
 import Staging.Stage4.Foot
+import Elements.Figure.Incidence
 import Staging.Stage4.Prop14
 
 /-!

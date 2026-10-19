@@ -1,4 +1,5 @@
 import Elements.Foundations.Tacit.Transfer
+import Elements.Figure.Incidence
 import Elements.Foundations.Phrases
 
 /-!

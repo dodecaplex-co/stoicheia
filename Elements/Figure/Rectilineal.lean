@@ -1,4 +1,5 @@
 import Elements.Figure.Sides
+import Elements.Figure.RuleBase
 
 /-!
 # Book Zero: a rectilineal figure's triangles

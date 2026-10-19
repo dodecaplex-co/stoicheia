@@ -9,6 +9,10 @@ These are the transfer inferences of System E, §3.6 (Avigad, Dean and Mumma,
 2009). Diagram-angle rule 5 is Postulate 5 itself, and the forward half of
 diagram-segment rule 3 is Definition 15. Diagram-angle rule 3 and the converse
 of Diagram-angle rule 2 are proved after I.13 in `Elements.BookI.Prop13`.
+
+The following former assumptions are proved in Book Zero:
+* `Elements.Figure.Incidence`: `inside_of_len_lt`, `len_lt_of_inside`.
+* `Elements.Figure.AreaRules`: `between_of_area_add`.
 -/
 
 namespace Elements.Tacit
@@ -29,14 +33,6 @@ axiom circle_eq (hα : Centre A α) (hβ : Centre A β) (hB : OnCircle B α) (hC
 (Diagram-segment 3, the half that Definition 15 doesn't give) -/
 axiom on_circle_of_len_eq (hA : Centre A α) (hB : OnCircle B α) (h : ‖A C‖ = ‖A B‖) :
     OnCircle C α
-
-/-- A point nearer the centre than the circumference is inside. (Diagram-segment 4) -/
-axiom inside_of_len_lt (hA : Centre A α) (hB : OnCircle B α) (h : ‖A C‖ < ‖A B‖) :
-    InsideCircle C α
-
-/-- A point inside is nearer the centre than the circumference. (Diagram-segment 4) -/
-axiom len_lt_of_inside (hA : Centre A α) (hB : OnCircle B α) (h : InsideCircle C α) :
-    ‖A C‖ < ‖A B‖
 
 /-! ## Angles -/
 
@@ -78,12 +74,5 @@ axiom on_line_of_area_eq_zero (hA : OnLine A L) (hB : OnLine B L) (hAB : A ≠ B
 axiom area_add_of_between (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
     (hAB : A ≠ B) (hAC : A ≠ C) (hBC : B ≠ C) (hD : ¬ OnLine D L) (h : Between A C B) :
     △ A C D + △ D C B = △ A D B
-
-/-- If A, B and C are different points of a straight line, D is off it, and the
-triangles ACD and DCB together make up the triangle ADB, then C lies between
-A and B. (Diagram-area 2, converse) -/
-axiom between_of_area_add (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C L)
-    (hAB : A ≠ B) (hAC : A ≠ C) (hBC : B ≠ C) (hD : ¬ OnLine D L)
-    (h : △ A C D + △ D C B = △ A D B) : Between A C B
 
 end Elements.Tacit

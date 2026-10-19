@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.Figure.RuleBase
 import Elements.BookIII.Squares
 import Elements.BookI.Prop04
 import Elements.BookI.Prop06

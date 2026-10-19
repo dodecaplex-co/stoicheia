@@ -1,4 +1,6 @@
 import Elements.Figure.Basics
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 import Staging.Stage3.Degenerate
 
 /-!

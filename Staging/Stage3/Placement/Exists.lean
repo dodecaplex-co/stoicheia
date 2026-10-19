@@ -1,4 +1,6 @@
 import Elements.Figure.Basics
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 import Elements.BookI.Prop02
 import Elements.BookI.Prop03
 import Elements.BookI.Prop20

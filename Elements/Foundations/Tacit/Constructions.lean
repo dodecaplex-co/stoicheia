@@ -17,6 +17,12 @@ Our reading of these rules owes a great deal to LeanEuclid (Logan Murphy,
 Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si, 2024),
 whose careful Lean rendering of System E we kept open beside the paper the
 whole time. Thank you!
+
+The following former assumptions are proved in Book Zero:
+* `Elements.Figure.RuleBase`: `exists_point_same_side`.
+* `Elements.Figure.Incidence`: `circles_meet_opposite_side`, `exists_point_between`,
+  `exists_point_opposite_side`, `exists_point_on_line_off_line`.
+* `Elements.Figure.CirclePoints`: `exists_point_on_circle`.
 -/
 
 namespace Elements.Tacit
@@ -29,27 +35,6 @@ axiom exists_point (avoid : List Point) : ∃ A : Point, A ∉ avoid
 /-- Let a point be taken on the straight line L. (Points 2) -/
 axiom exists_point_on_line (L : Line) (avoid : List Point) :
     ∃ A : Point, OnLine A L ∧ A ∉ avoid
-
-/-- Let a point be taken on L, not on the different straight line M.
-(Points 2, with "distinct from M") -/
-axiom exists_point_on_line_off_line {L M : Line} (h : L ≠ M) (avoid : List Point) :
-    ∃ A : Point, OnLine A L ∧ ¬ OnLine A M ∧ A ∉ avoid
-
-/-- Let a point be taken between B and C. (Points 3) -/
-axiom exists_point_between {B C : Point} {L : Line} (hB : OnLine B L) (hC : OnLine C L)
-    (hBC : B ≠ C) (avoid : List Point) : ∃ A : Point, OnLine A L ∧ Between B A C ∧ A ∉ avoid
-
-/-- Let a point be taken on the same side of L as B. (Points 5) -/
-axiom exists_point_same_side {B : Point} {L : Line} (hB : ¬ OnLine B L) (avoid : List Point) :
-    ∃ A : Point, SameSide A B L ∧ A ∉ avoid
-
-/-- Let a point be taken on the other side of L from B. (Points 6) -/
-axiom exists_point_opposite_side {B : Point} {L : Line} (hB : ¬ OnLine B L)
-    (avoid : List Point) : ∃ A : Point, OppositeSides A B L ∧ A ∉ avoid
-
-/-- Let a point be taken on the circle α. (Points 7) -/
-axiom exists_point_on_circle (α : Circle) (avoid : List Point) :
-    ∃ A : Point, OnCircle A α ∧ A ∉ avoid
 
 /-- Let a point be taken inside the circle α. (Points 8) -/
 axiom exists_point_inside_circle (α : Circle) (avoid : List Point) :
@@ -79,11 +64,5 @@ axiom circles_meet_same_side {α β : Circle} {B C D : Point} {L : Line}
     (h : CirclesMeet α β) (hC : Centre C α) (hD : Centre D β) (hCL : OnLine C L)
     (hDL : OnLine D L) (hB : ¬ OnLine B L) :
     ∃ A : Point, OnCircle A α ∧ OnCircle A β ∧ SameSide A B L
-
-/-- The same, on the side away from B. (Intersections 9) -/
-axiom circles_meet_opposite_side {α β : Circle} {B C D : Point} {L : Line}
-    (h : CirclesMeet α β) (hC : Centre C α) (hD : Centre D β) (hCL : OnLine C L)
-    (hDL : OnLine D L) (hB : ¬ OnLine B L) :
-    ∃ A : Point, OnCircle A α ∧ OnCircle A β ∧ OppositeSides A B L
 
 end Elements.Tacit

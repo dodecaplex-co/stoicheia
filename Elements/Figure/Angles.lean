@@ -1,4 +1,6 @@
 import Elements.Figure.Rays
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 import Elements.Figure.Sides
 
 /-!

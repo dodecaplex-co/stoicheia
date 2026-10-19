@@ -1,4 +1,5 @@
 import Staging.Superposition.Formulas
+import Elements.Figure.Incidence
 
 /-!
 # Superposition, restricted: the laws and the derivations

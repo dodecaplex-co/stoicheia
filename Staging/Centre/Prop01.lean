@@ -1,4 +1,7 @@
 import Elements.Figure.Circles
+import Elements.Figure.CirclePoints
+import Elements.Figure.Incidence
+import Elements.Figure.RuleBase
 import Elements.BookIII.Prop01
 
 /-!
