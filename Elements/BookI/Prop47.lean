@@ -17,6 +17,13 @@ Euclid's text, in Heath's translation: [`heath/I/47.md`](../../heath/I/47.md).
 Below, each of Euclid's sentences is a `--` comment, followed by the Lean that
 carries it out.
 
+`Prop47` keeps Euclid's worked configuration: the squares described outward, on the
+side of each base away from the triangle. The companion `Prop47.general` proves the
+same area identity for squares independently on either side of each base, all eight
+choices, with each square's far corners together on one side. It constructs outward
+squares by I.46, applies `Prop47`, and carries each area across by `Prop46.square_eq`,
+since squares on the same base have equal areas.
+
 Before the proposition, `Prop47.within` says where the squares fall: a fact of
 Euclid's figure that the proof needs three times.
 -/
