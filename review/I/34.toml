@@ -11,7 +11,7 @@ kind = "euclid"
 at = "and the straight line BC has fallen upon them"
 kind = "helper"
 helper = "AreParallel.oppositeSidesOf"
-note = "Euclid reads A and D on opposite sides of BC, so the angles ABC and BCD are alternate. `AreParallel.oppositeSidesOf` proves this from the parallels and the sides of the parallelogram."
+note = "Euclid reads A and D on opposite sides of BC, so the angles ABC and BCD are alternate. `AreParallel.oppositeSidesOf` proves this from AB parallel to CD and B and D on one side of AC, which `Parallelogram.sameSideOf` gives because AC is parallel to BD."
 
 [[passage]]
 at = "the whole angle ABD is equal to the whole angle ACD"

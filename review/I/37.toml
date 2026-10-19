@@ -16,13 +16,13 @@ note = "Euclid produces AD in both directions. The statement already supplies th
 at = "through B let BE be drawn parallel to CA"
 kind = "helper"
 helper = "Prop31.parallelogram"
-note = "Euclid draws BE and CF and reads their meetings E and F with AD from the figure. `Prop31.parallelogram` uses I.31 and `Prop30.meet` (I.30, which Heath does not cite here) to find both points on the whole straight line AD and complete the parallelograms."
+note = "Euclid draws BE and CF and reads their meetings E and F with AD from the figure. `Prop31.parallelogram` uses I.31 and `Prop30.meet` (I.30, which Heath does not cite here) to find both points on the whole straight line AD and prove that ACBE and DBCF are parallelograms, which Euclid's next sentence asserts without a reason, naming ACBE as EBCA."
 
 [[passage]]
 at = "But the halves of equal things are equal to one another"
 kind = "helper"
 helper = "Magnitude.eq_of_add_self_eq"
-note = "Euclid takes equal halves from equal wholes, in the sentence Heiberg brackets. `Magnitude.eq_of_add_self_eq` proves the step from the order of magnitudes: if one half were less, its double would be less too."
+note = "Euclid infers that the triangles are equal because they are halves of equal parallelograms; the bracketed sentence states the principle this inference needs, but Heath reports that Heiberg judges its words interpolated. `Magnitude.eq_of_add_self_eq` proves the step from the order of magnitudes: if one half were less, its double would be less too."
 
 [figure]
 case = "the vertices A and D apart"
