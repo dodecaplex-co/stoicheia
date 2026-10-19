@@ -2,6 +2,7 @@ module
 
 public import Model.Signature
 public import Model.Hand
+public import Model.Laws.«areas-p5»
 public import Model.Euclidean
 public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
