@@ -54,9 +54,12 @@ hypotheses keep out the cases the conventions cannot fix.
 
 ## How the model is checked
 
-Every program here takes an axiom, builds configurations of points, lines and circles,
-keeps those that satisfy the axiom's hypotheses, and checks its conclusion. Where the
-conclusion says that a point exists, the program constructs one and checks it.
+The programs take an axiom, build configurations of points, lines and circles, keep those
+that satisfy its hypotheses, and check its conclusion. Where the conclusion says that a
+point exists, the program constructs one and checks it. The exhaustive and structured
+harnesses also run eight predicates independently as retained derived properties. They
+preserve the existing numerical checks and configurations for those laws, but do not
+depend on the corresponding declarations remaining in the axiom registry.
 
 - **Exact where it can be.** Points have integer or fraction coordinates, lines are
   integer equations, and a circle is its centre and the square of its radius. So lying on
@@ -66,12 +69,15 @@ conclusion says that a point exists, the program constructs one and checks it.
 - **[search.py](search.py)** draws configurations at random, biased hard toward the
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
-- **[exhaustive.py](exhaustive.py)** visits every configuration on small grids, 70 of
-  the axioms in all, degenerate configurations included.
-- **[structured.py](structured.py)** builds each axiom's pattern of hypotheses on purpose,
-  for the axioms whose hypotheses chance rarely meets (three straight lines through one
-  point, a right angle, two circles through a common point), over a large lattice and
-  over fractions.
+- **[derived.py](derived.py)** keeps the eight numerical predicates prepared to survive
+  axiom retirement, under names beginning `derived.`.
+- **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 71
+  predicates in all: 63 axiom laws and eight retained derived properties, with degenerate
+  configurations included.
+- **[structured.py](structured.py)** builds each axiom's or retained property's pattern of
+  hypotheses on purpose, where chance rarely meets them (three straight lines through one
+  point, a right angle, two circles through a common point), over a large lattice and over
+  fractions.
 - **[mutations.py](mutations.py)** weakens 15 axioms on purpose, by dropping or loosening
   one guard, and checks that each weakened axiom has a counterexample. So the harness can
   see a false axiom when there is one.
@@ -80,12 +86,14 @@ conclusion says that a point exists, the program constructs one and checks it.
   and the angle, area, Postulate 4, Postulate 5 and superposition rules in floating point.
 - **[hyperbolic.py](hyperbolic.py)** runs every axiom in the hyperbolic plane
   ([below](#the-hyperbolic-plane)).
-- **[run.py](run.py)** runs them all and checks the results, after two checks that tie the
-  harness to the Lean: [laws.toml](laws.toml) names a law for each axiom, exactly the
-  axioms of `Certificate/axioms.lock` and of `facts.json`, and search.py and hyperbolic.py
-  each implement exactly those laws; and [lock.sha256](lock.sha256) pins the lock, which
-  holds every axiom's exact statement. When an axiom changes, this run fails until the
-  model has followed it ([below](#changing-the-axioms)).
+- **[run.py](run.py)** runs them all and checks the results, including every retained
+  property in both the exhaustive and structured reports. It reports their totals apart
+  from the axiom totals. Before the programs run, two checks tie the axiom harness to the
+  Lean: [laws.toml](laws.toml) names a law for each axiom, exactly the axioms of
+  `Certificate/axioms.lock` and of `facts.json`, and search.py and hyperbolic.py each
+  implement exactly those laws; and [lock.sha256](lock.sha256) pins the lock, which holds
+  every axiom's exact statement. When an axiom changes, this run fails until the model has
+  followed it ([below](#changing-the-axioms)).
 
 These programs were first written for the [read-through of 16 October
 2026](../../docs/reports/read-through-01.md), and came into the repository with [brief
@@ -566,7 +574,10 @@ the axiom in the same pull request as the Lean:
    `structured.py` and `exhaustive.py` run some laws by name on configurations of their
    own (`run('<law>', ...)`). If either program names the law of an axiom that is removed,
    or restated so that its law reads other letters, that program must drop or re-key the
-   law first, in a pull request of its own, before the axiom moves.
+   law first, in a pull request of its own, before the axiom moves. That preparation is
+   already complete for the eight predicates in [derived.py](derived.py): both programs
+   call their `derived.` names, and `run.py` requires each report independently of the
+   axiom registry.
 4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with
    the reason it holds in the plane, a word on the hyperbolic plane where it needs one,
    and the counts in the prose. `run.py --full --write` brings the numbers above and

@@ -1353,8 +1353,9 @@ findings:
   [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py),
   [`tests/model/structured.py`](../../tests/model/structured.py) and
   [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
-  laws, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only a
-  description; `model/Check/` compares the eight hand translations directly with the
+  laws, [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records that independent
+  contract, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only
+  a description; `model/Check/` compares the eight hand translations directly with the
   Elements declarations, so the comparisons hold whether those are axioms or theorems.
 - **One certificate pin dropped, with the owner's approval.** The retirement makes
   `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
