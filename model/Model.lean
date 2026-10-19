@@ -8,4 +8,6 @@ public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
+public import Model.Euclidean.Areas
+public import Model.Euclidean.Postulate5
 public import Model.Audit

@@ -7,6 +7,9 @@ public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
+public import Model.Laws.«areas-p5»
+public import Model.Euclidean.Areas
+public import Model.Euclidean.Postulate5
 
 /-!
 # What the model's proofs rest on
@@ -110,3 +113,57 @@ info: 'Model.Euclidean.exists_centre' depends on axioms: [propext, Classical.cho
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.exists_centre
+
+/--
+info: 'Model.Euclidean.area_degenerate' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.area_degenerate
+
+/--
+info: 'Model.Euclidean.area_rotate' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.area_rotate
+
+/--
+info: 'Model.Euclidean.area_swap' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.area_swap
+
+/--
+info: 'Model.Euclidean.area_congruent' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.area_congruent
+
+/--
+info: 'Model.Euclidean.area_eq_zero_of_on_line' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.area_eq_zero_of_on_line
+
+/--
+info: 'Model.Euclidean.on_line_of_area_eq_zero' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.on_line_of_area_eq_zero
+
+/--
+info: 'Model.Euclidean.area_add_of_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.area_add_of_between
+
+/--
+info: 'Model.Euclidean.between_of_area_add' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.between_of_area_add
+
+/--
+info: 'Model.Euclidean.Postulate5' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.Postulate5

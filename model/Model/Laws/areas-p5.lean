@@ -93,7 +93,8 @@ Not (Elements.OnLine D L) → Eq (HAdd.hAdd (Elements.area A C D) (Elements.area
 def between_of_area_add : Prop :=
   ∀ {A B C D : S.Point} {L : S.Line}, S.OnLine A L → S.OnLine B L → S.OnLine C L →
     A ≠ B → A ≠ C → B ≠ C → ¬ S.OnLine D L →
-    @HAdd.hAdd S.Area S.Area S.Area _ (S.area A C D) (S.area D C B) = S.area A D B → S.Between A C B
+    @HAdd.hAdd S.Area S.Area S.Area _ (S.area A C D) (S.area D C B) = S.area A D B →
+    S.Between A C B
 
 /-! ## Postulate 5 -/
 
