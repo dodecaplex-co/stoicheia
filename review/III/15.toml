@@ -34,5 +34,5 @@ case = "AD a diameter, neither BC nor FG through E, and EH less than EK"
 [review]
 stage = "exceptions"
 commit = "bb1589c5"
-reviewer = "Claude Opus 5.5"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:63a0eafb567d5839"

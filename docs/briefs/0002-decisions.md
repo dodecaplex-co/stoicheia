@@ -1790,7 +1790,7 @@ findings:
   itself needs no such split. Independent record review, the separate construction
   guard and regeneration of the edition remain with their assigned owners.
 
-- **III.25's segment kinds (19 October 2026), proposed for the coordinator's approval.**
+- **III.25's segment kinds (19 October 2026), approved by the owner.**
   The addition in [brief 0006](0006-statements.md#addition-19-october-2026-iii25s-segment-kinds)
   records the exact statement of `Elements.BookIII.Prop25.kind`, reviewed unchanged by
   both first mates. It is proved after `Prop25.complete` and registered as the companion
@@ -1799,7 +1799,7 @@ findings:
   centre-position conclusions and the three semicircle lemmas. `Prop25.complete`
   transports the result to the given arc; the construction and correctness companions
   retain their separate certificate entries. The three passages in `review/III/25.toml`
-  become helpers naming `Prop25.kind`; the record remains unstamped for independent review.
+  are helpers naming `Prop25.kind`; the record was stamped after independent review at `58612ec`.
 
   `Certificate/axioms.lock` is rewritten by `python3 scripts/check_fidelity.py --write-lock`.
   It adds only `Arc.Less`, `Arc.Semicircle` and `Arc.Greater`, bringing its vocabulary

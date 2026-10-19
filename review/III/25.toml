@@ -50,5 +50,5 @@ note = "`Prop25.kind` proves `Arc.Greater` and that the circumference measures m
 [review]
 stage = "exceptions"
 commit = "58612ec"
-reviewer = "Claude Opus 5.5"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:db7bbc551925e1dd"
