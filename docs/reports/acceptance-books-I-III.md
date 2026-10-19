@@ -3,13 +3,13 @@
 
 What [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) finds against [the acceptance checklist](../ACCEPTANCE.md), item by item: for each of the 99 propositions, for each book and for the edition as a whole. A [machine] item is checked by the script; a [review] item is read from the records, and passes only when a reviewer has recorded it. The checklist says what each item asks. ✓ passes; ✗ fails, and every failure is listed at the end.
 
-- **Revision:** `d898edd`.
+- **Revision:** `3e02de0`.
 - **Lean:** facts.json as Lean 4.35.0 wrote it.
 - **Run:** every item.
 
 ## Summary
 
-**737 failing items**. 0 of the 99 propositions pass every item of their own.
+**742 failing items**. 0 of the 99 propositions pass every item of their own.
 
 Failing propositions, item by item:
 
@@ -17,14 +17,14 @@ Failing propositions, item by item:
 |---|---|---|---|---|---|
 | P1 | proved: proved, with its porism and companions, each with its certificate | machine | 0 of 48 | 0 of 14 | 0 of 37 |
 | P2 | record: a current record at the stage `full`, its reviewer, run and commit | machine | 48 of 48 | 14 of 14 | 37 of 37 |
-| P3 | scope: full, or a limitation the checklist names; no other argument | machine | 2 of 48 | 2 of 14 | 7 of 37 |
+| P3 | scope: full, or a limitation the checklist names; no other argument | machine | 0 of 48 | 0 of 14 | 4 of 37 |
 | P4 | disclosed: every exception on the page; no disclosure in the mishnah alone | machine | 1 of 48 | 0 of 14 | 1 of 37 |
 | P5 | policies: the certificate's policies | machine | 0 of 48 | 0 of 14 | 0 of 37 |
 | P6 | runs: every run of `--` lines carried or declared; the notes shown | machine | 0 of 48 | 0 of 14 | 0 of 37 |
 | P7 | text: Heath's text, quotations, letters, links and scans | machine | 0 of 48 | 0 of 14 | 0 of 37 |
 | P8 | figures: both figures, by the figure rules; the case named | machine | 1 of 48 | 0 of 14 | 6 of 37 |
 | P9 | style: the style rules; the page regenerated clean | machine | 0 of 48 | 0 of 14 | 0 of 37 |
-| P10 | staging: nothing of it left in Staging | machine | 3 of 48 | 2 of 14 | 12 of 37 |
+| P10 | staging: nothing of it left in Staging | machine | 1 of 48 | 0 of 14 | 28 of 37 |
 | P11 | statement: the statement says what the enunciation says | review | 48 of 48 | 14 of 14 | 37 of 37 |
 | P12 | passages: every substantive passage carried or truly named | review | 48 of 48 | 14 of 14 | 37 of 37 |
 | P13 | representations: representations with their bridges | review | 48 of 48 | 14 of 14 | 37 of 37 |
@@ -57,7 +57,7 @@ Failing propositions, item by item:
 | [I.1](../../book/I/01.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.2](../../book/I/02.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.3](../../book/I/03.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [I.4](../../book/I/04.md) | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [I.4](../../book/I/04.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.5](../../book/I/05.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.6](../../book/I/06.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.7](../../book/I/07.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
@@ -93,12 +93,12 @@ Failing propositions, item by item:
 | [I.37](../../book/I/37.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.38](../../book/I/38.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.39](../../book/I/39.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [I.40](../../book/I/40.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [I.40](../../book/I/40.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.41](../../book/I/41.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.42](../../book/I/42.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.43](../../book/I/43.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.44](../../book/I/44.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [I.45](../../book/I/45.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [I.45](../../book/I/45.md) | ✓ | ✗ | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.46](../../book/I/46.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.47](../../book/I/47.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [I.48](../../book/I/48.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
@@ -114,7 +114,7 @@ Failing propositions, item by item:
 
 | | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | P11 | P12 | P13 | P14 | P15 | P16 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| [II.1](../../book/II/01.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [II.1](../../book/II/01.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [II.2](../../book/II/02.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [II.3](../../book/II/03.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [II.4](../../book/II/04.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
@@ -127,7 +127,7 @@ Failing propositions, item by item:
 | [II.11](../../book/II/11.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [II.12](../../book/II/12.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [II.13](../../book/II/13.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [II.14](../../book/II/14.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [II.14](../../book/II/14.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 
 ## Book III
 
@@ -140,28 +140,28 @@ Failing propositions, item by item:
 
 | | P1 | P2 | P3 | P4 | P5 | P6 | P7 | P8 | P9 | P10 | P11 | P12 | P13 | P14 | P15 | P16 |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| [III.1](../../book/III/01.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.2](../../book/III/02.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.1](../../book/III/01.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.2](../../book/III/02.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.3](../../book/III/03.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.4](../../book/III/04.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.5](../../book/III/05.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.6](../../book/III/06.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.7](../../book/III/07.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.8](../../book/III/08.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.9](../../book/III/09.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.10](../../book/III/10.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.4](../../book/III/04.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.5](../../book/III/05.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.6](../../book/III/06.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.7](../../book/III/07.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.8](../../book/III/08.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.9](../../book/III/09.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.10](../../book/III/10.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.11](../../book/III/11.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.12](../../book/III/12.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.13](../../book/III/13.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.13](../../book/III/13.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.14](../../book/III/14.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.15](../../book/III/15.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.16](../../book/III/16.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.17](../../book/III/17.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.17](../../book/III/17.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.18](../../book/III/18.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.19](../../book/III/19.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.20](../../book/III/20.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.21](../../book/III/21.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.22](../../book/III/22.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.21](../../book/III/21.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.22](../../book/III/22.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.23](../../book/III/23.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.24](../../book/III/24.md) | ✓ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.25](../../book/III/25.md) | ✓ | ✗ | ✗ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
@@ -169,22 +169,20 @@ Failing propositions, item by item:
 | [III.27](../../book/III/27.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.28](../../book/III/28.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.29](../../book/III/29.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.30](../../book/III/30.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.30](../../book/III/30.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 | [III.31](../../book/III/31.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.32](../../book/III/32.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.33](../../book/III/33.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.34](../../book/III/34.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.35](../../book/III/35.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.36](../../book/III/36.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
-| [III.37](../../book/III/37.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.32](../../book/III/32.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.33](../../book/III/33.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.34](../../book/III/34.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.35](../../book/III/35.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.36](../../book/III/36.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| [III.37](../../book/III/37.md) | ✓ | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
 
 ## Every failure
 
 ### The whole edition
 
 - **E6 staging:**
-  - Staging/Stage2/Rectilineal.lean still stages 29 declaration(s), for no one proposition: move them to Elements/ or retire them
-  - Staging/Stage2/Sums.lean still stages 7 declaration(s), for no one proposition: move them to Elements/ or retire them
   - Staging/Stage3/Aligned.lean still stages 3 declaration(s), for no one proposition: move them to Elements/ or retire them
   - Staging/Stage3/Arcs.lean still stages 2 declaration(s), for no one proposition: move them to Elements/ or retire them
   - Staging/Stage3/Chord.lean still stages 4 declaration(s), for no one proposition: move them to Elements/ or retire them
@@ -197,7 +195,12 @@ Failing propositions, item by item:
   - Staging/Stage3/Placement/Unique.lean still stages 2 declaration(s), for no one proposition: move them to Elements/ or retire them
   - Staging/Stage3/Placement.lean still stages 7 declaration(s), for no one proposition: move them to Elements/ or retire them
   - Staging/Stage4/Foot.lean still stages 3 declaration(s), for no one proposition: move them to Elements/ or retire them
-  - Staging/Stage4b/Contact.lean still stages 1 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Derivations.lean still stages 31 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Formulas.lean still stages 20 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Prop04.lean still stages 16 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Prop08.lean still stages 13 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Restriction.lean still stages 9 declaration(s), for no one proposition: move them to Elements/ or retire them
+  - Staging/Superposition/Rule.lean still stages 32 declaration(s), for no one proposition: move them to Elements/ or retire them
 
 ### Book I
 
@@ -233,7 +236,6 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
-- **P4 disclosed:** a passage is left unformalized, and the record has no [coverage] clause map to say what stays in Euclid's words
 
 ### I.5
 
@@ -416,8 +418,6 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
-- **P3 scope:** the statement is restricted: every statement of Books I-III is full but for the limitations docs/ACCEPTANCE.md names
-- **P10 staging:** Staging/Stage2/BookI/Prop40.lean still stages declarations for I.40: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### I.41
 
@@ -443,8 +443,7 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
-- **P3 scope:** the statement is restricted: every statement of Books I-III is full but for the limitations docs/ACCEPTANCE.md names
-- **P10 staging:** Staging/Stage2/BookI/Prop45.lean still stages declarations for I.45: once proved, a statement moves to Elements/ and its staged copy is deleted
+- **P4 disclosed:** the mishnah discloses a departure the record does not declare: "That these are enough for the triangles to fit together, none lying over another, is the hardest step of our I.45 (`Fitted.fan`); that the triangles so fitted make the figure with those corners in order round it is true in the plane, but our Lean does not state it."
 
 ### I.46
 
@@ -465,8 +464,6 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
-- **P3 scope:** the statement is restricted: every statement of Books I-III is full but for the limitations docs/ACCEPTANCE.md names
-- **P10 staging:** Staging/Stage2/BookII/Prop01.lean still stages declarations for II.1: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### II.2
 
@@ -532,20 +529,20 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
-- **P3 scope:** the statement is restricted: every statement of Books I-III is full but for the limitations docs/ACCEPTANCE.md names
-- **P10 staging:** Staging/Stage2/BookII/Prop14.lean still stages declarations for II.14: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.1
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
 - **P8 figures:** the theorem covers several cases (a `case` passage or a companion), and [figure] gives no `case` for the caption to name
+- **P10 staging:** Staging/Centre/Prop01.lean still stages declarations for III.1: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.2
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
 - **P8 figures:** the theorem covers several cases (a `case` passage or a companion), and [figure] gives no `case` for the caption to name
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.2: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.3
 
@@ -556,40 +553,44 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.4: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.5
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Crossing.lean still stages declarations for III.5: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.6
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Crossing.lean still stages declarations for III.6: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.7
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
-- **P3 scope:** the statement is restricted: every statement of Books I-III is full but for the limitations docs/ACCEPTANCE.md names
-- **P10 staging:** Staging/Stage4b/Prop07.lean still stages declarations for III.7: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.8
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
-- **P3 scope:** the statement is restricted: every statement of Books I-III is full but for the limitations docs/ACCEPTANCE.md names
-- **P10 staging:** Staging/Stage4b/Prop08.lean still stages declarations for III.8: once proved, a statement moves to Elements/ and its staged copy is deleted
+- **P10 staging:**
+  - Staging/Centre/Brief0007.lean still stages declarations for III.8: once proved, a statement moves to Elements/ and its staged copy is deleted
+  - Staging/Centre/Restated.lean still stages declarations for III.8: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.9
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.9: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.10
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.10: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.11
 
@@ -606,6 +607,7 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.13: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.14
 
@@ -632,8 +634,9 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
-- **P3 scope:** the statement is restricted: every statement of Books I-III is full but for the limitations docs/ACCEPTANCE.md names
-- **P10 staging:** Staging/Stage4b/Prop17.lean still stages declarations for III.17: once proved, a statement moves to Elements/ and its staged copy is deleted
+- **P10 staging:**
+  - Staging/Centre/Brief0007.lean still stages declarations for III.17: once proved, a statement moves to Elements/ and its staged copy is deleted
+  - Staging/Centre/Restated.lean still stages declarations for III.17: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.18
 
@@ -654,17 +657,22 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.21: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.22
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.22: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.23
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
-- **P10 staging:** Staging/Stage3/Prop23Point.lean still stages declarations for III.23: once proved, a statement moves to Elements/ and its staged copy is deleted
+- **P10 staging:**
+  - Staging/Centre/Brief0006.lean still stages declarations for III.23: once proved, a statement moves to Elements/ and its staged copy is deleted
+  - Staging/Centre/Restated.lean still stages declarations for III.23: once proved, a statement moves to Elements/ and its staged copy is deleted
+  - Staging/Stage3/Prop23Point.lean still stages declarations for III.23: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.24
 
@@ -673,7 +681,10 @@ Failing propositions, item by item:
 - **P3 scope:**
   - the statement is partial: every statement of Books I-III is full but for the limitations docs/ACCEPTANCE.md names
   - the route is an alternative argument, which is no deliberate limitation of Books I-III: Euclid's own argument is due
-- **P10 staging:** Staging/Stage3/Prop24.lean still stages declarations for III.24: once proved, a statement moves to Elements/ and its staged copy is deleted
+- **P10 staging:**
+  - Staging/Centre/Brief0006.lean still stages declarations for III.24: once proved, a statement moves to Elements/ and its staged copy is deleted
+  - Staging/Centre/Restated.lean still stages declarations for III.24: once proved, a statement moves to Elements/ and its staged copy is deleted
+  - Staging/Stage3/Prop24.lean still stages declarations for III.24: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.25
 
@@ -681,7 +692,10 @@ Failing propositions, item by item:
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
 - **P3 scope:** the statement is restricted: every statement of Books I-III is full but for the limitations docs/ACCEPTANCE.md names
 - **P4 disclosed:** a passage is left unformalized, and the record has no [coverage] clause map to say what stays in Euclid's words
-- **P10 staging:** Staging/Stage4/Prop25.lean still stages declarations for III.25: once proved, a statement moves to Elements/ and its staged copy is deleted
+- **P10 staging:**
+  - Staging/Centre/Brief0006.lean still stages declarations for III.25: once proved, a statement moves to Elements/ and its staged copy is deleted
+  - Staging/Centre/Restated.lean still stages declarations for III.25: once proved, a statement moves to Elements/ and its staged copy is deleted
+  - Staging/Stage4/Prop25.lean still stages declarations for III.25: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.26
 
@@ -709,6 +723,7 @@ Failing propositions, item by item:
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.30: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.31
 
@@ -722,28 +737,34 @@ Failing propositions, item by item:
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
 - **P8 figures:** the theorem covers several cases (a `case` passage or a companion), and [figure] gives no `case` for the caption to name
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.32: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.33
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.33: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.34
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.34: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.35
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.35: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.36
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.36: once proved, a statement moves to Elements/ and its staged copy is deleted
 
 ### III.37
 
 - **P11–P16 (the review items):** not yet assessed: the record is at the stage `exceptions` (P2).
 - **P2 record:** the record is at the stage `exceptions`, not `full`: every substantive passage is to be classified (review/SCHEMA.md, "Two stages")
+- **P10 staging:** Staging/Centre/Restated.lean still stages declarations for III.37: once proved, a statement moves to Elements/ and its staged copy is deleted
