@@ -43,7 +43,9 @@ open, or every book's where a text has no book of its own; it reads the name bef
 colon of a backticked `name : type` too, for a hypothesis is said in words, not by its
 local name (STYLE, section 1). A backticked word that is Lean's or the certificate's but
 no declaration (a tactic, a field of facts.json) is listed in NOT_DECLARED with its
-reason.
+reason. Reports also distinguish syntax, namespaces, repository files, scan identifiers,
+revision identifiers and schema fields or values by their source or explicit prose
+context (report_non_declaration). Those classifications never excuse a mishnah name.
 
 The reach of #66, held file by file (REACH_PENDING). The Review notes, the overlap
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
@@ -100,6 +102,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import json
 import math
 import re
 import shutil
@@ -185,7 +188,10 @@ REACH_PENDING: dict[str, tuple[str, str]] = {
     "docs/reports/gaps-book-II.md": ("S7 S12", "the text change that follows this one (#66)"),
     "docs/reports/gaps-book-III.md": ("S12", "stage 3's gap entries (#25)"),
     "docs/reports/overlaps.md": ("S7", "stage 3's overlap entries (#25)"),
-    "docs/reports/read-through-01.md": ("S7", "the change now writing the reports"),
+    # S12's report inventory on bd3b72a: 149 and 5 findings, respectively. These are
+    # the initial findings of the new report reach, not later additions to a landed rule.
+    "docs/reports/mixed-angles-prototype.md": ("S12", "the report text change after #66 (149 findings)"),
+    "docs/reports/read-through-01.md": ("S7 S12", "the report text change after #66 (5 S12 findings)"),
     # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
     "book/I/front.md": ("S12", "render.py's FRONT_LEAN_I, after stage 3 (#25)"),
     # The notes of four proofs (S22): a change to the file needs its record read again.
@@ -1381,15 +1387,16 @@ class LeanName(NamedTuple):
     binder: bool
 
 
-def lean_name_occurrences(text: str, binders: bool = True) -> list[LeanName]:
-    """The first visible occurrence of each Lean name in a Markdown text."""
+def lean_name_occurrences(text: str, binders: bool = True, *, all_uses: bool = False) -> list[LeanName]:
+    """The first visible occurrence of each Lean name, or every use for classification."""
     names = []
     visible = blank_html_comments(text)
     for span in code_span_details(visible):
         inner = span.content.strip()
         binder = BINDER.match(inner) if binders else None
         name = inner if IDENT.fullmatch(inner) else binder.group(1) if binder else None
-        if name and not FILE_NAME.fullmatch(name) and name not in {use.name for use in names}:
+        if (name and not FILE_NAME.fullmatch(name)
+                and (all_uses or name not in {use.name for use in names})):
             names.append(LeanName(name, span.start, binder is not None))
     return names
 
@@ -1464,21 +1471,116 @@ class NameUse(NamedTuple):
 Groups = dict[str, dict[str, list[NameUse]]]   # {namespaces opened: {name: uses}}
 
 
-def s12_plan(texts: list[NamedText], audit_built: bool):
+def report_vocabulary(texts: list[NamedText]) -> tuple[set[str], set[str]]:
+    """Lean's syntax and namespace-only names, for the new reach over reports alone.
+    Ask the installed language, rather than keeping a list of words that failed #check.
+    A namespace that is also a declaration is still put to #check."""
+    names = sorted({n for t in texts if is_report(t.path) and not t.held
+                    for n in lean_names(t.text)})
+    if not names:
+        return set(), set()
+    source = '\n'.join([
+        'import Lean', 'import Elements',
+        'run_cmd do',
+        '  let env ← Lean.getEnv',
+        '  let mut tokens := (Lean.Parser.getTokenTable env).values',
+        '  tokens := tokens ++ (Lean.getAttributeNames env).toArray.map toString',
+        '  tokens := tokens ++ (← Lean.getBuiltinAttributeNames).toArray.map toString',
+        f'  for name in #[{", ".join(json.dumps(n, ensure_ascii=False) for n in names)}] do',
+        '    if (Lean.Parser.runParserCategory env `tactic name).isOk then',
+        '      tokens := tokens.push name',
+        '  let namespaces := env.getNamespaces.toArray.filter (fun n => !env.contains n)',
+        '  Lean.logInfo (Lean.Json.compress (Lean.toJson (tokens, namespaces.map toString)))',
+    ])
+    try:
+        with tempfile.TemporaryDirectory() as tmp:
+            probe = Path(tmp) / 'StyleVocabulary.lean'
+            probe.write_text(source + '\n', encoding='utf-8')
+            run = subprocess.run(['lake', 'env', 'lean', str(probe)], cwd=ROOT,
+                                 capture_output=True, text=True, timeout=900)
+        if run.returncode:
+            raise ValueError((run.stdout + run.stderr).strip()[:400])
+        syntax, namespaces = json.loads(run.stdout)
+        return set(syntax), set(namespaces)
+    except (OSError, subprocess.TimeoutExpired, ValueError) as e:
+        lean_short.append('could not read Lean syntax for reports')
+        fail('S12', SCRIPT, 0, f'could not read Lean syntax for reports: {e}')
+        return set(), set()
+
+
+def report_non_declaration(t: NamedText, occurrence: LeanName,
+                           vocabulary: tuple[set[str], set[str]]) -> str | None:
+    """Classify report tokens by their source or explicit prose context, never by a list
+    of failed names. A typed binder still names a hypothesis; a numeric file location
+    does not. These rules apply only to reports newly read by S12."""
+    name, at, binder = occurrence
+    if binder:
+        span = next(s for s in code_span_details(blank_html_comments(t.text)) if s.start == at)
+        if not re.fullmatch(re.escape(name) + r":\d+(?:-\d+)?", span.content.strip()):
+            return None
+    # Markdown and Python files are often named without their extension in reports.
+    for folder in (ROOT, t.path.parent, ROOT / 'scripts', ROOT / 'docs'):
+        if any((folder / (name + ext)).is_file() for ext in ('', '.md', '.py')):
+            return 'a repository file or a numeric location in it'
+    if binder:
+        return None
+    syntax, namespaces = vocabulary
+    if name in syntax:
+        return 'Lean syntax (a keyword, tactic or attribute), not a declaration reference'
+    if any(n in namespaces for n in [name] + [f'{o}.{name}' for o in t.opens.split()]):
+        return 'a namespace with no declaration of that name'
+    # A trailing dot denotes a family of names, not a complete declaration name.
+    if name.endswith('.'):
+        return 'a namespace prefix, not a complete declaration name'
+    before = t.text[:at]
+    if re.search(r'(?i:\bnamespace)\s+`+' + re.escape(name) + r'`+',
+                 blank_fences(blank_html_comments(t.text))):
+        return 'explicitly identified as a namespace in this report'
+    if re.search(r'\btactics?\s+(?:`+[^`]+`+\s*(?:/|,|and|or)\s*)*$', before, re.I):
+        return 'explicitly described as a tactic (possibly of another project)'
+    start = before.rfind('\n\n') + 2 if '\n\n' in before else 0
+    end = t.text.find('\n\n', at)
+    paragraph = t.text[start:end if end >= 0 else len(t.text)]
+    if (re.search(r'\bInternet Archive scans?\b', paragraph)
+            and re.search(r'(?:\bscans?|\bvol\.\s*\d+(?:\s*\([^)]*\))?\s+is)\s*$', before)):
+        return 'an Internet Archive scan identifier, identified as such in the prose'
+    if (heath.COMMIT.fullmatch(name)
+            and re.search(r'\b(?:commit|revision|read|reviewed|verification)\b', paragraph)):
+        return 'a commit identifier in an account of a revision or review'
+    values = set(heath.SCOPES + heath.ROUTES + heath.PASSAGES + heath.OVERLAPS
+                 + heath.STAGES + heath.VERDICTS + heath.TAG_KINDS)
+    fields = {f for group in heath.FIELDS.values() for f in group}
+    if (name in values | fields
+            and re.search(r'\b(?:record|stage|passage|field)s?\b', paragraph)):
+        return 'a review schema field or value in an account of a record'
+    if 'facts.json' in paragraph:
+        fields_doc = (ROOT / 'Certificate' / 'FIELDS.md').read_text(encoding='utf-8')
+        if name in re.findall(r'^\| `([A-Za-z_]+)` \|', fields_doc, re.M):
+            return 'a documented field of facts.json'
+    return None
+
+
+def s12_plan(texts: list[NamedText], audit_built: bool,
+             vocabulary: tuple[set[str], set[str]] = (frozenset(), frozenset())):
     """What S12 asks of Lean: (the groups put to Lean as before #66, with `import
     Elements` alone; the groups put to it with the Audit library as well; the audit lemmas
     left unchecked; the words of NOT_DECLARED in use). A text S12 read before (`held`, the
     mishnah) is read as it was: every name of it is asked of Lean, with `import Elements`
     alone, so NOT_DECLARED and the audit lemmas excuse nothing there. In the other texts,
     a word of NOT_DECLARED is not asked, and an audit lemma is asked once the Audit library
-    is built, and listed as unchecked till then."""
+    is built, and listed as unchecked till then. Reports alone also classify non-declaration
+    tokens with report_non_declaration, before keeping the first declaration use."""
     old: Groups = defaultdict(lambda: defaultdict(list))
     new: Groups = defaultdict(lambda: defaultdict(list))
     unchecked: set[str] = set()
     used: set[str] = set()
     for t in texts:
-        for occurrence in lean_name_occurrences(t.text):
+        report_text = is_report(t.path) and not t.held
+        seen: set[str] = set()
+        for occurrence in lean_name_occurrences(t.text, all_uses=report_text):
             name = occurrence.name
+            if name in seen:
+                continue
             use = NameUse(t, occurrence.at, occurrence.binder)
             if name in NOT_DECLARED:
                 used.add(name)
@@ -1486,10 +1588,13 @@ def s12_plan(texts: list[NamedText], audit_built: bool):
                 old[t.opens][name].append(use)
             elif name in NOT_DECLARED:
                 continue
+            elif report_text and report_non_declaration(t, occurrence, vocabulary):
+                continue
             elif name.startswith("Audit.") and not audit_built:
                 unchecked.add(name)
             else:
                 new[t.opens][name].append(use)
+            seen.add(name)
     return old, new, sorted(unchecked), used
 
 
@@ -1497,6 +1602,8 @@ def lean_probe(groups: Groups, imports: list[str]) -> int:
     """Put every name of `groups` to Lean with `#check`, each group in a section of its
     own with its namespaces open, in one run, and fail S12 for each name Lean does not
     know, in each text that gives it. Returns how many names were put to Lean."""
+    # Reports can have more than Lean's default 100 errors. Read every name, including
+    # names after a pending file's findings; otherwise a truncated run can pass as done.
     lines = [f"import {m}" for m in imports]
     where: dict[int, tuple[str, list[NameUse]]] = {}
     for opens in sorted(groups):
@@ -1513,7 +1620,7 @@ def lean_probe(groups: Groups, imports: list[str]) -> int:
         probe = Path(tmp) / "StyleNames.lean"
         probe.write_text("\n".join(lines) + "\n", encoding="utf-8")
         try:
-            run = subprocess.run(["lake", "env", "lean", str(probe)], cwd=ROOT,
+            run = subprocess.run(["lake", "env", "lean", "-DmaxErrors=0", str(probe)], cwd=ROOT,
                                  capture_output=True, text=True, timeout=900)
         except (OSError, subprocess.TimeoutExpired) as e:
             lean_short.append("could not run Lean")
@@ -1549,7 +1656,7 @@ def check_lean_names(texts: list[NamedText]) -> tuple[int, list[str]]:
     """S12: every backticked name in the texts is one Lean knows, with each text's
     namespaces open (s12_plan says how each is asked). Returns how many names were put to
     Lean, and the audit lemmas left unchecked because the Audit library is not built."""
-    old, new, unchecked, used = s12_plan(texts, AUDIT_OLEAN.exists())
+    old, new, unchecked, used = s12_plan(texts, AUDIT_OLEAN.exists(), report_vocabulary(texts))
     for name in sorted(set(NOT_DECLARED) - used):
         fail("S12", SCRIPT, 0, f"`{name}` is in NOT_DECLARED, but no text S12 reads uses it "
              "any more: take it out")

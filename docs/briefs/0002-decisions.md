@@ -1401,3 +1401,44 @@ findings:
   rendered docstring, a docstring read with other white space than its page shows, a
   mishnah name excused that used to fail, a TOML comment taken for a note, and a D10
   report lost. Our warm thanks to Astra.
+
+- **S12's reports distinguish names from other code spans.** The check change for #66
+  keeps the Other reports in S12, as `d017113` added them. Their file names and numeric
+  file locations are recognized against the repository; Lean supplies its keywords,
+  tactics, attributes and namespace-only names. A report may explicitly identify an
+  external tactic, a namespace, a scan identifier or a revision identifier. Certificate
+  fields and review schema fields and values are recognized from their definitions where
+  the prose discusses them. A trailing dot names a family, not a declaration. None is an
+  exception made from a list of failed names, and a typed hypothesis is still checked.
+  These classifications apply to the new report reach alone: the mishnah keeps every
+  check it already had.
+
+  The remaining findings on main's content at `bd3b72a` are the initial inventory of
+  this reach, deferred by file and rule in `REACH_PENDING`, as the other new reach is:
+
+  | File | Rule | Findings |
+  |---|---|---|
+  | `docs/reports/mixed-angles-prototype.md` | S12 | 149 |
+  | `docs/reports/read-through-01.md` | S12 | 5 |
+
+  The 154 findings include incomplete or ambiguous references, local names and names
+  from a staged or earlier version, among them `Exceeds.nearVertexOpen`. The content
+  change after #66 corrects or qualifies each reference; the S12 entry then comes out
+  in a check change. The read-through's existing S7 entry stays. Every report still
+  reaches S12, and an unknown declaration in an unlisted report fails.
+
+  Reading `d017113` and `8c235bb` in full also exposed the Lean probe's existing
+  100-error cutoff: the new reports reached it, and later names were not checked.
+  The probe now passes `-DmaxErrors=0` to Lean, so every name is read, even after a
+  pending report's hundredth finding. A source-level option does not change that
+  command-line reporting limit. The Markdown changes in those commits align code spans,
+  tables and container boundaries with the documented scope; the changed D10 expectation
+  concerns a multiline code span, which the rule excludes. No other main-content failure
+  or relaxation of a documented rule was found in those commits.
+
+  The protected files changed are [`scripts/check_style.py`](../../scripts/check_style.py)
+  and [`tests/test_check_style.py`](../../tests/test_check_style.py). The regressions cover
+  the token categories, retained mishnah enforcement, unknown report names with and
+  without an S12 pending entry, and a failure after more than 100 deferred errors.
+  [STYLE](../STYLE.md), section 8, describes the report classification. No judged content,
+  Lean source, review record or generated page changes.

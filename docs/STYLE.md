@@ -559,7 +559,16 @@ just before the script ([WORKFLOW](WORKFLOW.md), section 8).
 - **Other reports:** every other `docs/reports/*.md`, save an outside review
   (`outside-review-*.md`), which keeps its reviewer's words as written; the crew's own
   logs, `docs/reports/crew/`, are not read. S12 reads them with every book's namespace
-  open, as texts with no book of their own.
+  open, as texts with no book of their own. For these reports alone, it distinguishes
+  declaration references from repository file names (including a numeric line location),
+  Lean's syntax and namespace-only names, and what the prose identifies as a namespace,
+  an external tactic, an Internet Archive scan identifier or a revision identifier. It
+  also recognizes documented certificate fields and review schema fields and values
+  where the prose discusses their files or records. Lean supplies the syntax, tactic and
+  attribute vocabulary; these are categories, not a list of unknown names to excuse.
+  A trailing dot names a family, not a complete declaration. A typed hypothesis still
+  goes to Lean, and an unknown declaration reference still fails unless its file is
+  pending for S12. None of these report classifications excuses a mishnah name.
 - **README:** `README.md`, without its section "How it was made".
 - **Lean notes:** in `Elements/**/*.lean`, the text of `/- … -/` blocks and docstrings,
   except the docstring of each `theorem PropN` (Heath's enunciation). The `--` lines are

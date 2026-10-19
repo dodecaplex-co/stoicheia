@@ -38,6 +38,7 @@ import sys
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
+from collections import defaultdict
 from contextlib import ExitStack, redirect_stdout
 from io import StringIO
 from pathlib import Path
@@ -660,6 +661,117 @@ class Scopes(unittest.TestCase):
         named = main_named_texts()
         self.assertEqual({path: named.get(path) for path in style.report_files()},
                          {path: style.every_book_opens() for path in style.report_files()})
+
+    def test_report_token_classification(self):
+        """Reports distinguish declarations from syntax, files and explicitly named objects."""
+        vocabulary = ({"axiom", "native_decide", "implemented_by"},
+                      {"Elements", "Elements.BookIII"})
+        cases = [
+            ("`NOTICE`, `README:17` and `references.bib:9`", []),
+            ("`NOTICE : Point` and `README : Point`", ["NOTICE", "README"]),
+            ("`axiom`, `native_decide`, `implemented_by`", []),
+            ("`Elements` and `Elements.BookIII`", []),
+            ("The namespace `Example.Geometry`. Later, `Example.Geometry`.", []),
+            ("The namespace `Example.Geometry`. Then `Example.geometry`.", ["Example.geometry"]),
+            ("<!-- namespace `Missing.name` -->\n`Missing.name`", ["Missing.name"]),
+            ("The tactics\n`external_step` / `external_finish`.", []),
+            ("`external_step` and `Exceeds.nearVertexOpen`",
+             ["Exceeds.nearVertexOpen", "external_step"]),
+            ("Internet Archive scans: vol. 4 (a supplement) is `another_scan_04`.", []),
+            ("An Internet Archive scan `another_scan_04`.", []),
+            ("`another_scan_04` is a name to check.", ["another_scan_04"]),
+            ("The revision read at `abcdef1`.", []),
+            ("`abcdef1`", ["abcdef1"]),
+            ("The record has stage `full`, with a `helper` passage.", []),
+            ("`full` and `helper`", ["full", "helper"]),
+            ("The `axiom_modules` field of `facts.json`.", []),
+            ("The record's `helper : Point`.", ["helper"]),
+            ("The `Example.` family and `Example.missing`.", ["Example.missing"]),
+            ("A tactic `external_step`.\n\nA declaration `external_step`.", ["external_step"]),
+        ]
+        path = style.REPORTS_DIR / "sample.md"
+        for raw, want in cases:
+            with self.subTest(raw=raw):
+                named = style.NamedText(path, raw, style.every_book_opens())
+                old, new, unchecked, _ = style.s12_plan([named], True, vocabulary)
+                self.assertFalse(old)
+                self.assertFalse(unchecked)
+                self.assertEqual(sorted(n for g in new.values() for n in g), want)
+
+    def test_report_classification_keeps_mishnah_enforcement(self):
+        """The report's syntax and namespace classification cannot excuse a mishnah name."""
+        raw = "`axiom` and `Elements` and `NOTICE` and `grind` and `Unknown.name`."
+        named = style.NamedText(MISHNAH, raw, style.book_opens("I"), held=True)
+        old, new, _, _ = style.s12_plan([named], True, ({"axiom"}, {"Elements"}))
+        self.assertEqual(sorted(n for g in old.values() for n in g),
+                         ["Elements", "NOTICE", "Unknown.name", "axiom", "grind"])
+        self.assertFalse(new)
+
+    def test_report_vocabulary_failure_is_not_pending(self):
+        """A failed syntax query fails S12 itself, even when its report is pending."""
+        path = style.REPORTS_DIR / "sample.md"
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(style, "failures", []))
+            stack.enter_context(patch.object(style, "lean_short", []))
+            stack.enter_context(patch.object(style, "REACH_PENDING",
+                                             {style.rel(path): ("S12", "a test")}))
+            stack.enter_context(patch.object(style.subprocess, "run", return_value=
+                SimpleNamespace(returncode=1, stdout="", stderr="could not import Elements")))
+            named = style.NamedText(path, "`Missing.name`", style.every_book_opens())
+            self.assertEqual(style.report_vocabulary([named]), (set(), set()))
+            self.assertEqual(len(style.failures), 1)
+            self.assertEqual(style.failures[0][:2], ("S12", style.rel(style.SCRIPT)))
+            self.assertTrue(style.lean_short)
+            self.assertFalse(style.reach_done())
+
+    def test_report_pending_names_and_error_limit(self):
+        """A report's unknown name fails without S12 pending, including after 100 errors."""
+        path = style.REPORTS_DIR / "sample.md"
+
+        def reject(args, **_):
+            self.assertIn("-DmaxErrors=0", args)
+            probe = Path(args[-1])
+            errors = [f"{probe.name}:{k}:1: error: unknown identifier"
+                      for k, line in enumerate(probe.read_text().splitlines(), 1)
+                      if line.startswith("#check")]
+            return SimpleNamespace(returncode=1, stdout="\n".join(errors), stderr="")
+
+        for pending, want_fail, want_defer in ((None, 1, 0), ("S7", 1, 0), ("S12", 0, 1)):
+            with self.subTest(pending=pending), ExitStack() as stack:
+                stack.enter_context(patch.object(style, "failures", []))
+                stack.enter_context(patch.object(style, "reports", defaultdict(list)))
+                stack.enter_context(patch.object(style, "reach_found", set()))
+                stack.enter_context(patch.object(style, "REACH_PENDING",
+                    {style.rel(path): (pending, "a test")} if pending else {}))
+                stack.enter_context(patch.object(style.subprocess, "run", side_effect=reject))
+                named = style.NamedText(path, "A name:\n`Exceeds.nearVertexOpen`.",
+                                       style.every_book_opens())
+                _, groups, _, _ = style.s12_plan([named], False)
+                self.assertEqual(style.lean_probe(groups, ["Elements"]), 1)
+                self.assertEqual(len(style.failures), want_fail)
+                self.assertEqual(len(style.reports.get("D16", [])), want_defer)
+                if want_fail:
+                    self.assertEqual(style.failures[0][:3], ("S12", style.rel(path), 2))
+                else:
+                    self.assertEqual(style.reports["D16"][0][:2], (style.rel(path), 2))
+                    self.assertFalse(style.reach_done())
+
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(style, "failures", []))
+            stack.enter_context(patch.object(style, "reports", defaultdict(list)))
+            stack.enter_context(patch.object(style, "reach_found", set()))
+            stack.enter_context(patch.object(style, "REACH_PENDING",
+                                             {style.rel(path): ("S12", "a test")}))
+            stack.enter_context(patch.object(style.subprocess, "run", side_effect=reject))
+            raw = " ".join(f"`Missing.name{k:03}`" for k in range(105))
+            later = style.REPORTS_DIR / "later.md"
+            named = [style.NamedText(path, raw, style.every_book_opens()),
+                     style.NamedText(later, "`ZMissing.later`", style.every_book_opens())]
+            _, groups, _, _ = style.s12_plan(named, False)
+            self.assertEqual(style.lean_probe(groups, ["Elements"]), 106)
+            self.assertEqual(len(style.reports["D16"]), 105)
+            self.assertEqual(len(style.failures), 1)
+            self.assertEqual(style.failures[0][:3], ("S12", style.rel(later), 1))
 
     def test_reach_cases(self):
         for path, scopes, new, pending, want in REACH_CASES:
