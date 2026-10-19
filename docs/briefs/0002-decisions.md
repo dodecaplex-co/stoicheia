@@ -1334,3 +1334,8 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+- **III.37 leaves the grouped-case example.** The example in the `uncarried_runs` docstring
+  of [scripts/check_fidelity.py](../../scripts/check_fidelity.py) drops III.37, whose case
+  with the centre on AC now has a proof of its own, `Prop37.centre_on_secant`. I.14 remains
+  as the example of a "similarly" that one argument already covers. The docstring is the
+  only change to the script; the check is unchanged.
