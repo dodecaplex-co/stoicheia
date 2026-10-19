@@ -1155,3 +1155,11 @@ findings:
   as proved. It follows the client in a separate change (keep_apart). The examples in
   `scripts/audit/jev.py` now name the calibration file; only that documentation changes,
   with every check preserved. No request has been sent.
+- **One certificate pin dropped, for one merge, on the owner's word.** Taking Circle 2 out of
+  every proof (#60) makes the pin "III.2 rests on Circle 2, through III.1" false, and the
+  harness does not let a pin flip in the same pull request as the content that flips it.
+  The owner approved the two steps (18 October): this pull request drops that one pin from
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) and
+  removes "only through III.1" from the reason of the pin on what III.2 inherits; the pull
+  request that takes Circle 2 out adds the stronger opposite pins, that III.1, III.2 and
+  II.14 rest on neither Circle 2 nor Circle 3. Nothing else is loosened.
