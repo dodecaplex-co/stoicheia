@@ -17,8 +17,8 @@ through the centre, each with its perpendicular from the centre. His enunciation
 any straight lines in a circle. The companion after it, `Prop14.general`, measures each
 straight line's distance from the centre by its foot (`Foot`), which is the centre itself
 for a straight line through it, so that a diameter, at no distance from the centre, is
-included: two diameters are equal, and a diameter is greater than any other straight line
-in the circle [I. 20], which is at some distance. Its helper `Prop14.diameter_sum` says
+included: two diameters are equal, and a diameter is greater than a straight line not
+through the centre [I. 20], which is at some distance. Its helper `Prop14.diameter_sum` says
 that a diameter is two radii together; III.15's companion uses it too.
 -/
 

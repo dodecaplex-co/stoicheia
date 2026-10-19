@@ -164,8 +164,8 @@ by Definition I.15 and the rules that relate "within" to the radius, with no pro
 
 The later proofs that called Circle 2 take the step in one of three ways. Where both ends
 are on the circle, III.2's own case, they cite III.2: III.10, III.15, III.21, III.22,
-III.23 and its companion `Prop23.point`, III.25, III.30, and III.32 in its helper
-`Prop32.sameSide`. Where one end is the centre and the other is on the circle, they use
+III.23 and its companion `Prop23.point`, III.25's companion `Prop25.of_circle` in the
+meeting fact `Prop25.meets`, III.30, and III.32 in its helper `Prop32.sameSide`. Where one end is the centre and the other is on the circle, they use
 `InsideCircle.of_between_centre`: III.7, III.8, III.12, III.15, III.17, III.20, III.34 and
 III.37. III.15 also has L between the centre and the point K within the circle;
 `InsideCircle.of_between_centre_of_inside` uses the given point F of the circle to put L
@@ -184,8 +184,9 @@ had two more lemmas that called Circle 2, and both now come after III.2. That a 
 the straight line through two points of a circle is on the circle exactly when it is one
 of them, and within it exactly when it lies between them, is `Prop24.chord_cases`, before
 III.24, by III.2 and `Prop2.triangle`. That a straight line drawn from within the base of
-a segment meets its circumference, which no proposition of the edition uses yet, is proved
-by III.2 beside the staged III.25, whose companion uses it, and moves with it. Book Zero
+a segment meets its circumference is `Prop25.meets`, proved by III.2 beside III.25, whose
+companion `Prop25.of_circle` uses it; III.25's construction is given the fact, and never
+sees a circle. Book Zero
 keeps its own three, `Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and
 `exists_onCircle_sameSideOf`, stated for a circle with no centre given: no proposition
 uses them, and the staged work (`Staging/`) still does, and calls Circle 2 and Circle 3
