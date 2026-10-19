@@ -1,6 +1,6 @@
 # The formal model
 
-Stoicheia's proofs rest on 87 laws: Euclid's postulates, Definition 15 and the tacit rules,
+Stoicheia's proofs rest on 88 laws: Euclid's postulates, Definition 15 and the tacit rules,
 each an `axiom` about seventeen `opaque` words, with their exact statements in
 [Certificate/axioms.lock](../Certificate/axioms.lock). Lean checks that every proof follows
 from the laws. It cannot check that the laws can all be true at once.
@@ -10,9 +10,9 @@ package gives a formal proof: a Lake package of its own, with Mathlib, in which 
 words are the fields of a structure, the ordinary plane fills them, and Lean checks that
 the plane satisfies each law.
 
-**Where it stands.** The package builds, with the signature, the plane, and all 87 laws,
+**Where it stands.** The package builds, with the signature, the plane, and all 88 laws,
 written by a generator from the library's elaborated declarations into one structure,
-`Laws`, and checked against those declarations. The plane satisfies all 87 locked laws.
+`Laws`, and checked against those declarations. The plane satisfies all 88 locked laws.
 `Model/Assembly.lean` gathers these proofs into `euclidean_laws`, with no remaining
 hypotheses, and proves `model_exists`. This establishes a model relative to Lean's logic
 and Mathlib's construction of the real numbers.
@@ -38,7 +38,7 @@ at the repository's root builds the library exactly as before.
 | [lakefile.toml](lakefile.toml) | the package: Mathlib pinned to `v4.35.0`, the release for the toolchain both packages use; the library itself, read only by `Check`; and the files besides Lean imports that `Check` reads | |
 | [Model/Signature.lean](Model/Signature.lean) | the seventeen words as the fields of `Signature`, and the words behind the magnitudes | nothing |
 | [Model/Laws.lean](Model/Laws.lean) | **generated:** every law, and the defined words they reach, translated from the library; the structures `Neutral` and `Laws` | `Signature` |
-| [Model/Hand.lean](Model/Hand.lean) | the laws first proved in the plane, translated **by hand**, and the proposed `exists_centre` | `Laws` |
+| [Model/Hand.lean](Model/Hand.lean) | the laws first proved in the plane, translated **by hand**, and `exists_centre`, proved in the plane before the library declared it | `Laws` |
 | [Model/Laws/angles.lean](Model/Laws/angles.lean) | the ten angle laws, with `Collinear` and `IsRightAngle`, translated **by hand** | `Signature` |
 | [Model/Laws/areas-p5.lean](Model/Laws/areas-p5.lean) | the eight area laws and Postulate 5, translated **by hand** | `Signature` |
 | [Model/Laws/circles.lean](Model/Laws/circles.lean) | the 19 circle rules, translated **by hand** | `Model.Hand` |
@@ -54,7 +54,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/Angles.lean](Model/Euclidean/Angles.lean) | Definition 15, Postulate 4, the two metric angle laws and diagram-angle rules 1, 3 and 4 proved in the plane | Mathlib |
 | [Model/Euclidean/Areas.lean](Model/Euclidean/Areas.lean) | the eight area laws, including collinear and repeated corners, proved by determinants | Mathlib |
 | [Model/Euclidean/Avoidance.lean](Model/Euclidean/Avoidance.lean) | Postulate 2 and all finite avoidance rules for lines, regions and circumferences proved in the plane | Mathlib |
-| [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
+| [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | `exists_centre`, every circle has a centre, proved in the plane | Mathlib |
 | [Model/Euclidean/CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | Postulate 3, Definition 15 and the generalities of a centre and of the inside of a circle, proved in the plane | Mathlib |
 | [Model/Euclidean/CircleRules.lean](Model/Euclidean/CircleRules.lean) | System E's Circle 1 to 4 proved in the plane, and `CirclesMeet α α` | Mathlib |
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
@@ -72,7 +72,7 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/Sides.lean](Model/Euclidean/Sides.lean) | `SameSide` read as `SSameSide`, and Same side 1 to 5 proved in the plane | Mathlib |
 | [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | superposition proved in the plane: an isometry, with a reflection when the side needs one | Mathlib |
 | [Model/Euclidean/TripleIncidence.lean](Model/Euclidean/TripleIncidence.lean) | Triple incidence 1 to 3 proved by signed determinants and affine sides | Mathlib |
-| [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all 87 proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
+| [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all 88 proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane, and the assembly, rests on | every module of `Model` |
 | [Check/Angles.lean](Check/Angles.lean) | the hand-translated angle laws and their two words compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.angles` |
 | [Check/AreasP5.lean](Check/AreasP5.lean) | the hand-translated area laws and Postulate 5 compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.«areas-p5»` |
@@ -195,7 +195,7 @@ what it writes.
 1. **Read the declarations, not the text.** The generator imports every module of
    `Elements.Foundations`, and checks that there is one for each file under
    `Elements/Foundations/`, so that no axiom is missed. It takes every axiom declared there,
-   which must be exactly the 87 names in the lock's `[axioms]`, as the expression Lean
+   which must be exactly the 88 names in the lock's `[axioms]`, as the expression Lean
    elaborated: binders, binder kinds (implicit or explicit), the order of the binders, every
    guard, every instance argument. It checks too that the lock prints each one's statement
    as Lean prints it now, and each word they reach as the lock's `[vocabulary]` has it, so
@@ -240,7 +240,7 @@ what it writes.
      Postulate5 : Law.Postulate5 S
    ```
 
-   Postulate 5 stands apart from the other 86, so that a hyperbolic plane can later satisfy
+   Postulate 5 stands apart from the other 87, so that a hyperbolic plane can later satisfy
    `Neutral` and fail it; so would any rule the library declared in
    `Elements.Tacit.Euclidean`, for the plane alone, of which there is none. The file's header
    records the sha256 of the lock it was written from, with a table of the 37 words and what
@@ -270,7 +270,7 @@ what it writes.
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
 care not to blur the certificate: if every theorem took one `Laws` hypothesis bundling all
-87 laws, Lean's dependency walk would report all 87 beneath every proof.
+88 laws, Lean's dependency walk would report all 88 beneath every proof.
 
 ## How the translation is checked
 
@@ -292,7 +292,7 @@ the original means. These checks do that, at every build.
   declaration's statement and does not use the axiom. The kernel accepts the `rfl` only if
   the two are the same proposition, up to unfolding definitions; a dropped guard, two
   swapped arguments or a change in the order of the binders fails it, and the build with
-  it. This covers all 87 laws and all 16 defined words they reach. The family checks in
+  it. This covers all 88 laws and all 16 defined words they reach. The family checks in
   `Check/` also compare each hand-translated law with its generated field over any signature,
   and retain the original library checks.
 - **The round trip, by syntax.** [Check/RoundTrip.lean](Check/RoundTrip.lean) takes each
@@ -361,11 +361,11 @@ generator computes the lock's sha256 itself, and `Check/Generated.lean` fails un
 `model/lock.sha256` holds it. The round-trip checks tie each translated law to the
 declaration itself, more tightly than the hash can; the hash pins the rest of the lock, and
 the vocabulary with it. A law proposed for the foundations is proved here before it lands:
-`exists_centre`, proposed in issue #59, is already proved in the plane
-([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)). In the change that declares
-it, the generator writes its law, the assembly gathers `Euclidean.exists_centre`, which is
-named as its field, `Check/RoundTrip.lean` compares the hand translation with the generated
-law, and its kernel round trip joins `Check/Hand.lean`.
+`exists_centre`, proposed in issue #59, was proved in the plane
+([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)) before the library declared it.
+In the change that declared it, the generator wrote its law, the assembly gathered
+`Euclidean.exists_centre`, which is named as its field, `Check/RoundTrip.lean` compared the
+hand translation with the generated law, and its kernel round trip joined `Check/Hand.lean`.
 
 ## What the proofs rest on
 
@@ -440,10 +440,9 @@ bisector of the common points, as in Intersections 8 and 9.
 
 ## Proved laws
 
-The generated [assembly](Model/Assembly.lean) supplies **87 of the 87 locked laws** from
+The generated [assembly](Model/Assembly.lean) supplies **88 of the 88 locked laws** from
 proofs in the plane. This list counts each law once, even where two families supply a proof.
 Names other than `Definition15` and the postulates are in `Elements.Tacit` in the lock.
-The proposed `exists_centre` is proved too, but is not a locked law and is not counted here.
 
 | Proof file in `Model/Euclidean/` | Count | Locked laws proved |
 |---|---:|---|
@@ -451,6 +450,7 @@ The proposed `exists_centre` is proved too, but is not a locked law and is not c
 | [Angles.lean](Model/Euclidean/Angles.lean) | 7 | `Postulate4`, `adjacent_eq_of_right`, `angle_eq_of_same_rays`, `angle_eq_zero_of_same_ray`, `angle_le_two_right`, `angle_symm`, `same_ray_of_angle_eq_zero` |
 | [Areas.lean](Model/Euclidean/Areas.lean) | 8 | `area_add_of_between`, `area_congruent`, `area_degenerate`, `area_eq_zero_of_on_line`, `area_rotate`, `area_swap`, `between_of_area_add`, `on_line_of_area_eq_zero` |
 | [Avoidance.lean](Model/Euclidean/Avoidance.lean) | 10 | `Postulate2`, `exists_point`, `exists_point_between`, `exists_point_inside_circle`, `exists_point_on_circle`, `exists_point_on_line`, `exists_point_on_line_off_line`, `exists_point_opposite_side`, `exists_point_outside_circle`, `exists_point_same_side` |
+| [Centre.lean](Model/Euclidean/Centre.lean) | 1 | `exists_centre` |
 | [CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | 2 | `Definition15`, `Postulate3` |
 | [CircleRules.lean](Model/Euclidean/CircleRules.lean) | 4 | `between_of_inside_chord`, `inside_of_between`, `not_same_side_of_circles_meet`, `outside_of_between` |
 | [CircleSides.lean](Model/Euclidean/CircleSides.lean) | 2 | `circles_meet_opposite_side`, `circles_meet_same_side` |

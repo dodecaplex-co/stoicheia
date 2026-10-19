@@ -14,7 +14,7 @@
 #
 #     python3 scripts/check_fidelity.py --write-lock
 
-[axioms]  # 87
+[axioms]  # 88
 "Definition15" = "∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Elements.OnCircle C α → Eq (Elements.len A B) (Elements.len A C)"
 "Postulate1" = "∀ (A B : Elements.Point), Ne A B → Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (Elements.OnLine B L)"
 "Postulate2" = "∀ {B C : Elements.Point} {L : Elements.Line}, Elements.OnLine B L → Elements.OnLine C L → Ne B C → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (And (Elements.Between B C A) (Not (Membership.mem avoid A)))"
@@ -51,6 +51,7 @@
 "Tacit.circles_meet_opposite_side" = "∀ {α β : Elements.Circle} {B C D : Elements.Point} {L : Elements.Line}, Elements.CirclesMeet α β → Elements.Centre C α → Elements.Centre D β → Elements.OnLine C L → Elements.OnLine D L → Not (Elements.OnLine B L) → Exists fun (A : Elements.Point) => And (Elements.OnCircle A α) (And (Elements.OnCircle A β) (Elements.OppositeSides A B L))"
 "Tacit.circles_meet_same_side" = "∀ {α β : Elements.Circle} {B C D : Elements.Point} {L : Elements.Line}, Elements.CirclesMeet α β → Elements.Centre C α → Elements.Centre D β → Elements.OnLine C L → Elements.OnLine D L → Not (Elements.OnLine B L) → Exists fun (A : Elements.Point) => And (Elements.OnCircle A α) (And (Elements.OnCircle A β) (Elements.SameSide A B L))"
 "Tacit.eq_of_len_eq_zero" = "∀ {A B : Elements.Point}, Eq (Elements.len A B) 0 → Eq A B"
+"Tacit.exists_centre" = "∀ (α : Elements.Circle), Exists fun (O : Elements.Point) => Elements.Centre O α"
 "Tacit.exists_point" = "∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => Not (Membership.mem avoid A)"
 "Tacit.exists_point_between" = "∀ {B C : Elements.Point} {L : Elements.Line}, Elements.OnLine B L → Elements.OnLine C L → Ne B C → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (And (Elements.Between B A C) (Not (Membership.mem avoid A)))"
 "Tacit.exists_point_inside_circle" = "∀ (α : Elements.Circle) (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.InsideCircle A α) (Not (Membership.mem avoid A))"

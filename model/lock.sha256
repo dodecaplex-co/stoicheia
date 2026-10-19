@@ -18,4 +18,10 @@
 # below with the output of
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
-9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when the rule that every circle has a centre,
+# Tacit.exists_centre, joined the axioms (brief 0008, section 2): the generator writes its
+# law, Model/Assembly.lean gathers Euclidean.exists_centre, which proved it in the plane
+# before it landed, and Check/Hand.lean compares the hand translation with the library's
+# declaration. The other 87 laws and the 37 words they reach are unchanged.
+6a2510a60542acff3bcbbe521c3c40cee2d7c3a64096f84c56015e233a353741  Certificate/axioms.lock
