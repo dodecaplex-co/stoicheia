@@ -40,6 +40,9 @@ kind = "carried"
 helper = "Prop1.porism"
 note = "Proved as its own theorem, III.1 Por., from this construction. It uses that a circle has one centre (`centre_unique`), which III.1 itself does not."
 
+[figure]
+case = "the supposed centre G off AB and off CE, as in Heath's figure"
+
 [review]
 stage = "exceptions"
 commit = "66e9871"
