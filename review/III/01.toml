@@ -42,6 +42,6 @@ note = "Proved as its own theorem, III.1 Por., from this construction. It uses `
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "2c3686e"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:49fd7a425f9aeb86"
+lean = "sha256:fd968c0c90a4b364"
