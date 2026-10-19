@@ -185,13 +185,13 @@ the straight line through two points of a circle is on the circle exactly when i
 of them, and within it exactly when it lies between them, is `Prop24.chord_cases`, before
 III.24, by III.2 and `Prop2.triangle`. That a straight line drawn from within the base of
 a segment meets its circumference, which no proposition of the edition uses yet, is proved
-by III.2 beside the staged III.25 whose companion uses it (`Prop25.meets`), and moves with
-it. Book Zero keeps its own three, `Triangle.of_onCircle`,
-`exists_onCircle_oppositeSidesOf` and `exists_onCircle_sameSideOf`, stated for a circle
-with no centre given: no proposition uses them, and the staged work (`Staging/`) still
-does, and calls Circle 2 and Circle 3 itself in places. Since `Prop2.within` is Circle 2
-for a circle with a centre, proved from the other rules, Circle 2 and Circle 3 tell us
-nothing about such a circle that the rest of our foundations do not.
+by III.2 beside the staged III.25, whose companion uses it, and moves with it. Book Zero
+keeps its own three, `Triangle.of_onCircle`, `exists_onCircle_oppositeSidesOf` and
+`exists_onCircle_sameSideOf`, stated for a circle with no centre given: no proposition
+uses them, and the staged work (`Staging/`) still does, and calls Circle 2 and Circle 3
+itself in places. Since `Prop2.within` is Circle 2 for a circle with a centre, proved
+from the other rules, Circle 2 and Circle 3 tell us nothing about such a circle that the
+rest of our foundations do not.
 
 #### III.5
 
