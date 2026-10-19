@@ -12,8 +12,9 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and the first
 laws, translated by hand for now and proved in the plane: the four circle-intersection
-rules, the first of the hard groups, and the eight magnitude laws, which are easy in the
-plane but test the translation where it is most delicate. That is 12 of the 87. The rest
+rules, the first of the hard groups, the eight magnitude laws, which are easy in the
+plane but test the translation where it is most delicate, and the five same-side rules and
+the four Pasch rules. That is 21 of the 87. The rest
 of the laws, and the generator that will translate them from the library's own
 declarations, are to come. Until every locked law is proved here, the evidence that the
 laws have a model remains MODEL.md's hand arguments and numerical tests, and this package
@@ -44,8 +45,12 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
+| [Model/Laws/sides.lean](Model/Laws/sides.lean) | the five same-side rules and the four Pasch rules, translated **by hand** | `Signature` |
+| [Model/Euclidean/Sides.lean](Model/Euclidean/Sides.lean) | `SameSide` read as `SSameSide`, and Same side 1 to 5 proved in the plane | Mathlib |
+| [Model/Euclidean/Pasch.lean](Model/Euclidean/Pasch.lean) | Pasch 1 to 4 proved in the plane | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane rests on | every module of `Model` |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration | `Elements.Foundations`, `Model.Hand` |
+| [Check/Sides.lean](Check/Sides.lean) | the same for the side rules | `Elements.Foundations`, `Model.Laws.sides` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib.
@@ -135,9 +140,9 @@ review records, not for this package.
 ## How the laws will be generated
 
 Today the laws proved here are translated by hand, in
-[Model/Hand.lean](Model/Hand.lean), each with the lock's printed statement above it. The
-next step replaces that file with one generated from the library's elaborated
-declarations, not from their printed text.
+[Model/Hand.lean](Model/Hand.lean) and [Model/Laws/sides.lean](Model/Laws/sides.lean),
+each with the lock's printed statement above it. The next step replaces those files with
+one generated from the library's elaborated declarations, not from their printed text.
 
 1. **Read the declarations, not the text.** A Lean program in `Check/` imports
    `Elements.Foundations`, and takes every axiom declared there, which must be exactly the
@@ -210,8 +215,12 @@ the original means. Three checks do that.
   its two points exchanged.) Today this covers the 12 laws translated by hand and 11
   defined words: the eight behind the magnitudes (these laws reach `Magnitude` and the
   instances for `+`, `0` and `<`; `Length`, `Angle`, `Area` and `≤` are checked ahead of
-  the laws that use them) and the three the circle laws reach. The generator will write
-  one such line for each of the 87 laws and each defined word they reach.
+  the laws that use them) and the three the circle laws reach; and
+  [Check/Sides.lean](Check/Sides.lean) asks the same of the nine side rules translated in
+  [Model/Laws/sides.lean](Model/Laws/sides.lean), which reach no defined word. (Pasch 1
+  with its conclusion's points exchanged, and Pasch 4 with a guard dropped, were tried and
+  fail.) The generator will write one such line for each of the 87 laws and each defined
+  word they reach.
 - **The round trip, by syntax.** The generator also translates each result back and
   compares it with the original expression exactly, which is stricter than the kernel's
   check: it notices a translation that is right only after unfolding, and a binder made
