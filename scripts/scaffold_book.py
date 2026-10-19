@@ -192,8 +192,9 @@ BOOK_II = {
 # for the centre where he has one), and the proof takes the centre by III.1. "Equal
 # circles" is `EqualCircles`; a straight line touching a circle is `Touches`; circles
 # touching one another are `TouchesInternally`, `TouchesExternally` or `CirclesTouch`;
-# the circumference BKC is `circumference α B K C`, and the circumference on which the
-# angle BAC stands is `standing α B A C` (Elements/Foundations/DefinitionsIII.lean).
+# circles cutting one another are `CirclesCut`; the circumference BKC is
+# `circumference α B K C`, and the circumference on which the angle BAC stands is
+# `standing α B A C` (Elements/Foundations/DefinitionsIII.lean).
 # Perpendiculars take I.12's form, as in II.12. The design is in
 # docs/briefs/0004-book-III.md.
 BOOK_III = {
@@ -213,7 +214,7 @@ BOOK_III = {
        "    (hB_AC : ¬ Collinear A C B) (hAC : ∀ F : Point, Centre F ABCD → ¬ Collinear A C F)\n"
        "    (hBD : ∀ F : Point, Centre F ABCD → ¬ Collinear B D F) :\n"
        "    ¬ (‖A E‖ = ‖E C‖ ∧ ‖B E‖ = ‖E D‖)",
-    5: "{E : Point} {ABC CDG : Circle} (hne : ABC ≠ CDG) (hcut : CirclesMeet ABC CDG) :\n"
+    5: "{E : Point} {ABC CDG : Circle} (hcut : CirclesCut ABC CDG) :\n"
        "    ¬ (Centre E ABC ∧ Centre E CDG)",
     6: "{C F : Point} {ABC CDE : Circle} (htouch : CirclesTouch ABC CDE C) :\n"
        "    ¬ (Centre F ABC ∧ Centre F CDE)",

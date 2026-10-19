@@ -564,10 +564,20 @@ TABLE_KEY_EACH = ("_Postulates, definitions, Common Notions and tacit rules: all
 
 # What a definition Euclid cites, but the Definitions row does not count, is in Lean:
 # a Lean definition, or the words it comes to in our statements.
+DEFINITION_III3 = (
+    "the whole-circle reading: `TouchesInternally α β C` says that the circles meet at C, "
+    "a point of β is within α, and no point of β is outside α; `TouchesExternally α β C` "
+    "says that they meet at C and no point is within both; `CirclesTouch α β C` is either "
+    "kind of contact; `CirclesCut α β` says that they meet at two points and each circle has "
+    "a point within the other"
+)
+
+
 DEFINITION_LEAN = {
     ("I", 10): "is `IsRightAngle` in Lean",
     ("I", 23): "is `Parallel` in Lean",
-    ("III", 3): "is `TouchesInternally` and `TouchesExternally` in Lean",
+    ("III", 3): (f"is represented in Lean by {DEFINITION_III3}, rather than by Heath's "
+                 "preferred local reading at the point of contact"),
     ("III", 4): "is said in Lean by the perpendiculars from the centre, `‖E F‖ = ‖E G‖`",
     ("III", 5): "is said in Lean by the perpendiculars from the centre, `‖E H‖ < ‖E K‖`",
     ("III", 11): "is said in Lean by the equal angles in the segments",
@@ -1716,9 +1726,8 @@ FRONT_LEAN_III = {
     "Definitions": {
         1: "`EqualCircles`: a radius of the one is equal to a radius of the other",
         2: "`Touches A B α`: the straight line AB meets the circle and does not cut it",
-        3: "`TouchesInternally α β C`: the circles meet at C, and no point of β falls outside "
-           "α; `TouchesExternally α β C`: they meet at C, and no point is within both; "
-           "`CirclesTouch α β C`: they touch one another in one of these ways",
+        3: (f"{DEFINITION_III3}. Heath prefers the local reading, in which the circles do "
+            "not cut at the point of contact"),
         4: "`‖E F‖ = ‖E G‖`, for the perpendiculars EF, EG from the centre E (III.14)",
         5: "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15)",
         6: "a circle, a straight line AB in it, and a point E of the circumference on one "

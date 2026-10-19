@@ -41,7 +41,7 @@ meaning = "The circle comes with a centre, named or as `∃ G, Centre G α`, bec
 
 [tag.touching-whole-circles]
 kind = "representation"
-meaning = "Circles touching one another are read of the whole circles: touching within, no point of the inner is outside the outer; touching without, no point is within both; so touching circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
+meaning = "Circles touching one another are read of the whole circles: touching within, a point of the inner circle is within the outer and no point of the inner is outside it, so the inner circle has passed within the outer; touching without, no point is within both; so touching circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
 
 [tag.segment-with-circle]
 kind = "representation"
