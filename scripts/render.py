@@ -817,7 +817,7 @@ def overlap_rules(overlap):
 
 def overlap_rests(p, overlap):
     """Does the proof rest on the rules its [overlap] names (facts.json's `axioms`)?
-    I.7's does not; III.2's does, through III.1 alone."""
+    Neither I.7's nor III.2's proof rests on its overlapping rule."""
     return bool(p) and all(r in p.get("axioms", []) for r in overlap_rules(overlap))
 
 
@@ -990,7 +990,7 @@ def field_table(book, n, p, record, attached, docs):
 
 
 def clause_map(record):
-    """For a statement in part (III.16, III.31), the clause map from [coverage], shown
+    """For a statement in part (III.24), the clause map from [coverage], shown
     before the Lean: what the Lean checks, what it proves toward the clauses it leaves
     out, and what stays in Euclid's words."""
     cov = record.get("coverage") if record else None
@@ -1723,8 +1723,9 @@ FRONT_LEAN_III = {
         5: "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15)",
         6: "a circle, a straight line AB in it, and a point E of the circumference on one "
            "side: the segment AEB",
-        7: "none: a mixed angle, of a straight line and a curve; III.16 and III.31 speak of "
-           "it, and their Lean states the straight-line facts Euclid proves them by",
+        7: "`MixedAngle.ofSegment A B α S`: the angle of the segment on S's side of AB, "
+           "read as the region it opens near A; the companions of III.16 and III.31 "
+           "compare it there with rectilineal angles placed along AB on that side",
         8: "`∠ A E B`, for a point E on the circumference of the segment",
         9: "`standing α B A C`, the circumference on which the angle BAC stands; the "
            "circumference BKC is `circumference α B K C`; each measured as twice the angle "
@@ -1734,9 +1735,8 @@ FRONT_LEAN_III = {
     },
 }
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
-# Euclid's own proofs use some words with no Lean partner (Definition I.14's figure, as
-# "the given rectilineal figure" of I.45 and II.14; Definition III.7's mixed angle in
-# III.16 and III.31), so every front page says only that the Lean proofs never use them.
+# Euclid's definitions include words with no Lean partner, such as Definition III.10's
+# sector, so every front page says only that the Lean proofs never use those words.
 # Helpers such as `Prop1.figure` are named for the diagram, not for Definition I.14.
 FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 

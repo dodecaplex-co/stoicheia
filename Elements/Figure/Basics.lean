@@ -13,6 +13,7 @@ import Elements.Figure.Rectangles
 import Elements.Figure.OnCircles
 import Elements.Figure.Sums
 import Elements.Figure.Rectilineal
+import Elements.Figure.Regions
 
 /-!
 # Book Zero: small facts every figure needs
@@ -71,6 +72,10 @@ Every proposition file imports this one, and through it:
 * `Rectilineal`: a figure fitted together from triangles has at least one, each a
   triangle, and no point inside two of them, so its triangles lie apart, with the
   same sum.
+* `Regions`: an angle as the region it opens near its vertex: the sides of a straight
+  line named by other points of it; circles about a point; the region of a rectilineal
+  angle, and of a mixed angle, named by any points of their arms; the comparison near a
+  vertex, which no angle bears to itself and to which an arm or a slit adds nothing.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is
 an axiom.

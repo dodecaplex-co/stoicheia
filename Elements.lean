@@ -26,6 +26,7 @@ import Elements.Figure.Rectangles
 import Elements.Figure.OnCircles
 import Elements.Figure.Sums
 import Elements.Figure.Rectilineal
+import Elements.Figure.Regions
 import Elements.Figure.Basics
 import Elements.BookI.Prop01
 import Elements.BookI.Prop02
@@ -108,6 +109,7 @@ import Elements.BookIII.Prop12
 import Elements.BookIII.Prop13
 import Elements.BookIII.Prop14
 import Elements.BookIII.Prop15
+import Elements.BookIII.MixedAngles
 import Elements.BookIII.Prop16
 import Elements.BookIII.Prop17
 import Elements.BookIII.Prop18

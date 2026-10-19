@@ -42,12 +42,31 @@ Book III is about circles, and most of its words need no Lean word of their own:
   equal.
 * The angle of a segment (Definition 7) is "contained by a straight line and a
   circumference": a mixed angle, which our angles, each made by two straight lines, are
-  not. No proof uses it. III.16 and III.31 speak of such angles in their last clauses,
-  and there Lean states the rectilineal facts that Euclid proves them by.
+  not. It has words of its own, below, which the companions of III.16 and III.31 use and
+  no proposition's own proof does.
 * No proposition of Book III uses a sector (Definition 10).
 
 The others are here: equal circles; a straight line touching a circle; circles touching
-one another, inside or outside; and a circumference, compared with a circumference.
+one another, inside or outside; a circumference, compared with a circumference; and the
+angles of III.16 and III.31, contained by a straight line and a circumference.
+
+**Mixed angles.** III.16 compares the angle of the semicircle, and the remaining angle
+between the circumference and the straight line that touches it, with any acute
+rectilineal angle; III.31 compares the angles of the greater and the less segment with a
+right angle. Here an angle is read as the region it opens near its vertex. A rectilineal
+angle BAC has the region `WithinAngle B A C`, the points between its arms. A mixed angle
+(`MixedAngle`) is recorded by its vertex, its straight arm, its circle and the side of the
+circumference that bounds it; its region is the points on that side within the circle,
+for the angle of a segment, or without it, between the circumference and a straight line
+touching it, for the angle of contact. "Near the vertex" is said with circles about it,
+as Euclid would draw them, and no numbers. A mixed angle exceeds a rectilineal angle
+placed at its vertex when, near the vertex, the rectilineal region lies within the mixed
+one and what is left over holds whole small circles (`MixedAngle.Exceeds`); it falls short
+of it the other way about (`MixedAngle.FallsShort`). The words compare the angles as they
+are placed. Euclid's comparison has the rectilineal angle along the mixed angle's
+straight arm, on its side; the theorems that use the words place it so, and show that the
+mixed angle is one Euclid draws (`MixedAngle.WellFormed`). No addition, multiple or ratio
+of mixed angles is defined, and no motion of one.
 
 **Circumferences.** Euclid compares circumferences only in one circle, or in equal
 circles: "in equal circles equal angles stand on equal circumferences" (III.26). Lean
@@ -106,6 +125,112 @@ def TouchesExternally (α β : Circle) (C : Point) : Prop :=
 one within the other, or externally. -/
 def CirclesTouch (α β : Circle) (C : Point) : Prop :=
   TouchesInternally α β C ∨ TouchesInternally β α C ∨ TouchesExternally α β C
+
+/-! ### Definition III.7: the angle of a segment, and the angle of contact -/
+
+/-- **Within the angle BAC.** The region of the rectilineal angle BAC: the points on C's
+side of the straight line AB and on B's side of AC. For a true angle it is the open region
+between the two arms, which are not in it; a straight angle has none. -/
+def WithinAngle (B A C : Point) (P : Point) : Prop :=
+  SameSideOf P C A B ∧ SameSideOf P B A C
+
+/-- **A mixed angle** (Definition III.7), contained by a straight line and a circumference:
+its vertex A, a point of the circle `α`, its straight arm, and the side of the
+circumference that bounds it.
+
+* `ofSegment A B α S`, **the angle of a segment**: the straight line AB and the
+  circumference on S's side of it. Its region is within the circle. A comparison places a
+  rectilineal angle along the ray from A through B, so B names the ray that runs into the
+  circle: the other end of the straight line in the circle, or, for the angle of the
+  semicircle in III.16, a point of the diameter beyond the centre.
+* `ofContact A E α B`, **the angle of contact**: III.16's remaining angle, the horn-like
+  angle, between a straight line AE touching the circle at A and the circumference on E's
+  side of a straight line AB into the circle. Its region is without the circle.
+
+The kinds may be formed from any points; `MixedAngle.WellFormed` says when they give the
+angle Euclid draws. -/
+inductive MixedAngle where
+  | ofSegment (A B : Point) (α : Circle) (S : Point)
+  | ofContact (A E : Point) (α : Circle) (B : Point)
+
+namespace MixedAngle
+
+/-- The vertex of a mixed angle: the point of the circle where its straight arm starts. -/
+def vertex : MixedAngle → Point
+  | ofSegment A _ _ _ => A
+  | ofContact A _ _ _ => A
+
+/-- **The region of a mixed angle.** For the angle of a segment, the points within the
+circle on S's side of AB; for the angle of contact, the points without the circle and
+within the angle EAB. Far from the vertex the regions run on, but only their parts near it
+enter a comparison. -/
+def region : MixedAngle → Point → Prop
+  | ofSegment A B α S => fun P => SameSideOf P S A B ∧ InsideCircle P α
+  | ofContact A E α B => fun P => WithinAngle E A B P ∧ OutsideCircle P α
+
+/-- **A mixed angle as Euclid draws it.** For the angle of a segment: A is on the circle,
+the ray from A through B passes within it, and S is off the straight line AB. For the angle
+of contact: A is on the circle, the straight line AE touches it (Definition III.2), the ray
+from A through B passes within it, and B is off AE. -/
+def WellFormed : MixedAngle → Prop
+  | ofSegment A B α S =>
+      OnCircle A α ∧ (∃ P : Point, OnRay P A B ∧ InsideCircle P α) ∧ ¬ Collinear A B S
+  | ofContact A E α B =>
+      OnCircle A α ∧ Touches A E α ∧ (∃ P : Point, OnRay P A B ∧ InsideCircle P α) ∧
+        ¬ Collinear A E B
+
+end MixedAngle
+
+/-- **Near A, the region `R` lies within the region `S`.** Some circle about A holds no
+point of `R` that is not a point of `S`. -/
+def LocallyWithin (A : Point) (R S : Point → Prop) : Prop :=
+  ∃ γ : Circle, Centre A γ ∧ ∀ P : Point, InsideCircle P γ → R P → S P
+
+/-- **The region `R` comes as near A as we please.** Every circle about A holds a point of
+`R`. -/
+def NearVertex (A : Point) (R : Point → Prop) : Prop :=
+  ∀ γ : Circle, Centre A γ → ∃ P : Point, InsideCircle P γ ∧ R P
+
+/-- **The region `R` holds a whole circle about P.** Some circle about P holds only points of
+`R`: P is a point of `R`, and not on its edge. -/
+def Surrounds (R : Point → Prop) (P : Point) : Prop :=
+  ∃ δ : Circle, Centre P δ ∧ ∀ Q : Point, InsideCircle Q δ → R Q
+
+/-- **The region `R` comes as near A as we please, and not by its edge alone.** Every circle
+about A holds a point about which some circle holds only points of `R`. -/
+def NearVertexOpen (A : Point) (R : Point → Prop) : Prop :=
+  ∀ γ : Circle, Centre A γ → ∃ P : Point, InsideCircle P γ ∧ Surrounds R P
+
+/-- **The angle with region `R` is less than the angle with region `S`, at A.** Near A, `R`
+lies within `S`, and the points of `S` outside `R` hold whole small circles as near A as we
+please; points alone would let an arm or a slit count as an excess. -/
+def LocallyLess (A : Point) (R S : Point → Prop) : Prop :=
+  LocallyWithin A R S ∧ NearVertexOpen A (fun P => S P ∧ ¬ R P)
+
+/-- **The angles with regions `R` and `S` are equal, at A.** Near A, each lies within the
+other. -/
+def LocallyEqual (A : Point) (R S : Point → Prop) : Prop :=
+  LocallyWithin A R S ∧ LocallyWithin A S R
+
+namespace MixedAngle
+
+/-- **The mixed angle `m` is greater than the rectilineal angle BXC**, X the vertex of `m`:
+BXC is a true angle (B, X, C not on one straight line), and, placed at that vertex, it is
+locally less than `m`. It compares their sizes as Euclid does when B is on the straight arm
+of `m` and C on its region's side, as III.16 and III.31 place the rectilineal angle; the
+word itself asks neither that, nor that `m` be well formed. -/
+def Exceeds (m : MixedAngle) (B C : Point) : Prop :=
+  ¬ Collinear B m.vertex C ∧ LocallyLess m.vertex (WithinAngle B m.vertex C) m.region
+
+/-- **The mixed angle `m` is less than the rectilineal angle BXC**, X the vertex of `m`: BXC
+is a true angle, `m` comes as near its vertex as we please, so that it is something, and
+`m` is locally less than BXC placed at its vertex. As with `Exceeds`, it compares sizes
+when the rectilineal angle is placed along the straight arm of `m`, on its side. -/
+def FallsShort (m : MixedAngle) (B C : Point) : Prop :=
+  ¬ Collinear B m.vertex C ∧ NearVertexOpen m.vertex m.region ∧
+    LocallyLess m.vertex m.region (WithinAngle B m.vertex C)
+
+end MixedAngle
 
 /-- **Definitions III.6 and III.9.** The circumference `BKC` of the circle `α`: the part
 of `α` from `B` to `C` on the side of the straight line `BC` where `K` is. It is measured
