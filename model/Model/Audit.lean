@@ -58,10 +58,10 @@ file imports every module of the `Model` library, and checks two things at every
 
 If either changes, the message changes, `#guard_msgs` fails, and so does the build. A new
 module of `Model` is imported here. `Model.euclidean_laws`, which `Model/Assembly.lean`
-generates from every theorem that proves a law in the plane, is audited last, so a law's
-theorem is audited through it as soon as the generator gathers it; the theorems listed one by
-one before it are every law's, the copies kept under suffixed names, `circlesMeet_self`, and
-the proposed `exists_centre`, which is no law yet.
+generates from every theorem that proves a law in the plane, is audited after them, and
+`Model.model_exists` last, so a law's theorem is audited through it as soon as the generator
+gathers it; the theorems listed one by one before it are every law's, the copies kept under
+suffixed names, `circlesMeet_self`, and the proposed `exists_centre`, which is no law yet.
 -/
 
 /-! ## The library is not imported -/

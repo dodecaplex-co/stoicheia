@@ -383,7 +383,7 @@ Three things make sure of that.
   own, which Mathlib's real numbers use. No project axiom and no `sorryAx` can pass.
   `euclidean_laws`, which `Model/Assembly.lean` gathers from every theorem that proves a
   law in the plane, is audited the same way, so a new proof is audited through it as soon
-  as the generator gathers it.
+  as the generator gathers it; so is `model_exists`.
 - **The library's rules on commands.** `Model/` uses none of the commands the library
   forbids ([FORMALIZATION](../docs/FORMALIZATION.md#7-the-foundations-and-the-policies-the-checks-enforce),
   section 7: `native_decide`, `implemented_by`, `unsafe` and the rest), and the audit
