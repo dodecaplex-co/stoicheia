@@ -1,33 +1,15 @@
 [statement]
-scope = "partial"
-omitted = [
-  "the angle of the greater segment is greater than a right angle",
-  "the angle of the less segment less than a right angle",
-]
-note = "Proves the angles in the semicircle and in each segment, at every point of the segment; the clause map below shows what stays in Euclid's words."
-short = "the angles of the segments stay in Euclid's words"
+scope = "full"
+note = "The angles in the segments, at every point of them; with its companions, the angles of the segments, for every straight line in the circle, at either end."
+companions = ["III.31 greater", "III.31 less"]
 fingerprint = "sha256:9a6c82df950595b4"
 
 [route]
 kind = "euclid"
 
 [representation]
-tags = ["mixed-angles-omitted", "centre-given"]
-note = "Our angles are made by two straight lines, so an angle contained by a straight line and a circumference has no Lean counterpart. A point is in the greater segment ABC when it is on B's side of AC, and in the less segment when it is on the other side. The centre E is given, as Euclid's setting-out names it."
-
-[coverage]
-checked = [
-  "The angle BAC in the semicircle is right.",
-  "The angle in the greater segment ABC is less than a right angle, at every point of the segment, not only at B.",
-  "The angle in the less segment ADC is greater than a right angle, at every point of the segment.",
-]
-explains = [
-  "The proof shows that the angles BAC and FAC are both right, as Euclid's \"each is right\" says. His sentences about the angles of the segments rest on these two facts.",
-]
-text_only = [
-  "the angle of the greater segment is greater than a right angle",
-  "the angle of the less segment less than a right angle",
-]
+tags = ["mixed-angles-local", "centre-given"]
+note = "An angle contained by a straight line and a circumference is a mixed angle (`MixedAngle`), read as the region it opens near its vertex: the angle of a segment is the points within the circle on the segment's side of AC. It is greater than a right angle placed at A along AC, on that side, when near A the right angle lies within it with whole small circles to spare, and less the other way about; the companions prove that the named points give the angles Euclid draws (`MixedAngle.WellFormed`), and claim no addition, ratio or motion of mixed angles. A point is in the greater segment ABC when it is on B's side of AC, and in the less segment when it is on the other side. The centre E is given, as Euclid's setting-out names it."
 
 [[passage]]
 at = "and it is the angle in the segment ADC less than the semicircle"
@@ -36,8 +18,15 @@ note = "Euclid shows the angle in the greater segment less than a right angle at
 
 [[passage]]
 at = "I say further that the angle of the greater segment"
-kind = "unformalized"
-note = "Euclid's argument for the angles of the segments, which the clause map above accounts for; the Lean beneath it only returns the three claims already proved."
+kind = "carried"
+helper = "Prop31.greater"
+note = "Proved after the theorem, for every straight line in the circle not through the centre, at either end; Euclid's figure is the case in which B is the far end of the diameter through C. What he calls manifest is proved: near A the right angle BAC lies within the circle, and so within the angle of the greater segment."
+
+[[passage]]
+at = "Again, since the angle contained by the straight lines AC, AF is right"
+kind = "carried"
+helper = "Prop31.less"
+note = "Proved after the theorem, as for the greater segment: the less segment lies wholly within the right angle CAF. The `exact` beneath these sentences returns only the claims of the statement."
 
 [review]
 stage = "exceptions"
