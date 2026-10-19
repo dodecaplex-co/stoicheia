@@ -51,10 +51,10 @@ far from C as its fellow is from A, and from D as its fellow is from B; and let 
 BAP be less than the angle BAQ. Then P'Q' is equal to PQ.
 
 Proved: the triangles ABP, CDP' and ABQ, CDQ' have their sides equal, so the angles
-BAP, DCP' and BAQ, DCQ' are equal [I. 8]; P lies within the angle BAQ (`Prop24.within`), and
-P' within DCQ', so BAQ is made up of BAP and PAQ, and DCQ' of DCP' and P'CQ'
-(`angle_add_of_within`); the remainders PAQ, P'CQ' are equal [C.N. 3]; and the triangles
-APQ, CP'Q' give PQ equal to P'Q' [I. 4]. -/
+BAP, DCP' and BAQ, DCQ' are equal [I. 8]; P lies within the angle BAQ
+(`BookI.Prop24.within`), and P' within DCQ', so BAQ is made up of BAP and PAQ, and DCQ' of
+DCP' and P'CQ' (`angle_add_of_within`); the remainders PAQ, P'CQ' are equal [C.N. 3]; and
+the triangles APQ, CP'Q' give PQ equal to P'Q' [I. 4]. -/
 theorem Placement.dist_strict {A B C D P Q P' Q' : Point} (hlen : ‖A B‖ = ‖C D‖)
     (hPQ : SameSideOf P Q A B) (hP'Q' : SameSideOf P' Q' C D)
     (hP₁ : ‖C P'‖ = ‖A P‖) (hP₂ : ‖D P'‖ = ‖B P‖) (hQ₁ : ‖C Q'‖ = ‖A Q‖)
@@ -69,7 +69,7 @@ theorem Placement.dist_strict {A B C D P Q P' Q' : Point} (hlen : ‖A B‖ = �
   have hDCP' : ∠ D C P' < ∠ D C Q' := by
     rw [← hBAP, ← hBAQ]
     exact hlt
-  /- The lesser ray lies within the greater angle (`Prop24.within`): P is on
+  /- The lesser ray lies within the greater angle (`BookI.Prop24.within`): P is on
      B's side of AQ, and P' on D's side of CQ'. -/
   have hPB : SameSideOf P B A Q := BookI.Prop24.within hPQ.symm hlt
   have hP'D : SameSideOf P' D C Q' := BookI.Prop24.within hP'Q'.symm hDCP'

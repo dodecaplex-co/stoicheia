@@ -1394,9 +1394,9 @@ findings:
   measure and congruent; III.27, III.28 and III.30 take the first conjunct where they cite
   them, and `Audit/Overlaps.lean`'s example of III.26 gives way to a note that III.26 no
   longer holds for any two circles. The records of III.23, III.24, III.26 and III.28 are
-  rewritten for their reviewer, and with those of III.27 and III.30 wait for its reading and
-  stamp. III.24's record carries `segment-with-circle`, `centre-given` and
-  `redundant-hypothesis`, but not `angle-measure`, which the brief plans for its
+  rewritten for their reviewer, who read them in full with those of III.27 and III.30 and
+  stamped all six at 8f37887. III.24's record carries `segment-with-circle`, `centre-given`
+  and `redundant-hypothesis`, but not `angle-measure`, which the brief plans for its
   companions: that tag's badge would put "in our measure of circumferences" beside the main
   theorem, which says nothing of a measure, and the record's note says how the companions
   measure. The reviewer may restore it, if the badge is first kept to statements that use

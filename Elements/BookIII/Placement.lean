@@ -21,9 +21,9 @@ superposition. The place of each point is chosen (`Classical.epsilon`): it exist
 I.3 and producing on the base) and is the only one (I.7 off the base, the order of points
 on it, and I.20's degenerate case between them). That every distance is kept is the long
 part, split by where the two points lie: both on the base, one on it, or both off it, where
-whichever end of the base gives unequal angles is used (I.8, `Prop24.within`, C.N. 3, I.4).
-The map is onto because the same construction runs back from CD to AB. The cases are in
-`Elements/BookIII/Placement/`, a file each.
+whichever end of the base gives unequal angles is used (I.8, `BookI.Prop24.within`, C.N. 3,
+I.4). The map is onto because the same construction runs back from CD to AB. The cases are
+in `Elements/BookIII/Placement/`, a file each.
 
 **Who may cite it.** III.24, where Euclid applies one segment to the other, and the bridge
 theorems of `Elements/BookIII/Arcs.lean`, and no other proof. The lemmas of the `Placement`

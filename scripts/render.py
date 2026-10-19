@@ -1957,8 +1957,8 @@ def postulate5_bullet(book, facts, proved, entries):
                                 "it, so any of its proofs may."))
 
 
-# What a book's line on superposition adds, where Euclid's text moves a figure that our
-# proof does not.
+# What a book's line on superposition adds about a proof in which Euclid moves a figure:
+# in Book III, III.24, which our proof follows by `placement`.
 SUPERPOSITION_NOTE = {"III": " Euclid's III.24 applies one segment to another, and so does our "
                              "proof of it, by `placement`, which uses superposition only through "
                              "the propositions it cites, I.4 and I.8 among them."}
