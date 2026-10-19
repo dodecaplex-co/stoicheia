@@ -321,7 +321,7 @@ the original means. These checks do that, at every build.
   hand translations of `Model/Hand.lean` and of seven files of `Model/Laws/`. The hand
   translations kept under suffixed names ([below](#proved-laws)), and the angle and
   superposition translations, which use words of their own written by hand, are compared
-  with the generated laws by the kernel in their files of `Check/`, apart from the seven
+  with the generated laws by the kernel in their files of `Check/`, apart from the
   direct declaration comparisons just described.
 - **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
   declared in `Elements.Foundations` are exactly the lock's `[axioms]`, so that none is

@@ -187,6 +187,7 @@ import run
 def made(key, script, laws, head='', tail=''):
     r = run.Run(key, script)
     r.code, r.err, r.twice, r.laws = 0, '', set(), laws
+    r.derived = {name: (5000, 7, 0) for name in run.PROPERTIES} if key == 'structured' else {}
     r.out = head + ''.join(f'{n} {t} {h} {c}\n' for n, (t, h, c) in laws.items()) + tail
     return r
 
