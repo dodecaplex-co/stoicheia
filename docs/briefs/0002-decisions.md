@@ -1347,3 +1347,17 @@ findings:
   words. The next steps are reworded after the test's own change on
   `tooling/safe-push-stage-line` lands separately, as [WORKFLOW](../WORKFLOW.md),
   section 10, requires.
+
+- **Stoicheia Team is the edition's copyright holder and cited author.** On 19 October 2026
+  the owner decided that [NOTICE](../../NOTICE) reads "Copyright 2026 Stoicheia Team and
+  contributors" and [CITATION.cff](../../CITATION.cff) names one author, the entity
+  "Stoicheia Team". The credit that [LICENSE-PROSE.md](../../LICENSE-PROSE.md) asks for now
+  names that author beside the title. [README.md](../../README.md) has no citation block or
+  text asking readers to cite the project; [references.bib](../references.bib) has no entry
+  for Stoicheia itself, so neither changes. [LICENSE](../../LICENSE) keeps the Apache
+  template's copyright line. A repository-wide search for the surname and copyright lines
+  found no other project attribution to change; third-party credits and notices stay as they
+  are. The sample name in `scripts/test_safe_push.py` still waits for its own tooling pull
+  request. This settles two of the three things "The edition does not name its owner" left
+  to the owner. The repository's address on GitHub remains the owner's to decide, and its
+  links stay unchanged. No statement, check or protected path changes.
