@@ -1286,16 +1286,24 @@ def guard_protected(repo, base, sha, rep: Report) -> list[str]:
     decisions = diff_hunks(repo, base, sha, DECISIONS)
 
     # The path whole, from the repository's root, or from the decisions page by a relative
-    # link (../../), or by a link anchored at the root (/model/lock.sha256), as
+    # link resolved from its folder (../../), or anchored at the root (/model/lock.sha256), as
     # check_links.py reads one; never the tail of a longer path, so that a line naming
     # tests/model/lock.sha256 names no model/lock.sha256, nor one naming
     # model/lakefile.toml the root's lakefile.toml; nor its head, so that a line naming
     # Audit.lean.orig names no Audit.lean, though Audit.lean. ending a sentence, or
     # Audit.lean's, does.
     def named(path):
-        pattern = re.compile(r"(?<![\w/.-])(?:/|(?:\.\.?/)*)%s(?!\.?[\w/-])"
+        pattern = re.compile(r"(?<![\w/.-])(?P<prefix>/|(?:\.\.?/)*)%s(?!\.?[\w/-])"
                              % re.escape(path))
-        return gains(decisions, lambda text: len(pattern.findall(text)))
+
+        def count(text):
+            return sum(
+                not m.group("prefix").startswith(".")
+                or posixpath.normpath(posixpath.join(posixpath.dirname(DECISIONS), m.group()))
+                == path
+                for m in pattern.finditer(text))
+
+        return gains(decisions, count)
 
     unnamed = [p for p in files if not named(p)]
     if unnamed:

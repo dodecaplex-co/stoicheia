@@ -648,8 +648,11 @@ the lock the model was last checked against). Since 19 October, `model/Model/Aud
 and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
 `Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
 build. A change to any of them needs a new line in the decisions page naming each file
-changed, by its whole path (from the root, or by a
-relative link: a line naming `tests/model/lock.sha256` does not name
+changed, by its whole path (from the root, or by a relative link that resolves from
+`docs/briefs/`, the decisions page's folder, to exactly that path: for
+`model/Model/Audit.lean`, `../../model/Model/Audit.lean` counts, but
+`../model/Model/Audit.lean`, `../../../model/Model/Audit.lean` and
+`./model/Model/Audit.lean` do not; a line naming `tests/model/lock.sha256` does not name
 `model/lock.sha256`), the label `security-review`, and a `/security-review` recorded in
 the pull request; weakening a check stays a decision of the owner's
 ([FORMALIZATION.md](FORMALIZATION.md), section 1). `Audit/`, `Audit.lean`,

@@ -1373,3 +1373,7 @@ findings:
   and still judged. The cases also keep similarly named paths, `model/Model/Hand.lean`
   and `model/Check/Hand.lean` unprotected. [WORKFLOW](../WORKFLOW.md), section 10, names
   the two files and their reason. Nothing is loosened; no model proof or audit changes.
+  In `scripts/safe_push.py`, with regression cases in `scripts/test_safe_push.py`, a
+  relative link must resolve from the decisions page's folder to the protected file,
+  so routine edits to `model/Model.lean` (a new import) and `model/Model/Audit.lean`
+  (a new pinned law) now need such a line too.

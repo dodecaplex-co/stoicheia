@@ -2279,6 +2279,31 @@ class ProtectedPaths(Edge):
                 self.assertEqual(self.guard(out, "protected paths"), "ok", out)
                 self.assertIn(f"each named in {DECISIONS}: {path};", out)
 
+    def test_decision_relative_link_must_resolve_from_decisions_page(self):
+        # A protected judged file and a check both need their actual path named.
+        for path in ("model/Model/Audit.lean", "scripts/check_style.py"):
+            for mention, outcome in (
+                    (f"[file](../{path})", "FAIL"),
+                    (f"[file](../../../{path})", "FAIL"),
+                    (f"[file](./{path})", "FAIL"),
+                    (f"[file](../../{path})", "ok"),
+                    (f"[file](./../../{path})", "ok"),
+                    (f"[file](.././../{path})", "ok"),
+                    (f"[file](/{path})", "ok"),
+                    (f"`{path}`", "ok"),
+                    (path, "ok")):
+                with self.subTest(path=path, mention=mention):
+                    git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                    changes = {path: self.text(path) + "\n# for the test\n"}
+                    changes.update(self.decision(f"{mention} changes."))
+                    sha = self.commit("Touch a protected file with a path mention", changes)
+                    rep, out = safe_push.Report(), io.StringIO()
+                    with contextlib.redirect_stdout(out):
+                        files = safe_push.guard_protected(WORK, BASE, sha, rep)
+                    self.assertEqual(files, [path])
+                    self.assertEqual(self.guard(out.getvalue(), "protected paths"),
+                                     outcome, out.getvalue())
+
     def test_audit_and_the_models_audit_and_build_files_stay_judged(self):
         # #96: Audit/, Audit.lean, the model's audit and its root, and the model's build
         # files are protected, yet still what the checks judge, so a check change stays
