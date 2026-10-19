@@ -305,12 +305,16 @@ the staged file at that revision, and "R" the report.
   III.31 and its paragraph on mixed angles; `docs/reports/gaps-book-III.md` under III.16;
   `docs/examples.md`, whose III.31 example cites `mixed-angles-omitted`;
   `scripts/render.py`'s front page row for Definition III.7 ("none: a mixed angle") and the
-  comment on words with no Lean partner; `review/terms.toml`'s `mixed-angles-omitted`, which
-  no record will use; README.md's sentence on passages the Lean argues another way or leaves
-  in Euclid's words, "as in I.4, III.16, III.25 and III.31", from which III.31 goes (III.16
-  stays, its step argued another way); PROGRAM.md, the coordinator's, whose limitations
-  allowed in Book III name the mixed angles; and the generated pages and README rows, the
-  integrator's.
+  comment on words with no Lean partner; [review/SCHEMA.md](../../review/SCHEMA.md)'s worked
+  example for III.16, which calls III.16 partial and uses `mixed-angles-omitted` (a
+  protected file, with a decisions entry of its own); `review/terms.toml`'s
+  `mixed-angles-omitted`, which no record will use, but which that worked example still
+  does, and `scripts/heath.py`'s self-test validates the example, so the tag stays until the
+  example changes with it; README.md's sentence on passages the Lean argues another way or
+  leaves in Euclid's words, "as in I.4, III.16, III.25 and III.31", from which III.31 goes
+  (III.16 stays, its step argued another way); PROGRAM.md, the coordinator's, whose
+  limitations allowed in Book III name the mixed angles; and the generated pages and README
+  rows, the integrator's.
 
 ## Questions for the coordinator
 
