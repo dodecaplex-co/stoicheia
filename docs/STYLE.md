@@ -135,7 +135,7 @@ where to look:
    plain word for its kind (a step done by a lemma, sentences carried together, a further
    case, a step already given, a step argued another way, a passage left in Euclid's
    words); then the listing, with the main theorem open, its helpers folded before it and
-   its corollaries and porism after it.
+   the declarations after it folded and named by their role.
 7. **What it rests on:** the certificate for every declaration the page shows (the
    theorem, its porism, its companions), with Heath's references beside the Lean's
    citations, the postulates, definitions taken as axioms, Common Notions and tacit

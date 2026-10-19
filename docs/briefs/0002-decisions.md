@@ -671,3 +671,20 @@ findings:
   decision foresees once it builds, is the owner's call. Even so, `git safe-push --merge`
   refuses a pull request while any of its checks fails or is still running, so a red or
   running `formal-model` already holds a merge there.
+
+- **Pages name what follows a theorem truly.** [`scripts/render.py`](../../scripts/render.py)
+  called every declaration after a theorem that is neither its porism nor a companion one
+  of the "theorems later propositions use". With stage 2's companions in the edition, that
+  would have covered `Fitted.fan`'s fourteen helpers on I.45's page and
+  `Prop14.area_pos` on II.14's, which no later proposition uses. The listing now names
+  three kinds: a declaration that another Lean file of the edition uses is one of the
+  "theorems later propositions use"; one that only other declarations of its own file use
+  is a "lemma for its own proofs"; and one that nothing uses, as III.17's `Prop17.inside`
+  will be (brief 0007), is "a lemma beside the proposition". A use is read from the Lean
+  with its comments taken out, so a name in a comment or a docstring is no use. Clauses
+  that hold lists are parted by semicolons. The Proof row names first the porism and the
+  companions that share the proposition's status, the companions together in the order
+  the review record lists them, and then each whose status differs. The page generator
+  checks its reading of uses against cases of its own before it renders anything; no page
+  on main changes, since every such label there is true (#94, found in the review of
+  brief 0007 and of stage 2's move).
