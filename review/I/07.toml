@@ -14,12 +14,33 @@ note = "System E's Circle 4 says I.7 of two circles: they cut one another on opp
 
 [[passage]]
 at = "For, if possible, given two straight lines AC, CB"
-kind = "helper"
+kind = "case"
 helper = "Prop7.within"
-note = "Euclid draws one figure. The Lean also takes AC crossing DB, his figure with C and D exchanged, and D within the triangle ABC or C within ABD, answered as Proclus answers it, by the angles under the base of I.5."
+note = "Euclid draws AD crossing CB; the Lean also takes AC crossing DB, his figure with C and D exchanged, and D within ABC or C within ABD, which `Prop7.within` answers as Proclus does, by the angles under the base of I.5. The Lean uses `Prop7.triangle` to rule out D on AC or BC, making ACD and BCD triangles, and `Prop7.cases` to prove that these four positions exhaust the possibilities."
+
+[[passage]]
+at = "and let CD be joined"
+kind = "given"
+note = "Euclid joins C to D; the Lean names ACD and BCD by their corners, so the join needs no separate step here. `Prop7.figure` draws the straight line CD later to establish the angles' parts."
+
+[[passage]]
+at = "therefore the angle ADC is greater than the angle DCB"
+kind = "helper"
+helper = "Prop7.figure"
+note = "Euclid reads off his figure that CB falls within the angle ACD. The Lean uses `Prop7.figure` to split ACD into ACB and BCD and show that ACB is not nothing, then Common Notion 5 and the equality of ACD and ADC to compare ADC with DCB."
+
+[[passage]]
+at = "therefore the angle CDB is much greater than the angle DCB"
+kind = "helper"
+helper = "Prop7.figure"
+note = "Euclid takes for granted that DA falls within the angle CDB; `Prop7.figure` above splits CDB into CDA and ADB and proves that ADB is not nothing. The Lean uses these facts with Common Notion 5 and the preceding comparison."
+
+[figure]
+case = "AD crossing CB, with a supposed second point D, as in Heath's figure"
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "16243feef5f36514fd2c21c634be60443965808b"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 lean = "sha256:ffbc06b6dd19da41"
