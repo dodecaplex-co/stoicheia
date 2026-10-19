@@ -23,9 +23,10 @@ names its centre and uses it (III.3, III.7, III.14 and nine more) is not here: i
 Three new lemmas for Lean users, approved at the freeze (question 11), are proved here:
 III.13's two clauses, each with only the two circles it speaks of (`Prop13.internally`,
 `Prop13.externally`), and `Centre.every`, which turns a fact about a named centre into the
-condition said of every centre that III.4 and III.8 ask for. The names sit in `Elements.BookIII.Staging.Centre` and
-`Elements.Staging.Centre`, apart from brief 0006's staged III.24 and III.25. When the
-restated statements are proved they replace today's, and this file is deleted.
+condition said of every centre that III.4 and III.8 ask for. The names sit in
+`Elements.BookIII.Staging.Centre` and `Elements.Staging.Centre`, apart from brief 0006's
+staged III.24 and III.25. When the restated statements are proved they replace today's, and
+this file is deleted.
 -/
 
 namespace Elements.BookIII.Staging.Centre
