@@ -10,7 +10,7 @@ kind = "euclid"
 [overlap]
 rule = "Tacit.circle_eq"
 kind = "gives"
-note = "System E's Diagram-segment 2, that one centre and one radius make one circle, gives III.5 at once from a common point. The proof follows Euclid, and calls on that rule only for the step he leaves tacit, that F and G are two points."
+note = "System E's Diagram-segment 2, that one centre and one radius make one circle, gives III.5 at once from a common point. The proof follows Euclid, and names that rule to show that F and G are two points. It also rests on that axiom and Postulate 3 through proved rules such as `Tacit.centre_inside`, whose proof uses circles to compare lengths."
 
 [[passage]]
 at = "therefore EF is also equal to EG, the less to the greater"

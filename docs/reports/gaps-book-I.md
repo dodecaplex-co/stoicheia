@@ -300,13 +300,19 @@ over a postulate, the reason is one of these.
   (`AreParallel.figure_alternate`, `AreParallel.figure_interior`,
   `Prop28.interior`, and AC and DB in I.33). In I.2 the rule that a straight line
   through the inside of a circle meets it (System E, Intersections 5) does the
-  producing, and in I.5 the statement hands us the produced sides, so neither proof
-  uses Postulate 2, though Heath's bracket gives it.
+  producing, so that proof uses no Postulate 2, though Heath's bracket gives it.
+  In I.5 the statement hands us the produced sides, but Postulate 2 still underlies
+  proved rules, including `OnRay.between_of_len_lt` through `between_of_between_right`
+  and `area_swap`. I.4 reaches it through `onRay_of_angle_eq`, and I.6 through
+  `area_swap` as well as I.4.
 - **Postulate 3 and Definition 15**: circles Euclid does not draw, which keep a
   chance point near enough (`exists_between_nearer`, I.5 and I.9), give a straight
   line room to be cut from (`produce_longer`), or lay a length along a ray
   (`OnRay.exists_len_eq`, I.24, I.44, I.46 and I.48); and circles he does draw, but
   without a bracket for the circle (I.22) or for its radii (I.2, I.12, I.22).
+  Proved order and length rules also carry these assumptions: I.4 reaches them through
+  `OnRay.eq_of_len_eq`, `ne_of_len_eq` and `onRay_of_angle_eq`, although its own
+  construction draws no circle.
 - **Postulate 4**: turning Definition 10's right angles into the one magnitude `∟`
   that all right angles share.
 - **Postulate 5**: no difference. The Lean uses it directly just where Euclid

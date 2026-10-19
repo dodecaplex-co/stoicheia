@@ -15,8 +15,14 @@ the former ones. The earlier catalogue and its measurements follow as history.
 | I.13, a consequence used in I.47 | Metric 5 (`angle_le_two_right`) | Supplies a step: the upper bound on an angle | I.47 | None |
 | I.23 | Superposition (`superposition`) | Supplies a step of the alternative proof | I.4 | `Audit.I_23` |
 | III.2 | Circle 3 (`outside_of_between`) | Gives it at once: if the middle point were not inside, the second endpoint would be outside | Nowhere: no certificate entry rests on it | `Audit.III_2_outside`; `Audit.III_2` through the derived Circle 2 |
-| III.5 | Diagram-segment 2 (`circle_eq`) | Gives it at once: circles about one centre through one point coincide | III.5 | `Audit.III_5` |
-| III.6 | Diagram-segment 2 (`circle_eq`) | Gives it at once for contact within; contact without is settled by Generalities 3, a former assumption now proved (below) | III.5 | `Audit.III_6` |
+| III.5 | Diagram-segment 2 (`circle_eq`) | Gives it at once: circles about one centre through one point coincide | I.1, through proved rules including `centre_inside` | `Audit.III_5` |
+| III.6 | Diagram-segment 2 (`circle_eq`) | Gives it at once for contact within; contact without is settled by Generalities 3, a former assumption now proved (below) | I.1, through proved rules including `centre_inside` | `Audit.III_6` |
+
+"First enters" here includes the axioms of proved rules. I.1 reaches `circle_eq`
+through `centre_inside` and `len_ne_zero`; III.5 is still the first proposition
+whose own Lean names the axiom. III.5 and III.6 also reach it, and Postulate 3,
+through the proved `centre_inside`. Their explicit calls to `circle_eq` distinguish
+F from G and E from B; those calls are no longer their only paths to the axiom.
 
 Fresh certificate facts at `1a2d37c1` show that no certificate entry rests on
 Circle 3. I.12 finds X on AB between the centre C and the point D on the circle;
@@ -48,6 +54,11 @@ Diagram-segment 2, so the old alternative between those two assumptions in the
 III.5 and III.6 discussion below now leaves Diagram-segment 2 as the retained axiom.
 The duplicate-circle argument there remains an informal model argument, not a Lean
 independence theorem.
+
+The crossing proof `Audit.III_5_crossing` now rests on `circle_eq` too, through
+the proved `len_lt_of_inside`. It still proves the statement with crossing as its
+hypothesis, but no longer supplies the derivation without that axiom described
+in the historical account below.
 
 ## Historical account, before 19 October 2026
 

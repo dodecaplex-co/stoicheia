@@ -16,8 +16,9 @@ The catalogue in `docs/reports/overlaps.md` lists every case we found, and this 
 proves each "states it" or "gives it at once" row again, from the rules alone, and I.2,
 I.3 and I.23, whose rules supply their step in a longer proof. The former I.7 audit is
 kept as a circular derivation through Circle 4, now a corollary of I.7. After III.6,
-`III_5_crossing` shows that III.5 needs neither of its rules when "cut" is read as
-crossing. A second section proves III.24, III.26 and III.27 without the hypotheses our
+`III_5_crossing` proves III.5 when "cut" is read as crossing. It now rests on
+Diagram-segment 2 through the proved radius comparison `len_lt_of_inside`.
+A second section proves III.24, III.26 and III.27 without the hypotheses our
 measure of circumferences leaves idle, the catalogue's near misses of representation.
 
 Each theorem's type is the proposition's own (`type_of% @Elements.BookIII.Prop2`), so a
@@ -188,8 +189,9 @@ theorem III_2_outside : type_of% @Elements.BookIII.Prop2 :=
 /-- **III.5 from Diagram-segment 2.** A circle is fixed by its centre and radius
 (`circle_eq`, Diagram-segment 2). Two circles about one centre through one point are
 one circle, so two circles that cut one another cannot share a centre. Our III.5 takes
-Euclid's steps, and uses this rule only for the step he leaves tacit, that F and G are two
-points. -/
+Euclid's steps, and names this rule to show that F and G are two points. It also rests
+on the rule and Postulate 3 through proved rules such as `centre_inside`, whose proof
+uses circles to compare lengths. -/
 theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
   fun hne ⟨_, _, _, hC₁, hC₂, _, _⟩ ⟨hE₁, hE₂⟩ => hne (circle_eq hE₁ hE₂ hC₁ hC₂ rfl)
 
@@ -197,10 +199,11 @@ theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
 circles through one point, so Diagram-segment 2 again forbids a common centre. Circles
 touching without have no point within both, and a common centre would be one, since a
 centre is within its circle (`centre_inside`, Generalities 3). Our III.6 ends contact
-without with Generalities 3, before anything is drawn; for contact within it takes Euclid's
-steps, and uses Diagram-segment 2 only for the step he leaves tacit, that E and B are two
-points. Generalities 3 has been a theorem since 19 October 2026 (`Elements/Figure/RuleBase.lean`),
-so the closure pinned below is that of its proof with Diagram-segment 2. -/
+without with Generalities 3, before drawing FEB; for contact within it takes Euclid's
+steps, and names Diagram-segment 2 to show that E and B are two points. Generalities 3
+has been a theorem since 19 October 2026 (`Elements/Figure/RuleBase.lean`), and itself
+rests on Diagram-segment 2 and Postulate 3 through its comparison of lengths. The
+closure pinned below is that of its proof with Diagram-segment 2. -/
 theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
   rintro C F ABC CDE (⟨hC₁, hC₂, hne, -⟩ | ⟨hC₂, hC₁, hne, -⟩ | ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
   · exact hne (circle_eq hF₁ hF₂ hC₁ hC₂ rfl)
@@ -213,7 +216,9 @@ than C is (`len_lt_of_inside`, Diagram-segment 4), and yet, both being on the on
 as far from it (Definition I.15). A circle and its copy, drawn twice over, do not cross
 so, for neither has a point within the other. Our III.5 reads "cut" as meeting at two
 points (`CirclesMeet`), which a circle and its copy do, and there the published proof
-uses Diagram-segment 2 (the catalogue, under III.5). Circle 4 is now proved using
+uses Diagram-segment 2 (the catalogue, under III.5). The crossing proof below also
+rests on Diagram-segment 2, through the proved `len_lt_of_inside`; it no longer gives
+an independent derivation without that axiom. Circle 4 is now proved using
 Diagram-segment 2 as well. The same proof gives III.6 for circles
 touching within, read with a point of the inner circle within the outer. -/
 theorem III_5_crossing {C P E : Point} {ABC CDG : Circle} (hC₁ : OnCircle C ABC)

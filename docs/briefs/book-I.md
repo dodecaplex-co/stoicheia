@@ -44,8 +44,10 @@ Hypotheses come from the setting-out, conclusions from "I say that".
 ## Representations
 
 - **A straight line is whole.** A `Line` is the whole straight line, named by any two of its
-  points, so producing one usually costs nothing: the proofs of I.2 and I.5 use no
-  Postulate 2. Where a proof must cut off from a straight line produced, `produce_longer`
+  points. I.2 finds its points on those lines without Postulate 2. I.5 takes its produced
+  sides as given, but still rests on Postulate 2 through proved rules, including
+  `OnRay.between_of_len_lt` through `Tacit.between_of_between_right`.
+  Where a proof must cut off from a straight line produced, `produce_longer`
   first makes it long enough.
 - **Magnitudes, not numbers.** Lengths, angles and areas are separate kinds that add and
   compare. No proof uses coordinates or real numbers; I.47 is about areas, with no
