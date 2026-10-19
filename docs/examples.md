@@ -79,7 +79,7 @@ meeting the drawn figure, and a shared step told on its home page.
 
 - **The statement is Euclid's, in areas:** the square on AB equals the squares on AC, CB
   with twice the rectangle AC, CB. No numbers anywhere.
-- **The figure is drawn as Euclid draws it,** by shared steps with recognizable names: the
+- **The figure is drawn as Euclid draws it,** by shared steps with recognisable names: the
   square by I.46 and `Square.described`, its side chosen by `exists_off_line`, and the
   parallels and the point G by `Parallelogram.figure`. Each drawn piece is then named as a
   rectangle or square of Euclid's words by the bridge lemmas of Book II's ground.
