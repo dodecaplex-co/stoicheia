@@ -22,7 +22,7 @@ Book I's words are the foundations every later book uses, in `Elements/Foundatio
 | `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`; points in order on a straight line, `InOrder`, with `segments` and `endOf` (II.1); and a rectilineal figure given with its triangles (Definitions I.14 and I.19), as triangles that lie apart, `Apart`, or fitted together, `Fitted` and `Rectilineal`, each with its area as given, with `OnFiniteLine`, `OnOrInsideTriangle`, `Corners` and `triples`. |
 | `Postulates.lean` | The five postulates, each an `axiom`. |
 | `CommonNotions.lean` | The five Common Notions, each a theorem; Common Notions 3 and 5 rest on tacit laws of magnitudes. |
-| `Tacit/` | 81 tacit rules, from System E: `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
+| `Tacit/` | 82 tacit rules, from System E save one of our own, that every circle has a centre (`exists_centre`, from Definitions I.15 and I.16, by the owner's decision of 18 October 2026): `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
 
 ## How the statements say Euclid's phrases
 

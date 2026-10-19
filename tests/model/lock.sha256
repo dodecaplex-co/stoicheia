@@ -21,4 +21,10 @@
 # statements of the companions of III.16 and III.31 reach, joined the vocabulary: 16 new
 # words, the definitions and what Lean declares for them; the 87 axioms and every word
 # already locked are unchanged, byte for byte, so MODEL.md's account stands as it was.
-a5a107575c18adbe7b6935a86714aa6217bc56cb4ffbc3bea4dfe11d7920f8c9  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when the rule that every circle has a centre,
+# Tacit.exists_centre, joined the axioms by the owner's decision (brief 0008, section 2):
+# 88 axioms, the other 87 and every word of the vocabulary unchanged, byte for byte. Its
+# law joins laws.toml, search.py and hyperbolic.py, and MODEL.md gains its row and new
+# counts, in the same change.
+3272536ae5e44987378cd5c873a2ca7279799f7397c6d916afeaadd2fea9904f  Certificate/axioms.lock

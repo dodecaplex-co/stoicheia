@@ -60,8 +60,8 @@ If either changes, the message changes, `#guard_msgs` fails, and so does the bui
 module of `Model` is imported here. `Model.euclidean_laws`, which `Model/Assembly.lean`
 generates from every theorem that proves a law in the plane, is audited after them, and
 `Model.model_exists` last, so a law's theorem is audited through it as soon as the generator
-gathers it; the theorems listed one by one before it are every law's, the copies kept under
-suffixed names, `circlesMeet_self`, and the proposed `exists_centre`, which is no law yet.
+gathers it; the theorems listed one by one before it are every law's, `exists_centre`
+among them, the copies kept under suffixed names, and `circlesMeet_self`.
 -/
 
 /-! ## The library is not imported -/
@@ -692,7 +692,7 @@ info: 'Model.Euclidean.triple_incidence3' depends on axioms: [propext, Classical
 
 /-! ## What the assembled model rests on
 
-`euclidean_laws` gathers proofs of all 87 locked laws, with no remaining hypothesis.
+`euclidean_laws` gathers proofs of all 88 locked laws, with no remaining hypothesis.
 It and `model_exists` rest on what those proofs rest on. -/
 
 /--
