@@ -1606,11 +1606,10 @@ def law_of(node: ast.stmt) -> str | None:
     return None
 
 
-def law_code(text: str | None) -> tuple[list[str], dict, set[str]] | None:
+def law_code(text: str | None) -> tuple[list[str], dict] | None:
     """A harness file's code: the statements at its top level that are not laws, each as
-    its syntax tree prints (comments and its docstring, which are prose, aside); its laws,
-    by name; and the names it binds at its top level. None when it does not parse, or
-    defines a law twice."""
+    its syntax tree prints (comments and its docstring, which are prose, aside); and its
+    laws, by name. None when it does not parse, or defines a law twice."""
     try:
         tree = ast.parse(text)
     except (TypeError, ValueError, SyntaxError):
@@ -1628,64 +1627,133 @@ def law_code(text: str | None) -> tuple[list[str], dict, set[str]] | None:
             return None
         else:
             laws[name] = node
-    names, todo = set(), list(tree.body)
-    while todo:     # the module's own scope: not the bodies of its functions
-        node = todo.pop()
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-            names.add(node.name)
-            todo.extend(node.decorator_list)
-            continue
-        if isinstance(node, ast.Lambda):
-            continue
-        if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store):
-            names.add(node.id)
-        elif isinstance(node, ast.alias):
-            names.add((node.asname or node.name).split(".")[0])
-        todo.extend(ast.iter_child_nodes(node))
-    return rest, laws, names
+    return rest, laws
 
 
-# What a law's code may not name: the builtins that reach a namespace, run code, open a
-# file or print (a printed line could pass for another law's result), and those that
-# write to standard output without `print` (`help`, `license`, `credits`, `copyright`),
-# whose words could pass for a harness's last line or another law's result, or that end
-# the run cleanly (`exit`, `quit`, `SystemExit`), so that a harness would stop before the
-# laws that follow; the two modules the harnesses import that reach every other module,
-# the environment and a shell (`sys`, `os`); and the registry of laws but for its own
-# decorator. The methods that change a container in place, and the one that shuffles the
-# container it is given. Those that reseed the random numbers every
-# law draws from, which reach a law through its configuration. The calls that make a new
-# container, beside a display or a comprehension. And the augmented assignments that a
-# container of Python's own makes in place (a list's `+=`, a set's `|=`).
-LAW_REACH = frozenset({"globals", "vars", "locals", "getattr", "setattr", "delattr", "exec",
-                       "eval", "compile", "open", "print", "input", "breakpoint", "help",
-                       "license", "credits", "copyright", "exit", "quit", "SystemExit",
-                       "sys", "os", "AXIOMS", "axiom"})
-MUTATORS = frozenset({"append", "extend", "insert", "pop", "remove", "clear", "update",
-                      "setdefault", "popitem", "add", "discard", "sort", "reverse", "write"})
-SHUFFLES = frozenset({"shuffle"})
-RESEED = frozenset({"seed", "setstate"})
+# What a law's code may use: an allow-list, and anything it does not name is refused.
+# Beside its own parameters and the names it binds, a global name in one role only, as
+# each harness's laws use it: a function called (the model's helpers, each of which reads
+# its arguments, draws from the random numbers it is given, and returns a value, while
+# hyperbolic.py's make_circle also notes a point of the circle it makes in SEEDS, which
+# the harness empties before every configuration); a value (search.py's right angle, RA);
+# a table, only read through a subscript (hyperbolic.py's SEEDS); a module, only for an
+# attribute in LAW_MATH; and, in a law's decorator, a generator named, or one made by a
+# call with constants. The builtins the laws call, in either harness. The attributes they
+# take of what they are given: of the random numbers the harness hands every law, which a
+# law draws from and never reseeds (LAW_ATTRIBUTES); and the one method that changes a
+# container, on a container the law made (LAW_MUTATORS). The letters of a decorator's
+# kinds. Each entry is one the laws use, and a test holds each to a use; widening a list
+# is a check change, in a pull request of its own.
+LAW_GLOBALS = {
+    "tests/model/search.py": {
+        "call": frozenset({
+            "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "_ti_hyp", "ang",
+            "area2", "between", "circles_meet", "collinear", "d2", "dot", "f_ang",
+            "f_between", "f_lval", "f_on_circle", "f_on_line", "f_same_side", "feq", "fl",
+            "in_or_on", "inside", "is_centre", "is_right_angle", "lattice_on_line",
+            "length", "line_circle_points", "line_meets_circle", "line_through",
+            "lines_meet", "lval", "mag_vals", "on_circle", "on_line", "opposite", "outside",
+            "same_side", "sgn", "sub", "triangle"}),
+        "value": frozenset({"RA"}),
+    },
+    "tests/model/hyperbolic.py": {
+        "call": frozenset({
+            "F_circ", "Fr", "H", "K", "_angle_inside_hyp", "_area_line_hyp", "_cm_side",
+            "_ti_hyp", "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre",
+            "ch2", "circles_meet", "collinear", "dist", "expmap", "f_ang", "f_dist",
+            "f_on_circle", "f_point", "f_side", "feq", "in_disc", "in_or_on", "inside",
+            "is_centre", "is_right", "line_meets_circle", "line_through", "lines_meet",
+            "mag_vals", "make_circle", "meet_point", "mink", "on_circle", "on_line",
+            "opposite", "outside", "pt_on_circle", "pt_on_line", "pts_on_line",
+            "roots_along", "same_side", "triangle", "unit_toward"}),
+        "table": frozenset({"SEEDS"}),
+        "generator": frozenset({
+            "gs_adj", "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
+            "gs_cong", "gs_lc", "gs_lines_meet", "gs_lmc_opp", "gs_p4", "gs_p5", "gs_pasch",
+            "gs_pasch4", "gs_rays", "gs_sup"}),
+        "generator maker": frozenset({"gs_cm", "gs_convex", "gs_ti"}),
+    },
+}
+LAW_BUILTINS = frozenset({"abs", "all", "any", "float", "len", "range", "set", "tuple"})
+LAW_MODULES = frozenset({"math"})
+LAW_MATH = frozenset({"cos", "dist", "hypot", "pi", "sin", "sqrt"})
+LAW_ATTRIBUTES = frozenset({"randint", "random"})
+LAW_MUTATORS = frozenset({"append"})
+LAW_KINDS = frozenset({"P", "L_", "C_"})
+# The syntax a law's body may hold: the statements, expressions and parts of them that the
+# laws use, and the plain ones beside them (`break`, `continue`, `pass`, a conditional
+# expression, a slice, a dict display or comprehension). Not an import, `global`,
+# `nonlocal`, `:=`, `lambda`, `del`, `try`, `with`, `raise`, `assert`, `yield`, `await`,
+# a class, a starred or annotated name, nor an f-string.
+LAW_SYNTAX = (ast.Assign, ast.AugAssign, ast.Expr, ast.If, ast.For, ast.While, ast.Break,
+              ast.Continue, ast.Pass, ast.Return, ast.FunctionDef, ast.BoolOp, ast.BinOp,
+              ast.UnaryOp, ast.Compare, ast.IfExp, ast.Call, ast.Constant, ast.Name,
+              ast.Attribute, ast.Subscript, ast.Slice, ast.Tuple, ast.List, ast.Set, ast.Dict,
+              ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp, ast.comprehension,
+              ast.keyword, ast.arguments, ast.arg, ast.expr_context, ast.operator,
+              ast.boolop, ast.unaryop, ast.cmpop)
+COMPREHENSIONS = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+# The calls that make a new container, beside a display or a comprehension; and the
+# augmented assignments that a container of Python's own makes in place (a list's `+=`, a
+# set's `|=`).
 CONSTRUCTORS = frozenset({"list", "dict", "set", "bytearray"})
 IN_PLACE = (ast.Add, ast.Sub, ast.Mult, ast.BitOr, ast.BitAnd, ast.BitXor)
 
 
-def self_contained(fn: ast.FunctionDef, module: set[str]) -> bool:
-    """Does a law's code keep to itself, so that it changes no other law's check when it
-    runs? No `global`, `nonlocal`, import or `:=`; no name in LAW_REACH (its own decorator
-    aside), and no dunder name, attribute or function; nothing stored into an attribute or
-    deleted from one; no method in RESEED. And it changes only a container it made in its
-    own body: a name that every binding in the law gives a new container (a list, dict or
-    set display, a comprehension, or a call of one of CONSTRUCTORS that nothing rebinds),
-    and that the file does not bind at its top level (`module`). Only through that name
-    itself may a container change: by a subscript stored or deleted, a method in MUTATORS,
-    an augmented assignment in IN_PLACE, or as the container a method in SHUFFLES is
-    given. So a second name for a shared container (`d = DEN`, `for d in (DEN,)`, an
-    argument) changes nothing, and nor does an element of the law's own container
-    (`x[0].clear()`, `x[0] += [1]`). An augmented assignment that a container of Python's
-    own never makes in place (`t /= 2`), or one to a name every binding gives a constant
-    (`j += 1`), changes nothing either."""
-    bound = module | {node.id for node in ast.walk(fn) if isinstance(node, ast.Name)
-                      and not isinstance(node.ctx, ast.Load)}
+def law_globals(path: str, role: str) -> frozenset:
+    """The global names a law in the harness `path` may use in `role` (LAW_GLOBALS), the
+    builtins among the calls and `math` among the modules."""
+    common = {"call": LAW_BUILTINS, "module": LAW_MODULES}.get(role, frozenset())
+    return LAW_GLOBALS.get(path, {}).get(role, frozenset()) | common
+
+
+def law_decorator(d: ast.Call, path: str) -> bool:
+    """Is a law's decorator, which law_of found to be `axiom('<name>', …)`, one the allow-list
+    takes? Its kinds a `dict` of letters, `dict(A=P, L=L_, al=C_)`; and, where the harness
+    takes a generator, one it names (`gs_p4`), or makes with constants (`gs_cm('side')`)."""
+    gens, makers = law_globals(path, "generator"), law_globals(path, "generator maker")
+    if d.keywords or len(d.args) not in ((2, 3) if gens or makers else (2,)):
+        return False
+    kinds, *gen = d.args[1:]
+    if not (isinstance(kinds, ast.Call) and isinstance(kinds.func, ast.Name)
+            and kinds.func.id == "dict" and not kinds.args
+            and all(k.arg is not None and isinstance(k.value, ast.Name)
+                    and k.value.id in LAW_KINDS for k in kinds.keywords)):
+        return False
+    if not gen:
+        return True
+    g = gen[0]
+    return (isinstance(g, ast.Name) and g.id in gens) or (
+        isinstance(g, ast.Call) and isinstance(g.func, ast.Name) and g.func.id in makers
+        and not g.keywords and all(isinstance(a, ast.Constant) for a in g.args))
+
+
+def scope_binds(nodes) -> set[str]:
+    """The names a scope binds itself, from its statements (or a comprehension's targets):
+    the names stored and the functions defined, and none bound in a scope inside it."""
+    out, todo = set(), list(nodes)
+    while todo:
+        node = todo.pop()
+        if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load):
+            out.add(node.id)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            out.add(node.name)
+        elif isinstance(node, COMPREHENSIONS):
+            todo.append(node.generators[0].iter)    # its first iterable is the scope's
+        elif not isinstance(node, ast.Lambda):
+            todo.extend(ast.iter_child_nodes(node))
+    return out
+
+
+def own_names(fn: ast.FunctionDef) -> tuple[set[str], set[str]]:
+    """The names of a law that hold only a container it made, and those that hold only a
+    constant. A container it made: a name that every binding in the law gives a new
+    container (a list, dict or set display, a comprehension, or a call of one of
+    CONSTRUCTORS that nothing in the law rebinds); a constant, a name every binding gives
+    a literal. A name bound by a loop, a comprehension, a parameter or a function is
+    neither."""
+    bound = {node.id for node in ast.walk(fn) if isinstance(node, ast.Name)
+             and not isinstance(node.ctx, ast.Load)}
     makers = CONSTRUCTORS - bound
 
     def new_container(value) -> bool:
@@ -1717,58 +1785,125 @@ def self_contained(fn: ast.FunctionDef, module: set[str]) -> bool:
         if isinstance(node, ast.Assign):
             for target in node.targets:
                 bind(target, node.value)
-        elif isinstance(node, ast.AnnAssign) and node.value is not None:
-            bind(node.target, node.value)
         elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
-            seen.add(id(node.target))   # the same name, judged below
+            seen.add(id(node.target))   # the same name, judged by self_contained
     for node in ast.walk(fn):
         if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load) \
                 and id(node) not in seen:
-            other.add(node.id)  # a loop, a comprehension, `with … as`, `del`
+            other.add(node.id)  # a loop, a comprehension
         elif isinstance(node, ast.arg):
             other.add(node.arg)
-        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) \
-                and node is not fn:
+        elif isinstance(node, ast.FunctionDef) and node is not fn:
             other.add(node.name)
-        elif isinstance(node, ast.ExceptHandler) and node.name:
-            other.add(node.name)
-        elif isinstance(node, (ast.MatchAs, ast.MatchStar)) and node.name:
-            other.add(node.name)
-        elif isinstance(node, ast.MatchMapping) and node.rest:
-            other.add(node.rest)
-    own = made - constant - other - module
-    constants = constant - made - other - module
+    return made - constant - other, constant - made - other
+
+
+def self_contained(fn: ast.FunctionDef, path: str) -> bool:
+    """Does a law's code in the harness `path` keep to itself, so that it changes no other
+    law's check when it runs? It is read against an allow-list, not run, and what the list
+    does not name is refused, so a route the list never thought of is refused too. Its
+    decorator is one law_decorator takes. It and every function it defines take plain
+    positional parameters (no default, annotation, `/` or `*`), and only it has a
+    decorator. Its body holds only the syntax of LAW_SYNTAX, with no `**` argument or
+    display, no `async` comprehension, no dunder name, and a generator expression only as
+    an argument, or unpacked as it is made. Each name is its own (a parameter, or bound in
+    the law or a scope of it, as Python resolves it: a name bound only in a comprehension
+    or an inner function is the global outside it), or a global in a role LAW_GLOBALS gives
+    it (law_globals): called, read through a subscript, a module before an attribute, or a
+    value. An attribute is never stored or deleted: on a module it is in LAW_MATH, on
+    anything else in LAW_ATTRIBUTES, or in LAW_MUTATORS on a container of the law's own. So
+    no frame, namespace, other module or lookup by string can be reached: none is on the
+    list. And it changes only a container it made in its own body (own_names), under a name
+    of the law's own scopes, and through that name itself: by a subscript stored, a method
+    in LAW_MUTATORS, or an augmented assignment in IN_PLACE. So a second name for a shared
+    container (`d = SEEDS[k]`, `for d in …`, an argument), an element of its own
+    (`x[0] += [1]`), or a global of the same name as one of its own, changes nothing. An
+    augmented assignment that a container of Python's own never makes in place (`t /= 2`),
+    or one to a name every binding gives a constant (`j += 1`), changes nothing either."""
+    if not law_decorator(fn.decorator_list[0], path):
+        return False
+    local = set()   # the names, as nodes, that the law's own scopes bind
+
+    def resolve(node, chain: tuple) -> None:
+        if isinstance(node, ast.FunctionDef):
+            params = {a.arg for a in ast.walk(node.args) if isinstance(a, ast.arg)}
+            inner = chain + (params | scope_binds(node.body),)
+            for statement in node.body:
+                resolve(statement, inner)
+            return
+        if isinstance(node, COMPREHENSIONS):
+            first = node.generators[0]
+            resolve(first.iter, chain)
+            inner = chain + (scope_binds(g.target for g in node.generators),)
+            parts = [node.key, node.value] if isinstance(node, ast.DictComp) else [node.elt]
+            for g in node.generators:
+                parts += [g.target, *g.ifs] + ([] if g is first else [g.iter])
+            for part in parts:
+                resolve(part, inner)
+            return
+        if isinstance(node, ast.Name) and any(node.id in names for names in chain):
+            local.add(node)
+        for child in ast.iter_child_nodes(node):
+            resolve(child, chain)
+
+    resolve(fn, ())
+    own, constants = own_names(fn)
+    parents = {child: node for node in ast.walk(fn) for child in ast.iter_child_nodes(node)}
 
     def mine(node) -> bool:
-        return isinstance(node, ast.Name) and node.id in own
+        return isinstance(node, ast.Name) and node in local and node.id in own
 
-    decorator = fn.decorator_list[0].func
-    for node in ast.walk(fn):
-        if isinstance(node, (ast.Global, ast.Nonlocal, ast.Import, ast.ImportFrom,
-                             ast.NamedExpr)):
+    def plain(f: ast.FunctionDef) -> bool:
+        a = f.args
+        return not (a.posonlyargs or a.vararg or a.kwonlyargs or a.kwarg or a.defaults
+                    or a.kw_defaults or f.returns or getattr(f, "type_params", None)
+                    or any(x.annotation or x.arg.startswith("__") for x in a.args)
+                    or f.name.startswith("__"))
+
+    def role(node: ast.Name) -> str:
+        up = parents.get(node)
+        if isinstance(up, ast.Call) and up.func is node:
+            return "call"
+        if isinstance(up, ast.Attribute):
+            return "module"
+        if isinstance(up, ast.Subscript) and up.value is node and isinstance(up.ctx, ast.Load):
+            return "table"
+        return "value"
+
+    if not plain(fn):
+        return False
+    for node in (n for statement in fn.body for n in ast.walk(statement)):
+        if not isinstance(node, LAW_SYNTAX):
             return False
-        if isinstance(node, ast.Name) and node is not decorator \
-                and (node.id in LAW_REACH or node.id.startswith("__")):
+        if isinstance(node, ast.FunctionDef) and (node.decorator_list or not plain(node)):
             return False
-        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)) \
-                and node.name.startswith("__"):
+        if (isinstance(node, ast.keyword) and node.arg is None) \
+                or (isinstance(node, ast.Dict) and None in node.keys) \
+                or (isinstance(node, ast.comprehension) and node.is_async):
             return False
-        if isinstance(node, ast.Attribute) and (
-                node.attr.startswith("__") or node.attr in RESEED
-                or isinstance(node.ctx, (ast.Store, ast.Del))
-                or (node.attr in MUTATORS and not mine(node.value))):
+        if isinstance(node, ast.GeneratorExp):
+            up = parents.get(node)
+            if not ((isinstance(up, ast.Call) and node in up.args)
+                    or (isinstance(up, ast.Assign) and up.value is node
+                        and len(up.targets) == 1
+                        and isinstance(up.targets[0], (ast.Tuple, ast.List)))):
+                return False
+        if isinstance(node, ast.Name) and (node.id.startswith("__") or (
+                node not in local and node.id not in law_globals(path, role(node)))):
             return False
-        if isinstance(node, ast.Subscript) and isinstance(node.ctx, (ast.Store, ast.Del)) \
+        if isinstance(node, ast.Attribute):
+            on_module = isinstance(node.value, ast.Name) and node.value not in local
+            if not isinstance(node.ctx, ast.Load) or not (
+                    node.attr in LAW_MATH if on_module else
+                    node.attr in LAW_ATTRIBUTES
+                    or (node.attr in LAW_MUTATORS and mine(node.value))):
+                return False
+        if isinstance(node, ast.Subscript) and not isinstance(node.ctx, ast.Load) \
                 and not mine(node.value):
             return False
         if isinstance(node, ast.AugAssign) and isinstance(node.op, IN_PLACE) \
                 and not mine(node.target) and not (isinstance(node.target, ast.Name)
                                                    and node.target.id in constants):
-            return False
-        if isinstance(node, ast.Call) and (
-                (isinstance(node.func, ast.Attribute) and node.func.attr in SHUFFLES)
-                or (isinstance(node.func, ast.Name) and node.func.id in SHUFFLES)) \
-                and not (node.args and mine(node.args[0])):
             return False
     return True
 
@@ -1796,7 +1931,7 @@ def laws_move_with_axioms(repo, base, sha, path: str) -> bool:
         was, now = old[1].get(name), new[1].get(name)
         if was is not None and now is not None and ast.dump(was) == ast.dump(now):
             continue
-        if now is not None and not self_contained(now, new[2]):
+        if now is not None and not self_contained(now, path):
             return False
         axioms = {k for laws in (old_laws, new_laws) for k, (law, _) in laws.items()
                   if law == name}
@@ -1859,8 +1994,8 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
             + (f"; and it drops or loosens an expectation of {EXPECTATIONS}, which is a "
                "check change" if loosened else "")
             + (f"; and it changes the model's laws in {', '.join(laws)} beyond the laws that "
-               "move with their axioms (or a law's code reaches outside itself), which is a "
-               "check change" if laws else "")
+               "move with their axioms (or a law's code uses what its allow-list does not "
+               "name), which is a check change" if laws else "")
             + ". Land the check change first, in a pull request of its own (the check code, "
             "the guides, the regenerated pages and the records' stamps), and the rest after "
             f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, the counts and values "

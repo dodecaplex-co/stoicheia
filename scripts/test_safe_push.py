@@ -65,11 +65,13 @@ one commit and runs safe_push.py against that origin:
   lock, the lock's hash, its line of tests/model/laws.toml, its law's code in search.py
   and hyperbolic.py and the model's account lands as content, and the model's ties hold
   on it; while a law loosened beside it, a helper or tolerance of the harness changed, a
-  line of laws.toml moved without its axiom, a new law's code that reaches outside
-  itself, prints or ends the run, or changes a shared container under a second name, or
-  laws.toml or the lock deleted, is a check change, kept apart; an axiom restated or
-  removed with its law lands as content too; and a harness of the model that stops
-  before its last line, with status 0, fails the model's run;
+  line of laws.toml moved without its axiom, a new law's code that uses what its
+  allow-list does not name (a global, a frame, a lookup by string, a print, the end of
+  the run) or changes a shared container under a second name, or laws.toml or the lock
+  deleted, is a check change, kept apart; an axiom restated or removed with its law lands
+  as content too; every law of the two harnesses keeps to the allow-list, and each entry
+  of the list is one a law uses; and a harness of the model that stops before its last
+  line, with status 0, fails the model's run;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -2639,6 +2641,18 @@ class ProtectedPaths(Edge):
                 self.SEARCH: self.planted_law(self.SEARCH, first="    raise SystemExit(0)\n")}),
             "the new law reseeding the search": lambda p: dict(p, **{
                 self.SEARCH: self.planted_law(self.SEARCH, first="    c['_rng'].seed(0)\n")}),
+            # The reviewer of #40 found that reflection escaped the deny-list; the
+            # allow-list refuses it.
+            "the new law reaching a frame": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(
+                    self.SEARCH, first="    g = (x for x in ())\n"
+                                       "    g.gi_frame.f_back.f_globals['BOX']\n")}),
+            "the new law looking an attribute up by string": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(
+                    self.SEARCH, first="    getattr(c['_rng'], 'seed')(0)\n")}),
+            "the new law closing over a global": lambda p: dict(p, **{
+                self.HYPERBOLIC: self.planted_law(
+                    self.HYPERBOLIC, first="    def h():\n        DEN.clear()\n    h()\n")}),
             # The verifier of #40 found these two: a second name for a shared container.
             "the new law changing a shared container through a second name": lambda p: dict(
                 p, **{self.HYPERBOLIC: self.planted_law(
@@ -3620,23 +3634,186 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING + [{"name": "check", "bucket": "fail"}])[0], "failure")
         self.assertEqual(judge(PASSING + [{"name": "other", "bucket": "pending"}])[0], "pending")
 
+    @staticmethod
+    def law(body: str, path: str = "tests/model/hyperbolic.py",
+            head: str = "@axiom('x', dict(A=P))\ndef _(c):\n") -> bool:
+        """Does a law of `path`, under `head`, with `body` and then `return True`, keep to
+        the allow-list (self_contained)?"""
+        lines = "".join(f"    {line}\n" for line in body.split("\n"))
+        fn = ast.parse(f"{head}{lines}    return True\n")
+        return safe_push.self_contained(fn.body[0], path)
+
+    def test_every_law_keeps_to_the_allow_list(self):
+        # Issue #40, and its reviewer's finding, with thanks: a law's code is read against
+        # an allow-list collected from the laws themselves. Every law of the two harnesses
+        # keeps to it, and each entry of the list is one some law uses, so that the list
+        # is no wider than the laws need.
+        used = {}
+        for path in safe_push.MODEL_LAW_CODE:
+            _, found = safe_push.law_code((SOURCE / path).read_text())
+            self.assertEqual(len(found), 87, path)
+            for name, fn in found.items():
+                self.assertTrue(safe_push.self_contained(fn, path), f"{path}: {name}")
+            nodes = [n for fn in found.values() for statement in fn.body
+                     for n in ast.walk(statement)]
+            decorators = [fn.decorator_list[0] for fn in found.values()]
+            gens = [d.args[2] for d in decorators if len(d.args) > 2]
+            used[path] = {
+                "call": {n.func.id for n in nodes if isinstance(n, ast.Call)
+                         and isinstance(n.func, ast.Name)},
+                "value": {n.id for n in nodes if isinstance(n, ast.Name)},
+                "table": {n.value.id for n in nodes if isinstance(n, ast.Subscript)
+                          and isinstance(n.value, ast.Name)},
+                "module": {n.value.id for n in nodes if isinstance(n, ast.Attribute)
+                           and isinstance(n.value, ast.Name)},
+                "math": {n.attr for n in nodes if isinstance(n, ast.Attribute)
+                         and isinstance(n.value, ast.Name) and n.value.id == "math"},
+                "attribute": {n.attr for n in nodes if isinstance(n, ast.Attribute)},
+                "generator": {g.id for g in gens if isinstance(g, ast.Name)},
+                "generator maker": {g.func.id for g in gens if isinstance(g, ast.Call)},
+                "kinds": {k.value.id for d in decorators for k in d.args[1].keywords},
+            }
+            for role, names in safe_push.LAW_GLOBALS[path].items():
+                with self.subTest(path=path, role=role):
+                    self.assertEqual(names - used[path][role], set())
+        both = {role: set().union(*(u[role] for u in used.values()))
+                for role in used[safe_push.MODEL_LAW_CODE[0]]}
+        self.assertEqual(safe_push.LAW_BUILTINS - both["call"], set())
+        self.assertEqual(safe_push.LAW_MODULES - both["module"], set())
+        self.assertEqual(safe_push.LAW_MATH - both["math"], set())
+        self.assertEqual(safe_push.LAW_ATTRIBUTES - both["attribute"], set())
+        self.assertEqual(safe_push.LAW_MUTATORS - both["attribute"], set())
+        self.assertEqual(safe_push.LAW_KINDS - both["kinds"], set())
+
+    def test_a_law_reaches_nothing_off_the_allow_list(self):
+        # Issue #40, and its reviewer's finding, with thanks: the check was a deny-list,
+        # which reflection escaped; under the allow-list, each route the reviewer named is
+        # refused, and so is every name, attribute and piece of syntax the laws do not use.
+        refused = {
+            # The reviewer's routes: a frame chain, the random module's os, a namespace by
+            # vars or __dict__, a lookup by string, a closure over a global, a default
+            # argument bound to a shared container.
+            "a generator's frame": "g = (x for x in ())\n"
+                                   "g.gi_frame.f_back.f_globals['DEN'].clear()",
+            "a frame, from sys": "sys._getframe(1).f_globals['SEEDS'].clear()",
+            "a traceback's frame": "try:\n    1 / 0\nexcept ZeroDivisionError as e:\n"
+                                   "    e.__traceback__.tb_frame.f_globals['DEN'].clear()",
+            "random's os": "random._os.system('true')",
+            # Two the deny-list let through: the decimal context every law of the
+            # hyperbolic plane computes in, coarsened; and a result forged by print.
+            "random's os, coarsening the decimals": "m = random._os.sys.modules['decimal']\n"
+                                                    "m.setcontext(m.Context(prec=2))",
+            "random's os, printing": "random._os.sys.modules['builtins'].print('len_self 1 1 0')",
+            "the random numbers' module": "c['_rng'].__class__",
+            "vars": "vars()['DEN'].clear()",
+            "vars of a module": "vars(math)['pi']",
+            "a __dict__": "math.__dict__['pi']",
+            "globals": "globals()['DEN'].clear()",
+            "the builtins by string": "__builtins__['exec']('DEN.clear()')",
+            "getattr with a string": "getattr(c['_rng'], 'seed')(0)",
+            "__getattribute__ with a string": "c['_rng'].__getattribute__('seed')(0)",
+            "a format string's attribute": "'{0.__class__}'.format(c)",
+            "a closure over a global": "def h():\n    return DEN\nh().clear()",
+            "a closure changing a global": "def h():\n    DEN.clear()\nh()",
+            "a default argument bound to a shared container": "def h(d=DEN):\n    d.append(1)\nh()",
+            "a default argument bound to its own list": "ws = []\ndef h(d=ws):\n"
+                                                        "    d.append(1)\nh()",
+            # A global under a name a comprehension or an inner function binds: Python
+            # resolves it outside them to the global, and so does the check.
+            "print, bound only in a comprehension": "[print for print in ()]\n"
+                                                    "print('len_self 1 1 0')",
+            "exit, bound only in a function": "def h():\n    exit = 0\nexit(0)",
+            "a table, bound only in a function": "def h():\n    SEEDS = {}\nSEEDS[1] = 2",
+            # The syntax the laws do not use.
+            "an import": "import os",
+            "global": "global BOX\nBOX = 1",
+            "nonlocal": "def h():\n    nonlocal c\n    c = 1",
+            "a walrus": "(y := 1)",
+            "a lambda": "f = lambda: 0",
+            "yield": "yield 1",
+            "try": "try:\n    pass\nexcept Exception:\n    pass",
+            "with": "with c['_rng'] as d:\n    pass",
+            "raise": "raise SystemExit(0)",
+            "assert": "assert c",
+            "del": "ws = [1]\ndel ws[0]",
+            "a class": "class K:\n    pass",
+            "an f-string": "s = f'{c}'",
+            "a starred name": "a, *b = [1, 2]",
+            "an annotated name": "x: list = []",
+            "a generator returned": "return (x for x in ())",
+            "a generator kept": "g = (x for x in ())",
+            "a decorated function": "@feq\ndef h():\n    pass",
+            "a function with a starred parameter": "def h(*x):\n    pass",
+            "keywords unpacked": "feq(**{'a': 1, 'b': 1})",
+            "a dict unpacked": "d = {**c}",
+            "a dunder name": "__x = 1",
+            # The names and attributes the laws do not use, or not so.
+            "a builtin not on the list": "sorted([1])",
+            "type": "type(c)",
+            "dict, called": "d = dict(a=1)",
+            "a helper as a value": "f = on_line",
+            "a builtin as a value": "m = map(float, [1])",
+            "a value called": "SEEDS()",
+            "a table, itself": "s = SEEDS",
+            "a table, stored into": "SEEDS[1] = 2",
+            "a table's method": "SEEDS.setdefault(1, 2)",
+            "an attribute of math not on the list": "math.floor(1)",
+            "math's attribute on another": "x = 4\nx.sqrt()",
+            "an attribute not on the list": "s = set()\ns.add(1)",
+            "the random numbers reseeded": "c['_rng'].seed(0)",
+            "the random numbers' state": "c['_rng'].setstate(c['_rng'].getstate())",
+            "an attribute stored": "ws = []\nws.x = 1",
+        }
+        for name, body in refused.items():
+            with self.subTest(refused=name):
+                self.assertFalse(self.law(body), body)
+        # A name of one harness is refused in the other.
+        self.assertFalse(self.law("make_circle(c['A'], c['B'])", "tests/model/search.py"))
+        self.assertFalse(self.law("x = SEEDS[c['al']]", "tests/model/search.py"))
+        self.assertFalse(self.law("x = RA"))
+        # The law's own signature and decorator: positional parameters only, and the
+        # decorator's kinds and generator as the laws write them.
+        for head in ("def _(c, d=DEN):", "def _(c, *a):", "def _(c: print('x')):",
+                     "def _(c) -> print('x'):", "def _(c, /):"):
+            with self.subTest(signature=head):
+                self.assertFalse(self.law("pass", head=f"@axiom('x', dict(A=P))\n{head}\n"))
+        for decorator, path in (("@axiom('x', dict(A=print('hi')))", None),
+                                ("@axiom('x', {'A': P})", None),
+                                ("@axiom('x', dict(A=P), print)", None),
+                                ("@axiom('x', dict(A=P), gs_cm(print))", None),
+                                ("@axiom('x', dict(A=P), gen=gs_p4)", None),
+                                ("@axiom('x', dict(A=P), gs_p4)", "tests/model/search.py")):
+            with self.subTest(decorator=decorator):
+                self.assertFalse(self.law("pass", path or "tests/model/hyperbolic.py",
+                                          f"{decorator}\ndef _(c):\n"))
+        accepted = {
+            "a closure over its own names": "A = c['A']\ndef iso(X):\n    x = X[0] - A[0]\n"
+                                            "    return x\ny = iso(c['A'])",
+            "its own list, changed in a function": "ws = []\ndef h():\n    ws.append(1)\nh()",
+            "a table read": "x = SEEDS[c['al']]",
+            "math's pi": "x = math.pi",
+            "the random numbers drawn": "x = c['_rng'].randint(0, 3) + c['_rng'].random()",
+            "a generator unpacked": "a, b = (c[k] for k in 'AB')",
+            "a generator as an argument": "x = all(on_line(w, c['L']) for w in [c['A']])",
+            "a loop with break and continue": "j = 0\nwhile j < 3:\n    j += 1\n"
+                                              "    if j == 2:\n        break\n    continue",
+            "comprehensions of its own": "x = [w for w in range(3)]\ny = {w: w for w in x}",
+        }
+        for name, body in accepted.items():
+            with self.subTest(accepted=name):
+                self.assertTrue(self.law(body), body)
+        for decorator in ("@axiom('x', dict())", "@axiom('x', dict(A=P, L=L_, al=C_), gs_p4)",
+                          "@axiom('x', dict(A=P), gs_cm('side'))",
+                          "@axiom('x', dict(A=P), gs_ti())"):
+            with self.subTest(decorator=decorator):
+                self.assertTrue(self.law("pass", head=f"{decorator}\ndef _(c):\n"))
+
     def test_a_law_changes_only_containers_it_made(self):
         # Issue #40, and its verifier's finding, with thanks: a law's code may change a
         # container only through a name it bound to a container made in its own body. A
         # second name for a shared one, an element of its own, its argument, or a shuffle
-        # of what it did not make, is refused; every law of the two harnesses passes.
-        laws = {}
-        for path in safe_push.MODEL_LAW_CODE:
-            _, found, module = safe_push.law_code((SOURCE / path).read_text())
-            laws[path] = module
-            for name, fn in found.items():
-                self.assertTrue(safe_push.self_contained(fn, module), f"{path}: {name}")
-        module = laws["tests/model/hyperbolic.py"]
-
-        def law(body: str) -> bool:
-            lines = "".join(f"    {line}\n" for line in body.split("\n"))
-            fn = ast.parse(f"@axiom('x', dict(A=P))\ndef _(c):\n{lines}    return True\n")
-            return safe_push.self_contained(fn.body[0], module)
+        # of what it did not make, is refused. Under the allow-list most of these name a
+        # global or an attribute it does not hold, and are refused for that as well.
         refused = {
             "a second name": "d = DEN\nd[:] = [2]",
             "a loop's name": "for d in (DEN,):\n    d.clear()",
@@ -3658,6 +3835,12 @@ class Units(unittest.TestCase):
             "an element of a tuple": "d = (DEN,)\nd[0].clear()",
             "its argument": "c['A'] = 1",
             "a second name for its argument": "d = c\nd['x'] = 1",
+            "its argument, merged into": "c |= {}",
+            "an element of its argument, appended to": "c['A'].append(1)",
+            "a second name for its argument, appended to": "d = c\nd.append(1)",
+            "a table's entry, added to": "d = SEEDS[c['al']]\nd += [1]",
+            "an element of its own, appended to": "x = [[]]\nx[0].append(1)",
+            "an element of its own list, added to": "x = [[]]\nx[0] += [1]",
             "a helper's argument": "def h(x):\n    x.clear()\nh(DEN)",
             "a method kept for later": "m = DEN.clear\nm()",
             "a shuffle": "c['_rng'].shuffle(DEN)",
@@ -3669,23 +3852,20 @@ class Units(unittest.TestCase):
         }
         for name, body in refused.items():
             with self.subTest(refused=name):
-                self.assertFalse(law(body), body)
+                self.assertFalse(self.law(body), body)
         accepted = {
             "a list of its own": "ws = []\nws.append(1)",
             "unpacked, with a number halved": "ws, t = [], Fr(1, 2)\nt /= 2\nws.append(t)",
             "a counter": "j = 1\nj += 1",
-            "a set made by a call": "s = set()\ns.add(1)",
-            "a dict made by a call": "d = dict(a=1)\nd['b'] = 2",
-            "a comprehension sorted": "xs = [y for y in range(3)]\nxs.sort()",
-            "a copy of a shared list, shuffled": "own = list(DEN)\nc['_rng'].shuffle(own)",
+            "a set made by a call": "s = set()\ns = s | {1}",
+            "a list stored into": "ws = [0]\nws[0] = 1",
             "one list under two names": "a = b = []\na.append(1)\nb.append(2)",
             "a list added to": "ws = []\nws += [1]",
-            "an annotated list": "x: list = []\nx.append(1)",
-            "a dict merged into and deleted from": "d = {}\nd |= {1: 2}\ndel d[1]",
+            "a comprehension appended to": "xs = [y for y in range(3)]\nxs.append(3)",
         }
         for name, body in accepted.items():
             with self.subTest(accepted=name):
-                self.assertTrue(law(body), body)
+                self.assertTrue(self.law(body), body)
 
     def test_the_laws_files_absent_read_as_none(self):
         # The verifier of #40 found it: a file absent (show gives None) reads as None, not a

@@ -379,9 +379,9 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The edition review | Commentary, quotations, figures and scope descriptions agree with the reviewed mathematics. | |
 | Regeneration is clean | The pages, certificate and graph match the sources and the generator. | Whether their descriptions of scope and meaning are accurate. |
 | The figure checks pass | The files display, and their letters, palette and strokes meet the structural rules. | Whether the drawn geometry and the case shown agree with the proof. |
-| The numerical model tests (`tests/model/`) | The 87 axioms held in the configurations sampled from a standard model of the plane, and planted mutations of them were caught. | A proof of consistency: laws no harness reaches rest on a hand argument. |
+| The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, and planted mutations of them were caught. | A proof of consistency: laws no harness reaches rest on a hand argument. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| A formal interpretation (a later milestone, a separate package with Mathlib) | The exact 87 laws proved in a model of the plane, tied to the lock so that any change to an axiom breaks it. | |
+| A formal interpretation (a later milestone, a separate package with Mathlib) | The exact locked axioms proved in a model of the plane, tied to the lock so that any change to an axiom breaks it. | |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of

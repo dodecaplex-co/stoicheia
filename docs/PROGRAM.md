@@ -151,9 +151,6 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
   request of its own ([#3]).
-- **A new axiom cannot yet land in any order:** the model's law names, in `tests/model`'s
-  search and hyperbolic check, are code, not a pinned value; they move into a pinned data
-  file. On adding one, see [AGENTS.md](../AGENTS.md), "Never".
 - **The merge commit's subject** takes the owner from origin's URL, which after a transfer
   would name the old owner (cosmetic).
 - **A guard for `gh` exiting 0 without merging,** needed if a merge queue or auto-merge is

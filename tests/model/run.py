@@ -316,7 +316,8 @@ def counts_block(runs, prov):
     met, total = totals(runs)
     h = {r.key: r for r in runs}['hyperbolic']
     hyp_met = sum(x[1] for x in h.laws.values())
-    p5 = h.laws['Postulate5'][2]
+    fails = '; '.join(f'`{lean_name(law)}` failed {h.laws.get(law, (0, 0, 0))[2]:,} times'
+                      for law in sorted(EXPECTED_TO_FAIL))
     return '\n'.join([
         f'Counts from `run.py --full --write` at commit `{prov["commit"].split()[0][:12]}`, '
         f'{prov["date"]}, Python {platform.python_version()}. Each number is how many configurations '
@@ -327,8 +328,8 @@ def counts_block(runs, prov):
         f'({sum(v for k, v in met.items() if k.startswith("search")):,} in the search, '
         f'{met.get("exhaustive", 0):,} exhaustive, {met.get("structured", 0):,} structured), '
         'with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: '
-        f'{hyp_met:,} configurations met an axiom\'s hypotheses; Postulate 5 failed {p5:,} times and '
-        'every other axiom held.',
+        f'{hyp_met:,} configurations met an axiom\'s hypotheses; '
+        + (f'{fails} and every other axiom held.' if fails else 'every axiom held.'),
         '',
         law_table(runs, markdown=True)])
 
