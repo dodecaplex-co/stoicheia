@@ -7,10 +7,10 @@ Each of Euclid's figures, `figures/<book>/NN.svg`, was set beside Heath's printe
 Heath's figure was cut from the leaf's image (the Internet Archive's `thirteenbookseu02heibgoog` for Books I and II, `thirteenbookseu00heibgoog` for Book III, as STYLE, section 5, gives them) and set beside ours, rendered with `rsvg-convert -w 700 figures/<book>/NN.svg`. Each pair was read for what the proof uses: which points lie on which straight lines and circles, the order of points along a line, which side of a line a point falls, where lines cross, which case of several is drawn, and every letter at its point. Three kinds of difference are kept apart:
 
 - **As Heath's:** the same points in the same relations, under the same letters. Proportions may differ (a triangle acute where his is obtuse), since no proof here turns on them.
-- **Laid out otherwise:** the same figure turned, reflected, or with its pieces in another order on the page (two triangles side by side, the other way round). Nothing the proof uses changes, so the record needs no note; the table says so, for a reader who opens the scan.
+- **Laid out otherwise:** the same figure turned or reflected. Nothing the proof uses changes, so the record needs no note; the table says so, for a reader who opens the scan.
 - **Departs:** a point placed otherwise than Heath places it, a line or a point he draws left out, or an impossible supposition drawn without saying so. Each is mended to match the scan, or said in the figure note (STYLE, section 7), whose line the record's owner writes.
 
-Of the 99, 63 are as Heath's in every respect read here, and the rest are listed with what differs.
+Of the 99, 64 are as Heath's with nothing to add; each of the rest has its word in the table, whether it is as Heath's with a remark, laid out otherwise, or departs.
 
 ## Mended on this branch
 
@@ -39,11 +39,11 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 | [I.1](../../book/I/01.md) | [n261](https://archive.org/download/thirteenbookseu02heibgoog/page/n261.jpg) | As Heath's. |
 | [I.2](../../book/I/02.md) | [n264](https://archive.org/download/thirteenbookseu02heibgoog/page/n264.jpg) | As Heath's in its order and sides; Heath's BC runs up from B, ours down to the right, and his triangle DAB is smaller. |
 | [I.3](../../book/I/03.md) | [n266](https://archive.org/download/thirteenbookseu02heibgoog/page/n266.jpg) | As Heath's; F, which only names the circle, stands at its lower left, Heath's at its lower right. |
-| [I.4](../../book/I/04.md) | [n267](https://archive.org/download/thirteenbookseu02heibgoog/page/n267.jpg) | Laid out otherwise: ABC on the left, where Heath sets DEF. Heath also draws the base bent below EF, the impossible case of two straight lines enclosing a space, which ours leaves out (a note is proposed below). |
+| [I.4](../../book/I/04.md) | [n267](https://archive.org/download/thirteenbookseu02heibgoog/page/n267.jpg) | Departs, and says so nowhere yet: Heath also draws the base bent below EF, the impossible case of two straight lines enclosing a space, which ours leaves out (a note is proposed below). Otherwise as Heath's, ABC on the left and DEF on the right. |
 | [I.5](../../book/I/05.md) | [n271](https://archive.org/download/thirteenbookseu02heibgoog/page/n271.jpg) | As Heath's. |
 | [I.6](../../book/I/06.md) | [n275](https://archive.org/download/thirteenbookseu02heibgoog/page/n275.jpg) | As Heath's. |
 | [I.7](../../book/I/07.md) | [n278](https://archive.org/download/thirteenbookseu02heibgoog/page/n278.jpg) | As Heath's. It draws an impossible supposition, and says so nowhere yet (a note is proposed below). |
-| [I.8](../../book/I/08.md) | [n281](https://archive.org/download/thirteenbookseu02heibgoog/page/n281.jpg) | Laid out otherwise: ABC on the left, where Heath sets DEF. It draws an impossible supposition, G, and says so nowhere yet (a note is proposed below). |
+| [I.8](../../book/I/08.md) | [n281](https://archive.org/download/thirteenbookseu02heibgoog/page/n281.jpg) | As Heath's, ABC on the left and DEF on the right. It draws an impossible supposition, G, and says so nowhere yet (a note is proposed below). |
 | [I.9](../../book/I/09.md) | [n284](https://archive.org/download/thirteenbookseu02heibgoog/page/n284.jpg) | As Heath's. |
 | [I.10](../../book/I/10.md) | [n287](https://archive.org/download/thirteenbookseu02heibgoog/page/n287.jpg) | As Heath's. |
 | [I.11](../../book/I/11.md) | [n289](https://archive.org/download/thirteenbookseu02heibgoog/page/n289.jpg) | As Heath's. |
@@ -59,11 +59,11 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 | [I.21](../../book/I/21.md) | [n309](https://archive.org/download/thirteenbookseu02heibgoog/page/n309.jpg) | As Heath's. |
 | [I.22](../../book/I/22.md) | [n312](https://archive.org/download/thirteenbookseu02heibgoog/page/n312.jpg) | As Heath's in its order and sides; of the three given straight lines Heath's A is the longest, ours B. |
 | [I.23](../../book/I/23.md) | [n314](https://archive.org/download/thirteenbookseu02heibgoog/page/n314.jpg) | As Heath's. |
-| [I.24](../../book/I/24.md) | [n316](https://archive.org/download/thirteenbookseu02heibgoog/page/n316.jpg) | As Heath's: F below EG, the case Heath draws. Heath's ABC has C on the left. |
+| [I.24](../../book/I/24.md) | [n316](https://archive.org/download/thirteenbookseu02heibgoog/page/n316.jpg) | Reflected: Heath sets C on the left of ABC and G on the left of DEF, where ours has B and E. F is below EG in both, the case Heath draws. |
 | [I.25](../../book/I/25.md) | [n319](https://archive.org/download/thirteenbookseu02heibgoog/page/n319.jpg) | As Heath's. |
 | [I.26](../../book/I/26.md) | [n322](https://archive.org/download/thirteenbookseu02heibgoog/page/n322.jpg) | As Heath's. |
 | [I.27](../../book/I/27.md) | [n327](https://archive.org/download/thirteenbookseu02heibgoog/page/n327.jpg) | As Heath's in what it shows, AB and CD meeting at G; Heath draws them as parallels bent to meet, ours as straight lines. It draws an impossible supposition and says so nowhere yet (a note is proposed below). |
-| [I.28](../../book/I/28.md) | [n330](https://archive.org/download/thirteenbookseu02heibgoog/page/n330.jpg) | Reflected: EF slants the other way. |
+| [I.28](../../book/I/28.md) | [n330](https://archive.org/download/thirteenbookseu02heibgoog/page/n330.jpg) | As Heath's. The figure lower on the leaf, in Heath's note on Proclus, has EF slanting the other way. |
 | [I.29](../../book/I/29.md) | [n331](https://archive.org/download/thirteenbookseu02heibgoog/page/n331.jpg) | As Heath's. |
 | [I.30](../../book/I/30.md) | [n334](https://archive.org/download/thirteenbookseu02heibgoog/page/n334.jpg) | As Heath's. |
 | [I.31](../../book/I/31.md) | [n336](https://archive.org/download/thirteenbookseu02heibgoog/page/n336.jpg) | As Heath's. |
@@ -136,7 +136,7 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 | [III.26](../../book/III/26.md) | [n69](https://archive.org/download/thirteenbookseu00heibgoog/page/n69.jpg) | As Heath's. |
 | [III.27](../../book/III/27.md) | [n70](https://archive.org/download/thirteenbookseu00heibgoog/page/n70.jpg) | As Heath's. |
 | [III.28](../../book/III/28.md) | [n71](https://archive.org/download/thirteenbookseu00heibgoog/page/n71.jpg) | As Heath's. |
-| [III.29](../../book/III/29.md) | [n72](https://archive.org/download/thirteenbookseu00heibgoog/page/n72.jpg) | Laid out otherwise: ABC on the left, where Heath sets DEF. |
+| [III.29](../../book/III/29.md) | [n72](https://archive.org/download/thirteenbookseu00heibgoog/page/n72.jpg) | As Heath's. |
 | [III.30](../../book/III/30.md) | [n73](https://archive.org/download/thirteenbookseu00heibgoog/page/n73.jpg) | As Heath's. |
 | [III.31](../../book/III/31.md) | [n74](https://archive.org/download/thirteenbookseu00heibgoog/page/n74.jpg) | As Heath's. Its record, which is to name the case drawn, belongs to the lane moving III.31 into the edition. |
 | [III.32](../../book/III/32.md) | [n78](https://archive.org/download/thirteenbookseu00heibgoog/page/n78.jpg) | As Heath's. The case it draws is now named (D on F's side of BA and apart from A). |
