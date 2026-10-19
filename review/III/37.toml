@@ -32,6 +32,6 @@ case = "the centre F off AC, with DE and DB touching on opposite sides of DF"
 
 [review]
 stage = "exceptions"
-commit = "b39e09d"
+commit = "11d6c0ec"
 reviewer = "GPT-6 Astra, independent reader"
-lean = "sha256:2f817d0b812256f4"
+lean = "sha256:0eba3abb58cb2fd2"

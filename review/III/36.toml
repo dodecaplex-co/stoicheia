@@ -18,6 +18,6 @@ note = "`Prop36.through_centre` carries these sentences together: III.18 gives t
 
 [review]
 stage = "exceptions"
-commit = "b39e09d"
+commit = "11d6c0ec"
 reviewer = "GPT-6 Astra, independent reader"
-lean = "sha256:8ad9fe935b980364"
+lean = "sha256:682a1087312a11bf"
