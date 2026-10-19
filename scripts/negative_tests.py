@@ -22,10 +22,20 @@ records current; CI runs it on every push.
    first with no Lean of its own: a remark ends a run and carries nothing. A second
    remark, between the next sentence and its Lean, does not stop that Lean carrying it.
 7. A `native_decide` in a proposition's file (I.16), read from the source, is caught.
-8. A lemma of the `Placement` namespace named in Book III's shared steps
+8. Every command docs/FORMALIZATION.md, section 7, forbids, an attribute for each ending
+   and prefix by which the scan knows one, and an axiom declared twice, once after
+   another command on the same line, planted in a new file of each folder the
+   scan reads, `Elements/`, `Staging/` (in a folder of its own) and `Audit/`, with
+   `#exit` at the end of each root file, `Elements.lean`, `Staging.lean` and
+   `Audit.lean`, and a new Book Zero file that imports a proposition: each is caught on
+   its own line. Some of the commands stand after a string, a raw string or a character
+   literal holding `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, so
+   the scan must read Lean's literals as Lean does; a string whose braces Lean could
+   read as code is caught too. The files are read, not built.
+9. A lemma of the `Placement` namespace named in Book III's shared steps
    (`Squares.lean`), outside placement's own files, III.24's and `Arcs.lean`, read from
    the source, is caught; the word in a comment there is not.
-9. One build with planted assumptions, the certificate recomputed:
+10. One build with planted assumptions, the certificate recomputed:
    - in I.16, Postulate 5, a planted Euclidean-only rule (`Tacit.Euclidean.planted`)
      and an axiom declared in I.16's own file after a docstring on the same line:
      each is caught, so are the count of Euclid's assumptions and the two planted
@@ -37,10 +47,12 @@ records current; CI runs it on every push.
    - a `sorry` in I.16's proof: Book I is complete, so I.16 not proved is caught.
 
 The checks these do not plant a fault for are named in README.md's table, "What the
-checks show": check_style.py, check_links.py, the pages' freshness and the audit lemmas.
+checks show": check_style.py, check_links.py, the pages' freshness, the audit lemmas and
+leanchecker's replay in check_kernel.py, whose own `--self-test` plants its fault,
+Postulate 5 withheld, for nanoda alone.
 
-The files changed are restored, and so is `facts.json`; after test 8 the proofs are
-built again from the restored files. Exits non-zero if any change goes unnoticed.
+The files changed are restored, and so is `facts.json`; after test 10 the proofs
+are built again from the restored files. Exits non-zero if any change goes unnoticed.
 Standard library only; Python 3.11 or later, for the review records.
 """
 
@@ -186,10 +198,206 @@ def native_decide() -> None:
                          "-/\ntheorem planted_native : 2 + 2 = 4 := by native_decide\n\n"
                          "end Elements.BookI")
     try:
+        text = (ROOT / rel).read_text()
+        line = text[:text.index("by native_decide")].count("\n") + 1
         expect_failure("a native_decide in I.16's file", fidelity(),
-                       f"{rel}: uses native_decide")
+                       f"{rel}:{line}: uses native_decide")
     finally:
         (ROOT / rel).write_text(saved)
+
+
+# Each command docs/FORMALIZATION.md, section 7, forbids, as check_fidelity.py names it,
+# with a line of Lean that uses it, some behind a literal that a scan blind to Lean's
+# literals would misread, and a string whose braces Lean could read as code ("string");
+# `#exit` comes last, as it would in a file.
+PLANTED_COMMANDS = (
+    ("decide +native", "theorem planted_decide : 2 + 2 = 4 := by decide +native"),
+    ("native := true",
+     "theorem planted_config : 2 + 2 = 4 := by decide (config := { native := true })"),
+    ("native", "theorem planted_item : 10 * 10 = 100 := by decide +zetaReduce +native"),
+    ("native", "theorem planted_value : 11 * 11 = 121 := by decide (native := Bool.true)"),
+    ("(config :=", "theorem planted_whole : 12 * 12 = 144 := "
+     "by decide (config := ⟨false, true, true, false⟩)"),
+    ("(«config» :=", "theorem planted_escaped_config : 13 * 13 = 169 := "
+     "by decide («config» := ⟨false, true, true, false⟩)"),
+    ("bv_decide", "theorem planted_bv (x y : BitVec 8) : x * y = y * x := by bv_decide"),
+    ("bv_check", 'theorem planted_lrat (x : BitVec 8) : x = x := by bv_check "planted.lrat"'),
+    ("set_option debug.",
+     "set_option debug.skipKernelTC true in theorem planted_skip : True := trivial"),
+    ("set_option «debug».",
+     "set_option «debug».skipKernelTC true in theorem planted_escaped : True := trivial"),
+    ("set_option doc.", "set_option doc.verso true"),
+    ("set_option «doc».",
+     "set_option «doc».«verso» true in theorem planted_verso : True := trivial"),
+    ("#eval", '#eval IO.println "planted"'),
+    ("run_cmd", "run_cmd pure ()"),
+    ("run_elab", "run_elab pure ()"),
+    ("run_meta", "run_meta pure ()"),
+    ("run_tac", "theorem planted_tac : True := by run_tac pure ()"),
+    ("by_elab", "def plantedByElab : Nat := by_elab pure (Lean.mkNatLit 4)"),
+    ("elab", 'elab "planted_elab" : term => pure (Lean.mkNatLit 4)'),
+    ("elab_rules", "elab_rules : term | `(planted_elab) => pure (Lean.mkNatLit 4)"),
+    ("macro", 'macro "planted_macro" : term => `(4)'),
+    ("macro_rules", "macro_rules | `(planted_macro) => `(4)"),
+    ("simproc", "simproc ↓ plantedSimproc (Nat.succ _) := fun _ => return .continue"),
+    ("dsimproc", "dsimproc plantedDSimproc (Nat.succ _) := fun _ => return .continue"),
+    ("simproc_decl",
+     "simproc_decl plantedSimprocDecl (Nat.succ _) := fun _ => return .continue"),
+    ("dsimproc_decl",
+     "dsimproc_decl plantedDSimprocDecl (Nat.succ _) := fun _ => return .continue"),
+    ("simproc_pattern", "simproc_pattern% Nat.succ _ => plantedSimprocDecl"),
+    ("cbv_simproc", "cbv_simproc plantedCbv (Nat.succ _) := fun _ => return .continue"),
+    ("sym_simproc", "sym_simproc plantedSym (Nat.succ _) := fun _ => return .continue"),
+    ("builtin_simproc",
+     "builtin_simproc plantedBuiltinSimproc (Nat.succ _) := fun _ => return .continue"),
+    ("set_library_suggestions", "set_library_suggestions plantedSelector"),
+    ("command_elab", "def plantedCommandAttr : Lean.Name := `command_elab"),
+    ("term_elab", "def plantedTermAttr : Lean.Name := `term_elab"),
+    ("@[command_elab]", "@[command_elab plantedStx] def plantedCommand : "
+     "Lean.Elab.Command.CommandElab := fun _ => pure ()"),
+    ("@[term_elab]", "@[term_elab plantedStx] def plantedTerm : Lean.Elab.Term.TermElab := "
+     "fun _ _ => pure (Lean.mkNatLit 4)"),
+    ("@[doElem_elab]", "@[doElem_elab plantedStx] def plantedDoElem : "
+     "Lean.Elab.Do.DoElab := fun _ _ => failure"),
+    ("@[inductive_elab]", "@[inductive_elab plantedStx] def plantedInductive : "
+     "Lean.Elab.Command.InductiveElabDescr := default"),
+    ("@[tactic]", "@[tactic plantedStx] def plantedTactic : Lean.Elab.Tactic.Tactic := "
+     "fun _ => pure ()"),
+    ("@[tactic]", "attribute [tactic plantedStx] plantedTactic"),
+    ("@[grind_tactic]", "@[grind_tactic plantedStx] def plantedGrind : "
+     "Lean.Elab.Tactic.Grind.GrindTactic := fun _ => pure ()"),
+    ("@[try_tactic]", "@[try_tactic plantedStx] def plantedTry : "
+     "Lean.Elab.Tactic.Try.TryTactic := fun _ => failure"),
+    ("@[simproc]", "@[simproc] def plantedSimprocAttr : Lean.Meta.Simp.Simproc := "
+     "fun _ => return .continue"),
+    ("@[sevalproc]", "attribute [sevalproc] plantedSimprocAttr"),
+    ("@[delab]", "@[delab app.plantedK] def plantedDelab : "
+     "Lean.PrettyPrinter.Delaborator.Delab := failure"),
+    ("@[app_unexpander]", "@[app_unexpander plantedK] def plantedUnexpander : "
+     "Lean.PrettyPrinter.Unexpander := fun _ => throw ()"),
+    ("@[quot_precheck]", "@[quot_precheck plantedStx] def plantedPrecheck : "
+     "Lean.Elab.Term.Quotation.Precheck := fun _ => pure ()"),
+    ("@[sym_discharger]", "@[sym_discharger plantedStx] def plantedDischarger := ()"),
+    ("@[formatter]", "@[formatter plantedK] def plantedFormatter : "
+     "Lean.PrettyPrinter.Formatter := pure ()"),
+    ("@[parenthesizer]", "@[parenthesizer plantedK] def plantedParenthesizer : "
+     "Lean.PrettyPrinter.Parenthesizer := pure ()"),
+    ("@[doElem_control_info]", "@[doElem_control_info plantedStx] def plantedControl : "
+     "Lean.Elab.Do.ControlInfoHandler := fun _ => pure {}"),
+    ("@[command_code_action]", "@[command_code_action plantedStx] def plantedAction := ()"),
+    ("@[server_rpc_method]", "@[server_rpc_method] def plantedRpc (_ : Nat) := ()"),
+    ("@[builtin_env_linter]", "@[builtin_env_linter] def plantedLinter := ()"),
+    ("@[term_parser]", "@[term_parser] def plantedParser : Lean.Parser.Parser := "
+     "Lean.Parser.skip"),
+    ("@[cpass]", "@[cpass] def plantedPass : Lean.Compiler.LCNF.PassInstaller := "
+     "{ phase := .base, install := pure }"),
+    ("@[doc_role]", "@[doc_role] def plantedRole := ()"),
+    ("@[deferred_doc_check]", "@[deferred_doc_check] def plantedDocCheck := ()"),
+    ("@[try_suggestion]", "@[try_suggestion] def plantedSuggestion := ()"),
+    ("@[library_suggestions]", "@[library_suggestions] def plantedSelector : "
+     "Lean.LibrarySuggestions.Selector := fun _ _ => pure #[]"),
+    ("@[package_code_quality_check]", "@[package_code_quality_check] def plantedQuality := ()"),
+    ("@[missing_docs_handler]", "@[missing_docs_handler plantedStx] def plantedHandler : "
+     "Lean.Linter.MissingDocs.Handler := fun _ _ => pure ()"),
+    ("@[code_action_provider]", "@[code_action_provider] def plantedProvider : "
+     "Lean.Server.CodeActionProvider := fun _ _ => pure #[]"),
+    ("@[unused_variables_ignore_fn]", "@[unused_variables_ignore_fn] def plantedIgnore : "
+     "Lean.Linter.IgnoreFunction := fun _ _ _ => false"),
+    ("@[widget_module]", "@[widget_module] def plantedWidget : Lean.Widget.Module := "
+     '{ javascript := "" }'),
+    ("@[run_parser_attribute_hooks]", "@[run_parser_attribute_hooks] def plantedHooks : "
+     "Lean.Parser.Parser := Lean.Parser.skip"),
+    ("@[builtin_macro]", "@[builtin_macro plantedStx] def plantedBuiltinMacro : Lean.Macro := "
+     "fun _ => Lean.Macro.throwUnsupported"),
+    ("@[builtin_doc]", "@[builtin_doc] def plantedBuiltinDoc := ()"),
+    ("@[simprocAttr]", "attribute [simprocAttr] plantedSimprocDecl"),
+    ("initialize", "initialize plantedRef : IO.Ref Nat ← IO.mkRef 0"),
+    ("builtin_initialize", "builtin_initialize plantedBuiltin : IO.Ref Nat ← IO.mkRef 0"),
+    ("@[init]", "@[init plantedInit] opaque plantedInitRef : IO.Ref Nat"),
+    ("implemented_by", "@[implemented_by plantedSpec] def plantedImpl : Nat := 4"),
+    ("extern", '@[extern "planted"] opaque plantedExtern : Nat'),
+    ("unsafe", "unsafe def plantedUnsafe : Nat := 4"),
+    ("@[tactic]", '@[deprecated "]" (since := "2026-01-01"), tactic plantedStx] '
+     "def plantedHidden : Lean.Elab.Tactic.Tactic := fun _ => pure ()"),
+    ("@[tactic]", 'attribute [deprecated "]", tactic plantedStx] plantedHidden'),
+    ("#eval", 'def plantedOpen := "/-" #eval IO.println "planted"'),
+    ("#eval", '#eval IO.println "-/"'),
+    ("#eval", 'def plantedRaw := r#"]"/-"# #eval IO.println r"-/"'),
+    ("#eval", "def plantedChar := '\"' #eval IO.println \"planted\""),
+    ("by_elab",
+     'def plantedHole : String := s!"{(by_elab pure (Lean.mkStrLit "x") : String)}"'),
+    ("string", 'def plantedBraces := "{" ++ "}"'),
+    ("#exit", "#exit"),
+)
+# A new file in each folder the scan reads; Staging's in a folder of its own, which
+# shows that the scan reads every folder beneath.
+PLANTED_FILES = ("Elements/Planted.lean", "Staging/Planted/Commands.lean", "Audit/Planted.lean")
+# A new file of Book Zero, and the line of it that imports a proposition.
+BOOK_ZERO = ("Elements/Figure/Planted.lean", 2, "-- Planted by scripts/negative_tests.py: "
+             "the import below must be caught.\nimport Elements.BookI.Prop01\n")
+
+
+def forbidden_commands() -> None:
+    """Every forbidden command, and an axiom declared twice, once after another command
+    on the same line, in a new file of each folder `check_fidelity.py` scans, `#exit` at
+    the end of each root file, and a Book Zero file importing a proposition. Each must be
+    caught, by its file and line."""
+    header = ["/-! Planted by scripts/negative_tests.py: every line below must be caught. -/",
+              ""]
+    body = [("axiom", "example : True := trivial axiom planted_inline : True"),
+            ("axiom", "axiom planted_axiom : True"),
+            ("native_decide", "theorem planted_native : 2 + 2 = 4 := by native_decide"),
+            *PLANTED_COMMANDS]
+    text = "\n".join(header + [line for _, line in body]) + "\n"
+
+    def caught(rel: str, line: int, word: str) -> str:
+        if word == "axiom":
+            return f"{rel}:{line}: declares an axiom outside Elements/Foundations/"
+        if word == "native_decide":
+            return f"{rel}:{line}: uses native_decide"
+        if word == "string":
+            return f"{rel}:{line}: a string the scan cannot read for certain"
+        return f"{rel}:{line}: uses `{word}`"
+
+    wanted: dict[str, list[str]] = {}
+    planted: list[Path] = []          # files, then the folders made for them
+    roots: dict[Path, str] = {}
+    try:
+        for rel in PLANTED_FILES:
+            path = ROOT / rel
+            assert not path.exists(), f"{rel} exists; update this test"
+            if not path.parent.exists():
+                path.parent.mkdir()
+                planted.append(path.parent)
+            path.write_text(text)
+            planted.insert(0, path)
+            wanted[rel.split("/")[0]] = [caught(rel, len(header) + i, word)
+                                         for i, (word, _) in enumerate(body, 1)]
+        for tree in wanted:
+            root = ROOT / f"{tree}.lean"
+            roots[root] = root.read_text()
+            changed = roots[root] + "\n#exit\n"
+            root.write_text(changed)
+            line = changed[:changed.rindex("#exit")].count("\n") + 1
+            wanted[tree].append(caught(f"{tree}.lean", line, "#exit"))
+        figure, line, text = BOOK_ZERO
+        assert not (ROOT / figure).exists(), f"{figure} exists; update this test"
+        (ROOT / figure).write_text(text)
+        planted.insert(0, ROOT / figure)
+        result = fidelity()
+        for tree, messages in wanted.items():
+            expect_failure(f"every forbidden command and an axiom in {tree}/ and {tree}.lean",
+                           result, *messages)
+        expect_failure("a proposition imported by Book Zero", result,
+                       f"{figure}:{line}: Book Zero must not import a proposition")
+    finally:
+        for root, saved in roots.items():
+            root.write_text(saved)
+        for path in planted:
+            if path.is_dir():
+                path.rmdir()
+            else:
+                path.unlink(missing_ok=True)
 
 
 def placement_named() -> None:
@@ -379,6 +587,7 @@ def main() -> int:
     undeclared_run()
     remark_ends_run()
     native_decide()
+    forbidden_commands()
     placement_named()
     planted_assumptions()
     if failures:
