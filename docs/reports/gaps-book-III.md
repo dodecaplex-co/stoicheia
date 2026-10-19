@@ -22,7 +22,8 @@ System E's Circle 2, that between two points on or within a circle every point i
 it (`inside_of_between`), already contains III.2, and no proposition rests on it: a point
 between the centre and a point on the circle is within it by Definition I.15
 (`InsideCircle.of_between_centre`), as is a point between the centre and a point within
-the circle when another point of the circle is given (its within-point variant); a point
+the circle when another point of the circle is given
+(`InsideCircle.of_between_centre_of_inside`); a point
 between two points of the circle is within it by III.2 (by III.2's own argument in III.1,
 `Prop1.within`), and a point between two points on or within it by III.2's corollary
 `Prop2.within`. A straight line from a point within a

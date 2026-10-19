@@ -104,7 +104,7 @@ II.14, III.3, III.10, III.15, III.16, III.17 and III.25 in their own Lean; III.9
 helper `Prop9.apart`; and III.1 and its porism in III.1's helper `Prop1.perpendicular`,
 which shows that at a point of a straight line only one straight line is at right angles
 to it. III.19 reaches the rule only through `Prop1.perpendicular`, which III.16 uses as
-well as calling the rule itself. Fourteen more entries (13 propositions and III.16's
+well as calling the rule itself. Twenty-five more entries (24 propositions and III.16's
 porism) rest on it through these 17. I.13 does not rest on it. The rule gives the right
 angles Euclid reads off his figure, as for the rectangles of II.1, where his text says
 nothing of them.
