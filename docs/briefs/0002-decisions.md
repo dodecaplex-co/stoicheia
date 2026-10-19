@@ -631,6 +631,78 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+
+- **An axiom lands with its law: the model's law names, a pinned value.** Under the rule
+  that keeps a check change apart from what it checks, a change of axioms could land in no
+  order ([#40](https://github.com/jackChallis/stoicheia/issues/40)): the model's law names
+  lived in its code, so a pull request moving the lock, its hash and the law together was
+  a check change made with content, and a law landed first would name an axiom the lock
+  did not hold. The names move into a data file,
+  [`tests/model/laws.toml`](../../tests/model/laws.toml): a line for each axiom, under the
+  lock's name, with the name of its law in the harness, and the laws that must fail in the
+  hyperbolic plane (Postulate 5), which
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) and
+  [`tests/model/run.py`](../../tests/model/run.py) now read from it, through `read_laws`
+  in [`tests/model/model.py`](../../tests/model/model.py). Before anything runs, `run.py`
+  checks the file against the axiom lock and against `facts.json` in both directions, and
+  `search.py` and `hyperbolic.py` against it; `run.py --ties` runs those checks alone, in
+  a second; and a law that a program reports twice, or a program that stops before its
+  last line, now fails the run. The number of axioms is no value of the harness, which
+  takes it from the lock, so nothing else had to move; the docstrings that named 87 and 86
+  now name no number.
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts the file as a value pinned
+  to the edition, beside `Certificate/axioms.lock` and
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256), while each line it changes
+  moves with its axiom: the same pull request adds, removes or restates that axiom's entry
+  in the lock. A law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`,
+  the two programs that check every law, moves the same way, while it keeps to itself (a
+  function `_` under its one decorator `@axiom('<name>', …)`, using only what an
+  allow-list names, below, and changing no container but one it made in its own body,
+  through the name it gave it) and nothing else in the file changes but comments and its
+  docstring. The model's account, [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
+  and `tests/model/results/`, which no check reads, moves with its content as well. A law
+  changed while its axiom stands, a helper or tolerance of the harness, and every other
+  change to the checks are kept apart as before.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) plants an
+  axiom added with its entry in the lock, the new hash, its line of `laws.toml`, its law's
+  code in both programs and a line of MODEL.md: it lands as content, and the model's ties
+  hold on it. With another law loosened beside it, the same change is kept apart, and a
+  table of twenty-five loosenings and five moves checks each way round. An axiom removed
+  or restated moves the same way when no other program names its law. `structured.py` and
+  `exhaustive.py` run some laws by name, so they must drop or re-key such a law first, in
+  a pull request of its own. The independent verifier of the change found two gaps, and
+  we thank them for it: a new law could change a shared container under a second name
+  (`d = DEN`, then `d[:] = [2]`), and a missing laws.toml or lock gave a traceback before
+  Python 3.14, not the refusal. A law now changes a container only through a name that
+  every binding in it gives a container it made itself, and a missing file reads as
+  nothing; each has its tests. The no-mistakes review found a third, and we thank it too:
+  a law could end the structured run early with `SystemExit(0)`, and the run still passed,
+  so each program that runs the laws must now reach its last line, and a test holds it
+  there; and as it found that a law could forge that line through `help`, the pre-flight
+  refused the builtins that print or end a run.
+  Then the change's independent reviewer found that the check was still a deny-list, which
+  reflection escaped, and we thank them for it: a frame's globals, say, or `random._os`,
+  through which a law could coarsen the decimal context every law of the hyperbolic plane
+  computes in, or print a forged result. As every change to a law was kept apart before,
+  the change as it stood weakened that rule against a determined bypass. So the check
+  (`self_contained` in `scripts/safe_push.py`) is now an allow-list, sound by
+  construction: a law's code may use its own parameters and the names it binds; by name,
+  and each in one role, the helpers of its program that the 87 laws call, and the
+  builtins, `math` functions, table (`SEEDS`), value (`RA`) and attributes they use
+  (`append`, on a container of its own, and the draws of the random numbers it is handed,
+  never a reseeding); and plain syntax, with no import, `global`, `lambda`, `try`, `with`,
+  class or default argument. What the list does not name is refused, so a route nobody
+  thought of is refused too. The lists are collected from the laws: every law passes, a
+  test shows that each entry is one some law needs, and each route the reviewer named has
+  its test; widening a list is a check change, in a pull request of its own. One thing a
+  law still shares with the laws after it is the random numbers: how many it draws moves
+  which configurations they see, never what they check. MODEL.md, "Changing the axioms",
+  is now the one home of the steps for changing an axiom, or a word of the lock, and the
+  comment in `tests/model/lock.sha256`, [FORMALIZATION](../FORMALIZATION.md), section 7,
+  the [orders](../templates/orders.md) and [brief 0006](0006-statements.md) point to it;
+  [WORKFLOW](../WORKFLOW.md), section 10, step 4, gives the rule for landing them. Adding
+  an axiom stays the owner's decision: this lets one land, and adds none.
+
 - **The voice rules loosened, and `$…$` in the modern way: the check change.** The owner's
   decisions of 18 October, after Argon's second review of the book-III release, as
   [#70](https://github.com/jackChallis/stoicheia/issues/70) records them: "drop the
@@ -693,7 +765,6 @@ findings:
   TeX intact. This supersedes the line "usually 250–450 words, with reasons for
   exceptions" in stage 1b of [brief 0005](0005-astra-review.md). The pages are rewritten
   under the new rules by #46 and #48.
-
 - **Stage 2 in the edition: brief 0006's words in the foundations, the axiom lock's
   vocabulary grown.** Every statement of stage 2 of [brief 0006](0006-statements.md) is
   proved, and moves from `Staging/` to its home in that brief's table, in a move the

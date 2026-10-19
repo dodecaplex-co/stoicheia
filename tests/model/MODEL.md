@@ -79,10 +79,11 @@ conclusion says that a point exists, the program constructs one and checks it.
 - **[hyperbolic.py](hyperbolic.py)** runs every axiom in the hyperbolic plane
   ([below](#the-hyperbolic-plane)).
 - **[run.py](run.py)** runs them all and checks the results, after two checks that tie the
-  harness to the Lean: the axioms it tests are exactly those in `facts.json`, and
-  [lock.sha256](lock.sha256) pins `Certificate/axioms.lock`, which holds every axiom's
-  exact statement. When an axiom changes, this run fails until someone has come back to
-  this page.
+  harness to the Lean: [laws.toml](laws.toml) names a law for each axiom, exactly the
+  axioms of `Certificate/axioms.lock` and of `facts.json`, and search.py and hyperbolic.py
+  each implement exactly those laws; and [lock.sha256](lock.sha256) pins the lock, which
+  holds every axiom's exact statement. When an axiom changes, this run fails until the
+  model has followed it ([below](#changing-the-axioms)).
 
 These programs were first written for the [read-through of 16 October
 2026](../../docs/reports/read-through-01.md), and came into the repository with [brief
@@ -482,6 +483,64 @@ the other 86 axioms would make the independence of Postulate 5 a theorem too.
   of the review records and the gap catalogues. And the programs' runs are evidence, not
   proof: the formal model above would be the proof.
 
+## Changing the axioms
+
+Adding, removing or restating an axiom is the owner's decision, recorded on the
+[decisions page](../../docs/briefs/0002-decisions.md). Once it is made, the model follows
+the axiom in the same pull request as the Lean:
+
+1. **The lock.** `python3 scripts/check_fidelity.py --write-lock` writes
+   `Certificate/axioms.lock` from the new `facts.json`, and
+   `shasum -a 256 Certificate/axioms.lock`, run from the repository's root, gives the
+   line for [lock.sha256](lock.sha256).
+2. **The law's name.** [laws.toml](laws.toml) gains, loses or keeps the axiom's line: its
+   name as the lock gives it, then its law's name in the harness. An axiom that must fail
+   in the hyperbolic plane, as Postulate 5 does, is also listed under `fails`.
+3. **The law.** [search.py](search.py) and [hyperbolic.py](hyperbolic.py) each implement
+   every law, so each gains, loses or changes it, written as every law there is: a
+   function `_` under `@axiom('<name>', …)`. The laws that stay keep their order. Its
+   helpers go inside it, and it keeps to itself, by an allow-list collected from the laws
+   (`LAW_GLOBALS` and the lists beside it in
+   [safe_push.py](../../scripts/safe_push.py)): it uses its own parameters and the names
+   it binds; the helpers of its program that the laws already call, the builtins, `math`
+   functions, table and value they use (hyperbolic.py's `SEEDS`, read through a subscript;
+   search.py's `RA`), each in the role they use it in; the random numbers it is handed,
+   drawn and never reseeded; and plain syntax: assignments, `if`, `for`, `while`, `return`,
+   arithmetic, comparisons, comprehensions and functions of its own, with no import,
+   `global`, `lambda`, `try`, `with`, class or default argument. And it changes no
+   container but one it made in its own body (`ws = []`, then `ws.append(w)`), and that
+   through the name it gave it: never through a second name for a container it did not
+   make, nor through an element of its own (`x[0] += [1]`). The pre-flight's check
+   (`self_contained`) reads the law's code, does not run it, and refuses whatever the list
+   does not name, so reflection has no way in. A law still shares the random numbers with
+   the laws after it, and how many it draws moves which configurations they see, never
+   what they check. A law that needs what the list lacks, a new helper say, waits for a
+   pull request of its own that adds the helper and widens the list. The other programs
+   check some laws only. A law added reaches them later, in a pull request of its own. But
+   `structured.py` and `exhaustive.py` run some laws by name on configurations of their
+   own (`run('<law>', ...)`). If either program names the law of an axiom that is removed,
+   or restated so that its law reads other letters, that program must drop or re-key the
+   law first, in a pull request of its own, before the axiom moves.
+4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with
+   the reason it holds in the plane, a word on the hyperbolic plane where it needs one,
+   and the counts in the prose. `run.py --full --write` brings the numbers above and
+   [results/](results/) up to date.
+5. **The run.** `python3 -I tests/model/run.py --ties` checks the names and the hash in a
+   second, and `--fast` runs what CI runs.
+
+A word that joins the lock's vocabulary, as a definition does when a statement first uses
+it, changes the lock and so its hash, while every axiom, and every word an axiom reaches,
+stays as it was: then step 1 and step 5 are all, with a line in the comment of
+[lock.sha256](lock.sha256) saying so, as its renewal of 17 October does. A word an axiom
+reaches that changes is a changed definition (below).
+
+These are values pinned to the axioms, and the pre-flight lets them land with the change
+they follow; a law changed while its axiom stands, or any other change to the programs,
+lands in a pull request of its own ([WORKFLOW](../../docs/WORKFLOW.md), section 10,
+"Landing work: pull requests"). A word whose definition the axioms reach is read in
+[model.py](model.py), so a changed definition changes code there, which lands on its own
+too.
+
 ## Running it
 
 From the repository's root, or anywhere:
@@ -490,6 +549,7 @@ From the repository's root, or anywhere:
 python3 -I tests/model/run.py --fast            # what CI runs, under 20 seconds
 python3 -I tests/model/run.py --full            # about seven minutes
 python3 -I tests/model/run.py --full --write    # and save results/ and the counts above
+python3 -I tests/model/run.py --ties            # the ties to the Lean alone, in a second
 ```
 
 Each program also runs on its own, for example `python3 -I tests/model/search.py 20000 2`
