@@ -1092,8 +1092,8 @@ findings:
 - **`Audit/` and the formal model's build files are protected paths.** `Audit/` holds the
   audit lemmas whose pinned axiom lists (`#guard_msgs`) back the overlap catalogue's
   claims, so a change there could weaken what the catalogue asserts without a security
-  review or a decisions entry. The brief 0008 lane raised it, and the coordinator decided
-  it as a check strengthened, never weakened (#96).
+  review or a decisions entry. The work on brief 0008 raised it, and the coordinator
+  decided it as a check strengthened, never weakened (#96).
   [`scripts/safe_push.py`](../../scripts/safe_push.py)'s protected list now holds `Audit/`;
   `Audit.lean`, the root that decides which audit lemmas `lake build Audit` checks; and
   the model's build files, `model/lakefile.toml`, `model/lakefile.lean` (which Lake would
