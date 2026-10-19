@@ -50,7 +50,7 @@ the fresh outside review (#47), which found the `centre-given` hypothesis across
 ## 1. The decision
 
 The owner decided on 18 October 2026, on issue #59 (the words below checked against the
-comment there, on 18 October):
+owner's comment there, on 18 October):
 
 > **The owner's decision (18 October): approved, as Astra recommends.** `axiom exists_centre
 > (α : Circle) : ∃ O, Centre O α`; III.1 keeps its construction-rich conclusion and drops the
@@ -62,9 +62,9 @@ comment there, on 18 October):
 > changed, challenged and frozen, then the axiom with its lock entry, model law and decisions
 > entry, then the restatements and their records.
 
-The same day came a second decision, to start the formal model now (#73): in `model/`, a
-Lake package of its own in this repository with a pinned Mathlib and its own CI job, the
-main library staying plain Lean, its laws generated from the elaborated declarations with
+On the same day the owner decided to start the formal model now (#73): in `model/`, a Lake
+package of its own in this repository with a pinned Mathlib and its own CI job, the main
+library staying plain Lean, its laws generated from the elaborated declarations with
 translation checks, the hardest first. The package landed on main in #98; issue #73 stays
 open for the work to come. Section 2 says what that means for this rule.
 
@@ -1508,7 +1508,7 @@ before it was applied.
 | The `Arc.Drawn` users; III.10's passage note | Claude challenger (editorial) | Both in section 4 |
 | Conditions said of every centre burden a citer who holds a named centre | Claude challenger (editorial) | `Centre.every`, staged, proved and checked against III.4, proposed for approval, and approved at the freeze; a docstring cannot carry the idiom, since a proposition's docstring is Heath's enunciation |
 | The brief is long for "a short brief" | Claude challenger (editorial) | The decisions entry's draft and the model's detail are cut; what the challenge added stays |
-| Astra could not fetch issue #59 | Astra (answer 6), triage | The owner's words were checked against the comment on issue #59 on 18 October (section 1) |
+| Astra could not fetch issue #59 | Astra (answer 6), triage | The owner's words were checked against the owner's comment on issue #59 on 18 October (section 1) |
 | The answer's links point to private paths | Triage | This brief cites repository paths only |
 | Brief 0006's conversions show interfaces, not proofs; `of_circle`'s closure is provisional | Astra (answer 1) | Said in Appendix A and section 3 |
 | `Audit/` lacks the protected-path treatment of `scripts/` and `tests/` | Astra (answer 5) | The guard is described as a regression check, and lands on its own; whether `Audit/` becomes protected is a policy question for the coordinator, outside this brief |
