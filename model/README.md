@@ -3,7 +3,7 @@
 Stoicheia's proofs rest on 88 laws: Euclid's postulates, Definition 15 and the tacit rules,
 each an `axiom` about seventeen `opaque` words, with their exact statements in
 [Certificate/axioms.lock](../Certificate/axioms.lock). Lean checks that every proof follows
-from the laws. It cannot check that the laws can all be true at once.
+from the laws. Checking the proofs does not show that the laws can all be true at once.
 [tests/model/MODEL.md](../tests/model/MODEL.md) argues that they can, law by law, by
 reading the words in the ordinary plane, and tests each law there numerically. This
 package gives a formal proof: a Lake package of its own, with Mathlib, in which the
