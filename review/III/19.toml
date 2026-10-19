@@ -18,6 +18,7 @@ kind = "grouped"
 note = "The reductio is made for any point F off AC, so one argument gives this sentence and Euclid's \"similarly\" for every other point."
 
 [figure]
+case = "A on the circumference and F inside angle ACE, as in Heath's figure"
 note = "Like Heath's, this figure draws the impossible supposition: F, off CA, as the centre of the circle ABC."
 
 [review]

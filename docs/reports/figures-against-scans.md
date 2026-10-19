@@ -15,7 +15,7 @@ Of the 99, 64 are as Heath's with nothing to add; each of the rest has its word 
 ## Mended on this branch
 
 - **III.24:** F stood at the crossing of the two curves, where the awry segment CGD meets CFD, and G at the top of the awry curve. Heath puts G at the crossing and F on CFD alone; so does the figure now, so that F names a point of CFD only.
-- **III.1, III.2, III.12, III.32:** each theorem covers several cases, and each record now names the one its figure draws, which the page's caption gives (acceptance item P8): G off AB and off CE (III.1), the centre D off AB (III.2), C and D apart on FG (III.12), D on F's side of BA and apart from A (III.32), each as in Heath's figure.
+- **III.1, III.2, III.12, III.19, III.32:** each theorem covers several cases, and each record now names the one its figure draws, which the page's caption gives (acceptance item P8): G off AB and off CE (III.1), the centre D off AB (III.2), C and D apart on FG (III.12), A on the circumference and F inside angle ACE (III.19), D on F's side of BA and apart from A (III.32), each as in Heath's figure.
 - **III.1, III.19:** each figure draws an impossible supposition, a centre off the straight line on which the proof finds it, as Heath's does, and each record's note now says so.
 
 ## Proposed to the owners of other files
@@ -23,6 +23,7 @@ Of the 99, 64 are as Heath's with nothing to add; each of the rest has its word 
 Book I's records are being taken to the stage `full` by their owner, III.24's moves with stage 3, and III.16's moves with the lane bringing III.16 into the edition (mixed angles), so these lines are proposed, not written:
 
 - **I.13** `[figure]`: `case = "AB leaning towards C, as in Heath's figure"` (acceptance item P8).
+- **I.24** `[figure]`: `case = "F beyond EG, on the opposite side from D, as in Heath's figure"` (acceptance item P8).
 - **III.16** `[figure]`: `case = "FA off the centre, with G apart from A, as in Heath's figure"` (acceptance item P8).
 - **I.7** `[figure]`: `note = "Like Heath's, this figure draws the impossible supposition: C and D on one side of AB, with CA equal to DA and CB equal to DB."`
 - **I.8** `[figure]`: `note = "Like Heath's, this figure draws the impossible supposition: BA, AC falling beside ED, DF, as EG, GF."`
@@ -60,7 +61,7 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 | [I.21](../../book/I/21.md) | [n309](https://archive.org/download/thirteenbookseu02heibgoog/page/n309.jpg) | As Heath's. |
 | [I.22](../../book/I/22.md) | [n312](https://archive.org/download/thirteenbookseu02heibgoog/page/n312.jpg) | As Heath's in its order and sides; of the three given straight lines Heath's A is the longest, ours B. |
 | [I.23](../../book/I/23.md) | [n314](https://archive.org/download/thirteenbookseu02heibgoog/page/n314.jpg) | As Heath's. |
-| [I.24](../../book/I/24.md) | [n316](https://archive.org/download/thirteenbookseu02heibgoog/page/n316.jpg) | Reflected: Heath sets C on the left of ABC and G on the left of DEF, where ours has B and E. F is below EG in both, the case Heath draws. |
+| [I.24](../../book/I/24.md) | [n316](https://archive.org/download/thirteenbookseu02heibgoog/page/n316.jpg) | Reflected: Heath sets C on the left of ABC and G on the left of DEF, where ours has B and E. F is below EG in both, the case Heath draws, which the record does not yet name (the line is proposed above). |
 | [I.25](../../book/I/25.md) | [n319](https://archive.org/download/thirteenbookseu02heibgoog/page/n319.jpg) | As Heath's. |
 | [I.26](../../book/I/26.md) | [n322](https://archive.org/download/thirteenbookseu02heibgoog/page/n322.jpg) | As Heath's. |
 | [I.27](../../book/I/27.md) | [n327](https://archive.org/download/thirteenbookseu02heibgoog/page/n327.jpg) | As Heath's in what it shows, AB and CD meeting at G; Heath draws them as parallels bent to meet, ours as straight lines. It draws an impossible supposition and says so nowhere yet (a note is proposed above). |
@@ -127,7 +128,7 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 | [III.16](../../book/III/16.md) | [n50](https://archive.org/download/thirteenbookseu00heibgoog/page/n50.jpg) | Departs, and says so: G within the circle and H beyond G, on the circumference, as the proof finds them. Its record, which has a case passage and is to name the case drawn, belongs to the lane moving III.16 into the edition (a line is proposed above). |
 | [III.17](../../book/III/17.md) | [n55](https://archive.org/download/thirteenbookseu00heibgoog/page/n55.jpg) | As Heath's. |
 | [III.18](../../book/III/18.md) | [n56](https://archive.org/download/thirteenbookseu00heibgoog/page/n56.jpg) | As Heath's. |
-| [III.19](../../book/III/19.md) | [n57](https://archive.org/download/thirteenbookseu00heibgoog/page/n57.jpg) | As Heath's. The note now says it draws the impossible supposition, a centre F off CA. |
+| [III.19](../../book/III/19.md) | [n57](https://archive.org/download/thirteenbookseu00heibgoog/page/n57.jpg) | As Heath's. The case it draws is now named (A on the circumference and F inside angle ACE), and the note says it draws the impossible supposition, a centre F off CA. |
 | [III.20](../../book/III/20.md) | [n58](https://archive.org/download/thirteenbookseu00heibgoog/page/n58.jpg) | As Heath's. |
 | [III.21](../../book/III/21.md) | [n61](https://archive.org/download/thirteenbookseu00heibgoog/page/n61.jpg) | As Heath's. |
 | [III.22](../../book/III/22.md) | [n64](https://archive.org/download/thirteenbookseu00heibgoog/page/n64.jpg) | As Heath's. |
