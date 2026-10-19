@@ -1316,6 +1316,24 @@ findings:
   `negative`, and making `formal-model` required, as the decision of 18 October foresees
   once the package builds, is the owner's call.
 
+- **A representation tag for the mixed angles.**
+  [`review/terms.toml`](../../review/terms.toml) gains `mixed-angles-local`, the tag that
+  brief 0011, which lands with them, gives the records of III.16 and III.31 once their
+  companions state the angle clauses, in the move of the mixed angles into the edition
+  ([#57](https://github.com/jackChallis/stoicheia/issues/57)): an angle contained by a
+  straight line and a circumference is read as the region it opens near its vertex, and
+  compared with a rectilineal angle placed at that vertex, along its straight arm and on its
+  side, by containment near the vertex. Its last clause carries Astra's wording, as the
+  prototype's report gives it (its condition 4): the comparisons use local containment of
+  curved angular regions, and no general arithmetic or ratio theory of mixed angles is
+  claimed. The tag adds that no motion of a mixed angle is claimed either, as the
+  coordinator's approval of the prototype, above, says. It is a tag of kind
+  `representation`, with no badge, since the certificate's sentence on badges speaks of a
+  measure with no radius in it. It lands on its own, before the records that use it, since
+  safe_push keeps a check's data apart from the content it judges, as
+  `figure-with-dissection` did; `mixed-angles-omitted` stays while a record uses it. The
+  protected file this changes is `review/terms.toml`.
+
 ## 19 October 2026
 
 - **The edition does not name its owner.** The owner asked that Stoicheia not be presented
