@@ -18,6 +18,10 @@ kind = "helper"
 helper = "Prop10"
 note = "Simson's preliminary (Heath, vol. 2, p. 53): by III.10 the circles meet only at A and B, so one segment falls within the other; III.21 carries the angle to where AC drawn through meets the other circle."
 
+[figure]
+case = "the segment ACB within ADB, as in Heath's figure"
+note = "Like Heath's, this figure draws the impossible supposition: two similar and unequal segments, ACB and ADB, on the same side of AB."
+
 [review]
 stage = "exceptions"
 commit = "4916590"
