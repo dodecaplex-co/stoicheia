@@ -272,7 +272,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - "Let the angle ABC be added to each" needs C within the angle DBA, and A within the angle FBC. Euclid reads both off his figure. The angles at B and C are less than right angles (I.17), and the squares are described outward, so `Prop47.within` puts each point where the figure does, by I.13, and `angle_add_of_within` adds the angles.
 - "Through A let AL be drawn parallel to either BD or CE" is I.31, though no bracket names it, and "either" is I.30 (`Prop30.parallel`). AL meets DE at L, and BC at a point Heath leaves without a letter (`Prop30.meet`).
 - "The whole square BDEC" is the parallelograms BL and CL together only if the foot of AL lies between B and C, and L between D and E. A lies between BD and CE, so AL, parallel to both, crosses BC and DE between them (`Between.of_inside`), and `quadArea_add_of_parallelograms` puts the pieces together.
-- Euclid's squares are described by I.46, so they are parallelograms, as I.41 needs. Ours are given in the statement as squares (Def. 22), and `Prop28.square` (I.28) shows them parallelograms.
+- Euclid's squares are described by I.46, so they are parallelograms, as I.41 needs. The main theorem takes its squares as given (Definition I.22), and `Prop28.square` shows them parallelograms. The companion `Prop47.general` constructs outward squares by I.46, applies `Prop47`, and transfers the equality to either side by `Prop46.square_eq`.
 
 ## I.48
 - "Let AD be drawn from the point A at right angles to the straight line AC" is I.11, though no bracket names it, and "let AD be made equal to BA" is a circle about A (`OnRay.exists_len_eq`, Post. 3).
