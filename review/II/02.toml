@@ -5,8 +5,41 @@ fingerprint = "sha256:a3969aee9d73cfe8"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "For let the square ADEB be described on AB"
+kind = "helper"
+helper = "BookI.Prop31.parallelogram"
+note = "Euclid draws the square and CF, taking its meeting with DE at F from the figure and taking for granted that a parallel to AD is also parallel to BE; Heath gives no reference for the latter step. The Lean uses I.46 with `Square.described` for the square; `BookI.Prop31.parallelogram` draws CF through C by I.31, finds F where CF meets DE by `BookI.Prop30.meet`, using I.30, and proves AF, that is ADFC, a parallelogram; `BookI.Prop30.parallel` (I.30) makes CF parallel to BE too."
+
+[[passage]]
+at = "Then AE is equal to AF, CE"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid reads AF and CE together as the square AE. `Parallel.between` places F between D and E, and `quadArea_add_of_parallelograms` proves that the two parallelograms make up the whole."
+
+[[passage]]
+at = "AF is the rectangle contained by BA, AC"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid treats AF as a rectangle because it has the square's right angle at A. `Rectangle.of_right` proves the other angles right by I.29, and `Rectangle.eq_rect` identifies its area from AD equal to AB."
+
+[[passage]]
+at = "and CE is the rectangle AB, BC"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid treats CE as a rectangle with BE equal to AB. The Lean reads CE from B as BCFE, keeping its area equal to that of CFEB by `Parallelogram.quadArea_rotate`, uses the square's right angle at B with `Rectangle.of_right`, and identifies the area as the rectangle AB, BC by `Rectangle.eq_rect` and `rect_comm`."
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "68e9276"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:7b299b042dbabba1"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
