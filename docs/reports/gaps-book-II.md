@@ -12,7 +12,8 @@ or square Euclid names. Where we know who saw a gap first, we say so; nothing he
 meant to be new.
 
 Each entry names the Lean lemma or tacit rule that fills the gap. Book II's proofs
-cite Book I as `BookI.PropN`, and the steps they share, each citing Book I, live in
+cite Book I's propositions with their book, as `BookI.Prop47`, and the steps they
+share, each citing Book I, live in
 `Elements/BookII/Rectangles.lean`: one right angle makes a parallelogram a rectangle
 (`Rectangle.of_right`, I.29); rectangles contained by equal straight lines are equal,
 so that a rectangle or square drawn is the one Euclid names (`Rectangle.contained`,
@@ -32,14 +33,14 @@ Steps of Book I that cite I.28, I.30 or I.31, such as `BookI.Prop30.meet`, are i
 
 ## II.1
 - "Let BG be made equal to A" carries the bracket [I. 3], but I.3 cuts off only from the greater of two straight lines, and I.11 gives BF no length. Our proof first sets out a straight line equal to A at B, by I.2, which Euclid does not use, and produces BF beyond it (`produce_longer`, as in I.11 and I.16).
-- Every given point lies on BC, and BF stands on a side of it that Euclid leaves to his figure. `exists_off_line` finds a point off BC where the two circles of I.1 cut one another (Post. 3, Def. 15; `circles_meet`, System E, Intersection 5). Each of II.1–II.11 needs such a point, with no letter in Euclid's figure, before its first square or perpendicular.
+- Every given point lies on BC, and BF stands on a side of it that Euclid leaves to his figure. `exists_off_line` finds a point off BC where the two circles of I.1 cut one another (Post. 3, Def. I.15; `circles_meet`, System E, Intersection 5). Each of II.1–II.11 needs such a point, with no letter in Euclid's figure, before its first square or perpendicular.
 - Euclid names K, L, H, where DK, EL, CH meet GH, without asking whether they do. A straight line meeting one of two parallels meets the other (`BookI.Prop31.parallelogram`, through `BookI.Prop30.meet`, from I.30), a lemma Proclus states in his attempt to prove Postulate 5 (Heath, vol. 1, p. 207). I.30 also makes DK, EL, CH parallel to one another (`BookI.Prop30.parallel`), once `Parallel.off_transversal` has shown them different straight lines.
 - "Then BH is equal to BK, DL, EH" has no reason given. K and L lie between G and H, in the order of D and E on BC, because parallels keep order (`Parallel.between`), and a parallelogram cut by a parallel to two of its sides is the two parallelograms it is cut into (`quadArea_add_of_parallelograms`).
 - "Now BH is the rectangle A, BC, for it is contained by GB, BC" takes two things for granted. That BH is right-angled, though only its angle at B was drawn right: one right angle makes a parallelogram a rectangle (`Rectangle.of_right`), as Heath remarks under II.4, and DL and EH have right angles at D and E because these lie beside right angles (`adjacent_eq_of_right`, System E, Diagram-angle 3). And that rectangles contained by equal straight lines are equal, so that the rectangle drawn is the rectangle named. Our `rect` (Definition II.1) is any rectangle contained by the two straight lines, and we prove once that they are all one area (`Rectangle.contained`, `Rectangle.eq_rect`). Every proposition of Book II needs it.
 - The enunciation cuts BC into "any number of segments whatever"; the setting-out, and our main theorem, cut it at two points, D and E. Our companions cut it at any number, repeating the construction one segment at a time: of three or more points in order, the second lies between the first and the last (`InOrder.between_end`), so the first segment can be cut off and the rest taken as before.
 
 ## II.2
-- Our I.46 describes a square as Definition 22 has it, with four equal sides and four right angles. That it is also a parallelogram, as Euclid's construction makes it, is I.28 (`BookI.Prop28.square`, inside `Square.described`), as for the squares of I.47 in Book I.
+- Our I.46 describes a square as Definition I.22 has it, with four equal sides and four right angles. That it is also a parallelogram, as Euclid's construction makes it, is I.28 (`BookI.Prop28.square`, inside `Square.described`), as for the squares of I.47 in Book I.
 - "Let CF be drawn through C parallel to either AD or BE": the bracket [I. 31] is I.31, but "either" is I.30, as in I.44 and I.47 (`BookI.Prop30.parallel`). F, where CF meets DE, comes from `BookI.Prop31.parallelogram`, and lies between D and E (`Parallel.between`), so that AF and CE make up AE.
 
 ## II.3
@@ -85,7 +86,7 @@ Steps of Book I that cite I.28, I.30 or I.31, such as `BookI.Prop30.meet`, are i
 
 ## II.11
 - "Let AC be bisected at the point E" has no bracket: it is I.10.
-- "Let CA be drawn through to F, and let EF be made equal to BE": a circle about E lays EF off along EA produced (`OnRay.exists_len_eq`, Post. 3, Def. 15), the circle Heath finds in Simson's solution, which "describes a circle with EB as radius cutting EA produced in F" (vol. 1, p. 403). That F falls beyond A, Euclid reads off his figure: the angle ABE is less than the right angle BAE (I.17), so EB is greater than EA (I.19), and EF, equal to EB, reaches past A (`OnRay.between_of_len_lt`).
+- "Let CA be drawn through to F, and let EF be made equal to BE": a circle about E lays EF off along EA produced (`OnRay.exists_len_eq`, Post. 3, Def. I.15), the circle Heath finds in Simson's solution, which "describes a circle with EB as radius cutting EA produced in F" (vol. 1, p. 403). That F falls beyond A, Euclid reads off his figure: the angle ABE is less than the right angle BAE (I.17), so EB is greater than EA (I.19), and EF, equal to EB, reaches past A (`OnRay.between_of_len_lt`).
 - "Let the square FH be described on AF": its side AH lies along AB, for the angle FAB, beside the square's right angle CAB, is right (`adjacent_eq_of_right`), and on one side of a straight line only one ray makes a given angle (`onRay_of_angle_eq`). H falls within AB because AF is less than AB: EA and AF together make EF, equal to EB, which is less than EA and AB together (I.20; `Magnitude.lt_of_add_lt_add_left`). Euclid's figure shows both; he gives a reason for neither.
 - "And let GH be drawn through to K": K, where GH meets CD, comes from `BookI.Prop30.meet`, since GH meets AB, the parallel to CD, at H. G, H, K and C, K, D lie in order (`Parallel.between`), so that FK is FH and AK together, and AD is AK and HD, as "let AK be subtracted from each" needs.
 
@@ -119,7 +120,7 @@ every Book II certificate; these are the places where a proof's own steps use on
   II.14, where Heath gives no bracket; and, inside `Square.described`, the sides of
   each square produced to make I.28's figure (`BookI.Prop28.interior`), which is how
   II.12 and II.13 come to use it.
-- **Postulate 3 and Definition 15**: circles Euclid does not draw, the two of I.1
+- **Postulate 3 and Definition I.15**: circles Euclid does not draw, the two of I.1
   that find a point off a straight line (`exists_off_line`, II.1–II.11) and those
   that give room to cut from (`produce_longer`) or lay a length along a ray
   (`OnRay.exists_len_eq`); and the semicircle of II.14, which Euclid draws, but
