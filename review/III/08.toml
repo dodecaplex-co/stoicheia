@@ -43,6 +43,6 @@ case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figu
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:7a6b67015e0959e8"
+lean = "sha256:24d4c4db2aba8cee"

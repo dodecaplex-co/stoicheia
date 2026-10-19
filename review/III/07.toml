@@ -33,6 +33,6 @@ case = "FB, FC and FG compared on one side of AD, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:a47f18d36bccb5e8"
+lean = "sha256:bef720567502d812"

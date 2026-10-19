@@ -13,6 +13,6 @@ note = "Superposition lays a triangle on the less straight line down at A, along
 
 [review]
 stage = "exceptions"
-commit = "a086819"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:5d88634ef13cd7a4"

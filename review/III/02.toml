@@ -32,6 +32,6 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:0f14d525b38befe4"

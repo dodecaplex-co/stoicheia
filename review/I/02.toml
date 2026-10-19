@@ -19,6 +19,6 @@ note = "Our straight lines DA and DB are whole lines already, so nothing is prod
 
 [review]
 stage = "exceptions"
-commit = "a086819"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:51c22d0c078729c6"
