@@ -8,8 +8,9 @@ circle. Astra pointed this out in the [outside review](outside-review-01.md), wi
 one-line proof compiled in Lean, and asked for this catalogue. We are grateful. Two later
 readings added to it, and we thank them too: a cold review by Claude saw that
 superposition supplies the steps of I.2 and I.3, and Argon's second review corrected our
-account of how each rule enters the proofs: the certificate counted a rule a proof reaches
-through a lemma as one it calls itself, and now keeps the two apart.
+account of how each rule enters the proofs (the certificate counted a rule a proof reaches
+through a lemma as one it calls itself, and now keeps the two apart), found defined words
+that our screen left folded, and saw that III.30 belongs among the near misses.
 
 A reconstruction that rests on such a rule does not establish the rule independently: it
 shows that Euclid's reasoning goes through within System E, not that the proposition holds
@@ -324,6 +325,17 @@ For each row we looked for a proof of the proposition's statement from at most t
   get a meaning of their own (brief 0005, stage 3). III.1 and III.25 take a centre from a
   hypothesis. These belong to the review records, under `[representation]` and
   `[statement]`.
+
+- **III.30, by the same measure.** Its two halves AD and DB are measured by the angles ABD
+  and DAB that stand on them, each taken twice, so they are equal once those angles are,
+  which I.4 gives. III.28, that equal straight lines cut off equal circumferences, is not
+  needed, nor Euclid's step that each half is less than a semicircle.
+  `Audit.III_30_measure` proves III.30 so, with its own statement and its axioms pinned; it
+  cites III.21, through which every point of the circle measures a circumference alike, so
+  it is a near miss of the measure, not of a rule. Our III.30 follows Euclid, by III.28, as
+  [FORMALIZATION](../FORMALIZATION.md), section 5, asks. III.30's statement keeps the
+  measure when arcs get a meaning of their own ([brief 0006](../briefs/0006-statements.md),
+  stage 3), so this near miss stays.
 
 ## A separate piece of work
 
