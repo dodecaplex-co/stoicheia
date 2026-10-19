@@ -29,7 +29,8 @@ In `Elements/Foundations/DefinitionsII.lean`; none is an assumption.
 | "greater than … by", "less than … by" | an equation: the less with the excess is the greater |
 | "the straight line A" (II.1) | two points, `A₁ A₂` |
 | "the square described on AB, BC as on one straight line" (II.8) | `sq A D` for every D with B between A and D and BD equal to CB |
-| "the rectilineal figure A" (II.14) | two triangles, `△ A₁ A₂ A₄ + △ A₄ A₂ A₃`, the figure I.45 takes |
+| "the rectilineal figure A" (II.14) | in the main theorem, two triangles, `△ A₁ A₂ A₄ + △ A₄ A₂ A₃`, the figure I.45's main theorem takes; in the companions, a figure given with its triangles, as I.45's companions take it (`Apart`, `Rectilineal`), and its area as given (`Apart.area`, `Rectilineal.area`) |
+| "cut into any number of segments whatever" (II.1) | the points of section and the end, in order along the straight line (`InOrder`), and the sum of the rectangles on the `segments` (`Magnitude.sum`) |
 | "let BD be drawn perpendicular" (II.12, II.13) | I.12's form: D on the straight line, and every angle there right |
 
 ## Representations and their bridges
@@ -75,15 +76,17 @@ System E's rules, as I.1 does); `Parallel.between` and `quadArea_add_of_parallel
 
 ## The statements' choices
 
-- **II.1** cuts BC at the two points of its setting-out, D and E (see the exceptions).
+- **II.1** cuts BC at the two points of its setting-out, D and E; its companions cut it at
+  any number of points, and let the uncut straight line be nothing (see the exceptions).
 - **II.5 and II.9** take D anywhere between A and B except at the middle point C, as the
   enunciation does; Euclid's figure has D between C and B, and the other side is the same
   with A and B exchanged.
 - **II.12 and II.13** take the perpendicular as I.12 gives it, and prove where its foot
   falls ("CA produced", "cut off within") from the obtuse or acute angles; II.13 asks only
   the angles at B and C to be acute, the angle at A playing no part.
-- **II.14** squares the figures I.45 can turn into a parallelogram, two triangles, and
-  returns the side of the square, a straight line EH with `sq E H` equal to the figure.
+- **II.14** squares the figure of I.45's main theorem, two triangles, and returns the side
+  of the square, a straight line EH with `sq E H` equal to the figure; its companions square
+  any figure given with its triangles, as I.45's do, and `Prop14.square` draws the square.
 
 ## Policies
 
@@ -98,14 +101,15 @@ System E's rules, as I.1 does); `Parallel.between` and `quadArea_add_of_parallel
 ## Exceptions
 
 The review records in `review/II/` are the authority. These are the exceptions the outside
-review named, with the work that answers each:
+review named, and stage 2 of [brief 0006](0006-statements.md) answers both with companions,
+so that each record's scope is `full`:
 
-| Proposition | Scope | What is restricted | Tags | Planned |
-|---|---|---|---|---|
-| II.1 | restricted | the straight line is cut into exactly three pieces, where Euclid's words allow any number | `three-pieces` | stage 2: `Prop1.two` and `Prop1.general`, for any number of pieces in order |
-| II.14 | restricted | the figure is two triangles; the construction returns the side of the square | `two-triangles`, `side-not-square` | stage 2: `Prop14.apart` for any supplied division into triangles, and `Prop14.square`, returning a drawn square; `Prop14.figure` and `Prop14.fan` beside them |
+| Proposition | Main theorem | Companions | Tags |
+|---|---|---|---|
+| II.1 | the straight line is cut into exactly three pieces | `Prop1.two` and `Prop1.general`, for any number of pieces in order; the uncut straight line may be nothing | `hypothesis-dropped` |
+| II.14 | the figure is two triangles, unchecked; the construction returns the side of the square | `Prop14.apart`, for any figure given with triangles that lie apart, and `Prop14.square`, returning a drawn square; `Prop14.figure` and `Prop14.fan`, the main companion, beside them; `Prop14.rectangle` and `Prop14.sum`, the construction | `figure-with-dissection`, `side-not-square` |
 
-Each keeps Euclid's worked configuration, with the general theorem beside it as a
-companion. `rect` has as yet no lemma that a rectangle contained by any two straight lines
+Each main theorem keeps Euclid's worked configuration, with the general theorems beside it
+as companions. `rect` has as yet no lemma that a rectangle contained by any two straight lines
 can be drawn; Book II never needs one, since it always draws its rectangles, and Book VI
 will.

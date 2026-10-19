@@ -1,21 +1,22 @@
 [statement]
-scope = "restricted"
-hypotheses = [
-  "BC is cut at exactly two points, D and E, in that order, into three segments (`hBDE : Between B D E`, `hDEC : Between D E C`)",
-]
-note = "Proved for BC cut at two points, D and E, into three segments, as Euclid's setting-out has it; his enunciation allows any number of segments."
-short = "a straight line cut into three"
-fingerprint = "sha256:df4a1ce92437b4e3"
+scope = "full"
+note = "With its companions: `Prop1.general` cuts the straight line at any number of points in order, `Prop1.two` at one; `Prop1` keeps Euclid's two, D and E."
+companions = ["II.1 two", "II.1 general"]
+fingerprint = "sha256:cce87676f32541bb"
 
 [route]
 kind = "euclid"
+note = "Euclid draws every parallel in one figure. The companions draw one at a time: `Prop1.two` is his construction for one point of section, and `Prop1.general` repeats it, cutting off one segment after another (`InOrder.between_end`)."
 
 [representation]
-tags = ["three-pieces"]
-note = "The straight line A is named by its two ends, A₁ and A₂. A straight line cut at one point, into two segments, is not an instance of the statement, and neither is one cut into four or more."
+tags = ["hypothesis-dropped"]
+note = "The straight line A is named by its two ends, A₁ and A₂, and the main theorem asks them to differ. The companions do not: A₁A₂ may be nothing, and then every rectangle is nothing, so they claim a little more than Euclid's two straight lines. `Prop1.general` takes the straight line from B cut at points given in order along it (`InOrder`), and adds the rectangles on its segments as a sum over the list; with no point of section the one segment is the whole, and with no point at all the straight line and each rectangle are nothing."
+
+[figure]
+case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "5d6b1f6"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:5b2b78012ab7bade"
+lean = "sha256:2642bf8e58a5ea62"

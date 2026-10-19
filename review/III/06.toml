@@ -30,6 +30,7 @@ note = "The reductio's conclusion. The Lean supposed F the centre of both circle
 
 [figure]
 case = "the circles touching within, as in Heath's figure"
+note = "Like Heath's, this figure draws the impossible supposition: F as one centre of ABC and CDE, two circles that touch."
 
 [review]
 stage = "exceptions"

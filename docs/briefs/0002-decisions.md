@@ -632,6 +632,42 @@ findings:
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
 
+- **Stage 2 in the edition: brief 0006's words in the foundations, the axiom lock's
+  vocabulary grown.** Every statement of stage 2 of [brief 0006](0006-statements.md) is
+  proved, and moves from `Staging/` to its home in that brief's table, in a move the
+  coordinator delegated to the stage's integrator. The definitions they use are approved for
+  the foundations as a class: the owner's call, as the tracking issue
+  ([#50](https://github.com/jackChallis/stoicheia/issues/50)) records it, is that "the
+  definitions the frozen briefs name are approved for the foundations, each recorded in its
+  pull request" (decision 4 of brief 0006). This entry records the ones this pull request
+  moves, each as the brief froze it: `Magnitude.sum`, into
+  `Elements/Foundations/Magnitudes.lean`; and `InOrder`, `segments`, `endOf`,
+  `OnFiniteLine`, `OnOrInsideTriangle`, `Corners`, `triples`, `Fitted` with its two
+  constructors, `Rectilineal`, `Rectilineal.area`, `Apart` and `Apart.area`, into
+  `Elements/Foundations/Phrases.lean`. None is an assumption. Their facts go to Book Zero,
+  in two new files that `Basics.lean` gathers, `Elements/Figure/Sums.lean` and
+  `Elements/Figure/Rectilineal.lean`; the bridge `Fitted.fan`, whose proof cites I.13, goes to
+  `Elements/BookI/Prop45.lean`, before `Prop45.fan`, as the brief provides. The sixteen
+  companions of I.40, I.45, II.1 and II.14 move beside their propositions and join
+  `Elements/Companions.lean`; the statements of I.40, I.45, II.1 and II.14 themselves do not
+  change. `Staging/Stage2/` is gone, and `Staging.lean` says so. The routes as proved are
+  those the brief declares, save one detail of a plan: `InOrder.between_end` uses Between 5
+  (`between_of_between_right`), where the brief names Between 6 and Diagram-segment 1. The
+  protected files this changes are three. [`Certificate/axioms.lock`](../../Certificate/axioms.lock)
+  is rewritten by `python3 scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the
+  same 87, byte for byte, and its `[vocabulary]` grows from 61 words to 91, by the words above
+  and what Lean declares for them, each structure's constructor and the projection the
+  companions use (`Apart.mk`, `Apart.pieces`, `Rectilineal.mk`, `Rectilineal.pieces`), and
+  the auxiliary declarations of the five definitions by recursion (`._f`, `.match_1` and
+  `segments._sparseCasesOn_1`). [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is
+  renewed, and [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an
+  axiom reaches, has changed, so its account stands, and `tests/model/run.py --fast` passes.
+  [`review/terms.toml`](../../review/terms.toml) gains the tag `figure-with-dissection`, of
+  kind `representation`, word for word as brief 0006 gives it, before the records of I.45 and
+  II.14 use it. Those records, with I.40's and II.1's, become `full` by their companions,
+  and wait for their reviewer's reading and stamp; the tags `adjacent-bases`, `two-triangles`
+  and `three-pieces` stay in the file, though no record carries them now.
+
 - **The certificate keeps a proof's own axioms apart from those it inherits.** Argon's
   second review of the book-III release found that `direct_axioms` lists, as a
   proposition's own, every axiom its proof term names together with those of the Book
@@ -668,7 +704,6 @@ findings:
   `Certificate/FIELDS.md`, `scripts/render.py`, `scripts/check_fidelity.py` and
   `tests/certificate_expectations.json`. The overlap catalogue's "First enters" moves to
   the new fields in a text pull request of its own, after this one.
-
 - **The style check's cases, in `tests/`.** The cases with which
   [`scripts/check_style.py`](../../scripts/check_style.py) checked its own reading, on
   every run and before anything else, move to a test file of their own,
@@ -767,3 +802,15 @@ findings:
   figure can be so divided and another division gives the same sum are not proved here.
   It lands on its own, before the records that use it, since safe_push keeps a check's
   data apart from the content it judges (#19).
+
+- **The restricted superposition prototype, in Staging.** The coordinator approves that
+  the prototype of #75 (brief [0009](0009-superposition.md), round 2: a finite symbolic
+  context with a valuation, the restricted rule carried as a hypothesis, I.4's and I.8's
+  conclusions proved from it) keeps its proofs in `Staging/Superposition/`, as WORKFLOW
+  section 2 allows an approved prototype, under the names `Elements.Superposition.Prop4`
+  and `Prop8`, which say plainly that these are not the edition's I.4 and I.8. No axiom is
+  added; the edition's superposition rule is unchanged, and it lands only when the
+  evidence brief 0009 asks for is complete (the owner's decision on #75).
+- **The formal model's lock hash renewed with stage 2's words.** Stage 2's move adds
+  words that only the statements of companions use, so `model/lock.sha256` is renewed
+  with `tests/model/lock.sha256`, as its own comment says; no law of the model changes.

@@ -2,7 +2,7 @@
 
 # Book I
 
-**All 48 propositions proved in Lean**: 46 as Euclid states them and 2 for a restricted statement ([I.40](40.md), [I.45](45.md)). 46 proofs follow Euclid's argument and 2 follow it with one step changed ([I.39](39.md), [I.40](40.md)); each page says how. In [I.23](23.md) one of our tacit rules already contains the proposition, and our proof rests on it, so the proof retraces Euclid's argument within our rules and does not establish the rule. In [I.2](02.md), [I.3](03.md) and [I.7](07.md) our tacit rules contain the propositions too, but our proofs never use those rules. [The overlap catalogue](../../docs/reports/overlaps.md) gives each. Our proofs of 29 propositions do not use the parallel postulate: I.1–I.28 and I.31. The first proof that does is I.29's, just where Euclid first calls on it.
+**All 48 propositions proved in Lean**, every one as Euclid states it. 46 proofs follow Euclid's argument and 2 follow it with one step changed ([I.39](39.md), [I.40](40.md)); each page says how. In [I.23](23.md) one of our tacit rules already contains the proposition, and our proof rests on it, so the proof retraces Euclid's argument within our rules and does not establish the rule. In [I.2](02.md), [I.3](03.md) and [I.7](07.md) our tacit rules contain the propositions too, but our proofs never use those rules. [The overlap catalogue](../../docs/reports/overlaps.md) gives each. Our proofs of 29 propositions do not use the parallel postulate: I.1–I.28 and I.31. The first proof that does is I.29's, just where Euclid first calls on it.
 
 Key to the table: ✅ proved. The Lean statement is *whole*, as Euclid states it; *restricted*, with hypotheses that leave out cases his words admit; or *in part*, leaving a clause to his words. Each page says how.
 
@@ -65,12 +65,12 @@ Books and papers to read alongside, from Proclus to Lean, are gathered by theme 
 | ✅ | [I.37](37.md) **Triangles on the same base and in the same parallels are equal** | whole | Triangles which are on the same base and in the same parallels are equal to one another. |
 | ✅ | [I.38](38.md) **Triangles on equal bases and in the same parallels are equal** | whole | Triangles which are on equal bases and in the same parallels are equal to one another. |
 | ✅ | [I.39](39.md) **Equal triangles on the same base are in the same parallels** | whole | Equal triangles which are on the same base and on the same side are also in the same parallels. |
-| ✅ | [I.40](40.md) **Equal triangles on equal bases are in the same parallels** | restricted | Equal triangles which are on equal bases and on the same side are also in the same parallels. |
+| ✅ | [I.40](40.md) **Equal triangles on equal bases are in the same parallels** | whole | Equal triangles which are on equal bases and on the same side are also in the same parallels. |
 | ✅ | [I.41](41.md) **The parallelogram is double of the triangle** | whole | If a parallelogram have the same base with a triangle and be in the same parallels, the parallelogram is… |
 | ✅ | [I.42](42.md) **A parallelogram equal to a given triangle, in a given angle** | whole | To construct, in a given rectilineal angle, a parallelogram equal to a given triangle. |
 | ✅ | [I.43](43.md) **In any parallelogram the complements are equal** | whole | In any parallelogram the complements of the parallelograms about the diameter are equal to one another. |
 | ✅ | [I.44](44.md) **A parallelogram applied to a given straight line** | whole | To a given straight line to apply, in a given rectilineal angle, a parallelogram equal to a given triangle. |
-| ✅ | [I.45](45.md) **A parallelogram equal to a given rectilineal figure** | restricted | To construct, in a given rectilineal angle, a parallelogram equal to a given rectilineal figure. |
+| ✅ | [I.45](45.md) **A parallelogram equal to a given rectilineal figure** | whole | To construct, in a given rectilineal angle, a parallelogram equal to a given rectilineal figure. |
 | ✅ | [I.46](46.md) **A square on a given straight line** | whole | On a given straight line to describe a square. |
 | ✅ | [I.47](47.md) **The square on the side subtending the right angle equals the other two** | whole | In right-angled triangles the square on the side subtending the right angle is equal to the squares on the… |
 | ✅ | [I.48](48.md) **If the square equals the other two, the angle is right** | whole | If in a triangle the square on one of the sides be equal to the squares on the remaining two sides of the… |
