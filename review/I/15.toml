@@ -7,13 +7,20 @@ fingerprint = "sha256:d56d5fa0ea80b4db"
 kind = "euclid"
 
 [[passage]]
+at = "For let the straight lines AB, CD cut one another at the point E"
+kind = "helper"
+helper = "Prop15.figure"
+note = "Euclid reads off the crossing lines that A is off CD and D is off AB. Beneath the setting-out, the Lean proves this with `Prop15.figure`, so that AE stands on CD and DE on AB for the two later applications of I.13."
+
+[[passage]]
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop15.porism"
 note = "Heath brackets the Porism, after Heiberg. It is proved as its own theorem, with its own certificate entry, I.15 Por."
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:eb3dee5d6e74fb41"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

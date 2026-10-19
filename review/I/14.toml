@@ -12,12 +12,28 @@ kind = "given"
 note = "The statement gives the goal; the note under the sentence says how our Lean puts it."
 
 [[passage]]
+at = "the less to the greater"
+kind = "helper"
+helper = "onRay_of_angle_eq"
+note = "Euclid reads off his figure that the angle ABE is a part of the angle ABD; the Lean also takes BD within ABE. `OppositeSidesOf.of_between` and `OppositeSidesOf.sameSideOf` put E and D on one side of AB, and `onRay_of_angle_eq` rules out either placement by making an angle equal to a proper part of itself."
+
+[[passage]]
 at = "Similarly we can prove that neither is any other straight line"
 kind = "grouped"
 note = "No second argument is needed: E was any point on CB produced, and the one argument already puts D on CB produced, beyond B."
 
+[[passage]]
+at = "Therefore CB is in a straight line with BD"
+kind = "helper"
+helper = "OnRay.between"
+note = "Euclid concludes that CB and BD form one straight line; `OnRay.between` turns D's lying on the ray from B through E, with B between C and E, into B's lying between C and D."
+
+[figure]
+case = "BE lying within the angle ABD"
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "6237881"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:0bb35e43d7174b8c"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

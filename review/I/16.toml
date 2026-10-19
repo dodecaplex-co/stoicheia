@@ -6,8 +6,32 @@ fingerprint = "sha256:26bd550c4d476801"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let AC be bisected at E"
+kind = "helper"
+helper = "produce_longer"
+note = "Euclid bisects AC and produces BE; the Lean uses I.10 for E and `produce_longer` to extend BE beyond E far enough for I.3 to cut off EF."
+
+[[passage]]
+at = "let EF be made equal to BE"
+kind = "helper"
+helper = "between_cut"
+note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F; Postulates 1 and 2 make the join and the production."
+
+[[passage]]
+at = "But the angle ECD is greater than the angle ECF"
+kind = "helper"
+helper = "Prop16.within"
+note = "Euclid treats ECF as part of ECD; `Prop16.within` puts F on D's side of AC and E's side of BC. The Lean then uses `angle_add_of_within` and `Triangle.angle_pos` to apply Common Notion 5."
+
+[[passage]]
+at = "Similarly also, if BC be bisected"
+kind = "grouped"
+note = "Euclid leaves the argument for the other interior angle to the reader, with BC bisected. The Lean proves his argument once over any letters and applies it again to the triangle BAC with AC produced to G, then uses I.15 to identify BCG with ACD."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:dbc44d9d229e1a48"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
