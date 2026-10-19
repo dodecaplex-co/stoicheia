@@ -215,16 +215,10 @@ theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
     /- Bisect BF at G [I. 10]. -/
     obtain ⟨G, hBGF, hBG⟩ := BookI.Prop10 (ne_of_between_ends hBEF)
     /- Describe the circle with centre G through B (Postulate 3); it passes
-       through F too, since GF equals GB. E is inside it, between the ends of
-       its diameter BF. -/
+       through F too, since GF equals GB. -/
     obtain ⟨BHF, hG_BHF, hB_BHF⟩ := Postulate3 G B (ne_of_between hBGF).symm
     have hF_BHF : OnCircle F BHF :=
       on_circle_of_len_eq hG_BHF hB_BHF (by rw [← hBG, len_symm G B])
-    have hE_BHF : InsideCircle E BHF :=
-      inside_of_between (Or.inr hB_BHF) (Or.inr hF_BHF) hBEF
-    /- Produce DE to H beyond E, on the semicircle BHF away from the rectangle. -/
-    obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hDE
-    obtain ⟨H, hH_BHF, hH_DE, hHED⟩ := line_circle_beyond hE_BHF hE_DE hD_DE hDE
     /- G lies between B and E: the half BG of BF is less than BE, since BE is
        greater than the remaining part EF. Thus E is the unequal cut of BF that
        II.5 needs, distinct from the midpoint G. -/
@@ -245,6 +239,13 @@ theorem Prop14.rectangle {E B C D : Point} (h : Rectangle E B C D) :
         rw [← hBF, hBF'] at this
         exact lt_irrefl _ (lt_trans hlt' (Magnitude.lt_of_add_lt_add_left this))
     have hEG : E ≠ G := ne_of_between (between_symm hBGE)
+    /- E is inside the circle: it lies between the centre G and F
+       (Definition I.15). -/
+    have hE_BHF : InsideCircle E BHF :=
+      InsideCircle.of_between_centre hG_BHF hF_BHF (between_inner hBGE hBEF)
+    /- Produce DE to H beyond E, on the semicircle BHF away from the rectangle. -/
+    obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hDE
+    obtain ⟨H, hH_BHF, hH_DE, hHED⟩ := line_circle_beyond hE_BHF hE_DE hD_DE hDE
     /- BF is cut equally at G and unequally at E: the rectangle BE, EF with the
        square on GE equals the square on GF [II. 5]. -/
     have h5 : rect B E E F + sq G E = sq G F := Prop5 hBGF hBG hBEF hEG
