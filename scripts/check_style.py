@@ -307,8 +307,6 @@ def _blank(m: re.Match) -> str:
 
 
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.S)
-HTML_COMMENT_BLOCK = re.compile(r"<!--.*?-->|^ {0,3}<!--[\s\S]*\Z", re.S | re.M)
-CODE_SPAN = re.compile(r"`[^`\n]+`")
 # The "(…)" after a link's "]", one level of parentheses inside allowed.
 LINK_TARGET = re.compile(r"(?<=\])\((?:[^()\n]|\([^()\n]*\))*\)")
 PARAGRAPH_BREAK = re.compile(r"(\n[ \t]*\n)")
@@ -322,7 +320,7 @@ def blank_code(text: str) -> str:
     quotations included."""
     text = blank_html_comments(text)
     text = blank_fences(text)
-    text = CODE_SPAN.sub(_blank, text)
+    text = blank_ranges(text, ((span.start, span.end) for span in code_span_details(text)))
     return LINK_TARGET.sub(_blank, text)
 
 
@@ -809,11 +807,18 @@ class CodeSpan(NamedTuple):
     offsets: list[int]
 
 
-def markdown_blocks(text: str) -> tuple[list[InlineBlock], list[tuple[int, int]]]:
-    """The inline leaf blocks and fenced-code spans of a Markdown text, with source
+class MarkdownBlocks(NamedTuple):
+    inline: list[InlineBlock]
+    fences: list[tuple[int, int]]
+    comments: list[tuple[int, int]]
+
+
+def markdown_blocks(text: str) -> MarkdownBlocks:
+    """The inline leaf blocks, fences and comment blocks of a Markdown text, with source
     offsets retained after block quote and list markers are removed."""
     blocks: list[InlineBlock] = []
     fences = []
+    comments = []
     chars: list[str] = []
     offsets: list[int] = []
     container = None
@@ -821,6 +826,8 @@ def markdown_blocks(text: str) -> tuple[list[InlineBlock], list[tuple[int, int]]
     list_number = 0
     fence = None
     fence_start = 0
+    comment = None
+    comment_start = 0
 
     def flush() -> None:
         nonlocal chars, offsets, container
@@ -861,34 +868,86 @@ def markdown_blocks(text: str) -> tuple[list[InlineBlock], list[tuple[int, int]]
             if mark < len(body) and body[mark] in " \t":
                 mark += 1
             pos, quote = mark, quote + 1
-        body, source = body[pos:], source[pos:]
+        base_body, base_source = body[pos:], source[pos:]
+        consumed = False
+        while True:
+            body, source = base_body, base_source
+            listed = LIST_LINE.match(body)
+            literal = fence is not None or comment is not None
+            if listed and not literal:
+                list_number += 1
+                indent = listed.start(3)
+                list_item = (quote, list_number, indent)
+                body, source = listed.group(3), source[indent:]
+                own = (quote, list_number)
+            elif list_item and list_item[0] == quote and body.strip():
+                indent = list_item[2]
+                leading = len(body) - len(body.lstrip(" "))
+                owner = (quote, list_item[1])
+                if leading >= indent:
+                    body, source = body[indent:], source[indent:]
+                    own = owner
+                elif not literal and container == owner:
+                    own = owner
+                else:
+                    list_item = None
+                    own = (quote, None)
+            elif list_item and list_item[0] == quote and literal:
+                own = (quote, list_item[1])
+            else:
+                if list_item and list_item[0] != quote:
+                    list_item = None
+                own = (quote, None)
 
-        listed = LIST_LINE.match(body)
-        if listed and fence is None:
-            list_number += 1
-            indent = listed.start(3)
-            list_item = (quote, list_number, indent)
-            body, source = listed.group(3), source[indent:]
-        elif list_item and list_item[0] == quote and body.strip():
-            indent = list_item[2]
-            cut = min(len(body) - len(body.lstrip(" ")), indent)
-            body, source = body[cut:], source[cut:]
-        elif list_item and list_item[0] != quote:
-            list_item = None
-        own = ("list", list_item[1]) if list_item and list_item[0] == quote else ("quote", quote)
+            starts_block = (not body.strip() or listed is not None or ATX_LINE.match(body)
+                            or FENCE_LINE.match(body) or THEMATIC_LINE.fullmatch(body)
+                            or SETEXT_LINE.fullmatch(body)
+                            or re.match(r"^ {0,3}<!--", body))
+            if (not literal and container is not None and quote < container[0]
+                    and not starts_block):
+                own = container
 
-        if fence is not None:
-            char, width = fence
-            if re.fullmatch(rf" {{0,3}}{re.escape(char)}{{{width},}}[ \t]*", body):
-                fences.append((fence_start, line_end))
-                fence = None
+            if fence is not None:
+                char, width, owner = fence
+                if own != owner:
+                    fences.append((fence_start, line_start))
+                    fence = None
+                    continue
+                if re.fullmatch(rf" {{0,3}}{re.escape(char)}{{{width},}}[ \t]*", body):
+                    fences.append((fence_start, line_end))
+                    fence = None
+                consumed = True
+                break
+
+            if comment is not None:
+                if own != comment:
+                    comments.append((comment_start, line_start))
+                    comment = None
+                    continue
+                if "-->" in body:
+                    comments.append((comment_start, line_end))
+                    comment = None
+                consumed = True
+                break
+            break
+        if consumed:
             continue
+
+        opened_comment = re.match(r"^ {0,3}<!--", body)
+        if opened_comment and "-->" not in body[opened_comment.end():]:
+            flush()
+            comment = own
+            comment_start = line_start
+            continue
+
+        if list_item and own == (quote, None):
+            list_item = None
 
         opened = FENCE_LINE.match(body)
         if opened and not (opened.group(1).startswith("`") and "`" in opened.group(2)):
             flush()
-            fence = (opened.group(1)[0], len(opened.group(1)))
-            fence_start = line_end - len(raw)
+            fence = (opened.group(1)[0], len(opened.group(1)), own)
+            fence_start = line_start
             continue
         if not body.strip():
             flush()
@@ -904,7 +963,9 @@ def markdown_blocks(text: str) -> tuple[list[InlineBlock], list[tuple[int, int]]
     flush()
     if fence is not None:
         fences.append((fence_start, len(text)))
-    return blocks, fences
+    if comment is not None:
+        comments.append((comment_start, len(text)))
+    return MarkdownBlocks(blocks, fences, comments)
 
 
 def blank_ranges(text: str, spans) -> str:
@@ -916,14 +977,13 @@ def blank_ranges(text: str, spans) -> str:
 
 
 def blank_fences(text: str) -> str:
-    return blank_ranges(text, markdown_blocks(text)[1])
+    return blank_ranges(text, markdown_blocks(text).fences)
 
 
 def code_span_details(text: str) -> list[CodeSpan]:
     """The CommonMark code spans in inline leaf blocks, with their source offsets."""
     spans = []
-    blocks, _ = markdown_blocks(text)
-    for block in blocks:
+    for block in markdown_blocks(text).inline:
         ticks = []
         for m in BACKTICKS.finditer(block.text):
             escaped = m.start() - len(block.text[:m.start()].rstrip("\\"))
@@ -959,11 +1019,12 @@ def markdown_code_spans(text: str):
 
 
 def html_comment_spans(text: str) -> list[tuple[int, int]]:
-    """Closed HTML comments, and a line-opening comment block through EOF when unclosed,
+    """Closed HTML comments and container-bounded, line-opening comment blocks,
     excluding markers inside fenced blocks and code spans."""
-    syntax = blank_fences(text)
+    parsed = markdown_blocks(text)
+    syntax = blank_ranges(text, parsed.fences + parsed.comments)
     syntax = blank_ranges(syntax, ((span.start, span.end) for span in code_span_details(syntax)))
-    return [m.span() for m in HTML_COMMENT_BLOCK.finditer(syntax)]
+    return parsed.comments + [m.span() for m in HTML_COMMENT.finditer(syntax)]
 
 
 def blank_html_comments(text: str) -> str:
