@@ -30,6 +30,6 @@ note = "Likewise, that the less segment lies wholly within the right angle CAF i
 
 [review]
 stage = "exceptions"
-commit = "03c0335"
+commit = "e707d55"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:961cd5456d47004a"
+lean = "sha256:9b555ff44def5132"

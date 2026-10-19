@@ -16,6 +16,6 @@ note = "Like Heath's, this figure draws both impossible suppositions: EBFD touch
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "e707d55"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:7c02d4cfded9019e"

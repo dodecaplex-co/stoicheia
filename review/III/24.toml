@@ -31,7 +31,7 @@ note = "The sentences after it show it; the Lean begins that argument here: a po
 [[passage]]
 at = "it will either fall within it, or outside it"
 kind = "different"
-note = "Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54), to be refuted. The Lean settles every point directly by III.23's companion `Prop23.point`: on F's side of CD a point is on the circle CFD exactly when CD subtends at it the angle at F, and within it exactly when the angle is greater; so no point of the one segment falls within the other or outside it."
+note = "Euclid leaves these two cases to a tacit reference to III.23 (Heath, vol. 2, p. 54), to be refuted. The Lean settles every point directly by III.23's companion `Prop23.point`: on F's side of CD a point is on the circle CFD exactly when CD subtends at it the angle at F, and within it exactly when the angle is greater; so each point of the first circumference maps to the second circumference, and points within the first segment map to points within the second, in both directions."
 
 [[passage]]
 at = "or it will fall awry"
@@ -50,6 +50,6 @@ note = "Like Heath's, this figure draws the last supposition the text refutes: t
 
 [review]
 stage = "exceptions"
-commit = "8f37887"
+commit = "7f4fba99"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:427b11ee9e1f37cf"
+lean = "sha256:bd40b803c93f0cfa"
