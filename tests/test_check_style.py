@@ -19,7 +19,8 @@ it, put to the script's own patterns and functions:
   wherever a transform moves it;
 * the modern cases: S22 and S23 read a figure of the modern way against its Euclid's
   figure's letters and its paragraph's names, which `modern_names` takes from TeX and
-  from plain words alike.
+  from plain words alike, save the letters of English (A's, e.g., the article "a") and
+  what a reader does not see, in a comment or in code.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -206,8 +207,23 @@ NAMES_CASES = [   # (a paragraph, names it must give, names it must not)
     (style.MODERN_WAY + r" Its breadth is $q/(a\sin\theta)$.", {"q", "a", "θ"}, {"s", "n"}),
     (style.MODERN_WAY + r" With $\nu$ and $\vartheta$ and ϕ.", {"ν", "θ", "φ"}, {"n", "u"}),
     (style.MODERN_WAY + r" Let $a_{\text{side {length}}}$ be given.", {"a"}, {"g", "s", "l"}),
+    (style.MODERN_WAY + r" On a base FG, A's side and Euclid’s turn a $\theta$, e.g. one, "
+     "i.e. two; E.g. three.", {"θ"}, {"a", "s", "e", "g", "i"}),
+    (style.MODERN_WAY + " Twice it is 2a, a² is its square, a/2 its half and\na − 1 less.",
+     {"a"}, set()),
+]
+LEAN_NAME = "`Elements.BookI.prop05_converse`"
+PAGE_NAMES_CASES = [   # (a mishnah, names its modern way gives, names it must not)
+    (style.MODERN_WAY + f" Put $a$ here, as Lean says in\n{LEAN_NAME}\nwith $b = c$.",
+     {"a", "b", "c"}, set()),
+    (style.MODERN_WAY + " Put $a$ here <!-- crew: label x and y later --> and so on.",
+     {"a"}, {"x", "y"}),
+    (style.MODERN_WAY + " Put $a$ here, as `$z$` and `k` say.", {"a"}, {"z", "k"}),
 ]
 SPAN_CASES = [   # (a mishnah, the paragraph modern_span finds, or None)
+    (style.MODERN_WAY + f" Put $a$ here, as Lean says in\n{LEAN_NAME}\nwith $b = c$.\n\nAfter.",
+     style.MODERN_WAY + " Put $a$ here, as Lean says in\n" + " " * len(LEAN_NAME)
+     + "\nwith $b = c$."),
     ("Before.\n\n" + style.MODERN_WAY + " x.\n\nAfter.", style.MODERN_WAY + " x."),
     ("Before.\n \n" + style.MODERN_WAY + " x.\n \nAfter.", style.MODERN_WAY + " x."),
     ("Before.\n\n  " + style.MODERN_WAY + " x.", style.MODERN_WAY + " x."),
@@ -314,6 +330,13 @@ class Modern(unittest.TestCase):
                 names = style.modern_names(text)
                 self.assertLessEqual(given, names, f"modern_names misses {given - names}")
                 self.assertFalse(names & not_given, f"modern_names wrongly gives {names & not_given}")
+
+    def test_page_names(self):
+        for text, given, not_given in PAGE_NAMES_CASES:
+            with self.subTest(text=text):
+                names = style.modern_names(style.modern_paragraph(text))
+                self.assertLessEqual(given, names, f"the page's names miss {given - names}")
+                self.assertFalse(names & not_given, f"the page wrongly gives {names & not_given}")
 
     def test_modern_cases(self):
         for inside, ref, want in MODERN_CASES:

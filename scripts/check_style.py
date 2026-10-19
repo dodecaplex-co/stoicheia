@@ -210,6 +210,13 @@ QUOTATION = re.compile(r'"[^"]*"')
 SQUARE = re.compile(r"\[[^\[\]\n]*\](?![(\[])")
 
 
+def blank_blocks(text: str) -> str:
+    """HTML comments and fenced blocks blanked, code spans kept: the text whose paragraphs
+    S10 and the modern way's figure read, so that a line holding only a code span goes on
+    with its paragraph, as Markdown reads it."""
+    return FENCE.sub(_blank, HTML_COMMENT.sub(_blank, text))
+
+
 def blank_code(text: str) -> str:
     """Fenced blocks, code spans and HTML comments blanked: what a reader reads as prose,
     quotations included."""
@@ -661,7 +668,7 @@ def lean_names(text: str) -> list[str]:
 
 def check_mishnah(path: Path, raw: str) -> None:
     ref = ref_of(path)
-    text = FENCE.sub(_blank, HTML_COMMENT.sub(_blank, raw))
+    text = blank_blocks(raw)
     for a, b, msg in tex_findings(text):
         fail("S10", path, line_of(text, a), f"{msg}: {excerpt(raw, a, b)}")
     for pattern, allowed in REFRAINS:
@@ -1414,7 +1421,14 @@ TEX_SPAN = re.compile(r"\$([^$\n]+)\$")
 # braces balanced, is no name of the modern way.
 TEX_UPRIGHT = re.compile(r"\\(?:mathrm|text|textrm|textup|operatorname)\s*\{")
 TEX_COMMAND = re.compile(r"\\([A-Za-z]+)")
-LONE_LOWER = re.compile(r"(?<![A-Za-z])([a-z])(?![A-Za-z])")
+# A lower-case letter standing alone in the paragraph's words, not the s of "A's" or
+# "Euclid’s" after an apostrophe.
+LONE_LOWER = re.compile(r"(?<![A-Za-z'’])[a-z](?![A-Za-z])")
+# The abbreviations whose letters are no names.
+ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:[eE]\.g|[iI]\.e)\.")
+# What stands beside the article "a", spaces between, when it is a name, as in "AC = a"
+# or "(a + b)²": a sign of an expression, a digit, raised or lowered, or a bracket.
+BESIDE_A_NAME = set("=+-−×·/<>≤≥()[]0123456789⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
 
 
 def without_upright(body: str) -> str:
@@ -1436,11 +1450,12 @@ def without_upright(body: str) -> str:
 
 def modern_span(text: str) -> tuple[int, int] | None:
     """Where the paragraph that opens "**The modern way.**" stands in a mishnah, as
-    (start, end) offsets: read as a reader's Markdown reads it, with HTML comments,
-    fenced blocks and code blanked first, its start indented or not, and its end where
-    Markdown ends it (MODERN_WAY_ENDS). render.py sets the modern figure at its end, so
-    the two read the page alike. None when there is no such paragraph."""
-    for off, para in paragraphs(blank_code(text)):
+    (start, end) offsets: read as a reader's Markdown reads it, and as S10 reads it, with
+    HTML comments and fenced blocks blanked first (blank_blocks), its start indented or
+    not, and its end where Markdown ends it (MODERN_WAY_ENDS). render.py sets the modern
+    figure at its end, so the two read the page alike. None when there is no such
+    paragraph."""
+    for off, para in paragraphs(blank_blocks(text)):
         if para.startswith(MODERN_WAY):
             end = MODERN_WAY_ENDS.search(para)
             return off, off + (end.start() if end else len(para))
@@ -1448,17 +1463,21 @@ def modern_span(text: str) -> tuple[int, int] | None:
 
 
 def modern_paragraph(text: str) -> str | None:
-    """The paragraph of a mishnah that opens "**The modern way.**" (modern_span), or None."""
+    """The paragraph of a mishnah that opens "**The modern way.**" (modern_span), as a
+    reader sees it: its HTML comments, code and link targets blanked (blank_code), so that
+    nothing hidden from the page gives it a name. None when there is no such paragraph."""
     span = modern_span(text)
-    return text[span[0]:span[1]] if span else None
+    return blank_code(text)[span[0]:span[1]] if span else None
 
 
 def modern_names(paragraph: str) -> set[str]:
     """The names a modern-way paragraph uses: each lower-case Latin or Greek letter of a
     $…$ span, its commands taken out (\\vec, \\frac, \\sin) and its Greek ones read as
     their letters (\\theta, θ), what \\mathrm{…} sets upright left aside (Heath's points);
-    and, outside the spans, each lower-case letter that stands alone, and each Greek
-    letter."""
+    and, outside the spans, each Greek letter, and each lower-case letter that stands
+    alone, save the letters of English: one after an apostrophe (A's), those of e.g. and
+    i.e., and the article "a" when no sign of an expression, digit or bracket stands
+    beside it (BESIDE_A_NAME)."""
     names: set[str] = set()
 
     def span(m: re.Match) -> str:
@@ -1468,7 +1487,11 @@ def modern_names(paragraph: str) -> set[str]:
         return " "
 
     rest = TEX_SPAN.sub(span, paragraph).translate(GREEK_VARIANTS)
-    names.update(LONE_LOWER.findall(rest))
+    rest = ABBREVIATION.sub(_blank, rest)
+    for m in LONE_LOWER.finditer(rest):
+        before, after = rest[:m.start()].rstrip()[-1:], rest[m.end():].lstrip()[:1]
+        if m.group(0) != "a" or {before, after} & BESIDE_A_NAME:
+            names.add(m.group(0))
     names.update(c for c in rest if "α" <= c <= "ω")
     return names
 

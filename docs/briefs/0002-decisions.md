@@ -1335,4 +1335,7 @@ findings:
   `scripts/check_acceptance.py` and `tests/test_check_style.py`. STYLE, sections 2, 7 and
   8, and the checklist's P8 say the same. No check is weakened: the rules hold only the
   new files, and no figure exists yet for them to judge; the figures follow in a content
-  pull request, since a check lands apart from the content it judges.
+  pull request, since a check lands apart from the content it judges. S23 reads a name in
+  the paragraph's plain words too, as Book II's "AC = a" needs, but not a letter of
+  English: one after an apostrophe, those of e.g. and i.e., and the article "a" with no
+  sign of an expression, digit or bracket beside it; nor anything in a comment or in code.
