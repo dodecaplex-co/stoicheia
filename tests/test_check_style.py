@@ -17,12 +17,15 @@ it, put to the script's own patterns and functions:
   fill, within its three ends and beyond its chord out to its arc, and not beyond the
   arc; however the wedge is spelled (an absolute arc, a relative arc, a cubic curve), and
   wherever a transform moves it;
-* the clearance cases: S22 finds a stroke through a letter, or nearer it than 2, and not
-  one clear of it; reads a stroke of none as no stroke and a dashed one whole; closes a
-  path's stroke only where a Z closes it; finds a circle through a letter and not one
-  round it, a dot beside it and the canvas's edge; follows a transform; and measures a
-  letter upright or italic as its figure sets it. And it finds a letter drawn twice,
-  save once in each of several figures side by side.
+* the clearance cases: S22 finds a stroke through a letter, or nearer it than 2 less half
+  its width (given as an attribute, in style= or inherited), and not one clear of it;
+  reads a stroke of none as no stroke and a dashed one whole; closes a path's stroke only
+  where a Z closes it; finds a circle through a letter and not one round it, a dot beside
+  it and the canvas's edge; leaves out a circle of no radius and a rect of no width, and
+  follows a rect's rounded corners; follows a transform, taking a width and a radius at
+  the most it stretches them; measures a letter upright or italic as its figure sets it,
+  and places it by its anchor and the whole label's advance. And it finds a letter drawn
+  twice, or twice in one of several figures side by side, or across the cut between them.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -196,59 +199,101 @@ def ink_finding(drawn: str, x: float, y: float, ink: str) -> bool:
 
 # ---------------------------------------------------------------------------------------
 # The clearance cases: strokes and dots beside a letter, read as S22 reads a figure.
-# (S22 is new: Argon's second review of the book-III release found letters crossed by
-# strokes in seven of Euclid's figures, and no rule then measured how near they came.)
+# (S22 is new: Argon's second review of the book-III release found seven letters of
+# Euclid's figures crossed by strokes, and no rule then measured how near they came. A
+# first review of S22 found it took a stroke's width at a transform's mean stretch, read a
+# rect's rounded corners as square, drew a circle of no radius, placed an anchored label
+# with a prime by its capital alone, and counted a letter drawn twice in one of several
+# figures side by side as once in each; each has its case below.)
 
 LINE = '<line x1="100" y1="{y}" x2="200" y2="{y}" stroke="#3b2f2f" stroke-width="1.6"/>'
+UPRIGHT_STROKE = '<line x1="{x}" y1="90" x2="{x}" y2="104" stroke="#3b2f2f" stroke-width="1.6"/>'
 CLEAR_CASES = [   # (what is drawn beside a letter at (150, 100), at 17; the letter, its
-                  # font-style; a finding?)
-    (LINE.format(y=90), "A", "italic", True),               # through the letter
-    (LINE.format(y=110), "A", "italic", False),             # 9 below its baseline
-    (LINE.format(y=101.5), "A", "italic", True),            # 0.7 below it, less half the width
-    (LINE.format(y=101.5), "A", "normal", True),
-    ('<line x1="100" y1="90" x2="200" y2="90" stroke="none"/>', "A", "italic", False),
+                  # font-style and text-anchor; a finding?)
+    (LINE.format(y=90), "A", "italic", "start", True),       # through the letter
+    (LINE.format(y=110), "A", "italic", "start", False),     # 9 below its baseline
+    (LINE.format(y=101.5), "A", "italic", "start", True),    # 1.5 below it: 0.7, less the width
+    (LINE.format(y=101.5), "A", "normal", "start", True),
+    (LINE.format(y=102.5), "A", "italic", "start", True),    # 2.5 below it: 1.7
+    (LINE.format(y=103.5), "A", "italic", "start", False),   # 3.5 below it: 2.7
+    ('<line x1="100" y1="103.5" x2="200" y2="103.5" style="stroke:#3b2f2f;stroke-width:4"/>',
+     "A", "italic", "start", True),                          # a width in style=: 1.5
+    ('<g stroke="#3b2f2f" stroke-width="4"><line x1="100" y1="103.5" x2="200" y2="103.5"/>'
+     '</g>', "A", "italic", "start", True),                  # a width inherited: 1.5
+    ('<line x1="100" y1="90" x2="200" y2="90" stroke="none"/>', "A", "italic", "start", False),
     ('<line x1="100" y1="90" x2="200" y2="90" stroke="#3b2f2f" stroke-dasharray="2 5"/>',
-     "A", "italic", True),
-    ('<path d="M110,94 V150 H200 V94" fill="none" stroke="#3b2f2f"/>', "A", "italic", False),
-    ('<path d="M110,94 V150 H200 V94 Z" fill="none" stroke="#3b2f2f"/>', "A", "italic", True),
-    ('<circle cx="155" cy="94" r="30" fill="none" stroke="#8c7b62"/>', "A", "italic", False),
-    ('<circle cx="155" cy="94" r="6" fill="none" stroke="#8c7b62"/>', "A", "italic", True),
-    ('<circle cx="156" cy="104" r="2.6" fill="#3b2f2f"/>', "A", "italic", True),
-    ('<circle cx="156" cy="108" r="2.6" fill="#3b2f2f"/>', "A", "italic", False),
-    (LINE.format(y=114), "A", "italic", False),
-    ('<g transform="translate(0,-20)">' + LINE.format(y=114) + '</g>', "A", "italic", True),
+     "A", "italic", "start", True),
+    ('<path d="M110,94 V150 H200 V94" fill="none" stroke="#3b2f2f"/>',
+     "A", "italic", "start", False),
+    ('<path d="M110,94 V150 H200 V94 Z" fill="none" stroke="#3b2f2f"/>',
+     "A", "italic", "start", True),
+    ('<circle cx="155" cy="94" r="30" fill="none" stroke="#8c7b62"/>',
+     "A", "italic", "start", False),
+    ('<circle cx="155" cy="94" r="6" fill="none" stroke="#8c7b62"/>',
+     "A", "italic", "start", True),
+    ('<circle cx="155" cy="94" r="0" fill="none" stroke="#8c7b62"/>',
+     "A", "italic", "start", False),                         # no radius: SVG draws nothing
+    ('<rect x="155" y="80" width="0" height="30" fill="none" stroke="#3b2f2f"/>',
+     "A", "italic", "start", False),                         # no width: SVG draws nothing
+    ('<rect x="150" y="100" width="100" height="100" fill="none" stroke="#3b2f2f"/>',
+     "A", "italic", "start", True),                          # its corner at the letter
+    ('<rect x="150" y="100" width="100" height="100" rx="50" fill="none" stroke="#3b2f2f"/>',
+     "A", "italic", "start", False),                         # a circle, 12.9 clear
+    ('<circle cx="156" cy="104" r="2.6" fill="#3b2f2f"/>', "A", "italic", "start", True),
+    ('<circle cx="156" cy="108" r="2.6" fill="#3b2f2f"/>', "A", "italic", "start", False),
+    (LINE.format(y=114), "A", "italic", "start", False),
+    ('<g transform="translate(0,-20)">' + LINE.format(y=114) + '</g>',
+     "A", "italic", "start", True),
+    # Stretched four times upright, a line at 104 is 6.4 wide, and a dot at 105 of
+    # radius 4: each 0.8 or 1 from the letter, though a mean stretch of 2 would clear them.
+    ('<g transform="scale(1,4)"><line x1="100" y1="26" x2="200" y2="26" stroke="#3b2f2f" '
+     'stroke-width="1.6"/></g>', "A", "italic", "start", True),
+    ('<g transform="scale(1,4)"><circle cx="156" cy="26.25" r="1" fill="#3b2f2f"/></g>',
+     "A", "italic", "start", True),
     # An E's top right corner stands 1.7 further right italic than upright.
     ('<line x1="163.5" y1="84" x2="163.5" y2="90" stroke="#3b2f2f" stroke-width="1.6"/>',
-     "E", "italic", True),
+     "E", "italic", "start", True),
     ('<line x1="163.5" y1="84" x2="163.5" y2="90" stroke="#3b2f2f" stroke-width="1.6"/>',
-     "E", "normal", False),
+     "E", "normal", "start", False),
+    # Anchored at its middle or its end, the letter stands left of x; a prime after it
+    # moves it further, by the prime's advance, 5.5 at 17.
+    (UPRIGHT_STROKE.format(x=145), "A", "italic", "middle", True),
+    (UPRIGHT_STROKE.format(x=145), "A", "italic", "start", False),
+    (UPRIGHT_STROKE.format(x=135), "A", "italic", "end", True),
+    (UPRIGHT_STROKE.format(x=135), "A", "italic", "start", False),
+    (UPRIGHT_STROKE.format(x=132), "A′", "italic", "end", True),
+    (UPRIGHT_STROKE.format(x=132), "A", "italic", "end", False),
 ]
 EDGE_CASES = [   # (a letter A's x, at y 100; a finding?)
     (1, True),
     (150, False),
 ]
-TWICE_CASES = [   # (how many times a letter A is drawn, the figure's cases; a finding?)
-    (1, 1, False),
-    (2, 1, True),
-    (2, 2, False),
-    (3, 2, True),
+TWICE_CASES = [   # (the x of each letter A, at y 100; the cuts between figures side by
+                  # side; a finding?)
+    ((150,), (), False),
+    ((60, 180), (), True),
+    ((60, 300), (200,), False),         # once in each of two figures
+    ((60, 120, 300), (200,), True),     # twice in the first
+    ((60,), (64,), True),               # across the cut
 ]
 
 
-def s22_findings(drawn: str, letters: str, cases: int = 1) -> list[str]:
+def s22_findings(drawn: str, letters: str, cuts: tuple[float, ...] = ()) -> list[str]:
     """S22's findings on a parchment canvas with `drawn` and `letters` on it."""
     root = ET.fromstring(
         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
         f'<rect width="400" height="300" fill="#fbf7ee"/>{drawn}{letters}</svg>')
     before = len(style.failures)
-    style.one_letter_one_point(style.ROOT / "figures" / "case.svg", root, cases)
+    style.one_letter_one_point(style.ROOT / "figures" / "case.svg", root, cuts)
     found = [msg for rule, _, _, msg in style.failures[before:] if rule == "S22"]
     del style.failures[before:]
     return found
 
 
-def letter(s: str, x: float = 150, y: float = 100, font_style: str = "italic") -> str:
-    return f'<text x="{x}" y="{y}" font-size="17" font-style="{font_style}">{s}</text>'
+def letter(s: str, x: float = 150, y: float = 100, font_style: str = "italic",
+           anchor: str = "start") -> str:
+    return (f'<text x="{x}" y="{y}" font-size="17" font-style="{font_style}" '
+            f'text-anchor="{anchor}">{s}</text>')
 
 
 # ---------------------------------------------------------------------------------------
@@ -299,12 +344,13 @@ class Clearance(unittest.TestCase):
     """The clearance cases, and a letter drawn more than once."""
 
     def test_clearance_cases(self):
-        for drawn, s, font_style, want in CLEAR_CASES:
-            with self.subTest(drawn=drawn, letter=s, style=font_style):
-                found = s22_findings(drawn, letter(s, font_style=font_style))
+        for drawn, s, font_style, anchor, want in CLEAR_CASES:
+            with self.subTest(drawn=drawn, letter=s, style=font_style, anchor=anchor):
+                found = s22_findings(drawn, letter(s, font_style=font_style, anchor=anchor))
                 self.assertEqual(bool(found), want,
                                  f"S22 {'misses' if want else 'wrongly finds'} a stroke "
-                                 f"near {font_style} {s}: {drawn}: {found}")
+                                 f"near {font_style} {s}, anchored at its {anchor}: "
+                                 f"{drawn}: {found}")
 
     test_clearance_cases.__doc__ = (f"S22 reads {len(CLEAR_CASES)} strokes and dots beside "
                                     "a letter rightly")
@@ -320,13 +366,12 @@ class Clearance(unittest.TestCase):
     test_edge_cases.__doc__ = f"S22 reads {len(EDGE_CASES)} letters by the canvas's edge rightly"
 
     def test_twice_cases(self):
-        for k, cases, want in TWICE_CASES:
-            with self.subTest(drawn=k, cases=cases):
-                drawn = "".join(letter("A", x=60 + 120 * i) for i in range(k))
-                found = s22_findings("", drawn, cases)
+        for xs, cuts, want in TWICE_CASES:
+            with self.subTest(at=xs, cuts=cuts):
+                found = s22_findings("", "".join(letter("A", x=x) for x in xs), cuts)
                 self.assertEqual(bool(found), want,
                                  f"S22 {'misses' if want else 'wrongly finds'} a letter "
-                                 f"drawn {k} times in a figure of {cases} case(s): {found}")
+                                 f"drawn at x {xs}, cut at {cuts}: {found}")
 
     test_twice_cases.__doc__ = (f"S22 reads {len(TWICE_CASES)} figures drawing a letter "
                                 "once or more rightly")

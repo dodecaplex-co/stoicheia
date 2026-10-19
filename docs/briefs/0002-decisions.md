@@ -1318,27 +1318,31 @@ findings:
 
 ## 19 October 2026
 
-- **One letter, one point: S22.** Argon's second review of the book-III release found
-  seven letters of Euclid's figures crossed by strokes, so that a reader could not be sure
-  which point each names: III.17's D, III.16's G, III.8's K and L, III.33's F in two of its
-  three figures, and I.2's E. We thank Argon warmly for so careful an audit
+- **One letter, one point: S22.** Argon's second review of the book-III release found seven
+  letters of Euclid's figures crossed or all but touched by strokes: III.17's D, III.16's G,
+  III.8's K and L, III.33's F in two of its three figures, and I.2's E. We thank Argon
+  warmly for so careful an audit
   ([#68](https://github.com/jackChallis/stoicheia/issues/68)). The issue read the seven as
   letters naming two points; what Argon measured was strokes through letters, and the rule
   holds a figure to both. [`scripts/check_style.py`](../../scripts/check_style.py) gains a
   rule, S22, which fails a figure, Euclid's or at a glance, that draws a letter twice (save
-  once in each of Heath's figures side by side, in III.25, III.33, III.35 and III.36), or
-  that lets a stroke, a dot or the canvas's edge come within 2 of a letter. A letter is
-  measured as Georgia draws its capital, upright or italic as the figure sets it, by the
-  convex hull of its outline's points, which the script carries as numbers
-  (`GLYPHS_UPRIGHT`, `GLYPHS_ITALIC`), read once from the fonts, so that it still needs
-  only Python's standard library; `path_rings` now also says which subpaths a Z closes,
-  and what S20 reads is unchanged.
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains 22 cases of S22, and
-  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) files its findings
-  under P8, the figures, as [ACCEPTANCE](../ACCEPTANCE.md) now says.
-  [STYLE](../STYLE.md), sections 7 and 8, gives the rule, and the reviewer's checklist,
-  item 16, asks that a letter naming one of Heath's points name no straight line or circle
-  in the Lean. A rule is added and nothing is weakened. It lands after the figures' change
-  for #68, which moves Argon's letters and eight more found by the same measure, and after
-  III.16's G stands clear of the chord AC, a change for the lane moving mixed angles
+  once in each of Heath's figures side by side, in III.25, III.33, III.35 and III.36, split
+  at straight cuts the script gives), or that lets a stroke, a dot or the canvas's edge come
+  within 2 of a letter. A letter is measured as Georgia draws its capital, upright or italic
+  as the figure sets it, by the convex hull of its outline's points, which the script
+  carries as numbers (`GLYPHS_UPRIGHT`, `GLYPHS_ITALIC`), read once from the fonts, so that
+  it still needs only Python's standard library; `path_rings` now also says which subpaths a
+  Z closes, and what S20 reads is unchanged.
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains 39 cases of S22,
+  among them one or more for each of five faults that a first review of the rule found: a
+  stroke's width taken at a transform's mean stretch, a rect's rounded corners read as
+  square, a circle of no radius read as drawn, an anchored label with a prime placed by its
+  capital alone, and a letter drawn twice in one of the figures side by side counted as once
+  in each; and [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) files its
+  findings under P8, the figures, as [ACCEPTANCE](../ACCEPTANCE.md) now says.
+  [STYLE](../STYLE.md), sections 7 and 8, gives the rule, and the reviewer's checklist, item
+  16, asks that a letter naming one of Heath's points name no straight line or circle in the
+  Lean. A rule is added and nothing is weakened. It lands after the figures' change for #68,
+  which moves Argon's letters and eight more found by the same measure, and after III.16's G
+  stands clear of the chord AC, a change for the lane moving mixed angles
   ([#57](https://github.com/jackChallis/stoicheia/issues/57)), whose page it is.

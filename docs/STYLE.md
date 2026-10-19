@@ -472,13 +472,14 @@ and none in the figure; a letter Heath gives a point the Lean does not need (III
 D) is still drawn; the letters inside shared steps do not count; and "PORISM" is not a
 letter.
 
-**One letter, one point [checked].** A letter names one point, and the figure leaves no
-doubt which. It draws each letter once, or once in each of Heath's figures where two or
-three stand side by side; and each letter stands 2 clear of every stroke and every dot,
-and of the canvas's edge, so that no straight line or circle runs through it and nothing
-touches the frame. The same holds at a glance. In the Lean, a letter that names one of
-Heath's points names no straight line or circle, which a reviewer checks (section 8, the
-reviewer's checklist, item 16).
+**One letter, one point [checked].** A letter names one thing, a point unless Heath gives
+it to a straight line or a figure (below), and the figure leaves no doubt which. It draws
+each letter once, or once in each of Heath's figures where two or three stand side by
+side; and each letter stands 2 clear of every stroke and every dot, and of the canvas's
+edge, so that no straight line or circle runs through it and nothing touches the frame.
+The same holds at a glance. In the Lean, a letter that names one of Heath's points names
+no straight line or circle, which a reviewer checks (section 8, the reviewer's checklist,
+item 16).
 
 **The same letters at a glance [checked].** Byrne's book uses coloured diagrams and
 symbols "instead of letters for the greater ease of learners", as its title says, and its
@@ -578,7 +579,7 @@ which CI runs just before the script ([WORKFLOW](WORKFLOW.md), section 8).
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
 | S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic), not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
-| S22 | One letter, one point: a letter drawn twice in a figure, save once in each of Heath's figures side by side (three in III.25 and III.33, two in III.35 and III.36); or a letter that a stroke, a dot or the canvas's edge comes within 2 of. A letter is measured as Georgia draws its capital, upright or italic as the figure sets it, by the convex hull of the points of its outline, at its x, y, anchor and size, transforms applied; a stroke (a `<line>`, `<polyline>`, `<polygon>`, `<rect>`, `<circle>`, `<ellipse>`, or each subpath of a `<path>`, closed only where a Z closes it, a dashed one read whole) less half its width; a dot (a filled `<circle>` of radius 6 at most) less its radius. The hull holds the ink and spans its hollows, so a stroke that ends in an L's corner or a K's notch is found while the ink is clear: move the letter. A prime or a subscript after the capital is not measured | Idea figures, Euclid's figures |
+| S22 | One letter, one point: a letter drawn twice in a figure, or twice in one of Heath's figures where two or three stand side by side (III.25, III.33, III.35, III.36, each split at the x of the straight cuts the script gives, a letter belonging to the figure its middle stands in), or across such a cut; or a letter that a stroke, a dot or the canvas's edge comes within 2 of. A letter is measured as Georgia draws its capital, upright or italic as the figure sets it, by the convex hull of the points of its outline, at its x, y and size, anchored by the whole label's advance (a prime or a subscript after it included, though not itself measured), transforms applied; a stroke (a `<line>`, `<polyline>`, `<polygon>`, `<rect>` with its corners rounded as rx and ry round them, `<circle>`, `<ellipse>`, or each subpath of a `<path>`, closed only where a Z closes it, a dashed one read whole, a shape that SVG does not draw left out) less half its width; a dot (a filled `<circle>` of radius 6 at most) less its radius; a width and a radius each taken at the most its transform stretches it. The hull holds the ink and spans its hollows, so a stroke that ends in an L's corner or a K's notch is found while the ink is clear: move the letter | Idea figures, Euclid's figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 

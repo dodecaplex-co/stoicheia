@@ -801,7 +801,7 @@ PATH_ARITY = {"m": 2, "l": 2, "h": 1, "v": 1, "c": 6, "s": 4, "q": 4, "t": 2, "a
 ARC_STEP = math.radians(3)   # an arc, in a straight piece to each 3 degrees of its sweep
 CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
 
-# One letter, one point (S22; STYLE, sections 7 and 8). A letter names one point: a figure
+# One letter, one point (S22; STYLE, sections 7 and 8). A letter names one thing: a figure
 # draws it once, or once in each of Heath's figures where they stand side by side, and it
 # stands clear of every stroke, every dot and the canvas's edge, so that no line runs
 # through it and it is not read as another point's. A letter is measured as Georgia, the
@@ -812,12 +812,22 @@ CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
 # read from the fonts with fontTools once, so that the script needs neither. The hull
 # misses no stroke that comes near the ink; it also spans a letter's hollows (an L's
 # corner, a K's notch), so a stroke that ends in one is found while the ink is clear. A
-# prime or a subscript after the capital is not measured.
+# prime or a subscript after the capital is not measured, but its advance (SUFFIXES, the
+# same upright and italic) places the capital when the label is anchored at its middle or
+# its end.
 CLEAR = 2.0     # the least room between a letter's hull and a stroke, a dot or the edge
 EM = 2048
+SUFFIXES = {"′": 658, "'": 441, **{chr(0x2080 + i): 1024 for i in range(10)}}
 # The figures where two or three of Heath's figures stand side by side, one to a case
-# (STYLE, section 7), each with its number of cases: a letter is drawn once in each.
-SIDE_BY_SIDE = {("III", 25): 3, ("III", 33): 3, ("III", 35): 2, ("III", 36): 2}
+# (STYLE, section 7): the x of each straight cut between two of them, in the canvas's
+# units. A letter belongs to the case its hull's middle stands in, is drawn once in each,
+# and stands wholly on one side of every cut.
+SIDE_BY_SIDE = {
+    ("III", 25): (150.0, 275.0),
+    ("III", 33): (147.0, 290.0),
+    ("III", 35): (222.0,),
+    ("III", 36): (190.0,),
+}
 GLYPHS_UPRIGHT = {
     "A": (1374, (-41, 0, 1421, 0, 1421, 71, 739, 1439, 659, 1439, -41, 71)),
     "B": (1339, (95, 0, 857, 0, 1026, 48, 1162, 141, 1248, 287, 1248, 483, 1170, 1196,
@@ -1398,23 +1408,60 @@ def check_idea_letters(path: Path, root, required: bool) -> int:
 def glyph_hull(own, eff, m, s: str) -> list[tuple[float, float]]:
     """The corners of the hull of letter s's capital (S22), upright or italic as its
     font-style sets it, where the text element puts it: x and y give the start of its
-    baseline (its middle or its end, by text-anchor), at its font-size, transforms
+    baseline (its middle or its end, by text-anchor, the whole label's advance counted,
+    a prime or a subscript after the capital included), at its font-size, transforms
     applied."""
     glyphs = GLYPHS_ITALIC if letter_style(eff) == "italic" else GLYPHS_UPRIGHT
     advance, corners = glyphs[s[0]]
+    whole = advance + sum(SUFFIXES.get(c, 0) for c in s[1:])
     k = (number(eff.get("font-size")) or 16.0) / EM
-    x = coord(own.get("x")) + {"middle": -advance * k / 2, "end": -advance * k}.get(
+    x = coord(own.get("x")) + {"middle": -whole * k / 2, "end": -whole * k}.get(
         (eff.get("text-anchor") or "start").strip(), 0.0)
     y = coord(own.get("y"))
     return [at(m, x + corners[i] * k, y - corners[i + 1] * k)
             for i in range(0, len(corners), 2)]
 
 
+def stretch(m) -> float:
+    """The most an affine map m lengthens any length: its larger singular value. A
+    stroke's width and a dot's radius are taken at this, so that a map that stretches one
+    way more than another never makes them seem thinner than they are (S22)."""
+    a, b, c, d = m[:4]
+    t, det = a * a + b * b + c * c + d * d, a * d - b * c
+    return math.sqrt((t + math.sqrt(max(0.0, t * t - 4 * det * det))) / 2)
+
+
+def rect_outline(own) -> list[tuple[float, float]] | None:
+    """A rect's outline, its corners rounded by rx and ry as SVG rounds them (one given
+    stands for both, and each is at most half the side), in short straight pieces; None
+    when it has no width or no height, and SVG draws nothing."""
+    x0, y0 = coord(own.get("x")), coord(own.get("y"))
+    w, h = coord(own.get("width")), coord(own.get("height"))
+    if w <= 0 or h <= 0:
+        return None
+    rx, ry = number(own.get("rx")), number(own.get("ry"))
+    rx = ry if rx is None else rx
+    ry = rx if ry is None else ry
+    rx, ry = min(rx or 0.0, w / 2), min(ry or 0.0, h / 2)
+    if rx <= 0 or ry <= 0:
+        return [(x0, y0), (x0 + w, y0), (x0 + w, y0 + h), (x0, y0 + h), (x0, y0)]
+    out = []
+    quarter = max(1, round(math.pi / 2 / ARC_STEP))
+    for cx, cy, start in ((x0 + w - rx, y0 + ry, -90), (x0 + w - rx, y0 + h - ry, 0),
+                          (x0 + rx, y0 + h - ry, 90), (x0 + rx, y0 + ry, 180)):
+        for i in range(quarter + 1):
+            a = math.radians(start + 90 * i / quarter)
+            out.append((cx + rx * math.cos(a), cy + ry * math.sin(a)))
+    return out + out[:1]
+
+
 def strokes(root):
     """(what it is, its points, half its width) for each stroke a figure draws, as a run
-    of straight pieces: a line, a polyline, a polygon or a rect's outline, each subpath of
-    a path (closed where a Z closes it), a circle or an ellipse in short straight pieces;
-    transforms applied, and a dashed stroke read whole (S22)."""
+    of straight pieces: a line, a polyline, a polygon or a rect's outline (its corners
+    rounded as rx and ry round them), each subpath of a path (closed where a Z closes it),
+    a circle or an ellipse in short straight pieces; transforms applied, the width taken
+    at the most the transform stretches it, a dashed stroke read whole, and a shape SVG
+    does not draw (a circle of no radius, a rect of no width) left out (S22)."""
     for el, own, eff, m, _ in placed(root):
         t = tag(el)
         w = number(eff.get("stroke-width"))
@@ -1433,32 +1480,33 @@ def strokes(root):
             rings = path_rings(own.get("d", ""), closed)
             runs = [ring + ring[:1] if shut else ring for ring, shut in zip(rings, closed)]
         elif t == "rect":
-            x0, y0 = coord(own.get("x")), coord(own.get("y"))
-            x1, y1 = x0 + coord(own.get("width")), y0 + coord(own.get("height"))
-            runs = [[(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)]]
+            outline = rect_outline(own)
+            runs = [outline] if outline else []
         else:
             cx, cy = coord(own.get("cx")), coord(own.get("cy"))
             rx = coord(own.get("r")) if t == "circle" else coord(own.get("rx"))
             ry = coord(own.get("r")) if t == "circle" else coord(own.get("ry"))
             steps = round(math.tau / ARC_STEP)
-            runs = [[(cx + rx * math.cos(i * ARC_STEP), cy + ry * math.sin(i * ARC_STEP))
-                     for i in range(steps + 1)]]
-        half = w / 2 * math.sqrt(abs(m[0] * m[3] - m[1] * m[2]))
+            runs = [] if rx <= 0 or ry <= 0 else [
+                [(cx + rx * math.cos(i * ARC_STEP), cy + ry * math.sin(i * ARC_STEP))
+                 for i in range(steps + 1)]]
+        half = w / 2 * stretch(m)
         kind = "a dashed line" if eff.get("stroke-dasharray") and t == "line" else \
             ("an " if t == "ellipse" else "a ") + t
         for run in runs:
-            yield kind, [at(m, x, y) for x, y in run], half
+            if len(run) > 1:
+                yield kind, [at(m, x, y) for x, y in run], half
 
 
 def dots(root):
     """(where, radius) for each dot a figure draws: a filled circle of radius DOT at most,
-    transforms applied (S22, as S21 reads a dot)."""
+    transforms applied, its radius taken at the most the transform stretches it (S22, as
+    S21 reads a dot)."""
     for el, own, eff, m, _ in placed(root):
         r = coord(own.get("r"))
         filled = (eff.get("fill") or "black").strip().lower() != "none"
         if tag(el) == "circle" and 0 < r <= DOT and filled:
-            scale = math.sqrt(abs(m[0] * m[3] - m[1] * m[2]))
-            yield at(m, coord(own.get("cx")), coord(own.get("cy"))), r * scale
+            yield at(m, coord(own.get("cx")), coord(own.get("cy"))), r * stretch(m)
 
 
 def point_gap(p, a, b) -> float:
@@ -1513,36 +1561,42 @@ def nearest(hull, pieces, spots) -> tuple[float, str] | None:
     return best
 
 
-def one_letter_one_point(path: Path, root, cases: int = 1) -> None:
-    """S22: a figure draws each letter once, or once in each of `cases` figures side by
-    side; and each letter stands CLEAR of every stroke, every dot and the canvas's edge,
+def one_letter_one_point(path: Path, root, cuts: tuple[float, ...] = ()) -> None:
+    """S22: a figure draws each letter once, or, where Heath's figures stand side by side
+    with `cuts` between them, once in each, every letter wholly on one side of every cut;
+    and each letter stands CLEAR of every stroke, every dot and the canvas's edge,
     measured by the hull of its capital as Georgia draws it, upright or italic."""
     vb = [float(v) for v in NUM.findall(root.get("viewBox", ""))]
     pieces, spots = list(strokes(root)), list(dots(root))
-    count: dict[str, int] = defaultdict(int)
+    count: dict[tuple[int, str], int] = defaultdict(int)
     for el, own, eff, m, _ in placed(root):
         s = text_of(el)
         if tag(el) != "text" or not LETTER.fullmatch(s):
             continue
-        count[s] += 1
         hull = glyph_hull(own, eff, m, s)
+        xs, ys = [p[0] for p in hull], [p[1] for p in hull]
         where = f"letter {s} at ({coord(own.get('x')):g}, {coord(own.get('y')):g})"
+        count[(sum(1 for c in cuts if (min(xs) + max(xs)) / 2 > c), s)] += 1
+        for c in cuts:
+            if min(xs) < c < max(xs):
+                fail("S22", path, 0, f"{where} stands across the cut at x {c:g} between two "
+                     "of the figures side by side (SIDE_BY_SIDE)")
         near = nearest(hull, pieces, spots)
         if near:
             gap, kind = near
             fail("S22", path, 0, f"{where} meets {kind}" if gap <= 0 else
                  f"{where} stands {gap:.1f} from {kind}, under {CLEAR:g}: move it clear")
         if len(vb) == 4:
-            xs, ys = [p[0] for p in hull], [p[1] for p in hull]
             edge = min(min(xs) - vb[0], vb[0] + vb[2] - max(xs),
                        min(ys) - vb[1], vb[1] + vb[3] - max(ys))
             if edge < CLEAR:
                 fail("S22", path, 0, f"{where} stands {max(edge, 0):.1f} from the canvas's "
                      f"edge, under {CLEAR:g}")
-    for s, k in sorted(count.items()):
-        if k > cases:
-            fail("S22", path, 0, f"letter {s} drawn {k} times: one letter names one point"
-                 + (f", once in each of its {cases} figures side by side" if cases > 1 else ""))
+    for (case, s), k in sorted(count.items()):
+        if k > 1:
+            fail("S22", path, 0, f"letter {s} drawn {k} times"
+                 + (f" in the figure {case + 1} of {len(cuts) + 1} side by side" if cuts else "")
+                 + ": one letter names one point")
 
 
 def heath_letters(book: str, n: int) -> set[str]:
@@ -1638,7 +1692,7 @@ def check_euclid(path: Path, ref: str) -> None:
         if stale:
             fail("S16", path, 0, f"the exception for {', '.join(sorted(stale))} in "
                  "LETTER_EXCEPTIONS no longer applies; remove it")
-    one_letter_one_point(path, root, SIDE_BY_SIDE.get((book, n), 1))
+    one_letter_one_point(path, root, SIDE_BY_SIDE.get((book, n), ()))
 
 
 def check_figures(required: bool) -> None:
