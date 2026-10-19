@@ -19,7 +19,15 @@ note = "Euclid reads off his figure that the angle ABD is part of ABC; the Lean 
 
 [review]
 stage = "full"
-commit = "2a34715"
+commit = "4ae9714"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:d55c3dc89613050d"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

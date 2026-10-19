@@ -37,7 +37,15 @@ note = "Euclid leaves the other two pairs to the same argument. The Lean proves 
 
 [review]
 stage = "full"
-commit = "dcb1767"
+commit = "4ae9714"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:143bf867e071afbd"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
