@@ -120,7 +120,7 @@ theorem foot_between {A B E F : Point} {α : Circle} (hE : Centre E α) (hA : On
 
 /-- Every straight line has a foot of the perpendicular from any point (`Foot`, Definitions
 III.4 and III.5): the perpendicular drawn to it, or the point itself when it is on the
-straight line (and when `A` and `B` are one point). [I. 12] -/
+straight line (and when A and B are one point). [I. 12] -/
 theorem Foot.exists (E A B : Point) : ∃ F : Point, Foot E A B F := by
   by_cases hE_AB : Collinear A B E
   · /- E is on AB, including when A and B coincide: E itself is the foot. -/
@@ -129,7 +129,7 @@ theorem Foot.exists (E A B : Point) : ∃ F : Point, Foot E A B F := by
     obtain ⟨F, hF, hEF⟩ := BookI.Prop12 (Triangle.ne₁₂ hE_AB) hE_AB
     exact ⟨F, hF, fun h => False.elim (hE_AB h), fun _ => hEF⟩
 
-/-- The foot of the perpendicular is one point: two perpendiculars from `E` to one straight
+/-- The foot of the perpendicular is one point: two perpendiculars from E to one straight
 line would make a triangle with two right angles, and two angles of a triangle are less
 than two right angles. So `Foot E A B F` may be read "F is the foot". [I. 17] -/
 theorem Foot.unique {E A B F F' : Point} (hF : Foot E A B F) (hF' : Foot E A B F') :

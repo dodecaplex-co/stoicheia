@@ -3,11 +3,11 @@
 scope = "full"
 note = "With its companion: `Prop14.general` takes any two straight lines in the circle, a diameter at no distance; `Prop14` keeps two not through the centre."
 companions = ["III.14 general"]
-fingerprint = "sha256:ab5dba1e761e8618"
+fingerprint = "sha256:ce986697315c50ff"
 
 [route]
 kind = "euclid"
-note = "The companion takes Euclid's case, two straight lines not through the centre, from `Prop14`. A straight line through the centre is a diameter, two radii together (`Prop14.diameter_sum`), its foot the centre; and of a diameter and another straight line, the diameter is the greater [I. 20]."
+note = "The companion takes Euclid's case, two straight lines not through the centre, from `Prop14`. A straight line through the centre is a diameter, two radii together (`Prop14.diameter_sum`), its foot the centre; and of a diameter and a straight line not through the centre, the diameter is the greater [I. 20]."
 
 [representation]
 tags = ["centre-given"]
@@ -28,8 +28,11 @@ at = "Next, let the straight lines AB, CD be equally distant from the centre"
 kind = "grouped"
 note = "The converse needs no Lean of its own until \"And, since AE is equal to CE\": the halves, AB double of AF and CD of CG, were found once, before the two directions part."
 
+[figure]
+case = "two equal straight lines AB and CD, neither through E"
+
 [review]
 stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:2c5b7de80bddf235"
+commit = "bb1589c5"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:39ec7343c9e88e1a"
