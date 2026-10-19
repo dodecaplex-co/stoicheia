@@ -1355,7 +1355,10 @@ findings:
   statements it closes; fails if III.2, III.5 or III.6, the rows it has always found, stops
   closing by a rule; and stops if a Lean process ends before its file does, or an error
   falls in a file's preamble. It reads a try's messages from its `set_option` line, so that
-  one reported there is not counted against the try before it.
+  one reported there is not counted against the try before it, and it reads an error
+  whether or not Lean names its kind after the word, as Lean 4.35 does for some
+  (`error(lean.unknownIdentifier): …`), so that such an error in the pass over the rules
+  stops the screen, and a try that stops on one is listed.
   [`tests/test_screen.py`](../../tests/test_screen.py) (new) puts the screen's own functions
   to small cases with no Lean: the attempts and tries it makes, its reading of Lean's logs,
   of the rules refused and of the definitions reached, and the known rows. The protected

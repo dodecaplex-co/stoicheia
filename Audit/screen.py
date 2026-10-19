@@ -240,6 +240,11 @@ run_cmd do
 # The kinds of attempt, each the start of a try's name; the bare try has no rules.
 KINDS = ("bare", "single", "family", "pair", "fampair")
 
+# An error in Lean's log, after the file, line and column: Lean may name the kind of error
+# after the word (`error(lean.unknownIdentifier): ...`), or not (`error: ...`). The message
+# is the group.
+ERROR = r"error(?:\([^)\s]*\))?: (.*)"
+
 
 def ident(s: str) -> str:
     return re.sub(r"\W", "_", s)
@@ -289,7 +294,7 @@ def refusals(cases: list[tuple[str, str]], name: str, log: str) -> dict[str, set
     if END not in log:
         sys.exit("screen: the pass over the rules stopped early (see Refused.log)")
     found: dict[str, set[str]] = {mode: set() for mode in MODES}
-    for m in re.finditer(rf"{re.escape(name)}:(\d+):\d+: error: (.*)", log):
+    for m in re.finditer(rf"{re.escape(name)}:(\d+):\d+: {ERROR}", log):
         k = (int(m.group(1)) - 3) // 3
         if not 0 <= k < len(cases) or not re.search(
                 r"invalid `grind`|failed to find patterns", m.group(2)):
@@ -399,7 +404,7 @@ def outcomes(name: str, text: str, log: str) -> tuple[int, list[str], list[str],
     bad = {int(m.group(1)) for m in re.finditer(
         rf"{re.escape(name)}:(\d+):\d+: (error|warning: declaration uses)", log)}
     slow, stop = set(), set()
-    for m in re.finditer(rf"{re.escape(name)}:(\d+):\d+: error: (.*)", log):
+    for m in re.finditer(rf"{re.escape(name)}:(\d+):\d+: {ERROR}", log):
         timeout = re.match(r"\(deterministic\) timeout|\(kernel\) deterministic timeout",
                            m.group(2))
         (slow if timeout else stop).add(int(m.group(1)))

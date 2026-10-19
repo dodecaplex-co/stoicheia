@@ -18,7 +18,8 @@ functions to small inputs, each with the answer the screen should give.
   the bare attempt is one try, with no rule.
 * Lean's log of a file of tries: a try closes only when nothing is reported from its
   `set_option` line to the next try's, neither an error nor a `sorry`; a timeout is told
-  apart from any other error; an error on a try's `set_option` line is that try's, not the
+  apart from any other error, and an error is read whether or not Lean names its kind
+  after the word; an error on a try's `set_option` line is that try's, not the
   one before; a log that stops before the file's last line, or an error in the preamble,
   stops the screen.
 * The pass over the rules: an error on a case's lines is a refusal of that case's rule in
@@ -156,6 +157,14 @@ class Outcomes(unittest.TestCase):
         self.assertEqual(self.read(log), (4, ["pair__A__P__Q"], ["single__A__P"],
                                           ["single__A__Q"]))
 
+    def test_an_error_that_names_its_kind_is_still_read(self):
+        # Lean 4.35 prints some errors with their kind after the word, as here.
+        log = (message(self.line["single__A__P"], 0, "error(lean.unknownConstant): Unknown "
+                       "constant `Elements.BookI.Prop1`") + END_LINE)
+        _, closed, slow, stopped = self.read(log)
+        self.assertEqual((slow, stopped), ([], ["single__A__P"]))
+        self.assertNotIn("single__A__P", closed)
+
     def test_a_grind_failure_without_sorry_still_does_not_close(self):
         log = message(self.line["single__A__Q"] + 4, 4, "error: `grind` failed") + END_LINE
         _, closed, _, stopped = self.read(log)
@@ -218,6 +227,8 @@ class Refusals(unittest.TestCase):
 
     def test_any_other_error_stops_the_screen(self):
         for line, what in ((4, "error: unknown identifier 'Elements.Postulate1'"),
+                           (4, "error(lean.unknownIdentifier): Unknown identifier "
+                               "`Elements.Postulate1`"),
                            (1, "error: invalid `grind` parameter")):
             with self.subTest(line=line), self.assertRaises(SystemExit):
                 screen.refusals(self.cases, "Refused.lean",
