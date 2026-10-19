@@ -25,6 +25,7 @@ Book I's records are being taken to the stage `full` by their owner, III.24's mo
 - **I.13** `[figure]`: `case = "AB leaning towards C, as in Heath's figure"` (acceptance item P8).
 - **I.24** `[figure]`: `case = "F beyond EG, on the opposite side from D, as in Heath's figure"` (acceptance item P8).
 - **III.16** `[figure]`: `case = "FA off the centre, with G apart from A, as in Heath's figure"` (acceptance item P8).
+- **III.31** `[figure]`: `case = "B in the greater segment ABC and D in the less segment ADC, with BC a diameter and BA produced through A to F"` (acceptance item P8).
 - **I.7** `[figure]`: `note = "Like Heath's, this figure draws the impossible supposition: C and D on one side of AB, with CA equal to DA and CB equal to DB."`
 - **I.8** `[figure]`: `note = "Like Heath's, this figure draws the impossible supposition: BA, AC falling beside ED, DF, as EG, GF."`
 - **I.14** `[figure]`: `note = "Like Heath's, this figure draws the impossible supposition: BE in a straight line with CB, and so drawn apart from BD."`
@@ -140,7 +141,7 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 | [III.28](../../book/III/28.md) | [n71](https://archive.org/download/thirteenbookseu00heibgoog/page/n71.jpg) | As Heath's. |
 | [III.29](../../book/III/29.md) | [n72](https://archive.org/download/thirteenbookseu00heibgoog/page/n72.jpg) | As Heath's. |
 | [III.30](../../book/III/30.md) | [n73](https://archive.org/download/thirteenbookseu00heibgoog/page/n73.jpg) | As Heath's. |
-| [III.31](../../book/III/31.md) | [n74](https://archive.org/download/thirteenbookseu00heibgoog/page/n74.jpg) | As Heath's. Its record, which is to name the case drawn, belongs to the lane moving III.31 into the edition. |
+| [III.31](../../book/III/31.md) | [n74](https://archive.org/download/thirteenbookseu00heibgoog/page/n74.jpg) | As Heath's. Its record, which is to name the case drawn, belongs to the lane moving III.31 into the edition (a line is proposed above). |
 | [III.32](../../book/III/32.md) | [n78](https://archive.org/download/thirteenbookseu00heibgoog/page/n78.jpg) | As Heath's. The case it draws is now named (D on F's side of BA and apart from A). |
 | [III.33](../../book/III/33.md) | [n79](https://archive.org/download/thirteenbookseu00heibgoog/page/n79.jpg), [n80](https://archive.org/download/thirteenbookseu00heibgoog/page/n80.jpg), [n81](https://archive.org/download/thirteenbookseu00heibgoog/page/n81.jpg) | As Heath's, his three figures side by side (acute, right, obtuse). |
 | [III.34](../../book/III/34.md) | [n83](https://archive.org/download/thirteenbookseu00heibgoog/page/n83.jpg) | As Heath's. |
