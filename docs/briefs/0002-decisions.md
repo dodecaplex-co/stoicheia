@@ -1418,6 +1418,24 @@ findings:
   derived facts. Proposition and porism statements, definitions and `--` lines are
   unchanged; the records whose Lean changed were read again and stamped by readers who
   wrote none of them.
+- **The numerical checks, made ready for the second axiom retirement.** This preparation
+  keeps all 79 axioms in place. Under [WORKFLOW](../WORKFLOW.md), section 10, the check
+  change lands in a pull request of its own before the retirement it judges. The 31 laws
+  due to become theorems also have derived properties, so their numerical checks survive
+  removal from the axiom registry. Protected files changed relative to `lean/retire-axioms`:
+  [`tests/model/derived.py`](../../tests/model/derived.py) keeps each of those 31 laws'
+  predicates word for word, alongside the eight already retained;
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py) and
+  [`tests/model/structured.py`](../../tests/model/structured.py) call each by its
+  `derived.` name on the existing configurations and newly sample the laws they did not
+  yet reach, five in the exhaustive harness and ten in the structured harness;
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records the 39 derived properties
+  and the two harnesses' counts. No check is weakened: comparing each new derived
+  predicate's body with its law in `tests/model/search.py` found all 31 byte-identical,
+  with the same parameters, guards and conclusions. The eight earlier predicates stay
+  unchanged. The added samples let the unchanged `tests/model/run.py` requirement hold
+  for every derived property: each exhaustive or structured run must report it with its
+  hypotheses met and no counterexample, independently of the axiom registry.
 - **Thirty-one more axioms retired, 79 to 48 (proposed, pending the evidence).** The owner
   decided on 19 October 2026: "Please do both. 79 is rather large with so many books in
   front of us." That is, the eight above, and then the largest further set of
