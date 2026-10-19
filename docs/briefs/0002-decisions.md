@@ -1334,3 +1334,15 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+- **III.1's porism has its whole axiom list pinned.** The first expectation in
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json), a
+  protected file, replaces `includes: ["Tacit.centre_unique"]` with `equals` holding the
+  full list regenerated from main at `bd3b72a`, in `facts.json`'s order. The porism's own
+  entry carries every assumption its proof uses: Definition I.15, Postulates 1 to 4 and
+  the reviewed 57 tacit rules, `Tacit.centre_unique` among them today. The `ref`, `field`
+  and count of 57 tacit rules stay as they are; no other expectation changes. This makes
+  the check stricter on its own, before C6b: safe_push treats dropping an `includes`
+  member as a check change and keeps it apart from the content it judges, while an
+  existing `equals` value and `count.is` may move with that content. Lane 3 can then
+  reprove the porism by Euclid's reductio, move the pinned list and count to that proof's
+  assumptions, and add `excludes: ["Tacit.centre_unique"]` in its content pull request.
