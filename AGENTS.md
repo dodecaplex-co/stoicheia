@@ -37,10 +37,10 @@ The rules and the priorities are Astra's, from the
 
 | Requirements: always | Defaults: usually, and a departure has a reason |
 |---|---|
-| Accurate statements, with their scope stated ([FORMALIZATION](docs/FORMALIZATION.md), section 2) | A mishnah of 250–450 words in three to five paragraphs ([STYLE](docs/STYLE.md), section 3) |
-| Exact quotations, with checked attribution (STYLE, section 5) | Short, proposition-specific bold leads |
+| Accurate statements, with their scope stated ([FORMALIZATION](docs/FORMALIZATION.md), section 2) | A mishnah as long as its proposition needs, with no count of words or paragraphs ([STYLE](docs/STYLE.md), section 3) |
+| Exact quotations, with checked attribution (STYLE, section 5) | Bold leads only where a hook helps, each proposition-specific |
 | An accurate account of the route (FORMALIZATION, section 5) | Four Lean names at most in a mishnah |
-| Omitted or reformulated clauses visible on the page (STYLE, section 2) | "The modern way" as a short last paragraph |
+| Omitted or reformulated clauses visible on the page (STYLE, section 2) | "The modern way" only where it helps, as a short last paragraph |
 | Valid dependency and certificate claims (FORMALIZATION, sections 8 and 9) | "We" where it comes naturally, with no count |
 | Figures that agree with the argument (STYLE, section 7) | The exact stroke weights of a figure |
 
