@@ -135,8 +135,8 @@ theorem EqualCircles.symm (h : EqualCircles α β) : EqualCircles β α := by
   obtain ⟨G, H, P, Q, hG, hH, hP, hQ, hr⟩ := h
   exact ⟨H, G, Q, P, hH, hG, hQ, hP, hr.symm⟩
 
-/-- Cutting is symmetric, as "cut one another" is (brief 0008, question 15). -/
-theorem CirclesCut.symm (h : CirclesCut α β) : CirclesCut β α := by
+/-- Circles that cut one another each pass within the other, in either order. -/
+theorem CirclesCut.symm {α β : Circle} (h : CirclesCut α β) : CirclesCut β α := by
   obtain ⟨⟨A, B, hAB, hAα, hAβ, hBα, hBβ⟩, hαβ, hβα⟩ := h
   exact ⟨⟨A, B, hAB, hAβ, hAα, hBβ, hBα⟩, hβα, hαβ⟩
 

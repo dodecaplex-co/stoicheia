@@ -47,7 +47,8 @@ Book III is about circles, and most of its words need no Lean word of their own:
 * No proposition of Book III uses a sector (Definition 10).
 
 The others are here: equal circles; a straight line touching a circle; circles touching
-one another, inside or outside; and a circumference, compared with a circumference.
+one another, inside or outside; circles cutting one another; and a circumference, compared
+with a circumference.
 
 **Circumferences.** Euclid compares circumferences only in one circle, or in equal
 circles: "in equal circles equal angles stand on equal circumferences" (III.26). Lean
@@ -90,9 +91,8 @@ def Touches (A B : Point) (α : Circle) : Prop :=
   A ≠ B ∧ ∀ L : Line, OnLine A L → OnLine B L →
     (∃ P : Point, OnLine P L ∧ OnCircle P α) ∧ ¬ LineMeetsCircle L α
 
-/-- **Definition III.3**, contact within. The circles `α` and `β` touch one another
-internally at `C`, `β` within `α`: they meet at `C`, `β` has passed within `α`, for a point
-of `β` is within `α`, and `β` does not cut `α`, for no point of `β` falls outside `α`. -/
+/-- **Definition III.3**, contact within: they meet at `C`, `β` has passed within `α`, for a
+point of `β` is within `α`, and no point of `β` falls outside `α`. -/
 def TouchesInternally (α β : Circle) (C : Point) : Prop :=
   OnCircle C α ∧ OnCircle C β ∧ (∃ P : Point, OnCircle P β ∧ InsideCircle P α) ∧
     ∀ P : Point, OnCircle P β → ¬ OutsideCircle P α

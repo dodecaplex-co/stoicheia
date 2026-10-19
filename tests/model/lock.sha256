@@ -16,4 +16,8 @@
 # vocabulary: 30 new words, the definitions and their auxiliary declarations; the 87 axioms
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
-9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026 for brief 0008, section 7: CirclesCut joins the vocabulary,
+# and TouchesInternally asks for a point within instead of distinct circles. The 87 axioms
+# and all 37 words they reach are unchanged; no model law changes.
+c60254688acb191ec2fee375562d6b0ccdd770db1f54b79a1568fe336174344d  Certificate/axioms.lock

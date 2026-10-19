@@ -9,8 +9,8 @@ or give it in a few lines. Astra found the clearest case, III.2, in the outside 
 The catalogue in `docs/reports/overlaps.md` lists every case we found, and this file
 proves each "states it" or "gives it at once" row again, from the rules alone, and I.2,
 I.3, I.7 and I.23, whose rules supply their step in a longer proof. After III.6,
-`III_5_crossing` shows that III.5 needs neither of its rules when "cut" is read as
-crossing. A second section proves III.24, III.26 and III.27 without the hypotheses our
+`III_5_crossing` and `III_5_radius` give III.5 from Definition I.15 with Diagram-segment 4
+or Diagram-segment 3. A second section proves III.24, III.26 and III.27 without the hypotheses our
 measure of circumferences leaves idle, the catalogue's near misses of representation.
 
 Each theorem's type is the proposition's own (`type_of% @Elements.BookIII.Prop2`), so a
@@ -178,20 +178,20 @@ theorem III_2_outside : type_of% @Elements.BookIII.Prop2 :=
 
 /-- **III.5 from Diagram-segment 2.** A circle is fixed by its centre and radius
 (`circle_eq`, Diagram-segment 2). Two circles about one centre through one point are
-one circle, so two circles that cut one another cannot share a centre. Our III.5 takes
-Euclid's steps, and uses this rule only for the step he leaves tacit, that F and G are two
-points. -/
+one circle. A point of one within the other would then be both within that circle and on
+it, which Generalities 4 forbids. Our III.5 takes Euclid's steps and uses neither
+Diagram-segment 2 nor Circle 4. -/
 theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
   fun ⟨⟨_, _, _, _, _, hC₁, hC₂⟩, ⟨_, hP₁, hP₂⟩, _⟩ ⟨hE₁, hE₂⟩ =>
     inside_not_on (circle_eq hE₁ hE₂ hC₁ hC₂ rfl ▸ hP₂) hP₁
 
-/-- **III.6 from Diagram-segment 2 and Generalities 3.** Circles touching within are two
-circles through one point, so Diagram-segment 2 again forbids a common centre. Circles
+/-- **III.6 from Diagram-segment 2 and Generalities 3 and 4.** A common centre and the
+point of contact would make the circles one, so the point of the inner circle within the
+outer would be both within that circle and on it, which Generalities 4 forbids. Circles
 touching without have no point within both, and a common centre would be one, since a
 centre is within its circle (`centre_inside`, Generalities 3). Our III.6 ends contact
-without with Generalities 3, before anything is drawn; for contact within it takes Euclid's
-steps, and uses Diagram-segment 2 only for the step he leaves tacit, that E and B are two
-points. -/
+without with Generalities 3, Definition I.15's placement of the centre within the figure.
+For contact within it takes Euclid's steps. Neither case uses Diagram-segment 2 or Circle 4. -/
 theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
   rintro C F ABC CDE (⟨hC₁, hC₂, ⟨P, hP, hP_in⟩, -⟩ | ⟨hC₂, hC₁, ⟨P, hP, hP_in⟩, -⟩ |
     ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
@@ -199,24 +199,23 @@ theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
   · exact inside_not_on (circle_eq hF₁ hF₂ hC₁ hC₂ rfl ▸ hP_in) hP
   · exact hout F (centre_inside hF₁) (centre_inside hF₂)
 
-/-- **III.5 read with crossing.** If a point P of one circle is within the other, and the
+/-- **III.5 from Diagram-segment 4.** If a point P of one circle is within the other, and the
 two circles have a point C in common, they have no common centre: P is nearer the centre
 than C is (`len_lt_of_inside`, Diagram-segment 4), and yet, both being on the one circle,
-as far from it (Definition I.15). A circle and its copy, drawn twice over, do not cross
-so, for neither has a point within the other. Our III.5 reads "cut" as meeting at two
-points (`CirclesMeet`), which a circle and its copy do, and there Diagram-segment 2 or
-Circle 4 is needed (the catalogue, under III.5). The same proof gives III.6 for circles
-touching within, read with a point of the inner circle within the outer. -/
+as far from it (Definition I.15). Our III.5 instead draws a straight line through the
+point within and compares its parts, without Diagram-segment 4. The same short proof
+gives III.6 for circles touching within, with the point of the inner circle within the
+outer. -/
 theorem III_5_crossing : type_of% @Elements.BookIII.Prop5 := by
   rintro E ABC CDG ⟨⟨_, C, _, _, _, hC₁, hC₂⟩, -, ⟨P, hP₂, hP₁⟩⟩ ⟨hE₁, hE₂⟩
   have h : ‖E P‖ < ‖E C‖ := len_lt_of_inside hE₁ hC₁ hP₁
   rw [Definition15 hE₂ hP₂ hC₂] at h
   exact lt_irrefl _ h
 
-/-- **III.5 from Diagram-segment 3** (probe; not in brief 0008's plan). F, a point of ABC,
+/-- **III.5 from Diagram-segment 3.** F, a point of ABC,
 is as far from E as C is (Definition I.15); so it is on CDG (`on_circle_of_len_eq`, the
-half of Diagram-segment 3 that Definition 15 does not give), within which it lies
-(Generalities 4). -/
+half of Diagram-segment 3 that Definition I.15 does not give), yet it is within CDG,
+which Generalities 4 forbids. -/
 theorem III_5_radius : type_of% @Elements.BookIII.Prop5 := by
   rintro E ABC CDG ⟨⟨_, C, _, _, _, hC₁, hC₂⟩, ⟨F, hF₁, hF₂⟩, -⟩ ⟨hE₁, hE₂⟩
   exact inside_not_on hF₂ (on_circle_of_len_eq hE₂ hC₂ (Definition15 hE₁ hF₁ hC₁))
@@ -440,6 +439,13 @@ info: 'Audit.III_6' depends on axioms: [Classical.choice,
 #guard_msgs in
 #print axioms Audit.III_6
 
+/--
+info: 'Audit.III_5_radius' depends on axioms: [Classical.choice,
+ Elements.Definition15,
+ Elements.Tacit.inside_not_on,
+ Elements.Tacit.on_circle_of_len_eq]
+-/
+#guard_msgs in
 #print axioms Audit.III_5_radius
 
 /--
