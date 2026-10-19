@@ -1,6 +1,6 @@
 """Check the house style's hard rules, and report its defaults.
 
-The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S21
+The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S22
 fail the script, and D4 to D11, D14 and D15 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
@@ -58,12 +58,16 @@ idea figure, "Euclid I.N: …" on Euclid's (STYLE, section 7). A known departure
 cannot see is right is listed below with its reason, and printed on every run; one that
 no longer applies fails. An idea figure marks a point Heath leaves without a letter in the
 figure itself, with `data-unlettered` and its reason (S21), and those are printed too.
-S20 judges a letter's ink by the fill under it, an angle's wedge included.
+S20 judges a letter's ink by the fill under it, an angle's wedge included. S22 measures
+a letter as Georgia draws its capital, upright or italic, by the convex hull of its
+outline's points (GLYPHS_UPRIGHT, GLYPHS_ITALIC), against every stroke and dot of its
+figure and the canvas's edge.
 
-How the rules read a phrase, S10's boundary for TeX, and how S20 reads a letter on and
-beside an angle's wedge are tested case by case in tests/test_check_style.py, which needs
-no Lean. CI runs it just before this script, in the order of docs/WORKFLOW.md, section 8;
-a defect fixed in that reading comes with a case there. Standard library only.
+How the rules read a phrase, S10's boundary for TeX, how S20 reads a letter on and beside
+an angle's wedge, and how S22 measures a letter against the strokes beside it are tested
+case by case in tests/test_check_style.py, which needs no Lean. CI runs it just before
+this script, in the order of docs/WORKFLOW.md, section 8; a defect fixed in that reading
+comes with a case there. Standard library only.
 """
 
 from __future__ import annotations
@@ -146,6 +150,7 @@ RULES = {
     "S19": "a book introduction that does not link the book's brief",
     "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
+    "S22": "one letter, one point: a letter drawn twice in a figure, or near a stroke, a dot or the edge",
 }
 
 REPORTS = {
@@ -796,6 +801,106 @@ PATH_ARITY = {"m": 2, "l": 2, "h": 1, "v": 1, "c": 6, "s": 4, "q": 4, "t": 2, "a
 ARC_STEP = math.radians(3)   # an arc, in a straight piece to each 3 degrees of its sweep
 CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
 
+# One letter, one point (S22; STYLE, sections 7 and 8). A letter names one point: a figure
+# draws it once, or once in each of Heath's figures where they stand side by side, and it
+# stands clear of every stroke, every dot and the canvas's edge, so that no line runs
+# through it and it is not read as another point's. A letter is measured as Georgia, the
+# figures' font, draws its capital, upright or italic as the figure sets it: by the convex
+# hull of the points of the capital's outline, on its curves and off them, which holds the
+# ink. GLYPHS_UPRIGHT and GLYPHS_ITALIC give each capital's advance and that hull's
+# corners, x and y in turn with y up, in the font's units, EM to the em: a coarse shape,
+# read from the fonts with fontTools once, so that the script needs neither. The hull
+# misses no stroke that comes near the ink; it also spans a letter's hollows (an L's
+# corner, a K's notch), so a stroke that ends in one is found while the ink is clear. A
+# prime or a subscript after the capital is not measured.
+CLEAR = 2.0     # the least room between a letter's hull and a stroke, a dot or the edge
+EM = 2048
+# The figures where two or three of Heath's figures stand side by side, one to a case
+# (STYLE, section 7), each with its number of cases: a letter is drawn once in each.
+SIDE_BY_SIDE = {("III", 25): 3, ("III", 33): 3, ("III", 35): 2, ("III", 36): 2}
+GLYPHS_UPRIGHT = {
+    "A": (1374, (-41, 0, 1421, 0, 1421, 71, 739, 1439, 659, 1439, -41, 71)),
+    "B": (1339, (95, 0, 857, 0, 1026, 48, 1162, 141, 1248, 287, 1248, 483, 1170, 1196,
+            1094, 1316, 972, 1389, 833, 1419, 102, 1419, 95, 71)),
+    "C": (1315, (78, 526, 184, 255, 273, 161, 363, 67, 596, -33, 919, -33, 1203, 148, 1289,
+            359, 1227, 1419, 859, 1450, 613, 1450, 365, 1342, 182, 1143, 78, 866)),
+    "D": (1534, (94, 0, 828, 0, 1102, 84, 1212, 169, 1321, 254, 1457, 520, 1457, 896, 1315,
+            1184, 1098, 1340, 850, 1419, 102, 1419, 94, 71)),
+    "E": (1338, (86, 0, 1264, 0, 1291, 418, 1184, 1419, 86, 1419)),
+    "F": (1227, (86, 0, 701, 0, 983, 444, 1199, 1064, 1199, 1419, 86, 1419)),
+    "G": (1485, (78, 530, 190, 258, 379, 69, 631, -33, 894, -33, 1158, 31, 1291, 91, 1471,
+            567, 1471, 640, 1278, 1419, 911, 1450, 641, 1450, 378, 1339, 185, 1137, 78,
+            860)),
+    "H": (1669, (98, 0, 1567, 0, 1567, 1419, 98, 1419)),
+    "I": (798, (79, 0, 718, 0, 718, 1419, 79, 1419)),
+    "J": (1060, (11, 149, 214, -34, 482, -34, 645, 42, 755, 168, 808, 316, 1006, 1348,
+            1006, 1419, 380, 1419, 11, 372)),
+    "K": (1422, (102, 0, 1475, 0, 1475, 71, 1393, 1419, 102, 1419)),
+    "L": (1236, (98, 0, 1207, 0, 1237, 422, 697, 1419, 98, 1419)),
+    "M": (1899, (48, 0, 1806, 0, 1806, 71, 1804, 1419, 57, 1419, 48, 71)),
+    "N": (1571, (24, 1348, 48, 0, 1237, -14, 1324, -14, 1554, 1348, 1554, 1419, 24, 1419)),
+    "O": (1524, (80, 550, 183, 273, 363, 77, 614, -34, 901, -34, 1147, 70, 1336, 263, 1444,
+            539, 1444, 876, 1338, 1153, 1153, 1347, 903, 1453, 626, 1453, 377, 1349, 188,
+            1152, 80, 881)),
+    "P": (1249, (91, 1348, 98, 0, 707, 0, 1184, 958, 1184, 1228, 937, 1419, 91, 1419)),
+    "Q": (1524, (80, 550, 178, 283, 353, 86, 923, -346, 1051, -385, 1238, -385, 1373, -356,
+            1418, -343, 1444, 574, 1444, 876, 1338, 1153, 1153, 1347, 903, 1453, 626, 1453,
+            377, 1349, 188, 1152, 80, 881)),
+    "R": (1437, (98, 0, 1480, 0, 1480, 71, 1201, 1172, 1127, 1301, 1065, 1341, 1001, 1382,
+            843, 1419, 98, 1419)),
+    "S": (1149, (94, 485, 108, -1, 490, -29, 791, -29, 1069, 215, 1069, 482, 1001, 1419,
+            661, 1451, 477, 1451, 319, 1392, 261, 1340, 200, 1285, 134, 1145)),
+    "T": (1267, (15, 1034, 298, 0, 968, 0, 1251, 1034, 1251, 1419, 15, 1419)),
+    "U": (1549, (74, 1348, 260, 294, 328, 147, 395, 90, 463, 33, 663, -34, 871, -34, 1046,
+            13, 1125, 67, 1205, 123, 1303, 297, 1533, 1348, 1533, 1419, 74, 1419)),
+    "V": (1365, (-38, 1348, 628, -18, 711, -18, 1407, 1348, 1407, 1419, -38, 1419)),
+    "W": (1998, (-4, 1348, 536, -18, 1447, -18, 2028, 1348, 2028, 1419, -4, 1419)),
+    "X": (1455, (13, 0, 1457, 0, 1457, 71, 1410, 1419, 27, 1419, 13, 71)),
+    "Y": (1260, (-44, 1348, 292, 0, 956, 0, 1314, 1348, 1314, 1419, -44, 1419)),
+    "Z": (1232, (27, 0, 1167, 0, 1214, 443, 1190, 1419, 127, 1419, 84, 1018, 27, 35)),
+}
+GLYPHS_ITALIC = {
+    "A": (1374, (-160, 0, 1302, 0, 1317, 66, 952, 1439, 872, 1439, -145, 66)),
+    "B": (1339, (-29, 0, 768, 0, 965, 55, 1051, 113, 1131, 167, 1236, 340, 1298, 1077,
+            1298, 1234, 1236, 1333, 1126, 1394, 1003, 1419, 306, 1419, 290, 1353)),
+    "C": (1315, (100, 400, 183, 190, 328, 43, 522, -33, 830, -33, 1140, 143, 1266, 358,
+            1427, 1419, 1041, 1452, 751, 1452, 448, 1302, 340, 1178, 228, 1049, 100, 721)),
+    "D": (1534, (-29, 0, 769, 0, 1096, 116, 1229, 229, 1357, 338, 1515, 669, 1515, 1024,
+            1398, 1241, 1209, 1368, 997, 1419, 306, 1419, -14, 66)),
+    "E": (1338, (-37, 0, 1141, 0, 1264, 418, 1388, 1419, 290, 1419, -22, 66)),
+    "F": (1227, (-35, 0, 583, 0, 963, 444, 1322, 1064, 1404, 1419, 291, 1419, 275, 1353)),
+    "G": (1485, (100, 403, 187, 191, 341, 43, 547, -33, 745, -33, 874, -13, 1021, 24, 1124,
+            64, 1190, 91, 1481, 572, 1496, 640, 1482, 1419, 1093, 1452, 781, 1452, 467,
+            1311, 235, 1064, 100, 733)),
+    "H": (1669, (-25, 0, 1444, 0, 1756, 1353, 1771, 1419, 302, 1419, -10, 66)),
+    "I": (798, (-44, 0, 595, 0, 907, 1353, 922, 1419, 283, 1419, -29, 66)),
+    "J": (1060, (-50, 106, 118, -34, 373, -34, 545, 44, 679, 166, 762, 315, 1194, 1353,
+            1209, 1419, 579, 1419, -50, 329)),
+    "K": (1422, (-21, 0, 1336, 0, 1353, 66, 1597, 1419, 306, 1419, -6, 66)),
+    "L": (1236, (-25, 0, 1084, 0, 1211, 422, 901, 1419, 302, 1419, -10, 66)),
+    "M": (1899, (-76, 0, 1682, 0, 1698, 66, 1993, 1353, 2008, 1419, 260, 1419)),
+    "N": (1571, (-75, 0, 1109, -14, 1199, -14, 1743, 1353, 1759, 1419, 229, 1419, 213,
+            1353)),
+    "O": (1496, (100, 288, 404, -34, 811, -34, 1108, 107, 1224, 229, 1337, 348, 1477, 683,
+            1477, 1138, 1169, 1453, 766, 1453, 465, 1311, 240, 1067, 100, 734)),
+    "P": (1249, (-25, 0, 584, 0, 1205, 822, 1312, 1012, 1312, 1266, 1097, 1419, 295, 1419,
+            280, 1353)),
+    "Q": (1496, (100, 290, 393, -24, 780, -386, 1000, -386, 1171, -357, 1232, -338, 1477,
+            683, 1477, 1138, 1169, 1453, 766, 1453, 465, 1311, 240, 1067, 100, 734)),
+    "R": (1437, (-26, 0, 1354, 0, 1370, 66, 1330, 1219, 1269, 1323, 1168, 1385, 1026, 1419,
+            302, 1419)),
+    "S": (1149, (-9, -1, 370, -29, 614, -29, 815, 41, 973, 169, 1065, 353, 1199, 1419, 825,
+            1451, 641, 1451, 448, 1383, 380, 1326, 310, 1267, 225, 1105, 89, 485)),
+    "T": (1267, (130, 1034, 174, 0, 844, 0, 1366, 1034, 1455, 1419, 219, 1419)),
+    "U": (1549, (212, 144, 449, -34, 749, -34, 931, 8, 1016, 57, 1104, 108, 1245, 289,
+            1721, 1353, 1737, 1419, 278, 1419, 262, 1353, 212, 313)),
+    "V": (1365, (151, 1353, 501, -18, 584, -18, 1599, 1353, 1614, 1419, 166, 1419)),
+    "W": (1998, (182, 1353, 408, -18, 1322, -18, 2217, 1353, 2232, 1419, 197, 1419)),
+    "X": (1455, (-110, 0, 1321, 0, 1336, 66, 1614, 1419, 243, 1419, -95, 66)),
+    "Y": (1260, (143, 1353, 169, 0, 833, 0, 1501, 1353, 1517, 1419, 159, 1419)),
+    "Z": (1232, (-90, 0, 1048, 0, 1198, 443, 1387, 1419, 326, 1419, 190, 1018, -81, 35)),
+}
+
 # data-unlettered marks in the idea figures, printed on every run:
 # {(file, reason): [elements, points]}
 idea_exemptions: dict[tuple[str, str], list[int]] = defaultdict(lambda: [0, 0])
@@ -979,12 +1084,20 @@ def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: fl
     return pts + [(x2, y2)]
 
 
-def path_rings(d: str) -> list[list[tuple[float, float]]]:
+def path_rings(d: str, closed: list[bool] | None = None) -> list[list[tuple[float, float]]]:
     """A path's subpaths as the rings of points its fill closes: straight segments as they
     are, arcs and curves in short straight pieces. A path is read as far as it is well
-    formed, as SVG draws it."""
+    formed, as SVG draws it. Given a list `closed`, it gains a flag for each ring: whether
+    a Z closes it, as its stroke is drawn (S22)."""
     rings: list[list[tuple[float, float]]] = []
     ring: list[tuple[float, float]] = []
+
+    def keep(shut: bool) -> None:
+        if len(ring) > 1:
+            rings.append(ring)
+            if closed is not None:
+                closed.append(shut)
+
     x = y = sx = sy = 0.0
     cmd, ctrl, pos = "", None, 0
     while True:
@@ -995,8 +1108,7 @@ def path_rings(d: str) -> list[list[tuple[float, float]]]:
             break
         kind = cmd.lower()
         if kind == "z":
-            if len(ring) > 1:
-                rings.append(ring)
+            keep(True)
             ring, x, y, ctrl = [(sx, sy)], sx, sy, None
             continue
         args = []
@@ -1011,8 +1123,7 @@ def path_rings(d: str) -> list[list[tuple[float, float]]]:
         ox, oy = (x, y) if cmd.islower() else (0.0, 0.0)
         pairs = [(ox + args[i], oy + args[i + 1]) for i in range(0, len(args) - 1, 2)]
         if kind == "m":
-            if len(ring) > 1:
-                rings.append(ring)
+            keep(False)
             (x, y), ctrl = pairs[0], None
             sx, sy, ring = x, y, [(x, y)]
             cmd = "l" if cmd == "m" else "L"
@@ -1035,8 +1146,7 @@ def path_rings(d: str) -> list[list[tuple[float, float]]]:
             ctrl = ("c" if kind in "cs" else "q", curve[-2])
         ring += pts
         x, y = ring[-1]
-    if len(ring) > 1:
-        rings.append(ring)
+    keep(False)
     return rings
 
 
@@ -1121,8 +1231,8 @@ def colours(path: Path, root, allowed: set[str], rule: str) -> None:
 
 
 def check_idea(path: Path, ref: str, required: bool) -> int:
-    """S13, S14, S20 and S21 for one idea figure. Returns how many of its points wait for
-    a letter while it is in the transition (no letter yet, the switch off), else 0."""
+    """S13, S14, S20, S21 and S22 for one idea figure. Returns how many of its points wait
+    for a letter while it is in the transition (no letter yet, the switch off), else 0."""
     root = svg_root(path)
     if root is None:
         return 0
@@ -1150,6 +1260,7 @@ def check_idea(path: Path, ref: str, required: bool) -> int:
         if n > 40 or ends > 2:
             report("D5", path, 0, f"caption of {n} words, {ends} sentence(s)")
     colours(path, root, IDEA_COLOURS | WHITE, "S14")
+    one_letter_one_point(path, root)
     return check_idea_letters(path, root, required)
 
 
@@ -1284,6 +1395,156 @@ def check_idea_letters(path: Path, root, required: bool) -> int:
     return 0
 
 
+def glyph_hull(own, eff, m, s: str) -> list[tuple[float, float]]:
+    """The corners of the hull of letter s's capital (S22), upright or italic as its
+    font-style sets it, where the text element puts it: x and y give the start of its
+    baseline (its middle or its end, by text-anchor), at its font-size, transforms
+    applied."""
+    glyphs = GLYPHS_ITALIC if letter_style(eff) == "italic" else GLYPHS_UPRIGHT
+    advance, corners = glyphs[s[0]]
+    k = (number(eff.get("font-size")) or 16.0) / EM
+    x = coord(own.get("x")) + {"middle": -advance * k / 2, "end": -advance * k}.get(
+        (eff.get("text-anchor") or "start").strip(), 0.0)
+    y = coord(own.get("y"))
+    return [at(m, x + corners[i] * k, y - corners[i + 1] * k)
+            for i in range(0, len(corners), 2)]
+
+
+def strokes(root):
+    """(what it is, its points, half its width) for each stroke a figure draws, as a run
+    of straight pieces: a line, a polyline, a polygon or a rect's outline, each subpath of
+    a path (closed where a Z closes it), a circle or an ellipse in short straight pieces;
+    transforms applied, and a dashed stroke read whole (S22)."""
+    for el, own, eff, m, _ in placed(root):
+        t = tag(el)
+        w = number(eff.get("stroke-width"))
+        w = 1.0 if w is None else w
+        if t not in DRAWN or (eff.get("stroke") or "none").strip().lower() == "none" or w <= 0:
+            continue
+        if t == "line":
+            runs = [[(coord(own.get("x1")), coord(own.get("y1"))),
+                     (coord(own.get("x2")), coord(own.get("y2")))]]
+        elif t in ("polyline", "polygon"):
+            v = [float(n) for n in NUM.findall(own.get("points", ""))]
+            run = list(zip(v[0::2], v[1::2]))
+            runs = [run + run[:1] if t == "polygon" else run]
+        elif t == "path":
+            closed: list[bool] = []
+            rings = path_rings(own.get("d", ""), closed)
+            runs = [ring + ring[:1] if shut else ring for ring, shut in zip(rings, closed)]
+        elif t == "rect":
+            x0, y0 = coord(own.get("x")), coord(own.get("y"))
+            x1, y1 = x0 + coord(own.get("width")), y0 + coord(own.get("height"))
+            runs = [[(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)]]
+        else:
+            cx, cy = coord(own.get("cx")), coord(own.get("cy"))
+            rx = coord(own.get("r")) if t == "circle" else coord(own.get("rx"))
+            ry = coord(own.get("r")) if t == "circle" else coord(own.get("ry"))
+            steps = round(math.tau / ARC_STEP)
+            runs = [[(cx + rx * math.cos(i * ARC_STEP), cy + ry * math.sin(i * ARC_STEP))
+                     for i in range(steps + 1)]]
+        half = w / 2 * math.sqrt(abs(m[0] * m[3] - m[1] * m[2]))
+        kind = "a dashed line" if eff.get("stroke-dasharray") and t == "line" else \
+            ("an " if t == "ellipse" else "a ") + t
+        for run in runs:
+            yield kind, [at(m, x, y) for x, y in run], half
+
+
+def dots(root):
+    """(where, radius) for each dot a figure draws: a filled circle of radius DOT at most,
+    transforms applied (S22, as S21 reads a dot)."""
+    for el, own, eff, m, _ in placed(root):
+        r = coord(own.get("r"))
+        filled = (eff.get("fill") or "black").strip().lower() != "none"
+        if tag(el) == "circle" and 0 < r <= DOT and filled:
+            scale = math.sqrt(abs(m[0] * m[3] - m[1] * m[2]))
+            yield at(m, coord(own.get("cx")), coord(own.get("cy"))), r * scale
+
+
+def point_gap(p, a, b) -> float:
+    """How far the point p stands from the straight piece ab."""
+    dx, dy = b[0] - a[0], b[1] - a[1]
+    n = dx * dx + dy * dy
+    t = 0.0 if n == 0 else max(0.0, min(1.0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / n))
+    return math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy)
+
+
+def crosses(a, b, c, d) -> bool:
+    """Whether the straight pieces ab and cd cross."""
+    def side(p, q, r):
+        return (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])
+    return side(a, b, c) * side(a, b, d) < 0 and side(c, d, a) * side(c, d, b) < 0
+
+
+def hull_gap(hull, a, b) -> float:
+    """How far the straight piece ab stands from the convex polygon `hull`: 0 if it meets
+    it."""
+    if enclosed([hull], *a, False) or enclosed([hull], *b, False):
+        return 0.0
+    gap = math.inf
+    for c, d in zip(hull, hull[1:] + hull[:1]):
+        if crosses(a, b, c, d):
+            return 0.0
+        gap = min(gap, point_gap(c, a, b), point_gap(a, c, d), point_gap(b, c, d))
+    return gap
+
+
+def nearest(hull, pieces, spots) -> tuple[float, str] | None:
+    """How near a stroke (less half its width) or a dot (less its radius) comes to a
+    letter's hull, and what it is; None if none comes within CLEAR."""
+    xs, ys = [p[0] for p in hull], [p[1] for p in hull]
+    best = None
+    for kind, run, half in pieces:
+        reach = CLEAR + half
+        lo_x, hi_x = min(xs) - reach, max(xs) + reach
+        lo_y, hi_y = min(ys) - reach, max(ys) + reach
+        for a, b in zip(run, run[1:]):
+            if max(a[0], b[0]) < lo_x or min(a[0], b[0]) > hi_x \
+                    or max(a[1], b[1]) < lo_y or min(a[1], b[1]) > hi_y:
+                continue
+            gap = hull_gap(hull, a, b) - half
+            if gap < CLEAR and (best is None or gap < best[0]):
+                best = (gap, kind)
+    for p, r in spots:
+        gap = (0.0 if enclosed([hull], *p, False) else
+               min(point_gap(p, c, d) for c, d in zip(hull, hull[1:] + hull[:1]))) - r
+        if gap < CLEAR and (best is None or gap < best[0]):
+            best = (gap, "a dot")
+    return best
+
+
+def one_letter_one_point(path: Path, root, cases: int = 1) -> None:
+    """S22: a figure draws each letter once, or once in each of `cases` figures side by
+    side; and each letter stands CLEAR of every stroke, every dot and the canvas's edge,
+    measured by the hull of its capital as Georgia draws it, upright or italic."""
+    vb = [float(v) for v in NUM.findall(root.get("viewBox", ""))]
+    pieces, spots = list(strokes(root)), list(dots(root))
+    count: dict[str, int] = defaultdict(int)
+    for el, own, eff, m, _ in placed(root):
+        s = text_of(el)
+        if tag(el) != "text" or not LETTER.fullmatch(s):
+            continue
+        count[s] += 1
+        hull = glyph_hull(own, eff, m, s)
+        where = f"letter {s} at ({coord(own.get('x')):g}, {coord(own.get('y')):g})"
+        near = nearest(hull, pieces, spots)
+        if near:
+            gap, kind = near
+            fail("S22", path, 0, f"{where} meets {kind}" if gap <= 0 else
+                 f"{where} stands {gap:.1f} from {kind}, under {CLEAR:g}: move it clear")
+        if len(vb) == 4:
+            xs, ys = [p[0] for p in hull], [p[1] for p in hull]
+            edge = min(min(xs) - vb[0], vb[0] + vb[2] - max(xs),
+                       min(ys) - vb[1], vb[1] + vb[3] - max(ys))
+            if edge < CLEAR:
+                fail("S22", path, 0, f"{where} stands {max(edge, 0):.1f} from the canvas's "
+                     f"edge, under {CLEAR:g}")
+    for s, k in sorted(count.items()):
+        if k > cases:
+            fail("S22", path, 0, f"letter {s} drawn {k} times: one letter names one point"
+                 + (f", once in each of its {cases} figures side by side" if cases > 1 else ""))
+
+
 def heath_letters(book: str, n: int) -> set[str]:
     """The capital letters of Heath's text, as STYLE section 8 gives the command: comments,
     headings, Heath's references, "Q. E. D.", "Q. E. F.", "I say" and "PORISM." taken out,
@@ -1377,6 +1638,7 @@ def check_euclid(path: Path, ref: str) -> None:
         if stale:
             fail("S16", path, 0, f"the exception for {', '.join(sorted(stale))} in "
                  "LETTER_EXCEPTIONS no longer applies; remove it")
+    one_letter_one_point(path, root, SIDE_BY_SIDE.get((book, n), 1))
 
 
 def check_figures(required: bool) -> None:
@@ -1471,7 +1733,7 @@ def main() -> int:
         print("  by rule: " + ", ".join(f"{r} {RULES[r]} ({k})"
                                        for r, k in sorted(by_rule.items(), key=lambda x: int(x[0][1:]))))
         return 1
-    rules = "S1–S21" if not args.no_lean else "S1–S11 and S13–S21"
+    rules = "S1–S22" if not args.no_lean else "S1–S11 and S13–S22"
     print(f"\n✓ style: the hard rules hold ({rules})")
     return 0
 

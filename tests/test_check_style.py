@@ -16,7 +16,13 @@ it, put to the script's own patterns and functions:
 * the ink cases: S20 judges a letter on an angle's wedge, a filled path, by the wedge's
   fill, within its three ends and beyond its chord out to its arc, and not beyond the
   arc; however the wedge is spelled (an absolute arc, a relative arc, a cubic curve), and
-  wherever a transform moves it.
+  wherever a transform moves it;
+* the clearance cases: S22 finds a stroke through a letter, or nearer it than 2, and not
+  one clear of it; reads a stroke of none as no stroke and a dashed one whole; closes a
+  path's stroke only where a Z closes it; finds a circle through a letter and not one
+  round it, a dot beside it and the canvas's edge; follows a transform; and measures a
+  letter upright or italic as its figure sets it. And it finds a letter drawn twice,
+  save once in each of several figures side by side.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -189,6 +195,63 @@ def ink_finding(drawn: str, x: float, y: float, ink: str) -> bool:
 
 
 # ---------------------------------------------------------------------------------------
+# The clearance cases: strokes and dots beside a letter, read as S22 reads a figure.
+# (S22 is new: Argon's second review of the book-III release found letters crossed by
+# strokes in seven of Euclid's figures, and no rule then measured how near they came.)
+
+LINE = '<line x1="100" y1="{y}" x2="200" y2="{y}" stroke="#3b2f2f" stroke-width="1.6"/>'
+CLEAR_CASES = [   # (what is drawn beside a letter at (150, 100), at 17; the letter, its
+                  # font-style; a finding?)
+    (LINE.format(y=90), "A", "italic", True),               # through the letter
+    (LINE.format(y=110), "A", "italic", False),             # 9 below its baseline
+    (LINE.format(y=101.5), "A", "italic", True),            # 0.7 below it, less half the width
+    (LINE.format(y=101.5), "A", "normal", True),
+    ('<line x1="100" y1="90" x2="200" y2="90" stroke="none"/>', "A", "italic", False),
+    ('<line x1="100" y1="90" x2="200" y2="90" stroke="#3b2f2f" stroke-dasharray="2 5"/>',
+     "A", "italic", True),
+    ('<path d="M110,94 V150 H200 V94" fill="none" stroke="#3b2f2f"/>', "A", "italic", False),
+    ('<path d="M110,94 V150 H200 V94 Z" fill="none" stroke="#3b2f2f"/>', "A", "italic", True),
+    ('<circle cx="155" cy="94" r="30" fill="none" stroke="#8c7b62"/>', "A", "italic", False),
+    ('<circle cx="155" cy="94" r="6" fill="none" stroke="#8c7b62"/>', "A", "italic", True),
+    ('<circle cx="156" cy="104" r="2.6" fill="#3b2f2f"/>', "A", "italic", True),
+    ('<circle cx="156" cy="108" r="2.6" fill="#3b2f2f"/>', "A", "italic", False),
+    (LINE.format(y=114), "A", "italic", False),
+    ('<g transform="translate(0,-20)">' + LINE.format(y=114) + '</g>', "A", "italic", True),
+    # An E's top right corner stands 1.7 further right italic than upright.
+    ('<line x1="163.5" y1="84" x2="163.5" y2="90" stroke="#3b2f2f" stroke-width="1.6"/>',
+     "E", "italic", True),
+    ('<line x1="163.5" y1="84" x2="163.5" y2="90" stroke="#3b2f2f" stroke-width="1.6"/>',
+     "E", "normal", False),
+]
+EDGE_CASES = [   # (a letter A's x, at y 100; a finding?)
+    (1, True),
+    (150, False),
+]
+TWICE_CASES = [   # (how many times a letter A is drawn, the figure's cases; a finding?)
+    (1, 1, False),
+    (2, 1, True),
+    (2, 2, False),
+    (3, 2, True),
+]
+
+
+def s22_findings(drawn: str, letters: str, cases: int = 1) -> list[str]:
+    """S22's findings on a parchment canvas with `drawn` and `letters` on it."""
+    root = ET.fromstring(
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+        f'<rect width="400" height="300" fill="#fbf7ee"/>{drawn}{letters}</svg>')
+    before = len(style.failures)
+    style.one_letter_one_point(style.ROOT / "figures" / "case.svg", root, cases)
+    found = [msg for rule, _, _, msg in style.failures[before:] if rule == "S22"]
+    del style.failures[before:]
+    return found
+
+
+def letter(s: str, x: float = 150, y: float = 100, font_style: str = "italic") -> str:
+    return f'<text x="{x}" y="{y}" font-size="17" font-style="{font_style}">{s}</text>'
+
+
+# ---------------------------------------------------------------------------------------
 
 class Phrases(unittest.TestCase):
     """The phrase cases, each put to its rule's search."""
@@ -230,6 +293,43 @@ class Ink(unittest.TestCase):
 
     test_ink_cases.__doc__ = (f"S20 reads the ink of {len(INK_CASES) * len(INK_WEDGES)} "
                               "letters on angles' wedges rightly")
+
+
+class Clearance(unittest.TestCase):
+    """The clearance cases, and a letter drawn more than once."""
+
+    def test_clearance_cases(self):
+        for drawn, s, font_style, want in CLEAR_CASES:
+            with self.subTest(drawn=drawn, letter=s, style=font_style):
+                found = s22_findings(drawn, letter(s, font_style=font_style))
+                self.assertEqual(bool(found), want,
+                                 f"S22 {'misses' if want else 'wrongly finds'} a stroke "
+                                 f"near {font_style} {s}: {drawn}: {found}")
+
+    test_clearance_cases.__doc__ = (f"S22 reads {len(CLEAR_CASES)} strokes and dots beside "
+                                    "a letter rightly")
+
+    def test_edge_cases(self):
+        for x, want in EDGE_CASES:
+            with self.subTest(x=x):
+                found = s22_findings("", letter("A", x=x))
+                self.assertEqual(bool(found), want,
+                                 f"S22 {'misses' if want else 'wrongly finds'} the canvas's "
+                                 f"edge near a letter at x {x}: {found}")
+
+    test_edge_cases.__doc__ = f"S22 reads {len(EDGE_CASES)} letters by the canvas's edge rightly"
+
+    def test_twice_cases(self):
+        for k, cases, want in TWICE_CASES:
+            with self.subTest(drawn=k, cases=cases):
+                drawn = "".join(letter("A", x=60 + 120 * i) for i in range(k))
+                found = s22_findings("", drawn, cases)
+                self.assertEqual(bool(found), want,
+                                 f"S22 {'misses' if want else 'wrongly finds'} a letter "
+                                 f"drawn {k} times in a figure of {cases} case(s): {found}")
+
+    test_twice_cases.__doc__ = (f"S22 reads {len(TWICE_CASES)} figures drawing a letter "
+                                "once or more rightly")
 
 
 if __name__ == "__main__":

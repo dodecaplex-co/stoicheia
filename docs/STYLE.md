@@ -466,11 +466,19 @@ figures stand side by side (III.25, III.33, III.35, III.36) **[checked]**. Uprig
 is "Euclid I.N: …", with no caption **[checked]**.
 
 **Heath's letters, all and only [checked].** Each point stands where the proof puts it
-(I.6: D on AB), each letter clear of every stroke, nothing touching the frame. The Lean
-uses the same letters, save in a helper written once over any letters (`Prop44.place`). A
-point Heath leaves without a letter gets a name in the Lean and none in the figure; a
-letter Heath gives a point the Lean does not need (III.3's C and D) is still drawn; the
-letters inside shared steps do not count; and "PORISM" is not a letter.
+(I.6: D on AB). The Lean uses the same letters, save in a helper written once over any
+letters (`Prop44.place`). A point Heath leaves without a letter gets a name in the Lean
+and none in the figure; a letter Heath gives a point the Lean does not need (III.3's C and
+D) is still drawn; the letters inside shared steps do not count; and "PORISM" is not a
+letter.
+
+**One letter, one point [checked].** A letter names one point, and the figure leaves no
+doubt which. It draws each letter once, or once in each of Heath's figures where two or
+three stand side by side; and each letter stands 2 clear of every stroke and every dot,
+and of the canvas's edge, so that no straight line or circle runs through it and nothing
+touches the frame. The same holds at a glance. In the Lean, a letter that names one of
+Heath's points names no straight line or circle, which a reviewer checks (section 8, the
+reviewer's checklist, item 16).
 
 **The same letters at a glance [checked].** Byrne's book uses coloured diagrams and
 symbols "instead of letters for the greater ease of learners", as its title says, and its
@@ -480,7 +488,8 @@ text, so that the yellow angle at B is the angle ABC of I.5's proof. The figure 
 glance carries Heath's letters, the same names as Euclid's figure and the Lean, at every
 point it shows, so that a reader can follow it however it turns or reflects Euclid's
 figure. Each letter is one that `NN.svg` draws, upright, at 14, small and beside its point,
-in the figure's black `#222222`, and clear of every colour and stroke where there is room.
+in the figure's black `#222222`, clear of every colour where there is room, and 2 clear
+of every stroke and dot (above).
 A point inside a coloured piece, with no parchment near it, takes its letter on the fill
 (I.43's K, II.4's G): in black on yellow, and in the parchment's `#fbf7ee` on red, blue or
 black (II.12's D), where black would hardly show. A point is shown when it is drawn as a
@@ -529,8 +538,8 @@ comment leader (`--`, or a quotation's `>`). A blank line ends such a phrase, sa
 white space. A word that a rule seeks elsewhere in the clause or the sentence (what
 follows S5's "never need", S11's "Proclus", D9's "need") is found as its row says. The
 patterns are tested on such phrases, case by case, with S20's reading of a letter on an
-angle's wedge, in `tests/test_check_style.py`, which CI runs just before the script
-([WORKFLOW](WORKFLOW.md), section 8).
+angle's wedge and S22's measure of a letter beside a stroke, in `tests/test_check_style.py`,
+which CI runs just before the script ([WORKFLOW](WORKFLOW.md), section 8).
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.
@@ -569,6 +578,7 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
 | S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic), not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
+| S22 | One letter, one point: a letter drawn twice in a figure, save once in each of Heath's figures side by side (three in III.25 and III.33, two in III.35 and III.36); or a letter that a stroke, a dot or the canvas's edge comes within 2 of. A letter is measured as Georgia draws its capital, upright or italic as the figure sets it, by the convex hull of the points of its outline, at its x, y, anchor and size, transforms applied; a stroke (a `<line>`, `<polyline>`, `<polygon>`, `<rect>`, `<circle>`, `<ellipse>`, or each subpath of a `<path>`, closed only where a Z closes it, a dashed one read whole) less half its width; a dot (a filled `<circle>` of radius 6 at most) less its radius. The hull holds the ink and spans its hollows, so a stroke that ends in an L's corner or a K's notch is found while the ink is clear: move the letter. A prime or a subscript after the capital is not measured | Idea figures, Euclid's figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 
@@ -659,11 +669,14 @@ proposition, and a later book's numeral replaces `I` in the paths.
 15. The figure is checked as geometry (section 7), rendered and looked at.
 16. The Lean uses the figure's letters: S16 checks the figure against Heath, and
     `grep -oE '\{[^}]*: Point\}|obtain ⟨[^⟩]*⟩' Elements/BookI/PropNN.lean` shows the
-    Lean's own.
+    Lean's own. One letter, one point: a letter that names one of Heath's points names no
+    straight line or circle in the Lean (`{L : Line}`, or `obtain ⟨L, …⟩ := Postulate1 …`,
+    beside Heath's point L); `grep -nE '\b[A-Z] : (Line|Circle)\b|obtain ⟨[A-Z],'` shows
+    the candidates.
 17. On the figure at a glance, rendered beside Euclid's, each letter is the one Euclid's
-    figure gives that point, beside it and clear of every colour and stroke, or on the fill
-    as section 7 says; S21 sees only that a letter is near. Each `data-unlettered` reason
-    is true of Heath's figure.
+    figure gives that point, beside it and clear of every colour, or on the fill as section
+    7 says; S21 sees only that a letter is near, and S22 that it is clear of the strokes.
+    Each `data-unlettered` reason is true of Heath's figure.
 18. A departure from Heath's figure has its line in the figure note, and a figure of one
     case among several names it.
 
