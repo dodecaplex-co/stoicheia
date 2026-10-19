@@ -1360,3 +1360,16 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+
+- **The model's audit and its root are protected too (#96).** `model/Model/Audit.lean`
+  pins the model's proofs to `propext`, `Classical.choice` and `Quot.sound` alone and
+  checks that `Elements` is absent; `model/Model.lean` imports that audit, so the build
+  checks it. They join `Audit/` and `Audit.lean` in the protected paths of
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), and remain content the checks
+  judge, so a check change is still kept apart from them. A change to either needs its
+  own whole path named here, the label `security-review` and a `/security-review`.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains cases for each:
+  refused without that line, a longer path's mention refused, a relative link accepted,
+  and still judged. The cases also keep similarly named paths, `model/Model/Hand.lean`
+  and `model/Check/Hand.lean` unprotected. [WORKFLOW](../WORKFLOW.md), section 10, names
+  the two files and their reason. Nothing is loosened; no model proof or audit changes.

@@ -74,9 +74,10 @@ one commit and runs safe_push.py against that origin:
   drop or re-key such a law first; every law of the two harnesses keeps to the
   allow-list, and each entry of the list is one a law needs; and a harness of the model
   that stops before its last line, with status 0, fails the model's run;
-- the protected paths of issue #96: Audit/, Audit.lean and the formal model's build files
-  are refused without a decisions entry naming them, a protected path is named only
-  whole (a line naming tests/model/lock.sha256 names no model/lock.sha256), and those
+- the protected paths of issue #96: Audit/, Audit.lean, model/Model/Audit.lean,
+  model/Model.lean and the formal model's build files are refused without a decisions
+  entry naming them, a protected path is named only whole (a line naming
+  tests/model/lock.sha256 names no model/lock.sha256), and those
   paths stay what the checks judge, so a check change is still kept apart from them;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
@@ -2217,6 +2218,7 @@ class ProtectedPaths(Edge):
         for path in ("scripts/check_style.py", ".github/workflows/ci.yml",
                      "tests/model/MODEL.md", "review/terms.toml", ".gitattributes",
                      ".gitignore", "lakefile.lean", "Audit/Overlaps.lean", "Audit.lean",
+                     "model/Model/Audit.lean", "model/Model.lean",
                      "model/lakefile.toml", "model/lakefile.lean", "model/lean-toolchain",
                      "model/lake-manifest.json", "model/lock.sha256"):
             with self.subTest(path=path):
@@ -2242,6 +2244,10 @@ class ProtectedPaths(Edge):
                             ("lean-toolchain", "model/lean-toolchain"),
                             (".gitignore", "model/.gitignore"),
                             ("Audit.lean", "Audit.lean.orig"),
+                            ("model/Model/Audit.lean", "tests/model/Model/Audit.lean"),
+                            ("model/Model/Audit.lean", "model/Model/Audit.lean.orig"),
+                            ("model/Model.lean", "tests/model/Model.lean"),
+                            ("model/Model.lean", "model/Model.lean.orig"),
                             ("model/lakefile.toml", "model/lakefile.toml.bak"),
                             ("lakefile.toml", "/model/lakefile.toml")):
             with self.subTest(path=path):
@@ -2259,6 +2265,9 @@ class ProtectedPaths(Edge):
                 ("model/lock.sha256", "[the model's hash](../../model/lock.sha256) is renewed."),
                 ("model/lock.sha256", "[the model's hash](/model/lock.sha256) is renewed."),
                 ("Audit/Overlaps.lean", "`Audit/Overlaps.lean` gains a lemma."),
+                ("model/Model/Audit.lean",
+                 "[the model's audit](../../model/Model/Audit.lean) changes."),
+                ("model/Model.lean", "[the model's root](../../model/Model.lean) changes."),
                 (".gitignore", "[the rule](../../.gitignore) is added."),
                 ("Audit.lean", "The audit's root is Audit.lean.")):
             with self.subTest(path=path):
@@ -2270,11 +2279,13 @@ class ProtectedPaths(Edge):
                 self.assertEqual(self.guard(out, "protected paths"), "ok", out)
                 self.assertIn(f"each named in {DECISIONS}: {path};", out)
 
-    def test_audit_and_the_models_build_files_stay_judged(self):
-        # #96: Audit/, Audit.lean and the model's build files are protected, yet still
-        # what the checks judge, so a check change stays apart from them (keep_apart); the
-        # rest of the protected paths and the guides are not judged.
-        judged = ["Audit.lean", "Audit/Overlaps.lean", "model/README.md",
+    def test_audit_and_the_models_audit_and_build_files_stay_judged(self):
+        # #96: Audit/, Audit.lean, the model's audit and its root, and the model's build
+        # files are protected, yet still what the checks judge, so a check change stays
+        # apart from them (keep_apart); the rest of the protected paths and the guides
+        # are not judged.
+        judged = ["Audit.lean", "Audit/Overlaps.lean", "model/Model.lean",
+                  "model/Model/Audit.lean", "model/README.md",
                   "model/lake-manifest.json", "model/lakefile.lean", "model/lakefile.toml",
                   "model/lean-toolchain", "model/lock.sha256"]
         apart = ["scripts/check_links.py", "lakefile.toml", "lean-toolchain", ".gitignore",
@@ -2911,6 +2922,7 @@ class ProtectedPaths(Edge):
                      ".gitignore", "lakefile.toml", "lakefile.lean", "lean-toolchain",
                      "lake-manifest.json", "scripts/hooks/safe-push", "Audit/Overlaps.lean",
                      "Audit/screen.py", "Audit.lean", "model/lakefile.toml",
+                     "model/Model/Audit.lean", "model/Model.lean",
                      "model/lakefile.lean", "model/lean-toolchain", "model/lake-manifest.json",
                      "model/lock.sha256"):
             self.assertTrue(safe_push.is_protected(path), path)
@@ -2933,6 +2945,8 @@ class ProtectedPaths(Edge):
         for path in ("docs/WORKFLOW.md", "review/I/01.toml", "Elements/BookI/Prop01.lean",
                      "heath/I/01.md", "scriptsx/a.py", "book/I/01.md", "Auditx/a.lean",
                      "Audit.leanx", "model/README.md", "model/Model/Hand.lean",
+                     "model/Model/Audit.lean.orig", "model/Model/Audit.lean/Hand.lean",
+                     "model/Model.lean.orig", "model/Model.lean/Hand.lean",
                      "model/Check/Hand.lean", "model/.gitignore", "docs/reports/overlaps.md"):
             self.assertFalse(safe_push.is_protected(path), path)
         self.assertTrue(set(safe_push.PROTECTED_JUDGED) <= set(safe_push.PROTECTED))

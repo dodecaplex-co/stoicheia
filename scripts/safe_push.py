@@ -178,13 +178,16 @@ PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md
              "lakefile.lean", "lean-toolchain", "lake-manifest.json")
 # Protected, and still judged (#96): the audit lemmas of docs/reports/overlaps.md, whose
 # pinned axiom lists (`#guard_msgs`) back the catalogue's claims, and Audit.lean, the root
-# that decides which of them `lake build Audit` checks; and the formal model's build files,
+# that decides which of them `lake build Audit` checks; the model's Model/Audit.lean and
+# Model.lean, which pin its proofs to Lean's own axioms with Elements absent, and include
+# that audit in the build; and the formal model's build files,
 # its package, toolchain and pinned Mathlib, with model/lakefile.lean, which Lake would read
 # in preference to model/lakefile.toml, and model/lock.sha256, the hash of the lock the model
 # was last checked against. A change to any of them needs a decisions entry and the label, as for
 # every protected path. They are content the checks judge, not checks, so they stay judged
 # (judged_files): a check change still lands apart from them, as before they were protected.
-PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/lakefile.toml", "model/lakefile.lean",
+PROTECTED_JUDGED = ("Audit/", "Audit.lean", "model/Model/Audit.lean", "model/Model.lean",
+                    "model/lakefile.toml", "model/lakefile.lean",
                     "model/lean-toolchain", "model/lake-manifest.json", "model/lock.sha256")
 PROTECTED += PROTECTED_JUDGED
 # The checks and what they expect: origin/main's copies judge the commit (step 4).
