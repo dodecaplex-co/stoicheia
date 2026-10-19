@@ -46,7 +46,15 @@ case = "AD and EF apart, with D between A and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "dcb1767"
+commit = "e8b6113"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:faf82eb7b41ef5a1"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "fail"
+figures = "pass"
+signoff = "pass"
