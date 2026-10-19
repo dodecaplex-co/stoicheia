@@ -44,7 +44,8 @@ rules a proof calls itself, those its own Lean or a helper written for its propo
 (`Prop47.within`, for I.47) names, and `inherited` the rules its own Lean does not name
 but reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step,
 each with the lemma that brings it in. A proposition it cites may rest on such a rule too.
-Each first user in the table calls its rule itself. A later proof may rest on a rule it
+A first user may call the rule itself or inherit it through a shared lemma; the notes
+below name those lemmas. A later proof may rest on a rule it
 never calls, as III.26 rests on Generalities 2 only through Book Zero's
 `EqualCircles.radii`; III.28 and III.29 call that lemma too, and rest on the rule through
 III.26 and III.27 as well, which they cite. The note under the table names the lemma the
@@ -69,8 +70,10 @@ rule's Lean name finds the same calls.
 | [III.1's corollary, in III.1 Por.](#iii1-por) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.1's porism; of the propositions themselves, III.14 | None |
 | [III.2](#iii2) | Circle 2 (`inside_of_between`): between two points on or within a circle, every point is within it | States it, and more: the ends may be within the circle as well as on it | Nowhere: no proposition rests on it | `Audit.III_2`, Astra's proof: Circle 2 alone |
 | [III.2](#iii2) | Circle 3 (`outside_of_between`): a straight line that has left a circle does not come back; Circle 2 turned round | Gives it at once: were a point between two points of the circle not within it, the second point would be outside the circle, not on it | Nowhere: no proposition rests on it | `Audit.III_2_outside`: Circle 3 alone |
-| [III.5](#iii5) | Diagram-segment 2 (`circle_eq`): a circle is fixed by its centre and radius | Gives it at once: two circles about one centre through one point are one circle | III.5 | `Audit.III_5`: Diagram-segment 2 alone |
-| [III.6](#iii6) | Diagram-segment 2 (`circle_eq`), and Generalities 3 (`centre_inside`): a circle's centre is within it | Gives it at once: circles touching within are two circles through one point; circles touching without have no point within both, and a common centre would be one | Diagram-segment 2: III.5. Generalities 3: I.1 | `Audit.III_6`: the two rules alone |
+| [III.5](#iii5) | Diagram-segment 2 (`circle_eq`), with Generalities 4 (`inside_not_on`) | Gives it at once: one centre and a common point make the circles one; the point of one within the other would be both within that circle and on it | Diagram-segment 2: III.10. Generalities 4: I.22 | `Audit.III_5`: the two rules |
+| [III.5](#iii5) | Diagram-segment 4 (`len_lt_of_inside`), with Definition I.15 and a magnitude law (`lt_irrefl`) | Gives it at once: the point within is nearer the centre than the common point, yet equally far from it | Diagram-segment 4: I.3. Definition I.15: I.1. The magnitude law: I.1 | `Audit.III_5_crossing`: the three rules |
+| [III.5](#iii5) | Diagram-segment 3, second half (`on_circle_of_len_eq`), with Definition I.15 and Generalities 4 | Gives it at once: F is as far from E as the common point C, so is on CDG, though within it | Diagram-segment 3, second half: II.14. Definition I.15: I.1. Generalities 4: I.22 | `Audit.III_5_radius`: the three rules |
+| [III.6](#iii6) | Diagram-segment 2 (`circle_eq`), with Generalities 3 (`centre_inside`) and 4 (`inside_not_on`) | Gives it at once: for contact within the circles would be one, with a point both within and on it; for contact without a common centre would be within both | Diagram-segment 2: III.10. Generalities 3: I.1. Generalities 4: I.22 | `Audit.III_6`: the three rules |
 
 The review records point here: a proposition's `[overlap]` names its rule
 ([review/SCHEMA.md](../../review/SCHEMA.md)).
@@ -188,65 +191,80 @@ that the rest of our foundations do not.
 
 #### III.5
 
-III.5 calls the rule itself, for the step Euclid leaves tacit: were F and G one point, the
-circles ABC and CDG, about one centre through one point, would be one circle. The Lean
-takes Euclid's steps and ends as he does, by the order of the points: F and G lie on one
-ray from E, and the nearer would make the less equal to the greater (Henry Savile's
-argument, Book Zero's `OnRay.eq_of_len_eq`).
+Our III.5 follows Euclid's argument, by Definition I.15 and the order on EFG. Cutting
+(`CirclesCut`) gives F on ABC and within CDG; producing EF beyond F meets CDG at G, so
+EF is the less. The proof uses neither Diagram-segment 2 nor Circle 4, nor the
+Diagram-segment 3 (second half) or 4 rules that give the other two short proofs. The rows
+say what the rules contain, separately from what our proof uses.
 
-Any proof of our III.5 must use Diagram-segment 2 or Circle 4. Draw every circle twice
-over, as two circles with one centre and one radius, through the same points. Of the 24
-rules about circles, only these two say when two circles are one circle or two, and every
-other rule we take still holds; but a circle and its copy are two circles, they cut one
-another, and they have one centre, so III.5 fails for them. That is a model argument,
-checked by hand rule by rule, not by Lean ([FORMALIZATION](../FORMALIZATION.md), section
-9). It is a fact about our statement, which reads "two circles" as two different circles
-(`ABC ≠ CDG`) and "cut" as meeting at two points (`CirclesMeet`). Read "cut" as a point of
-one circle within the other, with a point in common, and Definition I.15 and
-Diagram-segment 4, with a law of magnitude, give III.5 with neither rule
-(`Audit.III_5_crossing`). In our statement, Euclid's own ending needs one of the two rules
-as well, for the step he leaves tacit: that two different circles about one centre meet a
-straight line from it at different points, so that EF and EG are "the less to the
-greater". For a circle and its copy, F and G are one point, and EF is equal to EG without
-contradiction.
+The first row makes the circles one and contradicts F being both within and on that
+circle. The second compares the distance to a point within with the radius; Definition
+I.15 makes those lengths equal. The third uses Definition I.15 to make EF equal to EC,
+then Diagram-segment 3's second half to put F on CDG, though F is within it. Each audit
+lemma has the restated III.5's type. Diagram-segment 2 first enters at III.10, which calls
+it directly to identify circles with a common centre and point; III.23 reaches it through
+III.10. Generalities 4 first enters at I.22 through Book Zero's `ne_of_centre_of_on`,
+and Diagram-segment 4 at I.3 through `outside_of_len_gt`. The first propositions to call
+these two rules themselves are III.7 and III.17. Diagram-segment 3's second half is first
+called by II.14. The magnitude law `lt_irrefl` first enters at I.1 through
+`Magnitude.add_self_ne`.
+
+The earlier reading asked that the circles be different and meet at two points
+(`CirclesMeet`), without the points within. For that reading any proof must use
+Diagram-segment 2 or Circle 4: draw each ordinary circle twice, as two objects with the
+same centre, radius and points. All other axioms still hold, but the two copies meet and
+share their centre. This is a model argument checked by hand, not by Lean. It does not
+apply to the restated III.5, since neither copy has a point within the other.
+
+The bridge in `Audit/`, `CirclesCut.of_meet`, shows that two different circles meeting at
+two points do cross, given their centres. It uses III.7 and III.8, with `circle_eq`.
+Consequently the earlier statement of III.5 follows from the restated one, using the
+supposed common centre to supply both centres. This comparison of readings is separate
+from III.5's proof and cites later propositions. Heath's combined enunciation for III.5
+and III.6 concerns two different circles merely meeting (vol. 2, p. 12); Diagram-segment 2
+gives that assertion at once. It is not a proposition of ours, so it has no separate row.
 
 #### III.6
 
-III.6 calls both rules itself. Contact without ends at once, before anything is drawn: the
-supposed common centre would be within both circles (Generalities 3), and circles that
-touch without have no such point. For contact within, the Lean is as III.5's, with
-Diagram-segment 2 for the step Euclid leaves tacit, that E and B are two points.
+For contact within, our III.6 draws FEB through a point of the inner circle within the
+outer. The order of E and B, with Definition I.15, gives Euclid's contradiction, either
+circle the inner. It uses neither Diagram-segment 2 nor Circle 4. The catalogue's short
+proof instead makes the circles one by Diagram-segment 2 and uses Generalities 4 to
+contradict the point within.
 
-Any proof of our III.6 for contact within must use one of the same two rules, for the
-same reason: a circle and its copy, drawn twice over as under III.5, are two circles that
-meet, and no point of either lies outside the other, so by our Definition III.3 they touch
-within; and they have one centre. That too is our statement's reading, which asks of
-circles touching within only that they are two, that they meet, and that no point of the
-inner lies outside the outer; read with a point of the inner circle within the outer, the
-same proof (`Audit.III_5_crossing`) gives III.6 for contact within with neither rule. In
-our statement, Euclid's ending, FE equal to FB, "the less to the greater", needs the same
-tacit step, that the two circles meet the straight line FEB at different points. For
-contact without, Generalities 3 alone is enough: a common centre would be a point within
-both circles, and circles that touch without have none.
+Contact without ends at once in both proofs: a supposed common centre would be within
+both circles (Generalities 3), which contact without forbids. Generalities 3 expresses
+Definition I.15's own clause that the centre lies within the figure. It ends the case
+Euclid leaves to the reader, which Heath regards as self-evident (vol. 2, p. 13).
+Diagram-segment 2, the row's main rule, is not used by our III.6. The alternative routes
+through Diagram-segment 3 or 4 need four rules once contact without is included, so they
+do not meet the catalogue's limit of three.
+
+The twin-circle argument under III.5 also applies to the earlier contact within: two
+copies are different objects meeting with no point of either outside the other. The new
+clause requiring a point within excludes them. The bridge `within_point` in `Audit/`, by III.10,
+recovers that point from the earlier conditions when centres are given. It recovers the
+earlier statements of III.6, III.11 and III.13 with no extra hypothesis: III.6 supposes a
+common centre, and III.11 and III.13 are given their centres. This keeps the whole-circle
+reading of touching; it does not establish agreement with Heath's preferred local reading
+at the contact.
 
 ## How the rows were found
 
 **What the project already says.** The [gap catalogue for Book III](gaps-book-III.md) says
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
-gives Generalities 2 as the corollary Heath would add to III.1. III.2's commentary has a
-paragraph headed "A rule that contains III.2", and III.5's and III.6's name `circle_eq` as
-the rule that supplies the step Euclid leaves tacit there. The axiom docstrings name one
-more of Euclid's steps: Intersection 5 is "the step Euclid takes for granted in I.1". That
+gives Generalities 2 as the corollary Heath would add to III.1. III.5's and III.6's
+commentaries explain how the point within supplies the line and its ordered points;
+III.10's names `circle_eq` as its changed final step. The axiom docstrings name one more of Euclid's steps: Intersection 5 is "the step Euclid takes for granted in I.1". That
 is a gap Euclid leaves and the rule fills, not a proposition he proves later, and it
 belongs to the [gap catalogue for Book I](gaps-book-I.md).
 
 **Small certificates.** Four certificates cite no proposition: I.1 and I.4, Euclid's own
 beginnings, which rest on Postulate 3 with Intersection 5 and on superposition; and III.5
-and III.6, which are rows of the catalogue. When the catalogue was made, III.5 and III.6
-rested on six rules each, ending with Diagram-segment 2; now that they end by the order of
-the points, as Euclid does, each rests on eighteen, as many as I.1, and on Common Notion 5,
-so their certificates no longer stand out. Three others, I.23, I.25 and I.41, have the
-fewest rules in `direct_axioms`, three to five, but each cites propositions and carries
+and III.6, which are rows of the catalogue. In the restated readings, III.5 and III.6 each
+rest on thirteen tacit rules, with Definition I.15 and Postulate 1. The line through the point within and the order of
+its points carry Euclid's comparison, with Common Notion 5 through `len_lt_of_between`.
+Three others, I.23, I.25 and I.41, have the fewest rules in `direct_axioms`, three to five, but each cites propositions and carries
 Euclid's argument.
 
 **A sweep of every rule.** We read each of the 81 tacit rules, with the postulates and
@@ -254,9 +272,13 @@ Definition 15, against the 99 statements and the three porisms. Then a mechanica
 [Audit/screen.py](../../Audit/screen.py), had Lean's `grind` try every statement against
 every axiom alone, every family of axioms (the file that declares them) together, every
 pair of the 24 rules about circles, and every pair of families: 40,698 attempts over the
-99 propositions and the three porisms. It closed III.2, III.5 and III.6, and nothing
-else. The screen cannot draw a figure, for `grind` works with the points and circles a
-goal already names. I.7 needs two circles its statement never mentions, and I.23 a
+99 propositions and the three porisms. On the earlier readings it closed III.2, III.5 and
+III.6, and nothing else. For the restated readings the screen unfolds `CirclesCut` as well. Its run must be
+renewed on the integrated revision; the earlier run does not validate the new readings.
+The Diagram-segment 3 and 4 rows for III.5 were found by reading: each takes three rules
+from three families, outside the screen's pairs, and `grind` did not close the
+Diagram-segment 4 route in the probe. The screen cannot draw a figure, for `grind` works
+with the points and circles a goal already names. I.7 needs two circles its statement never mentions, and I.23 a
 triangle laid down, so both came from reading. I.2 and I.3 need a triangle drawn and then
 laid down. The catalogue first listed them as near misses, since neither statement gives a
 triangle to move; but the same holds of I.7's circles, and they are rows now, with
@@ -275,12 +297,14 @@ For each row we looked for a proof of the proposition's statement from at most t
 
 - **III.2**: found, from one rule, Circle 2; and from one rule, Circle 3, which is Circle 2
   turned round.
-- **III.5**: found, from one rule, Diagram-segment 2.
-- **III.6**: found, from two rules, and neither will do alone. In the ordinary plane with
-  no point counted within any circle, Diagram-segment 2 still holds, while a circle then
-  touches itself "without" and has the same centre as itself. Let a circle be drawn twice
-  over, as two circles with one centre and one radius, and Generalities 3 still holds,
-  while the two touch "within" and have one centre.
+- **III.5**: found in three ways for the restated statement: Diagram-segment 2 with
+  Generalities 4; Definition I.15 with Diagram-segment 4 and `lt_irrefl`; and Definition
+  I.15 with Diagram-segment 3's second half and Generalities 4.
+- **III.6**: found from Diagram-segment 2 with Generalities 3 and 4. Without Generalities
+  3 the other two do not suffice: in the ordinary plane with no point counted within any
+  circle they hold, while a circle touches itself without and has the same centre as
+  itself. This tests the short route, not the necessity of Diagram-segment 2 for III.6;
+  our proof avoids that rule.
 - **I.7**: not found from three. The shortest proof we found, `Audit.I_7`, uses seven:
   Circle 4 does the work, and the others draw two circles the statement never mentions and
   tell them apart. Circle 4 alone does not give I.7: where there are no circles and every

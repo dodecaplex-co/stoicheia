@@ -5,7 +5,8 @@ note = "Stated positively: two circles with three points in common are one circl
 fingerprint = "sha256:c4eb7ec3551eb8f4"
 
 [route]
-kind = "euclid"
+kind = "modified"
+note = "The construction and the argument locating both centres at P follow Euclid. The last step uses `circle_eq` directly: one centre and the common point B make the circles one, whereas the restated III.5 requires crossing and this statement covers circles that only meet."
 
 [representation]
 tags = ["centre-given", "hypothesis-dropped"]
@@ -15,6 +16,11 @@ note = "Both circles come with centres, so the porism to III.1 puts each centre 
 at = "therefore the point P is the centre of the circle ABC"
 kind = "grouped"
 note = "The statement gives ABC its centre, which the Lean names P at once; that AC and NO meet only there is the step above, so this sentence needs no Lean of its own."
+
+[[passage]]
+at = "therefore the two circles ABC, DEF which cut one another"
+kind = "different"
+note = "The Lean ends by `circle_eq` (Diagram-segment 2), from the common centre P and the common point B, instead of III.5. This is the converse Heath gives under III.5 (vol. 2, p. 12), and applies also to circles that only meet."
 
 [figure]
 note = "Like Heath's, this figure draws the impossible supposition: DEF meeting ABC at four points, B, G, F, H, and so drawn as an oval, since no second circle can."

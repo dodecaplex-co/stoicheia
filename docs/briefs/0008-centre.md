@@ -589,6 +589,29 @@ the rule, nor do III.5, III.6 and III.19.
 - **III.9's and III.10's `hypothesis-dropped`, III.24's and III.30's other tags,** and every
   restriction other than the centre.
 
+### Dated correction, 19 October 2026: section 7 before step 6
+
+The coordinator corrects the order frozen on 18 October, under WORKFLOW section 2.
+
+- **Discrepancy:** section 7 waits for step 6 only to avoid reading III.10, III.11 and
+  III.13 twice, although its restatement needs neither the centre rule nor the other
+  restatements.
+- **Current declaration:** section 6, step 6, and section 7, "Order", put section 7 in
+  the same pull request as the centre restatements.
+- **Corrected declaration:** section 7 lands now, before step 6, by the coordinator's
+  order of 19 October. Step 6 reads III.10, III.11 and III.13 again when its own changes
+  reach them.
+- **Reason:** III.5 and III.6 need not wait for step 6; the cost is the second reading of
+  those three records.
+- **Consumers affected:** III.5 and III.6, the definitions of cutting and contact within,
+  III.10's final step, III.11–III.13's semantic reviews, the overlap audit and catalogue,
+  their review records and page prose, the lock and its two hashes, and the generated
+  edition. The figures stay as drawn. The [decisions entry](0002-decisions.md#19-october-2026)
+  records the work that accompanies this landing.
+- **Work that can go on meanwhile:** the remaining steps of section 6 continue under their
+  existing dependencies. This correction changes only section 7's place in the order;
+  the frozen text below is retained.
+
 ## 6. The order of work
 
 A check never lands in the pull request whose code it checks

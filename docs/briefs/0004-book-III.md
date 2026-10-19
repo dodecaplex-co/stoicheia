@@ -43,6 +43,12 @@ assumption.
 | Def. 10, a sector | none: no proposition of Book III uses it | |
 | Def. 11, similar segments | no word: `∠ A E B = ∠ C F D`, equal angles in them | III.23, III.24, III.26 |
 
+**19 October 2026, Definition 3.** The row above records the earlier reading. By
+[brief 0008](0008-centre.md), section 7, `CirclesCut α β` now means that the circles meet
+at two points and each has a point within the other. Contact within replaces the clause
+that the circles are different with a point of β within α; the common point C and the
+clause that no point of β is outside α stay. Contact without stays as above.
+
 **Touching, for a straight line.** "Meeting the circle and being produced, does not cut
 the circle": `Touches A B α` says the straight line `AB` meets `α` and does not meet it in
 two points. That no point of it is within the circle is then Book Zero's
@@ -70,6 +76,14 @@ points of contact, within or without, are what III.13 refutes, by III.11 and III
 definition; that reading is set aside.) III.11's statement says which circle is within
 (`TouchesInternally ABC ADE A`, `ADE` within `ABC`); III.13 asks for either. III.11's
 mishnah owns Heath's note on Definition 3 and says all this.
+
+**19 October 2026, contact within.** The whole-circle reading remains ours. The point
+of the inner circle within the outer now belongs to `TouchesInternally`, expressing the
+passage within that Heath says Definition III.3 must imply. It lets III.6 draw FEB through
+that point. III.11 uses III.6 to distinguish its centres; III.13 carries the point within
+to the supposed second contact. The bridge in `Audit/` recovers the earlier readings of
+III.5, III.6, III.11 and III.13 from the restated ones under the existing axioms, with no
+extra hypotheses. The point does not turn this into Heath's preferred local reading.
 
 **Circumferences.** Euclid compares circumferences only in one circle or in equal circles:
 III.26–III.30, IV.11 and IV.16, and VI.33. A new kind of magnitude for them would need
@@ -381,6 +395,17 @@ is left out, being nearly everywhere):
 | [III.31](../../book/III/31.md) | in part: the angles of the segments stay in Euclid's words | Euclid's |  | `mixed-angles-omitted` | kept: a deliberate limitation |
 | [III.33](../../book/III/33.md) | whole | Euclid's |  | `segment-with-circle` |  |
 | [III.34](../../book/III/34.md) | whole | Euclid's |  | `segment-with-circle` |  |
+
+**19 October 2026, III.5, III.6 and III.10.** The dated table above is superseded for
+these three rows by brief 0008, section 7, landing before step 6. III.5 and III.6 cover
+the whole enunciations with Euclid's route: they draw through a point within and use the
+order of the points, without `circle_eq`. Their overlaps remain: Diagram-segment 2 with
+Generalities 4 for III.5, with Generalities 3 as well for III.6. Two further rows give
+III.5 by Definition I.15 with Diagram-segment 4 and a magnitude law, or Diagram-segment 3's
+second half and Generalities 4. III.6 takes `touching-whole-circles`. III.10 keeps its whole
+statement, with `hypothesis-dropped`, but its route becomes `modified`: its last step uses
+`circle_eq`, since its circles may merely meet. The three records need new stamps from a
+reader; III.11–III.13 are also read again for the changed meaning and dependencies.
 
 The overlaps are in the [catalogue](../reports/overlaps.md). The planned work is brief
 0005's ([0005-astra-review.md](0005-astra-review.md)); III.16 and III.31's mixed angles,
