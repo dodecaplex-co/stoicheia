@@ -37,13 +37,13 @@ variable (S : Signature)
 
 /-! ## Same side -/
 
-/-- `Elements.Tacit.same_side_refl` (Same side 1), translated by hand. The lock prints it as
+/-- `Elements.Tacit.same_side_refl` (Same side 1), translated by hand. The theorem's unchanged type is
 `∀ {A : Elements.Point} {L : Elements.Line}, Not (Elements.OnLine A L) →
 Elements.SameSide A A L`. -/
 def same_side_refl : Prop :=
   ∀ {A : S.Point} {L : S.Line}, ¬ S.OnLine A L → S.SameSide A A L
 
-/-- `Elements.Tacit.same_side_symm` (Same side 2), translated by hand. The lock prints it as
+/-- `Elements.Tacit.same_side_symm` (Same side 2), translated by hand. The theorem's unchanged type is
 `∀ {A B : Elements.Point} {L : Elements.Line}, Elements.SameSide A B L →
 Elements.SameSide B A L`. -/
 def same_side_symm : Prop :=
@@ -61,7 +61,7 @@ Elements.SameSide A C L → Elements.SameSide B C L`. -/
 def same_side_trans : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.SameSide A B L → S.SameSide A C L → S.SameSide B C L
 
-/-- `Elements.Tacit.same_side_or` (Same side 5), translated by hand. The lock prints it as
+/-- `Elements.Tacit.same_side_or` (Same side 5), translated by hand. The theorem's unchanged type is
 `∀ {A B C : Elements.Point} {L : Elements.Line}, Not (Elements.OnLine A L) →
 Not (Elements.OnLine B L) → Not (Elements.OnLine C L) → Not (Elements.SameSide A B L) →
 Or (Elements.SameSide A C L) (Elements.SameSide B C L)`. -/
@@ -71,7 +71,7 @@ def same_side_or : Prop :=
 
 /-! ## Pasch -/
 
-/-- `Elements.Tacit.pasch1` (Pasch 1), translated by hand. The lock prints it as
+/-- `Elements.Tacit.pasch1` (Pasch 1), translated by hand. The theorem's unchanged type is
 `∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.Between A B C →
 Elements.SameSide A C L → Elements.SameSide A B L`. -/
 def pasch1 : Prop :=
@@ -84,13 +84,13 @@ def pasch2 : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine A L → ¬ S.OnLine B L →
     S.SameSide B C L
 
-/-- `Elements.Tacit.pasch3` (Pasch 3), translated by hand. The lock prints it as
+/-- `Elements.Tacit.pasch3` (Pasch 3), translated by hand. The theorem's unchanged type is
 `∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.Between A B C →
 Elements.OnLine B L → Not (Elements.SameSide A C L)`. -/
 def pasch3 : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine B L → ¬ S.SameSide A C L
 
-/-- `Elements.Tacit.pasch4` (Pasch 4), translated by hand. The lock prints it as
+/-- `Elements.Tacit.pasch4` (Pasch 4), translated by hand. The theorem's unchanged type is
 `∀ {A B C : Elements.Point} {L M : Elements.Line}, Ne L M → Elements.OnLine B L →
 Elements.OnLine B M → Elements.OnLine A M → Elements.OnLine C M → Ne A C → Ne A B →
 Ne C B → Not (Elements.SameSide A C L) → Elements.Between A B C`. -/
@@ -100,7 +100,7 @@ def pasch4 : Prop :=
 
 /-! ## Triple incidence -/
 
-/-- `Elements.Tacit.triple_incidence1`, translated by hand. The lock prints it as
+/-- `Elements.Tacit.triple_incidence1`, translated by hand. The theorem's unchanged type is
 `∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L →
 Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M →
 Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N →
@@ -110,7 +110,7 @@ def triple_incidence1 : Prop :=
     S.OnLine B L → S.OnLine C M → S.OnLine D N → S.SameSide C D L → S.SameSide B C N →
     ¬ S.SameSide B D M
 
-/-- `Elements.Tacit.triple_incidence2`, translated by hand. The lock prints it as
+/-- `Elements.Tacit.triple_incidence2`, translated by hand. The theorem's unchanged type is
 `∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L →
 Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M →
 Elements.OnLine D N → Elements.SameSide C D L → Not (Elements.SameSide B D M) →

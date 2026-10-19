@@ -1,3 +1,4 @@
+import Elements.Figure.Basics
 import Elements.BookI.Prop07
 import Elements.Figure.Circles
 import Check.Hand
@@ -28,7 +29,6 @@ namespace Check
 
 /-! ## The defined words -/
 
-example : original.LineMeetsCircle = Elements.LineMeetsCircle := rfl
 example : original.LinesMeet = Elements.LinesMeet := rfl
 
 /-! ## The intersection rules -/
@@ -64,17 +64,15 @@ example : Model.Hand.not_same_side_of_circles_meet_intersections original =
 
 example (S : Model.Signature) : Model.Hand.Intersections.LinesMeet S = S.LinesMeet := rfl
 example : Model.Hand.Intersections.LinesMeet original = Elements.LinesMeet := rfl
-example (S : Model.Signature) : Model.Hand.Intersections.LineMeetsCircle S = S.LineMeetsCircle := rfl
 example : Model.Hand.Intersections.LineMeetsCircle original = Elements.LineMeetsCircle := rfl
 
 /-! ## The hand translations against generated laws or declaration types -/
 
 example (S : Model.Signature) : Model.Hand.lines_meet_of_opposite_sides_intersections S =
     Model.Law.Tacit.lines_meet_of_opposite_sides S := rfl
-run_cmd (Check.Generator.comparePlanted ``Model.Hand.line_meets_circle_of_opposite_sides
-  ``Elements.Tacit.line_meets_circle_of_opposite_sides)
-example (S : Model.Signature) : Model.Hand.line_meets_circle_of_inside S =
-    Model.Law.Tacit.line_meets_circle_of_inside S := rfl
+-- Intersections 2 and 3, retired, reach `LineMeetsCircle`, which no locked law reaches since
+-- 19 October 2026 and the generator no longer translates; they are compared with the library
+-- above, through `original`, and their hand word with the library's word.
 example (S : Model.Signature) : Model.Hand.line_circle_between S =
     Model.Law.Tacit.line_circle_between S := rfl
 example (S : Model.Signature) : Model.Hand.line_circle_beyond S =

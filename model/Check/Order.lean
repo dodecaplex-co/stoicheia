@@ -1,6 +1,8 @@
+import Elements.Figure.Basics
 import Elements.Foundations.Tacit.Diagram
 import Elements.Foundations.Tacit.Transfer
 import Check.Hand
+import Check.Generator
 import Model.Laws.order
 
 /-!
@@ -68,33 +70,33 @@ example : Model.Hand.len_lt_of_inside original = type_of% @Elements.Tacit.len_lt
 
 example (S : Model.Signature) : Model.Hand.between_symm S =
     Model.Law.Tacit.between_symm S := rfl
-example (S : Model.Signature) : Model.Hand.ne_of_between S =
-    Model.Law.Tacit.ne_of_between S := rfl
-example (S : Model.Signature) : Model.Hand.ne_of_between_ends S =
-    Model.Law.Tacit.ne_of_between_ends S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.ne_of_between
+  ``Elements.Tacit.ne_of_between)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.ne_of_between_ends
+  ``Elements.Tacit.ne_of_between_ends)
 example (S : Model.Signature) : Model.Hand.not_between_of_between S =
     Model.Law.Tacit.not_between_of_between S := rfl
-example (S : Model.Signature) : Model.Hand.on_line_of_between S =
-    Model.Law.Tacit.on_line_of_between S := rfl
-example (S : Model.Signature) : Model.Hand.on_line_of_between_ends S =
-    Model.Law.Tacit.on_line_of_between_ends S := rfl
-example (S : Model.Signature) : Model.Hand.between_of_between_left S =
-    Model.Law.Tacit.between_of_between_left S := rfl
-example (S : Model.Signature) : Model.Hand.between_of_between_right S =
-    Model.Law.Tacit.between_of_between_right S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.on_line_of_between
+  ``Elements.Tacit.on_line_of_between)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.on_line_of_between_ends
+  ``Elements.Tacit.on_line_of_between_ends)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.between_of_between_left
+  ``Elements.Tacit.between_of_between_left)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.between_of_between_right
+  ``Elements.Tacit.between_of_between_right)
 example (S : Model.Signature) : Model.Hand.between_cases S =
     Model.Law.Tacit.between_cases S := rfl
-example (S : Model.Signature) : Model.Hand.not_between_of_between_between S =
-    Model.Law.Tacit.not_between_of_between_between S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.not_between_of_between_between
+  ``Elements.Tacit.not_between_of_between_between)
 example (S : Model.Signature) : Model.Hand.len_add_of_between S =
     Model.Law.Tacit.len_add_of_between S := rfl
 example (S : Model.Signature) : Model.Hand.circle_eq S =
     Model.Law.Tacit.circle_eq S := rfl
-example (S : Model.Signature) : Model.Hand.on_circle_of_len_eq S =
-    Model.Law.Tacit.on_circle_of_len_eq S := rfl
-example (S : Model.Signature) : Model.Hand.inside_of_len_lt S =
-    Model.Law.Tacit.inside_of_len_lt S := rfl
-example (S : Model.Signature) : Model.Hand.len_lt_of_inside S =
-    Model.Law.Tacit.len_lt_of_inside S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.on_circle_of_len_eq
+  ``Elements.Tacit.on_circle_of_len_eq)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_len_lt
+  ``Elements.Tacit.inside_of_len_lt)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.len_lt_of_inside
+  ``Elements.Tacit.len_lt_of_inside)
 
 end Check

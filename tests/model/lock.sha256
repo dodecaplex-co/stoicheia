@@ -23,4 +23,19 @@
 # Tacit.exists_point_outside_circle, Tacit.line_meets_circle_of_opposite_sides,
 # Tacit.triple_incidence3 and Tacit.inside_of_angle_add. Their laws leave laws.toml, search.py
 # and hyperbolic.py; the other 79 axioms and every word are unchanged, byte for byte.
-da52a4969bf323512b82545ca01023038782d1c17a57e56da3273efdc93a1402  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when 31 more axioms became theorems (the owner's decision that
+# day: "Please do both. 79 is rather large with so many books in front of us"):
+# Tacit.area_swap, Tacit.between_of_area_add, Tacit.between_of_between_left,
+# Tacit.between_of_between_right, Tacit.centre_inside, Tacit.circles_meet_of_on_inside_outside,
+# Tacit.circles_meet_opposite_side, Tacit.eq_of_len_eq_zero, Tacit.exists_point_between,
+# Tacit.exists_point_on_circle, Tacit.exists_point_on_line_off_line,
+# Tacit.exists_point_opposite_side, Tacit.exists_point_same_side, Tacit.inside_not_on,
+# Tacit.inside_of_len_lt, Tacit.len_lt_of_inside, Tacit.line_meets_circle_of_inside,
+# Tacit.ne_of_between, Tacit.ne_of_between_ends, Tacit.not_between_of_between_between,
+# Tacit.on_circle_of_len_eq, Tacit.on_line_of_between, Tacit.on_line_of_between_ends,
+# Tacit.pasch1, Tacit.pasch3, Tacit.pasch4, Tacit.same_side_or, Tacit.same_side_refl,
+# Tacit.same_side_symm, Tacit.triple_incidence1 and Tacit.triple_incidence2. Their laws
+# leave laws.toml, search.py and hyperbolic.py, and derived.py keeps checking each; the other
+# 48 axioms and every word are unchanged, byte for byte.
+aaba04e9a811778508d047c348856225583ce35f90df3f098bf7fe4d15252f6b  Certificate/axioms.lock

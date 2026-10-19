@@ -1,8 +1,10 @@
+import Elements.Figure.Basics
 import Elements.Foundations.Tacit.Constructions
 import Elements.Foundations.Tacit.Diagram
 import Elements.Foundations.Tacit.Magnitudes
 import Model.Hand
 import Check.Original
+import Check.Generator
 
 /-!
 # Checking the hand translation against the library
@@ -141,12 +143,12 @@ syntax as well, binder kinds and names included.) -/
 
 example (S : Model.Signature) : Model.Hand.circles_meet S = Model.Law.Tacit.circles_meet S :=
   rfl
-example (S : Model.Signature) : Model.Hand.circles_meet_of_on_inside_outside S =
-    Model.Law.Tacit.circles_meet_of_on_inside_outside S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.circles_meet_of_on_inside_outside
+  ``Elements.Tacit.circles_meet_of_on_inside_outside)
 example (S : Model.Signature) : Model.Hand.circles_meet_same_side S =
     Model.Law.Tacit.circles_meet_same_side S := rfl
-example (S : Model.Signature) : Model.Hand.circles_meet_opposite_side S =
-    Model.Law.Tacit.circles_meet_opposite_side S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.circles_meet_opposite_side
+  ``Elements.Tacit.circles_meet_opposite_side)
 example (S : Model.Signature) : Model.Hand.add_assoc S = Model.Law.Tacit.add_assoc S := rfl
 example (S : Model.Signature) : Model.Hand.add_comm S = Model.Law.Tacit.add_comm S := rfl
 example (S : Model.Signature) : Model.Hand.add_lt_add_right S =

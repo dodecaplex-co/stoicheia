@@ -1,7 +1,9 @@
+import Elements.Figure.Basics
 import Elements.Foundations.Postulates
 import Elements.Foundations.Tacit.Metric
 import Elements.Foundations.Tacit.Transfer
 import Check.Hand
+import Check.Generator
 import Model.Laws.«areas-p5»
 
 /-!
@@ -47,8 +49,8 @@ example (S : Model.Signature) : Model.Hand.area_degenerate S =
     Model.Law.Tacit.area_degenerate S := rfl
 example (S : Model.Signature) : Model.Hand.area_rotate S =
     Model.Law.Tacit.area_rotate S := rfl
-example (S : Model.Signature) : Model.Hand.area_swap S =
-    Model.Law.Tacit.area_swap S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.area_swap
+  ``Elements.Tacit.area_swap)
 example (S : Model.Signature) : Model.Hand.area_congruent S =
     Model.Law.Tacit.area_congruent S := rfl
 example (S : Model.Signature) : Model.Hand.area_eq_zero_of_on_line S =
@@ -57,8 +59,8 @@ example (S : Model.Signature) : Model.Hand.on_line_of_area_eq_zero S =
     Model.Law.Tacit.on_line_of_area_eq_zero S := rfl
 example (S : Model.Signature) : Model.Hand.area_add_of_between S =
     Model.Law.Tacit.area_add_of_between S := rfl
-example (S : Model.Signature) : Model.Hand.between_of_area_add S =
-    Model.Law.Tacit.between_of_area_add S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.between_of_area_add
+  ``Elements.Tacit.between_of_area_add)
 example (S : Model.Signature) : Model.Hand.Postulate5 S =
     Model.Law.Postulate5 S := rfl
 

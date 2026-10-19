@@ -1,11 +1,11 @@
 # search-seed2: random search, 20,000 samples per axiom
 # command: python3 -I tests/model/search.py 20000 2
 # seeds: 2
-# commit: 9dbe96182b9a6d2080f23d3ead93e4c35f9ce624 (harness files as committed)
-# harness sha256: a156322ad06909ccfbc90d48426ac7bc3457d5625dd1072b2a4e98d5602a456a
+# commit: b739f109fa86cafdc1ac5891feb13149750db312 (harness files differ from this commit)
+# harness sha256: 327ea3cc5944688cff19c0e04e2829e766cfb03447a2a93ab83f9045955cae27
 # python: 3.11.9 (CPython, Darwin arm64)
-# date: 2026-10-17
-# time: 14.9 s
+# date: 2026-10-19
+# time: 7.8 s
 
 axiom                                       tried  hyp held counterex
 Postulate1                                  20000      6158         0
@@ -24,75 +24,36 @@ not_lt_zero                                 20000     20000         0
 add_lt_add_right                            20000      9431         0
 exists_point                                20000     20000         0
 exists_point_on_line                        20000     20000         0
-exists_point_on_line_off_line               20000        16         0
-exists_point_between                        20000      8400         0
-exists_point_same_side                      20000       291         0
-exists_point_opposite_side                  20000       317         0
-exists_point_on_circle                      20000     20000         0
 exists_point_inside_circle                  20000     20000         0
-exists_point_outside_circle                 20000     20000         0
-line_circle_between                         20000       952         0
-line_circle_beyond                          20000      2371         0
-circles_meet_same_side                      20000       125         0
-circles_meet_opposite_side                  20000       143         0
-line_unique                                 20000      5763         0
-centre_unique                               20000      6133         0
-centre_inside                               20000      9451         0
-inside_not_on                               20000     10976         0
-between_symm                                20000      1605         0
-ne_of_between                               20000      1612         0
-ne_of_between_ends                          20000      1582         0
-not_between_of_between                      20000      1628         0
-on_line_of_between                          20000      1825         0
-on_line_of_between_ends                     20000      1812         0
-between_of_between_left                     20000       207         0
-between_of_between_right                    20000       202         0
-between_cases                               20000      5482         0
-not_between_of_between_between              20000       573         0
-same_side_refl                              20000       294         0
-same_side_symm                              20000       105         0
-not_on_line_of_same_side                    20000       127         0
-same_side_trans                             20000        72         0
-same_side_or                                20000         1         0
-pasch1                                      20000         0         0   <-- hypotheses never met
-pasch2                                      20000        99         0
-pasch3                                      20000      1905         0
-pasch4                                      20000        66         0
-triple_incidence1                           20000         0         0   <-- hypotheses never met
-triple_incidence2                           20000         1         0
-triple_incidence3                           20000         0         0   <-- hypotheses never met
-between_of_inside_chord                     20000        89         0
-inside_of_between                           20000       591         0
-outside_of_between                          20000       142         0
-not_same_side_of_circles_meet               20000         0         0   <-- hypotheses never met
-lines_meet_of_opposite_sides                20000        11         0
-line_meets_circle_of_opposite_sides         20000       395         0
-line_meets_circle_of_inside                 20000      9283         0
-circles_meet_of_on_inside_outside           20000       228         0
-circles_meet                                20000       433         0
-eq_of_len_eq_zero                           20000     13928         0
+line_circle_between                         20000       924         0
+line_circle_beyond                          20000      2407         0
+circles_meet_same_side                      20000       149         0
+line_unique                                 20000      5803         0
+between_symm                                20000      1580         0
+not_between_of_between                      20000      1604         0
+between_cases                               20000      5493         0
+not_on_line_of_same_side                    20000       115         0
+same_side_trans                             20000        66         0
+pasch2                                      20000       115         0
+between_of_inside_chord                     20000        85         0
+outside_of_between                          20000       164         0
+lines_meet_of_opposite_sides                20000         6         0
+circles_meet                                20000       421         0
 len_self                                    20000     20000         0
 len_symm                                    20000     20000         0
-angle_symm                                  20000      5153         0
+angle_symm                                  20000      5191         0
 angle_le_two_right                          20000     20000         0
 area_degenerate                             20000     20000         0
 area_rotate                                 20000     20000         0
-area_swap                                   20000     20000         0
-area_congruent                              20000     18227         0
-len_add_of_between                          20000      1603         0
-circle_eq                                   20000       283         0
-on_circle_of_len_eq                         20000       832         0
-inside_of_len_lt                            20000      1014         0
-len_lt_of_inside                            20000       967         0
-angle_eq_zero_of_same_ray                   20000      5074         0
-same_ray_of_angle_eq_zero                   20000      5066         0
-angle_add_of_inside                         20000         2         0
-inside_of_angle_add                         20000         1         0
-adjacent_eq_of_right                        20000         1         0
-angle_eq_of_same_rays                       20000      2363         0
-area_eq_zero_of_on_line                     20000      8169         0
-on_line_of_area_eq_zero                     20000      8325         0
-area_add_of_between                         20000         8         0
-between_of_area_add                         20000         7         0
-superposition                               20000        40         0
-axioms checked: 87  total counterexamples: 0
+area_congruent                              20000     18218         0
+len_add_of_between                          20000      1630         0
+circle_eq                                   20000       246         0
+angle_eq_zero_of_same_ray                   20000      5071         0
+same_ray_of_angle_eq_zero                   20000      5010         0
+angle_add_of_inside                         20000         1         0
+angle_eq_of_same_rays                       20000      2281         0
+area_eq_zero_of_on_line                     20000      8327         0
+on_line_of_area_eq_zero                     20000      8139         0
+area_add_of_between                         20000         9         0
+superposition                               20000        32         0
+axioms checked: 48  total counterexamples: 0

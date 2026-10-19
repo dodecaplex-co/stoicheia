@@ -75,12 +75,12 @@ Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.Centre
 def centre_unique : Prop :=
   ∀ {A B : S.Point} {α : S.Circle}, S.Centre A α → S.Centre B α → A = B
 
-/-- `Elements.Tacit.centre_inside`, hand-translated. The lock prints it as `∀ {A :
+/-- `Elements.Tacit.centre_inside`, hand-translated. The theorem's unchanged type is `∀ {A :
 Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.InsideCircle A α`. -/
 def centre_inside : Prop :=
   ∀ {A : S.Point} {α : S.Circle}, S.Centre A α → S.InsideCircle A α
 
-/-- `Elements.Tacit.inside_not_on`, hand-translated. The lock prints it as `∀ {A :
+/-- `Elements.Tacit.inside_not_on`, hand-translated. The theorem's unchanged type is `∀ {A :
 Elements.Point} {α : Elements.Circle}, Elements.InsideCircle A α → Not (Elements.OnCircle A
 α)`. -/
 def inside_not_on : Prop :=
@@ -110,14 +110,14 @@ def exists_point_on_line : Prop :=
   ∀ (L : S.Line) (avoid : List S.Point), ∃ A : S.Point, S.OnLine A L ∧ ¬ A ∈ avoid
 
 /-- `Elements.Tacit.exists_point_on_line_off_line` (Points 2, off a second line),
-hand-translated. The lock prints it as `∀ {L M : Elements.Line}, Ne L M → ∀ (avoid : List
+hand-translated. The theorem's unchanged type is `∀ {L M : Elements.Line}, Ne L M → ∀ (avoid : List
 Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (And (Not
 (Elements.OnLine A M)) (Not (Membership.mem avoid A)))`. -/
 def exists_point_on_line_off_line : Prop :=
   ∀ {L M : S.Line}, L ≠ M → ∀ (avoid : List S.Point),
     ∃ A : S.Point, S.OnLine A L ∧ ¬ S.OnLine A M ∧ ¬ A ∈ avoid
 
-/-- `Elements.Tacit.exists_point_between` (Points 3), hand-translated. The lock prints it as
+/-- `Elements.Tacit.exists_point_between` (Points 3), hand-translated. The theorem's unchanged type is
 `∀ {B C : Elements.Point} {L : Elements.Line}, Elements.OnLine B L → Elements.OnLine C L →
 Ne B C → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And
 (Elements.OnLine A L) (And (Elements.Between B A C) (Not (Membership.mem avoid A)))`. -/

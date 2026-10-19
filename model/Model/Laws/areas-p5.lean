@@ -45,7 +45,7 @@ def area_degenerate : Prop :=
 def area_rotate : Prop :=
   ∀ (A B C : S.Point), S.area A B C = S.area C A B
 
-/-- `Elements.Tacit.area_swap` (Metric 8), by hand. The lock prints it as
+/-- `Elements.Tacit.area_swap` (Metric 8), by hand. The theorem's unchanged type is
 `∀ (A B C : Elements.Point), Eq (Elements.area A B C) (Elements.area A C B)`. -/
 def area_swap : Prop :=
   ∀ (A B C : S.Point), S.area A B C = S.area A C B

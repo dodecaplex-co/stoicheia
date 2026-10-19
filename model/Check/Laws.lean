@@ -43,7 +43,6 @@ open Model
 example : original.CirclesMeet = Elements.CirclesMeet := rfl
 example : original.Collinear = Elements.Collinear := rfl
 example : original.IsRightAngle = Elements.IsRightAngle := rfl
-example : original.LineMeetsCircle = Elements.LineMeetsCircle := rfl
 example : original.LinesMeet = Elements.LinesMeet := rfl
 example : original.OppositeSides = Elements.OppositeSides := rfl
 example : original.OutsideCircle = Elements.OutsideCircle := rfl
@@ -120,71 +119,29 @@ example : Law.Tacit.area_eq_zero_of_on_line original =
 
 example : Law.Tacit.area_rotate original = type_of% @Elements.Tacit.area_rotate := rfl
 
-example : Law.Tacit.area_swap original = type_of% @Elements.Tacit.area_swap := rfl
-
 example : Law.Tacit.between_cases original = type_of% @Elements.Tacit.between_cases := rfl
-
-example : Law.Tacit.between_of_area_add original =
-    type_of% @Elements.Tacit.between_of_area_add := rfl
-
-example : Law.Tacit.between_of_between_left original =
-    type_of% @Elements.Tacit.between_of_between_left := rfl
-
-example : Law.Tacit.between_of_between_right original =
-    type_of% @Elements.Tacit.between_of_between_right := rfl
 
 example : Law.Tacit.between_of_inside_chord original =
     type_of% @Elements.Tacit.between_of_inside_chord := rfl
 
 example : Law.Tacit.between_symm original = type_of% @Elements.Tacit.between_symm := rfl
 
-example : Law.Tacit.centre_inside original = type_of% @Elements.Tacit.centre_inside := rfl
-
 example : Law.Tacit.circle_eq original = type_of% @Elements.Tacit.circle_eq := rfl
 
 example : Law.Tacit.circles_meet original = type_of% @Elements.Tacit.circles_meet := rfl
 
-example : Law.Tacit.circles_meet_of_on_inside_outside original =
-    type_of% @Elements.Tacit.circles_meet_of_on_inside_outside := rfl
-
-example : Law.Tacit.circles_meet_opposite_side original =
-    type_of% @Elements.Tacit.circles_meet_opposite_side := rfl
-
 example : Law.Tacit.circles_meet_same_side original =
     type_of% @Elements.Tacit.circles_meet_same_side := rfl
 
-example : Law.Tacit.eq_of_len_eq_zero original = type_of% @Elements.Tacit.eq_of_len_eq_zero := rfl
-
 example : Law.Tacit.exists_point original = type_of% @Elements.Tacit.exists_point := rfl
-
-example : Law.Tacit.exists_point_between original =
-    type_of% @Elements.Tacit.exists_point_between := rfl
 
 example : Law.Tacit.exists_point_inside_circle original =
     type_of% @Elements.Tacit.exists_point_inside_circle := rfl
 
-example : Law.Tacit.exists_point_on_circle original =
-    type_of% @Elements.Tacit.exists_point_on_circle := rfl
-
 example : Law.Tacit.exists_point_on_line original =
     type_of% @Elements.Tacit.exists_point_on_line := rfl
 
-example : Law.Tacit.exists_point_on_line_off_line original =
-    type_of% @Elements.Tacit.exists_point_on_line_off_line := rfl
-
-example : Law.Tacit.exists_point_opposite_side original =
-    type_of% @Elements.Tacit.exists_point_opposite_side := rfl
-
-example : Law.Tacit.exists_point_same_side original =
-    type_of% @Elements.Tacit.exists_point_same_side := rfl
-
-example : Law.Tacit.inside_not_on original = type_of% @Elements.Tacit.inside_not_on := rfl
-
-example : Law.Tacit.inside_of_len_lt original = type_of% @Elements.Tacit.inside_of_len_lt := rfl
-
 example : Law.Tacit.len_add_of_between original = type_of% @Elements.Tacit.len_add_of_between := rfl
-
-example : Law.Tacit.len_lt_of_inside original = type_of% @Elements.Tacit.len_lt_of_inside := rfl
 
 example : Law.Tacit.len_self original = type_of% @Elements.Tacit.len_self := rfl
 
@@ -194,9 +151,6 @@ example : Law.Tacit.line_circle_between original =
     type_of% @Elements.Tacit.line_circle_between := rfl
 
 example : Law.Tacit.line_circle_beyond original = type_of% @Elements.Tacit.line_circle_beyond := rfl
-
-example : Law.Tacit.line_meets_circle_of_inside original =
-    type_of% @Elements.Tacit.line_meets_circle_of_inside := rfl
 
 example : Law.Tacit.line_unique original = type_of% @Elements.Tacit.line_unique := rfl
 
@@ -227,15 +181,8 @@ example : Law.Tacit.lt_trichotomy original ↔ type_of% @Elements.Tacit.lt_trich
     | area => exact @h .area,
     fun h => h⟩
 
-example : Law.Tacit.ne_of_between original = type_of% @Elements.Tacit.ne_of_between := rfl
-
-example : Law.Tacit.ne_of_between_ends original = type_of% @Elements.Tacit.ne_of_between_ends := rfl
-
 example : Law.Tacit.not_between_of_between original =
     type_of% @Elements.Tacit.not_between_of_between := rfl
-
-example : Law.Tacit.not_between_of_between_between original =
-    type_of% @Elements.Tacit.not_between_of_between_between := rfl
 
 example : Law.Tacit.not_lt_zero original ↔ type_of% @Elements.Tacit.not_lt_zero :=
   ⟨fun h {k} => by
@@ -248,42 +195,18 @@ example : Law.Tacit.not_lt_zero original ↔ type_of% @Elements.Tacit.not_lt_zer
 example : Law.Tacit.not_on_line_of_same_side original =
     type_of% @Elements.Tacit.not_on_line_of_same_side := rfl
 
-example : Law.Tacit.on_circle_of_len_eq original =
-    type_of% @Elements.Tacit.on_circle_of_len_eq := rfl
-
 example : Law.Tacit.on_line_of_area_eq_zero original =
     type_of% @Elements.Tacit.on_line_of_area_eq_zero := rfl
 
-example : Law.Tacit.on_line_of_between original = type_of% @Elements.Tacit.on_line_of_between := rfl
-
-example : Law.Tacit.on_line_of_between_ends original =
-    type_of% @Elements.Tacit.on_line_of_between_ends := rfl
-
 example : Law.Tacit.outside_of_between original = type_of% @Elements.Tacit.outside_of_between := rfl
 
-example : Law.Tacit.pasch1 original = type_of% @Elements.Tacit.pasch1 := rfl
-
 example : Law.Tacit.pasch2 original = type_of% @Elements.Tacit.pasch2 := rfl
-
-example : Law.Tacit.pasch3 original = type_of% @Elements.Tacit.pasch3 := rfl
-
-example : Law.Tacit.pasch4 original = type_of% @Elements.Tacit.pasch4 := rfl
 
 example : Law.Tacit.same_ray_of_angle_eq_zero original =
     type_of% @Elements.Tacit.same_ray_of_angle_eq_zero := rfl
 
-example : Law.Tacit.same_side_or original = type_of% @Elements.Tacit.same_side_or := rfl
-
-example : Law.Tacit.same_side_refl original = type_of% @Elements.Tacit.same_side_refl := rfl
-
-example : Law.Tacit.same_side_symm original = type_of% @Elements.Tacit.same_side_symm := rfl
-
 example : Law.Tacit.same_side_trans original = type_of% @Elements.Tacit.same_side_trans := rfl
 
 example : Law.Tacit.superposition original = type_of% @Elements.Tacit.superposition := rfl
-
-example : Law.Tacit.triple_incidence1 original = type_of% @Elements.Tacit.triple_incidence1 := rfl
-
-example : Law.Tacit.triple_incidence2 original = type_of% @Elements.Tacit.triple_incidence2 := rfl
 
 end Check

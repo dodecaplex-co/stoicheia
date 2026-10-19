@@ -50,7 +50,7 @@ def circles_meet : Prop :=
     S.InsideCircle A β → S.OnCircle B β → S.CirclesMeet α β
 
 /-- `Elements.Tacit.circles_meet_of_on_inside_outside` (Intersection 4, corrected), by
-hand. The lock prints it as `∀ {A B : Elements.Point} {α β : Elements.Circle},
+hand. The theorem's unchanged type is `∀ {A B : Elements.Point} {α β : Elements.Circle},
 Elements.OnCircle A α → Or (Elements.InsideCircle B α) (Elements.OnCircle B α) →
 Elements.InsideCircle A β → Elements.OutsideCircle B β → Elements.CirclesMeet α β`. -/
 def circles_meet_of_on_inside_outside : Prop :=
@@ -68,8 +68,8 @@ def circles_meet_same_side : Prop :=
     S.Centre D β → S.OnLine C L → S.OnLine D L → ¬ S.OnLine B L →
     ∃ A : S.Point, S.OnCircle A α ∧ S.OnCircle A β ∧ S.SameSide A B L
 
-/-- `Elements.Tacit.circles_meet_opposite_side` (Intersections 9), by hand. The lock prints
-it as `∀ {α β : Elements.Circle} {B C D : Elements.Point} {L : Elements.Line},
+/-- `Elements.Tacit.circles_meet_opposite_side` (Intersections 9), by hand. The theorem's unchanged type
+is `∀ {α β : Elements.Circle} {B C D : Elements.Point} {L : Elements.Line},
 Elements.CirclesMeet α β → Elements.Centre C α → Elements.Centre D β → Elements.OnLine C L →
 Elements.OnLine D L → Not (Elements.OnLine B L) → Exists fun (A : Elements.Point) => And
 (Elements.OnCircle A α) (And (Elements.OnCircle A β) (Elements.OppositeSides A B L))`. -/

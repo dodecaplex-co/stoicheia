@@ -1,3 +1,4 @@
+import Elements.Figure.Basics
 import Elements.Foundations.CommonNotions
 import Elements.Foundations.Definitions
 import Elements.Foundations.DefinitionsII

@@ -17,7 +17,7 @@ namespace Model.Hand
 
 variable (S : Signature)
 
-/-- `Elements.Tacit.eq_of_len_eq_zero` (Metric 1), hand-translated. The lock prints it as
+/-- `Elements.Tacit.eq_of_len_eq_zero` (Metric 1), hand-translated. The theorem's unchanged type is
 `∀ {A B : Elements.Point}, Eq (Elements.len A B) 0 → Eq A B`. -/
 def eq_of_len_eq_zero : Prop :=
   ∀ {A B : S.Point}, S.len A B = (0 : S.Length) → A = B

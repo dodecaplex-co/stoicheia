@@ -22,4 +22,9 @@
 # Renewed on 19 October 2026, when eight axioms became theorems (the owner approved retirement
 # in principle that day, pending the evidence): their laws leave the generated translation;
 # the other 79 axioms and every word are unchanged, byte for byte.
-da52a4969bf323512b82545ca01023038782d1c17a57e56da3273efdc93a1402  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when 31 more axioms became theorems (the owner's decision that
+# day): their laws leave the generated translation, and Check/ compares each hand translation
+# with the theorem's type directly; the other 48 axioms and every word are unchanged, byte for
+# byte.
+aaba04e9a811778508d047c348856225583ce35f90df3f098bf7fe4d15252f6b  Certificate/axioms.lock

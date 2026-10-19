@@ -39,12 +39,12 @@ variable (S : Signature)
 def between_symm : Prop :=
   ∀ {A B C : S.Point}, S.Between A B C → S.Between C B A
 
-/-- `Elements.Tacit.ne_of_between` (Between 1), hand-translated. The lock prints it as
+/-- `Elements.Tacit.ne_of_between` (Between 1), hand-translated. The theorem's unchanged type is
 `∀ {A B C : Elements.Point}, Elements.Between A B C → Ne A B`. -/
 def ne_of_between : Prop :=
   ∀ {A B C : S.Point}, S.Between A B C → A ≠ B
 
-/-- `Elements.Tacit.ne_of_between_ends` (Between 1), hand-translated. The lock prints it as
+/-- `Elements.Tacit.ne_of_between_ends` (Between 1), hand-translated. The theorem's unchanged type is
 `∀ {A B C : Elements.Point}, Elements.Between A B C → Ne A C`. -/
 def ne_of_between_ends : Prop :=
   ∀ {A B C : S.Point}, S.Between A B C → A ≠ C
@@ -54,28 +54,28 @@ as `∀ {A B C : Elements.Point}, Elements.Between A B C → Not (Elements.Betwe
 def not_between_of_between : Prop :=
   ∀ {A B C : S.Point}, S.Between A B C → ¬ S.Between B A C
 
-/-- `Elements.Tacit.on_line_of_between` (Between 2), hand-translated. The lock prints it as
+/-- `Elements.Tacit.on_line_of_between` (Between 2), hand-translated. The theorem's unchanged type is
 `∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.Between A B C →
 Elements.OnLine A L → Elements.OnLine B L → Elements.OnLine C L`. -/
 def on_line_of_between : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine A L → S.OnLine B L →
     S.OnLine C L
 
-/-- `Elements.Tacit.on_line_of_between_ends` (Between 3), hand-translated. The lock prints it
-as `∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.Between A B C →
+/-- `Elements.Tacit.on_line_of_between_ends` (Between 3), hand-translated. The theorem's unchanged
+type is `∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.Between A B C →
 Elements.OnLine A L → Elements.OnLine C L → Elements.OnLine B L`. -/
 def on_line_of_between_ends : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, S.Between A B C → S.OnLine A L → S.OnLine C L →
     S.OnLine B L
 
-/-- `Elements.Tacit.between_of_between_left` (Between 4), hand-translated. The lock prints
-it as `∀ {A B C D : Elements.Point}, Elements.Between A B C → Elements.Between A D B →
+/-- `Elements.Tacit.between_of_between_left` (Between 4), hand-translated. The theorem's unchanged type
+is `∀ {A B C D : Elements.Point}, Elements.Between A B C → Elements.Between A D B →
 Elements.Between A D C`. -/
 def between_of_between_left : Prop :=
   ∀ {A B C D : S.Point}, S.Between A B C → S.Between A D B → S.Between A D C
 
-/-- `Elements.Tacit.between_of_between_right` (Between 5), hand-translated. The lock prints
-it as `∀ {A B C D : Elements.Point}, Elements.Between A B C → Elements.Between B C D →
+/-- `Elements.Tacit.between_of_between_right` (Between 5), hand-translated. The theorem's unchanged type
+is `∀ {A B C D : Elements.Point}, Elements.Between A B C → Elements.Between B C D →
 Elements.Between A B D`. -/
 def between_of_between_right : Prop :=
   ∀ {A B C D : S.Point}, S.Between A B C → S.Between B C D → S.Between A B D
@@ -119,23 +119,23 @@ def circle_eq : Prop :=
     S.OnCircle C β → S.len A B = S.len A C → α = β
 
 /-- `Elements.Tacit.on_circle_of_len_eq` (Diagram-segment 3, the half Definition 15 does not
-give), hand-translated. The lock prints it as `∀ {A B C : Elements.Point}
+give), hand-translated. The theorem's unchanged type is `∀ {A B C : Elements.Point}
 {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Eq (Elements.len A C)
 (Elements.len A B) → Elements.OnCircle C α`. -/
 def on_circle_of_len_eq : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α →
     S.len A C = S.len A B → S.OnCircle C α
 
-/-- `Elements.Tacit.inside_of_len_lt` (Diagram-segment 4), hand-translated. The lock prints
-it as `∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α →
+/-- `Elements.Tacit.inside_of_len_lt` (Diagram-segment 4), hand-translated. The theorem's unchanged type
+is `∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α →
 Elements.OnCircle B α → LT.lt (Elements.len A C) (Elements.len A B) →
 Elements.InsideCircle C α`. -/
 def inside_of_len_lt : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.Centre A α → S.OnCircle B α →
     @LT.lt S.Length _ (S.len A C) (S.len A B) → S.InsideCircle C α
 
-/-- `Elements.Tacit.len_lt_of_inside` (Diagram-segment 4), hand-translated. The lock prints
-it as `∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α →
+/-- `Elements.Tacit.len_lt_of_inside` (Diagram-segment 4), hand-translated. The theorem's unchanged type
+is `∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α →
 Elements.OnCircle B α → Elements.InsideCircle C α → LT.lt (Elements.len A C)
 (Elements.len A B)`. -/
 def len_lt_of_inside : Prop :=
