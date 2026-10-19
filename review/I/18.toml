@@ -6,8 +6,28 @@ fingerprint = "sha256:3fac39150e84c75c"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "But the angle ADB is equal to the angle ABD"
+kind = "carried"
+note = "Euclid infers equal angles from the equal sides AB and AD; Heath gives no reference for this step. The Lean applies I.5 (`Prop5.base`) to the triangle ABD."
+
+[[passage]]
+at = "therefore the angle ABC is much greater than the angle ACB"
+kind = "helper"
+helper = "angle_add_of_between"
+note = "Euclid reads off his figure that the angle ABD is part of ABC; the Lean finds the reason in D lying between A and C, so BD falls within ABC and `angle_add_of_between` splits it into ABD and DBC. The Lean uses `Triangle.angle_pos` and Common Notion 5 to make ABC greater than ABD, then transitivity to make it greater than ACB."
+
 [review]
-stage = "exceptions"
-commit = "2a34715"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "4ae9714"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:d55c3dc89613050d"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
