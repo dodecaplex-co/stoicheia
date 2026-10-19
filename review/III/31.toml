@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-note = "The angles in the segments, at every point of them; with its companions, the angles of the segments, for every straight line in the circle, at either end."
+note = "The angles in the segments, at every point; its companions, the angles of the segments at either end of any straight line in the circle not through the centre."
 companions = ["III.31 greater", "III.31 less"]
 fingerprint = "sha256:c3d22dab733dbafc"
 

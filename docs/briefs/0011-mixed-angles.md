@@ -19,10 +19,11 @@ the prototype holds, III.16 and III.31 go full. Astra then read the prototype af
 themselves; its findings, and what was done with each, are below. This brief owes Astra the
 design, the checks it asked for and the challenge that shaped the move: warm thanks.
 
-Base: `origin/main` at `32eeba5`. The first commit of the branch, `ca8bd4d`, renames the
-prototype's `exists_centre` to `exists_circle_about`, as brief 0008 (question 12) asks,
-before the rule `Tacit.exists_centre` lands. No axiom is added or changed: the lock's
-`[axioms]` table stays the same 87, byte for byte.
+Base: the branch was written on `origin/main` at `32eeba5`, and has main merged in at
+`0c221b6` (`5812d71`). The first commit of the branch, `ca8bd4d`, renames the prototype's
+`exists_centre` to `exists_circle_about`, as brief 0008 (question 12) asks, before the rule
+`Tacit.exists_centre` lands. No axiom is added or changed: the lock's `[axioms]` table stays
+the same 87, byte for byte.
 
 ## Companions, not restatements
 
