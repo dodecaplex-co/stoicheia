@@ -126,8 +126,9 @@ where to look:
    ([review/SCHEMA.md](../review/SCHEMA.md), its `short`); what they mean is in
    [FORMALIZATION.md](FORMALIZATION.md).
 4. **The figure at a glance,** with its caption.
-5. **Euclid's proof:** his figure with Heath's letters, a figure note under it where our
-   drawing departs from Heath's (section 7), and Heath's proof in full.
+5. **Euclid's proof:** his figure with Heath's letters, a figure note under it where the
+   figure shows one case of several or our drawing departs from Heath's (section 7), and
+   Heath's proof in full.
 6. **In Lean:** a short table of the formal facts (proof, statement, extra hypotheses,
    argument, representation, overlap with an axiom, and what was reviewed, at which
    commit); a clause map where the statement leaves a clause out, which says the omission

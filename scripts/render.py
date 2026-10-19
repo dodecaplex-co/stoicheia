@@ -487,10 +487,14 @@ def heath_figure_note(source):
 
 
 def figure_note(record):
-    """Where our drawing of Euclid's figure places a point otherwise than Heath's, as the
-    Lean does, said under the figure (docs/STYLE.md, section 7): the review record's
-    `[figure] note`, or nothing."""
-    return ((record or {}).get("figure") or {}).get("note", "")
+    """What the page says under Euclid's figure (docs/STYLE.md, section 7), from the review
+    record's `[figure]`, whose keys review/SCHEMA.md defines: its `case`, as "Drawn for one
+    case: D between C and B, as in Heath's figure." (one full stop, whether or not the case
+    ends with its own), then its `note`. Nothing when the record gives neither."""
+    figure = (record or {}).get("figure") or {}
+    said = ([f"Drawn for one case: {figure['case'].rstrip('.')}."] if figure.get("case")
+            else [])
+    return " ".join(said + ([figure["note"]] if figure.get("note") else []))
 
 
 # Why Heath prints a whole proposition in square brackets, said under its enunciation
@@ -1364,14 +1368,15 @@ def page(book, n, count, titles, facts, docs, records):
     out += [in_lean_line(p, record, book, n), ""]
     if idea.exists():
         caption = svg_desc(idea)
+        alt = caption.replace('"', "&quot;")
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-idea.svg\" "
-                f"alt=\"{caption}\" width=\"420\"></p>", "",
+                f"alt=\"{alt}\" width=\"420\"></p>", "",
                 f"<p align=\"center\"><em>{caption}</em></p>", ""]
     out += ["## Euclid's proof", ""]
     if figure.exists():
         note = figure_note(record)
-        alt = f"Euclid's figure for Proposition {ref}, with Heath's letters" + (
-            f". {note}" if note else "")
+        alt = (f"Euclid's figure for Proposition {ref}, with Heath's letters" + (
+            f". {note}" if note else "")).replace('"', "&quot;")
         out += [f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}.svg\" "
                 f"alt=\"{alt}\" width=\"360\"></p>", ""]
         if note:
