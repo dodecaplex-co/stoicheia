@@ -13,6 +13,7 @@ note = "The circle comes with a centre (`∃ D, Centre D ABC`), which the proof 
 
 [overlap]
 rule = "Tacit.inside_of_between"
+kind = "states"
 note = "System E's Circle 2 contains III.2. The Lean of III.2 never calls the rule, but rests on it through III.1, so it reconstructs Euclid's reasoning within our foundations and does not establish the rule."
 
 [[passage]]

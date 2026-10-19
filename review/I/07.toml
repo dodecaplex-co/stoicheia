@@ -9,6 +9,7 @@ kind = "euclid"
 
 [overlap]
 rule = "Tacit.not_same_side_of_circles_meet"
+kind = "step"
 note = "System E's Circle 4 says I.7 of two circles: they cut one another on opposite sides of the straight line through their centres. Our proof follows Euclid, through I.5, and never uses the rule."
 
 [[passage]]

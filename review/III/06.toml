@@ -10,6 +10,7 @@ kind = "euclid"
 [overlap]
 rule = "Tacit.circle_eq"
 also = ["Tacit.centre_inside"]
+kind = "gives"
 note = "For contact within, System E's Diagram-segment 2 gives III.6 at once from the point of contact; for contact without, our definition of touching with Generalities 3 does. The proof follows Euclid, and calls on Diagram-segment 2 only for the step he leaves tacit, that E and B are two points."
 
 [[passage]]
