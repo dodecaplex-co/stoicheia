@@ -15,16 +15,16 @@
 # A book with no table here and nothing in facts.json is shown as not begun.
 
 [I]
-stage = "released (next: I.40 and I.45 in full generality)"
+stage = "released (next: the consolidation review, stage 5)"
 outside = { score = 90, by = "Astra", commit = "676244a" }
 tag = "book-I"
 
 [II]
-stage = "released (next: II.1 and II.14 in full generality)"
+stage = "released (next: the consolidation review, stage 5)"
 outside = { score = 85, by = "Astra", commit = "676244a" }
 tag = "book-II"
 
 [III]
-stage = "released (next: arcs and segments)"
+stage = "released (next: stages 3 and 4, brief 0008's restatements and the mixed angles)"
 outside = { score = 80, by = "Astra", commit = "676244a" }
 tag = "book-III"
