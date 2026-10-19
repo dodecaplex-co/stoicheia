@@ -204,6 +204,17 @@ NAMES_CASES = [   # (a paragraph, names it must give, names it must not)
     (style.MODERN_WAY + r" The point $\mathrm{A} + i\mathrm{(B - A)}$ is D.", {"i"}, {"m", "r"}),
     (style.MODERN_WAY + " With AC = a and CB = b, the square is (a + b)².", {"a", "b"}, {"c"}),
     (style.MODERN_WAY + r" Its breadth is $q/(a\sin\theta)$.", {"q", "a", "θ"}, {"s", "n"}),
+    (style.MODERN_WAY + r" With $\nu$ and $\vartheta$ and ϕ.", {"ν", "θ", "φ"}, {"n", "u"}),
+    (style.MODERN_WAY + r" Let $a_{\text{side {length}}}$ be given.", {"a"}, {"g", "s", "l"}),
+]
+SPAN_CASES = [   # (a mishnah, the paragraph modern_span finds, or None)
+    ("Before.\n\n" + style.MODERN_WAY + " x.\n\nAfter.", style.MODERN_WAY + " x."),
+    ("Before.\n \n" + style.MODERN_WAY + " x.\n \nAfter.", style.MODERN_WAY + " x."),
+    ("Before.\n\n  " + style.MODERN_WAY + " x.", style.MODERN_WAY + " x."),
+    (style.MODERN_WAY + " x.\n# A heading", style.MODERN_WAY + " x."),
+    ("<!--\n\n" + style.MODERN_WAY + " x.\n\n-->", None),
+    ("```\n" + style.MODERN_WAY + " x.\n```", None),
+    ("**A lead.** No modern way here.", None),
 ]
 HEATHS = {"A", "B", "C"}
 NAMES = style.modern_names(MODERN_PARAGRAPH)
@@ -212,7 +223,7 @@ MODERN_GOOD = ('<title>I.47: the modern way</title>'
                '<line x1="40" y1="250" x2="360" y2="250" stroke="#3b2f2f" stroke-width="1.6"/>'
                '<polygon points="60,250 300,250 60,60" fill="#e9dcc0" fill-opacity="0.55" '
                'stroke="#a0522d" stroke-width="2.4"/>'
-               '<g font-family="Georgia, serif" font-size="17">'
+               '<g font-family="Georgia, serif" font-size="17" fill="#3b2f2f">'
                '<text x="50" y="270">A</text><text x="300" y="270">B</text>'
                '<text x="50" y="55">C</text>'
                '<text x="180" y="270" font-style="italic">c</text>'
@@ -233,6 +244,12 @@ MODERN_CASES = [   # (a figure's inside, the title's ref, the finding wanted: ru
     (MODERN_GOOD.replace(">c<", ">c<tspan>₁</tspan><"), "I.47", "S23"),
     (MODERN_GOOD.replace(">c<", ">c∫<"), "I.47", "S23"),
     (MODERN_GOOD.replace('font-size="17"', 'font-size="14"'), "I.47", "S23"),
+    (MODERN_GOOD.replace(' fill="#3b2f2f">', '>'), "I.47", "S22"),
+    (MODERN_GOOD + '<polyline points="1,1 9,9 1,9" stroke="#8c7b62" stroke-width="1.3"/>',
+     "I.47", "S22"),
+    (MODERN_GOOD.replace(">a² = b² + c²<", ">a² =\n   b² + c²<"), "I.47", None),
+    (MODERN_GOOD.replace(">c<", ">ϑ<"), "I.47", None),
+    (MODERN_GOOD.replace(">c<", ">ν<"), "I.47", "S23"),
 ]
 
 
@@ -310,9 +327,9 @@ class Modern(unittest.TestCase):
     def test_no_paragraph_and_no_figure(self):
         self.assertIn("S22", modern_rules(MODERN_GOOD, "I.47", names=None))
         self.assertIn("S22", modern_rules(MODERN_GOOD, "I.47", heaths=None))
-        self.assertIsNone(style.modern_paragraph("**A lead.** No modern way here."))
-        self.assertEqual(style.modern_paragraph("Before.\n\n" + style.MODERN_WAY + " x.\n\nAfter."),
-                         style.MODERN_WAY + " x.")
+        for text, want in SPAN_CASES:
+            with self.subTest(text=text):
+                self.assertEqual(style.modern_paragraph(text), want)
 
     test_modern_cases.__doc__ = (f"S22 and S23 read {len(MODERN_CASES)} figures of the "
                                  "modern way rightly")

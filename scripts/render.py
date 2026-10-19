@@ -43,6 +43,7 @@ import json
 import re
 
 import check_fidelity
+import check_style
 import heath
 
 ROOT = heath.ROOT
@@ -1375,18 +1376,18 @@ JUMP_LINKS = ("[Euclid's proof](#euclids-proof) · [In Lean](#in-lean) · "
 def with_modern_figure(text, book, n):
     """The mishnah, with the figure of the modern way, `figures/<book>/NN-modern.svg`,
     where there is one, set under the paragraph that opens "**The modern way.**", at the
-    blank line that ends it (docs/STYLE.md, section 7). check_style.py's S22 fails such a
-    figure on a page with no such paragraph, so none is left out unseen."""
+    end of that paragraph as check_style.py reads it (`modern_span`), with a blank line on
+    each side (docs/STYLE.md, section 7). S22 fails such a figure on a page with no such
+    paragraph, so none is left out unseen."""
     figure = ROOT / "figures" / book / f"{n:02d}-modern.svg"
-    m = re.search(r"(?m)^\*\*The modern way\.\*\*", text)
-    if not figure.exists() or not m:
+    span = check_style.modern_span(text)
+    if not figure.exists() or span is None:
         return text
-    end = text.find("\n\n", m.start())
-    end = len(text) if end < 0 else end
     img = (f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-modern.svg\" "
            f"alt=\"The modern way for Proposition {book}.{n}, with Heath's letters\" "
            f"width=\"360\"></p>")
-    return text[:end] + "\n\n" + img + text[end:]
+    rest = text[span[1]:].lstrip("\n")
+    return text[:span[1]] + "\n\n" + img + ("\n\n" + rest if rest else "")
 
 
 def page(book, n, count, titles, facts, docs, records):

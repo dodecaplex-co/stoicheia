@@ -1401,23 +1401,56 @@ MODERN_TEXT_SIZE = 17
 MODERN_TEXT = re.compile(r"[a-zα-ωϑϕ0-9 +\-−·×()/√²³⁰¹⁴-⁹⁻½=,.|′'₀-₉<>≤≥±]+")
 # TeX's Greek letters, as the paragraph writes them, and the letter each names.
 TEX_GREEK = {"alpha": "α", "beta": "β", "gamma": "γ", "delta": "δ", "epsilon": "ε",
-             "varepsilon": "ε", "theta": "θ", "vartheta": "θ", "lambda": "λ", "mu": "μ",
-             "pi": "π", "rho": "ρ", "sigma": "σ", "tau": "τ", "phi": "φ", "varphi": "φ",
-             "psi": "ψ", "omega": "ω"}
+             "varepsilon": "ε", "zeta": "ζ", "eta": "η", "theta": "θ", "vartheta": "θ",
+             "iota": "ι", "kappa": "κ", "lambda": "λ", "mu": "μ", "nu": "ν", "xi": "ξ",
+             "pi": "π", "varpi": "π", "rho": "ρ", "varrho": "ρ", "sigma": "σ",
+             "varsigma": "σ", "tau": "τ", "upsilon": "υ", "phi": "φ", "varphi": "φ",
+             "chi": "χ", "psi": "ψ", "omega": "ω"}
+# The variant letters, each read as the letter it is a form of, in the paragraph and in
+# the figure alike: ϑ as θ, ϕ as φ, ς as σ, ϖ as π, ϱ as ρ.
+GREEK_VARIANTS = str.maketrans({"ϑ": "θ", "ϕ": "φ", "ς": "σ", "ϖ": "π", "ϱ": "ρ"})
 TEX_SPAN = re.compile(r"\$([^$\n]+)\$")
-TEX_UPRIGHT = re.compile(r"\\(?:mathrm|text|operatorname)\{[^{}]*\}")
+# A command whose argument TeX sets upright, as words or Heath's letters: the argument,
+# braces balanced, is no name of the modern way.
+TEX_UPRIGHT = re.compile(r"\\(?:mathrm|text|textrm|textup|operatorname)\s*\{")
 TEX_COMMAND = re.compile(r"\\([A-Za-z]+)")
 LONE_LOWER = re.compile(r"(?<![A-Za-z])([a-z])(?![A-Za-z])")
 
 
-def modern_paragraph(text: str) -> str | None:
-    """The paragraph of a mishnah that opens "**The modern way.**", to where Markdown
-    ends it (MODERN_WAY_ENDS), or None."""
-    for _, para in paragraphs(text):
+def without_upright(body: str) -> str:
+    """A TeX span with each upright argument (\\mathrm{…}, \\text{…}) taken out, its
+    braces balanced, so that nested braces end where TeX ends them."""
+    out, pos = [], 0
+    for m in TEX_UPRIGHT.finditer(body):
+        if m.start() < pos:
+            continue
+        out.append(body[pos:m.start()])
+        depth, i = 1, m.end()
+        while i < len(body) and depth:
+            depth += {"{": 1, "}": -1}.get(body[i], 0)
+            i += 1
+        out.append(" ")
+        pos = i
+    return "".join(out) + body[pos:]
+
+
+def modern_span(text: str) -> tuple[int, int] | None:
+    """Where the paragraph that opens "**The modern way.**" stands in a mishnah, as
+    (start, end) offsets: read as a reader's Markdown reads it, with HTML comments,
+    fenced blocks and code blanked first, its start indented or not, and its end where
+    Markdown ends it (MODERN_WAY_ENDS). render.py sets the modern figure at its end, so
+    the two read the page alike. None when there is no such paragraph."""
+    for off, para in paragraphs(blank_code(text)):
         if para.startswith(MODERN_WAY):
             end = MODERN_WAY_ENDS.search(para)
-            return para[:end.start()] if end else para
+            return off, off + (end.start() if end else len(para))
     return None
+
+
+def modern_paragraph(text: str) -> str | None:
+    """The paragraph of a mishnah that opens "**The modern way.**" (modern_span), or None."""
+    span = modern_span(text)
+    return text[span[0]:span[1]] if span else None
 
 
 def modern_names(paragraph: str) -> set[str]:
@@ -1429,12 +1462,12 @@ def modern_names(paragraph: str) -> set[str]:
     names: set[str] = set()
 
     def span(m: re.Match) -> str:
-        body = TEX_UPRIGHT.sub(" ", m.group(1))
+        body = without_upright(m.group(1))
         body = TEX_COMMAND.sub(lambda c: " " + TEX_GREEK.get(c.group(1), "") + " ", body)
-        names.update(c for c in body if c.isalpha() and c.islower())
+        names.update(c for c in body.translate(GREEK_VARIANTS) if c.isalpha() and c.islower())
         return " "
 
-    rest = TEX_SPAN.sub(span, paragraph)
+    rest = TEX_SPAN.sub(span, paragraph).translate(GREEK_VARIANTS)
     names.update(LONE_LOWER.findall(rest))
     names.update(c for c in rest if "α" <= c <= "ω")
     return names
@@ -1468,6 +1501,9 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
             v = own.get(k)
             if v is not None and v.lower() != "none" and v.lower() not in EUCLID_COLOURS:
                 bad[f"{k}={v}"] += 1
+        if (t in FILLED or t == "text") and eff.get("fill") is None:
+            found.append(("S22", f"a <{t}> with no fill, which SVG paints black: give it "
+                          "a colour of the palette, or fill=\"none\""))
         if t in DRAWN and (eff.get("stroke") or "none").lower() != "none":
             w = number(eff.get("stroke-width"))
             w = 1.0 if w is None else w
@@ -1477,7 +1513,7 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
             found.append(("S23", "a <tspan>: one size and one style to each <text>"))
         if t != "text":
             continue
-        s = text_of(el)
+        s = " ".join(text_of(el).split()).translate(GREEK_VARIANTS)
         if not s:
             continue
         if number(eff.get("font-size")) != MODERN_TEXT_SIZE:
