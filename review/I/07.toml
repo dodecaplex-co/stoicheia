@@ -36,10 +36,10 @@ case = "AD crossing CB, with a supposed second point D, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "2ac1625"
+commit = "7285f05"
 reviewer = "Claude Opus 5.5, records review"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
-lean = "sha256:ffbc06b6dd19da41"
+lean = "sha256:b1e72bc213d450aa"
 
 [review.items]
 statement = "pass"

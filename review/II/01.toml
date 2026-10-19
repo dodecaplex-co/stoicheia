@@ -59,9 +59,9 @@ case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "68e9276"
+commit = "7285f05"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:2642bf8e58a5ea62"
+lean = "sha256:dca5badf15c0dfbd"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]
