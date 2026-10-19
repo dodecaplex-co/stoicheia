@@ -18,6 +18,6 @@ note = "The helper carries the whole diameter calculation: III.18 gives the righ
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:35e8fdec862fbd29"
+commit = "b39e09d"
+reviewer = "GPT-6 Astra, independent reader"
+lean = "sha256:8ad9fe935b980364"
