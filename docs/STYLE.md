@@ -672,7 +672,8 @@ proposition, and a later book's numeral replaces `I` in the paths.
     `grep -oE '\{[^}]*: Point\}|obtain ⟨[^⟩]*⟩' Elements/BookI/PropNN.lean` shows the
     Lean's own. One letter, one point: a letter that names one of Heath's points names no
     straight line or circle in the Lean (`{L : Line}`, or `obtain ⟨L, …⟩ := Postulate1 …`,
-    beside Heath's point L); `grep -nE '[{(]([A-Z] )*[A-Z] : (Line|Circle)\b|⟨[A-Z],'`
+    beside Heath's point L);
+    `grep -nE '[{(]([A-Z] )*[A-Z] : (Line|Circle)\b|⟨[A-Z],' Elements/BookI/PropNN.lean`
     shows the candidates, a binder of several names (`{L M : Line}`) and a line taken
     from inside another fact (`obtain ⟨-, -, ⟨L, …⟩, -⟩`) among them.
 17. On the figure at a glance, rendered beside Euclid's, each letter is the one Euclid's
