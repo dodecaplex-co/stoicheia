@@ -67,8 +67,8 @@ example (S : Model.Signature) : Model.Hand.same_ray_of_angle_eq_zero S =
     Model.Law.Tacit.same_ray_of_angle_eq_zero S := rfl
 example (S : Model.Signature) : Model.Hand.angle_add_of_inside S =
     Model.Law.Tacit.angle_add_of_inside S := rfl
-example (S : Model.Signature) : Model.Hand.inside_of_angle_add S =
-    Model.Law.Tacit.inside_of_angle_add S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_angle_add
+  ``Elements.Tacit.inside_of_angle_add)
 run_cmd (Check.Generator.comparePlanted ``Model.Hand.adjacent_eq_of_right
   ``Elements.Tacit.adjacent_eq_of_right)
 example (S : Model.Signature) : Model.Hand.angle_eq_of_same_rays S =

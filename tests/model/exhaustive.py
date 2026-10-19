@@ -171,7 +171,7 @@ def gen_ti(withE=False):
 run('triple_incidence1', gen_ti())
 run('triple_incidence2', gen_ti())
 if os.environ.get('TI3', '1') == '1':
-    run('triple_incidence3', gen_ti(True))
+    run('derived.triple_incidence3', gen_ti(True))
 
 
 # ---------------- Angles ----------------
@@ -185,7 +185,7 @@ def gen_angle2():
 
 
 run('angle_add_of_inside', gen_angle2())
-run('inside_of_angle_add', gen_angle2())
+run('derived.inside_of_angle_add', gen_angle2())
 
 
 def gen_adj():
@@ -412,7 +412,7 @@ def gen_lmc_opp():
                 yield dict(A=A, B=B, L=L, al=c)
 
 
-run('line_meets_circle_of_opposite_sides', gen_lmc_opp())
+run('derived.line_meets_circle_of_opposite_sides', gen_lmc_opp())
 
 
 def gen_lmc_in():
@@ -450,6 +450,7 @@ def gen_sup():
 
 
 run('superposition', gen_sup())
+run('derived.exists_point_outside_circle', (dict(al=c) for c in CIRCS))
 
 print('exhaustive axioms run:', sum(r[0] not in PROPERTIES for r in results),
       ' derived properties run:', sum(r[0] in PROPERTIES for r in results),

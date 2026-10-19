@@ -87,7 +87,7 @@ at the repository's root builds the library exactly as before.
 | [Check/Order.lean](Check/Order.lean) | the hand-translated order laws compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.order` |
 | [Check/Original.lean](Check/Original.lean) | `original`, the library's own words as a signature | `Elements.Foundations`, `Model.Signature` |
 | [Check/RoundTrip.lean](Check/RoundTrip.lean) | checked at every build: each generated law and word translated back and compared with the library's by syntax; planted faults it must refuse | `Elements.Foundations`, `Model.Laws`, `Model.Hand`, seven files of `Model/Laws/` (all but angles and superposition), the generator |
-| [Check/Sides.lean](Check/Sides.lean) | the hand-translated same-side, Pasch and triple-incidence rules compared with the library and the generated laws | `Check.Hand`, `Model.Laws.sides` |
+| [Check/Sides.lean](Check/Sides.lean) | the hand-translated same-side, Pasch and triple-incidence rules compared with the library and the generated laws | `Elements.Figure.Circles`, `Check.Hand`, the generator, `Model.Laws.sides` |
 | [Check/Superposition.lean](Check/Superposition.lean) | the hand translation of superposition and its two words compared with the library and the generated law | `Elements.Foundations`, `Check.Hand`, `Model.Laws.superposition` |
 | [Check/Write.lean](Check/Write.lean) | run by hand, never built: writes the generated files | as `Check/Generated.lean` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
@@ -294,9 +294,11 @@ the original means. These checks do that, at every build.
   swapped arguments or a change in the order of the binders fails it, and the build with
   it. This covers all 87 laws and all 16 defined words they reach. The family checks in
   `Check/` retain the original library checks. They also compare each hand-translated law
-  with its generated field over any signature, except for the four properties prepared
+  with its generated field over any signature, except for the eight properties prepared
   for axiom retirement: `adjacent_eq_of_right`, `not_same_side_of_circles_meet`,
-  `centre_unique` and `inside_of_between`. Their seven hand translations are instead
+  `centre_unique`, `inside_of_between`, `exists_point_outside_circle`,
+  `line_meets_circle_of_opposite_sides`, `triple_incidence3` and `inside_of_angle_add`.
+  Their eleven hand translations are instead
   compared directly with the library declaration's type by `comparePlanted`, including
   binder kinds. This comparison works for an axiom or a theorem and remains when a
   generated assumption field disappears. All 87 axioms remain in this preparation.

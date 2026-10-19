@@ -71,8 +71,8 @@ example : Model.Hand.Intersections.LineMeetsCircle original = Elements.LineMeets
 
 example (S : Model.Signature) : Model.Hand.lines_meet_of_opposite_sides_intersections S =
     Model.Law.Tacit.lines_meet_of_opposite_sides S := rfl
-example (S : Model.Signature) : Model.Hand.line_meets_circle_of_opposite_sides S =
-    Model.Law.Tacit.line_meets_circle_of_opposite_sides S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.line_meets_circle_of_opposite_sides
+  ``Elements.Tacit.line_meets_circle_of_opposite_sides)
 example (S : Model.Signature) : Model.Hand.line_meets_circle_of_inside S =
     Model.Law.Tacit.line_meets_circle_of_inside S := rfl
 example (S : Model.Signature) : Model.Hand.line_circle_between S =

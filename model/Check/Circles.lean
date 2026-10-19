@@ -104,8 +104,8 @@ example (S : Model.Signature) : Model.Hand.exists_point_opposite_side S =
     Model.Law.Tacit.exists_point_opposite_side S := rfl
 example (S : Model.Signature) : Model.Hand.exists_point_inside_circle S =
     Model.Law.Tacit.exists_point_inside_circle S := rfl
-example (S : Model.Signature) : Model.Hand.exists_point_outside_circle S =
-    Model.Law.Tacit.exists_point_outside_circle S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.exists_point_outside_circle
+  ``Elements.Tacit.exists_point_outside_circle)
 example (S : Model.Signature) : Model.Hand.exists_point_on_circle S =
     Model.Law.Tacit.exists_point_on_circle S := rfl
 
