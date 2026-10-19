@@ -35,7 +35,15 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "full"
-commit = "5d6b1f6"
+commit = "40d340d"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:b695b9572f39b180"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "fail"
+figures = "pass"
+signoff = "pass"
