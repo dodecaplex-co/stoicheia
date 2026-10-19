@@ -239,13 +239,14 @@ containment is local.
 | `sameSideOf_self`, `onLine_of_collinear`, `Collinear.change_point`, `sameSideOf_congr_collinear`, `sameSideOf_congr_line`, `sameSideOf_congr_point`, `OnRay.of_sameRay`, `SameSideOf.of_between_line` | Sides, rays and straight lines: Book Zero's kind of fact. |
 | `exists_circle_about`, `exists_onRay_inside`, `exists_inside_both` | Every point is a centre; a ray from the centre has points within the circle; of two circles about one point, one lies within the other. |
 
-Two of these overlap statements that brief 0006 stages. `foot_nearest` takes the foot of
-the perpendicular as I.12 gives it, which for A off BC is the staged `Foot A B C N`
-(`Staging/Stage4/Foot.lean`); it is not stated through `Foot`, which is not yet approved
-and whose existence and uniqueness are still stubs. `len_lt_of_add_lt` is I.20 with its
-degenerate case, which `Staging/Stage3/Degenerate.lean` states as an equality,
-`Prop20.collinear_iff`, still a stub; derived from it, it would rest on the stub. Condition 3
-gives their homes.
+Two of these overlap statements of brief 0006, now approved and proved in `Elements/`.
+`foot_nearest` takes the foot of the perpendicular as I.12 gives it, which for A off BC
+is `Foot A B C N`. `Foot` is now in `Elements/Foundations/DefinitionsIII.lean`, and its
+existence and uniqueness are proved in `Elements/BookIII/Squares.lean`. The prototype's
+proof kept I.12's form because `Foot` was not yet approved when it was written.
+`len_lt_of_add_lt` is I.20 with its degenerate case, now proved as the equality
+`Prop20.collinear_iff` in `Elements/BookI/HelpersTriangles.lean`; that statement was a
+stub when the prototype was written. Condition 3 gives the prototype lemmas' homes.
 
 ### The routes
 
