@@ -9,7 +9,9 @@ public import Model.Euclidean.Incidence
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Order
 public import Model.Euclidean.OrderLines
+public import Model.Euclidean.Pasch
 public import Model.Euclidean.Segments
+public import Model.Euclidean.Sides
 
 /-!
 # The plane satisfies the laws
@@ -22,9 +24,9 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-So far 38 of the 87 laws are proved in the plane. Until the rest are,
+So far 47 of the 87 laws are proved in the plane. Until the rest are,
 `euclidean_laws` takes them as hypotheses, so that it states exactly what is proved: the plane
-satisfies every law, given the 49 that are not yet proved in it. When none is left,
+satisfies every law, given the 40 that are not yet proved in it. When none is left,
 the generator writes it with no hypothesis, and `model_exists` after it.
 -/
 
@@ -32,7 +34,7 @@ the generator writes it with no hypothesis, and `model_exists` after it.
 
 namespace Model
 
-/-- **The plane satisfies the laws,** given the 49 not yet proved in it. -/
+/-- **The plane satisfies the laws,** given the 40 not yet proved in it. -/
 theorem euclidean_laws
     (Definition15 : Law.Definition15 Euclidean.plane)
     (Postulate3 : Law.Postulate3 Euclidean.plane)
@@ -67,19 +69,10 @@ theorem euclidean_laws
     (line_meets_circle_of_inside : Law.Tacit.line_meets_circle_of_inside Euclidean.plane)
     (line_meets_circle_of_opposite_sides :
       Law.Tacit.line_meets_circle_of_opposite_sides Euclidean.plane)
-    (not_on_line_of_same_side : Law.Tacit.not_on_line_of_same_side Euclidean.plane)
     (not_same_side_of_circles_meet : Law.Tacit.not_same_side_of_circles_meet Euclidean.plane)
     (on_line_of_area_eq_zero : Law.Tacit.on_line_of_area_eq_zero Euclidean.plane)
     (outside_of_between : Law.Tacit.outside_of_between Euclidean.plane)
-    (pasch1 : Law.Tacit.pasch1 Euclidean.plane)
-    (pasch2 : Law.Tacit.pasch2 Euclidean.plane)
-    (pasch3 : Law.Tacit.pasch3 Euclidean.plane)
-    (pasch4 : Law.Tacit.pasch4 Euclidean.plane)
     (same_ray_of_angle_eq_zero : Law.Tacit.same_ray_of_angle_eq_zero Euclidean.plane)
-    (same_side_or : Law.Tacit.same_side_or Euclidean.plane)
-    (same_side_refl : Law.Tacit.same_side_refl Euclidean.plane)
-    (same_side_symm : Law.Tacit.same_side_symm Euclidean.plane)
-    (same_side_trans : Law.Tacit.same_side_trans Euclidean.plane)
     (superposition : Law.Tacit.superposition Euclidean.plane)
     (triple_incidence1 : Law.Tacit.triple_incidence1 Euclidean.plane)
     (triple_incidence2 : Law.Tacit.triple_incidence2 Euclidean.plane)
@@ -152,22 +145,22 @@ theorem euclidean_laws
   not_between_of_between := Euclidean.not_between_of_between
   not_between_of_between_between := Euclidean.not_between_of_between_between
   not_lt_zero := Euclidean.not_lt_zero
-  not_on_line_of_same_side := not_on_line_of_same_side
+  not_on_line_of_same_side := Euclidean.not_on_line_of_same_side
   not_same_side_of_circles_meet := not_same_side_of_circles_meet
   on_circle_of_len_eq := Euclidean.on_circle_of_len_eq
   on_line_of_area_eq_zero := on_line_of_area_eq_zero
   on_line_of_between := Euclidean.on_line_of_between
   on_line_of_between_ends := Euclidean.on_line_of_between_ends
   outside_of_between := outside_of_between
-  pasch1 := pasch1
-  pasch2 := pasch2
-  pasch3 := pasch3
-  pasch4 := pasch4
+  pasch1 := Euclidean.pasch1
+  pasch2 := Euclidean.pasch2
+  pasch3 := Euclidean.pasch3
+  pasch4 := Euclidean.pasch4
   same_ray_of_angle_eq_zero := same_ray_of_angle_eq_zero
-  same_side_or := same_side_or
-  same_side_refl := same_side_refl
-  same_side_symm := same_side_symm
-  same_side_trans := same_side_trans
+  same_side_or := Euclidean.same_side_or
+  same_side_refl := Euclidean.same_side_refl
+  same_side_symm := Euclidean.same_side_symm
+  same_side_trans := Euclidean.same_side_trans
   superposition := superposition
   triple_incidence1 := triple_incidence1
   triple_incidence2 := triple_incidence2

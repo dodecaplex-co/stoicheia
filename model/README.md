@@ -12,8 +12,8 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and all 87 laws,
 written by a generator from the library's elaborated declarations into one structure,
-`Laws`, and checked against those declarations. The plane satisfies 38 of the 87 locked
-laws. `Model/Assembly.lean` gathers these proofs, with the 49 remaining laws as hypotheses.
+`Laws`, and checked against those declarations. The plane satisfies 47 of the 87 locked
+laws. `Model/Assembly.lean` gathers these proofs, with the 40 remaining laws as hypotheses.
 Until every locked law is proved here, the evidence that the laws have a model remains
 MODEL.md's hand arguments and numerical tests, and this package is a milestone in progress.
 
@@ -62,6 +62,10 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/OrderLines.lean](Model/Euclidean/OrderLines.lean) | Between 2, 3 and 6, which bring in a straight line, proved in the plane | Mathlib |
 | [Model/Euclidean/Segments.lean](Model/Euclidean/Segments.lean) | the diagram-segment rules 1 to 4 proved in the plane | Mathlib |
 | [Check/Order.lean](Check/Order.lean) | each hand-translated order law compared with the library's declaration | `Elements.Foundations`, `Model.Laws.order` |
+| [Model/Laws/sides.lean](Model/Laws/sides.lean) | the five same-side rules and the four Pasch rules, translated **by hand** | `Signature` |
+| [Model/Euclidean/Sides.lean](Model/Euclidean/Sides.lean) | `SameSide` read as `SSameSide`, and Same side 1 to 5 proved in the plane | Mathlib |
+| [Model/Euclidean/Pasch.lean](Model/Euclidean/Pasch.lean) | Pasch 1 to 4 proved in the plane | Mathlib |
+| [Check/Sides.lean](Check/Sides.lean) | the same for the side rules | `Elements.Foundations`, `Model.Laws.sides` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib. The

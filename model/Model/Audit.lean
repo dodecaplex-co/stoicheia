@@ -16,6 +16,9 @@ public import Model.Laws.order
 public import Model.Euclidean.Order
 public import Model.Euclidean.OrderLines
 public import Model.Euclidean.Segments
+public import Model.Laws.sides
+public import Model.Euclidean.Sides
+public import Model.Euclidean.Pasch
 
 /-!
 # What the model's proofs rest on
@@ -279,6 +282,60 @@ info: 'Model.Euclidean.len_lt_of_inside' depends on axioms: [propext, Classical.
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.len_lt_of_inside
+
+/--
+info: 'Model.Euclidean.same_side_refl' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.same_side_refl
+
+/--
+info: 'Model.Euclidean.same_side_symm' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.same_side_symm
+
+/--
+info: 'Model.Euclidean.not_on_line_of_same_side' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.not_on_line_of_same_side
+
+/--
+info: 'Model.Euclidean.same_side_trans' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.same_side_trans
+
+/--
+info: 'Model.Euclidean.same_side_or' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.same_side_or
+
+/--
+info: 'Model.Euclidean.pasch1' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.pasch1
+
+/--
+info: 'Model.Euclidean.pasch2' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.pasch2
+
+/--
+info: 'Model.Euclidean.pasch3' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.pasch3
+
+/--
+info: 'Model.Euclidean.pasch4' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.pasch4
 
 /-! ## What the assembled model rests on
 

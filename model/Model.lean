@@ -4,6 +4,7 @@ public import Model.Signature
 public import Model.Laws
 public import Model.Hand
 public import Model.Laws.incidence
+public import Model.Laws.sides
 public import Model.Euclidean
 public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
@@ -16,4 +17,6 @@ public import Model.Laws.order
 public import Model.Euclidean.Order
 public import Model.Euclidean.OrderLines
 public import Model.Euclidean.Segments
+public import Model.Euclidean.Sides
+public import Model.Euclidean.Pasch
 public import Model.Audit

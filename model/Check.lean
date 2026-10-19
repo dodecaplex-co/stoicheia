@@ -5,3 +5,4 @@ import Check.Generated
 import Check.RoundTrip
 import Check.Incidence
 import Check.Order
+import Check.Sides
