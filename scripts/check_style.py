@@ -48,9 +48,10 @@ The reach of #66, held file by file (REACH_PENDING). The Review notes, the overl
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
 names came under the rules on 19 October, with S7 in the gap catalogues and the Generated
 files, S12 beyond the mishnah, and S22. A file that had findings of that reach on the
-day is listed with whoever mends them, and while it is listed those findings are
-reported (D16) and fail nothing; every other file is held at once, and so is every
-finding a file was held to before. An entry whose file has no finding of the reach left is
+day is listed with the rules it had findings of and whoever mends them, and while it is
+listed its findings of those rules are reported (D16) and fail nothing; every other
+finding of the reach fails at once, in a listed file as in any other, and so does every
+finding a file was held to before. An entry whose file has no finding of its rules left is
 reported as done, for the change that takes it out; once none is left, the list goes.
 
 "Outside quotations" means with every "…" span (within one paragraph), every link
@@ -160,58 +161,59 @@ NOT_DECLARED = {
 }
 
 # The reach of #66 (STYLE, section 8, "The reach of 19 October"), held file by file. Each
-# file below had findings of the rules' new reach on 19 October, and names who mends
-# them; while it is listed, those findings are reported (D16) and fail nothing. Every
-# file not listed is held to the whole reach, and every file to what it was held to
-# before. An entry whose file has no finding of the reach left is reported as done, for
-# the change that takes it out; it never fails, since the change that mends a file judged
-# by this check cannot change the check too (docs/WORKFLOW.md, section 10). Never add a
-# file to quiet a new finding: mend the text.
-REACH_PENDING: dict[str, str] = {
+# file below had findings of the rules' new reach on 19 October, of the rules named beside
+# it ({file: (rules, who mends them)}); while it is listed, its findings of those rules
+# are reported (D16) and fail nothing. Every other finding of the reach fails, in a listed
+# file as in any other, and every file is held to what it was held to before. An entry
+# whose file has no finding of its rules left is reported as done, for the change that
+# takes it out; it never fails, since the change that mends a file judged by this check
+# cannot change the check too (docs/WORKFLOW.md, section 10). Never add a file, or a rule
+# to a file, to quiet a new finding: mend the text.
+REACH_PENDING: dict[str, tuple[str, str]] = {
     # The review notes.
-    "review/I/09.toml": "the records of Books I and II (#29)",
-    "review/II/14.toml": "the records of Books I and II (#29)",
-    "review/III/14.toml": "stage 4's records (#28)",
-    "review/III/15.toml": "stage 4's records (#28)",
-    "review/III/25.toml": "stage 4's records (#28)",
+    "review/I/09.toml": ("S7", "the records of Books I and II (#29)"),
+    "review/II/14.toml": ("S12", "the records of Books I and II (#29)"),
+    "review/III/14.toml": ("S12", "stage 4's records (#28)"),
+    "review/III/15.toml": ("S12", "stage 4's records (#28)"),
+    "review/III/25.toml": ("S12", "stage 4's records (#28)"),
     # The catalogues and the reports.
-    "docs/reports/gaps-book-I.md": "the text change that follows this one (#66)",
-    "docs/reports/gaps-book-II.md": "the text change that follows this one (#66)",
-    "docs/reports/gaps-book-III.md": "stage 3's gap entries (#25)",
-    "docs/reports/overlaps.md": "stage 3's overlap entries (#25)",
-    "docs/reports/read-through-01.md": "the change now writing the reports",
+    "docs/reports/gaps-book-I.md": ("S7", "the text change that follows this one (#66)"),
+    "docs/reports/gaps-book-II.md": ("S7 S12", "the text change that follows this one (#66)"),
+    "docs/reports/gaps-book-III.md": ("S12", "stage 3's gap entries (#25)"),
+    "docs/reports/overlaps.md": ("S7", "stage 3's overlap entries (#25)"),
+    "docs/reports/read-through-01.md": ("S7", "the change now writing the reports"),
     # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
-    "book/I/front.md": "render.py's FRONT_LEAN_I, after stage 3 (#25)",
+    "book/I/front.md": ("S12", "render.py's FRONT_LEAN_I, after stage 3 (#25)"),
     # The notes of four proofs (S22): a change to the file needs its record read again.
-    "Elements/BookI/Prop08.lean": "the records of Books I and II (#29), with the record",
-    "Elements/BookII/Prop14.lean": "the records of Books I and II (#29), with the record",
-    "Elements/BookIII/Prop10.lean": "the next change to the file, with its record",
-    "Elements/BookIII/Prop19.lean": "the next change to the file, with its record",
+    "Elements/BookI/Prop08.lean": ("S22", "the records of Books I and II (#29), with the record"),
+    "Elements/BookII/Prop14.lean": ("S22", "the records of Books I and II (#29), with the record"),
+    "Elements/BookIII/Prop10.lean": ("S22", "the next change to the file, with its record"),
+    "Elements/BookIII/Prop19.lean": ("S22", "the next change to the file, with its record"),
     # Book Zero's notes (S22).
-    "Elements/Figure/Angles.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Areas.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Basics.lean": "stage 3 (#25) and the mixed angles (#57)",
-    "Elements/Figure/Circles.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Lengths.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Lines.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/OnCircles.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Parallelograms.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Parallels.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Rays.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Rectangles.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Rectilineal.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Sides.lean": "the text change that follows this one (#66)",
-    "Elements/Figure/Triangles.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Angles.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Areas.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Basics.lean": ("S22", "stage 3 (#25) and the mixed angles (#57)"),
+    "Elements/Figure/Circles.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Lengths.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Lines.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/OnCircles.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Parallelograms.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Parallels.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Rays.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Rectangles.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Rectilineal.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Sides.lean": ("S22", "the text change that follows this one (#66)"),
+    "Elements/Figure/Triangles.lean": ("S22", "the text change that follows this one (#66)"),
     # The foundations' notes (S22), and the rendered docstrings of Transfer.lean (S7): the
     # coordinator's files.
-    "Elements/Foundations/Definitions.lean": "the coordinator, who owns the foundations",
-    "Elements/Foundations/DefinitionsII.lean": "the coordinator, who owns the foundations",
-    "Elements/Foundations/DefinitionsIII.lean": "the coordinator, after the mixed angles (#57)",
-    "Elements/Foundations/Magnitudes.lean": "the coordinator, who owns the foundations",
-    "Elements/Foundations/Phrases.lean": "the coordinator, who owns the foundations",
-    "Elements/Foundations/Postulates.lean": "the coordinator, who owns the foundations",
-    "Elements/Foundations/Tacit/Transfer.lean": "the coordinator, who owns the foundations",
-    "Elements/Foundations/Words.lean": "the coordinator, who owns the foundations",
+    "Elements/Foundations/Definitions.lean": ("S22", "the coordinator, who owns the foundations"),
+    "Elements/Foundations/DefinitionsII.lean": ("S22", "the coordinator, who owns the foundations"),
+    "Elements/Foundations/DefinitionsIII.lean": ("S22", "the coordinator, after the mixed angles (#57)"),
+    "Elements/Foundations/Magnitudes.lean": ("S22", "the coordinator, who owns the foundations"),
+    "Elements/Foundations/Phrases.lean": ("S22", "the coordinator, who owns the foundations"),
+    "Elements/Foundations/Postulates.lean": ("S22", "the coordinator, who owns the foundations"),
+    "Elements/Foundations/Tacit/Transfer.lean": ("S7", "the coordinator, who owns the foundations"),
+    "Elements/Foundations/Words.lean": ("S22", "the coordinator, who owns the foundations"),
 }
 
 # ---------------------------------------------------------------------------------------
@@ -219,7 +221,7 @@ REACH_PENDING: dict[str, str] = {
 
 failures: list[tuple[str, str, int, str]] = []   # (rule, file, line, message)
 reports: dict[str, list[tuple[str, int, str]]] = defaultdict(list)
-reach_found: set[str] = set()   # the files of REACH_PENDING with a finding of the reach
+reach_found: set[str] = set()   # the files of REACH_PENDING with a finding of their rules
 
 RULES = {
     "S1": "an em dash",
@@ -257,7 +259,7 @@ REPORTS = {
     "D11": "Euclid's figure strokes or dots off the usual widths",
     "D14": "figures at a glance not yet lettered (S21 holds them once the switch is on)",
     "D15": "figures whose letters are still italic (S15 and S20 hold them upright once the switch is on)",
-    "D16": "the reach of 19 October, in a file still listed in REACH_PENDING (fails once it is out)",
+    "D16": "the reach of 19 October, of a rule its file is still listed for in REACH_PENDING (fails once it is out)",
 }
 
 
@@ -266,9 +268,10 @@ def rel(path: Path) -> str:
 
 
 def fail(rule: str, path: Path, line: int, message: str, *, new: bool = False) -> None:
-    """A failure; or, for a finding of the new reach (`new`) in a file still listed in
-    REACH_PENDING, a D16 report, with the rule it would fail."""
-    if new and rel(path) in REACH_PENDING:
+    """A failure; or, for a finding of the new reach (`new`) of a rule its file is still
+    listed for in REACH_PENDING, a D16 report, with the rule it would fail."""
+    pending = REACH_PENDING.get(rel(path))
+    if new and pending and rule in pending[0].split():
         reach_found.add(rel(path))
         report("D16", path, line, f"{rule}: {message}")
     else:
@@ -1037,8 +1040,8 @@ FILE_NAME = re.compile(r".*\.(?:lean|json|md|svg|py|toml|txt|lock)$")
 
 
 # A backticked hypothesis or variable with its type, `hBCE : Between B C E`: the name
-# before the colon (not `:=`) is read as a name too.
-BINDER = re.compile(r"([A-Za-z_][A-Za-z0-9_.'!?₀-₉]*)[ \t]*:(?![=:])")
+# before the colon (not `:=`, `::` or a link's `://`) is read as a name too.
+BINDER = re.compile(r"([A-Za-z_][A-Za-z0-9_.'!?₀-₉]*)[ \t]*:(?![=:/])")
 
 
 def lean_names(text: str, binders: bool = True) -> list[str]:
@@ -1961,12 +1964,12 @@ def main() -> int:
             print(f"note: S12 left {len(unchecked)} audit lemma(s) unchecked, for the Audit "
                   "library is not built (`lake build Audit`, as CI runs it): "
                   + ", ".join(f"`{n}`" for n in unchecked))
-    for f, who in sorted(REACH_PENDING.items()):
+    for f, (pending, who) in sorted(REACH_PENDING.items()):
         if not (ROOT / f).exists():
             report("D16", ROOT / f, 0, f"done: listed in REACH_PENDING ({who}), but there is "
                    "no such file now; take it out")
         elif f not in reach_found and not args.no_lean:
-            report("D16", ROOT / f, 0, f"done: no finding of the reach is left ({who}); take "
+            report("D16", ROOT / f, 0, f"done: no finding of {pending} is left ({who}); take "
                    "it out of REACH_PENDING")
 
     if not args.quiet:

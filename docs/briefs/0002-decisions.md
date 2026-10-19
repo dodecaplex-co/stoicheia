@@ -1359,16 +1359,18 @@ findings:
   [proposition template](../templates/proposition.md), point to it, and S12 holds it.
   The new reach is held file by file. On main at `89c5da4` it finds 1,173 things, 1,137 of
   them S22's, nearly all in the notes of Book Zero and the foundations, 25 of S7 and 11 of
-  S12, in 37 files; `REACH_PENDING` lists those files, each with whoever mends it (the
-  text change after this one; stages 3 and 4; the records of Books I and II; the next
-  change to III.10 and III.19, with their records; the coordinator, for the foundations),
-  and reports their findings of the reach as D16 meanwhile. Every other file
-  is held at once, and every file is held to all it was held to before: nothing is
-  loosened, and two cases of `tests/test_check_style.py` show an em dash still failing in
-  a listed file. An entry whose file has nothing left is reported as done, and comes out in
-  a change to the check; the list goes once it is empty. The protected files changed are
+  S12, in 37 files; `REACH_PENDING` lists those files, each with the rules it had findings
+  of and whoever mends it (the text change after this one; stages 3 and 4; the records of
+  Books I and II; the next change to III.10 and III.19, with their records; the
+  coordinator, for the foundations), and reports their findings of those rules as D16
+  meanwhile. Every other finding of the reach fails at once, in a listed file as in any
+  other, and every file is held to all it was held to before: nothing is loosened, and
+  cases of `tests/test_check_style.py` show an em dash still failing in a listed file, and
+  a listed file held at once to the rules it is not listed for. An entry whose file has
+  nothing of its rules left is reported as done, and comes out in a change to the check;
+  the list goes once it is empty. The protected files changed are
   [`scripts/check_style.py`](../../scripts/check_style.py),
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) (53 scope cases and 5
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (54 scope cases and 8
   reach cases), [`review/SCHEMA.md`](../../review/SCHEMA.md) and
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), whose comment on S12 now
   says what it reads. Astra read the first draft cold, through the Codex CLI, and found

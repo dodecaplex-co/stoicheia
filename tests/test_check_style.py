@@ -20,8 +20,8 @@ it, put to the script's own patterns and functions:
 * the scope cases (#66): which texts of a review record the rules read, and on which
   lines; the docstring render.py shows, found again in its file; S12's reading of a
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
-  reach of 19 October, whose findings in a file of REACH_PENDING are reported while every
-  finding of the old reach in that file still fails.
+  reach of 19 October, whose findings in a file of REACH_PENDING are reported only for the
+  rules the file is listed for, while every other finding in that file still fails.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -313,6 +313,7 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S12", style.lean_names, "`x := 1`", []),
     ("S12", style.lean_names, "(`hBCE:Between B C E`, `hBCE' : P`)", ["hBCE", "hBCE'"]),
     ("S12", style.lean_names, "`a :: l`", []),
+    ("S12", style.lean_names, "the edition at `https://example.org/x`", []),
     # A comment's quotation is no string; a multi-line string starts below its quotes;
     # an escaped line break in a one-line string reads as a space.
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_EDGES, [5, 6, 7]),
@@ -391,10 +392,10 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
 ]
 
 
-def findings(path, text: str, scopes: set[str], *, pending: bool, new: bool = False):
+def findings(path, text: str, scopes: set[str], *, pending: str | None, new: bool = False):
     """The failures and the D16 reports of check_text on `text`, as the file `path`, with
-    that file listed in REACH_PENDING or not; the script's own lists are left as they
-    were."""
+    that file listed in REACH_PENDING for the rules `pending`, or not listed; the script's
+    own lists are left as they were."""
     saved = (list(style.failures), dict(style.reports), set(style.reach_found),
              dict(style.REACH_PENDING))
     try:
@@ -402,7 +403,7 @@ def findings(path, text: str, scopes: set[str], *, pending: bool, new: bool = Fa
         style.reports.clear()
         style.REACH_PENDING.clear()
         if pending:
-            style.REACH_PENDING[style.rel(path)] = "a test"
+            style.REACH_PENDING[style.rel(path)] = (pending, "a test")
         style.check_text(path, text, scopes, new=new)
         return (sorted(r for r, *_ in style.failures),
                 sorted(m.split(":")[0] for _, _, m in style.reports.get("D16", [])))
@@ -418,15 +419,23 @@ def findings(path, text: str, scopes: set[str], *, pending: bool, new: bool = Fa
 
 GAPS = style.REPORTS_DIR / "gaps-book-I.md"
 REACH_TEXT = "As Definition 15 says \u2014 and `PQ`."
-REACH_CASES = [   # (file, scopes, a new text?, listed?, (failures, D16 reports))
+RECORD = style.ROOT / "review" / "I" / "99.toml"
+ALL = "S1 S7 S22"
+REACH_CASES = [   # (file, scopes, a new text?, the rules it is listed for, (failures, D16))
     # A gap catalogue was held to S1 before, and is still; S7 and S22 are the reach.
-    (GAPS, {"catalogue"}, False, True, (["S1"], ["S22", "S7"])),
-    (GAPS, {"catalogue"}, False, False, (["S1", "S22", "S7"], [])),
-    # A review note is new: while its file is listed, every finding is reported.
-    (style.ROOT / "review" / "I" / "99.toml", {"review"}, True, True, ([], ["S1", "S22", "S7"])),
-    (style.ROOT / "review" / "I" / "99.toml", {"review"}, True, False, (["S1", "S22", "S7"], [])),
+    (GAPS, {"catalogue"}, False, ALL, (["S1"], ["S22", "S7"])),
+    (GAPS, {"catalogue"}, False, None, (["S1", "S22", "S7"], [])),
+    # A review note is new: while its file is listed for every rule, every finding is
+    # reported.
+    (RECORD, {"review"}, True, ALL, ([], ["S1", "S22", "S7"])),
+    (RECORD, {"review"}, True, None, (["S1", "S22", "S7"], [])),
     # The prose was held to all three before (S22 aside), listed or not.
-    (style.ROOT / "mishnah" / "I" / "99.md", {"prose"}, False, True, (["S1", "S7"], ["S22"])),
+    (style.ROOT / "mishnah" / "I" / "99.md", {"prose"}, False, ALL, (["S1", "S7"], ["S22"])),
+    # A file listed for some rules is held at once to every other rule of the reach.
+    (GAPS, {"catalogue"}, False, "S7", (["S1", "S22"], ["S7"])),
+    (RECORD, {"review"}, True, "S12", (["S1", "S22", "S7"], [])),
+    (style.ROOT / "Elements" / "Foundations" / "Sample.lean", {"lean"}, False, "S22",
+     (["S1"], ["S22"])),
 ]
 
 
@@ -491,8 +500,9 @@ class Scopes(unittest.TestCase):
                 self.assertEqual(findings(path, REACH_TEXT, scopes, pending=pending, new=new),
                                  want)
 
-    test_reach_cases.__doc__ = (f"The reach of 19 October is reported in a listed file, and "
-                                f"the old reach still fails, in {len(REACH_CASES)} cases")
+    test_reach_cases.__doc__ = (f"The reach of 19 October is reported in a listed file for "
+                                f"the rules it is listed for, and all else fails, in "
+                                f"{len(REACH_CASES)} cases")
 
 
 if __name__ == "__main__":
