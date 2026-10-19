@@ -1,6 +1,6 @@
 # Euclid's figures against Heath's scans
 
-Each of Euclid's figures, `figures/<book>/NN.svg`, was set beside Heath's printed figure on the scan leaf that its source note names (`heath/<book>/NN.md`), and read as STYLE, section 7, asks a figure to be read: as geometry. This is the record of that reading, for [#30](https://github.com/jackChallis/stoicheia/issues/30), made at `89c5da4` on 19 October 2026, with what it mended and what it leaves to the owners of other files.
+Each of Euclid's figures, `figures/<book>/NN.svg`, was set beside Heath's printed figure on the scan leaf that its source note names (`heath/<book>/NN.md`), and read as STYLE, section 7, asks a figure to be read: as geometry. This is the record of that reading, for [#30](https://github.com/jackChallis/stoicheia/issues/30), with `89c5da4` as its audit baseline. The III.24 correction was introduced at `ec73cb1f`; the corrected figure, unchanged at `ebe82244`, was rendered and checked against Heath's figure on n66 on 19 October 2026. The report records what this branch mended and what it leaves to the owners of other files.
 
 ## How each figure was read
 
@@ -14,7 +14,7 @@ Of the 99, 64 are as Heath's with nothing to add; each of the rest has its word 
 
 ## Mended on this branch
 
-- **III.24:** F stood at the crossing of the two curves, where the awry segment CGD meets CFD, and G at the top of the awry curve. Heath puts G at the crossing and F on CFD alone; so does the figure now, so that F names a point of CFD only.
+- **III.24:** F was already on CFD but too near, and left of, the two curves' crossing; G stood at the top of the awry curve. The correction moved F farther from the crossing along CFD and G to the crossing, as Heath places them, so that F names a point of CFD only.
 - **III.1, III.2, III.12, III.19, III.32:** each theorem covers several cases, and each record now names the one its figure draws, which the page's caption gives (acceptance item P8): G off AB and off CE (III.1), the centre D off AB (III.2), C and D apart on FG (III.12), A on the circumference and F inside angle ACE (III.19), D on F's side of BA and apart from A (III.32), each as in Heath's figure.
 - **III.1, III.19:** each figure draws an impossible supposition, a centre off the straight line on which the proof finds it, as Heath's does, and each record's note now says so.
 
@@ -133,7 +133,7 @@ I.6 and I.26 draw a reductio's supposition too (AB greater than AC; AB unequal t
 | [III.21](../../book/III/21.md) | [n61](https://archive.org/download/thirteenbookseu00heibgoog/page/n61.jpg) | As Heath's. |
 | [III.22](../../book/III/22.md) | [n64](https://archive.org/download/thirteenbookseu00heibgoog/page/n64.jpg) | As Heath's. |
 | [III.23](../../book/III/23.md) | [n64](https://archive.org/download/thirteenbookseu00heibgoog/page/n64.jpg) | As Heath's. |
-| [III.24](../../book/III/24.md) | [n66](https://archive.org/download/thirteenbookseu00heibgoog/page/n66.jpg) | Mended here: F stood where the two curves cross and G at the top of the awry one; Heath puts G at the crossing and F on CFD alone, and so does ours now. It draws the segment falling awry, an impossible supposition (a note is proposed to its record's owner). |
+| [III.24](../../book/III/24.md) | [n66](https://archive.org/download/thirteenbookseu00heibgoog/page/n66.jpg) | Mended here: F was already on CFD but too near, and left of, the two curves' crossing; G was at the top of the awry one. F moved farther from the crossing along CFD and G moved to the crossing, as Heath places them. It draws the segment falling awry, an impossible supposition (a note is proposed to its record's owner). |
 | [III.25](../../book/III/25.md) | [n67](https://archive.org/download/thirteenbookseu00heibgoog/page/n67.jpg), [n68](https://archive.org/download/thirteenbookseu00heibgoog/page/n68.jpg) | As Heath's, his three figures side by side. Its record belongs to the lane moving III.25 into the edition. |
 | [III.26](../../book/III/26.md) | [n69](https://archive.org/download/thirteenbookseu00heibgoog/page/n69.jpg) | As Heath's. |
 | [III.27](../../book/III/27.md) | [n70](https://archive.org/download/thirteenbookseu00heibgoog/page/n70.jpg) | As Heath's. |
