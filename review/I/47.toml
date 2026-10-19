@@ -37,6 +37,6 @@ case = "the three squares standing outward from the right-angled triangle, as in
 
 [review]
 stage = "exceptions"
-commit = "7503779"
+commit = "22305736"
 reviewer = "GPT-6 Astra, independent reader"
-lean = "sha256:a33b4ea884666a1b"
+lean = "sha256:0120b11abdd14b1b"
