@@ -8,6 +8,12 @@
 
 Στοιχεῖα, *Stoicheia*, "Elements", is Euclid's title for the book that taught geometry for more than two thousand years. Abraham Lincoln, in the short autobiography he wrote in 1860, said of himself: "He studied and nearly mastered the Six-books of Euclid, since he was a member of Congress." The book turns up in his debates and his letters too, as [Lincoln and the six books](docs/reading.md#lincoln-and-the-six-books) tells. This project carries the same book into [Lean](https://lean-lang.org), a programming language that checks mathematical proofs, so that Euclid's steps are checked by a machine that can't be talked into anything.
 
+Lincoln's autobiography is in Roy P. Basler (ed.), [*The Collected Works of Abraham
+Lincoln*](docs/reading.md#basler1953collected), vol. 4, p. 62; his uses of Euclid in
+vol. 3, p. 186 and pp. 375–376. These passages were found through Glenn W. LaFantasie,
+["Lincoln, Euclid, and the Satisfaction of Success"](docs/reading.md#lafantasie2020satisfaction),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 24 and 43–44.
+
 For every proposition of Books I to III you get:
 
 - **Euclid's words**, in Sir Thomas Heath's 1908 translation (public domain).

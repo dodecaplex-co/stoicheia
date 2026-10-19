@@ -84,103 +84,115 @@ here in their own words.
 
 ## Lincoln and the six books
 
-Abraham Lincoln reckoned that all his schooling "did not amount to one year", and he did
-not hide it: asked in 1858 for a sketch of his life for the *Dictionary of Congress*, he
-wrote "Education defective." In the longer sketch he wrote in 1860, for John L. Scripps's
-campaign biography, he speaks of himself in the third person: "What he has in the way of
-education, he has picked up." After a sentence on English grammar comes the one the README
-quotes, and the one after it: "He studied and nearly mastered the Six-books of Euclid,
-since he was a member of Congress. He regrets his want of education, and does what he can
-to supply the want." His one term in Congress had ended in March 1849, a few weeks after
-his fortieth birthday (the [*Collected Works*](#basler1953collected), vol. 2, p. 459, and
-vol. 4, pp. 62 and 66). The
-six books are Books I to VI, which Oliver Byrne printed on their own as
-[*The First Six Books*](#oechslin2010byrne) in 1847, and Robert Simson
-[with the eleventh and twelfth](#simson1756elements). Lincoln does not say which edition
-he used. His son Robert, writing in 1917, remembered seeing him with "Playfield's"
-*Elements of Geometry*, which Glenn W. LaFantasie, in the
-[article listed below](#lafantasie2020satisfaction), takes to be John Playfair's
-*Elements of Geometry: Containing the First Six Books of Euclid* (p. 33). Stoicheia has the
-first three so far.
+Abraham Lincoln reckoned that all his schooling "did not amount to one year". In the
+sketch he wrote for John L. Scripps's campaign biography in 1860, he speaks of himself
+in the third person: "What he has in the way of education, he has picked up." After a
+sentence on English grammar comes the one the README quotes, and the one after it:
+"He studied and nearly mastered the Six-books of Euclid, since he was a member of
+Congress. He regrets his want of education, and does what he can to supply the want."
+These are Lincoln's own words (Roy P. Basler, ed., [*The Collected Works of Abraham
+Lincoln*](#basler1953collected), vol. 4, p. 62; the passages on education and Euclid found
+through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 24).
 
-William H. Herndon, his law partner in Springfield, was out on the circuit with him
-"probably one-fourth of the time": the round of county courts that kept Lincoln on the
-road, Herndon says, "for at least six months out of the year". In
-[*Herndon's Lincoln*](#herndon1889lincoln), written with Jesse William Weik, he remembered
-the country inns, the beds too short for Lincoln, and the candle on a chair at the head of
-the bed: "On the circuit in this way he studied Euclid until he could with ease
-demonstrate all the propositions in the six books. How he could maintain his mental
-equilibrium or concentrate his thoughts on an abstract mathematical proposition, while
-Davis, Logan, Swett, Edwards, and I so industriously and volubly filled the air with our
-interminable snoring was a problem none of us could ever solve." And: "Along with his
-Euclid therefore he carried a well-worn copy of Shakespeare" (vol. 2, pp. 308–309, 319 and
-337). Herndon's "with ease" and "all" are more generous than Lincoln's "nearly mastered",
-and his book came out in 1889, a quarter of a century after Lincoln's death; but the two
-agree that the study came after Congress, though Milton Hay and John T. Stuart each
-remembered a Euclid with him some years before (LaFantasie, pp. 38–39, note 32).
+The six books are Books I to VI. Lincoln does not name his edition, but LaFantasie makes a
+careful suggestion: most likely John Playfair's *Elements of Geometry: Containing the
+First Six Books of Euclid* (New York: W. E. Dean, 1849). Lincoln's son Robert Todd Lincoln,
+in a letter to Isaac Markens of 4 November 1917, remembered seeing his father with
+"Playfield's" *Elements of Geometry*. LaFantasie takes that to mean Playfair. The son's
+recollection helps identify the book; the edition remains a likelihood (Paul M. Angle,
+ed., *A Portrait of Abraham Lincoln in Letters by His Oldest Son*, Chicago Historical
+Society, 1968, p. 47; quotation found through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 33, note 18).
+Stoicheia has the first three books so far.
 
-Euclid came into Lincoln's arguments too. Closing the fourth of his debates with Stephen A.
-Douglas, at Charleston, Illinois, on 18 September 1858, he answered Douglas, who had called
-Lyman Trumbull a liar: Trumbull, he said, had only "arrayed the evidence and told you what
-follows as a matter of reasoning". Then: "If you have ever studied geometry, you remember
-that by a course of reasoning Euclid proves that all the angles in a triangle are equal to
-two right angles. Euclid has shown you how to work it out. Now, if you undertake to
-disprove that proposition, and to show that it is erroneous, would you prove it to be false
-by calling Euclid a liar?" The *Press and Tribune*'s report has "Roars of laughter and
-enthusiastic cheers" (vol. 3, p. 186). The proposition is [I.32](../book/I/32.md), worked
-out here once more, in Lean.
+William H. Herndon, Lincoln's law partner in Springfield, placed his most concentrated
+study between 1849 and 1854, after his return from Congress. He carried Euclid on the
+Eighth Circuit, from one county court to the next, in his saddlebags or a buggy. Herndon
+remembered him studying late in shared tavern rooms, by candlelight, while the other
+lawyers snored. He credited Lincoln with being able to demonstrate every proposition in
+the six books, a more generous estimate than Lincoln's own "nearly mastered". Herndon
+also recalled finding him absorbed at their office, with paper, a compass, a rule,
+pencils and coloured inks spread out before him. LaFantasie gathers these recollections
+and distinguishes this sustained effort from reports of earlier encounters with Euclid
+(Herndon and Jesse William Weik, [*Herndon's Lincoln*](#herndon1889lincoln), vol. 2,
+pp. 308–309; the 2006 edition, edited by Douglas L. Wilson and Rodney O. Davis, p. 194,
+and Herndon's letters are the sources used by Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 38–39 and 41).
 
-The next spring, declining an invitation from Henry L. Pierce and others to a festival in
-Boston for Thomas Jefferson's birthday, he wrote: "One would start with great confidence
-that he could convince any sane child that the simpler propositions of Euclid are true;
-but, nevertheless, he would fail, utterly, with one who should deny the definitions and
-axioms. The principles of Jefferson are the definitions and axioms of free society" (vol.
-3, p. 375). At Columbus, Ohio, that September, he set demonstration against authority:
-"There are two ways of establishing a proposition. One is by trying to demonstrate it upon
-reason; and the other is, to show that great men in former times have thought so and so,
-and thus to pass it by the weight of pure authority." If Douglas would "demonstrate it as
-Euclid demonstrated propositions", Lincoln had no objection (vol. 3, pp. 416–417). Every
-proof in Stoicheia starts from Euclid's [definitions, postulates and common
-notions](../book/I/front.md) and our tacit rules, and the certificate on its page lists
-what it rests on.
+Judge David Davis remembered Euclid on the circuit too, alongside Latin grammar and
+"the Exact Sciences". In his interview with Herndon on 20 September 1866, he connected
+Lincoln's study with "Mathematical demonstration". Davis admired Lincoln's reasoning,
+but did not say that Euclid had given him that ability (Douglas L. Wilson and Rodney O.
+Davis, eds., [*Herndon's Informants*](#wilson1998informants), p. 350; testimony and
+quotations found through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 36–37).
 
-One more story is told, and it comes to us at second hand. On 1 September 1864, in the
-middle of the presidential campaign, the New York weekly *The Independent* printed
-["A Talk with Abraham Lincoln"](#gulliver1864talk) by the Rev. John P. Gulliver of
-Norwich, Connecticut. Gulliver remembered riding the train with Lincoln the morning after
-Lincoln spoke at Norwich, in March 1860, and asking him where his power of putting an
-argument came from. In Gulliver's telling, Lincoln said that he had read law as a lawyer's
-clerk in Springfield, and kept meeting the word *demonstrate*, which no dictionary could
-explain to him: "You might as well have defined *blue* to a blind man." At last he said
-to himself, "Lincoln, you can never make a lawyer if you do not understand what
-*demonstrate* means"; so, as Gulliver reports him, "I left my situation in Springfield,
-went home to my father's house", and stayed there "till I could give any proposition in
-the six books of Euclid at sight. I then found out what 'demonstrate' means, and went back
-to my law studies." When Gulliver said that Euclid would be one of the best books for the
-Tract Society's catalogue, if only people could be got to read it, Lincoln laughed: "I vote
-for Euclid."
+The familiar story about the word *demonstrate* comes from the Rev. John P. Gulliver.
+On 1 September 1864, *The Independent* printed his account of a conversation on a train
+the morning after Lincoln's Norwich speech in March 1860. In Gulliver's telling, Lincoln
+had repeatedly met the word in his law reading and found the dictionaries unhelpful.
+He went home and studied until he could "give any proposition in the six books of Euclid
+at sight", and so understood what demonstration meant (Gulliver,
+["A Talk with Abraham Lincoln"](#gulliver1864talk), *The Independent*, 1 September 1864,
+front page; account and quotation found through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 26–27).
 
-Gulliver set this down four and a half years after the conversation, with the election in
-view, as his first sentence says, and the words he gives Lincoln are his memory of them.
-Some details do not fit the sketch Lincoln wrote a few months after that train ride: there
-he borrowed his law books from John T. Stuart and "studied with nobody", moved to
-Springfield only in 1837, after he was licensed, and came to Euclid after Congress, more
-than a decade later, as Herndon remembered too (vol. 4, pp. 62 and 65). Herndon, in an
-unpublished note, doubted the story on some of the same grounds, and Don E. and Virginia
-Fehrenbacher, in [*Recollected Words*](#fehrenbacher1996recollected), grade it E, "a
-quotation that is probably not authentic". Yet Gulliver had sent Lincoln a proof before
-it ran, asking for his corrections, and wrote to him again after; no answer is known.
-LaFantasie, who sets all this out, judges that the talk took place but that Gulliver put
-words in Lincoln's mouth (pp. 27–29 and 33–34). How much of the story is Lincoln's own
-wording, and when the study it tells of took place, we cannot say. Francis B. Carpenter
-reprinted the article in 1866 with some words changed, so the passage is met in more than
-one form; we quote *The Independent*.
+The telling has serious difficulties. Gulliver wrote it four and a half years after the
+conversation. Herndon objected that Lincoln had never been a law clerk in Springfield,
+as the story claimed, and that *demonstrate* was uncommon in law books. Don E. Fehrenbacher
+and Virginia Fehrenbacher give it grade E, meaning probably not authentic, in
+[*Recollected Words of Abraham Lincoln*](#fehrenbacher1996recollected), pp. liii and
+189–190. LaFantasie reaches a different judgment about the encounter while finding the
+reported dialogue unreliable. Gulliver twice wrote to Lincoln seeking corrections, in
+August and September 1864; no reply is known. For LaFantasie, those requests make the
+conversation probable, without establishing the accuracy of the words Gulliver supplied
+(Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 27–29 and 33–34).
 
-What the story adds to Lincoln's own sentence is a reason: in this telling he went to
-Euclid to learn what it is to demonstrate, and his speeches at Charleston and Columbus show
-the same regard for demonstration in his own words. LaFantasie finds the reasons wider
-than one word, and ends on what the six books gave Lincoln: the satisfaction of a hard
-thing done on his own (pp. 37 and 45–46).
+We can hear Lincoln use Euclid in the record of his political arguments. Closing the
+fourth debate with Stephen A. Douglas, at Charleston, Illinois, on 18 September 1858,
+he defended Lyman Trumbull's reasoning against Douglas's charge that Trumbull was a liar:
+"If you have ever studied geometry, you remember that by a course of reasoning Euclid
+proves that all the angles in a triangle are equal to two right angles. Euclid has shown
+you how to work it out. Now, if you undertake to disprove that proposition, and to show
+that it is erroneous, would you prove it to be false by calling Euclid a liar?"
+That is [I.32](../book/I/32.md): insulting the author does not answer the proof
+(Basler, ed., [*Collected Works*](#basler1953collected), vol. 3, p. 186; passage found
+through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 43).
+
+On 6 April 1859, declining Henry L. Pierce and others' invitation to celebrate Thomas
+Jefferson's birthday in Boston, Lincoln turned to the starting points of an argument:
+"One would start with great confidence that he could convince any sane child that the
+simpler propositions of Euclid are true; but, nevertheless, he would fail, utterly, with
+one who should deny the definitions and axioms. The principles of Jefferson are the
+definitions and axioms of free society." The comparison belongs to his defence of
+Jefferson's principles against those who denied their application to all people
+(Basler, ed., [*Collected Works*](#basler1953collected), vol. 3, pp. 375–376; passage
+found through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 44).
+
+At Columbus, Ohio, on 16 September 1859, Lincoln again asked for a demonstration:
+"There are two ways of establishing a proposition. One is by trying to demonstrate it
+upon reason; and the other is, to show that great men in former times have thought so and
+so, and thus to pass it by the weight of pure authority." He asked Douglas to
+"demonstrate it as Euclid demonstrated propositions". The claim at issue was popular
+sovereignty and the right to enslave another person (Basler, ed.,
+[*Collected Works*](#basler1953collected), vol. 3, pp. 416–417; passage found through
+Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 44).
+
+These passages show Lincoln putting Euclid to use. How far Euclid shaped his other
+speeches is harder to establish: LaFantasie reminds us of the many sources of his
+rhetoric, and finds no evidence that the study improved his performance as a lawyer.
+His conclusion gives the private achievement its due. Lincoln had set himself a difficult
+course of study, kept at it in the hours his work left him, and learned how much he could
+accomplish by his own effort. The satisfaction lay in having taught himself. We thank
+Glenn W. LaFantasie warmly for bringing that patient work into view, and for the careful
+attention to sources that lets us tell its story with its uncertainties intact
+(Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 43–46).
 
 - <a id="basler1953collected"></a>Roy P. Basler (ed.), [*The Collected Works of Abraham Lincoln*](https://quod.lib.umich.edu/l/lincoln/),
   with Marion Dolores Pratt and Lloyd A. Dunlap, assistant editors, 8 vols. (Rutgers
@@ -193,6 +205,12 @@ thing done on his own (pp. 37 and 45–46).
   3 vols. (Belford, Clarke & Company, Chicago, 1889): vol. 2 at the link. **Free.** The
   recollections of the man its title page calls Lincoln's friend and law partner for twenty
   years; Euclid by candlelight on the circuit is in vol. 2, pp. 308–309.
+- <a id="wilson1998informants"></a>Douglas L. Wilson and Rodney O. Davis (eds.), [*Herndon's Informants: Letters, Interviews, and Statements about Abraham Lincoln*](https://files.press.uillinois.edu/books/oa/wilson/html/index.html)
+  (University of Illinois Press, 1998), with the assistance of Terry Wilson. **Free**
+  online from the publisher. The letters and interviews collected by Herndon and Weik,
+  transcribed and annotated. Davis's recollection of Euclid in his interview of
+  20 September 1866, p. 350, was found through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+  *Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 36–37.
 - <a id="lincoln1860debates"></a>Abraham Lincoln and Stephen A. Douglas, [*Political Debates Between Hon. Abraham Lincoln and Hon. Stephen A. Douglas, in the Celebrated Campaign of 1858, in Illinois*](https://archive.org/details/politicaldebat00linc)
   (Follett, Foster and Company, Columbus, 1860). **Free.** The seven debates and the
   speeches around them, with Lincoln's two Ohio speeches of 1859, printed from the copies
@@ -211,13 +229,13 @@ thing done on his own (pp. 37 and 45–46).
   (Stanford University Press, 1996). The remarks that Lincoln's contemporaries remembered
   him making, gathered in one book: the place to begin in weighing a remembered remark,
   such as those Gulliver reports, against what Lincoln wrote.
-- <a id="lafantasie2020satisfaction"></a>Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104),
-  *Journal of the Abraham Lincoln Association* 41, no. 1 (2020), 24–46, DOI
-  10.5406/19457987.41.1.04; the link is the free text at the University of Michigan.
-  **Free.** A thoughtful essay on why Lincoln took up Euclid and what it gave him: it
-  weighs Gulliver's story against Herndon's doubts and Gulliver's own letters to Lincoln,
-  and sets the six books in the life of a man who taught himself. This section draws on it
-  with thanks.
+- <a id="lafantasie2020satisfaction"></a>Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+  *Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, DOI
+  10.5406/19457987.41.1.04. **Free** at the University of Michigan. A thoughtful account
+  of Lincoln's study and its rewards: Gulliver's story and its difficulties (pp. 26–29 and
+  33–34), the likely Playfair edition (p. 33), Davis's testimony (pp. 36–37), the circuit
+  years (pp. 38–39 and 41), Lincoln's uses of Euclid (pp. 43–44), and the satisfaction of
+  teaching himself (pp. 45–46). We are grateful to LaFantasie for this generous history.
 
 ## The foundations of geometry
 
