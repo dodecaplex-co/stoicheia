@@ -1,0 +1,21 @@
+# The sha256 of Certificate/axioms.lock: the exact laws the formal model was last checked
+# against. It is meant for the formal-model CI job (model/README.md, "The CI job"),
+# which compares it with the lock, from the repository's root,
+#     grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
+# and fails when they differ: on any change to the lock, since it also holds every word
+# the statement of a proposition, a porism or a companion reaches. A change to the axioms
+# (one added, removed or restated), or to a word an axiom reaches, sends someone back to
+# the model before CI is green: to the translation (generated in Model/Laws.lean, with
+# the hand translations of Model/Hand.lean and Model/Laws/), its checks in Check/, and the
+# proofs in the plane of the laws that changed. A change that touches none of these, such
+# as a word only a proposition's statement uses, moved into the foundations from Staging/,
+# needs only this hash renewed.
+# tests/model/lock.sha256 does the same for the numerical harness, and CI's model job
+# checks that one.
+#
+# Filled in when the model package was started (18 October 2026), at the lock of main's
+# f17b427. When the lock changes, bring the model up to date, then replace the line
+# below with the output of
+#     shasum -a 256 Certificate/axioms.lock
+# run from the repository root (keep these comment lines).
+9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock

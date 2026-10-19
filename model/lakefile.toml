@@ -1,0 +1,63 @@
+name = "model"
+version = "0.1.0"
+defaultTargets = ["Model", "Check"]
+
+# Mathlib, pinned to the release made for Lean v4.35.0 (the toolchain in lean-toolchain,
+# the same as the main package's). lake-manifest.json pins the exact commit.
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.35.0"
+
+# The edition itself, read only by the Check library to compare translations with the
+# original declarations. The Model library never imports it, and the main package
+# depends on nothing here.
+[[require]]
+name = "stoicheia"
+path = ".."
+
+# The signature, the translated laws and the Euclidean interpretation. Imports Mathlib,
+# never Elements.
+[[lean_lib]]
+name = "Model"
+
+# Translation checks and the generator: imports Elements.Foundations and the plain-Lean part
+# of Model (Model.Signature, Model.Laws, Model.Hand), never Mathlib. Its modules read files
+# that are not Lean imports: the lock and its hash, the files the generator writes, and the
+# proofs in the plane, whose theorems the assembly gathers. Lake reruns a module only when
+# its inputs change, so the library `needs` each of those files, and any change to one of
+# them reruns the checks, as a fresh build in CI does.
+[[lean_lib]]
+name = "Check"
+needs = ["axiomsLock", "lockHash", "generatedLaws", "generatedChecks", "generatedAssembly",
+  "planeProofs"]
+
+[[input_file]]
+name = "axiomsLock"
+path = "../Certificate/axioms.lock"
+text = true
+
+[[input_file]]
+name = "lockHash"
+path = "lock.sha256"
+text = true
+
+[[input_file]]
+name = "generatedLaws"
+path = "Model/Laws.lean"
+text = true
+
+[[input_file]]
+name = "generatedChecks"
+path = "Check/Laws.lean"
+text = true
+
+[[input_file]]
+name = "generatedAssembly"
+path = "Model/Assembly.lean"
+text = true
+
+[[input_dir]]
+name = "planeProofs"
+path = "Model/Euclidean"
+text = true

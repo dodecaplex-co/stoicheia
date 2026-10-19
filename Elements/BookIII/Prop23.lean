@@ -2,6 +2,7 @@ import Elements.Figure.Basics
 import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop16
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop10
 import Elements.BookIII.Prop21
 
@@ -52,12 +53,12 @@ theorem Prop23 {A B C D : Point} {ACB ADB : Circle} (hACB : ∃ O : Point, Centr
       exact ⟨C, D₀, between_symm hD₀CA, hC_AB,
         Or.inl ⟨rfl, (Prop21 hADB hD hA₂ hB₂ hD₀ (hCD.symm.trans hD₀C.symm)).symm⟩⟩
     · obtain ⟨M, hM_AB, hAMB, -⟩ := exists_point_between hA_AB hB_AB hAB []
-      have hM₁ : InsideCircle M ACB := inside_of_between (Or.inr hA₁) (Or.inr hB₁) hAMB
-      have hM₂ : InsideCircle M ADB := inside_of_between (Or.inr hA₂) (Or.inr hB₂) hAMB
+      have hM₁ : InsideCircle M ACB := Prop2 hACB hA₁ hB₁ M hAMB
+      have hM₂ : InsideCircle M ADB := Prop2 hADB hA₂ hB₂ M hAMB
       have hMC : M ≠ C := fun h => hC_AB (h ▸ hM_AB)
       obtain ⟨MC, hM_MC, hC_MC⟩ := Postulate1 M C hMC
       obtain ⟨D₁, hD₁, hD₁_MC, hMD₁C⟩ := line_circle_between hM₂ hM_MC ⟨hin, hC₂⟩ hC_MC
-      have hD₁_in : InsideCircle D₁ ACB := inside_of_between (Or.inl hM₁) (Or.inr hC) hMD₁C
+      have hD₁_in : InsideCircle D₁ ACB := Prop2.within hACB (Or.inl hM₁) (Or.inr hC) hMD₁C
       have hD₁_AB : ¬ OnLine D₁ AB := fun h =>
         hC_AB (line_unique (ne_of_between hMD₁C) hM_MC hD₁_MC hM_AB h ▸ hC_MC)
       have hD₁C : SameSideOf D₁ C A B :=

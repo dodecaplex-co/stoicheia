@@ -15,6 +15,9 @@ straight from Lean's own proof terms:
 * which other entries it cites directly;
 * exactly which postulates, definitions and tacit rules it rests on
   (via `#print axioms`, i.e. `Lean.collectAxioms`), and which of them it uses itself;
+* of those it uses itself, which its own Lean names (in its own declaration, or a helper
+  written for its proposition), and which it inherits through a lemma of Book Zero or a
+  shared step, each with the lemma that brings it in;
 * which Common Notions it rests on, found by a walk that goes wherever
   `collectAxioms` goes, so that, like the postulates, they include those of the
   entries it cites;
@@ -25,7 +28,8 @@ Every walk reads a declaration in the same way, through `mentions`: its type, it
 and an inductive type's constructors, as `collectAxioms` reads them. And the run checks
 itself against Lean: for every entry, the axioms `collectAxioms` finds must be exactly
 those the entry uses itself, together with those of the entries it cites and of the
-Common Notions it calls on. If they ever differ, the run fails.
+Common Notions it calls on; and those it uses itself must be exactly those its own Lean
+names, together with those it inherits. If they ever differ, the run fails.
 
 For the whole environment it also records the module that declares every axiom of
 this project, and of every axiom an entry rests on; the `opaque` words; the exact
@@ -175,6 +179,47 @@ def sharedSteps (env : Environment) (entries : NameSet) (root home : Name) : Nam
       if home.isPrefixOf d || d.isInternal then todo := todo.push d
       else steps := steps.insert d
   return steps
+
+/-- What `ownDeps` finds beneath a declaration: the part of its `direct` axioms that its
+own Lean names, and the lemmas through which it inherits the rest. -/
+structure Own where
+  /-- The axioms its own declarations name: the declaration itself, the helpers in the
+  namespace `home` (`Prop7.figure`, and `Prop1.middle` for III.1 Por.) and Lean's
+  auxiliary declarations. -/
+  axioms : NameSet := {}
+  /-- The lemmas those declarations call on: this project's own declarations outside
+  `home` that are not entries, axioms or Common Notions, such as a lemma of Book Zero
+  (`EqualCircles.radii`) or a shared step (`Prop5.base`, or `Prop1.perpendicular` for
+  III.19). What a lemma brings in is counted by `directDeps` from it. -/
+  lemmas : NameSet := {}
+
+/-- Walk `root` as `directDeps` does, through `mentions`, and in the same steps, but pass
+only through its own declarations, as `sharedSteps` does: the helpers in `home` and Lean's
+auxiliary declarations. At any other declaration of this project that is not an entry, an
+axiom or a Common Notion, record it as a lemma and stop. So an axiom is `own` when the
+proposition's own Lean names it, and every other axiom `directDeps` finds comes in through
+one of the `lemmas`; the run checks that it does. At an axiom of this project the walk
+reads its statement, as `directDeps` and `collectAxioms` do. -/
+def ownDeps (env : Environment) (entries : NameSet) (root home : Name) : Own := Id.run do
+  let cns := commonNotions.map (·.1)
+  let mut seen : NameSet := {}
+  let mut todo : Array Name := #[root]
+  let mut own : Own := {}
+  while h : todo.size > 0 do
+    let c := todo.back
+    todo := todo.pop
+    if seen.contains c then continue
+    seen := seen.insert c
+    let some ci := env.find? c | continue
+    for d in mentions ci do
+      if d == ``sorryAx || d == root || entries.contains d || cns.contains d then continue
+      if (env.find? d).any (·.isAxiom) then
+        own := { own with axioms := own.axioms.insert d }
+        if isLocal env d && !seen.contains d then todo := todo.push d
+      else if !isLocal env d || seen.contains d then continue
+      else if home.isPrefixOf d || d.isInternal then todo := todo.push d
+      else own := { own with lemmas := own.lemmas.insert d }
+  return own
 
 /-- Where `n` is declared, as a path from the repository root and the line of its
 name: `("Elements/BookII/Rectangles.lean", 98)` for `Rectangle.eq_rect`. -/
@@ -356,6 +401,8 @@ run_cmd do
   let euclidOnly (xs : Array Name) : Array Name :=
     xs.filter fun a => !leanFoundations.contains a && a != ``sorryAx
   let mut entries : Array Json := #[]
+  /- What each lemma an entry calls brings in, found once. -/
+  let mut lemmaAxioms : Std.HashMap Name (Array Name) := {}
   /- Every axiom any entry rests on, with its module, beside those this project
      declares: an axiom from anywhere else shows up here with the module it came from. -/
   let (declared, opaques) := projectDecls env
@@ -383,6 +430,34 @@ run_cmd do
     unless missing.isEmpty && extra.isEmpty do
       logError m!"{s.ref}: the walk does not account for Lean's axioms: collectAxioms has \
         {missing.toList} beyond what it finds, and it finds {extra} that collectAxioms does not"
+    /- Its own axioms, and those it inherits: each axiom it uses itself that its own Lean
+       does not name, with every lemma it calls that brings the axiom in, in name order. -/
+    let own := ownDeps env entrySet p s.home
+    let ownFound := euclidOnly own.axioms.toList.toArray
+    let mut inherited : Std.HashMap Name (Array Name) := {}
+    for lem in own.lemmas.toList.toArray.qsort (nameStr · < nameStr ·) do
+      unless lemmaAxioms.contains lem do
+        lemmaAxioms := lemmaAxioms.insert lem
+          (euclidOnly (directDeps env entrySet lem).direct.toList.toArray)
+      for a in lemmaAxioms.getD lem #[] do
+        unless ownFound.contains a do inherited := inherited.insert a ((inherited.getD a #[]).push lem)
+    /- The second self-check: what the entry uses itself is exactly what its own Lean
+       names, with what it inherits through its lemmas. -/
+    let direct := euclidOnly deps.direct.toList.toArray
+    let split := ownFound ++ inherited.toArray.map (·.1)
+    let unsplit := direct.filter (!split.contains ·)
+    let unused := split.filter (!direct.contains ·)
+    unless unsplit.isEmpty && unused.isEmpty do
+      logError m!"{s.ref}: its own axioms and those it inherits do not make up its direct \
+        axioms: {unsplit.toList} are direct but neither, and {unused.toList} are one but not direct"
+    let mut inheritedJson : Array (String × Json) := #[]
+    for (a, lems) in inherited.toArray.qsort (nameStr ·.1 < nameStr ·.1) do
+      let mut through : Array Json := #[]
+      for lem in lems do
+        let (file, line) ← declaredAt lem
+        through := through.push <| Json.mkObj [
+          ("name", Json.str (nameStr lem)), ("file", Json.str file), ("line", toJson line)]
+      inheritedJson := inheritedJson.push (nameStr a, Json.arr through)
     let notions := allNotions env p
     /- A proposition is not finished until its porism is; a companion changes no other
        entry's status. -/
@@ -422,6 +497,8 @@ run_cmd do
       ("axioms", Json.arr ((found.map nameStr).qsort (· < ·) |>.map Json.str)),
       ("direct_axioms", Json.arr ((deps.direct.toList.map nameStr).toArray.qsort (· < ·)
         |>.map Json.str)),
+      ("own_axioms", Json.arr ((ownFound.map nameStr).qsort (· < ·) |>.map Json.str)),
+      ("inherited", Json.mkObj inheritedJson.toList),
       ("lean_foundations", Json.arr (foundations.map (Json.str ∘ nameStr))),
       ("shared_steps", Json.arr shared),
       ("enunciation", Json.str (doc.getD "")),

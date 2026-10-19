@@ -18,6 +18,6 @@ note = "No second argument is needed: E was any point on CB produced, and the on
 
 [review]
 stage = "exceptions"
-commit = "8a014a8"
+commit = "6237881"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:2cfa682b9005c5d9"
+lean = "sha256:0bb35e43d7174b8c"

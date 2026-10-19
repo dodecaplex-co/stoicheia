@@ -28,6 +28,6 @@ note = "No second case is needed: III.36 is cited by its statement, which holds 
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "66e9871"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:5b04005b82143791"
+lean = "sha256:9e2390c9efe75d73"

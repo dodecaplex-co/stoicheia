@@ -4,15 +4,17 @@ Stoicheia's proofs rest on 87 axioms: Postulates 1 to 5, Definition 15, and 81 t
 rules, most of them the rules of System E (Jeremy Avigad, Edward Dean and John Mumma, ["A
 formal system for Euclid's *Elements*"](https://doi.org/10.1017/S1755020309990098), 2009).
 Lean checks that
-every proof follows from them. It cannot check that they can all be true at once. If they
-could not, every certificate would be worthless, because anything follows from a
-contradiction.
+every proof follows from them. Checking the proofs does not show that they can all be true
+at once. If they could not, every certificate would be worthless, because anything follows
+from a contradiction.
 
-This page says why they can. It reads the words in the ordinary plane, goes through the
-87 axioms one at a time, says why each one holds there, and shows the numbers from the
-programs in this folder that test each one against the plane. It does the same in the
-hyperbolic plane, where every axiom but Postulate 5 holds. It ends with the formal model
-we mean to build, which would turn this evidence into a theorem.
+This page gives the reasons for thinking they can. It reads the words in the ordinary
+plane, goes through the 87 axioms one at a time, says why each one holds there, and shows
+the numbers from the programs in this folder that test each one against the plane. It
+does the same in the hyperbolic plane, where Postulate 5 fails and every other axiom
+passes the tests. It ends with [the formal model](#the-formal-model), in which Lean checks
+that the ordinary plane satisfies every one of the 87, and with [what the evidence shows,
+and what it does not](#what-this-shows-and-what-it-does-not).
 
 ## The plane
 
@@ -79,10 +81,11 @@ conclusion says that a point exists, the program constructs one and checks it.
 - **[hyperbolic.py](hyperbolic.py)** runs every axiom in the hyperbolic plane
   ([below](#the-hyperbolic-plane)).
 - **[run.py](run.py)** runs them all and checks the results, after two checks that tie the
-  harness to the Lean: the axioms it tests are exactly those in `facts.json`, and
-  [lock.sha256](lock.sha256) pins `Certificate/axioms.lock`, which holds every axiom's
-  exact statement. When an axiom changes, this run fails until someone has come back to
-  this page.
+  harness to the Lean: [laws.toml](laws.toml) names a law for each axiom, exactly the
+  axioms of `Certificate/axioms.lock` and of `facts.json`, and search.py and hyperbolic.py
+  each implement exactly those laws; and [lock.sha256](lock.sha256) pins the lock, which
+  holds every axiom's exact statement. When an axiom changes, this run fails until the
+  model has followed it ([below](#changing-the-axioms)).
 
 These programs were first written for the [read-through of 16 October
 2026](../../docs/reports/read-through-01.md), and came into the repository with [brief
@@ -396,7 +399,8 @@ The book's certificates say which proofs use Postulate 5. They do not say, by th
 that the other 86 axioms could not do its work in disguise: a proof avoiding the named
 Postulate 5 might still lean on some other rule just as strong. Astra's review asked for
 the way to settle that, a model of the other axioms in which Postulate 5 fails, and
-[hyperbolic.py](hyperbolic.py) is that model, checked numerically.
+[hyperbolic.py](hyperbolic.py) tests such a model numerically, which supports the answer
+without settling it.
 
 It reads the words in the Beltrami-Klein picture of the hyperbolic plane, after Eugenio
 Beltrami (1868) and Felix Klein (1871). Robin Hartshorne gives non-Euclidean geometry a
@@ -422,7 +426,7 @@ and every triangle's angles add up to less than two right angles.
 
 **What it finds.** Postulate 5 fails, often (the numbers are [above](#what-the-numbers-say)):
 two chords can make interior angles less than two right angles with a third and never
-meet inside the disc. Every other axiom holds, with no counterexample. That is what the
+meet inside the disc. Every other axiom passes, with no counterexample. That is what the
 hand arguments lead one to expect. The incidence and order rules are the plane's,
 restricted to the open disc, which is convex. Hyperbolic circles are convex and cross as
 plane circles do. Angles at a point add and are supplementary as in the plane, so a right
@@ -433,54 +437,155 @@ along any ray, on either side, so superposition holds. Marvin Jay Greenberg's
 [*Euclidean and Non-Euclidean Geometries*](../../docs/reading.md#greenberg2008euclidean)
 tells this story in full, models and all.
 
-**What it shows.** Numerically, that none of the other 86 axioms carries the parallel
-postulate in disguise: whatever can be proved without Postulate 5 is also true in the
-hyperbolic plane. So a statement that fails there, such as I.32's "the three interior
-angles of the triangle are equal to two right angles", cannot be proved from the other 86
-axioms, and every proof of it must use Postulate 5. Whether a particular proposition's
-statement fails there is a question about that proposition, so the pages keep saying
-"this proof uses Postulate 5", and an independence claim on any page should name this
-evidence. No axiom is marked as Euclidean beyond Postulate 5, and this run shows that
-none needs to be.
+**What it shows.** It supports, numerically, that none of the other 86 axioms carries the
+parallel postulate in disguise. If every one of them does hold in the hyperbolic plane,
+as the hand arguments say, then whatever follows from them without Postulate 5 is true
+there, and a statement that fails there, such as I.32's "the three interior angles of the
+triangle are equal to two right angles", cannot be proved from them alone. The numbers do
+not establish that non-derivability: a test can find a counterexample, but it cannot show
+that none exists, so the conclusion waits on a proof that the hyperbolic reading
+satisfies every other law, planned after the Euclidean model
+([below](#the-formal-model)). Whether a particular proposition's statement fails
+there is a question about that proposition, so the pages keep saying "this proof uses
+Postulate 5", and an independence claim on any page should name this evidence and say
+that it is numerical. No axiom is marked as Euclidean beyond Postulate 5, and nothing in
+this run suggests that one should be.
 
-## A formal model: a later milestone
+## The formal model
 
-The evidence here is strong, but it is not a proof. The proof is a Lean model of the 87
-axioms, and we have named it as a milestone of its own
-([PROGRAM.md](../../docs/PROGRAM.md)). It has four parts.
+The evidence above is strong, but it is not a proof. The proof is a Lean model of the
+axioms, begun on 18 October 2026
+([#73](https://github.com/jackChallis/stoicheia/issues/73)) in a separate package,
+[`model/`](../../model/README.md): a Lake package of its own in this repository, with a
+pinned Mathlib, built by CI's `formal-model` job. Stoicheia itself stays plain Lean:
+nothing in the main library imports the model. One repository keeps the laws, their
+reading in the plane and the proofs that the reading satisfies them at a single revision,
+as Astra advised, with our thanks. The model has four parts.
 
-1. **The words as a signature.** Today the 17 words are `opaque` constants and the
-   axioms are `axiom`s about them, so nothing can be plugged in for them. The first step
-   states the same words as the fields of a Lean structure, and the 87 axioms as a
-   proposition about any such structure, generated from `facts.json`'s `axiom_types` so
-   that each statement is exactly the locked one.
-2. **A plane instance, in a separate package with Mathlib.** Stoicheia itself stays plain
-   Lean. The package reads points as `EuclideanSpace ℝ (Fin 2)`, lines as its
-   one-dimensional affine subspaces, circles as spheres of positive radius, magnitudes as
-   `NNReal`, length as `dist`, the area by the determinant, and `∟` as π/2. One care:
-   Mathlib's unoriented angle `EuclideanGeometry.angle` is π/2 when a point is repeated,
-   and our model needs 0 there, so the instance defines the angle by cases.
-3. **The 87 axioms proved for that instance**, degenerate cases included, each one the
-   statement in the lock.
-4. **The lock's hash tying them**, as [lock.sha256](lock.sha256) does here, so that any
-   change to an axiom breaks the model's build until the model is repaired.
+1. **The words as a signature.** In the library the 17 words are `opaque` constants and
+   the axioms are `axiom`s about them, so nothing can be plugged in for them. The model
+   states the same words as the fields of a Lean structure, `Signature`, the carriers of
+   the magnitudes with their zero, addition and order among them, and the laws as a
+   proposition about any such structure, `Laws`, with Postulate 5 apart from the other
+   86. A Lean program generates the laws from the elaborated declarations themselves, not
+   from their printed text, and every build checks the translation: taken back to the
+   library's words, each law is compared with the library's declaration, by the kernel
+   and expression by expression, and no word of the project is left untranslated.
+2. **The plane, with Mathlib.** The package reads the words as [the plane](#the-plane)
+   above does: points as `EuclideanSpace ℝ (Fin 2)`, lines as its one-dimensional affine
+   subspaces, circles as spheres of positive radius, magnitudes as `ℝ≥0`, length as
+   distance, the area by a determinant, and `∟` as π/2. One care: Mathlib's unoriented
+   angle is π/2 when a point is repeated, and our reading needs 0 there, so the plane's
+   angle is Mathlib's only when both arms are nonzero.
+3. **Every law of the lock proved in the plane**, degenerate cases included: all 87, each
+   a theorem of its own. The hardest were taken first, since they might have reshaped the
+   representation: where circles meet, and on which side; angle addition, both ways; the
+   side on which Postulate 5's lines meet; superposition, reflections included; the area
+   rules; and the finite `avoid` lists. The generator gathers the 87 into
+   `euclidean_laws`, which says that the plane satisfies `Laws`, with no hypothesis left,
+   and `model_exists : ∃ S : Signature, Laws S` follows. Every build checks that nothing
+   in the model imports the library, and that beneath each of these proofs lie only
+   Lean's own axioms, `propext`, `Classical.choice` and `Quot.sound`: no axiom of the
+   project and no `sorryAx`.
+4. **The lock's hash tying them.** [model/lock.sha256](../../model/lock.sha256) holds the
+   hash of `Certificate/axioms.lock`, as [lock.sha256](lock.sha256) does here, and the
+   model's build fails unless it is the lock's. So any change to the lock fails that
+   build until the model is brought to it, and a change to an axiom, or to a word an
+   axiom reaches, sends someone back to the translation and to the proofs of the laws
+   that changed.
 
-Then the consistency of the axioms would be a theorem, relative to Lean's logic and
-Mathlib's real numbers, instead of the evidence on this page. A hyperbolic instance of
-the other 86 axioms would make the independence of Postulate 5 a theorem too.
+So Lean checks that the ordinary Euclidean plane satisfies every law in this revision's
+foundations. This establishes a model relative to Lean's logical foundations and
+Mathlib's construction of the real numbers. It does not establish that every formal
+statement captures Euclid's intended meaning. Nor does it settle the independence of
+Postulate 5: a hyperbolic instance of every law but Postulate 5, with Postulate 5 proved
+false there, planned after the Euclidean one, would make that a theorem too. How the
+package is built, and how each check works, is in its [README](../../model/README.md).
 
 ## What this shows, and what it does not
 
-- **It shows** that every one of the 87 axioms holds in the ordinary plane, with a short
-  argument for each and many configurations tested against each. So the axioms can all
-  be true together, given Lean's logic and the real numbers, and no false axiom stands
-  behind any certificate.
+- **The consistency of the axioms is a theorem,** relative to Lean's logic and Mathlib's
+  construction of the real numbers: Lean checks, in [the formal model](#the-formal-model),
+  that the ordinary plane satisfies every locked law
+  ([#73](https://github.com/jackChallis/stoicheia/issues/73)). So the axioms cannot
+  contradict one another unless those foundations do.
+- **The interpretation** is the reading of the words above, with a short argument for
+  each of the 87 axioms and many configurations tested against each, exactly wherever
+  the coordinates allow. The formal model makes the same reading in Lean and proves each
+  law there, so that the axioms can all be true together no longer rests on these
+  arguments and tests alone.
 - **It depends on** the 17 words staying `opaque`, which `scripts/check_fidelity.py`
-  checks, and on the axioms being the ones this page was checked against, which
-  [lock.sha256](lock.sha256) pins.
+  checks, and on the axioms being the ones this page and the formal model were checked
+  against, which [lock.sha256](lock.sha256) and
+  [model/lock.sha256](../../model/lock.sha256) pin.
+- **Non-derivability is not proved.** That the other 86 axioms cannot give Postulate 5,
+  and that a statement failing in the hyperbolic plane cannot be proved without it, rest
+  on the numerical hyperbolic check [above](#the-hyperbolic-plane) until a hyperbolic
+  model is built in Lean. A test can find a counterexample but cannot show that there is
+  none, so numerical tests establish neither consistency nor non-derivability.
 - **It does not show** that the Lean statements say what Euclid meant: that is the work
-  of the review records and the gap catalogues. And the programs' runs are evidence, not
-  proof: the formal model above would be the proof.
+  of the review records and the gap catalogues. The formal model shows that the laws have
+  a model, not that a formal statement captures Euclid's intended meaning, nor that a
+  word the propositions use, such as `rect` or `circumference`, means in the plane what
+  Euclid means.
+
+## Changing the axioms
+
+Adding, removing or restating an axiom is the owner's decision, recorded on the
+[decisions page](../../docs/briefs/0002-decisions.md). Once it is made, the model follows
+the axiom in the same pull request as the Lean:
+
+1. **The lock.** `python3 scripts/check_fidelity.py --write-lock` writes
+   `Certificate/axioms.lock` from the new `facts.json`, and
+   `shasum -a 256 Certificate/axioms.lock`, run from the repository's root, gives the
+   line for [lock.sha256](lock.sha256).
+2. **The law's name.** [laws.toml](laws.toml) gains, loses or keeps the axiom's line: its
+   name as the lock gives it, then its law's name in the harness. An axiom that must fail
+   in the hyperbolic plane, as Postulate 5 does, is also listed under `fails`.
+3. **The law.** [search.py](search.py) and [hyperbolic.py](hyperbolic.py) each implement
+   every law, so each gains, loses or changes it, written as every law there is: a
+   function `_` under `@axiom('<name>', …)`. The laws that stay keep their order. Its
+   helpers go inside it, and it keeps to itself, by an allow-list collected from the laws
+   (`LAW_GLOBALS` and the lists beside it in
+   [safe_push.py](../../scripts/safe_push.py)): it uses its own parameters and the names
+   it binds; the helpers of its program that the laws already call, the builtins, `math`
+   functions, table and value they use (hyperbolic.py's `SEEDS`, read through a subscript;
+   search.py's `RA`), each in the role they use it in; the random numbers it is handed,
+   drawn and never reseeded; and plain syntax: assignments, `if`, `for`, `while`, `return`,
+   arithmetic, comparisons, comprehensions and functions of its own, with no import,
+   `global`, `lambda`, `try`, `with`, class or default argument. And it changes no
+   container but one it made in its own body (`ws = []`, then `ws.append(w)`), and that
+   through the name it gave it: never through a second name for a container it did not
+   make, nor through an element of its own (`x[0] += [1]`). The pre-flight's check
+   (`self_contained`) reads the law's code, does not run it, and refuses whatever the list
+   does not name, so reflection has no way in. A law still shares the random numbers with
+   the laws after it, and how many it draws moves which configurations they see, never
+   what they check. A law that needs what the list lacks, a new helper say, waits for a
+   pull request of its own that adds the helper and widens the list. The other programs
+   check some laws only. A law added reaches them later, in a pull request of its own. But
+   `structured.py` and `exhaustive.py` run some laws by name on configurations of their
+   own (`run('<law>', ...)`). If either program names the law of an axiom that is removed,
+   or restated so that its law reads other letters, that program must drop or re-key the
+   law first, in a pull request of its own, before the axiom moves.
+4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with
+   the reason it holds in the plane, a word on the hyperbolic plane where it needs one,
+   and the counts in the prose. `run.py --full --write` brings the numbers above and
+   [results/](results/) up to date.
+5. **The run.** `python3 -I tests/model/run.py --ties` checks the names and the hash in a
+   second, and `--fast` runs what CI runs.
+
+A word that joins the lock's vocabulary, as a definition does when a statement first uses
+it, changes the lock and so its hash, while every axiom, and every word an axiom reaches,
+stays as it was: then step 1 and step 5 are all, with a line in the comment of
+[lock.sha256](lock.sha256) saying so, as its renewal of 17 October does. A word an axiom
+reaches that changes is a changed definition (below).
+
+These are values pinned to the axioms, and the pre-flight lets them land with the change
+they follow; a law changed while its axiom stands, or any other change to the programs,
+lands in a pull request of its own ([WORKFLOW](../../docs/WORKFLOW.md), section 10,
+"Landing work: pull requests"). A word whose definition the axioms reach is read in
+[model.py](model.py), so a changed definition changes code there, which lands on its own
+too.
 
 ## Running it
 
@@ -490,6 +595,7 @@ From the repository's root, or anywhere:
 python3 -I tests/model/run.py --fast            # what CI runs, under 20 seconds
 python3 -I tests/model/run.py --full            # about seven minutes
 python3 -I tests/model/run.py --full --write    # and save results/ and the counts above
+python3 -I tests/model/run.py --ties            # the ties to the Lean alone, in a second
 ```
 
 Each program also runs on its own, for example `python3 -I tests/model/search.py 20000 2`

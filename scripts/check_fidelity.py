@@ -5,12 +5,23 @@
    order, must be exactly Heath's proof (whitespace aside). Euclid's words go in
    `--` comments; our own remarks go in `/- … -/` blocks.
 2. Every `axiom` lives in `Elements/Foundations/`: a first look in the source here,
-   and the real check from Lean's own environment in 5.
+   which reads `Staging/` and `Audit/` too, and the real check from Lean's own
+   environment in 5.
 3. Book Zero (`Elements/Figure/`) never imports a proposition.
-4. Nothing that gets round the kernel or adds an axiom without the word: no
-   `native_decide` or `decide +native` (each adds an axiom Lean's kernel doesn't
-   check), no `set_option debug.…`, and no `run_cmd`, `run_elab`, `elab`, `macro`,
-   `implemented_by`, `extern` or `unsafe` under `Elements/`.
+4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
+   `Elements/`, `Staging/` or `Audit/` (LEAN_TREES), since they get round the kernel,
+   bring in an axiom without the word, run a program when a file is built or imported,
+   or stop Lean reading a file: `native_decide`, `bv_decide`, the word `native`,
+   `(config := …)`, `set_option debug.…` and `set_option doc.…` (or `«debug».…` and
+   `«doc».…`), `#eval`, `#exit`, `run_cmd`, `elab`, `macro`, `simproc` and its kin,
+   `implemented_by`, `extern`, `unsafe`, the attributes it knows to register code (by a
+   name ending in `elab`, `tactic`, `init`, `proc`, `parser`, `handler`, `unexpander` and
+   others, or beginning `doc_`), and the rest of FORBIDDEN, below. The scan reads Lean's
+   comments and its string and character literals as Lean does (`read_lean`), so a
+   literal's text never opens a comment or ends an attribute's brackets, and is not read
+   as code, while the code in an interpolated string's `{…}` holes is; a string whose
+   braces Lean could read either way is refused. Each finding of 2, 3 and 4 names its
+   file and line.
 5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
    fields are in `Certificate/FIELDS.md`):
    - every axiom an entry rests on, other than Lean's own `propext`,
@@ -82,12 +93,45 @@ PRIMITIVES = {
 }
 # Lean's own logical foundations, which every proof may use.
 LEAN_FOUNDATIONS = {"propext", "Classical.choice", "Quot.sound"}
-# Commands that could get round the kernel, or bring in an axiom without the keyword.
-# Matched as whole words, in the Lean with its comments taken out.
+# The Lean the edition builds, which the source scan (check_rules) reads: the library, the
+# statements staged before their proofs, and the audit lemmas, each folder with its root
+# file (`Staging.lean`). The checks' own Lean, `Certificate/Facts.lean`, is not among them.
+LEAN_TREES = ("Elements", "Staging", "Audit")
+# Commands that could get round the kernel (`native_decide` and the `debug.` options, among
+# them `debug.skipKernelTC`, spelled `debug.` or `«debug».`), bring in an axiom without the
+# keyword, run a program when the file is built or imported (`#eval`, `run_cmd` and their
+# kin, `initialize`, the simproc commands and `set_library_suggestions`, whose code `simp`
+# and the suggestion tactics run, and the `doc.` options, spelled `doc.` or `«doc».`: with
+# `doc.verso` on, Lean runs the Lean in a docstring, which the scan takes out with the
+# comments), give syntax a meaning in code (`elab`, `macro`), swap code in for a definition,
+# or stop Lean reading the file (`#exit`). Matched as whole words, in the Lean as
+# `read_lean` gives it; so is an attribute that registers code Lean runs while a file is
+# built or printed, known by the end of its name (`command_elab`, `grind_tactic`, `init`,
+# `sym_simproc`, `app_unexpander`, `term_parser`, `cpass`, `missing_docs_handler`,
+# `simprocAttr` and the rest) or, for `builtin_doc` and the `doc_` attributes, its start,
+# and named in full in the finding. The list holds the attributes found in Lean 4.35 to run
+# code while a file is built; it may not be complete, and a later Lean may add more.
+# FORMALIZATION.md, section 7, is their one home.
+# Lean 4.35 evaluates natively, and admits the result as an axiom, for `native_decide`, the
+# `bv_decide` family and `decide` with its `native` option, which `decide +zetaReduce
+# +native`, `decide (native := Bool.true)` or a whole configuration, `(config := ⟨false,
+# true, true, false⟩)`, also set: so the word `native` anywhere, and `(config := …)`, are
+# refused as well.
 FORBIDDEN = re.compile(
-    r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bset_option\s+debug\.|"
-    r"\b(run_cmd|run_elab|run_meta|elab|elab_rules|macro|macro_rules|implemented_by|"
-    r"extern|unsafe)\b")
+    r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bnative\s*:=\s*true\b|\bnative\b|"
+    r"\(\s*«?config»?\s*:=|"
+    r"\bset_option\s+«?(?:debug|doc)»?\.|#eval\b|#exit\b|"
+    r"\b(bv_decide|bv_check|run_cmd|run_elab|run_meta|run_tac|by_elab|elab|elab_rules|"
+    r"macro|macro_rules|command_elab|term_elab|initialize|builtin_initialize|"
+    r"(?:builtin_)?(?:sym_|cbv_)?d?simproc(?:_decl|_pattern)?|set_library_suggestions|"
+    r"implemented_by|extern|unsafe)\b|"
+    r"(?:@|\battribute\s*)\[[^\]]*?\b(?P<attr>(?:builtin_)?doc(?:_\w+)?|\w*(?:elab|macro|"
+    r"tactic|init|proc|discharger|unexpander|precheck|formatter|parenthesizer|control_info|"
+    r"code_action|rpc_method|linter|parser|pass|suggestions?|check|handler|provider|fn|module|"
+    r"hooks|Attr))\b")
+# An axiom, declared anywhere in a line: Lean reads `example : True := trivial axiom
+# planted : False` as two commands, the second an axiom.
+AXIOM = re.compile(r"\baxiom\b")
 
 errors: list[str] = []
 # The records with no `text` stamp yet, named in a note (docs/WORKFLOW.md, section 6).
@@ -143,44 +187,170 @@ def check_fidelity() -> None:
                      + first_difference(got, expected))
 
 
+# Lean's tokens, as its tokenizer starts them: an identifier begins with a letter or `_`,
+# a raw string with `r`, any `#`s and `"`, a character literal with `'`; a number with a
+# digit, so that the `'` after one begins a character literal. A string just after one of
+# INTERPOLATED is read with its `{…}` holes, as Lean reads it.
+IDENT = re.compile(r"[^\W\d][\w'!?.]*|\d[\w.]*")
+RAW = re.compile(r'r(#*)"')
+CHAR = re.compile(r"'(?:\\(?:x[0-9a-fA-F]{2}|u[0-9a-fA-F]{4}|.)|[^\\\n'])'")
+INTERPOLATED = {"s!", "m!", "f!", "throwError"}
+
+
+def read_lean(src: str) -> tuple[str, list[int]]:
+    """The Lean as Lean's tokenizer reads it, with its comments (`--` to the end of the
+    line, and `/- … -/` blocks, docstrings and nested ones among them), the text of its
+    string and character literals, raw strings among them, and each `[` or `]` in a «…»
+    name blanked; the code in an interpolated string's `{…}` holes is kept. Newlines stay,
+    so lines keep their numbers. Also the offset of each string the scan cannot read for
+    certain: one with a `{`, not after INTERPOLATED, whose two readings, plain and with
+    holes, end in different places, since its braces may be text or holes of code."""
+    marks: list[tuple[str, int, int]] = []
+    _read_code(src, 0, marks)
+    out, unsure = list(src), []
+    for kind, i, j in marks:
+        if kind == "unsure":
+            unsure.append(i)
+            continue
+        for k in range(i, j):
+            if out[k] != "\n" and (kind == "text" or out[k] in "[]"):
+                out[k] = " "
+    return "".join(out), unsure
+
+
 def without_comments(src: str) -> str:
-    """The Lean with its comments taken out: `/- … -/` blocks (docstrings among them,
-    nested ones too) and `--` to the end of the line."""
-    out, depth, i = [], 0, 0
+    """The Lean with its comments and the text of its string literals blanked, as
+    `read_lean` reads it: what `scripts/render.py` searches for a declaration's uses, so a
+    name in a comment, a docstring or a string is no use."""
+    return read_lean(src)[0]
+
+
+def _find(src: str, s: str, i: int) -> int:
+    """The offset of `s` in `src` from `i` on, or the end of `src`."""
+    k = src.find(s, i)
+    return len(src) if k < 0 else k
+
+
+def _read_code(src: str, i: int, marks: list, hole: bool = False) -> int:
+    """Read Lean from `i` to the end or, in a hole, to the `}` that closes it, and return
+    that offset. `marks` gains the text of each comment and literal ("text"), each «…»
+    name ("name") and each string the scan cannot read for certain ("unsure")."""
+    depth, previous = 0, ""
     while i < len(src):
-        if src.startswith("/-", i):
-            depth, i = depth + 1, i + 2
-        elif depth and src.startswith("-/", i):
-            depth, i = depth - 1, i + 2
-        elif depth:
-            out.append(" " if src[i] != "\n" else "\n")
-            i += 1
-        elif src.startswith("--", i):
-            j = src.find("\n", i)
-            i = len(src) if j < 0 else j
+        c, j = src[i], i + 1
+        if src.startswith("--", i):
+            j = _find(src, "\n", i)
+            marks.append(("text", i, j))
+        elif src.startswith("/-", i):
+            j, nested = i + 2, 1
+            while j < len(src) and nested:
+                pair = src[j:j + 2]
+                nested += (pair == "/-") - (pair == "-/")
+                j += 2 if pair in ("/-", "-/") else 1
+            marks.append(("text", i, j))
+        elif c == '"':
+            j, previous = _read_string(src, i, marks, previous in INTERPOLATED), c
+        elif m := RAW.match(src, i):
+            close = '"' + m[1]
+            k = _find(src, close, m.end())
+            marks.append(("text", m.end(), k))
+            j, previous = min(k + len(close), len(src)), c
+        elif c == "«":
+            j = min(_find(src, "»", i) + 1, len(src))
+            marks.append(("name", i, j))
+            previous = src[i:j]
+        elif m := IDENT.match(src, i):
+            j, previous = m.end(), m[0]
+        elif c == "'" and src[j:j + 1] != "'" and (m := CHAR.match(src, i)):
+            marks.append(("text", i + 1, m.end() - 1))
+            j, previous = m.end(), c
+        elif c == "}" and hole and not depth:
+            return i
+        elif not c.isspace():
+            depth += (c == "{") - (c == "}")
+            previous = c
+        i = j
+    return len(src)
+
+
+def _read_string(src: str, i: int, marks: list, interpolated: bool) -> int:
+    """Read the string at `i` and return the offset past it: with its holes, as an
+    interpolated string, if it follows INTERPOLATED or both readings end in one place."""
+    plain = i + 1
+    while plain < len(src) and src[plain] != '"':
+        plain += 2 if src[plain] == "\\" else 1
+    plain = min(plain + 1, len(src))
+    holes: list[tuple[str, int, int]] = []
+    end = _read_interpolated(src, i, holes)
+    if end == plain or (interpolated and end is not None):
+        marks += holes
+        return end
+    marks.append(("text", i + 1, plain))
+    if "{" in src[i:plain]:
+        marks.append(("unsure", i, plain))
+    return plain
+
+
+def _read_interpolated(src: str, i: int, marks: list) -> int | None:
+    """The offset past the string at `i` read as an interpolated string, with its text
+    marked and its holes read as code; None if it does not close."""
+    j = start = i + 1
+    while j < len(src):
+        if src[j] == "\\":
+            j += 2
+        elif src[j] == '"':
+            marks.append(("text", start, j))
+            return j + 1
+        elif src[j] == "{":
+            marks.append(("text", start, j))
+            j = _read_code(src, j + 1, marks, hole=True)
+            if j >= len(src):
+                return None
+            j = start = j + 1
         else:
-            out.append(src[i])
-            i += 1
-    return "".join(out)
+            j += 1
+    return None
+
+
+def lean_sources() -> list[Path]:
+    """Every `.lean` file of LEAN_TREES: each folder's root file, then the folder."""
+    paths = []
+    for tree in LEAN_TREES:
+        root = ROOT / f"{tree}.lean"
+        paths += [root] if root.exists() else []
+        paths += sorted((ROOT / tree).rglob("*.lean"))
+    return paths
+
+
+def line_of(text: str, offset: int) -> int:
+    return text[:offset].count("\n") + 1
 
 
 def check_rules() -> None:
-    for path in sorted((ROOT / "Elements").rglob("*.lean")):
+    for path in lean_sources():
         rel = path.relative_to(ROOT).as_posix()
         src = path.read_text()
-        code = without_comments(src)
-        if re.search(r"^\s*(@\[[^\]]*\]\s*)?((private|protected|noncomputable|unsafe|partial)\s+)*axiom\s",
-                     code, re.M) and not rel.startswith("Elements/Foundations/"):
-            fail(f"{rel}: declares an axiom outside Elements/Foundations/")
-        if "native_decide" in src:
-            fail(f"{rel}: uses native_decide")
+        code, unsure = read_lean(src)
+        if not rel.startswith("Elements/Foundations/"):
+            for m in AXIOM.finditer(code):
+                fail(f"{rel}:{line_of(code, m.start())}: declares an axiom outside "
+                     "Elements/Foundations/")
+        for m in re.finditer("native_decide", src):
+            fail(f"{rel}:{line_of(src, m.start())}: uses native_decide")
         for m in FORBIDDEN.finditer(code):
             if m.group(0) != "native_decide":
-                line = code[: m.start()].count("\n") + 1
-                fail(f"{rel}:{line}: uses `{' '.join(m.group(0).split())}`, which could get "
-                     "round Lean's kernel or bring in an axiom unseen")
-        if rel.startswith("Elements/Figure/") and re.search(r"^import Elements\.Book", src, re.M):
-            fail(f"{rel}: Book Zero must not import a proposition")
+                word = f"@[{m['attr']}]" if m["attr"] else " ".join(m.group(0).split())
+                fail(f"{rel}:{line_of(code, m.start())}: uses `{word}`, which could get round "
+                     "Lean's kernel, bring in an axiom unseen, run a program when the file is "
+                     "built or imported, or stop Lean reading it (docs/FORMALIZATION.md, "
+                     "section 7)")
+        for offset in unsure:
+            fail(f"{rel}:{line_of(src, offset)}: a string the scan cannot read for certain, "
+                 "since Lean could read its braces as holes of code (docs/FORMALIZATION.md, "
+                 "section 7)")
+        if rel.startswith("Elements/Figure/"):
+            for m in re.finditer(r"^import Elements\.Book", src, re.M):
+                fail(f"{rel}:{line_of(src, m.start())}: Book Zero must not import a proposition")
 
 
 # The words retired from the reader-facing pages ("Euclid cites", "never need" and their
@@ -459,7 +629,8 @@ def check_entries(facts, by_ref) -> None:
 def check_expectations(by_ref, path: Path = EXPECTATIONS) -> None:
     """Each expectation names an entry (`ref`) and a list `field`, and asks that the
     list `includes` some names, `excludes` others, or holds exactly `count` names
-    beginning with `prefix`; `equals` compares any field with a value."""
+    beginning with `prefix`; `equals` compares any field with a value. A field that is
+    an object, as `inherited` is, is read by its keys: the axioms it names."""
     if not path.exists():
         fail(f"{rel(path)} is missing")
         return
@@ -480,10 +651,15 @@ def check_expectations(by_ref, path: Path = EXPECTATIONS) -> None:
         if ref not in by_ref:
             fail(f"{ref}: pinned by {label}, but facts.json has no such entry")
             continue
+        if field not in by_ref[ref][1]:
+            # Read as empty, a missing field would let every `excludes` pass.
+            fail(f"{ref}: pinned by {label}, but its entry has no field `{field}`")
+            continue
         value = by_ref[ref][1].get(field)
         if "equals" in x and value != x["equals"]:
             fail(f"{ref}: its {field} is {value!r}, not {x['equals']!r} ({label}: {why})")
-        listed = value if isinstance(value, list) else []
+        listed = value if isinstance(value, list) else list(value) if isinstance(value, dict) \
+            else []
         for name in x.get("includes", []):
             if name not in listed:
                 fail(f"{ref}: its {field} should include {name} ({label}: {why})")
@@ -647,7 +823,7 @@ def declared_names() -> frozenset:
     names = set()
     for path in (ROOT / "Elements").rglob("*.lean"):
         stack: list[list[str]] = []
-        for line in without_comments(path.read_text()).splitlines():
+        for line in read_lean(path.read_text())[0].splitlines():
             m = re.match(r"^\s*(namespace|section|end)\b\s*(\S*)", line)
             if m:
                 word, name = m.groups()
