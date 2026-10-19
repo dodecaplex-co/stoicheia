@@ -73,8 +73,10 @@ order, and the first that fails stops it with a message saying why:
    pages gone stale under origin/main's render.py (or facts.json rewritten by its
    certificate), which the pages' diff shows in full; and a failure on a commit whose
    only check inputs changed are values pinned to the edition (PINNED, below; the
-   certificate's expectations only while none of origin/main's is dropped or loosened),
-   which move with the content they pin. A crash of origin/main's render.py, its check of
+   certificate's expectations only while none of origin/main's is dropped or loosened;
+   the model's law names, and a law's code in the two harnesses that check every law
+   (MODEL_LAW_CODE), only while each law changed moves with its axiom), which move with
+   the content they pin. A crash of origin/main's render.py, its check of
    docs/program.toml among them, is a verdict. Step 3's two checks run the same way.
 5. The pull request settled first: our open one for the branch (a fork's of the same
    name is never touched), or a new one; its body, --body-file or generated from
@@ -132,6 +134,7 @@ Standard library, git and gh; Python 3.11 or later.
 from __future__ import annotations
 
 import argparse
+import ast
 import base64
 import binascii
 import contextlib
@@ -176,14 +179,27 @@ PROTECTED = ("scripts/", ".github/", "Certificate/", "tests/", "review/SCHEMA.md
 CHECK_INPUTS = ("scripts/", "tests/", "Certificate/", "review/SCHEMA.md", "review/terms.toml")
 # Of those, the values pinned to the edition, not code. The lock and the model's hash of it
 # are compared exactly, both ways: check_fidelity.py the lock with facts.json, and the
-# model's run its hash with the lock. The certificate's expectations are checked one way
-# only, each for what it says, so a change to them is a pinned value only while it keeps
-# every expectation origin/main has (kept_expectations). A change to the content they pin
-# moves them with it, in the same pull request; they stay protected (a decisions line,
-# security-review, the lock's guard), and the commit's own checks must pass.
+# model's run its hash with the lock. The model's page and results are its account of the
+# laws, which no check reads. The certificate's expectations are checked one way only, each
+# for what it says, so a change to them is a pinned value only while it keeps every
+# expectation origin/main has (kept_expectations). The model's law names are compared with
+# the lock both ways, but a line of them changed while its axiom stands would loosen the
+# model's check of that axiom, so a change to them is a pinned value only while each line
+# changed moves with its axiom's entry in the lock (laws_move_with_axioms). A change to
+# the content they pin moves them with it, in the same pull request; they stay protected
+# (a decisions line, security-review, the lock's guard), and the commit's own checks must
+# pass.
 EXPECTATIONS = "tests/certificate_expectations.json"
 MODEL_HASH = "tests/model/lock.sha256"
-PINNED = (EXPECTATIONS, LOCK, MODEL_HASH)
+MODEL_LAWS = "tests/model/laws.toml"
+MODEL_PAGE = "tests/model/MODEL.md"
+MODEL_RESULTS = "tests/model/results/"
+PINNED = (EXPECTATIONS, LOCK, MODEL_HASH, MODEL_LAWS, MODEL_PAGE, MODEL_RESULTS)
+# The two harnesses that implement every law of the model. They are check code; but a
+# law's code in them moves with its axiom, as its line of laws.toml does, while it keeps to
+# itself, the laws that stay keep their order, and the rest of the file stays as it was
+# (laws_move_with_axioms).
+MODEL_LAW_CODE = ("tests/model/search.py", "tests/model/hyperbolic.py")
 SECURITY_LABEL = "security-review"
 LABELS = {
     **{f"stage-{n}": f"Brief 0005, stage {n}" for n in range(2, 7)},
@@ -220,6 +236,7 @@ CHECKS = [
      [PY, "scripts/check_kernel.py", "--self-test"]),
     ("python3 scripts/heath.py", [PY, "scripts/heath.py"]),
     ("python3 scripts/check_fidelity.py", [PY, "scripts/check_fidelity.py"]),
+    ("python3 -I tests/test_check_style.py", [PY, "-I", "tests/test_check_style.py"]),
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
     ("git status --porcelain is empty", None),
@@ -1542,13 +1559,405 @@ def kept_expectations(old: str | None, new: str | None) -> bool:
     return all(any(asks_as_much(y, x) for y in news) for x in olds)
 
 
+def locked_axioms(text: str | None) -> dict | None:
+    """The lock's [axioms] table, {name: statement}; None when it does not read, or the
+    file is absent (`text` None: tomllib.loads(None) raises AttributeError before Python
+    3.14, and TypeError from it)."""
+    import tomllib
+    if text is None:
+        return None
+    try:
+        table = tomllib.loads(text)["axioms"]
+    except (TypeError, KeyError, tomllib.TOMLDecodeError):
+        return None
+    return table if isinstance(table, dict) else None
+
+
+def model_laws(text: str | None) -> dict | None:
+    """laws.toml, as {axiom: (the name of its law, whether it must fail in the hyperbolic
+    plane)}; None unless it is a [laws] table of names and a [hyperbolic] table holding
+    `fails`, a list of some of those axioms, and nothing else; None, too, when the file is
+    absent (`text` None, as in locked_axioms)."""
+    import tomllib
+    if text is None:
+        return None
+    try:
+        data = tomllib.loads(text)
+    except (TypeError, tomllib.TOMLDecodeError):
+        return None
+    laws, hyperbolic = data.get("laws"), data.get("hyperbolic")
+    fails = hyperbolic.get("fails") if isinstance(hyperbolic, dict) else None
+    if set(data) != {"laws", "hyperbolic"} or not isinstance(hyperbolic, dict) \
+            or set(hyperbolic) != {"fails"} or not isinstance(laws, dict) \
+            or not all(isinstance(v, str) for v in laws.values()) \
+            or not isinstance(fails, list) or not all(isinstance(k, str) for k in fails) \
+            or not set(fails) <= set(laws):
+        return None
+    return {k: (v, k in fails) for k, v in laws.items()}
+
+
+def law_of(node: ast.stmt) -> str | None:
+    """The law a statement of a harness defines: a function named `_` whose one decorator is
+    `axiom('<name>', …)`; None for any other statement."""
+    if not isinstance(node, ast.FunctionDef) or node.name != "_" or len(node.decorator_list) != 1:
+        return None
+    d = node.decorator_list[0]
+    if isinstance(d, ast.Call) and isinstance(d.func, ast.Name) and d.func.id == "axiom" \
+            and d.args and isinstance(d.args[0], ast.Constant) and isinstance(d.args[0].value, str):
+        return d.args[0].value
+    return None
+
+
+def law_code(text: str | bytes | None) -> tuple[list[str], dict] | None:
+    """A harness file's code: the statements at its top level that are not laws, each as
+    its syntax tree prints (comments and its docstring, which are prose, aside); and its
+    laws, by name. It reads the file as Python does, from its bytes, so a coding cookie is
+    honoured: a line that reads as a comment in UTF-8 may be code under another encoding.
+    None when it does not parse, or defines a law twice."""
+    try:
+        tree = ast.parse(text)
+    except (TypeError, ValueError, SyntaxError):
+        return None
+    body = tree.body
+    if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) \
+            and isinstance(body[0].value.value, str):
+        body = body[1:]
+    rest, laws = [], {}
+    for node in body:
+        name = law_of(node)
+        if name is None:
+            rest.append(ast.dump(node))
+        elif name in laws:
+            return None
+        else:
+            laws[name] = node
+    return rest, laws
+
+
+# What a law's code may use: an allow-list, and anything it does not name is refused.
+# Beside its own parameters and the names it binds, a global name in one role only, as
+# each harness's laws use it: a function called (the model's helpers, each of which reads
+# its arguments, draws from the random numbers it is given, and returns a value, while
+# hyperbolic.py's make_circle also notes a point of the circle it makes in SEEDS, which
+# the harness empties before every configuration); a value (search.py's right angle, RA);
+# a table, only read through a subscript (hyperbolic.py's SEEDS); a module, only for an
+# attribute in LAW_MATH; and, in a law's decorator, a generator named, or one made by a
+# call with constants. The builtins the laws call, in either harness. The attributes they
+# take of what they are given: of the random numbers the harness hands every law, which a
+# law draws from and never reseeds (LAW_ATTRIBUTES); and the one method that changes a
+# container, on a container the law made (LAW_MUTATORS). The letters of a decorator's
+# kinds. Each entry is one some law needs: a test takes each away in turn, and a law is
+# refused. Widening a list is a check change, in a pull request of its own.
+LAW_GLOBALS = {
+    "tests/model/search.py": {
+        "call": frozenset({
+            "Fr", "_angle_inside_hyp", "_area_line_hyp", "_cm_side", "_ti_hyp", "ang",
+            "area2", "between", "circles_meet", "collinear", "d2", "dot", "f_ang",
+            "f_between", "f_lval", "f_on_circle", "f_on_line", "f_same_side", "feq", "fl",
+            "in_or_on", "inside", "is_centre", "is_right_angle", "lattice_on_line",
+            "length", "line_circle_points", "line_meets_circle", "line_through",
+            "lines_meet", "lval", "mag_vals", "on_circle", "on_line", "opposite", "outside",
+            "same_side", "sgn", "sub", "triangle"}),
+        "value": frozenset({"RA"}),
+    },
+    "tests/model/hyperbolic.py": {
+        "call": frozenset({
+            "F_circ", "Fr", "H", "K", "_angle_inside_hyp", "_area_line_hyp", "_cm_side",
+            "_ti_hyp", "ang", "ang_eq", "ang_zero", "area", "area_zero", "between", "centre",
+            "ch2", "circles_meet", "collinear", "dist", "expmap", "f_ang", "f_dist",
+            "f_on_circle", "f_point", "f_side", "feq", "in_disc", "in_or_on", "inside",
+            "is_centre", "is_right", "line_meets_circle", "line_through", "lines_meet",
+            "mag_vals", "make_circle", "meet_point", "mink", "on_circle", "on_line",
+            "opposite", "outside", "pt_on_circle", "pt_on_line", "pts_on_line",
+            "roots_along", "same_side", "triangle", "unit_toward"}),
+        "table": frozenset({"SEEDS"}),
+        "generator": frozenset({
+            "gs_adj", "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
+            "gs_cong", "gs_lc", "gs_lines_meet", "gs_lmc_opp", "gs_p4", "gs_p5", "gs_pasch",
+            "gs_pasch4", "gs_rays", "gs_sup"}),
+        "generator maker": frozenset({"gs_cm", "gs_convex", "gs_ti"}),
+    },
+}
+LAW_BUILTINS = frozenset({"abs", "all", "any", "float", "len", "range", "set", "tuple"})
+LAW_MODULES = frozenset({"math"})
+LAW_MATH = frozenset({"cos", "dist", "hypot", "pi", "sin", "sqrt"})
+LAW_ATTRIBUTES = frozenset({"randint", "random"})
+LAW_MUTATORS = frozenset({"append"})
+LAW_KINDS = frozenset({"P", "L_", "C_"})
+# The syntax a law's body may hold: the statements, expressions and parts of them that the
+# laws use, and the plain ones beside them (`break`, `continue`, `pass`, a conditional
+# expression, a slice, a dict display or comprehension). Not an import, `global`,
+# `nonlocal`, `:=`, `lambda`, `del`, `try`, `with`, `raise`, `assert`, `yield`, `await`,
+# a class, a starred or annotated name, nor an f-string.
+LAW_SYNTAX = (ast.Assign, ast.AugAssign, ast.Expr, ast.If, ast.For, ast.While, ast.Break,
+              ast.Continue, ast.Pass, ast.Return, ast.FunctionDef, ast.BoolOp, ast.BinOp,
+              ast.UnaryOp, ast.Compare, ast.IfExp, ast.Call, ast.Constant, ast.Name,
+              ast.Attribute, ast.Subscript, ast.Slice, ast.Tuple, ast.List, ast.Set, ast.Dict,
+              ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp, ast.comprehension,
+              ast.keyword, ast.arguments, ast.arg, ast.expr_context, ast.operator,
+              ast.boolop, ast.unaryop, ast.cmpop)
+COMPREHENSIONS = (ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+# The calls that make a new container, beside a display or a comprehension; and the
+# augmented assignments that a container of Python's own makes in place (a list's `+=`, a
+# set's `|=`).
+CONSTRUCTORS = frozenset({"list", "dict", "set", "bytearray"})
+IN_PLACE = (ast.Add, ast.Sub, ast.Mult, ast.BitOr, ast.BitAnd, ast.BitXor)
+
+
+def law_globals(path: str, role: str) -> frozenset:
+    """The global names a law in the harness `path` may use in `role` (LAW_GLOBALS), the
+    builtins among the calls and `math` among the modules."""
+    common = {"call": LAW_BUILTINS, "module": LAW_MODULES}.get(role, frozenset())
+    return LAW_GLOBALS.get(path, {}).get(role, frozenset()) | common
+
+
+def law_decorator(d: ast.Call, path: str) -> bool:
+    """Is a law's decorator, which law_of found to be `axiom('<name>', …)`, one the allow-list
+    takes? Its kinds a `dict` of letters, `dict(A=P, L=L_, al=C_)`; and, where the harness
+    takes a generator, one it names (`gs_p4`), or makes with constants (`gs_cm('side')`)."""
+    gens, makers = law_globals(path, "generator"), law_globals(path, "generator maker")
+    if d.keywords or len(d.args) not in ((2, 3) if gens or makers else (2,)):
+        return False
+    kinds, *gen = d.args[1:]
+    if not (isinstance(kinds, ast.Call) and isinstance(kinds.func, ast.Name)
+            and kinds.func.id == "dict" and not kinds.args
+            and all(k.arg is not None and isinstance(k.value, ast.Name)
+                    and k.value.id in LAW_KINDS for k in kinds.keywords)):
+        return False
+    if not gen:
+        return True
+    g = gen[0]
+    return (isinstance(g, ast.Name) and g.id in gens) or (
+        isinstance(g, ast.Call) and isinstance(g.func, ast.Name) and g.func.id in makers
+        and not g.keywords and all(isinstance(a, ast.Constant) for a in g.args))
+
+
+def scope_binds(nodes) -> set[str]:
+    """The names a scope binds itself, from its statements (or a comprehension's targets):
+    the names stored and the functions defined, and none bound in a scope inside it."""
+    out, todo = set(), list(nodes)
+    while todo:
+        node = todo.pop()
+        if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load):
+            out.add(node.id)
+        elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+            out.add(node.name)
+        elif isinstance(node, COMPREHENSIONS):
+            todo.append(node.generators[0].iter)    # its first iterable is the scope's
+        elif not isinstance(node, ast.Lambda):
+            todo.extend(ast.iter_child_nodes(node))
+    return out
+
+
+def own_names(fn: ast.FunctionDef) -> tuple[set[str], set[str]]:
+    """The names of a law that hold only a container it made, and those that hold only a
+    constant. A container it made: a name that every binding in the law gives a new
+    container (a list, dict or set display, a comprehension, or a call of one of
+    CONSTRUCTORS that nothing in the law rebinds); a constant, a name every binding gives
+    a literal. A name bound by a loop, a comprehension, a parameter or a function is
+    neither."""
+    bound = {node.id for node in ast.walk(fn) if isinstance(node, ast.Name)
+             and not isinstance(node.ctx, ast.Load)}
+    makers = CONSTRUCTORS - bound
+
+    def new_container(value) -> bool:
+        return isinstance(value, (ast.List, ast.Dict, ast.Set, ast.ListComp, ast.DictComp,
+                                  ast.SetComp)) \
+            or (isinstance(value, ast.Call) and isinstance(value.func, ast.Name)
+                and value.func.id in makers)
+
+    made, constant, other, seen = set(), set(), set(), set()
+
+    def bind(target, value) -> None:
+        """A target of an assignment and its value, where it is known; a tuple or list
+        target takes a display of as many values, one each."""
+        seen.add(id(target))
+        if isinstance(target, ast.Name):
+            kind = made if new_container(value) else \
+                constant if isinstance(value, ast.Constant) else other
+            kind.add(target.id)
+        elif isinstance(target, (ast.Tuple, ast.List)):
+            elts = value.elts if isinstance(value, (ast.Tuple, ast.List)) \
+                and len(value.elts) == len(target.elts) \
+                and not any(isinstance(e, ast.Starred) for e in value.elts) else None
+            for i, t in enumerate(target.elts):
+                bind(t, elts[i] if elts else None)
+        elif isinstance(target, ast.Starred):
+            bind(target.value, None)
+
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Assign):
+            for target in node.targets:
+                bind(target, node.value)
+        elif isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name):
+            seen.add(id(node.target))   # the same name, judged by self_contained
+    for node in ast.walk(fn):
+        if isinstance(node, ast.Name) and not isinstance(node.ctx, ast.Load) \
+                and id(node) not in seen:
+            other.add(node.id)  # a loop, a comprehension
+        elif isinstance(node, ast.arg):
+            other.add(node.arg)
+        elif isinstance(node, ast.FunctionDef) and node is not fn:
+            other.add(node.name)
+    return made - constant - other, constant - made - other
+
+
+def self_contained(fn: ast.FunctionDef, path: str) -> bool:
+    """Does a law's code in the harness `path` keep to itself, so that it changes no other
+    law's check when it runs? It is read against an allow-list, not run, and what the list
+    does not name is refused, so a route the list never thought of is refused too. Its
+    decorator is one law_decorator takes. It and every function it defines take plain
+    positional parameters (no default, annotation, `/` or `*`), and only it has a
+    decorator. Its body holds only the syntax of LAW_SYNTAX, with no `**` argument or
+    display, no `async` comprehension, no dunder name, and a generator expression only as
+    an argument, or unpacked as it is made. Each name is its own (a parameter, or bound in
+    the law or a scope of it, as Python resolves it: a name bound only in a comprehension
+    or an inner function is the global outside it), or a global in a role LAW_GLOBALS gives
+    it (law_globals): called, read through a subscript, a module before an attribute, or a
+    value. An attribute is never stored or deleted: on a module it is in LAW_MATH, on
+    anything else in LAW_ATTRIBUTES, or in LAW_MUTATORS on a container of the law's own. So
+    no frame, namespace, other module or lookup by string can be reached: none is on the
+    list. And it changes only a container it made in its own body (own_names), under a name
+    of the law's own scopes, and through that name itself: by a subscript stored, a method
+    in LAW_MUTATORS, or an augmented assignment in IN_PLACE. So a second name for a shared
+    container (`d = SEEDS[k]`, `for d in …`, an argument), an element of its own
+    (`x[0] += [1]`), or a global of the same name as one of its own, changes nothing. An
+    augmented assignment that a container of Python's own never makes in place (`t /= 2`),
+    or one to a name every binding gives a constant (`j += 1`), changes nothing either."""
+    if not law_decorator(fn.decorator_list[0], path):
+        return False
+    local = set()   # the names, as nodes, that the law's own scopes bind
+
+    def resolve(node, chain: tuple) -> None:
+        if isinstance(node, ast.FunctionDef):
+            params = {a.arg for a in ast.walk(node.args) if isinstance(a, ast.arg)}
+            inner = chain + (params | scope_binds(node.body),)
+            for statement in node.body:
+                resolve(statement, inner)
+            return
+        if isinstance(node, COMPREHENSIONS):
+            first = node.generators[0]
+            resolve(first.iter, chain)
+            inner = chain + (scope_binds(g.target for g in node.generators),)
+            parts = [node.key, node.value] if isinstance(node, ast.DictComp) else [node.elt]
+            for g in node.generators:
+                parts += [g.target, *g.ifs] + ([] if g is first else [g.iter])
+            for part in parts:
+                resolve(part, inner)
+            return
+        if isinstance(node, ast.Name) and any(node.id in names for names in chain):
+            local.add(node)
+        for child in ast.iter_child_nodes(node):
+            resolve(child, chain)
+
+    resolve(fn, ())
+    own, constants = own_names(fn)
+    parents = {child: node for node in ast.walk(fn) for child in ast.iter_child_nodes(node)}
+
+    def mine(node) -> bool:
+        return isinstance(node, ast.Name) and node in local and node.id in own
+
+    def plain(f: ast.FunctionDef) -> bool:
+        a = f.args
+        return not (a.posonlyargs or a.vararg or a.kwonlyargs or a.kwarg or a.defaults
+                    or a.kw_defaults or f.returns or getattr(f, "type_params", None)
+                    or any(x.annotation or x.arg.startswith("__") for x in a.args)
+                    or f.name.startswith("__"))
+
+    def role(node: ast.Name) -> str:
+        up = parents.get(node)
+        if isinstance(up, ast.Call) and up.func is node:
+            return "call"
+        if isinstance(up, ast.Attribute):
+            return "module"
+        if isinstance(up, ast.Subscript) and up.value is node and isinstance(up.ctx, ast.Load):
+            return "table"
+        return "value"
+
+    if not plain(fn):
+        return False
+    for node in (n for statement in fn.body for n in ast.walk(statement)):
+        if not isinstance(node, LAW_SYNTAX):
+            return False
+        if isinstance(node, ast.FunctionDef) and (node.decorator_list or not plain(node)):
+            return False
+        if (isinstance(node, ast.keyword) and node.arg is None) \
+                or (isinstance(node, ast.Dict) and None in node.keys) \
+                or (isinstance(node, ast.comprehension) and node.is_async):
+            return False
+        if isinstance(node, ast.GeneratorExp):
+            up = parents.get(node)
+            if not ((isinstance(up, ast.Call) and node in up.args)
+                    or (isinstance(up, ast.Assign) and up.value is node
+                        and len(up.targets) == 1
+                        and isinstance(up.targets[0], (ast.Tuple, ast.List)))):
+                return False
+        if isinstance(node, ast.Name) and (node.id.startswith("__") or (
+                node not in local and node.id not in law_globals(path, role(node)))):
+            return False
+        if isinstance(node, ast.Attribute):
+            on_module = isinstance(node.value, ast.Name) and node.value not in local
+            if not isinstance(node.ctx, ast.Load) or not (
+                    node.attr in LAW_MATH if on_module else
+                    node.attr in LAW_ATTRIBUTES
+                    or (node.attr in LAW_MUTATORS and mine(node.value))):
+                return False
+        if isinstance(node, ast.Subscript) and not isinstance(node.ctx, ast.Load) \
+                and not mine(node.value):
+            return False
+        if isinstance(node, ast.AugAssign) and isinstance(node.op, IN_PLACE) \
+                and not mine(node.target) and not (isinstance(node.target, ast.Name)
+                                                   and node.target.id in constants):
+            return False
+    return True
+
+
+def laws_move_with_axioms(repo, base, sha, path: str) -> bool:
+    """Does each law the commit changes in `path` move with its axiom, whose entry in the
+    lock the commit adds, removes or restates? In laws.toml, a line: the law's name, or
+    whether it must fail in the hyperbolic plane. In one of MODEL_LAW_CODE, a law's code
+    (law_of), which must keep to itself (self_contained), while the rest of the file, its
+    comments and docstring aside, stays as it was, and the laws that stay keep their order.
+    Anything else, a law changed while its axiom stands among them, is a check change."""
+    old_lock, new_lock = locked_axioms(show(repo, base, LOCK)), locked_axioms(show(repo, sha, LOCK))
+    old_laws = model_laws(show(repo, base, MODEL_LAWS))
+    new_laws = model_laws(show(repo, sha, MODEL_LAWS))
+    if None in (old_lock, new_lock, old_laws, new_laws):
+        return False
+    moved = {k for k in old_lock.keys() | new_lock.keys() if old_lock.get(k) != new_lock.get(k)}
+    if path == MODEL_LAWS:
+        return all(k in moved for k in old_laws.keys() | new_laws.keys()
+                   if old_laws.get(k) != new_laws.get(k))
+    old, new = law_code(show_bytes(repo, base, path)), law_code(show_bytes(repo, sha, path))
+    if old is None or new is None or old[0] != new[0]:
+        return False
+    if [name for name in old[1] if name in new[1]] != \
+            [name for name in new[1] if name in old[1]]:
+        return False
+    for name in old[1].keys() | new[1].keys():
+        was, now = old[1].get(name), new[1].get(name)
+        if was is not None and now is not None and ast.dump(was) == ast.dump(now):
+            continue
+        if now is not None and not self_contained(now, path):
+            return False
+        axioms = {k for laws in (old_laws, new_laws) for k, (law, _) in laws.items()
+                  if law == name}
+        if not axioms or not axioms <= moved:
+            return False
+    return True
+
+
 def pinned(repo, base, sha, path: str) -> bool:
     """Is the commit's change to the check input `path` a value pinned to the edition? The
-    lock and the model's hash of it, always; the certificate's expectations, while the
-    change keeps every one origin/main has (kept_expectations)."""
+    lock, the model's hash of it, and its page and results, always; the certificate's
+    expectations, while the change keeps every one origin/main has (kept_expectations);
+    the model's law names, and a law's code in the two harnesses that check every law,
+    while each law changed moves with its axiom (laws_move_with_axioms)."""
     if path == EXPECTATIONS:
         return kept_expectations(show(repo, base, path), show(repo, sha, path))
-    return path in PINNED
+    if path == MODEL_LAWS or path in MODEL_LAW_CODE:
+        return laws_move_with_axioms(repo, base, sha, path)
+    return under(path, PINNED)
 
 
 def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
@@ -1564,8 +1973,9 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
     content, in no other order, and the commit's own pass still needs them to agree. An
     expectation dropped or loosened is no pinned value: check_fidelity.py checks only
     what each expectation says, so the commit's own pass could never catch it. Check code
-    changed with judged content is kept apart, pinned values or not. True when it
-    refuses."""
+    changed with judged content is kept apart, pinned values or not; and so is a law of
+    the model changed while its axiom stands, for the commit's own pass could not catch
+    that either. True when it refuses."""
     failed = [name for s in rep.steps
               if s.stage == stage and s.outcome == "note" and s.name.endswith(BASE_PASS)
               and (name := s.name.removesuffix(BASE_PASS)) not in FRESHNESS]
@@ -1577,21 +1987,30 @@ def keep_apart(repo, base, sha, rep: Report, stage: str) -> bool:
         if not any(s.stage == stage and s.name == "pinned values" for s in rep.steps):
             rep.add(stage, "pinned values", "note", f"origin/main's checks fail on the commit "
                     f"({', '.join(failed)}), and the only check inputs it changes are values "
-                    f"pinned to the edition ({', '.join(inputs)}), which move with the "
-                    "content they pin: for the security review")
+                    f"pinned to the edition, and laws of the model that move with their axioms "
+                    f"({', '.join(inputs)}), which move with the content they pin: for the "
+                    "security review, which reads each law's code")
         return False
     shown = ", ".join(judged[:8]) + (f" and {len(judged) - 8} more" if len(judged) > 8 else "")
     loosened = EXPECTATIONS in inputs and not pinned(repo, base, sha, EXPECTATIONS)
+    laws = [p for p in inputs if (p == MODEL_LAWS or p in MODEL_LAW_CODE)
+            and not pinned(repo, base, sha, p)]
     rep.add(stage, "check change kept apart", "FAIL",
             f"origin/main's checks fail on the commit ({', '.join(failed)}), and it changes "
             f"what they judge as well as the checks: {shown}"
             + (f"; and it drops or loosens an expectation of {EXPECTATIONS}, which is a "
                "check change" if loosened else "")
+            + (f"; and it changes the model's laws in {', '.join(laws)} beyond the laws that "
+               "move with their axioms (or a law's code uses what its allow-list does not "
+               "name), which is a check change" if laws else "")
             + ". Land the check change first, in a pull request of its own (the check code, "
             "the guides, the regenerated pages and the records' stamps), and the rest after "
-            f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, and the counts and "
-            f"values of {EXPECTATIONS}, none of its expectations dropped or loosened) move "
-            "with the content they pin (docs/WORKFLOW.md, \"Landing work: pull requests\")")
+            f"it; values pinned to the edition ({LOCK}, {MODEL_HASH}, the counts and values "
+            f"of {EXPECTATIONS}, none of its expectations dropped or loosened, and the "
+            f"model's account, {MODEL_PAGE} and {MODEL_RESULTS}) move with the content they "
+            f"pin, and so does a law of the model, its line of {MODEL_LAWS} and its code in "
+            f"{' and '.join(MODEL_LAW_CODE)}, with its axiom (docs/WORKFLOW.md, \"Landing "
+            "work: pull requests\")")
     return True
 
 

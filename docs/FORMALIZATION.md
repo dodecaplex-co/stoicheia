@@ -105,7 +105,7 @@ three words are the home of these terms:
   claims more, is still full (III.9's point need not be within the circle), and is tagged
   `hypothesis-dropped`.
 - **restricted:** every clause, but only under extra hypotheses that exclude configurations
-  his words admit (I.40's bases end to end).
+  his words admit (I.40's main theorem alone, its bases end to end).
 - **partial:** some clause has no formal conclusion (III.16, III.31); the record quotes it
   and gives a clause map.
 
@@ -159,8 +159,9 @@ in a circle.
 **A deliberate limit is stated** in the book's brief, carried as a tag of
 [review/terms.toml](../review/terms.toml) in each affected record, and shown on each
 affected page. A new tag is added there, with its meaning, before any record uses it. A full
-formal model of every axiom is valuable further assurance, and a separate milestone; it is
-not a prerequisite for each new representation.
+formal model of every axiom is valuable further assurance, and a milestone of its own, now
+in progress ([MODEL.md](../tests/model/MODEL.md#a-formal-model-in-progress)); it is not a
+prerequisite for each new representation.
 
 The representations Books I–III rest on:
 
@@ -169,9 +170,9 @@ The representations Books I–III rest on:
 | a straight line | a whole straight line, `Line`, named by any two points (Postulate 1) | producing it costs nothing | |
 | lengths, angles, areas | `Magnitude` of one kind each, added and compared only | Common Notions proved as theorems | |
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
-| superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | | |
+| superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | stronger as a construction principle than System E's restricted inference rule, as [its file](../Elements/Foundations/Tacit/Superposition.lean) says; a restricted rule is being prototyped ([#75](https://github.com/jackChallis/stoicheia/issues/75)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
-| a rectilineal figure | two triangles | a general figure is stage 2's work | `two-triangles` |
+| a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
 | a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
 | a circumference | twice the angle standing on it, `circumference`, `standing`; no radius | proved facts in `Circumferences.lean`; arcs with membership are stage 3's work | `angle-measure`, `redundant-hypothesis` |
 | a segment | its circle, a straight line in it and one side | stage 3 | `segment-with-circle` |
@@ -320,12 +321,12 @@ dependencies.
   statement, with every definition that the axioms' statements or the propositions',
   porisms' and companions' statements reach (`Touches`, `rect`, `Parallel`), so that no
   word can change what an axiom or a claim says. It changes only through
-  `check_fidelity.py --write-lock`, together with a decisions entry, and with
-  `tests/model/lock.sha256` updated and
-  [tests/model/MODEL.md](../tests/model/MODEL.md) read again for the changed laws, in the
-  same change; otherwise CI's `model` job fails. Review an axiom's statement and strength, not only the count. An
-  assignment to finish a proof is never permission to add an axiom that asserts its
-  conclusion.
+  `check_fidelity.py --write-lock`, together with a decisions entry, and with the model
+  brought to it in the same change, as
+  [tests/model/MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
+  says; otherwise CI's `model` job fails. Review an axiom's statement and strength, not
+  only the count. An assignment to finish a proof is never permission to add an axiom that
+  asserts its conclusion.
 - **Nothing gets round the kernel:** no `native_decide`, `decide +native`,
   `set_option debug.…`, `run_cmd`, `run_elab`, `elab`, `macro`, `implemented_by`, `extern`
   or `unsafe` under `Elements/`.
@@ -379,13 +380,17 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The edition review | Commentary, quotations, figures and scope descriptions agree with the reviewed mathematics. | |
 | Regeneration is clean | The pages, certificate and graph match the sources and the generator. | Whether their descriptions of scope and meaning are accurate. |
 | The figure checks pass | The files display, and their letters, palette and strokes meet the structural rules. | Whether the drawn geometry and the case shown agree with the proof. |
-| The numerical model tests (`tests/model/`) | The 87 axioms held in the configurations sampled from a standard model of the plane, and planted mutations of them were caught. | A proof of consistency: laws no harness reaches rest on a hand argument. |
+| The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of them were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
+| The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| A formal interpretation (a later milestone, a separate package with Mathlib) | The exact 87 laws proved in a model of the plane, tied to the lock so that any change to an axiom breaks it. | |
+| A formal model (in progress, [#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | When complete, every law of the lock, generated from the elaborated declarations with the translation checked, proved in the ordinary plane, relative to Lean's logic and Mathlib's real numbers, and tied to the lock so that any change to an axiom breaks it. Until then, nothing: [MODEL.md](../tests/model/MODEL.md#what-this-shows-and-what-it-does-not) says what may be claimed meanwhile. | That the formal statements capture Euclid's meaning. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of
 the foundations, nor the necessity of an axiom, nor the independence of the parallel
-postulate, nor that the Lean means what Euclid meant. A claim that a result holds without the
-postulate names its evidence (an interpretation in which the other axioms hold and the
-postulate fails), and even then the pages keep "this proof uses".
+postulate, nor that the Lean means what Euclid meant. A claim that a result cannot be
+proved without the postulate names its evidence and its kind. The evidence is an
+interpretation in which the other axioms hold and the result's own statement fails, its
+hypotheses met; that the postulate fails there is not enough, and a result whose statement
+stays true there needs a different analysis. The kind is numerical until a proof replaces
+it, and even then the pages keep "this proof uses".

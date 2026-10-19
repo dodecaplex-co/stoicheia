@@ -61,6 +61,19 @@ one commit and runs safe_push.py against that origin:
   committed list through load_allowlist, and the dry-run refusals name the step that
   refused; and the stand-in for gh refuses a second pull request for a head, as gh does,
   while ours is found whatever owner GitHub names for its head;
+- the model's laws (issue #40): an axiom added in one pull request with its entry in the
+  lock, the lock's hash, its line of tests/model/laws.toml, its law's code in search.py
+  and hyperbolic.py and the model's account lands as content, and the model's ties hold
+  on it; while a law loosened beside it, a helper or tolerance of the harness changed
+  (hidden in a comment by a coding cookie, too), two laws of a harness reordered, a line
+  of laws.toml moved without its axiom, a new law's code that uses what its allow-list
+  does not name (a global, a frame, a lookup by string, a print, the end of the run) or
+  changes a shared container under a second name, or laws.toml or the lock deleted, is a
+  check change, kept apart; the pre-flight treats an axiom restated or removed with its
+  law as content too, while structured.py and exhaustive.py, which name some laws, must
+  drop or re-key such a law first; every law of the two harnesses keeps to the
+  allow-list, and each entry of the list is one a law needs; and a harness of the model
+  that stops before its last line, with status 0, fails the model's run;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -84,6 +97,7 @@ pre-flight. Python 3.11 or later; standard library and git.
 
 from __future__ import annotations
 
+import ast
 import base64
 import contextlib
 import hashlib
@@ -160,6 +174,40 @@ SCRATCHPAD = "/private" + "/tmp/" + "claude" + "-501/" + FOLDED_HOME + "/0123/sc
 
 PASSING = [{"name": n, "bucket": "pass", "state": "SUCCESS", "workflow": "CI"}
            for n in ("check", "model", "negative")]
+
+# Judges the runs of a passing --fast run made by hand, then the same with the structured
+# run's last line dropped; prints the two lists of failures.
+JUDGE_RUNS = r'''
+import json, sys
+sys.path.insert(0, sys.argv[1])
+import run
+
+
+def made(key, script, laws, head='', tail=''):
+    r = run.Run(key, script)
+    r.code, r.err, r.twice, r.laws = 0, '', set(), laws
+    r.out = head + ''.join(f'{n} {t} {h} {c}\n' for n, (t, h, c) in laws.items()) + tail
+    return r
+
+
+def runs(structured_tail):
+    met = {law: (2000, 5, 0) for law in run.LAWS}
+    hyperbolic = {law: (300, 5, 3 if law in run.EXPECTED_TO_FAIL else 0) for law in run.LAWS}
+    return [made('search-seed1', 'search.py', met,
+                 tail=f'axioms checked: {len(met)}  total counterexamples: 0\n'),
+            made('structured', 'structured.py', {run.LAWS[0]: (5000, 7, 0)},
+                 tail=structured_tail + 'never met: []\n'),
+            made('mutations', 'mutations.py', {}, tail='15/15 mutations caught\n'),
+            made('grid_check', 'grid_check.py', {}, tail='failures 0 Counter()\n'),
+            made('angle_check', 'angle_check.py', {},
+                 tail='triple incidence grid failures: 0 []\nfloat failures: {}\n'),
+            made('hyperbolic', 'hyperbolic.py', hyperbolic, head='self-test: passed\n',
+                 tail=f'axioms checked: {len(hyperbolic)}  counterexamples to the other axioms: 0\n')]
+
+
+print(json.dumps([run.judge(runs('structured total counterexamples: 0\n')),
+                  run.judge(runs(''))]))
+'''
 
 # A stand-in for gh: pull requests in a JSON file; checks as each test sets them; a merge
 # made in the bare origin with a merge commit, as GitHub makes it.
@@ -2425,6 +2473,247 @@ class ProtectedPaths(Edge):
                 self.assertFalse(refused, out)
                 self.assertIn("pinned values", out)
 
+    # The model's laws (issue #40): an axiom moves with its law, in one pull request.
+    LOCK, HASH = "Certificate/axioms.lock", "tests/model/lock.sha256"
+    LAWS, PAGE = "tests/model/laws.toml", "tests/model/MODEL.md"
+    SEARCH, HYPERBOLIC = "tests/model/search.py", "tests/model/hyperbolic.py"
+    RESULTS = "tests/model/results/summary.txt"
+    METRIC = "Elements/Foundations/Tacit/Metric.lean"
+    MODEL_RUN = "python3 -I tests/model/run.py --fast"
+    RUN_MARK = "\n# ======================= run =======================\n"
+    CENTRE_UNIQUE = ("@axiom('centre_unique', dict(A=P, B=P, al=C_))\ndef _(c):\n"
+                     "    if not (is_centre(c['A'], c['al']) and is_centre(c['B'], c['al'])):\n"
+                     "        return None\n    return c['A'] == c['B']\n")
+    LEN_SELF = {SEARCH: "@axiom('len_self', dict(A=P))\ndef _(c):\n"
+                        "    return d2(c['A'], c['A']) == 0\n\n\n",
+                HYPERBOLIC: "@axiom('len_self', dict(A=P))\ndef _(c):\n"
+                            "    return ch2(c['A'], c['A']) == 1\n\n\n"}
+    PLANTED_LAW = {SEARCH: "d2(c['A'], c['A']) == 0", HYPERBOLIC: "ch2(c['A'], c['A']) == 1"}
+
+    def planted_law(self, path: str, fn: str = "_", first: str = "", before: str = "") -> str:
+        """`path`, a harness, with the planted law's code added before its run section: a
+        function `fn` under `@axiom('planted_law', …)`, its body beginning with `first`, and
+        `before` at the top level ahead of it."""
+        law = (f"\n{before}@axiom('planted_law', dict(A=P))\ndef {fn}(c):\n{first}"
+               f"    return {self.PLANTED_LAW[path]}\n\n")
+        return self.replaced(path, self.RUN_MARK, law + self.RUN_MARK)
+
+    def planted_axiom(self) -> dict:
+        """An axiom added as the coordinator adds one, Lean aside: its declaration in the
+        foundations; facts.json, and the lock written from it by `check_fidelity.py
+        --write-lock`; the lock's new hash; its line in the model's laws.toml, and its law's
+        code in search.py and hyperbolic.py; a line of MODEL.md and of the results; and a
+        decisions line naming the lock and each protected file."""
+        name, statement = "Tacit.planted_law", ("∀ (A : Elements.Point), "
+                                                "Eq (Elements.len A A) (Elements.len A A)")
+        facts = json.loads(self.text("facts.json"))
+        facts["axiom_modules"][name] = "Elements.Foundations.Tacit.Metric"
+        facts["axiom_types"][name] = statement
+        changes = {"facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n"}
+        (WORK / "facts.json").write_text(changes["facts.json"])
+        r = subprocess.run([sys.executable, "scripts/check_fidelity.py", "--write-lock"],
+                           cwd=WORK, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        lock = self.text(self.LOCK)
+        self.assertIn(f'"{name}" = "{statement}"', lock)
+        digest = hashlib.sha256(lock.encode()).hexdigest()
+        changes.update({
+            self.METRIC: self.text(self.METRIC)
+            + "\n/-- A law planted for the test. -/\naxiom planted_law (A : Point) : ‖A A‖ = ‖A A‖\n",
+            self.LOCK: lock,
+            self.HASH: re.sub(r"(?m)^[0-9a-f]{64}(?=  Certificate/axioms\.lock$)", digest,
+                              self.text(self.HASH)),
+            self.LAWS: self.replaced(self.LAWS, '"Tacit.pasch4" = "pasch4"\n',
+                                     '"Tacit.pasch4" = "pasch4"\n'
+                                     '"Tacit.planted_law" = "planted_law"\n'),
+            self.SEARCH: self.planted_law(self.SEARCH),
+            self.HYPERBOLIC: self.planted_law(self.HYPERBOLIC),
+            self.PAGE: self.text(self.PAGE) + "\nThe planted law: a point is no distance "
+                                              "from itself, for the test.\n",
+            self.RESULTS: self.text(self.RESULTS) + "planted_law: a line for the test\n"})
+        changes.update(self.decision(
+            "`Tacit.planted_law` joins the axiom lock, with its law: " + ", ".join(
+                f"`{p}`" for p in (self.LOCK, self.HASH, self.LAWS, self.SEARCH,
+                                   self.HYPERBOLIC, self.PAGE, self.RESULTS)) + "."))
+        return changes
+
+    def test_axiom_lands_with_its_law(self):
+        # Issue #40's test: an axiom added moves in one pull request with its entry in the
+        # lock, the lock's hash, its law's name in laws.toml, its law's code in the two
+        # harnesses that check every law, and the model's account. origin/main's checks
+        # fail on it, which is noted; the commit's own pass holds; it lands as content.
+        sha = self.regenerated_commit("Add an axiom, with its law", self.planted_axiom())
+        r = self.safe_push("--dry-run")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        self.assertEqual(self.guard(out, "axiom lock"), "ok", out)
+        self.assertEqual(self.guard(out, "protected paths"), "ok", out)
+        self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
+        self.assertIn("Tacit.planted_law: an assumption not in Certificate/axioms.lock", out)
+        self.assertEqual(self.guard(out, "review records (the commit's checks)"), "ok", out)
+        self.assertEqual(self.guard(out, "pinned values"), "note", out)
+        note = out[out.index("pinned values"):]
+        for path in (self.LOCK, self.HASH, self.LAWS, self.SEARCH, self.HYPERBOLIC, self.PAGE):
+            self.assertIn(path, note)
+        self.assertIsNone(self.guard(out, "check change kept apart"), out)
+        # And the model takes it: its ties to the Lean hold on the commit, and the planted
+        # law runs, and holds, in the plane and in the hyperbolic plane.
+        self.assertEqual(git(WORK, "rev-parse", "HEAD").strip(), sha)
+        r = subprocess.run([sys.executable, "-I", "tests/model/run.py", "--ties"], cwd=WORK,
+                           capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        n = len(json.loads(git(WORK, "show", f"{BASE}:facts.json"))["axiom_modules"]) + 1
+        self.assertIn(f"laws.toml names {n} laws; facts.json declares {n} axioms", r.stdout)
+        for path, samples in ((self.SEARCH, 200), (self.HYPERBOLIC, 100)):
+            r = subprocess.run([sys.executable, "-I", path, str(samples), "1"], cwd=WORK,
+                               env=dict(os.environ, ONLY="planted_law"),
+                               capture_output=True, text=True)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertRegex(r.stdout, rf"(?m)^planted_law +{samples} +[1-9]\d* +0$")
+
+    def test_law_loosened_beside_an_axiom_kept_apart(self):
+        # The same pull request, with centre_unique's law in search.py made to pass whatever
+        # it meets: a law changed while its axiom stands is a check change, kept apart.
+        changes = self.planted_axiom()
+        changes[self.SEARCH] = changes[self.SEARCH].replace(
+            self.CENTRE_UNIQUE, self.CENTRE_UNIQUE.replace("c['A'] == c['B']", "True"))
+        self.regenerated_commit("Add an axiom, and loosen another's law", changes)
+        out = self.assertRefused(self.safe_push("--dry-run"), "check change kept apart",
+                                 self.METRIC, "beyond the laws that move with their axioms",
+                                 f"the model's laws in {self.SEARCH}")
+        self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
+        self.assertEqual(self.guard(out, "check change kept apart"), "FAIL", out)
+        self.assertIsNone(self.guard(out, "pinned values"), out)
+
+    def law_commit(self, change) -> str:
+        """A commit from origin/main of what `change` returns, given the planted axiom's
+        changes (a path given None is deleted), with a line of the foundations, which the
+        checks judge, if it has none."""
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        planted = self.planted_axiom()
+        git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+        write = change(planted)
+        write.setdefault(self.METRIC, self.text(self.METRIC) + "\n-- A line for the test.\n")
+        return self.commit("An axiom and the model's laws, for the test",
+                           {p: v for p, v in write.items() if v is not None},
+                           remove=[p for p, v in write.items() if v is None])
+
+    def test_only_laws_moving_with_their_axioms_are_pinned_values(self):
+        # A law of the model, its line of laws.toml and its code in search.py and
+        # hyperbolic.py, moves only with its axiom's entry in the lock, and its code keeps to
+        # itself; the rest of each harness stays as it was. Anything else is a check change.
+        def edit(path, old, new):
+            return lambda p: dict(p, **{path: p[path].replace(old, new, 1)})
+        loose = self.CENTRE_UNIQUE.replace("c['A'] == c['B']", "True")
+        mine = "    pts = [c['A']]\n    pts.append(c['A'])\n"
+        len_self = self.LEN_SELF[self.SEARCH]
+        len_symm = ("@axiom('len_symm', dict(A=P, B=P))\ndef _(c):\n"
+                    "    return d2(c['A'], c['B']) == d2(c['B'], c['A'])\n\n\n")
+        weakened = {
+            "another law loosened in search.py": edit(self.SEARCH, self.CENTRE_UNIQUE, loose),
+            "another law loosened in hyperbolic.py": edit(self.HYPERBOLIC, self.CENTRE_UNIQUE,
+                                                          loose),
+            "the search's box shrunk, outside any law": edit(self.SEARCH, "BOX = 6\n",
+                                                             "BOX = 1\n"),
+            "a tolerance loosened in model.py": lambda p: dict(p, **{
+                "tests/model/model.py": self.replaced("tests/model/model.py", "EPS = 1e-9\n",
+                                                      "EPS = 1e-3\n")}),
+            "an axiom that stands made to fail in the hyperbolic plane": edit(
+                self.LAWS, 'fails = ["Postulate5"]', 'fails = ["Postulate5", "Tacit.centre_unique"]'),
+            "two laws swapped": edit(self.LAWS, '"Tacit.len_self" = "len_self"\n'
+                                     '"Tacit.len_symm" = "len_symm"\n',
+                                     '"Tacit.len_self" = "len_symm"\n'
+                                     '"Tacit.len_symm" = "len_self"\n'),
+            "two laws reordered in search.py": edit(self.SEARCH, len_self + len_symm,
+                                                      len_symm + len_self),
+            "a statement hidden in a comment by a coding cookie": lambda p: dict(p, **{
+                self.SEARCH: "# -*- coding: utf-7 -*-\n" + p[self.SEARCH].replace(
+                    self.RUN_MARK, "#+AAo-BOX = 1\n" + self.RUN_MARK, 1)}),
+            "the law added without its axiom": lambda p: {
+                k: v for k, v in p.items() if k not in (self.LOCK, self.HASH, "facts.json")},
+            "the new law's code named for a helper": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, fn="on_line")}),
+            "the new law with a helper beside it": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, before="def helper():\n"
+                                              "    return 0\n\n\n")}),
+            "the new law reaching outside itself": lambda p: dict(p, **{
+                self.HYPERBOLIC: self.planted_law(self.HYPERBOLIC, first="    SEEDS.clear()\n")}),
+            "the new law declaring a global": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first="    global BOX\n    BOX = 1\n")}),
+            "the new law printing a result": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH,
+                                              first="    print('len_self 1 1 0')\n")}),
+            "the new law printing through help": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(
+                    self.SEARCH, first="    help(type('len_self 1 1 0', (), {}))\n")}),
+            "the new law ending the run with exit": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first="    exit(0)\n")}),
+            "the new law raising SystemExit": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first="    raise SystemExit(0)\n")}),
+            "the new law reseeding the search": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first="    c['_rng'].seed(0)\n")}),
+            # The reviewer of #40 found that reflection escaped the deny-list; the
+            # allow-list refuses it.
+            "the new law reaching a frame": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(
+                    self.SEARCH, first="    g = (x for x in ())\n"
+                                       "    g.gi_frame.f_back.f_globals['BOX']\n")}),
+            "the new law looking an attribute up by string": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(
+                    self.SEARCH, first="    getattr(c['_rng'], 'seed')(0)\n")}),
+            "the new law closing over a global": lambda p: dict(p, **{
+                self.HYPERBOLIC: self.planted_law(
+                    self.HYPERBOLIC, first="    def h():\n        DEN.clear()\n    h()\n")}),
+            # The verifier of #40 found these two: a second name for a shared container.
+            "the new law changing a shared container through a second name": lambda p: dict(
+                p, **{self.HYPERBOLIC: self.planted_law(
+                    self.HYPERBOLIC, first="    d = DEN\n    d[:] = [2]\n")}),
+            "the new law changing a shared container through a loop": lambda p: dict(p, **{
+                self.HYPERBOLIC: self.planted_law(
+                    self.HYPERBOLIC, first="    for d in (DEN,):\n        d.clear()\n")}),
+            # And a file the laws are read from deleted, with a law's code changed: refused,
+            # not a traceback (tomllib.loads(None) raises AttributeError before 3.14).
+            "laws.toml deleted": lambda p: dict(p, **{self.LAWS: None}),
+            "the lock deleted": lambda p: dict(p, **{self.LOCK: None}),
+        }
+        for name, change in weakened.items():
+            with self.subTest(name):
+                refused, out = self.kept_apart(self.law_commit(change), self.MODEL_RUN)
+                self.assertTrue(refused, out)
+                self.assertNotIn("pinned values", out)
+                if name != "a tolerance loosened in model.py":
+                    self.assertIn("beyond the laws that move with their axioms", out)
+
+        def restated(_):
+            old = '"Tacit.len_self" = "∀ (A : Elements.Point), Eq (Elements.len A A) 0"'
+            new = ('"Tacit.len_self" = "∀ (A B : Elements.Point), Eq A B → '
+                   'Eq (Elements.len A B) 0"')
+            law = ("@axiom('len_self', dict(A=P, B=P))\ndef _(c):\n    if c['A'] != c['B']:\n"
+                   "        return None\n    return d2(c['A'], c['B']) == 0\n\n\n")
+            return {self.LOCK: self.replaced(self.LOCK, old, new),
+                    self.SEARCH: self.replaced(self.SEARCH, self.LEN_SELF[self.SEARCH], law)}
+
+        def removed(_):
+            lock = [line for line in self.text(self.LOCK).splitlines(keepends=True)
+                    if not line.startswith('"Tacit.len_self" = ')]
+            return {self.LOCK: "".join(lock),
+                    self.LAWS: self.replaced(self.LAWS, '"Tacit.len_self" = "len_self"\n', ""),
+                    **{p: self.replaced(p, self.LEN_SELF[p], "") for p in self.LEN_SELF}}
+        kept = {
+            "an axiom added with its law": lambda p: p,
+            "and a comment beside it": edit(self.SEARCH, self.RUN_MARK,
+                                            "\n# A comment for the test.\n" + self.RUN_MARK),
+            "the new law making a container of its own": lambda p: dict(p, **{
+                self.SEARCH: self.planted_law(self.SEARCH, first=mine)}),
+            "an axiom restated with its law": restated,
+            "an axiom removed with its law": removed,
+        }
+        for name, change in kept.items():
+            with self.subTest(name):
+                refused, out = self.kept_apart(self.law_commit(change), self.MODEL_RUN)
+                self.assertFalse(refused, out)
+                self.assertIn("pinned values", out)
+
     STYLE = ("python3 scripts/check_style.py",
              [sys.executable, "scripts/check_style.py", "--no-lean"])
 
@@ -2570,9 +2859,10 @@ class ProtectedPaths(Edge):
             self.assertIn(f"`{path}`", home, path)
         # And step 4 there names the check inputs, as CHECK_INPUTS holds them.
         step4 = workflow[workflow.index("4. *The full checks*"):workflow.index("5. *The push")]
-        for path in safe_push.CHECK_INPUTS + safe_push.PINNED:
+        for path in safe_push.CHECK_INPUTS + safe_push.PINNED + safe_push.MODEL_LAW_CODE:
             self.assertIn(f"`{path}`", step4, path)
-        self.assertTrue(all(safe_push.under(p, safe_push.CHECK_INPUTS) for p in safe_push.PINNED))
+        self.assertTrue(all(safe_push.under(p, safe_push.CHECK_INPUTS)
+                            for p in safe_push.PINNED + safe_push.MODEL_LAW_CODE))
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
         self.assertIn('"Protected paths"', template)
         self.assertNotIn("lake-manifest.json", template)
@@ -3354,6 +3644,257 @@ class Units(unittest.TestCase):
         self.assertEqual(judge(PASSING[:2])[0], "missing")
         self.assertEqual(judge(PASSING + [{"name": "check", "bucket": "fail"}])[0], "failure")
         self.assertEqual(judge(PASSING + [{"name": "other", "bucket": "pending"}])[0], "pending")
+
+    @staticmethod
+    def law(body: str, path: str = "tests/model/hyperbolic.py",
+            head: str = "@axiom('x', dict(A=P))\ndef _(c):\n") -> bool:
+        """Does a law of `path`, under `head`, with `body` and then `return True`, keep to
+        the allow-list (self_contained)?"""
+        lines = "".join(f"    {line}\n" for line in body.split("\n"))
+        fn = ast.parse(f"{head}{lines}    return True\n")
+        return safe_push.self_contained(fn.body[0], path)
+
+    def test_a_harness_is_read_as_python_reads_it(self):
+        base = b"X = 1\n"
+        cookie = b"# -*- coding: utf-7 -*-\nX = 1\n#+AAo-X = 2\n"
+        self.assertNotEqual(safe_push.law_code(base)[0], safe_push.law_code(cookie)[0])
+        self.assertEqual(safe_push.law_code(cookie.decode("utf-8"))[0],
+                         safe_push.law_code(base)[0])
+
+    def test_every_law_keeps_to_the_allow_list(self):
+        # Issue #40, and its reviewer's finding, with thanks: a law's code is read against
+        # an allow-list collected from the laws themselves. Every law of the two harnesses
+        # keeps to it; and each entry is one some law needs, so that the list is no wider
+        # than the laws: without the entry, a law is refused. (An axiom removed with the
+        # one law that used an entry leaves the entry harmless, and this test then asks
+        # for it to go, in a check change of its own.)
+        laws = {}
+        for path in safe_push.MODEL_LAW_CODE:
+            _, laws[path] = safe_push.law_code((SOURCE / path).read_text())
+            for name, fn in laws[path].items():
+                self.assertTrue(safe_push.self_contained(fn, path), f"{path}: {name}")
+
+        def refused_somewhere(paths) -> bool:
+            return any(not safe_push.self_contained(fn, path)
+                       for path in paths for fn in laws[path].values())
+        for path, roles in safe_push.LAW_GLOBALS.items():
+            for role, names in roles.items():
+                for name in names:
+                    narrower = {p: dict(r) for p, r in safe_push.LAW_GLOBALS.items()}
+                    narrower[path][role] = names - {name}
+                    with self.subTest(path=path, role=role, entry=name), \
+                            mock.patch.object(safe_push, "LAW_GLOBALS", narrower):
+                        self.assertTrue(refused_somewhere([path]))
+        for const in ("LAW_BUILTINS", "LAW_MODULES", "LAW_MATH", "LAW_ATTRIBUTES",
+                      "LAW_MUTATORS", "LAW_KINDS"):
+            names = getattr(safe_push, const)
+            for name in names:
+                with self.subTest(list=const, entry=name), \
+                        mock.patch.object(safe_push, const, names - {name}):
+                    self.assertTrue(refused_somewhere(safe_push.MODEL_LAW_CODE))
+
+    def test_a_law_reaches_nothing_off_the_allow_list(self):
+        # Issue #40, and its reviewer's finding, with thanks: the check was a deny-list,
+        # which reflection escaped; under the allow-list, each route the reviewer named is
+        # refused, and so is every name, attribute and piece of syntax the laws do not use.
+        refused = {
+            # The reviewer's routes: a frame chain, the random module's os, a namespace by
+            # vars or __dict__, a lookup by string, a closure over a global, a default
+            # argument bound to a shared container.
+            "a generator's frame": "g = (x for x in ())\n"
+                                   "g.gi_frame.f_back.f_globals['DEN'].clear()",
+            "a frame, from sys": "sys._getframe(1).f_globals['SEEDS'].clear()",
+            "a traceback's frame": "try:\n    1 / 0\nexcept ZeroDivisionError as e:\n"
+                                   "    e.__traceback__.tb_frame.f_globals['DEN'].clear()",
+            "random's os": "random._os.system('true')",
+            # Two the deny-list let through: the decimal context every law of the
+            # hyperbolic plane computes in, coarsened; and a result forged by print.
+            "random's os, coarsening the decimals": "m = random._os.sys.modules['decimal']\n"
+                                                    "m.setcontext(m.Context(prec=2))",
+            "random's os, printing": "random._os.sys.modules['builtins'].print('len_self 1 1 0')",
+            "the random numbers' module": "c['_rng'].__class__",
+            "vars": "vars()['DEN'].clear()",
+            "vars of a module": "vars(math)['pi']",
+            "a __dict__": "math.__dict__['pi']",
+            "globals": "globals()['DEN'].clear()",
+            "the builtins by string": "__builtins__['exec']('DEN.clear()')",
+            "getattr with a string": "getattr(c['_rng'], 'seed')(0)",
+            "__getattribute__ with a string": "c['_rng'].__getattribute__('seed')(0)",
+            "a format string's attribute": "'{0.__class__}'.format(c)",
+            "a closure over a global": "def h():\n    return DEN\nh().clear()",
+            "a closure changing a global": "def h():\n    DEN.clear()\nh()",
+            "a default argument bound to a shared container": "def h(d=DEN):\n    d.append(1)\nh()",
+            "a default argument bound to its own list": "ws = []\ndef h(d=ws):\n"
+                                                        "    d.append(1)\nh()",
+            # A global under a name a comprehension or an inner function binds: Python
+            # resolves it outside them to the global, and so does the check.
+            "print, bound only in a comprehension": "[print for print in ()]\n"
+                                                    "print('len_self 1 1 0')",
+            "exit, bound only in a function": "def h():\n    exit = 0\nexit(0)",
+            "a table, bound only in a function": "def h():\n    SEEDS = {}\nSEEDS[1] = 2",
+            # The syntax the laws do not use.
+            "an import": "import os",
+            "global": "global BOX\nBOX = 1",
+            "nonlocal": "def h():\n    nonlocal c\n    c = 1",
+            "a walrus": "(y := 1)",
+            "a lambda": "f = lambda: 0",
+            "yield": "yield 1",
+            "try": "try:\n    pass\nexcept Exception:\n    pass",
+            "with": "with c['_rng'] as d:\n    pass",
+            "raise": "raise SystemExit(0)",
+            "assert": "assert c",
+            "del": "ws = [1]\ndel ws[0]",
+            "a class": "class K:\n    pass",
+            "an f-string": "s = f'{c}'",
+            "a starred name": "a, *b = [1, 2]",
+            "an annotated name": "x: list = []",
+            "a generator returned": "return (x for x in ())",
+            "a generator kept": "g = (x for x in ())",
+            "a decorated function": "@feq\ndef h():\n    pass",
+            "a function with a starred parameter": "def h(*x):\n    pass",
+            "keywords unpacked": "feq(**{'a': 1, 'b': 1})",
+            "a dict unpacked": "d = {**c}",
+            "a dunder name": "__x = 1",
+            # The names and attributes the laws do not use, or not so.
+            "a builtin not on the list": "sorted([1])",
+            "type": "type(c)",
+            "dict, called": "d = dict(a=1)",
+            "a helper as a value": "f = on_line",
+            "a builtin as a value": "m = map(float, [1])",
+            "a value called": "SEEDS()",
+            "a table, itself": "s = SEEDS",
+            "a table, stored into": "SEEDS[1] = 2",
+            "a table's method": "SEEDS.setdefault(1, 2)",
+            "an attribute of math not on the list": "math.floor(1)",
+            "math's attribute on another": "x = 4\nx.sqrt()",
+            "an attribute not on the list": "s = set()\ns.add(1)",
+            "the random numbers reseeded": "c['_rng'].seed(0)",
+            "the random numbers' state": "c['_rng'].setstate(c['_rng'].getstate())",
+            "an attribute stored": "ws = []\nws.x = 1",
+        }
+        for name, body in refused.items():
+            with self.subTest(refused=name):
+                self.assertFalse(self.law(body), body)
+        # A name of one harness is refused in the other.
+        self.assertFalse(self.law("make_circle(c['A'], c['B'])", "tests/model/search.py"))
+        self.assertFalse(self.law("x = SEEDS[c['al']]", "tests/model/search.py"))
+        self.assertFalse(self.law("x = RA"))
+        # The law's own signature and decorator: positional parameters only, and the
+        # decorator's kinds and generator as the laws write them.
+        for head in ("def _(c, d=DEN):", "def _(c, *a):", "def _(c: print('x')):",
+                     "def _(c) -> print('x'):", "def _(c, /):"):
+            with self.subTest(signature=head):
+                self.assertFalse(self.law("pass", head=f"@axiom('x', dict(A=P))\n{head}\n"))
+        for decorator, path in (("@axiom('x', dict(A=print('hi')))", None),
+                                ("@axiom('x', {'A': P})", None),
+                                ("@axiom('x', dict(A=P), print)", None),
+                                ("@axiom('x', dict(A=P), gs_cm(print))", None),
+                                ("@axiom('x', dict(A=P), gen=gs_p4)", None),
+                                ("@axiom('x', dict(A=P), gs_p4)", "tests/model/search.py")):
+            with self.subTest(decorator=decorator):
+                self.assertFalse(self.law("pass", path or "tests/model/hyperbolic.py",
+                                          f"{decorator}\ndef _(c):\n"))
+        accepted = {
+            "a closure over its own names": "A = c['A']\ndef iso(X):\n    x = X[0] - A[0]\n"
+                                            "    return x\ny = iso(c['A'])",
+            "its own list, changed in a function": "ws = []\ndef h():\n    ws.append(1)\nh()",
+            "a table read": "x = SEEDS[c['al']]",
+            "math's pi": "x = math.pi",
+            "the random numbers drawn": "x = c['_rng'].randint(0, 3) + c['_rng'].random()",
+            "a generator unpacked": "a, b = (c[k] for k in 'AB')",
+            "a generator as an argument": "x = all(on_line(w, c['L']) for w in [c['A']])",
+            "a loop with break and continue": "j = 0\nwhile j < 3:\n    j += 1\n"
+                                              "    if j == 2:\n        break\n    continue",
+            "comprehensions of its own": "x = [w for w in range(3)]\ny = {w: w for w in x}",
+        }
+        for name, body in accepted.items():
+            with self.subTest(accepted=name):
+                self.assertTrue(self.law(body), body)
+        for decorator in ("@axiom('x', dict())", "@axiom('x', dict(A=P, L=L_, al=C_), gs_p4)",
+                          "@axiom('x', dict(A=P), gs_cm('side'))",
+                          "@axiom('x', dict(A=P), gs_ti())"):
+            with self.subTest(decorator=decorator):
+                self.assertTrue(self.law("pass", head=f"{decorator}\ndef _(c):\n"))
+
+    def test_a_law_changes_only_containers_it_made(self):
+        # Issue #40, and its verifier's finding, with thanks: a law's code may change a
+        # container only through a name it bound to a container made in its own body. A
+        # second name for a shared one, an element of its own, its argument, or a shuffle
+        # of what it did not make, is refused. Under the allow-list most of these name a
+        # global or an attribute it does not hold, and are refused for that as well.
+        refused = {
+            "a second name": "d = DEN\nd[:] = [2]",
+            "a loop's name": "for d in (DEN,):\n    d.clear()",
+            "a comprehension's name": "[d.clear() for d in (DEN,)]",
+            "a name bound by with": "with c['_rng'] as d:\n    d.clear()",
+            "a second name, added to": "d = DEN\nd += [2]",
+            "a second name, by a method": "d = DEN\nd.append(1)",
+            "a second name, merged into": "d = SEEDS\nd |= {1: 2}",
+            "a second name, deleted from": "d = SEEDS\ndel d[1]",
+            "one of two names unpacked": "a, b = [], DEN\nb.clear()",
+            "a starred name": "a, *b = [], DEN\nb.clear()",
+            "a name bound twice": "ws = []\nfor ws in (DEN,):\n    pass\nws.clear()",
+            "a name bound to a choice": "d = DEN or []\nd.clear()",
+            "a copy made by a method": "ws = DEN.copy()\nws.clear()",
+            "a constructor rebound": "list = lambda: DEN\nws = list()\nws.clear()",
+            "an element of its own": "x = [DEN]\nx[0].clear()",
+            "an element of its own, by a slice": "x = [DEN]\nx[0][:] = []",
+            "an element of its own, added to": "x = [DEN]\nx[0] += [1]",
+            "an element of a tuple": "d = (DEN,)\nd[0].clear()",
+            "its argument": "c['A'] = 1",
+            "a second name for its argument": "d = c\nd['x'] = 1",
+            "its argument, merged into": "c |= {}",
+            "an element of its argument, appended to": "c['A'].append(1)",
+            "a second name for its argument, appended to": "d = c\nd.append(1)",
+            "a table's entry, added to": "d = SEEDS[c['al']]\nd += [1]",
+            "an element of its own, appended to": "x = [[]]\nx[0].append(1)",
+            "an element of its own list, added to": "x = [[]]\nx[0] += [1]",
+            "a helper's argument": "def h(x):\n    x.clear()\nh(DEN)",
+            "a method kept for later": "m = DEN.clear\nm()",
+            "a shuffle": "c['_rng'].shuffle(DEN)",
+            "a dunder method": "class K:\n    def __radd__(self, o):\n        return 0",
+            "the shared name itself": "DEN[:] = [2]",
+            "the shared name, by a method": "SEEDS.clear()",
+            "another module, reached": "sys.modules['decimal'].setcontext(None)",
+            "a shell": "os.system('true')",
+        }
+        for name, body in refused.items():
+            with self.subTest(refused=name):
+                self.assertFalse(self.law(body), body)
+        accepted = {
+            "a list of its own": "ws = []\nws.append(1)",
+            "unpacked, with a number halved": "ws, t = [], Fr(1, 2)\nt /= 2\nws.append(t)",
+            "a counter": "j = 1\nj += 1",
+            "a set made by a call": "s = set()\ns = s | {1}",
+            "a list stored into": "ws = [0]\nws[0] = 1",
+            "one list under two names": "a = b = []\na.append(1)\nb.append(2)",
+            "a list added to": "ws = []\nws += [1]",
+            "a comprehension appended to": "xs = [y for y in range(3)]\nxs.append(3)",
+        }
+        for name, body in accepted.items():
+            with self.subTest(accepted=name):
+                self.assertTrue(self.law(body), body)
+
+    def test_the_laws_files_absent_read_as_none(self):
+        # The verifier of #40 found it: a file absent (show gives None) reads as None, not a
+        # traceback; tomllib.loads(None) raises AttributeError before Python 3.14.
+        self.assertIsNone(safe_push.locked_axioms(None))
+        self.assertIsNone(safe_push.model_laws(None))
+        self.assertIsNone(safe_push.law_code(None))
+        self.assertIsNone(safe_push.locked_axioms("not = [toml"))
+        self.assertIsNone(safe_push.model_laws('[laws]\n"Tacit.len_self" = "len_self"\n'))
+        laws = (SOURCE / safe_push.MODEL_LAWS).read_text()
+        self.assertEqual(safe_push.model_laws(laws)["Postulate5"], ("Postulate5", True))
+
+    def test_a_harness_cut_short_fails_the_run(self):
+        # Issue #40, and the no-mistakes review's finding, with thanks: a harness that ends
+        # early with status 0, by SystemExit(0) among others, fails run.py's judge.
+        r = subprocess.run([sys.executable, "-I", "-c", JUDGE_RUNS, str(SOURCE / "tests/model")],
+                           cwd=SOURCE, capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        whole, cut = json.loads(r.stdout)
+        self.assertEqual(whole, [])
+        self.assertEqual(cut, ["structured stopped before its last line"])
 
 
 if __name__ == "__main__":

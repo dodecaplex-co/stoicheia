@@ -1,3 +1,8 @@
+import Elements.BookI.Prop40
+import Elements.BookI.Prop45
+import Elements.BookII.Prop01
+import Elements.BookII.Prop14
+
 /-!
 # The companions
 
@@ -12,4 +17,20 @@ double-backtick name resolves.
 -/
 
 /-- The companions, each with its reference in the certificate. -/
-def Elements.companions : List (Lean.Name × String) := []
+def Elements.companions : List (Lean.Name × String) := [
+  (``Elements.BookI.Prop40.general, "I.40 general"),
+  (``Elements.BookI.Prop40.join, "I.40 join"),
+  (``Elements.BookI.Prop40.special, "I.40 special"),
+  (``Elements.BookI.Prop45.append, "I.45 append"),
+  (``Elements.BookI.Prop45.sum, "I.45 sum"),
+  (``Elements.BookI.Prop45.apart, "I.45 apart"),
+  (``Elements.BookI.Prop45.figure, "I.45 figure"),
+  (``Elements.BookI.Prop45.fan, "I.45 fan"),
+  (``Elements.BookII.Prop1.two, "II.1 two"),
+  (``Elements.BookII.Prop1.general, "II.1 general"),
+  (``Elements.BookII.Prop14.rectangle, "II.14 rectangle"),
+  (``Elements.BookII.Prop14.sum, "II.14 sum"),
+  (``Elements.BookII.Prop14.apart, "II.14 apart"),
+  (``Elements.BookII.Prop14.figure, "II.14 figure"),
+  (``Elements.BookII.Prop14.square, "II.14 square"),
+  (``Elements.BookII.Prop14.fan, "II.14 fan")]

@@ -180,7 +180,7 @@ graph TD
 
 ### From the Lean
 
-141 arrows: 106 also among Heath's references (solid) and 35 only in the Lean (dashed).
+142 arrows: 106 also among Heath's references (solid) and 36 only in the Lean (dashed).
 
 ```mermaid
 graph TD
@@ -345,6 +345,7 @@ graph TD
   I34 -.-> I44
   I42 --> I44
   I43 --> I44
+  I13 -.-> I45
   I14 --> I45
   I29 --> I45
   I30 --> I45
@@ -529,7 +530,7 @@ graph TD
 
 ### From the Lean
 
-138 arrows: 51 also among Heath's references and 87 only in the Lean. The graph draws the 4 arrows between propositions of Book II, 4 solid and 0 dashed; the table under it lists the other 134, to propositions of earlier books.
+139 arrows: 51 also among Heath's references and 88 only in the Lean. The graph draws the 4 arrows between propositions of Book II, 4 solid and 0 dashed; the table under it lists the other 135, to propositions of earlier books.
 
 ```mermaid
 graph TD
@@ -573,7 +574,7 @@ graph TD
 | [II.11](book/II/11.md) | I.4, I.10, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47 | I.46, I.47 |
 | [II.12](book/II/12.md) | I.4, I.17, I.28, I.34, I.46, I.47 | I.47 |
 | [II.13](book/II/13.md) | I.4, I.13, I.17, I.28, I.34, I.46, I.47 | I.47 |
-| [II.14](book/II/14.md) | I.4, I.10, I.11, I.28, I.29, I.34, I.45, I.46, I.47 | I.45, I.47 |
+| [II.14](book/II/14.md) | I.4, I.10, I.11, I.13, I.28, I.29, I.34, I.45, I.46, I.47 | I.45, I.47 |
 
 </details>
 
