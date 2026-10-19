@@ -1568,8 +1568,8 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
 
 #### Addition, 19 October 2026: III.25's segment kinds
 
-Proposed for the coordinator's approval; reviewed by both first mates. Brief 0006
-freezes III.25; this is the addition to its frozen statements requested in plan lane 9.
+Approved by the owner on 19 October 2026; reviewed unchanged by both first mates.
+Brief 0006 freezes III.25; this is the addition to its frozen statements requested in plan lane 9.
 The construction core and its existing companions keep their statements. The new
 companion lives in `Elements/BookIII/Prop25.lean`, immediately after `Prop25.complete`,
 in `Elements.BookIII`. The reviewed declaration is reproduced unchanged below.
