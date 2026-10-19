@@ -6,8 +6,29 @@ fingerprint = "sha256:b4d0ed7948bb00b8"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "For, if not, AB, CD when produced will meet"
+kind = "helper"
+helper = "Tacit.same_side_or"
+note = "Euclid places a supposed meeting on one side of EF or the other. The Lean rules out a meeting on EF using `Tacit.line_unique` (System E, Generalities 1), then uses `Tacit.same_side_or` (Same side 5); both are rules we assume, not proofs."
+
+[[passage]]
+at = "Then, in the triangle GEF"
+kind = "helper"
+helper = "OnRay.between"
+note = "Euclid next reads AEF as exterior to GEF and EFG as the given angle EFD. The Lean uses `OppositeSidesOf.sameSideOf_of_between` to put B with D, `OnRay.of_sameSideOf` to put G on the rays EB and FD, and `OnRay.between` to put E between A and G; `angle_onRay_right` identifies EFG with EFD."
+
+[[passage]]
+at = "Similarly it can be proved that neither will they meet towards A, C"
+kind = "grouped"
+note = "Euclid leaves the second direction to the same reasoning. The Lean proves the argument once over any letters and applies it again with D, C, B, A in place of A, B, C, D and F, E in place of E, F."
+
+[figure]
+note = "Heath bends BG and DG to reach G; our drawing keeps them straight, so the alternate angles supposed equal appear unequal."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:4cf303fe995ab67d"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
