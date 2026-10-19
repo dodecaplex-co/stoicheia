@@ -8,8 +8,8 @@ that a point lies between two others, that two points are on the same side of a
 straight line, that a straight line through the inside of a circle must cut it.
 He never states these facts or proves them. These are the diagrammatic inferences
 of System E, §3.4 (Avigad, Dean and Mumma, 2009). Each retained assumption is an
-axiom: most rules say one thing. Between 1 says four, and was four axioms; one of
-them, `not_between_of_between`, remains one, and the other three are proved.
+axiom: most rules say one thing. Between 1 says four, and was four axioms; two of
+them, `between_symm` and `not_between_of_between`, remain, and the other two are proved.
 Generalities 2, Circle 2, Triple incidence 3 and Intersection 2 are proved in
 `Elements.Figure.Circles`; Circle 4 is proved after I.7 in `Elements.BookI.Prop07`.
 
