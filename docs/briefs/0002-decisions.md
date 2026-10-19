@@ -1360,7 +1360,9 @@ findings:
   [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an axiom reaches,
   has changed, so its account stands, and `tests/model/run.py --fast` passes. The formal
   model's copy of the hash, `model/lock.sha256`, is renewed with it, as its own comment
-  says; no law of the model changes.
+  says, and the model's generated laws, `model/Model/Laws.lean`, which record that hash,
+  are written again by `lake lean Check/Write.lean` in `model/`, the line of the hash alone
+  changing; no law of the model changes, and the model builds.
   III.24 is restated as the brief froze it, to conclude that the segments are congruent
   (the owner's decision 2 in that brief): `placement` applies the one to the other, and
   III.23's companion settles every point. Its statement before, the circles equal and the
