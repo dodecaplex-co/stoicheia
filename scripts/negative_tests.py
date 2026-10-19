@@ -47,10 +47,11 @@ records current; CI runs it on every push.
     section 8 `git status --porcelain` command names the changed page. Editing just
     the page would be repaired back to HEAD and leave that status clean.
 13. An axiom dropped from an audit lemma's expected list: `lake build Audit` fails
-    with the file's name and a `#guard_msgs` mismatch; the restored audit builds.
+    with the file's name and a `#guard_msgs` mismatch; the restored audit must build.
 14. A corrupt header in I.1's compiled `.olean`: leanchecker, invoked as in
     `check_kernel.py`, fails naming the file and its invalid header. The original
-    bytes are restored, the module rebuilt, and the whole environment replayed.
+    bytes are restored, a rebuild is required, and on success the whole environment
+    is replayed.
 
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
@@ -58,10 +59,17 @@ plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s
 `--self-test` withholds Postulate 5 from nanoda alone. README.md's table, "What the
 checks show", records these limits.
 
-Every new plant is restored in `finally`, including all renderer outputs; tests 9,
-13 and 14 rebuild the restored Lean outputs. Tests 10 to 14 report their elapsed time,
-restoration included, and the final Git status must match the entry status. Exits
-non-zero if a fault goes unnoticed or a restoration check fails.
+Every new plant restores its inputs in `finally`; the freshness plant also restores
+all renderer outputs.
+Tests 9, 13 and 14 attempt a restoration build; if it fails or is interrupted, every
+file in `.lake/build` returns to its saved contents and presence or absence before
+the plant, including dependent modules, hashes and traces. Test 9 always restores or
+removes `Planted.*` outputs in a nested `finally`. Tests 10 to 14 report elapsed time,
+restoration included. An outer `finally` compares Git status with the entry status,
+including on interruption, without replacing an exception already in flight.
+Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
+goes unnoticed or a restoration check fails. Restoration needs writable files and
+an opportunity for `finally` to finish; a forced process kill cannot provide it.
 Standard library only; Python 3.11 or later, for the review records.
 """
 
@@ -124,6 +132,44 @@ def expect_success(name: str, result: subprocess.CompletedProcess) -> bool:
         print((result.stdout + result.stderr)[-3000:])
         return False
     return True
+
+
+class BuildOutputs:
+    """Save build files without a suffix list, including outputs of dependents.
+
+    A pattern can select just a temporary module for cleanup after a successful
+    build too. Rescanning on restore removes files absent when the snapshot was made.
+    """
+
+    def __init__(self, pattern: str = "**/*"):
+        self.root = ROOT / ".lake/build"
+        self.pattern = pattern
+        self.saved = {p: p.read_bytes() for p in self.files()}
+
+    def files(self) -> set[Path]:
+        return {p for p in self.root.glob(self.pattern) if p.is_file()}
+
+    def restore(self) -> None:
+        for path in self.files() - self.saved.keys():
+            path.unlink()
+        for path, data in self.saved.items():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+
+
+def rebuild_restored(name: str, outputs: BuildOutputs, *targets: str,
+                     force: Path | None = None) -> bool:
+    """Keep the restoration build, with saved files as fallback on failure or interrupt."""
+    rebuilt = False
+    try:
+        if force is not None:
+            # Lake removes companion outputs too when rebuilding this module.
+            force.unlink()
+        rebuilt = expect_success(name, run("lake", "build", *targets))
+        return rebuilt
+    finally:
+        if not rebuilt:
+            outputs.restore()
 
 
 def style_error() -> None:
@@ -227,6 +273,7 @@ def changed_audit_pin() -> None:
     saved = path.read_bytes()
     pin = b"'Audit.III_2' depends on axioms: [Elements.Tacit.inside_of_between]"
     assert saved.count(pin) == 1, "Audit.III_2's pin has changed; update this test"
+    outputs = BuildOutputs()
     try:
         path.write_bytes(saved.replace(pin, b"'Audit.III_2' depends on axioms: []"))
         expect_failure("an axiom dropped from Audit.III_2's pin", run("lake", "build", "Audit"),
@@ -234,7 +281,7 @@ def changed_audit_pin() -> None:
                        "Audit.III_2", "Elements.Tacit.inside_of_between")
     finally:
         path.write_bytes(saved)
-        expect_success("the restored audit build", run("lake", "build", "Audit"))
+        rebuild_restored("the restored audit build", outputs, "Audit")
 
 
 def corrupt_olean() -> None:
@@ -244,22 +291,14 @@ def corrupt_olean() -> None:
     path = ROOT / ".lake/build/lib/lean/Elements/BookI/Prop01.olean"
     saved = path.read_bytes()
     assert saved.startswith(b"olean"), "I.1's compiled header has changed; update this test"
+    outputs = BuildOutputs()
     try:
         path.write_bytes(b"broken" + saved[6:])
         expect_failure("a corrupt compiled header read by leanchecker", run(*command),
                        "failed to read file", "Elements/BookI/Prop01.olean", "invalid header")
     finally:
         path.write_bytes(saved)
-        # Removing this restored output forces Lake to rebuild it from its source.
-        # If rebuilding fails, retain the original, known-good compiled bytes.
-        rebuilt = False
-        try:
-            path.unlink()
-            rebuilt = expect_success("the restored Elements build", run("lake", "build"))
-        finally:
-            if not rebuilt:
-                path.write_bytes(saved)
-        if rebuilt:
+        if rebuild_restored("the restored Elements build", outputs, force=path):
             expect_success("leanchecker's replay after restoration", run(*command))
 
 
@@ -618,15 +657,8 @@ def remark_ends_run() -> None:
 
 def planted_assumptions() -> None:
     facts = (ROOT / "facts.json").read_text()
-    output_dirs = [ROOT / ".lake/build" / kind / "Elements/Foundations/Tacit"
-                   for kind in ("lib/lean", "ir")]
-    outputs = {p: p.read_bytes() for d in output_dirs for p in d.glob("Planted.*")}
-    PLANTED.write_text(
-        "import Elements.Foundations.Words\n\n"
-        "namespace Elements.Tacit.Euclidean\n\n"
-        "/-- A rule planted by scripts/negative_tests.py. -/\n"
-        "axiom planted : True\n\n"
-        "end Elements.Tacit.Euclidean\n")
+    outputs = BuildOutputs()
+    planted_outputs = BuildOutputs("**/Elements/Foundations/Tacit/Planted.*")
 
     # I.16: Postulate 5, the planted rule, a hidden axiom, and a helper whose statement
     # alone mentions the later I.22.
@@ -660,9 +692,15 @@ def planted_assumptions() -> None:
               "  have _sup := @Tacit.superposition\n"
               "  have _later := @Elements.BookI.Prop22\n" + saved15[proof:])
 
-    (ROOT / rel16).write_text(text)
-    (ROOT / rel15).write_text(text15)
     try:
+        PLANTED.write_text(
+            "import Elements.Foundations.Words\n\n"
+            "namespace Elements.Tacit.Euclidean\n\n"
+            "/-- A rule planted by scripts/negative_tests.py. -/\n"
+            "axiom planted : True\n\n"
+            "end Elements.Tacit.Euclidean\n")
+        (ROOT / rel16).write_text(text)
+        (ROOT / rel15).write_text(text15)
         build = run("lake", "build")
         if build.returncode != 0:
             failures.append("the planted assumptions: the changed I.15 and I.16 did not build")
@@ -695,46 +733,53 @@ def planted_assumptions() -> None:
         (ROOT / rel15).write_text(saved15)
         PLANTED.unlink(missing_ok=True)
         (ROOT / "facts.json").write_text(facts)
-        rebuilt = run("lake", "build")
-        if rebuilt.returncode != 0:
-            failures.append("the restored files did not build again")
-        for directory in output_dirs:
-            for path in directory.glob("Planted.*"):
-                if path not in outputs:
-                    path.unlink()
-        for path, data in outputs.items():
-            path.write_bytes(data)
+        try:
+            rebuild_restored("the restored files build", outputs)
+        finally:
+            planted_outputs.restore()
 
 
 def main() -> int:
+    if not expect_success("restoration regressions",
+                          run(sys.executable, "-I", "tests/test_negative_tests.py")):
+        return 1
+    print("✓ restoration regressions passed (without Lean)")
     before = run("git", "status", "--porcelain")
     if not expect_success("entry Git status", before):
         return 1
-    heath_word()
-    wrong_radii()
-    weakened_postulate()
-    changed_word()
-    stale_statement()
-    primitive_not_opaque()
-    stale_lean()
-    undeclared_run()
-    remark_ends_run()
-    native_decide()
-    forbidden_commands()
-    planted_assumptions()
-    for test in (style_error, broken_link, stale_page, changed_audit_pin, corrupt_olean):
-        started = perf_counter()
+    try:
+        heath_word()
+        wrong_radii()
+        weakened_postulate()
+        changed_word()
+        stale_statement()
+        primitive_not_opaque()
+        stale_lean()
+        undeclared_run()
+        remark_ends_run()
+        native_decide()
+        forbidden_commands()
+        planted_assumptions()
+        for test in (style_error, broken_link, stale_page, changed_audit_pin, corrupt_olean):
+            started = perf_counter()
+            try:
+                test()
+            finally:
+                print(f"  {test.__name__}: {perf_counter() - started:.2f}s (including restoration)")
+    finally:
+        original = sys.exception()
         try:
-            test()
-        finally:
-            print(f"  {test.__name__}: {perf_counter() - started:.2f}s (including restoration)")
-    after = run("git", "status", "--porcelain")
-    if expect_success("final Git status", after):
-        if after.stdout != before.stdout:
-            failures.append("the working tree did not return to its entry Git status")
-            print(after.stdout)
-        else:
-            print("✓ working tree restored to its entry Git status")
+            after = run("git", "status", "--porcelain")
+            if expect_success("final Git status", after):
+                if after.stdout != before.stdout:
+                    failures.append("the working tree did not return to its entry Git status")
+                    print(after.stdout)
+                else:
+                    print("✓ working tree restored to its entry Git status")
+        except BaseException as error:
+            if original is None:
+                raise
+            print(f"Final Git status also failed: {type(error).__name__}: {error}")
     if failures:
         print(f"{len(failures)} negative-test failure(s):")
         for f in failures:

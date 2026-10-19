@@ -1344,10 +1344,21 @@ findings:
   A corrupt header in I.1's compiled file makes leanchecker itself name the file and
   report its invalid header, using the invocation in `scripts/check_kernel.py`.
   This tests the loading of compiled files; no invalid proof term is planted for the
-  kernel replay. Each new plant is restored in `finally`, every renderer output is
-  saved, the affected Lean outputs are rebuilt, and leanchecker replays the restored
-  environment. Each new test reports its time, restoration included; the final Git
-  status must match the entry status. The existing assumptions test also restores or
-  removes its temporary module's build outputs. The docstring and the README's table
-  state the coverage and its limits. The protected file changed is
-  `scripts/negative_tests.py`. No check is loosened.
+  kernel replay. Each new plant restores its inputs in `finally`, and the freshness
+  test saves every renderer output. Before each plant that builds, every file under
+  `.lake/build` is saved, including companion outputs, dependent modules, hashes and
+  traces. A restoration build is attempted; if it fails or is interrupted, the saved
+  files return with their original bytes and newly created files are removed. After
+  I.1's successful rebuild, leanchecker replays the restored environment. The
+  assumptions test restores or removes its temporary module's outputs in a nested
+  `finally`, even when the restoration build is interrupted. Each new plant reports
+  its time, restoration included. An outer `finally` compares the final Git status
+  with the entry status, even on interruption, preserving an exception already in
+  flight if that comparison also fails. Restoration needs writable files and time
+  for `finally` to finish; a forced process kill cannot provide it.
+  `tests/test_negative_tests.py` tests failed and interrupted builds, saved and absent
+  outputs, temporary-module cleanup, replay after a successful rebuild and the final
+  status comparison in temporary directories, without Lean or Git. The script runs
+  these regressions before planting. Its docstring and the README's table state the
+  coverage and its limits. The protected files changed are `scripts/negative_tests.py`
+  and `tests/test_negative_tests.py`. No check is loosened.
