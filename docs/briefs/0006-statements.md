@@ -120,7 +120,7 @@ CI are untouched.
 
 ## The owner's decisions
 
-Jack Challis decided three things on 17 October 2026, revised the first on 18 October, and
+The owner decided three things on 17 October 2026, revised the first on 18 October, and
 decided a fourth on 18 October; this brief is written to them:
 
 1. **I.45 and II.14 are stated as Euclid and Byrne state them.** The figure is given by
@@ -162,7 +162,7 @@ decided a fourth on 18 October; this brief is written to them:
 3. **Placement has no fallback and no time limit, and no new axiom may be added.** III.24
    waits for a proved `placement`; the other work goes on in parallel. If a case of
    placement turns out to need a fact the 87 axioms lack, work on it stops and the case is
-   reported to Jack. Brief 0005's "timeboxed", its fallback congruence and "if the
+   reported to the owner. Brief 0005's "timeboxed", its fallback congruence and "if the
    fallback was used" are withdrawn.
 4. **The definitions that frozen briefs name are approved for the foundations as a
    class** (18 October 2026). The tracking issue,
@@ -591,8 +591,8 @@ theorem Fitted.fan {A₀ A₁ A₂ : Point} {ps : List Point}
   straight line and the sector is a half-plane bounded by it; and more than two, where the
   sector is that half-plane together with the angle between A₁A₀ produced through A₀ and
   A₀Aᵢ (I.13). No new axiom is expected (Astra saw no need of one); if a step needs a
-  fact the 87 axioms lack, work on it stops and the case is reported to Jack, as decision 3
-  has it for placement.
+  fact the 87 axioms lack, work on it stops and the case is reported to the owner, as
+  decision 3 has it for placement.
 - **Euclid's figure.** `Fitted.two` of 17 October, Euclid's ABCD as the list ABD, DBC, is not
   restored: `Fitted.fan` for the corners D, A, B, C says it, with the triangle ABD named
   DAB from D.
@@ -1623,8 +1623,8 @@ leaves `lake build`, `lake build Audit` and `lake build Staging` green.
    then `Arcs.lean`.
 
 Alongside, the stage 3 ground task: `Elements/Figure/Chords.lean` and
-`Circumference.add`. If any case needs a fact the axioms lack, work on it stops and Jack
-decides (decision 3).
+`Circumference.add`. If any case needs a fact the axioms lack, work on it stops and the
+owner decides (decision 3).
 
 **Stage 3: the migration into `Elements/`,** each step green:
 1. the arc words into `DefinitionsIII.lean`, with the lock and a decisions entry;
