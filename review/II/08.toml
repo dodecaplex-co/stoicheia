@@ -15,7 +15,7 @@ note = "Euclid produces AB to D with BD equal to CB. The statement takes every D
 at = "let the square AEFD be described on AD"
 kind = "helper"
 helper = "Prop8.cell"
-note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet. The Lean draws the square by I.46 and the two figures by `Parallelogram.figure`, obtains their complements by `Parallelogram.complements`, proves the crossing parallels with `Prop30.parallel`, finds G and R with `Prop30.meet`, and establishes the order of their points with `Parallel.between`."
+note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet. The Lean draws the square by I.46 and the two figures by `Parallelogram.figure`, obtains their complements by `Parallelogram.complements`, proves the crossing parallels with `Prop30.parallel` (I.30, for which Heath gives no reference here), finds G and R with `Prop30.meet`, and establishes the order of their points with `Parallel.between`."
 
 [[passage]]
 at = "while CB is equal to GK, and BD to KN"
@@ -40,6 +40,12 @@ at = "therefore the eight areas, which contain the gnomon STU"
 kind = "helper"
 helper = "quadArea_add_of_parallelograms"
 note = "Euclid reads the gnomon STU as eight cells and AK as AG and CK together. `Parallelogram.about_diameter` divides CP into four cells, and `quadArea_add_of_parallelograms` divides AQ, QF and AK into two each, so the two groups of four equal areas give four times AK."
+
+[[passage]]
+at = "Now, since AK is the rectangle AB, BD"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid treats AK as a rectangle and identifies it by BK equal to BD. The Lean takes AMKB from `Parallelogram.complements` beneath the double figure and the side equality from the square DK beneath \"Again, since CB is equal to BD\", transfers AEFD's right angle at A to BAM, proves the other angles right by `Rectangle.of_right`, and identifies its area by `Rectangle.eq_rect`."
 
 [[passage]]
 at = "Let OH, which is equal to the square on AC"

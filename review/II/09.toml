@@ -9,7 +9,7 @@ kind = "euclid"
 [[passage]]
 at = "For let a straight line AB be cut into equal segments at C"
 kind = "case"
-note = "Euclid's argument is given once over any letters, for D between C and B; D between A and C is the same with A and B exchanged."
+note = "Euclid's figure puts D between C and B; his hypothesis of unequal segments excludes D equal to C. The Lean uses that hypothesis to rule out AD equal to AC when comparing their lengths, proves Euclid's case once over any letters, and covers D between A and C by exchanging A and B."
 
 [[passage]]
 at = "For let CE be drawn from C at right angles to AB"
