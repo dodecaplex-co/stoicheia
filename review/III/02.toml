@@ -12,9 +12,9 @@ tags = ["centre-given"]
 note = "The circle comes with a centre (`∃ D, Centre D ABC`), which the proof takes by III.1, as Euclid does."
 
 [overlap]
-rule = "Tacit.inside_of_between"
-kind = "states"
-note = "System E's Circle 2 contains III.2, and Circle 3, the same rule turned round, gives it at once. Our III.2 rests on neither: it is Euclid's argument, by I.5, I.16 and I.19, and III.1, from which it takes its centre, puts its own middle point within the circle by the same argument."
+rule = "Tacit.outside_of_between"
+kind = "gives"
+note = "System E's Circle 3 (`Tacit.outside_of_between`) gives III.2 at once: if a point between A and B were not within the circle, B would be outside it, contrary to B being on it. Circle 2 (`Tacit.inside_of_between`) is now proved from Circle 3 in `Elements/Figure/Circles.lean`. Our III.2 uses neither that theorem nor Circle 3: it follows Euclid through I.5, I.16 and I.19, and III.1, from which it takes its centre, puts its own middle point within the circle by the same argument."
 
 [[passage]]
 at = "For suppose it does not, but, if possible, let it fall outside"

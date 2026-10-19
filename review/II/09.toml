@@ -63,16 +63,16 @@ note = "Euclid gives the square on EF as the squares on EG and GF together, with
 at = "But the squares on AD, DF are equal to the square on AF"
 kind = "helper"
 helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid uses the right angle ADF, while the earlier parallel argument made FDB right. The Lean obtains ADF from `Tacit.adjacent_eq_of_right`, a rule we assume (System E, Diagram-angle 3), and then applies I.47."
+note = "Euclid uses the right angle ADF, while the earlier parallel argument made FDB right. The Lean obtains ADF from `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, and then applies I.47."
 
 [figure]
 case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "f86db3d"
+commit = "7285f05"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:4816c01cd3768858"
+lean = "sha256:d341a1520792f8c3"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]

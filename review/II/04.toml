@@ -39,7 +39,7 @@ note = "Euclid takes the complements AG and GE to be equal. The Lean applies I.4
 at = "and AG is the rectangle AC, CB"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid treats AG as a rectangle, with GC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right`, the rule we assume as System E, Diagram-angle 3, then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AG."
+note = "Euclid treats AG as a rectangle, with GC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AG."
 
 [[passage]]
 at = "But HF, CK, AG, GE are the whole ADEB"
@@ -49,9 +49,9 @@ note = "Euclid takes the four areas as the whole square ADEB. `Parallelogram.abo
 
 [review]
 stage = "full"
-commit = "50b595b"
+commit = "7285f05"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:24f85c7951a63055"
+lean = "sha256:2c13e8bdc74e3aa0"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]
