@@ -50,7 +50,7 @@ case = "A apart from B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "8bdf0ef"
+commit = "251129b"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:51c22d0c078729c6"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
