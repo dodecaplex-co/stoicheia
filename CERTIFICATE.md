@@ -16,7 +16,7 @@ On each page, the notes under "How the Lean follows the text" open with a plain 
 
 ## Book I
 
-**All 48 propositions proved in Lean**, every one as Euclid states it. 46 proofs follow Euclid's argument and 2 follow it with one step changed ([I.39](book/I/39.md), [I.40](book/I/40.md)); each page says how. In [I.23](book/I/23.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. In [I.2](book/I/02.md), [I.3](book/I/03.md) and [I.7](book/I/07.md) our tacit rules supply a step of a proof of each proposition, but our proofs never use those rules. [The overlap catalogue](docs/reports/overlaps.md) gives each.
+**All 48 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. In [I.23](book/I/23.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. In [I.2](book/I/02.md), [I.3](book/I/03.md) and [I.7](book/I/07.md) our tacit rules supply a step of a proof of each proposition, but our proofs never use those rules. [The overlap catalogue](docs/reports/overlaps.md) gives each.
 
 What the proofs show:
 
@@ -64,9 +64,9 @@ What the proofs show:
 | ✅ | [I.36](book/I/36.md) | whole | Euclid's | I.33, I.34, I.35 | I.33, I.34, I.35 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 55 | 1 | 26 |
 | ✅ | [I.37](book/I/37.md) | whole | Euclid's | I.31, I.34, I.35 | I.30, I.31, I.34, I.35 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 59 | 0 | 32 |
 | ✅ | [I.38](book/I/38.md) | whole | Euclid's | I.31, I.34, I.36 | I.30, I.31, I.34, I.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 59 | 0 | 32 |
-| ✅ | [I.39](book/I/39.md) | whole | Euclid's, one step changed | I.31, I.37 | I.30, I.31, I.37 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 1 | 32 |
-| ✅ | [I.40](book/I/40.md) | whole | the text's, one step changed | I.31, I.38 | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 3 | 30 |
-| ✅ | &emsp;[I.40 general](book/I/40.md#general) |  |  |  | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 2 | 31 |
+| ✅ | [I.39](book/I/39.md) | whole | Euclid's | I.31, I.37 | I.30, I.31, I.37 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 2 | 23 |
+| ✅ | [I.40](book/I/40.md) | whole | the text's | I.31, I.38 | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 4 | 21 |
+| ✅ | &emsp;[I.40 general](book/I/40.md#general) |  |  |  | I.30, I.31, I.38 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 3 | 22 |
 | ✅ | &emsp;[I.40 join](book/I/40.md#join) |  |  |  | I.40 general | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 0 | 3 |
 | ✅ | &emsp;[I.40 special](book/I/40.md#special) |  |  |  | I.40 general | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 3 | 3 |
 | ✅ | [I.41](book/I/41.md) | whole | Euclid's | I.34, I.37 | I.34, I.37 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 59 | 1 | 3 |
@@ -81,6 +81,7 @@ What the proofs show:
 | ✅ | &emsp;[I.45 sum](book/I/45.md#sum) |  |  |  | I.42, I.45 append | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 3 | 24 |
 | ✅ | [I.46](book/I/46.md) | whole | Euclid's | I.11, I.29, I.31, I.34 | I.11, I.29, I.30, I.31, I.34 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 | 4 | 23 |
 | ✅ | [I.47](book/I/47.md) | whole | Euclid's | I.4, I.14, I.41, I.46 | I.4, I.13, I.14, I.17, I.28, I.30, I.31, I.41 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 16 | 23 |
+| ✅ | &emsp;[I.47 general](book/I/47.md#general) |  |  |  | I.4, I.28, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 0 | 30 |
 | ✅ | [I.48](book/I/48.md) | whole | Euclid's | I.8, I.47 | I.3, I.4, I.8, I.11, I.28, I.34, I.46, I.47 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 61 | 3 | 47 |
 
 ## Book II
@@ -168,7 +169,7 @@ What the proofs show:
 | ✅ | [III.33](book/III/33.md) | whole | Euclid's | I.4, III.16 Por., III.31, III.32 | I.4, I.10, I.11, I.23, III.2, III.16 Por., III.31, III.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 21 | 25 |
 | ✅ | [III.34](book/III/34.md) | whole | Euclid's | I.23, III.32 | I.11, I.23, III.2, III.16, III.16 Por., III.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 13 | 23 |
 | ✅ | [III.35](book/III/35.md) | whole | Euclid's | I.47, II.5, III.3 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.5, III.1, III.3 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 66 | 13 | 28 |
-| ✅ | [III.36](book/III/36.md) | whole | Euclid's | I.47, II.6, III.3, III.18 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.6, III.1, III.3, III.18 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 68 | 13 | 30 |
-| ✅ | [III.37](book/III/37.md) | whole | Euclid's | I.8, III.16 Por., III.18, III.36 | I.3, I.4, I.8, I.20, I.28, I.34, I.46, III.1, III.16 Por., III.17, III.18, III.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 68 | 12 | 42 |
+| ✅ | [III.36](book/III/36.md) | whole | Euclid's | I.47, II.6, III.3, III.18 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.6, III.1, III.3, III.18 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 68 | 14 | 29 |
+| ✅ | [III.37](book/III/37.md) | whole | Euclid's | I.8, III.16 Por., III.18, III.36 | I.3, I.4, I.8, I.20, I.28, I.34, I.46, I.47, II.6, III.1, III.16 Por., III.17, III.18, III.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 68 | 12 | 44 |
 
 The Common Notions are theorems in Lean (see [`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so `#print axioms` cannot see them; the walk that finds them goes everywhere `#print axioms` goes. Lean's own logical foundations (`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and are left out.
