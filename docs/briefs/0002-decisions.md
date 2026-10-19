@@ -1334,3 +1334,9 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+- **I.39 and I.40 now follow Euclid's reductio to its end.** I.40's companion
+  `Prop40.general` does so too, so their records' route is `euclid`. Under "The follow-ups
+  to the precision pass", the entry "Two more kinds of passage, and what 'argued another
+  way' means" called them "one step changed". It is superseded on this point and stays as
+  history. [review/SCHEMA.md](../../review/SCHEMA.md) now uses III.8 as its example of a
+  `modified` route: its last step compares the angles at the centre by I.24.
