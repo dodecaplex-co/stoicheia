@@ -31,11 +31,11 @@ On 18 October 2026, after Astra's third answer, the owner decided on superpositi
 (#75): prototype a genuinely restricted rule now, as a checked inference over represented
 derivations, with I.4 and I.8 proved from it, a restriction theorem and the model's
 justification; land it only when complete; and meanwhile disclose that our rule is
-stronger, as a construction principle, than System E's. The same day the owner decided
-that every circle has a centre (#59) and that the formal model starts now in `model/`
-(#73). Any new axiom waits for #40, the model's law names as a pinned data file. This
-brief answers the decision on superposition, and depends on the one on the model for the
-model's part.
+stronger, as a construction principle, than System E's. The same day brought two more
+decisions: that every circle has a centre (#59), and that the formal model starts now in
+`model/` (#73). Any new axiom waits for #40, the model's law names as a pinned data file.
+This brief answers the decision on superposition, and depends on the one on the model for
+the model's part.
 
 ## The problem
 

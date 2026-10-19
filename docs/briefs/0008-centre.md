@@ -50,7 +50,7 @@ the fresh outside review (#47), which found the `centre-given` hypothesis across
 ## 1. The decision
 
 The owner decided on 18 October 2026, on issue #59 (the words below checked against the
-owner's comment there, on 18 October):
+comment there, on 18 October):
 
 > **The owner's decision (18 October): approved, as Astra recommends.** `axiom exists_centre
 > (α : Circle) : ∃ O, Centre O α`; III.1 keeps its construction-rich conclusion and drops the
@@ -62,7 +62,7 @@ owner's comment there, on 18 October):
 > changed, challenged and frozen, then the axiom with its lock entry, model law and decisions
 > entry, then the restatements and their records.
 
-On the same day the owner decided to start the formal model now (#73): in `model/`, a
+The same day came a second decision, to start the formal model now (#73): in `model/`, a
 Lake package of its own in this repository with a pinned Mathlib and its own CI job, the
 main library staying plain Lean, its laws generated from the elaborated declarations with
 translation checks, the hardest first. The package landed on main in #98; issue #73 stays

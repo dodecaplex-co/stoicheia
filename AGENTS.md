@@ -95,7 +95,8 @@ Each rule has one home, linked; this list only points to it.
   work on main only as a pull request, through `scripts/safe_push.py` (WORKFLOW, section
   10, "Landing work: pull requests").
 - Publish: tag, release, write release notes, change the GitHub description, or send
-  anything outside the repository. Each needs the owner's OK (WORKFLOW, section 1).
+  anything outside the repository. Each needs the repository owner's OK (WORKFLOW,
+  section 1).
 - Invent a quotation, a page or a reference; put crew talk where readers look; write
   anything competitive (STYLE, sections 1 and 5).
 
