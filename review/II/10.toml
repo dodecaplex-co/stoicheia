@@ -27,7 +27,7 @@ note = "Euclid takes EB to fall within CEF, so FEB is less than CEF. The Lean pr
 at = "therefore EB, FD, if produced in the direction B, D, will meet"
 kind = "grouped"
 helper = "Postulate5"
-note = "One application of Postulate 5, under the sentence before, carries both that sentence and this conclusion; the Lean then takes the meeting point G. Our foundations state Euclid's own Postulate 5 as `Postulate5`, in System E's form (section 3.6, diagram-angle transfer rule 5)."
+note = "One application of Postulate 5, under the sentence before, carries both that sentence and this conclusion; the Lean then takes the meeting point G. Our foundations state Euclid's own Postulate 5 as `Postulate5`, in System E's form (System E §3.6, diagram-angle transfer rule 5)."
 
 [[passage]]
 at = "Let them be produced and meet at G"

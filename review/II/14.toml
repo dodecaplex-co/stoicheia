@@ -18,7 +18,7 @@ note = "Euclid asks I.45 for a rectangular parallelogram. The Lean first constru
 at = "But, if not, one of the straight lines BE, ED is greater."
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid takes for granted that one of the unequal straight lines BE and ED is greater. The Lean obtains the two alternatives from `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E, section 3.5), not a proved lemma."
+note = "Euclid takes for granted that one of the unequal straight lines BE and ED is greater. The Lean obtains the two alternatives from `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proved lemma."
 
 [[passage]]
 at = "Let BE be greater"
@@ -53,7 +53,7 @@ note = "Euclid uses the equality of the radii GF and GH without giving a reason.
 at = "But the squares on HE, EG are equal to the square on GH"
 kind = "helper"
 helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, the rule we assume as System E, Diagram-angle 3, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `BookI.Prop47.sq`."
+note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, the rule we assume as System E, Diagram-angle 3, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `Prop47.sq`."
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]
