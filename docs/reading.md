@@ -139,6 +139,10 @@ since been told "the so-called squaring of the circle is a practical impossibili
 1922, pp. 240–241). The sources of the scene are Herndon's letter to Ward H. Lamon of
 16 December 1887 and Weik's book, as given by Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
 *Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 39, note 33.
+The impossibility is in fact complete: no construction with straightedge and compass can
+square the circle, as Ferdinand von Lindemann showed in 1882 by proving π transcendental
+(the mishnah of [I.45](../book/I/45.md) tells the story, and Felix Klein's
+[*Famous Problems of Elementary Geometry*](#klein1897famous) gives the proof).
 
 Judge David Davis remembered Euclid too. In his interview with Herndon on 20 September
 1866, he said that Lincoln "was not a well read Man", and went on in short phrases:
