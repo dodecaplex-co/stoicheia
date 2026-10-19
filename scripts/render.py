@@ -815,7 +815,7 @@ def overlap_rules(overlap):
 
 def overlap_rests(p, overlap):
     """Does the proof rest on the rules its [overlap] names (facts.json's `axioms`)?
-    I.7's does not; III.2's does, through III.1 and I.5."""
+    I.7's does not; III.2's does, through III.1 alone."""
     return bool(p) and all(r in p.get("axioms", []) for r in overlap_rules(overlap))
 
 
@@ -878,10 +878,10 @@ def in_lean_line(p, record, book, n):
         if overlap_steps(ov):
             verb = "supplies" if one else "supply"
             if overlap_rests(p, ov):
-                parts.append(f"{overlap_word(ov)} {verb} a step of a proof of it, and this "
+                parts.append(f"{overlap_word(ov)} {verb} a step of a proof of it, and our "
                              f"proof rests on {rule} (see Overlap)")
             else:
-                parts.append(f"{overlap_word(ov)} {verb} a step of a proof of it, though this "
+                parts.append(f"{overlap_word(ov)} {verb} a step of a proof of it, though our "
                              f"proof does not use {rule} (see Overlap)")
         else:
             verb = "contains" if one else "contain"
