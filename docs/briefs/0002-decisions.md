@@ -631,6 +631,91 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+
+- **The forbidden-command scan reads `Staging/` and `Audit/`, and knows `#eval`.** The
+  security review of the Staging library noted two gaps in the source scan of
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py), `check_rules`, and we
+  are grateful for the close reading
+  ([#39](https://github.com/jackChallis/stoicheia/issues/39)). The scan read `Elements/`
+  alone, so in `Staging/` and `Audit/`, which the certificate never reaches, "no axiom and
+  no forbidden command" rested on review. And its list lacked `#eval`, which runs a
+  program while a file is built: on Lean 4.35 an `#eval` can declare an axiom through
+  `addDecl` with no `axiom` in the source, or write any file. Now the scan reads every
+  `.lean` file under `Elements/`, `Staging/` and `Audit/`, and the roots `Elements.lean`,
+  `Staging.lean` and `Audit.lean`. Its list gains `#eval`, `#exit`, `run_tac`, `by_elab`,
+  `initialize`, `builtin_initialize`, and the attributes that stand behind `elab`, `macro`
+  and `initialize`: `command_elab`, `term_elab`, `tactic` and `init`. It gains, too, every
+  way Lean 4.35 has of evaluating natively and admitting the result as an axiom:
+  `bv_decide` and `bv_check`, and `decide` with its `native` option, which
+  `decide +zetaReduce +native`, `decide (native := Bool.true)` and a whole configuration,
+  `(config := ⟨false, true, true, false⟩)`, set without the words the list had; so the
+  word `native`, wherever it stands, and `(config := …)` are refused. `set_option debug.…`
+  already covered `debug.skipKernelTC`, and with it `debug.byAsSorry`,
+  `debug.proofAsSorry` and `debug.terminalTacticsAsSorry`. The source check for an axiom
+  outside `Elements/Foundations/` now finds the word anywhere in a line, not only at its
+  start: Lean reads `example : True := trivial axiom planted : False` as two commands, the
+  second an axiom, which the old check missed (in `Elements/` the certificate caught it
+  all the same). Each finding names its file and line. Nothing is loosened but the text of a
+  literal (below): the scan refuses all else it refused before, in more places, and on main
+  it refuses nothing.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains test 8, which
+  plants every forbidden command, and an axiom twice, once after another command on its
+  line, in a new file of each of the three folders (Staging's in a folder of its own), and
+  `#exit` at the end of each root, and expects each caught on its own line. origin/main's
+  scan misses every one of them in `Staging/` and `Audit/`, and in `Elements/` the
+  commands the list gains and the axiom after another command.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, the list's one home, names every
+  command the scan refuses (`run_meta`, `elab_rules` and `macro_rules`, which it refused
+  unnamed, among them), says why each is forbidden, and drops the known gap. The review of
+  this branch found more routes the list lacked, and we thank it warmly: the simproc
+  commands (`simproc`, `dsimproc`, `simproc_decl`, `dsimproc_decl` and their kin) and
+  `set_library_suggestions`, whose code `simp` and the suggestion tactics run in the same
+  file; attributes beyond `tactic` and `init` that register code Lean runs while a file is
+  built or printed (`@[simproc]`, `@[doElem_elab]`, `@[grind_tactic]`, `@[delab]`,
+  `@[app_unexpander]`, `@[quot_precheck]`, `@[cpass]`, `@[term_parser]`, `@[doc_role]`,
+  `@[try_suggestion]` and others); and the escaped spelling `set_option «debug».…`, which
+  Lean reads as `debug.…`. The scan now refuses these commands and the attributes whose
+  names it lists, known by the end of the name or, for the `doc_` attributes, its start,
+  and test 8 plants each command, ending and prefix in all three folders; again nothing is
+  loosened. A later round of the review found two routes more, and we thank it for them
+  too. With `doc.verso` on, Lean 4.35 reads a docstring as Verso and runs the Lean in its
+  code blocks, an `#eval` among it, while the scan took docstrings out with the comments;
+  and the handler `@[missing_docs_handler]` registers runs on every command of its kind.
+  The scan now refuses `set_option doc.…`, spelled `doc.` or `«doc».`, so that every
+  docstring stays inert, and, from a reading of Lean 4.35's attributes, those whose names
+  end in `macro`, `check`, `handler`, `provider`, `fn`, `module`, `hooks` or `Attr`
+  (`builtin_macro`, `package_code_quality_check`, `missing_docs_handler`,
+  `code_action_provider`, `unused_variables_ignore_fn`, `widget_module`,
+  `run_parser_attribute_hooks`, `simprocAttr`), and `builtin_doc` with the
+  `builtin_doc_` attributes; test 8 plants each, and a Book Zero file that imports a
+  proposition. The findings for `native_decide` and for Book Zero's imports, which named
+  the file alone, now name the line as well, so every finding of the scan names its file
+  and line. The last round found that the scan did not know Lean's string literals: on
+  Lean 4.35 a `]` in a string ended an attribute's brackets early, so
+  `@[deprecated "]" (since := …), tactic …]` registered a tactic unseen, and a `"/-"`
+  opened a comment that hid the `#eval` after it. The scan now reads comments and string
+  and character literals as Lean's tokenizer does, raw strings, escapes and the `{…}`
+  holes of interpolated strings among them: a literal's text never opens or ends a
+  comment, an attribute or a command, and the code in a hole is still read. A string
+  whose braces Lean could read either as text or as holes of code, one not just after
+  `s!`, `m!`, `f!` or `throwError` whose two readings end in different places, is
+  refused, since the scan cannot tell which Lean will do. The one thing the scan now
+  refuses less is a forbidden word inside a literal's text, which Lean never runs as
+  code. Test 8 plants each disguise the review found, one behind a raw string and one
+  behind a character literal, a command in an interpolated string's hole, and a string
+  of the kind refused. A list of names trails the attributes each Lean release adds, so this one may
+  not be complete, and review still reads every staged file and audit lemma. What would
+  hold for good, an allowlist of the attributes the edition uses (main's Lean uses only
+  `@[simp]` and `@[inherit_doc]`) or refusing imports from outside the project (each of
+  the attribute and simproc routes needs an import of Lean's own modules, and on Lean
+  4.35 `simproc` and `set_library_suggestions` fail without one; the docstring route
+  needs none, and refusing the `doc.` options closes it), is left for the owner's
+  decision. The
+  protected files it changes are [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) and
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py). The README's table of
+  checks, and the name of CI's step for the negative tests, can follow in a pull request
+  of their own.
+
 - **The voice rules loosened, and `$…$` in "the modern way".** On 18 October, after
   Argon's second review of the book-III release, the owner decided, with thanks to Argon
   ([#70](https://github.com/jackChallis/stoicheia/issues/70)): drop the reports of length,
@@ -754,7 +839,6 @@ findings:
   A release made before the model is complete names the milestone as incomplete, as Astra
   advised. This supersedes "a later milestone" in the 17 October entry "The model harness
   lives in the repository".
-
 - **The case a figure shows, said under it.** Argon's second review found that the
   `[figure] case` of a review record, which eleven records give, was never printed, so a
   figure drawn for one case of several did not say so on its page; we thank Argon warmly for
@@ -1089,6 +1173,27 @@ findings:
   joined the phrase and ink cases in
   [`tests/test_check_style.py`](../../tests/test_check_style.py); every case of both is
   kept (44 phrase, 44 S10 and 33 ink cases), none weakened.
+- **An overlap is worded by its kind, as the catalogue gives it.** A record's
+  `[overlap]` may now name the kind of its row in the
+  [overlap catalogue](../reports/overlaps.md), `kind = "states"`, `"gives"` or `"step"`,
+  as [`review/SCHEMA.md`](../../review/SCHEMA.md) defines.
+  [`scripts/heath.py`](../../scripts/heath.py) accepts only those three, and asks of a
+  step a `note` saying which step, in which proof (brief 0008, question 3); its self-test
+  puts both rules to records of its own. [`scripts/render.py`](../../scripts/render.py)
+  words by the kind the line under the enunciation and the book's summary, which also
+  heads the book's index, its section of CERTIFICATE.md and its row of README.md: a rule
+  that states the proposition or gives it at once "contains" it, as before, and a rule
+  that supplies a step "supplies a step of a proof of it", with whether our proof rests
+  on the rule. The pages said that superposition and Circle 4 contain I.2, I.3, I.7 and
+  I.23, where the catalogue says only that each supplies a step, in an audit lemma that
+  takes seven axioms or more; so the words are "a proof of it", not "its proof", since our
+  own proofs of I.2, I.3 and I.7 never use the rule, and I.23's never calls it, resting on
+  it only through I.8 and I.20, which it cites (#93, found in the review of the Circle 2
+  branch, #87). Astra's probe in the
+  challenge of brief 0008 showed that both displays had to read the key, and we are
+  grateful. The key is optional so that this check lands first, on its own: a record
+  that names no kind is worded as before, so no page changes here, and the records name
+  their kinds after it, in a pull request of their own.
 
 - **A table of names, so the library is easy to use.**
   [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
@@ -1103,7 +1208,6 @@ findings:
   and links to the table follow separately (keep_apart). Generated API documentation
   (doc-gen4, in CI) comes in a change of its own, and nothing of it is published without
   the owner's OK.
-
 - **Using the library and keeping its names.** The table of names lands first;
   its guide and links follow separately (keep_apart). The README gains "Use it": the `require` for a
   `lakefile.toml`, pinned to the release tag `book-III`, its one-line form for a
@@ -1115,7 +1219,6 @@ findings:
   release; a changed statement keeping its proposition's name, with the old one kept as a
   companion where citers need it; and the release notes listing every name deprecated and
   every statement changed.
-
 - **The Jev audit's client.** Brief 0005's stage 6 asks for an
   independent audit by Jev, TypeSafe's decision model, through a fresh client
   ([#36](https://github.com/jackChallis/stoicheia/issues/36)).
@@ -1142,6 +1245,15 @@ findings:
   request has been sent yet; the accuracy bar Jev must meet on the set is the
   coordinator's to state before the first run, and `score --bar` counts it met only when
   every row of the set is answered and no request failed.
+- **The acceptance checker ([#35](https://github.com/jackChallis/stoicheia/issues/35)).**
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) (new) checks every
+  [machine] item of the acceptance checklist across the 99 propositions, each book and the
+  edition, reads every [review] item from the review records, and writes a report with
+  every failure listed; it changes no other file and reuses the checks already in place.
+  It is not yet a step of CI or of safe_push: it reports, and the consolidation release
+  waits for it to report no failure. The checklist itself, `docs/ACCEPTANCE.md`, and the
+  first report follow in a content pull request, since safe_push keeps a check apart from
+  the content it judges.
 - **The Jev calibration set.** The calibration set the brief describes is
   [`docs/reports/acceptance/jev/calibration.jsonl`](../reports/acceptance/jev/calibration.jsonl)
   (new), quoted from the files at `4d02d50`: fourteen rows, five seeded and nine controls.
@@ -1155,6 +1267,55 @@ findings:
   as proved. It follows the client in a separate change (keep_apart). The examples in
   `scripts/audit/jev.py` now name the calibration file; only that documentation changes,
   with every check preserved. No request has been sent.
+- **One certificate pin dropped, for one merge, on the owner's word.** Taking Circle 2 out of
+  every proof (#60) makes the pin "III.2 rests on Circle 2, through III.1" false, and the
+  harness does not let a pin flip in the same pull request as the content that flips it.
+  The owner approved the two steps (18 October): this pull request drops that one pin from
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) and
+  removes "only through III.1" from the reason of the pin on what III.2 inherits; the pull
+  request that takes Circle 2 out adds the stronger opposite pins, that III.1, III.2 and
+  II.14 rest on neither Circle 2 nor Circle 3. Nothing else is loosened.
+- **The opposite pins: III.1, III.2 and II.14 rest on neither Circle 2 nor Circle 3.** The
+  second of the owner-approved two steps: with Circle 2 taken out of every proof (#60),
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) gains
+  three pins that their certificates exclude `Tacit.inside_of_between` and
+  `Tacit.outside_of_between`, stronger than the one dropped in #107.
+- **The formal model, complete.** All 87 locked laws are proved in the ordinary Euclidean
+  plane in [`model/`](../../model/README.md), and `model_exists : ∃ S : Signature, Laws S`
+  is proved with no hypothesis left
+  ([#73](https://github.com/jackChallis/stoicheia/issues/73);
+  [the owner's note](https://github.com/jackChallis/stoicheia/issues/73#issuecomment-6258608865)).
+  The owner had made it a gate for the consolidation release
+  ([his words](https://github.com/jackChallis/stoicheia/issues/73#issuecomment-6256202836):
+  "the formal model is a gate for the consolidation release, not a target: every locked
+  law proved in the model before #38"). What it establishes is what Astra wrote for this
+  case, with our thanks: "Lean checks that the ordinary Euclidean plane satisfies every
+  law in this revision's foundation. This establishes a model relative to Lean's logical
+  foundations and Mathlib's construction of the real numbers. It does not establish that
+  every formal statement captures Euclid's intended meaning." So the consistency of the
+  axioms is a theorem, relative to Lean's logic and Mathlib's real numbers. The
+  independence of Postulate 5 is not: that the other laws cannot give it, or that a
+  statement failing in the hyperbolic plane cannot be proved without it, still rests on
+  the numerical hyperbolic check until a hyperbolic model is built. The pages that said
+  the model was in progress now say this, adapted to each:
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md), a protected file, whose opening
+  points to the model, whose section "A formal model: in progress" is now "The formal
+  model" (what is proved, where, how the lock ties it and what it does not show; the
+  links to its anchor move with it), and whose "What this shows, and what it does not"
+  keeps the consistency, now proved, apart from non-derivability, still numerical; the
+  formal model's row of the README's table of checks;
+  [FORMALIZATION](../FORMALIZATION.md), sections 3 and 9; the milestone in
+  [PROGRAM.md](../PROGRAM.md), section 4, marked done; the module docstring of
+  [`Elements/Foundations/Words.lean`](../../Elements/Foundations/Words.lean), which keeps
+  its length, so that no line a page links to moves, with no statement and nothing in the
+  lock changed; and the dated correction at the head of
+  [read-through 01](../reports/read-through-01.md). The numerical harness, its results
+  and its hash are unchanged. The `formal-model` CI job is not yet a required check: the
+  ruleset on main, and `REQUIRED_CHECKS` in
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), still name `check`, `model` and
+  `negative`, and making `formal-model` required, as the decision of 18 October foresees
+  once the package builds, is the owner's call.
+
 - **The negative test of an undeclared run reads the passage of any kind.**
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py)'s fifth test drops the
   passages that declare III.16's runs of `--` lines with no Lean beneath them, and expects
@@ -1168,3 +1329,22 @@ findings:
   on today's record and on the record to come; nothing is loosened. It lands on its own,
   before the records it reads, since safe_push keeps a check apart from the content it
   judges. The protected file this changes is `scripts/negative_tests.py`.
+
+## 19 October 2026
+
+- **The edition does not name its owner.** The owner asked that Stoicheia not be presented
+  as anyone's personal project, and that the name come out of its prose. Where a passage
+  needs the role, it now says "the owner", the repository's owner, as
+  [WORKFLOW](../WORKFLOW.md), section 1, defines the role, with exactly the same force: no
+  approval or decision moves. AGENTS.md says "the repository owner", since there "owner"
+  also means a file's owner. Changed: [AGENTS.md](../../AGENTS.md),
+  [FORMALIZATION](../FORMALIZATION.md), WORKFLOW, [PROGRAM](../PROGRAM.md), the README's
+  "How it was made", briefs 0001 and 0005 to 0009, and two reports:
+  [outside review 01](../reports/outside-review-01.md), whose quoted prompts are now
+  labelled "We asked" and keep their words, and
+  [read-through 01](../reports/read-through-01.md). Brief 0001, kept as history, records
+  the change in its own note. No statement, check or earlier decision changes, and no
+  protected path. Three things are the owner's to decide: the copyright line in
+  `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
+  name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
+  request of its own.

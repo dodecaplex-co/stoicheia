@@ -2,18 +2,21 @@ import Elements.Foundations.Tacit.Constructions
 import Elements.Foundations.Tacit.Diagram
 import Elements.Foundations.Tacit.Magnitudes
 import Model.Hand
+import Check.Original
 
 /-!
 # Checking the hand translation against the library
 
-`Model/Hand.lean` translates a few of the library's laws by hand. Here the library's own
-words are put in for the signature's fields (`original`), and Lean is asked whether each
-translated law, and each defined word it reaches, then is the library's declaration. Each
-check is `rfl`: the kernel accepts it only if the two are the same proposition, up to
+`Model/Hand.lean` translates a few of the library's laws by hand, and `Model/Signature.lean`
+writes by hand the words behind the magnitudes. Here the library's own words are put in for
+the signature's fields (`original`, in `Check/Original.lean`), and Lean is asked whether each
+law translated by hand, and each word written by hand, then is the library's declaration.
+Each check is `rfl`: the kernel accepts it only if the two are the same proposition, up to
 unfolding definitions. (The laws that quantify over the kind of magnitude make the same
 check up to relabelling the kinds, as their section says.) A translation that drops a
 guard, swaps two arguments or changes the order of the binders fails here, and the build
-fails with it.
+fails with it. Last, each law translated by hand is checked against the law the generator
+writes for it in `Model/Laws.lean`, the field of `Laws` it stands for.
 
 This file reads the library's axioms only through `type_of%`, which takes a declaration's
 statement and does not use it. Nothing in `Model/` imports this file.
@@ -21,37 +24,11 @@ statement and does not use it. Nothing in `Model/` imports this file.
 
 namespace Check
 
-/-- The library's kinds of magnitude, constructor by constructor. -/
-def kind : Model.Kind → Elements.Kind
-  | .length => .length
-  | .angle => .angle
-  | .area => .area
-
-/-- The library's seventeen words, as a signature. Specializing a translated law here must
-give back the original declaration. -/
-noncomputable def original : Model.Signature where
-  Point := Elements.Point
-  Line := Elements.Line
-  Circle := Elements.Circle
-  OnLine := Elements.OnLine
-  SameSide := Elements.SameSide
-  Between := Elements.Between
-  OnCircle := Elements.OnCircle
-  InsideCircle := Elements.InsideCircle
-  Centre := Elements.Centre
-  MagnitudeImpl k := Elements.MagnitudeImpl (kind k)
-  zero {k} := @Elements.Magnitude.zero (kind k)
-  add {k} := @Elements.Magnitude.add (kind k)
-  lt {k} := @Elements.Magnitude.lt (kind k)
-  len := Elements.len
-  ang := Elements.ang
-  area := Elements.area
-  rightAngle := Elements.rightAngle
-
 /-! ## The defined words
 
 The words of `Model/Signature.lean` behind the magnitudes, each at the matching kind, and
-the words of `Model/Hand.lean`. -/
+the three words the laws below reach, which were written here by hand before the generator
+wrote them in `Model/Laws.lean` (`Check/Laws.lean` checks every word it writes). -/
 
 example (k : Model.Kind) : original.Magnitude k = Elements.Magnitude (kind k) := rfl
 example : original.Length = Elements.Length := rfl
@@ -155,5 +132,30 @@ example : Model.Hand.not_lt_zero original ↔ type_of% @Elements.Tacit.not_lt_ze
     | angle => exact @h .angle
     | area => exact @h .area,
     fun h => h⟩
+
+/-! ## The hand translations against the generated laws
+
+Each law translated by hand in `Model/Hand.lean` is the law the generator writes for it, over
+any signature: the field of `Laws` it stands for. (`Check/RoundTrip.lean` compares the two by
+syntax as well, binder kinds and names included.) -/
+
+example (S : Model.Signature) : Model.Hand.circles_meet S = Model.Law.Tacit.circles_meet S :=
+  rfl
+example (S : Model.Signature) : Model.Hand.circles_meet_of_on_inside_outside S =
+    Model.Law.Tacit.circles_meet_of_on_inside_outside S := rfl
+example (S : Model.Signature) : Model.Hand.circles_meet_same_side S =
+    Model.Law.Tacit.circles_meet_same_side S := rfl
+example (S : Model.Signature) : Model.Hand.circles_meet_opposite_side S =
+    Model.Law.Tacit.circles_meet_opposite_side S := rfl
+example (S : Model.Signature) : Model.Hand.add_assoc S = Model.Law.Tacit.add_assoc S := rfl
+example (S : Model.Signature) : Model.Hand.add_comm S = Model.Law.Tacit.add_comm S := rfl
+example (S : Model.Signature) : Model.Hand.add_lt_add_right S =
+    Model.Law.Tacit.add_lt_add_right S := rfl
+example (S : Model.Signature) : Model.Hand.add_zero S = Model.Law.Tacit.add_zero S := rfl
+example (S : Model.Signature) : Model.Hand.lt_irrefl S = Model.Law.Tacit.lt_irrefl S := rfl
+example (S : Model.Signature) : Model.Hand.lt_trans S = Model.Law.Tacit.lt_trans S := rfl
+example (S : Model.Signature) : Model.Hand.lt_trichotomy S = Model.Law.Tacit.lt_trichotomy S :=
+  rfl
+example (S : Model.Signature) : Model.Hand.not_lt_zero S = Model.Law.Tacit.not_lt_zero S := rfl
 
 end Check

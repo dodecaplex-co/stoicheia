@@ -1,8 +1,11 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
+import Elements.BookI.Helpers
 import Elements.BookI.Prop08
 import Elements.BookI.Prop10
 import Elements.BookI.Prop11
+import Elements.BookI.Prop16
+import Elements.BookI.Prop19
 
 /-!
 # Book III, Proposition 1
@@ -30,6 +33,39 @@ theorem Prop1.middle {A B D G : Point} (hADB : Between A D B) (hAD : ‖A D‖ =
     ⟨L, hA_L, on_line_of_between_ends hADB hA_L hB_L, on_line_of_between_ends hAGB hA_L hB_L⟩,
     fun hb => not_between_of_between hAGB (between_of_between_right hb hADB)⟩
   exact OnRay.eq_of_len_eq hray hlen
+
+/-- The middle point D of AB, a straight line in the circle, is within the circle. Euclid
+takes it from his figure when he draws DC through to E, "a fact which Euclid first
+demonstrates in III. 2", as Isaac Todhunter observes (Heath, vol. 2, p. 7). We take it by
+III.2's own argument, from the centre G that the hypothesis gives. If G is on AB, it is AB's
+middle point D (`Prop1.middle`). If not, the angles GAD and GBD are equal [I. 5]; the angle
+GDB, outside the triangle GAD, is greater than GAD [I. 16], and so than GBD; and the greater
+angle is subtended by the greater side [I. 19], so GD is less than the radius GB. -/
+theorem Prop1.within {A B D G : Point} {ABC : Circle} (hG : Centre G ABC) (hA : OnCircle A ABC)
+    (hB : OnCircle B ABC) (hADB : Between A D B) (hAD : ‖A D‖ = ‖D B‖) :
+    InsideCircle D ABC := by
+  have hAB : A ≠ B := ne_of_between_ends hADB
+  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
+  have hD_L := on_line_of_between_ends hADB hA_L hB_L
+  by_cases hG_L : OnLine G L
+  · obtain rfl : G = D := Prop1.middle hADB hAD
+      (between_of_inside_chord hG_L hA_L hB_L (centre_inside hG) hA hB hAB)
+      (by rw [len_symm A G, Definition15 hG hA hB])
+    exact centre_inside hG
+  have hGAB : Triangle G A B := (Triangle.of_line hA_L hB_L hAB hG_L).cab
+  have hGAD : Triangle G A D := (Triangle.of_line hA_L hD_L (ne_of_between hADB) hG_L).cab
+  have hGDB : Triangle G D B :=
+    (Triangle.of_line hD_L hB_L (ne_of_between (between_symm hADB)).symm hG_L).cab
+  have h5 : ∠ G A D = ∠ G B D := by
+    rw [angle_onRay_right (OnRay.of_between hADB) hGAB.ne₁₂,
+      angle_onRay_right (OnRay.of_between (between_symm hADB)) hGAB.ne₁₃]
+    exact BookI.Prop5.base hGAB (Definition15 hG hA hB)
+  have h16 : ∠ G A D < ∠ G D B := by
+    rw [angle_symm hGAD.ne₁₂ hGAD.ne₂₃.symm]
+    exact (BookI.Prop16 hGAD hADB).1
+  have h19 : ‖G D‖ < ‖G B‖ :=
+    BookI.Prop19 hGDB (by rw [angle_symm hGDB.ne₂₃ hGDB.ne₁₃]; exact h5 ▸ h16)
+  exact inside_of_len_lt hG hB h19
 
 /-- At a point A of the straight line AD, only one straight line is at right
 angles to it. Euclid takes this for granted in "the greater to the less". With E
@@ -72,7 +108,9 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
   -- from D let DC be drawn at right angles to AB and let it be drawn through to E;
   obtain ⟨Q, hQ, -⟩ := exists_off_line hAB []
   obtain ⟨X, hXQ, hX⟩ := BookI.Prop11 hAB ⟨L, hA_L, hB_L, hD_L⟩ hQ
-  have hD_in : InsideCircle D ABC := inside_of_between (Or.inr hA) (Or.inr hB) hADB
+  /- D is within the circle, a fact Euclid proves only in III.2; `Prop1.within` takes it by
+     III.2's argument, from the centre the hypothesis gives. -/
+  have hD_in : InsideCircle D ABC := hABC.elim fun G hG => Prop1.within hG hA hB hADB hAD
   have hX_L : ¬ OnLine X L := hXQ.triangle.off_line hA_L hB_L
   have hDX : D ≠ X := fun e => hX_L (e ▸ hD_L)
   obtain ⟨N, hD_N, hX_N⟩ := Postulate1 D X hDX

@@ -3,6 +3,7 @@ import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop11
 import Elements.BookI.Prop23
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop16
 import Elements.BookIII.Prop32
 
@@ -82,7 +83,7 @@ theorem Prop34 {D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centr
     refine Classical.byContradiction fun hs => ?_
     obtain ⟨W, hW_L, hCWO⟩ := OppositeSides.exists_between ⟨hC_L, hO_L, hs⟩
     exact htouch.not_inside ⟨L, hB_L, hF_L, hW_L⟩
-      (inside_of_between (Or.inr hC) (Or.inl (centre_inside hO)) hCWO)
+      (InsideCircle.of_between_centre hO hC (between_symm hCWO))
   have hCC' : SameSideOf C C' B F :=
     SameSideOf.of_line hBF hB_L hF_L (same_side_trans (same_side_symm hCO)
       (same_side_symm (hC'O.sameSide hB_L hF_L)))
@@ -92,7 +93,7 @@ theorem Prop34 {D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centr
   -- and BC has been drawn across from the point of contact at B,
   have hBCF : Triangle B C F := hCC'.triangle.acb
   -- the angle FBC is equal to the angle constructed in the alternate segment BAC. [III. 32]
-  obtain ⟨A, hA, hAF⟩ := exists_onCircle_oppositeSidesOf hB hC hBCF
+  obtain ⟨A, hA, hAF⟩ := Prop2.oppositeSide ⟨O, hO⟩ hB hC hBCF
   have h32 : ∠ F B C = ∠ B A C :=
     (Prop32 ⟨O, hO⟩ hB hC hCB.symm hEF hEBF).1 A hA hAF
   -- But the angle FBC is equal to the angle at D;
