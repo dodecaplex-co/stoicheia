@@ -182,7 +182,8 @@ one circle, so two circles that cut one another cannot share a centre. Our III.5
 Euclid's steps, and uses this rule only for the step he leaves tacit, that F and G are two
 points. -/
 theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
-  fun hne ⟨_, _, _, hC₁, hC₂, _, _⟩ ⟨hE₁, hE₂⟩ => hne (circle_eq hE₁ hE₂ hC₁ hC₂ rfl)
+  fun ⟨⟨_, _, _, _, _, hC₁, hC₂⟩, ⟨_, hP₁, hP₂⟩, _⟩ ⟨hE₁, hE₂⟩ =>
+    inside_not_on (circle_eq hE₁ hE₂ hC₁ hC₂ rfl ▸ hP₂) hP₁
 
 /-- **III.6 from Diagram-segment 2 and Generalities 3.** Circles touching within are two
 circles through one point, so Diagram-segment 2 again forbids a common centre. Circles
@@ -192,9 +193,10 @@ without with Generalities 3, before anything is drawn; for contact within it tak
 steps, and uses Diagram-segment 2 only for the step he leaves tacit, that E and B are two
 points. -/
 theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
-  rintro C F ABC CDE (⟨hC₁, hC₂, hne, -⟩ | ⟨hC₂, hC₁, hne, -⟩ | ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
-  · exact hne (circle_eq hF₁ hF₂ hC₁ hC₂ rfl)
-  · exact hne (circle_eq hF₂ hF₁ hC₂ hC₁ rfl)
+  rintro C F ABC CDE (⟨hC₁, hC₂, ⟨P, hP, hP_in⟩, -⟩ | ⟨hC₂, hC₁, ⟨P, hP, hP_in⟩, -⟩ |
+    ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
+  · exact inside_not_on (circle_eq hF₂ hF₁ hC₂ hC₁ rfl ▸ hP_in) hP
+  · exact inside_not_on (circle_eq hF₁ hF₂ hC₁ hC₂ rfl ▸ hP_in) hP
   · exact hout F (centre_inside hF₁) (centre_inside hF₂)
 
 /-- **III.5 read with crossing.** If a point P of one circle is within the other, and the
@@ -205,13 +207,19 @@ so, for neither has a point within the other. Our III.5 reads "cut" as meeting a
 points (`CirclesMeet`), which a circle and its copy do, and there Diagram-segment 2 or
 Circle 4 is needed (the catalogue, under III.5). The same proof gives III.6 for circles
 touching within, read with a point of the inner circle within the outer. -/
-theorem III_5_crossing {C P E : Point} {ABC CDG : Circle} (hC₁ : OnCircle C ABC)
-    (hC₂ : OnCircle C CDG) (hP₂ : OnCircle P CDG) (hP₁ : InsideCircle P ABC) :
-    ¬ (Centre E ABC ∧ Centre E CDG) := by
-  rintro ⟨hE₁, hE₂⟩
+theorem III_5_crossing : type_of% @Elements.BookIII.Prop5 := by
+  rintro E ABC CDG ⟨⟨_, C, _, _, _, hC₁, hC₂⟩, -, ⟨P, hP₂, hP₁⟩⟩ ⟨hE₁, hE₂⟩
   have h : ‖E P‖ < ‖E C‖ := len_lt_of_inside hE₁ hC₁ hP₁
   rw [Definition15 hE₂ hP₂ hC₂] at h
   exact lt_irrefl _ h
+
+/-- **III.5 from Diagram-segment 3** (probe; not in brief 0008's plan). F, a point of ABC,
+is as far from E as C is (Definition I.15); so it is on CDG (`on_circle_of_len_eq`, the
+half of Diagram-segment 3 that Definition 15 does not give), within which it lies
+(Generalities 4). -/
+theorem III_5_radius : type_of% @Elements.BookIII.Prop5 := by
+  rintro E ABC CDG ⟨⟨_, C, _, _, _, hC₁, hC₂⟩, ⟨F, hF₁, hF₂⟩, -⟩ ⟨hE₁, hE₂⟩
+  exact inside_not_on hF₂ (on_circle_of_len_eq hE₂ hC₂ (Definition15 hE₁ hF₁ hC₁))
 
 /-! ## Hypotheses our measure of circumferences leaves idle
 
@@ -417,15 +425,22 @@ info: 'Audit.III_2_outside' depends on axioms: [propext, Classical.choice, Quot.
 #guard_msgs in
 #print axioms Audit.III_2_outside
 
-/-- info: 'Audit.III_5' depends on axioms: [Classical.choice, Elements.Tacit.circle_eq] -/
+/--
+info: 'Audit.III_5' depends on axioms: [Classical.choice, Elements.Tacit.circle_eq, Elements.Tacit.inside_not_on]
+-/
 #guard_msgs in
 #print axioms Audit.III_5
 
 /--
-info: 'Audit.III_6' depends on axioms: [Classical.choice, Elements.Tacit.centre_inside, Elements.Tacit.circle_eq]
+info: 'Audit.III_6' depends on axioms: [Classical.choice,
+ Elements.Tacit.centre_inside,
+ Elements.Tacit.circle_eq,
+ Elements.Tacit.inside_not_on]
 -/
 #guard_msgs in
 #print axioms Audit.III_6
+
+#print axioms Audit.III_5_radius
 
 /--
 info: 'Audit.III_5_crossing' depends on axioms: [Classical.choice,

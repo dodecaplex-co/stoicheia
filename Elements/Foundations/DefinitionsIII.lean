@@ -91,10 +91,11 @@ def Touches (A B : Point) (α : Circle) : Prop :=
     (∃ P : Point, OnLine P L ∧ OnCircle P α) ∧ ¬ LineMeetsCircle L α
 
 /-- **Definition III.3**, contact within. The circles `α` and `β` touch one another
-internally at `C`, `β` within `α`: they meet at `C`, they are two circles, and `β` does
-not cut `α`, for no point of `β` falls outside `α`. -/
+internally at `C`, `β` within `α`: they meet at `C`, `β` has passed within `α`, for a point
+of `β` is within `α`, and `β` does not cut `α`, for no point of `β` falls outside `α`. -/
 def TouchesInternally (α β : Circle) (C : Point) : Prop :=
-  OnCircle C α ∧ OnCircle C β ∧ α ≠ β ∧ ∀ P : Point, OnCircle P β → ¬ OutsideCircle P α
+  OnCircle C α ∧ OnCircle C β ∧ (∃ P : Point, OnCircle P β ∧ InsideCircle P α) ∧
+    ∀ P : Point, OnCircle P β → ¬ OutsideCircle P α
 
 /-- **Definition III.3**, contact without. The circles `α` and `β` touch one another
 externally at `C`: they meet at `C`, and neither cuts the other, for no point is within
@@ -106,6 +107,12 @@ def TouchesExternally (α β : Circle) (C : Point) : Prop :=
 one within the other, or externally. -/
 def CirclesTouch (α β : Circle) (C : Point) : Prop :=
   TouchesInternally α β C ∨ TouchesInternally β α C ∨ TouchesExternally α β C
+
+/-- **Definition III.3**, circles that cut one another: they meet at two points, and each
+passes within the other, for a point of `α` is within `β`, and a point of `β` within `α`. -/
+def CirclesCut (α β : Circle) : Prop :=
+  CirclesMeet α β ∧ (∃ P : Point, OnCircle P α ∧ InsideCircle P β) ∧
+    ∃ P : Point, OnCircle P β ∧ InsideCircle P α
 
 /-- **Definitions III.6 and III.9.** The circumference `BKC` of the circle `α`: the part
 of `α` from `B` to `C` on the side of the straight line `BC` where `K` is. It is measured
