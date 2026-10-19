@@ -1,6 +1,6 @@
 # The model behind the axioms
 
-Stoicheia's proofs rest on 87 axioms: Postulates 1 to 5, Definition 15, and 81 tacit
+Stoicheia's proofs rest on 79 axioms: Postulates 1 to 5, Definition 15, and 73 tacit
 rules, most of them the rules of System E (Jeremy Avigad, Edward Dean and John Mumma, ["A
 formal system for Euclid's *Elements*"](https://doi.org/10.1017/S1755020309990098), 2009).
 Lean checks that
@@ -9,18 +9,18 @@ at once. If they could not, every certificate would be worthless, because anythi
 from a contradiction.
 
 This page gives the reasons for thinking they can. It reads the words in the ordinary
-plane, goes through the 87 axioms one at a time, says why each one holds there, and shows
+plane, goes through the 79 axioms one at a time, says why each one holds there, and shows
 the numbers from the programs in this folder that test each one against the plane. It
 does the same in the hyperbolic plane, where Postulate 5 fails and every other axiom
 passes the tests. It ends with [the formal model](#the-formal-model), in which Lean checks
-that the ordinary plane satisfies every one of the 87, and with [what the evidence shows,
+that the ordinary plane satisfies every one of the 79, and with [what the evidence shows,
 and what it does not](#what-this-shows-and-what-it-does-not).
 
 ## The plane
 
 The words Euclid leaves undefined are `opaque` in Lean
 ([Words.lean](../../Elements/Foundations/Words.lean)): Lean knows nothing of them but what
-the axioms say. So any reading of the words that makes all 87 axioms true is a model.
+the axioms say. So any reading of the words that makes all 79 axioms true is a model.
 Here is ours.
 
 | Word | In the plane |
@@ -66,15 +66,15 @@ conclusion says that a point exists, the program constructs one and checks it.
 - **[search.py](search.py)** draws configurations at random, biased hard toward the
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
-- **[exhaustive.py](exhaustive.py)** visits every configuration on small grids, 70 of
-  the axioms in all, degenerate configurations included.
+- **[exhaustive.py](exhaustive.py)** visits every configuration on small grids, 63 of
+  the axioms and the eight derived properties in all, degenerate configurations included.
 - **[structured.py](structured.py)** builds each axiom's pattern of hypotheses on purpose,
   for the axioms whose hypotheses chance rarely meets (three straight lines through one
   point, a right angle, two circles through a common point), over a large lattice and
   over fractions.
-- **[mutations.py](mutations.py)** weakens 15 axioms on purpose, by dropping or loosening
-  one guard, and checks that each weakened axiom has a counterexample. So the harness can
-  see a false axiom when there is one.
+- **[mutations.py](mutations.py)** weakens 15 rules on purpose, by dropping or loosening
+  one guard, and checks that each weakened rule has a counterexample. So the harness can
+  see a false rule when there is one.
 - **[grid_check.py](grid_check.py)** and **[angle_check.py](angle_check.py)** are a second
   opinion, written separately: the incidence, order and circle rules exactly on a grid,
   and the angle, area, Postulate 4, Postulate 5 and superposition rules in floating point.
@@ -216,6 +216,12 @@ Every other axiom's hypotheses are met, exactly, thousands of times or more.
 
 Names are those in `Elements.Tacit` unless they are postulates or Definition 15.
 
+Eight former axioms are now theorems with the same names and types:
+`adjacent_eq_of_right`, `not_same_side_of_circles_meet`, `centre_unique`,
+`inside_of_between`, `exists_point_outside_circle`, `line_meets_circle_of_opposite_sides`,
+`triple_incidence3` and `inside_of_angle_add`. Their numerical configurations remain in
+[derived.py](derived.py), reported separately from the locked axioms.
+
 ### The postulates and Definition 15
 
 | Axiom | In the plane | Why it holds |
@@ -250,7 +256,6 @@ Each kind of magnitude is the real numbers of at least 0, with their own `0`, `+
 | `exists_point_opposite_side` | a point on the other side of `L` | `B`'s mirror image in `L`, and infinitely many more, lie in the other open half-plane. |
 | `exists_point_on_circle` | a point on `α` | A circle of positive radius has infinitely many points. |
 | `exists_point_inside_circle` | a point inside `α` | The open disc is infinite. |
-| `exists_point_outside_circle` | a point outside `α` | Any point farther from the centre than the radius. |
 | `line_circle_between` | a line from a point `B` inside to a point `C` outside crosses the circle between them | Along the segment the distance from the centre is continuous, less than the radius at `B` and more at `C`, so it equals the radius somewhere strictly between. |
 | `line_circle_beyond` | a line through `B` inside, produced beyond `B` away from `C`, crosses the circle there | Going from `B` away from `C`, the distance from the centre grows without bound, so it passes the radius at a point `A` with `B` between `A` and `C`. |
 | `circles_meet_same_side`, `circles_meet_opposite_side` | two circles that cut, with centres on `L`, cut on each side of `L` | If the circles differ, their centres differ (concentric circles that differ share no point), `L` is the line of centres, and the two common points are mirror images in it, off it, one on each side. If the circles are the same, `L` is any line through the centre, and the circle reaches both sides. |
@@ -260,7 +265,6 @@ Each kind of magnitude is the real numbers of at least 0, with their own `0`, `+
 | Axiom | Why it holds |
 |---|---|
 | `line_unique` | Two different points lie on only one line. |
-| `centre_unique` | A circle has one centre. |
 | `centre_inside` | The centre is at distance 0, less than the positive radius. |
 | `inside_not_on` | Nearer than the radius is not at the radius. |
 
@@ -309,23 +313,19 @@ lines are different and the points are not `A`.
 |---|---|
 | `triple_incidence1` | `C` is on `D`'s side of `L` and on `B`'s side of `N`: that is the open angle `BAD`, which is less than two right angles because `L ≠ N`. The ray from `A` through `C` lies inside it and splits it, so the line `AC` has `B` and `D` on opposite sides. |
 | `triple_incidence2` | `B` and `D` are on opposite sides of `M`, so the segment `BD` crosses `M` at a point `X`. `X` is not `A` (else `D` would be on `L`), so by Pasch `X` is on `D`'s side of `L`, which is `C`'s: `X` is on the ray from `A` through `C`. By Pasch again `X` is on `B`'s side of `N`, and so is `C`, on the same ray. |
-| `triple_incidence3` | `C` lies inside the angle `BAD`, so the angle `CAD` lies inside it too, and `E`, inside `CAD`, is on `D`'s side of `L`, which is `C`'s. |
 
 ### Circles
 
 | Axiom | Why it holds |
 |---|---|
 | `between_of_inside_chord` | A line meets a circle at most twice, so `B` and `C` are those two points. The points of the line inside the circle are exactly the open chord between them, and `A` is one. |
-| `inside_of_between` | The disc is strictly convex: a point strictly between two points of the closed disc is strictly inside. |
-| `outside_of_between` | If `B` were inside or on the circle, `C`, strictly between `A` and `B`, would be inside by the last rule. |
-| `not_same_side_of_circles_meet` | Two different circles with two common points have different centres, and the common points are mirror images in the line of centres, off it. The guard `α ≠ β` matters: two points of one circle can lie on one side. |
+| `outside_of_between` | If `B` were inside or on the circle, `C`, strictly between `A` and `B`, would be inside by strict convexity of the disc. |
 
 ### Intersections
 
 | Axiom | Why it holds |
 |---|---|
 | `lines_meet_of_opposite_sides` | `f` changes sign along the segment `AB`, so it is 0 somewhere on it: `M` (through `A` and `B`) meets `L`, and differs from it because `A` is off `L`. |
-| `line_meets_circle_of_opposite_sides` | The segment `AB` crosses `L` at a point strictly between `A` and `B`, which is strictly inside the circle by convexity; a line through a point inside cuts the circle twice. |
 | `line_meets_circle_of_inside` | The distance from the centre to the line is at most that to `A`, which is less than the radius, so the line cuts the circle twice. |
 | `circles_meet_of_on_inside_outside` | The circumference of `α` has a point inside `β` (namely `A`). It also has a point outside `β`: otherwise all of `α`'s closed disc, the convex hull of its circumference, would lie in `β`'s closed disc, and `B` could not be outside `β`. A circle with points inside and outside another circle crosses it on both arcs between them, so twice. This is the corrected form of System E's Intersection 4 that we owe to [LeanEuclid](https://github.com/loganrjmurphy/LeanEuclid) (Logan Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si, 2024), with our thanks; as printed, with `A` "on or inside" `α`, it fails for a small circle inside a large one. |
 | `circles_meet` | With `d` the distance between the centres and `r`, `s` the radii: `A` on `α` and inside `β` gives `|r − d| < s`, and `B` on `β` and inside `α` gives `|s − d| < r`. Together, `|r − s| < d < r + s`, which is exactly when two circles cut in two points (and rules out `d = 0`). |
@@ -354,8 +354,6 @@ lines are different and the points are not `A`.
 | `angle_eq_zero_of_same_ray` | `B` and `C` are on `L`, different from `A`, and `A` is not between them, so they are on one ray from `A`, and the angle is 0. |
 | `same_ray_of_angle_eq_zero` | An angle of 0 between rays from `A` makes them one ray, so `C` is on `L` and `A` is not between `B` and `C`. |
 | `angle_add_of_inside` | `L ≠ M`, so the angle `BAC` is less than two right angles, and `D`, on `B`'s side of `M` and `C`'s side of `L`, is inside it. A ray inside an angle splits it into two that add up. |
-| `inside_of_angle_add` | Angles between rays from `A` obey the triangle inequality on the circle of directions, with equality only when `D`'s direction lies on the shorter arc from `B`'s to `C`'s. `D` is off both lines, so it is strictly inside the angle, which is the two side conditions. The guard `L ≠ M` matters: with `B` and `C` on one ray, a `D` anywhere off the line would do. |
-| `adjacent_eq_of_right` | `C` is between `A` and `B`, so `∠ A C D + ∠ D C B = π`, and one of them is π/2. |
 | `angle_eq_of_same_rays` | `B'` is on the ray from `A` through `B`, and `C'` on the ray through `C`, so the rays, and the angle, are the same. |
 | `area_eq_zero_of_on_line` | Corners on one line make no area. |
 | `on_line_of_area_eq_zero` | With `A ≠ B`, no area means `C` is on the line `AB`. |
@@ -396,7 +394,7 @@ doing work, and the harness can see a false rule.
 ## The hyperbolic plane
 
 The book's certificates say which proofs use Postulate 5. They do not say, by themselves,
-that the other 86 axioms could not do its work in disguise: a proof avoiding the named
+that the other 78 axioms could not do its work in disguise: a proof avoiding the named
 Postulate 5 might still lean on some other rule just as strong. Astra's review asked for
 the way to settle that, a model of the other axioms in which Postulate 5 fails, and
 [hyperbolic.py](hyperbolic.py) tests such a model numerically, which supports the answer
@@ -437,7 +435,7 @@ along any ray, on either side, so superposition holds. Marvin Jay Greenberg's
 [*Euclidean and Non-Euclidean Geometries*](../../docs/reading.md#greenberg2008euclidean)
 tells this story in full, models and all.
 
-**What it shows.** It supports, numerically, that none of the other 86 axioms carries the
+**What it shows.** It supports, numerically, that none of the other 78 axioms carries the
 parallel postulate in disguise. If every one of them does hold in the hyperbolic plane,
 as the hand arguments say, then whatever follows from them without Postulate 5 is true
 there, and a statement that fails there, such as I.32's "the three interior angles of the
@@ -467,7 +465,7 @@ as Astra advised, with our thanks. The model has four parts.
    states the same words as the fields of a Lean structure, `Signature`, the carriers of
    the magnitudes with their zero, addition and order among them, and the laws as a
    proposition about any such structure, `Laws`, with Postulate 5 apart from the other
-   86. A Lean program generates the laws from the elaborated declarations themselves, not
+   78. A Lean program generates the laws from the elaborated declarations themselves, not
    from their printed text, and every build checks the translation: taken back to the
    library's words, each law is compared with the library's declaration, by the kernel
    and expression by expression, and no word of the project is left untranslated.
@@ -477,11 +475,11 @@ as Astra advised, with our thanks. The model has four parts.
    distance, the area by a determinant, and `∟` as π/2. One care: Mathlib's unoriented
    angle is π/2 when a point is repeated, and our reading needs 0 there, so the plane's
    angle is Mathlib's only when both arms are nonzero.
-3. **Every law of the lock proved in the plane**, degenerate cases included: all 87, each
+3. **Every law of the lock proved in the plane**, degenerate cases included: all 79, each
    a theorem of its own. The hardest were taken first, since they might have reshaped the
    representation: where circles meet, and on which side; angle addition, both ways; the
    side on which Postulate 5's lines meet; superposition, reflections included; the area
-   rules; and the finite `avoid` lists. The generator gathers the 87 into
+   rules; and the finite `avoid` lists. The generator gathers the 79 into
    `euclidean_laws`, which says that the plane satisfies `Laws`, with no hypothesis left,
    and `model_exists : ∃ S : Signature, Laws S` follows. Every build checks that nothing
    in the model imports the library, and that beneath each of these proofs lie only
@@ -510,7 +508,7 @@ package is built, and how each check works, is in its [README](../../model/READM
   ([#73](https://github.com/jackChallis/stoicheia/issues/73)). So the axioms cannot
   contradict one another unless those foundations do.
 - **The interpretation** is the reading of the words above, with a short argument for
-  each of the 87 axioms and many configurations tested against each, exactly wherever
+  each of the 79 axioms and many configurations tested against each, exactly wherever
   the coordinates allow. The formal model makes the same reading in Lean and proves each
   law there, so that the axioms can all be true together no longer rests on these
   arguments and tests alone.
@@ -518,7 +516,7 @@ package is built, and how each check works, is in its [README](../../model/READM
   checks, and on the axioms being the ones this page and the formal model were checked
   against, which [lock.sha256](lock.sha256) and
   [model/lock.sha256](../../model/lock.sha256) pin.
-- **Non-derivability is not proved.** That the other 86 axioms cannot give Postulate 5,
+- **Non-derivability is not proved.** That the other 78 axioms cannot give Postulate 5,
   and that a statement failing in the hyperbolic plane cannot be proved without it, rest
   on the numerical hyperbolic check [above](#the-hyperbolic-plane) until a hyperbolic
   model is built in Lean. A test can find a counterexample but cannot show that there is
