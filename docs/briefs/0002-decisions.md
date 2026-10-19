@@ -1446,8 +1446,11 @@ findings:
   `between_of_area_add` in [`Elements/Figure/AreaRules.lean`](../../Elements/Figure/AreaRules.lean);
   and `exists_point_on_circle` in
   [`Elements/Figure/CirclePoints.lean`](../../Elements/Figure/CirclePoints.lean), all under
-  `Elements.Tacit`. No proof rests on the rule it replaces, on another retired rule, on
-  Circle 2 or Circle 3, or on superposition directly, and none cites a proposition. No
+  `Elements.Tacit`. Across both waves, all 39 keep their original signatures, binder names
+  included: `pasch3` keeps `hB` and `same_side_or` keeps `h`. The 31 replacements use earlier
+  retired rules as proved theorems, and their theorem dependencies are acyclic. No
+  replacement's axiom closure contains a retired axiom, Circle 2, Circle 3 or superposition,
+  and none cites a proposition. No
   certificate entry rests on Circle 2 or Circle 3, and III.1 and its porism rest on 38
   tacit rules each. The constraints cost retirements: within the derivations found, every
   derivation of `between_symm`, `between_of_inside_chord` and `line_circle_between` rests
@@ -1461,22 +1464,40 @@ findings:
   [`tests/model/search.py`](../../tests/model/search.py) and
   [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py), the other laws in their
   order and the rest of each file as it was; [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
-  and [`tests/model/results/`](../../tests/model/results/), from `run.py --full --write`; and
-  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json): the
-  measured counts of III.1 and its porism (38 tacit rules each) and new pins that III.1,
-  III.1 Por., III.2 and II.14 rest on none of the 31. Three changes to the checks come
-  with them, each in a commit of its own so that they can land apart: the 31 become
+  follows the smaller lock. The results of `run.py --full --write` are recorded in
+  [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
+  [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
+  [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
+  [`tests/model/results/hyperbolic.txt`](../../tests/model/results/hyperbolic.txt),
+  [`tests/model/results/mutations.txt`](../../tests/model/results/mutations.txt),
+  [`tests/model/results/search-seed1.txt`](../../tests/model/results/search-seed1.txt),
+  [`tests/model/results/search-seed2.txt`](../../tests/model/results/search-seed2.txt),
+  [`tests/model/results/search-seed3.txt`](../../tests/model/results/search-seed3.txt),
+  [`tests/model/results/structured.txt`](../../tests/model/results/structured.txt) and
+  [`tests/model/results/summary.txt`](../../tests/model/results/summary.txt).
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates the measured counts for
+  III.1, its porism and III.2; its axiom examples use retained assumptions or identify the
+  retired rules as theorems. [`review/SCHEMA.md`](../../review/SCHEMA.md) marks the overlap
+  examples that treated Generalities 3 as an axiom as historical; its fields, requirements
+  and worked TOML examples stay unchanged.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) records
+  the measured counts of III.1 and its porism (38 tacit rules each) and new pins that III.1,
+  III.1 Por., III.2 and II.14 rest on none of the 31. The accompanying check changes must
+  land separately from the content they judge, under WORKFLOW, section 10: the 31 become
   derived properties in [`tests/model/derived.py`](../../tests/model/derived.py), which
   [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py) and
   [`tests/model/structured.py`](../../tests/model/structured.py) run by name, adding runs
   for the ones they did not yet sample; [`scripts/safe_push.py`](../../scripts/safe_push.py)'s
   `LAW_GLOBALS` loses the nine entries no remaining law uses, so its test that each entry is
   needed still passes, and [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py)'s
-  example decorator `gs_ti()` becomes `gs_convex('in')`; and, in the formal model, Intersections 2
-  and 3, retired, reach `LineMeetsCircle`, a word no locked law reaches now and so one the
-  generator no longer writes: they use the hand copy of the word, checked against the
-  library's, and are compared with their declarations by the kernel through `original`
-  instead of by `comparePlanted`. The formal model's generated laws, checks and assembly
+  example decorator `gs_ti()` becomes `gs_convex('in')`; and, in the formal model,
+  `model/Check/Generator.lean` extends `comparePlanted` to check the hand `LineMeetsCircle`'s
+  type and body against the library's definition before translating it, including binder
+  kinds and without unfolding. `model/Check/Intersections.lean` uses it for Intersections 2
+  and 3, retaining their kernel comparisons through `original` and a guarded regression:
+  making Intersection 3's point A explicit passes `rfl` but fails the structural comparison.
+  All 39 retired rules have direct structural comparisons, including binder kinds.
+  The formal model's generated laws, checks and assembly
   follow from its generator; its proofs in the plane stay, as derived facts, and
   `model_exists` stays unconditional. Proposition and porism statements, definitions and
   `--` lines are unchanged.

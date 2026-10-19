@@ -490,8 +490,9 @@ The same day, by the owner's decision ("Please do both. 79 is rather large with 
 books in front of us"), 31 more rules became theorems, taking the lock from 79 axioms to
 48. Euclid's six stay assumptions, and no certificate entry rests on Circle 2 or Circle 3.
 The 31 are proved in four Book Zero modules that `Elements/Figure/Basics.lean` imports, so
-every proposition reaches them as before; none cites a proposition, and none rests on
-Circle 2 or 3, on another retired rule or on itself.
+every proposition reaches them as before. They use earlier retired rules as proved
+theorems, and their theorem dependencies are acyclic. No replacement's axiom closure
+contains a retired axiom, Circle 2 or Circle 3, and none cites a proposition.
 
 | Theorem under `Elements.Tacit` | System E label | Derivation and home |
 |---|---|---|

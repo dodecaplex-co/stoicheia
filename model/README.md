@@ -303,12 +303,15 @@ the original means. These checks do that, at every build.
   now theorems with the same names and types. Their hand translations are compared
   directly with the library declaration's type by `comparePlanted`, including binder kinds,
   which works for an axiom or a theorem and remains when a generated assumption field
-  disappears; the exceptions are Intersections 2 and 3, which reach `LineMeetsCircle`, a
-  word no locked law reaches since their retirement and so one the generator no longer
-  writes: they use the hand copy of the word in `Model/Laws/intersections.lean`, which is
-  checked against the library's word, and are compared with their declarations by the
-  kernel through `original`, up to unfolding. Their concrete plane proofs and pinned axiom
-  audits remain as evidence for these derived facts.
+  disappears. This includes Intersections 2 and 3, which reach `LineMeetsCircle`, a word no
+  locked law reaches since their retirement and so one the generator no longer writes.
+  Before translating their hand copy in `Model/Laws/intersections.lean`, `comparePlanted`
+  checks its type and body against the library's definition, including binder kinds and
+  without unfolding. It then compares both rules with their library declarations,
+  including binder kinds. Their kernel comparisons through `original`, concrete plane
+  proofs and pinned axiom audits remain. A guarded regression in
+  `Check/Intersections.lean` confirms that making Intersection 3's point A explicit passes
+  `rfl` but fails the structural comparison.
 - **The round trip, by syntax.** [Check/RoundTrip.lean](Check/RoundTrip.lean) takes each
   law and word as Lean elaborated them from `Model/Laws.lean`, translates each back, every
   field of `S` and every word over it replaced by the library's word, and compares it with
