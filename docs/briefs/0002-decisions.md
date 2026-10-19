@@ -1407,6 +1407,56 @@ findings:
   stage 3 statements it checks (WORKFLOW, section 10). FORMALIZATION, section 7, lists the
   policy and the two tests.
 
+- **Stage 4 in the edition: `Foot` in the foundations, III.14's and III.15's companions, III.25
+  restated.** Every statement of stage 4 of [brief 0006](0006-statements.md) is proved
+  (#90, with the routes its section "Routes as proved" records, #91), and moves from
+  `Staging/Stage4/` to its home in that brief's table, in the stage's migration
+  ([#28](https://github.com/jackChallis/stoicheia/issues/28)), a move the coordinator
+  delegated to the stage's integrator. The one definition it uses is approved for the
+  foundations with the class of brief 0006's definitions (decision 4 of brief 0006, as the
+  tracking issue, [#50](https://github.com/jackChallis/stoicheia/issues/50), records it), and
+  this entry records it: `Foot`, the foot of the perpendicular (Definitions III.4 and III.5,
+  extended to a straight line through the point, whose foot is the point itself), goes into
+  `Elements/Foundations/DefinitionsIII.lean` as frozen, after `Arc.Congruent`, so that no
+  definition before it moves. It is not an assumption. `Foot.exists` [I. 12] and
+  `Foot.unique` [I. 17] go to `Elements/BookIII/Squares.lean`, the home the brief names. The
+  statements of III.14, III.15 and III.25 change, each as brief 0006 froze it, and no `--`
+  line changes: III.14 keeps its statement and gains the companion "III.14 general", with
+  its helper `Prop14.diameter_sum`; III.15 keeps its statement and gains "III.15
+  le_diameter" and "III.15 nearer"; and III.25 is restated, `Prop25` now the construction
+  core, which is given the segment's points as a predicate and never sees a circle or a
+  centre, with the companions "III.25 complete", which carries "of which it is a segment"
+  by III.9, and "III.25 of_circle", which keeps III.25's statement before, proved from the
+  core, `Prop25.meets` and `Prop25.complete`. The meeting fact for an arc, `Prop25.meets`,
+  proved by III.2, moves with III.25 into `Elements/BookIII/Prop25.lean`, as the entry on
+  stage 3's ground off Circle 2 planned. The five companions join `Elements/Companions.lean`.
+  The staged copies are deleted, and `Staging/Stage4/` with them; brief 0008's staged checks
+  in `Staging/Centre/` follow the move, naming `Prop25.of_circle` in `Elements/`, and no
+  staged statement changes. The records of III.14, III.15 and III.25 are rewritten for their
+  reviewer and left unstamped: III.14's and III.15's scopes are full with their companions,
+  the `diameters-excluded` tag going, and III.25's is full for the pair, the core with
+  `Prop25.complete`. On 19 October 2026, the route of "III.15 nearer" is accepted, as its
+  record describes:
+  for two straight lines not through the centre it constructs the missing diameter and
+  calls the already proved III.15; for a nearer diameter it uses `Prop15.le_diameter`.
+  The later example deriving the old statement from the companions checks their interface;
+  it is not a proof on which either companion depends ("Routes as proved", under III.15
+  nearer). The protected files this changes are three.
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) is rewritten by
+  `python3 scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the same 87, byte
+  for byte, and its `[vocabulary]` grows from 104 words to 105, by `Foot`, which the
+  statements of "III.14 general" and "III.15 nearer" use.
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is renewed, with a line in its
+  comment saying why, and [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no
+  word an axiom reaches, has changed, so its account stands, and `tests/model/run.py --fast`
+  and `--ties` pass. The formal model's copy of the hash, `model/lock.sha256`, is renewed
+  with it, and `model/Model/Laws.lean` is written again by `lake lean Check/Write.lean` in
+  `model/`, the line of the hash alone changing; no law of the model changes, and the model
+  builds. [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
+  accepts or checks: `FRONT_LEAN_III` gives Definitions III.4 and III.5 `Foot` beside the
+  perpendiculars, as the stage 3 entry above planned. It is not a check change (WORKFLOW,
+  section 10); the regenerated pages show it.
+
 ## 19 October 2026
 
 - **The edition does not name its owner.** The owner asked that Stoicheia not be presented
@@ -1659,3 +1709,16 @@ findings:
   `tests/model/lock.sha256`, `model/lock.sha256`, `Audit.lean`, `Audit/Crossing.lean`,
   `Audit/Overlaps.lean` and `Audit/screen.py`. The labels and
   security review required by WORKFLOW remain part of integration.
+
+- **Stage 4 integrated with the centre and mixed-angle work (19 October 2026).** The stage 4
+  entry above records its migration from stage 3 alone. In this combined revision,
+  `Certificate/axioms.lock` is regenerated by `python3 scripts/check_fidelity.py --write-lock`:
+  the 88 axioms are byte-identical to the preceding integration, and the vocabulary is its
+  121 words plus `Foot`, 122 in all. Both `model/lock.sha256` and
+  `tests/model/lock.sha256` keep the dated notes from both branches and pin the new hash;
+  `model/Model/Laws.lean` is regenerated offline from the same laws. The companions list
+  keeps both sets in book order. `scripts/render.py` stays exactly as in the preceding
+  integration; stage 4's renderer wording is assigned to the tooling change that precedes
+  this content. `Audit/Overlaps.lean` renews the dependency pins of `Audit.III_24_measure`,
+  `Audit.III_26_any` and `Audit.III_27_any` from Lean's output: III.1's construction now
+  brings `Tacit.exists_centre` into each. No proof, statement or check is weakened.

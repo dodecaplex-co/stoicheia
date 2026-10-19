@@ -41,4 +41,13 @@
 #
 # Renewed on 19 October 2026 for the merged vocabulary of stage 3, mixed angles and
 # brief 0008, section 7: 88 axioms, unchanged, and 121 words of vocabulary.
-9dbcd71159ca55d5849813db540460316e436eccdf7d892af0496e71ec67cf7a  Certificate/axioms.lock
+#
+# Renewed on 18 October 2026, when the word of stage 4's statements (brief 0006) joined the
+# vocabulary: `Foot`, the foot of the perpendicular, which only the companions of III.14 and
+# III.15 reach; the 87 axioms and every word already locked are unchanged, byte for byte, so
+# MODEL.md's account stands as it was.
+#
+# Renewed on 19 October 2026 for stage 4 with stage 3, mixed angles and brief 0008,
+# section 7: 88 axioms, byte-identical to the preceding integration, and its 121 words
+# plus Foot, 122 words of vocabulary. No model law changes.
+212da1958bf10b0b37bdf94bd0ab7ccc187712125a4e6bd80a871d3a064f2051  Certificate/axioms.lock

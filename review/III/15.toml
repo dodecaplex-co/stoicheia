@@ -1,24 +1,32 @@
 # review/III/15.toml
 [statement]
-scope = "restricted"
-hypotheses = [
-  "the diameter AD is shown greater than BC only beside a second straight line FG in the circle, more remote from the centre than BC: F and G on the circle, K the foot of the perpendicular EK, and `hnearer : ‖E H‖ < ‖E K‖`",
-]
-note = "The diameter's bound on BC is proved beside a straight line FG more remote than BC, as Euclid sets it out; that some such FG exists is not proved in Lean."
-short = "the diameter's bound only beside a more remote straight line"
+scope = "full"
+note = "With its companions: `Prop15.le_diameter` bounds every straight line by the diameter, `Prop15.nearer` compares any two; `Prop15` keeps Euclid's figure."
+companions = ["III.15 le_diameter", "III.15 nearer"]
 fingerprint = "sha256:8f609380c65c4ddf"
 
 [route]
 kind = "euclid"
+note = "`Prop15.le_diameter` is Euclid's step, two radii together greater than a straight line [I. 20], said of BE, EC and BC without MN. `Prop15.nearer` takes two straight lines not through the centre from `Prop15`, by his argument [III. 14, I. 24], and a nearer diameter from `Prop15.le_diameter`."
 
 [representation]
 tags = ["centre-given"]
-note = "The centre E and the perpendiculars EH, EK are given, since Definition III.5 measures from them, and \"nearer\" is `‖E H‖ < ‖E K‖`."
+note = "The centre E and the perpendiculars EH, EK are given, since Definition III.5 measures from them, and \"nearer\" is `‖E H‖ < ‖E K‖`. The companion `Prop15.nearer` is given the feet as `Foot`, the foot of the perpendicular, which is E itself for a straight line through E, so that the nearer may be a diameter, at no distance."
 
 [[passage]]
 at = "Then, since BC is nearer to the centre and FG more remote"
 kind = "given"
 note = "The statement assumes it (`hnearer : ‖E H‖ < ‖E K‖`), for Definition III.5 is how it says that BC is nearer; no Lean is needed beneath."
+
+[[passage]]
+at = "Again, since AE is equal to EM, and ED to EN"
+kind = "case"
+note = "Euclid shows AD greater than BC through MN, beside the more remote FG, and `Prop15` keeps his figure. `Prop15.le_diameter` says it of every straight line BC in the circle, without MN: BE, EC are together equal to AD and greater than BC [I. 20], and only a straight line through the centre is equal to the diameter."
+
+[[passage]]
+at = "Therefore the diameter AD is greatest and BC greater than FG"
+kind = "case"
+note = "Euclid's nearer straight line BC is not through the centre. `Prop15.nearer` lets it be a diameter, at no distance, and `Prop15.le_diameter` then makes FG the less, since FG, more remote, cannot pass through the centre."
 
 [review]
 stage = "exceptions"

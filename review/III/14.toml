@@ -1,19 +1,22 @@
 # review/III/14.toml
 [statement]
-scope = "restricted"
-hypotheses = [
-  "neither AB nor CD passes through the centre (`hE_AB : ¬ Collinear A B E`, `hE_CD : ¬ Collinear C D E`)",
-]
-note = "Proved for straight lines not through the centre; two diameters, or a diameter and another straight line, are not covered."
-short = "straight lines not through the centre"
+scope = "full"
+note = "With its companion: `Prop14.general` takes any two straight lines in the circle, a diameter at no distance; `Prop14` keeps two not through the centre."
+companions = ["III.14 general"]
 fingerprint = "sha256:ab5dba1e761e8618"
 
 [route]
 kind = "euclid"
+note = "The companion takes Euclid's case, two straight lines not through the centre, from `Prop14`. A straight line through the centre is a diameter, two radii together (`Prop14.diameter_sum`), its foot the centre; and of a diameter and another straight line, the diameter is the greater [I. 20]."
 
 [representation]
-tags = ["diameters-excluded", "centre-given"]
-note = "The centre E and the feet F, G of the perpendiculars are given, since Definition III.4 measures from them; the proof still takes III.1's centre and shows that it is E."
+tags = ["centre-given"]
+note = "The centre E and the feet F, G of the perpendiculars are given, since Definition III.4 measures from them; the proof still takes III.1's centre and shows that it is E. The companion is given the feet as `Foot`, the foot of the perpendicular, which is E itself for a straight line through E, so that a diameter is at no distance from the centre (Definition III.4, extended to that case)."
+
+[[passage]]
+at = "Then, since a straight line EF through the centre cuts a straight line AB not through the centre"
+kind = "case"
+note = "Euclid's proof takes AB and CD not through the centre, and `Prop14` asks as much. `Prop14.general` takes diameters too: two diameters are equal, and both at no distance; a diameter is greater than a straight line not through the centre [I. 20], which is at some distance."
 
 [[passage]]
 at = "But in a circle straight lines are said to be equally distant from the centre"

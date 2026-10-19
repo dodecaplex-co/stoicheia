@@ -141,11 +141,13 @@ Heath's brackets give in most of the propositions of Book III.
 - "Let the centre of the circle ABDC be taken [III. 1], and let it be E": Definition III.4 measures from the centre, so our statement names E and the feet F, G. Our proof finds III.1's centre and shows that it is E (`centre_unique`), and I.12 has nothing left to draw.
 - "And AB is equal to CD; therefore AF is also equal to CG": the halves of equal things are equal (`Magnitude.eq_of_add_self_eq`), the step J. L. Heiberg brackets in I.37.
 - I.47, which Heath's bracket gives for "the squares on AF, EF are equal to the square on AE", is said of squares on straight lines (`BookI.Prop47.sq`), as in Book II. "Therefore EF is equal to EG", and in the converse "therefore AF is equal to CG", pass from equal squares to equal straight lines without a word: `BookI.Prop46.sq`, as in I.48.
+- The enunciation speaks of any straight lines in the circle, and the proof takes them "not through the centre", as III.3 does. A diameter is at no distance from the centre, the foot of its perpendicular being the centre itself (`Foot`), and the companion `Prop14.general` takes it: a diameter is two radii together (`Prop14.diameter_sum`), and greater than a straight line not through the centre, by I.20.
 
 ## III.15
 - "Euclid himself assumes that the angle subtended at the centre by MN is greater than the angle subtended by FG, or, in other words, that M, N both fall outside the triangle FEG" (vol. 2, p. 37). Heath gives the reason, that EM, EN are radii, greater than the distances to the points where MN cuts EF, EG. Our proof goes one step further back: MN and FG never meet, for at a common point the triangle it makes with L and K would have two right angles, against I.17. So F and G lie across MN from E, and each point where MN cuts EF or EG is within the circle, and so between L and the end of MN on its side (`Prop15.half`). The two halves together are "the angle MEN greater than the angle FEG".
 - "Let EL be made equal to EH, through L let LM be drawn at right angles to EK and carried through to N": Heath gives no bracket for either: they are I.3 and I.11. K is within the circle by III.2, and L lies between the centre and K, so the given point F of the circle puts L within (`InsideCircle.of_between_centre_of_inside`); the straight line then meets the circle at M and N (`line_circle_beyond`), and it is at right angles to EK on both sides of L (`Prop15.perp`).
 - The feet H and K fall within BC and FG (`foot_between`). Our statement names E and the perpendiculars EH, EK, as Definition III.5 measures from them, so there is nothing to draw by III.1 or I.12.
+- "Therefore AD is greater than BC" comes by MN, which Euclid draws to compare BC with FG, so the proof says it only of a BC with a more remote straight line beside it. The companion `Prop15.le_diameter` needs no MN: BE and EC are two radii, together equal to AD, and greater than BC by I.20, unless BC passes through E and is a diameter too. The companion `Prop15.nearer` lets the nearer straight line be a diameter, its foot the centre (`Foot`); the more remote cannot pass through the centre.
 
 ## III.16
 - "Let DG be drawn from the point D perpendicular to FA": Heath gives no bracket for it: it is I.12.
@@ -201,11 +203,11 @@ Heath's brackets give in most of the propositions of Book III.
 - That equal segments have circumferences equal in measure, which III.26 takes from III.24, is III.24's companion `Prop24.equalMeasure`: a point of the one circumference off its base and its image see the bases under equal angles (I.8), and `Circumference.eq` and `Circumference.whole` do the rest.
 
 ## III.25
-- "Let DB be drawn ... at right angles to AC" assumes that DB reaches the circumference. D is within the circle (III.2), so the straight line meets it (`line_circle_beyond`), on the side of the segment.
+- "Let DB be drawn ... at right angles to AC" assumes that DB reaches the circumference. Our construction is given it, as the one fact it reads off the segment: a straight line drawn from within the base towards the segment meets it. For the arc of a circle it holds: a point between the ends of the base is within the circle (III.2), and the straight line through it meets the circle on each side (`line_circle_beyond`), one meeting point on the segment's side (`Prop25.meets`).
 - "Let DB be drawn through to E": in the first case Euclid takes for granted that AE meets DB produced. The angle ABD is less than a right angle (I.17, ADB being right), so the angles BAE, ABD are less than two right angles, and Postulate 5 gives E (`Postulate5`), beyond D.
 - In the third case "the centre will fall on DB within the segment ABC": the constructed straight line falls within the angle BAD (`BookI.Prop24.within`) and crosses BD between B and D (`crossbar`).
 - Heath gives no bracket for the bisection, the right angle, the angle BAE or "the base AE is equal to the base CE": they are I.10, I.11, I.23 and I.4.
-- Heath's bracket gives [III. 9] for E, which in the first case nothing yet shows to be within the circle; our III.9 does not ask it.
+- Heath's bracket gives [III. 9] for E, which in the first case nothing yet shows to be within the circle; our III.9 does not ask it. The step stands apart from the construction, in the companion `Prop25.complete`: a circle with a centre through A, B and C, three points of the given circle, is that circle.
 
 ## III.26
 - "As in III. 21, if Euclid's proof is to cover all cases, it requires us to take cognisance of 'angles at the centre' which are equal to or greater than two right angles. Otherwise we must deal separately with the cases where the angle at the circumference is equal to or greater than a right angle" (vol. 2, p. 57). Our angles are never straight or reflex, so our proof takes Heath's separate cases, sorted as in III.24 (`Prop24.angle_type`): acute, by III.20; right, where BC and EF are diameters; obtuse, by III.22, which passes to the acute angles in the other segments, as Heath proposes.
@@ -293,7 +295,7 @@ use one.
   straight line is at right angles at A (`Prop1.perpendicular`, used again in III.16 and
   III.19); a straight line produced backwards from a point within the
   circle, so that `line_circle_beyond` meets the circle on the side we want (III.7,
-  III.25, III.30); a side of a triangle, since our I.32 asks for one produced (III.22,
+  III.30); a side of a triangle, since our I.32 asks for one produced (III.22,
   III.32, `Prop24.isosceles`, `Circumference.semicircle`); the radius AD beyond the
   centre D, to the diameter III.16 asks for, in its porism (`Prop16.porism`); DA beyond
   A in III.33; and FB beyond B in III.34, so that the touching line EF runs on through
