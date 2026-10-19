@@ -21,7 +21,7 @@ note = "Euclid puts F beyond A with EF equal to EB. The Lean proves EB greater t
 at = "let the square FH be described on AF"
 kind = "helper"
 helper = "BookI.Prop20"
-note = "Euclid draws the square FH and produces GH to K, taking H within AB and K on CD from the figure. The Lean draws the square by I.46, places H on the ray AB with `onRay_of_angle_eq` after using the assumed rule `Tacit.adjacent_eq_of_right` (System E, Diagram-angle 3), uses I.20 and `OnRay.between_of_len_lt` to put H within AB, finds K with `Prop30.meet`, and uses `Prop30.parallel` (I.30, for which Heath gives no reference here) and `Parallel.between` to establish the parallels and point order that bound the rectangles."
+note = "Euclid draws the square FH and produces GH to K, taking H within AB and K on CD from the figure. The Lean draws the square by I.46, places H on the ray AB with `onRay_of_angle_eq` after using `Tacit.adjacent_eq_of_right` (now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`), uses I.20 and `OnRay.between_of_len_lt` to put H within AB, finds K with `Prop30.meet`, and uses `Prop30.parallel` (I.30, for which Heath gives no reference here) and `Parallel.between` to establish the parallels and point order that bound the rectangles."
 
 [[passage]]
 at = "Now the rectangle CF, FA is FK"
