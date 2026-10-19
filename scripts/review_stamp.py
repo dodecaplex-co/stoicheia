@@ -26,7 +26,7 @@ When a record's fingerprint, `lean` or `text` would change, or it has no commit 
 of its own, `key = "value"`, and is rewritten in place or added at the end of its
 section; nothing else in the file changes.
 
-`--migrate-text` is for the records stamped before `text` was (18 October 2026). It
+`--migrate-text` is for the records stamped before `text` was introduced. It
 writes `text` alone, and only for a record whose text at its own stamp `commit` is its
 text now: what the reviewer read is then what the record says, so the stamp records no
 new reading. Every other record is listed as needing a reader, who reads it and stamps

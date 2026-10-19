@@ -203,7 +203,7 @@ reviewer's account of the reading, and with `fingerprint` set aside, which stamp
 statements: so writing a stamp never changes the text it stamps. Comments, layout and the
 order of keys are not part of the text; every key and value of the other sections is.
 
-A record stamped before `text` was (18 October 2026) may lack it until it gains it as
+A record stamped before `text` was introduced may lack it until it gains it as
 [WORKFLOW](../docs/WORKFLOW.md), section 6, says; `scripts/check_fidelity.py` names each
 record without it in a note. Once every record carries `text`, it is required like the
 other stamps.

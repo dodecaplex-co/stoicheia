@@ -861,6 +861,7 @@ def check_reviews(facts, by_ref) -> None:
     except RuntimeError as e:
         fail(f"review records: {e}")
         return
+    untexted.clear()
     for book, count in BOOKS.items():
         folder = heath.REVIEW / book
         for path in sorted(folder.glob("*.toml")) if folder.exists() else []:
@@ -868,13 +869,19 @@ def check_reviews(facts, by_ref) -> None:
                 fail(f"{rel(path)}: not a proposition of Book {book}")
         for n in range(1, count + 1):
             check_review(facts, by_ref, book, n)
-    if untexted:
-        shown = ", ".join(untexted) if len(untexted) <= 20 else \
-            ", ".join(untexted[:10]) + f" and {len(untexted) - 10} more"
-        print(f"note: {len(untexted)} review record(s) have no `text` stamp yet, so an edit to "
-              f"their text is not yet caught: {shown}. `scripts/review_stamp.py "
-              "--migrate-text` writes it where a record is unchanged since its stamp commit, "
-              "and a reader stamps the rest (WORKFLOW.md, section 6)")
+
+
+def untexted_note() -> str | None:
+    """The note naming the records with no `text` stamp yet, which `main` prints: a note,
+    not a failure, until every record carries one (docs/WORKFLOW.md, section 6)."""
+    if not untexted:
+        return None
+    shown = ", ".join(untexted) if len(untexted) <= 20 else \
+        ", ".join(untexted[:10]) + f" and {len(untexted) - 10} more"
+    return (f"note: {len(untexted)} review record(s) have no `text` stamp yet, so an edit to "
+            f"their text is not yet caught: {shown}. `scripts/review_stamp.py "
+            "--migrate-text` writes it where a record is unchanged since its stamp commit, "
+            "and a reader stamps the rest (WORKFLOW.md, section 6)")
 
 
 def check_review(facts, by_ref, book: str, n: int) -> None:
@@ -980,6 +987,9 @@ def main(argv=None) -> int:
     check_fidelity()
     check_rules()
     check_facts(args.facts)
+    note = untexted_note()
+    if note:
+        print(note)
     if errors:
         print(f"{len(errors)} problem(s):")
         for e in errors:

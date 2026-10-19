@@ -242,7 +242,7 @@ reviewer from the authors of the proof.
   file under a record changes, even by a comment, and whenever the record's own text is
   edited. The contributor lists the records made stale in the handback (form 3, "Records
   made stale"), and never runs `review_stamp.py` on a record they did not review.
-- The records stamped before the `text` stamp (18 October 2026) gain it by
+- The records stamped before the `text` stamp was introduced gain it by
   `python3 scripts/review_stamp.py --migrate-text`, which writes `text` alone, and only
   for a record whose text at its own stamp commit is its text now: what was read is then
   what the record says, so it records no new reading. It lists every other record as

@@ -1335,3 +1335,54 @@ findings:
   The proposition template's `[overlap]` lines say the key is always named. Nothing a
   reader sees changes: the pages render the same at the branch's base. This is a check
   change on its own; it changes no record.
+- **A review stamp covers the record's own text.** A record's stamps went stale when its
+  statements or its Lean file changed, but not when the record itself was edited, so a
+  note, a scope or a passage could change under "Reviewed at" with no one reading it. Two
+  lanes found it on 18 October, the one correcting the errors from Argon's review
+  ([#64](https://github.com/jackChallis/stoicheia/issues/64)) and the fidelity runs
+  ([#61](https://github.com/jackChallis/stoicheia/issues/61)), and we thank them both
+  ([#77](https://github.com/jackChallis/stoicheia/issues/77)). A record now carries a
+  fourth stamp, `text` in `[review]`: `heath.text_hash` of the record as TOML reads it,
+  with `[review]` and `fingerprint` set aside, so that writing a stamp, or moving a record
+  from the stage `exceptions` to `full`, never changes the text it stamps, and with
+  comments and layout aside ([`review/SCHEMA.md`](../../review/SCHEMA.md#stamps), "Stamps",
+  whose two worked examples now carry it as test values).
+  [`scripts/review_stamp.py`](../../scripts/review_stamp.py) writes it with the other
+  stamps, and, whenever a stamp changes, checks both the Lean file and the record at the
+  commit named (before, it checked the Lean file only, and only when the commit changed).
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) fails on a record whose
+  text no longer matches its stamp: "its record has changed since it was reviewed".
+  [`scripts/heath.py`](../../scripts/heath.py) knows the key and checks the examples'
+  values; [`scripts/render.py`](../../scripts/render.py) counts such a record as not
+  current, and writes nothing new; [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  asks of a record at P2 that it carry `text`, as [ACCEPTANCE](../ACCEPTANCE.md), P2, now
+  says, so no record is accepted whose own words no stamp ties to a reading;
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants an edited note in
+  I.1's record and expects it caught, and a comment and a moved stamp not;
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts a `text` line as a stamp.
+  That widens its `stamp_only` a little: a stamp line added or moved now counts as a stamp
+  alone, where before it was judged, so that the records' `text` stamps travel past
+  `keep_apart` as the other stamps do. Two guards hold it, and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) tests both: no stamp key
+  is taken away, and the record as TOML reads it, its stamps set aside, is unchanged, so
+  that a line shaped as a stamp inside a multi-line string, which changes the record's
+  words, is judged. This is a check change on its own: it changes no record.
+- **The `text` stamps' migration, and what it does not do.** The existing records are not
+  stamped as read. `review_stamp.py --migrate-text` writes `text` alone, and only where a record's
+  text at its own stamp commit (`git show <commit>:review/<book>/NN.toml`, its `[review]`
+  table and fingerprint aside) is its text now: the hash then records what its reviewer
+  read, and no new reading. Every other record is listed as needing a reader, and is never
+  stamped by the migration. On main at `89c5da4` it would write 93 records; six were
+  edited after their stamp commit and need a reader: I.37, I.38, III.4, III.13, III.14 and
+  III.16 (quotation marks and wording in their notes, III.13's figure note, III.14's
+  `short`). The records crew taking Books I and II to `full` stamps with the current
+  scheme while this waits; the migration treats their stamps exactly as any other, since
+  it reads each record's own stamp commit, so it is run again on main at landing, after
+  their branches and the other branches that change records, in a records pull request of
+  its own. Failing on the records without `text` would stop main, so until every record
+  carries it, `check_fidelity.py` names each record without it in a note, and fails on a
+  `text` that no longer matches. The order of landing: this change; then the records'
+  `text` stamps, by `--migrate-text` at landing; then the remaining records read and
+  stamped by a reader; then, in a check change of its own, `text` required like the other
+  stamps. The branch carries the work of the lane of 18 October that first built it, with
+  thanks, brought up to main and to the required overlap kind.
