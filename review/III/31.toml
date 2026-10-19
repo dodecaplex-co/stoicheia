@@ -2,7 +2,7 @@
 scope = "full"
 note = "The angles in the segments, at every point of them; with its companions, the angles of the segments, for every straight line in the circle, at either end."
 companions = ["III.31 greater", "III.31 less"]
-fingerprint = "sha256:9a6c82df950595b4"
+fingerprint = "sha256:c3d22dab733dbafc"
 
 [route]
 kind = "euclid"
@@ -30,6 +30,6 @@ note = "Likewise, that the less segment lies wholly within the right angle CAF i
 
 [review]
 stage = "exceptions"
-commit = "2c83342"
+commit = "03c0335"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:e480b09398343158"
+lean = "sha256:961cd5456d47004a"

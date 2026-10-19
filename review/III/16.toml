@@ -3,7 +3,7 @@
 scope = "full"
 note = "With its companions: `Prop16.semicircle` and `Prop16.remaining` compare the two angles with every acute angle placed at A; `Prop16.acute` with any acute angle."
 companions = ["III.16 semicircle", "III.16 remaining", "III.16 acute"]
-fingerprint = "sha256:9fd59073303dbcdc"
+fingerprint = "sha256:bbe980064221ec4c"
 
 [route]
 kind = "modified"
@@ -51,6 +51,6 @@ note = "G is drawn within the circle and H beyond G, on the circumference, as th
 
 [review]
 stage = "exceptions"
-commit = "2c83342"
+commit = "03c0335"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:e2b137f61ace1a23"
+lean = "sha256:815ace823c8618d7"
