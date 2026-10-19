@@ -2,6 +2,7 @@ import Elements.Figure.Basics
 import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop23
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop20
 import Elements.BookIII.Prop26
 
@@ -67,8 +68,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       /- For III.26 we name the circumference BK by a point P beyond it, and take a point of
          each circle on the centre's side. -/
       obtain ⟨P, hPG, -⟩ := exists_oppositeSidesOf hGBK.bca []
-      obtain ⟨X, hX, hXG⟩ := exists_onCircle_sameSideOf hB hK hGBK.bca
-      obtain ⟨Y, hY, hYH⟩ := exists_onCircle_sameSideOf hE hF hHR.triangle
+      obtain ⟨X, hX, hXG⟩ := Prop2.sameSide ⟨G, hG⟩ hB hK hGBK.bca
+      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide ⟨H, hH⟩ hE hF hHR.triangle
       -- therefore the circumference BK is equal to the circumference EF.
       have hBK : circumference ABC B P K = circumference DEF E R F :=
         ((Prop26 hcircles hG hH hX hB hK hY hE hF (hXG.trans_opposite hPG.symm)

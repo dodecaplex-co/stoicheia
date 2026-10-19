@@ -3,6 +3,7 @@ import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop08
 import Elements.BookI.Prop20
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop20
 import Elements.BookIII.Prop24
 import Elements.BookIII.Prop26
@@ -148,8 +149,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   -- But equal angles stand on equal circumferences, when they are at the centres; [III. 26]
   /- C and F name sides, not necessarily points of the circles, so we take a point of each
      circle on that side for III.26. -/
-  obtain ⟨X, hX, hXG⟩ := exists_onCircle_oppositeSidesOf hA hB hCG.symm.triangle
-  obtain ⟨Y, hY, hYH⟩ := exists_onCircle_oppositeSidesOf hD hE hFH.symm.triangle
+  obtain ⟨X, hX, hXG⟩ := Prop2.oppositeSide ⟨K, hK⟩ hA hB hCG.symm.triangle
+  obtain ⟨Y, hY, hYH⟩ := Prop2.oppositeSide ⟨L, hL⟩ hD hE hFH.symm.triangle
   -- therefore the circumference AGB is equal to DHE.
   have hless : circumference ABC A G B = circumference DEF D H E ∧
       Arc.Congruent ⟨ABC, A, B, G⟩ ⟨DEF, D, E, H⟩ :=

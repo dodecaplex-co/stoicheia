@@ -48,7 +48,7 @@ theorem Prop17 {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD) (
   have hDF' : D ≠ F' := fun e => hF'_L (e ▸ hD_L)
   obtain ⟨N, hD_N, hF'_N⟩ := Postulate1 D F' hDF'
   have hD_in : InsideCircle D AFG :=
-    inside_of_between (Or.inl (centre_inside hE_AFG)) (Or.inr hA_AFG) hEDA
+    InsideCircle.of_between_centre hE_AFG hA_AFG hEDA
   obtain ⟨F, hF, hF_N, hFDF'⟩ :=
     line_circle_beyond hD_in hD_N hF'_N hDF'.symm
   have hE_N : ¬ OnLine E N := fun h =>
