@@ -10,7 +10,7 @@ kind = "euclid"
 [overlap]
 rule = "Tacit.superposition"
 kind = "step"
-note = "Superposition lays the triangle DCE down at A, along AB and on P's side, and so supplies I.23's step in the shortest proof we found from the rules alone (`Audit.I_23`), which takes eight. Our proof is Euclid's, by I.22 and I.8, with I.20 for I.22's condition; it rests on the rule through I.8 and I.20, and does not establish it."
+note = "Superposition lays the triangle DCE down at A, along AB and on P's side, and so supplies I.23's step in the audit proof from the rules alone (`Audit.I_23`), which now rests on 24 axioms, following the proofs of the retired rules. Our proof is Euclid's, by I.22 and I.8, with I.20 for I.22's condition; it rests on the rule through I.8 and I.20, and does not establish it."
 
 [[passage]]
 at = "thus it is required to construct on the given straight line AB"

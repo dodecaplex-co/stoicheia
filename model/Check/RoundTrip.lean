@@ -48,7 +48,8 @@ unfolded, neither of which changes the proposition. It also checks:
   the signature against the library's opaque word;
 * that `Neutral` and `Laws` have exactly a field for each law of the lock, each of type
   `Law.… S`, and nothing else;
-* each law of `Model/Hand.lean` against the law the generator wrote for it; and
+* each retained axiom of `Model/Hand.lean` against the law the generator wrote for it;
+  `Check/Hand.lean` compares the two retired rules directly with their theorem types; and
 * that `original`, which the kernel's round trips put back for the signature, gives each field
   the library's word.
 

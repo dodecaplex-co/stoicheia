@@ -1239,8 +1239,8 @@ def compareBack (p : Plan) (S : Expr) (what : String) (model lib : Expr) (carrie
 
 /-- A definition of the model over the signature, `fun S => …`, against the library's word or
 law: its value against the library's, and its type, after the signature, against the
-library's type. For a law, whose library counterpart is an axiom, `libValue` is the axiom's
-statement and the type is `Prop`. -/
+library's type. For a law, whose library counterpart is an axiom or a retired rule now
+proved, `libValue` is its statement and the type is `Prop`. -/
 def compareDefinition (p : Plan) (model : Name) (libValue libType : Expr) (carriers : Bool) :
     MetaM (Array String) := do
   let (value, type) ← definition model

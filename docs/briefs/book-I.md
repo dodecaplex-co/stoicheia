@@ -22,7 +22,7 @@ Book I's words are the foundations every later book uses, in `Elements/Foundatio
 | `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`; points in order on a straight line, `InOrder`, with `segments` and `endOf` (II.1); and a rectilineal figure given with its triangles (Definitions I.14 and I.19), as triangles that lie apart, `Apart`, or fitted together, `Fitted` and `Rectilineal`, each with its area as given, with `OnFiniteLine`, `OnOrInsideTriangle`, `Corners` and `triples`. |
 | `Postulates.lean` | The five postulates, each an `axiom`. |
 | `CommonNotions.lean` | The five Common Notions, each a theorem; Common Notions 3 and 5 rest on tacit laws of magnitudes. |
-| `Tacit/` | 73 tacit rules taken as axioms, from System E: `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
+| `Tacit/` | 42 tacit rules taken as axioms, from System E: `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
 
 ## How the statements say Euclid's phrases
 
@@ -60,7 +60,7 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   ([#75](https://github.com/jackChallis/stoicheia/issues/75)).
 - **What the figure shows** is supplied by System E's tacit rules and the facts proved
   from them: an Intersection rule says when straight lines and circles must meet, and an
-  Intersections rule lets a proof take a point where they do. Eight rules are now theorems
+  Intersections rule lets a proof take a point where they do. Thirty-nine rules are now theorems
   with their existing names and types; [FORMALIZATION](../FORMALIZATION.md#rules-now-proved)
   gives their derivations and homes.
 - **A rectilineal figure** (I.45) is given with its division into triangles, and the division

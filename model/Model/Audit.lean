@@ -694,7 +694,7 @@ info: 'Model.Euclidean.triple_incidence3' depends on axioms: [propext, Classical
 
 /-! ## What the assembled model rests on
 
-`euclidean_laws` gathers proofs of all 79 locked laws, with no remaining hypothesis.
+`euclidean_laws` gathers proofs of all 48 locked laws, with no remaining hypothesis.
 It and `model_exists` rest on what those proofs rest on. -/
 
 /--

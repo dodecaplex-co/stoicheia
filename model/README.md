@@ -418,14 +418,12 @@ formal statement captures what Euclid meant: that is the work of the review reco
 ## The order of the work: hardest laws first
 
 Astra's third answer listed the laws whose proofs would settle the representation, and they
-were taken first. Each locked law proved here is gathered into
-`euclidean_laws` by the generator, and `lake build` fails until it has been
-(`lake lean Check/Write.lean`).
-
-The table also includes derived facts, whose proofs in the plane are kept outside
-`euclidean_laws`. Intersection 2 is now proved in `Elements/Figure/Circles.lean` from
-Intersection 1, betweenness, Pasch 2, Circle 3 and Intersections 5. The converse of angle
-addition is proved after I.13 from I.13, angle addition, positivity and the side rules.
+were taken first. Each retained axiom proved here is gathered into `euclidean_laws`
+by the generator, and `lake build` fails until it has been (`lake lean Check/Write.lean`).
+The table also includes the 39 former axioms now proved in the library, whose
+[derivations and homes](../docs/FORMALIZATION.md#rules-now-proved) are listed separately.
+Their plane proofs remain as derived facts with individual audits; the generator
+no longer gathers them as assumptions.
 
 | Group | Laws | State |
 |---|---|---|

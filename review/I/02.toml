@@ -10,7 +10,7 @@ kind = "euclid"
 [overlap]
 rule = "Tacit.superposition"
 kind = "step"
-note = "Superposition lays a triangle on BC down at A, along AB, and so carries the length of BC to A, which is I.2; the shortest proof we found from the rules alone (`Audit.I_2`) takes ten. Our proof of I.2 is Euclid's, by I.1 and two circles, and never uses the rule."
+note = "Superposition lays a triangle on BC down at A, along AB, and so carries the length of BC to A, which is I.2; the audit proof from the rules alone (`Audit.I_2`) now rests on 31 axioms, following the proofs of the retired rules. Our proof of I.2 is Euclid's, by I.1 and two circles, and never uses the rule."
 
 [[passage]]
 at = "Let A be the given point"
@@ -37,7 +37,7 @@ note = "Euclid leaves the meeting point G to the figure. After Postulate 3 draws
 at = "and again, with centre D and distance DG let the circle GKL be described"
 kind = "helper"
 helper = "Tacit.line_circle_beyond"
-note = "Euclid takes L where DA produced meets GKL; the Lean first draws GKL by Postulate 3 and proves DA = DB < DG by Common Notion 5. It puts A inside by `Tacit.inside_of_len_lt` (System E, Diagram-segment 4), then takes L beyond A by `Tacit.line_circle_beyond` (Intersections 5), both rules we assume."
+note = "Euclid takes L where DA produced meets GKL; the Lean first draws GKL by Postulate 3 and proves DA = DB < DG by Common Notion 5. It puts A inside by `Tacit.inside_of_len_lt` (System E, Diagram-segment 4), now proved in `Elements/Figure/Incidence.lean` from Definition I.15, circle crossings and length addition, then takes L beyond A by `Tacit.line_circle_beyond` (Intersections 5), which remains an axiom."
 
 [[passage]]
 at = "And in these DA is equal to DB"
