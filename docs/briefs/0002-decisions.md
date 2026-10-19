@@ -794,3 +794,14 @@ findings:
   its own, with one pre-flight, one CI run and one merge ([WORKFLOW](../WORKFLOW.md),
   section 10, "Trains"). Nothing in the checks changes: a train is an ordinary branch to
   safe_push, keep_apart still holds within it, and strict status checks stay on.
+- **The restricted superposition prototype, in Staging.** The coordinator approves that
+  the prototype of #75 (brief [0009](0009-superposition.md), round 2: a finite symbolic
+  context with a valuation, the restricted rule carried as a hypothesis, I.4's and I.8's
+  conclusions proved from it) keeps its proofs in `Staging/Superposition/`, as WORKFLOW
+  section 2 allows an approved prototype, under the names `Elements.Superposition.Prop4`
+  and `Prop8`, which say plainly that these are not the edition's I.4 and I.8. No axiom is
+  added; the edition's superposition rule is unchanged, and it lands only when the
+  evidence brief 0009 asks for is complete (the owner's decision on #75).
+- **The formal model's lock hash renewed with stage 2's words.** Stage 2's move adds
+  words that only the statements of companions use, so `model/lock.sha256` is renewed
+  with `tests/model/lock.sha256`, as its own comment says; no law of the model changes.
