@@ -66,7 +66,15 @@ note = "Euclid takes the angles EGF and FEG to be equal because each is half a r
 
 [review]
 stage = "full"
-commit = "8a014a8"
+commit = "f86db3d"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:3884ca872c6802f9"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
