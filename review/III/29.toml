@@ -19,6 +19,6 @@ note = "Euclid's figure has each centre beyond its straight line. The Lean sorts
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "66e9871"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:4d3dfd4d6598633e"
+lean = "sha256:8deb7e4fbbdec574"

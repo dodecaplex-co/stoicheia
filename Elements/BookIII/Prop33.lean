@@ -6,6 +6,7 @@ import Elements.BookI.Prop10
 import Elements.BookI.Prop11
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop16
 import Elements.BookIII.Prop31
 import Elements.BookIII.Prop32
@@ -154,7 +155,7 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     have hFA : F ≠ A := (ne_of_between hAFB).symm
     obtain ⟨AEB, hF, hA⟩ := Postulate3 F A hFA
     have hB : OnCircle B AEB := on_circle_of_len_eq hF hA (by rw [← hAF, len_symm A F])
-    obtain ⟨E, hE, hED⟩ := exists_onCircle_sameSideOf hA hB hD
+    obtain ⟨E, hE, hED⟩ := Prop2.sameSide ⟨F, hF⟩ hA hB hD
     -- Therefore the straight line AD touches the circle ABE, because the angle at A is
     -- right. [III. 16, Por.]
     have htouchR : Touches A D AEB := Prop16.porism hF hA (Triangle.of_line hF_M hA_M hFA hD_M)
@@ -267,7 +268,7 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     have hcol : Collinear A D D' := ⟨L, hA_L, hD_L, hD'_L⟩
     have htouch' : Touches D' D AEB :=
       htouch.of_collinear hcol ⟨L, hA_L, hD_L, hD_L⟩ (ne_of_between_ends hDAD').symm
-    obtain ⟨H, hH, hHD⟩ := exists_onCircle_oppositeSidesOf hA hB hD
+    obtain ⟨H, hH, hHD⟩ := Prop2.oppositeSide ⟨G, hG⟩ hA hB hD
     -- therefore the angle BAD is equal to the angle constructed in the alternate segment AHB of
     -- the circle. [III. 32]
     have h32 := (Prop32 ⟨G, hG⟩ hA hB hAB htouch' (between_symm hDAD')).1 H hH hHD

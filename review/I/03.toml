@@ -8,10 +8,11 @@ kind = "euclid"
 
 [overlap]
 rule = "Tacit.superposition"
+kind = "step"
 note = "Superposition lays a triangle on the less straight line down at A, along the ray AB, and so cuts off from AB a length equal to it, which is I.3; the shortest proof we found from the rules alone (`Audit.I_3`) takes twenty-two. Our proof of I.3 is Euclid's, by I.2 and a circle, and never uses the rule."
 
 [review]
 stage = "exceptions"
-commit = "7339460"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:5d88634ef13cd7a4"

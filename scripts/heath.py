@@ -305,6 +305,7 @@ SHORT_LIMIT = 70  # characters in [statement] short, which stands beside the bad
 SCOPES = ("full", "restricted", "partial")
 ROUTES = ("euclid", "modified", "alternative")
 PASSAGES = ("carried", "helper", "grouped", "case", "given", "different", "unformalized")
+OVERLAPS = ("states", "gives", "step")  # [overlap] kind, the catalogue's three kinds
 STAGES = ("exceptions", "full")
 VERDICTS = ("pass", "fail", "n/a")
 TAG_KINDS = ("scope", "representation")
@@ -321,7 +322,8 @@ FIELDS = {
                   "companions": (_LIST, False)},
     "route": {"kind": (_STR, True), "note": (_STR, False)},
     "representation": {"tags": (_LIST, True), "note": (_STR, False)},
-    "overlap": {"rule": (_STR, True), "also": (_LIST, False), "note": (_STR, False)},
+    "overlap": {"rule": (_STR, True), "also": (_LIST, False), "kind": (_STR, False),
+                "note": (_STR, False)},
     "coverage": {"checked": (_LIST, False), "explains": (_LIST, False),
                  "text_only": (_LIST, False)},
     "passage": {"at": (_STR, True), "kind": (_STR, True), "helper": (_STR, False),
@@ -537,11 +539,17 @@ def validate_review(record: dict, book: str, n: int, *, require_stamp: bool = Tr
                 bad(f"[representation]: tag {t!r} narrows the statement, but its scope is full")
 
     # [overlap]
-    if "overlap" in record and any(
-            re.search(r"\s", r)
-            for r in [record["overlap"]["rule"]] + record["overlap"].get("also", [])):
-        bad("[overlap]: `rule` and `also` name axioms as facts.json writes them, "
-            "as 'Tacit.inside_of_between'")
+    if "overlap" in record:
+        ov = record["overlap"]
+        if any(re.search(r"\s", r) for r in [ov["rule"]] + ov.get("also", [])):
+            bad("[overlap]: `rule` and `also` name axioms as facts.json writes them, "
+                "as 'Tacit.inside_of_between'")
+        if "kind" in ov and ov["kind"] not in OVERLAPS:
+            bad(f"[overlap]: `kind` is one of {', '.join(OVERLAPS)}, the overlap catalogue's "
+                f"three kinds, not {ov['kind']!r}")
+        elif ov.get("kind") == "step" and "note" not in ov:
+            bad("[overlap]: a rule that supplies a step needs a `note` saying which step, "
+                "and in which proof")
 
     # [coverage]
     if "coverage" in record:
@@ -668,6 +676,24 @@ def _self_test() -> int:
                             where=f"review/SCHEMA.md, the example for {book}.{n}")
         except (ReviewError, tomllib.TOMLDecodeError) as e:
             faults.append(str(e))
+    # [overlap] `kind`: one of the catalogue's three kinds, and "step" with its note.
+    for overlap, ok in [({"rule": "Tacit.circle_eq", "kind": "gives"}, True),
+                        ({"rule": "Tacit.circle_eq", "kind": "states"}, True),
+                        ({"rule": "Tacit.circle_eq"}, True),
+                        ({"rule": "Tacit.superposition", "kind": "step",
+                          "note": "Which step, in which proof."}, True),
+                        ({"rule": "Tacit.superposition", "kind": "step"}, False),
+                        ({"rule": "Tacit.circle_eq", "kind": "contains"}, False)]:
+        record = {"statement": {"scope": "full"}, "route": {"kind": "euclid"},
+                  "overlap": dict(overlap),
+                  "review": {"stage": "exceptions", "reviewer": "Claude Opus 5.5"}}
+        try:
+            validate_review(record, "I", 7, require_stamp=False, where="a test record")
+            if not ok:
+                faults.append(f"validate_review accepts [overlap] {overlap}")
+        except ReviewError as e:
+            if ok:
+                faults.append(str(e))
     records = 0
     for book, count in BOOKS.items():
         for n in range(1, count + 1):

@@ -18,9 +18,9 @@ We read the words in the Beltrami-Klein model of the hyperbolic plane.
 Postulate 5 should fail: two chords can make interior angles less than two right angles
 with a third and still never meet inside the disc.  Every other law should hold.  The
 run reports both: Postulate 5's counterexamples show that the search can see a false
-law, and no counterexample for the other 86 is the evidence.  Where circles cross we
-use 60-digit decimals, so that two circles that only touch are told apart from two that
-cut.
+law, and no counterexample for the others is the evidence.  Which laws must fail is
+read from laws.toml.  Where circles cross we use 60-digit decimals, so that two circles
+that only touch are told apart from two that cut.
 
 Usage: python3 -I hyperbolic.py [samples_per_axiom] [seed]
 """
@@ -32,11 +32,11 @@ from decimal import Decimal, getcontext
 from fractions import Fraction as Fr
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from model import between, collinear, feq, line_through, lval, on_line, opposite, same_side, sgn  # noqa: E402
+from model import (between, collinear, feq, line_through, lval, on_line, opposite, read_laws,  # noqa: E402
+                   same_side, sgn)
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 2000
 SEED = int(sys.argv[2]) if len(sys.argv) > 2 else 1
-EXPECTED_TO_FAIL = {'Postulate5'}
 getcontext().prec = 60
 TOUCH = Decimal(10) ** -40   # below this, two circles touch rather than cut
 
@@ -1658,6 +1658,7 @@ def selftest(rng, n=2000):
 
 
 def main():
+    _, expected_to_fail = read_laws()
     rng = random.Random(SEED)
     worst = selftest(random.Random(SEED + 1000))
     print(f'self-test: law of cosines, reflections, perpendiculars and angle sums on 2000 triangles'
@@ -1689,18 +1690,19 @@ def main():
                 cex += 1
                 if first is None:
                     first = {k: v for k, v in cfg.items() if k != '_rng'}
-        total[name in EXPECTED_TO_FAIL] += cex
+        total[name in expected_to_fail] += cex
         flag = '' if hits else '   <-- hypotheses never met'
-        if name in EXPECTED_TO_FAIL:
+        if name in expected_to_fail:
             flag += '   (expected to fail: the hyperbolic plane is not Euclidean)'
         print(f"{name:40s} {N:8d} {hits:9d} {cex:9d}{flag}")
-        if first is not None and name not in EXPECTED_TO_FAIL:
+        if first is not None and name not in expected_to_fail:
             print('    first counterexample:', first)
         elif first is not None:
             print('    for example:', {k: tuple(str(t) for t in v) if isinstance(v, tuple) else v
                                        for k, v in first.items()})
     print('axioms checked:', len(AXIOMS), ' counterexamples to the other axioms:', total[False],
-          ' counterexamples to Postulate 5:', total[True])
+          f' counterexamples to those that must fail ({", ".join(sorted(expected_to_fail))}):',
+          total[True])
 
 
 if __name__ == '__main__':

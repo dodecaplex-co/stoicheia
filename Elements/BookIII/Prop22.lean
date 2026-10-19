@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
 import Elements.BookI.Prop32
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop21
 
 /-!
@@ -26,13 +27,13 @@ theorem Prop22 {A B C D : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   -- I say that the opposite angles are equal to two right angles.
   -- Let AC, BD be joined.
   /- BD separates A from C, so AC crosses the straight line BD at a point X. X is within
-     the circle (System E, Circle 2), so it lies between B and D (Circle 1), as in III.21:
+     the circle (III.2), so it lies between B and D (System E, Circle 1), as in III.21:
      AC and BD cut one another. -/
   have hBD : B ≠ D := hAC.1
   obtain ⟨L, hB_L, hD_L⟩ := Postulate1 B D hBD
   obtain ⟨X, hX_L, hAXC⟩ := (hAC.2 L hB_L hD_L).exists_between
   have hBXD : Between B X D := between_of_inside_chord hX_L hB_L hD_L
-    (inside_of_between (Or.inr hA) (Or.inr hC) hAXC) hB hD hBD
+    (Prop2 hABCD hA hC X hAXC) hB hD hBD
   have hAC' : A ≠ C := ne_of_between_ends hAXC
   /- Euclid proves it for the angles at B and D and says "similarly" for those at A and C,
      so we write his argument once, for any quadrilateral in the circle whose straight lines
@@ -70,20 +71,20 @@ theorem Prop22 {A B C D : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
     -- therefore the angles ABC, ADC are also equal to two right angles.
     exact h₄ ▸ h₅
   /- The argument serves first in Euclid's own figure, for the angles ABC, ADC. Three
-     points of the circle make a triangle (`Triangle.of_onCircle`). -/
+     points of the circle make a triangle (`Prop2.triangle`). -/
   have hB_D : ∠ A B C + ∠ A D C = ∟ + ∟ := half hA hB hC hD hAXC hBXD
-    (Triangle.of_onCircle hA hB hC hBDA.ne₁₃.symm hBDC.ne₁₃ hAC')
-    (Triangle.of_onCircle hB hC hD hBDC.ne₁₃ hBDC.ne₂₃.symm hBD)
-    (Triangle.of_onCircle hA hC hD hAC' hBDC.ne₂₃.symm hBDA.ne₂₃.symm)
+    (Prop2.triangle hABCD hA hB hC hBDA.ne₁₃.symm hBDC.ne₁₃ hAC')
+    (Prop2.triangle hABCD hB hC hD hBDC.ne₁₃ hBDC.ne₂₃.symm hBD)
+    (Prop2.triangle hABCD hA hC hD hAC' hBDC.ne₂₃.symm hBDA.ne₂₃.symm)
   -- Similarly we can prove that the angles BAD, DCB are also equal to two right angles.
   /- The same argument serves in the quadrilateral BCDA, whose straight lines BD, CA cut
      one another at the same point, for its angles BCD, BAD. -/
   have hA_C : ∠ B A D + ∠ D C B = ∟ + ∟ := by
     rw [add_comm, angle_symm hBDC.ne₂₃ hBDC.ne₁₃]
     exact half hB hC hD hA hBXD (between_symm hAXC)
-      (Triangle.of_onCircle hB hC hD hBDC.ne₁₃ hBDC.ne₂₃.symm hBD)
-      (Triangle.of_onCircle hC hD hA hBDC.ne₂₃.symm hBDA.ne₂₃ hAC'.symm)
-      (Triangle.of_onCircle hB hD hA hBD hBDA.ne₂₃ hBDA.ne₁₃)
+      (Prop2.triangle hABCD hB hC hD hBDC.ne₁₃ hBDC.ne₂₃.symm hBD)
+      (Prop2.triangle hABCD hC hD hA hBDC.ne₂₃.symm hBDA.ne₂₃ hAC'.symm)
+      (Prop2.triangle hABCD hB hD hA hBD hBDA.ne₂₃ hBDA.ne₁₃)
   -- Therefore etc.
   exact ⟨hB_D, hA_C⟩
   -- Q. E. D.

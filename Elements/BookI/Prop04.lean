@@ -74,10 +74,12 @@ theorem Prop4 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
   -- hence the base BC will coincide with the base EF.
   -- [For if, when B coincides with E and C with F, the base BC does not coincide with the base
   -- EF, two straight lines will enclose a space: which is impossible.
-  /- Heiberg brackets this passage as an early scholium. Our proof has no need
-     of it: in our representation a finite straight line is fixed by its ends,
-     so once B' is E and C' is F, the base B'C' simply is EF. -/
   -- Therefore the base BC will coincide with EF] and will be equal to it. [C.N. 4]
+  /- Heiberg brackets the words from "For if" to "EF" as an early scholium. A
+     finite straight line enters our Lean only through its two ends, so once B'
+     is E and C' is F the base B'C' is EF, and there is no second one on those
+     ends for the scholium to rule out. C.N. 4 takes the ends alone; and B'C'
+     has BC's length, since the moving keeps every side. -/
   have hBC : ‖B C‖ = ‖E F‖ := hB'C'.symm.trans (CommonNotion4 hB'E hC'F)
   -- Thus the whole triangle ABC will coincide with the whole triangle DEF,
   have hcoincide : △ D B' C' = △ D E F := CommonNotion4.triangle rfl hB'E hC'F

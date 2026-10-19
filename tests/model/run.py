@@ -2,14 +2,16 @@
 
     python3 -I tests/model/run.py --fast           # CI: well under two minutes
     python3 -I tests/model/run.py --full [--write] # about seven minutes
+    python3 -I tests/model/run.py --ties           # the ties to the Lean alone
 
 Two checks tie the model to the Lean before anything runs:
-* the axioms the harness checks are exactly the axioms in facts.json's `axiom_modules`
-  (and its `axiom_types`, once that field exists), in search.py and in hyperbolic.py
-  alike: 87 at present;
+* laws.toml names a law for each axiom: exactly the axioms of Certificate/axioms.lock
+  and of facts.json's `axiom_modules` (and its `axiom_types`, once that field exists),
+  in both directions; and search.py and hyperbolic.py each implement exactly the laws
+  it names, each once;
 * lock.sha256 holds the sha256 of Certificate/axioms.lock, so that a change to any
-  axiom's statement stops this run until someone revisits the model (MODEL.md) and
-  updates the hash.
+  axiom's statement stops this run until someone revisits the model (MODEL.md,
+  "Changing the axioms") and updates the hash.
 
 --fast runs the counterexample search at 2,000 samples per axiom (seed 1), a reduced
 structured run (5,000 per axiom, seed 11), all 15 mutations, the two independent grid and
@@ -22,9 +24,10 @@ it saves each harness's output in results/, under a header naming the commit, th
 seeds and the Python; writes the axiom-by-axiom table to results/summary.txt; and brings
 the counts in MODEL.md up to date.
 
-The run passes when no harness finds a counterexample in the plane, every mutation is
-caught, every axiom's hypotheses are met somewhere, and in the hyperbolic plane every axiom
-holds except Postulate 5, which must fail.
+The run passes when every harness runs to its last line, no harness finds a counterexample
+in the plane or reports a law twice, every mutation is caught, every axiom's hypotheses
+are met somewhere, and in the hyperbolic plane every axiom holds except those laws.toml
+says must fail there (Postulate 5), which must fail.
 """
 import datetime
 import hashlib
@@ -43,41 +46,73 @@ LOCK = os.path.join(ROOT, 'Certificate', 'axioms.lock')
 LOCK_HASH = os.path.join(HERE, 'lock.sha256')
 MODEL_MD = os.path.join(HERE, 'MODEL.md')
 HARNESS = ['model.py', 'search.py', 'exhaustive.py', 'structured.py', 'mutations.py',
-           'grid_check.py', 'angle_check.py', 'hyperbolic.py', 'run.py']
+           'grid_check.py', 'angle_check.py', 'hyperbolic.py', 'run.py', 'laws.toml']
 PLACEHOLDER = 'TODO'
 
 sys.path.insert(0, HERE)
 _argv, sys.argv = sys.argv, sys.argv[:1]   # the harness modules read sys.argv when imported
 import search  # noqa: E402
 import hyperbolic  # noqa: E402
+from model import read_laws  # noqa: E402
 sys.argv = _argv
 
-LAWS = [name for name, _, _ in search.AXIOMS]
-EXPECTED_TO_FAIL = hyperbolic.EXPECTED_TO_FAIL
+try:
+    LAW_OF, EXPECTED_TO_FAIL = read_laws()   # {axiom: its law}; the laws that must fail
+    LAWS_PROBLEM = None
+except ValueError as e:
+    LAW_OF, EXPECTED_TO_FAIL, LAWS_PROBLEM = {}, set(), str(e)
+AXIOM_OF = {law: axiom for axiom, law in LAW_OF.items()}
+LAWS = [name for name, _, _ in search.AXIOMS]   # in search.py's order, for the tables
 
 
 def lean_name(law):
-    """search.py's short name -> the name facts.json uses"""
-    return law if law.startswith(('Postulate', 'Definition')) else 'Tacit.' + law
+    """a law's name in the harness -> its axiom's name, as the lock and facts.json have it"""
+    return AXIOM_OF.get(law, law)
 
 
 # ---------------------------------------------------------------- the ties to the Lean
 
+def locked_axioms():
+    """the names in Certificate/axioms.lock's [axioms] table, or None if it has none"""
+    import tomllib
+    try:
+        with open(LOCK, 'rb') as f:
+            table = tomllib.load(f).get('axioms')
+    except (OSError, tomllib.TOMLDecodeError):
+        return None
+    return set(table) if isinstance(table, dict) else None
+
+
 def check_names():
-    problems = []
+    """(the number of axioms in facts.json, the problems): laws.toml names exactly the
+    axioms of the lock and of facts.json, and each harness implements exactly its laws"""
     with open(os.path.join(ROOT, 'facts.json')) as f:
         facts = json.load(f)
     lean = set(facts['axiom_modules'])
+    if LAWS_PROBLEM:
+        return len(lean), [LAWS_PROBLEM]
+    problems, named = [], set(LAW_OF)
+    others = [("facts.json's axiom_modules", lean)]
+    if 'axiom_types' in facts:
+        others.append(("facts.json's axiom_types", set(facts['axiom_types'])))
+    locked = locked_axioms()
+    if locked is not None:
+        others.insert(0, ('Certificate/axioms.lock', locked))
+    elif os.path.exists(LOCK):
+        problems.append('Certificate/axioms.lock has no [axioms] table that reads')
+    for label, names in others:
+        for n in sorted(names - named):
+            problems.append(f'{n}, an axiom in {label}, has no law in tests/model/laws.toml')
+        for n in sorted(named - names):
+            problems.append(f'{n} has a law in tests/model/laws.toml, but is not an axiom in {label}')
+    laws = set(AXIOM_OF)
     for label, names in (('search.py', LAWS), ('hyperbolic.py', [n for n, *_ in hyperbolic.AXIOMS])):
         if len(names) != len(set(names)):
-            problems.append(f'{label} checks an axiom twice')
-        ours = {lean_name(n) for n in names}
-        for n in sorted(lean - ours):
-            problems.append(f'{label} does not check the axiom {n}')
-        for n in sorted(ours - lean):
-            problems.append(f'{label} checks {n}, which is not an axiom in facts.json')
-    if 'axiom_types' in facts and set(facts['axiom_types']) != lean:
-        problems.append("facts.json's axiom_types and axiom_modules name different axioms")
+            problems.append(f'{label} implements a law twice')
+        for n in sorted(laws - set(names)):
+            problems.append(f'{label} does not implement {n}, the law laws.toml names for {AXIOM_OF[n]}')
+        for n in sorted(set(names) - laws):
+            problems.append(f'{label} implements {n}, a law laws.toml does not name')
     return len(lean), problems
 
 
@@ -106,8 +141,10 @@ def check_lock():
         return False, 'lock.sha256 pins Certificate/axioms.lock, but the lock is missing'
     if actual != pinned:
         return False, ('Certificate/axioms.lock has changed since the model was last checked against '
-                       'it. Revisit tests/model (the harness and MODEL.md) for the changed axioms, then '
-                       f'update lock.sha256 to\n    {actual}  Certificate/axioms.lock')
+                       'it. Revisit the model for the changed axioms, as tests/model/MODEL.md, '
+                       '"Changing the axioms", says (laws.toml, the laws in search.py and '
+                       'hyperbolic.py, and MODEL.md itself), then update lock.sha256 to\n'
+                       f'    {actual}  Certificate/axioms.lock')
     return True, f'Certificate/axioms.lock matches lock.sha256 ({actual[:16]}...)'
 
 
@@ -125,10 +162,12 @@ class Run:
         p = subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT, env=env)
         self.seconds = time.time() - t
         self.code, self.out, self.err = p.returncode, p.stdout, p.stderr
-        self.laws = {}
+        self.laws, self.twice = {}, set()
         for line in self.out.splitlines():
             m = re.match(r'^(\S+)\s+(\d+)\s+(\d+)\s+(\d+)\b', line)
             if m and m.group(1) in search_names:
+                if m.group(1) in self.laws:
+                    self.twice.add(m.group(1))
                 self.laws[m.group(1)] = (int(m.group(2)), int(m.group(3)), int(m.group(4)))
         envs = ' '.join(f'{k}={v}' for k, v in (self.env or {}).items())
         self.command = ' '.join(filter(None, [envs, 'python3 -I', 'tests/model/' + self.script, *self.args]))
@@ -159,6 +198,8 @@ def plan(full):
 
 
 EUCLIDEAN = ('search', 'exhaustive', 'structured')
+LAST_LINE = {'search': 'axioms checked:', 'exhaustive': 'exhaustive axioms run:',
+             'structured': 'structured total counterexamples:', 'hyperbolic': 'axioms checked:'}
 
 
 def judge(runs):
@@ -167,6 +208,11 @@ def judge(runs):
     for r in runs:
         if r.code != 0:
             bad.append(f'{r.key} exited with status {r.code}:\n{r.err.strip()[-2000:]}')
+        for law in sorted(r.twice):
+            bad.append(f'{r.key} reported {law} twice')
+        last = next((v for k, v in LAST_LINE.items() if r.key.startswith(k)), None)
+        if last and not re.search('^' + re.escape(last), r.out, re.M):
+            bad.append(f'{r.key} stopped before its last line')
     plane = [r for r in runs if r.key.startswith(EUCLIDEAN)]
     for r in plane:
         for law, (_, _, cex) in r.laws.items():
@@ -270,7 +316,8 @@ def counts_block(runs, prov):
     met, total = totals(runs)
     h = {r.key: r for r in runs}['hyperbolic']
     hyp_met = sum(x[1] for x in h.laws.values())
-    p5 = h.laws['Postulate5'][2]
+    fails = '; '.join(f'`{lean_name(law)}` failed {h.laws.get(law, (0, 0, 0))[2]:,} times'
+                      for law in sorted(EXPECTED_TO_FAIL))
     return '\n'.join([
         f'Counts from `run.py --full --write` at commit `{prov["commit"].split()[0][:12]}`, '
         f'{prov["date"]}, Python {platform.python_version()}. Each number is how many configurations '
@@ -281,8 +328,8 @@ def counts_block(runs, prov):
         f'({sum(v for k, v in met.items() if k.startswith("search")):,} in the search, '
         f'{met.get("exhaustive", 0):,} exhaustive, {met.get("structured", 0):,} structured), '
         'with no counterexample, and all 15 mutations were caught. In the hyperbolic plane: '
-        f'{hyp_met:,} configurations met an axiom\'s hypotheses; Postulate 5 failed {p5:,} times and '
-        'every other axiom held.',
+        f'{hyp_met:,} configurations met an axiom\'s hypotheses; '
+        + (f'{fails} and every other axiom held.' if fails else 'every axiom held.'),
         '',
         law_table(runs, markdown=True)])
 
@@ -314,19 +361,23 @@ def write(runs, prov):
 
 def main():
     args = set(sys.argv[1:])
-    if not args or not args <= {'--fast', '--full', '--write'} or ('--fast' in args) == ('--full' in args) \
-            or ('--write' in args and '--full' not in args):
+    if args != {'--ties'} and (not args or not args <= {'--fast', '--full', '--write'}
+                               or ('--fast' in args) == ('--full' in args)
+                               or ('--write' in args and '--full' not in args)):
         sys.exit(__doc__)
     full = '--full' in args
     n, problems = check_names()
-    print(f'names: the harness checks {len(LAWS)} axioms; facts.json declares {n} axioms'
-          + (' -- they agree' if not problems else ''))
+    print(f'names: laws.toml names {len(LAW_OF)} laws; facts.json declares {n} axioms'
+          + (' -- they agree, with the lock and the harness' if not problems else ''))
     ok, msg = check_lock()
     print('lock: ' + msg)
     if problems or not ok:
         for p in problems:
             print('  ' + p)
         sys.exit(1)
+    if args == {'--ties'}:
+        print('the ties to the Lean hold')
+        return
     runs = []
     for r in plan(full):
         print(f'  {r.key:14s} ...', end='', flush=True)
@@ -339,8 +390,9 @@ def main():
     print(f'plane: {total:,} configurations met an axiom\'s hypotheses; counterexamples: '
           f'{sum(c for r in runs if r.key.startswith(EUCLIDEAN) for *_, c in r.laws.values())}')
     h = {r.key: r for r in runs}['hyperbolic']
-    print(f'hyperbolic: Postulate 5 failed {h.laws.get("Postulate5", (0, 0, 0))[2]:,} times (it must); '
-          f'counterexamples to the other axioms: '
+    failed = '; '.join(f'{law} failed {h.laws.get(law, (0, 0, 0))[2]:,} times'
+                       for law in sorted(EXPECTED_TO_FAIL))
+    print(f'hyperbolic: {failed} (as it must); counterexamples to the other axioms: '
           f'{sum(c for k, (_, _, c) in h.laws.items() if k not in EXPECTED_TO_FAIL)}')
     if bad:
         print('FAILED:')

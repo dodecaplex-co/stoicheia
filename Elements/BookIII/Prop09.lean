@@ -4,6 +4,7 @@ import Elements.BookI.Prop08
 import Elements.BookI.Prop10
 import Elements.BookI.Prop17
 import Elements.BookIII.Prop01
+import Elements.BookIII.Prop02
 
 /-!
 # Book III, Proposition 9
@@ -115,7 +116,7 @@ theorem Prop9 {A B C D : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O A
   -- Let ABC be a circle and D a point within it, and from D let more than two equal straight
   -- lines, namely DA, DB, DC, fall on the circle ABC;
   obtain ⟨O, hO⟩ := hABC
-  have hT : Triangle A B C := Triangle.of_onCircle hA hB hC hAB hBC hAC
+  have hT : Triangle A B C := Prop2.triangle ⟨O, hO⟩ hA hB hC hAB hBC hAC
   -- I say that the point D is the centre of the circle ABC.
   -- For let AB, BC be joined and bisected at the points E, F, and let ED, FD be joined and
   -- drawn through to the points G, K, H, L.

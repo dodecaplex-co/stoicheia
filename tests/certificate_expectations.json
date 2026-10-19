@@ -1,5 +1,5 @@
 {
-  "about": "Facts the certificate must keep. scripts/check_fidelity.py checks each one against facts.json, so that a change to Certificate/Facts.lean cannot quietly lose them. They answer Astra's outside review (docs/reports/outside-review-01.md), which asked for these regressions by name; brief 0005, stage 1k. Each names an entry by its ref and a field of it (Certificate/FIELDS.md), and asks that the list `includes` some names, `excludes` others, or holds exactly `count.is` names beginning with `count.prefix`; `equals` compares the field with a value. `why` is shown when one fails.",
+  "about": "Facts the certificate must keep. scripts/check_fidelity.py checks each one against facts.json, so that a change to Certificate/Facts.lean cannot quietly lose them. They answer Astra's outside review (docs/reports/outside-review-01.md), which asked for these regressions by name; brief 0005, stage 1k. Each names an entry by its ref and a field of it (Certificate/FIELDS.md), and asks that the list `includes` some names, `excludes` others, or holds exactly `count.is` names beginning with `count.prefix`; `equals` compares the field with a value. A field that is an object, as `inherited` is, is read by its keys, and a field the entry lacks fails. `why` is shown when one fails.",
   "expectations": [
     {
       "ref": "III.1 Por.",
@@ -26,6 +26,48 @@
       "field": "attached",
       "equals": ["III.1 Por."],
       "why": "A proposition lists its porism, so that it is not complete until the porism is proved."
+    },
+    {
+      "ref": "III.2",
+      "field": "own_axioms",
+      "excludes": ["Tacit.inside_of_between"],
+      "why": "III.2's own Lean never calls Circle 2 (Argon's second review; #65): its own axioms are those its proof and its helpers name, not those of the propositions it cites."
+    },
+    {
+      "ref": "III.2",
+      "field": "inherited",
+      "excludes": ["Tacit.inside_of_between"],
+      "why": "No lemma III.2 calls brings Circle 2 in (#65)."
+    },
+    {
+      "ref": "I.5",
+      "field": "own_axioms",
+      "excludes": ["Postulate3"],
+      "why": "I.5's own Lean never calls Postulate 3: like Euclid's proof, it draws no circle (#65)."
+    },
+    {
+      "ref": "I.5",
+      "field": "inherited",
+      "includes": ["Postulate3"],
+      "why": "Postulate 3 reaches I.5's proof through Book Zero's exists_between_nearer, which keeps a point taken at random near enough with a circle; a lemma's axioms are inherited, not the proof's own (Argon's second review; #65)."
+    },
+    {
+      "ref": "III.2",
+      "field": "axioms",
+      "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
+      "why": "III.2 rests on neither Circle 2 nor Circle 3: its own Lean calls neither, and III.1, which it cites, shows its middle point within the circle by III.2's own argument (#60)."
+    },
+    {
+      "ref": "III.1",
+      "field": "axioms",
+      "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
+      "why": "III.1 shows the middle point of its chord within the circle by I.5, I.16 and I.19, as III.2 does, and so rests on neither Circle 2 nor Circle 3 (#60)."
+    },
+    {
+      "ref": "II.14",
+      "field": "axioms",
+      "excludes": ["Tacit.inside_of_between", "Tacit.outside_of_between"],
+      "why": "II.14 puts E within the circle by Definition I.15 and the order of the points (InsideCircle.of_between_centre), and rests on neither Circle 2 nor Circle 3 (#60)."
     }
   ]
 }

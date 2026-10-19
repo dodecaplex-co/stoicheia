@@ -9,7 +9,8 @@ kind = "euclid"
 
 [overlap]
 rule = "Tacit.not_same_side_of_circles_meet"
-note = "System E's Circle 4 says I.7 of two circles: they cut one another on opposite sides of the straight line through their centres. Our proof follows Euclid, through I.5, and never uses the rule."
+kind = "step"
+note = "System E's Circle 4 says I.7 of two circles: they cut one another on opposite sides of the straight line through their centres. So it supplies I.7's step in the shortest proof we found from the rules alone (`Audit.I_7`), which draws the two circles and takes seven. Our proof follows Euclid, through I.5, and never uses the rule."
 
 [[passage]]
 at = "For, if possible, given two straight lines AC, CB"
@@ -19,6 +20,6 @@ note = "Euclid draws one figure. The Lean also takes AC crossing DB, his figure 
 
 [review]
 stage = "exceptions"
-commit = "2a34715"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:ffbc06b6dd19da41"

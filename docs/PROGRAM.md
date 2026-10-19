@@ -54,9 +54,9 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
-| III | 37 of 37 proved, and the porisms of III.1 and III.16 | released (next: arcs and segments) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
+| I | 48 of 48 proved, and I.15's porism and eight companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved, and eight companion theorems | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| III | 37 of 37 proved, and the porisms of III.1 and III.16 and three companion theorems | released (next: arcs and segments) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV–XIII | not begun | — | — | — | — | — |
 
 <!-- /status -->
@@ -78,9 +78,9 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40, I.45, II.1, II.14 in full generality | statements staged ([#11]); approval next |
-| 3 | Arcs and segments; III.24 | statements staged ([#11]); approval next |
-| 4 | III.14, III.15, III.25 | statements staged ([#11]); approval next |
+| 2 | I.40, I.45, II.1, II.14 in full generality | proved in Staging ([#88]); the move into `Elements/` next ([#19]) |
+| 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
+| 4 | III.14, III.15, III.25 | proved in Staging (this pull request); the move into `Elements/` next ([#28]) |
 | 5 | Consolidation review of all 99 | |
 | 6 | Acceptance, then a consolidation release of Books I–III | |
 
@@ -134,22 +134,22 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 
 - **The scope of the I.45 and II.14 records** is decided: `full`, by the checked fan and
   any supplied division (the owner, 18 October; brief 0006, decision 1 as revised, [#13]).
-- **Stage 2's proofs** are done in `Staging/Stage2`, every statement of brief 0006's stage 2
-  proved with no new axiom, including `Fitted.fan` (#14 to #18). Next is the move into
-  `Elements/`: the words into their homes with the lock and a decisions entry, the
-  companions beside their propositions, and the records, pages and gap entries (#19).
+- **Stage 2 is in the edition** (#19): I.40, I.45, II.1 and II.14 with their companions
+  beside them, certified, their records full and re-stamped, the words in the foundations
+  with the lock, and the gap entries for I.45's and II.14's tacit step.
 - **Stage 3's proofs** are done in `Staging/Stage3`, every statement of brief 0006's stage 3
   proved with no new axiom: placement in all its cases, with superposition not among its
   direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
   route, III.26 and III.28 upgraded, and `Arcs.lean` (#20 to #24). Next is the migration
   into `Elements/`, in brief 0006's seven steps (#25).
+- **Stage 4's proofs** are done in `Staging/Stage4`: III.14 with diameters, III.15 both
+  clauses for every straight line, the foot of the perpendicular, and III.25's construction
+  core, which never sees a circle or a centre, with its correctness (#26, #27). Next is the
+  move into `Elements/` with the records (#28).
 - **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
   request of its own ([#3]).
-- **A new axiom cannot yet land in any order:** the model's law names, in `tests/model`'s
-  search and hyperbolic check, are code, not a pinned value; they move into a pinned data
-  file. On adding one, see [AGENTS.md](../AGENTS.md), "Never".
 - **The merge commit's subject** takes the owner from origin's URL, which after a transfer
   would name the old owner (cosmetic).
 - **A guard for `gh` exiting 0 without merging,** needed if a merge queue or auto-merge is
@@ -174,9 +174,14 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   borrowing commutativity; prototyped first.
 - **Incommensurables** (Book X): X.1 prototyped first.
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
-- **A formal model** of the axioms in Lean with Mathlib, as a separate package, defined
-  in [MODEL.md](../tests/model/MODEL.md#a-formal-model-a-later-milestone). Until then the
-  evidence is numerical: [tests/model](../tests/model/), in CI, with the hyperbolic check.
+- **A formal model** of the axioms in Lean with Mathlib: done. Begun on 18 October 2026 in
+  a package of its own, [`model/`](../model/README.md), with CI's `formal-model` job (#73,
+  a gate for the consolidation release), it proves all 87 locked laws in the ordinary
+  plane, and `model_exists` has no hypothesis left: a model relative to Lean's logic and
+  Mathlib's construction of the real numbers. It does not show that a formal statement
+  captures what Euclid meant. The independence of Postulate 5 still rests on the
+  numerical hyperbolic check in [tests/model](../tests/model/), until a hyperbolic model
+  is built. Making `formal-model` a required check of the ruleset is the owner's call.
 - **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
   axioms' statements or the entries' statements reach: 61, the 37 of the axioms and 24
   that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
@@ -272,3 +277,8 @@ in the voyage logs).
 | Precision pass and standards (brief 0005, stages 1 and 1b): the build | 23 (3 stopped at an account-terms prompt and were run again) | 5.9M | 95 min |
 | Precision pass and standards: the finish (integration, readers, fixes) | 7 | 2.0M | 104 min |
 | The night of 18 October: pull requests #1 to #11 | not logged | not logged | one night |
+[#88]: https://github.com/jackChallis/stoicheia/pull/88
+[#89]: https://github.com/jackChallis/stoicheia/pull/89
+[#19]: https://github.com/jackChallis/stoicheia/issues/19
+[#25]: https://github.com/jackChallis/stoicheia/issues/25
+[#28]: https://github.com/jackChallis/stoicheia/issues/28
