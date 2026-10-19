@@ -11,8 +11,10 @@ records current; CI runs it on every push.
 3. Without a build, on a copy of `facts.json`: Postulate 1 weakened in the printed
    statements no longer matches the axiom lock; `Touches`, a word only Book III's
    statements use, given another meaning no longer matches it either; a changed
-   statement of III.1's porism makes III.1's review record stale; and `Centre`, no
-   longer among the opaque primitives (as if it had been made a `def`), is caught.
+   statement of III.1's porism makes III.1's review record stale; `Centre`, no
+   longer among the opaque primitives (as if it had been made a `def`), is caught;
+   Circle 2 added to III.3's axioms, and Circle 3 to I.15's porism or II.1's general
+   companion, are each refused by the entry's name.
 4. A changed Lean file makes its review record stale (I.1).
 5. III.16's review record without its unformalized passage leaves a run of `--` lines
    with no Lean beneath it undeclared.
@@ -169,6 +171,19 @@ def primitive_not_opaque() -> None:
         facts["opaque"] = [w for w in facts["opaque"] if w != "Centre"]
     expect_failure("a primitive word no longer opaque", with_facts(change),
                    "Centre: no longer an opaque primitive")
+
+
+def circle_dependencies() -> None:
+    for ref, axiom, rule in (
+        ("III.3", "Tacit.inside_of_between", "Circle 2"),
+        ("I.15 Por.", "Tacit.outside_of_between", "Circle 3"),
+        ("II.1 general", "Tacit.outside_of_between", "Circle 3"),
+    ):
+        def change(facts):
+            entry(facts, ref)["axioms"].append(axiom)
+        expect_failure(f"{rule} in {ref}'s axioms", with_facts(change),
+                       f"{ref}: rests on {axiom} ({rule}), forbidden for every entry",
+                       unwanted=(f"{ref.split()[0]}: rests on {axiom}",) if " " in ref else ())
 
 
 def native_decide() -> None:
@@ -541,6 +556,7 @@ def main() -> int:
     changed_word()
     stale_statement()
     primitive_not_opaque()
+    circle_dependencies()
     stale_lean()
     undeclared_run()
     remark_ends_run()

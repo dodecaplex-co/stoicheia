@@ -1334,3 +1334,17 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+
+- **No certificate entry may rest on Circle 2 or Circle 3.** Plan lane 1 keeps
+  [brief 0008](0008-centre.md)'s III.1 construction from reaching Circle 2, which states
+  III.2, or Circle 3, which gives it at once.
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) now refuses either rule
+  in any entry's axioms, propositions, porisms and companions of every book included,
+  and names the entry and the rule. Main at `bd3b72a` passes: none of its 121 entries
+  rests on either rule.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants Circle 2 in a
+  proposition and Circle 3 in a porism and a companion, on separate copies of
+  `facts.json`, without a build, and expects each refusal by name. These are the two
+  protected files changed. The overlap catalogue and the guides say what the check
+  covers: Book Zero lemmas are not entries, so it covers them only through entries that
+  use them. Nothing is loosened.

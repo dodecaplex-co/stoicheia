@@ -433,6 +433,8 @@ dependencies.
 - **Superposition** only in I.4 and I.8.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
+- **Circle 2 and Circle 3.** No certificate entry rests on `Tacit.inside_of_between` or
+  `Tacit.outside_of_between`, whether through its own proof or through a lemma it uses.
 - **No later citations:** no proof cites a proposition that does not come before it.
 - **Complete books stay complete:** every proposition of a complete book is proved, with
   both figures and a mishnah, and so is every porism and companion attached to it.
@@ -443,7 +445,8 @@ included. `negative_tests.py` plants a break of these kinds to show each is caug
 axiom declared outside the foundations, in each of `Elements/`, `Staging/` and `Audit/`,
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
-and I.8; a later citation, one of them named only in a helper's statement; every
+and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms; a later
+citation, one of them named only in a helper's statement; every
 forbidden command, and an attribute for each ending and prefix the scan knows, in each of
 `Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a proposition
 imported by Book Zero; a `sorry` in a complete book; and a primitive word no longer
