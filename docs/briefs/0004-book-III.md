@@ -18,11 +18,12 @@ III.26–III.30 compares the circumferences themselves:
 > In equal circles equal angles stand on equal circumferences, whether they stand at the
 > centres or at the circumferences. (III.26)
 
-Three things in it do not fit what Books I and II built. Our circles have no centre
-unless a hypothesis gives one. A circumference is a magnitude to Euclid, compared,
+Three things in it needed more than Books I and II built. Our foundations now give every
+circle a centre (`exists_centre`), though most statements still supply one. A circumference is a magnitude to Euclid, compared,
 added and taken away, and we have only lengths, angles and areas. And twice (III.16,
 III.31) he speaks of angles "contained by a straight line and a circumference", which
-our angles, each made by two straight lines, are not.
+our rectilineal angles, each made by two straight lines, are not. The companions of III.16
+and III.31 now compare those mixed angles as regions near their vertices.
 
 ## The words
 
@@ -36,12 +37,18 @@ assumption.
 | Def. 3, circles touching | `TouchesInternally α β C` (they meet at `C`, are two circles, and no point of `β` is outside `α`), `TouchesExternally α β C` (they meet at `C`, and no point is within both), `CirclesTouch` (either within the other, or without) | III.6, III.11–III.13 |
 | Defs. 4, 5, equally distant, at a greater distance | no word: `‖E F‖ = ‖E G‖`, `‖E H‖ < ‖E K‖` for the feet of the perpendiculars from the centre `E` | III.14, III.15 |
 | Def. 6, a segment | a circle, a straight line `AB` in it, and a point `E` of the circumference on one side, "the segment AEB"; as a figure with its points, `Arc`: the circle, the ends of the base and a point naming the side, with the segment's points `InSegment` and its circumference's `OnArc`; segments that coincide, `Arc.Congruent` (Common Notion 4) | III.23–III.25, III.33, III.34; `Arc` in III.24, III.26, III.28 |
-| Def. 7, the angle of a segment | none: a mixed angle; no proof uses it | (III.16, III.31: the mishnah) |
+| Def. 7, the angle of a segment | `MixedAngle.ofSegment`, compared as a region near its vertex | III.16 and III.31's companions |
 | Def. 8, the angle in a segment | `∠ A E B`, `E` on the circumference of the segment | III.21 on |
 | Def. 9, the angle standing on a circumference | `standing α B A C`, the circumference on which the angle `BAC` stands | III.27, III.30 |
 | (Def. 6, 9) the circumference BKC | `circumference α B K C`: the part of `α` from `B` to `C` on `K`'s side of `BC`; for an `Arc`, `Arc.measure` | III.24's companions, III.26, III.28, III.29 |
 | Def. 10, a sector | none: no proposition of Book III uses it | |
 | Def. 11, similar segments | no word: `∠ A E B = ∠ C F D`, equal angles in them | III.23, III.24, III.26 |
+
+**19 October 2026, Definition 3.** The row above records the earlier reading. By
+[brief 0008](0008-centre.md), section 7, `CirclesCut α β` now means that the circles meet
+at two points and each has a point within the other. Contact within replaces the clause
+that the circles are different with a point of β within α; the common point C and the
+clause that no point of β is outside α stay. Contact without stays as above.
 
 **Touching, for a straight line.** "Meeting the circle and being produced, does not cut
 the circle": `Touches A B α` says the straight line `AB` meets `α` and does not meet it in
@@ -70,6 +77,14 @@ points of contact, within or without, are what III.13 refutes, by III.11 and III
 definition; that reading is set aside.) III.11's statement says which circle is within
 (`TouchesInternally ABC ADE A`, `ADE` within `ABC`); III.13 asks for either. III.11's
 mishnah owns Heath's note on Definition 3 and says all this.
+
+**19 October 2026, contact within.** The whole-circle reading remains ours. The point
+of the inner circle within the outer now belongs to `TouchesInternally`, expressing the
+passage within that Heath says Definition III.3 must imply. It lets III.6 draw FEB through
+that point. III.11 uses III.6 to distinguish its centres; III.13 carries the point within
+to the supposed second contact. The bridge in `Audit/` recovers the earlier readings of
+III.5, III.6, III.11 and III.13 from the restated ones under the existing axioms, with no
+extra hypotheses. The point does not turn this into Heath's preferred local reading.
 
 **Circumferences.** Euclid compares circumferences only in one circle or in equal circles:
 III.26–III.30, IV.11 and IV.16, and VI.33. A new kind of magnitude for them would need
@@ -130,14 +145,18 @@ statement (every straight line through `A` other than `AE` passes within the cir
 III.31, that the angles `BAC`, `CAF` are right. The Lean states III.16's clause and the
 right angle `BAC`; that `CAF` is right, the proof of III.31 shows on its way, where Euclid
 finds `BAC` equal to `FAC` and so each right. The claims about mixed
-angles, and Heath's account of the quarrel over the horn-like angle, go to the
-mishnah. In the proofs, Euclid's sentences about them stand as comments with no Lean
-beneath them, and each page says so.
+angles are now proved in companions after those main statements, using `MixedAngle` and
+comparisons of regions near the vertex. III.16's companions argue directly from the
+rectilineal fact, where Euclid uses reductio; III.31's companions prove what he calls
+manifest. No addition, ratio or motion of mixed angles is claimed. The representation
+and Heath's account of the quarrel over the horn-like angle are explained in the mishnah.
 
 ## Circles and their centres
 
-A circle in Lean has a centre only when a hypothesis gives one: `Postulate3` makes each
-circle with its centre, and nothing says that a circle given otherwise has one. Simson
+A circle in Lean has a centre by `exists_centre`, the rule approved on 18 October 2026
+in [brief 0008](0008-centre.md). `Postulate3` also makes each circle with its centre.
+Most statements still supply a centre as described below; removing those hypotheses is
+the brief's step 6. Simson
 observed that the proof of III.1 must be by *reductio ad absurdum*, and Heath explains
 why: "At the beginning of Book III. we have nothing more to base the proof upon than the
 definition of a circle, and this cannot be made use of unless we assume some point to be
@@ -266,8 +285,9 @@ worth naming. The first mate's report has a note on every statement.
   the centre `E` and the point `F` is `FE`, and so the statement is said of `E` and `F`;
   `C` and `D`, its ends on the circle, need no Lean name. Citers (III.4, III.14, III.35,
   III.36) have a centre and a point, never the ends.
-- **III.5, III.6** take two different circles (`ABC ≠ CDG`); a circle cuts itself, and has
-  its own centre.
+- **III.5, III.6** exclude a circle paired with itself through the point within:
+  `CirclesCut` supplies one in either direction, and `TouchesInternally` one of the inner
+  circle within the outer. Contact without forbids a point within both.
 - **III.7, III.8** say "greatest", "least", "the nearer is greater" and "only two equal"
   of every straight line from the point, with Euclid's meaning of "nearer": the less angle
   at the point with the ray through the centre, unsigned. Heath discusses the other
@@ -425,9 +445,25 @@ is left out, being nearly everywhere):
 | [III.33](../../book/III/33.md) | whole | Euclid's |  | `segment-with-circle` |  |
 | [III.34](../../book/III/34.md) | whole | Euclid's |  | `segment-with-circle` |  |
 
+**19 October 2026, III.5, III.6 and III.10.** The dated table above is superseded for
+these three rows by brief 0008, section 7, landing before step 6. III.5 and III.6 cover
+the whole enunciations with Euclid's route: they draw through a point within and use the
+order of the points, without `circle_eq`. Their overlaps remain: Diagram-segment 2 with
+Generalities 4 for III.5, with Generalities 3 as well for III.6. Two further rows give
+III.5 by Definition I.15 with Diagram-segment 4 and a magnitude law, or Diagram-segment 3's
+second half and Generalities 4. III.6 takes `touching-whole-circles`. III.10 keeps its whole
+statement, with `hypothesis-dropped`, but its route becomes `modified`: its last step uses
+`circle_eq`, since its circles may merely meet. The three records need new stamps from a
+reader; III.11–III.13 are also read again for the changed meaning and dependencies.
+
+**19 October 2026, III.16 and III.31.** Their rows in the dated table are also superseded:
+with their mixed-angle companions both now cover the whole enunciation, and carry
+`mixed-angles-local` instead of `mixed-angles-omitted`. III.16's route is `modified` for
+the companions' direct argument; III.31's remains `euclid`.
+
 The overlaps are in the [catalogue](../reports/overlaps.md). The planned work is brief
-0005's ([0005-astra-review.md](0005-astra-review.md)); III.16 and III.31's mixed angles,
-and III.2's kind of overlap, are the deliberate limitations Book III keeps.
+0005's ([0005-astra-review.md](0005-astra-review.md)); III.2's overlap remains catalogued,
+and the mixed-angle comparisons have the scope described above.
 
 ## Later
 
@@ -445,7 +481,7 @@ and III.2's kind of overlap, are the deliberate limitations Book III keeps.
   and III.26–III.30), but a statement could. A type of their own over `Angle` would forbid it
   without new rules; every law of magnitudes, now axioms about `Magnitude k`, would have to
   be proved again for it. The captain's call.
-- **A circle's centre.** If Definition 15's other half becomes a rule, the
-  `∃ O, Centre O α` hypotheses can go.
+- **A circle's centre.** With `exists_centre` now a rule, brief 0008's step 6 removes the
+  `∃ O, Centre O α` hypotheses where its approved statements do so.
 - A gap catalogue for Book III. (It now exists:
   [gaps-book-III.md](../reports/gaps-book-III.md), and Book III's index page links it.)

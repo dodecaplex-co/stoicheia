@@ -44,7 +44,7 @@ Tacit.exists_point_outside_circle Tacit.circle_eq Tacit.on_circle_of_len_eq
 Tacit.inside_of_len_lt Tacit.len_lt_of_inside""".split()
 
 # Phrases unfolded in every attempt.
-DEFS = ", ".join("""SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet
+DEFS = ", ".join("""SameSideOf OppositeSidesOf OppositeSides OutsideCircle CirclesMeet CirclesCut
 LineMeetsCircle CirclesTouch TouchesInternally TouchesExternally Touches LinesMeet""".split())
 
 HEAD = "import Elements\nopen Elements Elements.Tacit\nset_option maxErrors 1000000\n\n"

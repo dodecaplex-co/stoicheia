@@ -106,7 +106,8 @@ three words are the home of these terms:
   `hypothesis-dropped`.
 - **restricted:** every clause, but only under extra hypotheses that exclude configurations
   his words admit (I.40's main theorem alone, its bases end to end).
-- **partial:** some clause has no formal conclusion (III.16, III.31); the record quotes it
+- **partial:** some clause has no formal conclusion (as in III.16 and III.31 before their
+  mixed-angle companions); the record quotes it
   and gives a clause map.
 
 **A statement, once approved, is frozen:** others write against it. Never change an
@@ -224,11 +225,12 @@ The representations Books I–III rest on:
 | superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | stronger as a construction principle than System E's restricted inference rule, as [its file](../Elements/Foundations/Tacit/Superposition.lean) says; a restricted rule is being prototyped ([#75](https://github.com/jackChallis/stoicheia/issues/75)) | |
 | the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
-| a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
+| a circle's centre | `exists_centre` gives one for every circle; most statements still supply one as a hypothesis, `∃ O, Centre O α`, or take Postulate 3's | III.1 finds it by Euclid's construction | `centre-given` where the statement supplies it |
 | a circumference | twice the angle standing on it, `circumference`, `standing`, and for an arc `Arc.measure`; no radius; equal circumferences in III.26 and III.28 are equal in measure and congruent, `Arc.Congruent` | proved facts in `Circumferences.lean`; `Arc.measure_eq_iff` and `Arc.congruent_iff`, in `Arcs.lean` after III.29, say what equal measures and congruence come to | `angle-measure`, `redundant-hypothesis` |
 | a segment | its circle, the ends of its base and a point naming its side, `Arc`, with its points, `InSegment`, and its circumference's, `OnArc`; equal segments read through Common Notion 4 as segments that coincide, `Arc.Congruent` | `placement`, from I.4 and I.8, lays one on another in III.24; only III.24 and `Arcs.lean` may cite it | `segment-with-circle` |
-| an angle of a straight line and a circumference | none | the rectilineal facts Euclid proves it by are stated | `mixed-angles-omitted` |
-| circles touching | not crossing anywhere (the whole-circle reading Heath reports as Todhunter's) | III.13 keeps its content | |
+| an angle of a straight line and a circumference | `MixedAngle`, the region it opens near its vertex, compared there with a rectilineal angle | the companions of III.16 and III.31 prove the comparisons; no addition, ratio or motion of mixed angles is claimed | `mixed-angles-local` |
+| circles cutting | `CirclesCut`: meeting at two points, each circle with a point within the other | `CirclesCut.symm` exchanges the circles; the bridge `CirclesCut.of_meet` in `Audit/` derives this reading from two different circles meeting at two points, given their centres, by III.7 and III.8 | |
+| circles touching | meeting without crossing anywhere (the whole-circle reading Heath reports as Todhunter's); contact within has a point of the inner circle within the outer and none outside it; contact without has no point within both | `within_point` in `Audit/`, by III.10, gives the point within for the earlier reading, given centres; these later bridges compare readings, not steps in III.5 or III.6. III.13 still proves uniqueness of contact | `touching-whole-circles` |
 
 The details, and the reasons, are in the book briefs.
 

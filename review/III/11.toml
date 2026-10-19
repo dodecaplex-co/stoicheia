@@ -8,8 +8,8 @@ fingerprint = "sha256:b27048d5de2d5a8d"
 kind = "euclid"
 
 [representation]
-tags = ["centre-given"]
-note = "The centres F and G are given, as the enunciation takes them. Touching within is read of the whole circles: no point of ADE is outside ABC, which carries what Heath says Euclid assumes, that touching circles cross nowhere."
+tags = ["centre-given", "touching-whole-circles"]
+note = "The centres F and G are given, as the enunciation takes them. Touching within is read of the whole circles: a point of ADE is within ABC and no point of ADE is outside ABC, which carries what Heath says Euclid assumes, that touching circles cross nowhere. The point within serves through III.6 to distinguish F and G; the remaining proof uses the condition that none lies outside."
 
 [figure]
 note = "Like Heath's, this figure draws the impossible supposition: FG produced falling as FGH, away from A, so the G drawn is not the centre of ADE."

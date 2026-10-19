@@ -35,4 +35,11 @@
 #
 # Renewed on 19 October 2026 for the combined vocabulary of stages 3 and mixed angles:
 # 88 axioms, byte-identical to the centre-rule revision, and 120 words of vocabulary.
-324b75e86b1a99e45f33581ebdceaf38b34f9e730020efcf493d044f34039a82  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026 for brief 0008, section 7: CirclesCut joins the vocabulary,
+# and TouchesInternally asks for a point within instead of distinct circles. The 87 axioms
+# and all 37 words they reach are unchanged; no model law changes.
+#
+# Renewed on 19 October 2026 for the merged vocabulary of stage 3, mixed angles and
+# brief 0008, section 7: 88 axioms, unchanged, and 121 words of vocabulary.
+9dbcd71159ca55d5849813db540460316e436eccdf7d892af0496e71ec67cf7a  Certificate/axioms.lock

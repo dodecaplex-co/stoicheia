@@ -1,7 +1,7 @@
 # review/III/05.toml
 [statement]
 scope = "full"
-note = "The circles are taken to be two (`ABC ≠ CDG`), as Euclid's figure takes for granted, cutting at two points; the proof uses only one of them."
+note = "Cutting (`CirclesCut`) means two common points and a point of each circle within the other; the proof uses one common point and one point within."
 fingerprint = "sha256:d7cdfb6a9d4b4196"
 
 [route]
@@ -9,14 +9,14 @@ kind = "euclid"
 
 [overlap]
 rule = "Tacit.circle_eq"
+also = ["Tacit.inside_not_on"]
 kind = "gives"
-note = "System E's Diagram-segment 2, that one centre and one radius make one circle, gives III.5 at once from a common point. The proof follows Euclid, and calls on that rule only for the step he leaves tacit, that F and G are two points."
+note = "Diagram-segment 2 with Generalities 4 gives III.5 at once: one centre and a common point make the circles one, making F both within that circle and on it. Definition I.15 with Diagram-segment 4 and a magnitude law gives another short proof; with Diagram-segment 3's second half and Generalities 4 it gives a third. Our proof follows Euclid by Definition I.15 and the order on EFG, using neither Diagram-segment 2, Diagram-segment 3's second half, Diagram-segment 4 nor Circle 4."
 
 [[passage]]
-at = "therefore EF is also equal to EG, the less to the greater"
-kind = "helper"
-helper = "Tacit.circle_eq"
-note = "That F and G are two points is the step Euclid leaves tacit: were they one, ABC and CDG, about the one centre E, would be one circle (System E, Diagram-segment 2), and the statement says they are two. Then whichever of F and G is the nearer E gives the less, as in his figure, where F is."
+at = "For, if possible, let it be E"
+kind = "carried"
+note = "EFG is drawn through F, a point of ABC within CDG, and produced beyond F to meet CDG at G. This gives the order in Euclid's figure; one straight line from E meeting the circles at different points is enough for his contradiction."
 
 [[passage]]
 at = "Therefore the point E is not the centre of the circles ABC, CDG."

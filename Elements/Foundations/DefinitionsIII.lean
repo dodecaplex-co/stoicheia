@@ -48,7 +48,8 @@ Book III is about circles, and most of its words need no Lean word of their own:
 * No proposition of Book III uses a sector (Definition 10).
 
 The others are here: equal circles; a straight line touching a circle; circles touching
-one another, inside or outside; a circumference, compared with a circumference; and the
+one another, inside or outside; circles cutting one another; a circumference, compared
+with a circumference; and the
 angles of III.16 and III.31, contained by a straight line and a circumference.
 
 **Mixed angles.** III.16 compares the angle of the semicircle, and the remaining angle
@@ -135,11 +136,11 @@ def Touches (A B : Point) (α : Circle) : Prop :=
   A ≠ B ∧ ∀ L : Line, OnLine A L → OnLine B L →
     (∃ P : Point, OnLine P L ∧ OnCircle P α) ∧ ¬ LineMeetsCircle L α
 
-/-- **Definition III.3**, contact within. The circles `α` and `β` touch one another
-internally at `C`, `β` within `α`: they meet at `C`, they are two circles, and `β` does
-not cut `α`, for no point of `β` falls outside `α`. -/
+/-- **Definition III.3**, contact within: they meet at `C`, `β` has passed within `α`, for a
+point of `β` is within `α`, and no point of `β` falls outside `α`. -/
 def TouchesInternally (α β : Circle) (C : Point) : Prop :=
-  OnCircle C α ∧ OnCircle C β ∧ α ≠ β ∧ ∀ P : Point, OnCircle P β → ¬ OutsideCircle P α
+  OnCircle C α ∧ OnCircle C β ∧ (∃ P : Point, OnCircle P β ∧ InsideCircle P α) ∧
+    ∀ P : Point, OnCircle P β → ¬ OutsideCircle P α
 
 /-- **Definition III.3**, contact without. The circles `α` and `β` touch one another
 externally at `C`: they meet at `C`, and neither cuts the other, for no point is within
@@ -257,6 +258,12 @@ def FallsShort (m : MixedAngle) (B C : Point) : Prop :=
     LocallyLess m.vertex m.region (WithinAngle B m.vertex C)
 
 end MixedAngle
+
+/-- **Definition III.3**, circles that cut one another: they meet at two points, and each
+passes within the other, for a point of `α` is within `β`, and a point of `β` within `α`. -/
+def CirclesCut (α β : Circle) : Prop :=
+  CirclesMeet α β ∧ (∃ P : Point, OnCircle P α ∧ InsideCircle P β) ∧
+    ∃ P : Point, OnCircle P β ∧ InsideCircle P α
 
 /-- **Definitions III.6 and III.9.** The circumference `BKC` of the circle `α`: the part
 of `α` from `B` to `C` on the side of the straight line `BC` where `K` is. It is measured

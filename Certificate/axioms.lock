@@ -104,7 +104,7 @@
 "Tacit.triple_incidence2" = "∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Not (Elements.SameSide B D M) → Not (Elements.OnLine D M) → Ne B A → Elements.SameSide B C N"
 "Tacit.triple_incidence3" = "∀ {A B C D E : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N → Elements.SameSide D E M → Elements.SameSide C E N → Elements.SameSide C E L"
 
-[vocabulary]  # 120
+[vocabulary]  # 121
 "Angle" = "def : Type := Elements.Magnitude Elements.Kind.angle"
 "Apart" = "structure : Type"
 "Apart.area" = "def : Elements.Apart → Elements.Area := fun (R : Elements.Apart) => Elements.Magnitude.sum (List.map (fun (t : Prod Elements.Point (Prod Elements.Point Elements.Point)) => Elements.area (Prod.fst t) (Prod.fst (Prod.snd t)) (Prod.snd (Prod.snd t))) (Elements.Apart.pieces R))"
@@ -124,6 +124,7 @@
 "Between" = "opaque : Elements.Point → Elements.Point → Elements.Point → Prop"
 "Centre" = "opaque : Elements.Point → Elements.Circle → Prop"
 "Circle" = "opaque : Type"
+"CirclesCut" = "def : Elements.Circle → Elements.Circle → Prop := fun (α β : Elements.Circle) => And (Elements.CirclesMeet α β) (And (Exists fun (P : Elements.Point) => And (Elements.OnCircle P α) (Elements.InsideCircle P β)) (Exists fun (P : Elements.Point) => And (Elements.OnCircle P β) (Elements.InsideCircle P α)))"
 "CirclesMeet" = "def : Elements.Circle → Elements.Circle → Prop := fun (α β : Elements.Circle) => Exists fun (A : Elements.Point) => Exists fun (B : Elements.Point) => And (Ne A B) (And (Elements.OnCircle A α) (And (Elements.OnCircle A β) (And (Elements.OnCircle B α) (Elements.OnCircle B β))))"
 "CirclesTouch" = "def : Elements.Circle → Elements.Circle → Elements.Point → Prop := fun (α β : Elements.Circle) (C : Elements.Point) => Or (Elements.TouchesInternally α β C) (Or (Elements.TouchesInternally β α C) (Elements.TouchesExternally α β C))"
 "Collinear" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"
@@ -198,7 +199,7 @@
 "Surrounds" = "def : (Elements.Point → Prop) → Elements.Point → Prop := fun (R : Elements.Point → Prop) (P : Elements.Point) => Exists fun (δ : Elements.Circle) => And (Elements.Centre P δ) (∀ (Q : Elements.Point), Elements.InsideCircle Q δ → R Q)"
 "Touches" = "def : Elements.Point → Elements.Point → Elements.Circle → Prop := fun (A B : Elements.Point) (α : Elements.Circle) => And (Ne A B) (∀ (L : Elements.Line), Elements.OnLine A L → Elements.OnLine B L → And (Exists fun (P : Elements.Point) => And (Elements.OnLine P L) (Elements.OnCircle P α)) (Not (Elements.LineMeetsCircle L α)))"
 "TouchesExternally" = "def : Elements.Circle → Elements.Circle → Elements.Point → Prop := fun (α β : Elements.Circle) (C : Elements.Point) => And (Elements.OnCircle C α) (And (Elements.OnCircle C β) (∀ (P : Elements.Point), Elements.InsideCircle P α → Not (Elements.InsideCircle P β)))"
-"TouchesInternally" = "def : Elements.Circle → Elements.Circle → Elements.Point → Prop := fun (α β : Elements.Circle) (C : Elements.Point) => And (Elements.OnCircle C α) (And (Elements.OnCircle C β) (And (Ne α β) (∀ (P : Elements.Point), Elements.OnCircle P β → Not (Elements.OutsideCircle P α))))"
+"TouchesInternally" = "def : Elements.Circle → Elements.Circle → Elements.Point → Prop := fun (α β : Elements.Circle) (C : Elements.Point) => And (Elements.OnCircle C α) (And (Elements.OnCircle C β) (And (Exists fun (P : Elements.Point) => And (Elements.OnCircle P β) (Elements.InsideCircle P α)) (∀ (P : Elements.Point), Elements.OnCircle P β → Not (Elements.OutsideCircle P α))))"
 "Triangle" = "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Not (Elements.Collinear A B C)"
 "WithinAngle" = "def : Elements.Point → Elements.Point → Elements.Point → Elements.Point → Prop := fun (B A C P : Elements.Point) => And (Elements.SameSideOf P C A B) (Elements.SameSideOf P B A C)"
 "ang" = "opaque : Elements.Point → Elements.Point → Elements.Point → Elements.Angle"

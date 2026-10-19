@@ -1436,9 +1436,10 @@ findings:
   III.11, III.12 and III.13 keep their `[representation]` with this tag, and III.6 takes it
   too. It lands here, in a pull request of its own, before any record uses it, as
   [FORMALIZATION](../FORMALIZATION.md), section 3, asks and as step 1 of the brief's
-  section 6 orders; no record carries it yet, so no page changes. When the definition of
-  contact within changes, in the brief's step 6, the meaning gains that the inner circle has
-  passed within the outer (question 16). Protected file changed: `review/terms.toml`.
+  section 6 orders; no record carries it yet, so no page changes. The definition of
+  contact within now changes with section 7, before step 6, under the correction below; the tag's meaning is to gain that the inner circle has passed
+  within the outer (question 16). Protected file changed: `review/terms.toml`.
+
 - **The negative tests read the count of assumptions from the lock.** The planted-assumption
   test of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) expected
   `check_fidelity.py` to say "declares 88 axioms, not 87", a count fixed in the script. It
@@ -1460,7 +1461,6 @@ findings:
   Definition III.7 by `MixedAngle.ofSegment` and the companions' comparisons near the
   vertex. Its examples of partial coverage and overlap dependencies are brought to the
   same state. This changes the rendered wording alone, with no check changed.
-## 19 October 2026
 
 - **Every circle has a centre: the rule lands (brief 0008, step 5).** The owner approved it
   on 18 October, on issue #59: "approved, as Astra recommends.
@@ -1609,3 +1609,53 @@ findings:
   `Tacit.exists_centre` removes that extra centre hypothesis from `Prop24.chord_cases`,
   restoring brief 0006's frozen type exactly; its home before III.24, after III.2, is kept
   and disclosed here.
+
+- **III.5 and III.6: section 7 lands before step 6.** By the coordinator's order of
+  19 October, [brief 0008](0008-centre.md), section 7, lands now, as lane 2 of the Book III
+  plan. Its frozen order bundled it with step 6 only so that III.10, III.11 and III.13
+  would be read once. The correction lets III.5 and III.6 proceed independently of the
+  centre rule and accepts reading those three records again in step 6.
+
+  `Elements.BookIII.Prop5` now takes `CirclesCut ABC CDG`, replacing `ABC ≠ CDG` and
+  `CirclesMeet ABC CDG`. The new definition says that the circles meet at two points and
+  each passes within the other; either point within implies that they are different.
+  In `TouchesInternally`, a point of the inner circle within the outer replaces the
+  inequality of the circles. This changes the meaning of `Elements.BookIII.Prop6`,
+  `Elements.BookIII.Prop11` and `Elements.BookIII.Prop13`, whose declaration text stays
+  the same. Contact without stays the same. Both definitions are approved by the frozen
+  brief; no axiom is added.
+
+  The staged proofs of III.5 and III.6 move home unchanged, with Euclid's route, and
+  `Staging/Centre/Crossing.lean` is deleted. `CirclesCut.symm` goes to Book Zero, and
+  `CirclesMeet`'s docstring now describes meeting at two points. III.10's statement stays;
+  its final step calls `circle_eq` directly, its import of III.5 goes, and its route is
+  `modified`. Its statement covers circles that only meet as well as circles that cross.
+
+  `Audit/Overlaps.lean` is retyped and gains `Audit.III_5_radius`, the third short route
+  for III.5, by Definition I.15, Diagram-segment 3's second half and Generalities 4. The
+  probe's bridge belongs in `Audit/`: `CirclesCut.of_meet`, `within_point`, and the earlier
+  readings of III.5, III.6, III.11 and III.13 derived from the restated ones. The bridge
+  takes centres from the given hypotheses or the supposed common centre and uses the
+  existing axioms, with III.7, III.8 and III.10; it adds no hypothesis to those earlier
+  statements. A copy of `CirclesCut.of_meet` in `Elements/` after III.8 is not approved
+  by this order and waits for the coordinator.
+
+  The catalogue keeps the overlaps, adds III.5's third row, and moves Diagram-segment 2's
+  first entry to III.10. It discloses that Generalities 3 ends III.6's contact without:
+  this is Definition I.15's clause putting the centre within the figure. The other
+  short routes are not the proofs used by III.5 and III.6. The mishnah, introduction,
+  gaps report, FORMALIZATION section 3 and brief 0004's dated notes follow the new
+  readings, and `Audit/screen.py` unfolds `CirclesCut`. The renderer's and the scaffold's
+  words for this content come in a separate tooling change that lands first, in
+  `scripts/render.py` and `scripts/scaffold_book.py`. The meaning of
+  `touching-whole-circles` in `review/terms.toml` is brought up to date by a later tooling
+  change: the inner circle has a point within the outer, and no point outside it.
+
+  III.5, III.6 and III.10 require fresh review stamps by an independent reader; III.11,
+  III.12 and III.13 require deliberate semantic re-reading, even where their hashes
+  do not change. III.6 takes `touching-whole-circles`. The lock change is vocabulary
+  only, still 87 axioms, with both lock hashes renewed and no model law changed.
+  Protected files carried with this change: `Certificate/axioms.lock`,
+  `tests/model/lock.sha256`, `model/lock.sha256`, `Audit.lean`, `Audit/Crossing.lean`,
+  `Audit/Overlaps.lean` and `Audit/screen.py`. The labels and
+  security review required by WORKFLOW remain part of integration.
