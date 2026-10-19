@@ -1334,3 +1334,13 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+
+- **The stage test reads the program's words.**
+  `test_renderer_validation_loosened_with_content_is_kept_apart` in
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py), a protected file,
+  quoted Book I's stage words from [`docs/program.toml`](../program.toml) to plant a
+  stage [`render.py`](../../scripts/render.py) does not know. It now reads the first
+  stage line from the file, so that the program's words can change without changing
+  this test. It plants the same fault and expects the same refusal; nothing it checks
+  is loosened. This test change lands on its own, before the stage words change
+  ([WORKFLOW](../WORKFLOW.md), section 10: a check lands first).
