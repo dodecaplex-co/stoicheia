@@ -1524,3 +1524,11 @@ findings:
   request. This settles two of the three things "The edition does not name its owner" left
   to the owner. The repository's address on GitHub remains the owner's to decide, and its
   links stay unchanged. No statement, check or protected path changes.
+- **The screen's new near misses are pinned in the audit.** The overlap screen, as #78 widened
+  it, finds that III.30 can be proved from its angle measure alone, without III.28. The
+  catalogue lists it among the near misses of representation, and
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) gains the proof that shows it,
+  `Audit.III_30_measure`, beside the other audit lemmas. `Audit/` became a protected path
+  with #96 (train H6, #113), so this entry names the file: `Audit/Overlaps.lean` gains one
+  lemma and its docstring, and no pin, statement or check changes. No proposition rests on
+  the new lemma; it records what a rule already gives.
