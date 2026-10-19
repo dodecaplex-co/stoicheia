@@ -106,6 +106,7 @@ import json
 import math
 import re
 import shutil
+import string
 import subprocess
 import sys
 import tempfile
@@ -188,10 +189,10 @@ REACH_PENDING: dict[str, tuple[str, str]] = {
     "docs/reports/gaps-book-II.md": ("S7 S12", "the text change that follows this one (#66)"),
     "docs/reports/gaps-book-III.md": ("S12", "stage 3's gap entries (#25)"),
     "docs/reports/overlaps.md": ("S7", "stage 3's overlap entries (#25)"),
-    # S12's report inventory on bd3b72a: 149 and 6 findings, respectively. These are
+    # S12's report inventory on bd3b72a: 147 and 2 findings, respectively. These are
     # the initial findings of the new report reach, not later additions to a landed rule.
-    "docs/reports/mixed-angles-prototype.md": ("S12", "the report text change after #66 (149 findings)"),
-    "docs/reports/read-through-01.md": ("S7 S12", "the report text change after #66 (6 S12 findings)"),
+    "docs/reports/mixed-angles-prototype.md": ("S12", "the report text change after #66 (147 findings)"),
+    "docs/reports/read-through-01.md": ("S7 S12", "the report text change after #66 (2 S12 findings)"),
     # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
     "book/I/front.md": ("S12", "render.py's FRONT_LEAN_I, after stage 3 (#25)"),
     # The notes of four proofs (S22): a change to the file needs its record read again.
@@ -1261,13 +1262,17 @@ def inline_destination_end(text: str, start: int) -> int | None:
         pairs = {'"': '"', "'": "'", '(': ')'}
         if at >= len(text) or text[at] not in pairs:
             return None
-        closer = pairs[text[at]]
+        opener = text[at]
+        closer = pairs[opener]
         at += 1
         while at < len(text):
-            if text[at] == "\\" and at + 1 < len(text):
+            if (text[at] == "\\" and at + 1 < len(text)
+                    and text[at + 1] in string.punctuation):
                 at += 2
             elif text[at] == closer:
                 return at + 1
+            elif opener == "(" and text[at] == "(":
+                return None
             elif text[at] == "\n" and text[at:at + 2] == "\n\n":
                 return None
             else:
@@ -1279,22 +1284,28 @@ def inline_destination_end(text: str, start: int) -> int | None:
         return None
     if text[at] == ")":
         return at + 1
-    empty = at > start + 1 and text[at] in "\"'("
-    if not empty and text[at] == "<":
+    if text[at] == "<":
         at += 1
-        while at < len(text) and text[at] != ">":
+        while at < len(text):
+            if (text[at] == "\\" and at + 1 < len(text)
+                    and text[at + 1] in string.punctuation):
+                at += 2
+                continue
+            if text[at] == ">":
+                break
             if text[at] == "\n" or text[at] == "<" or ord(text[at]) < 0x20:
                 return None
-            at += 2 if text[at] == "\\" and at + 1 < len(text) else 1
+            at += 1
         if at == len(text):
             return None
         at += 1
-    elif not empty:
+    else:
         depth = 0
         began = at
         while at < len(text):
             char = text[at]
-            if char == "\\" and at + 1 < len(text):
+            if (char == "\\" and at + 1 < len(text)
+                    and text[at + 1] in string.punctuation):
                 at += 2
                 continue
             if char == "(":
@@ -1308,12 +1319,6 @@ def inline_destination_end(text: str, start: int) -> int | None:
             at += 1
         if at == began or depth:
             return None
-    if empty:
-        titled = title(at)
-        if titled is None:
-            return None
-        closed = space(titled)
-        return closed + 1 if closed < len(text) and text[closed] == ")" else None
     if at < len(text) and text[at] == ")":
         return at + 1
     separated = space(at)
@@ -1386,10 +1391,8 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
                 raw_start, opened = ticks[i]
                 start = raw_start + backslashes_before(block.text, raw_start) % 2
                 width = opened - start
-                before = link[0] if link[2] <= raw_start < link[0] else len(block.text)
                 close = next((j for j in range(i + 1, len(ticks))
-                              if ticks[j][0] < before
-                              and ticks[j][1] - ticks[j][0] == width), None) if width else None
+                              if ticks[j][1] - ticks[j][0] == width), None) if width else None
                 if close is None:
                     i += 1
                     continue

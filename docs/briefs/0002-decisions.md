@@ -1421,10 +1421,10 @@ findings:
 
   | File | Rule | Findings |
   |---|---|---|
-  | `docs/reports/mixed-angles-prototype.md` | S12 | 149 |
-  | `docs/reports/read-through-01.md` | S12 | 5 |
+  | `docs/reports/mixed-angles-prototype.md` | S12 | 147 |
+  | `docs/reports/read-through-01.md` | S12 | 2 |
 
-  The 154 findings include incomplete or ambiguous references, local names and names
+  The 149 findings include incomplete or ambiguous references, local names and names
   from a staged or earlier version, among them `Exceeds.nearVertexOpen`. The content
   change after #66 corrects or qualifies each reference; the S12 entry then comes out
   in a check change. The read-through's existing S7 entry stays. Every report still
