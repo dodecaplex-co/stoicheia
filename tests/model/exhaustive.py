@@ -100,9 +100,9 @@ run('Postulate2', gen_p2())
 run('Postulate3', P4('AB'))
 
 # ---------------- Between ----------------
-for n in ['between_symm', 'ne_of_between', 'ne_of_between_ends', 'not_between_of_between']:
+for n in ['between_symm', 'derived.ne_of_between', 'derived.ne_of_between_ends', 'not_between_of_between']:
     run(n, P4('ABC'))
-for n in ['between_of_between_left', 'between_of_between_right', 'not_between_of_between_between']:
+for n in ['derived.between_of_between_left', 'derived.between_of_between_right', 'derived.not_between_of_between_between']:
     run(n, P4('ABCD'))
 
 
@@ -114,12 +114,12 @@ def gen_ptsline(names):
             yield d
 
 
-for n in ['on_line_of_between', 'on_line_of_between_ends', 'between_cases',
-          'same_side_trans', 'same_side_or', 'pasch1', 'pasch2', 'pasch3']:
+for n in ['derived.on_line_of_between', 'derived.on_line_of_between_ends', 'between_cases',
+          'same_side_trans', 'derived.same_side_or', 'derived.pasch1', 'pasch2', 'derived.pasch3']:
     run(n, gen_ptsline('ABC'))
-for n in ['same_side_symm', 'not_on_line_of_same_side']:
+for n in ['derived.same_side_symm', 'not_on_line_of_same_side']:
     run(n, gen_ptsline('AB'))
-run('same_side_refl', gen_ptsline('A'))
+run('derived.same_side_refl', gen_ptsline('A'))
 
 
 def gen_lines2_pts(names_on, extra=()):
@@ -137,7 +137,7 @@ def gen_pasch4():
                 yield dict(A=A, B=B, C=C, L=L, M=M)
 
 
-run('pasch4', gen_pasch4())
+run('derived.pasch4', gen_pasch4())
 
 
 def gen_lines_meet():
@@ -168,8 +168,8 @@ def gen_ti(withE=False):
                             yield dict(A=A, B=B, C=C, D=D, L=L, M=M, N=N)
 
 
-run('triple_incidence1', gen_ti())
-run('triple_incidence2', gen_ti())
+run('derived.triple_incidence1', gen_ti())
+run('derived.triple_incidence2', gen_ti())
 if os.environ.get('TI3', '1') == '1':
     run('derived.triple_incidence3', gen_ti(True))
 
@@ -232,7 +232,7 @@ def gen_area_line():
 
 
 run('area_add_of_between', gen_area_line())
-run('between_of_area_add', gen_area_line())
+run('derived.between_of_area_add', gen_area_line())
 
 
 def gen_area0():
@@ -246,7 +246,7 @@ run('area_eq_zero_of_on_line', gen_area0())
 run('on_line_of_area_eq_zero', gen_area0())
 run('area_degenerate', P4('AB'))
 run('area_rotate', P4('ABC'))
-run('area_swap', P4('ABC'))
+run('derived.area_swap', P4('ABC'))
 
 
 def gen_cong():
@@ -259,7 +259,7 @@ def gen_cong():
 run('area_congruent', gen_cong())
 
 # ---------------- Metric / segments ----------------
-run('eq_of_len_eq_zero', P4('AB'))
+run('derived.eq_of_len_eq_zero', P4('AB'))
 run('len_self', P4('A'))
 run('len_symm', P4('AB'))
 run('len_add_of_between', P4('ABC'))
@@ -275,8 +275,8 @@ def gen_circ_pts(names, grid=G2):
 
 
 run('derived.centre_unique', gen_circ_pts('AB', G))
-run('centre_inside', gen_circ_pts('A'))
-run('inside_not_on', gen_circ_pts('A'))
+run('derived.centre_inside', gen_circ_pts('A'))
+run('derived.inside_not_on', gen_circ_pts('A'))
 
 
 def gen_def15():
@@ -287,9 +287,9 @@ def gen_def15():
 
 
 run('Definition15', gen_def15())
-run('on_circle_of_len_eq', gen_def15())
-run('inside_of_len_lt', gen_circ_pts('ABC', [(x, y) for x in range(-3, 4) for y in range(-3, 4)]))
-run('len_lt_of_inside', gen_circ_pts('ABC', [(x, y) for x in range(-3, 4) for y in range(-3, 4)]))
+run('derived.on_circle_of_len_eq', gen_def15())
+run('derived.inside_of_len_lt', gen_circ_pts('ABC', [(x, y) for x in range(-3, 4) for y in range(-3, 4)]))
+run('derived.len_lt_of_inside', gen_circ_pts('ABC', [(x, y) for x in range(-3, 4) for y in range(-3, 4)]))
 
 
 def gen_circle_eq():
@@ -379,7 +379,7 @@ def gen_cm_side():
 
 
 run('circles_meet_same_side', gen_cm_side())
-run('circles_meet_opposite_side', gen_cm_side())
+run('derived.circles_meet_opposite_side', gen_cm_side())
 
 
 def gen_cmoio():
@@ -389,7 +389,7 @@ def gen_cmoio():
                 yield dict(A=A, B=B, al=c1, be=c2)
 
 
-run('circles_meet_of_on_inside_outside', gen_cmoio())
+run('derived.circles_meet_of_on_inside_outside', gen_cmoio())
 
 
 def gen_cm5():
@@ -422,7 +422,7 @@ def gen_lmc_in():
                 yield dict(A=A, L=L, al=c)
 
 
-run('line_meets_circle_of_inside', gen_lmc_in())
+run('derived.line_meets_circle_of_inside', gen_lmc_in())
 
 
 def gen_lc():
@@ -451,6 +451,14 @@ def gen_sup():
 
 run('superposition', gen_sup())
 run('derived.exists_point_outside_circle', (dict(al=c) for c in CIRCS))
+
+
+# The existence rules retired on 19 October 2026, checked on the grid as derived properties.
+run('derived.exists_point_same_side', gen_ptsline('B'))
+run('derived.exists_point_opposite_side', gen_ptsline('B'))
+run('derived.exists_point_between', gen_ptsline('BC'))
+run('derived.exists_point_on_circle', (dict(al=c) for c in CIRCS))
+run('derived.exists_point_on_line_off_line', (dict(L=L, M=M) for L, M in itertools.product(LINES, repeat=2)))
 
 print('exhaustive axioms run:', sum(r[0] not in PROPERTIES for r in results),
       ' derived properties run:', sum(r[0] in PROPERTIES for r in results),
