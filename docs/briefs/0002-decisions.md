@@ -1090,19 +1090,20 @@ findings:
   [`tests/test_check_style.py`](../../tests/test_check_style.py); every case of both is
   kept (44 phrase, 44 S10 and 33 ink cases), none weakened.
 - **The tests of an interruption after the push depend on nothing but the run.** Two tests
-  of `InterruptedAfterThePush` had failed once beside a Lean build (#95, found by the #40
-  lane). Under load alone they never failed here: eleven runs of the class, eight of them
-  at load averages of 23 to 32 with four from-scratch builds of the library running
-  alongside, and three more with git's background gc forced. They did fail, exactly the
-  two that follow CI while the third passed, when the checkout's `scripts/safe_push.py`
-  changed after the suite had committed it as origin/main's, as an edit in a shared
-  checkout would change it while the suite runs: the copy run then differs from
-  origin/main's and hands over to it, the hand-over leaves behind the stand-ins the tests
-  put in place of following CI, and the run follows the stand-in CI to success, exit 0.
-  So [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) now runs every driven
-  test from a copy of the harness as the suite committed it, and the three tests of the
-  class run on a clock of their own, which never reads the wall clock and never waits,
-  twice: with time standing still, and with each reading an hour after the last, past
-  every deadline `safe_push.py` keeps. Each run must still end in "pushed; CI not
-  followed", exit 3, and must now show origin/main's harness, never handed over, and a
-  total that is the clock's. `scripts/safe_push.py` is unchanged, and no test is loosened.
+  of `InterruptedAfterThePush` had failed once beside a Lean build (#95, found during the
+  work on #40). Under load alone they never failed here: eleven runs of the class, eight
+  of them at load averages of 23 to 32 with four from-scratch builds of the library
+  running alongside, and three more with git's background gc forced. They did fail,
+  exactly the two that follow CI while the third passed, when the checkout's
+  `scripts/safe_push.py` changed after the suite had committed it as origin/main's, as an
+  edit in a shared checkout would change it while the suite runs: the copy run then
+  differs from origin/main's and hands over to it, the hand-over leaves behind the
+  stand-ins the tests put in place of following CI, and the run follows the stand-in CI to
+  success, exit 0. So [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) now
+  runs every driven test from a copy of the harness as the suite committed it, and the
+  three tests of the class run on a clock of their own, which never reads the wall clock
+  and never waits, twice: with time standing still, and with each reading an hour after
+  the last, past every deadline `safe_push.py` keeps. Each run must still end in "pushed;
+  CI not followed", exit 3, and must now show origin/main's harness, never handed over,
+  and a total that is the clock's. `scripts/safe_push.py` is unchanged, and no test is
+  loosened.
