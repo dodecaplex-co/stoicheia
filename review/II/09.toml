@@ -39,18 +39,25 @@ note = "Euclid infers equal angles at A and E from AC equal to CE. The Lean uses
 at = "therefore the whole angle AEB is right"
 kind = "helper"
 helper = "angle_add_of_between"
-note = "Euclid adds the two half-right angles at E to obtain AEB. `angle_add_of_between` shows that EC divides AEB because C lies between A and B; the Lean then adds the equal halves."
+note = "Euclid adds the two half-right angles at E to obtain AEB. `angle_add_of_between` shows that EC divides AEB because C lies between A and B; the Lean proves CEA and CEB equal with `Magnitude.eq_of_add_self_eq`, then adds the equal halves."
+
+[[passage]]
+at = "therefore the angle GEF is equal to the angle EFG"
+kind = "helper"
+helper = "Magnitude.eq_of_add_self_eq"
+note = "Euclid takes the angles GEF and EFG to be equal because each is half a right angle. The Lean applies `Magnitude.eq_of_add_self_eq` to their equal doubles."
+
+[[passage]]
+at = "therefore the angle at B is equal to the angle DFB"
+kind = "helper"
+helper = "Magnitude.eq_of_add_self_eq"
+note = "Euclid takes the angles FBD and DFB to be equal because each is half a right angle. The Lean applies `Magnitude.eq_of_add_self_eq` to their equal doubles."
 
 [[passage]]
 at = "But the square on EF is equal to the squares on EG, GF"
 kind = "helper"
 helper = "BookI.Prop47.sq"
 note = "Euclid gives the square on EF as the squares on EG and GF together, without a reference here. The Lean applies I.47 to the triangle EGF, whose angle at G has been proved right."
-
-[[passage]]
-at = "But the square on EA is also double of the square on AC"
-kind = "grouped"
-note = "Euclid recalls the square on EA and adds it to the square on EF. One step in the Lean uses both earlier equalities and regroups their sum as twice the squares on AC and CD together."
 
 [[passage]]
 at = "But the squares on AD, DF are equal to the square on AF"

@@ -44,7 +44,7 @@ note = "Our triangles AEG and ADG are named by their corners, so no straight lin
 at = "therefore the angle AEB is right"
 kind = "helper"
 helper = "angle_add_of_between"
-note = "Euclid adds the two half-right angles at E to obtain AEB. `angle_add_of_between` shows that EC divides AEB because C lies between A and B; the Lean then adds the equal halves."
+note = "Euclid adds the two half-right angles at E to obtain AEB. `angle_add_of_between` shows that EC divides AEB because C lies between A and B; the Lean proves CEA and CEB equal with `Magnitude.eq_of_add_self_eq`, then adds the equal halves."
 
 [[passage]]
 at = "for it is equal to the angle DCE, they being alternate"
@@ -53,9 +53,16 @@ helper = "Tacit.pasch3"
 note = "Euclid reads E and G on opposite sides of AB from his figure when he takes BDG and DCE as alternate angles. From B between E and G, proved beneath \"Let them be produced and meet at G\", the Lean places them on opposite sides by `Tacit.pasch3`, a rule we assume (System E, Pasch 3), and applies I.29 to the parallels CE and DG to carry the right angle DCE to BDG."
 
 [[passage]]
-at = "But the square on EA was also proved double of the square on AC"
-kind = "grouped"
-note = "Euclid recalls the square on EA and adds it to the square on EG. One step in the Lean uses both earlier equalities and regroups their sum as twice the squares on AC and CD together."
+at = "therefore the angle DGB is equal to the angle DBG"
+kind = "helper"
+helper = "Magnitude.eq_of_add_self_eq"
+note = "Euclid takes the angles DGB and DBG to be equal because each is half a right angle. The Lean applies `Magnitude.eq_of_add_self_eq` to their equal doubles."
+
+[[passage]]
+at = "therefore the angle EGF is equal to the angle FEG"
+kind = "helper"
+helper = "Magnitude.eq_of_add_self_eq"
+note = "Euclid takes the angles EGF and FEG to be equal because each is half a right angle. The Lean applies `Magnitude.eq_of_add_self_eq` to their equal doubles."
 
 [review]
 stage = "full"
