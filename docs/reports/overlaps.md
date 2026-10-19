@@ -264,33 +264,37 @@ as Argon's second review pointed out; and it lost more than a quarter of its att
 without a search, for `grind` refuses a rule in which it finds nothing to match, as it does
 the twelve rules that only say a point, a straight line or a circle exists, and with it the
 rest of the attempt, so that Postulates 4 and 5, for instance, were never tried with the
-diagram rules. Now every definition a statement or a rule reaches is unfolded, but for the
-kinds of magnitude, with their sum, order and zero, in which the rules are stated, and the
-magnitudes Lean chooses (`circumference`, `standing` and the rectangle `rect`), which are
-given by what their definitions say; each try leaves out the rules `grind` refuses, and each
-statement is also tried with no rule, so that one that holds by its definitions alone is not
-counted as a rule's. Run so over all 121 statements, the propositions, the porisms and the
-companions, at `89c5da4`, the screen closes the same three, each by a rule, and nothing
-else; no statement closes with no rule. Seven of its 90,629 tries ran out of time even with
-four times the usual allowance, all of them III.34 from Postulate 4, alone or with
-Postulate 5 and at most one more family. III.34 asks for three points on its circle, and
-the rules among those that put a point on a circle that has none need a straight line,
-which III.34 does not give and none of those rules draws. No try stopped on any other
-error. What the screen does not give `grind` is that every point of a circle measures a
-circumference alike: that is III.21, a proposition, so the near misses of the measure
-(below) are not found by it, and are not overlaps with a rule. Nor does it give `grind` that
-a magnitude Lean chooses is one magnitude under two descriptions that hold of the same
-points, as `standing_eq_circumference` and `standing_congr` show, so a statement that needs
-that step is not searched either. Nor does `grind` reason by induction, or open a figure's
-fields of itself, so what a figure given with its triangles holds by its formation is not
-searched, which only the companions of I.45 and II.14 speak of. The screen is not one of
-CI's checks: it takes about an hour and a half of processor time, and nothing runs it of
-itself; it should be run again when a statement or a rule changes. It cannot draw a figure,
-for `grind` works with the points and circles a goal already names. I.7 needs two circles
-its statement never mentions, and I.23 a triangle laid down, so both came from reading. I.2
-and I.3 need a triangle drawn and then laid down. The catalogue first listed them as near
-misses, since neither statement gives a triangle to move; but the same holds of I.7's
-circles, and they are rows now, with `Audit.I_2` and `Audit.I_3`.
+diagram rules.
+
+The revised screen of `tooling/overlap-screen-unfold` (commit `760b974`) was run against
+library revision `89c5da4`. The linked `Audit/screen.py` gains the behaviours described here
+when that tooling lands. In the revised screen, every definition a statement or a rule
+reaches is unfolded, but for the kinds of magnitude, with their sum, order and zero, in
+which the rules are stated, and the magnitudes Lean chooses (`circumference`, `standing` and
+the rectangle `rect`), which are given by what their definitions say; each try leaves out
+the rules `grind` refuses, and each statement is also tried with no rule, so that one that
+holds by its definitions alone is not counted as a rule's. Run so over all 121 statements,
+the propositions, the porisms and the companions, the revised screen closed the same three,
+each by a rule, and nothing else; no statement closed with no rule. Seven of its 90,629
+tries ran out of time even with four times the usual allowance, all of them III.34 from
+Postulate 4, alone or with Postulate 5 and at most one more family. III.34 asks for three
+points on its circle, and the rules among those that put a point on a circle that has none
+need a straight line, which III.34 does not give and none of those rules draws. No try
+stopped on any other error. What the revised screen does not give `grind` is that every
+point of a circle measures a circumference alike: that is III.21, a proposition, so the near
+misses of the measure (below) are not found by it, and are not overlaps with a rule. Nor
+does it give `grind` that a magnitude Lean chooses is one magnitude under two descriptions
+that hold of the same points, as `standing_eq_circumference` and `standing_congr` show, so a
+statement that needs that step is not searched either. Nor does `grind` reason by induction,
+or open a figure's fields of itself, so what a figure given with its triangles holds by its
+formation is not searched, which only the companions of I.45 and II.14 speak of. The revised
+screen is not one of CI's checks: that run took about an hour and a half of processor time,
+and nothing runs it of itself; it should be run again when a statement or a rule changes. It
+cannot draw a figure, for `grind` works with the points and circles a goal already names.
+I.7 needs two circles its statement never mentions, and I.23 a triangle laid down, so both
+came from reading. I.2 and I.3 need a triangle drawn and then laid down. The catalogue first
+listed them as near misses, since neither statement gives a triangle to move; but the same
+holds of I.7's circles, and they are rows now, with `Audit.I_2` and `Audit.I_3`.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
 rule a proof reaches through a lemma as well as one its own Lean names, and found that
