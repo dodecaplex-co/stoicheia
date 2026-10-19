@@ -19,6 +19,9 @@ open Tacit
 touches the circle α, some point B of α is on it; B may be A or X. -/
 theorem Touches.contact {A X : Point} {α : Circle} (h : Touches A X α) :
     ∃ B : Point, OnCircle B α ∧ Collinear A X B := by
-  sorry
+  /- Name the straight line AX. Definition III.2 gives a point of the circle on it. -/
+  obtain ⟨L, hA_L, hX_L⟩ := Postulate1 A X h.1
+  obtain ⟨B, hB_L, hB⟩ := (h.2 L hA_L hX_L).1
+  exact ⟨B, hB, ⟨L, hA_L, hX_L, hB_L⟩⟩
 
 end Elements

@@ -40,7 +40,59 @@ theorem Prop7.partner {A D E F G H : Point} {ABCD : Circle} (hE : Centre E ABCD)
     (hG : OnCircle G ABCD) (hH : OnCircle H ABCD) (hHG : OppositeSidesOf H G A D)
     (hFH : ‖F H‖ = ‖F G‖) :
     ∠ A F H = ∠ A F G := by
-  sorry
+  have hAD : A ≠ D := ne_of_between_ends hAED
+  obtain ⟨L, hA_L, hD_L⟩ := Postulate1 A D hAD
+  have hE_L : OnLine E L := on_line_of_between_ends hAED hA_L hD_L
+  have hF_L : OnLine F L := on_line_of_between_ends hEFD hE_L hD_L
+  have hEF : E ≠ F := ne_of_between hEFD
+  have hG_L : ¬ OnLine G L := (hHG.oppositeSides hA_L hD_L).2.1
+  have hEFG : Triangle E F G := Triangle.of_line hE_L hF_L hEF hG_L
+  /- On EF at E make the angle FEH' equal to GEF, on the other side from G. -/
+  obtain ⟨P, hPG, -⟩ := exists_point_opposite_side hG_L []
+  have hP_EF : ¬ Collinear E F P := Triangle.of_line hE_L hF_L hEF hPG.1
+  obtain ⟨X, F', hF', hX, hang⟩ := BookI.Prop23 hEF hEFG.cab hP_EF
+  obtain ⟨N, hE_N, hX_N⟩ := Postulate1 E X hX.triangle.ne₁₃
+  obtain ⟨Q, hXEQ⟩ := produce hX.triangle.ne₁₃.symm
+  have hQ_N : OnLine Q N := on_line_of_between hXEQ hX_N hE_N
+  obtain ⟨H', hH', -, hH'EQ⟩ :=
+    line_circle_beyond (centre_inside hE) hE_N hQ_N
+      (ne_of_between (between_symm hXEQ))
+  have hH'_ray : OnRay H' E X :=
+    OnRay.of_between_between (between_symm hXEQ) (between_symm hH'EQ)
+  have hH'G_EF : OppositeSidesOf H' G E F :=
+    (SameSideOf.of_onRay hH'_ray hX).trans_opposite
+      (OppositeSidesOf.of_line hEF hE_L hF_L hPG)
+  have hH'G : OppositeSidesOf H' G A D :=
+    OppositeSidesOf.of_line hAD hA_L hD_L (hH'G_EF.oppositeSides hE_L hF_L)
+  have hFEH' : ∠ F E H' = ∠ G E F :=
+    (angle_eq_of_onRay hF'.symm hH'_ray).trans
+      ((angle_symm hF'.2.1 hX.triangle.ne₁₃.symm).trans hang)
+  have hEH'F : Triangle E H' F := hH'G_EF.triangle.acb
+  have hGEF : ∠ G E F = ∠ H' E F :=
+    hFEH'.symm.trans (angle_symm hEF.symm hEH'F.ne₁₂.symm)
+  /- I.4 gives both the equal bases and the equal angles at F. -/
+  have h4 := BookI.Prop4 hEFG.acb hEH'F (Definition15 hE hG hH') rfl hGEF
+  have hFH' : ‖F H'‖ = ‖F G‖ := by
+    rw [len_symm F H', len_symm F G]
+    exact h4.1.symm
+  have hEray : OnRay E F A := OnRay.of_between (between_symm (between_cut hAED hEFD))
+  have hangle : ∠ A F H' = ∠ A F G := by
+    rw [← angle_onRay_left hEray hEH'F.ne₂₃,
+      ← angle_onRay_left hEray hEFG.ne₂₃.symm]
+    exact h4.2.2.2.symm
+  /- H and H' are both the unique partner of G on the other side of AD. -/
+  obtain ⟨J, -, -, -, hunique⟩ := (Prop7 hE hA hD hAED hEFD).2.2.2 G hG hHG.symm.triangle
+  have hHG_ne : H ≠ G := by
+    intro e
+    have hs := hHG.oppositeSides hA_L hD_L
+    exact hs.2.2 (e ▸ same_side_refl hs.1)
+  have hH'G_ne : H' ≠ G := by
+    intro e
+    have hs := hH'G.oppositeSides hA_L hD_L
+    exact hs.2.2 (e ▸ same_side_refl hs.1)
+  have hHJ : H = J := (hunique H hH hFH).resolve_left hHG_ne
+  have hH'J : H' = J := (hunique H' hH' hFH').resolve_left hH'G_ne
+  exact (hHJ.trans hH'J.symm) ▸ hangle
 
 /-- **III.7, general** (companion of III.7). F is on the diameter AD of the circle ABCD with
 centre E, strictly between E and D, so not the centre. Of the straight lines from F to the
@@ -59,12 +111,28 @@ theorem Prop7.general {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD)
     (∀ G : Point, OnCircle G ABCD → ¬ Collinear A D G → ∃ H : Point, OnCircle H ABCD ∧
       OppositeSidesOf H G A D ∧ ‖F H‖ = ‖F G‖ ∧
       ∀ K : Point, OnCircle K ABCD → ‖F K‖ = ‖F G‖ → K = G ∨ K = H) := by
-  sorry
+  obtain ⟨hgreatest, hleast, hnearer, hpartner⟩ := Prop7 hE hA hD hAED hEFD
+  refine ⟨hgreatest, hleast, ?_, hpartner⟩
+  intro B C hB hC hB_AD hC_AD hlt
+  by_cases hBC : SameSideOf B C A D
+  · exact hnearer B C hB hC hBC hlt
+  /- Move C to its partner H on B's side of AD. -/
+  have hAD : A ≠ D := ne_of_between_ends hAED
+  obtain ⟨L, hA_L, hD_L⟩ := Postulate1 A D hAD
+  have hBC' : OppositeSidesOf B C A D :=
+    OppositeSidesOf.of_line hAD hA_L hD_L
+      ⟨fun h => hB_AD ⟨L, hA_L, hD_L, h⟩,
+        fun h => hC_AD ⟨L, hA_L, hD_L, h⟩,
+        fun hs => hBC (SameSideOf.of_line hAD hA_L hD_L hs)⟩
+  obtain ⟨H, hH, hHC, hFH, -⟩ := hpartner C hC hC_AD
+  have hBH : SameSideOf B H A D := OppositeSidesOf.sameSideOf hBC'.symm hHC.symm
+  have hang : ∠ A F H = ∠ A F C := Prop7.partner hE hA hD hAED hEFD hC hH hHC hFH
+  have hlt' : ∠ A F B < ∠ A F H := by rw [hang]; exact hlt
+  have hless := hnearer B H hB hH hBH hlt'
+  rwa [hFH] at hless
 
 /-- The check: today's statement of III.7 follows from `Prop7.general` (checked by Lean).
-`Prop7.general` is still a `sorry` stub, so the check proves nothing of III.7 until the
-companion is proved: it shows only that the two statements fit. Two points on one side of
-AD are off it. -/
+Two points on one side of AD are off it. -/
 example : type_of% @Elements.BookIII.Prop7 := by
   intro A D E F ABCD hE hA hD hAED hEFD
   obtain ⟨hgreatest, hleast, hnearer, hpartner⟩ := Prop7.general hE hA hD hAED hEFD
