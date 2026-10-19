@@ -11,7 +11,8 @@ files of verdicts, each with the outcome it should give:
 
 * a pass that turns into a fail, into "not run" (a check not run is not a pass), or that
   the pull request's verdicts lack, is held; a fail that stays a fail, or turns into a
-  pass, and an item main does not pass, is not;
+  pass, and an item main does not pass, is not; nor is a staging item's fail (P10, E6),
+  which staging a statement before its proof brings, and which is listed;
 * two files from different copies of the checker, which need not judge alike, or a file
   that --json did not write, cannot be compared, exit 2;
 * --json writes a verdict for every item of every proposition, book and the edition, with
@@ -96,6 +97,38 @@ class Comparison(unittest.TestCase):
         self.assertIn("no item that passes on main (abc1234) fails on the pull request", out)
         self.assertIn("1 pass on both, 1 more pass on the pull request, and 5 still fail or "
                       "were not run there", out)
+
+    def test_what_a_pull_request_stages_is_listed_and_not_held(self):
+        # A statement that a stage adds or changes is staged before its proof (WORKFLOW,
+        # section 2), and P10 and E6 read Staging/ alone: their fail is listed, not held,
+        # and the full gate holds it. Not run, or missing, it is held like any other.
+        main = run_file({"I.1": {"P1": "pass", "P10": "pass"}, "edition": {"E6": "pass"}})
+        staged = "Staging/Stage5/Prop01.lean still stages declarations for I.1: once proved"
+        pr = run_file({"I.1": {"P1": "pass", "P10": "fail"}, "edition": {"E6": "fail"}},
+                      notes={"I.1": {"P10": [staged]}})
+        code, out = self.compare(main, pr)
+        self.assertEqual(code, 0, out)
+        self.assertIn("Not held: 2 staging items that pass on main", out)
+        self.assertIn(f"I.1, P10 staging: fail: {staged}", out)
+        self.assertIn("edition, E6 staging: fail", out)
+        self.assertIn("fails on the pull request (abc1234), save the staging items above: 1 "
+                      "pass on both", out)
+        # Held with a fail of another item, and listed apart from it.
+        pr = run_file({"I.1": {"P1": "fail", "P10": "fail"}, "edition": {"E6": "pass"}})
+        code, out = self.compare(main, pr)
+        self.assertEqual(code, 1, out)
+        self.assertIn("1 item that passes on main", out)
+        self.assertIn("Besides, not held: 1 staging item that passes on main (abc1234) and "
+                      "fails on the pull request", out)
+        self.assertLess(out.index("I.1, P1 proved: fail"), out.index("Besides"))
+        self.assertLess(out.index("Besides"), out.index("I.1, P10 staging: fail"))
+        # Not run, or gone missing: held.
+        pr = run_file({"I.1": {"P1": "pass"}, "edition": {"E6": "not run"}})
+        code, out = self.compare(main, pr)
+        self.assertEqual(code, 1, out)
+        self.assertIn("I.1, P10 staging: missing", out)
+        self.assertIn("edition, E6 staging: not run", out)
+        self.assertNotIn("Not held", out)
 
     def test_regressions_listed_in_the_reports_order(self):
         main = run_file({"I.10": {"P9": "pass"}, "I.2": {"P9": "pass", "P1": "pass"},

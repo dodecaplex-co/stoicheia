@@ -156,7 +156,8 @@ jobs:
     # The acceptance checklist, docs/ACCEPTANCE.md, on every pull request ("In CI" there):
     # scripts/check_acceptance.py checks the pull request and keeps its report as an
     # artifact. Until the consolidation release the job fails only when an item that
-    # passes on main does not pass here: a pass may not turn into a fail. Main is checked
+    # passes on main does not pass here: a pass may not turn into a fail (save P10 and E6,
+    # which turn when a statement is staged before its proof). Main is checked
     # beside the pull request with the pull request's own checks (scripts/, tests/,
     # Certificate/, review/SCHEMA.md, review/terms.toml), so that both are judged alike
     # and a check made stricter, in a pull request of its own, holds nothing back.
@@ -166,6 +167,7 @@ jobs:
     env:
       # `ratchet`: fail only when a pass on main turns into a fail. The consolidation
       # release's pull request sets `full`, and from then on any failure fails the job.
+      # Any other value fails the job at once, so that no misspelling turns the gate off.
       ACCEPTANCE_GATE: ratchet
     steps:
       - uses: actions/checkout@v5
@@ -197,6 +199,10 @@ jobs:
         # Exit 1 is a failing item, which the ratchet weighs in the last step; 2 or more is
         # a checker that could not run, which fails at once.
         run: |
+          case "$ACCEPTANCE_GATE" in
+            ratchet|full) ;;
+            *) echo "ACCEPTANCE_GATE is '$ACCEPTANCE_GATE', neither ratchet nor full"; exit 2 ;;
+          esac
           mkdir -p "$RUNNER_TEMP/acceptance"
           status=0
           python3 scripts/check_acceptance.py --output "$RUNNER_TEMP/acceptance/report.md" --json "$RUNNER_TEMP/acceptance/verdicts.json" || status=$?

@@ -1335,12 +1335,19 @@ findings:
   writes every item's verdict beside the report, and `--compare MAIN PR`, which runs no
   check and exits 1 for each item that passes in MAIN and does not pass in PR (a fail, a
   check not run, or an item missing), and 2 for a file `--json` did not write, or for two
-  files written by different copies of the script.
+  files written by different copies of the script. A staging item, P10 or E6, that turns
+  into a fail is listed and not held: both read `Staging/` alone, and a statement that a
+  stage adds or changes is staged before its proof ([WORKFLOW](../WORKFLOW.md), section 2),
+  so they turn into a fail exactly when a pull request stages one, as I.20's degenerate
+  case was staged after I.20 was proved; only the full gate holds them. The lane's
+  independent review found that the ratchet would have held such a pull request back, and
+  that a misspelt gate turned the job off; we thank it for both.
   [`tests/test_check_acceptance.py`](../../tests/test_check_acceptance.py) (new) puts the
   comparison to small files of verdicts, and the job runs it before the checker. The full
   gate is one line of the workflow, `ACCEPTANCE_GATE: ratchet`, which the consolidation
   release's pull request sets to `full`: from then on the job skips main, and any failure
-  fails it, as step 9 of [WORKFLOW](../WORKFLOW.md), section 10, asks. Nothing is loosened:
+  fails it, as step 9 of [WORKFLOW](../WORKFLOW.md), section 10, asks; any other value
+  fails the job at once. Nothing is loosened:
   no other job, check, test or expectation changes, and without the new options the
   script's verdicts, report and exit status are as before. The job is not a required check:
   the ruleset on main and `REQUIRED_CHECKS` in

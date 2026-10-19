@@ -55,7 +55,11 @@ messages, beside the report. `--compare` runs no check: it reads two such files,
 first, and exits 1 when an item that passes in the first does not pass in the second (a
 fail, a check not run, or an item missing), listing each with why; 0 when every pass holds;
 and 2 when a file is not one `--json` wrote, or the two were written by different copies of
-the script, which need not judge alike. CI uses both ([In CI](#in-ci)).
+the script, which need not judge alike. A staging item, P10 or E6, that turns into a fail
+is listed and not held: both read `Staging/` alone, and a statement that a stage adds or
+changes is staged before its proof ([WORKFLOW](WORKFLOW.md#2-briefs-before-proofs),
+section 2), so they turn into a fail exactly when a pull request stages one, as it may.
+CI uses both options ([In CI](#in-ci)).
 
 ## In CI
 
@@ -78,13 +82,15 @@ turn into a fail.** In three steps:
    Main's run is `--quick`: the kernel replay and the model tests (E1 and E4) are what CI's
    `check` and `model` jobs hold on every pull request.
 3. `--compare` sets main's verdicts beside the pull request's, and fails for each item that
-   passes on main and does not pass on the pull request.
+   passes on main and does not pass on the pull request, save a staging item (P10 or E6)
+   that a statement staged before its proof turns into a fail, which it lists.
 
 **The full gate.** The consolidation release's pull request switches it on: it sets
 `ACCEPTANCE_GATE`, in the CI workflow, from `ratchet` to `full`, a change to a protected
 file with its decisions entry; from then on the job skips main, and any failure of any item
 fails it. That is step 9 of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released),
-section 10: the checklist passes in CI with no failures.
+section 10: the checklist passes in CI with no failures. Any other value fails the job at
+once, so that no misspelling turns the gate off.
 
 The job is not yet a required check: the ruleset on main and `REQUIRED_CHECKS` in
 `scripts/safe_push.py` name `check`, `model` and `negative`, and making `acceptance` one is

@@ -320,8 +320,9 @@ The `acceptance` job checks the pull request against the [acceptance
 checklist](ACCEPTANCE.md) and keeps its report as an artifact. It checks main as well,
 with the pull request's own checks, and until the consolidation release it fails only
 when an item that passes on main does not pass on the pull request: a pass may not turn
-into a fail. The consolidation release's pull request switches on the full gate, under
-which any failure fails it ([ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci)).
+into a fail. The staging items (P10 and E6) are the exception, since a statement is staged
+before its proof (section 2). The consolidation release's pull request switches on the full
+gate, under which any failure fails it ([ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci)).
 
 `scripts/safe_push.py` runs the first two groups on the head commit of every pull request
 (section 10), so a change to them is made there too, and in the CI workflow. It leaves the

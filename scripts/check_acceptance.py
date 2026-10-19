@@ -16,7 +16,7 @@ writes every failure to docs/reports/acceptance-books-I-III.md, and changes noth
     python3 scripts/check_acceptance.py --compare MAIN PR
                                                    no check run: whether every item that
                                                    passes in MAIN passes in PR, two files
-                                                   that --json wrote
+                                                   that --json wrote (P10 and E6 aside)
 
 Run it on a built tree, as CI's `check` job leaves one: after `lake build`, `lake build
 Audit` and `lake env lean Certificate/Facts.lean`, with `lake` on the PATH, Python 3.11 or
@@ -39,7 +39,9 @@ script wrote with --json: main's, then the pull request's. It exits 0 when every
 passes in the first passes in the second, so that a pass may not turn into a fail; 1 when
 one does not, each such item listed with why; and 2 when either file is not this script's
 verdicts, or the two were written by different copies of it, which would not judge alike.
-CI's `acceptance` job runs it on every pull request (docs/ACCEPTANCE.md, "In CI").
+P10 and E6 turning into a fail are listed and not held (STAGING_ITEMS): they read Staging/
+alone, and staging a statement before its proof is the workflow's own way in. CI's
+`acceptance` job runs it on every pull request (docs/ACCEPTANCE.md, "In CI").
 """
 
 from __future__ import annotations
@@ -1006,6 +1008,13 @@ def report(output: Path, facts: dict, quick: bool, more: tuple = ()) -> str:
 VERDICTS_FORMAT = 1
 VERDICT_WORDS = ("pass", "fail", "not run")
 
+# The items --compare lists but does not hold when they turn from a pass into a fail. P10
+# and E6 read Staging/ alone, and a statement that a stage adds or changes is staged before
+# its proof (docs/WORKFLOW.md, section 2), so they turn into a fail exactly when a pull
+# request stages something, as the workflow has it do. Only the full gate holds them. A
+# pass of theirs that turns into "not run", or goes missing, is held like any other.
+STAGING_ITEMS = ("P10", "E6")
+
 
 def checker_id() -> str:
     """This copy of the script, by its bytes. --compare compares only verdicts that one
@@ -1089,9 +1098,10 @@ def regressions(before: dict, after: dict) -> list[tuple[str, str, str]]:
 
 
 def compare(before_path: Path, after_path: Path) -> int:
-    """--compare: 0 when every item that passes in the first file passes in the second; 1
-    when one does not, each listed with why; 2 when either is not a file of verdicts, or
-    the two came from different copies of this script."""
+    """--compare: 0 when every item that passes in the first file passes in the second,
+    save the staging items' fails (STAGING_ITEMS), which are listed; 1 when one does not,
+    each listed with why; 2 when either is not a file of verdicts, or the two came from
+    different copies of this script."""
     try:
         before, after = read_verdicts(before_path), read_verdicts(after_path)
     except ValueError as e:
@@ -1102,7 +1112,18 @@ def compare(before_path: Path, after_path: Path) -> int:
               "check_acceptance.py, which need not judge alike: run one copy on both trees")
         return 2
     labels = {i: key for i, key, *_ in PROP_ITEMS + BOOK_ITEMS + EDITION_ITEMS}
+
+    def show(cells) -> None:
+        for where, item, now in cells:
+            notes = after["notes"].get(where, {}).get(item) if isinstance(
+                after["notes"].get(where), dict) else None
+            why = str(notes[0]).splitlines()[0] if isinstance(notes, list) and notes else ""
+            label = f" {labels[item]}" if item in labels else ""
+            print(f"  {where}, {item}{label}: {now}" + (f": {why}" if why else ""))
+
     lost = regressions(before, after)
+    staged = [x for x in lost if x[1] in STAGING_ITEMS and x[2] == "fail"]
+    lost = [x for x in lost if x not in staged]
     passing = sum(v == "pass" for items in before["verdicts"].values() for v in items.values())
     gained = sum(v == "pass" and before["verdicts"].get(w, {}).get(i) != "pass"
                  for w, items in after["verdicts"].items() for i, v in items.items())
@@ -1114,17 +1135,23 @@ def compare(before_path: Path, after_path: Path) -> int:
         print(f"✗ acceptance: {len(lost)} item{'' if one else 's'} that pass{'es' if one else ''} "
               f"on {first} {'does' if one else 'do'} not pass on {second}; a pass may not "
               "turn into a fail:")
-        for where, item, now in lost:
-            notes = after["notes"].get(where, {}).get(item) if isinstance(
-                after["notes"].get(where), dict) else None
-            why = str(notes[0]).splitlines()[0] if isinstance(notes, list) and notes else ""
-            label = f" {labels[item]}" if item in labels else ""
-            print(f"  {where}, {item}{label}: {now}" + (f": {why}" if why else ""))
+        show(lost)
+    if staged:
+        one = len(staged) == 1
+        print(f"{'Besides, n' if lost else 'N'}ot held: {len(staged)} staging "
+              f"item{'' if one else 's'} that pass{'es' if one else ''} on {first} and "
+              f"fail{'s' if one else ''} on {second}, for what it stages, as a statement is "
+              "staged before its proof (docs/WORKFLOW.md, section 2); only the full gate "
+              f"holds {'it' if one else 'them'}:")
+        show(staged)
+    if lost:
         print("Every failure, with what to do about it, is in the pull request's report.")
         return 1
-    print(f"✓ acceptance: no item that passes on {first} fails on {second}: {passing} pass "
-          f"on both, {gained} more pass on the pull request, and {rest} still fail or were "
-          "not run there")
+    print(f"✓ acceptance: no item that passes on {first} fails on {second}"
+          + ((", save the staging item above" if len(staged) == 1 else
+              ", save the staging items above") if staged else "")
+          + f": {passing - len(staged)} pass on both, {gained} more pass on the pull request, "
+          f"and {rest} still fail or were not run there")
     return 0
 
 
@@ -1142,7 +1169,8 @@ def main(argv=None) -> int:
                              "--compare")
     parser.add_argument("--compare", type=Path, nargs=2, metavar=("MAIN", "PR"),
                         help="run no check: exit 1 when an item that passes in MAIN does "
-                             "not pass in PR, two files that --json wrote")
+                             "not pass in PR, save a staging item's fail (P10, E6), two "
+                             "files that --json wrote")
     args = parser.parse_args(argv)
     if args.compare:
         if args.quick or args.json or args.output != REPORT:
