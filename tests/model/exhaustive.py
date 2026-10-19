@@ -4,7 +4,8 @@ hypotheses random sampling rarely meets (and for the rest as a second check).
 Points: lattice grid; lines: every line through two grid points; circles: lattice
 centres, radius^2 in a fixed list.  Every degenerate configuration in these ranges
 (coincident points, equal lines, concentric / equal / tangent circles, points on
-circles, collinear triples) is visited.  Uses the very same check functions as search.py.
+circles, collinear triples) is visited. Axiom checks come from search.py; retained
+derived properties use the same predicates, independently kept in derived.py.
 Usage: python3 -I exhaustive.py   (about two minutes; R1=1 or TI3=0 in the environment
 for a quicker, smaller run)
 """
@@ -16,9 +17,11 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import search  # noqa: E402
+from derived import PROPERTIES  # noqa: E402
 from model import *  # noqa
 
 CHECK = {name: f for name, kinds, f in search.AXIOMS}
+CHECK.update(PROPERTIES)
 rng = random.Random(7)
 
 R1 = int(os.environ.get('R1', 2))   # small grid radius for incidence work
@@ -70,7 +73,7 @@ def P4(names):
 
 
 print(f"grid {len(G)} pts, {len(LINES)} lines; circle grid {len(G2)} pts, {len(CIRCS)} circles")
-print(f"{'axiom':40s} {'configs':>10s} {'hyp held':>9s} {'cex':>6s}")
+print(f"{'axiom / derived property':40s} {'configs':>10s} {'hyp held':>9s} {'cex':>6s}")
 
 # ---------------- Postulates ----------------
 run('Postulate1', P4('AB'))
@@ -192,7 +195,7 @@ def gen_adj():
                 yield dict(A=A, B=B, C=C, D=D, L=L)
 
 
-run('adjacent_eq_of_right', gen_adj())
+run('derived.adjacent_eq_of_right', gen_adj())
 
 
 def gen_rays():
@@ -271,7 +274,7 @@ def gen_circ_pts(names, grid=G2):
             yield d
 
 
-run('centre_unique', gen_circ_pts('AB', G))
+run('derived.centre_unique', gen_circ_pts('AB', G))
 run('centre_inside', gen_circ_pts('A'))
 run('inside_not_on', gen_circ_pts('A'))
 
@@ -328,7 +331,7 @@ def gen_convex():
                 yield dict(A=A, B=B, C=C, al=c)
 
 
-run('inside_of_between', gen_convex())
+run('derived.inside_of_between', gen_convex())
 
 
 def gen_outside():
@@ -362,7 +365,7 @@ def gen_nss():
                 yield dict(A=A, B=B, C=C, D=D, L=L, al=c1, be=c2)
 
 
-run('not_same_side_of_circles_meet', gen_nss())
+run('derived.not_same_side_of_circles_meet', gen_nss())
 
 
 def gen_cm_side():
@@ -448,6 +451,8 @@ def gen_sup():
 
 run('superposition', gen_sup())
 
-print('exhaustive axioms run:', len(results), ' total counterexamples:', sum(r[3] for r in results))
+print('exhaustive axioms run:', sum(r[0] not in PROPERTIES for r in results),
+      ' derived properties run:', sum(r[0] in PROPERTIES for r in results),
+      ' total counterexamples:', sum(r[3] for r in results))
 never = [r[0] for r in results if r[2] == 0]
 print('hypotheses never met:', never)

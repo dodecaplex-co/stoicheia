@@ -74,14 +74,14 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/TripleIncidence.lean](Model/Euclidean/TripleIncidence.lean) | Triple incidence 1 to 3 proved by signed determinants and affine sides | Mathlib |
 | [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all 87 proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane, and the assembly, rests on | every module of `Model` |
-| [Check/Angles.lean](Check/Angles.lean) | the hand-translated angle laws and their two words compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.angles` |
+| [Check/Angles.lean](Check/Angles.lean) | the hand-translated angle laws and their two words compared with the library and the generated laws | `Elements.Foundations`, `Elements.BookI.Prop13`, `Check.Hand`, the generator, `Model.Laws.angles` |
 | [Check/AreasP5.lean](Check/AreasP5.lean) | the hand-translated area laws and Postulate 5 compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.«areas-p5»` |
-| [Check/Circles.lean](Check/Circles.lean) | the hand-translated circle rules compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.circles` |
+| [Check/Circles.lean](Check/Circles.lean) | the hand-translated circle rules compared with the library and the generated laws | `Elements.Foundations`, `Elements.BookI.Prop07`, `Elements.Figure.Circles`, `Check.Hand`, the generator, `Model.Laws.circles` |
 | [Check/Generated.lean](Check/Generated.lean) | checked at every build: the lock, its hash and the axioms, and that the generated files are what the generator writes | `Elements.Foundations`, `Model.Signature`, the generator |
 | [Check/Generator.lean](Check/Generator.lean) | the generator: reading the library, translating, writing, and the checks it makes | Lean alone |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration and with the generated law | `Elements.Foundations`, `Model.Hand` |
-| [Check/Incidence.lean](Check/Incidence.lean) | the hand-translated incidence and line laws, and `Hand.LinesMeet`, compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.incidence` |
-| [Check/Intersections.lean](Check/Intersections.lean) | the hand-translated intersection rules and their two words compared with the library and the generated laws | `Check.Hand`, `Model.Laws.intersections` |
+| [Check/Incidence.lean](Check/Incidence.lean) | the hand-translated incidence and line laws, and `Hand.LinesMeet`, compared with the library and the generated laws | `Elements.Foundations`, `Elements.Figure.Circles`, `Check.Hand`, the generator, `Model.Laws.incidence` |
+| [Check/Intersections.lean](Check/Intersections.lean) | the hand-translated intersection rules and their two words compared with the library and the generated laws | `Elements.BookI.Prop07`, `Elements.Figure.Circles`, `Check.Hand`, the generator, `Model.Laws.intersections` |
 | [Check/Laws.lean](Check/Laws.lean) | **generated:** each generated law and word compared with the library's by the kernel | `Elements.Foundations`, `Model.Laws` |
 | [Check/Lengths.lean](Check/Lengths.lean) | the hand-translated metric length laws compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.lengths` |
 | [Check/Order.lean](Check/Order.lean) | the hand-translated order laws compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.order` |
@@ -293,8 +293,13 @@ the original means. These checks do that, at every build.
   the two are the same proposition, up to unfolding definitions; a dropped guard, two
   swapped arguments or a change in the order of the binders fails it, and the build with
   it. This covers all 87 laws and all 16 defined words they reach. The family checks in
-  `Check/` also compare each hand-translated law with its generated field over any signature,
-  and retain the original library checks.
+  `Check/` retain the original library checks. They also compare each hand-translated law
+  with its generated field over any signature, except for the four properties prepared
+  for axiom retirement: `adjacent_eq_of_right`, `not_same_side_of_circles_meet`,
+  `centre_unique` and `inside_of_between`. Their seven hand translations are instead
+  compared directly with the library declaration's type by `comparePlanted`, including
+  binder kinds. This comparison works for an axiom or a theorem and remains when a
+  generated assumption field disappears. All 87 axioms remain in this preparation.
 - **The round trip, by syntax.** [Check/RoundTrip.lean](Check/RoundTrip.lean) takes each
   law and word as Lean elaborated them from `Model/Laws.lean`, translates each back, every
   field of `S` and every word over it replaced by the library's word, and compares it with
@@ -314,7 +319,8 @@ the original means. These checks do that, at every build.
   hand translations of `Model/Hand.lean` and of seven files of `Model/Laws/`. The hand
   translations kept under suffixed names ([below](#proved-laws)), and the angle and
   superposition translations, which use words of their own written by hand, are compared
-  with the generated laws by the kernel in their files of `Check/`.
+  with the generated laws by the kernel in their files of `Check/`, apart from the seven
+  direct declaration comparisons just described.
 - **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
   declared in `Elements.Foundations` are exactly the lock's `[axioms]`, so that none is
   missing and none is extra, and `Check/RoundTrip.lean` that `Neutral` and `Laws` have
@@ -475,7 +481,8 @@ the unconditional theorem `model_exists : ∃ S : Signature, Laws S`.
 The overlapping circle and intersection proofs are retained with `_circles` and
 `_intersections` suffixes, and the second proof of Definition 15 with `_angles`.
 Their hand translations retain the same statements under corresponding names. Each has
-its own original-declaration and generated-law checks, and its own pinned axiom audit.
+its own original-declaration check, a generated-law or direct syntactic comparison as
+described above, and its own pinned axiom audit.
 The hand copies of `LinesMeet` and `LineMeetsCircle` also remain under distinct names,
 with equality checks against the generated words over every signature.
 
