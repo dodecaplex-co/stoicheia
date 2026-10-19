@@ -12,8 +12,10 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and the first
 laws, translated by hand for now and proved in the plane: the four circle-intersection
-rules, the first of the hard groups, and the eight magnitude laws, which are easy in the
-plane but test the translation where it is most delicate. That is 12 of the 87. The rest
+rules, the first of the hard groups; the eight magnitude laws, which are easy in the
+plane but test the translation where it is most delicate; and the eleven incidence and
+line laws, among them Postulates 1 and 2 and the finite avoidance rules for lines. That is
+23 of the 87. The rest
 of the laws, and the generator that will translate them from the library's own
 declarations, are to come. Until every locked law is proved here, the evidence that the
 laws have a model remains MODEL.md's hand arguments and numerical tests, and this package
@@ -39,13 +41,17 @@ at the repository's root builds the library exactly as before.
 | [lakefile.toml](lakefile.toml) | the package: Mathlib pinned to `v4.35.0`, the release for the toolchain both packages use; the library itself, read only by `Check` | |
 | [Model/Signature.lean](Model/Signature.lean) | the seventeen words as the fields of `Signature` | nothing |
 | [Model/Hand.lean](Model/Hand.lean) | the laws translated so far, and the defined words they reach, **by hand** | `Signature` |
+| [Model/Laws/incidence.lean](Model/Laws/incidence.lean) | the incidence and line laws, and `LinesMeet`, **by hand** | `Signature`, `Hand` |
 | [Model/Euclidean.lean](Model/Euclidean.lean) | the ordinary plane as a `Signature` | Mathlib |
 | [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersection 4 and Intersection 5 proved in the plane | Mathlib |
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
+| [Model/Euclidean/Incidence.lean](Model/Euclidean/Incidence.lean) | Postulate 1, `line_unique`, the other generalities and Intersection 1 proved in the plane | Mathlib |
+| [Model/Euclidean/Avoidance.lean](Model/Euclidean/Avoidance.lean) | Postulate 2 and the Points rules for lines proved in the plane, by the infinitude of a line | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane rests on | every module of `Model` |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration | `Elements.Foundations`, `Model.Hand` |
+| [Check/Incidence.lean](Check/Incidence.lean) | the same for the incidence and line laws | `Elements.Foundations`, `Model.Laws.incidence` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib.
@@ -207,10 +213,11 @@ the original means. Three checks do that.
   proposition, up to unfolding definitions; a dropped guard, two swapped arguments or a
   change in the order of the binders fails it, and the build with it. (Both were tried:
   Intersection 4 in System E's printed form, with "on or inside", and Intersection 5 with
-  its two points exchanged.) Today this covers the 12 laws translated by hand and 11
+  its two points exchanged.) Today this covers the 23 laws translated by hand and 12
   defined words: the eight behind the magnitudes (these laws reach `Magnitude` and the
   instances for `+`, `0` and `<`; `Length`, `Angle`, `Area` and `≤` are checked ahead of
-  the laws that use them) and the three the circle laws reach. The generator will write
+  the laws that use them), the three the circle laws reach, and `LinesMeet`, in
+  [Check/Incidence.lean](Check/Incidence.lean). The generator will write
   one such line for each of the 87 laws and each defined word they reach.
 - **The round trip, by syntax.** The generator also translates each result back and
   compares it with the original expression exactly, which is stricter than the kernel's
@@ -298,7 +305,7 @@ come before the easy laws are shared out:
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
 | Superposition | an isometry, with a reflection where the side needs one; and the soundness of whichever restricted rule is adopted | to do |
 | Areas | `area_congruent`, `area_add_of_between`, `between_of_area_add`, with collinear and repeated corners | to do |
-| Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | to do |
+| Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | on a line, proved here (Postulate 2, `exists_point`, `exists_point_on_line`, `exists_point_on_line_off_line`, `exists_point_between`); in a region and on a circumference, to do |
 
 `CirclesMeet α α` is true, since a circle has two distinct points; the side laws are proved
 for that case too, where both centres are one point and the line through them is any line

@@ -2,11 +2,14 @@ module
 
 public import Model.Signature
 public import Model.Hand
+public import Model.Laws.incidence
 public import Model.Euclidean
 public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
+public import Model.Euclidean.Incidence
+public import Model.Euclidean.Avoidance
 
 /-!
 # What the model's proofs rest on
@@ -110,3 +113,69 @@ info: 'Model.Euclidean.exists_centre' depends on axioms: [propext, Classical.cho
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.exists_centre
+
+/--
+info: 'Model.Euclidean.Postulate1' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.Postulate1
+
+/--
+info: 'Model.Euclidean.line_unique' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.line_unique
+
+/--
+info: 'Model.Euclidean.centre_unique' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.centre_unique
+
+/--
+info: 'Model.Euclidean.centre_inside' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.centre_inside
+
+/--
+info: 'Model.Euclidean.inside_not_on' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.inside_not_on
+
+/--
+info: 'Model.Euclidean.lines_meet_of_opposite_sides' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.lines_meet_of_opposite_sides
+
+/--
+info: 'Model.Euclidean.exists_point' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point
+
+/--
+info: 'Model.Euclidean.exists_point_on_line' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point_on_line
+
+/--
+info: 'Model.Euclidean.exists_point_on_line_off_line' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point_on_line_off_line
+
+/--
+info: 'Model.Euclidean.exists_point_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point_between
+
+/--
+info: 'Model.Euclidean.Postulate2' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.Postulate2
