@@ -19,7 +19,7 @@ note = "Euclid takes E where the circle DEF cuts AB. After Postulate 3 draws the
 
 [review]
 stage = "full"
-commit = "8bdf0ef"
+commit = "251129b"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:5d88634ef13cd7a4"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
