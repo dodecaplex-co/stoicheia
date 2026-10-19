@@ -1089,3 +1089,23 @@ findings:
   joined the phrase and ink cases in
   [`tests/test_check_style.py`](../../tests/test_check_style.py); every case of both is
   kept (44 phrase, 44 S10 and 33 ink cases), none weakened.
+- **An overlap is worded by its kind, as the catalogue gives it.** A record's
+  `[overlap]` may now name the kind of its row in the
+  [overlap catalogue](../reports/overlaps.md), `kind = "states"`, `"gives"` or `"step"`,
+  as [`review/SCHEMA.md`](../../review/SCHEMA.md) defines.
+  [`scripts/heath.py`](../../scripts/heath.py) accepts only those three, and asks of a
+  step a `note` saying which step, in which proof (brief 0008, question 3); its self-test
+  puts both rules to records of its own. [`scripts/render.py`](../../scripts/render.py)
+  words by the kind the line under the enunciation and the book's summary, which also
+  heads the book's index, its section of CERTIFICATE.md and its row of README.md: a rule
+  that states the proposition or gives it at once "contains" it, as before, and a rule
+  that supplies a step "supplies a step of a proof of it", with whether our proof rests
+  on the rule. The pages said that superposition and Circle 4 contain I.2, I.3, I.7 and
+  I.23, where the catalogue says only that each supplies a step, in an audit lemma that
+  takes seven axioms or more; so the words are "a proof of it", not "its proof", since our
+  own proofs of I.2, I.3 and I.7 never use the rule, and I.23's rests on it only through
+  I.8 (#93, found in the review of the Circle 2 branch, #87). Astra's probe in the
+  challenge of brief 0008 showed that both displays had to read the key, and we are
+  grateful. The key is optional so that this check lands first, on its own: a record
+  that names no kind is worded as before, so no page changes here, and the records name
+  their kinds after it, in a pull request of their own.
