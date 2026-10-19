@@ -76,11 +76,12 @@ propositions, the three porisms and the 19 companions, with a bare try for each,
 48,400 attempts made 90,629 tries (6,050 were left with no rule) and closed the same
 three, each by a rule; no statement closed bare. 175 tries ran out of time and were tried
 again; 7 ran out again, all of them III.34 from Postulate 4, alone or with Postulate 5 and
-at most one more family, as on 1caff82. None of those rules puts a point on a circle that
-has none, and III.34 asks for three. III.2 closes by Circle 2 with Generalities 4
-(`inside_not_on`), and by the diagram rules together, but not by Circle 2 alone: `grind`
-tries Circle 2 only on points of which the goal asks whether they are within the circle,
-and III.2 asks that only of E, until Generalities 4 brings in A and B.
+at most one more family, as on 1caff82. III.34 asks for three points on its circle, and
+the rules among those that put a point on a circle that has none need a straight line,
+which III.34 does not give and none of those rules draws. III.2 closes by Circle 2 with
+Generalities 4 (`inside_not_on`), and by the diagram rules together, but not by Circle 2
+alone: `grind` tries Circle 2 only on points of which the goal asks whether they are
+within the circle, and III.2 asks that only of E, until Generalities 4 brings in A and B.
 The screen checks that III.2, III.5 and III.6 still close by a rule (KNOWN, below), and
 says so when one does not.
 
