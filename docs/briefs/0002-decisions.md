@@ -1334,3 +1334,8 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+- **The sample identity uses the team's name.** This is the tooling pull request awaited
+  above. The owner chose "Stoicheia Team" as the project's author on 19 October 2026;
+  `test_identities` in `scripts/test_safe_push.py`, a protected file, now uses
+  `Stoicheia Team <team@example.org>` for its ordinary identity. The test's meaning is
+  unchanged: an ordinary identity is not flagged. Nothing is loosened.
