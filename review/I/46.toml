@@ -7,8 +7,21 @@ fingerprint = "sha256:aa4983891ecca1b7"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and let AD be made equal to AB"
+kind = "helper"
+helper = "OnRay.exists_len_eq"
+note = "Euclid makes AD equal to AB on the perpendicular AC, taking enough room to cut it off by I.3 for granted; Heath gives no reference here. `OnRay.exists_len_eq` finds D on the ray AC by a circle about A with distance AB, using Postulate 3; C need not lie beyond D."
+
+[[passage]]
+at = "through the point D let DE be drawn parallel to AB"
+kind = "helper"
+helper = "Prop31.parallelogram"
+note = "Euclid draws the two parallels and takes their meeting at E from the figure. The Lean draws DE by I.31, then `Prop31.parallelogram` draws BE and finds E by `Prop30.meet`, using I.30."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:1bd2ea836e5d51aa"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
