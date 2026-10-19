@@ -23,8 +23,7 @@ namespace Elements.BookIII
 open Tacit
 
 /-- To bisect a given circumference. -/
-theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB) (hA : OnCircle A ADB)
-    (hB : OnCircle B ADB) :
+theorem Prop30 {A B : Point} {ADB : Circle} (hA : OnCircle A ADB) (hB : OnCircle B ADB) :
     ∀ P : Point, ¬ Collinear A B P → ∃ D : Point, OnCircle D ADB ∧ SameSideOf D P A B ∧
       standing ADB A B D = standing ADB D A B := by
   -- Let ADB be the given circumference;
@@ -83,7 +82,6 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   -- and the less to the less; [III. 28]
   /- We use III.28 in one circle, which is equal to itself (`EqualCircles.refl`), and name
      the less circumferences by points Q, R beyond AD from B and beyond DB from A. -/
-  obtain ⟨O, hO⟩ := hADB
   obtain ⟨Q, hQB, -⟩ := exists_oppositeSidesOf hABD.acb []
   obtain ⟨R, hRA, -⟩ := exists_oppositeSidesOf hABD.cba []
   have h28 := Prop28 (EqualCircles.refl ADB) hA hD hD hB hQB.symm hRA.symm hAD'
@@ -97,10 +95,10 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   have h17 := (BookI.Prop17 hABD).2.2
   rw [hbase] at h17
   have hAQD : circumference ADB A Q D < ∟ + ∟ := by
-    rw [← standing_eq_circumference hQB.symm, Circumference.standing ⟨O, hO⟩ hB hA hD hABD.acb]
+    rw [← standing_eq_circumference hQB.symm, Circumference.standing hB hA hD hABD.acb]
     exact h17
   have hDRB : circumference ADB D R B < ∟ + ∟ := by
-    rw [← standing_eq_circumference hRA.symm, Circumference.standing ⟨O, hO⟩ hA hD hB hABD.cba, hbase]
+    rw [← standing_eq_circumference hRA.symm, Circumference.standing hA hD hB hABD.cba, hbase]
     exact h17
   /- So the circumferences ABD, DAB on the other sides are greater, for the two on each
      straight line make up the circle (`Circumference.whole`). -/
@@ -110,8 +108,8 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
     have h2 := add_lt_add_right (∟ + ∟) (lt_trans hyx hx)
     rw [add_comm y] at h2
     exact lt_irrefl _ (hxy ▸ lt_trans h1 h2)
-  have hw₁ := Circumference.whole ⟨O, hO⟩ hA hD hQB.symm
-  have hw₂ := Circumference.whole ⟨O, hO⟩ hD hB hRA.symm
+  have hw₁ := Circumference.whole hA hD hQB.symm
+  have hw₂ := Circumference.whole hD hB hRA.symm
   -- therefore the circumference AD is equal to the circumference DB.
   have hADDB := (h28 (not_greater hAQD hw₁) (not_greater hDRB hw₂)).2.1
   -- Therefore the given circumference has been bisected at the point D.

@@ -120,9 +120,7 @@ A bridge theorem for the congruence that III.24, III.26 and III.28 conclude. -/
 theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
     Arc.Congruent a b ↔ EqualCircles a.circle b.circle ∧ a.measure = b.measure := by
   obtain ⟨hB, hC, hK⟩ := id ha
-  have hα := exists_centre a.circle
   obtain ⟨hD, hE, hL⟩ := id hb
-  have hβ := exists_centre b.circle
   constructor
   · intro h
     /- A point P of the first arc off its base, and its image Q, show the segments similar
@@ -130,7 +128,7 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
        companion `Prop24.equalCircles`, and the measures, by `Prop24.equalMeasure`. -/
     obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hB hC hK
     obtain ⟨hBC, Q, hQ, hQL, hPQ⟩ := Prop24.image ha hb h hP hPK
-    exact ⟨(Prop24.equalCircles hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle
+    exact ⟨(Prop24.equalCircles hB hC hP hD hE hQ hPK.triangle hQL.triangle
       hBC hPQ).1, Prop24.equalMeasure ha hb h⟩
   · rintro ⟨hcircles, hm⟩
     /- The chords are equal (`Arc.measure_eq_iff`). -/
@@ -145,14 +143,14 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
     obtain ⟨X, hXK, -⟩ := exists_oppositeSidesOf (show Triangle a.B a.C a.K from hK) []
     obtain ⟨Y, hYL, -⟩ := exists_oppositeSidesOf (show Triangle b.B b.C b.K from hL) []
     have hXY : circumference a.circle a.B X a.C = circumference b.circle b.B Y b.C :=
-      CommonNotion3 ((Circumference.whole hα hB hC hXK.symm).trans
-        (Circumference.whole hβ hD hE hYL.symm).symm) hm
-    rw [Circumference.eq hα hP hB hC (hPK.trans_opposite hXK.symm),
-      Circumference.eq hβ hQ hD hE (hQL.trans_opposite hYL.symm)] at hXY
+      CommonNotion3 ((Circumference.whole hB hC hXK.symm).trans
+        (Circumference.whole hD hE hYL.symm).symm) hm
+    rw [Circumference.eq hP hB hC (hPK.trans_opposite hXK.symm),
+      Circumference.eq hQ hD hE (hQL.trans_opposite hYL.symm)] at hXY
     have hPQ : ∠ a.B P a.C = ∠ b.B Q b.C := Magnitude.eq_of_add_self_eq hXY
     /- So the segments named by P and Q are similar, and on equal bases they are congruent
        [III. 24]; only the side names a segment (`Arc.Congruent.congr_side`). -/
-    exact (Prop24 hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle hBC
+    exact (Prop24 hB hC hP hD hE hQ hPK.triangle hQL.triangle hBC
       hPQ).congr_side hPK hQL
 
 end Elements.BookIII

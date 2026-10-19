@@ -1,14 +1,14 @@
 [statement]
 scope = "full"
-note = "Cuts off from the given circle a segment BAC admitting the given angle at A; the circle comes with a centre."
+note = "Cuts off from the given circle a segment BAC admitting the given angle at A."
 fingerprint = "sha256:b3501a06d0f60e79"
 
 [route]
 kind = "euclid"
 
 [representation]
-tags = ["segment-with-circle", "centre-given"]
-note = "The given circle comes with a centre (`∃ O, Centre O ABC`), which the proof needs to draw EF touching it by III.16's porism; the segment cut off is named by its points B, A and C."
+tags = ["segment-with-circle"]
+note = "The segment cut off from the given circle is named by its points B, A and C. The proof obtains a centre from the rule to draw EF touching the circle by III.16's porism."
 
 [[passage]]
 at = "and on the straight line FB"

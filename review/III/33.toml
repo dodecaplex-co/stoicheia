@@ -1,6 +1,6 @@
 [statement]
 scope = "full"
-note = "Describes on AB a circle with its centre, and a point E off AB at which the segment admits the given angle, acute, right or obtuse."
+note = "Describes on AB a circle and a point E off AB at which the segment admits the given angle, acute, right or obtuse."
 fingerprint = "sha256:c60a78b8701d4d18"
 
 [route]
@@ -8,7 +8,7 @@ kind = "euclid"
 
 [representation]
 tags = ["segment-with-circle"]
-note = "The segment is returned as its circle AEB, with its centre, and a point E off AB naming its side; the angle it admits is the angle AEB."
+note = "The segment is returned as its circle AEB and a point E off AB naming its side; the angle it admits is the angle AEB."
 
 [[passage]]
 at = "Let AE be drawn at right angles to DA"

@@ -30,11 +30,11 @@ lies beyond AC, at D, or on B's side, as the angles at A and B decide: Euclid's 
 **The statement is the pair.** The core does not say that γ is the circle the segment came
 from: `S` need not lie on any circle, and nothing puts it on γ. Heath's "the complete circle
 of which it is a segment" is carried by the companion `Prop25.complete`: for `S` the arc of
-a circle α with a centre, any circle through A, B and C with a centre is α, and holds every
-point of the arc. Euclid's step "[III. 9]", which finds the centre of the given circle, is
-there.
+a circle α, any circle through A, B and C is α, and holds every point of the arc. Euclid's
+step "[III. 9]", which finds the centre of the given circle, is there.
 
 The companion `Prop25.of_circle` keeps III.25's statement before brief 0006 restated it,
+with the centre-existence hypothesis removed,
 handed the whole circle: the core, run on the points of the arc, which meet every straight
 line drawn from within the base (`Prop25.meets`, by III.2), finds a circle that is the given
 one (`Prop25.complete`), so its centre is the given circle's.
@@ -238,19 +238,20 @@ theorem Prop25 {A C P : Point} {S : Point → Prop} (hP : ¬ Collinear A C P)
       fun h' => absurd (h' ▸ h) (lt_irrefl _), fun _ => hEB_AC⟩
   -- Q. E. F.
 
-/-- **III.25's circle is the segment's circle.** Let A, C be points of a circle α with a
-centre, and B a point of its arc on P's side of AC (B on P's side). Any circle γ, with a
-centre, through A, B and C is α, and every point of the arc AC on P's side is on γ.
+/-- **III.25's circle is the segment's circle.** Let A, C be points of a circle α,
+and B a point of its arc on P's side of AC (B on P's side). Any circle γ
+through A, B and C is α, and every point of the arc AC on P's side is on γ.
 
 A companion of III.25 ("III.25 complete"): its correctness argument, kept apart from the
 construction core. It carries Heath's "of which it is a segment", and Euclid's step
-"[III. 9]": A, B and C are three points of α on γ, so EA, EB, EC are equal, E is the centre
-of α, and one centre with one radius makes one circle (`circle_eq`). [III. 9] -/
-theorem Prop25.complete {A C P B E : Point} {α γ : Circle} (hα : ∃ O : Point, Centre O α)
-    (hA : OnCircle A α) (hC : OnCircle C α) (hB : OnArc B ⟨α, A, C, P⟩)
-    (hBP : SameSideOf B P A C) (hE : Centre E γ) (hAγ : OnCircle A γ) (hBγ : OnCircle B γ)
-    (hCγ : OnCircle C γ) :
+"[III. 9]": the rule gives a centre E of γ; A, B and C are three points of α on γ,
+so EA, EB, EC are equal, E is the centre of α, and one centre with one radius makes one
+circle (`circle_eq`). [III. 9] -/
+theorem Prop25.complete {A C P B : Point} {α γ : Circle} (hA : OnCircle A α)
+    (hC : OnCircle C α) (hB : OnArc B ⟨α, A, C, P⟩) (hBP : SameSideOf B P A C)
+    (hAγ : OnCircle A γ) (hBγ : OnCircle B γ) (hCγ : OnCircle C γ) :
     γ = α ∧ ∀ X : Point, OnArc X ⟨α, A, C, P⟩ → OnCircle X γ := by
+  obtain ⟨E, hE⟩ := exists_centre γ
   /- B is on P's side of AC, so off the straight line AC: A, B and C are three different
      points of α. They are on γ too, so EA, EB and EC are equal, being radii of γ
      [I. Def. 15], and E is the centre of α [III. 9]. -/
@@ -354,10 +355,11 @@ theorem Prop25.meets {a : Arc} (ha : a.Drawn) {X Y : Point} (hX : Between a.B X 
 the circle ABC, the core run on the points of its arc on P's side (which meet every
 straight line from within the base, by `Prop25.meets`) finds a circle that is ABC itself
 (`Prop25.complete`), so its centre E is the centre of ABC. This is III.25's statement
-before brief 0006 restated it, kept so that it keeps its certificate; proved from the core,
+before brief 0006 restated it, with the centre-existence hypothesis removed; it retains
+its certificate. Proved from the core,
 `Prop25.meets` and `Prop25.complete`, it checks that the pieces fit. -/
-theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
-    (hA : OnCircle A ABC) (hC : OnCircle C ABC) :
+theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hA : OnCircle A ABC)
+    (hC : OnCircle C ABC) :
     ∀ P : Point, ¬ Collinear A C P → ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧
       Between A D C ∧ ‖A D‖ = ‖D C‖ ∧ ∠ A D B = ∟ ∧ Centre E ABC ∧ Collinear D B E ∧
       (∠ B A D < ∠ A B D → OppositeSidesOf E B A C) ∧ (∠ A B D = ∠ B A D → E = D) ∧
@@ -366,7 +368,7 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
   have ha : Arc.Drawn ⟨ABC, A, C, P⟩ := ⟨hA, hC, hP⟩
   obtain ⟨B, D, E, γ, hSB, hBP, hADC, hAD, hADB, hE, hAγ, hBγ, hCγ, hDBE, k₁, k₂, k₃⟩ :=
     Prop25 (S := (OnArc · ⟨ABC, A, C, P⟩)) hP (fun _ _ hX hY => Prop25.meets ha hX hY)
-  obtain ⟨hγ, -⟩ := Prop25.complete hABC hA hC hSB hBP hE hAγ hBγ hCγ
+  obtain ⟨hγ, -⟩ := Prop25.complete hA hC hSB hBP hAγ hBγ hCγ
   rw [hγ] at hE
   exact ⟨B, D, E, hSB.1, hBP, hADC, hAD, hADB, hE, hDBE, k₁, k₂, k₃⟩
 

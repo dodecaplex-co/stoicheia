@@ -4,7 +4,6 @@ import Elements.BookIII.Circumferences
 import Elements.BookI.Prop12
 import Elements.BookI.Prop47
 import Elements.BookII.Prop06
-import Elements.BookIII.Prop01
 import Elements.BookIII.Prop03
 import Elements.BookIII.Prop18
 
@@ -24,9 +23,9 @@ open Tacit
 and if one of them cut the circle and the other touch it, the rectangle contained by the whole
 of the straight line which cuts the circle and the straight line intercepted on it outside
 between the point and the convex circumference will be equal to the square on the tangent. -/
-theorem Prop36 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F ABC)
-    (hD : OutsideCircle D ABC) (hA : OnCircle A ABC) (hB : OnCircle B ABC)
-    (hC : OnCircle C ABC) (hDCA : Between D C A) (hDB : Touches D B ABC) :
+theorem Prop36 {A B C D : Point} {ABC : Circle} (hD : OutsideCircle D ABC)
+    (hA : OnCircle A ABC) (hB : OnCircle B ABC) (hC : OnCircle C ABC) (hDCA : Between D C A)
+    (hDB : Touches D B ABC) :
     rect A D D C = sq D B := by
   -- For let a point D be taken outside the circle ABC,
   have hDB' : D ≠ B := fun e => hD.2 (e ▸ hB)
@@ -41,7 +40,7 @@ theorem Prop36 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
   -- Then DCA is either through the centre or not through the centre.
   by_cases hthrough : ∀ P : Point, Centre P ABC → Collinear A C P
   -- First let it be through the centre, and let F be the centre of the circle ABC;
-  · obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hA hC hAC
+  · obtain ⟨F, hF⟩ := exists_centre ABC
     -- let FB be joined;
     -- therefore the angle FBD is right. [III. 18]
     have hFBD : ∠ F B D = ∟ := Prop18 hF hB hDB hDB_B D hDB_D hDB'
@@ -77,7 +76,7 @@ theorem Prop36 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
     exact hrect.trans (sq_symm B D)
   -- Again, let DCA not be through the centre of the circle ABC;
   -- let the centre E be taken, and from E let EF be drawn perpendicular to AC;
-  · obtain ⟨E, -, -, -, hE, -⟩ := Prop1 hA hC hAC
+  · obtain ⟨E, hE⟩ := exists_centre ABC
     have hE_AC : ¬ Collinear A C E := fun h => hthrough fun P hP => by
       obtain rfl : P = E := centre_unique hP hE
       exact h

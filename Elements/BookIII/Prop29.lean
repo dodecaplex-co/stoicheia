@@ -46,13 +46,6 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
   -- and let the straight lines BC, EF be joined;
   have hBCG : Triangle B C G := hG
   have hEFH : Triangle E F H := hH
-  /- Equal circles come with their centres, which III.2 needs to find A and D. -/
-  have hABC : ∃ O : Point, Centre O ABC := by
-    obtain ⟨K, _, _, _, hK, _⟩ := hcircles
-    exact ⟨K, hK⟩
-  have hDEF : ∃ O : Point, Centre O DEF := by
-    obtain ⟨_, L, _, _, _, hL, _⟩ := hcircles
-    exact ⟨L, hL⟩
   /- A and D are points of the circles beyond BC and EF from G and H, as Heath draws
      them. -/
   obtain ⟨A, hA, hAG⟩ := Prop2.oppositeSide hB hC hBCG
@@ -96,8 +89,8 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
         refine ⟨X, Y, hX, hY, hKG.trans hXG.symm, hLH.trans hYH.symm, ?_⟩
         rw [standing_eq_circumference (hXG.trans_opposite hAG.symm),
           standing_eq_circumference (hYH.trans_opposite hDH.symm)]
-        have hw₁ := Circumference.whole ⟨K, hK⟩ hB hC hAG
-        have hw₂ := Circumference.whole ⟨L, hL⟩ hE hF hDH
+        have hw₁ := Circumference.whole hB hC hAG
+        have hw₂ := Circumference.whole hE hF hDH
         refine CommonNotion3 (c := circumference ABC B G C) (d := circumference DEF E H F) ?_ heq
         calc
           _ = circumference ABC B G C + circumference ABC B A C := by ac_rfl

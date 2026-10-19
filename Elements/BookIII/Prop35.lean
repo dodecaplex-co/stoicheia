@@ -4,7 +4,6 @@ import Elements.BookIII.Circumferences
 import Elements.BookI.Prop12
 import Elements.BookI.Prop47
 import Elements.BookII.Prop05
-import Elements.BookIII.Prop01
 import Elements.BookIII.Prop03
 
 /-!
@@ -83,9 +82,9 @@ theorem Prop35.cut {A C E F : Point} {α : Circle} (hF : Centre F α) (hA : OnCi
 
 /-- If in a circle two straight lines cut one another, the rectangle contained by the segments of
 the one is equal to the rectangle contained by the segments of the other. -/
-theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centre F ABCD)
-    (hA : OnCircle A ABCD) (hB : OnCircle B ABCD) (hC : OnCircle C ABCD)
-    (hD : OnCircle D ABCD) (hAEC : Between A E C) (hBED : Between B E D) :
+theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hA : OnCircle A ABCD)
+    (hB : OnCircle B ABCD) (hC : OnCircle C ABCD) (hD : OnCircle D ABCD)
+    (hAEC : Between A E C) (hBED : Between B E D) :
     rect A E E C = rect D E E B := by
   -- For in the circle ABCD let the two straight lines AC, BD cut one another at the point E;
   -- I say that the rectangle contained by AE, EC is equal to the rectangle contained by DE,
@@ -100,7 +99,7 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
     exact rect_congr h₁ h₂
   -- Next let AC, DB not be through the centre;
   -- let the centre of ABCD be taken, and let it be F;
-  obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hA hC (ne_of_between_ends hAEC)
+  obtain ⟨F, hF⟩ := exists_centre ABCD
   have hEF : E ≠ F := fun e => hE (e ▸ hF)
   have hAC : rect A E E C + sq F E = sq F C := by
     by_cases hF_AC : Collinear A C F

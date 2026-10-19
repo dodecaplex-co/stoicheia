@@ -26,8 +26,8 @@ open Tacit
 /-- On a given straight line to describe a segment of a circle admitting an angle equal to a given
 rectilineal angle. -/
 theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C₂) :
-    ∃ (AEB : Circle) (E : Point), (∃ O : Point, Centre O AEB) ∧ OnCircle A AEB ∧
-      OnCircle B AEB ∧ OnCircle E AEB ∧ ¬ Collinear A B E ∧ ∠ A E B = ∠ C₁ C C₂ := by
+    ∃ (AEB : Circle) (E : Point), OnCircle A AEB ∧ OnCircle B AEB ∧ OnCircle E AEB ∧
+      ¬ Collinear A B E ∧ ∠ A E B = ∠ C₁ C C₂ := by
   -- Let AB be the given straight line, and the angle at C the given rectilineal angle;
   -- thus it is required to describe on the given straight line AB a segment of a circle
   -- admitting an angle equal to the angle at C.
@@ -128,14 +128,14 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     have hEray : OnRay E A G := OnRay.of_beyond (between_symm hEGA)
     have hED : OppositeSidesOf E D A B := (SameSideOf.of_onRay hEray hGX').trans_opposite hXD
     -- the angle DAB is equal to the angle AEB in the alternate segment of the circle. [III. 32]
-    have h32 := (Prop32 ⟨G, hG⟩ hA hB hAB htouch' (between_symm hDAD')).1 E hE hED
+    have h32 := (Prop32 hA hB hAB htouch' (between_symm hDAD')).1 E hE hED
     -- But the angle DAB is equal to the angle at C;
     have hDAB : ∠ D A B = ∠ C₁ C C₂ := (angle_symm hDA hBA).trans hBAD
     -- therefore the angle at C is also equal to the angle AEB.
     have hCE : ∠ C₁ C C₂ = ∠ A E B := hDAB.symm.trans h32
     -- Therefore on the given straight line AB the segment AEB of a circle has been described
     -- admitting the angle AEB equal to the given angle, the angle at C.
-    exact ⟨ABE, E, ⟨G, hG⟩, hA, hB, hE, hED.triangle, hCE.symm⟩
+    exact ⟨ABE, E, hA, hB, hE, hED.triangle, hCE.symm⟩
   -- Next let the angle at C be right;
   -- and let it be again required to describe on AB a segment of a circle admitting an angle
   -- equal to the right angle at C.
@@ -170,7 +170,7 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     have hEC : ∠ A E B = ∠ C₁ C C₂ := hBAD_AEB.symm.trans hBAD
     -- Therefore again the segment AEB of a circle has been described on AB admitting an angle
     -- equal to the angle at C.
-    exact ⟨AEB, E, ⟨F, hF⟩, hA, hB, hE, hEt, hEC⟩
+    exact ⟨AEB, E, hA, hB, hE, hEt, hEC⟩
   -- Next, let the angle at C be obtuse;
   -- and on the straight line AB, and at the point A, let the angle BAD be constructed equal to
   -- it, as is the case in the third figure;
@@ -271,14 +271,14 @@ theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C
     obtain ⟨H, hH, hHD⟩ := Prop2.oppositeSide hA hB hD
     -- therefore the angle BAD is equal to the angle constructed in the alternate segment AHB of
     -- the circle. [III. 32]
-    have h32 := (Prop32 ⟨G, hG⟩ hA hB hAB htouch' (between_symm hDAD')).1 H hH hHD
+    have h32 := (Prop32 hA hB hAB htouch' (between_symm hDAD')).1 H hH hHD
     have hBAD_AHB : ∠ B A D = ∠ A H B := (angle_symm hBA hDA).trans h32
     -- But the angle BAD is equal to the angle at C.
     -- Therefore the angle in the segment AHB is also equal to the angle at C.
     have hHC : ∠ A H B = ∠ C₁ C C₂ := hBAD_AHB.symm.trans hBAD
     -- Therefore on the given straight line AB the segment AHB of a circle has been described
     -- admitting an angle equal to the angle at C.
-    exact ⟨AEB, H, ⟨G, hG⟩, hA, hB, hH, hHD.triangle, hHC⟩
+    exact ⟨AEB, H, hA, hB, hH, hHD.triangle, hHC⟩
   -- Q. E. F.
 
 end Elements.BookIII

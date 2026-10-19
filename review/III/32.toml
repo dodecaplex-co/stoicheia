@@ -1,14 +1,10 @@
 [statement]
 scope = "full"
-note = "Both angles at the tangent are equal to the angles in the alternate segments, at every point of each segment; the circle comes with a centre."
+note = "Both angles at the tangent are equal to the angles in the alternate segments, at every point of each segment."
 fingerprint = "sha256:7ea76618660f96c2"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre (`∃ O, Centre O ABCD`), on which III.19 finds the diameter BA."
 
 [[passage]]
 at = "let a point C be taken at random on the circumference BD"

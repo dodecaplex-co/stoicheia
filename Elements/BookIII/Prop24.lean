@@ -48,12 +48,10 @@ granted when AB coincides with CD: the ends go to the ends, and the points betwe
 between, so that the base of one segment falls on the base of the other. A point between A
 and B is within the circle by III.2, and so no third point of the straight line is on the
 circle (`Prop2.triangle`); a point within the circle on AB lies between A and B by System E's
-Circle 1 (`between_of_inside_chord`). The centre needed by III.2 comes from the rule that
-every circle has one (`exists_centre`). [III. 2] -/
+Circle 1 (`between_of_inside_chord`). [III. 2] -/
 theorem Prop24.chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnCircle B α)
     (hAB : A ≠ B) (hP : Collinear A B P) :
     (OnCircle P α ↔ P = A ∨ P = B) ∧ (InsideCircle P α ↔ Between A P B) := by
-  have hcentre := exists_centre α
   refine ⟨⟨fun hPα => Classical.byContradiction fun hne => ?_, ?_⟩,
     ⟨fun hin => ?_, fun h => Prop2 hA hB P h⟩⟩
   · exact Prop2.triangle hA hB hPα hAB (fun e => hne (Or.inr e.symm))
@@ -65,9 +63,8 @@ theorem Prop24.chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (h
     exact between_of_inside_chord hP_L hA_L hB_L hin hA hB hAB
 
 /-- Similar segments of circles on equal straight lines are equal to one another. -/
-theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, Centre O AEB)
-    (hCFD : ∃ O : Point, Centre O CFD) (hA : OnCircle A AEB) (hB : OnCircle B AEB)
-    (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)
+theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)
+    (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)
     (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E) (hF_CD : ¬ Collinear C D F)
     (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :
     Arc.Congruent ⟨AEB, A, B, E⟩ ⟨CFD, C, D, F⟩ := by
@@ -129,8 +126,8 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
       (OnCircle P AEB ↔ OnCircle (f P) CFD) ∧ (InsideCircle P AEB ↔ InsideCircle (f P) CFD) := by
     intro P hPE
     obtain ⟨hQF, hPQ⟩ := hang P hPE
-    obtain ⟨on₁, in₁⟩ := Prop23.point hAEB hA hB hE hPE
-    obtain ⟨on₂, in₂⟩ := Prop23.point hCFD hC hD hF hQF
+    obtain ⟨on₁, in₁⟩ := Prop23.point hA hB hE hPE
+    obtain ⟨on₂, in₂⟩ := Prop23.point hC hD hF hQF
     rw [on₁, on₂, in₁, in₂, hPQ, hsim]
     exact ⟨Iff.rfl, Iff.rfl⟩
   -- or it will fall awry, as CGD, and a circle cuts a circle at more points than two: which is
@@ -196,7 +193,7 @@ theorem Prop24.angle_type {X Y Z M : Point} {α : Circle} (hM : Centre M α) (hX
     (SameSideOf M Z X Y ∧ ∠ X Z Y < ∟) ∨ (Between X M Y ∧ ∠ X Z Y = ∟) ∨
       (OppositeSidesOf M Z X Y ∧ ∟ < ∠ X Z Y) := by
   obtain ⟨W, hW, hWZ⟩ := Prop2.oppositeSide hX hY hXYZ
-  have hm : circumference α X W Y = ∠ X Z Y + ∠ X Z Y := Circumference.eq ⟨M, hM⟩ hZ hX hY hWZ.symm
+  have hm : circumference α X W Y = ∠ X Z Y + ∠ X Z Y := Circumference.eq hZ hX hY hWZ.symm
   obtain ⟨L, hX_L, hY_L⟩ := Postulate1 X Y hXYZ.ne₁₂
   by_cases hM_L : OnLine M L
   · have hXMY := between_of_inside_chord hM_L hX_L hY_L (centre_inside hM) hX hY hXYZ.ne₁₂
@@ -246,14 +243,13 @@ Euclid's application of one segment to the other, and labelled so on the page, w
 Euclid's text in full under the main proof. The measures follow from the equal angles
 alone; the equal bases are needed for the circles. `Arc.congruent_iff` cites it for the
 equal circles. -/
-theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle}
-    (hAEB : ∃ O : Point, Centre O AEB) (hCFD : ∃ O : Point, Centre O CFD)
-    (hA : OnCircle A AEB) (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD)
-    (hD : OnCircle D CFD) (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E)
-    (hF_CD : ¬ Collinear C D F) (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :
+theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)
+    (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)
+    (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E) (hF_CD : ¬ Collinear C D F)
+    (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :
     EqualCircles AEB CFD ∧ circumference AEB A E B = circumference CFD C F D := by
-  obtain ⟨M, hM⟩ := hAEB
-  obtain ⟨N, hN⟩ := hCFD
+  obtain ⟨M, hM⟩ := exists_centre AEB
+  obtain ⟨N, hN⟩ := exists_centre CFD
   have hABE : Triangle A B E := hE_AB
   have hCDF : Triangle C D F := hF_CD
   obtain ⟨X, hX, hXE⟩ := Prop2.oppositeSide hA hB hABE
@@ -306,10 +302,10 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle}
   refine ⟨⟨M, N, A, C, hM, hN, hA, hC, hrad⟩, ?_⟩
   /- Each circumference, with the one on the other side of its base, which is twice the
      angle at E or F, makes up the whole circle; so the remainders are equal [C.N. 3]. -/
-  have w₁ := Circumference.whole ⟨M, hM⟩ hA hB hXE
-  have w₂ := Circumference.whole ⟨N, hN⟩ hC hD hYF
-  rw [Circumference.eq ⟨M, hM⟩ hE hA hB hXE.symm] at w₁
-  rw [Circumference.eq ⟨N, hN⟩ hF hC hD hYF.symm, ← hsim] at w₂
+  have w₁ := Circumference.whole hA hB hXE
+  have w₂ := Circumference.whole hC hD hYF
+  rw [Circumference.eq hE hA hB hXE.symm] at w₁
+  rw [Circumference.eq hF hC hD hYF.symm, ← hsim] at w₂
   exact CommonNotion3 (w₁.trans w₂.symm) rfl
 
 /-- **A point of the arc, and its image.** In two congruent drawn segments, the map carries a
@@ -373,9 +369,7 @@ circumferences are equal [C.N. 3]. -/
 theorem Prop24.equalMeasure {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (h : Arc.Congruent a b) : a.measure = b.measure := by
   obtain ⟨hB, hC, hK⟩ := id ha
-  have hα := exists_centre a.circle
   obtain ⟨hD, hE, hL⟩ := id hb
-  have hβ := exists_centre b.circle
   /- Take a point P of the first arc off its base. Its image Q is a point of the second arc,
      off its base, and the bases subtend equal angles at P and Q (`Prop24.image`). -/
   obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hB hC hK
@@ -385,12 +379,12 @@ theorem Prop24.equalMeasure {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
   obtain ⟨X, hXK, -⟩ := exists_oppositeSidesOf (show Triangle a.B a.C a.K from hK) []
   obtain ⟨Y, hYL, -⟩ := exists_oppositeSidesOf (show Triangle b.B b.C b.K from hL) []
   have hXY : circumference a.circle a.B X a.C = circumference b.circle b.B Y b.C := by
-    rw [Circumference.eq hα hP hB hC (hPK.trans_opposite hXK.symm),
-      Circumference.eq hβ hQ hD hE (hQL.trans_opposite hYL.symm), hPQ]
+    rw [Circumference.eq hP hB hC (hPK.trans_opposite hXK.symm),
+      Circumference.eq hQ hD hE (hQL.trans_opposite hYL.symm), hPQ]
   /- Each given circumference, with the one on the other side of its base, makes up the
      whole circle (`Circumference.whole`); the remainders of the equal wholes are equal
      [C.N. 3]. -/
-  exact CommonNotion3 ((Circumference.whole hα hB hC hXK).trans
-    (Circumference.whole hβ hD hE hYL).symm) hXY
+  exact CommonNotion3 ((Circumference.whole hB hC hXK).trans
+    (Circumference.whole hD hE hYL).symm) hXY
 
 end Elements.BookIII

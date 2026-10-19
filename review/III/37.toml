@@ -1,14 +1,11 @@
 [statement]
 scope = "full"
-note = "A straight line DB whose square is the rectangle AD, DC touches the circle; the circle comes with a centre."
+note = "A straight line DB whose square is the rectangle AD, DC touches the circle."
 fingerprint = "sha256:68600420107e4625"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre (`∃ F, Centre F ABC`), and the proof finds it by III.1 where Euclid takes it."
+note = "The proof takes F from the rule where Euclid takes the centre without a bracket for III.1. III.17 supplies the touching straight line, and III.36 the equality of squares, as before."
 
 [[passage]]
 at = "and FD is the common base of the triangles"

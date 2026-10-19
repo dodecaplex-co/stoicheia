@@ -122,7 +122,7 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       obtain ⟨Y, hY, hYQ⟩ := Prop2.sameSide hD hE hDEQ
       have hXrt : ∠ A X B = ∟ := Prop28.right hK hA hB hX hAKB hXP.triangle
       have hYrt : ∠ D Y E = ∟ := Prop28.right hL hD hE hY hDLE hYQ.triangle
-      have hXY := Prop24 ⟨K, hK⟩ ⟨L, hL⟩ hA hB hX hD hE hY
+      have hXY := Prop24 hA hB hX hD hE hY
         hXP.triangle hYQ.triangle hAB (hXrt.trans hYrt.symm)
       exact hXY.congr_side hXP hYQ
     refine ⟨⟨?_, hcongr hCG.triangle hFH.triangle⟩,
@@ -156,8 +156,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
       Arc.Congruent ⟨ABC, A, B, G⟩ ⟨DEF, D, E, H⟩ :=
     (Prop26 hcircles hK hL hX hA hB hY hD hE hXG hYH).1 hKG hLH hAKB
   -- And the whole circle ABC is also equal to the whole circle DEF;
-  have hw₁ := Circumference.whole ⟨K, hK⟩ hA hB hCG.symm
-  have hw₂ := Circumference.whole ⟨L, hL⟩ hD hE hFH.symm
+  have hw₁ := Circumference.whole hA hB hCG.symm
+  have hw₂ := Circumference.whole hD hE hFH.symm
   -- therefore the circumference ACB which remains is also equal to the circumference DFE which
   -- remains.
   have hgreater : circumference ABC A C B = circumference DEF D F E :=
@@ -171,7 +171,7 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
   have hLY : SameSideOf L Y D E := OppositeSidesOf.sameSideOf hLH.symm hYH.symm
   have hXY : ∠ A X B = ∠ D Y E := Magnitude.eq_of_add_self_eq
     ((Prop20 hK hX hA hB hKX).symm.trans (hAKB.trans (Prop20 hL hY hD hE hLY)))
-  have hAXB := Prop24 ⟨K, hK⟩ ⟨L, hL⟩ hA hB hX hD hE hY
+  have hAXB := Prop24 hA hB hX hD hE hY
     hXG.triangle hYH.triangle hAB hXY
   have hACB : Arc.Congruent ⟨ABC, A, B, C⟩ ⟨DEF, D, E, F⟩ :=
     hAXB.congr_side (OppositeSidesOf.sameSideOf hXG.symm hCG.symm)

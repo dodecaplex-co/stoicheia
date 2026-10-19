@@ -95,8 +95,8 @@ theorem Prop27 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
          where no angle at the centre in Euclid's sense stands on the same
          circumference. There the circumference is twice the angle standing on it
          (`Circumference.standing`), and halves of equal things are equal. -/
-      rw [Circumference.standing ⟨G, hG⟩ hA hB hC hBAC.acb,
-        Circumference.standing ⟨H, hH⟩ hD hE hF hEDF.acb] at heq
+      rw [Circumference.standing hA hB hC hBAC.acb,
+        Circumference.standing hD hE hF hEDF.acb] at heq
       exact Magnitude.eq_of_add_self_eq heq
     -- And the angle at A is half of the angle BGC,
     have h20A := Prop20 hG hA hB hC hGH.1

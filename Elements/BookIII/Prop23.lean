@@ -28,10 +28,10 @@ open Tacit
 
 /-- On the same straight line there cannot be constructed two similar and unequal segments of
 circles on the same side. -/
-theorem Prop23 {A B C D : Point} {ACB ADB : Circle} (hACB : ∃ O : Point, Centre O ACB)
-    (hADB : ∃ O : Point, Centre O ADB) (hA₁ : OnCircle A ACB) (hB₁ : OnCircle B ACB)
-    (hC : OnCircle C ACB) (hA₂ : OnCircle A ADB) (hB₂ : OnCircle B ADB)
-    (hD : OnCircle D ADB) (hCD : SameSideOf C D A B) (hsim : ∠ A C B = ∠ A D B) :
+theorem Prop23 {A B C D : Point} {ACB ADB : Circle} (hA₁ : OnCircle A ACB)
+    (hB₁ : OnCircle B ACB) (hC : OnCircle C ACB) (hA₂ : OnCircle A ADB)
+    (hB₂ : OnCircle B ADB) (hD : OnCircle D ADB) (hCD : SameSideOf C D A B)
+    (hsim : ∠ A C B = ∠ A D B) :
     ACB = ADB := by
   -- For, if possible, on the same straight line AB let two similar and unequal segments of
   -- circles ACB, ADB be constructed on the same side;
@@ -125,7 +125,7 @@ theorem Prop23.insideTriangle_of_between {A B M P Q : Point} (hABP : Triangle A 
     hABP.off_line hA_L hB_L (on_line_of_between hMQP hM_L hQ_L)
   exact pasch2 hMQP hM_L hQ_L
 
-/-- **On the circle, by the angle.** Let A, B, E be points of a circle with a centre, and P a
+/-- **On the circle, by the angle.** Let A, B, E be points of a circle, and P a
 point on E's side of AB. Then P is on the circle exactly when the angle APB is equal to the
 angle AEB, and P is within the circle exactly when the angle APB is greater than the angle
 AEB.
@@ -139,8 +139,8 @@ both, Q is on E's side of AB, and the angle AQB is equal to the angle AEB [III. 
 that draws AP on fails when AP touches the circle at A.)
 
 A companion of III.23 ("III.23 point"): its content, point by point. III.24 cites it. -/
-theorem Prop23.point {A B E P : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
-    (hA : OnCircle A α) (hB : OnCircle B α) (hE : OnCircle E α) (hPE : SameSideOf P E A B) :
+theorem Prop23.point {A B E P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnCircle B α)
+    (hE : OnCircle E α) (hPE : SameSideOf P E A B) :
     (OnCircle P α ↔ ∠ A P B = ∠ A E B) ∧ (InsideCircle P α ↔ ∠ A E B < ∠ A P B) := by
   /- Take M between A and B. It is within the circle [III. 2]. -/
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hPE.1

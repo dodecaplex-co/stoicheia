@@ -248,8 +248,8 @@ theorem III_26_any {A B C D E F G H K L : Point} {ABC DEF : Circle}
       rw [BookIII.Circumference.centre hG hB hC hGK, BookIII.Circumference.centre hH hE hF hHL,
         h],
    fun h => by
-      rw [BookIII.Circumference.eq ⟨G, hG⟩ hA hB hC hAK,
-        BookIII.Circumference.eq ⟨H, hH⟩ hD hE hF hDL, h]⟩
+      rw [BookIII.Circumference.eq hA hB hC hAK,
+        BookIII.Circumference.eq hD hE hF hDL, h]⟩
 
 /- III.26 itself does not follow from `III_26_any`, and no longer holds for any two circles:
 it concludes that the circumferences are congruent as well as equal in measure, and in
@@ -268,8 +268,8 @@ theorem III_27_any {A B C D E F G H : Point} {ABC DEF : Circle}
     (heq : standing ABC B A C = standing DEF E D F) :
     ∠ B A C = ∠ E D F ∧
       (SameSideOf G A B C → SameSideOf H D E F → ∠ B G C = ∠ E H F) := by
-  rw [BookIII.Circumference.standing ⟨G, hG⟩ hA hB hC hBAC.acb,
-    BookIII.Circumference.standing ⟨H, hH⟩ hD hE hF hEDF.acb] at heq
+  rw [BookIII.Circumference.standing hA hB hC hBAC.acb,
+    BookIII.Circumference.standing hD hE hF hEDF.acb] at heq
   have hangle : ∠ B A C = ∠ E D F := Magnitude.eq_of_add_self_eq heq
   refine ⟨hangle, fun hGA hHD => ?_⟩
   rw [BookIII.Prop20 hG hA hB hC hGA, BookIII.Prop20 hH hD hE hF hHD, hangle]
@@ -284,23 +284,22 @@ F, makes up the whole circle (`Circumference.whole`). The first clause of
 `Prop24.equalCircles`, that the circles are equal, needs the equal bases, and so does III.24
 itself, which concludes that the segments are congruent. -/
 theorem III_24_measure {A B C D E F : Point} {AEB CFD : Circle}
-    (hAEB : ∃ O : Point, Centre O AEB) (hCFD : ∃ O : Point, Centre O CFD)
     (hA : OnCircle A AEB) (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD)
     (hD : OnCircle D CFD) (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E)
     (hF_CD : ¬ Collinear C D F) (hsim : ∠ A E B = ∠ C F D) :
     circumference AEB A E B = circumference CFD C F D := by
   obtain ⟨X, hX, hXE⟩ := BookIII.Prop2.oppositeSide hA hB hE_AB
   obtain ⟨Y, hY, hYF⟩ := BookIII.Prop2.oppositeSide hC hD hF_CD
-  have w₁ := BookIII.Circumference.whole hAEB hA hB hXE
-  have w₂ := BookIII.Circumference.whole hCFD hC hD hYF
-  rw [BookIII.Circumference.eq hAEB hE hA hB hXE.symm] at w₁
-  rw [BookIII.Circumference.eq hCFD hF hC hD hYF.symm, ← hsim] at w₂
+  have w₁ := BookIII.Circumference.whole hA hB hXE
+  have w₂ := BookIII.Circumference.whole hC hD hYF
+  rw [BookIII.Circumference.eq hE hA hB hXE.symm] at w₁
+  rw [BookIII.Circumference.eq hF hC hD hYF.symm, ← hsim] at w₂
   exact CommonNotion3 (w₁.trans w₂.symm) rfl
 
 example : type_of% @Elements.BookIII.Prop24.equalCircles :=
-  fun hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim =>
-    ⟨(BookIII.Prop24.equalCircles hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
-     III_24_measure hAEB hCFD hA hB hE hC hD hF hE_AB hF_CD hsim⟩
+  fun hA hB hE hC hD hF hE_AB hF_CD hAB hsim =>
+    ⟨(BookIII.Prop24.equalCircles hA hB hE hC hD hF hE_AB hF_CD hAB hsim).1,
+     III_24_measure hA hB hE hC hD hF hE_AB hF_CD hsim⟩
 
 /-! ## A rule that a proposition gives back -/
 

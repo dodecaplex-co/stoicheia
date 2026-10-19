@@ -8,7 +8,7 @@ fingerprint = "sha256:c3d22dab733dbafc"
 kind = "euclid"
 
 [representation]
-tags = ["mixed-angles-local", "centre-given"]
+tags = ["mixed-angles-local"]
 note = "An angle contained by a straight line and a circumference is a mixed angle (`MixedAngle`), read as the region it opens near its vertex: the angle of a segment is the points within the circle on the segment's side of AC. It is greater than a right angle placed at A along AC, on that side, when near A the right angle lies within it with whole small circles to spare, and less the other way about; the companions prove that the named points give the angles Euclid draws (`MixedAngle.WellFormed`), and claim no addition, ratio or motion of mixed angles. A point is in the greater segment ABC when it is on B's side of AC, and in the less segment when it is on the other side. The centre E is given, as Euclid's setting-out names it."
 
 [[passage]]

@@ -106,7 +106,7 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
   -- therefore the segment BAC is equal to EDF.
   have seg : ‖B C‖ = ‖E F‖ → ∠ B A C = ∠ E D F →
       Arc.Congruent ⟨ABC, B, C, A⟩ ⟨DEF, E, F, D⟩ :=
-    fun hBC h => Prop24 ⟨G, hG⟩ ⟨H, hH⟩ hB hC hA hE hF hD hBCA hEFD hBC h
+    fun hBC h => Prop24 hB hC hA hE hF hD hBCA hEFD hBC h
   /- So their circumferences are equal in measure (`Prop24.equalMeasure`). -/
   have hBAC : ‖B C‖ = ‖E F‖ → ∠ B A C = ∠ E D F →
       circumference ABC B A C = circumference DEF E D F :=
@@ -114,8 +114,8 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
       ⟨hB, hC, hBCA⟩
       ⟨hE, hF, hEFD⟩ (seg hBC h)
   -- But the whole circle ABC is also equal to the whole circle DEF;
-  have w₁ := Circumference.whole ⟨G, hG⟩ hB hC hAK
-  have w₂ := Circumference.whole ⟨H, hH⟩ hE hF hDL
+  have w₁ := Circumference.whole hB hC hAK
+  have w₂ := Circumference.whole hE hF hDL
   -- therefore the circumference BKC which remains is equal to the circumference ELF.
   have rest : ‖B C‖ = ‖E F‖ → ∠ B A C = ∠ E D F →
       circumference ABC B K C = circumference DEF E L F ∧
@@ -142,7 +142,7 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
     have hXY : ∠ B X C = ∠ E Y F :=
       CommonNotion3 (c := ∠ B A C) (d := ∠ E D F)
         (by rw [add_comm (∠ B X C), hAX, add_comm (∠ E Y F), hDY]) hAD
-    have hBXC := Prop24 ⟨G, hG⟩ ⟨H, hH⟩ hB hC hX hE hF hY
+    have hBXC := Prop24 hB hC hX hE hF hY
       hXK.triangle hYL.triangle hBC hXY
     exact ⟨hKL, hBXC.congr_side hXK hYL⟩
   -- Therefore etc.

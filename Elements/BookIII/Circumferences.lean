@@ -48,8 +48,8 @@ private theorem sameSideOf_self (h : Triangle B C A) : SameSideOf A A B C := by
 BKC is twice the angle BAC, for every point A of the circle on the other side of
 BC: Lean's choice measured it at some such point, and the angles in that segment are
 all equal. [III. 21] -/
-theorem Circumference.eq (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α)
-    (hB : OnCircle B α) (hC : OnCircle C α) (hAK : OppositeSidesOf A K B C) :
+theorem Circumference.eq (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
+    (hAK : OppositeSidesOf A K B C) :
     circumference α B K C = ∠ B A C + ∠ B A C := by
   obtain ⟨X, hX, hXK, hx⟩ := Classical.epsilon_spec
     (p := fun x => ∃ X : Point, OnCircle X α ∧ OppositeSidesOf X K B C ∧
@@ -60,8 +60,8 @@ theorem Circumference.eq (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α)
 /-- **The circumference on which an angle stands.** For a point A of the circle off
 BC, the circumference on which the angle BAC stands is twice that angle, as any other
 point of the segment would make it. [III. 21] -/
-theorem Circumference.standing (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α)
-    (hB : OnCircle B α) (hC : OnCircle C α) (hBCA : Triangle B C A) :
+theorem Circumference.standing (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
+    (hBCA : Triangle B C A) :
     standing α B A C = ∠ B A C + ∠ B A C := by
   obtain ⟨X, hX, hXA, hx⟩ := Classical.epsilon_spec
     (p := fun x => ∃ X : Point, OnCircle X α ∧ SameSideOf X A B C ∧
@@ -75,15 +75,15 @@ on the centre's side, the angle BGC is double of the angle BAC. [III. 2, III. 20
 theorem Circumference.centre (hG : Centre G α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hGK : OppositeSidesOf G K B C) : circumference α B K C = ∠ B G C := by
   obtain ⟨A, hA, hAG⟩ := Prop2.sameSide hB hC hGK.triangle
-  rw [Circumference.eq ⟨G, hG⟩ hA hB hC (hAG.trans_opposite hGK),
+  rw [Circumference.eq hA hB hC (hAG.trans_opposite hGK),
     Prop20 hG hA hB hC hAG.symm]
 
 /-- **The whole circle.** A straight line BC cuts the circle into two circumferences,
 one on each side, and together they are four right angles. Measured at a point of each,
 they are twice the opposite angles of a quadrilateral in the circle, which are together
 two right angles. [III. 2, III. 21, III. 22] -/
-theorem Circumference.whole (hα : ∃ O : Point, Centre O α) (hB : OnCircle B α)
-    (hC : OnCircle C α) (hAK : OppositeSidesOf A K B C) :
+theorem Circumference.whole (hB : OnCircle B α) (hC : OnCircle C α)
+    (hAK : OppositeSidesOf A K B C) :
     circumference α B K C + circumference α B A C = ∟ + ∟ + (∟ + ∟) := by
   /- We take a point A' of the circle on A's side, and a point K' on K's side. -/
   obtain ⟨A', hA', hA'A⟩ := Prop2.sameSide hB hC hAK.triangle
@@ -91,7 +91,7 @@ theorem Circumference.whole (hα : ∃ O : Point, Centre O α) (hB : OnCircle B 
   have hA'K : OppositeSidesOf A' K B C := hA'A.trans_opposite hAK
   have hK'A : OppositeSidesOf K' A B C := hK'K.trans_opposite hAK.symm
   have hA'K' : OppositeSidesOf A' K' B C := (hK'K.trans_opposite hA'K.symm).symm
-  rw [Circumference.eq hα hA' hB hC hA'K, Circumference.eq hα hK' hB hC hK'A]
+  rw [Circumference.eq hA' hB hC hA'K, Circumference.eq hK' hB hC hK'A]
   /- III.22 gives the opposite angles at A' and K' of the quadrilateral A'CK'B. -/
   have h22 := (Prop22 hA' hC hK' hB hA'K'.swap).2
   rw [angle_symm hA'K.triangle.ne₂₃ hA'K.triangle.ne₁₃] at h22
@@ -165,13 +165,13 @@ circumference on the other side, less than a semicircle, it makes up four right 
 theorem Circumference.gt_semicircle (hG : Centre G α) (hB : OnCircle B α)
     (hC : OnCircle C α) (hGK : SameSideOf G K B C) : ∟ + ∟ < circumference α B K C := by
   obtain ⟨Q, hQ, -⟩ := exists_oppositeSidesOf hGK.symm.triangle []
-  have hw := Circumference.whole ⟨G, hG⟩ hB hC hQ
+  have hw := Circumference.whole hB hC hQ
   have hlt := Circumference.lt_semicircle hG hB hC (hGK.trans_opposite hQ.symm)
   have h1 := add_lt_add_right (circumference α B K C) hlt
   rw [add_comm (circumference α B Q C), hw, add_comm (∟ + ∟) (circumference α B K C)] at h1
   exact Magnitude.lt_of_add_lt_add_right h1
 
-/-- **Circumferences add.** Let B, C, D be points of a circle with a centre, and C on K's side
+/-- **Circumferences add.** Let B, C, D be points of a circle, and C on K's side
 of BD. Then the circumference BC away from D, and the circumference CD away from B, make up
 the circumference BD on K's side, the one through C.
 
@@ -182,8 +182,8 @@ angles of BCD make two right angles [I. 32], and the angles at A and C make two 
 
 Ground for Book IV, where IV.11 and IV.16 add circumferences; no proposition of Book III
 cites it. [I. 32, III. 2, III. 21, III. 22] -/
-theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
-    (hB : OnCircle B α) (hC : OnCircle C α) (hD : OnCircle D α) (hCK : SameSideOf C K B D)
+theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hB : OnCircle B α)
+    (hC : OnCircle C α) (hD : OnCircle D α) (hCK : SameSideOf C K B D)
     (hX : OppositeSidesOf X D B C) (hY : OppositeSidesOf Y B C D) :
     circumference α B X C + circumference α C Y D = circumference α B K D := by
   /- Take A on the circle across BD from C, and therefore across BD from K: BD is a straight
@@ -191,8 +191,8 @@ theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hα : ∃ O : Poi
   obtain ⟨A, hA, hAC⟩ := Prop2.oppositeSide hB hD hCK.triangle
   have hAK : OppositeSidesOf A K B D := (hCK.symm.trans_opposite hAC.symm).symm
   /- Measure BXC at D, CYD at B, and BKD at A. [III. 21] -/
-  rw [Circumference.eq hα hD hB hC hX.symm,
-    Circumference.eq hα hB hC hD hY.symm, Circumference.eq hα hA hB hD hAK]
+  rw [Circumference.eq hD hB hC hX.symm,
+    Circumference.eq hB hC hD hY.symm, Circumference.eq hA hB hD hAK]
   /- The three angles of the triangle CBD make two right angles. [I. 32] -/
   have hCBD : Triangle C B D := hCK.triangle.cab
   obtain ⟨E, hBDE⟩ := produce hCBD.ne₂₃
