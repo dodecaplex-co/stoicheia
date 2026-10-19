@@ -631,6 +631,47 @@ findings:
   alone. The words it defines, the statements of III.16 and III.31 that would use them, and
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
+
+- **The formal model, begun in `model/`.** The owner decided on 18 October, after Astra's
+  third answer on [issue #73](https://github.com/jackChallis/stoicheia/issues/73), for
+  which we thank Astra warmly
+  ([the decision](https://github.com/jackChallis/stoicheia/issues/73#issuecomment-6253675685)):
+
+  > **The owner's decision (18 October): start now, in `model/`, as Astra recommends.** A
+  > Lake package of its own inside this repository, with a pinned Mathlib and a required CI
+  > job once it builds; the main library stays plain Lean. A separate parameterized
+  > signature and laws generated from the elaborated declarations, with translation checks;
+  > the hardest laws prototyped first (circle intersections, angle transfer, Postulate 5,
+  > superposition, areas, finite avoidance); the hyperbolic model afterwards. MODEL.md's
+  > conclusions are softened now, to say what the evidence is until the proof is complete.
+
+  The package adds, all under `model/`: its Lake files (`lakefile.toml`, with Mathlib
+  pinned to `v4.35.0`, `lake-manifest.json`, `lean-toolchain` and `.gitignore`); the
+  library `Model` (`Model.lean`, and under `Model/` the files `Signature.lean`,
+  `Hand.lean`, `Euclidean.lean`, `Euclidean/Circles.lean`, `Euclidean/CircleSides.lean`,
+  `Euclidean/Magnitudes.lean`, `Euclidean/Centre.lean` and `Audit.lean`); the library
+  `Check` (`Check.lean` and `Check/Hand.lean`); `lock.sha256`, the hash of
+  `Certificate/axioms.lock` the model was last checked against; and
+  [`model/README.md`](../../model/README.md), which says what each file holds and where
+  the work stands: 12 of the 87 laws proved in the plane so far, and the proposed
+  `exists_centre`. Its proofs stand on Mathlib, and the README thanks those whose work
+  the plane's readings use. Outside `model/`, only CI and this page change: the main
+  package depends on nothing in `model/`, and its `lakefile.toml` and `lake-manifest.json`
+  are unchanged, so `lake build` at the root never sees Mathlib. Softening MODEL.md's
+  conclusions, as the decision asks, is a change of its own:
+  [`tests/model/MODEL.md`](../../tests/model/MODEL.md) is unchanged here. The CI job is a
+  new job, `formal-model`, in
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml); its id is not `model`,
+  which is the numerical harness's. After installing elan, it checks `model/lock.sha256`
+  against the lock, restores `model/.lake/packages` and `~/.cache/mathlib` from a cache
+  keyed on `model/lake-manifest.json`, and runs `lake exe cache get` and `lake build` in
+  `model/`, stopping after 30 minutes. It is not yet a required check: `REQUIRED_CHECKS`
+  in [`scripts/safe_push.py`](../../scripts/safe_push.py) and the ruleset on main still
+  name `check`, `model` and `negative`, and making `formal-model` required, as the
+  decision foresees once it builds, is the owner's call. Even so, `git safe-push --merge`
+  refuses a pull request while any of its checks fails or is still running, so a red or
+  running `formal-model` already holds a merge there.
+
 - **Pages name what follows a theorem truly.** [`scripts/render.py`](../../scripts/render.py)
   called every declaration after a theorem that is neither its porism nor a companion one
   of the "theorems later propositions use". With stage 2's companions in the edition, that

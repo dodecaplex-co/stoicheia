@@ -100,3 +100,49 @@ jobs:
 
       - name: The axioms hold in the plane, every weakened axiom is caught, and only Postulate 5 fails in the hyperbolic plane
         run: python3 -I tests/model/run.py --fast
+
+  formal-model:
+    # The formal model in model/ (model/README.md, "The CI job"): a Lake package of its
+    # own, with a pinned Mathlib, in which Lean checks that the ordinary plane satisfies
+    # the laws translated so far. Not `model`, which is the numerical harness above. Every
+    # Lean step runs in model/: the main package never sees Mathlib.
+    runs-on: ubuntu-latest
+    # A run takes a few minutes. Without Mathlib's prebuilt files, lake build would compile
+    # Mathlib from source for hours, so the job stops long before that.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install Lean (elan)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Check the model was last brought up to date against the present lock of the axioms
+        # model/lock.sha256 holds the sha256 of Certificate/axioms.lock, so any change to
+        # the lock fails here until the hash is renewed, after the model is brought up to
+        # date wherever an axiom or a word an axiom reaches changed (model/README.md, "How
+        # the lock ties it").
+        run: grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
+
+      - name: Restore Mathlib, its prebuilt files and their downloads from an earlier run
+        # model/.lake/packages holds the pinned clones and the unpacked build (6.6 GB);
+        # ~/.cache/mathlib holds what lake exe cache get downloaded (452 MB), which it looks
+        # for before downloading again. Both are fixed by model/lake-manifest.json.
+        uses: actions/cache@v5
+        with:
+          path: |
+            model/.lake/packages
+            ~/.cache/mathlib
+          key: formal-model-packages-${{ runner.os }}-${{ hashFiles('model/lake-manifest.json') }}
+
+      - name: Fetch Mathlib's prebuilt files
+        # After a restore it downloads nothing and unpacks nothing.
+        working-directory: model
+        run: lake exe cache get
+
+      - name: Check the proofs in the plane and what they rest on, and each hand translation against the library's declaration
+        # Builds Model, with its audit, and Check, with its round trips; any failed check
+        # fails the build.
+        working-directory: model
+        run: lake build
