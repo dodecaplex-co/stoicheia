@@ -27606,10 +27606,160 @@
      "file": "Elements/BookI/Prop31.lean",
      "brings_in": ["I.31"]}],
    "ref": "I.40 general",
+   "own_axioms": ["Postulate1", "Tacit.same_side_trans"],
    "of": "I.40",
    "name": "BookI.Prop40.general",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.same_side_symm":
+    [{"name": "OnRay.of_sameSideOf",
+      "line": 186,
+      "file": "Elements/Figure/Angles.lean"}],
+    "Tacit.pasch3":
+    [{"name": "OnRay.of_sameSideOf",
+      "line": 186,
+      "file": "Elements/Figure/Angles.lean"}],
+    "Tacit.on_line_of_between_ends":
+    [{"name": "BookI.Prop31.line",
+      "line": 79,
+      "file": "Elements/BookI/Prop31.lean"},
+     {"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.on_line_of_between":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.on_line_of_area_eq_zero":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "OnRay.of_sameSideOf",
+      "line": 186,
+      "file": "Elements/Figure/Angles.lean"}],
+    "Tacit.not_lt_zero":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.not_between_of_between_between":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.not_between_of_between":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.ne_of_between_ends":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.ne_of_between":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.lt_trichotomy":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.lt_trans":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.lt_irrefl":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.lines_meet_of_opposite_sides":
+    [{"name": "Parallel.sameSide",
+      "line": 52,
+      "file": "Elements/Figure/Parallels.lean"}],
+    "Tacit.line_unique":
+    [{"name": "BookI.Prop30.meet",
+      "line": 41,
+      "file": "Elements/BookI/HelpersParallels.lean"},
+     {"name": "BookI.Prop31.line",
+      "line": 79,
+      "file": "Elements/BookI/Prop31.lean"},
+     {"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"},
+     {"name": "SameSideOf.of_line",
+      "line": 32,
+      "file": "Elements/Figure/Sides.lean"},
+     {"name": "Triangle.of_line",
+      "line": 82,
+      "file": "Elements/Figure/Triangles.lean"}],
+    "Tacit.len_add_of_between":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.exists_point_on_line_off_line":
+    [{"name": "BookI.Prop30.meet",
+      "line": 41,
+      "file": "Elements/BookI/HelpersParallels.lean"}],
+    "Tacit.exists_point_on_line":
+    [{"name": "BookI.Prop30.meet",
+      "line": 41,
+      "file": "Elements/BookI/HelpersParallels.lean"},
+     {"name": "BookI.Prop31.line",
+      "line": 79,
+      "file": "Elements/BookI/Prop31.lean"}],
+    "Tacit.exists_point":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"},
+     {"name": "Triangle.ne₁₂",
+      "line": 22,
+      "file": "Elements/Figure/Triangles.lean"},
+     {"name": "Triangle.ne₂₃",
+      "line": 29,
+      "file": "Elements/Figure/Triangles.lean"}],
+    "Tacit.eq_of_len_eq_zero":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.between_symm":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.between_of_between_right":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.between_of_between_left":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.between_cases":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.area_swap":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.area_rotate":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.area_eq_zero_of_on_line":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.area_degenerate":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.area_add_of_between":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.add_zero":
+    [{"name": "OnRay.eq_of_area_eq",
+      "line": 129,
+      "file": "Elements/Figure/Areas.lean"}]},
    "enunciation":
    "**I.40, general** (companion of I.40). Equal triangles ABC, DEF on equal bases BC, EF\nof one straight line L, and on the same side of it, are in the same parallels: A and D lie\non one straight line parallel to L. The bases may be apart, touching, overlapping or one,\nand named either way along L; the vertices may be one point, and then the parallel is the\none through it. ",
    "direct_axioms":
@@ -27720,10 +27870,24 @@
    "∀ {A B C D E F : Elements.Point} {L : Elements.Line}, Elements.Triangle A B C → Elements.Triangle D E F → Elements.OnLine B L → Elements.OnLine C L → Elements.OnLine E L → Elements.OnLine F L → Eq (Elements.len B C) (Elements.len E F) → Eq (Elements.area A B C) (Elements.area D E F) → Elements.SameSide A D L → Ne A D → Elements.AreParallel A D B C",
    "shared_steps": [],
    "ref": "I.40 join",
+   "own_axioms": [],
    "of": "I.40",
    "name": "BookI.Prop40.join",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.line_unique":
+    [{"name": "AreParallel.of_parallel",
+      "line": 82,
+      "file": "Elements/Figure/Parallels.lean"}],
+    "Tacit.exists_point":
+    [{"name": "Triangle.ne₂₃",
+      "line": 29,
+      "file": "Elements/Figure/Triangles.lean"}],
+    "Postulate1":
+    [{"name": "Triangle.ne₂₃",
+      "line": 29,
+      "file": "Elements/Figure/Triangles.lean"}]},
    "enunciation":
    "**I.40, the join** (companion of I.40). Under the hypotheses of `Prop40.general`, when\nthe vertices A and D are two points, the straight line AD joining them is parallel to the\nbase BC: Euclid's \"AD is parallel to BE\". ",
    "direct_axioms": ["Postulate1", "Tacit.exists_point", "Tacit.line_unique"],
@@ -27801,10 +27965,21 @@
    "∀ {A B C D E : Elements.Point}, Elements.Triangle A B C → Elements.Triangle C D E → Elements.Between B C E → Eq (Elements.len B C) (Elements.len C E) → Eq (Elements.area A B C) (Elements.area C D E) → Elements.SameSideOf A D B E → Ne A D → Elements.AreParallel A D B E",
    "shared_steps": [],
    "ref": "I.40 special",
+   "own_axioms":
+   ["Postulate1", "Tacit.ne_of_between_ends", "Tacit.on_line_of_between_ends"],
    "of": "I.40",
    "name": "BookI.Prop40.special",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.line_unique":
+    [{"name": "AreParallel.of_parallel",
+      "line": 82,
+      "file": "Elements/Figure/Parallels.lean"}],
+    "Tacit.area_swap":
+    [{"name": "area_bac", "line": 70, "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.area_rotate":
+    [{"name": "area_bac", "line": 70, "file": "Elements/Figure/Areas.lean"}]},
    "enunciation":
    "**I.40, special** (companion of I.40). The statement of `Prop40`, with the bases BC, CE\nend to end, derived from `Prop40.general`: it shows that the general statement contains\nEuclid's configuration. The second triangle, CDE, is the triangle DCE on the base\nCE, and L is the straight line BE. ",
    "direct_axioms":
@@ -27888,10 +28063,12 @@
    "∀ {E₁ E E₂ : Elements.Point} (R : Elements.Apart), Elements.Triangle E₁ E E₂ → Exists fun (K : Elements.Point) => Exists fun (F : Elements.Point) => Exists fun (L : Elements.Point) => Exists fun (M : Elements.Point) => And (Elements.Parallelogram K F L M) (And (Eq (Elements.ang F K M) (Elements.ang E₁ E E₂)) (Eq (Elements.quadArea K F L M) (Elements.Apart.area R)))",
    "shared_steps": [],
    "ref": "I.45 apart",
+   "own_axioms": [],
    "of": "I.45",
    "name": "BookI.Prop45.apart",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited": {},
    "enunciation":
    "**I.45, for any rectilineal figure, with any boundaries** (companion of I.45). To\nconstruct, in a given rectilineal angle E, a parallelogram KFLM, its angle at K equal to E,\nequal to a given rectilineal figure: the figure given with any division of it into\ntriangles, no point inside two of them (`Apart`), and \"equal to the figure\" meaning equal\nto those triangles taken together (`Apart.area`). The figure may have a hole, touch itself\nat a corner, or be in more than one piece. It is `Prop45.sum` for the figure's triangles;\nlying apart is what makes their sum the figure's. Nothing is claimed of another division of\nthe figure. ",
    "direct_axioms": [],
@@ -27981,10 +28158,213 @@
      "file": "Elements/BookI/HelpersParallels.lean",
      "brings_in": ["I.30"]}],
    "ref": "I.45 append",
+   "own_axioms":
+   ["Postulate1",
+    "Tacit.add_comm",
+    "Tacit.angle_symm",
+    "Tacit.between_symm",
+    "Tacit.len_symm",
+    "Tacit.line_unique",
+    "Tacit.ne_of_between",
+    "Tacit.ne_of_between_ends",
+    "Tacit.on_line_of_between_ends",
+    "Tacit.same_side_symm",
+    "Tacit.same_side_trans"],
    "of": "I.45",
    "name": "BookI.Prop45.append",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.triple_incidence1":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.same_side_refl":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.same_side_or":
+    [{"name": "BookI.Prop29.alternate",
+      "line": 144,
+      "file": "Elements/BookI/Prop29.lean"}],
+    "Tacit.pasch4":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.pasch3":
+    [{"name": "BookI.Prop29.alternate",
+      "line": 144,
+      "file": "Elements/BookI/Prop29.lean"},
+     {"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.pasch2":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.on_line_of_between":
+    [{"name": "BookI.Prop29.alternate",
+      "line": 144,
+      "file": "Elements/BookI/Prop29.lean"},
+     {"name": "BookI.Prop29.interior",
+      "line": 152,
+      "file": "Elements/BookI/Prop29.lean"},
+     {"name": "OnRay.of_beyond",
+      "line": 39,
+      "file": "Elements/Figure/Rays.lean"},
+     {"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "SameSideOf.trans_opposite",
+      "line": 133,
+      "file": "Elements/Figure/Sides.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.not_between_of_between":
+    [{"name": "OnRay.of_beyond",
+      "line": 39,
+      "file": "Elements/Figure/Rays.lean"}],
+    "Tacit.lines_meet_of_opposite_sides":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "Parallelogram.sameSideOf",
+      "line": 47,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.exists_point_opposite_side":
+    [{"name": "exists_oppositeSidesOf",
+      "line": 177,
+      "file": "Elements/Figure/Sides.lean"}],
+    "Tacit.exists_point_on_line_off_line":
+    [{"name": "BookI.Prop30.parallel",
+      "line": 62,
+      "file": "Elements/BookI/HelpersParallels.lean"}],
+    "Tacit.exists_point_on_line":
+    [{"name": "BookI.Prop30.parallel",
+      "line": 62,
+      "file": "Elements/BookI/HelpersParallels.lean"}],
+    "Tacit.exists_point":
+    [{"name": "BookI.Prop29.alternate",
+      "line": 144,
+      "file": "Elements/BookI/Prop29.lean"},
+     {"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "Triangle.ne₁₂",
+      "line": 22,
+      "file": "Elements/Figure/Triangles.lean"},
+     {"name": "Triangle.ne₂₃",
+      "line": 29,
+      "file": "Elements/Figure/Triangles.lean"},
+     {"name": "exists_oppositeSidesOf",
+      "line": 177,
+      "file": "Elements/Figure/Sides.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.between_of_between_right":
+    [{"name": "BookI.Prop29.alternate",
+      "line": 144,
+      "file": "Elements/BookI/Prop29.lean"},
+     {"name": "BookI.Prop29.interior",
+      "line": 152,
+      "file": "Elements/BookI/Prop29.lean"}],
+    "Tacit.between_cases":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_swap":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_reverse",
+      "line": 152,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.area_rotate":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_eq_zero_of_on_line":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_degenerate":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_add_of_between":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.angle_eq_of_same_rays":
+    [{"name": "angle_onRay_right",
+      "line": 47,
+      "file": "Elements/Figure/Angles.lean"}],
+    "Tacit.add_zero":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.add_assoc":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Postulate2":
+    [{"name": "BookI.Prop29.alternate",
+      "line": 144,
+      "file": "Elements/BookI/Prop29.lean"},
+     {"name": "BookI.Prop29.interior",
+      "line": 152,
+      "file": "Elements/BookI/Prop29.lean"}]},
    "enunciation":
    "**I.45, one more triangle** (companion of I.45). Given a parallelogram KFLM in the\ngiven rectilineal angle E, and a triangle ABC, to construct a parallelogram in the same\nangle equal to KFLM and ABC together: the second half of Euclid's proof, which applies a\nparallelogram equal to the triangle to a side of the first [I. 44] and shows that the two\nmake one. ",
    "direct_axioms":
@@ -28102,10 +28482,82 @@
      "file": "Elements/BookI/Prop45.lean",
      "brings_in": ["I.13"]}],
    "ref": "I.45 fan",
+   "own_axioms": [],
    "of": "I.45",
    "name": "BookI.Prop45.fan",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.triple_incidence2":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_side_trans":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_side_symm":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_side_refl":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_side_or":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_ray_of_angle_eq_zero":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.pasch4":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.pasch3":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.pasch2":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.on_line_of_between_ends":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.on_line_of_between":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.not_lt_zero":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.not_between_of_between_between":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.not_between_of_between":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.ne_of_between_ends":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.ne_of_between":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.lt_trichotomy":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.lt_trans":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.lt_irrefl":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.line_unique":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.exists_point":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.between_symm":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.between_of_between_right":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.between_of_between_left":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.between_cases":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.angle_eq_of_same_rays":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.angle_add_of_inside":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.add_zero":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.add_lt_add_right":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.add_comm":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.add_assoc":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Postulate2":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Postulate1":
+    [{"name": "Fitted.fan",
+      "line": 709,
+      "file": "Elements/BookI/Prop45.lean"}]},
    "enunciation":
    "**I.45, for a figure divided from one corner** (companion of I.45), as Euclid and Oliver\nByrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, the list `ps` being A₃, …, Aₙ\n(empty for a triangle), divided by the straight lines from A₀ into the triangles A₀A₁A₂,\nA₀A₂A₃, …, A₀Aₙ₋₁Aₙ, one on each side `segments (A₁ :: A₂ :: ps)`. The division is checked:\neach piece is a triangle; each two neighbouring triangles A₀Aᵢ₋₁Aᵢ and A₀AᵢAᵢ₊₁ lie on\nopposite sides of the straight line A₀Aᵢ they share (one condition for each of\n`triples (A₁ :: A₂ :: ps)`); and the angles A₁A₀A₂, …, Aₙ₋₁A₀Aₙ together are less than four\nright angles. Then those triangles, in that order, are fitted together into one figure\n(`Fitted.fan`); and, given a rectilineal angle E, there is a parallelogram KFLM, its angle\nat K equal to E, equal to that figure, that is, to the triangles taken together. The figure\nis read as the one with corners A₀, A₁, …, Aₙ in order round it; that its boundary is that\nclosed line is not stated in Lean. Nothing is claimed of another division.\n\nThe first conclusion is what the two conditions are for: without them the triangles from\nA₀ may overlap, and need not be fitted. The parallelogram alone would follow from each\npiece being a triangle, by `Prop45.sum`.\n\nEuclid's ABCD with DB joined is the figure with corners D, A, B, C, its triangles DAB and\nDBC: A and C lie on opposite sides of DB. Byrne's figure has its corners listed from its\nre-entrant corner, from which both his straight lines are drawn. ",
    "direct_axioms":
@@ -28218,10 +28670,24 @@
    "∀ {E₁ E E₂ : Elements.Point} (R : Elements.Rectilineal), Elements.Triangle E₁ E E₂ → Exists fun (K : Elements.Point) => Exists fun (F : Elements.Point) => Exists fun (L : Elements.Point) => Exists fun (M : Elements.Point) => And (Elements.Parallelogram K F L M) (And (Eq (Elements.ang F K M) (Elements.ang E₁ E E₂)) (Eq (Elements.quadArea K F L M) (Elements.Rectilineal.area R)))",
    "shared_steps": [],
    "ref": "I.45 figure",
+   "own_axioms": [],
    "of": "I.45",
    "name": "BookI.Prop45.figure",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.on_line_of_between_ends":
+    [{"name": "Rectilineal.toApart",
+      "line": 79,
+      "file": "Elements/Figure/Rectilineal.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "Rectilineal.toApart",
+      "line": 79,
+      "file": "Elements/Figure/Rectilineal.lean"}],
+    "Postulate1":
+    [{"name": "Rectilineal.toApart",
+      "line": 79,
+      "file": "Elements/Figure/Rectilineal.lean"}]},
    "enunciation":
    "**I.45, for any rectilineal figure with one boundary** (companion of I.45). To\nconstruct, in a given rectilineal angle E, a parallelogram KFLM, its angle at K equal to E,\nequal to a given rectilineal figure: the figure given with triangles fitted together in a\nsuitable order, each glued across a side of an earlier one and meeting the earlier ones only\nalong it (`Rectilineal`), and \"equal to the figure\" meaning equal to those triangles taken\ntogether (`Rectilineal.area`). The figure may be convex or not, and need have no corner from\nwhich the straight lines to the others divide it. It is `Prop45.apart` for the figure's\ntriangles, which lie apart (`Fitted.inside_pairwise`, `Rectilineal.toApart`). Nothing is\nclaimed of another division of the figure. ",
    "direct_axioms":
@@ -28303,10 +28769,114 @@
    "∀ {E₁ E E₂ : Elements.Point} (ts : List (Prod Elements.Point (Prod Elements.Point Elements.Point))), Ne ts List.nil → (∀ (t : Prod Elements.Point (Prod Elements.Point Elements.Point)), Membership.mem ts t → Elements.Triangle (Prod.fst t) (Prod.fst (Prod.snd t)) (Prod.snd (Prod.snd t))) → Elements.Triangle E₁ E E₂ → Exists fun (K : Elements.Point) => Exists fun (F : Elements.Point) => Exists fun (L : Elements.Point) => Exists fun (M : Elements.Point) => And (Elements.Parallelogram K F L M) (And (Eq (Elements.ang F K M) (Elements.ang E₁ E E₂)) (Eq (Elements.quadArea K F L M) (Elements.Magnitude.sum (List.map (fun (t : Prod Elements.Point (Prod Elements.Point Elements.Point)) => Elements.area (Prod.fst t) (Prod.fst (Prod.snd t)) (Prod.snd (Prod.snd t))) ts))))",
    "shared_steps": [],
    "ref": "I.45 sum",
+   "own_axioms": ["Tacit.add_assoc", "Tacit.add_zero", "Tacit.angle_symm"],
    "of": "I.45",
    "name": "BookI.Prop45.sum",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.triple_incidence1":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.same_side_trans":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.same_side_symm":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.same_side_refl":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.pasch4":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.pasch3":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.pasch2":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.on_line_of_between_ends":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.on_line_of_between":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.ne_of_between_ends":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.ne_of_between":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.lines_meet_of_opposite_sides":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.line_unique":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.exists_point":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.between_symm":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.between_cases":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_swap":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_reverse",
+      "line": 152,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.area_rotate":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_eq_zero_of_on_line":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_degenerate":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_add_of_between":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.add_comm":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "quadArea_reverse",
+      "line": 152,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Postulate1":
+    [{"name": "Parallelogram.quadArea_rotate",
+      "line": 200,
+      "file": "Elements/Figure/Parallelograms.lean"}]},
    "enunciation":
    "**I.45, any number of triangles** (companion of I.45). To construct, in a given\nrectilineal angle E, a parallelogram equal to any number of given triangles taken together,\nat least one: I.42 for the first, then `Prop45.append` for each of the rest, in order. The\ntriangles are any triangles, each with its corners off one straight line; they need not fit\ntogether into one figure, and the statement claims nothing of a figure. ",
    "direct_axioms":
@@ -28411,10 +28981,36 @@
    "∀ {A₁ A₂ B : Elements.Point} {ps : List Elements.Point}, Elements.InOrder (List.cons B ps) → Eq (Elements.rect A₁ A₂ B (Elements.endOf B ps)) (Elements.Magnitude.sum (List.map (fun (s : Prod Elements.Point Elements.Point) => Elements.rect A₁ A₂ (Prod.fst s) (Prod.snd s)) (Elements.segments (List.cons B ps))))",
    "shared_steps": [],
    "ref": "II.1 general",
+   "own_axioms": ["Tacit.add_zero"],
    "of": "II.1",
    "name": "BookII.Prop1.general",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.len_self":
+    [{"name": "rect_self_right",
+      "line": 124,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.eq_of_len_eq_zero":
+    [{"name": "rect_self_right",
+      "line": 124,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.between_of_between_right":
+    [{"name": "InOrder.between_end",
+      "line": 49,
+      "file": "Elements/Figure/Sums.lean"}],
+    "Tacit.area_swap":
+    [{"name": "rect_self_right",
+      "line": 124,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.angle_symm":
+    [{"name": "rect_self_right",
+      "line": 124,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.add_comm":
+    [{"name": "rect_self_right",
+      "line": 124,
+      "file": "Elements/Figure/Rectangles.lean"}]},
    "enunciation":
    "**II.1, any number of segments** (companion of II.1). If the straight line from B to its\nend is cut at any number of points in order, the rectangle contained by A₁A₂ and the whole\nis equal to the rectangles contained by A₁A₂ and each of the segments. The list `ps` is\nthe points of section followed by the end; with no points of section it is the whole\nstraight line alone, and with no points at all the straight line is nothing and so is each\nside. ",
    "direct_axioms":
@@ -28521,10 +29117,362 @@
      "file": "Elements/BookII/Rectangles.lean",
      "brings_in": ["I.29"]}],
    "ref": "II.1 two",
+   "own_axioms":
+   ["Postulate1",
+    "Tacit.add_zero",
+    "Tacit.adjacent_eq_of_right",
+    "Tacit.angle_symm",
+    "Tacit.between_symm",
+    "Tacit.len_symm",
+    "Tacit.ne_of_between",
+    "Tacit.ne_of_between_ends",
+    "Tacit.not_on_line_of_same_side",
+    "Tacit.on_line_of_between_ends"],
    "of": "II.1",
    "name": "BookII.Prop1.two",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.triple_incidence1":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.same_side_trans":
+    [{"name": "Parallel.between",
+      "line": 99,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "SameSideOf.of_onRay",
+      "line": 165,
+      "file": "Elements/Figure/Angles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.same_side_symm":
+    [{"name": "Parallel.between",
+      "line": 99,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "SameSideOf.of_onRay",
+      "line": 165,
+      "file": "Elements/Figure/Angles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.same_side_refl":
+    [{"name": "Parallel.between",
+      "line": 99,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "SameSideOf.of_onRay",
+      "line": 165,
+      "file": "Elements/Figure/Angles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.pasch4":
+    [{"name": "Parallel.between",
+      "line": 99,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "SameSideOf.of_onRay",
+      "line": 165,
+      "file": "Elements/Figure/Angles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.pasch3":
+    [{"name": "Parallel.between",
+      "line": 99,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.pasch2":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.on_line_of_between":
+    [{"name": "OnRay.of_between_between",
+      "line": 86,
+      "file": "Elements/Figure/Rays.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.not_lt_zero":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"}],
+    "Tacit.not_between_of_between_between":
+    [{"name": "OnRay.of_between_between",
+      "line": 86,
+      "file": "Elements/Figure/Rays.lean"}],
+    "Tacit.not_between_of_between":
+    [{"name": "OnRay.of_between",
+      "line": 32,
+      "file": "Elements/Figure/Rays.lean"}],
+    "Tacit.lt_trichotomy":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"}],
+    "Tacit.lt_irrefl":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.lines_meet_of_opposite_sides":
+    [{"name": "Parallel.between",
+      "line": 99,
+      "file": "Elements/Figure/Parallelograms.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.line_unique":
+    [{"name": "AreParallel.of_parallel",
+      "line": 82,
+      "file": "Elements/Figure/Parallels.lean"},
+     {"name": "BookI.Prop30.parallel",
+      "line": 62,
+      "file": "Elements/BookI/HelpersParallels.lean"},
+     {"name": "BookI.Prop31.line",
+      "line": 79,
+      "file": "Elements/BookI/Prop31.lean"},
+     {"name": "BookI.Prop31.parallelogram",
+      "line": 83,
+      "file": "Elements/BookI/HelpersParallels.lean"},
+     {"name": "Parallel.off_transversal",
+      "line": 63,
+      "file": "Elements/Figure/Parallels.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "SameSideOf.of_onRay",
+      "line": 165,
+      "file": "Elements/Figure/Angles.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.line_circle_beyond":
+    [{"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"}],
+    "Tacit.len_self":
+    [{"name": "ne_of_len_eq",
+      "line": 75,
+      "file": "Elements/Figure/Lengths.lean"},
+     {"name": "rect_self_left",
+      "line": 117,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.len_add_of_between":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"}],
+    "Tacit.inside_not_on":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.exists_point_same_side":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.exists_point_on_line_off_line":
+    [{"name": "BookI.Prop30.parallel",
+      "line": 62,
+      "file": "Elements/BookI/HelpersParallels.lean"},
+     {"name": "BookI.Prop31.parallelogram",
+      "line": 83,
+      "file": "Elements/BookI/HelpersParallels.lean"}],
+    "Tacit.exists_point_on_line":
+    [{"name": "BookI.Prop30.parallel",
+      "line": 62,
+      "file": "Elements/BookI/HelpersParallels.lean"},
+     {"name": "BookI.Prop31.line",
+      "line": 79,
+      "file": "Elements/BookI/Prop31.lean"},
+     {"name": "BookI.Prop31.parallelogram",
+      "line": 83,
+      "file": "Elements/BookI/HelpersParallels.lean"}],
+    "Tacit.exists_point":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Triangle.ne₁₃",
+      "line": 36,
+      "file": "Elements/Figure/Triangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.eq_of_len_eq_zero":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "ne_of_len_eq",
+      "line": 75,
+      "file": "Elements/Figure/Lengths.lean"},
+     {"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"},
+     {"name": "rect_self_left",
+      "line": 117,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.circles_meet":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.centre_inside":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"}],
+    "Tacit.between_of_between_right":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"}],
+    "Tacit.between_cases":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_swap":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_rotate":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_eq_zero_of_on_line":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_degenerate":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.area_add_of_between":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.angle_eq_of_same_rays":
+    [{"name": "angle_onRay_left",
+      "line": 40,
+      "file": "Elements/Figure/Angles.lean"},
+     {"name": "angle_onRay_right",
+      "line": 47,
+      "file": "Elements/Figure/Angles.lean"}],
+    "Tacit.add_comm":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Tacit.add_assoc":
+    [{"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_add_of_parallelograms",
+      "line": 213,
+      "file": "Elements/Figure/Parallelograms.lean"}],
+    "Postulate3":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"}],
+    "Postulate2":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "produce", "line": 67, "file": "Elements/Figure/Lines.lean"},
+     {"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"}],
+    "Definition15":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "produce_longer",
+      "line": 80,
+      "file": "Elements/Figure/Lines.lean"}]},
    "enunciation":
    "**II.1, one cut** (companion of II.1). If the straight line BC is cut at D, the\nrectangle contained by A₁A₂ and BC is equal to the rectangles contained by A₁A₂ and each\nof BD, DC. II.1's construction, with one parallel drawn through D. The uncut straight line\nA₁A₂ may be nothing, and then every rectangle is nothing. ",
    "direct_axioms":
@@ -28652,10 +29600,12 @@
    "∀ (R : Elements.Apart), Exists fun (P : Elements.Point) => Exists fun (Q : Elements.Point) => Eq (Elements.sq P Q) (Elements.Apart.area R)",
    "shared_steps": [],
    "ref": "II.14 apart",
+   "own_axioms": [],
    "of": "II.14",
    "name": "BookII.Prop14.apart",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited": {},
    "enunciation":
    "**II.14, for any rectilineal figure, with any boundaries** (companion of II.14). To\nconstruct a square equal to a given rectilineal figure, given with any division of it into\ntriangles, no point inside two of them (`Apart`), as in `Prop45.apart`: the square on PQ is\nequal to those triangles taken together (`Apart.area`). The figure may have a hole, touch\nitself at a corner, or be in more than one piece. It is `Prop14.sum` for the figure's\ntriangles. Nothing is claimed of another division of the figure. ",
    "direct_axioms": [],
@@ -28743,10 +29693,82 @@
      "file": "Elements/BookI/Prop45.lean",
      "brings_in": ["I.13"]}],
    "ref": "II.14 fan",
+   "own_axioms": [],
    "of": "II.14",
    "name": "BookII.Prop14.fan",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.triple_incidence2":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_side_trans":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_side_symm":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_side_refl":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_side_or":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.same_ray_of_angle_eq_zero":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.pasch4":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.pasch3":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.pasch2":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.on_line_of_between_ends":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.on_line_of_between":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.not_lt_zero":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.not_between_of_between_between":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.not_between_of_between":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.ne_of_between_ends":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.ne_of_between":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.lt_trichotomy":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.lt_trans":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.lt_irrefl":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.line_unique":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.exists_point":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.between_symm":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.between_of_between_right":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.between_of_between_left":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.between_cases":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.angle_eq_of_same_rays":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.angle_add_of_inside":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.add_zero":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.add_lt_add_right":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.add_comm":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Tacit.add_assoc":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Postulate2":
+    [{"name": "Fitted.fan", "line": 709, "file": "Elements/BookI/Prop45.lean"}],
+    "Postulate1":
+    [{"name": "Fitted.fan",
+      "line": 709,
+      "file": "Elements/BookI/Prop45.lean"}]},
    "enunciation":
    "**II.14, for a figure divided from one corner** (companion of II.14), as Euclid and\nOliver Byrne divide it. A figure with corners A₀, A₁, A₂, …, Aₙ, divided by the straight\nlines from A₀ into the triangles A₀A₁A₂, …, A₀Aₙ₋₁Aₙ, with the division checked as in\n`Prop45.fan`: each piece a triangle, each two neighbouring triangles on opposite sides of\nthe straight line A₀Aᵢ they share, and the angles at A₀ together less than four right\nangles. Then those triangles, in that order, are fitted together into one figure\n(`Fitted.fan`), and the square on PQ is equal to that figure, that is, to the triangles\ntaken together. The figure is read as the one with corners A₀, A₁, …, Aₙ in order round it\n(that its boundary is that closed line is not stated in Lean). The square drawn is\n`Prop14.square R.toApart`, for the glued figure `R` returned.\n\nAs in `Prop45.fan`, the first conclusion is what the two conditions are for; the square\nalone would follow from each piece being a triangle, by `Prop14.sum`. ",
    "direct_axioms":
@@ -28865,10 +29887,24 @@
    "∀ (R : Elements.Rectilineal), Exists fun (P : Elements.Point) => Exists fun (Q : Elements.Point) => Eq (Elements.sq P Q) (Elements.Rectilineal.area R)",
    "shared_steps": [],
    "ref": "II.14 figure",
+   "own_axioms": [],
    "of": "II.14",
    "name": "BookII.Prop14.figure",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.on_line_of_between_ends":
+    [{"name": "Rectilineal.toApart",
+      "line": 79,
+      "file": "Elements/Figure/Rectilineal.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "Rectilineal.toApart",
+      "line": 79,
+      "file": "Elements/Figure/Rectilineal.lean"}],
+    "Postulate1":
+    [{"name": "Rectilineal.toApart",
+      "line": 79,
+      "file": "Elements/Figure/Rectilineal.lean"}]},
    "enunciation":
    "**II.14, for any rectilineal figure with one boundary** (companion of II.14). To\nconstruct a square equal to a given rectilineal figure, given with triangles fitted together\nin a suitable order, each glued across a side of an earlier one and meeting the earlier ones\nonly along it (`Rectilineal`), as in `Prop45.figure`: the square on PQ is equal to those\ntriangles taken together (`Rectilineal.area`). It is `Prop14.apart` for the figure's\ntriangles, which lie apart (`Fitted.inside_pairwise`, `Rectilineal.toApart`). Nothing is\nclaimed of another division of the figure. ",
    "direct_axioms":
@@ -28964,10 +30000,248 @@
      "file": "Elements/BookII/Rectangles.lean",
      "brings_in": ["I.4", "I.34"]}],
    "ref": "II.14 rectangle",
+   "own_axioms":
+   ["Definition15",
+    "Postulate1",
+    "Postulate3",
+    "Tacit.add_comm",
+    "Tacit.adjacent_eq_of_right",
+    "Tacit.angle_symm",
+    "Tacit.between_symm",
+    "Tacit.inside_of_between",
+    "Tacit.len_add_of_between",
+    "Tacit.len_symm",
+    "Tacit.line_circle_beyond",
+    "Tacit.line_unique",
+    "Tacit.lt_irrefl",
+    "Tacit.lt_trans",
+    "Tacit.lt_trichotomy",
+    "Tacit.ne_of_between",
+    "Tacit.ne_of_between_ends",
+    "Tacit.on_circle_of_len_eq",
+    "Tacit.on_line_of_between_ends"],
    "of": "II.14",
    "name": "BookII.Prop14.rectangle",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.triple_incidence1":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.same_side_trans":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.same_side_symm":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.same_side_refl":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.pasch4":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.pasch3":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.pasch2":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.on_line_of_between":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "OnRay.between", "line": 70, "file": "Elements/Figure/Rays.lean"},
+     {"name": "OnRay.between_of_len_lt",
+      "line": 121,
+      "file": "Elements/Figure/Rays.lean"},
+     {"name": "OnRay.exists_len_eq",
+      "line": 139,
+      "file": "Elements/Figure/Rays.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.not_lt_zero":
+    [{"name": "OnRay.between_of_len_lt",
+      "line": 121,
+      "file": "Elements/Figure/Rays.lean"}],
+    "Tacit.not_between_of_between_between":
+    [{"name": "OnRay.between", "line": 70, "file": "Elements/Figure/Rays.lean"},
+     {"name": "OnRay.between_of_len_lt",
+      "line": 121,
+      "file": "Elements/Figure/Rays.lean"},
+     {"name": "OnRay.exists_len_eq",
+      "line": 139,
+      "file": "Elements/Figure/Rays.lean"}],
+    "Tacit.not_between_of_between":
+    [{"name": "OnRay.between", "line": 70, "file": "Elements/Figure/Rays.lean"},
+     {"name": "OnRay.between_of_len_lt",
+      "line": 121,
+      "file": "Elements/Figure/Rays.lean"},
+     {"name": "OnRay.of_between",
+      "line": 32,
+      "file": "Elements/Figure/Rays.lean"}],
+    "Tacit.lines_meet_of_opposite_sides":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.exists_point_opposite_side":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.exists_point":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.eq_of_len_eq_zero":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "OnRay.between_of_len_lt",
+      "line": 121,
+      "file": "Elements/Figure/Rays.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.centre_inside":
+    [{"name": "OnRay.exists_len_eq",
+      "line": 139,
+      "file": "Elements/Figure/Rays.lean"}],
+    "Tacit.between_of_between_right":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "OnRay.between", "line": 70, "file": "Elements/Figure/Rays.lean"},
+     {"name": "OnRay.between_of_len_lt",
+      "line": 121,
+      "file": "Elements/Figure/Rays.lean"}],
+    "Tacit.between_of_between_left":
+    [{"name": "OnRay.between", "line": 70, "file": "Elements/Figure/Rays.lean"},
+     {"name": "OnRay.between_of_len_lt",
+      "line": 121,
+      "file": "Elements/Figure/Rays.lean"}],
+    "Tacit.between_cases":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "OnRay.between", "line": 70, "file": "Elements/Figure/Rays.lean"},
+     {"name": "OnRay.between_of_len_lt",
+      "line": 121,
+      "file": "Elements/Figure/Rays.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.area_swap":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "quadArea_reverse",
+      "line": 152,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.area_rotate":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.area_eq_zero_of_on_line":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.area_degenerate":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.area_add_of_between":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.angle_eq_of_same_rays":
+    [{"name": "angle_onRay_left",
+      "line": 40,
+      "file": "Elements/Figure/Angles.lean"}],
+    "Tacit.add_zero":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.add_lt_add_right":
+    [{"name": "Magnitude.add_self_lt_add_self",
+      "line": 43,
+      "file": "Elements/Figure/Areas.lean"},
+     {"name": "Magnitude.lt_of_add_lt_add_left",
+      "line": 60,
+      "file": "Elements/Figure/Lengths.lean"}],
+    "Tacit.add_assoc":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Rectangle.eq_rect",
+      "line": 98,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Postulate2":
+    [{"name": "BookI.Prop47.sq",
+      "line": 380,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "OnRay.exists_len_eq",
+      "line": 139,
+      "file": "Elements/Figure/Rays.lean"},
+     {"name": "produce", "line": 67, "file": "Elements/Figure/Lines.lean"}]},
    "enunciation":
    "**II.14, for a rectangle** (companion of II.14). To construct a square equal to a given\nrectangle EBCD: the second part of Euclid's proof, with both of its cases. If BE is equal to\nED, the rectangle is a square already. If not, the greater, say BE, is produced to F with EF\nequal to ED, BF is bisected at G, the semicircle BHF is described with centre G, and DE is\nproduced to H; then the rectangle BE, EF with the square on EG is the square on GF [II. 5],\nwhich is the squares on HE, EG [I. 47], and the rectangle is the square on EH. This is\nthe proof of `Prop14` after the rectangle is made, written out again, for it does not cite\nII.14. The square is the square on PQ. ",
    "direct_axioms":
@@ -29104,10 +30378,204 @@
      "file": "Elements/BookII/Rectangles.lean",
      "brings_in": ["I.4", "I.28", "I.34"]}],
    "ref": "II.14 square",
+   "own_axioms": ["Tacit.add_comm", "Tacit.lt_irrefl", "Tacit.not_lt_zero"],
    "of": "II.14",
    "name": "BookII.Prop14.square",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.triple_incidence1":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.same_side_trans":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.same_side_symm":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.same_side_refl":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.pasch4":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.pasch3":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.pasch2":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.on_line_of_between_ends":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.on_line_of_between":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.on_line_of_area_eq_zero":
+    [{"name": "Triangle.area_pos",
+      "line": 90,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.ne_of_between_ends":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.ne_of_between":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.lt_trichotomy":
+    [{"name": "Magnitude.pos_of_ne_zero",
+      "line": 26,
+      "file": "Elements/Figure/Lengths.lean"},
+     {"name": "Triangle.area_pos",
+      "line": 90,
+      "file": "Elements/Figure/Areas.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.lines_meet_of_opposite_sides":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.line_unique":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.len_symm":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.len_self":
+    [{"name": "sq_self",
+      "line": 128,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.len_add_of_between":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.inside_not_on":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.exists_point_same_side":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.exists_point":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Triangle.area_pos",
+      "line": 90,
+      "file": "Elements/Figure/Areas.lean"}],
+    "Tacit.eq_of_len_eq_zero":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"},
+     {"name": "sq_self",
+      "line": 128,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.circles_meet":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.centre_inside":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.between_symm":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.between_of_between_right":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.between_cases":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Tacit.area_swap":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.area_rotate":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.area_eq_zero_of_on_line":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.area_degenerate":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.area_add_of_between":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.add_zero":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.add_assoc":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Postulate3":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Postulate2":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Postulate1":
+    [{"name": "Square.described",
+      "line": 113,
+      "file": "Elements/BookII/Rectangles.lean"},
+     {"name": "Triangle.area_pos",
+      "line": 90,
+      "file": "Elements/Figure/Areas.lean"},
+     {"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}],
+    "Definition15":
+    [{"name": "exists_off_line",
+      "line": 39,
+      "file": "Elements/Figure/Rectangles.lean"}]},
    "enunciation":
    "**II.14, with the square drawn** (companion of II.14). To construct a square PQST equal\nto a given rectilineal figure, given with triangles that lie apart as in `Prop14.apart`: the\nsquare on the side that `Prop14.apart` finds, described on it [I. 46]. The square is a\nparallelogram, and it is equal to the figure's triangles taken together. A figure `R` given\nby gluing (`Rectilineal`) is taken here as `R.toApart`, the same triangles, which lie apart,\nwith the same sum (`Rectilineal.area_toApart`); so is the glued figure that `Prop14.fan`\nreturns for a checked fan. ",
    "direct_axioms":
@@ -29237,10 +30705,56 @@
      "file": "Elements/BookII/Rectangles.lean",
      "brings_in": ["I.29"]}],
    "ref": "II.14 sum",
+   "own_axioms": ["Postulate1", "Tacit.angle_symm"],
    "of": "II.14",
    "name": "BookII.Prop14.sum",
    "lean_foundations": ["propext", "Classical.choice", "Quot.sound"],
    "kind": "companion",
+   "inherited":
+   {"Tacit.same_side_symm":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.on_line_of_between":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.not_on_line_of_same_side":
+    [{"name": "SameSideOf.triangle",
+      "line": 59,
+      "file": "Elements/Figure/Sides.lean"}],
+    "Tacit.ne_of_between_ends":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.lines_meet_of_opposite_sides":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.line_unique":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.exists_point":
+    [{"name": "Triangle.ne₁₂",
+      "line": 22,
+      "file": "Elements/Figure/Triangles.lean"}],
+    "Tacit.between_symm":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.between_of_between_right":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Tacit.add_comm":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"}],
+    "Postulate2":
+    [{"name": "Rectangle.of_right",
+      "line": 49,
+      "file": "Elements/BookII/Rectangles.lean"}]},
    "enunciation":
    "**II.14, any number of triangles** (companion of II.14). To construct a square equal to\nany number of given triangles taken together, at least one: a rectangle equal to them\n[I. 45, `Prop45.sum`, in a right angle from I.11 at a corner A of the first triangle ABC, on\nAB], then a square equal to the rectangle (`Prop14.rectangle`). The triangles are any\ntriangles; they need not fit together into one figure, and the statement claims nothing of\na figure. The square is the square on PQ. ",
    "direct_axioms":
