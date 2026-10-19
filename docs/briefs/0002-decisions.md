@@ -1378,10 +1378,11 @@ findings:
   corollaries. The first four came from a probe; the other four are the derivable rules
   that lie on no cycle of the derivation graph, so no later choice of basis can disturb
   them. The rest of the search, what else could go and what each choice costs, is evidence
-  for the owner, not part of this change. Two costs are disclosed: I.7's audited shortcut
-  through Circle 4 is circular now, and I.12, with the entries that rest on it, now rests
-  on Circle 3, through the proved intersection rule (II.14, III.1 and III.2 still rest on
-  neither Circle 2 nor Circle 3, and new pins say so). The axioms leave
+  for the owner, not part of this change. I.7's audited shortcut through Circle 4 is
+  circular now, and the audit says so. I.12, which cited the intersection rule now proved
+  from Circle 3, cuts its circle instead through a point inside it, the crossing of CD with
+  AB (Intersection 3), so that no certificate entry rests on Circle 2 or Circle 3, and new
+  pins say so for II.14, III.1 and III.2. The axioms leave
   `Elements/Foundations/Tacit/Constructions.lean`, `Diagram.lean` and `Transfer.lean`.
   Protected files changed with them, as values pinned to the axioms:
   [`Certificate/axioms.lock`](../../Certificate/axioms.lock), written by `--write-lock`;
