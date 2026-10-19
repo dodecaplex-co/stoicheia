@@ -6,13 +6,50 @@ fingerprint = "sha256:3b821b319dc406ad"
 kind = "euclid"
 
 [[passage]]
+at = "through C let CF be drawn parallel"
+kind = "grouped"
+helper = "Parallelogram.figure"
+note = "Euclid draws CF through C and HK through G, where CF meets BD. `Parallelogram.figure` carries the two constructions together: I.31 draws the parallels, `Prop30.meet` finds their meetings, `Prop30.parallel` proves the further parallels, and `Parallel.between` puts the points in order and allows the parallelograms about BD to be named."
+
+[[passage]]
+at = "and BD has fallen on them"
+kind = "helper"
+helper = "Tacit.pasch2"
+note = "Euclid takes C and A on the same side of BD when he identifies the exterior and opposite angles. The Lean places them there by `Tacit.pasch2`, the rule we assume as System E, Pasch 2, before applying I.29 in the next sentence."
+
+[[passage]]
 at = "For the same reason"
 kind = "grouped"
 helper = "Square.about_diameter"
 note = "Euclid's \"for the same reason\" is carried by one lemma, which gives his argument for CK over any letters: a parallelogram about the diameter of a square is a square."
 
+[[passage]]
+at = "and it is described on HG, that is AC"
+kind = "helper"
+helper = "Parallelogram.complements"
+note = "Euclid takes AG as a parallelogram when he applies I.34 to identify HG with AC. `Parallelogram.complements` proves that shape using I.30; I.34 and `Square.eq_sq` then identify HF as the square on AC."
+
+[[passage]]
+at = "Now, since AG is equal to GE"
+kind = "helper"
+helper = "BookI.Prop43"
+note = "Euclid takes the complements AG and GE to be equal. The Lean applies I.43, for which Heath gives no reference here."
+
+[[passage]]
+at = "and AG is the rectangle AC, CB"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid treats AG as a rectangle, with GC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right`, the rule we assume as System E, Diagram-angle 3, then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AG."
+
+[[passage]]
+at = "But HF, CK, AG, GE are the whole ADEB"
+kind = "helper"
+helper = "Parallelogram.about_diameter"
+note = "Euclid takes the four areas as the whole square ADEB. `Parallelogram.about_diameter` proves the complements are parallelograms, uses I.30 and `Between.of_inside` to join and order the points on HK, then joins the pieces with `quadArea_add_of_parallelograms`."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:24f85c7951a63055"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

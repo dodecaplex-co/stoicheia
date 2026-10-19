@@ -5,8 +5,39 @@ fingerprint = "sha256:e5f5af215b738f22"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and let the figure be drawn"
+kind = "helper"
+helper = "Parallelogram.figure"
+note = "Euclid leaves the diameter and two parallels to the familiar figure; `Parallelogram.figure` draws them by Postulate 1 and I.31, finds their meetings by `Prop30.meet`, proves the further parallels by I.30 and orders the points by `Parallel.between`. `Parallelogram.complements` uses I.30 to prove AG and GE are parallelograms; the divisions of AF and CE use them, and I.34 uses AG to identify HG with AC for the square DG."
+
+[[passage]]
+at = "therefore the whole AF is equal to the whole CE"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid takes AF as AG and CF together, and CE as CF and GE together. `quadArea_add_of_parallelograms` proves both divisions, so adding CF to the equal complements gives equal wholes; the same divisions later identify AF and CE together as the gnomon and CF."
+
+[[passage]]
+at = "But twice the rectangle AB, BC is also double of AF"
+kind = "helper"
+helper = "Square.about_diameter"
+note = "Euclid takes BF equal to BC from the square CF and treats AF as a rectangle. `Square.about_diameter` proves CF a square; the Lean proves BAHF a parallelogram and uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AF as the rectangle AB, BC."
+
+[[passage]]
+at = "Let DG, which is the square on AC"
+kind = "helper"
+helper = "Square.about_diameter"
+note = "Euclid takes DG to be the square on AC. `Square.about_diameter` proves DG a square, and I.34 with `Square.eq_sq` identifies its area as the square on AC before Common Notion 2 adds it to both sides."
+
+[[passage]]
+at = "But the gnomon KLM and the squares BG, GD are the whole ADEB and CF"
+kind = "helper"
+helper = "Parallelogram.about_diameter"
+note = "Euclid takes the gnomon and GD as the whole square ADEB, with CF left beside it. `Parallelogram.about_diameter` proves the complements are parallelograms, uses I.30 and `Between.of_inside` to join and order H, G and F, then joins the four pieces with `quadArea_add_of_parallelograms`."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:1300a024e78c97c1"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
