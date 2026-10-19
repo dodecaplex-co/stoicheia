@@ -20,8 +20,8 @@ files of verdicts, each with the outcome it should give:
 * CI copies the pull request's checks into main but keeps main's content pins, so an
   updated definition or expected count cannot hide a later E2 failure.
 
-CI runs this file before the checker. Python 3.11 or later; standard library, bash and
-rsync (as the workflow uses).
+CI runs this file before the checker. Python 3.11 or later; standard library, with sh and
+rsync for scripts/copy_acceptance_checks.sh, the helper the workflow runs.
 """
 
 from __future__ import annotations
