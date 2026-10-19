@@ -182,4 +182,19 @@ theorem Prop13 {A B C D : Point} (hCBD : Between C B D) (hA : ¬ Collinear C D A
     exact two_right (between_symm hCBD) hDBE hEBC hAE_BD hAD
   -- Q. E. D.
 
+/-- A right angle is equal to the angle adjacent to it (System E, Diagram-angle 3).
+This was an assumption until 19 October 2026 and is now proved from I.13 and Common
+Notion 3: the two adjacent angles together equal two right angles, and taking the
+given right angle away leaves one right angle. -/
+theorem _root_.Elements.Tacit.adjacent_eq_of_right
+    {A B C D : Point} {L : Line}
+    (hA : OnLine A L) (hB : OnLine B L) (h : Between A C B)
+    (hD : ¬ OnLine D L) (hright : ∠ A C D = ∟) : ∠ A C D = ∠ D C B := by
+  have hABD : Triangle A B D :=
+    Triangle.of_line hA hB (ne_of_between_ends h) hD
+  have h13 := Prop13 h hABD
+  rw [hright, add_comm ∟] at h13
+  rw [hright]
+  exact (CommonNotion3 h13 rfl).symm
+
 end Elements.BookI

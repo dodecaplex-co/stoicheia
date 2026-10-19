@@ -7,8 +7,10 @@ Euclid draws a figure and then uses facts that are "obvious from the picture":
 that a point lies between two others, that two points are on the same side of a
 straight line, that a straight line through the inside of a circle must cut it.
 He never states these facts or proves them. These are the diagrammatic inferences
-of System E, §3.4 (Avigad, Dean and Mumma, 2009), one axiom for each thing a rule
-says: most rules say one thing, and Between 1, which says four, is four axioms.
+of System E, §3.4 (Avigad, Dean and Mumma, 2009). Each retained assumption is an
+axiom: most rules say one thing, and Between 1, which says four, is four axioms.
+Generalities 2 and Circle 2 are proved in `Elements.Figure.Circles`; Circle 4 is
+proved after I.7 in `Elements.BookI.Prop07`.
 
 In one place we follow LeanEuclid's correction of the published rules:
 `circles_meet_of_on_inside_outside` (Intersection rule 4) asks that A be *on*
@@ -27,9 +29,6 @@ variable {A B C D E : Point} {L M N : Line} {α β : Circle}
 /-- Two points determine a straight line. (Generalities 1) -/
 axiom line_unique (hAB : A ≠ B) (hAL : OnLine A L) (hBL : OnLine B L) (hAM : OnLine A M)
     (hBM : OnLine B M) : L = M
-
-/-- A circle has only one centre. (Generalities 2) -/
-axiom centre_unique (hA : Centre A α) (hB : Centre B α) : A = B
 
 /-- The centre of a circle is inside it. (Generalities 3) -/
 axiom centre_inside (hA : Centre A α) : InsideCircle A α
@@ -156,21 +155,10 @@ axiom between_of_inside_chord (hA : OnLine A L) (hB : OnLine B L) (hC : OnLine C
     (hAin : InsideCircle A α) (hBon : OnCircle B α) (hCon : OnCircle C α) (hBC : B ≠ C) :
     Between B A C
 
-/-- A circle is "convex": between two points on or inside it, every point is
-inside. (Circle 2) -/
-axiom inside_of_between (hA : InsideCircle A α ∨ OnCircle A α)
-    (hB : InsideCircle B α ∨ OnCircle B α) (h : Between A C B) : InsideCircle C α
-
 /-- Once a straight line has left a circle, it doesn't come back.
 (Circle 3) -/
 axiom outside_of_between (hA : InsideCircle A α ∨ OnCircle A α) (hC : ¬ InsideCircle C α)
     (h : Between A C B) : OutsideCircle B α
-
-/-- Two circles cut one another on opposite sides of the straight line through
-their centres. (Circle 4) -/
-axiom not_same_side_of_circles_meet (hαβ : α ≠ β) (hCα : OnCircle C α) (hCβ : OnCircle C β)
-    (hDα : OnCircle D α) (hDβ : OnCircle D β) (hCD : C ≠ D) (hA : Centre A α)
-    (hB : Centre B β) (hAL : OnLine A L) (hBL : OnLine B L) : ¬ SameSide C D L
 
 /-! ## Intersection rules -/
 
