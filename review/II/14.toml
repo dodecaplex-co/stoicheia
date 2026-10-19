@@ -12,7 +12,7 @@ note = "`Prop14.rectangle` is the second part of Euclid's proof, the main theore
 at = "For let there be constructed the rectangular parallelogram BD"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid asks I.45 for a rectangular parallelogram. The Lean first constructs a right angle by I.11, applies I.45 in it, and uses `Rectangle.of_right` (I.29) to prove the other three angles right."
+note = "Euclid asks I.45 for a rectangular parallelogram. The Lean first constructs a right angle by I.11, for which Heath gives no reference here, applies I.45 in it, and uses `Rectangle.of_right` (I.29) to prove the other three angles right."
 
 [[passage]]
 at = "Let BE be greater"
@@ -22,8 +22,8 @@ note = "Euclid takes BE the greater; when ED is, the Lean reads the rectangle th
 [[passage]]
 at = "let EF be made equal to ED"
 kind = "helper"
-helper = "OnRay.between"
-note = "Euclid makes EF equal to ED on BE produced, then bisects BF. The Lean chooses F by `OnRay.exists_len_eq`, using Postulate 3 and `Tacit.line_circle_beyond` (the rule we assume as System E, Intersections 5), places E between B and F by `OnRay.between`, and bisects BF by I.10."
+helper = "OnRay.exists_len_eq"
+note = "Euclid makes EF equal to ED on BE produced, then bisects BF; Heath gives no reference for either step here. The Lean chooses F by `OnRay.exists_len_eq`, using Postulate 3 and `Tacit.line_circle_beyond` (the rule we assume as System E, Intersections 5), places E between B and F by `OnRay.between`, and bisects BF by I.10."
 
 [[passage]]
 at = "With centre G and distance one of the straight lines GB, GF"
@@ -35,13 +35,13 @@ note = "Euclid's semicircle passes through both B and F. Postulate 3 draws the w
 at = "let DE be produced to H"
 kind = "helper"
 helper = "Tacit.line_circle_beyond"
-note = "Euclid takes DE produced to meet the semicircle at H. The Lean puts G between B and E by `OnRay.between_of_len_lt`, then E inside the circle by `between_inner` and `InsideCircle.of_between_centre`; `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, finds H beyond E from D, and GH is named by its ends."
+note = "Euclid takes DE produced to meet the semicircle at H; since BE is greater than ED = EF and G bisects BF, the Lean puts G between B and E by `OnRay.between_of_len_lt`, also giving E different from G for the unequal cut in II.5. The Lean then puts E inside the circle by `between_inner` and `InsideCircle.of_between_centre`; `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, finds H beyond E from D, and GH is named by its ends."
 
 [[passage]]
 at = "But the squares on HE, EG are equal to the square on GH"
 kind = "helper"
 helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid applies I.47 with HEG right, beside the rectangle's right angle DEB. The Lean gets the adjacent right angle BEH from `Tacit.adjacent_eq_of_right`, the rule we assume as System E, Diagram-angle 3, identifies it with HEG because G lies on the ray EB, and applies `BookI.Prop47.sq`."
+note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, the rule we assume as System E, Diagram-angle 3, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `BookI.Prop47.sq`."
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]

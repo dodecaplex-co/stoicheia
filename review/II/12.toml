@@ -10,7 +10,7 @@ kind = "euclid"
 at = "Let ABC be an obtuse-angled triangle"
 kind = "helper"
 helper = "BookI.Prop17"
-note = "Euclid takes the foot D on CA produced beyond A. The statement gives the perpendicular; the Lean excludes D = A because BAC would be right, uses I.17 to exclude D on the ray from A through C, and puts C, A, D in order by `Tacit.between_cases`, the rule we assume as System E, Between 6."
+note = "Euclid takes the foot D on CA produced beyond A; Heath gives no reference for I.17 here. The statement gives the perpendicular; the Lean excludes D = A because BAC would be right, uses I.17 to exclude D on the ray from A through C because triangle ABD would have an obtuse angle at A and a right angle at D, and puts C, A, D in order by `Tacit.between_cases`, the rule we assume as System E, Between 6."
 
 [review]
 stage = "full"
