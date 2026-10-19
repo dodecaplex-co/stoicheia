@@ -178,9 +178,11 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   borrowing commutativity; prototyped first.
 - **Incommensurables** (Book X): X.1 prototyped first.
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
-- **A formal model** of the axioms in Lean with Mathlib, as a separate package, defined
-  in [MODEL.md](../tests/model/MODEL.md#a-formal-model-a-later-milestone). Until then the
-  evidence is numerical: [tests/model](../tests/model/), in CI, with the hyperbolic check.
+- **A formal model** of the axioms in Lean with Mathlib, begun on 18 October 2026 in a
+  package of its own, [`model/`](../model/README.md), with CI's `formal-model` job (#73,
+  a gate for the consolidation release). Until every locked law is proved there, the
+  evidence is partly numerical: [tests/model](../tests/model/), in CI, with the hyperbolic
+  check.
 - **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
   axioms' statements or the entries' statements reach: 61, the 37 of the axioms and 24
   that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
