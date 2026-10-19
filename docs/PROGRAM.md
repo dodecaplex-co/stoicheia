@@ -45,8 +45,8 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
    list only.
 6. **Acceptance.** The checklist passes in CI, the independent audit agrees, a reader goes
    through the book start to finish.
-7. **Release.** Release notes drafted from the generated summaries, approved by Jack, then
-   the tag.
+7. **Release.** Release notes drafted from the generated summaries, approved by the
+   owner, then the tag.
 
 ## 3. Status
 
