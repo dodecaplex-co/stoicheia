@@ -1642,8 +1642,8 @@ def law_code(text: str | None) -> tuple[list[str], dict] | None:
 # take of what they are given: of the random numbers the harness hands every law, which a
 # law draws from and never reseeds (LAW_ATTRIBUTES); and the one method that changes a
 # container, on a container the law made (LAW_MUTATORS). The letters of a decorator's
-# kinds. Each entry is one the laws use, and a test holds each to a use; widening a list
-# is a check change, in a pull request of its own.
+# kinds. Each entry is one some law needs: a test takes each away in turn, and a law is
+# refused. Widening a list is a check change, in a pull request of its own.
 LAW_GLOBALS = {
     "tests/model/search.py": {
         "call": frozenset({

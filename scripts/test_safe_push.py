@@ -70,7 +70,7 @@ one commit and runs safe_push.py against that origin:
   the run) or changes a shared container under a second name, or laws.toml or the lock
   deleted, is a check change, kept apart; an axiom restated or removed with its law lands
   as content too; every law of the two harnesses keeps to the allow-list, and each entry
-  of the list is one a law uses; and a harness of the model that stops before its last
+  of the list is one a law needs; and a harness of the model that stops before its last
   line, with status 0, fails the model's run;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
@@ -3646,44 +3646,34 @@ class Units(unittest.TestCase):
     def test_every_law_keeps_to_the_allow_list(self):
         # Issue #40, and its reviewer's finding, with thanks: a law's code is read against
         # an allow-list collected from the laws themselves. Every law of the two harnesses
-        # keeps to it, and each entry of the list is one some law uses, so that the list
-        # is no wider than the laws need.
-        used = {}
+        # keeps to it; and each entry is one some law needs, so that the list is no wider
+        # than the laws: without the entry, a law is refused. (An axiom removed with the
+        # one law that used an entry leaves the entry harmless, and this test then asks
+        # for it to go, in a check change of its own.)
+        laws = {}
         for path in safe_push.MODEL_LAW_CODE:
-            _, found = safe_push.law_code((SOURCE / path).read_text())
-            self.assertEqual(len(found), 87, path)
-            for name, fn in found.items():
+            _, laws[path] = safe_push.law_code((SOURCE / path).read_text())
+            for name, fn in laws[path].items():
                 self.assertTrue(safe_push.self_contained(fn, path), f"{path}: {name}")
-            nodes = [n for fn in found.values() for statement in fn.body
-                     for n in ast.walk(statement)]
-            decorators = [fn.decorator_list[0] for fn in found.values()]
-            gens = [d.args[2] for d in decorators if len(d.args) > 2]
-            used[path] = {
-                "call": {n.func.id for n in nodes if isinstance(n, ast.Call)
-                         and isinstance(n.func, ast.Name)},
-                "value": {n.id for n in nodes if isinstance(n, ast.Name)},
-                "table": {n.value.id for n in nodes if isinstance(n, ast.Subscript)
-                          and isinstance(n.value, ast.Name)},
-                "module": {n.value.id for n in nodes if isinstance(n, ast.Attribute)
-                           and isinstance(n.value, ast.Name)},
-                "math": {n.attr for n in nodes if isinstance(n, ast.Attribute)
-                         and isinstance(n.value, ast.Name) and n.value.id == "math"},
-                "attribute": {n.attr for n in nodes if isinstance(n, ast.Attribute)},
-                "generator": {g.id for g in gens if isinstance(g, ast.Name)},
-                "generator maker": {g.func.id for g in gens if isinstance(g, ast.Call)},
-                "kinds": {k.value.id for d in decorators for k in d.args[1].keywords},
-            }
-            for role, names in safe_push.LAW_GLOBALS[path].items():
-                with self.subTest(path=path, role=role):
-                    self.assertEqual(names - used[path][role], set())
-        both = {role: set().union(*(u[role] for u in used.values()))
-                for role in used[safe_push.MODEL_LAW_CODE[0]]}
-        self.assertEqual(safe_push.LAW_BUILTINS - both["call"], set())
-        self.assertEqual(safe_push.LAW_MODULES - both["module"], set())
-        self.assertEqual(safe_push.LAW_MATH - both["math"], set())
-        self.assertEqual(safe_push.LAW_ATTRIBUTES - both["attribute"], set())
-        self.assertEqual(safe_push.LAW_MUTATORS - both["attribute"], set())
-        self.assertEqual(safe_push.LAW_KINDS - both["kinds"], set())
+
+        def refused_somewhere(paths) -> bool:
+            return any(not safe_push.self_contained(fn, path)
+                       for path in paths for fn in laws[path].values())
+        for path, roles in safe_push.LAW_GLOBALS.items():
+            for role, names in roles.items():
+                for name in names:
+                    narrower = {p: dict(r) for p, r in safe_push.LAW_GLOBALS.items()}
+                    narrower[path][role] = names - {name}
+                    with self.subTest(path=path, role=role, entry=name), \
+                            mock.patch.object(safe_push, "LAW_GLOBALS", narrower):
+                        self.assertTrue(refused_somewhere([path]))
+        for const in ("LAW_BUILTINS", "LAW_MODULES", "LAW_MATH", "LAW_ATTRIBUTES",
+                      "LAW_MUTATORS", "LAW_KINDS"):
+            names = getattr(safe_push, const)
+            for name in names:
+                with self.subTest(list=const, entry=name), \
+                        mock.patch.object(safe_push, const, names - {name}):
+                    self.assertTrue(refused_somewhere(safe_push.MODEL_LAW_CODE))
 
     def test_a_law_reaches_nothing_off_the_allow_list(self):
         # Issue #40, and its reviewer's finding, with thanks: the check was a deny-list,

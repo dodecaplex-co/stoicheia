@@ -689,13 +689,13 @@ findings:
   (`append`, on a container of its own, and the draws of the random numbers it is handed,
   never a reseeding); and plain syntax, with no import, `global`, `lambda`, `try`, `with`,
   class or default argument. What the list does not name is refused, so a route nobody
-  thought of is refused too. The lists are collected from the laws, a test holds each
-  entry to a use, every law passes, and each route the reviewer named has its test;
-  widening a list is a check change, in a pull request of its own. One thing a law still
-  shares with the laws after it is the random numbers: how many it draws moves which
-  configurations they see, never what they check. MODEL.md, "Changing the axioms", is now
-  the one home of the steps for changing an axiom, or a word of the lock, and the comment
-  in `tests/model/lock.sha256`, [FORMALIZATION](../FORMALIZATION.md), section 7, the
-  [orders](../templates/orders.md) and [brief 0006](0006-statements.md) point to it;
+  thought of is refused too. The lists are collected from the laws: every law passes, a
+  test shows that each entry is one some law needs, and each route the reviewer named has
+  its test; widening a list is a check change, in a pull request of its own. One thing a
+  law still shares with the laws after it is the random numbers: how many it draws moves
+  which configurations they see, never what they check. MODEL.md, "Changing the axioms",
+  is now the one home of the steps for changing an axiom, or a word of the lock, and the
+  comment in `tests/model/lock.sha256`, [FORMALIZATION](../FORMALIZATION.md), section 7,
+  the [orders](../templates/orders.md) and [brief 0006](0006-statements.md) point to it;
   [WORKFLOW](../WORKFLOW.md), section 10, step 4, gives the rule for landing them. Adding
   an axiom stays the owner's decision: this lets one land, and adds none.
