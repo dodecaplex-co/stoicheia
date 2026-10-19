@@ -187,8 +187,9 @@ proves that all the angles in a triangle are equal to two right angles. Euclid h
 you how to work it out. Now, if you undertake to disprove that proposition, and to show
 that it is erroneous, would you prove it to be false by calling Euclid a liar?"
 That is [I.32](../book/I/32.md): insulting the author does not answer the proof
-(Basler, ed., [*Collected Works*](#basler1953collected), vol. 3, p. 186; passage found
-through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+(Basler, ed., [*Collected Works*](#basler1953collected), vol. 3, p. 186; the
+[1860 edition of the debates](#lincoln1860debates), p. 160, punctuates it otherwise, with
+a comma after "reasoning"; passage found through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
 *Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 43).
 
 On 6 April 1859, declining Henry L. Pierce and others' invitation to celebrate Thomas
