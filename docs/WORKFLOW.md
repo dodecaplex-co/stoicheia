@@ -620,19 +620,20 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
    commit's subject and body given (GitHub's own words: the owner GitHub names for the
    head, never the one in origin's URL, which names the old owner after a transfer, and
-   refused when GitHub names none; the branch name, scanned; and the title, scanned; a
-   branch renamed since the merge first read the pull request is refused, as a head moved
-   is), so main holds exactly what was scanned: a merge commit, never a squash or a
-   rebase, and the branch deleted. Whatever gh's exit, GitHub is then asked whether the
-   pull request merged before anything is said: gh can fail after merging, and can exit
-   0 without merging, when a merge queue or auto-merge takes the pull request to merge
-   later. Once gh is asked to merge, the script says nothing merged only when GitHub says
-   so after gh failed, and reports success only when GitHub says merged and origin/main
-   holds the merge commit GitHub names. gh exiting 0 with the pull request not merged, a
-   merge commit GitHub does not name or origin/main does not hold, an interruption
-   before GitHub answers, or GitHub not to be asked, is reported as "merge state
-   unknown", exit 3, with no revert advised, since nothing on main is known to be the
-   merge. Afterwards the merge commit is checked to join the base and the head checked,
+   refused when GitHub names none an account could have; the branch name, scanned; and
+   the title, scanned; a branch renamed since the merge first read the pull request is
+   refused, as a head moved is), so main holds exactly what was scanned: a merge commit,
+   never a squash or a rebase, and the branch deleted. Whatever gh's exit, GitHub is then
+   asked whether the pull request merged before anything is said: gh can fail after
+   merging, and can exit 0 without merging, when a merge queue or auto-merge takes the
+   pull request to merge later. Once gh is asked to merge, the script says nothing merged
+   only when GitHub says the pull request is open or closed after gh failed, and reports
+   success only when GitHub says merged and origin/main holds the merge commit GitHub
+   names by its full object name. gh exiting 0 with the pull request not merged, a merge
+   commit GitHub does not name or origin/main does not hold, an interruption before
+   GitHub answers, or GitHub not to be asked, or answering with no state of its own, is
+   reported as "merge state unknown", exit 3, with no revert advised, since nothing on
+   main is known to be the merge. Afterwards the merge commit is checked to join the base and the head checked,
    with the head's tree; if it does not, the script prints how to revert it in a pull
    request of its own, with the merged pull request's label for its kind, and reverts
    nothing itself.

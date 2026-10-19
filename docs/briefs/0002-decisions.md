@@ -1325,11 +1325,13 @@ findings:
   GitHub redirects, would name the old one. It now takes the owner GitHub reports for the
   pull request's head (`headRepositoryOwner`), read by the gates with the branch name and
   the title, and a new gate, "subject", shows the subject before the merge and refuses the
-  merge when GitHub names no owner, before gh is asked. Nothing the merge checked before is
-  loosened. The files changed are [`scripts/safe_push.py`](../../scripts/safe_push.py)
+  merge when GitHub names no owner, or none an account could have (a login of letters,
+  digits and hyphens), before gh is asked. Nothing the merge checked before is loosened.
+  The files changed are [`scripts/safe_push.py`](../../scripts/safe_push.py)
   (`merge_subject`, beside `gates` and `merge`, and its docstring) and
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) (a test, with the
-  stand-in for gh naming no owner, then a new one, which fails before the change), with
+  stand-in for gh naming no owner, five owners no account could have, then a new one,
+  which fails before the change), with
   [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
 - **A merge is GitHub's word, never gh's exit alone
   ([#42](https://github.com/jackChallis/stoicheia/issues/42)).** With a merge queue or
@@ -1348,10 +1350,17 @@ findings:
   expectation moves with the last, the more cautious way:
   `test_interrupted_after_gh_merged_is_merged` is now
   `test_interrupted_after_gh_exits_0_is_unknown`, still exit 3, and expects "merge state
-  unknown" where it expected "merged". The files changed are
+  unknown" where it expected "merged". The change's independent review found four answers
+  GitHub could give that the merge misread or crashed on, and we thank it: an owner that
+  is no account's name (above), a state that is none of OPEN, CLOSED and MERGED (once
+  "nothing was merged", exit 1, though gh had merged), and a merge commit named by
+  something other than its full object name, or by nothing, which was fetched and judged
+  before the merge state was settled. Each is now refused by the gate, or "merge state
+  unknown" before anything is fetched, with tests. The files changed are
   [`scripts/safe_push.py`](../../scripts/safe_push.py) (`merge_outcome`, `verify_merge`,
   `merge_main`, a new refusal `MergeUnknown`, and its docstring) and
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) (three ways for the
-  stand-in for gh to exit 0 with no merge on main that GitHub vouches for, one for GitHub
-  to give no state, and four new tests, each failing before the change), with
+  stand-in for gh to exit 0 with no merge on main that GitHub vouches for, a way for
+  GitHub to give any answer a test needs, and six new tests, each failing before the
+  change), with
   [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.

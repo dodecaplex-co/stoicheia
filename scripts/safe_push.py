@@ -110,17 +110,18 @@ is not a draft; the pre-flight's notes are shown beside the checklist. Then
 `gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
 commit's subject and body given (GitHub's own words: the owner GitHub names for the head,
 never origin's URL's, which names the old owner after a transfer, and refused when GitHub
-names none; the branch name, scanned; and the title, scanned; a branch renamed since the
-merge first read it is refused, as a head moved is): a merge commit, never a squash or a
-rebase, since review records stamp the branch's commits. Whatever gh's exit, GitHub is
-then asked whether the pull request merged before anything is said, for gh can fail after
-merging, and exit 0 without merging when a merge queue or auto-merge takes the pull
-request to merge later (issue #42). Once gh is asked to merge, the run says nothing
-merged only when GitHub says so after gh failed, and success only when GitHub says merged
-and origin/main holds the merge commit GitHub names; gh exiting 0 with the pull request
-not merged, a merge commit GitHub does not name or origin/main does not hold, an
-interruption before GitHub answers, or GitHub not to be asked, is "merge state unknown",
-with no revert advised. Afterwards that merge commit is checked to join the base and the
+names none an account could have; the branch name, scanned; and the title, scanned; a
+branch renamed since the merge first read it is refused, as a head moved is): a merge
+commit, never a squash or a rebase, since review records stamp the branch's commits.
+Whatever gh's exit, GitHub is then asked whether the pull request merged before anything
+is said, for gh can fail after merging, and exit 0 without merging when a merge queue or
+auto-merge takes the pull request to merge later (issue #42). Once gh is asked to merge,
+the run says nothing merged only when GitHub says OPEN or CLOSED after gh failed, and
+success only when GitHub says merged and origin/main holds the merge commit GitHub names
+by its full object name; gh exiting 0 with the pull request not merged, a merge commit
+GitHub does not name or origin/main does not hold, an interruption before GitHub answers,
+or GitHub not to be asked, or answering with no state of its own, is "merge state
+unknown", with no revert advised. Afterwards that merge commit is checked to join the base and the
 head checked, with the head's tree.
 
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
@@ -3193,8 +3194,8 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
         rep.add("G", "subject", "ok", f"\"{subject}\", GitHub's own words, with the owner "
                 "GitHub names for the head")
     else:
-        rep.add("G", "subject", "FAIL", f"GitHub names no owner for #{number}'s head, and the "
-                "merge commit's subject names it: look with "
+        rep.add("G", "subject", "FAIL", f"GitHub names no owner for #{number}'s head, or none "
+                "an account could have, and the merge commit's subject names it: look with "
                 f"`gh pr view {number} --json headRepositoryOwner`")
     body = view.get("body") or ""
     template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
@@ -3234,11 +3235,15 @@ def merge_subject(number: int, view: dict) -> str | None:
     """GitHub's own subject for a pull request's merge commit, "Merge pull request #<n> from
     <owner>/<branch>", with the owner GitHub names for the head (headRepositoryOwner), never
     the owner in origin's URL, which after a transfer or a rename, both of which GitHub
-    redirects, names the old one (issue #41). None when GitHub names no owner or no
-    branch."""
-    owner = (view.get("headRepositoryOwner") or {}).get("login")
+    redirects, names the old one (issue #41). None when GitHub names no owner, or none an
+    account could have (a login of letters, digits and hyphens), or no branch."""
+    owner = view.get("headRepositoryOwner")
+    login = owner.get("login") if isinstance(owner, dict) else None
     branch = view.get("headRefName")
-    return f"Merge pull request #{number} from {owner}/{branch}" if owner and branch else None
+    if not isinstance(login, str) or not GITHUB_LOGIN.fullmatch(login) \
+            or not isinstance(branch, str) or not branch:
+        return None
+    return f"Merge pull request #{number} from {login}/{branch}"
 
 
 def revert_advice(ctx: Context, kind: str | None = None) -> str:
@@ -3250,6 +3255,11 @@ def revert_advice(ctx: Context, kind: str | None = None) -> str:
         f"    git switch -c {branch} origin/main",
         f"    git revert --no-edit -m 1 {ctx.sha}",
         f"    git safe-push --branch {branch} --label {kind or '<kind>'}"])
+
+
+GITHUB_LOGIN = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]{0,38}")    # an account's name
+PR_STATES = ("OPEN", "CLOSED", "MERGED")                        # GitHub's, for a pull request
+FULL_OID = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")            # a commit's full object name
 
 
 class NotMerged(Refusal):
@@ -3292,23 +3302,27 @@ def merge_outcome(ctx: Context, number: int, rep: Report, r: subprocess.Complete
     status is never believed by itself. gh can fail after the merge (in deleting the
     branch, say), and can exit 0 without merging, when a merge queue or auto-merge takes
     the pull request to merge later (issue #42). So GitHub is asked whatever gh's exit.
-    Merged: the merge commit GitHub names is returned, or None when it names none, which
-    verify_merge refuses. Not merged after gh failed: NotMerged, for nothing was merged.
+    Merged: the merge commit GitHub names is returned, a full object name; when it names
+    none, MergeUnknown, before anything else, since nothing on main is known to be the
+    merge. Not merged (OPEN or CLOSED) after gh failed: NotMerged, for nothing was merged.
     Not merged after gh exited 0: MergeUnknown, since it may merge yet. GitHub not to be
-    asked, or giving no state: a refusal with the merge state unknown, since the merge may
-    have happened."""
+    asked, or giving no state, or one that is none of its own: a refusal with the merge
+    state unknown, since the merge may have happened."""
     said = (r.stdout + r.stderr).strip()
     exited = "exited 0" if r.returncode == 0 else "failed"
     try:
         view = gh_json(ctx, "pr", "view", str(number), "--json", "state,mergeCommit")
-        if not isinstance(view, dict) or not view.get("state"):
+        state = view.get("state") if isinstance(view, dict) else None
+        if not state:
             raise Refusal(f"it gave no state for #{number}")
+        if state not in PR_STATES:
+            raise Refusal(f"it gave #{number} a state that is none of "
+                          f"{', '.join(PR_STATES)}: {str(state)[:40]!r}")
     except Refusal as e:
         rep.add("4", "gh pr merge", "FAIL", said or f"gh {exited}", time.time() - started)
         raise Refusal(f"`gh pr merge` {exited}, and GitHub could not be asked whether "
                       f"#{number} merged ({e}): look with `gh pr view {number}` before "
                       "anything else")
-    state = view.get("state")
     if state == "MERGED":
         if r.returncode == 0:
             rep.add("4", "gh pr merge", "ok", f"#{number} merged with a merge commit",
@@ -3317,7 +3331,15 @@ def merge_outcome(ctx: Context, number: int, rep: Report, r: subprocess.Complete
             rep.add("4", "gh pr merge", "note", f"gh exited {r.returncode}, but GitHub says "
                     f"#{number} is merged: {(said.splitlines() or [''])[0]}",
                     time.time() - started)
-        return (view.get("mergeCommit") or {}).get("oid")
+        commit = view.get("mergeCommit")
+        oid = commit.get("oid") if isinstance(commit, dict) else None
+        if not isinstance(oid, str) or not FULL_OID.fullmatch(oid):
+            named = "names no merge commit" if not oid else \
+                f"names no merge commit by its full object name ({str(oid)[:40]!r})"
+            rep.add("5", "main", "FAIL", f"GitHub says #{number} is merged, but it {named}")
+            raise MergeUnknown(f"GitHub says #{number} is merged, but it {named}: look with "
+                               f"`gh pr view {number}` and at origin/main before anything else")
+        return oid
     rep.add("4", "gh pr merge", "FAIL", said or f"gh {exited}", time.time() - started)
     if r.returncode != 0:
         raise NotMerged(f"`gh pr merge` refused; nothing was merged (#{number} is {state})")
@@ -3327,20 +3349,20 @@ def merge_outcome(ctx: Context, number: int, rep: Report, r: subprocess.Complete
                        "else")
 
 
-def verify_merge(ctx: Context, rep: Report, number: int, merged: str | None) -> str | None:
-    """The merge commit GitHub names (`merged`, a full object name) is on origin/main, and
-    joins the base checked and the head checked, with the head's tree; the branch is gone.
-    When GitHub names none, or one origin/main does not hold, nothing on main is known to
-    be the merge, so MergeUnknown, and no revert is advised: it would name origin/main's
-    last commit in place of the merge (issue #42). Returns the merge commit, or None when
-    origin could not be read."""
+def verify_merge(ctx: Context, rep: Report, number: int, merged: str) -> str | None:
+    """The merge commit GitHub names (`merged`, a full object name, as merge_outcome
+    returns it) is on origin/main, and joins the base checked and the head checked, with
+    the head's tree; the branch is gone. When origin/main does not hold it, nothing on main
+    is known to be the merge, so MergeUnknown, and no revert is advised: it would name
+    origin/main's last commit in place of the merge (issue #42). Returns the merge commit,
+    or None when origin could not be read."""
     r = run(["git", "fetch", "origin"], ctx.repo)
     if r.returncode != 0:
         rep.add("5", "main", "FAIL", f"not checked: `git fetch origin` failed after the merge: "
                 f"{r.stderr.strip()}")
         return None
     main = rev_parse(ctx.repo, "refs/remotes/origin/main^{commit}") or ""
-    if not merged or not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", merged) \
+    if not isinstance(merged, str) or not FULL_OID.fullmatch(merged) \
             or rev_parse(ctx.repo, f"{merged}^{{commit}}") is None \
             or not git_ok(ctx.repo, "merge-base", "--is-ancestor", merged, main):
         named = f"names {merged[:12]} as its merge commit, which origin/main ({main[:12]}) " \

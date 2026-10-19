@@ -1202,7 +1202,7 @@ class GeneratedPages(Edge):
 # Runs safe_push in a subprocess with `guards`, `gates` or `watch_checks` wrapped, so that
 # something happens at a chosen moment: origin's main moves, or an interruption.
 DRIVER = r"""
-import subprocess, sys
+import json, subprocess, sys
 sys.path.insert(0, sys.argv[1])
 import safe_push
 action, origin, target = sys.argv[2], sys.argv[3], sys.argv[4]
@@ -1235,6 +1235,9 @@ def gh_json(ctx, *args):
         raise safe_push.Refusal("`gh pr view` failed: a test failure")
     if "state,mergeCommit" in args and action == "merge-view-empty":
         return {}
+    # "merge-view-json:<JSON>": GitHub's answer, as odd as a test needs it.
+    if "state,mergeCommit" in args and action.startswith("merge-view-json:"):
+        return json.loads(action.split(":", 1)[1])
     return real_gh_json(ctx, *args)
 def gh_run(ctx, *args):
     r = real_gh_run(ctx, *args)
@@ -1831,15 +1834,21 @@ class Merge(Edge):
         # GitHub's own words, so it names the owner GitHub reports; when GitHub names none,
         # the gates refuse, before gh is asked to merge.
         sha = self.opened()
-        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"]),
-                                                 headRepositoryOwner=None))
-        r = self.merge()
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertEqual(self.guard(out, "subject"), "FAIL", out)
-        self.assertIn("GitHub names no owner for #1's head", out)
-        self.assertEqual(self.merges(), [])
-        self.assertEqual(self.origin_main(), BASE)
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        # None, or an answer no account could have (the review of 19 October): each is
+        # refused by the gate, never a traceback, and never a subject.
+        for owner in (None, "new-owner", {"login": True}, {"login": ""},
+                      {"login": "new-owner/x"}, {"login": "new owner"}):
+            with self.subTest(owner=owner):
+                self.set_gh(lambda s: s["prs"][0].update(headRepositoryOwner=owner))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "subject"), "FAIL", out)
+                self.assertIn("GitHub names no owner for #1's head", out)
+                self.assertNotIn("Traceback", out)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.origin_main(), BASE)
         self.set_gh(lambda s: s["prs"][0].update(headRepositoryOwner={"login": "new-owner"}))
         r = self.merge()
         out = r.stdout + r.stderr
@@ -2134,6 +2143,48 @@ class Merge(Edge):
         self.assertNotIn("nothing was merged", out)
         self.assertEqual(self.origin_main(), BASE)
         self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_github_giving_a_state_of_no_pull_request_is_unknown(self):
+        # The review of 19 October: gh fails after merging, and GitHub answers with a state
+        # that is none of OPEN, CLOSED and MERGED. That says nothing of the merge, so it is
+        # no "nothing was merged", exit 1: the merge state is unknown, exit 3.
+        for answer in ('{"state": true}', '{"state": "SQUASHED"}', '[]'):
+            with self.subTest(answer=answer):
+                self.setUp()
+                sha = self.opened()
+                env = clean_env()
+                env["STOICHEIA_FAKE_GH_MERGE"] = "fail-after"
+                r = self.driven_merge(f"merge-view-json:{answer}", env)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn("`gh pr merge` failed, and GitHub could not be asked whether #1 "
+                              "merged", out)
+                self.assertNotIn("nothing was merged", out)
+                self.assertNotIn("Traceback", out)
+                self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+                self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_merge_commit_github_names_by_no_full_object_name_is_unknown(self):
+        # The review of 19 October: GitHub says merged, and names its merge commit by
+        # something that is no full object name. Nothing on main is known to be the merge,
+        # so the merge state is unknown, exit 3, with no revert advised, and nothing is
+        # fetched or judged as the merge first: never a traceback, never "merged".
+        for commit in ('{"oid": 123}', '"abc"', '{"oid": "abc123"}', '{"oid": null}'):
+            with self.subTest(commit=commit):
+                self.setUp()
+                sha = self.opened()
+                r = self.driven_merge(
+                    'merge-view-json:{"state": "MERGED", "mergeCommit": %s}' % commit)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertEqual(self.guard(out, "main"), "FAIL", out)
+                self.assertIn("The merge state is unknown: GitHub says #1 is merged, but it "
+                              "names no merge commit", out)
+                self.assertNotIn("Traceback", out)
+                self.assertNotIn("git revert", out)
+                self.assertNotIn("Merged, but", out)
+                self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+                self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
 
     def test_gh_exiting_0_without_merging_is_unknown(self):
         # Issue #42: with a merge queue or auto-merge on, `gh pr merge` exits 0 having only
