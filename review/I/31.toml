@@ -23,7 +23,7 @@ note = "Euclid treats EAD and ADC as alternate; `SameSideOf.trans_opposite` puts
 
 [review]
 stage = "full"
-commit = "915600b"
+commit = "251129b"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:664aca971683e75b"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
