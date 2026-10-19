@@ -1,13 +1,27 @@
 # review/I/34.toml
 [statement]
 scope = "full"
+note = "Euclid's diameter bisects the area; the Lean equates triangles ABC and DCB in area, and `Prop34.bisect` gives the parallelogram as twice either triangle."
 fingerprint = "sha256:b6eec0dcb704cc8b"
 
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and the straight line BC has fallen upon them"
+kind = "helper"
+helper = "AreParallel.oppositeSidesOf"
+note = "Euclid reads A and D on opposite sides of BC, so the angles ABC and BCD are alternate. `AreParallel.oppositeSidesOf` proves this from the parallels and the sides of the parallelogram."
+
+[[passage]]
+at = "the whole angle ABD is equal to the whole angle ACD"
+kind = "helper"
+helper = "Parallelogram.sameSideOf"
+note = "Euclid takes BC to run within the angles ABD and ACD. `Parallelogram.sameSideOf`, with the corners named in turn, locates C and B within those angles, and `angle_add_of_within` gives their parts before Common Notion 2 adds the equal angles."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:315843fc575c2853"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

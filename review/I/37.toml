@@ -7,11 +7,29 @@ fingerprint = "sha256:562b9178b7b445ef"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let AD be produced in both directions to E, F"
+kind = "given"
+note = "Euclid produces AD in both directions. The statement already supplies the whole straight line through A and D, even when the vertices coincide; the following parallels determine E and F on it."
+
+[[passage]]
+at = "through B let BE be drawn parallel to CA"
+kind = "helper"
+helper = "Prop31.parallelogram"
+note = "Euclid draws BE and CF and reads their meetings E and F with AD from the figure. `Prop31.parallelogram` uses I.31 and `Prop30.meet` (I.30, which Heath does not cite here) to find both points on the whole straight line AD and complete the parallelograms."
+
+[[passage]]
+at = "But the halves of equal things are equal to one another"
+kind = "helper"
+helper = "Magnitude.eq_of_add_self_eq"
+note = "Euclid takes equal halves from equal wholes, in the sentence Heiberg brackets. `Magnitude.eq_of_add_self_eq` proves the step from the order of magnitudes: if one half were less, its double would be less too."
+
 [figure]
 case = "the vertices A and D apart"
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:d59da7f6e4de693e"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
