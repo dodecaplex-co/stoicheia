@@ -33,6 +33,23 @@ theorem outside_of_len_gt (hA : Centre A α) (hD : OnCircle D α) (h : ‖A D‖
     rw [Definition15 hA hD hon] at h
     exact lt_irrefl _ h
 
+/-- A point between the centre and a point on the circle is within it. It is nearer the
+centre than that point is, as the part is less than the whole, and so nearer than the
+circumference by Definition 15 and the transfer rules. No proposition is needed, and not
+System E's Circle 2, which contains III.2. -/
+theorem InsideCircle.of_between_centre {O P : Point} (hO : Centre O α)
+    (hP : OnCircle P α) (h : Between O C P) : InsideCircle C α := by
+  exact inside_of_len_lt hO hP (len_lt_of_between h)
+
+/-- A point between the centre and a point within the circle is within it, when a point
+of the circle is given. The nearer point is nearer than the point within, which is nearer
+than the circumference by Definition 15 and the transfer rules. No proposition is needed,
+and not System E's Circle 2, which contains III.2. -/
+theorem InsideCircle.of_between_centre_of_inside {O P R : Point} (hO : Centre O α)
+    (hR : OnCircle R α) (hP : InsideCircle P α) (h : Between O C P) : InsideCircle C α := by
+  exact inside_of_len_lt hO hR
+    (lt_trans (len_lt_of_between h) (len_lt_of_inside hO hR hP))
+
 /-- A chance point, but not too far out. If `P` is nearer to `O` than `C` is, and `Q`
 lies beyond `P` as seen from `O` (or `O` is `P` itself), there is a point `F` between
 `P` and `Q` that is nearer to `O` than `C` is, too. Euclid takes a point "at random" on

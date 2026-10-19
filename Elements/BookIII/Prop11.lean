@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookIII.Squares
 import Elements.BookI.Prop20
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop06
 
 /-!
@@ -44,7 +45,7 @@ theorem Prop11 {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Cent
     obtain ⟨Q, hQ, -, hQGA⟩ :=
       line_circle_beyond (centre_inside hG) hG_M hA_M hGA.symm
     have hG_in : InsideCircle G ABC :=
-      inside_of_between (Prop11.not_outside (hwithin Q hQ)) (Or.inr hA₁) hQGA
+      Prop2.within ⟨F, hF⟩ (Prop11.not_outside (hwithin Q hQ)) (Or.inr hA₁) hQGA
     obtain ⟨H, hH, hH_L, hHGF⟩ := line_circle_beyond hG_in hG_L hF_L hFG
     have hFGH : Between F G H := between_symm hHGF
     have hAH : A ≠ H := fun e => hFGA (e ▸ hFGH)

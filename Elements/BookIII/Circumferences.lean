@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookI.Helpers
 import Elements.BookI.Prop32
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop20
 import Elements.BookIII.Prop21
 import Elements.BookIII.Prop22
@@ -71,7 +72,7 @@ on the other side of BC, is measured by the angle BGC: for a point A of the circ
 on the centre's side, the angle BGC is double of the angle BAC. [III. 20, III. 21] -/
 theorem Circumference.centre (hG : Centre G α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hGK : OppositeSidesOf G K B C) : circumference α B K C = ∠ B G C := by
-  obtain ⟨A, hA, hAG⟩ := exists_onCircle_sameSideOf hB hC hGK.triangle
+  obtain ⟨A, hA, hAG⟩ := Prop2.sameSide ⟨G, hG⟩ hB hC hGK.triangle
   rw [Circumference.eq ⟨G, hG⟩ hA hB hC (hAG.trans_opposite hGK),
     Prop20 hG hA hB hC hAG.symm]
 
@@ -83,8 +84,8 @@ theorem Circumference.whole (hα : ∃ O : Point, Centre O α) (hB : OnCircle B 
     (hC : OnCircle C α) (hAK : OppositeSidesOf A K B C) :
     circumference α B K C + circumference α B A C = ∟ + ∟ + (∟ + ∟) := by
   /- We take a point A' of the circle on A's side, and a point K' on K's side. -/
-  obtain ⟨A', hA', hA'A⟩ := exists_onCircle_sameSideOf hB hC hAK.triangle
-  obtain ⟨K', hK', hK'K⟩ := exists_onCircle_sameSideOf hB hC hAK.symm.triangle
+  obtain ⟨A', hA', hA'A⟩ := Prop2.sameSide hα hB hC hAK.triangle
+  obtain ⟨K', hK', hK'K⟩ := Prop2.sameSide hα hB hC hAK.symm.triangle
   have hA'K : OppositeSidesOf A' K B C := hA'A.trans_opposite hAK
   have hK'A : OppositeSidesOf K' A B C := hK'K.trans_opposite hAK.symm
   have hA'K' : OppositeSidesOf A' K' B C := (hK'K.trans_opposite hA'K.symm).symm
@@ -106,7 +107,7 @@ theorem Circumference.semicircle (hG : Centre G α) (hB : OnCircle B α) (hC : O
     (hBGC : Between B G C) (hK : Triangle B C K) : circumference α B K C = ∟ + ∟ := by
   /- Lean measured the circumference at some point A of the circle on the other side of BC
      from K, and there is such a point. -/
-  obtain ⟨A₀, hA₀, hA₀K⟩ := exists_onCircle_oppositeSidesOf hB hC hK
+  obtain ⟨A₀, hA₀, hA₀K⟩ := Prop2.oppositeSide ⟨G, hG⟩ hB hC hK
   obtain ⟨A, hA, hAK, hx⟩ := Classical.epsilon_spec
     (p := fun x => ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C ∧
       x = ∠ B A C + ∠ B A C) ⟨_, A₀, hA₀, hA₀K, rfl⟩
