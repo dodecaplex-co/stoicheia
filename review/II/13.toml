@@ -19,7 +19,7 @@ note = "The statement gives the triangle, the acute angles at B and C, and the p
 at = "For, since the straight line CB has been cut at random at D"
 kind = "helper"
 helper = "Prop13.not_beyond"
-note = "Euclid reads off his figure that D falls within CB; the Lean proves it: a foot beyond B or C would give the triangle a right and an obtuse angle (I.13, I.17). The Lean also rules out D = B and D = C because the corresponding angle would be both acute and right, leaving `Tacit.between_cases`, the rule we assume as System E, Between 6, to put D between B and C."
+note = "Euclid reads off his figure that D falls within CB; the Lean proves it: a foot beyond B or C would give triangle ABD or ACD, respectively, a right angle at D and an obtuse angle at the end passed (I.13, I.17). The Lean also rules out D = B and D = C because the corresponding angle would be both acute and right, leaving `Tacit.between_cases`, the rule we assume as System E, Between 6, to put D between B and C."
 
 [figure]
 case = "an acute angle at A, as in Heath's figure"

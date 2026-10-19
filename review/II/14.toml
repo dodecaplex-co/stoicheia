@@ -15,6 +15,12 @@ helper = "Rectangle.of_right"
 note = "Euclid asks I.45 for a rectangular parallelogram. The Lean first constructs a right angle by I.11, for which Heath gives no reference here, applies I.45 in it, and uses `Rectangle.of_right` (I.29) to prove the other three angles right."
 
 [[passage]]
+at = "But, if not, one of the straight lines BE, ED is greater."
+kind = "helper"
+helper = "Tacit.lt_trichotomy"
+note = "Euclid takes for granted that one of the unequal straight lines BE and ED is greater. The Lean obtains the two alternatives from `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E, section 3.5), not a proved lemma."
+
+[[passage]]
 at = "Let BE be greater"
 kind = "case"
 note = "Euclid takes BE the greater; when ED is, the Lean reads the rectangle the other way round, so one argument serves for both."
@@ -36,6 +42,12 @@ at = "let DE be produced to H"
 kind = "helper"
 helper = "Tacit.line_circle_beyond"
 note = "Euclid takes DE produced to meet the semicircle at H; since BE is greater than ED = EF and G bisects BF, the Lean puts G between B and E by `OnRay.between_of_len_lt`, also giving E different from G for the unequal cut in II.5. The Lean then puts E inside the circle by `between_inner` and `InsideCircle.of_between_centre`; `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, finds H beyond E from D, and GH is named by its ends."
+
+[[passage]]
+at = "But GF is equal to GH;"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equality of the radii GF and GH without giving a reason. The Lean obtains their equality from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
 
 [[passage]]
 at = "But the squares on HE, EG are equal to the square on GH"
