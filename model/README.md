@@ -12,8 +12,10 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and the first
 laws, translated by hand for now and proved in the plane: the four circle-intersection
-rules, the first of the hard groups, and the eight magnitude laws, which are easy in the
-plane but test the translation where it is most delicate. That is 12 of the 87. The rest
+rules, the first of the hard groups; the eight magnitude laws, which are easy in the
+plane but test the translation where it is most delicate; and the ten angle laws, with
+angle addition in both directions, another of the hard groups, beside Postulate 4 and
+Definition 15. That is 22 of the 87. The rest
 of the laws, and the generator that will translate them from the library's own
 declarations, are to come. Until every locked law is proved here, the evidence that the
 laws have a model remains MODEL.md's hand arguments and numerical tests, and this package
@@ -44,8 +46,13 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
+| [Model/Laws/angles.lean](Model/Laws/angles.lean) | the ten angle laws, with `Collinear` and `IsRightAngle`, translated **by hand** | `Signature` |
+| [Model/Euclidean/AngleBasics.lean](Model/Euclidean/AngleBasics.lean) | the bridge from the plane's angle to Mathlib's, and the line through two points | Mathlib |
+| [Model/Euclidean/Angles.lean](Model/Euclidean/Angles.lean) | Definition 15, Postulate 4, the two metric angle laws and diagram-angle rules 1, 3 and 4 proved in the plane | Mathlib |
+| [Model/Euclidean/AngleAdd.lean](Model/Euclidean/AngleAdd.lean) | angle addition, both ways (diagram-angle rule 2), proved in the plane | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane rests on | every module of `Model` |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration | `Elements.Foundations`, `Model.Hand` |
+| [Check/Angles.lean](Check/Angles.lean) | the same for the angle laws of `Model/Laws/angles.lean` | `Elements.Foundations`, `Model.Laws.angles` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib.
@@ -124,8 +131,10 @@ Reading our words by Mathlib's own definitions, rather than by new ones, lets th
 here stand on Mathlib's lemmas. Its betweenness, sides and spheres are the work of Joseph
 Myers; its unoriented angle, of Joseph Myers and Manuel Candales; its perpendicular
 bisector, of Yury Kudryashov and Joseph Myers; and its Euclidean plane, `EuclideanSpace`,
-of Joseph Myers, Sébastien Gouëzel and Heather Macbeth, as their files record. Our thanks
-to them all.
+of Joseph Myers, Sébastien Gouëzel and Heather Macbeth, as their files record. Angle
+addition in both directions stands on the exact case of equality in the triangle inequality
+for angles, the work of Ilmārs Cīrulis, Alex Meiburg and Jovan Gerbscheid. Our thanks to
+them all.
 
 A model of the laws is one obligation, and a faithful reading of every word the
 propositions use is another. The plane here is checked against the laws; whether
@@ -207,10 +216,12 @@ the original means. Three checks do that.
   proposition, up to unfolding definitions; a dropped guard, two swapped arguments or a
   change in the order of the binders fails it, and the build with it. (Both were tried:
   Intersection 4 in System E's printed form, with "on or inside", and Intersection 5 with
-  its two points exchanged.) Today this covers the 12 laws translated by hand and 11
-  defined words: the eight behind the magnitudes (these laws reach `Magnitude` and the
-  instances for `+`, `0` and `<`; `Length`, `Angle`, `Area` and `≤` are checked ahead of
-  the laws that use them) and the three the circle laws reach. The generator will write
+  its two points exchanged; and angle addition with the angles `D A B` for `B A D`.) Today
+  this covers the 22 laws translated by hand and 13 defined words: the eight behind the
+  magnitudes (these laws reach `Magnitude` and the instances for `+`, `0` and `<`;
+  `Length`, `Angle`, `Area` and `≤` are checked ahead of the laws that use them), the three
+  the circle laws reach, and `Collinear` and `IsRightAngle`, which Postulate 4 reaches
+  ([Check/Angles.lean](Check/Angles.lean)). The generator will write
   one such line for each of the 87 laws and each defined word they reach.
 - **The round trip, by syntax.** The generator also translates each result back and
   compares it with the original expression exactly, which is stricter than the kernel's
@@ -294,7 +305,7 @@ come before the easy laws are shared out:
 | Circle intersections | `circles_meet`, `circles_meet_of_on_inside_outside`, `circles_meet_same_side`, `circles_meet_opposite_side` | proved here |
 | Magnitudes | the eight laws of `Tacit/Magnitudes.lean`: easy in the plane, but they test the translation of the instances and of `Kind` | proved here |
 | Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides` | to do |
-| Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | to do |
+| Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | proved here |
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
 | Superposition | an isometry, with a reflection where the side needs one; and the soundness of whichever restricted rule is adopted | to do |
 | Areas | `area_congruent`, `area_add_of_between`, `between_of_area_add`, with collinear and repeated corners | to do |

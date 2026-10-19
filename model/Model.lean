@@ -9,4 +9,6 @@ public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
 public import Model.Laws.angles
 public import Model.Euclidean.AngleBasics
+public import Model.Euclidean.Angles
+public import Model.Euclidean.AngleAdd
 public import Model.Audit
