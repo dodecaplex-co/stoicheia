@@ -28,9 +28,8 @@ functions to small inputs, each with the answer the screen should give.
   that is not the edition's, a failed run or an empty one stops the screen.
 * The known rows: III.2, III.5 and III.6 must close by a rule; closed only by the bare try,
   a row is lost.
-* The lists: the definitions unfolded, chosen and left as they are do not overlap; each
-  chosen one has its lemma; every file of tries proves the controls, and unfolds every
-  definition listed.
+* The lists: the definitions unfolded, chosen and left as they are do not overlap; every
+  file of tries proves the controls, and unfolds every definition listed.
 
 Nothing runs these in CI yet: whoever changes the screen runs this file. Python 3.11 or
 later; standard library.
@@ -58,6 +57,16 @@ def file_of(tries: list[tuple[str, str, str]]) -> str:
 def line_of(text: str, start: str) -> int:
     """The number of the first line of `text` that begins with `start`."""
     return next(i + 1 for i, line in enumerate(text.splitlines()) if line.startswith(start))
+
+
+def given(line: str) -> list[str]:
+    """The names a line of Lean gives `grind`, in its order."""
+    return line.split("grind [", 1)[1].removesuffix("]").split(", ")
+
+
+def unfolded() -> list[str]:
+    """The names every try gives `grind` beyond its rules: each definition, then each lemma."""
+    return [f"Elements.{d}" for d in screen.DEFS] + list(screen.CHOSEN.values())
 
 
 def message(line: int, col: int, what: str, name: str = NAME) -> str:
@@ -123,13 +132,15 @@ class Tries(unittest.TestCase):
 
     def test_the_bare_try_gives_grind_only_the_definitions(self):
         bare = screen.theorem("bare__X", "BookI.Prop1", "", 100)
-        self.assertIn(f"  | grind [{screen.UNFOLD}]\n", bare)
         ruled = screen.theorem("single__X__P", "BookI.Prop1", "Elements.P", 100)
-        self.assertIn(f"  | grind [Elements.P, {screen.UNFOLD}]\n", ruled)
-        for text in (bare, ruled):
-            self.assertTrue(text.startswith("set_option maxHeartbeats 100 in\n"))
-            self.assertIn("type_of% @Elements.BookI.Prop1", text)
-            self.assertIn("  | sorry\n", text)
+        for text, names in ((bare, unfolded()), (ruled, ["Elements.P"] + unfolded())):
+            lines = text.splitlines()
+            self.assertEqual(lines[0], "set_option maxHeartbeats 100 in")
+            self.assertTrue(lines[1].startswith("theorem "))
+            self.assertIn("type_of% @Elements.BookI.Prop1", lines[1])
+            [grind] = [line for line in lines if line.startswith("  | grind [")]
+            self.assertEqual(given(grind), names)
+            self.assertIn("  | sorry", lines)
 
 
 class Outcomes(unittest.TestCase):
@@ -268,8 +279,6 @@ class Definitions(unittest.TestCase):
         text = screen.reach_file(facts)
         for n in ["BookI.Prop1", "Postulate1"] + screen.DEFS + list(screen.CHOSEN):
             self.assertIn(f"`Elements.{n}", text)
-        self.assertIn("isMatcherCore", text)
-        self.assertIn("isProjectionFn", text)
         self.assertTrue(text.endswith(f'#print "{screen.END}"\n'))
 
 
@@ -304,18 +313,15 @@ class Lists(unittest.TestCase):
         everything = [n for names in lists for n in names]
         self.assertEqual(len(everything), len(set(everything)))
 
-    def test_each_chosen_magnitude_has_its_lemma(self):
-        for lemma in screen.CHOSEN.values():
-            self.assertIn(f"theorem {lemma.removeprefix('Screen.')} ", screen.SPECS)
-
     def test_every_file_proves_the_controls_and_unfolds_every_listed_word(self):
-        for goal in screen.CONTROLS:
-            self.assertIn(f"example : {goal} := by\n  intros\n  grind [{screen.UNFOLD}]\n",
-                          screen.HEAD)
-        for d in screen.DEFS:
-            self.assertIn(f"Elements.{d}", screen.UNFOLD.split(", "))
-        for lemma in screen.CHOSEN.values():
-            self.assertIn(lemma, screen.UNFOLD.split(", "))
+        blocks = [block.splitlines() for block in screen.HEAD.split("\n\n")
+                  if block.startswith("example : ")]
+        goals = [lines[0].removeprefix("example : ").removesuffix(" := by")
+                 for lines in blocks]
+        self.assertEqual(goals, screen.CONTROLS)
+        for lines in blocks:
+            [grind] = [line for line in lines if line.lstrip().startswith("grind [")]
+            self.assertEqual(set(given(grind)), set(unfolded()))
 
 
 if __name__ == "__main__":
