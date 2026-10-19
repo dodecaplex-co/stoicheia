@@ -1346,3 +1346,7 @@ findings:
   existing `equals` value and `count.is` may move with that content. Lane 3 can then
   reprove the porism by Euclid's reductio, move the pinned list and count to that proof's
   assumptions, and add `excludes: ["Tacit.centre_unique"]` in its content pull request.
+  The `axioms` row of [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md), a protected
+  file, gave III.1's and its porism's counts as fixed; it now says that the list follows
+  each proof's dependencies and that the expectations pin what those two must hold, which
+  stays true when a re-proof moves the pinned values.
