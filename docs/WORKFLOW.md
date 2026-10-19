@@ -535,10 +535,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
-      changes what the checks judge (anything but the protected paths, save `Audit/`,
-      `Audit.lean` and the model's build files, the guides and briefs, the generated pages
-      and a review record's stamp): the check change goes
-      first, in a pull request of its own. Two kinds of failure are only noted. Pages gone
+      changes what the checks judge (anything but the guides and briefs, the generated
+      pages, a review record's stamp, and the protected paths other than `Audit/`,
+      `Audit.lean` and the model's build files): the check change goes first, in a pull
+      request of its own. Two kinds of failure are only noted. Pages gone
       stale under origin/main's `render.py`, or `facts.json` rewritten by origin/main's
       certificate, show the generator's change in the pages' diff; a failure of
       `render.py` itself, its check of `docs/program.toml` among them, is a verdict. And
