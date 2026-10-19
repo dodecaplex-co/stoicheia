@@ -28,7 +28,7 @@ note = "Heath bends BG and DG to reach G; our drawing keeps them straight, so th
 
 [review]
 stage = "full"
-commit = "d9048de"
+commit = "251129b"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:4cf303fe995ab67d"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

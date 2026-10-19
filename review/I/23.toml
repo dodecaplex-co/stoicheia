@@ -35,7 +35,7 @@ note = "Euclid applies I.22 without checking its condition on the three lengths.
 
 [review]
 stage = "full"
-commit = "ce5a881"
+commit = "251129b"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:03384cc241aed0a4"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
