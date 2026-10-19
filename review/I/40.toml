@@ -15,16 +15,33 @@ kind = "given"
 note = "The statement gives the goal, AD parallel to BE, and nothing is drawn here: the parallel through A, drawn next, will pass through D and so be AD."
 
 [[passage]]
+at = "For, if not, let AF be drawn through A parallel to BE"
+kind = "helper"
+helper = "Prop30.meet"
+note = "Euclid draws AF parallel to BE and takes its meeting with CD at F from the figure. The Lean draws the parallel by I.31 (`Prop31.line`), proves the meeting by I.30 (`Prop30.meet`), and joins FE by Postulate 1."
+
+[[passage]]
+at = "the greater to the less"
+kind = "case"
+note = "Euclid's figure puts F between C and D, so FCE is a part of DCE and the less. The Lean puts F on the ray from C through D (`Parallel.sameSide`, `OnRay.of_sameSideOf`) and uses `OnRay.eq_of_area_eq` to prove F = D, excluding both that arrangement and F beyond D, where DCE is the less, by comparing part and whole."
+
+[[passage]]
+at = "Therefore AF is not parallel to BE"
+kind = "different"
+note = "Euclid rejects AF as a parallel distinct from AD. The Lean keeps the constructed parallel and substitutes F = D to put D on it."
+
+[[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
 kind = "different"
 note = "As in I.39, the Lean argues directly: the areas put F at D (`OnRay.eq_of_area_eq`), so the parallel through A is AD itself, and no other straight line needs trying."
 
 [figure]
-case = "the bases BC and CE meeting at C, as in Heath's figure"
+case = "the bases BC and CE meeting at C, with F on CD between C and D, as in Heath's figure"
 note = "F is drawn between C and D, with AF level, as the proof supposes; Heath draws AD level and AF sloping."
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "5d6b1f6"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 lean = "sha256:26f3e7e66e5dc512"

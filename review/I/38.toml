@@ -7,11 +7,29 @@ fingerprint = "sha256:ea3639a017aefed0"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "For let AD be produced in both directions to G, H"
+kind = "given"
+note = "Euclid produces AD in both directions. The statement already gives the whole straight line through A and D, so the Lean needs no extension here."
+
+[[passage]]
+at = "through B let BG be drawn parallel to CA"
+kind = "helper"
+helper = "Prop31.parallelogram"
+note = "Euclid draws BG and FH and takes their meetings with AD at G and H from the figure, then calls GBCA and DEFH parallelograms without giving a reason. The Lean uses `Prop31.parallelogram` to draw the parallels by I.31, prove their meetings by I.30, which Heath does not cite here, and establish both parallelograms for the next sentence."
+
+[[passage]]
+at = "But the halves of equal things are equal to one another"
+kind = "helper"
+helper = "Magnitude.eq_of_add_self_eq"
+note = "Euclid takes equality of halves for granted in the sentence J. L. Heiberg brackets as added later. The Lean applies `Magnitude.eq_of_add_self_eq`, which rules out unequal halves by comparing their doubles using the order and addition laws for magnitudes."
+
 [figure]
 case = "the bases BC and EF apart, and the vertices A and D apart"
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 lean = "sha256:13849d21c6487897"
