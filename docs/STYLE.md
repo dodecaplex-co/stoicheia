@@ -515,8 +515,8 @@ validate a figure. Before a changed figure is signed off, render it
 modern way.** is easier to follow with a picture (its coordinates, its vectors, Book II's
 lengths a and b), it has a figure of its own, which the page sets under that paragraph. It
 is drawn as Euclid's figure is: the same canvas, palette and strokes **[checked]**, and
-Euclid's figure's letters, upright at 17, at the points his figure gives them, placed on
-the axes or the plane as the paragraph places them **[checked: the letters]**. What the
+Euclid's figure's letters, upright at 17 **[checked]**, at the points his figure gives
+them, placed on the axes or in the plane as the paragraph places them. What the
 paragraph measures takes the paragraph's own names (a, b, θ, u), italic at 17, and the
 figure uses no name the paragraph does not **[checked]**. A capital stands alone, as one
 of Heath's letters: a length or a vector is named by its lower-case letter. The title is
