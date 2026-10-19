@@ -1341,10 +1341,10 @@ findings:
   entry carries every assumption its proof uses: Definition I.15, Postulates 1 to 4 and
   the reviewed 57 tacit rules, `Tacit.centre_unique` among them today. The `ref`, `field`
   and count of 57 tacit rules stay as they are; no other expectation changes. This makes
-  the check stricter on its own, before C6b: safe_push treats dropping an `includes`
-  member as a check change and keeps it apart from the content it judges, while an
-  existing `equals` value and `count.is` may move with that content. Lane 3 can then
-  reprove the porism by Euclid's reductio, move the pinned list and count to that proof's
+  the check stricter on its own, before the content it describes: safe_push treats
+  dropping an `includes` member as a check change and keeps it apart from the content
+  it judges, while an existing `equals` value and `count.is` may move with that content.
+  Lane 3 can then reprove the porism by Euclid's reductio, move the pinned list and count to that proof's
   assumptions, and add `excludes: ["Tacit.centre_unique"]` in its content pull request.
   The `axioms` row of [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md), a protected
   file, gave III.1's and its porism's counts as fixed; it now says that the list follows
