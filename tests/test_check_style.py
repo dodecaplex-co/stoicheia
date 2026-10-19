@@ -21,11 +21,12 @@ it, put to the script's own patterns and functions:
   its width (given as an attribute, in style= or inherited), and not one clear of it;
   reads a stroke of none as no stroke and a dashed one whole; closes a path's stroke only
   where a Z closes it; finds a circle through a letter and not one round it, a dot beside
-  it and the canvas's edge; leaves out a circle of no radius and a rect of no width, and
-  follows a rect's rounded corners; follows a transform, taking a width and a radius at
-  the most it stretches them; measures a letter upright or italic as its figure sets it,
-  and places it by its anchor and the whole label's advance. And it finds a letter drawn
-  twice, or twice in one of several figures side by side, or across the cut between them.
+  it and the canvas's edge; leaves out a circle of no radius, a rect of no width and a
+  line of no length with butt caps, and follows a rect's rounded corners however their
+  radius is spelled; follows a transform, taking a width and a radius at the most it
+  stretches them; measures a letter upright or italic as its figure sets it, and places
+  it by its anchor and the whole label's advance. And it finds a letter drawn twice, or
+  twice in one of several figures side by side, or across the cut between them.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -204,7 +205,8 @@ def ink_finding(drawn: str, x: float, y: float, ink: str) -> bool:
 # first review of S22 found it took a stroke's width at a transform's mean stretch, read a
 # rect's rounded corners as square, drew a circle of no radius, placed an anchored label
 # with a prime by its capital alone, and counted a letter drawn twice in one of several
-# figures side by side as once in each; each has its case below.)
+# figures side by side as once in each; a second found a radius spelled 5e1 read as none,
+# and a line of no length with butt caps read as drawn. Each has its case below.)
 
 LINE = '<line x1="100" y1="{y}" x2="200" y2="{y}" stroke="#3b2f2f" stroke-width="1.6"/>'
 UPRIGHT_STROKE = '<line x1="{x}" y1="90" x2="{x}" y2="104" stroke="#3b2f2f" stroke-width="1.6"/>'
@@ -233,12 +235,20 @@ CLEAR_CASES = [   # (what is drawn beside a letter at (150, 100), at 17; the let
      "A", "italic", "start", True),
     ('<circle cx="155" cy="94" r="0" fill="none" stroke="#8c7b62"/>',
      "A", "italic", "start", False),                         # no radius: SVG draws nothing
+    ('<circle cx="155" cy="94" r="0" fill="none" stroke="#8c7b62" stroke-linecap="round"/>',
+     "A", "italic", "start", False),                         # whatever its caps
     ('<rect x="155" y="80" width="0" height="30" fill="none" stroke="#3b2f2f"/>',
      "A", "italic", "start", False),                         # no width: SVG draws nothing
     ('<rect x="150" y="100" width="100" height="100" fill="none" stroke="#3b2f2f"/>',
      "A", "italic", "start", True),                          # its corner at the letter
     ('<rect x="150" y="100" width="100" height="100" rx="50" fill="none" stroke="#3b2f2f"/>',
      "A", "italic", "start", False),                         # a circle, 12.9 clear
+    ('<rect x="150" y="100" width="100" height="100" rx="5e1" fill="none" stroke="#3b2f2f"/>',
+     "A", "italic", "start", False),                         # the same, spelled otherwise
+    ('<line x1="155" y1="94" x2="155" y2="94" stroke="#3b2f2f"/>',
+     "A", "italic", "start", False),                         # no length, butt caps: nothing
+    ('<line x1="155" y1="94" x2="155" y2="94" stroke="#3b2f2f" stroke-linecap="round"/>',
+     "A", "italic", "start", True),                          # no length, round caps: a dot
     ('<circle cx="156" cy="104" r="2.6" fill="#3b2f2f"/>', "A", "italic", "start", True),
     ('<circle cx="156" cy="108" r="2.6" fill="#3b2f2f"/>', "A", "italic", "start", False),
     (LINE.format(y=114), "A", "italic", "start", False),

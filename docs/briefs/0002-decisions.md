@@ -1333,13 +1333,14 @@ findings:
   carries as numbers (`GLYPHS_UPRIGHT`, `GLYPHS_ITALIC`), read once from the fonts, so that
   it still needs only Python's standard library; `path_rings` now also says which subpaths a
   Z closes, and what S20 reads is unchanged.
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains 39 cases of S22,
-  among them one or more for each of five faults that a first review of the rule found: a
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains 43 cases of S22,
+  among them one or more for each of seven faults that two reviews of the rule found: a
   stroke's width taken at a transform's mean stretch, a rect's rounded corners read as
   square, a circle of no radius read as drawn, an anchored label with a prime placed by its
-  capital alone, and a letter drawn twice in one of the figures side by side counted as once
-  in each; and [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) files its
-  findings under P8, the figures, as [ACCEPTANCE](../ACCEPTANCE.md) now says.
+  capital alone, a letter drawn twice in one of the figures side by side counted as once in
+  each, a corner's radius spelled 5e1 read as none, and a line of no length with butt caps
+  read as drawn; and [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  files its findings under P8, the figures, as [ACCEPTANCE](../ACCEPTANCE.md) now says.
   [STYLE](../STYLE.md), sections 7 and 8, gives the rule, and the reviewer's checklist, item
   16, asks that a letter naming one of Heath's points name no straight line or circle in the
   Lean. A rule is added and nothing is weakened. It lands after the figures' change for #68,

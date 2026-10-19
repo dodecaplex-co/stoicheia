@@ -773,8 +773,8 @@ EUCLID_COLOURS = {"#fbf7ee", "#3b2f2f", "#8c7b62", "#a0522d", "#e9dcc0"}
 COLOUR_ATTRS = ("fill", "stroke", "stop-color", "color", "flood-color", "lighting-color")
 DRAWN = {"line", "path", "polyline", "polygon", "circle", "ellipse", "rect"}
 FILLED = DRAWN - {"line"}
-INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "font-size", "font-style",
-             "text-anchor")
+INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap", "font-size",
+             "font-style", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
 
 # The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
@@ -1431,6 +1431,13 @@ def stretch(m) -> float:
     return math.sqrt((t + math.sqrt(max(0.0, t * t - 4 * det * det))) / 2)
 
 
+def length(value: str | None) -> float | None:
+    """An attribute that is one number, in any spelling SVG allows ("50", "5e1", "50px"),
+    or None."""
+    m = re.fullmatch(r"\s*(" + NUM.pattern + r")\s*(?:px)?\s*", value or "")
+    return float(m.group(1)) if m else None
+
+
 def rect_outline(own) -> list[tuple[float, float]] | None:
     """A rect's outline, its corners rounded by rx and ry as SVG rounds them (one given
     stands for both, and each is at most half the side), in short straight pieces; None
@@ -1439,7 +1446,7 @@ def rect_outline(own) -> list[tuple[float, float]] | None:
     w, h = coord(own.get("width")), coord(own.get("height"))
     if w <= 0 or h <= 0:
         return None
-    rx, ry = number(own.get("rx")), number(own.get("ry"))
+    rx, ry = length(own.get("rx")), length(own.get("ry"))
     rx = ry if rx is None else rx
     ry = rx if ry is None else ry
     rx, ry = min(rx or 0.0, w / 2), min(ry or 0.0, h / 2)
@@ -1460,8 +1467,9 @@ def strokes(root):
     of straight pieces: a line, a polyline, a polygon or a rect's outline (its corners
     rounded as rx and ry round them), each subpath of a path (closed where a Z closes it),
     a circle or an ellipse in short straight pieces; transforms applied, the width taken
-    at the most the transform stretches it, a dashed stroke read whole, and a shape SVG
-    does not draw (a circle of no radius, a rect of no width) left out (S22)."""
+    at the most the transform stretches it, a dashed stroke read whole, and a stroke SVG
+    does not draw (a circle of no radius, a rect of no width, a run of no length with
+    butt caps) left out (S22)."""
     for el, own, eff, m, _ in placed(root):
         t = tag(el)
         w = number(eff.get("stroke-width"))
@@ -1493,8 +1501,9 @@ def strokes(root):
         half = w / 2 * stretch(m)
         kind = "a dashed line" if eff.get("stroke-dasharray") and t == "line" else \
             ("an " if t == "ellipse" else "a ") + t
+        butt = (eff.get("stroke-linecap") or "butt").strip() == "butt"
         for run in runs:
-            if len(run) > 1:
+            if len(run) > 1 and not (butt and all(p == run[0] for p in run)):
                 yield kind, [at(m, x, y) for x, y in run], half
 
 
