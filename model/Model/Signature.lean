@@ -84,8 +84,14 @@ namespace Signature
 
 variable (S : Signature)
 
-/-- `Elements.Magnitude`: the carrier of a kind of magnitude. -/
-def Magnitude (k : Kind) : Type := (S.MagnitudeImpl k).type
+/-- `Elements.Magnitude`: the carrier of a kind of magnitude.
+
+It is reducible, as the library's is not, and for one reason. The fields write the carrier
+out, so `S.len A B` has the type `(S.MagnitudeImpl .length).type`, not `S.Length`; Lean finds
+the instances below for such a term, and so reads `S.len A B + S.len B C` or `S.ang A B C = 0`
+at all, only when it can unfold `S.Magnitude k` to the carrier as it looks for them. The
+definition is the library's all the same, which is what the round trips check. -/
+abbrev Magnitude (k : Kind) : Type := (S.MagnitudeImpl k).type
 
 /-- `Elements.Length`. -/
 abbrev Length := S.Magnitude .length
