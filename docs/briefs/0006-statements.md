@@ -1429,6 +1429,56 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
 - These are the bridge theorems for the representation (FORMALIZATION, section 3): they
   say what `circumference` and `Arc.Congruent` mean.
 
+### Addition, 19 October 2026: III.30's halves, proposed for the owner's approval
+
+Proposed for the owner's approval; the proof is not yet assigned. The statement is staged
+in `Staging/Halves/Prop30.lean`, in `Elements.BookIII`. Its proposed final home is immediately
+after `Prop30` in `Elements/BookIII/Prop30.lean`. It has no companion registration or review
+record entry while approval is pending.
+
+```lean
+theorem Prop30.halves {A B D P : Point} {ADB : Circle}
+    (hA : OnCircle A ADB) (hB : OnCircle B ADB)
+    (hD : OnCircle D ADB) (hDP : SameSideOf D P A B)
+    (hequal : standing ADB A B D = standing ADB D A B) :
+    ∃ Q R : Point,
+      OppositeSidesOf Q B A D ∧ OppositeSidesOf R A D B ∧
+      Arc.Drawn ⟨ADB, A, D, Q⟩ ∧ Arc.Drawn ⟨ADB, D, B, R⟩ ∧
+      Arc.Congruent ⟨ADB, A, D, Q⟩ ⟨ADB, D, B, R⟩ ∧
+      circumference ADB A Q D + circumference ADB D R B =
+        circumference ADB A P B ∧
+      (∀ X : Point, OnArc X ⟨ADB, A, B, P⟩ ↔
+        OnArc X ⟨ADB, A, D, Q⟩ ∨ OnArc X ⟨ADB, D, B, R⟩) ∧
+      (∀ X : Point,
+        (OnArc X ⟨ADB, A, D, Q⟩ ∧ OnArc X ⟨ADB, D, B, R⟩) ↔
+          X = D) := by
+  sorry
+```
+
+In plain words, D is fixed before this theorem is applied. For the D returned by III.30,
+the arc AD away from B and the arc DB away from A are drawn and congruent. Their measures
+add to the given arc AB on P's side. Every point of that given arc belongs to at least one
+half, and a point belongs to both halves exactly when it is D. Endpoints are included.
+
+The hypotheses are precisely the endpoints' incidence and III.30's conclusions about D:
+its incidence, its side of AB, and equality of standing measures. The side condition also
+keeps D off AB. Q and R select sides; they need not lie on the circle. Choose Q opposite B
+across AD and R opposite A across DB, using `exists_oppositeSidesOf` on the triangles
+`hDP.triangle.acb` and `hDP.triangle.cba`.
+
+**Proposed route.** The current result does not expose the equal chords proved internally
+by I.4. This interface therefore requires an additional recovery step: recover equal base
+angles from `hequal` by `Circumference.standing` and cancellation, then equal chords by I.6.
+I.17 establishes that the two selected arcs are less than semicircles; III.28's `.2.2`
+congruence clause then supplies their congruence. This I.6 recovery is an addition to the
+construction's route and must remain disclosed in the eventual companion's route note.
+
+For the sum, apply `Circumference.add` with circle points A, D, B and side markers P, Q, R.
+The two membership equivalences need a separate argument from plane separation and circle
+incidence, with III.2 providing the relevant chord facts. Pointwise division is the main
+unproved obligation. The staged `sorry` establishes only that the proposed type elaborates;
+it proves none of these claims. No proof or certificate is assigned before approval.
+
 ## Stage 4: III.14, III.15, III.25
 
 ### The foot of the perpendicular
