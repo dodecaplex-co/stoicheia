@@ -1130,3 +1130,12 @@ findings:
   request has been sent yet; the accuracy bar Jev must meet on the set is the
   coordinator's to state before the first run, and `score --bar` counts it met only when
   every row of the set is answered and no request failed.
+- **The acceptance checker ([#35](https://github.com/jackChallis/stoicheia/issues/35)).**
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) (new) checks every
+  [machine] item of the acceptance checklist across the 99 propositions, each book and the
+  edition, reads every [review] item from the review records, and writes a report with
+  every failure listed; it changes no other file and reuses the checks already in place.
+  It is not yet a step of CI or of safe_push: it reports, and the consolidation release
+  waits for it to report no failure. The checklist itself, `docs/ACCEPTANCE.md`, and the
+  first report follow in a content pull request, since safe_push keeps a check apart from
+  the content it judges.
