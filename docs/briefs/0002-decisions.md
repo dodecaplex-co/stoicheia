@@ -1315,3 +1315,23 @@ findings:
   [`scripts/safe_push.py`](../../scripts/safe_push.py), still name `check`, `model` and
   `negative`, and making `formal-model` required, as the decision of 18 October foresees
   once the package builds, is the owner's call.
+
+## 19 October 2026
+
+- **An overlap always names its kind.** The last part of
+  [#93](https://github.com/jackChallis/stoicheia/issues/93), as its comments list it. The
+  decision of 18 October, "An overlap is worded by its kind, as the catalogue gives it",
+  made `kind` optional so that the check could land before the records named their kinds,
+  and worded a record with no kind as one whose rule contains the proposition. Every
+  record on main now names its kind (I.2, I.3, I.7 and I.23 `step`, III.2 `states`, III.5
+  and III.6 `gives`), so the key is required, and a new `[overlap]` without it, as III.1's
+  might be under brief 0008, can no longer render "contains" by default, the defect #93
+  fixes. [`review/SCHEMA.md`](../../review/SCHEMA.md) marks `kind` required, and its list
+  of what the machine checks says so. [`scripts/heath.py`](../../scripts/heath.py) rejects
+  an `[overlap]` with no `kind` ("`kind` is missing"), and its self-test case
+  `{rule: Tacit.circle_eq}`, which it accepted, is now a rejection; the other five cases
+  stand. [`scripts/render.py`](../../scripts/render.py) drops its fallback to "contains":
+  `overlap_steps` reads the record's `kind`, which every record it is given now carries.
+  The proposition template's `[overlap]` lines say the key is always named. Nothing a
+  reader sees changes: the pages render the same at the branch's base. This is a check
+  change on its own; it changes no record.
