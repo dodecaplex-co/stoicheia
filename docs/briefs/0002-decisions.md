@@ -1318,6 +1318,23 @@ findings:
 
 ## 19 October 2026
 
+- **The edition does not name its owner.** The owner asked that Stoicheia not be presented
+  as anyone's personal project, and that the name come out of its prose. Where a passage
+  needs the role, it now says "the owner", the repository's owner, as
+  [WORKFLOW](../WORKFLOW.md), section 1, defines the role, with exactly the same force: no
+  approval or decision moves. AGENTS.md says "the repository owner", since there "owner"
+  also means a file's owner. Changed: [AGENTS.md](../../AGENTS.md),
+  [FORMALIZATION](../FORMALIZATION.md), WORKFLOW, [PROGRAM](../PROGRAM.md), the README's
+  "How it was made", briefs 0001 and 0005 to 0009, and two reports:
+  [outside review 01](../reports/outside-review-01.md), whose quoted prompts are now
+  labelled "We asked" and keep their words, and
+  [read-through 01](../reports/read-through-01.md). Brief 0001, kept as history, records
+  the change in its own note. No statement, check or earlier decision changes, and no
+  protected path. Three things are the owner's to decide: the copyright line in
+  `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
+  name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
+  request of its own.
+
 - **The negative tests read the count of assumptions from the lock.** The planted-assumption
   test of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) expected
   `check_fidelity.py` to say "declares 88 axioms, not 87", a count fixed in the script. It

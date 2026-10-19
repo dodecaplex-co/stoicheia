@@ -1,6 +1,6 @@
 # An outside review: Astra, October 2026
 
-On 17 October 2026, at Jack Challis's request, Astra, an OpenAI model run in ChatGPT, read
+On 17 October 2026, at our request, Astra, an OpenAI model run in ChatGPT, read
 Stoicheia cold at commit
 [676244a](https://github.com/jackChallis/stoicheia/tree/676244a617e59e527b4ba0a3f33b8797c1552b90)
 and wrote four things: an assessment, a score against the README's own goal, a route to
@@ -54,7 +54,7 @@ kept. The draft contributor guide is in [outside-review-01-guide.md](outside-rev
 
 ### 1. Coming in cold
 
-*Jack asked:* "I have been working to formalize Euclid's Elements. Review the project at GitHub jackchallis/stoicheia and tell me what it's missing, what's wrong, what should be improved. Come in cold."
+*We asked:* "I have been working to formalize Euclid's Elements. Review the project at GitHub jackchallis/stoicheia and tell me what it's missing, what's wrong, what should be improved. Come in cold."
 
 #### My cold assessment
 
@@ -431,7 +431,7 @@ The strongest improvements would make those existing strengths easier for reader
 
 ### 2. A score against the README
 
-*Jack asked:* "As an outsider on a scale from 0-100 how well would you say for the first three books it addresses the goals of the Readme, Lean review sentence by sentence in Euclid with text, Lean + commentary."
+*We asked:* "As an outsider on a scale from 0-100 how well would you say for the first three books it addresses the goals of the Readme, Lean review sentence by sentence in Euclid with text, Lean + commentary."
 
 I would give it about 85/100 for Books I–III, judged against the goal you just stated: reading Euclid sentence by sentence, with his text, checked Lean, and useful commentary.
 
@@ -488,7 +488,7 @@ So my judgment is: 85 is earned by the existing text–proof–commentary experi
 
 ### 3. The road to 95
 
-*Jack asked:* "OK if I want 95/100 for all three books, accepting that the quality seems to be falling off over time what improvements would you specifically mention to go to 95/100?"
+*We asked:* "OK if I want 95/100 for all three books, accepting that the quality seems to be falling off over time what improvements would you specifically mention to go to 95/100?"
 
 **I would aim for a consolidation release, with most of the new mathematical work concentrated in Book III.** To give each book roughly 95/100, I would want the remaining generality gaps closed, the meanings of Book III’s arcs and segments better established, and a systematic review of whether the Lean actually carries out the sentences printed above it.
 
@@ -820,7 +820,7 @@ To sustain that standard in later books, I would make the **formal statement and
 
 ### 4. A guide for parallel work
 
-*Jack asked:* "And if we want a general style guide for OpenAI style approaches here. What would that look like? In terms of the overall structure. So that we can keep a common voice, and approach throughout. And help to parallelize the work!"
+*We asked:* "And if we want a general style guide for OpenAI style approaches here. What would that look like? In terms of the overall structure. So that we can keep a common voice, and approach throughout. And help to parallelize the work!"
 
 **I would give it three parts: an editorial standard, a mathematical authoring standard, and a protocol for parallel work.** Then put a short agent brief in front of those documents so each OpenAI/Codex contributor knows what to read, what it owns, and what evidence it must return.
 

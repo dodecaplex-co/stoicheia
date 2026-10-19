@@ -49,7 +49,7 @@ speak of brief 0005's stages alone.
 
 ## The owner's decision
 
-Jack Challis decided on 18 October 2026, after Astra's answer:
+The owner decided on 18 October 2026, after Astra's answer:
 
 1. **I.45 and II.14 go full.** That decision belongs to brief 0006's statements, and this
    brief does not touch them.
@@ -374,7 +374,7 @@ The three may run in parallel: they share no file. When each is proved, it moves
 `PropNN.lean`, its staged copy and check are deleted in the same change, and the integrator
 adds its entries to `Elements/Companions.lean`. Then the records, the pages and the prose
 listed below are brought up to date. If any step turns out to need a fact the axioms lack,
-work on it stops and the case goes to Jack, as for every stage.
+work on it stops and the case goes to the owner, as for every stage.
 
 ## Records made stale
 
