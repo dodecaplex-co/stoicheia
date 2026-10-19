@@ -305,8 +305,11 @@ the staged file at that revision, and "R" the report.
   `docs/examples.md`, whose III.31 example cites `mixed-angles-omitted`;
   `scripts/render.py`'s front page row for Definition III.7 ("none: a mixed angle") and the
   comment on words with no Lean partner; `review/terms.toml`'s `mixed-angles-omitted`, which
-  no record will use; PROGRAM.md, the coordinator's; and the generated pages and README rows,
-  the integrator's.
+  no record will use; README.md's sentence on passages the Lean argues another way or leaves
+  in Euclid's words, "as in I.4, III.16, III.25 and III.31", from which III.31 goes (III.16
+  stays, its step argued another way); PROGRAM.md, the coordinator's, whose limitations
+  allowed in Book III name the mixed angles; and the generated pages and README rows, the
+  integrator's.
 
 ## Questions for the coordinator
 
