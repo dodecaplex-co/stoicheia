@@ -9,6 +9,7 @@ kind = "euclid"
 
 [overlap]
 rule = "Tacit.circle_eq"
+kind = "gives"
 note = "System E's Diagram-segment 2, that one centre and one radius make one circle, gives III.5 at once from a common point. The proof follows Euclid, and calls on that rule only for the step he leaves tacit, that F and G are two points."
 
 [[passage]]
@@ -27,6 +28,6 @@ note = "Like Heath's, this figure draws the impossible supposition: E as one cen
 
 [review]
 stage = "exceptions"
-commit = "7339460"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:51a2558ef848cac3"

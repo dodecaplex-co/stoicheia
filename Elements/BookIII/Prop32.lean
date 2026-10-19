@@ -4,6 +4,7 @@ import Elements.BookIII.Circumferences
 import Elements.BookI.Prop11
 import Elements.BookI.Prop13
 import Elements.BookI.Prop32
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop19
 import Elements.BookIII.Prop21
 import Elements.BookIII.Prop22
@@ -24,16 +25,17 @@ open Tacit
 /-- Two points of a circle, neither of them the point B where the straight line EF
 touches it, lie on the same side of EF. Euclid takes this for granted. Were they on
 opposite sides, the straight line joining them would cross EF at a point within the
-circle (System E, Circle 2), and no point of a straight line touching a circle is within
+circle by III.2, and no point of a straight line touching a circle is within
 it, as in III.18. -/
-theorem Prop32.sameSide {B E F P Q : Point} {α : Circle} {L : Line} (hEF : Touches E F α)
+theorem Prop32.sameSide {B E F P Q : Point} {α : Circle} {L : Line}
+    (hα : ∃ O : Point, Centre O α) (hEF : Touches E F α)
     (hE_L : OnLine E L) (hF_L : OnLine F L) (hB_L : OnLine B L) (hB : OnCircle B α)
     (hP : OnCircle P α) (hQ : OnCircle Q α) (hPB : P ≠ B) (hQB : Q ≠ B) : SameSide P Q L := by
   have off : ∀ {R : Point}, OnCircle R α → R ≠ B → ¬ OnLine R L := fun hR hRB h =>
     (hEF.2 L hE_L hF_L).2 ⟨B, _, hRB.symm, hB_L, hB, h, hR⟩
   refine Classical.byContradiction fun hs => ?_
   obtain ⟨Y, hY_L, hPYQ⟩ := OppositeSides.exists_between ⟨off hP hPB, off hQ hQB, hs⟩
-  exact hEF.not_inside ⟨L, hE_L, hF_L, hY_L⟩ (inside_of_between (Or.inr hP) (Or.inr hQ) hPYQ)
+  exact hEF.not_inside ⟨L, hE_L, hF_L, hY_L⟩ (Prop2 hα hP hQ Y hPYQ)
 
 /-- If a straight line touch a circle, and from the point of contact there be drawn across, in the
 circle, a straight line cutting the circle, the angles which it makes with the tangent will be
@@ -78,7 +80,8 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
   have hAB : A ≠ B := ne_of_between_ends hAOB
   /- A is on X's side of EF, the side of the circle, so the straight line BA is the one
      drawn at right angles to EF. -/
-  have hAD_L : SameSide A D L := Prop32.sameSide hEF hE_L hF_L hB_L hB hA hD hAB hBD.symm
+  have hAD_L : SameSide A D L :=
+    Prop32.sameSide ⟨O, hO⟩ hEF hE_L hF_L hB_L hB hA hD hAB hBD.symm
   have hAX : OnRay A B X :=
     OnRay.of_sameSideOf (E := F) (SameSideOf.of_line (ne_of_between (between_symm hEBF)).symm
       hB_L hF_L (same_side_trans (same_side_symm hAD_L) (same_side_symm (hXD.sameSide hE_L hF_L))))
@@ -123,7 +126,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
       hD_L ((line_unique hFB.symm hB_N h hB_L hF_L) ▸ hD_N)
     have hAF : OppositeSidesOf A F B D :=
       OppositeSidesOf.of_line hBD hB_N hD_N
-        ⟨(Triangle.of_onCircle hB hD hA hBD hBAD.ne₂₃.symm hAB.symm).off_line hB_N hD_N,
+        ⟨(Prop2.triangle ⟨O, hO⟩ hB hD hA hBD hBAD.ne₂₃.symm hAB.symm).off_line hB_N hD_N,
           hF_N, pasch3 hAYF hY_N⟩
     refine ⟨fun A' hA' hA'F => ?_, fun C hC hCF => ?_⟩
     · /- Any angle in that segment is the angle BAD [III. 21]. -/
@@ -164,7 +167,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
       rw [angle_symm (ne_of_between hEBF) hBD.symm, hright hE_L (ne_of_between hEBF)]
       exact ((Prop31 hO hC hD hB hAOB hT.ne₂₃.symm hT.ne₁₃.symm).1).symm
   · have hDBA : ¬ OnLine D M := fun h =>
-      (Triangle.of_onCircle hD hB hA hBD.symm hAB.symm hDA) ⟨M, h, hB_M, hA_M⟩
+      (Prop2.triangle ⟨O, hO⟩ hD hB hA hBD.symm hAB.symm hDA) ⟨M, h, hB_M, hA_M⟩
     have hA_L : ¬ OnLine A L := off hA hAB
     have hEF_BA : OppositeSidesOf E F B A :=
       (OppositeSidesOf.of_between (Triangle.of_line hB_L hE_L (ne_of_between hEBF).symm hA_L).cab
