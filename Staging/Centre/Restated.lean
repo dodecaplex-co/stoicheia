@@ -208,9 +208,10 @@ example : type_of% @Elements.BookIII.Prop24.equalCircles := fun _ _ => Centre.Pr
 
 /-- Given a segment of a circle, to describe the complete circle of which it is a segment.
 
-Today's statement of III.25, still handed the whole circle: dropping its centre does not
-give it the segment alone. Brief 0006 restates III.25 (its stage 4), and keeps this
-statement as the companion `Prop25.of_circle` (`Brief0006.lean`). -/
+III.25's statement before stage 4, still handed the whole circle: dropping its centre does
+not give it the segment alone. Brief 0006 restates III.25 (its stage 4) and keeps this
+statement as the companion `Prop25.of_circle`, against which it is checked here
+(`Brief0006.lean`). -/
 theorem Prop25 {A C : Point} {ABC : Circle} (hA : OnCircle A ABC) (hC : OnCircle C ABC) :
     ∀ P : Point, ¬ Collinear A C P → ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧
       Between A D C ∧ ‖A D‖ = ‖D C‖ ∧ ∠ A D B = ∟ ∧ Centre E ABC ∧ Collinear D B E ∧
@@ -219,8 +220,8 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hA : OnCircle A ABC) (hC : OnCircle
   sorry
 
 example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) : type_of% @Centre.Prop25 :=
-  Elements.BookIII.Prop25 (exists_centre _)
-example : type_of% @Elements.BookIII.Prop25 := fun _ => Centre.Prop25
+  Elements.BookIII.Prop25.of_circle (exists_centre _)
+example : type_of% @Elements.BookIII.Prop25.of_circle := fun _ => Centre.Prop25
 
 /-- To bisect a given circumference. -/
 theorem Prop30 {A B : Point} {ADB : Circle} (hA : OnCircle A ADB) (hB : OnCircle B ADB) :

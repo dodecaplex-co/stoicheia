@@ -9,6 +9,7 @@ import Elements.BookIII.Prop15
 import Elements.BookIII.Prop17
 import Elements.BookIII.Prop23
 import Elements.BookIII.Prop24
+import Elements.BookIII.Prop25
 
 /-!
 # The companions
@@ -49,4 +50,6 @@ def Elements.companions : List (Lean.Name × String) := [
   (``Elements.BookIII.Prop17.general, "III.17 general"),
   (``Elements.BookIII.Prop23.point, "III.23 point"),
   (``Elements.BookIII.Prop24.equalCircles, "III.24 equalCircles"),
-  (``Elements.BookIII.Prop24.equalMeasure, "III.24 equalMeasure")]
+  (``Elements.BookIII.Prop24.equalMeasure, "III.24 equalMeasure"),
+  (``Elements.BookIII.Prop25.complete, "III.25 complete"),
+  (``Elements.BookIII.Prop25.of_circle, "III.25 of_circle")]
