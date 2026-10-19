@@ -13,7 +13,9 @@ the plane satisfies each law.
 **Where it stands.** The package builds, with the signature, the plane, and the first
 laws, translated by hand for now and proved in the plane: the four circle-intersection
 rules, the first of the hard groups, and the eight magnitude laws, which are easy in the
-plane but test the translation where it is most delicate. That is 12 of the 87. The rest
+plane but test the translation where it is most delicate. With them are the fifteen order
+laws, Between 1 to 7 and the diagram-segment rules (in their own hand-translated file,
+[Model/Laws/order.lean](Model/Laws/order.lean)). That is 27 of the 87. The rest
 of the laws, and the generator that will translate them from the library's own
 declarations, are to come. Until every locked law is proved here, the evidence that the
 laws have a model remains MODEL.md's hand arguments and numerical tests, and this package
@@ -44,8 +46,13 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
+| [Model/Laws/order.lean](Model/Laws/order.lean) | the fifteen order laws, Between 1 to 7 and the diagram-segment rules, **hand-translated** | `Signature` |
+| [Model/Euclidean/Order.lean](Model/Euclidean/Order.lean) | Between 1, 4, 5 and 7 proved in the plane | Mathlib |
+| [Model/Euclidean/OrderLines.lean](Model/Euclidean/OrderLines.lean) | Between 2, 3 and 6, which bring in a straight line, proved in the plane | Mathlib |
+| [Model/Euclidean/Segments.lean](Model/Euclidean/Segments.lean) | the diagram-segment rules 1 to 4 proved in the plane | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane rests on | every module of `Model` |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration | `Elements.Foundations`, `Model.Hand` |
+| [Check/Order.lean](Check/Order.lean) | each hand-translated order law compared with the library's declaration | `Elements.Foundations`, `Model.Laws.order` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib.
@@ -207,7 +214,8 @@ the original means. Three checks do that.
   proposition, up to unfolding definitions; a dropped guard, two swapped arguments or a
   change in the order of the binders fails it, and the build with it. (Both were tried:
   Intersection 4 in System E's printed form, with "on or inside", and Intersection 5 with
-  its two points exchanged.) Today this covers the 12 laws translated by hand and 11
+  its two points exchanged.) Today this covers the 27 laws translated by hand (the fifteen
+  order laws in [Check/Order.lean](Check/Order.lean)) and 11
   defined words: the eight behind the magnitudes (these laws reach `Magnitude` and the
   instances for `+`, `0` and `<`; `Length`, `Angle`, `Area` and `≤` are checked ahead of
   the laws that use them) and the three the circle laws reach. The generator will write
@@ -293,6 +301,7 @@ come before the easy laws are shared out:
 |---|---|---|
 | Circle intersections | `circles_meet`, `circles_meet_of_on_inside_outside`, `circles_meet_same_side`, `circles_meet_opposite_side` | proved here |
 | Magnitudes | the eight laws of `Tacit/Magnitudes.lean`: easy in the plane, but they test the translation of the instances and of `Kind` | proved here |
+| Order | the ten laws of Between 1 to 7 and the five diagram-segment laws (`len_add_of_between`, `circle_eq`, `on_circle_of_len_eq`, `inside_of_len_lt`, `len_lt_of_inside`): not among the hard groups, but most other laws lean on them | proved here |
 | Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides` | to do |
 | Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | to do |
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |

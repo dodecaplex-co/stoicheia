@@ -7,6 +7,10 @@ public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
+public import Model.Laws.order
+public import Model.Euclidean.Order
+public import Model.Euclidean.OrderLines
+public import Model.Euclidean.Segments
 
 /-!
 # What the model's proofs rest on
@@ -110,3 +114,95 @@ info: 'Model.Euclidean.exists_centre' depends on axioms: [propext, Classical.cho
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.exists_centre
+
+/-! ### The order laws: Between 1 to 7 and the diagram-segment rules -/
+
+/--
+info: 'Model.Euclidean.between_symm' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.between_symm
+
+/--
+info: 'Model.Euclidean.ne_of_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.ne_of_between
+
+/--
+info: 'Model.Euclidean.ne_of_between_ends' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.ne_of_between_ends
+
+/--
+info: 'Model.Euclidean.not_between_of_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.not_between_of_between
+
+/--
+info: 'Model.Euclidean.on_line_of_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.on_line_of_between
+
+/--
+info: 'Model.Euclidean.on_line_of_between_ends' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.on_line_of_between_ends
+
+/--
+info: 'Model.Euclidean.between_of_between_left' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.between_of_between_left
+
+/--
+info: 'Model.Euclidean.between_of_between_right' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.between_of_between_right
+
+/--
+info: 'Model.Euclidean.between_cases' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.between_cases
+
+/--
+info: 'Model.Euclidean.not_between_of_between_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.not_between_of_between_between
+
+/--
+info: 'Model.Euclidean.len_add_of_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.len_add_of_between
+
+/--
+info: 'Model.Euclidean.circle_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.circle_eq
+
+/--
+info: 'Model.Euclidean.on_circle_of_len_eq' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.on_circle_of_len_eq
+
+/--
+info: 'Model.Euclidean.inside_of_len_lt' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.inside_of_len_lt
+
+/--
+info: 'Model.Euclidean.len_lt_of_inside' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.len_lt_of_inside
