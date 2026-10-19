@@ -32,11 +32,13 @@ lake build Audit
 lake env lean Certificate/Facts.lean
 python3 scripts/check_acceptance.py           # every item, in about two minutes
 python3 scripts/check_acceptance.py --quick   # the kernel replay and the model tests not run
+python3 scripts/check_acceptance.py --json verdicts.json   # every verdict as JSON as well
+python3 scripts/check_acceptance.py --compare main.json verdicts.json   # no check run
 ```
 
 It writes [the report](reports/acceptance-books-I-III.md): a table of items by book, a table
 of every proposition against every item, and every failure, each with what to do about it.
-It changes no other file. It exits 0 only when every item passes and every check ran; 1
+It changes no other file, save the verdicts `--json` asks for. It exits 0 only when every item passes and every check ran; 1
 when anything fails or was not run (a check not run is not a pass); and 2 when it cannot
 begin. It needs Python 3.11 or later, `lake` on the PATH, and the commits the records name,
 so a full clone rather than a shallow one.
@@ -48,10 +50,49 @@ proposition or book whose file it names; and `render.py`'s functions, which rege
 pages in memory to compare them with the files. An item passes only when the checks it
 names pass for that proposition, book or edition.
 
-It is not yet a step of CI; the coordinator decides when it becomes a required one. A CI
-step would fetch the whole history (`fetch-depth: 0`), for the records' commits, and would
-change, together, the CI workflow, the sequence in [WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision),
-section 8, and the `CHECKS` list of `scripts/safe_push.py`, which runs that sequence.
+`--json` writes every item's verdict, `pass`, `fail` or `not run`, with each failure's
+messages, beside the report. `--compare` runs no check: it reads two such files, main's
+first, and exits 1 when an item that passes in the first does not pass in the second (a
+fail, a check not run, or an item missing), listing each with why; 0 when every pass holds;
+and 2 when a file is not one `--json` wrote, or the two were written by different copies of
+the script, which need not judge alike. CI uses both ([In CI](#in-ci)).
+
+## In CI
+
+CI's `acceptance` job runs the script on every pull request, with the whole history
+(`fetch-depth: 0`) for the records' commits, and keeps the reports as an artifact of the
+run, named `acceptance`: the pull request's (`report.md`, `verdicts.json`) and main's
+(`main-report.md`, `main.json`). The failures it finds are reported, item by item, and do
+not by themselves fail the job: until the consolidation release, the job fails only for an
+item that already passes on main and does not pass on the pull request. **A pass may not
+turn into a fail.** In three steps:
+
+1. The script checks the pull request, as CI checks it out (the merge commit of the pull
+   request into main), every item, and writes its verdicts with `--json`.
+2. It checks main, the merge commit's first parent, in a worktree beside it, after a build
+   of its own, with the pull request's own checks copied in (`scripts/`, `tests/`,
+   `Certificate/`, `review/SCHEMA.md` and `review/terms.toml`), so that one copy of the
+   checks judges both. A check made stricter, which lands in a pull request of its own,
+   before the content it judges ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests),
+   section 10), then fails main as it fails the pull request, and holds nothing back.
+   Main's run is `--quick`: the kernel replay and the model tests (E1 and E4) are what CI's
+   `check` and `model` jobs hold on every pull request.
+3. `--compare` sets main's verdicts beside the pull request's, and fails for each item that
+   passes on main and does not pass on the pull request.
+
+**The full gate.** The consolidation release's pull request switches it on: it sets
+`ACCEPTANCE_GATE`, in the CI workflow, from `ratchet` to `full`, a change to a protected
+file with its decisions entry; from then on the job skips main, and any failure of any item
+fails it. That is step 9 of [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released),
+section 10: the checklist passes in CI with no failures.
+
+The job is not yet a required check: the ruleset on main and `REQUIRED_CHECKS` in
+`scripts/safe_push.py` name `check`, `model` and `negative`, and making `acceptance` one is
+the owner's call. Even so, `git safe-push --merge` refuses a pull request while any of its
+checks fails or is still running, so a red `acceptance` already holds a merge there. The
+pre-flight does not run the script, since the job builds main beside the pull request;
+like the `formal-model` job, it is CI's alone ([WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision),
+section 8).
 
 ## For each proposition
 
@@ -205,8 +246,8 @@ section 10, step 9): the checklist with no failures, the independent audit, and 
 outside reading. The checklist is this page. The independent audit, by a model family that
 wrote none of the work, reads the [review] items afresh (brief 0005, stage 6), and its
 evidence goes under `docs/reports/acceptance/`. The cold outside reading scores the
-tagged candidate. On the candidate commit CI is green, with `check`, `model` and
-`negative`; the release notes are drafted from the generated summaries; and the owner
+tagged candidate. On the candidate commit CI is green, with `check`, `model`,
+`negative`, and `acceptance` under its full gate; the release notes are drafted from the generated summaries; and the owner
 approves them before the tag.
 
 The check that every Lean name a catalogue gives is declared, by asking Lean itself (B2,

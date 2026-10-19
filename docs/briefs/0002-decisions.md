@@ -1315,3 +1315,38 @@ findings:
   [`scripts/safe_push.py`](../../scripts/safe_push.py), still name `check`, `model` and
   `negative`, and making `formal-model` required, as the decision of 18 October foresees
   once the package builds, is the owner's call.
+
+## 19 October 2026
+
+- **The acceptance checklist in CI, held to what main passes
+  ([#35](https://github.com/jackChallis/stoicheia/issues/35)).** A new job, `acceptance`, in
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), runs
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) on every pull request,
+  with the whole history for the records' commits, and keeps its reports as an artifact of
+  the run. Until the consolidation release it fails only for an item that already passes on
+  main and does not pass on the pull request: a pass may not turn into a fail, while the
+  failures main still has (742 at #111) are reported and hold nothing back. Main is checked
+  beside the pull request, in a worktree of the merge commit's first parent, with the pull
+  request's own checks copied in (`scripts/`, `tests/`, `Certificate/`, `review/SCHEMA.md`
+  and `review/terms.toml`), so that one copy of the checks judges both, and a check made
+  stricter, which lands on its own before the content it judges, holds nothing back. Main's
+  run leaves out the kernel replay and the model tests (E1 and E4), which the `check` and
+  `model` jobs hold on every pull request. The script gains two options: `--json`, which
+  writes every item's verdict beside the report, and `--compare MAIN PR`, which runs no
+  check and exits 1 for each item that passes in MAIN and does not pass in PR (a fail, a
+  check not run, or an item missing), and 2 for a file `--json` did not write, or for two
+  files written by different copies of the script.
+  [`tests/test_check_acceptance.py`](../../tests/test_check_acceptance.py) (new) puts the
+  comparison to small files of verdicts, and the job runs it before the checker. The full
+  gate is one line of the workflow, `ACCEPTANCE_GATE: ratchet`, which the consolidation
+  release's pull request sets to `full`: from then on the job skips main, and any failure
+  fails it, as step 9 of [WORKFLOW](../WORKFLOW.md), section 10, asks. Nothing is loosened:
+  no other job, check, test or expectation changes, and without the new options the
+  script's verdicts, report and exit status are as before. The job is not a required check:
+  the ruleset on main and `REQUIRED_CHECKS` in
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), unchanged, still name `check`,
+  `model` and `negative`, and making `acceptance` one is the owner's call; even so,
+  `git safe-push --merge` refuses a pull request while any of its checks fails or is still
+  running. The pre-flight's `CHECKS` are unchanged too, since the job builds main beside the
+  pull request: like `formal-model`, it is CI's alone. [ACCEPTANCE](../ACCEPTANCE.md), in a
+  new section, "In CI", and [WORKFLOW](../WORKFLOW.md), sections 8 and 10, say so.

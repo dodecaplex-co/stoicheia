@@ -303,7 +303,7 @@ python3 scripts/check_links.py
 ```
 
 Review the generated differences and commit them with their sources, so that regenerating
-leaves them unchanged and the `git status` line prints nothing. Three more jobs run on
+leaves them unchanged and the `git status` line prints nothing. Four more jobs run on
 their own, each in isolation:
 
 ```sh
@@ -311,12 +311,23 @@ python3 scripts/negative_tests.py      # CI's `negative` job, after lake build a
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
                                        # CI's `formal-model` job: the formal model, with Mathlib
+python3 -I tests/test_check_acceptance.py && python3 scripts/check_acceptance.py
+                                       # CI's `acceptance` job, on every pull request, after
+                                       # lake build, lake build Audit and Facts.lean
 ```
+
+The `acceptance` job checks the pull request against the [acceptance
+checklist](ACCEPTANCE.md) and keeps its report as an artifact. It checks main as well,
+with the pull request's own checks, and until the consolidation release it fails only
+when an item that passes on main does not pass on the pull request: a pass may not turn
+into a fail. The consolidation release's pull request switches on the full gate, under
+which any failure fails it ([ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci)).
 
 `scripts/safe_push.py` runs the first two groups on the head commit of every pull request
 (section 10), so a change to them is made there too, and in the CI workflow. It leaves the
-`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files; its merge
-gate still waits for that job, like every other ([model/README.md](../model/README.md#the-ci-job)).
+`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files, and the
+`acceptance` job, since it builds main beside the pull request; its merge gate still waits
+for both, like every other ([model/README.md](../model/README.md#the-ci-job)).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -409,7 +420,10 @@ looked into.
    Books I–III, whose records came after their proofs, reach it in brief 0005's stage 5.
 8. **A read-through.**
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
-   the independent audit agrees, and a cold outside reading scores the book.
+   the independent audit agrees, and a cold outside reading scores the book. CI's
+   `acceptance` job runs the checklist on every pull request; until the consolidation
+   release it holds each to what main already passes, and that release's pull request
+   switches on its full gate, no failures (section 8).
 10. **Release.** The notes are drafted from the generated summaries, Jack approves them, and
     the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up to date: the status
     board, the lessons, the costs.
