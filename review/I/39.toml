@@ -36,6 +36,6 @@ note = "AE is drawn level, as the proof supposes; Heath draws AD level."
 
 [review]
 stage = "exceptions"
-commit = "ea2f15e"
-reviewer = "GPT-6 Astra, independent reader"
-lean = "sha256:c10d7f21e1ebb2f3"
+commit = "b0db4b78"
+reviewer = "GPT-5 Codex, independent reader"
+lean = "sha256:ed110b7f428be948"

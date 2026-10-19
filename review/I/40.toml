@@ -35,6 +35,6 @@ note = "F is drawn between C and D, with AF level, as the proof supposes; Heath 
 
 [review]
 stage = "exceptions"
-commit = "ea2f15e"
-reviewer = "GPT-6 Astra, independent reader"
-lean = "sha256:666cb6b745c5ee9d"
+commit = "b0db4b78"
+reviewer = "GPT-5 Codex, independent reader"
+lean = "sha256:42c6b5725278f449"
