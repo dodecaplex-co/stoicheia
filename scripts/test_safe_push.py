@@ -1205,7 +1205,8 @@ import safe_push
 action, origin, target = sys.argv[2], sys.argv[3], sys.argv[4]
 class Clock:
     # STOICHEIA_TEST_CLOCK: a stand-in for safe_push's clock, time.time and time.sleep, by
-    # which it times its steps and its waits (datetime, which only stamps the log, stays).
+    # which it times its steps and its waits (datetime, which only stamps the log and the
+    # pre-flight's record, stays).
     # It never reads the wall clock and never waits. "still": time stands, but for the
     # sleeps; "leap": each reading is an hour after the last, past every deadline safe_push
     # keeps, as on a machine so loaded that each step takes an hour.
@@ -2907,8 +2908,9 @@ class InterruptedAfterThePush(Edge):
     None of these depends on time (#95): each runs through DRIVER on its clock, which never
     reads the wall clock and never waits, twice, once with time standing still and once
     leaping an hour at each reading, past every deadline safe_push keeps, and asks the same
-    outcome of both; and DRIVER runs the harness committed at BASE, so that the run is
-    origin/main's harness, never handed over to it out of DRIVER's reach."""
+    outcome of both, its reason included, so that neither clock can reach exit 3 by another
+    path; and DRIVER runs the harness committed at BASE, so that the run is origin/main's
+    harness, never handed over to it out of DRIVER's reach."""
 
     CLOCKS = ("still", "leap")
 
@@ -2939,7 +2941,7 @@ class InterruptedAfterThePush(Edge):
                 r = self.drive("watch-interrupt", clock)
                 out = r.stdout + r.stderr
                 self.assertEqual(r.returncode, 3, out)
-                self.assertIn("pushed; CI not followed", out)
+                self.assertIn("Pushed; CI not followed: interrupted (a test interruption)", out)
                 self.assertNotIn("Interrupted:", out)
                 self.assertEqual(self.origin_branch(), sha)
                 self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
@@ -2983,7 +2985,8 @@ class InterruptedAfterThePush(Edge):
                 hook.unlink()
                 out = r.stdout + r.stderr
                 self.assertEqual(r.returncode, 3, out)
-                self.assertIn("Pushed; CI not followed", out)
+                self.assertIn("Pushed; CI not followed: `git ls-remote origin refs/heads/"
+                              f"{BRANCH}` failed: fatal: unable to access origin", out)
                 self.assertNotIn("REFUSED", out)
                 self.assertEqual(self.origin_branch(), sha)
                 self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
