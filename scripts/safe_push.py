@@ -52,8 +52,8 @@ order, and the first that fails stops it with a message saying why:
    - `Certificate/axioms.lock` is unchanged, unless 0002-decisions.md gains a new line
      mentioning the lock;
    - a protected path (PROTECTED, below, as docs/WORKFLOW.md lists them) changes only
-     with a new line in 0002-decisions.md naming each file changed, and the pull request
-     then carries the label `security-review`;
+     with a new line in 0002-decisions.md naming each file changed by its whole path, at
+     either end, and the pull request then carries the label `security-review`;
    - every changed file under `heath/` carries, in the change, a comment naming a scan
      leaf of its own pages, as origin/main's copy of the file lists them;
    - no review record is stale, and the generated pages are current (check_fidelity.py
@@ -1285,9 +1285,11 @@ def guard_protected(repo, base, sha, rep: Report) -> list[str]:
     # The path whole, from the repository's root, or from the decisions page by a relative
     # link (../../); never the tail of a longer path, so that a line naming
     # tests/model/lock.sha256 names no model/lock.sha256, nor one naming
-    # model/lakefile.toml the root's lakefile.toml.
+    # model/lakefile.toml the root's lakefile.toml; nor its head, so that a line naming
+    # Audit.lean.orig names no Audit.lean, though Audit.lean. ending a sentence, or
+    # Audit.lean's, does.
     def named(path):
-        pattern = re.compile(r"(?<![\w/.-])(?:\.\.?/)*%s(?![\w/-])" % re.escape(path))
+        pattern = re.compile(r"(?<![\w/.-])(?:\.\.?/)*%s(?!\.?[\w/-])" % re.escape(path))
         return gains(decisions, lambda text: len(pattern.findall(text)))
 
     unnamed = [p for p in files if not named(p)]

@@ -1105,7 +1105,11 @@ findings:
   it was before they were protected. A protected path is now named only whole, from the
   root or by a relative link, so a line naming `tests/model/lock.sha256` no longer counts
   for `model/lock.sha256`, nor one naming `model/lakefile.toml` for the root's
-  `lakefile.toml`. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains
-  the cases: each new path refused without its line, a longer path's mention refused, a
-  relative link accepted, and the new paths still judged. Every refusal it made before
-  still stands.
+  `lakefile.toml`. Nor is a path named by a longer one at its other end, so a line naming
+  `Audit.lean.orig` does not count for `Audit.lean`; and a line edited in place so that it
+  names a different file now counts for the file it newly names (from
+  `model/lakefile.toml` to `lakefile.toml`, say), which the old pattern refused, because
+  it read the root's `lakefile.toml` in the removed line too.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains the cases: each new
+  path refused without its line, a longer path's mention refused, a relative link
+  accepted, and the new paths still judged. Every refusal it made before still stands.

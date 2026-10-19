@@ -2235,11 +2235,14 @@ class ProtectedPaths(Edge):
     def test_decision_naming_a_longer_path_does_not_count(self):
         # #96: a protected path is named whole. A line naming tests/model/lock.sha256 does
         # not name model/lock.sha256, nor one naming model/lakefile.toml the root's
-        # lakefile.toml, nor one naming model/lean-toolchain the root's lean-toolchain.
+        # lakefile.toml, nor one naming model/lean-toolchain the root's lean-toolchain; and
+        # at the other end, a line naming Audit.lean.orig does not name Audit.lean.
         for path, other in (("model/lock.sha256", "tests/model/lock.sha256"),
                             ("lakefile.toml", "model/lakefile.toml"),
                             ("lean-toolchain", "model/lean-toolchain"),
-                            (".gitignore", "model/.gitignore")):
+                            (".gitignore", "model/.gitignore"),
+                            ("Audit.lean", "Audit.lean.orig"),
+                            ("model/lakefile.toml", "model/lakefile.toml.bak")):
             with self.subTest(path=path):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 changes = {path: self.text(path) + "\n# for the test\n"}
@@ -2249,11 +2252,13 @@ class ProtectedPaths(Edge):
                 self.assertEqual(self.guard(out, "protected paths"), "FAIL", out)
 
     def test_decision_naming_the_path_by_a_relative_link_counts(self):
-        # From the decisions page, docs/briefs/, a link reaches the root through ../../.
+        # From the decisions page, docs/briefs/, a link reaches the root through ../../. A
+        # path that ends a sentence, its period after it, is named whole too.
         for path, line in (
                 ("model/lock.sha256", "[the model's hash](../../model/lock.sha256) is renewed."),
                 ("Audit/Overlaps.lean", "`Audit/Overlaps.lean` gains a lemma."),
-                (".gitignore", "[the rule](../../.gitignore) is added.")):
+                (".gitignore", "[the rule](../../.gitignore) is added."),
+                ("Audit.lean", "The audit's root is Audit.lean.")):
             with self.subTest(path=path):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 changes = {path: self.text(path) + "\n-- for the test\n"}
