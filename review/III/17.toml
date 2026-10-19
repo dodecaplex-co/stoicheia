@@ -1,11 +1,8 @@
 # review/III/17.toml
 [statement]
-scope = "restricted"
-hypotheses = [
-  "the given point A is outside the circle (`hA : OutsideCircle A BCD`), which leaves out a point on the circumference",
-]
-note = "Proved for a point outside the circle; a point on the circumference, which Euclid leaves to III.16's porism, is not covered."
-short = "a point outside the circle"
+scope = "full"
+note = "With its companion: `Prop17.general` draws a touching straight line from any point not within the circle; `Prop17` keeps A outside."
+companions = ["III.17 general"]
 fingerprint = "sha256:32b9217d50bc0d85"
 
 [route]
@@ -13,7 +10,15 @@ kind = "euclid"
 
 [representation]
 tags = ["centre-given"]
-note = "The circle comes with a centre. III.1, which takes it, needs two points of the circle, and the proof finds them on the straight line from the centre to A."
+note = "The circle comes with a centre. III.1, which takes it, needs two points of the circle, and the proof finds them on the straight line from the centre to A. The companion concludes Definition III.2's `Touches A X BCD`, a straight line named by A and another point X; its point of contact is not returned beside X, and may be A itself (`Touches.contact` reads it off). Not being within the circle is the condition for a solution: from a point within, no straight line touches (`Prop17.inside`, a lemma beside the proposition)."
+
+[[passage]]
+at = "Let A be the given point, and BCD the given circle"
+kind = "case"
+note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page."
+
+[figure]
+case = "A outside the circle, as in Heath's figure"
 
 [review]
 stage = "exceptions"
