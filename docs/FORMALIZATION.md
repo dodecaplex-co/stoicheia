@@ -334,7 +334,8 @@ dependencies.
   - `native_decide`, `bv_decide` and `bv_check`, and `decide` with its `native` option,
     have the compiler vouch for a proof in the kernel's place; since `decide +native`,
     `decide (native := …)` and a whole configuration given by `(config := …)` all set
-    that option, the word `native`, wherever it stands, and `(config := …)` are refused;
+    that option, the word `native`, wherever it stands, and `(config := …)`, spelled
+    `config` or `«config»`, are refused;
   - `set_option debug.…`, and its escaped spelling `set_option «debug».…`, which Lean
     reads the same way: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry` and
     its kin put `sorry` in place of a proof;
@@ -377,9 +378,9 @@ one of them after another command on its line; an axiom missing from the lock, a
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
 and I.8; a later citation, one of them named only in a helper's statement; every
 forbidden command, and an attribute for each ending and prefix the scan knows, in each of
-`Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a `sorry` in a complete book; and a primitive word no longer opaque.
-Book Zero's imports and a complete book's missing figure or mishnah have no planted break
-yet.
+`Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a `sorry` in a
+complete book; and a primitive word no longer opaque. Book Zero's imports and a complete
+book's missing figure or mishnah have no planted break yet.
 
 The first two policies hold in `Staging/` (section 6) and in `Audit/` as well: a staged
 file or an audit lemma declares no axiom and uses none of the forbidden commands. Nothing
@@ -389,10 +390,10 @@ there reaches the certificate, so the source scan is what enforces them:
 `Elements/Foundations/` and every command and attribute the list above names. It reads
 words, not Lean's grammar, so it catches a slip but not a command disguised from it on
 purpose, nor an attribute it does not list: review still reads every staged file and
-audit lemma. In `Elements/` the certificate reads the axioms from
-Lean itself as well. The checks' own Lean, `Certificate/Facts.lean`, which writes
-`facts.json`, is not scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section
-10), changed only with a decisions entry and a security review.
+audit lemma. In `Elements/` the certificate reads the axioms from Lean itself as well.
+The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is not
+scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only
+with a decisions entry and a security review.
 
 ## 8. Completion claims
 

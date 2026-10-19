@@ -189,6 +189,8 @@ PLANTED_COMMANDS = (
     ("native", "theorem planted_value : 11 * 11 = 121 := by decide (native := Bool.true)"),
     ("(config :=", "theorem planted_whole : 12 * 12 = 144 := "
      "by decide (config := ⟨false, true, true, false⟩)"),
+    ("(«config» :=", "theorem planted_escaped_config : 13 * 13 = 169 := "
+     "by decide («config» := ⟨false, true, true, false⟩)"),
     ("bv_decide", "theorem planted_bv (x y : BitVec 8) : x * y = y * x := by bv_decide"),
     ("bv_check", 'theorem planted_lrat (x : BitVec 8) : x = x := by bv_check "planted.lrat"'),
     ("set_option debug.",

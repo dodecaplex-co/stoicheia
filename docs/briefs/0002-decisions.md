@@ -653,10 +653,9 @@ findings:
   already covered `debug.skipKernelTC`, and with it `debug.byAsSorry`,
   `debug.proofAsSorry` and `debug.terminalTacticsAsSorry`. The source check for an axiom
   outside `Elements/Foundations/` now finds the word anywhere in a line, not only at its
-  start:
-  Lean reads `example : True := trivial axiom planted : False` as two commands, the second
-  an axiom, which the old check missed (in `Elements/` the certificate caught it all the
-  same). Each finding names its file and line. Nothing is loosened: the scan refuses all
+  start: Lean reads `example : True := trivial axiom planted : False` as two commands, the
+  second an axiom, which the old check missed (in `Elements/` the certificate caught it
+  all the same). Each finding names its file and line. Nothing is loosened: the scan refuses all
   it refused before, in more places, and on main it refuses nothing.
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains test 8, which
   plants every forbidden command, and an axiom twice, once after another command on its
@@ -682,8 +681,8 @@ findings:
   hold for good, an allowlist of the attributes the edition uses (main's Lean uses only
   `@[simp]` and `@[inherit_doc]`) or refusing imports from outside the project (each of
   these routes needs an import of Lean's own modules, and on Lean 4.35 `simproc` and
-  `set_library_suggestions` fail without one), is left for the owner's decision. The protected
-  files it changes are [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) and
+  `set_library_suggestions` fail without one), is left for the owner's decision. The
+  protected files it changes are [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) and
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py). The README's table of
   checks, and the name of CI's step for the negative tests, can follow in a pull request
   of their own.
