@@ -12,12 +12,12 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and the first
 laws, translated by hand for now and proved in the plane: the four circle-intersection
-rules, the first of the hard groups, and the eight magnitude laws, which are easy in the
-plane but test the translation where it is most delicate. That is 12 of the 87. The rest
-of the laws, and the generator that will translate them from the library's own
-declarations, are to come. Until every locked law is proved here, the evidence that the
-laws have a model remains MODEL.md's hand arguments and numerical tests, and this package
-is a milestone in progress.
+rules, the first of the hard groups, the eight magnitude laws, which are easy in the
+plane but test the translation where it is most delicate, and the rule of superposition.
+That is 13 of the 87. The rest of the laws, and the generator that will translate them
+from the library's own declarations, are to come. Until every locked law is proved here,
+the evidence that the laws have a model remains MODEL.md's hand arguments and numerical
+tests, and this package is a milestone in progress.
 
 ## Building it
 
@@ -44,8 +44,11 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
+| [Model/Laws/superposition.lean](Model/Laws/superposition.lean) | the rule of superposition, and the words `Collinear` and `Triangle` it reaches, **by hand** | `Signature` |
+| [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | superposition proved in the plane: an isometry, with a reflection when the side needs one | Mathlib |
 | [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane rests on | every module of `Model` |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration | `Elements.Foundations`, `Model.Hand` |
+| [Check/Superposition.lean](Check/Superposition.lean) | the hand translation of superposition compared with the library's declaration | `Elements.Foundations`, `Model.Laws.superposition` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib.
@@ -210,8 +213,10 @@ the original means. Three checks do that.
   its two points exchanged.) Today this covers the 12 laws translated by hand and 11
   defined words: the eight behind the magnitudes (these laws reach `Magnitude` and the
   instances for `+`, `0` and `<`; `Length`, `Angle`, `Area` and `≤` are checked ahead of
-  the laws that use them) and the three the circle laws reach. The generator will write
-  one such line for each of the 87 laws and each defined word they reach.
+  the laws that use them) and the three the circle laws reach;
+  [Check/Superposition.lean](Check/Superposition.lean) adds the rule of superposition and
+  the two words it reaches, `Collinear` and `Triangle`. The generator will write one such
+  line for each of the 87 laws and each defined word they reach.
 - **The round trip, by syntax.** The generator also translates each result back and
   compares it with the original expression exactly, which is stricter than the kernel's
   check: it notices a translation that is right only after unfolding, and a binder made
@@ -296,7 +301,7 @@ come before the easy laws are shared out:
 | Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides` | to do |
 | Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | to do |
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
-| Superposition | an isometry, with a reflection where the side needs one; and the soundness of whichever restricted rule is adopted | to do |
+| Superposition | `superposition`, as locked: an isometry built in the plane, with a reflection where the side needs one | proved here; a restricted rule, if one is adopted in its place, will need its own proof |
 | Areas | `area_congruent`, `area_add_of_between`, `between_of_area_add`, with collinear and repeated corners | to do |
 | Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | to do |
 

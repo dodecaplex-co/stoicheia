@@ -7,4 +7,6 @@ public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
+public import Model.Laws.superposition
+public import Model.Euclidean.Superposition
 public import Model.Audit

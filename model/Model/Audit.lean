@@ -7,6 +7,8 @@ public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
+public import Model.Laws.superposition
+public import Model.Euclidean.Superposition
 
 /-!
 # What the model's proofs rest on
@@ -110,3 +112,9 @@ info: 'Model.Euclidean.exists_centre' depends on axioms: [propext, Classical.cho
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.exists_centre
+
+/--
+info: 'Model.Euclidean.superposition' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.superposition
