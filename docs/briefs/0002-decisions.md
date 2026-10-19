@@ -1103,3 +1103,15 @@ findings:
   and links to the table follow separately (keep_apart). Generated API documentation
   (doc-gen4, in CI) comes in a change of its own, and nothing of it is published without
   the owner's OK.
+
+- **Using the library and keeping its names.** The table of names lands first;
+  its guide and links follow separately (keep_apart). The README gains "Use it": the `require` for a
+  `lakefile.toml`, pinned to the release tag `book-III`, its one-line form for a
+  `lakefile.lean`, and a short example, each built in a fresh project against the tag on
+  18 October; and, for a project that already has a `lake-manifest.json`,
+  `lake update stoicheia` first, since Lake 4.35's `lake build` does not add a new
+  dependency to a manifest that exists. FORMALIZATION, section 2, gains "Names, and how they change": how names are
+  made; a released name never renamed or removed without a deprecated alias for one
+  release; a changed statement keeping its proposition's name, with the old one kept as a
+  companion where citers need it; and the release notes listing every name deprecated and
+  every statement changed.
