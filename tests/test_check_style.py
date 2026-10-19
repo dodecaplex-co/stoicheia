@@ -33,7 +33,9 @@ section 8, "A guard defect gets a regression"). Python 3.11 or later; standard l
 
 from __future__ import annotations
 
+import os
 import sys
+import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -533,6 +535,25 @@ class Scopes(unittest.TestCase):
     test_done_cases.__doc__ = (f"A rule of a listed file with no finding of it left is "
                                f"reported as done, and the entry once all its rules are, in "
                                f"{len(DONE_CASES)} more reach cases")
+
+    def test_done_without_lean(self):
+        """S12 is not reported done when Lean could not be run, as without `lake`"""
+        name = style.NamedText(GAPS, "`Unknown.name`", "Elements")
+        saved = (os.environ.get("PATH"), list(style.lean_short))
+        try:
+            with tempfile.TemporaryDirectory() as empty:
+                os.environ["PATH"] = empty   # no `lake` to be found
+                style.lean_short.clear()
+                done = reach_run(GAPS, "Plain words.", {"catalogue"}, "S7 S12", False, lambda: (
+                    style.lean_probe({"Elements": {"Unknown.name": [name]}}, ["Elements"]),
+                    sorted(r for r, *_ in style.failures), style.reach_done(False)))
+        finally:
+            if saved[0] is None:
+                os.environ.pop("PATH", None)
+            else:
+                os.environ["PATH"] = saved[0]
+            style.lean_short[:] = saved[1]
+        self.assertEqual(done, (0, ["S12"], [(GAPS_REL, ["S7"], False)]))
 
 
 if __name__ == "__main__":

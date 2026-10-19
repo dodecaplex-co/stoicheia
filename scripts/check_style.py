@@ -53,8 +53,8 @@ listed its findings of those rules are reported (D16) and fail nothing; every ot
 finding of the reach fails at once, in a listed file as in any other, and so does every
 finding a file was held to before. A rule of an entry whose file has no finding of it left
 is reported as done, for the change that takes the rule out of the entry, or the entry out
-once each of its rules is done; under `--no-lean`, S12, which alone asks Lean, is not. Once
-no entry is left, the list goes.
+once each of its rules is done; S12, which alone asks Lean, is not, under `--no-lean` or
+when Lean could not be asked. Once no entry is left, the list goes.
 
 "Outside quotations" means with every "…" span (within one paragraph), every link
 target `](…)`, every code span and every fenced code block blanked first. HTML comments
@@ -225,6 +225,7 @@ REACH_PENDING: dict[str, tuple[str, str]] = {
 failures: list[tuple[str, str, int, str]] = []   # (rule, file, line, message)
 reports: dict[str, list[tuple[str, int, str]]] = defaultdict(list)
 reach_found: set[tuple[str, str]] = set()   # (file, rule) of REACH_PENDING with a finding
+lean_short: list[str] = []   # why S12 did not put every name to Lean, when it did not
 
 RULES = {
     "S1": "an em dash",
@@ -1168,18 +1169,21 @@ def lean_probe(groups: Groups, imports: list[str]) -> int:
             run = subprocess.run(["lake", "env", "lean", str(probe)], cwd=ROOT,
                                  capture_output=True, text=True, timeout=900)
         except (OSError, subprocess.TimeoutExpired) as e:
+            lean_short.append("could not run Lean")
             fail("S12", SCRIPT, 0, f"could not run Lean ({e}); build the tree with "
                  "`lake build`, or pass --no-lean")
             return 0
     out = run.stdout + run.stderr
     errors = list(re.finditer(rf"{re.escape(probe.name)}:(\d+):\d+: error(?:\([^)]*\))?: (.*)", out))
     if run.returncode != 0 and not errors:
+        lean_short.append("Lean failed before checking a name")
         fail("S12", SCRIPT, 0, "Lean failed before checking a name (is the tree "
              "built? run `lake build`, or pass --no-lean):\n      " + out.strip()[:400])
         return 0
     for m in errors:
         line = int(m.group(1))
         if line not in where:
+            lean_short.append("Lean failed outside the names")
             fail("S12", SCRIPT, 0, f"Lean: {m.group(2)} (is the tree built? run "
                  "`lake build`, or pass --no-lean)")
             continue
@@ -1890,11 +1894,13 @@ def check_figures(required: bool) -> None:
 def reach_done(no_lean: bool = False) -> list[tuple[str, list[str], bool]]:
     """The entries of REACH_PENDING with a rule whose file has no finding of it left,
     each as (the file, those rules, whether they are all its rules), for D16 to report as
-    done. Under `no_lean`, S12, which alone asks Lean, found nothing, so it is never done."""
+    done. S12 alone asks Lean: under `no_lean`, or when Lean could not be asked of every
+    name (`lean_short`), it found nothing it could have found, so it is never done."""
+    unasked = no_lean or bool(lean_short)
     done = []
     for f, (pending, _) in sorted(REACH_PENDING.items()):
         rules = pending.split()
-        left = [r for r in rules if (f, r) not in reach_found and not (no_lean and r == "S12")]
+        left = [r for r in rules if (f, r) not in reach_found and not (unasked and r == "S12")]
         if left:
             done.append((f, left, len(left) == len(rules)))
     return done
@@ -1969,6 +1975,7 @@ def main() -> int:
         print("note: S12 skipped (--no-lean); the Lean names of the texts it reads were not "
               "checked")
     elif shutil.which("lake") is None:
+        lean_short.append("`lake` is not on the PATH")
         fail("S12", SCRIPT, 0, "`lake` is not on the PATH; build the tree, or pass --no-lean")
     else:
         names, unchecked = check_lean_names(named)

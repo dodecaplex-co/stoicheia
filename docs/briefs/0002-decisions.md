@@ -1340,14 +1340,14 @@ findings:
   - S12 beyond the mishnah, in the prose, the Review notes, the catalogues, the Rendered
     docstrings and the front pages, each text with its book's namespace (every book's for
     a text with none, and the foundations' for the Rendered docstrings), and the name
-    before the colon of a backticked `name : type`, which B2 of
-    `scripts/check_acceptance.py`, unchanged, now reads in the gap catalogues too, as S12
-    does, since it takes their names from `check_style.lean_names`. `NOT_DECLARED` lists
-    the two tactics and the three fields of facts.json it cannot `#check`, each with its
-    reason, and fails an entry that no text uses any more. The overlap catalogue's audit
-    lemmas are put to Lean once `lake build Audit` has run, as CI runs it. The mishnah is
-    asked as it always was, every name with `import Elements` alone, and neither excuse
-    holds there;
+    before the colon of a backticked `name : type`, which B2 and E2 of
+    `scripts/check_acceptance.py`, unchanged, now read in the gap catalogues and the
+    overlap catalogue too, as S12 does, since they take their names from
+    `check_style.lean_names`. `NOT_DECLARED` lists the two tactics and the three fields
+    of facts.json it cannot `#check`, each with its reason, and fails an entry that no
+    text uses any more. The overlap catalogue's audit lemmas are put to Lean once
+    `lake build Audit` has run, as CI runs it. The mishnah is asked as it always was,
+    every name with `import Elements` alone, and neither excuse holds there;
   - S22, new: a code span of letters alone (`P`, `PQ`, `ABCD`), in all of these and the
     Lean notes. The owner's second comment on #66 asked that Book Zero's backticked pairs
     of letters be swept, or excepted in STYLE: they are swept, with the lone letters
@@ -1371,10 +1371,11 @@ findings:
   cases of `tests/test_check_style.py` show an em dash still failing in a listed file, and
   a listed file held at once to the rules it is not listed for. A rule of an entry whose
   file has nothing of it left is reported as done, rule by rule as the excuse is (S12
-  aside under `--no-lean`, which does not ask Lean), and comes out of its entry in a
-  change to the check, and the entry with its last rule; the list goes once it is empty.
+  aside when Lean is not asked, under `--no-lean` or for want of `lake`), and comes out
+  of its entry in a change to the check, and the entry with its last rule; the list goes
+  once it is empty.
   The protected files changed are [`scripts/check_style.py`](../../scripts/check_style.py),
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) (54 scope cases and 13
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (54 scope cases and 14
   reach cases), [`review/SCHEMA.md`](../../review/SCHEMA.md) and
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), whose comment on S12 now
   says what it reads. Astra read the first draft cold, through the Codex CLI, and found

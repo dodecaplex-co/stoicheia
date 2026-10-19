@@ -643,10 +643,11 @@ and fail nothing. Every other finding of the reach fails at once, in a listed fi
 any other, and every file is held to what it was held to before, so nothing is loosened.
 A rule of a listed file with no finding of it left is reported as done, and comes out of
 its entry in a change to the check, and the entry comes out once each of its rules has;
-under `--no-lean`, S12, which alone asks Lean, is not reported. A done rule cannot fail,
-since the change that mends a file may not change the check that judges it
-([WORKFLOW](WORKFLOW.md), section 10). Once no entry is left, the list goes. No file, and
-no rule of a file, is ever added to quiet a new finding: the text is mended.
+S12, which alone asks Lean, is not reported under `--no-lean`, or when Lean could not be
+run. A done rule cannot fail, since the change that mends a file may not change the check
+that judges it ([WORKFLOW](WORKFLOW.md), section 10). Once no entry is left, the list
+goes. No file, and no rule of a file, is ever added to quiet a new finding: the text is
+mended.
 
 ### The reviewer's checklist
 
