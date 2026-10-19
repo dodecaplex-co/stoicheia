@@ -1116,3 +1116,17 @@ findings:
   request has been sent yet; the accuracy bar Jev must meet on the set is the
   coordinator's to state before the first run, and `score --bar` counts it met only when
   every row of the set is answered and no request failed.
+
+- **The Jev calibration set.** The calibration set the brief describes is
+  [`docs/reports/acceptance/jev/calibration.jsonl`](../reports/acceptance/jev/calibration.jsonl)
+  (new), quoted from the files at `4d02d50`: fourteen rows, five seeded and nine controls.
+  Item 9's question, framed as the brief frames it, is asked of the I.40, II.1, III.14 and
+  III.24 statements as they stand before stages 2 to 4 move their new statements in, each
+  once labelled "full" (seeded) and once with its own record (a control), and of four full
+  statements with their records, each beside a seeded statement of its kind: I.39, I.6,
+  II.4 and III.3. Item 10's question is asked of I.41, once with a planted dummy citation
+  (I.37's result bound to `_` and never used, the step done by I.38: it compiles without a
+  warning, and its proof term still names I.37, so the certificate would list it) and once
+  as proved. It follows the client in a separate change (keep_apart). The examples in
+  `scripts/audit/jev.py` now name the calibration file; only that documentation changes,
+  with every check preserved. No request has been sent.
