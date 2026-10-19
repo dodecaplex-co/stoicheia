@@ -1,4 +1,4 @@
-import Staging.Stage4.Foot
+import Elements
 
 /-!
 # Staging: III.14 with diameters

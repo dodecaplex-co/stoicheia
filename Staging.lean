@@ -1,4 +1,3 @@
-import Staging.Stage4.Foot
 import Staging.Stage4.Prop14
 import Staging.Stage4.Prop15
 import Staging.Stage4.Prop25
