@@ -21,4 +21,9 @@
 # vocabulary: 13 new words, the arcs and segments with the structure's constructor and fields;
 # the 87 axioms and every word already locked are unchanged, byte for byte, so MODEL.md's
 # account stands as it was.
-cdf1645a48283ee7ed63eeff759e4e9aefb86ddd03c7d86df0c2cfaeb3fdcbd6  Certificate/axioms.lock
+#
+# Renewed on 18 October 2026, when the word of stage 4's statements (brief 0006) joined the
+# vocabulary: `Foot`, the foot of the perpendicular, which only the companions of III.14 and
+# III.15 reach; the 87 axioms and every word already locked are unchanged, byte for byte, so
+# MODEL.md's account stands as it was.
+e046aea2ee2794a4193805408b85bb5d1ffa3d2bb91a93b0ff5050e447f95cae  Certificate/axioms.lock

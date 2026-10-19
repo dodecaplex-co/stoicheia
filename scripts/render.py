@@ -1719,8 +1719,11 @@ FRONT_LEAN_III = {
         3: "`TouchesInternally α β C`: the circles meet at C, and no point of β falls outside "
            "α; `TouchesExternally α β C`: they meet at C, and no point is within both; "
            "`CirclesTouch α β C`: they touch one another in one of these ways",
-        4: "`‖E F‖ = ‖E G‖`, for the perpendiculars EF, EG from the centre E (III.14)",
-        5: "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15)",
+        4: "`‖E F‖ = ‖E G‖`, for the perpendiculars EF, EG from the centre E (III.14); "
+           "`Foot E A B F`: F is the foot of the perpendicular from E to AB, or E itself "
+           "when AB passes through E, so that a diameter is at no distance (III.14 general)",
+        5: "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15), "
+           "or for the feet H, K, `Foot` (III.15 nearer)",
         6: "`Arc`: a circle, the ends A, B of a straight line in it, and a point E naming "
            "its side, the segment AEB; its points, `InSegment`, and its circumference's, "
            "`OnArc`; segments that coincide, `Arc.Congruent` (III.24, III.26, III.28)",
