@@ -1344,27 +1344,30 @@ findings:
     and the three fields of facts.json it cannot `#check`, each with its reason, and fails
     an entry that no text uses any more. The overlap catalogue's audit lemmas are put to
     Lean once `lake build Audit` has run, as CI runs it;
-  - S22, new: a code span of letters alone (`PQ`, `ABCD`), in all of these and the Lean
-    notes. The owner's second comment on #66 asked that Book Zero's backticked letters be
-    swept, or excepted in STYLE: they are swept, in the text change that follows this one,
-    and STYLE, section 1, says that a step written over any letters writes them plain too.
+  - S22, new: a code span of letters alone (`P`, `PQ`, `ABCD`), in all of these and the
+    Lean notes. The owner's second comment on #66 asked that Book Zero's backticked pairs
+    of letters be swept, or excepted in STYLE: they are swept, with the lone letters
+    beside them, so that a sentence does not set P one way and PQ another, in the text
+    change that follows this one; and STYLE, section 1, says that a step written over any
+    letters writes them plain too, the Lean's variables among them.
 
   The hypotheses rule has one home, STYLE, section 1, "Hypotheses in words", as the
   owner's first comment on #66 asked, since the form in review/SCHEMA.md named a
   hypothesis by its local name where STYLE said words: the row for `hypotheses` and the
   worked example of [`review/SCHEMA.md`](../../review/SCHEMA.md), and the
   [proposition template](../templates/proposition.md), point to it, and S12 holds it.
-  The new reach is held file by file. On main at `89c5da4` it finds 484 things, 448 of them
-  S22's in the notes of Book Zero and the foundations, 25 of S7 and 11 of S12, in 31
-  files; `REACH_PENDING` lists those files, each with whoever mends it (the text change
-  after this one; stages 3 and 4; the records of Books I and II; the coordinator, for the
-  foundations), and reports their findings of the reach as D16 meanwhile. Every other file
+  The new reach is held file by file. On main at `89c5da4` it finds 1,173 things, 1,137 of
+  them S22's, nearly all in the notes of Book Zero and the foundations, 25 of S7 and 11 of
+  S12, in 37 files; `REACH_PENDING` lists those files, each with whoever mends it (the
+  text change after this one; stages 3 and 4; the records of Books I and II; the next
+  change to III.10 and III.19, with their records; the coordinator, for the foundations),
+  and reports their findings of the reach as D16 meanwhile. Every other file
   is held at once, and every file is held to all it was held to before: nothing is
   loosened, and two cases of `tests/test_check_style.py` show an em dash still failing in
   a listed file. An entry whose file has nothing left is reported as done, and comes out in
   a change to the check; the list goes once it is empty. The protected files changed are
   [`scripts/check_style.py`](../../scripts/check_style.py),
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) (26 scope cases and 5
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (27 scope cases and 5
   reach cases), [`review/SCHEMA.md`](../../review/SCHEMA.md) and
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), whose comment on S12 now
   says what it reads.

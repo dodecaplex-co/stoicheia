@@ -181,6 +181,11 @@ REACH_PENDING: dict[str, str] = {
     "docs/reports/read-through-01.md": "the change now writing the reports",
     # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
     "book/I/front.md": "render.py's FRONT_LEAN_I, after stage 3 (#25)",
+    # The notes of four proofs (S22): a change to the file needs its record read again.
+    "Elements/BookI/Prop08.lean": "the records of Books I and II (#29), with the record",
+    "Elements/BookII/Prop14.lean": "the records of Books I and II (#29), with the record",
+    "Elements/BookIII/Prop10.lean": "the next change to the file, with its record",
+    "Elements/BookIII/Prop19.lean": "the next change to the file, with its record",
     # Book Zero's notes (S22).
     "Elements/Figure/Angles.lean": "the text change that follows this one (#66)",
     "Elements/Figure/Areas.lean": "the text change that follows this one (#66)",
@@ -193,6 +198,7 @@ REACH_PENDING: dict[str, str] = {
     "Elements/Figure/Parallels.lean": "the text change that follows this one (#66)",
     "Elements/Figure/Rays.lean": "the text change that follows this one (#66)",
     "Elements/Figure/Rectangles.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Rectilineal.lean": "the text change that follows this one (#66)",
     "Elements/Figure/Sides.lean": "the text change that follows this one (#66)",
     "Elements/Figure/Triangles.lean": "the text change that follows this one (#66)",
     # The foundations' notes (S22), and the rendered docstrings of Transfer.lean (S7): the
@@ -204,6 +210,7 @@ REACH_PENDING: dict[str, str] = {
     "Elements/Foundations/Phrases.lean": "the coordinator, who owns the foundations",
     "Elements/Foundations/Postulates.lean": "the coordinator, who owns the foundations",
     "Elements/Foundations/Tacit/Transfer.lean": "the coordinator, who owns the foundations",
+    "Elements/Foundations/Words.lean": "the coordinator, who owns the foundations",
 }
 
 # ---------------------------------------------------------------------------------------
@@ -655,11 +662,12 @@ ITALIC_LETTER = re.compile(r"(?:^|[^*])(\*[A-Z]+[′₀-₉]*(?:" + LETTER_GAP +
                            r"(?:$|[^*])", re.M)
 TEX = re.compile(r"\\|\^\{|\$")
 LEAN_CANNOT = re.compile(phrase(r"\bLean (?:cannot|can't|can not)\b"), re.I)
-# S22: a code span holding letters alone, a run of two or more capitals (each with its
-# prime or subscript), or several runs apart by commas or spaces: `PQ`, `ABCD`, `AB, CD`.
-# Letters are plain (STYLE, section 1): no Lean name or expression is a run of capitals,
-# and a lone letter, `P`, may be one of the Lean's variables, so it is left alone.
-LETTER_RUN = r"(?:[A-Z][′'₀-₉]*){2,}"
+# S22: a code span holding letters alone: a capital or a run of capitals (each with its
+# prime or subscript), or several runs apart by commas or spaces: `P`, `PQ`, `ABCD`,
+# `AB, CD`. Letters are plain (STYLE, section 1), Heath's and those of a step written over
+# any letters alike, and the Lean's variables among them; no Lean name or expression of
+# ours is capitals alone.
+LETTER_RUN = r"(?:[A-Z][′'₀-₉]*)+"
 LETTERS_ONLY = re.compile(rf"[ \t]*{LETTER_RUN}(?:[ \t]*,?[ \t]+{LETTER_RUN})*[ \t]*")
 LETTERS_IN_CODE = re.compile(r"`([^`\n]+)`")
 

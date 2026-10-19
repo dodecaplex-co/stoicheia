@@ -81,11 +81,10 @@ for ranges (I.1–I.24, pp. 253–254). Straight quotation marks (section 5).
 **Lean notes** (the `/- … -/` remarks and the docstrings of helpers) read as the mishnah
 does. Each is a full sentence or two, and may say "we". Heath's letters are plain (AB, not
 `AB`: the page shows the Lean in a code block, where backticks print), and so are the
-letters of a step written once over any letters, as Book Zero's and the foundations' are
-(the straight line PQ, the circle ABCD): a code span of letters alone, two or more of them,
-fails **[checked]**, while a lone letter in backticks may stand for one of the Lean's
-variables (`P`). Backticks are for Lean names and expressions alone (`Prop30.meet`,
-`∠ A B C`), and hypotheses are said in words (below). A shared step is explained once,
+letters of a step written once over any letters, as Book Zero's and the foundations' are,
+the Lean's variables among them: the point P, the straight line PQ, the circle ABCD. A
+code span of letters alone fails **[checked]**. Backticks are for Lean names and
+expressions alone (`Prop30.meet`, `∠ A B C`), and hypotheses are said in words (below). A shared step is explained once,
 where it is first used or in the book's introduction, and pointed to elsewhere: "I.5
 (`Prop5.base`)", "as in III.1 (`Prop1.perpendicular`)". A note does not retell the
 mishnah: the note says how, the mishnah says why. Where the comments go, and what the `--`
@@ -599,7 +598,7 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
 | S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic), not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
-| S22 | Letters in backticks: a code span that holds only letters, a run of two or more capitals (each with its prime or subscript) or several such runs apart by commas or spaces, as `PQ`, `ABCD` or `AB, CD` (section 1, "Lean notes"). A lone letter, `P`, may be one of the Lean's variables, and is not read | Prose, Review notes, Catalogues, Other reports, Lean notes, Generated |
+| S22 | Letters in backticks: a code span that holds only letters, a capital or a run of capitals (each with its prime or subscript) or several such runs apart by commas or spaces, as `P`, `PQ`, `ABCD` or `AB, CD` (section 1, "Lean notes") | Prose, Review notes, Catalogues, Other reports, Lean notes, Generated |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 
