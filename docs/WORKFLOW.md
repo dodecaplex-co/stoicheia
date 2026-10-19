@@ -439,6 +439,17 @@ brief 0005), and a change to a protected path carries `security-review`. A pull 
 opens as a draft (unless `--ready` is given), and is marked ready when its reviews are
 done; `--merge` refuses a draft.
 
+**Trains.** Since every pull request must be up to date with main before it merges, and
+nearly every one touches the decisions page and the generated pages, reviewed branches can
+land together, as a train (the owner, 18 October 2026). A train is a branch
+`train/<area>-<n>` that merges several branches, each already one coherent change with its
+own reviews and `/no-mistakes` run, as merge commits of their own, so history keeps each
+change whole. The coordinator resolves the decisions page and regenerates the pages once;
+the train passes the pre-flight and CI once and merges as one pull request, whose body
+lists each branch with its reviews and the issue it closes. A train never carries a check
+change together with content that check judges: trains of checks and trains of content are
+separate, and a branch that fails the train's pre-flight leaves the train.
+
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
                                                    # clone, and after the hook or launcher changes

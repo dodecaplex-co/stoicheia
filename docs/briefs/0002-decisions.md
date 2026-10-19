@@ -749,3 +749,13 @@ findings:
   checks its reading of uses against cases of its own before it renders anything; no page
   on main changes, since every such label there is true (#94, found in the review of
   brief 0007 and of stage 2's move).
+- **Trains: reviewed branches land together.** Landing one pull request at a time cost
+  about ten minutes each, since the ruleset and safe_push require every pull request to be
+  up to date with main, and almost every one touches the decisions page and the generated
+  pages; twenty reviewed branches waited. On the owner's word ("It feels like we are
+  solving problems serially ... Map out a PR strategy. And for those that can run in
+  parallel run them that way"), and his approval of the plan that proposed them, branches
+  now land in trains: one branch merging several reviewed branches, each a merge commit of
+  its own, with one pre-flight, one CI run and one merge ([WORKFLOW](../WORKFLOW.md),
+  section 10, "Trains"). Nothing in the checks changes: a train is an ordinary branch to
+  safe_push, keep_apart still holds within it, and strict status checks stay on.
