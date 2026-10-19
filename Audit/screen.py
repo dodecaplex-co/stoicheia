@@ -10,7 +10,8 @@ falls back to `sorry`, and only the attempts that close without it are reported.
 
 It is a screen, not a proof search. `grind` instantiates rules among the terms already in
 a goal; it does not draw a new circle or lay down a triangle, so a proposition that needs
-one (I.7 from Circle 4, I.23 from superposition) is found by reading, not here.
+one (I.23 from superposition) is found by reading, not here. The former I.7 overlap
+used Circle 4, now a corollary of I.7 and no longer an axiom in this screen.
 
 The statements are facts.json's entries. At commit d040117 that is the 99 propositions,
 399 attempts each, 39,501 in all; with the three porisms as well, 40,698. Either way the
@@ -34,13 +35,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # Rules that speak of circles: the pairs among these are screened against every statement.
-CIRCLE = """Definition15 Postulate3 Tacit.centre_unique Tacit.centre_inside Tacit.inside_not_on
-Tacit.between_of_inside_chord Tacit.inside_of_between Tacit.outside_of_between
-Tacit.not_same_side_of_circles_meet Tacit.line_meets_circle_of_opposite_sides
+CIRCLE = """Definition15 Postulate3 Tacit.centre_inside Tacit.inside_not_on
+Tacit.between_of_inside_chord Tacit.outside_of_between
 Tacit.line_meets_circle_of_inside Tacit.circles_meet_of_on_inside_outside Tacit.circles_meet
 Tacit.line_circle_between Tacit.line_circle_beyond Tacit.circles_meet_same_side
 Tacit.circles_meet_opposite_side Tacit.exists_point_on_circle Tacit.exists_point_inside_circle
-Tacit.exists_point_outside_circle Tacit.circle_eq Tacit.on_circle_of_len_eq
+Tacit.circle_eq Tacit.on_circle_of_len_eq
 Tacit.inside_of_len_lt Tacit.len_lt_of_inside""".split()
 
 # Phrases unfolded in every attempt.

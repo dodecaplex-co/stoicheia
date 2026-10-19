@@ -16,4 +16,11 @@
 # vocabulary: 30 new words, the definitions and their auxiliary declarations; the 87 axioms
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
-9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved retirement
+# in principle that day, pending the evidence): Tacit.adjacent_eq_of_right,
+# Tacit.not_same_side_of_circles_meet, Tacit.centre_unique, Tacit.inside_of_between,
+# Tacit.exists_point_outside_circle, Tacit.line_meets_circle_of_opposite_sides,
+# Tacit.triple_incidence3 and Tacit.inside_of_angle_add. Their laws leave laws.toml, search.py
+# and hyperbolic.py; the other 79 axioms and every word are unchanged, byte for byte.
+da52a4969bf323512b82545ca01023038782d1c17a57e56da3273efdc93a1402  Certificate/axioms.lock

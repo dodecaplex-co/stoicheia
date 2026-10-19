@@ -22,7 +22,7 @@ Book I's words are the foundations every later book uses, in `Elements/Foundatio
 | `Phrases.lean` | Phrases Euclid never defines, as abbreviations: `SameSideOf`, `OppositeSidesOf`, `OnRay`, `InsideTriangle`, `AreParallel`, `Parallelogram` and its area `quadArea`; points in order on a straight line, `InOrder`, with `segments` and `endOf` (II.1); and a rectilineal figure given with its triangles (Definitions I.14 and I.19), as triangles that lie apart, `Apart`, or fitted together, `Fitted` and `Rectilineal`, each with its area as given, with `OnFiniteLine`, `OnOrInsideTriangle`, `Corners` and `triples`. |
 | `Postulates.lean` | The five postulates, each an `axiom`. |
 | `CommonNotions.lean` | The five Common Notions, each a theorem; Common Notions 3 and 5 rest on tacit laws of magnitudes. |
-| `Tacit/` | 81 tacit rules, from System E: `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
+| `Tacit/` | 73 tacit rules taken as axioms, from System E: `Diagram.lean`, `Transfer.lean`, `Constructions.lean`, `Metric.lean`, `Magnitudes.lean` and `Superposition.lean`. |
 
 ## How the statements say Euclid's phrases
 
@@ -58,9 +58,11 @@ Hypotheses come from the setting-out, conclusions from "I say that".
   ([Superposition.lean](../../Elements/Foundations/Tacit/Superposition.lean)), and a
   restricted rule is being prototyped
   ([#75](https://github.com/jackChallis/stoicheia/issues/75)).
-- **What the figure shows** is a tacit rule, a named axiom, from System E: an Intersection
-  rule says when straight lines and circles must meet, and an Intersections rule lets a
-  proof take a point where they do.
+- **What the figure shows** is supplied by System E's tacit rules and the facts proved
+  from them: an Intersection rule says when straight lines and circles must meet, and an
+  Intersections rule lets a proof take a point where they do. Eight rules are now theorems
+  with their existing names and types; [FORMALIZATION](../FORMALIZATION.md#rules-now-proved)
+  gives their derivations and homes.
 - **A rectilineal figure** (I.45) is given with its division into triangles, and the division
   is checked: triangles that lie apart (`Apart`), for any figure, a figure with a hole among
   them; triangles fitted together in a suitable order (`Fitted`, `Rectilineal`), for a figure
@@ -138,15 +140,21 @@ them as companions ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
 
 Two proofs follow Euclid with one step changed: I.39, and I.40 after it, make the end of
 his reductio direct, the parallel through A being shown to pass through D
-(`OnRay.eq_of_area_eq`). And four propositions are already contained in a rule, as the
-[overlap catalogue](../reports/overlaps.md) records:
+(`OnRay.eq_of_area_eq`). Superposition supplies a step of alternative proofs of three
+propositions, as the [overlap catalogue](../reports/overlaps.md) records:
 
 | Proposition | Rule | What the proof does |
 |---|---|---|
 | I.2 | superposition | Euclid's construction, by I.1 and two circles; it never uses the rule |
 | I.3 | superposition | Euclid's construction, by I.2 and a circle; it never uses the rule |
-| I.7 | Circle 4 (`not_same_side_of_circles_meet`) | Euclid's argument, by I.5; it never uses the rule |
 | I.23 | superposition | Euclid's construction, by I.22 and I.8; it rests on the rule through I.8, which with I.4 alone may call on it directly |
+
+19 October 2026: I.7's former overlap with Circle 4 is retired. Circle 4 is now a
+corollary after I.7 in `Elements/BookI/Prop07.lean`, proved from I.7, Definition I.15
+and `circle_eq`; using it to prove I.7 would be circular. The right-angle rule
+`adjacent_eq_of_right` and the converse angle-addition rule `inside_of_angle_add` are
+corollaries after I.13. The other five retired rules are proved in Book Zero's
+`Circles.lean`. The lock now holds 79 axioms, including 73 tacit rules.
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
 their own in the mishnah.

@@ -6,16 +6,19 @@ public import Model.Signature
 # The same-side, Pasch and triple-incidence rules, translated by hand
 
 **This file is written by hand, and so is every translation in it.** It holds the
-translations of the five same-side rules, four Pasch rules and three triple-incidence rules of
-`Elements/Foundations/Tacit/Diagram.lean`. The generator described in the
-[README](../../README.md) writes every law from its elaborated declaration, and
-`Check/Sides.lean` compares each translation here with its generated field.
+translations of the five same-side rules, four Pasch rules and three triple-incidence
+rules of the library. The generator described in the [README](../../README.md) writes
+every locked law from its elaborated declaration, and
+`Check/Sides.lean` compares each locked law's translation here with its generated field.
+`triple_incidence3` is now a theorem, compared directly with the library declaration,
+including binder kinds. Its concrete plane proof remains as a derived fact, with no
+generated assumption field.
 
 Each law is the library's, word for word, with `S.Point` for `Elements.Point`, `S.OnLine`
 for `Elements.OnLine`, `S.SameSide` for `Elements.SameSide`, `S.Between` for
 `Elements.Between`, and `S.Line` for `Elements.Line`, keeping every binder, its kind
 (all are implicit) and its order, and every guard. The printed original is quoted above
-each law, from `Certificate/axioms.lock` (the same text as `axiom_types` in `facts.json`).
+each law, from the lock or, for `triple_incidence3`, its unchanged theorem type.
 `Check/Sides.lean` puts the library's own words in for `S` and asks Lean whether each
 result is the original declaration; the build fails if it is not.
 
@@ -117,7 +120,8 @@ def triple_incidence2 : Prop :=
     S.OnLine B L → S.OnLine C M → S.OnLine D N → S.SameSide C D L →
     ¬ S.SameSide B D M → ¬ S.OnLine D M → B ≠ A → S.SameSide B C N
 
-/-- `Elements.Tacit.triple_incidence3`, translated by hand. The lock prints it as
+/-- `Elements.Tacit.triple_incidence3`, translated by hand.
+The theorem's unchanged type is
 `∀ {A B C D E : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L →
 Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M →
 Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N →

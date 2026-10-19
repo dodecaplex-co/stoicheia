@@ -8,6 +8,7 @@ which the circles cut one another", without ever saying why such a point
 exists. These rules supply the reasons. They are the construction rules of
 System E, §3.3 (Avigad, Dean and Mumma, 2009). Postulates 1, 2 and 3 are the
 "lines and circles" rules and Points rule 4, and they live in `Postulates.lean`.
+Points rule 9 is proved in `Elements.Figure.Circles` from the remaining rules.
 
 The optional list `avoid` lets a new point be chosen different from any points
 already in the figure, as System E's "[distinct from …]" clauses do.
@@ -53,10 +54,6 @@ axiom exists_point_on_circle (α : Circle) (avoid : List Point) :
 /-- Let a point be taken inside the circle α. (Points 8) -/
 axiom exists_point_inside_circle (α : Circle) (avoid : List Point) :
     ∃ A : Point, InsideCircle A α ∧ A ∉ avoid
-
-/-- Let a point be taken outside the circle α. (Points 9) -/
-axiom exists_point_outside_circle (α : Circle) (avoid : List Point) :
-    ∃ A : Point, OutsideCircle A α ∧ A ∉ avoid
 
 /-! ## Intersections (System E §3.3)
 

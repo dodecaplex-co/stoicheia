@@ -1,5 +1,13 @@
 # Brief 0009: a restricted rule of superposition
 
+19 October 2026: the frozen instruction below to leave the other overlap rows alone
+refers to the catalogue before [eight axiom retirements](../FORMALIZATION.md#rules-now-proved).
+Circle 4 is now a corollary of I.7, so the former I.7 shortcut is circular;
+Diagram-angle 3 follows I.13, and Generalities 2 is proved in Book Zero. Circle 2 is
+proved from Circle 3, which remains III.2's axiom overlap. The superposition work
+still leaves those rows to the retirement work. The baseline is now 79 axioms,
+including 73 tacit rules; no superposition statement changes here.
+
 *18 October 2026, revised the same day (round 2). A design brief and a prototype for issue
 #75, written to the owner's decision of 18 October after Astra's third answer. Nothing in
 `Elements/` changes and no axiom is added: the restricted rule is a hypothesis, `Rule`,

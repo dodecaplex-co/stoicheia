@@ -366,7 +366,7 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and 81 tacit rules, 87 in all, each tacit rule from System E (or
+  Definition I.15 and 73 tacit rules, 79 in all, each tacit rule from System E (or
   LeanEuclid's corrections of it) with its citation. A new rule, or a change to one, is a
   foundation decision (section 1); `Certificate/axioms.lock` holds every axiom's exact
   statement, with every definition that the axioms' statements or the propositions',
@@ -468,6 +468,35 @@ The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is no
 scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only
 with a decisions entry and a security review.
 
+### Rules now proved
+
+19 October 2026: eight rules became theorems, taking the lock from 87 axioms to 79.
+Each keeps its `Elements.Tacit` name and exact type. The namespace preserves the
+interface; it does not make a declaration an assumption. The certificate follows each
+proof to the assumptions it uses.
+
+| Theorem under `Elements.Tacit` | System E label | Derivation and home |
+|---|---|---|
+| `adjacent_eq_of_right` | Diagram-angle 3 | I.13 makes adjacent angles two right angles; Common Notion 3 removes the given right angle. Proved after I.13 in [`Prop13.lean`](../Elements/BookI/Prop13.lean). |
+| `not_same_side_of_circles_meet` | Circle 4 | Definition I.15 gives equal distances from each centre, `circle_eq` tells the centres apart, and I.7 excludes two common points on the same side. Proved after I.7 in [`Prop07.lean`](../Elements/BookI/Prop07.lean). |
+| `centre_unique` | Generalities 2 | Two supposed centres bisect the same straight line through the circle by Definition I.15. Equal doubles have equal halves, and the strict order of lengths forces the centres to coincide. Proved from the foundations in [`Circles.lean`](../Elements/Figure/Circles.lean). |
+| `inside_of_between` | Circle 2 | Circle 3, `outside_of_between`, would put the second endpoint outside if the middle point were not inside. Proved in `Circles.lean`. Circle 3 stays an axiom. |
+| `exists_point_outside_circle` | Points 9 | Points on the circle enclose an interior point; Postulate 2 produces the line beyond the circumference, avoiding the given finite list, and Circle 3 puts the new point outside. Proved in `Circles.lean`. |
+| `line_meets_circle_of_opposite_sides` | Intersection 2 | Intersection 1, betweenness and Pasch 2 locate a crossing between the given points; Circle 3 puts it inside, and Intersections 5 gives two distinct points of the circle on the line. Proved in `Circles.lean`. |
+| `triple_incidence3` | Triple incidence 3 | Angle addition and positivity, Intersection 1, and the order and side rules locate a crossing and carry its side relation to the given point. Proved in `Circles.lean`. |
+| `inside_of_angle_add` | Diagram-angle 2, converse | I.13, angle addition, positivity and the side rules exclude each way the point could lie outside the angle. Proved after I.13 in `Prop13.lean`; the forward rule, `angle_add_of_inside`, stays an axiom. |
+
+A client that previously imported only the foundations must now import the theorem's
+home. Book Zero still imports no proposition. I.7 cannot be established independently
+through Circle 4, since that theorem now uses I.7. III.2 still has an overlap with the
+retained Circle 3 axiom, as the [catalogue](reports/overlaps.md) explains.
+
+No certificate entry currently rests on Circle 3. I.12 finds the crossing X of
+CD with AB between the centre C and the point D on the circle, proves X inside
+by `InsideCircle.of_between_centre`, and uses the assumed Intersection 3
+(`line_meets_circle_of_inside`) to find two points of the circle on AB. The proved
+Intersection 2 has no user in the published proofs.
+
 ## 8. Completion claims
 
 A completion label and its certificate cover the same declarations: the main theorem, its
@@ -497,7 +526,7 @@ claim on a page, in the README or in release notes says which kind of evidence i
 | The numerical model tests (`tests/model/`) | The locked axioms held in the configurations sampled from a standard model of the plane, exactly where coordinates allow, and planted mutations of them were caught. | A proof of consistency: a test can find a counterexample but cannot show there is none, and laws no harness reaches rest on a hand argument. |
 | The hyperbolic check (`tests/model/hyperbolic.py`) | Every axiom but Postulate 5 held in the configurations sampled from the hyperbolic plane, and Postulate 5 failed there. | Non-derivability: numerical tests do not establish that a statement failing there cannot be proved without Postulate 5. |
 | The informal model argument | A reasoned interpretation of each law in the standard plane. | A machine-checked proof. |
-| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all 87 laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
+| The formal model ([#73](https://github.com/jackChallis/stoicheia/issues/73): [`model/`](../model/README.md), a Lake package of its own with a pinned Mathlib, built by CI's `formal-model` job) | Lean checks that the ordinary Euclidean plane satisfies every law in this revision's foundations: all 79 laws of the lock, generated from the elaborated declarations with the translation checked, each proved in the plane with only Lean's own axioms beneath it, and gathered in `model_exists`, with no hypothesis left. This establishes a model relative to Lean's logical foundations and Mathlib's construction of the real numbers, so the consistency of the axioms is a theorem relative to those. The model holds the lock's hash, so any change to the lock fails its build until the model is brought to it ([MODEL.md](../tests/model/MODEL.md#the-formal-model)). | That every formal statement captures Euclid's intended meaning. Non-derivability: that a statement cannot be proved without Postulate 5 still rests on the numerical hyperbolic check, until a hyperbolic model is built. |
 
 The certificate describes proof-term dependencies, and nothing more. "This proof uses
 Postulate 5" is a fact about our proof. By itself it establishes neither the consistency of

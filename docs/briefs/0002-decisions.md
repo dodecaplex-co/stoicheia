@@ -1364,3 +1364,38 @@ findings:
   the count would no longer be caught. This is a relaxation, in a commit of its own, and it
   lands only if the owner approves this pin specifically; the retirement then adds stronger
   pins, that III.1, III.1 Por., III.2 and II.14 rest on none of the eight.
+- **Eight axioms retired, 87 to 79 (proposed, pending the evidence).** The owner asked,
+  "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
+  principle on 19 October 2026, pending the evidence; this lands only when the owner has
+  seen it. Each of the eight keeps its name and exact type and becomes a theorem at the
+  earliest place it can be proved: `Tacit.centre_unique`, `Tacit.inside_of_between`
+  (Circle 2, from Circle 3, which stays), `Tacit.exists_point_outside_circle`,
+  `Tacit.line_meets_circle_of_opposite_sides` and `Tacit.triple_incidence3` in
+  [`Elements/Figure/Circles.lean`](../../Elements/Figure/Circles.lean);
+  `Tacit.not_same_side_of_circles_meet` (Circle 4) after I.7; and
+  `Tacit.adjacent_eq_of_right` and `Tacit.inside_of_angle_add` after I.13. No proof rests on
+  the axiom it replaces or on a later proposition, and I.7 and I.13 do not rest on their
+  corollaries. The first four came from a probe; the other four are the derivable rules
+  that lie on no cycle of the derivation graph, so no later choice of basis can disturb
+  them. The rest of the search, what else could go and what each choice costs, is evidence
+  for the owner, not part of this change. I.7's audited shortcut through Circle 4 is
+  circular now, and the audit says so. I.12, which cited the intersection rule now proved
+  from Circle 3, cuts its circle instead through a point inside it, the crossing of CD with
+  AB (Intersection 3), so that no certificate entry rests on Circle 2 or Circle 3, and new
+  pins say so for II.14, III.1 and III.2. The axioms leave
+  `Elements/Foundations/Tacit/Constructions.lean`, `Diagram.lean` and `Transfer.lean`.
+  Protected files changed with them, as values pinned to the axioms:
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock), written by `--write-lock`;
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and `model/lock.sha256`;
+  [`tests/model/laws.toml`](../../tests/model/laws.toml), and the eight laws' code in
+  [`tests/model/search.py`](../../tests/model/search.py) and
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py), the other laws in their
+  order; [`tests/model/MODEL.md`](../../tests/model/MODEL.md) and
+  [`tests/model/results/`](../../tests/model/results/), from `run.py --full --write`; and
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json): the
+  measured counts of III.1 and its porism (55 tacit rules each) and new pins that III.1,
+  III.1 Por., III.2 and II.14 rest on none of the eight. The formal model's generated
+  laws, checks and assembly follow from its generator; its proofs in the plane stay, as
+  derived facts. Proposition and porism statements, definitions and `--` lines are
+  unchanged; the records whose Lean changed were read again and stamped by readers who
+  wrote none of them.

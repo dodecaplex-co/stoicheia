@@ -14,7 +14,7 @@
 #
 #     python3 scripts/check_fidelity.py --write-lock
 
-[axioms]  # 87
+[axioms]  # 79
 "Definition15" = "∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Elements.OnCircle C α → Eq (Elements.len A B) (Elements.len A C)"
 "Postulate1" = "∀ (A B : Elements.Point), Ne A B → Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (Elements.OnLine B L)"
 "Postulate2" = "∀ {B C : Elements.Point} {L : Elements.Line}, Elements.OnLine B L → Elements.OnLine C L → Ne B C → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (And (Elements.Between B C A) (Not (Membership.mem avoid A)))"
@@ -25,7 +25,6 @@
 "Tacit.add_comm" = "∀ {k : Elements.Kind} (a b : Elements.Magnitude k), Eq (HAdd.hAdd a b) (HAdd.hAdd b a)"
 "Tacit.add_lt_add_right" = "∀ {k : Elements.Kind} {a b : Elements.Magnitude k} (c : Elements.Magnitude k), LT.lt a b → LT.lt (HAdd.hAdd a c) (HAdd.hAdd b c)"
 "Tacit.add_zero" = "∀ {k : Elements.Kind} (a : Elements.Magnitude k), Eq (HAdd.hAdd a 0) a"
-"Tacit.adjacent_eq_of_right" = "∀ {A B C D : Elements.Point} {L : Elements.Line}, Elements.OnLine A L → Elements.OnLine B L → Elements.Between A C B → Not (Elements.OnLine D L) → Eq (Elements.ang A C D) Elements.rightAngle → Eq (Elements.ang A C D) (Elements.ang D C B)"
 "Tacit.angle_add_of_inside" = "∀ {A B C D : Elements.Point} {L M : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine B L → Elements.OnLine C M → Ne A B → Ne A C → Not (Elements.OnLine D L) → Not (Elements.OnLine D M) → Ne L M → Elements.SameSide B D M → Elements.SameSide C D L → Eq (Elements.ang B A C) (HAdd.hAdd (Elements.ang B A D) (Elements.ang D A C))"
 "Tacit.angle_eq_of_same_rays" = "∀ {A B C : Elements.Point} {L M : Elements.Line} {B' C' : Elements.Point}, Elements.OnLine A L → Elements.OnLine B L → Elements.OnLine B' L → Elements.OnLine A M → Elements.OnLine C M → Elements.OnLine C' M → Ne B A → Ne B' A → Ne C A → Ne C' A → Not (Elements.Between B A B') → Not (Elements.Between C A C') → Eq (Elements.ang B A C) (Elements.ang B' A C')"
 "Tacit.angle_eq_zero_of_same_ray" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Ne A B → Ne A C → Elements.OnLine A L → Elements.OnLine B L → Elements.OnLine C L → Not (Elements.Between B A C) → Eq (Elements.ang B A C) 0"
@@ -44,7 +43,6 @@
 "Tacit.between_of_inside_chord" = "∀ {A B C : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Elements.OnLine A L → Elements.OnLine B L → Elements.OnLine C L → Elements.InsideCircle A α → Elements.OnCircle B α → Elements.OnCircle C α → Ne B C → Elements.Between B A C"
 "Tacit.between_symm" = "∀ {A B C : Elements.Point}, Elements.Between A B C → Elements.Between C B A"
 "Tacit.centre_inside" = "∀ {A : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.InsideCircle A α"
-"Tacit.centre_unique" = "∀ {A B : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.Centre B α → Eq A B"
 "Tacit.circle_eq" = "∀ {A B C : Elements.Point} {α β : Elements.Circle}, Elements.Centre A α → Elements.Centre A β → Elements.OnCircle B α → Elements.OnCircle C β → Eq (Elements.len A B) (Elements.len A C) → Eq α β"
 "Tacit.circles_meet" = "∀ {A B : Elements.Point} {α β : Elements.Circle}, Elements.OnCircle A α → Elements.InsideCircle B α → Elements.InsideCircle A β → Elements.OnCircle B β → Elements.CirclesMeet α β"
 "Tacit.circles_meet_of_on_inside_outside" = "∀ {A B : Elements.Point} {α β : Elements.Circle}, Elements.OnCircle A α → Or (Elements.InsideCircle B α) (Elements.OnCircle B α) → Elements.InsideCircle A β → Elements.OutsideCircle B β → Elements.CirclesMeet α β"
@@ -58,11 +56,8 @@
 "Tacit.exists_point_on_line" = "∀ (L : Elements.Line) (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (Not (Membership.mem avoid A))"
 "Tacit.exists_point_on_line_off_line" = "∀ {L M : Elements.Line}, Ne L M → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OnLine A L) (And (Not (Elements.OnLine A M)) (Not (Membership.mem avoid A)))"
 "Tacit.exists_point_opposite_side" = "∀ {B : Elements.Point} {L : Elements.Line}, Not (Elements.OnLine B L) → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OppositeSides A B L) (Not (Membership.mem avoid A))"
-"Tacit.exists_point_outside_circle" = "∀ (α : Elements.Circle) (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.OutsideCircle A α) (Not (Membership.mem avoid A))"
 "Tacit.exists_point_same_side" = "∀ {B : Elements.Point} {L : Elements.Line}, Not (Elements.OnLine B L) → ∀ (avoid : List Elements.Point), Exists fun (A : Elements.Point) => And (Elements.SameSide A B L) (Not (Membership.mem avoid A))"
 "Tacit.inside_not_on" = "∀ {A : Elements.Point} {α : Elements.Circle}, Elements.InsideCircle A α → Not (Elements.OnCircle A α)"
-"Tacit.inside_of_angle_add" = "∀ {A B C D : Elements.Point} {L M : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine B L → Elements.OnLine C M → Ne A B → Ne A C → Not (Elements.OnLine D L) → Not (Elements.OnLine D M) → Ne L M → Eq (Elements.ang B A C) (HAdd.hAdd (Elements.ang B A D) (Elements.ang D A C)) → And (Elements.SameSide B D M) (Elements.SameSide C D L)"
-"Tacit.inside_of_between" = "∀ {A B C : Elements.Point} {α : Elements.Circle}, Or (Elements.InsideCircle A α) (Elements.OnCircle A α) → Or (Elements.InsideCircle B α) (Elements.OnCircle B α) → Elements.Between A C B → Elements.InsideCircle C α"
 "Tacit.inside_of_len_lt" = "∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → LT.lt (Elements.len A C) (Elements.len A B) → Elements.InsideCircle C α"
 "Tacit.len_add_of_between" = "∀ {A B C : Elements.Point}, Elements.Between A B C → Eq (HAdd.hAdd (Elements.len A B) (Elements.len B C)) (Elements.len A C)"
 "Tacit.len_lt_of_inside" = "∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Elements.InsideCircle C α → LT.lt (Elements.len A C) (Elements.len A B)"
@@ -71,7 +66,6 @@
 "Tacit.line_circle_between" = "∀ {B C : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Elements.InsideCircle B α → Elements.OnLine B L → Elements.OutsideCircle C α → Elements.OnLine C L → Exists fun (A : Elements.Point) => And (Elements.OnCircle A α) (And (Elements.OnLine A L) (Elements.Between B A C))"
 "Tacit.line_circle_beyond" = "∀ {B C : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Elements.InsideCircle B α → Elements.OnLine B L → Elements.OnLine C L → Ne C B → Exists fun (A : Elements.Point) => And (Elements.OnCircle A α) (And (Elements.OnLine A L) (Elements.Between A B C))"
 "Tacit.line_meets_circle_of_inside" = "∀ {A : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Elements.InsideCircle A α → Elements.OnLine A L → Elements.LineMeetsCircle L α"
-"Tacit.line_meets_circle_of_opposite_sides" = "∀ {A B : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Or (Elements.InsideCircle A α) (Elements.OnCircle A α) → Or (Elements.InsideCircle B α) (Elements.OnCircle B α) → Elements.OppositeSides A B L → Elements.LineMeetsCircle L α"
 "Tacit.line_unique" = "∀ {A B : Elements.Point} {L M : Elements.Line}, Ne A B → Elements.OnLine A L → Elements.OnLine B L → Elements.OnLine A M → Elements.OnLine B M → Eq L M"
 "Tacit.lines_meet_of_opposite_sides" = "∀ {A B : Elements.Point} {L M : Elements.Line}, Elements.OppositeSides A B L → Elements.OnLine A M → Elements.OnLine B M → Elements.LinesMeet L M"
 "Tacit.lt_irrefl" = "∀ {k : Elements.Kind} (a : Elements.Magnitude k), Not (LT.lt a a)"
@@ -83,7 +77,6 @@
 "Tacit.not_between_of_between_between" = "∀ {A B C D : Elements.Point}, Elements.Between A B C → Elements.Between A B D → Not (Elements.Between C B D)"
 "Tacit.not_lt_zero" = "∀ {k : Elements.Kind} (a : Elements.Magnitude k), Not (LT.lt a 0)"
 "Tacit.not_on_line_of_same_side" = "∀ {A B : Elements.Point} {L : Elements.Line}, Elements.SameSide A B L → Not (Elements.OnLine A L)"
-"Tacit.not_same_side_of_circles_meet" = "∀ {A B C D : Elements.Point} {L : Elements.Line} {α β : Elements.Circle}, Ne α β → Elements.OnCircle C α → Elements.OnCircle C β → Elements.OnCircle D α → Elements.OnCircle D β → Ne C D → Elements.Centre A α → Elements.Centre B β → Elements.OnLine A L → Elements.OnLine B L → Not (Elements.SameSide C D L)"
 "Tacit.on_circle_of_len_eq" = "∀ {A B C : Elements.Point} {α : Elements.Circle}, Elements.Centre A α → Elements.OnCircle B α → Eq (Elements.len A C) (Elements.len A B) → Elements.OnCircle C α"
 "Tacit.on_line_of_area_eq_zero" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.OnLine A L → Elements.OnLine B L → Ne A B → Eq (Elements.area A B C) 0 → Elements.OnLine C L"
 "Tacit.on_line_of_between" = "∀ {A B C : Elements.Point} {L : Elements.Line}, Elements.Between A B C → Elements.OnLine A L → Elements.OnLine B L → Elements.OnLine C L"
@@ -101,7 +94,6 @@
 "Tacit.superposition" = "∀ {A B C D G H : Elements.Point} {L : Elements.Line}, Elements.Triangle A B C → Elements.OnLine D L → Elements.OnLine G L → Ne D G → Not (Elements.OnLine H L) → Exists fun (B' : Elements.Point) => Exists fun (C' : Elements.Point) => And (Elements.OnLine B' L) (And (Not (Elements.Between B' D G)) (And (Elements.SameSide C' H L) (And (Eq (Elements.len D B') (Elements.len A B)) (And (Eq (Elements.len B' C') (Elements.len B C)) (And (Eq (Elements.len C' D) (Elements.len C A)) (And (Eq (Elements.ang B' D C') (Elements.ang B A C)) (And (Eq (Elements.ang D C' B') (Elements.ang A C B)) (Eq (Elements.ang C' B' D) (Elements.ang C B A)))))))))"
 "Tacit.triple_incidence1" = "∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N → Not (Elements.SameSide B D M)"
 "Tacit.triple_incidence2" = "∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Not (Elements.SameSide B D M) → Not (Elements.OnLine D M) → Ne B A → Elements.SameSide B C N"
-"Tacit.triple_incidence3" = "∀ {A B C D E : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N → Elements.SameSide D E M → Elements.SameSide C E N → Elements.SameSide C E L"
 
 [vocabulary]  # 91
 "Angle" = "def : Type := Elements.Magnitude Elements.Kind.angle"
