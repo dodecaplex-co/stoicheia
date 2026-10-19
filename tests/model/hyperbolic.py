@@ -548,14 +548,6 @@ def gs_p4(rng):
     return None if r is None else dict(A=r[0], B=r[1], C=r[2], D=r[3])
 
 
-def gs_adj(rng):
-    r = g_right(rng)
-    if r is None:
-        return None
-    A, B, C, D, L = r   # here the right angle is at B: rename to the axiom's letters
-    return dict(A=A, B=D, C=B, D=C, L=L)
-
-
 def gs_ti(withE=False):
     def g(rng):
         A = rand_pt(rng)
@@ -1539,9 +1531,15 @@ def _(c):
     return same_side(B, D, c['M']) and same_side(C, D, c['L'])
 
 
-@axiom('adjacent_eq_of_right', dict(A=P, B=P, C=P, D=P, L=L_), gs_adj)
+@axiom('adjacent_eq_of_right', dict(A=P, B=P, C=P, D=P, L=L_), gs_p4)
 def _(c):
-    A, B, C, D, L = (c[k] for k in 'ABCDL')
+    if 'L' in c:
+        A, B, C, D, L = (c[k] for k in 'ABCDL')
+    else:
+        # gs_p4 uses g_right's letters: its vertex B is this law's C.
+        # Its distinct endpoints A and D recover the same supporting line.
+        A, B, C, D = (c[k] for k in 'ADBC')
+        L = line_through(A, B)
     if not (on_line(A, L) and on_line(B, L) and between(A, C, B) and not on_line(D, L) and is_right(A, C, D)):
         return None
     return ang_eq(A, C, D, D, C, B)

@@ -1672,7 +1672,7 @@ LAW_GLOBALS = {
             "roots_along", "same_side", "triangle", "unit_toward"}),
         "table": frozenset({"SEEDS"}),
         "generator": frozenset({
-            "gs_adj", "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
+            "gs_angle", "gs_area_line", "gs_between", "gs_chord", "gs_circ_pts",
             "gs_cong", "gs_lc", "gs_lines_meet", "gs_lmc_opp", "gs_p4", "gs_p5", "gs_pasch",
             "gs_pasch4", "gs_rays", "gs_sup"}),
         "generator maker": frozenset({"gs_cm", "gs_convex", "gs_ti"}),

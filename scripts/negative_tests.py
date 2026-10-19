@@ -455,6 +455,9 @@ def remark_ends_run() -> None:
 
 def planted_assumptions() -> None:
     facts = (ROOT / "facts.json").read_text()
+    lock = check_fidelity.read_lock()
+    assert lock is not None, "the axiom lock must exist before planting assumptions"
+    count = len(lock[0])
     PLANTED.write_text(
         "import Elements.Foundations.Words\n\n"
         "namespace Elements.Tacit.Euclidean\n\n"
@@ -509,7 +512,7 @@ def planted_assumptions() -> None:
                        "I.16: rests on Postulate5, Tacit.Euclidean.planted before I.29",
                        "BookI.sneaky: an axiom declared in Elements.BookI.Prop16, outside",
                        "I.16: rests on BookI.sneaky",
-                       "declares 88 axioms, not 87")
+                       f"declares {count + 1} axioms, not {count}")
         expect_failure("the planted axioms missing from the lock", result,
                        "Tacit.Euclidean.planted: an assumption not in Certificate/axioms.lock",
                        "BookI.sneaky: an assumption not in Certificate/axioms.lock")
