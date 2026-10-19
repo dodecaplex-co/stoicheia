@@ -120,7 +120,8 @@ where to look:
    about the same declarations: is the formal proof finished; does the statement cover the
    whole enunciation, or a restricted case, or only some clauses; and is the argument
    Euclid's, Euclid's with a step done differently, or an alternative? It also says when
-   an axiom already contains the proposition. An exception shows here, in a few words,
+   an axiom already contains the proposition, or supplies a step of a proof of it, as the
+   record's `[overlap]` names the kind. An exception shows here, in a few words,
    before the reader meets the green check, and never only in the mishnah; the detail is
    in the table under "In Lean". The words come from the proposition's review record
    ([review/SCHEMA.md](../review/SCHEMA.md), its `short`); what they mean is in

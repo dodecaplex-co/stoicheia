@@ -1,1 +1,14 @@
+import Check.Original
 import Check.Hand
+import Check.Laws
+import Check.Generated
+import Check.RoundTrip
+import Check.Incidence
+import Check.Lengths
+import Check.Order
+import Check.Sides
+import Check.Circles
+import Check.Intersections
+import Check.Angles
+import Check.AreasP5
+import Check.Superposition

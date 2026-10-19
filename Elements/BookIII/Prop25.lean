@@ -8,6 +8,7 @@ import Elements.BookI.Prop11
 import Elements.BookI.Prop17
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop09
 
 /-!
@@ -40,7 +41,7 @@ theorem Prop25 {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Centre E ABC)
   obtain ⟨L, hA_L, hC_L⟩ := Postulate1 A C hAC
   have hD_L : OnLine D L := on_line_of_between_ends hADC hA_L hC_L
   obtain ⟨X, hXP, hX⟩ := BookI.Prop11 hAC ⟨L, hA_L, hC_L, hD_L⟩ hP
-  have hD_in : InsideCircle D ABC := inside_of_between (Or.inr hA) (Or.inr hC) hADC
+  have hD_in : InsideCircle D ABC := Prop2 hABC hA hC D hADC
   have hX_L : ¬ OnLine X L := hXP.triangle.off_line hA_L hC_L
   have hDX : D ≠ X := fun e => hX_L (e ▸ hD_L)
   obtain ⟨N, hD_N, hX_N⟩ := Postulate1 D X hDX

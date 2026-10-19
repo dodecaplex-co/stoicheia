@@ -5,6 +5,7 @@ import Elements.BookI.Prop04
 import Elements.BookI.Prop10
 import Elements.BookI.Prop11
 import Elements.BookI.Prop17
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop21
 import Elements.BookIII.Prop22
 import Elements.BookIII.Prop28
@@ -39,9 +40,9 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   have hC_L : OnLine C L := on_line_of_between_ends hACB hA_L hB_L
   obtain ⟨X, hXP, hX⟩ := BookI.Prop11 hAB ⟨L, hA_L, hB_L, hC_L⟩ hP
   /- CX meets the circumference on P's side at D. C is within the circle
-     (`inside_of_between`), so when XC is produced beyond C to Y, the straight line meets
+     by III.2, so when XC is produced beyond C to Y, the straight line meets
      the circle at D, beyond C from Y, on X's side (`line_circle_beyond`). -/
-  have hC_in : InsideCircle C ADB := inside_of_between (Or.inr hA) (Or.inr hB) hACB
+  have hC_in : InsideCircle C ADB := Prop2 hADB hA hB C hACB
   have hX_L : ¬ OnLine X L := hXP.triangle.off_line hA_L hB_L
   have hCX : C ≠ X := fun e => hX_L (e ▸ hC_L)
   obtain ⟨N, hC_N, hX_N⟩ := Postulate1 C X hCX

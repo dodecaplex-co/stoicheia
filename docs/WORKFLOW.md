@@ -16,7 +16,7 @@ contributor may hold several roles, save one: nobody reviews a claim they wrote.
 
 | Role | Responsible for |
 |---|---|
-| Owner | Jack Challis. Every public action but landing a checked pull request (tags, releases and their notes, the GitHub description, anything sent outside the repository), and the foundation decisions, made with the coordinator. |
+| Owner | The repository's owner. Every public action but landing a checked pull request (tags, releases and their notes, the GitHub description, anything sent outside the repository), and the foundation decisions, made with the coordinator. |
 | Coordinator | The plan, the baseline, and the decisions delegated to the role: approving statements and brief corrections, the files of the foundations, `Certificate/axioms.lock`, [0002-decisions.md](briefs/0002-decisions.md), PROGRAM.md, CI, and opening and merging pull requests, through `scripts/safe_push.py` alone (section 10, "Landing work: pull requests"). |
 | Statement and representation owner | A book's brief and each proposition's statement: vocabulary, hypotheses, conclusions, cases, and the exceptions allowed. |
 | Proof contributor | The assigned declarations with their helpers, porisms and companions, and how the Lean corresponds to the text. |
@@ -32,8 +32,8 @@ review independent: the reviewer must not have written, prompted or edited the c
 Books I–III were made by a crew of agents, as the README's "How it was made" tells, and
 their logs are in `docs/reports/crew/`:
 
-- **The captain**, the main Claude session working with Jack, is the coordinator, and the
-  integrator at the end of a wave unless it names one.
+- **The captain**, the main Claude session working with the owner, is the coordinator,
+  and the integrator at the end of a wave unless it names one.
 - **A first mate**, one for each book or stretch, owns its statements and representations:
   it writes the brief, states every proposition with `sorry`, tests the statements with
   scratch proofs, and writes the orders. After the voyage it reviews each proof for
@@ -410,9 +410,9 @@ looked into.
 8. **A read-through.**
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book.
-10. **Release.** The notes are drafted from the generated summaries, Jack approves them, and
-    the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up to date: the status
-    board, the lessons, the costs.
+10. **Release.** The notes are drafted from the generated summaries, the owner approves
+    them, and the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up to date:
+    the status board, the lessons, the costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
