@@ -9,8 +9,8 @@ straight line, that a straight line through the inside of a circle must cut it.
 He never states these facts or proves them. These are the diagrammatic inferences
 of System E, §3.4 (Avigad, Dean and Mumma, 2009). Each retained assumption is an
 axiom: most rules say one thing, and Between 1, which says four, is four axioms.
-Generalities 2 and Circle 2 are proved in `Elements.Figure.Circles`; Circle 4 is
-proved after I.7 in `Elements.BookI.Prop07`.
+Generalities 2, Circle 2, Triple incidence 3 and Intersection 2 are proved in
+`Elements.Figure.Circles`; Circle 4 is proved after I.7 in `Elements.BookI.Prop07`.
 
 In one place we follow LeanEuclid's correction of the published rules:
 `circles_meet_of_on_inside_outside` (Intersection rule 4) asks that A be *on*
@@ -139,14 +139,6 @@ axiom triple_incidence2 (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
     (hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
     (hBD : ¬ SameSide B D M) (hDM : ¬ OnLine D M) (hBA : B ≠ A) : SameSide B C N
 
-/-- Take B on L, C on M and D on N, three straight lines through A, with
-C within the angle BAD (on D's side of L and on B's side of N). A point
-E within the angle CAD (on D's side of M and on C's side of N) is on
-C's side of L. (Triple incidence 3) -/
-axiom triple_incidence3 (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
-    (hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
-    (hBC : SameSide B C N) (hDE : SameSide D E M) (hCE : SameSide C E N) : SameSide C E L
-
 /-! ## Circles -/
 
 /-- A straight line through a point inside a circle has that point between the
@@ -166,11 +158,6 @@ axiom outside_of_between (hA : InsideCircle A α ∨ OnCircle A α) (hC : ¬ Ins
 (Intersection 1) -/
 axiom lines_meet_of_opposite_sides (h : OppositeSides A B L) (hAM : OnLine A M)
     (hBM : OnLine B M) : LinesMeet L M
-
-/-- A straight line separating two points of a circle cuts the circle.
-(Intersection 2) -/
-axiom line_meets_circle_of_opposite_sides (hA : InsideCircle A α ∨ OnCircle A α)
-    (hB : InsideCircle B α ∨ OnCircle B α) (h : OppositeSides A B L) : LineMeetsCircle L α
 
 /-- A straight line through a point inside a circle cuts the circle.
 (Intersection 3) -/

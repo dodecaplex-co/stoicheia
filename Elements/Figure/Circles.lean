@@ -53,6 +53,152 @@ theorem Tacit.inside_of_between {A B C : Point} {α : Circle}
   Classical.byContradiction fun hC =>
     hB.elim (outside_of_between hA hC h).1 (outside_of_between hA hC h).2
 
+/-- Two distinct circumference points enclose an interior point avoiding any finite list. -/
+private theorem inside_point_of_chord (α : Circle) (avoid : List Point) :
+    ∃ A : Point, InsideCircle A α ∧ A ∉ avoid := by
+  obtain ⟨B, hB, _⟩ := Elements.Tacit.exists_point_on_circle α []
+  obtain ⟨C, hC, hCB⟩ := Elements.Tacit.exists_point_on_circle α [B]
+  have hBC : B ≠ C := by
+    intro e
+    exact hCB (e ▸ List.mem_singleton_self B)
+  obtain ⟨L, hBL, hCL⟩ := Postulate1 B C hBC
+  obtain ⟨A, _, hBAC, hA⟩ := exists_point_between hBL hCL hBC avoid
+  refine ⟨A, Classical.byContradiction (fun h => ?_), hA⟩
+  exact (outside_of_between (Or.inr hB) h hBAC).2 hC
+
+/-- A point can be taken outside a circle while avoiding any finite list of points
+(System E, Points 9). This was an assumption until 19 October 2026 and is now proved
+from Points 7 and 3, Postulates 1 and 2, and Circle 3: take an interior point between
+two points on the circle, then produce a straight line from it beyond the circumference.
+Postulate 2 chooses the endpoint outside the given list. -/
+theorem Tacit.exists_point_outside_circle (α : Circle) (avoid : List Point) :
+    ∃ A : Point, OutsideCircle A α ∧ A ∉ avoid := by
+  obtain ⟨B, hB, _⟩ := inside_point_of_chord α []
+  obtain ⟨C, hC, _⟩ := Elements.Tacit.exists_point_on_circle α []
+  have hBC : B ≠ C := fun e => inside_not_on (e ▸ hB) hC
+  obtain ⟨L, hBL, hCL⟩ := Postulate1 B C hBC
+  obtain ⟨A, _, hBCA, hA⟩ := Postulate2 hBL hCL hBC avoid
+  exact ⟨A, outside_of_between (Or.inl hB) (fun h => inside_not_on h hC) hBCA, hA⟩
+
+/-- The three collinear orders and Pasch 2 locate a crossing between its endpoints. -/
+private theorem between_at_crossing {A B C : Point} {L M : Line}
+    (hLM : L ≠ M) (hBL : OnLine B L) (hBM : OnLine B M) (hAM : OnLine A M)
+    (hCM : OnLine C M) (hAC : A ≠ C) (hAB : A ≠ B) (hCB : C ≠ B)
+    (hs : ¬ SameSide A C L) : Between A B C := by
+  have hAL : ¬ OnLine A L := fun hAL =>
+    hLM (line_unique hAB hAL hBL hAM hBM)
+  have hCL : ¬ OnLine C L := fun hCL =>
+    hLM (line_unique hCB hCL hBL hCM hBM)
+  rcases between_cases hAB hCB.symm hAC hAM hBM hCM with h | h | h
+  · exact h
+  · exact False.elim (hs (pasch2 h hBL hAL))
+  · exact False.elim (hs (same_side_symm (pasch2 (between_symm h) hBL hCL)))
+
+/-- Two opposite extensions from an interior point meet the circumference distinctly. -/
+private theorem circle_intersections_of_inside {A : Point} {L : Line} {α : Circle}
+    (hA : InsideCircle A α) (hAL : OnLine A L) : LineMeetsCircle L α := by
+  obtain ⟨C, hCL, hCA⟩ := exists_point_on_line L [A]
+  have hCA' : C ≠ A := by simpa using hCA
+  obtain ⟨P, hP, hPL, hPAC⟩ := line_circle_beyond hA hAL hCL hCA'
+  obtain ⟨Q, hQ, hQL, hQAP⟩ :=
+    line_circle_beyond hA hAL hPL (ne_of_between hPAC)
+  exact ⟨Q, P, ne_of_between_ends hQAP, hQL, hQ, hPL, hP⟩
+
+/-- A straight line separating two points on or inside a circle cuts the circle
+(System E, Intersection 2). This was an assumption until 19 October 2026 and is now
+proved from Intersection 1, the order of collinear points, Pasch 2, Circle 3 and
+Intersections 5. The crossing lies between the given points and is inside the circle;
+producing the straight line in both directions gives two distinct circumference points. -/
+theorem Tacit.line_meets_circle_of_opposite_sides {A B : Point} {L : Line} {α : Circle}
+    (hA : InsideCircle A α ∨ OnCircle A α)
+    (hB : InsideCircle B α ∨ OnCircle B α) (h : OppositeSides A B L) : LineMeetsCircle L α := by
+  have hAB : A ≠ B := fun e => h.2.2 (e ▸ same_side_refl h.1)
+  obtain ⟨M, hAM, hBM⟩ := Postulate1 A B hAB
+  obtain ⟨hLM, X, hXL, hXM⟩ := lines_meet_of_opposite_sides h hAM hBM
+  have hAXB : Between A X B := between_at_crossing hLM hXL hXM hAM hBM hAB
+    (fun e => h.1 (e ▸ hXL)) (fun e => h.2.1 (e ▸ hXL)) h.2.2
+  have hX : InsideCircle X α := by
+    apply Classical.byContradiction
+    intro hn
+    have ho := outside_of_between hA hn hAXB
+    exact hB.elim ho.1 ho.2
+  exact circle_intersections_of_inside hX hXL
+
+/-- Angle addition and positivity exclude three incompatible same-side relations. -/
+private theorem separates_of_angle_add {A B C D : Point} {L M N : Line}
+    (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
+    (hBL : OnLine B L) (hCM : OnLine C M) (hDN : OnLine D N)
+    (hCD : SameSide C D L) (hBC : SameSide B C N) : ¬ SameSide B D M := by
+  intro hBD
+  have hCL := not_on_line_of_same_side hCD
+  have hDL := not_on_line_of_same_side (same_side_symm hCD)
+  have hBN := not_on_line_of_same_side hBC
+  have hCN := not_on_line_of_same_side (same_side_symm hBC)
+  have hDM := not_on_line_of_same_side (same_side_symm hBD)
+  have hAB : A ≠ B := fun e => hBN (e ▸ hAN)
+  have hAC : A ≠ C := fun e => hCL (e ▸ hAL)
+  have hAD : A ≠ D := fun e => hDL (e ▸ hAL)
+  have hLN : L ≠ N := fun e => hBN (e ▸ hBL)
+  have hLM : L ≠ M := fun e => hCL (e ▸ hCM)
+  have e₁ := angle_add_of_inside hAL hAN hBL hDN hAB hAD hCL hCN hLN hBC
+    (same_side_symm hCD)
+  have e₂ := angle_add_of_inside hAL hAM hBL hCM hAB hAC hDL hDM hLM hBD hCD
+  have hp₁ : 0 < ∠ C A D := Magnitude.pos_of_ne_zero
+    (fun hz => hDM (same_ray_of_angle_eq_zero hAC hAD hAM hCM hz).1)
+  have hp₂ : 0 < ∠ D A C := Magnitude.pos_of_ne_zero
+    (fun hz => hCN (same_ray_of_angle_eq_zero hAD hAC hAN hDN hz).1)
+  have hlt₁ := CommonNotion5 (a := ∠ B A C) hp₁
+  have hlt₂ := CommonNotion5 (a := ∠ B A D) hp₂
+  rw [← e₁] at hlt₁
+  rw [← e₂] at hlt₂
+  exact lt_irrefl _ (lt_trans hlt₁ hlt₂)
+
+/-- Take B on L, C on M and D on N, three straight lines through A, with C within
+BAD and E within CAD. Then E is on C's side of L (System E, Triple incidence 3).
+This was an assumption until 19 October 2026 and is now proved from angle addition
+and positivity, Intersection 1, and the order and side rules. The straight line AE
+crosses CD between C and D; Pasch carries that crossing's side of L to E. The given
+point B and its side relation are retained in the statement, although the proof does
+not need them. -/
+theorem Tacit.triple_incidence3 {A B C D E : Point} {L M N : Line}
+    (hAL : OnLine A L) (hAM : OnLine A M) (hAN : OnLine A N)
+    (hB : OnLine B L) (hC : OnLine C M) (hD : OnLine D N) (hCD : SameSide C D L)
+    (hBC : SameSide B C N) (hDE : SameSide D E M) (hCE : SameSide C E N) : SameSide C E L := by
+  have hAC : A ≠ C := fun e => not_on_line_of_same_side hCD (e ▸ hAL)
+  have hEM := not_on_line_of_same_side (same_side_symm hDE)
+  have hEN := not_on_line_of_same_side (same_side_symm hCE)
+  have hCN := not_on_line_of_same_side hCE
+  have hAE : A ≠ E := fun e => hEM (e ▸ hAM)
+  have hAD : A ≠ D := fun e => not_on_line_of_same_side hDE (e ▸ hAM)
+  obtain ⟨R, hAR, hER⟩ := Postulate1 A E hAE
+  have hCR : ¬ OnLine C R := fun hCR =>
+    hEM (line_unique hAC hAR hCR hAM hC ▸ hER)
+  have hDR : ¬ OnLine D R := fun hDR =>
+    hEN (line_unique hAD hAR hDR hAN hD ▸ hER)
+  have hCDR : ¬ SameSide C D R := fun hs =>
+    separates_of_angle_add hAM hAN hAR hC hD hER hDE hs hCE
+  have hCD' : C ≠ D := fun e => hCN (e ▸ hD)
+  obtain ⟨Q, hCQ, hDQ⟩ := Postulate1 C D hCD'
+  obtain ⟨hRQ, X, hXR, hXQ⟩ :=
+    lines_meet_of_opposite_sides ⟨hCR, hDR, hCDR⟩ hCQ hDQ
+  have hCXD : Between C X D := between_at_crossing hRQ hXR hXQ hCQ hDQ hCD'
+    (fun e => hCR (e ▸ hXR)) (fun e => hDR (e ▸ hXR)) hCDR
+  have hCX : SameSide C X L := pasch1 hCXD hCD
+  have hXL := not_on_line_of_same_side (same_side_symm hCX)
+  have hXA : X ≠ A := fun e => hXL (e ▸ hAL)
+  have hXM : ¬ OnLine X M := fun hXM =>
+    hEM (line_unique hXA hXR hAR hXM hAM ▸ hER)
+  have hXE_M : SameSide X E M :=
+    same_side_trans (same_side_symm (pasch2 hCXD hC hXM)) hDE
+  have hXE_L : SameSide X E L := by
+    by_cases he : X = E
+    · exact he ▸ same_side_refl hXL
+    apply Classical.byContradiction
+    intro hn
+    have hLR : L ≠ R := fun e => hXL (e ▸ hXR)
+    exact pasch3 (between_at_crossing hLR hAL hAR hXR hER he hXA hAE.symm hn) hAM hXE_M
+  exact same_side_trans (same_side_symm hCX) hXE_L
+
 /-- A point on a circle is not its centre. -/
 theorem ne_of_centre_of_on (hA : Centre A α) (hC : OnCircle C α) : C ≠ A := by
   intro h

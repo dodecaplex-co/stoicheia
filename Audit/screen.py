@@ -37,11 +37,10 @@ ROOT = Path(__file__).resolve().parent.parent
 # Rules that speak of circles: the pairs among these are screened against every statement.
 CIRCLE = """Definition15 Postulate3 Tacit.centre_inside Tacit.inside_not_on
 Tacit.between_of_inside_chord Tacit.outside_of_between
-Tacit.line_meets_circle_of_opposite_sides
 Tacit.line_meets_circle_of_inside Tacit.circles_meet_of_on_inside_outside Tacit.circles_meet
 Tacit.line_circle_between Tacit.line_circle_beyond Tacit.circles_meet_same_side
 Tacit.circles_meet_opposite_side Tacit.exists_point_on_circle Tacit.exists_point_inside_circle
-Tacit.exists_point_outside_circle Tacit.circle_eq Tacit.on_circle_of_len_eq
+Tacit.circle_eq Tacit.on_circle_of_len_eq
 Tacit.inside_of_len_lt Tacit.len_lt_of_inside""".split()
 
 # Phrases unfolded in every attempt.

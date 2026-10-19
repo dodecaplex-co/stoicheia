@@ -7,8 +7,8 @@ import Elements.Foundations.Tacit.Metric
 together": Euclid moves between the figure and its magnitudes all the time.
 These are the transfer inferences of System E, §3.6 (Avigad, Dean and Mumma,
 2009). Diagram-angle rule 5 is Postulate 5 itself, and the forward half of
-diagram-segment rule 3 is Definition 15. Diagram-angle rule 3 is proved after
-I.13 in `Elements.BookI.Prop13`.
+diagram-segment rule 3 is Definition 15. Diagram-angle rule 3 and the converse
+of Diagram-angle rule 2 are proved after I.13 in `Elements.BookI.Prop13`.
 -/
 
 namespace Elements.Tacit
@@ -56,12 +56,6 @@ axiom angle_add_of_inside (hAL : OnLine A L) (hAM : OnLine A M) (hB : OnLine B L
     (hC : OnLine C M) (hAB : A ≠ B) (hAC : A ≠ C) (hDL : ¬ OnLine D L) (hDM : ¬ OnLine D M)
     (hLM : L ≠ M) (hBD : SameSide B D M) (hCD : SameSide C D L) :
     ∠ B A C = ∠ B A D + ∠ D A C
-
-/-- If the angle BAC is made up of BAD and DAC, then D lies within it.
-(Diagram-angle 2) -/
-axiom inside_of_angle_add (hAL : OnLine A L) (hAM : OnLine A M) (hB : OnLine B L)
-    (hC : OnLine C M) (hAB : A ≠ B) (hAC : A ≠ C) (hDL : ¬ OnLine D L) (hDM : ¬ OnLine D M)
-    (hLM : L ≠ M) (h : ∠ B A C = ∠ B A D + ∠ D A C) : SameSide B D M ∧ SameSide C D L
 
 /-- The angle doesn't change if its arms are traced through other points on the
 same rays. (Diagram-angle 4) -/

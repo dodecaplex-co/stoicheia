@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.Figure.Circles
 import Elements.BookI.Prop08
 import Elements.BookI.Prop10
 
@@ -45,7 +46,8 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
     exact hCD_AB.2.2 (same_side_refl hC_AB)
   obtain ⟨EFG, hC_EFG, hD_EFG⟩ := Postulate3 C D hCD
   /- The circle's centre C is inside it and D is on it, on the other side of AB,
-     so AB cuts the circle in two points (System E, Intersection 2). Heath's figure
+     so AB cuts the circle in two points (System E, Intersection 2, now proved in
+     `Elements.Figure.Circles` from Circle 3 and the crossing rules). Heath's figure
      calls them G and E. F, the third letter of the circle's name, is only a name:
      the proof never uses it. -/
   obtain ⟨E, G, hEG, hE_AB, hE_EFG, hG_AB, hG_EFG⟩ :=
