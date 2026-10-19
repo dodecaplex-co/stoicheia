@@ -1315,3 +1315,24 @@ findings:
   [`scripts/safe_push.py`](../../scripts/safe_push.py), still name `check`, `model` and
   `negative`, and making `formal-model` required, as the decision of 18 October foresees
   once the package builds, is the owner's call.
+
+## 19 October 2026
+
+- **A figure for the modern way, and its two rules.** The owner asked for figures for the
+  modern mathematics, drawn to match Euclid's figure on the same page and carrying the
+  same letters ([#49](https://github.com/jackChallis/stoicheia/issues/49)). A page may
+  now have a third figure, `figures/<book>/NN-modern.svg`, which
+  [`scripts/render.py`](../../scripts/render.py) sets under the paragraph that opens
+  "**The modern way.**". [`scripts/check_style.py`](../../scripts/check_style.py) gains
+  two rules for it: S22, the frame (Euclid's figure's canvas, palette and strokes; the
+  title "I.N: the modern way" and no caption; a Euclid's figure beside it and a modern way
+  on the page for it to stand under), and S23, its text (Euclid's figure's letters,
+  upright at 17, and otherwise only the paragraph's own names, italic, with digits and
+  the signs of an expression). [`tests/test_check_style.py`](../../tests/test_check_style.py)
+  holds their cases, and [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
+  counts the two rules under P8 and gives a modern figure's findings to its proposition.
+  Protected files changed: `scripts/check_style.py`, `scripts/render.py`,
+  `scripts/check_acceptance.py` and `tests/test_check_style.py`. STYLE, sections 2, 7 and
+  8, and the checklist's P8 say the same. No check is weakened: the rules hold only the
+  new files, and no figure exists yet for them to judge; the figures follow in a content
+  pull request, since a check lands apart from the content it judges.

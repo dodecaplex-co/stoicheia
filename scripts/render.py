@@ -1372,6 +1372,23 @@ JUMP_LINKS = ("[Euclid's proof](#euclids-proof) · [In Lean](#in-lean) · "
               "[What it rests on](#what-it-rests-on) · [Mishnah](#mishnah)")
 
 
+def with_modern_figure(text, book, n):
+    """The mishnah, with the figure of the modern way, `figures/<book>/NN-modern.svg`,
+    where there is one, set under the paragraph that opens "**The modern way.**", at the
+    blank line that ends it (docs/STYLE.md, section 7). check_style.py's S22 fails such a
+    figure on a page with no such paragraph, so none is left out unseen."""
+    figure = ROOT / "figures" / book / f"{n:02d}-modern.svg"
+    m = re.search(r"(?m)^\*\*The modern way\.\*\*", text)
+    if not figure.exists() or not m:
+        return text
+    end = text.find("\n\n", m.start())
+    end = len(text) if end < 0 else end
+    img = (f"<p align=\"center\"><img src=\"../../figures/{book}/{n:02d}-modern.svg\" "
+           f"alt=\"The modern way for Proposition {book}.{n}, with Heath's letters\" "
+           f"width=\"360\"></p>")
+    return text[:end] + "\n\n" + img + text[end:]
+
+
 def page(book, n, count, titles, facts, docs, records):
     source, enunciation, proof = heath.read(book, n)
     # The enunciation counts too: I.22's [I. 20] is there. The porism's references go
@@ -1429,7 +1446,7 @@ def page(book, n, count, titles, facts, docs, records):
             "## What it rests on", "", rests_on(p, docs, 2, book, refs, attached_refs)]
     out += ["## Mishnah", ""]
     if mishnah.exists():
-        out += [MISHNAH_LEAD, "", mishnah.read_text().strip(), ""]
+        out += [MISHNAH_LEAD, "", with_modern_figure(mishnah.read_text().strip(), book, n), ""]
     else:
         out += ["_Commentary to come._", ""]
     # A line or three from docs/reading.md, chosen for this proposition; no file, no section.

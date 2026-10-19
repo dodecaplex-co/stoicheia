@@ -142,7 +142,8 @@ where to look:
    theorem, its porism, its companions), with Heath's references beside the Lean's
    citations, the postulates, definitions taken as axioms, Common Notions and tacit
    rules, and the generated line naming the shared steps that bring in propositions.
-8. **The mishnah,** our commentary (section 3).
+8. **The mishnah,** our commentary (section 3), and under its paragraph "The modern way",
+   where it has one, that paragraph's figure (section 7).
 9. **Further reading,** when something apt exists (section 6).
 10. **The foot of the page:** links to the scan leaves of Heath's text and figure, the
     thanks to the authors of System E and LeanEuclid, and the navigation again.
@@ -154,6 +155,9 @@ sentence. Each does what the other cannot, and neither is decoration. Both carry
 letters, the names the text and the Lean use, so a reader passes from the colours to the
 proof by the same A and B (section 7). Colour may carry an equality, but never alone: the
 caption names the colours, so that a reader who cannot tell them apart still has the point.
+Where the modern way is easier to follow with a picture, it has a third, its own figure,
+drawn as Euclid's is and with his letters, so that a reader moves between the coordinates
+and the proof by the same names (section 7).
 
 **Each thing in one place.** Scope and exceptions go at the top, in the status line and
 the table. Citations, postulates and rules go in the certificate and the line under it.
@@ -507,6 +511,21 @@ validate a figure. Before a changed figure is signed off, render it
 - the scope: the figure does not show more than the theorem proves;
 - legibility at the size the page shows it: nothing clipped, letters clear.
 
+**`NN-modern.svg`, the figure of the modern way.** Where the paragraph that opens **The
+modern way.** is easier to follow with a picture (its coordinates, its vectors, Book II's
+lengths a and b), it has a figure of its own, which the page sets under that paragraph. It
+is drawn as Euclid's figure is: the same canvas, palette and strokes **[checked]**, and
+Euclid's figure's letters, upright at 17, at the points his figure gives them, placed on
+the axes or the plane as the paragraph places them **[checked: the letters]**. What the
+paragraph measures takes the paragraph's own names (a, b, θ, u), italic at 17, and the
+figure uses no name the paragraph does not **[checked]**. A capital stands alone, as one
+of Heath's letters: a length or a vector is named by its lower-case letter. The title is
+"I.N: the modern way", with no caption, for the paragraph above it is one **[checked]**. A
+page with no modern way has no such figure **[checked]**, and a modern way that would only
+restate the proposition in symbols needs none. The figure shows what the paragraph says
+and no more, with the paragraph's conditions (A = (0, 0), b > 0), and is checked as
+geometry, as Euclid's is.
+
 **Departures go in the figure note.** Where our drawing places a point otherwise than
 Heath's figure, because the Lean does, draw the proof and say so in one line under the
 figure (I.39, I.40, III.16); not in the mishnah. The line is the review record's
@@ -542,7 +561,7 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 - **Generated:** `CERTIFICATE.md`, `GRAPH.md`, `book/<book>/index.md`. A failure here is
   mended in `scripts/render.py` or in the source it reads.
 - **Idea figures:** `figures/<book>/NN-idea.svg`. **Euclid's figures:**
-  `figures/<book>/NN.svg`.
+  `figures/<book>/NN.svg`. **Modern figures:** `figures/<book>/NN-modern.svg`.
 
 **Failures.** Each fails the script, naming the file, the line and the rule.
 
@@ -569,6 +588,8 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
 | S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic), not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
+| S22 | A viewBox width outside 400–440; a colour other than Euclid's figure's five; a stroke-width under 1.2 or over 3.2; a `<desc>`; a `<title>` other than "I.N: the modern way"; no `NN.svg` beside it, or no paragraph opening `**The modern way.**` in `mishnah/<book>/NN.md` for it to stand under | Modern figures |
+| S23 | A `<text>` not at font-size 17, or a `<tspan>`; a capital letter (with a prime or a subscript) that `NN.svg` does not draw, or not upright; a capital in a longer text; any other text holding a character besides lower-case Latin and Greek letters, digits and the signs of an expression, or with letters not italic, or with a letter that is not a name of the page's modern way: in its `$…$` spans, each lower-case letter once the commands are taken out (`\vec`, `\frac`, `\mathrm{…}` and what it sets) and the Greek ones read as their letters (`\theta` as θ); outside them, each lower-case letter standing alone, and each Greek letter | Modern figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 

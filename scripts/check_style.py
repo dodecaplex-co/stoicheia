@@ -1,6 +1,6 @@
 """Check the house style's hard rules, and report its defaults.
 
-The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S21
+The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S23
 fail the script, and D4 to D11, D14 and D15 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
@@ -25,7 +25,10 @@ What the scopes cover (STYLE, section 8):
   are Heath's proof and out of scope.
 * Generated: CERTIFICATE.md, GRAPH.md, book/<book>/index.md. A failure here is mended
   in scripts/render.py or in the source it reads.
-* Idea figures, figures/<book>/NN-idea.svg; Euclid's figures, figures/<book>/NN.svg.
+* Idea figures, figures/<book>/NN-idea.svg; Euclid's figures, figures/<book>/NN.svg;
+  the figures of the modern way, figures/<book>/NN-modern.svg (S22, S23), each drawn to
+  stand under its page's paragraph "**The modern way.**", with Euclid's figure's letters
+  and the paragraph's own names.
 
 "Outside quotations" means with every "…" span (within one paragraph), every link
 target `](…)`, every code span and every fenced code block blanked first. HTML comments
@@ -146,6 +149,8 @@ RULES = {
     "S19": "a book introduction that does not link the book's brief",
     "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
+    "S22": "a modern figure's canvas, colours, strokes, title, or paragraph to stand under",
+    "S23": "a modern figure's text not Euclid's figure's letters, upright, or the modern way's names, italic",
 }
 
 REPORTS = {
@@ -303,8 +308,9 @@ def generated_files() -> list[Path]:
 
 
 def ref_of(path: Path) -> str | None:
-    """"I.5" for mishnah/I/05.md, reading/I/05.md or figures/I/05-idea.svg."""
-    m = re.fullmatch(r"(\d\d)(?:-idea)?\.(?:md|svg)", path.name)
+    """"I.5" for mishnah/I/05.md, reading/I/05.md, figures/I/05-idea.svg or
+    figures/I/05-modern.svg."""
+    m = re.fullmatch(r"(\d\d)(?:-idea|-modern)?\.(?:md|svg)", path.name)
     if m and path.parent.name in heath.ROMAN:
         return f"{path.parent.name}.{int(m.group(1))}"
     return None
@@ -1094,7 +1100,9 @@ def svg_root(path: Path):
     try:
         return ET.parse(path).getroot()
     except ET.ParseError as e:
-        fail("S14" if path.stem.endswith("-idea") else "S15", path, 0, f"not well-formed SVG: {e}")
+        rule = ("S14" if path.stem.endswith("-idea") else
+                "S22" if path.stem.endswith("-modern") else "S15")
+        fail(rule, path, 0, f"not well-formed SVG: {e}")
         return None
 
 
@@ -1379,6 +1387,152 @@ def check_euclid(path: Path, ref: str) -> None:
                  "LETTER_EXCEPTIONS no longer applies; remove it")
 
 
+# ---------------------------------------------------------------------------------------
+# The figure of the modern way (S22, S23; STYLE, section 7): figures/<book>/NN-modern.svg,
+# shown under the page's paragraph "**The modern way.**". It is drawn as Euclid's figure
+# is, on its canvas and in its palette, with its letters, upright, at the same points,
+# and with the paragraph's own names for what the modern way measures (a, b, θ, u),
+# italic, so that a reader moves between the two figures by the same names.
+
+MODERN_SUFFIX = "-modern.svg"
+MODERN_TEXT_SIZE = 17
+# What the text of a modern figure may hold besides one of Heath's letters: the
+# paragraph's lower-case Latin and Greek names, digits, and the signs of an expression.
+MODERN_TEXT = re.compile(r"[a-zα-ωϑϕ0-9 +\-−·×()/√²³⁰¹⁴-⁹⁻½=,.|′'₀-₉<>≤≥±]+")
+# TeX's Greek letters, as the paragraph writes them, and the letter each names.
+TEX_GREEK = {"alpha": "α", "beta": "β", "gamma": "γ", "delta": "δ", "epsilon": "ε",
+             "varepsilon": "ε", "theta": "θ", "vartheta": "θ", "lambda": "λ", "mu": "μ",
+             "pi": "π", "rho": "ρ", "sigma": "σ", "tau": "τ", "phi": "φ", "varphi": "φ",
+             "psi": "ψ", "omega": "ω"}
+TEX_SPAN = re.compile(r"\$([^$\n]+)\$")
+TEX_UPRIGHT = re.compile(r"\\(?:mathrm|text|operatorname)\{[^{}]*\}")
+TEX_COMMAND = re.compile(r"\\([A-Za-z]+)")
+LONE_LOWER = re.compile(r"(?<![A-Za-z])([a-z])(?![A-Za-z])")
+
+
+def modern_paragraph(text: str) -> str | None:
+    """The paragraph of a mishnah that opens "**The modern way.**", to where Markdown
+    ends it (MODERN_WAY_ENDS), or None."""
+    for _, para in paragraphs(text):
+        if para.startswith(MODERN_WAY):
+            end = MODERN_WAY_ENDS.search(para)
+            return para[:end.start()] if end else para
+    return None
+
+
+def modern_names(paragraph: str) -> set[str]:
+    """The names a modern-way paragraph uses: each lower-case Latin or Greek letter of a
+    $…$ span, its commands taken out (\\vec, \\frac, \\sin) and its Greek ones read as
+    their letters (\\theta, θ), what \\mathrm{…} sets upright left aside (Heath's points);
+    and, outside the spans, each lower-case letter that stands alone, and each Greek
+    letter."""
+    names: set[str] = set()
+
+    def span(m: re.Match) -> str:
+        body = TEX_UPRIGHT.sub(" ", m.group(1))
+        body = TEX_COMMAND.sub(lambda c: " " + TEX_GREEK.get(c.group(1), "") + " ", body)
+        names.update(c for c in body if c.isalpha() and c.islower())
+        return " "
+
+    rest = TEX_SPAN.sub(span, paragraph)
+    names.update(LONE_LOWER.findall(rest))
+    names.update(c for c in rest if "α" <= c <= "ω")
+    return names
+
+
+def modern_findings(root, ref: str, heaths: set[str] | None,
+                    names: set[str] | None) -> list[tuple[str, str]]:
+    """(rule, message) for each fault of a modern figure (S22, S23), given the letters its
+    Euclid's figure draws (None: no Euclid's figure) and the names its page's modern way
+    uses (None: no such paragraph)."""
+    found: list[tuple[str, str]] = []
+    vb = root.get("viewBox", "").replace(",", " ").split()
+    width = float(vb[2]) if len(vb) == 4 else None
+    if width is None or not 400 <= width <= 440:
+        found.append(("S22", f"viewBox width {width}, not 400 to 440, as Euclid's figure"))
+    title = root.find(f"{SVG}title")
+    if title is None or " ".join(text_of(title).split()) != f"{ref}: the modern way":
+        got = "no <title>" if title is None else f"title \"{text_of(title)}\""
+        found.append(("S22", f"{got}, not \"{ref}: the modern way\""))
+    if root.find(f".//{SVG}desc") is not None:
+        found.append(("S22", "a caption (<desc>): the paragraph above the figure is its caption"))
+    if heaths is None:
+        found.append(("S22", "no Euclid's figure to take the letters from"))
+    if names is None:
+        found.append(("S22", "the page's mishnah has no paragraph opening "
+                      f"{MODERN_WAY} for the figure to stand under"))
+    bad = defaultdict(int)
+    for el, own, eff in walk(root):
+        t = tag(el)
+        for k in COLOUR_ATTRS:
+            v = own.get(k)
+            if v is not None and v.lower() != "none" and v.lower() not in EUCLID_COLOURS:
+                bad[f"{k}={v}"] += 1
+        if t in DRAWN and (eff.get("stroke") or "none").lower() != "none":
+            w = number(eff.get("stroke-width"))
+            w = 1.0 if w is None else w
+            if not 1.2 <= w <= 3.2:
+                found.append(("S22", f"stroke-width {w:g} on a <{t}>, not 1.2 to 3.2"))
+        if t == "tspan":
+            found.append(("S23", "a <tspan>: one size and one style to each <text>"))
+        if t != "text":
+            continue
+        s = text_of(el)
+        if not s:
+            continue
+        if number(eff.get("font-size")) != MODERN_TEXT_SIZE:
+            found.append(("S23", f"<text>{s}</text> at font-size {eff.get('font-size')}, "
+                          f"not {MODERN_TEXT_SIZE}"))
+        style = letter_style(eff)
+        if LETTER.fullmatch(s):
+            if heaths is not None and s not in heaths:
+                found.append(("S23", f"letter {s} is not one Euclid's figure draws "
+                              f"({', '.join(sorted(heaths))})"))
+            if style != "normal":
+                found.append(("S23", f"letter {s} in font-style {style}: Heath's letters are "
+                              "upright (STYLE, section 4)"))
+            continue
+        if re.search(r"[A-Z]", s):
+            found.append(("S23", f"<text>{s}</text>: a capital stands alone, as one of Heath's "
+                          "letters; a length or a vector takes the modern way's own name"))
+            continue
+        if not MODERN_TEXT.fullmatch(s):
+            odd = "".join(sorted({c for c in s if not MODERN_TEXT.fullmatch(c)}))
+            found.append(("S23", f"<text>{s}</text> holds {odd!r}: a modern figure's text is "
+                          "Heath's letters, or the modern way's names, numbers and signs"))
+            continue
+        letters = sorted({c for c in s if c.isalpha()})
+        if not letters:
+            continue
+        if style != "italic":
+            found.append(("S23", f"<text>{s}</text> in font-style {style}: the modern way's "
+                          "names are italic, as its mathematics sets them"))
+        unknown = [c for c in letters if names is not None and c not in names]
+        if unknown:
+            found.append(("S23", f"<text>{s}</text>: {', '.join(unknown)} is no name of the "
+                          "page's modern way"))
+    for what, k in sorted(bad.items()):
+        found.append(("S22", f"colour {what} ({k}×) is not in Euclid's figure's palette"))
+    return found
+
+
+def check_modern(path: Path, ref: str) -> None:
+    """S22 and S23 for one figure of the modern way."""
+    root = svg_root(path)
+    if root is None:
+        return
+    book, n = ref.split(".")
+    heaths = drawn_letters(path.with_name(f"{int(n):02d}.svg"))
+    mishnah = ROOT / "mishnah" / book / f"{int(n):02d}.md"
+    para = modern_paragraph(mishnah.read_text(encoding="utf-8")) if mishnah.exists() else None
+    title = root.find(f"{SVG}title")
+    if title is not None:
+        caption_text_rules(path, title, "title")
+    for rule, message in modern_findings(root, ref, heaths,
+                                         modern_names(para) if para is not None else None):
+        fail(rule, path, 0, message)
+
+
 def check_figures(required: bool) -> None:
     for book in books_with_pages():
         d = ROOT / "figures" / book
@@ -1389,6 +1543,8 @@ def check_figures(required: bool) -> None:
                 waiting.append(f"{path.name[:2]} ({left})")
         for path in numbered(d, ".svg"):
             check_euclid(path, ref_of(path))
+        for path in numbered(d, MODERN_SUFFIX):
+            check_modern(path, ref_of(path))
         if waiting:
             report("D14", d, 0, f"{len(waiting)} without letters, with the points each "
                    f"has to letter: {', '.join(waiting)}")
@@ -1471,7 +1627,7 @@ def main() -> int:
         print("  by rule: " + ", ".join(f"{r} {RULES[r]} ({k})"
                                        for r, k in sorted(by_rule.items(), key=lambda x: int(x[0][1:]))))
         return 1
-    rules = "S1–S21" if not args.no_lean else "S1–S11 and S13–S21"
+    rules = "S1–S23" if not args.no_lean else "S1–S11 and S13–S23"
     print(f"\n✓ style: the hard rules hold ({rules})")
     return 0
 

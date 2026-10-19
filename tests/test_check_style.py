@@ -16,7 +16,10 @@ it, put to the script's own patterns and functions:
 * the ink cases: S20 judges a letter on an angle's wedge, a filled path, by the wedge's
   fill, within its three ends and beyond its chord out to its arc, and not beyond the
   arc; however the wedge is spelled (an absolute arc, a relative arc, a cubic curve), and
-  wherever a transform moves it.
+  wherever a transform moves it;
+* the modern cases: S22 and S23 read a figure of the modern way against its Euclid's
+  figure's letters and its paragraph's names, which `modern_names` takes from TeX and
+  from plain words alike.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -189,6 +192,58 @@ def ink_finding(drawn: str, x: float, y: float, ink: str) -> bool:
 
 
 # ---------------------------------------------------------------------------------------
+# The modern cases: a figure of the modern way, read as S22 and S23 read it, against the
+# letters its Euclid's figure draws and the names its paragraph uses.
+
+MODERN_PARAGRAPH = (style.MODERN_WAY + r" Put $\mathrm{A} = (0, 0)$, $\mathrm{B} = (c, 0)$ "
+                    r"and $\mathrm{C} = (0, b)$, and write $a$ for BC. Then $\vec{u}$ "
+                    r"turns through $\theta$, and $\tfrac{1}{2}bc$ is the area; with h a "
+                    "height, (a + b)² is plain.")
+NAMES_CASES = [   # (a paragraph, names it must give, names it must not)
+    (MODERN_PARAGRAPH, {"a", "b", "c", "u", "θ", "h"}, {"v", "e", "r", "t", "f", "m"}),
+    (style.MODERN_WAY + r" The point $\mathrm{A} + i\mathrm{(B - A)}$ is D.", {"i"}, {"m", "r"}),
+    (style.MODERN_WAY + " With AC = a and CB = b, the square is (a + b)².", {"a", "b"}, {"c"}),
+    (style.MODERN_WAY + r" Its breadth is $q/(a\sin\theta)$.", {"q", "a", "θ"}, {"s", "n"}),
+]
+HEATHS = {"A", "B", "C"}
+NAMES = style.modern_names(MODERN_PARAGRAPH)
+MODERN_GOOD = ('<title>I.47: the modern way</title>'
+               '<rect width="400" height="300" rx="10" fill="#fbf7ee"/>'
+               '<line x1="40" y1="250" x2="360" y2="250" stroke="#3b2f2f" stroke-width="1.6"/>'
+               '<polygon points="60,250 300,250 60,60" fill="#e9dcc0" fill-opacity="0.55" '
+               'stroke="#a0522d" stroke-width="2.4"/>'
+               '<g font-family="Georgia, serif" font-size="17">'
+               '<text x="50" y="270">A</text><text x="300" y="270">B</text>'
+               '<text x="50" y="55">C</text>'
+               '<text x="180" y="270" font-style="italic">c</text>'
+               '<text x="200" y="140" font-style="italic">a² = b² + c²</text>'
+               '<text x="70" y="290">(0, 0)</text></g>')
+MODERN_CASES = [   # (a figure's inside, the title's ref, the finding wanted: rule, or None)
+    (MODERN_GOOD, "I.47", None),
+    (MODERN_GOOD, "I.48", "S22"),
+    (MODERN_GOOD.replace("</title>", "</title><desc>A caption.</desc>"), "I.47", "S22"),
+    (MODERN_GOOD.replace('fill="#e9dcc0"', 'fill="#f2b705"'), "I.47", "S22"),
+    (MODERN_GOOD.replace('stroke-width="1.6"', 'stroke-width="0.8"'), "I.47", "S22"),
+    (MODERN_GOOD.replace(">C<", ">D<"), "I.47", "S23"),
+    (MODERN_GOOD.replace('<text x="50" y="270">A', '<text x="50" y="270" font-style="italic">A'),
+     "I.47", "S23"),
+    (MODERN_GOOD.replace('font-style="italic">c<', '>c<'), "I.47", "S23"),
+    (MODERN_GOOD.replace(">c<", ">x<"), "I.47", "S23"),
+    (MODERN_GOOD.replace(">c<", ">BC<"), "I.47", "S23"),
+    (MODERN_GOOD.replace(">c<", ">c<tspan>₁</tspan><"), "I.47", "S23"),
+    (MODERN_GOOD.replace(">c<", ">c∫<"), "I.47", "S23"),
+    (MODERN_GOOD.replace('font-size="17"', 'font-size="14"'), "I.47", "S23"),
+]
+
+
+def modern_rules(inside: str, ref: str, heaths=HEATHS, names=NAMES) -> set[str]:
+    """The rules S22 and S23 find broken in a 400 × 300 figure of the modern way."""
+    root = ET.fromstring('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                         f"{inside}</svg>")
+    return {rule for rule, _ in style.modern_findings(root, ref, heaths, names)}
+
+
+# ---------------------------------------------------------------------------------------
 
 class Phrases(unittest.TestCase):
     """The phrase cases, each put to its rule's search."""
@@ -230,6 +285,37 @@ class Ink(unittest.TestCase):
 
     test_ink_cases.__doc__ = (f"S20 reads the ink of {len(INK_CASES) * len(INK_WEDGES)} "
                               "letters on angles' wedges rightly")
+
+
+class Modern(unittest.TestCase):
+    """The modern cases: the names a paragraph gives, and a figure of the modern way read
+    against them and against its Euclid's figure's letters."""
+
+    def test_names(self):
+        for text, given, not_given in NAMES_CASES:
+            with self.subTest(text=text):
+                names = style.modern_names(text)
+                self.assertLessEqual(given, names, f"modern_names misses {given - names}")
+                self.assertFalse(names & not_given, f"modern_names wrongly gives {names & not_given}")
+
+    def test_modern_cases(self):
+        for inside, ref, want in MODERN_CASES:
+            with self.subTest(figure=inside, ref=ref):
+                found = modern_rules(inside, ref)
+                if want is None:
+                    self.assertEqual(found, set(), f"S22 and S23 wrongly find {found}")
+                else:
+                    self.assertIn(want, found, f"{want} misses a fault in {inside!r}")
+
+    def test_no_paragraph_and_no_figure(self):
+        self.assertIn("S22", modern_rules(MODERN_GOOD, "I.47", names=None))
+        self.assertIn("S22", modern_rules(MODERN_GOOD, "I.47", heaths=None))
+        self.assertIsNone(style.modern_paragraph("**A lead.** No modern way here."))
+        self.assertEqual(style.modern_paragraph("Before.\n\n" + style.MODERN_WAY + " x.\n\nAfter."),
+                         style.MODERN_WAY + " x.")
+
+    test_modern_cases.__doc__ = (f"S22 and S23 read {len(MODERN_CASES)} figures of the "
+                                 "modern way rightly")
 
 
 if __name__ == "__main__":
