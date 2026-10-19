@@ -437,7 +437,7 @@ end RuleProofs.Sides
 would cross all three sides of the triangle ABC, or, when the three are in a straight line,
 cross it at one point between each pair; neither can be. -/
 theorem Tacit.same_side_or (hA : ¬ OnLine A L) (hB : ¬ OnLine B L) (hC : ¬ OnLine C L)
-    (hAB : ¬ SameSide A B L) : SameSide A C L ∨ SameSide B C L := by
+    (h : ¬ SameSide A B L) : SameSide A C L ∨ SameSide B C L := by
   by_cases hAC : SameSide A C L
   · exact Or.inl hAC
   apply Or.inr
@@ -445,7 +445,7 @@ theorem Tacit.same_side_or (hA : ¬ OnLine A L) (hB : ¬ OnLine B L) (hC : ¬ On
   intro hBC
   have hACne : A ≠ C := fun e => hAC (e ▸ same_side_refl hA)
   have hBCne : B ≠ C := fun e => hBC (e ▸ same_side_refl hB)
-  obtain ⟨X, hXL, hAXB⟩ := RuleProofs.Pasch.opposite_sides_exists_between ⟨hA, hB, hAB⟩
+  obtain ⟨X, hXL, hAXB⟩ := RuleProofs.Pasch.opposite_sides_exists_between ⟨hA, hB, h⟩
   by_cases hcol : Collinear A B C
   · obtain ⟨M, hAM, hBM, hCM⟩ := hcol
     have hXM := on_line_of_between_ends hAXB hAM hBM
