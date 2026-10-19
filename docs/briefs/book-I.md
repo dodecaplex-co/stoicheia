@@ -94,8 +94,9 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   `Prop29.interior`, `Prop29.exterior`, `Prop31.line`, `Prop34.bisect`, and
   `Prop46.square_eq` with `Prop46.side_eq` (squares on equal straight lines are equal, and
   conversely, as Heath reports Proclus proving under I.46).
-- **Companions after their propositions** (the exceptions, below): I.40's, I.45's and I.47's; and,
-  in `Prop45.lean` before `Prop45.fan`, the bridge `Fitted.fan`, which cites I.13.
+- **Companions after their propositions** (the exceptions, below): I.40's, I.45's and
+  I.47's; and, in `Prop45.lean` before `Prop45.fan`, the bridge `Fitted.fan`, which cites
+  I.13.
 
 19 October 2026: the statement of `Prop47.general` was challenged by an independent reader
 who wrote none of it, and approved as written by the coordinator.
