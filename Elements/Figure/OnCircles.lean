@@ -5,14 +5,13 @@ import Elements.Foundations.DefinitionsIII
 /-!
 # Book Zero: straight lines in a circle
 
-Book III draws straight lines in circles, and reads off its figures where their ends
-and the points of the circle lie. These are the facts it takes for granted that need no
-proposition: three points of a circle are not on one straight line; a straight line in a
-circle has points of the circle on each side of it; a circumference may be named from
-either side of the straight line that cuts it off; equal circles have equal radii; and a
-straight line that touches a circle meets it at a point of contact and has no point within
-it. They follow from Definition 15, System E's rules for circles, and the definitions of
-Book III.
+Book III draws straight lines in circles, and reads off its figures where their ends and the
+points of the circle lie. These are the facts it takes for granted that need no proposition:
+three points of a circle are not on one straight line; a straight line in a circle has points
+of the circle on each side of it; a circumference may be named from either side of the
+straight line that cuts it off; equal circles have equal radii; and a straight line that
+touches a circle meets it at a point of contact and has no point within it. They follow
+from Definition 15, System E's rules for circles, and the definitions of Book III.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.
