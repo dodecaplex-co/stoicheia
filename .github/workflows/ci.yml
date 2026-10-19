@@ -224,12 +224,7 @@ jobs:
           # An updated pin belongs to the content it pins. Copying it from the pull
           # request could make unchanged main fail, hiding a real acceptance regression.
           # rsync excludes also protect main's pins from deletion when absent in the PR.
-          rsync -a --delete scripts/ "$main/scripts/"
-          rsync -a --delete --exclude=/certificate_expectations.json \
-            --exclude=/model/lock.sha256 --exclude=/model/laws.toml \
-            --exclude=/model/MODEL.md --exclude=/model/results/ tests/ "$main/tests/"
-          rsync -a --delete --exclude=/axioms.lock Certificate/ "$main/Certificate/"
-          cp review/SCHEMA.md review/terms.toml "$main/review/"
+          scripts/copy_acceptance_checks.sh . "$main"
           cp -R .lake "$main/"
           cd "$main"
           lake build

@@ -32,7 +32,6 @@ import json
 import subprocess
 import sys
 import tempfile
-import textwrap
 import unittest
 from pathlib import Path
 
@@ -226,7 +225,7 @@ class Verdicts(unittest.TestCase):
 
 
 class BaselineCopy(unittest.TestCase):
-    """Run the workflow's copy commands on small trees, without git or Lean."""
+    """Run the baseline-copy helper on small trees, without git or Lean."""
 
     # WORKFLOW section 10, step 4: values pinned to the edition, including the model's
     # account of its laws. model/ itself is outside the directories CI copies.
@@ -234,6 +233,7 @@ class BaselineCopy(unittest.TestCase):
             "tests/model/lock.sha256", "tests/model/laws.toml", "tests/model/MODEL.md",
             "tests/model/results/summary.txt", "tests/model/results/nested/run.txt")
     checks = ("scripts/check_acceptance.py", "scripts/check_fidelity.py",
+              "scripts/copy_acceptance_checks.sh",
               "tests/test_check_acceptance.py", "tests/model/run.py",
               "tests/model/search.py", "tests/model/hyperbolic.py",
               "Certificate/Facts.lean", "review/SCHEMA.md", "review/terms.toml")
@@ -249,20 +249,15 @@ class BaselineCopy(unittest.TestCase):
         for tree, version in ((main, "main"), (pr, "pull request")):
             for name in self.pins + self.checks + ("model/lock.sha256",):
                 self.write(tree, name, f"{version}: {name}\n")
+        helper = pr / "scripts/copy_acceptance_checks.sh"
+        helper.write_bytes((ca.ROOT / "scripts/copy_acceptance_checks.sh").read_bytes())
+        helper.chmod(0o755)
         return main, pr
 
     def copy_checks(self, main: Path, pr: Path) -> None:
-        # Exercise the actual workflow, from its worktree creation to its build cache
-        # copy. Reading this block needs no YAML library in CI's test environment.
-        workflow = (ca.ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
-        step = workflow.split("      - name: Check main against the checklist, with the "
-                              "pull request's checks\n", 1)[1].split("\n      - name:", 1)[0]
-        script = textwrap.dedent(step.split("        run: |\n", 1)[1])
-        copy = script.split('git worktree add --detach "$main" "$main_sha"\n', 1)[1]
-        copy = copy.split('cp -R .lake "$main/"', 1)[0]
-        done = subprocess.run(["bash", "-eu", "-c", 'main="$1"\n' + copy,
-                               "baseline-copy", str(main)], cwd=pr, capture_output=True,
-                              text=True, timeout=10)
+        done = subprocess.run([str(pr / "scripts/copy_acceptance_checks.sh"),
+                               str(pr), str(main)], cwd=pr, capture_output=True, text=True,
+                              timeout=10)
         self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
 
     def test_workflow_copies_checks_and_preserves_main_pins(self):
