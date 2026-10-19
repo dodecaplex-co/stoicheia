@@ -26,6 +26,6 @@ case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"
 
 [review]
 stage = "exceptions"
-commit = "8f37887"
+commit = "7f4fba99"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:b27e1893390da4f3"

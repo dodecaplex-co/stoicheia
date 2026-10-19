@@ -50,6 +50,6 @@ note = "Like Heath's, this figure draws the last supposition the text refutes: t
 
 [review]
 stage = "exceptions"
-commit = "8f37887"
+commit = "7f4fba99"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:427b11ee9e1f37cf"
+lean = "sha256:bd40b803c93f0cfa"

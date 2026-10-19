@@ -32,6 +32,6 @@ case = "acute angles at A and D, with BKC and ELF less than semicircles"
 
 [review]
 stage = "exceptions"
-commit = "8f37887"
+commit = "7f4fba99"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:bda125b8a98ed658"

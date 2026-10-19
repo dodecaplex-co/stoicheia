@@ -22,6 +22,6 @@ note = "Euclid's figure draws the impossible supposition that BGC is greater tha
 
 [review]
 stage = "exceptions"
-commit = "8f37887"
+commit = "7f4fba99"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:7be789b74d6d4d78"
