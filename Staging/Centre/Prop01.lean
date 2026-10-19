@@ -1,78 +1,33 @@
 import Elements.BookIII.Prop01
 
 /-!
-# Staging: III.1, once every circle has a centre
+# Staging: III.1 without the centre hypothesis
 
-Brief 0008. The owner approved a rule that every circle has a centre, `exists_centre`, which
-lands only in the coordinator's own pull request, now that the model's law names are data
-(issue #40, landed) and this brief is frozen. Until it lands no such rule exists, and
-nothing here declares one: where a check needs the rule, it takes the rule's content as a
-hypothesis named `exists_centre`, so that, once the rule lands, the same words refer to it.
+Brief 0008. The rule `exists_centre` is now available. III.1 keeps its conclusion, the
+points of Euclid's construction with `Centre F ABC`, and drops its hypothesis
+`∃ G, Centre G ABC`. Euclid's construction is kept apart from its correctness:
 
-III.1 keeps its conclusion, the points of Euclid's construction with `Centre F ABC`, and
-drops its hypothesis `∃ G, Centre G ABC`. Euclid's construction is kept apart from its
-correctness:
-
-* `Prop1.construction` finds D, C, E and F as Euclid does, for a circle given with two
-  points A, B and nothing more. It is proved here with today's construction steps,
-  unchanged: no centre of the circle is given to it, and no rule that a centre exists is
-  used. It returns the right angles ADC and BDC, so that the reductio takes the angle CDB
-  from it, as today's proof does.
+* `Elements.BookIII.Prop1.construction` now lives before the main III.1. It receives a
+  circle and two points A, B, with no centre supplied. It uses `exists_centre` only inside
+  the proof that D is within the circle, through `Prop1.within`; that centre supplies none
+  of the points returned. The construction returns both right angles ADC and BDC and that
+  C is off AB.
 * The restated `Prop1` adds the correctness: "let G be the centre" takes a centre from the
-  rule, and Euclid's reductio shows that it is F. The first check below proves the restated
-  statement this way, from `Prop1.construction`, the rule's content and today's reductio.
-* `Prop1.of_circle` is the entry point for a circle alone: it takes two points of the
-  circle (Points 7, `exists_point_on_circle`) and runs III.1 on the straight line through
-  them, as Euclid draws AB "through it at random".
+  rule, and Euclid's reductio shows that it is F. The first check below runs the reductio
+  on the home construction's output. Its hypothesis supplies G for this correctness
+  argument; the construction already uses the rule to prove D within.
+* `Prop1.of_circle` takes two points of the circle (`exists_point_on_circle`) and runs
+  III.1 on the straight line through them, as Euclid draws AB "through it at random".
 
-Once proved, the construction goes before `Elements.BookIII.Prop1` first, under
-today's statement (the record shows it as a `grouped` passage naming it), the restated
-theorem then replaces today's, and the entry point goes after the porism as a lemma; this
-file is then deleted. The names here sit in `Elements.BookIII.Staging.Centre`,
-not `Elements.BookIII.Staging`, which brief 0006's staged III.24 and III.25 already use.
+The main III.1 still keeps its centre hypothesis and calls the home construction under
+its three sentences. The restated theorem here will replace it later, and the entry
+point will go after the porism. The remaining staged names sit in
+`Elements.BookIII.Staging.Centre`.
 -/
 
 namespace Elements.BookIII.Staging.Centre
 
 open Tacit
-
-/-- **Euclid's construction for III.1**, for a circle given with two points A, B of it and
-no centre. AB is bisected at D; DC is drawn at right angles to AB, the angles ADC and BDC
-both right, and through to E, so that C and E are on the circle, either side of D, and C is
-off AB; and CE is bisected at F. That F is the centre is not claimed here: that is the
-correctness argument, in `Prop1`. This is the construction core of FORMALIZATION, section
-4: it receives only what the problem gives, and carries Euclid's three sentences of
-construction. -/
-theorem Prop1.construction {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
-    (hB : OnCircle B ABC) (hAB : A ≠ B) :
-    ∃ F C D E : Point, Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧
-      OnCircle E ABC ∧ Between C D E ∧ ∠ A D C = ∟ ∧ ∠ B D C = ∟ ∧ ¬ Collinear A B C ∧
-      Between C F E ∧ ‖C F‖ = ‖F E‖ := by
-  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
-  obtain ⟨D, hADB, hAD⟩ := BookI.Prop10 hAB
-  have hD_L := on_line_of_between_ends hADB hA_L hB_L
-  obtain ⟨Q, hQ, -⟩ := exists_off_line hAB []
-  obtain ⟨X, hXQ, hX⟩ := BookI.Prop11 hAB ⟨L, hA_L, hB_L, hD_L⟩ hQ
-  have hD_in : InsideCircle D ABC := inside_of_between (Or.inr hA) (Or.inr hB) hADB
-  have hX_L : ¬ OnLine X L := hXQ.triangle.off_line hA_L hB_L
-  have hDX : D ≠ X := fun e => hX_L (e ▸ hD_L)
-  obtain ⟨N, hD_N, hX_N⟩ := Postulate1 D X hDX
-  obtain ⟨E, hE, hE_N, hEDX⟩ := line_circle_beyond hD_in hD_N hX_N hDX.symm
-  obtain ⟨C, hC, hC_N, hCDE⟩ := line_circle_beyond hD_in hD_N hE_N (ne_of_between hEDX)
-  have hCray : OnRay C D X := OnRay.of_between_between hEDX (between_symm hCDE)
-  have hDA : D ≠ A := (ne_of_between hADB).symm
-  have hDB : D ≠ B := (ne_of_between (between_symm hADB)).symm
-  have hADC : ∠ A D C = ∟ := by
-    rw [angle_onRay_right hCray hDA.symm]
-    exact hX A ⟨L, hA_L, hB_L, hA_L⟩ hDA.symm
-  have hBDC : ∠ B D C = ∟ := by
-    rw [angle_onRay_right hCray hDB.symm]
-    exact hX B ⟨L, hA_L, hB_L, hB_L⟩ hDB.symm
-  have hCD : C ≠ D := ne_of_between hCDE
-  have hC_L : ¬ OnLine C L := fun h => hX_L ((line_unique hCD hC_N hD_N h hD_L) ▸ hX_N)
-  obtain ⟨F, hCFE, hCF⟩ := BookI.Prop10 (ne_of_between_ends hCDE)
-  exact ⟨F, C, D, E, hADB, hAD, hC, hE, hCDE, hADC, hBDC, Triangle.of_line hA_L hB_L hAB hC_L,
-    hCFE, hCF⟩
 
 /-- To find the centre of a given circle. -/
 theorem Prop1 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC) (hB : OnCircle B ABC)
@@ -82,13 +37,13 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC) (hB : OnCircle 
   sorry
 
 /-- The check that the construction and the correctness fit: given the rule's content, the
-restated III.1 follows from `Prop1.construction` and Euclid's reductio, which is today's,
-run on the construction's output alone (checked by Lean). The centre's existence enters only
-at "let G be the centre". -/
+restated III.1 follows from the home construction and Euclid's reductio, run on the
+construction's output (checked by Lean). The hypothesis supplies G at "let G be the centre";
+the construction uses the rule itself only to prove D within. -/
 example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) : type_of% @Centre.Prop1 := by
   intro A B ABC hA hB hAB
   obtain ⟨F, C, D, E, hADB, hAD, hC, hE, hCDE, hADC, hBDC, hC_AB, hCFE, hCF⟩ :=
-    Prop1.construction hA hB hAB
+    Elements.BookIII.Prop1.construction hA hB hAB
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hAB
   have hD_L := on_line_of_between_ends hADB hA_L hB_L
   have hCD : C ≠ D := ne_of_between hCDE
@@ -109,9 +64,7 @@ example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) : type_of%
     have hDBG : Triangle D B G := Triangle.of_line hD_L hB_L hDB hG_L
     have hDA_DB : ‖D A‖ = ‖D B‖ := by rw [len_symm D A, hAD]
     have h8 : ∠ A D G = ∠ G D B :=
-      (BookI.Prop8 hDAG hDBG hDA_DB rfl
-        (by rw [len_symm A G, len_symm B G, Definition15 hG hA hB])).trans
-        (angle_symm hDBG.ne₁₂.symm hDBG.ne₁₃.symm)
+      Prop1.equal_adjacent hDAG hDBG hDA_DB (Definition15 hG hA hB)
     have hADG : ∠ A D G = ∟ := Postulate4 ⟨B, hADB, hDAG.bac, h8⟩
     have hGDB : ∠ G D B = ∟ := h8 ▸ hADG
     /- The angle CDB, right by construction, in place of FDB, as today. -/
