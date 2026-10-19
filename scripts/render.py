@@ -590,6 +590,7 @@ def definitions_not_counted(refs, defs, book):
         if (where, num) in counted:
             continue
         lean = DEFINITION_LEAN.get((where, num))
+        lean = content_wording().get(lean, lean)
         parts.append(f"Def. {d} {lean}" if lean else f"Def. {d} is said in Lean's own terms")
     if not parts:
         return ""
@@ -817,7 +818,7 @@ def overlap_rules(overlap):
 
 def overlap_rests(p, overlap):
     """Does the proof rest on the rules its [overlap] names (facts.json's `axioms`)?
-    I.7's does not; III.2's does, through III.1 alone."""
+    Neither I.7's nor III.2's proof rests on its overlapping rule."""
     return bool(p) and all(r in p.get("axioms", []) for r in overlap_rules(overlap))
 
 
@@ -990,7 +991,7 @@ def field_table(book, n, p, record, attached, docs):
 
 
 def clause_map(record):
-    """For a statement in part (III.16, III.31), the clause map from [coverage], shown
+    """For a statement in part, the clause map from [coverage], shown
     before the Lean: what the Lean checks, what it proves toward the clauses it leaves
     out, and what stays in Euclid's words."""
     cov = record.get("coverage") if record else None
@@ -1734,9 +1735,8 @@ FRONT_LEAN_III = {
     },
 }
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
-# Euclid's own proofs use some words with no Lean partner (Definition I.14's figure, as
-# "the given rectilineal figure" of I.45 and II.14; Definition III.7's mixed angle in
-# III.16 and III.31), so every front page says only that the Lean proofs never use them.
+# Euclid's definitions include words with no Lean partner, such as Definition III.10's
+# sector, so every front page says only that the Lean proofs never use those words.
 # Helpers such as `Prop1.figure` are named for the diagram, not for Definition I.14.
 FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 
@@ -1757,6 +1757,7 @@ def front(book):
         elif re.match(r"^\d+\. ", line) and section:
             num, rest = line.split(". ", 1)
             lean = FRONT_LEAN.get(book, {}).get(section, {}).get(int(num), "")
+            lean = content_wording().get(lean, lean)
             out.append(f"| {num} | {rest} | {lean} |")
         elif line.strip() and section and not line.startswith("#"):
             intro = [f"_{line.strip()}_", ""]
@@ -1956,10 +1957,59 @@ def postulate5_bullet(book, facts, proved, entries):
                                 "it, so any of its proofs may."))
 
 
-# What a book's line on superposition adds, where Euclid's text moves a figure that our
-# proof does not.
+# What a book's line on superposition adds about a proof in which Euclid moves a figure.
 SUPERPOSITION_NOTE = {"III": " Euclid's III.24 applies one segment to another, and our proof "
                              "of it compares the radii instead."}
+
+
+@functools.cache
+def content_wording():
+    """Text pairs selected by the vocabulary and proof dependencies in facts.json.
+    Read once per render; without the named content, keep the existing wording."""
+    path = ROOT / "facts.json"
+    data = json.loads(path.read_text()) if path.exists() else {}
+    words = data.get("vocabulary", {})
+    props = {p["ref"]: p for p in data.get("propositions", [])}
+    placement = any(s["name"] == "BookIII.placement"
+                    for s in props.get("III.24", {}).get("shared_steps", []))
+    definitions = FRONT_LEAN_III["Definitions"]
+    choices = (
+        ("MixedAngle.ofSegment" in words, (
+            (definitions[7],
+             "`MixedAngle.ofSegment A B α S`: the angle of the segment on S's side of AB, "
+             "read as the region it opens near A; the companions of III.16 and III.31 "
+             "compare it there with rectilineal angles placed along AB on that side"),
+        )),
+        ({"Arc", "InSegment", "OnArc", "Arc.Congruent"} <= words.keys(), (
+            (definitions[6],
+             "`Arc`: a circle, the ends A, B of a straight line in it, and a point E naming "
+             "its side, the segment AEB; its points, `InSegment`, and its circumference's, "
+             "`OnArc`; segments that coincide, `Arc.Congruent` (III.24, III.26, III.28)"),
+        )),
+        ({"Arc", "Arc.measure"} <= words.keys(), (
+            (definitions[9],
+             "`standing α B A C`, the circumference on which the angle BAC stands; the "
+             "circumference BKC is `circumference α B K C`, and an arc's is `Arc.measure`; "
+             "each measured as twice the angle that stands on it at the circumference"),
+        )),
+        ("CirclesCut" in words, (
+            (DEFINITION_LEAN["III", 3],
+             "is `CirclesCut`, `TouchesInternally` and `TouchesExternally` in Lean"),
+            (definitions[3],
+             "`CirclesCut α β`: the circles meet at two points and each has a point within "
+             "the other; `TouchesInternally α β C`: they meet at C, a point of β is within α, "
+             "and no point of β falls outside α; `TouchesExternally α β C`: they meet at C, "
+             "and no point is within both; `CirclesTouch α β C`: either touches the other "
+             "within, or they touch without. Touching is read of the whole circles"),
+        )),
+        (placement, (
+            (SUPERPOSITION_NOTE["III"],
+             " Euclid's III.24 applies one segment to another, and so does our proof of it, "
+             "by `placement`, which uses superposition only through the propositions it "
+             "cites, I.4 and I.8 among them."),
+        )),
+    )
+    return {old: new for present, pairs in choices if present for old, new in pairs}
 
 
 def superposition_bullet(book, sup, complete):
@@ -1972,7 +2022,8 @@ def superposition_bullet(book, sup, complete):
                 "project only I.4 and I.8 do.")
     else:
         text = f"called on by {and_list(sup)}."
-    return f"- **Superposition**: {text}" + SUPERPOSITION_NOTE.get(book, "")
+    note = SUPERPOSITION_NOTE.get(book, "")
+    return f"- **Superposition**: {text}" + content_wording().get(note, note)
 
 
 def certificate(facts, docs, records):

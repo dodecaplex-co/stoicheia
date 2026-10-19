@@ -1334,3 +1334,17 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+- **The renderer's words follow the content.** The protected file
+  [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
+  `facts.json`: `MixedAngle.ofSegment` enables the mixed-angle row; `Arc`, `InSegment`,
+  `OnArc` and `Arc.Congruent` enable the segment row; `Arc` with `Arc.measure` enables the
+  circumference row; `CirclesCut` enables the cutting and touching rows; and III.24's
+  shared step `BookIII.placement` enables the account of its application of one segment
+  to another. Each keeps the present wording until its named content is there. Comments
+  about III.2's unused overlapping rule are corrected, and the clause-map docstring no
+  longer names particular propositions. On main's present content, the generated pages
+  stay byte for byte unchanged. This tooling change precedes train C6a so that its
+  content pull request changes no check input beyond the values pinned to that content:
+  the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
+  apart from an accompanying change to `scripts/render.py`. No check, statement, lock
+  or review record changes here.
