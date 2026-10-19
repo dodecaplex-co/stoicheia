@@ -84,16 +84,17 @@ here in their own words.
 
 ## Lincoln and the six books
 
-Abraham Lincoln reckoned that all his schooling "did not amount to one year". In the
-sketch he wrote for John L. Scripps's campaign biography in 1860, he speaks of himself
-in the third person: "What he has in the way of education, he has picked up." After a
-sentence on English grammar comes the one the README quotes, and the one after it:
-"He studied and nearly mastered the Six-books of Euclid, since he was a member of
+Abraham Lincoln reckoned that all his schooling "did not amount to one year" (Roy P.
+Basler, ed., [*The Collected Works of Abraham Lincoln*](#basler1953collected), vol. 4,
+p. 62). In the sketch he wrote for John L. Scripps's campaign biography in 1860, he speaks
+of himself in the third person: "What he has in the way of education, he has picked up."
+After a sentence on English grammar comes the one the README quotes, and the one after
+it: "He studied and nearly mastered the Six-books of Euclid, since he was a member of
 Congress. He regrets his want of education, and does what he can to supply the want."
-These are Lincoln's own words (Roy P. Basler, ed., [*The Collected Works of Abraham
-Lincoln*](#basler1953collected), vol. 4, p. 62; the passages on education and Euclid found
-through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
-*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 24).
+These are Lincoln's own words, on the same page of the *Collected Works*. The sentence on
+Euclid, with the phrases "What he has in the way of education", "picked up" and "his want
+of education", was found through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 24.
 
 The six books are Books I to VI. Lincoln does not name his edition, but LaFantasie makes a
 careful suggestion: most likely John Playfair's *Elements of Geometry: Containing the
@@ -106,27 +107,42 @@ Society, 1968, p. 47; quotation found through Glenn W. LaFantasie, ["Lincoln, Eu
 *Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 33, note 18).
 Stoicheia has the first three books so far.
 
-William H. Herndon, Lincoln's law partner in Springfield, placed his most concentrated
-study between 1849 and 1854, after his return from Congress. He carried Euclid on the
-Eighth Circuit, from one county court to the next, in his saddlebags or a buggy. Herndon
-remembered him studying late in shared tavern rooms, by candlelight, while the other
-lawyers snored. He credited Lincoln with being able to demonstrate every proposition in
-the six books, a more generous estimate than Lincoln's own "nearly mastered". Herndon
-also recalled finding him absorbed at their office, with paper, a compass, a rule,
-pencils and coloured inks spread out before him. LaFantasie gathers these recollections
-and distinguishes this sustained effort from reports of earlier encounters with Euclid
-(Herndon and Jesse William Weik, [*Herndon's Lincoln*](#herndon1889lincoln), vol. 2,
-pp. 308–309; the 2006 edition, edited by Douglas L. Wilson and Rodney O. Davis, p. 194,
-and Herndon's letters are the sources used by Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
-*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 38–39 and 41).
+William H. Herndon, Lincoln's law partner in Springfield, left several recollections of
+the study, and LaFantasie gives each its source. In a manuscript, "Lincoln and Strangers",
+written about 1885 or 1886, Herndon placed Lincoln's most concentrated effort between 1849
+and 1854, after his return from Congress, when "he carried it around with him when on
+circuit as [a] lawyer", sometimes in his saddlebags or in the back of a buggy. LaFantasie
+distinguishes this sustained effort from reports of earlier encounters with Euclid
+(Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 38–39 and
+note 32, citing the manuscript in the Herndon-Weik Collection at the Library of Congress).
+In a letter to Ward H. Lamon of 16 December 1887, Herndon recalled finding him absorbed
+at their office, with paper, a compass, a rule, pencils and inks of various colours spread
+out before him (LaFantasie, p. 39 and note 33, which also cites Jesse W. Weik's *The Real
+Lincoln*, pp. 240–241).
 
-Judge David Davis remembered Euclid on the circuit too, alongside Latin grammar and
-"the Exact Sciences". In his interview with Herndon on 20 September 1866, he connected
-Lincoln's study with "Mathematical demonstration". Davis admired Lincoln's reasoning,
-but did not say that Euclid had given him that ability (Douglas L. Wilson and Rodney O.
-Davis, eds., [*Herndon's Informants*](#wilson1998informants), p. 350; testimony and
-quotations found through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
-*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 36–37).
+In *Herndon's Lincoln* he remembered the circuit's "little country inns", where he and
+others shared Lincoln's room. Lincoln would set a candle on a chair at the head of the
+bed and study, sometimes "till two o'clock in the morning", while Davis, Logan, Swett,
+Edwards and Herndon himself slept and snored. "On the circuit in this way", Herndon
+wrote, "he studied Euclid until he could with ease demonstrate all the propositions in
+the six books", a more generous estimate than Lincoln's own "nearly mastered" (Herndon and
+Jesse William Weik, [*Herndon's Lincoln*](#herndon1889lincoln), vol. 2, pp. 308–309;
+in the 2006 edition, edited by Douglas L. Wilson and Rodney O. Davis, p. 194, as cited
+by LaFantasie, p. 39 and note 34).
+
+Judge David Davis remembered Euclid too. In his interview with Herndon on 20 September
+1866, he said that Lincoln "was not a well read Man", and went on in short phrases:
+"Studied Euclid", "the Exact Sciences", "His mind struggled to arrive at moral &
+physical", "Mathematical demonstration". The circuit comes in his next sentence, with
+the Latin grammar: "He Studied the Latin Grammar on the Circuit." LaFantasie,
+paraphrasing, has Lincoln study Euclid, "Latin Grammar" and "the Exact Sciences" on the
+circuit alike. Davis admired Lincoln's "unsurpassed reasoning powers", but did not say
+that Euclid had given him that ability (Douglas L. Wilson and Rodney O. Davis, eds.,
+[*Herndon's Informants*](#wilson1998informants), p. 350; testimony found through
+Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
+*Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, pp. 36–37 and
+note 25).
 
 The familiar story about the word *demonstrate* comes from the Rev. John P. Gulliver.
 On 1 September 1864, *The Independent* printed his account of a conversation on a train
@@ -169,7 +185,7 @@ simpler propositions of Euclid are true; but, nevertheless, he would fail, utter
 one who should deny the definitions and axioms. The principles of Jefferson are the
 definitions and axioms of free society." The comparison belongs to his defence of
 Jefferson's principles against those who denied their application to all people
-(Basler, ed., [*Collected Works*](#basler1953collected), vol. 3, pp. 375–376; passage
+(Basler, ed., [*Collected Works*](#basler1953collected), vol. 3, p. 375; passage
 found through Glenn W. LaFantasie, ["Lincoln, Euclid, and the Satisfaction of Success"](https://quod.lib.umich.edu/j/jala/2629860.0041.104/--lincoln-euclid-and-the-satisfaction-of-success?rgn=main;view=fulltext),
 *Journal of the Abraham Lincoln Association* 41, no. 1 (2020): 24–46, p. 44).
 
@@ -215,9 +231,13 @@ attention to sources that lets us tell its story with its uncertainties intact
   (Follett, Foster and Company, Columbus, 1860). **Free.** The seven debates and the
   speeches around them, with Lincoln's two Ohio speeches of 1859, printed from the copies
   Lincoln sent with the request that the reprint be "precisely as the copies I send,
-  without any comment whatever". The Euclid of Charleston is on p. 160, and that of
-  Columbus on p. 249. Lincoln struck the crowd's laughter and cheers from his copies; the
-  *Collected Works* puts them back.
+  without any comment whatever" (his letter of 19 December 1859 to George M. Parsons and
+  others, printed at the front; Basler, *Collected Works*, vol. 3, p. 510). The Euclid of
+  Charleston is on p. 160, and that of Columbus on p. 249. Lincoln deleted the crowd's
+  cheering and interruptions in his scrapbook of the debates, and the *Collected Works*
+  does not follow him (vol. 3, p. 145, note 1): there the Euclid of Charleston ends in
+  "[Roars of laughter and enthusiastic cheers.]" (vol. 3, p. 186), which this edition
+  does not print.
 - <a id="gulliver1864talk"></a>John P. Gulliver, ["A Talk with Abraham Lincoln"](https://archive.org/details/sim_independent_1864-09-01_16_822),
   *The Independent* (New York) 16, no. 822 (1 September 1864), front page. **Free.** The
   whole conversation as Gulliver remembered it, the "demonstrate" story among the rest; the
