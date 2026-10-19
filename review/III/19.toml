@@ -22,6 +22,6 @@ note = "Like Heath's, this figure draws the impossible supposition: F, off CA, a
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "39e9dbb"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:be52672706f4acba"

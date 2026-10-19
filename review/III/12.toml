@@ -22,6 +22,6 @@ note = "Like Heath's, this figure draws the impossible supposition: FG passing a
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "39e9dbb"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:8420eb7838a02329"
