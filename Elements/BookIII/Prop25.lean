@@ -265,6 +265,46 @@ theorem Prop25.complete {A C P B E : Point} {α γ : Circle} (hα : ∃ O : Poin
   rw [hγ]
   exact hX.1
 
+/-- The centre's position in III.25 determines whether the segment is less than a
+semicircle, a semicircle or greater, and compares its circumference with two right angles.
+B is on P's side of AC, and D lies between A and C. The construction's three conclusions
+place E across AC from B, at D, or on B's side. `Prop25.complete` identifies the constructed
+circle with the given segment's circle, carrying these conclusions to that segment.
+[I. 5, I. 32, III. 2, III. 20, III. 21, III. 22] -/
+theorem Prop25.kind {A B C D E P : Point} {γ : Circle}
+    (hBP : SameSideOf B P A C) (hADC : Between A D C)
+    (hE : Centre E γ) (hAγ : OnCircle A γ) (hCγ : OnCircle C γ)
+    (hless : ∠ B A D < ∠ A B D → OppositeSidesOf E B A C)
+    (hequal : ∠ A B D = ∠ B A D → E = D)
+    (hgreater : ∠ A B D < ∠ B A D → SameSideOf E B A C) :
+    Arc.Drawn ⟨γ, A, C, P⟩ ∧
+      (∠ B A D < ∠ A B D →
+        Arc.Less ⟨γ, A, C, P⟩ ∧
+          circumference γ A P C < ∟ + ∟) ∧
+      (∠ A B D = ∠ B A D →
+        Arc.Semicircle ⟨γ, A, C, P⟩ ∧
+          circumference γ A P C = ∟ + ∟) ∧
+      (∠ A B D < ∠ B A D →
+        Arc.Greater ⟨γ, A, C, P⟩ ∧
+          ∟ + ∟ < circumference γ A P C) := by
+  /- B and P are on the same side of AC, so P is off AC and the arc is drawn. -/
+  have hP : Triangle A C P := hBP.symm.triangle
+  refine ⟨⟨⟨E, hE⟩, hAγ, hCγ, hP⟩, ?_, ?_, ?_⟩
+  · intro h
+    /- E is opposite B across AC, hence opposite P. -/
+    have hEP : OppositeSidesOf E P A C := (hBP.symm.trans_opposite (hless h).symm).symm
+    exact ⟨⟨E, hE, hEP⟩, Circumference.lt_semicircle hE hAγ hCγ hEP⟩
+  · intro h
+    /- E is D, between A and C, so AC is a diameter. -/
+    have hAEC : Between A E C := by rw [hequal h]; exact hADC
+    obtain ⟨L, hA_L, hE_L, hC_L⟩ := collinear_of_between hAEC
+    exact ⟨⟨E, hE, ⟨L, hA_L, hC_L, hE_L⟩⟩,
+      Circumference.semicircle hE hAγ hCγ hAEC hP⟩
+  · intro h
+    /- E is on B's side of AC, hence on P's side. -/
+    have hEP : SameSideOf E P A C := (hgreater h).trans hBP
+    exact ⟨⟨E, hE, hEP⟩, Circumference.gt_semicircle hE hAγ hCγ hEP⟩
+
 /-- **A straight line from within the base meets the arc.** For a drawn arc, a ray from a point
 X between the ends of the base, through a point Y on the arc's side, meets the arc. It is the
 meeting fact that III.25's construction core reads off the segment it is given, for the

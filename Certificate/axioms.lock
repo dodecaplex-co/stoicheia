@@ -104,7 +104,7 @@
 "Tacit.triple_incidence2" = "∀ {A B C D : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Not (Elements.SameSide B D M) → Not (Elements.OnLine D M) → Ne B A → Elements.SameSide B C N"
 "Tacit.triple_incidence3" = "∀ {A B C D E : Elements.Point} {L M N : Elements.Line}, Elements.OnLine A L → Elements.OnLine A M → Elements.OnLine A N → Elements.OnLine B L → Elements.OnLine C M → Elements.OnLine D N → Elements.SameSide C D L → Elements.SameSide B C N → Elements.SameSide D E M → Elements.SameSide C E N → Elements.SameSide C E L"
 
-[vocabulary]  # 122
+[vocabulary]  # 125
 "Angle" = "def : Type := Elements.Magnitude Elements.Kind.angle"
 "Apart" = "structure : Type"
 "Apart.area" = "def : Elements.Apart → Elements.Area := fun (R : Elements.Apart) => Elements.Magnitude.sum (List.map (fun (t : Prod Elements.Point (Prod Elements.Point Elements.Point)) => Elements.area (Prod.fst t) (Prod.fst (Prod.snd t)) (Prod.snd (Prod.snd t))) (Elements.Apart.pieces R))"
@@ -115,7 +115,10 @@
 "Arc.C" = "def : Elements.Arc → Elements.Point := fun (self : Elements.Arc) => self.3"
 "Arc.Congruent" = "def : Elements.Arc → Elements.Arc → Prop := fun (a b : Elements.Arc) => Exists fun (f : Elements.Point → Elements.Point) => And (Eq (f (Elements.Arc.B a)) (Elements.Arc.B b)) (And (Eq (f (Elements.Arc.C a)) (Elements.Arc.C b)) (And (Elements.Places f (fun (x : Elements.Point) => Elements.InSegment x a) fun (x : Elements.Point) => Elements.InSegment x b) (Elements.Places f (fun (x : Elements.Point) => Elements.OnArc x a) fun (x : Elements.Point) => Elements.OnArc x b)))"
 "Arc.Drawn" = "def : Elements.Arc → Prop := fun (a : Elements.Arc) => And (Exists fun (O : Elements.Point) => Elements.Centre O (Elements.Arc.circle a)) (And (Elements.OnCircle (Elements.Arc.B a) (Elements.Arc.circle a)) (And (Elements.OnCircle (Elements.Arc.C a) (Elements.Arc.circle a)) (Not (Elements.Collinear (Elements.Arc.B a) (Elements.Arc.C a) (Elements.Arc.K a)))))"
+"Arc.Greater" = "def : Elements.Arc → Prop := fun (a : Elements.Arc) => Exists fun (O : Elements.Point) => And (Elements.Centre O (Elements.Arc.circle a)) (Elements.SameSideOf O (Elements.Arc.K a) (Elements.Arc.B a) (Elements.Arc.C a))"
 "Arc.K" = "def : Elements.Arc → Elements.Point := fun (self : Elements.Arc) => self.4"
+"Arc.Less" = "def : Elements.Arc → Prop := fun (a : Elements.Arc) => Exists fun (O : Elements.Point) => And (Elements.Centre O (Elements.Arc.circle a)) (Elements.OppositeSidesOf O (Elements.Arc.K a) (Elements.Arc.B a) (Elements.Arc.C a))"
+"Arc.Semicircle" = "def : Elements.Arc → Prop := fun (a : Elements.Arc) => Exists fun (O : Elements.Point) => And (Elements.Centre O (Elements.Arc.circle a)) (Elements.Collinear (Elements.Arc.B a) (Elements.Arc.C a) O)"
 "Arc.circle" = "def : Elements.Arc → Elements.Circle := fun (self : Elements.Arc) => self.1"
 "Arc.measure" = "def : Elements.Arc → Elements.Angle := fun (a : Elements.Arc) => Elements.circumference (Elements.Arc.circle a) (Elements.Arc.B a) (Elements.Arc.K a) (Elements.Arc.C a)"
 "Arc.mk" = "constructor : Elements.Circle → Elements.Point → Elements.Point → Elements.Point → Elements.Arc"
