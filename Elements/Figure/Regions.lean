@@ -24,8 +24,8 @@ about them that cite no proposition:
   straight.
 
 The facts that need a proposition, the order of rectilineal angles among them, and that
-comparisons chain (`LocallyLess.trans`, by I.20), are in `BookIII/MixedAngles.lean`. Nothing here cites a proposition of the *Elements*, and nothing
-in it is an axiom.
+comparisons chain (`LocallyLess.trans`, by I.20), are in `BookIII/MixedAngles.lean`.
+Nothing here cites a proposition of the *Elements*, and nothing in it is an axiom.
 -/
 
 namespace Elements
