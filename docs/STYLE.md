@@ -615,7 +615,7 @@ just before the script ([WORKFLOW](WORKFLOW.md), section 8).
 | D11 | Euclid's figure strokes other than lines 1.6, circles 1.3, the subject 2.4 to 2.6, angle marks 1.3, or dots of radius other than 2.6 | Euclid's figures |
 | D14 | The figures at a glance with no letter yet, book by book, with the points each has to letter, while the switch is off (below) | Idea figures |
 | D15 | The figures whose letters are still italic, book by book, while the switch for upright letters is off (below) | Idea figures, Euclid's figures |
-| D16 | A finding of the reach of 19 October, of a rule its file is still listed for (below), with the rule it would fail; and each listed file with no finding of its rules left, to be taken out of the list | The files listed |
+| D16 | A finding of the reach of 19 October, of a rule its file is still listed for (below), with the rule it would fail; and each rule of a listed file with no finding of it left, to be taken out of the file's entry, or the entry out of the list once each of its rules is | The files listed |
 
 **The switch for S21.** The figures at a glance were lettered one by one, and while they
 were, `IDEA_LETTERS_REQUIRED` in `scripts/check_style.py` was `False`: S20 held every
@@ -641,11 +641,12 @@ listed in `REACH_PENDING` in `scripts/check_style.py`, with the rules it had fin
 and whoever mends them; while it is listed, its findings of those rules are reported (D16)
 and fail nothing. Every other finding of the reach fails at once, in a listed file as in
 any other, and every file is held to what it was held to before, so nothing is loosened.
-A listed file with no finding of its rules left is reported as done, and its entry comes
-out in a change to the check; the entry cannot fail, since the change that mends a file
-may not change the check that judges it ([WORKFLOW](WORKFLOW.md), section 10). Once no
-entry is left, the list goes. No file, and no rule of a file, is ever added to quiet a new
-finding: the text is mended.
+A rule of a listed file with no finding of it left is reported as done, and comes out of
+its entry in a change to the check, and the entry comes out once each of its rules has;
+under `--no-lean`, S12, which alone asks Lean, is not reported. A done rule cannot fail,
+since the change that mends a file may not change the check that judges it
+([WORKFLOW](WORKFLOW.md), section 10). Once no entry is left, the list goes. No file, and
+no rule of a file, is ever added to quiet a new finding: the text is mended.
 
 ### The reviewer's checklist
 

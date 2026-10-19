@@ -51,8 +51,10 @@ files, S12 beyond the mishnah, and S22. A file that had findings of that reach o
 day is listed with the rules it had findings of and whoever mends them, and while it is
 listed its findings of those rules are reported (D16) and fail nothing; every other
 finding of the reach fails at once, in a listed file as in any other, and so does every
-finding a file was held to before. An entry whose file has no finding of its rules left is
-reported as done, for the change that takes it out; once none is left, the list goes.
+finding a file was held to before. A rule of an entry whose file has no finding of it left
+is reported as done, for the change that takes the rule out of the entry, or the entry out
+once each of its rules is done; under `--no-lean`, S12, which alone asks Lean, is not. Once
+no entry is left, the list goes.
 
 "Outside quotations" means with every "…" span (within one paragraph), every link
 target `](…)`, every code span and every fenced code block blanked first. HTML comments
@@ -164,11 +166,12 @@ NOT_DECLARED = {
 # file below had findings of the rules' new reach on 19 October, of the rules named beside
 # it ({file: (rules, who mends them)}); while it is listed, its findings of those rules
 # are reported (D16) and fail nothing. Every other finding of the reach fails, in a listed
-# file as in any other, and every file is held to what it was held to before. An entry
-# whose file has no finding of its rules left is reported as done, for the change that
-# takes it out; it never fails, since the change that mends a file judged by this check
-# cannot change the check too (docs/WORKFLOW.md, section 10). Never add a file, or a rule
-# to a file, to quiet a new finding: mend the text.
+# file as in any other, and every file is held to what it was held to before. A rule of
+# an entry whose file has no finding of it left is reported as done (reach_done), for the
+# change that takes the rule out of the entry, or the entry out once each of its rules is
+# done; it never fails, since the change that mends a file judged by this check cannot
+# change the check too (docs/WORKFLOW.md, section 10). Never add a file, or a rule to a
+# file, to quiet a new finding: mend the text.
 REACH_PENDING: dict[str, tuple[str, str]] = {
     # The review notes.
     "review/I/09.toml": ("S7", "the records of Books I and II (#29)"),
@@ -221,7 +224,7 @@ REACH_PENDING: dict[str, tuple[str, str]] = {
 
 failures: list[tuple[str, str, int, str]] = []   # (rule, file, line, message)
 reports: dict[str, list[tuple[str, int, str]]] = defaultdict(list)
-reach_found: set[str] = set()   # the files of REACH_PENDING with a finding of their rules
+reach_found: set[tuple[str, str]] = set()   # (file, rule) of REACH_PENDING with a finding
 
 RULES = {
     "S1": "an em dash",
@@ -272,7 +275,7 @@ def fail(rule: str, path: Path, line: int, message: str, *, new: bool = False) -
     listed for in REACH_PENDING, a D16 report, with the rule it would fail."""
     pending = REACH_PENDING.get(rel(path))
     if new and pending and rule in pending[0].split():
-        reach_found.add(rel(path))
+        reach_found.add((rel(path), rule))
         report("D16", path, line, f"{rule}: {message}")
     else:
         failures.append((rule, rel(path), line, message))
@@ -850,17 +853,17 @@ def text_lines(text: str, line0: int = 0, last: int | None = None):
     return at
 
 
-def check_text(path: Path, raw: str, scopes: set[str], *, line0: int = 0,
-               new: bool = False, replaced=None, line_at=None, collect=None) -> None:
-    """The text rules for one file, or for one text of it that starts after its line
-    `line0` (a review note), by the scopes it belongs to. `new` marks a text that came
-    under the rules with the reach of #66, whose every finding is of that reach; in the
-    other texts, the reach is S7 where it was D10, S6 in the rendered docstrings, and
-    S22. `replaced` gives, for S6 and S7, the offsets in `raw` where they found something
-    in a Lean file's rendered docstrings, read as the pages show them, so D10 passes by
-    the match there that the failure replaces. `line_at` gives the file's line of an
-    offset in `raw`, when `line0` alone cannot; `collect`, a list, gains (rule, offset)
-    for each finding."""
+def check_text(path: Path, raw: str, scopes: set[str], *, new: bool = False,
+               replaced=None, line_at=None, collect=None) -> None:
+    """The text rules for one file, or for one text of it (a review note, a rendered
+    docstring), by the scopes it belongs to. `new` marks a text that came under the rules
+    with the reach of #66, whose every finding is of that reach; in the other texts, the
+    reach is S7 where it was D10, S6 in the rendered docstrings, and S22. `replaced`
+    gives, for S6 and S7, the offsets in `raw` where they found something in a Lean
+    file's rendered docstrings, read as the pages show them, so D10 passes by the match
+    there that the failure replaces. `line_at` gives the file's line of an offset in
+    `raw`, for a text taken from a file; `collect`, a list, gains (rule, offset) for each
+    finding."""
     raw = raw.replace("\r\n", "\n")
     straight = straighten(raw)
     code_free = blank_code(straight)
@@ -869,7 +872,7 @@ def check_text(path: Path, raw: str, scopes: set[str], *, line0: int = 0,
     notes, gen = "lean" in scopes, "generated" in scopes
     review, reports_, rendered = "review" in scopes, "report" in scopes, "rendered" in scopes
 
-    line_at = line_at or text_lines(raw, line0)
+    line_at = line_at or text_lines(raw)
 
     replaced = replaced or {}
 
@@ -1082,15 +1085,14 @@ def check_mishnah(path: Path, raw: str) -> None:
 
 class NamedText(NamedTuple):
     """A text S12 reads: the file a finding names, the text (the file's own, or one text
-    of it, as a review note), the namespaces opened for it, the file's line before the
-    text's first, and whether S12 read it before the reach of #66 (the mishnah, whose
-    plain names it read and whose `name : type` it did not)."""
+    of it, as a review note), the namespaces opened for it, and whether S12 read it before
+    the reach of #66 (the mishnah, whose plain names it read and whose `name : type` it
+    did not)."""
     path: Path
     text: str
     opens: str
-    line0: int = 0
     held: bool = False
-    line_at: object = None   # the file's line of an offset in the text, if line0 cannot say
+    line_at: object = None   # the file's line of an offset in the text, if taken from a file
 
 
 def book_opens(book: str) -> str:
@@ -1188,7 +1190,7 @@ def lean_probe(groups: Groups, imports: list[str]) -> int:
             binder = bool(found and found.group(1) != "`")
             hint = ("; a hypothesis is said in words, never by its local name (STYLE, "
                     "section 1, \"Hypotheses in words\")" if binder else "")
-            line = t.line_at(at) if t.line_at else t.line0 + line_of(t.text, at)
+            line = t.line_at(at) if t.line_at else line_of(t.text, at)
             fail("S12", t.path, line, f"`{name}`: {m.group(2).strip()}{hint}",
                  new=binder or not t.held)
     return len(where)
@@ -1885,6 +1887,19 @@ def check_figures(required: bool) -> None:
 
 # ---------------------------------------------------------------------------------------
 
+def reach_done(no_lean: bool = False) -> list[tuple[str, list[str], bool]]:
+    """The entries of REACH_PENDING with a rule whose file has no finding of it left,
+    each as (the file, those rules, whether they are all its rules), for D16 to report as
+    done. Under `no_lean`, S12, which alone asks Lean, found nothing, so it is never done."""
+    done = []
+    for f, (pending, _) in sorted(REACH_PENDING.items()):
+        rules = pending.split()
+        left = [r for r in rules if (f, r) not in reach_found and not (no_lean and r == "S12")]
+        if left:
+            done.append((f, left, len(left) == len(rules)))
+    return done
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("--no-lean", action="store_true",
@@ -1964,13 +1979,19 @@ def main() -> int:
             print(f"note: S12 left {len(unchecked)} audit lemma(s) unchecked, for the Audit "
                   "library is not built (`lake build Audit`, as CI runs it): "
                   + ", ".join(f"`{n}`" for n in unchecked))
+    done = {f: (rules, whole) for f, rules, whole in reach_done(args.no_lean)}
     for f, (pending, who) in sorted(REACH_PENDING.items()):
+        rules, whole = done.get(f, ([], False))
         if not (ROOT / f).exists():
             report("D16", ROOT / f, 0, f"done: listed in REACH_PENDING ({who}), but there is "
                    "no such file now; take it out")
-        elif f not in reach_found and not args.no_lean:
+        elif whole:
             report("D16", ROOT / f, 0, f"done: no finding of {pending} is left ({who}); take "
                    "it out of REACH_PENDING")
+        elif rules:
+            report("D16", ROOT / f, 0, f"done: no finding of {' '.join(rules)} is left ({who}); "
+                   f"take {'it' if len(rules) == 1 else 'them'} out of its entry in "
+                   f"REACH_PENDING, \"{pending}\"")
 
     if not args.quiet:
         print("Exceptions the script allows, each with its reason:")

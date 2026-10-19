@@ -21,7 +21,8 @@ it, put to the script's own patterns and functions:
   lines; the docstring render.py shows, found again in its file; S12's reading of a
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
   reach of 19 October, whose findings in a file of REACH_PENDING are reported only for the
-  rules the file is listed for, while every other finding in that file still fails.
+  rules the file is listed for, while every other finding in that file still fails, and
+  whose rules are reported as done one by one, as each is left with no finding.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -392,21 +393,21 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
 ]
 
 
-def findings(path, text: str, scopes: set[str], *, pending: str | None, new: bool = False):
-    """The failures and the D16 reports of check_text on `text`, as the file `path`, with
-    that file listed in REACH_PENDING for the rules `pending`, or not listed; the script's
-    own lists are left as they were."""
+def reach_run(path, text: str, scopes: set[str], pending: str | None, new: bool, read):
+    """What `read()` gives after check_text on `text`, as the file `path`, with that file
+    listed in REACH_PENDING for the rules `pending`, or not listed; the script's own lists
+    are left as they were."""
     saved = (list(style.failures), dict(style.reports), set(style.reach_found),
              dict(style.REACH_PENDING))
     try:
         style.failures.clear()
         style.reports.clear()
+        style.reach_found.clear()
         style.REACH_PENDING.clear()
         if pending:
             style.REACH_PENDING[style.rel(path)] = (pending, "a test")
         style.check_text(path, text, scopes, new=new)
-        return (sorted(r for r, *_ in style.failures),
-                sorted(m.split(":")[0] for _, _, m in style.reports.get("D16", [])))
+        return read()
     finally:
         style.failures[:] = saved[0]
         style.reports.clear()
@@ -415,6 +416,14 @@ def findings(path, text: str, scopes: set[str], *, pending: str | None, new: boo
         style.reach_found.update(saved[2])
         style.REACH_PENDING.clear()
         style.REACH_PENDING.update(saved[3])
+
+
+def findings(path, text: str, scopes: set[str], *, pending: str | None, new: bool = False):
+    """The failures and the D16 reports of check_text on `text`, as the file `path`, with
+    that file listed in REACH_PENDING for the rules `pending`, or not listed."""
+    return reach_run(path, text, scopes, pending, new, lambda: (
+        sorted(r for r, *_ in style.failures),
+        sorted(m.split(":")[0] for _, _, m in style.reports.get("D16", []))))
 
 
 GAPS = style.REPORTS_DIR / "gaps-book-I.md"
@@ -436,6 +445,17 @@ REACH_CASES = [   # (file, scopes, a new text?, the rules it is listed for, (fai
     (RECORD, {"review"}, True, "S12", (["S1", "S22", "S7"], [])),
     (style.ROOT / "Elements" / "Foundations" / "Sample.lean", {"lean"}, False, "S22",
      (["S1"], ["S22"])),
+]
+GAPS_REL = style.rel(GAPS)
+DONE_CASES = [   # (a text of the gap catalogue, the rules it is listed for, --no-lean?, done)
+    # Listed for two rules, with a finding of one: the other is done, and the entry is not.
+    (REACH_TEXT, "S7 S12", False, [(GAPS_REL, ["S12"], False)]),
+    # No finding of a rule it is listed for: the entry is done, though an em dash fails.
+    ("Plain words \u2014 and more.", "S7 S22", False, [(GAPS_REL, ["S7", "S22"], True)]),
+    # Under --no-lean S12 found nothing, so it is never done; S7 and S22 still are.
+    ("Plain words.", "S12", True, []),
+    ("Plain words.", "S22", True, [(GAPS_REL, ["S22"], True)]),
+    ("Plain words.", "S7 S12", True, [(GAPS_REL, ["S7"], False)]),
 ]
 
 
@@ -503,6 +523,16 @@ class Scopes(unittest.TestCase):
     test_reach_cases.__doc__ = (f"The reach of 19 October is reported in a listed file for "
                                 f"the rules it is listed for, and all else fails, in "
                                 f"{len(REACH_CASES)} cases")
+
+    def test_done_cases(self):
+        for text, pending, no_lean, want in DONE_CASES:
+            with self.subTest(text=text, pending=pending, no_lean=no_lean):
+                self.assertEqual(reach_run(GAPS, text, {"catalogue"}, pending, False,
+                                           lambda: style.reach_done(no_lean)), want)
+
+    test_done_cases.__doc__ = (f"A rule of a listed file with no finding of it left is "
+                               f"reported as done, and the entry once all its rules are, in "
+                               f"{len(DONE_CASES)} more reach cases")
 
 
 if __name__ == "__main__":
