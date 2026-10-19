@@ -14,10 +14,10 @@ note = "Euclid takes equality and less as the only possibilities when AC is not 
 
 [review]
 stage = "full"
-commit = "4ae9714"
-reviewer = "Claude Opus 5.5, records review"
+commit = "882b90a4"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:25107852e253b12a"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"
