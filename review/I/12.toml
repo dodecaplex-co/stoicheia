@@ -31,7 +31,15 @@ note = "Euclid concludes that CH is perpendicular to AB from the two right angle
 
 [review]
 stage = "full"
-commit = "2a34715"
+commit = "a9bca05"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:0ca9857095b86a95"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
