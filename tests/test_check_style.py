@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The cases of scripts/check_style.py: how its rules read a phrase, and a letter.
+"""The cases of scripts/check_style.py: how its rules read a phrase, TeX, and a letter.
 
     python3 -I tests/test_check_style.py        # well under a second; no Lean, no network
 
@@ -10,6 +10,9 @@ it, put to the script's own patterns and functions:
   it, and not across a blank line (save S2's and S7's), inside a quotation or in one of
   Heath's `--` lines; and S3 still finds an "I" after "Book" when anything but one space
   stands between them;
+* the TeX cases: S10 allows `$…$` only in a paragraph that opens
+  "**The modern way.**", with balanced delimiters and no shape known to break on
+  GitHub; TeX outside such a span still fails, in the modern way as elsewhere;
 * the ink cases: S20 judges a letter on an angle's wedge, a filled path, by the wedge's
   fill, within its three ends and beyond its chord out to its arc, and not beyond the
   arc; however the wedge is spelled (an absolute arc, a relative arc, a cubic curve), and
@@ -17,8 +20,8 @@ it, put to the script's own patterns and functions:
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
-checks before the style check's findings are read. When a rule is found reading a phrase
-or a letter wrongly, its fix comes with a case here that the old rule fails (WORKFLOW,
+checks before the style check's findings are read. When a rule is found reading a phrase,
+TeX or a letter wrongly, its fix comes with a case here that the old rule fails (WORKFLOW,
 section 8, "A guard defect gets a regression"). Python 3.11 or later; standard library.
 """
 
@@ -90,6 +93,57 @@ PHRASE_CASES = [   # (rule, its search, the text as the rule reads it, a finding
 ]
 
 # ---------------------------------------------------------------------------------------
+# The TeX cases: mishnahs on both sides of S10's modern-way boundary.
+
+MW = style.MODERN_WAY + " "
+TEX_CASES = [   # (a mishnah, as S10 reads it, a finding?)
+    (MW + r"Then $e^{i\theta}$ turns B through $\theta$.", False),
+    (MW + r"Put $\mathrm{A}$ at $0$; the angle is $\pi/2$, and $a_1 + b_1$ is real.", False),
+    (MW + r"It is $\frac{e^{i\gamma}-e^{i\alpha}}{e^{i\beta}-e^{i\alpha}}$, and ($x$) too.", False),
+    (MW + r"For $0 \lt b \lt a$, $a\thinspace b$ and $\lbrace x \rbrace$ hold.", False),
+    ("**A lead.** Plain words.\n\n" + MW + r"It is $z \mapsto e^{i\theta} z$.", False),
+    ("Plain words, with θ and π and (a + b)², and no lead.", False),
+    (MW + r"Then $z^\ast$ and $w^\ast$ are conjugates.", False),
+    (MW + r"Then $x_{1}^{2}$ and $a_{n}$ are terms.", False),
+    (MW + r"Then $\theta_1$ and $\vec{u_1}$ are given.", False),
+    (MW + "Then $x$ holds, and the modulus\n|z| is one, so $y$ is too.", False),
+    (MW + "Then $x$ holds, and the sum is\n2. So $y$ is two.", False),
+    (MW + "Then $x$ holds, as Lean's\n#check shows for $y$ too.", False),
+    (r"**A lead.** Then $e^{i\theta}$ turns it.", True),
+    (r"Then e^{iθ} turns it, in a paragraph with no lead.", True),
+    (MW + r"Then e^{iθ} turns it.", True),
+    (MW + r"Then \theta turns it.", True),
+    (MW + r"Then $e^{i\theta}$ turns it, and \pi is half a turn.", True),
+    (MW + r"Then $e^{i\theta}$ and $x turn it.", True),
+    (MW + r"Then $e^{i\theta$ turns it.", True),
+    (MW + r"Then $e^{i\theta}}{$ turns it.", True),
+    (MW + r"Then $$x^2$$ is a square.", True),
+    (MW + r"Then $ x $ is padded.", True),
+    (MW + "Then $x +\ny$ crosses a line.", True),
+    (MW + r"Then the$x$ is glued before.", True),
+    (MW + r"Then $x$s is glued after.", True),
+    (MW + r'Then "$x$" is quoted.', True),
+    (MW + r"Then $\{x\}$ loses its backslashes.", True),
+    (MW + r"Then $a\,b$ loses its backslash.", True),
+    (MW + r"Then $a < b$ is escaped twice.", True),
+    (MW + r"Then $z^*$ and $w^*$ are read as emphasis.", True),
+    (MW + r"Then $a*b*c$ is read as emphasis.", True),
+    (MW + r"Then $\vec{u}_{1}$ and $\vec{v}_{2}$ are read as emphasis.", True),
+    (MW + r"Then $x^{2}_{1}$ has its subscript after a brace.", True),
+    (MW + r"Then $x~y$ is read as strikethrough.", True),
+    (MW + r"Then $a`b$ holds a backtick.", True),
+    ("**A lead.** A paragraph.\n" + MW + r"Then $x$ is in the lead's paragraph.", True),
+    (MW + "Plain words.\n\nThen $x$ is in the next paragraph.", True),
+    (MW + "Then $x$ holds.\n- and $y$ in a list item.", True),
+    (MW + "Then $x$ holds.\n# $y$ a heading", True),
+    (MW + "Then $x$ holds.\n+ and $y$ in a list item.", True),
+    (MW + "Then $x$ holds.\n1) and $y$ in a list item.", True),
+    (MW + "Then $x$ holds.\n> and $y$ in a quotation.", True),
+    (MW + "Then $x$ holds.\n| $y$ | z |\n| --- | --- |", True),
+    (r"**The modern way** without its full stop: $x$.", True),
+]
+
+# ---------------------------------------------------------------------------------------
 # The ink cases: a letter on an angle's wedge, read as S20 reads a figure's letters.
 # (S20 once read no paths, and let a black letter on a blue wedge through.)
 
@@ -147,6 +201,19 @@ class Phrases(unittest.TestCase):
 
     test_phrase_cases.__doc__ = (f"The wording rules read {len(PHRASE_CASES)} wrapped and "
                                  "unwrapped phrases rightly")
+
+
+class Tex(unittest.TestCase):
+    """The TeX cases, each read as S10 reads a mishnah."""
+
+    def test_tex_cases(self):
+        for text, want in TEX_CASES:
+            with self.subTest(text=text):
+                self.assertEqual(bool(style.tex_findings(text)), want,
+                                 f"S10 {'misses' if want else 'wrongly finds'} {text!r}")
+
+    test_tex_cases.__doc__ = (f"S10 reads {len(TEX_CASES)} mishnahs on either side of "
+                              "the modern way's $…$ rightly")
 
 
 class Ink(unittest.TestCase):

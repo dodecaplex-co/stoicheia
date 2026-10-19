@@ -106,6 +106,11 @@ given as the tracking issue records it; and `Rectilineal.toApart`, with
 `Rectilineal.area_toApart`, is added for proofs, so that a glued figure goes to the `Apart`
 companions in one step. No statement's hypotheses or conclusions changed.*
 
+*Corrected 18 October 2026, after the brief landed, with
+[#40](https://github.com/jackChallis/stoicheia/issues/40): the steps that bring the model
+to a changed lock now have one home, tests/model/MODEL.md, "Changing the axioms", and "No
+new axioms" below points to it in place of the steps it gave. No statement changes.*
+
 Base: the branch was written on main at `1e5b99a`, and has main merged in; the revision of
 18 October was written on main at `f17b427`, and the corrections after Astra's second answer
 on `b48640c`. The statements are in `Staging/`, as committed with this brief.
@@ -228,8 +233,9 @@ the new statements.
 **No new axioms.** The lock's `[axioms]` table stays at 87. Its `[vocabulary]` table, which
 holds every definition a proposition's, porism's or companion's statement reaches, grows by
 the new words below, each with a decisions entry and `check_fidelity.py --write-lock`, with
-`tests/model/lock.sha256` updated and `tests/model/MODEL.md` read again in the same change
-(FORMALIZATION, section 7). The words: `Magnitude.sum` (with its auxiliary `match_`
+the model brought to the new lock in the same change, as
+[tests/model/MODEL.md, "Changing the axioms"](../../tests/model/MODEL.md#changing-the-axioms),
+says (FORMALIZATION, section 7). The words: `Magnitude.sum` (with its auxiliary `match_`
 declarations), `InOrder`, `segments`, `endOf`, `OnFiniteLine`, `OnOrInsideTriangle`,
 `Corners`, `Fitted` (with its constructors), `Rectilineal`, `Rectilineal.area`, `Apart`,
 `Apart.area`, `triples`, `Arc`, `Arc.Drawn`, `OnSideOrLine`, `OnArc`, `InSegment`,

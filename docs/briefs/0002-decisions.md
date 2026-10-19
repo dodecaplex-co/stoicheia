@@ -632,6 +632,155 @@ findings:
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
 
+- **The case a figure shows, said under it.** Argon's second review found that the
+  `[figure] case` of a review record, which eleven records give, was never printed, so a
+  figure drawn for one case of several did not say so on its page; we thank Argon warmly for
+  reading the renderer and the records side by side.
+  [`scripts/render.py`](../../scripts/render.py) now prints it under Euclid's figure, before
+  the figure note, and in the figure's alternative text: "Drawn for one case: the bases BC and
+  CE meeting at C, as in Heath's figure." That is what
+  [review/SCHEMA.md](../../review/SCHEMA.md) already says of the key ("The caption names it")
+  and what [STYLE](../STYLE.md), section 7, asks of a figure drawn for one case. The
+  alternative text of both figures also writes a double quotation mark as `&quot;`, so that
+  a record's or a caption's words cannot end the attribute early; none has one today. It
+  changes what render.py writes and nothing it accepts or checks, so it is not a check change
+  ([WORKFLOW](../WORKFLOW.md), section 10); the regenerated pages of I.30, I.35 to I.38,
+  I.40, I.41, II.5, II.9, II.14 and III.6 show it, and no other page changes. The one
+  protected file it changes is
+  `scripts/render.py` ([#30](https://github.com/jackChallis/stoicheia/issues/30)).
+
+- **An axiom lands with its law: the model's law names, a pinned value.** Under the rule
+  that keeps a check change apart from what it checks, a change of axioms could land in no
+  order ([#40](https://github.com/jackChallis/stoicheia/issues/40)): the model's law names
+  lived in its code, so a pull request moving the lock, its hash and the law together was
+  a check change made with content, and a law landed first would name an axiom the lock
+  did not hold. The names move into a data file,
+  [`tests/model/laws.toml`](../../tests/model/laws.toml): a line for each axiom, under the
+  lock's name, with the name of its law in the harness, and the laws that must fail in the
+  hyperbolic plane (Postulate 5), which
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) and
+  [`tests/model/run.py`](../../tests/model/run.py) now read from it, through `read_laws`
+  in [`tests/model/model.py`](../../tests/model/model.py). Before anything runs, `run.py`
+  checks the file against the axiom lock and against `facts.json` in both directions, and
+  `search.py` and `hyperbolic.py` against it; `run.py --ties` runs those checks alone, in
+  a second; and a law that a program reports twice, or a program that stops before its
+  last line, now fails the run. The number of axioms is no value of the harness, which
+  takes it from the lock, so nothing else had to move; the docstrings that named 87 and 86
+  now name no number.
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) counts the file as a value pinned
+  to the edition, beside `Certificate/axioms.lock` and
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256), while each line it changes
+  moves with its axiom: the same pull request adds, removes or restates that axiom's entry
+  in the lock. A law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`,
+  the two programs that check every law, moves the same way, while it keeps to itself (a
+  function `_` under its one decorator `@axiom('<name>', …)`, using only what an
+  allow-list names, below, and changing no container but one it made in its own body,
+  through the name it gave it) and nothing else in the file changes but comments and its
+  docstring. The model's account, [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
+  and `tests/model/results/`, which no check reads, moves with its content as well. A law
+  changed while its axiom stands, a helper or tolerance of the harness, and every other
+  change to the checks are kept apart as before.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) plants an
+  axiom added with its entry in the lock, the new hash, its line of `laws.toml`, its law's
+  code in both programs and a line of MODEL.md: it lands as content, and the model's ties
+  hold on it. With another law loosened beside it, the same change is kept apart, and a
+  table of twenty-five loosenings and five moves checks each way round. An axiom removed
+  or restated moves the same way when no other program names its law. `structured.py` and
+  `exhaustive.py` run some laws by name, so they must drop or re-key such a law first, in
+  a pull request of its own. The independent verifier of the change found two gaps, and
+  we thank them for it: a new law could change a shared container under a second name
+  (`d = DEN`, then `d[:] = [2]`), and a missing laws.toml or lock gave a traceback before
+  Python 3.14, not the refusal. A law now changes a container only through a name that
+  every binding in it gives a container it made itself, and a missing file reads as
+  nothing; each has its tests. The no-mistakes review found a third, and we thank it too:
+  a law could end the structured run early with `SystemExit(0)`, and the run still passed,
+  so each program that runs the laws must now reach its last line, and a test holds it
+  there; and as it found that a law could forge that line through `help`, the pre-flight
+  refused the builtins that print or end a run.
+  Then the change's independent reviewer found that the check was still a deny-list, which
+  reflection escaped, and we thank them for it: a frame's globals, say, or `random._os`,
+  through which a law could coarsen the decimal context every law of the hyperbolic plane
+  computes in, or print a forged result. As every change to a law was kept apart before,
+  the change as it stood weakened that rule against a determined bypass. So the check
+  (`self_contained` in `scripts/safe_push.py`) is now an allow-list, sound by
+  construction: a law's code may use its own parameters and the names it binds; by name,
+  and each in one role, the helpers of its program that the 87 laws call, and the
+  builtins, `math` functions, table (`SEEDS`), value (`RA`) and attributes they use
+  (`append`, on a container of its own, and the draws of the random numbers it is handed,
+  never a reseeding); and plain syntax, with no import, `global`, `lambda`, `try`, `with`,
+  class or default argument. What the list does not name is refused, so a route nobody
+  thought of is refused too. The lists are collected from the laws: every law passes, a
+  test shows that each entry is one some law needs, and each route the reviewer named has
+  its test; widening a list is a check change, in a pull request of its own. One thing a
+  law still shares with the laws after it is the random numbers: how many it draws moves
+  which configurations they see, never what they check. MODEL.md, "Changing the axioms",
+  is now the one home of the steps for changing an axiom, or a word of the lock, and the
+  comment in `tests/model/lock.sha256`, [FORMALIZATION](../FORMALIZATION.md), section 7,
+  the [orders](../templates/orders.md) and [brief 0006](0006-statements.md) point to it;
+  [WORKFLOW](../WORKFLOW.md), section 10, step 4, gives the rule for landing them. Adding
+  an axiom stays the owner's decision: this lets one land, and adds none.
+- **The voice rules loosened, and `$…$` in the modern way: the check change.** The owner's
+  decisions of 18 October, after Argon's second review of the book-III release, as
+  [#70](https://github.com/jackChallis/stoicheia/issues/70) records them: "drop the
+  length, paragraph-count and bold-lead reports; make 'the modern way' optional; let
+  reading lines vary; allow `$…$` in 'the modern way'; radians throughout; one style for
+  letters in text and figures"; and as
+  [#48](https://github.com/jackChallis/stoicheia/issues/48) records them: "S10 is relaxed
+  so that 'the modern way' may use `$…$` (III.20 can then write $e^{i\theta}$); angles
+  are in radians throughout …; letters take one style in text and figures, written once
+  in STYLE". Our warm thanks to Argon, whose counts across the 99 pages showed what the
+  quotas had done. [STYLE](../STYLE.md) writes the new rules once (sections 3, 4, 6, 7 and
+  8), and the table of defaults in [AGENTS.md](../../AGENTS.md) follows it. The one
+  protected file changed is [`scripts/check_style.py`](../../scripts/check_style.py), and
+  this, exactly, is loosened:
+  - the reports D1 (a mishnah outside 250–450 words), D2 (fewer than three or more than
+    five paragraphs, or one over 120 words) and D3 (a paragraph without a bold lead, or a
+    last paragraph not "The modern way") are removed: a mishnah has no count, its leads are
+    optional, and so is "the modern way";
+  - the report D13 (a reading line not beginning "For ") is removed: a line gives the same
+    facts in its own words and order. S17, which fails a reading file's shape and links,
+    is unchanged;
+  - S10 lets TeX stand within `$…$` in a paragraph that opens `**The modern way.**`, and
+    nowhere else: TeX outside those spans, in that paragraph or in any other, fails as
+    before. The paragraph ends where Markdown ends it: at a blank line, or at a line that
+    opens a heading, a list item (a numbered list only from 1), a quotation, a code fence,
+    an HTML block, a rule or a table; a line that only looks like one, such as `|z| is one`,
+    goes on with it. Within it, S10 refuses the shapes of span known to break on GitHub. Its
+    renderer, tried with sample spans on 18 October, needs the dollars paired within the
+    paragraph, never `$$`; one line, no white space just inside a dollar; the opening
+    dollar at a line's start or after white space or "(", the closing one before white
+    space, a line's end or a punctuation mark; balanced braces; no backslash before an
+    ASCII punctuation mark, which GitHub's Markdown removes; and no `<`, `>` or `&`, which
+    it escapes twice. Those lost backslashes show that GitHub's Markdown reads inside a
+    span, and by CommonMark's rules for emphasis, checked with a CommonMark parser and not
+    tried on GitHub, a `*`, or a `_` after anything but a letter or a digit, pairs with
+    another across two spans: so a span holds no `*`, `~` or backtick, and a `_` only
+    straight after a letter or a digit. A shape not yet found may still break, and the
+    reviewer's checklist (STYLE, section 8, item 5), which sees each span rendered on
+    GitHub, stays the guard. Before anything else, the script's self-check reads 44 sample
+    mishnahs, twelve on the allowed side and thirty-two refused, among them TeX outside
+    the dollars in the modern way, `$…$` in another paragraph or in a list item, heading,
+    quotation or table just under the modern way, `$…$` on a wrapped line that only looks
+    like one, and each malformed span;
+  - S20, which held the letters of a figure at a glance italic, now holds them upright, and
+    S15 holds Euclid's figures to the same (it read no style before); the owner's "one
+    style" is read as upright, the style the text already has (S9) and the only one the
+    Lean can show, since Heath's sentences stand on every page as `--` lines in a code
+    block. While the figures are set upright, in a change of their own, the new switch
+    `UPRIGHT_LETTERS_REQUIRED` is `False`: a figure's letters may all be italic, as every
+    figure's are now, or all upright, never mixed, and a new report, D15, lists the
+    figures still italic. The switch is turned on once every figure is upright, and never
+    turned back to quiet a figure.
+
+  Nothing else is loosened: every other rule reads what it read. Radians, and upright
+  letters within a formula (`$\mathrm{A}$`), are rules of STYLE, section 4, for a reader
+  to judge; no check reads them. GitHub renders `$…$`: III.20's modern way, rewritten with
+  `$e^{i\beta}$` and `$\frac{\mathrm{C} - \mathrm{A}}{\mathrm{B} - \mathrm{A}}$` (a trial,
+  not committed), passed S10, went onto `book/III/20.md` through `scripts/render.py`
+  byte for byte, and GitHub's Markdown API set each of its spans as mathematics with the
+  TeX intact. This supersedes the line "usually 250–450 words, with reasons for
+  exceptions" in stage 1b of [brief 0005](0005-astra-review.md). The pages are rewritten
+  under the new rules by #46 and #48.
 - **Stage 2 in the edition: brief 0006's words in the foundations, the axiom lock's
   vocabulary grown.** Every statement of stage 2 of [brief 0006](0006-statements.md) is
   proved, and moves from `Staging/` to its home in that brief's table, in a move the
@@ -667,7 +816,6 @@ findings:
   II.14 use it. Those records, with I.40's and II.1's, become `full` by their companions,
   and wait for their reviewer's reading and stamp; the tags `adjacent-bases`, `two-triangles`
   and `three-pieces` stay in the file, though no record carries them now.
-
 - **The certificate keeps a proof's own axioms apart from those it inherits.** Argon's
   second review of the book-III release found that `direct_axioms` lists, as a
   proposition's own, every axiom its proof term names together with those of the Book
@@ -802,7 +950,6 @@ findings:
   figure can be so divided and another division gives the same sum are not proved here.
   It lands on its own, before the records that use it, since safe_push keeps a check's
   data apart from the content it judges (#19).
-
 - **The restricted superposition prototype, in Staging.** The coordinator approves that
   the prototype of #75 (brief [0009](0009-superposition.md), round 2: a finite symbolic
   context with a valuation, the restricted rule carried as a hypothesis, I.4's and I.8's
@@ -814,3 +961,9 @@ findings:
 - **The formal model's lock hash renewed with stage 2's words.** Stage 2's move adds
   words that only the statements of companions use, so `model/lock.sha256` is renewed
   with `tests/model/lock.sha256`, as its own comment says; no law of the model changes.
+- **The style rules' new cases live with the others.** When the owner's style decision
+  (#70) met the move of check_style's cases into a test (#44), its new cases for S10's
+  boundary (`$…$` allowed in "the modern way", TeX refused elsewhere, delimiters balanced)
+  joined the phrase and ink cases in
+  [`tests/test_check_style.py`](../../tests/test_check_style.py); every case of both is
+  kept (44 phrase, 44 S10 and 33 ink cases), none weakened.

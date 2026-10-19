@@ -126,8 +126,9 @@ where to look:
    ([review/SCHEMA.md](../review/SCHEMA.md), its `short`); what they mean is in
    [FORMALIZATION.md](FORMALIZATION.md).
 4. **The figure at a glance,** with its caption.
-5. **Euclid's proof:** his figure with Heath's letters, a figure note under it where our
-   drawing departs from Heath's (section 7), and Heath's proof in full.
+5. **Euclid's proof:** his figure with Heath's letters, a figure note under it where the
+   figure shows one case of several or our drawing departs from Heath's (section 7), and
+   Heath's proof in full.
 6. **In Lean:** a short table of the formal facts (proof, statement, extra hypotheses,
    argument, representation, overlap with an axiom, and what was reviewed, at which
    commit); a clause map where the statement leaves a clause out, which says the omission
@@ -169,7 +170,7 @@ book's brief. Every book with pages has one **[checked]**.
 **What it is for.** The mishnah, `mishnah/<book>/NN.md`, explains why Euclid's proof and
 ours look as they do; a Lean note explains how a particular step works. The proof and the
 table are on the page, so the mishnah says why they look as they do, not what they say. It
-does four things, in about this order:
+does up to four things, in about this order:
 
 - **The mathematical move.** What Euclid does here, and why this step matters: a way into
   the figure. Open on Euclid.
@@ -183,27 +184,29 @@ does four things, in about this order:
   of those facts said" (I.5). For the hardest formal blocks (I.7, I.35, I.47, III.8 and
   their kin) say what obstacle the block resolves, and why Euclid did not need to say it.
   The finer gaps go in the book's gap catalogue, `docs/reports/gaps-book-<book>.md`.
-- **The modern way.** Last: a correct modern comparison, with the conditions it needs, in
-  coordinates, vectors, complex numbers or matrices. Usually one or two sentences, exactly
-  right, and as long as accuracy needs. Say so when it is not Euclid's route or changes the
-  construction (I.43, I.48; I.2's L lies on DA produced, so it is not A + (C − B)). Write it
-  as Book I does, for a curious reader: "cos θ + i sin θ", "the argument of", "turn B
-  through θ", never TeX's e^{iθ} **[checked]**, and only the range of a variable the reader
-  needs. A modern method may recur on neighbouring pages when it is the clearest correct
-  comparison: link the earlier page and give this page's own point.
+- **The modern way,** where one helps: a correct modern comparison, with the conditions it
+  needs, in coordinates, vectors, complex numbers or matrices, exactly right, and as long
+  as accuracy needs. It is optional: a page leaves it out when it would only restate the
+  proposition in symbols. When a page has one, it is a paragraph of its own that opens
+  **The modern way.**, usually the last, and that paragraph alone may set mathematics in
+  `$…$` (section 4, "Mathematics"). Say so when it is not Euclid's route or changes the
+  construction (I.43, I.48; I.2's L lies on DA produced, so it is not A + (C − B)). Write
+  it for a curious reader: words where they serve ("the argument of", "turn B through θ"),
+  a formula where it is clearer (`$e^{i\theta}$`), and only the range of a variable the
+  reader needs. A modern method may recur on neighbouring pages when it is the clearest
+  correct comparison: link the earlier page and give this page's own point.
 
-These are functions, not four compulsory paragraphs: combine or expand them as the
-proposition asks.
+These are functions, not four compulsory paragraphs: combine, expand or leave them out as
+the proposition asks.
 
-**Its usual shape [reported].** Usually 250–450 words, in three to five paragraphs of about
-120 words at most, "The modern way" last. Shorter is right when the proposition offers
-little more; longer is right when a qualification needs room. The reason goes in the
-handback or the review, never into padding. A paragraph usually opens with a short bold
-lead, proposition-specific and ending in a full stop (a question mark if it asks): a hook,
-not a label. A question (**Must the circles meet?**), a claim (**A compass that closes.**),
-or Euclid's or Heath's words (**"Less than two right angles."**). A lead that could head a
-paragraph on another page is a label. Not every lead need be a question, and the pages
-should not fall into one rhythm.
+**Its shape.** There is no count of words or paragraphs: a mishnah is as long as its
+proposition needs, and a proposition that offers little gets a short one. Nothing is
+padded to reach a length, and no qualification is cut to keep one. A paragraph may open
+with a short bold lead where a hook helps the reader, proposition-specific and ending in a
+full stop (a question mark if it asks): a question (**Must the circles meet?**), a claim
+(**A compass that closes.**), or Euclid's or Heath's words (**"Less than two right
+angles."**). A lead that could head a paragraph on another page is a label. No paragraph
+needs a lead, and the pages should not fall into one rhythm, of leads or of lengths.
 
 **Lean names.** A few exact Lean names, in backticks, where they help the reader find the
 work (`circles_meet`, `Prop1.figure`): usually four at most **[reported]**, and every one a
@@ -316,6 +319,46 @@ docstring label, "System E, Intersection 5" (a diagram rule, §3.4 of System E) 
 E, Intersections 8" (a construction rule, §3.3), or by its Lean name. Titles and foreign
 words are in italics: *pons asinorum*, *reductio ad absurdum*.
 
+**Heath's letters, one style.** Heath's letters name points, straight lines and figures,
+and a reader meets them in the text, in both figures, in the Lean and in the modern way.
+They look the same in each: upright, never italic. Heath's page sets them in italic, but a
+Lean listing cannot, and the page shows Heath's sentences there too, as `--` lines; so the
+letters take the Lean's upright style everywhere. In prose they are plain capitals
+(section 5, "The letters rule"); in the figures, upright Georgia (section 7); in a formula,
+`$\mathrm{A}$`, or `$\mathrm{(C - A)/(B - A)}$` for a whole expression of them. The
+variables of a formula (a, r, z, θ) are not Heath's letters, and take mathematics' usual
+italic.
+
+**Mathematics.** Angles are in radians throughout, as modern mathematics measures them: a
+right angle is π/2, two right angles π, a whole turn 2π, and an angle of a triangle lies
+between 0 and π. No degrees, and no "two right angles" inside a formula ("cos θ falls as θ
+grows from 0 to π"); Euclid's right angles stay in Euclid's words, outside the modern way.
+A formula may be written in plain characters, (a + b)² = a² + b² + 2ab, or, in the modern
+way alone, in TeX between single dollars, `$e^{i\theta}$`, which GitHub renders as
+mathematics. TeX stands nowhere else in the mishnah: not in another paragraph, and not
+outside the dollars **[checked]**. The modern way's paragraph ends where Markdown ends it:
+at a blank line, or at a line that opens a heading, a list item (a numbered list only
+from 1), a quotation, a code fence, an HTML block, a rule or a table **[checked]**. A line
+that only looks like one, `|z| is one` or `2. So`, goes on with the paragraph. A span is
+mathematics only where GitHub reads it so, and the check refuses the shapes known to break
+one **[checked]**. GitHub's renderer, tried with sample spans on 18 October, needs the
+dollars in pairs within the paragraph, and never `$$`; each span on one line, with no space
+just inside either dollar; the opening dollar at a line's start or after a space or "(",
+and the closing one before a space, a line's end or one of the punctuation marks that S10
+lists (section 8); braces that balance; no backslash before a punctuation mark, which
+GitHub's Markdown removes (write `\lbrace`, `\rbrace`, `\thinspace` and `\Vert` for `\{`,
+`\}`, `\,` and `\|`); and `\lt` and `\gt` for < and >, which GitHub escapes twice inside a
+span. Those lost backslashes show that GitHub's Markdown reads inside a span, and by
+CommonMark's rules for emphasis, checked with a CommonMark parser and not tried on GitHub,
+a `*`, or a `_` after anything but a letter or a digit, pairs with another across two
+spans. So a span holds no `*` (write `\ast`), no `~`, which GitHub can read as
+strikethrough (write a space or `\sim`), and no backtick, which opens code; and a `_`
+stands straight after a letter or a digit: `x_{1}^{2}`, not `x^{2}_{1}`, and
+`\mathrm{A_1}`, not `\mathrm{A}_1`. A shape not yet found may still break, so the reviewer
+sees each span rendered on GitHub (section 8, the reviewer's checklist, item 5).
+`scripts/render.py` copies the mishnah onto its page unchanged, so the page shows the same
+mathematics.
+
 **System E and LeanEuclid** are thanked by name in every page's footer, so the mishnah
 does not thank them again; a particular debt is still said where it falls (Intersection 4
 is LeanEuclid's corrected form).
@@ -356,8 +399,8 @@ a quotation is first checked against. The page image decides.
   **[checked]**. His page sets them in italic; ours writes them as the rest of the page
   does: "the middle point of CE" (vol. 2, p. 8), not "of *CE*". Where his italic runs on
   through letters and words together, the words keep it and the letters do not: "AE, EB,
-  EC *will also pass through the remaining points of the segment*" (III.25). Euclid's
-  figures keep their italic letters (section 7).
+  EC *will also pass through the remaining points of the segment*" (III.25). The figures
+  set the letters upright too: one style for them everywhere (section 4).
 - Each of Heath's notes is quoted on the page of the proposition it belongs to, and
   elsewhere only referred to in a clause: "as Todhunter remarks under I.14". A passage from
   his introduction, or from his notes on the definitions and postulates, is quoted once,
@@ -373,23 +416,28 @@ section. A work is new to the project only once it is on the list, checked again
 work itself, its publisher or a library catalogue, and in [references.bib](references.bib).
 Every link a line gives is one the list gives **[checked]**.
 
-Each item stands on one line of the file **[checked]**, however long; the example below
-is wrapped only for this page. Every line runs the same way: "For" and what the reader
-will find **[reported]**; the
-author in full; the title with the list's link, in italics for a book and in quotation
-marks for a paper or a web page, as the list has it; the year of the edition linked, with
-"free online" beside it where the list says **Free**; the chapter, where a checked table
-of contents gives one; and a few words on the work, a phrase rather than a verb ("a lively
-book that sets vectors beside classical proofs"). For instance:
+Each item stands on one line of the file **[checked]**, however long; the examples below
+are wrapped only for this page. A line says, in its own words, what a reader of this
+proposition will find in the work, and it gives the work's facts: the author in full; the
+title with the list's link, in italics for a book and in quotation marks for a paper or a
+web page, as the list has it; the year of the edition linked, with "free online" beside it
+where the list says **Free**; and the chapter, where a checked table of contents gives
+one. The order and the sentence are the writer's: a line may open on the work, on its
+author or on what it shows, and the lines of a book should not fall into one mould. Two
+shapes, of many:
 
 > - For the dot product of the modern way, Grant Sanderson's [*Essence of linear
 >   algebra*](https://www.3blue1brown.com/topics/linear-algebra) (2016, free online),
 >   ch. 9, "Dot products and duality", one short animated lesson that explains it in
 >   pictures.
+> - Grant Sanderson's [*Essence of linear
+>   algebra*](https://www.3blue1brown.com/topics/linear-algebra) (2016, free online) shows
+>   the dot product in pictures, in ch. 9, "Dot products and duality": one short animated
+>   lesson.
 
 A work is described in full the first time it appears in each book. A later line keeps a
 few words on what the work is, when it has them, or else links the page where it is
-described, `(also on [I.18](../I/18.md))`, and its "For" says what this page finds there.
+described, `(also on [I.18](../I/18.md))`, and says what this page finds there.
 A reader may land on any page, so a line never points back in words alone. A line that
 would fit any page of the book is left out.
 
@@ -408,13 +456,13 @@ the house voice, the colours named in brackets, about 40 words **[reported]** an
 most **[checked]**.
 
 **`NN.svg`, Euclid's figure.** 400 wide, and 440 at most where two or three of Heath's
-figures stand side by side (III.25, III.33, III.35, III.36) **[checked]**. Italic letters
-at 17 **[checked]**; ink `#3b2f2f` for lines, dots and letters; circles `#8c7b62`; what the
-proposition is about in `#a0522d`, drawn heavier; triangle fills `#e9dcc0` at 0.55; no
-other colour **[checked]**. Dots of radius 2.6, lines 1.6, circles 1.3, what the
-proposition is about 2.4 to 2.6, angle marks in `#8c7b62` at 1.3 **[reported]**, and no
-stroke thinner than 1.2 or heavier than 3.2 **[checked]**. The title is "Euclid I.N: …",
-with no caption **[checked]**.
+figures stand side by side (III.25, III.33, III.35, III.36) **[checked]**. Upright letters
+(section 4) at 17 **[checked]**; ink `#3b2f2f` for lines, dots and letters; circles
+`#8c7b62`; what the proposition is about in `#a0522d`, drawn heavier; triangle fills
+`#e9dcc0` at 0.55; no other colour **[checked]**. Dots of radius 2.6, lines 1.6, circles
+1.3, what the proposition is about 2.4 to 2.6, angle marks in `#8c7b62` at 1.3
+**[reported]**, and no stroke thinner than 1.2 or heavier than 3.2 **[checked]**. The title
+is "Euclid I.N: …", with no caption **[checked]**.
 
 **Heath's letters, all and only [checked].** Each point stands where the proof puts it
 (I.6: D on AB), each letter clear of every stroke, nothing touching the frame. The Lean
@@ -430,7 +478,7 @@ read by its points: the colours carry the equalities, and the letters tie them t
 text, so that the yellow angle at B is the angle ABC of I.5's proof. The figure at a
 glance carries Heath's letters, the same names as Euclid's figure and the Lean, at every
 point it shows, so that a reader can follow it however it turns or reflects Euclid's
-figure. Each letter is one that `NN.svg` draws, italic, at 14, small and beside its point,
+figure. Each letter is one that `NN.svg` draws, upright, at 14, small and beside its point,
 in the figure's black `#222222`, and clear of every colour and stroke where there is room.
 A point inside a coloured piece, with no parchment near it, takes its letter on the fill
 (I.43's K, II.4's G): in black on yellow, and in the parchment's `#fbf7ee` on red, blue or
@@ -441,8 +489,9 @@ shows no point. A point Heath leaves without a letter stays without one here too
 draws it says why, on the element or on a `<g>` round several:
 `data-unlettered="the squares of the reading in areas, which Heath's figure does not draw"`
 (II.9). A letter Heath gives a straight line or a figure (I.3's C, II.14's A) may stand
-beside it or within it. How the script reads this, and the switch that held the figures
-while they were being lettered, are in section 8.
+beside it or within it. How the script reads this, the switch that held the figures
+while they were being lettered, and the one that holds their letters while they are set
+upright, are in section 8.
 
 **Checked as geometry, not only as a picture.** A label count or a colour check does not
 validate a figure. Before a changed figure is signed off, render it
@@ -507,26 +556,23 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 | S7 | A definition without its book: "Definition N" or "Def. N", N a numeral, outside quotations and square brackets | Prose |
 | S8 | A curly quotation mark: “ ” ‘ ’ | Prose, Catalogues |
 | S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*(([ \t,]+\|[ \t,]*\n[ \t]*((--\|>)[ \t]*)?[ \t,]*)[A-Z]+[′₀-₉]*)*\*($\|[^*])`: the letters may stand apart by spaces, tabs and commas, or by one line break, as above | Prose, Catalogues, Lean notes |
-| S10 | TeX in the mishnah: a backslash, `^{` or `$` | Mishnah |
+| S10 | TeX in the mishnah: a backslash, `^{` or `$`, save within a `$…$` span of a paragraph that opens `**The modern way.**`, a paragraph that ends where Markdown ends it, at a blank line or at a line opening a heading, a list item (a numbered list only from 1), a quotation, a code fence, an HTML block, a rule or a table; and there, a span of a shape known to break on GitHub (section 4, "Mathematics"): a `$` unpaired in the paragraph, `$$`, a span across a line break or with white space just inside a dollar, an opening `$` not at a line's start or after white space or `(`, a closing `$` not before white space, a line's end or one of `. , ; : ! ? ) ] ' " - – /`, braces that do not balance, a backslash before an ASCII punctuation mark, `<`, `>` or `&`, a `*`, `~` or backtick, or a `_` first in the span or after anything but a letter or digit within it. Before reading anything else, the script checks its reading of this boundary against sample mishnahs on both sides of it | Mishnah |
 | S11 | A retired refrain of section 3, on a page not allowed it: "certificate cites", "certificate records", "Of the postulates", "besides Euclid's", "just Euclid's three" (nowhere); "comes in through" (I.29 only); "Lean wants it said", "Lean asks why", "Lean makes us say so" (I.1, I.5, I.22 only); "uses Postulate 1", "brings it in" (I.1, I.3 only); "with no letter", "proves it once", "We give his argument once", "and the Lean cites it.", and "under I.31" in a sentence naming Proclus (nowhere); a paragraph opening `**What Lean made us say.**`, `**What else Lean made us say.**`, `**What it rests on.**`, `**Where the parallels meet.**`, `**Naming the pieces.**`, or `**Where X falls.**` with X a run of capitals (nowhere) | Mishnah |
 | S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (the command is below). Run when the tree is built | Mishnah |
 | S13 | A caption (`<desc>`) missing, or over 50 words | Idea figures |
 | S14 | A viewBox other than `0 0 400 300`; a colour other than `#fbf7ee`, `#d0312d`, `#f2b705`, `#1f5aa6`, `#222222` and white; a missing `<title>`, or one other than "I.N at a glance", with a name after a colon if it has one | Idea figures |
-| S15 | A viewBox width outside 400–440; a letter not at font-size 17; a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than "Euclid I.N: …" | Euclid's figures |
+| S15 | A viewBox width outside 400–440; a letter not at font-size 17, or not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic); a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than "Euclid I.N: …" | Euclid's figures |
 | S16 | Letters drawn that are not Heath's, or Heath's letters not drawn: the letters of the figure's `<text>` elements against the capital letters of `heath/<book>/NN.md`, with comments, Heath's references, "Q. E. D.", "Q. E. F.", "I say" and "PORISM." taken out (the command is below). An exception is listed in the script with its reason | Euclid's figures |
 | S17 | A reading file of no lines or more than three, a line that is not a list item ("- "), or a web link that `docs/reading.md` does not give | `reading/<book>/NN.md` |
 | S18 | A book with pages and no `mishnah/intro/<book>.md` | `mishnah/intro/` |
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
-| S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not italic, not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
+| S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic), not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 
 | Rule | What is listed | Where |
 |---|---|---|
-| D1 | A mishnah outside 250–450 words | Mishnah |
-| D2 | Fewer than three or more than five paragraphs, or a paragraph over 120 words | Mishnah |
-| D3 | A paragraph that does not open with a bold lead ending in "." or "?" (a closing quotation mark allowed), or a last paragraph not opening `**The modern way.**` | Mishnah |
 | D4 | More than four distinct Lean names | Mishnah |
 | D5 | A caption over 40 words, or of more than two sentences | Idea figures |
 | D6 | Each "first", "only", "better", "best", "unlike", for a reader to judge as a comparison or a claim to priority | Prose, README |
@@ -535,8 +581,8 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 | D9 | A sentence that joins "need", "needs" or "needed" to Postulate 5 or the parallel postulate (say "uses"; a claim that a result holds without the postulate names its evidence) | Prose, Catalogues, README, Lean notes |
 | D10 | S6 and S7 outside their failing scope | Catalogues, README, Lean notes |
 | D11 | Euclid's figure strokes other than lines 1.6, circles 1.3, the subject 2.4 to 2.6, angle marks 1.3, or dots of radius other than 2.6 | Euclid's figures |
-| D13 | A reading line that does not begin "For " | `reading/<book>/NN.md` |
 | D14 | The figures at a glance with no letter yet, book by book, with the points each has to letter, while the switch is off (below) | Idea figures |
+| D15 | The figures whose letters are still italic, book by book, while the switch for upright letters is off (below) | Idea figures, Euclid's figures |
 
 **The switch for S21.** The figures at a glance were lettered one by one, and while they
 were, `IDEA_LETTERS_REQUIRED` in `scripts/check_style.py` was `False`: S20 held every
@@ -544,6 +590,14 @@ figure, S21 held each figure that carried at least one letter, so a figure once 
 lettered whole, and D14 listed the rest. Every figure now carries its letters, and the
 switch is `True`: S21 fails any figure with a point unlettered, and D14 is empty. The
 switch is never turned back to quiet a figure: the figure is lettered.
+
+**The switch for upright letters.** The figures were drawn with italic letters, and are set
+upright (section 4) in a change of their own. While they are, `UPRIGHT_LETTERS_REQUIRED` in
+`scripts/check_style.py` is `False`: S15 and S20 take a figure whose letters are all italic
+as well as one whose letters are all upright, and fail a figure that mixes the two, so that
+a figure once begun is set upright whole; D15 lists the figures still italic. Once every
+figure is upright the switch is `True`, S15 and S20 fail an italic letter, and D15 is
+empty. The switch is never turned back to quiet a figure: the figure is set upright.
 
 ### The reviewer's checklist
 
@@ -558,12 +612,14 @@ proposition, and a later book's numeral replaces `I` in the paths.
 
 **The mishnah**
 
-3. It does the four things of section 3 that this proposition needs, and nothing the table,
-   the generated line or the introduction already says. A departure from its usual shape
-   (D1 to D4) has a reason.
-4. Each lead is a hook, not a label, and the leads do not fall into one rhythm.
-5. The modern way is exactly right, with its conditions, and says when it is not Euclid's
-   route.
+3. It does the things of section 3 that this proposition needs, at the length they need,
+   and nothing the table, the generated line or the introduction already says. More than
+   four Lean names (D4) has a reason.
+4. A lead, where a paragraph has one, is a hook, not a label, and neither the leads nor the
+   lengths of the pages fall into one rhythm.
+5. The modern way, where there is one, is exactly right, with its conditions, in radians,
+   and says when it is not Euclid's route. Each `$…$` shows as mathematics, formula for
+   formula, on the page as GitHub renders it, and Heath's letters in it are upright.
 6. Every Lean name names what the sentence means. S12 shows each is known to Lean; it
    cannot see a bare `Prop4` on a page of Book II, which Lean reads as II.4 when the
    sentence means I.4. An earlier book's names are written `BookI.PropN`, `BookII.PropN`.
@@ -617,5 +673,6 @@ proposition, and a later book's numeral replaces `I` in the paths.
 
 **Further reading**
 
-20. Each line helps with this proposition, follows the pattern of section 6, and describes
-    a work in full only at its first appearance in the book.
+20. Each line helps with this proposition, gives the facts of section 6 in its own words,
+    and describes a work in full only at its first appearance in the book; the lines of a
+    book do not fall into one mould.

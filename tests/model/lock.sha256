@@ -3,8 +3,8 @@
 # to an axiom's statement sends someone back to the harness and MODEL.md before CI is green.
 #
 # Filled in when the lock was first written (brief 0005, stage 1c, 17 October 2026). When the
-# lock changes, check MODEL.md's law-by-law account against it, then replace the line below
-# with the output of
+# lock changes, bring the model to it as MODEL.md, "Changing the axioms", says, then replace
+# the line below with the output of
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
 #
