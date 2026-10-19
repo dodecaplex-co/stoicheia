@@ -238,14 +238,14 @@ def note_lines(raw: str, rule, *, names: bool = False) -> list[int]:
     check_text reads a note for S7 (outside quotations and square brackets), or, with
     `names`, in which S12 finds a name."""
     out = []
-    for line0, _, text, last in style.review_texts(raw):
+    for note in style.review_texts(raw):
         read = style.SQUARE.sub(style._blank, style.blank_quotes(style.blank_code(
-            style.straighten(text))))
+            style.straighten(note.text))))
         m = None if names else rule.search(read)
-        if names and style.lean_names(text):
-            out.append(line0 + 1)
+        if names:
+            out.extend(note.line_at(use.at) for use in style.lean_name_occurrences(note.text))
         elif m:
-            out.append(style.text_lines(read, line0, last)(m.start()))
+            out.append(note.line_at(m.start()))
     return out
 
 
@@ -423,6 +423,10 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
      ["Missing.name"]),
     ("S12", style.lean_names, "[x]: https://example.test/`\nvisible `Missing.name`",
      ["Missing.name"]),
+    ("S12", style.lean_names, "Foo\n[x]: /baz`\nvisible `Missing.name`", ["visible"]),
+    ("S12", style.lean_names, "[x]: /baz extra`\nvisible `Missing.name`", ["visible"]),
+    ("S12", style.lean_names,
+     "[x]: /one\n[y]: https://example.test/`\nvisible `Missing.name`", ["Missing.name"]),
     ("S12", style.lean_names, "<https://example.test/`> visible `Missing.name`",
      ["Missing.name"]),
     ("S12", style.lean_names, "``[x](url`)`` `Missing.name`", ["Missing.name"]),
@@ -464,8 +468,9 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     # A comment's quotation is no string; a multi-line string starts below its quotes;
     # an escaped line break in a one-line string reads as a space.
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_EDGES, [5, 6, 7]),
-    ("S7", lambda raw: [t for _, k, t, _ in style.review_texts(raw)
-                        if k == "statement.hypotheses"], SAMPLE_TOML_EDGES, ["one\nDefinition 9"]),
+    ("S7", lambda raw: [note.text for note in style.review_texts(raw)
+                        if note.key == "statement.hypotheses"], SAMPLE_TOML_EDGES,
+     ["one\nDefinition 9"]),
     # A line break after a backslash, and quotation marks before the closing three.
     ("S4", lambda raw: note_lines(raw, style.HEDGE), SAMPLE_TOML_MORE, []),
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_MORE, [6]),
@@ -473,6 +478,14 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
      [4, 6, 7, 15, 21]),
     ("S7", lambda raw: note_lines(raw, style.DEFINITION),
      '[statement]\nnote = """\\\nDefinition 3."""\n', [3]),
+    ("S7", lambda raw: note_lines(raw, style.DEFINITION),
+     '[statement]\nnote = """before \\\n  Definition 8"""\n', [3]),
+    ("S7", lambda raw: note_lines(raw, style.DEFINITION),
+     "[statement]\nnote = '''\nbefore\nDefinition 9'''\n", [4]),
+    ("S7", lambda raw: note_lines(raw, style.DEFINITION),
+     '[statement]\nnote = "before\\nDefinition 10"\n', [2]),
+    ("S7", lambda raw: note_lines(raw, style.DEFINITION),
+     "[statement]\nnote = 'Definition 11'\n", [2]),
     ("S7", lambda raw: style.review_texts(raw), "statement = 1\nfigure = [1]\n", []),
     ("S7", lambda raw: style.review_texts(raw, terms=True), "tag = 1\n", []),
     # The mishnah is asked as before: every name, with Elements alone.
@@ -508,7 +521,7 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("D4", lambda t: style.lean_names(t, binders=False), "(`hBCE : Between B C E`)", []),
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_RECORD, [5, 15]),
     ("S12", lambda raw: note_lines(raw, None, names=True), SAMPLE_RECORD, [4, 12]),
-    ("S7", lambda raw: [k for _, k, _, _ in style.review_texts(raw)], SAMPLE_RECORD,
+    ("S7", lambda raw: [note.key for note in style.review_texts(raw)], SAMPLE_RECORD,
      ["statement.hypotheses", "statement.note", "statement.short", "passage.note",
       "figure.case"]),
     ("S7", lambda raw: style.review_texts("not = [toml"), "", []),
@@ -555,6 +568,10 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
      "A | B\n--- | ---\n`AB \\| CD` | `EF`", [r"AB \| CD", "EF"]),
     ("S22", lambda t: failure_lines(t, "S22"),
      "A | B\n--- | ---\nplain | `AB`", [3]),
+    ("S12", style.lean_names,
+     "A | B\n--- | ---\nok | ok | `Missing.name`", []),
+    ("S12", style.lean_names,
+     "A | B\n--- | ---\nok | `Missing.name` | ignored", ["Missing.name"]),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "overlaps.md", True),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-II.md", True),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-I-supplement.md", True),

@@ -489,9 +489,60 @@ TOML_HEADER = re.compile(r"^[ \t]*(\[\[?)[ \t]*([A-Za-z0-9_.-]+)[ \t]*\]\]?[ \t]
 TOML_ASSIGNMENT = re.compile(r"^[ \t]*([A-Za-z0-9_-]+)[ \t]*=", re.M)
 
 
-def toml_string_locations(raw: str) -> dict[tuple[str, int, str, int], tuple[int, int]]:
-    """The source lines of string values, keyed by table, table-array occurrence, key
-    and list-element index."""
+class TomlStringLocation(NamedTuple):
+    line0: int
+    last: int
+    lines: list[int]
+
+
+def decode_toml_string(token: str, first_line: int) -> tuple[str, list[int]]:
+    """Decode one TOML string and retain the source line of every decoded character."""
+    multiline = token.startswith(('"""', "'''"))
+    basic = token.startswith('"')
+    width = 3 if multiline else 1
+    content = token[width:-width]
+    source = width
+    if multiline and content.startswith("\r\n"):
+        content, source = content[2:], source + 2
+    elif multiline and content.startswith("\n"):
+        content, source = content[1:], source + 1
+
+    decoded = []
+    lines = []
+
+    def emit(value: str, at: int) -> None:
+        decoded.extend(value)
+        lines.extend([first_line + token.count("\n", 0, at)] * len(value))
+
+    simple = {'b': '\b', 't': '\t', 'n': '\n', 'f': '\f', 'r': '\r', '"': '"', '\\': '\\'}
+    at = 0
+    while at < len(content):
+        absolute = source + at
+        if basic and content[at] == "\\":
+            continuation = re.match(r"\\[ \t]*\r?\n[ \t\r\n]*", content[at:])
+            if multiline and continuation:
+                at += continuation.end()
+                continue
+            escaped = content[at + 1]
+            if escaped in simple:
+                emit(simple[escaped], absolute)
+                at += 2
+                continue
+            digits = 4 if escaped == "u" else 8
+            emit(chr(int(content[at + 2:at + 2 + digits], 16)), absolute)
+            at += 2 + digits
+            continue
+        if content.startswith("\r\n", at):
+            emit("\n", absolute)
+            at += 2
+            continue
+        emit(content[at], absolute)
+        at += 1
+    return "".join(decoded), lines
+
+
+def toml_string_locations(raw: str) -> dict[tuple[str, int, str, int], TomlStringLocation]:
+    """Decoded source locations, keyed by table, table-array occurrence, key and index."""
     tokens = []
     masked = list(raw)
     for m in TOML_TOKEN.finditer(raw):
@@ -504,7 +555,8 @@ def toml_string_locations(raw: str) -> dict[tuple[str, int, str, int], tuple[int
             text = tomllib.loads("s = " + m.group(0))["s"]
         except tomllib.TOMLDecodeError:
             continue
-        tokens.append((m, text))
+        decoded, lines = decode_toml_string(m.group(0), line_of(raw, m.start()))
+        tokens.append((m, text, lines if decoded == text else []))
         for i in range(m.start(), m.end()):
             if masked[i] != "\n":
                 masked[i] = " "
@@ -525,23 +577,31 @@ def toml_string_locations(raw: str) -> dict[tuple[str, int, str, int], tuple[int
                 occurrence = 0
             continue
         end = events[n + 1][0] if n + 1 < len(events) else len(raw)
-        values = [(token, text) for token, text in tokens
+        values = [(token, text, lines) for token, text, lines in tokens
                   if m.end() <= token.start() < end]
-        for index, (token, _) in enumerate(values):
+        for index, (token, text, lines) in enumerate(values):
             starts_below = re.match(r'("""|' + "'''" + r')(\\[ \t]*)?\r?\n',
                                     token.group(0)) is not None
             first = line_of(raw, token.start())
-            found[(table, occurrence, m.group(1), index)] = (
-                first - (0 if starts_below else 1), line_of(raw, token.end() - 1))
+            last = line_of(raw, token.end() - 1)
+            if len(lines) != len(text):
+                lines = [min(first + text.count("\n", 0, at), last)
+                         for at in range(len(text))]
+            found[(table, occurrence, m.group(1), index)] = TomlStringLocation(
+                first - (0 if starts_below else 1), last, lines)
     return found
 
 
-def review_texts(raw: str, terms: bool = False) -> list[tuple[int, str, str, int]]:
-    """(line0, key, text, last) for each text of a review record (or, with `terms`, of
-    review/terms.toml) that a page shows, in the order of the file: the file's line
-    before the text's first, the key, the text, and the file's last line of the string. A
-    record that is not TOML, or not of the schema's shape, gives what it can: heath.py
-    and check_fidelity.py report the rest."""
+class ReviewText(NamedTuple):
+    line0: int
+    key: str
+    text: str
+    last: int | None
+    line_at: object
+
+
+def review_texts(raw: str, terms: bool = False) -> list[ReviewText]:
+    """Reader-visible review strings with decoded offsets mapped to their source lines."""
     try:
         data = tomllib.loads(raw)
     except tomllib.TOMLDecodeError:
@@ -568,9 +628,14 @@ def review_texts(raw: str, terms: bool = False) -> list[tuple[int, str, str, int
     where = toml_string_locations(raw)
     found = []
     for key, t, selector in wanted:
-        line0, last = where.get(selector, (0, None))
-        found.append((line0, key, t, last))
-    return sorted(found, key=lambda x: x[0])
+        location = where.get(selector)
+        if location:
+            line_at = lambda at, location=location: (location.lines[min(max(at, 0),
+                len(location.lines) - 1)] if location.lines else location.last)
+            found.append(ReviewText(location.line0, key, t, location.last, line_at))
+        else:
+            found.append(ReviewText(0, key, t, None, text_lines(t)))
+    return sorted(found, key=lambda x: x.line0)
 
 
 def ref_of(path: Path) -> str | None:
@@ -876,19 +941,22 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
                 and delimiter_cells
                 and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip())
                         for a, b in delimiter_cells)):
-            table = k
+            table = (k, len(header_cells))
             break
     if table is None:
         return [block]
 
     found = []
+    table, columns = table
     header_start = lines[table][0]
     prefix_end = max(0, header_start - 1)
     if prefix_end:
         found.append(InlineBlock(block.text[:prefix_end], block.offsets[:prefix_end]))
-    for row in [lines[table]] + lines[table + 2:]:
+    for row_number, row in enumerate([lines[table]] + lines[table + 2:]):
         start, _, text = row
         cells, _ = table_cell_ranges(text)
+        if row_number:
+            cells = (cells + [(len(text), len(text))] * columns)[:columns]
         for a, b in cells:
             while a < b and text[a] in " \t":
                 a += 1
@@ -1102,7 +1170,80 @@ AUTOLINK = re.compile(
     r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
     r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)*)>"
 )
-REFERENCE_DESTINATION = re.compile(r"(?m)^ {0,3}\[(?:\\.|[^\]\n])+\]:[^\n]*")
+REFERENCE_LABEL = re.compile(r"^ {0,3}\[((?:\\.|[^\[\]\\]){1,999})\]:")
+
+
+def reference_title(text: str) -> bool:
+    """Whether `text` is one complete CommonMark link-reference title."""
+    if len(text) < 2 or (text[0], text[-1]) not in (("\"", "\""), ("'", "'"), ("(", ")")):
+        return False
+    closer = text[-1]
+    at = 1
+    while at < len(text) - 1:
+        if text[at] == "\\":
+            at += 2
+        elif text[at] == closer:
+            return False
+        else:
+            at += 1
+    return at == len(text) - 1
+
+
+def reference_definition(line: str) -> bool:
+    """Whether one line is a complete CommonMark link-reference definition."""
+    match = REFERENCE_LABEL.match(line)
+    if not match or not match.group(1).strip():
+        return False
+    at = match.end()
+    while at < len(line) and line[at] in " \t":
+        at += 1
+    if at == len(line):
+        return False
+    if line[at] == "<":
+        at += 1
+        while at < len(line) and line[at] != ">":
+            if line[at] == "<" or ord(line[at]) < 0x20:
+                return False
+            at += 2 if line[at] == "\\" and at + 1 < len(line) else 1
+        if at == len(line):
+            return False
+        at += 1
+    else:
+        depth = 0
+        start = at
+        while at < len(line) and line[at] not in " \t":
+            if line[at] == "\\" and at + 1 < len(line):
+                at += 2
+                continue
+            if line[at] == "(":
+                depth += 1
+            elif line[at] == ")":
+                depth -= 1
+                if depth < 0:
+                    return False
+            elif line[at] == "<" or ord(line[at]) < 0x20:
+                return False
+            at += 1
+        if at == start or depth:
+            return False
+    if at == len(line):
+        return True
+    if line[at] not in " \t":
+        return False
+    tail = line[at:].strip()
+    return not tail or reference_title(tail)
+
+
+def reference_destination_ranges(text: str) -> list[tuple[int, int, int]]:
+    """The consecutive link-reference definitions at the start of an inline block."""
+    found = []
+    offset = 0
+    for line in text.split("\n"):
+        if not reference_definition(line):
+            break
+        found.append((offset, offset + len(line), offset))
+        offset += len(line) + 1
+    return found
 
 
 def inline_destination_end(text: str, start: int) -> int | None:
@@ -1137,7 +1278,7 @@ def matching_link_label(text: str, close: int) -> int | None:
 
 def link_destination_ranges(text: str) -> list[tuple[int, int, int]]:
     """Link destinations and their label starts in one inline block."""
-    found = [(m.start(), m.end(), m.start()) for m in REFERENCE_DESTINATION.finditer(text)]
+    found = reference_destination_ranges(text)
     found += [(m.start(), m.end(), m.start()) for m in AUTOLINK.finditer(text)]
     for match in re.finditer(r"\]\(", text):
         close = match.start()
@@ -2536,12 +2677,10 @@ def main() -> int:
     terms = ROOT / "review" / "terms.toml"
     for path in review_files() + ([terms] if terms.exists() else []):
         is_terms = path == terms
-        for line0, _, text, last in review_texts(path.read_text(encoding="utf-8"),
-                                                  terms=is_terms):
-            at = text_lines(text, line0, last)
-            check_text(path, text, {"review"}, line_at=at, new=True)
-            named.append(NamedText(path, text, every_book_opens() if is_terms
-                                   else book_opens(path.parent.name), line_at=at))
+        for note in review_texts(path.read_text(encoding="utf-8"), terms=is_terms):
+            check_text(path, note.text, {"review"}, line_at=note.line_at, new=True)
+            named.append(NamedText(path, note.text, every_book_opens() if is_terms
+                                   else book_opens(path.parent.name), line_at=note.line_at))
     for path in catalogue_files():
         raw = path.read_text(encoding="utf-8")
         book = re.fullmatch(r"gaps-book-(\w+)\.md", path.name)
