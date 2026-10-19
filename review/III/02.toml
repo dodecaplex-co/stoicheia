@@ -13,6 +13,7 @@ note = "The circle comes with a centre (`∃ D, Centre D ABC`), which the proof 
 
 [overlap]
 rule = "Tacit.inside_of_between"
+kind = "states"
 note = "System E's Circle 2 contains III.2, and Circle 3, the same rule turned round, gives it at once. Our III.2 rests on neither: it is Euclid's argument, by I.5, I.16 and I.19, and III.1, from which it takes its centre, puts its own middle point within the circle by the same argument."
 
 [[passage]]
@@ -31,6 +32,6 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:0f14d525b38befe4"
