@@ -22,7 +22,9 @@ it, put to the script's own patterns and functions:
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
   reach of 19 October, whose findings in a file of REACH_PENDING are reported only for the
   rules the file is listed for, while every other finding in that file still fails, and
-  whose rules are reported as done one by one, as each is left with no finding.
+  whose rules are reported as done one by one, as each is left with no finding;
+* the acceptance case: check_acceptance.py sorts a style finding in a review record to
+  its proposition's P9, the item for the record's notes, and every other as before.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -431,6 +433,21 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
      "<!-- `Missing.name` -->\nvisible `Missing.name : T`", [(42, True)]),
     ("S12", lean_failure,
      "> <!-- old:\n> `Missing.name : T`\nvisible `Missing.name`", [(3, False)]),
+    # A comment and a code span are read in source order: the first to open hides the
+    # other's markers inside it.
+    ("S12", style.lean_names, "Prefix <!-- `old --> visible `Missing.name`", ["Missing.name"]),
+    ("S12", lean_failure, "Prefix <!-- `old -->\nvisible `Missing.name`", [(2, False)]),
+    ("S12", style.lean_names, "`<!--` visible `Prop5.base` -->", ["Prop5.base"]),
+    ("S12", style.lean_names, "a <!-- `x` --> b `Prop5.base` <!-- `Missing.name` -->",
+     ["Prop5.base"]),
+    ("S12", style.lean_names, "an unclosed <!-- `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, "\\<!-- `Missing.name` -->", ["Missing.name"]),
+    ("S12", style.lean_names, "> a <!-- x\n> `y` --> `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, "text <!-- a\n\n`b` --> `Missing.name`", ["b", "Missing.name"]),
+    ("S7", lambda t: failure_lines(t, "S7"), "Prefix <!-- `old --> Definition 8 `x`", [1]),
+    ("S22", lambda t: failure_lines(t, "S22"), "Before <!-- `x -->\n`AB`", [2]),
+    ("S22", style.blank_html_comments, "> a <!-- x\n> `y` --> `AB`",
+     "> a       \n>         `AB`"),
     # A comment's quotation is no string; a multi-line string starts below its quotes;
     # an escaped line break in a one-line string reads as a space.
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_EDGES, [5, 6, 7]),
@@ -667,7 +684,15 @@ class Scopes(unittest.TestCase):
         vocabulary = ({"axiom", "native_decide", "implemented_by"},
                       {"Elements", "Elements.BookIII"})
         cases = [
-            ("`NOTICE`, `README:17` and `references.bib:9`", []),
+            ("`NOTICE:59-60`, `README:17`, `references.bib:9` and `references.bib`", []),
+            ("`NOTICE` and `README`", ["NOTICE", "README"]),
+            ("The file `NOTICE`, the `README` page and the script `check_fidelity`.", []),
+            ("The files `NOTICE` and `README`.", []),
+            ("It passes `check_fidelity`.", ["check_fidelity"]),
+            ("The declaration `README` is missing.", ["README"]),
+            ("The declaration `references.bib`, the `NOTICE` theorem and the files "
+             "`README`, `check_fidelity`.", ["NOTICE", "references.bib"]),
+            ("The declarations `Elements` and `axiom`.", ["Elements", "axiom"]),
             ("`NOTICE : Point` and `README : Point`", ["NOTICE", "README"]),
             ("`axiom`, `native_decide`, `implemented_by`", []),
             ("`Elements` and `Elements.BookIII`", []),
@@ -812,6 +837,29 @@ class Scopes(unittest.TestCase):
                 os.environ["PATH"] = saved[0]
             style.lean_short[:] = saved[1]
         self.assertEqual(done, (0, ["S12"], [(GAPS_REL, ["S7"], False)]))
+
+
+class Acceptance(unittest.TestCase):
+    """The acceptance case: how check_acceptance.py sorts the style check's findings."""
+
+    def test_review_record_findings_are_style(self):
+        """A record's finding is its proposition's P9, whatever its rule; others as before"""
+        import check_acceptance as acceptance
+        out = "\n".join([
+            "  ✗ S8 review/I/05.toml:7: a curly quotation mark",
+            "  ✗ S9 review/I/06.toml:3: a styled letter",
+            "  ✗ S8 mishnah/I/07.md:2: a curly quotation mark",
+            "  ✗ S13 figures/I/08.svg: a letter not Heath's",
+            "  ✗ S12 mishnah/I/09.md:4: an unknown name",
+        ])
+        with ExitStack() as stack:
+            stack.enter_context(patch.object(acceptance, "failures", {}))
+            stack.enter_context(patch.object(acceptance, "run", return_value=SimpleNamespace(
+                returncode=1, stdout=out, stderr="")))
+            acceptance.check_style_rules()
+            self.assertEqual(sorted(acceptance.failures),
+                             [("I.5", "P9"), ("I.6", "P9"), ("I.7", "P7"), ("I.8", "P8"),
+                              ("I.9", "P9")])
 
 
 if __name__ == "__main__":

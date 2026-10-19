@@ -188,10 +188,10 @@ REACH_PENDING: dict[str, tuple[str, str]] = {
     "docs/reports/gaps-book-II.md": ("S7 S12", "the text change that follows this one (#66)"),
     "docs/reports/gaps-book-III.md": ("S12", "stage 3's gap entries (#25)"),
     "docs/reports/overlaps.md": ("S7", "stage 3's overlap entries (#25)"),
-    # S12's report inventory on bd3b72a: 149 and 5 findings, respectively. These are
+    # S12's report inventory on bd3b72a: 149 and 6 findings, respectively. These are
     # the initial findings of the new report reach, not later additions to a landed rule.
     "docs/reports/mixed-angles-prototype.md": ("S12", "the report text change after #66 (149 findings)"),
-    "docs/reports/read-through-01.md": ("S7 S12", "the report text change after #66 (5 S12 findings)"),
+    "docs/reports/read-through-01.md": ("S7 S12", "the report text change after #66 (6 S12 findings)"),
     # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
     "book/I/front.md": ("S12", "render.py's FRONT_LEAN_I, after stage 3 (#25)"),
     # The notes of four proofs (S22): a change to the file needs its record read again.
@@ -1058,34 +1058,77 @@ def blank_fences(text: str) -> str:
     return blank_ranges(text, markdown_blocks(text).fences)
 
 
+class MarkdownSyntax(NamedTuple):
+    spans: list[CodeSpan]
+    comments: list[tuple[int, int]]
+
+
+def offset_runs(offsets: list[int]) -> list[tuple[int, int]]:
+    """The half-open source ranges of a list of offsets, split where container markers
+    fall between them."""
+    runs: list[tuple[int, int]] = []
+    for offset in offsets:
+        if runs and runs[-1][1] == offset:
+            runs[-1] = (runs[-1][0], offset + 1)
+        else:
+            runs.append((offset, offset + 1))
+    return runs
+
+
+def backslashes_before(text: str, at: int) -> int:
+    return at - len(text[:at].rstrip("\\"))
+
+
+def markdown_syntax(text: str) -> MarkdownSyntax:
+    """The CommonMark code spans and HTML comments of a Markdown text, with source offsets.
+    Comments are the container-bounded comment blocks and the closed inline comments. In
+    each inline leaf block, a code span and an inline comment are read in source order:
+    whichever opens first is read, so a comment hides the backticks inside it, and a code
+    span the comment markers inside it."""
+    parsed = markdown_blocks(text)
+    spans: list[CodeSpan] = []
+    comments = list(parsed.comments)
+    for block in parsed.inline:
+        ticks = [(m.start(), m.end()) for m in BACKTICKS.finditer(block.text)]
+        openers = [m.start() for m in re.finditer("<!--", block.text)
+                   if backslashes_before(block.text, m.start()) % 2 == 0]
+        i, pos = 0, 0
+        while True:
+            while i < len(ticks) and ticks[i][0] < pos:
+                i += 1
+            opener = next((at for at in openers if at >= pos), len(block.text))
+            if i < len(ticks) and ticks[i][0] < opener:
+                raw_start, opened = ticks[i]
+                start = raw_start + backslashes_before(block.text, raw_start) % 2
+                width = opened - start
+                close = next((j for j in range(i + 1, len(ticks))
+                              if ticks[j][1] - ticks[j][0] == width), None) if width else None
+                if close is None:
+                    i += 1
+                    continue
+                closed, end = ticks[close]
+                content = re.sub(r"\r\n?|\n", " ", block.text[opened:closed])
+                if (len(content) >= 2 and content.startswith(" ") and content.endswith(" ")
+                        and content.strip(" ")):
+                    content = content[1:-1]
+                source = block.offsets[start:end]
+                spans.append(CodeSpan(source[0], source[-1] + 1, content, source))
+                pos = end
+                continue
+            if opener == len(block.text):
+                break
+            close = block.text.find("-->", opener + 4)
+            if close < 0:
+                openers = []
+                continue
+            comments.extend(offset_runs(block.offsets[opener:close + 3]))
+            pos = close + 3
+    return MarkdownSyntax(spans, comments)
+
+
 def code_span_details(text: str) -> list[CodeSpan]:
     """The CommonMark code spans in inline leaf blocks, with their source offsets."""
-    spans = []
-    for block in markdown_blocks(text).inline:
-        ticks = [(m.start(), m.end()) for m in BACKTICKS.finditer(block.text)]
-        i = 0
-        while i < len(ticks):
-            raw_start, opened = ticks[i]
-            escaped = raw_start - len(block.text[:raw_start].rstrip("\\"))
-            start = raw_start + (1 if escaped % 2 else 0)
-            if start == opened:
-                i += 1
-                continue
-            width = opened - start
-            close = next((j for j in range(i + 1, len(ticks))
-                          if ticks[j][1] - ticks[j][0] == width), None)
-            if close is None:
-                i += 1
-                continue
-            closed, end = ticks[close]
-            content = re.sub(r"\r\n?|\n", " ", block.text[opened:closed])
-            if (len(content) >= 2 and content.startswith(" ") and content.endswith(" ")
-                    and content.strip(" ")):
-                content = content[1:-1]
-            source = block.offsets[start:end]
-            spans.append(CodeSpan(source[0], source[-1] + 1, content, source))
-            i = close + 1
-    return spans
+    return markdown_syntax(text).spans
 
 
 def markdown_code_spans(text: str):
@@ -1098,11 +1141,8 @@ def markdown_code_spans(text: str):
 
 def html_comment_spans(text: str) -> list[tuple[int, int]]:
     """Closed HTML comments and container-bounded, line-opening comment blocks,
-    excluding markers inside fenced blocks and code spans."""
-    parsed = markdown_blocks(text)
-    syntax = blank_ranges(text, parsed.fences + parsed.comments)
-    syntax = blank_ranges(syntax, ((span.start, span.end) for span in code_span_details(syntax)))
-    return parsed.comments + [m.span() for m in HTML_COMMENT.finditer(syntax)]
+    excluding markers inside fenced blocks and code spans (markdown_syntax)."""
+    return markdown_syntax(text).comments
 
 
 def blank_html_comments(text: str) -> str:
@@ -1385,6 +1425,7 @@ class LeanName(NamedTuple):
     name: str
     at: int
     binder: bool
+    span: CodeSpan
 
 
 def lean_name_occurrences(text: str, binders: bool = True, *, all_uses: bool = False) -> list[LeanName]:
@@ -1397,7 +1438,7 @@ def lean_name_occurrences(text: str, binders: bool = True, *, all_uses: bool = F
         name = inner if IDENT.fullmatch(inner) else binder.group(1) if binder else None
         if (name and not FILE_NAME.fullmatch(name)
                 and (all_uses or name not in {use.name for use in names})):
-            names.append(LeanName(name, span.start, binder is not None))
+            names.append(LeanName(name, span.start, binder is not None, span))
     return names
 
 
@@ -1508,20 +1549,36 @@ def report_vocabulary(texts: list[NamedText]) -> tuple[set[str], set[str]]:
         return set(), set()
 
 
+# Prose that calls a report's backticked name a declaration or a file: the word before
+# the name (or before a list that ends with it), or the word just after it.
+DECLARATION_WORDS = (r"(?:declaration|theorem|lemma|definition|def|axiom|constant|structure"
+                     r"|abbrev|instance|inductive)")
+FILE_WORDS = r"(?:file|script|page|document)"
+CONTEXT_WORD = r"{}s?\s+(?:`+[^`\n]+`+\s*(?:/|,|and|or)\s*)*"
+
+
 def report_non_declaration(t: NamedText, occurrence: LeanName,
                            vocabulary: tuple[set[str], set[str]]) -> str | None:
     """Classify report tokens by their source or explicit prose context, never by a list
     of failed names. A typed binder still names a hypothesis; a numeric file location
-    does not. These rules apply only to reports newly read by S12."""
-    name, at, binder = occurrence
-    if binder:
-        span = next(s for s in code_span_details(blank_html_comments(t.text)) if s.start == at)
-        if not re.fullmatch(re.escape(name) + r":\d+(?:-\d+)?", span.content.strip()):
-            return None
-    # Markdown and Python files are often named without their extension in reports.
-    for folder in (ROOT, t.path.parent, ROOT / 'scripts', ROOT / 'docs'):
-        if any((folder / (name + ext)).is_file() for ext in ('', '.md', '.py')):
-            return 'a repository file or a numeric location in it'
+    does not. A name the prose calls a declaration is put to Lean whatever else it could
+    be. These rules apply only to reports newly read by S12."""
+    name, at, binder, span = occurrence
+    if binder and not re.fullmatch(re.escape(name) + r":\d+(?:-\d+)?", span.content.strip()):
+        return None
+    before, after = t.text[:at], t.text[span.end:]
+    if (re.search(rf'\b{CONTEXT_WORD.format(DECLARATION_WORDS)}$', before, re.I)
+            or re.match(rf'\s*{DECLARATION_WORDS}s?\b', after, re.I)):
+        return None
+    # Markdown and Python files are often named without their extension in reports, so
+    # a name is read as a file only by its shape (a numeric location, an extension) or
+    # by prose that calls it one.
+    folders = (ROOT, t.path.parent, ROOT / 'scripts', ROOT / 'docs')
+    called_file = (binder or re.search(rf'\b{CONTEXT_WORD.format(FILE_WORDS)}$', before, re.I)
+                   or re.match(rf'\s*{FILE_WORDS}s?\b', after, re.I))
+    exts = ('', '.md', '.py') if called_file else ('',) if '.' in name.strip('.') else ()
+    if any((folder / (name + ext)).is_file() for folder in folders for ext in exts):
+        return 'a repository file or a numeric location in it'
     if binder:
         return None
     syntax, namespaces = vocabulary

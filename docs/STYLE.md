@@ -560,10 +560,11 @@ just before the script ([WORKFLOW](WORKFLOW.md), section 8).
   (`outside-review-*.md`), which keeps its reviewer's words as written; the crew's own
   logs, `docs/reports/crew/`, are not read. S12 reads them with every book's namespace
   open, as texts with no book of their own. For these reports alone, it distinguishes
-  declaration references from repository file names (including a numeric line location),
-  Lean's syntax and namespace-only names, and what the prose identifies as a namespace,
-  an external tactic, an Internet Archive scan identifier or a revision identifier. It
-  also recognizes documented certificate fields and review schema fields and values
+  declaration references from repository file names, known by their shape (an extension,
+  a numeric line location) or by prose that calls them files; from Lean's syntax and
+  namespace-only names; and from what the prose identifies as a namespace, an external
+  tactic, an Internet Archive scan identifier or a revision identifier. A name the prose
+  calls a declaration goes to Lean, whatever else it could be. It also recognizes documented certificate fields and review schema fields and values
   where the prose discusses their files or records. Lean supplies the syntax, tactic and
   attribute vocabulary; these are categories, not a list of unknown names to excuse.
   A trailing dot names a family, not a complete declaration. A typed hypothesis still
