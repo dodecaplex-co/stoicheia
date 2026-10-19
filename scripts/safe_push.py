@@ -121,8 +121,8 @@ success only when GitHub says merged and origin/main holds the merge commit GitH
 by its full object name; gh exiting 0 with the pull request not merged, a merge commit
 GitHub does not name or origin/main does not hold, an interruption before GitHub answers,
 or GitHub not to be asked, or answering with no state of its own, is "merge state
-unknown", with no revert advised. Afterwards that merge commit is checked to join the base and the
-head checked, with the head's tree.
+unknown", with no revert advised. Afterwards that merge commit is checked to join the
+base and the head checked, with the head's tree.
 
 `--dry-run` does everything but the push, the pull request and the merge. The temporary
 worktrees are removed at the end, on a failure too. The pre-push hook,

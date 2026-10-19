@@ -633,10 +633,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    commit GitHub does not name or origin/main does not hold, an interruption before
    GitHub answers, or GitHub not to be asked, or answering with no state of its own, is
    reported as "merge state unknown", exit 3, with no revert advised, since nothing on
-   main is known to be the merge. Afterwards the merge commit is checked to join the base and the head checked,
-   with the head's tree; if it does not, the script prints how to revert it in a pull
-   request of its own, with the merged pull request's label for its kind, and reverts
-   nothing itself.
+   main is known to be the merge. Afterwards the merge commit is checked to join the base
+   and the head checked, with the head's tree; if it does not, the script prints how to
+   revert it in a pull request of its own, with the merged pull request's label for its
+   kind, and reverts nothing itself.
 5. **Generated files** are regenerated from the integrated sources and committed by the
    integrator (section 4), so the pull request that changes their sources carries them.
 
