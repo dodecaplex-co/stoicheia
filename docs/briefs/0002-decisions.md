@@ -1358,8 +1358,8 @@ findings:
   exactly as the supplied scaffold patch specifies. A search of `scripts/` and `tests/`
   found no check that reads the scaffold's Book III strings. The scaffold records the
   approved statements; it was not run to rewrite any Lean file.
-  This tooling change precedes train C6a so that its
-  content pull request changes no check input beyond the values pinned to that content:
+  This tooling change lands before the content it describes, so that the content's
+  pull request changes no check input beyond the values pinned to that content:
   the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
   apart from an accompanying change to `scripts/render.py`. No check, statement, lock
   or review record changes here, apart from the approved signature in the scaffold.
