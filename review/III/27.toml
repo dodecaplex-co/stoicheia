@@ -13,6 +13,6 @@ note = "\"In equal circles\" is kept from Euclid, and the proof uses it through 
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "8f37887"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:7f9b3ed3b240fe5b"
+lean = "sha256:7be789b74d6d4d78"

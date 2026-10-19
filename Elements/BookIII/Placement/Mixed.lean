@@ -1,13 +1,15 @@
 import Elements.Figure.Basics
 import Elements.BookI.Prop04
 import Elements.BookI.Prop08
-import Staging.Stage3.Degenerate
+import Elements.BookI.HelpersTriangles
 
 /-!
-# Stage 3, staged: placement, a point of the base and a point off it
+# Placement: a point of the base and a point off it
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. One file of
-`Elements/BookIII/Placement/`.
+One of the five files of placement's cases (`Elements/BookIII/Placement.lean` gathers them).
+A point of the straight line AB and a point off it keep their distance when they are sent
+to CD: measured from the end of the base whose ray holds the point of the base, I.8 gives
+the angle there and I.4 the distance.
 -/
 
 namespace Elements.BookIII

@@ -28,4 +28,11 @@
 # law, Model/Assembly.lean gathers Euclidean.exists_centre, which proved it in the plane
 # before it landed, and Check/Hand.lean compares the hand translation with the library's
 # declaration. The other 87 laws and the 37 words they reach are unchanged.
-3272536ae5e44987378cd5c873a2ca7279799f7397c6d916afeaadd2fea9904f  Certificate/axioms.lock
+#
+# Renewed on 18 October 2026, when the words of stage 3's statements (brief 0006) joined
+# the vocabulary: words only the propositions and their companions reach, so none of
+# the model's laws changes.
+#
+# Renewed on 19 October 2026 for the combined vocabulary of stages 3 and mixed angles:
+# 88 axioms, byte-identical to the centre-rule revision, and 120 words of vocabulary.
+324b75e86b1a99e45f33581ebdceaf38b34f9e730020efcf493d044f34039a82  Certificate/axioms.lock

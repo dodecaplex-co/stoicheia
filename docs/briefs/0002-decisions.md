@@ -1511,3 +1511,101 @@ findings:
   tacit rules, its table of checks and its thanks; and `NOTICE`. The pull request carries
   the labels `lean` and `security-review`, and needs a `/security-review`. Warm thanks to
   Astra, whose reading of the rule this follows throughout.
+- **Stage 3 in the edition: brief 0006's arc words in the foundations, III.24 restated,
+  III.26 and III.28 upgraded.** Every statement of stage 3 of
+  [brief 0006](0006-statements.md) is proved, and moves from `Staging/` to its home in that
+  brief's table, in the seven steps of its migration, a move the coordinator delegated to
+  the stage's integrator. The definitions they use are approved for the
+  foundations as a class (decision 4 of brief 0006: "the definitions the frozen briefs
+  name are approved for the foundations, each recorded in its pull request", as the
+  tracking issue, [#50](https://github.com/jackChallis/stoicheia/issues/50), records it).
+  This entry records the ones this pull request moves, each as the brief froze it, into
+  `Elements/Foundations/DefinitionsIII.lean`, after `standing`: `Arc`, with its constructor
+  and its four fields, `Arc.Drawn`, `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.Less`,
+  `Arc.Semicircle`, `Arc.Greater`, `Arc.SameKind`, `Arc.measure`, `Places` and
+  `Arc.Congruent` (Definitions III.6 and III.9, and Common Notion 4 for congruence). None
+  is an assumption. The module's account gains a paragraph on segments and arcs. The words
+  join the lock with the first statements that use them, the companion
+  "III.24 equalMeasure", then III.24, III.26 and III.28 as restated. The ground goes to the
+  homes the brief names, save two facts that rest on III.2 (the next entry):
+  `Elements/Figure/Chords.lean` (new, Book Zero), I.20's degenerate
+  case in `Elements/BookI/HelpersTriangles.lean` (new, after I.20), placement in
+  `Elements/BookIII/Placement.lean` and its cases in `Elements/BookIII/Placement/` (new),
+  `Arc.eq_of_aligned` in `Elements/BookIII/Squares.lean` and `Circumference.add` in
+  `Elements/BookIII/Circumferences.lean`; and three companions join
+  `Elements/Companions.lean`: "III.23 point", "III.24 equalCircles" and "III.24
+  equalMeasure". The protected files this changes are three.
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) is rewritten by
+  `python3 scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the same 87, byte
+  for byte, and its `[vocabulary]` grows from 91 words to 104, by `Arc` with its constructor
+  `Arc.mk` and its fields `Arc.circle`, `Arc.B`, `Arc.C`, `Arc.K`, and by `Arc.Drawn`,
+  `OnSideOrLine`, `OnArc`, `InSegment`, `Arc.measure`, `Places` and `Arc.Congruent`. The
+  kinds, `Arc.Less`, `Arc.Semicircle`, `Arc.Greater` and `Arc.SameKind`, are in the
+  foundations but not in the lock, which holds the words that the axioms' and the entries'
+  statements reach: only `Arc.eq_of_aligned` and the bridge theorems of
+  `Elements/BookIII/Arcs.lean` use them, and those are not entries of the certificate.
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is renewed, and
+  [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an axiom reaches,
+  has changed, so its account stands, and `tests/model/run.py --fast` passes. The formal
+  model's copy of the hash, `model/lock.sha256`, is renewed with it, as its own comment
+  says, and the model's generated laws, `model/Model/Laws.lean`, which record that hash,
+  are written again by `lake lean Check/Write.lean` in `model/`, the line of the hash alone
+  changing; no law of the model changes, and the model builds.
+  III.24 is restated as the brief froze it, to conclude that the segments are congruent
+  (the owner's decision 2 in that brief): `placement` applies the one to the other, and
+  III.23's companion settles every point. Its statement before, the circles equal and the
+  measures equal, is its companion `Prop24.equalCircles`, with the proof by the radii, shown
+  as the alternative; III.26 takes the equal measures from III.24 by `Prop24.equalMeasure`,
+  and `Audit/Overlaps.lean`'s example of III.24 is pointed at `Prop24.equalCircles`, whose
+  measure clause still follows from the equal angles alone. III.26 and III.28 are upgraded
+  as the brief froze them, each clause concluding that the circumferences are equal in
+  measure and congruent; III.27, III.28 and III.30 take the first conjunct where they cite
+  them, and `Audit/Overlaps.lean`'s example of III.26 gives way to a note that III.26 no
+  longer holds for any two circles. The records of III.23, III.24, III.26 and III.28 are
+  rewritten for their reviewer, who read them in full with those of III.27 and III.30 and
+  stamped all six at 8f37887. III.24's record carries `segment-with-circle`, `centre-given`
+  and `redundant-hypothesis`, but not `angle-measure`, which the brief plans for its
+  companions: that tag's badge would put "in our measure of circumferences" beside the main
+  theorem, which says nothing of a measure, and the record's note says how the companions
+  measure. The reviewer may restore it, if the badge is first kept to statements that use
+  the measure.
+  [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
+  accepts or checks, as the brief's list of consumers asks: `SUPERPOSITION_NOTE` no longer
+  says that our proof of III.24 compares the radii, but that it applies one segment to
+  another by `placement`, which uses superposition only through the propositions it cites;
+  and `FRONT_LEAN_III` gives Definition III.6 its words, `Arc`, `InSegment`, `OnArc` and
+  `Arc.Congruent`, and Definition III.9 `Arc.measure`. Definitions III.4 and III.5 keep their
+  lines until `Foot` joins the foundations with stage 4. It is not a check change (WORKFLOW,
+  section 10); the regenerated pages show it.
+
+- **Stage 3's ground off Circle 2.** With `lean/circle2-out`
+  ([#60](https://github.com/jackChallis/stoicheia/issues/60)) merged into the stage 3 move,
+  no entry of the certificate rests on System E's Circle 2 (`Tacit.inside_of_between`) or
+  Circle 3, as facts.json shows. The calls of the rule that stage 3 brought in, and of Book
+  Zero's lemmas that call it, take the step as #60's do: III.23's companion `Prop23.point`
+  puts its point M within the circle by III.2; III.24's companions, III.26, III.28,
+  `Circumference.add` and the bridge theorems of `Elements/BookIII/Arcs.lean` take points of
+  a circle on either side of a straight line from III.2's corollaries `Prop2.sameSide` and
+  `Prop2.oppositeSide`. Two of the facts that [brief 0006](0006-statements.md) ("Book Zero
+  for arcs") puts in Book Zero rest on III.2, and Book Zero cites no proposition, so they
+  move after it, to the first proposition that uses each (FORMALIZATION, section 6). The
+  points of the straight line through two points of a circle, `chord_cases`, go before
+  III.24 as `Prop24.chord_cases`, proved by III.2, `Prop2.triangle` and Circle 1, with one
+  hypothesis more, the circle's centre (`∃ O : Point, Centre O α`), which III.2 needs and
+  which III.24, `Prop24.image` and `Prop24.equalMeasure` have. The meeting fact for an arc,
+  `Arc.meets`, which no proposition of the edition uses yet, waits, its statement unchanged
+  and proved by III.2, in `Staging/Stage4/Prop25.lean` as `Prop25.meets`, beside the staged
+  III.25 whose companion "III.25 of_circle" uses it, and moves with stage 4
+  ([#28](https://github.com/jackChallis/stoicheia/issues/28)), as WORKFLOW, section 2,
+  allows a proved staged fact that rests on no stub. `Elements/Figure/Chords.lean` keeps
+  `Arc.congr_side` and `Arc.Congruent.congr_side`. This corrects brief 0006's table of
+  homes and its "Book Zero for arcs" for those two facts (WORKFLOW, section 2, "Correcting a
+  frozen brief"): what fails is Book Zero's rule against citing a proposition, once no proof
+  may rest on Circle 2; the consumers are III.24, its companions and the staged III.25. So
+  III.24 now cites III.2, through its helper, and its record gains a passage for it; and the
+  shared steps of `Elements/BookIII/Circumferences.lean` that take points from III.2's
+  corollaries name III.2 among the propositions they cite. No statement of a proposition or a
+  companion changes, and no protected file. On 19 October 2026, the approved rule
+  `Tacit.exists_centre` removes that extra centre hypothesis from `Prop24.chord_cases`,
+  restoring brief 0006's frozen type exactly; its home before III.24, after III.2, is kept
+  and disclosed here.

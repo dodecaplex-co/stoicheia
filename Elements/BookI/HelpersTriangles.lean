@@ -2,21 +2,20 @@ import Elements.Figure.Basics
 import Elements.BookI.Prop20
 
 /-!
-# Stage 3, staged: I.20's degenerate case
+# Book I: I.20's degenerate case
 
-Statements frozen before their proofs (brief 0006, stage 3), and proved here. These are
-shared steps that cite I.20, so they go in a Book I helper file at or after I.20.
-`Elements/BookI/Helpers.lean` imports only I.5 and is imported by I.7, so it cannot take
-them without a cycle: they go to a new helper file, `Elements/BookI/HelpersTriangles.lean`,
-after I.20 and citing nothing later.
-It has one owner, named in the orders of the wave that adds it (brief 0006).
+I.20 says that in a triangle any two sides together are greater than the third. When the
+three points lie on one straight line, "greater" becomes "equal": one distance is the
+other two together. So whether three points lie on one straight line, and whether one lies
+between the other two, are decided by the three distances alone, and carry across to any
+three points with the same distances (`Prop20.collinear_congr`, `Prop20.between_congr`).
+Placement uses them to carry "on the straight line AB" and "between A and B" from one
+figure to the other (`Elements/BookIII/Placement.lean`).
 
-This is the one statement of `Prop20.collinear_iff` in Staging: placement uses it, and
-stage 4's `Prop14.general` and `Prop15.le_diameter` will cite it too. (Stage 2's draft had a
-second copy, with the distances in another order; it was removed when the two were merged.)
-
-`placement` uses them to carry "on the straight line AB" and "between A and B" across: both
-are decided by the three distances alone.
+These steps cite I.20, so they cannot live in Book Zero; and `Helpers.lean`, which I.7
+imports, cannot import I.20 without the imports going round in a circle. So they live
+here, after I.20, citing nothing later. The certificate walks through them as it walks
+through any helper, so a proof that uses one is recorded as citing I.20.
 -/
 
 namespace Elements.BookI

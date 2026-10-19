@@ -1,14 +1,3 @@
-import Staging.Stage3.Definitions
-import Staging.Stage3.Degenerate
-import Staging.Stage3.Placement
-import Staging.Stage3.Chord
-import Staging.Stage3.Prop23Point
-import Staging.Stage3.Aligned
-import Staging.Stage3.CircumferenceAdd
-import Staging.Stage3.Prop24
-import Staging.Stage3.Prop26
-import Staging.Stage3.Prop28
-import Staging.Stage3.Arcs
 import Staging.Stage4.Foot
 import Staging.Stage4.Prop14
 import Staging.Stage4.Prop15
@@ -23,17 +12,17 @@ the few proofs this library may hold, are in `docs/WORKFLOW.md`, section 2. Brie
 the home and owner of each statement of brief 0005's stages; a later brief names those of
 its own.
 
-The folders follow the briefs' stages. Stage 2's statements, all proved, have moved to
-their homes in `Elements/`, and its folder with them; so have stage 4b's statements of
-brief 0007, III.7, III.8 and III.17 with the point of contact, and the mixed-angle
-prototype for III.16 and III.31 (brief 0011). The others:
+The folders follow the briefs' stages. The statements of stages 2 and 3, all proved, have
+moved to their homes in `Elements/`, and their folders with them, save stage 3's meeting fact
+for an arc, which rests on III.2 and waits beside III.25, the one proof that uses it. So have
+stage 4b's statements of brief 0007, III.7, III.8 and III.17 with the point of contact, and
+the mixed-angle prototype for III.16 and III.31 (brief 0011). The others:
 
-* `Stage3/`: the arcs and segments, I.20's degenerate case, placement, III.23 point by
-  point, III.24 restated, III.26 and III.28 upgraded, and the bridge theorems of `Arcs.lean`;
-* `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated;
-* `Centre/`: brief 0008's statements, every circle has a centre, with III.1 kept as
-  Euclid's construction and III.5 and III.6 read with crossing and contact within;
+* `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated, with
+  the meeting fact for an arc (`Prop25.meets`);
+* `Centre/`: brief 0008's restated propositions, using the rule now in the foundations
+  that every circle has a centre, with III.1 kept as Euclid's construction and III.5 and
+  III.6 read with crossing and contact within;
 * `Superposition/`: the prototype of a restricted superposition rule (brief 0009), carried
   as a hypothesis, with its proofs, which the coordinator approved on 18 October 2026.
-
 -/

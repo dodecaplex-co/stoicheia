@@ -27,4 +27,11 @@
 # 88 axioms, the other 87 and every word of the vocabulary unchanged, byte for byte. Its
 # law joins laws.toml, search.py and hyperbolic.py, and MODEL.md gains its row and new
 # counts, in the same change.
-3272536ae5e44987378cd5c873a2ca7279799f7397c6d916afeaadd2fea9904f  Certificate/axioms.lock
+# Renewed on 18 October 2026, when the words of stage 3's statements (brief 0006) joined the
+# vocabulary: 13 new words, the arcs and segments with the structure's constructor and fields;
+# the 87 axioms and every word already locked are unchanged, byte for byte, so MODEL.md's
+# account stands as it was.
+#
+# Renewed on 19 October 2026 for the combined vocabulary of stages 3 and mixed angles:
+# 88 axioms, byte-identical to the centre-rule revision, and 120 words of vocabulary.
+324b75e86b1a99e45f33581ebdceaf38b34f9e730020efcf493d044f34039a82  Certificate/axioms.lock

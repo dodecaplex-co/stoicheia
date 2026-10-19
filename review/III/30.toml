@@ -12,6 +12,6 @@ note = "The given circumference is put as a given segment is: its circle, the st
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "8f37887"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:9ffaa25c2c2ec6fd"
+lean = "sha256:333b962d9d9223c8"

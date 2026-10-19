@@ -14,6 +14,7 @@ import Elements.Figure.OnCircles
 import Elements.Figure.Sums
 import Elements.Figure.Rectilineal
 import Elements.Figure.Regions
+import Elements.Figure.Chords
 
 /-!
 # Book Zero: small facts every figure needs
@@ -76,6 +77,8 @@ Every proposition file imports this one, and through it:
   line named by other points of it; circles about a point; the region of a rectilineal
   angle, and of a mixed angle, named by any points of their arms; the comparison near a
   vertex, which no angle bears to itself and to which an arm or a slit adds nothing.
+* `Chords`: only the side names a segment, and a congruence of segments carries over
+  to other points naming the same sides.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is
 an axiom.
