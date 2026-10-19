@@ -294,7 +294,7 @@ theorem SameSideOf.of_between_line {Y W : Point} (hY : Collinear A B Y)
   exact (SameSideOf.of_line hW.1 hA hB (pasch2 h hY_L hP_L)).trans hW
 
 /-- Every point is the centre of some circle [Post. 3]. -/
-theorem exists_centre (A : Point) : ∃ γ : Circle, Centre A γ := by
+theorem exists_circle_about (A : Point) : ∃ γ : Circle, Centre A γ := by
   obtain ⟨B, hB⟩ := exists_point [A]
   have hAB : A ≠ B := fun h => hB (h ▸ List.mem_singleton_self A)
   obtain ⟨γ, hγ, -⟩ := Postulate3 A B hAB
@@ -729,7 +729,7 @@ within BAC and has no point within BAD. -/
 theorem WithinAngle.locallyLess_of_lt (hDC : SameSideOf D C A B) (h : ∠ B A D < ∠ B A C) :
     LocallyLess A (WithinAngle B A D) (WithinAngle B A C) := by
   have hD : WithinAngle B A C D := ⟨hDC, sameSideOf_of_angle_lt hDC h⟩
-  obtain ⟨γ₀, hγ₀⟩ := exists_centre A
+  obtain ⟨γ₀, hγ₀⟩ := exists_circle_about A
   refine ⟨⟨γ₀, hγ₀, fun P _ hP => WithinAngle.mono_left hD hP⟩, ?_⟩
   exact (WithinAngle.nearVertexOpen hD.2.triangle.cab).mono fun P hP =>
     ⟨WithinAngle.mono_right hD hP, fun h' => hD.not_sameSideOf (h'.2.symm.trans hP.1)⟩
@@ -743,7 +743,7 @@ theorem WithinAngle.locallyLess_iff (hDC : SameSideOf D C A B) :
   rcases lt_trichotomy (∠ B A D) (∠ B A C) with h | h | h
   · exact h
   · exfalso
-    obtain ⟨γ, hγ⟩ := exists_centre A
+    obtain ⟨γ, hγ⟩ := exists_circle_about A
     obtain ⟨P, -, hC, hD⟩ := hL.2.nearVertex γ hγ
     exact hD ((WithinAngle.eq_of_angle_eq hDC h).2 hC)
   · exact (not_locallyWithin hL.1 (WithinAngle.locallyLess_of_lt hDC.symm h).2.nearVertex).elim
@@ -761,7 +761,7 @@ theorem WithinAngle.locallyEqual_iff (hDC : SameSideOf D C A B) :
     · exact (not_locallyWithin hE.1
         (WithinAngle.locallyLess_of_lt hDC.symm h).2.nearVertex).elim
   · intro h
-    obtain ⟨γ, hγ⟩ := exists_centre A
+    obtain ⟨γ, hγ⟩ := exists_circle_about A
     exact ⟨⟨γ, hγ, fun P _ hP => (WithinAngle.eq_of_angle_eq (P := P) hDC h).1 hP⟩,
       ⟨γ, hγ, fun P _ hP => (WithinAngle.eq_of_angle_eq (P := P) hDC h).2 hP⟩⟩
 
@@ -770,7 +770,7 @@ the added points lie on a straight line, which holds no circle (`Surrounds.not_l
 theorem not_locallyLess_arm (h : Triangle B A C) :
     ¬ LocallyLess A (WithinAngle B A C) (fun P => WithinAngle B A C P ∨ OnRay P A C) := by
   intro hL
-  obtain ⟨γ, hγ⟩ := exists_centre A
+  obtain ⟨γ, hγ⟩ := exists_circle_about A
   obtain ⟨P, -, δ, hδ, hT⟩ := hL.2 γ hγ
   exact Surrounds.not_line h.ne₂₃ (P := P)
     ⟨δ, hδ, fun Q hQ => ((hT Q hQ).1.resolve_left (hT Q hQ).2).2.2.1⟩
@@ -780,7 +780,7 @@ not locally less than the angle: what is taken out lies on a straight line. -/
 theorem not_locallyLess_slit (hD : WithinAngle B A C D) :
     ¬ LocallyLess A (fun P => WithinAngle B A C P ∧ ¬ OnRay P A D) (WithinAngle B A C) := by
   intro hL
-  obtain ⟨γ, hγ⟩ := exists_centre A
+  obtain ⟨γ, hγ⟩ := exists_circle_about A
   obtain ⟨P, -, δ, hδ, hT⟩ := hL.2 γ hγ
   have hray : ∀ Q, InsideCircle Q δ → OnRay Q A D := fun Q hQ =>
     Classical.byContradiction fun hn => (hT Q hQ).2 ⟨(hT Q hQ).1, hn⟩
@@ -793,7 +793,7 @@ right angle", which chains comparisons; these laws allow it. -/
 
 /-- Near A, every region lies within itself. -/
 theorem LocallyWithin.refl (A : Point) (R : Point → Prop) : LocallyWithin A R R := by
-  obtain ⟨γ, hγ⟩ := exists_centre A
+  obtain ⟨γ, hγ⟩ := exists_circle_about A
   exact ⟨γ, hγ, fun _ _ h => h⟩
 
 /-- Lying within, near A, passes along. -/
@@ -806,7 +806,7 @@ theorem LocallyWithin.trans {R S T : Point → Prop} (h₁ : LocallyWithin A R S
 
 /-- Regions with the same points are locally equal. -/
 theorem LocallyEqual.of_iff {R S : Point → Prop} (h : ∀ P, R P ↔ S P) : LocallyEqual A R S := by
-  obtain ⟨γ, hγ⟩ := exists_centre A
+  obtain ⟨γ, hγ⟩ := exists_circle_about A
   exact ⟨⟨γ, hγ, fun P _ hP => (h P).1 hP⟩, ⟨γ, hγ, fun P _ hP => (h P).2 hP⟩⟩
 
 /-- Every angle is locally equal to itself. -/
@@ -825,7 +825,7 @@ theorem LocallyEqual.trans {R S T : Point → Prop} (h₁ : LocallyEqual A R S)
 /-- No angle is locally less than itself. -/
 theorem LocallyLess.irrefl {R : Point → Prop} : ¬ LocallyLess A R R := by
   intro h
-  obtain ⟨γ, hγ⟩ := exists_centre A
+  obtain ⟨γ, hγ⟩ := exists_circle_about A
   obtain ⟨P, -, hP, hn⟩ := h.2.nearVertex γ hγ
   exact hn hP
 
@@ -888,7 +888,7 @@ condition of `FallsShort` follows from its third. -/
 theorem not_collinear_of_locallyLess {m : MixedAngle}
     (h : LocallyLess m.vertex m.region (WithinAngle B m.vertex C)) :
     ¬ Collinear B m.vertex C := by
-  obtain ⟨γ, hγ⟩ := exists_centre m.vertex
+  obtain ⟨γ, hγ⟩ := exists_circle_about m.vertex
   obtain ⟨P, -, hP, -⟩ := h.2.nearVertex γ hγ
   exact hP.1.symm.triangle.bac
 
@@ -1195,7 +1195,7 @@ theorem fallsShort_iff {C K O R S T : Point} (hO : Centre O α) (hA : OnCircle A
     have hCO : SameSideOf C O A T := SameSideOf.of_onRay hK.symm hKO
     have hacross := near_across hO hTS.triangle.bac (near_inside_of_onRay hA hK hKα)
       (Prop16.outside_of_onRay hAT_out)
-    obtain ⟨γ₀, hγ₀⟩ := exists_centre A
+    obtain ⟨γ₀, hγ₀⟩ := exists_circle_about A
     refine ⟨hRS.triangle.bac, nearVertexOpen hO hA hK hKα hAT_out hTS,
       ⟨γ₀, hγ₀, fun P _ hP => ?_⟩, hacross.2.mono fun P hP =>
         ⟨hsub P hP.1, fun h' => hP.2.1 (MixedAngle.region_ofSegment.1 h').2⟩⟩
@@ -1512,7 +1512,7 @@ theorem horn_locallyEqual {A B B' D E : Point} {ABC : Circle} (hD : Centre D ABC
   by_cases hs : SameSide B' E L
   · /- B′ within the angle EAB. -/
     have hFw : WithinAngle E A B B' := ⟨hB', SameSideOf.of_line hAB hA_L hB_L hs⟩
-    obtain ⟨γ₀, hγ₀⟩ := exists_centre A
+    obtain ⟨γ₀, hγ₀⟩ := exists_circle_about A
     obtain ⟨γ, hγ, hW⟩ := horn_within hD hA hADB hE hAE_out hAE_in hFw
     exact ⟨⟨γ, hγ, fun P hPγ hP => MixedAngle.region_ofContact.2
         ⟨hW P hPγ hP, (MixedAngle.region_ofContact.1 hP).2⟩⟩,
@@ -1656,7 +1656,7 @@ theorem semicircle_lt_right {A B D E : Point} {ABC : Circle} (hD : Centre D ABC)
     (MixedAngle.ofSegment A B ABC E).FallsShort B E := by
   refine ⟨(show Triangle A B E from hE).bac, semicircle_nearVertex hD hA hADB hE hAE_out, ?_⟩
   show LocallyLess A (MixedAngle.ofSegment A B ABC E).region (WithinAngle B A E)
-  obtain ⟨γ₀, hγ₀⟩ := exists_centre A
+  obtain ⟨γ₀, hγ₀⟩ := exists_circle_about A
   refine ⟨⟨γ₀, hγ₀, fun P _ hP => ?_⟩,
     (horn_nearVertex hD hA hADB hE hAE_out).mono fun P hP => ?_⟩
   · obtain ⟨hPE, hPα⟩ := MixedAngle.region_ofSegment.1 hP
@@ -1786,7 +1786,7 @@ theorem horn_fallsShort_iff {A B D E F : Point} {ABC : Circle} (hD : Centre D AB
         rwa [angle_symm hABE.ne₁₃.symm hABE.ne₁₂.symm, hBAE] at this
       exact horn_lt hD hA hADB hE hBAE h.1 h.2 hFB hlt
     · have hsub := WithinAngle.of_not_sameSideOf hFB hFE
-      obtain ⟨γ₀, hγ₀⟩ := exists_centre A
+      obtain ⟨γ₀, hγ₀⟩ := exists_circle_about A
       refine ⟨hFB.triangle.bac, horn_nearVertex hD hA hADB hE h.1,
         ⟨γ₀, hγ₀, fun P _ hP => hsub P (MixedAngle.region_ofContact.1 hP).1⟩, ?_⟩
       exact (near_across hD hABE.bac
@@ -1973,7 +1973,7 @@ theorem less_lt_right {A B C D E R : Point} {ABCD : Circle} (hE : Centre E ABCD)
     have hTD : SameSideOf T D A C :=
       SameSideOf.of_between_line ⟨M, hA_M, hC_M, hC_M⟩ hPD (between_symm hPTC)
     exact hnotB T hTD (hseg T hT_N hTα)
-  obtain ⟨γ₀, hγ₀⟩ := exists_centre A
+  obtain ⟨γ₀, hγ₀⟩ := exists_circle_about A
   refine ⟨⟨γ₀, hγ₀, fun P _ hP => ?_⟩, ?_⟩
   · obtain ⟨hPD, hPα⟩ := MixedAngle.region_ofSegment.1 hP
     exact ⟨hPD.trans hDF, (sameSideOf_congr_collinear hAB hAF.symm hFcol).2 (hside P hPD hPα)⟩

@@ -228,7 +228,7 @@ containment is local.
 | `WithinAngle.mono_left`, `.mono_right`, `.not_sameSideOf`, `.of_between`, `.exists_near` | Angles within angles (Triple incidence 1 and 3); a point between two arms is within the angle; every circle about the vertex holds a point within it. |
 | `foot_nearest`, `len_lt_of_add_lt` | Every point of a straight line but the foot of the perpendicular from A is farther from A [I. 17, I. 19]; if OP, PQ together are less than a length, so is OQ, whether or not O, P, Q make a triangle [I. 20; System E, Between 6]. |
 | `sameSideOf_self`, `onLine_of_collinear`, `Collinear.change_point`, `sameSideOf_congr_collinear`, `sameSideOf_congr_line`, `sameSideOf_congr_point`, `OnRay.of_sameRay`, `SameSideOf.of_between_line` | Sides, rays and straight lines: Book Zero's kind of fact. |
-| `exists_centre`, `exists_onRay_inside`, `exists_inside_both` | Every point is a centre; a ray from the centre has points within the circle; of two circles about one point, one lies within the other. |
+| `exists_circle_about`, `exists_onRay_inside`, `exists_inside_both` | Every point is a centre; a ray from the centre has points within the circle; of two circles about one point, one lies within the other. |
 
 Two of these overlap statements that brief 0006 stages. `foot_nearest` takes the foot of
 the perpendicular as I.12 gives it, which for A off BC is the staged `Foot A B C N`
