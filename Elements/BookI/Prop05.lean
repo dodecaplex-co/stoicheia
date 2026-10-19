@@ -54,8 +54,6 @@ theorem Prop5 {A B C D E : Point} (hABC : Triangle A B C) (hAB : ‖A B‖ = ‖
   -- and let the straight lines FC, GB be joined. [Post. 1]
   have hF_C : F ≠ C := fun h => hC_AB (h ▸ hF_AB)
   have hG_B : G ≠ B := fun h => hB_AC (h ▸ hG_AC)
-  obtain ⟨FC, hF_FC, hC_FC⟩ := Postulate1 F C hF_C
-  obtain ⟨GB, hG_GB, hB_GB⟩ := Postulate1 G B hG_B
   -- Then, since AF is equal to AG and AB to AC,
   have hAF_AG : ‖A F‖ = ‖A G‖ := hAG_AF.symm
   -- the two sides FA, AC are equal to the two sides GA, AB, respectively;

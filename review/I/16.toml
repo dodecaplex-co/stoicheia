@@ -16,7 +16,7 @@ note = "Euclid bisects AC and produces BE; the Lean uses I.10 for E and `produce
 at = "let EF be made equal to BE"
 kind = "helper"
 helper = "between_cut"
-note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F; Postulates 1 and 2 make the join and the production."
+note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F and Postulate 2 produces AC to G; FC is used through its endpoints without a separate line construction."
 
 [[passage]]
 at = "But the angle ECD is greater than the angle ECF"
