@@ -6,8 +6,38 @@ fingerprint = "sha256:b05b756871654980"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "For let BA be drawn through to the point D"
+kind = "helper"
+helper = "produce_longer"
+note = "Euclid draws BA through far enough to make DA equal to CA. The Lean first uses `produce_longer` to reach a point X beyond A with AX greater than AC, leaving room for I.3 to cut off AD."
+
+[[passage]]
+at = "let DA be made equal to CA, and let DC be joined"
+kind = "helper"
+helper = "Prop3"
+note = "Euclid makes DA equal to CA on BA produced, without naming I.3. The Lean cuts AD from AX by `Prop3`, uses `between_cut` to put A between B and D, and joins DC by Postulate 1."
+
+[[passage]]
+at = "therefore the angle BCD is greater than the angle ADC"
+kind = "helper"
+helper = "angle_add_of_between"
+note = "Euclid treats ACD as part of BCD, since A lies between B and D. The Lean uses `angle_add_of_between` to split BCD into BCA and ACD, and `Triangle.angle_pos` supplies the positive part for Common Notion 5."
+
+[[passage]]
+at = "But DA is equal to AC"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid replaces DA by AC in the whole DB, which consists of BA and AD. The Lean writes this sum using `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1), then substitutes the equal length AC."
+
+[[passage]]
+at = "Similarly we can prove that AB, BC are also greater than CA"
+kind = "grouped"
+note = "Euclid leaves the other two pairs to the same argument. The Lean proves that argument once over any triangle in the local step named greater, then applies it to BAC and CBA after ABC."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:143bf867e071afbd"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

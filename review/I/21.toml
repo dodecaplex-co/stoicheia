@@ -12,8 +12,39 @@ at = "On BC, one of the sides of the triangle ABC"
 kind = "given"
 note = "The statement gives the point D within the triangle, and BD and DC are named by their ends, so nothing is constructed here."
 
+[[passage]]
+at = "For let BD be drawn through to E"
+kind = "helper"
+helper = "Prop21.through"
+note = "Euclid draws BD through to meet AC at E, beyond D. The Lean proves this in `Prop21.through`: `crossbar` puts E between A and C on the ray BD, and the remaining side condition puts D between B and E."
+
+[[passage]]
+at = "Then, since in any triangle two sides are greater than the remaining one"
+kind = "grouped"
+helper = "Prop20"
+note = "Euclid recalls I.20 and applies it to ABE in the next clause. The Lean carries both clauses with one call to `Prop20`, giving BE less than BA and AE together."
+
+[[passage]]
+at = "therefore BA, AC are greater than BE, EC"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid reads AE and EC together as AC because E lies between A and C. The Lean makes this replacement with `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1)."
+
+[[passage]]
+at = "therefore CE, EB are greater than CD, DB"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid reads ED and DB together as EB because D lies between E and B. The Lean makes this replacement with `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1)."
+
+[[passage]]
+at = "Again, since in any triangle the exterior angle is greater than the interior and opposite angle"
+kind = "grouped"
+helper = "Prop16"
+note = "Euclid recalls I.16 and applies it to CDE in the following clauses. The Lean puts E, D and B in order, then calls `Prop16` once to make BDC greater than CED, reading both angles from their other arms."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "2e1d5c1"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:043c9336dae4f96b"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
