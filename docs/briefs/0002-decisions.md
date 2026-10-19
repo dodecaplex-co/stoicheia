@@ -1089,3 +1089,23 @@ findings:
   joined the phrase and ink cases in
   [`tests/test_check_style.py`](../../tests/test_check_style.py); every case of both is
   kept (44 phrase, 44 S10 and 33 ink cases), none weakened.
+- **`Audit/` and the formal model's build files are protected paths.** `Audit/` holds the
+  audit lemmas whose pinned axiom lists (`#guard_msgs`) back the overlap catalogue's
+  claims, so a change there could weaken what the catalogue asserts without a security
+  review or a decisions entry. The brief 0008 lane raised it, and the coordinator decided
+  it as a check strengthened, never weakened (#96).
+  [`scripts/safe_push.py`](../../scripts/safe_push.py)'s protected list now holds `Audit/`;
+  `Audit.lean`, the root that decides which audit lemmas `lake build Audit` checks; and
+  the model's build files, `model/lakefile.toml`, `model/lakefile.lean` (which Lake would
+  read in preference to the toml, as at the root), `model/lean-toolchain`,
+  `model/lake-manifest.json` and `model/lock.sha256`. [WORKFLOW](../WORKFLOW.md), section
+  10, "Protected paths", names each. A change to any of them needs a new line here naming
+  it, the label `security-review` and a `/security-review`. They are content the checks
+  judge, not checks, so they stay judged: a check change is still kept apart from them, as
+  it was before they were protected. A protected path is now named only whole, from the
+  root or by a relative link, so a line naming `tests/model/lock.sha256` no longer counts
+  for `model/lock.sha256`, nor one naming `model/lakefile.toml` for the root's
+  `lakefile.toml`. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains
+  the cases: each new path refused without its line, a longer path's mention refused, a
+  relative link accepted, and the new paths still judged. Every refusal it made before
+  still stands.
