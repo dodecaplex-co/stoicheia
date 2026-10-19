@@ -159,8 +159,9 @@ jobs:
     # passes on main does not pass here: a pass may not turn into a fail (save P10 and E6,
     # which turn when a statement is staged before its proof). Main is checked
     # beside the pull request with the pull request's own checks (scripts/, tests/,
-    # Certificate/, review/SCHEMA.md, review/terms.toml), so that both are judged alike
-    # and a check made stricter, in a pull request of its own, holds nothing back.
+    # Certificate/, review/SCHEMA.md, review/terms.toml), keeping main's values pinned to
+    # its content (WORKFLOW, section 10, step 4), so that both are judged alike and a
+    # check made stricter, in a pull request of its own, holds nothing back.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 60
@@ -220,8 +221,14 @@ jobs:
           if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3 ]; then main_sha=$(git rev-parse HEAD^1); else main_sha="$BASE_SHA"; fi
           main="$RUNNER_TEMP/main"
           git worktree add --detach "$main" "$main_sha"
-          rm -rf "$main/scripts" "$main/tests" "$main/Certificate"
-          cp -R scripts tests Certificate "$main/"
+          # An updated pin belongs to the content it pins. Copying it from the pull
+          # request could make unchanged main fail, hiding a real acceptance regression.
+          # rsync excludes also protect main's pins from deletion when absent in the PR.
+          rsync -a --delete scripts/ "$main/scripts/"
+          rsync -a --delete --exclude=/certificate_expectations.json \
+            --exclude=/model/lock.sha256 --exclude=/model/laws.toml \
+            --exclude=/model/MODEL.md --exclude=/model/results/ tests/ "$main/tests/"
+          rsync -a --delete --exclude=/axioms.lock Certificate/ "$main/Certificate/"
           cp review/SCHEMA.md review/terms.toml "$main/review/"
           cp -R .lake "$main/"
           cd "$main"

@@ -76,7 +76,13 @@ turn into a fail.** In three steps:
 2. It checks main, the merge commit's first parent, in a worktree beside it, after a build
    of its own, with the pull request's own checks copied in (`scripts/`, `tests/`,
    `Certificate/`, `review/SCHEMA.md` and `review/terms.toml`), so that one copy of the
-   checks judges both. A check made stricter, which lands in a pull request of its own,
+   checks judges both. Main keeps its own values pinned to its content:
+   `Certificate/axioms.lock`, `tests/certificate_expectations.json`,
+   `tests/model/lock.sha256`, `tests/model/laws.toml`, `tests/model/MODEL.md` and
+   `tests/model/results/` ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests), section 10,
+   step 4). The formal model's `model/` directory is not copied. An updated definition or
+   expected count must not make unchanged main fail and so hide a pull request's failure.
+   A check made stricter, which lands in a pull request of its own,
    before the content it judges ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests),
    section 10), then fails main as it fails the pull request, and holds nothing back.
    Main's run is `--quick`: the kernel replay and the model tests (E1 and E4) are what CI's
@@ -95,7 +101,9 @@ once, so that no misspelling turns the gate off.
 The job is not yet a required check: the ruleset on main and `REQUIRED_CHECKS` in
 `scripts/safe_push.py` name `check`, `model` and `negative`, and making `acceptance` one is
 the owner's call. Even so, `git safe-push --merge` refuses a pull request while any of its
-checks fails or is still running, so a red `acceptance` already holds a merge there. The
+checks fails, is cancelled or is still running, so a red `acceptance` already holds a
+merge there. A skipped or missing `acceptance` does not hold it, provided `check`, `model`
+and `negative` pass and no other check fails, is cancelled or is still running. The
 pre-flight does not run the script, since the job builds main beside the pull request;
 like the `formal-model` job, it is CI's alone ([WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision),
 section 8).

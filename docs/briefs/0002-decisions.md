@@ -1345,8 +1345,9 @@ findings:
   failures main still has (742 at #111) are reported and hold nothing back. Main is checked
   beside the pull request, in a worktree of the merge commit's first parent, with the pull
   request's own checks copied in (`scripts/`, `tests/`, `Certificate/`, `review/SCHEMA.md`
-  and `review/terms.toml`), so that one copy of the checks judges both, and a check made
-  stricter, which lands on its own before the content it judges, holds nothing back. Main's
+  and `review/terms.toml`), keeping main's own values pinned to its content, so that one
+  copy of the checks judges both, and a check made stricter, which lands on its own before
+  the content it judges, holds nothing back. Main's
   run leaves out the kernel replay and the model tests (E1 and E4), which the `check` and
   `model` jobs hold on every pull request. The script gains two options: `--json`, which
   writes every item's verdict beside the report, and `--compare MAIN PR`, which runs no
@@ -1370,7 +1371,14 @@ findings:
   the ruleset on main and `REQUIRED_CHECKS` in
   [`scripts/safe_push.py`](../../scripts/safe_push.py), unchanged, still name `check`,
   `model` and `negative`, and making `acceptance` one is the owner's call; even so,
-  `git safe-push --merge` refuses a pull request while any of its checks fails or is still
-  running. The pre-flight's `CHECKS` are unchanged too, since the job builds main beside the
+  `git safe-push --merge` refuses a pull request while any of its checks fails, is cancelled
+  or is still running, but a skipped or missing `acceptance` does not hold it when the
+  three required jobs pass and no other check fails, is cancelled or is still running.
+  The pre-flight's `CHECKS` are unchanged too, since the job builds main beside the
   pull request: like `formal-model`, it is CI's alone. [ACCEPTANCE](../ACCEPTANCE.md), in a
   new section, "In CI", and [WORKFLOW](../WORKFLOW.md), sections 8 and 10, say so.
+  The review's correction changes `.github/workflows/ci.yml` and
+  `tests/test_check_acceptance.py`: main keeps its axiom lock, certificate expectations,
+  model hash, law names and account of the laws (WORKFLOW, section 10, step 4), and a
+  regression runs the workflow's copy commands and the certificate checks to show that
+  an updated definition or expected count cannot hide a pull request's E2 failure.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The cases of scripts/check_acceptance.py's verdicts and its comparison of two runs.
 
-    python3 -I tests/test_check_acceptance.py        # well under a second; no Lean
+    python3 -I tests/test_check_acceptance.py        # seconds; no Lean
 
 CI's `acceptance` job holds a pull request to every item that passes on main: it runs the
 checker on main and on the pull request, each writing its verdicts with --json, and then
@@ -16,9 +16,12 @@ files of verdicts, each with the outcome it should give:
 * two files from different copies of the checker, which need not judge alike, or a file
   that --json did not write, cannot be compared, exit 2;
 * --json writes a verdict for every item of every proposition, book and the edition, with
-  each failure's messages and why an item was not run.
+  each failure's messages and why an item was not run;
+* CI copies the pull request's checks into main but keeps main's content pins, so an
+  updated definition or expected count cannot hide a later E2 failure.
 
-CI runs this file before the checker. Python 3.11 or later; standard library.
+CI runs this file before the checker. Python 3.11 or later; standard library, bash and
+rsync (as the workflow uses).
 """
 
 from __future__ import annotations
@@ -26,8 +29,10 @@ from __future__ import annotations
 import contextlib
 import io
 import json
+import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 
@@ -218,6 +223,120 @@ class Verdicts(unittest.TestCase):
             out = io.StringIO()
             with contextlib.redirect_stdout(out):
                 self.assertEqual(ca.compare(path, path), 0, out.getvalue())
+
+
+class BaselineCopy(unittest.TestCase):
+    """Run the workflow's copy commands on small trees, without git or Lean."""
+
+    # WORKFLOW section 10, step 4: values pinned to the edition, including the model's
+    # account of its laws. model/ itself is outside the directories CI copies.
+    pins = ("Certificate/axioms.lock", "tests/certificate_expectations.json",
+            "tests/model/lock.sha256", "tests/model/laws.toml", "tests/model/MODEL.md",
+            "tests/model/results/summary.txt", "tests/model/results/nested/run.txt")
+    checks = ("scripts/check_acceptance.py", "scripts/check_fidelity.py",
+              "tests/test_check_acceptance.py", "tests/model/run.py",
+              "tests/model/search.py", "tests/model/hyperbolic.py",
+              "Certificate/Facts.lean", "review/SCHEMA.md", "review/terms.toml")
+
+    @staticmethod
+    def write(root: Path, name: str, text: str) -> None:
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    def trees(self, root: Path) -> tuple[Path, Path]:
+        main, pr = root / "main tree", root / "pull request"
+        for tree, version in ((main, "main"), (pr, "pull request")):
+            for name in self.pins + self.checks + ("model/lock.sha256",):
+                self.write(tree, name, f"{version}: {name}\n")
+        return main, pr
+
+    def copy_checks(self, main: Path, pr: Path) -> None:
+        # Exercise the actual workflow, from its worktree creation to its build cache
+        # copy. Reading this block needs no YAML library in CI's test environment.
+        workflow = (ca.ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        step = workflow.split("      - name: Check main against the checklist, with the "
+                              "pull request's checks\n", 1)[1].split("\n      - name:", 1)[0]
+        script = textwrap.dedent(step.split("        run: |\n", 1)[1])
+        copy = script.split('git worktree add --detach "$main" "$main_sha"\n', 1)[1]
+        copy = copy.split('cp -R .lake "$main/"', 1)[0]
+        done = subprocess.run(["bash", "-eu", "-c", 'main="$1"\n' + copy,
+                               "baseline-copy", str(main)], cwd=pr, capture_output=True,
+                              text=True, timeout=10)
+        self.assertEqual(done.returncode, 0, done.stdout + done.stderr)
+
+    def test_workflow_copies_checks_and_preserves_main_pins(self):
+        with tempfile.TemporaryDirectory() as d:
+            main, pr = self.trees(Path(d))
+            self.write(main, "scripts/retired.py", "old checker\n")
+            self.write(main, "tests/model/results/main-only.txt", "main result\n")
+            self.write(pr, "tests/model/results/pr-only.txt", "pull request result\n")
+            self.copy_checks(main, pr)
+            for name in self.pins + ("model/lock.sha256",):
+                with self.subTest(pin=name):
+                    self.assertEqual((main / name).read_text(), f"main: {name}\n")
+            for name in self.checks:
+                with self.subTest(check=name):
+                    self.assertEqual((main / name).read_bytes(), (pr / name).read_bytes())
+            self.assertFalse((main / "scripts/retired.py").exists())
+            self.assertEqual((main / "tests/model/results/main-only.txt").read_text(),
+                             "main result\n")
+            self.assertFalse((main / "tests/model/results/pr-only.txt").exists())
+
+    def test_pin_absence_on_either_side_does_not_change_main(self):
+        for absent in ("main", "pr"):
+            with self.subTest(absent=absent), tempfile.TemporaryDirectory() as d:
+                main, pr = self.trees(Path(d))
+                for name in self.pins:
+                    ((main if absent == "main" else pr) / name).unlink()
+                self.copy_checks(main, pr)
+                for name in self.pins:
+                    self.assertEqual((main / name).exists(), absent != "main", name)
+
+    def certificate(self, root: Path, word: str, count: int) -> dict:
+        facts = {"axiom_types": {}, "vocabulary": {"word": word}}
+        entries = {"I.1": (None, {"axioms": [f"rule{i}" for i in range(count)]})}
+        _, errors = ca.captured(ca.cf.check_lock, facts, root / "Certificate/axioms.lock")
+        _, more = ca.captured(ca.cf.check_expectations, entries,
+                              root / "tests/certificate_expectations.json")
+        errors += more
+        return run_file({"edition": {"E2": "fail" if errors else "pass"}},
+                        notes={"edition": {"E2": errors}})
+
+    def test_updated_pin_cannot_hide_a_pr_certificate_failure(self):
+        for changed in ("definition", "expected count"):
+            with self.subTest(changed=changed), tempfile.TemporaryDirectory() as d:
+                root = Path(d)
+                main, pr = self.trees(root)
+                pr_word = "new definition" if changed == "definition" else "main definition"
+                pr_count = 2 if changed == "expected count" else 1
+                for tree, word, count in ((main, "main definition", 1),
+                                          (pr, pr_word, pr_count)):
+                    self.write(tree, "Certificate/axioms.lock",
+                               f'[axioms]\n[vocabulary]\nword = "{word}"\n')
+                    self.write(tree, "tests/certificate_expectations.json", json.dumps({
+                        "expectations": [{"ref": "I.1", "field": "axioms",
+                                          "count": {"prefix": "rule", "is": count},
+                                          "why": "the edition's expected count"}]}))
+                self.assertEqual(self.certificate(main, "main definition", 1)
+                                 ["verdicts"]["edition"]["E2"], "pass")
+                self.assertEqual(self.certificate(pr, pr_word, pr_count)
+                                 ["verdicts"]["edition"]["E2"], "pass")
+                self.copy_checks(main, pr)
+                before = self.certificate(main, "main definition", 1)
+                # A subsequent PR defect violates its own count. The updated pin must
+                # not make unchanged main fail too, excusing this as pre-existing.
+                after = self.certificate(pr, pr_word, pr_count + 1)
+                self.assertEqual(after["verdicts"]["edition"]["E2"], "fail")
+                self.write(root, "main.json", json.dumps(before))
+                self.write(root, "pr.json", json.dumps(after))
+                out = io.StringIO()
+                with contextlib.redirect_stdout(out):
+                    code = ca.main(["--compare", str(root / "main.json"),
+                                    str(root / "pr.json")])
+                self.assertEqual(code, 1, out.getvalue())
+                self.assertIn("edition, E2 certificate: fail", out.getvalue())
+                self.assertEqual(before["verdicts"]["edition"]["E2"], "pass")
 
 
 if __name__ == "__main__":

@@ -318,17 +318,23 @@ python3 -I tests/test_check_acceptance.py && python3 scripts/check_acceptance.py
 
 The `acceptance` job checks the pull request against the [acceptance
 checklist](ACCEPTANCE.md) and keeps its report as an artifact. It checks main as well,
-with the pull request's own checks, and until the consolidation release it fails only
-when an item that passes on main does not pass on the pull request: a pass may not turn
-into a fail. The staging items (P10 and E6) are the exception, since a statement is staged
-before its proof (section 2). The consolidation release's pull request switches on the full
-gate, under which any failure fails it ([ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci)).
+with the pull request's own checker code and main's own values pinned to the edition
+(section 10, step 4; [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci)). Until the consolidation
+release it fails only when an item that passes on main does not pass on the pull request:
+a pass may not turn into a fail. The staging items (P10 and E6) are the exception, since a
+statement is staged before its proof (section 2). The consolidation release's pull request
+switches on the full gate, under which any failure fails it
+([ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci)).
 
 `scripts/safe_push.py` runs the first two groups on the head commit of every pull request
 (section 10), so a change to them is made there too, and in the CI workflow. It leaves the
 `formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files, and the
-`acceptance` job, since it builds main beside the pull request; its merge gate still waits
-for both, like every other ([model/README.md](../model/README.md#the-ci-job)).
+`acceptance` job, since it builds main beside the pull request. Its merge gate refuses
+when any reported check fails, is cancelled or is still running. It requires a passing
+run of `check`, `model` and `negative`; a skipped or missing `formal-model` or `acceptance`
+does not hold it when those three pass and no other check fails, is cancelled or is still
+running. Making either job required is the owner's call
+([model/README.md](../model/README.md#the-ci-job)).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
