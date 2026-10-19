@@ -329,6 +329,14 @@ worth naming. The first mate's report has a note on every statement.
   III.21.
 - **III.33, III.34** construct the circle with its centre, so that what they make can be
   used.
+- **III.36, III.37 (19 October 2026).** `Prop36.through_centre` carries III.36's diameter
+  calculation through cancellation and is shared with `Prop37.centre_on_secant`. III.37
+  now selects the centre-on-AC case explicitly, then retains its general argument in the
+  other branch, including III.17 and III.1. This makes an already covered case explicit;
+  both statements retain full scope. The helpers require no companion registration. The
+  statements of `Prop36.through_centre` and `Prop37.centre_on_secant` were challenged by an
+  independent reader who wrote neither statement, and approved as written by the
+  coordinator.
 
 ## Book I and II's rules, in Book III
 
