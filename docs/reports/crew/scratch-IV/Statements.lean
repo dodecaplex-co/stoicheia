@@ -1,4 +1,5 @@
 import Elements
+import Staging.Stage3.Definitions
 
 /-!
 # Book IV, scratch: the words and the statements (a draft)
@@ -7,8 +8,9 @@ The words that brief 0012 proposes for `Elements/Foundations/DefinitionsIV.lean`
 coordinator's file, and every statement of Book IV as the brief drafts it, each with
 `sorry`. Nothing imports this file, and nothing in the edition builds it: from the root of
 a checkout that has built `Elements`, `lake env lean docs/reports/crew/scratch-IV/Statements.lean`
-checks it. The prototypes beside it (`Prototype*.lean`) repeat the words, unchanged, and
-prove one statement each.
+checks it, once `Staging` is built too: the bridge `Polygon.arcs_measure` speaks of stage
+3's arcs, still staged. The prototypes beside it (`Prototype*.lean`) repeat the words,
+unchanged, and prove one statement each.
 
 The statements are written as they will stand once brief 0008's rule, that every circle has
 a centre, is in the foundations: a given circle carries no hypothesis that it has a centre.
@@ -105,14 +107,14 @@ open Elements Elements.Tacit
 
 /-- Into a given circle to fit a straight line equal to a given straight line which is not
 greater than the diameter of the circle. -/
-theorem Prop1 {D₁ D₂ : Point} (ABC : Circle) (hD : D₁ ≠ D₂)
-    (hle : ∀ B C E : Point, Centre E ABC → OnCircle B ABC → OnCircle C ABC → Between B E C →
-      len D₁ D₂ ≤ len B C) :
-    ∃ C A : Point, OnCircle C ABC ∧ OnCircle A ABC ∧ len C A = len D₁ D₂ := sorry
+theorem Prop1 {C D₁ D₂ : Point} {ABC : Circle} (hC : OnCircle C ABC) (hD : D₁ ≠ D₂)
+    (hle : ∀ P Q E : Point, Centre E ABC → OnCircle P ABC → OnCircle Q ABC → Between P E Q →
+      len D₁ D₂ ≤ len P Q) :
+    ∃ A : Point, OnCircle A ABC ∧ len C A = len D₁ D₂ := sorry
 
 /-- In a given circle to inscribe a triangle equiangular with a given triangle. -/
-theorem Prop2 {D E F : Point} (ABC : Circle) (hDEF : Triangle D E F) :
-    ∃ A B C : Point, Triangle A B C ∧ Polygon.InscribedIn [A, B, C] ABC ∧
+theorem Prop2 {A D E F : Point} {ABC : Circle} (hA : OnCircle A ABC) (hDEF : Triangle D E F) :
+    ∃ B C : Point, Triangle A B C ∧ Polygon.InscribedIn [A, B, C] ABC ∧
       ∠ B A C = ∠ E D F ∧ ∠ A B C = ∠ D E F ∧ ∠ A C B = ∠ D F E := sorry
 
 /-- About a given circle to circumscribe a triangle equiangular with a given triangle. -/
@@ -158,8 +160,8 @@ theorem Prop10 {A B : Point} (hAB : A ≠ B) :
       ∠ A B D = ∠ B A D + ∠ B A D ∧ ∠ A D B = ∠ B A D + ∠ B A D := sorry
 
 /-- In a given circle to inscribe an equilateral and equiangular pentagon. -/
-theorem Prop11 (ABCDE : Circle) :
-    ∃ A B C D E : Point, Polygon [A, B, C, D, E] ∧
+theorem Prop11 {A : Point} {ABCDE : Circle} (hA : OnCircle A ABCDE) :
+    ∃ B C D E : Point, Polygon [A, B, C, D, E] ∧
       Polygon.InscribedIn [A, B, C, D, E] ABCDE ∧
       Polygon.Equilateral [A, B, C, D, E] ∧ Polygon.Equiangular [A, B, C, D, E] ∧
       AllEqual (Polygon.arcs [A, B, C, D, E] ABCDE) := sorry
@@ -198,20 +200,56 @@ theorem Prop15.porism :
       Polygon [A, B, C, D, E, F] → Polygon.InscribedIn [A, B, C, D, E, F] α →
       Polygon.Equilateral [A, B, C, D, E, F] → Polygon.Equiangular [A, B, C, D, E, F] →
       len A B = len O A) ∧
-    (∀ α : Circle, ∃ G H K L M N : Point, Polygon [G, H, K, L, M, N] ∧
-      Polygon.CircumscribedAbout [G, H, K, L, M, N] α ∧
-      Polygon.Equilateral [G, H, K, L, M, N] ∧ Polygon.Equiangular [G, H, K, L, M, N]) ∧
+    (∀ (α : Circle) (A B C D E F : Point), Polygon [A, B, C, D, E, F] →
+      Polygon.InscribedIn [A, B, C, D, E, F] α →
+      Polygon.Equilateral [A, B, C, D, E, F] → Polygon.Equiangular [A, B, C, D, E, F] →
+      ∃ G H K L M N : Point, Polygon [G, H, K, L, M, N] ∧
+        Polygon.CircumscribedAbout [G, H, K, L, M, N] α ∧
+        (∀ P ∈ [A, B, C, D, E, F], ∃ s ∈ Polygon.sides [G, H, K, L, M, N], Between s.1 P s.2) ∧
+        Polygon.Equilateral [G, H, K, L, M, N] ∧ Polygon.Equiangular [G, H, K, L, M, N]) ∧
     (∀ A B C D E F : Point, Polygon [A, B, C, D, E, F] →
       Polygon.Equilateral [A, B, C, D, E, F] → Polygon.Equiangular [A, B, C, D, E, F] →
       (∃ (α : Circle) (O : Point), Centre O α ∧ Circle.InscribedIn α [A, B, C, D, E, F]) ∧
       (∃ (β : Circle) (O : Point), Centre O β ∧
         Circle.CircumscribedAbout β [A, B, C, D, E, F])) := sorry
 
+/-- **Straight lines fitted in contiguity close up** (IV.16's last step, which Euclid
+leaves to the reader: "fit into the circle ABCD straight lines equal to them and in
+contiguity"). If n of the circumference PKQ make the whole circle, for some n of three or
+more, then n straight lines equal to PQ, fitted into the circle from P, each from the end of
+the last (IV.1), close up and inscribe an equilateral and equiangular figure of n corners
+whose first side is PQ, its sides cutting off that circumference. A helper of IV.16, before
+it in its file: it cites IV.1. -/
+theorem Prop16.contiguity {P Q K : Point} {α : Circle} {n : Nat} (hn : 3 ≤ n)
+    (hP : OnCircle P α) (hQ : OnCircle Q α) (hK : ¬ Collinear P Q K)
+    (hpart : Magnitude.sum (List.replicate n (circumference α P K Q)) = ∟ + ∟ + ∟ + ∟) :
+    ∃ rest : List Point, (P :: Q :: rest).length = n ∧ Polygon (P :: Q :: rest) ∧
+      Polygon.InscribedIn (P :: Q :: rest) α ∧ Polygon.Equilateral (P :: Q :: rest) ∧
+      Polygon.Equiangular (P :: Q :: rest) ∧
+      ∀ a ∈ Polygon.arcs (P :: Q :: rest) α, a = circumference α P K Q := sorry
+
 /-- In a given circle to inscribe a fifteen-angled figure which shall be both equilateral
 and equiangular. -/
 theorem Prop16 (ABCD : Circle) :
     ∃ ps : List Point, ps.length = 15 ∧ Polygon ps ∧ Polygon.InscribedIn ps ABCD ∧
       Polygon.Equilateral ps ∧ Polygon.Equiangular ps := sorry
+
+/-- **IV.16, further.** "And, in like manner as in the case of the pentagon, if through the
+points of division on the circle we draw tangents to the circle, there will be circumscribed
+about the circle a fifteen-angled figure which is equilateral and equiangular. And further,
+by proofs similar to those in the case of the pentagon, we can both inscribe a circle in the
+given fifteen-angled figure and circumscribe one about it." A companion, not a porism: Heath
+prints no heading, and the claims come before the last "Q. E. F.". -/
+theorem Prop16.further :
+    (∀ (α : Circle) (ps : List Point), ps.length = 15 → Polygon ps →
+      Polygon.InscribedIn ps α → Polygon.Equilateral ps → Polygon.Equiangular ps →
+      ∃ qs : List Point, qs.length = 15 ∧ Polygon qs ∧ Polygon.CircumscribedAbout qs α ∧
+        (∀ P ∈ ps, ∃ s ∈ Polygon.sides qs, Between s.1 P s.2) ∧
+        Polygon.Equilateral qs ∧ Polygon.Equiangular qs) ∧
+    (∀ ps : List Point, ps.length = 15 → Polygon ps → Polygon.Equilateral ps →
+      Polygon.Equiangular ps →
+      (∃ (α : Circle) (O : Point), Centre O α ∧ Circle.InscribedIn α ps) ∧
+      (∃ (β : Circle) (O : Point), Centre O β ∧ Circle.CircumscribedAbout β ps)) := sorry
 
 /-! ## Companions: Euclid's "in like manner", for any number of sides -/
 
@@ -222,6 +260,7 @@ theorem Prop12.general {ps : List Point} {α : Circle} (hps : Polygon ps)
     (hin : Polygon.InscribedIn ps α) (heqs : Polygon.Equilateral ps)
     (heqa : Polygon.Equiangular ps) :
     ∃ qs : List Point, qs.length = ps.length ∧ Polygon qs ∧ Polygon.CircumscribedAbout qs α ∧
+      (∀ P ∈ ps, ∃ s ∈ Polygon.sides qs, Between s.1 P s.2) ∧
       Polygon.Equilateral qs ∧ Polygon.Equiangular qs := sorry
 
 /-- **IV.13 for any equilateral and equiangular figure**: a circle is inscribed in it. -/
@@ -234,6 +273,22 @@ it. -/
 theorem Prop14.general {ps : List Point} (hps : Polygon ps) (heqs : Polygon.Equilateral ps)
     (heqa : Polygon.Equiangular ps) :
     ∃ (α : Circle) (O : Point), Centre O α ∧ Circle.CircumscribedAbout α ps := sorry
+
+/-! ## Bridges in Book Zero: no proposition cited -/
+
+/-- **A figure of three corners is a triangle**, and a triangle is a figure of three
+corners. -/
+theorem Polygon.triangle_iff {A B C : Point} : Polygon [A, B, C] ↔ Triangle A B C := sorry
+
+/-- **Each circumference of an inscribed figure is stage 3's arc on that side.** For a side
+PQ, with R the next corner, and K any point beyond PQ from R, the circumference on which the
+angle PRQ stands is the measure of the arc PQ on K's side (`Arc.measure`), and no other
+corner is on that arc: the corners lie in order round the circle. -/
+theorem Polygon.arcs_measure {ps : List Point} {α : Circle} (hps : Polygon ps)
+    (hin : Polygon.InscribedIn ps α) :
+    ∀ t ∈ Polygon.cornerTriples ps, ∀ K : Point, OppositeSidesOf K t.2.2 t.1 t.2.1 →
+      standing α t.1 t.2.2 t.2.1 = Arc.measure ⟨α, t.1, t.2.1, K⟩ ∧
+      ∀ R ∈ ps, R ≠ t.1 → R ≠ t.2.1 → ¬ OnArc R ⟨α, t.1, t.2.1, K⟩ := sorry
 
 /-! ## Bridges to Book III's circumferences
 

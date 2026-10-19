@@ -10,8 +10,9 @@ whole circle, for any number of corners: by induction, taking away the second co
 adding its two circumferences into one (`Circumference.add`, from stage 3, imported from
 `Staging`). Until brief 0008's rule lands, the centre is a hypothesis (`hα`). Proved by a
 Codex sailor (OpenAI's Codex, at its highest reasoning setting) on 19 October 2026, at
-`89c5da4`; a second sailor proved it independently too, and this proof, the shorter, was
-kept. Nothing builds this file, and `lake env lean` checks it, once `Staging` is built.
+`89c5da4`; a second sailor, working independently, reported a complete proof too, and
+this one, the shorter, was kept. Nothing builds this file, and `lake env lean` checks it,
+once `Staging` is built.
 -/
 
 namespace Elements

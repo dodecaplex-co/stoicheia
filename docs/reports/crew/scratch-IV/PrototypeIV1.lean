@@ -94,16 +94,16 @@ namespace Scratch.BookIV
 
 open Elements Elements.Tacit
 
-/-- Euclid takes for granted that a diameter can be drawn. Take C on the circle and
-join it to the centre O; the straight line, continued beyond O, meets the circle at B
-(System E, Points 7 and Intersections 5). Thus O lies between its two ends. -/
-theorem Prop1.draw_diameter {ABC : Circle} {O : Point} (hO : Centre O ABC) :
-    ∃ B C : Point, OnCircle B ABC ∧ OnCircle C ABC ∧ Between B O C := by
-  obtain ⟨C, hC, _⟩ := exists_point_on_circle ABC []
+/-- Euclid takes for granted that a diameter can be drawn from a point C of the circle.
+Join C to the centre O; the straight line, continued beyond O, meets the circle at B
+(System E, Intersections 5). Thus O lies between its two ends. -/
+theorem Prop1.draw_diameter {ABC : Circle} {C O : Point} (hO : Centre O ABC)
+    (hC : OnCircle C ABC) :
+    ∃ B : Point, OnCircle B ABC ∧ Between B O C := by
   have hCO : C ≠ O := ne_of_centre_of_on hO hC
   obtain ⟨CO, hC_CO, hO_CO⟩ := Postulate1 C O hCO
   obtain ⟨B, hB, _, hBOC⟩ := line_circle_beyond (centre_inside hO) hO_CO hC_CO hCO
-  exact ⟨B, C, hB, hC, hBOC⟩
+  exact ⟨B, hB, hBOC⟩
 
 /-- Euclid takes for granted that the circle with centre C and distance CE meets ABC.
 The point C of ABC is inside this new circle, and B is outside it, since CE is part of
@@ -120,21 +120,21 @@ theorem Prop1.circles_intersect {ABC EAF : Circle} {B C E : Point}
 
 /-- Into a given circle to fit a straight line equal to a given straight line which is not
 greater than the diameter of the circle. -/
-theorem Prop1 {D₁ D₂ : Point} (ABC : Circle) (hABC : ∃ O : Point, Centre O ABC)
-    (hD : D₁ ≠ D₂)
-    (hle : ∀ B C E : Point, Centre E ABC → OnCircle B ABC → OnCircle C ABC → Between B E C →
-      len D₁ D₂ ≤ len B C) :
-    ∃ C A : Point, OnCircle C ABC ∧ OnCircle A ABC ∧ len C A = len D₁ D₂ := by
+theorem Prop1 {C D₁ D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centre O ABC)
+    (hC : OnCircle C ABC) (hD : D₁ ≠ D₂)
+    (hle : ∀ P Q E : Point, Centre E ABC → OnCircle P ABC → OnCircle Q ABC → Between P E Q →
+      len D₁ D₂ ≤ len P Q) :
+    ∃ A : Point, OnCircle A ABC ∧ len C A = len D₁ D₂ := by
   -- Let ABC be the given circle, and D the given straight line not greater than the diameter of the circle;
   obtain ⟨O, hO⟩ := hABC
   -- thus it is required to fit into the circle ABC a straight line equal to the straight line D.
-  show ∃ C A : Point, OnCircle C ABC ∧ OnCircle A ABC ∧ len C A = len D₁ D₂
+  show ∃ A : Point, OnCircle A ABC ∧ len C A = len D₁ D₂
   -- Let a diameter BC of the circle ABC be drawn.
-  obtain ⟨B, C, hB, hC, hBOC⟩ := Prop1.draw_diameter hO
+  obtain ⟨B, hB, hBOC⟩ := Prop1.draw_diameter hO hC
   have hD_BC : len D₁ D₂ ≤ len B C := hle B C O hO hB hC hBOC
   -- Then, if BC is equal to D, that which was enjoined will have been done; for BC has been fitted into the circle ABC equal to the straight line D.
   by_cases heq : len B C = len D₁ D₂
-  · exact ⟨B, C, hB, hC, heq⟩
+  · exact ⟨B, hB, (len_symm C B).trans heq⟩
   -- But, if BC is greater than D,
   have hlt : len D₁ D₂ < len B C := by
     rcases lt_trichotomy (len D₁ D₂) (len B C) with h | h | h
@@ -160,6 +160,6 @@ theorem Prop1 {D₁ D₂ : Point} (ABC : Circle) (hABC : ∃ O : Point, Centre O
   -- therefore D is also equal to CA.
   have hD_CA : len D₁ D₂ = len C A := CommonNotion1 hCE_D.symm hCA_CE
   -- Therefore into the given circle ABC there has been fitted CA equal to the given straight line D.
-  exact ⟨C, A, hC, hA_ABC, hD_CA.symm⟩
+  exact ⟨A, hA_ABC, hD_CA.symm⟩
 
 end Scratch.BookIV

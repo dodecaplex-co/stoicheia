@@ -26,10 +26,19 @@ the bridge), `lake env lean docs/reports/crew/scratch-IV/<file>` checks each.
 
 The statements are written as they will stand when two decisions already taken have
 landed: [brief 0008](0008-centre.md)'s rule that every circle has a centre, so a given
-circle carries no hypothesis that it has one; and, if the owner approves it,
-brief 0010's `len A B` ([#69], a draft for the owner) for the length the library now writes `‖A B‖`.
-Lean reads the two forms as one term, so nothing here depends on the second. Book IV has no
-areas.
+circle carries no hypothesis that it has one; and, if the owner approves it, brief 0010's
+`len A B` ([#69], a draft for the owner) for the length the library now writes `‖A B‖`.
+Lean reads the two forms as one term, so nothing here depends on the second. No statement
+of Book IV is about areas; IV.10's proof uses II.11's rectangle and square, and IV.12's the
+squares of I.47, as they stand.
+
+The draft was challenged on 19 October by a reader who did not write it, Astra (through
+Codex, read-only), which found no false statement and no degenerate answer, confirmed the
+five prototypes, and returned it for correction with two material findings and two
+editorial; each is answered, and the appendix lists them. Warm thanks to Astra. A first
+reading during the challenge found four gaps of its own (IV.16's further claims, two of the
+bridges, IV.1's chord from a given point, and the tangents of the general companion), which
+were mended before its report and are listed there too.
 
 Our debts are many and gladly owed. The words are Heath's (*The Thirteen Books of Euclid's
 Elements*, vol. 2, Cambridge, 1908, pp. 78–111), whose notes on Book IV show where Euclid
@@ -140,9 +149,9 @@ helpers `Polygon.sides` and `Polygon.cornerTriples` reuse.
 
 `Polygon` asks that, for each side, every other corner lie on one side of it. That makes
 the figure convex, with sides meeting only at their ends and no three corners in a row on
-one straight line. Every figure of Book IV is one, and for its figures nothing is lost:
-a figure inscribed in a circle, or circumscribed about one, that does not cross itself is
-convex. The condition keeps out what the corners alone would let in. Five points of a
+one straight line. Every figure of Book IV is one, so nothing Euclid draws is lost: a
+figure inscribed in a circle that does not cross itself is convex, and so is every figure
+he circumscribes. The condition keeps out what the corners alone would let in. Five points of a
 circle, equally spaced and joined every other one, make a star whose five sides are equal
 and whose five angles are equal; it is "equilateral and equiangular" corner by corner, but
 it is not a figure "contained by straight lines" (Definition I.19), for its sides cross.
@@ -151,8 +160,8 @@ to inscribe a circle in one. Naming that the given pentagon is a figure names wh
 Euclid's words presuppose, and is not a restriction ([FORMALIZATION.md](../FORMALIZATION.md),
 section 2, "Hypotheses").
 
-Stage 2's `Rectilineal` and `Apart` give a figure for its area, cut into triangles. Book IV
-compares no areas, so it needs neither; when Book XII does, a convex figure's triangles from
+Stage 2's `Rectilineal` and `Apart` give a figure for its area, cut into triangles. No
+statement of Book IV compares the areas of figures, so it needs neither; when Book XII does, a convex figure's triangles from
 one corner are a checked division (`Fitted.fan`), and a Book Zero lemma can say so.
 
 Two other ways were weighed. Separate points for each figure (`A B C D E : Point`) read
@@ -181,8 +190,8 @@ p. 85). Euclid's inscribed circle touches each side within it.
 ### 4.3 Equilateral and equiangular
 
 Euclid never says "regular"; he says "equilateral and equiangular", and the statements say
-it his way: `Polygon.Equilateral ps ∧ Polygon.Equiangular ps`. A regular figure, in the
-table of names and on the pages, is a figure with both. The angle at a corner is the one its
+it his way: `Polygon.Equilateral ps ∧ Polygon.Equiangular ps`. "Regular", in our own prose,
+means a figure with both, and no Lean word says it. The angle at a corner is the one its
 two sides there contain, `∠ P Q R` for the neighbours P and R of Q; for a convex figure it
 is less than two right angles, as Euclid's are.
 
@@ -197,7 +206,9 @@ and a corner R. `Polygon.arcs ps α` lists them, one for each side, each named b
 corner. III.21 makes the choice of corner immaterial (Book Zero's `standing_congr`, since
 every other corner is on one side of PQ), and stage 3's arcs measure the same
 circumference: `standing α P R Q` is `Arc.measure ⟨α, P, Q, K⟩` for a point K beyond PQ
-from R (`standing_eq_circumference`). The bridges of section 7 tie these to Book III.
+from R (`standing_eq_circumference`). `Polygon.arcs` is a list of measures, angles in Lean,
+not of stage 3's `Arc` objects; the bridges of section 7 tie the two together, and to Book
+III.
 
 ### 4.5 Counting: "fifteen-angled", "one-third of the circle"
 
@@ -206,7 +217,8 @@ IV.16's figure has fifteen corners, which Heath does not letter, and its proof c
 in the circumference ABC which is one-third of the circle, and there will be three in the
 circumference AB which is one-fifth of the circle" (vol. 2, p. 110). The draft says "fifteen
 corners" with the list's length, `ps.length = 15`, and "fifteen of the circumference e make
-the circle" with `Magnitude.sum (List.replicate 15 e)`, the sum Book I already defines.
+the circle" with `Magnitude.sum (List.replicate 15 e)`, the sum the foundations already
+define (`Magnitudes.lean`), as the prototype does; IV.16's statement needs only the count.
 [FORMALIZATION.md](../FORMALIZATION.md), section 2, says that no numbers appear in a
 statement or a proof. Its reason is that magnitudes are compared and added, never measured
 by numbers, and a count of corners or of equal parts measures nothing. This brief proposes
@@ -235,8 +247,13 @@ segment only as the points of it, with the meeting fact Euclid reads off his fig
 separate theorem shows that the circle it finds is the circle the segment came from. Book
 IV adopts the lesson as a rule for every problem:
 
-1. **The theorem receives exactly what the enunciation gives, in the form Euclid's
-   construction reads it, and nothing that contains the answer.** A given circle is a
+1. **The theorem receives what the enunciation gives, in the form Euclid's construction
+   reads it, and nothing that contains the answer.** It may also take, for every choice, a
+   starting point the construction is free to choose, when its users need to fix it: a
+   point of the circle to fit a straight line from (IV.1) or to put a corner at (IV.2,
+   IV.11), a straight line to build on (IV.10). Such a choice is quantified over, so the
+   problem as Euclid states it is recovered by choosing it; it is never a hypothesis that
+   supplies what is unknown. A given circle is a
    `Circle`, and its centre, when the construction needs one, is found as Euclid finds it
    ("let the centre K of the circle ABC be taken [III. 1]"), by III.1, on brief 0008's
    rule that a centre exists. A given straight line is its two ends, as in I.3 (`D₁ D₂`,
@@ -260,8 +277,8 @@ For Book IV the check finds no problem that needs the third clause:
 
 | Proposition | Given | Read by the construction | Returns | Core kept apart? |
 |---|---|---|---|---|
-| IV.1 | a circle; a straight line, not greater than the diameter | the circle, a diameter (its centre by III.1), the straight line's length | the fitted straight line | no: the answer is not among the data |
-| IV.2, IV.3 | a circle; a triangle | the circle (its centre, in IV.3); the triangle's angles | the triangle, with its angles | no |
+| IV.1 | a circle; a straight line, not greater than the diameter; and, for its users, the point of the circle to fit it from | the circle, the diameter from that point (its centre by III.1), the straight line's length | the other end of the fitted straight line | no: the answer is not among the data |
+| IV.2, IV.3 | a circle; a triangle; and, for IV.2's users, the point of the circle for its first corner | the circle (its centre, in IV.3); the triangle's angles | the triangle, with its angles | no |
 | IV.4, IV.5, IV.8, IV.9 | a triangle, a square | its corners and sides | the circle, its centre, its contact points or where its centre falls | no: a figure's circle is not part of the figure |
 | IV.6, IV.7, IV.11, IV.12, IV.15, IV.16 | a circle | the circle, its centre and diameters | the figure | no |
 | IV.10 | (any straight line, "set out") | the straight line AB | the triangle on it | no |
@@ -274,8 +291,8 @@ prototype (section 9) tests it on IV.1.
 
 Every statement below is in [`Statements.lean`](../reports/crew/scratch-IV/Statements.lean)
 with `sorry`, under the docstring each will carry: Heath's enunciation, taken from the
-scan's text and checked against the page image for IV.1, IV.3, IV.4, IV.6 and IV.16 (the
-rest are checked when `heath/IV/` is transcribed, the first step of section 11). Each is
+scan's text and checked against the page image, all sixteen (`heath/IV/` is transcribed
+and checked again in the ground step of section 11). Each is
 a problem, an `∃` returning what it constructs ([FORMALIZATION.md](../FORMALIZATION.md),
 section 2). Every statement is expected `full`; the notes say where a reading was chosen.
 
@@ -283,24 +300,35 @@ section 2). Every statement is expected `full`; the notes say where a reading wa
 is not greater than the diameter of the circle.
 
 ```lean
-theorem Prop1 {D₁ D₂ : Point} (ABC : Circle) (hD : D₁ ≠ D₂)
-    (hle : ∀ B C E : Point, Centre E ABC → OnCircle B ABC → OnCircle C ABC → Between B E C →
-      len D₁ D₂ ≤ len B C) :
-    ∃ C A : Point, OnCircle C ABC ∧ OnCircle A ABC ∧ len C A = len D₁ D₂
+theorem Prop1 {C D₁ D₂ : Point} {ABC : Circle} (hC : OnCircle C ABC) (hD : D₁ ≠ D₂)
+    (hle : ∀ P Q E : Point, Centre E ABC → OnCircle P ABC → OnCircle Q ABC → Between P E Q →
+      len D₁ D₂ ≤ len P Q) :
+    ∃ A : Point, OnCircle A ABC ∧ len C A = len D₁ D₂
 ```
 
-Plain words: given a circle ABC and a straight line D₁D₂ no longer than any diameter, there
-are two points C, A of the circle with CA equal to D₁D₂. Euclid's two cases, the diameter
-equal to D or greater, are the two cases of the proof. That the circle EAF meets the circle
-ABC is left tacit; the proof supplies it.
+Plain words: given a circle ABC, a point C of it, and a straight line D₁D₂ no longer than
+any diameter, there is a point A of the circle with CA equal to D₁D₂. The straight line is
+fitted from a point of the circle that the user chooses, as Euclid's construction allows
+(his diameter BC may be drawn from any point C), and as his own uses need: IV.10 fits BD
+from the point B, and IV.16 fits fifteen straight lines "in contiguity", each from the end
+of the last. Heath notes as much: "if a particular point be chosen as one extremity of the
+chord to be 'fitted in,' there are two solutions" (vol. 2, p. 81). So the statement says
+more than the enunciation, never less. Euclid's two cases, the diameter equal to D or
+greater, are the two cases of the proof. That the circle EAF meets the circle ABC is left
+tacit; the proof supplies it.
 
 **IV.2.** In a given circle to inscribe a triangle equiangular with a given triangle.
 
 ```lean
-theorem Prop2 {D E F : Point} (ABC : Circle) (hDEF : Triangle D E F) :
-    ∃ A B C : Point, Triangle A B C ∧ Polygon.InscribedIn [A, B, C] ABC ∧
+theorem Prop2 {A D E F : Point} {ABC : Circle} (hA : OnCircle A ABC) (hDEF : Triangle D E F) :
+    ∃ B C : Point, Triangle A B C ∧ Polygon.InscribedIn [A, B, C] ABC ∧
       ∠ B A C = ∠ E D F ∧ ∠ A B C = ∠ D E F ∧ ∠ A C B = ∠ D F E
 ```
+
+Euclid's construction begins at the point A where GH touches the circle, and any point of
+the circle will serve; so the statement takes A and inscribes the triangle with its corner
+there, as IV.1 fits its straight line from a given point. IV.11 and IV.16 need that: IV.16
+inscribes the triangle's side AC and the pentagon's side AB from one point A.
 
 **IV.3.** About a given circle to circumscribe a triangle equiangular with a given
 triangle.
@@ -402,19 +430,20 @@ circle ACD, which III.37 needs, is left tacit; the proof supplies it.
 **IV.11.** In a given circle to inscribe an equilateral and equiangular pentagon.
 
 ```lean
-theorem Prop11 (ABCDE : Circle) :
-    ∃ A B C D E : Point, Polygon [A, B, C, D, E] ∧
+theorem Prop11 {A : Point} {ABCDE : Circle} (hA : OnCircle A ABCDE) :
+    ∃ B C D E : Point, Polygon [A, B, C, D, E] ∧
       Polygon.InscribedIn [A, B, C, D, E] ABCDE ∧
       Polygon.Equilateral [A, B, C, D, E] ∧ Polygon.Equiangular [A, B, C, D, E] ∧
       AllEqual (Polygon.arcs [A, B, C, D, E] ABCDE)
 ```
 
-The last clause is a step of Euclid's proof, "therefore the five circumferences AB, BC, CD,
-DE, EA are equal to one another", returned because IV.12 cites it ("so that the
-circumferences AB, BC, CD, DE, EA are equal [IV. 11]") and IV.16 counts by it. His proof of
-the equal angles adds circumferences ("let BCD be added to each") by `Circumference.add`,
-corner by corner, as he does; it does not cite the bridge of section 7 that would do every
-corner at once.
+The pentagon has its corner A at a given point of the circle, as IV.2's triangle has, by
+which Euclid inscribes the triangle ACD; IV.16 needs it. The last clause is a step of
+Euclid's proof, "therefore the five circumferences AB, BC, CD, DE, EA are equal to one
+another", returned because IV.12 cites it ("so that the circumferences AB, BC, CD, DE, EA
+are equal; [IV. 11]", vol. 2, p. 102) and IV.16 counts by it. His proof of the equal angles
+adds circumferences ("let BCD be added to each") by `Circumference.add`, corner by corner,
+as he does; it does not cite the bridge of section 7 that would do every corner at once.
 
 **IV.12.** About a given circle to circumscribe an equilateral and equiangular pentagon.
 
@@ -467,9 +496,13 @@ theorem Prop15.porism :
       Polygon [A, B, C, D, E, F] → Polygon.InscribedIn [A, B, C, D, E, F] α →
       Polygon.Equilateral [A, B, C, D, E, F] → Polygon.Equiangular [A, B, C, D, E, F] →
       len A B = len O A) ∧
-    (∀ α : Circle, ∃ G H K L M N : Point, Polygon [G, H, K, L, M, N] ∧
-      Polygon.CircumscribedAbout [G, H, K, L, M, N] α ∧
-      Polygon.Equilateral [G, H, K, L, M, N] ∧ Polygon.Equiangular [G, H, K, L, M, N]) ∧
+    (∀ (α : Circle) (A B C D E F : Point), Polygon [A, B, C, D, E, F] →
+      Polygon.InscribedIn [A, B, C, D, E, F] α →
+      Polygon.Equilateral [A, B, C, D, E, F] → Polygon.Equiangular [A, B, C, D, E, F] →
+      ∃ G H K L M N : Point, Polygon [G, H, K, L, M, N] ∧
+        Polygon.CircumscribedAbout [G, H, K, L, M, N] α ∧
+        (∀ P ∈ [A, B, C, D, E, F], ∃ s ∈ Polygon.sides [G, H, K, L, M, N], Between s.1 P s.2) ∧
+        Polygon.Equilateral [G, H, K, L, M, N] ∧ Polygon.Equiangular [G, H, K, L, M, N]) ∧
     (∀ A B C D E F : Point, Polygon [A, B, C, D, E, F] →
       Polygon.Equilateral [A, B, C, D, E, F] → Polygon.Equiangular [A, B, C, D, E, F] →
       (∃ (α : Circle) (O : Point), Centre O α ∧ Circle.InscribedIn α [A, B, C, D, E, F]) ∧
@@ -495,21 +528,51 @@ theorem Prop16 (ABCD : Circle) :
 Euclid's last step, "If therefore we join BE, EC and fit into the circle ABCD straight
 lines equal to them and in contiguity, a fifteen-angled figure which is both equilateral
 and equiangular will have been inscribed in it", leaves to the reader that fifteen such
-straight lines close up and make a figure; the bridges supply it. His two further
+straight lines close up and make a figure. Two helpers, before IV.16 in its file, supply
+what he leaves tacit. `Prop16.within`: of two circumferences cut off from one point A of
+the circle on one side of the diameter through A, the less ends within the greater, so that
+the side AB of the pentagon falls within the circumference AC of the triangle and the
+circumferences AB and BC make up AC (`Circumference.add`); this is the subtraction "in the
+remainder BC there will be two of the equal segments", with the count of the prototype
+`fifteenth`. And `Prop16.contiguity`, in `Statements.lean`: if n of a circumference PKQ
+make the whole circle, n straight lines equal to PQ, fitted from P each from the end of the
+last (IV.1), close up into an equilateral and equiangular figure whose first side is PQ.
+Both are IV.16's task's to state exactly and to prove, and both cite only Book III, IV.1,
+IV.2 and IV.11. His two further
 paragraphs, as for the hexagon, say that a fifteen-angled figure is circumscribed about a
 circle, and that a circle is inscribed in and circumscribed about a given one. They come
-before his last "Q. E. F." and are not a porism; a companion, `Prop16.further`, states them,
-the general companions for fifteen sides, and the record declares them carried by it.
+before his last "Q. E. F." and are not a porism; a companion states them, the general
+companions for fifteen sides, and the record declares them carried by it:
+
+```lean
+theorem Prop16.further :
+    (∀ (α : Circle) (ps : List Point), ps.length = 15 → Polygon ps →
+      Polygon.InscribedIn ps α → Polygon.Equilateral ps → Polygon.Equiangular ps →
+      ∃ qs : List Point, qs.length = 15 ∧ Polygon qs ∧ Polygon.CircumscribedAbout qs α ∧
+        (∀ P ∈ ps, ∃ s ∈ Polygon.sides qs, Between s.1 P s.2) ∧
+        Polygon.Equilateral qs ∧ Polygon.Equiangular qs) ∧
+    (∀ ps : List Point, ps.length = 15 → Polygon ps → Polygon.Equilateral ps →
+      Polygon.Equiangular ps →
+      (∃ (α : Circle) (O : Point), Centre O α ∧ Circle.InscribedIn α ps) ∧
+      (∃ (β : Circle) (O : Point), Centre O β ∧ Circle.CircumscribedAbout β ps))
+```
 
 **The general companions.** Euclid's "in like manner as in the case of the pentagon" (IV.15
-Por., IV.16) asserts IV.12, IV.13 and IV.14 again for six and fifteen sides. Said once, for
-any number of sides, they serve both, and every later book that needs a regular figure:
+Por., IV.16) asserts IV.12, IV.13 and IV.14 again for six and fifteen sides. "De Morgan
+remarks that IV. 12, 13, 14 supply the place of the following: *Having given a regular
+polygon of any number of sides inscribed in a circle, to describe the same about the
+circle; and, having given the polygon, to inscribe and circumscribe a circle.* For the
+method can be applied generally, as indeed Euclid practically says in the Porism to IV. 15
+about the regular hexagon and in the remark appended to IV. 16 about the regular
+fifteen-angled figure." (Heath, vol. 2, p. 104.) Said once, for any number of sides, they
+serve both, and every later book that needs a regular figure:
 
 ```lean
 theorem Prop12.general {ps : List Point} {α : Circle} (hps : Polygon ps)
     (hin : Polygon.InscribedIn ps α) (heqs : Polygon.Equilateral ps)
     (heqa : Polygon.Equiangular ps) :
     ∃ qs : List Point, qs.length = ps.length ∧ Polygon qs ∧ Polygon.CircumscribedAbout qs α ∧
+      (∀ P ∈ ps, ∃ s ∈ Polygon.sides qs, Between s.1 P s.2) ∧
       Polygon.Equilateral qs ∧ Polygon.Equiangular qs
 
 theorem Prop13.general {ps : List Point} (hps : Polygon ps) (heqs : Polygon.Equilateral ps)
@@ -524,7 +587,9 @@ theorem Prop14.general {ps : List Point} (hps : Polygon ps) (heqs : Polygon.Equi
 Each is a companion, as FORMALIZATION, section 2, defines one: approved as a statement with
 `sorry` before anyone proves it, listed in `Elements/Companions.lean`, certified and shown
 on its page. Each follows Euclid's argument for the pentagon, a side or a corner at a time,
-by induction on the list.
+along the given figure, by induction over its corners in order; taking a corner away, as
+the bridge `Polygon.arcs_sum` does, would not serve here, for the figure left is no longer
+equilateral.
 
 ## 7. The bridges
 
@@ -580,8 +645,9 @@ which the final statement drops.
 | what a construction is given (section 5) | IV.1, Euclid's construction under his sentences | `PrototypeIV1.lean` | proved: Euclid's two cases under his twelve sentences; helpers for the diameter and for the meeting of the circles EAF and ABC, which he leaves tacit |
 | a figure by its corners, inscribed in a circle (`Polygon`, Defs. 3 and 6) | IV.6: the hard part every inscribing proof meets is proving `Polygon` for the figure it builds | `PrototypeIV6.lean` | proved: Euclid's route under his twenty sentences; `Prop6.polygon_of_cross` proves `Polygon` for four corners whose diagonals cross, a shared step for every quadrilateral of Book IV |
 | a figure circumscribed, a circle inscribed (Defs. 4 and 5: touching within each side) | IV.4 | `PrototypeIV4.lean` | proved: Euclid's route under his eighteen sentences, by I.9, I.12, I.26, Postulate 3 and III.16's porism; helpers for the bisectors meeting within the triangle, each half-angle acute, and each point of contact within its side, the step Definition IV.4's second clause asks for |
-| the circle divided (`Polygon.arcs`, the bridges) | `Polygon.arcs_sum`, for any number of sides | `PrototypeArcs.lean` | proved for any number of corners, by taking away one corner at a time; two sailors proved it independently, and the shorter proof was kept. Its steps (a figure less a corner is a figure; the circumferences of two neighbouring sides add) are Book Zero's and the ground's to keep |
-| counting parts of the circle (IV.16) | `fifteenth`: if three of AC and five of AB make the circle, and BC, the rest, is bisected at E, fifteen of BE make it | `PrototypeIV16.lean` | proved |
+| the circle divided (`Polygon.arcs`, the bridges) | `Polygon.arcs_sum`, for any number of sides | `PrototypeArcs.lean` | proved for any number of corners, by taking away one corner at a time. A second sailor, working independently, reported a complete proof too; the shorter was kept, and only it was checked here. Its steps (a figure less a corner is a figure; the circumferences of two neighbouring sides add) are Book Zero's and the ground's to keep |
+| counting parts of the circle (IV.16) | `fifteenth`: if three of AC and five of AB make the circle, and BC, the rest, is bisected at E, fifteen of BE make it | `PrototypeIV16.lean` | proved; it is arithmetic of magnitudes only |
+| (recommended by the challenge) straight lines fitted in contiguity close up | `Prop16.contiguity`, IV.16's last step | to be written | not yet done: the next geometric prototype, before the fleet sails; the arithmetic above does not show the fitting, the order or the closure |
 
 Approved by the coordinator, the prototypes' proofs may be kept in `Staging/` until their
 statements' homes exist (WORKFLOW, section 2, "What proofs `Staging/` may hold").
@@ -650,17 +716,36 @@ otherwise; the recommendation is the brief's.
 ## Appendix: what was checked
 
 - `lake env lean` on [`Statements.lean`](../reports/crew/scratch-IV/Statements.lean), at
-  `89c5da4`: the words and the twenty-three statements (sixteen propositions, the porism,
-  three companions and three bridges) elaborate, each with its `sorry` and no other
-  message. That `Polygon.sides`, `Polygon.cornerTriples` and `Polygon.arcs` compute as their
+  `89c5da4`, with `Staging` built: the words and the twenty-seven statements (sixteen
+  propositions, the porism, four companions, five bridges and IV.16's helper
+  `Prop16.contiguity`) elaborate, each with its `sorry` and no other message. That `Polygon.sides`, `Polygon.cornerTriples` and `Polygon.arcs` compute as their
   docstrings say was checked by `rfl` on four and five corners.
 - Each prototype by `lake env lean` at `89c5da4`, with no error and no warning, and
   `#print axioms` on its theorem: no `sorryAx`, and no axiom outside the lock. The
   prototypes of IV.4, IV.6 and the circle divided rest on superposition through the
   propositions they cite (I.4, I.8 and those after), as every proof that cites them does.
-- Heath's definitions (p. 78) and the enunciations of IV.1, IV.3, IV.4, IV.6 and IV.16, and
-  every passage of his quoted here (pp. 83, 84, 85, 90, 109, 110), against the page images of
-  the scan; the other enunciations against its text only.
+- Heath's definitions (p. 78), the sixteen enunciations, the order of each figure's corners
+  in his figures, and every passage of his quoted here (pp. 81, 83, 84, 85, 90, 101, 102, 104,
+  109, 110),
+  against the page images of the scan.
+
+## Appendix: the challenge of 19 October
+
+Astra read the brief and its scratch Lean at `1c56974`, and the changes made while it read,
+ran every scratch file and the prototypes' `#print axioms`, read each statement back in
+plain words (all full, "the mathematical statement, not completion of its proof"), and
+returned the brief for correction before freezing. Each finding, and what was done:
+
+| Finding | Severity | Done |
+|---|---|---|
+| `Prop12.general`'s prose promised tangents at the given figure's corners, its conclusion did not; so too IV.15's porism and IV.16's further claims | material (found during the reading) | each conclusion now says that every corner of the given figure is the point of contact of a side |
+| IV.10 fits BD from the point B, and IV.16 fits straight lines in contiguity, but IV.1 returned some chord, not one from a given point | material (during the reading) | IV.1 takes the point C and returns A |
+| `Prop16.further` and two bridges were promised but not declared | material (during the reading) | declared in `Statements.lean` |
+| The closing step's conclusion did not make the figure start from the given chord PQ | material | it returns `P :: Q :: rest`; it is now `Prop16.contiguity`, a helper of IV.16 that cites IV.1, not a bridge before IV.1 |
+| IV.16 needs the triangle's side AC and the pentagon's side AB from one point A, with B within the circumference AC, and IV.2 and IV.11 returned figures placed anywhere | material | IV.2 and IV.11 take the point A for a corner; the helper `Prop16.within` gives the order of the circumferences |
+| "Exactly what the enunciation gives" contradicted IV.1's and IV.10's chosen starting points | editorial | section 5, rule 1, allows a starting point quantified over, never a hypothesis that supplies the unknown |
+| "Book IV has no areas" is too broad: IV.10 and IV.12 use II.11's and I.47's squares | editorial | corrected |
+| (notes) `Polygon.arcs` is a list of measures, not of `Arc`s; the general companions should go round the given figure, not take corners away; `Prop16.contiguity` should be the next geometric prototype | | sections 4.4, 6 and 9 |
 
 [issue #97]: https://github.com/jackChallis/stoicheia/issues/97
 [#69]: https://github.com/jackChallis/stoicheia/issues/69
