@@ -9,6 +9,7 @@ kind = "euclid"
 
 [overlap]
 rule = "Tacit.superposition"
+kind = "step"
 note = "Superposition lays a triangle on BC down at A, along AB, and so carries the length of BC to A, which is I.2; the shortest proof we found from the rules alone (`Audit.I_2`) takes ten. Our proof of I.2 is Euclid's, by I.1 and two circles, and never uses the rule."
 
 [[passage]]
@@ -18,6 +19,6 @@ note = "Our straight lines DA and DB are whole lines already, so nothing is prod
 
 [review]
 stage = "exceptions"
-commit = "7339460"
+commit = "16243feef5f36514fd2c21c634be60443965808b"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:51c22d0c078729c6"
