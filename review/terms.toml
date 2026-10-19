@@ -39,6 +39,10 @@ meaning = "A clause about an angle contained by a straight line and a circumfere
 kind = "representation"
 meaning = "The circle comes with a centre, named or as `∃ G, Centre G α`, because a circle in Lean has a centre only when a hypothesis or Postulate 3 gives it one (brief 0004)."
 
+[tag.touching-whole-circles]
+kind = "representation"
+meaning = "Circles touching one another are read of the whole circles: touching within, no point of the inner is outside the outer; touching without, no point is within both; so touching circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
+
 [tag.segment-with-circle]
 kind = "representation"
 meaning = "A segment is given as its whole circle, a straight line in it and one side of that line, so a statement given a segment is also given its circle (III.24, III.25)."
