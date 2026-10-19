@@ -7,12 +7,34 @@ fingerprint = "sha256:dd20d32592101253"
 kind = "euclid"
 
 [[passage]]
-at = "for, if the base BC coincides with the base EF"
+at = "For, if the triangle ABC be applied to the triangle DEF"
+kind = "helper"
+helper = "Tacit.superposition"
+note = "Euclid applies ABC to DEF; the Lean places B on E, C on the ray EF and A on D's side of EF by `Tacit.superposition`, a rule we assume, not a proof (System E, section 3.7, in LeanEuclid's form). The rule preserves every side and angle of ABC in the copy, with C at C' and A at G."
+
+[[passage]]
+at = "the point C will also coincide with F"
+kind = "helper"
+helper = "OnRay.eq_of_len_eq"
+note = "Euclid makes C coincide with F because the bases are equal; `OnRay.eq_of_len_eq` proves that the placed point C', on the ray EF and as far from E as F, is F itself."
+
+[[passage]]
+at = "Then, BC coinciding with EF"
 kind = "grouped"
+helper = "Prop7"
 note = "Our I.7 is stated positively, so Euclid's reduction to the impossible is one step: I.7 shows that G, where A comes down, is D itself."
 
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "2ac1625"
+reviewer = "Claude Opus 5.5, records review"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 lean = "sha256:fcb1ba2567bc9c46"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
