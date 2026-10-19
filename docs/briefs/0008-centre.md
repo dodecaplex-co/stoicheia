@@ -433,7 +433,7 @@ would still be left for a citer of the first. `Centre.every`, in Book Zero besid
 | `Circumference.add`, `Prop23.point`, III.24 restated, `Prop24.equalCircles`, `Prop25.of_circle` | brief 0006, `Staging/Stage3/`, `Stage4/` | each drops its existence hypotheses |
 | `Prop25.complete` | brief 0006, `Staging/Stage4/Prop25.lean` | drops `hα : ∃ O, Centre O α`, and `hE : Centre E γ`, whose E names nothing else: any circle through A, B and C is α (question 2) |
 | `Arc.Drawn` | brief 0006, `Staging/Stage3/Definitions.lean` | the clause "its circle has a centre" goes; it was there because `Prop23.point` needed one (question 5) |
-| `Arc.eq_of_aligned`, `Arc.meets`, `Arc.measure_eq_iff`, `Arc.congruent_iff`, `Prop24.equalMeasure` | brief 0006, `Staging/Stage3/Aligned.lean`, `Chord.lean`, `Arcs.lean`, `Prop24.lean` | their text does not change, but their `Drawn` hypotheses ask less, so each statement says more; all are proved in Staging since #89, three of them through the clause that goes, which step 6 replaces in a line each (section 6, "Other branches") |
+| `Arc.eq_of_aligned`, `Arc.meets`, `Arc.measure_eq_iff`, `Arc.congruent_iff`, `Prop24.image`, `Prop24.equalMeasure` | brief 0006, `Staging/Stage3/Aligned.lean`, `Chord.lean`, `Arcs.lean`, `Prop24.lean` | their text does not change, but their `Drawn` hypotheses ask less, so each statement says more; all are proved in Staging since #89, four of them through the clause that goes, which step 6 replaces in a line each (section 6, "Other branches") |
 | `Prop25.of_circle`'s proof | brief 0006, `Staging/Stage4/Prop25.lean:288` | `⟨hABC, hA, hC, hP⟩ : Arc.Drawn …` becomes `⟨hA, hC, hP⟩` |
 | `Prop8.partner`, `Prop8.general` | brief 0007, `Staging/Stage4b/Prop08.lean` (#85) | drop `hABC : ∃ M, Centre M ABC`; `hGA` stays |
 | `Prop17.general` | brief 0007, `Staging/Stage4b/Prop17.lean` (#85) | drops `hBCD : ∃ E, Centre E BCD`; its condition "not within" stays |
@@ -693,18 +693,27 @@ true as they stand; question 2's rule lets the centre go when #57 moves them int
 
 Brief 0006's stages 2 to 4 are proved in Staging (#88, #89, #90), their statements keeping
 the hypotheses that go until step 6. Their proofs cite statements that change, and step 6
-edits each call: III.21 in `Staging/Stage3/Prop23Point.lean` (lines 77, 87, 101); III.22,
-III.24 and `Circumference.whole` and `.eq`, each given a centre as `⟨G, hG⟩`, in
-`Staging/Stage3/Prop24.lean` (lines 198 to 229) and `Prop26.lean` (lines 85 to 147); and
-III.9 and the restated III.25 in `Staging/Stage4/Prop25.lean` (lines 65 and 291). Question
-5's advice not to use `Arc.Drawn`'s centre clause reached three of the proofs too late:
-`Arc.eq_of_aligned` takes its centres from it (`Staging/Stage3/Aligned.lean`, lines 59 and
-60), and `Arc.measure_eq_iff` and `Prop24.equalMeasure` hand it on to `Circumference.whole`,
-`.eq` and the restated III.24 (`Arcs.lean`, lines 39 and 40; `Prop24.lean`, lines 296 and
-297); the others read the later clauses by position (`ha.2.1`, `⟨-, hB, hC, -⟩`). When the
-clause goes, the first takes `exists_centre a.circle`, the other two pass nothing once those
-statements drop their hypotheses, and each position moves up by one: a line apiece, in step
-6, and nothing to prove again.
+edits each call. In `Staging/Stage3/`: III.21, given `hα`, in `Prop23Point.lean` (lines 77,
+87 and 101); `Prop23.point`, given `hAEB` and `hCFD`, in `Prop24.lean` (lines 109 and 110);
+III.22, III.24 and `Circumference.whole` and `.eq`, each given a centre as `⟨G, hG⟩`, in
+`Prop24.lean` (lines 198 to 229), `Prop26.lean` (lines 85 to 147) and `Prop28.lean` (lines
+92, 126, 127 and 141); `Circumference.eq` and III.22, given `hα`, in `CircumferenceAdd.lean`
+(lines 35, 36 and 42); and III.24, `Prop24.equalCircles`, `Circumference.whole` and `.eq`,
+given the centre clause of `Arc.Drawn`, in `Arcs.lean` (lines 128 and 143 to 150) and
+`Prop24.lean` (lines 307 to 313). In `Staging/Stage4/`: III.9 and the restated III.25 in
+`Prop25.lean` (lines 65 and 291). Brief 0007's `Staging/Stage4b/Prop08.lean` and
+`Prop17.lean`, named in step 6, are proved too (#102), and pass `hABC` and `hBCD` on to
+III.8 and III.17 and from one of their statements to another. Question 5's advice not to
+use `Arc.Drawn`'s centre clause reached four of the proofs too late: `Arc.eq_of_aligned`
+and `Arc.measure_eq_iff` take their centres from it (`Aligned.lean`, lines 59 and 60;
+`Arcs.lean`, lines 39, 40, 52 and 53), and `Arc.congruent_iff` and `Prop24.equalMeasure`
+hand it on to `Circumference.whole`, `.eq`, the restated III.24 and `Prop24.equalCircles`
+(`Arcs.lean`, lines 119 and 120; `Prop24.lean`, lines 296 and 297); the others read the
+later clauses by position (`Chord.lean`'s `ha.2.1`, and `Prop24.image`'s `⟨-, hB, hC, -⟩`,
+lines 249 and 250), and two proofs build a drawn arc whole (`Prop26.lean`, lines 116 and
+117; `Prop25.lean`, line 288). When the clause goes, the first two take `exists_centre` of
+each circle, the other two pass nothing once those statements drop their hypotheses, and
+each position moves up by one: a line apiece, in step 6, and nothing to prove again.
 
 ## 7. III.5 and III.6: cutting and touching as Definition III.3 reads them
 
@@ -1012,12 +1021,12 @@ With the definition of contact within that the freeze chose (question 16).
 - **The catalogue,** [overlaps.md](../reports/overlaps.md), with question 15: its rows for
   III.5 and III.6 stay, for the restated propositions, reworded to say both things: our
   proofs are Euclid's, from Definition I.15 and the order of the points on his straight
-  line, and do not use `circle_eq` (avoidance), while `circle_eq`, and Definition I.15
-  with the diagram rule Diagram-segment 4, give the restated propositions at once
-  (overlap). III.5: Diagram-segment 2, with
-  Generalities 4, gives it at once (circles about one centre through one point are one
-  circle, and the point of the one within the other would then be within that circle and on
-  it); and a second row, Diagram-segment 4, with Definition I.15 and a law of magnitude,
+  line, and do not use `circle_eq` (avoidance), while `circle_eq`, with Generalities 4 (and
+  3, for III.6), gives both restated propositions at once, and Definition I.15 with the
+  diagram rule Diagram-segment 4 gives the restated III.5 at once (overlap). III.5:
+  Diagram-segment 2, with Generalities 4, gives it at once (circles about one centre
+  through one point are one circle, and the point of the one within the other would then
+  be within that circle and on it); and a second row, Diagram-segment 4, with Definition I.15 and a law of magnitude,
   gives it at once too (the point within is nearer the centre than the common point, and
   yet as far from it). III.6:
   Diagram-segment 2, with Generalities 3 and 4, gives it at once, Generalities 3 ending
@@ -1178,7 +1187,7 @@ changed two of question 15's three recommendations before the freeze (Appendix B
    built together with issue #93 in one tooling pull request landed before the rule; III.1
    takes `kind = "step"`.
 4. **Decided:** III.33's conclusion loses `∃ O, Centre O AEB`.
-5. **Decided:** `Arc.Drawn`'s centre clause goes once the rule is there; the three staged
+5. **Decided:** `Arc.Drawn`'s centre clause goes once the rule is there; the four staged
    proofs that use it change by a line each in step 6.
 6. **Decided:** `Prop1.of_circle` is a lemma after the porism, with no certificate entry,
    under that name.
@@ -1286,12 +1295,13 @@ marked with its decision.
    adds nothing once every circle has one; it is our clause, not Euclid's. Keeping it costs
    nothing but the question a reader would ask.
 5. **`Arc.Drawn`.** *Decided as recommended.* Recommended: its centre clause goes, in brief
-   0006's file, before the definition joins the foundations if it has not yet, with its five
+   0006's file, before the definition joins the foundations if it has not yet, with its
    users listed in section 4; after, it is a change of definition, with its lock entry and
    decisions entry. Either way the clause goes only once the rule is there to stand in for
    it, and the stage 3 proofs under way should not use it, so that its going breaks none.
-   *At the freeze:* the stage 3 proofs had landed (#89), three of them using the clause;
-   each changes by a line in step 6 (section 6, "Other branches").
+   *At the freeze:* the stage 3 proofs had landed (#89), four of them using the clause, and
+   section 4 lists six users; each changes by a line in step 6 (section 6, "Other
+   branches").
 6. **`Prop1.of_circle`, a lemma or a companion.** *Decided as recommended.* Recommended: a
    lemma, after the porism, with no certificate entry, as for `Prop17.inside`: it
    generalizes no clause. III.1's overlap note makes it findable from the page, and section
@@ -1395,9 +1405,10 @@ marked with its decision.
       stand whatever is said of Diagram-segment 4's. So the proofs avoid the rules, and the
       catalogue records the overlap. *At the freeze:* the rows stay, reworded to say both:
       our proofs are Euclid's, from Definition I.15 and the order of the points on his
-      straight line, and do not use `circle_eq` (avoidance), while `circle_eq`, and
-      Definition I.15 with Diagram-segment 4, give the restated propositions at once
-      (overlap); the records' overlap notes say the same, and the proposal of a note in
+      straight line, and do not use `circle_eq` (avoidance), while `circle_eq`, with
+      Generalities 4 (and 3, for III.6), gives both restated propositions at once, and
+      Definition I.15 with Diagram-segment 4 gives the restated III.5 at once (overlap);
+      the records' overlap notes say the same, and the proposal of a note in
       place of the rows is dropped. The alternative is a different test for the
       catalogue, defined and applied to every row: a question for the catalogue's owner,
       not an exception made here. III.6's contact without, which Generalities 3 with our
@@ -1473,7 +1484,7 @@ before it was applied.
 
 | Finding | Source | What was done |
 |---|---|---|
-| `render.py` says "already contains the proposition" in the book's summary as well as under the enunciation; `kind = "step"` must reach both, the record block and the schema's validation | Astra (answers 5, 7; question 3), triage | Both displays named, with their wording (section 3, question 3); the key in the record block; `heath.py` accepts only "step" and requires a note; III.1 alone takes it |
+| `render.py` says "already contains the proposition" in the book's summary as well as under the enunciation; `kind = "step"` must reach both, the record block and the schema's validation | Astra (answers 5, 7; question 3), triage | Both displays named, with their wording (section 3, question 3); the key in the record block; `heath.py` accepts only "step" and requires a note; III.1 alone takes it. At the freeze the key is built together with issue #93, in one tooling pull request landed before the rule: `heath.py` accepts the three kinds (states it, gives it at once, supplies a step), III.1 takes `kind = "step"`, and the other records take their catalogue rows' kinds (question 3) |
 | The guard sat beside the code it checks, against WORKFLOW section 10 | Astra (answers 2, 7), triage | Section 6, steps 3, 4 and 6: the construction under today's III.1, then the guard on its own, then the restatements |
 | The guard reads axioms only: it shows neither the construction's algorithm nor its signature, nor rules out a shortcut through the existing axioms; keep semantic review | Astra (answer 2) | Section 3 says what it shows and what it leaves to review; the construction's type is now fixed beside it |
 | A pin of 62 names breaks whenever Book I changes; a targeted check is firmer | Claude challenger (editorial) | Adopted at `05c9095`, with the type fixed, and tried against the staged construction, a planted `sorry` and a rename. At the freeze the guard became the pin after all, since the forbidden-command scan (#39) refuses `#eval` in `Audit/`; each renewal is read for the three names (section 3, question 7) |

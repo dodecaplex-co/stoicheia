@@ -20,8 +20,8 @@ So, given the rule, each new statement says exactly what today's says. A stateme
 names its centre and uses it (III.3, III.7, III.14 and nine more) is not here: it keeps
 `Centre E α`, and does not change.
 
-Three new lemmas, proposed with the brief for Lean users, are proved here: III.13's two
-clauses, each with only the two circles it speaks of (`Prop13.internally`,
+Three new lemmas for Lean users, approved at the freeze (question 11), are proved here:
+III.13's two clauses, each with only the two circles it speaks of (`Prop13.internally`,
 `Prop13.externally`), and `Centre.every`, which turns a fact about a named centre into the
 condition said of every centre that III.4 and III.8 ask for. The names sit in `Elements.BookIII.Staging.Centre` and
 `Elements.Staging.Centre`, apart from brief 0006's staged III.24 and III.25. When the
@@ -307,7 +307,7 @@ given rectilineal angle.
 
 Today's conclusion says also that the circle described has a centre, `∃ O, Centre O AEB`, so
 that a citer could hand it on to a statement asking for one. Once every circle has a centre
-that clause adds nothing, and goes (open question 4 of brief 0008). -/
+that clause adds nothing, and goes (question 4 of brief 0008, decided at the freeze). -/
 theorem Prop33 {A B C₁ C C₂ : Point} (hAB : A ≠ B) (hC : Triangle C₁ C C₂) :
     ∃ (AEB : Circle) (E : Point), OnCircle A AEB ∧ OnCircle B AEB ∧ OnCircle E AEB ∧
       ¬ Collinear A B E ∧ ∠ A E B = ∠ C₁ C C₂ := by

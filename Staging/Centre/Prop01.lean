@@ -4,10 +4,10 @@ import Elements.BookIII.Prop01
 # Staging: III.1, once every circle has a centre
 
 Brief 0008. The owner approved a rule that every circle has a centre, `exists_centre`, which
-lands only in the coordinator's own pull request, after the model's law names are data
-(issue #40) and this brief is frozen. Until then no such rule exists, and nothing here
-declares one: where a check needs the rule, it takes the rule's content as a hypothesis
-named `exists_centre`, so that, once the rule lands, the same words refer to it.
+lands only in the coordinator's own pull request, now that the model's law names are data
+(issue #40, landed) and this brief is frozen. Until it lands no such rule exists, and
+nothing here declares one: where a check needs the rule, it takes the rule's content as a
+hypothesis named `exists_centre`, so that, once the rule lands, the same words refer to it.
 
 III.1 keeps its conclusion, the points of Euclid's construction with `Centre F ABC`, and
 drops its hypothesis `∃ G, Centre G ABC`. Euclid's construction is kept apart from its
@@ -25,7 +25,7 @@ correctness:
   circle (Points 7, `exists_point_on_circle`) and runs III.1 on the straight line through
   them, as Euclid draws AB "through it at random".
 
-When frozen and proved, the construction goes before `Elements.BookIII.Prop1` first, under
+Once proved, the construction goes before `Elements.BookIII.Prop1` first, under
 today's statement (the record shows it as a `grouped` passage naming it), the restated
 theorem then replaces today's, and the entry point goes after the porism as a lemma; this
 file is then deleted. The names here sit in `Elements.BookIII.Staging.Centre`,

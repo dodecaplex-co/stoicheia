@@ -40,7 +40,7 @@ Here, with proofs, which the freeze approved as staged facts resting on no stub 
   `#guard_msgs` as `Audit/Overlaps.lean` pins its lemmas: neither `circle_eq` nor Circle 4
   is among them, nor an admitted proof, and the build fails if one enters.
 
-When the brief is frozen and the restatements land, the definitions go to
+When the restatements land (step 6), the definitions go to
 `Elements/Foundations/DefinitionsIII.lean`, the proofs to `Elements/BookIII/Prop05.lean` and
 `Prop06.lean`, and this file is deleted.
 -/
@@ -76,7 +76,7 @@ def TouchesInternally (α β : Circle) (C : Point) : Prop :=
     ∀ P : Point, OnCircle P β → ¬ OutsideCircle P α
 
 /-- **Definition III.3.** The circles `α` and `β` touch one another at `C`, internally, one
-within the other, or externally: today's `CirclesTouch`, over contact within as proposed
+within the other, or externally: today's `CirclesTouch`, over contact within as given
 above. Contact without does not change. -/
 def CirclesTouch (α β : Circle) (C : Point) : Prop :=
   TouchesInternally α β C ∨ TouchesInternally β α C ∨ TouchesExternally α β C
@@ -97,8 +97,8 @@ example {α β : Circle} (h : CirclesCut α β) : α ≠ β ∧ CirclesMeet α �
   obtain ⟨-, ⟨P, hP, hP_in⟩, -⟩ := h
   exact inside_not_on hP_in hP
 
-/-- Contact within, as proposed, is today's contact within with a point of the inner circle
-within the outer, and that point makes the circles two (checked by Lean). -/
+/-- Contact within, as the freeze decided it, is today's contact within with a point of the
+inner circle within the outer, and that point makes the circles two (checked by Lean). -/
 example {α β : Circle} {C : Point} :
     TouchesInternally α β C ↔
       Elements.TouchesInternally α β C ∧ ∃ P : Point, OnCircle P β ∧ InsideCircle P α := by
@@ -245,9 +245,9 @@ example {C F : Point} {ABC CDE : Circle}
   · exact Or.inr (Or.inr h)
 
 /-- III.11 reads the definition of contact within in two lines, which go through against
-the proposed definition as they are written today (checked by Lean): "by III.6 the centres
-differ", and the destructuring that keeps the clause that no point of the inner circle is
-outside the outer. -/
+the definition the freeze chose as they are written today (checked by Lean): "by III.6 the
+centres differ", and the destructuring that keeps the clause that no point of the inner
+circle is outside the outer. -/
 example {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG : Centre G ADE)
     (htouch : Staging.Centre.TouchesInternally ABC ADE A) :
     F ≠ G ∧ OnCircle A ABC ∧ OnCircle A ADE ∧

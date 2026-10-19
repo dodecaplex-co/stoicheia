@@ -10,10 +10,10 @@ import Staging.Centre.Restated
 Brief 0008. Six statements that brief 0006 froze, staged in `Stage3/` and `Stage4/`, ask that
 a circle have some centre, and its definition of a drawn arc asks it too. Once every circle
 has a centre (the rule `exists_centre`, approved, not yet landed), each loses that
-hypothesis, as below; nothing else in them changes. This is a revision of brief 0006, for
-the coordinator to approve with brief 0008, and is made in brief 0006's files by their
-owners, after the rule lands: before or after those statements move into `Elements/`,
-whichever comes first.
+hypothesis, as below; nothing else in them changes. This is a revision of brief 0006,
+approved by the coordinator with brief 0008, at its freeze, and is made in brief 0006's
+files by their owners, after the rule lands: before or after those statements move into
+`Elements/`, whichever comes first.
 
 As in `Restated.lean`, each statement carries `sorry` and two checks (checked by Lean): given
 the rule's content, taken as a hypothesis, brief 0006's statement gives the new one; and the

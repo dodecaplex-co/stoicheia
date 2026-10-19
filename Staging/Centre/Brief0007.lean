@@ -9,9 +9,9 @@ Brief 0008. Three statements that brief 0007 froze, staged in `Stage4b/` (#85), 
 circle have some centre: `Prop8.partner` and `Prop8.general` (`hABC`) and `Prop17.general`
 (`hBCD`). Once every circle has a centre (the rule `exists_centre`, approved, not yet
 landed), each loses that hypothesis, as below; nothing else in them changes, and the
-condition said of every centre, `hGA`, stays. This is a revision of brief 0007, for the
-coordinator to approve with brief 0008, made in brief 0007's files by their owners, with
-the restatements of III.8 and III.17.
+condition said of every centre, `hGA`, stays. This is a revision of brief 0007, approved
+by the coordinator with brief 0008, at its freeze, made in brief 0007's files by their
+owners, with the restatements of III.8 and III.17.
 
 As in `Brief0006.lean`, each statement carries `sorry` and two checks (checked by Lean):
 given the rule's content, taken as a hypothesis, brief 0007's statement gives the new one;
