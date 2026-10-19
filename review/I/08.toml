@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For, if the triangle ABC be applied to the triangle DEF"
 kind = "helper"
 helper = "Tacit.superposition"
-note = "Euclid applies ABC to DEF; the Lean places B on E, C on the ray EF and A on D's side of EF by `Tacit.superposition`, a rule we assume, not a proof (System E, section 3.7, in LeanEuclid's form). The rule preserves every side and angle of ABC in the copy, with C at C' and A at G."
+note = "Euclid applies ABC to DEF; the Lean places B on E, C on the ray EF and A on D's side of EF by `Tacit.superposition`, a rule we assume, not a proof (System E §3.7, in LeanEuclid's form). The rule preserves every side and angle of ABC in the copy, with C at C' and A at G."
 
 [[passage]]
 at = "the point C will also coincide with F"
@@ -24,11 +24,14 @@ kind = "grouped"
 helper = "Prop7"
 note = "Our I.7 is stated positively, so Euclid's reduction to the impossible is one step: I.7 shows that G, where A comes down, is D itself."
 
+[figure]
+note = "This figure draws the impossible supposition: G distinct from D on the same side of EF, with EG supposed equal to ED and GF supposed equal to DF. I.7 rules out such a point."
+
 [review]
 stage = "full"
-commit = "2ac1625"
-reviewer = "Claude Opus 5.5, records review"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
+run = "brief 0005 stage 5, ship C5 re-read"
 lean = "sha256:fcb1ba2567bc9c46"
 
 [review.items]

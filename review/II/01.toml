@@ -21,14 +21,14 @@ note = "Euclid cuts off BG equal to A by I.3, taking enough room on BF for grant
 [[passage]]
 at = "and through D, E, C let DK, EL, CH be drawn parallel to BG"
 kind = "helper"
-helper = "BookI.Prop31.parallelogram"
-note = "Euclid draws DK, EL and CH and reads their meetings with GH from the figure. `BookI.Prop31.parallelogram` draws each parallel by I.31 and finds K, L and H by `BookI.Prop30.meet`, using I.30."
+helper = "Prop31.parallelogram"
+note = "Euclid draws DK, EL and CH and reads their meetings with GH from the figure. `Prop31.parallelogram` draws each parallel by I.31 and finds K, L and H by `Prop30.meet`, using I.30."
 
 [[passage]]
 at = "Then BH is equal to BK, DL, EH"
 kind = "helper"
 helper = "quadArea_add_of_parallelograms"
-note = "Euclid reads BH as BK, DL and EH together. The Lean proves the uprights parallel by `BookI.Prop30.parallel` (I.30), orders G, K, L and H by `Parallel.between`, and uses `quadArea_add_of_parallelograms` twice to join the three pieces."
+note = "Euclid reads BH as BK, DL and EH together. The Lean proves the uprights parallel by `Prop30.parallel` (I.30), orders G, K, L and H by `Parallel.between`, and uses `quadArea_add_of_parallelograms` twice to join the three pieces."
 
 [[passage]]
 at = "Now BH is the rectangle A, BC"
@@ -59,10 +59,10 @@ case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "68e9276"
-reviewer = "Claude Opus 5.5, records review"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:2642bf8e58a5ea62"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"

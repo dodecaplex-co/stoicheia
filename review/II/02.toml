@@ -8,8 +8,8 @@ kind = "euclid"
 [[passage]]
 at = "For let the square ADEB be described on AB"
 kind = "helper"
-helper = "BookI.Prop31.parallelogram"
-note = "Euclid draws the square and CF, taking its meeting with DE at F from the figure and taking for granted that a parallel to AD is also parallel to BE; Heath gives no reference for the latter step. The Lean uses I.46 with `Square.described` for the square; `BookI.Prop31.parallelogram` draws CF through C by I.31, finds F where CF meets DE by `BookI.Prop30.meet`, using I.30, and proves AF, that is ADFC, a parallelogram; `BookI.Prop30.parallel` (I.30) makes CF parallel to BE too."
+helper = "Prop31.parallelogram"
+note = "Euclid draws the square and CF, taking its meeting with DE at F from the figure and taking for granted that a parallel to AD is also parallel to BE; Heath gives no reference for the latter step. The Lean uses I.46 with `Square.described` for the square; `Prop31.parallelogram` draws CF through C by I.31, finds F where CF meets DE by `Prop30.meet`, using I.30, and proves AF, that is ADFC, a parallelogram; `Prop30.parallel` (I.30) makes CF parallel to BE too."
 
 [[passage]]
 at = "Then AE is equal to AF, CE"
@@ -31,10 +31,10 @@ note = "Euclid treats CE as a rectangle with BE equal to AB. The Lean reads CE f
 
 [review]
 stage = "full"
-commit = "68e9276"
-reviewer = "Claude Opus 5.5, records review"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:7b299b042dbabba1"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"
