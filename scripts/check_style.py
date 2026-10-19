@@ -37,12 +37,13 @@ What the scopes cover (STYLE, section 8):
   book/names.md. A failure here is mended in scripts/render.py or in the source it reads.
 * Idea figures, figures/<book>/NN-idea.svg; Euclid's figures, figures/<book>/NN.svg.
 
-S12 reads the Prose, the Review notes, the Catalogues, the Rendered docstrings and the
-front pages (book/<book>/front.md), each with its book's namespace open, or every book's
-where a text has no book of its own; it reads the name before the colon of a backticked
-`name : type` too, for a hypothesis is said in words, not by its local name (STYLE,
-section 1). A backticked word that is Lean's or the certificate's but no declaration
-(a tactic, a field of facts.json) is listed in NOT_DECLARED with its reason.
+S12 reads the Prose, the Review notes, the Catalogues, the Other reports, the Rendered
+docstrings and the front pages (book/<book>/front.md), each with its book's namespace
+open, or every book's where a text has no book of its own; it reads the name before the
+colon of a backticked `name : type` too, for a hypothesis is said in words, not by its
+local name (STYLE, section 1). A backticked word that is Lean's or the certificate's but
+no declaration (a tactic, a field of facts.json) is listed in NOT_DECLARED with its
+reason.
 
 The reach of #66, held file by file (REACH_PENDING). The Review notes, the overlap
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
@@ -789,10 +790,13 @@ LETTERS_ONLY = re.compile(rf"\s*{LETTER_RUN}(?:\s*,\s*{LETTER_RUN}|\s+{LETTER_RU
 LETTERS_IN_CODE = re.compile(r"`+([^`]+)`+")
 BACKTICKS = re.compile(r"`+")
 ATX_LINE = re.compile(r"^ {0,3}#{1,6}(?:[ \t]|$)")
-LIST_LINE = re.compile(r"^( {0,3})(?:[-+*]|\d{1,9}[.)])([ \t]+)(.*)$")
+LIST_LINE = re.compile(
+    r"^(?P<indent> {0,3})(?:(?P<bullet>[-+*])|(?P<number>\d{1,9})[.)])"
+    r"(?P<space>[ \t]+)(?P<body>.*)$")
 FENCE_LINE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
 THEMATIC_LINE = re.compile(r"^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$")
 SETEXT_LINE = re.compile(r"^ {0,3}(?:=+|-+)[ \t]*$")
+TABLE_DELIMITER_CELL = re.compile(r":?-+:?")
 
 
 class InlineBlock(NamedTuple):
@@ -811,6 +815,69 @@ class MarkdownBlocks(NamedTuple):
     inline: list[InlineBlock]
     fences: list[tuple[int, int]]
     comments: list[tuple[int, int]]
+
+
+def table_cell_ranges(line: str) -> tuple[list[tuple[int, int]], bool]:
+    """The source ranges of a GFM row's cells, and whether the row has a separator."""
+    pipes = []
+    slashes = 0
+    for at, char in enumerate(line):
+        if char == "\\":
+            slashes += 1
+            continue
+        if char == "|" and slashes % 2 == 0:
+            pipes.append(at)
+        slashes = 0
+    if not pipes:
+        return [(0, len(line))], False
+    edges = [-1] + pipes + [len(line)]
+    cells = [(edges[k] + 1, edges[k + 1]) for k in range(len(edges) - 1)]
+    if not line[:pipes[0]].strip():
+        cells.pop(0)
+    if cells and not line[pipes[-1] + 1:].strip():
+        cells.pop()
+    return cells, True
+
+
+def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
+    """Split a recognized GFM table into independent, offset-preserving cells."""
+    lines = []
+    at = 0
+    for line in block.text.split("\n"):
+        lines.append((at, at + len(line), line))
+        at += len(line) + 1
+    table = None
+    for k in range(len(lines) - 1):
+        _, _, header = lines[k]
+        _, _, delimiter = lines[k + 1]
+        header_cells, header_has_pipe = table_cell_ranges(header)
+        delimiter_cells, delimiter_has_pipe = table_cell_ranges(delimiter)
+        if ((header_has_pipe or delimiter_has_pipe)
+                and len(header_cells) == len(delimiter_cells)
+                and delimiter_cells
+                and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip())
+                        for a, b in delimiter_cells)):
+            table = k
+            break
+    if table is None:
+        return [block]
+
+    found = []
+    header_start = lines[table][0]
+    prefix_end = max(0, header_start - 1)
+    if prefix_end:
+        found.append(InlineBlock(block.text[:prefix_end], block.offsets[:prefix_end]))
+    for row in [lines[table]] + lines[table + 2:]:
+        start, _, text = row
+        cells, _ = table_cell_ranges(text)
+        for a, b in cells:
+            while a < b and text[a] in " \t":
+                a += 1
+            while b > a and text[b - 1] in " \t":
+                b -= 1
+            if a < b:
+                found.append(InlineBlock(text[a:b], block.offsets[start + a:start + b]))
+    return found
 
 
 def markdown_blocks(text: str) -> MarkdownBlocks:
@@ -872,13 +939,17 @@ def markdown_blocks(text: str) -> MarkdownBlocks:
         consumed = False
         while True:
             body, source = base_body, base_source
-            listed = LIST_LINE.match(body)
             literal = fence is not None or comment is not None
+            listed = LIST_LINE.match(body)
+            if (listed and listed.group("number") not in (None, "1")
+                    and container is not None
+                    and not (list_item and list_item[0] == quote)):
+                listed = None
             if listed and not literal:
                 list_number += 1
-                indent = listed.start(3)
+                indent = listed.start("body")
                 list_item = (quote, list_number, indent)
-                body, source = listed.group(3), source[indent:]
+                body, source = listed.group("body"), source[indent:]
                 own = (quote, list_number)
             elif list_item and list_item[0] == quote and body.strip():
                 indent = list_item[2]
@@ -965,7 +1036,8 @@ def markdown_blocks(text: str) -> MarkdownBlocks:
         fences.append((fence_start, len(text)))
     if comment is not None:
         comments.append((comment_start, len(text)))
-    return MarkdownBlocks(blocks, fences, comments)
+    inline = [cell for block in blocks for cell in table_inline_blocks(block)]
+    return MarkdownBlocks(inline, fences, comments)
 
 
 def blank_ranges(text: str, spans) -> str:
@@ -984,15 +1056,15 @@ def code_span_details(text: str) -> list[CodeSpan]:
     """The CommonMark code spans in inline leaf blocks, with their source offsets."""
     spans = []
     for block in markdown_blocks(text).inline:
-        ticks = []
-        for m in BACKTICKS.finditer(block.text):
-            escaped = m.start() - len(block.text[:m.start()].rstrip("\\"))
-            start = m.start() + (1 if escaped % 2 else 0)
-            if start < m.end():
-                ticks.append((start, m.end()))
+        ticks = [(m.start(), m.end()) for m in BACKTICKS.finditer(block.text)]
         i = 0
         while i < len(ticks):
-            start, opened = ticks[i]
+            raw_start, opened = ticks[i]
+            escaped = raw_start - len(block.text[:raw_start].rstrip("\\"))
+            start = raw_start + (1 if escaped % 2 else 0)
+            if start == opened:
+                i += 1
+                continue
             width = opened - start
             close = next((j for j in range(i + 1, len(ticks))
                           if ticks[j][1] - ticks[j][0] == width), None)
@@ -1369,9 +1441,9 @@ def book_opens(book: str) -> str:
 
 
 def every_book_opens() -> str:
-    """What S12 opens for a text with no book of its own (the overlap catalogue, the
-    review terms): every book, so that a name two books share is ambiguous, and is
-    written with its book (`BookI.Prop5.base`)."""
+    """What S12 opens for a text with no book of its own (the overlap catalogue, other
+    reports and the review terms): every book, so that a name two books share is
+    ambiguous, and is written with its book (`BookI.Prop5.base`)."""
     return " ".join(["Elements"] + [f"Elements.Book{b}" for b in heath.BOOKS] + ["Elements.Tacit"])
 
 
@@ -2224,7 +2296,9 @@ def main() -> int:
         named.append(NamedText(path, raw, book_opens(book.group(1))
                                if book and book.group(1) in heath.ROMAN else every_book_opens()))
     for path in report_files():
-        check_text(path, path.read_text(encoding="utf-8"), {"report"}, new=True)
+        raw = path.read_text(encoding="utf-8")
+        check_text(path, raw, {"report"}, new=True)
+        named.append(NamedText(path, raw, every_book_opens()))
     check_text(ROOT / "README.md", readme_text(), {"readme"})
     shown_docs = rendered_docstrings()
     for path in lean_files():
@@ -2253,8 +2327,8 @@ def main() -> int:
     else:
         names, unchecked = check_lean_names(named)
         print(f"S12: {names} backticked names put to Lean, from {len({t.path for t in named})} "
-              "files: the prose, the review notes, the catalogues, the rendered docstrings "
-              "and the front pages")
+              "files: the prose, the review notes, the catalogues, the reports, the "
+              "rendered docstrings and the front pages")
         if unchecked:
             print(f"note: S12 left {len(unchecked)} audit lemma(s) unchecked, for the Audit "
                   "library is not built (`lake build Audit`, as CI runs it): "

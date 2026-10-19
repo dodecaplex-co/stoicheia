@@ -38,8 +38,11 @@ import sys
 import tempfile
 import unittest
 import xml.etree.ElementTree as ET
+from contextlib import ExitStack, redirect_stdout
+from io import StringIO
 from pathlib import Path
 from types import SimpleNamespace
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_style as style  # noqa: E402
@@ -326,6 +329,29 @@ def s22(text: str) -> list[str]:
             for m in style.LETTERS_IN_CODE.finditer(style.letter_spans(text))]
 
 
+def main_named_texts() -> dict[Path, str]:
+    """The paths and namespaces main gives S12, with other checks replaced by stubs."""
+    captured = []
+
+    def remember(texts):
+        captured.extend(texts)
+        return 0, []
+
+    with ExitStack() as stack:
+        for name in ("check_text", "check_mishnah", "check_reading", "check_intros",
+                     "check_figures"):
+            stack.enter_context(patch.object(style, name))
+        stack.enter_context(patch.object(style, "check_lean_notes", return_value=[]))
+        stack.enter_context(patch.object(style, "rendered_docstrings", return_value={}))
+        stack.enter_context(patch.object(style, "check_lean_names", side_effect=remember))
+        stack.enter_context(patch.object(style, "reach_done", return_value=[]))
+        stack.enter_context(patch.object(style.shutil, "which", return_value="lake"))
+        stack.enter_context(patch.object(sys, "argv", ["check_style.py"]))
+        with redirect_stdout(StringIO()):
+            style.main()
+    return {text.path: text.opens for text in captured}
+
+
 def failure_lines(text: str, rule: str) -> list[int]:
     """The lines at which check_text fails `rule` in a prose text."""
     saved = (list(style.failures), dict(style.reports), set(style.reach_found))
@@ -386,6 +412,10 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S12", style.lean_names, "(`hBCE:Between B C E`, `hBCE' : P`)", ["hBCE", "hBCE'"]),
     ("S12", style.lean_names, "`a :: l`", []),
     ("S12", style.lean_names, "the edition at `https://example.org/x`", []),
+    ("S12", style.lean_names, r"`not\` `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, "`x\n2. y` `Missing.name`", ["Missing.name"]),
+    ("S12", style.lean_names, "`Missing.name\n1. `", []),
+    ("S12", style.lean_names, "2. `Missing.name\n3. `", []),
     ("S12", style.lean_names,
      "<!-- old: `Missing.name` --> visible `Prop5.base`", ["Prop5.base"]),
     ("S12", style.lean_names, "<!-- old: `Missing.name`", []),
@@ -488,6 +518,12 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
      "> ```\n> `CD`\nordinary `AB`", [3]),
     ("S22", s22, "> ```\n> hidden\n- `AB,\n- CD`", []),
     ("S22", s22, "- ```\n  `CD`\nordinary `AB`", ["AB"]),
+    ("S22", s22, "H |\n--- |\n`AB\nCD`", []),
+    ("S12", style.lean_names, "H |\n--- |\n`Missing.name\n`", []),
+    ("S22", lambda t: [content for _, _, content in style.markdown_code_spans(t)],
+     "A | B\n--- | ---\n`AB \\| CD` | `EF`", [r"AB \| CD", "EF"]),
+    ("S22", lambda t: failure_lines(t, "S22"),
+     "A | B\n--- | ---\nplain | `AB`", [3]),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "overlaps.md", True),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-II.md", True),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-I-supplement.md", True),
@@ -618,6 +654,12 @@ class Scopes(unittest.TestCase):
 
     test_scope_cases.__doc__ = (f"The new scopes read {len(SCOPE_CASES)} records, docstrings, "
                                 "names and letters rightly")
+
+    def test_reports_reach_s12(self):
+        """Every eligible ordinary report is among the texts main gives S12."""
+        named = main_named_texts()
+        self.assertEqual({path: named.get(path) for path in style.report_files()},
+                         {path: style.every_book_opens() for path in style.report_files()})
 
     def test_reach_cases(self):
         for path, scopes, new, pending, want in REACH_CASES:
