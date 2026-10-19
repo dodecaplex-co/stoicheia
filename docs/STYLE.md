@@ -135,7 +135,7 @@ where to look:
    plain word for its kind (a step done by a lemma, sentences carried together, a further
    case, a step already given, a step argued another way, a passage left in Euclid's
    words); then the listing, with the main theorem open, its helpers folded before it and
-   its corollaries and porism after it.
+   the declarations after it folded and named by their role.
 7. **What it rests on:** the certificate for every declaration the page shows (the
    theorem, its porism, its companions), with Heath's references beside the Lean's
    citations, the postulates, definitions taken as axioms, Common Notions and tacit
@@ -477,8 +477,10 @@ commas, between S9's letters), or by one line break with the next line's indent 
 comment leader (`--`, or a quotation's `>`). A blank line ends such a phrase, save S2's
 "first mate" and the "Definition N" of S7 and D10, whose words may stand apart by any
 white space. A word that a rule seeks elsewhere in the clause or the sentence (what
-follows S5's "never need", S11's "Proclus", D9's "need") is found as its row says. Before
-reading anything else, the script checks its own patterns against such phrases.
+follows S5's "never need", S11's "Proclus", D9's "need") is found as its row says. The
+patterns are tested on such phrases, case by case, with S20's reading of a letter on an
+angle's wedge, in `tests/test_check_style.py`, which CI runs just before the script
+([WORKFLOW](WORKFLOW.md), section 8).
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.

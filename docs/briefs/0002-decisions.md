@@ -632,6 +632,68 @@ findings:
   their records wait for #57, on the conditions of the report's section 5; nothing in
   `Elements/` changes.
 
+- **The certificate keeps a proof's own axioms apart from those it inherits.** Argon's
+  second review of the book-III release found that `direct_axioms` lists, as a
+  proposition's own, every axiom its proof term names together with those of the Book
+  Zero lemmas and shared steps it calls, so that a reader asking which rules a proof calls
+  got a longer list than the proof's own; we thank Argon for it
+  ([#65](https://github.com/jackChallis/stoicheia/issues/65)).
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) now writes two more fields for
+  every entry: `own_axioms`, the axioms named in the proof's own declarations (the
+  declaration, the helpers in its proposition's namespace, and Lean's auxiliary
+  declarations), and `inherited`, each other axiom it uses itself with every lemma, of
+  Book Zero or shared, that brings it in. A second self-check joins the first: the run
+  fails unless an entry's `direct_axioms`, Lean's foundations aside, are exactly its
+  `own_axioms` and its inherited axioms, so that its `axioms` are still exactly its own,
+  those it inherits, its Common Notions' and those of what it cites. Every field that was
+  there before is byte for byte as it was, `direct_axioms` among them, and the policy on
+  superposition still reads it, so no proof may reach that rule through a lemma either.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) documents both fields.
+  [`scripts/render.py`](../../scripts/render.py) shows them: each page's table gains the
+  rows "Its own Lean calls" and "Through lemmas", and its list of tacit rules marks a
+  rule "(used here)" only when the proof's own Lean calls it, and otherwise names the
+  lemmas it comes in through; CERTIFICATE.md gains the columns "Own rules (all kinds)"
+  and "Through lemmas (all kinds)". That is a change to what it writes, which the
+  regenerated pages show, and not to what it accepts.
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) reads a field of
+  `tests/certificate_expectations.json` that is an object, as `inherited` is, by its
+  keys, and fails an expectation whose entry lacks its field, which it read as empty
+  before, so that an `excludes` could pass on a field that had gone. Both are stricter,
+  and nothing is loosened.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  its four expectations and gains five: III.2 rests on Circle 2 (`inside_of_between`),
+  which neither its own Lean nor any lemma it calls brings in, so it comes only through
+  III.1; and I.5's own Lean never calls Postulate 3, which it inherits through Book Zero's
+  `exists_between_nearer`. The protected files this changes are `Certificate/Facts.lean`,
+  `Certificate/FIELDS.md`, `scripts/render.py`, `scripts/check_fidelity.py` and
+  `tests/certificate_expectations.json`. The overlap catalogue's "First enters" moves to
+  the new fields in a text pull request of its own, after this one.
+
+- **The style check's cases, in `tests/`.** The cases with which
+  [`scripts/check_style.py`](../../scripts/check_style.py) checked its own reading, on
+  every run and before anything else, move to a test file of their own,
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (new). This settles
+  [issue #44](https://github.com/jackChallis/stoicheia/issues/44), the question that
+  [#3](https://github.com/jackChallis/stoicheia/pull/3) left open. They are the 44 phrase
+  cases, each wording rule's phrases wrapped and unwrapped, and S20's 11 ink cases, each
+  read with three spellings of an angle's wedge, 33 in all. Every case moves as it was,
+  its rule, its search, its text and its expected finding the same and in the same order,
+  and none is added or dropped: compared with origin/main's copy, they are identical one
+  for one, and the file fails when D7's pattern stops wrapping, when S3 passes over an "I"
+  after "Book" across a tab or a line break, or when S20 stops reading paths. The home is
+  the one [WORKFLOW](../WORKFLOW.md), section 8, gives a guard's regression, and that
+  section now names the file: a defect fixed in the style check's reading of a phrase or
+  of a letter's ink comes with a case there. WORKFLOW asks for no start-up self-check, so
+  the script's is removed. In CI and in the pre-flight nothing runs less often: the file
+  needs no Lean and runs in well under a second, so it stands where the cases ran before,
+  just before `check_style.py`, in CI's `check` job
+  ([`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), a step of its own), in
+  the `CHECKS` list of [`scripts/safe_push.py`](../../scripts/safe_push.py), and in the
+  sequence of WORKFLOW, section 8, and a case read wrongly stops the checks before the
+  style check's findings are read, as the self-check did. A contributor who runs
+  `check_style.py` alone no longer runs the cases, so WORKFLOW asks whoever changes the
+  script to run the file too. The check is moved, never weakened. The script's docstring
+  and [STYLE](../STYLE.md), section 8, say where the cases are.
 - **The formal model, begun in `model/`.** The owner decided on 18 October, after Astra's
   third answer on [issue #73](https://github.com/jackChallis/stoicheia/issues/73), for
   which we thank Astra warmly
@@ -671,3 +733,29 @@ findings:
   decision foresees once it builds, is the owner's call. Even so, `git safe-push --merge`
   refuses a pull request while any of its checks fails or is still running, so a red or
   running `formal-model` already holds a merge there.
+- **Pages name what follows a theorem truly.** [`scripts/render.py`](../../scripts/render.py)
+  called every declaration after a theorem that is neither its porism nor a companion one
+  of the "theorems later propositions use". With stage 2's companions in the edition, that
+  would have covered `Fitted.fan`'s fourteen helpers on I.45's page and
+  `Prop14.area_pos` on II.14's, which no later proposition uses. The listing now names
+  three kinds: a declaration that another Lean file of the edition uses is one of the
+  "theorems later propositions use"; one that only other declarations of its own file use
+  is a "lemma for its own proofs"; and one that nothing uses, as III.17's `Prop17.inside`
+  will be (brief 0007), is "a lemma beside the proposition". A use is read from the Lean
+  with its comments taken out, so a name in a comment or a docstring is no use. Clauses
+  that hold lists are parted by semicolons. The Proof row names first the porism and the
+  companions that share the proposition's status, the companions together in the order
+  the review record lists them, and then each whose status differs. The page generator
+  checks its reading of uses against cases of its own before it renders anything; no page
+  on main changes, since every such label there is true (#94, found in the review of
+  brief 0007 and of stage 2's move).
+- **Trains: reviewed branches land together.** Landing one pull request at a time cost
+  about ten minutes each, since the ruleset and safe_push require every pull request to be
+  up to date with main, and almost every one touches the decisions page and the generated
+  pages; twenty reviewed branches waited. On the owner's word ("It feels like we are
+  solving problems serially ... Map out a PR strategy. And for those that can run in
+  parallel run them that way"), and his approval of the plan that proposed them, branches
+  now land in trains: one branch merging several reviewed branches, each a merge commit of
+  its own, with one pre-flight, one CI run and one merge ([WORKFLOW](../WORKFLOW.md),
+  section 10, "Trains"). Nothing in the checks changes: a train is an ordinary branch to
+  safe_push, keep_apart still holds within it, and strict status checks stay on.

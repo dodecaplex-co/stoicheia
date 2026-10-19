@@ -295,6 +295,7 @@ lake env lean Certificate/Facts.lean
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
+python3 -I tests/test_check_style.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
@@ -333,9 +334,16 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
   and `check_style.py`; a stale record is expected (section 6), and the pages are the
   integrator's.
 - **A guard defect gets a regression.** When a certificate or check defect is fixed, add a
-  focused test that shows the defect would now be caught (a negative test, or an entry in
-  `tests/certificate_expectations.json`). Tests that only repeat a trivial prose change are
-  not added.
+  focused test that shows the defect would now be caught (a negative test, an entry in
+  `tests/certificate_expectations.json`, or, for the style check's reading of a phrase or
+  of a letter's ink, a case in `tests/test_check_style.py`). Tests that only repeat a
+  trivial prose change are not added.
+- **The style check's cases run before it.** `tests/test_check_style.py` puts the
+  wording rules of `scripts/check_style.py`, and S20's reading of a letter's ink, to short
+  texts and small figures, each with the finding the rule should make, and needs no Lean.
+  It runs just before the script, so a rule that reads a case wrongly stops the checks
+  before the script's findings are read. The script does not run them itself: whoever
+  changes it runs the file too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -430,6 +438,17 @@ one without; stage work carries its stage's label as well (`stage-2` to `stage-6
 brief 0005), and a change to a protected path carries `security-review`. A pull request
 opens as a draft (unless `--ready` is given), and is marked ready when its reviews are
 done; `--merge` refuses a draft.
+
+**Trains.** Since every pull request must be up to date with main before it merges, and
+nearly every one touches the decisions page and the generated pages, reviewed branches can
+land together, as a train (the owner, 18 October 2026). A train is a branch
+`train/<area>-<n>` that merges several branches, each already one coherent change with its
+own reviews and `/no-mistakes` run, as merge commits of their own, so history keeps each
+change whole. The coordinator resolves the decisions page and regenerates the pages once;
+the train passes the pre-flight and CI once and merges as one pull request, whose body
+lists each branch with its reviews and the issue it closes. A train never carries a check
+change together with content that check judges: trains of checks and trains of content are
+separate, and a branch that fails the train's pre-flight leaves the train.
 
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
