@@ -39,6 +39,7 @@ import tempfile
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_style as style  # noqa: E402
@@ -342,6 +343,33 @@ def failure_lines(text: str, rule: str) -> list[int]:
         style.reach_found.update(saved[2])
 
 
+def lean_failure(text: str, line_at=None) -> list[tuple[int, bool]]:
+    """The line and binder hint of an S12 failure returned by Lean for `text`."""
+    saved = (list(style.failures), dict(style.reports), style.subprocess.run)
+
+    def reject(args, **_):
+        probe = Path(args[-1])
+        line = next(k for k, value in enumerate(probe.read_text().splitlines(), 1)
+                    if value.startswith("#check"))
+        return SimpleNamespace(returncode=1, stdout="",
+                               stderr=f"{probe.name}:{line}:1: error: unknown identifier")
+
+    try:
+        style.failures.clear()
+        style.reports.clear()
+        style.subprocess.run = reject
+        named = style.NamedText(MISHNAH, text, "Elements", held=True, line_at=line_at)
+        old, _, _, _ = style.s12_plan([named], False)
+        style.lean_probe(old, ["Elements"])
+        return [(line, "Hypotheses in words" in message)
+                for rule, _, line, message in style.failures if rule == "S12"]
+    finally:
+        style.failures[:] = saved[0]
+        style.reports.clear()
+        style.reports.update(saved[1])
+        style.subprocess.run = saved[2]
+
+
 def spans_of(src: str, line: int, doc: str) -> str | None:
     """The text of the docstring `docstring_span` finds above line `line`, or None."""
     span = style.docstring_span(src, line, doc)
@@ -360,6 +388,12 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S12", style.lean_names, "the edition at `https://example.org/x`", []),
     ("S12", style.lean_names,
      "<!-- old: `Missing.name` --> visible `Prop5.base`", ["Prop5.base"]),
+    ("S12", style.lean_names, "<!-- old: `Missing.name`", []),
+    ("S12", style.lean_names, "`<!--` visible `Prop5.base`", ["Prop5.base"]),
+    ("S12", lean_failure,
+     "<!-- `Missing.name : T` -->\nvisible `Missing.name`", [(2, False)]),
+    ("S12", lambda text: lean_failure(text, lambda at: 40 + style.line_of(text, at)),
+     "<!-- `Missing.name` -->\nvisible `Missing.name : T`", [(42, True)]),
     # A comment's quotation is no string; a multi-line string starts below its quotes;
     # an escaped line break in a one-line string reads as a space.
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_EDGES, [5, 6, 7]),
@@ -427,6 +461,8 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S22", s22, "`x` AB `y`", []),
     ("S22", s22, "`AB,CD` and ``AB`CD`` and `A\nB`", ["AB,CD", "A B"]),
     ("S22", s22, "the straight lines `AB,\nCD`", ["AB, CD"]),
+    ("S22", s22, "> `AB,\n> CD`", ["AB, CD"]),
+    ("S22", s22, "- `AB,\n  CD`", ["AB, CD"]),
     ("S22", lambda t: [content for _, _, content in style.markdown_code_spans(t)],
      "` AB,\nCD `", ["AB, CD"]),
     ("S22", lambda t: failure_lines(t, "S22"), "Before\n`AB,\nCD`", [2]),
@@ -434,8 +470,8 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S22", s22, "# `AB\n`CD`", ["CD"]),
     ("S22", s22, "`AB\n\n`EF`", ["EF"]),
     ("S22", s22, "\\`X and `AB`", ["AB"]),
-    ("S22", lambda t: s22(style.FENCE.sub(style._blank, t)), "```\n`AB`\n```\n`CD`",
-     ["CD"]),
+    ("S22", s22, "```\n`AB`\n```\n`CD`", ["CD"]),
+    ("S22", s22, "~~~\n`AB`\n~~~\n`CD`", ["CD"]),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "overlaps.md", True),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-II.md", True),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-I-supplement.md", True),
@@ -590,13 +626,14 @@ class Scopes(unittest.TestCase):
     def test_done_without_lean(self):
         """S12 is not reported done when Lean could not be run, as without `lake`"""
         name = style.NamedText(GAPS, "`Unknown.name`", "Elements")
+        use = style.NameUse(name, 0, False)
         saved = (os.environ.get("PATH"), list(style.lean_short))
         try:
             with tempfile.TemporaryDirectory() as empty:
                 os.environ["PATH"] = empty   # no `lake` to be found
                 style.lean_short.clear()
                 done = reach_run(GAPS, "Plain words.", {"catalogue"}, "S7 S12", False, lambda: (
-                    style.lean_probe({"Elements": {"Unknown.name": [name]}}, ["Elements"]),
+                    style.lean_probe({"Elements": {"Unknown.name": [use]}}, ["Elements"]),
                     sorted(r for r, *_ in style.failures), style.reach_done(False)))
         finally:
             if saved[0] is None:

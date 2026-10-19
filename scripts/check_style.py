@@ -306,9 +306,9 @@ def _blank(m: re.Match) -> str:
     return re.sub(r"[^\n]", " ", m.group(0))
 
 
-FENCE = re.compile(r"^[ \t]*```.*?^[ \t]*```[^\n]*$", re.S | re.M)
-CODE_SPAN = re.compile(r"`[^`\n]+`")
 HTML_COMMENT = re.compile(r"<!--.*?-->", re.S)
+HTML_COMMENT_BLOCK = re.compile(r"<!--.*?-->|^ {0,3}<!--[\s\S]*\Z", re.S | re.M)
+CODE_SPAN = re.compile(r"`[^`\n]+`")
 # The "(…)" after a link's "]", one level of parentheses inside allowed.
 LINK_TARGET = re.compile(r"(?<=\])\((?:[^()\n]|\([^()\n]*\))*\)")
 PARAGRAPH_BREAK = re.compile(r"(\n[ \t]*\n)")
@@ -320,8 +320,8 @@ SQUARE = re.compile(r"\[[^\[\]\n]*\](?![(\[])")
 def blank_code(text: str) -> str:
     """Fenced blocks, code spans and HTML comments blanked: what a reader reads as prose,
     quotations included."""
-    text = FENCE.sub(_blank, text)
-    text = HTML_COMMENT.sub(_blank, text)
+    text = blank_html_comments(text)
+    text = blank_fences(text)
     text = CODE_SPAN.sub(_blank, text)
     return LINK_TARGET.sub(_blank, text)
 
@@ -790,25 +790,143 @@ LETTER_RUN = r"(?:[A-Z][′'₀-₉]*)+"
 LETTERS_ONLY = re.compile(rf"\s*{LETTER_RUN}(?:\s*,\s*{LETTER_RUN}|\s+{LETTER_RUN})*\s*")
 LETTERS_IN_CODE = re.compile(r"`+([^`]+)`+")
 BACKTICKS = re.compile(r"`+")
-ATX_BLOCK = re.compile(r"^ {0,3}#{1,6}(?:[ \t]|$)[^\n]*(?:\n|$)", re.M)
+ATX_LINE = re.compile(r"^ {0,3}#{1,6}(?:[ \t]|$)")
+LIST_LINE = re.compile(r"^( {0,3})(?:[-+*]|\d{1,9}[.)])([ \t]+)(.*)$")
+FENCE_LINE = re.compile(r"^ {0,3}(`{3,}|~{3,})(.*)$")
+THEMATIC_LINE = re.compile(r"^ {0,3}([-*_])(?:[ \t]*\1){2,}[ \t]*$")
+SETEXT_LINE = re.compile(r"^ {0,3}(?:=+|-+)[ \t]*$")
 
 
-def markdown_code_spans(text: str):
-    """(start, end, content) of each code span of a Markdown text, read as CommonMark
-    reads it: a backtick string is closed by the next string of the same length in its
-    inline block; soft line endings become spaces, and one enclosing space is removed
-    when the content is not all spaces. A run that finds no closer is text."""
+class InlineBlock(NamedTuple):
+    text: str
+    offsets: list[int]
+
+
+class CodeSpan(NamedTuple):
+    start: int
+    end: int
+    content: str
+    offsets: list[int]
+
+
+def markdown_blocks(text: str) -> tuple[list[InlineBlock], list[tuple[int, int]]]:
+    """The inline leaf blocks and fenced-code spans of a Markdown text, with source
+    offsets retained after block quote and list markers are removed."""
+    blocks: list[InlineBlock] = []
+    fences = []
+    chars: list[str] = []
+    offsets: list[int] = []
+    container = None
+    list_item = None
+    list_number = 0
+    fence = None
+    fence_start = 0
+
+    def flush() -> None:
+        nonlocal chars, offsets, container
+        if chars:
+            blocks.append(InlineBlock("".join(chars), offsets))
+        chars, offsets, container = [], [], None
+
+    def emit(body: str, source: list[int], own, newline: int) -> None:
+        nonlocal container
+        if container != own:
+            flush()
+            container = own
+        if chars:
+            chars.append("\n")
+            offsets.append(newline)
+        chars.extend(body)
+        offsets.extend(source)
+
+    at = 0
+    lines = text.splitlines(keepends=True)
+    if text and (not lines or sum(map(len, lines)) < len(text)):
+        lines.append(text[sum(map(len, lines)):])
+    for raw in lines:
+        line_start = at
+        line_end = at + len(raw)
+        body = raw.rstrip("\r\n")
+        source = list(range(at, at + len(body)))
+        at = line_end
+
+        pos, quote = 0, 0
+        while True:
+            mark = pos
+            while mark < len(body) and mark - pos < 3 and body[mark] == " ":
+                mark += 1
+            if mark >= len(body) or body[mark] != ">":
+                break
+            mark += 1
+            if mark < len(body) and body[mark] in " \t":
+                mark += 1
+            pos, quote = mark, quote + 1
+        body, source = body[pos:], source[pos:]
+
+        listed = LIST_LINE.match(body)
+        if listed and fence is None:
+            list_number += 1
+            indent = listed.start(3)
+            list_item = (quote, list_number, indent)
+            body, source = listed.group(3), source[indent:]
+        elif list_item and list_item[0] == quote and body.strip():
+            indent = list_item[2]
+            cut = min(len(body) - len(body.lstrip(" ")), indent)
+            body, source = body[cut:], source[cut:]
+        elif list_item and list_item[0] != quote:
+            list_item = None
+        own = ("list", list_item[1]) if list_item and list_item[0] == quote else ("quote", quote)
+
+        if fence is not None:
+            char, width = fence
+            if re.fullmatch(rf" {{0,3}}{re.escape(char)}{{{width},}}[ \t]*", body):
+                fences.append((fence_start, line_end))
+                fence = None
+            continue
+
+        opened = FENCE_LINE.match(body)
+        if opened and not (opened.group(1).startswith("`") and "`" in opened.group(2)):
+            flush()
+            fence = (opened.group(1)[0], len(opened.group(1)))
+            fence_start = line_end - len(raw)
+            continue
+        if not body.strip():
+            flush()
+            continue
+        if THEMATIC_LINE.fullmatch(body) or SETEXT_LINE.fullmatch(body):
+            flush()
+            continue
+        if ATX_LINE.match(body):
+            flush()
+            blocks.append(InlineBlock(body, source))
+            continue
+        emit(body, source, own, line_start - 1)
+    flush()
+    if fence is not None:
+        fences.append((fence_start, len(text)))
+    return blocks, fences
+
+
+def blank_ranges(text: str, spans) -> str:
+    """`text` with each half-open source span blanked and every newline retained."""
+    out = text
+    for start, end in spans:
+        out = out[:start] + re.sub(r"[^\n]", " ", out[start:end]) + out[end:]
+    return out
+
+
+def blank_fences(text: str) -> str:
+    return blank_ranges(text, markdown_blocks(text)[1])
+
+
+def code_span_details(text: str) -> list[CodeSpan]:
+    """The CommonMark code spans in inline leaf blocks, with their source offsets."""
     spans = []
-    edges = {0, len(text)}
-    for brk in MARKDOWN_BLOCK_BREAK.finditer(text):
-        edges.update(brk.span())
-    for block in ATX_BLOCK.finditer(text):
-        edges.update(block.span())
-    edges = sorted(edges)
-    for block_start, block_end in zip(edges, edges[1:]):
+    blocks, _ = markdown_blocks(text)
+    for block in blocks:
         ticks = []
-        for m in BACKTICKS.finditer(text, block_start, block_end):
-            escaped = m.start() - len(text[:m.start()].rstrip("\\"))
+        for m in BACKTICKS.finditer(block.text):
+            escaped = m.start() - len(block.text[:m.start()].rstrip("\\"))
             start = m.start() + (1 if escaped % 2 else 0)
             if start < m.end():
                 ticks.append((start, m.end()))
@@ -822,13 +940,34 @@ def markdown_code_spans(text: str):
                 i += 1
                 continue
             closed, end = ticks[close]
-            content = re.sub(r"\r\n?|\n", " ", text[opened:closed])
+            content = re.sub(r"\r\n?|\n", " ", block.text[opened:closed])
             if (len(content) >= 2 and content.startswith(" ") and content.endswith(" ")
                     and content.strip(" ")):
                 content = content[1:-1]
-            spans.append((start, end, content))
+            source = block.offsets[start:end]
+            spans.append(CodeSpan(source[0], source[-1] + 1, content, source))
             i = close + 1
     return spans
+
+
+def markdown_code_spans(text: str):
+    """(start, end, content) of each code span of a Markdown text, read as CommonMark
+    reads it: a backtick string is closed by the next string of the same length in its
+    inline block; soft line endings become spaces, and one enclosing space is removed
+    when the content is not all spaces. A run that finds no closer is text."""
+    return [(span.start, span.end, span.content) for span in code_span_details(text)]
+
+
+def html_comment_spans(text: str) -> list[tuple[int, int]]:
+    """Closed HTML comments, and a line-opening comment block through EOF when unclosed,
+    excluding markers inside fenced blocks and code spans."""
+    syntax = blank_fences(text)
+    syntax = blank_ranges(syntax, ((span.start, span.end) for span in code_span_details(syntax)))
+    return [m.span() for m in HTML_COMMENT_BLOCK.finditer(syntax)]
+
+
+def blank_html_comments(text: str) -> str:
+    return blank_ranges(text, html_comment_spans(text))
 
 
 def letter_spans(text: str) -> str:
@@ -836,10 +975,12 @@ def letter_spans(text: str) -> str:
     alone (LETTERS_ONLY), and everything outside a code span blanked too, so that
     LETTERS_IN_CODE finds each such span and nothing across two spans."""
     out = re.sub(r"[^\n]", " ", text)
-    for a, b, content in markdown_code_spans(text):
-        if LETTERS_ONLY.fullmatch(content):
-            out = out[:a] + text[a:b] + out[b:]
-    return out
+    chars = list(out)
+    for span in code_span_details(text):
+        if LETTERS_ONLY.fullmatch(span.content):
+            for offset in span.offsets:
+                chars[offset] = text[offset]
+    return "".join(chars)
 
 
 # S11: retired refrains of STYLE section 3, and the mishnah allowed each ("nowhere" is
@@ -963,7 +1104,7 @@ def check_text(path: Path, raw: str, scopes: set[str], *, new: bool = False,
         find("S9", ITALIC_LETTER, code_free)
     if prose or review or cat or notes or reports_ or gen:
         find("S22", LETTERS_IN_CODE,
-             letter_spans(FENCE.sub(_blank, HTML_COMMENT.sub(_blank, straight))), reach=True)
+             letter_spans(blank_html_comments(straight)), reach=True)
     if prose or readme:
         find("D6", COMPARISON, outside, failing=False)
     if prose or review or cat or notes:
@@ -1101,24 +1242,35 @@ FILE_NAME = re.compile(r".*\.(?:lean|json|md|svg|py|toml|txt|lock)$")
 BINDER = re.compile(r"([A-Za-z_][A-Za-z0-9_.'!?₀-₉]*)[ \t]*:(?![=:/])")
 
 
+class LeanName(NamedTuple):
+    name: str
+    at: int
+    binder: bool
+
+
+def lean_name_occurrences(text: str, binders: bool = True) -> list[LeanName]:
+    """The first visible occurrence of each Lean name in a Markdown text."""
+    names = []
+    visible = blank_html_comments(text)
+    for span in code_span_details(visible):
+        inner = span.content.strip()
+        binder = BINDER.match(inner) if binders else None
+        name = inner if IDENT.fullmatch(inner) else binder.group(1) if binder else None
+        if name and not FILE_NAME.fullmatch(name) and name not in {use.name for use in names}:
+            names.append(LeanName(name, span.start, binder is not None))
+    return names
+
+
 def lean_names(text: str, binders: bool = True) -> list[str]:
     """The backticked Lean names of a text, file names aside, in order of first use: a
     span that is one name, and, unless `binders` is False, the name a span `name : type`
     opens with."""
-    names = []
-    visible = HTML_COMMENT.sub(_blank, FENCE.sub(_blank, text))
-    for m in CODE_SPAN.finditer(visible):
-        inner = m.group(0)[1:-1].strip()
-        binder = BINDER.match(inner) if binders else None
-        name = inner if IDENT.fullmatch(inner) else binder.group(1) if binder else None
-        if name and not FILE_NAME.fullmatch(name) and name not in names:
-            names.append(name)
-    return names
+    return [use.name for use in lean_name_occurrences(text, binders)]
 
 
 def check_mishnah(path: Path, raw: str) -> None:
     ref = ref_of(path)
-    text = FENCE.sub(_blank, HTML_COMMENT.sub(_blank, raw))
+    text = blank_fences(blank_html_comments(raw))
     for a, b, msg in tex_findings(text):
         fail("S10", path, line_of(text, a), f"{msg}: {excerpt(raw, a, b)}")
     for pattern, allowed in REFRAINS:
@@ -1170,7 +1322,13 @@ AUDIT_OLEAN = ROOT / ".lake" / "build" / "lib" / "lean" / "Audit.olean"
 SCRIPT = ROOT / "scripts" / "check_style.py"
 
 
-Groups = dict[str, dict[str, list[NamedText]]]   # {namespaces opened: {name: texts}}
+class NameUse(NamedTuple):
+    text: NamedText
+    at: int
+    binder: bool
+
+
+Groups = dict[str, dict[str, list[NameUse]]]   # {namespaces opened: {name: uses}}
 
 
 def s12_plan(texts: list[NamedText], audit_built: bool):
@@ -1186,17 +1344,19 @@ def s12_plan(texts: list[NamedText], audit_built: bool):
     unchecked: set[str] = set()
     used: set[str] = set()
     for t in texts:
-        for name in lean_names(t.text):
+        for occurrence in lean_name_occurrences(t.text):
+            name = occurrence.name
+            use = NameUse(t, occurrence.at, occurrence.binder)
             if name in NOT_DECLARED:
                 used.add(name)
             if t.held:
-                old[t.opens][name].append(t)
+                old[t.opens][name].append(use)
             elif name in NOT_DECLARED:
                 continue
             elif name.startswith("Audit.") and not audit_built:
                 unchecked.add(name)
             else:
-                new[t.opens][name].append(t)
+                new[t.opens][name].append(use)
     return old, new, sorted(unchecked), used
 
 
@@ -1205,7 +1365,7 @@ def lean_probe(groups: Groups, imports: list[str]) -> int:
     own with its namespaces open, in one run, and fail S12 for each name Lean does not
     know, in each text that gives it. Returns how many names were put to Lean."""
     lines = [f"import {m}" for m in imports]
-    where: dict[int, tuple[str, list[NamedText]]] = {}
+    where: dict[int, tuple[str, list[NameUse]]] = {}
     for opens in sorted(groups):
         if not groups[opens]:
             continue
@@ -1241,11 +1401,9 @@ def lean_probe(groups: Groups, imports: list[str]) -> int:
             fail("S12", SCRIPT, 0, f"Lean: {m.group(2)} (is the tree built? run "
                  "`lake build`, or pass --no-lean)")
             continue
-        name, ts = where[line]
-        for t in ts:
-            found = re.search(r"`[ \t]*" + re.escape(name) + r"(`|[ \t]*:(?![=:]))", t.text)
-            at = found.start() if found else 0
-            binder = bool(found and found.group(1) != "`")
+        name, uses = where[line]
+        for use in uses:
+            t, at, binder = use.text, use.at, use.binder
             hint = ("; a hypothesis is said in words, never by its local name (STYLE, "
                     "section 1, \"Hypotheses in words\")" if binder else "")
             line = t.line_at(at) if t.line_at else line_of(t.text, at)
