@@ -12,8 +12,8 @@ the plane satisfies each law.
 
 **Where it stands.** The package builds, with the signature, the plane, and all 87 laws,
 written by a generator from the library's elaborated declarations into one structure,
-`Laws`, and checked against those declarations. The plane satisfies 47 of the 87 locked
-laws. `Model/Assembly.lean` gathers these proofs, with the 40 remaining laws as hypotheses.
+`Laws`, and checked against those declarations. The plane satisfies 58 of the 87 locked
+laws. `Model/Assembly.lean` gathers these proofs, with the 29 remaining laws as hypotheses.
 Until every locked law is proved here, the evidence that the laws have a model remains
 MODEL.md's hand arguments and numerical tests, and this package is a milestone in progress.
 
@@ -55,7 +55,7 @@ at the repository's root builds the library exactly as before.
 | [Check/Write.lean](Check/Write.lean) | run by hand, never built: writes the generated files | as `Check/Generated.lean` |
 | [Model/Laws/incidence.lean](Model/Laws/incidence.lean) | the incidence and line laws, and `Hand.LinesMeet`, **by hand** | `Signature`, `Hand` |
 | [Model/Euclidean/Incidence.lean](Model/Euclidean/Incidence.lean) | Postulate 1, `line_unique`, the other generalities and Intersection 1 proved in the plane | Mathlib |
-| [Model/Euclidean/Avoidance.lean](Model/Euclidean/Avoidance.lean) | Postulate 2 and the Points rules for lines proved in the plane, by the infinitude of a line | Mathlib |
+| [Model/Euclidean/Avoidance.lean](Model/Euclidean/Avoidance.lean) | Postulate 2 and all finite avoidance rules for lines, regions and circumferences proved in the plane | Mathlib |
 | [Check/Incidence.lean](Check/Incidence.lean) | the same for the incidence and line laws | `Elements.Foundations`, `Model.Laws.incidence` |
 | [Model/Laws/order.lean](Model/Laws/order.lean) | the fifteen order laws, Between 1 to 7 and the diagram-segment rules, **hand-translated** | `Signature` |
 | [Model/Euclidean/Order.lean](Model/Euclidean/Order.lean) | Between 1, 4, 5 and 7 proved in the plane | Mathlib |
@@ -66,6 +66,10 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/Sides.lean](Model/Euclidean/Sides.lean) | `SameSide` read as `SSameSide`, and Same side 1 to 5 proved in the plane | Mathlib |
 | [Model/Euclidean/Pasch.lean](Model/Euclidean/Pasch.lean) | Pasch 1 to 4 proved in the plane | Mathlib |
 | [Check/Sides.lean](Check/Sides.lean) | the same for the side rules | `Elements.Foundations`, `Model.Laws.sides` |
+| [Model/Laws/circles.lean](Model/Laws/circles.lean) | the 19 circle rules, translated **by hand** | `Model.Hand` |
+| [Model/Euclidean/CircleBasics.lean](Model/Euclidean/CircleBasics.lean) | Postulate 3, Definition 15 and the generalities of a centre and of the inside of a circle, proved in the plane | Mathlib |
+| [Model/Euclidean/CircleRules.lean](Model/Euclidean/CircleRules.lean) | System E's Circle 1 to 4 proved in the plane, and `CirclesMeet α α` | Mathlib |
+| [Check/Circles.lean](Check/Circles.lean) | the same for the circle rules of `Model/Laws/circles.lean` | `Elements.Foundations`, `Model.Laws.circles` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
 Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib. The
@@ -393,11 +397,13 @@ come before the easy laws are shared out. A law proved here is gathered into
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
 | Superposition | an isometry, with a reflection where the side needs one; and the soundness of whichever restricted rule is adopted | to do |
 | Areas | `area_congruent`, `area_add_of_between`, `between_of_area_add`, with collinear and repeated corners | to do |
-| Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | on a line, proved here (Postulate 2, `exists_point`, `exists_point_on_line`, `exists_point_on_line_off_line`, `exists_point_between`); in a region and on a circumference, to do |
+| Finite avoidance | the `avoid` lists of Postulate 2 and the Points rules: a line, an open region and a circumference are infinite | proved here: infinite real intervals on a line, and injective families indexed by ℕ for regions and circumferences |
 
-`CirclesMeet α α` is true, since a circle has two distinct points; the side laws are proved
-for that case too, where both centres are one point and the line through them is any line
-through it.
+`CirclesMeet α α` is true, since a circle has two distinct points (`circlesMeet_self`); the
+side laws are proved for that case too, where both centres are one point and the line
+through them is any line through it. Circle 4 (`not_same_side_of_circles_meet`) asks that
+the circles differ, and needs to: for a circle and itself, two common points can lie on
+one side of a line through the centre.
 
 ## The CI job
 
@@ -447,4 +453,6 @@ pitfalls, the translation checks and the order of the hard laws. To Jeremy Aviga
 Dean and John Mumma, whose System E gives most of the laws, and to LeanEuclid (Logan
 Murphy, Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si), whose
 corrected Intersection 4 is the form proved here. And to Mathlib's authors and
-maintainers, on whose plane every proof here stands.
+maintainers, on whose plane every proof here stands: among them, for the circle rules,
+Yaël Dillies and Yury Kudryashov, whose strict convexity gives Circle 1 to 3, and Johannes
+Hölzl, Mario Carneiro and Kyle Miller, whose finite sets give the avoidance rules.

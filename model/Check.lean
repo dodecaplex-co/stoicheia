@@ -6,3 +6,4 @@ import Check.RoundTrip
 import Check.Incidence
 import Check.Order
 import Check.Sides
+import Check.Circles

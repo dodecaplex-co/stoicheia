@@ -19,4 +19,7 @@ public import Model.Euclidean.OrderLines
 public import Model.Euclidean.Segments
 public import Model.Euclidean.Sides
 public import Model.Euclidean.Pasch
+public import Model.Laws.circles
+public import Model.Euclidean.CircleBasics
+public import Model.Euclidean.CircleRules
 public import Model.Audit

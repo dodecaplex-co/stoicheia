@@ -1,5 +1,9 @@
 module
 
+public import Model.Laws.circles
+public import Model.Euclidean.CircleBasics
+public import Model.Euclidean.CircleRules
+
 public import Model.Signature
 public import Model.Laws
 public import Model.Hand
@@ -336,6 +340,126 @@ info: 'Model.Euclidean.pasch4' depends on axioms: [propext, Classical.choice, Qu
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.pasch4
+
+/--
+info: 'Model.Euclidean.Postulate3' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.Postulate3
+
+/--
+info: 'Model.Euclidean.Definition15' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.Definition15
+
+/--
+info: 'Model.Euclidean.centre_unique_circles' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.centre_unique_circles
+
+/--
+info: 'Model.Euclidean.centre_inside_circles' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.centre_inside_circles
+
+/--
+info: 'Model.Euclidean.inside_not_on_circles' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.inside_not_on_circles
+
+/--
+info: 'Model.Euclidean.circle_eq_circles' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.circle_eq_circles
+
+/--
+info: 'Model.Euclidean.inside_of_len_lt_circles' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.inside_of_len_lt_circles
+
+/--
+info: 'Model.Euclidean.len_lt_of_inside_circles' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.len_lt_of_inside_circles
+
+/--
+info: 'Model.Euclidean.on_circle_of_len_eq_circles' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.on_circle_of_len_eq_circles
+
+/--
+info: 'Model.Euclidean.between_of_inside_chord' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.between_of_inside_chord
+
+/--
+info: 'Model.Euclidean.inside_of_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.inside_of_between
+
+/--
+info: 'Model.Euclidean.outside_of_between' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.outside_of_between
+
+/--
+info: 'Model.Euclidean.not_same_side_of_circles_meet' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.not_same_side_of_circles_meet
+
+/--
+info: 'Model.Euclidean.circlesMeet_self' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.circlesMeet_self
+
+/--
+info: 'Model.Euclidean.exists_point_circles' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point_circles
+
+/--
+info: 'Model.Euclidean.exists_point_same_side' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point_same_side
+
+/--
+info: 'Model.Euclidean.exists_point_opposite_side' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point_opposite_side
+
+/--
+info: 'Model.Euclidean.exists_point_inside_circle' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point_inside_circle
+
+/--
+info: 'Model.Euclidean.exists_point_outside_circle' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point_outside_circle
+
+/--
+info: 'Model.Euclidean.exists_point_on_circle' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.exists_point_on_circle
 
 /-! ## What the assembled model rests on
 
