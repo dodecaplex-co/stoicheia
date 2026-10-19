@@ -8,7 +8,8 @@ circle. Astra pointed this out in the [outside review](outside-review-01.md), wi
 one-line proof compiled in Lean, and asked for this catalogue. We are grateful. Two later
 readings added to it, and we thank them too: a cold review by Claude saw that
 superposition supplies the steps of I.2 and I.3, and Argon's second review corrected our
-account of how each rule enters the proofs.
+account of how each rule enters the proofs: the certificate counted a rule a proof reaches
+through a lemma as one it calls itself, and now keeps the two apart.
 
 A reconstruction within these foundations does not establish such a rule independently.
 Our III.2 follows Euclid's argument, and the proof is sound; but it rests, through III.1,
@@ -34,17 +35,20 @@ Each row is one of three kinds:
   lengths), which is more than "at once".
 
 "First enters" names the first proposition, in Euclid's order, whose proof uses the rule
-without taking it from a proposition it cites. It is read from `direct_axioms` in
-[facts.json](../../facts.json) as committed, and that list counts a rule the proof
-reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step, as
-well as a rule its own Lean names ([Certificate/FIELDS.md](../../Certificate/FIELDS.md)).
-So a proof may rest on a rule it never calls, as III.26, III.28 and III.29 rest on
-Generalities 2 only through Book Zero's `EqualCircles.radii`; each first user in the
-table, though, calls its rule itself. Until facts.json keeps the two apart
-([issue #65](https://github.com/jackChallis/stoicheia/issues/65)), the notes under the
-table do. A proof calls a rule itself when its own Lean, or a helper written for its
-proposition (`Prop47.within`, for I.47), names the rule; otherwise the note names the
-lemma the rule comes through.
+without taking it from a proposition it cites. It is read from
+[facts.json](../../facts.json) as committed, which keeps the two ways apart
+([Certificate/FIELDS.md](../../Certificate/FIELDS.md);
+[issue #65](https://github.com/jackChallis/stoicheia/issues/65)): `own_axioms` lists the
+rules a proof calls itself, those its own Lean or a helper written for its proposition
+(`Prop47.within`, for I.47) names, and `inherited` the rules its own Lean does not name
+but reaches through a lemma it calls, of Book Zero (`Elements/Figure/`) or a shared step,
+each with the lemma that brings it in. A proposition it cites may rest on such a rule too.
+Each first user in the table calls its rule itself. A later proof may rest on a rule it
+never calls, as III.26 rests on Generalities 2 only through Book Zero's
+`EqualCircles.radii`; III.28 and III.29 call that lemma too, and rest on the rule through
+III.26 and III.27 as well, which they cite. The note under the table names the lemma the
+rule comes through. Each proposition's page marks the same in its list of tacit rules:
+"(used here)" for a rule its own Lean calls, and the lemmas for one it inherits.
 
 Each audit lemma is in [Audit/Overlaps.lean](../../Audit/Overlaps.lean), its type the
 proposition's own, proved from the rules alone, with the axioms Lean reports for it
@@ -124,9 +128,10 @@ two of ours.
 III.1's porism calls the rule itself: it makes the centre III.1 finds the given centre,
 so that it lies on the cutting straight line. III.14, III.17 and III.36 call it
 themselves for the same step, making the centre III.1 finds the centre their statements
-speak of. III.26, III.28 and III.29 reach it only through Book Zero's
-`EqualCircles.radii`, that equal circles have equal radii: a circle has only one centre,
-so the centres the definition of equal circles names are the given ones.
+speak of. III.26 reaches it only through Book Zero's `EqualCircles.radii`, that equal
+circles have equal radii: a circle has only one centre, so the centres the definition of
+equal circles names are the given ones. III.28 and III.29 call that lemma too, and rest on
+the rule through III.26 and III.27 as well, which they cite.
 
 #### III.2
 
@@ -243,7 +248,8 @@ rule a proof reaches through a lemma as well as one its own Lean names, and foun
 II.14 and III.15 call Circle 2 on two points of a circle. The account of "First enters"
 above the table, the notes on I.13 in 17 proofs, III.1's porism and III.2, and II.14's
 place beside III.1 in the table rest on that reading, each point checked against Lean's
-proof terms.
+proof terms. The certificate now keeps the two apart, as `own_axioms` and `inherited`, and
+agrees with every one of those points.
 
 ## The rows checked
 
