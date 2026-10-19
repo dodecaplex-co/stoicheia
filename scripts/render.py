@@ -25,13 +25,21 @@ Three things are kept apart on every page and in the certificate: Heath's refere
 (facts.json, computed by Lean); and the reconstruction of Euclid's argument (the review
 records, written by a reviewer and tied to the commit read).
 
+A page's listing names each declaration after the theorem by how the Lean uses it, its
+comments aside: one of the theorems later propositions use, a lemma for the proposition's
+own proofs, or a lemma beside the proposition. On every run, before anything else, the
+script checks that reading against the cases of USE_CASES (`use_self_check`), and stops if
+one is read wrongly.
+
 Run after `lake env lean Certificate/Facts.lean`. Standard library, and Python 3.11 or
 later for the review records (tomllib).
 """
 
+import functools
 import json
 import re
 
+import check_fidelity
 import heath
 
 ROOT = heath.ROOT
@@ -267,7 +275,8 @@ def lean_parts(book, n):
     """The part of a proposition file worth showing, from `open Tacit` to the
     namespace's end, cut in three by `heath.theorem_span`: the helpers before the main
     theorem; the main theorem, docstring, statement and proof; and what follows it, the
-    porism, the companions and other theorems later propositions use.
+    porism, the companions, theorems later propositions use, and lemmas for the
+    proposition's own proofs or beside it.
 
     Text before the first helper that declares nothing (a section heading alone) goes
     with the main theorem, as does everything when the file has no documented main
@@ -793,9 +802,11 @@ def in_lean_line(p, record, book, n):
 
 
 def proof_cell(p, attached, order=()):
-    """The Proof row: the proposition's status, and its porism's and companions'. The
-    companions that share the proposition's status are named together, in one clause, in
-    the order the review record lists them (`order`, references such as "I.45 apart")."""
+    """The Proof row: the proposition's status, and its porism's and companions'. Those
+    that share the proposition's status come first, the porism and then the companions
+    together, in one clause, in the order the review record lists them (`order`,
+    references such as "I.45 apart"); then each whose status differs, with its own, so
+    that a porism's status is never read as the companions'."""
     if not p:
         return STATUS["sketched"]
     text = STATUS[p["status"]]
@@ -810,7 +821,7 @@ def proof_cell(p, attached, order=()):
             if a["status"] == p["status"]:
                 text += f", and its porism, {link}"
             else:
-                text += f"; its porism, {link}: {STATUS[a['status']]}"
+                other.append(f"; its porism, {link}: {STATUS[a['status']]}")
         elif a["status"] == p["status"]:
             same.append(f"`Prop{r.n}.{r.name}` ({link})")
         else:
@@ -984,23 +995,143 @@ def how_to_read(p, record, proof_text=""):
             "listing explain smaller adjustments.")
 
 
-def used_elsewhere(name, own):
-    """Whether a declaration, named as a page lists it (`Prop46.square_eq`,
-    `Fitted.fan`), is used in a Lean file of the edition other than its own: so that a
-    page says "later propositions use" only of what they use. A longer name that merely
-    begins with this one (`Fitted.fan.part` for `Fitted.fan`) does not count."""
-    pat = re.compile(r"(?<![\w.])(?:[\w.]*\.)?" + re.escape(name) + r"(?!\w|\.\w)")
-    for path in sorted((heath.ROOT / "Elements").rglob("*.lean")):
-        if path != own and pat.search(path.read_text()):
-            return True
-    return False
+@functools.cache
+def lean_code():
+    """Every Lean file of the edition, by path, with its comments taken out
+    (`check_fidelity.without_comments`): read once, for `use_kind`."""
+    return {path: check_fidelity.without_comments(path.read_text())
+            for path in sorted((ROOT / "Elements").rglob("*.lean"))}
+
+
+def use_pattern(names):
+    """A use of a declaration by one of `names`: the first, its full name, may stand
+    qualified (`BookI.Prop46.square_eq`). A longer name that merely begins with one of
+    them (`Fitted.fan.part` for `Fitted.fan`, `Prop45.append'` for `Prop45.append`) is no
+    use, nor is a field of something else (`h.area_pos` for `Prop14.area_pos`)."""
+    alts = [r"(?:\w+\.)*" + re.escape(names[0])] + [re.escape(x) for x in names[1:]]
+    return re.compile(r"(?<![\w.'])(?:" + "|".join(alts) + r")(?![\w'!?]|\.\w)")
+
+
+def own_names(name, user):
+    """The names a declaration goes by inside `user`, another declaration of its file:
+    its full name, and each shorter ending of it that Lean reads there, since the proof
+    of `A.B.c` reads names inside the namespace `A.B` (`fan.growth` for
+    `Fitted.fan.growth` inside `Fitted.fan.within`)."""
+    parts, space = name.split("."), user.split(".")[:-1]
+    return [".".join(parts[j:]) for j in range(len(parts)) if parts[:j] == space[:j]]
+
+
+def commands(code):
+    """[name, text] for each command of a Lean file without comments: its first line,
+    which starts at the margin, and the lines after it up to the next that does, as the
+    edition's Lean is laid out. The name is the declaration's (`Prop14.area_pos`), or ""
+    for a command that declares nothing (`open Tacit`)."""
+    out = []
+    for line in code.splitlines(keepends=True):
+        if not out or line.strip() and not line[0].isspace():
+            m = DECLARATION.match(line)
+            out.append([m.group(1) if m else "", line])
+        else:
+            out[-1][1] += line
+    return out
+
+
+def use_kind(name, own, code):
+    """How a declaration after a theorem, named as a page lists it (`Prop46.square_eq`,
+    `Fitted.fan`), is used, read from `code`, the Lean files of the edition by path with
+    their comments taken out, its own file being `own`: "later" if another file uses it,
+    "own" if only other declarations of its own file do, and "beside" if nothing does,
+    its own declaration line and body aside. A mention in a comment is no use."""
+    if any(use_pattern([name]).search(text) for path, text in code.items() if path != own):
+        return "later"
+    if any(use_pattern(own_names(name, user)).search(text)
+           for user, text in commands(code[own]) if user != name):
+        return "own"
+    return "beside"
+
+
+# The script's own check, run first on every run: `use_kind` reads each case below from the
+# two files of USE_FILES, the first a proposition's, as it reads the edition's Lean.
+
+USE_FILES = {
+    "Prop09.lean": """namespace Elements.BookI
+
+open Tacit
+
+theorem Prop9 : True := trivial
+
+theorem Prop9.later : True := trivial
+
+theorem Prop9.helper : True := trivial
+
+theorem Prop9.noted : True := trivial
+
+theorem Prop9.alone : True := by
+  exact trivial
+
+theorem Prop9.step : True := trivial
+
+theorem Prop9.porism : True := by
+  -- not Prop9.alone
+  have h := Prop9.helper
+  exact h.step
+
+theorem Fitted.fan.part : True := trivial
+
+theorem Fitted.fan.growth : True := trivial
+
+theorem Fitted.fan.within : True := by
+  exact fan.growth
+
+theorem Fitted.fan : True := trivial
+
+end Elements.BookI
+""",
+    "Prop10.lean": """import Elements.BookI.Prop09
+
+namespace Elements.BookI
+
+/-- After `Prop9.noted`, which is named here only in comments. -/
+theorem Prop10 : True := by
+  -- Prop9.noted
+  /- A note /- with a note inside -/ names Prop9.noted. -/
+  have := Fitted.fan.part
+  exact BookI.Prop9.later
+
+end Elements.BookI
+""",
+}
+
+USE_CASES = [   # (a declaration of the first file, how it is used)
+    ("Prop9.later", "later"),         # in the other file, qualified
+    ("Prop9.noted", "beside"),        # in the other file only in comments, one nested
+    ("Prop9.helper", "own"),          # by the porism, in its own file
+    ("Prop9.alone", "beside"),        # by nothing: its own line and a comment aside
+    ("Prop9.step", "beside"),         # only as a field of something else, `h.step`
+    ("Fitted.fan.part", "later"),
+    ("Fitted.fan", "beside"),         # only `Fitted.fan.part`, which begins with it
+    ("Fitted.fan.growth", "own"),     # as `fan.growth`, inside `Fitted.fan.within`
+]
+
+
+def use_self_check():
+    """USE_CASES, read from USE_FILES; returns the number of cases and the faults."""
+    code = {path: check_fidelity.without_comments(src) for path, src in USE_FILES.items()}
+    own = next(iter(USE_FILES))
+    faults = []
+    for name, want in USE_CASES:
+        got = use_kind(name, own, code)
+        if got != want:
+            faults.append(f"{name} read as {got!r}, not {want!r}")
+    return len(USE_CASES), faults
 
 
 def lean_listing(book, n, facts):
     """The Lean of a page: the main theorem open; the lemmas before it folded in one
     <details>, with their names and line count; and the porism, companions and other
-    theorems after it folded in another, those that later propositions use named apart
-    from the lemmas only this proposition's proofs use."""
+    declarations after it folded in another, those that later propositions use named apart
+    from the lemmas only this proposition's own proofs use and from those nothing uses,
+    which stand beside it (`use_kind`)."""
     parts = lean_parts(book, n)
     companions = {f"Prop{n}.{heath.parse_ref(a).name}"
                   for a in facts.get(f"{book}.{n}", {}).get("attached", [])
@@ -1029,29 +1160,37 @@ def lean_listing(book, n, facts):
         comp = [x for x in parts.after_names if x in companions]
         rest = [x for x in parts.after_names if x not in porism + comp]
         own = heath.lean_path(book, n)
-        later = [x for x in rest if used_elsewhere(x, own)]
-        local = [x for x in rest if x not in later]
-        what = []
+        kind = {x: use_kind(x, own, lean_code()) for x in rest}
+        later = [x for x in rest if kind[x] == "later"]
+        local = [x for x in rest if kind[x] == "own"]
+        beside = [x for x in rest if kind[x] == "beside"]
+        what = []   # (a clause, the number of names it lists)
         if porism:
-            what.append(f"its porism, {names(porism)}")
+            what.append((f"its porism, {names(porism)}", len(porism)))
         if comp:
-            what.append(f"its companion{'s' if len(comp) > 1 else ''}, {names(comp)}")
+            what.append((f"its companion{'s' if len(comp) > 1 else ''}, {names(comp)}",
+                         len(comp)))
         if later:
             k = len(later)
             more = "more " if porism or comp else ""
-            what.append(f"{number_word(k)} {more}theorem{'s' if k > 1 else ''} "
-                        f"later propositions use, {names(later)}")
+            what.append((f"{number_word(k)} {more}theorem{'s' if k > 1 else ''} "
+                         f"later propositions use, {names(later)}", k))
         if local:
             k = len(local)
-            what.append(f"{number_word(k)} lemma{'s' if k > 1 else ''} for its own "
-                        f"proofs, {names(local)}")
+            what.append((f"{number_word(k)} lemma{'s' if k > 1 else ''} for its own "
+                         f"proofs, {names(local)}", k))
+        if beside:
+            k = len(beside)
+            what.append((f"{number_word(k)} lemma{'s' if k > 1 else ''} beside the "
+                         f"proposition, {names(beside)}", k))
         anchors = "".join(f'<a name="{x.split(".", 1)[1]}"></a>' for x in comp)
         if anchors:
             out += [anchors, ""]
-        if len(what) > 1 and any(" and " in w or ", " in w.split(", ", 1)[1] for w in what):
-            summary = "; ".join(what[:-1]) + "; and " + what[-1]
+        clauses = [w for w, _ in what]
+        if len(what) > 1 and any(k > 1 for _, k in what):
+            summary = "; ".join(clauses[:-1]) + "; and " + clauses[-1]
         else:
-            summary = and_list(what) if what else "more Lean"
+            summary = and_list(clauses) if clauses else "more Lean"
         out += fold(f"After the theorem, {summary} ({lines(parts.after)})", parts.after)
     return "\n".join(out).rstrip("\n")
 
@@ -2026,6 +2165,12 @@ def graph(facts):
 
 
 def main() -> None:
+    count, faults = use_self_check()
+    if faults:
+        raise SystemExit(f"{len(faults)} fault(s) in render.py's reading of how a declaration "
+                         "is used; nothing was rendered:\n"
+                         + "\n".join("  ✗ " + f for f in faults))
+    print(f"self-check: the listing reads how {count} declarations are used rightly")
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
