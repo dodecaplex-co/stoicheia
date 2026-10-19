@@ -251,17 +251,40 @@ fewest rules in `direct_axioms`, three to five, but each cites propositions and 
 Euclid's argument.
 
 **A sweep of every rule.** We read each of the 81 tacit rules, with the postulates and
-Definition 15, against the 99 statements and the three porisms. Then a mechanical screen,
+Definition 15, against the 99 statements and the three porisms, and later against the 19
+companions that stages 2 and 4b brought in (I.40's, I.45's, II.1's and II.14's, and those
+of III.7, III.8 and III.17), and found no more. Then a mechanical screen,
 [Audit/screen.py](../../Audit/screen.py), had Lean's `grind` try every statement against
 every axiom alone, every family of axioms (the file that declares them) together, every
-pair of the 24 rules about circles, and every pair of families: 40,698 attempts over the
-99 propositions and the three porisms. It closed III.2, III.5 and III.6, and nothing
-else. The screen cannot draw a figure, for `grind` works with the points and circles a
-goal already names. I.7 needs two circles its statement never mentions, and I.23 a
-triangle laid down, so both came from reading. I.2 and I.3 need a triangle drawn and then
-laid down. The catalogue first listed them as near misses, since neither statement gives a
-triangle to move; but the same holds of I.7's circles, and they are rows now, with
-`Audit.I_2` and `Audit.I_3`.
+pair of the 24 rules about circles, and every pair of families. Its first run, 40,698
+attempts over the 99 propositions and the three porisms, closed III.2, III.5 and III.6, and
+nothing else. But it left defined words folded, `Triangle`, `Collinear`, `circumference`
+and `standing` among them, so that a statement written with them was searched only in part,
+as Argon's second review pointed out; and it lost more than a quarter of its attempts
+without a search, for `grind` refuses a rule in which it finds nothing to match, as it does
+the twelve rules that only say a point, a straight line or a circle exists, and with it the
+rest of the attempt, so that Postulates 4 and 5, for instance, were never tried with the
+diagram rules. Now every definition a statement or a rule reaches is unfolded, the
+magnitudes Lean chooses (`circumference`, `standing` and the rectangle `rect`) are given by
+what their definitions say, each try leaves out the rules `grind` refuses, and each
+statement is also tried with no rule, so that one that holds by its definitions alone is
+not counted as a rule's. Run so over all 121 statements, the propositions, the porisms and
+the companions, at `89c5da4`, the screen closes the same three, each by a rule, and nothing
+else; no statement closes with no rule. Seven of its 90,629 tries ran out of time even with
+four times the usual allowance, all of them III.34 from Postulate 4, alone or with
+Postulate 5 and at most one more family; none of those rules puts a point on a circle that
+has none, and III.34 asks for three. What the screen does not give `grind` is that every
+point of a circle measures a circumference alike: that is III.21, a proposition, so the
+near misses of the measure (below) are not found by it, and are not overlaps with a rule.
+Nor does `grind` reason by induction, so what a figure given with its triangles holds by
+its formation is not searched, which only the companions of I.45 and II.14 speak of. The
+screen is not one of CI's checks: it takes about an hour and a half of processor time, and
+is run again when a statement or a rule changes. It cannot draw a figure, for `grind` works
+with the points and circles a goal already names. I.7 needs two circles its statement never
+mentions, and I.23 a triangle laid down, so both came from reading. I.2 and I.3 need a
+triangle drawn and then laid down. The catalogue first listed them as near misses, since
+neither statement gives a triangle to move; but the same holds of I.7's circles, and they
+are rows now, with `Audit.I_2` and `Audit.I_3`.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
 rule a proof reaches through a lemma as well as one its own Lean names, and found that
