@@ -13,13 +13,13 @@ figures appears in none of the postulates. Hilbert simply made side–angle–si
 an axiom. System E (§3.7) treats superposition as a rule that may be used only
 to prove facts about the figure already drawn, never to build anything new.
 
-Here it is one rule: a triangle can be laid down with its corner A on a given
-point D of a straight line, its side AB along the ray from D toward G, and its
-third corner on the same side as H, keeping all its sides and angles. We
-follow the form of the rule in LeanEuclid, by Logan Murphy, Kaiyu Yang, Jialiang
-Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si, which combines System E's two
-superposition rules into one. To respect System E's restriction, the
-certificate's checks allow only I.4 and I.8 to cite it.
+Our superposition axiom asserts that a congruent triangle can be placed on a
+given ray and side: A on D, AB along the ray from D toward G, C on H's side. We
+take its form, one rule for System E's two, from LeanEuclid, by Logan Murphy,
+Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si, with warm
+thanks. The edition permits its direct use only in I.4 and I.8, where the
+checks hold it. This axiom is stronger as a construction principle than System
+E's restricted inference rule: a proof may build on the corners it places.
 -/
 
 namespace Elements.Tacit
