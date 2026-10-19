@@ -354,6 +354,12 @@ SENTENCE_END = re.compile(r'(?<=[.?!])["\')*]*\s+(?=["*(\[`]?[A-Z])')
 
 # A paragraph break, or a new line opening a heading, a list item or a table row.
 BLOCK_BREAK = re.compile(r"\n[ \t]*\n|\n(?=[ \t]*(?:#|[-*] |\d+\. |\|))")
+MARKDOWN_BLOCK_BREAK = re.compile(
+    r"\n[ \t]*\n|\n(?= {0,3}(?:#{1,6}(?:[ \t]|$)"
+    r"|[-+*][ \t]+\S|0{0,8}1[.)][ \t]+\S|>|```|~~~|<[A-Za-z/!?]"
+    r"|([-*_])(?:[ \t]*\1){2,}[ \t]*$|(?:=+|-+)[ \t]*$"
+    r"|[^\n]*\n {0,3}(?=[^\n]*\|)\|?(?:[ \t]*:?-+:?[ \t]*\|)*[ \t]*:?-+:?[ \t]*\|?[ \t]*$))",
+    re.M)
 
 
 def sentences(text: str):
@@ -474,6 +480,56 @@ TERMS_SHOWN = ("meaning", "badge")
 TOML_TOKEN = re.compile(r'"""(?:[^"\\]|\\[\s\S]|"(?!""))*"{3,5}'
                         r"|'''(?:[^']|'(?!''))*'{3,5}"
                         r'|"(?:[^"\\\n]|\\.)*"|\'[^\'\n]*\'|#[^\n]*')
+TOML_HEADER = re.compile(r"^[ \t]*(\[\[?)[ \t]*([A-Za-z0-9_.-]+)[ \t]*\]\]?[ \t]*$",
+                         re.M)
+TOML_ASSIGNMENT = re.compile(r"^[ \t]*([A-Za-z0-9_-]+)[ \t]*=", re.M)
+
+
+def toml_string_locations(raw: str) -> dict[tuple[str, int, str, int], tuple[int, int]]:
+    """The source lines of string values, keyed by table, table-array occurrence, key
+    and list-element index."""
+    tokens = []
+    masked = list(raw)
+    for m in TOML_TOKEN.finditer(raw):
+        if m.group(0).startswith("#"):
+            for i in range(m.start(), m.end()):
+                if masked[i] != "\n":
+                    masked[i] = " "
+            continue
+        try:
+            text = tomllib.loads("s = " + m.group(0))["s"]
+        except tomllib.TOMLDecodeError:
+            continue
+        tokens.append((m, text))
+        for i in range(m.start(), m.end()):
+            if masked[i] != "\n":
+                masked[i] = " "
+    syntax = "".join(masked)
+    events = sorted([(m.start(), "header", m) for m in TOML_HEADER.finditer(syntax)]
+                    + [(m.start(), "assignment", m)
+                       for m in TOML_ASSIGNMENT.finditer(syntax)])
+    table, occurrence = "", 0
+    occurrences: dict[str, int] = defaultdict(int)
+    found = {}
+    for n, (_, kind, m) in enumerate(events):
+        if kind == "header":
+            table = m.group(2)
+            if m.group(1) == "[[":
+                occurrence = occurrences[table]
+                occurrences[table] += 1
+            else:
+                occurrence = 0
+            continue
+        end = events[n + 1][0] if n + 1 < len(events) else len(raw)
+        values = [(token, text) for token, text in tokens
+                  if m.end() <= token.start() < end]
+        for index, (token, _) in enumerate(values):
+            starts_below = re.match(r'("""|' + "'''" + r')(\\[ \t]*)?\r?\n',
+                                    token.group(0)) is not None
+            first = line_of(raw, token.start())
+            found[(table, occurrence, m.group(1), index)] = (
+                first - (0 if starts_below else 1), line_of(raw, token.end() - 1))
+    return found
 
 
 def review_texts(raw: str, terms: bool = False) -> list[tuple[int, str, str, int]]:
@@ -489,39 +545,26 @@ def review_texts(raw: str, terms: bool = False) -> list[tuple[int, str, str, int
     wanted = []
     if terms:
         tags = data.get("tag")
-        for table in (tags.values() if isinstance(tags, dict) else []):
-            wanted += [(f"tag.{k}", table[k]) for k in TERMS_SHOWN
+        for tag, table in (tags.items() if isinstance(tags, dict) else []):
+            wanted += [(f"tag.{k}", table[k], (f"tag.{tag}", 0, k, 0))
+                       for k in TERMS_SHOWN
                        if isinstance(table, dict) and isinstance(table.get(k), str)]
     else:
         for section, keys in REVIEW_SHOWN.items():
             tables = data.get(section)
             tables = [tables] if isinstance(tables, dict) else tables
-            for table in (tables if isinstance(tables, list) else []):
+            for occurrence, table in enumerate(tables if isinstance(tables, list) else []):
                 for k in keys:
                     v = table.get(k) if isinstance(table, dict) else None
-                    for t in [v] if isinstance(v, str) else v if isinstance(v, list) else []:
+                    values = [v] if isinstance(v, str) else v if isinstance(v, list) else []
+                    for index, t in enumerate(values):
                         if isinstance(t, str):
-                            wanted.append((f"{section}.{k}", t))
-    # Where each text stands: every string of the file, decoded, in order.
-    where: dict[str, list[tuple[int, int]]] = defaultdict(list)
-    for m in TOML_TOKEN.finditer(raw):
-        if m.group(0).startswith("#"):
-            continue
-        try:
-            text = tomllib.loads("s = " + m.group(0))["s"]
-        except tomllib.TOMLDecodeError:
-            continue
-        # A multi-line string's text starts on the next line when a line break follows its
-        # opening quotes, which TOML drops, or a backslash ending their line. (A backslash
-        # ending a later line joins two lines of the text, and a finding after it is put on
-        # the line before its own, at worst.)
-        starts_below = re.match(r'("""|' + "'''" + r')(\\[ \t]*)?\r?\n',
-                                m.group(0)) is not None
-        first = line_of(raw, m.start())
-        where[text].append((first - (0 if starts_below else 1), line_of(raw, m.end() - 1)))
+                            wanted.append((f"{section}.{k}", t,
+                                           (section, occurrence, k, index)))
+    where = toml_string_locations(raw)
     found = []
-    for key, t in wanted:
-        line0, last = where[t].pop(0) if where[t] else (0, None)
+    for key, t, selector in wanted:
+        line0, last = where.get(selector, (0, None))
         found.append((line0, key, t, last))
     return sorted(found, key=lambda x: x[0])
 
@@ -747,29 +790,44 @@ LETTER_RUN = r"(?:[A-Z][′'₀-₉]*)+"
 LETTERS_ONLY = re.compile(rf"\s*{LETTER_RUN}(?:\s*,\s*{LETTER_RUN}|\s+{LETTER_RUN})*\s*")
 LETTERS_IN_CODE = re.compile(r"`+([^`]+)`+")
 BACKTICKS = re.compile(r"`+")
+ATX_BLOCK = re.compile(r"^ {0,3}#{1,6}(?:[ \t]|$)[^\n]*(?:\n|$)", re.M)
 
 
 def markdown_code_spans(text: str):
     """(start, end, content) of each code span of a Markdown text, read as CommonMark
-    reads one within a line: a run of backticks not escaped by a backslash, closed by the
-    next run of the same length on its line; a run that finds none is text. A span that
-    CommonMark would carry onto the next line is not read, as no rule here reads one."""
-    spans, at = [], 0
-    while (m := BACKTICKS.search(text, at)):
-        escaped = len(text[:m.start()]) - len(text[:m.start()].rstrip("\\"))
-        run = m.group(0)[1:] if escaped % 2 else m.group(0)
-        start = m.start() + (1 if escaped % 2 else 0)
-        if not run:
-            at = m.end()
-            continue
-        end_of_line = text.find("\n", m.end())
-        end_of_line = len(text) if end_of_line < 0 else end_of_line
-        c = re.compile(rf"(?<!`){run}(?!`)").search(text, m.end(), end_of_line)
-        if c:
-            spans.append((start, c.end(), text[m.end():c.start()]))
-            at = c.end()
-        else:
-            at = m.end()
+    reads it: a backtick string is closed by the next string of the same length in its
+    inline block; soft line endings become spaces, and one enclosing space is removed
+    when the content is not all spaces. A run that finds no closer is text."""
+    spans = []
+    edges = {0, len(text)}
+    for brk in MARKDOWN_BLOCK_BREAK.finditer(text):
+        edges.update(brk.span())
+    for block in ATX_BLOCK.finditer(text):
+        edges.update(block.span())
+    edges = sorted(edges)
+    for block_start, block_end in zip(edges, edges[1:]):
+        ticks = []
+        for m in BACKTICKS.finditer(text, block_start, block_end):
+            escaped = m.start() - len(text[:m.start()].rstrip("\\"))
+            start = m.start() + (1 if escaped % 2 else 0)
+            if start < m.end():
+                ticks.append((start, m.end()))
+        i = 0
+        while i < len(ticks):
+            start, opened = ticks[i]
+            width = opened - start
+            close = next((j for j in range(i + 1, len(ticks))
+                          if ticks[j][1] - ticks[j][0] == width), None)
+            if close is None:
+                i += 1
+                continue
+            closed, end = ticks[close]
+            content = re.sub(r"\r\n?|\n", " ", text[opened:closed])
+            if (len(content) >= 2 and content.startswith(" ") and content.endswith(" ")
+                    and content.strip(" ")):
+                content = content[1:-1]
+            spans.append((start, end, content))
+            i = close + 1
     return spans
 
 
@@ -946,12 +1004,7 @@ MODERN_WAY = "**The modern way.**"
 # CommonMark's (it lets "<span>" go on); a thematic break or a setext underline; and a
 # table, whose next line is a delimiter row. Any other line, "|z| is one", "2. So" or
 # "#check", goes on with it.
-MODERN_WAY_ENDS = re.compile(
-    r"\n[ \t]*\n|\n(?= {0,3}(?:#{1,6}(?:[ \t]|$)"
-    r"|[-+*][ \t]+\S|0{0,8}1[.)][ \t]+\S|>|```|~~~|<[A-Za-z/!?]"
-    r"|([-*_])(?:[ \t]*\1){2,}[ \t]*$|(?:=+|-+)[ \t]*$"
-    r"|[^\n]*\n {0,3}(?=[^\n]*\|)\|?(?:[ \t]*:?-+:?[ \t]*\|)*[ \t]*:?-+:?[ \t]*\|?[ \t]*$))",
-    re.M)
+MODERN_WAY_ENDS = MARKDOWN_BLOCK_BREAK
 MATH_OPENS_AFTER = " \t\n("
 MATH_CLOSES_BEFORE = " \t\n.,;:!?)]'\"’”–-/"
 MATH_ESCAPE = re.compile(r"\\[!-/:-@\[-`{-~]")      # a backslash before ASCII punctuation
@@ -1053,7 +1106,8 @@ def lean_names(text: str, binders: bool = True) -> list[str]:
     span that is one name, and, unless `binders` is False, the name a span `name : type`
     opens with."""
     names = []
-    for m in CODE_SPAN.finditer(FENCE.sub(_blank, text)):
+    visible = HTML_COMMENT.sub(_blank, FENCE.sub(_blank, text))
+    for m in CODE_SPAN.finditer(visible):
         inner = m.group(0)[1:-1].strip()
         binder = BINDER.match(inner) if binders else None
         name = inner if IDENT.fullmatch(inner) else binder.group(1) if binder else None

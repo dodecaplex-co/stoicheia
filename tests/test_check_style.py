@@ -259,6 +259,29 @@ that one is \\
 short = \"\"\"As Definition 8 says, "so\"\"\"\"\"
 """
 
+SAMPLE_TOML_DUPLICATES = """[statement]
+scope = "partial"
+omitted = ["Definition 8"]
+note = "Definition 8"
+hypotheses = [
+  "Definition 8",
+  "Definition 8",
+]
+short = "partial"
+
+[[passage]]
+at = "Definition 8"
+kind = "helper"
+helper = "Prop1.first"
+note = "Definition 8"
+
+[[passage]]
+at = "Definition 8"
+kind = "helper"
+helper = "Prop1.second"
+note = "Definition 8"
+"""
+
 
 def lean_note_findings(src: str, rendered=(), lines: bool = False) -> list:
     """The failures and reports of check_lean_notes on a Lean source, as a file of the
@@ -298,7 +321,25 @@ CATALOGUE = style.REPORTS_DIR / "overlaps.md"
 
 def s22(text: str) -> list[str]:
     """What S22 finds in a text: each code span of letters alone."""
-    return [m.group(1) for m in style.LETTERS_IN_CODE.finditer(style.letter_spans(text))]
+    return [style.flat(m.group(1))
+            for m in style.LETTERS_IN_CODE.finditer(style.letter_spans(text))]
+
+
+def failure_lines(text: str, rule: str) -> list[int]:
+    """The lines at which check_text fails `rule` in a prose text."""
+    saved = (list(style.failures), dict(style.reports), set(style.reach_found))
+    try:
+        style.failures.clear()
+        style.reports.clear()
+        style.reach_found.clear()
+        style.check_text(MISHNAH, text, {"prose"})
+        return [line for found, _, line, _ in style.failures if found == rule]
+    finally:
+        style.failures[:] = saved[0]
+        style.reports.clear()
+        style.reports.update(saved[1])
+        style.reach_found.clear()
+        style.reach_found.update(saved[2])
 
 
 def spans_of(src: str, line: int, doc: str) -> str | None:
@@ -317,6 +358,8 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S12", style.lean_names, "(`hBCE:Between B C E`, `hBCE' : P`)", ["hBCE", "hBCE'"]),
     ("S12", style.lean_names, "`a :: l`", []),
     ("S12", style.lean_names, "the edition at `https://example.org/x`", []),
+    ("S12", style.lean_names,
+     "<!-- old: `Missing.name` --> visible `Prop5.base`", ["Prop5.base"]),
     # A comment's quotation is no string; a multi-line string starts below its quotes;
     # an escaped line break in a one-line string reads as a space.
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_EDGES, [5, 6, 7]),
@@ -325,6 +368,8 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     # A line break after a backslash, and quotation marks before the closing three.
     ("S4", lambda raw: note_lines(raw, style.HEDGE), SAMPLE_TOML_MORE, []),
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_MORE, [6]),
+    ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_TOML_DUPLICATES,
+     [4, 6, 7, 15, 21]),
     ("S7", lambda raw: note_lines(raw, style.DEFINITION),
      '[statement]\nnote = """\\\nDefinition 3."""\n', [3]),
     ("S7", lambda raw: style.review_texts(raw), "statement = 1\nfigure = [1]\n", []),
@@ -380,8 +425,14 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S22", s22, "the copy `G E C'` of ABC", ["G E C'"]),
     ("S22", s22, "`∠ A B C`, `Prop5.base`, `Centre E ABCD`, `B ≠ C`, `hAB`", []),
     ("S22", s22, "`x` AB `y`", []),
-    ("S22", s22, "`AB,CD` and ``AB`CD`` and `A\nB`", ["AB,CD"]),
+    ("S22", s22, "`AB,CD` and ``AB`CD`` and `A\nB`", ["AB,CD", "A B"]),
+    ("S22", s22, "the straight lines `AB,\nCD`", ["AB, CD"]),
+    ("S22", lambda t: [content for _, _, content in style.markdown_code_spans(t)],
+     "` AB,\nCD `", ["AB, CD"]),
+    ("S22", lambda t: failure_lines(t, "S22"), "Before\n`AB,\nCD`", [2]),
     ("S22", s22, "`AB\n# `CD`", ["CD"]),
+    ("S22", s22, "# `AB\n`CD`", ["CD"]),
+    ("S22", s22, "`AB\n\n`EF`", ["EF"]),
     ("S22", s22, "\\`X and `AB`", ["AB"]),
     ("S22", lambda t: s22(style.FENCE.sub(style._blank, t)), "```\n`AB`\n```\n`CD`",
      ["CD"]),
