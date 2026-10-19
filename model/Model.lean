@@ -12,4 +12,8 @@ public import Model.Euclidean.Centre
 public import Model.Assembly
 public import Model.Euclidean.Incidence
 public import Model.Euclidean.Avoidance
+public import Model.Laws.order
+public import Model.Euclidean.Order
+public import Model.Euclidean.OrderLines
+public import Model.Euclidean.Segments
 public import Model.Audit

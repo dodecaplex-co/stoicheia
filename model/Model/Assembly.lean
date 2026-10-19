@@ -7,6 +7,9 @@ public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Circles
 public import Model.Euclidean.Incidence
 public import Model.Euclidean.Magnitudes
+public import Model.Euclidean.Order
+public import Model.Euclidean.OrderLines
+public import Model.Euclidean.Segments
 
 /-!
 # The plane satisfies the laws
@@ -19,9 +22,9 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-So far 23 of the 87 laws are proved in the plane. Until the rest are,
+So far 38 of the 87 laws are proved in the plane. Until the rest are,
 `euclidean_laws` takes them as hypotheses, so that it states exactly what is proved: the plane
-satisfies every law, given the 64 that are not yet proved in it. When none is left,
+satisfies every law, given the 49 that are not yet proved in it. When none is left,
 the generator writes it with no hypothesis, and `model_exists` after it.
 -/
 
@@ -29,7 +32,7 @@ the generator writes it with no hypothesis, and `model_exists` after it.
 
 namespace Model
 
-/-- **The plane satisfies the laws,** given the 64 not yet proved in it. -/
+/-- **The plane satisfies the laws,** given the 49 not yet proved in it. -/
 theorem euclidean_laws
     (Definition15 : Law.Definition15 Euclidean.plane)
     (Postulate3 : Law.Postulate3 Euclidean.plane)
@@ -47,13 +50,8 @@ theorem euclidean_laws
     (area_eq_zero_of_on_line : Law.Tacit.area_eq_zero_of_on_line Euclidean.plane)
     (area_rotate : Law.Tacit.area_rotate Euclidean.plane)
     (area_swap : Law.Tacit.area_swap Euclidean.plane)
-    (between_cases : Law.Tacit.between_cases Euclidean.plane)
     (between_of_area_add : Law.Tacit.between_of_area_add Euclidean.plane)
-    (between_of_between_left : Law.Tacit.between_of_between_left Euclidean.plane)
-    (between_of_between_right : Law.Tacit.between_of_between_right Euclidean.plane)
     (between_of_inside_chord : Law.Tacit.between_of_inside_chord Euclidean.plane)
-    (between_symm : Law.Tacit.between_symm Euclidean.plane)
-    (circle_eq : Law.Tacit.circle_eq Euclidean.plane)
     (eq_of_len_eq_zero : Law.Tacit.eq_of_len_eq_zero Euclidean.plane)
     (exists_point_inside_circle : Law.Tacit.exists_point_inside_circle Euclidean.plane)
     (exists_point_on_circle : Law.Tacit.exists_point_on_circle Euclidean.plane)
@@ -62,9 +60,6 @@ theorem euclidean_laws
     (exists_point_same_side : Law.Tacit.exists_point_same_side Euclidean.plane)
     (inside_of_angle_add : Law.Tacit.inside_of_angle_add Euclidean.plane)
     (inside_of_between : Law.Tacit.inside_of_between Euclidean.plane)
-    (inside_of_len_lt : Law.Tacit.inside_of_len_lt Euclidean.plane)
-    (len_add_of_between : Law.Tacit.len_add_of_between Euclidean.plane)
-    (len_lt_of_inside : Law.Tacit.len_lt_of_inside Euclidean.plane)
     (len_self : Law.Tacit.len_self Euclidean.plane)
     (len_symm : Law.Tacit.len_symm Euclidean.plane)
     (line_circle_between : Law.Tacit.line_circle_between Euclidean.plane)
@@ -72,16 +67,9 @@ theorem euclidean_laws
     (line_meets_circle_of_inside : Law.Tacit.line_meets_circle_of_inside Euclidean.plane)
     (line_meets_circle_of_opposite_sides :
       Law.Tacit.line_meets_circle_of_opposite_sides Euclidean.plane)
-    (ne_of_between : Law.Tacit.ne_of_between Euclidean.plane)
-    (ne_of_between_ends : Law.Tacit.ne_of_between_ends Euclidean.plane)
-    (not_between_of_between : Law.Tacit.not_between_of_between Euclidean.plane)
-    (not_between_of_between_between : Law.Tacit.not_between_of_between_between Euclidean.plane)
     (not_on_line_of_same_side : Law.Tacit.not_on_line_of_same_side Euclidean.plane)
     (not_same_side_of_circles_meet : Law.Tacit.not_same_side_of_circles_meet Euclidean.plane)
-    (on_circle_of_len_eq : Law.Tacit.on_circle_of_len_eq Euclidean.plane)
     (on_line_of_area_eq_zero : Law.Tacit.on_line_of_area_eq_zero Euclidean.plane)
-    (on_line_of_between : Law.Tacit.on_line_of_between Euclidean.plane)
-    (on_line_of_between_ends : Law.Tacit.on_line_of_between_ends Euclidean.plane)
     (outside_of_between : Law.Tacit.outside_of_between Euclidean.plane)
     (pasch1 : Law.Tacit.pasch1 Euclidean.plane)
     (pasch2 : Law.Tacit.pasch2 Euclidean.plane)
@@ -119,15 +107,15 @@ theorem euclidean_laws
   area_eq_zero_of_on_line := area_eq_zero_of_on_line
   area_rotate := area_rotate
   area_swap := area_swap
-  between_cases := between_cases
+  between_cases := Euclidean.between_cases
   between_of_area_add := between_of_area_add
-  between_of_between_left := between_of_between_left
-  between_of_between_right := between_of_between_right
+  between_of_between_left := Euclidean.between_of_between_left
+  between_of_between_right := Euclidean.between_of_between_right
   between_of_inside_chord := between_of_inside_chord
-  between_symm := between_symm
+  between_symm := Euclidean.between_symm
   centre_inside := Euclidean.centre_inside
   centre_unique := Euclidean.centre_unique
-  circle_eq := circle_eq
+  circle_eq := Euclidean.circle_eq
   circles_meet := Euclidean.circles_meet
   circles_meet_of_on_inside_outside := Euclidean.circles_meet_of_on_inside_outside
   circles_meet_opposite_side := Euclidean.circles_meet_opposite_side
@@ -145,9 +133,9 @@ theorem euclidean_laws
   inside_not_on := Euclidean.inside_not_on
   inside_of_angle_add := inside_of_angle_add
   inside_of_between := inside_of_between
-  inside_of_len_lt := inside_of_len_lt
-  len_add_of_between := len_add_of_between
-  len_lt_of_inside := len_lt_of_inside
+  inside_of_len_lt := Euclidean.inside_of_len_lt
+  len_add_of_between := Euclidean.len_add_of_between
+  len_lt_of_inside := Euclidean.len_lt_of_inside
   len_self := len_self
   len_symm := len_symm
   line_circle_between := line_circle_between
@@ -159,17 +147,17 @@ theorem euclidean_laws
   lt_irrefl := Euclidean.lt_irrefl
   lt_trans := Euclidean.lt_trans
   lt_trichotomy := Euclidean.lt_trichotomy
-  ne_of_between := ne_of_between
-  ne_of_between_ends := ne_of_between_ends
-  not_between_of_between := not_between_of_between
-  not_between_of_between_between := not_between_of_between_between
+  ne_of_between := Euclidean.ne_of_between
+  ne_of_between_ends := Euclidean.ne_of_between_ends
+  not_between_of_between := Euclidean.not_between_of_between
+  not_between_of_between_between := Euclidean.not_between_of_between_between
   not_lt_zero := Euclidean.not_lt_zero
   not_on_line_of_same_side := not_on_line_of_same_side
   not_same_side_of_circles_meet := not_same_side_of_circles_meet
-  on_circle_of_len_eq := on_circle_of_len_eq
+  on_circle_of_len_eq := Euclidean.on_circle_of_len_eq
   on_line_of_area_eq_zero := on_line_of_area_eq_zero
-  on_line_of_between := on_line_of_between
-  on_line_of_between_ends := on_line_of_between_ends
+  on_line_of_between := Euclidean.on_line_of_between
+  on_line_of_between_ends := Euclidean.on_line_of_between_ends
   outside_of_between := outside_of_between
   pasch1 := pasch1
   pasch2 := pasch2
