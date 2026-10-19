@@ -20,7 +20,8 @@ note = "I.42 builds FH on half of BD itself, so H falls on D: the Lean writes D 
 
 [[passage]]
 at = "Thus, with a straight line GH"
-kind = "carried"
+kind = "helper"
+helper = "SameSideOf.trans_opposite"
 note = "Euclid uses KH and HM on opposite sides of GH to apply I.14. Beneath the first constructions, the Lean requests I.44's parallelogram across GH from K and uses `SameSideOf.trans_opposite` to put M on the other side; I.14 now puts H between K and M, with D for H in the Lean."
 
 [[passage]]
