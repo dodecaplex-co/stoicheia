@@ -2,7 +2,7 @@
 scope = "full"
 note = "With its companions: `Prop24` lays one segment on the other, `Prop24.equalCircles` gives equal circles and measures, `Prop24.equalMeasure` equal measures."
 companions = ["III.24 equalCircles", "III.24 equalMeasure"]
-fingerprint = "sha256:078608b0ea0a6e21"
+fingerprint = "sha256:34772fdbf2230d5d"
 
 [route]
 kind = "modified"
@@ -40,6 +40,6 @@ note = "III.10 is not needed: the angles have settled every point of the circumf
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "4916590"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:ba959540baee714f"
+lean = "sha256:63f676f64fa2f7d2"

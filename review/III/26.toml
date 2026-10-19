@@ -1,7 +1,7 @@
 [statement]
 scope = "full"
 note = "Euclid's two cases, each stated on its own, with equal circumferences read as equal in measure and congruent, which says more than Heath's words."
-fingerprint = "sha256:dd8fa4e5cb88ea35"
+fingerprint = "sha256:fdd1449580f76ce4"
 
 [route]
 kind = "modified"
@@ -29,6 +29,6 @@ note = "The remainders BKC, ELF are equal in measure by Euclid's subtraction [C.
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "4916590"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:4e05d0d69b1b03e1"
+lean = "sha256:bd37fee9fad54e6d"

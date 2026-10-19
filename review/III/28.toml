@@ -1,7 +1,7 @@
 [statement]
 scope = "full"
 note = "Equal circumferences read as equal in measure and congruent; \"the greater\" taken as no less, so two diameters, cutting off four semicircles, are covered."
-fingerprint = "sha256:084cabc9fb6a1dad"
+fingerprint = "sha256:27e77d5577435ccb"
 
 [route]
 kind = "modified"
@@ -24,6 +24,6 @@ note = "The greater circumferences are equal in measure as the remainders [C.N. 
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "4916590"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:303b294cc4368109"
+lean = "sha256:a824e0f06f31e71e"

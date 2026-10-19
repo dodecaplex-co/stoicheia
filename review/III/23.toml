@@ -2,7 +2,7 @@
 scope = "full"
 note = "Stated as an equality: two circles through A and B with similar segments on one side of AB are one circle; `Prop23.point` says it point by point."
 companions = ["III.23 point"]
-fingerprint = "sha256:3f7601e5fce9aeab"
+fingerprint = "sha256:c23bab573b2dc820"
 
 [route]
 kind = "euclid"
@@ -20,6 +20,6 @@ note = "Simson's preliminary (Heath, vol. 2, p. 53): by III.10 the circles meet 
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "4916590"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:1084d9eefcd3f4c9"
+lean = "sha256:50dc041e0df87f28"
