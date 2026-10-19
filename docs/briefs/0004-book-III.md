@@ -257,9 +257,9 @@ citations and status, and every policy check applies to it as to a proposition. 
 "[III. 1, Por.]" and "[III. 16, Por.]" are read as citations of those entries, by the
 scripts and by `Certificate/Facts.lean` alike, and the graph draws a porism as its
 proposition. A proposition counts as proved only when its porism is too, and its page
-shows the porism's certificate in a column of its own. III.1 Por. rests on one rule III.1
-does not, that a circle has one centre (`centre_unique`). Each porism's proof cites its
-proposition, "from this it is manifest".
+shows the porism's certificate in a column of its own. III.1 Por. uses the shared I.8
+comparison directly, through `Prop1.equal_adjacent`; it neither cites III.1 nor uses
+`centre_unique`. III.16 Por. cites III.16.
 
 ## How the statements say Euclid's phrases
 
@@ -485,9 +485,9 @@ and the mixed-angle comparisons have the scope described above.
   `Elements/BookIII/Circumferences.lean`.)
 - **VI.33**, "angles have the same ratio as the circumferences", becomes short with the
   measure. Book VI's design should revisit circumferences then. `circumference` and
-  `standing` are angles in Lean: no statement of Book III equates one with an angle or
-  adds one to an angle (they are compared only with each other, in III.24's companions
-  and III.26–III.30), but a statement could. A type of their own over `Angle` would forbid it
+  `standing` are angles in Lean: `Prop25.kind` compares a circumference with two right
+  angles, while III.24's companions and III.26–III.30 compare circumferences with one
+  another. A type of their own over `Angle` would forbid comparisons with angles
   without new rules; every law of magnitudes, now axioms about `Magnitude k`, would have to
   be proved again for it. The captain's call.
 - **A circle's centre.** With `exists_centre` now a rule, brief 0008's step 6 removes the

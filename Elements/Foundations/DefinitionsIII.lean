@@ -356,12 +356,12 @@ def Arc.Congruent (a b : Arc) : Prop :=
   ∃ f : Point → Point, f a.B = b.B ∧ f a.C = b.C ∧
     Places f (InSegment · a) (InSegment · b) ∧ Places f (OnArc · a) (OnArc · b)
 
-/-- **Definitions III.4 and III.5.** The foot of the perpendicular drawn from `E` to the
-straight line `AB`. `F` is on the straight line `AB`; if `E` is not on it, every other point
-`P` of the straight line makes the angle `EFP` right; and if `E` is on it, the foot is `E`
-itself. If `A` and `B` are one point, every point is on a straight line with them, so the
-foot is `E`. `EF` is then the distance of `AB` from `E` (Definitions III.4 and III.5,
-extended: it is nothing when `AB` passes through `E`, a case Euclid's definitions do not
+/-- **Definitions III.4 and III.5.** The foot of the perpendicular drawn from E to the
+straight line AB. F is on the straight line AB; if E is not on it, every other point
+P of the straight line makes the angle EFP right; and if E is on it, the foot is E
+itself. If A and B are one point, every point is on a straight line with them, so the
+foot is E. EF is then the distance of AB from E (Definitions III.4 and III.5,
+extended: it is nothing when AB passes through E, a case Euclid's definitions do not
 take). Every straight line has one foot (`Foot.exists`, `Foot.unique`, by I.12 and I.17). -/
 def Foot (E A B F : Point) : Prop :=
   Collinear A B F ∧ (Collinear A B E → F = E) ∧

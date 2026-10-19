@@ -2,7 +2,7 @@
 scope = "full"
 note = "`Prop25` constructs a circle; `Prop25.complete` identifies it with the segment's; `Prop25.kind` classifies the arc; `Prop25.of_circle` takes its circle."
 companions = ["III.25 complete", "III.25 kind", "III.25 of_circle"]
-fingerprint = "sha256:cea48281c16e35be"
+fingerprint = "sha256:a7539c95e31547ca"
 
 [route]
 kind = "euclid"
@@ -49,6 +49,6 @@ note = "`Prop25.kind` proves `Arc.Greater` and that the circumference measures m
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:a647496de419c36d"
+commit = "58612ec"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:db7bbc551925e1dd"
