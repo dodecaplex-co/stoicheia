@@ -1356,3 +1356,8 @@ findings:
   the paragraph's plain words too, as Book II's "AC = a" needs, but not a letter of
   English: one after an apostrophe, those of e.g. and i.e., and the article "a" with no
   sign of an expression, digit or bracket beside it; nor anything in a comment or in code.
+  A fix in `scripts/check_style.py`, `scripts/render.py` and `tests/test_check_style.py`
+  selects the paragraph from the original Markdown blocks with its source offsets kept,
+  then masks comments and code, so that indented code gives no paragraph, a multiline
+  inline comment leaves the figure after the whole paragraph, and a code span across a
+  line break supplies no name, with regression cases for the rules and the renderer.

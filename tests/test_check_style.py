@@ -20,7 +20,8 @@ it, put to the script's own patterns and functions:
 * the modern cases: S22 and S23 read a figure of the modern way against its Euclid's
   figure's letters and its paragraph's names, which `modern_names` takes from TeX and
   from plain words alike, save the letters of English (A's, e.g., the article "a") and
-  what a reader does not see, in a comment or in code.
+  what a reader does not see, in a comment or in code; the renderer puts that figure
+  after the same whole paragraph and keeps its source indentation.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -35,9 +36,11 @@ import sys
 import unittest
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_style as style  # noqa: E402
+import render  # noqa: E402
 
 # ---------------------------------------------------------------------------------------
 # The phrase cases. (D7 once let "Lean\ncannot" through, in a docstring.)
@@ -213,12 +216,23 @@ NAMES_CASES = [   # (a paragraph, names it must give, names it must not)
      {"a"}, set()),
 ]
 LEAN_NAME = "`Elements.BookI.prop05_converse`"
+COMMENT_PARAGRAPH = (style.MODERN_WAY + " Put $b$ here <!--\nnotes x and y\n--> "
+                     "and $c$ there.")
+CODE_PARAGRAPH = style.MODERN_WAY + " Put $b$ here `k\nx` and $c$ there."
 PAGE_NAMES_CASES = [   # (a mishnah, names its modern way gives, names it must not)
     (style.MODERN_WAY + f" Put $a$ here, as Lean says in\n{LEAN_NAME}\nwith $b = c$.",
      {"a", "b", "c"}, set()),
     (style.MODERN_WAY + " Put $a$ here <!-- crew: label x and y later --> and so on.",
      {"a"}, {"x", "y"}),
     (style.MODERN_WAY + " Put $a$ here, as `$z$` and `k` say.", {"a"}, {"z", "k"}),
+    (COMMENT_PARAGRAPH, {"b", "c"}, {"x", "y"}),
+    (CODE_PARAGRAPH, {"b", "c"}, {"k", "x"}),
+    (CODE_PARAGRAPH.replace("`", "``"), {"b", "c"}, {"k", "x"}),
+    (style.MODERN_WAY + " Put $b$ here `<!--` and $c$ there <!-- x -->.",
+     {"b", "c"}, {"x"}),
+    (style.MODERN_WAY + " Put $b$ here <!-- `x` --> and $c$ there.",
+     {"b", "c"}, {"x"}),
+    (style.MODERN_WAY + " Put $b$ here `k\nx and $c$ there.", {"b", "c", "k", "x"}, set()),
 ]
 SPAN_CASES = [   # (a mishnah, the paragraph modern_span finds, or None)
     (style.MODERN_WAY + f" Put $a$ here, as Lean says in\n{LEAN_NAME}\nwith $b = c$.\n\nAfter.",
@@ -231,6 +245,37 @@ SPAN_CASES = [   # (a mishnah, the paragraph modern_span finds, or None)
     ("<!--\n\n" + style.MODERN_WAY + " x.\n\n-->", None),
     ("```\n" + style.MODERN_WAY + " x.\n```", None),
     ("**A lead.** No modern way here.", None),
+    ("    " + style.MODERN_WAY + " Put $b$ here.", None),
+    ("\t" + style.MODERN_WAY + " Put $b$ here.", None),
+    (COMMENT_PARAGRAPH + "\n\nAfter $z$.",
+     style.MODERN_WAY + " Put $b$ here     \n             \n    and $c$ there."),
+    (CODE_PARAGRAPH + "\n\nAfter $z$.",
+     style.MODERN_WAY + " Put $b$ here   \n   and $c$ there."),
+]
+# These expectations are source slices, before comments or code are masked. The renderer
+# must insert after that whole slice, and the figure rules must select the same one.
+SOURCE_SPAN_CASES = [   # (the text before, the paragraph or None, the text after)
+    ("", None, "    " + style.MODERN_WAY + " Put $b$ here."),
+    ("Before.\n\n", None, "    " + style.MODERN_WAY + " Put $b$ here."),
+    ("Before.\n\n   ", COMMENT_PARAGRAPH, "\n\nAfter $z$."),
+    ("", COMMENT_PARAGRAPH, "\n# Next"),
+    ("Before.\n\n", CODE_PARAGRAPH, "\n\nAfter $z$."),
+    ("", CODE_PARAGRAPH, "\n- Next"),
+    ("# Before\n", style.MODERN_WAY + " Put $b$ here.", "\n> Next"),
+    ("<!-- before\n\nnotes\n-->\n", style.MODERN_WAY + " Put $b$ here.", "\n<div>Next</div>"),
+    ("    Some code.\n", style.MODERN_WAY + " Put $b$ here.", "\n<!-- Next -->"),
+    ("", style.MODERN_WAY + " Put $b$ here.\n    With $c$ there.", "\n1. Next"),
+    ("", style.MODERN_WAY + " Put $b$ here.\n2. With $c$ there.", "\n~~~\ncode\n~~~"),
+    ("", style.MODERN_WAY + " Put $b$ here.\n<span>With $c$ there.</span>", "\n\nAfter."),
+    ("", style.MODERN_WAY + " Put $b$ here.", "\n| Next |\n| --- |\n| $z$ |"),
+    ("Before.\n", None, style.MODERN_WAY + " Put $b$ here."),
+    ("", None, style.MODERN_WAY + " Put $b$ here.\n===\n"),
+    ("~~~\n\n", None, style.MODERN_WAY + " Put $b$ here.\n~~~"),
+    ("````\n```\n\n", None, style.MODERN_WAY + " Put $b$ here.\n````"),
+    ("```\n\n", None, style.MODERN_WAY + " Put $b$ here."),
+    ("<div>\n\n", style.MODERN_WAY + " Put $b$ here.", "\n\nAfter."),
+    ("<div>\n", None, style.MODERN_WAY + " Put $b$ here.\n</div>"),
+    ("<span>\n", None, style.MODERN_WAY + " Put $b$ here.\n</span>"),
 ]
 HEATHS = {"A", "B", "C"}
 NAMES = style.modern_names(MODERN_PARAGRAPH)
@@ -353,6 +398,43 @@ class Modern(unittest.TestCase):
         for text, want in SPAN_CASES:
             with self.subTest(text=text):
                 self.assertEqual(style.modern_paragraph(text), want)
+
+    def test_source_spans(self):
+        for before, paragraph, after in SOURCE_SPAN_CASES:
+            text = before + (paragraph or "") + after
+            with self.subTest(text=text):
+                want = (len(before), len(before) + len(paragraph)) if paragraph else None
+                self.assertEqual(style.modern_span(text), want)
+                selected = style.modern_paragraph(text)
+                names = style.modern_names(selected) if selected is not None else None
+                findings = modern_rules(MODERN_GOOD, "I.47", names=names)
+                self.assertEqual("S22" in findings, paragraph is None)
+
+    def test_render_placement(self):
+        count, faults = render.modern_figure_self_check()
+        self.assertEqual(count, len(render.MODERN_FIGURE_CASES))
+        self.assertEqual(faults, [])
+
+    def test_render_page(self):
+        """Exercise the page caller too, which must preserve leading code indentation."""
+        mishnah = render.ROOT / "mishnah" / "I" / "47.md"
+        figure = render.ROOT / "figures" / "I" / "47-modern.svg"
+        read_text, exists = Path.read_text, Path.exists
+        facts, docs, records = render.load_facts(), render.load_axiom_docs(), render.load_records()
+        count, titles = render.BOOKS["I"]
+        for source, want_figure in [("    " + style.MODERN_WAY + " Put $b$ here.", False),
+                                    (COMMENT_PARAGRAPH, True), (CODE_PARAGRAPH, True)]:
+            def read(path, *args, **kwargs):
+                return source + "\n" if path == mishnah else read_text(path, *args, **kwargs)
+
+            with self.subTest(source=source), patch.object(Path, "read_text", read), \
+                    patch.object(Path, "exists", lambda path: path == figure or exists(path)):
+                page = render.page("I", 47, count, titles, facts, docs, records)
+                self.assertIn(source, page)
+                marker = '<p align="center"><img src="../../figures/I/47-modern.svg"'
+                self.assertEqual(marker in page, want_figure)
+                if want_figure:
+                    self.assertIn(source + "\n\n" + marker, page)
 
     test_modern_cases.__doc__ = (f"S22 and S23 read {len(MODERN_CASES)} figures of the "
                                  "modern way rightly")

@@ -212,8 +212,7 @@ SQUARE = re.compile(r"\[[^\[\]\n]*\](?![(\[])")
 
 def blank_blocks(text: str) -> str:
     """HTML comments and fenced blocks blanked, code spans kept: the text whose paragraphs
-    S10 and the modern way's figure read, so that a line holding only a code span goes on
-    with its paragraph, as Markdown reads it."""
+    S10 reads, so that a line holding only a code span goes on with its paragraph."""
     return FENCE.sub(_blank, HTML_COMMENT.sub(_blank, text))
 
 
@@ -1430,6 +1429,39 @@ ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:[eE]\.g|[iI]\.e)\.")
 # or "(a + b)²": a sign of an expression, a digit, raised or lowered, or a bracket.
 BESIDE_A_NAME = set("=+-−×·/<>≤≥()[]0123456789⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
 
+# Blocks are read before inlines (CommonMark, sections 4 and 6). In particular, an
+# inline comment must not manufacture a blank line before the paragraph is selected.
+MODERN_FENCE = re.compile(r"(`{3,}(?=[^`]*$)|~{3,})")
+MODERN_HEADING = re.compile(r"#{1,6}(?:[ \t]|$)")
+MODERN_LIST = re.compile(r"(?:[-+*]|([0-9]{1,9})[.)])(?:[ \t]+(\S.*)|[ \t]*$)")
+MODERN_THEMATIC = re.compile(r"([-*_])(?:[ \t]*\1){2,}[ \t]*$")
+MODERN_SETEXT = re.compile(r"(?:=+|-+)[ \t]*$")
+MODERN_TABLE = re.compile(r"(?=[^\n]*\|)\|?(?:[ \t]*:?-+:?[ \t]*\|)*"
+                          r"[ \t]*:?-+:?[ \t]*\|?[ \t]*$")
+MODERN_BLOCK_TAGS = ("address|article|aside|base|basefont|blockquote|body|caption|center|col|"
+                     "colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|"
+                     "form|frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|"
+                     "menu|menuitem|nav|noframes|ol|optgroup|option|p|param|search|section|"
+                     "summary|table|tbody|td|tfoot|th|thead|title|tr|track|ul")
+# The first six HTML block kinds interrupt a paragraph; a complete tag on its own
+# line, the seventh kind, opens a block only when no paragraph is open.
+MODERN_HTML_BLOCKS = (
+    (re.compile(r"<(?:pre|script|style|textarea)(?:[ \t>]|$)", re.I),
+     re.compile(r"</(?:pre|script|style|textarea)>", re.I)),
+    (re.compile(r"<!--"), re.compile(r"-->")),
+    (re.compile(r"<\?"), re.compile(r"\?>")),
+    (re.compile(r"<![A-Za-z]"), re.compile(r">")),
+    (re.compile(r"<!\[CDATA\["), re.compile(r"\]\]>")),
+    (re.compile(rf"</?(?:{MODERN_BLOCK_TAGS})(?:[ \t>]|/>|$)", re.I), None),
+)
+MODERN_TAG_LINE = re.compile(r"(?:<[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[A-Za-z_:][\w.:-]*"
+                             r"(?:[ \t]*=[ \t]*(?:[^\s\"'=<>`]+|'[^']*'|\"[^\"]*\"))?)*"
+                             r"[ \t]*/?>|</[A-Za-z][A-Za-z0-9-]*[ \t]*>)[ \t]*$")
+# Read escapes, code spans, unmatched backtick runs and comments in source order.
+# Equal backtick runs delimit code even across a line break; a comment inside code
+# has no separate meaning, and an unclosed comment inside a paragraph is plain text.
+MODERN_INLINE = re.compile(r"\\[!-/:-@\[-`{-~]|(`+)(?!`).*?(?<!`)\1(?!`)|`+|<!--.*?-->", re.S)
+
 
 def without_upright(body: str) -> str:
     """A TeX span with each upright argument (\\mathrm{…}, \\text{…}) taken out, its
@@ -1450,24 +1482,89 @@ def without_upright(body: str) -> str:
 
 def modern_span(text: str) -> tuple[int, int] | None:
     """Where the paragraph that opens "**The modern way.**" stands in a mishnah, as
-    (start, end) offsets: read as a reader's Markdown reads it, and as S10 reads it, with
-    HTML comments and fenced blocks blanked first (blank_blocks), its start indented or
-    not, and its end where Markdown ends it (MODERN_WAY_ENDS). render.py sets the modern
-    figure at its end, so the two read the page alike. None when there is no such
-    paragraph."""
-    for off, para in paragraphs(blank_blocks(text)):
-        if para.startswith(MODERN_WAY):
-            end = MODERN_WAY_ENDS.search(para)
-            return off, off + (end.start() if end else len(para))
-    return None
+    (start, end) source offsets. Read blocks in the original text, before masking any
+    comments or code. Four columns of indentation start code, but cannot interrupt an
+    open paragraph. Fences and HTML blocks keep their contents out of the search;
+    inline comments leave the paragraph's line boundaries intact. render.py uses these
+    same offsets to put the figure after the whole paragraph."""
+    lines = text.splitlines(keepends=True)
+    off, end = 0, 0
+    start, fence, html = None, None, False
+    modern = False
+    for i, line in enumerate(lines):
+        at, off = off, off + len(line)
+        raw = line.rstrip("\r\n")
+        content = raw.lstrip(" \t")
+        indent = raw[:len(raw) - len(content)]
+        columns = len(indent.expandtabs(4))
+        if fence is not None:
+            if columns <= 3 and re.fullmatch(re.escape(fence[0]) + "{" + str(len(fence))
+                                            + r",}[ \t]*", content):
+                fence = None
+            continue
+        if html is not False:
+            if html is None and not content:
+                html = False
+            elif html is not None and html.search(raw):
+                html = False
+            continue
+        if not content:
+            if modern:
+                return start, end
+            start = None
+            continue
+        if columns <= 3:
+            # A setext underline makes the preceding text a heading, not a paragraph.
+            if start is not None and MODERN_SETEXT.fullmatch(content):
+                start, modern = None, False
+                continue
+            opening = MODERN_FENCE.match(content)
+            html_end = next((e for s, e in MODERN_HTML_BLOCKS if s.match(content)), False)
+            if html_end is False and start is None and MODERN_TAG_LINE.fullmatch(content):
+                html_end = None
+            item = MODERN_LIST.match(content)
+            list_start = item and (start is None or
+                                  (item.group(2) and
+                                   (item.group(1) is None or int(item.group(1)) == 1)))
+            heading = MODERN_HEADING.match(content)
+            thematic = MODERN_THEMATIC.fullmatch(content)
+            table = ("|" in content and i + 1 < len(lines)
+                     and MODERN_TABLE.fullmatch(lines[i + 1].rstrip("\r\n")))
+            container = content.startswith(">") or list_start
+            if opening or html_end is not False or heading or thematic or table or container:
+                if modern:
+                    return start, end
+                start = None
+                if opening:
+                    fence = opening.group(1)
+                elif html_end is not False:
+                    if html_end is None or not html_end.search(content):
+                        html = html_end
+                elif container or table:
+                    # A following unmarked line may continue the list or quotation;
+                    # its lead cannot open the page's modern paragraph.
+                    start = at
+                continue
+        if start is None:
+            if columns >= 4:
+                continue
+            start = at + len(indent)
+            modern = content.startswith(MODERN_WAY)
+        end = at + len(raw)
+    return (start, end) if modern else None
 
 
 def modern_paragraph(text: str) -> str | None:
     """The paragraph of a mishnah that opens "**The modern way.**" (modern_span), as a
-    reader sees it: its HTML comments, code and link targets blanked (blank_code), so that
+    reader sees it: its HTML comments, code and link targets blanked afterwards, so that
     nothing hidden from the page gives it a name. None when there is no such paragraph."""
     span = modern_span(text)
-    return blank_code(text)[span[0]:span[1]] if span else None
+    if span is None:
+        return None
+    paragraph = MODERN_INLINE.sub(
+        lambda m: _blank(m) if m.group(1) or m.group(0).startswith("<!--") else m.group(0),
+        text[span[0]:span[1]])
+    return LINK_TARGET.sub(_blank, paragraph)
 
 
 def modern_names(paragraph: str) -> set[str]:
