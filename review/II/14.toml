@@ -64,9 +64,9 @@ case = "BE greater than ED, as in Heath's figure, with the figure A of two trian
 
 [review]
 stage = "full"
-commit = "7921e32"
+commit = "7285f05"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:b4bbc1cc94524069"
+lean = "sha256:a68c1627405e8cef"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]

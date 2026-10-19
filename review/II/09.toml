@@ -70,9 +70,9 @@ case = "D between C and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "f86db3d"
+commit = "7285f05"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:4816c01cd3768858"
+lean = "sha256:d341a1520792f8c3"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]

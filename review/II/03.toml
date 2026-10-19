@@ -31,9 +31,9 @@ note = "Euclid treats AD as a rectangle, with DC equal to CB. The Lean gets the 
 
 [review]
 stage = "full"
-commit = "50b595b"
+commit = "7285f05"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:6682122d40cfab7c"
+lean = "sha256:ff9c599209c8485f"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]

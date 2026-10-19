@@ -49,9 +49,9 @@ note = "Euclid takes the four areas as the whole square ADEB. `Parallelogram.abo
 
 [review]
 stage = "full"
-commit = "50b595b"
+commit = "7285f05"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:24f85c7951a63055"
+lean = "sha256:2c13e8bdc74e3aa0"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]
