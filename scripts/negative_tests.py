@@ -25,7 +25,8 @@ records current; CI runs it on every push.
    another command on the same line, planted in a new file of each folder the
    scan reads, `Elements/`, `Staging/` (in a folder of its own) and `Audit/`, with
    `#exit` at the end of each root file, `Elements.lean`, `Staging.lean` and
-   `Audit.lean`: each is caught on its own line. The files are read, not built.
+   `Audit.lean`, and a new Book Zero file that imports a proposition: each is caught on
+   its own line. The files are read, not built.
 9. One build with planted assumptions, the certificate recomputed:
    - in I.16, Postulate 5, a planted Euclidean-only rule (`Tacit.Euclidean.planted`)
      and an axiom declared in I.16's own file after a docstring on the same line:
@@ -173,8 +174,10 @@ def native_decide() -> None:
                          "-/\ntheorem planted_native : 2 + 2 = 4 := by native_decide\n\n"
                          "end Elements.BookI")
     try:
+        text = (ROOT / rel).read_text()
+        line = text[:text.index("by native_decide")].count("\n") + 1
         expect_failure("a native_decide in I.16's file", fidelity(),
-                       f"{rel}: uses native_decide")
+                       f"{rel}:{line}: uses native_decide")
     finally:
         (ROOT / rel).write_text(saved)
 
@@ -197,6 +200,9 @@ PLANTED_COMMANDS = (
      "set_option debug.skipKernelTC true in theorem planted_skip : True := trivial"),
     ("set_option «debug».",
      "set_option «debug».skipKernelTC true in theorem planted_escaped : True := trivial"),
+    ("set_option doc.", "set_option doc.verso true"),
+    ("set_option «doc».",
+     "set_option «doc».«verso» true in theorem planted_verso : True := trivial"),
     ("#eval", '#eval IO.println "planted"'),
     ("run_cmd", "run_cmd pure ()"),
     ("run_elab", "run_elab pure ()"),
@@ -264,6 +270,21 @@ PLANTED_COMMANDS = (
     ("@[try_suggestion]", "@[try_suggestion] def plantedSuggestion := ()"),
     ("@[library_suggestions]", "@[library_suggestions] def plantedSelector : "
      "Lean.LibrarySuggestions.Selector := fun _ _ => pure #[]"),
+    ("@[package_code_quality_check]", "@[package_code_quality_check] def plantedQuality := ()"),
+    ("@[missing_docs_handler]", "@[missing_docs_handler plantedStx] def plantedHandler : "
+     "Lean.Linter.MissingDocs.Handler := fun _ _ => pure ()"),
+    ("@[code_action_provider]", "@[code_action_provider] def plantedProvider : "
+     "Lean.Server.CodeActionProvider := fun _ _ => pure #[]"),
+    ("@[unused_variables_ignore_fn]", "@[unused_variables_ignore_fn] def plantedIgnore : "
+     "Lean.Linter.IgnoreFunction := fun _ _ _ => false"),
+    ("@[widget_module]", "@[widget_module] def plantedWidget : Lean.Widget.Module := "
+     '{ javascript := "" }'),
+    ("@[run_parser_attribute_hooks]", "@[run_parser_attribute_hooks] def plantedHooks : "
+     "Lean.Parser.Parser := Lean.Parser.skip"),
+    ("@[builtin_macro]", "@[builtin_macro plantedStx] def plantedBuiltinMacro : Lean.Macro := "
+     "fun _ => Lean.Macro.throwUnsupported"),
+    ("@[builtin_doc]", "@[builtin_doc] def plantedBuiltinDoc := ()"),
+    ("@[simprocAttr]", "attribute [simprocAttr] plantedSimprocDecl"),
     ("initialize", "initialize plantedRef : IO.Ref Nat ← IO.mkRef 0"),
     ("builtin_initialize", "builtin_initialize plantedBuiltin : IO.Ref Nat ← IO.mkRef 0"),
     ("@[init]", "@[init plantedInit] opaque plantedInitRef : IO.Ref Nat"),
@@ -275,12 +296,16 @@ PLANTED_COMMANDS = (
 # A new file in each folder the scan reads; Staging's in a folder of its own, which
 # shows that the scan reads every folder beneath.
 PLANTED_FILES = ("Elements/Planted.lean", "Staging/Planted/Commands.lean", "Audit/Planted.lean")
+# A new file of Book Zero, and the line of it that imports a proposition.
+BOOK_ZERO = ("Elements/Figure/Planted.lean", 2, "-- Planted by scripts/negative_tests.py: "
+             "the import below must be caught.\nimport Elements.BookI.Prop01\n")
 
 
 def forbidden_commands() -> None:
     """Every forbidden command, and an axiom declared twice, once after another command
-    on the same line, in a new file of each folder `check_fidelity.py` scans, and `#exit`
-    at the end of each root file. Each must be caught, by its file and line."""
+    on the same line, in a new file of each folder `check_fidelity.py` scans, `#exit` at
+    the end of each root file, and a Book Zero file importing a proposition. Each must be
+    caught, by its file and line."""
     header = ["/-! Planted by scripts/negative_tests.py: every line below must be caught. -/",
               ""]
     body = [("axiom", "example : True := trivial axiom planted_inline : True"),
@@ -293,7 +318,7 @@ def forbidden_commands() -> None:
         if word == "axiom":
             return f"{rel}:{line}: declares an axiom outside Elements/Foundations/"
         if word == "native_decide":
-            return f"{rel}: uses native_decide"
+            return f"{rel}:{line}: uses native_decide"
         return f"{rel}:{line}: uses `{word}`"
 
     wanted: dict[str, list[str]] = {}
@@ -317,10 +342,16 @@ def forbidden_commands() -> None:
             root.write_text(changed)
             line = changed[:changed.rindex("#exit")].count("\n") + 1
             wanted[tree].append(caught(f"{tree}.lean", line, "#exit"))
+        figure, line, text = BOOK_ZERO
+        assert not (ROOT / figure).exists(), f"{figure} exists; update this test"
+        (ROOT / figure).write_text(text)
+        planted.insert(0, ROOT / figure)
         result = fidelity()
         for tree, messages in wanted.items():
             expect_failure(f"every forbidden command and an axiom in {tree}/ and {tree}.lean",
                            result, *messages)
+        expect_failure("a proposition imported by Book Zero", result,
+                       f"{figure}:{line}: Book Zero must not import a proposition")
     finally:
         for root, saved in roots.items():
             root.write_text(saved)

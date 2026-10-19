@@ -339,6 +339,10 @@ dependencies.
   - `set_option debug.…`, and its escaped spelling `set_option «debug».…`, which Lean
     reads the same way: `debug.skipKernelTC` skips the kernel, and `debug.byAsSorry` and
     its kin put `sorry` in place of a proof;
+  - `set_option doc.…`, and its escaped spelling `set_option «doc».…`: with `doc.verso`
+    or `doc.verso.module` on, Lean reads a docstring as Verso and runs the Lean in its
+    code blocks, an `#eval` among it, while the file is built, though the scan takes
+    docstrings out with the comments; refusing the options keeps every docstring inert;
   - `#eval`, `run_cmd`, `run_elab`, `run_meta`, `run_tac`, `by_elab`, `initialize` and
     `builtin_initialize` run a program when the file is built or imported, which could
     declare an axiom without the word, or write any file, a check or `facts.json` among
@@ -351,16 +355,22 @@ dependencies.
     that suggest lemmas. An attribute can register code that Lean runs while a file is
     built or printed. The scan refuses the attributes whose names it lists: any whose
     name ends in `elab` (`command_elab`, `term_elab`, `doElem_elab`, `inductive_elab`,
-    and so `delab` and `app_delab`), `tactic` (`tactic`, `grind_tactic`, `try_tactic`),
-    `init`, `proc` (`simproc`, `dsimproc`, `sym_simproc`, `sevalproc`), `discharger`,
-    `unexpander` (`app_unexpander`), `precheck` (`quot_precheck`), `formatter`,
-    `parenthesizer`, `control_info`, `code_action`, `rpc_method`, `linter`, `parser`
-    (`term_parser`, `command_parser`, `tactic_parser`), `pass` (`cpass`), `suggestion`
-    or `suggestions` (`try_suggestion`, `library_suggestions`) or `deferred_doc_check`,
-    and any whose name begins with `doc_` (`doc_role`, `doc_directive`,
-    `doc_code_block`, `doc_command` and the rest). A list of names trails the attributes
-    each Lean release adds, so this one may not be complete, and review still reads
-    every staged file and audit lemma;
+    and so `delab` and `app_delab`), `macro` (`builtin_macro`), `tactic` (`tactic`,
+    `grind_tactic`, `try_tactic`), `init`, `proc` (`simproc`, `dsimproc`, `sym_simproc`,
+    `sevalproc`), `discharger`, `unexpander` (`app_unexpander`), `precheck`
+    (`quot_precheck`), `formatter`, `parenthesizer`, `control_info`, `code_action`,
+    `rpc_method`, `linter`, `parser` (`term_parser`, `command_parser`, `tactic_parser`),
+    `pass` (`cpass`), `suggestion` or `suggestions` (`try_suggestion`,
+    `library_suggestions`), `check` (`deferred_doc_check`, `package_code_quality_check`),
+    `handler` (`missing_docs_handler`), `provider` (`code_action_provider`), `fn`
+    (`unused_variables_ignore_fn`), `module` (`widget_module`), `hooks`
+    (`run_parser_attribute_hooks`) or `Attr` (`simprocAttr`, `cbvSimprocAttr` and the
+    other names Lean gives its simproc attributes); `builtin_doc`; and any whose name
+    begins with `doc_` or `builtin_doc_` (`doc_role`, `doc_directive`, `doc_code_block`,
+    `doc_command` and the rest). A reading of Lean 4.35's attributes found these to
+    register code that Lean, its editor or Lake runs. A list of names trails the
+    attributes each Lean release adds, so this one may not be complete, and review still
+    reads every staged file and audit lemma;
   - `implemented_by`, `extern` and `unsafe` put code in place of a definition;
   - `#exit` stops Lean reading the file, though a reader and the checks here read on.
 - **Superposition** only in I.4 and I.8.
@@ -378,9 +388,10 @@ one of them after another command on its line; an axiom missing from the lock, a
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
 and I.8; a later citation, one of them named only in a helper's statement; every
 forbidden command, and an attribute for each ending and prefix the scan knows, in each of
-`Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a `sorry` in a
-complete book; and a primitive word no longer opaque. Book Zero's imports and a complete
-book's missing figure or mishnah have no planted break yet.
+`Elements/`, `Staging/` and `Audit/`, and `#exit` at the end of each root; a proposition
+imported by Book Zero; a `sorry` in a complete book; and a primitive word no longer
+opaque. Each finding of the source scan names its file and line. A complete book's
+missing figure or mishnah has no planted break yet.
 
 The first two policies hold in `Staging/` (section 6) and in `Audit/` as well: a staged
 file or an audit lemma declares no axiom and uses none of the forbidden commands. Nothing

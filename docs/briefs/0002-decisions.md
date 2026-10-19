@@ -676,12 +676,27 @@ findings:
   Lean reads as `debug.…`. The scan now refuses these commands and the attributes whose
   names it lists, known by the end of the name or, for the `doc_` attributes, its start,
   and test 8 plants each command, ending and prefix in all three folders; again nothing is
-  loosened. A list of names trails the attributes each Lean release adds, so this one may
+  loosened. A later round of the review found two routes more, and we thank it for them
+  too. With `doc.verso` on, Lean 4.35 reads a docstring as Verso and runs the Lean in its
+  code blocks, an `#eval` among it, while the scan took docstrings out with the comments;
+  and the handler `@[missing_docs_handler]` registers runs on every command of its kind.
+  The scan now refuses `set_option doc.…`, spelled `doc.` or `«doc».`, so that every
+  docstring stays inert, and, from a reading of Lean 4.35's attributes, those whose names
+  end in `macro`, `check`, `handler`, `provider`, `fn`, `module`, `hooks` or `Attr`
+  (`builtin_macro`, `package_code_quality_check`, `missing_docs_handler`,
+  `code_action_provider`, `unused_variables_ignore_fn`, `widget_module`,
+  `run_parser_attribute_hooks`, `simprocAttr`), and `builtin_doc` with the
+  `builtin_doc_` attributes; test 8 plants each, and a Book Zero file that imports a
+  proposition. The findings for `native_decide` and for Book Zero's imports, which named
+  the file alone, now name the line as well, so every finding of the scan names its file
+  and line. A list of names trails the attributes each Lean release adds, so this one may
   not be complete, and review still reads every staged file and audit lemma. What would
   hold for good, an allowlist of the attributes the edition uses (main's Lean uses only
   `@[simp]` and `@[inherit_doc]`) or refusing imports from outside the project (each of
-  these routes needs an import of Lean's own modules, and on Lean 4.35 `simproc` and
-  `set_library_suggestions` fail without one), is left for the owner's decision. The
+  the attribute and simproc routes needs an import of Lean's own modules, and on Lean
+  4.35 `simproc` and `set_library_suggestions` fail without one; the docstring route
+  needs none, and refusing the `doc.` options closes it), is left for the owner's
+  decision. The
   protected files it changes are [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) and
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py). The README's table of
   checks, and the name of CI's step for the negative tests, can follow in a pull request

@@ -12,11 +12,12 @@
    `Elements/`, `Staging/` or `Audit/` (LEAN_TREES), since they get round the kernel,
    bring in an axiom without the word, run a program when a file is built or imported,
    or stop Lean reading a file: `native_decide`, `bv_decide`, the word `native`,
-   `(config := …)`, `set_option debug.…` (or `«debug».…`), `#eval`, `#exit`, `run_cmd`,
-   `elab`, `macro`, `simproc` and its kin, `implemented_by`, `extern`, `unsafe`, the
-   attributes it knows to register code (by a name ending in `elab`, `tactic`, `init`,
-   `proc`, `parser`, `unexpander` and others, or beginning `doc_`), and the rest of
-   FORBIDDEN, below.
+   `(config := …)`, `set_option debug.…` and `set_option doc.…` (or `«debug».…` and
+   `«doc».…`), `#eval`, `#exit`, `run_cmd`, `elab`, `macro`, `simproc` and its kin,
+   `implemented_by`, `extern`, `unsafe`, the attributes it knows to register code (by a
+   name ending in `elab`, `tactic`, `init`, `proc`, `parser`, `handler`, `unexpander` and
+   others, or beginning `doc_`), and the rest of FORBIDDEN, below. Each finding of 2, 3
+   and 4 names its file and line.
 5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
    fields are in `Certificate/FIELDS.md`):
    - every axiom an entry rests on, other than Lean's own `propext`,
@@ -95,14 +96,17 @@ LEAN_TREES = ("Elements", "Staging", "Audit")
 # them `debug.skipKernelTC`, spelled `debug.` or `«debug».`), bring in an axiom without the
 # keyword, run a program when the file is built or imported (`#eval`, `run_cmd` and their
 # kin, `initialize`, the simproc commands and `set_library_suggestions`, whose code `simp`
-# and the suggestion tactics run), give syntax a meaning in code (`elab`, `macro`), swap
-# code in for a definition, or stop Lean reading the file (`#exit`). Matched as whole words,
-# in the Lean with its comments taken out; so is an attribute that registers code Lean runs
-# while a file is built or printed, known by the end of its name (`command_elab`,
-# `grind_tactic`, `init`, `sym_simproc`, `app_unexpander`, `term_parser`, `cpass`,
-# `try_suggestion` and the rest) or, for the `doc_` attributes, its start, and named in
-# full in the finding. The list holds the attributes Lean 4.35 has, and a later Lean may
-# add more. FORMALIZATION.md, section 7, is their one home.
+# and the suggestion tactics run, and the `doc.` options, spelled `doc.` or `«doc».`: with
+# `doc.verso` on, Lean runs the Lean in a docstring, which the scan takes out with the
+# comments), give syntax a meaning in code (`elab`, `macro`), swap code in for a definition,
+# or stop Lean reading the file (`#exit`). Matched as whole words, in the Lean with its
+# comments taken out; so is an attribute that registers code Lean runs while a file is
+# built or printed, known by the end of its name (`command_elab`, `grind_tactic`, `init`,
+# `sym_simproc`, `app_unexpander`, `term_parser`, `cpass`, `missing_docs_handler`,
+# `simprocAttr` and the rest) or, for `builtin_doc` and the `doc_` attributes, its start,
+# and named in full in the finding. The list holds the attributes found in Lean 4.35 to run
+# code while a file is built; it may not be complete, and a later Lean may add more.
+# FORMALIZATION.md, section 7, is their one home.
 # Lean 4.35 evaluates natively, and admits the result as an axiom, for `native_decide`, the
 # `bv_decide` family and `decide` with its `native` option, which `decide +zetaReduce
 # +native`, `decide (native := Bool.true)` or a whole configuration, `(config := ⟨false,
@@ -111,14 +115,15 @@ LEAN_TREES = ("Elements", "Staging", "Audit")
 FORBIDDEN = re.compile(
     r"\bnative_decide\b|\bdecide\s*\+\s*native\b|\bnative\s*:=\s*true\b|\bnative\b|"
     r"\(\s*«?config»?\s*:=|"
-    r"\bset_option\s+«?debug»?\.|#eval\b|#exit\b|"
+    r"\bset_option\s+«?(?:debug|doc)»?\.|#eval\b|#exit\b|"
     r"\b(bv_decide|bv_check|run_cmd|run_elab|run_meta|run_tac|by_elab|elab|elab_rules|"
     r"macro|macro_rules|command_elab|term_elab|initialize|builtin_initialize|"
     r"(?:builtin_)?(?:sym_|cbv_)?d?simproc(?:_decl|_pattern)?|set_library_suggestions|"
     r"implemented_by|extern|unsafe)\b|"
-    r"(?:@|\battribute\s*)\[[^\]]*?\b(?P<attr>doc_\w+|\w*(?:elab|tactic|init|proc|discharger|"
-    r"unexpander|precheck|formatter|parenthesizer|control_info|code_action|rpc_method|linter|"
-    r"parser|pass|suggestions?|deferred_doc_check))\b")
+    r"(?:@|\battribute\s*)\[[^\]]*?\b(?P<attr>(?:builtin_)?doc(?:_\w+)?|\w*(?:elab|macro|"
+    r"tactic|init|proc|discharger|unexpander|precheck|formatter|parenthesizer|control_info|"
+    r"code_action|rpc_method|linter|parser|pass|suggestions?|check|handler|provider|fn|module|"
+    r"hooks|Attr))\b")
 # An axiom, declared anywhere in a line: Lean reads `example : True := trivial axiom
 # planted : False` as two commands, the second an axiom.
 AXIOM = re.compile(r"\baxiom\b")
@@ -206,6 +211,10 @@ def lean_sources() -> list[Path]:
     return paths
 
 
+def line_of(text: str, m: re.Match) -> int:
+    return text[: m.start()].count("\n") + 1
+
+
 def check_rules() -> None:
     for path in lean_sources():
         rel = path.relative_to(ROOT).as_posix()
@@ -213,19 +222,18 @@ def check_rules() -> None:
         code = without_comments(src)
         if not rel.startswith("Elements/Foundations/"):
             for m in AXIOM.finditer(code):
-                line = code[: m.start()].count("\n") + 1
-                fail(f"{rel}:{line}: declares an axiom outside Elements/Foundations/")
-        if "native_decide" in src:
-            fail(f"{rel}: uses native_decide")
+                fail(f"{rel}:{line_of(code, m)}: declares an axiom outside Elements/Foundations/")
+        for m in re.finditer("native_decide", src):
+            fail(f"{rel}:{line_of(src, m)}: uses native_decide")
         for m in FORBIDDEN.finditer(code):
             if m.group(0) != "native_decide":
-                line = code[: m.start()].count("\n") + 1
                 word = f"@[{m['attr']}]" if m["attr"] else " ".join(m.group(0).split())
-                fail(f"{rel}:{line}: uses `{word}`, which could get round Lean's kernel, bring "
-                     "in an axiom unseen, run a program when the file is built or imported, "
-                     "or stop Lean reading it (docs/FORMALIZATION.md, section 7)")
-        if rel.startswith("Elements/Figure/") and re.search(r"^import Elements\.Book", src, re.M):
-            fail(f"{rel}: Book Zero must not import a proposition")
+                fail(f"{rel}:{line_of(code, m)}: uses `{word}`, which could get round Lean's "
+                     "kernel, bring in an axiom unseen, run a program when the file is built or "
+                     "imported, or stop Lean reading it (docs/FORMALIZATION.md, section 7)")
+        if rel.startswith("Elements/Figure/"):
+            for m in re.finditer(r"^import Elements\.Book", src, re.M):
+                fail(f"{rel}:{line_of(src, m)}: Book Zero must not import a proposition")
 
 
 # The words retired from the reader-facing pages ("Euclid cites", "never need" and their
