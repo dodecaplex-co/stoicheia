@@ -1348,6 +1348,33 @@ findings:
   before the records it reads, since safe_push keeps a check apart from the content it
   judges. The protected file this changes is `scripts/negative_tests.py`.
 
+- **Placement: only III.24 and `Arcs.lean` may cite it.** [Brief 0006](0006-statements.md)
+  ("Placement", the policy) asks for a check, with a negative test, that outside
+  `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/` only III.24 and
+  `Elements/BookIII/Arcs.lean` cite `placement` or any declaration of the `Placement`
+  namespace: the lemmas of the namespace carry the same distance-keeping content as the
+  whole, so a check of `placement` alone could be got round through them.
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) gains it in two parts. Read
+  from the source as its scan of forbidden commands reads it (`read_lean`), comments and
+  literals taken out, no Lean file under `Elements/` but those four names `placement` or
+  `Placement`, each finding naming its file and line; `Staging/` and `Audit/`, which that
+  scan reads too, are outside the policy, which is the edition's, and `Staging/` holds
+  placement's staged statements until they move. And, from facts.json, no entry but III.24
+  has placement, a lemma of the `Placement` namespace or anything declared in placement's
+  files among its shared steps, so that a proof that reaches it without naming it is caught
+  too. [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains two tests: a
+  lemma of the namespace named in `Elements/BookIII/Squares.lean` is caught on its line,
+  and the word in a comment there is not (test 9, the build test becoming 10); placement
+  among III.26's shared steps, on a copy of facts.json, is caught, and III.24, given it
+  too, is not blamed (in test 3). The superposition check that the brief rewords needs no
+  new code: the policy that only I.4 and I.8 use superposition directly reads III.24's
+  `direct_axioms`, whose walk passes through placement and its lemmas and stops at I.4, I.7
+  and I.8 as entries, and the lock check covers every axiom III.24 rests on. The check is
+  added, and nothing is loosened; with nothing under `Elements/` naming placement yet, it
+  passes on main. It is a check change, and lands in a pull request of its own, before the
+  stage 3 statements it checks (WORKFLOW, section 10). FORMALIZATION, section 7, lists the
+  policy and the two tests.
+
 ## 19 October 2026
 
 - **The edition does not name its owner.** The owner asked that Stoicheia not be presented
