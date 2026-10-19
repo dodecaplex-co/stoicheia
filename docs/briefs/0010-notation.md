@@ -18,7 +18,10 @@ taken again on main, and the tests that need no Mathlib were run again there (th
 appendix). Then a challenger who did not write it, Astra (through Codex, read-only),
 returned the draft for correction, with five material findings and three editorial; every
 one is answered below, and the second appendix lists them. The largest changes the
-recommendation for the angle (section 3.2). Warm thanks to Astra.*
+recommendation for the angle (section 3.2). Warm thanks to Astra. An independent review
+of the revised draft, that day, found that the new angle reaches one more protected file,
+`scripts/negative_tests.py`, which quotes I.16's statement; section 6 adds it, ahead of the
+content pass.*
 
 The points are Argon's. Its second review of the `book-III` release, which read the checks,
 the records and the pages line by line, gave section 3.3 to the notation of the Lean
@@ -417,11 +420,14 @@ passages is [#48]'s, in STYLE.
   FORMALIZATION, section 1, keeps the early briefs, and 0006 to 0009 as written, the frozen
   among them unchanged; a line in FORMALIZATION says so.
 - *Protected paths*, each named in a decisions entry and given a security review:
-  `scripts/render.py` (the Book III definitions map writes `‖E F‖ = ‖E G‖`, and the page key
-  is new), `scripts/scaffold_book.py` (the statement tables of Books I to III; Book IV's
-  table, written in its ground step, takes the chosen notation from the start), `scripts/test_safe_push.py` (one planted law writes `‖A A‖`) and
-  `tests/model/MODEL.md` (its table names both forms). The formal model's docstrings
-  ("written `‖A B‖` in the library", in `model/Model/Signature.lean`, [#73]) follow.
+  `scripts/render.py` (the Book III definitions map writes `‖E F‖ = ‖E G‖` and `∠ A E B`,
+  and the page key is new), `scripts/scaffold_book.py` (the statement tables of Books I to
+  III; Book IV's table, written in its ground step, takes the chosen notation from the
+  start), `scripts/test_safe_push.py` (one planted law writes `‖A A‖`),
+  `scripts/negative_tests.py` (it quotes I.16's statement, `∠ C B A < ∠ A C D ∧ …`, and
+  stops unless it finds those words once) and `tests/model/MODEL.md` (its table names both
+  forms). The formal model's docstrings ("written `‖A B‖` in the library", and the same for
+  `∠` and `△`, in `model/Model/Signature.lean`, [#73]) follow.
 
 **How a reviewer knows it is notation only.** A notation change leaves every recorded term
 alone, so `facts.json` regenerated before and after the pass must agree entry by entry in
@@ -435,23 +441,28 @@ mechanical substitution, and the reviewer still reads each file before stamping 
 **The order.**
 
 1. If the owner takes open question 3, the arc's field order, as a revision of brief 0006,
-   before the consolidation release.
+   before the consolidation release. And, in a pull request of its own before step 2,
+   `scripts/negative_tests.py` taught to find I.16's statement however its angle is
+   written: it quotes the statement's words, so step 2's `ang` would stop CI's `negative`
+   job, and `safe_push` would keep the two changes apart (WORKFLOW, section 10).
 2. After the consolidation release, the content pass outside the foundations: the
    substitution, the docstrings and the prose, while the old notation still stands, so that
    the build never warns.
 3. The records re-read and re-stamped, once, with `facts.json` compared.
-4. The protected paths, in a branch of their own if `safe_push`'s keep_apart asks for one.
+4. The other protected paths, in a branch of their own if `safe_push`'s keep_apart asks for
+   one.
 5. The coordinator's change to the foundations: their definitions and docstrings written
-   with the words, and the bars and the △ made the deprecated forms of section 7. From then
-   on `lake build`, `lake build Audit` and `lake build Staging` show no deprecation warning,
-   which shows that no file of the library, the audit or the staged statements still writes
-   the old forms; the pages are regenerated in the same change, since their Lean blocks
-   quote the source.
+   with the words, and the bars, the △ and the ∠ made the deprecated forms of section 7.
+   From then on `lake build`, `lake build Audit` and `lake build Staging` show no
+   deprecation warning, which shows that no file of the library, the audit or the staged
+   statements still writes the old forms; the pages are regenerated in the same change,
+   since their Lean blocks quote the source.
 6. A release later, the deprecated forms removed, and the release notes say so.
 
-Book IV's statements are scaffolded after step 4, in the new notation; Book IV's draft
-brief ([#97]) already writes them so, since `len A B` and `area A B C` are read the same
-today.
+Book IV's statements are scaffolded after step 4, in the new notation. Book IV's draft
+brief ([#97]) already writes its lengths `len A B`, which Lean reads the same today; it
+still writes the angle `∠ A B C`, which follows the answer to open question 9 when its
+statements are scaffolded.
 
 ## 7. The old forms, for one release
 
