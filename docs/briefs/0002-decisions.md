@@ -1734,3 +1734,54 @@ findings:
   existing `equals` value and `count.is` may move with that content. Lane 3 can then
   reprove the porism by Euclid's reductio, move the pinned list and count to that proof's
   assumptions, and add `excludes: ["Tacit.centre_unique"]` in its content pull request.
+
+- **III.1's construction home and its porism, 19 October 2026 (D1).** By the owner's
+  decision D1 of 19 October, `Elements.BookIII.Prop1.construction` moves home before
+  `Prop1`, with its frozen type: a circle and two points of it, no centre supplied,
+  returning Euclid's bisections and perpendicular straight line. The rule
+  `Tacit.exists_centre` supplies a centre only inside the proof that D is within the
+  circle, through `Prop1.within` and III.2's argument. No centre witness reaches the
+  construction's output. Today's `Prop1` calls it and keeps its existing hypothesis
+  `hABC` for G in the reductio. Its statement and every Heath sentence stay unchanged.
+
+  Lane 3's porism keeps its statement and uses the argument of Euclid's reductio from
+  its given centre G. On AB, G is D by `Prop1.middle`; off AB, the shared I.8 step
+  `Prop1.equal_adjacent` makes the adjacent angles equal, Postulate 4 makes them right,
+  and `Prop1.perpendicular` puts G on DC. It neither calls III.1 nor uses
+  `centre_unique` or `exists_centre`.
+
+  [Brief 0008's dated correction](0008-centre.md#correction-iii1-19-october-2026)
+  records the discrepancy, the unchanged declarations, the corrected proof, guard,
+  overlap, porism, consumers and order under WORKFLOW section 2. The rule is step 5,
+  followed by corrected step 3, then step 4's guard in a pull request of its own before
+  step 6, never in a train with the content it judges. Section 7 landed earlier. The
+  final restated III.1 will take both D within and "let G be the centre" from the rule;
+  the current record says D within only, retaining scope `full` and `centre-given`.
+  Its grouped construction passage and porism passage are renewed without stamping.
+
+  Fresh Lean output at `b117d01` gives the construction 64 axioms, including 56 tacit
+  rules and `Tacit.exists_centre`, with none of `Tacit.inside_of_between`,
+  `Tacit.outside_of_between`, `Tacit.centre_unique` or `sorryAx`. The future guard pins
+  that complete output afresh and reads each renewal for those four excluded names.
+  The certificate has 57 tacit rules for III.1 and 51 for III.1 Por. In the protected
+  file `tests/certificate_expectations.json`, the porism's existing `equals` moves to
+  its complete fresh list, `count.is` moves to 51, and `excludes` gains
+  `Tacit.centre_unique`; III.1's `count.is` moves to 57 and its exclusion stays. Both
+  reasons follow the proofs. No other expectation or field changes. These are values
+  pinned to the content; `kept_expectations` accepts the transition.
+
+  `Audit/Overlaps.lean`'s three pins, renewed in the preceding stage 4 integration,
+  carry `Tacit.exists_centre` through III.1's construction. `Audit/Crossing.lean`'s
+  seven pins are renewed from Lean's actual printing: `Audit.III_5_today`,
+  `Audit.cut_point` and `Audit.CirclesCut.of_meet` gain `Tacit.exists_centre`;
+  `Audit.III_6_today`, `Audit.III_11_today`, `Audit.III_13_today` and
+  `Audit.within_point` gain it and lose `Tacit.centre_unique`. No statement or proof in
+  either audit file changes. All axiom lists remain pinned.
+
+  The protected `Certificate/FIELDS.md` corrects its now-false counts and account of
+  the porism's dependencies. It changes no field contract. The coordinator must keep
+  this documentation correction apart from the content landing if the base checks
+  fail: safe_push classifies this file as a check input, not as a pinned value, so
+  including it would defeat the pinned-values exception. The expectation update
+  itself needs no such split. Independent record review, the separate construction
+  guard and regeneration of the edition remain with their assigned owners.

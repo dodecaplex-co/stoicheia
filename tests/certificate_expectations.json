@@ -10,7 +10,6 @@
         "Postulate2",
         "Postulate3",
         "Postulate4",
-        "Tacit.add_assoc",
         "Tacit.add_comm",
         "Tacit.add_lt_add_right",
         "Tacit.add_zero",
@@ -27,15 +26,11 @@
         "Tacit.between_of_inside_chord",
         "Tacit.between_symm",
         "Tacit.centre_inside",
-        "Tacit.centre_unique",
         "Tacit.circles_meet",
         "Tacit.circles_meet_same_side",
         "Tacit.eq_of_len_eq_zero",
         "Tacit.exists_point",
         "Tacit.exists_point_between",
-        "Tacit.exists_point_opposite_side",
-        "Tacit.exists_point_same_side",
-        "Tacit.inside_not_on",
         "Tacit.inside_of_len_lt",
         "Tacit.len_add_of_between",
         "Tacit.len_lt_of_inside",
@@ -61,22 +56,22 @@
         "Tacit.pasch4",
         "Tacit.same_ray_of_angle_eq_zero",
         "Tacit.same_side_or",
-        "Tacit.same_side_refl",
         "Tacit.same_side_symm",
         "Tacit.same_side_trans",
         "Tacit.superposition",
         "Tacit.triple_incidence1",
         "Tacit.triple_incidence2"
       ],
-      "count": {"prefix": "Tacit.", "is": 57},
-      "why": "The porism's own entry carries every assumption its proof uses, pinned in full: the reviewed list includes 57 tacit rules, centre_unique among them today."
+      "excludes": ["Tacit.centre_unique"],
+      "count": {"prefix": "Tacit.", "is": 51},
+      "why": "The porism's own entry pins every assumption of its proof by the argument of Euclid's reductio from the given centre: 51 tacit rules, with centre_unique excluded. It neither calls III.1 nor uses exists_centre."
     },
     {
       "ref": "III.1",
       "field": "axioms",
       "excludes": ["Tacit.centre_unique"],
-      "count": {"prefix": "Tacit.", "is": 56},
-      "why": "III.1's own certificate is its construction alone: 56 tacit rules, without the porism's centre_unique."
+      "count": {"prefix": "Tacit.", "is": 57},
+      "why": "III.1's certificate now also carries exists_centre through its construction, for D within by III.2's argument: 57 tacit rules, still without centre_unique."
     },
     {
       "ref": "III.1 Por.",
