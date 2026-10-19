@@ -6,6 +6,7 @@ public import Model.Hand
 public import Model.Laws.incidence
 public import Model.Laws.sides
 public import Model.Laws.intersections
+public import Model.Laws.«areas-p5»
 public import Model.Euclidean
 public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
@@ -29,4 +30,6 @@ public import Model.Laws.angles
 public import Model.Euclidean.AngleBasics
 public import Model.Euclidean.Angles
 public import Model.Euclidean.AngleAdd
+public import Model.Euclidean.Areas
+public import Model.Euclidean.Postulate5
 public import Model.Audit

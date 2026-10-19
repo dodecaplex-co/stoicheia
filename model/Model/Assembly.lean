@@ -4,6 +4,7 @@ public import Model.Laws
 public import Model.Euclidean
 public import Model.Euclidean.AngleAdd
 public import Model.Euclidean.Angles
+public import Model.Euclidean.Areas
 public import Model.Euclidean.Avoidance
 public import Model.Euclidean.CircleBasics
 public import Model.Euclidean.CircleRules
@@ -16,6 +17,7 @@ public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Order
 public import Model.Euclidean.OrderLines
 public import Model.Euclidean.Pasch
+public import Model.Euclidean.Postulate5
 public import Model.Euclidean.Segments
 public import Model.Euclidean.Sides
 
@@ -30,9 +32,9 @@ A theorem of `Model/Euclidean/` named as a field of `Laws` (`Euclidean.circles_m
 field `circles_meet`) proves that law in the plane, and `euclidean_laws` gathers them; Lean
 checks here that each proves the law the generator wrote.
 
-So far 71 of the 87 laws are proved in the plane. Until the rest are,
+So far 80 of the 87 laws are proved in the plane. Until the rest are,
 `euclidean_laws` takes them as hypotheses, so that it states exactly what is proved: the plane
-satisfies every law, given the 16 that are not yet proved in it. When none is left,
+satisfies every law, given the 7 that are not yet proved in it. When none is left,
 the generator writes it with no hypothesis, and `model_exists` after it.
 -/
 
@@ -40,20 +42,11 @@ the generator writes it with no hypothesis, and `model_exists` after it.
 
 namespace Model
 
-/-- **The plane satisfies the laws,** given the 16 not yet proved in it. -/
+/-- **The plane satisfies the laws,** given the 7 not yet proved in it. -/
 theorem euclidean_laws
-    (Postulate5 : Law.Postulate5 Euclidean.plane)
-    (area_add_of_between : Law.Tacit.area_add_of_between Euclidean.plane)
-    (area_congruent : Law.Tacit.area_congruent Euclidean.plane)
-    (area_degenerate : Law.Tacit.area_degenerate Euclidean.plane)
-    (area_eq_zero_of_on_line : Law.Tacit.area_eq_zero_of_on_line Euclidean.plane)
-    (area_rotate : Law.Tacit.area_rotate Euclidean.plane)
-    (area_swap : Law.Tacit.area_swap Euclidean.plane)
-    (between_of_area_add : Law.Tacit.between_of_area_add Euclidean.plane)
     (eq_of_len_eq_zero : Law.Tacit.eq_of_len_eq_zero Euclidean.plane)
     (len_self : Law.Tacit.len_self Euclidean.plane)
     (len_symm : Law.Tacit.len_symm Euclidean.plane)
-    (on_line_of_area_eq_zero : Law.Tacit.on_line_of_area_eq_zero Euclidean.plane)
     (superposition : Law.Tacit.superposition Euclidean.plane)
     (triple_incidence1 : Law.Tacit.triple_incidence1 Euclidean.plane)
     (triple_incidence2 : Law.Tacit.triple_incidence2 Euclidean.plane)
@@ -64,7 +57,7 @@ theorem euclidean_laws
   Postulate2 := Euclidean.Postulate2
   Postulate3 := Euclidean.Postulate3
   Postulate4 := Euclidean.Postulate4
-  Postulate5 := Postulate5
+  Postulate5 := Euclidean.Postulate5
   add_assoc := Euclidean.add_assoc
   add_comm := Euclidean.add_comm
   add_lt_add_right := Euclidean.add_lt_add_right
@@ -75,14 +68,14 @@ theorem euclidean_laws
   angle_eq_zero_of_same_ray := Euclidean.angle_eq_zero_of_same_ray
   angle_le_two_right := Euclidean.angle_le_two_right
   angle_symm := Euclidean.angle_symm
-  area_add_of_between := area_add_of_between
-  area_congruent := area_congruent
-  area_degenerate := area_degenerate
-  area_eq_zero_of_on_line := area_eq_zero_of_on_line
-  area_rotate := area_rotate
-  area_swap := area_swap
+  area_add_of_between := Euclidean.area_add_of_between
+  area_congruent := Euclidean.area_congruent
+  area_degenerate := Euclidean.area_degenerate
+  area_eq_zero_of_on_line := Euclidean.area_eq_zero_of_on_line
+  area_rotate := Euclidean.area_rotate
+  area_swap := Euclidean.area_swap
   between_cases := Euclidean.between_cases
-  between_of_area_add := between_of_area_add
+  between_of_area_add := Euclidean.between_of_area_add
   between_of_between_left := Euclidean.between_of_between_left
   between_of_between_right := Euclidean.between_of_between_right
   between_of_inside_chord := Euclidean.between_of_inside_chord
@@ -129,7 +122,7 @@ theorem euclidean_laws
   not_on_line_of_same_side := Euclidean.not_on_line_of_same_side
   not_same_side_of_circles_meet := Euclidean.not_same_side_of_circles_meet
   on_circle_of_len_eq := Euclidean.on_circle_of_len_eq
-  on_line_of_area_eq_zero := on_line_of_area_eq_zero
+  on_line_of_area_eq_zero := Euclidean.on_line_of_area_eq_zero
   on_line_of_between := Euclidean.on_line_of_between
   on_line_of_between_ends := Euclidean.on_line_of_between_ends
   outside_of_between := Euclidean.outside_of_between

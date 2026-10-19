@@ -14,6 +14,7 @@ import Elements.Foundations.Tacit.Transfer
 import Elements.Foundations.Words
 import Model.Laws
 import Model.Hand
+import Model.Laws.«areas-p5»
 import Model.Laws.intersections
 import Model.Laws.circles
 import Model.Laws.sides
