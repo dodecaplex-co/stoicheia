@@ -40,14 +40,28 @@ records current; CI runs it on every push.
    - a helper of I.16 that mentions I.22 only in its statement: the certificate's
      walk reads types as well as proofs, so I.16 is caught citing a later proposition;
    - a `sorry` in I.16's proof: Book I is complete, so I.16 not proved is caught.
+10. An em dash in I.1's mishnah: `check_style.py` fails with S1 and the file's name.
+11. A relative link to a missing file in README.md: `check_links.py` names the link
+    and its source file.
+12. I.1's generated page left stale beside a changed mishnah: after `render.py`, the
+    section 8 `git status --porcelain` command names the changed page. Editing just
+    the page would be repaired back to HEAD and leave that status clean.
+13. An axiom dropped from an audit lemma's expected list: `lake build Audit` fails
+    with the file's name and a `#guard_msgs` mismatch; the restored audit builds.
+14. A corrupt header in I.1's compiled `.olean`: leanchecker, invoked as in
+    `check_kernel.py`, fails naming the file and its invalid header. The original
+    bytes are restored, the module rebuilt, and the whole environment replayed.
 
-The checks these do not plant a fault for are named in README.md's table, "What the
-checks show": check_style.py, check_links.py, the pages' freshness, the audit lemmas and
-leanchecker's replay in check_kernel.py, whose own `--self-test` plants its fault,
-Postulate 5 withheld, for nanoda alone.
+These faults exercise the style and link checks, page freshness, an audit pin and
+leanchecker's loading of compiled files as well as the earlier checks. They do not
+plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s own
+`--self-test` withholds Postulate 5 from nanoda alone. README.md's table, "What the
+checks show", records these limits.
 
-The files changed are restored, and so is `facts.json`; after test 9 the proofs are
-built again from the restored files. Exits non-zero if any change goes unnoticed.
+Every new plant is restored in `finally`, including all renderer outputs; tests 9,
+13 and 14 rebuild the restored Lean outputs. Tests 10 to 14 report their elapsed time,
+restoration included, and the final Git status must match the entry status. Exits
+non-zero if a fault goes unnoticed or a restoration check fails.
 Standard library only; Python 3.11 or later, for the review records.
 """
 
@@ -56,13 +70,17 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from time import perf_counter
 
 import check_fidelity
+import check_kernel
 import heath
 
 ROOT = heath.ROOT
 PLANTED = ROOT / "Elements" / "Foundations" / "Tacit" / "Planted.lean"
 failures: list[str] = []
+GENERATED = ("facts.json", "book", "CERTIFICATE.md", "GRAPH.md", "README.md",
+             "docs/PROGRAM.md")
 
 
 def run(*cmd: str) -> subprocess.CompletedProcess:
@@ -98,6 +116,151 @@ def expect_failure(name: str, result: subprocess.CompletedProcess, *wanted: str,
         print(out[-3000:])
     else:
         print(f"✓ {name}: caught")
+
+
+def expect_success(name: str, result: subprocess.CompletedProcess) -> bool:
+    if result.returncode != 0:
+        failures.append(f"{name}: exit {result.returncode}")
+        print((result.stdout + result.stderr)[-3000:])
+        return False
+    return True
+
+
+def style_error() -> None:
+    rel = "mishnah/I/01.md"
+    path = ROOT / rel
+    saved = path.read_bytes()
+    try:
+        path.write_bytes(saved + ("\nA planted punctuation fault " + chr(0x2014)
+                                  + " here.\n").encode())
+        expect_failure("an em dash in I.1's mishnah",
+                       run(sys.executable, "scripts/check_style.py"),
+                       f"S1 {rel}:", "S1 an em dash")
+    finally:
+        path.write_bytes(saved)
+
+
+def broken_link() -> None:
+    path = ROOT / "README.md"
+    target = "book/I/planted-missing-page.md"
+    assert not (ROOT / target).exists(), f"{target} exists; update this test"
+    saved = path.read_bytes()
+    line = saved.count(b"\n") + 2
+    try:
+        path.write_bytes(saved + f"\n[Planted missing page]({target})\n".encode())
+        expect_failure("a relative link to a missing page",
+                       run(sys.executable, "scripts/check_links.py"),
+                       f"README.md:{line}: {target}: no such file: {target}")
+    finally:
+        path.write_bytes(saved)
+
+
+def generated_files() -> set[Path]:
+    paths = set()
+    for rel in GENERATED:
+        path = ROOT / rel
+        if path.is_dir():
+            paths.update(p for p in path.rglob("*") if p.is_file())
+        elif path.exists():
+            paths.add(path)
+    return paths
+
+
+def stale_page() -> None:
+    """A stale page after a source change, tested by the actual freshness command.
+
+    Rendering a hand edit alone restores HEAD, so it cannot test the post-render
+    Git status. Change the source too, then require both its rendered text and the
+    page's own status line. Save every output, including pre-existing local edits.
+    """
+    source = ROOT / "mishnah/I/01.md"
+    page = ROOT / "book/I/01.md"
+    saved_source = source.read_bytes()
+    saved = {p: p.read_bytes() for p in generated_files()}
+    command = ("git", "status", "--porcelain", "--", *GENERATED)
+    before = run(*command)
+    if not expect_success("freshness entry status", before):
+        return
+    page_status = run("git", "status", "--porcelain", "--", "book/I/01.md")
+    if not expect_success("I.1 page entry status", page_status):
+        return
+    if page_status.stdout:
+        failures.append("freshness: book/I/01.md must be clean before the plant")
+        return
+    current = b"A source sentence planted for the freshness check."
+    obsolete = b"An obsolete sentence planted in the generated page."
+    assert current not in saved_source and obsolete not in saved[page]
+    try:
+        source.write_bytes(saved_source + b"\n" + current + b"\n")
+        page.write_bytes(saved[page] + b"\n" + obsolete + b"\n")
+        if not expect_success("rendering the stale page",
+                              run(sys.executable, "scripts/render.py")):
+            return
+        status = run(*command)
+        if not expect_success("freshness status", status):
+            return
+        rendered = page.read_bytes()
+        if (current not in rendered or obsolete in rendered
+                or status.stdout.splitlines() != sorted(
+                    [*before.stdout.splitlines(), " M book/I/01.md"], key=lambda s: s[3:])):
+            failures.append("freshness: expected the rendered source and ' M book/I/01.md'")
+            print(status.stdout)
+        else:
+            print("✓ a stale generated page: caught by git status:  M book/I/01.md")
+    finally:
+        source.write_bytes(saved_source)
+        for path in generated_files() - saved.keys():
+            path.unlink()
+        for path, data in saved.items():
+            path.write_bytes(data)
+        after = run(*command)
+        if expect_success("restored freshness status", after):
+            if after.stdout != before.stdout:
+                failures.append("freshness: generated paths did not return to their entry status")
+            else:
+                print("✓ freshness: generated paths restored to their entry status")
+
+
+def changed_audit_pin() -> None:
+    rel = "Audit/Overlaps.lean"
+    path = ROOT / rel
+    saved = path.read_bytes()
+    pin = b"'Audit.III_2' depends on axioms: [Elements.Tacit.inside_of_between]"
+    assert saved.count(pin) == 1, "Audit.III_2's pin has changed; update this test"
+    try:
+        path.write_bytes(saved.replace(pin, b"'Audit.III_2' depends on axioms: []"))
+        expect_failure("an axiom dropped from Audit.III_2's pin", run("lake", "build", "Audit"),
+                       f"{rel}:", "Docstring on `#guard_msgs` does not match generated message",
+                       "Audit.III_2", "Elements.Tacit.inside_of_between")
+    finally:
+        path.write_bytes(saved)
+        expect_success("the restored audit build", run("lake", "build", "Audit"))
+
+
+def corrupt_olean() -> None:
+    """Exercise leanchecker's loader, without pretending to plant an invalid proof."""
+    bin_ = check_kernel.toolchain_bin()
+    command = ("lake", "env", str(bin_ / "leanchecker"), "--fresh", "Elements")
+    path = ROOT / ".lake/build/lib/lean/Elements/BookI/Prop01.olean"
+    saved = path.read_bytes()
+    assert saved.startswith(b"olean"), "I.1's compiled header has changed; update this test"
+    try:
+        path.write_bytes(b"broken" + saved[6:])
+        expect_failure("a corrupt compiled header read by leanchecker", run(*command),
+                       "failed to read file", "Elements/BookI/Prop01.olean", "invalid header")
+    finally:
+        path.write_bytes(saved)
+        # Removing this restored output forces Lake to rebuild it from its source.
+        # If rebuilding fails, retain the original, known-good compiled bytes.
+        rebuilt = False
+        try:
+            path.unlink()
+            rebuilt = expect_success("the restored Elements build", run("lake", "build"))
+        finally:
+            if not rebuilt:
+                path.write_bytes(saved)
+        if rebuilt:
+            expect_success("leanchecker's replay after restoration", run(*command))
 
 
 def heath_word() -> None:
@@ -455,6 +618,9 @@ def remark_ends_run() -> None:
 
 def planted_assumptions() -> None:
     facts = (ROOT / "facts.json").read_text()
+    output_dirs = [ROOT / ".lake/build" / kind / "Elements/Foundations/Tacit"
+                   for kind in ("lib/lean", "ir")]
+    outputs = {p: p.read_bytes() for d in output_dirs for p in d.glob("Planted.*")}
     PLANTED.write_text(
         "import Elements.Foundations.Words\n\n"
         "namespace Elements.Tacit.Euclidean\n\n"
@@ -532,9 +698,18 @@ def planted_assumptions() -> None:
         rebuilt = run("lake", "build")
         if rebuilt.returncode != 0:
             failures.append("the restored files did not build again")
+        for directory in output_dirs:
+            for path in directory.glob("Planted.*"):
+                if path not in outputs:
+                    path.unlink()
+        for path, data in outputs.items():
+            path.write_bytes(data)
 
 
 def main() -> int:
+    before = run("git", "status", "--porcelain")
+    if not expect_success("entry Git status", before):
+        return 1
     heath_word()
     wrong_radii()
     weakened_postulate()
@@ -547,8 +722,21 @@ def main() -> int:
     native_decide()
     forbidden_commands()
     planted_assumptions()
+    for test in (style_error, broken_link, stale_page, changed_audit_pin, corrupt_olean):
+        started = perf_counter()
+        try:
+            test()
+        finally:
+            print(f"  {test.__name__}: {perf_counter() - started:.2f}s (including restoration)")
+    after = run("git", "status", "--porcelain")
+    if expect_success("final Git status", after):
+        if after.stdout != before.stdout:
+            failures.append("the working tree did not return to its entry Git status")
+            print(after.stdout)
+        else:
+            print("✓ working tree restored to its entry Git status")
     if failures:
-        print(f"{len(failures)} change(s) went unnoticed:")
+        print(f"{len(failures)} negative-test failure(s):")
         for f in failures:
             print("  ✗ " + f)
         return 1

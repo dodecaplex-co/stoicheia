@@ -1334,3 +1334,20 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+- **Planted faults for the remaining checks.** `scripts/negative_tests.py` now plants an
+  em dash in I.1's mishnah, caught by S1 with the file named; a relative link to a
+  missing page, caught with the source and target named; a generated I.1 page stale
+  beside a changed mishnah, caught by the page's Git status line after rendering; and
+  an axiom omitted from an audit lemma's expected list, caught by `#guard_msgs` in
+  `lake build Audit`. The freshness test changes the source as well: editing only the
+  page would let the renderer restore the committed text and leave Git status clean.
+  A corrupt header in I.1's compiled file makes leanchecker itself name the file and
+  report its invalid header, using the invocation in `scripts/check_kernel.py`.
+  This tests the loading of compiled files; no invalid proof term is planted for the
+  kernel replay. Each new plant is restored in `finally`, every renderer output is
+  saved, the affected Lean outputs are rebuilt, and leanchecker replays the restored
+  environment. Each new test reports its time, restoration included; the final Git
+  status must match the entry status. The existing assumptions test also restores or
+  removes its temporary module's build outputs. The docstring and the README's table
+  state the coverage and its limits. The protected file changed is
+  `scripts/negative_tests.py`. No check is loosened.
