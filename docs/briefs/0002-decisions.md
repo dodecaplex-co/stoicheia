@@ -961,3 +961,9 @@ findings:
 - **The formal model's lock hash renewed with stage 2's words.** Stage 2's move adds
   words that only the statements of companions use, so `model/lock.sha256` is renewed
   with `tests/model/lock.sha256`, as its own comment says; no law of the model changes.
+- **The style rules' new cases live with the others.** When the owner's style decision
+  (#70) met the move of check_style's cases into a test (#44), its new cases for S10's
+  boundary (`$…$` allowed in "the modern way", TeX refused elsewhere, delimiters balanced)
+  joined the phrase and ink cases in
+  [`tests/test_check_style.py`](../../tests/test_check_style.py); every case of both is
+  kept (44 phrase, 44 S10 and 33 ink cases), none weakened.
