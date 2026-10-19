@@ -20,10 +20,10 @@ note = "Heath brackets the Porism, after Heiberg. It is proved as its own theore
 
 [review]
 stage = "full"
-commit = "7397642"
-reviewer = "Claude Opus 5.5, records review"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:eb3dee5d6e74fb41"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"
