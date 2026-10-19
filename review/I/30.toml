@@ -17,7 +17,7 @@ note = "Euclid's GK crosses EF, as in his figure. When EF lies outside AB and CD
 at = "For let the straight line GK fall upon them"
 kind = "helper"
 helper = "OppositeSides.exists_between"
-note = "Euclid draws GK through H on EF; `OppositeSides.exists_between` supplies that meeting point between G and K when EF separates them. The Lean takes F on EF off GK and produces FH to E, so E and F lie on opposite sides of GK; `Prop30.point_on_side` then puts A on E's side and D on F's side of GK, before the Lean produces AG to B and DK to C."
+note = "Euclid reads from his figure that GK meets EF at H, between G and K; `OppositeSides.exists_between` supplies this point when EF separates G and K. The Lean chooses A, B, C, D, E and F afresh on the given straight lines, since the conclusion concerns whole lines: it takes F on EF off GK and produces FH to E, putting E and F on opposite sides of GK, uses `Prop30.point_on_side` to put A on AB on E's side and D on CD on F's side of GK, then produces AG to B and DK to C."
 
 [[passage]]
 at = "and they are alternate"
