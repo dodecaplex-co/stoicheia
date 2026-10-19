@@ -88,6 +88,9 @@ theorem Prop36 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
       -- FB, BD.
       -- Let the square on FB be subtracted from each;
       -- therefore the rectangle AD, DC which remains is equal to the square on the tangent DB.
+      /- These sentences are carried out step by step in `Prop36.through_centre` above:
+         III.18, II.6, I.47, then subtraction of the square on FB. III.37 shares this
+         calculation. -/
       exact Prop36.through_centre hF hA hB hC hDCA (hthrough F hF) hDB
     -- Again, let DCA not be through the centre of the circle ABC;
     -- let the centre E be taken, and from E let EF be drawn perpendicular to AC;

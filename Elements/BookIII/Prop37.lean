@@ -97,6 +97,9 @@ theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
   -- AD, DC be equal to the square on DB.
   -- I say that DB touches the circle ABC.
   have hresult : Touches D B ABC := by
+    /- We take the case of Euclid's last sentence first: the centre on AC, proved in
+       `Prop37.centre_on_secant`. The general argument below takes every other
+       position of the centre. -/
     by_cases hthrough : ∃ F : Point, Centre F ABC ∧ Collinear A C F
     · obtain ⟨F, hF, hACF⟩ := hthrough
       exact Prop37.centre_on_secant hF hD hA hB hC hDCA hACF h
@@ -146,8 +149,7 @@ theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
         hBD.of_collinear ⟨M, hB_M, hD_M, hD_M⟩ ⟨M, hB_M, hD_M, hB_M⟩ hDB
       exact hDB_touch
   -- Similarly this can be proved to be the case even if the centre be on AC.
-  /- The first branch proves this case explicitly in `Prop37.centre_on_secant`,
-     using the diameter calculation shared with III.36. -/
+  /- The first branch above proves this case. -/
   -- Therefore etc.
   -- Q. E. D.
   exact hresult
