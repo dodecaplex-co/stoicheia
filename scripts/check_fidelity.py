@@ -215,6 +215,13 @@ def read_lean(src: str) -> tuple[str, list[int]]:
     return "".join(out), unsure
 
 
+def without_comments(src: str) -> str:
+    """The Lean with its comments and the text of its string literals blanked, as
+    `read_lean` reads it: what `scripts/render.py` searches for a declaration's uses, so a
+    name in a comment, a docstring or a string is no use."""
+    return read_lean(src)[0]
+
+
 def _find(src: str, s: str, i: int) -> int:
     """The offset of `s` in `src` from `i` on, or the end of `src`."""
     k = src.find(s, i)
