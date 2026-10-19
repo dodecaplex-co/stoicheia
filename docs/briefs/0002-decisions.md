@@ -1327,4 +1327,5 @@ findings:
   lock. This is step 1's third item in [brief 0008](0008-centre.md), section 6: without it,
   the pull request that adds the rule that every circle has a centre could not pass. Today
   the lock holds 87, so the test expects what it expected before; nothing else in the
-  script, and no check, changes. Protected file changed: `scripts/negative_tests.py`.
+  script, and no check, changes. The one protected file it changes is
+  `scripts/negative_tests.py`.
