@@ -321,13 +321,13 @@ QUOTATION = re.compile(r'"[^"]*"')
 SQUARE = re.compile(r"\[[^\[\]\n]*\](?![(\[])")
 
 
-def blank_code(text: str) -> str:
+def blank_code(text: str, *, indented_code: bool = True) -> str:
     """Fenced blocks, code spans and HTML comments blanked: what a reader reads as prose,
     quotations included."""
-    syntax = markdown_syntax(text)
+    syntax = markdown_syntax(text, indented_code=indented_code)
     ranges = (syntax.comments + syntax.destinations
               + [(span.start, span.end) for span in syntax.spans]
-              + markdown_blocks(text).fences)
+              + markdown_blocks(text, indented_code=indented_code).fences)
     return blank_ranges(text, ranges)
 
 
@@ -968,7 +968,7 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     return found
 
 
-def markdown_blocks(text: str) -> MarkdownBlocks:
+def markdown_blocks(text: str, *, indented_code: bool = True) -> MarkdownBlocks:
     """The inline leaf blocks, fences and comment blocks of a Markdown text, with source
     offsets retained after block quote and list markers are removed."""
     blocks: list[InlineBlock] = []
@@ -1095,6 +1095,12 @@ def markdown_blocks(text: str) -> MarkdownBlocks:
         if consumed:
             continue
 
+        indented = body.startswith("    ") or body.startswith("\t")
+        if indented_code and body.strip() and indented and not (chars and container == own):
+            flush()
+            fences.append((line_start, line_end))
+            continue
+
         opened_comment = re.match(r"^ {0,3}<!--", body)
         if opened_comment and "-->" not in body[opened_comment.end():]:
             flush()
@@ -1102,7 +1108,7 @@ def markdown_blocks(text: str) -> MarkdownBlocks:
             comment_start = line_start
             continue
 
-        if list_item and own == (quote, None):
+        if list_item and own == (quote, None) and body.strip():
             list_item = None
 
         opened = FENCE_LINE.match(body)
@@ -1147,6 +1153,13 @@ class MarkdownSyntax(NamedTuple):
     spans: list[CodeSpan]
     comments: list[tuple[int, int]]
     destinations: list[tuple[int, int]]
+
+
+class LinkDestination(NamedTuple):
+    start: int
+    end: int
+    label: int
+    deactivates_links: bool
 
 
 def offset_runs(offsets: list[int]) -> list[tuple[int, int]]:
@@ -1195,24 +1208,24 @@ def reference_title(text: str) -> bool:
     return at == len(text) - 1
 
 
-def reference_definition(line: str) -> bool:
-    """Whether one line is a complete CommonMark link-reference definition."""
+def reference_definition_title(line: str) -> bool | None:
+    """Whether a valid reference definition has a same-line title, or None if invalid."""
     match = REFERENCE_LABEL.match(line)
     if not match or not match.group(1).strip():
-        return False
+        return None
     at = match.end()
     while at < len(line) and line[at] in " \t":
         at += 1
     if at == len(line):
-        return False
+        return None
     if line[at] == "<":
         at += 1
         while at < len(line) and line[at] != ">":
             if line[at] == "<" or ord(line[at]) < 0x20:
-                return False
+                return None
             at += 2 if escapes_punctuation(line, at) else 1
         if at == len(line):
-            return False
+            return None
         at += 1
     else:
         depth = 0
@@ -1226,29 +1239,50 @@ def reference_definition(line: str) -> bool:
             elif line[at] == ")":
                 depth -= 1
                 if depth < 0:
-                    return False
+                    return None
             elif line[at] == "<" or ord(line[at]) < 0x20:
-                return False
+                return None
             at += 1
         if at == start or depth:
-            return False
+            return None
     if at == len(line):
-        return True
-    if line[at] not in " \t":
         return False
+    if line[at] not in " \t":
+        return None
     tail = line[at:].strip()
-    return not tail or reference_title(tail)
+    if not tail:
+        return False
+    return True if reference_title(tail) else None
 
 
-def reference_destination_ranges(text: str) -> list[tuple[int, int, int]]:
+def reference_definition(line: str) -> bool:
+    """Whether one line is a complete CommonMark link-reference definition."""
+    return reference_definition_title(line) is not None
+
+
+def reference_destination_ranges(text: str) -> list[LinkDestination]:
     """The consecutive link-reference definitions at the start of an inline block."""
     found = []
+    lines = []
     offset = 0
     for line in text.split("\n"):
-        if not reference_definition(line):
-            break
-        found.append((offset, offset + len(line), offset))
+        lines.append((offset, line))
         offset += len(line) + 1
+    k = 0
+    while k < len(lines):
+        start, line = lines[k]
+        titled = reference_definition_title(line)
+        if titled is None:
+            break
+        end = start + len(line)
+        if not titled and k + 1 < len(lines):
+            title_start, title_line = lines[k + 1]
+            continuation = re.fullmatch(r" {0,3}(\S.*)", title_line)
+            if continuation and reference_title(continuation.group(1)):
+                end = title_start + len(title_line)
+                k += 1
+        found.append(LinkDestination(start, end, start, False))
+        k += 1
     return found
 
 
@@ -1352,10 +1386,11 @@ def matching_link_label(text: str, close: int) -> int | None:
     return None
 
 
-def link_destination_ranges(text: str) -> list[tuple[int, int, int]]:
+def link_destination_ranges(text: str) -> list[LinkDestination]:
     """Link destinations and their label starts in one inline block."""
     found = reference_destination_ranges(text)
-    found += [(m.start(), m.end(), m.start()) for m in AUTOLINK.finditer(text)]
+    found += [LinkDestination(m.start(), m.end(), m.start(), False)
+              for m in AUTOLINK.finditer(text)]
     for match in re.finditer(r"\]\(", text):
         close = match.start()
         label = matching_link_label(text, close)
@@ -1363,17 +1398,19 @@ def link_destination_ranges(text: str) -> list[tuple[int, int, int]]:
             continue
         end = inline_destination_end(text, close + 1)
         if end is not None:
-            found.append((close, end, label))
+            image = (label > 0 and text[label - 1] == "!"
+                     and backslashes_before(text, label - 1) % 2 == 0)
+            found.append(LinkDestination(close, end, label, not image))
     return sorted(found)
 
 
-def markdown_syntax(text: str) -> MarkdownSyntax:
+def markdown_syntax(text: str, *, indented_code: bool = True) -> MarkdownSyntax:
     """The CommonMark code spans and HTML comments of a Markdown text, with source offsets.
     Comments are the container-bounded comment blocks and the closed inline comments. In
     each inline leaf block, a code span and an inline comment are read in source order:
     whichever opens first is read, so a comment hides the backticks inside it, and a code
     span the comment markers inside it."""
-    parsed = markdown_blocks(text)
+    parsed = markdown_blocks(text, indented_code=indented_code)
     spans: list[CodeSpan] = []
     comments = list(parsed.comments)
     destinations = []
@@ -1382,16 +1419,19 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
         openers = [m.start() for m in re.finditer("<!--", block.text)
                    if backslashes_before(block.text, m.start()) % 2 == 0]
         links = link_destination_ranges(block.text)
+        active = {link.label: True for link in links}
         consumed: list[tuple[int, int]] = []
         i, pos = 0, 0
         while True:
             while i < len(ticks) and ticks[i][0] < pos:
                 i += 1
             opener = next((at for at in openers if at >= pos), len(block.text))
-            link = next(((a, b, label) for a, b, label in links
-                         if a >= pos and not any(start <= label < end
-                                                for start, end in consumed)),
-                        (len(block.text), len(block.text), len(block.text)))
+            link = next((candidate for candidate in links
+                         if candidate.start >= pos and active[candidate.label]
+                         and not any(start <= candidate.label < end
+                                     for start, end in consumed)),
+                        LinkDestination(len(block.text), len(block.text),
+                                        len(block.text), False))
             if i < len(ticks) and ticks[i][0] < min(opener, link[0]):
                 raw_start, opened = ticks[i]
                 start = raw_start + backslashes_before(block.text, raw_start) % 2
@@ -1411,9 +1451,14 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
                 consumed.append((start, end))
                 pos = end
                 continue
-            if link[0] < opener:
-                destinations.extend(offset_runs(block.offsets[link[0]:link[1]]))
-                pos = link[1]
+            if link.start < opener:
+                destinations.extend(offset_runs(block.offsets[link.start:link.end]))
+                if link.deactivates_links:
+                    for outer in links:
+                        if (outer.deactivates_links and outer.label < link.label
+                                and link.end <= outer.start):
+                            active[outer.label] = False
+                pos = link.end
                 continue
             if opener == len(block.text):
                 break
@@ -1427,9 +1472,9 @@ def markdown_syntax(text: str) -> MarkdownSyntax:
     return MarkdownSyntax(spans, comments, destinations)
 
 
-def code_span_details(text: str) -> list[CodeSpan]:
+def code_span_details(text: str, *, indented_code: bool = True) -> list[CodeSpan]:
     """The CommonMark code spans in inline leaf blocks, with their source offsets."""
-    return markdown_syntax(text).spans
+    return markdown_syntax(text, indented_code=indented_code).spans
 
 
 def markdown_code_spans(text: str):
@@ -1450,13 +1495,13 @@ def blank_html_comments(text: str) -> str:
     return blank_ranges(text, html_comment_spans(text))
 
 
-def letter_spans(text: str) -> str:
+def letter_spans(text: str, *, indented_code: bool = True) -> str:
     """S22's reading: `text` with every code span blanked but those that hold letters
     alone (LETTERS_ONLY), and everything outside a code span blanked too, so that
     LETTERS_IN_CODE finds each such span and nothing across two spans."""
     out = re.sub(r"[^\n]", " ", text)
     chars = list(out)
-    for span in code_span_details(text):
+    for span in code_span_details(text, indented_code=indented_code):
         if LETTERS_ONLY.fullmatch(span.content):
             for offset in span.offsets:
                 chars[offset] = text[offset]
@@ -1546,11 +1591,11 @@ def check_text(path: Path, raw: str, scopes: set[str], *, new: bool = False,
     finding."""
     raw = raw.replace("\r\n", "\n")
     straight = straighten(raw)
-    code_free = blank_code(straight)
-    outside = blank_quotes(code_free)
     prose, cat, readme = "prose" in scopes, "catalogue" in scopes, "readme" in scopes
     notes, gen = "lean" in scopes, "generated" in scopes
     review, reports_, rendered = "review" in scopes, "report" in scopes, "rendered" in scopes
+    code_free = blank_code(straight, indented_code=not notes)
+    outside = blank_quotes(code_free)
 
     line_at = line_at or text_lines(raw)
 
@@ -1561,7 +1606,7 @@ def check_text(path: Path, raw: str, scopes: set[str], *, new: bool = False,
                  new=new or reach, passed=passed, collect=collect)
 
     if prose or review or cat or readme or notes or reports_:
-        find("S1", EM_DASH, blank_code(raw))
+        find("S1", EM_DASH, blank_code(raw, indented_code=not notes))
     if prose or review or cat or readme or notes:
         find("S2", CREW, outside)
         find("S3", FIRST_PERSON, outside)
@@ -1579,12 +1624,12 @@ def check_text(path: Path, raw: str, scopes: set[str], *, new: bool = False,
     elif readme or notes:
         find("D10", DEFINITION, defs, failing=False, passed=replaced.get("S7", frozenset()))
     if prose or review or cat or reports_:
-        find("S8", CURLY, blank_code(raw))
+        find("S8", CURLY, blank_code(raw, indented_code=not notes))
     if prose or review or cat or notes:
         find("S9", ITALIC_LETTER, code_free)
     if prose or review or cat or notes or reports_ or gen:
         find("S22", LETTERS_IN_CODE,
-             letter_spans(blank_html_comments(straight)), reach=True)
+             letter_spans(straight, indented_code=not notes), reach=True)
     if prose or readme:
         find("D6", COMPARISON, outside, failing=False)
     if prose or review or cat or notes:
@@ -1745,8 +1790,7 @@ class LeanName(NamedTuple):
 def lean_name_occurrences(text: str, binders: bool = True, *, all_uses: bool = False) -> list[LeanName]:
     """The first visible occurrence of each Lean name, or every use for classification."""
     names = []
-    visible = blank_html_comments(text)
-    for span in code_span_details(visible):
+    for span in code_span_details(text):
         inner = span.content.strip()
         binder = BINDER.match(inner) if binders else None
         name = inner if IDENT.fullmatch(inner) else binder.group(1) if binder else None
@@ -1765,7 +1809,7 @@ def lean_names(text: str, binders: bool = True) -> list[str]:
 
 def check_mishnah(path: Path, raw: str) -> None:
     ref = ref_of(path)
-    text = blank_fences(blank_html_comments(raw))
+    text = blank_html_comments(blank_fences(raw))
     for a, b, msg in tex_findings(text):
         fail("S10", path, line_of(text, a), f"{msg}: {excerpt(raw, a, b)}")
     for pattern, allowed in REFRAINS:
@@ -1913,7 +1957,7 @@ def report_non_declaration(t: NamedText, occurrence: LeanName,
         return 'a namespace prefix, not a complete declaration name'
     before = t.text[:at]
     if re.search(r'(?i:\bnamespace)\s+`+' + re.escape(name) + r'`+',
-                 blank_fences(blank_html_comments(t.text))):
+                 blank_html_comments(blank_fences(t.text))):
         return 'explicitly identified as a namespace in this report'
     if re.search(r'\btactics?\s+(?:`+[^`]+`+\s*(?:/|,|and|or)\s*)*$', before, re.I):
         return 'explicitly described as a tactic (possibly of another project)'
