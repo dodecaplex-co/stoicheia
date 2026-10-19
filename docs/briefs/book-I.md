@@ -94,8 +94,12 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   `Prop29.interior`, `Prop29.exterior`, `Prop31.line`, `Prop34.bisect`, and
   `Prop46.square_eq` with `Prop46.side_eq` (squares on equal straight lines are equal, and
   conversely, as Heath reports Proclus proving under I.46).
-- **Companions after their propositions** (the exceptions, below): I.40's and I.45's; and,
-  in `Prop45.lean` before `Prop45.fan`, the bridge `Fitted.fan`, which cites I.13.
+- **Companions after their propositions** (the exceptions, below): I.40's, I.45's and
+  I.47's; and, in `Prop45.lean` before `Prop45.fan`, the bridge `Fitted.fan`, which cites
+  I.13.
+
+19 October 2026: the statement of `Prop47.general` was challenged by an independent reader
+who wrote none of it, and approved as written by the coordinator.
 
 ## The statements' choices
 
@@ -123,17 +127,18 @@ Each was approved before its voyage, and the reasons are in the first mates' rep
 
 ## Exceptions
 
-The review records in `review/I/` are the authority, proposition by proposition. These are
-the exceptions the outside review named, and stage 2 of
-[brief 0006](0006-statements.md) answers both with companions, so that each record's scope
-is `full`:
+The review records in `review/I/` are the authority, proposition by proposition. Stage 2 of
+[brief 0006](0006-statements.md) answered I.40 and I.45 with companions. `Prop47.general`
+makes the transfer from outward squares to squares on either side explicit. Each record's
+scope is `full`:
 
 | Proposition | Main theorem | Companions | Tag |
 |---|---|---|---|
 | I.40 | the equal bases meet end to end, as BC and CE | `Prop40.general`, for equal bases anywhere on one straight line; `Prop40.join` and `Prop40.special` | |
 | I.45 | the figure is two triangles, unchecked | `Prop45.apart`, for any figure given with triangles that lie apart; `Prop45.figure` and `Prop45.fan`, the main companion, beside it; `Prop45.append` and `Prop45.sum`, the construction | `figure-with-dissection` |
+| I.47 | the three squares stand outward from the triangle | `Prop47.general`, for squares independently on either side of each base | |
 
-Both main theorems stay as Euclid's worked configuration, with the general theorems beside
+These main theorems stay as Euclid's worked configuration, with the general theorems beside
 them as companions ([FORMALIZATION.md](../FORMALIZATION.md), section 2).
 
 Two proofs follow Euclid with one step changed: I.39, and I.40 after it, make the end of
