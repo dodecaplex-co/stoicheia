@@ -4,6 +4,7 @@
 
 - **Placement has no time limit and no fallback.** The owner decided on 17 October that III.24 waits for a proved placement lemma, and that a fact the axioms lack is a decision for the owner, never a quiet new axiom. "Timeboxed", the fallback congruence and "if the fallback was used" are removed; the verification line for placement, which could never pass, is restated; the corrections to the design and the order of work, spike first, are added under stage 3.
 - **I.45 and II.14 are stated as Euclid and Byrne state them.** The owner's decision, later on 17 October, replaces the general dissection (`Rectilineal`, `Fitted`) with a figure given by its corners and taken as divided by the straight lines from one corner (stage 2, and the places that named a dissection).
+- **I.45 and II.14 are full** (18 October, after the revision above). [Brief 0006](0006-statements.md), as revised and frozen, takes them `full`: the figure is given with its division into triangles, checked, as triangles that lie apart (`Apart`), as triangles glued edge to edge (`Fitted`, `Rectilineal`, restored), or as Euclid's and Byrne's from one corner, with the two conditions that make it a division. Its statements, proved, are now in the edition. The passages of stage 2 below that speak of a figure given by its corners alone are kept as they stood, each with a note.
 - **Landing work: pull requests,** a new section: a pointer to the pull-request discipline of docs/WORKFLOW.md, section 10, which lands with pull request #1, and the branches stages 2, 3 and 4 work on.
 - **The colour figures are to carry Heath's letters,** the owner's decision of 17 October, taken after stage 1b was done (stages 1b, 5 and 6).
 - **What remains of stages 1 and 1b** is kept in docs/PROGRAM.md, with the state of the work; a line at the end of stage 1b points to it.
@@ -353,6 +354,8 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 - Proof: Euclid's own argument (`Prop31.line`, `Prop30.meet`, I.38 already general, `OnRay.eq_of_area_eq`). It covers separated, touching, overlapping and oppositely named bases.
 
 *I.45 for a figure given by its corners* (revised 18 October, to the owner's decision later on 17 October)
+
+*Overtaken later on 18 October by brief 0006, as revised and frozen: I.45 is `full`, by `Prop45.apart`, for any figure given with triangles that lie apart, beside `Prop45.figure`, for a figure with one boundary glued together, and `Prop45.fan`, the main companion, for the division from one corner with its two conditions checked; `Rectilineal`, `Fitted` and `Prop45.sum` are restored. The design below is kept as it stood.*
 - A rectilineal figure is given by its corners A₀, A₁, …, Aₙ, in order round it, and taken as one that the straight lines from A₀ divide into the triangles A₀A₁A₂, A₀A₂A₃, …, A₀Aₙ₋₁Aₙ, as Euclid and Byrne divide it: Euclid's DB divides his ABCD into ABD and DBC. Every convex figure is so divided from any corner, Euclid's ABCD among them. Byrne's I.45 figure is not convex, and both his lines start from its re-entrant corner. A figure that is not convex may need its first corner chosen, and some figures have no such corner.
 - `Prop45.append`: the parallelogram so far plus one triangle, preserving the angle (the second half of I.45's proof).
 - `Prop45.figure`: a parallelogram in the given angle equal to those triangles taken together, built one triangle at a time, I.42 for the first and `Prop45.append` for each of the rest. Euclid's ABCD with DB joined is the case of four corners, D, A, B and C.
@@ -365,6 +368,8 @@ What remains of stages 1 and 1b is kept in [docs/PROGRAM.md](../PROGRAM.md), sec
 - `Prop1.general`: induction over `InOrder (B :: ps)`, rect(A; B, end) = Σ rect over consecutive pieces. One and two pieces are included, and the three-piece result is `[D, E, C]`.
 
 *II.14 general* (revised 18 October, with I.45)
+
+*Overtaken later on 18 October by brief 0006, as revised and frozen, as for I.45: `Prop14.apart` and `Prop14.square` carry `full`, beside `Prop14.figure` and `Prop14.fan`; `Prop14.sum` takes any list of triangles. The design below is kept as it stood.*
 - `Prop14.rectangle` is proved directly, by the second part of Euclid's proof, keeping his semicircle and his cases (II.5 and I.47), and does not cite II.14. (Revised 18 October, as brief 0006 decides: the first text applied Prop14 to the rectangle's two halves, a route now withdrawn, since it would prove II.14 from II.14.)
 - `Prop14.general`, for a figure given by its corners, by `Prop45.figure` with a right angle, then the rectangle.
 - `Prop14.square` returns `Square P Q S T` with its area (I.46, `Square.described`), equal to the figure's triangles taken together. As in I.45, nothing is claimed of another division.
@@ -460,7 +465,7 @@ The order of work, de-risking first:
 - **A start-to-finish read-through:** 6 sequential readers, a measurer, 3 figure auditors, a judge, a critic and a fixer. Its findings feed the standards documents.
 - **The pilot check Astra asks for.** The guide is piloted on three kinds of task in stages 2–4, each worked by parallel contributors with disjoint files:
   - a straightforward one (II.1 general);
-  - a construction or generalization (I.45 and II.14 for a figure given by its corners; revised 18 October, from "over a dissection");
+  - a construction or generalization (I.45 and II.14 for a figure given by its corners; revised 18 October, from "over a dissection"; and, by brief 0006 as frozen, for a figure given with a checked division into triangles);
   - a representation or route exception (III.24 with its alternative proof).
 
   An independent editor then reads the resulting pages consecutively, for shared voice, consistent terms, truthful scope and an even depth of explanation. The defaults and examples are adjusted before stage 5 applies the guide to all 99.
@@ -500,7 +505,7 @@ This gates the consolidation release.
 - [machine] The completion summary is generated and true.
 - [machine] The gap catalogue and overlap catalogue are current.
 - [review] Reading the book straight through, it flows and the voice is common.
-- [review] The remaining limitations are deliberate, few and stated plainly. For Books I and II, I.45 and II.14 cover only a figure that the straight lines from one of its corners divide, and do not prove that another division gives the same area. For Book III these are only the mixed-angle clauses of III.16/31 and the III.2-style overlaps. (Revised 18 October: with no fallback for placement, III.24's alternative proof is no longer a limitation, and the limits of the corners form are added.)
+- [review] The remaining limitations are deliberate, few and stated plainly. For Books I and II, I.45 and II.14 cover only a figure that the straight lines from one of its corners divide, and do not prove that another division gives the same area. For Book III these are only the mixed-angle clauses of III.16/31 and the III.2-style overlaps. (Revised 18 October: with no fallback for placement, III.24's alternative proof is no longer a limitation, and the limits of the corners form are added. Overtaken later that day by brief 0006, as frozen: I.45 and II.14 take any figure given with a checked division into triangles, and what they leave unproved is that every figure can be so divided and that another division gives the same sum, as the tag `figure-with-dissection` states.)
 
 **`scripts/check_acceptance.py`** checks every [machine] item across all 99 propositions. It reads every [review] item from the review records (each must be `pass` with a reviewer and a commit). It writes `docs/reports/acceptance-books-I-III.md`: a table per proposition and per book, with every failure listed. CI runs it, and **the consolidation tag requires zero failures**.
 
@@ -576,7 +581,7 @@ The same table, with each done-criterion, goes into `docs/reports/outside-review
 | Jump links, bottom nav, fold helpers, scope by the badge, scan links | 1d, 1f |
 | Prototype each new foundation; settle Book IV interfaces first | 5 (after) |
 | 95: semantic review of all 99 with the five relationships, records keyed to a revision, exceptions near the status | 1d (exceptions), 5 (full), 1k (visible notes) |
-| 95: I.40 general; I.45 over a supplied dissection | 2 (I.45 for a figure given by its corners, divided as Euclid and Byrne divide it; revised 18 October) |
+| 95: I.40 general; I.45 over a supplied dissection | 2 (I.45 for a figure given by its corners, divided as Euclid and Byrne divide it; revised 18 October; then, by brief 0006 as frozen, over a supplied dissection, checked) |
 | 95: II.1 any number; II.14 general with a drawn Square; Book II area correspondence | 2, 5 |
 | 95: arcs by membership, kinds by the centre, theorems (i) and (ii) | 3 |
 | 95: III.24 congruence, alternative proof displayed, Euclid's proof in full | 3 |
