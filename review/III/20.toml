@@ -17,6 +17,6 @@ note = "Euclid leaves out E on AB or on AC, which his proof plainly covers (Heat
 
 [review]
 stage = "exceptions"
-commit = "c900c89"
+commit = "66e9871"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:5e57ea5cc70ef693"
+lean = "sha256:ccd8afe1c9a04254"

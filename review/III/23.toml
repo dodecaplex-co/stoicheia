@@ -18,6 +18,6 @@ note = "Simson's preliminary (Heath, vol. 2, p. 53): by III.10 the circles meet 
 
 [review]
 stage = "exceptions"
-commit = "c900c89"
+commit = "66e9871"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:314961b131104353"

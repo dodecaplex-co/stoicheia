@@ -17,6 +17,6 @@ note = "The circle comes with a centre. III.1, which takes it, needs two points 
 
 [review]
 stage = "exceptions"
-commit = "c900c89"
+commit = "66e9871"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:265af7468f2da455"
+lean = "sha256:508a9e9de0054363"
