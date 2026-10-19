@@ -13,6 +13,7 @@ note = "The circle comes with a centre (`∃ D, Centre D ABC`), which the proof 
 
 [overlap]
 rule = "Tacit.inside_of_between"
+kind = "states"
 note = "System E's Circle 2 contains III.2, and Circle 3, the same rule turned round, gives it at once. Our III.2 rests on neither: it is Euclid's argument, by I.5, I.16 and I.19, and III.1, from which it takes its centre, puts its own middle point within the circle by the same argument."
 
 [[passage]]
