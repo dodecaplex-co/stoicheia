@@ -8,11 +8,16 @@ Brief 0012, sections 7 and 9. The circumferences that the sides of a figure insc
 circle cut off, each named by the angle standing on it at the next corner, make up the
 whole circle, for any number of corners: by induction, taking away the second corner and
 adding its two circumferences into one (`Circumference.add`, from stage 3, imported from
-`Staging`). Until brief 0008's rule lands, the centre is a hypothesis (`hα`). Proved by a
-Codex sailor (OpenAI's Codex, at its highest reasoning setting) on 19 October 2026, at
-`89c5da4`; a second sailor, working independently, reported a complete proof too, and
-this one, the shorter, was kept. Nothing builds this file, and `lake env lean` checks it,
-once `Staging` is built.
+`Staging`). Until brief 0008's rule lands, the centre is a hypothesis (`hα`). Its own steps
+take a point of a chord within the circle by III.2 (`BookIII.Prop2.within` and
+`BookIII.Prop2.triangle`), not by Circle 2, which no proof of the edition rests on since
+#60; it still rests on Circle 2 through the staged `Circumference.add`, which takes Book
+Zero's `exists_onCircle_oppositeSidesOf` where III.2's `Prop2.oppositeSide` would serve
+(stage 3's move, #25). Proved by a Codex sailor (OpenAI's Codex, at its highest reasoning
+setting) on 19 October 2026, at `89c5da4`; a second sailor, working independently,
+reported a complete proof too, and this one, the shorter, was kept. Its III.2 steps were
+put in place of Circle 2 in review, the same day. Nothing builds this file, and
+`lake env lean` checks it, once `Staging` is built.
 -/
 
 namespace Elements
@@ -105,13 +110,15 @@ theorem same_side_self {A B C : Point} (h : Triangle A B C) : SameSideOf C C A B
 
 /-- A fourth point of the circle within the angle ABC is across AC from B. Euclid
 reads this separation off an inscribed convex figure: otherwise the point would lie
-inside triangle ABC and hence inside the circle. -/
+inside triangle ABC and hence inside the circle. Each "within the circle" is III.2's
+(`BookIII.Prop2.within`, `BookIII.Prop2.triangle`), not System E's Circle 2. -/
 theorem circle_corner_across_diagonal {A B C D : Point} {α : Circle}
+    (hα : ∃ O : Point, Centre O α)
     (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α) (hD : OnCircle D α)
     (hDC : SameSideOf D C A B) (hDA : SameSideOf D A B C) :
     OppositeSidesOf D B A C := by
   have hABC : Triangle A B C := hDC.symm.triangle
-  have hACD : Triangle A C D := Triangle.of_onCircle hA hC hD hABC.ne₁₃
+  have hACD : Triangle A C D := BookIII.Prop2.triangle hα hA hC hD hABC.ne₁₃
     hDA.triangle.ne₂₃ hDC.triangle.ne₁₃
   obtain ⟨L, hA_L, hC_L⟩ := Postulate1 A C hABC.ne₁₃
   apply OppositeSidesOf.of_line hABC.ne₁₃ hA_L hC_L
@@ -128,13 +135,13 @@ theorem circle_corner_across_diagonal {A B C D : Point} {α : Circle}
     (by obtain ⟨N, hB_N, hD_N, hX_N⟩ := hXray.2.2.1
         exact ⟨N, hB_N, hD_N, hX_N⟩)
     (hXD.symm.sameSide hB_M hA_M) hDB
-  have hX_in : InsideCircle X α := inside_of_between (Or.inr hA) (Or.inr hC) hAXC
-  exact inside_not_on (inside_of_between (Or.inr hB) (Or.inl hX_in) hBDX) hD
+  have hX_in : InsideCircle X α := BookIII.Prop2.within hα (Or.inr hA) (Or.inr hC) hAXC
+  exact inside_not_on (BookIII.Prop2.within hα (Or.inr hB) (Or.inl hX_in) hBDX) hD
 
 /-- Deleting the second corner preserves the inscribed convex figure. The only new
 side is AC; all remaining corners are across it from B, by the preceding separation. -/
 theorem polygon_delete_second {A B C D : Point} {rest : List Point} {α : Circle}
-    (hps : Polygon (A :: B :: C :: D :: rest))
+    (hα : ∃ O : Point, Centre O α) (hps : Polygon (A :: B :: C :: D :: rest))
     (hin : Polygon.InscribedIn (A :: B :: C :: D :: rest) α) :
     Polygon (A :: C :: D :: rest) := by
   have sub : ∀ P ∈ A :: C :: D :: rest, P ∈ A :: B :: C :: D :: rest := by
@@ -152,7 +159,7 @@ theorem polygon_delete_second {A B C D : Point} {rest : List Point} {α : Circle
     have hPA : P ≠ A := fun e => hn.1 (List.mem_cons_of_mem B (e ▸ hP))
     have hPB : P ≠ B := fun e => hn.2.1 (e ▸ hP)
     have hPm : P ∈ A :: B :: C :: D :: rest := List.mem_cons_of_mem A (List.mem_cons_of_mem B hP)
-    exact circle_corner_across_diagonal (hin A (by simp)) (hin B (by simp))
+    exact circle_corner_across_diagonal hα (hin A (by simp)) (hin B (by simp))
       (hin C (by simp)) (hin P hPm)
       (hps.2.2 (A, B) (by simp [Polygon.sides, segments]) P hPm C (by simp)
         hPA hPB hAC.symm hBC.symm)
@@ -258,7 +265,7 @@ theorem arcs_sum_delete_second {A B C D : Point} {rest : List Point} {α : Circl
   have hD_A : SameSideOf D A B C := hps.2.2 (B, C)
     (by simp [Polygon.sides, segments]) D (by simp) A (by simp)
     hDB hDC hAB hAC
-  have hD_B : OppositeSidesOf D B A C := circle_corner_across_diagonal
+  have hD_B : OppositeSidesOf D B A C := circle_corner_across_diagonal hα
     (hin A (by simp)) (hin B (by simp)) (hin C (by simp)) (hin D (by simp)) hD_C hD_A
   /- Joining the first two arcs replaces AB and BC by AC away from D. -/
   have hadd : standing α A C B + standing α B D C = standing α A D C := by
@@ -296,7 +303,7 @@ theorem Polygon.arcs_sum {ps : List Point} {α : Circle} (hα : ∃ O : Point, C
       on the other side of AC; these two circumferences make up the whole circle. -/
       have hn := hps.2.1
       simp only [List.nodup_cons] at hn
-      have hABC : Triangle A B C := Triangle.of_onCircle (hin A (by simp))
+      have hABC : Triangle A B C := BookIII.Prop2.triangle hα (hin A (by simp))
         (hin B (by simp)) (hin C (by simp)) (fun e => hn.1 (by simp [e]))
         (fun e => hn.2.1 (by simp [e])) (fun e => hn.1 (by simp [e]))
       obtain ⟨K, hKB, -⟩ := exists_oppositeSidesOf hABC.acb []
@@ -310,7 +317,7 @@ theorem Polygon.arcs_sum {ps : List Point} {α : Circle} (hα : ∃ O : Point, C
       /- Remove B. Convexity survives, the new side's arc is the sum of the two
       removed arcs, and the other arcs retain their measures. -/
       rw [arcs_sum_delete_second hα hps hin]
-      apply ih A C D (polygon_delete_second hps hin)
+      apply ih A C D (polygon_delete_second hα hps hin)
       intro P hP
       apply hin P
       rcases List.mem_cons.mp hP with h | h

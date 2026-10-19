@@ -24,10 +24,12 @@ statement with `sorry`, and each `Prototype*.lean` repeats the words, unchanged,
 one statement. From the root of a checkout that has built `Elements` (and `Staging`, for
 the bridge), `lake env lean docs/reports/crew/scratch-IV/<file>` checks each.
 
-The statements are written as they will stand when two decisions already taken have
-landed: [brief 0008](0008-centre.md)'s rule that every circle has a centre, so a given
-circle carries no hypothesis that it has one; and, if the owner approves it, brief 0010's
-`len A B` ([#69], a draft for the owner) for the length the library now writes `‖A B‖`.
+The statements are written as they will stand when one decision already taken has landed,
+and one still proposed: [brief 0008](0008-centre.md)'s rule that every circle has a
+centre, approved, so a given circle carries no hypothesis that it has one; and, if the
+owner approves it, brief 0010's `len A B` ([#69], a draft for the owner) for the length
+the library now writes `‖A B‖`. The angle is still written `∠ A B C`, as brief 0010's
+question 9 leaves it until the owner answers.
 Lean reads the two forms as one term, so nothing here depends on the second. No statement
 of Book IV is about areas; IV.10's proof uses II.11's rectangle and square, and IV.12's the
 squares of I.47, as they stand.
@@ -52,7 +54,7 @@ thanks to each.
 
 | Done when | Here |
 |---|---|
-| a brief, challenged and frozen, gives every Book IV statement in Lean | section 6, all sixteen propositions, the porism of IV.15, the addition to IV.5 and the closing claims of IV.16; challenge and freeze are the next steps (section 11) |
+| a brief, challenged and frozen, gives every Book IV statement in Lean | section 6, all sixteen propositions, the porism of IV.15, the addition to IV.5 and the closing claims of IV.16; challenged once (the appendix), and a second challenge, approval and freeze are the next steps (section 11) |
 | settles the construction-input convention that III.25's core prototyped | section 5 |
 | defines inscribed and circumscribed figures and regular polygons, with their bridge theorems to Book III's arcs | sections 3, 4 and 7 |
 | names each new word's home and owner | section 8 |
@@ -645,7 +647,7 @@ which the final statement drops.
 | what a construction is given (section 5) | IV.1, Euclid's construction under his sentences | `PrototypeIV1.lean` | proved: Euclid's two cases under his twelve sentences; helpers for the diameter and for the meeting of the circles EAF and ABC, which he leaves tacit |
 | a figure by its corners, inscribed in a circle (`Polygon`, Defs. 3 and 6) | IV.6: the hard part every inscribing proof meets is proving `Polygon` for the figure it builds | `PrototypeIV6.lean` | proved: Euclid's route under his twenty sentences; `Prop6.polygon_of_cross` proves `Polygon` for four corners whose diagonals cross, a shared step for every quadrilateral of Book IV |
 | a figure circumscribed, a circle inscribed (Defs. 4 and 5: touching within each side) | IV.4 | `PrototypeIV4.lean` | proved: Euclid's route under his eighteen sentences, by I.9, I.12, I.26, Postulate 3 and III.16's porism; helpers for the bisectors meeting within the triangle, each half-angle acute, and each point of contact within its side, the step Definition IV.4's second clause asks for |
-| the circle divided (`Polygon.arcs`, the bridges) | `Polygon.arcs_sum`, for any number of sides | `PrototypeArcs.lean` | proved for any number of corners, by taking away one corner at a time. A second sailor, working independently, reported a complete proof too; the shorter was kept, and only it was checked here. Its steps (a figure less a corner is a figure; the circumferences of two neighbouring sides add) are Book Zero's and the ground's to keep |
+| the circle divided (`Polygon.arcs`, the bridges) | `Polygon.arcs_sum`, for any number of sides | `PrototypeArcs.lean` | proved for any number of corners, by taking away one corner at a time. A second sailor, working independently, reported a complete proof too; the shorter was kept, and only it was checked here. Its steps (a figure less a corner is a figure; the circumferences of two neighbouring sides add) are Book Zero's and the ground's to keep. Its own steps take a point of a chord within the circle by III.2 (`BookIII.Prop2.within`, `BookIII.Prop2.triangle`), put in place of Circle 2 in review; it rests on Circle 2 still through stage 3's staged `Circumference.add` alone |
 | counting parts of the circle (IV.16) | `fifteenth`: if three of AC and five of AB make the circle, and BC, the rest, is bisected at E, fifteen of BE make it | `PrototypeIV16.lean` | proved; it is arithmetic of magnitudes only |
 | (recommended by the challenge) straight lines fitted in contiguity close up | `Prop16.contiguity`, IV.16's last step | to be written | not yet done: the next geometric prototype, before the fleet sails; the arithmetic above does not show the fitting, the order or the closure |
 
@@ -656,6 +658,10 @@ statements' homes exist (WORKFLOW, section 2, "What proofs `Staging/` may hold")
 
 - **Postulate 5.** Every proposition of Book IV comes after I.29, so any may rest on it.
 - **Superposition** stays with I.4 and I.8.
+- **Circles 2 and 3.** No proof of the edition rests on them since [#60], and none of Book IV
+  will: a point between two points on or within a circle is within it by III.2
+  (`BookIII.Prop2.within`, with `Prop2.triangle`, `Prop2.oppositeSide` and
+  `Prop2.sameSide`), never by the rule, nor by the Book Zero lemmas that still call it.
 - **Citing.** A Book IV proof cites `BookI.PropN`, `BookII.PropN`, `BookIII.PropN` and
   `BookIII.Prop16.porism`; a bare `Prop1` in a Book IV file means IV.1.
 - **The overlaps.** No rule of the foundations is expected to state a proposition of Book
@@ -724,6 +730,12 @@ otherwise; the recommendation is the brief's.
   `#print axioms` on its theorem: no `sorryAx`, and no axiom outside the lock. The
   prototypes of IV.4, IV.6 and the circle divided rest on superposition through the
   propositions they cite (I.4, I.8 and those after), as every proof that cites them does.
+  The circle divided rests on Circle 2 (`inside_of_between`) too, through the staged
+  `Circumference.add` alone, which takes Book Zero's `exists_onCircle_oppositeSidesOf`
+  where III.2's `Prop2.oppositeSide` would serve; the independent review of 67a4be5 put
+  III.2 in place of Circle 2 in the prototype's own steps, and found that remaining path.
+  No proof of the edition has rested on Circle 2 since [#60], so the bridge waits for
+  `Circumference.add` to reach `Elements/` without it (stage 3's move, [#25]).
 - Heath's definitions (p. 78), the sixteen enunciations, the order of each figure's corners
   in his figures, and every passage of his quoted here (pp. 81, 83, 84, 85, 90, 101, 102, 104,
   109, 110),
@@ -751,3 +763,4 @@ returned the brief for correction before freezing. Each finding, and what was do
 [#69]: https://github.com/jackChallis/stoicheia/issues/69
 [#25]: https://github.com/jackChallis/stoicheia/issues/25
 [#38]: https://github.com/jackChallis/stoicheia/issues/38
+[#60]: https://github.com/jackChallis/stoicheia/issues/60
