@@ -6,8 +6,15 @@ fingerprint = "sha256:ee8ae557ec6ee73a"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let ABC be an obtuse-angled triangle"
+kind = "helper"
+helper = "BookI.Prop17"
+note = "Euclid takes the foot D on CA produced beyond A. The statement gives the perpendicular; the Lean excludes D = A because BAC would be right, uses I.17 to exclude D on the ray from A through C, and puts C, A, D in order by `Tacit.between_cases`, the rule we assume as System E, Between 6."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:c8056e07b2db5b7d"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

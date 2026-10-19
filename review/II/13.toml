@@ -11,13 +11,22 @@ tags = ["hypothesis-dropped"]
 note = "Euclid's enunciation speaks of acute-angled triangles, all three angles acute. The statement leaves out the angle at A, which plays no part; the acute angle at C keeps the foot D within CB, as \"cut off within\" and II.7 need. The perpendicular from A and its foot D on BC are given. The scholiast's wider reading, any triangle acute-angled at B, is not stated: with a right angle at C the foot D is C itself, and with an obtuse angle at C it falls beyond C."
 
 [[passage]]
+at = "Let ABC be an acute-angled triangle"
+kind = "given"
+note = "The statement gives the triangle, the acute angles at B and C, and the perpendicular AD with its foot D on BC. The Lean rules out D = B and D = C because the corresponding angle would be both acute and right."
+
+[[passage]]
 at = "For, since the straight line CB has been cut at random at D"
 kind = "helper"
 helper = "Prop13.not_beyond"
 note = "Euclid reads off his figure that D falls within CB; the Lean proves it: a foot beyond B or C would give the triangle a right and an obtuse angle (I.13, I.17)."
 
+[figure]
+case = "ABC acute-angled, with D between B and C, as in Heath's figure"
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:d4220867a6bb2695"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
