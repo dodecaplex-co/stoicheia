@@ -519,6 +519,11 @@ class Clone(unittest.TestCase):
                            cwd=ORIGIN, capture_output=True, text=True)
         return r.stdout.strip() or None
 
+    def short(self, sha: str) -> str:
+        """A commit's hash as the clone abbreviates it, as safe_push lists the commits: git
+        gives seven characters or more, as many as the repository's size asks for."""
+        return git(WORK, "log", "-1", "--format=%h", sha).strip()
+
     def guard(self, out: str, name: str) -> str | None:
         """The outcome a step's line reports: "ok", "FAIL", "note", or None if absent."""
         m = re.search(r"^\s+(ok|FAIL|note)\s+%s:" % re.escape(name), out, re.M)
@@ -602,7 +607,7 @@ class Accepts(Clone):
         self.assertIn(f"<!-- safe_push:preflight begin sha={sha} base={BASE} -->", body)
         self.assertIn("## Checklist", body)
         self.assertIn("- [ ] **Required:**", body)
-        self.assertIn(f"`{sha[:7]}` A good commit", body)
+        self.assertIn(f"`{self.short(sha)}` A good commit", body)
         self.assertIn("| 3. statements | ok |", body)
         self.assertNotIn("<!-- safe_push: commits -->", body)
         self.assertNotIn(str(Path.home()), body, "a private path in the public body")
@@ -1588,7 +1593,7 @@ class PullRequests(Edge):
                       records)
         self.assertIn("`review/I/04.toml`: a stamp taken away (`text`)", records)
         self.assertNotIn("`review/I/04.toml`: its stamps written", records)
-        self.assertIn(f"`{second[:7]}` I.1 names its side point Q", body)
+        self.assertIn(f"`{self.short(second)}` I.1 names its side point Q", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(body.count(f"<!-- safe_push:{name} begin"), 1, name)
 
@@ -1616,7 +1621,7 @@ class PullRequests(Edge):
         for text in (words, approval):
             self.assertIn(text, body)
         self.assertEqual(re.findall(r"(?m)^## .*$", body), re.findall(r"(?m)^## .*$", before))
-        self.assertIn(f"`{second[:7]}` A good commit", body)
+        self.assertIn(f"`{self.short(second)}` A good commit", body)
         self.assertIn(f"sha={second}", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(len(re.findall(rf"(?m)^<!-- safe_push:{name} begin", body)), 1,
