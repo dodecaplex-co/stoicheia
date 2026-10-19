@@ -17,7 +17,15 @@ case = "E on AD produced beyond D, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "2e1d5c1"
+commit = "cee2591"
 reviewer = "Claude Opus 5.5, records review"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 lean = "sha256:920a7dc2766794ce"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

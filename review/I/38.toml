@@ -29,7 +29,15 @@ case = "the bases BC and EF apart, and the vertices A and D apart"
 
 [review]
 stage = "full"
-commit = "dcb1767"
+commit = "cee2591"
 reviewer = "Claude Opus 5.5, records review"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 lean = "sha256:13849d21c6487897"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
