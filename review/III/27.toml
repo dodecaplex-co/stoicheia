@@ -11,6 +11,15 @@ note = "Euclid's reductio for the angles at the centres, and his halving by III.
 tags = ["angle-measure", "redundant-hypothesis", "centre-given"]
 note = "\"In equal circles\" is kept from Euclid, and the proof uses it through III.26 as he does; but the circumferences are measured by angles, so the statement would hold without it. The centres G and H are given, as the enunciation speaks of angles at the centres."
 
+[[passage]]
+at = "And the angle at A is half of the angle BGC"
+kind = "different"
+note = "For right or obtuse angles at the circumference, Circumference.standing expresses each circumference as twice the angle standing on it, and equal measures give equal halves. The acute case uses III.20."
+
+[figure]
+case = "acute angles at the circumferences"
+note = "Euclid's figure draws the impossible supposition that BGC is greater than EHF, with BGK equal to EHF."
+
 [review]
 stage = "exceptions"
 commit = "8f37887"

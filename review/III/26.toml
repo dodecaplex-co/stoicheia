@@ -27,6 +27,9 @@ at = "therefore the circumference BKC which remains is equal to the circumferenc
 kind = "different"
 note = "The remainders BKC, ELF are equal in measure by Euclid's subtraction [C.N. 3]. Their congruence cannot come by subtraction: it comes from III.24 applied to the remaining segments, which are similar, their angles making two right angles with the equal angles at A and D [III. 22]."
 
+[figure]
+case = "acute angles at A and D, with BKC and ELF less than semicircles"
+
 [review]
 stage = "exceptions"
 commit = "8f37887"

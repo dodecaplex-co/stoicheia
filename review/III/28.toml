@@ -5,7 +5,7 @@ fingerprint = "sha256:27e77d5577435ccb"
 
 [route]
 kind = "modified"
-note = "Euclid's argument for the measures: the angles at the centres are equal [I. 8], the less circumferences equal by III.26, the greater as the remainders. The greater circumferences' congruence cannot come by subtraction, and comes from III.24 applied to the greater segments, whose angles are the halves of the equal angles at the centres [III. 20]."
+note = "For non-diameters, Euclid's argument for the measures: the angles at the centres are equal [I. 8], the less circumferences equal by III.26, the greater as the remainders. The greater circumferences' congruence cannot come by subtraction, and comes from III.24 applied to the greater segments, whose angles are the halves of the equal angles at the centres [III. 20]. For diameters, the measures are those of semicircles, and congruence follows from Prop28.right and III.24."
 
 [representation]
 tags = ["angle-measure"]
@@ -13,14 +13,16 @@ note = "\"Equal circumferences\" is read as in III.26, equal in measure and cong
 
 [[passage]]
 at = "the radii are also equal"
-kind = "helper"
-helper = "Prop28.diameter"
+kind = "different"
 note = "Euclid's figure has the centre K off AB, on C's side. If K is on AB, AB and DE are diameters and the four circumferences semicircles, and with no angle at the centre the congruence comes from the right angle in each semicircle (`Prop28.right`) and III.24; `Prop28.beyond` shows K is not on G's side."
 
 [[passage]]
 at = "therefore the circumference ACB which remains"
 kind = "different"
 note = "The greater circumferences are equal in measure as the remainders [C.N. 3]; their congruence comes from III.24, the angles AXB, DYE at points of the greater circumferences being the halves of the equal angles AKB, DLE at the centres [III. 20], so that the greater segments are similar."
+
+[figure]
+case = "non-diameter chords, with K on C's side of AB and L on F's side of DE"
 
 [review]
 stage = "exceptions"
