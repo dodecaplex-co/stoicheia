@@ -70,7 +70,6 @@ Key to the tables: ✅ proved. The Lean statement is *whole*, as Euclid states i
 | ✅ | &emsp;[I.45 sum](I/45.md#sum) | `Elements.BookI.Prop45.sum` | [`Elements.BookI.Prop45`](../Elements/BookI/Prop45.lean) |  | [what it rests on](I/45.md#what-it-rests-on) |
 | ✅ | [I.46](I/46.md) A square on a given straight line | `Elements.BookI.Prop46` | [`Elements.BookI.Prop46`](../Elements/BookI/Prop46.lean) | whole | [what it rests on](I/46.md#what-it-rests-on) |
 | ✅ | [I.47](I/47.md) The square on the side subtending the right angle equals the other two | `Elements.BookI.Prop47` | [`Elements.BookI.Prop47`](../Elements/BookI/Prop47.lean) | whole | [what it rests on](I/47.md#what-it-rests-on) |
-| ✅ | &emsp;[I.47 general](I/47.md#general) | `Elements.BookI.Prop47.general` | [`Elements.BookI.Prop47`](../Elements/BookI/Prop47.lean) |  | [what it rests on](I/47.md#what-it-rests-on) |
 | ✅ | [I.48](I/48.md) If the square equals the other two, the angle is right | `Elements.BookI.Prop48` | [`Elements.BookI.Prop48`](../Elements/BookI/Prop48.lean) | whole | [what it rests on](I/48.md#what-it-rests-on) |
 
 ## Book II
