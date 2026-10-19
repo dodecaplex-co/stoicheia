@@ -137,10 +137,10 @@ review records, not for this package.
 
 ## How the laws will be generated
 
-Today the laws proved here are translated by hand, in
-[Model/Hand.lean](Model/Hand.lean), each with the lock's printed statement above it. The
-next step replaces that file with one generated from the library's elaborated
-declarations, not from their printed text.
+Today the laws proved here are translated by hand, in [Model/Hand.lean](Model/Hand.lean)
+and [Model/Laws/superposition.lean](Model/Laws/superposition.lean), each with the lock's
+printed statement above it. The next step replaces those files with one generated from the
+library's elaborated declarations, not from their printed text.
 
 1. **Read the declarations, not the text.** A Lean program in `Check/` imports
    `Elements.Foundations`, and takes every axiom declared there, which must be exactly the
