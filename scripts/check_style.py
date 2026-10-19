@@ -666,9 +666,8 @@ def lean_notes(path: Path) -> str:
     return notes_text(path.read_text(encoding="utf-8"), n)
 
 
-def notes_text(src: str, n: int | None = None) -> str:
-    """`lean_notes` of a Lean source; `n` names the `theorem PropN` whose docstring is
-    blanked."""
+def lean_note_spans(src: str, n: int | None = None) -> list[tuple[int, int]]:
+    """The source ranges of a Lean file's reader-visible block-comment interiors."""
     skip = None
     if n is not None:
         span = heath.theorem_span(src, n)
@@ -693,8 +692,14 @@ def notes_text(src: str, n: int | None = None) -> str:
             i = len(src) if j < 0 else j
         else:
             i += 1
+    return spans
+
+
+def notes_text(src: str, n: int | None = None) -> str:
+    """`lean_notes` of a Lean source; `n` names the `theorem PropN` whose docstring is
+    blanked."""
     out = re.sub(r"[^\n]", " ", src)
-    for a, b in spans:
+    for a, b in lean_note_spans(src, n):
         out = out[:a] + src[a:b] + out[b:]
     return out
 
@@ -720,7 +725,11 @@ def check_lean_notes(path: Path, src: str, rendered: list) -> list:
         texts.append(NamedText(path, r.doc, FOUNDATIONS_OPENS, line_at=at))
     m = re.fullmatch(r"Prop(\d+)\.lean", path.name)
     n = int(m.group(1)) if m and path.parent.name.startswith("Book") else None
-    check_text(path, notes_text(src, n), {"lean"}, replaced=replaced)
+    check_text(path, notes_text(src, n), {"lean"}, replaced=replaced, check_s22=False)
+    for first, last in lean_note_spans(src, n):
+        check_letters_in_code(path, src[first:last],
+                              line_at=lambda at, first=first: line_of(src, first + at),
+                              indented_code=False)
     return texts
 
 
@@ -887,6 +896,7 @@ TABLE_DELIMITER_CELL = re.compile(r":?-+:?")
 class InlineBlock(NamedTuple):
     text: str
     offsets: list[int]
+    references: bool = True
 
 
 class CodeSpan(NamedTuple):
@@ -952,7 +962,8 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     header_start = lines[table][0]
     prefix_end = max(0, header_start - 1)
     if prefix_end:
-        found.append(InlineBlock(block.text[:prefix_end], block.offsets[:prefix_end]))
+        found.append(InlineBlock(block.text[:prefix_end], block.offsets[:prefix_end],
+                                 block.references))
     for row_number, row in enumerate([lines[table]] + lines[table + 2:]):
         start, _, text = row
         cells, _ = table_cell_ranges(text)
@@ -964,7 +975,7 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
             while b > a and text[b - 1] in " \t":
                 b -= 1
             if a < b:
-                found.append(InlineBlock(text[a:b], block.offsets[start + a:start + b]))
+                found.append(InlineBlock(text[a:b], block.offsets[start + a:start + b], False))
     return found
 
 
@@ -1086,9 +1097,13 @@ def markdown_blocks(text: str, *, indented_code: bool = True) -> MarkdownBlocks:
                     comments.append((comment_start, line_start))
                     comment = None
                     continue
-                if "-->" in body:
-                    comments.append((comment_start, line_end))
+                close = body.find("-->")
+                if close >= 0:
+                    comments.append((comment_start, source[close + 2] + 1))
                     comment = None
+                    base_body, base_source = body[close + 3:], source[close + 3:]
+                    if base_body:
+                        continue
                 consumed = True
                 break
             break
@@ -1386,11 +1401,12 @@ def matching_link_label(text: str, close: int) -> int | None:
     return None
 
 
-def link_destination_ranges(text: str) -> list[LinkDestination]:
+def link_destination_ranges(text: str, *, references: bool = True) -> list[LinkDestination]:
     """Link destinations and their label starts in one inline block."""
-    found = reference_destination_ranges(text)
+    found = reference_destination_ranges(text) if references else []
     found += [LinkDestination(m.start(), m.end(), m.start(), False)
-              for m in AUTOLINK.finditer(text)]
+              for m in AUTOLINK.finditer(text)
+              if backslashes_before(text, m.start()) % 2 == 0]
     for match in re.finditer(r"\]\(", text):
         close = match.start()
         label = matching_link_label(text, close)
@@ -1418,7 +1434,7 @@ def markdown_syntax(text: str, *, indented_code: bool = True) -> MarkdownSyntax:
         ticks = [(m.start(), m.end()) for m in BACKTICKS.finditer(block.text)]
         openers = [m.start() for m in re.finditer("<!--", block.text)
                    if backslashes_before(block.text, m.start()) % 2 == 0]
-        links = link_destination_ranges(block.text)
+        links = link_destination_ranges(block.text, references=block.references)
         active = {link.label: True for link in links}
         consumed: list[tuple[int, int]] = []
         i, pos = 0, 0
@@ -1508,6 +1524,16 @@ def letter_spans(text: str, *, indented_code: bool = True) -> str:
     return "".join(chars)
 
 
+def check_letters_in_code(path: Path, raw: str, *, line_at=None,
+                          indented_code: bool = True, collect=None) -> None:
+    """Apply S22 to one Markdown inline-block domain."""
+    raw = raw.replace("\r\n", "\n")
+    straight = straighten(raw)
+    find_all("S22", LETTERS_IN_CODE, path,
+             letter_spans(straight, indented_code=indented_code), raw,
+             line_at=line_at or text_lines(raw), new=True, collect=collect)
+
+
 # S11: retired refrains of STYLE section 3, and the mishnah allowed each ("nowhere" is
 # the empty set).
 REFRAINS = [
@@ -1579,7 +1605,7 @@ def text_lines(text: str, line0: int = 0, last: int | None = None):
 
 
 def check_text(path: Path, raw: str, scopes: set[str], *, new: bool = False,
-               replaced=None, line_at=None, collect=None) -> None:
+               replaced=None, line_at=None, collect=None, check_s22: bool = True) -> None:
     """The text rules for one file, or for one text of it (a review note, a rendered
     docstring), by the scopes it belongs to. `new` marks a text that came under the rules
     with the reach of #66, whose every finding is of that reach; in the other texts, the
@@ -1627,9 +1653,9 @@ def check_text(path: Path, raw: str, scopes: set[str], *, new: bool = False,
         find("S8", CURLY, blank_code(raw, indented_code=not notes))
     if prose or review or cat or notes:
         find("S9", ITALIC_LETTER, code_free)
-    if prose or review or cat or notes or reports_ or gen:
-        find("S22", LETTERS_IN_CODE,
-             letter_spans(straight, indented_code=not notes), reach=True)
+    if check_s22 and (prose or review or cat or notes or reports_ or gen):
+        check_letters_in_code(path, raw, line_at=line_at, indented_code=not notes,
+                              collect=collect)
     if prose or readme:
         find("D6", COMPARISON, outside, failing=False)
     if prose or review or cat or notes:

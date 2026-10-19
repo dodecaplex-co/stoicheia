@@ -478,6 +478,8 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S12", style.lean_names, r"[x]: a\ `Missing.name`", ["Missing.name"]),
     ("S12", style.lean_names, "<https://example.test/`> visible `Missing.name`",
      ["Missing.name"]),
+    ("S12", style.lean_names, r"\<https://x/`Missing.name`>", ["Missing.name"]),
+    ("S12", style.lean_names, r"\\<https://x/`Missing.name`>", []),
     ("S12", style.lean_names, "``[x](url`)`` `Missing.name`", ["Missing.name"]),
     ("S12", style.lean_names, "[x `](url`) visible `Missing.name`", ["Missing.name"]),
     ("S12", style.lean_names, "[see `foo](bar)` and `Missing.name`", ["Missing.name"]),
@@ -525,6 +527,7 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
     ("S12", style.lean_names, "text <!-- a\n\n`b` --> `Missing.name`", ["b", "Missing.name"]),
     ("S7", lambda t: failure_lines(t, "S7"), "Prefix <!-- `old --> Definition 8 `x`", [1]),
     ("S22", lambda t: failure_lines(t, "S22"), "Before <!-- `x -->\n`AB`", [2]),
+    ("S7", lambda t: failure_lines(t, "S7"), "<!-- hidden\n--> Definition 8", [2]),
     ("S22", style.blank_html_comments, "> a <!-- x\n> `y` --> `AB`",
      "> a       \n>         `AB`"),
     # A comment's quotation is no string; a multi-line string starts below its quotes;
@@ -580,6 +583,7 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
                                                      "(Definition 15).")], lines=True),
      "namespace Elements.Tacit\n/-- A point at the radius\nis on the circle (Definition 15). -/"
      "\naxiom r : True\n", [("S7", 3)]),
+    ("S22", lean_note_findings, "/- `x -/\n/- `AB` -/\n", ["S22"]),
     ("D4", lambda t: style.lean_names(t, binders=False), "(`hBCE : Between B C E`)", []),
     ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_RECORD, [5, 15]),
     ("S12", lambda raw: note_lines(raw, None, names=True), SAMPLE_RECORD, [4, 12]),
@@ -641,6 +645,8 @@ SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
      "A | B\n--- | ---\nok | ok | `Missing.name`", []),
     ("S12", style.lean_names,
      "A | B\n--- | ---\nok | `Missing.name` | ignored", ["Missing.name"]),
+    ("S12", style.lean_names,
+     "A | B\n--- | ---\n[x]: `Missing.name` | ok", ["Missing.name"]),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "overlaps.md", True),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-II.md", True),
     ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-I-supplement.md", True),
