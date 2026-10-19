@@ -1507,7 +1507,9 @@ def stamp_only(repo, base, sha, path: str) -> bool:
     or added (as `text`, review/SCHEMA.md), none taken away, and nothing else changed?
     The lines are compared, and so is the record as TOML reads it, with the STAMPS keys
     set aside in their sections, so that a stamp-shaped line inside a multi-line string
-    is no stamp. A record that does not read as TOML, before or after, is judged."""
+    is no stamp. The stamps present, before and after, are read from the record as TOML
+    reads it, each in its section. A record that does not read as TOML, before or after,
+    is judged."""
     if not re.fullmatch(r"review/[IVX]+/\d+\.toml", path):
         return False
     old, new = show(repo, base, path), show(repo, sha, path)
@@ -1515,22 +1517,26 @@ def stamp_only(repo, base, sha, path: str) -> bool:
         return False
     import tomllib
 
-    def keys(text: str) -> set[str]:
-        return {m.group(1) for m in STAMP_LINE.finditer(text)}
+    def present(record: dict) -> set[tuple[str, str]]:
+        return {(section, key) for section, stamps in STAMPS.items()
+                if isinstance(record.get(section), dict)
+                for key in stamps if key in record[section]}
 
-    def unstamped(text: str) -> dict:
-        record = tomllib.loads(text)
+    def unstamped(record: dict) -> dict:
         for section, stamps in STAMPS.items():
             if isinstance(record.get(section), dict):
                 for key in stamps:
                     record[section].pop(key, None)
         return record
-    if STAMP_LINE.sub("", old) != STAMP_LINE.sub("", new) or not keys(old) <= keys(new):
+    if STAMP_LINE.sub("", old) != STAMP_LINE.sub("", new):
         return False
     try:
-        return unstamped(old) == unstamped(new)
+        before, after = tomllib.loads(old), tomllib.loads(new)
     except tomllib.TOMLDecodeError:
         return False
+    if not present(before) <= present(after):
+        return False
+    return unstamped(before) == unstamped(after)
 
 
 def judged_files(repo, base, sha) -> list[str]:
@@ -2562,8 +2568,12 @@ def describe(ctx: Context, pre: Preflight) -> dict[str, str]:
             continue
         old = dict(STAMP_FIELD.findall(show(repo, base, path) or ""))
         new = dict(STAMP_FIELD.findall(show(repo, sha, path) or ""))
+        lost = sorted(old.keys() - new.keys())
         if status == "D":
             records.append(f"- `{path}`: deleted")
+        elif lost:
+            records.append(f"- `{path}`: {'a stamp' if len(lost) == 1 else 'stamps'} taken "
+                           f"away ({', '.join(f'`{key}`' for key in lost)})")
         elif old != new and new.get("commit") and new["commit"] == old.get("commit"):
             records.append(f"- `{path}`: its stamps written, its commit kept at "
                            f"`{new['commit'][:12]}`")

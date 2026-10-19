@@ -1540,6 +1540,12 @@ class PullRequests(Edge):
         untexted = re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text(texted))
         if untexted != self.text(texted):
             self.new_base("I.3's record before its `text` stamp", {texted: untexted})
+        # And I.4's record with its `text` stamp, if it does not carry it already.
+        lost = "review/I/04.toml"
+        bare = re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text(lost))
+        with_text = bare.rstrip("\n") + f'\ntext = "{safe_push.heath.text_hash(bare)}"\n'
+        if with_text != self.text(lost):
+            self.new_base("I.4's record with its `text` stamp", {lost: with_text})
         self.good_commit()
         self.assertEqual(self.safe_push().returncode, 0)
         words = "A change for the test, in the coordinator's words."
@@ -1559,10 +1565,12 @@ class PullRequests(Edge):
                          f'lean = "{safe_push.heath._sha(new_lean.encode())}"', self.text(record))
         stamped = re.sub(r'(?m)^commit = "[^"]*"', 'commit = "abc1234"', stamped)
         # And I.3's record gains its `text` stamp alone, its commit kept, as
-        # review_stamp.py --migrate-text writes it.
+        # review_stamp.py --migrate-text writes it; I.4's loses its `text` stamp, its
+        # commit kept, which is no stamp written.
         kept = re.search(r'(?m)^commit = "([^"]*)"', self.text(texted)).group(1)
         changes = {lean: new_lean, record: stamped, texted: self.text(texted).rstrip("\n")
-                   + f'\ntext = "{safe_push.heath.text_hash(self.text(texted))}"\n'}
+                   + f'\ntext = "{safe_push.heath.text_hash(self.text(texted))}"\n',
+                   lost: bare}
         changes.update(self.decision("I.1 names its side point Q."))
         second = self.regenerated_commit("I.1 names its side point Q", changes)
         r = self.safe_push()
@@ -1578,6 +1586,8 @@ class PullRequests(Edge):
         self.assertIn("`review/I/01.toml`: re-stamped at `abc1234`", records)
         self.assertIn(f"`review/I/03.toml`: its stamps written, its commit kept at `{kept[:12]}`",
                       records)
+        self.assertIn("`review/I/04.toml`: a stamp taken away (`text`)", records)
+        self.assertNotIn("`review/I/04.toml`: its stamps written", records)
         self.assertIn(f"`{second[:7]}` I.1 names its side point Q", body)
         for name in ("commits", "statements", "records", "protected", "generated", "preflight"):
             self.assertEqual(body.count(f"<!-- safe_push:{name} begin"), 1, name)
@@ -2860,6 +2870,21 @@ class ProtectedPaths(Edge):
         stamped = self.commit("A `text` stamp in [review]", {
             path: noted.rstrip("\n") + f"\n{line}\n"})
         self.assertTrue(safe_push.stamp_only(WORK, first, stamped, path))
+
+    def test_a_stamp_taken_away_beside_a_stamp_shaped_line_is_judged(self):
+        # The [review] `text` stamp taken away, while a line of its shape stays inside a
+        # multi-line note: a stamp is gone from its section, and the record is judged.
+        path, line = "review/I/03.toml", 'text = "sha256:0123456789abcdef"'
+        record = re.sub(r'(?m)^text = "[^"]*"\n?', "", self.text(path))
+        self.assertEqual(record.count('scope = "full"\n'), 1)
+        noted = record.replace('scope = "full"\n', 'scope = "full"\n'
+                               f'note = """\nA note on two lines,\n{line}\n"""\n')
+        stamped = noted.rstrip("\n") + '\ntext = "sha256:3333333333333333"\n'
+        first = self.commit("A stamp-shaped line in the note, and a `text` stamp",
+                            {path: stamped})
+        taken = self.commit("The `text` stamp taken away", {path: noted})
+        self.assertFalse(safe_push.stamp_only(WORK, first, taken, path))
+        self.assertIn(path, safe_push.judged_files(WORK, first, taken))
 
     def test_harness_runs_from_origin_main(self):
         # The commit empties its own copy of the secret scan and plants a token; run from
