@@ -11,12 +11,15 @@ superposition supplies the steps of I.2 and I.3, and Argon's second review corre
 account of how each rule enters the proofs: the certificate counted a rule a proof reaches
 through a lemma as one it calls itself, and now keeps the two apart.
 
+One rule in the catalogue is our own: `exists_centre`, from Definitions I.15 and I.16.
+In III.1 it supplies a centre for the proof that the middle point D is within the circle.
+
 A reconstruction that rests on such a rule does not establish the rule independently: it
-shows that Euclid's reasoning goes through within System E, not that the proposition holds
+shows that Euclid's reasoning goes through within our foundations, not that the proposition holds
 without the rule. Our III.2 follows Euclid's argument, and it once rested so, through
 III.1, on a rule at least as strong as its own conclusion; III.1 now takes that step by
 Euclid's own argument for III.2, and no proposition rests on the rule. This catalogue
-shows where System E gives early what Euclid later proves: which rule, where it first
+shows where our foundations give early what Euclid later proves: which rule, where it first
 enters the development, and how it reaches the proposition's own proof.
 
 ## The catalogue
@@ -67,7 +70,8 @@ rule's Lean name finds the same calls.
 | [I.13, a case of it, in 17 proofs from II.1 on](#i13-in-17-proofs) | Diagram-angle 3 (`adjacent_eq_of_right`): the angle beside a right angle is right | Supplies a step: I.13 makes the two angles two right angles, so the second is right | II.1 | `Audit.adjacent_eq_of_right` runs the other way: the rule, proved from I.13 |
 | [I.13, a consequence of it, in I.47](#i13-in-i47) | Metric 5 (`angle_le_two_right`): no angle exceeds two right angles | Supplies a step: for an angle between two straight lines, I.13 gives it | I.47, its only user | None |
 | [I.23](#i23) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_23`: laid down at A along AB, the triangle DCE carries its angle at C to A, and naming the ray and the side takes seven axioms more | I.4 | `Audit.I_23` |
-| [III.1's corollary, in III.1 Por.](#iii1-por) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.1's porism; of the propositions themselves, III.14 | None |
+| [III.1's centre, in III.1](#iii1) | `exists_centre`, our rule: every circle has a centre | Supplies a step: a centre for the proof that D is within the circle, by III.2's argument | III.1 | None |
+| [III.1's uniqueness corollary](#iii1-por) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step, in III.14: identifies the centre found by III.1 with the given centre | III.14 | None |
 | [III.2](#iii2) | Circle 2 (`inside_of_between`): between two points on or within a circle, every point is within it | States it, and more: the ends may be within the circle as well as on it | Nowhere: no proposition rests on it | `Audit.III_2`, Astra's proof: Circle 2 alone |
 | [III.2](#iii2) | Circle 3 (`outside_of_between`): a straight line that has left a circle does not come back; Circle 2 turned round | Gives it at once: were a point between two points of the circle not within it, the second point would be outside the circle, not on it | Nowhere: no proposition rests on it | `Audit.III_2_outside`: Circle 3 alone |
 | [III.5](#iii5) | Diagram-segment 2 (`circle_eq`), with Generalities 4 (`inside_not_on`) | Gives it at once: one centre and a common point make the circles one; the point of one within the other would be both within that circle and on it | Diagram-segment 2: III.10. Generalities 4: I.22 | `Audit.III_5`: the two rules |
@@ -135,10 +139,22 @@ inference rule, whose placed points never become constructed ones
 Points 1 and Same side 3 to name the ray and the side: eight axioms in all, since System
 E's Metric 1 is two of ours.
 
+#### III.1
+
+The construction receives a circle and two points A, B of it, with no centre supplied.
+It bisects AB at D, draws DC at right angles and through to E, and bisects CE at F.
+Only the proof that D is within the circle takes a centre from `exists_centre`, through
+`Prop1.within` and III.2's argument; that witness supplies none of the constructed points.
+III.1 still takes G for its reductio from its statement's hypothesis. The rule gives bare
+existence; the construction and the proof that F is the centre are III.1's work.
+
 #### III.1 Por.
 
-III.1's porism calls the rule itself: it makes the centre III.1 finds the given centre,
-so that it lies on the cutting straight line. III.14, III.17 and III.36 call it
+Heath calls uniqueness "a proposition which, if thought necessary, may be added to
+III. 1 as a corollary" (vol. 2, p. 8). Our porism proves that the given centre lies on
+the cutting straight line by the argument of Euclid's reductio: on AB it is D; off AB,
+the equal adjacent angles put it on DC. It neither calls III.1 nor uses `centre_unique`
+or `exists_centre`. III.14, III.17 and III.36 call `centre_unique`
 themselves for the same step, making the centre III.1 finds the centre their statements
 speak of. III.26 reaches it only through Book Zero's `EqualCircles.radii`, that equal
 circles have equal radii: a circle has only one centre, so the centres the definition of
@@ -161,9 +177,9 @@ rests on neither rule. Circle 2 used to reach it through III.1, which called the
 put D, the middle point of AB, within the circle, so that the straight line drawn through
 D at right angles to AB meets the circle on both sides of it: "a fact which Euclid first
 demonstrates in III. 2", as Isaac Todhunter observes (Heath, vol. 2, p. 7). III.1's
-helper `Prop1.within` proves it by III.2's own argument, from the centre III.1's statement
-gives: on AB that centre is D itself, and off it I.5, I.16 and I.19 make D nearer the
-centre than the circumference. II.14, once the first proof to call the rule, needs E, between
+helper `Prop1.within` proves it by III.2's own argument, from a centre `exists_centre`
+supplies inside that proof: on AB that centre is D itself, and off it I.5, I.16 and I.19
+make D nearer the centre than the circumference. II.14, once the first proof to call the rule, needs E, between
 B and F, the ends of the diameter of the semicircle BHF, within the circle, so that DE
 produced meets it at H, a step Euclid takes without saying why
 ([gaps in Book II](gaps-book-II.md#ii14)). G, the centre, falls between B and E, so E lies

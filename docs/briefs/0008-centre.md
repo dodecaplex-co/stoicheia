@@ -3,6 +3,10 @@
 *Frozen 18 October 2026 by the coordinator, after Astra's challenges of `afe0ee9` and
 `3f00ebf` and the Claude challenger's; decisions Q1 to Q16 as recorded in section 8.*
 
+*19 October 2026: the [dated correction in section 3](#correction-iii1-19-october-2026)
+replaces the frozen construction, guard, porism, overlap and order claims it names below,
+by the owner's decision D1. The frozen text is retained as history.*
+
 *The brief settles, before any proof work and as [WORKFLOW.md](../WORKFLOW.md), section 2,
 requires, the rule the owner approved, that every circle has a centre, and every statement
 the rule changes. Each new statement is written with `sorry` in the `Staging` library, in
@@ -160,6 +164,98 @@ axiom exists_centre (α : Circle) : ∃ O : Point, Centre O α
   file it changes, as [WORKFLOW.md](../WORKFLOW.md), section 10, requires.
 
 ## 3. III.1
+
+<a id="correction-iii1-19-october-2026"></a>
+
+### Dated correction, 19 October 2026: III.1's construction and porism
+
+The coordinator records the owner's decision D1 of 19 October under
+[WORKFLOW.md](../WORKFLOW.md), section 2, "Correcting a frozen brief". This note replaces
+the claims named below, including their summaries in sections 4, 6 and 8 and Appendix B;
+the frozen text that follows is kept, not silently rewritten.
+
+- **Discrepancy.** The frozen construction promises no use of a rule supplying a centre,
+  but its staged proof used Circle 2 for D within. That would reintroduce the rule that
+  contains III.2 into III.1 and its consumers. The frozen porism also describes a call to
+  III.1 and `centre_unique`; the delivered proof instead uses its given centre directly.
+- **Current declarations.** Section 3's code block fixes `Prop1.construction`, with the
+  circle and two distinct points on it as input and the bisections and perpendicular
+  straight line as output. Today's `Elements.BookIII.Prop1` still takes
+  `hABC : ∃ G : Point, Centre G ABC`; `Elements.BookIII.Prop1.porism` takes
+  `hG : Centre G ABC` and concludes `Collinear D C G`. Their types do not change in
+  corrected step 3. The restated `Prop1` and `Prop1.of_circle` remain staged for step 6.
+- **Corrected construction and reason, replacing "The construction, apart" and the
+  closure claims in "The correctness, with the rule".** D1 keeps the construction's
+  frozen type and moves it home before `Prop1`. It receives no centre. It uses
+  `exists_centre` only inside the proof that D is within the circle, through
+  `Prop1.within`, by III.2's argument using I.5, I.16 and I.19:
+
+  ```lean
+  have hD_in : InsideCircle D ABC :=
+    (exists_centre ABC).elim fun G hG => Prop1.within hG hA hB hADB hAD
+  ```
+
+  No centre witness reaches its output. The bisections and perpendicular construction
+  stay as before, and today's `Prop1` calls `Prop1.construction` under Euclid's three
+  construction sentences. The proof that F is the centre stays in `Prop1`.
+  `Prop1.within` keeps its given-centre interface for this confined use; changing that
+  helper is not part of step 3.
+- **Corrected guard, replacing "The guard Astra asks for", its sample comment and
+  counts, and both versions of question 7.** `Audit/Centre.lean` fixes the same
+  construction type and pins its complete axiom list afresh from Lean's actual output
+  for the home declaration. `Tacit.exists_centre` is admitted. Every renewal is read
+  for `Tacit.inside_of_between`, `Tacit.outside_of_between`, `Tacit.centre_unique` and
+  `sorryAx`, all of which must be absent. At `b117d01`, `#print axioms` reports 64 names:
+  Lean's three foundations, Definition I.15, Postulates 1 to 4 and 56 tacit rules, with
+  `Tacit.exists_centre` included and those four names absent. This delivered output
+  replaces the frozen prediction of 62 names and 54 tacit rules. The guard uses Lean's
+  complete printing, not a list inferred from the count. A pin does not show where the
+  witness was used; the reader checks that confinement in the proof.
+- **Corrected porism, replacing "The porism" and its record and certificate promises.**
+  The statement still names its centre G. Its proof takes the argument of Euclid's
+  reductio directly from that centre: on AB it is D by `Prop1.middle`; off AB, I.8's
+  comparison in `Prop1.equal_adjacent`, shared with `Prop1`, makes the adjacent angles
+  equal, Postulate 4 makes them right, and `Prop1.perpendicular` puts G on DC. It neither
+  calls III.1 nor uses `centre_unique` or `exists_centre`. The fresh certificate has 51
+  tacit rules, replacing the frozen prediction of 58. III.1 has 57, including the rule
+  through its construction, and still excludes `centre_unique`.
+- **Corrected overlap, replacing "The overlap note" and "The catalogue".** In the
+  final restated III.1, the rule supplies two steps: D within by III.2's argument, and
+  "let G be the centre". The bisections, perpendicular straight line and correctness
+  argument remain III.1's work. The record keeps `kind = "step"`; bare existence is
+  supplied by the rule, while `Prop1.of_circle` will give Euclid's construction and its
+  correctness from a circle alone. At corrected step 3, only D within uses the rule:
+  today's `hABC` still supplies G for the reductio. The current record must say this,
+  keep scope `full` and `centre-given`, and not claim the final restatement has landed.
+- **Corrected record and page text, replacing the affected instructions in "The
+  record" and section 4's prose list.** The grouped passage names `Prop1.construction`;
+  the `Prop1.within` passage names the rule as the source of its centre; the porism
+  passage names the shared comparison and its direct route. The commentary and overlap
+  catalogue say the same. The certificate field guide's old 56/57 counts are no longer
+  current. In `tests/certificate_expectations.json`, the porism's existing `equals`
+  moves to the full fresh list, its count to 51, and it gains an exclusion of
+  `Tacit.centre_unique`; III.1's count moves to 57 and its exclusion stays. Only those
+  two expectations change, with their reasons; no field is dropped. These are values
+  pinned to the content, after the earlier separate change that pinned the old porism's
+  full list. Review stamps wait for an independent reader.
+- **Corrected order, replacing section 6's order and its sentence allowing steps 3 and
+  4 before step 5, section 8's order of landing and its summary, and their repeated
+  guard instructions.** Step 5, the rule, precedes corrected step 3. Step 4 follows
+  step 3 and precedes step 6, in a pull request of its own, never in a train with the
+  content it judges. Section 7 landed earlier, as its separate dated correction says;
+  it does not wait for step 6. The construction and porism content comes first, the
+  guard next in a separate landing, then the centre restatements.
+- **Consumers affected.** III.1's callers, the porism's callers, its review record and
+  page, Book III's introduction where it discusses centres, III.2's commentary, the
+  overlap catalogue, `Certificate/FIELDS.md`, `tests/certificate_expectations.json`,
+  the future `Audit/Centre.lean`, and the dependency pins in `Audit/Overlaps.lean` and
+  `Audit/Crossing.lean`. The integrator regenerates the pages. No proposition or porism
+  statement, Heath sentence, foundation or lock changes under this correction.
+- **Work that can go on meanwhile.** The remaining content proceeds under its approved
+  interfaces. The construction guard waits for its separate landing; the restated
+  III.1 and its circle-only entry point wait for step 6.
+
+### The text frozen on 18 October
 
 `Staging/Centre/Prop01.lean`.
 
@@ -613,6 +709,10 @@ The coordinator corrects the order frozen on 18 October, under WORKFLOW section 
   the frozen text below is retained.
 
 ## 6. The order of work
+
+*19 October correction: the [section 3 correction](#correction-iii1-19-october-2026)
+supersedes the frozen order below: step 5, corrected step 3, step 4 on its own, then
+step 6. Section 7 landed earlier; step 4 never shares a train with content it judges.*
 
 A check never lands in the pull request whose code it checks
 ([WORKFLOW.md](../WORKFLOW.md), section 10), so the guard of section 3 needs a pull request
@@ -1200,6 +1300,10 @@ changed two of question 15's three recommendations before the freeze (Appendix B
 
 ### Each decision
 
+*19 October correction: question 7 below is retained as frozen. The
+[section 3 correction](#correction-iii1-19-october-2026) admits `Tacit.exists_centre`
+and requires Circle 2, Circle 3, `centre_unique` and `sorryAx` to be absent at each renewal.*
+
 1. **Decided:** the rule is `Tacit.exists_centre`, in `Tacit/Constructions.lean`, a tacit
    rule of our own, with a pointer to it in the opening note of `Definitions.lean`.
 2. **Decided, as a standing rule for this brief and later ones:** a named centre that
@@ -1239,6 +1343,11 @@ changed two of question 15's three recommendations before the freeze (Appendix B
     form for III.6 alone stays only as a staged check.
 
 ### The order of landing
+
+*19 October correction: the [section 3 correction](#correction-iii1-19-october-2026)
+replaces this order and its closing summary. Step 5 precedes corrected step 3; step 4
+lands separately between step 3 and step 6, never in their content train. Section 7 has
+already landed.*
 
 1. **#40,** the model's law names as data: landed, in train H2 (#103).
 2. **The `[overlap]` kind,** one tooling pull request with issue #93 (question 3).

@@ -11,11 +11,22 @@ kind = "euclid"
 tags = ["centre-given"]
 note = "The circle comes with some centre G, Euclid's supposed centre, and with the two points A, B of the straight line he draws through it at random. The porism, too, is stated of a circle with a centre."
 
+[overlap]
+rule = "Tacit.exists_centre"
+kind = "step"
+note = "Our foundations assume that every circle has a centre. In `Prop1.construction` the rule supplies a centre only for the proof that D is within the circle, by III.2's argument in `Prop1.within`; that witness supplies none of the constructed points. The bisections, perpendicular straight line and proof that F is the centre remain III.1's work. The statement still supplies the centre G for the reductio."
+
+[[passage]]
+at = "Let a straight line AB be drawn through it at random"
+kind = "grouped"
+helper = "Prop1.construction"
+note = "One call carries Euclid's three construction sentences: bisect AB at D, draw DC at right angles and through to E, then bisect CE at F. `Prop1.construction` receives the circle and A, B, with no centre supplied; the proof that F is the centre follows under Euclid's sentences."
+
 [[passage]]
 at = "from D let DC be drawn at right angles to AB and let it be drawn through to E"
 kind = "helper"
 helper = "Prop1.within"
-note = "Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes. `Prop1.within` takes it by III.2's own argument, by I.5, I.16 and I.19, from the centre the hypothesis gives; were the centre on AB, it would be D itself."
+note = "Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes. Inside `Prop1.construction`, `exists_centre` supplies a centre only for this proof: `Prop1.within` takes III.2's own argument, by I.5, I.16 and I.19; were the centre on AB, it would be D itself."
 
 [[passage]]
 at = "and let GA, GD, GB be joined"
@@ -38,7 +49,7 @@ note = "The reductio shows that the supposed centre G lies on CE, and the Lean b
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop1.porism"
-note = "Proved as its own theorem, III.1 Por., from this construction. It uses that a circle has one centre (`centre_unique`), which III.1 itself does not."
+note = "Proved as its own theorem, III.1 Por., by the argument of Euclid's reductio from the given centre G: on AB it is D by `Prop1.middle`; off AB, the shared I.8 step `Prop1.equal_adjacent` makes the adjacent angles equal, Postulate 4 makes them right, and `Prop1.perpendicular` puts G on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`."
 
 [review]
 stage = "exceptions"
