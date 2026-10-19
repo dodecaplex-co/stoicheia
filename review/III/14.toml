@@ -7,7 +7,7 @@ fingerprint = "sha256:ab5dba1e761e8618"
 
 [route]
 kind = "euclid"
-note = "The companion takes Euclid's case, two straight lines not through the centre, from `Prop14`. A straight line through the centre is a diameter, two radii together (`Prop14.diameter_sum`), its foot the centre; and of a diameter and another straight line, the diameter is the greater [I. 20]."
+note = "The companion takes Euclid's case, two straight lines not through the centre, from `Prop14`. A straight line through the centre is a diameter, two radii together (`Prop14.diameter_sum`), its foot the centre; and of a diameter and a straight line not through the centre, the diameter is the greater [I. 20]."
 
 [representation]
 tags = ["centre-given"]
@@ -27,6 +27,9 @@ note = "Definition III.4 is how the statement says \"equally distant\": its conc
 at = "Next, let the straight lines AB, CD be equally distant from the centre"
 kind = "grouped"
 note = "The converse needs no Lean of its own until \"And, since AE is equal to CE\": the halves, AB double of AF and CD of CG, were found once, before the two directions part."
+
+[figure]
+case = "two equal straight lines AB and CD, neither through E"
 
 [review]
 stage = "exceptions"

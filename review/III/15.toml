@@ -7,7 +7,7 @@ fingerprint = "sha256:8f609380c65c4ddf"
 
 [route]
 kind = "euclid"
-note = "`Prop15.le_diameter` is Euclid's step, two radii together greater than a straight line [I. 20], said of BE, EC and BC without MN. `Prop15.nearer` takes two straight lines not through the centre from `Prop15`, by his argument [III. 14, I. 24], and a nearer diameter from `Prop15.le_diameter`."
+note = "`Prop15.le_diameter` uses Euclid's triangle inequality step [I. 20] when BC does not pass through E, and treats diameters and coincident endpoints separately. `Prop15.nearer` takes two straight lines not through the centre from `Prop15`, by his argument [III. 14, I. 24], and a nearer diameter from `Prop15.le_diameter`."
 
 [representation]
 tags = ["centre-given"]
@@ -21,12 +21,15 @@ note = "The statement assumes it (`hnearer : ‖E H‖ < ‖E K‖`), for Defini
 [[passage]]
 at = "Again, since AE is equal to EM, and ED to EN"
 kind = "case"
-note = "Euclid shows AD greater than BC through MN, beside the more remote FG, and `Prop15` keeps his figure. `Prop15.le_diameter` says it of every straight line BC in the circle, without MN: BE, EC are together equal to AD and greater than BC [I. 20], and only a straight line through the centre is equal to the diameter."
+note = "Euclid shows AD greater than BC through MN, beside the more remote FG, and `Prop15` keeps his figure. `Prop15.le_diameter` bounds every BC by AD without MN: if BC does not pass through E, BE and EC together exceed BC [I. 20]; if E lies between B and C, BC equals AD; if B and C coincide, BC has length zero."
 
 [[passage]]
 at = "Therefore the diameter AD is greatest and BC greater than FG"
 kind = "case"
 note = "Euclid's nearer straight line BC is not through the centre. `Prop15.nearer` lets it be a diameter, at no distance, and `Prop15.le_diameter` then makes FG the less, since FG, more remote, cannot pass through the centre."
+
+[figure]
+case = "AD a diameter, neither BC nor FG through E, and EH less than EK"
 
 [review]
 stage = "exceptions"
