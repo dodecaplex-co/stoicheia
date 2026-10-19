@@ -7,12 +7,45 @@ fingerprint = "sha256:141737cc26d36b0f"
 kind = "euclid"
 
 [[passage]]
+at = "Let BC be bisected at E"
+kind = "helper"
+helper = "Prop10"
+note = "Euclid bisects BC at E without a reference in Heath's text. The Lean uses I.10, which puts E between B and C and makes BE equal to EC."
+
+[[passage]]
 at = "and let AE be joined"
 kind = "given"
 note = "Our triangles ABE and AEC are named by their corners, so no straight line AE is drawn."
 
+[[passage]]
+at = "through A let AG be drawn parallel to EC"
+kind = "helper"
+helper = "Prop30.meet"
+note = "Euclid draws the parallel through A and takes F where it meets the arm of the angle at E. The Lean draws the parallel by I.31 and finds F with `Prop30.meet`, using I.30, which Heath does not cite here."
+
+[[passage]]
+at = "through C let CG be drawn parallel to EF"
+kind = "helper"
+helper = "Prop31.parallelogram"
+note = "Euclid takes G where the parallel through C meets AG. `Prop31.parallelogram` draws that parallel by I.31, finds G with `Prop30.meet` (I.30), and proves that FECG is a parallelogram."
+
+[[passage]]
+at = "therefore the triangle ABC is double of the triangle AEC"
+kind = "helper"
+helper = "area_cut"
+note = "Euclid takes ABC as ABE and AEC together. `area_cut` proves that division from E between B and C, and the equality from I.38 makes the whole double of AEC."
+
+[[passage]]
+at = "And it has the angle CEF equal to the given angle D"
+kind = "carried"
+note = "Euclid identifies CEF with the angle constructed by I.23. Beneath the construction of AG, the Lean uses `Parallel.sameSide` and `OnRay.of_sameSideOf` to put F on the constructed arm from E; `angle_eq_of_onRay` then gives the angle here."
+
+[figure]
+case = "A on FG produced beyond F, as in Heath's figure"
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "2e1d5c1"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:69828f783bc4393e"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
