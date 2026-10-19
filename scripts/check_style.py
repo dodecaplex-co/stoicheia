@@ -1,7 +1,7 @@
 """Check the house style's hard rules, and report its defaults.
 
-The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S21
-fail the script, and D4 to D11, D14 and D15 are listed for a reader to judge and fail
+The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S22
+fail the script, and D4 to D11 and D14 to D16 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
     python3 scripts/check_style.py              # every rule, S12 included
@@ -10,22 +10,48 @@ nothing. Run from anywhere; the paths are the repository's.
     python3 scripts/check_style.py --require-idea-letters   # S21 on every figure, as the switch is
     python3 -I tests/test_check_style.py        # the rules' cases, which CI runs first
 
-S12 asks Lean whether each backticked name in the mishnah exists, so it needs a built
-tree (`lake build`) and `lake` on the PATH; without them the script fails and says so,
-unless `--no-lean` is given. CI runs it after `lake build`.
+S12 asks Lean whether each backticked name in the texts it reads exists, so it needs a
+built tree (`lake build`) and `lake` on the PATH; without them the script fails and says
+so, unless `--no-lean` is given. The overlap catalogue's audit lemmas are Lean's only
+once `lake build Audit` has run: until then they are listed as not checked. CI runs the
+script after both.
 
 What the scopes cover (STYLE, section 8):
 
 * Prose: mishnah/<book>/NN.md, mishnah/intro/<book>.md, reading/<book>/NN.md.
 * Mishnah: mishnah/<book>/NN.md alone.
-* Catalogues: docs/reports/gaps-book-*.md.
+* Review notes: the texts of review/<book>/NN.toml that its page shows (REVIEW_SHOWN),
+  and each tag's `meaning` and `badge` in review/terms.toml.
+* Catalogues: docs/reports/gaps-book-*.md and docs/reports/overlaps.md.
+* Other reports: every other docs/reports/*.md, save the outside reviews
+  (outside-review-*.md), which keep their reviewers' words as written; the crew's own
+  logs, docs/reports/crew/, are not read.
 * README: README.md, without its section "How it was made".
 * Lean notes: in Elements/**/*.lean, the text of `/- … -/` blocks and docstrings, save
   the docstring of each `theorem PropN`, which is Heath's enunciation. The `--` lines
   are Heath's proof and out of scope.
-* Generated: CERTIFICATE.md, GRAPH.md, book/<book>/index.md. A failure here is mended
-  in scripts/render.py or in the source it reads.
+* Rendered docstrings: of the Lean notes, the docstrings that render.py copies onto the
+  pages, each tacit rule's and each other axiom's that is not a postulate or a definition
+  (`render.load_axiom_docs`, `render.axiom_groups`).
+* Generated: CERTIFICATE.md, GRAPH.md, book/<book>/index.md, book/<book>/front.md and
+  book/names.md. A failure here is mended in scripts/render.py or in the source it reads.
 * Idea figures, figures/<book>/NN-idea.svg; Euclid's figures, figures/<book>/NN.svg.
+
+S12 reads the Prose, the Review notes, the Catalogues, the Rendered docstrings and the
+front pages (book/<book>/front.md), each with its book's namespace open, or every book's
+where a text has no book of its own; it reads the name before the colon of a backticked
+`name : type` too, for a hypothesis is said in words, not by its local name (STYLE,
+section 1). A backticked word that is Lean's or the certificate's but no declaration
+(a tactic, a field of facts.json) is listed in NOT_DECLARED with its reason.
+
+The reach of #66, held file by file (REACH_PENDING). The Review notes, the overlap
+catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
+names came under the rules on 19 October, with S7 in the gap catalogues and the Generated
+files, S12 beyond the mishnah, and S22. A file that had findings of that reach on the
+day is listed with whoever mends them, and while it is listed those findings are
+reported (D16) and fail nothing; every other file is held at once, and so is every
+finding a file was held to before. An entry whose file has no finding of the reach left is
+reported as done, for the change that takes it out; once none is left, the list goes.
 
 "Outside quotations" means with every "…" span (within one paragraph), every link
 target `](…)`, every code span and every fenced code block blanked first. HTML comments
@@ -75,11 +101,14 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
+from typing import NamedTuple
 
 import heath
+import render
 
 ROOT = heath.ROOT
 
@@ -118,11 +147,71 @@ IDEA_LETTERS_REQUIRED = True
 # figure: set the figure upright.
 UPRIGHT_LETTERS_REQUIRED = False
 
+# S12: backticked words that are Lean's, or the certificate's, but that no `#check` can
+# find, since they are not declarations. {word: why}. Each is printed on every run, and
+# one that no text S12 reads uses any more fails.
+NOT_DECLARED = {
+    "by_contra": "a tactic, which Lean runs rather than declares (reading/I/39.md)",
+    "grind": "a tactic, which Lean runs rather than declares (the overlap catalogue)",
+    "direct_axioms": "a field of facts.json (Certificate/FIELDS.md), not a Lean name",
+    "own_axioms": "a field of facts.json (Certificate/FIELDS.md), not a Lean name",
+    "inherited": "a field of facts.json (Certificate/FIELDS.md), not a Lean name",
+}
+
+# The reach of #66 (STYLE, section 8, "The reach of 19 October"), held file by file. Each
+# file below had findings of the rules' new reach on 19 October, and names who mends
+# them; while it is listed, those findings are reported (D16) and fail nothing. Every
+# file not listed is held to the whole reach, and every file to what it was held to
+# before. An entry whose file has no finding of the reach left is reported as done, for
+# the change that takes it out; it never fails, since the change that mends a file judged
+# by this check cannot change the check too (docs/WORKFLOW.md, section 10). Never add a
+# file to quiet a new finding: mend the text.
+REACH_PENDING: dict[str, str] = {
+    # The review notes.
+    "review/I/09.toml": "the records of Books I and II (#29)",
+    "review/II/14.toml": "the records of Books I and II (#29)",
+    "review/III/14.toml": "stage 4's records (#28)",
+    "review/III/15.toml": "stage 4's records (#28)",
+    "review/III/25.toml": "stage 4's records (#28)",
+    # The catalogues and the reports.
+    "docs/reports/gaps-book-I.md": "the text change that follows this one (#66)",
+    "docs/reports/gaps-book-II.md": "the text change that follows this one (#66)",
+    "docs/reports/gaps-book-III.md": "stage 3's gap entries (#25)",
+    "docs/reports/overlaps.md": "stage 3's overlap entries (#25)",
+    "docs/reports/read-through-01.md": "the change now writing the reports",
+    # The front pages: render.py's FRONT_LEAN_I, once stage 3's change to render.py lands.
+    "book/I/front.md": "render.py's FRONT_LEAN_I, after stage 3 (#25)",
+    # Book Zero's notes (S22).
+    "Elements/Figure/Angles.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Areas.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Basics.lean": "stage 3 (#25) and the mixed angles (#57)",
+    "Elements/Figure/Circles.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Lengths.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Lines.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/OnCircles.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Parallelograms.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Parallels.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Rays.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Rectangles.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Sides.lean": "the text change that follows this one (#66)",
+    "Elements/Figure/Triangles.lean": "the text change that follows this one (#66)",
+    # The foundations' notes (S22), and the rendered docstrings of Transfer.lean (S7): the
+    # coordinator's files.
+    "Elements/Foundations/Definitions.lean": "the coordinator, who owns the foundations",
+    "Elements/Foundations/DefinitionsII.lean": "the coordinator, who owns the foundations",
+    "Elements/Foundations/DefinitionsIII.lean": "the coordinator, after the mixed angles (#57)",
+    "Elements/Foundations/Magnitudes.lean": "the coordinator, who owns the foundations",
+    "Elements/Foundations/Phrases.lean": "the coordinator, who owns the foundations",
+    "Elements/Foundations/Postulates.lean": "the coordinator, who owns the foundations",
+    "Elements/Foundations/Tacit/Transfer.lean": "the coordinator, who owns the foundations",
+}
+
 # ---------------------------------------------------------------------------------------
 # Findings.
 
 failures: list[tuple[str, str, int, str]] = []   # (rule, file, line, message)
 reports: dict[str, list[tuple[str, int, str]]] = defaultdict(list)
+reach_found: set[str] = set()   # the files of REACH_PENDING with a finding of the reach
 
 RULES = {
     "S1": "an em dash",
@@ -146,6 +235,7 @@ RULES = {
     "S19": "a book introduction that does not link the book's brief",
     "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
+    "S22": "letters in backticks, where they are plain",
 }
 
 REPORTS = {
@@ -159,6 +249,7 @@ REPORTS = {
     "D11": "Euclid's figure strokes or dots off the usual widths",
     "D14": "figures at a glance not yet lettered (S21 holds them once the switch is on)",
     "D15": "figures whose letters are still italic (S15 and S20 hold them upright once the switch is on)",
+    "D16": "the reach of 19 October, in a file still listed in REACH_PENDING (fails once it is out)",
 }
 
 
@@ -166,8 +257,14 @@ def rel(path: Path) -> str:
     return path.relative_to(ROOT).as_posix()
 
 
-def fail(rule: str, path: Path, line: int, message: str) -> None:
-    failures.append((rule, rel(path), line, message))
+def fail(rule: str, path: Path, line: int, message: str, *, new: bool = False) -> None:
+    """A failure; or, for a finding of the new reach (`new`) in a file still listed in
+    REACH_PENDING, a D16 report, with the rule it would fail."""
+    if new and rel(path) in REACH_PENDING:
+        reach_found.add(rel(path))
+        report("D16", path, line, f"{rule}: {message}")
+    else:
+        failures.append((rule, rel(path), line, message))
 
 
 def report(rule: str, path: Path, line: int, message: str) -> None:
@@ -292,14 +389,104 @@ def reading_files() -> list[Path]:
     return [p for b in books_with_pages() for p in numbered(ROOT / "reading" / b, ".md")]
 
 
+REPORTS_DIR = ROOT / "docs" / "reports"
+
+
+def is_catalogue(path: Path) -> bool:
+    """The gap catalogues and the overlap catalogue: reports that describe the edition as
+    it stands, and are kept up to date with it."""
+    return path.parent == REPORTS_DIR and (re.fullmatch(r"gaps-book-\w+\.md", path.name)
+                                           is not None or path.name == "overlaps.md")
+
+
+def is_report(path: Path) -> bool:
+    """Any other report of docs/reports/, save an outside review, which keeps its
+    reviewer's words as written. The crew's own logs, docs/reports/crew/, are not read."""
+    return (path.parent == REPORTS_DIR and path.suffix == ".md" and not is_catalogue(path)
+            and not path.name.startswith("outside-review-"))
+
+
 def catalogue_files() -> list[Path]:
-    return sorted((ROOT / "docs" / "reports").glob("gaps-book-*.md"))
+    return sorted(p for p in REPORTS_DIR.glob("*.md") if is_catalogue(p))
+
+
+def report_files() -> list[Path]:
+    return sorted(p for p in REPORTS_DIR.glob("*.md") if is_report(p))
+
+
+def front_files() -> list[Path]:
+    """book/<book>/front.md: a book's definitions, with their Lean, written by render.py
+    from heath/<book>/front.md and its own table, FRONT_LEAN."""
+    return [p for b in books_with_pages() if (p := ROOT / "book" / b / "front.md").exists()]
 
 
 def generated_files() -> list[Path]:
+    """The pages render.py writes that the rules read: CERTIFICATE.md, GRAPH.md, each
+    book's index and front page, and the table of names. The proposition pages are made
+    of the sources the other scopes read."""
     files = [ROOT / "CERTIFICATE.md", ROOT / "GRAPH.md"]
     files += [ROOT / "book" / b / "index.md" for b in books_with_pages()]
+    files += front_files() + [ROOT / "book" / "names.md"]
     return [p for p in files if p.exists()]
+
+
+# The generated files that came under the rules with the reach of #66: every finding in
+# them is of that reach.
+def is_new_generated(path: Path) -> bool:
+    return path in front_files() or path == ROOT / "book" / "names.md"
+
+
+def review_files() -> list[Path]:
+    return [p for b in books_with_pages() for p in numbered(ROOT / "review" / b, ".toml")]
+
+
+# The texts of a review record that its page shows (render.py): the field table's
+# statement, extra hypotheses, argument, representation and overlap; the figure note, its
+# case and its note; the clause map's claims; and the passages' notes. Heath's own words
+# (`omitted`, `text_only`, a passage's `at`) are check_fidelity.py's, and the name a
+# `helper` gives is Lean's.
+REVIEW_SHOWN = {"statement": ("note", "short", "hypotheses"), "route": ("note",),
+                "representation": ("note",), "overlap": ("note",),
+                "coverage": ("checked", "explains"), "passage": ("note",),
+                "figure": ("case", "note")}
+# In review/terms.toml, what a page shows of each tag: its meaning (the Representation
+# row, where a record has no note of its own) and its badge.
+TERMS_SHOWN = ("meaning", "badge")
+TOML_STRING = re.compile(r'"(?:[^"\\\n]|\\.)*"|\'[^\'\n]*\'')
+TOML_COMMENT = re.compile(r"^[ \t]*#[^\n]*", re.M)
+
+
+def review_texts(raw: str, terms: bool = False) -> list[tuple[int, str, str]]:
+    """(line, key, text) for each text of a review record (or, with `terms`, of
+    review/terms.toml) that a page shows, in the order of the file. A record that is not
+    TOML gives none: heath.py and check_fidelity.py report it."""
+    try:
+        data = tomllib.loads(raw)
+    except tomllib.TOMLDecodeError:
+        return []
+    wanted = []
+    if terms:
+        for table in (data.get("tag") or {}).values():
+            wanted += [(f"tag.{k}", table[k]) for k in TERMS_SHOWN
+                       if isinstance(table, dict) and isinstance(table.get(k), str)]
+    else:
+        for section, keys in REVIEW_SHOWN.items():
+            tables = data.get(section) or []
+            for table in ([tables] if isinstance(tables, dict) else tables):
+                for k in keys:
+                    v = table.get(k) if isinstance(table, dict) else None
+                    for t in [v] if isinstance(v, str) else v if isinstance(v, list) else []:
+                        if isinstance(t, str):
+                            wanted.append((f"{section}.{k}", t))
+    # Where each text stands: every string outside the comment lines, decoded, in order.
+    lines: dict[str, list[int]] = defaultdict(list)
+    for m in TOML_STRING.finditer(TOML_COMMENT.sub(_blank, raw)):
+        try:
+            lines[tomllib.loads("s = " + m.group(0))["s"]].append(line_of(raw, m.start()))
+        except tomllib.TOMLDecodeError:
+            continue
+    found = [((lines[t].pop(0) if lines[t] else 0), key, t) for key, t in wanted]
+    return sorted(found, key=lambda x: x[0])
 
 
 def ref_of(path: Path) -> str | None:
@@ -366,6 +553,51 @@ def lean_files() -> list[Path]:
     return sorted((ROOT / "Elements").rglob("*.lean"))
 
 
+def rendered_docstrings() -> dict[str, list[tuple[str, int, int]]]:
+    """The docstrings render.py copies onto the pages, by file: {file: [(axiom, first,
+    last)]}, the first and last character of each docstring's text in the file. They are
+    the docstrings of the tacit rules, and of any other axiom that is not a postulate or a
+    definition (`render.axiom_groups`), as `render.load_axiom_docs` reads them; each is
+    found again in its file, just above its axiom, and must read as render.py reads it."""
+    found: dict[str, list[tuple[str, int, int]]] = defaultdict(list)
+    sources: dict[str, str] = {}
+    for name, (doc, path, line) in sorted(render.load_axiom_docs().items()):
+        _, _, tacit, other = render.axiom_groups({"axioms": [name]})
+        if not (tacit or other) or not path:
+            continue
+        src = sources.setdefault(path, (ROOT / path).read_text(encoding="utf-8"))
+        span = docstring_span(src, line, doc)
+        if span is None:
+            fail("S7", ROOT / path, line, f"the docstring render.py shows for `{name}` was not "
+                 "found above its axiom, so the rules could not read it")
+            continue
+        found[path].append((name, *span))
+    return found
+
+
+def docstring_span(src: str, line: int, doc: str) -> tuple[int, int] | None:
+    """The first and last character of the text of the docstring just above line `line`
+    of a Lean source (an axiom's), if it reads as `doc` once its white space is made one
+    space, as render.py reads it; else None."""
+    at = sum(len(l) for l in src.splitlines(keepends=True)[:line - 1])
+    a = src.rfind("/--", 0, at)
+    b = src.find("-/", a + 3) if a >= 0 else -1
+    if a < 0 or b < 0 or b > at or " ".join(src[a + 3:b].split()) != doc:
+        return None
+    return a + 3, b
+
+
+def split_notes(notes: str, spans: list[tuple[int, int]]) -> tuple[str, str]:
+    """A Lean file's notes in two, each of the same length, the rest blanked: the
+    rendered docstrings (`spans`), and every other note."""
+    shown = re.sub(r"[^\n]", " ", notes)
+    rest = notes
+    for a, b in spans:
+        shown = shown[:a] + notes[a:b] + shown[b:]
+        rest = rest[:a] + re.sub(r"[^\n]", " ", notes[a:b]) + rest[b:]
+    return shown, rest
+
+
 # ---------------------------------------------------------------------------------------
 # The text rules. Each pattern is matched on the text the rule names (raw, without code,
 # or outside quotations); every match is one finding.
@@ -423,6 +655,24 @@ ITALIC_LETTER = re.compile(r"(?:^|[^*])(\*[A-Z]+[′₀-₉]*(?:" + LETTER_GAP +
                            r"(?:$|[^*])", re.M)
 TEX = re.compile(r"\\|\^\{|\$")
 LEAN_CANNOT = re.compile(phrase(r"\bLean (?:cannot|can't|can not)\b"), re.I)
+# S22: a code span holding letters alone, a run of two or more capitals (each with its
+# prime or subscript), or several runs apart by commas or spaces: `PQ`, `ABCD`, `AB, CD`.
+# Letters are plain (STYLE, section 1): no Lean name or expression is a run of capitals,
+# and a lone letter, `P`, may be one of the Lean's variables, so it is left alone.
+LETTER_RUN = r"(?:[A-Z][′'₀-₉]*){2,}"
+LETTERS_ONLY = re.compile(rf"[ \t]*{LETTER_RUN}(?:[ \t]*,?[ \t]+{LETTER_RUN})*[ \t]*")
+LETTERS_IN_CODE = re.compile(r"`([^`\n]+)`")
+
+
+def letter_spans(text: str) -> str:
+    """S22's reading: `text` with every code span blanked but those that hold letters
+    alone (LETTERS_ONLY), and everything outside a code span blanked too, so that
+    LETTERS_IN_CODE finds each such span and nothing across two spans."""
+    out = re.sub(r"[^\n]", " ", text)
+    for m in CODE_SPAN.finditer(text):
+        if LETTERS_ONLY.fullmatch(m.group(0)[1:-1]):
+            out = out[:m.start()] + m.group(0) + out[m.end():]
+    return out
 NO_CITATION = re.compile(phrase(r"\bno citations?\b"), re.I)
 COMPARISON = re.compile(r"\b(?:first|only|better|best|unlike)\b", re.I)
 NEED = re.compile(r"\bneed(?:s|ed)?\b", re.I)
@@ -465,58 +715,77 @@ def proclus_under_i31(text: str) -> list[tuple[int, int]]:
 
 
 def find_all(rule: str, pattern: re.Pattern, path: Path, text: str, shown: str | None = None,
-             *, failing: bool = True, what: str = "") -> None:
+             *, failing: bool = True, what: str = "", line0: int = 0, new: bool = False) -> None:
     """Each match of `pattern` in `text` (already blanked as the rule asks) is a finding.
-    `shown` is the text the excerpt is taken from, so the reader sees the words."""
+    `shown` is the text the excerpt is taken from, so the reader sees the words; `line0`
+    is the file's line before the text's first, for a text taken from a file (a review
+    note); `new` marks a finding of the reach of #66 (REACH_PENDING)."""
     shown = text if shown is None else shown
     for m in pattern.finditer(text):
         a, b = (m.span(1) if m.groups() and m.group(1) else m.span())
         found = flat(m.group(1) if m.groups() and m.group(1) else m.group(0))
         msg = f'{what}"{found}": {excerpt(shown, a, b)}'
-        (fail if failing else report)(rule, path, line_of(text, a), msg)
+        if failing:
+            fail(rule, path, line0 + line_of(text, a), msg, new=new)
+        else:
+            report(rule, path, line0 + line_of(text, a), msg)
 
 
-def check_text(path: Path, raw: str, scopes: set[str]) -> None:
-    """The text rules for one file, by the scopes it belongs to."""
+def check_text(path: Path, raw: str, scopes: set[str], *, line0: int = 0,
+               new: bool = False) -> None:
+    """The text rules for one file, or for one text of it that starts after its line
+    `line0` (a review note), by the scopes it belongs to. `new` marks a text that came
+    under the rules with the reach of #66, whose every finding is of that reach; in the
+    other texts, the reach is S7 where it was D10, S6 in the rendered docstrings, and
+    S22."""
     raw = raw.replace("\r\n", "\n")
     straight = straighten(raw)
     code_free = blank_code(straight)
     outside = blank_quotes(code_free)
     prose, cat, readme = "prose" in scopes, "catalogue" in scopes, "readme" in scopes
     notes, gen = "lean" in scopes, "generated" in scopes
+    review, reports_, rendered = "review" in scopes, "report" in scopes, "rendered" in scopes
 
-    if prose or cat or readme or notes:
-        find_all("S1", EM_DASH, path, blank_code(raw), raw)
-        find_all("S2", CREW, path, outside, raw)
-        find_all("S3", FIRST_PERSON, path, outside, raw)
-    if prose or cat or notes:
-        find_all("S4", HEDGE, path, outside, raw)
-    if prose or cat or readme or notes or gen:
-        find_all("S5", EUCLID_CITES, path, outside, raw)
-    if prose or gen:
-        find_all("S6", TACIT, path, outside, raw)
+    def find(rule, pattern, text, *, failing=True, reach=False):
+        find_all(rule, pattern, path, text, raw, failing=failing, line0=line0,
+                 new=new or reach)
+
+    if prose or review or cat or readme or notes or reports_:
+        find("S1", EM_DASH, blank_code(raw))
+    if prose or review or cat or readme or notes:
+        find("S2", CREW, outside)
+        find("S3", FIRST_PERSON, outside)
+    if prose or review or cat or notes:
+        find("S4", HEDGE, outside)
+    if prose or review or cat or readme or notes or gen:
+        find("S5", EUCLID_CITES, outside)
+    if prose or review or rendered or gen:
+        find("S6", TACIT, outside, reach=rendered)
     elif cat or readme or notes:
-        find_all("D10", TACIT, path, outside, raw, failing=False)
+        find("D10", TACIT, outside, failing=False)
     defs = SQUARE.sub(_blank, outside)
-    if prose:
-        find_all("S7", DEFINITION, path, defs, raw)
-    elif cat or readme or notes:
-        find_all("D10", DEFINITION, path, defs, raw, failing=False)
-    if prose or cat:
-        find_all("S8", CURLY, path, blank_code(raw), raw)
-    if prose or cat or notes:
-        find_all("S9", ITALIC_LETTER, path, code_free, raw)
+    if prose or review or cat or reports_ or rendered or gen:
+        find("S7", DEFINITION, defs, reach=cat or rendered or gen)
+    elif readme or notes:
+        find("D10", DEFINITION, defs, failing=False)
+    if prose or review or cat or reports_:
+        find("S8", CURLY, blank_code(raw))
+    if prose or review or cat or notes:
+        find("S9", ITALIC_LETTER, code_free)
+    if prose or review or cat or notes or reports_ or gen:
+        find("S22", LETTERS_IN_CODE,
+             letter_spans(FENCE.sub(_blank, HTML_COMMENT.sub(_blank, straight))), reach=True)
     if prose or readme:
-        find_all("D6", COMPARISON, path, outside, raw, failing=False)
-    if prose or cat or notes:
-        find_all("D7", LEAN_CANNOT, path, outside, raw, failing=False)
-    if prose or cat:
-        find_all("D8", NO_CITATION, path, outside, raw, failing=False)
-    if prose or cat or readme or notes:
+        find("D6", COMPARISON, outside, failing=False)
+    if prose or review or cat or notes:
+        find("D7", LEAN_CANNOT, outside, failing=False)
+    if prose or review or cat:
+        find("D8", NO_CITATION, outside, failing=False)
+    if prose or review or cat or readme or notes:
         for off, sent in sentences(outside):
             if NEED.search(sent) and POSTULATE_5.search(sent):
                 m = NEED.search(sent)
-                report("D9", path, line_of(outside, off + m.start()),
+                report("D9", path, line0 + line_of(outside, off + m.start()),
                        excerpt(raw, off + m.start(), off + m.end(), 70))
 
 
@@ -643,13 +912,22 @@ IDENT = re.compile(r"[A-Za-z_][A-Za-z0-9_.₀-₉]*")
 FILE_NAME = re.compile(r".*\.(?:lean|json|md|svg|py|toml|txt|lock)$")
 
 
-def lean_names(text: str) -> list[str]:
-    """The backticked Lean names of a text, file names aside, in order of first use."""
+# A backticked hypothesis or variable with its type, `hBCE : Between B C E`: the name
+# before the colon (not `:=`) is read as a name too.
+BINDER = re.compile(r"([A-Za-z_][A-Za-z0-9_.₀-₉]*)[ \t]*:(?!=)[ \t]")
+
+
+def lean_names(text: str, binders: bool = True) -> list[str]:
+    """The backticked Lean names of a text, file names aside, in order of first use: a
+    span that is one name, and, unless `binders` is False, the name a span `name : type`
+    opens with."""
     names = []
     for m in CODE_SPAN.finditer(FENCE.sub(_blank, text)):
         inner = m.group(0)[1:-1].strip()
-        if IDENT.fullmatch(inner) and not FILE_NAME.fullmatch(inner) and inner not in names:
-            names.append(inner)
+        binder = BINDER.match(inner) if binders else None
+        name = inner if IDENT.fullmatch(inner) else binder.group(1) if binder else None
+        if name and not FILE_NAME.fullmatch(name) and name not in names:
+            names.append(name)
     return names
 
 
@@ -670,26 +948,76 @@ def check_mishnah(path: Path, raw: str) -> None:
              f'"under I.31" beside Proclus (allowed nowhere): {excerpt(raw, a, b)}')
     for m in RETIRED_LEADS.finditer(text):
         fail("S11", path, line_of(text, m.start()), f"retired lead {flat(m.group(0))}")
-    names = lean_names(raw)
+    names = lean_names(raw, binders=False)
     if len(names) > 4:
         report("D4", path, 1, f"{len(names)} Lean names: {', '.join(names)}")
 
 
-def check_lean_names(mishnah: list[Path]) -> int:
-    """S12: every backticked name in the mishnah is one Lean knows, with `Elements`,
-    `Elements.Book<book>` and `Elements.Tacit` open. One Lean run checks every book, each
-    in its own section. Returns how many names were put to Lean."""
-    lines = ["import Elements"]
-    where: dict[int, tuple[str, list[Path]]] = {}
-    by_book: dict[str, dict[str, list[Path]]] = defaultdict(lambda: defaultdict(list))
-    for path in mishnah:
-        for name in lean_names(path.read_text(encoding="utf-8")):
-            by_book[path.parent.name][name].append(path)
-    for book in sorted(by_book, key=heath.arabic):
-        lines += ["", "section", f"open Elements Elements.Book{book} Elements.Tacit"]
-        for name in sorted(by_book[book]):
+class NamedText(NamedTuple):
+    """A text S12 reads: the file a finding names, the text (the file's own, or one text
+    of it, as a review note), the namespaces opened for it, the file's line before the
+    text's first, and whether S12 read it before the reach of #66 (the mishnah, whose
+    plain names it read and whose `name : type` it did not)."""
+    path: Path
+    text: str
+    opens: str
+    line0: int = 0
+    held: bool = False
+
+
+def book_opens(book: str) -> str:
+    """What S12 opens for a text of one book: `Elements`, its book and the tacit rules."""
+    return f"Elements Elements.Book{book} Elements.Tacit"
+
+
+def every_book_opens() -> str:
+    """What S12 opens for a text with no book of its own (the overlap catalogue, the
+    review terms): every book, so that a name two books share is ambiguous, and is
+    written with its book (`BookI.Prop5.base`)."""
+    return " ".join(["Elements"] + [f"Elements.Book{b}" for b in heath.BOOKS] + ["Elements.Tacit"])
+
+
+# What S12 opens for the docstrings of the foundations, which come before every book.
+FOUNDATIONS_OPENS = "Elements Elements.Tacit"
+# The audit lemmas the overlap catalogue names are Lean's once `lake build Audit` has run
+# (CI runs it before this script); until then they are listed as not checked.
+AUDIT_OLEAN = ROOT / ".lake" / "build" / "lib" / "lean" / "Audit.olean"
+SCRIPT = ROOT / "scripts" / "check_style.py"
+
+
+def check_lean_names(texts: list[NamedText]) -> tuple[int, list[str]]:
+    """S12: every backticked name in the texts is one Lean knows, with each text's
+    namespaces open. One Lean run checks every group of texts, each group in its own
+    section. Returns how many names were put to Lean, and the audit lemmas left unchecked
+    because the Audit library is not built."""
+    groups: dict[str, dict[str, list[NamedText]]] = defaultdict(lambda: defaultdict(list))
+    used = set()
+    for t in texts:
+        for name in lean_names(t.text):
+            if name in NOT_DECLARED:
+                used.add(name)
+            else:
+                groups[t.opens][name].append(t)
+    for name in sorted(set(NOT_DECLARED) - used):
+        fail("S12", SCRIPT, 0, f"`{name}` is in NOT_DECLARED, but no text S12 reads uses it "
+             "any more: take it out")
+    unchecked = []
+    audit = any(n.startswith("Audit.") for g in groups.values() for n in g)
+    if audit and not AUDIT_OLEAN.exists():
+        for g in groups.values():
+            for n in [n for n in g if n.startswith("Audit.")]:
+                unchecked.append(n)
+                del g[n]
+        audit = False
+    lines = ["import Elements"] + (["import Audit"] if audit else [])
+    where: dict[int, tuple[str, list[NamedText]]] = {}
+    for opens in sorted(groups):
+        if not groups[opens]:
+            continue
+        lines += ["", "section", f"open {opens}"]
+        for name in sorted(groups[opens]):
             lines.append(f"#check @{name}")
-            where[len(lines)] = (name, by_book[book][name])
+            where[len(lines)] = (name, groups[opens][name])
         lines.append("end")
     with tempfile.TemporaryDirectory() as tmp:
         probe = Path(tmp) / "StyleNames.lean"
@@ -698,27 +1026,31 @@ def check_lean_names(mishnah: list[Path]) -> int:
             run = subprocess.run(["lake", "env", "lean", str(probe)], cwd=ROOT,
                                  capture_output=True, text=True, timeout=900)
         except (OSError, subprocess.TimeoutExpired) as e:
-            fail("S12", ROOT / "mishnah", 0, f"could not run Lean ({e}); build the tree with "
+            fail("S12", SCRIPT, 0, f"could not run Lean ({e}); build the tree with "
                  "`lake build`, or pass --no-lean")
-            return 0
+            return 0, sorted(set(unchecked))
     out = run.stdout + run.stderr
     errors = list(re.finditer(rf"{re.escape(probe.name)}:(\d+):\d+: error(?:\([^)]*\))?: (.*)", out))
     if run.returncode != 0 and not errors:
-        fail("S12", ROOT / "mishnah", 0, "Lean failed before checking a name (is the tree "
+        fail("S12", SCRIPT, 0, "Lean failed before checking a name (is the tree "
              "built? run `lake build`, or pass --no-lean):\n      " + out.strip()[:400])
-        return 0
+        return 0, sorted(set(unchecked))
     for m in errors:
         line = int(m.group(1))
         if line not in where:
-            fail("S12", ROOT / "mishnah", 0, f"Lean: {m.group(2)} (is the tree built? run "
+            fail("S12", SCRIPT, 0, f"Lean: {m.group(2)} (is the tree built? run "
                  "`lake build`, or pass --no-lean)")
             continue
-        name, paths = where[line]
-        for path in paths:
-            raw = path.read_text(encoding="utf-8")
-            at = max(raw.find(f"`{name}`"), 0)
-            fail("S12", path, line_of(raw, at), f"`{name}`: {m.group(2).strip()}")
-    return len(where)
+        name, ts = where[line]
+        for t in ts:
+            found = re.search(r"`" + re.escape(name) + r"(`|[ \t]*:(?!=))", t.text)
+            at = found.start() if found else 0
+            binder = bool(found and found.group(1) != "`")
+            hint = ("; a hypothesis is said in words, never by its local name (STYLE, "
+                    "section 1, \"Hypotheses in words\")" if binder else "")
+            fail("S12", t.path, t.line0 + line_of(t.text, at),
+                 f"`{name}`: {m.group(2).strip()}{hint}", new=binder or not t.held)
+    return len(where), sorted(set(unchecked))
 
 
 # ---------------------------------------------------------------------------------------
@@ -1410,25 +1742,54 @@ def main() -> int:
     args = parser.parse_args()
     required = IDEA_LETTERS_REQUIRED or args.require_idea_letters
 
-    mishnah = mishnah_files()
-    for path in mishnah:
+    named: list[NamedText] = []   # the texts S12 reads
+    for path in mishnah_files():
         raw = path.read_text(encoding="utf-8")
         check_text(path, raw, {"prose"})
         check_mishnah(path, raw)
+        named.append(NamedText(path, raw, book_opens(path.parent.name), held=True))
     for path in intro_files():
-        check_text(path, path.read_text(encoding="utf-8"), {"prose"})
+        raw = path.read_text(encoding="utf-8")
+        check_text(path, raw, {"prose"})
+        named.append(NamedText(path, raw, book_opens(path.stem) if path.stem in heath.ROMAN
+                               else every_book_opens()))
     allowed = reading_links()
     for path in reading_files():
         raw = path.read_text(encoding="utf-8")
         check_text(path, raw, {"prose"})
         check_reading(path, raw, allowed)
+        named.append(NamedText(path, raw, book_opens(path.parent.name)))
+    terms = ROOT / "review" / "terms.toml"
+    for path in review_files() + ([terms] if terms.exists() else []):
+        is_terms = path == terms
+        for line, _, text in review_texts(path.read_text(encoding="utf-8"), terms=is_terms):
+            check_text(path, text, {"review"}, line0=max(line - 1, 0), new=True)
+            named.append(NamedText(path, text, every_book_opens() if is_terms
+                                   else book_opens(path.parent.name), max(line - 1, 0)))
     for path in catalogue_files():
-        check_text(path, path.read_text(encoding="utf-8"), {"catalogue"})
+        raw = path.read_text(encoding="utf-8")
+        book = re.fullmatch(r"gaps-book-(\w+)\.md", path.name)
+        check_text(path, raw, {"catalogue"}, new=book is None)
+        named.append(NamedText(path, raw, book_opens(book.group(1))
+                               if book and book.group(1) in heath.ROMAN else every_book_opens()))
+    for path in report_files():
+        check_text(path, path.read_text(encoding="utf-8"), {"report"}, new=True)
     check_text(ROOT / "README.md", readme_text(), {"readme"})
+    shown_docs = rendered_docstrings()
     for path in lean_files():
-        check_text(path, lean_notes(path), {"lean"})
+        notes = lean_notes(path)
+        spans = [(a, b) for _, a, b in shown_docs.get(rel(path), [])]
+        shown, rest = split_notes(notes, spans)
+        check_text(path, rest, {"lean"})
+        if spans:
+            check_text(path, shown, {"lean", "rendered"})
+            named.append(NamedText(path, shown, FOUNDATIONS_OPENS))
     for path in generated_files():
-        check_text(path, path.read_text(encoding="utf-8"), {"generated"})
+        check_text(path, path.read_text(encoding="utf-8"), {"generated"},
+                   new=is_new_generated(path))
+    for path in front_files():
+        named.append(NamedText(path, path.read_text(encoding="utf-8"),
+                               book_opens(path.parent.name)))
     check_intros()
     check_figures(required)
     if "D14" in reports:
@@ -1438,18 +1799,34 @@ def main() -> int:
         print("note: S15 and S20 take italic letters, one style in each figure, until "
               "UPRIGHT_LETTERS_REQUIRED is set (STYLE, section 8); D15 lists the figures")
     if args.no_lean:
-        print("note: S12 skipped (--no-lean); the mishnah's Lean names were not checked")
+        print("note: S12 skipped (--no-lean); the Lean names of the texts it reads were not "
+              "checked")
     elif shutil.which("lake") is None:
-        fail("S12", ROOT / "mishnah", 0, "`lake` is not on the PATH; build the tree, or pass --no-lean")
+        fail("S12", SCRIPT, 0, "`lake` is not on the PATH; build the tree, or pass --no-lean")
     else:
-        names = check_lean_names(mishnah)
-        print(f"S12: {names} backticked names of the mishnah put to Lean, book by book")
+        names, unchecked = check_lean_names(named)
+        print(f"S12: {names} backticked names put to Lean, from {len({t.path for t in named})} "
+              "files: the prose, the review notes, the catalogues, the rendered docstrings "
+              "and the front pages")
+        if unchecked:
+            print(f"note: S12 left {len(unchecked)} audit lemma(s) unchecked, for the Audit "
+                  "library is not built (`lake build Audit`, as CI runs it): "
+                  + ", ".join(f"`{n}`" for n in unchecked))
+    for f, who in sorted(REACH_PENDING.items()):
+        if not (ROOT / f).exists():
+            report("D16", ROOT / f, 0, f"done: listed in REACH_PENDING ({who}), but there is "
+                   "no such file now; take it out")
+        elif f not in reach_found and not args.no_lean:
+            report("D16", ROOT / f, 0, f"done: no finding of the reach is left ({who}); take "
+                   "it out of REACH_PENDING")
 
     if not args.quiet:
         print("Exceptions the script allows, each with its reason:")
         for (book, n), exc in sorted(LETTER_EXCEPTIONS.items(), key=lambda x: heath.prop_key(f"{x[0][0]}.{x[0][1]}")):
             letters = sorted(exc.get("extra", set()) | exc.get("missing", set()))
             print(f"  S16 figures/{book}/{n:02d}.svg ({', '.join(letters)}): {exc['why']}")
+        for word, why in sorted(NOT_DECLARED.items()):
+            print(f"  S12 `{word}`: {why}")
         for (f, why), (elements, points) in sorted(idea_exemptions.items()):
             print(f"  S21 {f} ({elements} marked {UNLETTERED}, {points} point(s)): {why}")
     if reports:
@@ -1471,7 +1848,7 @@ def main() -> int:
         print("  by rule: " + ", ".join(f"{r} {RULES[r]} ({k})"
                                        for r, k in sorted(by_rule.items(), key=lambda x: int(x[0][1:]))))
         return 1
-    rules = "S1–S21" if not args.no_lean else "S1–S11 and S13–S21"
+    rules = "S1–S22" if not args.no_lean else "S1–S11 and S13–S22"
     print(f"\n✓ style: the hard rules hold ({rules})")
     return 0
 

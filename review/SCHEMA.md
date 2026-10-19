@@ -36,7 +36,7 @@ have something to say. Unknown sections and keys are faults, so a misspelling is
 | Key | Type | Required | Meaning |
 |---|---|---|---|
 | `scope` | `"full"`, `"restricted"` or `"partial"` | yes | How much of the enunciation the theorem proves, with the companions listed below. |
-| `hypotheses` | list of strings | when restricted | Each extra hypothesis that excludes a case Euclid's words admit, in plain words with the Lean hypothesis after it. |
+| `hypotheses` | list of strings | when restricted | Each extra hypothesis that excludes a case Euclid's words admit, in words, as [STYLE](../docs/STYLE.md), section 1, "Hypotheses in words", says. |
 | `omitted` | list of strings | when partial | Each clause with no formal conclusion, quoted exactly from Heath's enunciation or porism. |
 | `note` | string, one line, at most 160 characters | unless full | What the theorem proves, in plain words, shown in the page's field table. |
 | `short` | string, one line, at most 70 characters, no full stop | unless full | The same in a few words, shown beside the badge: "bases that meet end to end". It follows a colon or a bracket, so it begins with a small letter. |
@@ -292,7 +292,7 @@ I.40 is restricted: the theorem takes the two bases end to end.
 # review/I/40.toml
 [statement]
 scope = "restricted"
-hypotheses = ["the bases BC and CE meet at C (`hBCE : Between B C E`)"]
+hypotheses = ["the bases BC and CE meet at C (`Between B C E`)"]
 note = "Proved for equal bases that meet end to end, as BC and CE; Euclid's bases may lie anywhere on one straight line."
 short = "bases that meet end to end"
 fingerprint = "sha256:5ea666d96871b7f8"

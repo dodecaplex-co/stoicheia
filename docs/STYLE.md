@@ -50,14 +50,14 @@ sentence needs it ("the Lean cites I.10"). No "I", "me" or "my" outside quotatio
 
 **Production stays out of the mathematics.** Readers meet Euclid, Heath and the proof, not
 the people or agents who made the page. The mishnah, the captions, the reading lines, the
-book introductions, the Lean comments, the gap catalogues and the README carry no crew
-talk **[checked]**: "Book Zero proves it once", not "the first mate added it". Roles,
-model names and how the work was shared belong in [WORKFLOW.md](WORKFLOW.md),
-[PROGRAM.md](PROGRAM.md), the briefs, `docs/reports/crew/` and the README's "How it was
-made", which says plainly how the work is done. This paragraph is the one home of that
-boundary between the crew and the reader: [AGENTS.md](../AGENTS.md), the
-[orders](templates/orders.md) and every fleet prompt point here instead of restating it,
-and `scripts/check_style.py` checks its words (S2, section 8).
+book introductions, the Lean comments, the review records' notes, the catalogues and the
+README carry no crew talk **[checked]**: "Book Zero proves it once", not "the first mate
+added it". Roles, model names and how the work was shared belong in
+[WORKFLOW.md](WORKFLOW.md), [PROGRAM.md](PROGRAM.md), the briefs, `docs/reports/crew/` and
+the README's "How it was made", which says plainly how the work is done. This paragraph is
+the one home of that boundary between the crew and the reader: [AGENTS.md](../AGENTS.md),
+the [orders](templates/orders.md) and every fleet prompt point here instead of restating
+it, and `scripts/check_style.py` checks its words (S2, section 8).
 
 **People by name,** spelled as Heath spells them (Proclus, an-Nairīzī, van Pesch). A
 modern author in full at the first mention on each page, then by surname:
@@ -80,13 +80,27 @@ for ranges (I.1–I.24, pp. 253–254). Straight quotation marks (section 5).
 
 **Lean notes** (the `/- … -/` remarks and the docstrings of helpers) read as the mishnah
 does. Each is a full sentence or two, and may say "we". Heath's letters are plain (AB, not
-`AB`: the page shows the Lean in a code block, where backticks print); backticks are for
-Lean names and expressions alone (`Prop30.meet`, `∠ A B C`), and hypotheses are said in
-words rather than by their local names. A shared step is explained once, where it is first
-used or in the book's introduction, and pointed to elsewhere: "I.5 (`Prop5.base`)", "as in
-III.1 (`Prop1.perpendicular`)". A note does not retell the mishnah: the note says how, the
-mishnah says why. Where the comments go, and what the `--` lines are, is
-[FORMALIZATION.md](FORMALIZATION.md)'s business.
+`AB`: the page shows the Lean in a code block, where backticks print), and so are the
+letters of a step written once over any letters, as Book Zero's and the foundations' are
+(the straight line PQ, the circle ABCD): a code span of letters alone, two or more of them,
+fails **[checked]**, while a lone letter in backticks may stand for one of the Lean's
+variables (`P`). Backticks are for Lean names and expressions alone (`Prop30.meet`,
+`∠ A B C`), and hypotheses are said in words (below). A shared step is explained once,
+where it is first used or in the book's introduction, and pointed to elsewhere: "I.5
+(`Prop5.base`)", "as in III.1 (`Prop1.perpendicular`)". A note does not retell the
+mishnah: the note says how, the mishnah says why. Where the comments go, and what the `--`
+lines are, is [FORMALIZATION.md](FORMALIZATION.md)'s business.
+
+**Hypotheses in words.** This paragraph is the rule's one home. A hypothesis is said in
+words, never by its local name: "the bases BC and CE meet at C", not `hBCE`, a name Lean
+knows only inside its theorem. That holds wherever a reader meets one: in the mishnah, the
+Lean notes, and a review record's notes, whose `hypotheses` the page shows as its extra
+hypotheses ([review/SCHEMA.md](../review/SCHEMA.md)). Where it helps a Lean reader find
+the condition in the listing, the condition may follow in backticks, as a Lean expression:
+"the bases BC and CE meet at C (`Between B C E`)". In every text it reads (section 8), the
+check fails a local name in backticks, alone or before its type (`hBCE : Between B C E`)
+**[checked]**. A record's `#` comments, which no page shows and only its maintainers read,
+may name a hypothesis as the Lean does.
 
 ### Avoid and prefer
 
@@ -534,13 +548,29 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 
 - **Prose:** `mishnah/<book>/NN.md`, `mishnah/intro/<book>.md`, `reading/<book>/NN.md`.
 - **Mishnah:** `mishnah/<book>/NN.md` alone.
-- **Catalogues:** `docs/reports/gaps-book-*.md`.
+- **Review notes:** the texts of `review/<book>/NN.toml` that its page shows: the
+  statement's `note`, `short` and `hypotheses`; the `note` of `[route]`,
+  `[representation]` and `[overlap]`; the `case` and `note` of `[figure]`; the `checked`
+  and `explains` of `[coverage]`; and each passage's `note`; with each tag's `meaning` and
+  `badge` in `review/terms.toml`. Heath's words in a record (`omitted`, `text_only`, a
+  passage's `at`) are `scripts/check_fidelity.py`'s, and a `helper` is a Lean name.
+- **Catalogues:** `docs/reports/gaps-book-*.md` and `docs/reports/overlaps.md`, which
+  describe the edition as it stands.
+- **Other reports:** every other `docs/reports/*.md`, save an outside review
+  (`outside-review-*.md`), which keeps its reviewer's words as written; the crew's own
+  logs, `docs/reports/crew/`, are not read. S12 does not read them: a dated report names
+  what stood at its date, and the survey of earlier work names other projects'
+  declarations.
 - **README:** `README.md`, without its section "How it was made".
 - **Lean notes:** in `Elements/**/*.lean`, the text of `/- … -/` blocks and docstrings,
   except the docstring of each `theorem PropN` (Heath's enunciation). The `--` lines are
   Heath's proof, and out of scope.
-- **Generated:** `CERTIFICATE.md`, `GRAPH.md`, `book/<book>/index.md`. A failure here is
-  mended in `scripts/render.py` or in the source it reads.
+- **Rendered docstrings:** of the Lean notes, the docstrings `scripts/render.py` copies
+  onto every page that rests on their rule: each tacit rule's, and any other axiom's of
+  `Elements/Foundations/` that is not a postulate or a definition.
+- **Generated:** `CERTIFICATE.md`, `GRAPH.md`, `book/<book>/index.md`,
+  `book/<book>/front.md` and `book/names.md`. A failure here is mended in
+  `scripts/render.py` or in the source it reads.
 - **Idea figures:** `figures/<book>/NN-idea.svg`. **Euclid's figures:**
   `figures/<book>/NN.svg`.
 
@@ -548,18 +578,18 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 
 | Rule | What fails | Where |
 |---|---|---|
-| S1 | An em dash (—) | Prose, Catalogues, README, Lean notes, figure titles and captions |
-| S2 | Crew talk: the words crew, captain, first mate, bosun, sailor, voyage, fleet, enforcer, polisher (whole words, any case), outside quotations | Prose, Catalogues, README, Lean notes, figure titles and captions |
-| S3 | The first person singular outside quotations: "I am", "I was", "I have", "I think", "I found", "I would", "my", "me" | Prose, Catalogues, README, Lean notes |
-| S4 | "note that", "strictly speaking", "it is worth noting" (any case), outside quotations | Prose, Catalogues, Lean notes |
-| S5 | "Euclid cites", "Euclid's own bracketed", or "never need" or "never needs" with "it", a postulate or parallels later in the same clause ("never need it", "never needs the fifth postulate"), outside quotations. This is the one home of the rule; `check_fidelity.py` no longer repeats it | Prose, Catalogues, README, Lean notes, Generated |
-| S6 | "tacit assumption(s)", "tacit law(s)" (any case), outside quotations | Prose, Generated |
-| S7 | A definition without its book: "Definition N" or "Def. N", N a numeral, outside quotations and square brackets | Prose |
-| S8 | A curly quotation mark: “ ” ‘ ’ | Prose, Catalogues |
-| S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*(([ \t,]+\|[ \t,]*\n[ \t]*((--\|>)[ \t]*)?[ \t,]*)[A-Z]+[′₀-₉]*)*\*($\|[^*])`: the letters may stand apart by spaces, tabs and commas, or by one line break, as above | Prose, Catalogues, Lean notes |
+| S1 | An em dash (—) | Prose, Review notes, Catalogues, Other reports, README, Lean notes, figure titles and captions |
+| S2 | Crew talk: the words crew, captain, first mate, bosun, sailor, voyage, fleet, enforcer, polisher (whole words, any case), outside quotations | Prose, Review notes, Catalogues, README, Lean notes, figure titles and captions |
+| S3 | The first person singular outside quotations: "I am", "I was", "I have", "I think", "I found", "I would", "my", "me" | Prose, Review notes, Catalogues, README, Lean notes |
+| S4 | "note that", "strictly speaking", "it is worth noting" (any case), outside quotations | Prose, Review notes, Catalogues, Lean notes |
+| S5 | "Euclid cites", "Euclid's own bracketed", or "never need" or "never needs" with "it", a postulate or parallels later in the same clause ("never need it", "never needs the fifth postulate"), outside quotations. This is the one home of the rule; `check_fidelity.py` no longer repeats it | Prose, Review notes, Catalogues, README, Lean notes, Generated |
+| S6 | "tacit assumption(s)", "tacit law(s)" (any case), outside quotations | Prose, Review notes, Rendered docstrings, Generated |
+| S7 | A definition without its book: "Definition N" or "Def. N", N a numeral, outside quotations and square brackets | Prose, Review notes, Catalogues, Other reports, Rendered docstrings, Generated |
+| S8 | A curly quotation mark: “ ” ‘ ’ | Prose, Review notes, Catalogues, Other reports |
+| S9 | An italic letter or run of letters, matched by `(^\|[^*])\*[A-Z]+[′₀-₉]*(([ \t,]+\|[ \t,]*\n[ \t]*((--\|>)[ \t]*)?[ \t,]*)[A-Z]+[′₀-₉]*)*\*($\|[^*])`: the letters may stand apart by spaces, tabs and commas, or by one line break, as above | Prose, Review notes, Catalogues, Lean notes |
 | S10 | TeX in the mishnah: a backslash, `^{` or `$`, save within a `$…$` span of a paragraph that opens `**The modern way.**`, a paragraph that ends where Markdown ends it, at a blank line or at a line opening a heading, a list item (a numbered list only from 1), a quotation, a code fence, an HTML block, a rule or a table; and there, a span of a shape known to break on GitHub (section 4, "Mathematics"): a `$` unpaired in the paragraph, `$$`, a span across a line break or with white space just inside a dollar, an opening `$` not at a line's start or after white space or `(`, a closing `$` not before white space, a line's end or one of `. , ; : ! ? ) ] ' " - – /`, braces that do not balance, a backslash before an ASCII punctuation mark, `<`, `>` or `&`, a `*`, `~` or backtick, or a `_` first in the span or after anything but a letter or digit within it. Before reading anything else, the script checks its reading of this boundary against sample mishnahs on both sides of it | Mishnah |
 | S11 | A retired refrain of section 3, on a page not allowed it: "certificate cites", "certificate records", "Of the postulates", "besides Euclid's", "just Euclid's three" (nowhere); "comes in through" (I.29 only); "Lean wants it said", "Lean asks why", "Lean makes us say so" (I.1, I.5, I.22 only); "uses Postulate 1", "brings it in" (I.1, I.3 only); "with no letter", "proves it once", "We give his argument once", "and the Lean cites it.", and "under I.31" in a sentence naming Proclus (nowhere); a paragraph opening `**What Lean made us say.**`, `**What else Lean made us say.**`, `**What it rests on.**`, `**Where the parallels meet.**`, `**Naming the pieces.**`, or `**Where X falls.**` with X a run of capitals (nowhere) | Mishnah |
-| S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (the command is below). Run when the tree is built | Mishnah |
+| S12 | A backticked Lean name, other than a file name, that `#check` does not know, with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open; every book's namespace for a text with no book (the overlap catalogue, `review/terms.toml`), so that a name two books share is written with its book; and `Elements` and `Elements.Tacit` alone for the Rendered docstrings. The name before the colon of a backticked `name : type` is read as well (section 1, "Hypotheses in words"). A word that is Lean's but no declaration, as a tactic or a field of `facts.json`, is listed in the script with its reason, and fails once no text uses it. Run when the tree is built; the overlap catalogue's audit lemmas once `lake build Audit` has run, and listed as not checked till then | Prose, Review notes, Catalogues, Rendered docstrings, `book/<book>/front.md` |
 | S13 | A caption (`<desc>`) missing, or over 50 words | Idea figures |
 | S14 | A viewBox other than `0 0 400 300`; a colour other than `#fbf7ee`, `#d0312d`, `#f2b705`, `#1f5aa6`, `#222222` and white; a missing `<title>`, or one other than "I.N at a glance", with a name after a colon if it has one | Idea figures |
 | S15 | A viewBox width outside 400–440; a letter not at font-size 17, or not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic); a colour other than `#fbf7ee`, `#3b2f2f`, `#8c7b62`, `#a0522d`, `#e9dcc0`; a stroke-width under 1.2 or over 3.2; a `<desc>`; a missing `<title>`, or one other than "Euclid I.N: …" | Euclid's figures |
@@ -569,6 +599,7 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 | S19 | A book introduction that does not link the book's brief in `docs/briefs/` (section 2 requires it) | `mishnah/intro/` |
 | S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic), not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
+| S22 | Letters in backticks: a code span that holds only letters, a run of two or more capitals (each with its prime or subscript) or several such runs apart by commas or spaces, as `PQ`, `ABCD` or `AB, CD` (section 1, "Lean notes"). A lone letter, `P`, may be one of the Lean's variables, and is not read | Prose, Review notes, Catalogues, Other reports, Lean notes, Generated |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 
@@ -577,13 +608,14 @@ angle's wedge, in `tests/test_check_style.py`, which CI runs just before the scr
 | D4 | More than four distinct Lean names | Mishnah |
 | D5 | A caption over 40 words, or of more than two sentences | Idea figures |
 | D6 | Each "first", "only", "better", "best", "unlike", for a reader to judge as a comparison or a claim to priority | Prose, README |
-| D7 | "Lean cannot", "Lean can't", "Lean can not" | Prose, Catalogues, Lean notes |
-| D8 | "gives no citation" (say "Heath gives no reference") | Prose, Catalogues |
-| D9 | A sentence that joins "need", "needs" or "needed" to Postulate 5 or the parallel postulate (say "uses"; a claim that a result holds without the postulate names its evidence) | Prose, Catalogues, README, Lean notes |
-| D10 | S6 and S7 outside their failing scope | Catalogues, README, Lean notes |
+| D7 | "Lean cannot", "Lean can't", "Lean can not" | Prose, Review notes, Catalogues, Lean notes |
+| D8 | "gives no citation" (say "Heath gives no reference") | Prose, Review notes, Catalogues |
+| D9 | A sentence that joins "need", "needs" or "needed" to Postulate 5 or the parallel postulate (say "uses"; a claim that a result holds without the postulate names its evidence) | Prose, Review notes, Catalogues, README, Lean notes |
+| D10 | S6 and S7 outside their failing scope | S6: Catalogues, README, Lean notes; S7: README, Lean notes; the Rendered docstrings aside |
 | D11 | Euclid's figure strokes other than lines 1.6, circles 1.3, the subject 2.4 to 2.6, angle marks 1.3, or dots of radius other than 2.6 | Euclid's figures |
 | D14 | The figures at a glance with no letter yet, book by book, with the points each has to letter, while the switch is off (below) | Idea figures |
 | D15 | The figures whose letters are still italic, book by book, while the switch for upright letters is off (below) | Idea figures, Euclid's figures |
+| D16 | A finding of the reach of 19 October in a file still listed for it (below), with the rule it would fail; and each listed file with no such finding left, to be taken out of the list | The files listed |
 
 **The switch for S21.** The figures at a glance were lettered one by one, and while they
 were, `IDEA_LETTERS_REQUIRED` in `scripts/check_style.py` was `False`: S20 held every
@@ -599,6 +631,20 @@ as well as one whose letters are all upright, and fail a figure that mixes the t
 a figure once begun is set upright whole; D15 lists the figures still italic. Once every
 figure is upright the switch is `True`, S15 and S20 fail an italic letter, and D15 is
 empty. The switch is never turned back to quiet a figure: the figure is set upright.
+
+**The reach of 19 October.** On that day the rules came to every text a reader meets
+([#66](https://github.com/jackChallis/stoicheia/issues/66)): the Review notes, the overlap
+catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
+names, with S7 in the gap catalogues and the Generated files, S12 beyond the mishnah (and
+the name of a `name : type`), and S22. A file that had findings of that reach on the day is
+listed in `REACH_PENDING` in `scripts/check_style.py`, with whoever mends them; while it
+is listed, those findings are reported (D16) and fail nothing. Every other file is held to
+the whole reach at once, and every file is held to what it was held to before, so nothing
+is loosened. A listed file with no finding of the reach left is reported as done, and its
+entry comes out in a change to the check; the entry cannot fail, since the change that
+mends a file may not change the check that judges it ([WORKFLOW](WORKFLOW.md), section
+10). Once no entry is left, the list goes. No file is ever added to quiet a new finding:
+the text is mended.
 
 ### The reviewer's checklist
 

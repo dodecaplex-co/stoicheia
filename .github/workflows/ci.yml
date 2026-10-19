@@ -55,7 +55,8 @@ jobs:
         run: python3 -I tests/test_check_style.py
 
       - name: Check the house style's hard rules
-        # S12 asks Lean about the names in the mishnah, so it runs on the built tree.
+        # S12 asks Lean about the names in every text it reads, the audit lemmas of the
+        # overlap catalogue among them, so it runs on the built tree, after Audit.
         run: python3 scripts/check_style.py
 
       - name: Check the generated pages are up to date

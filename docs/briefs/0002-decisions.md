@@ -1315,3 +1315,56 @@ findings:
   [`scripts/safe_push.py`](../../scripts/safe_push.py), still name `check`, `model` and
   `negative`, and making `formal-model` required, as the decision of 18 October foresees
   once the package builds, is the owner's call.
+
+## 19 October 2026
+
+- **The style check reads every text a reader meets: the check change
+  ([#66](https://github.com/jackChallis/stoicheia/issues/66)).** Argon's second review of
+  the Book III release (18 October) found that S7 and S12 skipped the notes of the review
+  records, the front pages, the reports and the docstrings the pages show, so that
+  "Definition 8" and `hnearer` reached the pages unseen; our warm thanks to Argon.
+  [`scripts/check_style.py`](../../scripts/check_style.py) now reads each of them, as
+  [STYLE](../STYLE.md), section 8, lists:
+  - the Review notes: the texts of a record that its page shows (the statement's `note`,
+    `short` and `hypotheses`; the `note` of the route, the representation and the overlap;
+    the figure's `case` and `note`; the clause map's claims; each passage's `note`), and
+    each tag's `meaning` and `badge` in `review/terms.toml`, under the prose rules S1 to
+    S9, with D7 to D9;
+  - the overlap catalogue, beside the gap catalogues, and S7 in both, where it was D10;
+  - the Other reports, every other report of `docs/reports/` save the outside reviews,
+    which keep their reviewers' words as written, under S1, S7 and S8;
+  - the Rendered docstrings, the tacit rules' that `render.py` copies onto the pages,
+    which now fail S6 and S7 as well;
+  - the front pages and the table of names, beside the generated files, and S7 in all of
+    them;
+  - S12 beyond the mishnah, in the prose, the Review notes, the catalogues, the Rendered
+    docstrings and the front pages, each text with its book's namespace (every book's for
+    a text with none, and the foundations' for the Rendered docstrings), and the name
+    before the colon of a backticked `name : type`. `NOT_DECLARED` lists the two tactics
+    and the three fields of facts.json it cannot `#check`, each with its reason, and fails
+    an entry that no text uses any more. The overlap catalogue's audit lemmas are put to
+    Lean once `lake build Audit` has run, as CI runs it;
+  - S22, new: a code span of letters alone (`PQ`, `ABCD`), in all of these and the Lean
+    notes. The owner's second comment on #66 asked that Book Zero's backticked letters be
+    swept, or excepted in STYLE: they are swept, in the text change that follows this one,
+    and STYLE, section 1, says that a step written over any letters writes them plain too.
+
+  The hypotheses rule has one home, STYLE, section 1, "Hypotheses in words", as the
+  owner's first comment on #66 asked, since the form in review/SCHEMA.md named a
+  hypothesis by its local name where STYLE said words: the row for `hypotheses` and the
+  worked example of [`review/SCHEMA.md`](../../review/SCHEMA.md), and the
+  [proposition template](../templates/proposition.md), point to it, and S12 holds it.
+  The new reach is held file by file. On main at `89c5da4` it finds 484 things, 448 of them
+  S22's in the notes of Book Zero and the foundations, 25 of S7 and 11 of S12, in 31
+  files; `REACH_PENDING` lists those files, each with whoever mends it (the text change
+  after this one; stages 3 and 4; the records of Books I and II; the coordinator, for the
+  foundations), and reports their findings of the reach as D16 meanwhile. Every other file
+  is held at once, and every file is held to all it was held to before: nothing is
+  loosened, and two cases of `tests/test_check_style.py` show an em dash still failing in
+  a listed file. An entry whose file has nothing left is reported as done, and comes out in
+  a change to the check; the list goes once it is empty. The protected files changed are
+  [`scripts/check_style.py`](../../scripts/check_style.py),
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (26 scope cases and 5
+  reach cases), [`review/SCHEMA.md`](../../review/SCHEMA.md) and
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), whose comment on S12 now
+  says what it reads.

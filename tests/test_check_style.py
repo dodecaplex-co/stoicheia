@@ -16,7 +16,12 @@ it, put to the script's own patterns and functions:
 * the ink cases: S20 judges a letter on an angle's wedge, a filled path, by the wedge's
   fill, within its three ends and beyond its chord out to its arc, and not beyond the
   arc; however the wedge is spelled (an absolute arc, a relative arc, a cubic curve), and
-  wherever a transform moves it.
+  wherever a transform moves it;
+* the scope cases (#66): which texts of a review record the rules read, and on which
+  lines; the docstring render.py shows, found again in its file; S12's reading of a
+  `name : type`; S22's reading of letters in backticks, one code span at a time; and the
+  reach of 19 October, whose findings in a file of REACH_PENDING are reported while every
+  finding of the old reach in that file still fails.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -189,6 +194,135 @@ def ink_finding(drawn: str, x: float, y: float, ink: str) -> bool:
 
 
 # ---------------------------------------------------------------------------------------
+# The scope cases (#66). (S7 and S12 once skipped the review notes, the reports, the front
+# pages and the rendered docstrings, and let "Definition 8" and `hnearer` onto the pages.)
+
+SAMPLE_RECORD = """# review/I/99.toml: a comment no page shows, `hX : T` and Definition 8 in it
+[statement]
+scope = "restricted"
+hypotheses = ["the arms not in one straight line (`hX : ¬ Collinear A B C`)"]
+note = "As Definition 8 asks."
+short = "arms not in one straight line"
+
+[[passage]]
+at = "as Definition 8 says"
+kind = "helper"
+helper = "Prop9.apart"
+note = "By \\"Definition 15\\" in quotation marks, and `Prop9.apart`."
+
+[figure]
+case = "D on the side of Definition 3"
+"""
+
+SAMPLE_TACIT = """/-! The transfer rules: Definition 15 here is in no page. -/
+namespace Elements.Tacit
+/-- A point at the radius is on the circle
+(the half Definition 15 does not give). -/
+axiom on_circle : True
+end Elements.Tacit
+"""
+
+
+def note_lines(raw: str, rule, *, names: bool = False) -> list[int]:
+    """The lines of the review notes of `raw` in which `rule` finds something, read as
+    check_text reads a note for S7 (outside quotations and square brackets), or, with
+    `names`, in which S12 finds a name."""
+    out = []
+    for line, _, text in style.review_texts(raw):
+        read = style.SQUARE.sub(style._blank, style.blank_quotes(style.blank_code(
+            style.straighten(text))))
+        if style.lean_names(text) if names else rule.search(read):
+            out.append(line)
+    return out
+
+
+def s22(text: str) -> list[str]:
+    """What S22 finds in a text: each code span of letters alone."""
+    return [m.group(1) for m in style.LETTERS_IN_CODE.finditer(style.letter_spans(text))]
+
+
+def spans_of(src: str, line: int, doc: str) -> str | None:
+    """The text of the docstring `docstring_span` finds above line `line`, or None."""
+    span = style.docstring_span(src, line, doc)
+    return src[span[0]:span[1]] if span else None
+
+
+SCOPE_CASES = [   # (rule, its reading, the text, what it should give)
+    ("S12", style.lean_names, "(`hBCE : Between B C E`)", ["hBCE"]),
+    ("S12", style.lean_names, "(`h₁ : Triangle A₁ A₂ A₄`)", ["h₁"]),
+    ("S12", style.lean_names, "as in I.5 (`Prop5.base`)", ["Prop5.base"]),
+    ("S12", style.lean_names, "(`Between B C E`)", []),
+    ("S12", style.lean_names, "(`∠ A B C`)", []),
+    ("S12", style.lean_names, "`x := 1`", []),
+    ("D4", lambda t: style.lean_names(t, binders=False), "(`hBCE : Between B C E`)", []),
+    ("S7", lambda raw: note_lines(raw, style.DEFINITION), SAMPLE_RECORD, [5, 15]),
+    ("S12", lambda raw: note_lines(raw, None, names=True), SAMPLE_RECORD, [4, 12]),
+    ("S7", lambda raw: [k for _, k, _ in style.review_texts(raw)], SAMPLE_RECORD,
+     ["statement.hypotheses", "statement.note", "statement.short", "passage.note",
+      "figure.case"]),
+    ("S7", lambda raw: style.review_texts("not = [toml"), "", []),
+    ("S7", lambda src: spans_of(src, 5, "A point at the radius is on the circle (the half "
+                                "Definition 15 does not give)."), SAMPLE_TACIT,
+     " A point at the radius is on the circle\n(the half Definition 15 does not give). "),
+    ("S7", lambda src: spans_of(src, 5, "Another docstring."), SAMPLE_TACIT, None),
+    ("S7", lambda src: spans_of(src, 2, "The transfer rules: Definition 15 here is in no "
+                                "page."), SAMPLE_TACIT, None),
+    ("S22", s22, "the straight line `PQ` and the circle `ABCD`", ["PQ", "ABCD"]),
+    ("S22", s22, "`AB, CD` and `A′B′` and `A₁A₂`", ["AB, CD", "A′B′", "A₁A₂"]),
+    ("S22", s22, "a lone letter `P`, the Lean's variable", []),
+    ("S22", s22, "`∠ A B C`, `Prop5.base`, `Centre E ABCD`, `A B`", []),
+    ("S22", s22, "`x` AB `y`", []),
+    ("S22", lambda t: s22(style.FENCE.sub(style._blank, t)), "```\n`AB`\n```\n`CD`",
+     ["CD"]),
+    ("S7", style.is_catalogue, style.REPORTS_DIR / "overlaps.md", True),
+    ("S7", style.is_catalogue, style.REPORTS_DIR / "gaps-book-II.md", True),
+    ("S7", style.is_report, style.REPORTS_DIR / "read-through-01.md", True),
+    ("S7", style.is_report, style.REPORTS_DIR / "gaps-book-II.md", False),
+    ("S7", style.is_report, style.REPORTS_DIR / "outside-review-02.md", False),
+    ("S7", style.is_report, style.REPORTS_DIR / "crew" / "voyage-01.md", False),
+]
+
+
+def findings(path, text: str, scopes: set[str], *, pending: bool, new: bool = False):
+    """The failures and the D16 reports of check_text on `text`, as the file `path`, with
+    that file listed in REACH_PENDING or not; the script's own lists are left as they
+    were."""
+    saved = (list(style.failures), dict(style.reports), set(style.reach_found),
+             dict(style.REACH_PENDING))
+    try:
+        style.failures.clear()
+        style.reports.clear()
+        style.REACH_PENDING.clear()
+        if pending:
+            style.REACH_PENDING[style.rel(path)] = "a test"
+        style.check_text(path, text, scopes, new=new)
+        return (sorted(r for r, *_ in style.failures),
+                sorted(m.split(":")[0] for _, _, m in style.reports.get("D16", [])))
+    finally:
+        style.failures[:] = saved[0]
+        style.reports.clear()
+        style.reports.update(saved[1])
+        style.reach_found.clear()
+        style.reach_found.update(saved[2])
+        style.REACH_PENDING.clear()
+        style.REACH_PENDING.update(saved[3])
+
+
+GAPS = style.REPORTS_DIR / "gaps-book-I.md"
+REACH_TEXT = "As Definition 15 says \u2014 and `PQ`."
+REACH_CASES = [   # (file, scopes, a new text?, listed?, (failures, D16 reports))
+    # A gap catalogue was held to S1 before, and is still; S7 and S22 are the reach.
+    (GAPS, {"catalogue"}, False, True, (["S1"], ["S22", "S7"])),
+    (GAPS, {"catalogue"}, False, False, (["S1", "S22", "S7"], [])),
+    # A review note is new: while its file is listed, every finding is reported.
+    (style.ROOT / "review" / "I" / "99.toml", {"review"}, True, True, ([], ["S1", "S22", "S7"])),
+    (style.ROOT / "review" / "I" / "99.toml", {"review"}, True, False, (["S1", "S22", "S7"], [])),
+    # The prose was held to all three before (S22 aside), listed or not.
+    (style.ROOT / "mishnah" / "I" / "99.md", {"prose"}, False, True, (["S1", "S7"], ["S22"])),
+]
+
+
+# ---------------------------------------------------------------------------------------
 
 class Phrases(unittest.TestCase):
     """The phrase cases, each put to its rule's search."""
@@ -230,6 +364,27 @@ class Ink(unittest.TestCase):
 
     test_ink_cases.__doc__ = (f"S20 reads the ink of {len(INK_CASES) * len(INK_WEDGES)} "
                               "letters on angles' wedges rightly")
+
+
+class Scopes(unittest.TestCase):
+    """The scope cases: the texts the rules read since #66, and how they read them."""
+
+    def test_scope_cases(self):
+        for rule, read, text, want in SCOPE_CASES:
+            with self.subTest(rule=rule, text=text):
+                self.assertEqual(read(text), want, f"{rule} reads {text!r} wrongly")
+
+    test_scope_cases.__doc__ = (f"The new scopes read {len(SCOPE_CASES)} records, docstrings, "
+                                "names and letters rightly")
+
+    def test_reach_cases(self):
+        for path, scopes, new, pending, want in REACH_CASES:
+            with self.subTest(path=style.rel(path), pending=pending):
+                self.assertEqual(findings(path, REACH_TEXT, scopes, pending=pending, new=new),
+                                 want)
+
+    test_reach_cases.__doc__ = (f"The reach of 19 October is reported in a listed file, and "
+                                f"the old reach still fails, in {len(REACH_CASES)} cases")
 
 
 if __name__ == "__main__":
