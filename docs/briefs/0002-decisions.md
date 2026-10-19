@@ -1843,3 +1843,15 @@ findings:
   meaning now says only what the tag records, that the statement gives the circle a
   centre, which is true before the rule lands and after. No record's tags change, and no
   page changes, since every record with the tag says the rest in its own note.
+
+- **III.1's construction guard, brief 0008, step 4.** `Audit/Centre.lean`, imported
+  from `Audit.lean`, fixes the frozen type of `Elements.BookIII.Prop1.construction`
+  and pins its full axiom list with `#guard_msgs`, read afresh from Lean at `34f2db57`.
+  The list has 64 names, including `Tacit.exists_centre`, admitted by the owner's
+  decision. Every renewal is read for `Tacit.inside_of_between`,
+  `Tacit.outside_of_between`, `Tacit.centre_unique` and `sorryAx`, all of which must
+  remain absent. The pin cannot establish that the centre is used only inside the
+  proof that D is within the circle; a reader checks that confinement in the proof.
+  Under [brief 0008's dated correction](0008-centre.md#correction-iii1-19-october-2026),
+  this guard lands in a pull request of its own after step 3's construction and before
+  step 6's restatements, never in a train with the content it checks.
