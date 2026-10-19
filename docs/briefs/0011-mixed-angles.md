@@ -86,6 +86,13 @@ every file in the table: `DefinitionsIII.lean` by the coordinator's delegation, 
 `Companions.lean`, the integrator's list, in the commit that moves the companions, as
 [WORKFLOW](../WORKFLOW.md), section 4, has it.
 
+Two steps overlap statements that other stages bring, as the report says (its section 2):
+`len_lt_of_add_lt` is I.20 with its degenerate case, which stage 3 states as
+`Prop20.collinear_iff` in `Elements/BookI/HelpersTriangles.lean`, and `foot_nearest` takes
+the foot of the perpendicular as I.12 gives it, which stage 4 names `Foot`. Neither is on
+main, so both steps stay in the shared module; when those land, the steps can go beside
+them, or be derived from them, with a change of homes alone.
+
 ## III.16: the angle of the semicircle, and the remaining angle
 
 Companions "III.16 semicircle", "III.16 remaining" and "III.16 acute".
@@ -283,7 +290,11 @@ the staged file at that revision, and "R" the report.
 - `review/III/16.toml`, `review/III/31.toml`: their Lean files change and companions attach,
   so their fingerprints change. This branch writes their new entries (full, the companions,
   the passages, the tag); a reviewer who did not write them reads and stamps them. They use
-  the new tag, so they land after `tooling/mixed-angles-tag`.
+  the new tag, and III.16's declares its angle clauses as argued another way, where
+  `scripts/negative_tests.py` looks for a passage left in Euclid's words; so they land
+  after two check changes of their own, `tooling/mixed-angles-tag` and
+  `tooling/negative-iii16-passage`, which teaches that test to find the run's passage of
+  any kind.
 - `mishnah/III/16.md`, `mishnah/III/31.md` and `mishnah/intro/III.md`: the sentences that
   said the clauses stay in Euclid's words are rewritten on this branch.
 - For their owners, each now false or stale once this lands:
