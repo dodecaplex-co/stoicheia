@@ -9,7 +9,7 @@ kind = "euclid"
 at = "For let the square ADEB be described on AB"
 kind = "helper"
 helper = "BookI.Prop31.parallelogram"
-note = "Euclid draws the square and CF, taking its meeting with DE at F from the figure and taking for granted that a parallel to AD is also parallel to BE; Heath gives no reference for the latter step. The Lean uses I.46 with `Square.described` for the square, `BookI.Prop31.parallelogram` for F and AF, and `BookI.Prop30.parallel` (I.30) to make CF parallel to BE too."
+note = "Euclid draws the square and CF, taking its meeting with DE at F from the figure and taking for granted that a parallel to AD is also parallel to BE; Heath gives no reference for the latter step. The Lean uses I.46 with `Square.described` for the square; `BookI.Prop31.parallelogram` draws CF through C by I.31, finds F where CF meets DE by `BookI.Prop30.meet`, using I.30, and proves AF, that is ADFC, a parallelogram; `BookI.Prop30.parallel` (I.30) makes CF parallel to BE too."
 
 [[passage]]
 at = "Then AE is equal to AF, CE"
@@ -27,7 +27,7 @@ note = "Euclid treats AF as a rectangle because it has the square's right angle 
 at = "and CE is the rectangle AB, BC"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid treats CE as a rectangle with BE equal to AB. The Lean reads its corners from B, uses the square's right angle there with `Rectangle.of_right`, and identifies the same area by `Rectangle.eq_rect` and `rect_comm`."
+note = "Euclid treats CE as a rectangle with BE equal to AB. The Lean reads CE from B as BCFE, keeping its area equal to that of CFEB by `Parallelogram.quadArea_rotate`, uses the square's right angle at B with `Rectangle.of_right`, and identifies the area as the rectangle AB, BC by `Rectangle.eq_rect` and `rect_comm`."
 
 [review]
 stage = "full"

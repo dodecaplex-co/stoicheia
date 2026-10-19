@@ -45,13 +45,13 @@ note = "Euclid likewise treats BK as a rectangle. The Lean transfers the right a
 [[passage]]
 at = "and DL is the rectangle A, DE"
 kind = "helper"
-helper = "Tacit.adjacent_eq_of_right"
+helper = "Rectangle.of_right"
 note = "Euclid takes DL to be right-angled, with DK equal to A by I.34. The Lean gets its angle at D from the adjacent right angle of BK by `Tacit.adjacent_eq_of_right`, a rule we assume (System E, Diagram-angle 3), then uses `Rectangle.of_right` and `Rectangle.eq_rect` to identify DL."
 
 [[passage]]
 at = "Similarly also EH is the rectangle A, EC"
 kind = "helper"
-helper = "Tacit.adjacent_eq_of_right"
+helper = "Rectangle.of_right"
 note = "Euclid gives EH the same justification as DL. The Lean repeats I.34 for EL equal to A, makes BL a rectangle by `Rectangle.of_right`, and uses `Tacit.adjacent_eq_of_right`, a rule we assume (System E, Diagram-angle 3), for the angle at E before `Rectangle.of_right` and `Rectangle.eq_rect` identify EH."
 
 [figure]
