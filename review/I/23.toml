@@ -29,6 +29,6 @@ note = "Our triangle DCE is named by its corners, so no straight line DE is draw
 
 [review]
 stage = "exceptions"
-commit = "17d38cf"
+commit = "a086819"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:03384cc241aed0a4"

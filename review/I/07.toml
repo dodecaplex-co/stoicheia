@@ -20,6 +20,6 @@ note = "Euclid draws one figure. The Lean also takes AC crossing DB, his figure 
 
 [review]
 stage = "exceptions"
-commit = "2a34715"
+commit = "a086819"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:ffbc06b6dd19da41"
