@@ -17,6 +17,9 @@ at = "Therefore F is not the centre of the circle ABC"
 kind = "grouped"
 note = "The reductio is made for any point F off AC, so one argument gives this sentence and Euclid's \"similarly\" for every other point."
 
+[figure]
+note = "Like Heath's, this figure draws the impossible supposition: F, off CA, as the centre of the circle ABC."
+
 [review]
 stage = "exceptions"
 commit = "dcb1767"

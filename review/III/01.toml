@@ -42,6 +42,7 @@ note = "Proved as its own theorem, III.1 Por., from this construction. It uses t
 
 [figure]
 case = "the supposed centre G off AB and off CE, as in Heath's figure"
+note = "Like Heath's, this figure draws the impossible supposition: G, off CE, as a centre of the circle ABC."
 
 [review]
 stage = "exceptions"
