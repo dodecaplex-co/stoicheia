@@ -373,9 +373,9 @@ The responses to Argon's review ([#71]) send three more points here.
 - **Book I's names declared in later books' files**: `BookI.Prop47.sq` in Book II's
   `Rectangles.lean`, and `BookI.Prop46.sq` in Book III's `Squares.lean`. The square `sq` is
   defined with Book II, so I.47 said with squares cannot stand in Book I's file, and the
-  name says whose fact it is. Keep the names: the table of names that [#76] adds gives each
-  one's module, and I.47's page says where its form in squares lives. A rename would cost a
-  deprecation and show a reader nothing new.
+  name says whose fact it is. Keep the names: their modules are `Elements.BookII.Rectangles`
+  and `Elements.BookIII.Squares`, respectively, and I.47's page explains its form in squares.
+  A rename would cost a deprecation and show a reader nothing new.
 
 ## 5. The vocabulary, as recommended
 
