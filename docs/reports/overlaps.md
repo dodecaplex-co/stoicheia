@@ -147,7 +147,7 @@ D at right angles to AB meets the circle on both sides of it: "a fact which Eucl
 demonstrates in III. 2", as Isaac Todhunter observes (Heath, vol. 2, p. 7). III.1's
 helper `Prop1.within` proves it by III.2's own argument, from the centre III.1's statement
 gives: on AB that centre is D itself, and off it I.5, I.16 and I.19 make D nearer the
-centre than the circumference. II.14, the first proof to call the rule, needs E, between
+centre than the circumference. II.14, once the first proof to call the rule, needs E, between
 B and F, the ends of the diameter of the semicircle BHF, within the circle, so that DE
 produced meets it at H, a step Euclid takes without saying why
 ([gaps in Book II](gaps-book-II.md#ii14)). G, the centre, falls between B and E, so E lies
@@ -157,12 +157,14 @@ by Definition I.15 and the rules that relate "within" to the radius, with no pro
 The later proofs that called Circle 2 take the step in one of three ways. Where both ends
 are on the circle, III.2's own case, they cite III.2: III.10, III.15, III.21, III.22,
 III.23, III.25, III.30, and III.32 in its helper `Prop32.sameSide`. Where one end is the
-centre, they use `InsideCircle.of_between_centre`: III.7, III.8, III.12, III.15, III.17,
-III.20, III.34 and III.37. Where an end is within the circle and is not its centre, they
-cite III.2's corollary `Prop2.within`, III.2 for ends on or within the circle, whose proof
-produces the straight line to meet the circle and finds the point between the two points
-where it meets it: III.7, III.11, III.15 and III.23. III.13 cites III.2, where Heath's
-reference is III.2.
+centre and the other is on the circle, they use `InsideCircle.of_between_centre`: III.7,
+III.8, III.12, III.15, III.17, III.20, III.34 and III.37. III.15 also has L between the
+centre and the point K within the circle; `InsideCircle.of_between_centre_of_inside`
+uses the given point F of the circle to put L within. Where an end is within the circle
+and is not its centre, they cite III.2's corollary `Prop2.within`, III.2 for ends on or
+within the circle, whose proof produces the straight line to meet the circle and finds
+the point between the two points where it meets it: III.7, III.11, III.15 and III.23.
+III.13 cites III.2, where Heath's reference is III.2.
 
 Three more corollaries after III.2 take the place of Book Zero lemmas that call Circle 2:
 `Prop2.triangle`, that three points of a circle are not on one straight line, first used
@@ -334,4 +336,4 @@ an audit lemma stops compiling, its row is out of date: the overlap may have gon
 good news, or moved. The first users come from facts.json, and change only when the proofs,
 or the lemmas they call, do. A proof that calls Circle 2 or Circle 3, or one of Book Zero's
 three lemmas that call Circle 2, brings the rule back into the certificate; III.2, its
-corollaries and `InsideCircle.of_between_centre` take the step without it.
+corollaries and the two `InsideCircle` helpers take the step without it.

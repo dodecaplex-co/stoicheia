@@ -83,7 +83,7 @@ theorem Prop34 {D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centr
     refine Classical.byContradiction fun hs => ?_
     obtain ⟨W, hW_L, hCWO⟩ := OppositeSides.exists_between ⟨hC_L, hO_L, hs⟩
     exact htouch.not_inside ⟨L, hB_L, hF_L, hW_L⟩
-      (InsideCircle.of_between_centre hO (Or.inr hC) (between_symm hCWO))
+      (InsideCircle.of_between_centre hO hC (between_symm hCWO))
   have hCC' : SameSideOf C C' B F :=
     SameSideOf.of_line hBF hB_L hF_L (same_side_trans (same_side_symm hCO)
       (same_side_symm (hC'O.sameSide hB_L hF_L)))

@@ -44,7 +44,8 @@ theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnC
 /-- A straight line `BC` in a circle has a point of the circle on the other side of it
 from any point `K` off it. Take `M` between `B` and `C`; it is within the circle (System
 E, Circle 2), so the straight line `KM`, produced beyond `M`, meets the circle
-(Intersections 5), on the other side of `BC` from `K` (Pasch 3). -/
+(Intersections 5), on the other side of `BC` from `K` (Pasch 3). For a circle with a
+centre, `BookIII.Prop2.oppositeSide` gives the same by III.2. -/
 theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α)
     (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C := by
   obtain ⟨L, hB_L, hC_L⟩ := Postulate1 B C hK.ne₁₂
@@ -64,7 +65,8 @@ theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α
 
 /-- A straight line `BC` in a circle has a point of the circle on the same side of it as
 any point `K` off it: take a point on the other side from `K`, and a point of the circle
-on the other side from that (`exists_onCircle_oppositeSidesOf`). -/
+on the other side from that (`exists_onCircle_oppositeSidesOf`). For a circle with a
+centre, `BookIII.Prop2.sameSide` gives the same by III.2. -/
 theorem exists_onCircle_sameSideOf (hB : OnCircle B α) (hC : OnCircle C α)
     (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ SameSideOf A K B C := by
   obtain ⟨Q, hQ, -⟩ := exists_oppositeSidesOf hK []

@@ -19,11 +19,13 @@ within it (`centre_inside`, Generalities 3), and a circle has one centre
 (`centre_unique`, Generalities 2). A point within a circle, on a straight line that
 meets the circle at two points, lies between them (`between_of_inside_chord`, Circle 1).
 System E's Circle 2, that between two points on or within a circle every point is within
-it (`inside_of_between`), already contains III.2, and no proposition rests on it: a point between
-the centre and a point on or within the circle is within it by Definition I.15
-(`InsideCircle.of_between_centre`), a point between two points of the circle by III.2 (by
-III.2's own argument in III.1, `Prop1.within`), and a point between two points on or
-within it by III.2's corollary `Prop2.within`. A straight line from a point within a
+it (`inside_of_between`), already contains III.2, and no proposition rests on it: a point
+between the centre and a point on the circle is within it by Definition I.15
+(`InsideCircle.of_between_centre`), as is a point between the centre and a point within
+the circle when another point of the circle is given (its within-point variant); a point
+between two points of the circle is within it by III.2 (by III.2's own argument in III.1,
+`Prop1.within`), and a point between two points on or within it by III.2's corollary
+`Prop2.within`. A straight line from a point within a
 circle to a point outside it meets the circle between them (`line_circle_between`,
 Intersections 4), and a straight line through a point within meets the circle beyond
 that point, on either side (`line_circle_beyond`, Intersections 5). And one centre with
@@ -137,7 +139,7 @@ Heath's brackets give in most of the propositions of Book III.
 
 ## III.15
 - "Euclid himself assumes that the angle subtended at the centre by MN is greater than the angle subtended by FG, or, in other words, that M, N both fall outside the triangle FEG" (vol. 2, p. 37). Heath gives the reason, that EM, EN are radii, greater than the distances to the points where MN cuts EF, EG. Our proof goes one step further back: MN and FG never meet, for at a common point the triangle it makes with L and K would have two right angles, against I.17. So F and G lie across MN from E, and each point where MN cuts EF or EG is within the circle, and so between L and the end of MN on its side (`Prop15.half`). The two halves together are "the angle MEN greater than the angle FEG".
-- "Let EL be made equal to EH, through L let LM be drawn at right angles to EK and carried through to N": Heath gives no bracket for either: they are I.3 and I.11. L is within the circle, so the straight line meets it at M and N (`line_circle_beyond`), and it is at right angles to EK on both sides of L (`Prop15.perp`).
+- "Let EL be made equal to EH, through L let LM be drawn at right angles to EK and carried through to N": Heath gives no bracket for either: they are I.3 and I.11. K is within the circle by III.2, and L lies between the centre and K, so the given point F of the circle puts L within (`InsideCircle.of_between_centre_of_inside`); the straight line then meets the circle at M and N (`line_circle_beyond`), and it is at right angles to EK on both sides of L (`Prop15.perp`).
 - The feet H and K fall within BC and FG (`foot_between`). Our statement names E and the perpendiculars EH, EK, as Definition III.5 measures from them, so there is nothing to draw by III.1 or I.12.
 
 ## III.16

@@ -29,7 +29,7 @@ theorem Prop8.outside {D M E F H : Point} {α : Circle} (hM : Centre M α) (hE :
     (hlt : ∠ M D E < ∠ M D F) : ∠ F M D < ∠ E M D := by
   have hEM : SameSideOf E M D F := BookI.Prop24.within hEF.symm hlt
   obtain ⟨Y, hMYF, hY⟩ := crossbar hEF hEM
-  have hY_in : InsideCircle Y α := InsideCircle.of_between_centre hM (Or.inr hF) hMYF
+  have hY_in : InsideCircle Y α := InsideCircle.of_between_centre hM hF hMYF
   obtain ⟨-, -, ⟨L, hD_L, hE_L, hY_L⟩, -⟩ := hY
   have hH_L : OnLine H L := on_line_of_between_ends hDHE hD_L hE_L
   have hHE : H ≠ E := ne_of_between (between_symm hDHE) |>.symm
@@ -46,7 +46,7 @@ theorem Prop8.within {D M K L C : Point} {α : Circle} (hM : Centre M α) (hK : 
     (hlt : ∠ M D K < ∠ M D L) : InsideTriangle K L M D := by
   have hKM : SameSideOf K M D L := BookI.Prop24.within hKL.symm hlt
   obtain ⟨Z, hMZL, hZ⟩ := crossbar hKL hKM
-  have hZ_in : InsideCircle Z α := InsideCircle.of_between_centre hM (Or.inr hL) hMZL
+  have hZ_in : InsideCircle Z α := InsideCircle.of_between_centre hM hL hMZL
   obtain ⟨-, -, ⟨N, hD_N, hK_N, hZ_N⟩, -⟩ := hZ
   have hC_N : OnLine C N := on_line_of_between hDKC hD_N hK_N
   have hKC : K ≠ C := (ne_of_between (between_symm hDKC)).symm

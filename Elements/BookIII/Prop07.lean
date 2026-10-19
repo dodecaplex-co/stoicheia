@@ -43,7 +43,7 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
   have hAEF : Between A E F := between_cut hAED hEFD
   have hFA : F ≠ A := (ne_of_between_ends hAEF).symm
   have hF_in : InsideCircle F ABCD :=
-    InsideCircle.of_between_centre hE (Or.inr hD) hEFD
+    InsideCircle.of_between_centre hE hD hEFD
   /- A point of the circle on the diameter is A or D (System E, Circle 1). -/
   have hends : ∀ K, OnCircle K ABCD → OnLine K L → K ≠ A → K = D := by
     intro K hK hK_L hKA
@@ -95,7 +95,7 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
     rw [← angle_onRay_left hEray hBF, ← angle_onRay_left hEray hCF] at hlt
     have hwithin : SameSideOf B E F C := BookI.Prop24.within hBC'.symm hlt
     obtain ⟨M, hEMC, hM⟩ := crossbar hBC' hwithin
-    have hM_in : InsideCircle M ABCD := InsideCircle.of_between_centre hE (Or.inr hC) hEMC
+    have hM_in : InsideCircle M ABCD := InsideCircle.of_between_centre hE hC hEMC
     /- M is between F and B: it is on the ray from F through B, and not beyond B, for
        then B would be within the circle (`Prop2.within`). -/
     have hFMB : Between F M B := by

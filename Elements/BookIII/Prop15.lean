@@ -32,7 +32,7 @@ theorem Prop15.half {E F K L M : Point} {α : Circle} {EK MN : Line}
     (hMF : SameSide M F EK) (hF_EK : ¬ OnLine F EK) :
     ∠ F E K < ∠ M E L := by
   obtain ⟨X, hX_MN, hEXF⟩ := hEF.exists_between
-  have hX_in : InsideCircle X α := InsideCircle.of_between_centre hE (Or.inr hF) hEXF
+  have hX_in : InsideCircle X α := InsideCircle.of_between_centre hE hF hEXF
   have hX_EK : ¬ OnLine X EK := fun h => hF_EK (on_line_of_between hEXF hE_EK h)
   have hXF : SameSide X F EK := pasch2 hEXF hE_EK hX_EK
   have hXM : SameSide X M EK := same_side_trans (same_side_symm hXF) (same_side_symm hMF)
@@ -110,7 +110,7 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
      each side of L, at N and at M. -/
   have hK_in : InsideCircle K ABCD := Prop2 ⟨E, hE⟩ hF hG K hFKG
   have hL_in : InsideCircle L ABCD :=
-    InsideCircle.of_between_centre hE (Or.inl hK_in) hELK
+    InsideCircle.of_between_centre_of_inside hE hF hK_in hELK
   obtain ⟨N, hN, hN_MN, hNLR⟩ := line_circle_beyond hL_in hL_MN hR_MN hRL
   obtain ⟨M, hM, hM_MN, hMLN⟩ := line_circle_beyond hL_in hL_MN hN_MN (ne_of_between hNLR)
   /- MN meets EK at L alone. -/

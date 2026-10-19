@@ -89,7 +89,7 @@ theorem Prop14 {A₁ A₂ A₃ A₄ : Point} (h₁ : Triangle A₁ A₂ A₄) (h
         rw [← hBF, hBF'] at this
         exact lt_irrefl _ (lt_trans hlt' (Magnitude.lt_of_add_lt_add_left this))
     have hE_BHF : InsideCircle E BHF :=
-      InsideCircle.of_between_centre hG_BHF (Or.inr hF_BHF) (between_inner hBGE hBEF)
+      InsideCircle.of_between_centre hG_BHF hF_BHF (between_inner hBGE hBEF)
     obtain ⟨DE, hD_DE, hE_DE⟩ := Postulate1 D E hDE
     obtain ⟨H, hH_BHF, hH_DE, hHED⟩ := line_circle_beyond hE_BHF hE_DE hD_DE hDE
     /- H lies beyond E from D, on the semicircle away from the rectangle.
