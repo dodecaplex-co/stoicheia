@@ -7,12 +7,51 @@ fingerprint = "sha256:5dfd84a887916a54"
 kind = "euclid"
 
 [[passage]]
+at = "For, if the triangle ABC be applied to the triangle DEF"
+kind = "helper"
+helper = "Tacit.superposition"
+note = "Euclid relies on being able to lay ABC along DE on F's side with every side and angle intact. The Lean obtains the placed triangle DB'C' from `Tacit.superposition`, a rule we assume rather than prove, in LeanEuclid's stronger construction form of System E §3.7: it names DE with `Postulate1`, proves F is off DE, places A at D, B' on the ray from D through E and C' on F's side, and uses `ne_of_len_eq` to establish that D, B' and C' differ."
+
+[[passage]]
+at = "then the point B will also coincide with E"
+kind = "helper"
+helper = "OnRay.eq_of_len_eq"
+note = "Euclid infers that B lands on E from the equality of AB and DE. `OnRay.eq_of_len_eq` proves that a point on the ray from D through E at distance DE must be E itself, ruling out a point short of E or beyond it."
+
+[[passage]]
+at = "the straight line AC will also coincide with DF"
+kind = "helper"
+helper = "onRay_of_angle_eq"
+note = "Euclid infers that AC falls along DF from the equality of the angles at A and D. `onRay_of_angle_eq` proves that on F's side of DE only one ray from D makes that angle with DE, so C lands on the ray from D through F."
+
+[[passage]]
+at = "hence the point C will also coincide with the point F"
+kind = "helper"
+helper = "OnRay.eq_of_len_eq"
+note = "Euclid infers that C lands on F from the equality of AC and DF. The Lean again uses `OnRay.eq_of_len_eq`, now on the ray from D through F."
+
+[[passage]]
 at = "For if, when B coincides with E and C with F"
 kind = "given"
 note = "Heiberg brackets this as an early scholium. A finite straight line enters our Lean only through its two ends, so once B is on E and C on F the base is EF, with no second one for the scholium to rule out."
 
+[[passage]]
+at = "Thus the whole triangle ABC will coincide with the whole triangle DEF"
+kind = "helper"
+helper = "Tacit.area_congruent"
+note = "Euclid takes for granted that moving ABC leaves its area unchanged. The Lean identifies the placed triangle with DEF by `CommonNotion4.triangle`, and obtains its equality in area to ABC from the preserved sides and angles by `Tacit.area_congruent`, a rule we assume (System E, Metric 9)."
+
 [review]
-stage = "exceptions"
-commit = "6237881"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "8bdf0ef"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:9aaf00e4e29e5634"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "fail"
+figures = "pass"
+signoff = "pass"
