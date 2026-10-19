@@ -610,7 +610,7 @@ findings:
   ([the approval on issue #51](https://github.com/jackChallis/stoicheia/issues/51#issuecomment-6252155076)),
   with a prototype of mixed angles first for III.16 and III.31: if it holds, they go full,
   and if not, they stay partial with Astra's wording. The prototype is
-  [`Staging/Stage4b/MixedAngles.lean`](../../Staging/Stage4b/MixedAngles.lean), with its
+  `Staging/Stage4b/MixedAngles.lean`, with its
   account in [the report](../reports/mixed-angles-prototype.md)
   ([issue #56](https://github.com/jackChallis/stoicheia/issues/56)): Astra's representation
   from issue #51, a mixed angle as a geometric object, compared with a rectilineal angle by
@@ -1089,3 +1089,37 @@ findings:
   joined the phrase and ink cases in
   [`tests/test_check_style.py`](../../tests/test_check_style.py); every case of both is
   kept (44 phrase, 44 S10 and 33 ink cases), none weakened.
+- **Mixed angles in the edition: III.16 and III.31 full, by companions; the axiom lock's
+  vocabulary grown.** [Issue #57](https://github.com/jackChallis/stoicheia/issues/57)
+  decides the move of the approved prototype into `Elements/`, on the owner's decision on
+  [#51](https://github.com/jackChallis/stoicheia/issues/51) that III.16 and III.31 go full if
+  it holds. The coordinator's approval of [brief 0011](0011-mixed-angles.md), given in this
+  pull request, approves its five companions and the words they are stated in. The
+  statements of III.16 and III.31 do not change: their last clauses are companions, "III.16
+  semicircle", "III.16 remaining" and "III.16 acute", "III.31 greater" and "III.31 less",
+  which join `Elements/Companions.lean`. The words move, unchanged in meaning, into
+  `Elements/Foundations/DefinitionsIII.lean`: `WithinAngle`, `MixedAngle` with its two kinds,
+  `MixedAngle.vertex`, `.region`, `.WellFormed`, `.Exceeds` and `.FallsShort`,
+  `LocallyWithin`, `NearVertex`, `Surrounds`, `NearVertexOpen`, `LocallyLess` and
+  `LocallyEqual`. None is an assumption. Their facts go to Book Zero, in a new file that
+  `Basics.lean` gathers, `Elements/Figure/Regions.lean`, and the steps that cite a
+  proposition to a new shared module, `Elements/BookIII/MixedAngles.lean`, after III.2 and
+  before III.16, as the brief provides; those steps take "within the circle" from III.2,
+  not from System E's Circle 2 or Circle 3. `Staging/Stage4b/MixedAngles.lean` is gone, and
+  `Staging.lean` says so; the entry "Mixed angles: the prototype approved" above linked it,
+  and names it now without the link. That entry took the comparisons at another vertex as
+  the check of congruent placement; they are invariances of the comparisons with
+  rectilineal angles, moving no mixed angle, and are renamed `Segment.compare_alike`,
+  `Prop16.semicircle_compare_alike` and `Prop16.horn_compare_alike` (Astra's challenge, in
+  the brief); III.16 and III.31 compare at one vertex and need no more. No axiom is added.
+  The protected files this changes are two.
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) is rewritten by `python3
+  scripts/check_fidelity.py --write-lock`: its `[axioms]` table is the same 87, byte for
+  byte, and its `[vocabulary]` grows from 91 words to 107, by the thirteen words above that
+  the companions' statements reach and three that Lean declares for them
+  (`MixedAngle.rec`, `MixedAngle.casesOn`, `MixedAngle.vertex.match_1`).
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) is renewed, and
+  [MODEL.md](../../tests/model/MODEL.md) read again: no axiom, and no word an axiom reaches,
+  has changed, so its account stands, and `tests/model/run.py --fast` passes.
+  `model/lock.sha256` is renewed with it, as its own comment says; no law of the model
+  changes.

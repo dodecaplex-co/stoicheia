@@ -17,4 +17,8 @@
 # below with the output of
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
-9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock
+#
+# Renewed on 18 October 2026, with tests/model/lock.sha256, when the words of the mixed
+# angles (brief 0011) joined the vocabulary: words only the companions of III.16 and III.31
+# use, and no law of the model changes.
+a5a107575c18adbe7b6935a86714aa6217bc56cb4ffbc3bea4dfe11d7920f8c9  Certificate/axioms.lock

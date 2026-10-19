@@ -30,7 +30,7 @@ their homes in `Elements/`, and its folder with them. The others:
   point, III.24 restated, III.26 and III.28 upgraded, and the bridge theorems of `Arcs.lean`;
 * `Stage4/`: III.14 and III.15 with the foot of the perpendicular, and III.25 restated;
 * `Stage4b/`: III.7 and III.8 compared on either side of the diameter, III.17 for a point
-  not within the circle, and the point of contact (brief 0007); and a prototype of mixed
-  angles for III.16 and III.31, with its proofs, which the coordinator approved on 18
-  October 2026 (`docs/reports/mixed-angles-prototype.md`).
+  not within the circle, and the point of contact (brief 0007). The prototype of mixed
+  angles for III.16 and III.31, which the coordinator approved on 18 October 2026, has
+  moved to `Elements/` (brief 0011).
 -/
