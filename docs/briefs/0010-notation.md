@@ -21,7 +21,8 @@ one is answered below, and the second appendix lists them. The largest changes t
 recommendation for the angle (section 3.2). Warm thanks to Astra. An independent review
 of the revised draft, that day, found that the new angle reaches one more protected file,
 `scripts/negative_tests.py`, which quotes I.16's statement; section 6 adds it, ahead of the
-content pass.*
+content pass, and a further review that day made the citation of brief 0012 checkable,
+completed section 6's lists and corrected two counts (sections 2 and 3.5).*
 
 The points are Argon's. Its second review of the `book-III` release, which read the checks,
 the records and the pages line by line, gave section 3.3 to the notation of the Lean
@@ -98,7 +99,7 @@ four kinds of change cost differently:
 | How a word is written (a notation) | the `lean` stamp of each proposition file whose text changes; no fingerprint | nothing | the old notation kept for one release, with a warning (section 7) |
 | A word renamed (`len`, `Triangle`) | the `lean` stamp, and the fingerprint of every statement that names the word | the word's entry and every entry that names it (eleven axioms and five definitions name `len`), with the two lock hashes, `tests/model/lock.sha256` and `model/lock.sha256`, MODEL.md and the formal model's signature ([#73]) | a deprecated alias for one release ([#76]) |
 | A bound variable renamed (`ABCD`, `C₁`) | the `lean` stamp, and the fingerprint of each statement that binds it | nothing | calls that name it warn for one release, under `@[deprecated_arg]` (test 15), then break |
-| Arguments or fields of one type reordered | as for a renamed word | the word's entry | nothing warns: old code compiles with a new meaning |
+| Arguments or fields of one type reordered | as for a renamed word | a reordered definition's entry, or, for a structure, the entries of the fields that move (for `Arc`, `Arc.C` and `Arc.K`, not `Arc`'s own); and every entry that applies a reordered function by position | nothing warns: old code compiles with a new meaning |
 
 Issue #69 plans for every record of Books I to III to be re-stamped once. On the
 recommendations below the cost is less than that: no fingerprint changes and nothing in the
@@ -252,7 +253,8 @@ written in a third order: the staged III.24 writes Heath's segment AEB as `⟨AE
 `circumference AEB A E B`. Stage 3 is proved in `Staging/` ([#89]), and its move into
 `Elements/` is under way ([#25]); [#67] plans to restate III.30 with arcs, which would
 leave `standing` in III.27 alone. Book IV will write arcs too: its regular figures are
-inscribed by equal circumferences (its draft brief, [#97]).
+inscribed by the equal circumferences their sides cut off (brief 0012, Book IV's draft
+brief for [#97], not yet on main).
 
 **Options.**
 
@@ -347,8 +349,9 @@ and his one letter labels it.
   rule of the foundations says that every length is the length of some straight line.
 - *A segment object* (`C : Segment`, its ends `C.1` and `C.2`). It reads as Euclid's "the
   straight line C", but it is a new word in the foundations and the lock, it renames bound
-  variables in nine statements (rule 4: I.23's call of I.22 names all six, and would warn,
-  then break), and it asks
+  variables in five statements, I.3, I.22 and II.1 and II.1's companions `Prop1.general`
+  and `Prop1.two` (rule 4: I.23's call of I.22 names all six, and would warn, then break),
+  and it asks
   every caller to wrap two points as `⟨P, Q⟩`.
 
 **Recommended: keep, and explain**, in the vocabulary and the key ("C₁ and C₂ are the ends
@@ -413,21 +416,27 @@ passages is [#48]'s, in STYLE.
   docstrings write the bars too, are the coordinator's, and change in step 5 below.
 - *The prose:* FORMALIZATION's vocabulary (section 2) and its table of representations; the
   book briefs ([Book I](book-I.md), [Book II](book-II.md), [Book III](0004-book-III.md)),
-  which agree with the code; the README's two examples, in "Use it" and above it; and the
-  one review record whose text writes `‖` (III.15; the records of I.45 and II.14, which
+  which agree with the code; the README's two examples, in "Use it" and above it; STYLE's
+  example of a Lean expression, `∠ A B C` ([STYLE.md](../STYLE.md), section 1, "Lean
+  notes"); and the one review record whose text writes `‖` (III.15; the records of I.45 and II.14, which
   wrote the bars when this draft began, were rewritten with stage 2). The other briefs that
   write the bars keep the notation they were written in: 0003 as history, as
   FORMALIZATION, section 1, keeps the early briefs, and 0006 to 0009 as written, the frozen
   among them unchanged; a line in FORMALIZATION says so.
 - *Protected paths*, each named in a decisions entry and given a security review:
-  `scripts/render.py` (the Book III definitions map writes `‖E F‖ = ‖E G‖` and `∠ A E B`,
-  and the page key is new), `scripts/scaffold_book.py` (the statement tables of Books I to
+  `scripts/render.py` (its definitions maps write `∠ A B C` for Book I's Definitions 8 and
+  9, and the bars, `∠ A E B` and `∠ A E B = ∠ C F D` for Book III's; `DEFINITION_LEAN`
+  writes `‖E F‖ = ‖E G‖` and `‖E H‖ < ‖E K‖` for Definitions III.4 and III.5; and the page
+  key is new), `scripts/scaffold_book.py` (the statement tables of Books I to
   III; Book IV's table, written in its ground step, takes the chosen notation from the
   start), `scripts/test_safe_push.py` (one planted law writes `‖A A‖`),
   `scripts/negative_tests.py` (it quotes I.16's statement, `∠ C B A < ∠ A C D ∧ …`, and
   stops unless it finds those words once) and `tests/model/MODEL.md` (its table names both
-  forms). The formal model's docstrings ("written `‖A B‖` in the library", and the same for
-  `∠` and `△`, in `model/Model/Signature.lean`, [#73]) follow.
+  forms). The formal model's hand-written docstrings follow: those of
+  `model/Model/Signature.lean` ("written `‖A B‖` in the library", and the same for `∠` and
+  `△`, [#73]), and of `model/Model/Laws/order.lean` and `model/Model/Laws/circles.lean`,
+  which write the library's `‖A B‖ + ‖B C‖` and `‖A C‖ < ‖A B‖`. The model's other bars
+  are Mathlib's norm, and stay.
 
 **How a reviewer knows it is notation only.** A notation change leaves every recorded term
 alone, so `facts.json` regenerated before and after the pass must agree entry by entry in
@@ -459,8 +468,8 @@ mechanical substitution, and the reviewer still reads each file before stamping 
    since their Lean blocks quote the source.
 6. A release later, the deprecated forms removed, and the release notes say so.
 
-Book IV's statements are scaffolded after step 4, in the new notation. Book IV's draft
-brief ([#97]) already writes its lengths `len A B`, which Lean reads the same today; it
+Book IV's statements are scaffolded after step 4, in the new notation. Brief 0012, Book
+IV's draft brief for [#97], not yet on main, already writes its lengths `len A B`, which Lean reads the same today; it
 still writes the angle `∠ A B C`, which follows the answer to open question 9 when its
 statements are scaffolded.
 
