@@ -22,6 +22,6 @@ case = "A outside the circle, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "f698a81"
+commit = "c5f6240"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:dc8853c814f5707f"
