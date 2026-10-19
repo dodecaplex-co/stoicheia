@@ -14,26 +14,28 @@ touching: "Circles are said to touch one another which, meeting one another, do 
 another." Read so, circles that cut one another cross, each passing within the other, and
 circles touching within have the inner circle passing within the outer, as Heath says the
 definition must imply. Then III.5 and III.6 follow by Euclid's own argument, with neither
-rule. The rules still give the restated statements in a line or two, so the overlap
-catalogue keeps its rows: the proofs avoid the rules, which still contain the propositions
-(brief 0008, section 7, after Astra's challenge).
+rule. In the intended plane the old and the new hypotheses agree; the circle drawn twice
+over shows that they differ in an interpretation without those two rules, not every way in
+which they could. The rules still give the restated statements in a line or two, so the
+overlap catalogue keeps its rows: the proofs avoid the rules, which still contain the
+propositions (brief 0008, section 7, after Astra's challenge).
 
-Here, with proofs (the coordinator directed them; brief 0008, question 13, asks the freeze
-to approve them as staged facts resting on no stub):
+Here, with proofs, which the freeze approved as staged facts resting on no stub (brief
+0008, question 13):
 
-* `CirclesCut`, the new word, and contact within with a point of the inner circle within
-  the outer, the definition that section 7 recommends (question 16), with `CirclesTouch`
-  over it.
+* `CirclesCut`, the new word, with `CirclesCut.symm`, and contact within with a point of
+  the inner circle within the outer, the definition the freeze chose (question 16), with
+  `CirclesTouch` over it.
   They sit in `Elements.Staging.Centre`, since `Elements.TouchesInternally` and
   `Elements.CirclesTouch` are still declared;
 * III.5 and III.6 restated, each proved by Euclid's argument: the straight line he draws
   "at random" is drawn through the point where the one circle passes within the other,
   and the order of the points on it gives "the less to the greater";
-* checks (checked by Lean): cutting is symmetric; today's III.5 and III.6 give the restated
-  ones, which ask more (no check here runs the converse); III.6 written as question 16's
-  alternative, with the point in its statement and today's definition, is the same theorem;
-  and the only lines of III.11 and III.13 that read the definition of contact within go
-  through as they are written today;
+* checks (checked by Lean): today's III.5 and III.6 give the restated ones, which ask more
+  (no check here runs the converse); III.6 written as question 16's alternative, not
+  chosen, with the point in its statement and today's definition, is the same theorem; and
+  the only lines of III.11 and III.13 that read the definition of contact within go through
+  as they are written today;
 * at the end, the axioms Lean reports for the restated III.5 and III.6, pinned with
   `#guard_msgs` as `Audit/Overlaps.lean` pins its lemmas: neither `circle_eq` nor Circle 4
   is among them, nor an admitted proof, and the build fails if one enters.
@@ -59,7 +61,7 @@ def CirclesCut (α β : Circle) : Prop :=
   CirclesMeet α β ∧ (∃ P : Point, OnCircle P α ∧ InsideCircle P β) ∧
     ∃ P : Point, OnCircle P β ∧ InsideCircle P α
 
-/-- **Definition III.3**, contact within, as brief 0008 proposes it. The circles `α` and `β`
+/-- **Definition III.3**, contact within, as brief 0008 gives it. The circles `α` and `β`
 touch one another internally at `C`, `β` within `α`: they meet at `C`, `β` has passed
 within `α`, for a point of `β` is within `α`, and `β` does not cut `α`, for no point of `β`
 falls outside `α`. Heath says the definition "must be taken to imply" that "a circle
@@ -79,9 +81,11 @@ above. Contact without does not change. -/
 def CirclesTouch (α β : Circle) (C : Point) : Prop :=
   TouchesInternally α β C ∨ TouchesInternally β α C ∨ TouchesExternally α β C
 
-/-- Cutting is symmetric, as "cut one another" is (checked by Lean): the definition asks
-the same of each circle. -/
-example {α β : Circle} (h : CirclesCut α β) : CirclesCut β α := by
+/-- Cutting is symmetric, as "cut one another" is: the definition asks the same of each
+circle, so the circles exchanged still cut one another. As `EqualCircles.symm` does for
+equal circles, it lets a citer who holds the circles in the other order write `hcut.symm`
+(brief 0008, question 15). -/
+theorem CirclesCut.symm {α β : Circle} (h : CirclesCut α β) : CirclesCut β α := by
   obtain ⟨⟨A, B, hAB, hAα, hAβ, hBα, hBβ⟩, hαβ, hβα⟩ := h
   exact ⟨⟨A, B, hAB, hAβ, hAα, hBβ, hBα⟩, hβα, hαβ⟩
 
@@ -225,9 +229,10 @@ example : type_of% @Centre.Prop6 := by
   · exact Or.inr (Or.inl (within h))
   · exact Or.inr (Or.inr h)
 
-/-- III.6 the other way, the alternative of question 16: today's definition of contact
-within kept, and the point of the inner circle within the outer written into III.6's
-statement alone. It is the same theorem (checked by Lean, from the restated III.6). -/
+/-- III.6 the other way, the alternative of question 16, which the freeze did not choose:
+today's definition of contact within kept, and the point of the inner circle within the
+outer written into III.6's statement alone. It is the same theorem (checked by Lean, from
+the restated III.6), and stays here only as this check. -/
 example {C F : Point} {ABC CDE : Circle}
     (htouch : (TouchesInternally ABC CDE C ∧ ∃ P : Point, OnCircle P CDE ∧ InsideCircle P ABC) ∨
       (TouchesInternally CDE ABC C ∧ ∃ P : Point, OnCircle P ABC ∧ InsideCircle P CDE) ∨
