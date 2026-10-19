@@ -18,8 +18,9 @@ Mumma ("A formal system for Euclid's *Elements*", Review of Symbolic Logic,
 
 ## The plane they describe
 
-No proof uses numbers, but the axioms have a model, and that is how we know they
-can all be true together (given Lean's logic and the real numbers). Read the words
+No proof uses numbers, but the axioms are read in a model, the ordinary plane: numerical
+and exact finite tests support it (`tests/model/`), and a proof checked by Lean that the
+plane satisfies every locked law is being built in `model/` (#73). Read the words
 in the ordinary plane, and every postulate, Definition 15 and every tacit rule
 holds, degenerate cases included:
 

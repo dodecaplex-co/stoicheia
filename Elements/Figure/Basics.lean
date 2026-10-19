@@ -11,6 +11,8 @@ import Elements.Figure.Areas
 import Elements.Figure.Parallelograms
 import Elements.Figure.Rectangles
 import Elements.Figure.OnCircles
+import Elements.Figure.Sums
+import Elements.Figure.Rectilineal
 
 /-!
 # Book Zero: small facts every figure needs
@@ -64,6 +66,11 @@ Every proposition file imports this one, and through it:
   in a circle has points of the circle on each side of it; a circumference named
   from either side; equal circles have equal radii; no point of a straight line
   touching a circle lies within it.
+* `Sums`: the sum of one magnitude, and of two lists one after the other; of three or
+  more points in order, the second lies between the first and the last.
+* `Rectilineal`: a figure fitted together from triangles has at least one, each a
+  triangle, and no point inside two of them, so its triangles lie apart, with the
+  same sum.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is
 an axiom.

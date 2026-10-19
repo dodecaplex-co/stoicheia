@@ -54,8 +54,8 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| I | 48 of 48 proved, and I.15's porism and eight companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved, and eight companion theorems | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
 | III | 37 of 37 proved, and the porisms of III.1 and III.16 | released (next: arcs and segments) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV–XIII | not begun | — | — | — | — | — |
 
@@ -134,10 +134,9 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 
 - **The scope of the I.45 and II.14 records** is decided: `full`, by the checked fan and
   any supplied division (the owner, 18 October; brief 0006, decision 1 as revised, [#13]).
-- **Stage 2's proofs** are done in `Staging/Stage2`, every statement of brief 0006's stage 2
-  proved with no new axiom, including `Fitted.fan` (#14 to #18). Next is the move into
-  `Elements/`: the words into their homes with the lock and a decisions entry, the
-  companions beside their propositions, and the records, pages and gap entries (#19).
+- **Stage 2 is in the edition** (#19): I.40, I.45, II.1 and II.14 with their companions
+  beside them, certified, their records full and re-stamped, the words in the foundations
+  with the lock, and the gap entries for I.45's and II.14's tacit step.
 - **Stage 3's proofs** are done in `Staging/Stage3`, every statement of brief 0006's stage 3
   proved with no new axiom: placement in all its cases, with superposition not among its
   direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
@@ -151,9 +150,6 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
   request of its own ([#3]).
-- **A new axiom cannot yet land in any order:** the model's law names, in `tests/model`'s
-  search and hyperbolic check, are code, not a pinned value; they move into a pinned data
-  file. On adding one, see [AGENTS.md](../AGENTS.md), "Never".
 - **The merge commit's subject** takes the owner from origin's URL, which after a transfer
   would name the old owner (cosmetic).
 - **A guard for `gh` exiting 0 without merging,** needed if a merge queue or auto-merge is

@@ -17,4 +17,4 @@
 # below with the output of
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
-ea46c571028b5e62da2c71f97bfbc09b40b83e7758f8f687dd3747097a528bd6  Certificate/axioms.lock
+9c8b3b8cb1020c3cbe6680c562e0dd65fa6b75676ab4da8695545c9d0dde6d52  Certificate/axioms.lock

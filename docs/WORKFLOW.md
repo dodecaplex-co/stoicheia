@@ -295,6 +295,7 @@ lake env lean Certificate/Facts.lean
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
+python3 -I tests/test_check_style.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
@@ -320,9 +321,11 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
   beside other contributors' builds in a shared tree.
-- **The model tests read the lock.** `tests/model/lock.sha256` pins
-  `Certificate/axioms.lock`, so a change to an axiom fails the `model` job until the model
-  is read again ([FORMALIZATION.md](FORMALIZATION.md), section 7).
+- **The model tests read the lock.** `tests/model/laws.toml` names a law for each axiom of
+  `Certificate/axioms.lock`, and `tests/model/lock.sha256` pins the lock's hash, so a
+  change to an axiom fails the `model` job until the model follows it, in the same pull
+  request: [MODEL.md, "Changing the axioms"](../tests/model/MODEL.md#changing-the-axioms),
+  says how.
 - **Staging builds; it is not proved.** `lake build Staging` checks that the statements
   staged before their proofs (section 2), each with `sorry` where its proof is due, still
   build against the library they import. It builds every file under `Staging/`, whether or
@@ -333,9 +336,16 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
   and `check_style.py`; a stale record is expected (section 6), and the pages are the
   integrator's.
 - **A guard defect gets a regression.** When a certificate or check defect is fixed, add a
-  focused test that shows the defect would now be caught (a negative test, or an entry in
-  `tests/certificate_expectations.json`). Tests that only repeat a trivial prose change are
-  not added.
+  focused test that shows the defect would now be caught (a negative test, an entry in
+  `tests/certificate_expectations.json`, or, for the style check's reading of a phrase or
+  of a letter's ink, a case in `tests/test_check_style.py`). Tests that only repeat a
+  trivial prose change are not added.
+- **The style check's cases run before it.** `tests/test_check_style.py` puts the
+  wording rules of `scripts/check_style.py`, and S20's reading of a letter's ink, to short
+  texts and small figures, each with the finding the rule should make, and needs no Lean.
+  It runs just before the script, so a rule that reads a case wrongly stops the checks
+  before the script's findings are read. The script does not run them itself: whoever
+  changes it runs the file too.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -431,6 +441,17 @@ brief 0005), and a change to a protected path carries `security-review`. A pull 
 opens as a draft (unless `--ready` is given), and is marked ready when its reviews are
 done; `--merge` refuses a draft.
 
+**Trains.** Since every pull request must be up to date with main before it merges, and
+nearly every one touches the decisions page and the generated pages, reviewed branches can
+land together, as a train (the owner, 18 October 2026). A train is a branch
+`train/<area>-<n>` that merges several branches, each already one coherent change with its
+own reviews and `/no-mistakes` run, as merge commits of their own, so history keeps each
+change whole. The coordinator resolves the decisions page and regenerates the pages once;
+the train passes the pre-flight and CI once and merges as one pull request, whose body
+lists each branch with its reviews and the issue it closes. A train never carries a check
+change together with content that check judges: trains of checks and trains of content are
+separate, and a branch that fails the train's pre-flight leaves the train.
+
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
                                                    # clone, and after the hook or launcher changes
@@ -520,17 +541,36 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       stale under origin/main's `render.py`, or `facts.json` rewritten by origin/main's
       certificate, show the generator's change in the pages' diff; a failure of
       `render.py` itself, its check of `docs/program.toml` among them, is a verdict. And
-      the values pinned to the edition, `tests/certificate_expectations.json`,
-      `Certificate/axioms.lock` and `tests/model/lock.sha256`, move with the content they
-      pin (a re-proof that changes an expected count, a new word in the lock): when they
-      are the only check inputs a pull request changes, origin/main's failure is noted,
-      and its own copies must pass. The expectations are checked one way only, each for
-      what it says, so they count as pinned values only while every one of origin/main's
-      stays, by its `ref` and `field`, with its `includes` and `excludes` the same or
-      grown and only the values of `count.is` and `equals` changed (new expectations are
-      fine); an expectation dropped or loosened is a check change. Check code changed with
-      judged content is kept apart, pinned values or not. The guards' two checks in step 3
-      run the same way.
+      the values pinned to the edition move with the content they pin (a re-proof that
+      changes an expected count, a new word in the lock, an axiom added):
+      `tests/certificate_expectations.json`, `Certificate/axioms.lock`,
+      `tests/model/lock.sha256`, the model's law names in `tests/model/laws.toml`, and its
+      account of the laws, `tests/model/MODEL.md` and `tests/model/results/`, which no
+      check reads. When they are the only check inputs a pull request changes,
+      origin/main's failure is noted, and its own copies must pass. The expectations are
+      checked one way only, each for what it says, so they count as pinned values only
+      while every one of origin/main's stays, by its `ref` and `field`, with its
+      `includes` and `excludes` the same or grown and only the values of `count.is` and
+      `equals` changed (new expectations are fine); an expectation dropped or loosened is
+      a check change. A law of the model moves only with its axiom: a line of `laws.toml`,
+      and the law's code in `tests/model/search.py` and `tests/model/hyperbolic.py`, the
+      two harnesses that check every law, count as pinned values only where the same pull
+      request adds, removes or restates that axiom's entry in the lock, the law's code
+      keeps to itself (a function `_` under its one decorator `@axiom('<name>', …)`, which
+      uses only what an allow-list in `scripts/safe_push.py` names: its own parameters and
+      the names it binds, the helpers, builtins, `math` functions, other names and
+      attributes that its harness's laws already use, each in the role they use it in, and
+      plain syntax; and changes no container but one it made in its own body, through the
+      name it gave it), and nothing else in the harness changes but its comments and
+      docstring. The laws that stay keep their order; a law changed while its axiom stands
+      is a check change. The pre-flight reads the law's code, does not run it, and refuses
+      whatever the list does not name, so reflection (a frame, a module reached through
+      another, a lookup by string) has no way in; the security review reads the law as
+      well. A law still shares the random numbers with the laws after it, and how many it
+      draws moves which configurations they see, never what they check. A law that needs
+      what the list lacks waits for the list to grow, in a pull request of its own. Check
+      code changed with judged content is kept apart, pinned values or not. The guards'
+      two checks in step 3 run the same way.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the

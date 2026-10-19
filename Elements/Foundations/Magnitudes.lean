@@ -18,6 +18,10 @@ always positive, and the zero is only a convenience: it lets us say that the
 "line" from a point to itself has no length, or that a "triangle" whose corners
 lie on one line has no area.
 
+A sum of any number of magnitudes of one kind, `Magnitude.sum`, adds them one at a
+time. II.1 cuts a straight line "into any number of segments whatever", and I.45 and
+II.14 take a figure of any number of triangles; Lean says "any number" with a list.
+
 The laws these magnitudes obey are in `Foundations/Tacit/Magnitudes.lean`.
 -/
 
@@ -57,6 +61,13 @@ instance {k : Kind} : LT (Magnitude k) := ⟨Magnitude.lt⟩
 
 /-- `a ≤ b` means "`a` is not greater than `b`". -/
 instance {k : Kind} : LE (Magnitude k) := ⟨fun a b => ¬ b < a⟩
+
+/-- **The sum of a list of magnitudes** of one kind: nothing for the empty list, and
+otherwise the first added to the sum of the rest. So `Magnitude.sum [a, b, c]` is
+`a + (b + (c + 0))`, which is `a + b + c`. -/
+noncomputable def Magnitude.sum {k : Kind} : List (Magnitude k) → Magnitude k
+  | [] => 0
+  | a :: as => a + Magnitude.sum as
 
 /-- A length (of a finite straight line). -/
 abbrev Length := Magnitude .length

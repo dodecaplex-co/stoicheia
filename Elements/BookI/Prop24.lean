@@ -125,8 +125,9 @@ theorem Prop24 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
   have hDF_DG : ‖D F‖ = ‖D G‖ := hDG_DF.symm
   -- the angle DGF is also equal to the angle DFG; [I. 5]
   have hDGF : ∠ D G F = ∠ D F G := (Prop5.base hDFG hDF_DG).symm
-  /- Euclid's figure has F beyond EG. Lean must also take the two cases he leaves to
-     the reader (`Prop24.cases`), and it takes them as Proclus does. -/
+  /- Euclid's figure has F beyond EG. Our statement, like his enunciation, covers
+     every placing of F, so the proof takes as well the two cases he leaves to the
+     reader (`Prop24.cases`), as Proclus does. -/
   have hEF_EG : ‖E F‖ < ‖E G‖ := by
     rcases Prop24.cases hGF hFE with hEFG | hF | ⟨X, hEXG, hDXF, hEGF⟩
     · /- F falls on EG: "it is then obvious that EG is greater than EF", the whole

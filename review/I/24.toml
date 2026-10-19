@@ -14,6 +14,6 @@ note = "Euclid draws F beyond EG and leaves the rest to the reader. The Lean tak
 
 [review]
 stage = "exceptions"
-commit = "9d0bdcb"
+commit = "6237881"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:8ace58e8a2b96330"
+lean = "sha256:1fbf4c22b29ebd3f"

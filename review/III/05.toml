@@ -22,6 +22,9 @@ at = "Therefore the point E is not the centre of the circles ABC, CDG."
 kind = "grouped"
 note = "The reductio's conclusion. The Lean supposed E the centre of both circles at the start and has reached the contradiction above, which proves it."
 
+[figure]
+note = "Like Heath's, this figure draws the impossible supposition: E as one centre of ABC and CDG, two circles that cut."
+
 [review]
 stage = "exceptions"
 commit = "7339460"

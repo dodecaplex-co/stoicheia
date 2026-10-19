@@ -60,8 +60,8 @@ point of a straight line and a side along a given ray, keeping its sides
 (`superposition`). Laid down at A along AB, a triangle on BC carries the length of BC
 to A: that is I.2, which a collapsing compass (Postulate 3) cannot do at once. Neither
 the triangle nor a point off AB is given, so both are drawn (`exists_point_off_line`).
-The certificate lets only I.4 and I.8 use superposition, as System E asks; our I.2 is
-Euclid's construction, by I.1, and does not rest on the rule. -/
+The certificate lets only I.4 and I.8 use superposition, though the rule, unlike System
+E's, can itself construct points (#75); our I.2 is Euclid's construction, by I.1, and does not rest on the rule. -/
 theorem I_2 : type_of% @Elements.BookI.Prop2 := by
   intro A B C hBC
   by_cases hAB : A = B
@@ -128,8 +128,8 @@ theorem I_7 : type_of% @Elements.BookI.Prop7 := by
 point of a straight line and a side along a given ray, keeping its angles
 (`superposition`, after LeanEuclid's form of System E's two superposition rules). Laid
 down at A along AB, on P's side, the triangle DCE carries its angle at C to A: that is
-I.23. The certificate lets only I.4 and I.8 use superposition, as System E asks, so our
-I.23 is Euclid's construction, by I.22 and I.8. It rests on superposition all the same,
+I.23. The certificate lets only I.4 and I.8 use superposition, though the rule, unlike
+System E's, can itself construct points (#75), so our I.23 is Euclid's construction, by I.22 and I.8. It rests on superposition all the same,
 through I.8. -/
 theorem I_23 : type_of% @Elements.BookI.Prop23 := by
   intro A B C D E P hAB hDCE hABP

@@ -24,6 +24,8 @@ import Elements.Figure.Areas
 import Elements.Figure.Parallelograms
 import Elements.Figure.Rectangles
 import Elements.Figure.OnCircles
+import Elements.Figure.Sums
+import Elements.Figure.Rectilineal
 import Elements.Figure.Basics
 import Elements.BookI.Prop01
 import Elements.BookI.Prop02
