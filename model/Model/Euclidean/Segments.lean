@@ -9,7 +9,8 @@ public import Mathlib.Analysis.Normed.Affine.Convex
 
 The diagram-segment rules. A length is `nndist`, a circle a Mathlib sphere of positive
 radius. Lengths add along a segment by Mathlib's distance formula for weak betweenness,
-building on Joseph Myers's betweenness lemmas, with our thanks. The circle laws compare
+`Wbtw.dist_add_dist`, in a file of Alexander Bentkamp and Yury Kudryashov, which builds on
+Joseph Myers's betweenness lemmas; our thanks to them all. The circle laws compare
 distances with the radius: equal centres and radii give equal spheres, and a smaller
 distance means a point is inside. These comparisons also cover the centre itself,
 where the distance is zero, and allow the two named points on circles to coincide.

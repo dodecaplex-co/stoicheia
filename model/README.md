@@ -40,7 +40,7 @@ at the repository's root builds the library exactly as before.
 |---|---|---|
 | [lakefile.toml](lakefile.toml) | the package: Mathlib pinned to `v4.35.0`, the release for the toolchain both packages use; the library itself, read only by `Check` | |
 | [Model/Signature.lean](Model/Signature.lean) | the seventeen words as the fields of `Signature` | nothing |
-| [Model/Hand.lean](Model/Hand.lean) | the laws translated so far, and the defined words they reach, **by hand** | `Signature` |
+| [Model/Hand.lean](Model/Hand.lean) | the circle-intersection and magnitude laws, the proposed `exists_centre`, and the defined words they reach, **by hand** | `Signature` |
 | [Model/Euclidean.lean](Model/Euclidean.lean) | the ordinary plane as a `Signature` | Mathlib |
 | [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersection 4 and Intersection 5 proved in the plane | Mathlib |
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
@@ -142,9 +142,9 @@ review records, not for this package.
 ## How the laws will be generated
 
 Today the laws proved here are translated by hand, in
-[Model/Hand.lean](Model/Hand.lean), each with the lock's printed statement above it. The
-next step replaces that file with one generated from the library's elaborated
-declarations, not from their printed text.
+[Model/Hand.lean](Model/Hand.lean) and [Model/Laws/order.lean](Model/Laws/order.lean), each
+with the lock's printed statement above it. The next step replaces those files with one
+generated from the library's elaborated declarations, not from their printed text.
 
 1. **Read the declarations, not the text.** A Lean program in `Check/` imports
    `Elements.Foundations`, and takes every axiom declared there, which must be exactly the
@@ -301,7 +301,7 @@ come before the easy laws are shared out:
 |---|---|---|
 | Circle intersections | `circles_meet`, `circles_meet_of_on_inside_outside`, `circles_meet_same_side`, `circles_meet_opposite_side` | proved here |
 | Magnitudes | the eight laws of `Tacit/Magnitudes.lean`: easy in the plane, but they test the translation of the instances and of `Kind` | proved here |
-| Order | the ten laws of Between 1 to 7 and the five diagram-segment laws (`len_add_of_between`, `circle_eq`, `on_circle_of_len_eq`, `inside_of_len_lt`, `len_lt_of_inside`): not among the hard groups, but most other laws lean on them | proved here |
+| Order | the ten laws of Between 1 to 7 and the five diagram-segment laws (`len_add_of_between`, `circle_eq`, `on_circle_of_len_eq`, `inside_of_len_lt`, `len_lt_of_inside`): not among the hard groups, but the proof of every one of the 99 propositions rests on some of them | proved here |
 | Line and circle crossings | `line_circle_between`, `line_circle_beyond`, `line_meets_circle_of_inside`, `line_meets_circle_of_opposite_sides` | to do |
 | Angle addition, both ways | `angle_add_of_inside`, `inside_of_angle_add` | to do |
 | Postulate 5 | the meeting on the stated side, not only a meeting | to do |
