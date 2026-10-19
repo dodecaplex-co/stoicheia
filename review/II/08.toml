@@ -7,13 +7,55 @@ fingerprint = "sha256:00c64558ea21b272"
 kind = "euclid"
 
 [[passage]]
+at = "For let [the straight line] BD be produced"
+kind = "given"
+note = "Euclid produces AB to D with BD equal to CB. The statement takes every D with these properties, so the Lean introduces D and its two hypotheses here."
+
+[[passage]]
 at = "let the square AEFD be described on AD"
 kind = "helper"
 helper = "Prop8.cell"
-note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet."
+note = "Euclid reads each cell of the figure drawn double as a parallelogram; the Lean proves it once, for the corners where two pairs of parallels meet. The Lean draws the square by I.46 and the two figures by `Parallelogram.figure`, obtains their complements by `Parallelogram.complements`, proves the crossing parallels with `Prop30.parallel`, finds G and R with `Prop30.meet`, and establishes the order of their points with `Parallel.between`."
+
+[[passage]]
+at = "while CB is equal to GK, and BD to KN"
+kind = "helper"
+helper = "BookI.Prop34"
+note = "Euclid takes CB equal to GK and BD to KN from the opposite sides of the two parallelograms. The Lean applies I.34 to each, although Heath gives no reference here."
+
+[[passage]]
+at = "Again, since CB is equal to BD"
+kind = "helper"
+helper = "Square.about_diameter"
+note = "Euclid takes BD equal to BK from the square DK. `Square.about_diameter` proves that DK is a square, and I.34 gives BK equal to CG in the parallelogram CK."
+
+[[passage]]
+at = "and CB is equal to GK, that is GQ"
+kind = "helper"
+helper = "Square.about_diameter"
+note = "Euclid takes GK equal to GQ from the square GR. The Lean applies `Square.about_diameter` first to CP and then to GR within it, and combines this equality with CB equal to GK."
+
+[[passage]]
+at = "therefore the eight areas, which contain the gnomon STU"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid reads the gnomon STU as eight cells and AK as AG and CK together. `Parallelogram.about_diameter` divides CP into four cells, and `quadArea_add_of_parallelograms` divides AQ, QF and AK into two each, so the two groups of four equal areas give four times AK."
+
+[[passage]]
+at = "Let OH, which is equal to the square on AC"
+kind = "helper"
+helper = "Square.about_diameter"
+note = "Euclid takes OH to be the square on AC. `Square.about_diameter` makes OH a square, and I.34 with `Square.eq_sq` identifies its area as the square on AC; the next sentence adds it to both sides."
+
+[[passage]]
+at = "But the gnomon STU and OH are the whole square AEFD"
+kind = "helper"
+helper = "Parallelogram.about_diameter"
+note = "Euclid takes the gnomon STU and OH together as the whole square AEFD. `Parallelogram.about_diameter` proves that CP, its two complements and OH make up the square."
 
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:d2669414e0cf5c4c"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
