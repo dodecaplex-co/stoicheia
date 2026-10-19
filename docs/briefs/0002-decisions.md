@@ -1334,6 +1334,36 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+- **The checks, made ready for retiring axioms (proposed, pending the evidence).** The owner
+  asked, "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
+  principle on 19 October 2026, pending the evidence; nothing lands until the owner has seen
+  it. A search found eight that can go with no choice of basis (the retirement's own entry
+  names them). Since a check never changes in the pull request of the content it judges,
+  this change prepares the checks first, with all 87 axioms in place, and weakens none:
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) reads the expected count
+  from the lock instead of a hard-coded 87;
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) moves its mutation, count
+  and membership fixtures to laws and pins that survive (I.5's inherited Postulate 3);
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) drops the generators `gs_adj` and
+  `gs_lmc_opp` from its allow-list, because
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) now samples those two laws
+  with generators the other laws use, with byte-identical output;
+  [`tests/model/derived.py`](../../tests/model/derived.py) (new) keeps the eight laws'
+  configurations as derived properties, which
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py),
+  [`tests/model/structured.py`](../../tests/model/structured.py) and
+  [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
+  laws, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only a
+  description; `model/Check/` compares the eight hand translations directly with the
+  Elements declarations, so the comparisons hold whether those are axioms or theorems.
+- **One certificate pin dropped, pending the owner's word.** The retirement makes
+  `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
+  in [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json),
+  that III.1 Por.'s assumptions include it, must go first, as the pin dropped for #60 did.
+  Its count stays, so deleting that dependency still fails, but a substitution that keeps
+  the count would no longer be caught. This is a relaxation, in a commit of its own, and it
+  lands only if the owner approves this pin specifically; the retirement then adds stronger
+  pins, that III.1, III.1 Por., III.2 and II.14 rest on none of the eight.
 - **Eight axioms retired, 87 to 79 (proposed, pending the evidence).** The owner asked,
   "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
   principle on 19 October 2026, pending the evidence; this lands only when the owner has
