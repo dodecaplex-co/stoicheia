@@ -7,18 +7,53 @@ fingerprint = "sha256:f7865a393037e43d"
 [route]
 kind = "euclid"
 
+[representation]
+tags = ["hypothesis-dropped"]
+note = "Definition I.20 distinguishes isosceles from equilateral triangles. The Lean assumes only AB = AC, so it proves both conclusions for equilateral triangles as well."
+
 [[passage]]
 at = "and let the straight lines BD, CE be produced further"
 kind = "given"
 note = "D and E come with the statement, already produced, so the Lean draws only AB and AC here and does not use Postulate 2; `Prop5.base` produces them for the propositions that cite only the angles at the base."
 
 [[passage]]
+at = "Let a point F be taken at random on BD"
+kind = "helper"
+helper = "exists_between_nearer"
+note = "Euclid chooses F on BD and then treats AF as less than AE. The Lean uses `exists_between_nearer` to take F between B and D with AF < AE, and `between_cut` to put B between A and F."
+
+[[passage]]
+at = "and they contain a common angle"
+kind = "helper"
+helper = "OnRay.between_of_len_lt"
+note = "Euclid reads the common angle FAG from the figure. The Lean uses Common Notion 5 and AG = AF to show AC < AG, then `OnRay.between_of_len_lt` puts C between A and G, allowing `angle_onRay_left` to identify FAC and GAB."
+
+[[passage]]
+at = "And, since the whole AF is equal to the whole AG"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid subtracts equal AB and AC from equal AF and AG. `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1), writes AF as AB + BF and AG as AC + CG, using the point order established before the first application of I.4."
+
+[[passage]]
 at = "while the base BC is common to them"
 kind = "given"
 note = "BC is one straight line, the base of both triangles, so nothing is proved here; I.4, applied next, takes only the two sides and the angle between them."
 
+[[passage]]
+at = "Accordingly, since the whole angle ABG was proved equal to the angle ACF"
+kind = "helper"
+helper = "angle_add_of_between"
+note = "Euclid reads ABG as ABC and CBG together, and ACF as ACB and BCF together. The Lean proves both sums by `angle_add_of_between`, using C between A and G and B between A and F, established before the first application of I.4."
+
+[[passage]]
+at = "and they are under the base"
+kind = "helper"
+helper = "between_inner"
+note = "Euclid identifies FBC and GCB with the angles under the base. The Lean uses `between_inner` to put G between C and E, then `angle_onRay_left` and angle symmetry identify those angles with CBD and BCE."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "7339460"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:434da0bb3337847c"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
