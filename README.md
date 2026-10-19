@@ -112,6 +112,28 @@ Each proposition's page shows, under Euclid's enunciation, what its Lean stateme
 
 **Try breaking it.** In [`Prop01.lean`](Elements/BookI/Prop01.lean), change `Definition15 hA_BCD hC_BCD hB_BCD` to `Definition15 hB_ACE hC_ACE hA_ACE` and run `lake build`. Lean refuses: B is the centre of the other circle, so the radii it gives are the wrong ones.
 
+## Use it
+
+Stoicheia is a Lean library as well as a book, and a Lean project of yours can build on it. Add it to your `lakefile.toml`, pinned to a release tag:
+
+```toml
+[[require]]
+name = "stoicheia"
+git = "https://github.com/jackChallis/stoicheia"
+rev = "book-III"
+```
+
+In a `lakefile.lean` it is one line: `require stoicheia from git "https://github.com/jackChallis/stoicheia" @ "book-III"`. Your `lean-toolchain` must name the same Lean, `leanprover/lean4:v4.35.0`. There is nothing else to download. In a new project, `lake build` fetches the tag and builds the modules you import; in one that already has a `lake-manifest.json`, run `lake update stoicheia` first, which adds Stoicheia to the manifest and leaves your other dependencies as they are (a bare `lake update` would update them all). The same command moves you to a later tag once you change `rev`. Then import a proposition and use it; here I.20, that any two sides of a triangle are together greater than the third, gives one of its three inequalities:
+
+```lean
+import Elements.BookI.Prop20
+
+example {A B C : Elements.Point} (h : Elements.Triangle A B C) :
+    ‖B C‖ < ‖B A‖ + ‖A C‖ := (Elements.BookI.Prop20 h).1
+```
+
+A proposition is `Elements.Book<book>.Prop<n>`, declared in the module whose name gives its number in two digits (I.1 is `Elements.BookI.Prop1`, in `Elements.BookI.Prop01`), and `import Elements` brings in every book. Its porism is `Prop<n>.porism`, and a companion, a theorem shown beside the proposition (its general form where our statement is narrower, or an earlier statement kept for those who cite it), is `Prop<n>.<word>`, in the same module. [The table of names](book/names.md) gives each proposition, porism and companion with its Lean name, its module, its page and its certificate. The theorems speak of the points, lines and circles of our foundations, which Lean knows through the axioms of [What Euclid takes for granted](#what-euclid-takes-for-granted) alone, so `#print axioms` on a theorem of yours lists what it rests on. A released name does not change without a deprecated alias for one release, and each release's notes list what changed ([FORMALIZATION](docs/FORMALIZATION.md#names-and-how-they-change), section 2).
+
 ## How it's built
 
 | Where | What |

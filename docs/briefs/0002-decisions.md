@@ -1089,6 +1089,72 @@ findings:
   joined the phrase and ink cases in
   [`tests/test_check_style.py`](../../tests/test_check_style.py); every case of both is
   kept (44 phrase, 44 S10 and 33 ink cases), none weakened.
+
+- **A table of names, so the library is easy to use.**
+  [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
+  accepts or checks: it now writes `book/names.md`, every proposition, porism and companion
+  of every book with its Lean name, the module that declares it, its page and its
+  certificate, read from `facts.json` and the proposition files, so that a Lean user who
+  knows Euclid's number finds the name, and a reader of the Lean finds the page
+  ([issue #76](https://github.com/jackChallis/stoicheia/issues/76), the owner's: "easy for
+  others to use as it stands"). It is not a check change (WORKFLOW, section 10): the
+  regenerated page shows it, and it stands under `book/`, which the check that the pages
+  are current already reads. The README usage guide, naming and deprecation policy,
+  and links to the table follow separately (keep_apart). Generated API documentation
+  (doc-gen4, in CI) comes in a change of its own, and nothing of it is published without
+  the owner's OK.
+
+- **Using the library and keeping its names.** The table of names lands first;
+  its guide and links follow separately (keep_apart). The README gains "Use it": the `require` for a
+  `lakefile.toml`, pinned to the release tag `book-III`, its one-line form for a
+  `lakefile.lean`, and a short example, each built in a fresh project against the tag on
+  18 October; and, for a project that already has a `lake-manifest.json`,
+  `lake update stoicheia` first, since Lake 4.35's `lake build` does not add a new
+  dependency to a manifest that exists. FORMALIZATION, section 2, gains "Names, and how they change": how names are
+  made; a released name never renamed or removed without a deprecated alias for one
+  release; a changed statement keeping its proposition's name, with the old one kept as a
+  companion where citers need it; and the release notes listing every name deprecated and
+  every statement changed.
+
+- **The Jev audit's client.** Brief 0005's stage 6 asks for an
+  independent audit by Jev, TypeSafe's decision model, through a fresh client
+  ([#36](https://github.com/jackChallis/stoicheia/issues/36)).
+  [`scripts/audit/jev.py`](../../scripts/audit/jev.py) (new) is that client, written for
+  Stoicheia from TypeSafe's public documentation; we thank TypeSafe warmly for Jev, and for
+  documentation clear enough to build from. It uses the standard library alone. It runs
+  the model preflight, then one decision request for each row of a JSON Lines file, with
+  retries off, a timeout, no redirect followed and HTTPS only, and writes one line for each
+  row: the choice, every option's probability, Jev's confidence, the model that answered,
+  the latency, the tokens used and the SHA-256 of the body sent. Each run pins a versioned
+  model id (`jev-1.13.0` by default) and refuses an alias unless told otherwise. Each choice
+  is asked a second time in the same request with its options reversed, since TypeSafe's
+  notes on Jev 1.13 say it can lean toward the option that comes first. The key is read
+  only from the file that `STOICHEIA_JEV_KEY_FILE` names, outside the repository; it is
+  never printed, logged or written, and it is redacted from anything the service echoes.
+  Only a row's state, question and images are sent, never its expected answer. A dry run
+  prints every request and reads no key; `--resume` takes up a stopped run, sending only
+  the rows not yet answered; `score` lists what goes to the adjudicator (a disagreement, a
+  confidence under 0.5 or none given, an answer that moves when its options are reversed
+  or comes from another model than the one pinned); and `self-test` runs every command
+  against a stand-in for the service on the same machine, with no network and no key. The
+  calibration set follows in a separate change, keeping the client apart from the
+  content it judges (keep_apart). The client's self-test needs that set. The protected file it adds is `scripts/audit/jev.py`. No
+  request has been sent yet; the accuracy bar Jev must meet on the set is the
+  coordinator's to state before the first run, and `score --bar` counts it met only when
+  every row of the set is answered and no request failed.
+- **The Jev calibration set.** The calibration set the brief describes is
+  [`docs/reports/acceptance/jev/calibration.jsonl`](../reports/acceptance/jev/calibration.jsonl)
+  (new), quoted from the files at `4d02d50`: fourteen rows, five seeded and nine controls.
+  Item 9's question, framed as the brief frames it, is asked of the I.40, II.1, III.14 and
+  III.24 statements as they stand before stages 2 to 4 move their new statements in, each
+  once labelled "full" (seeded) and once with its own record (a control), and of four full
+  statements with their records, each beside a seeded statement of its kind: I.39, I.6,
+  II.4 and III.3. Item 10's question is asked of I.41, once with a planted dummy citation
+  (I.37's result bound to `_` and never used, the step done by I.38: it compiles without a
+  warning, and its proof term still names I.37, so the certificate would list it) and once
+  as proved. It follows the client in a separate change (keep_apart). The examples in
+  `scripts/audit/jev.py` now name the calibration file; only that documentation changes,
+  with every check preserved. No request has been sent.
 - **Mixed angles in the edition: III.16 and III.31 full, by companions; the axiom lock's
   vocabulary grown.** [Issue #57](https://github.com/jackChallis/stoicheia/issues/57)
   decides the move of the approved prototype into `Elements/`, on the owner's decision on
