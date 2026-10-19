@@ -18,12 +18,6 @@ helper = "quadArea_add_of_parallelograms"
 note = "Euclid reads AF and CE together as the square AE. `Parallel.between` places F between D and E, and `quadArea_add_of_parallelograms` proves that the two parallelograms make up the whole."
 
 [[passage]]
-at = "Now AE is the square on AB"
-kind = "helper"
-helper = "Square.described"
-note = "Euclid identifies the constructed square with the square on AB without further proof. `Square.described` establishes the parallelogram by I.28 and identifies its area with `sq A B` through `Square.eq_sq` and `Rectangle.eq_rect`, using I.4 and I.34."
-
-[[passage]]
 at = "AF is the rectangle contained by BA, AC"
 kind = "helper"
 helper = "Rectangle.of_right"
