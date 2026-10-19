@@ -8,15 +8,14 @@ kind = "euclid"
 
 [[passage]]
 at = "But the angle ADB is equal to the angle ABD"
-kind = "helper"
-helper = "Prop5.base"
-note = "Euclid infers equal angles from the equal sides AB and AD without a reference. The Lean applies I.5 through `Prop5.base` to the triangle ABD."
+kind = "carried"
+note = "Euclid infers equal angles from the equal sides AB and AD; Heath gives no reference for this step. The Lean applies I.5 (`Prop5.base`) to the triangle ABD."
 
 [[passage]]
 at = "therefore the angle ABC is much greater than the angle ACB"
 kind = "helper"
 helper = "angle_add_of_between"
-note = "Euclid passes from ABD to the whole angle ABC, since D lies between A and C. The Lean splits ABC into ABD and DBC by `angle_add_of_between`, uses `Triangle.angle_pos` and Common Notion 5 to make the whole greater than ABD, and then uses transitivity."
+note = "Euclid reads off his figure that the angle ABD is part of ABC; the Lean finds the reason in D lying between A and C, so BD falls within ABC and `angle_add_of_between` splits it into ABD and DBC. The Lean uses `Triangle.angle_pos` and Common Notion 5 to make ABC greater than ABD, then transitivity to make it greater than ACB."
 
 [review]
 stage = "full"

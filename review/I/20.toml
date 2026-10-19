@@ -15,14 +15,14 @@ note = "Euclid draws BA through far enough to make DA equal to CA. The Lean firs
 [[passage]]
 at = "let DA be made equal to CA, and let DC be joined"
 kind = "helper"
-helper = "Prop3"
-note = "Euclid makes DA equal to CA on BA produced, without naming I.3. The Lean cuts AD from AX by `Prop3`, uses `between_cut` to put A between B and D, and joins DC by Postulate 1."
+helper = "between_cut"
+note = "Euclid makes DA equal to CA and takes for granted that D lies on BA produced beyond A. Heath gives no reference for the cut; the Lean uses I.3 (`Prop3`) to cut AD from AX, `between_cut` to place A between B and D, and Postulate 1 to join DC."
 
 [[passage]]
 at = "therefore the angle BCD is greater than the angle ADC"
 kind = "helper"
 helper = "angle_add_of_between"
-note = "Euclid treats ACD as part of BCD, since A lies between B and D. The Lean uses `angle_add_of_between` to split BCD into BCA and ACD, and `Triangle.angle_pos` supplies the positive part for Common Notion 5."
+note = "Euclid reads off his figure that the angle ACD is part of BCD; the Lean finds the reason in A lying between B and D, so CA falls within BCD and `angle_add_of_between` splits it into BCA and ACD. The Lean uses `Triangle.angle_pos` and Common Notion 5 to make BCD greater than ACD, which equals ADC."
 
 [[passage]]
 at = "But DA is equal to AC"
@@ -33,7 +33,7 @@ note = "Euclid replaces DA by AC in the whole DB, which consists of BA and AD. T
 [[passage]]
 at = "Similarly we can prove that AB, BC are also greater than CA"
 kind = "grouped"
-note = "Euclid leaves the other two pairs to the same argument. The Lean proves that argument once over any triangle in the local step named greater, then applies it to BAC and CBA after ABC."
+note = "Euclid leaves the other two pairs to the same argument. The Lean proves once, for any triangle ABC, that BA and AC together are greater than BC, then applies this step to BAC and CBA as well."
 
 [review]
 stage = "full"
