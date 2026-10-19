@@ -10,14 +10,15 @@ package is the start of the proof: a Lake package of its own, with Mathlib, in w
 words are the fields of a structure, the ordinary plane fills them, and Lean checks that
 the plane satisfies each law.
 
-**Where it stands.** The package builds, with the signature, the plane, and the first
-laws, translated by hand for now and proved in the plane: the four circle-intersection
-rules, the first of the hard groups, and the eight magnitude laws, which are easy in the
-plane but test the translation where it is most delicate. That is 12 of the 87. The rest
-of the laws, and the generator that will translate them from the library's own
-declarations, are to come. Until every locked law is proved here, the evidence that the
-laws have a model remains MODEL.md's hand arguments and numerical tests, and this package
-is a milestone in progress.
+**Where it stands.** The package builds, with the signature, the plane, and all 87 laws,
+written by a generator from the library's own elaborated declarations into one structure,
+`Laws`, and checked against those declarations. The first laws are proved in the plane: the
+four circle-intersection rules, the first of the hard groups, and the eight magnitude laws,
+which are easy in the plane but test the translation where it is most delicate. That is 12
+of the 87, and `Model/Assembly.lean` states exactly that: the plane satisfies every law,
+given the 75 not yet proved in it. Until every locked law is proved here, the evidence that
+the laws have a model remains MODEL.md's hand arguments and numerical tests, and this
+package is a milestone in progress.
 
 ## Building it
 
@@ -25,7 +26,8 @@ is a milestone in progress.
 export PATH=$HOME/.elan/bin:$PATH
 cd model
 lake exe cache get      # Mathlib's prebuilt files: about 450 MB to download, 6.6 GB unpacked
-lake build              # this package: about 10 seconds once Mathlib's files are in place
+lake build              # this package: about 15 seconds once Mathlib's files are in place
+lake lean Check/Write.lean   # writes the generated files again, after the lock or a proof changes
 ```
 
 `lake exe cache get` resolves the pinned Mathlib on the first run and downloads its build
@@ -36,19 +38,29 @@ at the repository's root builds the library exactly as before.
 
 | File | What it holds | Imports |
 |---|---|---|
-| [lakefile.toml](lakefile.toml) | the package: Mathlib pinned to `v4.35.0`, the release for the toolchain both packages use; the library itself, read only by `Check` | |
-| [Model/Signature.lean](Model/Signature.lean) | the seventeen words as the fields of `Signature` | nothing |
-| [Model/Hand.lean](Model/Hand.lean) | the laws translated so far, and the defined words they reach, **by hand** | `Signature` |
+| [lakefile.toml](lakefile.toml) | the package: Mathlib pinned to `v4.35.0`, the release for the toolchain both packages use; the library itself, read only by `Check`; and the files besides Lean imports that `Check` reads | |
+| [Model/Signature.lean](Model/Signature.lean) | the seventeen words as the fields of `Signature`, and the words behind the magnitudes | nothing |
+| [Model/Laws.lean](Model/Laws.lean) | **generated:** every law, and the defined words they reach, translated from the library; the structures `Neutral` and `Laws` | `Signature` |
+| [Model/Hand.lean](Model/Hand.lean) | the laws first proved in the plane, translated **by hand**, and the proposed `exists_centre` | `Laws` |
 | [Model/Euclidean.lean](Model/Euclidean.lean) | the ordinary plane as a `Signature` | Mathlib |
 | [Model/Euclidean/Circles.lean](Model/Euclidean/Circles.lean) | Intersection 4 and Intersection 5 proved in the plane | Mathlib |
 | [Model/Euclidean/CircleSides.lean](Model/Euclidean/CircleSides.lean) | Intersections 8 and 9 proved in the plane | Mathlib |
 | [Model/Euclidean/Magnitudes.lean](Model/Euclidean/Magnitudes.lean) | the eight magnitude laws proved in the plane | Mathlib |
 | [Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean) | the proposed `exists_centre` proved in the plane | Mathlib |
-| [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane rests on | every module of `Model` |
-| [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration | `Elements.Foundations`, `Model.Hand` |
+| [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, the proofs in the plane gathered into `Laws`, with the laws not yet proved as hypotheses | Mathlib |
+| [Model/Audit.lean](Model/Audit.lean) | checked at every build: the library is not imported, and what each proof in the plane, and the assembly, rests on | every module of `Model` |
+| [Check/Generator.lean](Check/Generator.lean) | the generator: reading the library, translating, writing, and the checks it makes | Lean alone |
+| [Check/Generated.lean](Check/Generated.lean) | checked at every build: the lock, its hash and the axioms, and that the generated files are what the generator writes | `Elements.Foundations`, `Model.Signature`, the generator |
+| [Check/RoundTrip.lean](Check/RoundTrip.lean) | checked at every build: each generated law and word translated back and compared with the library's by syntax; planted faults it must refuse | `Elements.Foundations`, `Model.Laws`, `Model.Hand`, the generator |
+| [Check/Laws.lean](Check/Laws.lean) | **generated:** each generated law and word compared with the library's by the kernel | `Elements.Foundations`, `Model.Laws` |
+| [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration and with the generated law | `Elements.Foundations`, `Model.Hand` |
+| [Check/Original.lean](Check/Original.lean) | `original`, the library's own words as a signature | `Elements.Foundations`, `Model.Signature` |
+| [Check/Write.lean](Check/Write.lean) | run by hand, never built: writes the generated files | as `Check/Generated.lean` |
 | [lock.sha256](lock.sha256) | the hash of the lock the model was last checked against | |
 
-Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib.
+Nothing under `Model/` imports the library, and nothing under `Check/` imports Mathlib. The
+three generated files are committed, so that anyone can read them, and `lake build` fails
+while any of them differs from what the generator writes.
 
 ## The signature
 
@@ -85,10 +97,13 @@ laws are about them and many more compare them. The fields copy the library's wo
 closely that the translation of a law is a substitution, and putting the library's own
 words back in gives the original declaration, which is how the translation is checked
 (below). So the types agree up to unfolding, which Lean checks when `Check.original` fills
-the fields with the library's words. Besides that unfolding, the one difference is the
-kinds of magnitude: the library's `Elements.Kind` is declared beside the opaque words and
-their notation, so the model declares `Model.Kind`, with the same three constructors, and
-the translation maps them by name.
+the fields with the library's words. One consequence: `S.len A B` has the type
+`(S.MagnitudeImpl .length).type`, not `S.Length`, so for Lean to find `+`, `0`, `<` and `≤`
+for it, `S.Magnitude` is reducible, as the library's `Magnitude` is not; its definition is the
+library's all the same. Besides that unfolding, the one difference is the kinds of magnitude:
+the library's `Elements.Kind` is declared beside the opaque words and their notation, so the
+model declares `Model.Kind`, with the same three constructors, and the translation maps them
+by name.
 
 ## The plane
 
@@ -132,18 +147,23 @@ propositions use is another. The plane here is checked against the laws; whether
 `Square`, `rect` or `circumference` mean in it what Euclid means is a question for the
 review records, not for this package.
 
-## How the laws will be generated
+## How the laws are generated
 
-Today the laws proved here are translated by hand, in
-[Model/Hand.lean](Model/Hand.lean), each with the lock's printed statement above it. The
-next step replaces that file with one generated from the library's elaborated
-declarations, not from their printed text.
+`Model/Laws.lean` is written by a Lean program, [Check/Generator.lean](Check/Generator.lean),
+from the library's elaborated declarations, not from their printed text. To write it again,
+with the two other generated files, run `lake lean Check/Write.lean` in `model/` (`lake lean`
+builds the file's imports first). `lake build` runs the generator again in memory
+([Check/Generated.lean](Check/Generated.lean)) and fails while a committed file differs from
+what it writes.
 
-1. **Read the declarations, not the text.** A Lean program in `Check/` imports
-   `Elements.Foundations`, and takes every axiom declared there, which must be exactly the
-   87 names in the lock's `[axioms]`, as the expression Lean elaborated: binders, binder
-   kinds (implicit or explicit), the order of the binders, every guard, every instance
-   argument.
+1. **Read the declarations, not the text.** The generator imports every module of
+   `Elements.Foundations`, and checks that there is one for each file under
+   `Elements/Foundations/`, so that no axiom is missed. It takes every axiom declared there,
+   which must be exactly the 87 names in the lock's `[axioms]`, as the expression Lean
+   elaborated: binders, binder kinds (implicit or explicit), the order of the binders, every
+   guard, every instance argument. It checks too that the lock prints each one's statement
+   as Lean prints it now, and each word they reach as the lock's `[vocabulary]` has it, so
+   the laws it translates are exactly those the lock records.
 2. **Translate by structure.** It walks each expression and replaces each of the seventeen
    opaque constants by the matching field of a signature `S`, and `Elements.Kind` and its
    constructors by `Model.Kind`'s. A project definition the law reaches, such as
@@ -151,38 +171,71 @@ declarations, not from their printed text.
    among them the present definition of `≤`, is translated the same way, once, into a
    definition over `S` in dependency order. The axioms reach 37 words of the lock's
    vocabulary: the seventeen opaque words, `Kind` and its three constructors, and 16
-   such definitions. Lean's own constants (`Eq`, `Ne`, `And`, `Or`,
-   `Not`, `Exists`, `List`, `Membership.mem`, `LT.lt`, `HAdd.hAdd`, `OfNat.ofNat` and the
-   like) stay as they are. **Any other constant of the project is an error**, so nothing
-   untranslated can reach the model.
-3. **Write a file a reader can read.** The output is `Model/Laws.lean`, plain Lean with no
-   Mathlib, holding the translated words and a structure with one field for each law,
-   named as in the lock, in place of `Model/Hand.lean`:
+   definitions. Eight of those, the carriers of the magnitudes and their instances, are
+   written by hand in `Model/Signature.lean`, since the signature's own fields need them to
+   be used at all, and the generator checks them rather than writing them; the other eight
+   it writes. Lean's own constants, those of `Init` (`Eq`, `Ne`, `And`, `Or`, `Not`,
+   `Exists`, `List`, `Membership.mem`, `LT.lt`, `HAdd.hAdd`, `OfNat.ofNat` and the like),
+   stay as they are. **Any other constant is an error**, so nothing untranslated can reach
+   the model. (One detail: Lean declares the library's `MagnitudeImpl` at every universe,
+   since it generalizes the level of `NonemptyType`, and `Magnitude` uses it at universe 0;
+   the field is that one, and the translation insists on it.)
+3. **Write a file a reader can read.** The output is plain Lean with no Mathlib: the eight
+   translated words, then each law as a definition named as in the lock, `Law.Postulate1 S`
+   for `Postulate1` and `Law.Tacit.circles_meet S` for `Tacit.circles_meet`, laid out as a
+   reader writes a law, its hypotheses filling the line:
 
    ```lean
-   structure Laws (S : Signature) : Prop where
-     Postulate1 : ∀ (A B : S.Point), A ≠ B → ∃ L : S.Line, S.OnLine A L ∧ S.OnLine B L
+   def circles_meet : Prop :=
+     ∀ {A B : S.Point} {α β : S.Circle}, S.OnCircle A α → S.InsideCircle B α → S.InsideCircle A β →
+       S.OnCircle B β → S.CirclesMeet α β
+   ```
+
+   and last the structures with a field for each law, named as the law's last part:
+
+   ```lean
+   structure Neutral (S : Signature) : Prop where
+     Definition15 : Law.Definition15 S
      ...
-     circles_meet : ∀ {A B : S.Point} {α β : S.Circle}, S.OnCircle A α →
-       S.InsideCircle B α → S.InsideCircle A β → S.OnCircle B β → S.CirclesMeet α β
+     circles_meet : Law.Tacit.circles_meet S
+     ...
+
+   structure Laws (S : Signature) : Prop extends Neutral S where
+     Postulate5 : Law.Postulate5 S
+   ```
+
+   Postulate 5 stands apart from the other 86, so that a hyperbolic plane can later satisfy
+   `Neutral` and fail it; so would any rule the library declared in
+   `Elements.Tacit.Euclidean`, for the plane alone, of which there is none. The file's header
+   records the sha256 of the lock it was written from, with a table of the 37 words and what
+   each becomes, so the vocabulary is pinned with the lock's hash.
+4. **Assemble the model.** Each law is proved in the plane as a theorem of its own, named as
+   its field, `Euclidean.circles_meet`, in a module of `Model/Euclidean/` that imports the
+   laws and Mathlib. The generator finds those theorems in the files under
+   `Model/Euclidean/` (a theorem named as a field of `Laws` is taken to prove that law, and
+   Lean checks that it does) and writes [Model/Assembly.lean](Model/Assembly.lean), which
+   imports them all and gathers them into
+
+   ```lean
+   theorem euclidean_laws
+       (Definition15 : Law.Definition15 Euclidean.plane)
+       ...
+       (triple_incidence3 : Law.Tacit.triple_incidence3 Euclidean.plane) :
+       Laws Euclidean.plane where
+     Definition15 := Definition15
+     ...
+     circles_meet := Euclidean.circles_meet
      ...
    ```
 
-   The file is committed, so that anyone can read the laws as one structure, and CI runs
-   the generator again and fails if its output differs from the committed file. Postulate
-   5 stands apart from the other 86, as a structure of its own beside them, so that a
-   hyperbolic plane can later satisfy the rest and fail it.
-4. **Assemble the model.** Each law is proved in the plane as a theorem of its own, as
-   here, in modules that import `Model/Laws.lean` and Mathlib. A last module, also
-   generated, imports them all and ends with
-
-   ```lean
-   theorem euclidean_laws : Laws Euclidean.plane := ⟨Euclidean.Postulate1, ...⟩
-   theorem model_exists : ∃ S : Signature, Laws S := ⟨Euclidean.plane, euclidean_laws⟩
-   ```
-
-   It stands apart from `Model/Laws.lean`, which the proofs import, so that no import goes
-   round in a circle and the laws stay free of Mathlib.
+   with each law not yet proved in the plane as a hypothesis, so that it states exactly what
+   is proved. When none is left, the generator writes it with no hypothesis, and after it
+   `theorem model_exists : ∃ S : Signature, Laws S := ⟨Euclidean.plane, euclidean_laws⟩`. The
+   assembly stands apart from `Model/Laws.lean`, which the proofs import, so that no import
+   goes round in a circle and the laws stay free of Mathlib. A law proved from now on is
+   stated with the generated law, `theorem line_unique : Law.Tacit.line_unique plane`; the
+   twelve proved before the generator keep their statements from `Model/Hand.lean`, which
+   Lean checks against the generated laws.
 
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
@@ -192,35 +245,50 @@ care not to blur the certificate: if every theorem took one `Laws` hypothesis bu
 ## How the translation is checked
 
 A hash shows that a file has not changed. It does not show that a translation means what
-the original means. Three checks do that.
+the original means. These checks do that, at every build.
 
-- **The round trip, by the kernel.** [Check/Hand.lean](Check/Hand.lean) builds `original`,
-  the signature whose fields are the library's own words (`Point := Elements.Point`, and
-  so on), and asks, for each translated law,
+- **The round trip, by the kernel.** [Check/Original.lean](Check/Original.lean) builds
+  `original`, the signature whose fields are the library's own words
+  (`Point := Elements.Point`, and so on), and the generated
+  [Check/Laws.lean](Check/Laws.lean) asks, for each law the generator wrote,
 
   ```lean
-  example : Model.Hand.circles_meet original = type_of% @Elements.Tacit.circles_meet := rfl
+  example : Law.Tacit.circles_meet original = type_of% @Elements.Tacit.circles_meet := rfl
   ```
 
-  and the same for each translated word. `type_of%` takes the declaration's statement and
-  does not use the axiom. The kernel accepts the `rfl` only if the two are the same
-  proposition, up to unfolding definitions; a dropped guard, two swapped arguments or a
-  change in the order of the binders fails it, and the build with it. (Both were tried:
-  Intersection 4 in System E's printed form, with "on or inside", and Intersection 5 with
-  its two points exchanged.) Today this covers the 12 laws translated by hand and 11
-  defined words: the eight behind the magnitudes (these laws reach `Magnitude` and the
-  instances for `+`, `0` and `<`; `Length`, `Angle`, `Area` and `≤` are checked ahead of
-  the laws that use them) and the three the circle laws reach. The generator will write
-  one such line for each of the 87 laws and each defined word they reach.
-- **The round trip, by syntax.** The generator also translates each result back and
-  compares it with the original expression exactly, which is stricter than the kernel's
-  check: it notices a translation that is right only after unfolding, and a binder made
-  explicit where the original's is implicit, which the kernel does not see, since it does
-  not change the proposition. Until the generator exists, the binder kinds of the hand
-  translations are checked by reading them against the lock's printed statements.
-- **Completeness.** The generator checks that the laws it wrote are exactly the axioms
-  declared in `Elements.Foundations`, and exactly the lock's `[axioms]`, so that none is
-  missing and none is extra.
+  and the same for each word it wrote; [Check/Hand.lean](Check/Hand.lean) asks it of the
+  laws translated by hand and the words written by hand in `Model/Signature.lean`, and asks
+  whether each hand translation is the law the generator wrote. `type_of%` takes the
+  declaration's statement and does not use the axiom. The kernel accepts the `rfl` only if
+  the two are the same proposition, up to unfolding definitions; a dropped guard, two
+  swapped arguments or a change in the order of the binders fails it, and the build with
+  it. This covers all 87 laws and all 16 defined words they reach.
+- **The round trip, by syntax.** [Check/RoundTrip.lean](Check/RoundTrip.lean) takes each
+  law and word as Lean elaborated them from `Model/Laws.lean`, translates each back, every
+  field of `S` and every word over it replaced by the library's word, and compares it with
+  the library's declaration expression for expression. A binder's kind and type always
+  count, and so does its name wherever the bound variable is used; an unused hypothesis's
+  name does not, since Lean prints it as an arrow and it is no part of what a law says. The
+  one difference allowed is that the four carrier words of the magnitudes (`Magnitude`,
+  `Length`, `Angle`, `Area`) are unfolded on both sides first, since the fields write the
+  carriers out ([the signature](#the-signature)). Anything left over that does not translate
+  back is an error. This is stricter than the kernel's check: it notices a translation that
+  is right only after unfolding a word, and a binder made explicit where the original's is
+  implicit, which the kernel does not see, since neither changes the proposition. The same
+  file checks the words written by hand in `Model/Signature.lean`, exactly, the type of each
+  field of the signature against the library's opaque word, each law of `Model/Hand.lean`
+  against the law the generator wrote for it, binder kinds included, and that `original`
+  gives each field the library's word.
+- **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
+  declared in `Elements.Foundations` are exactly the lock's `[axioms]`, so that none is
+  missing and none is extra, and `Check/RoundTrip.lean` that `Neutral` and `Laws` have
+  exactly one field for each, of type `Law.… S`, and nothing else.
+- **The checks catch what they are meant to.** The end of `Check/RoundTrip.lean` plants a
+  fault of each kind in a copy of a law (a binder made explicit, two points exchanged, a
+  dropped guard, a word written out) and two statements the translation must refuse (a word
+  the laws do not reach, and a constant that is neither the library's nor Lean's own), and
+  `#guard_msgs` fails the build unless each is refused with the message it pins. The first
+  and the fourth pass the kernel's `rfl`, which the file shows too.
 
 The eight magnitude laws quantify over the kind (`∀ {k : Elements.Kind}`), and with two
 copies of `Kind` their round trip is an equivalence, not `rfl`. Each direction is the other
@@ -249,12 +317,19 @@ reaches, sends someone back to the model: to the translation, its checks in `Che
 the proofs in the plane of the laws that changed. A change that touches none of these, such
 as a word only a proposition's statement uses, moved into the foundations from `Staging/`,
 needs only the hash renewed. A change to the lock renews `model/lock.sha256` in the same
-change, as it renews `tests/model/lock.sha256`. The round-trip checks tie each translated
-law to the declaration itself, more tightly than the hash can; the hash covers the laws
-the round trips do not yet reach. A law proposed for the foundations is proved here before
-it lands: `exists_centre`, proposed in issue #59, is already proved in the plane
-([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)), and its round-trip check
-joins `Check/Hand.lean` in the change that declares it.
+change, as it renews `tests/model/lock.sha256`, and writes the generated files again
+(`lake lean Check/Write.lean`): `Model/Laws.lean` records the hash of the lock it was
+written from, with the vocabulary its laws reach, so it differs from what the generator
+writes until it is written again. `lake build` checks the hash as well, without CI: the
+generator computes the lock's sha256 itself, and `Check/Generated.lean` fails unless
+`model/lock.sha256` holds it. The round-trip checks tie each translated law to the
+declaration itself, more tightly than the hash can; the hash pins the rest of the lock, and
+the vocabulary with it. A law proposed for the foundations is proved here before it lands:
+`exists_centre`, proposed in issue #59, is already proved in the plane
+([Model/Euclidean/Centre.lean](Model/Euclidean/Centre.lean)). In the change that declares
+it, the generator writes its law, the assembly gathers `Euclidean.exists_centre`, which is
+named as its field, `Check/RoundTrip.lean` compares the hand translation with the generated
+law, and its kernel round trip joins `Check/Hand.lean`.
 
 ## What the proofs rest on
 
@@ -269,15 +344,20 @@ Three things make sure of that.
 - **The axioms, checked at every build.** The same file prints, for each theorem that
   proves a law in the plane, the axioms Lean finds beneath it, and `#guard_msgs` fails the
   build unless they are exactly `propext`, `Classical.choice` and `Quot.sound`: Lean's
-  own, which Mathlib's real numbers use. No project axiom and no `sorryAx` can pass. When
-  `euclidean_laws` exists, it is audited the same way.
+  own, which Mathlib's real numbers use. No project axiom and no `sorryAx` can pass.
+  `euclidean_laws`, which `Model/Assembly.lean` gathers from every theorem that proves a
+  law in the plane, is audited the same way, so a new proof is audited through it as soon
+  as the generator gathers it.
 - **The library's rules on commands.** `Model/` uses none of the commands the library
   forbids ([FORMALIZATION](../docs/FORMALIZATION.md#7-the-foundations-and-the-policies-the-checks-enforce),
   section 7: `native_decide`, `implemented_by`, `unsafe` and the rest), and the audit
-  catches a `sorry` beneath any listed proof. That `Model/` and `Check/` use none of those
-  commands rests on review today: `check_fidelity.py` scans `Elements/` alone, and a
-  `set_option debug.…` would not show in `#print axioms`. The generator is a Lean program
-  and needs metaprogramming, so it will live in `Check/`, apart from the proofs.
+  catches a `sorry` beneath any listed proof. The generator is a Lean program and needs
+  metaprogramming, so it lives in `Check/`, apart from the proofs, and nothing under
+  `Model/` imports it; it runs as `Certificate/Facts.lean` does, with `run_cmd`, and uses
+  none of the commands that get round the kernel (`native_decide`, `implemented_by`,
+  `extern`, `unsafe`, `set_option debug.…`). That `Model/` and `Check/` keep to this rests
+  on review today: `check_fidelity.py` scans `Elements/` alone, and a `set_option debug.…`
+  would not show in `#print axioms`.
 
 When every law is proved, the claim this package supports will be: Lean checks that the
 ordinary Euclidean plane satisfies every law in this revision's foundations, relative to
@@ -287,7 +367,9 @@ formal statement captures what Euclid meant: that is the work of the review reco
 ## The order of the work: hardest laws first
 
 Astra's third answer lists the laws whose proofs will settle the representation, and they
-come before the easy laws are shared out:
+come before the easy laws are shared out. A law proved here is gathered into
+`euclidean_laws` by the generator, and `lake build` fails until it has been
+(`lake lean Check/Write.lean`).
 
 | Group | Laws | State |
 |---|---|---|
@@ -318,12 +400,18 @@ lake exe cache get
 lake build
 ```
 
-`lake build` builds both libraries, `Model` (with the audit) and `Check` (with the round
-trips), and fails if any check in them fails; there is nothing else to run. On the machine
-that built this package, from a fresh clone, `lake exe cache get` took about 65 seconds
-(cloning the pinned Mathlib and its dependencies, downloading 9,031 files, 452 MB, and
-unpacking them to 6.6 GB), and `lake build` 11 seconds, for this package and the library
-files `Check` reads. A runner should expect a few minutes in all.
+`lake build` builds both libraries, `Model` (with the assembly and the audit) and `Check`
+(with the generator's checks and the round trips), and fails if any check in them fails;
+there is nothing else to run, since the generator runs inside the build. On the machine that
+built this package, from a fresh clone, `lake exe cache get` took about 65 seconds (cloning
+the pinned Mathlib and its dependencies, downloading 9,031 files, 452 MB, and unpacking them
+to 6.6 GB). With the generator, `lake build` took 11 to 13 seconds of wall time in two runs,
+for this package and the library files `Check` reads. Of the modules the generator added,
+`Check/Generator.lean` took about 2 seconds to compile, `Check/Generated.lean` about 1 to run
+the generator and compare its output, `Check/RoundTrip.lean` about 1, `Check/Laws.lean` under
+half a second and `Model/Assembly.lean` 1 to 2, much of it alongside the proofs in the plane;
+a build with nothing changed took a second or so. A runner should expect a few minutes in
+all.
 
 Between runs the job caches two directories, keyed on `model/lake-manifest.json`:
 `model/.lake/packages`, which holds the pinned clones and the unpacked build, and

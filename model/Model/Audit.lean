@@ -1,12 +1,14 @@
 module
 
 public import Model.Signature
+public import Model.Laws
 public import Model.Hand
 public import Model.Euclidean
 public import Model.Euclidean.Circles
 public import Model.Euclidean.CircleSides
 public import Model.Euclidean.Magnitudes
 public import Model.Euclidean.Centre
+public import Model.Assembly
 
 /-!
 # What the model's proofs rest on
@@ -22,7 +24,11 @@ file imports every module of the `Model` library, and checks two things at every
   would bring in.
 
 If either changes, the message changes, `#guard_msgs` fails, and so does the build. A new
-module of `Model` is imported here, and a new law's theorem is listed here.
+module of `Model` is imported here. `Model.euclidean_laws`, which `Model/Assembly.lean`
+generates from every theorem that proves a law in the plane, is audited last, so a law's
+theorem is audited through it as soon as the generator gathers it; the theorems listed one by
+one before it are those proved before the generator existed, and the proposed
+`exists_centre`, which is no law yet.
 -/
 
 /-! ## The library is not imported -/
@@ -110,3 +116,14 @@ info: 'Model.Euclidean.exists_centre' depends on axioms: [propext, Classical.cho
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.exists_centre
+
+/-! ## What the assembled model rests on
+
+`euclidean_laws` gathers every theorem that proves a law in the plane, with the laws not yet
+proved there as hypotheses, so what it rests on is what all those proofs rest on. -/
+
+/--
+info: 'Model.euclidean_laws' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.euclidean_laws
