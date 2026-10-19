@@ -275,21 +275,22 @@ else; no statement closes with no rule. Seven of its 90,629 tries ran out of tim
 four times the usual allowance, all of them III.34 from Postulate 4, alone or with
 Postulate 5 and at most one more family. III.34 asks for three points on its circle, and
 the rules among those that put a point on a circle that has none need a straight line,
-which III.34 does not give and none of those rules draws. What the screen does not give `grind` is that
-every point of a circle measures a circumference alike: that is III.21, a proposition, so
-the near misses of the measure (below) are not found by it, and are not overlaps with a
-rule. Nor does it give `grind` that a magnitude Lean chooses is one magnitude under two
-descriptions that hold of the same points, as `standing_eq_circumference` and
-`standing_congr` show, so a statement that needs that step is not searched either. Nor does
-`grind` reason by induction, so what a figure given with its triangles holds by its
-formation is not searched, which only the companions of I.45 and II.14 speak of. The
-screen is not one of CI's checks: it takes about an hour and a half of processor time, and
-is run again when a statement or a rule changes. It cannot draw a figure, for `grind` works
-with the points and circles a goal already names. I.7 needs two circles its statement never
-mentions, and I.23 a triangle laid down, so both came from reading. I.2 and I.3 need a
-triangle drawn and then laid down. The catalogue first listed them as near misses, since
-neither statement gives a triangle to move; but the same holds of I.7's circles, and they
-are rows now, with `Audit.I_2` and `Audit.I_3`.
+which III.34 does not give and none of those rules draws. No try stopped on any other
+error. What the screen does not give `grind` is that every point of a circle measures a
+circumference alike: that is III.21, a proposition, so the near misses of the measure
+(below) are not found by it, and are not overlaps with a rule. Nor does it give `grind` that
+a magnitude Lean chooses is one magnitude under two descriptions that hold of the same
+points, as `standing_eq_circumference` and `standing_congr` show, so a statement that needs
+that step is not searched either. Nor does `grind` reason by induction, or open a figure's
+fields of itself, so what a figure given with its triangles holds by its formation is not
+searched, which only the companions of I.45 and II.14 speak of. The screen is not one of
+CI's checks: it takes about an hour and a half of processor time, and nothing runs it of
+itself; it should be run again when a statement or a rule changes. It cannot draw a figure,
+for `grind` works with the points and circles a goal already names. I.7 needs two circles
+its statement never mentions, and I.23 a triangle laid down, so both came from reading. I.2
+and I.3 need a triangle drawn and then laid down. The catalogue first listed them as near
+misses, since neither statement gives a triangle to move; but the same holds of I.7's
+circles, and they are rows now, with `Audit.I_2` and `Audit.I_3`.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
 rule a proof reaches through a lemma as well as one its own Lean names, and found that
@@ -354,10 +355,12 @@ For each row we looked for a proof of the proposition's statement from at most t
   hypothesis. These belong to the review records, under `[representation]` and
   `[statement]`.
 
-- **III.30, by the same measure.** Its two halves AD and DB are measured by the angles ABD
-  and DAB that stand on them, each taken twice, so they are equal once those angles are,
-  which I.4 gives. III.28, that equal straight lines cut off equal circumferences, is not
-  needed, nor Euclid's step that each half is less than a semicircle.
+- **III.30, by the same measure.** I.4 makes the angles DAB and ABD equal, and they stand
+  on the halves DB and AD. Each half is measured by the angle standing on it, taken twice,
+  so the halves are equal. Euclid goes instead from the equal straight lines AD and DB, by
+  III.28, with his step that each half is less than a semicircle; his own III.26 would take
+  him from the equal angles to equal halves without either. What the measure saves is
+  III.26's work at the circumference, which it reduces to its definition and III.21.
   `Audit.III_30_measure` proves III.30 so, with its own statement and its axioms pinned; it
   cites III.21, through which every point of the circle measures a circumference alike, so
   it is a near miss of the measure, not of a rule. Our III.30 follows Euclid, by III.28, as

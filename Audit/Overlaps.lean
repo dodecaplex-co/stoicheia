@@ -293,12 +293,14 @@ example : type_of% @Elements.BookIII.Prop24 :=
 
 /-! ## III.30 by the measure
 
-The same measure leaves a step of III.30 idle. Its two halves are measured by the angles
-that stand on them, each taken twice (`Circumference.standing`, by III.21), so they are
-equal once those angles are. Euclid's III.28, that equal straight lines cut off equal
-circumferences, is not needed, nor his step that each half is less than a semicircle.
-`III_30_measure` has III.30's own statement, which keeps the measure when arcs get a
-meaning of their own (brief 0006, stage 3), so it stays. Our III.30 follows Euclid, by
+The same measure saves III.30 a step. Its two halves are measured by the angles that stand
+on them, each taken twice (`Circumference.standing`, by III.21), so they are equal once
+those angles are, which I.4 gives. Euclid goes instead from the equal straight lines AD and
+DB, by III.28, with his step that each half is less than a semicircle; his own III.26
+would take him from the equal angles to equal halves without either. What the measure
+saves is III.26's step at the circumference, which it reduces to its definition and
+III.21. `III_30_measure` has III.30's own statement, which keeps the measure when arcs get
+a meaning of their own (brief 0006, stage 3), so it stays. Our III.30 follows Euclid, by
 III.28. -/
 
 /-- **III.30 without III.28.** The halves AD and DB are measured by the angles ABD and DAB
