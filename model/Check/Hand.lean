@@ -13,15 +13,18 @@ import Check.Generator
 writes by hand the words behind the magnitudes. Here the library's own words are put in for
 the signature's fields (`original`, in `Check/Original.lean`), and Lean is asked whether each
 law translated by hand, and each word written by hand, then is the library's declaration.
-Each check is `rfl`: the kernel accepts it only if the two are the same proposition, up to
+Each kernel check is `rfl`: the kernel accepts it only if the two are the same proposition, up to
 unfolding definitions. (The laws that quantify over the kind of magnitude make the same
 check up to relabelling the kinds, as their section says.) A translation that drops a
 guard, swaps two arguments or changes the order of the binders fails here, and the build
-fails with it. Last, each law translated by hand is checked against the law the generator
-writes for it in `Model/Laws.lean`, the field of `Laws` it stands for.
+fails with it. Last, each retained axiom translated by hand is checked against the law the
+generator writes for it in `Model/Laws.lean`, the field of `Laws` it stands for.
+Intersection 4 and Intersections 9, now proved in `Elements/Figure/Incidence.lean` as
+`Model/Hand.lean` describes, are compared directly with their theorem types by
+`comparePlanted`, including binder kinds.
 
-This file reads the library's axioms only through `type_of%`, which takes a declaration's
-statement and does not use it. Nothing in `Model/` imports this file.
+The kernel comparisons read the library's axioms and theorems through `type_of%`, which
+takes a declaration's statement and does not use its proof. Nothing in `Model/` imports this file.
 -/
 
 namespace Check
@@ -135,11 +138,12 @@ example : Model.Hand.not_lt_zero original ↔ type_of% @Elements.Tacit.not_lt_ze
     | area => exact @h .area,
     fun h => h⟩
 
-/-! ## The hand translations against the generated laws
+/-! ## The hand translations against generated laws or theorem types
 
-Each law translated by hand in `Model/Hand.lean` is the law the generator writes for it, over
-any signature: the field of `Laws` it stands for. (`Check/RoundTrip.lean` compares the two by
-syntax as well, binder kinds and names included.) -/
+Each retained axiom translated by hand in `Model/Hand.lean` is the law the generator writes
+for it, over any signature: the field of `Laws` it stands for. (`Check/RoundTrip.lean`
+compares the two by syntax as well, binder kinds and names included.) The two retired
+rules are compared directly with their unchanged theorem types. -/
 
 example (S : Model.Signature) : Model.Hand.circles_meet S = Model.Law.Tacit.circles_meet S :=
   rfl

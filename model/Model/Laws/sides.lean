@@ -13,12 +13,18 @@ every locked law from its elaborated declaration, and
 `triple_incidence3` is now a theorem, compared directly with the library declaration,
 including binder kinds. Its concrete plane proof remains as a derived fact, with no
 generated assumption field.
+Same side 1, 2 and 5, Pasch 1, 3 and 4, and Triple incidence 1 and 2 are now proved too,
+in `Elements/Figure/RuleBase.lean` and `Incidence.lean`, using circle intersections,
+angle addition and the retained order and side rules. Their
+[derivations](../../../docs/FORMALIZATION.md#rules-now-proved) give each route; they
+keep the same direct comparison and individual model proofs.
 
 Each law is the library's, word for word, with `S.Point` for `Elements.Point`, `S.OnLine`
 for `Elements.OnLine`, `S.SameSide` for `Elements.SameSide`, `S.Between` for
 `Elements.Between`, and `S.Line` for `Elements.Line`, keeping every binder, its kind
 (all are implicit) and its order, and every guard. The printed original is quoted above
-each law, from the lock or, for `triple_incidence3`, its unchanged theorem type.
+each law, from the lock for retained rules, or the unchanged theorem type for retired ones,
+`triple_incidence1`, `triple_incidence2` and `triple_incidence3` among them.
 `Check/Sides.lean` puts the library's own words in for `S` and asks Lean whether each
 result is the original declaration; the build fails if it is not.
 

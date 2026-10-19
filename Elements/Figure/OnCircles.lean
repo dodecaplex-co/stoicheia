@@ -21,8 +21,9 @@ The propositions take these facts from III.2 instead, for a circle with a centre
 Its corollaries `BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide` and
 `BookIII.Prop2.sameSide`, like III.2 itself, avoid Circle 3. No certificate entry
 currently rests on Circle 3. I.12 puts the crossing of CD with AB inside the circle
-by comparing its distance from the centre with the radius, then uses the assumed
-Intersection 3. The proved Intersection 2 has no user in the published proofs.
+by comparing its distance from the centre with the radius, then uses the proved
+Intersection 3, obtained in `Elements.Figure.Incidence` by applying `line_circle_beyond`
+in both directions. The proved Intersection 2 has no user in the published proofs.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.

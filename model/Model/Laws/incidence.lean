@@ -9,13 +9,17 @@ public import Model.Hand
 **Hand-translated: this file is written by hand,** like `Model/Hand.lean`, alongside the
 generated laws described in the [README](../../README.md). Each law here is the library's,
 word for word, with `S.Point` for `Elements.Point`, `S.OnLine` for `Elements.OnLine`, and
-so on. Its printed statement is quoted above it, from the lock or, for the retired
-`centre_unique`, its unchanged theorem type. Each binder keeps its original kind.
+so on. Its printed statement is quoted above it, from the lock or, for a retired
+rule such as `centre_unique` or `centre_inside`, its unchanged theorem type. Each binder keeps its original kind.
 `Check/Incidence.lean` puts the library's own words in for `S` and asks the kernel whether
 each result is the original declaration; the build fails if it is not. The same check
 file compares each locked law's translation with its generated
 law, and `centre_unique` directly with the library declaration, including binder kinds.
 Its concrete plane proof remains as a derived fact, with no generated assumption field.
+The same holds for `centre_inside` and `inside_not_on`, now proved using circle crossings
+and Circle 1 in `Elements/Figure/RuleBase.lean`, and for `exists_point_between` and
+`exists_point_on_line_off_line`, proved using smaller circles and uniqueness of a line,
+respectively, in `Elements/Figure/Incidence.lean`.
 
 The laws are those of a straight line and the points on it:
 

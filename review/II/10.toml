@@ -50,7 +50,7 @@ note = "Euclid adds the two half-right angles at E to obtain AEB. `angle_add_of_
 at = "for it is equal to the angle DCE, they being alternate"
 kind = "helper"
 helper = "Tacit.pasch3"
-note = "Euclid reads E and G on opposite sides of AB from his figure when he takes BDG and DCE as alternate angles. From B between E and G, proved beneath \"Let them be produced and meet at G\", the Lean places them on opposite sides by `Tacit.pasch3`, a rule we assume (System E, Pasch 3), and applies I.29 to the parallels CE and DG to carry the right angle DCE to BDG."
+note = "Euclid reads E and G on opposite sides of AB from his figure when he takes BDG and DCE as alternate angles. From B between E and G, proved beneath \"Let them be produced and meet at G\", the Lean places them on opposite sides by `Tacit.pasch3` (System E, Pasch 3), now proved from Pasch 2 and the proved Triple incidence 1 in `Elements/Figure/RuleBase.lean`, and applies I.29 to the parallels CE and DG to carry the right angle DCE to BDG."
 
 [[passage]]
 at = "therefore the angle DGB is equal to the angle DBG"

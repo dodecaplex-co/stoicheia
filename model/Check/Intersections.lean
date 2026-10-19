@@ -15,13 +15,16 @@ it reaches, is then the library's declaration. Each kernel check is `rfl`: the k
 only if the two are the same proposition, up to unfolding definitions, so a dropped guard,
 two swapped arguments or a change in the order of the binders fails here, and the build
 with it. Binder kinds, which the kernel does not see, are checked by reading each
-statement against the lock's printed one, quoted above it. The generator's syntactic
+statement against the lock's printed one or the unchanged theorem type, quoted above it. The generator's syntactic
 round trip also covers the laws imported under their original names in `Model.Hand`.
 
-The kernel comparisons read the library's declarations through `type_of%`. For the
-properties retained through axiom retirement, `comparePlanted` also translates the
-hand definition back and compares it directly with the declaration's type, including
-binder kinds. Both checks read only the statement, whether it is an axiom or a theorem.
+The kernel comparisons read the library's declarations through `type_of%`. For Circle 2
+and Circle 4, `comparePlanted` also translates the hand definition back and compares it
+directly with the theorem's type, including binder kinds. Intersection 3, now proved from
+`line_circle_beyond` in both directions in `Elements/Figure/Incidence.lean`, and the proved
+Intersection 2 have the kernel comparisons above, but no `comparePlanted` check:
+`LineMeetsCircle` is no longer generated. These checks read only the statement, whether
+it is an axiom or a theorem.
 Nothing in `Model/` imports this file.
 -/
 

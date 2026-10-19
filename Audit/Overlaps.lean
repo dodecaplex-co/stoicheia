@@ -42,9 +42,10 @@ open Elements Elements.Tacit
 /-- Draws a point X off the straight line through B and C, and with it the triangle BCX,
 from the rules alone: superposition needs a triangle to lay down and a point to name the
 side, and neither I.2 nor I.3 gives one. Book Zero's `exists_off_line` draws such a point
-too, by two circles that cut one another and a comparison of lengths, but would bring
-I.2's audit proof from ten axioms to twenty-one; the catalogue's counts are made with
-this one. The circle about B through C meets the straight line again at C', beyond B
+too, by two circles that cut one another and a comparison of lengths. The catalogue's
+historical counts used this construction; after the rule retirements, I.2's audit
+rests on 31 axioms, through the proofs of the rules it calls. The circle about B through
+C meets the straight line again at C', beyond B
 (Intersections 5); a third point X of the circle cannot be on the straight line, for B
 would then lie between X and C, and between X and C' (Circle 1), and C and C' would lie
 on one side of B (Between 7), where B lies between them. Book Zero's `Triangle.of_line`

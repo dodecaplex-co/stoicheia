@@ -15,8 +15,10 @@ is the library's declaration. Each check is `rfl`: the kernel accepts it only if
 the same proposition, up to unfolding definitions, so a dropped guard, two swapped arguments
 or a change in the order of the binders fails here, and the build with it.
 
-This file reads the library's axioms only through `type_of%`, which takes a declaration's
-statement and does not use it. Nothing in `Model/` imports this file.
+This file reads the library's axioms and theorems through `type_of%`, which takes a
+declaration's statement and does not use its proof. The retired order and length rules
+are proved in `Elements/Figure/RuleBase.lean` and `Incidence.lean`; `comparePlanted`
+compares their hand translations directly with those theorem types, including binder kinds. Nothing in `Model/` imports this file.
 -/
 
 namespace Check

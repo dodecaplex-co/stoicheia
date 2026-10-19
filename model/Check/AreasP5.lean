@@ -13,9 +13,12 @@ As in [Check/Hand.lean](Hand.lean): the library's own words are put in for the s
 fields (`Check.original`), and Lean is asked whether each law translated by hand in
 `Model/Laws/areas-p5.lean` then is the library's declaration. Each check is `rfl`, which
 the kernel accepts only if the two are the same proposition, up to unfolding definitions.
-None of these laws quantifies over the kind of magnitude, so every check is `rfl`. The
-library's axioms are read only through `type_of%`, which takes a declaration's statement
-and does not use it.
+None of these laws quantifies over the kind of magnitude, so every kernel comparison
+is `rfl`. The library's axioms and theorems are read through `type_of%`, which takes
+a declaration's statement and does not use its proof. `area_swap` and
+`between_of_area_add`, now proved from area rotation, addition and positivity in
+`Elements/Figure/AreaRules.lean`, are also compared directly with their theorem types
+by `comparePlanted`, including binder kinds.
 -/
 
 namespace Check

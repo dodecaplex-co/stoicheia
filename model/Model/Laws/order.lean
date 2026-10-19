@@ -6,16 +6,21 @@ public import Model.Signature
 # The order laws, translated by hand
 
 **Hand-translated.** This file holds, translated by hand, the fifteen laws about
-betweenness and its measure: the ten axioms of System E's Between rules 1 to 7 (Between 1
-says four things, so it is four axioms), and the five of the diagram-segment rules 1 to 4
-(Diagram-segment 4 is two axioms, one for each direction; rule 3's forward half is
-Definition 15, which is not among them). The generator described in the
-[README](../../README.md) writes each law in `Model/Laws.lean` from its elaborated declaration.
-`Check/Order.lean` compares every hand translation here with its generated law by `rfl`.
+betweenness and its measure: the ten statements of System E's Between rules 1 to 7
+(Between 1 says four things), and the five of the diagram-segment rules 1 to 4
+(Diagram-segment 4 has two directions; rule 3's forward half is Definition 15, which is
+not among them). Five remain axioms and ten are now proved in the library's
+`Elements/Figure/RuleBase.lean` and `Incidence.lean`, from the retained order, length
+and circle rules, as the [derivation table](../../../docs/FORMALIZATION.md#rules-now-proved)
+sets out. The generator described in the [README](../../README.md) writes the retained
+axioms in `Model/Laws.lean`. `Check/Order.lean` compares their hand translations with
+the generated laws by `rfl`, and the retired rules directly with their theorem types,
+including binder kinds.
 
 Each declaration is the library's, word for word, with `S.Point` for `Elements.Point`,
 `S.Between` for `Elements.Between`, and so on. The printed original is quoted above each
-law, from `Certificate/axioms.lock` (and the same in `facts.json`'s `axiom_types`).
+law, from `Certificate/axioms.lock` for a retained axiom, or its unchanged theorem type
+for a retired rule.
 `Check/Order.lean` puts the library's own words in for `S` and asks Lean whether each
 result is the original declaration; the build fails if it is not.
 
@@ -88,8 +93,8 @@ def between_cases : Prop :=
   ∀ {A B C : S.Point} {L : S.Line}, A ≠ B → B ≠ C → A ≠ C → S.OnLine A L → S.OnLine B L →
     S.OnLine C L → S.Between A B C ∨ S.Between B A C ∨ S.Between A C B
 
-/-- `Elements.Tacit.not_between_of_between_between` (Between 7), hand-translated. The lock
-prints it as `∀ {A B C D : Elements.Point}, Elements.Between A B C → Elements.Between A B D →
+/-- `Elements.Tacit.not_between_of_between_between` (Between 7), hand-translated. The theorem's
+unchanged type is `∀ {A B C D : Elements.Point}, Elements.Between A B C → Elements.Between A B D →
 Not (Elements.Between C B D)`. -/
 def not_between_of_between_between : Prop :=
   ∀ {A B C D : S.Point}, S.Between A B C → S.Between A B D → ¬ S.Between C B D

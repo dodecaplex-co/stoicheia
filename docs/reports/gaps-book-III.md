@@ -15,7 +15,9 @@ here is meant to be new.
 
 Each entry names the Lean lemma or tacit rule that fills the gap. A few of System E's
 rules for circles do most of the work, and we name them once here. A circle's centre is
-within it (`centre_inside`, Generalities 3). That it has only one centre
+within it (`centre_inside`, Generalities 3), now proved in Book Zero's `RuleBase.lean`
+from Circle 1, Definition I.15, circle crossings and length addition: a centre outside
+would have unequal radii. That it has only one centre
 (`centre_unique`, Generalities 2) is now proved in Book Zero's `Circles.lean`:
 two supposed centres bisect the same straight line through the circle by Definition I.15,
 and equal doubles have equal halves. A point within a circle, on a straight line that
@@ -103,7 +105,7 @@ Heath's brackets give in most of the propositions of Book III.
 - Euclid speaks of the concave and the convex circumference, "terms which are not defined but taken as understood", as Heath remarks under III.7 (vol. 2, p. 16). We read the convex as where a straight line from D first meets the circle, and the concave as where it meets it again.
 - "As De Morgan points out, there are here two assumptions similar to that tacitly made in the proof of III. 7, namely that K falls within the triangle DLM and E outside the triangle DFM" (vol. 2, p. 20). The first is I.21's figure, the second gives I.24 its greater angle at M. We prove both as in III.7 (`Prop8.within`, `Prop8.outside`): where DK crosses the radius ML, or DE the radius MF, the crossing is within the circle, and so between the two points where that straight line meets the circle (Circle 1).
 - Our statement compares DA and DG with every point of the circle, and a point on DA itself makes no triangle for I.20. It is A or G (`Prop8.on_diameter`), and the part DG is less than the whole DA.
-- "Let the angle DMB be constructed equal to the angle KMD": Heath gives no bracket for it: it is I.23. B is laid off on its arm at the distance of the radius (`OnRay.exists_len_eq`), and System E's Diagram-segment 3 (`on_circle_of_len_eq`) puts it on the circle. Definition I.15 gives only the other half: that a point of the circle is a radius away.
+- "Let the angle DMB be constructed equal to the angle KMD": Heath gives no bracket for it: it is I.23. B is laid off on its arm at the distance of the radius (`OnRay.exists_len_eq`), and System E's Diagram-segment 3 (`on_circle_of_len_eq`) puts it on the circle. This rule is now proved from Postulate 3 and `circle_eq`, with the radius nonzero, in `Elements/Figure/RuleBase.lean`. Definition I.15 gives only the other half: that a point of the circle is a radius away.
 - "Which was proved impossible" looks back to the convex circumference, but a third straight line DN might end on the concave one, or DK touch the circle. Our proof compares the angles at M instead: by I.24, unequal angles there give unequal straight lines from D.
 - Across DA, as in III.7, the companion `Prop8.general` compares through the partner on the other side, which Euclid's I.4 step at M makes equally inclined to DA; that it is in the same class, the convex or the concave circumference, is a step of its own (`Prop8.partner`), from the partners of the points of the circle beyond it or before it.
 
@@ -212,7 +214,7 @@ Heath's brackets give in most of the propositions of Book III.
 - "But the whole circle ABC is also equal to the whole circle DEF; therefore the circumference BKC which remains": that a segment's circumference and the one remaining make up the whole circle is `Circumference.whole`; then Common Notion 3.
 
 ## III.27
-- "Let the angle BGK be constructed equal to the angle EHF [I. 23]": I.23 gives the ray, not K on the circle. K is laid off on it at the distance GB (`OnRay.exists_len_eq`), and Diagram-segment 3 puts it on the circle (`on_circle_of_len_eq`).
+- "Let the angle BGK be constructed equal to the angle EHF [I. 23]": I.23 gives the ray, not K on the circle. K is laid off on it at the distance GB (`OnRay.exists_len_eq`), and the proved Diagram-segment 3 puts it on the circle (`on_circle_of_len_eq`, from Postulate 3 and `circle_eq`, as in III.8).
 - "Therefore BK is also equal to BC, the less to the greater" takes the part BK to be less than the whole BC. Our proof measures each circumference, the centre lying beyond it, by its angle at the centre (`Circumference.centre`), so that BK is less because the angle BGK is.
 - "And the angle at A is half of the angle BGC ... [III. 20]" holds where the angles at the circumference are acute. Heath: "the remarks about the method of treating the different cases apply here also" (vol. 2, p. 59). Our statement asks for angles of any size, as IV.11 needs, and our proof reaches the right and obtuse ones through `Circumference.standing`: the circumference is twice the angle standing on it.
 - Euclid argues one case of the inequality; the reductio is written once and used with the circles exchanged, as in I.26.
@@ -249,7 +251,7 @@ Heath's brackets give in most of the propositions of Book III.
 ## III.33
 - "It is assumed in Euclid's proof of the first and third cases that AE and FG will meet; but of course there is no difficulty in satisfying ourselves of this" (vol. 2, p. 70). Our proof takes the meeting from Postulate 5 (`Postulate5`): the angle EAF is less than a right angle and the angle AFG is right. In the obtuse case, that EAF is less than a right angle needs DA produced beyond A.
 - Heath gives no bracket for constructing the angle BAD, bisecting AB or drawing AE and FG at right angles: they are I.23, I.10 and I.11.
-- "Therefore the circle described with centre G and distance GA will pass through B also": Definition I.15 says that the points of a circle are a radius away; that B, a radius away, is on the circle is System E's Diagram-segment 3 (`on_circle_of_len_eq`).
+- "Therefore the circle described with centre G and distance GA will pass through B also": Definition I.15 says that the points of a circle are a radius away; that B, a radius away, is on the circle is the proved Diagram-segment 3 (`on_circle_of_len_eq`, from Postulate 3 and `circle_eq`, as in III.8).
 - Which side of AB each point lies on is left to the three figures: G across AB from D when the angle is acute, on D's side when it is obtuse. In the second case E stays on D's side, as in Euclid's figure, so III.31 is used and not III.32, as Heath observes (vol. 2, p. 70).
 
 ## III.34

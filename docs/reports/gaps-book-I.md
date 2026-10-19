@@ -82,7 +82,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - Turning Definition 10's "right" into the one magnitude of all right angles takes Postulate 4, which no bracket names here.
 
 ## I.12
-- The circle about C through D cuts AB twice. `OppositeSides.exists_between` finds X on AB between C and D; CX is less than the radius CD, so `InsideCircle.of_between_centre` puts X within the circle. The assumed `line_meets_circle_of_inside` (System E, Intersection 3) then gives the two distinct crossings E and G.
+- The circle about C through D cuts AB twice. `OppositeSides.exists_between` finds X on AB between C and D; CX is less than the radius CD, so `InsideCircle.of_between_centre` puts X within the circle. The theorem `line_meets_circle_of_inside` (System E, Intersection 3) then gives the two distinct crossings E and G, proved in `Elements/Figure/Incidence.lean` by applying `line_circle_beyond` in both directions.
 - "Perpendicular to the infinite straight line" again means a right angle with every point of AB (`OnRay.cases_of_between`, as in I.11).
 - HGC and HEC, the triangles I.8 compares, are genuine triangles: H, G and E are on AB, and C is off it (`Triangle.of_line`).
 
@@ -141,7 +141,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - The angle CED is the angle CEB, and BAE is BAC, because each pair of points lies on one ray (`angle_onRay_right`).
 
 ## I.22
-- The circles meet. Heath: "It was early observed that Euclid assumes, without giving any reason, that the circles drawn as described will meet" when the condition holds (vol. 1, p. 293). Proclus argued it but missed the case of one circle within the other, and Robert Simson thought no beginner so dull as not to see it. `Prop22.meet` follows Heath's own argument (vol. 1, p. 294): the circle about G has a point outside the circle about F and a point inside it, so they cut one another (System E's Intersection rule 4, `circles_meet_of_on_inside_outside`, in the corrected form Logan Murphy and his colleagues gave it in LeanEuclid). Our proof also covers the case Heath passes over, where the inside point is the centre F itself.
+- The circles meet. Heath: "It was early observed that Euclid assumes, without giving any reason, that the circles drawn as described will meet" when the condition holds (vol. 1, p. 293). Proclus argued it but missed the case of one circle within the other, and Robert Simson thought no beginner so dull as not to see it. `Prop22.meet` follows Heath's own argument (vol. 1, p. 294): the circle about G has a point outside the circle about F and a point inside it, so they cut one another (System E's Intersection rule 4, `circles_meet_of_on_inside_outside`, in the corrected form Logan Murphy and his colleagues gave it in LeanEuclid). Intersection 4 is now proved from Intersection 5, Circle 1 and `line_circle_between` in `Elements/Figure/Incidence.lean`. Our proof also covers the case Heath passes over, where the inside point is the centre F itself.
 - DE is "of infinite length in the direction of E", but I.3 cuts off only from a greater finite straight line, so each cut needs room first (`Prop22.room`: I.2, then `produce_longer`). That is why I.2 is among the propositions I.22 cites.
 - None of A, B, C is nothing, which I.3 needs (`Prop22.ne_zero`).
 - DF, FG and GH are cut off one after another, so that D, F, G, H lie in that order along DE, as in Euclid's figure (`between_cut`). Heath's argument that the circles meet needs it, since FH must be FG and GH together.
@@ -174,7 +174,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - The equal sides must be corresponding sides, both adjoining the equal angles or both subtending equal angles; Heath explains that a figure of Proclus shows just this (vol. 1, p. 306). The statement names them so: BC and EF, or AB and DE.
 
 ## I.27
-- Euclid's two directions, "in the direction of B, D or towards A, C", are the two sides of EF; the Greek speaks of parts, Heath notes (vol. 1, p. 308). A point where AB and CD meet is off EF, for AB meets EF at E alone, and were the point E, CD would be EF itself, with D on it (System E, Generalities 1). So it lies on D's side or on A's, since a straight line has just two sides (`same_side_or`, System E, Same side 5).
+- Euclid's two directions, "in the direction of B, D or towards A, C", are the two sides of EF; the Greek speaks of parts, Heath notes (vol. 1, p. 308). A point where AB and CD meet is off EF, for AB meets EF at E alone, and were the point E, CD would be EF itself, with D on it (System E, Generalities 1). So it lies on D's side or on A's, since a straight line has just two sides (`same_side_or`, System E, Same side 5), now proved in `Elements/Figure/Incidence.lean` from Intersection 1, Pasch 3 and 4 and the three collinear orders.
 - "The exterior angle AEF" of the triangle GEF needs E between A and G, and "the interior and opposite angle EFG" needs EFG to be the given angle EFD. Euclid reads both off his figure. B lies on G's side of EF, so G lies on the ray from E through B (`OnRay.of_sameSideOf`), beyond E from A (`OnRay.between`); and G lies on the ray from F through D, so EFG is EFD (`angle_onRay_right`).
 - "Similarly" is the same argument with the figure read from the other end, D, C, B, A for A, B, C, D, written once and used twice, as in I.16.
 
@@ -196,7 +196,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 
 ## I.31
 - The given point A is off the given straight line BC; the statement asks it (`¬ Collinear B C A`).
-- D, "taken at random on BC", is taken between B and C, as in Euclid's figure (`exists_point_between`, System E, Points 3), so that B and C lie on either side of AD (`OppositeSidesOf.of_between`).
+- D, "taken at random on BC", is taken between B and C, as in Euclid's figure (`exists_point_between`, System E, Points 3, now proved in `Elements/Figure/Incidence.lean` from smaller concentric circles, Circle 1, Definition I.15 and circle crossings), so that B and C lie on either side of AD (`OppositeSidesOf.of_between`).
 - The angle DAE must be built on the side of AD away from C, or EAD and ADC would not be alternate angles, as I.27 needs. Our I.23 lets the side be named, and B's is named (`SameSideOf.trans_opposite`).
 - Proclus remarks that the construction implies that only one straight line through A is parallel to BC, and draws this from I.30: two such straight lines would be parallel, though they meet at A (Heath, vol. 1, p. 316). Our statement asks for a parallel, not the only one. The uniqueness is `Prop30.meet`, that a straight line meeting one of two parallels meets the other, and later proofs cite it wherever Euclid names a point on a parallel he has drawn: I.37–I.40, I.42, I.44, I.46 and I.47.
 

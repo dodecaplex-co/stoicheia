@@ -9,16 +9,19 @@ public import Model.Laws
 by hand before the generator existed, and the proposed `exists_centre`. Each law here is
 the library's, word for word, with `S.Point` for `Elements.Point`, `S.OnCircle` for
 `Elements.OnCircle`, and so on, and the printed original is quoted above it, from
-`Certificate/axioms.lock`. The defined words the laws use (`S.CirclesMeet`,
+`Certificate/axioms.lock` for a retained axiom, or its unchanged theorem type for a
+retired rule. The defined words the laws use (`S.CirclesMeet`,
 `S.OppositeSides`, `S.OutsideCircle`) are the generated ones, from `Model/Laws.lean`.
 
 These laws are kept as the independent check they were written to be. `Check/Hand.lean`
 puts the library's own words in for `S` and asks Lean whether each result is the original
-declaration, and asks too whether each is the law the generator writes, the field of
-`Laws` it stands for; `Check/RoundTrip.lean` compares each with the generated law by syntax,
-binder kinds and names included. The build fails if any of these fails. The proofs in the
-plane of these laws are stated with them, and Lean checks, where `Model/Assembly.lean`
-gathers them, that each proves its field of `Laws`. The other laws are stated the same way,
+declaration. For each retained axiom it asks too whether this is the law the generator
+writes, the field of `Laws` it stands for; `Check/RoundTrip.lean` compares these with the
+generated laws by syntax, binder kinds and names included. The retired rules are compared
+directly with their theorem types by `comparePlanted`, including binder kinds. The build
+fails if any of these fails. The plane proofs use the hand translations, and
+`Model/Assembly.lean` gathers those of the retained axioms into their fields of `Laws`.
+The other laws are stated the same way,
 with the hand translations of `Model/Laws/`, each checked against its generated law in
 `Check/`, or directly against its library declaration for a retired axiom. The retired
 rules keep their concrete plane proofs and audits as derived facts, with no generated
@@ -31,6 +34,10 @@ Kaiyu Yang, Jialiang Sun, Zhaoyu Li, Anima Anandkumar and Xujie Si), with our th
 Intersections 8 and 9, which say on which side of the line of centres a crossing point
 lies. With them are the eight magnitude laws, which test the translation of the instances
 and of the kinds of magnitude.
+
+Intersection 4 and Intersections 9 are now proved in `Elements/Figure/Incidence.lean`:
+the former from Intersection 5, Circle 1 and `line_circle_between`; the latter by choosing
+a point on the opposite side and applying the retained Intersections 8 to it.
 -/
 
 @[expose] public section

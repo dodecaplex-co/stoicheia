@@ -8,7 +8,10 @@ import Model.Laws.lengths
 # Checking the hand translations of the metric length laws
 
 The kernel compares each translation with the original declaration, read through
-`type_of%`, and with the generated law over every signature. Nothing under `Model/`
+`type_of%`. The retained axioms are also compared with their generated laws;
+`eq_of_len_eq_zero`, now proved from Postulate 3 and circle rules in
+`Elements/Figure/RuleBase.lean`, is compared directly with its theorem type by
+`comparePlanted`, including binder kinds. Nothing under `Model/`
 imports this file.
 -/
 
