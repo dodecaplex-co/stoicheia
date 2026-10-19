@@ -17,9 +17,10 @@ The first two, proved here for any circle, use Circle 2, now proved from System 
 Circle 3 in `Elements.Figure.Circles`. Circle 3 therefore still gives III.2 at once.
 The propositions take these facts from III.2 instead, for a circle with a centre.
 Its corollaries `BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide` and
-`BookIII.Prop2.sameSide`, like III.2 itself, avoid Circle 3. A proof using them may
-still rest on Circle 3 through another step: I.12 now uses it through the proved
-Intersection 2.
+`BookIII.Prop2.sameSide`, like III.2 itself, avoid Circle 3. No certificate entry
+currently rests on Circle 3. I.12 puts the crossing of CD with AB inside the circle
+by comparing its distance from the centre with the radius, then uses the assumed
+Intersection 3. The proved Intersection 2 has no user in the published proofs.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.

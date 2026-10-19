@@ -491,6 +491,12 @@ home. Book Zero still imports no proposition. I.7 cannot be established independ
 through Circle 4, since that theorem now uses I.7. III.2 still has an overlap with the
 retained Circle 3 axiom, as the [catalogue](reports/overlaps.md) explains.
 
+No certificate entry currently rests on Circle 3. I.12 finds the crossing X of
+CD with AB between the centre C and the point D on the circle, proves X inside
+by `InsideCircle.of_between_centre`, and uses the assumed Intersection 3
+(`line_meets_circle_of_inside`) to find two points of the circle on AB. The proved
+Intersection 2 has no user in the published proofs.
+
 ## 8. Completion claims
 
 A completion label and its certificate cover the same declarations: the main theorem, its

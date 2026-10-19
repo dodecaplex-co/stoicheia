@@ -14,24 +14,23 @@ the former ones. The earlier catalogue and its measurements follow as history.
 | I.3 | Superposition (`superposition`) | Supplies a step of the alternative proof | I.4 | `Audit.I_3` |
 | I.13, a consequence used in I.47 | Metric 5 (`angle_le_two_right`) | Supplies a step: the upper bound on an angle | I.47 | None |
 | I.23 | Superposition (`superposition`) | Supplies a step of the alternative proof | I.4 | `Audit.I_23` |
-| III.2 | Circle 3 (`outside_of_between`) | Gives it at once: if the middle point were not inside, the second endpoint would be outside | I.12, through the proved Intersection 2 | `Audit.III_2_outside`; `Audit.III_2` through the derived Circle 2 |
+| III.2 | Circle 3 (`outside_of_between`) | Gives it at once: if the middle point were not inside, the second endpoint would be outside | Nowhere: no certificate entry rests on it | `Audit.III_2_outside`; `Audit.III_2` through the derived Circle 2 |
 | III.5 | Diagram-segment 2 (`circle_eq`) | Gives it at once: circles about one centre through one point coincide | III.5 | `Audit.III_5` |
 | III.6 | Diagram-segment 2 (`circle_eq`) and Generalities 3 (`centre_inside`) | Gives it at once: one rule settles contact within, the other contact without | Diagram-segment 2: III.5. Generalities 3: I.1 | `Audit.III_6` |
 
-Fresh certificate facts at `d4306441`, compared with `facts.json` at `1843e6b`, show
-that Circle 3 now supports 13 entries where it supported none before: I.12,
-III.16, III.17, III.18, III.19, III.32, III.33, III.34, III.35, III.36, III.37,
-III.16 Por. and III.17 general. These are exactly I.12 and every certificate entry
-that rests on it. I.12 reaches Circle 3 through
-`line_meets_circle_of_opposite_sides`, now proved from Circle 3 and the crossing
-rules in `Elements/Figure/Circles.lean`; the other twelve entries inherit it
-through I.12. Retiring Intersection 2 therefore brings Circle 3 into these proofs.
+Fresh certificate facts at `1a2d37c1` show that no certificate entry rests on
+Circle 3. I.12 finds X on AB between the centre C and the point D on the circle;
+`InsideCircle.of_between_centre` puts X inside by comparing CX with the radius CD,
+and the assumed Intersection 3 (`line_meets_circle_of_inside`) supplies the two
+crossings E and G. The proved Intersection 2
+(`line_meets_circle_of_opposite_sides`) has no user in `Elements/`, `Staging/` or
+`Audit/`; its declaration in `Elements/Figure/Circles.lean` is the only occurrence
+of its name there.
 
-II.14, III.1, III.1 Por. and III.2 still avoid Circle 3. So do III.2's corollaries
-`Prop2.triangle`, `Prop2.oppositeSide` and `Prop2.sameSide`, as `#print axioms`
-confirms; using one of them does not keep a proof from reaching Circle 3 through
-another step. Our III.2 follows Euclid through I.5, I.16 and I.19; its overlap with
-an available axiom is distinct from what its published proof uses.
+III.2 and its corollaries `Prop2.triangle`, `Prop2.oppositeSide` and
+`Prop2.sameSide` also avoid Circle 3. Our III.2 follows Euclid through I.5, I.16
+and I.19; its overlap with an available axiom is distinct from what its published
+proof uses.
 
 ## Former axiom overlaps
 
