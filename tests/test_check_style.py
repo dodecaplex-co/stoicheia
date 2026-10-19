@@ -29,7 +29,7 @@ it, put to the script's own patterns and functions:
   upright or italic, and at its size, as its figure sets it, and places it by its anchor
   and the whole label's advance. And it finds a letter drawn twice, or twice in one of
   several figures side by side, or across the cut between them, and reads A and A′ as two
-  letters.
+  letters; and it names a line dashed by itself or by its group as a dashed line.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -343,6 +343,15 @@ PLACE_CASES = [   # (what is drawn; the letters, as markup; a finding?)
     ("", letter("A′", x=60) + letter("A′", x=300), True),
 ]
 
+KIND_CASES = [   # (a line drawn through a letter A at (150, 100); what S22 calls it)
+    ('<line x1="100" y1="90" x2="200" y2="90" stroke="#3b2f2f" stroke-dasharray="2 5"/>',
+     "a dashed line"),
+    ('<g stroke-dasharray="2 5"><line x1="100" y1="90" x2="200" y2="90" stroke="#3b2f2f"/>'
+     '</g>', "a dashed line"),                               # dashed by its group
+    ('<line x1="100" y1="90" x2="200" y2="90" stroke="#3b2f2f" stroke-dasharray="none"/>',
+     "a line"),                                              # none: drawn solid
+]
+
 
 # ---------------------------------------------------------------------------------------
 
@@ -423,6 +432,16 @@ class Clearance(unittest.TestCase):
 
     test_place_cases.__doc__ = (f"S22 reads {len(PLACE_CASES)} letters by their size, their "
                                 "transform and their primes rightly")
+
+    def test_kind_cases(self):
+        for drawn, kind in KIND_CASES:
+            with self.subTest(drawn=drawn):
+                found = s22_findings(drawn, letter("A"))
+                self.assertEqual(found, [f"letter A at (150, 100) meets {kind}"],
+                                 f"S22 does not call {drawn} {kind}: {found}")
+
+    test_kind_cases.__doc__ = (f"S22 names {len(KIND_CASES)} lines through a letter, dashed "
+                               "or not, rightly")
 
     def test_twice_cases(self):
         for xs, cuts, want in TWICE_CASES:

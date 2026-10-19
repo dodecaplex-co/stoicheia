@@ -773,8 +773,8 @@ EUCLID_COLOURS = {"#fbf7ee", "#3b2f2f", "#8c7b62", "#a0522d", "#e9dcc0"}
 COLOUR_ATTRS = ("fill", "stroke", "stop-color", "color", "flood-color", "lighting-color")
 DRAWN = {"line", "path", "polyline", "polygon", "circle", "ellipse", "rect"}
 FILLED = DRAWN - {"line"}
-INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap", "font-size",
-             "font-style", "text-anchor")
+INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap",
+             "stroke-dasharray", "font-size", "font-style", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
 
 # The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
@@ -1506,7 +1506,8 @@ def strokes(root):
                 [(cx + rx * math.cos(i * ARC_STEP), cy + ry * math.sin(i * ARC_STEP))
                  for i in range(steps + 1)]]
         half = w / 2 * stretch(m)
-        kind = "a dashed line" if eff.get("stroke-dasharray") and t == "line" else \
+        dashed = (eff.get("stroke-dasharray") or "none").strip().lower() != "none"
+        kind = "a dashed line" if dashed and t == "line" else \
             ("an " if t == "ellipse" else "a ") + t
         butt = (eff.get("stroke-linecap") or "butt").strip() == "butt"
         for run in runs:
