@@ -1372,5 +1372,5 @@ findings:
   the budget, all of them III.34 from Postulate 4, alone or with Postulate 5 and at most one
   more family. III.34 asks for three points on its circle, and the rules among those that
   put a point on a circle that has none need a straight line, which III.34 does not give
-  and none of those rules draws. The catalogue's account of the screen, and III.30 among its near misses, follow on
-  a text branch of their own, after this one.
+  and none of those rules draws. The catalogue's account of the screen, and III.30 among
+  its near misses, follow on a text branch of their own, after this one.
