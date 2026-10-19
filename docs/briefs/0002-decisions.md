@@ -667,7 +667,7 @@ findings:
   axiom added with its entry in the lock, the new hash, its line of `laws.toml`, its law's
   code in both programs and a line of MODEL.md: it lands as content, and the model's ties
   hold on it. With another law loosened beside it, the same change is kept apart, and a
-  table of twenty-four loosenings and five moves checks each way round. An axiom removed
+  table of twenty-five loosenings and five moves checks each way round. An axiom removed
   or restated moves the same way when no other program names its law. `structured.py` and
   `exhaustive.py` run some laws by name, so they must drop or re-key such a law first, in
   a pull request of its own. The independent verifier of the change found two gaps, and

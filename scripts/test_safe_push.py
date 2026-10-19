@@ -2625,6 +2625,9 @@ class ProtectedPaths(Edge):
                                      '"Tacit.len_symm" = "len_self"\n'),
             "two laws reordered in search.py": edit(self.SEARCH, len_self + len_symm,
                                                       len_symm + len_self),
+            "a statement hidden in a comment by a coding cookie": lambda p: dict(p, **{
+                self.SEARCH: "# -*- coding: utf-7 -*-\n" + p[self.SEARCH].replace(
+                    self.RUN_MARK, "#+AAo-BOX = 1\n" + self.RUN_MARK, 1)}),
             "the law added without its axiom": lambda p: {
                 k: v for k, v in p.items() if k not in (self.LOCK, self.HASH, "facts.json")},
             "the new law's code named for a helper": lambda p: dict(p, **{
@@ -3649,6 +3652,13 @@ class Units(unittest.TestCase):
         lines = "".join(f"    {line}\n" for line in body.split("\n"))
         fn = ast.parse(f"{head}{lines}    return True\n")
         return safe_push.self_contained(fn.body[0], path)
+
+    def test_a_harness_is_read_as_python_reads_it(self):
+        base = b"X = 1\n"
+        cookie = b"# -*- coding: utf-7 -*-\nX = 1\n#+AAo-X = 2\n"
+        self.assertNotEqual(safe_push.law_code(base)[0], safe_push.law_code(cookie)[0])
+        self.assertEqual(safe_push.law_code(cookie.decode("utf-8"))[0],
+                         safe_push.law_code(base)[0])
 
     def test_every_law_keeps_to_the_allow_list(self):
         # Issue #40, and its reviewer's finding, with thanks: a law's code is read against

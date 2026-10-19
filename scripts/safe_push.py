@@ -1607,10 +1607,12 @@ def law_of(node: ast.stmt) -> str | None:
     return None
 
 
-def law_code(text: str | None) -> tuple[list[str], dict] | None:
+def law_code(text: str | bytes | None) -> tuple[list[str], dict] | None:
     """A harness file's code: the statements at its top level that are not laws, each as
     its syntax tree prints (comments and its docstring, which are prose, aside); and its
-    laws, by name. None when it does not parse, or defines a law twice."""
+    laws, by name. It reads the file as Python does, from its bytes, so a coding cookie is
+    honoured: a line that reads as a comment in UTF-8 may be code under another encoding.
+    None when it does not parse, or defines a law twice."""
     try:
         tree = ast.parse(text)
     except (TypeError, ValueError, SyntaxError):
@@ -1925,7 +1927,7 @@ def laws_move_with_axioms(repo, base, sha, path: str) -> bool:
     if path == MODEL_LAWS:
         return all(k in moved for k in old_laws.keys() | new_laws.keys()
                    if old_laws.get(k) != new_laws.get(k))
-    old, new = law_code(show(repo, base, path)), law_code(show(repo, sha, path))
+    old, new = law_code(show_bytes(repo, base, path)), law_code(show_bytes(repo, sha, path))
     if old is None or new is None or old[0] != new[0]:
         return False
     if [name for name in old[1] if name in new[1]] != \
