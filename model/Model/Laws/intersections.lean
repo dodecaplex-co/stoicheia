@@ -45,7 +45,8 @@ variable (S : Signature)
 
 /-- `Elements.LineMeetsCircle`, by hand: a line that cuts a circle in two points. -/
 def LineMeetsCircle (L : S.Line) (α : S.Circle) : Prop :=
-  ∃ A B : S.Point, A ≠ B ∧ S.OnLine A L ∧ S.OnCircle A α ∧ S.OnLine B L ∧ S.OnCircle B α
+  ∃ A B : S.Point,
+    A ≠ B ∧ S.OnLine A L ∧ S.OnCircle A α ∧ S.OnLine B L ∧ S.OnCircle B α
 
 /-- `Elements.LinesMeet`, by hand: two different lines with a common point. -/
 def LinesMeet (L M : S.Line) : Prop :=
