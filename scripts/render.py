@@ -27,9 +27,10 @@ records, written by a reviewer and tied to the commit read).
 
 A page's listing names each declaration after the theorem by how the Lean uses it, its
 comments aside: one of the theorems later propositions use, a lemma for the proposition's
-own proofs, or a lemma beside the proposition. On every run, before anything else, the
-script checks that reading against the cases of USE_CASES (`use_self_check`), and stops if
-one is read wrongly.
+own proofs, or a lemma beside the proposition; and the Proof row names the companions in
+the order the review record lists them. On every run, before anything else, the script
+checks both against the cases of USE_CASES and ORDER_CASES (`use_self_check`), and stops
+if one is read wrongly.
 
 Run after `lake env lean Certificate/Facts.lean`. Standard library, and Python 3.11 or
 later for the review records (tomllib).
@@ -805,15 +806,16 @@ def proof_cell(p, attached, order=()):
     """The Proof row: the proposition's status, and its porism's and companions'. Those
     that share the proposition's status come first, the porism and then the companions
     together, in one clause, in the order the review record lists them (`order`,
-    references such as "I.45 apart"); then each whose status differs, with its own, so
+    references such as "I.45 apart", or "I. 45 apart" with Heath's spacing); then each
+    whose status differs, with its own, so
     that a porism's status is never read as the companions'."""
     if not p:
         return STATUS["sketched"]
     text = STATUS[p["status"]]
     same, other = [], []
-    rank = {ref: i for i, ref in enumerate(order)}
+    rank = {heath.parse_ref(ref): i for i, ref in enumerate(order)}
     attached = sorted(attached, key=lambda a: (heath.parse_ref(a["ref"]).kind != "porism",
-                                               rank.get(a["ref"], len(rank))))
+                                               rank.get(heath.parse_ref(a["ref"]), len(rank))))
     for a in attached:
         r = heath.parse_ref(a["ref"])
         link = prop_link(a["ref"], r.book)
@@ -1003,13 +1005,29 @@ def lean_code():
             for path in sorted((ROOT / "Elements").rglob("*.lean"))}
 
 
-def use_pattern(names):
+def declared_names(code):
+    """Every name the Lean files of `code` declare, as written (`Fitted.fan.part`)."""
+    return frozenset(x for text in code.values() for x in DECLARATION.findall(text))
+
+
+@functools.cache
+def lean_declared():
+    """`declared_names` of the edition's Lean: collected once, for `use_kind`."""
+    return declared_names(lean_code())
+
+
+def use_pattern(names, longer=()):
     """A use of a declaration by one of `names`: the first, its full name, may stand
-    qualified (`BookI.Prop46.square_eq`). A longer name that merely begins with one of
-    them (`Fitted.fan.part` for `Fitted.fan`, `Prop45.append'` for `Prop45.append`) is no
-    use, nor is a field of something else (`h.area_pos` for `Prop14.area_pos`)."""
+    qualified (`BookI.Prop46.square_eq`). A projection of it is a use
+    (`Prop20.collinear_iff.mpr`, `Prop46.square_eq.symm`, `.1`), but not a longer name
+    declared in the edition that begins with it (`Fitted.fan.part` for `Fitted.fan`), its
+    `longer` names giving each such name's rest (`part`); nor a longer name that runs on
+    without a dot (`Prop45.append'` for `Prop45.append`), nor a field of something else
+    (`h.area_pos` for `Prop14.area_pos`)."""
     alts = [r"(?:\w+\.)*" + re.escape(names[0])] + [re.escape(x) for x in names[1:]]
-    return re.compile(r"(?<![\w.'])(?:" + "|".join(alts) + r")(?![\w'!?]|\.\w)")
+    rests = "|".join(re.escape(x) for x in longer)
+    after = r"[\w'!?]" + (rf"|\.(?:{rests})(?![\w'!?])" if rests else "")
+    return re.compile(r"(?<![\w.'])(?:" + "|".join(alts) + rf")(?!{after})")
 
 
 def own_names(name, user):
@@ -1036,15 +1054,18 @@ def commands(code):
     return out
 
 
-def use_kind(name, own, code):
+def use_kind(name, own, code, declared):
     """How a declaration after a theorem, named as a page lists it (`Prop46.square_eq`,
     `Fitted.fan`), is used, read from `code`, the Lean files of the edition by path with
-    their comments taken out, its own file being `own`: "later" if another file uses it,
-    "own" if only other declarations of its own file do, and "beside" if nothing does,
-    its own declaration line and body aside. A mention in a comment is no use."""
-    if any(use_pattern([name]).search(text) for path, text in code.items() if path != own):
+    their comments taken out, its own file being `own`, and `declared`, the names they
+    declare: "later" if another file uses it, "own" if only other declarations of its own
+    file do, and "beside" if nothing does, its own declaration line and body aside. A
+    mention in a comment is no use."""
+    longer = [x[len(name) + 1:] for x in declared if x.startswith(name + ".")]
+    if any(use_pattern([name], longer).search(text)
+           for path, text in code.items() if path != own):
         return "later"
-    if any(use_pattern(own_names(name, user)).search(text)
+    if any(use_pattern(own_names(name, user), longer).search(text)
            for user, text in commands(code[own]) if user != name):
         return "own"
     return "beside"
@@ -1071,9 +1092,16 @@ theorem Prop9.alone : True := by
 
 theorem Prop9.step : True := trivial
 
+theorem Prop9.iff : True ↔ True := Iff.rfl
+
+theorem Prop9.pair : True ∧ True := ⟨trivial, trivial⟩
+
+theorem Prop9.eq : 1 = 1 := rfl
+
 theorem Prop9.porism : True := by
   -- not Prop9.alone
   have h := Prop9.helper
+  have := Prop9.eq.symm
   exact h.step
 
 theorem Fitted.fan.part : True := trivial
@@ -1096,6 +1124,8 @@ theorem Prop10 : True := by
   -- Prop9.noted
   /- A note /- with a note inside -/ names Prop9.noted. -/
   have := Fitted.fan.part
+  have := Prop9.iff.mpr trivial
+  have := Prop9.pair.1
   exact BookI.Prop9.later
 
 end Elements.BookI
@@ -1108,22 +1138,43 @@ USE_CASES = [   # (a declaration of the first file, how it is used)
     ("Prop9.helper", "own"),          # by the porism, in its own file
     ("Prop9.alone", "beside"),        # by nothing: its own line and a comment aside
     ("Prop9.step", "beside"),         # only as a field of something else, `h.step`
+    ("Prop9.iff", "later"),           # only as `Prop9.iff.mpr`, a projection of it
+    ("Prop9.pair", "later"),          # only as `Prop9.pair.1`
+    ("Prop9.eq", "own"),              # only as `Prop9.eq.symm`, by the porism
     ("Fitted.fan.part", "later"),
-    ("Fitted.fan", "beside"),         # only `Fitted.fan.part`, which begins with it
+    ("Fitted.fan", "beside"),         # only in `Fitted.fan.part` and `fan.growth`, longer
+                                      # names declared beside it, not projections of it
     ("Fitted.fan.growth", "own"),     # as `fan.growth`, inside `Fitted.fan.within`
+]
+
+# And the Proof row names a proposition's companions in the order its review record lists
+# them, however the record spaces a reference: ORDER_ATTACHED is facts.json's order.
+
+ORDER_ATTACHED = [{"ref": f"I.45 {x}", "status": "proved"} for x in ("append", "sum", "fan")]
+
+ORDER_CASES = [   # (the record's `companions`, as written; the order the row names them in)
+    (["I.45 fan", "I.45 sum", "I.45 append"], ["fan", "sum", "append"]),
+    (["I. 45 fan", "I. 45 sum", "I.45 append"], ["fan", "sum", "append"]),
 ]
 
 
 def use_self_check():
-    """USE_CASES, read from USE_FILES; returns the number of cases and the faults."""
+    """USE_CASES, read from USE_FILES, and ORDER_CASES; returns the number of cases and
+    the faults."""
     code = {path: check_fidelity.without_comments(src) for path, src in USE_FILES.items()}
+    declared = declared_names(code)
     own = next(iter(USE_FILES))
     faults = []
     for name, want in USE_CASES:
-        got = use_kind(name, own, code)
+        got = use_kind(name, own, code, declared)
         if got != want:
             faults.append(f"{name} read as {got!r}, not {want!r}")
-    return len(USE_CASES), faults
+    for order, want in ORDER_CASES:
+        got = re.findall(r"`Prop45\.(\w+)`", proof_cell({"status": "proved"},
+                                                       ORDER_ATTACHED, order))
+        if got != want:
+            faults.append(f"the companions of {order!r} named as {got!r}, not {want!r}")
+    return len(USE_CASES) + len(ORDER_CASES), faults
 
 
 def lean_listing(book, n, facts):
@@ -1160,7 +1211,7 @@ def lean_listing(book, n, facts):
         comp = [x for x in parts.after_names if x in companions]
         rest = [x for x in parts.after_names if x not in porism + comp]
         own = heath.lean_path(book, n)
-        kind = {x: use_kind(x, own, lean_code()) for x in rest}
+        kind = {x: use_kind(x, own, lean_code(), lean_declared()) for x in rest}
         later = [x for x in rest if kind[x] == "later"]
         local = [x for x in rest if kind[x] == "own"]
         beside = [x for x in rest if kind[x] == "beside"]
@@ -2168,9 +2219,9 @@ def main() -> None:
     count, faults = use_self_check()
     if faults:
         raise SystemExit(f"{len(faults)} fault(s) in render.py's reading of how a declaration "
-                         "is used; nothing was rendered:\n"
-                         + "\n".join("  ✗ " + f for f in faults))
-    print(f"self-check: the listing reads how {count} declarations are used rightly")
+                         "is used, or of a record's order of companions; nothing was "
+                         "rendered:\n" + "\n".join("  ✗ " + f for f in faults))
+    print(f"self-check: the listing and the Proof row read {count} cases rightly")
     facts = load_facts()
     docs = load_axiom_docs()
     records = load_records()
