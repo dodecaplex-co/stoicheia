@@ -1334,3 +1334,16 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+
+- **The overlap wording and the table of stages are brought up to date.** The two text
+  follow-ups to #93 update the [README](../../README.md)'s row for `Audit/` and the
+  [Book I brief](book-I.md)'s account of its four overlaps: a rule supplies a step of
+  I.2, I.3, I.7 and I.23, and I.23 rests on superposition through I.20 as well as I.8.
+  Brief 0005's table of stages in [PROGRAM](../PROGRAM.md) marks stage 2 done and names
+  #90 in stage 4's row as the pull request that proved its propositions in Staging.
+  The next steps in [`docs/program.toml`](../program.toml), which supply PROGRAM's
+  status table, keep their words for now. A protected test in
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) quotes Book I's stage
+  words. The next steps are reworded after the test's own change on
+  `tooling/safe-push-stage-line` lands separately, as [WORKFLOW](../WORKFLOW.md),
+  section 10, requires.
