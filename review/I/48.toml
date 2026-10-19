@@ -9,7 +9,8 @@ kind = "euclid"
 
 [[passage]]
 at = "For let AD be drawn from the point A at right angles"
-kind = "carried"
+kind = "helper"
+helper = "Prop11"
 note = "Euclid draws AD perpendicular to AC, and Heath gives no reference here. The Lean draws AD by I.11 on the other side of AC from B, as in Heath's figure."
 
 [[passage]]

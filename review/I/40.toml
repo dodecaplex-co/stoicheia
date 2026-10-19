@@ -37,7 +37,7 @@ note = "As in I.39, the Lean argues directly: the areas put F at D (`OnRay.eq_of
 
 [figure]
 case = "the bases BC and CE meeting at C, with F on CD between C and D, as in Heath's figure"
-note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the proof supposes."
+note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the proof supposes. Like Heath's, this figure draws Euclid's impossible supposition: AF parallel to BE with F strictly between C and D, while the triangles ABC and DCE on equal bases BC and CE are assumed equal in area. Their drawn areas are unequal."
 
 [review]
 stage = "full"
