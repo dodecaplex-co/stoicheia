@@ -6,7 +6,7 @@ fingerprint = "sha256:c23bab573b2dc820"
 
 [route]
 kind = "euclid"
-note = "The companion `Prop23.point` goes through a point M between A and B, within the circle: a point on the circle subtends the angle in the segment [III. 21]; one outside it, or within it, subtends a less, or a greater, angle, through a point Q where MP meets the circle [I. 21, III. 21], with `Prop23.insideTriangle_of_between` for the step read off the figure."
+note = "The companion `Prop23.point` goes through a point M between A and B, within the circle [III. 2]: a point on the circle subtends the angle in the segment [III. 21]; one outside it, or within it, subtends a less, or a greater, angle, through a point Q where MP meets the circle [I. 21, III. 21], with `Prop23.insideTriangle_of_between` for the step read off the figure."
 
 [representation]
 tags = ["segment-with-circle", "centre-given"]

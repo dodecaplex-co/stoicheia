@@ -178,11 +178,17 @@ cites.
 `exists_onCircle_oppositeSidesOf`, `exists_onCircle_sameSideOf` (a straight line in a
 circle has points of it on each side), `circumference_congr`, `standing_congr`,
 `standing_eq_circumference`, `EqualCircles.radii`, `.symm`, `.refl`, `Touches.not_inside`,
-`Touches.of_collinear`. **`Elements/Figure/Chords.lean`**, from stage 3 of
-[brief 0006](0006-statements.md): `chord_cases` (a point of the straight line through two
-points of a circle is on the circle exactly when it is one of them, and within it exactly
-when between them), `Arc.meets`, `Arc.congr_side` and `Arc.Congruent.congr_side` (only the
-side names a segment).
+`Touches.of_collinear`. The first three rest on System E's Circle 2, which contains III.2,
+and no proposition uses them: the propositions take the same facts from III.2's
+corollaries, for a circle with a centre (`Prop2.triangle`, `Prop2.oppositeSide`,
+`Prop2.sameSide`, and `Prop2.within` for ends on or within the circle).
+**`Elements/Figure/Chords.lean`**, from stage 3 of [brief 0006](0006-statements.md):
+`Arc.congr_side` and `Arc.Congruent.congr_side` (only the side names a segment). The
+brief's two other facts for it rest on III.2, and come after it: `Prop24.chord_cases` (a
+point of the straight line through two points of a circle is on the circle exactly when it
+is one of them, and within it exactly when between them), before III.24, which uses it;
+and the meeting fact for an arc, `Prop25.meets`, staged beside III.25, whose companion
+uses it, to move with stage 4.
 
 **Book III's ground, before III.1, `Elements/BookIII/Squares.lean`**: `sq_pos` (the square
 on a straight line is something) and `BookI.Prop46.sq` (equal squares are on equal

@@ -38,6 +38,12 @@ at = "or it will fall awry"
 kind = "different"
 note = "III.10 is not needed: the angles have settled every point of the circumference, so the segment cannot fall awry, and no third case is left to refute."
 
+[[passage]]
+at = "Therefore, if the straight line AB be applied to CD"
+kind = "helper"
+helper = "Prop24.chord_cases"
+note = "On the bases the points are settled by their ends and their order: a point of AB is on the circle exactly when it is an end, and within it exactly when it lies between the ends, by III.2 (`Prop24.chord_cases`), and the placement keeps both."
+
 [review]
 stage = "exceptions"
 commit = "4916590"

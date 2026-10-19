@@ -1195,7 +1195,8 @@ findings:
   is an assumption. The module's account gains a paragraph on segments and arcs. The words
   join the lock with the first statements that use them, the companion
   "III.24 equalMeasure", then III.24, III.26 and III.28 as restated. The ground goes to the
-  homes the brief names: `Elements/Figure/Chords.lean` (new, Book Zero), I.20's degenerate
+  homes the brief names, save two facts that rest on III.2 (the next entry):
+  `Elements/Figure/Chords.lean` (new, Book Zero), I.20's degenerate
   case in `Elements/BookI/HelpersTriangles.lean` (new, after I.20), placement in
   `Elements/BookIII/Placement.lean` and its cases in `Elements/BookIII/Placement/` (new),
   `Arc.eq_of_aligned` in `Elements/BookIII/Squares.lean` and `Circumference.add` in
@@ -1242,3 +1243,32 @@ findings:
   `Arc.Congruent`, and Definition III.9 `Arc.measure`. Definitions III.4 and III.5 keep their
   lines until `Foot` joins the foundations with stage 4. It is not a check change (WORKFLOW,
   section 10); the regenerated pages show it.
+
+- **Stage 3's ground off Circle 2.** With `lean/circle2-out`
+  ([#60](https://github.com/jackChallis/stoicheia/issues/60)) merged into the stage 3 move,
+  no entry of the certificate rests on System E's Circle 2 (`Tacit.inside_of_between`) or
+  Circle 3, as facts.json shows. The calls of the rule that stage 3 brought in, and of Book
+  Zero's lemmas that call it, take the step as #60's do: III.23's companion `Prop23.point`
+  puts its point M within the circle by III.2; III.24's companions, III.26, III.28,
+  `Circumference.add` and the bridge theorems of `Elements/BookIII/Arcs.lean` take points of
+  a circle on either side of a straight line from III.2's corollaries `Prop2.sameSide` and
+  `Prop2.oppositeSide`. Two of the facts that [brief 0006](0006-statements.md) ("Book Zero
+  for arcs") puts in Book Zero rest on III.2, and Book Zero cites no proposition, so they
+  move after it, to the first proposition that uses each (FORMALIZATION, section 6). The
+  points of the straight line through two points of a circle, `chord_cases`, go before
+  III.24 as `Prop24.chord_cases`, proved by III.2, `Prop2.triangle` and Circle 1, with one
+  hypothesis more, the circle's centre (`∃ O : Point, Centre O α`), which III.2 needs and
+  which III.24, `Prop24.image` and `Prop24.equalMeasure` have. The meeting fact for an arc,
+  `Arc.meets`, which no proposition of the edition uses yet, waits, its statement unchanged
+  and proved by III.2, in `Staging/Stage4/Prop25.lean` as `Prop25.meets`, beside the staged
+  III.25 whose companion "III.25 of_circle" uses it, and moves with stage 4
+  ([#28](https://github.com/jackChallis/stoicheia/issues/28)), as WORKFLOW, section 2,
+  allows a proved staged fact that rests on no stub. `Elements/Figure/Chords.lean` keeps
+  `Arc.congr_side` and `Arc.Congruent.congr_side`. This corrects brief 0006's table of
+  homes and its "Book Zero for arcs" for those two facts (WORKFLOW, section 2, "Correcting a
+  frozen brief"): what fails is Book Zero's rule against citing a proposition, once no proof
+  may rest on Circle 2; the consumers are III.24, its companions and the staged III.25. So
+  III.24 now cites III.2, through its helper, and its record gains a passage for it; and the
+  shared steps of `Elements/BookIII/Circumferences.lean` that take points from III.2's
+  corollaries name III.2 among the propositions they cite. No statement of a proposition or a
+  companion changes, and no protected file.
