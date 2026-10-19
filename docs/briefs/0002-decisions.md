@@ -1090,6 +1090,20 @@ findings:
   [`tests/test_check_style.py`](../../tests/test_check_style.py); every case of both is
   kept (44 phrase, 44 S10 and 33 ink cases), none weakened.
 
+- **A table of names, so the library is easy to use.**
+  [`scripts/render.py`](../../scripts/render.py) changes what it writes and nothing it
+  accepts or checks: it now writes `book/names.md`, every proposition, porism and companion
+  of every book with its Lean name, the module that declares it, its page and its
+  certificate, read from `facts.json` and the proposition files, so that a Lean user who
+  knows Euclid's number finds the name, and a reader of the Lean finds the page
+  ([issue #76](https://github.com/jackChallis/stoicheia/issues/76), the owner's: "easy for
+  others to use as it stands"). It is not a check change (WORKFLOW, section 10): the
+  regenerated page shows it, and it stands under `book/`, which the check that the pages
+  are current already reads. The README usage guide, naming and deprecation policy,
+  and links to the table follow separately (keep_apart). Generated API documentation
+  (doc-gen4, in CI) comes in a change of its own, and nothing of it is published without
+  the owner's OK.
+
 - **The Jev audit's client.** Brief 0005's stage 6 asks for an
   independent audit by Jev, TypeSafe's decision model, through a fresh client
   ([#36](https://github.com/jackChallis/stoicheia/issues/36)).
