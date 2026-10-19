@@ -36,6 +36,7 @@ note = "AE is drawn level, as the proof supposes; Heath draws AD level."
 
 [review]
 stage = "exceptions"
-commit = "b0db4b78"
-reviewer = "GPT-5 Codex, independent reader"
+commit = "86751ad0"
+reviewer = "Claude Opus 5.5, independent reviewer"
+run = "issue #29, no-mistakes review round 3: independent reading of Heath, Prop39, Prop40 with Prop40.general, the records and the rendered pages at 86751ad0"
 lean = "sha256:ed110b7f428be948"
