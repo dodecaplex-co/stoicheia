@@ -44,7 +44,7 @@ helper = "Tacit.line_circle_beyond"
 note = "Euclid takes DE produced to meet the semicircle at H; since BE is greater than ED = EF and G bisects BF, the Lean puts G between B and E by `OnRay.between_of_len_lt`, also giving E different from G for the unequal cut in II.5. The Lean then puts E inside the circle by `between_inner` and `InsideCircle.of_between_centre`; `Tacit.line_circle_beyond`, the rule we assume as System E, Intersections 5, finds H beyond E from D, and GH is named by its ends."
 
 [[passage]]
-at = "But GF is equal to GH;"
+at = "But GF is equal to GH"
 kind = "helper"
 helper = "Definition15"
 note = "Euclid uses the equality of the radii GF and GH without giving a reason. The Lean obtains their equality from `Definition15`, Euclid's definition of a circle, which we assume as a rule."
