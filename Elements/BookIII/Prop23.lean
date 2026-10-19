@@ -130,7 +130,7 @@ point on E's side of AB. Then P is on the circle exactly when the angle APB is e
 angle AEB, and P is within the circle exactly when the angle APB is greater than the angle
 AEB.
 
-Proved through a point M between A and B, which is within the circle. On the circle,
+Proved through a point M between A and B, which is within the circle [III. 2]. On the circle,
 the angles in the same segment are equal [III. 21]. Outside it, the finite straight line PM
 meets the circle at a point Q, which is within the triangle ABP, so the angle AQB is greater
 than the angle APB [I. 21]. Within it, MP produced beyond P meets the circle at a point Q,
@@ -142,10 +142,10 @@ A companion of III.23 ("III.23 point"): its content, point by point. III.24 cite
 theorem Prop23.point {A B E P : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
     (hA : OnCircle A α) (hB : OnCircle B α) (hE : OnCircle E α) (hPE : SameSideOf P E A B) :
     (OnCircle P α ↔ ∠ A P B = ∠ A E B) ∧ (InsideCircle P α ↔ ∠ A E B < ∠ A P B) := by
-  /- Take M between A and B. A chord's interior lies within the circle. -/
+  /- Take M between A and B. It is within the circle [III. 2]. -/
   obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B hPE.1
   obtain ⟨M, hM_L, hAMB, -⟩ := exists_point_between hA_L hB_L hPE.1 []
-  have hM_in : InsideCircle M α := inside_of_between (Or.inr hA) (Or.inr hB) hAMB
+  have hM_in : InsideCircle M α := Prop2 hα hA hB M hAMB
   have hP_L : ¬ OnLine P L := hPE.triangle.off_line hA_L hB_L
   have hMP : M ≠ P := fun e => hP_L (e ▸ hM_L)
   obtain ⟨N, hM_N, hP_N⟩ := Postulate1 M P hMP

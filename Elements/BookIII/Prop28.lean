@@ -118,8 +118,8 @@ theorem Prop28 {A B C D E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCir
     have hcongr : ∀ {P Q : Point}, Triangle A B P → Triangle D E Q →
         Arc.Congruent ⟨ABC, A, B, P⟩ ⟨DEF, D, E, Q⟩ := by
       intro P Q hABP hDEQ
-      obtain ⟨X, hX, hXP⟩ := exists_onCircle_sameSideOf hA hB hABP
-      obtain ⟨Y, hY, hYQ⟩ := exists_onCircle_sameSideOf hD hE hDEQ
+      obtain ⟨X, hX, hXP⟩ := Prop2.sameSide ⟨K, hK⟩ hA hB hABP
+      obtain ⟨Y, hY, hYQ⟩ := Prop2.sameSide ⟨L, hL⟩ hD hE hDEQ
       have hXrt : ∠ A X B = ∟ := Prop28.right hK hA hB hX hAKB hXP.triangle
       have hYrt : ∠ D Y E = ∟ := Prop28.right hL hD hE hY hDLE hYQ.triangle
       have hXY := Prop24 ⟨K, hK⟩ ⟨L, hL⟩ hA hB hX hD hE hY

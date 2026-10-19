@@ -71,7 +71,7 @@ theorem Circumference.standing (hα : ∃ O : Point, Centre O α) (hA : OnCircle
 
 /-- **The angle at the centre.** A circumference BKC beyond which the centre G lies,
 on the other side of BC, is measured by the angle BGC: for a point A of the circle
-on the centre's side, the angle BGC is double of the angle BAC. [III. 20, III. 21] -/
+on the centre's side, the angle BGC is double of the angle BAC. [III. 2, III. 20, III. 21] -/
 theorem Circumference.centre (hG : Centre G α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hGK : OppositeSidesOf G K B C) : circumference α B K C = ∠ B G C := by
   obtain ⟨A, hA, hAG⟩ := Prop2.sameSide ⟨G, hG⟩ hB hC hGK.triangle
@@ -81,7 +81,7 @@ theorem Circumference.centre (hG : Centre G α) (hB : OnCircle B α) (hC : OnCir
 /-- **The whole circle.** A straight line BC cuts the circle into two circumferences,
 one on each side, and together they are four right angles. Measured at a point of each,
 they are twice the opposite angles of a quadrilateral in the circle, which are together
-two right angles. [III. 21, III. 22] -/
+two right angles. [III. 2, III. 21, III. 22] -/
 theorem Circumference.whole (hα : ∃ O : Point, Centre O α) (hB : OnCircle B α)
     (hC : OnCircle C α) (hAK : OppositeSidesOf A K B C) :
     circumference α B K C + circumference α B A C = ∟ + ∟ + (∟ + ∟) := by
@@ -104,7 +104,8 @@ make the angles at B and C equal to the two parts of the angle at A [I. 5], and 
 three angles of the triangle ABC are two right angles [I. 32]. Since that holds at
 every point, it holds at the one that measures the circumference, and the angles in a
 segment being equal (III.21) is not needed. Euclid proves the same of the angle in a
-semicircle in III.31; III.28 and III.29 need it of circumferences first. [I. 5, I. 32] -/
+semicircle in III.31; III.28 and III.29 need it of circumferences first. [I. 5, I. 32,
+III. 2] -/
 theorem Circumference.semicircle (hG : Centre G α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hBGC : Between B G C) (hK : Triangle B C K) : circumference α B K C = ∟ + ∟ := by
   /- Lean measured the circumference at some point A of the circle on the other side of BC
@@ -145,7 +146,7 @@ theorem Circumference.semicircle (hG : Centre G α) (hB : OnCircle B α) (hC : O
 
 /-- **A circumference beyond which the centre lies is less than a semicircle.** Its
 angle at the centre, an angle of the triangle BGC, is less than two right angles, the
-three angles being two right angles [I. 32]. [I. 32, III. 20, III. 21] -/
+three angles being two right angles [I. 32]. [I. 32, III. 2, III. 20, III. 21] -/
 theorem Circumference.lt_semicircle (hG : Centre G α) (hB : OnCircle B α)
     (hC : OnCircle C α) (hGK : OppositeSidesOf G K B C) : circumference α B K C < ∟ + ∟ := by
   rw [Circumference.centre hG hB hC hGK]
@@ -160,7 +161,7 @@ theorem Circumference.lt_semicircle (hG : Centre G α) (hB : OnCircle B α)
 
 /-- **A circumference on the centre's side is greater than a semicircle**: with the
 circumference on the other side, less than a semicircle, it makes up four right angles.
-[I. 32, III. 20, III. 21, III. 22] -/
+[I. 32, III. 2, III. 20, III. 21, III. 22] -/
 theorem Circumference.gt_semicircle (hG : Centre G α) (hB : OnCircle B α)
     (hC : OnCircle C α) (hGK : SameSideOf G K B C) : ∟ + ∟ < circumference α B K C := by
   obtain ⟨Q, hQ, -⟩ := exists_oppositeSidesOf hGK.symm.triangle []
@@ -180,13 +181,14 @@ angles of BCD make two right angles [I. 32], and the angles at A and C make two 
 [III. 22].
 
 Ground for Book IV, where IV.11 and IV.16 add circumferences; no proposition of Book III
-cites it. [I. 32, III. 21, III. 22] -/
+cites it. [I. 32, III. 2, III. 21, III. 22] -/
 theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
     (hB : OnCircle B α) (hC : OnCircle C α) (hD : OnCircle D α) (hCK : SameSideOf C K B D)
     (hX : OppositeSidesOf X D B C) (hY : OppositeSidesOf Y B C D) :
     circumference α B X C + circumference α C Y D = circumference α B K D := by
-  /- Take A on the circle across BD from C, and therefore across BD from K. -/
-  obtain ⟨A, hA, hAC⟩ := exists_onCircle_oppositeSidesOf hB hD hCK.triangle
+  /- Take A on the circle across BD from C, and therefore across BD from K: BD is a straight
+     line in the circle, which has points on either side of it (`Prop2.oppositeSide`). -/
+  obtain ⟨A, hA, hAC⟩ := Prop2.oppositeSide hα hB hD hCK.triangle
   have hAK : OppositeSidesOf A K B D := (hCK.symm.trans_opposite hAC.symm).symm
   /- Measure BXC at D, CYD at B, and BKD at A. [III. 21] -/
   rw [Circumference.eq hα hD hB hC hX.symm,

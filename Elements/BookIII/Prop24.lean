@@ -26,7 +26,10 @@ segment to the other (`placement`: A on C, AB on CD, B on D), and argues the coi
 the circumferences by the angles, point by point (`Prop23.point`, III.23's companion), in
 place of his reductio. Euclid refutes a segment falling within the other, or outside it, by
 a tacit reference to III.23, as Heath notes (vol. 2, p. 54), and one falling awry by III.10;
-the Lean settles every point directly, and needs neither the reductio nor III.10.
+the Lean settles every point directly, and needs neither the reductio nor III.10. The points
+of the base are settled by the lemma before it, `Prop24.chord_cases`: a point of the straight
+line through two points of a circle is on the circle exactly when it is one of them, and
+within it exactly when it lies between them, by III.2.
 
 After it come its companions: `Prop24.equalCircles`, that the circles are equal and the
 circumferences equal in measure, proved by the radii, an alternative to Euclid's argument;
@@ -37,6 +40,27 @@ which III.26 cites where Euclid passes from the equal segments to the equal circ
 namespace Elements.BookIII
 
 open Tacit
+
+/-- **A straight line in a circle, along its own line.** For two different points A, B of a
+circle with a centre, and a point P of the straight line AB: P is on the circle exactly when
+it is A or B, and within the circle exactly when it lies between them. Euclid takes it for
+granted when AB coincides with CD: the ends go to the ends, and the points between to points
+between, so that the base of one segment falls on the base of the other. A point between A
+and B is within the circle by III.2, and so no third point of the straight line is on the
+circle (`Prop2.triangle`); a point within the circle on AB lies between A and B by System E's
+Circle 1 (`between_of_inside_chord`). [III. 2] -/
+theorem Prop24.chord_cases {A B P : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
+    (hA : OnCircle A α) (hB : OnCircle B α) (hAB : A ≠ B) (hP : Collinear A B P) :
+    (OnCircle P α ↔ P = A ∨ P = B) ∧ (InsideCircle P α ↔ Between A P B) := by
+  refine ⟨⟨fun hPα => Classical.byContradiction fun hne => ?_, ?_⟩,
+    ⟨fun hin => ?_, fun h => Prop2 hα hA hB P h⟩⟩
+  · exact Prop2.triangle hα hA hB hPα hAB (fun e => hne (Or.inr e.symm))
+      (fun e => hne (Or.inl e.symm)) hP
+  · rintro (h | h)
+    · rw [h]; exact hA
+    · rw [h]; exact hB
+  · obtain ⟨L, hA_L, hB_L, hP_L⟩ := hP
+    exact between_of_inside_chord hP_L hA_L hB_L hin hA hB hAB
 
 /-- Similar segments of circles on equal straight lines are equal to one another. -/
 theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, Centre O AEB)
@@ -115,15 +139,15 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
   -- coincide with CFD also;
   /- So every point of the half-plane is on the circle AEB, or within it, exactly when its
      image is on the circle CFD, or within it: off the base by the angles, on the base by its
-     ends and their order (`chord_cases`). -/
+     ends and their order (`Prop24.chord_cases`). -/
   have hcirc : ∀ P : Point, OnSideOrLine P E A B →
       (OnCircle P AEB ↔ OnCircle (f P) CFD) ∧ (InsideCircle P AEB ↔ InsideCircle (f P) CFD) := by
     intro P hP
     rcases hP with hPE | hPl
     · exact hoff P hPE
     · obtain ⟨hQl, hends, hbet⟩ := hbase P (Or.inr hPl) hPl
-      obtain ⟨on₁, in₁⟩ := chord_cases hA hB hA_B hPl
-      obtain ⟨on₂, in₂⟩ := chord_cases hC hD hC_D hQl
+      obtain ⟨on₁, in₁⟩ := Prop24.chord_cases hAEB hA hB hA_B hPl
+      obtain ⟨on₂, in₂⟩ := Prop24.chord_cases hCFD hC hD hC_D hQl
       rw [on₁, on₂, in₁, in₂]
       exact ⟨hends, hbet⟩
   -- therefore it will coincide with it and will be equal to it.
@@ -291,8 +315,8 @@ point P of the first arc, off its base, to a point Q of the second arc, off its 
 bases are equal. The map keeps the base and the distances from P to its ends, so the triangles
 on the bases with vertices P and Q have their three sides equal, and the base subtends equal
 angles at P and Q [I. 8]: the segments are similar (Definition III.11). Q is off the base, for
-a point of the circle on the base is one of its ends (`chord_cases`), and were Q an end, P
-would be the corresponding end, being as far from it. `Prop24.equalMeasure` and
+a point of the circle on the base is one of its ends (`Prop24.chord_cases`), and were Q an end,
+P would be the corresponding end, being as far from it. `Prop24.equalMeasure` and
 `Arc.congruent_iff` both take this step from a congruence. -/
 theorem Prop24.image {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (h : Arc.Congruent a b) {P : Point} (hP : OnCircle P a.circle)
@@ -300,7 +324,7 @@ theorem Prop24.image {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     ‖a.B a.C‖ = ‖b.B b.C‖ ∧ ∃ Q : Point, OnCircle Q b.circle ∧
       SameSideOf Q b.K b.B b.C ∧ ∠ a.B P a.C = ∠ b.B Q b.C := by
   obtain ⟨-, hB, hC, -⟩ := ha
-  obtain ⟨-, hD, hE, hL⟩ := hb
+  obtain ⟨hβ, hD, hE, hL⟩ := hb
   obtain ⟨f, hfB, hfC, -, hinto, -, hdist⟩ := h
   /- The ends of the base are points of the arc, and so is P. -/
   obtain ⟨M, hB_M, hC_M⟩ := Postulate1 a.B a.C hPK.triangle.ne₁₂
@@ -315,12 +339,12 @@ theorem Prop24.image {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
   have hPC : ‖P a.C‖ = ‖(f P) b.C‖ := by
     rw [← hfC]; exact (hdist P a.C hPa hCa).symm
   /- The image of P is a point of the second arc, and off its base: there it would be an end
-     (`chord_cases`), and P, as far from the corresponding end as its image is, would be that
-     end. -/
+     (`Prop24.chord_cases`), and P, as far from the corresponding end as its image is, would
+     be that end. -/
   obtain ⟨hQ, hQside⟩ := hinto P hPa
   have hQBC : ¬ Collinear b.B b.C (f P) := by
     intro hcol
-    rcases (chord_cases hD hE (show Triangle b.B b.C b.K from hL).ne₁₂ hcol).1.mp hQ with
+    rcases (Prop24.chord_cases hβ hD hE (show Triangle b.B b.C b.K from hL).ne₁₂ hcol).1.mp hQ with
       hQB | hQC
     · rw [hQB, len_self] at hPB
       exact len_ne_zero hPK.triangle.ne₁₃.symm hPB
@@ -337,9 +361,9 @@ measure. III.26 cites it after III.24, where Euclid passes from the equal segmen
 equal circumferences [III. 24]; nothing before III.26 says it otherwise, for `Arc.congruent_iff`
 comes after III.29.
 
-Proved: take a point P of the first arc off its base [`exists_onCircle_sameSideOf`]; its
+Proved: take a point P of the first arc off its base (`Prop2.sameSide`, by III.2); its
 image is a point of the second arc, off its base (it is neither end, being as far from each
-as P is, and `chord_cases`); the congruence keeps the distances from P to the ends, so the
+as P is, and `Prop24.chord_cases`); the congruence keeps the distances from P to the ends, so the
 angle at P is the angle at its image [I. 8] (these steps are `Prop24.image`); the
 circumference on the other side of each base is twice that angle (`Circumference.eq`), and
 with it each circumference makes up the whole circle (`Circumference.whole`); so the
@@ -350,7 +374,7 @@ theorem Prop24.equalMeasure {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
   obtain ⟨hβ, hD, hE, hL⟩ := id hb
   /- Take a point P of the first arc off its base. Its image Q is a point of the second arc,
      off its base, and the bases subtend equal angles at P and Q (`Prop24.image`). -/
-  obtain ⟨P, hP, hPK⟩ := exists_onCircle_sameSideOf hB hC hK
+  obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hα hB hC hK
   obtain ⟨-, Q, hQ, hQL, hPQ⟩ := Prop24.image ha hb h hP hPK
   /- The circumferences on the other sides of the bases, named by points X and Y there, are
      twice those equal angles (`Circumference.eq`), and so are equal. -/

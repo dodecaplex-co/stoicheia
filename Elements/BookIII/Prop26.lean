@@ -129,8 +129,8 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
        are similar; on the equal bases BC, EF they are congruent [III. 24]. Only the side
        names a segment, so they are the segments on the sides of K and L
        (`Arc.Congruent.congr_side`). -/
-    obtain ⟨X, hX, hXK⟩ := exists_onCircle_sameSideOf hB hC hAK.symm.triangle
-    obtain ⟨Y, hY, hYL⟩ := exists_onCircle_sameSideOf hE hF hDL.symm.triangle
+    obtain ⟨X, hX, hXK⟩ := Prop2.sameSide ⟨G, hG⟩ hB hC hAK.symm.triangle
+    obtain ⟨Y, hY, hYL⟩ := Prop2.sameSide ⟨H, hH⟩ hE hF hDL.symm.triangle
     have hXA : OppositeSidesOf X A B C := hXK.trans_opposite hAK.symm
     have hYD : OppositeSidesOf Y D E F := hYL.trans_opposite hDL.symm
     have hAX : ∠ B A C + ∠ B X C = ∟ + ∟ := by
