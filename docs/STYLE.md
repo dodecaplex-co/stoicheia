@@ -291,8 +291,8 @@ These examples show what the language passes cut or replaced:
   what Nelsen's book shows (II.1). Section 6 gives the reading lines their shape.
 - Announcing sentences: "The proof is short" gives way to "Euclid joins BC" (I.33);
   "The proposition is old" goes, leaving Heath's evidence from Aristotle (I.27).
-- Sweeping closings: "Book II leans on it again and again" becomes "Every later page of
-  Book II uses it", with a link to the introduction (II.1).
+- Sweeping closings: "Book II leans on it again and again" becomes "II.2 to II.8, II.11
+  and II.14 use it again", with a link to the introduction (II.1).
 - Recaps in threes: I.41 drops the closing "greater than, equal to or less than" summary
   and keeps Proclus' construction. A list that supplies necessary cases stays.
 - Padded phrases: "does its multiplying" becomes "multiplies" (II.1); "has a name for
