@@ -2242,7 +2242,8 @@ class ProtectedPaths(Edge):
                             ("lean-toolchain", "model/lean-toolchain"),
                             (".gitignore", "model/.gitignore"),
                             ("Audit.lean", "Audit.lean.orig"),
-                            ("model/lakefile.toml", "model/lakefile.toml.bak")):
+                            ("model/lakefile.toml", "model/lakefile.toml.bak"),
+                            ("lakefile.toml", "/model/lakefile.toml")):
             with self.subTest(path=path):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 changes = {path: self.text(path) + "\n# for the test\n"}
@@ -2256,6 +2257,7 @@ class ProtectedPaths(Edge):
         # path that ends a sentence, its period after it, is named whole too.
         for path, line in (
                 ("model/lock.sha256", "[the model's hash](../../model/lock.sha256) is renewed."),
+                ("model/lock.sha256", "[the model's hash](/model/lock.sha256) is renewed."),
                 ("Audit/Overlaps.lean", "`Audit/Overlaps.lean` gains a lemma."),
                 (".gitignore", "[the rule](../../.gitignore) is added."),
                 ("Audit.lean", "The audit's root is Audit.lean.")):
