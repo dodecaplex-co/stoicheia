@@ -662,6 +662,12 @@ ITALIC_LETTER = re.compile(r"(?:^|[^*])(\*[A-Z]+[′₀-₉]*(?:" + LETTER_GAP +
                            r"(?:$|[^*])", re.M)
 TEX = re.compile(r"\\|\^\{|\$")
 LEAN_CANNOT = re.compile(phrase(r"\bLean (?:cannot|can't|can not)\b"), re.I)
+NO_CITATION = re.compile(phrase(r"\bno citations?\b"), re.I)
+COMPARISON = re.compile(r"\b(?:first|only|better|best|unlike)\b", re.I)
+NEED = re.compile(r"\bneed(?:s|ed)?\b", re.I)
+POSTULATE_5 = re.compile(phrase(r"\bPostulate 5\b", r"\bPost\. 5\b", r"\bparallel postulate\b",
+                                r"\bfifth postulate\b"), re.I)
+
 # S22: a code span holding letters alone: a capital or a run of capitals (each with its
 # prime or subscript), or several runs apart by commas or spaces: `P`, `PQ`, `ABCD`,
 # `AB, CD`. Letters are plain (STYLE, section 1), Heath's and those of a step written over
@@ -681,11 +687,7 @@ def letter_spans(text: str) -> str:
         if LETTERS_ONLY.fullmatch(m.group(0)[1:-1]):
             out = out[:m.start()] + m.group(0) + out[m.end():]
     return out
-NO_CITATION = re.compile(phrase(r"\bno citations?\b"), re.I)
-COMPARISON = re.compile(r"\b(?:first|only|better|best|unlike)\b", re.I)
-NEED = re.compile(r"\bneed(?:s|ed)?\b", re.I)
-POSTULATE_5 = re.compile(phrase(r"\bPostulate 5\b", r"\bPost\. 5\b", r"\bparallel postulate\b",
-                                r"\bfifth postulate\b"), re.I)
+
 
 # S11: retired refrains of STYLE section 3, and the mishnah allowed each ("nowhere" is
 # the empty set).
