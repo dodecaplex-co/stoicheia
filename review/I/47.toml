@@ -1,19 +1,20 @@
 # review/I/47.toml
-# Full: Euclid describes the squares outward (I.46), and squares on one straight line
-# are equal whichever side they stand on (Prop46.square_eq, after Proclus), so the
-# outward squares are 'the squares on' the sides of every right-angled triangle.
+# Full: Prop47 keeps Euclid's outward squares; Prop47.general transfers its result
+# to either side of each base by equality of squares on the same base.
 [statement]
 scope = "full"
-note = "Proved for squares standing outward, as Euclid describes them; inward squares on the same sides are equal to these, as proved after I.46."
+companions = ["I.47 general"]
+note = "Prop47 keeps Euclid's outward squares; Prop47.general proves the same area identity for squares on either side of each base."
 fingerprint = "sha256:d6269e6f56742e6b"
 
 [route]
 kind = "euclid"
+note = "The main theorem follows Euclid's outward-square argument; Prop47.general transfers its result using equal squares on the same base."
 
 [[passage]]
 at = "For let there be described on BC the square BDEC"
 kind = "given"
-note = "The three squares are given in the statement, standing outward from the triangle, so I.46 is not called here; `Prop28.square` shows that each is a parallelogram."
+note = "The main theorem takes the three outward squares as given, so it does not call I.46; `Prop28.square` shows that each is a parallelogram. The companion constructs outward squares with I.46."
 
 [[passage]]
 at = "and let AD, FC be joined"
@@ -29,7 +30,10 @@ note = "Euclid reads off his figure that C lies within the angle DBA and A withi
 [[passage]]
 at = "And the square BDEC is described on BC"
 kind = "given"
-note = "The statement takes BDEC, GB and HC as the squares on BC, BA and AC; squares on one straight line are equal whichever side they stand on, as proved after I.46; Book II restates I.47 for the squares on straight lines, as Books II and III cite it."
+note = "The main theorem takes BDEC, GB and HC as the squares on BC, BA and AC; `Prop47.general` transfers the outward result to squares on either side of each base by `Prop46.square_eq`. Book II separately restates I.47 using its areas of squares on straight lines for later citations."
+
+[figure]
+case = "the three squares standing outward from the right-angled triangle, as in the main theorem; Prop47.general also covers squares on either side of each base"
 
 [review]
 stage = "exceptions"

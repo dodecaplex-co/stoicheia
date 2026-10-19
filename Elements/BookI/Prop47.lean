@@ -7,6 +7,7 @@ import Elements.BookI.Prop28
 import Elements.BookI.Prop30
 import Elements.BookI.Prop31
 import Elements.BookI.Prop41
+import Elements.BookI.Prop46
 import Elements.BookI.HelpersParallels
 
 /-!
@@ -275,7 +276,50 @@ theorem Prop47 {A B C D E F G H K : Point} (hABC : Triangle A B C) (hright : ∠
   /- These are the three given squares. -/
   -- Therefore the square on the side BC is equal to the squares on the sides BA, AC.
   -- Therefore etc.
-  exact hequal
   -- Q. E. D.
+  exact hequal
+
+/-- The area identity for squares on either side of each base. Each square's far
+corners lie together on one side of its base, with no prescribed side relative to
+the triangle or to the other squares.
+
+We construct outward squares by I.46, apply `Prop47`, and transfer the result by
+`Prop46.square_eq`, since squares on the same base have equal areas. Euclid's
+angle-addition argument remains in the outward configuration. -/
+theorem Prop47.general {A B C D E F G H K : Point}
+    (hABC : Triangle A B C) (hright : ∠ B A C = ∟)
+    (hBDEC : Square B D E C) (hDE : SameSideOf D E B C)
+    (hABFG : Square A B F G) (hFG : SameSideOf F G A B)
+    (hACKH : Square A C K H) (hKH : SameSideOf K H A C) :
+    quadArea B D E C = quadArea A B F G + quadArea A C K H := by
+  obtain ⟨X, hXA, _⟩ := exists_oppositeSidesOf hABC.bca []
+  obtain ⟨D', E', hsBC, hD', hE'⟩ := Prop46 hABC.ne₂₃ hXA.triangle
+  obtain ⟨Y, hYC, _⟩ := exists_oppositeSidesOf hABC.bac []
+  obtain ⟨F', G', hsBA, hF', hG'⟩ := Prop46 hABC.ne₁₂.symm hYC.triangle
+  obtain ⟨Z, hZB, _⟩ := exists_oppositeSidesOf hABC.cab []
+  obtain ⟨K', H', hsCA, hK', hH'⟩ := Prop46 hABC.ne₁₃.symm hZB.triangle
+  have hDE' : SameSideOf D' E' B C := hD'.trans hE'.symm
+  have hBC : quadArea B D E C = quadArea B D' E' C := by
+    /- BC is the closing side of BDEC. Rotate both squares to compare that
+       side, then use the parallelograms to return to their original areas. -/
+    have hp := Prop28.square hBDEC.rotate.rotate.rotate hDE.swap
+    have hp' := Prop28.square hsBC.rotate.rotate.rotate hDE'.swap
+    have heq := Prop46.square_eq hBDEC.rotate.rotate.rotate hDE.swap
+      hsBC.rotate.rotate.rotate hDE'.swap rfl
+    rw [hp.quadArea_rotate, hp'.quadArea_rotate]
+    exact heq
+  have hBA : quadArea A B F' G' = quadArea A B F G :=
+    Prop46.square_eq hsBA.rotate.rotate.rotate (hF'.trans hG'.symm).swap
+      hABFG hFG rfl
+  have hCA : quadArea A C K' H' = quadArea A C K H :=
+    Prop46.square_eq hsCA.rotate.rotate.rotate (hK'.trans hH'.symm).swap
+      hACKH hKH rfl
+  have h47 := Prop47 hABC hright hsBC
+    (hD'.trans_opposite hXA) (hE'.trans_opposite hXA)
+    hsBA.rotate.rotate.rotate
+    (hF'.trans_opposite hYC).swap (hG'.trans_opposite hYC).swap
+    hsCA.rotate.rotate.rotate
+    (hK'.trans_opposite hZB).swap (hH'.trans_opposite hZB).swap
+  exact hBC.trans (h47.trans (CommonNotion2 hBA hCA))
 
 end Elements.BookI
