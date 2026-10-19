@@ -19,7 +19,7 @@ note = "The three squares are given in the statement, standing outward from the 
 at = "through A let AL be drawn parallel"
 kind = "helper"
 helper = "Prop30.meet"
-note = "Euclid draws AL through A and takes its meetings with DE and BC from the figure. The Lean draws the parallel by I.31, uses `Prop30.meet` for L and the unnamed foot, and names the two parallelograms."
+note = "Euclid draws AL through A, taking for granted that a parallel to BD is also parallel to CE, and reads its meetings with DE and BC from the figure. The Lean draws AL by I.31, proves it parallel to CE with `Prop30.parallel` (I.30, which Heath does not cite here), uses `Prop30.meet` for L and the unnamed foot, and names the two parallelograms."
 
 [[passage]]
 at = "and let AD, FC be joined"
@@ -35,7 +35,13 @@ note = "Euclid reads off his figure that C lies within the angle DBA and A withi
 [[passage]]
 at = "Similarly, if AE, BK be joined"
 kind = "grouped"
-note = "Euclid says CL can similarly be proved equal to HC, then adds the two parts. The Lean proves the half at B once over any letters and applies it again at C; `Between.of_inside` places the cuts between the square's corners, and `quadArea_add_of_parallelograms` joins BL and CL."
+note = "Euclid invokes the same argument for CL and the square HC. The Lean proves the half once over any letters and applies it at B and again at C."
+
+[[passage]]
+at = "therefore the whole square BDEC"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid reads from the figure that BL and CL make up the square BDEC. The Lean uses I.17 and `Prop47.within` beneath the squares sentence to put A on C's side of BD and B's side of CE; with AL parallel to both, `Between.of_inside` places its foot between B and C and L between D and E, so `quadArea_add_of_parallelograms` joins the two parts."
 
 [[passage]]
 at = "And the square BDEC is described on BC"

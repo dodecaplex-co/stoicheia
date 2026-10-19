@@ -9,11 +9,12 @@ kind = "euclid"
 [[passage]]
 at = "For let a straight line AB be cut into equal segments at C"
 kind = "case"
-note = "Euclid's argument is given once over any letters, for D between C and B; D between A and C is the same with A and B exchanged."
+note = "Euclid's figure puts D between C and B; D cannot be C, since the segments are unequal. The Lean proves Euclid's case once over any letters and covers D between A and C by exchanging A and B."
 
 [[passage]]
 at = "and let BE be joined"
 kind = "grouped"
+helper = "Parallelogram.figure"
 note = "Euclid joins BE and draws the parallels through D and H. `Parallelogram.figure` carries these three constructions together, finding the intersections and their order on the sides of the square."
 
 [[passage]]
@@ -26,7 +27,7 @@ note = "Euclid draws AK parallel to CL and takes K on KM from the figure. `Prop3
 at = "Then, since the complement CH is equal to the complement HF"
 kind = "helper"
 helper = "Parallelogram.complements"
-note = "Euclid treats CH and HF as parallelograms. I.43 gives their equal areas, and `Parallelogram.complements` supplies the shapes needed to add them to DM."
+note = "Euclid treats CH and HF as parallelograms. I.43 gives their equal areas, and `Parallelogram.complements` proves that both are parallelograms, as the additions to DM that follow require."
 
 [[passage]]
 at = "therefore the whole CM is equal to the whole DF"

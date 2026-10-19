@@ -10,8 +10,8 @@ kind = "euclid"
 [[passage]]
 at = "and from the point C"
 kind = "helper"
-helper = "circles_meet"
-note = "Euclid takes C where the circles cut one another; `circles_meet` supplies their crossing because each circle passes through the other's centre. The Lean chooses C on the requested side with `circles_meet_same_side` when P is off AB, and uses the point C without drawing CA and CB."
+helper = "Tacit.circles_meet"
+note = "Euclid takes C where the circles cut one another; the Lean uses `Tacit.circles_meet`, a tacit rule we assume in our foundations (System E, Intersection 5), since each circle passes through the other's centre and each centre lies inside its own circle. The Lean chooses C on P's side when P is off AB using `Tacit.circles_meet_same_side`, the rule for crossings on each side (System E, Intersections 8), and uses C without drawing CA and CB."
 
 [[passage]]
 at = "Therefore the triangle ABC is equilateral"
