@@ -25,7 +25,7 @@ squares by I.46, applies `Prop47`, and carries each area across by `Prop46.squar
 since squares on the same base have equal areas.
 
 Before the proposition, `Prop47.within` says where the squares fall: a fact of
-Euclid's figure that the proof needs three times.
+Euclid's figure, used in the angle additions and in dividing the square BDEC.
 -/
 
 namespace Elements.BookI
