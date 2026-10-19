@@ -74,6 +74,10 @@ one commit and runs safe_push.py against that origin:
   drop or re-key such a law first; every law of the two harnesses keeps to the
   allow-list, and each entry of the list is one a law needs; and a harness of the model
   that stops before its last line, with status 0, fails the model's run;
+- the protected paths of issue #96: Audit/, Audit.lean and the formal model's build files
+  are refused without a decisions entry naming them, a protected path is named only
+  whole (a line naming tests/model/lock.sha256 names no model/lock.sha256), and those
+  paths stay what the checks judge, so a check change is still kept apart from them;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -2212,7 +2216,9 @@ class ProtectedPaths(Edge):
     def test_protected_change_without_a_decision_refused(self):
         for path in ("scripts/check_style.py", ".github/workflows/ci.yml",
                      "tests/model/MODEL.md", "review/terms.toml", ".gitattributes",
-                     ".gitignore", "lakefile.lean"):
+                     ".gitignore", "lakefile.lean", "Audit/Overlaps.lean", "Audit.lean",
+                     "model/lakefile.toml", "model/lakefile.lean", "model/lean-toolchain",
+                     "model/lake-manifest.json", "model/lock.sha256"):
             with self.subTest(path=path):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 old = self.text(path) if (WORK / path).exists() else ""
@@ -2225,6 +2231,61 @@ class ProtectedPaths(Edge):
         changes.update(self.decision("A comment in `scripts/check_links.py`."))
         self.commit("Touch check_style.py, naming check_links.py", changes)
         self.assertRefused(self.safe_push(), "naming them: scripts/check_style.py")
+
+    def test_decision_naming_a_longer_path_does_not_count(self):
+        # #96: a protected path is named whole. A line naming tests/model/lock.sha256 does
+        # not name model/lock.sha256, nor one naming model/lakefile.toml the root's
+        # lakefile.toml, nor one naming model/lean-toolchain the root's lean-toolchain; and
+        # at the other end, a line naming Audit.lean.orig does not name Audit.lean.
+        for path, other in (("model/lock.sha256", "tests/model/lock.sha256"),
+                            ("lakefile.toml", "model/lakefile.toml"),
+                            ("lean-toolchain", "model/lean-toolchain"),
+                            (".gitignore", "model/.gitignore"),
+                            ("Audit.lean", "Audit.lean.orig"),
+                            ("model/lakefile.toml", "model/lakefile.toml.bak"),
+                            ("lakefile.toml", "/model/lakefile.toml")):
+            with self.subTest(path=path):
+                git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                changes = {path: self.text(path) + "\n# for the test\n"}
+                changes.update(self.decision(f"`{other}` is named, for the test."))
+                self.commit(f"Touch {path}, naming {other}", changes)
+                out = self.assertRefused(self.safe_push(), f"naming them: {path}")
+                self.assertEqual(self.guard(out, "protected paths"), "FAIL", out)
+
+    def test_decision_naming_the_path_by_a_relative_link_counts(self):
+        # From the decisions page, docs/briefs/, a link reaches the root through ../../. A
+        # path that ends a sentence, its period after it, is named whole too.
+        for path, line in (
+                ("model/lock.sha256", "[the model's hash](../../model/lock.sha256) is renewed."),
+                ("model/lock.sha256", "[the model's hash](/model/lock.sha256) is renewed."),
+                ("Audit/Overlaps.lean", "`Audit/Overlaps.lean` gains a lemma."),
+                (".gitignore", "[the rule](../../.gitignore) is added."),
+                ("Audit.lean", "The audit's root is Audit.lean.")):
+            with self.subTest(path=path):
+                git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                changes = {path: self.text(path) + "\n-- for the test\n"}
+                changes.update(self.decision(line))
+                self.commit(f"Touch {path}, naming it", changes)
+                out = self.safe_push("--dry-run").stdout
+                self.assertEqual(self.guard(out, "protected paths"), "ok", out)
+                self.assertIn(f"each named in {DECISIONS}: {path};", out)
+
+    def test_audit_and_the_models_build_files_stay_judged(self):
+        # #96: Audit/, Audit.lean and the model's build files are protected, yet still
+        # what the checks judge, so a check change stays apart from them (keep_apart); the
+        # rest of the protected paths and the guides are not judged.
+        judged = ["Audit.lean", "Audit/Overlaps.lean", "model/README.md",
+                  "model/lake-manifest.json", "model/lakefile.lean", "model/lakefile.toml",
+                  "model/lean-toolchain", "model/lock.sha256"]
+        apart = ["scripts/check_links.py", "lakefile.toml", "lean-toolchain", ".gitignore",
+                 "tests/model/lock.sha256", "docs/WORKFLOW.md"]
+        sha = self.commit("Touch protected and judged files", {
+            p: (self.text(p) if (WORK / p).exists() else "") + "\n-- for the test\n"
+            for p in judged + apart})
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), judged)
+        for p in judged + apart:
+            self.assertEqual(safe_push.is_protected(p), p != "model/README.md"
+                             and p != "docs/WORKFLOW.md", p)
 
     def test_weakened_check_with_the_code_it_would_catch_refused(self):
         # The commit makes check_fidelity.py pass whatever it finds, and changes a Lean
@@ -2848,7 +2909,10 @@ class ProtectedPaths(Edge):
                      "Certificate/Facts.lean", "tests/certificate_expectations.json",
                      "review/SCHEMA.md", "review/terms.toml", ".gitattributes",
                      ".gitignore", "lakefile.toml", "lakefile.lean", "lean-toolchain",
-                     "lake-manifest.json", "scripts/hooks/safe-push"):
+                     "lake-manifest.json", "scripts/hooks/safe-push", "Audit/Overlaps.lean",
+                     "Audit/screen.py", "Audit.lean", "model/lakefile.toml",
+                     "model/lakefile.lean", "model/lean-toolchain", "model/lake-manifest.json",
+                     "model/lock.sha256"):
             self.assertTrue(safe_push.is_protected(path), path)
         # One home: WORKFLOW.md's "Protected paths" names every one of them, and the
         # template points to it rather than copying the list.
@@ -2867,8 +2931,11 @@ class ProtectedPaths(Edge):
         self.assertIn('"Protected paths"', template)
         self.assertNotIn("lake-manifest.json", template)
         for path in ("docs/WORKFLOW.md", "review/I/01.toml", "Elements/BookI/Prop01.lean",
-                     "heath/I/01.md", "scriptsx/a.py", "book/I/01.md"):
+                     "heath/I/01.md", "scriptsx/a.py", "book/I/01.md", "Auditx/a.lean",
+                     "Audit.leanx", "model/README.md", "model/Model/Hand.lean",
+                     "model/Check/Hand.lean", "model/.gitignore", "docs/reports/overlaps.md"):
             self.assertFalse(safe_push.is_protected(path), path)
+        self.assertTrue(set(safe_push.PROTECTED_JUDGED) <= set(safe_push.PROTECTED))
 
 
 class InterruptedAfterThePush(Edge):

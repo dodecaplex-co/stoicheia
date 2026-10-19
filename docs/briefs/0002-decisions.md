@@ -1375,6 +1375,32 @@ findings:
   stage 3 statements it checks (WORKFLOW, section 10). FORMALIZATION, section 7, lists the
   policy and the two tests.
 
+- **`Audit/` and the formal model's build files are protected paths.** `Audit/` holds the
+  audit lemmas whose pinned axiom lists (`#guard_msgs`) back the overlap catalogue's
+  claims, so a change there could weaken what the catalogue asserts without a security
+  review or a decisions entry. The work on brief 0008 raised it, and the coordinator
+  decided it as a check strengthened, never weakened (#96).
+  [`scripts/safe_push.py`](../../scripts/safe_push.py)'s protected list now holds `Audit/`;
+  `Audit.lean`, the root that decides which audit lemmas `lake build Audit` checks; and
+  the model's build files, `model/lakefile.toml`, `model/lakefile.lean` (which Lake would
+  read in preference to the toml, as at the root), `model/lean-toolchain`,
+  `model/lake-manifest.json` and `model/lock.sha256`. [WORKFLOW](../WORKFLOW.md), section
+  10, "Protected paths", names each. A change to any of them needs a new line here naming
+  it, the label `security-review` and a `/security-review`. They are content the checks
+  judge, not checks, so they stay judged: a check change is still kept apart from them, as
+  it was before they were protected. A protected path is now named only whole, from the
+  root (with or without a leading slash) or by a relative link, so a line naming
+  `tests/model/lock.sha256` no longer counts for `model/lock.sha256`, nor one naming
+  `model/lakefile.toml` for the root's `lakefile.toml`. Nor is a path named by a longer
+  one at its other end, so a line naming `Audit.lean.orig` does not count for
+  `Audit.lean`; and a line edited in place so that it names a different file now counts
+  for the file it newly names (from `model/lakefile.toml` to `lakefile.toml`, say), which
+  the old pattern refused, because it read the root's `lakefile.toml` in the removed line
+  too. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains the cases:
+  each new path refused without its line, a longer path's mention refused, a relative
+  link accepted, and the new paths still judged. None of the cases it held before is
+  loosened.
+
 ## 19 October 2026
 
 - **The edition does not name its owner.** The owner asked that Stoicheia not be presented
