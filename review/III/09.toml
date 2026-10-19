@@ -8,8 +8,8 @@ fingerprint = "sha256:60fd9e5a7bed392d"
 kind = "euclid"
 
 [representation]
-tags = ["centre-given", "hypothesis-dropped"]
-note = "The circle comes with a centre, which the proof shows is D. Euclid's proof never uses that D is within, and the statement does not ask it."
+tags = ["hypothesis-dropped"]
+note = "The rule supplies a centre, which the proof shows is D. Euclid's proof never uses that D is within, and the statement does not ask it."
 
 [review]
 stage = "exceptions"

@@ -1855,3 +1855,20 @@ findings:
   Under [brief 0008's dated correction](0008-centre.md#correction-iii1-19-october-2026),
   this guard lands in a pull request of its own after step 3's construction and before
   step 6's restatements, never in a train with the content it checks.
+
+- **Brief 0008, step 6: a drawn arc needs no centre.** As
+  [brief 0008](0008-centre.md), section 4, approved, `Arc.Drawn` in the foundations file
+  [`Elements/Foundations/DefinitionsIII.lean`](../../Elements/Foundations/DefinitionsIII.lean)
+  loses its existential centre clause: a drawn arc has its two ends on its circle and its
+  side point off their straight line, and a proof that needs the circle's centre takes it
+  from `Tacit.exists_centre`. [`Certificate/axioms.lock`](../../Certificate/axioms.lock)
+  is rewritten by `python3 scripts/check_fidelity.py --write-lock`; only the word
+  `Arc.Drawn` changes, and the 88 axioms and the other 124 words are byte for byte as
+  before. [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and
+  [`model/lock.sha256`](../../model/lock.sha256) take the new hash with a dated note, and
+  [`model/Model/Laws.lean`](../../model/Model/Laws.lean) is regenerated, changing only
+  in the hash it records; no law changes. In
+  [`Audit/Crossing.lean`](../../Audit/Crossing.lean) and
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) the calls follow the restated
+  propositions; an argument no proof now uses keeps its type under a name beginning with
+  `_`, and every axiom pin stays as Lean prints it.

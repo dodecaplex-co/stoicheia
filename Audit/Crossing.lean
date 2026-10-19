@@ -64,10 +64,10 @@ theorem cut_point {α β : Circle} {O O' B C : Point} (hO : Centre O α) (hO' : 
       rcases between_cases hGO'.symm hGO hOO'.symm hO'_L hG_L hO_L with h | h | h
       · exact h
       · exact absurd
-          (Prop2.within ⟨O, hO⟩ (Or.inr hG) (Or.inl (centre_inside hO)) h) hin
+          (Prop2.within (Or.inr hG) (Or.inl (centre_inside hO)) h) hin
       · exact absurd hGOA (not_between_of_between_between h (between_symm hAOO'))
     have hO'GA : Between O' G A := between_of_between_right hO'GO hGOA
-    exact finish G hG (Prop8 ⟨O, hO⟩ hout hA hG hO'GA
+    exact finish G hG (Prop8 hout hA hG hO'GA
       (fun M hM => centre_unique hM hO ▸ hGOA)).2.2.1
 
 /-- Two different circles, each with a centre, that meet at two points cut one another. -/
@@ -83,8 +83,8 @@ theorem CirclesCut.of_meet {α β : Circle} (hα : ∃ O : Point, Centre O α)
 /-- For two different circles with centres, if no point of the inner circle is outside
 the outer, some point of it is within the outer. Otherwise every point of it would be on
 the outer, and three of them would make the circles one (III.10). -/
-theorem within_point {α β : Circle} (hα : ∃ O : Point, Centre O α)
-    (hβ : ∃ O : Point, Centre O β) (hne : α ≠ β)
+theorem within_point {α β : Circle} (_hα : ∃ O : Point, Centre O α)
+    (_hβ : ∃ O : Point, Centre O β) (hne : α ≠ β)
     (hnot : ∀ P : Point, OnCircle P β → ¬ OutsideCircle P α) :
     ∃ P : Point, OnCircle P β ∧ InsideCircle P α := by
   refine Classical.byContradiction fun h => ?_
@@ -96,7 +96,7 @@ theorem within_point {α β : Circle} (hα : ∃ O : Point, Centre O α)
   have hXY : X ≠ Y := fun e => hYX (e ▸ List.mem_singleton_self X)
   have hXZ : X ≠ Z := fun e => hZXY (e ▸ List.mem_cons_self)
   have hYZ : Y ≠ Z := fun e => hZXY (e ▸ List.mem_cons_of_mem _ (List.mem_singleton_self Y))
-  exact hne (Prop10 hα hβ (on X hX) hX (on Y hY) hY (on Z hZ) hZ hXY hXZ hYZ)
+  exact hne (Prop10 (on X hX) hX (on Y hY) hY (on Z hZ) hZ hXY hXZ hYZ)
 
 /-- Two different circles ABC and CDG, each with a centre and meeting at two distinct
 points, cannot have E as a common centre. This follows from the restated III.5. -/
@@ -144,15 +144,16 @@ theorem III_11_today {A F G : Point} {ABC ADE : Circle} (hF : Centre F ABC) (hG 
 /-- Let ABDC, EBFD and ACK each have a centre. If ABDC and EBFD are different, meet at D,
 and no point of one is outside the other, any common point B equals D. If ACK and ABDC
 meet at A and no point is within both, any common point C equals A. This recovers the
-earlier III.13 from the restated III.13: the given centres supply those the bridge needs,
-and the conclusion about contact without is unchanged. -/
+earlier III.13 from the restated III.13. The bridge still takes the earlier centre
+hypotheses; III.13 now obtains centres internally, and the conclusion about contact
+without is unchanged. -/
 theorem III_13_today {A B C D : Point} {ABDC EBFD ACK : Circle}
     (hABDC : ∃ G : Point, Centre G ABDC) (hEBFD : ∃ H : Point, Centre H EBFD)
-    (hACK : ∃ O : Point, Centre O ACK) :
+    (_hACK : ∃ O : Point, Centre O ACK) :
     ((TouchesInternallyToday ABDC EBFD D ∨ TouchesInternallyToday EBFD ABDC D) →
       OnCircle B ABDC → OnCircle B EBFD → B = D) ∧
     (TouchesExternally ACK ABDC A → OnCircle C ACK → OnCircle C ABDC → C = A) := by
-  obtain ⟨h₁, h₂⟩ := Prop13 (B := B) (C := C) hABDC hEBFD hACK
+  obtain ⟨h₁, h₂⟩ := Prop13 (B := B) (C := C) (ABDC := ABDC) (EBFD := EBFD) (ACK := ACK)
   refine ⟨fun h => h₁ ?_, h₂⟩
   rcases h with ⟨hD₁, hD₂, hne, hnot⟩ | ⟨hD₁, hD₂, hne, hnot⟩
   · exact Or.inl ⟨hD₁, hD₂, within_point hABDC hEBFD hne hnot, hnot⟩

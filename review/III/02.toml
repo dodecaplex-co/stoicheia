@@ -7,10 +7,6 @@ fingerprint = "sha256:58a8fb1c86c1c4a0"
 [route]
 kind = "euclid"
 
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre (`∃ D, Centre D ABC`), which the proof takes by III.1, as Euclid does."
-
 [overlap]
 rule = "Tacit.inside_of_between"
 kind = "states"

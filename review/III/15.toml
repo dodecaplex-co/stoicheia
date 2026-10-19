@@ -1,7 +1,7 @@
 # review/III/15.toml
 [statement]
 scope = "full"
-note = "With its companions: `Prop15.le_diameter` bounds every straight line by the diameter, `Prop15.nearer` compares any two; `Prop15` keeps Euclid's figure."
+note = "E and the feet are given. `Prop15.le_diameter` bounds every line; `Prop15.nearer` compares any two, a diameter at no distance; `Prop15` keeps the figure."
 companions = ["III.15 le_diameter", "III.15 nearer"]
 fingerprint = "sha256:8f609380c65c4ddf"
 
@@ -9,8 +9,9 @@ fingerprint = "sha256:8f609380c65c4ddf"
 kind = "euclid"
 note = "`Prop15.le_diameter` is Euclid's step, two radii together greater than a straight line [I. 20], said of BE, EC and BC without MN. `Prop15.nearer` takes two straight lines not through the centre from `Prop15`, by his argument [III. 14, I. 24], and a nearer diameter from `Prop15.le_diameter`."
 
-[representation]
-tags = ["centre-given"]
+[[passage]]
+at = "For from the centre E let EH, EK be drawn"
+kind = "given"
 note = "The centre E and the perpendiculars EH, EK are given, since Definition III.5 measures from them, and \"nearer\" is `‖E H‖ < ‖E K‖`. The companion `Prop15.nearer` is given the feet as `Foot`, the foot of the perpendicular, which is E itself for a straight line through E, so that the nearer may be a diameter, at no distance."
 
 [[passage]]

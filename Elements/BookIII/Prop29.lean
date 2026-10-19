@@ -55,8 +55,8 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
     exact ⟨L, hL⟩
   /- A and D are points of the circles beyond BC and EF from G and H, as Heath draws
      them. -/
-  obtain ⟨A, hA, hAG⟩ := Prop2.oppositeSide hABC hB hC hBCG
-  obtain ⟨D, hD, hDH⟩ := Prop2.oppositeSide hDEF hE hF hEFH
+  obtain ⟨A, hA, hAG⟩ := Prop2.oppositeSide hB hC hBCG
+  obtain ⟨D, hD, hDH⟩ := Prop2.oppositeSide hE hF hEFH
   -- I say that BC is equal to EF.
   -- For let the centres of the circles be taken, and let them be K, L; let BK, KC, EL, LF be
   -- joined.
@@ -91,8 +91,8 @@ theorem Prop29 {B C E F G H : Point} {ABC DEF : Circle} (hcircles : EqualCircles
     · rcases Prop29.size hL hE hF hEFH with ⟨-, hlt'⟩ | ⟨-, hsemi'⟩ | ⟨hLH, -⟩
       · exact absurd (lt_trans hlt' (heq ▸ hgt)) (lt_irrefl _)
       · exact absurd (hsemi' ▸ heq ▸ hgt) (lt_irrefl _)
-      · obtain ⟨X, hX, hXG⟩ := Prop2.sameSide ⟨K, hK⟩ hB hC hBCG
-        obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide ⟨L, hL⟩ hE hF hEFH
+      · obtain ⟨X, hX, hXG⟩ := Prop2.sameSide hB hC hBCG
+        obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide hE hF hEFH
         refine ⟨X, Y, hX, hY, hKG.trans hXG.symm, hLH.trans hYH.symm, ?_⟩
         rw [standing_eq_circumference (hXG.trans_opposite hAG.symm),
           standing_eq_circumference (hYH.trans_opposite hDH.symm)]

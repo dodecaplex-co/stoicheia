@@ -35,7 +35,7 @@ theorem Prop32.sameSide {B E F P Q : Point} {α : Circle} {L : Line}
     (hEF.2 L hE_L hF_L).2 ⟨B, _, hRB.symm, hB_L, hB, h, hR⟩
   refine Classical.byContradiction fun hs => ?_
   obtain ⟨Y, hY_L, hPYQ⟩ := OppositeSides.exists_between ⟨off hP hPB, off hQ hQB, hs⟩
-  exact hEF.not_inside ⟨L, hE_L, hF_L, hY_L⟩ (Prop2 hα hP hQ Y hPYQ)
+  exact hEF.not_inside ⟨L, hE_L, hF_L, hY_L⟩ (Prop2 hP hQ Y hPYQ)
 
 /-- If a straight line touch a circle, and from the point of contact there be drawn across, in the
 circle, a straight line cutting the circle, the angles which it makes with the tangent will be
@@ -126,15 +126,15 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
       hD_L ((line_unique hFB.symm hB_N h hB_L hF_L) ▸ hD_N)
     have hAF : OppositeSidesOf A F B D :=
       OppositeSidesOf.of_line hBD hB_N hD_N
-        ⟨(Prop2.triangle ⟨O, hO⟩ hB hD hA hBD hBAD.ne₂₃.symm hAB.symm).off_line hB_N hD_N,
+        ⟨(Prop2.triangle hB hD hA hBD hBAD.ne₂₃.symm hAB.symm).off_line hB_N hD_N,
           hF_N, pasch3 hAYF hY_N⟩
     refine ⟨fun A' hA' hA'F => ?_, fun C hC hCF => ?_⟩
     · /- Any angle in that segment is the angle BAD [III. 21]. -/
       rw [angle_symm hFB hBD.symm, hDBF,
-        Prop21 ⟨O, hO⟩ hA hB hD hA' (OppositeSidesOf.sameSideOf hAF.symm hA'F.symm)]
+        Prop21 hA hB hD hA' (OppositeSidesOf.sameSideOf hAF.symm hA'F.symm)]
     -- Next, since ABCD is a quadrilateral in a circle,
     -- its opposite angles are equal to two right angles. [III. 22]
-    have h22 := (Prop22 ⟨O, hO⟩ hA hB hC hD (hCF.trans_opposite hAF.symm).symm).2
+    have h22 := (Prop22 hA hB hC hD (hCF.trans_opposite hAF.symm).symm).2
     -- But the angles DBF, DBE are also equal to two right angles;
     have h13 : ∠ F B D + ∠ D B E = ∟ + ∟ :=
       BookI.Prop13 (between_symm hEBF) (fun ⟨K, hF_K, hE_K, hD_K⟩ =>
@@ -167,7 +167,7 @@ theorem Prop32 {B D E F : Point} {ABCD : Circle} (hABCD : ∃ O : Point, Centre 
       rw [angle_symm (ne_of_between hEBF) hBD.symm, hright hE_L (ne_of_between hEBF)]
       exact ((Prop31 hO hC hD hB hAOB hT.ne₂₃.symm hT.ne₁₃.symm).1).symm
   · have hDBA : ¬ OnLine D M := fun h =>
-      (Prop2.triangle ⟨O, hO⟩ hD hB hA hBD.symm hAB.symm hDA) ⟨M, h, hB_M, hA_M⟩
+      (Prop2.triangle hD hB hA hBD.symm hAB.symm hDA) ⟨M, h, hB_M, hA_M⟩
     have hA_L : ¬ OnLine A L := off hA hAB
     have hEF_BA : OppositeSidesOf E F B A :=
       (OppositeSidesOf.of_between (Triangle.of_line hB_L hE_L (ne_of_between hEBF).symm hA_L).cab

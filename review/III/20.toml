@@ -1,14 +1,10 @@
 [statement]
 scope = "full"
-note = "The centre is on A's side of BC, where the angle at the centre stands on the same circumference as BAC and is less than two right angles, as Euclid's are."
+note = "The given centre E is on A's side of BC: its angle stands on the same circumference as BAC and is less than two right angles, as Euclid's are."
 fingerprint = "sha256:fb6f51cf124385c5"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The centre E is given, as the enunciation names it."
 
 [[passage]]
 at = "For let AE be joined and drawn through to F"

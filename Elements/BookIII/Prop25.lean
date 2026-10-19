@@ -255,7 +255,7 @@ theorem Prop25.complete {A C P B E : Point} {α γ : Circle} (hα : ∃ O : Poin
      points of α. They are on γ too, so EA, EB and EC are equal, being radii of γ
      [I. Def. 15], and E is the centre of α [III. 9]. -/
   have hABC : Triangle A B C := hBP.triangle.acb
-  have hEα : Centre E α := Prop9 hα hA hB.1 hC hABC.ne₁₂ hABC.ne₂₃ hABC.ne₁₃
+  have hEα : Centre E α := Prop9 hA hB.1 hC hABC.ne₁₂ hABC.ne₂₃ hABC.ne₁₃
     (Definition15 hE hAγ hBγ) (Definition15 hE hBγ hCγ)
   /- So γ and α have one centre, E, and one radius, EA: they are one circle. -/
   have hγ : γ = α := circle_eq hE hEα hAγ hA rfl
@@ -289,7 +289,7 @@ theorem Prop25.kind {A B C D E P : Point} {γ : Circle}
           ∟ + ∟ < circumference γ A P C) := by
   /- B and P are on the same side of AC, so P is off AC and the arc is drawn. -/
   have hP : Triangle A C P := hBP.symm.triangle
-  refine ⟨⟨⟨E, hE⟩, hAγ, hCγ, hP⟩, ?_, ?_, ?_⟩
+  refine ⟨⟨hAγ, hCγ, hP⟩, ?_, ?_, ?_⟩
   · intro h
     /- E is opposite B across AC, hence opposite P. -/
     have hEP : OppositeSidesOf E P A C := (hBP.symm.trans_opposite (hless h).symm).symm
@@ -318,7 +318,7 @@ theorem Prop25.meets {a : Arc} (ha : a.Drawn) {X Y : Point} (hX : Between a.B X 
     (hY : SameSideOf Y a.K a.B a.C) : ∃ Q : Point, OnArc Q a ∧ OnRay Q X Y := by
   /- X lies within the circle, since it is between the ends of the base [III. 2], and Y is
      off the straight line BC. -/
-  have hX_in : InsideCircle X a.circle := Prop2 ha.1 ha.2.1 ha.2.2.1 X hX
+  have hX_in : InsideCircle X a.circle := Prop2 ha.1 ha.2.1 X hX
   obtain ⟨L, hB_L, hC_L⟩ := Postulate1 a.B a.C hY.1
   have hX_L : OnLine X L := on_line_of_between_ends hX hB_L hC_L
   have hY_L : ¬ OnLine Y L := hY.triangle.off_line hB_L hC_L
@@ -363,7 +363,7 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
       (∠ B A D < ∠ A B D → OppositeSidesOf E B A C) ∧ (∠ A B D = ∠ B A D → E = D) ∧
       (∠ A B D < ∠ B A D → SameSideOf E B A C) := by
   intro P hP
-  have ha : Arc.Drawn ⟨ABC, A, C, P⟩ := ⟨hABC, hA, hC, hP⟩
+  have ha : Arc.Drawn ⟨ABC, A, C, P⟩ := ⟨hA, hC, hP⟩
   obtain ⟨B, D, E, γ, hSB, hBP, hADC, hAD, hADB, hE, hAγ, hBγ, hCγ, hDBE, k₁, k₂, k₃⟩ :=
     Prop25 (S := (OnArc · ⟨ABC, A, C, P⟩)) hP (fun _ _ hX hY => Prop25.meets ha hX hY)
   obtain ⟨hγ, -⟩ := Prop25.complete hABC hA hC hSB hBP hE hAγ hBγ hCγ

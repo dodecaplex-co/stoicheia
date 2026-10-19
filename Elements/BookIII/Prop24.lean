@@ -55,8 +55,8 @@ theorem Prop24.chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (h
     (OnCircle P α ↔ P = A ∨ P = B) ∧ (InsideCircle P α ↔ Between A P B) := by
   have hcentre := exists_centre α
   refine ⟨⟨fun hPα => Classical.byContradiction fun hne => ?_, ?_⟩,
-    ⟨fun hin => ?_, fun h => Prop2 hcentre hA hB P h⟩⟩
-  · exact Prop2.triangle hcentre hA hB hPα hAB (fun e => hne (Or.inr e.symm))
+    ⟨fun hin => ?_, fun h => Prop2 hA hB P h⟩⟩
+  · exact Prop2.triangle hA hB hPα hAB (fun e => hne (Or.inr e.symm))
       (fun e => hne (Or.inl e.symm)) hP
   · rintro (h | h)
     · rw [h]; exact hA
@@ -195,7 +195,7 @@ theorem Prop24.angle_type {X Y Z M : Point} {α : Circle} (hM : Centre M α) (hX
     (hY : OnCircle Y α) (hZ : OnCircle Z α) (hXYZ : Triangle X Y Z) :
     (SameSideOf M Z X Y ∧ ∠ X Z Y < ∟) ∨ (Between X M Y ∧ ∠ X Z Y = ∟) ∨
       (OppositeSidesOf M Z X Y ∧ ∟ < ∠ X Z Y) := by
-  obtain ⟨W, hW, hWZ⟩ := Prop2.oppositeSide ⟨M, hM⟩ hX hY hXYZ
+  obtain ⟨W, hW, hWZ⟩ := Prop2.oppositeSide hX hY hXYZ
   have hm : circumference α X W Y = ∠ X Z Y + ∠ X Z Y := Circumference.eq ⟨M, hM⟩ hZ hX hY hWZ.symm
   obtain ⟨L, hX_L, hY_L⟩ := Postulate1 X Y hXYZ.ne₁₂
   by_cases hM_L : OnLine M L
@@ -256,8 +256,8 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle}
   obtain ⟨N, hN⟩ := hCFD
   have hABE : Triangle A B E := hE_AB
   have hCDF : Triangle C D F := hF_CD
-  obtain ⟨X, hX, hXE⟩ := Prop2.oppositeSide ⟨M, hM⟩ hA hB hABE
-  obtain ⟨Y, hY, hYF⟩ := Prop2.oppositeSide ⟨N, hN⟩ hC hD hCDF
+  obtain ⟨X, hX, hXE⟩ := Prop2.oppositeSide hA hB hABE
+  obtain ⟨Y, hY, hYF⟩ := Prop2.oppositeSide hC hD hCDF
   /- We compare the circles by their radii MA, NC, from the centres M, N. -/
   have hMA : ‖M A‖ = ‖M B‖ := Definition15 hM hA hB
   have hNC : ‖N C‖ = ‖N D‖ := Definition15 hN hC hD
@@ -278,10 +278,10 @@ theorem Prop24.equalCircles {A B C D E F : Point} {AEB CFD : Circle}
   /- The segments on the other sides of AB, CD, at X and Y, are similar too: the angle in
      each makes two right angles with the angle at E or F [III. 22]. -/
   have q₁ : ∠ A E B + ∠ A X B = ∟ + ∟ := by
-    have := (Prop22 ⟨M, hM⟩ hE hA hX hB hXE.symm).2
+    have := (Prop22 hE hA hX hB hXE.symm).2
     rwa [angle_symm hXE.triangle.ne₂₃ hXE.triangle.ne₁₃] at this
   have q₂ : ∠ C F D + ∠ C Y D = ∟ + ∟ := by
-    have := (Prop22 ⟨N, hN⟩ hF hC hY hD hYF.symm).2
+    have := (Prop22 hF hC hY hD hYF.symm).2
     rwa [angle_symm hYF.triangle.ne₂₃ hYF.triangle.ne₁₃] at this
   have hXY : ∠ A X B = ∠ C Y D := by
     apply CommonNotion3 (c := ∠ A E B) (d := ∠ C F D) _ hsim
@@ -325,8 +325,8 @@ theorem Prop24.image {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (hPK : SameSideOf P a.K a.B a.C) :
     ‖a.B a.C‖ = ‖b.B b.C‖ ∧ ∃ Q : Point, OnCircle Q b.circle ∧
       SameSideOf Q b.K b.B b.C ∧ ∠ a.B P a.C = ∠ b.B Q b.C := by
-  obtain ⟨-, hB, hC, -⟩ := ha
-  obtain ⟨-, hD, hE, hL⟩ := hb
+  obtain ⟨hB, hC, -⟩ := ha
+  obtain ⟨hD, hE, hL⟩ := hb
   obtain ⟨f, hfB, hfC, -, hinto, -, hdist⟩ := h
   /- The ends of the base are points of the arc, and so is P. -/
   obtain ⟨M, hB_M, hC_M⟩ := Postulate1 a.B a.C hPK.triangle.ne₁₂
@@ -372,11 +372,13 @@ with it each circumference makes up the whole circle (`Circumference.whole`); so
 circumferences are equal [C.N. 3]. -/
 theorem Prop24.equalMeasure {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (h : Arc.Congruent a b) : a.measure = b.measure := by
-  obtain ⟨hα, hB, hC, hK⟩ := id ha
-  obtain ⟨hβ, hD, hE, hL⟩ := id hb
+  obtain ⟨hB, hC, hK⟩ := id ha
+  have hα := exists_centre a.circle
+  obtain ⟨hD, hE, hL⟩ := id hb
+  have hβ := exists_centre b.circle
   /- Take a point P of the first arc off its base. Its image Q is a point of the second arc,
      off its base, and the bases subtend equal angles at P and Q (`Prop24.image`). -/
-  obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hα hB hC hK
+  obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hB hC hK
   obtain ⟨-, Q, hQ, hQL, hPQ⟩ := Prop24.image ha hb h hP hPK
   /- The circumferences on the other sides of the bases, named by points X and Y there, are
      twice those equal angles (`Circumference.eq`), and so are equal. -/

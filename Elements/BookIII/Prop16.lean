@@ -221,7 +221,7 @@ point within the circle, or on it other than A, is on the side of AE of any poin
 the circle: a point on AE, or across it, would put a point of AE within the circle, on the
 way to K (System E, Intersection 1; III.2, as `InsideCircle.of_between` gives it). -/
 theorem Prop16.sameSideOf_of_inside {A E K Q : Point} {α : Circle}
-    (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α) (hAE_out : Outside A E α)
+    (hA : OnCircle A α) (hAE_out : Outside A E α)
     (hK : InsideCircle K α) (hQ : InsideCircle Q α ∨ OnCircle Q α) (hQA : Q ≠ A) :
     SameSideOf Q K A E := by
   have hAE : A ≠ E := Prop16.Outside.ne hA hK hAE_out
@@ -237,14 +237,14 @@ theorem Prop16.sameSideOf_of_inside {A E K Q : Point} {α : Circle}
   refine SameSideOf.of_line hAE hA_L hE_L ?_
   refine Classical.byContradiction fun hs => ?_
   obtain ⟨X, hX_L, hQXK⟩ := OppositeSides.exists_between ⟨hQ_L, hoff K hK, hs⟩
-  exact hoff X (InsideCircle.of_between hα hQ (Or.inl hK) hQXK) hX_L
+  exact hoff X (InsideCircle.of_between hQ (Or.inl hK) hQXK) hX_L
 
 /-- The points within the circle are on B's side of AE: on the centre's side
 (`Prop16.sameSideOf_of_inside`), which is B's, since D is between A and B. -/
 theorem Prop16.inside_sameSideOf {A B D E Q : Point} {ABC : Circle} (hD : Centre D ABC)
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hAE_out : Outside A E ABC) (hQ : InsideCircle Q ABC) : SameSideOf Q B A E :=
-  (sameSideOf_of_inside ⟨D, hD⟩ hA hAE_out (centre_inside hD) (Or.inl hQ)
+  (sameSideOf_of_inside hA hAE_out (centre_inside hD) (Or.inl hQ)
     (fun e => inside_not_on (e ▸ hQ) hA)).trans
     (SameSideOf.of_onRay (OnRay.of_between hADB)
       (sameSideOf_self (show Triangle A B E from hE).acb))
@@ -270,7 +270,7 @@ theorem Prop16.near_inside {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC
   have hG_L : ¬ OnLine G L := not_on_line_of_same_side (hGE.sameSide hA_L hB_L)
   have hGAD : Triangle G A D := (Triangle.of_line hA_L hD_L hDray.2.1.symm hG_L).cab
   obtain ⟨γ, hγ, hnear⟩ :=
-    near_inside_of_angle ⟨D, hD⟩ (Or.inr hA) (Or.inl hGα) (Or.inl (centre_inside hD)) hGAD
+    near_inside_of_angle (Or.inr hA) (Or.inl hGα) (Or.inl (centre_inside hD)) hGAD
   refine ⟨γ, hγ, fun P hPγ hP => hnear P hPγ ?_⟩
   rcases hP with hW | hR
   · exact Or.inl ((WithinAngle.congr hGray hDray).2 hW)
@@ -284,8 +284,8 @@ theorem Prop16.horn_nearVertex {A B D E : Point} {ABC : Circle} (hD : Centre D A
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hAE_out : Outside A E ABC) :
     NearVertexOpen A (MixedAngle.ofContact A E ABC B).region :=
-  (near_across hD (show Triangle A B E from hE).bac
-    (near_inside_of_onRay ⟨D, hD⟩ hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)))
+  (near_across (show Triangle A B E from hE).bac
+    (near_inside_of_onRay hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)))
     (outside_of_onRay hAE_out)).2.mono fun _ hP =>
       MixedAngle.region_ofContact.2 ⟨WithinAngle.comm.1 hP.1, hP.2⟩
 
@@ -296,8 +296,8 @@ theorem Prop16.semicircle_nearVertex {A B D E : Point} {ABC : Circle} (hD : Cent
     (hA : OnCircle A ABC) (hADB : Between A D B) (hE : ¬ Collinear A B E)
     (hAE_out : Outside A E ABC) :
     NearVertexOpen A (MixedAngle.ofSegment A B ABC E).region :=
-  (near_across hD (show Triangle A B E from hE).bac
-    (near_inside_of_onRay ⟨D, hD⟩ hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)))
+  (near_across (show Triangle A B E from hE).bac
+    (near_inside_of_onRay hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)))
     (outside_of_onRay hAE_out)).1.mono fun _ hP =>
       MixedAngle.region_ofSegment.2 ⟨hP.1.1, hP.2⟩
 
@@ -397,7 +397,7 @@ theorem Prop16.horn_locallyEqual {A B B' D E : Point} {ABC : Circle} (hD : Centr
   obtain ⟨γ₁, hγ₁, hnear₁⟩ := near_inside hD hA hADB hABE' hAE'_out hAE'_in hFw'
   have hDray : OnRay D A B := OnRay.of_between hADB
   obtain ⟨γ₂, hγ₂, hnear₂⟩ :=
-    near_inside_of_ray ⟨D, hD⟩ hA (Or.inl (centre_inside hD)) hDray.2.1.symm
+    near_inside_of_ray hA (Or.inl (centre_inside hD)) hDray.2.1.symm
   obtain ⟨γ, hγ, hboth⟩ := exists_inside_both hγ₁ hγ₂
   /- E and B are on one side of AB′: AB′ separates E′ from B, and E from E′. -/
   have hAB'B : Triangle A B' B := by
@@ -470,7 +470,7 @@ theorem Prop16.semicircle_gt {A B D E F : Point} {ABC : Circle} (hD : Centre D A
   obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside hD hA hADB hE hAE_out hAE_in hFw
   refine ⟨⟨γ₀, hγ₀, fun P hPγ hP => MixedAngle.region_ofSegment.2
     ⟨hP.1.trans hF, hnear P hPγ (Or.inl (WithinAngle.comm.1 hP))⟩⟩, ?_⟩
-  refine (near_across hD hFw.1.triangle.cab ⟨γ₀, hγ₀, fun P hP hPF => hnear P hP (Or.inr hPF)⟩
+  refine (near_across hFw.1.triangle.cab ⟨γ₀, hγ₀, fun P hP hPF => hnear P hP (Or.inr hPF)⟩
     (outside_of_onRay hAE_out)).1.mono fun P hP => ?_
   obtain ⟨hPw, hPα⟩ := hP
   refine ⟨MixedAngle.region_ofSegment.2
@@ -495,7 +495,7 @@ theorem Prop16.horn_lt {A B D E F : Point} {ABC : Circle} (hD : Centre D ABC)
   have hFw : WithinAngle E A B F := ⟨hF, sameSideOf_of_angle_lt hF hlt⟩
   refine ⟨horn_within hD hA hADB hE hAE_out hAE_in hFw, ?_⟩
   obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside hD hA hADB hE hAE_out hAE_in hFw
-  exact (near_across hD hFw.1.triangle.cab ⟨γ₀, hγ₀, fun P hP hPF => hnear P hP (Or.inr hPF)⟩
+  exact (near_across hFw.1.triangle.cab ⟨γ₀, hγ₀, fun P hP hPF => hnear P hP (Or.inr hPF)⟩
     (outside_of_onRay hAE_out)).1.mono fun P hP =>
       ⟨WithinAngle.comm.1 hP.1, fun h' => (MixedAngle.region_ofContact.1 h').2.1 hP.2⟩
 
@@ -622,15 +622,16 @@ every circle about A holds whole circles within the angle RAT and within the cir
 are in the angle of the segment and not in CAR (`near_across`). If it is not, the angle CAT
 lies within the angle CAR, and every circle about A holds points within the angle CAT and
 without the circle, which the angle of the segment would have to hold. -/
-theorem Segment.exceeds_iff {A C K O R S T : Point} {α : Circle} (hO : Centre O α)
+theorem Segment.exceeds_iff {A C K R S T : Point} {α : Circle}
     (hA : OnCircle A α) (hK : OnRay K A C) (hKα : InsideCircle K α ∨ OnCircle K α)
     (hAT_out : Prop16.Outside A T α) (hAT_in : Prop16.FallsWithin A T α)
     (hTS : SameSideOf T S A C) (hRS : SameSideOf R S A C) :
     (MixedAngle.ofSegment A C α S).Exceeds C R ↔ SameSideOf R C A T := by
+  obtain ⟨O, hO⟩ := exists_centre α
   have hAK : A ≠ K := hK.2.1.symm
   have hRT : SameSideOf R T A C := hRS.trans hTS.symm
   have hCAT : Triangle C A T := hTS.triangle.bac
-  have hacross := near_across hO hCAT (near_inside_of_onRay ⟨O, hO⟩ hA hK hKα)
+  have hacross := near_across hCAT (near_inside_of_onRay hA hK hKα)
     (Prop16.outside_of_onRay hAT_out)
   constructor
   · intro hEx
@@ -642,22 +643,22 @@ theorem Segment.exceeds_iff {A C K O R S T : Point} {α : Circle} (hO : Centre O
   · intro hRC
     have hRw : WithinAngle C A T R := ⟨hRT, hRC⟩
     have hKO : SameSideOf K O A T :=
-      Prop16.sameSideOf_of_inside ⟨O, hO⟩ hA hAT_out (centre_inside hO) hKα hAK.symm
+      Prop16.sameSideOf_of_inside hA hAT_out (centre_inside hO) hKα hAK.symm
     have hCO : SameSideOf C O A T := SameSideOf.of_onRay hK.symm hKO
     obtain ⟨G, hG, hGα⟩ := hAT_in R hRC.triangle
     have hGA : G ≠ A := fun e => inside_not_on (e ▸ hGα) hA
     have hGO : SameSideOf G O A T :=
-      Prop16.sameSideOf_of_inside ⟨O, hO⟩ hA hAT_out (centre_inside hO) (Or.inl hGα) hGA
+      Prop16.sameSideOf_of_inside hA hAT_out (centre_inside hO) (Or.inl hGα) hGA
     have hGray : OnRay G A R :=
       OnRay.of_sameSideOf ((hGO.trans hCO.symm).trans hRC.symm) hG hGA
     have hGR : SameSideOf G R A C := SameSideOf.of_onRay hGray (sameSideOf_self hRS.triangle)
     have hGAK : Triangle G A K := ((sameSideOf_congr_line hK).2 hGR).triangle.cab
-    obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside_of_angle ⟨O, hO⟩ (Or.inr hA) (Or.inl hGα) hKα hGAK
+    obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside_of_angle (Or.inr hA) (Or.inl hGα) hKα hGAK
     refine ⟨hRS.triangle.bac, ⟨γ₀, hγ₀, fun P hPγ hP => ?_⟩, ?_⟩
     · exact MixedAngle.region_ofSegment.2 ⟨hP.1.trans hRS,
         hnear P hPγ (Or.inl (WithinAngle.comm.1 ((WithinAngle.congr hK hGray).2 hP)))⟩
-    · refine (near_across hO hRC.triangle.cab
-        (near_inside_of_onRay ⟨O, hO⟩ hA hGray (Or.inl hGα))
+    · refine (near_across hRC.triangle.cab
+        (near_inside_of_onRay hA hGray (Or.inl hGα))
         (Prop16.outside_of_onRay hAT_out)).1.mono fun P hP => ?_
       obtain ⟨hPw, hPα⟩ := hP
       refine ⟨MixedAngle.region_ofSegment.2
@@ -667,11 +668,11 @@ theorem Segment.exceeds_iff {A C K O R S T : Point} {α : Circle} (hO : Centre O
 /-- **The angle of a segment is something.** In the figure of `Segment.exceeds_iff`, every
 circle about A holds a whole circle within the angle CAT and within the circle, which is in
 the angle of the segment (`near_across`). -/
-theorem Segment.nearVertexOpen {A C K O S T : Point} {α : Circle} (hO : Centre O α)
+theorem Segment.nearVertexOpen {A C K S T : Point} {α : Circle}
     (hA : OnCircle A α) (hK : OnRay K A C) (hKα : InsideCircle K α ∨ OnCircle K α)
     (hAT_out : Prop16.Outside A T α) (hTS : SameSideOf T S A C) :
     NearVertexOpen A (MixedAngle.ofSegment A C α S).region :=
-  (near_across hO hTS.triangle.bac (near_inside_of_onRay ⟨O, hO⟩ hA hK hKα)
+  (near_across hTS.triangle.bac (near_inside_of_onRay hA hK hKα)
     (Prop16.outside_of_onRay hAT_out)).1.mono fun _ hP =>
       MixedAngle.region_ofSegment.2 ⟨hP.1.1.trans hTS, hP.2⟩
 
@@ -681,29 +682,30 @@ CAR exactly when R is not on C's side of AT: on AT, or beyond it. Then the whole
 within the angle CAT, which lies within the angle CAR, and the points within the angle CAT
 and without the circle are the excess. Were R on C's side, the angle of the segment would
 exceed CAR. -/
-theorem Segment.fallsShort_iff {A C K O R S T : Point} {α : Circle} (hO : Centre O α)
+theorem Segment.fallsShort_iff {A C K R S T : Point} {α : Circle}
     (hA : OnCircle A α) (hK : OnRay K A C) (hKα : InsideCircle K α ∨ OnCircle K α)
     (hAT_out : Prop16.Outside A T α) (hAT_in : Prop16.FallsWithin A T α)
     (hTS : SameSideOf T S A C) (hRS : SameSideOf R S A C) :
     (MixedAngle.ofSegment A C α S).FallsShort C R ↔ ¬ SameSideOf R C A T := by
+  obtain ⟨O, hO⟩ := exists_centre α
   constructor
   · intro hFS hRC
-    exact LocallyLess.asymm ((exceeds_iff hO hA hK hKα hAT_out hAT_in hTS hRS).2 hRC).2 hFS.2.2
+    exact LocallyLess.asymm ((exceeds_iff hA hK hKα hAT_out hAT_in hTS hRS).2 hRC).2 hFS.2.2
   · intro hRC
     have hRT : SameSideOf R T A C := hRS.trans hTS.symm
     have hsub := WithinAngle.of_not_sameSideOf hRT hRC
     have hKO : SameSideOf K O A T :=
-      Prop16.sameSideOf_of_inside ⟨O, hO⟩ hA hAT_out (centre_inside hO) hKα hK.2.1
+      Prop16.sameSideOf_of_inside hA hAT_out (centre_inside hO) hKα hK.2.1
     have hCO : SameSideOf C O A T := SameSideOf.of_onRay hK.symm hKO
-    have hacross := near_across hO hTS.triangle.bac (near_inside_of_onRay ⟨O, hO⟩ hA hK hKα)
+    have hacross := near_across hTS.triangle.bac (near_inside_of_onRay hA hK hKα)
       (Prop16.outside_of_onRay hAT_out)
     obtain ⟨γ₀, hγ₀⟩ := exists_circle_about A
-    refine ⟨hRS.triangle.bac, nearVertexOpen hO hA hK hKα hAT_out hTS,
+    refine ⟨hRS.triangle.bac, nearVertexOpen hA hK hKα hAT_out hTS,
       ⟨γ₀, hγ₀, fun P _ hP => ?_⟩, hacross.2.mono fun P hP =>
         ⟨hsub P hP.1, fun h' => hP.2.1 (MixedAngle.region_ofSegment.1 h').2⟩⟩
     obtain ⟨hPS, hPα⟩ := MixedAngle.region_ofSegment.1 hP
     exact hsub P ⟨hPS.trans hTS.symm,
-      (Prop16.sameSideOf_of_inside ⟨O, hO⟩ hA hAT_out (centre_inside hO) (Or.inl hPα)
+      (Prop16.sameSideOf_of_inside hA hAT_out (centre_inside hO) (Or.inl hPα)
         (fun e => inside_not_on (e ▸ hPα) hA)).trans hCO.symm⟩
 
 /-- **The two parts of III.16 at any point of a circle.** A straight line AT at right angles
@@ -767,7 +769,7 @@ theorem Segment.angle_tangent_of_sameSideOf {A C O T : Point} {α : Circle} (hO 
     (hA : OnCircle A α) (hC : OnCircle C α) (hAC : A ≠ C) (hAT_out : Prop16.Outside A T α)
     (hOAT : ∠ O A T = ∟) (hOT : SameSideOf O T A C) : ∠ C A T = ∠ O A C + ∟ := by
   have hCO : SameSideOf C O A T :=
-    Prop16.sameSideOf_of_inside ⟨O, hO⟩ hA hAT_out (centre_inside hO) (Or.inr hC) hAC.symm
+    Prop16.sameSideOf_of_inside hA hAT_out (centre_inside hO) (Or.inr hC) hAC.symm
   rw [angle_add_of_within hOT hCO.symm, hOAT, angle_symm hAC.symm (ne_of_centre_of_on hO hA).symm]
 
 /-- **The angle with the tangent, the centre on the other side.** If the centre O is across
@@ -853,10 +855,10 @@ theorem Segment.compare_alike {A C O R S A' C' O' R' S' : Point} {α α' : Circl
       exact CommonNotion3 (e₁.trans e₂.symm) rfl
   have hAC₁ : A ≠ C := hACO'.ne₁₂
   have hA'C'₁ : A' ≠ C' := hA'C'O''.ne₁₂
-  rw [exceeds_iff hO hA (OnRay.self hAC₁) (Or.inr hC) hparts.1 hparts.2 hTS hRS,
-    exceeds_iff hO' hA' (OnRay.self hA'C'₁) (Or.inr hC') hparts'.1 hparts'.2 hT'S' hR'S',
-    fallsShort_iff hO hA (OnRay.self hAC₁) (Or.inr hC) hparts.1 hparts.2 hTS hRS,
-    fallsShort_iff hO' hA' (OnRay.self hA'C'₁) (Or.inr hC') hparts'.1 hparts'.2 hT'S' hR'S',
+  rw [exceeds_iff hA (OnRay.self hAC₁) (Or.inr hC) hparts.1 hparts.2 hTS hRS,
+    exceeds_iff hA' (OnRay.self hA'C'₁) (Or.inr hC') hparts'.1 hparts'.2 hT'S' hR'S',
+    fallsShort_iff hA (OnRay.self hAC₁) (Or.inr hC) hparts.1 hparts.2 hTS hRS,
+    fallsShort_iff hA' (OnRay.self hA'C'₁) (Or.inr hC') hparts'.1 hparts'.2 hT'S' hR'S',
     WithinAngle.iff_angle_lt (hRS.trans hTS.symm),
     WithinAngle.iff_angle_lt (hR'S'.trans hT'S'.symm), hCAR, hCAT]
   exact ⟨Iff.rfl, Iff.rfl⟩
@@ -870,7 +872,7 @@ theorem Prop16.semicircle_exceeds_iff {A B D E F : Point} {ABC : Circle} (hD : C
     (hBAE : ∠ B A E = ∟) (hF : SameSideOf F E A B) :
     (MixedAngle.ofSegment A B ABC E).Exceeds B F ↔ ∠ B A F < ∟ := by
   have h := Prop16 hD hA hADB hE hBAE
-  rw [Segment.exceeds_iff hD hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)) h.1 h.2
+  rw [Segment.exceeds_iff hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)) h.1 h.2
     (sameSideOf_self (show Triangle A B E from hE)) hF, WithinAngle.iff_angle_lt hF, hBAE]
 
 /-- **The angle of the semicircle falls short of exactly the angles that are not acute.** -/
@@ -879,7 +881,7 @@ theorem Prop16.semicircle_fallsShort_iff {A B D E F : Point} {ABC : Circle} (hD 
     (hBAE : ∠ B A E = ∟) (hF : SameSideOf F E A B) :
     (MixedAngle.ofSegment A B ABC E).FallsShort B F ↔ ¬ ∠ B A F < ∟ := by
   have h := Prop16 hD hA hADB hE hBAE
-  rw [Segment.fallsShort_iff hD hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)) h.1 h.2
+  rw [Segment.fallsShort_iff hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)) h.1 h.2
     (sameSideOf_self (show Triangle A B E from hE)) hF, WithinAngle.iff_angle_lt hF, hBAE]
 
 /-- **The angles of two semicircles compare alike.** In any two circles, whatever their
@@ -932,8 +934,8 @@ theorem Prop16.horn_fallsShort_iff {A B D E F : Point} {ABC : Circle} (hD : Cent
       obtain ⟨γ₀, hγ₀⟩ := exists_circle_about A
       refine ⟨hFB.triangle.bac, horn_nearVertex hD hA hADB hE h.1,
         ⟨γ₀, hγ₀, fun P _ hP => hsub P (MixedAngle.region_ofContact.1 hP).1⟩, ?_⟩
-      exact (near_across hD hABE.bac
-        (near_inside_of_onRay ⟨D, hD⟩ hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)))
+      exact (near_across hABE.bac
+        (near_inside_of_onRay hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)))
         (outside_of_onRay h.1)).1.mono fun P hP =>
           ⟨hsub P (WithinAngle.comm.1 hP.1), fun h' => (MixedAngle.region_ofContact.1 h').2.1 hP.2⟩
 
@@ -956,13 +958,13 @@ theorem Prop16.horn_not_exceeds {A B D E F : Point} {ABC : Circle} (hD : Centre 
     · have hFw : WithinAngle E A B F := ⟨hFB, hFE⟩
       obtain ⟨γ₀, hγ₀, hnear⟩ := near_inside hD hA hADB hE h.1 h.2 hFw
       obtain ⟨P, hPγ, hPw, hPα⟩ :=
-        (near_across hD hFw.1.triangle.cab ⟨γ₀, hγ₀, fun P hP hPF => hnear P hP (Or.inr hPF)⟩
+        (near_across hFw.1.triangle.cab ⟨γ₀, hγ₀, fun P hP hPF => hnear P hP (Or.inr hPF)⟩
           (outside_of_onRay h.1)).1.nearVertex γ hγ
       exact hin P hPγ (WithinAngle.comm.1 hPw) hPα
     · have hsub := WithinAngle.of_not_sameSideOf hFB hFE
       obtain ⟨P, hPγ, hPw, hPα⟩ :=
-        (near_across hD hABE.bac
-          (near_inside_of_onRay ⟨D, hD⟩ hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)))
+        (near_across hABE.bac
+          (near_inside_of_onRay hA (OnRay.of_between hADB) (Or.inl (centre_inside hD)))
           (outside_of_onRay h.1)).1.nearVertex γ hγ
       exact hin P hPγ (hsub P (WithinAngle.comm.1 hPw)) hPα
   · obtain ⟨P, hPγ, hPw⟩ := WithinAngle.exists_near hEAF hγ

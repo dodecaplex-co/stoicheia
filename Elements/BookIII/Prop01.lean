@@ -140,7 +140,7 @@ theorem Prop1.construction {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
     hCFE, hCF⟩
 
 /-- To find the centre of a given circle. -/
-theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) (hA : OnCircle A ABC)
+theorem Prop1 {A B : Point} {ABC : Circle} (hA : OnCircle A ABC)
     (hB : OnCircle B ABC) (hAB : A ≠ B) :
     ∃ F C D E : Point, Centre F ABC ∧ Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧
       OnCircle E ABC ∧ Between C D E ∧ ∠ A D C = ∟ ∧ Between C F E ∧ ‖C F‖ = ‖F E‖ := by
@@ -163,7 +163,7 @@ theorem Prop1 {A B : Point} {ABC : Circle} (hABC : ∃ G : Point, Centre G ABC) 
   have hC_L : ¬ OnLine C L := (show Triangle A B C from hC_AB).off_line hA_L hB_L
   -- I say that F is the centre of the circle ABC.
   -- For suppose it is not, but, if possible, let G be the centre,
-  obtain ⟨G, hG⟩ := hABC
+  obtain ⟨G, hG⟩ := exists_centre ABC
   have hG_N : OnLine G N := by
     refine Classical.byContradiction fun hG_N => ?_
     -- and let GA, GD, GB be joined.
@@ -248,5 +248,21 @@ theorem Prop1.porism {A B C D G : Point} {ABC : Circle} (hG : Centre G ABC) (hA 
   have hADG : ∠ A D G = ∟ := Postulate4 ⟨B, hADB, hDAG.bac, h8⟩
   have hDAC : Triangle D A C := Triangle.of_line hD_L hA_L hDA hC_L
   exact Prop1.perpendicular hDAC.bac hDAG.bac hADC hADG
+
+/-- **III.1 for a circle alone.** Given only a circle, Euclid's construction finds its
+centre: two points A, B of the circle are taken (Points 7), and III.1 runs on the straight
+line AB, drawn "through it at random". It returns A and B with III.1's points; that A and B
+differ follows from `Between A D B`. A lemma beside III.1, after its porism, with no
+certificate entry: it rests on what III.1 rests on and on Points 7, which III.1 does not
+use. For the bare existence of a centre, cite the rule itself. -/
+theorem Prop1.of_circle (ABC : Circle) :
+    ∃ A B F C D E : Point, OnCircle A ABC ∧ OnCircle B ABC ∧ Centre F ABC ∧
+      Between A D B ∧ ‖A D‖ = ‖D B‖ ∧ OnCircle C ABC ∧ OnCircle E ABC ∧ Between C D E ∧
+      ∠ A D C = ∟ ∧ Between C F E ∧ ‖C F‖ = ‖F E‖ := by
+  obtain ⟨A, hA, -⟩ := exists_point_on_circle ABC []
+  obtain ⟨B, hB, hBA⟩ := exists_point_on_circle ABC [A]
+  have hAB : A ≠ B := fun e => hBA (e ▸ List.mem_singleton_self A)
+  obtain ⟨F, C, D, E, h⟩ := Prop1 hA hB hAB
+  exact ⟨A, B, F, C, D, E, hA, hB, h⟩
 
 end Elements.BookIII

@@ -54,4 +54,8 @@
 # Renewed on 19 October 2026 for III.25's kind companion (brief 0006): Arc.Less,
 # Arc.Semicircle and Arc.Greater join the vocabulary, 125 words in all. The 88 axioms
 # and every previously locked word are byte-identical; no model law changes.
-4d9993cc4a91f2251a38eeb4cfea86db688d75585f7d635fc0fd22abd365e849  Certificate/axioms.lock
+#
+# Renewed on 19 October 2026 for brief 0008, section 4: Arc.Drawn no longer asks
+# for a centre witness. The 88 axioms and the other 124 words are byte-identical;
+# no model law changes.
+012e5d3e2313e71214756184fd7431ff5fb4459843be7312e38b7b808c0e45ed  Certificate/axioms.lock

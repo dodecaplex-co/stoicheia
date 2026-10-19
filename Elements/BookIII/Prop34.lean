@@ -93,7 +93,7 @@ theorem Prop34 {D₁ D D₂ : Point} {ABC : Circle} (hABC : ∃ O : Point, Centr
   -- and BC has been drawn across from the point of contact at B,
   have hBCF : Triangle B C F := hCC'.triangle.acb
   -- the angle FBC is equal to the angle constructed in the alternate segment BAC. [III. 32]
-  obtain ⟨A, hA, hAF⟩ := Prop2.oppositeSide ⟨O, hO⟩ hB hC hBCF
+  obtain ⟨A, hA, hAF⟩ := Prop2.oppositeSide hB hC hBCF
   have h32 : ∠ F B C = ∠ B A C :=
     (Prop32 ⟨O, hO⟩ hB hC hCB.symm hEF hEBF).1 A hA hAF
   -- But the angle FBC is equal to the angle at D;

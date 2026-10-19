@@ -39,8 +39,8 @@ A bridge theorem for the measure that III.26–III.29 compare. -/
 theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     (hcircles : EqualCircles a.circle b.circle) :
     a.measure = b.measure ↔ ‖a.B a.C‖ = ‖b.B b.C‖ ∧ Arc.SameKind a b := by
-  obtain ⟨hα, hB, hC, hK⟩ := ha
-  obtain ⟨hβ, hD, hE, hL⟩ := hb
+  obtain ⟨hB, hC, hK⟩ := ha
+  obtain ⟨hD, hE, hL⟩ := hb
   have hBCK : Triangle a.B a.C a.K := hK
   have hDEL : Triangle b.B b.C b.K := hL
   constructor
@@ -52,8 +52,8 @@ theorem Arc.measure_eq_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
        lies beyond the base, on it, or on the arc's side (`Prop29.size`). Equal measures fall
        in the same case, so the arcs are of one kind. -/
     change circumference a.circle a.B a.K a.C = circumference b.circle b.B b.K b.C at heq
-    obtain ⟨G, hG⟩ := hα
-    obtain ⟨H, hH⟩ := hβ
+    obtain ⟨G, hG⟩ := exists_centre a.circle
+    obtain ⟨H, hH⟩ := exists_centre b.circle
     rcases Prop29.size hG hB hC hBCK with ⟨hGK, hlt⟩ | ⟨hBGC, hsemi⟩ | ⟨hGK, hgt⟩ <;>
       rcases Prop29.size hH hD hE hDEL with ⟨hHL, hlt'⟩ | ⟨hDHE, hsemi'⟩ | ⟨hHL, hgt'⟩
     · exact Or.inl ⟨⟨G, hG, hGK⟩, ⟨H, hH, hHL⟩⟩
@@ -119,14 +119,16 @@ makes the segments congruent.
 A bridge theorem for the congruence that III.24, III.26 and III.28 conclude. -/
 theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
     Arc.Congruent a b ↔ EqualCircles a.circle b.circle ∧ a.measure = b.measure := by
-  obtain ⟨hα, hB, hC, hK⟩ := id ha
-  obtain ⟨hβ, hD, hE, hL⟩ := id hb
+  obtain ⟨hB, hC, hK⟩ := id ha
+  have hα := exists_centre a.circle
+  obtain ⟨hD, hE, hL⟩ := id hb
+  have hβ := exists_centre b.circle
   constructor
   · intro h
     /- A point P of the first arc off its base, and its image Q, show the segments similar
        on equal bases (`Prop24.image`, by I.8): so the circles are equal, by III.24's
        companion `Prop24.equalCircles`, and the measures, by `Prop24.equalMeasure`. -/
-    obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hα hB hC hK
+    obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hB hC hK
     obtain ⟨hBC, Q, hQ, hQL, hPQ⟩ := Prop24.image ha hb h hP hPK
     exact ⟨(Prop24.equalCircles hα hβ hB hC hP hD hE hQ hPK.triangle hQL.triangle
       hBC hPQ).1, Prop24.equalMeasure ha hb h⟩
@@ -138,8 +140,8 @@ theorem Arc.congruent_iff {a b : Arc} (ha : a.Drawn) (hb : b.Drawn) :
        the remainders of the whole circles when the equal arcs are taken away
        (`Circumference.whole`), so they are equal [C.N. 3]; and each is twice the angle at P
        or Q (`Circumference.eq`). -/
-    obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hα hB hC hK
-    obtain ⟨Q, hQ, hQL⟩ := Prop2.sameSide hβ hD hE hL
+    obtain ⟨P, hP, hPK⟩ := Prop2.sameSide hB hC hK
+    obtain ⟨Q, hQ, hQL⟩ := Prop2.sameSide hD hE hL
     obtain ⟨X, hXK, -⟩ := exists_oppositeSidesOf (show Triangle a.B a.C a.K from hK) []
     obtain ⟨Y, hYL, -⟩ := exists_oppositeSidesOf (show Triangle b.B b.C b.K from hL) []
     have hXY : circumference a.circle a.B X a.C = circumference b.circle b.B Y b.C :=

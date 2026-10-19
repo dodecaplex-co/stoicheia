@@ -9,13 +9,13 @@ kind = "modified"
 note = "The construction and the argument locating both centres at P follow Euclid. The last step uses `circle_eq` directly: one centre and the common point B make the circles one, whereas the restated III.5 requires crossing and this statement covers circles that only meet."
 
 [representation]
-tags = ["centre-given", "hypothesis-dropped"]
-note = "Both circles come with centres, so the porism to III.1 puts each centre on both perpendiculars. That the circles cut is not asked, only three common points, of the four Euclid names."
+tags = ["hypothesis-dropped"]
+note = "The rule supplies both centres, so the porism to III.1 puts each centre on both perpendiculars. That the circles cut is not asked, only three common points, of the four Euclid names."
 
 [[passage]]
 at = "therefore the point P is the centre of the circle ABC"
 kind = "grouped"
-note = "The statement gives ABC its centre, which the Lean names P at once; that AC and NO meet only there is the step above, so this sentence needs no Lean of its own."
+note = "The rule gives ABC its centre, which the Lean names P at once; that AC and NO meet only there is the step above, so this sentence needs no Lean of its own."
 
 [[passage]]
 at = "therefore the two circles ABC, DEF which cut one another"

@@ -14,7 +14,7 @@ touches a circle meets it at a point of contact and has no point within it. They
 from Definition 15, System E's rules for circles, and the definitions of Book III.
 
 The first two, proved here for any circle, rest on System E's Circle 2, which contains
-III.2. The propositions take them from III.2 instead, for a circle with a centre
+III.2. The propositions take them from III.2 instead
 (`BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide`, `BookIII.Prop2.sameSide`), and so
 rest on neither Circle 2 nor Circle 3.
 
@@ -31,8 +31,8 @@ variable {A B C D K P Q : Point} {α β : Circle}
 /-! ## Points of a circle -/
 
 /-- Three points of a circle are not on one straight line. Were they, one would lie
-between the other two, and so within the circle (System E, Circle 2), not on it. For a
-circle with a centre, `BookIII.Prop2.triangle` gives the same by III.2. -/
+between the other two, and so within the circle (System E, Circle 2), not on it. For any
+circle, `BookIII.Prop2.triangle` gives the same by III.2. -/
 theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) : Triangle A B C := by
   rintro ⟨L, hA_L, hB_L, hC_L⟩
@@ -44,8 +44,8 @@ theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnC
 /-- A straight line `BC` in a circle has a point of the circle on the other side of it
 from any point `K` off it. Take `M` between `B` and `C`; it is within the circle (System
 E, Circle 2), so the straight line `KM`, produced beyond `M`, meets the circle
-(Intersections 5), on the other side of `BC` from `K` (Pasch 3). For a circle with a
-centre, `BookIII.Prop2.oppositeSide` gives the same by III.2. -/
+(Intersections 5), on the other side of `BC` from `K` (Pasch 3). For any circle,
+`BookIII.Prop2.oppositeSide` gives the same by III.2. -/
 theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α)
     (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C := by
   obtain ⟨L, hB_L, hC_L⟩ := Postulate1 B C hK.ne₁₂
@@ -65,8 +65,8 @@ theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α
 
 /-- A straight line `BC` in a circle has a point of the circle on the same side of it as
 any point `K` off it: take a point on the other side from `K`, and a point of the circle
-on the other side from that (`exists_onCircle_oppositeSidesOf`). For a circle with a
-centre, `BookIII.Prop2.sameSide` gives the same by III.2. -/
+on the other side from that (`exists_onCircle_oppositeSidesOf`). For any circle,
+`BookIII.Prop2.sameSide` gives the same by III.2. -/
 theorem exists_onCircle_sameSideOf (hB : OnCircle B α) (hC : OnCircle C α)
     (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ SameSideOf A K B C := by
   obtain ⟨Q, hQ, -⟩ := exists_oppositeSidesOf hK []
@@ -118,6 +118,14 @@ theorem standing_congr {A' : Point} (hA : SameSideOf A A' B C) :
   · rintro ⟨X, hX, hXA', rfl⟩
     exact ⟨X, hX, hXA'.trans hA.symm, rfl⟩
 
+/-- What is true of one centre of a circle is true of every centre, since a circle has only
+one (`centre_unique`, Generalities 2). For a condition said of every centre, as III.4's
+"not through the centre" and III.8's "through the centre" are: a citer who has named the
+centre O passes `hO.every h`, with `h` the condition at O. -/
+theorem Centre.every {O : Point} {α : Circle} {p : Point → Prop}
+    (hO : Centre O α) (h : p O) : ∀ F : Point, Centre F α → p F :=
+  fun _ hF => centre_unique hO hF ▸ h
+
 /-! ## Equal circles -/
 
 /-- In equal circles the radii are equal: any radius `GP` of the one is equal to any
@@ -143,9 +151,10 @@ theorem CirclesCut.symm {α β : Circle} (h : CirclesCut α β) : CirclesCut β 
 /-- A circle is equal to itself. Heath remarks that III.26–III.29, said of equal circles,
 are "equally true if the same circle is taken" (vol. 2, p. 61); this is how a proof says
 so. -/
-theorem EqualCircles.refl {G : Point} (hG : Centre G α) (hP : OnCircle P α) :
-    EqualCircles α α :=
-  ⟨G, G, P, P, hG, hG, hP, hP, rfl⟩
+theorem EqualCircles.refl (α : Circle) : EqualCircles α α := by
+  obtain ⟨G, hG⟩ := exists_centre α
+  obtain ⟨P, hP, -⟩ := exists_point_on_circle α []
+  exact ⟨G, G, P, P, hG, hG, hP, hP, rfl⟩
 
 /-! ## A straight line touching a circle -/
 

@@ -63,8 +63,8 @@ theorem Prop37 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
   -- I say that DB touches the circle ABC.
   -- For let DE be drawn touching ABC; let the centre of the circle ABC be taken, and let it be
   -- F; let FE, FB, FD be joined.
-  obtain ⟨E, hE, hDE⟩ := Prop17 hABC hD
-  obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hABC hA hC (ne_of_between (between_symm hDCA))
+  obtain ⟨E, hE, hDE⟩ := Prop17 hD
+  obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hA hC (ne_of_between (between_symm hDCA))
   have hDE' : D ≠ E := hDE.1
   have hDB : D ≠ B := fun e => hD.2 (e ▸ hB)
   have hFE : F ≠ E := fun e => inside_not_on (centre_inside hF) (e ▸ hE)

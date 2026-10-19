@@ -68,8 +68,8 @@ theorem Prop10.meet_once {B G H K L C O P Q : Point} (hBHG : Triangle B H G)
   exact lt_irrefl _ h17
 
 /-- A circle does not cut a circle at more points than two. -/
-theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre P ABC)
-    (hDEF : ∃ P : Point, Centre P DEF) (hB₁ : OnCircle B ABC) (hB₂ : OnCircle B DEF)
+theorem Prop10 {B G H : Point} {ABC DEF : Circle}
+    (hB₁ : OnCircle B ABC) (hB₂ : OnCircle B DEF)
     (hG₁ : OnCircle G ABC) (hG₂ : OnCircle G DEF) (hH₁ : OnCircle H ABC)
     (hH₂ : OnCircle H DEF) (hBG : B ≠ G) (hBH : B ≠ H) (hGH : G ≠ H) :
     ABC = DEF := by
@@ -77,7 +77,7 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
   -- G, F, H;
   refine Classical.byContradiction fun hne => ?_
   /- Three common points suffice; Euclid never uses the fourth, F. -/
-  have hBHG : Triangle B H G := Prop2.triangle hABC hB₁ hH₁ hG₁ hBH hGH.symm hBG
+  have hBHG : Triangle B H G := Prop2.triangle hB₁ hH₁ hG₁ hBH hGH.symm hBG
   -- let BH, BG be joined and bisected at the points K, L,
   obtain ⟨BH, hB_BH, hH_BH⟩ := Postulate1 B H hBH
   obtain ⟨BG, hB_BG, hG_BG⟩ := Postulate1 B G hBG
@@ -93,8 +93,8 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
   have hY_BG : ¬ OnLine Y BG := hYH.triangle.off_line hB_BG hG_BG
   have hKX_ne : K ≠ X := fun e => hX_BH (e ▸ hK_BH)
   have hLY_ne : L ≠ Y := fun e => hY_BG (e ▸ hL_BG)
-  have hK_in : InsideCircle K ABC := Prop2 hABC hB₁ hH₁ K hBKH
-  have hL_in : InsideCircle L ABC := Prop2 hABC hB₁ hG₁ L hBLG
+  have hK_in : InsideCircle K ABC := Prop2 hB₁ hH₁ K hBKH
+  have hL_in : InsideCircle L ABC := Prop2 hB₁ hG₁ L hBLG
   obtain ⟨AC, hK_AC, hX_AC⟩ := Postulate1 K X hKX_ne
   obtain ⟨A, hA, hA_AC, hAKX⟩ := line_circle_beyond hK_in hK_AC hX_AC hKX_ne.symm
   obtain ⟨C, hC, hC_AC, hCKA⟩ := line_circle_beyond hK_in hK_AC hA_AC (ne_of_between hAKX)
@@ -129,7 +129,7 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
   -- Then, since in the circle ABC a straight line AC cuts a straight line BH into two equal
   -- parts and at right angles,
   -- the centre of the circle ABC is on AC. [III. 1, Por.]
-  obtain ⟨P, hP⟩ := hABC
+  obtain ⟨P, hP⟩ := exists_centre ABC
   have hP_AC : Collinear K C P := Prop1.porism hP hB₁ hH₁ hBKH hBK hC_off hBKC
   -- Again, since in the same circle ABC a straight line NO cuts a straight line BG into two
   -- equal parts and at right angles,
@@ -143,9 +143,9 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
     fun Q hQ_AC hQ_NO =>
       Prop10.meet_once hBHG hBKH hBLG hC_off hBKC hO_off hBLO hQ_AC hP_AC hQ_NO hP_NO
   -- therefore the point P is the centre of the circle ABC.
-  /- The centre our statement gives the circle ABC has already been named P. -/
+  /- The centre the rule gives the circle ABC has already been named P. -/
   -- Similarly we can prove that P is also the centre of the circle DEF;
-  obtain ⟨P', hP'⟩ := hDEF
+  obtain ⟨P', hP'⟩ := exists_centre DEF
   have hP'_AC : Collinear K C P' := Prop1.porism hP' hB₂ hH₂ hBKH hBK hC_off hBKC
   have hP'_NO : Collinear L O P' := Prop1.porism hP' hB₂ hG₂ hBLG hBL hO_off hBLO
   obtain rfl : P' = P := hmeet P' hP'_AC hP'_NO

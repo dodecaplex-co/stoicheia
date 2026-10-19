@@ -1,7 +1,7 @@
 # review/III/07.toml
 [statement]
 scope = "full"
-note = "With its companion: `Prop7.general` compares any two of the rest, on one side of AD or on opposite sides; `Prop7` keeps two on one side."
+note = "The centre E is given; F lies strictly between E and D. `Prop7.general` compares all the rest; `Prop7` keeps two on one side of AD."
 companions = ["III.7 general"]
 fingerprint = "sha256:089a6993dc3354e9"
 
@@ -9,8 +9,9 @@ fingerprint = "sha256:089a6993dc3354e9"
 kind = "euclid"
 note = "Across AD the companion moves C to its partner on B's side, as far from F. Euclid's own I.4 step, which makes FH equal to FG, makes the angles at F equal too, so the partner is as near FA as C (`Prop7.partner`), as Heath reads the comparison across the diameter (vol. 2, p. 17); the comparison on one side finishes."
 
-[representation]
-tags = ["centre-given"]
+[[passage]]
+at = "on AD let a point F be taken"
+kind = "given"
 note = "The centre E is given, as Euclid's setting-out takes it. \"Nearer\" is Euclid's meaning, the less angle at F with the ray FA, unsigned: an obtuse angle is not exchanged for its acute supplement. F is a point strictly within the diameter, between E and D, so not the centre, since F at an end would make the least straight line nothing. The statement speaks of every point of the circle."
 
 [[passage]]

@@ -42,7 +42,7 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   /- CX meets the circumference on P's side at D. C is within the circle
      by III.2, so when XC is produced beyond C to Y, the straight line meets
      the circle at D, beyond C from Y, on X's side (`line_circle_beyond`). -/
-  have hC_in : InsideCircle C ADB := Prop2 hADB hA hB C hACB
+  have hC_in : InsideCircle C ADB := Prop2 hA hB C hACB
   have hX_L : ¬ OnLine X L := hXP.triangle.off_line hA_L hB_L
   have hCX : C ≠ X := fun e => hX_L (e ▸ hC_L)
   obtain ⟨N, hC_N, hX_N⟩ := Postulate1 C X hCX
@@ -86,7 +86,7 @@ theorem Prop30 {A B : Point} {ADB : Circle} (hADB : ∃ O : Point, Centre O ADB)
   obtain ⟨O, hO⟩ := hADB
   obtain ⟨Q, hQB, -⟩ := exists_oppositeSidesOf hABD.acb []
   obtain ⟨R, hRA, -⟩ := exists_oppositeSidesOf hABD.cba []
-  have h28 := Prop28 (EqualCircles.refl hO hA) hA hD hD hB hQB.symm hRA.symm hAD'
+  have h28 := Prop28 (EqualCircles.refl ADB) hA hD hD hB hQB.symm hRA.symm hAD'
   -- and each of the circumferences AD, DB is less than a semicircle;
   /- They are measured at B and A (`Circumference.standing`), by the angles ABD, DAB.
      These are equal, for I.4 gave them, C being on AB, and two of them are less than two

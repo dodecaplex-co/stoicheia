@@ -8,11 +8,10 @@ import Staging.Centre.Restated
 # Staging: brief 0006's statements without `∃ O, Centre O α`
 
 Brief 0008. Six statements that brief 0006 froze, four of them moved to `Elements/` with
-stage 3 and two with stage 4, ask that a circle have some centre, and its definition
-of a drawn arc asks it too. Once every circle has a centre (the rule `exists_centre`,
-approved, not yet landed), each loses that hypothesis, as below; nothing else in them
-changes. This is a revision of brief 0006, approved by the coordinator with brief 0008, at
-its freeze, and is made in brief 0006's files by their owners, after the rule lands: before
+stage 3 and two with stage 4, ask that a circle have some centre. The rule
+`exists_centre` is now available, and each loses that hypothesis, as below; nothing else
+in them changes. The restatement of `Arc.Drawn` has moved to the foundations. This is a
+revision of brief 0006, approved by the coordinator with brief 0008, at its freeze, and is made in brief 0006's files by their owners, after the rule lands: before
 or after those statements move into `Elements/`, whichever comes first.
 
 As in `Restated.lean`, each statement carries `sorry` and two checks (checked by Lean): given
@@ -136,19 +135,3 @@ stage 4, restated without its centre (`Restated.lean`). -/
 example : type_of% @Centre.Prop25 := @Stage4.Prop25.of_circle
 
 end Elements.BookIII.Staging.Centre.Stage4
-
-namespace Elements.Staging.Centre
-
-/-- **A drawn arc** (brief 0006's `Arc.Drawn`, without its centre): its two ends are on the
-circle, and the point naming its side is off the straight line joining them (so the ends
-differ). Brief 0006's definition asks also that the circle have a centre, because
-`Prop23.point` needed one; once every circle has a centre, the clause goes. -/
-def Arc.Drawn (a : Arc) : Prop :=
-  OnCircle a.B a.circle ∧ OnCircle a.C a.circle ∧ ¬ Collinear a.B a.C a.K
-
-/-- Given the rule's content, the two definitions agree (checked by Lean). -/
-example (exists_centre : ∀ α : Circle, ∃ O : Point, Centre O α) (a : Arc) :
-    Centre.Arc.Drawn a ↔ a.Drawn :=
-  ⟨fun h => ⟨exists_centre _, h⟩, fun h => h.2⟩
-
-end Elements.Staging.Centre

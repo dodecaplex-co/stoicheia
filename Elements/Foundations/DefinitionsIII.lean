@@ -297,11 +297,10 @@ structure Arc where
   C : Point
   K : Point
 
-/-- The arc is drawn: its circle has a centre, its two ends are on the circle, and the
-point naming its side is off the straight line joining them (so the ends differ). -/
+/-- The arc is drawn: its two ends are on the circle, and the point naming its side is off
+the straight line joining them (so the ends differ). -/
 def Arc.Drawn (a : Arc) : Prop :=
-  (∃ O : Point, Centre O a.circle) ∧ OnCircle a.B a.circle ∧ OnCircle a.C a.circle ∧
-    ¬ Collinear a.B a.C a.K
+  OnCircle a.B a.circle ∧ OnCircle a.C a.circle ∧ ¬ Collinear a.B a.C a.K
 
 /-- `P` lies on `K`'s side of the straight line `BC`, or on that straight line: a closed
 half-plane, for `B ≠ C`, as in a drawn arc. (When `B` and `C` are one point, every point

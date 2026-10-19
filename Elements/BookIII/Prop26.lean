@@ -75,15 +75,15 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
     · rw [← h, hrt] at hgt'; exact absurd hgt' (lt_irrefl _)
     · rw [h] at hgt; exact absurd (lt_trans hlt' hgt) (lt_irrefl _)
     · rw [h, hrt'] at hgt; exact absurd hgt (lt_irrefl _)
-    · obtain ⟨X, hX, hXG⟩ := Prop2.sameSide ⟨G, hG⟩ hB hC hGA.triangle
-      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide ⟨H, hH⟩ hE hF hHD.triangle
+    · obtain ⟨X, hX, hXG⟩ := Prop2.sameSide hB hC hGA.triangle
+      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide hE hF hHD.triangle
       have hXA : OppositeSidesOf X A B C := hXG.trans_opposite hGA
       have hYD : OppositeSidesOf Y D E F := hYH.trans_opposite hHD
       have q₁ : ∠ B A C + ∠ B X C = ∟ + ∟ := by
-        have := (Prop22 ⟨G, hG⟩ hA hB hX hC hXA.symm).2
+        have := (Prop22 hA hB hX hC hXA.symm).2
         rwa [angle_symm hXA.triangle.ne₂₃ hXA.triangle.ne₁₃] at this
       have q₂ : ∠ E D F + ∠ E Y F = ∟ + ∟ := by
-        have := (Prop22 ⟨H, hH⟩ hD hE hY hF hYD.symm).2
+        have := (Prop22 hD hE hY hF hYD.symm).2
         rwa [angle_symm hYD.triangle.ne₂₃ hYD.triangle.ne₁₃] at this
       have hXY : ∠ B X C = ∠ E Y F :=
         CommonNotion3 (c := ∠ B A C) (d := ∠ E D F)
@@ -111,8 +111,8 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
   have hBAC : ‖B C‖ = ‖E F‖ → ∠ B A C = ∠ E D F →
       circumference ABC B A C = circumference DEF E D F :=
     fun hBC h => Prop24.equalMeasure (a := ⟨ABC, B, C, A⟩) (b := ⟨DEF, E, F, D⟩)
-      ⟨⟨G, hG⟩, hB, hC, hBCA⟩
-      ⟨⟨H, hH⟩, hE, hF, hEFD⟩ (seg hBC h)
+      ⟨hB, hC, hBCA⟩
+      ⟨hE, hF, hEFD⟩ (seg hBC h)
   -- But the whole circle ABC is also equal to the whole circle DEF;
   have w₁ := Circumference.whole ⟨G, hG⟩ hB hC hAK
   have w₂ := Circumference.whole ⟨H, hH⟩ hE hF hDL
@@ -129,15 +129,15 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
        are similar; on the equal bases BC, EF they are congruent [III. 24]. Only the side
        names a segment, so they are the segments on the sides of K and L
        (`Arc.Congruent.congr_side`). -/
-    obtain ⟨X, hX, hXK⟩ := Prop2.sameSide ⟨G, hG⟩ hB hC hAK.symm.triangle
-    obtain ⟨Y, hY, hYL⟩ := Prop2.sameSide ⟨H, hH⟩ hE hF hDL.symm.triangle
+    obtain ⟨X, hX, hXK⟩ := Prop2.sameSide hB hC hAK.symm.triangle
+    obtain ⟨Y, hY, hYL⟩ := Prop2.sameSide hE hF hDL.symm.triangle
     have hXA : OppositeSidesOf X A B C := hXK.trans_opposite hAK.symm
     have hYD : OppositeSidesOf Y D E F := hYL.trans_opposite hDL.symm
     have hAX : ∠ B A C + ∠ B X C = ∟ + ∟ := by
-      have hAX := (Prop22 ⟨G, hG⟩ hA hB hX hC hXA.symm).2
+      have hAX := (Prop22 hA hB hX hC hXA.symm).2
       rwa [angle_symm hXA.triangle.ne₂₃ hXA.triangle.ne₁₃] at hAX
     have hDY : ∠ E D F + ∠ E Y F = ∟ + ∟ := by
-      have hDY := (Prop22 ⟨H, hH⟩ hD hE hY hF hYD.symm).2
+      have hDY := (Prop22 hD hE hY hF hYD.symm).2
       rwa [angle_symm hYD.triangle.ne₂₃ hYD.triangle.ne₁₃] at hDY
     have hXY : ∠ B X C = ∠ E Y F :=
       CommonNotion3 (c := ∠ B A C) (d := ∠ E D F)

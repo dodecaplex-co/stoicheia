@@ -8,7 +8,7 @@ fingerprint = "sha256:3ed7384603af15f7"
 kind = "euclid"
 
 [representation]
-tags = ["centre-given", "touching-whole-circles"]
+tags = ["touching-whole-circles"]
 note = "The centres F and G are given, as the setting-out takes them. Touching without is read of the whole circles: no point is within both."
 
 [[passage]]

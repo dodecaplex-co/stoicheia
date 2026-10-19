@@ -41,7 +41,7 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
   -- Let ABCD be a circle, let BC be its diameter, and E its centre, and let BA, AC, AD, DC be
   -- joined;
   have hABC : Triangle A B C :=
-    Prop2.triangle ⟨E, hE⟩ hA hB hC hAB (ne_of_between_ends hBEC) hAC
+    Prop2.triangle hA hB hC hAB (ne_of_between_ends hBEC) hAC
   -- I say that the angle BAC in the semicircle BAC is right,
   -- the angle ABC in the segment ABC greater than the semicircle is less than a right angle,
   -- and the angle ADC in the segment ADC less than the semicircle is greater than a right
@@ -104,7 +104,7 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
   -- angles, [III. 22]
   have hless : ∀ D : Point, OnCircle D ABCD → OppositeSidesOf B D A C → ∟ < ∠ A D C := by
     intro D hD hBD
-    have h22 := (Prop22 ⟨E, hE⟩ hB hC hD hA hBD.swap).2
+    have h22 := (Prop22 hB hC hD hA hBD.swap).2
     rw [angle_symm hABC.ne₂₃.symm hAB] at h22
     -- while the angle ABC is less than a right angle,
     -- therefore the angle ADC which remains is greater than a right angle;
@@ -122,9 +122,9 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
      segment, III.22 makes the angle at X less than a right angle. -/
   have hgreater : ∀ X : Point, OnCircle X ABCD → SameSideOf X B A C → ∠ A X C < ∟ := by
     intro X hX hXB
-    obtain ⟨D, hD, hDB⟩ := Prop2.oppositeSide ⟨E, hE⟩ hA hC hABC.acb
+    obtain ⟨D, hD, hDB⟩ := Prop2.oppositeSide hA hC hABC.acb
     have hXD : OppositeSidesOf X D A C := hXB.trans_opposite hDB.symm
-    have h22 := (Prop22 ⟨E, hE⟩ hX hA hD hC hXD).2
+    have h22 := (Prop22 hX hA hD hC hXD).2
     have hDAC : Triangle A D C := hXD.symm.triangle.acb
     rw [angle_symm hDAC.ne₂₃.symm hDAC.ne₁₂] at h22
     have hobtuse : ∟ < ∠ A D C := hless D hD hDB.symm
@@ -182,14 +182,14 @@ theorem Prop31.greater_gt_right {A B C E R : Point} {ABCD : Circle} (hE : Centre
   refine ⟨hR.triangle.bac, ?_⟩
   show LocallyLess A (WithinAngle C A R) (MixedAngle.ofSegment A C ABCD B).region
   have hABC : Triangle A B C :=
-    Triangle.of_onCircle_centre ⟨E, hE⟩ hA hB hC hAB (ne_of_between_ends hBEC) hAC
+    Triangle.of_onCircle_centre hA hB hC hAB (ne_of_between_ends hBEC) hAC
   have hCAB : ∠ C A B = ∟ := by
     rw [angle_symm hAC.symm hAB.symm]; exact hBAC
   have hRray : OnRay R A B := onRay_of_angle_eq hR (hCAR.trans hCAB.symm)
   refine (locallyLess_congr (fun P => WithinAngle.congr (OnRay.self hAC) hRray)
     (fun _ => Iff.rfl)).2 ?_
   obtain ⟨γ₀, hγ₀, hnear⟩ :=
-    near_inside_of_angle ⟨E, hE⟩ (Or.inr hA) (Or.inr hC) (Or.inr hB) hABC.bac.cba
+    near_inside_of_angle (Or.inr hA) (Or.inr hC) (Or.inr hB) hABC.bac.cba
   refine ⟨⟨γ₀, hγ₀, fun P hPγ hP => MixedAngle.region_ofSegment.2
     ⟨hP.1, hnear P hPγ (Or.inl hP)⟩⟩, ?_⟩
   /- CA produced beyond A to C′: its points are without the circle. -/
@@ -203,8 +203,8 @@ theorem Prop31.greater_gt_right {A B C E R : Point} {ABCD : Circle} (hE : Centre
   have hopp : OppositeSidesOf C C' A B :=
     (OppositeSidesOf.of_between hABC.bac hCAC').swap
   obtain ⟨N, hA_N, hB_N⟩ := Postulate1 A B hAB
-  refine (near_across hE hBAC' (near_inside_of_ray ⟨E, hE⟩ hA (Or.inr hB) hAB)
-    (fun P hP => OutsideCircle.of_between ⟨E, hE⟩ (Or.inr hC) (fun h => inside_not_on h hA)
+  refine (near_across hBAC' (near_inside_of_ray hA (Or.inr hB) hAB)
+    (fun P hP => OutsideCircle.of_between (Or.inr hC) (fun h => inside_not_on h hA)
       (hP.between hCAC'))).1.mono fun P hP => ?_
   obtain ⟨hPw, hPα⟩ := hP
   refine ⟨MixedAngle.region_ofSegment.2
@@ -222,12 +222,12 @@ theorem Prop31.less_nearVertex {A B C D E : Point} {ABCD : Circle} (hE : Centre 
     (hBEC : Between B E C) (hAB : A ≠ B) (hAC : A ≠ C) (hBD : OppositeSidesOf B D A C) :
     NearVertexOpen A (MixedAngle.ofSegment A C ABCD D).region := by
   have hABC : Triangle A B C :=
-    Triangle.of_onCircle_centre ⟨E, hE⟩ hA hB hC hAB (ne_of_between_ends hBEC) hAC
+    Triangle.of_onCircle_centre hA hB hC hAB (ne_of_between_ends hBEC) hAC
   obtain ⟨F, hBAF⟩ := produce hAB.symm
   have hBF : OppositeSidesOf B F A C := (OppositeSidesOf.of_between hABC.cab hBAF).swap
   have hDF : SameSideOf D F A C := OppositeSidesOf.sameSideOf hBD hBF
-  exact (near_across hE hBF.symm.triangle.bac (near_inside_of_ray ⟨E, hE⟩ hA (Or.inr hC) hAC)
-    (fun P hP => OutsideCircle.of_between ⟨E, hE⟩ (Or.inr hB) (fun h => inside_not_on h hA)
+  exact (near_across hBF.symm.triangle.bac (near_inside_of_ray hA (Or.inr hC) hAC)
+    (fun P hP => OutsideCircle.of_between (Or.inr hB) (fun h => inside_not_on h hA)
       (hP.between hBAF))).1.mono fun P hP =>
         MixedAngle.region_ofSegment.2 ⟨hP.1.1.trans hDF.symm, hP.2⟩
 
@@ -247,7 +247,7 @@ theorem Prop31.less_lt_right {A B C D E R : Point} {ABCD : Circle} (hE : Centre 
   refine ⟨hR.triangle.bac, less_nearVertex hE hA hB hC hBEC hAB hAC hBD, ?_⟩
   show LocallyLess A (MixedAngle.ofSegment A C ABCD D).region (WithinAngle C A R)
   have hABC : Triangle A B C :=
-    Triangle.of_onCircle_centre ⟨E, hE⟩ hA hB hC hAB (ne_of_between_ends hBEC) hAC
+    Triangle.of_onCircle_centre hA hB hC hAB (ne_of_between_ends hBEC) hAC
   obtain ⟨F, hBAF⟩ := produce hAB.symm
   obtain ⟨N, hA_N, hB_N⟩ := Postulate1 A B hAB
   have hF_N : OnLine F N := on_line_of_between hBAF hB_N hA_N
@@ -282,7 +282,7 @@ theorem Prop31.less_lt_right {A B C D E R : Point} {ABCD : Circle} (hE : Centre 
     refine SameSideOf.of_line hAB hA_N hB_N (Classical.byContradiction fun hs => ?_)
     obtain ⟨T, hT_N, hPTC⟩ := OppositeSides.exists_between ⟨hP_N, hC_N, hs⟩
     have hTα : InsideCircle T ABCD :=
-      InsideCircle.of_between ⟨E, hE⟩ (Or.inl hPα) (Or.inr hC) hPTC
+      InsideCircle.of_between (Or.inl hPα) (Or.inr hC) hPTC
     have hTD : SameSideOf T D A C :=
       SameSideOf.of_between_line ⟨M, hA_M, hC_M, hC_M⟩ hPD (between_symm hPTC)
     exact hnotB T hTD (hseg T hT_N hTα)
@@ -290,9 +290,9 @@ theorem Prop31.less_lt_right {A B C D E R : Point} {ABCD : Circle} (hE : Centre 
   refine ⟨⟨γ₀, hγ₀, fun P _ hP => ?_⟩, ?_⟩
   · obtain ⟨hPD, hPα⟩ := MixedAngle.region_ofSegment.1 hP
     exact ⟨hPD.trans hDF, (sameSideOf_congr_collinear hAB hAF.symm hFcol).2 (hside P hPD hPα)⟩
-  · exact (near_across hE hBF.symm.triangle.bac
-      (near_inside_of_ray ⟨E, hE⟩ hA (Or.inr hC) hAC)
-      (fun P hP => OutsideCircle.of_between ⟨E, hE⟩ (Or.inr hB) (fun h => inside_not_on h hA)
+  · exact (near_across hBF.symm.triangle.bac
+      (near_inside_of_ray hA (Or.inr hC) hAC)
+      (fun P hP => OutsideCircle.of_between (Or.inr hB) (fun h => inside_not_on h hA)
         (hP.between hBAF))).2.mono fun P hP =>
           ⟨hP.1, fun h' => hP.2.1 (MixedAngle.region_ofSegment.1 h').2⟩
 
@@ -330,7 +330,7 @@ theorem Prop31.greater {A C E : Point} {ABCD : Circle} (hE : Centre E ABCD)
   have hAC : A ≠ C := (show Triangle A C E from hACE).ne₁₂
   obtain ⟨B, hB, hBEC, hAB, hEB⟩ := diameter_through hE hC hACE
   have hBAC := (Prop31 hE hA hB hC hBEC hAB hAC).1
-  refine ⟨MixedAngle.wellFormed_ofSegment ⟨E, hE⟩ hA hC hAC hACE, fun R hR hCAR => ?_⟩
+  refine ⟨MixedAngle.wellFormed_ofSegment hA hC hAC hACE, fun R hR hCAR => ?_⟩
   exact ⟨hR.triangle.bac, (locallyLess_congr (fun _ => Iff.rfl)
     (fun _ => MixedAngle.ofSegment_congr (OnRay.self hAC) hEB)).2
     (greater_gt_right hE hA hB hC hBEC hAB hAC hBAC (hR.trans hEB) hCAR).2⟩
@@ -349,7 +349,7 @@ theorem Prop31.less {A C D E : Point} {ABCD : Circle} (hE : Centre E ABCD)
   have hAC : A ≠ C := (show Triangle A C E from hACE).ne₁₂
   obtain ⟨B, hB, hBEC, hAB, hEB⟩ := diameter_through hE hC hACE
   have hBAC := (Prop31 hE hA hB hC hBEC hAB hAC).1
-  exact ⟨MixedAngle.wellFormed_ofSegment ⟨E, hE⟩ hA hC hAC hED.symm.triangle,
+  exact ⟨MixedAngle.wellFormed_ofSegment hA hC hAC hED.symm.triangle,
     fun R hR hCAR =>
       less_lt_right hE hA hB hC hBEC hAB hAC hBAC (hEB.symm.trans_opposite hED) hR hCAR⟩
 

@@ -7,10 +7,6 @@ fingerprint = "sha256:84c2e52c5d72734a"
 [route]
 kind = "euclid"
 
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre, which the proof takes by III.1, as Euclid does."
-
 [[passage]]
 at = "Therefore AC, BD do not bisect one another."
 kind = "grouped"

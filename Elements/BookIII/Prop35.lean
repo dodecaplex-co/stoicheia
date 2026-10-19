@@ -100,7 +100,7 @@ theorem Prop35 {A B C D E : Point} {ABCD : Circle} (hABCD : ∃ F : Point, Centr
     exact rect_congr h₁ h₂
   -- Next let AC, DB not be through the centre;
   -- let the centre of ABCD be taken, and let it be F;
-  obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hABCD hA hC (ne_of_between_ends hAEC)
+  obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hA hC (ne_of_between_ends hAEC)
   have hEF : E ≠ F := fun e => hE (e ▸ hF)
   have hAC : rect A E E C + sq F E = sq F C := by
     by_cases hF_AC : Collinear A C F

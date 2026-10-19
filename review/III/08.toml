@@ -1,7 +1,7 @@
 # review/III/08.toml
 [statement]
 scope = "full"
-note = "With its companion: `Prop8.general` compares any two of a class, on one side of DA or on opposite sides; `Prop8` keeps two on one side."
+note = "Concave and convex orders stay separate. `Prop8.general` compares either side of DA; `Prop8` keeps one side. The last clause includes contact."
 companions = ["III.8 general"]
 fingerprint = "sha256:407ebb1e80f5d884"
 
@@ -9,9 +9,10 @@ fingerprint = "sha256:407ebb1e80f5d884"
 kind = "modified"
 note = "Euclid's argument, but the last step, that no third straight line equals DK, compares the angles at the centre M by I.24, which reaches every point of the circle. Across DA the companion moves a point to its partner on the other side, as far from D: Euclid's I.4 step at M makes it equally inclined to DA, and it stays in its class (`Prop8.partner`)."
 
-[representation]
-tags = ["centre-given"]
-note = "The circle comes with a centre, which the proof takes by III.1. \"Nearer\" is the less angle at D with the ray DA, unsigned. The convex circumference is read as where a straight line from D first meets the circle, the concave as where it meets it again, and the two orders are kept apart: the two meetings of one straight line make one angle with DA. A straight line touching the circle from D falls on neither, by convention, as Euclid's lines are drawn through; that its point of contact has no point of the circle before it or beyond it follows from Definition III.2, and is not stated in Lean. The last clause covers a point of contact too."
+[[passage]]
+at = "Let ABC be a circle"
+kind = "given"
+note = "\"Nearer\" is the less angle at D with the ray DA, unsigned. The convex circumference is read as where a straight line from D first meets the circle, the concave as where it meets it again, and the two orders are kept apart: the two meetings of one straight line make one angle with DA. A straight line touching the circle from D falls on neither, by convention, as Euclid's lines are drawn through; that its point of contact has no point of the circle before it or beyond it follows from Definition III.2, and is not stated in Lean. The last clause covers a point of contact too."
 
 [[passage]]
 at = "Similarly we can prove that FD is greater than CD"

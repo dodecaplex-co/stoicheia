@@ -55,7 +55,7 @@ theorem Circumference.eq (hα : ∃ O : Point, Centre O α) (hA : OnCircle A α)
     (p := fun x => ∃ X : Point, OnCircle X α ∧ OppositeSidesOf X K B C ∧
       x = ∠ B X C + ∠ B X C) ⟨_, A, hA, hAK, rfl⟩
   unfold circumference
-  rw [hx, Prop21 hα hX hB hC hA (OppositeSidesOf.sameSideOf hXK.symm hAK.symm)]
+  rw [hx, Prop21 hX hB hC hA (OppositeSidesOf.sameSideOf hXK.symm hAK.symm)]
 
 /-- **The circumference on which an angle stands.** For a point A of the circle off
 BC, the circumference on which the angle BAC stands is twice that angle, as any other
@@ -67,14 +67,14 @@ theorem Circumference.standing (hα : ∃ O : Point, Centre O α) (hA : OnCircle
     (p := fun x => ∃ X : Point, OnCircle X α ∧ SameSideOf X A B C ∧
       x = ∠ B X C + ∠ B X C) ⟨_, A, hA, sameSideOf_self hBCA, rfl⟩
   unfold Elements.standing
-  rw [hx, Prop21 hα hX hB hC hA hXA]
+  rw [hx, Prop21 hX hB hC hA hXA]
 
 /-- **The angle at the centre.** A circumference BKC beyond which the centre G lies,
 on the other side of BC, is measured by the angle BGC: for a point A of the circle
 on the centre's side, the angle BGC is double of the angle BAC. [III. 2, III. 20, III. 21] -/
 theorem Circumference.centre (hG : Centre G α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hGK : OppositeSidesOf G K B C) : circumference α B K C = ∠ B G C := by
-  obtain ⟨A, hA, hAG⟩ := Prop2.sameSide ⟨G, hG⟩ hB hC hGK.triangle
+  obtain ⟨A, hA, hAG⟩ := Prop2.sameSide hB hC hGK.triangle
   rw [Circumference.eq ⟨G, hG⟩ hA hB hC (hAG.trans_opposite hGK),
     Prop20 hG hA hB hC hAG.symm]
 
@@ -86,14 +86,14 @@ theorem Circumference.whole (hα : ∃ O : Point, Centre O α) (hB : OnCircle B 
     (hC : OnCircle C α) (hAK : OppositeSidesOf A K B C) :
     circumference α B K C + circumference α B A C = ∟ + ∟ + (∟ + ∟) := by
   /- We take a point A' of the circle on A's side, and a point K' on K's side. -/
-  obtain ⟨A', hA', hA'A⟩ := Prop2.sameSide hα hB hC hAK.triangle
-  obtain ⟨K', hK', hK'K⟩ := Prop2.sameSide hα hB hC hAK.symm.triangle
+  obtain ⟨A', hA', hA'A⟩ := Prop2.sameSide hB hC hAK.triangle
+  obtain ⟨K', hK', hK'K⟩ := Prop2.sameSide hB hC hAK.symm.triangle
   have hA'K : OppositeSidesOf A' K B C := hA'A.trans_opposite hAK
   have hK'A : OppositeSidesOf K' A B C := hK'K.trans_opposite hAK.symm
   have hA'K' : OppositeSidesOf A' K' B C := (hK'K.trans_opposite hA'K.symm).symm
   rw [Circumference.eq hα hA' hB hC hA'K, Circumference.eq hα hK' hB hC hK'A]
   /- III.22 gives the opposite angles at A' and K' of the quadrilateral A'CK'B. -/
-  have h22 := (Prop22 hα hA' hC hK' hB hA'K'.swap).2
+  have h22 := (Prop22 hA' hC hK' hB hA'K'.swap).2
   rw [angle_symm hA'K.triangle.ne₂₃ hA'K.triangle.ne₁₃] at h22
   rw [← h22]
   ac_rfl
@@ -110,7 +110,7 @@ theorem Circumference.semicircle (hG : Centre G α) (hB : OnCircle B α) (hC : O
     (hBGC : Between B G C) (hK : Triangle B C K) : circumference α B K C = ∟ + ∟ := by
   /- Lean measured the circumference at some point A of the circle on the other side of BC
      from K, and there is such a point. -/
-  obtain ⟨A₀, hA₀, hA₀K⟩ := Prop2.oppositeSide ⟨G, hG⟩ hB hC hK
+  obtain ⟨A₀, hA₀, hA₀K⟩ := Prop2.oppositeSide hB hC hK
   obtain ⟨A, hA, hAK, hx⟩ := Classical.epsilon_spec
     (p := fun x => ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C ∧
       x = ∠ B A C + ∠ B A C) ⟨_, A₀, hA₀, hA₀K, rfl⟩
@@ -188,7 +188,7 @@ theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hα : ∃ O : Poi
     circumference α B X C + circumference α C Y D = circumference α B K D := by
   /- Take A on the circle across BD from C, and therefore across BD from K: BD is a straight
      line in the circle, which has points on either side of it (`Prop2.oppositeSide`). -/
-  obtain ⟨A, hA, hAC⟩ := Prop2.oppositeSide hα hB hD hCK.triangle
+  obtain ⟨A, hA, hAC⟩ := Prop2.oppositeSide hB hD hCK.triangle
   have hAK : OppositeSidesOf A K B D := (hCK.symm.trans_opposite hAC.symm).symm
   /- Measure BXC at D, CYD at B, and BKD at A. [III. 21] -/
   rw [Circumference.eq hα hD hB hC hX.symm,
@@ -198,7 +198,7 @@ theorem Circumference.add {B C D K X Y : Point} {α : Circle} (hα : ∃ O : Poi
   obtain ⟨E, hBDE⟩ := produce hCBD.ne₂₃
   have h32 : ∠ C B D + ∠ B D C + ∠ D C B = ∟ + ∟ := (BookI.Prop32 hCBD hBDE).2
   /- The angles at A and C of the quadrilateral ABCD also make two right angles. [III. 22] -/
-  have h22 : ∠ B A D + ∠ D C B = ∟ + ∟ := (Prop22 hα hA hB hC hD hAC).2
+  have h22 : ∠ B A D + ∠ D C B = ∟ + ∟ := (Prop22 hA hB hC hD hAC).2
   /- Take away the common angle DCB: the angles CBD and BDC together equal BAD. -/
   have hsum : ∠ C B D + ∠ B D C = ∠ B A D :=
     CommonNotion3 (h32.trans h22.symm) rfl

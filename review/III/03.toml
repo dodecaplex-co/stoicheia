@@ -1,15 +1,16 @@
 # review/III/03.toml
 [statement]
 scope = "full"
-note = "F is between A and B, as bisecting and cutting a straight line mean, and the converse asks only that the angle AFE be right."
+note = "The centre E is given and FE represents CD. F is between A and B; the converse asks only that AFE be right."
 fingerprint = "sha256:02edb0964e2a267d"
 
 [route]
 kind = "euclid"
 
-[representation]
-tags = ["centre-given"]
-note = "The centre E is given, as Euclid's setting-out takes it, and his straight line CD through the centre is FE, so C and D need no Lean names."
+[[passage]]
+at = "For let the centre of the circle ABC be taken"
+kind = "given"
+note = "The centre E is given, as Euclid's setting-out takes it. FE represents his straight line CD through the centre, so C and D need no Lean names. F is between A and B, as bisecting and cutting a straight line mean."
 
 [review]
 stage = "exceptions"

@@ -1,15 +1,11 @@
 # review/III/18.toml
 [statement]
 scope = "full"
-note = "The centre F is given, as Euclid's setting-out takes it."
+note = "The centre F is given; it is off DE because F is within the circle and no point of DE is."
 fingerprint = "sha256:8e256532a8501ef2"
 
 [route]
 kind = "euclid"
-
-[representation]
-tags = ["centre-given"]
-note = "The centre F is given, as Euclid's setting-out takes it; the proof shows it is off DE, since it is within the circle and no point of DE is."
 
 [[passage]]
 at = "Therefore FG is not perpendicular to DE."

@@ -26,9 +26,9 @@ two different points to name its straight line. `Touches` already says that the 
 line meets the circle, and its witness is the point of contact, which may be A;
 `Touches.contact` reads it off.
 
-For a circle with a centre, not being within the circle is the condition for the problem to
-have a solution, and `Prop17.inside`, a lemma beside the proposition, states the other half:
-from a point within the circle, no straight line touches it.
+Not being within the circle is the condition for the problem to have a solution, and
+`Prop17.inside`, a lemma beside the proposition, states the other half: from a point within
+the circle, no straight line touches it.
 -/
 
 namespace Elements.BookIII
@@ -36,24 +36,16 @@ namespace Elements.BookIII
 open Tacit
 
 /-- From a given point to draw a straight line touching a given circle. -/
-theorem Prop17 {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD) (hA : OutsideCircle A BCD) :
+theorem Prop17 {A : Point} {BCD : Circle} (hA : OutsideCircle A BCD) :
     ∃ B : Point, OnCircle B BCD ∧ Touches A B BCD := by
   -- Let A be the given point, and BCD the given circle;
   -- thus it is required to draw from the point A a straight line touching the circle BCD.
   -- For let the centre E of the circle be taken; [III. 1]
-  /- III.1 needs two points of the circle. The straight line from the given centre
-     towards A meets it at D, and meets it again beyond the centre (System E,
-     Intersections 4 and 5). III.1's centre is the same point (Generalities 2). -/
-  obtain ⟨E₀, hE₀⟩ := hBCD
-  have hEA : E₀ ≠ A := fun e => hA.1 (e ▸ centre_inside hE₀)
-  obtain ⟨L, hE_L, hA_L⟩ := Postulate1 E₀ A hEA
-  obtain ⟨D, hD, hD_L, hEDA⟩ := line_circle_between (centre_inside hE₀) hE_L hA hA_L
-  obtain ⟨D', hD', -, hD'EA⟩ :=
-    line_circle_beyond (centre_inside hE₀) hE_L hA_L hEA.symm
-  have hDD' : D ≠ D' := fun e => not_between_of_between (e ▸ hD'EA) hEDA
-  obtain ⟨E, -, -, -, hE, -⟩ := Prop1 ⟨E₀, hE₀⟩ hD hD' hDD'
-  obtain rfl : E = E₀ := centre_unique hE hE₀
+  obtain ⟨-, -, E, -, -, -, -, -, hE, -⟩ := Prop1.of_circle BCD
   -- let AE be joined, and with centre E and distance EA let the circle AFG be described;
+  have hEA : E ≠ A := fun e => hA.1 (e ▸ centre_inside hE)
+  obtain ⟨L, hE_L, hA_L⟩ := Postulate1 E A hEA
+  obtain ⟨D, hD, hD_L, hEDA⟩ := line_circle_between (centre_inside hE) hE_L hA hA_L
   obtain ⟨AFG, hE_AFG, hA_AFG⟩ := Postulate3 E A hEA
   -- from D let DF be drawn at right angles to EA,
   /- I.11 draws the perpendicular through D. Its point F' need not be on AFG, so we take F
@@ -128,7 +120,7 @@ theorem Prop17 {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD) (
   exact ⟨B, hB, hAB⟩
   -- Q. E. F.
 
-/-- **III.17, general** (companion of III.17). Given a circle BCD with a centre, and a point
+/-- **III.17, general** (companion of III.17). Given a circle BCD and a point
 A not within it, there is a point X such that the straight line AX touches the circle: it
 meets the circle, and does not cut it. A may be outside the circle, and then the point of
 contact is another point (Euclid's case, `Prop17`); or on it, and then the point of
@@ -136,12 +128,12 @@ contact is A itself: the proof draws AX at right angles to the radius EA (I.11),
 touches by III.16's porism. Euclid leaves that case out, Heath explains, because III.16's
 porism so directly indicates its construction (vol. 2, p. 44); the construction is not on
 Euclid's page. -/
-theorem Prop17.general {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre E BCD)
+theorem Prop17.general {A : Point} {BCD : Circle}
     (hA : ¬ InsideCircle A BCD) :
     ∃ X : Point, Touches A X BCD := by
   by_cases hon : OnCircle A BCD
   · /- A is on the circle. Its centre E is within it, so E is not A. -/
-    obtain ⟨E, hE⟩ := hBCD
+    obtain ⟨E, hE⟩ := exists_centre BCD
     have hEA : E ≠ A := (ne_of_centre_of_on hE hon).symm
     obtain ⟨L, hE_L, hA_L⟩ := Postulate1 E A hEA
     /- Choose Q off EA, then draw AX at right angles to EA on Q's side by I.11. -/
@@ -151,14 +143,13 @@ theorem Prop17.general {A : Point} {BCD : Circle} (hBCD : ∃ E : Point, Centre 
     /- X is off EA, since it lies on Q's side; AX touches the circle by III.16's porism. -/
     exact ⟨X, Prop16.porism hE hon hXQ.triangle hEAX⟩
   · /- A is outside the circle, so III.17 gives its point of contact B. -/
-    obtain ⟨B, -, hB⟩ := Prop17 hBCD ⟨hA, hon⟩
+    obtain ⟨B, -, hB⟩ := Prop17 ⟨hA, hon⟩
     exact ⟨B, hB⟩
 
 /-- **III.17, from a point within** (a lemma beside III.17). From a point A within the
 circle BCD, no point X makes the straight line AX touch the circle, since a straight line
-through a point within a circle cuts it (`Touches.not_inside`). So, for a circle with a
-centre, a point not within it is exactly the condition under which `Prop17.general` draws a
-straight line touching it. -/
+through a point within a circle cuts it (`Touches.not_inside`). So a point not within it is
+exactly the condition under which `Prop17.general` draws a straight line touching it. -/
 theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
     ¬ ∃ X : Point, Touches A X BCD := by
   rintro ⟨X, hAX⟩
@@ -170,8 +161,8 @@ theorem Prop17.inside {A : Point} {BCD : Circle} (hA : InsideCircle A BCD) :
 A is outside the circle, so the point where AX meets the circle is not A, and the straight
 line it names with A is AX. -/
 example : type_of% @Elements.BookIII.Prop17 := by
-  intro A BCD hBCD hA
-  obtain ⟨X, hAX, hX⟩ := Prop17.general hBCD hA.1
+  intro A BCD hA
+  obtain ⟨X, hAX, hX⟩ := Prop17.general hA.1
   obtain ⟨L, hA_L, hX_L⟩ := Postulate1 A X hAX
   obtain ⟨⟨B, hB_L, hB⟩, -⟩ := hX L hA_L hX_L
   have hAB : A ≠ B := fun e => hA.2 (e ▸ hB)

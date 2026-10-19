@@ -166,7 +166,7 @@ and I.19, and rests on neither this rule nor Circle 3: III.1, which finds its ce
 the middle point of a straight line in the circle within it by III.2's own argument
 (`Prop1.within`). -/
 theorem III_2 : type_of% @Elements.BookIII.Prop2 :=
-  fun _ hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
+  fun hA hB _ hAEB => inside_of_between (Or.inr hA) (Or.inr hB) hAEB
 
 /-- **III.2 from Circle 3.** A straight line that has left a circle does not come back
 (`outside_of_between`, Circle 3): with one point on or within the circle and a second
@@ -174,7 +174,7 @@ point not within it, any point beyond the second is outside. It is Circle 2 turn
 Were a point between two points of the circle not within it, the second point of the
 circle would be outside the circle, and so not on it. -/
 theorem III_2_outside : type_of% @Elements.BookIII.Prop2 :=
-  fun _ hA hB _ hAEB => Classical.byContradiction fun hE =>
+  fun hA hB _ hAEB => Classical.byContradiction fun hE =>
     (outside_of_between (Or.inr hA) hE hAEB).2 hB
 
 /-- **III.5 from Diagram-segment 2.** A circle is fixed by its centre and radius
@@ -289,8 +289,8 @@ theorem III_24_measure {A B C D E F : Point} {AEB CFD : Circle}
     (hD : OnCircle D CFD) (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E)
     (hF_CD : ¬ Collinear C D F) (hsim : ∠ A E B = ∠ C F D) :
     circumference AEB A E B = circumference CFD C F D := by
-  obtain ⟨X, hX, hXE⟩ := BookIII.Prop2.oppositeSide hAEB hA hB hE_AB
-  obtain ⟨Y, hY, hYF⟩ := BookIII.Prop2.oppositeSide hCFD hC hD hF_CD
+  obtain ⟨X, hX, hXE⟩ := BookIII.Prop2.oppositeSide hA hB hE_AB
+  obtain ⟨Y, hY, hYF⟩ := BookIII.Prop2.oppositeSide hC hD hF_CD
   have w₁ := BookIII.Circumference.whole hAEB hA hB hXE
   have w₂ := BookIII.Circumference.whole hCFD hC hD hYF
   rw [BookIII.Circumference.eq hAEB hE hA hB hXE.symm] at w₁

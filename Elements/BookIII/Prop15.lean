@@ -52,7 +52,7 @@ theorem Prop15.half {E F K L M : Point} {α : Circle} {EK MN : Line}
   have hMXL : Between M X L := by
     rcases between_cases hMX hXL hML hM_MN hX_MN hL_MN with h | h | h
     · exact h
-    · exact absurd hM (inside_not_on (Prop2.within ⟨E, hE⟩ (Or.inl hX_in) (Or.inl hL_in) h))
+    · exact absurd hM (inside_not_on (Prop2.within (Or.inl hX_in) (Or.inl hL_in) h))
     · exact absurd (same_side_symm hXM) (pasch3 h hL_EK)
   have hMLE : Triangle M L E := Triangle.of_line hM_MN hL_MN hML hE_MN
   rw [← angle_eq_of_onRay (OnRay.of_between hEXF) (OnRay.of_between hELK)]
@@ -118,7 +118,7 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
   obtain ⟨MN, hL_MN, hR_MN⟩ := Postulate1 L R hRL.symm
   /- L is within the circle, so the straight line LM, carried through, meets the circle on
      each side of L, at N and at M. -/
-  have hK_in : InsideCircle K ABCD := Prop2 ⟨E, hE⟩ hF hG K hFKG
+  have hK_in : InsideCircle K ABCD := Prop2 hF hG K hFKG
   have hL_in : InsideCircle L ABCD :=
     InsideCircle.of_between_centre_of_inside hE hF hK_in hELK
   obtain ⟨N, hN, hN_MN, hNLR⟩ := line_circle_beyond hL_in hL_MN hR_MN hRL

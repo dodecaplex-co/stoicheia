@@ -1,7 +1,7 @@
 # review/III/14.toml
 [statement]
 scope = "full"
-note = "With its companion: `Prop14.general` takes any two straight lines in the circle, a diameter at no distance; `Prop14` keeps two not through the centre."
+note = "E and feet F, G are given. `Prop14.general` takes any two straight lines, a diameter at no distance; `Prop14` keeps two not through E."
 companions = ["III.14 general"]
 fingerprint = "sha256:ab5dba1e761e8618"
 
@@ -9,8 +9,9 @@ fingerprint = "sha256:ab5dba1e761e8618"
 kind = "euclid"
 note = "The companion takes Euclid's case, two straight lines not through the centre, from `Prop14`. A straight line through the centre is a diameter, two radii together (`Prop14.diameter_sum`), its foot the centre; and of a diameter and another straight line, the diameter is the greater [I. 20]."
 
-[representation]
-tags = ["centre-given"]
+[[passage]]
+at = "For let the centre of the circle ABDC be taken"
+kind = "given"
 note = "The centre E and the feet F, G of the perpendiculars are given, since Definition III.4 measures from them; the proof still takes III.1's centre and shows that it is E. The companion is given the feet as `Foot`, the foot of the perpendicular, which is E itself for a straight line through E, so that a diameter is at no distance from the centre (Definition III.4, extended to that case)."
 
 [[passage]]
