@@ -42,19 +42,21 @@ namespace Elements.BookIII
 open Tacit
 
 /-- **A straight line in a circle, along its own line.** For two different points A, B of a
-circle with a centre, and a point P of the straight line AB: P is on the circle exactly when
+circle, and a point P of the straight line AB: P is on the circle exactly when
 it is A or B, and within the circle exactly when it lies between them. Euclid takes it for
 granted when AB coincides with CD: the ends go to the ends, and the points between to points
 between, so that the base of one segment falls on the base of the other. A point between A
 and B is within the circle by III.2, and so no third point of the straight line is on the
 circle (`Prop2.triangle`); a point within the circle on AB lies between A and B by System E's
-Circle 1 (`between_of_inside_chord`). [III. 2] -/
-theorem Prop24.chord_cases {A B P : Point} {α : Circle} (hα : ∃ O : Point, Centre O α)
-    (hA : OnCircle A α) (hB : OnCircle B α) (hAB : A ≠ B) (hP : Collinear A B P) :
+Circle 1 (`between_of_inside_chord`). The centre needed by III.2 comes from the rule that
+every circle has one (`exists_centre`). [III. 2] -/
+theorem Prop24.chord_cases {A B P : Point} {α : Circle} (hA : OnCircle A α) (hB : OnCircle B α)
+    (hAB : A ≠ B) (hP : Collinear A B P) :
     (OnCircle P α ↔ P = A ∨ P = B) ∧ (InsideCircle P α ↔ Between A P B) := by
+  have hcentre := exists_centre α
   refine ⟨⟨fun hPα => Classical.byContradiction fun hne => ?_, ?_⟩,
-    ⟨fun hin => ?_, fun h => Prop2 hα hA hB P h⟩⟩
-  · exact Prop2.triangle hα hA hB hPα hAB (fun e => hne (Or.inr e.symm))
+    ⟨fun hin => ?_, fun h => Prop2 hcentre hA hB P h⟩⟩
+  · exact Prop2.triangle hcentre hA hB hPα hAB (fun e => hne (Or.inr e.symm))
       (fun e => hne (Or.inl e.symm)) hP
   · rintro (h | h)
     · rw [h]; exact hA
@@ -146,8 +148,8 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
     rcases hP with hPE | hPl
     · exact hoff P hPE
     · obtain ⟨hQl, hends, hbet⟩ := hbase P (Or.inr hPl) hPl
-      obtain ⟨on₁, in₁⟩ := Prop24.chord_cases hAEB hA hB hA_B hPl
-      obtain ⟨on₂, in₂⟩ := Prop24.chord_cases hCFD hC hD hC_D hQl
+      obtain ⟨on₁, in₁⟩ := Prop24.chord_cases hA hB hA_B hPl
+      obtain ⟨on₂, in₂⟩ := Prop24.chord_cases hC hD hC_D hQl
       rw [on₁, on₂, in₁, in₂]
       exact ⟨hends, hbet⟩
   -- therefore it will coincide with it and will be equal to it.
@@ -324,7 +326,7 @@ theorem Prop24.image {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
     ‖a.B a.C‖ = ‖b.B b.C‖ ∧ ∃ Q : Point, OnCircle Q b.circle ∧
       SameSideOf Q b.K b.B b.C ∧ ∠ a.B P a.C = ∠ b.B Q b.C := by
   obtain ⟨-, hB, hC, -⟩ := ha
-  obtain ⟨hβ, hD, hE, hL⟩ := hb
+  obtain ⟨-, hD, hE, hL⟩ := hb
   obtain ⟨f, hfB, hfC, -, hinto, -, hdist⟩ := h
   /- The ends of the base are points of the arc, and so is P. -/
   obtain ⟨M, hB_M, hC_M⟩ := Postulate1 a.B a.C hPK.triangle.ne₁₂
@@ -344,7 +346,7 @@ theorem Prop24.image {a b : Arc} (ha : a.Drawn) (hb : b.Drawn)
   obtain ⟨hQ, hQside⟩ := hinto P hPa
   have hQBC : ¬ Collinear b.B b.C (f P) := by
     intro hcol
-    rcases (Prop24.chord_cases hβ hD hE (show Triangle b.B b.C b.K from hL).ne₁₂ hcol).1.mp hQ with
+    rcases (Prop24.chord_cases hD hE (show Triangle b.B b.C b.K from hL).ne₁₂ hcol).1.mp hQ with
       hQB | hQC
     · rw [hQB, len_self] at hPB
       exact len_ne_zero hPK.triangle.ne₁₃.symm hPB
