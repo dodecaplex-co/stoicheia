@@ -22,7 +22,10 @@ recommendation for the angle (section 3.2). Warm thanks to Astra. An independent
 of the revised draft, that day, found that the new angle reaches one more protected file,
 `scripts/negative_tests.py`, which quotes I.16's statement; section 6 adds it, ahead of the
 content pass, and a further review that day made the citation of brief 0012 checkable,
-completed section 6's lists and corrected two counts (sections 2 and 3.5).*
+completed section 6's lists and corrected two counts (sections 2 and 3.5). A last review
+that day set the cost of statements written with `Arc.ofHeath` apart from the notation's
+(sections 2, 3.3, 5 and 6, and question 3), and limited what a build without warnings
+shows (section 6).*
 
 The points are Argon's. Its second review of the `book-III` release, which read the checks,
 the records and the pages line by line, gave section 3.3 to the notation of the Lean
@@ -102,11 +105,16 @@ four kinds of change cost differently:
 | Arguments or fields of one type reordered | as for a renamed word | a reordered definition's entry, or, for a structure, the entries of the fields that move (for `Arc`, `Arc.C` and `Arc.K`, not `Arc`'s own); and every entry that applies a reordered function by position | nothing warns: old code compiles with a new meaning |
 
 Issue #69 plans for every record of Books I to III to be re-stamped once. On the
-recommendations below the cost is less than that: no fingerprint changes and nothing in the
-lock, and the `lean` stamps of 98 of the 99 proposition files are re-read once (section 6).
-One open question (3) would add a few statements' fingerprints and two lock entries, if the
-owner takes it before the consolidation release; another (9), if the owner keeps the angle's
-symbol, would lower the 98 files to 77.
+recommendations below the notation pass costs less than that: no fingerprint changes and
+nothing in the lock, and the `lean` stamps of 98 of the 99 proposition files are re-read
+once (section 6). Open question 9, if the owner keeps the angle's symbol, would lower the
+98 files to 77. Open question 3 is not a change of notation, and is costed apart (section
+3.3). Heath's field order for the arc, taken before the consolidation release, would change
+the fingerprints of the four statements that build an arc by position and two lock entries.
+A constructor in Heath's order costs nothing while no statement uses it; each statement
+rewritten with it is a statement change, with its own approval, that changes the
+statement's fingerprint and `lean` stamp and brings the constructor's definition into the
+lock, with the two lock hashes renewed after review.
 
 ## 3. The five points
 
@@ -272,9 +280,15 @@ brief for [#97], not yet on main).
   `circumference AEB A E B`. The fields read by name (`a.B`, `a.K`, `a.C`) as before, and
   so does construction by name (`{ circle := AEB, B := A, C := B, K := E }`); positional
   construction and matching change (`⟨…⟩`, `Arc.mk`, patterns).
-- *A constructor in Heath's order, beside the fields.* Keep the fields, and add
-  `Arc.ofHeath α B K C`, which builds the arc BKC, for statements to write in place of
-  `⟨…⟩`. It moves nothing, so it can be added before the release or after it.
+- *A constructor in Heath's order, beside the fields.* Keep the fields in their order, and
+  add `Arc.ofHeath α B K C`, which builds the arc BKC. Added and unused, it moves nothing:
+  no field, no statement and no lock entry changes, so it can be added before the release
+  or after it. Writing a statement with it in place of `⟨…⟩` is another change, a
+  statement correction with its own approval. Lean then records `Arc.ofHeath AEB A E B`
+  where it recorded `Arc.mk AEB A B E` (III.24), so the statement's fingerprint changes
+  and its file's `lean` stamp goes stale; and the certificate's vocabulary walk, which
+  starts from the constants of the statements, reaches the new word, so its definition
+  joins the lock, and the lock and the two lock hashes are renewed after review.
 
 **Recommended: keep both words and explain them; and decide the arc's field order before
 the consolidation release** (open question 3). Before `Arc` is first released, reordering
@@ -285,14 +299,21 @@ the certificate's printer, that the entry for `Arc` itself would not change), an
 deprecation. After the release the fields could not be reordered: `⟨α, B, C, K⟩` would
 silently mean another arc (rule 3). A third way works before the release or after it: keep
 the fields, and add a function that takes Heath's order, `Arc.ofHeath α B K C` for the arc
-BKC, for statements to write in place of `⟨…⟩`. The staged III.28 shows what is at stake:
+BKC. Adding it costs nothing; writing the four statements with it in place of `⟨…⟩` costs
+what reordering does in the records, their fingerprints and `lean` stamps, and in the lock
+one new entry, `Arc.ofHeath`'s, in place of the two fields' changed entries. The staged
+III.28 shows what is at stake:
 Heath's circumference ACB of the circle ABC is `⟨ABC, A, B, C⟩` there, and would be
-`⟨ABC, A, C, B⟩` in Heath's order, or `Arc.ofHeath ABC A C B`. The decision
+`⟨ABC, A, C, B⟩` in Heath's order, or `Arc.ofHeath ABC A C B`. Either way changes what
+Lean records, so it is a statement change with its own approval, and no part of the
+notation pass of section 6. The decision
 belongs with brief 0006, whose definition it would revise, and with the migration of stage
 3 now under way ([#25]); this brief raises it, and does not take it. It is the one question
 here with a deadline that is not the owner's to set: the move puts `Arc` into `Elements/`,
-and the consolidation release would release it. Taken before the move lands, it costs the
-staged files alone.
+and the consolidation release would release it. Taken before the move lands, either way
+costs the staged files alone, which the certificate does not yet read: the move then brings
+the statements into `facts.json` in the chosen form, and a constructor's entry into the lock
+with stage 3's other words.
 
 ### 3.4 Circles named ABCD beside the points A, B, C, D
 
@@ -389,7 +410,7 @@ The responses to Argon's review ([#71]) send three more points here.
 | the rectangle AB, CD; the square on AB | `rect A B C D`, `sq A B` | unchanged | words already |
 | the circumference BKC | `circumference α B K C` | unchanged, explained | Heath's letters: K on the arc |
 | the circumference on which the angle BAC stands | `standing α B A C` | unchanged, explained | Heath's letters: A the vertex |
-| the arc BKC, and its segment (stage 3) | `⟨α, B, C, K⟩` | `⟨α, B, K, C⟩`, if decided before the release, or `Arc.ofHeath α B K C` | one order for one arc |
+| the arc BKC, and its segment (stage 3) | `⟨α, B, C, K⟩` | `⟨α, B, K, C⟩`, if decided before the release, or `Arc.ofHeath α B K C`: a statement change either way, not notation (open question 3) | one order for one arc |
 | the circle ABCD | `ABCD` | unchanged, explained | Heath's name, and part of the interface |
 | the straight line C; the angle D | `C₁ C₂`; `D₁ D D₂` | unchanged, explained | its ends; its vertex and a point on each arm |
 
@@ -420,9 +441,14 @@ passages is [#48]'s, in STYLE.
   example of a Lean expression, `∠ A B C` ([STYLE.md](../STYLE.md), section 1, "Lean
   notes"); and the one review record whose text writes `‖` (III.15; the records of I.45 and II.14, which
   wrote the bars when this draft began, were rewritten with stage 2). The other briefs that
-  write the bars keep the notation they were written in: 0003 as history, as
-  FORMALIZATION, section 1, keeps the early briefs, and 0006 to 0009 as written, the frozen
-  among them unchanged; a line in FORMALIZATION says so.
+  write the old forms keep the notation they were written in: 0002, the decisions page,
+  where its entry quotes Argon's examples (`‖A B‖`, `△ A B C`); 0003 as history, as
+  FORMALIZATION, section 1, keeps the early briefs; and 0006 to 0009 as written, the frozen
+  among them unchanged (0009 writes no bars, only `∠` and `△`). The reports under
+  `docs/reports/` are kept as their day's record too: the crew's reports and the acceptance
+  calibration, which between them write all three, and the prototype of mixed angles, which
+  writes `∠`. A line in FORMALIZATION says so. The ∠ABC of III.22's "modern way" is
+  mathematics, not Lean, and is [#48]'s (section 5).
 - *Protected paths*, each named in a decisions entry and given a security review:
   `scripts/render.py` (its definitions maps write `∠ A B C` for Book I's Definitions 8 and
   9, and the bars, `∠ A E B` and `∠ A E B = ∠ C F D` for Book III's; `DEFINITION_LEAN`
@@ -445,12 +471,25 @@ and the lock's vocabulary. The line numbers it records may move, where a longer 
 reflows a line, and only they. Any other difference means the pass changed more than
 notation. A slip in the substitution (`f len A B` for `f ‖A B‖`) is a type error, which
 `lake build` finds. With both, re-reading 98 files against their records is reading a
-mechanical substitution, and the reviewer still reads each file before stamping it.
+mechanical substitution, and the reviewer still reads each file before stamping it. The
+comparison is for the notation substitutions alone: a change taken under open question 3
+changes recorded terms by design, so it lands before the pass, with its own approval,
+review and `facts.json`, and the pass's "before" is taken after it.
+
+Neither check sees a docstring or a `/- … -/` note, which Lean never elaborates, nor the
+prose. So the pass begins from an inventory, taken by searching the Lean and the prose for
+`‖`, `△` and `∠`, which lists each occurrence to be replaced and each kept on purpose, with
+its reason: the deprecated forms of section 7 and their docstrings; the briefs and reports
+kept as written, and the decisions page's quotation of Argon; the modern way's mathematics;
+the formal model's Mathlib norms; and this brief. The reviewer checks the pass against the
+inventory, and searches again after step 5 for anything it does not list.
 
 **The order.**
 
-1. If the owner takes open question 3, the arc's field order, as a revision of brief 0006,
-   before the consolidation release. And, in a pull request of its own before step 2,
+1. If the owner and the coordinator take open question 3, the arc's field order or its
+   statements written with `Arc.ofHeath`, as a revision of brief 0006, before the
+   consolidation release: a statement change with its own approval and records, apart from
+   the notation pass. And, in a pull request of its own before step 2,
    `scripts/negative_tests.py` taught to find I.16's statement however its angle is
    written: it quotes the statement's words, so step 2's `ang` would stop CI's `negative`
    job, and `safe_push` would keep the two changes apart (WORKFLOW, section 10).
@@ -463,9 +502,11 @@ mechanical substitution, and the reviewer still reads each file before stamping 
 5. The coordinator's change to the foundations: their definitions and docstrings written
    with the words, and the bars, the △ and the ∠ made the deprecated forms of section 7.
    From then on `lake build`, `lake build Audit` and `lake build Staging` show no
-   deprecation warning, which shows that no file of the library, the audit or the staged
-   statements still writes the old forms; the pages are regenerated in the same change,
-   since their Lean blocks quote the source.
+   deprecation warning, which shows that no term Lean elaborates in those targets still
+   uses the old forms. It shows nothing of the docstrings and notes, which the inventory
+   above covers, and the foundations themselves still write the old forms, in section 7's
+   deprecated declarations. The pages are regenerated in the same change, since their Lean
+   blocks quote the source.
 6. A release later, the deprecated forms removed, and the release notes say so.
 
 Book IV's statements are scaffolded after step 4, in the new notation. Brief 0012, Book
@@ -518,9 +559,13 @@ Each is the owner's, or the coordinator's where marked; the recommendation is th
 3. **The arc's field order.** Heath's (`circle`, `B`, `K`, `C`), decided before stage 3's
    move lands, and at the latest before the consolidation release, since afterwards the
    fields cannot move without silently changing users' arcs; or the fields kept, with a
-   function in Heath's order (`Arc.ofHeath`) beside them? *For the coordinator and the
-   owner*, as a revision of brief 0006; it touches the migration of stage 3 ([#25]),
-   III.25's restatement (stage 4) and Book IV's bridges ([#97]).
+   function in Heath's order (`Arc.ofHeath`) beside them? Added unused, the function
+   changes nothing; each statement written with it changes its printed term, fingerprint
+   and `lean` stamp, and brings the function's definition into the lock, with the two lock
+   hashes renewed after review. Either way it is a statement change, approved apart from
+   the notation pass (section 3.3). *For the coordinator and the owner*, as a revision of
+   brief 0006; it touches the migration of stage 3 ([#25]), III.25's restatement (stage 4)
+   and Book IV's bridges ([#97]).
 4. **The page key.** A line under each "In Lean" block, generated by `render.py` from the
    words the page's statements use, its wording taken from FORMALIZATION's vocabulary:
    wanted?
@@ -585,7 +630,7 @@ correction. Each finding, and what was done:
 |---|---|---|
 | A renamed binder can keep its old name for callers, with a warning, by Lean 4.35's `@[deprecated_arg]`; "no alias possible" was false | material | rule 4, the table of section 2, sections 3.4 and 3.5 corrected; test 15 added |
 | Reordering the arc's fields changes two lock entries, `Arc.C` and `Arc.K`, not the one for `Arc`; positional `Arc.mk` and patterns change too, not only `⟨…⟩` | material | sections 2 and 3.3 corrected |
-| The arc's order should be decided before stage 3's move lands, and a constructor in Heath's order is a third way that moves nothing | material | section 3.3's options and question 3 |
+| The arc's order should be decided before stage 3's move lands, and a constructor in Heath's order is a third way, which leaves the fields where they are | material | section 3.3's options and question 3; a later review set apart the cost of statements written with it (sections 2, 3.3, 5 and 6) |
 | Keeping `∠` global leaves the clash with Mathlib's angle for every Mathlib user who imports the library | material | the recommendation is now `ang A B C`, with `∠` deprecated for one release (sections 3.2, 5, 6, 7 and question 9) |
 | The pass's checks should cover `Audit/` and `Staging/`, the pages should be regenerated, and the comparison of `facts.json` should allow moved line numbers | material | section 6, "How a reviewer knows" and step 5 |
 | `scaffold_book.py` holds Books I to III's tables only; Book IV's is yet to be written | editorial | section 6 |
