@@ -1433,9 +1433,16 @@ def stretch(m) -> float:
 
 def length(value: str | None) -> float | None:
     """An attribute that is one number, in any spelling SVG allows ("50", "5e1", "50px"),
-    or None."""
-    m = re.fullmatch(r"\s*(" + NUM.pattern + r")\s*(?:px)?\s*", value or "")
-    return float(m.group(1)) if m else None
+    or None. Read in one pass, by its characters and then float(), so that a long run of
+    digits cannot make the reading slow, as NUM matched to the end would."""
+    v = (value or "").strip()
+    v = v[:-2].rstrip() if v.endswith("px") else v
+    if not re.fullmatch(r"[-+.0-9eE]+", v):
+        return None
+    try:
+        return float(v)
+    except ValueError:
+        return None
 
 
 def rect_outline(own) -> list[tuple[float, float]] | None:

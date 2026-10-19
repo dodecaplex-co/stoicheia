@@ -20,13 +20,16 @@ it, put to the script's own patterns and functions:
 * the clearance cases: S22 finds a stroke through a letter, or nearer it than 2 less half
   its width (given as an attribute, in style= or inherited), and not one clear of it;
   reads a stroke of none as no stroke and a dashed one whole; closes a path's stroke only
-  where a Z closes it; finds a circle through a letter and not one round it, a dot beside
-  it and the canvas's edge; leaves out a circle of no radius, a rect of no width and a
-  line of no length with butt caps, and follows a rect's rounded corners however their
-  radius is spelled; follows a transform, taking a width and a radius at the most it
-  stretches them; measures a letter upright or italic as its figure sets it, and places
-  it by its anchor and the whole label's advance. And it finds a letter drawn twice, or
-  twice in one of several figures side by side, or across the cut between them.
+  where a Z closes it, a polygon's always and a polyline's never; finds a circle or an
+  ellipse through a letter and not one round it, a dot beside it, a dot or a short stroke
+  wholly within it, and each of the canvas's four edges; leaves out a circle of no radius,
+  a rect of no width and a line of no length with butt caps, and follows a rect's rounded
+  corners however their radius is spelled; follows a transform, of a stroke or of the
+  letter, taking a width and a radius at the most it stretches them; measures a letter
+  upright or italic, and at its size, as its figure sets it, and places it by its anchor
+  and the whole label's advance. And it finds a letter drawn twice, or twice in one of
+  several figures side by side, or across the cut between them, and reads A and A′ as two
+  letters.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -206,7 +209,11 @@ def ink_finding(drawn: str, x: float, y: float, ink: str) -> bool:
 # rect's rounded corners as square, drew a circle of no radius, placed an anchored label
 # with a prime by its capital alone, and counted a letter drawn twice in one of several
 # figures side by side as once in each; a second found a radius spelled 5e1 read as none,
-# and a line of no length with butt caps read as drawn. Each has its case below.)
+# and a line of no length with butt caps read as drawn. Each has its case below. An
+# independent review then found no case for an ellipse, a polyline, a dot or a stroke
+# wholly within a letter, the canvas's right, top and foot, a letter's size or transform,
+# or a prime, so that S22 could lose any of them and every case still pass; those cases
+# are below too.)
 
 LINE = '<line x1="100" y1="{y}" x2="200" y2="{y}" stroke="#3b2f2f" stroke-width="1.6"/>'
 UPRIGHT_STROKE = '<line x1="{x}" y1="90" x2="{x}" y2="104" stroke="#3b2f2f" stroke-width="1.6"/>'
@@ -233,6 +240,20 @@ CLEAR_CASES = [   # (what is drawn beside a letter at (150, 100), at 17; the let
      "A", "italic", "start", False),
     ('<circle cx="155" cy="94" r="6" fill="none" stroke="#8c7b62"/>',
      "A", "italic", "start", True),
+    ('<ellipse cx="155" cy="94" rx="20" ry="4" fill="none" stroke="#8c7b62"/>',
+     "A", "italic", "start", True),                          # an ellipse through it
+    ('<ellipse cx="155" cy="94" rx="40" ry="30" fill="none" stroke="#8c7b62"/>',
+     "A", "italic", "start", False),                         # and one round it
+    ('<polyline points="140,94 170,94 170,140" fill="none" stroke="#3b2f2f"/>',
+     "A", "italic", "start", True),                          # a polyline through it
+    ('<polyline points="110,94 110,150 200,150 200,94" fill="none" stroke="#3b2f2f"/>',
+     "A", "italic", "start", False),                         # open: no side along 94
+    ('<polygon points="110,94 110,150 200,150 200,94" fill="none" stroke="#3b2f2f"/>',
+     "A", "italic", "start", True),                          # closed: a side along 94
+    # Wholly within an upright H, 4 or more from its hull's sides: a dot, a short stroke.
+    ('<circle cx="157" cy="94" r="1" fill="#3b2f2f"/>', "H", "normal", "start", True),
+    ('<line x1="155" y1="93" x2="158" y2="93" stroke="#3b2f2f" stroke-width="0.5"/>',
+     "H", "normal", "start", True),
     ('<circle cx="155" cy="94" r="0" fill="none" stroke="#8c7b62"/>',
      "A", "italic", "start", False),                         # no radius: SVG draws nothing
     ('<circle cx="155" cy="94" r="0" fill="none" stroke="#8c7b62" stroke-linecap="round"/>',
@@ -274,9 +295,12 @@ CLEAR_CASES = [   # (what is drawn beside a letter at (150, 100), at 17; the let
     (UPRIGHT_STROKE.format(x=132), "A′", "italic", "end", True),
     (UPRIGHT_STROKE.format(x=132), "A", "italic", "end", False),
 ]
-EDGE_CASES = [   # (a letter A's x, at y 100; a finding?)
-    (1, True),
-    (150, False),
+EDGE_CASES = [   # (a letter A's x and y; a finding?)
+    (1, 100, True),         # by the left edge
+    (390, 100, True),       # by the right: it ends at 400.9
+    (150, 13, True),        # by the top: its apex at 1.1
+    (150, 299, True),       # by the foot: 1 above it
+    (150, 100, False),
 ]
 TWICE_CASES = [   # (the x of each letter A, at y 100; the cuts between figures side by
                   # side; a finding?)
@@ -301,9 +325,23 @@ def s22_findings(drawn: str, letters: str, cuts: tuple[float, ...] = ()) -> list
 
 
 def letter(s: str, x: float = 150, y: float = 100, font_style: str = "italic",
-           anchor: str = "start") -> str:
-    return (f'<text x="{x}" y="{y}" font-size="17" font-style="{font_style}" '
+           anchor: str = "start", size: float = 17) -> str:
+    return (f'<text x="{x}" y="{y}" font-size="{size:g}" font-style="{font_style}" '
             f'text-anchor="{anchor}">{s}</text>')
+
+
+PLACE_CASES = [   # (what is drawn; the letters, as markup; a finding?)
+    # At 17 an A's apex stands 1.3 from a line at 86, its width taken off; at 14, 3.4.
+    (LINE.format(y=86), letter("A"), True),
+    (LINE.format(y=86), letter("A", size=14), False),
+    # A transform on the letter moves it: up 20, onto the line at 90.
+    (LINE.format(y=90), '<g transform="translate(0,-20)">' + letter("A", y=120) + "</g>",
+     True),
+    (LINE.format(y=90), letter("A", y=120), False),
+    # A and A′ name two points, each drawn once; A′ drawn twice is a repeat.
+    ("", letter("A", x=60) + letter("A′", x=300), False),
+    ("", letter("A′", x=60) + letter("A′", x=300), True),
+]
 
 
 # ---------------------------------------------------------------------------------------
@@ -366,14 +404,25 @@ class Clearance(unittest.TestCase):
                                     "a letter rightly")
 
     def test_edge_cases(self):
-        for x, want in EDGE_CASES:
-            with self.subTest(x=x):
-                found = s22_findings("", letter("A", x=x))
+        for x, y, want in EDGE_CASES:
+            with self.subTest(at=(x, y)):
+                found = s22_findings("", letter("A", x=x, y=y))
                 self.assertEqual(bool(found), want,
                                  f"S22 {'misses' if want else 'wrongly finds'} the canvas's "
-                                 f"edge near a letter at x {x}: {found}")
+                                 f"edge near a letter at ({x:g}, {y:g}): {found}")
 
     test_edge_cases.__doc__ = f"S22 reads {len(EDGE_CASES)} letters by the canvas's edge rightly"
+
+    def test_place_cases(self):
+        for drawn, letters, want in PLACE_CASES:
+            with self.subTest(drawn=drawn, letters=letters):
+                found = s22_findings(drawn, letters)
+                self.assertEqual(bool(found), want,
+                                 f"S22 {'misses' if want else 'wrongly finds'} a finding on "
+                                 f"{letters} beside {drawn or 'nothing'}: {found}")
+
+    test_place_cases.__doc__ = (f"S22 reads {len(PLACE_CASES)} letters by their size, their "
+                                "transform and their primes rightly")
 
     def test_twice_cases(self):
         for xs, cuts, want in TWICE_CASES:
