@@ -82,7 +82,7 @@ live in Book Zero (`Elements/Figure/`), where any proof may cite them.
 - Turning Definition 10's "right" into the one magnitude of all right angles takes Postulate 4, which no bracket names here.
 
 ## I.12
-- The circle about C through D cuts AB twice (System E, Intersection 2).
+- The circle about C through D cuts AB twice. `line_meets_circle_of_opposite_sides` (System E, Intersection 2) is now proved in Book Zero's `Circles.lean`: the crossing lies between C and D, Circle 3 puts it inside the circle, and Intersections 5 finds a point of the circle in each direction.
 - "Perpendicular to the infinite straight line" again means a right angle with every point of AB (`OnRay.cases_of_between`, as in I.11).
 - HGC and HEC, the triangles I.8 compares, are genuine triangles: H, G and E are on AB, and C is off it (`Triangle.of_line`).
 
