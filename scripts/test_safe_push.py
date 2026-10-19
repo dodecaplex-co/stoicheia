@@ -2337,10 +2337,16 @@ class ProtectedPaths(Edge):
         for p in facts["propositions"]:
             if p["ref"] in ("III.1", "III.1 Por."):
                 p["axioms"].remove("Tacit.area_swap")
+        expectations = json.loads(self.text(expect))
+        for x in expectations["expectations"]:
+            if x["ref"] == "III.1 Por." and x["field"] == "axioms":
+                x["equals"].remove("Tacit.area_swap")
+                x["count"]["is"] -= 1
+            elif x["ref"] == "III.1" and x["field"] == "axioms" and "count" in x:
+                x["count"]["is"] -= 1
         changes = {lean: new_lean, record: stamped,
                    "facts.json": json.dumps(facts, indent=2, ensure_ascii=False) + "\n",
-                   expect: self.text(expect).replace('"is": 56}', '"is": 55}')
-                                            .replace('"is": 57}', '"is": 56}')}
+                   expect: json.dumps(expectations, indent=2, ensure_ascii=False) + "\n"}
         changes.update(self.decision(f"`{expect}`: III.1's re-proof uses one tacit rule fewer."))
         return changes
 
@@ -2436,7 +2442,7 @@ class ProtectedPaths(Edge):
             "an expectation removed": lambda d: d["expectations"].remove(entry(d, "III.1")),
             "every expectation removed": lambda d: d.update(expectations=[]),
             "its excludes removed": drop("excludes"),
-            "its includes emptied": lambda d: entry(d, "III.1 Por.").update(includes=[]),
+            "its includes emptied": lambda d: entry(d, "I.5", "inherited").update(includes=[]),
             "its excludes emptied": lambda d: entry(d, "III.1").update(excludes=[]),
             "its count removed": drop("count"),
             "its equals removed": drop("equals", "III.1 Por.", "of"),
@@ -2456,7 +2462,7 @@ class ProtectedPaths(Edge):
         kept = {
             "the counts moved": moved,
             "an equals moved": lambda d: entry(d, "III.1 Por.", "of").update(equals="III.2"),
-            "its includes grown": lambda d: entry(d, "III.1 Por.")["includes"].append(
+            "its includes grown": lambda d: entry(d, "I.5", "inherited")["includes"].append(
                 "Tacit.area_swap"),
             "its excludes grown": lambda d: entry(d, "III.1")["excludes"].append(
                 "Tacit.area_swap"),

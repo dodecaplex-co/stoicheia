@@ -1729,15 +1729,20 @@ findings:
   entry carries every assumption its proof uses: Definition I.15, Postulates 1 to 4 and
   the reviewed 57 tacit rules, `Tacit.centre_unique` among them today. The `ref`, `field`
   and count of 57 tacit rules stay as they are; no other expectation changes. This makes
-  the check stricter on its own, before C6b: safe_push treats dropping an `includes`
-  member as a check change and keeps it apart from the content it judges, while an
-  existing `equals` value and `count.is` may move with that content. Lane 3 can then
-  reprove the porism by Euclid's reductio, move the pinned list and count to that proof's
-  assumptions, and add `excludes: ["Tacit.centre_unique"]` in its content pull request.
+  the check stricter on its own, before the content it describes: safe_push treats
+  dropping an `includes` member as a check change and keeps it apart from the content
+  it judges, while an existing `equals` value and `count.is` may move with that content.
+  Lane 3 can then reprove the porism by Euclid's reductio, move the pinned list and count
+  to that proof's assumptions, and add `excludes: ["Tacit.centre_unique"]` in its content
+  pull request.
   The `axioms` row of [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md), a protected
   file, gave III.1's and its porism's counts as fixed; it now says that the list follows
   each proof's dependencies and that the expectations pin what those two must hold, which
-  stays true when a re-proof moves the pinned values.
+  stays true when a re-proof moves the pinned values. The protected regression test
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) keeps its checks of
+  growing and emptying an `includes` list by exercising the still-list-shaped I.5
+  expectation after III.1 Por.'s `includes` becomes `equals`, and its simulated future
+  re-proof moves that exact list together with the counts. No guard is weakened.
 
 - **III.1's construction home and its porism, 19 October 2026 (D1).** By the owner's
   decision D1 of 19 October, `Elements.BookIII.Prop1.construction` moves home before
