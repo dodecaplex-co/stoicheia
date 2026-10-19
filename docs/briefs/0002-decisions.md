@@ -1334,3 +1334,17 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+
+- **Stoicheia Team is the edition's copyright holder and cited author.** On 19 October 2026
+  the owner decided that [NOTICE](../../NOTICE) reads "Copyright 2026 Stoicheia Team and
+  contributors" and [CITATION.cff](../../CITATION.cff) names one author, the entity
+  "Stoicheia Team". The credit that [LICENSE-PROSE.md](../../LICENSE-PROSE.md) asks for now
+  names that author beside the title. [README.md](../../README.md) has no citation block or
+  text asking readers to cite the project; [references.bib](../references.bib) has no entry
+  for Stoicheia itself, so neither changes. [LICENSE](../../LICENSE) keeps the Apache
+  template's copyright line. A repository-wide search for the surname and copyright lines
+  found no other project attribution to change; third-party credits and notices stay as they
+  are. The sample name in `scripts/test_safe_push.py` still waits for its own tooling pull
+  request. This settles two of the three things "The edition does not name its owner" left
+  to the owner. The repository's address on GitHub remains the owner's to decide, and its
+  links stay unchanged. No statement, check or protected path changes.
