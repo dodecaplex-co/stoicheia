@@ -174,7 +174,7 @@ within the circle, whose proof produces the straight line to meet the circle and
 the point between the two points where it meets it: III.7, III.11, III.15 and III.23.
 III.13 cites III.2, where Heath's reference is III.2.
 
-Three more corollaries after III.2 take the place of Book Zero lemmas that call Circle 2:
+Three more corollaries after III.2 take the place of Book Zero lemmas that rest on Circle 2:
 `Prop2.triangle`, that three points of a circle are not on one straight line, first used
 in III.8; and `Prop2.oppositeSide` and `Prop2.sameSide`, that a straight line in a circle
 has points of the circle on either side of it, first used in the shared steps of
@@ -344,5 +344,5 @@ not in the default build, and nothing imports it. If a statement or a rule chang
 an audit lemma stops compiling, its row is out of date: the overlap may have gone, which is
 good news, or moved. The first users come from facts.json, and change only when the proofs,
 or the lemmas they call, do. A proof that calls Circle 2 or Circle 3, or one of Book Zero's
-three lemmas that call Circle 2, brings the rule back into the certificate; III.2, its
+three lemmas that rest on Circle 2, brings the rule back into the certificate; III.2, its
 corollaries and the two `InsideCircle` helpers take the step without it.
