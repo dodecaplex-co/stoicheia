@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For, if AB is unequal to AC"
 kind = "helper"
 helper = "Tacit.lt_trichotomy"
-note = "Euclid takes for granted that one of two unequal lengths is greater; the Lean uses `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E, section 3.5), not a proved lemma."
+note = "Euclid takes for granted that one of two unequal lengths is greater; the Lean uses `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proved lemma."
 
 [[passage]]
 at = "Let AB be greater"
@@ -27,12 +27,6 @@ note = "Euclid cuts DB from the end B of AB; the Lean uses I.3 (`Prop3`), for wh
 at = "let DC be joined"
 kind = "given"
 note = "Our triangle DBC is named by its corners, so no straight line DC is drawn: the proof uses only the points D and C."
-
-[[passage]]
-at = "and the angle DBC is equal to the angle ACB"
-kind = "helper"
-helper = "angle_onRay_left"
-note = "Euclid treats DBC as ABC because D is between B and A; `angle_onRay_left` identifies those angles before the Lean uses the given equality with ACB."
 
 [[passage]]
 at = "therefore the base DC is equal to the base AB"
