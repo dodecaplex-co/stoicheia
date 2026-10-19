@@ -5,7 +5,8 @@ machine or a reviewer answers it. This script answers the machine's items for ev
 proposition of Books I-III, for each book and for the edition as a whole, and reads the
 reviewer's items from the review records (`review/<book>/NN.toml`, `[review] items`) and
 from each book's acceptance record (`docs/reports/acceptance/book-<book>.toml`). It
-writes every failure to docs/reports/acceptance-books-I-III.md, and changes nothing else.
+writes every failure to docs/reports/acceptance-books-I-III.md and, with --json, writes
+the verdicts beside it; it changes nothing else.
 
     python3 scripts/check_acceptance.py            every item
     python3 scripts/check_acceptance.py --quick    the kernel replay and the model tests
@@ -31,8 +32,9 @@ The check that every Lean name a catalogue gives is declared, by asking Lean its
 follows Patrick Massot's `leanblueprint checkdecls`, which checks that every declaration a
 blueprint names exists in the project; we are grateful for the idea.
 
-Exits 0 only when every item passes and every check ran; 1 otherwise, the report written
-either way; 2 when it cannot begin (no facts.json, say). Standard library only.
+In checking mode it exits 0 only when every item passes and every check ran; 1 otherwise,
+the report written either way; 2 when it cannot begin (no facts.json, say). Standard
+library only.
 
 With --compare it runs no check, and reads two files of verdicts that one copy of this
 script wrote with --json: main's, then the pull request's. It exits 0 when every item that
