@@ -24,6 +24,6 @@ note = "The greater circumferences are equal in measure as the remainders [C.N. 
 
 [review]
 stage = "exceptions"
-commit = "4916590"
+commit = "8f37887"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:a824e0f06f31e71e"
+lean = "sha256:b27e1893390da4f3"

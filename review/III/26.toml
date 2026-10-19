@@ -29,6 +29,6 @@ note = "The remainders BKC, ELF are equal in measure by Euclid's subtraction [C.
 
 [review]
 stage = "exceptions"
-commit = "4916590"
+commit = "8f37887"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:bd37fee9fad54e6d"
+lean = "sha256:bda125b8a98ed658"
