@@ -46,7 +46,7 @@ case = "AD and EF apart, with D between A and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "570e6fa"
+commit = "5c0cdd65"
 reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:86706a9a57d0ca53"
 run = "brief 0005 stage 5, ship C5 re-read"
