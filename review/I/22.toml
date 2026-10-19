@@ -7,8 +7,27 @@ fingerprint = "sha256:ece8cab1243b4f20"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let the three given straight lines be A, B, C"
+kind = "helper"
+helper = "Prop22.ne_zero"
+note = "Euclid gives three straight lines; `Prop22.ne_zero` uses the strict inequalities to show that none has zero length, so each pair of endpoints is distinct as I.3 requires."
+
+[[passage]]
+at = "and let DF be made equal to A"
+kind = "helper"
+helper = "Prop22.room"
+note = "Euclid's DE has an end D and extends endlessly towards E; the Lean starts with F and the ray from F through E given by the statement, takes DE through F and E, and finds its end D by cutting off FD equal to A from EF produced beyond F. For each cut, `Prop22.room` uses I.2 and `produce_longer` to find a point far enough along the straight line produced to provide a finite straight line longer than the length to cut off, as I.3 requires; `between_cut` then puts D, F, G and H in order."
+
+[[passage]]
+at = "again, with centre G and distance GH let the circle KLH be described"
+kind = "helper"
+helper = "Prop22.meet"
+note = "Euclid takes K where the circles meet without proving they meet; `Prop22.meet` finds a point of the circle about G inside the circle about F, including when that point is F itself, and H outside it. The Lean uses the assumed rules `Tacit.circles_meet_of_on_inside_outside` (System E, Intersection 4, in LeanEuclid's corrected form) and `Tacit.circles_meet_same_side` (Intersections 8) to obtain K on P's side."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "6e7c20b"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:7231552689f848f2"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

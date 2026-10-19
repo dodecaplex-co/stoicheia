@@ -6,8 +6,15 @@ fingerprint = "sha256:b317f4a32e9504d5"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "For, if not, it is either equal to it or less"
+kind = "helper"
+helper = "Tacit.lt_trichotomy"
+note = "Euclid divides the possibilities for the two angles into greater, equal and less. The Lean uses `Tacit.lt_trichotomy`, a rule we assume for magnitudes (System E, section 3.5), to obtain the equal or less alternatives when the angle BAC is not greater."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "2a34715"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:12e2dae7d350dbbb"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

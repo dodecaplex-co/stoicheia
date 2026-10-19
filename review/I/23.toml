@@ -27,8 +27,15 @@ at = "let DE be joined"
 kind = "given"
 note = "Our triangle DCE is named by its corners, so no straight line DE is drawn; its three sides are the three straight lines that I.22 takes."
 
+[[passage]]
+at = "and out of three straight lines which are equal to the three straight lines CD, DE, CE"
+kind = "helper"
+helper = "Prop20"
+note = "Euclid applies I.22 without checking its condition on the three lengths. The Lean first uses I.20 (`Prop20`) on DCE for all three inequalities, then uses I.22 to place AFG at A, along AB and on P's side."
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "16243feef5f36514fd2c21c634be60443965808b"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:03384cc241aed0a4"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

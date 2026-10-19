@@ -7,13 +7,35 @@ fingerprint = "sha256:080838b879590cc3"
 kind = "euclid"
 
 [[passage]]
-at = "therefore the angle DFG is greater than the angle EGF"
+at = "let DG be made equal to either of the two straight lines AC, DF"
 kind = "helper"
+helper = "Prop24.within"
+note = "Euclid places G on the new arm with DG equal to DF; the Lean sets this length with `OnRay.exists_len_eq` and keeps G on F's side of DE with `SameSideOf.of_onRay`. The Lean uses `Prop24.within` to justify Euclid's placing of F within the angle EDG: the joins have distinct ends, DFG is a triangle for I.5, and `Prop24.cases` can use `crossbar` to find X on EG along the ray DF and distinguish F on EG, within the triangle DEG or beyond EG."
+
+[[passage]]
+at = "the angle DGF is also equal to the angle DFG"
+kind = "case"
 helper = "Prop24.cases"
 note = "Euclid draws F beyond EG and leaves the rest to the reader. The Lean takes Proclus's other two cases (Heath, vol. 1, p. 297): F on EG, where EF is a part of EG, and F within the triangle DEG, by I.21."
 
+[[passage]]
+at = "therefore the angle DFG is greater than the angle EGF"
+kind = "helper"
+helper = "angle_lt_of_between"
+note = "Euclid reads EGF as part of DGF, which equals DFG. The preceding call to `Prop24.cases` puts the crossing X of EG and DF between D and F; `angle_lt_of_between` makes XGF less than DGF, and the shared ray GE identifies XGF with EGF."
+
+[[passage]]
+at = "Therefore the angle EFG is much greater than the angle EGF"
+kind = "helper"
+helper = "angle_lt_of_between"
+note = "Euclid reads DFG as part of EFG. Since X lies between E and G, `angle_lt_of_between` makes XFG less than EFG; the shared ray FD identifies XFG with DFG, and the preceding comparison gives EGF less than EFG."
+
+[figure]
+case = "F beyond EG, on the opposite side from D, as in Heath's figure"
+
 [review]
-stage = "exceptions"
+stage = "full"
 commit = "6237881"
-reviewer = "Claude Opus 5.5"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:1fbf4c22b29ebd3f"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
