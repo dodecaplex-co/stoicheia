@@ -647,6 +647,15 @@ def gs_chord(rng):
 def gs_convex(kind):
     def g(rng):
         c = g_circle(rng)
+        if kind == 'opposite':
+            A = rng.choice([SEEDS[c], pt_on_circle(c, rng), centre(c), rand_pt(rng)])
+            B = rng.choice([pt_on_circle(c, rng), centre(c), rand_pt(rng)])
+            if A is None or B is None or A == B:
+                return None
+            t = Fr(rng.randint(1, 4), 5)
+            X = (A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1]))
+            L = g_line_thru(rng, X) if rng.random() < 0.8 else g_line_thru(rng, rand_pt(rng))
+            return dict(A=A, B=B, L=L, al=c)
         pool = [SEEDS[c], pt_on_circle(c, rng), centre(c)]
         A = rng.choice(pool) if rng.random() < 0.6 else rand_pt(rng)
         if kind == 'in':
@@ -730,18 +739,6 @@ def gs_lc(rng):
         return None
     L = g_line_thru(rng, B)
     return dict(B=B, C=g_pt_on(rng, L, [B]), L=L, al=c)
-
-
-def gs_lmc_opp(rng):
-    c = g_circle(rng)
-    A = rng.choice([SEEDS[c], pt_on_circle(c, rng), centre(c), rand_pt(rng)])
-    B = rng.choice([pt_on_circle(c, rng), centre(c), rand_pt(rng)])
-    if A is None or B is None or A == B:
-        return None
-    t = Fr(rng.randint(1, 4), 5)
-    X = (A[0] + t * (B[0] - A[0]), A[1] + t * (B[1] - A[1]))
-    L = g_line_thru(rng, X) if rng.random() < 0.8 else g_line_thru(rng, rand_pt(rng))
-    return dict(A=A, B=B, L=L, al=c)
 
 
 def g_along(A, B, t):
@@ -1358,7 +1355,7 @@ def _(c):
     return lines_meet(L, M)
 
 
-@axiom('line_meets_circle_of_opposite_sides', dict(A=P, B=P, L=L_, al=C_), gs_lmc_opp)
+@axiom('line_meets_circle_of_opposite_sides', dict(A=P, B=P, L=L_, al=C_), gs_convex('opposite'))
 def _(c):
     A, B, L, al = c['A'], c['B'], c['L'], c['al']
     if not (in_or_on(A, al) and in_or_on(B, al) and opposite(A, B, L)):
