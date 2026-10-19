@@ -68,10 +68,11 @@ one commit and runs safe_push.py against that origin:
   line of laws.toml moved without its axiom, a new law's code that uses what its
   allow-list does not name (a global, a frame, a lookup by string, a print, the end of
   the run) or changes a shared container under a second name, or laws.toml or the lock
-  deleted, is a check change, kept apart; an axiom restated or removed with its law lands
-  as content too; every law of the two harnesses keeps to the allow-list, and each entry
-  of the list is one a law needs; and a harness of the model that stops before its last
-  line, with status 0, fails the model's run;
+  deleted, is a check change, kept apart; the pre-flight treats an axiom restated or
+  removed with its law as content too, while structured.py and exhaustive.py, which name
+  some laws, must drop or re-key such a law first; every law of the two harnesses keeps
+  to the allow-list, and each entry of the list is one a law needs; and a harness of the
+  model that stops before its last line, with status 0, fails the model's run;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -2560,7 +2561,8 @@ class ProtectedPaths(Edge):
         r = subprocess.run([sys.executable, "-I", "tests/model/run.py", "--ties"], cwd=WORK,
                            capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        self.assertIn("laws.toml names 88 laws; facts.json declares 88 axioms", r.stdout)
+        n = len(json.loads(git(WORK, "show", f"{BASE}:facts.json"))["axiom_modules"]) + 1
+        self.assertIn(f"laws.toml names {n} laws; facts.json declares {n} axioms", r.stdout)
         for path, samples in ((self.SEARCH, 200), (self.HYPERBOLIC, 100)):
             r = subprocess.run([sys.executable, "-I", path, str(samples), "1"], cwd=WORK,
                                env=dict(os.environ, ONLY="planted_law"),

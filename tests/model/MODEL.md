@@ -511,10 +511,15 @@ the axiom in the same pull request as the Lean:
    through the name it gave it: never through a second name for a container it did not
    make, nor through an element of its own (`x[0] += [1]`). The pre-flight's check
    (`self_contained`) reads the law's code, does not run it, and refuses whatever the list
-   does not name, so reflection has no way in. A law that needs what the list lacks, a new
-   helper say, waits for a pull request of its own that adds the helper and widens the
-   list. The other programs check some laws only, and can follow later, in a pull request
-   of their own.
+   does not name, so reflection has no way in. A law still shares the random numbers with
+   the laws after it, and how many it draws moves which configurations they see, never
+   what they check. A law that needs what the list lacks, a new helper say, waits for a
+   pull request of its own that adds the helper and widens the list. The other programs
+   check some laws only. A law added reaches them later, in a pull request of its own. But
+   `structured.py` and `exhaustive.py` run some laws by name on configurations of their
+   own (`run('<law>', ...)`). If either program names the law of an axiom that is removed,
+   or restated so that its law reads other letters, that program must drop or re-key the
+   law first, in a pull request of its own, before the axiom moves.
 4. **This page.** The axiom's row in [the axioms one by one](#the-axioms-one-by-one), with
    the reason it holds in the plane, a word on the hyperbolic plane where it needs one,
    and the counts in the prose. `run.py --full --write` brings the numbers above and

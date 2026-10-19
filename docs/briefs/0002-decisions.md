@@ -667,16 +667,19 @@ findings:
   axiom added with its entry in the lock, the new hash, its line of `laws.toml`, its law's
   code in both programs and a line of MODEL.md: it lands as content, and the model's ties
   hold on it. With another law loosened beside it, the same change is kept apart, and a
-  table of twenty-three loosenings and five moves checks each way round. The independent
-  verifier of the change found two gaps, and we thank them for it: a new law could change
-  a shared container under a second name (`d = DEN`, then `d[:] = [2]`), and a missing
-  laws.toml or lock gave a traceback before Python 3.14, not the refusal. A law now changes
-  a container only through a name that every binding in it gives a container it made
-  itself, and a missing file reads as nothing; each has its tests. The no-mistakes review
-  found a third, and we thank it too: a law could end the structured run early with
-  `SystemExit(0)`, and the run still passed, so each program that runs the laws must now
-  reach its last line, and a test holds it there; and as it found that a law could forge
-  that line through `help`, the pre-flight refused the builtins that print or end a run.
+  table of twenty-three loosenings and five moves checks each way round. An axiom removed
+  or restated moves the same way when no other program names its law. `structured.py` and
+  `exhaustive.py` run some laws by name, so they must drop or re-key such a law first, in
+  a pull request of its own. The independent verifier of the change found two gaps, and
+  we thank them for it: a new law could change a shared container under a second name
+  (`d = DEN`, then `d[:] = [2]`), and a missing laws.toml or lock gave a traceback before
+  Python 3.14, not the refusal. A law now changes a container only through a name that
+  every binding in it gives a container it made itself, and a missing file reads as
+  nothing; each has its tests. The no-mistakes review found a third, and we thank it too:
+  a law could end the structured run early with `SystemExit(0)`, and the run still passed,
+  so each program that runs the laws must now reach its last line, and a test holds it
+  there; and as it found that a law could forge that line through `help`, the pre-flight
+  refused the builtins that print or end a run.
   Then the change's independent reviewer found that the check was still a deny-list, which
   reflection escaped, and we thank them for it: a frame's globals, say, or `random._os`,
   through which a law could coarsen the decimal context every law of the hyperbolic plane

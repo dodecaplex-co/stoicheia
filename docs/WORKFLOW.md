@@ -542,10 +542,12 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       docstring; a law changed while its axiom stands is a check change. The pre-flight
       reads the law's code, does not run it, and refuses whatever the list does not name,
       so reflection (a frame, a module reached through another, a lookup by string) has no
-      way in; the security review reads the law as well. A law that needs what the list
-      lacks waits for the list to grow, in a pull request of its own. Check code changed
-      with judged content is kept apart, pinned values or not. The guards' two checks in
-      step 3 run the same way.
+      way in; the security review reads the law as well. A law still shares the random
+      numbers with the laws after it, and how many it draws moves which configurations
+      they see, never what they check. A law that needs what the list lacks waits for the
+      list to grow, in a pull request of its own. Check code changed with judged content
+      is kept apart, pinned values or not. The guards' two checks in step 3 run the same
+      way.
    5. *The push and the pull request.* First the pull request is settled: our open one
       for the branch (a fork's pull request of the same name is never touched), or a new
       one. Its body is `--body-file`, or is generated from the
