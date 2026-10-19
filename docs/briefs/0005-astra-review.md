@@ -8,7 +8,9 @@ certificate output at `1e713bb` gives III.1 and its porism the same 60 axioms, i
 required axiom membership no longer describe their dependencies. Any change to those
 checks needs its own approval and separate preparation under WORKFLOW, section 10.
 Circle 2 is proved from Circle 3; III.2's remaining overlap is with Circle 3, and its
-published proof uses neither the Circle 2 theorem nor the Circle 3 axiom.
+published proof uses neither the Circle 2 theorem nor the Circle 3 axiom. Thirty-one more
+rules became theorems the same day, so the baseline is now 48 axioms, including 42 tacit
+rules; fresh certificate output for the 48 gives III.1 and its porism 38 tacit rules each.
 
 *Written and committed on 17 October 2026 (d040117), and revised on 18 October 2026 to the owner's decisions taken after it. The first text stands in the history, and each revised passage says so where it stands. What changed, and why:*
 

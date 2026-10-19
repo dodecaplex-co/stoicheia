@@ -2,7 +2,9 @@
 
 19 October 2026: the frozen requirement below that `[axioms]` stay at 87 now has a
 baseline of 79, including 73 tacit rules, after [eight rules became theorems](../FORMALIZATION.md#rules-now-proved)
-with their names and exact types unchanged. The instruction to add no axiom remains;
+with their names and exact types unchanged. Thirty-one more
+rules became theorems the same day, so the baseline is now 48 axioms, including 42 tacit
+rules. The instruction to add no axiom remains;
 no statement or vocabulary change is made here.
 
 *18 October 2026. This brief settles the new statements that make the records of III.7,

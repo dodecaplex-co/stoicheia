@@ -366,7 +366,7 @@ dependencies.
 ## 7. The foundations, and the policies the checks enforce
 
 - **Every assumption is an `axiom` in `Elements/Foundations/`:** the five postulates,
-  Definition I.15 and 73 tacit rules, 79 in all, each tacit rule from System E (or
+  Definition I.15 and 42 tacit rules, 48 in all, each tacit rule from System E (or
   LeanEuclid's corrections of it) with its citation. A new rule, or a change to one, is a
   foundation decision (section 1); `Certificate/axioms.lock` holds every axiom's exact
   statement, with every definition that the axioms' statements or the propositions',
@@ -486,6 +486,47 @@ proof to the assumptions it uses.
 | `triple_incidence3` | Triple incidence 3 | Angle addition and positivity, Intersection 1, and the order and side rules locate a crossing and carry its side relation to the given point. Proved in `Circles.lean`. |
 | `inside_of_angle_add` | Diagram-angle 2, converse | I.13, angle addition, positivity and the side rules exclude each way the point could lie outside the angle. Proved after I.13 in `Prop13.lean`; the forward rule, `angle_add_of_inside`, stays an axiom. |
 
+The same day, by the owner's decision ("Please do both. 79 is rather large with so many
+books in front of us"), 31 more rules became theorems, taking the lock from 79 axioms to
+48. Euclid's six stay assumptions, and no certificate entry rests on Circle 2 or Circle 3.
+The 31 are proved in four Book Zero modules that `Elements/Figure/Basics.lean` imports, so
+every proposition reaches them as before; none cites a proposition, and none rests on
+Circle 2 or 3, on another retired rule or on itself.
+
+| Theorem under `Elements.Tacit` | System E label | Derivation and home |
+|---|---|---|
+| `centre_inside` | Generalities 3 | A centre that were not inside would lie on a straight line through an inside point beyond it, and its radii to the two crossings would be unequal. Proved in [`RuleBase.lean`](../Elements/Figure/RuleBase.lean). |
+| `on_circle_of_len_eq` | Diagram-segment 3, the half that Definition 15 doesn't give | The circle about the centre through the point is the given circle; the centre itself is excluded, since a radius is never nothing. Proved in `RuleBase.lean`. |
+| `same_side_symm` | Same side 2 | Two circles about points of the line cut on A's side, by Intersection 5, Generalities 3 and Intersections 8; Same side 4 then makes B's relation to A follow from A's to B. Proved in `RuleBase.lean`. |
+| `exists_point_same_side` | Points 5 | Postulate 2 extends a line from a point of L beyond B; Pasch 2 puts its endpoint on B's side. Proved in `RuleBase.lean`. |
+| `ne_of_between` | Between 1 | Coincidence would make the forbidden reversed order identical to the given order. Proved in `RuleBase.lean`. |
+| `on_line_of_between_ends` | Between 3 | If the middle point were off the line, Pasch 2 would put the last endpoint off it too. Proved in `RuleBase.lean`. |
+| `pasch4` | Pasch 4 | The other two collinear orders put the endpoints on the same side by Pasch 2. Proved in `RuleBase.lean`. |
+| `same_side_refl` | Same side 1 | Choose a point on its side and apply transitivity to that relation twice. Proved in `RuleBase.lean`. |
+| `triple_incidence1` | Triple incidence 1 | Two angle decompositions would make each of two angles greater than the other. Proved in `RuleBase.lean`. |
+| `pasch3` | Pasch 3 | Join A and C to another point of the line: Pasch 2 puts B within the angle they make there, and Triple incidence 1 then forbids A and C one side. Proved in `RuleBase.lean`. |
+| `inside_not_on` | Generalities 4 | A line produced from the point meets the circle; Circle 1 would put that point between itself and the crossing. Proved in `RuleBase.lean`. |
+| `eq_of_len_eq_zero` | Metric 1 | A circle drawn with distinct endpoints would put its own centre on its circumference. Proved in `RuleBase.lean`. |
+| `inside_of_len_lt` | Diagram-segment 4 | A point outside would lie beyond a circumference crossing, whose radius is shorter than its distance. Proved in [`Incidence.lean`](../Elements/Figure/Incidence.lean). |
+| `len_lt_of_inside` | Diagram-segment 4 | Produce the line from the centre through the interior point to the circumference; its distance is a part of the radius. Proved in `Incidence.lean`. |
+| `ne_of_between_ends` | Between 1 | Coincident endpoints would make a sum containing a positive length equal to zero. Proved in `Incidence.lean`. |
+| `on_line_of_between` | Between 2 | Join the endpoints and use incidence of the middle point and uniqueness of their line. Proved in `Incidence.lean`. |
+| `between_of_between_left` | Between 4 | Length addition and strict comparison exclude the other two orders of A, D and C. Proved in `Incidence.lean`. |
+| `between_of_between_right` | Between 5 | Collinear orders, length comparison and one extension exclude both contrary arrangements. Proved in `Incidence.lean`. |
+| `circles_meet_of_on_inside_outside` | Intersection 4, in LeanEuclid's corrected form | A crossing of the second circle lies inside the first, giving the two witnesses for Intersection 5. Proved in `Incidence.lean`. |
+| `exists_point_opposite_side` | Points 6 | Produce the line from B through a point of L; Pasch 3 separates its endpoints. Proved in `Incidence.lean`. |
+| `circles_meet_opposite_side` | Intersections 9 | Choose a point opposite B and take the common circle point on that point's side. Proved in `Incidence.lean`. |
+| `exists_point_between` | Points 3 | A smaller concentric circle supplies one interior division; repeat within a smaller segment to avoid each forbidden point. Proved in `Incidence.lean`. |
+| `line_meets_circle_of_inside` | Intersection 3 | Produce the line in both directions from the interior point to obtain distinct circumference points. Proved in `Incidence.lean`. |
+| `not_between_of_between_between` | Between 7 | The three orders obtained from circle crossings each contradict length addition. Proved in `Incidence.lean`. |
+| `same_side_or` | Same side 5 | Were A, B and C on three sides, the line would cross all three sides of the triangle ABC, or, when the three are in a straight line, cross it at one point between each pair; neither can be. Proved in `Incidence.lean`. |
+| `triple_incidence2` | Triple incidence 2 | Extend BA through A. The two-side rule locates the extension, and Triple incidence 1 excludes the contrary arrangement. Proved in `Incidence.lean`. |
+| `pasch1` | Pasch 1 | Opposite sides would give a crossing before B, contradicting Pasch 3 on the full segment. Proved in `Incidence.lean`. |
+| `exists_point_on_line_off_line` | Points 2, with "distinct from M" | Choose a point of L; if it is on M, a second point of L differs from it and cannot also be on M. Proved in `Incidence.lean`. |
+| `area_swap` | Metric 8 | Successive cuts prove reversal for a triangle; collinear and repeated corners have zero area. Proved in [`AreaRules.lean`](../Elements/Figure/AreaRules.lean). |
+| `between_of_area_add` | Diagram-area 2, converse | In either contrary collinear order, area addition would make each of two areas greater than the other. Proved in `AreaRules.lean`. |
+| `exists_point_on_circle` | Points 7 | Intersect a line through an interior point that avoids every other forbidden point. Proved in [`CirclePoints.lean`](../Elements/Figure/CirclePoints.lean). |
+
 A client that previously imported only the foundations must now import the theorem's
 home. Book Zero still imports no proposition. I.7 cannot be established independently
 through Circle 4, since that theorem now uses I.7. III.2 still has an overlap with the
@@ -493,8 +534,9 @@ retained Circle 3 axiom, as the [catalogue](reports/overlaps.md) explains.
 
 No certificate entry currently rests on Circle 3. I.12 finds the crossing X of
 CD with AB between the centre C and the point D on the circle, proves X inside
-by `InsideCircle.of_between_centre`, and uses the assumed Intersection 3
-(`line_meets_circle_of_inside`) to find two points of the circle on AB. The proved
+by `InsideCircle.of_between_centre`, and uses Intersection 3
+(`line_meets_circle_of_inside`, proved since the second retirement) to find two points of
+the circle on AB. The proved
 Intersection 2 has no user in the published proofs.
 
 ## 8. Completion claims

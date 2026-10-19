@@ -198,7 +198,8 @@ touching without have no point within both, and a common centre would be one, si
 centre is within its circle (`centre_inside`, Generalities 3). Our III.6 ends contact
 without with Generalities 3, before anything is drawn; for contact within it takes Euclid's
 steps, and uses Diagram-segment 2 only for the step he leaves tacit, that E and B are two
-points. -/
+points. Generalities 3 has been a theorem since 19 October 2026 (`Elements/Figure/RuleBase.lean`),
+so the closure pinned below is that of its proof with Diagram-segment 2. -/
 theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
   rintro C F ABC CDE (⟨hC₁, hC₂, hne, -⟩ | ⟨hC₂, hC₁, hne, -⟩ | ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
   · exact hne (circle_eq hF₁ hF₂ hC₁ hC₂ rfl)

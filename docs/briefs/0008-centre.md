@@ -4,7 +4,11 @@
 [Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
 names and exact types, so the baseline is 79, including 73 tacit rules. Adding the
 proposed centre-existence axiom would now take 79 to 80, and 73 tacit rules to 74.
-This note adds no axiom and grants no approval to add one.
+Thirty-one more
+rules became theorems the same day, so the baseline is now 48 axioms, including 42 tacit
+rules. With them, the
+centre-existence axiom would take 48 to 49. This note adds no axiom and grants no approval
+to add one.
 
 `centre_unique` is now proved in `Elements/Figure/Circles.lean`; Circle 4 is proved
 after I.7 from I.7, Definition I.15 and `circle_eq`; Circle 2 is proved from Circle 3,

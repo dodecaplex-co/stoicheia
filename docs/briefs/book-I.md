@@ -154,7 +154,9 @@ corollary after I.7 in `Elements/BookI/Prop07.lean`, proved from I.7, Definition
 and `circle_eq`; using it to prove I.7 would be circular. The right-angle rule
 `adjacent_eq_of_right` and the converse angle-addition rule `inside_of_angle_add` are
 corollaries after I.13. The other five retired rules are proved in Book Zero's
-`Circles.lean`. The lock now holds 79 axioms, including 73 tacit rules.
+`Circles.lean`. Thirty-one more rules became theorems the same day, in Book Zero's
+`RuleBase.lean`, `Incidence.lean`, `AreaRules.lean` and `CirclePoints.lean`, and the lock
+now holds 48 axioms, including 42 tacit rules.
 
 The stage-5 review will give the hardest formal blocks (I.7, I.35, I.47) a paragraph of
 their own in the mishnah.

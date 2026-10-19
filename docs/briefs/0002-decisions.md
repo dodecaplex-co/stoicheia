@@ -1399,3 +1399,65 @@ findings:
   derived facts. Proposition and porism statements, definitions and `--` lines are
   unchanged; the records whose Lean changed were read again and stamped by readers who
   wrote none of them.
+- **Thirty-one more axioms retired, 79 to 48 (proposed, pending the evidence).** The owner
+  decided on 19 October 2026: "Please do both. 79 is rather large with so many books in
+  front of us." That is, the eight above, and then the largest further set of
+  retirements under two constraints: Euclid's six (Postulates 1 to 5 and Definition 15)
+  stay explicit assumptions even where they are derivable, and no certificate entry may
+  rest on Circle 2 or Circle 3 (`Tacit.inside_of_between`, `Tacit.outside_of_between`).
+  This lands only when the owner has seen the evidence. An exact search over every checked
+  derivation, the earlier search's and a second search's that avoids Circle 3, found a
+  largest set of 31; it is a maximum over the derivations found, not a proof that no
+  smaller foundation exists. Among the maximum sets, this one keeps the most of System E's
+  plain incidence and order rules (`line_unique`, `between_symm`, `between_cases`,
+  `not_between_of_between`, `not_on_line_of_same_side`, `same_side_trans`, `pasch2`,
+  `exists_point_on_line`). Each keeps its name and exact type and becomes a theorem in four
+  new Book Zero modules, which `Elements/Figure/Basics.lean` imports, so no proposition
+  file changes: `centre_inside`, `on_circle_of_len_eq`, `same_side_symm`,
+  `exists_point_same_side`, `ne_of_between`, `on_line_of_between_ends`, `pasch4`,
+  `same_side_refl`, `triple_incidence1`, `pasch3`, `inside_not_on` and `eq_of_len_eq_zero`
+  in [`Elements/Figure/RuleBase.lean`](../../Elements/Figure/RuleBase.lean);
+  `inside_of_len_lt`, `len_lt_of_inside`, `ne_of_between_ends`, `on_line_of_between`,
+  `between_of_between_left`, `between_of_between_right`,
+  `circles_meet_of_on_inside_outside`, `exists_point_opposite_side`,
+  `circles_meet_opposite_side`, `exists_point_between`, `line_meets_circle_of_inside`,
+  `not_between_of_between_between`, `same_side_or`, `triple_incidence2`, `pasch1` and
+  `exists_point_on_line_off_line` in
+  [`Elements/Figure/Incidence.lean`](../../Elements/Figure/Incidence.lean); `area_swap` and
+  `between_of_area_add` in [`Elements/Figure/AreaRules.lean`](../../Elements/Figure/AreaRules.lean);
+  and `exists_point_on_circle` in
+  [`Elements/Figure/CirclePoints.lean`](../../Elements/Figure/CirclePoints.lean), all under
+  `Elements.Tacit`. No proof rests on the rule it replaces, on another retired rule, on
+  Circle 2 or Circle 3, or on superposition directly, and none cites a proposition. No
+  certificate entry rests on Circle 2 or Circle 3, and III.1 and its porism rest on 38
+  tacit rules each. The constraints cost retirements: within the derivations found, every
+  derivation of `between_symm`, `between_of_inside_chord` and `line_circle_between` rests
+  on Circle 3 or none was found, and without the Circle constraint the earlier search's
+  maximum, 34 in all, put Circle 3 under II.14, III.1 and III.2. The axioms leave
+  `Elements/Foundations/Tacit/Constructions.lean`, `Diagram.lean`, `Metric.lean` and
+  `Transfer.lean`. Protected files changed with them, as values pinned to the axioms:
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock), written by `--write-lock`;
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and `model/lock.sha256`;
+  [`tests/model/laws.toml`](../../tests/model/laws.toml), and the 31 laws' code in
+  [`tests/model/search.py`](../../tests/model/search.py) and
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py), the other laws in their
+  order and the rest of each file as it was; [`tests/model/MODEL.md`](../../tests/model/MODEL.md)
+  and [`tests/model/results/`](../../tests/model/results/), from `run.py --full --write`; and
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json): the
+  measured counts of III.1 and its porism (38 tacit rules each) and new pins that III.1,
+  III.1 Por., III.2 and II.14 rest on none of the 31. Three changes to the checks come
+  with them, each in a commit of its own so that they can land apart: the 31 become
+  derived properties in [`tests/model/derived.py`](../../tests/model/derived.py), which
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py) and
+  [`tests/model/structured.py`](../../tests/model/structured.py) run by name, adding runs
+  for the ones they did not yet sample; [`scripts/safe_push.py`](../../scripts/safe_push.py)'s
+  `LAW_GLOBALS` loses the nine entries no remaining law uses, so its test that each entry is
+  needed still passes, and [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py)'s
+  example decorator `gs_ti()` becomes `gs_convex('in')`; and, in the formal model, Intersections 2
+  and 3, retired, reach `LineMeetsCircle`, a word no locked law reaches now and so one the
+  generator no longer writes: they use the hand copy of the word, checked against the
+  library's, and are compared with their declarations by the kernel through `original`
+  instead of by `comparePlanted`. The formal model's generated laws, checks and assembly
+  follow from its generator; its proofs in the plane stay, as derived facts, and
+  `model_exists` stays unconditional. Proposition and porism statements, definitions and
+  `--` lines are unchanged.

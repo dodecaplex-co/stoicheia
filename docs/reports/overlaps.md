@@ -1,9 +1,9 @@
 # Overlaps: where a rule already says what Euclid proves
 
 19 October 2026: eight axioms have become theorems with their names and exact types
-unchanged. The lock now holds 79 axioms, including 73 tacit rules. Their
-[derivations and homes](../FORMALIZATION.md#rules-now-proved) explain what each proof
-uses. The current catalogue below distinguishes the remaining axiom overlaps from
+unchanged, and 31 more followed the same day. The lock now holds 48 axioms, including 42
+tacit rules. Their [derivations and homes](../FORMALIZATION.md#rules-now-proved) explain
+what each proof uses. The current catalogue below distinguishes the remaining axiom overlaps from
 the former ones. The earlier catalogue and its measurements follow as history.
 
 ## Current axiom overlaps
@@ -16,13 +16,13 @@ the former ones. The earlier catalogue and its measurements follow as history.
 | I.23 | Superposition (`superposition`) | Supplies a step of the alternative proof | I.4 | `Audit.I_23` |
 | III.2 | Circle 3 (`outside_of_between`) | Gives it at once: if the middle point were not inside, the second endpoint would be outside | Nowhere: no certificate entry rests on it | `Audit.III_2_outside`; `Audit.III_2` through the derived Circle 2 |
 | III.5 | Diagram-segment 2 (`circle_eq`) | Gives it at once: circles about one centre through one point coincide | III.5 | `Audit.III_5` |
-| III.6 | Diagram-segment 2 (`circle_eq`) and Generalities 3 (`centre_inside`) | Gives it at once: one rule settles contact within, the other contact without | Diagram-segment 2: III.5. Generalities 3: I.1 | `Audit.III_6` |
+| III.6 | Diagram-segment 2 (`circle_eq`) | Gives it at once for contact within; contact without is settled by Generalities 3, a former assumption now proved (below) | III.5 | `Audit.III_6` |
 
 Fresh certificate facts at `1a2d37c1` show that no certificate entry rests on
 Circle 3. I.12 finds X on AB between the centre C and the point D on the circle;
 `InsideCircle.of_between_centre` puts X inside by comparing CX with the radius CD,
-and the assumed Intersection 3 (`line_meets_circle_of_inside`) supplies the two
-crossings E and G. The proved Intersection 2
+and Intersection 3 (`line_meets_circle_of_inside`), proved since 19 October 2026 in
+`Elements/Figure/Incidence.lean`, supplies the two crossings E and G. The proved Intersection 2
 (`line_meets_circle_of_opposite_sides`) has no user in `Elements/`, `Staging/` or
 `Audit/`; its declaration in `Elements/Figure/Circles.lean` is the only occurrence
 of its name there.
@@ -40,6 +40,7 @@ proof uses.
 | I.13's right-angle case and Diagram-angle 3 (`adjacent_eq_of_right`) | I.13 and Common Notion 3, after I.13 in `Elements/BookI/Prop13.lean`. The later proofs now use that theorem. |
 | III.1's centre uniqueness and Generalities 2 (`centre_unique`) | The foundations, in `Elements/Figure/Circles.lean`: two supposed centres bisect the same straight line through the circle, and equal doubles have equal halves. III.1 Por. still calls the theorem, but its axiom closure is now the same as III.1's. |
 | III.2 and Circle 2 (`inside_of_between`) | Circle 3, in `Elements/Figure/Circles.lean`. The remaining axiom overlap is the Circle 3 row above. |
+| III.6's contact without and Generalities 3 (`centre_inside`) | Circle 1, Definition 15 and the rules of length and order, in `Elements/Figure/RuleBase.lean` (19 October 2026): a centre that were not inside its circle would have two unequal radii on one straight line. `Audit.III_6` now rests on that proof; the remaining axiom overlap is the Diagram-segment 2 row above. |
 
 `Audit.outside_of_between`, which derives Circle 3 through Circle 2, now reaches the
 Circle 3 axiom again. It does not retire that axiom. Circle 4 also uses
@@ -268,8 +269,9 @@ contradiction.
 ##### III.6
 
 III.6 calls both rules itself. Contact without ends at once, before anything is drawn: the
-supposed common centre would be within both circles (Generalities 3), and circles that
-touch without have no such point. For contact within, the Lean is as III.5's, with
+supposed common centre would be within both circles (Generalities 3, proved since 19
+October 2026 in `Elements/Figure/RuleBase.lean`), and circles that touch without have no
+such point. For contact within, the Lean is as III.5's, with
 Diagram-segment 2 for the step Euclid leaves tacit, that E and B are two points.
 
 Any proof of our III.6 for contact within must use one of the same two rules, for the
@@ -335,7 +337,8 @@ For each row we looked for a proof of the proposition's statement from at most t
   no point counted within any circle, Diagram-segment 2 still holds, while a circle then
   touches itself "without" and has the same centre as itself. Let a circle be drawn twice
   over, as two circles with one centre and one radius, and Generalities 3 still holds,
-  while the two touch "within" and have one centre.
+  while the two touch "within" and have one centre. Generalities 3 is a theorem now, so
+  of the two only Diagram-segment 2 remains an assumption.
 - **I.7**: not found from three. The shortest proof we found, `Audit.I_7`, uses seven:
   Circle 4 does the work, and the others draw two circles the statement never mentions and
   tell them apart. Circle 4 alone does not give I.7: where there are no circles and every
