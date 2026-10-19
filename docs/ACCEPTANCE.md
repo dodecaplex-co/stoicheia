@@ -38,10 +38,10 @@ python3 scripts/check_acceptance.py --compare main.json verdicts.json   # no che
 
 It writes [the report](reports/acceptance-books-I-III.md): a table of items by book, a table
 of every proposition against every item, and every failure, each with what to do about it.
-It changes no other file, save the verdicts `--json` asks for. It exits 0 only when every item passes and every check ran; 1
-when anything fails or was not run (a check not run is not a pass); and 2 when it cannot
-begin. It needs Python 3.11 or later, `lake` on the PATH, and the commits the records name,
-so a full clone rather than a shallow one.
+It changes no other file, save the verdicts `--json` asks for. It exits 0 only when every
+item passes and every check ran; 1 when anything fails or was not run (a check not run is
+not a pass); and 2 when it cannot begin. It needs Python 3.11 or later, `lake` on the
+PATH, and the commits the records name, so a full clone rather than a shallow one.
 
 The script stands on the checks already in place rather than restating them:
 `check_fidelity.py`'s functions, `check_style.py`, `check_links.py`, `check_kernel.py`,
@@ -247,8 +247,8 @@ outside reading. The checklist is this page. The independent audit, by a model f
 wrote none of the work, reads the [review] items afresh (brief 0005, stage 6), and its
 evidence goes under `docs/reports/acceptance/`. The cold outside reading scores the
 tagged candidate. On the candidate commit CI is green, with `check`, `model`,
-`negative`, and `acceptance` under its full gate; the release notes are drafted from the generated summaries; and the owner
-approves them before the tag.
+`negative`, and `acceptance` under its full gate; the release notes are drafted from the
+generated summaries; and the owner approves them before the tag.
 
 The check that every Lean name a catalogue gives is declared, by asking Lean itself (B2,
 E2), follows Patrick Massot's [leanblueprint](https://github.com/PatrickMassot/leanblueprint),
