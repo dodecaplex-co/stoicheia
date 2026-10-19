@@ -1334,3 +1334,16 @@ findings:
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+- **A new tag, `touching-whole-circles`.** [`review/terms.toml`](../../review/terms.toml)
+  gains the tag, of kind `representation`, with the meaning [brief 0008](0008-centre.md)
+  gives it, word for word (section 4, "Records, Lean files and pages", and question 9):
+  "Circles touching one another are read of the whole circles: touching within, no point
+  of the inner is outside the outer; touching without, no point is within both; so touching
+  circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
+  It is a representation, not a centre: when `centre-given` leaves the records, those of
+  III.11, III.12 and III.13 keep their `[representation]` with this tag, and III.6 takes it
+  too. It lands here, in a pull request of its own, before any record uses it, as
+  [FORMALIZATION](../FORMALIZATION.md), section 3, asks and as step 1 of the brief's
+  section 6 orders; no record carries it yet, so no page changes. When the definition of
+  contact within changes, in the brief's step 6, the meaning gains that the inner circle has
+  passed within the outer (question 16). Protected file changed: `review/terms.toml`.
