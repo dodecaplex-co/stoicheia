@@ -31,9 +31,9 @@ note = "Euclid leaves the argument for the other interior angle to the reader, w
 
 [review]
 stage = "full"
-commit = "7397642"
+commit = "89918a7f"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:dbc44d9d229e1a48"
+lean = "sha256:f75bd14ed11169ef"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]
