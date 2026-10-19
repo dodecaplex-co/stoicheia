@@ -2,6 +2,7 @@ import Elements.Figure.Basics
 import Elements.BookIII.Squares
 import Elements.BookIII.Circumferences
 import Elements.BookI.Prop04
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop20
 import Elements.BookIII.Prop22
 import Elements.BookIII.Prop24
@@ -58,8 +59,8 @@ theorem Prop26 {A B C D E F G H K L : Point} {ABC DEF : Circle} (hcircles : Equa
     · rw [← h, hrt] at hgt'; exact absurd hgt' (lt_irrefl _)
     · rw [h] at hgt; exact absurd (lt_trans hlt' hgt) (lt_irrefl _)
     · rw [h, hrt'] at hgt; exact absurd hgt (lt_irrefl _)
-    · obtain ⟨X, hX, hXG⟩ := exists_onCircle_sameSideOf hB hC hGA.triangle
-      obtain ⟨Y, hY, hYH⟩ := exists_onCircle_sameSideOf hE hF hHD.triangle
+    · obtain ⟨X, hX, hXG⟩ := Prop2.sameSide ⟨G, hG⟩ hB hC hGA.triangle
+      obtain ⟨Y, hY, hYH⟩ := Prop2.sameSide ⟨H, hH⟩ hE hF hHD.triangle
       have hXA : OppositeSidesOf X A B C := hXG.trans_opposite hGA
       have hYD : OppositeSidesOf Y D E F := hYH.trans_opposite hHD
       have q₁ : ∠ B A C + ∠ B X C = ∟ + ∟ := by

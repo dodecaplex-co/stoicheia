@@ -4,6 +4,7 @@ import Elements.BookI.Prop10
 import Elements.BookI.Prop11
 import Elements.BookI.Prop17
 import Elements.BookIII.Prop01
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop05
 
 /-!
@@ -77,7 +78,7 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
   -- G, F, H;
   refine Classical.byContradiction fun hne => ?_
   /- Three common points suffice; Euclid never uses the fourth, F. -/
-  have hBHG : Triangle B H G := Triangle.of_onCircle hB₁ hH₁ hG₁ hBH hGH.symm hBG
+  have hBHG : Triangle B H G := Prop2.triangle hABC hB₁ hH₁ hG₁ hBH hGH.symm hBG
   -- let BH, BG be joined and bisected at the points K, L,
   obtain ⟨BH, hB_BH, hH_BH⟩ := Postulate1 B H hBH
   obtain ⟨BG, hB_BG, hG_BG⟩ := Postulate1 B G hBG
@@ -93,8 +94,8 @@ theorem Prop10 {B G H : Point} {ABC DEF : Circle} (hABC : ∃ P : Point, Centre 
   have hY_BG : ¬ OnLine Y BG := hYH.triangle.off_line hB_BG hG_BG
   have hKX_ne : K ≠ X := fun e => hX_BH (e ▸ hK_BH)
   have hLY_ne : L ≠ Y := fun e => hY_BG (e ▸ hL_BG)
-  have hK_in : InsideCircle K ABC := inside_of_between (Or.inr hB₁) (Or.inr hH₁) hBKH
-  have hL_in : InsideCircle L ABC := inside_of_between (Or.inr hB₁) (Or.inr hG₁) hBLG
+  have hK_in : InsideCircle K ABC := Prop2 hABC hB₁ hH₁ K hBKH
+  have hL_in : InsideCircle L ABC := Prop2 hABC hB₁ hG₁ L hBLG
   obtain ⟨AC, hK_AC, hX_AC⟩ := Postulate1 K X hKX_ne
   obtain ⟨A, hA, hA_AC, hAKX⟩ := line_circle_beyond hK_in hK_AC hX_AC hKX_ne.symm
   obtain ⟨C, hC, hC_AC, hCKA⟩ := line_circle_beyond hK_in hK_AC hA_AC (ne_of_between hAKX)

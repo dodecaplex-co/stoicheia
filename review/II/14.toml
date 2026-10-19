@@ -22,6 +22,6 @@ case = "BE greater than ED, as in Heath's figure, with the figure A of two trian
 
 [review]
 stage = "exceptions"
-commit = "5d6b1f6"
+commit = "66e9871"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:724697fc62b07d66"
+lean = "sha256:b4bbc1cc94524069"

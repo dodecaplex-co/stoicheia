@@ -4,6 +4,7 @@ import Elements.BookI.Prop04
 import Elements.BookI.Prop20
 import Elements.BookI.Prop23
 import Elements.BookI.Prop24
+import Elements.BookIII.Prop02
 
 /-!
 # Book III, Proposition 7
@@ -42,7 +43,7 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
   have hAEF : Between A E F := between_cut hAED hEFD
   have hFA : F ≠ A := (ne_of_between_ends hAEF).symm
   have hF_in : InsideCircle F ABCD :=
-    inside_of_between (Or.inl (centre_inside hE)) (Or.inr hD) hEFD
+    InsideCircle.of_between_centre hE hD hEFD
   /- A point of the circle on the diameter is A or D (System E, Circle 1). -/
   have hends : ∀ K, OnCircle K ABCD → OnLine K L → K ≠ A → K = D := by
     intro K hK hK_L hKA
@@ -94,16 +95,16 @@ theorem Prop7 {A D E F : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCir
     rw [← angle_onRay_left hEray hBF, ← angle_onRay_left hEray hCF] at hlt
     have hwithin : SameSideOf B E F C := BookI.Prop24.within hBC'.symm hlt
     obtain ⟨M, hEMC, hM⟩ := crossbar hBC' hwithin
-    have hM_in : InsideCircle M ABCD := inside_of_between (Or.inl (centre_inside hE)) (Or.inr hC) hEMC
+    have hM_in : InsideCircle M ABCD := InsideCircle.of_between_centre hE hC hEMC
     /- M is between F and B: it is on the ray from F through B, and not beyond B, for
-       then B would be within the circle (System E, Circle 2). -/
+       then B would be within the circle (`Prop2.within`). -/
     have hFMB : Between F M B := by
       obtain ⟨-, hMF, ⟨N, hF_N, hB_N, hM_N⟩, hMFB⟩ := hM
       have hMB : M ≠ B := fun e => inside_not_on hM_in (e ▸ hB)
       rcases between_cases hMF.symm hMB hBF.symm hF_N hM_N hB_N with h | h | h
       · exact h
       · exact absurd h hMFB
-      · exact absurd hB (inside_not_on (inside_of_between (Or.inl hF_in) (Or.inl hM_in) h))
+      · exact absurd hB (inside_not_on (Prop2.within ⟨E, hE⟩ (Or.inl hF_in) (Or.inl hM_in) h))
     have hBFE : Triangle B F E := hBC'.triangle.cab
     have hang : ∠ C E F < ∠ B E F := by
       rw [← angle_onRay_left (OnRay.of_between hEMC) hEF.symm]

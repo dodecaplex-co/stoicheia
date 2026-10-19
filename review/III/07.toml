@@ -27,6 +27,6 @@ note = "The conclusion of the argument above, which has shown that every point K
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "66e9871"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:9a75b001019fe0f1"
+lean = "sha256:a47f18d36bccb5e8"
