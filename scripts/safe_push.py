@@ -197,7 +197,8 @@ MODEL_RESULTS = "tests/model/results/"
 PINNED = (EXPECTATIONS, LOCK, MODEL_HASH, MODEL_LAWS, MODEL_PAGE, MODEL_RESULTS)
 # The two harnesses that implement every law of the model. They are check code; but a
 # law's code in them moves with its axiom, as its line of laws.toml does, while it keeps to
-# itself and the rest of the file stays as it was (laws_move_with_axioms).
+# itself, the laws that stay keep their order, and the rest of the file stays as it was
+# (laws_move_with_axioms).
 MODEL_LAW_CODE = ("tests/model/search.py", "tests/model/hyperbolic.py")
 SECURITY_LABEL = "security-review"
 LABELS = {
@@ -1913,8 +1914,8 @@ def laws_move_with_axioms(repo, base, sha, path: str) -> bool:
     lock the commit adds, removes or restates? In laws.toml, a line: the law's name, or
     whether it must fail in the hyperbolic plane. In one of MODEL_LAW_CODE, a law's code
     (law_of), which must keep to itself (self_contained), while the rest of the file, its
-    comments and docstring aside, stays as it was. Anything else, a law changed while its
-    axiom stands among them, is a check change."""
+    comments and docstring aside, stays as it was, and the laws that stay keep their order.
+    Anything else, a law changed while its axiom stands among them, is a check change."""
     old_lock, new_lock = locked_axioms(show(repo, base, LOCK)), locked_axioms(show(repo, sha, LOCK))
     old_laws = model_laws(show(repo, base, MODEL_LAWS))
     new_laws = model_laws(show(repo, sha, MODEL_LAWS))
@@ -1926,6 +1927,9 @@ def laws_move_with_axioms(repo, base, sha, path: str) -> bool:
                    if old_laws.get(k) != new_laws.get(k))
     old, new = law_code(show(repo, base, path)), law_code(show(repo, sha, path))
     if old is None or new is None or old[0] != new[0]:
+        return False
+    if [name for name in old[1] if name in new[1]] != \
+            [name for name in new[1] if name in old[1]]:
         return False
     for name in old[1].keys() | new[1].keys():
         was, now = old[1].get(name), new[1].get(name)

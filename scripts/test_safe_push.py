@@ -2605,6 +2605,9 @@ class ProtectedPaths(Edge):
             return lambda p: dict(p, **{path: p[path].replace(old, new, 1)})
         loose = self.CENTRE_UNIQUE.replace("c['A'] == c['B']", "True")
         mine = "    pts = [c['A']]\n    pts.append(c['A'])\n"
+        len_self = self.LEN_SELF[self.SEARCH]
+        len_symm = ("@axiom('len_symm', dict(A=P, B=P))\ndef _(c):\n"
+                    "    return d2(c['A'], c['B']) == d2(c['B'], c['A'])\n\n\n")
         weakened = {
             "another law loosened in search.py": edit(self.SEARCH, self.CENTRE_UNIQUE, loose),
             "another law loosened in hyperbolic.py": edit(self.HYPERBOLIC, self.CENTRE_UNIQUE,
@@ -2620,6 +2623,8 @@ class ProtectedPaths(Edge):
                                      '"Tacit.len_symm" = "len_symm"\n',
                                      '"Tacit.len_self" = "len_symm"\n'
                                      '"Tacit.len_symm" = "len_self"\n'),
+            "two laws reordered in search.py": edit(self.SEARCH, len_self + len_symm,
+                                                      len_symm + len_self),
             "the law added without its axiom": lambda p: {
                 k: v for k, v in p.items() if k not in (self.LOCK, self.HASH, "facts.json")},
             "the new law's code named for a helper": lambda p: dict(p, **{

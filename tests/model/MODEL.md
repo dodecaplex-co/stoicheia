@@ -498,15 +498,16 @@ the axiom in the same pull request as the Lean:
    in the hyperbolic plane, as Postulate 5 does, is also listed under `fails`.
 3. **The law.** [search.py](search.py) and [hyperbolic.py](hyperbolic.py) each implement
    every law, so each gains, loses or changes it, written as every law there is: a
-   function `_` under `@axiom('<name>', …)`. Its helpers go inside it, and it keeps to
-   itself, by an allow-list collected from the laws (`LAW_GLOBALS` and the lists beside it
-   in [safe_push.py](../../scripts/safe_push.py)): it uses its own parameters and the
-   names it binds; the helpers of its program that the laws already call, the builtins,
-   `math` functions, table and value they use (hyperbolic.py's `SEEDS`, read through a
-   subscript; search.py's `RA`), each in the role they use it in; the random numbers it is
-   handed, drawn and never reseeded; and plain syntax: assignments, `if`, `for`, `while`,
-   `return`, arithmetic, comparisons, comprehensions and functions of its own, with no
-   import, `global`, `lambda`, `try`, `with`, class or default argument. And it changes no
+   function `_` under `@axiom('<name>', …)`. The laws that stay keep their order. Its
+   helpers go inside it, and it keeps to itself, by an allow-list collected from the laws
+   (`LAW_GLOBALS` and the lists beside it in
+   [safe_push.py](../../scripts/safe_push.py)): it uses its own parameters and the names
+   it binds; the helpers of its program that the laws already call, the builtins, `math`
+   functions, table and value they use (hyperbolic.py's `SEEDS`, read through a subscript;
+   search.py's `RA`), each in the role they use it in; the random numbers it is handed,
+   drawn and never reseeded; and plain syntax: assignments, `if`, `for`, `while`, `return`,
+   arithmetic, comparisons, comprehensions and functions of its own, with no import,
+   `global`, `lambda`, `try`, `with`, class or default argument. And it changes no
    container but one it made in its own body (`ws = []`, then `ws.append(w)`), and that
    through the name it gave it: never through a second name for a container it did not
    make, nor through an element of its own (`x[0] += [1]`). The pre-flight's check
