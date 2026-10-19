@@ -19,6 +19,11 @@ helper = "produce_longer"
 note = "Euclid cuts off CE equal to CD, taking for granted a straight line beyond C greater than CD, although CB may be shorter than CD or C may be B. The Lean uses `produce_longer` to extend DC beyond C far enough for I.3 and, after the cut, `between_cut` to put C between D and E; with F off DE, this makes DCF and FCE adjacent, as Euclid later says in \"and they are adjacent angles\"."
 
 [[passage]]
+at = "and let FC be joined"
+kind = "given"
+note = "FC is represented by its endpoints in the angles; no separate straight line is constructed. The Lean beneath proves F ≠ C for the later angle identities."
+
+[[passage]]
 at = "Therefore the straight line CF has been drawn at right angles"
 kind = "helper"
 helper = "OnRay.cases_of_between"
@@ -29,9 +34,9 @@ case = "C between A and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "a9bca05"
+commit = "89918a7f"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:04349025e77f5b9a"
+lean = "sha256:c3cc54c2882dae53"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]

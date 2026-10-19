@@ -45,7 +45,6 @@ theorem Prop26 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
       have hG_AB := on_line_of_between_ends hBGA hB_AB hA_AB
       have hBGC : Triangle B G C := Triangle.of_line hB_AB hG_AB
         (ne_of_between hBGA) (hABC.off_line hA_AB hB_AB)
-      obtain ⟨GC, hG_GC, hC_GC⟩ := Postulate1 G C hBGC.ne₂₃
       -- Then, since BG is equal to DE, and BC to EF,
       -- the two sides GB, BC are equal to the two sides DE, EF respectively;
       have hBG_ED : ‖B G‖ = ‖E D‖ := hBG.trans (len_symm D E)
@@ -109,7 +108,6 @@ theorem Prop26 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D 
         (ne_of_between hBHC) (hABC.bca.off_line hB_BC hC_BC)
       have hCHA : Triangle C H A := Triangle.of_line hC_BC hH_BC
         (ne_of_between (between_symm hBHC)) (hABC.bca.off_line hB_BC hC_BC)
-      obtain ⟨AH, hA_AH, hH_AH⟩ := Postulate1 A H hBHA.ne₂₃.symm
       -- Then, since BH is equal to EF, and AB to DE,
       -- the two sides AB, BH are equal to the two sides DE, EF respectively, and they contain
       -- equal angles;

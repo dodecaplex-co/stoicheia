@@ -52,7 +52,6 @@ theorem Prop20 {A B C : Point} (hABC : Triangle A B C) :
     have hD_BA : OnLine D BA := on_line_of_between hBAD hB_BA hA_BA
     have hA_D : A ≠ D := ne_of_between hADX
     have hD_C : D ≠ C := fun e => hC_BA (e ▸ hD_BA)
-    obtain ⟨DC, hD_DC, hC_DC⟩ := Postulate1 D C hD_C
     -- Then, since DA is equal to AC,
     have hDA_AC : ‖D A‖ = ‖A C‖ := by rw [len_symm D A, hAD_CA, len_symm C A]
     -- the angle ADC is also equal to the angle ACD; [I. 5]

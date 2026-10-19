@@ -23,6 +23,11 @@ helper = "exists_between_nearer"
 note = "Euclid assumes he can find F on BD near enough to B that AF remains less than AE. The Lean applies `exists_between_nearer` to AB = AC < AE, using `len_lt_of_between` for C between A and E, and obtains F between B and D with AF < AE; it then derives the order A, B, F by `between_cut` and puts F on AB by `Tacit.on_line_of_between`, a rule we assume (System E, Between 2)."
 
 [[passage]]
+at = "and let the straight lines FC, GB be joined"
+kind = "given"
+note = "FC and GB are represented by their endpoints in the lengths and angles; no separate straight lines are constructed. The Lean beneath proves F ≠ C and G ≠ B for the later angle identities."
+
+[[passage]]
 at = "and they contain a common angle"
 kind = "helper"
 helper = "OnRay.between_of_len_lt"
@@ -53,9 +58,9 @@ note = "Euclid identifies FBC and GCB with the angles under the base. The Lean u
 
 [review]
 stage = "full"
-commit = "8bdf0ef"
+commit = "89918a7f"
 reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:434da0bb3337847c"
+lean = "sha256:489a046b9c1ddda8"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]
