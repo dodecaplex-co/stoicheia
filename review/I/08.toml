@@ -10,7 +10,7 @@ kind = "euclid"
 at = "For, if the triangle ABC be applied to the triangle DEF"
 kind = "helper"
 helper = "Tacit.superposition"
-note = "Euclid applies ABC to DEF; the Lean places B on E, C on the ray EF and A on D's side of EF by `Tacit.superposition`, a rule we assume, not a proof (System E, section 3.7, in LeanEuclid's form)."
+note = "Euclid applies ABC to DEF; the Lean places B on E, C on the ray EF and A on D's side of EF by `Tacit.superposition`, a rule we assume, not a proof (System E, section 3.7, in LeanEuclid's form). The rule preserves every side and angle of ABC in the copy, with C at C' and A at G."
 
 [[passage]]
 at = "the point C will also coincide with F"
