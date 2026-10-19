@@ -15,7 +15,10 @@ brief, and a later change is a revision of it.*
 our angle with Mathlib's scoped `∠` (section 3.2), the cost of scoping released bars
 (section 3.1) and tests 10 to 13, and corrected the counts. On 19 October the counts were
 taken again on main, and the tests that need no Mathlib were run again there (the
-appendix).*
+appendix). Then a challenger who did not write it, Astra (through Codex, read-only),
+returned the draft for correction, with five material findings and three editorial; every
+one is answered below, and the second appendix lists them. The largest changes the
+recommendation for the angle (section 3.2). Warm thanks to Astra.*
 
 The points are Argon's. Its second review of the `book-III` release, which read the checks,
 the records and the pages line by line, gave section 3.3 to the notation of the Lean
@@ -62,8 +65,11 @@ Five rules follow, and every recommendation below applies them.
    or under a new name with the old one deprecated.
 4. **The names of bound variables are part of the interface.** A caller may name an
    argument, as I.23 calls I.22 with `(A₁ := C) (A₂ := D) … (C₂ := E)`; the library names
-   an argument so 141 times, in 23 files. Renaming a bound variable breaks every such call,
-   and no alias can soften it.
+   an argument so 199 times, in 42 files, 141 of them a point or a circle by Heath's
+   letters, in 23. Renaming a bound variable changes the statement's fingerprint, since
+   bound names are printed; for its callers, Lean 4.35's `@[deprecated_arg old new]` keeps
+   the old name working for a release, with a warning (appendix, test 15), as a deprecated
+   alias does for a name.
 5. **Explain where the reader meets the Lean.** FORMALIZATION's vocabulary is the one home
    of what each word means; a key under each page's Lean block, generated from the words
    that page's statements use, puts it where it is read.
@@ -88,15 +94,15 @@ four kinds of change cost differently:
 |---|---|---|---|
 | How a word is written (a notation) | the `lean` stamp of each proposition file whose text changes; no fingerprint | nothing | the old notation kept for one release, with a warning (section 7) |
 | A word renamed (`len`, `Triangle`) | the `lean` stamp, and the fingerprint of every statement that names the word | the word's entry and every entry that names it (eleven axioms and five definitions name `len`), with the two lock hashes, `tests/model/lock.sha256` and `model/lock.sha256`, MODEL.md and the formal model's signature ([#73]) | a deprecated alias for one release ([#76]) |
-| A bound variable renamed (`ABCD`, `C₁`) | the `lean` stamp, and the fingerprint of each statement that binds it | nothing | calls that name it break, with no alias possible |
+| A bound variable renamed (`ABCD`, `C₁`) | the `lean` stamp, and the fingerprint of each statement that binds it | nothing | calls that name it warn for one release, under `@[deprecated_arg]` (test 15), then break |
 | Arguments or fields of one type reordered | as for a renamed word | the word's entry | nothing warns: old code compiles with a new meaning |
 
 Issue #69 plans for every record of Books I to III to be re-stamped once. On the
 recommendations below the cost is less than that: no fingerprint changes and nothing in the
-lock, and the `lean` stamps of 77 of the 99 proposition files are re-read once (section 6).
-One open question (3) would add a few statements' fingerprints and one lock entry, if the
-owner takes it before the consolidation release; another (9), if the owner writes the angle
-as a word, would raise the 77 files to 98.
+lock, and the `lean` stamps of 98 of the 99 proposition files are re-read once (section 6).
+One open question (3) would add a few statements' fingerprints and two lock entries, if the
+owner takes it before the consolidation release; another (9), if the owner keeps the angle's
+symbol, would lower the 98 files to 77.
 
 ## 3. The five points
 
@@ -203,12 +209,20 @@ the longer. In a file that imports the library and opens `EuclideanGeometry`, a 
 `∠ p q` no longer parses; the user writes `EuclideanGeometry.angle p q r` instead, since a
 file cannot switch off a global notation it imports. Giving ours Mathlib's shape
 (`notation "∠" => ang`) does not mend it: both readings then elaborate on our points, and
-Lean calls `∠ A B C` ambiguous (test 12). The word `ang A B C` would end the clash, at the
-cost of 21 more proposition files (98 of the 99 in all; `∠` is written 1,974 times in the
-Lean), and of pages that read `ang A B C` where they now read `∠ A B C`. **Recommended:
-keep `∠`, global, and say in the key and the table of names how a Mathlib user writes
-Mathlib's angle beside it**; open question 9 puts the choice to the owner. `∟` stays as
-well; LeanEuclid writes the right angle the same way, and Mathlib has no `∟`.
+Lean calls `∠ A B C` ambiguous (test 12). The word `ang A B C` ends the clash, at the cost
+of 21 more proposition files (98 of the 99 in all; `∠` is written 1,974 times in the Lean),
+and of pages that read `ang A B C` where they now read `∠ A B C`.
+
+The first draft recommended keeping `∠` and explaining it. The challenge of this draft
+argued the other way, and we agree: the clash reaches every Mathlib user who imports the
+library and writes Mathlib's angle, whether or not they open `Elements`, and an
+explanation tells them how to repair their code without removing the reason to. That is
+just what the owner asks us not to leave to others. **Recommended: the word `ang A B C`,
+with `∠` kept for one release in the form of section 7, and then removed.** If the owner
+weighs the look of the pages more, the fallback is `∠` kept global, recorded as an accepted
+limitation for Mathlib users, with the key and the table of names saying how to write
+Mathlib's angle beside it (open question 9). `∟` stays: LeanEuclid writes the right angle
+the same way, and Mathlib has no `∟`.
 
 ### 3.3 `circumference` and `standing` take their arguments in different orders
 
@@ -250,17 +264,25 @@ inscribed by equal circumferences (its draft brief, [#97]).
   beside it.
 - *One order for an arc, Heath's.* Give `Arc` its fields in the order Heath letters an arc,
   `circle`, `B`, `K`, `C`, so that the segment AEB is `⟨AEB, A, E, B⟩` and its circumference
-  `circumference AEB A E B`. Named fields (`a.B`, `a.K`, `a.C`) read as before; only the
-  anonymous constructor changes.
+  `circumference AEB A E B`. The fields read by name (`a.B`, `a.K`, `a.C`) as before, and
+  so does construction by name (`{ circle := AEB, B := A, C := B, K := E }`); positional
+  construction and matching change (`⟨…⟩`, `Arc.mk`, patterns).
+- *A constructor in Heath's order, beside the fields.* Keep the fields, and add
+  `Arc.ofHeath α B K C`, which builds the arc BKC, for statements to write in place of
+  `⟨…⟩`. It moves nothing, so it can be added before the release or after it.
 
 **Recommended: keep both words and explain them; and decide the arc's field order before
 the consolidation release** (open question 3). Before `Arc` is first released, reordering
 its fields costs the fingerprints of the statements that write an arc as `⟨…⟩` (III.24,
-III.26, III.28 and III.25's `Prop25.complete`, as staged) and the lock's entry for `Arc`,
-and needs no deprecation. After the release it could never be done: `⟨α, B, C, K⟩` would
-silently mean another arc (rule 3), and only a new structure could carry Heath's order. The
-staged III.28 shows what is at stake: Heath's circumference ACB of the circle ABC is
-`⟨ABC, A, B, C⟩` there, and would be `⟨ABC, A, C, B⟩` in Heath's order. The decision
+III.26, III.28 and III.25's `Prop25.complete`, as staged) and the lock's entries for the
+two fields that trade places, `Arc.C` and `Arc.K` (the challenge of this draft found, with
+the certificate's printer, that the entry for `Arc` itself would not change), and needs no
+deprecation. After the release the fields could not be reordered: `⟨α, B, C, K⟩` would
+silently mean another arc (rule 3). A third way works before the release or after it: keep
+the fields, and add a function that takes Heath's order, `Arc.ofHeath α B K C` for the arc
+BKC, for statements to write in place of `⟨…⟩`. The staged III.28 shows what is at stake:
+Heath's circumference ACB of the circle ABC is `⟨ABC, A, B, C⟩` there, and would be
+`⟨ABC, A, C, B⟩` in Heath's order, or `Arc.ofHeath ABC A C B`. The decision
 belongs with brief 0006, whose definition it would revise, and with the migration of stage
 3 now under way ([#25]); this brief raises it, and does not take it. It is the one question
 here with a deadline that is not the owner's to set: the move puts `Arc` into `Elements/`,
@@ -287,9 +309,11 @@ Greek letters (`α`, `β`), as System E does ("α, β, γ, . . . to range over c
   one name, `ABCD`, declared `{ABCD : Circle}` in the statement.
 - *Greek letters throughout.* Lean's idiom and System E's, but the tie to Heath's text
   (AGENTS.md, rule 5) moves into a remark, each statement's fingerprint changes, since bound
-  names are printed, and calls that name the circle break (rule 4).
-- *A marked name.* Lean's identifiers cannot hold `⊙`, the usual mark for a circle
-  (test 9), and a letter prefix (`cABCD`) reads worse than the plain name.
+  names are printed, and calls that name the circle warn for a release and then break
+  (rule 4).
+- *A marked name.* Lean's unquoted identifiers cannot hold `⊙`, the usual mark for a
+  circle (test 9); quoted, `«⊙ABCD»`, it can, but every use must type the guillemets, and a
+  letter prefix (`cABCD`) reads worse than the plain name.
 
 **Recommended: keep Heath's letters, and explain the split**, in the vocabulary and in the
 key of each page with a circle ("`ABCD` is the circle ABCD, named by Heath's letters"). The
@@ -320,7 +344,8 @@ and his one letter labels it.
   rule of the foundations says that every length is the length of some straight line.
 - *A segment object* (`C : Segment`, its ends `C.1` and `C.2`). It reads as Euclid's "the
   straight line C", but it is a new word in the foundations and the lock, it renames bound
-  variables in nine statements (rule 4: I.23's call of I.22 names all six), and it asks
+  variables in nine statements (rule 4: I.23's call of I.22 names all six, and would warn,
+  then break), and it asks
   every caller to wrap two points as `⟨P, Q⟩`.
 
 **Recommended: keep, and explain**, in the vocabulary and the key ("C₁ and C₂ are the ends
@@ -351,30 +376,32 @@ The responses to Argon's review ([#71]) send three more points here.
 | Euclid | Now | Recommended | Why |
 |---|---|---|---|
 | the straight line AB, as a length | `‖A B‖` | `len A B` | the bars read as a norm, and clash with Mathlib's |
-| the angle ABC | `∠ A B C` | `∠ A B C` | System E's symbol, and Mathlib's for the same angle; ours hides Mathlib's where both are open (open question 9) |
+| the angle ABC | `∠ A B C` | `ang A B C` | the symbol is System E's and Mathlib's, but ours, global, hides Mathlib's in every file that imports the library (open question 9) |
 | the triangle ABC, as an area | `△ A B C` | `area A B C` | △ reads as the triangle itself; `area` is System E's name |
 | a right angle | `∟` | `∟` | unchanged |
 | "let ABC be a triangle" | `Triangle A B C` | `Triangle A B C` | Euclid's setting-out, word for word |
 | the rectangle AB, CD; the square on AB | `rect A B C D`, `sq A B` | unchanged | words already |
 | the circumference BKC | `circumference α B K C` | unchanged, explained | Heath's letters: K on the arc |
 | the circumference on which the angle BAC stands | `standing α B A C` | unchanged, explained | Heath's letters: A the vertex |
-| the arc BKC, and its segment (stage 3) | `⟨α, B, C, K⟩` | `⟨α, B, K, C⟩`, if decided before the release | one order for one arc |
+| the arc BKC, and its segment (stage 3) | `⟨α, B, C, K⟩` | `⟨α, B, K, C⟩`, if decided before the release, or `Arc.ofHeath α B K C` | one order for one arc |
 | the circle ABCD | `ABCD` | unchanged, explained | Heath's name, and part of the interface |
 | the straight line C; the angle D | `C₁ C₂`; `D₁ D D₂` | unchanged, explained | its ends; its vertex and a point on each arm |
 
-A notation added from now on is `scoped` to `Elements`, so that a user meets it only on
-`open Elements`; at a notation's birth that costs nothing. Scoping one already released
-would break every user who never opened the namespace, with no clean release of warnings
-before it (section 3.1), so `∠` and `∟` stay global, at the cost to Mathlib users that
-section 3.2 states. This brief is about the Lean alone: the notation of "the modern way"
+A notation added from now on is `scoped` to `Elements`, so that a user meets it only after
+`open Elements` or `open scoped Elements` (which brings in the notation and no names), or
+inside the namespace, as the library's own files are; at a notation's birth that costs
+nothing. Scoping one already released would break every user who never opened the
+namespace, with no clean release of warnings before it (section 3.1), so a released symbol
+either stays global or becomes a word: `∟` stays, and `∠`, `‖ ‖` and `△` become words. This brief is about the Lean alone: the notation of "the modern way"
 passages is [#48]'s, in STYLE.
 
 ## 6. The cost, once, and the order of work
 
 **What the pass changes.**
 
-- *Proposition files:* 77 of the 99 change their text (72 for `len`, and I.37, I.39, I.41,
-  I.42 and I.43 for `area`; 98, if open question 9 writes the angle as a word). Their
+- *Proposition files:* 98 of the 99 change their text: 72 for `len`, five more (I.37, I.39,
+  I.41, I.42 and I.43) for `area`, and 21 more for `ang`; II.2 writes none of the three.
+  If open question 9 keeps `∠`, 77. Their
   records' `lean` stamps go stale, and each is re-read and re-stamped once (WORKFLOW,
   section 6). No fingerprint changes, nothing in the lock, and nothing in either lock
   hash (`tests/model/lock.sha256`, `model/lock.sha256`).
@@ -391,17 +418,19 @@ passages is [#48]'s, in STYLE.
   among them unchanged; a line in FORMALIZATION says so.
 - *Protected paths*, each named in a decisions entry and given a security review:
   `scripts/render.py` (the Book III definitions map writes `‖E F‖ = ‖E G‖`, and the page key
-  is new), `scripts/scaffold_book.py` (the statement templates that Book IV's scaffolding
-  copies), `scripts/test_safe_push.py` (one planted law writes `‖A A‖`) and
+  is new), `scripts/scaffold_book.py` (the statement tables of Books I to III; Book IV's
+  table, written in its ground step, takes the chosen notation from the start), `scripts/test_safe_push.py` (one planted law writes `‖A A‖`) and
   `tests/model/MODEL.md` (its table names both forms). The formal model's docstrings
   ("written `‖A B‖` in the library", in `model/Model/Signature.lean`, [#73]) follow.
 
 **How a reviewer knows it is notation only.** A notation change leaves every recorded term
-alone, so `facts.json` regenerated before and after the pass must agree entry by entry:
-statements, citations and axioms. Any difference means the pass changed more than notation.
-A slip in the substitution (`f len A B` for `f ‖A B‖`) is a type error, which `lake build`
-finds. With both, re-reading 77 files against their records is reading a mechanical
-substitution, and the reviewer still reads each file before stamping it.
+alone, so `facts.json` regenerated before and after the pass must agree entry by entry in
+what it says of each entry: its statement, its citations, its axioms and inherited rules,
+and the lock's vocabulary. The line numbers it records may move, where a longer word
+reflows a line, and only they. Any other difference means the pass changed more than
+notation. A slip in the substitution (`f len A B` for `f ‖A B‖`) is a type error, which
+`lake build` finds. With both, re-reading 98 files against their records is reading a
+mechanical substitution, and the reviewer still reads each file before stamping it.
 
 **The order.**
 
@@ -414,8 +443,10 @@ substitution, and the reviewer still reads each file before stamping it.
 4. The protected paths, in a branch of their own if `safe_push`'s keep_apart asks for one.
 5. The coordinator's change to the foundations: their definitions and docstrings written
    with the words, and the bars and the △ made the deprecated forms of section 7. From then
-   on the library's own build shows no deprecation warning, which shows that no file still
-   writes the old forms.
+   on `lake build`, `lake build Audit` and `lake build Staging` show no deprecation warning,
+   which shows that no file of the library, the audit or the staged statements still writes
+   the old forms; the pages are regenerated in the same change, since their Lean blocks
+   quote the source.
 6. A release later, the deprecated forms removed, and the release notes say so.
 
 Book IV's statements are scaffolded after step 4, in the new notation; Book IV's draft
@@ -440,11 +471,12 @@ notation:max "‖" A:max B:max "‖" => (len A B : BarsLength)
 ```
 
 and the same for `△ A B C`, as `(area A B C : TriangleArea)` with a deprecated
-`abbrev TriangleArea := Area`. The old notation expands to the word itself, ascribed a type
-whose name is deprecated. Lean warns at every use, with the message; the term it records is
-`len A B`, unchanged, so every law and theorem about `len` still rewrites it; and, once the
-bars are only this deprecated form, goals print as `len A B` (test 7). The names `BarsLength` and `TriangleArea` are placeholders. Two
-other ways were tried and set aside:
+`abbrev TriangleArea := Area`, and for `∠ A B C`, as `(ang A B C : SymbolAngle)`. The old
+notation expands to the word itself, ascribed a type whose name is deprecated. Lean warns
+at every use, with the message; the term it records is `len A B`, unchanged, so every law
+and theorem about `len` still rewrites it; and, once the bars are only this deprecated
+form, goals print as `len A B` (test 7). The names `BarsLength`, `TriangleArea` and
+`SymbolAngle` are placeholders. Two other ways were tried and set aside:
 
 - `@[deprecated]` on the `notation` command itself: Lean 4.35 accepts it, and warns nowhere
   (test 5).
@@ -455,7 +487,7 @@ other ways were tried and set aside:
 
 A notation that logs its own warning would need `macro` or `elab`, which FORMALIZATION,
 section 7, forbids under `Elements/`. For that one release the bars still meet Mathlib's
-norm, for anyone who keeps writing them.
+norm, and `∠` Mathlib's angle, for anyone who keeps writing them.
 
 ## 8. Open questions
 
@@ -463,10 +495,12 @@ Each is the owner's, or the coordinator's where marked; the recommendation is th
 
 1. **Lengths.** `len A B` (recommended), or scoped bars with a key (the fallback)?
 2. **Areas.** `area A B C` (recommended), or `△` kept and explained?
-3. **The arc's field order.** Heath's (`circle`, `B`, `K`, `C`), decided before the
-   consolidation release, since afterwards it cannot change without silently changing users'
-   arcs? *For the coordinator and the owner*, as a revision of brief 0006; it touches the
-   migration of stage 3 ([#25]) and III.25's restatement (stage 4).
+3. **The arc's field order.** Heath's (`circle`, `B`, `K`, `C`), decided before stage 3's
+   move lands, and at the latest before the consolidation release, since afterwards the
+   fields cannot move without silently changing users' arcs; or the fields kept, with a
+   function in Heath's order (`Arc.ofHeath`) beside them? *For the coordinator and the
+   owner*, as a revision of brief 0006; it touches the migration of stage 3 ([#25]),
+   III.25's restatement (stage 4) and Book IV's bridges ([#97]).
 4. **The page key.** A line under each "In Lean" block, generated by `render.py` from the
    words the page's statements use, its wording taken from FORMALIZATION's vocabulary:
    wanted?
@@ -479,10 +513,10 @@ Each is the owner's, or the coordinator's where marked; the recommendation is th
    after the release, as decided, the records are read once more, for their `lean` stamps
    alone. The brief keeps the owner's timing.
 8. **Argon's further points.** Kept and explained, as section 4 says?
-9. **The angle.** `∠` kept global and explained (recommended), though in a file that imports
-   the library and opens `EuclideanGeometry` it hides Mathlib's `∠`; or the word
-   `ang A B C`, in 21 more proposition files, with `∠` kept for one release in the form of
-   section 7?
+9. **The angle.** The word `ang A B C` (recommended, after the challenge), with `∠` kept for
+   one release in the form of section 7 and then removed; or `∠` kept global, in 21 fewer
+   proposition files, recorded as an accepted limitation for Mathlib users, who must then
+   write `EuclideanGeometry.angle` in any file that imports the library?
 
 ## Appendix: what was tested
 
@@ -491,9 +525,11 @@ library, or on their own. Tests 1 to 9 were first run against main at `4d02d50`,
 10 to 13 were added in review there; tests 10 to 12 load Mathlib v4.35.0 beside the
 library. On 19 October tests 1, 3 to 9 and 13 were run again against main at `89c5da4`,
 each with the result below, and test 7 once more with a stand-in word that has no notation
-of its own, for how goals print once the bars are only the deprecated form. Tests 2 and 10
-to 12, which need Mathlib, were not run again: nothing they rest on has changed, neither
-Lean's version nor our notations. Nothing here is committed.
+of its own, for how goals print once the bars are only the deprecated form. Tests 14 and 15
+were added that day, the second when the challenge of this draft pointed to Lean's
+`deprecated_arg`. Tests 2 and 10 to 12, which need Mathlib, were not run again: nothing
+they rest on has changed, neither Lean's version nor our notations. Nothing here is
+committed.
 
 | Test | What it showed |
 |---|---|
@@ -510,12 +546,32 @@ Lean's version nor our notations. Nothing here is committed.
 | 11. Mathlib's scoped `∠`, with `open EuclideanGeometry`, beside the library | Mathlib's `∠ p q r`, on points of `EuclideanSpace ℝ (Fin 2)`, is read as ours: "Application type mismatch", in `Elements.ang p`; `∠ p q` gives "unexpected token ')'"; ours on `Point` still works |
 | 12. A stand-in angle in Mathlib's shape, `notation "∠" => angX`, beside Mathlib's with `open EuclideanGeometry` | Mathlib's `∠ p q r` works; the stand-in's `∠ A B C` is an "Ambiguous term" |
 | 13. One symbol twice: a global notation ascribed a deprecated `abbrev` type (section 7's form), and a `scoped` one | outside the namespace, a warning; after `open`, an "Ambiguous term" |
+| 14. The words as they read today, `len B C < len B A + len A C` from I.20, with `open Elements` | elaborates; Lean records the term the bars give |
+| 15. A theorem whose circle `ABCD` is renamed `α`, marked `@[deprecated_arg ABCD α]` | `T (α := c)` elaborates; `T (ABCD := c)` elaborates, with "parameter `ABCD` of `T` has been deprecated, use `α` instead" |
 
 The counts in this brief were taken again from main at `89c5da4`: the uses of each symbol
 under `Elements/`, `Staging/` and `Audit/`, and in the 99 proposition files; the statements
 that reach each word, from `facts.json` (121 entries, porisms and companions among them);
 the lock's entries (87 axioms, 91 words); and the named arguments (`(X := …)`) under
 `Elements/`.
+
+## Appendix: the challenge of 19 October
+
+Astra read the draft at `72610fb` against the code, recounted the appendix's figures (all
+confirmed but one), ran its own Lean tests through standard input, and returned it for
+correction. Each finding, and what was done:
+
+| Finding | Severity | Done |
+|---|---|---|
+| A renamed binder can keep its old name for callers, with a warning, by Lean 4.35's `@[deprecated_arg]`; "no alias possible" was false | material | rule 4, the table of section 2, sections 3.4 and 3.5 corrected; test 15 added |
+| Reordering the arc's fields changes two lock entries, `Arc.C` and `Arc.K`, not the one for `Arc`; positional `Arc.mk` and patterns change too, not only `⟨…⟩` | material | sections 2 and 3.3 corrected |
+| The arc's order should be decided before stage 3's move lands, and a constructor in Heath's order is a third way that moves nothing | material | section 3.3's options and question 3 |
+| Keeping `∠` global leaves the clash with Mathlib's angle for every Mathlib user who imports the library | material | the recommendation is now `ang A B C`, with `∠` deprecated for one release (sections 3.2, 5, 6, 7 and question 9) |
+| The pass's checks should cover `Audit/` and `Staging/`, the pages should be regenerated, and the comparison of `facts.json` should allow moved line numbers | material | section 6, "How a reviewer knows" and step 5 |
+| `scaffold_book.py` holds Books I to III's tables only; Book IV's is yet to be written | editorial | section 6 |
+| `open scoped Elements` brings a scoped notation without the names | editorial | section 5 |
+| A quoted identifier, `«⊙ABCD»`, can hold the circle's mark | editorial | section 3.4 |
+| The named arguments are 199, in 42 files; 141, in 23, name a point or a circle | (count) | rule 4 |
 
 [issue #69]: https://github.com/jackChallis/stoicheia/issues/69
 [#25]: https://github.com/jackChallis/stoicheia/issues/25
