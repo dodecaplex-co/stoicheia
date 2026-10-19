@@ -28,14 +28,17 @@ marked for the coordinator, who decides it at the freeze.*
 coordinator's decision when the owner asked whether there was a way around their resting on
 `circle_eq` or Circle 4. For it this branch merged main at `5766311` (#87 to #92); the line
 references of sections 1 to 6 are still to `e04f318`, and are renewed at the freeze. Section
-7 has not yet been challenged: question 15 is for its challenge, and question 16 for the
-coordinator.*
+7 was challenged on its own by Astra (GPT Pro, through Codex, read-only) at `3f00ebf`, which
+supported the restatement and found one thing that blocked its freeze: the rules still give
+the restated III.5 and III.6 at once, so the overlap catalogue keeps their rows. This
+revision answers every finding, and Appendix B, under "Section 7's challenge", gives each,
+with what was done. Warm thanks to Astra. Questions 15 and 16 are the coordinator's.*
 
 Base: main at `f17b427`, merged with main at `e04f318`, and at `5766311` for section 7.
 `lake build Staging` passes at this revision with the files in `Staging/Centre/`: 33
 statements with `sorry`, four definitions, seven proved declarations (the construction of
 III.1; its circle-only entry point, from the staged III.1; III.13's two clauses as lemmas,
-from the staged III.13; `Centre.every`; and III.5 and III.6 restated, section 7), 81 checks,
+from the staged III.13; `Centre.every`; and III.5 and III.6 restated, section 7), 82 checks,
 and the axioms of III.5 and III.6 pinned. Nothing in `Elements/` changes, so main's
 records, lock and CI are untouched.
 
@@ -639,7 +642,11 @@ proofs should not use `Arc.Drawn`'s centre clause (question 5).
 ## 7. III.5 and III.6: cutting and touching as Definition III.3 reads them
 
 *Added on 18 October 2026, after the challenge of sections 1 to 6, and read against main at
-`5766311`. It is challenged on its own (question 15) and frozen with the rest.*
+`5766311`. Challenged on its own by Astra at `3f00ebf`, which supported the mathematics and
+asked for the corrections made here: the catalogue keeps its rows for III.5 and III.6;
+circles that cut one another each pass within the other, in the definition as in the
+plane; and the account of what the restatement keeps says only what was shown (Appendix B,
+"Section 7's challenge"). The coordinator freezes it with the rest.*
 
 ### The decision, and why
 
@@ -679,15 +686,29 @@ centre is drawn through a point where the one circle passes within the other, an
 I.15, with the order of the points on that line, gives "the less to the greater".
 `Audit.III_5_crossing` (#87) showed it first, by Definition I.15 and Diagram-segment 4.
 
+What the restatement does not do is take III.5 and III.6 out of the overlap catalogue. The
+rules still say what the restated propositions say, in a line or two. Were two circles about
+one centre with a point in common, Diagram-segment 2 would make them one circle, and the
+point of the one within the other would be within that circle and on it, which Generalities
+4 forbids; for III.6, contact without ends by Generalities 3. Diagram-segment 4, with
+Definition I.15 and a law of magnitude, gives the restated III.5 in three lines as well.
+Each is "a short proof, from at most three rules, that cites no proposition", the
+catalogue's test for "gives it at once" ([overlaps.md](../reports/overlaps.md), "The
+catalogue"), so the restated propositions keep their rows. Euclid's argument, which the
+proofs follow, uses neither rule that tells two circles apart: the proofs avoid the rules,
+and the rules still contain the propositions. That was the challenge's one blocking
+finding, and the brief adopts it (question 15).
+
 ### The statements
 
 As they would read in `Elements` (the staged file has the docstrings in full):
 
 ```lean
-/-- **Definition III.3**, circles that cut one another: they meet at two points, and `α`
-passes within `β`, for a point of `α` is within `β`. -/
+/-- **Definition III.3**, circles that cut one another: they meet at two points, and each
+passes within the other, for a point of `α` is within `β`, and a point of `β` within `α`. -/
 def CirclesCut (α β : Circle) : Prop :=
-  CirclesMeet α β ∧ ∃ P : Point, OnCircle P α ∧ InsideCircle P β
+  CirclesMeet α β ∧ (∃ P : Point, OnCircle P α ∧ InsideCircle P β) ∧
+    ∃ P : Point, OnCircle P β ∧ InsideCircle P α
 
 /-- If two circles cut one another, they will not have the same centre. -/
 theorem Prop5 {E : Point} {ABC CDG : Circle} (hcut : CirclesCut ABC CDG) :
@@ -705,11 +726,21 @@ theorem Prop6 {C F : Point} {ABC CDE : Circle} (htouch : CirclesTouch ABC CDE C)
 ```
 
 - **Cutting, a new word.** `CirclesCut α β` asks that the circles meet at two points and
-  that `α` pass within `β`. Circles that cross each pass within the other; one point of `α`
-  within `β` is all that III.5's argument uses, and it is Euclid's F, which his figure puts
-  within CDG, nearer E than G. A definition reads more like "cut one another" than the
-  hypotheses written out (`CirclesMeet ABC CDG`, `OnCircle F ABC`, `InsideCircle F CDG`),
-  which would name a point the enunciation never mentions, and it stands beside its kin: in
+  that each pass within the other: a point of `α` is within `β`, and a point of `β` within
+  `α`. That is crossing, read by our definitions of touching (above), and in the plane it is
+  exactly what two different circles that meet at two points do (below): the definition is
+  chosen for that equivalence, not for what the proof consumes. It is symmetric by its form,
+  as "cut one another" is (a check). III.5's argument uses one common point, C, and one
+  point within, Euclid's F, a point of ABC which his figure puts within CDG, nearer E than
+  G; the second common point and the second point within say which figure is meant, as B
+  does in Euclid's setting-out, and go unused. Asked of `α` alone, as the challenged draft
+  asked, the definition would be an oriented representation, which the challenge accepted
+  under that name while preferring this form (question 15). The two common points stay:
+  Euclid's setting-out names both, and with one common point the one-way form would admit
+  contact within as well, since the inner of two circles touching within has points within
+  the outer. A definition reads more like "cut one another" than the hypotheses written out
+  (`CirclesMeet ABC CDG` and the two points within), which would name points the
+  enunciation never mentions, and it stands beside its kin: in
   `Elements/Foundations/DefinitionsIII.lean`, after `CirclesTouch`, under Definition III.3,
   whose module note gains circles cutting one another in its list of the words defined there.
   It joins `Certificate/axioms.lock` with III.5, the first statement that uses it, through
@@ -719,16 +750,20 @@ theorem Prop6 {C F : Point} {ABC CDE : Circle} (htouch : CirclesTouch ABC CDE C)
   approved as a class; each moves with the first approved statement that uses it, and the
   pull request that moves it records it" ([0002-decisions.md](0002-decisions.md), "Brief
   0006 frozen").
-- **III.5** reads "cut" as `CirclesCut` and loses `hne : ABC ≠ CDG`, which the point within
-  implies: a point within a circle is not on it (Generalities 4). Today's III.5 gives the
-  restated one (a check), so it claims nothing that today's does not.
+- **III.5** reads "cut" as `CirclesCut` and loses `hne : ABC ≠ CDG`, which either point
+  within implies: a point within a circle is not on it (Generalities 4). Today's III.5
+  gives the restated one (a check), so it claims nothing that today's does not.
 - **Contact within, in the definition** (recommended, question 16). The point of the inner
   circle within the outer takes the place of the clause `α ≠ β`, which it implies. III.6's
   text does not change, nor does that of any statement: what changes is what touching within
   means, in `CirclesTouch` and in III.6, III.11 and III.13. Contact without
   (`TouchesExternally`) does not change. A changed definition is the coordinator's to
   approve, with its lock entry and a decisions entry that names the three statements whose
-  meaning moves with it.
+  meaning moves with it. The definition stays our whole-circle reading (brief 0004,
+  "Touching, for circles"), and so does `touching-whole-circles` on the records of III.6,
+  III.11 and III.13: Heath prefers to read Definition III.3 locally, the circles not cutting
+  at the point of contact, and says the definition must imply the point within; the form
+  given here is ours, and the point does not make our reading his.
 - **Every user of `TouchesInternally`,** by `git grep` at `4a85d42` (main at `5766311`,
   merged into this brief): `CirclesTouch`, and III.6 through it; III.11
   (`htouch : TouchesInternally ABC ADE A`); III.13 (its first clause, and `htB`); III.13
@@ -742,7 +777,11 @@ theorem Prop6 {C F : Point} {ABC CDE : Circle} (htouch : CirclesTouch ABC CDE C)
   the third clause, all three lines go through as written (two checks in the staged file).
   In a scratch copy at `4a85d42`, not committed, the whole of III.11 and of III.13,
   unchanged but for the staged names, checked, and each lost Diagram-segment 2 from its
-  axioms and gained nothing; so did III.12, which cites III.6 for contact without.
+  axioms and gained nothing; so did III.12, which cites III.6 for contact without. That is
+  evidence for section 7's change alone, from a scratch copy, not a build of the migration:
+  the rest of the brief brings the rule that every circle has a centre into III.13, among
+  others (section 4), and the whole migration is built, and its certificates compared, on
+  the revision delivered ("Order", below).
 - **The alternative,** the form the coordinator asked to be preferred: today's definition
   kept, and the point given to III.6 alone.
 
@@ -761,27 +800,59 @@ theorem Prop6 {C F : Point} {ABC CDE : Circle} (htouch : CirclesTouch ABC CDE C)
   would call Diagram-segment 2 itself for that step, and its record would gain an overlap;
   III.11 and III.13 would go on resting on the rule, as they do today through III.6; and
   touching within would be read one way in III.6 and another in III.11 and III.13. Heath
-  puts the point in the definition. So the brief recommends the definition.
+  says that the definition must be taken to imply the point, though he gives no definition
+  of this form. So the brief recommends putting it there, where III.6, III.11 and III.13 all
+  read it.
 
 ### No configuration Euclid's words admit is lost
 
-In the plane where every axiom holds (the note of `Elements/Foundations/Words.lean`, and
-[MODEL.md](../../tests/model/MODEL.md)), a circle is a centre and a radius, one figure, and
-Euclid's two circles are two figures.
+The test is the intended plane, the one in which every axiom holds (the note of
+`Elements/Foundations/Words.lean`, lines 18 to 28, and [MODEL.md](../../tests/model/MODEL.md),
+line 28): a circle is one figure, a centre and a positive radius, and Euclid's two circles
+are two figures. The axioms ask a positive radius as well: Points 7 gives a
+point of any circle outside every finite list, so no circle is a single point, and Points 8
+a point within every circle (`exists_point_on_circle` and `exists_point_inside_circle`, in
+`Elements/Foundations/Tacit/Constructions.lean`); and a named centre and a point of its
+circle are two points (`ne_of_centre_of_on`), so the radius between them has some length
+(`len_pos`).
 
-- **Two different circles that meet at two points cross.** Let their centres be O and O′ and
-  their radii r and r′. The centres differ, for one centre and a common point make one
-  circle. The common points are two, and lie symmetrically about the straight line OO′, so
-  neither is on it, and the triangle of O, O′ and a common point gives |r − r′| < OO′ <
-  r + r′. The point of the first circle on the ray from O towards O′ is then |OO′ − r| from
-  O′, which is less than r′: it is within the second circle. So two circles that cut one
-  another in the plane are `CirclesCut`.
+- **Two different circles that meet at two points cross, each within the other.** Let
+  their centres be O and O′ and their radii r and r′, both positive. The centres differ,
+  for one centre and a common point make one circle. The common points are two, and lie
+  symmetrically about the straight line OO′, so neither is on it, and the triangle of O,
+  O′ and a common point gives |r − r′| < OO′ < r + r′. The point of the first circle on
+  the ray from O towards O′ is then |OO′ − r| from O′, which is less than r′: it is within
+  the second circle. With the circles exchanged, the point of the second on the ray from O′
+  towards O is |OO′ − r′| from O, which is less than r: it is within the first. So two
+  circles that cut one another in the plane are `CirclesCut`, in either order.
 - **A circle touching another within has its other points within.** If two circles meet at
-  C, are two, and no point of the inner is outside the outer, then r′ < r and OO′ = r − r′,
-  and every point of the inner circle but C is less than r from O. So two circles touching
-  within have the point of the definition. Touching without is as before.
-- So the old and the new statements part only over a circle drawn twice over, which the
-  plane does not have. The records of III.5, III.6, III.11 and III.13 stay `full`.
+  C, are two, and no point of the inner is outside the outer, then r′ < r and OO′ = r − r′.
+  The inner circle's radius is positive, so it has points other than C, and every one of
+  them is less than r from O. So two circles touching within have the point of the
+  definition. Touching without is as before.
+
+Configuration by configuration (the table is Astra's, from the challenge):
+
+| In the plane | Before and after |
+|---|---|
+| Two different circles that cross | They cut one another, both before and after, and the new definition holds in either order |
+| One point in common, contact within | Not cutting, before or after; touching within, before and after, the new definition's point present |
+| One point in common, contact without | Touching without, unchanged |
+| One circle within the other, no point in common | Neither cutting nor touching |
+| One centre, unequal radii | No point in common: neither |
+| A circle and itself | Not two circles: excluded before by III.5's `ABC ≠ CDG` and contact within's `α ≠ β`, now by the point within, since no point of a circle is within it (Generalities 4) |
+
+**What this shows, and what it does not.** In the intended plane the old and the new
+hypotheses agree: there they do not part at all. So the restated III.5 and III.6 say what
+today's say, and the records of III.5, III.6, III.11 and III.13 stay `full`, with the
+representation disclosed (the whole-circle reading of touching, above). That rests on the
+plane, not on the staged checks, which go one way only: today's statements give the
+restated ones. In an interpretation without the two rules that tell two circles apart, a
+circle drawn twice over meets today's hypotheses and not the new ones; that shows that the
+readings differ there, not every way in which they could. Nor is a model of every axiom, by
+itself, a reading of Euclid's objects: section 1 has a plane with a circle that no point is
+the centre of. The intended plane is the test for these figures of Euclid's, and the one
+used here.
 
 ### What changes
 
@@ -791,18 +862,28 @@ With the definition, as recommended; where the alternative differs, the item say
   clause, in `DefinitionsIII.lean`; the lock, which gains `CirclesCut` and changes
   `TouchesInternally`'s entry, and `tests/model/lock.sha256`; and the decisions entry, naming
   III.5 and III.6 restated, III.11 and III.13 whose meaning moves with the definition, and
-  III.10's proof. With the alternative, `TouchesInternally` stays.
+  III.10's proof. With the alternative, `TouchesInternally` stays. And `CirclesMeet`'s
+  docstring in `Words.lean`, "Two circles that cut one another (in two points)", which a
+  circle meeting itself also satisfies, and which would now misname it: it becomes "Two
+  circles that meet at two points", with a sentence sending a reader to `CirclesCut` for
+  circles that cut one another. The lock holds no docstrings, so that entry stays.
 - **III.5,** `Elements/BookIII/Prop05.lean`: the statement and the proof below. Its record:
   the statement note says how "cut" is read (the circles meet at two points and cross, a
-  point of ABC within CDG, which makes them two; the proof uses one common point), and stays
-  `full`; the route stays `euclid`; the `[overlap]` on `circle_eq` and the `helper` passage
-  that names it go (question 15); a `carried` passage at "For, if possible, let it be E"
-  says that EFG is drawn through F, where the circles cross, one straight line from E
-  meeting the circles at two points being all the argument needs; the closing `grouped`
-  passage stays.
+  point of ABC within CDG and a point of CDG within ABC, either of which makes them two; the
+  proof uses one common point and the first point within), and stays `full`; the route
+  stays `euclid`; the `[overlap]` stays on `circle_eq`, with `also =
+  ["Tacit.inside_not_on"]`, and its note says that Diagram-segment 2 with Generalities 4
+  gives the restated III.5 at once, as Diagram-segment 4 with Definition I.15 does in three
+  lines, and that the proof follows Euclid and uses neither Diagram-segment 2 nor Circle 4
+  (question 15); the `helper` passage that names the rule goes, since the proof no longer
+  calls it; a `carried` passage at "For, if possible, let it be E" says that EFG is drawn
+  through F, where the circles cross, one straight line from E meeting the circles at two
+  points being all the argument needs; the closing `grouped` passage stays.
 - **III.6,** `Prop06.lean`: the proof. Its record: the route stays `euclid`; the `[overlap]`
-  on `circle_eq` with `also = ["Tacit.centre_inside"]` and the `helper` passage go (question
-  15); the `case` passage for contact without, at "For, if possible, let it be F", gains a
+  stays on `circle_eq`, with `also = ["Tacit.centre_inside", "Tacit.inside_not_on"]`, and
+  its note says, as III.5's does, that the rules give the restated III.6 at once and the
+  proof uses neither Diagram-segment 2 nor Circle 4 (question 15); the `helper` passage
+  goes; the `case` passage for contact without, at "For, if possible, let it be F", gains a
   sentence: for contact within, FEB is drawn through a point of the inner circle within the
   outer, the one straight line Heath says is enough when he answers J. G. Camerer (vol. 2,
   p. 13); the `[representation]` takes `touching-whole-circles` (section 4), whose meaning
@@ -823,12 +904,16 @@ With the definition, as recommended; where the alternative differs, the item say
   section 4 leaves them.
 - **III.11 and III.13:** no Lean changes. Their records are read again for the definition,
   which neither their fingerprints nor their Lean hashes can show, since neither the text of
-  their statements nor their files change; the notes on touching within gain the point
-  within. With the alternative, III.11's line for F ≠ G calls `circle_eq`, under a `helper`
-  passage and an `[overlap]`, and its file changes.
-- **III.12:** nothing but its certificate.
-- **Certificates** (from the staged proofs and the scratch copy, at `4a85d42`): III.5 and
-  III.6 go from 16 tacit rules each to 13, losing Diagram-segment 2, Points 1, Between 6 and
+  their statements nor their files change, and their semantic reviews are made again; the
+  notes on touching within gain the point within. With the alternative, III.11's line for
+  F ≠ G calls `circle_eq`, under a `helper` passage and an `[overlap]`, and its file
+  changes.
+- **III.12:** nothing but its certificate; its semantic review is made again with III.11's
+  and III.13's, since it cites III.6.
+- **Certificates** (from the staged proofs and the scratch copy, at `4a85d42`, for section
+  7's change alone; the rest of the brief changes some of the same certificates, and the
+  migration's are compared before it lands, "Order"): III.5 and III.6 go from 16 tacit
+  rules each to 13, losing Diagram-segment 2, Points 1, Between 6 and
   Between 7 and gaining Generalities 4, with Definition I.15 and Postulate 1 as before;
   III.11, III.12 and III.13 lose Diagram-segment 2 and nothing else; III.10 keeps its 64
   axioms and calls Diagram-segment 2 itself; III.23 does not change. In `Elements`,
@@ -836,16 +921,56 @@ With the definition, as recommended; where the alternative differs, the item say
   III.10, and III.23 through it; it first enters at III.10. The staged work uses it the same
   way, in brief 0006's arcs and restated III.25 and in one step of the mixed-angle
   prototype. With the alternative, III.11 and III.13 keep it.
-- **The catalogue,** [overlaps.md](../reports/overlaps.md): its rows for III.5 and III.6
-  become one for Heath's combined enunciation, "*If the circumferences of two circles meet at
-  a point they cannot have the same centre*" (vol. 2, p. 12), circles that merely meet, which
-  Diagram-segment 2 gives at once and which supplies III.10's last step (first enters:
-  III.10); its notes under III.5 and III.6 become notes on that weaker reading, with the
-  twin-circle argument as the reason the rule is needed there and not in Euclid's
-  propositions; "The rows checked", the small certificates and the account of the screen
-  follow, and the screen runs again in step 6. In `Audit/Overlaps.lean`, `III_5` and
-  `III_6`, typed today as the propositions, become one lemma with the weaker reading written
-  out, from Diagram-segment 2 alone, with its pin; `III_5_crossing` waits on question 15.
+- **The catalogue,** [overlaps.md](../reports/overlaps.md), with question 15: its rows for
+  III.5 and III.6 stay, for the restated propositions. III.5: Diagram-segment 2, with
+  Generalities 4, gives it at once (circles about one centre through one point are one
+  circle, and the point of the one within the other would then be within that circle and on
+  it); and a second row, Diagram-segment 4, with Definition I.15 and a law of magnitude,
+  gives it at once too (the point within is nearer the centre than the common point, and
+  yet as far from it). III.6:
+  Diagram-segment 2, with Generalities 3 and 4, gives it at once, Generalities 3 ending
+  contact without. Diagram-segment 4's proof does not make a row for III.6: with contact
+  without it takes four rules. "First enters" is read from the migrated facts.json, and
+  checked against the proofs' own calls as the catalogue says: Diagram-segment 2 at III.10
+  (above), and, by today's facts.json, Generalities 3 at I.1, Generalities 4 at I.22 and
+  Diagram-segment 4 at I.3. The notes under III.5 and
+  III.6 say that the proofs follow Euclid and use neither Diagram-segment 2 nor Circle 4,
+  that the rows record what the rules contain, not what the proofs rest on, and that the
+  twin-circle argument now concerns today's readings and Heath's combined enunciation,
+  "*If the circumferences of two circles meet at a point they cannot have the same centre*"
+  (vol. 2, p. 12), circles that merely meet, which Diagram-segment 2 gives at once and which
+  carries III.10's last step: a note, not a row, since it is no proposition of ours. "The
+  rows checked", the small certificates and the account of the screen follow, and the
+  screen runs again in step 6. In `Audit/Overlaps.lean`, `III_5`, `III_6` and
+  `III_5_crossing` are retyped to the restated propositions, with their pins. Their proofs,
+  checked by Lean against the staged statements in a scratch file at this revision (not
+  committed), are
+
+  ```lean
+  theorem III_5 : type_of% @Elements.BookIII.Prop5 :=
+    fun ⟨⟨_, _, _, _, _, hC₁, hC₂⟩, ⟨_, hP₁, hP₂⟩, _⟩ ⟨hE₁, hE₂⟩ =>
+      inside_not_on (circle_eq hE₁ hE₂ hC₁ hC₂ rfl ▸ hP₂) hP₁
+
+  theorem III_6 : type_of% @Elements.BookIII.Prop6 := by
+    rintro C F ABC CDE (⟨hC₁, hC₂, ⟨P, hP, hP_in⟩, -⟩ | ⟨hC₂, hC₁, ⟨P, hP, hP_in⟩, -⟩ |
+      ⟨-, -, hout⟩) ⟨hF₁, hF₂⟩
+    · exact inside_not_on (circle_eq hF₂ hF₁ hC₂ hC₁ rfl ▸ hP_in) hP
+    · exact inside_not_on (circle_eq hF₁ hF₂ hC₁ hC₂ rfl ▸ hP_in) hP
+    · exact hout F (centre_inside hF₁) (centre_inside hF₂)
+
+  theorem III_5_crossing : type_of% @Elements.BookIII.Prop5 := by
+    rintro E ABC CDG ⟨⟨_, C, _, _, _, hC₁, hC₂⟩, -, ⟨P, hP₂, hP₁⟩⟩ ⟨hE₁, hE₂⟩
+    have h : ‖E P‖ < ‖E C‖ := len_lt_of_inside hE₁ hC₁ hP₁
+    rw [Definition15 hE₂ hP₂ hC₂] at h
+    exact lt_irrefl _ h
+  ```
+
+  and Lean reports, besides `Classical.choice`: for `III_5`, `circle_eq` and
+  `inside_not_on`; for `III_6`, those two and `centre_inside`; for `III_5_crossing`,
+  `Definition15`, `len_lt_of_inside` and `lt_irrefl`. `III_5_crossing` takes the second
+  point within, a point of CDG within ABC, as #87's lemma took its point. In the same
+  scratch file, `grind`, given Diagram-segment 2, Generalities 4 and the two definitions,
+  closes the restated III.5.
 - **Pages and prose,** by the owner of each, with step 6: the mishnah of III.5 (its
   paragraph on `circle_eq`, and its last sentence, that the proof proves Heath's combined
   enunciation, which is no longer so), of III.6 (Camerer's question, now answered with the
@@ -870,7 +995,7 @@ With the definition, as recommended; where the alternative differs, the item say
 `Elements.BookIII.Staging.Centre`, each proved under Heath's sentences as its home will
 have them:
 
-- **III.5.** The crossing gives F, a point of ABC within CDG. EC is drawn for the eye; EFG
+- **III.5.** The cutting gives F, a point of ABC within CDG. EC is drawn for the eye; EFG
   is drawn from E through F and, produced beyond F, meets CDG at G (Intersections 5,
   `line_circle_beyond`, since F is within CDG). EC is equal to EF and to EG, by Definition
   I.15, and F, between E and G, makes EF the less (Diagram-segment 1 and Common Notion 5,
@@ -880,8 +1005,9 @@ have them:
 - **III.6.** Contact without ends at once, as today (Generalities 3). For contact within,
   FEB is drawn through the point of the inner circle within the outer and produced to the
   outer, and whichever of E and B is the nearer F gives the less, either circle the inner.
-- **What they rest on.** `#print axioms` gives, for each, at `4a85d42`: `Definition15`,
-  `Postulate1` and thirteen tacit rules, `add_comm`, `add_lt_add_right`, `add_zero`,
+- **What they rest on.** `#print axioms` gives, for each, at `4a85d42` and again at this
+  revision: `Definition15`, `Postulate1` and thirteen tacit rules, `add_comm`,
+  `add_lt_add_right`, `add_zero`,
   `between_symm`, `centre_inside`, `eq_of_len_eq_zero`, `inside_not_on`,
   `len_add_of_between`, `line_circle_beyond`, `lt_irrefl`, `lt_trichotomy`, `ne_of_between`
   and `not_lt_zero`, with Lean's `Classical.choice`: neither `circle_eq` nor
@@ -890,12 +1016,23 @@ have them:
   if either changes; with `circle_eq` planted in III.5's proof, or `sorry` in III.6's, it
   fails. They are pins, not a targeted check like section 3's guard, because
   `tooling/forbidden-scan`, in flight, refuses `#eval` in `Staging/` and `Audit/` (question
-  7).
-- **The checks** (checked by Lean): circles that cut one another are two and meet at two
-  points; contact within as proposed is today's with the point; today's III.5 and III.6
-  give the restated ones; III.6 written the alternative's way is the same theorem; III.11's
-  two lines and III.13's one go through against the proposed definition; and III.10's last
-  step, as planned, closes. Nothing in the file is `sorry`.
+  7). What the pins show is the names of these two declarations' axioms, whole: they would
+  catch `circle_eq`, Circle 4 or `sorryAx` entering. They do not check the reading of the
+  statements, the statements of the axioms, the other declarations in the file, or whether
+  a shorter proof exists from other rules, which one does (above, "What changes", the
+  catalogue). `lake build Staging` runs them, and CI runs it; the default `lake build`
+  does not.
+- **What they leave unused.** III.5 uses neither B, nor its incidences, nor B ≠ C, nor the
+  point of CDG within ABC; III.6's contact within does not use the clause that no point of
+  the inner circle is outside the outer; contact without uses no point of contact. Those
+  clauses say which figure is meant, and ordinary circles that cross or touch satisfy them:
+  no hypothesis is vacuous, and none is used artificially.
+- **The checks** (checked by Lean): cutting is symmetric; circles that cut one another are
+  two and meet at two points; contact within as proposed is today's with the point; today's
+  III.5 and III.6 give the restated ones, a check that runs one way only (the other way
+  holds in the plane, above, and is not checked); III.6 written the alternative's way is
+  the same theorem; III.11's two lines and III.13's one go through against the proposed
+  definition; and III.10's last step, as planned, closes. Nothing in the file is `sorry`.
 - **Their standing.** Both proofs are a statement's own, made now at the coordinator's
   direction; like `Prop1.construction` and `Centre.every`, they rest on no stub, and
   question 13 asks the freeze to approve them as staged facts, or make them `sorry` until it.
@@ -905,9 +1042,13 @@ have them:
 The restatement needs neither #40 nor the rule. Recommended: it lands in step 6's pull
 request, so that the records of III.10, III.11 and III.13, which section 4 changes too, are
 read once (question 10's reason), and since `Audit/Overlaps.lean`, the catalogue and the
-screen's run change with both. `Staging/Centre/` is deleted there, this file with it. The
-definitions are the coordinator's to write, in `Elements/Foundations/`, carried in that pull
-request as step 5 carries the model's files. Branches in flight touch the same files:
+screen's run change with both. Before it lands, the whole migration is built on the
+revision delivered and its certificates compared with those this section gives; III.5 and
+III.6 keep the route `euclid`, III.10 takes `modified`, and the semantic reviews of III.11,
+III.12 and III.13 are made again, though their fingerprints do not change.
+`Staging/Centre/` is deleted there, this file with it. The definitions are the
+coordinator's to write, in `Elements/Foundations/`, carried in that pull request as step 5
+carries the model's files. Branches in flight touch the same files:
 `lean/circle2-out` (#60) changes the proofs of III.10, III.11 and III.12 (not their calls of
 III.5 and III.6) and `Audit/Overlaps.lean`; `text/screen-rows` and `tooling/screen-unfold`,
 the screen and the catalogue; `text/overlaps-own`, the catalogue. Step 6 starts from main
@@ -921,7 +1062,8 @@ on questions 1 to 6, 8 and 10, and on question 9's removal of the tag; on questi
 endorsed the draft's pin of the whole list of axioms, which the revision replaced by a
 targeted check on the Claude challenger's advice; and it asked for the lemmas of question
 11. Questions 12 to 14 arose after the challenge. Questions 15 and 16 come with section 7,
-and question 15 goes first to that section's challenge.
+whose challenge, Astra's at `3f00ebf`, supported question 16 and changed two of question
+15's three recommendations (Appendix B, "Section 7's challenge").
 
 1. **Where the rule sits.** *For the coordinator.* Recommended: `Tacit/Constructions.lean`, as
    `Tacit.exists_centre`, beside the other rules that a point exists. Weighed against a home
@@ -1034,47 +1176,55 @@ and question 15 goes first to that section's challenge.
     first `grouped` passage naming a construction has its warrant on main, and a later book's
     constructions can follow it. The alternative is III.1's record alone, citing
     FORMALIZATION section 4.
-15. **III.5 and III.6, read as Definition III.3 reads cutting.** *For the challenge, then
-    the coordinator.* Does reading "cut" as crossing, and contact within with a point of the
-    inner circle within the outer, say what Euclid's words say, and no more (section 7)?
-    Three parts:
-    - *One way, or both.* `CirclesCut α β` asks for a point of `α` within `β`, though
-      circles that cross each pass within the other. Recommended: one way, which is what
-      III.5's argument uses and Euclid's figure shows; a citer holding the other way
-      exchanges the circles, and III.5's conclusion does not mind their order. The
-      alternatives ask for both, which no proof uses, or for either, which costs III.5 a
-      second case.
-    - *Still an overlap?* With the crossing in its hypothesis, Definition I.15 and
-      Diagram-segment 4, with a law of magnitude, prove the restated III.5 in three lines
-      (`Audit.III_5_crossing`), and the catalogue's test for "gives it at once", "a short
-      proof, from at most three rules, that cites no proposition", would count that. The
-      screen's `grind`, tried at `4a85d42` on the restated III.5 with that pair as the
-      screen tries a pair, and again with the law of magnitude added, does not close it.
-      Recommended: a note in the catalogue, not a row. Diagram-segment 4 speaks of one
-      circle, a point within it being nearer its centre than its circumference, which is how
-      Euclid reads "the less" off his figure; Definition I.15 is his own citation; the proof
-      is his argument, as short as his, not a rule that already says what he proves of two
-      circles. If the challenge finds otherwise, the row is "Diagram-segment 4, with
-      Definition I.15: gives it at once", `Audit.III_5_crossing` is retyped as the restated
-      III.5's audit lemma, and III.6's contact within goes with it. III.6's contact without,
-      which Generalities 3 with our definition of touching without ends at once, is the case
-      Euclid leaves to the reader: recommended, its `case` passage and a note in the
-      catalogue, no row.
+15. **III.5 and III.6, read as Definition III.3 reads cutting.** *For the coordinator.*
+    Does reading "cut" as crossing, and contact within with a point of the inner circle
+    within the outer, say what Euclid's words say, and no more (section 7)? Astra's
+    challenge at `3f00ebf` found that it does in the intended plane, with the corrections
+    this revision makes (Appendix B). Three parts:
+    - *One way, or both.* Recommended, after the challenge: both. `CirclesCut α β` asks for
+      a point of `α` within `β` and a point of `β` within `α`, which is what circles that
+      cross do in the plane, and is symmetric by its form, as "cut one another" is. III.5's
+      proof uses one point within, and the other says which figure is meant, as B does.
+      III.5 has no citer once III.10 stops citing it, so today no proof has to supply the
+      second point. The challenged draft asked for one way only, which the challenge
+      accepted as an explicitly oriented representation, while preferring both, or a
+      proved bridge from one way to the other; a bridge would be a lemma of its own, with a
+      proof the brief does not have. Asking for either way is a third form, symmetric too,
+      at the cost of a second case in III.5.
+    - *Still an overlap?* Yes. Recommended, after the challenge: the catalogue keeps its
+      rows, for the restated propositions, and the records keep their `[overlap]` (section
+      7, "What changes"). Diagram-segment 2 with Generalities 4 gives the restated III.5 in
+      a line, and with Generalities 3 as well the restated III.6; Diagram-segment 4 with
+      Definition I.15 and a law of magnitude gives the restated III.5 in three (each
+      checked by Lean in a scratch file at this revision). Each is "a short proof, from at most three rules, that cites
+      no proposition". The challenged draft recommended a note in place of the rows, since
+      Diagram-segment 4's proof is Euclid's argument and the screen's `grind` did not find
+      it. The challenge rejected that under the catalogue's test, and the brief agrees: a
+      search that fails does not show that no proof exists, and Diagram-segment 2's proofs
+      stand whatever is said of Diagram-segment 4's. So the proofs avoid the rules, and the
+      catalogue records the overlap. The alternative is a different test for the
+      catalogue, defined and applied to every row: a question for the catalogue's owner,
+      not an exception made here. III.6's contact without, which Generalities 3 with our
+      definition of touching without ends at once, is the case Euclid leaves to the reader:
+      its `case` passage stays, and III.6's row covers it.
     - *III.10's last step.* Recommended: Diagram-segment 2, with the route `modified`
-      (section 7). Splitting the step into circles that cross, for which III.5 would serve,
-      and the rest, for which the rule would, cites III.5 only to match Heath's bracket,
-      since the rule ends both cases; FORMALIZATION section 5 forbids that ("No dummy
-      citations"). Is there a reading that keeps Euclid's citation honestly?
+      (section 7), and the challenge agreed. Circles about one centre do not cross, so the
+      restated III.5 cannot serve; splitting the step into circles that cross, for which
+      III.5 would, and the rest, for which the rule would, cites III.5 only to match
+      Heath's bracket, since the rule ends both cases, and FORMALIZATION section 5 forbids
+      that ("No dummy citations").
 16. **Contact within: the definition, or III.6 alone.** *For the coordinator.* Recommended:
     the definition, `TouchesInternally` with a point of the inner circle within the outer in
-    place of `α ≠ β` (section 7). Heath puts that point in the definition; no user breaks;
-    and with it III.11 and III.13 rest on neither rule, as III.12 does with either form, and
+    place of `α ≠ β` (section 7). Heath says the definition must be taken to imply that
+    point; no user breaks; and with it III.11 and III.13 rest on neither rule, as III.12 does with either form, and
     touching within means one thing throughout. The alternative, the form the coordinator
     asked to be preferred, gives the point to III.6's statement alone and changes no
     definition, at the cost that III.11 calls Diagram-segment 2 itself, with a new overlap,
     and III.11 and III.13 keep resting on it. If the definition is chosen, the meaning of
     `touching-whole-circles` (section 4), which lands in step 1, says that the inner circle
-    has passed within the outer.
+    has passed within the outer. The challenge supported the definition, provided that
+    disclosure stays, as it does: the definition remains our whole-circle reading, and
+    Heath's own is local.
 
 ## Appendix A: what is staged, and why
 
@@ -1110,9 +1260,11 @@ replace.
 | `Staging/Centre/Restated.lean` | the other eighteen propositions, III.33, the three steps of `Circumferences.lean` and `EqualCircles.refl`, each with its two checks; `Prop13.internally` and `Prop13.externally`, proved from the staged III.13, with a check that they give it back; `Centre.every`, proved, with a check against the restated III.4 |
 | `Staging/Centre/Brief0006.lean` | brief 0006's six statements and `Arc.Drawn` without the centre, with their checks, and the two checks that `Prop24.equalCircles` and `Prop25.of_circle` still have today's III.24 and III.25, restated |
 | `Staging/Centre/Brief0007.lean` | brief 0007's three statements without the centre, `Prop8.partner`, `Prop8.general` and `Prop17.general`, with their checks, and the two checks that III.8 and III.17, restated, still follow from `Prop8.general` and `Prop17.general` |
-| `Staging/Centre/Crossing.lean` | section 7: `CirclesCut`, contact within with the point of the inner circle within the outer, and `CirclesTouch` over it; III.5 and III.6 restated and proved; eight checks; and the axioms of each, pinned, with neither `circle_eq` nor Circle 4 nor `sorry` among them |
+| `Staging/Centre/Crossing.lean` | section 7: `CirclesCut`, contact within with the point of the inner circle within the outer, and `CirclesTouch` over it; III.5 and III.6 restated and proved; nine checks; and the axioms of each, pinned, with neither `circle_eq` nor Circle 4 nor `sorry` among them |
 
 ## Appendix B: the challenge, finding by finding
+
+### Sections 1 to 6
 
 Astra's answer to the draft at `afe0ee9`, with its bosun's triage, and the Claude
 challenger's findings at the same commit. Every finding was checked against the repository
@@ -1147,3 +1299,30 @@ before it was applied.
 | The answer's links point to private paths | Triage | This brief cites repository paths only |
 | Brief 0006's conversions show interfaces, not proofs; `of_circle`'s closure is provisional | Astra (answer 1) | Said in Appendix A and section 3 |
 | `Audit/` lacks the protected-path treatment of `scripts/` and `tests/` | Astra (answer 5) | The guard is described as a regression check, and lands on its own; whether `Audit/` becomes protected is a policy question for the coordinator, outside this brief |
+
+### Section 7's challenge
+
+Astra's answer to section 7 at `3f00ebf` (GPT Pro, through Codex, read-only, in a
+worktree without a build, so with no Lean run). Every finding was checked against the
+repository before it was applied, and the Lean ones were run here, at this revision.
+
+| Finding | Source | What was done |
+|---|---|---|
+| Reading "cut" as crossing is faithful to Definition III.3 and III.5's setting-out; for circles of positive radius the definition describes exactly that figure | Astra (answer 1) | Kept |
+| The one-way `CirclesCut` is not symmetric as a Lean definition: acceptable as an explicitly oriented representation, but a reusable relation is better with both points within, or a proved bridge; justify it by geometric equivalence, not by what the proof consumes | Astra (answers 1, 6) | Adopted: both points within, symmetric by its form, with a check; the justification is now the plane's (section 7, "Cutting, a new word"); one way and either way are the alternatives (question 15) |
+| Keep the two common points: one common point with a point within describes contact within too | Astra (answer 1) | Kept, with that reason and Euclid's setting-out (section 7) |
+| The point within is faithful and belongs in the definition of contact within, in place of `α ≠ β`; question 16 supported, provided `touching-whole-circles` stays | Astra (answer 2) | Recommendation kept; the disclosure stays, as section 7 and question 16 now say |
+| "Heath puts the point in the definition" says too much: Heath says the definition must imply it, and gives no definition of this form | Astra (answer 2) | Reworded in section 7, question 16 and the staged docstring |
+| The definition stays our whole-circle reading, not Heath's local one | Astra (answers 2, 6) | Said in section 7 and in the staged docstring of contact within |
+| No configuration of circles of positive radius is lost; the argument should use the positive radius, and repeat the crossing argument with the circles exchanged | Astra (answer 3) | Section 7, "No configuration Euclid's words admit is lost", rewritten: the positive radius from the model and from Points 7 and 8, both directions, and Astra's table of configurations |
+| "The old and the new statements part only over a circle drawn twice over" says too much: in the plane they do not part; the twin circle shows a difference elsewhere, not every one; a model of every axiom is not a reading of Euclid's objects; `full` rests on the plane, not on the staged checks, which run one way | Astra (answer 3) | Rewritten as "What this shows, and what it does not" (section 7); the checks are called one-way there and in the file |
+| The staged check's docstring says the restatement gives up only the twin circle | Astra (answer 4) | Qualified in `Staging/Centre/Crossing.lean` |
+| The pins check whole lists of axiom names, not the reading, the statements of the axioms, the other declarations, or shorter proofs; the default `lake build` does not run them | Astra (answer 4) | Said in section 7, "What they rest on", and above the pins in the file |
+| Some hypotheses go unused, legitimately | Astra (answer 4) | Said in section 7, "What they leave unused"; nothing else changed |
+| III.10's route `modified` and its direct step by `circle_eq` are right; III.11, III.12 and III.13 need no new construction; the audit lemmas need changes | Astra (answer 5) | Kept; the audit lemmas' new proofs are given (section 7, "What changes") |
+| "III.11, III.12 and III.13 lose Diagram-segment 2 and gain nothing" is supporting evidence from a scratch copy, for section 7 alone, and the rest of the brief adds centre existence to III.13 | Astra (answer 5) | Qualified in section 7, at the users of `TouchesInternally` and at the certificates |
+| Blocking: by the catalogue's test the restated III.5 and III.6 are still overlaps, from Diagram-segment 2 with Generalities 4 (and 3, for III.6), and III.5 from Diagram-segment 4 with Definition I.15; a failed `grind` does not undo a proof; keep the rows, or change the test everywhere | Astra (answer 6) | Adopted: the rows and the records' `[overlap]` stay (section 7, "What changes"; question 15), and the `helper` passages go, since the proofs no longer call the rule. The three proofs were checked by Lean in a scratch file at this revision, with the axioms Astra named |
+| Clarify `CirclesMeet`'s docstring, "cut one another", which a circle meeting itself satisfies | Astra (answer 6) | Listed for the coordinator in section 7, "What changes" |
+| Before landing: build the whole migration and compare the certificates on the revision delivered; keep `euclid` for III.5 and III.6 and `modified` for III.10; review III.11 to III.13 again, though their fingerprints do not change | Astra (answer 6) | Section 7, "Order" and "What changes" |
+| Astra ran no Lean, and read Heath's commentary in a text copy | Astra (handback) | `lake build Staging` and the pins ran here, at this revision; Heath's words on p. 3 were checked against the page image (leaf n15) when section 7 was written |
+| The answer's links point to private paths | Triage | This brief cites repository paths only |

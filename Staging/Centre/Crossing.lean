@@ -14,7 +14,9 @@ touching: "Circles are said to touch one another which, meeting one another, do 
 another." Read so, circles that cut one another cross, each passing within the other, and
 circles touching within have the inner circle passing within the outer, as Heath says the
 definition must imply. Then III.5 and III.6 follow by Euclid's own argument, with neither
-rule.
+rule. The rules still give the restated statements in a line or two, so the overlap
+catalogue keeps its rows: the proofs avoid the rules, which still contain the propositions
+(brief 0008, section 7, after Astra's challenge).
 
 Here, with proofs (the coordinator directed them; brief 0008, question 13, asks the freeze
 to approve them as staged facts resting on no stub):
@@ -27,10 +29,11 @@ to approve them as staged facts resting on no stub):
 * III.5 and III.6 restated, each proved by Euclid's argument: the straight line he draws
   "at random" is drawn through the point where the one circle passes within the other,
   and the order of the points on it gives "the less to the greater";
-* checks (checked by Lean): today's III.5 and III.6 give the restated ones, which ask more;
-  III.6 written the other way, with the point in its statement and today's definition, is
-  the same theorem; and the only lines of III.11 and III.13 that read the definition of
-  contact within go through as they are written today;
+* checks (checked by Lean): cutting is symmetric; today's III.5 and III.6 give the restated
+  ones, which ask more (no check here runs the converse); III.6 written as question 16's
+  alternative, with the point in its statement and today's definition, is the same theorem;
+  and the only lines of III.11 and III.13 that read the definition of contact within go
+  through as they are written today;
 * at the end, the axioms Lean reports for the restated III.5 and III.6, pinned with
   `#guard_msgs` as `Audit/Overlaps.lean` pins its lemmas: neither `circle_eq` nor Circle 4
   is among them, nor an admitted proof, and the build fails if one enters.
@@ -45,21 +48,27 @@ namespace Elements.Staging.Centre
 open Tacit
 
 /-- **Definition III.3**, circles that cut one another. The circles `α` and `β` cut one
-another: they meet at two points, and `α` passes within `β`, for a point of `α` is within
-`β`. Definition III.3 sets cutting against touching, and touching circles cross nowhere
-(`TouchesInternally`, `TouchesExternally`); cutting circles cross, each passing within the
-other. One point of `α` within `β` is all that III.5's argument uses, and it makes the
-circles two. -/
+another: they meet at two points, and each passes within the other, for a point of `α` is
+within `β`, and a point of `β` within `α`. Definition III.3 sets cutting against touching,
+and touching circles cross nowhere (`TouchesInternally`, `TouchesExternally`); cutting
+circles cross. In the plane, two different circles that meet at two points cross so,
+each within the other (brief 0008, section 7). III.5's argument uses one common point and
+the point of `α` within `β`, which makes the circles two; the rest says which figure is
+meant, as Euclid's setting-out names both points. -/
 def CirclesCut (α β : Circle) : Prop :=
-  CirclesMeet α β ∧ ∃ P : Point, OnCircle P α ∧ InsideCircle P β
+  CirclesMeet α β ∧ (∃ P : Point, OnCircle P α ∧ InsideCircle P β) ∧
+    ∃ P : Point, OnCircle P β ∧ InsideCircle P α
 
 /-- **Definition III.3**, contact within, as brief 0008 proposes it. The circles `α` and `β`
 touch one another internally at `C`, `β` within `α`: they meet at `C`, `β` has passed
 within `α`, for a point of `β` is within `α`, and `β` does not cut `α`, for no point of `β`
-falls outside `α`. Heath takes the definition to imply that "a circle touching another
-internally must, immediately before 'meeting' it, have passed through points *within* the
-circle that it touches" (vol. 2, p. 3). The point within takes the place of today's clause
-that the circles are two, which it implies. -/
+falls outside `α`. Heath says the definition "must be taken to imply" that "a circle
+touching another internally must, immediately before 'meeting' it, have passed through
+points *within* the circle that it touches" (vol. 2, p. 3); the definition in this form is
+ours. The point within takes the place of today's clause that the circles are two, which
+it implies. The last clause stays the whole-circle reading of brief 0004: Heath prefers to
+read Definition III.3 locally, the circles not cutting at the point of contact, and the
+point within does not make ours his. -/
 def TouchesInternally (α β : Circle) (C : Point) : Prop :=
   OnCircle C α ∧ OnCircle C β ∧ (∃ P : Point, OnCircle P β ∧ InsideCircle P α) ∧
     ∀ P : Point, OnCircle P β → ¬ OutsideCircle P α
@@ -70,12 +79,18 @@ above. Contact without does not change. -/
 def CirclesTouch (α β : Circle) (C : Point) : Prop :=
   TouchesInternally α β C ∨ TouchesInternally β α C ∨ TouchesExternally α β C
 
+/-- Cutting is symmetric, as "cut one another" is (checked by Lean): the definition asks
+the same of each circle. -/
+example {α β : Circle} (h : CirclesCut α β) : CirclesCut β α := by
+  obtain ⟨⟨A, B, hAB, hAα, hAβ, hBα, hBβ⟩, hαβ, hβα⟩ := h
+  exact ⟨⟨A, B, hAB, hAβ, hAα, hBβ, hBα⟩, hβα, hαβ⟩
+
 /-- Circles that cut one another are two circles that meet at two points, as today's III.5
 asks (checked by Lean): the point of `α` within `β` is not on `β` (Generalities 4). -/
 example {α β : Circle} (h : CirclesCut α β) : α ≠ β ∧ CirclesMeet α β := by
   refine ⟨?_, h.1⟩
   rintro rfl
-  obtain ⟨-, P, hP, hP_in⟩ := h
+  obtain ⟨-, ⟨P, hP, hP_in⟩, -⟩ := h
   exact inside_not_on hP_in hP
 
 /-- Contact within, as proposed, is today's contact within with a point of the inner circle
@@ -101,7 +116,7 @@ open Tacit
 theorem Prop5 {E : Point} {ABC CDG : Circle} (hcut : Staging.Centre.CirclesCut ABC CDG) :
     ¬ (Centre E ABC ∧ Centre E CDG) := by
   -- For let the circles ABC, CDG cut one another at the points B, C;
-  obtain ⟨⟨B, C, -, -, -, hC_ABC, hC_CDG⟩, F, hF_ABC, hF_in⟩ := hcut
+  obtain ⟨⟨B, C, -, -, -, hC_ABC, hC_CDG⟩, ⟨F, hF_ABC, hF_in⟩, -⟩ := hcut
   -- I say that they will not have the same centre.
   -- For, if possible, let it be E; let EC be joined, and let EFG be drawn through at random.
   rintro ⟨hE_ABC, hE_CDG⟩
@@ -183,17 +198,19 @@ theorem Prop6 {C F : Point} {ABC CDE : Circle}
 
 /-- Today's III.5 gives the restated one, which asks more: circles that cut one another are
 two, and meet at two points (checked by Lean). So the restated III.5 claims nothing that
-today's does not; what it gives up is the circle drawn twice over, which is no figure of
-Euclid's. -/
+today's does not. The check runs one way only. In the plane the two hypotheses agree (brief
+0008, section 7); where the two rules that tell circles apart are dropped, a circle drawn
+twice over meets today's and not the restated one, which shows that they differ there, not
+every way in which they could. -/
 example : type_of% @Centre.Prop5 := by
   intro E ABC CDG hcut
   refine Elements.BookIII.Prop5 ?_ hcut.1
   rintro rfl
-  obtain ⟨-, P, hP, hP_in⟩ := hcut
+  obtain ⟨-, ⟨P, hP, hP_in⟩, -⟩ := hcut
   exact inside_not_on hP_in hP
 
 /-- Today's III.6 gives the restated one, whose contact within asks more (checked by
-Lean). -/
+Lean). It too runs one way only. -/
 example : type_of% @Centre.Prop6 := by
   intro C F ABC CDE htouch
   have within : ∀ {α β : Circle}, Staging.Centre.TouchesInternally α β C →
@@ -255,7 +272,12 @@ end Elements.BookIII.Staging.Centre
 
 Neither rule that tells two circles apart, Diagram-segment 2 (`circle_eq`) and Circle 4
 (`not_same_side_of_circles_meet`), nor an admitted proof: Definition I.15, Postulate 1 and
-thirteen tacit rules, the same for each (checked by Lean, as the file is built). -/
+thirteen tacit rules, the same for each (checked by Lean, as `lake build Staging` builds
+the file; the default `lake build` does not). The pins check the names of these two
+declarations' axioms and nothing more: not the reading of the statements, nor the
+statements of the axioms, nor the other declarations here, nor whether a shorter proof
+from other rules exists. Shorter proofs do exist, from Diagram-segment 2 among others, as
+the overlap catalogue will record (brief 0008, section 7). -/
 
 /--
 info: 'Elements.BookIII.Staging.Centre.Prop5' depends on axioms: [Classical.choice,
