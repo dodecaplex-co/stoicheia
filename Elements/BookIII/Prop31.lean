@@ -5,6 +5,7 @@ import Elements.BookI.Helpers
 import Elements.BookI.Prop05
 import Elements.BookI.Prop17
 import Elements.BookI.Prop32
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop22
 import Elements.BookIII.MixedAngles
 
@@ -40,7 +41,7 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
   -- Let ABCD be a circle, let BC be its diameter, and E its centre, and let BA, AC, AD, DC be
   -- joined;
   have hABC : Triangle A B C :=
-    Triangle.of_onCircle hA hB hC hAB (ne_of_between_ends hBEC) hAC
+    Prop2.triangle ⟨E, hE⟩ hA hB hC hAB (ne_of_between_ends hBEC) hAC
   -- I say that the angle BAC in the semicircle BAC is right,
   -- the angle ABC in the segment ABC greater than the semicircle is less than a right angle,
   -- and the angle ADC in the segment ADC less than the semicircle is greater than a right
@@ -121,7 +122,7 @@ theorem Prop31 {A B C E : Point} {ABCD : Circle} (hE : Centre E ABCD) (hA : OnCi
      segment, III.22 makes the angle at X less than a right angle. -/
   have hgreater : ∀ X : Point, OnCircle X ABCD → SameSideOf X B A C → ∠ A X C < ∟ := by
     intro X hX hXB
-    obtain ⟨D, hD, hDB⟩ := exists_onCircle_oppositeSidesOf hA hC hABC.acb
+    obtain ⟨D, hD, hDB⟩ := Prop2.oppositeSide ⟨E, hE⟩ hA hC hABC.acb
     have hXD : OppositeSidesOf X D A C := hXB.trans_opposite hDB.symm
     have h22 := (Prop22 ⟨E, hE⟩ hX hA hD hC hXD).2
     have hDAC : Triangle A D C := hXD.symm.triangle.acb

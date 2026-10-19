@@ -1,20 +1,27 @@
 module
 
-public import Model.Signature
+public import Model.Laws
 
 /-!
-# Translated by hand, for now
+# Translated by hand
 
-**This file is written by hand.** It holds the translation of the laws proved so far, and
-of the defined words they reach, until the generator described in the
-[README](../README.md) writes every law from the elaborated declarations. When the
-generator lands, it replaces this file, and the names here become fields of `Laws`.
+**This file is written by hand.** It holds the laws first proved in the plane, translated
+by hand before the generator existed, and the proposed `exists_centre`. Each law here is
+the library's, word for word, with `S.Point` for `Elements.Point`, `S.OnCircle` for
+`Elements.OnCircle`, and so on, and the printed original is quoted above it, from
+`Certificate/axioms.lock`. The defined words the laws use (`S.CirclesMeet`,
+`S.OppositeSides`, `S.OutsideCircle`) are the generated ones, from `Model/Laws.lean`.
 
-Each declaration is the library's, word for word, with `S.Point` for `Elements.Point`,
-`S.OnCircle` for `Elements.OnCircle`, and so on. The printed original is quoted above each
-law, from `Certificate/axioms.lock`. `Check/Hand.lean` puts the library's own words in
-for `S` and asks Lean whether each result is the original declaration; the build fails if
-it is not.
+These laws are kept as the independent check they were written to be. `Check/Hand.lean`
+puts the library's own words in for `S` and asks Lean whether each result is the original
+declaration, and asks too whether each is the law the generator writes, the field of
+`Laws` it stands for; `Check/RoundTrip.lean` compares each with the generated law by syntax,
+binder kinds and names included. The build fails if any of these fails. The proofs in the
+plane of these laws are stated with them, and Lean checks, where `Model/Assembly.lean`
+gathers them, that each proves its field of `Laws`. The other laws are stated the same way,
+with the hand translations of `Model/Laws/`, each checked against its generated law in
+`Check/`. A proof may instead be stated with the generated law itself,
+`Law.Tacit.line_unique plane`, and then needs no hand translation.
 
 The laws here are the circle-intersection rules: Intersection 5, the step Euclid takes for
 granted in I.1; Intersection 4, in the corrected form we owe to LeanEuclid (Logan Murphy,
@@ -27,24 +34,6 @@ and of the kinds of magnitude.
 @[expose] public section
 
 namespace Model
-
-namespace Signature
-
-variable (S : Signature)
-
-/-- `Elements.OppositeSides`, by hand. -/
-def OppositeSides (A B : S.Point) (L : S.Line) : Prop :=
-  ¬ S.OnLine A L ∧ ¬ S.OnLine B L ∧ ¬ S.SameSide A B L
-
-/-- `Elements.OutsideCircle`, by hand. -/
-def OutsideCircle (A : S.Point) (α : S.Circle) : Prop :=
-  ¬ S.InsideCircle A α ∧ ¬ S.OnCircle A α
-
-/-- `Elements.CirclesMeet`, by hand: two circles that cut one another in two points. -/
-def CirclesMeet (α β : S.Circle) : Prop :=
-  ∃ A B : S.Point, A ≠ B ∧ S.OnCircle A α ∧ S.OnCircle A β ∧ S.OnCircle B α ∧ S.OnCircle B β
-
-end Signature
 
 namespace Hand
 

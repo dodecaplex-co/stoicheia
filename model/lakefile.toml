@@ -21,7 +21,43 @@ path = ".."
 [[lean_lib]]
 name = "Model"
 
-# Translation checks: imports Elements.Foundations and the plain-Lean part of Model
-# (Model.Signature, Model.Hand), never Mathlib.
+# Translation checks and the generator: imports Elements.Foundations and the plain-Lean part
+# of Model (Model.Signature, Model.Laws, Model.Hand), never Mathlib. Its modules read files
+# that are not Lean imports: the lock and its hash, the files the generator writes, and the
+# proofs in the plane, whose theorems the assembly gathers. Lake reruns a module only when
+# its inputs change, so the library `needs` each of those files, and any change to one of
+# them reruns the checks, as a fresh build in CI does.
 [[lean_lib]]
 name = "Check"
+needs = ["axiomsLock", "lockHash", "generatedLaws", "generatedChecks", "generatedAssembly",
+  "planeProofs"]
+
+[[input_file]]
+name = "axiomsLock"
+path = "../Certificate/axioms.lock"
+text = true
+
+[[input_file]]
+name = "lockHash"
+path = "lock.sha256"
+text = true
+
+[[input_file]]
+name = "generatedLaws"
+path = "Model/Laws.lean"
+text = true
+
+[[input_file]]
+name = "generatedChecks"
+path = "Check/Laws.lean"
+text = true
+
+[[input_file]]
+name = "generatedAssembly"
+path = "Model/Assembly.lean"
+text = true
+
+[[input_dir]]
+name = "planeProofs"
+path = "Model/Euclidean"
+text = true

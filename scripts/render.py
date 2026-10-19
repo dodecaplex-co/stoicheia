@@ -816,14 +816,22 @@ def overlap_rules(overlap):
 
 
 def overlap_rests(p, overlap):
-    """Does the proof rest on the rules that contain its proposition (facts.json's
-    `axioms`)? I.7's does not; III.2's does, through III.1 and I.5."""
+    """Does the proof rest on the rules its [overlap] names (facts.json's `axioms`)?
+    Neither I.7's nor III.2's proof rests on its overlapping rule."""
     return bool(p) and all(r in p.get("axioms", []) for r in overlap_rules(overlap))
 
 
+def overlap_steps(overlap):
+    """Does the rule only supply a step of a proof of the proposition, the overlap
+    catalogue's third kind (`kind = "step"`), rather than state the proposition or give
+    it at once? Only then do the pages say "supplies a step" in place of "contains". A
+    record whose [overlap] names no kind is read as before, as "contains"."""
+    return overlap.get("kind") == "step"
+
+
 def overlap_word(overlap):
-    """What contains the proposition, as the top line says it: "one of our tacit rules",
-    "two of our tacit rules together"."""
+    """What contains the proposition, or supplies a step of a proof of it, as the top
+    line says it: "one of our tacit rules", "two of our tacit rules together"."""
     rules = overlap_rules(overlap)
     kind = "tacit rules" if all(r.startswith("Tacit.") for r in rules) else "axioms"
     if len(rules) == 1:
@@ -843,7 +851,8 @@ def representation_badge(record):
 def in_lean_line(p, record, book, n):
     """The line under the enunciation, from the review record, short enough to read at
     a glance: whether the proof is finished, what its statement covers, whose argument it
-    follows, and whether an axiom already contains the proposition. The detail is in the
+    follows, and whether an axiom already contains the proposition or supplies a step of
+    a proof of it, as the record's [overlap] `kind` says. The detail is in the
     field table under "In Lean"; the reader meets the scope before the green check means
     anything more than it says."""
     status = p["status"] if p else "sketched"
@@ -866,12 +875,23 @@ def in_lean_line(p, record, book, n):
                       "alternative": "a different argument"}[route["kind"]])
     if "overlap" in record:
         ov = record["overlap"]
-        verb = "contains" if len(overlap_rules(ov)) == 1 else "contain"
-        if overlap_rests(p, ov):
-            parts.append(f"{overlap_word(ov)} already {verb} it (see Overlap)")
+        one = len(overlap_rules(ov)) == 1
+        rule = "the rule" if one else "the rules"
+        if overlap_steps(ov):
+            verb = "supplies" if one else "supply"
+            if overlap_rests(p, ov):
+                parts.append(f"{overlap_word(ov)} {verb} a step of a proof of it, and our "
+                             f"proof rests on {rule} (see Overlap)")
+            else:
+                parts.append(f"{overlap_word(ov)} {verb} a step of a proof of it, though our "
+                             f"proof does not use {rule} (see Overlap)")
         else:
-            parts.append(f"{overlap_word(ov)} {verb} it too, though this proof does not "
-                         "use it (see Overlap)")
+            verb = "contains" if one else "contain"
+            if overlap_rests(p, ov):
+                parts.append(f"{overlap_word(ov)} already {verb} it (see Overlap)")
+            else:
+                parts.append(f"{overlap_word(ov)} {verb} it too, though this proof does not "
+                             f"use {'it' if one else 'them'} (see Overlap)")
     return "**In Lean:** " + " · ".join(parts)
 
 
@@ -938,14 +958,22 @@ def field_table(book, n, p, record, attached, docs):
             if text:
                 rows.append(("Representation", text))
         if "overlap" in record:
+            ov = record["overlap"]
             names = []
-            for rule in overlap_rules(record["overlap"]):
+            for rule in overlap_rules(ov):
                 doc, path, line = docs.get(rule, ("", "", 0))
                 name = f"`{rule.replace('Tacit.', '')}`"
                 names.append(f"[{name}](../../{path}#L{line})" if path else name)
             name = and_list(names)
-            note = record["overlap"].get("note")
-            text = f"{name}: {note}" if note else f"{name} already contains this proposition."
+            one = len(names) == 1
+            note = ov.get("note")
+            if note:
+                text = f"{name}: {note}"
+            elif overlap_steps(ov):  # heath.py asks a note of a step; this is a fallback
+                text = (f"{name} {'supplies' if one else 'supply'} a step of a proof of this "
+                        "proposition.")
+            else:
+                text = f"{name} already {'contains' if one else 'contain'} this proposition."
             if (ROOT / "docs" / "reports" / "overlaps.md").exists():
                 text += " See [the overlap catalogue](../../docs/reports/overlaps.md)."
             rows.append(("Overlap", text))
@@ -962,7 +990,7 @@ def field_table(book, n, p, record, attached, docs):
 
 
 def clause_map(record):
-    """For a statement in part (III.16, III.31), the clause map from [coverage], shown
+    """For a statement in part (III.24), the clause map from [coverage], shown
     before the Lean: what the Lean checks, what it proves toward the clauses it leaves
     out, and what stays in Euclid's words."""
     cov = record.get("coverage") if record else None
@@ -1477,38 +1505,67 @@ def postulate5_sentence(book, facts, proved):
 
 
 def overlap_sentences(overlap, facts, records, links, up):
-    """What a book's summary says of the propositions an axiom already contains, told
-    apart by whether the proof rests on that axiom (facts.json's `axioms`): "In I.23 one
-    of our tacit rules already contains the proposition, and our proof rests on it…; in
-    I.7 a rule contains it too, but our proof never uses that rule." Where a proposition
-    needs two rules together (III.6), it says so."""
+    """What a book's summary says of the propositions an axiom already contains, or
+    supplies a step of a proof of, told apart by the record's [overlap] `kind` and by
+    whether the proof rests on that axiom (facts.json's `axioms`): "In III.2, III.5 and
+    III.6 our tacit rules already contain the proposition…, and our proofs rest on them…";
+    "In I.23 one of our tacit rules supplies a step of a proof of the proposition, and our
+    proof rests on it"; "In I.7 one of our tacit rules supplies a step of a proof of the
+    proposition, but our proof never uses that rule." Only a rule that states the
+    proposition or gives it at once is said to contain it, as in the overlap catalogue.
+    Where a proposition needs two rules together (III.6), it says so."""
     def rules(r):
         return overlap_rules(records[r]["overlap"])
 
-    kind = ("tacit rules" if all(x.startswith("Tacit.") for r in overlap for x in rules(r))
-            else "axioms")
-    rests = [r for r in overlap if overlap_rests(facts.get(r), records[r]["overlap"])]
-    unused = [r for r in overlap if r not in rests]
-    out = []
-    if rests:
-        multi = [f"{r}, {number_word(len(rules(r)))} of them together" for r in rests
+    def together(rs):
+        multi = [f"{r}, {number_word(len(rules(r)))} of them together" for r in rs
                  if len(rules(r)) > 1]
-        extra = f" ({'; '.join('in ' + m for m in multi)})" if multi else ""
-        if len(rests) == 1 and not multi:
-            out.append(f"In {links(rests)} one of our {kind} already contains the proposition, "
+        return f" ({'; '.join('in ' + m for m in multi)})" if multi else ""
+
+    family = ("tacit rules" if all(x.startswith("Tacit.") for r in overlap for x in rules(r))
+              else "axioms")
+    contain = [r for r in overlap if not overlap_steps(records[r]["overlap"])]
+    step = [r for r in overlap if r not in contain]
+    rests = [r for r in overlap if overlap_rests(facts.get(r), records[r]["overlap"])]
+    out = []
+    used = [r for r in contain if r in rests]
+    if used:
+        extra = together(used)
+        if len(used) == 1 and not extra:
+            out.append(f"In {links(used)} one of our {family} already contains the proposition, "
                        "and our proof rests on it, so the proof retraces Euclid's argument "
                        "within our rules and does not establish the rule.")
         else:
-            out.append(f"In {and_list(links([r]) for r in rests)} our {kind} already contain "
+            out.append(f"In {and_list(links([r]) for r in used)} our {family} already contain "
                        f"the proposition{extra}, and our proofs rest on them, so each retraces "
                        "Euclid's argument within our rules and does not establish them.")
+    unused = [r for r in contain if r not in rests]
     if unused:
         if len(unused) == 1:
-            out.append(f"In {links(unused)} one of our {kind} contains the proposition too, "
+            out.append(f"In {links(unused)} one of our {family} contains the proposition too, "
                        "but our proof never uses that rule.")
         else:
-            out.append(f"In {and_list(links([r]) for r in unused)} our {kind} contain the "
+            out.append(f"In {and_list(links([r]) for r in unused)} our {family} contain the "
                        "propositions too, but our proofs never use those rules.")
+    used = [r for r in step if r in rests]
+    if used:
+        extra = together(used)
+        if len(used) == 1 and not extra:
+            out.append(f"In {links(used)} one of our {family} supplies a step of a proof of "
+                       "the proposition, and our proof rests on it.")
+        else:
+            out.append(f"In {and_list(links([r]) for r in used)} our {family} supply a step of "
+                       f"a proof of each proposition{extra}, and our proofs rest on them.")
+    unused = [r for r in step if r not in rests]
+    if unused:
+        extra = together(unused)
+        if len(unused) == 1 and not extra:
+            out.append(f"In {links(unused)} one of our {family} supplies a step of a proof "
+                       "of the proposition, but our proof never uses that rule.")
+        else:
+            out.append(f"In {and_list(links([r]) for r in unused)} our {family} supply a step "
+                       f"of a proof of each proposition{extra}, but our proofs never use those "
+                       "rules.")
     out.append(f"[The overlap catalogue]({up}docs/reports/overlaps.md) gives each.")
     return " ".join(out)
 
@@ -1517,9 +1574,10 @@ def book_summary(book, facts, records, href, postulate5=True, up=""):
     """A book's completion summary, one line of Markdown generated from facts.json and
     the review records: how many propositions are proved, how many statements are
     whole, restricted or in part, whose argument the proofs follow, the propositions an
-    axiom already contains, and (unless `postulate5` is False) where the parallel
-    postulate comes in. `href(ref)` is the link to a proposition's page. The same line
-    heads the book's index, its section of CERTIFICATE.md and its row of README.md."""
+    axiom already contains or supplies a step of a proof of, and (unless `postulate5` is
+    False) where the parallel postulate comes in. `href(ref)` is the link to a
+    proposition's page. The same line heads the book's index, its section of
+    CERTIFICATE.md and its row of README.md."""
     count = BOOKS[book][0]
     refs = [f"{book}.{n}" for n in range(1, count + 1)]
 
@@ -1665,8 +1723,9 @@ FRONT_LEAN_III = {
         5: "`‖E H‖ < ‖E K‖`, for the perpendiculars EH, EK from the centre E (III.15)",
         6: "a circle, a straight line AB in it, and a point E of the circumference on one "
            "side: the segment AEB",
-        7: "none: a mixed angle, of a straight line and a curve; III.16 and III.31 speak of "
-           "it, and their Lean states the straight-line facts Euclid proves them by",
+        7: "`MixedAngle.ofSegment A B α S`: the angle of the segment on S's side of AB, "
+           "read as the region it opens near A; the companions of III.16 and III.31 "
+           "compare it there with rectilineal angles placed along AB on that side",
         8: "`∠ A E B`, for a point E on the circumference of the segment",
         9: "`standing α B A C`, the circumference on which the angle BAC stands; the "
            "circumference BKC is `circumference α B K C`; each measured as twice the angle "
@@ -1676,9 +1735,8 @@ FRONT_LEAN_III = {
     },
 }
 FRONT_LEAN = {"I": FRONT_LEAN_I, "II": FRONT_LEAN_II, "III": FRONT_LEAN_III}
-# Euclid's own proofs use some words with no Lean partner (Definition I.14's figure, as
-# "the given rectilineal figure" of I.45 and II.14; Definition III.7's mixed angle in
-# III.16 and III.31), so every front page says only that the Lean proofs never use them.
+# Euclid's definitions include words with no Lean partner, such as Definition III.10's
+# sector, so every front page says only that the Lean proofs never use those words.
 # Helpers such as `Prop1.figure` are named for the diagram, not for Definition I.14.
 FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 

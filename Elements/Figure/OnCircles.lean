@@ -5,13 +5,18 @@ import Elements.Foundations.DefinitionsIII
 /-!
 # Book Zero: straight lines in a circle
 
-Book III draws straight lines in circles, and reads off its figures where their ends
-and the points of the circle lie. These are the facts it takes for granted that need no
-proposition: three points of a circle are not on one straight line; a straight line in a
-circle has points of the circle on each side of it; a circumference may be named from
-either side of the straight line that cuts it off; equal circles have equal radii; and a
-straight line that touches a circle has no point within it. They follow from Definition
-15, System E's rules for circles, and the definitions of Book III.
+Book III draws straight lines in circles, and reads off its figures where their ends and the
+points of the circle lie. These are the facts it takes for granted that need no proposition:
+three points of a circle are not on one straight line; a straight line in a circle has points
+of the circle on each side of it; a circumference may be named from either side of the
+straight line that cuts it off; equal circles have equal radii; and a straight line that
+touches a circle meets it at a point of contact and has no point within it. They follow
+from Definition 15, System E's rules for circles, and the definitions of Book III.
+
+The first two, proved here for any circle, rest on System E's Circle 2, which contains
+III.2. The propositions take them from III.2 instead, for a circle with a centre
+(`BookIII.Prop2.triangle`, `BookIII.Prop2.oppositeSide`, `BookIII.Prop2.sameSide`), and so
+rest on neither Circle 2 nor Circle 3.
 
 Nothing in Book Zero cites a proposition of the *Elements*, and nothing in it is an
 axiom.
@@ -26,7 +31,8 @@ variable {A B C D K P Q : Point} {α β : Circle}
 /-! ## Points of a circle -/
 
 /-- Three points of a circle are not on one straight line. Were they, one would lie
-between the other two, and so within the circle (System E, Circle 2), not on it. -/
+between the other two, and so within the circle (System E, Circle 2), not on it. For a
+circle with a centre, `BookIII.Prop2.triangle` gives the same by III.2. -/
 theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
     (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) : Triangle A B C := by
   rintro ⟨L, hA_L, hB_L, hC_L⟩
@@ -38,7 +44,8 @@ theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnC
 /-- A straight line `BC` in a circle has a point of the circle on the other side of it
 from any point `K` off it. Take `M` between `B` and `C`; it is within the circle (System
 E, Circle 2), so the straight line `KM`, produced beyond `M`, meets the circle
-(Intersections 5), on the other side of `BC` from `K` (Pasch 3). -/
+(Intersections 5), on the other side of `BC` from `K` (Pasch 3). For a circle with a
+centre, `BookIII.Prop2.oppositeSide` gives the same by III.2. -/
 theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α)
     (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C := by
   obtain ⟨L, hB_L, hC_L⟩ := Postulate1 B C hK.ne₁₂
@@ -58,7 +65,8 @@ theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α
 
 /-- A straight line `BC` in a circle has a point of the circle on the same side of it as
 any point `K` off it: take a point on the other side from `K`, and a point of the circle
-on the other side from that (`exists_onCircle_oppositeSidesOf`). -/
+on the other side from that (`exists_onCircle_oppositeSidesOf`). For a circle with a
+centre, `BookIII.Prop2.sameSide` gives the same by III.2. -/
 theorem exists_onCircle_sameSideOf (hB : OnCircle B α) (hC : OnCircle C α)
     (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ SameSideOf A K B C := by
   obtain ⟨Q, hQ, -⟩ := exists_oppositeSidesOf hK []
@@ -144,6 +152,17 @@ theorem Touches.not_inside (h : Touches A B α) (hP : Collinear A B P) :
   obtain ⟨M, hA_M, hB_M, hP_M⟩ := hP
   have hP_L : OnLine P L := (line_unique h.1 hA_M hB_M hA_L hB_L) ▸ hP_M
   exact fun hin => (h.2 L hA_L hB_L).2 (line_meets_circle_of_inside hin hP_L)
+
+/-- The point of contact of a straight line touching a circle. If the straight line AX
+touches the circle α, some point B of α is on it; B may be A or X. Definition III.2 holds
+the point inside `Touches`, behind a straight line named by A and X, and this reads it off
+in one step, for a citer of III.17's companion `Prop17.general`. -/
+theorem Touches.contact {A X : Point} {α : Circle} (h : Touches A X α) :
+    ∃ B : Point, OnCircle B α ∧ Collinear A X B := by
+  /- Name the straight line AX. Definition III.2 gives a point of the circle on it. -/
+  obtain ⟨L, hA_L, hX_L⟩ := Postulate1 A X h.1
+  obtain ⟨B, hB_L, hB⟩ := (h.2 L hA_L hX_L).1
+  exact ⟨B, hB, ⟨L, hA_L, hX_L, hB_L⟩⟩
 
 /-- A straight line that touches a circle, named by any two of its points. -/
 theorem Touches.of_collinear (h : Touches A B α) (hC : Collinear A B C) (hD : Collinear A B D)

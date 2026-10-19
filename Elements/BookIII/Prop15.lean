@@ -6,6 +6,7 @@ import Elements.BookI.Prop17
 import Elements.BookI.Prop19
 import Elements.BookI.Prop20
 import Elements.BookI.Prop24
+import Elements.BookIII.Prop02
 import Elements.BookIII.Prop14
 
 /-!
@@ -31,7 +32,7 @@ theorem Prop15.half {E F K L M : Point} {α : Circle} {EK MN : Line}
     (hMF : SameSide M F EK) (hF_EK : ¬ OnLine F EK) :
     ∠ F E K < ∠ M E L := by
   obtain ⟨X, hX_MN, hEXF⟩ := hEF.exists_between
-  have hX_in : InsideCircle X α := inside_of_between (Or.inl (centre_inside hE)) (Or.inr hF) hEXF
+  have hX_in : InsideCircle X α := InsideCircle.of_between_centre hE hF hEXF
   have hX_EK : ¬ OnLine X EK := fun h => hF_EK (on_line_of_between hEXF hE_EK h)
   have hXF : SameSide X F EK := pasch2 hEXF hE_EK hX_EK
   have hXM : SameSide X M EK := same_side_trans (same_side_symm hXF) (same_side_symm hMF)
@@ -41,7 +42,7 @@ theorem Prop15.half {E F K L M : Point} {α : Circle} {EK MN : Line}
   have hMXL : Between M X L := by
     rcases between_cases hMX hXL hML hM_MN hX_MN hL_MN with h | h | h
     · exact h
-    · exact absurd hM (inside_not_on (inside_of_between (Or.inl hX_in) (Or.inl hL_in) h))
+    · exact absurd hM (inside_not_on (Prop2.within ⟨E, hE⟩ (Or.inl hX_in) (Or.inl hL_in) h))
     · exact absurd (same_side_symm hXM) (pasch3 h hL_EK)
   have hMLE : Triangle M L E := Triangle.of_line hM_MN hL_MN hML hE_MN
   rw [← angle_eq_of_onRay (OnRay.of_between hEXF) (OnRay.of_between hELK)]
@@ -107,9 +108,9 @@ theorem Prop15 {A B C D E F G H K : Point} {ABCD : Circle} (hE : Centre E ABCD)
   obtain ⟨MN, hL_MN, hR_MN⟩ := Postulate1 L R hRL.symm
   /- L is within the circle, so the straight line LM, carried through, meets the circle on
      each side of L, at N and at M. -/
-  have hK_in : InsideCircle K ABCD := inside_of_between (Or.inr hF) (Or.inr hG) hFKG
+  have hK_in : InsideCircle K ABCD := Prop2 ⟨E, hE⟩ hF hG K hFKG
   have hL_in : InsideCircle L ABCD :=
-    inside_of_between (Or.inl (centre_inside hE)) (Or.inl hK_in) hELK
+    InsideCircle.of_between_centre_of_inside hE hF hK_in hELK
   obtain ⟨N, hN, hN_MN, hNLR⟩ := line_circle_beyond hL_in hL_MN hR_MN hRL
   obtain ⟨M, hM, hM_MN, hMLN⟩ := line_circle_beyond hL_in hL_MN hN_MN (ne_of_between hNLR)
   /- MN meets EK at L alone. -/
