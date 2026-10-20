@@ -1823,6 +1823,72 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+- **The checks, made ready for retiring axioms (proposed, pending the evidence).** The owner
+  asked, "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
+  principle on 19 October 2026, pending the evidence; nothing lands until the owner has seen
+  it. A search found eight that can go with no choice of basis, listed in
+  [`model/README.md`](../../model/README.md#how-the-translation-is-checked).
+  Since a check never changes in the pull request of the content it judges,
+  this change prepares the checks first, with all 87 axioms in place and the pin change
+  recorded below. Main already reads the expected axiom count from
+  the lock in its negative tests, and that count stays as main has it; the further
+  changes to the negative tests are recorded below.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) moves its mutation, count
+  and membership fixtures to laws and pins that survive (I.5's inherited Postulate 3);
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) drops the generators `gs_adj` and
+  `gs_lmc_opp` from its allow-list, because
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) now samples those two laws
+  with generators the other laws use, with byte-identical output;
+  `tests/model/derived.py` (new) keeps the eight laws'
+  configurations as derived properties, which
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py),
+  [`tests/model/structured.py`](../../tests/model/structured.py) and
+  [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
+  laws, [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records that independent
+  contract, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only
+  a description. The five files
+  [`model/Check/Angles.lean`](../../model/Check/Angles.lean),
+  [`model/Check/Circles.lean`](../../model/Check/Circles.lean),
+  [`model/Check/Incidence.lean`](../../model/Check/Incidence.lean),
+  [`model/Check/Intersections.lean`](../../model/Check/Intersections.lean) and
+  [`model/Check/Sides.lean`](../../model/Check/Sides.lean) compare eleven hand translations
+  of the eight properties directly with the Elements declarations, so the comparisons
+  hold whether those are axioms or theorems; `model/README.md` describes these checks.
+- **One certificate pin dropped, with the owner's approval.** The retirement makes
+  `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
+  in [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json),
+  that III.1 Por.'s assumptions include it, had to go first, as the pin dropped for #60 did.
+  On 19 October 2026 the owner approved this first step of a two-step pin flip: commit
+  `5d200cf` removes the `includes: ["Tacit.centre_unique"]` pin while retaining its count.
+  Deleting that dependency still fails, but a substitution that keeps the count would no
+  longer be caught. C6's full `equals` pin remains pending; the retirement then adds stronger
+  pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight. This approval is for
+  the first pin change alone; the retirement itself remains pending the evidence and the
+  owner's separate decision.
+  As built, those pins put the eight names in `excludes` on each entry's `axioms`. Once
+  the eight are theorems no axiom list can hold their names, so those pins cannot fail;
+  an entry's use of a proved rule shows only in the axioms beneath it, which `proved_rules`
+  (the entry below) lists for each rule. A pin on the proved rules an entry uses would
+  need a field of its own, which this change does not add.
+
+## 20 October 2026
+
+- **The Jev scorer checks confidence in both askings
+  ([#36](https://github.com/jackChallis/stoicheia/issues/36)).** Each Jev choice is asked
+  twice, the second time with its options reversed, unless the run is made with
+  `--no-order-check`; a noul is asked once. `score` in
+  [`scripts/audit/jev.py`](../../scripts/audit/jev.py) sent an answer to adjudication when
+  its first asking had a confidence under the threshold or none, and read the reversed
+  asking only for a changed choice; it now applies the same confidence rule to the reversed
+  asking too, and says which asking fell short. A line whose reversed asking is not an answer
+  at all stops `score` with a failure, as it stopped it with an error before. The
+  threshold stays 0.5 and exclusive. The self-test gains cases for a low, a missing and a
+  null confidence in the reversed asking, a refused reversed asking that is not an answer
+  (with and without a bar), a single asking, and the boundary. More answers go to adjudication, none fewer. The audit of Books
+  I and II found this while scoring, and its report, on `text/jev-audit-I-II`, follows this
+  change, as a check lands before the content it judges. The protected file this changes is
+  `scripts/audit/jev.py`. Neither CI nor `safe_push` runs its self-test: whoever changes the
+  client runs `python3 -I scripts/audit/jev.py self-test`.
 
 - **The source scan reads the formal model too (#121).** On 19 October 2026 the scan in
   `scripts/check_fidelity.py` is extended to every `.lean` file under `model/`, without
@@ -1852,7 +1918,6 @@ findings:
   Nothing is loosened in `Elements/`, `Staging/` or `Audit/`; Book Zero's import rule
   and the placement policy still apply only in `Elements/`. The model's independent
   kernel replay, the other half of #121, is still open.
-
 - **The acceptance checklist in CI, held to what main passes
   ([#35](https://github.com/jackChallis/stoicheia/issues/35)).** A new job, `acceptance`, in
   [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), runs
@@ -1906,47 +1971,134 @@ findings:
   checks to show that an updated definition or expected count cannot hide a pull request's
   E2 failure.
 
-- **The checks, made ready for retiring axioms (proposed, pending the evidence).** The owner
-  asked, "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
-  principle on 19 October 2026, pending the evidence; nothing lands until the owner has seen
-  it. A search found eight that can go with no choice of basis, listed in
-  [`model/README.md`](../../model/README.md#how-the-translation-is-checked).
-  Since a check never changes in the pull request of the content it judges,
-  this change prepares the checks first, with all 87 axioms in place and the pin change
-  recorded below. Main already reads the expected axiom count from
-  the lock in its negative tests; this pull request keeps that file unchanged.
-  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) moves its mutation, count
-  and membership fixtures to laws and pins that survive (I.5's inherited Postulate 3);
-  [`scripts/safe_push.py`](../../scripts/safe_push.py) drops the generators `gs_adj` and
-  `gs_lmc_opp` from its allow-list, because
-  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) now samples those two laws
-  with generators the other laws use, with byte-identical output;
-  [`tests/model/derived.py`](../../tests/model/derived.py) (new) keeps the eight laws'
-  configurations as derived properties, which
-  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py),
-  [`tests/model/structured.py`](../../tests/model/structured.py) and
-  [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
-  laws, [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records that independent
-  contract, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only
-  a description. The five files
-  [`model/Check/Angles.lean`](../../model/Check/Angles.lean),
-  [`model/Check/Circles.lean`](../../model/Check/Circles.lean),
-  [`model/Check/Incidence.lean`](../../model/Check/Incidence.lean),
-  [`model/Check/Intersections.lean`](../../model/Check/Intersections.lean) and
-  [`model/Check/Sides.lean`](../../model/Check/Sides.lean) compare eleven hand translations
-  of the eight properties directly with the Elements declarations, so the comparisons
-  hold whether those are axioms or theorems; `model/README.md` describes these checks.
-- **One certificate pin dropped, with the owner's approval.** The retirement makes
-  `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
-  in [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json),
-  that III.1 Por.'s assumptions include it, had to go first, as the pin dropped for #60 did.
-  On 19 October 2026 the owner approved this first step of a two-step pin flip: commit
-  `5d200cf` removes the `includes: ["Tacit.centre_unique"]` pin while retaining its count.
-  Deleting that dependency still fails, but a substitution that keeps the count would no
-  longer be caught. C6's full `equals` pin remains pending; the retirement then adds stronger
-  pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight. This approval is for
-  the first pin change alone; the retirement itself remains pending the evidence and the
-  owner's separate decision.
+- **I.45 and II.14 are allowed as restricted while the outline proof is to come (#116).**
+  On 20 October 2026 the owner approved ship G's decisions for #116, including:
+  "**Interim disclosure.** Approve the restricted-scope entries in section 7 and keep
+  `figure-with-dissection` until all bridges are proved and reviewed."
+  This supersedes the 18 October decision to call both full under the convention of a
+  figure supplied with a checked finite division. The figure is given with its checked
+  division into triangles, and its area is relative to that division; existence of a
+  division from the outline and independence of area from the division chosen remain to
+  be proved under #116.
+  `scripts/check_acceptance.py` adds I.45 and II.14 to `ALLOWED_LIMITS`, each as
+  `("restricted", "figure-with-dissection")`, and [ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed)
+  gains the same two rows. They go when the outline proof is proved and reviewed.
+  The record change follows on a text branch of its own, stacked on this tooling change.
+  The protected files changed are `scripts/check_acceptance.py`, whose only change is
+  those entries and their comment, and `tests/test_acceptance_limits.py` (new), which checks
+  the list against the table and exercises P3 with and without the required tag. CI does
+  not run it yet; whoever changes the limitations runs it.
+
+- **Exact counts in prose are rendered and checked.** The stale-content audit found the
+  vocabulary still given as 61 where the lock held 91, and companions as nineteen across
+  seven propositions where the list held twenty across eight. The owner asked for a rule
+  that catches such drift. Inline HTML comments, `count:name` and `/count`, delimit just
+  the number; `:word` spells it out and `:Word` capitalises its first letter. The syntax,
+  shown with its opening brackets escaped in [STYLE](../STYLE.md), section 4, is distinct
+  from the existing scope and status regions and leaves no visible delimiters in Markdown.
+  Only counts computed exactly from files are generated: the lock's axioms, tacit rules
+  and postulates, using the renderer's existing classification, the axioms other than
+  Postulate 5, and its vocabulary; the
+  listed companions and the propositions they widen; each book's records and those at
+  stage `full`; and the acceptance report's failing items and propositions passing every
+  own item, read from its generated summary at that report's revision. Surrounding prose
+  stays human. No Lean run is needed to compute or check a count.
+  `render.py` fills markers in tracked Markdown before copying introductions and other
+  prose into book pages, where it removes the count comments. Whole renderer outputs are
+  excluded. Markers that overlap README.md's generated scope regions or PROGRAM.md's
+  generated status region, including their delimiters, are refused before rendering,
+  since those regions are replaced. Markers are refused in this decisions log and throughout `docs/reports/`,
+  except the living `gaps-book-*.md` and `overlaps.md` catalogues, so dated evidence stays
+  at its revision. Unknown, malformed, nested and unclosed markers fail with file and
+  line. `check_fidelity.py`, already run before rendering, also refuses a stale value,
+  giving the name, stated and computed values, and the command to regenerate.
+  Small fixtures test each count and the marker boundaries; negative tests plant wrong,
+  unknown and correct counts in a source copy under `/tmp`, without a build. Their
+  `--counts-only` option runs those plants and the file-only regressions; the default
+  suite still runs every plant. This is the tooling branch only. A later content branch
+  adds markers to the prose. The protected files changed are
+  `scripts/generated_counts.py`, `scripts/render.py`, `scripts/check_fidelity.py`,
+  `scripts/negative_tests.py` and `tests/test_generated_counts.py`.
+- **Count discovery and rendering refuse unsafe inputs.** Following the code and
+  security reviews, Git's resolved work tree must match the supplied root, including
+  copies using `GIT_DIR` and `GIT_WORK_TREE`. Missing or mismatched metadata fails with
+  a diagnostic. Symlinks in every component below the repository root, and paths resolving
+  outside the root, are refused before an optional input is tested for presence, or a path
+  is read or written; a symlink supplied as the root itself remains a supported alias.
+  Whole renderer outputs are now scanned and any count marker there is refused; this
+  supersedes their exclusion in the entry above.
+  Review counts use tracked records alone and check proposition numbers. Regressions
+  cover these boundaries and run rendering from a stale marked introduction through
+  to its updated source and copied page without count comments. The protected paths
+  changed by this branch are `scripts/generated_counts.py`, `scripts/render.py`,
+  `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
+  `tests/test_generated_counts.py`.
+
+- **A check for merge-conflict markers.** Pull request #138 left a diff3 base marker and a
+  duplicated, outdated fragment on this page, and nothing caught it; the owner asked for a
+  rule to catch such residue. S23 of `scripts/check_style.py` ([STYLE](../STYLE.md),
+  section 8) reads every tracked text file, fenced code and comments included, and refuses
+  an opening, base or closing marker (exactly seven characters, then a space or the line's
+  end), and a seven-equals middle between markers or where it cannot underline a Markdown
+  paragraph, since a resolver can delete the outer markers and leave a middle, as #138
+  left a base. Setext headings stay allowed, including paragraphs of several lines.
+  The check tracks comments, fences, HTML blocks, GFM tables, completed headings,
+  indented code and link reference definitions; a fence inside a comment or HTML block
+  opens no block. It skips symlinks,
+  and traversal errors name their path and stop the check. The walk without Git serves
+  S23 alone; S12 loads its strictly Git-backed index only when needed. The updated S23
+  finds no marker in origin/main's 1,100 text files at `d95125f0`.
+  The style check is its home because it
+  already holds the repository's file-and-line rules and runs in CI and the pre-flight
+  with its cases; `check_fidelity.py` judges the Lean, Heath's text and the certificate,
+  and the Jev audit is an independent model's reading, not a mechanical check. Planted
+  markers in `scripts/negative_tests.py` (item 16) and cases in `tests/test_check_style.py`
+  show each kind refused, the block boundaries held, traversal errors raised, symlinks
+  skipped and valid setext headings allowed. By keep_apart (WORKFLOW, section 10),
+  the rule lands apart from the content fix, `text/decisions-marker` (#140), which removed
+  the marker first; on main since #140 it finds none. The protected files changed are `scripts/check_style.py`,
+  `scripts/negative_tests.py` and `tests/test_check_style.py`.
+- **S23 errs toward refusal for possible reference definitions.** A lone Markdown middle
+  is allowed only when every line of the preceding block is ordinary paragraph text;
+  any line beginning with up to three spaces, a bracketed label (escaped brackets
+  included) and a colon disqualifies the block until its next boundary, as does a block
+  quote or list item, since an underline is never a lazy continuation. Within a
+  paragraph, as in GFM, only a list item that can interrupt it counts: a bullet, or an
+  ordered item numbered 1, with some text. `2. item`, `1.` or a bare `*` goes on with
+  the paragraph, which a seven-equals line may underline; at a block's start any list
+  item disqualifies the block.
+  S23 examines only middles of exactly seven equals and errs toward refusal in doubtful
+  contexts, so an author whose heading is refused can use eight, since other lengths are
+  never examined as middles.
+  This deliberately refuses `[label]: destination extra words` with seven equals even
+  though it is paragraph text. `scripts/check_style.py` retains the possible definition
+  across destination and title continuations. `tests/test_check_style.py` covers the
+  three reported escapes, the conservative refusal, the eight-equals alternative,
+  list markers that cannot interrupt a paragraph and ordinary headings across block
+  boundaries; `scripts/negative_tests.py` adds a two-line
+  definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
+  states the rule. No mathematical statement or review record changes.
+
+- **The circle ban survives a rule being proved.** The check change precedes the
+  retirement, with all 87 axioms still in place. No certificate entry may rest on
+  Circle 2 (`Tacit.inside_of_between`) or Circle 3 (`Tacit.outside_of_between`).
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) now finds every theorem
+  this project declares in `Elements.Tacit` and records Lean's `collectAxioms` for it
+  in `facts.json` as `proved_rules`, documented in
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md).
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) requires each
+  forbidden name either to remain an axiom in the lock or to name a proved rule
+  resting on another forbidden circle rule that remains an axiom there. The
+  per-entry refusal is unchanged: in the planned retirement, Circle 2 is proved
+  from Circle 3, so every use still brings in a forbidden axiom. A renamed rule or
+  a proof without a forbidden axiom beneath it is refused.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants both cases
+  of proved Circle 2, restores the lock, and drops one project axiom from
+  `Audit.III_2`'s pin whether its list occupies one line or several.
+  [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) checks the
+  guard, both pin forms and restoration on failure or interruption.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, records how the ban continues
+  to hold. This prepares the checks for the retirement; it retires no axiom.
 - **Eight axioms retired, 87 to 79.** The owner asked,
   "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
   principle on 19 October 2026, pending the evidence; this lands only when the owner has

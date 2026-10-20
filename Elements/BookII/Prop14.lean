@@ -21,14 +21,15 @@ carries it out.
 
 `Prop14` is Euclid's worked configuration, I.45's figure of two triangles, and returns the
 side of the square. His proof makes a rectangle equal to the figure [I. 45] and then a square
-equal to the rectangle. The companions after it take any rectilineal figure:
+equal to the rectangle. The companions after it take a rectilineal figure given with its
+triangles:
 
 * `Prop14.rectangle` is that second part.
 * `Prop14.sum` is the proof for any number of triangles, by I.45's `Prop45.sum`: the
   construction, which claims nothing of a figure.
-* `Prop14.apart` is the proposition for any rectilineal figure, with any boundaries, given
-  with any division into triangles that lie apart (`Apart`), as in I.45's `Prop45.apart`;
-  the figure may have a hole. `Prop14.square` is the same with the square drawn.
+* `Prop14.apart` is the proposition for a figure given with triangles that lie apart
+  (`Apart`), as in I.45's `Prop45.apart`; the figure may have a hole. `Prop14.square` is the
+  same with the square drawn.
 * `Prop14.figure` is the proposition for a figure with one boundary, given with triangles
   fitted together in a suitable order (`Rectilineal`), as in I.45's `Prop45.figure`; it
   follows from `Prop14.apart`, since fitted triangles lie apart (`Fitted.inside_pairwise`).
@@ -316,7 +317,7 @@ theorem Prop14.sum (ts : List (Point × Point × Point)) (hne : ts ≠ [])
     obtain ⟨P, Q, hPQ⟩ := Prop14.rectangle hrect
     exact ⟨P, Q, hPQ.trans harea⟩
 
-/-- **II.14, for any rectilineal figure, with any boundaries** (companion of II.14). To
+/-- **II.14, for a figure given with triangles that lie apart** (companion of II.14). To
 construct a square equal to a given rectilineal figure, given with any division of it into
 triangles, no point inside two of them (`Apart`), as in `Prop45.apart`: the square on PQ is
 equal to those triangles taken together (`Apart.area`). The figure may have a hole, touch
@@ -325,8 +326,9 @@ triangles. Nothing is claimed of another division of the figure. -/
 theorem Prop14.apart (R : Apart) : ∃ P Q : Point, sq P Q = R.area :=
   Prop14.sum R.pieces R.ne R.triangle
 
-/-- **II.14, for any rectilineal figure with one boundary** (companion of II.14). To
-construct a square equal to a given rectilineal figure, given with triangles fitted together
+/-- **II.14, for a figure with one boundary, given with triangles fitted together**
+(companion of II.14). To construct a square equal to a given rectilineal figure, given with
+triangles fitted together
 in a suitable order, each glued across a side of an earlier one and meeting the earlier ones
 only along it (`Rectilineal`), as in `Prop45.figure`: the square on PQ is equal to those
 triangles taken together (`Rectilineal.area`). It is `Prop14.apart` for the figure's

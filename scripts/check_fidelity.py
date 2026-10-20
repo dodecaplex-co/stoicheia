@@ -52,8 +52,9 @@
    - for every entry, propositions, porisms and companions alike: none cites one that
      does not come before it; only I.4 and I.8 use superposition directly; none
      before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may); none rests on Circle 2 or Circle 3, both of which the lock
-     must hold by their names; only III.24 has placement, or a lemma of the `Placement`
+     after I.29, and may); none rests on Circle 2 or Circle 3, each of which must be
+     an axiom in the lock or a proved rule resting on another forbidden circle rule
+     that remains an axiom in the lock; only III.24 has placement, or a lemma of the `Placement`
      namespace or of placement's files, among its shared steps;
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
@@ -64,6 +65,10 @@
      helpers that exist; and every run of `--` lines with no Lean beneath it before
      the next run, a `/- … -/` remark ending a run and carrying none, is declared as a
      passage (`uncarried_runs`).
+7. Inline count markers in tracked Markdown match the exact file-derived counts in
+   generated_counts.py, and stand only where that module allows. Unknown and
+   malformed markers are refused, as are unsafe paths and a missing or mismatched Git
+   work tree.
 
 `--facts PATH` checks another copy of facts.json (scripts/negative_tests.py uses it);
 `--write-lock` writes `Certificate/axioms.lock` from facts.json and stops.
@@ -82,6 +87,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 import heath
+import generated_counts
 
 ROOT = heath.ROOT
 BOOKS = heath.BOOKS
@@ -504,10 +510,18 @@ def check_lock(facts, path: Path = LOCK):
         fail(f"{rel(path)} is missing: with a decisions entry, write it with "
              "`python3 scripts/check_fidelity.py --write-lock`")
         return None
+    proved = facts.get("proved_rules", {})
     for name, rule in FORBIDDEN_CIRCLE_RULES.items():
-        if name not in lock[0]:
-            fail(f"{name} ({rule}): not an axiom in {rel(path)}, so no entry can be refused "
-                 "it (if the axiom was renamed, rename it in FORBIDDEN_CIRCLE_RULES too)")
+        if name in lock[0]:
+            continue
+        if name not in proved:
+            fail(f"{name} ({rule}): not an axiom in {rel(path)} or a proved rule in "
+                 "facts.json (if the rule was renamed, rename it in FORBIDDEN_CIRCLE_RULES too)")
+        elif not any(other != name and other in lock[0] and other in proved[name]
+                     for other in FORBIDDEN_CIRCLE_RULES):
+            fail(f"{name} ({rule}): proved without another forbidden circle rule "
+                 f"beneath it that is an axiom in {rel(path)}, so entries using it "
+                 "cannot be refused by their axioms")
     types, vocabulary = facts.get("axiom_types"), facts.get("vocabulary")
     if types is None or vocabulary is None:
         fail("facts.json has no axiom_types or vocabulary: rerun `lake env lean Certificate/Facts.lean`")
@@ -1056,6 +1070,9 @@ def main(argv=None) -> int:
         return write_lock(json.loads(args.facts.read_text()))
     check_fidelity()
     check_rules()
+    _, count_errors = generated_counts.updates(ROOT, check=True)
+    for error in count_errors:
+        fail(error)
     check_facts(args.facts)
     if errors:
         print(f"{len(errors)} problem(s):")

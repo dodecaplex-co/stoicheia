@@ -1,12 +1,16 @@
 [statement]
-scope = "full"
-note = "With its companions: `Prop14.apart` and `Prop14.square` take any figure given with triangles that lie apart, the square drawn; `Prop14` keeps two triangles."
+scope = "restricted"
+short = "figures supplied with a checked division into triangles"
+hypotheses = [
+  "A division into non-overlapping triangles is supplied with the figure (`Apart` or `Rectilineal`); existence from an outline is not yet proved."
+]
+note = "`Prop14.square` draws a square equal to a supplied triangle sum; outline coverage and independence of division remain unproved."
 companions = ["II.14 rectangle", "II.14 sum", "II.14 apart", "II.14 figure", "II.14 square", "II.14 fan"]
 fingerprint = "sha256:9e83215b978b4220"
 
 [route]
 kind = "euclid"
-note = "`Prop14.rectangle` is the second part of Euclid's proof, the main theorem's argument after the rectangle is made, written out again so as not to cite II.14; `Prop14.sum` makes the rectangle for any number of triangles by I.45's `Prop45.sum`, in a right angle from I.11; and `Prop14.square` describes the square on the side found, by I.46, as Euclid's last words name it."
+note = "`Prop14.rectangle` is the second part of Euclid's proof, the main theorem's argument after the rectangle is made, written out again so as not to cite II.14; `Prop14.sum` makes the rectangle for any number of triangles by I.45's `BookI.Prop45.sum`, in a right angle from I.11; and `Prop14.square` describes the square on the side found, by I.46, as Euclid's last words name it."
 
 [[passage]]
 at = "For let there be constructed the rectangular parallelogram BD"
@@ -53,21 +57,21 @@ note = "Euclid uses the equality of the radii GF and GH without giving a reason.
 at = "But the squares on HE, EG are equal to the square on GH"
 kind = "helper"
 helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `Prop47.sq`."
+note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `BookI.Prop47.sq`."
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]
-note = "A rectilineal figure is given with its division into triangles, checked, as in I.45: triangles that lie apart, for any figure, a figure with a hole among them (`Prop14.apart`, `Prop14.square`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop14.figure`); or Euclid's and Oliver Byrne's division from one corner, checked and shown to fit together (`Prop14.fan`). Equal to the figure means equal to those triangles together. That every figure can be so divided, and that another division gives the same sum, are not proved here; David Hilbert proved the second, for his measure of area. The main theorem is an area-sum theorem: it takes A₁A₂A₄ and A₄A₂A₃ unchecked, and they may overlap. It represents Euclid's pictured division when A₁ and A₃ lie on opposite sides of A₂A₄; that checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃. The main theorem returns the straight line EH, and `sq E H` is the square on it, as Euclid ends with \"the square which can be described on EH\"; no four corners of a square are drawn there. `Prop14.square` draws them, on the side `Prop14.apart` finds, and with it carries full coverage."
+note = "A rectilineal figure is given with its division into triangles, checked, as in I.45: triangles that lie apart, allowing a figure with a hole (`Prop14.apart`, `Prop14.square`); triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop14.figure`); or Euclid's and Oliver Byrne's division from one corner, checked and shown to fit together (`Prop14.fan`). Equal to the figure means equal to those triangles together. Existence of such a division from the figure's outline, coverage of its region, and independence of the sum from the division chosen remain unproved ([#116](https://github.com/jackChallis/stoicheia/issues/116)); David Hilbert proved the last, for his measure of area. The main theorem is an area-sum theorem: it takes A₁A₂A₄ and A₄A₂A₃ unchecked, and they may overlap. It represents Euclid's pictured division when A₁ and A₃ lie on opposite sides of A₂A₄; that checked case is `Prop14.fan` for the corners A₄, A₁, A₂, A₃. The main theorem returns the straight line EH, and `sq E H` is the square on it, as Euclid ends with \"the square which can be described on EH\"; no four corners of a square are drawn there. `Prop14.square` draws them, on the side `Prop14.apart` finds, constructing the required square for a supplied checked division into triangles that lie apart."
 
 [figure]
 case = "BE greater than ED, as in Heath's figure, with the figure A of two triangles"
 
 [review]
 stage = "full"
-commit = "29cd78e"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:a68c1627405e8cef"
-run = "brief 0005 stage 5, ship C5 re-read"
+commit = "e2b241fd"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:2edad20a42acc1a6"
+run = "Q watch, independent re-read at e2b241fd"
 
 [review.items]
 statement = "pass"

@@ -35,6 +35,7 @@ in Books I-III, I.15, III.1 and III.16.
 | `opaque` | list of names | Every `opaque` constant this project declares. |
 | `axiom_types` | object, name to string | **New.** The printed statement of every axiom in `axiom_modules`, with exactly the same keys. 87 at commit d040117. |
 | `vocabulary` | object, name to string | **New.** Every definition, instance, structure, inductive type and opaque of this project that the statement of an axiom, or of an entry, reaches (below). |
+| `proved_rules` | object, name to list of names | **New** (20 October 2026). Every theorem this project declares in `Elements.Tacit`, found in Lean's environment, with the axioms `collectAxioms` finds beneath it. Names omit the leading `Elements.`; Lean's three foundations and `sorryAx` are left out, as in an entry's `axioms`. Each list is sorted by string. |
 
 Names here are Lean's full names without the leading `Elements.`, as `axiom_modules`
 has always written them: `"Postulate1"`, `"Tacit.circle_eq"`, `"Magnitude.add"`.
