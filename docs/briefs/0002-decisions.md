@@ -1363,10 +1363,3 @@ findings:
   the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
   apart from an accompanying change to `scripts/render.py`. No check, statement, lock
   or review record changes here, apart from the approved signature in the scaffold.
-- **The tag `centre-given` no longer says why a circle has a centre.** Its meaning in the
-  protected file [`review/terms.toml`](../../review/terms.toml) said that a circle in Lean
-  has a centre only when a hypothesis or Postulate 3 gives it one. Once the rule that every
-  circle has a centre lands ([brief 0008](0008-centre.md), step 5), that is false. The
-  meaning now says only what the tag records, that the statement gives the circle a
-  centre, which is true before the rule lands and after. No record's tags change, and no
-  page changes, since every record with the tag says the rest in its own note.
