@@ -35,7 +35,7 @@ note = "Euclid takes for granted that DAF and EAF are BAF and FAC, since D lies 
 stage = "full"
 commit = "8b8162f7"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "R2, independent re-read at 8b8162f7"
+run = "brief 0005 stage 5, workflow R2 independent re-read at 8b8162f7"
 lean = "sha256:d385f2716fd5a8ad"
 
 [review.items]
