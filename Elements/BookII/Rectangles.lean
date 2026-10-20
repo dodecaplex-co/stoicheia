@@ -135,9 +135,6 @@ theorem Square.about_diameter (h : Square A B C D) (hp : Parallelogram A B C D)
     (hK : Between A K C) (hE : Between A E B) (hH : Between A H D)
     (hAEKH : Parallelogram A E K H) : Square A E K H := by
   have hABC : Triangle A B C := hp.triangle
-  have hAD : A ≠ D := ne_of_between_ends hH
-  have hAC : A ≠ C := hABC.ne₁₃
-  have hAB : A ≠ B := hABC.ne₁₂
   /- The angles BAC, BCA at the base of the isosceles triangle BAC are equal. [I. 5] -/
   have h₁ : ∠ B A C = ∠ B C A := Prop5.base hABC.bac (len_symm B A ▸ h.1)
   /- The alternate angles BCA, CAD are equal. [I. 29] -/
@@ -179,8 +176,6 @@ theorem Parallelogram.complements (hABCD : Parallelogram A B C D) (hK : Between 
   obtain ⟨CD, hC_CD, hD_CD⟩ := Postulate1 C D hABCD.1.2.1
   obtain ⟨BC, hB_BC, hC_BC⟩ := Postulate1 B C hABCD.2.1
   obtain ⟨DA, hD_DA, hA_DA⟩ := Postulate1 D A hABCD.2.2.1
-  obtain ⟨AC, hA_AC, hC_AC⟩ := Postulate1 A C (ne_of_between_ends hK)
-  have hK_AC : OnLine K AC := on_line_of_between_ends hK hA_AC hC_AC
   have hE_AB : OnLine E AB := on_line_of_between_ends hE hA_AB hB_AB
   have hG_BC : OnLine G BC := on_line_of_between_ends hG hB_BC hC_BC
   have hF_CD : OnLine F CD := on_line_of_between_ends hF hC_CD hD_CD

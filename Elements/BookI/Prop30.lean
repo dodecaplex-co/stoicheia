@@ -100,7 +100,6 @@ theorem Prop30 {A B C D E F : Point} (h₁ : AreParallel A B E F) (h₂ : ArePar
     obtain ⟨F, hF_EF, hF_GK, -⟩ := exists_point_on_line_off_line hEF_GK []
     have hF_H : F ≠ H := fun e => hF_GK (e ▸ hH_GK)
     obtain ⟨E, hFHE⟩ := produce hF_H
-    have hE_EF := on_line_of_between hFHE hF_EF hH_EF
     have hE_GK : ¬ OnLine E GK := fun h =>
       hF_GK (on_line_of_between (between_symm hFHE) h hH_GK)
     have hEF : OppositeSides E F GK :=

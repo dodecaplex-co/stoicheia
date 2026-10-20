@@ -1499,6 +1499,46 @@ findings:
   so routine edits to `model/Model.lean` (a new import) and `model/Model/Audit.lean`
   (a new pinned law) now need such a line too.
 
+- **The overlap wording and the table of stages are brought up to date.** The two text
+  follow-ups to #93 update the [README](../../README.md)'s row for `Audit/` and the
+  [Book I brief](book-I.md)'s account of its four overlaps: a rule supplies a step of
+  I.2, I.3, I.7 and I.23, and I.23 rests on superposition through I.20 as well as I.8.
+  Brief 0005's table of stages in [PROGRAM](../PROGRAM.md) marks stage 2 done and names
+  #90 in stage 4's row as the pull request that proved its propositions in Staging.
+  The next steps in [`docs/program.toml`](../program.toml), which supply PROGRAM's
+  status table, keep their words for now. A protected test in
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) quotes Book I's stage
+  words. The next steps are reworded after the test's own change on
+  `tooling/safe-push-stage-line` lands separately, as [WORKFLOW](../WORKFLOW.md),
+  section 10, requires.
+- **Stoicheia Team is the edition's copyright holder and cited author.** On 19 October 2026
+  the owner decided that [NOTICE](../../NOTICE) reads "Copyright 2026 Stoicheia Team and
+  contributors" and [CITATION.cff](../../CITATION.cff) names one author, the entity
+  "Stoicheia Team". The credit that [LICENSE-PROSE.md](../../LICENSE-PROSE.md) asks for now
+  names that author beside the title. [README.md](../../README.md) has no citation block or
+  text asking readers to cite the project; [references.bib](../references.bib) has no entry
+  for Stoicheia itself, so neither changes. [LICENSE](../../LICENSE) keeps the Apache
+  template's copyright line. A repository-wide search for the surname and copyright lines
+  found no other project attribution to change; third-party credits and notices stay as they
+  are. The sample name in `scripts/test_safe_push.py` still waits for its own tooling pull
+  request. This settles two of the three things "The edition does not name its owner" left
+  to the owner. The repository's address on GitHub remains the owner's to decide, and its
+  links stay unchanged. No statement, check or protected path changes.
+- **The screen's new near misses are pinned in the audit.** The overlap screen, as #78 widened
+  it, finds that III.30 can be proved from its angle measure alone, without III.28. The
+  catalogue lists it among the near misses of representation, and
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) gains the proof that shows it,
+  `Audit.III_30_measure`, beside the other audit lemmas. `Audit/` became a protected path
+  with #96 (train H6, #113), so this entry names the file: `Audit/Overlaps.lean` gains one
+  lemma and its docstring, and no pin, statement or check changes. No proposition rests on
+  the new lemma; it records what a rule already gives.
+- **The review schema points to the acceptance checklist that now exists.**
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) said that `docs/ACCEPTANCE.md` "will fix the item
+  keys" and that `items` stays empty until it exists. The checklist landed with #111 and fixes
+  the keys and when an item counts, so the schema's `items` row and the sentence after the
+  table now say so and link it. Wording only: no field, rule or check of the schema changes.
+  This entry names the protected file `review/SCHEMA.md`.
+
 - **III.37 leaves the grouped-case example.** The example in the `uncarried_runs` docstring
   of [scripts/check_fidelity.py](../../scripts/check_fidelity.py) drops III.37, whose case
   with the centre on AC gets a proof of its own, `Prop37.centre_on_secant`, on ship R1's

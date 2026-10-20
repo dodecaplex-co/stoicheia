@@ -146,8 +146,6 @@ theorem Prop35.same {A B C D F : Point} (h₁ : Parallelogram A B C D) (h₂ : P
   have hDA : D ≠ A := (ne_of_len_eq hAD h₁.2.1).symm
   have hA_DB : ¬ OnLine A DB := fun h =>
     hAF_BC.symm.not_onLine hB (by rw [line_unique hDA hD hA hD_DB h]; exact hB_DB)
-  have hC_DB : ¬ OnLine C DB := fun h =>
-    hA_DB (on_line_of_between (between_symm hAXC) h hX_DB)
   have hCF : SameSide C F DB := h₂.sameSideOf.sameSide hD_DB hB_DB
   have hAF : ¬ SameSide A F DB := fun hs =>
     pasch3 hAXC hX_DB (same_side_trans (same_side_symm hs) (same_side_symm hCF))

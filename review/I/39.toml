@@ -17,15 +17,41 @@ kind = "given"
 note = "The statement gives the goal, AD parallel to BC, and nothing is drawn here: the parallel through A, drawn next, will pass through D and so be AD."
 
 [[passage]]
+at = "and let EC be joined"
+kind = "helper"
+helper = "Prop30.meet"
+note = "Euclid takes E where the parallel through A meets BD. The Lean proves that this meeting exists by I.30 (`Prop30.meet`), then joins EC by Postulate 1."
+
+[[passage]]
+at = "the greater to the less"
+kind = "case"
+note = "Euclid's figure puts E between B and D, so EBC is a part of DBC and the less. The Lean puts E on the ray from B through D (`Parallel.sameSide`, `OnRay.of_sameSideOf`) and uses `OnRay.eq_of_area_eq` to prove E = D, excluding both that arrangement and E beyond D, where DBC is the less, by comparing part and whole."
+
+[[passage]]
+at = "Therefore AE is not parallel to BC"
+kind = "different"
+note = "Euclid rejects AE as a parallel distinct from AD. The Lean keeps the constructed parallel and substitutes E = D to put D on it."
+
+[[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
 kind = "different"
 note = "Euclid supposes AD not parallel and refutes it. The Lean supposes nothing: the areas put E at D (`OnRay.eq_of_area_eq`), so the parallel through A is AD itself, and no other straight line needs trying."
 
 [figure]
-note = "AE is drawn level, as the proof supposes; Heath draws AD level."
+case = "E on BD between B and D, as in Heath's figure"
+note = "AE is drawn level, as the proof supposes; Heath draws AD level. Like Heath's, this figure draws Euclid's impossible supposition: AE parallel to BC with E strictly between B and D, while the triangles ABC and DBC are assumed equal in area. Their drawn areas are unequal."
 
 [review]
-stage = "exceptions"
-commit = "2e1d5c1"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
+run = "brief 0005 stage 5, ship C5 re-read"
 lean = "sha256:a7efb796f39c1124"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
