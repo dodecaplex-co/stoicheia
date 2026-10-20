@@ -1026,6 +1026,22 @@ def pi_refusal(target, data):
     return f"processing instruction {instruction!r} is outside S26's SVG allow-list"
 
 
+DTD_CASES = (
+    ('<!DOCTYPE svg [<!ENTITY family "Georgia">]>', '&family;'),
+    ('<!DOCTYPE svg [<!ENTITY first "Geor"><!ENTITY family "&first;gia">]>', '&family;'),
+    ('<!DOCTYPE svg SYSTEM "x.dtd">', 'Georgia'),
+    ('<!DOCTYPE svg PUBLIC "figure" "x.dtd">', 'Georgia'),
+    ('<!DOCTYPE svg [<!ENTITY % family "Georgia">]>', 'Georgia'),
+    ('<!DOCTYPE svg>', 'Georgia'),
+)
+DTD_REFUSAL = "DTD or entity declaration is outside S26's SVG allow-list"
+
+
+def dtd_figure(idea, declaration, family):
+    return declaration.encode("ascii") + ET.tostring(figure_fixture(idea)).replace(
+        b'font-family="Georgia"', f'font-family="{family}"'.encode("ascii"))
+
+
 class SvgGate(unittest.TestCase):
     """The closed SVG input language, through both complete figure checks."""
 
@@ -1298,6 +1314,58 @@ class SvgGate(unittest.TestCase):
                 path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
                 self.assertEqual([f for f in found if f[1] == path], [("S26", path, 0, expected)])
                 self.assert_continued(found, idea, expected)
+
+    def test_dtd_refusal_and_continuation(self):
+        for idea in (False, True):
+            for declaration, family in DTD_CASES:
+                for encoding in ("utf-8", "utf-16"):
+                    with self.subTest(idea=idea, declaration=declaration, encoding=encoding):
+                        raw = dtd_figure(idea, declaration, family).decode("ascii").encode(encoding)
+                        found = figure_run(raw, idea)
+                        path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                        self.assertEqual([f for f in found if f[1] == path],
+                                         [("S26", path, 0, DTD_REFUSAL)])
+                        self.assert_continued(found, idea, DTD_REFUSAL)
+
+    def test_dtd_in_euclid_reference_is_reported_once_and_continues(self):
+        for declaration, family in DTD_CASES:
+            with self.subTest(declaration=declaration):
+                raw = dtd_figure(False, declaration, family)
+                found = figure_run(figure_fixture(True), True, reference=raw)
+                path = "figures/I/01.svg"
+                self.assertEqual([f for f in found if f[1] == path],
+                                 [("S26", path, 0, DTD_REFUSAL)])
+                self.assert_continued(found, True, DTD_REFUSAL, first_path=path)
+
+    def test_drawn_letters_refuses_dtd(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "01.svg"
+            for declaration, family in DTD_CASES:
+                with self.subTest(declaration=declaration):
+                    path.write_bytes(dtd_figure(False, declaration, family))
+                    self.assertIsNone(style.drawn_letters(path))
+
+    def test_dtd_refusal_precedes_internal_subset(self):
+        # Refuse even before any declaration or reference in the subset is read.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "01.svg"
+            path.write_bytes(b"<!DOCTYPE svg [")
+            with self.assertRaises(ET.ParseError) as raised:
+                style.parse_svg(path)
+            self.assertEqual(str(raised.exception), DTD_REFUSAL)
+
+    def test_character_references_keep_the_resolved_value_gate(self):
+        for idea in (False, True):
+            for family in (b"&#71;eorgia", b"&#x47;eorgia", b"&#83;erif"):
+                with self.subTest(idea=idea, family=family):
+                    raw = ET.tostring(figure_fixture(idea)).replace(
+                        b'font-family="Georgia"', b'font-family="' + family + b'"')
+                    raw = raw.replace(b">A<", b">&#65;<")
+                    found = figure_run(raw, idea)
+                    path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                    expected = [("S26", path, 0, svg_refusal("svg", "font-family", "Serif"))] \
+                        if family == b"&#83;erif" else []
+                    self.assertEqual([f for f in found if f[1] == path], expected)
 
     def test_xml_declarations_and_comments_are_admitted(self):
         for idea in (False, True):

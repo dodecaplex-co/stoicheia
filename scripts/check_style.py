@@ -2712,6 +2712,10 @@ def fill_under(root, x: float, y: float) -> str:
     return under
 
 
+class SvgDeclarationError(ET.ParseError):
+    """A DTD refused before its subset or any declared entity is read."""
+
+
 class FigureTreeBuilder(ET.TreeBuilder):
     def __init__(self):
         super().__init__()
@@ -2719,6 +2723,9 @@ class FigureTreeBuilder(ET.TreeBuilder):
 
     def pi(self, target, data):
         self.processing_instructions.append((target, data))
+
+    def doctype(self, name, pubid, system):
+        raise SvgDeclarationError("DTD or entity declaration is outside S26's SVG allow-list")
 
 
 def parse_svg(path: Path):
@@ -2733,6 +2740,9 @@ def svg_root(path: Path, missing_ok: bool = False):
         if missing_ok:
             return None
         raise
+    except SvgDeclarationError as e:
+        fail("S26", path, 0, str(e))
+        return None
     except (ET.ParseError, LookupError, UnicodeDecodeError, ValueError) as e:
         fail("S14" if path.stem.endswith("-idea") else "S15", path, 0, f"not well-formed SVG: {e}")
         return None
@@ -2811,7 +2821,7 @@ def measure_idea(path: Path, ref: str, required: bool, root) -> int:
 
 def drawn_letters(path: Path) -> set[str] | None:
     """The letters Euclid's figure draws, which S16 holds to Heath's text; None when there
-    is no figure to read (S15 says why)."""
+    is no figure to read (S15 or S26 says why)."""
     try:
         tree, _ = parse_svg(path)
     except (OSError, ET.ParseError, LookupError, UnicodeDecodeError, ValueError):

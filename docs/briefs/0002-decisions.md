@@ -1873,6 +1873,9 @@ findings:
   parser call. Both entry points have regressions requiring the next figure's finding after an
   arithmetic or encoding failure. Subdivision is bounded for each cubic; these limits do
   not bound the input's length or its number of elements or path commands.
+  `scripts/check_style.py` refuses a DTD or entity declaration before any declared entity
+  is expanded, through the parser shared by every figure reader; `tests/test_check_style.py`
+  pins the refusal, continuation, XML declarations, comments and character references.
   Mitre joins now use original segments' endpoint tangents, with no joins between a
   curve's flattened chords.
   Both figure entry points have cases requiring an S26 finding. And
