@@ -222,7 +222,7 @@ The representations Books I–III rest on:
 | lengths, angles, areas | `Magnitude` of one kind each, added and compared only | Common Notions proved as theorems | |
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
 | superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | stronger as a construction principle than System E's restricted inference rule, as [its file](../Elements/Foundations/Tacit/Superposition.lean) says; a restricted rule is being prototyped ([#75](https://github.com/jackChallis/stoicheia/issues/75)) | |
-| the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
+| the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
 | a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
 | a circumference | twice the angle standing on it, `circumference`, `standing`; no radius | proved facts in `Circumferences.lean`; arcs with membership are stage 3's work | `angle-measure`, `redundant-hypothesis` |
@@ -444,6 +444,9 @@ dependencies.
   III.24 calls on one.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
+- **Circle 2 and Circle 3.** No certificate entry rests on `Tacit.inside_of_between` or
+  `Tacit.outside_of_between`, whether through its own proof or through a lemma it uses;
+  the check fails if the axiom lock no longer holds either name.
 - **No later citations:** no proof cites a proposition that does not come before it.
 - **Complete books stay complete:** every proposition of a complete book is proved, with
   both figures and a mishnah, and so is every porism and companion attached to it.
@@ -455,7 +458,9 @@ axiom declared outside the foundations, in each of `Elements/`, `Staging/`, `Aud
 `model/Model/` and `model/Check/`,
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
-and I.8; placement among the shared steps of an entry other than III.24, and a lemma of
+and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms,
+and Circle 3 renamed in the lock;
+placement among the shared steps of an entry other than III.24, and a lemma of
 its namespace named in another file under `Elements/`; a later citation, one of them
 named only in a helper's statement; every forbidden command, and an attribute for each
 ending and prefix the scan knows, in each of those five folders, and `#exit` at the end

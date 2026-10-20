@@ -52,7 +52,8 @@
    - for every entry, propositions, porisms and companions alike: none cites one that
      does not come before it; only I.4 and I.8 use superposition directly; none
      before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may); only III.24 has placement, or a lemma of the `Placement`
+     after I.29, and may); none rests on Circle 2 or Circle 3, both of which the lock
+     must hold by their names; only III.24 has placement, or a lemma of the `Placement`
      namespace or of placement's files, among its shared steps;
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
@@ -96,6 +97,12 @@ EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # postulate from their first proposition on, as II.10 does by name. A book missing here
 # may use it throughout. A porism or companion goes with its proposition.
 FIRST_EUCLIDEAN = {"I": 29, "II": 1, "III": 1}
+# These rules contain III.2; no certificate entry may rest on either, even through a
+# helper. Certificate names omit the leading `Elements.`.
+FORBIDDEN_CIRCLE_RULES = {
+    "Tacit.inside_of_between": "Circle 2",
+    "Tacit.outside_of_between": "Circle 3",
+}
 # The words Euclid leaves undefined, and the magnitudes. Each must stay `opaque`: Lean
 # then knows only what the axioms say of them, and the axioms stay true in the plane.
 PRIMITIVES = {
@@ -497,6 +504,10 @@ def check_lock(facts, path: Path = LOCK):
         fail(f"{rel(path)} is missing: with a decisions entry, write it with "
              "`python3 scripts/check_fidelity.py --write-lock`")
         return None
+    for name, rule in FORBIDDEN_CIRCLE_RULES.items():
+        if name not in lock[0]:
+            fail(f"{name} ({rule}): not an axiom in {rel(path)}, so no entry can be refused "
+                 "it (if the axiom was renamed, rename it in FORBIDDEN_CIRCLE_RULES too)")
     types, vocabulary = facts.get("axiom_types"), facts.get("vocabulary")
     if types is None or vocabulary is None:
         fail("facts.json has no axiom_types or vocabulary: rerun `lake env lean Certificate/Facts.lean`")
@@ -614,7 +625,7 @@ def entries_by_ref(facts) -> dict:
 
 
 def check_entries(facts, by_ref) -> None:
-    """Which entries there are, how they hang together, and the three policies, for
+    """Which entries there are, how they hang together, and the policies, for
     every entry."""
     if any("kind" not in p or "statement" not in p for p in facts["propositions"]):
         fail("facts.json predates Certificate/FIELDS.md (an entry has no `kind` or "
@@ -678,6 +689,9 @@ def check_entries(facts, by_ref) -> None:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
             if bad:
                 fail(f"{ref}: rests on {', '.join(bad)} before {r.book}.{first}")
+        for axiom, rule in FORBIDDEN_CIRCLE_RULES.items():
+            if axiom in p["axioms"]:
+                fail(f"{ref}: rests on {axiom} ({rule}), forbidden for every entry")
         if ref not in PLACEMENT_ENTRIES:
             for step in p.get("shared_steps", []):
                 if placement_step(step):
@@ -858,7 +872,7 @@ def uncarried_runs(src: str, n: int) -> list:
 
     In Books I-III this finds runs of several kinds, among them the closing sentences of
     reductios (III.4, III.5, III.6, III.7, III.19), a "similarly" that one argument
-    already covers (I.14, III.37), a sentence that the Lean above it carries (II.10,
+    already covers (I.14), a sentence that the Lean above it carries (II.10,
     III.14), a setting-out or an "I say that" that the statement gives (I.13, I.21,
     I.23), a join that needs no object of its own (I.6), and III.16's last part: its
     conclusion, then the angle of the semicircle and the horn-like angle."""
