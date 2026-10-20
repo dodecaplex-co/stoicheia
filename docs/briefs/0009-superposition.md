@@ -1,5 +1,15 @@
 # Brief 0009: a restricted rule of superposition
 
+*Status, 20 October 2026 (main at d95125f0):*
+
+Prototype approval landed in #102, and its [`Staging.lean` entry](../../Staging.lean) followed in #108; its six files remain in [`Staging/Superposition/`](../../Staging/Superposition/).
+The [pinned model-law names](../../tests/model/laws.toml) are in place (#40, landed in #103), and the [forbidden-command scan](../../scripts/check_fidelity.py) covers staging and audit files (#39).
+The interim disclosures are in the [foundations](../../Elements/Foundations/Tacit/Superposition.lean), [overlap catalogue](../reports/overlaps.md#i23), [I.4](../../mishnah/I/04.md) and [I.8](../../mishnah/I/08.md) (#104, #134).
+The [formal model](../../model/Model/Euclidean/Superposition.lean) proves the current placement axiom (#109); the restricted rule still needs its own translation and model justification.
+At this revision, 116 of the 122 entries in [`facts.json`](../../facts.json) rest on superposition.
+Still to do for #75: settle the open design questions, complete that justification, review the delivered rule and replace the axiom with its proofs and records.
+The frozen text below is kept as history.
+
 *18 October 2026, revised the same day (round 2). A design brief and a prototype for issue
 #75, written to the owner's decision of 18 October after Astra's third answer. Nothing in
 `Elements/` changes and no axiom is added: the restricted rule is a hypothesis, `Rule`,
