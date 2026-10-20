@@ -54,6 +54,10 @@ jobs:
         # reading its cases wrongly stops the job before the style check's verdict.
         run: python3 -I tests/test_check_style.py
 
+      - name: Check the unfinished work and release gates, case by case
+        # These cases need no Lean and no network; unreadable issues must hold a release.
+        run: python3 -I tests/test_release_gate.py
+
       - name: Check the house style's hard rules
         # S12 asks Lean about the names in every text it reads, the audit lemmas of the
         # overlap catalogue among them, so it runs on the built tree, after Audit.

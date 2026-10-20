@@ -1852,3 +1852,42 @@ findings:
   Nothing is loosened in `Elements/`, `Staging/` or `Audit/`; Book Zero's import rule
   and the placement policy still apply only in `Elements/`. The model's independent
   kernel replay, the other half of #121, is still open.
+
+## 20 October 2026
+
+- **Unfinished work may land with its issue, and holds the release until it is finished.**
+  The owner set the rule: "I don't mind incomplete work, prototypes, whatever so long as those are flagged issues and releases are held up until those are finalized."
+  Each prototype, provisional answer, restricted or partial scope awaiting a proof,
+  deferred page, test not yet in CI, or thing a disclosure calls "to come" has an open
+  issue labelled `blocks-release`, named in the pull request's new "Unfinished work"
+  section, whose Required box confirms that every piece is listed; a pull request with
+  none says "None". The merge gates require that section once the template in force has
+  it, read each named issue from GitHub, and refuse another repository's reference, a
+  pull request number, a closed or unlabelled issue, a list item with no issue, or a read
+  that cannot be trusted. A pull request labelled `release` is refused while any issue
+  or pull request labelled `blocks-release` is open; ordinary pull requests make no
+  read of that list.
+  `scripts/check_release_gate.py` makes the same release check, with an offline JSON
+  mode for its tests, and the separate `release-gate` CI job shows the hold on a release
+  pull request. That job is skipped on ordinary pull requests and checks out main's copy
+  at the base commit; the merge gate reads the issues again and remains the authority.
+  Both readers follow every page and fail closed on unreadable data. The offline tests
+  in `tests/test_release_gate.py` run in CI's `check` job and safe_push's check sequence,
+  immediately after `tests/test_check_style.py`, with no Lean or network; the full
+  `scripts/test_safe_push.py` harness tests the merges and refusals locally through its gh
+  stand-in. Its source clone copies Git's objects without hard links, so a sandbox that
+  permits reading the repository can run it, with all writes confined to the temporary
+  clone. No planted fault is added to `negative_tests.py`: these gates judge pull request
+  text and issue state, which the offline fixtures and gh stand-in supply, rather than a
+  break in the edition's files. The protected files changed are:
+  `.github/pull_request_template.md`,
+  `.github/workflows/ci.yml`,
+  `.github/workflows/release-gate.yml`,
+  `scripts/safe_push.py`,
+  `scripts/check_release_gate.py`,
+  `scripts/test_safe_push.py`,
+  `tests/test_release_gate.py`.
+  [WORKFLOW](../WORKFLOW.md), sections 8 and 10, records the checks and the release
+  hold. `git safe-push --label release` creates the `release` label, with its
+  description, the first time it is given; the consolidation release (#38) lands through
+  a pull request carrying it. Tags and releases stay manual, by the owner.

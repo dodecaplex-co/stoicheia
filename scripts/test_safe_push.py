@@ -4,7 +4,7 @@
     python3 scripts/test_safe_push.py        # seven minutes or so; no Lean, no network
     STOICHEIA_SLOW_TESTS=1 python3 scripts/test_safe_push.py FullChecks   # Lean, minutes
 
-The clone is made with `git clone --local` of this repository into a temporary
+The clone is made with `git clone --local --no-hardlinks` of this repository into a temporary
 directory: a bare `origin.git` and a working clone of it. Origin's main is this
 checkout's HEAD with this checkout's copies of the harness (scripts/safe_push.py, its
 hook, its allow-list, its tests) and of the pull request template committed on top, so
@@ -26,6 +26,10 @@ one commit and runs safe_push.py against that origin:
   GitHub names for the head (issue #41); and believes gh's exit 0 only once GitHub says
   the pull request merged and origin/main holds the merge commit GitHub names, the merge
   state otherwise unknown, with no revert advised (issue #42);
+- unfinished work must be written as None or with issues open and labelled blocks-release;
+  closed or unlabelled issues and unreadable replies refuse the merge; a release pull
+  request waits for every open blocker, while an ordinary pull request never reads that
+  list; both None and an open labelled issue pass;
 - the pre-push hook refuses every push to main and scans a push to any other branch;
 - the review's findings: the harness and the check scripts are origin/main's, an
   allow-list entry the push adds does not count, the heath/ leaves are origin/main's, an
@@ -146,7 +150,8 @@ DECISIONS = "docs/briefs/0002-decisions.md"
 # The files of the harness under test, committed on top of HEAD as origin's main.
 HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_push.py",
                  "scripts/hooks/pre-push", "scripts/hooks/safe-push", "scripts/install_hooks.sh",
-                 "scripts/safe_push_allow.toml", ".github/pull_request_template.md")
+                 "scripts/safe_push_allow.toml", ".github/pull_request_template.md",
+                 "scripts/check_release_gate.py", "tests/test_release_gate.py")
 
 
 def with_branch(args) -> tuple:
@@ -293,6 +298,33 @@ def main(argv):
     cmd = args[:2]
     if cmd == ["auth", "status"]:
         return 0
+    if args[0] == "api":
+        if s.get("issue_read_fail"):
+            # Even valid stdout on a failed read must not pass either gate.
+            print("[]")
+            return 1
+        if "issue_output" in s:
+            print(s["issue_output"])
+            return 0
+        path = args[-1]
+        issues = s.get("issues", [])
+        if path == "repos/test/stoicheia/issues?labels=blocks-release&state=open&per_page=100":
+            if "--paginate" not in args:
+                return 2
+            found = [i for i in issues if i["state"].lower() == "open" and
+                     "blocks-release" in [v.get("name") if isinstance(v, dict) else v
+                                         for v in i["labels"]]]
+            # Two concatenated pages, as gh api --paginate prints them.
+            print(json.dumps(found[:1]))
+            print(json.dumps(found[1:]))
+            return 0
+        if path.startswith("repos/test/stoicheia/issues/"):
+            number = int(path.rsplit("/", 1)[1])
+            issue = next((i for i in issues if i["number"] == number), None)
+            if issue is not None:
+                print(json.dumps(issue))
+                return 0
+        return 1
     if cmd == ["label", "list"]:
         print(json.dumps([{"name": n} for n in s["labels"]]))
         return 0
@@ -449,8 +481,8 @@ sys.exit(main(sys.argv[1:]))
 
 
 def reset_gh() -> None:
-    GH_STATE.write_text(json.dumps({"prs": [], "labels": [], "checks": {"*": PASSING},
-                                    "calls": []}))
+    GH_STATE.write_text(json.dumps({"prs": [], "labels": ["release", "blocks-release"],
+                                    "issues": [], "checks": {"*": PASSING}, "calls": []}))
 
 
 def setUpModule():
@@ -463,13 +495,17 @@ def setUpModule():
     reset_gh()
     common = git(SOURCE, "rev-parse", "--path-format=absolute", "--git-common-dir").strip()
     head = git(SOURCE, "rev-parse", "HEAD").strip()
-    git(TMP, "clone", "--quiet", "--bare", "--local", common, str(ORIGIN))
+    # Copy the objects: a sandbox may read the source repository but refuse hard links
+    # to its files. All commits and ref changes stay in the temporary clone.
+    git(TMP, "clone", "--quiet", "--bare", "--local", "--no-hardlinks", common, str(ORIGIN))
     git(ORIGIN, "update-ref", "refs/heads/main", head)
     git(ORIGIN, "symbolic-ref", "HEAD", "refs/heads/main")
     git(TMP, "clone", "--quiet", "--local", str(ORIGIN), str(WORK))
     git(WORK, "config", "user.name", "safe_push test")
     git(WORK, "config", "user.email", "safe-push-test@example.invalid")
     git(WORK, "config", "commit.gpgsign", "false")
+    # The body assertions use seven digits; Git's default grows with the object count.
+    git(WORK, "config", "core.abbrev", "7")
     git(WORK, "checkout", "--quiet", "--detach", head)
     for rel in HARNESS_FILES:
         if (SOURCE / rel).exists():
@@ -1526,6 +1562,7 @@ def boxes_ticked(body: str) -> str:
 def ticked(body: str) -> str:
     """The body as the coordinator completes it: the sections written, the boxes ticked."""
     body = body.replace("## What and why\n", "## What and why\n\nA change for the test.\n", 1)
+    body = body.replace("## Unfinished work\n", "## Unfinished work\n\nNone\n", 1)
     for review in ("/code-review", "/security-review", "/no-mistakes"):
         body = body.replace(f"| {review} | | |", f"| {review} | abc1234 | None. |")
     body = body.replace("## Needs the owner's OK\n", "## Needs the owner's OK\n\nNothing.\n", 1)
@@ -1810,6 +1847,107 @@ class PullRequests(Edge):
 
 
 class Merge(Edge):
+    def unfinished_body(self, text):
+        self.set_gh(lambda s: s["prs"][0].update(body=re.sub(
+            r"(## Unfinished work\n).*?(?=\n## )", lambda m: m.group(1) + "\n" + text + "\n",
+            ticked(s["prs"][0]["body"]), count=1, flags=re.S)))
+
+    def blocker(self, **changes):
+        issue = {"number": 38, "title": "Finish the prototype", "state": "open",
+                 "labels": [{"name": "blocks-release"}],
+                 "html_url": "https://github.invalid/test/stoicheia/issues/38"}
+        return dict(issue, **changes)
+
+    def test_unfinished_work_unwritten_refused(self):
+        self.opened()
+        self.unfinished_body("")
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn('not written: the section "Unfinished work"', out)
+        self.assertEqual(self.merges(), [])
+
+    def test_unfinished_work_closed_and_unlabelled_refused(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38\n- Deferred page #39")
+        self.set_gh(lambda s: s.update(issues=[
+            self.blocker(state="closed"), self.blocker(number=39, labels=[])]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("#38 is closed", out)
+        self.assertIn("#39 lacks the label blocks-release", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_unfinished_work_open_labelled_issue_merges(self):
+        self.opened()
+        self.unfinished_body("- Prototype #38")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_unfinished_work_read_failure_refused(self):
+        self.opened()
+        self.unfinished_body("#38")
+        self.set_gh(lambda s: s.update(issue_read_fail=True))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("#38 unreadable", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_release_waits_for_all_open_blockers_then_merges(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
+        self.set_gh(lambda s: s.update(issues=[
+            self.blocker(), self.blocker(number=39, title="Finish the page",
+                                        pull_request={})]))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertEqual(self.guard(out, "release"), "FAIL", out)
+        self.assertIn("#38: Finish the prototype", out)
+        self.assertIn("#39: Finish the page", out)
+        self.assertEqual(self.merges(), [])
+        self.set_gh(lambda s: s.update(issues=[]))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "release"), "ok", r.stdout)
+        self.assertEqual(len(self.merges()), 1)
+
+    def test_release_issue_read_failures_refused(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s["prs"][0]["labels"].append("release"))
+        for reply in ({"issue_read_fail": True}, {"issue_output": "[]\n{"},
+                      {"issue_output": '[{"number": 38}]'}):
+            with self.subTest(reply=reply):
+                self.set_gh(lambda s: (s.pop("issue_read_fail", None),
+                                       s.pop("issue_output", None), s.update(reply)))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "release"), "FAIL", out)
+                self.assertIn("release issues unreadable", out)
+                self.assertEqual(self.merges(), [])
+
+    def test_ordinary_pull_request_never_reads_open_blockers(self):
+        self.opened()
+        self.unfinished_body("None")
+        self.set_gh(lambda s: s.update(issues=[self.blocker()], issue_read_fail=True))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
+        self.assertEqual(self.step(r.stdout, "release"), "skip", r.stdout)
+        self.assertFalse([c for c in json.loads(GH_STATE.read_text())["calls"]
+                          if c[0] == "api"])
+        self.assertEqual(len(self.merges()), 1)
+
     def opened(self, *args, ready=True, **write) -> str:
         sha = self.good_commit() if not write else self.commit("A change", write)
         r = self.safe_push(*args, *(("--ready",) if ready else ()))
@@ -2037,6 +2175,7 @@ class Merge(Edge):
         self.assertEqual(r.returncode, 1, out)
         self.assertEqual(self.guard(out, "sections"), "FAIL", out)
         for problem in ('not written: the section "What and why"',
+                        'not written: the section "Unfinished work"',
                         "not written: the review /code-review",
                         "not written: the review /no-mistakes",
                         'not written: the section "Needs the owner\'s OK"'):
@@ -3723,8 +3862,8 @@ class Units(unittest.TestCase):
 
     def test_sections(self):
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
-        self.assertEqual(len(safe_push.section_problems(template, template, False)), 4)
-        self.assertEqual(len(safe_push.section_problems(template, template, True)), 5)
+        self.assertEqual(len(safe_push.section_problems(template, template, False)), 5)
+        self.assertEqual(len(safe_push.section_problems(template, template, True)), 6)
         self.assertEqual(safe_push.section_problems(ticked(template), template, True), [])
         # safe_push's own lines are not the coordinator's words.
         body = template.replace("<!-- safe_push: commits -->", "<!-- safe_push:commits begin "
@@ -3735,7 +3874,7 @@ class Units(unittest.TestCase):
         self.assertEqual(safe_push.section_problems(ticked(template), None, False), [])
         # A fenced block of filled-in headings at the end does not write the sections.
         fenced = template + "\n```\n" + ticked(template) + "\n```\n"
-        self.assertEqual(len(safe_push.section_problems(fenced, template, False)), 4)
+        self.assertEqual(len(safe_push.section_problems(fenced, template, False)), 5)
         # Backticked review names are read; a dash holds a place.
         rows = ticked(template).replace("| /code-review |", "| `/code-review` |")
         self.assertEqual(safe_push.section_problems(rows, template, False), [])
@@ -3854,7 +3993,7 @@ class Units(unittest.TestCase):
             with self.subTest(name):
                 self.assertEqual(both(body), ([], []))
         hidden = swap("## Checklist\n", "<!-- a note never closed\n\n## Checklist\n")
-        self.assertEqual(len(both(hidden)[0]), 9, both(hidden))
+        self.assertEqual(len(both(hidden)[0]), 10, both(hidden))
         commented = swap(cell, "| /no-mistakes | abc1234 | <!-- x --> |")
         self.assertEqual(both(commented), ([], ["not written: the review /no-mistakes, its "
                                                 "commit and its findings"]))
@@ -3870,7 +4009,7 @@ class Units(unittest.TestCase):
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
         head, _, checklist = ticked(template).partition("## Checklist\n")
         boxes = [line for line in checklist.splitlines() if line.startswith("- [x]")]
-        self.assertEqual(len(boxes), 9)
+        self.assertEqual(len(boxes), 10)
 
         def problems(lines, indent=""):
             body = head + "## Checklist\n\n" + lines + "\n".join(indent + b for b in boxes)
@@ -3884,7 +4023,7 @@ class Units(unittest.TestCase):
         }
         for name, (lines, indent) in hidden.items():
             with self.subTest(name):
-                self.assertEqual(len(problems(lines, indent)), 9)
+                self.assertEqual(len(problems(lines, indent)), 10)
         shown = {
             "three spaces under a paragraph's line": ("See below.\n", "   "),
             "nested by its item's content column": ("1. The boxes:\n\n", "   "),

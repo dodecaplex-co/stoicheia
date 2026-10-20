@@ -296,6 +296,7 @@ python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
 python3 -I tests/test_check_style.py
+python3 -I tests/test_release_gate.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
@@ -317,6 +318,11 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cac
 (section 10), so a change to them is made there too, and in the CI workflow. It leaves the
 `formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files; its merge
 gate still waits for that job, like every other ([model/README.md](../model/README.md#the-ci-job)).
+The separate `release-gate` workflow runs its job only on pull requests labelled `release`,
+reading the open issues labelled `blocks-release` with `python3 scripts/check_release_gate.py`;
+ordinary pull requests skip it. It checks out the base commit, main's copy of the script,
+so a release pull request cannot change the check that judges it. The merge gate reads the
+issues again when the coordinator merges (section 10).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -343,9 +349,14 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
 - **The style check's cases run before it.** `tests/test_check_style.py` puts the
   wording rules of `scripts/check_style.py`, and S20's reading of a letter's ink, to short
   texts and small figures, each with the finding the rule should make, and needs no Lean.
-  It runs just before the script, so a rule that reads a case wrongly stops the checks
+  It runs before the script, so a rule that reads a case wrongly stops the checks
   before the script's findings are read. The script does not run them itself: whoever
   changes it runs the file too.
+- **The release gate's cases need no Lean and no network.**
+  `python3 -I tests/test_release_gate.py`, immediately after the style check's cases,
+  checks the unfinished work section, the issues' state and labels, pagination and
+  unreadable replies, and that an ordinary pull request skips the release hold; fixtures
+  and stand-ins supply every reply.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -410,8 +421,14 @@ looked into.
 8. **A read-through.**
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book.
-10. **Release.** The notes are drafted from the generated summaries, the owner approves
-    them, and the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up to date:
+10. **Release.** No issue labelled `blocks-release` may be open, checked by
+    `python3 scripts/check_release_gate.py`, by the `release-gate` job on the release
+    pull request (labelled `release`), and by `git safe-push --merge`, which refuses a
+    pull request labelled `release` while one is open, and refuses when GitHub cannot
+    be read. Pull requests carrying `blocks-release` count too. The release lands
+    through that release pull request; the notes are drafted from the generated
+    summaries, the owner approves them, and the owner makes the tag
+    (`book-I`, `book-II`, …) and release manually. PROGRAM.md is brought up to date:
     the status board, the lessons, the costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
@@ -440,6 +457,16 @@ one without; stage work carries its stage's label as well (`stage-2` to `stage-6
 brief 0005), and a change to a protected path carries `security-review`. A pull request
 opens as a draft (unless `--ready` is given), and is marked ready when its reviews are
 done; `--merge` refuses a draft.
+
+**Unfinished work may land on main, with its issue.** Each piece, a prototype, a
+provisional answer, a restricted or partial scope awaiting a proof, a deferred page, a
+test not yet in CI, anything a disclosure calls "to come", has an open issue labelled
+`blocks-release`, named as `#N` in the pull request's "Unfinished work" section; when
+there is none, the section says "None". Each list item names its issue. These issues
+hold the release until they are closed, as the owner's rule of
+[20 October 2026](briefs/0002-decisions.md#20-october-2026) says. The release lands
+through a pull request labelled `release`; `git safe-push --label release` creates that
+label, with its description, the first time it is given, as it does the others.
 
 **Trains.** Since every pull request must be up to date with main before it merges, and
 nearly every one touches the decisions page and the generated pages, reviewed branches can
@@ -612,11 +639,18 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    required boxes is missing (origin/main's template, or the head's while origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's
    copies, are shown beside the checklist); the coordinator has written "What and why",
+   "Unfinished work" (once the template in force has that section),
    each review's commit and findings in the Reviews table (the security review's when a
    protected path changes) and "Needs the owner's OK"; boxes and sections count only
    where GitHub shows them, by CommonMark's rules: not in a comment, an HTML block or
    code, and a box only as a list item (a `<!--` in a code span is text, and hides
-   nothing); the title and the branch name, which go into main's merge commit, hold
+   nothing); "Unfinished work" says "None" (case aside, with an optional final full stop),
+   or names issues of this repository, each open with `blocks-release`, each list
+   item's first line naming at least one; a pull request labelled `release` has no
+   open issue or pull request labelled `blocks-release`. Both issue gates read from
+   GitHub and fail closed on a failed read, malformed JSON or missing fields; the
+   release gate makes no issue-list read for an ordinary pull request. The title and
+   the branch name, which go into main's merge commit, hold
    nothing the secret scan refuses; it carries a label for its kind, and
    `security-review` when a protected path changes; and it is not a draft. Then
    `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
@@ -685,5 +719,7 @@ a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags
 and the hook still scans the commits it points to and an annotated tag's message.
 `python3 scripts/test_safe_push.py` plants a bad commit for each guard, gate and edge case
 on a throwaway clone, with a stand-in for gh, and checks that each is refused and a good
-one proposed and merged; `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and
-all.
+one proposed and merged. Its cases include unfinished work left unwritten, closed or
+unlabelled issues, open labelled issues, the release held by an open blocker or an
+unreadable reply, and an ordinary pull request merging without reading the blockers;
+`STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all.

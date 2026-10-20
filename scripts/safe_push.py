@@ -102,11 +102,14 @@ check, model and negative pass, nothing fails or waits), no required box of its
 checklist is unticked (the template's own required boxes included, so deleting one does
 not help; origin/main's template, or the head's while origin/main has none), the
 coordinator has written its "What and why", its reviews (each with its commit and its
-findings) and its "Needs the owner's OK", each read as GitHub shows it by CommonMark's
+findings), its "Unfinished work" (None, or issues open with blocks-release) and its "Needs
+the owner's OK", each read as GitHub shows it by CommonMark's
 rules (not in a comment, an HTML block or code, and a box only as a list item), its title
 and branch name, which go into main's merge commit, hold nothing the scan refuses, it
 carries a label for its kind and `security-review` when a protected path changes, and it
-is not a draft; the pre-flight's notes are shown beside the checklist. Then
+is not a draft; a pull request labelled release waits until no blocks-release issue or
+pull request is open, read from GitHub at the gate, with any unreadable response refusing
+the merge. The pre-flight's notes are shown beside the checklist. Then
 `gh pr merge <n> --merge --delete-branch --match-head-commit <head>` with the merge
 commit's subject and body given (GitHub's own words: the owner GitHub names for the head,
 never origin's URL's, which names the old owner after a transfer, and refused when GitHub
@@ -224,6 +227,8 @@ PINNED = (EXPECTATIONS, LOCK, MODEL_HASH, MODEL_LAWS, MODEL_PAGE, MODEL_RESULTS)
 # (laws_move_with_axioms).
 MODEL_LAW_CODE = ("tests/model/search.py", "tests/model/hyperbolic.py")
 SECURITY_LABEL = "security-review"
+RELEASE_LABEL = "release"
+BLOCKS_RELEASE = "blocks-release"
 LABELS = {
     **{f"stage-{n}": f"Brief 0005, stage {n}" for n in range(2, 7)},
     "tooling": "Scripts, CI and the harness",
@@ -231,6 +236,8 @@ LABELS = {
     "lean": "Proofs and statements",
     "docs": "Guides, briefs and reports",
     SECURITY_LABEL: "Changes a protected path: needs /security-review before merge",
+    RELEASE_LABEL: "A release pull request: --merge refuses it while a blocks-release issue is open",
+    BLOCKS_RELEASE: "Unfinished or prototype work on main: no release until this is closed",
 }
 KIND_LABELS = ("tooling", "text", "lean", "docs")      # every pull request carries one
 assert set(KIND_LABELS) <= set(LABELS)
@@ -260,6 +267,7 @@ CHECKS = [
     ("python3 scripts/heath.py", [PY, "scripts/heath.py"]),
     ("python3 scripts/check_fidelity.py", [PY, "scripts/check_fidelity.py"]),
     ("python3 -I tests/test_check_style.py", [PY, "-I", "tests/test_check_style.py"]),
+    ("python3 -I tests/test_release_gate.py", [PY, "-I", "tests/test_release_gate.py"]),
     ("python3 scripts/check_style.py", [PY, "scripts/check_style.py"]),
     ("python3 scripts/render.py", [PY, "scripts/render.py"]),
     ("git status --porcelain is empty", None),
@@ -2942,7 +2950,7 @@ def checklist_problems(body: str, template: str | None, protected: bool) -> list
 
 SECTION = re.compile(r"(?m)^## +(.+?) *$")
 # The sections the coordinator writes, which --merge needs written when the template has them.
-WRITTEN = ("What and why", "Reviews", "Needs the owner's OK")
+WRITTEN = ("What and why", "Unfinished work", "Reviews", "Needs the owner's OK")
 # CommonMark's blocks, read from a line less the indentation of its containers (shown,
 # below). A fence opens with three or more backticks or tildes, and, after backticks, an
 # info string with no backtick in it; it closes with the same character, at least as
@@ -3122,9 +3130,9 @@ def written(cell: str) -> bool:
 
 
 def section_problems(body: str, template: str | None, protected: bool) -> list[str]:
-    """What the coordinator has still to write: "What and why", each review's commit and
-    findings (the security review's only when a protected path changes), and "Needs the
-    owner's OK"."""
+    """What the coordinator has still to write: "What and why", "Unfinished work", each
+    review's commit and findings (the security review's only when a protected path
+    changes), and "Needs the owner's OK"."""
     wanted, have = sections(template or ""), sections(body)
     problems = []
     for name in (n for n in WRITTEN if n in wanted):
@@ -3141,6 +3149,168 @@ def section_problems(body: str, template: str | None, protected: bool) -> list[s
         elif not have[name]:
             problems.append(f"not written: the section \"{name}\"")
     return problems
+
+
+ISSUE_REF = re.compile(
+    r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/([1-9]\d*)\b"
+    r"|(?<![\w/.-])([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#([1-9]\d*)\b"
+    r"|(?<![\w/\\])#([1-9]\d*)\b", re.I)
+
+
+def unfinished_refs(text: str, slug: str) -> tuple[list[int], list[str]]:
+    """Read the section's visible words: None, or local issue references, one or more
+    on each list item's first line. Other repositories never stand in for this one's."""
+    text = visible(text).strip()
+    if re.fullmatch(r"None\.?", text, re.I):
+        return [], []
+    refs, problems = set(), []
+
+    def read(line):
+        local = []
+        # A code span is not an issue link, even though shown keeps its text.
+        line = INLINE.sub(lambda m: "" if m.group(1) else m.group(0), line)
+        for match in ISSUE_REF.finditer(line):
+            repo = match.group(1) or match.group(3)
+            if repo and repo.lower() != slug.lower():
+                problems.append(f"another repository's reference: {match.group(0)}")
+            else:
+                local.append(int(match.group(2) or match.group(4) or match.group(5)))
+        return local
+
+    for line, item in shown(text):
+        found = read(line)
+        refs.update(found)
+        if item and not found:
+            problems.append(f"list item names no local issue: {line.strip()}")
+    if not refs:
+        problems.append("Unfinished work must say None or name an open issue with blocks-release")
+    return sorted(refs), problems
+
+
+def issue_labels(issue: dict) -> set[str]:
+    """Validate the fields both gates need; an incomplete response is never an empty
+    list of blockers. REST and gh's issue list spell labels and state differently."""
+    if not isinstance(issue, dict) or type(issue.get("number")) is not int \
+            or issue["number"] <= 0:
+        raise ValueError("issue has no valid number")
+    if not isinstance(issue.get("state"), str) or issue["state"].lower() not in {
+            "open", "closed"}:
+        raise ValueError(f"#{issue['number']} has no valid state")
+    labels = issue.get("labels")
+    if not isinstance(labels, list):
+        raise ValueError(f"#{issue['number']} has no valid labels")
+    names = set()
+    for label in labels:
+        name = label.get("name") if isinstance(label, dict) else label
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError(f"#{issue['number']} has an unreadable label")
+        names.add(name.lower())
+    return names
+
+
+def unfinished_issue_problems(number: int, issue: dict) -> list[str]:
+    """A named issue must be this number, open and labelled, and not a pull request."""
+    try:
+        labels = issue_labels(issue)
+    except ValueError as e:
+        return [f"#{number} unreadable: {e}"]
+    if issue["number"] != number:
+        return [f"#{number} unreadable: GitHub returned another number"]
+    problems = []
+    if "pull_request" in issue:
+        problems.append(f"#{number} is a pull request, not an issue")
+    if issue["state"].lower() != "open":
+        problems.append(f"#{number} is closed")
+    if BLOCKS_RELEASE not in labels:
+        problems.append(f"#{number} lacks the label {BLOCKS_RELEASE}")
+    return problems
+
+
+def issue_pages(text: str) -> list[dict]:
+    """Read every concatenated JSON array from gh api --paginate, refusing empty,
+    malformed or non-array output, including a bad page after good pages."""
+    decoder = json.JSONDecoder()
+    rest, issues = text.strip(), []
+    if not rest:
+        raise ValueError("GitHub printed no issue pages")
+    while rest:
+        try:
+            page, end = decoder.raw_decode(rest)
+        except json.JSONDecodeError:
+            raise ValueError("GitHub printed malformed issue JSON") from None
+        if not isinstance(page, list):
+            raise ValueError("GitHub did not return an array of issues")
+        issues.extend(page)
+        rest = rest[end:].lstrip()
+    return issues
+
+
+def open_blockers(issues: list[dict]) -> list[dict]:
+    """The open labelled issues, pull requests included. Validate every entry, even
+    one that would not block, so a partial response cannot pass as a complete reading."""
+    if not isinstance(issues, list):
+        raise ValueError("expected an array of issues")
+    blockers = []
+    for issue in issues:
+        labels = issue_labels(issue)
+        if not isinstance(issue.get("title"), str) or not issue["title"].strip():
+            raise ValueError(f"#{issue['number']} has no title")
+        url = issue.get("html_url") or issue.get("url")
+        if not isinstance(url, str) or not url.strip():
+            raise ValueError(f"#{issue['number']} has no URL")
+        if issue["state"].lower() == "open" and BLOCKS_RELEASE in labels:
+            blockers.append(issue)
+    return blockers
+
+
+def read_issues(ctx: Context, path: str, *, paginate=False):
+    """Use ctx.gh directly: gh api has no -R flag. Never accept stdout on a failed
+    command, or print gh's error text, which may contain credentials."""
+    try:
+        r = run([*ctx.gh, "api", *(["--paginate"] if paginate else []), path], ctx.repo)
+    except (OSError, UnicodeError):
+        raise ValueError("GitHub could not be read") from None
+    if r.returncode:
+        raise ValueError(f"GitHub issue read failed (exit {r.returncode})")
+    if paginate:
+        return issue_pages(r.stdout)
+    try:
+        return json.loads(r.stdout)
+    except json.JSONDecodeError:
+        raise ValueError("GitHub printed malformed issue JSON") from None
+
+
+def unfinished_gate(ctx: Context, body: str, template: str | None) -> tuple[str, str]:
+    """The section is required only once the template in force has it."""
+    if "Unfinished work" not in sections(template or ""):
+        return "skip", "the template in force has no Unfinished work section"
+    text = sections(body).get("Unfinished work", "")
+    refs, problems = unfinished_refs(text, ctx.github)
+    for number in refs:
+        try:
+            issue = read_issues(ctx, f"repos/{ctx.github}/issues/{number}")
+            problems.extend(unfinished_issue_problems(number, issue))
+        except ValueError as e:
+            problems.append(f"#{number} unreadable: {e}")
+    return ("FAIL", "\n".join(problems)) if problems else (
+        "ok", ", ".join(f"#{n}" for n in refs) or "None")
+
+
+def release_gate(ctx: Context, labels: set[str]) -> tuple[str, str]:
+    """Only a release pull request reads the open blockers; an ordinary one may land
+    unfinished work. Every read failure holds the release."""
+    if RELEASE_LABEL not in labels:
+        return "skip", "not a release pull request"
+    try:
+        blockers = open_blockers(read_issues(
+            ctx, f"repos/{ctx.github}/issues?labels={BLOCKS_RELEASE}&state=open&per_page=100",
+            paginate=True))
+    except ValueError as e:
+        return "FAIL", f"release issues unreadable: {e}"
+    if blockers:
+        return "FAIL", "open blocks-release:\n" + "\n".join(
+            f"#{issue['number']}: {issue['title']}" for issue in blockers)
+    return "ok", "no open blocks-release issue"
 
 
 def protected_files(repo, base, sha) -> list[str]:
@@ -3189,8 +3359,11 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
     """Not a draft; every required box ticked; the coordinator's sections written; the
     title and the branch name, which go into main's merge commit, clean; an owner GitHub
     names for the head, which the merge commit's subject names (merge_subject); a label
-    for its kind, and security-review when a protected path changes; CI green on the
-    head. Each is reported; any failure refuses the merge. The template is origin/main's,
+    for its kind, and security-review when a protected path changes; unfinished work
+    says None or names issues open with blocks-release; a release pull request has no
+    open blocks-release issues or pull requests, with unreadable GitHub data refusing
+    both gates; CI green on the head. Each is reported; any failure refuses the merge.
+    The template is origin/main's,
     or the head's while origin/main has none (as generated_body reads it): any template
     is stricter than none. The record's notes are shown beside the checklist: a check that
     failed with origin/main's copies, on a commit that changes nothing the checks judge
@@ -3239,12 +3412,16 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
     if unwritten:
         rep.add("G", "sections", "FAIL", "\n".join(unwritten))
     else:
-        rep.add("G", "sections", "ok", "what and why, the reviews and the owner's OK written")
+        rep.add("G", "sections", "ok", "the coordinator's required sections written")
+    verdict, detail = unfinished_gate(ctx, body, template)
+    rep.add("G", "unfinished work", verdict, detail)
     notes = [n for n in (record or {}).get("notes", []) if len(n) == 2 and n[0] != "pre-flight"]
     if notes:
         rep.add("G", "pre-flight notes", "note", f"{plural(len(notes), 'note')} of the "
                 "pre-flight, for the reviews:\n" + "\n".join(f"{n}: {d}" for n, d in notes))
     labels = {item.get("name") for item in view.get("labels") or []}
+    verdict, detail = release_gate(ctx, labels)
+    rep.add("G", "release", verdict, detail)
     if protected and SECURITY_LABEL not in labels:
         rep.add("G", "label", "FAIL", f"protected paths change ({', '.join(protected)}), and "
                 f"#{number} lacks the label {SECURITY_LABEL}")
