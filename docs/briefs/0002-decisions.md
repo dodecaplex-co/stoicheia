@@ -1538,6 +1538,21 @@ findings:
   the keys and when an item counts, so the schema's `items` row and the sentence after the
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
+
+- **III.37 leaves the grouped-case example.** The example in the `uncarried_runs` docstring
+  of [scripts/check_fidelity.py](../../scripts/check_fidelity.py) drops III.37, whose case
+  with the centre on AC gets a proof of its own, `Prop37.centre_on_secant`, on ship R1's
+  train. The docstring holds before and after that train lands. I.14 remains as the example
+  of a "similarly" that one argument already covers. The docstring is the only change to
+  the script; the check is unchanged.
+
+- **I.39 and I.40 now follow Euclid's reductio to its end.** I.40's companion
+  `Prop40.general` does so too, so their records' route is `euclid`. Under "The follow-ups
+  to the precision pass", the entry "Two more kinds of passage, and what 'argued another
+  way' means" called them "one step changed". It is superseded on this point and stays as
+  history. [review/SCHEMA.md](../../review/SCHEMA.md) now uses III.8 as its example of a
+  `modified` route: its last step compares the angles at the centre by I.24.
+
 - **The sample identity in the safe-push tests uses the team's name.** The item the two
   entries above left waiting for a tooling pull request of its own: a sample identity in
   `scripts/test_safe_push.py`, a protected file, now uses
@@ -1718,7 +1733,6 @@ findings:
   rendered docstring, a docstring read with other white space than its page shows, a
   mishnah name excused that used to fail, a TOML comment taken for a note, and a D10
   report lost. Our warm thanks to Astra.
-
 - **S12's reports distinguish names from other code spans.** The check change for #66
   keeps the Other reports in S12, as `d017113` added them. Their file names and numeric
   file locations are recognized against the repository; Lean supplies its keywords,
@@ -1759,7 +1773,6 @@ findings:
   without an S12 pending entry, and a failure after more than 100 deferred errors.
   [STYLE](../STYLE.md), section 8, describes the report classification. No judged content,
   Lean source, review record or generated page changes.
-
 - **No certificate entry may rest on Circle 2 or Circle 3.** The check keeps
   [brief 0008](0008-centre.md)'s III.1 construction from reaching Circle 2, which states
   III.2, or Circle 3, which gives it at once.
