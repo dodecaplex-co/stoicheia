@@ -45,8 +45,9 @@
    - for every entry, propositions, porisms and companions alike: none cites one that
      does not come before it; only I.4 and I.8 use superposition directly; none
      before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may); only III.24 has placement, or a lemma of the `Placement`
-     namespace or of placement's files, among its shared steps;
+     after I.29, and may); none rests on Circle 2 or Circle 3; only III.24 has placement,
+     or a lemma of the `Placement` namespace or of placement's files, among its shared
+     steps;
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
    - the facts pinned in `tests/certificate_expectations.json` still hold;
@@ -88,6 +89,12 @@ EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # postulate from their first proposition on, as II.10 does by name. A book missing here
 # may use it throughout. A porism or companion goes with its proposition.
 FIRST_EUCLIDEAN = {"I": 29, "II": 1, "III": 1}
+# These rules contain III.2; no certificate entry may rest on either, even through a
+# helper. Certificate names omit the leading `Elements.`.
+FORBIDDEN_CIRCLE_RULES = {
+    "Tacit.inside_of_between": "Circle 2",
+    "Tacit.outside_of_between": "Circle 3",
+}
 # The words Euclid leaves undefined, and the magnitudes. Each must stay `opaque`: Lean
 # then knows only what the axioms say of them, and the axioms stay true in the plane.
 PRIMITIVES = {
@@ -575,7 +582,7 @@ def entries_by_ref(facts) -> dict:
 
 
 def check_entries(facts, by_ref) -> None:
-    """Which entries there are, how they hang together, and the three policies, for
+    """Which entries there are, how they hang together, and the policies, for
     every entry."""
     if any("kind" not in p or "statement" not in p for p in facts["propositions"]):
         fail("facts.json predates Certificate/FIELDS.md (an entry has no `kind` or "
@@ -639,6 +646,9 @@ def check_entries(facts, by_ref) -> None:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
             if bad:
                 fail(f"{ref}: rests on {', '.join(bad)} before {r.book}.{first}")
+        for axiom, rule in FORBIDDEN_CIRCLE_RULES.items():
+            if axiom in p["axioms"]:
+                fail(f"{ref}: rests on {axiom} ({rule}), forbidden for every entry")
         if ref not in PLACEMENT_ENTRIES:
             for step in p.get("shared_steps", []):
                 if placement_step(step):
