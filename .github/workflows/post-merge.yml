@@ -1,3 +1,8 @@
+# The workflow at after receives the App key; this repository alone cannot make
+# that authority independent. The App is no ruleset's bypass actor. The owner's
+# setup steps must give it a ruleset so it can push only revert/** branches.
+# queue-integrity, run from main's copy, admits its pull request only as the exact
+# revert of a failed push's merges. These bounds require the owner's configuration.
 name: Post-merge
 
 on:
@@ -32,6 +37,7 @@ jobs:
       REPOSITORY: ${{ github.repository }}
       BEFORE: ${{ github.event.before }}
       AFTER: ${{ github.event.after }}
+      RUN_ID: ${{ github.run_id }}
       RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
       - uses: actions/checkout@v5
@@ -44,7 +50,6 @@ jobs:
         if: always()
         id: failed
         env:
-          RUN_ID: ${{ github.run_id }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
         shell: bash
         run: |
@@ -76,13 +81,50 @@ jobs:
         run: |
           set -euo pipefail
           script=$(mktemp "$RUNNER_TEMP/auto-revert.XXXXXX")
-          if [[ "$BEFORE" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE" != 0000000000000000000000000000000000000000 ]] \
-            && git show "$BEFORE:scripts/auto_revert.py" > "$script" && test -s "$script"; then
-            echo "script=$script" >> "$GITHUB_OUTPUT"
-          else
-            rm -f "$script"
-            echo "script=" >> "$GITHUB_OUTPUT"
+          reason="The previous main commit is invalid."
+          if [[ "$BEFORE" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE" != 0000000000000000000000000000000000000000 ]]; then
+            response=$(mktemp "$RUNNER_TEMP/previous-runs.XXXXXX")
+            verdict=$(mktemp "$RUNNER_TEMP/previous-verdict.XXXXXX")
+            reason="The previous main's post-merge runs could not be read."
+            if gh api --paginate --slurp \
+              "repos/$REPOSITORY/actions/workflows/post-merge.yml/runs?head_sha=$BEFORE&event=push&branch=main&per_page=100" \
+              > "$response" && jq -er --arg before "$BEFORE" '
+                def integer: type == "number" and . == floor;
+                if type != "array" or length == 0 or any(.[];
+                  type != "object" or (.workflow_runs | type) != "array" or
+                  (.total_count | integer | not) or .total_count < 0)
+                then error("Unreadable previous runs") else
+                  .[0].total_count as $count |
+                  if any(.[]; .total_count != $count) then error("Inconsistent run count") else
+                    [.[] | .workflow_runs[]] |
+                    if length != $count or (map(.id) | unique | length) != $count or any(.[];
+                      type != "object" or (.id | integer | not) or .id <= 0 or
+                      .head_sha != $before or .head_branch != "main" or .event != "push" or
+                      .path != ".github/workflows/post-merge.yml" or (.status | type) != "string" or
+                      (has("conclusion") | not) or
+                      (.conclusion != null and (.conclusion | type) != "string"))
+                    then error("Incomplete or mismatched previous runs")
+                    elif length == 0 then "No post-merge run was found for the previous main."
+                    else max_by(.id) |
+                      if .status == "completed" and .conclusion == "success" then "success"
+                      else "The latest post-merge run for the previous main did not conclude success." end
+                    end
+                  end
+                end' "$response" > "$verdict"; then
+              reason=$(cat "$verdict")
+              if [[ "$reason" == success ]]; then
+                reason="The successful previous main has no readable revert script."
+                if git show "$BEFORE:scripts/auto_revert.py" > "$script" && test -s "$script"; then
+                  echo "script=$script" >> "$GITHUB_OUTPUT"
+                  echo "reason=" >> "$GITHUB_OUTPUT"
+                  exit 0
+                fi
+              fi
+            fi
           fi
+          rm -f "$script"
+          echo "script=" >> "$GITHUB_OUTPUT"
+          printf 'reason=%s\n' "$reason" >> "$GITHUB_OUTPUT"
 
       - name: Record the failure and enqueue the revert
         if: always() && steps.trusted.outputs.script != '' && steps.failed.outputs.readable == 'true'
@@ -100,6 +142,7 @@ jobs:
         if: always() && (steps.trusted.outputs.script == '' || steps.failed.outputs.readable != 'true')
         env:
           FAILED_JOBS: ${{ steps.failed.outputs.path }}
+          TRUST_FAILURE: ${{ steps.trusted.outputs.reason }}
         shell: bash
         # This fallback uses shell and the runner's tools only. No repository code
         # runs with credentials, including on the first push that adds this workflow.
@@ -145,8 +188,8 @@ jobs:
             else
               printf 'Failed job details could not be read; integration reported failure.\n'
             fi
-            printf '\nRun: %s\n\n' "$RUN_URL"
-            printf 'The previous main has no readable revert script, or the failed jobs could not be read.\n'
+            printf '\nFailed run: %s\nRun: %s\n\n' "$RUN_ID" "$RUN_URL"
+            printf '%s\n' "${TRUST_FAILURE:-The trusted script or failed jobs could not be read.}"
             printf 'Issue only; no automatic revert or pull request was attempted.\n'
           } > "$body"
           payload=$(mktemp "$RUNNER_TEMP/revert-payload.XXXXXX")

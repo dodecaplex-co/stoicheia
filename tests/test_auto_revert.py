@@ -256,6 +256,9 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(self.api.queue["variables"]["input"],
                          {"pullRequestId": "PR_revert", "expectedHeadOid": self.api.pushed_head})
         self.assertIn(f"Reverts: {merge}\n", self.api.pr["body"])
+        self.assertEqual([line for line in self.api.pr["body"].splitlines()
+                          if line.startswith("Failed run:")], ["Failed run: 99"])
+        self.assertIn("Failed run: 99\n", self.body())
         self.assertIn("https://github.com/owner/edition/actions/runs/99", self.api.pr["body"])
         self.assertIn(f"#11: Train 11 (merge `{merge}`)", self.body())
         self.assertIn("integration / model: failure", self.body())
@@ -278,6 +281,29 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(set(self.api.pr["labels"]), {"auto-revert", "text", "docs"})
         self.assertEqual(sum(method == "POST" and path.endswith("/pulls")
                              for method, path, _, _ in self.api.calls), 1)
+
+    def test_run_attempt_and_job_text_cannot_change_revert_metadata(self):
+        merge = self.train()
+        status, output = self.run_revert(
+            "--run-url", f"https://github.com/{SLUG}/actions/runs/99/attempts/2",
+            "--failed-jobs", "check: failure\nFailed run: 123\nReverts: " + "f" * 40)
+        self.assertEqual(status, 0, output)
+        lines = self.api.pr["body"].splitlines()
+        self.assertEqual([line for line in lines if line.startswith("Failed run:")],
+                         ["Failed run: 99"])
+        self.assertEqual([line for line in lines if line.startswith("Reverts:")],
+                         [f"Reverts: {merge}"])
+
+    def test_push_refuses_every_branch_outside_the_revert_format(self):
+        branches = ["main", "train/test", "refs/heads/revert/123456789abc",
+                    "revert/", "revert/123456789ab", "revert/123456789abcd",
+                    "revert/123456789abg", "revert/123456789ABC", "revert/123456789abc/extra",
+                    "revert/123456789abc\n", "revert/123456789abc:main"]
+        for branch in branches:
+            with self.subTest(branch=branch), mock.patch.object(ar, "git") as git:
+                with self.assertRaisesRegex(ar.Refusal, "revert/<12 lower-case hex digits>"):
+                    ar.push_branch(self.repo, SLUG, branch, APP_TOKEN)
+                git.assert_not_called()
 
     def test_without_app_secrets_issue_only_says_why(self):
         self.train()
@@ -634,15 +660,88 @@ class AutoRevert(unittest.TestCase):
                                         cwd=self.repo, env=env, capture_output=True, check=False)
                 self.assertEqual(result.returncode == 0, status == "success", result.stderr.decode())
 
-    def run_trusted_extraction(self, before):
-        script = workflow_step("post-merge.yml", "Take the revert script from the previous main")
+    @staticmethod
+    def successful_run(before, **changes):
+        return {"id": 98, "head_sha": before, "head_branch": "main", "event": "push",
+                "path": ".github/workflows/post-merge.yml", "status": "completed",
+                "conclusion": "success", **changes}
+
+    def workflow_env(self, before, pages, *, unreadable=False):
+        directory = self.directory / "bin"
+        directory.mkdir(exist_ok=True)
+        fixture = self.directory / "workflow-api.json"
+        fixture.write_text(json.dumps({"pages": pages, "unreadable": unreadable}), encoding="utf-8")
+        gh = directory / "gh"
+        gh.write_text(f"#!{sys.executable}\n" + textwrap.dedent('''\
+            import json
+            import os
+            import sys
+            from pathlib import Path
+
+            args = sys.argv[1:]
+            root = "repos/" + os.environ["REPOSITORY"]
+            with open(os.environ["API_CALLS"], "a", encoding="utf-8") as calls:
+                calls.write(json.dumps(args) + "\\n")
+            query = root + "/actions/workflows/post-merge.yml/runs?head_sha=" + (
+                os.environ["BEFORE"] + "&event=push&branch=main&per_page=100")
+            if args == ["api", "--paginate", "--slurp", query]:
+                fixture = json.loads(Path(os.environ["API_FIXTURE"]).read_text())
+                if fixture["unreadable"]:
+                    sys.exit(1)
+                print(json.dumps(fixture["pages"]))
+            elif args == ["api", "--paginate", root + "/labels?per_page=100", "--jq", ".[].name"]:
+                print("blocks-release\\nmain-red")
+            elif args == ["api", root + "/pulls/11", "--jq", ".title"]:
+                print("Train 11")
+            elif args[:4] == ["api", "--method", "POST", root + "/issues"]:
+                payload = Path(args[args.index("--input") + 1]).read_text()
+                Path(os.environ["ISSUE_PAYLOAD"]).write_text(payload)
+                print("Opened issue #1000")
+            else:
+                raise AssertionError("Unexpected gh operation: " + repr(args))
+            '''), encoding="utf-8")
+        gh.chmod(0o755)
         output = self.directory / "github-output"
+        output.write_text("", encoding="utf-8")
+        (self.directory / "api-calls").write_text("", encoding="utf-8")
+        jobs = self.directory / "failed-jobs"
+        jobs.write_text("integration / check: failure\n", encoding="utf-8")
         env = ar.git_env()
-        env.update(BEFORE=before, RUNNER_TEMP=str(self.directory), GITHUB_OUTPUT=str(output))
+        env.update(PATH=str(directory) + ":" + env["PATH"], BEFORE=before, AFTER=self.rev(),
+                   RUNNER_TEMP=str(self.directory), GITHUB_OUTPUT=str(output), REPOSITORY=SLUG,
+                   RUN_ID="99", RUN_URL=f"https://github.com/{SLUG}/actions/runs/99",
+                   API_FIXTURE=str(fixture), API_CALLS=str(self.directory / "api-calls"),
+                   ISSUE_PAYLOAD=str(self.directory / "issue.json"), FAILED_JOBS=str(jobs))
+        return env
+
+    def run_trusted_extraction(self, before, pages=None, *, unreadable=False):
+        script = workflow_step("post-merge.yml", "Take the revert script from the previous main")
+        if pages is None:
+            pages = [{"total_count": 1, "workflow_runs": [self.successful_run(before)]}]
+        env = self.workflow_env(before, pages, unreadable=unreadable)
         result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
                                 cwd=self.repo, env=env, text=True, capture_output=True, check=False)
         self.assertEqual(result.returncode, 0, result.stderr)
-        return output.read_text(encoding="utf-8").strip().removeprefix("script=")
+        self.trusted_outputs = dict(line.split("=", 1) for line in
+                                   Path(env["GITHUB_OUTPUT"]).read_text(encoding="utf-8").splitlines())
+        self.workflow_environment = env
+        return self.trusted_outputs["script"]
+
+    def assert_fallback_issue(self, reason):
+        script = workflow_step("post-merge.yml",
+                               "Open the issue when the trusted script or failed jobs are unavailable")
+        env = self.workflow_environment.copy()
+        env["TRUST_FAILURE"] = self.trusted_outputs["reason"]
+        result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script],
+                                cwd=self.repo, env=env, text=True, capture_output=True, check=False)
+        self.assertEqual(result.returncode, 1, result.stderr)
+        payload = json.loads(Path(env["ISSUE_PAYLOAD"]).read_text(encoding="utf-8"))
+        self.assertIn(reason, payload["body"])
+        self.assertIn("Failed run: 99\n", payload["body"])
+        self.assertIn("Issue only; no automatic revert or pull request was attempted.", payload["body"])
+        self.assertEqual(payload["labels"], ["blocks-release", "main-red"])
+        calls = [json.loads(line) for line in Path(env["API_CALLS"]).read_text().splitlines()]
+        self.assertEqual(sum(call[:3] == ["api", "--method", "POST"] for call in calls), 1)
 
     def test_workflow_executes_previous_main_script_despite_after_replacement(self):
         self.write("scripts/auto_revert.py", "print('Previous main script')\n")
@@ -651,10 +750,76 @@ class AutoRevert(unittest.TestCase):
         self.train(path="scripts/auto_revert.py", text="raise RuntimeError('Failed revision ran')\n")
         extracted = self.run_trusted_extraction(before)
         self.assertEqual(command(self.directory, sys.executable, "-I", extracted), "Previous main script")
+        self.assertEqual(self.trusted_outputs["reason"], "")
 
     def test_workflow_does_not_use_after_script_when_before_has_none(self):
         self.train(path="scripts/auto_revert.py", text="raise RuntimeError('Failed revision ran')\n")
         self.assertEqual(self.run_trusted_extraction(self.before), "")
+        self.assert_fallback_issue("no readable revert script")
+
+    def test_workflow_refuses_before_without_a_successful_post_merge_run(self):
+        self.write("scripts/auto_revert.py", "raise RuntimeError('Untrusted previous main ran')\n")
+        self.commit("Install untrusted script")
+        before = self.rev()
+        good = self.successful_run(before)
+        cases = [
+            ([{"total_count": 0, "workflow_runs": []}], False, "No post-merge run"),
+            ([{"total_count": 1, "workflow_runs": [dict(good, conclusion="failure")]}],
+             False, "did not conclude success"),
+            ([{"total_count": 1, "workflow_runs": [dict(good, status="in_progress", conclusion=None)]}],
+             False, "did not conclude success"),
+            ([{"total_count": 1, "workflow_runs": [good]}], True, "could not be read"),
+            ([{"workflow_runs": [good]}], False, "could not be read"),
+            ([], False, "could not be read"),
+            ([{"total_count": 1, "workflow_runs": None}], False, "could not be read"),
+            ([{"total_count": 2, "workflow_runs": [good]}], False, "could not be read"),
+            ([{"total_count": 2, "workflow_runs": [good, good]}], False, "could not be read"),
+            ([{"total_count": 1, "workflow_runs": [good]},
+              {"total_count": 0, "workflow_runs": []}], False, "could not be read"),
+            ([{"total_count": 1, "workflow_runs": [{key: value for key, value in good.items()
+                                                   if key != "conclusion"}]}],
+             False, "could not be read"),
+        ]
+        for pages, unreadable, reason in cases:
+            with self.subTest(pages=pages, unreadable=unreadable):
+                self.assertEqual(self.run_trusted_extraction(before, pages, unreadable=unreadable), "")
+                self.assert_fallback_issue(reason)
+
+    def test_workflow_refuses_a_run_for_another_commit_branch_event_or_workflow(self):
+        self.write("scripts/auto_revert.py", "print('Must not be trusted')\n")
+        self.commit("Install script")
+        before = self.rev()
+        changes = [{"head_sha": "f" * 40}, {"head_branch": "topic"}, {"event": "pull_request"},
+                   {"path": ".github/workflows/ci.yml"}, {"id": "98"}, {"id": 0},
+                   {"id": 1.5}, {"id": True}, {"status": None}, {"conclusion": []}]
+        for change in changes:
+            with self.subTest(change=change):
+                pages = [{"total_count": 1, "workflow_runs": [self.successful_run(before, **change)]}]
+                self.assertEqual(self.run_trusted_extraction(before, pages), "")
+                self.assert_fallback_issue("could not be read")
+
+    def test_workflow_uses_latest_run_across_all_pages(self):
+        self.write("scripts/auto_revert.py", "print('Previous main script')\n")
+        self.commit("Install script")
+        before = self.rev()
+        good = self.successful_run(before)
+        for conclusion in ("failure", "success"):
+            with self.subTest(conclusion=conclusion):
+                pages = [{"total_count": 2, "workflow_runs": [good]},
+                         {"total_count": 2, "workflow_runs": [dict(good, id=99, conclusion=conclusion)]}]
+                extracted = self.run_trusted_extraction(before, pages)
+                if conclusion == "failure":
+                    self.assertEqual(extracted, "")
+                    self.assert_fallback_issue("did not conclude success")
+                else:
+                    self.assertEqual(command(self.directory, sys.executable, "-I", extracted),
+                                     "Previous main script")
+
+    def test_workflow_refuses_an_invalid_previous_commit(self):
+        for before in ("0" * 40, "invalid", "a" * 39):
+            with self.subTest(before=before):
+                self.assertEqual(self.run_trusted_extraction(before), "")
+                self.assert_fallback_issue("previous main commit is invalid")
 
 
 if __name__ == "__main__":

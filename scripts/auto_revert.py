@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Revert a failed main push through the queue, and leave a release-blocking issue.
 
-The workflow runs this file from the previous main with Python's isolated mode.
+The revert job runs this file from the previous main with Python's isolated mode,
+only after that commit's latest post-merge run has concluded success.
 It imports no repository code. Git works in a temporary clone with hooks, global
 configuration and inherited credentials disabled. Only the push receives the App
 token; the issue and its labels always use GITHUB_TOKEN.
@@ -263,6 +264,8 @@ def installation_token(api: GitHub, app_id: str, key: str, repo: str,
 
 def push_branch(repo: Path, slug: str, branch: str, token: str) -> None:
     """Keep the credential out of command arguments, URLs and git's config files."""
+    if not re.fullmatch(r"revert/[0-9a-f]{12}", branch):
+        raise Refusal("Only revert/<12 lower-case hex digits> branches may be pushed.")
     env = git_env()
     credential = base64.b64encode(f"x-access-token:{token}".encode()).decode()
     env.update(GIT_CONFIG_COUNT="1",
@@ -291,7 +294,8 @@ def issue_body(args, entries: list[Train], outcome: str) -> str:
     names = "\n".join(f"- #{t.number}: {t.title} (merge `{t.sha}`)" for t in entries)
     return (f"Main's integration checks failed.\n\nBefore: {args.before}\nAfter: {args.after}\n\n"
             f"Trains, newest first:\n{names or 'The train list could not be read.'}\n\n"
-            f"Failed jobs:\n{args.failed_jobs}\n\nRun: {args.run_url}\n\n{outcome}\n")
+            f"Failed jobs:\n{args.failed_jobs}\n\nFailed run: {args.run_id}\n"
+            f"Run: {args.run_url}\n\n{outcome}\n")
 
 
 def main_tip(api: GitHub, after: str) -> None:
@@ -394,10 +398,12 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
             stage = f"Push of {branch} was attempted; its remote state may need inspection."
             push(target, args.repo, branch, token)
             stage = f"Branch {branch} was pushed; pull request creation may need inspection."
+            # Quote job names so they cannot add run or revert metadata lines.
+            jobs = "\n".join("> " + line for line in args.failed_jobs.splitlines())
             pr = app.call("POST", api.root + "/pulls",
                           {"title": f"Revert failed main push {args.after[:12]}", "head": branch,
                            "base": "main", "body": "\n".join(f"Reverts: {t.sha}" for t in entries)
-                           + f"\n\nFailed jobs:\n{args.failed_jobs}\n\nRun: {args.run_url}\n"})
+                           + f"\nFailed run: {args.run_id}\n\nFailed jobs:\n{jobs}\n\nRun: {args.run_url}\n"})
             if (not isinstance(pr, dict) or type(pr.get("number")) is not int or pr["number"] <= 0
                     or not isinstance(pr.get("node_id"), str) or not pr["node_id"]
                     or pr.get("head", {}).get("sha") != head):
@@ -450,10 +456,14 @@ def main(argv=None, *, http=None, push=None, repo_dir=None, env=None) -> int:
         parser.error("--before, --after, --run-url and --failed-jobs are required")
     if args.after and (not SHA.fullmatch(args.after) or not args.after.strip("0")):
         parser.error("--after must be a non-zero, full commit SHA")
-    if args.run_url and not re.fullmatch(
-            rf"https://github\.com/{re.escape(args.repo)}/actions/runs/[1-9][0-9]*(?:/attempts/[1-9][0-9]*)?",
-            args.run_url):
-        parser.error("--run-url must name a GitHub Actions run in --repo")
+    args.run_id = None
+    if args.run_url:
+        run = re.fullmatch(
+            rf"https://github\.com/{re.escape(args.repo)}/actions/runs/([1-9][0-9]*)(?:/attempts/[1-9][0-9]*)?",
+            args.run_url)
+        if not run:
+            parser.error("--run-url must name a GitHub Actions run in --repo")
+        args.run_id = run[1]
     environment = dict(os.environ if env is None else env)
     source = Path.cwd() if repo_dir is None else Path(repo_dir)
     try:
