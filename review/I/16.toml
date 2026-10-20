@@ -16,7 +16,7 @@ note = "Euclid bisects AC and produces BE; the Lean uses I.10 for E and `produce
 at = "let EF be made equal to BE"
 kind = "helper"
 helper = "between_cut"
-note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F and Postulate 2 produces AC to G; FC is used through its endpoints without a separate line construction."
+note = "Euclid cuts off EF equal to BE and joins FC, then produces AC to G. After I.3 chooses F, `between_cut` proves that E lies between B and F; Postulates 1 and 2 make the join and the production."
 
 [[passage]]
 at = "But the angle ECD is greater than the angle ECF"
@@ -31,10 +31,10 @@ note = "Euclid leaves the argument for the other interior angle to the reader, w
 
 [review]
 stage = "full"
-commit = "e939480f"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:0d68a2996090312b"
-run = "brief 0005 stage 5, ship T re-read"
+commit = "7397642"
+reviewer = "Claude Opus 5.5, records review"
+lean = "sha256:dbc44d9d229e1a48"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]
 statement = "pass"

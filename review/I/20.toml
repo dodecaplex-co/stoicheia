@@ -16,7 +16,7 @@ note = "Euclid draws BA through far enough to make DA equal to CA. The Lean firs
 at = "let DA be made equal to CA, and let DC be joined"
 kind = "helper"
 helper = "between_cut"
-note = "Euclid makes DA equal to CA and takes for granted that D lies on BA produced beyond A. Heath gives no reference for the cut; the Lean uses I.3 (`Prop3`) to cut AD from AX and `between_cut` to place A between B and D; DC is used through its endpoints without a separate line construction."
+note = "Euclid makes DA equal to CA and takes for granted that D lies on BA produced beyond A. Heath gives no reference for the cut; the Lean uses I.3 (`Prop3`) to cut AD from AX, `between_cut` to place A between B and D, and Postulate 1 to join DC."
 
 [[passage]]
 at = "therefore the angle BCD is greater than the angle ADC"
@@ -37,10 +37,10 @@ note = "Euclid leaves the other two pairs to the same argument. The Lean proves 
 
 [review]
 stage = "full"
-commit = "18d16630"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:f56b708d36b0a89b"
-run = "brief 0005 stage 5, ship T re-read"
+commit = "4ae9714"
+reviewer = "Claude Opus 5.5, records review"
+lean = "sha256:143bf867e071afbd"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
 
 [review.items]
 statement = "pass"

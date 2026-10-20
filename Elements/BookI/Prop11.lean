@@ -64,6 +64,7 @@ theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬
   have hF_AB : ¬ OnLine F AB := not_on_line_of_same_side hF_Q
   -- and let FC be joined;
   have hFC : F ≠ C := fun h => hF_AB (h ▸ hC_AB)
+  obtain ⟨FC, -, -⟩ := Postulate1 F C hFC
   -- I say that the straight line FC has been drawn at right angles to the given straight line
   -- AB from C the given point on it.
   -- For, since DC is equal to CE,
