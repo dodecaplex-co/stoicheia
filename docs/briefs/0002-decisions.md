@@ -1548,9 +1548,10 @@ findings:
   sends, for review items P11 to P15 of [ACCEPTANCE](../ACCEPTANCE.md): the statement's
   scope, with its companions and porism; whether each proposition a proof unit calls does
   work, and whether any hypothesis is used only for show; whether a representation's bridge
-  is stated; whether the commentary's account of the scope, the route and the Lean it names
-  agrees with them; and whether the Heath figure, sent as an image, agrees with the proof
-  and its caption. Every state quotes its files exactly, checked byte for byte against
+  is stated, while recording its dependency placement locally rather than treating that
+  answer as all of P13; whether the commentary's account of the scope, the route and the Lean
+  it names agrees with them; and whether the Heath figure, sent as an image, agrees with the
+  proof and its caption. Every state quotes its files exactly, checked byte for byte against
   `git show` of a named commit, and the expected answers, taken from the records, stay on
   this machine. Ten seeded controls, each a planted defect in a generated state only,
   measure whether the questions can find a fault. It uses the standard library alone,
