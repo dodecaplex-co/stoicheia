@@ -1854,9 +1854,7 @@ findings:
   [scripts/check_acceptance.py](../../scripts/check_acceptance.py) and
   [tests/test_check_style.py](../../tests/test_check_style.py).
   [STYLE](../STYLE.md), sections 2, 7 and 8, describes the figure and its rules.
-  The re-review fixes in `scripts/check_style.py`, with regressions in
-  `tests/test_check_style.py`, refuse unsupported SVG styling and text children, empty
-  or whitespace-only font-style attributes, and modern-paragraph HTML and reference syntax,
-  report malformed or overflowing numeric input per file, enforce CSS lengths, positive
-  viewBox height and permitted font families and weight, and count indentation in columns
-  while retaining source offsets.
+  The reviews' fixes close S24 and S25's input: the modern figure may use only the elements,
+  attributes and spellings the modern figures on main use, so no CSS is read; a malformed
+  figure is reported on its file and checking goes on; and a modern paragraph with inline
+  HTML or reference-link syntax is refused, its indentation counted in columns.

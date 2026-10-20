@@ -962,6 +962,108 @@ class Modern(unittest.TestCase):
                     self.assertEqual(modern_rules(inside, "I.47"),
                                      set() if value == "normal" else {"S25"})
 
+    def test_modern_gate_elements(self):
+        for element in ("use", "image", "foreignObject", "switch", "animate", "set",
+                        "symbol", "filter", "linearGradient", "script", "unknown"):
+            with self.subTest(element=element):
+                findings = self.check_refused_modern(MODERN_GOOD + f"<{element}/>")
+                self.assertTrue(any("<" + element + ">" in m for _, m in findings), findings)
+        for namespace in ("", "urn:other"):
+            with self.subTest(namespace=namespace):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + f'<g xmlns="{namespace}"/>')
+                self.assertTrue(any("<" in m and "g>" in m for _, m in findings), findings)
+
+    def test_modern_gate_attributes_and_no_css(self):
+        for attribute, value in (("display", "none"), ("visibility", "hidden"),
+                                 ("opacity", "0"), ("class", "hidden"), ("href", "#head"),
+                                 ("onload", "void(0)"), ("font-weight", "normal"),
+                                 ("style", "fill: #3b2f2f; font-size: 17")):
+            with self.subTest(attribute=attribute):
+                findings = self.check_refused_modern(
+                    root_attributes=f'{attribute}="{value}"')
+                self.assertTrue(any(attribute in m and "<svg>" in m for _, m in findings),
+                                findings)
+        # Even a formerly supported style must be refused before the presentation walk.
+        root = ET.fromstring('<svg xmlns="http://www.w3.org/2000/svg" '
+                             'viewBox="0 0 400 300" style="fill: #3b2f2f">'
+                             + MODERN_GOOD + '</svg>')
+        with patch.object(style, "style_of", side_effect=AssertionError("CSS was read")):
+            self.assertTrue(style.modern_findings(root, "I.47", HEATHS, NAMES))
+
+    def test_modern_gate_numeric_attributes(self):
+        for attribute in ("x", "y", "x1", "x2", "y1", "y2", "cx", "cy", "r", "rx", "ry",
+                          "width", "height", "fill-opacity", "markerWidth", "markerHeight",
+                          "refX", "refY", "font-size", "stroke-width"):
+            for value in ("17px", "17e0", ".17", "17.", " 17", "17 ", "1 7", "1_7",
+                          "１７", "NaN", "Infinity", "inherit", "initial"):
+                with self.subTest(attribute=attribute, value=value):
+                    findings = self.check_refused_modern(
+                        root_attributes=f'{attribute}="{value}"')
+                    self.assertTrue(any(attribute in m and "<svg>" in m for _, m in findings),
+                                    findings)
+        # A long failing token guards the linear scan against ambiguous digit regexes.
+        value = "1" * 100000 + "!"
+        self.assertIsNone(style.modern_number(value))
+        self.assertIsNone(style.modern_number("9" * 1000))
+        for value in ("0", "-0", "+17", "0017", "17.0", "-0.55"):
+            with self.subTest(value=value):
+                self.assertEqual(style.modern_number(value), float(value))
+
+    def test_modern_gate_number_lists(self):
+        for attribute, values in (
+                ("points", ("1e1,2 3,4", "1,2,3", "1,2, 3,4", "1,2 3", "1,2 rubbish")),
+                ("viewBox", ("0 0 4e2 300", "0 0 400. 300", "0,,0,400,300")),
+                ("stroke-dasharray", ("5px 4", "5e0 4", "5,,4", "5,", "5 -4", "5 4x"))):
+            for value in values:
+                with self.subTest(attribute=attribute, value=value):
+                    kwargs = ({"viewbox": value} if attribute == "viewBox" else
+                              {"root_attributes": f'{attribute}="{value}"'})
+                    findings = self.check_refused_modern(**kwargs)
+                    self.assertTrue(any(attribute in m and "<svg>" in m for _, m in findings),
+                                    findings)
+        for value in ("M 0 0 L 1e1 2", "M 0 0 h 10", "M 0 0 A 1 1 0 2 0 2 2",
+                      "M 0 0 L 10 2 trailing"):
+            with self.subTest(path=value):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + f'<path d="{value}" fill="none"/>')
+                self.assertTrue(any(" d " in m and "<path>" in m for _, m in findings), findings)
+
+    def test_modern_gate_transforms(self):
+        for value in ("translate(1 2)", "scale(1)", "matrix(1 0 0 1 0 0)", "skewX(0)",
+                      "rotate(1)", "rotate(1,2,3)", "rotate(1e0 2 3)", "rotate(.1 2 3)",
+                      "rotate(1 2 3) ", "rotate(1 2 3) rotate(0 0 0)", "rotate(1 2 3)x"):
+            with self.subTest(value=value):
+                findings = self.check_refused_modern(
+                    root_attributes=f'transform="{value}"')
+                self.assertTrue(any("transform" in m and "<svg>" in m for _, m in findings),
+                                findings)
+        self.assertEqual(self.check_refused_modern(
+            root_attributes='transform="rotate(-26.565051 190.538699 202.827398)"'), [])
+
+    def test_modern_gate_keywords_and_colours(self):
+        for attribute, other in (("fill", "#3B2F2F"), ("stroke", "currentColor"),
+                                  ("font-family", "serif"), ("font-style", "oblique"),
+                                  ("text-anchor", "end"), ("stroke-linejoin", "bevel"),
+                                  ("markerUnits", "userspaceonuse"), ("orient", "auto"),
+                                  ("marker-end", "url(#elsewhere)"), ("id", "elsewhere")):
+            for value in (other, "inherit", "initial", "unset", "revert", "revert-layer"):
+                with self.subTest(attribute=attribute, value=value):
+                    findings = self.check_refused_modern(
+                        root_attributes=f'{attribute}="{value}"')
+                    self.assertTrue(any(attribute in m and "<svg>" in m for _, m in findings),
+                                    findings)
+        for attribute, value in (("stroke", "none"), ("font-style", "normal"),
+                                 ("text-anchor", "start"), ("stroke-linejoin", "miter"),
+                                 ("markerUnits", "strokeWidth"), ("orient", "0"),
+                                 ("marker-end", "none"), ("stroke-dasharray", "none")):
+            with self.subTest(attribute=attribute, value=value):
+                self.assertEqual(self.check_refused_modern(
+                    root_attributes=f'{attribute}="{value}"'), [])
+        # An explicit initial fill still fails the existing palette rule.
+        self.assertTrue(any("palette" in m for _, m in self.check_refused_modern(
+            root_attributes='fill="black"')))
+
     def test_no_paragraph_and_no_figure(self):
         self.assertIn("S24", modern_rules(MODERN_GOOD, "I.47", names=None))
         self.assertIn("S24", modern_rules(MODERN_GOOD, "I.47", heaths=None))
@@ -994,24 +1096,25 @@ class Modern(unittest.TestCase):
 
     def test_canvas_heights(self):
         for height, valid in (("0", False), ("-0", False), ("-1", False),
-                              ("-300", False), (".5", True), ("300", True)):
+                              ("-300", False), (".5", False), ("0.5", True), ("300", True)):
             with self.subTest(height=height):
                 findings = self.check_refused_modern(viewbox=f"0 0 400 {height}")
                 if valid:
                     self.assertEqual(findings, [])
                 else:
-                    self.assertTrue(any(r == "S24" and "viewBox height" in message
+                    message_part = "malformed or unsupported viewBox" if height == ".5" else "viewBox height"
+                    self.assertTrue(any(r == "S24" and message_part in message
                                         for r, message in findings), findings)
 
-    def test_presentation_lengths_use_css_numbers(self):
+    def test_presentation_lengths_use_plain_decimals(self):
         letter = '<text x="50" y="270">A</text>'
         for attribute, size, parent, rule in (("font-size", "17", "40", "S25"),
                                                ("stroke-width", "2", "20", "S24")):
             values = [(value, True) for value in
-                      (size, size + "px", size + ".0", size + ".0px",
-                       "+" + size, f".{size}e{len(size)}", size + "e0px")]
+                      (size, size + ".0", "+" + size)]
             values += [(value, False) for value in
-                       (size + ".", size + ".px", size + ".e0", size + "em",
+                       (size + "px", size + ".0px", f".{size}e{len(size)}", size + "e0px",
+                        size + ".", size + ".px", size + ".e0", size + "em",
                         size + "%", size + " px", size + "e", "", "\u00a0" + size)]
             for element in ("text", "g"):
                 for inherited in (False, True):
@@ -1048,7 +1151,7 @@ class Modern(unittest.TestCase):
                 ("font-family", ("Georgia", "Georgia, serif",
                                  "Georgia, 'Times New Roman', serif"),
                  ("Arial", "serif", "Georgia, monospace")),
-                ("font-weight", ("normal",), ("bold", "bolder", "400", "700"))):
+                ("font-weight", (), ("normal", "bold", "bolder", "400", "700"))):
             values = [(value, True) for value in allowed]
             values += [(value, False) for value in
                        refused + ("initial", "inherit", "unset", "revert", "", " \t\n ")]
@@ -1171,8 +1274,8 @@ class Modern(unittest.TestCase):
             with self.subTest(message=message):
                 findings = self.check_refused_modern(inside, prefix=prefix)
                 self.assertTrue(any(r == "S24" and message in m for r, m in findings), findings)
-        supported = MODERN_GOOD.replace(">A<", ' style="font-size: 17px; fill: #3b2f2f">A<')
-        self.assertEqual(modern_rules(supported, "I.47"), set())
+        styled = MODERN_GOOD.replace(">A<", ' style="font-size: 17px; fill: #3b2f2f">A<')
+        self.assertEqual(modern_rules(styled, "I.47"), {"S24"})
 
     def test_mixed_indentation_keeps_columns_and_offsets(self):
         paragraph = MW + "Put $b$ here."
@@ -1215,7 +1318,7 @@ class Modern(unittest.TestCase):
                 self.check_refused_modern()
         with patch.object(style, "transform_of", side_effect=ValueError("checker defect")):
             with self.assertRaisesRegex(ValueError, "checker defect"):
-                self.check_refused_modern(MODERN_GOOD.replace(">A<", ' transform="rotate(1)">A<'))
+                self.check_refused_modern(MODERN_GOOD.replace(">A<", ' transform="rotate(1 50 270)">A<'))
 
     def test_text_strokes(self):
         for inherited in (False, True):

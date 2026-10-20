@@ -3050,53 +3050,127 @@ def modern_names(paragraph: str) -> set[str]:
     return names
 
 
-def modern_number(value: str | None, *, pixels: bool = False) -> float | None:
-    """A finite SVG number, or a CSS presentation number with px as its only unit."""
-    if value is None:
+# Derived from all 30 figures at 209d71fd: no CSS, units or exponent notation.
+MODERN_ELEMENTS = {"svg", "title", "defs", "marker", "g", "rect", "line", "circle",
+                   "ellipse", "path", "polygon", "polyline", "text"}
+MODERN_NUMBERS = {"x", "y", "x1", "x2", "y1", "y2", "cx", "cy", "r", "rx", "ry",
+                  "width", "height", "fill-opacity", "markerWidth", "markerHeight",
+                  "refX", "refY", "font-size", "stroke-width"}
+# Exact values from those figures, plus explicit SVG initial values, never CSS-wide
+# keywords. The palette and text checks still apply after this syntax gate.
+MODERN_VALUES = {
+    "fill": EUCLID_COLOURS | {"none", "black"},
+    "stroke": {"#3b2f2f", "#8c7b62", "#a0522d", "none"},
+    "font-family": {"Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"},
+    "font-style": {"italic", "normal"},
+    "text-anchor": {"middle", "start"},
+    "stroke-linejoin": {"round", "miter"},
+    "markerUnits": {"userSpaceOnUse", "strokeWidth"},
+    "orient": {"auto-start-reverse", "0"},
+    "marker-end": {"url(#axis)", "url(#head)", "none"},
+    "id": {"axis", "head"},
+}
+MODERN_ATTRIBUTES = MODERN_NUMBERS | MODERN_VALUES.keys() | {
+    "viewBox", "points", "stroke-dasharray", "transform", "d"}
+
+
+def modern_number(value: str | None) -> float | None:
+    """A finite plain decimal, scanned once without regex backtracking or units."""
+    if not value:
         return None
-    fraction = r"\.[0-9]+" if pixels else r"\.[0-9]*"
-    pattern = rf"([-+]?(?:[0-9]+(?:{fraction})?|\.[0-9]+)(?:[eE][-+]?[0-9]+)?)"
-    space = r"[ \t\r\n\f]*" if pixels else r"\s*"
-    match = re.fullmatch(space + pattern + (r"(?:px)?" if pixels else "") + space, value)
-    if not match:
+    i = int(value[0] in "+-")
+    start = i
+    while i < len(value) and "0" <= value[i] <= "9":
+        i += 1
+    if i == start:
         return None
-    try:
-        result = float(match.group(1))
-    except (ValueError, OverflowError):
+    if i < len(value) and value[i] == ".":
+        i += 1
+        start = i
+        while i < len(value) and "0" <= value[i] <= "9":
+            i += 1
+        if i == start:
+            return None
+    if i != len(value):
         return None
+    result = float(value)
     return result if math.isfinite(result) else None
 
 
+def modern_numbers(value: str) -> list[float] | None:
+    """Space-separated plain decimals, as main spells lists and transform arguments."""
+    values = [modern_number(part) for part in value.split(" ")]
+    return None if None in values else values
+
+
 def modern_transform(value: str) -> bool:
-    """Whether a supported transform parses completely to a finite affine map."""
-    counts = {"translate": {1, 2}, "scale": {1, 2}, "rotate": {1, 3},
-              "skewX": {1}, "skewY": {1}, "matrix": {6}}
-    end = 0
-    for match in re.finditer(r"([A-Za-z]+)\s*\(([^()]*)\)", value):
-        gap = value[end:match.start()]
-        if not re.fullmatch(r"\s*" if end == 0 else r"\s*,?\s*", gap):
-            return False
-        args = re.split(r"\s*,\s*|\s+", match.group(2).strip())
-        if (len(args) not in counts.get(match.group(1), set())
-                or any(modern_number(arg) is None for arg in args)):
-            return False
-        end = match.end()
-    if not end or value[end:].strip():
+    """Main uses one rotation about an explicit centre, with nothing trailing."""
+    if not value.startswith("rotate(") or not value.endswith(")"):
         return False
-    return all(math.isfinite(n) for n in transform_of(value))
+    args = modern_numbers(value[7:-1])
+    return (args is not None and len(args) == 3
+            and all(math.isfinite(n) for n in transform_of(value)))
 
 
-# Only declarations whose effect S24 or S25 reads are accepted in an inline style.
-MODERN_STYLE = set(COLOUR_ATTRS) | {"stroke-width", "font-size", "font-style"}
-MODERN_NUMBERS = {"x", "y", "x1", "x2", "y1", "y2", "cx", "cy", "r", "rx", "ry",
-                  "width", "height", "fill-opacity", "stroke-opacity", "opacity",
-                  "markerWidth", "markerHeight", "refX", "refY", "font-size", "stroke-width"}
-# Main's thirty modern figures use these families and no weight attribute.
-# Euclid's roots also omit weight, leaving SVG's normal weight in force.
-MODERN_FONTS = {
-    "font-family": {"Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"},
-    "font-weight": {"normal"},
-}
+def modern_path(value: str) -> bool:
+    """Main's paths use explicit M, L, A and final z, with space-separated decimals."""
+    parts, i = value.split(" "), 0
+    if parts[0] != "M":
+        return False
+    while i < len(parts):
+        command = parts[i]
+        if command == "z":
+            return i == len(parts) - 1
+        count = {"M": 2, "L": 2, "A": 7}.get(command)
+        if count is None:
+            return False
+        args = parts[i + 1:i + 1 + count]
+        if len(args) != count or any(modern_number(arg) is None for arg in args):
+            return False
+        if command == "A" and (any(modern_number(arg) < 0 for arg in args[:2])
+                               or any(arg not in {"0", "1"} for arg in args[3:5])):
+            return False
+        i += count + 1
+    return True
+
+
+def modern_svg_findings(root) -> list[tuple[str, str]]:
+    """Close the input before walk() reads any presentation attributes or text."""
+    found = []
+    for el in root.iter():
+        t = tag(el)
+        if el.tag != SVG + t or t not in MODERN_ELEMENTS or (el is root and t != "svg"):
+            rule = "S25" if t == "tspan" else "S24"
+            found.append((rule, f"unsupported <{t}> in a modern figure"))
+        if t == "text":
+            for child in el:
+                found.append(("S24", f"unsupported <{tag(child)}> child of <text>: "
+                              "use plain text"))
+        for key, value in el.attrib.items():
+            valid = False
+            if key in MODERN_NUMBERS:
+                valid = modern_number(value) is not None
+            elif key in MODERN_VALUES:
+                valid = value in MODERN_VALUES[key]
+            elif key == "transform":
+                valid = modern_transform(value)
+            elif key == "d":
+                valid = modern_path(value)
+            elif key == "points":
+                pairs = [pair.split(",") for pair in value.split(" ")]
+                valid = all(len(pair) == 2 and all(modern_number(n) is not None for n in pair)
+                            for pair in pairs)
+            elif key in {"viewBox", "stroke-dasharray"}:
+                values = modern_numbers(value)
+                valid = (values is not None and (len(values) == 4 if key == "viewBox"
+                                                 else all(n >= 0 for n in values)))
+                if key == "stroke-dasharray" and value == "none":
+                    valid = True
+            if not valid:
+                rule = "S25" if key in {"font-size", "font-style"} else "S24"
+                what = "malformed or unsupported" if key in MODERN_ATTRIBUTES else "unsupported"
+                found.append((rule, f"{what} {key} {value!r} on <{t}>"))
+    return found
 
 
 def modern_findings(root, ref: str, heaths: set[str] | None,
@@ -3104,8 +3178,10 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
     """(rule, message) for each fault of a modern figure (S24, S25), given the letters its
     Euclid's figure draws (None: no Euclid's figure) and the names its page's modern way
     uses (None: no such paragraph)."""
-    found: list[tuple[str, str]] = []
-    vb = root.get("viewBox", "").replace(",", " ").split()
+    found = modern_svg_findings(root)
+    if found:
+        return found
+    vb = root.get("viewBox", "").split(" ")
     values = [modern_number(value) for value in vb]
     width = values[2] if len(values) == 4 else None
     if len(values) != 4 or None in values:
@@ -3130,36 +3206,6 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
     bad = defaultdict(int)
     for el, own, eff in walk(root):
         t = tag(el)
-        for attribute, allowed in MODERN_FONTS.items():
-            value = el.get(attribute)
-            if value is not None and value not in allowed:
-                found.append(("S24", f"unsupported {attribute} {value!r} on <{t}>: "
-                              f"use {' or '.join(sorted(allowed))}"))
-        font_style = el.get("font-style")
-        if font_style is not None and not font_style.strip():
-            found.append(("S25", f"empty font-style presentation attribute on <{t}>: "
-                          "use normal or italic"))
-        if t in {"style", "textPath"}:
-            found.append(("S24", f"unsupported <{t}> in a modern figure"))
-        if t == "text":
-            for child in el:
-                found.append(("S24", f"unsupported <{tag(child)}> child of <text>: "
-                              "use plain text"))
-        for declaration in el.get("style", "").split(";"):
-            if not declaration.strip():
-                continue
-            key, colon, value = declaration.partition(":")
-            if not colon or key.strip() not in MODERN_STYLE or not value.strip():
-                found.append(("S24", f"unsupported style declaration {declaration!r} on <{t}>"))
-        if "transform" in own and not modern_transform(own["transform"]):
-            found.append(("S24", f"malformed or overflowing transform {own['transform']!r} "
-                          f"on <{t}>"))
-        for key in MODERN_NUMBERS & own.keys():
-            # Read the raw attribute even when a child or inline style overrides it.
-            value = el.get(key, own[key])
-            if modern_number(value, pixels=True) is None:
-                rule = "S25" if key == "font-size" else "S24"
-                found.append((rule, f"malformed {key} {value!r} on <{t}>"))
         for k in COLOUR_ATTRS:
             v = own.get(k)
             if v is not None and v.lower() != "none" and v.lower() not in EUCLID_COLOURS:
@@ -3169,19 +3215,17 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
                           "a colour of the palette, or fill=\"none\""))
         if (t in DRAWN or t == "text") and (eff.get("stroke") or "none").lower() != "none":
             raw_width = eff.get("stroke-width")
-            w = 1.0 if raw_width is None else modern_number(raw_width, pixels=True)
+            w = 1.0 if raw_width is None else modern_number(raw_width)
             if w is None:
                 found.append(("S24", f"malformed stroke-width {raw_width!r} on a <{t}>"))
             elif not 1.2 <= w <= 3.2:
                 found.append(("S24", f"stroke-width {w:g} on a <{t}>, not 1.2 to 3.2"))
-        if t == "tspan":
-            found.append(("S25", "a <tspan>: one size and one style to each <text>"))
         if t != "text":
             continue
         s = " ".join(text_of(el).split()).translate(GREEK_VARIANTS)
         if not s:
             continue
-        if modern_number(eff.get("font-size"), pixels=True) != MODERN_TEXT_SIZE:
+        if modern_number(eff.get("font-size")) != MODERN_TEXT_SIZE:
             found.append(("S25", f"<text>{s}</text> at font-size {eff.get('font-size')}, "
                           f"not {MODERN_TEXT_SIZE}"))
         style = letter_style(eff)
@@ -3222,12 +3266,18 @@ def check_modern(path: Path, ref: str) -> None:
     root = svg_root(path)
     if root is None:
         return
+    refused = modern_svg_findings(root)
+    for rule, message in refused:
+        fail(rule, path, 0, message)
+    if refused:
+        return
     # ElementTree drops processing instructions, including those before the root.
     source = path.read_text(encoding="utf-8")
     for pattern, what in ((r"<\?xml-stylesheet\b", "stylesheet reference"),
                           (r"@import\b", "@import")):
         if re.search(pattern, source, re.I):
             fail("S24", path, 0, f"unsupported {what} in a modern figure")
+            return
     book, n = ref.split(".")
     heaths = drawn_letters(path.with_name(f"{int(n):02d}.svg"))
     mishnah = ROOT / "mishnah" / book / f"{int(n):02d}.md"
