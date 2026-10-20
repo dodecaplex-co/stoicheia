@@ -5,10 +5,10 @@ Small subjects for the certificate's C.N. 4 regression. The test compiles this f
 the temporary package's `Elements` module, which an unmodified copy of
 `Certificate/Facts.lean` imports in preference to the repository's module.
 
-The restricted calculus has not landed on the tooling branch. These are stand-ins with
-the exact constructor names from `Elements/Foundations/Superposition/Syntax.lean` on
-the Lean branch, not a model of its rules. Import only the Common Notions, so the
-stand-ins also work once the real calculus lands. No axiom is declared here.
+The restricted calculus (brief 0009) lands separately. These are stand-ins with the exact
+names of its constructors in `Elements/Foundations/Superposition/Syntax.lean`, not a model
+of its rules. Import only the Common Notions, so the stand-ins also work once the real
+calculus lands. No axiom is declared here.
 -/
 
 namespace Elements

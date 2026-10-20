@@ -1562,8 +1562,15 @@ findings:
   `Elements.Superposition.Derives.angle_congr` and
   `Elements.Superposition.Derives.area_congr`, so it runs before the Lean replacement.
   Each constructor is tested directly and through a helper's value; reaching only the
-  inductive type's constructor list reports no C.N. 4. Every case must keep the same
-  axiom fields, with existing axioms used directly and inherited through a helper.
-  CI does not run this standalone test: the tooling writer and the integrator run
-  `python3 -I tests/test_certificate.py` after `lake build`, with the Lean tools on
-  `PATH`, on the revision delivered.
+  inductive type's constructor list reports no C.N. 4 (I.7's control), and naming another
+  constructor of `Derives` in a value reports none either (I.8's control). Every case must
+  keep the same axiom fields, with existing axioms used directly and inherited through a
+  helper. CI does not yet run this standalone test: whoever changes
+  `Certificate/Facts.lean`, and the integrator, run `python3 -I tests/test_certificate.py`
+  after `lake build`, with the Lean tools on `PATH`, on the revision delivered, as
+  [WORKFLOW](../WORKFLOW.md), section 8, now records.
+  Open point: on `lean/superposition-restricted`, `Derives.map` names all three coincidence
+  constructors in its value, so any entry whose proof reaches it would report C.N. 4
+  whatever its derivation uses; nothing reaches it today, and when the Lean replacement
+  lands, `common_notions` for I.4 and I.8 should be pinned in
+  `tests/certificate_expectations.json`.

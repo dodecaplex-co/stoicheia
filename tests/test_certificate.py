@@ -12,8 +12,13 @@ package keeps every output, including facts.json, away from the repository. The 
 declares stand-ins with the exact constructor names, so this test can land before the
 calculus it checks.
 
-CI does not currently run this file. The tooling writer and the integrator run it
-explicitly, as recorded in docs/briefs/0002-decisions.md. Standard library only.
+Each coincidence constructor is tested directly and through a helper's value. Reaching
+only the inductive type's constructor list (I.7), or naming another Derives constructor
+in a value (I.8), reports no C.N. 4. Every case must keep the same axiom fields.
+
+The foundation modules must be built first. CI does not yet run this file: whoever
+changes Certificate/Facts.lean, and the integrator, run it explicitly on the revision
+delivered, as recorded in docs/WORKFLOW.md, section 8. Standard library only.
 """
 
 import json
