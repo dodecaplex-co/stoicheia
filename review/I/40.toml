@@ -36,6 +36,6 @@ note = "F is drawn between C and D, with AF level, as the proof supposes; Heath 
 [review]
 stage = "exceptions"
 commit = "06138bcb"
-reviewer = "GPT-6 Astra, independent reader"
-run = "issue #29, no-mistakes review round 3: independent reading of Heath, Prop39, Prop40 with Prop40.general, the records and the rendered pages at 86751ad0"
+reviewer = "Codex (GPT-6), independent reader"
+run = "issue #29, independent Codex source-first reading at 06138bcb94a2a47d9844a4f40ac8f8c55dddac95: Heath, both formal statements and complete Lean files, Prop40.general/join/special, helper semantics, records, mishnahs, figures and temporary rendered previews; generated certificates await refreshed facts"
 lean = "sha256:42c6b5725278f449"
