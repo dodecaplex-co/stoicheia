@@ -13,8 +13,8 @@ differs from what the generator writes. To write it again, run `lake lean Check/
 `model/`. The [README](../README.md) says how the laws are translated and checked.
 
 It was written from the lock, `Certificate/axioms.lock`, whose sha256 is
-`815fd9c4408b2f51fada91938a3b97ef3743483e9943111d7086b19fb79c98df`,
-the hash that `model/lock.sha256` holds. The lock has 87 laws, and they reach 151 words of its
+`4b384982036b5f0e4348a3537b65b4a0c52a36afbdeb13000eed7ac5f4e996fb`,
+the hash that `model/lock.sha256` holds. The lock has 87 laws, and they reach 153 words of its
 vocabulary. Each law here is the library's axiom with the words of a signature `S` put for the
 library's words:
 
@@ -76,6 +76,8 @@ library's words:
 | `Elements.Superposition.Cited.rayOfAngleSide` | `Elements.Superposition.Cited.rayOfAngleSide`, shared unchanged from its pure module |
 | `Elements.Superposition.Cited.rayUnique` | `Elements.Superposition.Cited.rayUnique`, shared unchanged from its pure module |
 | `Elements.Superposition.Cited.rec` | `Elements.Superposition.Cited.rec`, shared unchanged from its pure module |
+| `Elements.Superposition.Coincidence` | `Elements.Superposition.Coincidence`, shared unchanged from its pure module |
+| `Elements.Superposition.Coincidence.step` | `Elements.Superposition.Coincidence.step`, shared unchanged from its pure module |
 | `Elements.Superposition.Collinear` | `Elements.Superposition.Collinear`, shared unchanged from its pure module |
 | `Elements.Superposition.Derives` | `Elements.Superposition.Derives`, shared unchanged from its pure module |
 | `Elements.Superposition.Derives.angle_congr` | `Elements.Superposition.Derives.angle_congr`, shared unchanged from its pure module |

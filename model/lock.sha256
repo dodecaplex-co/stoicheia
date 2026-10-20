@@ -22,4 +22,9 @@
 # Renewed on 19 October 2026, when the restricted rule of superposition (brief 0009, #75)
 # replaced the existential one: the generated law, its hand translation and its proof in
 # the plane were brought to it (model/README.md), and the other 86 laws are unchanged.
-815fd9c4408b2f51fada91938a3b97ef3743483e9943111d7086b19fb79c98df  Certificate/axioms.lock
+# Renewed on 20 October 2026 after the coincidence marker was integrated (brief 0009,
+# #75): the vocabulary grows from 206 to 208 words. Coincidence and its step join
+# the lock, and the three Derives congruence constructors take the marker. All 87
+# axiom statements are unchanged. The marker records a step without changing its
+# interpretation; the existing placement proofs and numerical law still apply.
+4b384982036b5f0e4348a3537b65b4a0c52a36afbdeb13000eed7ac5f4e996fb  Certificate/axioms.lock
