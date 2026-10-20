@@ -278,21 +278,41 @@ structure Target where
   identity : Bool := false
   deriving Inhabited
 
-/-- The module that declares `c`. -/
+/-- A non-empty module name whose string components each denote one relative path
+component. `Lean.modToFilePath` joins components with `FilePath.join`, so an absolute
+component discards the preceding path and `..` can leave the package. Numeric components
+are invalid imports. Reject separators and NUL, and also colons and trailing dots or
+spaces: Windows gives those drive, stream or normalisation meanings. Harmless escaped
+identifiers such as `areas-p5` remain valid. This checks names, not symlinks or provenance. -/
+def isCanonicalModuleName : Name → Bool
+  | .str p s =>
+    !s.isEmpty && s != "." && s != ".." &&
+    !(s.contains '/' || s.contains '\\' || s.contains ':' || s.contains '\x00') &&
+    !s.endsWith "." && !s.endsWith " " &&
+    (p.isAnonymous || isCanonicalModuleName p)
+  | _ => false
+
+/-- The module that declares `c`. This is the recorded name, without a trust decision. -/
 def moduleOf? (env : Environment) (c : Name) : Option Name :=
   (env.getModuleIdxFor? c).map fun i => env.header.moduleNames[i.toNat]!
 
 /-- `c` is a word of the project: declared in a module of `Elements`. -/
 def isProject (env : Environment) (c : Name) : Bool :=
   match moduleOf? env c with
-  | some m => (`Elements).isPrefixOf m
+  | some m => isCanonicalModuleName m && (`Elements).isPrefixOf m
   | none => false
 
-/-- `c` is Lean's own: declared in a module of `Init`, the part of Lean every file has. -/
+/-- The core boundary also checks the imported module's package metadata. The pinned
+Lean 4.35 toolchain's Init modules have no package identifier; a named package is refused.
+Lean retains no resolved `.olean` path, so an unlabelled replacement cannot be distinguished
+here from a toolchain file. The configured toolchain and search path remain assumptions. -/
+def isLeanCoreModule (m : Name) (package? : Option PkgId) : Bool :=
+  isCanonicalModuleName m && m.getRoot == `Init && package?.isNone
+
+/-- Decide core membership from the constant's declaring module. -/
 def isLeanCore (env : Environment) (c : Name) : Bool :=
-  match moduleOf? env c with
-  | some m => m.getRoot == `Init
-  | none => false
+  (env.getModuleIdxFor? c).any fun i =>
+    isLeanCoreModule env.header.moduleNames[i.toNat]! (env.getModulePackageByIdx? i)
 
 /-- The complete shared-definition boundary, decided by declaring module, not namespace. -/
 def pureModules : Array Name := #[
@@ -302,8 +322,12 @@ def pureModules : Array Name := #[
   `Elements.Foundations.Superposition.Restriction]
 
 /-- Sharing by declaring module, with a supplied boundary for regression fixtures. -/
+def isSharedModuleWith (modules : Array Name) (m : Name) : Bool :=
+  isCanonicalModuleName m && modules.contains m
+
+/-- Sharing uses the same module decision for actual declarations. -/
 def isSharedWith (modules : Array Name) (env : Environment) (c : Name) : Bool :=
-  (moduleOf? env c).any modules.contains
+  (moduleOf? env c).any (isSharedModuleWith modules)
 
 /-- A constant declared in one of the four approved pure modules. -/
 def isShared (env : Environment) (c : Name) : Bool :=
@@ -347,6 +371,8 @@ reaches. The supplied lookup permits isolated regression data without changing L
 environment. Production supplies `pureModules` and the environment's own lookup. -/
 def checkPureModulesWith (modules : Array Name) (env : Environment)
     (find? : Name → Option ConstantInfo) : Except String Unit := do
+  for m in modules do
+    unless isCanonicalModuleName m do throw s!"non-canonical shared module `{m}`"
   let mut roots := #[]
   for i in [:env.header.moduleNames.size] do
     if modules.contains env.header.moduleNames[i]! then
@@ -505,6 +531,7 @@ order. -/
 def foundationAxioms (env : Environment) : Array Name := Id.run do
   let mut out : Array Name := #[]
   for i in [0:env.header.moduleNames.size] do
+    unless isCanonicalModuleName env.header.moduleNames[i]! do continue
     unless (`Elements.Foundations).isPrefixOf env.header.moduleNames[i]! do continue
     for c in env.header.moduleData[i]!.constNames do
       if let some (.axiomInfo _) := env.find? c then out := out.push c
@@ -860,7 +887,7 @@ before those modules exist. -/
 def sharedImportHeaderWith (modules : Array Name) (env : Environment)
     (reached : Array Name) : String :=
   let imports := modules.filter fun m =>
-    reached.any fun w => moduleOf? env w == some m
+    isCanonicalModuleName m && reached.any fun w => moduleOf? env w == some m
   String.join (imports.toList.map (s!"\npublic import {·}"))
 
 /-- The text of `Model/Laws.lean`. It adds the generated words, and the laws as definitions,
@@ -1208,13 +1235,15 @@ def modelImportPackages : Array (String × Array Name) := #[
 /-- Check imports recorded for source files, with paths relative to the repository.
 Model files may import only `Model`, its submodules, the four pure modules and the external
 roots in `modelImportPackages`. Pure modules may import only each other and `Init`.
-Every Model source is audited. Lean and the pinned external packages cannot import this
-repository's modules, so checking these direct imports checks the whole import closure.
-This decision needs no environment. -/
+Every Model source is audited. Under the configured package roots and unmodified external
+dependencies, these direct imports bound the local closure. This name-based check does not
+authenticate external files, search paths or symlink targets. It needs no environment. -/
 def checkModelImportsWith (files : List (String × List Name)) : Except String Unit := do
   for (file, imports) in files do
     let shared := pureModules.any fun m => pureModuleFile m == file
     for m in imports do
+      unless isCanonicalModuleName m do
+        throw s!"{file}: import `{m}` has a non-canonical module name"
       if shared then
         unless m.getRoot == `Init || pureModules.contains m do
           throw s!"{file}: pure module imports `{m}`, outside the four pure modules and `Init`"
@@ -1329,7 +1358,8 @@ def checkLock (root modelDir : System.FilePath) (p : Plan) (checkHash : Bool) :
 those of `Elements.Foundations`. -/
 def importedFoundations : CommandElabM (Array Name) := do
   let env ← getEnv
-  return (env.header.moduleNames.filter (`Elements.Foundations).isPrefixOf).qsort
+  return (env.header.moduleNames.filter fun m =>
+    isCanonicalModuleName m && (`Elements.Foundations).isPrefixOf m).qsort
     (·.toString < ·.toString)
 
 /-- The three files, written in memory from the declarations in the environment. -/
@@ -1622,6 +1652,63 @@ def checkPureFixture (roots : Array Name) (replacements : Array ConstantInfo := 
   match checkPureWith env lookup roots with
   | .ok () => pure ()
   | .error e => throwError "{e}"
+
+/-- Plant declaring-module lookup data for the two geometric words from the escape
+report. Exercise the same module decisions as `isLeanCore` and `isSharedWith`, without
+constructing an environment or installing a module. -/
+def checkModuleTrustFixture (m : Name) : CommandElabM Unit := do
+  let lookup := fun c =>
+    if c == `Elements.Point || c == `Elements.Collinear then some m else none
+  for c in [`Elements.Point, `Elements.Collinear] do
+    for package? in [none, some "stoicheia"] do
+      if (lookup c).any (fun n => isLeanCoreModule n package?) then
+        throwError "non-canonical module made `{c}` Lean's own"
+    if (lookup c).any (isSharedModuleWith (pureModules.push m)) then
+      throwError "non-canonical module made `{c}` shared"
+
+/-- Test the canonical predicate and the decisions that use it, before any pure module
+exists. Escaped strings are also passed through Lean's real header parser; anonymous and
+numeric names can only be supplied directly as data. No fixture loads an import. -/
+def checkCanonicalModuleNames : CommandElabM Unit := do
+  let env ← getEnv
+  unless isLeanCore env ``Nat && isLeanCore env ``List && isLeanCore env ``propext do
+    throwError "installed Init declarations failed the core decision"
+  for m in pureModules ++ #[`Init, `Init.Data.List.Basic, `Model.Laws.«areas-p5»,
+      `Model.«αβ», `Model.«v1.2», `Model.«123»] do
+    unless isCanonicalModuleName m do throwError "canonical module refused: `{m}`"
+    unless isLeanCoreModule m none == (m.getRoot == `Init) do
+      throwError "wrong core decision for `{m}`"
+    for package in ["stoicheia", "model", "lean", "Init", ""] do
+      if isLeanCoreModule m (some package) then
+        throwError "core decision accepted `{m}` from package {repr package}"
+    unless isSharedModuleWith (pureModules.push m) m do
+      throwError "canonical shared module refused: `{m}`"
+  let badParts := ["", ".", "..", "A/B", "A\\B", "/tmp/Elements/Foundations/Words",
+    "\\tmp\\Words", "C:", "C:Words", "C:/Words", "C:\\Words", "Words:stream",
+    "\\\\host\\Words", "\x00Words", "Words\x00", "Words.", "Words ", ".. ", "..."]
+  let mut badNames := #[Name.anonymous, Name.num .anonymous 0, Name.num `Init 0,
+    Name.str (Name.num `Init 0) "Words"]
+  for root in [Name.anonymous, `Init, `Model, `Elements.Foundations, `Unknown] do
+    for part in badParts do
+      let m := Name.str root part
+      badNames := badNames.push m |>.push (Name.str m "Words")
+      let source := s!"import {if root.isAnonymous then "" else s!"{root}."}«{part}»\n"
+      unless (← modelImportHeader "planted header" source) == [m] do
+        throwError "header parser changed the escaped component {repr part}"
+  for m in badNames do
+    if isCanonicalModuleName m then throwError "non-canonical module accepted: `{m}`"
+    checkModuleTrustFixture m
+    for file in ["model/Model.lean", pureModuleFile pureModules[0]!] do
+      match checkModelImportsWith [(file, [m])] with
+      | .ok () => throwError "import audit accepted non-canonical `{m}`"
+      | .error e =>
+        unless e == s!"{file}: import `{m}` has a non-canonical module name" do
+          throwError "unexpected non-canonical import refusal: {e}"
+    match checkPureModulesWith #[m] (← getEnv) (fun _ => none) with
+    | .ok () => throwError "module audit accepted a non-canonical sharing boundary"
+    | .error e =>
+      unless e == s!"non-canonical shared module `{m}`" do
+        throwError "unexpected shared boundary refusal: {e}"
 
 /-- A copy of a definition with a dependency in its type or value. This is lookup data,
 never a declaration submitted to the kernel. -/

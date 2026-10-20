@@ -1950,8 +1950,11 @@ findings:
   `modelImportPackages`, from Lean and the pinned Mathlib dependency configurations in
   `model/lake-manifest.json`. Other roots, including `Check`, `Staging`, `Audit`,
   `Certificate` and unknown names, are refused. Pure files admit only the four pure
-  modules and `Init`. The external packages cannot import this repository, so auditing
-  every local source's direct imports checks the whole import closure. Lake 4.35 defaults
+  modules and `Init`. Every import name must first have canonical path components, as
+  specified in the fifth-round correction below. Auditing these local sources bounds their
+  closure under the configured package roots and unmodified external dependencies and
+  toolchain, without search-path or symlink substitution. External sources and file
+  provenance are not audited here. Lake 4.35 defaults
   the Model library to root `Model` and glob `Glob.one Model`, building `Model.lean` and
   following its imports. Auditing that root outside `Model/` and the whole directory
   covers its local sources, including unimported ones. Lean's header parser handles legacy
@@ -2014,3 +2017,34 @@ findings:
   `Check.Generated` also refused the newly present, unimported foundation module in that
   case. Each fixture was removed afterwards, the newly created `Superposition/` directory
   was removed, and `lake build` passed again (2625 jobs). No generated source was written.
+
+- **Fifth-round module-name correction for brief 0009, #75.** The import audit previously
+  accepted `Model.«..».Check.Original`; an absolute-path component under `Init` could also
+  label the geometric words as Lean's own. `isCanonicalModuleName` now requires non-empty
+  string components, with no slash, backslash, NUL or colon, neither `.` nor `..`, and no
+  trailing dot or space. Anonymous names and numeric components are refused. The import audit
+  applies this predicate before root permissions; core, shared and project membership,
+  foundation collection and shared headers use it too. A non-canonical sharing boundary
+  is an error. Harmless escaped names such as `areas-p5` remain accepted.
+  Reading the installed Lean 4.35 `Lean/Util/Path.lean` and `Init/System/FilePath.lean`
+  confirms that `modToFilePath` joins each component with `FilePath.join`: `..` permits
+  traversal and an absolute component discards the preceding path. Windows drive prefixes,
+  streams and trailing-dot or trailing-space aliases are refused on every platform.
+  `Lean/Compiler/ModPkgExt.lean` exposes an imported module's optional package identifier
+  through `Environment.getModulePackageByIdx?`. Inspection found no identifier on any of
+  the installed toolchain's 653 `Init` modules, and `some "stoicheia"` on the geometric
+  words. `isLeanCore` now requires a canonical `Init` name and an absent package identifier,
+  refusing every named package. `Lean/Environment.lean` retains no resolved file path; its
+  importer can use either `findOLean` or explicit import artefacts, so looking up a name
+  again would not authenticate the already loaded file. An unlabelled replacement remains
+  outside what these checks distinguish. The build assumptions above still apply.
+  Planted headers reproduce both escapes, and planted declaring-module lookups for
+  `Elements.Point` and `Elements.Collinear` exercise the core and sharing decisions without
+  installing a new module. These cases failed before the canonical guard was added.
+  A matrix exercises the predicate, header parser and import decisions, including Windows
+  spellings, empty components, NUL and invalid numeric names; positive cases keep harmless
+  escaped identifiers and canonical modules admitted. Further core cases refuse named
+  packages even with canonical names, and accept actual Init declarations. All run before
+  the calculus arrives.
+  This round changes only `model/Check/Generator.lean`, `model/Check/RoundTrip.lean`,
+  `model/README.md` and this decisions file. The three generated sources stay unchanged.

@@ -160,6 +160,17 @@ both direct and transitive dependencies through types and values. -/
 run_cmd (Check.Generator.checkPureFixture
   #[``id, ``List, ``Nat.rec, ``propext, ``Classical.choice, ``Quot.sound])
 
+/- Planted declaring-module lookups exercise the core and sharing decisions without
+installing a module or constructing an environment. -/
+#guard_msgs in
+run_cmd Check.Generator.checkModuleTrustFixture `Init.«/tmp/Elements/Foundations/Words»
+
+#guard_msgs in
+run_cmd Check.Generator.checkModuleTrustFixture `Model.«..».Check.Original
+
+#guard_msgs in
+run_cmd Check.Generator.checkModuleTrustFixture `Elements.«..».Check.Original
+
 /-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
 #guard_msgs in
 run_cmd Check.Generator.pureDependency ``Elements.Point
@@ -237,6 +248,22 @@ first body command is not part of the header. -/
 
 #guard_msgs in
 run_cmd Check.Generator.checkModelImports
+
+#guard_msgs in
+run_cmd Check.Generator.checkCanonicalModuleNames
+
+/-- error: model/Model.lean: import `Model.«..».Check.Original` has a non-canonical module name -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "import Model.«..».Check.Original\n")])
+
+/--
+error: Elements/Foundations/Superposition/Syntax.lean: import `Init.«/tmp/Elements/Foundations/Words»` has a non-canonical module name
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/Syntax.lean",
+    "import Init.«/tmp/Elements/Foundations/Words»\n")])
 
 #guard_msgs in
 run_cmd (Check.Generator.checkModelImportFixture [

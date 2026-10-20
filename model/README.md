@@ -274,8 +274,9 @@ The generator is prepared to share four modules for the restricted calculus of
 `Elements.Foundations.Superposition.Semantics`,
 `Elements.Foundations.Superposition.Soundness` and
 `Elements.Foundations.Superposition.Restriction`. A declaration qualifies by its declaring
-module, never by its namespace. Its translation keeps its name and universe arguments in
-both directions, and the generated laws import the shared modules their vocabulary reaches.
+canonical module name, never by its namespace. Its translation keeps its name and universe
+arguments in both directions, and the generated laws import the shared modules their
+vocabulary reaches.
 Before translating, the generator audits every declaration in every imported shared module,
 including declarations no law reaches. It follows types and values transitively, including
 theorem proofs, opaque values, constructors and recursor rules. Every dependency must come
@@ -291,9 +292,29 @@ the external module roots listed in `modelImportPackages` in
 [Check/Generator.lean](Check/Generator.lean). That single list records Lean's permitted
 roots and the library roots supplied by Mathlib and its dependencies, checked against
 the pinned packages in `lake-manifest.json`. Every other root is refused, including
-`Check`, `Staging`, `Audit` and `Certificate`. The external packages cannot import this
-repository's modules. Auditing every Model source, and allowing the pure files to import
-only each other and `Init`, therefore checks the whole import closure.
+`Check`, `Staging`, `Audit` and `Certificate`. Pure files may import only each other and
+`Init`. Before applying any root permission, the audit requires a canonical module name:
+every component is a non-empty string, with no `/`, `\`, NUL or colon, neither `.` nor
+`..`, and no trailing dot or space. Anonymous names and numeric components are refused.
+Harmless escaped identifiers, including `areas-p5`, remain valid. The same predicate guards
+core, shared and project declaration membership, foundation collection and shared headers.
+
+Lean 4.35's `modToFilePath` joins each component as a path: `..` can leave a package and
+an absolute component replaces the path before it. Colons and trailing dots or spaces have
+additional drive, stream or normalisation meanings on Windows, so they are refused on every
+platform. This closes the escaped-component routes, including
+`Model.«..».Check.Original` and an absolute path beneath `Init`.
+
+The closure claim depends on the configured package roots, unmodified pinned dependencies
+and toolchain, and no search-path or symlink substitution. The audit checks all local Model
+sources and the four pure sources, but does not recursively audit external source files or
+authenticate their origin. Lean 4.35 exposes an imported module's optional package identifier
+through `Environment.getModulePackageByIdx?`. All 653 `Init` modules in the installed pinned
+toolchain have no identifier, so `isLeanCore` requires both a canonical `Init` name and no
+package identifier. This refuses a named package, including `stoicheia`, posing as `Init`.
+It does not authenticate an unlabelled replacement. Lean's environment retains no resolved
+`.olean` path. `findOLean` searches the current path again; it does not recover the loaded
+file's provenance, and Lake can supply explicit import artefacts.
 
 Lake 4.35 defaults the Model library's roots to `Model` and its globs to that root alone.
 It builds `Model.lean` and recursively follows imports. The audit includes this file
@@ -401,6 +422,14 @@ the original means. These checks do that, at every build.
   Import cases accept the real tree and permitted headers, and refuse geometric imports,
   `Check.Original` in a legacy `Model.lean` header, `Staging`, `Audit`, `Certificate`, an
   unknown root, a module below an approved pure module, and Mathlib in a pure file.
+  Escaped traversal and absolute-path headers are refused. A matrix checks empty, dot,
+  separator, NUL, drive, stream and trailing-dot or trailing-space components in root,
+  intermediate and final positions, through the predicate and import decisions; escaped
+  strings also pass through Lean's header parser. Anonymous and numeric names are tested
+  directly. Planted declaring-module lookups for `Elements.Point` and `Elements.Collinear`
+  exercise the same core and sharing decisions as production, without installing a module.
+  Core cases also refuse canonical names with a named package and accept actual Init
+  declarations. Canonical names, including harmless escaped identifiers, remain accepted.
   A path regression checks that both relative and absolute Check filenames locate the
   model package.
 
