@@ -333,10 +333,12 @@ def blank_blocks(text: str) -> str:
     return blank_html_comments(blank_fences(text))
 
 
-def blank_code(text: str, *, indented_code: bool = True) -> str:
+def blank_code(text: str, *, indented_code: bool = True,
+               reference_labels: set[str] | None = None, inline_html: bool = False) -> str:
     """Fenced blocks, code spans and HTML comments blanked: what a reader reads as prose,
     quotations included."""
-    syntax = markdown_syntax(text, indented_code=indented_code)
+    syntax = markdown_syntax(text, indented_code=indented_code,
+                             reference_labels=reference_labels, inline_html=inline_html)
     ranges = (syntax.comments + syntax.destinations
               + [(span.start, span.end) for span in syntax.spans]
               + markdown_blocks(text, indented_code=indented_code).fences)
@@ -925,6 +927,10 @@ HTML_BLOCKS = (
 HTML_TAG_LINE = re.compile(r"(?:<[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[A-Za-z_:][\w.:-]*"
                              r"(?:[ \t]*=[ \t]*(?:[^\s\"'=<>`]+|'[^']*'|\"[^\"]*\"))?)*"
                              r"[ \t]*/?>|</[A-Za-z][A-Za-z0-9-]*[ \t]*>)[ \t]*$")
+INLINE_HTML_TAG = re.compile(
+    r"(?:<[A-Za-z][A-Za-z0-9-]*(?:\s+[A-Za-z_:][\w.:-]*"
+    r"(?:\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s\"'=<>`]+))?)*\s*/?>"
+    r"|</[A-Za-z][A-Za-z0-9-]*\s*>)")
 
 class InlineBlock(NamedTuple):
     text: str
@@ -1476,18 +1482,49 @@ def matching_link_label(text: str, close: int) -> int | None:
     return None
 
 
-def link_destination_ranges(text: str, *, references: bool = True) -> list[LinkDestination]:
+def reference_key(label: str) -> str:
+    """A reference label with case and whitespace normalised for matching."""
+    return " ".join(label.split()).casefold()
+
+
+def document_reference_labels(text: str) -> set[str]:
+    """Reference definitions throughout the document, excluding code and raw HTML."""
+    labels = set()
+    for block in markdown_blocks(text, raw_html=True).inline:
+        if block.references:
+            for definition in reference_destination_ranges(block.text):
+                match = REFERENCE_LABEL.match(block.text[definition.start:definition.end])
+                if match:
+                    labels.add(reference_key(match.group(1)))
+    return labels
+
+
+def link_destination_ranges(text: str, *, references: bool = True,
+                            reference_labels: set[str] | None = None,
+                            inline_html: bool = False) -> list[LinkDestination]:
     """Link destinations and their label starts in one inline block."""
     found = reference_destination_ranges(text) if references else []
     found += [LinkDestination(m.start(), m.end(), m.start(), False)
               for m in AUTOLINK.finditer(text)
               if backslashes_before(text, m.start()) % 2 == 0]
-    for match in re.finditer(r"\]\(", text):
+    if inline_html:
+        found += [LinkDestination(m.start(), m.end(), m.start(), False)
+                  for m in INLINE_HTML_TAG.finditer(text)
+                  if backslashes_before(text, m.start()) % 2 == 0]
+    for match in re.finditer(r"\]", text):
         close = match.start()
         label = matching_link_label(text, close)
         if backslashes_before(text, close) % 2 or label is None:
             continue
-        end = inline_destination_end(text, close + 1)
+        end = (inline_destination_end(text, close + 1)
+               if text[close + 1:close + 2] == "(" else None)
+        if end is None and reference_labels:
+            identifier = re.match(r"\[((?:\\.|[^\[\]\\]){0,999})\]", text[close + 1:])
+            key = identifier.group(1) if identifier else ""
+            if not key:
+                key = text[label + 1:close]
+            if reference_key(key) in reference_labels:
+                end = close + 1 + (identifier.end() if identifier else 0)
         if end is not None:
             image = (label > 0 and text[label - 1] == "!"
                      and backslashes_before(text, label - 1) % 2 == 0)
@@ -1495,7 +1532,9 @@ def link_destination_ranges(text: str, *, references: bool = True) -> list[LinkD
     return sorted(found)
 
 
-def markdown_syntax(text: str, *, indented_code: bool = True) -> MarkdownSyntax:
+def markdown_syntax(text: str, *, indented_code: bool = True,
+                    reference_labels: set[str] | None = None,
+                    inline_html: bool = False) -> MarkdownSyntax:
     """The CommonMark code spans and HTML comments of a Markdown text, with source offsets.
     Comments are the container-bounded comment blocks and the closed inline comments. In
     each inline leaf block, a code span and an inline comment are read in source order:
@@ -1509,7 +1548,9 @@ def markdown_syntax(text: str, *, indented_code: bool = True) -> MarkdownSyntax:
         ticks = [(m.start(), m.end()) for m in BACKTICKS.finditer(block.text)]
         openers = [m.start() for m in re.finditer("<!--", block.text)
                    if backslashes_before(block.text, m.start()) % 2 == 0]
-        links = link_destination_ranges(block.text, references=block.references)
+        links = link_destination_ranges(block.text, references=block.references,
+                                        reference_labels=reference_labels,
+                                        inline_html=inline_html)
         active = {link.label: True for link in links}
         consumed: list[tuple[int, int]] = []
         i, pos = 0, 0
@@ -2862,7 +2903,7 @@ def check_euclid(path: Path, ref: str) -> None:
 
 # ---------------------------------------------------------------------------------------
 # The figure of the modern way (S24, S25; STYLE, section 7): figures/<book>/NN-modern.svg,
-# shown under the page's paragraph "**The modern way.**". It is drawn as Euclid's figure
+# intended for the page's paragraph "**The modern way.**". It is drawn as Euclid's figure
 # is, on its canvas and in its palette, with its letters, upright, at the same points,
 # and with the paragraph's own names for what the modern way measures (a, b, θ, u),
 # italic, so that a reader moves between the two figures by the same names.
@@ -2920,12 +2961,15 @@ def modern_span(text: str) -> tuple[int, int] | None:
     (start, end) source offsets. Read blocks in the original text, before masking any
     comments or code. Four columns of indentation start code, but cannot interrupt an
     open paragraph. Fences and HTML blocks keep their contents out of the search;
-    inline comments leave the paragraph's line boundaries intact. These offsets also
-    let a renderer put the figure after the whole paragraph."""
+    inline comments leave the paragraph's line boundaries intact. Leading reference
+    definitions are excluded without moving the offsets into the original text.
+    These offsets also let a renderer put the figure after the whole paragraph."""
     for block in markdown_blocks(text, raw_html=True).inline:
         if not block.paragraph:
             continue
-        content = block.text.lstrip(" \t")
+        definitions = reference_destination_ranges(block.text)
+        start = definitions[-1].end if definitions else 0
+        content = block.text[start:].lstrip(" \t\n")
         if content.startswith(MODERN_WAY):
             first = len(block.text) - len(content)
             return block.offsets[first], block.offsets[-1] + 1
@@ -2934,12 +2978,14 @@ def modern_span(text: str) -> tuple[int, int] | None:
 
 def modern_paragraph(text: str) -> str | None:
     """The paragraph of a mishnah that opens "**The modern way.**" (modern_span), as a
-    reader sees it: its HTML comments, code and link targets blanked afterwards, so that
-    nothing hidden from the page gives it a name. None when there is no such paragraph."""
+    reader sees it: its HTML tags and comments, code and link targets blanked afterwards.
+    Reference links resolve against the whole document before their identifiers are
+    blanked. None when there is no such paragraph."""
     span = modern_span(text)
     if span is None:
         return None
-    return blank_code(text[span[0]:span[1]])
+    return blank_code(text[span[0]:span[1]], indented_code=False,
+                      reference_labels=document_reference_labels(text), inline_html=True)
 
 
 def modern_names(paragraph: str) -> set[str]:
@@ -2968,6 +3014,21 @@ def modern_names(paragraph: str) -> set[str]:
     return names
 
 
+def modern_number(value: str | None, *, pixels: bool = False) -> float | None:
+    """A finite SVG number, optionally in pixels, or None for malformed syntax."""
+    if value is None:
+        return None
+    pattern = r"([-+]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][-+]?[0-9]+)?)"
+    match = re.fullmatch(r"\s*" + pattern + (r"(?:px)?" if pixels else "") + r"\s*", value)
+    if not match:
+        return None
+    try:
+        result = float(match.group(1))
+    except (ValueError, OverflowError):
+        return None
+    return result if math.isfinite(result) else None
+
+
 def modern_findings(root, ref: str, heaths: set[str] | None,
                     names: set[str] | None) -> list[tuple[str, str]]:
     """(rule, message) for each fault of a modern figure (S24, S25), given the letters its
@@ -2975,15 +3036,19 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
     uses (None: no such paragraph)."""
     found: list[tuple[str, str]] = []
     vb = root.get("viewBox", "").replace(",", " ").split()
-    width = float(vb[2]) if len(vb) == 4 else None
-    if width is None or not 400 <= width <= 440:
+    values = [modern_number(value) for value in vb]
+    width = values[2] if len(values) == 4 else None
+    if len(values) != 4 or None in values:
+        found.append(("S24", f"malformed viewBox {root.get('viewBox')!r}: "
+                      "expected four finite SVG numbers"))
+    elif not 400 <= width <= 440:
         found.append(("S24", f"viewBox width {width}, not 400 to 440, as Euclid's figure"))
     title = root.find(f"{SVG}title")
     if title is None or " ".join(text_of(title).split()) != f"{ref}: the modern way":
         got = "no <title>" if title is None else f"title \"{text_of(title)}\""
         found.append(("S24", f"{got}, not \"{ref}: the modern way\""))
     if root.find(f".//{SVG}desc") is not None:
-        found.append(("S24", "a caption (<desc>): the paragraph above the figure is its caption"))
+        found.append(("S24", "a caption (<desc>): the modern-way paragraph serves as its caption"))
     if heaths is None:
         found.append(("S24", "no Euclid's figure to take the letters from"))
     if names is None:
@@ -2999,10 +3064,12 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
         if (t in FILLED or t == "text") and eff.get("fill") is None:
             found.append(("S24", f"a <{t}> with no fill, which SVG paints black: give it "
                           "a colour of the palette, or fill=\"none\""))
-        if t in DRAWN and (eff.get("stroke") or "none").lower() != "none":
-            w = number(eff.get("stroke-width"))
-            w = 1.0 if w is None else w
-            if not 1.2 <= w <= 3.2:
+        if (t in DRAWN or t == "text") and (eff.get("stroke") or "none").lower() != "none":
+            raw_width = eff.get("stroke-width")
+            w = 1.0 if raw_width is None else modern_number(raw_width, pixels=True)
+            if w is None:
+                found.append(("S24", f"malformed stroke-width {raw_width!r} on a <{t}>"))
+            elif not 1.2 <= w <= 3.2:
                 found.append(("S24", f"stroke-width {w:g} on a <{t}>, not 1.2 to 3.2"))
         if t == "tspan":
             found.append(("S25", "a <tspan>: one size and one style to each <text>"))
@@ -3011,7 +3078,7 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
         s = " ".join(text_of(el).split()).translate(GREEK_VARIANTS)
         if not s:
             continue
-        if number(eff.get("font-size")) != MODERN_TEXT_SIZE:
+        if modern_number(eff.get("font-size"), pixels=True) != MODERN_TEXT_SIZE:
             found.append(("S25", f"<text>{s}</text> at font-size {eff.get('font-size')}, "
                           f"not {MODERN_TEXT_SIZE}"))
         style = letter_style(eff)

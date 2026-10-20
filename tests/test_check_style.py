@@ -349,9 +349,10 @@ MODERN_CASES = [   # (a figure's inside, the title's ref, the finding wanted: ru
 ]
 
 
-def modern_rules(inside: str, ref: str, heaths=HEATHS, names=NAMES) -> set[str]:
-    """The rules S24 and S25 find broken in a 400 × 300 figure of the modern way."""
-    root = ET.fromstring('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+def modern_rules(inside: str, ref: str, heaths=HEATHS, names=NAMES,
+                 viewbox="0 0 400 300") -> set[str]:
+    """The rules S24 and S25 find broken in a figure of the modern way."""
+    root = ET.fromstring(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}">'
                          f"{inside}</svg>")
     return {rule for rule, _ in style.modern_findings(root, ref, heaths, names)}
 
@@ -963,6 +964,131 @@ class Modern(unittest.TestCase):
                 fail.assert_called_once()
                 self.assertEqual(fail.call_args.args[:3], ("S24", path, 0))
                 self.assertIn("not well-formed SVG", fail.call_args.args[3])
+
+    def test_canvas_widths(self):
+        for width, valid in (("399", False), ("400", True), ("420", True),
+                             ("440", True), ("441", False), ("invalid", False),
+                             (".", False), ("400..0", False), ("400px", False),
+                             ("nan", False), ("inf", False), ("1e999", False)):
+            with self.subTest(width=width):
+                found = modern_rules(MODERN_GOOD, "I.47", viewbox=f"0 0 {width} 300")
+                self.assertEqual(found, set() if valid else {"S24"})
+        for viewbox in ("0 0 400", "invalid 0 400 300", "0 0 400 invalid"):
+            with self.subTest(viewbox=viewbox):
+                self.assertEqual(modern_rules(MODERN_GOOD, "I.47", viewbox=viewbox),
+                                 {"S24"})
+
+    def test_malformed_numbers_report_the_file_and_continue(self):
+        cases = [
+            ("0 0 invalid 300", MODERN_GOOD, "S24", "viewBox"),
+            ("0 0 400 300", MODERN_GOOD.replace('stroke-width="1.6"',
+                                               'stroke-width="."'), "S24", "stroke-width"),
+            ("0 0 400 300", MODERN_GOOD.replace('font-size="17"',
+                                               'font-size="17..0"'), "S25", "font-size"),
+        ]
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            figures = root / "figures" / "I"
+            figures.mkdir(parents=True)
+            mishnah = root / "mishnah" / "I"
+            mishnah.mkdir(parents=True)
+            for n in ("47", "48"):
+                (mishnah / f"{n}.md").write_text(MODERN_PARAGRAPH)
+            first, following = (figures / f"{n}-modern.svg" for n in ("47", "48"))
+            following.write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                + MODERN_GOOD.replace("I.47", "I.48").replace(">c<", ">x<") + "</svg>")
+            for viewbox, inside, rule, attribute in cases:
+                with self.subTest(attribute=attribute):
+                    first.write_text(
+                        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}">'
+                        + inside + "</svg>")
+                    with patch.object(style, "ROOT", root), \
+                            patch.object(style, "drawn_letters", return_value=HEATHS), \
+                            patch.object(style, "fail") as fail:
+                        style.check_modern(first, "I.47")
+                        style.check_modern(following, "I.48")
+                    findings = [call.args for call in fail.call_args_list]
+                    self.assertTrue(any(r == rule and path == first and attribute in message
+                                        for r, path, _, message in findings), findings)
+                    self.assertTrue(any(r == "S25" and path == following
+                                        and "x is no name" in message
+                                        for r, path, _, message in findings), findings)
+
+    def test_text_strokes(self):
+        for inherited in (False, True):
+            for width, valid in (("1.2", True), ("3.2", True), ("1.1", False),
+                                 ("20", False), (".", False)):
+                with self.subTest(inherited=inherited, width=width):
+                    ink = f'stroke="#3b2f2f" stroke-width="{width}"'
+                    label = (f'<g {ink}><text x="50" y="270">A</text></g>' if inherited
+                             else f'<text x="50" y="270" {ink}>A</text>')
+                    inside = MODERN_GOOD.replace('<text x="50" y="270">A</text>', label)
+                    self.assertEqual(modern_rules(inside, "I.47"), set() if valid else {"S24"})
+
+    def test_html_attributes_supply_no_names(self):
+        for inline, expected in (
+                ('<span data-note="x">the side</span>', {"b"}),
+                ('<span data-note="x">c</span>', {"b", "c"}),
+                ('<span data-note="x > y">c</span>', {"b", "c"}),
+                ('<span\n data-note="x">c</span>', {"b", "c"}),
+                ('<span data-note="`x">c</span> and `k`', {"b", "c"}),
+                ('<span data-note="<!-- x -->">c</span>', {"b", "c"})):
+            text = MW + "Put $b$ on " + inline + "."
+            with self.subTest(inline=inline):
+                names = style.modern_names(style.modern_paragraph(text))
+                self.assertEqual(names, expected)
+                figure = ('<title>I.47: the modern way</title>'
+                          '<text font-size="17" fill="#3b2f2f" font-style="italic">x</text>')
+                self.assertEqual(modern_rules(figure, "I.47", names=names), {"S25"})
+        escaped = MW + r'Put $b$ on \<span data-note="x">c\</span>.'
+        self.assertIn("x", style.modern_names(style.modern_paragraph(escaped)))
+
+    def test_reference_link_names(self):
+        cases = [
+            ("[this reference][x]", "\n\n[x]: /reference", {"b"}),
+            ("[c][x]", "\n\n[x]: /reference", {"b", "c"}),
+            ("[c][ X ]", "\n\n[x]: /reference", {"b", "c"}),
+            ("[this reference][x]", "", {"b", "x"}),
+            ("[this reference][x]", "\n\n```\n[x]: /reference\n```", {"b", "x"}),
+            ("[this reference][x]", "\n\n<!--\n[x]: /reference\n-->", {"b", "x"}),
+            ("[this reference][x]", "\n\n<div>\n[x]: /reference\n</div>", {"b", "x"}),
+            ("[x][] and [c]", "\n\n[x]: /reference\n[c]: /reference", {"b", "x", "c"}),
+            ("[c][x] and [d][y]", "\n\n[x]: /reference\n[y]: /reference", {"b", "c", "d"}),
+        ]
+        for link, definitions, expected in cases:
+            text = MW + "Put $b$ on " + link + "." + definitions
+            with self.subTest(text=text):
+                names = style.modern_names(style.modern_paragraph(text))
+                self.assertEqual(names, expected)
+                figure = ('<title>I.47: the modern way</title>'
+                          '<text font-size="17" fill="#3b2f2f" font-style="italic">x</text>')
+                self.assertEqual(modern_rules(figure, "I.47", names=names),
+                                 set() if "x" in expected else {"S25"})
+
+    def test_leading_reference_definitions_preserve_source_offsets(self):
+        paragraph = MW + "Put $b$ on [the side][x]."
+        for before in ("[x]: /reference\n", "[x]: /reference\n  'a title'\n",
+                       "Before.\n\n[x]: /reference\n[y]: /elsewhere\n  "):
+            text = before + paragraph + "\n\nAfter."
+            with self.subTest(before=before):
+                self.assertEqual(style.modern_span(text),
+                                 (len(before), len(before) + len(paragraph)))
+                names = style.modern_names(style.modern_paragraph(text))
+                self.assertEqual(names, {"b"})
+                self.assertNotIn("S24", modern_rules(MODERN_GOOD, "I.47", names=names))
+        self.assertIsNone(style.modern_span("[x]: invalid destination\n" + paragraph))
+
+    def test_style_describes_placement_as_pending(self):
+        text = (style.ROOT / "docs" / "STYLE.md").read_text()
+        page = text.split("8. **The mishnah,**", 1)[1].split("9. **Further reading,**", 1)[0]
+        figure = text.split("**`NN-modern.svg`,", 1)[1].split("**Departures", 1)[0]
+        for passage in (page, figure):
+            with self.subTest(passage=passage):
+                self.assertIn("pending renderer change", passage)
+                self.assertIn("train F1", passage)
+                self.assertIn("S24", passage)
+                self.assertIn("source", passage)
 
     def test_source_spans(self):
         for before, paragraph, after in SOURCE_SPAN_CASES:

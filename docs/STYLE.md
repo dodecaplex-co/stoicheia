@@ -155,8 +155,9 @@ where to look:
    theorem, its porism, its companions), with Heath's references beside the Lean's
    citations, the postulates, definitions taken as axioms, Common Notions and tacit
    rules, and the generated line naming the shared steps that bring in propositions.
-8. **The mishnah,** our commentary (section 3), and under its paragraph "The modern way",
-   where it has one, that paragraph's figure (section 7).
+8. **The mishnah,** our commentary (section 3). S24 checks the source paragraph for any
+   modern figure (section 7); the pending renderer change (train F1) will place that
+   figure under its paragraph "The modern way".
 9. **Further reading,** when something apt exists (section 6).
 10. **The foot of the page:** links to the scan leaves of Heath's text and figure, the
     thanks to the authors of System E and LeanEuclid, and the navigation again.
@@ -526,18 +527,21 @@ validate a figure. Before a changed figure is signed off, render it
 
 **`NN-modern.svg`, the figure of the modern way.** Where the paragraph that opens **The
 modern way.** is easier to follow with a picture (its coordinates, its vectors, Book II's
-lengths a and b), it has a figure of its own, which the page sets under that paragraph. It
-is drawn as Euclid's figure is: the same canvas, palette and strokes **[checked]**, and
+lengths a and b), it has a figure of its own. S24 checks that the source has the paragraph
+for the figure to stand under; the pending renderer change (train F1) will put it there
+on the page.
+It is drawn as Euclid's figure is: the same canvas, palette and strokes **[checked]**, and
 Euclid's figure's letters, upright at 17 **[checked]**, at the points his figure gives
 them, placed on the axes or in the plane as the paragraph places them. What the
 paragraph measures takes the paragraph's own names (a, b, θ, u), italic at 17, and the
 figure uses no name the paragraph does not **[checked]**. A name is a lower-case letter
 of the paragraph's `$…$`, or one standing alone in its words, as in Book II's "AC = a",
-that a reader sees (not in a comment or in code) and that English does not use as a
+that a reader sees (not in a comment, code, an HTML tag or a link's target or reference
+identifier) and that English does not use as a
 word: not the s of "A's", nor the letters of e.g. and i.e., nor the article "a" unless a
 sign of an expression, a digit or a bracket stands beside it. A capital stands alone, as
 one of Heath's letters: a length or a vector is named by its lower-case letter. The title is
-"I.N: the modern way", with no caption, for the paragraph above it is one **[checked]**. A
+"I.N: the modern way", with no caption, for its paragraph serves as one **[checked]**. A
 page with no modern way has no such figure **[checked]**, and a modern way that would only
 restate the proposition in symbols needs none. The figure shows what the paragraph says
 and no more, with the paragraph's conditions (A = (0, 0), b > 0), and is checked as
@@ -633,7 +637,7 @@ just before the script ([WORKFLOW](WORKFLOW.md), section 8).
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 | S22 | Letters in backticks: a code span that holds only letters, a capital or a run of capitals (each with its prime or subscript) or several such runs apart by commas or spaces, as `P`, `PQ`, `ABCD` or `AB, CD` (section 1, "Lean notes") | Prose, Review notes, Catalogues, Other reports, Lean notes, Generated |
 | S24 | A viewBox width outside 400–440; a colour other than Euclid's figure's five, or a shape or a `<text>` with no fill, which SVG paints black; a stroke-width under 1.2 or over 3.2; a `<desc>`; a `<title>` other than "I.N: the modern way"; no `NN.svg` beside it, or no paragraph opening `**The modern way.**` in `mishnah/<book>/NN.md` for it to stand under, read as Markdown reads it (not in a comment or a code block) | Modern figures |
-| S25 | A `<text>` not at font-size 17, or a `<tspan>`; a capital letter (with a prime or a subscript) that `NN.svg` does not draw, or not upright; a capital in a longer text; any other text holding a character besides lower-case Latin and Greek letters, digits and the signs of an expression, or with letters not italic, or with a letter that is not a name of the page's modern way: in its `$…$` spans, each lower-case letter once the commands are taken out (`\vec`, `\frac`, `\mathrm{…}` and what it sets) and the Greek ones read as their letters (`\theta` as θ, and a variant such as ϑ as the letter it is a form of); outside them, each Greek letter, and each lower-case letter standing alone, save one straight after an apostrophe (`'` or `’`, the s of "A's"), the letters of e.g. and i.e., and the article a with no sign of an expression (=, +, -, −, ×, ·, /, <, >, ≤, ≥), digit (raised or lowered, as ²) or bracket beside it, spaces between; and none of it from an HTML comment, a code span or a link's target, which a reader does not see, the paragraph being read as Markdown reads it, so that a line holding only a code span goes on with it | Modern figures |
+| S25 | A `<text>` not at font-size 17, or a `<tspan>`; a capital letter (with a prime or a subscript) that `NN.svg` does not draw, or not upright; a capital in a longer text; any other text holding a character besides lower-case Latin and Greek letters, digits and the signs of an expression, or with letters not italic, or with a letter that is not a name of the page's modern way: in its `$…$` spans, each lower-case letter once the commands are taken out (`\vec`, `\frac`, `\mathrm{…}` and what it sets) and the Greek ones read as their letters (`\theta` as θ, and a variant such as ϑ as the letter it is a form of); outside them, each Greek letter, and each lower-case letter standing alone, save one straight after an apostrophe (`'` or `’`, the s of "A's"), the letters of e.g. and i.e., and the article a with no sign of an expression (=, +, -, −, ×, ·, /, <, >, ≤, ≥), digit (raised or lowered, as ²) or bracket beside it, spaces between; and none of it from an HTML tag or comment, a code span or a link's target or resolved reference identifier, which a reader does not see, the paragraph being read as Markdown reads it, so that a line holding only a code span goes on with it | Modern figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 
