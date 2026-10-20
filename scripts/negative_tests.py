@@ -62,8 +62,10 @@ records current; CI runs it on every push.
     is replayed.
 16. Without a build, in a temporary copy of the tracked files without Git: opening,
     base and closing merge markers, a middle between outer markers, and a lone middle
-    in a non-Markdown file each fail S23 with their file, line and kind. A Markdown
-    setext heading with seven equals leaves the unplanted copy's result unchanged.
+    in a non-Markdown file, comment, fence or after a completed heading, indented code
+    or link reference definition each fail S23 with their file, line and kind.
+    Setext headings, including several lines and one after a comment containing a
+    fence, leave the unplanted copy's result unchanged. Symlinks are not copied.
     This runs before the plants that build, and preserves any existing findings.
 
 These faults exercise the style and link checks, page freshness, an audit pin and
@@ -203,6 +205,16 @@ def style_error() -> None:
         path.write_bytes(saved)
 
 
+def copy_marker_files(root: Path, names: list[str]) -> None:
+    """Copy the tracked files for item 16, skipping symlinks without reading targets."""
+    for name in names:
+        source = ROOT / name
+        if name and not source.is_symlink() and source.is_file():
+            target = root / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source, target)
+
+
 def merge_conflict_markers() -> None:
     """Plant raw marker lines in copies of tracked text, with no Git or Lean needed
     by the check. Compare the harmless heading with the baseline, so an existing
@@ -213,11 +225,7 @@ def merge_conflict_markers() -> None:
         return
     with tempfile.TemporaryDirectory(prefix="stoicheia-markers-") as tmp:
         root = Path(tmp)
-        for name in listing.stdout.split("\0"):
-            if name and (ROOT / name).is_file():
-                target = root / name
-                target.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(ROOT / name, target)
+        copy_marker_files(root, listing.stdout.split("\0"))
 
         def check() -> subprocess.CompletedProcess:
             return subprocess.run([sys.executable, "scripts/check_style.py", "--no-lean"],
@@ -234,6 +242,20 @@ def merge_conflict_markers() -> None:
              [(0, "opening"), (2, "middle"), (3, "closing")]),
             ("lone middle", non_markdown, ["=" * 7], [(0, "middle")]),
             ("closing", markdown, [">" * 7 + " theirs"], [(0, "closing")]),
+            ("middle in a comment", markdown,
+             ["<!--", "Comment text", "=" * 7, "-->"], [(2, "middle")]),
+            ("middle after a completed heading", markdown,
+             ["Heading", "=" * 3, "=" * 7], [(2, "middle")]),
+            ("middle after a hyphen heading", markdown,
+             ["Heading", "-" * 3, "=" * 7], [(2, "middle")]),
+            ("middle after indented code", markdown,
+             ["", "    code", "=" * 7], [(2, "middle")]),
+            ("middle after a reference definition", markdown,
+             ["", "[label]: destination", "=" * 7], [(2, "middle")]),
+            ("middle in a fence", markdown,
+             ["```", "Code text", "=" * 7, "```"], [(2, "middle")]),
+            ("middle after a fence inside a comment", markdown,
+             ["<!--", "```", "Comment text", "=" * 7, "-->"], [(3, "middle")]),
         ]
         for name, rel, lines, expected in cases:
             path = root / rel
@@ -249,17 +271,20 @@ def merge_conflict_markers() -> None:
                 path.write_bytes(saved)
         path = root / markdown
         saved = path.read_bytes()
-        try:
-            path.write_bytes(saved + ("\nA planted setext heading\n" + "=" * 7 + "\n").encode())
-            result = check()
-            if (result.returncode, result.stdout, result.stderr) != (
-                    baseline.returncode, baseline.stdout, baseline.stderr):
-                failures.append("a setext heading changed the style check's result")
-                print(result.stdout + result.stderr)
-            else:
-                print("✓ a seven-equals setext heading: no new refusal")
-        finally:
-            path.write_bytes(saved)
+        for heading in ("A planted setext heading", "A planted heading\ncontinued",
+                        "<!--\n```\n-->\nA planted heading",
+                        "A planted heading\n    continued"):
+            try:
+                path.write_bytes(saved + ("\n" + heading + "\n" + "=" * 7 + "\n").encode())
+                result = check()
+                if (result.returncode, result.stdout, result.stderr) != (
+                        baseline.returncode, baseline.stdout, baseline.stderr):
+                    failures.append(f"a setext heading changed the style check's result: {heading!r}")
+                    print(result.stdout + result.stderr)
+                else:
+                    print(f"✓ a seven-equals setext heading ({heading!r}): no new refusal")
+            finally:
+                path.write_bytes(saved)
 
 
 def broken_link() -> None:

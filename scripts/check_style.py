@@ -21,6 +21,8 @@ seven-character opening, base and closing merge markers, and seven-equals separa
 between opening and closing markers or where they cannot be Markdown setext underlines.
 Text has no NUL and decodes as UTF-8; without Git it walks the tree, omitting the build
 and cache directories named in MARKER_SKIP_DIRS (including every .lake, model's too).
+Traversal errors stop the check. Symlinks are skipped: Git stores a link's target path,
+not the contents it points to. The walk is for S23 alone; S12 requires Git's index.
 
 What the scopes cover (STYLE, section 8):
 
@@ -325,11 +327,12 @@ CONFLICT_KINDS = {"<": "opening", "|": "base", ">": "closing"}
 
 
 def repository_files(root: Path):
-    """Git's tracked paths, or a pruned walk in a copy without Git.
+    """S23's paths: Git's tracked paths, or a pruned walk in a copy without Git.
 
     Do not consult ignore rules or prune tracked paths. In a checkout, Git missing or
     failing stops the check, rather than silently leaving tracked files unread or
-    reading untracked ones.
+    reading untracked ones. A traversal error raises with its path. The walk never
+    follows symlinks, and the scanner skips any that Git lists.
     """
     if (root / ".git").exists():
         result = subprocess.run(["git", "ls-files", "-z"], cwd=root,
@@ -338,11 +341,15 @@ def repository_files(root: Path):
             if name:
                 yield root / os.fsdecode(name)
         return
-    for folder, dirs, files in os.walk(root):
-        dirs[:] = sorted(d for d in dirs if d not in MARKER_SKIP_DIRS)
+    def walk_error(error: OSError) -> None:
+        raise OSError(f"could not scan {error.filename}: {error}") from error
+
+    for folder, dirs, files in os.walk(root, onerror=walk_error):
+        dirs[:] = sorted(d for d in dirs if d not in MARKER_SKIP_DIRS
+                         and not (Path(folder) / d).is_symlink())
         for name in sorted(files):
             path = Path(folder) / name
-            if path.name != ".git" and path.is_file():
+            if path.name != ".git" and not path.is_symlink() and path.is_file():
                 yield path
 
 
@@ -352,8 +359,14 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
     Edges begin with exactly seven identical characters followed by a space or
     the line's end. A middle has exactly seven equals, with optional trailing
     horizontal space. Outside a conflict, Markdown may use it as a setext underline
-    after a paragraph, but never inside a fence or after a blank, marker, ATX
-    heading, thematic break or fence boundary. Other lengths of equals are allowed.
+    after a paragraph. This small block state machine treats non-blank text as a
+    paragraph except for markers, ATX headings, thematic breaks, completed setext
+    headings, fences and line-opening HTML comments (up to three spaces before <!--,
+    through the line holding -->). An indented line (four columns, tabs expanded)
+    or a link reference definition ([label]: destination, up to three spaces)
+    cannot start a paragraph, but may continue one. Paragraphs may span several
+    lines. A fence inside a comment, or a comment inside a fence, opens no block.
+    Other lengths of equals are allowed. This is not a full CommonMark parser.
     """
     lines = [line.removesuffix("\r") for line in text.split("\n")]
     edges = [CONFLICT_EDGE.match(line) for line in lines]
@@ -362,19 +375,22 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
     found = []
     opened = False
     fence = ""
-    previous_boundary = previous_marker = False
+    comment = paragraph = False
     for i, (line, edge) in enumerate(zip(lines, edges)):
-        boundary = False
+        block = False
         if markdown:
             match = FENCE_LINE.fullmatch(line)
             if fence:
+                block = True
                 if (match and match[1][0] == fence[0] and len(match[1]) >= len(fence)
                         and not match[2].strip()):
                     fence = ""
-                    boundary = True
+            elif comment or re.match(r"^ {0,3}<!--", line):
+                block = True
+                comment = "-->" not in line
             elif match and (match[1][0] != "`" or "`" not in match[2]):
                 fence = match[1]
-                boundary = True
+                block = True
         kind = None
         if edge:
             char = edge[1][0]
@@ -384,23 +400,29 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
             elif char == ">":
                 opened = False
         elif CONFLICT_MIDDLE.fullmatch(line):
-            previous = lines[i - 1] if i else ""
-            if (opened and i < last_close or not markdown or fence
-                    or not previous.strip() or previous_marker or previous_boundary
-                    or re.match(r"^ {0,3}#{1,6}(?:[ \t]|$)", previous)
-                    or THEMATIC_LINE.fullmatch(previous)):
+            if (opened and i < last_close or not markdown or block or not paragraph):
                 kind = "middle"
         if kind:
             found.append((i + 1, kind))
-        previous_marker = kind is not None
-        previous_boundary = boundary
+        if (kind or block or not line.strip() or ATX_LINE.match(line)
+                or THEMATIC_LINE.fullmatch(line)
+                or paragraph and SETEXT_LINE.fullmatch(line)):
+            paragraph = False
+        elif not paragraph and (line.expandtabs(4).startswith("    ")
+                or re.match(r"^ {0,3}\[[^\]\n]+\]:[ \t]*\S", line)):
+            paragraph = False
+        else:
+            paragraph = True
     return found
 
 
 def check_conflict_markers() -> None:
-    """S23 covers raw text throughout the repository, independently of prose scopes."""
+    """S23 covers raw text independently of prose scopes, skipping symlinks.
+
+    A tracked symlink's text is its target path, not the bytes of its target.
+    """
     for path in repository_files(ROOT):
-        if not path.is_file():
+        if path.is_symlink() or not path.is_file():
             continue
         data = path.read_bytes()
         if b"\0" in data:
@@ -1897,12 +1919,15 @@ FILE_NAME = re.compile(r".*\.(?:lean|json|md|svg|py|toml|txt|lock)$")
 
 
 def tracked_file_index() -> tuple[frozenset[str], frozenset[str]]:
-    """Tracked files, or the same pruned walk as S23 in a copy without Git."""
-    paths = frozenset(path.relative_to(ROOT).as_posix() for path in repository_files(ROOT))
+    """The repository's tracked files, by path and by basename."""
+    run = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, text=True)
+    if run.returncode:
+        raise RuntimeError(f"could not list tracked files: {run.stderr.strip()}")
+    paths = frozenset(path for path in run.stdout.split("\0") if path)
     return paths, frozenset(Path(path).name for path in paths)
 
 
-TRACKED_FILE_PATHS, TRACKED_FILE_NAMES = tracked_file_index()
+TRACKED_FILE_INDEX: tuple[frozenset[str], frozenset[str]] | None = None
 
 
 # A backticked hypothesis or variable with its type, `hBCE : Between B C E`: the name
@@ -2059,6 +2084,10 @@ def report_non_declaration(t: NamedText, occurrence: LeanName,
     of failed names. A typed binder still names a hypothesis; a numeric file location
     does not. A name the prose calls a declaration is put to Lean whatever else it could
     be. These rules apply only to reports newly read by S12."""
+    global TRACKED_FILE_INDEX
+    if TRACKED_FILE_INDEX is None:
+        TRACKED_FILE_INDEX = tracked_file_index()
+    tracked_paths, tracked_names = TRACKED_FILE_INDEX
     name, at, binder, span = occurrence
     if binder and not re.fullmatch(re.escape(name) + r":\d+(?:-\d+)?", span.content.strip()):
         return None
@@ -2072,7 +2101,7 @@ def report_non_declaration(t: NamedText, occurrence: LeanName,
                    or re.match(rf'\s*{FILE_WORDS}s?\b', after, re.I))
     exts = ('', '.md', '.py') if called_file else ('',) if '.' in name.strip('.') else ()
     candidates = {name + ext for ext in exts}
-    if any(candidate in TRACKED_FILE_PATHS or Path(candidate).name in TRACKED_FILE_NAMES
+    if any(candidate in tracked_paths or Path(candidate).name in tracked_names
            for candidate in candidates):
         return 'a repository file or a numeric location in it'
     if binder:

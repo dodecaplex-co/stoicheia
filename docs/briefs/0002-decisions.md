@@ -1833,13 +1833,19 @@ findings:
   an opening, base or closing marker (exactly seven characters, then a space or the line's
   end), and a seven-equals middle between markers or where it cannot underline a Markdown
   paragraph, since a resolver can delete the outer markers and leave a middle, as #138
-  left a base. Setext headings stay allowed; origin/main at `a836cc31` holds no
-  seven-equals line and no marker in a fence. The style check is its home because it
+  left a base. Setext headings stay allowed, including paragraphs of several lines.
+  The check tracks comments, fences, completed headings, indented code and link
+  reference definitions; a fence inside a comment opens no block. It skips symlinks,
+  and traversal errors name their path and stop the check. The walk without Git serves
+  S23 alone; S12 loads its strictly Git-backed index only when needed. The updated S23
+  finds no marker in origin/main's 1,100 text files at `d95125f0`.
+  The style check is its home because it
   already holds the repository's file-and-line rules and runs in CI and the pre-flight
   with its cases; `check_fidelity.py` judges the Lean, Heath's text and the certificate,
   and the Jev audit is an independent model's reading, not a mechanical check. Planted
   markers in `scripts/negative_tests.py` (item 16) and cases in `tests/test_check_style.py`
-  show each kind refused and a setext heading not. By keep_apart (WORKFLOW, section 10),
+  show each kind refused, the block boundaries held, traversal errors raised, symlinks
+  skipped and valid setext headings allowed. By keep_apart (WORKFLOW, section 10),
   the rule lands apart from the content fix, `text/decisions-marker` (#140), which removed
   the marker first; on main since #140 it finds none. The protected files changed are `scripts/check_style.py`,
   `scripts/negative_tests.py` and `tests/test_check_style.py`.

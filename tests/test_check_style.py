@@ -26,7 +26,8 @@ it, put to the script's own patterns and functions:
 * the acceptance case: check_acceptance.py sorts a style finding in a review record to
   its proposition's P9, the item for the record's notes, and every other as before;
 * the conflict-marker cases: S23 reads tracked UTF-8 text and copies without Git,
-  refuses each marker kind even in Markdown fences, and preserves setext headings.
+  refuses each marker kind even in Markdown fences and comments, preserves setext
+  paragraphs, raises on traversal errors and skips symlinks; S12 keeps Git's index.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -38,6 +39,7 @@ section 8, "A guard defect gets a regression"). Python 3.11 or later; standard l
 from __future__ import annotations
 
 import os
+import runpy
 import sys
 import tempfile
 import unittest
@@ -51,6 +53,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_style as style  # noqa: E402
+import negative_tests as plants  # noqa: E402
 
 # ---------------------------------------------------------------------------------------
 # The phrase cases. (D7 once let "Lean\ncannot" through, in a docstring.)
@@ -1039,6 +1042,69 @@ class ConflictMarkers(unittest.TestCase):
                     self.assertEqual(style.conflict_markers(
                         paragraph + "\n" + "=" * width + " \r\n", markdown=True), [])
 
+    def test_middle_after_completed_setext_heading(self):
+        for char in "=-":
+            for width in (1, 3, 7, 8):
+                with self.subTest(char=char, width=width):
+                    text = "Heading\n   " + char * width + " \t\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True),
+                                     [(3, "middle")])
+
+    def test_middle_in_comment_blocks(self):
+        for indent in ("", " ", "   "):
+            for ending in ("", "\n-->"):
+                with self.subTest(indent=indent, ending=ending):
+                    text = indent + "<!--\nComment text\n" + "=" * 7 + ending
+                    self.assertEqual(style.conflict_markers(text, markdown=True),
+                                     [(3, "middle")])
+        for comment in ("<!-- one line -->", "<!--\ncomment\n-->"):
+            text = comment + "\n" + "=" * 7
+            self.assertEqual(style.conflict_markers(text, markdown=True),
+                             [(text.count("\n") + 1, "middle")])
+
+    def test_comment_fences_do_not_escape_the_comment(self):
+        for fence in ("```", "~~~~"):
+            for gap in ("", "\n"):
+                with self.subTest(fence=fence, gap=gap):
+                    text = "<!--\n" + fence + "\n-->\n" + gap + "Heading\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        for char, kind in (("<", "opening"), ("|", "base"), ("=", "middle"),
+                           (">", "closing")):
+            text = "<!--\n```\nComment text\n" + char * 7 + "\n-->"
+            self.assertEqual(style.conflict_markers(text, markdown=True), [(4, kind)])
+
+    def test_comment_openers_in_fences_do_not_escape_the_fence(self):
+        text = "\n".join(("```", "<!--", "```", "Heading", "=" * 7))
+        self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_middle_after_indented_code(self):
+        for indent in ("    ", "\t", "  \t"):
+            for prefix in ("", "Paragraph\n\n"):
+                with self.subTest(indent=indent, prefix=prefix):
+                    text = prefix + indent + "code\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True),
+                                     [(text.count("\n") + 1, "middle")])
+
+    def test_indented_continuation_is_still_a_paragraph(self):
+        for indent in ("    ", "\t", "  \t"):
+            with self.subTest(indent=indent):
+                text = "Heading\n" + indent + "continued\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_middle_after_link_reference_definition(self):
+        for indent in ("", " ", "   "):
+            for destination in ("destination", "<somewhere>", 'destination "Title"'):
+                with self.subTest(indent=indent, destination=destination):
+                    text = indent + "[label]: " + destination + "\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True),
+                                     [(2, "middle")])
+        text = "[label]: destination\nHeading\ncontinued\n" + "=" * 7
+        self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_reference_shape_inside_paragraph_is_text(self):
+        text = "Heading\n[label]: destination\n" + "=" * 7
+        self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
     def test_lone_middle_without_paragraph(self):
         for previous in ("", "  ", "#", "## A heading", "   ### Heading",
                          "---", "* * *", "___"):
@@ -1147,6 +1213,110 @@ class ConflictMarkers(unittest.TestCase):
                              side_effect=style.subprocess.CalledProcessError(128, "git")):
             with self.assertRaises(style.subprocess.CalledProcessError):
                 list(style.repository_files(style.ROOT))
+
+    def test_walk_error_names_the_unread_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            blocked = root / "docs" / "briefs"
+            blocked.mkdir(parents=True)
+            (blocked / "marker.md").write_text("|" * 7)
+            scandir = os.scandir
+
+            def unreadable(path):
+                if Path(path) == blocked:
+                    raise PermissionError(13, "Permission denied", str(path))
+                return scandir(path)
+
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style.os, "scandir", side_effect=unreadable):
+                with self.assertRaisesRegex(OSError, str(blocked)):
+                    style.check_conflict_markers()
+
+    def test_symlinks_are_not_scanned(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "copy"
+            root.mkdir()
+            outside = Path(tmp) / "outside"
+            outside.mkdir()
+            (outside / "marker.md").write_text("|" * 7)
+            links = [root / "file.md", root / "folder", root / "missing.md"]
+            for link, target in zip(links, (outside / "marker.md", outside,
+                                           outside / "missing.md")):
+                link.symlink_to(target)
+            (root / "ordinary.md").write_text("|" * 7)
+            for tracked in (False, True):
+                with self.subTest(tracked=tracked), ExitStack() as stack:
+                    stack.enter_context(patch.object(style, "ROOT", root))
+                    stack.enter_context(patch.object(style, "failures", []))
+                    if tracked:
+                        stack.enter_context(patch.object(style, "repository_files",
+                            return_value=links + [root / "ordinary.md"]))
+                    style.check_conflict_markers()
+                    self.assertEqual(style.failures,
+                        [("S23", "ordinary.md", 1, "base merge-conflict marker")])
+
+    def test_marker_copy_does_not_dereference_symlinks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, copy = Path(tmp) / "source", Path(tmp) / "copy"
+            source.mkdir()
+            copy.mkdir()
+            outside = Path(tmp) / "outside"
+            outside.write_text("|" * 7)
+            (source / "link.md").symlink_to(outside)
+            (source / "missing.md").symlink_to(Path(tmp) / "missing")
+            (source / "ordinary.md").write_text("A paragraph.")
+            with patch.object(plants, "ROOT", source):
+                plants.copy_marker_files(copy, ["link.md", "missing.md", "ordinary.md"])
+            self.assertEqual((copy / "ordinary.md").read_text(), "A paragraph.")
+            for name in ("link.md", "missing.md"):
+                path = copy / name
+                self.assertTrue(path.is_symlink() or not path.exists())
+
+
+class TrackedFiles(unittest.TestCase):
+    """S12 has no filesystem fallback, and importing the check needs no Git."""
+
+    def test_git_index_ignores_untracked_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Bogus.missing").write_text("untracked")
+            listing = SimpleNamespace(returncode=0, stdout="docs/kept.md\0", stderr="")
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style.subprocess, "run", return_value=listing) as run:
+                self.assertEqual(style.tracked_file_index(),
+                    (frozenset({"docs/kept.md"}), frozenset({"kept.md"})))
+                run.assert_called_once_with(["git", "ls-files", "-z"], cwd=root,
+                                            capture_output=True, text=True)
+
+    def test_git_failure_without_metadata_still_raises(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Bogus.missing").write_text("untracked")
+            listing = SimpleNamespace(returncode=128, stdout="", stderr="not a git repository")
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style.subprocess, "run", return_value=listing):
+                with self.assertRaisesRegex(RuntimeError, "could not list tracked files"):
+                    style.tracked_file_index()
+
+    def test_import_does_not_build_the_git_index(self):
+        with patch.object(style.subprocess, "run", side_effect=FileNotFoundError) as run:
+            runpy.run_path(str(style.SCRIPT), run_name="style_import_probe")
+            run.assert_not_called()
+
+    def test_report_classification_cannot_use_the_fallback_walk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Bogus.missing").write_text("untracked")
+            named = style.NamedText(root / "report.md", "`Bogus.missing`",
+                                   style.every_book_opens())
+            occurrence, = style.lean_name_occurrences(named.text, all_uses=True)
+            listing = SimpleNamespace(returncode=128, stdout="", stderr="not a git repository")
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style, "TRACKED_FILE_INDEX", None), \
+                    patch.object(style.subprocess, "run", return_value=listing):
+                with self.assertRaisesRegex(RuntimeError, "could not list tracked files"):
+                    style.report_non_declaration(named, occurrence, (set(), set()))
+                self.assertIsNone(style.TRACKED_FILE_INDEX)
 
 
 class Acceptance(unittest.TestCase):
