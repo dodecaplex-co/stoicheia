@@ -227,7 +227,7 @@ reviewed"), and that every run of `--` lines with no Lean beneath it is declared
 `scripts/check_style.py` reads as "Review notes" the statement's `note`, `short` and
 `hypotheses`, the route, representation, overlap and passage notes, the figure's `case`
 and `note`, and the clause map's `checked` and `explains`. It also reads each tag's
-`meaning` and `badge` in `review/terms.toml`. S1 to S9 check their prose; S12 asks Lean
+`meaning` and `badge` in `review/terms.toml`. S1 to S9 and S22 check their prose; S12 asks Lean
 about names in backticks, except the non-declarations listed in `NOT_DECLARED`.
 [STYLE](../docs/STYLE.md#8-checks), section 8, gives the rules and explains which findings
 `REACH_PENDING` reports without failing.
@@ -298,7 +298,7 @@ lean = "sha256:061379c1f0411141"
 reviewer = "Claude Opus 5.5"
 ```
 
-I.40 is restricted: the theorem takes the two bases end to end.
+At d040117, I.40 was restricted: the theorem took the two bases end to end.
 
 ```toml
 # review/I/40.toml
