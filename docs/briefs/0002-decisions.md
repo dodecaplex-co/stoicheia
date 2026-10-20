@@ -1874,4 +1874,3 @@ findings:
   `scripts/copy_acceptance_checks.sh`, `scripts/negative_tests.py`,
   `scripts/safe_push.py`, `scripts/test_safe_push.py`, `tests/test_check_acceptance.py`,
   `tests/test_check_style.py`, `tests/test_negative_tests.py` and `tests/test_screen.py`.
-
