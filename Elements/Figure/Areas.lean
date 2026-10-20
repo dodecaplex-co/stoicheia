@@ -6,7 +6,7 @@ import Elements.Figure.Rays
 
 From I.35 on, Euclid adds and takes away areas as freely as lengths and angles:
 "let DGE be subtracted from each", "let the triangle GBC be added to each". He
-never doubts that the triangle `ABC` is the triangle `BCA`, whichever corner it is
+never doubts that the triangle ABC is the triangle BCA, whichever corner it is
 named from; that a straight line from a corner cuts a triangle into two which make
 up the whole; that a triangle is something, and greater than a part of it; that
 on a ray from a corner only one point makes a triangle equal to a given one on the
@@ -57,20 +57,20 @@ theorem Magnitude.eq_of_add_self_eq {a b : Magnitude k} (h : a + a = b + b) : a 
 
 /-! ## A triangle named from any corner -/
 
-/-- The triangle `ABC` is the triangle `BCA`. (System E, Metric 8) -/
+/-- The triangle ABC is the triangle BCA. (System E, Metric 8) -/
 theorem area_bca (A B C : Point) : △ A B C = △ B C A := (area_rotate B C A).symm
 
-/-- The triangle `ABC` is the triangle `CAB`. (System E, Metric 8) -/
+/-- The triangle ABC is the triangle CAB. (System E, Metric 8) -/
 theorem area_cab (A B C : Point) : △ A B C = △ C A B := area_rotate A B C
 
-/-- The triangle `ABC` is the triangle `ACB`. (System E, Metric 8) -/
+/-- The triangle ABC is the triangle ACB. (System E, Metric 8) -/
 theorem area_acb (A B C : Point) : △ A B C = △ A C B := area_swap A B C
 
-/-- The triangle `ABC` is the triangle `BAC`. (System E, Metric 8) -/
+/-- The triangle ABC is the triangle BAC. (System E, Metric 8) -/
 theorem area_bac (A B C : Point) : △ A B C = △ B A C :=
   (area_swap A B C).trans (area_rotate A C B)
 
-/-- The triangle `ABC` is the triangle `CBA`. (System E, Metric 8) -/
+/-- The triangle ABC is the triangle CBA. (System E, Metric 8) -/
 theorem area_cba (A B C : Point) : △ A B C = △ C B A :=
   (area_rotate A B C).trans (area_swap C A B)
 
@@ -95,9 +95,9 @@ theorem Triangle.area_pos (h : Triangle A B C) : 0 < △ A B C := by
 /-! ## Cutting a triangle from a corner -/
 
 /-- A straight line from a corner cuts a triangle into two which make up the
-whole: if `D` lies between `B` and `C`, the triangles `ABD` and `ADC` together are
-the triangle `ABC`. (System E, Diagram-area 2) When `A` is on the straight line
-`BC`, all three are nothing, and it still holds. -/
+whole: if D lies between B and C, the triangles ABD and ADC together are
+the triangle ABC. (System E, Diagram-area 2) When A is on the straight line
+BC, all three are nothing, and it still holds. -/
 theorem area_cut (h : Between B D C) : △ A B D + △ A D C = △ A B C := by
   obtain ⟨L, hB, hC⟩ := Postulate1 B C (ne_of_between_ends h)
   have hD : OnLine D L := on_line_of_between_ends h hB hC
@@ -109,8 +109,8 @@ theorem area_cut (h : Between B D C) : △ A B D + △ A D C = △ A B C := by
     rw [area_bca A B D, area_bac A B C]
     exact this
 
-/-- The part is less than the whole, for triangles: if `D` lies between `B` and `C`,
-the triangle `ABD` is less than the triangle `ABC`, for the triangle `ADC` is
+/-- The part is less than the whole, for triangles: if D lies between B and C,
+the triangle ABD is less than the triangle ABC, for the triangle ADC is
 something besides. (System E, Diagram-area 2, and C.N. 5) -/
 theorem area_lt_of_cut (hABC : Triangle A B C) (h : Between B D C) : △ A B D < △ A B C := by
   obtain ⟨L, hB, hC⟩ := Postulate1 B C hABC.ne₂₃
@@ -120,11 +120,11 @@ theorem area_lt_of_cut (hABC : Triangle A B C) (h : Between B D C) : △ A B D <
   rw [← area_cut (A := A) h]
   exact CommonNotion5 hADC.area_pos
 
-/-- "The greater to the less: which is impossible" (I.39, I.40). On the ray from `B`
-through `D`, only `D` itself makes with the base `BC` a triangle equal to `DBC`. A
-point `E` nearer to `B` makes `EBC` a part of `DBC`, and a point beyond `D` makes
-`DBC` a part of `EBC`; either way the part would be equal to the whole
-(`area_lt_of_cut`, C.N. 5). If `E` is as far from `B` as `D` is, it is `D`
+/-- "The greater to the less: which is impossible" (I.39, I.40). On the ray from B
+through D, only D itself makes with the base BC a triangle equal to DBC. A
+point E nearer to B makes EBC a part of DBC, and a point beyond D makes
+DBC a part of EBC; either way the part would be equal to the whole
+(`area_lt_of_cut`, C.N. 5). If E is as far from B as D is, it is D
 (`OnRay.eq_of_len_eq`). -/
 theorem OnRay.eq_of_area_eq {E : Point} (hDBC : Triangle D B C) (hE : OnRay E B D)
     (h : △ E B C = △ D B C) : E = D := by
@@ -142,28 +142,28 @@ theorem OnRay.eq_of_area_eq {E : Point} (hDBC : Triangle D B C) (hE : OnRay E B 
 
 /-! ## Four-sided figures
 
-`quadArea A B C D` measures the figure `ABCD` by its diameter `AC`: it is the
-triangles `ABC` and `ACD` together. Read from `C`, or the other way round, the
-diameter is the same. Read from `B`, the diameter is `BD`; when the two diameters
+`quadArea A B C D` measures the figure ABCD by its diameter AC: it is the
+triangles ABC and ACD together. Read from C, or the other way round, the
+diameter is the same. Read from B, the diameter is BD; when the two diameters
 cross, the two measures agree. -/
 
-/-- The figure `ABCD` read the other way round, as `ADCB`, has the same diameter
-`AC`, and the same area. -/
+/-- The figure ABCD read the other way round, as ADCB, has the same diameter
+AC, and the same area. -/
 theorem quadArea_reverse (A B C D : Point) : quadArea A D C B = quadArea A B C D := by
   unfold quadArea
   rw [area_acb A D C, area_acb A C B, add_comm]
 
-/-- The figure `ABCD` read from `C`, as `CDAB`, has the same diameter `CA`, and the
+/-- The figure ABCD read from C, as CDAB, has the same diameter CA, and the
 same area. -/
 theorem quadArea_rotate₂ (A B C D : Point) : quadArea C D A B = quadArea A B C D := by
   unfold quadArea
   rw [area_bca A C D, area_cab A B C, add_comm]
 
 /-- A four-sided figure whose diameters cross has the same area whichever diameter
-cuts it: if `X` lies between `A` and `C` and also between `B` and `D`, the figure
-`ABCD` measured by `AC` is the figure `BCDA` measured by `BD`. Each diameter cuts
+cuts it: if X lies between A and C and also between B and D, the figure
+ABCD measured by AC is the figure BCDA measured by BD. Each diameter cuts
 the figure into two triangles, and the other diameter cuts each of those into two
-more; the four small triangles about `X` are the same either way (System E,
+more; the four small triangles about X are the same either way (System E,
 Diagram-area 2). -/
 theorem quadArea_rotate_of_cross (hAXC : Between A X C) (hBXD : Between B X D) :
     quadArea B C D A = quadArea A B C D := by

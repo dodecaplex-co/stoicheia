@@ -44,35 +44,35 @@ theorem Triangle.ne₁₃ (h : Triangle A B C) : A ≠ C := by
 Three points that are not on one straight line stay so, in whatever order we
 name them. -/
 
-/-- The triangle `ABC`, named from `B`, as `BCA`. -/
+/-- The triangle ABC, named from B, as BCA. -/
 theorem Triangle.bca (h : Triangle A B C) : Triangle B C A := by
   rintro ⟨L, hB, hC, hA⟩
   exact h ⟨L, hA, hB, hC⟩
 
-/-- The triangle `ABC`, named from `C`, as `CAB`. -/
+/-- The triangle ABC, named from C, as CAB. -/
 theorem Triangle.cab (h : Triangle A B C) : Triangle C A B := by
   rintro ⟨L, hC, hA, hB⟩
   exact h ⟨L, hA, hB, hC⟩
 
-/-- The triangle `ABC`, named the other way round, as `ACB`. -/
+/-- The triangle ABC, named the other way round, as ACB. -/
 theorem Triangle.acb (h : Triangle A B C) : Triangle A C B := by
   rintro ⟨L, hA, hC, hB⟩
   exact h ⟨L, hA, hB, hC⟩
 
-/-- The triangle `ABC`, named the other way round, as `BAC`. -/
+/-- The triangle ABC, named the other way round, as BAC. -/
 theorem Triangle.bac (h : Triangle A B C) : Triangle B A C := by
   rintro ⟨L, hB, hA, hC⟩
   exact h ⟨L, hA, hB, hC⟩
 
-/-- The triangle `ABC`, named the other way round, as `CBA`. -/
+/-- The triangle ABC, named the other way round, as CBA. -/
 theorem Triangle.cba (h : Triangle A B C) : Triangle C B A := by
   rintro ⟨L, hC, hB, hA⟩
   exact h ⟨L, hA, hB, hC⟩
 
 /-! ## Triangles and straight lines -/
 
-/-- In the triangle `ABC`, the corner `C` is off every straight line through `A`
-and `B`. -/
+/-- In the triangle ABC, the corner C is off every straight line through A
+and B. -/
 theorem Triangle.off_line (h : Triangle A B C) (hA : OnLine A L) (hB : OnLine B L) :
     ¬ OnLine C L :=
   fun hC => h ⟨L, hA, hB, hC⟩
