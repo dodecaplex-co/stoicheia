@@ -75,12 +75,12 @@ at the repository's root builds the library exactly as before.
 | [Model/Euclidean/Superposition.lean](Model/Euclidean/Superposition.lean) | restricted superposition from placement by isometry and reflection, its kept side, and `Rule.of_placement` | Mathlib, pure calculus soundness |
 | [Model/Euclidean/TripleIncidence.lean](Model/Euclidean/TripleIncidence.lean) | Triple incidence 1 to 3 proved by signed determinants and affine sides | Mathlib |
 | [Model/Assembly.lean](Model/Assembly.lean) | **generated:** `euclidean_laws`, all 87 proofs gathered into `Laws`, and the unconditional `model_exists` | Mathlib |
-| [Model/Audit.lean](Model/Audit.lean) | checked at every build: only the four pure library modules are imported, and every proof and the assembly have their pinned logical axioms | every module of `Model` |
+| [Model/Audit.lean](Model/Audit.lean) | checked at every build: `Elements.Point` remains unknown, and every proof and the assembly have their pinned logical axioms | every module of `Model` |
 | [Check/Angles.lean](Check/Angles.lean) | the hand-translated angle laws and their two words compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.angles` |
 | [Check/AreasP5.lean](Check/AreasP5.lean) | the hand-translated area laws and Postulate 5 compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.«areas-p5»` |
 | [Check/Circles.lean](Check/Circles.lean) | the hand-translated circle rules compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.circles` |
 | [Check/Generated.lean](Check/Generated.lean) | checked at every build: the lock, its hash and the axioms, and that the generated files are what the generator writes | `Elements.Foundations`, `Model.Signature`, the generator |
-| [Check/Generator.lean](Check/Generator.lean) | the generator: reading the library, auditing shared purity, translating, writing, and checking | Lean alone |
+| [Check/Generator.lean](Check/Generator.lean) | the generator: reading the library, auditing shared declarations and model imports, translating, writing, and the checks it makes | Lean alone |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration and with the generated law | `Elements.Foundations`, `Model.Hand` |
 | [Check/Incidence.lean](Check/Incidence.lean) | the hand-translated incidence and line laws, and `Hand.LinesMeet`, compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.incidence` |
 | [Check/Intersections.lean](Check/Intersections.lean) | the hand-translated intersection rules and their two words compared with the library and the generated laws | `Check.Hand`, `Model.Laws.intersections` |
@@ -213,22 +213,21 @@ what it writes.
    constructors by `Model.Kind`'s. A project definition the law reaches, such as
    `Triangle`, `Collinear`, `CirclesMeet`, `IsRightAngle` or the magnitude instances,
    among them the present definition of `≤`, is translated the same way, once, into a
-   definition over `S` in dependency order. The axioms reach 151 vocabulary entries:
+   definition over `S` in dependency order. Their vocabulary comprises
    the seventeen opaque words, `Kind` and its three constructors, 16 definitions over
-   the signature, and 114 shared calculus declarations. Eight of those, the carriers of the magnitudes and their instances, are
+   the signature, and the shared calculus declarations. Eight of those definitions,
+   the carriers of the magnitudes and their instances, are
    written by hand in `Model/Signature.lean`, since the signature's own fields need them to
    be used at all, and the generator checks them rather than writing them; the other eight
    it writes, including `primitives`. The old root word `Triangle` is no longer reached
-   by the laws; the shared calculus has its generic interpretation. Lean's own constants, those of `Init` (`Eq`, `Ne`, `And`, `Or`, `Not`,
+   by the laws; the shared calculus has its generic interpretation. Lean's own constants,
+   those of `Init` (`Eq`, `Ne`, `And`, `Or`, `Not`,
    `Exists`, `List`, `Membership.mem`, `LT.lt`, `HAdd.hAdd`, `OfNat.ofNat` and the like),
-   stay as they are. Constants declared in the four approved pure modules are translated
-   by identity, including their universe arguments. Admission is by declaring module,
-   never by namespace. Before planning, the generator checks every shared declaration's
-   transitive type and value, including proofs, constructors and recursor rules, admitting
-   only the pure modules and `Init`, with no geometric words, project axiom or `sorryAx`.
-   **Any other unsupported constant is an error.** (One detail: Lean declares the library's `MagnitudeImpl` at every universe,
-   since it generalizes the level of `NonemptyType`, and `Magnitude` uses it at universe 0;
-   the field is that one, and the translation insists on it.)
+   stay as they are. The four shared modules described below keep their declarations
+   unchanged too. **Any other constant is an error.** (One detail: Lean declares the
+   library's `MagnitudeImpl` at every universe, since it generalizes the level of
+   `NonemptyType`, and `Magnitude` uses it at universe 0; the field is that one, and the
+   translation insists on it.)
 3. **Write a file a reader can read.** The output is plain Lean with no Mathlib: the eight
    translated words, then each law as a definition named as in the lock, `Law.Postulate1 S`
    for `Postulate1` and `Law.Tacit.circles_meet S` for `Tacit.circles_meet`, laid out as a
@@ -256,7 +255,7 @@ what it writes.
    Postulate 5 stands apart from the other 86, so that a hyperbolic plane can later satisfy
    `Neutral` and fail it; so would any rule the library declared in
    `Elements.Tacit.Euclidean`, for the plane alone, of which there is none. The file's header
-   records the sha256 of the lock it was written from, with a table of the 37 words and what
+   records the sha256 of the lock it was written from, with a table of the reached words and what
    each becomes, so the vocabulary is pinned with the lock's hash.
 4. **Assemble the model.** Each law is proved in the plane as a theorem of its own, named as
    its field, `Euclidean.circles_meet`, in a module of `Model/Euclidean/` that imports the
@@ -280,7 +279,52 @@ what it writes.
    hand-translated laws of `Model/Hand.lean` and `Model/Laws/`, and the files of `Check/`
    compare every one of those with its generated field.
 
-The library's 99 proofs do not change. Rewriting the library over a signature, with
+The generator shares four modules for the restricted calculus of
+[brief 0009](../docs/briefs/0009-superposition.md):
+`Elements.Foundations.Superposition.Syntax`,
+`Elements.Foundations.Superposition.Semantics`,
+`Elements.Foundations.Superposition.Soundness` and
+`Elements.Foundations.Superposition.Restriction`. A declaration qualifies by its declaring
+module, never by its namespace. Its translation keeps its name and universe arguments in
+both directions, and the generated laws import the shared modules their vocabulary reaches.
+Before translating, the generator audits every declaration in every imported shared module,
+including declarations no law reaches. It follows types and values transitively, including
+theorem proofs, opaque values, constructors and recursor rules. Every dependency must come
+from those four modules or `Init`; the only permitted axioms are `propext`,
+`Classical.choice` and `Quot.sound`, and `sorryAx` is refused. All four modules are present.
+The generic checks also work when those modules are absent, as they were when the tooling
+landed first: an empty shared-import list adds no text to the generated header.
+
+`checkModelImports`, called from `Check/RoundTrip.lean`, also reads the headers of
+`Model.lean`, every Lean file under `Model/`, and each of the four pure source files that
+exists. A Model file may import only other Model modules, those four pure modules, and
+the external module roots listed in `modelImportPackages` in
+[Check/Generator.lean](Check/Generator.lean). That single list records Lean's permitted
+roots and the library roots supplied by Mathlib and its dependencies, checked against
+the pinned packages in `lake-manifest.json`. Every other root is refused, including
+`Check`, `Staging`, `Audit` and `Certificate`. The external packages cannot import this
+repository's modules. Auditing every Model source, and allowing the pure files to import
+only each other and `Init`, therefore checks the whole import closure.
+
+Lake 4.35 defaults the Model library's roots to `Model` and its globs to that root alone.
+It builds `Model.lean` and recursively follows imports. The audit includes this file
+outside `Model/`, and also checks sources under `Model/` that the root does not import.
+Lean's own header parser reads both legacy headers without `module` and headers with
+`module`, comments, blank lines, `public import` and the other import modifiers, stopping
+at the first body command; a malformed header is an error. `checkModelImportsWith` makes
+the decision from file paths and imports, so planted cases use the same parser and
+decision without creating files or loading their imports.
+
+The Check library registers `Model.lean`, the whole `Model/` directory and
+`../Elements/Foundations/` as text inputs in [lakefile.toml](lakefile.toml). Directory
+inputs track additions and removals as well as edits. The foundations parent was registered
+before its `Superposition/` subdirectory existed, since Lake rejects a missing input
+directory. It continues to cover all four pure modules. Lake hashes text contents,
+so a timestamp-only touch may replay a
+cached result; changing an audited source's contents rebuilds the checks.
+
+The library keeps its geometric words; I.4 and I.8 use the restricted rule.
+Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
 care not to blur the certificate: if every theorem took one `Laws` hypothesis bundling all
 87 laws, Lean's dependency walk would report all 87 beneath every proof.
@@ -337,11 +381,35 @@ the original means. These checks do that, at every build.
   dropped guard, a word written out) and two statements the translation must refuse (a word
   the laws do not reach, and a constant that is neither the library's nor Lean's own), and
   `#guard_msgs` fails the build unless each is refused with the message it pins. The first
-  and the fourth pass the kernel's `rfl`, which the file shows too. Further faults change
-  a placement guard, swap angle and area in the interpretation, claim an unapproved
-  declaration as shared, or introduce a geometric word, project axiom or `sorryAx` into
-  a pure definition. Each must be refused. A shared recursor also makes a round trip
-  at a symbolic universe level unchanged.
+  and the fourth pass the kernel's `rfl`, which the file shows too. Further cases pass
+  copies of Init declarations to the purity checker without installing them in Lean's
+  environment: an Init-only closure passes, while a transitive reference to `Elements.Point`
+  in a type or value, a dependency found only in an opaque value or a recursor rule,
+  `sorryAx`, and an unapproved axiom are refused. Every helper called
+  by `run_cmd` is defined in `Check/Generator.lean`. `plantPureDependency` accepts any
+  definition as its root and puts a named dependency in a copy of its type or value.
+  The production identity check still refuses `Nat.rec`, which is not shared.
+  Parameterised variants use stand-in module lists to exercise successful identity
+  entries in the plan, forward and reverse translation with zero, symbolic and compound
+  universe arguments, and a non-empty shared-import header even without the calculus.
+  `List.filterMap` tests two universe arguments; `Model.Kind.rec` tests a shared name
+  outside `Elements`, including the residual model-name check. These two fixtures add
+  their stand-in modules to the four approved modules so the real laws still translate.
+  The module-root collector
+  accepts an Init module and finds a planted dependency in a declaration no law uses,
+  without receiving that declaration as an explicit audit root. Production keeps the
+  four-module boundary throughout.
+  Import cases accept the real tree and permitted headers, and refuse geometric imports,
+  `Check.Original` in a legacy `Model.lean` header, `Staging`, `Audit`, `Certificate`, an
+  unknown root, a module below an approved pure module, and Mathlib in a pure file.
+  A path regression checks that both relative and absolute Check filenames locate the
+  model package.
+  The real calculus cases also refuse a changed placement guard, angle and area swapped
+  in the interpretation, and a declaration claimed as shared by namespace alone.
+  `plantPureDependency` plants `Elements.Point`, `Elements.Tacit.superposition` and
+  `sorryAx` separately in copies of `Elements.Superposition.guards`; all three are refused.
+  `checkSharedIdentity` checks `Elements.Superposition.Atom.rec` in the production plan,
+  preserving zero, symbolic and compound universe arguments in both directions.
 
 The eight magnitude laws quantify over the kind (`∀ {k : Elements.Kind}`), and with two
 copies of `Kind` their round trip is an equivalence, not `rfl`. Each direction is the other
@@ -389,9 +457,10 @@ law, and its kernel round trip joins `Check/Hand.lean`.
 A model is evidence only if its proofs do not use the laws they are meant to satisfy.
 Three things make sure of that.
 
-- **An exact import boundary.** [Model/Audit.lean](Model/Audit.lean) imports every module
-  of `Model` and checks that every imported `Elements` module is one of the four pure
-  calculus modules listed above. This includes transitive imports. It also asks Lean for
+- **An exact import boundary.** `Check.Generator.checkModelImports`, called from
+  [Check/RoundTrip.lean](Check/RoundTrip.lean), checks every Model source and the four pure
+  modules as described above, covering the whole import closure.
+  [Model/Audit.lean](Model/Audit.lean) imports every module of `Model` and asks Lean for
   `Elements.Point`, and `#guard_msgs` fails unless the answer is "unknown identifier".
   The generator separately audits every shared declaration's transitive dependencies.
 - **The axioms, checked at every build.** The same file prints, for each theorem that
@@ -401,8 +470,8 @@ Three things make sure of that.
   `euclidean_laws`, which `Model/Assembly.lean` gathers from every theorem that proves a
   law in the plane, is audited the same way, so a new proof is audited through it as soon
   as the generator gathers it; so is `model_exists`.
-- **The library's rules on commands.** Apart from the import audit's `run_cmd`, `Model/`
-  uses none of the commands the library forbids ([FORMALIZATION](../docs/FORMALIZATION.md#7-the-foundations-and-the-policies-the-checks-enforce),
+- **The library's rules on commands.** `Model/` uses none of the commands the library
+  forbids ([FORMALIZATION](../docs/FORMALIZATION.md#7-the-foundations-and-the-policies-the-checks-enforce),
   section 7: `native_decide`, `implemented_by`, `unsafe` and the rest), and the audit
   catches a `sorry` beneath any listed proof. The generator is a Lean program and needs
   metaprogramming, so it lives in `Check/`, apart from the proofs, and nothing under

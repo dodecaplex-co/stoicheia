@@ -1995,6 +1995,74 @@ findings:
 
 ## 20 October 2026
 
+- **The model's shared-module checks land before the restricted rule (brief 0009, #75).**
+  The branch `tooling/superposition-model-check` carries the generic checks from
+  `lean/superposition-restricted` in `model/Check/Generator.lean`: declarations from exactly
+  the four pure superposition modules are shared by identity, with their universe
+  arguments preserved. Admission is by declaring module. Before translation, a transitive
+  audit reads every declaration in those modules and permits dependencies only on those
+  modules and `Init`, with only Lean's three logical axioms and no `sorryAx`. The checks
+  land separately from the content they serve, as WORKFLOW requires. The four modules do
+  not exist on main yet, so the audit has no roots, no declaration is shared, and all three
+  generated files remain byte for byte unchanged. An empty shared-import list adds no
+  blank line to the generated laws header.
+  `model/Check/RoundTrip.lean` adds cases using Init declarations and isolated lookup
+  copies, so the audit is exercised before the calculus arrives: it accepts an Init-only
+  closure and refuses a transitive geometric dependency in a type or value, a dependency
+  found only in an opaque value or a recursor rule, `sorryAx`, and an unapproved axiom.
+  All helpers called by `run_cmd` live in
+  `model/Check/Generator.lean`, as the model scan's allowance intends; the guarded cases
+  stay in `model/Check/RoundTrip.lean`. `plantPureDependency` takes a definition and a
+  dependency, plants it in a copy of the definition's type or value, and audits from that
+  definition with an isolated lookup. The content branch can use it on
+  `Elements.Superposition.guards`. `checkSharedIdentity` checks the production translation
+  plan in both directions, preserving zero, symbolic and compound universe arguments;
+  here `Nat.rec` pins the refusal of a constant that is not shared. Parameterised variants
+  supply stand-in module lists and reached words to the same plan construction, purity
+  audit and import-header printer. The cases for `List.filterMap` and `Model.Kind.rec`
+  exercise successful identity entries before the calculus arrives, including two
+  universe arguments and a shared name in the Model namespace. Reverse translation exempts
+  identity entries from its residual model-name check. Further cases check a non-empty
+  shared-import header and module-root collection: a dependency planted in an otherwise
+  unused declaration is found without that declaration being supplied as an audit root.
+  Production continues to use exactly the four pure modules.
+  `checkModelImports`, called from RoundTrip, reads `Model.lean`, every Lean file under
+  `Model/`, and each pure module's source if present. Model imports are restricted to Model
+  modules, the four pure modules and the external package roots recorded once in
+  `modelImportPackages`, from Lean and the pinned Mathlib dependency configurations in
+  `model/lake-manifest.json`. Other roots, including `Check`, `Staging`, `Audit`,
+  `Certificate` and unknown names, are refused. Pure files admit only the four pure
+  modules and `Init`. The external packages cannot import this repository, so auditing
+  every local source's direct imports checks the whole import closure. Lake 4.35 defaults
+  the Model library to root `Model` and glob `Glob.one Model`, building `Model.lean` and
+  following its imports. Auditing that root outside `Model/` and the whole directory
+  covers its local sources, including unimported ones. Lean's header parser handles legacy
+  headers without `module`, comments, blank lines, `module` and import modifiers, and
+  stops at the first body command. Malformed headers are refused.
+  `checkModelImportsWith` makes the decision from a list of files and imports; planted
+  headers exercise the same parser and decision. They accept permitted imports and
+  refuse plain and public geometric imports, a module below an approved module, and
+  Mathlib in a pure file, as well as `Check.Original` in a legacy `Model.lean` header,
+  `Staging`, `Audit`, `Certificate` and an unknown root. The real tree is checked too.
+  **The protected path `model/lakefile.toml` changes** to register all files the import
+  audit reads as text inputs in the Check library's `needs`: `Model.lean`, the entire
+  `Model/` directory and `../Elements/Foundations/`. An experiment with a missing
+  `input_dir` fails with "no such file or directory", so the existing foundations parent
+  is registered instead of its absent `Superposition/` child. Directory inputs cover
+  additions and removals, including the first pure source, as well as changed contents.
+  A timestamp-only touch can replay cached checks because Lake hashes text contents;
+  a content change rebuilds them. This strengthens the check without changing its
+  expectations or the generated files. The protected build-file change needs the
+  security review required by WORKFLOW before landing.
+  RoundTrip also tests `modelDir` with relative and absolute filenames.
+  The path fix in `model/Check/Generator.lean` replaces the early `return` with `pure`,
+  so resolving a relative filename continues to its parent directories and the package
+  check. `model/README.md` explains the boundary and the regressions. The complete change
+  is `model/Check/Generator.lean`, `model/Check/RoundTrip.lean`, `model/README.md`,
+  `model/lakefile.toml` and `docs/briefs/0002-decisions.md`; `model/lakefile.toml` is the
+  only protected path among them under `PROTECTED` or `PROTECTED_JUDGED` in
+  `scripts/safe_push.py`.
+
 - **The owner approves the restricted superposition replacement.** The owner's exact
   approval is: "replace the superposition rule as ship S built it, with brief 0009 questions 2, 4 and 5 as prototyped, the model's import of the four pure modules, the page claim 'a restricted inference in System E's style', tooling PR first. Lands after /no-mistakes and an independent Codex read of the model lane."
 
@@ -2041,3 +2109,14 @@ findings:
   `primitives`, the edition's interpretation of the restricted calculus, without
   changing its coverage check or returning placement witnesses. No check, expected
   value, lock or schema is weakened; the check changes land in tooling first.
+
+  Integration with the model tooling moves the import-boundary check out of
+  `model/Model/Audit.lean`: `Check.Generator.checkModelImports`, called from
+  `model/Check/RoundTrip.lean`, checks every Model source and the four pure modules on
+  each build. The unknown-`Elements.Point` sentinel and every axiom pin remain in
+  `model/Model/Audit.lean`. The real-calculus regressions use the tooling's generator
+  helpers, retaining every case and expected rejection; `model/lakefile.toml` keeps
+  all tooling inputs and `needs` unchanged and describes the boundary now in use.
+  The two identity fixtures for `List.filterMap` and `Model.Kind.rec` add their stand-in
+  module to the production boundary, since the laws now reach the real calculus.
+  Their success expectations and the production boundary itself are unchanged.

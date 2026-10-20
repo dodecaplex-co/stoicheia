@@ -49,9 +49,10 @@ public import Model.Euclidean.TripleIncidence
 A model is evidence only if its proofs do not use the laws they are meant to satisfy. This
 file imports every module of the `Model` library, and checks two things at every build.
 
-* **Only the four pure calculus modules are imported from the library.** An executable
-  module check rejects every other `Elements` import, including transitive ones. The
-  geometric words remain unknown here, so none of the library's laws is in scope.
+* **The library's geometric words remain unknown here.** The `Elements.Point` sentinel
+  below pins that absence. The import boundary is checked separately at every build by
+  `Check.Generator.checkModelImports`, called from `Check/RoundTrip.lean`: it reads every
+  Model source and the four pure calculus modules, checking the whole import closure.
 * **Each theorem that proves a law in the plane rests on Lean's own axioms alone,**
   `propext`, `Classical.choice` and `Quot.sound`, which Mathlib's real numbers use. No
   axiom of the library can appear, and neither can `sorryAx`, which an unfinished proof
@@ -66,16 +67,6 @@ suffixed names, `circlesMeet_self`, and the proposed `exists_centre`, which is n
 -/
 
 /-! ## The exact shared-definition boundary -/
-
-run_cmd do
-  let allowed := #[`Elements.Foundations.Superposition.Syntax,
-    `Elements.Foundations.Superposition.Semantics,
-    `Elements.Foundations.Superposition.Soundness,
-    `Elements.Foundations.Superposition.Restriction]
-  for m in (← Lean.getEnv).header.moduleNames do
-    if (`Elements).isPrefixOf m && !allowed.contains m then
-      throwError "Model imports unapproved library module `{m}`"
-
 
 /-- error: Unknown identifier `Elements.Point` -/
 #guard_msgs in

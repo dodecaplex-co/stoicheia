@@ -173,45 +173,198 @@ def Check.Planted.unapproved : Prop := Elements.Superposition.unapprovedShared
 #guard_msgs in
 run_cmd Check.Generator.translatePlanted ``Check.Planted.unapproved
 
-/-- Plant a dependency in a pure definition's value, leaving its provenance intact. The
-copy is used only as input to the purity checker; it is never installed in Lean. -/
-def Check.Planted.pureDependency (dep : Lean.Name) : Lean.Elab.Command.CommandElabM Unit := do
-  let env ← Lean.getEnv
-  let target := ``Elements.Superposition.guards
-  let some (.defnInfo ci) := env.find? target | throwError "no shared guards definition"
-  let some dependency := env.find? dep | throwError "no planted dependency"
-  let value := Lean.Expr.letE `planted dependency.type
-    (.const dep (dependency.levelParams.map Lean.Level.param)) ci.value true
-  let lookup := fun n =>
-    if n == target then some (.defnInfo { ci with value }) else env.find? n
-  match Check.Generator.checkPureWith env lookup #[target] with
-  | .ok () => pure ()
-  | .error e => throwError "{e}"
-
 /-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
 #guard_msgs in
-run_cmd Check.Planted.pureDependency ``Elements.Point
+run_cmd Check.Generator.plantPureDependency ``Elements.Superposition.guards ``Elements.Point
 
 /-- error: shared calculus reaches `Elements.Tacit.superposition`, outside the four pure modules and `Init` -/
 #guard_msgs in
-run_cmd Check.Planted.pureDependency ``Elements.Tacit.superposition
+run_cmd Check.Generator.plantPureDependency ``Elements.Superposition.guards ``Elements.Tacit.superposition
 
 /-- error: shared calculus reaches `sorryAx` -/
 #guard_msgs in
-run_cmd Check.Planted.pureDependency ``sorryAx
+run_cmd Check.Generator.plantPureDependency ``Elements.Superposition.guards ``sorryAx
 
-/- Shared recursors retain arbitrary universe arguments in both directions. -/
-run_cmd do
-  let env ← Lean.getEnv
-  let p ← match Check.Generator.plan env with
-    | .ok p => pure p
-    | .error e => throwError "{e}"
-  Lean.Elab.Command.liftTermElabM <| Check.Generator.withSignature fun S => do
-    let e := Lean.Expr.const ``Elements.Superposition.Atom.rec [Lean.Level.param `u]
-    let forward ← match Check.Generator.translate env p.vocab S "shared recursor" e with
-      | .ok e => pure e
-      | .error e => throwError "{e}"
-    unless forward == e do throwError "identity translation changed a universe argument"
-    match Check.Generator.untranslate p.inverse S "shared recursor" forward with
-    | .ok back => unless back == e do throwError "reverse translation changed a universe argument"
-    | .error e => throwError "{e}"
+/- Shared recursors retain zero, symbolic and compound universe arguments in both directions. -/
+#guard_msgs in
+run_cmd Check.Generator.checkSharedIdentity ``Elements.Superposition.Atom.rec
+
+/-! ## Purity before the shared modules arrive
+
+These cases use Init declarations, so they run before the restricted calculus exists.
+The planted declarations are copies passed to a lookup, never installed in Lean's
+environment. Some fixtures make the root reach a second definition, so the faults test
+both direct and transitive dependencies through types and values. -/
+
+/- Init definitions, inductives, recursors and all three permitted axioms pass unchanged. -/
+#guard_msgs in
+run_cmd (Check.Generator.checkPureFixture
+  #[``id, ``List, ``Nat.rec, ``propext, ``Classical.choice, ``Quot.sound])
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureDependency ``Elements.Point
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureDependency ``Elements.Point true
+
+/-- error: shared calculus reaches `sorryAx` -/
+#guard_msgs in
+run_cmd Check.Generator.pureDependency ``sorryAx
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.plantPureDependency ``id ``Elements.Point
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.plantPureDependency ``Not ``Elements.Point true
+
+#guard_msgs in
+run_cmd Check.Generator.plantPureDependency ``id ``Not
+
+/-- error: shared calculus reaches unapproved axiom `Not` -/
+#guard_msgs in
+run_cmd Check.Generator.pureAxiom
+
+/-- error: `Nat.rec` is not shared -/
+#guard_msgs in
+run_cmd Check.Generator.checkSharedIdentity ``Nat.rec
+
+/- Stand-in module lists exercise successful identities before the calculus exists.
+List.filterMap has two universe arguments; Model.Kind.rec also checks that a shared name
+in the Model namespace survives the residual-name check in reverse translation. Include
+the production boundary too, since the library's laws now reach the real calculus. -/
+#guard_msgs in
+run_cmd (Check.Generator.checkSharedIdentityWith
+  (Check.Generator.pureModules ++ #[`Init.Data.List.Basic]) ``List.filterMap)
+
+#guard_msgs in
+run_cmd (Check.Generator.checkSharedIdentityWith
+  (Check.Generator.pureModules ++ #[`Model.Signature]) ``Model.Kind.rec)
+
+#guard_msgs in
+run_cmd (Check.Generator.checkPureModuleFixture #[`Init.Data.List.Basic] ``List.filterMap)
+
+/- No explicit declaration root is supplied to the audit: module data must find this
+word even though the library's laws do not use it. -/
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd (Check.Generator.checkPureModuleFixture
+  #[`Init.Data.List.Basic] ``List.filterMap (some ``Elements.Point))
+
+#guard_msgs in
+run_cmd Check.Generator.checkSharedImportHeader
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureOpaqueDependency
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureRecursorDependency
+
+#guard_msgs in
+run_cmd Check.Generator.checkModelDirPaths
+
+/-! ## The imports respect the shared boundary
+
+The real tree and planted headers use the same parser and decision. The permitted headers
+exercise comments, blank lines, import modifiers and escaped identifiers. Text after the
+first body command is not part of the header. -/
+
+#guard_msgs in
+run_cmd Check.Generator.checkModelImports
+
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean",
+    "import Model.Signature\nimport Mathlib\nimport Init\nimport Std\nimport Lean\n\
+    import Plausible\nimport LeanSearchClient\nimport ImportGraph\nimport ProofWidgets\n\
+    import Aesop\nimport Qq\nimport Batteries\nimport Cli\n"),
+  ("model/Model/Planted.lean",
+    "/- import Elements.Point /- nested -/ -/\nmodule\n\n\
+    public /- between tokens -/ import Elements.Foundations.Superposition.Syntax\n\
+    -- import Elements.Point\n\
+    public meta import Elements.Foundations.Superposition.Semantics\n\
+    import all Elements.Foundations.Superposition.Soundness\n\
+    public import Elements.Foundations.Superposition.Restriction\n\
+    public import Model.Laws.«areas-p5»\n\
+    def body := \"import Elements.Point\"\nimport Elements.Point"),
+  ("Elements/Foundations/Superposition/Syntax.lean",
+    "module\nprelude\npublic import Init\nimport Init.Data.List.Basic\n\
+    public import Elements.Foundations.Superposition.Semantics\n"),
+  ("Elements/Foundations/Superposition/Semantics.lean",
+    "import Elements.Foundations.Superposition.Syntax\n"),
+  ("Elements/Foundations/Superposition/Soundness.lean",
+    "import Elements.Foundations.Superposition.Semantics\n"),
+  ("Elements/Foundations/Superposition/Restriction.lean",
+    "import Elements.Foundations.Superposition.Soundness\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Elements.Point`, outside the four pure modules -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "import Elements.Point\n")])
+
+/--
+error: model/Model/Planted.lean: Model imports `Elements.Foundations.Words`, outside the four pure modules
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean",
+    "module\n\n/- header /- nested -/ comment -/\n\
+    public /- comment -/ import\n  Elements.Foundations.Words\n")])
+
+/-- error: model/Model.lean: Model imports `Elements`, outside the four pure modules -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "module\npublic import Elements\n")])
+
+/--
+error: model/Model/Planted.lean: Model imports `Elements.Foundations.Superposition.Syntax.Extra`, outside the four pure modules
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean",
+    "import Elements.Foundations.Superposition.Syntax.Extra\n")])
+
+/--
+error: Elements/Foundations/Superposition/Syntax.lean: pure module imports `Elements.Foundations.Words`, outside the four pure modules and `Init`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/Syntax.lean",
+    "module\npublic import Elements.Foundations.Words\n")])
+
+/--
+error: Elements/Foundations/Superposition/Restriction.lean: pure module imports `Mathlib`, outside the four pure modules and `Init`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/Restriction.lean", "import Mathlib\n")])
+
+/-- error: model/Model.lean: Model imports `Check.Original`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "import Check.Original\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Staging.X`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "module\npublic import Staging.X\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Unknown.X`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "module\nimport Unknown.X\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Audit.X`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "import Audit.X\n")])
+
+/-- error: model/Model.lean: Model imports `Certificate.Facts`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "module\npublic import Certificate.Facts\n")])
