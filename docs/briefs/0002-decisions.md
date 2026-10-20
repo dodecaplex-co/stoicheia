@@ -1853,14 +1853,68 @@ findings:
   and the placement policy still apply only in `Elements/`. The model's independent
   kernel replay, the other half of #121, is still open.
 
+- **The acceptance checklist in CI, held to what main passes
+  ([#35](https://github.com/jackChallis/stoicheia/issues/35)).** A new job, `acceptance`, in
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), runs
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) on every pull request,
+  with the whole history for the records' commits, and keeps its reports as an artifact of
+  the run. Until the consolidation release it fails only for an item that already passes on
+  main and does not pass on the pull request: a pass may not turn into a fail, while the
+  failures main still has (742 at #111) are reported and hold nothing back. Main is checked
+  beside the pull request, in a worktree of the merge commit's first parent, with the pull
+  request's own checks copied in (`scripts/`, `tests/`, `Certificate/`, `review/SCHEMA.md`
+  and `review/terms.toml`), keeping main's own values pinned to its content. The new
+  `scripts/copy_acceptance_checks.sh` is the helper that CI and the behavioural tests share
+  to copy the pull request's checker code while preserving those pinned values, so that one
+  copy of the checks judges both, and a check made stricter, which lands on its own before
+  the content it judges, holds nothing back. Main's
+  run leaves out the kernel replay and the model tests (E1 and E4), which the `check` and
+  `model` jobs hold on every pull request. The script gains two options: `--json`, which
+  writes every item's verdict beside the report, and `--compare MAIN PR`, which runs no
+  check and exits 1 for each item that passes in MAIN and does not pass in PR (a fail, a
+  check not run, or an item missing), and 2 for a file `--json` did not write, or for two
+  files written by different copies of the script. A staging item, P10 or E6, that turns
+  into a fail is listed and not held: both read `Staging/` alone, and a statement that a
+  stage adds or changes is staged before its proof ([WORKFLOW](../WORKFLOW.md), section 2),
+  so they turn into a fail exactly when a pull request stages one, as I.20's degenerate
+  case was staged after I.20 was proved; only the full gate holds them. The lane's
+  independent review found that the ratchet would have held such a pull request back, and
+  that a misspelt gate turned the job off; we thank it for both.
+  [`tests/test_check_acceptance.py`](../../tests/test_check_acceptance.py) (new) puts the
+  comparison to small files of verdicts, and the job runs it before the checker. The full
+  gate is one line of the workflow, `ACCEPTANCE_GATE: ratchet`, which the consolidation
+  release's pull request sets to `full`: from then on the job skips main, and any failure
+  fails it, as step 9 of [WORKFLOW](../WORKFLOW.md), section 10, asks; any other value
+  fails the job at once. Nothing is loosened:
+  no other job, check, test or expectation changes, and without the new options the
+  script's verdicts, report and exit status are as before. The job is not a required check:
+  the ruleset on main and `REQUIRED_CHECKS` in
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), unchanged, still name `check`,
+  `model` and `negative`, and making `acceptance` one is the owner's call; even so,
+  `git safe-push --merge` refuses a pull request while any of its checks fails, is cancelled
+  or is still running, but a skipped or missing `acceptance` does not hold it when the
+  three required jobs pass and no other check fails, is cancelled or is still running.
+  The pre-flight's `CHECKS` are unchanged too, since the job builds main beside the
+  pull request: like `formal-model`, it is CI's alone. The follow-up pull request
+  `docs/acceptance-ci-page` will add the new section "In CI" to
+  [ACCEPTANCE](../ACCEPTANCE.md) and update [WORKFLOW](../WORKFLOW.md), sections 8 and 10;
+  those reader-facing documentation changes are deliberately deferred from this one.
+  The review's correction changes `.github/workflows/ci.yml`,
+  `scripts/copy_acceptance_checks.sh` and `tests/test_check_acceptance.py`: main keeps its
+  axiom lock, certificate expectations, model hash, law names and account of the laws
+  (WORKFLOW, section 10, step 4), and a regression runs the shared helper and the certificate
+  checks to show that an updated definition or expected count cannot hide a pull request's
+  E2 failure.
+
 - **The checks, made ready for retiring axioms (proposed, pending the evidence).** The owner
   asked, "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
   principle on 19 October 2026, pending the evidence; nothing lands until the owner has seen
-  it. A search found eight that can go with no choice of basis (the retirement's own entry
-  names them). Since a check never changes in the pull request of the content it judges,
-  this change prepares the checks first, with all 87 axioms in place, and weakens none:
-  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) reads the expected count
-  from the lock instead of a hard-coded 87;
+  it. A search found eight that can go with no choice of basis, listed in
+  [`model/README.md`](../../model/README.md#how-the-translation-is-checked).
+  Since a check never changes in the pull request of the content it judges,
+  this change prepares the checks first, with all 87 axioms in place and the pin change
+  recorded below. Main already reads the expected axiom count from
+  the lock in its negative tests; this pull request keeps that file unchanged.
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) moves its mutation, count
   and membership fixtures to laws and pins that survive (I.5's inherited Postulate 3);
   [`scripts/safe_push.py`](../../scripts/safe_push.py) drops the generators `gs_adj` and
@@ -1874,8 +1928,14 @@ findings:
   [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
   laws, [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records that independent
   contract, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only
-  a description; `model/Check/` compares the eight hand translations directly with the
-  Elements declarations, so the comparisons hold whether those are axioms or theorems.
+  a description. The five files
+  [`model/Check/Angles.lean`](../../model/Check/Angles.lean),
+  [`model/Check/Circles.lean`](../../model/Check/Circles.lean),
+  [`model/Check/Incidence.lean`](../../model/Check/Incidence.lean),
+  [`model/Check/Intersections.lean`](../../model/Check/Intersections.lean) and
+  [`model/Check/Sides.lean`](../../model/Check/Sides.lean) compare eleven hand translations
+  of the eight properties directly with the Elements declarations, so the comparisons
+  hold whether those are axioms or theorems; `model/README.md` describes these checks.
 - **One certificate pin dropped, with the owner's approval.** The retirement makes
   `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
   in [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json),
