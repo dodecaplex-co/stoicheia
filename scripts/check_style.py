@@ -3942,6 +3942,19 @@ ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:[eE]\.g|[iI]\.e)\.")
 BESIDE_A_NAME = set("=+-−×·/<>≤≥()[]0123456789⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
 
 
+def modern_text_of(el) -> str:
+    return "".join(el.itertext()).strip()
+
+
+def modern_drawn_letters(path: Path) -> set[str] | None:
+    """The letters Euclid's figure draws for S25, preserving internal whitespace."""
+    try:
+        root = ET.parse(path).getroot()
+    except (OSError, ET.ParseError):
+        return None
+    return {modern_text_of(el) for el in root.iter()
+            if tag(el) == "text" and LETTER.fullmatch(modern_text_of(el))}
+
 
 def without_upright(body: str) -> str:
     """A TeX span with each upright argument (\\mathrm{…}, \\text{…}) taken out, its
@@ -4252,8 +4265,8 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
         if values[3] <= 0:
             found.append(("S24", f"viewBox height {values[3]}, not positive"))
     title = root.find(f"{SVG}title")
-    if title is None or " ".join(text_of(title).split()) != f"{ref}: the modern way":
-        got = "no <title>" if title is None else f"title \"{text_of(title)}\""
+    if title is None or " ".join(modern_text_of(title).split()) != f"{ref}: the modern way":
+        got = "no <title>" if title is None else f"title \"{modern_text_of(title)}\""
         found.append(("S24", f"{got}, not \"{ref}: the modern way\""))
     if root.find(f".//{SVG}desc") is not None:
         found.append(("S24", "a caption (<desc>): the modern-way paragraph serves as its caption"))
@@ -4359,7 +4372,7 @@ def check_modern(path: Path, ref: str) -> None:
             fail("S24", path, 0, f"unsupported {what} in a modern figure")
             return
     book, n = ref.split(".")
-    heaths = drawn_letters(path.with_name(f"{int(n):02d}.svg"))
+    heaths = modern_drawn_letters(path.with_name(f"{int(n):02d}.svg"))
     mishnah = ROOT / "mishnah" / book / f"{int(n):02d}.md"
     raw = mishnah.read_text(encoding="utf-8") if mishnah.exists() else ""
     markup = modern_markup_findings(raw)

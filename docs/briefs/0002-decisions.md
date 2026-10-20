@@ -2086,9 +2086,11 @@ findings:
   attributes and spellings the modern figures on main use, so no CSS is read; a malformed
   figure is reported on its file and checking goes on; and a modern paragraph with inline
   HTML or reference-link syntax is refused, its indentation counted in columns.
-  After merge `ce98e710`, `scripts/check_style.py` restores `93d61b6c`'s table reading
-  as `modern_table_columns` and `modern_table_cell_ranges`, keeping S23's helpers
-  unchanged, with the S24 and S25 refusals covered in `tests/test_check_style.py`.
+  After merges `ce98e710` and `57a5a94f`, `scripts/check_style.py` restores `93d61b6c`'s
+  table reading as `modern_table_columns` and `modern_table_cell_ranges`, and its
+  companion lookup as `modern_drawn_letters`, with `modern_text_of` preserving internal
+  newlines, keeping S23, S26 and the idea-figure checks' helpers unchanged, with the S24
+  and S25 refusals covered in `tests/test_check_style.py`.
 
 - **One letter, one point: S26.** Argon's second review of the book-III release found seven
   letters of Euclid's figures crossed or all but touched by strokes: III.17's D, III.16's G,

@@ -1177,6 +1177,33 @@ class Modern(unittest.TestCase):
     """The modern cases: the names a paragraph gives, and a figure of the modern way read
     against them and against its Euclid's figure's letters."""
 
+    def test_companion_letter_keeps_internal_newline(self):
+        euclid = (style.ROOT / "figures/I/01.svg").read_text(encoding="utf-8")
+        modern = (style.ROOT / "figures/I/01-modern.svg").read_text(encoding="utf-8")
+        paragraph = (style.ROOT / "mishnah/I/01.md").read_text(encoding="utf-8")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            figures = root / "figures/I"
+            figures.mkdir(parents=True)
+            mishnah = root / "mishnah/I"
+            mishnah.mkdir(parents=True)
+            (mishnah / "01.md").write_text(paragraph, encoding="utf-8")
+            path = figures / "01-modern.svg"
+            path.write_text(modern.replace(">A<", ">A′<"), encoding="utf-8")
+            for letter, expected in (
+                    ("A′", []),
+                    ("A\n′", [("S25", "letter A′ is not one Euclid's figure draws "
+                               "(B, C, D, E)")])):
+                with self.subTest(letter=letter):
+                    (figures / "01.svg").write_text(
+                        euclid.replace(">A<", f">{letter}<"), encoding="utf-8")
+                    with patch.object(style, "ROOT", root), \
+                            patch.object(style, "fail") as fail:
+                        style.check_modern(path, "I.1")
+                    self.assertEqual(
+                        [(r, message) for r, _, _, message in
+                         (call.args for call in fail.call_args_list)], expected)
+
     def test_modern_depth_is_bounded_before_recursive_helpers(self):
         self.assertEqual(self.check_refused_modern(
             MODERN_GOOD + "<g>" * 16 + "</g>" * 16), [])
@@ -1721,7 +1748,7 @@ class Modern(unittest.TestCase):
                         f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}">'
                         + inside + "</svg>")
                     with patch.object(style, "ROOT", root), \
-                            patch.object(style, "drawn_letters", return_value=HEATHS), \
+                            patch.object(style, "modern_drawn_letters", return_value=HEATHS), \
                             patch.object(style, "fail") as fail:
                         style.check_modern(first, "I.47")
                         style.check_modern(following, "I.48")
@@ -1756,7 +1783,7 @@ class Modern(unittest.TestCase):
             if figure_bytes is not None:
                 first.write_bytes(figure_bytes)
             with patch.object(style, "ROOT", root), \
-                    patch.object(style, "drawn_letters", return_value=HEATHS), \
+                    patch.object(style, "modern_drawn_letters", return_value=HEATHS), \
                     patch.object(style, "fail") as fail:
                 style.check_modern(first, "I.47")
                 style.check_modern(following, "I.48")
