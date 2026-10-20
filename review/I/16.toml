@@ -31,10 +31,10 @@ note = "Euclid leaves the argument for the other interior angle to the reader, w
 
 [review]
 stage = "full"
-commit = "e317bfcb"
+commit = "b6f63f85"
 reviewer = "Claude Opus 5.5, independent reader"
-lean = "sha256:f75bd14ed11169ef"
-run = "brief 0005 stage 5, no-mistakes run 01M5BM6YQB9Q11ZE3W6ZZW9C2V, review step"
+lean = "sha256:0d68a2996090312b"
+run = "brief 0005 stage 5, no-mistakes run 01M5BM6YQB9Q11ZE3W6ZZW9C2V, review step, round 3 reader"
 
 [review.items]
 statement = "pass"
