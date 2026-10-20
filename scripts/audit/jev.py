@@ -751,6 +751,7 @@ def cmd_score(args) -> int:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
     answered = []
     agreements: dict[int, bool] = {}
+    model_mismatches: dict[int, bool] = {}
     seen_ids = set()
     for n, r in enumerate(rows, 1):
         if not isinstance(r, dict):
@@ -796,6 +797,23 @@ def cmd_score(args) -> int:
             if "confidence" in r or "probabilities" in r or "reversed" in r:
                 raise Failure(f"{row_id}: its noul answer has choice-only fields; score reads "
                               "only lines that `run` wrote")
+        model = r.get("model")
+        requested_model = r.get("model_requested")
+        if not isinstance(model, str) or not model.strip():
+            raise Failure(f"{row_id}: its answering model is not a nonempty string; score "
+                          "reads only lines that `run` wrote")
+        if not isinstance(requested_model, str) or not requested_model.strip():
+            raise Failure(f"{row_id}: its requested model is not a nonempty string; score "
+                          "reads only lines that `run` wrote")
+        model_mismatch = model != requested_model
+        if "model_differs" in r:
+            if r["model_differs"] is not True:
+                raise Failure(f"{row_id}: its model mismatch flag is not true; score reads "
+                              "only lines that `run` wrote")
+            if not model_mismatch:
+                raise Failure(f"{row_id}: its model mismatch flag does not match its models; "
+                              "score reads only lines that `run` wrote")
+        model_mismatches[id(r)] = model_mismatch
         answered.append(r)
         if "expected" not in r:
             if "agrees" in r:
@@ -868,8 +886,8 @@ def cmd_score(args) -> int:
                 and (r["reversed"]["choice"] != r.get("choice")
                      or r["reversed"].get("consistent") is False)):
             why.append(f"chose {r['reversed']['choice']!r} with the options reversed")
-        if r.get("model_differs"):
-            why.append(f"answered by {r.get('model')}, not {r.get('model_requested')}")
+        if model_mismatches[id(r)]:
+            why.append(f"answered by {r['model']}, not {r['model_requested']}")
         if why:
             adjudicate.append(f"  {r.get('id')}: " + "; ".join(why))
     print(f"for adjudication: {len(adjudicate)}")
@@ -1185,6 +1203,8 @@ def cmd_self_test(args) -> int:
         agreement_base["confidence"] = 1
         agreement_base["reversed"]["confidence"] = 1
         agreement_base["reversed"]["consistent"] = True
+        model_fields = {"model": agreement_base["model"],
+                        "model_requested": agreement_base["model_requested"]}
         other_choice = next(choice for choice in agreement_base["probabilities"]
                             if choice != agreement_base["choice"])
         forged_choice = dict(agreement_base, id="forged-choice", choice=other_choice)
@@ -1204,7 +1224,7 @@ def cmd_self_test(args) -> int:
         no_answer.pop("reversed")
         forged_noul = {"id": "forged-noul", "noul": 0.9, "expected": False,
                        "agrees": True, "input_sha256": "self-test-agreement",
-                       "input_rows": 1, "order_check": False}
+                       "input_rows": 1, "order_check": False, **model_fields}
         missing_noul_agreement = dict(forged_noul, id="missing-noul-agreement",
                                       expected=True)
         del missing_noul_agreement["agrees"]
@@ -1241,7 +1261,7 @@ def cmd_self_test(args) -> int:
                                          choice=other_choice, agrees=False)
         valid_noul = {"id": "valid-noul", "noul": 0.75, "expected": True,
                       "agrees": True, "input_sha256": "self-test-agreement",
-                      "input_rows": 1, "order_check": False}
+                      "input_rows": 1, "order_check": False, **model_fields}
         valid_noul_disagreement = dict(valid_noul, id="valid-noul-disagreement",
                                        expected=False, agrees=False)
         for row in (valid_choice, valid_noul):
@@ -1262,6 +1282,68 @@ def cmd_self_test(args) -> int:
             code, out, err = run("score", str(agreement_file), "--bar", "1")
             check(code == 1 and "below the bar of 100%" in out,
                   f"score applies a bar to {row['id']}", out + err)
+
+        mismatched_model = dict(valid_choice, id="mismatched-model",
+                                model="jev-self-test-returned",
+                                model_requested="jev-self-test-requested")
+        mismatched_model.pop("model_differs", None)
+        mismatched_model_file = tmp / "mismatched-model.jsonl"
+        mismatched_model_file.write_text(json.dumps(mismatched_model) + "\n")
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(mismatched_model_file), *extra)
+            check(code == 0 and "for adjudication: 1" in out
+                  and "answered by jev-self-test-returned, not jev-self-test-requested" in out
+                  and (not extra or "at or above the bar of 100%" in out),
+                  "score derives an omitted model mismatch"
+                  + (" under a bar" if extra else ""), out + err)
+
+        valid_model_mismatch = dict(mismatched_model, id="valid-model-mismatch",
+                                    model_differs=True)
+        valid_model_mismatch_file = tmp / "valid-model-mismatch.jsonl"
+        valid_model_mismatch_file.write_text(json.dumps(valid_model_mismatch) + "\n")
+        code, out, err = run("score", str(valid_model_mismatch_file))
+        check(code == 0 and "for adjudication: 1" in out,
+              "score accepts and derives a true model mismatch flag", out + err)
+
+        false_model_mismatch = dict(mismatched_model, id="false-model-mismatch",
+                                    model_differs=False)
+        false_model_mismatch_file = tmp / "false-model-mismatch.jsonl"
+        false_model_mismatch_file.write_text(json.dumps(false_model_mismatch) + "\n")
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(false_model_mismatch_file), *extra)
+            check(code == 1 and out == "" and "model mismatch flag is not true" in err
+                  and "Traceback" not in err,
+                  "score refuses a false model mismatch flag"
+                  + (" under a bar" if extra else ""), out + err)
+
+        matching_model_flag = dict(valid_choice, id="matching-model-flag",
+                                   model_differs=True)
+        matching_model_flag_file = tmp / "matching-model-flag.jsonl"
+        matching_model_flag_file.write_text(json.dumps(matching_model_flag) + "\n")
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(matching_model_flag_file), *extra)
+            check(code == 1 and out == "" and "does not match its models" in err
+                  and "Traceback" not in err,
+                  "score refuses a forged model mismatch flag"
+                  + (" under a bar" if extra else ""), out + err)
+
+        for field in ("model", "model_requested"):
+            for name, bad in (("missing", None), ("empty", ""), ("blank", "  "),
+                              ("boolean", True), ("number", 1)):
+                malformed_model = dict(valid_choice,
+                                       id=f"{field.replace('_', '-')}-{name}")
+                if name == "missing":
+                    malformed_model.pop(field)
+                else:
+                    malformed_model[field] = bad
+                malformed_model_file = tmp / "malformed-model.jsonl"
+                malformed_model_file.write_text(json.dumps(malformed_model) + "\n")
+                for extra in ((), ("--bar", "1")):
+                    code, out, err = run("score", str(malformed_model_file), *extra)
+                    check(code == 1 and out == "" and "not a nonempty string" in err
+                          and "Traceback" not in err,
+                          f"score refuses {field} {name}"
+                          + (" under a bar" if extra else ""), out + err)
 
         duplicate_file = tmp / "duplicate-id.jsonl"
         duplicate_file.write_text(json.dumps(valid_choice) + "\n"
@@ -1367,8 +1449,8 @@ def cmd_self_test(args) -> int:
         single_order["order_check"] = False
         confidence_cases.append(single_order)
         confidence_cases.extend([
-            {"id": "noul-low", "noul": 0.74, "order_check": False},
-            {"id": "noul-boundary", "noul": 0.75, "order_check": False},
+            {"id": "noul-low", "noul": 0.74, "order_check": False, **model_fields},
+            {"id": "noul-boundary", "noul": 0.75, "order_check": False, **model_fields},
         ])
         confidence_file = tmp / "confidence.jsonl"
         confidence_file.write_text("".join(json.dumps(row) + "\n" for row in confidence_cases))
@@ -1454,7 +1536,7 @@ def cmd_self_test(args) -> int:
                                      ("noul-threshold", 0.75, True)):
             noul_cases.append({"id": name, "noul": noul, "expected": expected,
                                "agrees": True, "input_sha256": "self-test-noul",
-                               "input_rows": 4, "order_check": False})
+                               "input_rows": 4, "order_check": False, **model_fields})
         noul_file = tmp / "noul-boundaries.jsonl"
         noul_file.write_text("".join(json.dumps(row) + "\n" for row in noul_cases))
         for extra in ((), ("--bar", "1")):
