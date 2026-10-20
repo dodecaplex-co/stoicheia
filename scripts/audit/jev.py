@@ -735,6 +735,10 @@ def cmd_score(args) -> int:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
     for r in rows:
         answers = [(r, "")]
+        if ("error" not in r and "choice" in r and r.get("order_check") is True
+                and "reversed" not in r):
+            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
+                          "only lines that `run` wrote")
         if "reversed" in r and (not isinstance(r["reversed"], dict)
                                 or not isinstance(r["reversed"].get("choice"), str)):
             raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
@@ -1238,11 +1242,34 @@ def cmd_self_test(args) -> int:
             row["reversed"] = broken
             broken_file = tmp / "reversed-broken.jsonl"
             broken_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
-            for extra in ((), ("--bar", "0")):
+            for extra in ((), ("--bar", "1")):
                 code, out, err = run("score", str(broken_file), *extra)
                 check(code == 1 and out == "" and "reversed asking is not an answer" in err,
                       f"score refuses a reversed asking of {broken!r}"
                       + (" under a bar" if extra else ""), out + err)
+
+        missing_reversed = json.loads(first[0])
+        missing_reversed["id"] = "reversed-absent"
+        missing_reversed["expected"] = missing_reversed["choice"]
+        missing_reversed["agrees"] = True
+        missing_reversed["confidence"] = 1
+        missing_reversed["input_rows"] = 1
+        missing_reversed["order_check"] = True
+        missing_reversed.pop("reversed")
+        missing_reversed_file = tmp / "reversed-absent.jsonl"
+        missing_reversed_file.write_text(json.dumps(missing_reversed) + "\n")
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(missing_reversed_file), *extra)
+            check(code == 1 and out == "" and "reversed asking is not an answer" in err,
+                  "score refuses an absent reversed asking"
+                  + (" under a bar" if extra else ""), out + err)
+
+        single_order_good = dict(missing_reversed, id="single-order-good", order_check=False)
+        single_order_file = tmp / "single-order-good.jsonl"
+        single_order_file.write_text(json.dumps(single_order_good) + "\n")
+        code, out, err = run("score", str(single_order_file), "--bar", "1")
+        check(code == 0 and "at or above the bar of 100%" in out,
+              "score accepts a successful choice made without the order check", out + err)
 
         order_cases = []
         for name, differs, consistent in (("different-without-flag", True, None),
