@@ -29,9 +29,11 @@ name = "Model"
 # content changes or a file entering or leaving a filtered directory input rerun the
 # checks. Timestamps and filenames alone are not hashed. CI's fresh build runs every
 # check regardless of these local cache traces.
+# The compiled-import audit reads Model's artefacts without importing Mathlib into Check.
+# Build the whole Model library first, including when building a Check module directly.
 [[lean_lib]]
 name = "Check"
-needs = ["axiomsLock", "lockHash", "generatedLaws", "generatedChecks", "generatedAssembly",
+needs = ["Model:leanArts", "axiomsLock", "lockHash", "generatedLaws", "generatedChecks", "generatedAssembly",
   "planeProofs", "modelRoot", "modelSources", "pureSources"]
 
 [[input_file]]
@@ -68,6 +70,7 @@ filter = { extension = ["lean"] }
 # The import audit reads the library root as well as every Model source, including files
 # not imported by the root. Filter before hashing: a same-content .txt to .lean rename
 # must add a hashed input, since it adds a source to the audit.
+# Include all sixteen ASCII case variants so non-canonical extensions rerun the check.
 [[input_file]]
 name = "modelRoot"
 path = "Model.lean"
@@ -77,7 +80,7 @@ text = true
 name = "modelSources"
 path = "Model"
 text = true
-filter = { extension = ["lean"] }
+filter = { extension = ["lean", "leaN", "leAn", "leAN", "lEan", "lEaN", "lEAn", "lEAN", "Lean", "LeaN", "LeAn", "LeAN", "LEan", "LEaN", "LEAn", "LEAN"] }
 
 # Superposition does not exist on main yet. Lake rejects a missing input directory, so
 # track Lean files under its existing parent, a superset of the four pure sources.
@@ -86,4 +89,4 @@ filter = { extension = ["lean"] }
 name = "pureSources"
 path = "../Elements/Foundations"
 text = true
-filter = { extension = ["lean"] }
+filter = { extension = ["lean", "leaN", "leAn", "leAN", "lEan", "lEaN", "lEAn", "lEAN", "Lean", "LeaN", "LeAn", "LeAN", "LEan", "LEaN", "LEAn", "LEAN"] }

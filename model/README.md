@@ -10,7 +10,7 @@ package gives a formal proof: a Lake package of its own, with Mathlib, in which 
 words are the fields of a structure, the ordinary plane fills them, and Lean checks that
 the plane satisfies each law.
 
-**Where it stands.** The package builds, with the signature, the plane, and all 87 laws,
+**Where it stands.** The package contains the signature, the plane, and all 87 laws,
 written by a generator from the library's elaborated declarations into one structure,
 `Laws`, and checked against those declarations. The plane satisfies all 87 locked laws.
 `Model/Assembly.lean` gathers these proofs into `euclidean_laws`, with no remaining
@@ -78,7 +78,7 @@ at the repository's root builds the library exactly as before.
 | [Check/AreasP5.lean](Check/AreasP5.lean) | the hand-translated area laws and Postulate 5 compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.«areas-p5»` |
 | [Check/Circles.lean](Check/Circles.lean) | the hand-translated circle rules compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.circles` |
 | [Check/Generated.lean](Check/Generated.lean) | checked at every build: the lock, its hash and the axioms, and that the generated files are what the generator writes | `Elements.Foundations`, `Model.Signature`, the generator |
-| [Check/Generator.lean](Check/Generator.lean) | the generator: reading the library, auditing shared declarations and model imports, translating, writing, and the checks it makes | Lean alone |
+| [Check/Generator.lean](Check/Generator.lean) | the generator: reading the library, auditing shared declarations, source headers and compiled imports, translating, writing, and the checks it makes | Lean alone |
 | [Check/Hand.lean](Check/Hand.lean) | each hand translation compared with the library's declaration and with the generated law | `Elements.Foundations`, `Model.Hand` |
 | [Check/Incidence.lean](Check/Incidence.lean) | the hand-translated incidence and line laws, and `Hand.LinesMeet`, compared with the library and the generated laws | `Elements.Foundations`, `Check.Hand`, `Model.Laws.incidence` |
 | [Check/Intersections.lean](Check/Intersections.lean) | the hand-translated intersection rules and their two words compared with the library and the generated laws | `Check.Hand`, `Model.Laws.intersections` |
@@ -299,16 +299,41 @@ every component is a non-empty string, with no `/`, `\`, NUL or colon, neither `
 Harmless escaped identifiers, including `areas-p5`, remain valid. The same predicate guards
 core, shared and project declaration membership, foundation collection and shared headers.
 
+Before selecting source files, the audit checks the directory listings under `Model/`
+and `../Elements/Foundations/`, together with the actual spelling of `Model.lean`.
+Any extension equal to `lean` ignoring case must be exactly `.lean`; `.LEAN` and mixed
+spellings are errors. Distinct file paths equal after lowercasing are also errors,
+including differences in directory components. A case variant of a pure module's prescribed
+path is refused even when the canonical spelling is absent. This prevents a case-insensitive
+filesystem from resolving a source which the audit would otherwise omit. The listing decision takes
+data, so its regressions run on any filesystem without creating colliding files.
+
 Lean 4.35's `modToFilePath` joins each component as a path: `..` can leave a package and
 an absolute component replaces the path before it. Colons and trailing dots or spaces have
 additional drive, stream or normalisation meanings on Windows, so they are refused on every
 platform. This closes the escaped-component routes, including
 `Model.«..».Check.Original` and an absolute path beneath `Init`.
 
-The closure claim depends on the configured package roots, unmodified pinned dependencies
-and toolchain, and no search-path or symlink substitution. The audit checks all local Model
-sources and the four pure sources, but does not recursively audit external source files or
-authenticate their origin. Lean 4.35 exposes an imported module's optional package identifier
+`checkModelImportClosure`, also called from `Check/RoundTrip.lean`, separately follows
+the **graph of compiled imports** from `Model`. It resolves each module with `findOLean`
+on the current search path and reads the imports in its `.olean` with `readModuleData`.
+Lean 4.35's `mkModuleData` copies the whole import header into that first part, including
+non-public imports; the graph check follows every edge, regardless of import modifiers.
+It checks each name before looking up its file, using the same canonical-name predicate
+and Model whitelist as the source audit. Repeated imports are visited once. The source
+audit remains necessary for files that nothing imports, and keeps the stricter import
+boundary for the pure modules.
+
+The compiled closure reaches `Lake.Util.Version`, through the pinned Mathlib and
+ImportGraph imports. `Lake` ships with Lean's toolchain, as `Init`, `Std` and `Lean` do, so
+it is among the permitted roots of both import checks; it is not trusted as Lean's own by
+`isLeanCore`, which still admits only `Init`.
+
+A passing check establishes that names in the resolved compiled-import graph stay within the permitted
+boundary. **It does not authenticate the files on the search path.** It does not establish
+that a compiled file matches a source, authenticate external dependencies or symlink targets,
+or recover an earlier environment's import artefacts. Those still depend on the configured
+build and search path. Lean 4.35 exposes an imported module's optional package identifier
 through `Environment.getModulePackageByIdx?`. All 653 `Init` modules in the installed pinned
 toolchain have no identifier, so `isLeanCore` requires both a canonical `Init` name and no
 package identifier. This refuses a named package, including `stoicheia`, posing as `Init`.
@@ -317,24 +342,37 @@ It does not authenticate an unlabelled replacement. Lean's environment retains n
 file's provenance, and Lake can supply explicit import artefacts.
 
 Lake 4.35 defaults the Model library's roots to `Model` and its globs to that root alone.
-It builds `Model.lean` and recursively follows imports. The audit includes this file
-outside `Model/`, and also checks sources under `Model/` that the root does not import.
+It builds `Model.lean` and recursively follows imports. The compiled check compares this
+closure with the source audit's complete Model list and refuses any source module the
+root does not reach: under this configuration it is not otherwise built. If the library's
+globs grow, the graph's starting modules and coverage check must grow with them.
+The source audit includes the root outside `Model/` and checks unimported files too.
 Lean's own header parser reads both legacy headers without `module` and headers with
 `module`, comments, blank lines, `public import` and the other import modifiers, stopping
 at the first body command; a malformed header is an error. `checkModelImportsWith` makes
 the decision from file paths and imports, so planted cases use the same parser and
 decision without creating files or loading their imports.
 
-The Check library registers `Model.lean` and the `.lean` files under `Model/` and
-`../Elements/Foundations/` as text inputs in [lakefile.toml](lakefile.toml). The plane-proof
-input is filtered to `.lean` too. The existing foundations directory is used because Lake
+Check continues to import only Lean, the edition and the plain-Lean part of Model, with
+no Mathlib imports. Its Lake `needs` now includes `Model:leanArts`, so the whole Model
+library is built before any Check module runs, even when a Check module is built directly.
+The graph reader examines those compiled files without importing their declarations or
+running their initialisers. A forbidden Model import of Check creates a build dependency
+cycle and is refused by Lake before the audits run.
+
+The Check library registers `Model.lean` and every case variant of the `.lean` extension
+under `Model/` and `../Elements/Foundations/` as text inputs in
+[lakefile.toml](lakefile.toml). Both source-directory filters enumerate all sixteen ASCII
+spellings, so adding a `.LEAN` file also invalidates the checks. The separate plane-proof
+input still selects `.lean`. The existing foundations directory is used because Lake
 rejects an input directory that does not exist, and its `Superposition/` subdirectory is
 absent on main; this input includes all four pure sources when present, as well as other
 foundation sources.
 
 Lake 4.35 filters directory entries before sorting them and combining their content hashes.
 Adding or removing a selected file, including a same-content rename from `.txt` to `.lean`
-or back, changes that list. This catches the first pure module arriving by such a rename.
+or `.LEAN`, or back, changes that list. This catches the first pure module arriving by such
+a rename.
 File paths are trace captions, not part of the hash: a rename within the selected set can
 still replay a cached result when the ordered contents stay the same. Text hashes normalise
 line endings, and a timestamp-only touch can also replay a result. Changes to the selected
@@ -430,6 +468,11 @@ the original means. These checks do that, at every build.
   exercise the same core and sharing decisions as production, without installing a module.
   Core cases also refuse canonical names with a named package and accept actual Init
   declarations. Canonical names, including harmless escaped identifiers, remain accepted.
+  Directory listings supplied as data refuse upper-case and mixed-case extensions, names
+  differing only in case, and directory-component aliases, in Model and the foundations.
+  Compiled-import cases require the real closure to pass and refuse planted closures containing
+  `Check.Original`, `Elements.Foundations.Words` (the module declaring `Elements.Point`),
+  and a non-canonical module name. A coverage case refuses an unimported Model source.
   A path regression checks that both relative and absolute Check filenames locate the
   model package.
 
@@ -479,11 +522,12 @@ law, and its kernel round trip joins `Check/Hand.lean`.
 A model is evidence only if its proofs do not use the laws they are meant to satisfy.
 Three things make sure of that.
 
-- **No import of the library.** Nothing under `Model/` imports `Elements`, so no law of
-  the library is even in scope there. [Model/Audit.lean](Model/Audit.lean), which
-  imports every module of `Model`, checks it at every build: it asks Lean for
+- **No geometric import of the library.** The source and compiled-import audits above
+  restrict the whole Model library, including its root, to the declared boundary.
+  [Model/Audit.lean](Model/Audit.lean) also imports the model's proof modules and asks Lean for
   `Elements.Point`, and `#guard_msgs` fails the build unless the answer is "unknown
-  identifier". An import through another file is caught as well as a direct one.
+  identifier". The compiled graph check covers indirect imports, including dependencies
+  of external modules; its source coverage check refuses any Model source outside that graph.
 - **The axioms, checked at every build.** The same file prints, for each theorem that
   proves a law in the plane, the axioms Lean finds beneath it, and `#guard_msgs` fails the
   build unless they are exactly `propext`, `Classical.choice` and `Quot.sound`: Lean's

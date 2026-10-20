@@ -2048,3 +2048,69 @@ findings:
   the calculus arrives.
   This round changes only `model/Check/Generator.lean`, `model/Check/RoundTrip.lean`,
   `model/README.md` and this decisions file. The three generated sources stay unchanged.
+
+- **Sixth-round source spelling and compiled imports for brief 0009, #75.** At
+  `356b62ab`, the source audit selected only an exactly lower-case `.lean` extension.
+  On this case-insensitive filesystem, Lake built `Model/Uppercase.LEAN` when asked for
+  `Model.Uppercase`, and the source audit passed it. The requested fixture, containing
+  `import Check.Original`, did not make the whole baseline build pass: Lean refused its
+  non-`module` header when `Model.lean` imported it. Both observations matter.
+  `model/Check/Generator.lean` now validates directory listings before selecting sources:
+  every extension equal to `lean` ignoring case must be exactly `lean`, and distinct paths
+  equal after lowercasing are refused, including directory components. It checks the
+  actual Model root filename and the listings under Model and the existing foundations
+  parent. A case variant of a pure module's prescribed path is also refused on its own,
+  so selecting by listing cannot lose the old audit's case-insensitive path lookup.
+  `model/Check/RoundTrip.lean` supplies planted listings as data, exercising
+  upper-case and mixed-case extensions and collisions on any filesystem. The extension
+  and collision cases failed before the new decision was implemented.
+
+  The same generator now traverses the compiled import graph from `Model`, using
+  `findOLean` and `readModuleData` from the installed Lean 4.35 toolchain. Its
+  `Lean/Environment.lean` shows that `mkModuleData` copies the whole import header into
+  the first `.olean` part, including non-public imports. Every name is checked before
+  lookup, against the canonical-name predicate and the source audit's Model whitelist.
+  A visited set handles repeated imports and cycles; refusals give the import path.
+  The source audit's complete Model list must appear in the closure. Model's default
+  root and glob build only `Model` and its imports, so an unimported source is refused;
+  new globs would require new graph roots and a revised coverage check. Source headers
+  are still audited, including files nothing imports and the four pure sources.
+  Planted closure data refuses `Check.Original`, `Elements.Foundations.Words`, where
+  `Elements.Point` is declared, a non-canonical name, and an uncovered source module.
+  This checks the graph of compiled imports. It does not authenticate files on the search
+  path, establish correspondence with sources, or recover earlier import artefacts.
+
+  **The protected path `model/lakefile.toml` changes in this round.** Check keeps its
+  existing restriction against importing Mathlib. Instead its `needs` includes
+  `Model:leanArts`, building the whole Model library before any Check module runs, also
+  for a direct Check-module build. The graph reader imports no declarations and runs no
+  module initialisers. Both source-directory filters now enumerate all sixteen ASCII
+  case variants of `lean`; adding a `.LEAN` source invalidates the checks. The existing
+  limits of content-only traces still apply to renames within the selected set.
+  With the fixture unimported, `lake build` now fails with:
+  ```text
+  model/Model/Uppercase.LEAN: non-canonical source extension (expected `.lean`)
+  ```
+  With its import added to `Model.lean`, Lake instead reports `build cycle detected`
+  through Model, Check's new build prerequisite and `Check.Original`. Both temporary
+  source changes were removed. `model/Model.lean` is byte for byte unchanged.
+
+  The real compiled graph reaches `Lake.Util.Version`, through `Mathlib.Init`,
+  `ImportGraph.Tools` and `ImportGraph.Util.Modules`. `Lake` ships with Lean's toolchain,
+  like `Init`, `Std` and `Lean`, so the captain added it to the permitted roots of the
+  import checks this branch introduces; no existing check is loosened, and `isLeanCore`,
+  which decides what is trusted as Lean's own in translation, still admits only `Init`.
+  `model/README.md` documents the graph check, build ordering and provenance limits.
+  The files changed are `model/Check/Generator.lean`, `model/Check/RoundTrip.lean`,
+  `model/README.md`, `model/lakefile.toml` and `docs/briefs/0002-decisions.md`.
+  `model/lakefile.toml` is the only protected path changed by the branch and still needs
+  the independent security review before landing. All three generated sources remain
+  byte for byte unchanged. No proposition review record is made stale.
+  On `356b62ab` with these uncommitted changes, `python3 scripts/check_fidelity.py`,
+  `python3 -I tests/model/run.py --fast`, `python3 -I tests/test_negative_tests.py` (eight
+  tests), and the generated-file `git diff --exit-code` pass. With `Lake` permitted,
+  `cd model && lake build` passes (2625 jobs).
+  The optional style check initially found eight unknown Audit names with stale build
+  artefacts; `lake build Audit` passed (139 jobs), then `python3 scripts/check_style.py`
+  passed. Every Lake invocation exported the elan path first. No full repository CI or
+  independent security review was run, and no commit, push or GitHub action was made.
