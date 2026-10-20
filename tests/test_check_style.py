@@ -17,6 +17,11 @@ it, put to the script's own patterns and functions:
   fill, within its three ends and beyond its chord out to its arc, and not beyond the
   arc; however the wedge is spelled (an absolute arc, a relative arc, a cubic curve), and
   wherever a transform moves it;
+* the modern cases: S24 and S25 read a figure of the modern way against its Euclid's
+  figure's letters and its paragraph's names, which `modern_names` takes from TeX and
+  from plain words alike, save the letters of English (A's, e.g., the article "a") and
+  what a reader does not see, in a comment or in code; the paragraph selection keeps
+  its source offsets and indentation.
 * the scope cases (#66): which texts of a review record the rules read, and on which
   lines; the docstring render.py shows, found again in its file; S12's reading of a
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
@@ -39,6 +44,7 @@ section 8, "A guard defect gets a regression"). Python 3.11 or later; standard l
 
 from __future__ import annotations
 
+import io
 import os
 import runpy
 import sys
@@ -207,6 +213,155 @@ def ink_finding(drawn: str, x: float, y: float, ink: str) -> bool:
         f'font-style="italic" fill="{ink}">A</text></svg>')
     return any(style.ink_fault(root, eff, style.letter_centre(own, eff, m, "A"), "A")
                for el, own, eff, m, _ in style.placed(root) if style.tag(el) == "text")
+
+
+# ---------------------------------------------------------------------------------------
+# The modern cases: a figure of the modern way, read as S24 and S25 read it, against the
+# letters its Euclid's figure draws and the names its paragraph uses.
+
+MODERN_PARAGRAPH = (style.MODERN_WAY + r" Put $\mathrm{A} = (0, 0)$, $\mathrm{B} = (c, 0)$ "
+                    r"and $\mathrm{C} = (0, b)$, and write $a$ for BC. Then $\vec{u}$ "
+                    r"turns through $\theta$, and $\tfrac{1}{2}bc$ is the area; with h a "
+                    "height, (a + b)² is plain.")
+NAMES_CASES = [   # (a paragraph, names it must give, names it must not)
+    (MODERN_PARAGRAPH, {"a", "b", "c", "u", "θ", "h"}, {"v", "e", "r", "t", "f", "m"}),
+    (style.MODERN_WAY + r" The point $\mathrm{A} + i\mathrm{(B - A)}$ is D.", {"i"}, {"m", "r"}),
+    (style.MODERN_WAY + " With AC = a and CB = b, the square is (a + b)².", {"a", "b"}, {"c"}),
+    (style.MODERN_WAY + r" Its breadth is $q/(a\sin\theta)$.", {"q", "a", "θ"}, {"s", "n"}),
+    (style.MODERN_WAY + r" With $\nu$ and $\vartheta$ and ϕ.", {"ν", "θ", "φ"}, {"n", "u"}),
+    (style.MODERN_WAY + r" Let $a_{\text{side {length}}}$ be given.", {"a"}, {"g", "s", "l"}),
+    (style.MODERN_WAY + r" On a base FG, A's side and Euclid’s turn a $\theta$, e.g. one, "
+     "i.e. two; E.g. three.", {"θ"}, {"a", "s", "e", "g", "i"}),
+    (style.MODERN_WAY + " Twice it is 2a, a² is its square, a/2 its half and\na − 1 less.",
+     {"a"}, set()),
+]
+LEAN_NAME = "`Elements.BookI.prop05_converse`"
+COMMENT_PARAGRAPH = (style.MODERN_WAY + " Put $b$ here <!--\nnotes x and y\n--> "
+                     "and $c$ there.")
+CODE_PARAGRAPH = style.MODERN_WAY + " Put $b$ here `k\nx` and $c$ there."
+PAGE_NAMES_CASES = [   # (a mishnah, names its modern way gives, names it must not)
+    (style.MODERN_WAY + f" Put $a$ here, as Lean says in\n{LEAN_NAME}\nwith $b = c$.",
+     {"a", "b", "c"}, set()),
+    (style.MODERN_WAY + " Put $a$ here <!-- crew: label x and y later --> and so on.",
+     {"a"}, {"x", "y"}),
+    (style.MODERN_WAY + " Put $a$ here, as `$z$` and `k` say.", {"a"}, {"z", "k"}),
+    (COMMENT_PARAGRAPH, {"b", "c"}, {"x", "y"}),
+    (CODE_PARAGRAPH, {"b", "c"}, {"k", "x"}),
+    (CODE_PARAGRAPH.replace("`", "``"), {"b", "c"}, {"k", "x"}),
+    (style.MODERN_WAY + " Put $b$ here `<!--` and $c$ there <!-- x -->.",
+     {"b", "c"}, {"x"}),
+    (style.MODERN_WAY + " Put $b$ here <!-- `x` --> and $c$ there.",
+     {"b", "c"}, {"x"}),
+    (style.MODERN_WAY + " Put $b$ here `k\nx and $c$ there.", {"b", "c", "k", "x"}, set()),
+    # The modern figure uses the same link and code parsing as S12 and S22: a backtick
+    # in a link's target cannot hide a visible name, and an invalid link hides nothing.
+    (style.MODERN_WAY + " Put $b$ here [link](https://example.test/x/`) and $c$ there `k`.",
+     {"b", "c"}, {"k", "x"}),
+    (style.MODERN_WAY + " Put $b$ here [x](/my $z$) and $c$ there.",
+     {"b", "c", "z"}, set()),
+    (style.MODERN_WAY + " Put $b$ here [x](<https://example.test/$z$>) and $c$ there.",
+     {"b", "c"}, {"z"}),
+]
+SPAN_CASES = [   # (a mishnah, the paragraph modern_span finds, or None)
+    (style.MODERN_WAY + f" Put $a$ here, as Lean says in\n{LEAN_NAME}\nwith $b = c$.\n\nAfter.",
+     style.MODERN_WAY + " Put $a$ here, as Lean says in\n" + " " * len(LEAN_NAME)
+     + "\nwith $b = c$."),
+    ("Before.\n\n" + style.MODERN_WAY + " x.\n\nAfter.", style.MODERN_WAY + " x."),
+    ("Before.\n \n" + style.MODERN_WAY + " x.\n \nAfter.", style.MODERN_WAY + " x."),
+    ("Before.\n\n  " + style.MODERN_WAY + " x.", style.MODERN_WAY + " x."),
+    (style.MODERN_WAY + " x.\n# A heading", style.MODERN_WAY + " x."),
+    ("<!--\n\n" + style.MODERN_WAY + " x.\n\n-->", None),
+    ("```\n" + style.MODERN_WAY + " x.\n```", None),
+    ("**A lead.** No modern way here.", None),
+    ("    " + style.MODERN_WAY + " Put $b$ here.", None),
+    ("\t" + style.MODERN_WAY + " Put $b$ here.", None),
+    (COMMENT_PARAGRAPH + "\n\nAfter $z$.",
+     style.MODERN_WAY + " Put $b$ here     \n             \n    and $c$ there."),
+    (CODE_PARAGRAPH + "\n\nAfter $z$.",
+     style.MODERN_WAY + " Put $b$ here   \n   and $c$ there."),
+]
+# These expectations are source slices, before comments or code are masked. The renderer
+# must insert after that whole slice, and the figure rules must select the same one.
+SOURCE_SPAN_CASES = [   # (the text before, the paragraph or None, the text after)
+    ("", None, "    " + style.MODERN_WAY + " Put $b$ here."),
+    ("Before.\n\n", None, "    " + style.MODERN_WAY + " Put $b$ here."),
+    ("Before.\n\n   ", COMMENT_PARAGRAPH, "\n\nAfter $z$."),
+    ("", COMMENT_PARAGRAPH, "\n# Next"),
+    ("Before.\n\n", CODE_PARAGRAPH, "\n\nAfter $z$."),
+    ("", CODE_PARAGRAPH, "\n- Next"),
+    ("# Before\n", style.MODERN_WAY + " Put $b$ here.", "\n> Next"),
+    ("<!-- before\n\nnotes\n-->\n", style.MODERN_WAY + " Put $b$ here.", "\n<div>Next</div>"),
+    ("    Some code.\n", style.MODERN_WAY + " Put $b$ here.", "\n<!-- Next -->"),
+    ("", style.MODERN_WAY + " Put $b$ here.\n    With $c$ there.", "\n1. Next"),
+    ("", style.MODERN_WAY + " Put $b$ here.\n2. With $c$ there.", "\n~~~\ncode\n~~~"),
+    ("", style.MODERN_WAY + " Put $b$ here.\n<span>With $c$ there.</span>", "\n\nAfter."),
+    ("", style.MODERN_WAY + " Put $b$ here.", "\n| Next |\n| --- |\n| $z$ |"),
+    ("Before.\n", None, style.MODERN_WAY + " Put $b$ here."),
+    ("", None, style.MODERN_WAY + " Put $b$ here.\n===\n"),
+    ("~~~\n\n", None, style.MODERN_WAY + " Put $b$ here.\n~~~"),
+    ("````\n```\n\n", None, style.MODERN_WAY + " Put $b$ here.\n````"),
+    ("```\n\n", None, style.MODERN_WAY + " Put $b$ here."),
+    ("<div>\n\n", style.MODERN_WAY + " Put $b$ here.", "\n\nAfter."),
+    ("<div>\n", None, style.MODERN_WAY + " Put $b$ here.\n</div>"),
+    ("<span>\n", None, style.MODERN_WAY + " Put $b$ here.\n</span>"),
+    # The shared block parser recognises tables by both rows and keeps a line with
+    # mismatched columns, or a backtick in a fence's info string, in its paragraph.
+    ("", style.MODERN_WAY + " Put $b$ here.", "\nNext\n| --- |\n| $z$ |"),
+    ("", style.MODERN_WAY + " Put $b$ here.\n| Next | two |\n| --- |\nWith $c$ there.",
+     "\n\nAfter."),
+    ("", style.MODERN_WAY + " Put $b$ here.\n```bad`info\nWith $c$ there.",
+     "\n\nAfter."),
+    # A fence inside raw HTML is inert. The next top-level paragraph is still found,
+    # while a modern lead inside a quotation, list item or table is not a paragraph.
+    ("<div>\n```\n\n", style.MODERN_WAY + " Put $b$ here.", "\n\nAfter."),
+    ("<script>\n```\n</script>\n", style.MODERN_WAY + " Put $b$ here.", "\n\nAfter."),
+    ("", None, "> " + style.MODERN_WAY + " Put $b$ here.\n"),
+    ("", None, "- " + style.MODERN_WAY + " Put $b$ here.\n"),
+    ("", None, style.MODERN_WAY + " Put $b$ here.\n| --- |\n"),
+]
+HEATHS = {"A", "B", "C"}
+NAMES = style.modern_names(MODERN_PARAGRAPH)
+MODERN_GOOD = ('<title>I.47: the modern way</title>'
+               '<rect width="400" height="300" rx="10" fill="#fbf7ee"/>'
+               '<line x1="40" y1="250" x2="360" y2="250" stroke="#3b2f2f" stroke-width="1.6"/>'
+               '<polygon points="60,250 300,250 60,60" fill="#e9dcc0" fill-opacity="0.55" '
+               'stroke="#a0522d" stroke-width="2.4"/>'
+               '<g font-family="Georgia, serif" font-size="17" fill="#3b2f2f">'
+               '<text x="50" y="270">A</text><text x="300" y="270">B</text>'
+               '<text x="50" y="55">C</text>'
+               '<text x="180" y="270" font-style="italic">c</text>'
+               '<text x="200" y="140" font-style="italic">a² = b² + c²</text>'
+               '<text x="70" y="290">(0, 0)</text></g>')
+MODERN_CASES = [   # (a figure's inside, the title's ref, the finding wanted: rule, or None)
+    (MODERN_GOOD, "I.47", None),
+    (MODERN_GOOD, "I.48", "S24"),
+    (MODERN_GOOD.replace("</title>", "</title><desc>A caption.</desc>"), "I.47", "S24"),
+    (MODERN_GOOD.replace('fill="#e9dcc0"', 'fill="#f2b705"'), "I.47", "S24"),
+    (MODERN_GOOD.replace('stroke-width="1.6"', 'stroke-width="0.8"'), "I.47", "S24"),
+    (MODERN_GOOD.replace(">C<", ">D<"), "I.47", "S25"),
+    (MODERN_GOOD.replace('<text x="50" y="270">A', '<text x="50" y="270" font-style="italic">A'),
+     "I.47", "S25"),
+    (MODERN_GOOD.replace('font-style="italic">c<', '>c<'), "I.47", "S25"),
+    (MODERN_GOOD.replace(">c<", ">x<"), "I.47", "S25"),
+    (MODERN_GOOD.replace(">c<", ">BC<"), "I.47", "S25"),
+    (MODERN_GOOD.replace(">c<", ">c<tspan>₁</tspan><"), "I.47", "S25"),
+    (MODERN_GOOD.replace(">c<", ">c∫<"), "I.47", "S25"),
+    (MODERN_GOOD.replace('font-size="17"', 'font-size="14"'), "I.47", "S25"),
+    (MODERN_GOOD.replace(' fill="#3b2f2f">', '>'), "I.47", "S24"),
+    (MODERN_GOOD + '<polyline points="1,1 9,9 1,9" stroke="#8c7b62" stroke-width="1.3"/>',
+     "I.47", "S24"),
+    (MODERN_GOOD.replace(">a² = b² + c²<", ">a² =\n   b² + c²<"), "I.47", None),
+    (MODERN_GOOD.replace(">c<", ">ϑ<"), "I.47", None),
+    (MODERN_GOOD.replace(">c<", ">ν<"), "I.47", "S25"),
+]
+
+
+def modern_rules(inside: str, ref: str, heaths=HEATHS, names=NAMES,
+                 viewbox="0 0 400 300") -> set[str]:
+    """The rules S24 and S25 find broken in a figure of the modern way."""
+    root = ET.fromstring(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}">'
+                         f"{inside}</svg>")
+    return {rule for rule, _ in style.modern_findings(root, ref, heaths, names)}
 
 
 # ---------------------------------------------------------------------------------------
@@ -771,6 +926,744 @@ class Ink(unittest.TestCase):
 
     test_ink_cases.__doc__ = (f"S20 reads the ink of {len(INK_CASES) * len(INK_WEDGES)} "
                               "letters on angles' wedges rightly")
+
+
+class Modern(unittest.TestCase):
+    """The modern cases: the names a paragraph gives, and a figure of the modern way read
+    against them and against its Euclid's figure's letters."""
+
+    def test_modern_depth_is_bounded_before_recursive_helpers(self):
+        self.assertEqual(self.check_refused_modern(
+            MODERN_GOOD + "<g>" * 16 + "</g>" * 16), [])
+        for depth in (17, 1100):
+            with self.subTest(depth=depth):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + "<g>" * depth + "</g>" * depth)
+                self.assertEqual(findings, [
+                    ("S24", "modern figure nesting exceeds 16 levels below <svg>")])
+        root = ET.fromstring('<svg xmlns="http://www.w3.org/2000/svg">'
+                             + "<g>" * 1100 + "</g>" * 1100 + "</svg>")
+        with patch.object(style, "walk", side_effect=AssertionError("recursive walk")):
+            self.assertEqual(style.modern_svg_findings(root), [
+                ("S24", "modern figure nesting exceeds 16 levels below <svg>")])
+
+    def test_modern_text_requires_effective_font_family(self):
+        bare = MODERN_GOOD.replace(' font-family="Georgia, serif"', "")
+        findings = self.check_refused_modern(bare)
+        self.assertEqual(len(findings), 6)
+        self.assertTrue(all(r == "S25" and "font-family" in m for r, m in findings),
+                        findings)
+        for family in ("Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"):
+            for where in ("root", "group", "text"):
+                with self.subTest(family=family, where=where):
+                    attrs = f'font-family="{family}"'
+                    body = (bare.replace("<g ", f"<g {attrs} ") if where == "group" else
+                            bare.replace("<text ", f"<text {attrs} ") if where == "text"
+                            else bare)
+                    self.assertEqual(self.check_refused_modern(
+                        body, root_attributes=attrs if where == "root" else ""), [])
+        # A declaration on a sibling does not supply the unstyled text's family.
+        findings = self.check_refused_modern(
+            MODERN_GOOD + '<text font-size="17" fill="#3b2f2f">A</text>')
+        self.assertEqual(len(findings), 1)
+        self.assertIn("font-family", findings[0][1])
+        self.assertEqual(self.check_refused_modern(
+            MODERN_GOOD + '<text fill="#3b2f2f"> \t\r\n</text>'), [])
+
+    def test_modern_character_references_are_refused_without_granting_names(self):
+        for reference in ("&#x3c0;", "&#X3C0;", "&#960;", "&pi;", "&alpha;",
+                          r"\&#x3c0;", r"\\&#x3c0;"):
+            for name in ("x", "c", "π"):
+                with self.subTest(reference=reference, name=name):
+                    findings = self.check_refused_modern(
+                        MODERN_GOOD.replace(">c<", f">{name}/3<"),
+                        paragraph=MODERN_PARAGRAPH + " The turning angle is "
+                        + reference + "/3.")
+                    self.assertTrue(any(r == "S25" and "character reference" in m
+                                        for r, m in findings), findings)
+                    self.assertTrue(any(r == "S25" and f"{name} is no name" in m
+                                        for r, m in findings), findings)
+        # Literal π supplies π, and neither letter of a hexadecimal spelling.
+        for name in ("π", "x", "c"):
+            findings = self.check_refused_modern(
+                '<title>I.47: the modern way</title>'
+                '<text font-family="Georgia" font-size="17" font-style="italic" '
+                f'fill="#3b2f2f">{name}/3</text>',
+                paragraph=MW + "The turning angle is π/3.")
+            self.assertEqual(findings, [] if name == "π" else [
+                ("S25", f"<text>{name}/3</text>: {name} is no name of the page's modern way")])
+
+    def test_modern_text_checks_raw_space_characters(self):
+        for space in ("\u0085", "\u00a0", "\u1680", "\u2003", "\u2028", "\u2029",
+                      "\u202f", "\u205f", "\u3000"):
+            for old, new in ((">A<", f">{space}A{space}<"),
+                             (">c<", f">c{space}/{space}3<"),
+                             (">c<", f">{space}<")):
+                with self.subTest(space=repr(space), text=new):
+                    findings = self.check_refused_modern(MODERN_GOOD.replace(old, new))
+                    self.assertTrue(any(r == "S25" and "holds" in m and repr(space) in m
+                                        for r, m in findings), findings)
+        for space in (" ", "\t", "\r", "\n", " \t\r\n "):
+            with self.subTest(space=repr(space)):
+                self.assertEqual(self.check_refused_modern(MODERN_GOOD.replace(
+                    ">A<", f">{space}A{space}<").replace(">c<", f">c{space}/{space}3<")), [])
+
+    def test_modern_intraword_emphasis_is_refused(self):
+        for word in ("e*x*ponent", "e**x**ponent", "e***x***ponent",
+                     "e[*x*](/reference)ponent"):
+            for name in ("e", "x"):
+                with self.subTest(word=word, name=name):
+                    findings = self.check_refused_modern(
+                        MODERN_GOOD.replace(">c<", f">{name}<"),
+                        paragraph=MODERN_PARAGRAPH + " The " + word + " is positive.")
+                    self.assertTrue(any(r == "S25" and "intraword emphasis" in m
+                                        for r, m in findings), findings)
+                    self.assertTrue(any(r == "S25" and f"{name} is no name" in m
+                                        for r, m in findings), findings)
+        for words in ("The *exponent* is positive.", "The **exponent** is positive.",
+                      "The name *x* is given.", "The name **x** is given."):
+            with self.subTest(words=words):
+                self.assertEqual(style.modern_markup_findings(MW + words), [])
+                self.assertEqual(style.modern_names(style.modern_paragraph(MW + words)),
+                                 {"x"} if "name" in words else set())
+
+    def test_modern_emphasis_through_punctuation_is_refused(self):
+        for emphasis in ("*", "**", "***", "_", "__", "___"):
+            for word, name in (
+                    (f"A'{emphasis}s{emphasis}", "s"),
+                    (f"A’{emphasis}s{emphasis}", "s"),
+                    (f"{emphasis}A{emphasis}'s", "s"),
+                    (f"{emphasis}A{emphasis}’s", "s"),
+                    (f"e.{emphasis}g{emphasis}.", "g"),
+                    (f"{emphasis}e{emphasis}.g.", "g"),
+                    (f"i.{emphasis}e{emphasis}.", "e"),
+                    (f"{emphasis}i{emphasis}.e.", "e")):
+                with self.subTest(word=word):
+                    findings = self.check_refused_modern(
+                        MODERN_GOOD.replace(">c<", f">{name}<"),
+                        paragraph=MODERN_PARAGRAPH + " Consider " + word)
+                    self.assertTrue(any(r == "S25" and "intraword emphasis" in m
+                                        for r, m in findings), findings)
+                    self.assertTrue(any(r == "S25" and f"{name} is no name" in m
+                                        for r, m in findings), findings)
+        for words in ("The name *x*.", "The name _x_.", "The name '*x*'.",
+                      "The name '_x_'."):
+            with self.subTest(words=words):
+                self.assertEqual(self.check_refused_modern(
+                    MODERN_GOOD.replace(">c<", ">x<"),
+                    paragraph=MODERN_PARAGRAPH + " " + words), [])
+
+    def test_modern_nested_svg_is_refused(self):
+        for content in ('<line x2="20" stroke="#3b2f2f" stroke-width="1.6"/>',
+                        '<text font-size="17" fill="#3b2f2f">A</text>'):
+            with self.subTest(content=content):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + '<svg width="400" height="300" viewBox="0 0 40 30">'
+                    + content + '</svg>')
+                self.assertTrue(any(r == "S24" and "<svg>" in m for r, m in findings),
+                                findings)
+
+    def test_modern_marker_attributes_match_main(self):
+        attributes = dict(id="head", viewBox="0 0 10 10", refX="9", refY="5",
+                          markerWidth="5", markerHeight="5", orient="auto-start-reverse")
+        for key, values in (
+                ("markerUnits", ("strokeWidth",)),
+                ("markerWidth", ("50", "5.0")),
+                ("markerHeight", ("50", "5.0")),
+                ("viewBox", ("0 0 1 1", "0 0 10.0 10")),
+                ("refX", ("90", "9.0")), ("refY", ("50", "5.0")),
+                ("orient", ("0",)), ("width", ("5",))):
+            for value in values:
+                with self.subTest(key=key, value=value):
+                    changed = attributes | {key: value}
+                    attrs = " ".join(f'{k}="{v}"' for k, v in changed.items())
+                    findings = self.check_refused_modern(
+                        MODERN_GOOD + f'<defs><marker {attrs}>'
+                        '<path d="M 0 0 L 10 5 L 0 10 z" fill="#8c7b62"/>'
+                        '</marker></defs>')
+                    self.assertTrue(any(r == "S24" and key in m and "<marker>" in m
+                                        for r, m in findings), findings)
+
+    def test_modern_markers_refuse_strokes_and_text(self):
+        line = '<path d="M 0 0 L 10 5 L 0 10 z" fill="#8c7b62"/>'
+        ink = 'stroke="#3b2f2f" stroke-width="1.6"'
+        cases = [
+            (line.replace("/>", f" {ink}/>"), ""),
+            (f'<g {ink}>{line}</g>', ""),
+            (line, ink),
+            ('<g><text font-size="17" fill="#3b2f2f">A</text></g>', ""),
+        ]
+        for content, inherited in cases:
+            with self.subTest(content=content, inherited=inherited):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + f'<defs {inherited}><marker id="head" '
+                    'viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" '
+                    'markerHeight="5" orient="auto-start-reverse">'
+                    + content + '</marker></defs>')
+                self.assertTrue(any(r == "S24" and "<marker>" in m for r, m in findings),
+                                findings)
+
+    def test_inline_links_preserve_visible_names_and_articles(self):
+        cases = (
+            ("a point reached", "[a point](../../book/I/01.md) reached", set()),
+            ("a point reached", "[a](../../book/I/01.md) point reached", set()),
+            ("AC = a", "AC = [a](../../book/I/01.md)", {"a"}),
+            ("a + b", "[a + b](../../book/I/01.md)", {"a", "b"}),
+            ("exponent", "e[x](../../book/I/01.md)ponent", set()),
+            ("axis", "[a](../../book/I/01.md)xis", set()),
+        )
+        for plain, linked, expected in cases:
+            for words in (plain, linked):
+                with self.subTest(words=words):
+                    paragraph = MW + words + "."
+                    findings = self.check_refused_modern(
+                        '<title>I.47: the modern way</title>'
+                        '<text font-family="Georgia" font-size="17" font-style="italic" '
+                        'fill="#3b2f2f">a</text>',
+                        paragraph=paragraph)
+                    self.assertEqual(findings, [] if "a" in expected else [
+                        ("S25", "<text>a</text>: a is no name of the page's modern way")])
+                    self.assertEqual(style.modern_names(style.modern_paragraph(paragraph)),
+                                     expected)
+
+    def test_modern_encoding_failures_continue(self):
+        document = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                    + MODERN_GOOD + '</svg>')
+        for declaration, encoding in (("unknown-encoding", "utf-8"), ("UTF-7", "utf-7"),
+                                       ("UTF-16", "utf-16"), ("UTF-16", "utf-16-le"),
+                                       ("ISO-8859-1", "iso-8859-1")):
+            with self.subTest(declaration=declaration, encoding=encoding):
+                body = (document.replace("²", "2") if encoding == "utf-16-le" else
+                        document.replace("</svg>", "<!-- café --></svg>"))
+                source = f'<?xml version="1.0" encoding="{declaration}"?>' + body
+                findings = self.check_refused_modern(figure_bytes=source.encode(encoding))
+                self.assertTrue(any(r == "S24" and "encoding" in m for r, m in findings),
+                                findings)
+
+    def test_modern_figure_is_read_once_as_bytes(self):
+        opened = []
+        original_open = io.open
+
+        def record_open(file, mode="r", *args, **kwargs):
+            if str(file).endswith("47-modern.svg") and "r" in mode:
+                opened.append(mode)
+            return original_open(file, mode, *args, **kwargs)
+
+        with patch("builtins.open", side_effect=record_open), \
+                patch("io.open", side_effect=record_open):
+            self.assertEqual(self.check_refused_modern(), [])
+        self.assertEqual(opened, ["rb"])
+
+    def test_encoding_exceptions_from_checker_propagate(self):
+        for error in (LookupError("checker defect"),
+                      UnicodeDecodeError("utf-8", b"\xff", 0, 1, "checker defect"),
+                      ValueError("checker defect")):
+            for checker in ("modern_svg_findings", "modern_findings"):
+                with self.subTest(error=type(error).__name__, checker=checker):
+                    with patch.object(style, checker, side_effect=error):
+                        with self.assertRaisesRegex(type(error), "checker defect"):
+                            self.check_refused_modern()
+
+    def test_names(self):
+        for text, given, not_given in NAMES_CASES:
+            with self.subTest(text=text):
+                names = style.modern_names(text)
+                self.assertLessEqual(given, names, f"modern_names misses {given - names}")
+                self.assertFalse(names & not_given, f"modern_names wrongly gives {names & not_given}")
+
+    def test_page_names(self):
+        for text, given, not_given in PAGE_NAMES_CASES:
+            with self.subTest(text=text):
+                names = style.modern_names(style.modern_paragraph(text))
+                self.assertLessEqual(given, names, f"the page's names miss {given - names}")
+                self.assertFalse(names & not_given, f"the page wrongly gives {names & not_given}")
+
+    def test_modern_cases(self):
+        for inside, ref, want in MODERN_CASES:
+            with self.subTest(figure=inside, ref=ref):
+                found = modern_rules(inside, ref)
+                if want is None:
+                    self.assertEqual(found, set(), f"S24 and S25 wrongly find {found}")
+                else:
+                    self.assertIn(want, found, f"{want} misses a fault in {inside!r}")
+
+    def test_font_style_presentation_under_italic_parent(self):
+        letter = '<text x="50" y="270">A</text>'
+        for element in ("text", "g"):
+            for value in ("", " \t\n ", "normal"):
+                with self.subTest(element=element, value=value):
+                    if element == "text":
+                        label = letter.replace("<text ", f'<text font-style="{value}" ')
+                    else:
+                        label = f'<g font-style="{value}">{letter}</g>'
+                    inside = MODERN_GOOD.replace(
+                        letter, f'<g font-style="italic">{label}</g>')
+                    self.assertEqual(modern_rules(inside, "I.47"),
+                                     set() if value == "normal" else {"S25"})
+
+    def test_modern_gate_elements(self):
+        for element in ("use", "image", "foreignObject", "switch", "animate", "set",
+                        "symbol", "filter", "linearGradient", "script", "unknown"):
+            with self.subTest(element=element):
+                findings = self.check_refused_modern(MODERN_GOOD + f"<{element}/>")
+                self.assertTrue(any("<" + element + ">" in m for _, m in findings), findings)
+        for namespace in ("", "urn:other"):
+            with self.subTest(namespace=namespace):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + f'<g xmlns="{namespace}"/>')
+                self.assertTrue(any("<" in m and "g>" in m for _, m in findings), findings)
+
+    def test_modern_gate_attributes_and_no_css(self):
+        for attribute, value in (("display", "none"), ("visibility", "hidden"),
+                                 ("opacity", "0"), ("class", "hidden"), ("href", "#head"),
+                                 ("onload", "void(0)"), ("font-weight", "normal"),
+                                 ("style", "fill: #3b2f2f; font-size: 17")):
+            with self.subTest(attribute=attribute):
+                findings = self.check_refused_modern(
+                    root_attributes=f'{attribute}="{value}"')
+                self.assertTrue(any(attribute in m and "<svg>" in m for _, m in findings),
+                                findings)
+        # Even a formerly supported style must be refused before the presentation walk.
+        root = ET.fromstring('<svg xmlns="http://www.w3.org/2000/svg" '
+                             'viewBox="0 0 400 300" style="fill: #3b2f2f">'
+                             + MODERN_GOOD + '</svg>')
+        with patch.object(style, "style_of", side_effect=AssertionError("CSS was read")):
+            self.assertTrue(style.modern_findings(root, "I.47", HEATHS, NAMES))
+
+    def test_modern_gate_numeric_attributes(self):
+        for attribute in ("x", "y", "x1", "x2", "y1", "y2", "cx", "cy", "r", "rx", "ry",
+                          "width", "height", "fill-opacity", "markerWidth", "markerHeight",
+                          "refX", "refY", "font-size", "stroke-width"):
+            for value in ("17px", "17e0", ".17", "17.", " 17", "17 ", "1 7", "1_7",
+                          "１７", "NaN", "Infinity", "inherit", "initial"):
+                with self.subTest(attribute=attribute, value=value):
+                    findings = self.check_refused_modern(
+                        root_attributes=f'{attribute}="{value}"')
+                    self.assertTrue(any(attribute in m and "<svg>" in m for _, m in findings),
+                                    findings)
+        # A long failing token guards the linear scan against ambiguous digit regexes.
+        value = "1" * 100000 + "!"
+        self.assertIsNone(style.modern_number(value))
+        self.assertIsNone(style.modern_number("9" * 1000))
+        for value in ("0", "-0", "+17", "0017", "17.0", "-0.55"):
+            with self.subTest(value=value):
+                self.assertEqual(style.modern_number(value), float(value))
+
+    def test_modern_gate_number_lists(self):
+        for attribute, values in (
+                ("points", ("1e1,2 3,4", "1,2,3", "1,2, 3,4", "1,2 3", "1,2 rubbish")),
+                ("viewBox", ("0 0 4e2 300", "0 0 400. 300", "0,,0,400,300")),
+                ("stroke-dasharray", ("5px 4", "5e0 4", "5,,4", "5,", "5 -4", "5 4x"))):
+            for value in values:
+                with self.subTest(attribute=attribute, value=value):
+                    kwargs = ({"viewbox": value} if attribute == "viewBox" else
+                              {"root_attributes": f'{attribute}="{value}"'})
+                    findings = self.check_refused_modern(**kwargs)
+                    self.assertTrue(any(attribute in m and "<svg>" in m for _, m in findings),
+                                    findings)
+        for value in ("M 0 0 L 1e1 2", "M 0 0 h 10", "M 0 0 A 1 1 0 2 0 2 2",
+                      "M 0 0 L 10 2 trailing"):
+            with self.subTest(path=value):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + f'<path d="{value}" fill="none"/>')
+                self.assertTrue(any(" d " in m and "<path>" in m for _, m in findings), findings)
+
+    def test_modern_gate_transforms(self):
+        for value in ("translate(1 2)", "scale(1)", "matrix(1 0 0 1 0 0)", "skewX(0)",
+                      "rotate(1)", "rotate(1,2,3)", "rotate(1e0 2 3)", "rotate(.1 2 3)",
+                      "rotate(1 2 3) ", "rotate(1 2 3) rotate(0 0 0)", "rotate(1 2 3)x"):
+            with self.subTest(value=value):
+                findings = self.check_refused_modern(
+                    root_attributes=f'transform="{value}"')
+                self.assertTrue(any("transform" in m and "<svg>" in m for _, m in findings),
+                                findings)
+        self.assertEqual(self.check_refused_modern(
+            root_attributes='transform="rotate(-26.565051 190.538699 202.827398)"'), [])
+
+    def test_modern_gate_keywords_and_colours(self):
+        for attribute, other in (("fill", "#3B2F2F"), ("stroke", "currentColor"),
+                                  ("font-family", "serif"), ("font-style", "oblique"),
+                                  ("text-anchor", "end"), ("stroke-linejoin", "bevel"),
+                                  ("markerUnits", "userspaceonuse"), ("orient", "auto"),
+                                  ("marker-end", "url(#elsewhere)"), ("id", "elsewhere")):
+            for value in (other, "inherit", "initial", "unset", "revert", "revert-layer"):
+                with self.subTest(attribute=attribute, value=value):
+                    findings = self.check_refused_modern(
+                        root_attributes=f'{attribute}="{value}"')
+                    self.assertTrue(any(attribute in m and "<svg>" in m for _, m in findings),
+                                    findings)
+        for attribute, value in (("stroke", "none"), ("font-style", "normal"),
+                                 ("text-anchor", "start"), ("stroke-linejoin", "miter"),
+                                 ("markerUnits", "strokeWidth"), ("orient", "0"),
+                                 ("marker-end", "none"), ("stroke-dasharray", "none")):
+            with self.subTest(attribute=attribute, value=value):
+                self.assertEqual(self.check_refused_modern(
+                    root_attributes=f'{attribute}="{value}"'), [])
+        # An explicit initial fill still fails the existing palette rule.
+        self.assertTrue(any("palette" in m for _, m in self.check_refused_modern(
+            root_attributes='fill="black"')))
+
+    def test_no_paragraph_and_no_figure(self):
+        self.assertIn("S24", modern_rules(MODERN_GOOD, "I.47", names=None))
+        self.assertIn("S24", modern_rules(MODERN_GOOD, "I.47", heaths=None))
+        for text, want in SPAN_CASES:
+            with self.subTest(text=text):
+                self.assertEqual(style.modern_paragraph(text), want)
+
+    def test_malformed_modern_svg_is_s24(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "01-modern.svg"
+            path.write_text("<svg>")
+            with patch.object(style, "fail") as fail:
+                self.assertIsNone(style.svg_root(path))
+                fail.assert_called_once()
+                self.assertEqual(fail.call_args.args[:3], ("S24", path, 0))
+                self.assertIn("not well-formed SVG", fail.call_args.args[3])
+
+    def test_canvas_widths(self):
+        for width, valid in (("399", False), ("400", True), ("420", True),
+                             ("440", True), ("441", False), ("invalid", False),
+                             (".", False), ("400..0", False), ("400px", False),
+                             ("nan", False), ("inf", False), ("1e999", False)):
+            with self.subTest(width=width):
+                found = modern_rules(MODERN_GOOD, "I.47", viewbox=f"0 0 {width} 300")
+                self.assertEqual(found, set() if valid else {"S24"})
+        for viewbox in ("0 0 400", "invalid 0 400 300", "0 0 400 invalid"):
+            with self.subTest(viewbox=viewbox):
+                self.assertEqual(modern_rules(MODERN_GOOD, "I.47", viewbox=viewbox),
+                                 {"S24"})
+
+    def test_canvas_heights(self):
+        for height, valid in (("0", False), ("-0", False), ("-1", False),
+                              ("-300", False), (".5", False), ("0.5", True), ("300", True)):
+            with self.subTest(height=height):
+                findings = self.check_refused_modern(viewbox=f"0 0 400 {height}")
+                if valid:
+                    self.assertEqual(findings, [])
+                else:
+                    message_part = "malformed or unsupported viewBox" if height == ".5" else "viewBox height"
+                    self.assertTrue(any(r == "S24" and message_part in message
+                                        for r, message in findings), findings)
+
+    def test_explicit_root_dimensions_must_be_positive(self):
+        for attribute in ("width", "height"):
+            for value in ("0", "-0", "0.0", "-0.0", "-1", "-290"):
+                with self.subTest(attribute=attribute, value=value):
+                    attributes = {"width": "400", "height": "290"}
+                    attributes[attribute] = value
+                    findings = self.check_refused_modern(
+                        viewbox="0 0 400 290",
+                        root_attributes=" ".join(f'{key}="{v}"'
+                                                 for key, v in attributes.items()))
+                    self.assertEqual(findings, [
+                        ("S24", f"root {attribute} {value!r}, not positive")])
+
+    def test_positive_or_omitted_root_dimensions_are_allowed(self):
+        for width in (None, "0.5", "400"):
+            for height in (None, "0.5", "290"):
+                with self.subTest(width=width, height=height):
+                    self.assertEqual(self.check_refused_modern(
+                        viewbox="0 0 400 290",
+                        root_attributes=" ".join(
+                            f'{key}="{value}"' for key, value in
+                            (("width", width), ("height", height)) if value is not None)), [])
+
+    def test_presentation_lengths_use_plain_decimals(self):
+        letter = '<text x="50" y="270">A</text>'
+        for attribute, size, parent, rule in (("font-size", "17", "40", "S25"),
+                                               ("stroke-width", "2", "20", "S24")):
+            values = [(value, True) for value in
+                      (size, size + ".0", "+" + size)]
+            values += [(value, False) for value in
+                       (size + "px", size + ".0px", f".{size}e{len(size)}", size + "e0px",
+                        size + ".", size + ".px", size + ".e0", size + "em",
+                        size + "%", size + " px", size + "e", "", "\u00a0" + size)]
+            for element in ("text", "g"):
+                for inherited in (False, True):
+                    for value, valid in values:
+                        with self.subTest(attribute=attribute, element=element,
+                                          inherited=inherited, value=value):
+                            declaration = f'{attribute}="{value}"'
+                            label = (letter.replace("<text ", f"<text {declaration} ")
+                                     if element == "text"
+                                     else f"<g {declaration}>{letter}</g>")
+                            ink = 'stroke="#3b2f2f"' if attribute == "stroke-width" else ""
+                            ancestor = f'{attribute}="{parent}"' if inherited else ""
+                            inside = MODERN_GOOD.replace(
+                                letter, f"<g {ink} {ancestor}>{label}</g>")
+                            findings = self.check_refused_modern(inside)
+                            if valid:
+                                self.assertEqual(findings, [])
+                            else:
+                                self.assertTrue(any(r == rule and attribute in message
+                                                    for r, message in findings), findings)
+
+    def test_malformed_presentation_lengths_cannot_be_overridden(self):
+        for attribute, value, rule in (("font-size", "17.", "S25"),
+                                      ("stroke-width", "2.px", "S24")):
+            with self.subTest(attribute=attribute):
+                findings = self.check_refused_modern(
+                    root_attributes=f'{attribute}="{value}"')
+                self.assertTrue(any(r == rule and attribute in message
+                                    for r, message in findings), findings)
+
+    def test_font_family_and_weight_presentation(self):
+        letter = '<text x="50" y="270">A</text>'
+        for attribute, allowed, refused in (
+                ("font-family", ("Georgia", "Georgia, serif",
+                                 "Georgia, 'Times New Roman', serif"),
+                 ("Arial", "serif", "Georgia, monospace")),
+                ("font-weight", (), ("normal", "bold", "bolder", "400", "700"))):
+            values = [(value, True) for value in allowed]
+            values += [(value, False) for value in
+                       refused + ("initial", "inherit", "unset", "revert", "", " \t\n ")]
+            for element in ("svg", "g", "text"):
+                for value, valid in values:
+                    with self.subTest(attribute=attribute, element=element, value=value):
+                        declaration = f'{attribute}="{value}"'
+                        inside, root_attributes = MODERN_GOOD, ""
+                        if element == "svg":
+                            root_attributes = declaration
+                        elif element == "g":
+                            inside = inside.replace(letter, f"<g {declaration}><g>{letter}</g></g>")
+                        else:
+                            inside = inside.replace(letter, letter.replace(
+                                "<text ", f"<text {declaration} "))
+                        findings = self.check_refused_modern(
+                            inside, root_attributes=root_attributes)
+                        if valid:
+                            self.assertEqual(findings, [])
+                        else:
+                            self.assertTrue(any(r == "S24" and attribute in message
+                                                and f"<{element}>" in message
+                                                for r, message in findings), findings)
+
+    def test_malformed_numbers_report_the_file_and_continue(self):
+        cases = [
+            ("0 0 invalid 300", MODERN_GOOD, "S24", "viewBox"),
+            ("0 0 400 300", MODERN_GOOD.replace('stroke-width="1.6"',
+                                               'stroke-width="."'), "S24", "stroke-width"),
+            ("0 0 400 300", MODERN_GOOD.replace('font-size="17"',
+                                               'font-size="17..0"'), "S25", "font-size"),
+        ]
+        for value in ("rotate(1e999)", "rotate(nan)", "rotate(.)", "rotate(17..0)",
+                      "rotate(1, 2)", "translate(1,)", "scale(1e308) scale(1e308)",
+                      "rotate(1) rubbish", "unknown(1)"):
+            cases.append(("0 0 400 300",
+                          MODERN_GOOD.replace(">A<", f' transform="{value}">A<'),
+                          "S24", "transform"))
+        for attribute in ("x", "y", "fill-opacity"):
+            for value in ("1e999", ".", "17..0"):
+                cases.append(("0 0 400 300",
+                              MODERN_GOOD.replace(">A<", f' {attribute}="{value}">A<')
+                              .replace('x="50" ', '').replace('y="270"', ''),
+                              "S24", attribute))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            figures = root / "figures" / "I"
+            figures.mkdir(parents=True)
+            mishnah = root / "mishnah" / "I"
+            mishnah.mkdir(parents=True)
+            for n in ("47", "48"):
+                (mishnah / f"{n}.md").write_text(MODERN_PARAGRAPH)
+            first, following = (figures / f"{n}-modern.svg" for n in ("47", "48"))
+            following.write_text(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                + MODERN_GOOD.replace("I.47", "I.48").replace(">c<", ">x<") + "</svg>")
+            for viewbox, inside, rule, attribute in cases:
+                with self.subTest(attribute=attribute):
+                    first.write_text(
+                        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{viewbox}">'
+                        + inside + "</svg>")
+                    with patch.object(style, "ROOT", root), \
+                            patch.object(style, "drawn_letters", return_value=HEATHS), \
+                            patch.object(style, "fail") as fail:
+                        style.check_modern(first, "I.47")
+                        style.check_modern(following, "I.48")
+                    findings = [call.args for call in fail.call_args_list]
+                    self.assertTrue(any(r == rule and path == first and attribute in message
+                                        for r, path, _, message in findings), findings)
+                    self.assertTrue(any(r == "S25" and path == following
+                                        and "x is no name" in message
+                                        for r, path, _, message in findings), findings)
+
+    def check_refused_modern(self, inside=MODERN_GOOD, paragraph=MODERN_PARAGRAPH,
+                            prefix="", root_attributes="", viewbox="0 0 400 300",
+                            figure_bytes=None):
+        """Read two real files, keeping the following figure's independent finding."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            figures = root / "figures" / "I"
+            figures.mkdir(parents=True)
+            mishnah = root / "mishnah" / "I"
+            mishnah.mkdir(parents=True)
+            first, following = (figures / f"{n}-modern.svg" for n in ("47", "48"))
+            for n, body, words in (("47", inside, paragraph),
+                                    ("48", MODERN_GOOD.replace("I.47", "I.48")
+                                     .replace(">c<", ">x<"), MODERN_PARAGRAPH)):
+                (mishnah / f"{n}.md").write_text(words)
+                (figures / f"{n}-modern.svg").write_text(
+                    (prefix if n == "47" else "")
+                    + '<svg xmlns="http://www.w3.org/2000/svg" '
+                    + (f'viewBox="{viewbox}" {root_attributes}>' if n == "47"
+                       else 'viewBox="0 0 400 300">')
+                    + body + "</svg>")
+            if figure_bytes is not None:
+                first.write_bytes(figure_bytes)
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style, "drawn_letters", return_value=HEATHS), \
+                    patch.object(style, "fail") as fail:
+                style.check_modern(first, "I.47")
+                style.check_modern(following, "I.48")
+            findings = [call.args for call in fail.call_args_list]
+            self.assertTrue(any(r == "S25" and path == following and "x is no name" in message
+                                for r, path, _, message in findings), findings)
+            return [(r, message) for r, path, _, message in findings if path == first]
+
+    def test_unsupported_svg_presentation_is_refused(self):
+        cases = [
+            (MODERN_GOOD + '<style>text { fill: #ff0000; font-size: 100px; '
+             'font-style: italic; stroke-width: 50px; }</style>', "", "<style>"),
+            (MODERN_GOOD, '<?xml-stylesheet href="figure.css" type="text/css"?>', "stylesheet"),
+            (MODERN_GOOD.replace(">A<", ' style="@import url(figure.css)">A<'), "", "@import"),
+            (MODERN_GOOD.replace(">A<", ' style="font: italic 32px serif">A<'), "", "font"),
+            (MODERN_GOOD.replace(">A<", ' style="letter-spacing: 30px">A<'), "", "letter-spacing"),
+            (MODERN_GOOD.replace(">A<", ' style="font-size 32px">A<'), "", "style"),
+            (MODERN_GOOD.replace(">A<", '><a font-size="100" font-style="italic">A</a><'),
+             "", "<a>"),
+            (MODERN_GOOD.replace(">A<", '><textPath href="#guide" font-size="9" '
+             'font-style="italic">A</textPath><')
+             + '<path id="guide" d="M 50 270 L 300 270" fill="none"/>', "", "<textPath>"),
+        ]
+        for inside, prefix, message in cases:
+            with self.subTest(message=message):
+                findings = self.check_refused_modern(inside, prefix=prefix)
+                self.assertTrue(any(r == "S24" and message in m for r, m in findings), findings)
+        styled = MODERN_GOOD.replace(">A<", ' style="font-size: 17px; fill: #3b2f2f">A<')
+        self.assertEqual(modern_rules(styled, "I.47"), {"S24"})
+
+    def test_mixed_indentation_keeps_columns_and_offsets(self):
+        paragraph = MW + "Put $b$ here."
+        for indent in (" \t", "  \t", "   \t", "\t ", " \t "):
+            for before in ("", "Before.\n\n"):
+                with self.subTest(indent=indent, before=before):
+                    text = before + indent + paragraph
+                    self.assertIsNone(style.modern_span(text))
+                    self.assertIsNone(style.modern_paragraph(text))
+                    self.assertIn("S24", {r for r, _ in self.check_refused_modern(paragraph=text)})
+            text = "Before.\n\n  " + paragraph + "\n" + indent + "With $c$ there."
+            self.assertEqual(style.modern_span(text), (len("Before.\n\n  "), len(text)))
+            self.assertEqual(style.modern_names(style.modern_paragraph(text)), {"b", "c"})
+
+    def test_inline_html_and_reference_syntax_are_refused(self):
+        for inline in ("e<span>x</span>ponent", "si<!-- notation -->n",
+                       '<span data-note="x">the side</span>', "[the side][x]",
+                       "[x][]", "[x]"):
+            with self.subTest(inline=inline):
+                findings = self.check_refused_modern(paragraph=MW + "Put $b$ in " + inline + ".")
+                self.assertTrue(any(r == "S25" and "unsupported" in m for r, m in findings),
+                                findings)
+        for definition in ("[x]: /reference\n", "[x]:\n /reference\n",
+                           "[x]:\n\t/reference\n"):
+            for before in (True, False):
+                paragraph = MW + "Put $b$ on [the side][x]."
+                text = definition + paragraph if before else paragraph + "\n\n" + definition
+                with self.subTest(definition=definition, before=before):
+                    findings = self.check_refused_modern(paragraph=text)
+                    self.assertTrue(any(r == "S25" and "reference definition" in m
+                                        for r, m in findings), findings)
+                    self.assertNotIn("S24", {r for r, _ in findings})
+        for inline in ("[the side](/reference)", "`<span>`", "`<!-- notation -->`"):
+            self.assertEqual(self.check_refused_modern(paragraph=MODERN_PARAGRAPH + " " + inline),
+                             [])
+
+    def test_checker_errors_are_not_input_findings(self):
+        with patch.object(style, "modern_findings", side_effect=ValueError("checker defect")):
+            with self.assertRaisesRegex(ValueError, "checker defect"):
+                self.check_refused_modern()
+        with patch.object(style, "transform_of", side_effect=ValueError("checker defect")):
+            with self.assertRaisesRegex(ValueError, "checker defect"):
+                self.check_refused_modern(MODERN_GOOD.replace(">A<", ' transform="rotate(1 50 270)">A<'))
+
+    def test_text_strokes(self):
+        for inherited in (False, True):
+            for width, valid in (("1.2", True), ("3.2", True), ("1.1", False),
+                                 ("20", False), (".", False)):
+                with self.subTest(inherited=inherited, width=width):
+                    ink = f'stroke="#3b2f2f" stroke-width="{width}"'
+                    label = (f'<g {ink}><text x="50" y="270">A</text></g>' if inherited
+                             else f'<text x="50" y="270" {ink}>A</text>')
+                    inside = MODERN_GOOD.replace('<text x="50" y="270">A</text>', label)
+                    self.assertEqual(modern_rules(inside, "I.47"), set() if valid else {"S24"})
+
+    def test_html_attributes_supply_no_names(self):
+        for inline, expected in (
+                ('<span data-note="x">the side</span>', {"b"}),
+                ('<span data-note="x">c</span>', {"b", "c"}),
+                ('<span data-note="x > y">c</span>', {"b", "c"}),
+                ('<span\n data-note="x">c</span>', {"b", "c"}),
+                ('<span data-note="`x">c</span> and `k`', {"b", "c"}),
+                ('<span data-note="<!-- x -->">c</span>', {"b", "c"})):
+            text = MW + "Put $b$ on " + inline + "."
+            with self.subTest(inline=inline):
+                names = style.modern_names(style.modern_paragraph(text))
+                self.assertEqual(names, expected)
+                figure = ('<title>I.47: the modern way</title>'
+                          '<text font-family="Georgia" font-size="17" fill="#3b2f2f" '
+                          'font-style="italic">x</text>')
+                self.assertEqual(modern_rules(figure, "I.47", names=names), {"S25"})
+        escaped = MW + r'Put $b$ on \<span data-note="x">c\</span>.'
+        self.assertIn("x", style.modern_names(style.modern_paragraph(escaped)))
+
+    def test_reference_link_names(self):
+        cases = [
+            ("[this reference][x]", "\n\n[x]: /reference", {"b"}),
+            ("[c][x]", "\n\n[x]: /reference", {"b", "c"}),
+            ("[c][ X ]", "\n\n[x]: /reference", {"b", "c"}),
+            ("[this reference][x]", "", {"b", "x"}),
+            ("[this reference][x]", "\n\n```\n[x]: /reference\n```", {"b", "x"}),
+            ("[this reference][x]", "\n\n<!--\n[x]: /reference\n-->", {"b", "x"}),
+            ("[this reference][x]", "\n\n<div>\n[x]: /reference\n</div>", {"b", "x"}),
+            ("[x][] and [c]", "\n\n[x]: /reference\n[c]: /reference", {"b", "x", "c"}),
+            ("[c][x] and [d][y]", "\n\n[x]: /reference\n[y]: /reference", {"b", "c", "d"}),
+        ]
+        for link, definitions, expected in cases:
+            text = MW + "Put $b$ on " + link + "." + definitions
+            with self.subTest(text=text):
+                names = style.modern_names(style.modern_paragraph(text))
+                self.assertEqual(names, expected)
+                figure = ('<title>I.47: the modern way</title>'
+                          '<text font-family="Georgia" font-size="17" fill="#3b2f2f" '
+                          'font-style="italic">x</text>')
+                self.assertEqual(modern_rules(figure, "I.47", names=names),
+                                 set() if "x" in expected else {"S25"})
+
+    def test_leading_reference_definitions_preserve_source_offsets(self):
+        paragraph = MW + "Put $b$ on [the side][x]."
+        for before in ("[x]: /reference\n", "[x]: /reference\n  'a title'\n",
+                       "Before.\n\n[x]: /reference\n[y]: /elsewhere\n  "):
+            text = before + paragraph + "\n\nAfter."
+            with self.subTest(before=before):
+                self.assertEqual(style.modern_span(text),
+                                 (len(before), len(before) + len(paragraph)))
+                names = style.modern_names(style.modern_paragraph(text))
+                self.assertEqual(names, {"b"})
+                self.assertNotIn("S24", modern_rules(MODERN_GOOD, "I.47", names=names))
+        self.assertIsNone(style.modern_span("[x]: invalid destination\n" + paragraph))
+
+    def test_source_spans(self):
+        for before, paragraph, after in SOURCE_SPAN_CASES:
+            text = before + (paragraph or "") + after
+            with self.subTest(text=text):
+                want = (len(before), len(before) + len(paragraph)) if paragraph else None
+                self.assertEqual(style.modern_span(text), want)
+                selected = style.modern_paragraph(text)
+                names = style.modern_names(selected) if selected is not None else None
+                findings = modern_rules(MODERN_GOOD, "I.47", names=names)
+                self.assertEqual("S24" in findings, paragraph is None)
+
+    test_modern_cases.__doc__ = (f"S24 and S25 read {len(MODERN_CASES)} figures of the "
+                                 "modern way rightly")
 
 
 class Scopes(unittest.TestCase):
@@ -1564,7 +2457,35 @@ class TrackedFiles(unittest.TestCase):
 
 
 class Acceptance(unittest.TestCase):
-    """The acceptance case: how check_acceptance.py sorts the style check's findings."""
+    """How check_acceptance.py assigns the style check's findings to items and pages."""
+
+    def test_modern_figure_owners(self):
+        import check_acceptance as acceptance
+        for path, want in [
+            ("figures/I/01-modern.svg", "I.1"),
+            ("./figures/II/14-modern.svg", "II.14"),
+            ("figures/III/37-modern.svg", "III.37"),
+            ("figures/I/00-modern.svg", None),
+            ("figures/II/15-modern.svg", None),
+            ("figures/IV/01-modern.svg", None),
+            ("figures/I/01-modern-extra.svg", None),
+        ]:
+            with self.subTest(path=path):
+                self.assertEqual(acceptance.owner(path), want)
+
+    def test_modern_findings_are_figures_and_backticks_are_style(self):
+        import check_acceptance as acceptance
+        out = "\n".join([
+            "  ✗ S24 figures/I/01-modern.svg: a wrong title",
+            "  ✗ S25 figures/II/14-modern.svg: an unknown name",
+            "  ✗ S22 mishnah/I/02.md:3: letters in backticks",
+        ])
+        with patch.object(acceptance, "failures", {}), \
+                patch.object(acceptance, "run", return_value=SimpleNamespace(
+                    returncode=1, stdout=out, stderr="")):
+            acceptance.check_style_rules()
+            self.assertEqual(sorted(acceptance.failures),
+                             [("I.1", "P8"), ("I.2", "P9"), ("II.14", "P8")])
 
     def test_review_record_findings_are_style(self):
         """A record's finding is its proposition's P9, whatever its rule; others as before"""

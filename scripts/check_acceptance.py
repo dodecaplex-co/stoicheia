@@ -137,7 +137,7 @@ PLACEMENT_HOMES = ("Elements/BookIII/Placement.lean", "Elements/BookIII/Placemen
 
 # The check_style rules each item reads; the rest belong to P9 (or B1, B2 and E5).
 TEXT_RULES = {"S8", "S9", "S17"}
-FIGURE_RULES = {"S13", "S14", "S15", "S16", "S20", "S21"}
+FIGURE_RULES = {"S13", "S14", "S15", "S16", "S20", "S21", "S24", "S25"}
 
 # B2. Backticked words of a catalogue that are not Lean declarations, and need none: the
 # placeholder of a pattern, a field of facts.json, a tactic.
@@ -172,7 +172,7 @@ def owner(path: str) -> str | None:
     for the edition's."""
     path = path.strip().lstrip("./")
     m = (re.fullmatch(r"(?:mishnah|reading|heath|review|book)/([IVX]+)/(\d\d)\.(?:md|toml)", path)
-         or re.fullmatch(r"figures/([IVX]+)/(\d\d)(?:-idea)?\.svg", path)
+         or re.fullmatch(r"figures/([IVX]+)/(\d\d)(?:-idea|-modern)?\.svg", path)
          or re.fullmatch(r"Elements/Book([IVX]+)/Prop(\d\d)\.lean", path))
     if m and m.group(1) in heath.BOOKS and 1 <= int(m.group(2)) <= heath.BOOKS[m.group(1)]:
         return f"{m.group(1)}.{int(m.group(2))}"

@@ -155,7 +155,9 @@ where to look:
    theorem, its porism, its companions), with Heath's references beside the Lean's
    citations, the postulates, definitions taken as axioms, Common Notions and tacit
    rules, and the generated line naming the shared steps that bring in propositions.
-8. **The mishnah,** our commentary (section 3).
+8. **The mishnah,** our commentary (section 3). S24 checks the source paragraph for any
+   modern figure (section 7); the pending renderer change (train F1) will place that
+   figure under its paragraph "The modern way".
 9. **Further reading,** when something apt exists (section 6).
 10. **The foot of the page:** links to the scan leaves of Heath's text and figure, the
     thanks to the authors of System E and LeanEuclid, and the navigation again.
@@ -167,6 +169,9 @@ sentence. Each does what the other cannot, and neither is decoration. Both carry
 letters, the names the text and the Lean use, so a reader passes from the colours to the
 proof by the same A and B (section 7). Colour may carry an equality, but never alone: the
 caption names the colours, so that a reader who cannot tell them apart still has the point.
+Where the modern way is easier to follow with a picture, it has a third, its own figure,
+drawn as Euclid's is and with his letters, so that a reader moves between the coordinates
+and the proof by the same names (section 7).
 
 **Each thing in one place.** Scope and exceptions go at the top, in the status line and
 the table. Citations, postulates and rules go in the certificate and the line under it.
@@ -534,6 +539,28 @@ validate a figure. Before a changed figure is signed off, render it
 - the scope: the figure does not show more than the theorem proves;
 - legibility at the size the page shows it: nothing clipped, letters clear.
 
+**`NN-modern.svg`, the figure of the modern way.** Where the paragraph that opens **The
+modern way.** is easier to follow with a picture (its coordinates, its vectors, Book II's
+lengths a and b), it has a figure of its own. S24 checks that the source has the paragraph
+for the figure to stand under; the pending renderer change (train F1) will put it there
+on the page.
+It is drawn as Euclid's figure is: the same canvas, palette and strokes **[checked]**, and
+Euclid's figure's letters, upright at 17 **[checked]**, at the points his figure gives
+them, placed on the axes or in the plane as the paragraph places them. What the
+paragraph measures takes the paragraph's own names (a, b, θ, u), italic at 17, and the
+figure uses no name the paragraph does not **[checked]**. A name is a lower-case letter
+of the paragraph's `$…$`, or one standing alone in its words, as in Book II's "AC = a",
+that a reader sees (not in a comment, code, an HTML tag or a link's target or reference
+identifier) and that English does not use as a
+word: not the s of "A's", nor the letters of e.g. and i.e., nor the article "a" unless a
+sign of an expression, a digit or a bracket stands beside it. A capital stands alone, as
+one of Heath's letters: a length or a vector is named by its lower-case letter. The title is
+"I.N: the modern way", with no caption, for its paragraph serves as one **[checked]**. A
+page with no modern way has no such figure **[checked]**, and a modern way that would only
+restate the proposition in symbols needs none. The figure shows what the paragraph says
+and no more, with the paragraph's conditions (A = (0, 0), b > 0), and is checked as
+geometry, as Euclid's is.
+
 **Departures go in the figure note.** Where our drawing places a point otherwise than
 Heath's figure, because the Lean does, draw the proof and say so in one line under the
 figure (I.39, I.40, III.16); not in the mishnah. The line is the review record's
@@ -595,7 +622,7 @@ just before the script ([WORKFLOW](WORKFLOW.md), section 8).
   `book/<book>/front.md` and `book/names.md`. A failure here is mended in
   `scripts/render.py` or in the source it reads.
 - **Idea figures:** `figures/<book>/NN-idea.svg`. **Euclid's figures:**
-  `figures/<book>/NN.svg`.
+  `figures/<book>/NN.svg`. **Modern figures:** `figures/<book>/NN-modern.svg`.
 
 **Failures.** Each fails the script, naming the file, the line and the rule.
 
@@ -633,6 +660,8 @@ serves S23 alone; S12 still requires Git's tracked-file index.
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 | S22 | Letters in backticks: a code span that holds only letters, a capital or a run of capitals (each with its prime or subscript) or several such runs apart by commas or spaces, as `P`, `PQ`, `ABCD` or `AB, CD` (section 1, "Lean notes") | Prose, Review notes, Catalogues, Other reports, Lean notes, Generated |
 | S23 | A merge-conflict marker, with its kind: a line beginning with exactly seven `<`, `\|` or `>` followed by a space or the line's end; or exactly seven `=` with optional trailing spaces or tabs. A trailing CR is allowed. A middle is refused between opening and closing markers, outside `.md` files, or unless every line of the preceding block is ordinary paragraph text. Blank lines, markers, ATX or completed setext headings, thematic breaks, fences, HTML blocks and GFM tables bound or disqualify the block; indented code cannot start a paragraph, but indented continuations are allowed. Any possible reference definition prefix (up to three spaces, a bracketed label allowing escaped brackets, then a colon), block quote or list item disqualifies the whole block; within a paragraph, a list item counts only where it can interrupt one, as a bullet or an ordered item numbered 1, with some text, so `2. item` or a bare `*` goes on with the paragraph. S23 errs toward refusal: other lengths of equals are never examined as middles, so a refused heading can use eight. Fences inside comments or HTML blocks open no block | Every tracked text file except symlinks, or the files of the walk described above |
+| S24 | A viewBox width outside 400–440 or non-positive height; a colour other than Euclid's figure's five, or a shape or a `<text>` with no fill, which SVG paints black; a stroke-width under 1.2 or over 3.2; a `<desc>`; a `<title>` other than "I.N: the modern way"; no `NN.svg` beside it, or no paragraph opening `**The modern way.**` in `mishnah/<book>/NN.md` for it to stand under, read as Markdown reads it (not in a comment or a code block). The modern figure may use only the elements, attributes and spellings that the modern figures on main use. | Modern figures |
+| S25 | A `<text>` not at font-size 17, or a `<tspan>`; an empty or whitespace-only `font-style` presentation attribute; a capital letter (with a prime or a subscript) that `NN.svg` does not draw, or not upright; a capital in a longer text; any other text holding a character besides lower-case Latin and Greek letters, digits and the signs of an expression, or with letters not italic, or with a letter that is not a name of the page's modern way: in its `$…$` spans, each lower-case letter once the commands are taken out (`\vec`, `\frac`, `\mathrm{…}` and what it sets) and the Greek ones read as their letters (`\theta` as θ, and a variant such as ϑ as the letter it is a form of); outside them, each Greek letter, and each lower-case letter standing alone, save one straight after an apostrophe (`'` or `’`, the s of "A's"), the letters of e.g. and i.e., and the article a with no sign of an expression (=, +, -, −, ×, ·, /, <, >, ≤, ≥), digit (raised or lowered, as ²) or bracket beside it, spaces between; and none of it from an HTML tag or comment, a code span or a link's target or resolved reference identifier, which a reader does not see, the paragraph being read as Markdown reads it, so that a line holding only a code span goes on with it; inline HTML and reference-style links or definitions in its source are refused | Modern figures |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 

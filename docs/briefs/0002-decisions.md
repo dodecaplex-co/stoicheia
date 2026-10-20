@@ -2032,8 +2032,6 @@ findings:
   definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
   states the rule. No mathematical statement or review record changes.
 
-## 20 October 2026
-
 - **The stage test reads the program's words.**
   `test_renderer_validation_loosened_with_content_is_kept_apart` in
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py), a protected file,
@@ -2045,8 +2043,6 @@ findings:
   change in train D4 ([WORKFLOW](../WORKFLOW.md), section 10: a check lands first). The
   protected file changed is `scripts/test_safe_push.py`.
 
-## 20 October 2026
-
 - **S12 reads "Revision" as "revision".** The acceptance report's "Revision" header
   sent the commit identifier `d95125f0` to Lean as a name.
   [scripts/check_style.py](../../scripts/check_style.py) now reads "Revision" as
@@ -2056,3 +2052,36 @@ findings:
   header, the same hex word without revision context and a non-commit word beside
   "Revision", and keeps the unknown Lean name in sentences beginning "Read", "Reviewed"
   and "Verification" subject to Lean checking. These are the two protected files changed.
+
+- **The modern figure's checks precede its place on the page.** The owner asked for
+  figures for the modern mathematics, drawn to match Euclid's figure and carrying the
+  same letters (#49). S24 checks `figures/<book>/NN-modern.svg`: Euclid's figure's canvas
+  width, palette and strokes; the title "I.N: the modern way", with no caption; a Euclid's
+  figure beside it; and a paragraph opening "**The modern way.**" in its mishnah.
+  S25 checks its text at size 17: Euclid's figure's letters upright, and the paragraph's
+  own lower-case names italic, with numbers and the signs of an expression. It reads names
+  in TeX and plain words, including Book II's "AC = a", but excludes English letters
+  after apostrophes, those of e.g. and i.e., and the article "a" unless a sign, digit or
+  bracket stands beside it. Comments, code and link targets supply no names.
+  The shared `check_style.modern_span` selects the paragraph from the original Markdown
+  blocks and retains its source offsets before comments and code are masked: indented
+  code supplies no paragraph, multiline inline comments preserve its boundaries, and
+  code spans across lines supply no names. Its regression cases stay with these checks.
+  The rules are S24 and S25, formerly S23 and S24 on this branch; S22 remains letters in
+  backticks, S23 checks merge-conflict markers (`tooling/no-conflict-markers`), and S26
+  is reserved for `tooling/letter-check` (#68). The hard rules now run from S1 to S25.
+  Acceptance assigns both modern rules to P8 and each modern figure's findings
+  to its proposition; S22 remains a text rule.
+  These checks read the source paragraph and SVGs, not the generated page, and apply to
+  the thirty modern figures already on main. Train H10 carries the checks; the page
+  insertion, its two renderer tests, the regenerated pages and the checklist's P8 sentence
+  follow in train F1. `scripts/render.py` and `docs/ACCEPTANCE.md` keep main's copies.
+  The protected files changed are
+  [scripts/check_style.py](../../scripts/check_style.py),
+  [scripts/check_acceptance.py](../../scripts/check_acceptance.py) and
+  [tests/test_check_style.py](../../tests/test_check_style.py).
+  [STYLE](../STYLE.md), sections 2, 7 and 8, describes the figure and its rules.
+  The reviews' fixes close S24 and S25's input: the modern figure may use only the elements,
+  attributes and spellings the modern figures on main use, so no CSS is read; a malformed
+  figure is reported on its file and checking goes on; and a modern paragraph with inline
+  HTML or reference-link syntax is refused, its indentation counted in columns.
