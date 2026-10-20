@@ -69,7 +69,7 @@ depend on the corresponding declarations remaining in the axiom registry.
 - **[search.py](search.py)** draws configurations at random, biased hard toward the
   degenerate ones: repeated points, points on the lines and circles already drawn,
   centres, points between and beyond, equal and concentric and touching circles.
-- **[derived.py](derived.py)** keeps the 39 numerical predicates of the retired axioms,
+- **[derived.py](derived.py)** keeps the 39 numerical predicates of the retired rules,
   prepared to survive their retirement, under names beginning `derived.`.
 - **[exhaustive.py](exhaustive.py)** visits every configuration on small grids for 76
   predicates in all: 37 axiom laws and the 39 retained derived properties, with degenerate
