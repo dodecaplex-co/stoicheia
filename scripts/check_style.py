@@ -1246,6 +1246,42 @@ def gfm_table_columns(header: str, delimiter: str) -> int | None:
     return None
 
 
+# S24 and S25 retain their original whitespace reading, separate from S23 above.
+def modern_table_cell_ranges(line: str) -> tuple[list[tuple[int, int]], bool]:
+    """The source ranges of a GFM row's cells, and whether the row has a separator."""
+    pipes = []
+    slashes = 0
+    for at, char in enumerate(line):
+        if char == "\\":
+            slashes += 1
+            continue
+        if char == "|" and slashes % 2 == 0:
+            pipes.append(at)
+        slashes = 0
+    if not pipes:
+        return [(0, len(line))], False
+    edges = [-1] + pipes + [len(line)]
+    cells = [(edges[k] + 1, edges[k + 1]) for k in range(len(edges) - 1)]
+    if not line[:pipes[0]].strip():
+        cells.pop(0)
+    if cells and not line[pipes[-1] + 1:].strip():
+        cells.pop()
+    return cells, True
+
+
+def modern_table_columns(header: str, delimiter: str) -> int:
+    """The number of columns when two lines open a GFM table, or zero otherwise."""
+    header_cells, header_has_pipe = modern_table_cell_ranges(header)
+    delimiter_cells, delimiter_has_pipe = modern_table_cell_ranges(delimiter)
+    if ((header_has_pipe or delimiter_has_pipe)
+            and len(header_cells) == len(delimiter_cells)
+            and delimiter_cells
+            and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip())
+                    for a, b in delimiter_cells)):
+        return len(header_cells)
+    return 0
+
+
 def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     """Split a recognized GFM table into independent, offset-preserving cells."""
     lines = []
@@ -1257,8 +1293,8 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     for k in range(len(lines) - 1):
         _, _, header = lines[k]
         _, _, delimiter = lines[k + 1]
-        columns = gfm_table_columns(header, delimiter)
-        if columns is not None:
+        columns = modern_table_columns(header, delimiter)
+        if columns:
             table = (k, columns)
             break
     if table is None:
@@ -1273,7 +1309,7 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
                                  block.references, block.paragraph))
     for row_number, row in enumerate([lines[table]] + lines[table + 2:]):
         start, _, text = row
-        cells, _ = table_cell_ranges(text)
+        cells, _ = modern_table_cell_ranges(text)
         if row_number:
             cells = (cells + [(len(text), len(text))] * columns)[:columns]
         for a, b in cells:

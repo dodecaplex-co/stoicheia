@@ -1897,6 +1897,33 @@ class Modern(unittest.TestCase):
                 self.assertNotIn("S24", modern_rules(MODERN_GOOD, "I.47", names=names))
         self.assertIsNone(style.modern_span("[x]: invalid destination\n" + paragraph))
 
+    def test_table_with_nonbreaking_spaces_supplies_no_modern_name(self):
+        figure = ('<title>I.47: the modern way</title>'
+                  '<text font-family="Georgia" font-size="17" fill="#3b2f2f" '
+                  'font-style="italic">x</text>')
+        paragraph = MW + "Put $a$ here."
+        for delimiter in ("| --- |", "|\t---\t|", "|\u00a0---\u00a0|",
+                          "\u00a0| --- |\u00a0"):
+            with self.subTest(delimiter=delimiter):
+                text = paragraph + "\n| Header |\n" + delimiter + "\n| $x$ |"
+                self.assertEqual(self.check_refused_modern(figure, paragraph=text), [
+                    ("S25", "<text>x</text>: x is no name of the page's modern way")])
+                self.assertEqual(style.modern_span(text), (0, len(paragraph)))
+                self.assertEqual(style.modern_names(style.modern_paragraph(text)), {"a"})
+
+    def test_immediate_nonbreaking_space_delimiter_leaves_no_modern_paragraph(self):
+        figure = ('<title>I.47: the modern way</title>'
+                  '<text font-family="Georgia" font-size="17" fill="#3b2f2f">A</text>')
+        for delimiter in ("| --- |", "|\t---\t|", "|\u00a0---\u00a0|",
+                          "\u00a0| --- |\u00a0"):
+            with self.subTest(delimiter=delimiter):
+                text = MW + "Put $a$ here.\n" + delimiter + "\n| $x$ |"
+                self.assertEqual(self.check_refused_modern(figure, paragraph=text), [
+                    ("S24", "the page's mishnah has no paragraph opening "
+                     "**The modern way.** for the figure to stand under")])
+                self.assertIsNone(style.modern_span(text))
+                self.assertIsNone(style.modern_paragraph(text))
+
     def test_source_spans(self):
         for before, paragraph, after in SOURCE_SPAN_CASES:
             text = before + (paragraph or "") + after
