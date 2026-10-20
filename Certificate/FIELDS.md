@@ -136,9 +136,8 @@ Each value is `"<kind> : <type>"`, with `" := <value>"` after it for a `def` or
 value is not printed: that Lean cannot see it is the point. An inductive type's or a
 structure's constructors are entries of their own.
 
-At commit d040117 there were 37, all reached from the axioms. Since 17 October 2026,
-the vocabulary also includes words reached from the entries' statements. It now has
-<!-- count:vocabulary -->91<!-- /count --> entries. Among them:
+At commit d040117 there were 37, all reached from the axioms; with the entries'
+statements, from 17 October 2026, there are 61. Among them:
 
 ```text
 "Collinear": "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"

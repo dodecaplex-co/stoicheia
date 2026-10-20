@@ -2168,7 +2168,7 @@ findings:
   current axioms from proved rules; its fields, requirements and worked TOML examples stay
   unchanged.
   [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) also marks I.5's inherited
-  Postulate 3 example as an excerpt and gives the current vocabulary count, 91.
+  Postulate 3 example as an excerpt.
   [`scripts/heath.py`](../../scripts/heath.py) uses the retained Circle 3 axiom in its
   overlap error message's example.
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) explains that its
