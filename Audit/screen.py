@@ -12,9 +12,17 @@ It is a screen, not a proof search. `grind` instantiates rules among the terms a
 a goal; it does not draw a new circle or lay down a triangle, so a proposition that needs
 one (I.7 from Circle 4, I.23 from superposition) is found by reading, not here.
 
-The statements are facts.json's entries. At commit d040117 that is the 99 propositions,
-399 attempts each, 39,501 in all; with the three porisms as well, 40,698. Either way the
-screen closes III.2, III.5 and III.6, and nothing else.
+The last run (19 October 2026) used fresh certificates at commit b260c826, with
+Tacit.exists_centre added to CIRCLE: 135 statements (99 propositions, three porisms and
+33 companions), 424 attempts each, 57,240 in all. Eleven attempts closed: seven for
+III.2, three for III.5 and one for III.6, with no other statement closing. No pair
+containing Tacit.exists_centre closed. Of the remaining attempts, 57,196 fell back to
+sorry and 33 timed out at the unchanged 30,000-heartbeat limit. The report lists every
+closing and its rules. III.5 from the Magnitudes and Transfer families uses only
+Tacit.len_lt_of_inside, Tacit.lt_irrefl and Tacit.lt_trans, besides Lean's logical
+axioms: an uncatalogued candidate route already found by the earlier 51,600-attempt
+run, which also closed eleven attempts on these three propositions. No catalogue row
+is added by the screen.
 
 usage (from the repository root, after `lake build`):
     python3 Audit/screen.py OUTDIR [--jobs N]
@@ -34,7 +42,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 # Rules that speak of circles: the pairs among these are screened against every statement.
-CIRCLE = """Definition15 Postulate3 Tacit.centre_unique Tacit.centre_inside Tacit.inside_not_on
+CIRCLE = """Definition15 Postulate3 Tacit.exists_centre Tacit.centre_unique Tacit.centre_inside Tacit.inside_not_on
 Tacit.between_of_inside_chord Tacit.inside_of_between Tacit.outside_of_between
 Tacit.not_same_side_of_circles_meet Tacit.line_meets_circle_of_opposite_sides
 Tacit.line_meets_circle_of_inside Tacit.circles_meet_of_on_inside_outside Tacit.circles_meet

@@ -284,13 +284,12 @@ at the contact.
 
 ## How the rows were found
 
-**19 October 2026, screen status after step 6.** The run below predates the centre
-restatements at `17987153`. `Tacit.exists_centre` is still absent from the `CIRCLE` set
-in `Audit/screen.py`; adding it and rerunning the screen against fresh certificates
-remain work for a separate tooling pull request. Its actual attempt count and results
-must replace the current screen claim; the historical run below does not validate the
-new interfaces. `Prop30.halves` is staged for the owner's approval, with no proof or
-certificate entry, and supplies no overlap evidence.
+**19 October 2026, screen rerun after step 6.** With `Tacit.exists_centre` added to
+`Audit/screen.py`'s `CIRCLE` set, the screen ran against fresh certificates at
+`b260c826`: 57,240 attempts over 135 statements, eleven closings, all on III.2, III.5
+and III.6. No pair containing `Tacit.exists_centre` closed. The full result and its
+comparison with the earlier runs follow below. `Prop30.halves` is staged for the owner's
+approval, with no proof or certificate entry, and supplies no overlap evidence.
 
 **What the project already says.** The [gap catalogue for Book III](gaps-book-III.md) says
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
@@ -308,18 +307,56 @@ its points carry Euclid's comparison, with Common Notion 5 through `len_lt_of_be
 Three others, I.23, I.25 and I.41, have the fewest rules in `direct_axioms`, three to five, but each cites propositions and carries
 Euclid's argument.
 
-**A sweep of every rule.** We read each of the 81 tacit rules, with the postulates and
-Definition 15, against the 99 statements and the three porisms. Then a mechanical screen,
-[Audit/screen.py](../../Audit/screen.py), had Lean's `grind` try every statement against
-every axiom alone, every family of axioms (the file that declares them) together, every
-pair of the 24 rules about circles, and every pair of families: 40,698 attempts over the
-99 propositions and the three porisms. On the earlier readings it closed III.2, III.5 and
-III.6, and nothing else. For the restated readings the screen unfolds `CirclesCut` as well. Its run must be
-renewed on the integrated revision; the earlier run does not validate the new readings.
-The Diagram-segment 3 and 4 rows for III.5 were found by reading: each takes three rules
-from three families, outside the screen's pairs, and `grind` did not close the
-Diagram-segment 4 route in the probe. The screen cannot draw a figure, for `grind` works
-with the points and circles a goal already names. I.7 needs two circles its statement never mentions, and I.23 a
+**A sweep of every rule.** The original reading compared the 81 tacit rules then in
+force, with the postulates and Definition I.15, against the 99 propositions and the
+three porisms. At `d040117` the mechanical screen,
+[Audit/screen.py](../../Audit/screen.py), tried 399 attempts per statement: 39,501 for
+the propositions alone, or 40,698 with the porisms. It closed only III.2, III.5 and
+III.6. The later 51,600-attempt run closed eleven attempts, all on those existing
+catalogue entries, with one further candidate route for III.5.
+
+The new run uses all 135 certificate entries: 99 propositions, three porisms and 33
+companions. Lean's `grind` tries each statement against each of the 88 axioms alone,
+each of eight families (the module that declares them), each pair of the 25 circle
+rules, and each pair of families. That is 88 + 8 + 300 + 28 = 424 attempts per
+statement, 57,240 in all. The phrase definitions, including `CirclesCut`, are unfolded
+as before. The eleven closings are below. Family names are the final components of
+their module names; the rule column omits the prefix `Tacit.`. Each successful
+attempt was also recompiled with warnings treated as errors and its axioms printed:
+the listed rules, plus Lean's `propext`, `Classical.choice` and `Quot.sound`, with no
+`sorryAx`.
+
+| Statement | Attempt: family, family pair or rule pair | Rules used |
+|---|---|---|
+| III.2 | `Diagram` | `inside_not_on`, `inside_of_between` |
+| III.2 | `Definitions` + `Diagram` | `inside_not_on`, `inside_of_between` |
+| III.2 | `Diagram` + `Magnitudes` | `inside_not_on`, `inside_of_between` |
+| III.2 | `Diagram` + `Metric` | `inside_not_on`, `inside_of_between` |
+| III.2 | `Diagram` + `Superposition` | `inside_not_on`, `inside_of_between` |
+| III.2 | `Diagram` + `Transfer` | `inside_not_on`, `inside_of_between` |
+| III.2 | `inside_not_on` + `inside_of_between` | `inside_not_on`, `inside_of_between` |
+| III.5 | `Diagram` + `Transfer` | `circle_eq`, `inside_not_on` |
+| III.5 | `Magnitudes` + `Transfer` | `len_lt_of_inside`, `lt_irrefl`, `lt_trans` |
+| III.5 | `inside_not_on` + `circle_eq` | `circle_eq`, `inside_not_on` |
+| III.6 | `Diagram` + `Transfer` | `centre_inside`, `circle_eq`, `inside_not_on` |
+
+No single axiom, porism, companion or other proposition closed. Of the remaining
+attempts, 57,196 fell back to `sorry` and 33 timed out at the unchanged limit of 30,000
+heartbeats; none counts as a closing. The result matches the eleven closings of the
+51,600-attempt run. No statement closes from `exists_centre` paired with another
+circle rule, and no closing uses it. The same uncatalogued candidate route for III.5
+remains: `len_lt_of_inside`, `lt_trans` and `lt_irrefl`. Cutting gives a point of each
+circle within the other; about a common centre, each would be nearer than the other.
+Transitivity and irreflexivity give the contradiction, without Definition I.15. This
+is a further route for an existing proposition, already reported by the earlier run,
+not a new finding of this rerun. It remains a candidate for the coordinator to decide;
+no catalogue row is added here.
+
+The Diagram-segment 3 and 4 rows for III.5 were found by reading: each takes three
+rules from three families, outside the screen's pairs. The Diagram-segment 4 route in
+the table above is the separate candidate using two points within, not the catalogue's
+route through Definition I.15. The screen cannot draw a figure, for `grind` works with
+the points and circles a goal already names. I.7 needs two circles its statement never mentions, and I.23 a
 triangle laid down, so both came from reading. I.2 and I.3 need a triangle drawn and then
 laid down. The catalogue first listed them as near misses, since neither statement gives a
 triangle to move; but the same holds of I.7's circles, and they are rows now, with
