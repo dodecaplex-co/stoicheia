@@ -1907,6 +1907,24 @@ findings:
   E2 failure.
 
 ## 20 October 2026
+- **I.45 and II.14 are allowed as restricted while the outline proof is to come (#116).**
+  On 20 October 2026 the owner approved ship G's decisions for #116, including:
+  "**Interim disclosure.** Approve the restricted-scope entries in section 7 and keep
+  `figure-with-dissection` until all bridges are proved and reviewed."
+  This supersedes the 18 October decision to call both full under the convention of a
+  figure supplied with a checked finite division. The figure is given with its checked
+  division into triangles, and its area is relative to that division; existence of a
+  division from the outline and independence of area from the division chosen remain to
+  be proved under #116.
+  `scripts/check_acceptance.py` adds I.45 and II.14 to `ALLOWED_LIMITS`, each as
+  `("restricted", "figure-with-dissection")`, and [ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed)
+  gains the same two rows. They go when the outline proof is proved and reviewed.
+  The record change follows on a text branch of its own, stacked on this tooling change.
+  The protected files changed are `scripts/check_acceptance.py`, whose only change is
+  those entries and their comment, and `tests/test_acceptance_limits.py` (new), which checks
+  the list against the table and exercises P3 with and without the required tag. CI does
+  not run it yet; whoever changes the limitations runs it.
+
 
 - **Exact counts in prose are rendered and checked.** The stale-content audit found the
   vocabulary still given as 61 where the lock held 91, and companions as nineteen across
