@@ -219,16 +219,15 @@ end MixedAngle
 These are Book Zero's kind of fact, proved from the foundations and Book Zero, with I.12,
 I.17, I.19 and I.20 for the facts about circles about a point.
 
-Two of them overlap statements that brief 0006 stages. `foot_nearest` takes the foot of the
+Two of them overlap statements that brief 0006 introduced. `foot_nearest` takes the foot of the
 perpendicular as I.12 gives it: a point N of BC such that every other point X of BC makes
-the angle ANX right. For A off BC that is the staged `Foot A B C N`
-(`Staging/Stage4/Foot.lean`). It is not stated through `Foot`, which is not yet approved and
-whose existence and uniqueness are still stubs; on adoption it can take `Foot` as its
-hypothesis and go with `Foot.exists` and `Foot.unique` to `Elements/BookIII/Squares.lean`.
-`len_lt_of_add_lt` is I.20 with its degenerate case, which `Staging/Stage3/Degenerate.lean`
-states as an equality, `Prop20.collinear_iff`, now proved there. It keeps its proof here from
-`between_cases`, which needs nothing from the stage 3 files; on adoption it goes beside
-`Prop20.collinear_iff` in `Elements/BookI/HelpersTriangles.lean`, which brief 0006 adds. -/
+the angle ANX right. For A off BC that is `Foot A B C N`, the approved definition in
+`Elements/Foundations/DefinitionsIII.lean`; `Foot.exists` and `Foot.unique` are proved in
+`Elements/BookIII/Squares.lean`. `foot_nearest` keeps its current interface here. A future
+adaptation could instead take `Foot` as its hypothesis and use those two facts.
+`len_lt_of_add_lt` is I.20 with its degenerate case, which `Prop20.collinear_iff` now states
+as an equality in `Elements/BookI/HelpersTriangles.lean`. It keeps its current proof here
+from `between_cases`; a future adaptation could use that proved fact. -/
 
 variable {A B C D E F P Q : Point} {α γ : Circle}
 

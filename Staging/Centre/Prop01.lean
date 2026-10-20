@@ -29,7 +29,9 @@ Once proved, the construction goes before `Elements.BookIII.Prop1` first, under
 today's statement (the record shows it as a `grouped` passage naming it), the restated
 theorem then replaces today's, and the entry point goes after the porism as a lemma; this
 file is then deleted. The names here sit in `Elements.BookIII.Staging.Centre`,
-not `Elements.BookIII.Staging`, which brief 0006's staged III.24 and III.25 already use.
+not `Elements.BookIII.Staging`. Brief 0006's III.24 and III.25 now live in
+`Elements.BookIII`; their centre-removal variants remain staged in
+`Elements.BookIII.Staging.Centre.Stage3` and `.Stage4`.
 -/
 
 namespace Elements.BookIII.Staging.Centre

@@ -142,10 +142,11 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
   route, III.26 and III.28 upgraded, and `Arcs.lean` (#20 to #24). Next is the migration
   into `Elements/`, in brief 0006's seven steps (#25).
-- **Stage 4's proofs** are done in `Staging/Stage4`: III.14 with diameters, III.15 both
-  clauses for every straight line, the foot of the perpendicular, and III.25's construction
-  core, which never sees a circle or a centre, with its correctness (#26, #27). Next is the
-  move into `Elements/` with the records (#28).
+- **Stage 4's migration** is complete in this revision: `Foot` is in the foundations, its
+  existence and uniqueness are in `Squares.lean`, III.14 and III.15 have their companions,
+  and III.25 has its construction core, correctness theorem and circle-backed companion in
+  `Elements/` (#26–#28). The records remain unstamped pending independent review and
+  stamping.
 - **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
