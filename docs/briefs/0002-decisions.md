@@ -1948,6 +1948,11 @@ findings:
   pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight. This approval is for
   the first pin change alone; the retirement itself remains pending the evidence and the
   owner's separate decision.
+  As built, those pins put the eight names in `excludes` on each entry's `axioms`. Once
+  the eight are theorems no axiom list can hold their names, so those pins cannot fail;
+  an entry's use of a proved rule shows only in the axioms beneath it, which `proved_rules`
+  (the entry below) lists for each rule. A pin on the proved rules an entry uses would
+  need a field of its own, which this change does not add.
 
 ## 20 October 2026
 - **I.45 and II.14 are allowed as restricted while the outline proof is to come (#116).**
