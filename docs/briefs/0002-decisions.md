@@ -1538,3 +1538,16 @@ findings:
   the keys and when an item counts, so the schema's `items` row and the sentence after the
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
+
+## 20 October 2026
+
+- **The restricted-superposition certificate tooling lands before the Lean replacement.**
+  For [#75](https://github.com/jackChallis/stoicheia/issues/75) and
+  [brief 0009](0009-superposition.md), `Certificate/Facts.lean` counts occurrences of
+  `len_congr`, `angle_congr` and `area_congr` in declaration values as C.N. 4, while its
+  axiom walks and their boundaries stay unchanged. `scripts/heath.py` replaces the overlap
+  self-test fixtures for the old superposition rule with I.7's rule,
+  `Tacit.not_same_side_of_circles_meet`, preserving the same acceptance of a complete
+  `step` record and rejection when its note is missing. This tooling change lands before
+  the Lean replacement it checks, and neither check is weakened. Protected files changed:
+  `Certificate/Facts.lean` and `scripts/heath.py`.
