@@ -12,7 +12,7 @@ kind = "euclid"
 at = "Let AB be greater, and let BG be made equal to DE"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A, and uses G and C directly without constructing a separate line GC."
+note = "Euclid cuts BG equal to DE; Heath gives no reference for the cut. The Lean uses I.3, which also puts G between B and A, and joins GC by Postulate 1."
 
 [[passage]]
 at = "the less to the greater"
@@ -29,7 +29,7 @@ note = "Euclid supposes AB greater than DE; the Lean proves his argument once ov
 at = "Let BC be greater, if possible, and let BH be made equal to EF"
 kind = "helper"
 helper = "Prop3"
-note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C, and uses A and H directly without constructing a separate line AH."
+note = "Euclid cuts BH equal to EF; Heath gives no reference for the cut. The Lean uses I.3, which also puts H between B and C, and joins AH by Postulate 1."
 
 [[passage]]
 at = "Therefore BC is not unequal to EF"
@@ -41,10 +41,10 @@ case = "AB supposed greater than DE, with G between B and A, and separately BC s
 
 [review]
 stage = "full"
-commit = "e939480f"
+commit = "570e6fa"
 reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:3c089d4e9c8fe8a3"
-run = "brief 0005 stage 5, ship T re-read"
+lean = "sha256:a39a56a942144b8d"
+run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
 statement = "pass"

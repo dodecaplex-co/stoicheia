@@ -23,9 +23,9 @@ helper = "exists_between_nearer"
 note = "Euclid assumes he can find F on BD near enough to B that AF remains less than AE. The Lean applies `exists_between_nearer` to AB = AC < AE, using `len_lt_of_between` for C between A and E, and obtains F between B and D with AF < AE; it then derives the order A, B, F by `between_cut` and puts F on AB by `Tacit.on_line_of_between`, a rule we assume (System E, Between 2)."
 
 [[passage]]
-at = "and let the straight lines FC, GB be joined"
-kind = "given"
-note = "FC and GB are represented by their endpoints in the lengths and angles; no separate straight lines are constructed. The Lean beneath proves F ≠ C and G ≠ B for the later angle identities."
+at = "and let the straight lines FC, GB be joined. [Post. 1]"
+kind = "carried"
+note = "The Lean joins FC and GB by Postulate 1, as Euclid asks. The later steps use lengths and angles named by the points and do not use either joined line; the lines are named here only to carry out this sentence."
 
 [[passage]]
 at = "and they contain a common angle"
@@ -58,10 +58,10 @@ note = "Euclid identifies FBC and GCB with the angles under the base. The Lean u
 
 [review]
 stage = "full"
-commit = "e939480f"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:489a046b9c1ddda8"
-run = "brief 0005 stage 5, ship T re-read"
+commit = "006ac64c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:434da0bb3337847c"
+run = "Q watch, independent re-read at 006ac64c"
 
 [review.items]
 statement = "pass"

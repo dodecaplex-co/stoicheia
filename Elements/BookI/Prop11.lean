@@ -64,6 +64,7 @@ theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬
   have hF_AB : ¬ OnLine F AB := not_on_line_of_same_side hF_Q
   -- and let FC be joined;
   have hFC : F ≠ C := fun h => hF_AB (h ▸ hC_AB)
+  obtain ⟨FC, -, -⟩ := Postulate1 F C hFC
   -- I say that the straight line FC has been drawn at right angles to the given straight line
   -- AB from C the given point on it.
   -- For, since DC is equal to CE,
@@ -83,7 +84,7 @@ theorem Prop11 {A B C Q : Point} (hAB : A ≠ B) (hC : Collinear A B C) (hQ : ¬
   have hDCF_FCE : ∠ D C F = ∠ F C E := hDCF_ECF.trans (angle_symm hEC hFC)
   -- But, when a straight line set up on a straight line makes the adjacent angles equal to one
   -- another, each of the equal angles is right; [Def. 10]
-  /- Definition 10 says what a right angle is, and Postulate 4 that every right
+  /- Definition I.10 says what a right angle is, and Postulate 4 that every right
      angle is the right angle `∟`. -/
   have hDCF_right : IsRightAngle D C F := ⟨E, hDCE, hCDF.bac, hDCF_FCE⟩
   have hECF_right : IsRightAngle E C F :=

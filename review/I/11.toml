@@ -19,9 +19,9 @@ helper = "produce_longer"
 note = "Euclid cuts off CE equal to CD, taking for granted a straight line beyond C greater than CD, although CB may be shorter than CD or C may be B. The Lean uses `produce_longer` to extend DC beyond C far enough for I.3 and, after the cut, `between_cut` to put C between D and E; with F off DE, this makes DCF and FCE adjacent, as Euclid later says in \"and they are adjacent angles\"."
 
 [[passage]]
-at = "and let FC be joined"
-kind = "given"
-note = "FC is represented by its endpoints in the angles; no separate straight line is constructed. The Lean beneath proves F ≠ C for the later angle identities."
+at = "and let FC be joined;"
+kind = "carried"
+note = "The Lean joins FC by Postulate 1, as Euclid asks. The later proof compares lengths and angles named by the points, without using the joined line; FC is named here only to carry out this sentence."
 
 [[passage]]
 at = "Therefore the straight line CF has been drawn at right angles"
@@ -34,10 +34,10 @@ case = "C between A and B, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "e939480f"
-reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:c3cc54c2882dae53"
-run = "brief 0005 stage 5, ship T re-read"
+commit = "267d8d2f"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:6aad9ce1223a6e05"
+run = "Q watch, independent re-read at 267d8d2f"
 
 [review.items]
 statement = "pass"
