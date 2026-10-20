@@ -1,7 +1,11 @@
 import Elements.Figure.Basics
 import Elements.BookI.Helpers
+import Elements.BookI.Prop02
+import Elements.BookI.Prop03
 import Elements.BookI.Prop04
 import Elements.BookI.Prop06
+import Elements.BookI.Prop11
+import Elements.BookI.Prop31
 import Elements.BookI.Prop34
 import Elements.BookI.Prop46
 import Elements.BookI.Prop47
@@ -98,6 +102,38 @@ PQRS are equal to AB, CD, it is the rectangle contained by AB, CD.
 theorem Rectangle.eq_rect (h : Rectangle P Q R S) (h₁ : ‖P Q‖ = ‖A B‖) (h₂ : ‖P S‖ = ‖C D‖) :
     quadArea P Q R S = rect A B C D :=
   h.contained.trans (rect_congr h₁ h₂)
+
+/-- Euclid takes for granted that the rectangle contained by two given straight
+lines can be described. We carry out, from Book I, the construction that II.1
+makes: raise a perpendicular to AB at A on P's side [I. 11], produce it far
+enough to cut off AE equal to CD [I. 2, I. 3], and complete ABFE by parallels
+[I. 30, I. 31]. Both E and F lie on P's side of AB. Its angles are right (`Rectangle.of_right`), and its area is
+the rectangle contained by AB, CD (`Rectangle.eq_rect`).
+[I. 2, I. 3, I. 4, I. 11, I. 29, I. 30, I. 31, I. 34] -/
+theorem exists_rect {A B C D P : Point} (hAB : A ≠ B) (hCD : C ≠ D) (hP : ¬ Collinear A B P) :
+    ∃ E F : Point, Rectangle A B F E ∧ ‖A E‖ = ‖C D‖ ∧ SameSideOf E P A B ∧
+      SameSideOf F P A B ∧ quadArea A B F E = rect A B C D := by
+  obtain ⟨AB, hA_AB, hB_AB⟩ := Postulate1 A B hAB
+  obtain ⟨Q, hQP, hright⟩ := BookI.Prop11 hAB ⟨AB, hA_AB, hB_AB, hA_AB⟩ hP
+  have hBAQ : ∠ B A Q = ∟ := hright B ⟨AB, hA_AB, hB_AB, hB_AB⟩ hAB.symm
+  obtain ⟨R, hAR⟩ := BookI.Prop2 A C D hCD
+  have hAQ : A ≠ Q := hQP.triangle.ne₁₃
+  obtain ⟨Y, hQAY⟩ := produce hAQ.symm
+  obtain ⟨X, hYAX, hlt⟩ :=
+    produce_longer (ne_of_between (between_symm hQAY)) (ne_of_len_eq hAR hCD)
+  have hX : OnRay X A Q := OnRay.of_between_between (between_symm hQAY) hYAX
+  obtain ⟨E, hAEX, hAE⟩ := BookI.Prop3 hCD (hAR ▸ hlt)
+  have hBAE : ∠ B A E = ∟ := by
+    rw [angle_onRay_right (OnRay.of_between hAEX) hAB.symm, angle_onRay_right hX hAB.symm]
+    exact hBAQ
+  have hEP : SameSideOf E P A B :=
+    SameSideOf.of_onRay (OnRay.of_between hAEX) (SameSideOf.of_onRay hX hQP)
+  have hE_AB : ¬ OnLine E AB := not_on_line_of_same_side (hEP.sameSide hA_AB hB_AB)
+  obtain ⟨EF, hE_EF, hEF_AB⟩ := BookI.Prop31.line hE_AB
+  obtain ⟨F, -, hEABF⟩ := BookI.Prop31.parallelogram hEF_AB hE_EF hA_AB hB_AB hAB
+  have hrect : Rectangle A B F E := Rectangle.of_right hEABF.rotate
+    ((angle_symm (ne_of_between hAEX).symm hAB.symm).trans hBAE)
+  exact ⟨E, F, hrect, hAE, hEP, hrect.1.sameSideOf.trans hEP, hrect.eq_rect rfl hAE⟩
 
 /-! ## Squares -/
 
