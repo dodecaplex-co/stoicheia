@@ -442,7 +442,9 @@ looked into.
     summaries, the owner approves them, and the owner makes the tag
     (`book-I`, `book-II`, …) and release manually, running
     `python3 scripts/check_release_gate.py` once more just before the tag, since the hold
-    rests on the labels. PROGRAM.md is brought up to date:
+    rests on the labels. The job runs on the pull request's events, not the issues', so
+    once the last blocker closes it is run again (or `release` removed and given again)
+    before `--merge`, which counts its failed run on a release pull request. PROGRAM.md is brought up to date:
     the status board, the lessons, the costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
@@ -631,9 +633,9 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       opens it ready, or marks the open one ready), with the labels given and
       `security-review` when a protected path changes. Then its CI is followed to its
       conclusion, judged as the merge judges it (step 4): a `release-gate` run left from
-      an earlier `release` label is waited for, never counted. Once `git push` succeeds, an interruption, a failure
-      to follow CI or a refusal is reported as "pushed; CI not followed", exit 3, never as
-      a refusal before the push.
+      an earlier `release` label is waited for, never counted. Once `git push` succeeds,
+      an interruption, a failure to follow CI or a refusal is reported as "pushed; CI not
+      followed", exit 3, never as a refusal before the push.
 3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
    always; `/security-review` when a protected path changes; `/no-mistakes` before the
    merge, run without its push and pull request steps, since `git safe-push` alone
@@ -661,9 +663,11 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    protected path changes) and "Needs the owner's OK". Boxes and other sections count
    where GitHub shows them, by CommonMark's rules; "Unfinished work" is read as raw text,
    so that nothing GitHub hides or shows differently can stand in for it. The body holds
-   the line `## Unfinished work` once, at the left edge, and no other line a reader
-   could take for that heading (in a comment or code too); the section runs to the
-   template's next heading. Taking out the template's own comment for it, it is plain
+   the line `## Unfinished work` once, at the left edge, and no other line whose
+   letters, with tags and entities taken out, begin "unfinished work" (in a comment or
+   code too, so not even a sentence may start with those words); a heading disguised on
+   purpose, in another alphabet or in crafted markup, is for the reviews to find, as a
+   false "None" is. The section runs to the template's next heading. Taking out the template's own comment for it, it is plain
    ASCII with no markup (no links, code, HTML, other comments, headings or entities):
    "None", with an optional full stop, or a list, each item `- ` or `* ` at the left
    edge, wrapped with two to five spaces, naming its issue as a token `#N` (perhaps in

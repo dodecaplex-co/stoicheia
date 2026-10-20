@@ -179,12 +179,27 @@ class UnfinishedWork(unittest.TestCase):
             "<!-- Name each piece. -->\n", "")), ("ok", "None"))
 
     def test_non_ascii_and_other_issue_forms_are_refused(self):
-        for text in ("- Prototype #38, deferred page GH-39", "- Prototype #\u00ad38",
+        for text in ("- Prototype #38, deferred page GH-39", "- Prototype #38, page *GH-39*",
+                     '- Prototype #38, page "GH-39"', "- Prototype #\u00ad38",
                      "- Prototype #\uff13\uff18", "- Prototype \u00e9 #38",
                      "- Prototype & #38", "- Prototype&nbsp;#38"):
             with self.subTest(text=text):
                 refs, problems = self.refs(text)
                 self.assertTrue(problems)
+
+    def test_a_stale_template_comment_is_named_as_such(self):
+        refs, problems = self.refs("<!-- An older wording. -->\nNone")
+        self.assertIn("comment other than the template's own", "\n".join(problems))
+
+    def test_issue_titles_are_printed_escaped(self):
+        self.assertEqual(safe_push.printable_text("a\x1b[2Jb\u202e"), "a\\x1b[2Jb\\u202e")
+        ctx = safe_push.Context(ROOT, "", "", 0, "", "example/edition", {}, gh=("stand-in",))
+        with mock.patch.object(safe_push, "read_issues",
+                               return_value=[issue(title="Finish\x1b]0;x\x07 it")]):
+            verdict, detail = safe_push.release_gate(ctx, {"release"})
+        self.assertEqual(verdict, "FAIL")
+        self.assertNotIn("\x1b", detail)
+        self.assertIn("\\x1b", detail)
 
     def test_template_and_required_box(self):
         template = (ROOT / safe_push.TEMPLATE).read_text()
@@ -287,7 +302,7 @@ class UnfinishedWork(unittest.TestCase):
                 ("https://github.com/example/edition/issues/38/garbage", "URL"),
                 ("https://github.com/other/repo/issues/38", "URL"),
                 ("www.example.invalid", "URL"), ("~", "tilde"), ("|", "pipe"),
-                ("\\", "backslash"), ("\t", "tab"), ("<!-- unclosed", "HTML")):
+                ("\\", "backslash"), ("\t", "tab"), ("<!-- unclosed", "comment")):
             with self.subTest(text=text):
                 refs, problems = self.refs("- Prototype " + text + " #38")
                 self.assertEqual(refs, [])

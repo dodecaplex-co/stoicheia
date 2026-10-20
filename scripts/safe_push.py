@@ -3240,16 +3240,17 @@ def unfinished_section(body: str, template: str | None = None) -> tuple[str, lis
     no following heading when the template has some."""
     _, ends = template_section(template)
     lines = raw_lines(body or "")
-    if any(ODD_BREAK.search(line) for line in lines):
-        return "", ["the body holds a carriage return, form feed or line separator inside "
-                    "a line, which GitHub and the gate would break differently"]
+    odd = [n for n, line in enumerate(lines, 1) if ODD_BREAK.search(line)]
+    if odd:
+        return "", [f"line {odd[0]} of the body holds a carriage return, form feed or line "
+                    "separator inside it, which GitHub and the gate would break differently"]
     starts = [i for i, line in enumerate(lines) if line.rstrip() == UNFINISHED_HEADING]
     alike = [line for line in lines
              if line.rstrip() != UNFINISHED_HEADING and reads_as_heading(line)]
     if len(starts) != 1 or alike:
         return "", ["the body must have exactly one ## Unfinished work heading, at the left "
-                    "edge, and no other line that reads as one"
-                    + "".join(f": {line.strip()}" for line in alike[:1])]
+                    "edge, and no other line whose letters begin \"unfinished work\""
+                    + "".join(f": {printable_text(line.strip())}" for line in alike[:1])]
     start = starts[0] + 1
     end = next((i for i in range(start, len(lines)) if lines[i].rstrip() in ends), None)
     if ends and end is None:
@@ -3268,6 +3269,9 @@ def unfinished_refs(text: str, comment: str | None = None) -> tuple[list[int], l
     if any(ord(c) > 126 or (ord(c) < 32 and c != "\n") for c in text):
         return [], ["Unfinished work must be plain ASCII text, with no tab or control "
                     "character"]
+    if "<!--" in text:
+        return [], ["Unfinished work holds a comment other than the template's own for it "
+                    "(origin/main's wording, which may have changed): delete it"]
     for token, reason in UNFINISHED_FORBIDDEN:
         if token in text:
             return [], [f"Unfinished work must be a plain list: {reason} is forbidden"]
@@ -3302,7 +3306,7 @@ def unfinished_refs(text: str, comment: str | None = None) -> tuple[list[int], l
             match = ISSUE_TOKEN.fullmatch(token)
             if match:
                 local.append(int(match[1]))
-            elif "#" in token or re.match(r"\(?gh-[0-9]", token, re.I):
+            elif "#" in token or re.search(r"(?<![a-z0-9])gh-[0-9]", token, re.I):
                 problems.append(f"write the issue as #N on its own: {token}")
         refs.update(local)
         if not local:
@@ -3589,7 +3593,7 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
                 f"#{number} lacks the label {SECURITY_LABEL}")
     elif protected:
         rep.add("G", "label", "ok", f"{SECURITY_LABEL}, for {', '.join(protected)}")
-    problem = kind_problem(labels or set())
+    problem = "unreadable labels" if labels is None else kind_problem(labels)
     rep.add("G", "kind label", "FAIL" if problem else "ok", f"#{number} has {problem}"
             if problem else ", ".join(sorted(labels & set(KIND_LABELS))))
     verdict, detail = judge_checks(judged_checks(pr_checks(ctx, number), labels))
@@ -3933,6 +3937,9 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         new = refreshed(body, describe(ctx, pre))
         if checked is None or not m or (m.group(1), m.group(2)) != (ctx.sha, ctx.base):
             new = put_block(new, preflight_block(ctx.sha, ctx.base, record))
+        if unfinished_section(new, template) != unfinished_section(body, template):
+            raise Refusal(f"refreshing #{number}'s parts would change its Unfinished work: "
+                          "put safe_push's markers back where the template has them")
         if new != body:
             if dry_run:
                 rep.add("3", "body", "note", "its pre-flight summary or the parts safe_push "

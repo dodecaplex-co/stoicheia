@@ -1963,7 +1963,7 @@ class Merge(Edge):
             ("None\n```\n- Deferred page to come\n```", "backtick"),
             ("None\n~~~\n- Deferred page to come\n~~~", "tilde"),
             ("None\n<!-- safe_push:custom begin -->\n- Prototype with no issue\n"
-             "<!-- safe_push:custom end -->", "names no local issue"),
+             "<!-- safe_push:custom end -->", "a comment other than the template's own"),
             ("-     Prototype #38", "plain list"),
             ("-\tPrototype #38", "tab"),
         )

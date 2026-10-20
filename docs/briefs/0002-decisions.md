@@ -2068,7 +2068,8 @@ findings:
   `scripts/test_safe_push.py` harness tests the merges and refusals locally through its gh
   stand-in; its source clone copies Git's objects without hard links, so a sandbox that
   may read the repository can run it, and its renderer case reads `docs/program.toml`'s
-  first released stage instead of pinning words main has since changed. No planted fault is added to `negative_tests.py`: these gates judge pull request
+  first released stage instead of pinning words main has since changed. No planted fault
+  is added to `negative_tests.py`: these gates judge pull request
   text and issue state, which the offline fixtures and gh stand-in supply, rather than a
   break in the edition's files. The protected files changed are:
   `.github/pull_request_template.md`,
