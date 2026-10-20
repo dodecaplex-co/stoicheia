@@ -2697,10 +2697,9 @@ class ProtectedPaths(Edge):
     EXPECT = "tests/certificate_expectations.json"
 
     def test_expectation_dropped_with_its_regression_kept_apart(self):
-        # The re-review's blocking finding: III.1's certificate gains the porism's
-        # centre_unique, the regression its expectation exists to catch, and the same commit
-        # drops that expectation. check_fidelity.py checks only what each expectation says,
-        # so the commit's own pass holds: the drop is a check change, kept apart.
+        # The test deliberately injects the retired theorem name Tacit.centre_unique into
+        # III.1's axiom list and drops the corresponding expectation. It verifies that this
+        # check change must remain separate from content changes.
         lean, record = "Elements/BookIII/Prop01.lean", "review/III/01.toml"
         new_lean = self.text(lean) + "\n-- A re-proof that uses centre_unique.\n"
         stamped = re.sub(r'(?m)^lean = "[^"]*"',

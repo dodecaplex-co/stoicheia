@@ -2172,8 +2172,13 @@ findings:
   [`scripts/heath.py`](../../scripts/heath.py) uses the retained Circle 3 axiom in its
   overlap error message's example.
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) explains that its
-  Circle 2 plant deliberately puts a theorem's name in an axiom list; the plants stay
-  unchanged.
+  Circle 2 plant deliberately puts a theorem's name in an axiom list, and that the Circle 3
+  rename also invalidates III.2's `[overlap]`, although the plant does not rely on that
+  failure; the plants stay unchanged.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) corrects the introduction
+  to its expectation-drop test: the test injects the retired theorem name
+  `Tacit.centre_unique` into III.1's axiom list and drops the corresponding expectation to
+  verify that the check change stays separate from content changes.
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json)
   changes only its reasons: exclusions of retired names do not detect uses of the
   theorems, while the existing Circle 3 exclusions still constrain dependencies.
