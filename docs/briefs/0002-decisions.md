@@ -1351,7 +1351,9 @@ findings:
   use adds a clause naming both the rules used and those unused in the status line, the
   Overlap row and the book summaries. This applies to every record, including both kinds
   that contain the proposition and rules that supply a step. On main's present content,
-  every generated page stays byte for byte unchanged.
+  every generated page stays byte for byte unchanged. The protected file
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the page's Overlap row also
+  carries this account and that partial use names each rule used and unused.
   The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
   brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
   inequality of circles) and its comment on cutting and contact within and without,
