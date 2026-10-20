@@ -11,7 +11,7 @@ kind = "euclid"
 at = "let it be placed so that BE is in a straight line with AB"
 kind = "helper"
 helper = "Prop44.place"
-note = "Our foundations keep superposition for I.4 and I.8, so nothing is moved: `Prop44.place` builds a parallelogram equal to I.42's where Euclid places his, with I.2, I.23, I.31, I.4 and I.34. Its construction also finds F through `Prop31.parallelogram` and `Prop30.meet`, using I.30, which Heath does not cite here."
+note = "The restricted superposition rule supplies no constructed points; `Prop44.place` supplies Euclid's unproved placing step by constructing an equal parallelogram there, with I.2, I.23, I.31, I.4 and I.34. Its construction finds F through `Prop31.parallelogram` and `Prop30.meet`, using I.30, which Heath does not cite here."
 
 [[passage]]
 at = "let FG be drawn through to H"
@@ -54,10 +54,10 @@ note = "Euclid concludes that LB, equal to C, has been applied to AB in the angl
 
 [review]
 stage = "full"
-commit = "40d340d"
-reviewer = "Claude Opus 5.5, records review"
-lean = "sha256:a2b5c0ae2745773e"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+commit = "bda0636"
+reviewer = "Codex (gpt-6-astra), independent reader"
+lean = "sha256:60fe314a429e1bf5"
+run = "brief 0009, superposition replacement, ship S"
 
 [review.items]
 statement = "pass"
