@@ -36,6 +36,16 @@ TEST = "tests/test_check_sample.py"
 BOT = "revert-fixture[bot]"
 
 
+
+def harness_source(comment, extra=()):
+    """A fixture harness: a comment, and CHECKS and NEGATIVE lists naming the real checks
+    (and any extra ones), as check_queue reads them by ast."""
+    checks = [name for name, _ in queue.safe_push.CHECKS] + list(extra)
+    negative = [name for name, _ in queue.safe_push.NEGATIVE]
+    return (f"# {comment}\n"
+            + "CHECKS = [\n" + "".join(f"    ({n!r}, None),\n" for n in checks) + "]\n"
+            + "NEGATIVE = [\n" + "".join(f"    ({n!r}, None),\n" for n in negative) + "]\n")
+
 class QueueTests(unittest.TestCase):
     """Build two real trains and GitHub-style group merges for each test."""
 
@@ -69,7 +79,7 @@ class QueueTests(unittest.TestCase):
             SECOND: "Before the second train.\n",
             PAGE: "## 20 October 2026\n\nA previous decision.\n",
             "Elements/BookI/Prop01.lean": "-- A fixture source.\n",
-            "scripts/safe_push.py": "# The fixture's trusted base harness.\n",
+            "scripts/safe_push.py": harness_source("The fixture's trusted base harness."),
             "scripts/render.py": "print('fixture renderer ran')\n",
             CHECK: "print('old check')\n",
             TEST: "print('old sample test')\n",
@@ -317,7 +327,7 @@ class QueueTests(unittest.TestCase):
     def test_preflight_uses_its_recorded_base_harness(self):
         old_base = self.base
         self.base = self.make([old_base], {
-            "scripts/safe_push.py": "# A newer main harness.\n",
+            "scripts/safe_push.py": harness_source('A newer main harness.'),
         })
         self.snapshot["main"]["sha"] = self.base
         first = self.merge(self.base, self.one, 1)
@@ -331,7 +341,7 @@ class QueueTests(unittest.TestCase):
 
     def test_preflight_harness_may_be_newer_than_its_comparison_base(self):
         old_base = self.base
-        self.base = self.make([old_base], {"scripts/safe_push.py": "# Updated main harness.\n"})
+        self.base = self.make([old_base], {"scripts/safe_push.py": harness_source('Updated main harness.')})
         self.snapshot["main"]["sha"] = self.base
         for number, head in ((1, self.one), (2, self.two)):
             block = self.block(head, base=old_base, harness_commit=self.base)
@@ -340,9 +350,35 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(head=self.merge(first, self.two, 2)), 0, "queue: PASS")
 
     def test_preflight_harness_must_have_been_on_main(self):
-        off_main = self.make([self.base], {"scripts/safe_push.py": "# Untrusted harness.\n"})
+        off_main = self.make([self.base], {"scripts/safe_push.py": harness_source('Untrusted harness.')})
         self.set_body(queue.PREFLIGHT.sub(self.block(self.one, harness_commit=off_main), self.body()))
         self.verdict(self.cli(), 1, "harness commit is not an ancestor")
+
+    def test_preflight_is_judged_by_its_own_harness_checks(self):
+        # A check added to main after the pre-flight is not asked of it: CI runs it on
+        # the group; the pre-flight is held to the checks its own harness ran.
+        old_base = self.base
+        self.base = self.make([old_base], {"scripts/safe_push.py": harness_source(
+            "A newer harness with a new check.", extra=["python3 scripts/new_check.py"])})
+        self.snapshot["main"]["sha"] = self.base
+        first = self.merge(self.base, self.one, 1)
+        self.verdict(self.cli(head=self.merge(first, self.two, 2)), 0, "queue: PASS")
+
+    def test_preflight_missing_one_of_its_harness_checks_refuses(self):
+        name = queue.safe_push.CHECKS[0][0]
+        self.set_body(self.body().replace(f"| 4. {name} | ok | 1.0 |\n", ""))
+        self.verdict(self.cli(), 1, "steps must run the full checks")
+
+    def test_preflight_harness_without_check_lists_refuses(self):
+        old_base = self.base
+        self.base = self.make([old_base], {"scripts/safe_push.py": "# No lists.\n"})
+        self.snapshot["main"]["sha"] = self.base
+        for number, head in ((1, self.one), (2, self.two)):
+            block = self.block(head, base=old_base, harness_commit=self.base)
+            self.set_body(queue.PREFLIGHT.sub(block, self.body(number)), number)
+        first = self.merge(self.base, self.one, 1)
+        self.verdict(self.cli(head=self.merge(first, self.two, 2)), 1,
+                     "harness's checks could not be read")
 
     def test_preflight_requires_passing_summary_and_full_steps(self):
         original = self.body()
@@ -375,7 +411,7 @@ class QueueTests(unittest.TestCase):
 
     def test_preflight_reads_the_current_writer_with_a_newer_harness(self):
         old_base = self.base
-        self.base = self.make([old_base], {"scripts/safe_push.py": "# Newer harness.\n"})
+        self.base = self.make([old_base], {"scripts/safe_push.py": harness_source('Newer harness.')})
         self.snapshot["main"]["sha"] = self.base
         blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
         for number, head in ((1, self.one), (2, self.two)):
@@ -708,7 +744,7 @@ class QueueTests(unittest.TestCase):
         one = self.train(1, {
             "scripts/another.py": "print('check')\n",
             "scripts/test_another.py": "print('another test ran')\n",
-            "scripts/safe_push.py": "# A new fixture harness.\n",
+            "scripts/safe_push.py": harness_source('A new fixture harness.'),
         }, new="- check: scripts/another.py\n- check: scripts/test_another.py\n"
                "- check: scripts/safe_push.py")
         first = self.merge(self.base, one, 1)

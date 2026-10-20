@@ -39,6 +39,7 @@ Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, 
 from __future__ import annotations
 
 import argparse
+import ast
 import contextlib
 import datetime
 import json
@@ -283,8 +284,42 @@ def chain(repo: Path, base: str, head: str, api: GitHub) -> list[dict]:
     return entries
 
 
-def preflight_steps(inner: str, head: str, base: str) -> None:
-    """Read a passing verdict and complete full-check rows, or their named record."""
+def harness_check_names(repo: Path, harness_commit: str) -> set[str]:
+    """The names of the full checks the harness at `harness_commit` runs: its CHECKS and
+    NEGATIVE lists, read from its source by ast (never run), so that a train pre-flighted
+    before a check was added is judged by the checks its harness had, and a group's own
+    harness never decides what its pre-flight needed."""
+    source = safe_push.show(repo, harness_commit, "scripts/safe_push.py")
+    if source is None:
+        raise Refused("pre-flight: the recorded harness commit has no scripts/safe_push.py")
+    try:
+        tree = ast.parse(source)
+    except SyntaxError:
+        raise Refused("pre-flight: the recorded harness could not be read") from None
+    names: dict[str, list[str]] = {}
+    for node in tree.body:
+        if isinstance(node, ast.Assign) and len(node.targets) == 1 \
+                and isinstance(node.targets[0], ast.Name) \
+                and node.targets[0].id in ("CHECKS", "NEGATIVE"):
+            if not isinstance(node.value, ast.List) or node.targets[0].id in names:
+                raise Refused("pre-flight: the recorded harness's checks could not be read")
+            found = []
+            for elt in node.value.elts:
+                if not (isinstance(elt, ast.Tuple) and elt.elts
+                        and isinstance(elt.elts[0], ast.Constant)
+                        and isinstance(elt.elts[0].value, str)):
+                    raise Refused("pre-flight: the recorded harness's checks could not be read")
+                found.append(elt.elts[0].value)
+            names[node.targets[0].id] = found
+    if set(names) != {"CHECKS", "NEGATIVE"} or not all(names.values()):
+        raise Refused("pre-flight: the recorded harness's checks could not be read")
+    return {f"4. {name}" for name in names["CHECKS"] + names["NEGATIVE"]}
+
+
+def preflight_steps(inner: str, head: str, base: str,
+                    expected: set[str] | None = None) -> None:
+    """Read a passing verdict and complete full-check rows, or their named record. The
+    full checks expected are those of the harness that ran the pre-flight."""
     visible = safe_push.visible(inner)
     verdicts = [line.strip().strip("*") for line in visible.splitlines()
                 if re.match(r"(?:\*\*)?(?:Pre-flight )?Verdict:", line.strip(), re.I)]
@@ -309,7 +344,8 @@ def preflight_steps(inner: str, head: str, base: str) -> None:
         steps.append((row[0], row[1].casefold()))
     if len({name for name, _ in steps}) != len(steps):
         raise Refused("pre-flight: duplicate steps table row")
-    expected = {f"4. {name}" for name, _ in (*safe_push.CHECKS, *safe_push.NEGATIVE)}
+    if expected is None:
+        expected = {f"4. {name}" for name, _ in (*safe_push.CHECKS, *safe_push.NEGATIVE)}
     passed = {name for name, outcome in steps if outcome in {"ok", "pass"}}
     complete = any({name + suffix for name in expected} <= passed
                    for suffix in ("", " (the commit's checks)"))
@@ -356,7 +392,7 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
     candidates = safe_push.git(repo, "rev-parse", f"--disambiguate={harness[0]}").split()
     if candidates != [actual]:
         raise Refused("pre-flight: harness blob is not the recorded harness commit's safe_push.py")
-    preflight_steps(inner, checked, against)
+    preflight_steps(inner, checked, against, harness_check_names(repo, harness_commit))
     if pr["ref"].startswith("train/"):
         try:
             problems = check_train.check_train(repo, base=against, sha=checked, body=body)
