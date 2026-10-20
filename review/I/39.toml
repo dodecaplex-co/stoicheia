@@ -39,13 +39,13 @@ note = "Euclid supposes AD not parallel and refutes it. The Lean supposes nothin
 
 [figure]
 case = "E on BD between B and D, as in Heath's figure"
-note = "AE is drawn level, as the proof supposes; Heath draws AD level."
+note = "AE is drawn level, as the proof supposes; Heath draws AD level. Like Heath's, this figure draws Euclid's impossible supposition: AE parallel to BC with E strictly between B and D, while the triangles ABC and DBC are assumed equal in area. Their drawn areas are unequal."
 
 [review]
 stage = "full"
-commit = "cee2591"
-reviewer = "Claude Opus 5.5, records review"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
+run = "brief 0005 stage 5, ship C5 re-read"
 lean = "sha256:a7efb796f39c1124"
 
 [review.items]
