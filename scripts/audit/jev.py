@@ -746,6 +746,9 @@ def cmd_score(args) -> int:
             if confidence is not None and not (_number(confidence) and 0 <= confidence <= 1):
                 raise Failure(f"{r.get('id')}: its {asking}confidence is not a number from "
                               "0 to 1; score reads only lines that `run` wrote")
+            if "noul" in answer and not (_number(answer["noul"]) and 0 <= answer["noul"] <= 1):
+                raise Failure(f"{r.get('id')}: its {asking}noul is not a number from 0 to 1; "
+                              "score reads only lines that `run` wrote")
     answered = [r for r in rows if "error" not in r and ("choice" in r or "noul" in r)]
     labelled = [r for r in answered if "agrees" in r]
     agree = [r for r in labelled if r["agrees"]]
@@ -1187,6 +1190,40 @@ def cmd_self_test(args) -> int:
             check(code == 0 and listed == {"original-zero", "reversed-zero"}
                   and (not extra or "at or above the bar of 100%" in out),
                   "score accepts confidence boundaries in both askings"
+                  + (" under a bar" if extra else ""), out + err)
+
+        bad_nouls = (None, "0.9", True, [], -0.01, 1.01,
+                     float("nan"), float("inf"), float("-inf"))
+        for bad in bad_nouls:
+            valid = json.loads(first[1])
+            valid["id"] = "valid-before-bad-noul"
+            row = {"id": "bad-noul", "noul": bad, "confidence": 0.9,
+                   "input_sha256": valid["input_sha256"], "input_rows": 2}
+            bad_file = tmp / "bad-noul.jsonl"
+            bad_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
+            for extra in ((), ("--bar", "0")):
+                code, out, err = run("score", str(bad_file), *extra)
+                check(code == 1 and out == "" and "noul is not a number from 0 to 1" in err
+                      and "Traceback" not in err,
+                      f"score refuses noul {bad!r}" + (" under a bar" if extra else ""),
+                      out + err)
+
+        noul_cases = []
+        for name, noul, expected in (("noul-zero", 0, False),
+                                     ("noul-one", 1, True),
+                                     ("noul-low", 0.74, True),
+                                     ("noul-threshold", 0.75, True)):
+            noul_cases.append({"id": name, "noul": noul, "expected": expected,
+                               "agrees": True, "input_sha256": "self-test-noul",
+                               "input_rows": 4})
+        noul_file = tmp / "noul-boundaries.jsonl"
+        noul_file.write_text("".join(json.dumps(row) + "\n" for row in noul_cases))
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(noul_file), *extra)
+            listed = {row["id"] for row in noul_cases if f"  {row['id']}:" in out}
+            check(code == 0 and listed == {"noul-low"}
+                  and (not extra or "at or above the bar of 100%" in out),
+                  "score accepts noul boundaries and finds derived low confidence"
                   + (" under a bar" if extra else ""), out + err)
 
         for broken in (None, [], "reversed", 1, True, {},
