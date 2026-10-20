@@ -219,7 +219,7 @@ theorem Prop16.outside_of_onRay {A E : Point} {α : Circle} (hAE_out : Outside A
 /-- **The circle lies on one side of the straight line AE.** Under III.16's first part, every
 point within the circle, or on it other than A, is on the side of AE of any point K within
 the circle: a point on AE, or across it, would put a point of AE within the circle, on the
-way to K (System E, Intersection 1; III.2, as `Prop2.within` gives it). -/
+way to K (System E, Intersection 1; III.2, as `InsideCircle.of_between` gives it). -/
 theorem Prop16.sameSideOf_of_inside {A E K Q : Point} {α : Circle}
     (hA : OnCircle A α) (hAE_out : Prop16.Outside A E α)
     (hK : InsideCircle K α) (hQ : InsideCircle Q α ∨ OnCircle Q α) (hQA : Q ≠ A) :
@@ -237,7 +237,7 @@ theorem Prop16.sameSideOf_of_inside {A E K Q : Point} {α : Circle}
   refine SameSideOf.of_line hAE hA_L hE_L ?_
   refine Classical.byContradiction fun hs => ?_
   obtain ⟨X, hX_L, hQXK⟩ := OppositeSides.exists_between ⟨hQ_L, hoff K hK, hs⟩
-  exact hoff X (Prop2.within hQ (Or.inl hK) hQXK) hX_L
+  exact hoff X (InsideCircle.of_between hQ (Or.inl hK) hQXK) hX_L
 
 /-- The points within the circle are on B's side of AE: on the centre's side
 (`Prop16.sameSideOf_of_inside`), which is B's, since D is between A and B. -/

@@ -40,13 +40,46 @@ variable {A B C D E F P Q : Point} {α γ : Circle}
 
 /-! ## Within the circle, by III.2 -/
 
+/-- **III.2 for points on or within the circle.** A point between two points on or within a
+circle is within it. Produced beyond each end that is within, the
+straight line meets the circle (System E, Intersections 5), and the point lies between the
+two points where it meets it. [III. 2] -/
+theorem InsideCircle.of_between
+    (hA : InsideCircle A α ∨ OnCircle A α) (hB : InsideCircle B α ∨ OnCircle B α)
+    (h : Between A C B) : InsideCircle C α := by
+  obtain ⟨L, hA_L, hB_L⟩ := Postulate1 A B (ne_of_between_ends h)
+  obtain ⟨P, hP, hP_L, hPCB⟩ : ∃ P : Point, OnCircle P α ∧ OnLine P L ∧ Between P C B := by
+    rcases hA with hA | hA
+    · obtain ⟨P, hP, hP_L, hPAB⟩ :=
+        line_circle_beyond hA hA_L hB_L (ne_of_between_ends h).symm
+      exact ⟨P, hP, hP_L,
+        between_symm (between_of_between_left (between_symm hPAB) (between_symm h))⟩
+    · exact ⟨A, hA, hA_L, h⟩
+  obtain ⟨Q, hQ, hPCQ⟩ : ∃ Q : Point, OnCircle Q α ∧ Between P C Q := by
+    rcases hB with hB | hB
+    · obtain ⟨Q, hQ, -, hQBP⟩ := line_circle_beyond hB hB_L hP_L (ne_of_between_ends hPCB)
+      exact ⟨Q, hQ, between_of_between_left (between_symm hQBP) hPCB⟩
+    · exact ⟨B, hB, hPCB⟩
+  exact BookIII.Prop2 hP hQ C hPCQ
+
 /-- **A straight line that has left the circle does not come back.** If C, not within the
 circle, lies between A, on or within it, and B, then B is without the circle: were B on or within it, C would be within. [III. 2] -/
 theorem OutsideCircle.of_between
     (hA : InsideCircle A α ∨ OnCircle A α) (hC : ¬ InsideCircle C α) (h : Between A C B) :
     OutsideCircle B α :=
-  ⟨fun hB => hC (BookIII.Prop2.within hA (Or.inl hB) h),
-    fun hB => hC (BookIII.Prop2.within hA (Or.inr hB) h)⟩
+  ⟨fun hB => hC (InsideCircle.of_between hA (Or.inl hB) h),
+    fun hB => hC (InsideCircle.of_between hA (Or.inr hB) h)⟩
+
+/-- Three points of a circle are not on one straight line: were they, one
+would lie between the other two, and so within the circle, not on it. [III. 2] -/
+theorem Triangle.of_onCircle_centre
+    (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnCircle C α)
+    (hAB : A ≠ B) (hBC : B ≠ C) (hAC : A ≠ C) : Triangle A B C := by
+  rintro ⟨L, hA_L, hB_L, hC_L⟩
+  rcases between_cases hAB hBC hAC hA_L hB_L hC_L with h | h | h
+  · exact inside_not_on (BookIII.Prop2 hA hC B h) hB
+  · exact inside_not_on (BookIII.Prop2 hB hC A h) hA
+  · exact inside_not_on (BookIII.Prop2 hA hB C h) hC
 
 /-- **The angle of a segment, as Euclid draws it.** For a straight line AC in a circle, and a
 point S off AC, the angle of the segment on S's side is well formed: the ray AC passes
@@ -319,11 +352,11 @@ theorem near_inside_of_angle
     exact OnRay.between_of_len_lt hPX (OnRay.self hPX.1) hlt
   rcases hP with hW | hPB | hPC
   · obtain ⟨X, hBXC, hXP⟩ := crossbar hW.1 hW.2
-    have hXα : InsideCircle X α := BookIII.Prop2.within hB hC hBXC
-    exact BookIII.Prop2.within hA (Or.inl hXα)
+    have hXα : InsideCircle X α := InsideCircle.of_between hB hC hBXC
+    exact InsideCircle.of_between hA (Or.inl hXα)
       (hnear X (on_line_of_between_ends hBXC hB_L hC_L) hXP.symm)
-  · exact BookIII.Prop2.within hA hB (hnear B hB_L hPB)
-  · exact BookIII.Prop2.within hA hC (hnear C hC_L hPC)
+  · exact InsideCircle.of_between hA hB (hnear B hB_L hPB)
+  · exact InsideCircle.of_between hA hC (hnear C hC_L hPC)
 
 /-- **Points on either side of the circumference, near the vertex.** Let UAV be a true angle,
 with the points of the ray AU near A within a circle, and every point of the ray AV
@@ -352,9 +385,9 @@ theorem exists_near_across {U V : Point} (hUAV : Triangle U A V)
   have hYP₂W : Between Y P₂ W :=
     between_symm (between_of_between_left (between_symm hYXW) (between_symm hXP₂W))
   have hinγ : ∀ P : Point, Between Y P W → InsideCircle P γ := fun P h =>
-    (hboth P (BookIII.Prop2.within (Or.inl hYγ') (Or.inl hWγ') h)).1
+    (hboth P (InsideCircle.of_between (Or.inl hYγ') (Or.inl hWγ') h)).1
   exact ⟨⟨P₁, hinγ P₁ hYP₁W, WithinAngle.of_between hUAV hY hW hYP₁W,
-      BookIII.Prop2.within (Or.inl hYα) (Or.inr hXα) hYP₁X⟩,
+      InsideCircle.of_between (Or.inl hYα) (Or.inr hXα) hYP₁X⟩,
     ⟨P₂, hinγ P₂ hYP₂W, WithinAngle.of_between hUAV hY hW hYP₂W,
       OutsideCircle.of_between (Or.inl hYα) (fun h => inside_not_on h hXα)
         (between_cut hYXW hXP₂W)⟩⟩
@@ -380,7 +413,7 @@ theorem near_inside_of_ray (hA : OnCircle A α)
     (hB : InsideCircle B α ∨ OnCircle B α) (hAB : A ≠ B) :
     LocallyWithin A (fun P => OnRay P A B) (fun P => InsideCircle P α) := by
   obtain ⟨γ₀, hγ₀, hBγ₀⟩ := Postulate3 A B hAB
-  exact ⟨γ₀, hγ₀, fun P hP hPB => BookIII.Prop2.within (Or.inr hA) hB
+  exact ⟨γ₀, hγ₀, fun P hP hPB => InsideCircle.of_between (Or.inr hA) hB
     (OnRay.between_of_len_lt hPB (OnRay.self hAB) (len_lt_of_inside hγ₀ hBγ₀ hP))⟩
 
 /-- The ray AC is, near A, within the circle if some point K of it is on or within the
