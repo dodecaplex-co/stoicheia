@@ -163,9 +163,10 @@ files working in parallel, the renderers, and an integrator followed by blind re
   with `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions page,
   PROGRAM.md and the CI workflow to a wave's integrator. The integrator
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
-  README.md's rows between the `<!-- scope:… -->` markers and PROGRAM.md's status table
-  between the `<!-- status -->` markers, which `render.py` fills; the rest of README.md has
-  an owner of its own, named in the orders. The integrator also owns the companions list,
+  README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
+  between the `<!-- status -->` markers and inline `count:` values in tracked Markdown,
+  which `render.py` fills; the rest of README.md has an owner of its own, named in the
+  orders. The integrator also owns the companions list,
   `Elements/Companions.lean`, which the certificate reads and checks, and adds a
   companion's entry in the commit that moves the companion beside its proposition, so
   that the listing travels with the proof and its record's stamp
@@ -177,8 +178,9 @@ files working in parallel, the renderers, and an integrator followed by blind re
   ([template](templates/proposition.md)). That is far easier to integrate than "something
   about circles".
 - **Generated files.** Contributors may render previews; only the integrator commits the
-  generated edition, regenerated from the integrated sources. This avoids merging separately
-  generated copies of the same pages.
+  generated edition, including inline `count:` values in tracked Markdown, regenerated
+  from the integrated sources. This avoids merging separately generated copies of the
+  same pages.
 - **Commit by name** (`git add` the files you own), never `git add -A` in a tree others use.
   Do not push, open, merge or approve a pull request, or rebase a shared branch: the
   coordinator lands work, as pull requests (section 10, "Landing work: pull requests").
@@ -304,34 +306,46 @@ python3 scripts/check_links.py
 
 Review the generated differences and commit them with their sources, so that regenerating
 leaves them unchanged and the `git status` line prints nothing. Four more jobs run on
-their own, each in isolation. Three have direct local commands:
+their own, each in isolation. The first three have direct local commands; the last two
+commands below run the acceptance job's tests and checklist without its CI comparison:
 
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
                                        # CI's `formal-model` job: the formal model, with Mathlib
+python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the comparison tests
+# After lake build, lake build Audit and Facts.lean, the checklist run:
+python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
 ```
 
-The fourth, CI-only job is `acceptance`; its executable definitions are the
-[CI workflow](../.github/workflows/ci.yml) and
-[`scripts/check_acceptance.py`](../scripts/check_acceptance.py). Until the consolidation
-release, it runs the checklist on the pull request, checks main with the pull request's
-check code while preserving main's pinned values, and compares the two: an item that passes
-on main may not fail on the pull request, except P10 and E6, whose staging failures are the
-workflow's expected result of staging a statement before its proof. The consolidation
-release's pull request changes `ACCEPTANCE_GATE` from `ratchet` to `full`; after that, any
-checklist failure fails the job.
+`RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
+`/tmp` when the command is run locally.
 
-`scripts/safe_push.py` runs `check`, `negative` and `model` on the head commit of every
-pull request (section 10), so a change to them is made there too, and in the CI workflow.
-It leaves `formal-model` and `acceptance` to CI; at merge it watches the reported jobs and
-waits while either is pending, and refuses either when failed. GitHub requires both jobs,
-as well as `check`, `model` and `negative`. The merge gate in `scripts/safe_push.py` still
-requires the presence of a passing run only for `check`, `model` and `negative`; aligning
-that local test with the five-check ruleset needs a separate protected-check change. The
-formal model stays in CI because it fetches Mathlib's prebuilt files
-([model/README.md](../model/README.md#the-ci-job)).
+The full `acceptance` job runs only in CI. Its ratchet before the consolidation release,
+the switch to the full gate at that release, the reports and the executable definitions
+are in [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci), the account of how CI runs the
+[acceptance checklist](ACCEPTANCE.md).
+
+`scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on
+the head commit of every pull request (section 10), so a change to them is made there too,
+and in the CI workflow. It leaves the `formal-model` job to CI on purpose, since it
+fetches Mathlib's prebuilt files
+([model/README.md](../model/README.md#the-ci-job)), and the `acceptance` job, since it builds
+main beside the pull request. Its merge gate refuses when any reported check fails, is
+cancelled or is still running. It requires a passing
+run of `check`, `model` and `negative`, the three names still in its `REQUIRED_CHECKS`;
+its local check judgement does not reject a skipped or missing `formal-model` or
+`acceptance` when those three pass and no other check fails, is cancelled or is still
+running. Main's ruleset requires all five checks; aligning the local presence test with it
+needs a separate protected-check change, tracked by #142. GitHub uses the ruleset when
+merging, but requiring
+`acceptance` does not by itself prove that the pull request's checklist ran: the workflow
+also runs on pushes, where that job is conditionally skipped, and GitHub accepts a skipped
+job even when it is required
+([GitHub documentation](https://docs.github.com/en/pull-requests/reference/status-checks)).
+The ruleset and the remaining merge requirements are in
+[section 10, "Landing work: pull requests"](#landing-work-pull-requests).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -361,6 +375,13 @@ formal model stays in CI because it fetches Mathlib's prebuilt files
   It runs just before the script, so a rule that reads a case wrongly stops the checks
   before the script's findings are read. The script does not run them itself: whoever
   changes it runs the file too.
+- **Counts in prose.** A count a script knows exactly goes between count markers and is
+  rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
+  `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
+  tests the counts and markers without Lean. Count markers do not overlap README.md's
+  generated scope regions or PROGRAM.md's generated status region. `negative_tests.py` runs
+  the tests before planting; its `--counts-only` option runs these plants and the file-only
+  regressions without a build.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -450,7 +471,9 @@ looked into.
      that later work overtakes gains a dated status note, never a quiet rewrite, and the
      issues and the tracker are kept current.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
-   the independent audit agrees, and a cold outside reading scores the book.
+   the independent audit agrees, and a cold outside reading scores the book. The switch
+   from the ratchet to the full gate is described in
+   [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci).
 10. **Release.** A release waits for its gate: both the page read-through and the
     stale-content audit of step 8 on the release candidate, with every Tier 0 to 2 finding
     from the audit fixed in the release's pull request and every Tier 3 record given its
@@ -469,8 +492,8 @@ corrections and the common voice, as Books I and II have since their tags.
 
 Work reaches main only as a pull request, merged with a merge commit. On GitHub, a ruleset
 on main requires a pull request and the checks `check`, `model`, `negative`,
-`formal-model` and `acceptance`, and blocks
-force pushes and deletion; locally, the pre-push hook refuses every push to main. Agents
+`formal-model` and `acceptance` (the last two added on 20 October 2026), and blocks force
+pushes and deletion; locally, the pre-push hook refuses every push to main. Agents
 never open, merge or approve a pull request: the coordinator does. The account cannot
 approve its own pull requests, so a merge is gated by the checks and by the review
 findings recorded in the pull request, not by approvals. Tags, releases, release notes,
@@ -655,9 +678,8 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    they run again too. The body's summary is written afresh when the full checks ran
    again or when it is not of this head and origin/main, and the other parts safe_push
    wrote whenever they are out of date. It merges only when those pass; CI on that head
-   is green: GitHub's ruleset requires `check`, `model`, `negative`, `formal-model` and
-   `acceptance`, while `scripts/safe_push.py` currently tests for a reported passing run
-   of the first three and refuses every reported failure or running check; no box marked
+   is green, subject to the ruleset and the local check judgement described in
+   [section 8](#8-validation-on-the-integrated-revision); no box marked
    **Required** in its checklist is unticked, nor one marked
    **Required if protected** when a protected path changes, and none of the template's
    required boxes is missing (origin/main's template, or the head's while origin/main
