@@ -1823,3 +1823,32 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+
+- **The source scan reads the formal model too (#121).** On 19 October 2026 the scan in
+  `scripts/check_fidelity.py` is extended to every `.lean` file under `model/`, without
+  entering the package's own `model/.lake`, where Mathlib and the build live; a `.lake`
+  folder deeper in the model is read like any other, since git tracks it and Lean can
+  build it. Symbolic links to files or directories in every scanned tree and its root
+  file are refused by their own paths and never followed, a link at `model/.lake` among
+  them: the scan skips only what lies inside a real `model/.lake` directory, links there
+  included, and never the link that stands in its place. Mathlib imports are allowed
+  there, but the forbidden commands and attributes stay the same, and
+  an `axiom` is refused anywhere in the model. Only `model/Check.lean` and `model/Check/`
+  may use `run_cmd` first on its line followed by `Check.Generator.<ident>` or
+  `(Check.Generator.<ident>`: running the generator is those files' job. The named
+  allowance exempts that command alone, so its arguments and any further command are
+  still scanned. The one string in the model the scan could not read for certain, the
+  implicit binder's in `model/Check/Generator.lean`, line 600, became an interpolated
+  string with an escaped opening brace and exactly the same output in a pull request of
+  its own (`tooling/model-generator-brace`), landed before this one, since a check is
+  never changed in the same pull request as the code it checks.
+  `scripts/negative_tests.py` plants axioms, forbidden commands and attributes in the model's Model and Check files, tests
+  the allowance's boundary and the `.lake` boundary both ways, refuses a link named
+  `.lake` to a directory, a file or nothing in `model/`, `model/Model/` and
+  `model/Check/`, and checks that the unplanted tree passes; it copies only `facts.json`,
+  never `model/.lake`. These are the two protected files changed:
+  `scripts/check_fidelity.py` and `scripts/negative_tests.py`.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, records the scope and the tests.
+  Nothing is loosened in `Elements/`, `Staging/` or `Audit/`; Book Zero's import rule
+  and the placement policy still apply only in `Elements/`. The model's independent
+  kernel replay, the other half of #121, is still open.
