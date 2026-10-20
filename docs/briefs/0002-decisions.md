@@ -2110,8 +2110,9 @@ findings:
   for the owner, not part of this change. I.7's audited shortcut through Circle 4 is
   circular now, and the audit says so. I.12, which cited the intersection rule now proved
   from Circle 3, cuts its circle instead through a point inside it, the crossing of CD with
-  AB (Intersection 3), so that no certificate entry rests on Circle 2 or Circle 3, and new
-  pins say so for II.14, III.1 and III.2. The axioms leave
+  AB (Intersection 3), so that no certificate entry rests on Circle 2 or Circle 3; the pins
+  of #60 for II.14, III.1 and III.2 still say so, through their exclusion of Circle 3. The
+  axioms leave
   `Elements/Foundations/Tacit/Constructions.lean`, `Diagram.lean` and `Transfer.lean`.
   Protected files changed with them, as values pinned to the axioms:
   [`Certificate/axioms.lock`](../../Certificate/axioms.lock), written by `--write-lock`;
@@ -2141,8 +2142,11 @@ findings:
   the 79-law assembly and retention of the eight individual audits, with every guard and
   axiom pin unchanged.
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
-  the measured counts of III.1 and its porism (55 tacit rules each) and new pins that III.1,
-  III.1 Por., III.2 and II.14 rest on none of the eight. The formal model's generated
+  the measured counts of III.1 and its porism (55 tacit rules each) and gains pins that
+  keep the eight names out of the axiom lists of III.1, III.1 Por., III.2 and II.14. With
+  the eight now theorems those pins cannot fail; the pins that hold are the counts and the
+  exclusion of Circle 3, which keeps Circle 2 out too, since Circle 2 rests on it (III.1
+  Por. does use the proved `Tacit.centre_unique`). The formal model's generated
   laws, checks and assembly follow from its generator; its proofs in the plane stay, as
   derived facts. The five files `model/Check/Angles.lean`, `model/Check/Circles.lean`,
   `model/Check/Incidence.lean`, `model/Check/Intersections.lean` and `model/Check/Sides.lean`
