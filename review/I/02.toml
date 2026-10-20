@@ -13,12 +13,52 @@ kind = "step"
 note = "Superposition lays a triangle on BC down at A, along AB, and so carries the length of BC to A, which is I.2; the shortest proof we found from the rules alone (`Audit.I_2`) takes ten. Our proof of I.2 is Euclid's, by I.1 and two circles, and never uses the rule."
 
 [[passage]]
+at = "Let A be the given point"
+kind = "case"
+note = "Euclid's construction takes A apart from B. Before the setting-out, the Lean also settles A at B itself, taking C as the other end of the required straight line."
+
+[[passage]]
+at = "From the point A to the point B let the straight line AB be joined"
+kind = "given"
+note = "The finite straight line AB is named by its two ends. The Lean passes A and B directly to `Prop1`, so no separate straight line is drawn here."
+
+[[passage]]
 at = "Let the straight lines AE, BF be produced in a straight line with DA, DB"
 kind = "given"
 note = "Our straight lines DA and DB are whole lines already, so nothing is produced and Postulate 2 is not used: G and L are where they meet the circles beyond B and A (System E, Intersections 5)."
 
+[[passage]]
+at = "with centre B and distance BC let the circle CGH be described"
+kind = "helper"
+helper = "Tacit.line_circle_beyond"
+note = "Euclid leaves the meeting point G to the figure. After Postulate 3 draws CGH, the Lean takes G beyond B by `Tacit.line_circle_beyond`, a rule we assume (System E, Intersections 5), since B, the centre, lies inside the circle."
+
+[[passage]]
+at = "and again, with centre D and distance DG let the circle GKL be described"
+kind = "helper"
+helper = "Tacit.line_circle_beyond"
+note = "Euclid takes L where DA produced meets GKL; the Lean first draws GKL by Postulate 3 and proves DA = DB < DG by Common Notion 5. It puts A inside by `Tacit.inside_of_len_lt` (System E, Diagram-segment 4), then takes L beyond A by `Tacit.line_circle_beyond` (Intersections 5), both rules we assume."
+
+[[passage]]
+at = "And in these DA is equal to DB"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid subtracts DA and DB from DL and DG. The Lean already has DA = DB from I.1 and DB + BG = DG at the second circle; here `Tacit.len_add_of_between`, a rule we assume (System E, Diagram-segment 1), supplies DA + AL = DL from the order of D, A and L."
+
+[figure]
+case = "A apart from B, as in Heath's figure"
+
 [review]
-stage = "exceptions"
-commit = "16243feef5f36514fd2c21c634be60443965808b"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "8bdf0ef"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:51c22d0c078729c6"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

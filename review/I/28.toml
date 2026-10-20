@@ -6,8 +6,29 @@ fingerprint = "sha256:4f9ad42046ebf17a"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and they are alternate; therefore AB is parallel to CD. [I. 27] Again,"
+kind = "helper"
+helper = "SameSideOf.oppositeSidesOf_of_between"
+note = "Euclid reads the angles as alternate from the figure. `SameSideOf.oppositeSidesOf_of_between` puts A and D on opposite sides of GH, since G lies between A and B, and since B and D lie on the same side of GH."
+
+[[passage]]
+at = "and they are alternate; therefore AB is parallel to CD. [I. 27] Therefore etc."
+kind = "helper"
+helper = "SameSideOf.oppositeSidesOf_of_between"
+note = "Euclid again reads the angles as alternate. The Lean repeats `SameSideOf.oppositeSidesOf_of_between`, using the same sides and betweenness as in the first case."
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "d9048de"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:620d018ada992821"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

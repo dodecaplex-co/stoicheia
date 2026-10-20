@@ -7,9 +7,32 @@ fingerprint = "sha256:c1797ee9c0db3d8e"
 kind = "euclid"
 
 [[passage]]
+at = "For, if AB is unequal to AC"
+kind = "helper"
+helper = "Tacit.lt_trichotomy"
+note = "Euclid takes for granted that one of two unequal lengths is greater; the Lean uses `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proved lemma."
+
+[[passage]]
+at = "Let AB be greater"
+kind = "case"
+note = "Euclid supposes AB greater; the Lean also rules out AC greater by applying the same argument with B and C exchanged."
+
+[[passage]]
+at = "and from AB the greater let DB be cut off"
+kind = "helper"
+helper = "Prop3"
+note = "Euclid cuts DB from the end B of AB; the Lean uses I.3 (`Prop3`), for which Heath gives no reference here."
+
+[[passage]]
 at = "let DC be joined"
 kind = "given"
 note = "Our triangle DBC is named by its corners, so no straight line DC is drawn: the proof uses only the points D and C."
+
+[[passage]]
+at = "therefore the base DC is equal to the base AB"
+kind = "grouped"
+helper = "Prop4"
+note = "Euclid obtains the equal base and the equal triangle from the two sides and their included angle. The Lean first shows that DBC is a triangle by `Prop6.figure`, then applies I.4 (`Prop4`) once for both conclusions, though Heath prints no reference for I.4 here."
 
 [[passage]]
 at = "the less to the greater"
@@ -17,8 +40,20 @@ kind = "helper"
 helper = "Prop6.less"
 note = "Euclid takes for granted that DBC is less than ACB; the Lean proves it with areas, the whole triangle being greater than its part."
 
+[figure]
+case = "AB supposed greater than AC, with DB cut off from AB equal to AC, as in Heath's figure"
+
 [review]
-stage = "exceptions"
-commit = "6237881"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
+run = "brief 0005 stage 5, ship C5 re-read"
 lean = "sha256:8c6d2e5ec99a02cf"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

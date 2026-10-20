@@ -6,7 +6,7 @@
    `--` comments; our own remarks go in `/- … -/` blocks.
 2. Every `axiom` lives in `Elements/Foundations/`: a first look in the source here,
    which reads `Staging/` and `Audit/` too, and the real check from Lean's own
-   environment in 5.
+   environment in 6.
 3. Book Zero (`Elements/Figure/`) never imports a proposition.
 4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
    `Elements/`, `Staging/` or `Audit/` (LEAN_TREES), since they get round the kernel,
@@ -22,7 +22,12 @@
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
    braces Lean could read either way is refused. Each finding of 2, 3 and 4 names its
    file and line.
-5. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
+5. Placement, Euclid's application of one figure to another (brief 0006): outside its
+   own files, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`, no
+   Lean under `Elements/` names `placement` or the `Placement` namespace but III.24's
+   file and `Elements/BookIII/Arcs.lean`, read as 4 reads it (`read_lean`), each finding
+   naming its file and line; and in 6, no entry but III.24 calls on one of them.
+6. With `facts.json` present (run `lake env lean Certificate/Facts.lean` first; its
    fields are in `Certificate/FIELDS.md`):
    - every axiom an entry rests on, other than Lean's own `propext`,
      `Classical.choice` and `Quot.sound`, is declared under `Elements.Foundations`,
@@ -40,7 +45,9 @@
    - for every entry, propositions, porisms and companions alike: none cites one that
      does not come before it; only I.4 and I.8 use superposition directly; none
      before I.29 rests on Postulate 5 or any Euclidean-only rule (a later book comes
-     after I.29, and may);
+     after I.29, and may); none rests on Circle 2 or Circle 3, both of which the lock
+     must hold by their names; only III.24 has placement, or a lemma of the `Placement`
+     namespace or of placement's files, among its shared steps;
    - every proposition of a completed book is proved, and so is everything attached
      to it, with both figures and a mishnah;
    - the facts pinned in `tests/certificate_expectations.json` still hold;
@@ -82,6 +89,12 @@ EUCLIDEAN_ONLY = re.compile(r"^(Postulate5|Tacit\.Euclidean\..*)$")
 # postulate from their first proposition on, as II.10 does by name. A book missing here
 # may use it throughout. A porism or companion goes with its proposition.
 FIRST_EUCLIDEAN = {"I": 29, "II": 1, "III": 1}
+# These rules contain III.2; no certificate entry may rest on either, even through a
+# helper. Certificate names omit the leading `Elements.`.
+FORBIDDEN_CIRCLE_RULES = {
+    "Tacit.inside_of_between": "Circle 2",
+    "Tacit.outside_of_between": "Circle 3",
+}
 # The words Euclid leaves undefined, and the magnitudes. Each must stay `opaque`: Lean
 # then knows only what the axioms say of them, and the axioms stay true in the plane.
 PRIMITIVES = {
@@ -131,6 +144,20 @@ FORBIDDEN = re.compile(
 # An axiom, declared anywhere in a line: Lean reads `example : True := trivial axiom
 # planted : False` as two commands, the second an axiom.
 AXIOM = re.compile(r"\baxiom\b")
+# Placement (brief 0006, "Placement", the policy). `placement` carries the points on one
+# side of a straight line, and the line, onto those on one side of an equal straight line,
+# keeping every distance: Euclid's "let the segment AEB be applied to CFD" (III.24), with
+# no motion assumed beyond I.4 and I.8. The lemmas of its namespace carry the same content,
+# so the policy covers them all. Outside its own files, only III.24, which applies one
+# segment to another, and the bridge theorems of Arcs.lean may cite them: the source of no
+# other file under Elements/ names them, and no entry but III.24 calls on them.
+PLACEMENT_HOME = ("Elements/BookIII/Placement.lean", "Elements/BookIII/Placement/")
+PLACEMENT_CITERS = {"Elements/BookIII/Prop24.lean", "Elements/BookIII/Arcs.lean"}
+PLACEMENT_ENTRIES = {"III.24"}
+# `placement`, or the namespace `Placement`, as a whole name or a part of one
+# (`BookIII.placement`, `Placement.dist`), in the Lean as `read_lean` gives it, its
+# comments and literals taken out.
+PLACEMENT_NAME = re.compile(r"\b(placement|Placement)\b")
 
 errors: list[str] = []
 
@@ -348,6 +375,21 @@ def check_rules() -> None:
         if rel.startswith("Elements/Figure/"):
             for m in re.finditer(r"^import Elements\.Book", src, re.M):
                 fail(f"{rel}:{line_of(src, m.start())}: Book Zero must not import a proposition")
+        if (rel.startswith("Elements/") and not rel.startswith(PLACEMENT_HOME)
+                and rel not in PLACEMENT_CITERS):
+            for m in PLACEMENT_NAME.finditer(code):
+                fail(f"{rel}:{line_of(code, m.start())}: names `{m.group(0)}`, but outside "
+                     "placement's own files only III.24 and Elements/BookIII/Arcs.lean may cite "
+                     "placement or a lemma of the `Placement` namespace (brief 0006)")
+
+
+def placement_step(step: dict) -> bool:
+    """Is this shared step (facts.json, `shared_steps`) placement, a lemma of the
+    `Placement` namespace, or anything declared in placement's own files?"""
+    name, file = step.get("name", ""), step.get("file", "")
+    return (name == "BookIII.placement" or name.startswith(("BookIII.placement.",
+                                                            "BookIII.Placement."))
+            or file.startswith(PLACEMENT_HOME))
 
 
 # The words retired from the reader-facing pages ("Euclid cites", "never need" and their
@@ -423,6 +465,10 @@ def check_lock(facts, path: Path = LOCK):
         fail(f"{rel(path)} is missing: with a decisions entry, write it with "
              "`python3 scripts/check_fidelity.py --write-lock`")
         return None
+    for name, rule in FORBIDDEN_CIRCLE_RULES.items():
+        if name not in lock[0]:
+            fail(f"{name} ({rule}): not an axiom in {rel(path)}, so no entry can be refused "
+                 "it (if the axiom was renamed, rename it in FORBIDDEN_CIRCLE_RULES too)")
     types, vocabulary = facts.get("axiom_types"), facts.get("vocabulary")
     if types is None or vocabulary is None:
         fail("facts.json has no axiom_types or vocabulary: rerun `lake env lean Certificate/Facts.lean`")
@@ -540,7 +586,7 @@ def entries_by_ref(facts) -> dict:
 
 
 def check_entries(facts, by_ref) -> None:
-    """Which entries there are, how they hang together, and the three policies, for
+    """Which entries there are, how they hang together, and the policies, for
     every entry."""
     if any("kind" not in p or "statement" not in p for p in facts["propositions"]):
         fail("facts.json predates Certificate/FIELDS.md (an entry has no `kind` or "
@@ -604,6 +650,15 @@ def check_entries(facts, by_ref) -> None:
             bad = [a for a in p["axioms"] if EUCLIDEAN_ONLY.match(a)]
             if bad:
                 fail(f"{ref}: rests on {', '.join(bad)} before {r.book}.{first}")
+        for axiom, rule in FORBIDDEN_CIRCLE_RULES.items():
+            if axiom in p["axioms"]:
+                fail(f"{ref}: rests on {axiom} ({rule}), forbidden for every entry")
+        if ref not in PLACEMENT_ENTRIES:
+            for step in p.get("shared_steps", []):
+                if placement_step(step):
+                    fail(f"{ref}: calls on {step.get('name')} ({step.get('file')}), but only "
+                         "III.24 may call on placement or a lemma of the `Placement` "
+                         "namespace (brief 0006)")
 
     # A complete book stays complete: every proposition proved, with all it carries.
     for book in sorted(COMPLETE, key=heath.arabic):
@@ -778,7 +833,7 @@ def uncarried_runs(src: str, n: int) -> list:
 
     In Books I-III this finds runs of several kinds, among them the closing sentences of
     reductios (III.4, III.5, III.6, III.7, III.19), a "similarly" that one argument
-    already covers (I.14, III.37), a sentence that the Lean above it carries (II.10,
+    already covers (I.14), a sentence that the Lean above it carries (II.10,
     III.14), a setting-out or an "I say that" that the statement gives (I.13, I.21,
     I.23), a join that needs no object of its own (I.6), and III.16's last part: its
     conclusion, then the angle of the semicircle and the horn-like angle."""
