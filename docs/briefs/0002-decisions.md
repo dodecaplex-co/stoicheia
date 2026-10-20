@@ -2462,3 +2462,36 @@ findings:
   The changes remain uncommitted. No push or GitHub action was taken. Full repository CI,
   independent kernel replay and independent security review were not run in this round;
   security review before landing remains open.
+
+- **Ninth-round Lake source-list traces for brief 0009, #75.** The eighth-round source
+  audit reads exact names for directories and non-source entries, but the declarative
+  directory inputs in `model/lakefile.toml` hash only the contents of selected files.
+  A passing cached audit could therefore survive the addition of `Model/notes-é.txt` or a
+  same-content rename of a selected source. That contradicted the requirement that Lake's
+  inputs rerun the audit; a fresh CI build did not repair the incremental-build contract.
+
+  `model/lakefile.lean` carries the same package, dependencies, libraries, build prerequisite
+  and content inputs as the replaced TOML file. Its `sourceListings` target runs on every
+  Lake invocation and deterministically hashes the sorted entry kinds and exact
+  repository-relative spellings from the model and foundations listings the source audit
+  inspects. Check depends on that trace beside the existing content traces. It includes
+  directories, non-source files, symlinks and other entries, and works while
+  `Elements/Foundations/Superposition/` is absent.
+
+  `tests/model/test_lake_inputs.py` first obtains passing cached ordinary and direct
+  `Check.RoundTrip` builds while the Superposition directory is absent. It then adds
+  `model/Model/notes-é.txt`; after restoration it renames the selected, imported
+  `Elements/Foundations/Phrases.lean` without changing its bytes to `Phraſes.lean`.
+  Without cleaning, both `lake build` and `lake build Check.RoundTrip` must reject both
+  invalid trees. The non-source case always pins the source-audit diagnostic; where the
+  canonical imported path resolves the alias, the rename case pins it too. The formal-model job in
+  `.github/workflows/ci.yml` runs this executable regression, and `docs/WORKFLOW.md` and
+  `model/README.md` give the matching command and corrected cache account.
+
+  The protected paths `.github/workflows/ci.yml`, `model/lakefile.toml`,
+  `model/lakefile.lean` and `tests/model/test_lake_inputs.py` change in this round. The
+  TOML file is replaced rather than retained because Lake reads `lakefile.lean` in
+  preference and the declarative form cannot supply a path-valued trace. No check,
+  foundation, lock, generated source or model proof is weakened or changed. The required
+  independent security review is recorded in the next entry after it is performed on the
+  committed protected-path revision.

@@ -377,26 +377,31 @@ With an unimported `Model/Uppercase.LEAN` containing `import Check.Original`, th
 audit refuses the non-canonical extension. Importing that fixture from `Model.lean` instead
 produces Lake's `build cycle detected` refusal on a case-insensitive filesystem.
 
-The Check library registers `Model.lean` and every case variant of the `.lean` extension
-under `Model/` and `../Elements/Foundations/` as text inputs in
-[lakefile.toml](lakefile.toml). Both source-directory filters enumerate all sixteen ASCII
-spellings, so adding a `.LEAN` file also invalidates the checks. The separate plane-proof
-input still selects `.lean`. The existing foundations directory is used because Lake
-rejects an input directory that does not exist, and its `Superposition/` subdirectory is
-absent on main; this input includes all four pure sources when present, as well as other
-foundation sources.
+The Check library keeps `Model.lean` and every case variant of the `.lean` extension under
+`Model/` and `../Elements/Foundations/` as text inputs in
+[lakefile.lean](lakefile.lean). Both source-directory filters enumerate all sixteen ASCII
+spellings, so content changes and additions or removals of selected sources invalidate the
+checks. The separate plane-proof input still selects `.lean`. The existing foundations
+directory is used because its `Superposition/` subdirectory is absent on main; this input
+includes all four pure sources when present, as well as other foundation sources.
 
-Lake 4.35 filters directory entries before sorting them and combining their content hashes.
-Adding or removing a selected file, including a same-content rename from `.txt` to `.lean`
-or `.LEAN`, or back, changes that list. This catches the first pure module arriving by such
-a rename.
-File paths are trace captions, not part of the hash: a rename within the selected set can
-still replay a cached result when the ordered contents stay the same. Text hashes normalise
-line endings, and a timestamp-only touch can also replay a result. Changes to the selected
-contents otherwise rebuild the checks. CI's fresh build runs every check, including the
-whole import audit, regardless of local cache traces.
-Non-source entries are checked when the audit runs, but are outside the extension-filtered
-Lake inputs; changing those entries alone need not rerun a cached check.
+Lake's directory inputs hash selected contents, not their path captions. The same build
+file therefore gives Check a second dependency: on every Lake invocation it walks the two
+directories and the model package entries that the source audit reads, records files,
+directories, symlinks and other entries by their exact repository-relative spellings,
+sorts those records and hashes them into the build trace. This path fingerprint sits beside,
+and does not replace, the content dependencies. A rename within the selected set or a change
+to a directory or non-source entry now invalidates a cached audit even when file bytes do
+not change. Text content hashes still normalise line endings, and a timestamp-only touch
+with unchanged content and listing can replay a result.
+
+`tests/model/test_lake_inputs.py` begins with passing cached ordinary and direct
+`Check.RoundTrip` builds while `Superposition/` is absent. Without cleaning, it adds
+`Model/notes-é.txt`, then renames the selected, imported `Phrases.lean` byte for byte to
+`Phraſes.lean`. Both `lake build` and `lake build Check.RoundTrip` must reject each invalid
+tree; on a filesystem where the canonical import resolves the alias, the test also requires
+the source audit's non-canonical-path refusal. The formal-model CI job runs this incremental
+regression after its ordinary build.
 
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
@@ -665,6 +670,7 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c -
 cd model
 lake exe cache get
 lake build
+python3 -I ../tests/model/test_lake_inputs.py
 ```
 
 `lake build` builds both libraries, `Model` (with the assembly and the audit) and `Check`

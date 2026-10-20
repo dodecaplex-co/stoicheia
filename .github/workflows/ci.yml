@@ -156,6 +156,9 @@ jobs:
         working-directory: model
         run: lake build
 
+      - name: Check source-list changes invalidate cached model audits
+        run: python3 -I tests/model/test_lake_inputs.py
+
   acceptance:
     # The acceptance checklist, docs/ACCEPTANCE.md, on every pull request, as this
     # `acceptance` job and docs/briefs/0002-decisions.md describe:

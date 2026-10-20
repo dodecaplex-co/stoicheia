@@ -312,7 +312,9 @@ their own, each in isolation:
 ```sh
 python3 scripts/negative_tests.py      # CI's `negative` job, after lake build and Facts.lean
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
-grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
+grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && \
+  (cd model && lake exe cache get && lake build) && \
+  python3 -I tests/model/test_lake_inputs.py
                                        # CI's `formal-model` job: the formal model, with Mathlib
 ```
 
