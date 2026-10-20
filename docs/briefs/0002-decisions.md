@@ -2161,7 +2161,7 @@ findings:
   now a theorem, and prints every other entry unchanged. The guard remains exact.
 - **The certificate's and the schema's examples follow the eight retired axioms.** A
   check-input change of its own, landed after the retirement of the eight (87 to 79), which
-  leaves the check inputs alone.
+  leaves the check inputs not pinned to the axioms alone.
   [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates its axiom examples and
   the counts for III.1 and its porism because `centre_unique` and Circle 2 are now theorems.
   [`review/SCHEMA.md`](../../review/SCHEMA.md) updates its overlap examples to distinguish
