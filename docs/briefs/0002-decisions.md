@@ -1422,3 +1422,11 @@ findings:
   derived facts. Proposition and porism statements, definitions and `--` lines are
   unchanged; the records whose Lean changed were read again and stamped by readers who
   wrote none of them.
+- **The certificate's and the schema's examples follow the eight retired axioms.** A
+  check-input change of its own, landed after the retirement of the eight (87 to 79), which
+  leaves the check inputs alone.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates its axiom examples and
+  the counts for III.1 and its porism because `centre_unique` and Circle 2 are now theorems.
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) updates its overlap examples to distinguish
+  current axioms from proved rules; its fields, requirements and worked TOML examples stay
+  unchanged. No check, field or requirement changes.

@@ -96,7 +96,7 @@ A tag of kind `scope` may appear only when the statement is restricted or partia
 
 | Key | Type | Required | Meaning |
 |---|---|---|---|
-| `rule` | string | yes | The axiom, named as facts.json names it: `"Tacit.inside_of_between"`. |
+| `rule` | string | yes | The axiom, named as facts.json names it: `"Tacit.outside_of_between"`. |
 | `also` | list of strings | no | Any further axioms that contain the proposition, or supply its step, only together with `rule`, as III.6 needs `"Tacit.centre_inside"`. |
 | `kind` | `"states"`, `"gives"` or `"step"` | no | The kind of the proposition's row in the catalogue (below). |
 | `note` | string | for `step` | What follows for the page: the proof reconstructs Euclid's reasoning within our foundations, and does not establish the rule. For a step, which step the rule carries, and in which proof. |
@@ -106,13 +106,13 @@ The catalogue of overlaps, with their audit lemmas, is
 kinds, and `kind` names the row's kind in the catalogue's words:
 
 - **states**: the rule, read for the proposition's figure, is its statement, or says more
-  (III.2, which Circle 2 states).
+  (historically, III.2 and Circle 2, before that rule became a theorem).
 - **gives**: the proposition follows from the rule at once, in a short proof from at most
   three rules that cites no proposition, any other rules only drawing or naming the figure
-  (III.5 and III.6).
+  (III.2 from Circle 3, III.5 and III.6).
 - **step**: inside some proof, the rule carries a step that is the proposition's content,
-  or a case of it, and does not give the proposition at once (I.2, I.3, I.7 and I.23,
-  where the proof is the audit lemma, which takes seven axioms or more).
+  or a case of it, and does not give the proposition at once (I.2, I.3 and I.23,
+  where the proof is the audit lemma, which takes eight axioms or more).
 
 The page words its overlap by the kind, in the line under the enunciation and in the
 book's summary, which also heads the book's index, its section of CERTIFICATE.md and its
