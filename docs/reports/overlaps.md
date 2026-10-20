@@ -7,8 +7,8 @@ within a circle every point is within it, and III.2 is that rule for two points 
 circle. Astra pointed this out in the [outside review](outside-review-01.md), with a
 one-line proof compiled in Lean, and asked for this catalogue. We are grateful. Two later
 readings added to it, and we thank them too: a cold review by Claude saw that
-superposition supplies the steps of I.2 and I.3, and Argon's second review corrected our
-account of how each rule enters the proofs (the certificate counted a rule a proof reaches
+the former existential superposition rule supplied the steps of I.2 and I.3, and Argon's
+second review corrected our account of how each rule enters the proofs (the certificate counted a rule a proof reaches
 through a lemma as one it calls itself, and now keeps the two apart), found defined words
 that our screen left folded, and saw that III.30 belongs among the near misses.
 
@@ -22,7 +22,7 @@ enters the development, and how it reaches the proposition's own proof.
 
 ## The catalogue
 
-Each row is one of three kinds:
+The eight current rows are of three kinds:
 
 - **States it**: the rule, read for the proposition's figure, is its statement, or says more.
 - **Gives it at once**: the proposition follows from the rule in a short proof, from at
@@ -30,11 +30,10 @@ Each row is one of three kinds:
   name the figure.
 - **Supplies a step**: inside some proof, the rule carries a step that is a proposition's
   content, or a case of it. The first column says which proposition, and in which proofs.
-  For I.2, I.3, I.7 and I.23 the proof is the audit lemma: the rule carries the
-  proposition's content, but the shortest proof we found from the rules alone takes ten,
-  twenty-two, seven and eight of them, the rest drawing a figure the statement never
-  mentions and telling its parts apart (and, for I.3, ordering three points by their
-  lengths), which is more than "at once".
+  For I.7 the proof is the audit lemma: Circle 4 carries the proposition's content,
+  but the shortest proof we found from the rules alone takes seven of them, the rest
+  drawing two circles the statement never mentions and telling them apart, which is more
+  than "at once".
 
 "First enters" names the first proposition, in Euclid's order, whose proof uses the rule
 without taking it from a proposition it cites. It is read from
@@ -61,12 +60,9 @@ rule's Lean name finds the same calls.
 
 | Proposition | Rule(s) | Kind | First enters | Audit lemma |
 |---|---|---|---|---|
-| [I.2](#i2-and-i3) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_2`: laid down at A along AB, a triangle on BC carries the length of BC to A, and drawing that triangle and a point off AB takes nine axioms more | I.4 | `Audit.I_2` |
-| [I.3](#i2-and-i3) | Superposition (`superposition`) | Supplies a step, in `Audit.I_3`: laid down at A along the ray AB, a triangle on the less straight line carries its length onto the ray, and drawing the figure and placing the new point between A and B takes twenty-one axioms more | I.4 | `Audit.I_3` |
 | [I.7](#i7) | Circle 4 (`not_same_side_of_circles_meet`): two circles cut one another on opposite sides of the straight line through their centres | Supplies a step, in `Audit.I_7`: I.7 is the rule with its two circles left undrawn, and drawing them and telling them apart takes six rules more | Nowhere: no proof uses it | `Audit.I_7` |
 | [I.13, a case of it, in 17 proofs from II.1 on](#i13-in-17-proofs) | Diagram-angle 3 (`adjacent_eq_of_right`): the angle beside a right angle is right | Supplies a step: I.13 makes the two angles two right angles, so the second is right | II.1 | `Audit.adjacent_eq_of_right` runs the other way: the rule, proved from I.13 |
 | [I.13, a consequence of it, in I.47](#i13-in-i47) | Metric 5 (`angle_le_two_right`): no angle exceeds two right angles | Supplies a step: for an angle between two straight lines, I.13 gives it | I.47, its only user | None |
-| [I.23](#i23) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_23`: laid down at A along AB, the triangle DCE carries its angle at C to A, and naming the ray and the side takes seven axioms more | I.4 | `Audit.I_23` |
 | [III.1's corollary, in III.1 Por.](#iii1-por) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.1's porism; of the propositions themselves, III.14 | None |
 | [III.2](#iii2) | Circle 2 (`inside_of_between`): between two points on or within a circle, every point is within it | States it, and more: the ends may be within the circle as well as on it | Nowhere: no proposition rests on it | `Audit.III_2`, Astra's proof: Circle 2 alone |
 | [III.2](#iii2) | Circle 3 (`outside_of_between`): a straight line that has left a circle does not come back; Circle 2 turned round | Gives it at once: were a point between two points of the circle not within it, the second point would be outside the circle, not on it | Nowhere: no proposition rests on it | `Audit.III_2_outside`: Circle 3 alone |
@@ -80,16 +76,16 @@ The review records point here: a proposition's `[overlap]` names its rule
 
 #### I.2 and I.3
 
-Nothing brings the rule into our I.2 or I.3, which come before I.4 and do not rest on it.
-The proofs are Euclid's: I.2 by the equilateral triangle of I.1 and two circles, I.3 by
-I.2 and a circle. Our Postulate 3 is Euclid's collapsing compass, and leaves carrying a
-distance to I.2; superposition, in the form we take it, carries one. What keeps I.2
-Euclid's is the certificate's policy, which lets only I.4 and I.8 use the rule.
-`Audit.I_2` uses superposition with Postulates 1 and 3, Generalities 1 and 3, Points 7,
-Intersections 5, Circle 1 and Between 1 and 7, which draw a triangle on BC and a point off
-AB, since neither statement gives one. `Audit.I_3` draws the same way, and adds Between 6,
-Diagram-segment 1, Metric 1 and the laws of magnitude, which put the new point between A
-and B.
+Our I.2 and I.3 do not rest on superposition. The proofs are Euclid's: I.2 by the
+equilateral triangle of I.1 and two circles, I.3 by I.2 and a circle. Our Postulate 3 is
+Euclid's collapsing compass, and leaves carrying a distance to I.2.
+
+These two overlap rows are retired. Under the former existential superposition rule,
+`Audit.I_2` and `Audit.I_3` drew a triangle, laid it down and returned one of its placed
+corners. The restricted rule permits hypothetical placement within a derivation over
+symbols and exports only an equality of lengths, angles or triangles about the given
+figure. No exported formula names a placed corner, and no derivation step constructs
+anything. The two audit lemmas that returned such corners are retired with their rows.
 
 #### I.7
 
@@ -118,15 +114,19 @@ twice.
 
 #### I.23
 
-I.8 calls the rule itself, and I.20 rests on it through I.5 and I.4. Our proof is Euclid's
-construction: a triangle from three straight lines (I.22), and I.8 for its angle. The
-certificate lets only I.4 and I.8 use superposition. That limits where the rule is used,
-not what it can do: as a construction principle it is stronger than System E's restricted
-inference rule, whose placed points never become constructed ones
-([Superposition.lean](../../Elements/Foundations/Tacit/Superposition.lean)).
-`Audit.I_23` uses superposition, with Postulate 1, Generalities 1, Metric 1, Metric 4,
-Points 1 and Same side 3 to name the ray and the side: eight axioms in all, since System
-E's Metric 1 is two of ours.
+Our proof keeps Euclid's construction: I.22 constructs F and G from three lengths,
+I.20 supplies the triangle inequalities, and I.8 proves the angle equality. It rests on
+superposition through I.8 and I.20: I.8 calls the restricted rule itself, while I.20
+rests on it through I.5 and I.4. Only I.4 and I.8 may call it directly.
+
+The former overlap row and its lemma `Audit.I_23` are retired. That lemma used the
+existential rule to lay down the triangle DCE and return its placed corners. The
+[restricted rule](../../Elements/Foundations/Tacit/Superposition.lean) is an inference
+in System E's style: a represented derivation returns an equality about the given figure,
+and cannot return its hypothetical corners as constructed points. This is a restriction
+on those derivations, not a claim that the whole foundation cannot recover a placement.
+I.22 and I.23 legitimately construct congruent figures by Euclid's route. Equivalence
+with System E's two printed rules is not claimed.
 
 #### III.1 Por.
 
@@ -291,10 +291,14 @@ formation is not searched, which only the companions of I.45 and II.14 speak of.
 screen is not one of CI's checks: that run took about an hour and a half of processor time,
 and nothing runs it of itself; it should be run again when a statement or a rule changes. It
 cannot draw a figure, for `grind` works with the points and circles a goal already names.
-I.7 needs two circles its statement never mentions, and I.23 a triangle laid down, so both
-came from reading. I.2 and I.3 need a triangle drawn and then laid down. The catalogue first
-listed them as near misses, since neither statement gives a triangle to move; but the same
-holds of I.7's circles, and they are rows now, with `Audit.I_2` and `Audit.I_3`.
+I.7's overlap needs two circles its statement never mentions, so it came from reading.
+At that revision the I.23 overlap used a triangle laid down by the existential
+superposition rule. The I.2 and I.3 overlaps first drew a triangle to lay down; the
+catalogue initially listed them as near misses, then as rows with audit lemmas, since
+I.7 likewise drew objects absent from its statement. All three superposition rows and
+their audit lemmas are now retired with that existential rule. These screening results
+are historical evidence for the revisions named above, not a fresh screen of the
+restricted rule.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
 rule a proof reaches through a lemma as well as one its own Lean names, and found that
@@ -321,24 +325,16 @@ For each row we looked for a proof of the proposition's statement from at most t
   length is nothing, it holds, having nothing to speak of, and I.7 fails for any two points
   on one side of AB. So the row says that Circle 4 supplies I.7's step, not that it gives
   I.7 at once.
-- **I.23**: not found from three. `Audit.I_23` uses eight axioms (System E's Metric 1 is two
-  of them): superposition does the work, and the others name the ray and the side.
-  Superposition alone does not give I.23: where there are no straight lines it holds,
-  having nothing to speak of, and no point lies on a ray from A through B. So the row says
-  that superposition supplies I.23's step, as for I.7.
-- **I.2 and I.3**: not found from three. `Audit.I_2` uses ten axioms and `Audit.I_3`
-  twenty-two: superposition does the work, and the others draw a triangle to lay down and
-  a point off AB, and, for I.3, place the new point between A and B. Superposition alone
-  does not give I.2: where there are no straight lines it holds, having nothing to speak
-  of, and no length from A need equal BC. Nor does it give I.3: in that world, let no
-  point lie between two others, and let AB be the greater of two straight lines; then no
-  point lies between A and B to cut off the less. So the rows say that superposition
-  supplies their step, as for I.7 and I.23.
 - **The steps.** For III.1, its porism and I.13 we found no proof from three rules: each
   needs a construction Euclid makes by earlier propositions, a bisection or a
   perpendicular (I.10, I.11). In the other direction, Diagram-angle 3 is a theorem of
   the remaining axioms: `Audit.adjacent_eq_of_right` proves it from I.13, and Lean's list
   of what that proof rests on does not include it. It stays an axiom, as System E has it.
+
+The retired checks for I.2, I.3 and I.23 used ten, twenty-two and eight axioms
+respectively, all under the former existential superposition rule. Those results are
+historical evidence about that rule; they do not establish overlaps with the restricted
+rule.
 
 ## Near misses
 
