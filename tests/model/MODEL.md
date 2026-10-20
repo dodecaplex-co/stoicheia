@@ -104,6 +104,12 @@ run.py and hyperbolic.py are new.
 
 ## What the numbers say
 
+The table below and its linked [results](results/) are historical evidence from commit
+`9dbe96182b9a` (2026-10-17), covering the former 87-axiom registry. They include the
+eight axioms now retired and predate separate reporting of those retained derived
+properties. The recorded numbers remain unchanged here; regeneration belongs to the
+train integrator.
+
 <!-- counts:begin -->
 Counts from `run.py --full --write` at commit `9dbe96182b9a`, 2026-10-17, Python 3.11.9. Each number is how many configurations met the axiom's hypotheses (for the search, over the three seeds); none of them was a counterexample. A dot means that harness does not enumerate the axiom.
 
