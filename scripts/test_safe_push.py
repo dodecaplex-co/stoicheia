@@ -2697,11 +2697,10 @@ class ProtectedPaths(Edge):
     EXPECT = "tests/certificate_expectations.json"
 
     def test_expectation_dropped_with_its_regression_kept_apart(self):
-        # The test injects a locked tacit rule III.1 does not use, circle_eq, into III.1's
-        # axiom list, the regression its count exists to catch, and drops III.1's axioms
-        # expectations in the same commit. check_fidelity.py checks only what each
-        # expectation says, so the commit's own pass holds: the drop is a check change, kept
-        # apart. (A retired name such as centre_unique would fail that pass: it is no axiom.)
+        # This test deliberately injects circle_eq, a locked tacit rule absent from III.1's
+        # axiom list, and drops the corresponding axioms expectations. It verifies that this
+        # check change must remain separate from the content change. A retired theorem name
+        # such as centre_unique cannot be the injection: the commit's own pass refuses it.
         lean, record = "Elements/BookIII/Prop01.lean", "review/III/01.toml"
         new_lean = self.text(lean) + "\n-- A re-proof that uses circle_eq.\n"
         stamped = re.sub(r'(?m)^lean = "[^"]*"',

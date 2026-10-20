@@ -2181,9 +2181,10 @@ findings:
   that is no axiom. It now injects `Tacit.circle_eq`, a locked tacit rule III.1 does not
   use, caught by III.1's count of tacit rules, and still drops III.1's axioms expectations
   in the same commit to verify that the check change stays separate from content changes;
-  its introduction says so. The test now first asserts that III.1 does not already use the
-  rule, and looks in origin/main's failure for the count instead of the excluded name; its
-  other assertions stay.
+  its corrected introduction describes that fixture without saying III.1's current
+  certificate contains `centre_unique`. The test now first asserts that III.1 does not
+  already use the rule, and looks in origin/main's failure for the count instead of the
+  excluded name; its other assertions stay.
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json)
   changes only its reasons: exclusions of retired names do not detect uses of the
   theorems, while the existing Circle 3 exclusions still constrain dependencies.
