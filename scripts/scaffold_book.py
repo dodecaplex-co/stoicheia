@@ -385,9 +385,9 @@ BOOK_III = {
         "    Touches D B ABC",
 }
 
-# Corollaries that later propositions cite, stated now so that they can be: each follows
-# its proposition in the same file, a docstring and a statement, ending in `sorry`.
-COROLLARIES = {
+# Declarations that follow their proposition in the same file: each has a docstring and a
+# statement ending in `sorry`.
+FOLLOWUPS = {
     ("III", 1): [(
         "porism",
         "The Porism to III.1: \"if in a circle a straight line cut a straight line into two\n"
@@ -409,6 +409,45 @@ COROLLARIES = {
         "{A D E : Point} {ABC : Circle} (hD : Centre D ABC) (hA : OnCircle A ABC)\n"
         "    (hE : ¬ Collinear D A E) (hDAE : ∠ D A E = ∟) :\n"
         "    Touches A E ABC",
+    )],
+    ("III", 24): [(
+        "equalCircles",
+        "**III.24, the circles and the measures** (companion of III.24, \"III.24 equalCircles\").\n"
+        "Similar segments on equal straight lines lie in equal circles, and their circumferences are\n"
+        "equal in measure.",
+        "{A B C D E F : Point} {AEB CFD : Circle} (hA : OnCircle A AEB)\n"
+        "    (hB : OnCircle B AEB) (hE : OnCircle E AEB) (hC : OnCircle C CFD) (hD : OnCircle D CFD)\n"
+        "    (hF : OnCircle F CFD) (hE_AB : ¬ Collinear A B E) (hF_CD : ¬ Collinear C D F)\n"
+        "    (hAB : ‖A B‖ = ‖C D‖) (hsim : ∠ A E B = ∠ C F D) :\n"
+        "    EqualCircles AEB CFD ∧ circumference AEB A E B = circumference CFD C F D",
+    ), (
+        "equalMeasure",
+        "**Congruent segments have equal circumferences** (companion of III.24, \"III.24\n"
+        "equalMeasure\"). If two drawn segments are congruent, their circumferences are equal in\n"
+        "measure.",
+        "{a b : Arc} (ha : a.Drawn) (hb : b.Drawn)\n"
+        "    (h : Arc.Congruent a b) : a.measure = b.measure",
+    )],
+    ("III", 25): [(
+        "complete",
+        "**III.25's circle is the segment's circle** (companion of III.25, \"III.25 complete\").\n"
+        "Let A, C be points of a circle α, and B a point of its arc on P's side of AC. Any circle γ\n"
+        "through A, B and C is α, and every point of the arc AC on P's side is on γ.",
+        "{A C P B : Point} {α γ : Circle} (hA : OnCircle A α)\n"
+        "    (hC : OnCircle C α) (hB : OnArc B ⟨α, A, C, P⟩) (hBP : SameSideOf B P A C)\n"
+        "    (hAγ : OnCircle A γ) (hBγ : OnCircle B γ) (hCγ : OnCircle C γ) :\n"
+        "    γ = α ∧ ∀ X : Point, OnArc X ⟨α, A, C, P⟩ → OnCircle X γ",
+    ), (
+        "of_circle",
+        "**Today's III.25, from the restated core** (companion of III.25, \"III.25 of_circle\").\n"
+        "Handed the circle ABC, the core finds a circle that is ABC itself, so its centre E is the\n"
+        "centre of ABC.",
+        "{A C : Point} {ABC : Circle} (hA : OnCircle A ABC)\n"
+        "    (hC : OnCircle C ABC) :\n"
+        "    ∀ P : Point, ¬ Collinear A C P → ∃ B D E : Point, OnCircle B ABC ∧ SameSideOf B P A C ∧\n"
+        "      Between A D C ∧ ‖A D‖ = ‖D C‖ ∧ ∠ A D B = ∟ ∧ Centre E ABC ∧ Collinear D B E ∧\n"
+        "      (∠ B A D < ∠ A B D → OppositeSidesOf E B A C) ∧ (∠ A B D = ∠ B A D → E = D) ∧\n"
+        "      (∠ A B D < ∠ B A D → SameSideOf E B A C)",
     )],
 }
 
@@ -463,9 +502,9 @@ def render(book: str, n: int, signature: str) -> str:
     body = []
     for p in proof:
         body.extend(comment_lines(p))
-    corollaries = "".join(
+    followups = "".join(
         f"\n{docstring_text(doc)}\ntheorem Prop{n}.{name} {sig} := by\n  sorry\n"
-        for name, doc, sig in COROLLARIES.get((book, n), []))
+        for name, doc, sig in FOLLOWUPS.get((book, n), []))
     return f"""{chr(10).join(imports)}
 
 /-!
@@ -484,7 +523,7 @@ open Tacit
 theorem Prop{n} {signature} := by
 {chr(10).join(body)}
   sorry
-{corollaries}
+{followups}
 end Elements.Book{book}
 """
 

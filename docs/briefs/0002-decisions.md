@@ -1540,8 +1540,14 @@ findings:
   loses a centre-existence conclusion clause. III.26 retains G/H; III.28 had no centre
   clause; both gain [brief 0006](0006-statements.md)'s congruence conclusions. Its comment
   now names a centre where the statement uses it. Where a proof needs an unnamed centre,
-  it takes one by III.1 where Heath cites it, and from `exists_centre` otherwise. A search of
-  `scripts/` and `tests/` confirms that no check reads the scaffold's Book III strings.
+  it takes one by III.1 where Heath cites it, and from `exists_centre` otherwise. The shared
+  follow-up mapping emits `Prop24.equalCircles`, `Prop24.equalMeasure`,
+  `Prop25.complete` and `Prop25.of_circle` after their propositions. `Prop24.equalCircles`,
+  `Prop25.complete` and `Prop25.of_circle` take [brief 0008](0008-centre.md)'s approved
+  post-centre signatures; `Prop24.equalMeasure` retains
+  [brief 0006](0006-statements.md)'s approved signature.
+  A search of `scripts/` and `tests/` confirms that no check reads the scaffold's Book III
+  strings.
   The scaffold creates only missing files, so it never rewrites a proof. This change
   lands before the content it describes, in a pull request of its own, since `scripts/`
   is a check input.
