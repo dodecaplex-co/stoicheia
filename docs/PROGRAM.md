@@ -132,8 +132,9 @@ own, the figure letters as three:
 What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), section 10,
 "Landing work: pull requests".
 
-- **The scope of the I.45 and II.14 records** is decided: `full`, by the checked fan and
-  any supplied division (the owner, 18 October; brief 0006, decision 1 as revised, [#13]).
+- **The current scope decision for I.45 and II.14** is the owner's interim disclosure of
+  20 October under #116; the [decision entry](briefs/0002-decisions.md#20-october-2026)
+  supersedes the earlier full-scope call. The record changes follow on a stacked text branch.
 - **Stage 2 is in the edition** (#19): I.40, I.45, II.1 and II.14 with their companions
   beside them, certified, their records full and re-stamped, the words in the foundations
   with the lock, and the gap entries for I.45's and II.14's tacit step.
@@ -146,8 +147,6 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   clauses for every straight line, the foot of the perpendicular, and III.25's construction
   core, which never sees a circle or a centre, with its correctness (#26, #27). Next is the
   move into `Elements/` with the records (#28).
-- **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
-  `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
   request of its own ([#3]).
 - **The Lean notes of I.6, I.14 and I.24** still make Lean the subject: a later pass, with
