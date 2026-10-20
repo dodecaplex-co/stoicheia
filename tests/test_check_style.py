@@ -1996,6 +1996,26 @@ class Modern(unittest.TestCase):
                     self.assertIn("_Commentary to come._", page)
                     self.assertNotIn("47-modern.svg", page)
 
+    def test_render_page_normalizes_mishnah_without_modern_figure(self):
+        mishnah = render.ROOT / "mishnah" / "I" / "01.md"
+        figure = render.ROOT / "figures" / "I" / "01-modern.svg"
+        read_text, exists = Path.read_text, Path.exists
+        facts, docs, records = render.load_facts(), render.load_axiom_docs(), render.load_records()
+        count, titles = render.BOOKS["I"]
+
+        def read(path, *args, **kwargs):
+            if path == mishnah:
+                return " Ordinary commentary.\n"
+            return read_text(path, *args, **kwargs)
+
+        def present(path):
+            return False if path == figure else exists(path)
+
+        with patch.object(Path, "read_text", read), patch.object(Path, "exists", present):
+            page = render.page("I", 1, count, titles, facts, docs, records)
+        self.assertIn("\n\nOrdinary commentary.\n\n", page)
+        self.assertNotIn("\n\n Ordinary commentary.\n\n", page)
+
     def test_render_without_modern_figure(self):
         figure = render.ROOT / "figures" / "I" / "01-modern.svg"
         exists = Path.exists

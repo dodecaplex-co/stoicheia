@@ -1526,7 +1526,7 @@ def page(book, n, count, titles, facts, docs, records):
     commentary = with_modern_figure(read_text(mishnah).strip("\r\n")
                                     if mishnah is not None else "", book, n)
     if mishnah is not None:
-        out += [MISHNAH_LEAD, "", generated_counts.without_markers(commentary), ""]
+        out += [MISHNAH_LEAD, "", generated_counts.without_markers(commentary.strip()), ""]
     else:
         out += ["_Commentary to come._", ""]
     # A line or three from docs/reading.md, chosen for this proposition; no file, no section.
