@@ -1815,6 +1815,17 @@ findings:
   put a point on a circle that has none need a straight line, which III.34 does not give
   and none of those rules draws. The catalogue's account of the screen, and III.30 among
   its near misses, follow on a text branch of their own, after this one.
+- **What the checks of train H8b judge lands in train H9b.** As the entry for H8b says, the
+  content its branches held back lands here, after the checks: `docs/ACCEPTANCE.md`'s lines
+  for style everywhere (`tooling/style-everywhere`), the README's table and the overlap
+  catalogue's lines on the Circle rule (`tooling/no-circle-2`), the README's row for the
+  negative tests (`tooling/planted-faults`), PROGRAM.md's open work
+  (`tooling/safe-push-followups`) and the overlap screen itself
+  (`tooling/overlap-screen-unfold`, #78), whose tests landed with H8b. Acceptance in CI and
+  its page wait for a fix (#35). The protected file this train changes is `Audit/screen.py`:
+  the screen unfolds every defined word, tries each statement bare, and has its cases, as the
+  entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
+  statement changes.
 
 - **The acceptance checklist in CI, held to what main passes
   ([#35](https://github.com/jackChallis/stoicheia/issues/35)).** A new job, `acceptance`, in
