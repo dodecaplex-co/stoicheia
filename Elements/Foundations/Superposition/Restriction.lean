@@ -1,4 +1,6 @@
-import Elements.Foundations.Superposition.Soundness
+module
+
+public import Elements.Foundations.Superposition.Soundness
 
 /-!
 # Superposition, restricted: what the rule cannot do
@@ -56,6 +58,8 @@ cannot prove the existential placement principle. Astra's third kind of evidence
 one only if it is claimed, with the fragment of rules stated; none is claimed here (brief 0009,
 "Evidence before landing").
 -/
+
+@[expose] public section
 
 namespace Elements.Superposition
 

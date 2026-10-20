@@ -1,4 +1,6 @@
-import Elements.Foundations.Superposition.Syntax
+module
+
+public import Elements.Foundations.Superposition.Syntax
 
 /-!
 # Superposition, restricted: interpretation and rule
@@ -38,6 +40,8 @@ symbols, gives the conclusion for every figure that satisfies the guards and the
 `Rule.of_placement` shows that wherever triangles can be laid down, with the side AC drawn,
 the restricted rule holds, by logic alone.
 -/
+
+@[expose] public section
 
 namespace Elements.Superposition
 

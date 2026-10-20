@@ -1,4 +1,6 @@
-import Init
+module
+
+public import Init
 
 /-!
 # Superposition, restricted: the formulas
@@ -31,6 +33,8 @@ that language.
 Two symbols are one symbol only when they are the same symbol. So a derivation, which works
 on symbols, can never learn that two of them stand for one point unless a step proves it.
 -/
+
+@[expose] public section
 
 namespace Elements.Superposition
 

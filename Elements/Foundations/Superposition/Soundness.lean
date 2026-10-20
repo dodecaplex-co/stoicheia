@@ -1,4 +1,6 @@
-import Elements.Foundations.Superposition.Semantics
+module
+
+public import Elements.Foundations.Superposition.Semantics
 
 /-!
 # Superposition, restricted: soundness
@@ -7,6 +9,8 @@ A derivation holds under any interpretation in which its cited laws hold. Renami
 changes only how a valuation is read. If triangles can be laid down with their sides and
 angles kept and their side AC drawn, the restricted rule follows by logic alone.
 -/
+
+@[expose] public section
 
 namespace Elements.Superposition
 
