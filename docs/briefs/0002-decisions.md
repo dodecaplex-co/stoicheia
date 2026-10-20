@@ -2095,9 +2095,12 @@ findings:
   [FORMALIZATION](../FORMALIZATION.md), section 7, records how the ban continues
   to hold. This prepares the checks for the retirement; it retires no axiom.
 - **Eight axioms retired, 87 to 79.** The owner asked,
-  "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
-  principle on 19 October 2026, pending the evidence; this lands only when the owner has
-  seen it. Each of the eight keeps its name and exact type and becomes a theorem at the
+  "Fewer axioms is better. Any more that can go?", and on 19 October 2026 approved both
+  retirements: "Please do both. 79 is rather large with so many books in front of us." On
+  20 October the owner approved landing each as three pull requests; this is the second of
+  the first. Pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight, able
+  to fail now that the eight are theorems, are #168, which holds every release until it
+  closes. Each of the eight keeps its name and exact type and becomes a theorem at the
   earliest place it can be proved: `Tacit.centre_unique`, `Tacit.inside_of_between`
   (Circle 2, from Circle 3, which stays), `Tacit.exists_point_outside_circle`,
   `Tacit.line_meets_circle_of_opposite_sides` and `Tacit.triple_incidence3` in
