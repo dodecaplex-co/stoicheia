@@ -101,6 +101,10 @@ none, and we add no axiom for Book III. So a circumference is measured, by a
 definition, as Definition 9 suggests: by the angle that stands on it at the
 circumference, taken twice.
 
+**19 October 2026, circumferences.** No axiom is added for circumferences. The earlier
+decision to add none for Book III is superseded by the approved rule `Tacit.exists_centre`,
+which gives every circle a centre ([brief 0008](0008-centre.md), approved 18 October).
+
 `circumference α B K C` is `∠ B A C + ∠ B A C` for a point `A` of `α` on the other side of
 `BC` from `K`; Lean chooses one such angle (`Classical.epsilon`), as `rect` chooses one
 area. It is the angle the circumference subtends at the centre when it is less than
