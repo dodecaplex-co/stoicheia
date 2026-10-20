@@ -40,10 +40,10 @@ note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "523e55ce"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:b695b9572f39b180"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "Q watch, independent re-read at 523e55ce"
 
 [review.items]
 statement = "pass"
