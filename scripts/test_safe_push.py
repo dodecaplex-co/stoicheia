@@ -2056,21 +2056,24 @@ class Merge(Edge):
 
     def test_fence_opened_in_a_safe_push_part_refuses_the_merge(self):
         # The section moved to the end, after a part safe_push writes that opens a fence:
-        # GitHub shows the part, so the fence hides the heading and the section after it.
+        # GitHub shows the part, so the fence hides the heading and the section after it,
+        # whether it runs to the end or a longer fence closes it after them.
         self.opened()
         body = re.sub(r"## Unfinished work\n.*?(?=## Review records\n)", "",
                       ticked(self.gh_state()["prs"][0]["body"]), count=1, flags=re.S)
-        body = body.rstrip("\n") + "\n\n" + (
-            "<!-- safe_push:custom begin -->\n```\n<!-- safe_push:custom end -->\n"
-            "## Unfinished work\nNone\n## Review records\n")
-        self.set_gh(lambda s: s["prs"][0].update(body=body))
-        r = self.merge()
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
-        self.assertIn("must be one GitHub shows", out)
-        self.assertEqual(self.merges(), [])
-        self.assertEqual(self.origin_main(), BASE)
+        for closer in ("", "````\n"):
+            hidden = body.rstrip("\n") + "\n\n" + (
+                "<!-- safe_push:custom begin -->\n```\n<!-- safe_push:custom end -->\n"
+                "## Unfinished work\nNone\n## Review records\n" + closer)
+            with self.subTest(closer=closer):
+                self.set_gh(lambda s: s["prs"][0].update(body=hidden))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+                self.assertIn("must be one GitHub shows", out)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.origin_main(), BASE)
 
     def test_unfinished_heading_after_closed_comment_code_and_html_merges(self):
         self.opened()
