@@ -92,6 +92,9 @@ BOOK_REVIEW_ITEMS = {key: item for item, key, kind, _ in BOOK_ITEMS if kind == "
 # allowed"): each proposition, the scope it may keep and the tag that must say why. Every
 # other statement is full (stage 4b's goal, brief 0007), and no route is "alternative".
 ALLOWED_LIMITS = {
+    # #116: the owner's interim disclosure decision of 20 October 2026.
+    "I.45": ("restricted", "figure-with-dissection"),
+    "II.14": ("restricted", "figure-with-dissection"),
     "III.16": ("partial", "mixed-angles-omitted"),
     "III.31": ("partial", "mixed-angles-omitted"),
 }
