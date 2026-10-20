@@ -2,7 +2,7 @@
 scope = "full"
 note = "With its companions: `Prop24` lays one segment on the other, `Prop24.equalCircles` gives equal circles and measures, `Prop24.equalMeasure` equal measures."
 companions = ["III.24 equalCircles", "III.24 equalMeasure"]
-fingerprint = "sha256:34772fdbf2230d5d"
+fingerprint = "sha256:f026c2536b478ed3"
 
 [route]
 kind = "modified"
@@ -50,6 +50,6 @@ note = "Like Heath's, this figure draws the last supposition the text refutes: t
 
 [review]
 stage = "exceptions"
-commit = "7f4fba99"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:bd40b803c93f0cfa"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:a89b0e46fd0c545c"

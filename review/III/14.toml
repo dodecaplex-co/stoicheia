@@ -34,6 +34,6 @@ case = "two equal straight lines AB and CD, neither through E"
 
 [review]
 stage = "exceptions"
-commit = "bb1589c5"
+commit = "d0508d6c"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:39ec7343c9e88e1a"
+lean = "sha256:31f0eb228c91b8a5"

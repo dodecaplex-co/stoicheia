@@ -1,7 +1,7 @@
 [statement]
 scope = "full"
 note = "A straight line DB whose square is the rectangle AD, DC touches the circle."
-fingerprint = "sha256:68600420107e4625"
+fingerprint = "sha256:3fa81505760e369a"
 
 [route]
 kind = "euclid"
@@ -28,6 +28,6 @@ case = "F off AC, with distinct contacts B and E on opposite sides of DF"
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:9e2390c9efe75d73"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:5393e83152f64aea"

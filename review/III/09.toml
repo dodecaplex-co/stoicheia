@@ -2,7 +2,7 @@
 [statement]
 scope = "full"
 note = "Leaves out Euclid's \"within\": any point from which three equal straight lines fall on the circle is its centre, as III.25 needs."
-fingerprint = "sha256:60fd9e5a7bed392d"
+fingerprint = "sha256:f4a21c9a83e585ee"
 
 [route]
 kind = "euclid"
@@ -21,6 +21,6 @@ case = "D off both AB and BC, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:81664e305ab4ab7b"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:87c4a4d26db29398"

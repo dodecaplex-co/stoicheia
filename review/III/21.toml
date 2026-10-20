@@ -1,7 +1,7 @@
 [statement]
 scope = "full"
 note = "The angles at any two points of one segment are equal, in a segment of any size."
-fingerprint = "sha256:8d61fc6e9d4c7398"
+fingerprint = "sha256:60a9c816badb070c"
 
 [route]
 kind = "modified"
@@ -17,6 +17,6 @@ case = "the segment BAED greater than a semicircle, with F on A's and E's side o
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:9d325961baa79035"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:54a61ea628e84e01"

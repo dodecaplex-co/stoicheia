@@ -1,7 +1,7 @@
 [statement]
 scope = "full"
 note = "The rectangles AE, EC and DE, EB are equal wherever the two straight lines cut within the circle."
-fingerprint = "sha256:c435ba685e4d22d2"
+fingerprint = "sha256:260bca6886d9f981"
 
 [route]
 kind = "euclid"
@@ -17,6 +17,6 @@ case = "both straight lines through the centre E (left), and neither through F w
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:963cae5bb2629b9b"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:98c7b45c9b798d58"

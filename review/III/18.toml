@@ -17,6 +17,6 @@ note = "The figure shows the impossible supposition with G distinct from C: FG i
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:c05e2d0569c0489f"

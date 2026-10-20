@@ -26,6 +26,6 @@ case = "circumferences BGC and EHF less than semicircles, with K and L beyond BC
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:8deb7e4fbbdec574"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:c6ea841e06026dc5"

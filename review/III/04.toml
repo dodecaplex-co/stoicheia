@@ -2,7 +2,7 @@
 [statement]
 scope = "full"
 note = "\"Not through the centre\" is said of every centre of the circle, and B is off AC, so that the two straight lines are really two."
-fingerprint = "sha256:84c2e52c5d72734a"
+fingerprint = "sha256:fed861dbbfcf4968"
 
 [route]
 kind = "euclid"
@@ -22,6 +22,6 @@ case = "B on A's side of FE, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:f7ace278349575cf"
+commit = "d0508d6c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:39764bc40a45a681"
