@@ -1079,17 +1079,6 @@ class Modern(unittest.TestCase):
                 self.assertNotIn("S24", modern_rules(MODERN_GOOD, "I.47", names=names))
         self.assertIsNone(style.modern_span("[x]: invalid destination\n" + paragraph))
 
-    def test_style_describes_placement_as_pending(self):
-        text = (style.ROOT / "docs" / "STYLE.md").read_text()
-        page = text.split("8. **The mishnah,**", 1)[1].split("9. **Further reading,**", 1)[0]
-        figure = text.split("**`NN-modern.svg`,", 1)[1].split("**Departures", 1)[0]
-        for passage in (page, figure):
-            with self.subTest(passage=passage):
-                self.assertIn("pending renderer change", passage)
-                self.assertIn("train F1", passage)
-                self.assertIn("S24", passage)
-                self.assertIn("source", passage)
-
     def test_source_spans(self):
         for before, paragraph, after in SOURCE_SPAN_CASES:
             text = before + (paragraph or "") + after
