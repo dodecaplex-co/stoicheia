@@ -1239,7 +1239,9 @@ class ConflictMarkers(unittest.TestCase):
 
     def test_middle_after_block_quote_or_list_item_is_refused(self):
         for start in ("> quote", "- item", "* item", "+ item", "1. item", "12) item",
-                      "Para\n> quote", "Para\n- item"):
+                      "0. item", "2.", "*", "+ \t", "Para\n\n2. item", "Para\n\n*",
+                      "Para\n> quote", "Para\n>", "Para\n- item", "Para\n*\tx",
+                      "Para\n1. item", "Para\n01) item", "Para\n2. item\n- x"):
             with self.subTest(start=start):
                 text = start + "\n" + "=" * 7
                 line = text.count("\n") + 1
@@ -1248,6 +1250,20 @@ class ConflictMarkers(unittest.TestCase):
         for text in ("-item\n", "1.5 metres\n", "*emphasis* here\n"):
             with self.subTest(paragraph=text):
                 self.assertEqual(style.conflict_markers(text + "=" * 7, markdown=True), [])
+
+    def test_list_items_that_cannot_interrupt_continue_the_paragraph(self):
+        for line in ("2. item", "12) item", "0. item", "*", "+", "* \t", "+ ", "1.",
+                     "1)  ", "01.", "2.", "2. item\n3. item"):
+            with self.subTest(line=line):
+                text = "Heading\n" + line + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_setext_and_thematic_lines_precede_list_items(self):
+        for line in ("-", "- ", "-\t", "* * *", "- - -", "_ _ _"):
+            with self.subTest(line=line):
+                text = "Heading\n" + line + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(3, "middle")])
 
     def test_reference_definition_stops_at_block_boundary(self):
         for boundary in ("\n", "<!-- comment -->\n", "<!--\ncomment\n-->\n",

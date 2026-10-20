@@ -328,6 +328,9 @@ LINK_REFERENCE_OPEN = re.compile(r"^ {0,3}\[")
 # A block quote or list item: a seven-equals line after one cannot underline a
 # paragraph (a setext underline is never a lazy continuation), so S23 refuses it.
 CONTAINER_START = re.compile(r"^ {0,3}(?:>|[-+*](?:[ \t]|$)|[0-9]{1,9}[.)](?:[ \t]|$))")
+# Of those, the ones that may interrupt a paragraph: a block quote, a bullet item with
+# some text, or an ordered one numbered 1 with some text. Any other goes on with it.
+PARAGRAPH_CONTAINER_START = re.compile(r"^ {0,3}(?:>|(?:[-+*]|0{0,8}1[.)])[ \t]+[^ \t])")
 GFM_WHITESPACE_CHARS = " \t\n\v\f\r"
 GFM_WHITESPACE = r"[ \t\n\v\f\r]"
 HTML_RAW_START = re.compile(
@@ -525,7 +528,8 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
         else:
             reference_label, completed_reference = possible_reference_label(
                 line, reference_label)
-            if completed_reference or CONTAINER_START.match(line):
+            if completed_reference or (PARAGRAPH_CONTAINER_START if paragraph
+                                       else CONTAINER_START).match(line):
                 reference_definition = True
                 paragraph = False
             elif not paragraph and line.expandtabs(4).startswith("    "):

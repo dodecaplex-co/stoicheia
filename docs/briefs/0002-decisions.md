@@ -1855,14 +1855,19 @@ findings:
   is allowed only when every line of the preceding block is ordinary paragraph text;
   any line beginning with up to three spaces, a bracketed label (escaped brackets
   included) and a colon disqualifies the block until its next boundary, as does a block
-  quote or list item, since an underline is never a lazy continuation.
+  quote or list item, since an underline is never a lazy continuation. Within a
+  paragraph, as in GFM, only a list item that can interrupt it counts: a bullet, or an
+  ordered item numbered 1, with some text. `2. item`, `1.` or a bare `*` goes on with
+  the paragraph, which a seven-equals line may underline; at a block's start any list
+  item disqualifies the block.
   S23 examines only middles of exactly seven equals and errs toward refusal in doubtful
   contexts, so an author whose heading is refused can use eight, since other lengths are
   never examined as middles.
   This deliberately refuses `[label]: destination extra words` with seven equals even
   though it is paragraph text. `scripts/check_style.py` retains the possible definition
   across destination and title continuations. `tests/test_check_style.py` covers the
-  three reported escapes, the conservative refusal, the eight-equals alternative and
-  ordinary headings across block boundaries; `scripts/negative_tests.py` adds a two-line
+  three reported escapes, the conservative refusal, the eight-equals alternative,
+  list markers that cannot interrupt a paragraph and ordinary headings across block
+  boundaries; `scripts/negative_tests.py` adds a two-line
   definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
   states the rule. No mathematical statement or review record changes.
