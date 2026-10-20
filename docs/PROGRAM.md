@@ -20,9 +20,12 @@ questions at once:
 A book meets the standard when its acceptance checklist (`ACCEPTANCE.md`)
 passes with no failures, an independent audit by a model family that wrote none of it
 agrees, and a cold outside reading scores it about 95. A few deliberate limitations are
-allowed when they are stated plainly where they occur: in Book III, the mixed angles of
-III.16 and III.31, and the places where a System E rule already contains a proposition
-(III.2).
+allowed when they are stated plainly where they occur. For I.45 and II.14, the figure is
+supplied with its checked division into triangles and area is relative to that division; a
+proof of a division from the outline, and independence of area from the division chosen,
+remain pending under [#116](https://github.com/jackChallis/stoicheia/issues/116). In Book
+III, the limitations are the mixed angles of III.16 and III.31, and the places where a
+System E rule already contains a proposition (III.2).
 
 ## 2. How a book is made, in parallel
 
