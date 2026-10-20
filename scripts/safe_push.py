@@ -2,7 +2,7 @@
 """The pre-flight of a pull request, and its merge: the way work reaches main.
 
     git safe-push --branch <name> [--label L]... [--title T] [--body-file F] [--ready]
-                  [--commit <sha>] [--dry-run] [--full]
+                  [--commit <sha>] [--dry-run]
     git safe-push --merge <pr-number> [--dry-run]
     git safe-push --dry-run [--commit <sha>]                      # the checks alone
 
@@ -18,13 +18,12 @@ and --dry-run, the script refuses, and says to use --branch.
 
 The pre-flight (--branch) checks one commit (HEAD unless --commit names another) from end
 to end, reading nothing from the working tree, and only then pushes it to
-refs/heads/<name> and opens the pull request, or updates the open one. A passing full-check
-record of this commit against this origin/main, made by origin/main's harness, stands in
-for step 4 alone, unless --dry-run or --full is given. The steps run in order, and the
-first that fails stops it with a message saying why:
+refs/heads/<name> and opens the pull request, or updates the open one. The steps run in
+order, and the first that fails stops it with a message saying why:
 
 Branches named train/* require --body-file. Step "3. train" runs origin/main's
-check_train.py before the full checks, or reports a skip while main has no such module.
+check_train.py before the full checks. While main has no such module, only a commit
+adding it may use its own copy, with a bootstrap note for the security review.
 
 1. Preconditions. The commit exists; `git fetch origin`; origin/main is an ancestor of
    the commit, so that the merge commit will hold exactly the tree checked; the branch,
@@ -97,7 +96,7 @@ check_train.py before the full checks, or reports a skip while main has no such 
    before the checks; a dry run, which does not ask GitHub, notes a missing one.
 6. A summary, printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
    repository (`STOICHEIA_PUSH_LOG` names another file); each step's output is kept
-   beside it in `logs/`, and the pre-flight's record in `preflight/`, for --branch and --merge.
+   beside it in `logs/`, and the pre-flight's record in `preflight/`, for --merge.
 
 --merge <n> merges a pull request only when its head passes the secret scan and the
 guards against the current origin/main, run again then (a record of the pre-flight is a
@@ -2170,7 +2169,7 @@ def check_commit(ctx, rep: Report, logs: Path, test_mode: bool,
                  checked: dict | None = None, train_body: str | None = None) -> Preflight:
     """Steps 2 to 4 on the commit: the secret scan, the guards and the full checks.
     `checked`, a record of the full checks of this commit against this origin/main by
-    origin/main's harness, stands in for step 4 alone; steps 2 and 3, including the
+    origin/main's harness, stands in for step 4 alone (--merge); steps 2 and 3, including the
     train check when given, always run."""
     secret_scan(ctx.repo, ctx.base, ctx.sha, rep, allow_rev=ctx.base)
     with tempfile.TemporaryDirectory(prefix="stoicheia-push-") as tmp:
@@ -2207,6 +2206,7 @@ class Context(NamedTuple):
     gh: tuple = ("gh",)
     remote_branch: str | None = None    # the branch on origin before the push
     queue: bool = False
+    harness_sha: str | None = None     # origin/main's tip, before queue_base changes base
 
 
 def is_local(url: str) -> bool:
@@ -2263,13 +2263,13 @@ def check_installed(repo, base: str, rep: Report) -> None:
                     "(sh scripts/install_hooks.sh --force)")
 
 
-def harness_train(repo: Path, base: str) -> bytes | None:
-    """Read main's train module, distinguishing an absent file from an unreadable one."""
+def harness_train(repo: Path, base: str, owner: str = "origin/main") -> bytes | None:
+    """Read the train module at a commit, distinguishing absent from unreadable."""
     entry = git(repo, "ls-tree", base, "--", "scripts/check_train.py").strip()
     if not entry:
         return None
     if not re.fullmatch(r"100(?:644|755) blob [0-9a-f]{40,64}\tscripts/check_train\.py", entry):
-        raise Refusal("origin/main's scripts/check_train.py is not a regular file")
+        raise Refusal(f"{owner}'s scripts/check_train.py is not a regular file")
     return git(repo, "cat-file", "blob", f"{base}:scripts/check_train.py", binary=True)
 
 
@@ -2360,14 +2360,25 @@ def train_input(ctx: Context, args) -> str | None:
 
 
 def train_check(ctx: Context, body: str, rep: Report) -> None:
-    """Run the public train check from main's harness copy, never the proposed tree."""
+    """Run main's train checker, or the commit's newly added checker with a bootstrap note.
+    The queue's comparison base may precede main's harness revision."""
     rep.heading("3. train")
     started = time.time()
     try:
-        source = harness_train(ctx.repo, ctx.base)
+        source = harness_train(ctx.repo, ctx.harness_sha or ctx.base)
+        origin = "origin/main's check_train"
         if source is None:
-            rep.add("3", "train", "skip", "origin/main has no scripts/check_train.py yet")
-            return
+            added = any(c.status == "A" and c.path == "scripts/check_train.py"
+                        for c in raw_changes(ctx.repo, ctx.base, ctx.sha))
+            if not added:
+                raise Refusal("origin/main has no scripts/check_train.py and the commit "
+                              "does not add it")
+            source = harness_train(ctx.repo, ctx.sha, "the commit")
+            if source is None:
+                raise Refusal("could not read the commit's added scripts/check_train.py")
+            rep.add("3", "train bootstrap", "note", "bootstrap: the commit's own check_train.py, "
+                    "for the security review")
+            origin = "the commit's check_train"
         here = Path(__file__).resolve().parent
         path = harness_copy((here / "safe_push.py").read_bytes(),
                             (here / "heath.py").read_bytes(), source)
@@ -2381,10 +2392,20 @@ def train_check(ctx: Context, body: str, rep: Report) -> None:
             raise Refusal("check_train returned an unreadable problem list")
         if problems:
             raise Refusal("\n".join(problems))
-    except Exception as e:
+    except (Exception, SystemExit) as e:
         rep.add("3", "train", "FAIL", str(e), time.time() - started)
         raise Refusal(f"the train check refused: {e}") from e
-    rep.add("3", "train", "ok", "origin/main's check_train passed", time.time() - started)
+    rep.add("3", "train", "ok", f"{origin} passed", time.time() - started)
+
+
+def merge_train_input(ctx: Context, view: dict) -> str | None:
+    """Read a train's current pull request body; an unreadable body cannot skip its check."""
+    if not (ctx.branch or "").startswith("train/"):
+        return None
+    body = view.get("body")
+    if not isinstance(body, str):
+        raise Refusal("could not read the train's current pull request body")
+    return body
 
 
 def gh_command(test_mode: bool) -> tuple:
@@ -2496,7 +2517,8 @@ def preconditions(repo: Path, commit: str, branch: str | None, dry_run: bool,
         gh_ready(gh, repo, test_mode)
         tags = remote_refs(repo, "--tags")
     check_installed(repo, base, rep)
-    return Context(repo, sha, base, commits, origin, slug, tags, branch, gh, remote_branch)
+    return Context(repo, sha, base, commits, origin, slug, tags, branch, gh, remote_branch,
+                   harness_sha=base)
 
 
 # --------------------------------------------------------------------------------------
@@ -2580,7 +2602,8 @@ OWN_PART = re.compile(r"(?ms)^<!-- safe_push:(\w+) begin\b[^\n]*?-->[ \t\r]*$"
                       r"(?:(?!<!-- safe_push:\1 begin).)*?"
                       r"^<!-- safe_push:\1 end -->[ \t\r]*$")
 # The pre-flight's summary, one of those parts, is replaced there.
-BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin(?: sha=(\w+) base=(\w+))? -->"
+BLOCK = re.compile(r"(?ms)^<!-- safe_push:preflight begin"
+                   r"(?: sha=(\w+) base=(\w+)(?: harness=(\w+))?)? -->"
                    r"[ \t\r]*$(?:(?!<!-- safe_push:preflight begin).)*?"
                    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
 PLACEHOLDER = re.compile(r"(?m)^<!-- safe_push: (\w+) -->[ \t\r]*$")
@@ -2593,12 +2616,13 @@ def sanitized(text: str) -> str:
 
 
 def preflight_block(sha: str, base: str, record: dict) -> str:
-    lines = [f"<!-- safe_push:preflight begin sha={sha} base={base} -->",
+    harness_sha = record.get("harness_sha", base)
+    lines = [f"<!-- safe_push:preflight begin sha={sha} base={base} harness={harness_sha} -->",
              f"Pre-flight of `{sha[:12]}` against origin/main `{base[:12]}`, "
              f"{record.get('time', '')}, by {record.get('harness', 'safe_push.py')}"
              + ("; the full checks skipped (the internal test flag)"
                 if not record.get("full") else "") + ".",
-             "",
+             "", "Verdict: PASS.", "",
              "| Step | Outcome | Seconds |",
              "|---|---|---|"]
     for stage, name, outcome, seconds in record.get("steps", []):
@@ -2919,7 +2943,7 @@ def watch_checks(ctx: Context, pr: PR, rep: Report) -> str:
 
 
 # --------------------------------------------------------------------------------------
-# The pre-flight's record, for --branch and --merge
+# The pre-flight's record, for --merge
 
 
 def log_path() -> Path:
@@ -2934,7 +2958,7 @@ def record_path(sha: str, base: str) -> Path:
 def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool,
                 checked: dict | None = None) -> dict:
     """The pre-flight's record. `checked`, the earlier record whose full checks stood in
-    for step 4, gives its step 4 and its notes."""
+    for step 4 (--merge), gives its step 4 and its notes."""
     steps = [[s.stage, s.name, s.outcome, s.seconds] for s in rep.steps
              if s.outcome in ("ok", "FAIL", "skip") and s.stage in ("2", "3", "4")]
     notes = [[s.name, (s.detail.splitlines() or [""])[0]] for s in rep.steps
@@ -2951,13 +2975,14 @@ def make_record(ctx: Context, pre: Preflight, rep: Report, full: bool,
         "full": full or bool(checked and checked.get("full")),
         "time": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "harness": HARNESS, "harness_blob": HARNESS_BLOB,
+        "harness_sha": ctx.harness_sha or ctx.base,
         "steps": steps, "notes": notes,
         "protected": pre.protected, "statements": pre.statements,
     }
 
 
 def checks_record(record: dict | None, test_mode: bool) -> dict | None:
-    """The record, if its passing full checks may stand in for step 4: they were run
+    """The record, if its passing full checks may stand in for step 4 at the merge: they ran
     (or skipped by the internal test flag, under it) by origin/main's harness, the one
     running now. The record is a local file anything run as the user could write, so it
     never stands in for the secret scan or the guards, and CI runs the same checks."""
@@ -3260,7 +3285,7 @@ def merge_preconditions(repo: Path, number: int, test_mode: bool, rep: Report):
         raise Refusal(f"origin ({origin}) is not on GitHub: there is no pull request to merge")
     gh = gh_command(test_mode)
     gh_ready(gh, repo, test_mode)
-    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh)
+    ctx = Context(repo, "", base, 0, origin, slug, {}, None, gh, harness_sha=base)
     queued = queue_enabled(ctx, rep)
     main_health(ctx, rep)
     view = gh_json(ctx, "pr", "view", str(number), "--json",
@@ -3860,12 +3885,8 @@ def preflight_main(repo: Path, args) -> int:
         if ctx.branch:
             check_kind_label(ctx, args, rep)
         logs = logs_dir(sha)
-        checked = checks_record(load_record(sha, base), args.test_mode) \
-            if not args.dry_run and not args.full else None
-        pre = check_commit(ctx, rep, logs, args.test_mode, checked=checked,
-                           train_body=train_input(ctx, args))
-        record = make_record(ctx, pre, rep, full=not args.test_mode and checked is None,
-                             checked=checked)
+        pre = check_commit(ctx, rep, logs, args.test_mode, train_body=train_input(ctx, args))
+        record = make_record(ctx, pre, rep, full=not args.test_mode)
         save_record(record)
         if args.dry_run:
             rep.heading("5. Push")
@@ -3944,7 +3965,7 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         earlier = load_record(ctx.sha, ctx.base)
         checked = checks_record(earlier, test_mode)
         if checked is None:
-            gates(ctx, number, rep)     # before the long checks, so a draft fails at once
+            view = gates(ctx, number, rep)   # before long checks, so a draft fails at once
         rep.heading("3. The pre-flight of the head")
         # The secret scan and the guards run on the head every time: the record is a
         # local file, and the pre-flight ran the commit's own code (its checks, and Lean
@@ -3962,20 +3983,28 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
                     f"{ctx.base[:12]} ({checked.get('time')}): the secret scan and the guards "
                     "run again; the full checks are not repeated")
         logs = logs_dir(ctx.sha)
-        pre = check_commit(ctx, rep, logs, test_mode, checked=checked)
+        train_body = merge_train_input(ctx, view)
+        pre = check_commit(ctx, rep, logs, test_mode, checked=checked, train_body=train_body)
         record = make_record(ctx, pre, rep, full=not test_mode and checked is None,
                              checked=checked)
         save_record(record)
         view = gates(ctx, number, rep, record)
+        if merge_train_input(ctx, view) != train_body:
+            raise Refusal("the train's body changed during the checks: run --merge again")
         labels = {item.get("name") for item in view.get("labels") or []}
         kind = next((k for k in KIND_LABELS if k in labels), None)
-        # The body's summary is written afresh when the full checks ran again or when it
-        # is not of this head and origin/main; the parts safe_push wrote, whenever they
-        # are out of date.
-        body = gh_json(ctx, "pr", "view", str(number), "--json", "body").get("body") or ""
+        # A train's summary includes the current train check and any bootstrap note.
+        # Other summaries are refreshed when the full checks ran again or the head,
+        # comparison base or harness changed; the other parts, whenever out of date.
+        body_view = gh_json(ctx, "pr", "view", str(number), "--json", "body")
+        if merge_train_input(ctx, body_view) != train_body:
+            raise Refusal("the train's body changed during the checks: run --merge again")
+        body = body_view.get("body") or ""
         m = BLOCK.search(body)
         new = refreshed(body, describe(ctx, pre))
-        if checked is None or not m or (m.group(1), m.group(2)) != (ctx.sha, ctx.base):
+        if train_body is not None or checked is None or not m or \
+                (m.group(1), m.group(2), m.group(3) or m.group(2)) != \
+                (ctx.sha, ctx.base, record["harness_sha"]):
             new = put_block(new, preflight_block(ctx.sha, ctx.base, record))
         if new != body:
             if dry_run:
@@ -4118,8 +4147,6 @@ def main(argv=None) -> int:
     parser.add_argument("--commit", default="HEAD", help="the commit to check (default HEAD)")
     parser.add_argument("--dry-run", action="store_true",
                         help="everything but the push, the pull request and the merge")
-    parser.add_argument("--full", action="store_true",
-                        help="run the full local checks again with --branch")
     # The pre-push hook's entry point: the secret scan of one ref's push.
     parser.add_argument("--scan-push", nargs=3, metavar=("LOCAL", "REMOTE", "REF"),
                         help=argparse.SUPPRESS)
@@ -4129,10 +4156,8 @@ def main(argv=None) -> int:
                         help=argparse.SUPPRESS)
     args = parser.parse_args(ARGV)
     if args.merge is not None and (args.branch or args.title or args.body_file or args.ready
-                                   or args.label or args.commit != "HEAD" or args.full):
+                                   or args.label or args.commit != "HEAD"):
         parser.error("--merge takes only --dry-run")
-    if args.full and not args.branch:
-        parser.error("--full goes with --branch")
     if not args.branch and (args.title or args.body_file or args.ready or args.label):
         parser.error("--title, --body-file, --ready and --label go with --branch")
     if args.body_file and not Path(args.body_file).is_file():
