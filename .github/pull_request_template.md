@@ -6,8 +6,11 @@ coordinator writes the rest. `git safe-push --merge <n>` refuses while a box mar
 **Required** is unticked, or one marked **Required if protected** when a protected path
 changes, while a required box of this template is missing from the body, and while "What
 and why", a row of the Reviews table (the security review's when a protected path
-changes) or "Needs the owner's OK" is unwritten. A box or a section counts only where
-GitHub shows it, as docs/WORKFLOW.md says under "The merge".
+changes), "Unfinished work" or "Needs the owner's OK" is unwritten, or an issue named
+under "Unfinished work" is not open with blocks-release. A pull request labelled release
+is refused while any blocks-release issue is open. Boxes and other sections count where
+GitHub shows them; "Unfinished work" is checked as raw text, as docs/WORKFLOW.md says
+under "The merge".
 -->
 
 ## What and why
@@ -25,6 +28,17 @@ code it checks. -->
 or "None". -->
 
 <!-- safe_push: statements -->
+
+## Unfinished work
+
+<!-- Each piece of unfinished work this pull request lands: a prototype, a provisional
+answer, a restricted or partial scope awaiting a proof, a deferred page, a test not yet
+in CI, anything a disclosure calls "to come". Name each with its open issue labelled
+blocks-release, as #N; or write "None", with an optional final full stop. Keep exactly one
+heading for this section. Use a plain list with - or * at the left edge and one following space;
+wrap an item with 2 to 5 spaces and no intervening blank line. Each item names its issue
+as a separate #N token, optionally in parentheses or followed by punctuation. No links,
+URLs, code, HTML, nested lists or headings; this comment may stay. -->
 
 ## Review records
 
@@ -76,6 +90,7 @@ description, anything sent outside the repository. Quote the owner's OK, or writ
 - [ ] **Required:** One coherent change, and no check changed together with the code it checks.
 - [ ] **Required:** The checks above are safe_push.py's pre-flight of this pull request's head commit.
 - [ ] **Required:** Each statement changed is named in its approving brief revision or decisions entry, or none changed.
+- [ ] **Required:** Each piece of unfinished work is named under "Unfinished work" with its open issue labelled blocks-release, or there is none.
 - [ ] **Required:** Each review record touched was re-stamped by its reviewer, or none was touched.
 - [ ] **Required:** /code-review was run, and each blocking or material finding is resolved above.
 - [ ] **Required if protected:** /security-review was run, and each blocking or material finding is resolved above.
