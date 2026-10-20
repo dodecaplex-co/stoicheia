@@ -1501,6 +1501,7 @@ findings:
 
 - **III.37 leaves the grouped-case example.** The example in the `uncarried_runs` docstring
   of [scripts/check_fidelity.py](../../scripts/check_fidelity.py) drops III.37, whose case
-  with the centre on AC now has a proof of its own, `Prop37.centre_on_secant`. I.14 remains
-  as the example of a "similarly" that one argument already covers. The docstring is the
-  only change to the script; the check is unchanged.
+  with the centre on AC gets a proof of its own, `Prop37.centre_on_secant`, on ship R1's
+  train. The docstring holds before and after that train lands. I.14 remains as the example
+  of a "similarly" that one argument already covers. The docstring is the only change to
+  the script; the check is unchanged.
