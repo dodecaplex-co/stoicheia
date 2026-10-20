@@ -1549,5 +1549,6 @@ findings:
   self-test fixtures for the old superposition rule with I.7's rule,
   `Tacit.not_same_side_of_circles_meet`, preserving the same acceptance of a complete
   `step` record and rejection when its note is missing. This tooling change lands before
-  the Lean replacement it checks, and neither check is weakened. Protected files changed:
-  `Certificate/Facts.lean` and `scripts/heath.py`.
+  the Lean replacement it checks, and neither check is weakened. `Certificate/FIELDS.md`
+  records the resulting `common_notions` contract. Protected files changed:
+  `Certificate/Facts.lean`, `Certificate/FIELDS.md` and `scripts/heath.py`.
