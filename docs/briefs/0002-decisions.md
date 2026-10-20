@@ -2491,6 +2491,65 @@ findings:
   or independent security review was run. The changes remain uncommitted; no push or
   GitHub action was taken. Security review before landing remains open.
 
+- **Eighth-round Unicode source aliases for brief 0009, #75.** At `2a481ee5`, ASCII
+  lowercasing did not identify `ſyntax.lean` as an alias of `Syntax.lean`. The listing
+  check accepted the former, and exact selection from the listing omitted it from the
+  stricter pure-source import audit. A canonical path on this machine opens that alias.
+  `model/Check/Generator.lean` now probes each of the four pure modules by its canonical
+  source path, independently of the directory listing, and audits the file that path opens.
+  The separate listing check permits only ASCII letters, digits, `_`, `-` and `.` in
+  each component, with empty, `.` and `..` components refused. It checks directory entries
+  and non-source filenames too, before ASCII case comparisons. The existing exact `.lean`
+  extension, case-collision and prescribed pure-path checks remain. Model sources are read
+  from the validated ASCII listing, with the root required as `model/Model.lean`.
+  The import decision validates supplied source paths before deciding whether the pure or
+  Model import boundary applies, so an alias cannot receive the Model permissions.
+
+  `model/Check/RoundTrip.lean` adds listings and headers supplied as data. They refuse
+  the long-s aliases of a pure source and a Model source, a Kelvin-sign alias, and other
+  non-ASCII names. A directory component and a non-source filename are checked as well;
+  canonical ASCII paths, including all four pure sources, pass. These cases need no pure
+  source files or folding filesystem. With the old generator, the ten refusal cases failed
+  because no diagnostic was emitted; with the correction, `lake build Check.RoundTrip`
+  passes (2610 jobs). `model/README.md` explains the canonical probes, ASCII filenames
+  and the regression evidence. Lake's inputs are unchanged: the existing extension filters
+  already include these `.lean` aliases. Non-source entries are checked when the audit
+  runs, but changing those entries alone need not invalidate a cached check; the existing
+  content-only trace limits on renames also remain.
+
+  Real experiments on this machine created
+  `Elements/Foundations/Superposition/ſyntax.lean` containing exactly
+  `import Lake.Util.Version` and a newline, then separately
+  `model/Model/ſcratch.lean` containing exactly `import Check.Original` and a newline.
+  Reading the canonical paths `Elements/Foundations/Superposition/Syntax.lean` and
+  `model/Model/Scratch.lean` returned those bytes. Each `cd model && lake build` exited 1,
+  with the respective source-audit diagnostic:
+  ```text
+  Elements/Foundations/Superposition/ſyntax.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+  model/Model/ſcratch.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+  ```
+  Both temporary files and the newly created `Superposition/` source directory were removed.
+  The restored `cd model && lake build` passes (2625 jobs). On `2a481ee5` plus this
+  round's uncommitted code, `python3 scripts/check_fidelity.py`,
+  `python3 -I tests/model/run.py --fast` and `python3 -I tests/test_negative_tests.py`
+  (ten tests) pass. The three generated sources, `model/Model/Laws.lean`,
+  `model/Check/Laws.lean` and `model/Model/Assembly.lean`, match both HEAD and origin/main
+  byte for byte. Every Lean and Lake invocation exported `PATH=$HOME/.elan/bin:$PATH` first.
+
+  This round changes only `model/Check/Generator.lean`, `model/Check/RoundTrip.lean`,
+  `model/README.md` and `docs/briefs/0002-decisions.md`. No proposition statement, Heath
+  comment, foundation, lock, expected value or review record changes; no record is made
+  stale. The complete protected-file list for the branch against origin/main, including
+  the earlier certificate tooling, is named again by whole path on added lines:
+  `.github/workflows/ci.yml`, `Certificate/FIELDS.md`, `Certificate/Facts.lean`,
+  `model/lakefile.toml`, `review/SCHEMA.md`, `scripts/heath.py`,
+  `scripts/negative_tests.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `tests/fixtures/CertificateCN4.lean`, `tests/test_certificate.py`,
+  `tests/test_negative_tests.py`.
+  The changes remain uncommitted. No push or GitHub action was taken. Full repository CI,
+  independent kernel replay and independent security review were not run in this round;
+  security review before landing remains open.
+
 - **The owner approves the restricted superposition replacement.** The owner's exact
   approval is: "replace the superposition rule as ship S built it, with brief 0009 questions 2, 4 and 5 as prototyped, the model's import of the four pure modules, the page claim 'a restricted inference in System E's style', tooling PR first. Lands after /no-mistakes and an independent Codex read of the model lane."
 

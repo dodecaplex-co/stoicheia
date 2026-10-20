@@ -312,12 +312,22 @@ core, shared and project declaration membership, foundation collection and share
 
 Before selecting source files, the audit checks the directory listings under `Model/`
 and `../Elements/Foundations/`, together with the actual spelling of `Model.lean`.
-Any extension equal to `lean` ignoring case must be exactly `.lean`; `.LEAN` and mixed
-spellings are errors. Distinct file paths equal after lowercasing are also errors,
-including differences in directory components. A case variant of a pure module's prescribed
-path is refused even when the canonical spelling is absent. This prevents a case-insensitive
-filesystem from resolving a source which the audit would otherwise omit. The listing decision takes
-data, so its regressions run on any filesystem without creating colliding files.
+Every filename and directory component must use only ASCII letters, digits, `_`, `-` and
+`.`; empty components, `.` and `..` are refused. This applies to non-source files too.
+Unicode names are refused before case comparison: ASCII lowercasing alone misses aliases
+such as `ſyntax.lean`, which can resolve to `Syntax.lean`, and the Kelvin sign, which can
+resolve to `K`. Among ASCII names, any extension equal to `lean` ignoring case must be
+exactly `.lean`; `.LEAN` and mixed spellings are errors. Distinct paths equal after
+lowercasing are errors, including directory components. A case variant of a pure module's
+prescribed path is refused even when the canonical spelling is absent.
+
+The four pure sources are located independently of those listings: the audit probes
+`../Elements/Foundations/Superposition/Syntax.lean`, `Semantics.lean`, `Soundness.lean`
+and `Restriction.lean` by their canonical paths and reads whatever files those paths open.
+Each receives the stricter pure-module import check. Model sources are read through the
+validated ASCII paths, with `Model.lean` required in its canonical spelling. The import
+decision also validates supplied source paths before assigning import permissions. Listing
+and header regressions use data, so they run without the pure modules or a folding filesystem.
 
 Lean 4.35's `modToFilePath` joins each component as a path: `..` can leave a package and
 an absolute component replaces the path before it. Colons and trailing dots or spaces have
@@ -396,6 +406,8 @@ still replay a cached result when the ordered contents stay the same. Text hashe
 line endings, and a timestamp-only touch can also replay a result. Changes to the selected
 contents otherwise rebuild the checks. CI's fresh build runs every check, including the
 whole import audit, regardless of local cache traces.
+Non-source entries are checked when the audit runs, but are outside the extension-filtered
+Lake inputs; changing those entries alone need not rerun a cached check.
 
 The library keeps its geometric words; I.4 and I.8 use the restricted rule.
 Rewriting the library over a signature, with
@@ -489,6 +501,9 @@ the original means. These checks do that, at every build.
   declarations. Canonical names, including harmless escaped identifiers, remain accepted.
   Directory listings supplied as data refuse upper-case and mixed-case extensions, names
   differing only in case, and directory-component aliases, in Model and the foundations.
+  Listings and headers also refuse long-s aliases of pure and Model sources, Kelvin-sign
+  aliases and other non-ASCII filenames. Canonical ASCII names remain accepted. A listing
+  case checks a non-ASCII directory component and another checks a non-source filename.
   Compiled-import cases require the real closure to pass and refuse planted closures containing
   `Check.Original`, `Elements.Foundations.Words` (the module declaring `Elements.Point`),
   and a non-canonical module name. A coverage case refuses an unimported Model source.
