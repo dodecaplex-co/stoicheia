@@ -3,6 +3,18 @@
 *Frozen 18 October 2026 by the coordinator, after Astra's challenges of `afe0ee9` and
 `3f00ebf` and the Claude challenger's; decisions Q1 to Q16 as recorded in section 8.*
 
+*Status, 20 October 2026 (main at d95125f0):*
+
+Circle 2 is out of every certified proof (#108); the [guard](../../scripts/check_fidelity.py) forbids it (#137).
+The [overlap kind](../../review/SCHEMA.md) is required (#93); the [negative test](../../scripts/negative_tests.py) reads the lock and [`touching-whole-circles`](../../review/terms.toml) exists (#113).
+The [forbidden-command scan](../../scripts/check_fidelity.py) covers `Staging/` and `Audit/` (#39).
+The [formal model](../../model/Model/Assembly.lean) proves all 87 locked laws, with [generated laws](../../model/Model/Laws.lean) (#109).
+Stage 2's proofs are in [`Elements/`](../../Elements/) (#102).
+Stage 4b's III.8 and III.17 companions are in [`Elements/BookIII/Prop08.lean`](../../Elements/BookIII/Prop08.lean) and [`Prop17.lean`](../../Elements/BookIII/Prop17.lean) (#111); stages 3 and 4 remain in `Staging/`.
+[Staged III.1](../../Staging/Centre/Prop01.lean) still calls Circle 2; its construction must be reconciled with [main's III.1](../../Elements/BookIII/Prop01.lean) before migration.
+Still to do under #59: the prototype rename, centre rule, construction guard, restatements, tag revision and record migration.
+The frozen text below is kept as history.
+
 *The brief settles, before any proof work and as [WORKFLOW.md](../WORKFLOW.md), section 2,
 requires, the rule the owner approved, that every circle has a centre, and every statement
 the rule changes. Each new statement is written with `sorry` in the `Staging` library, in

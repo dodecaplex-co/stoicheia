@@ -27,6 +27,16 @@ staged; and the open questions are marked answered. No statement of III.7, III.8
 changes. The appendix's second table lists what was done, and the notes after it the
 editorial corrections made to the frozen text before it landed.*
 
+*Status, 20 October 2026 (main at d95125f0):*
+
+The three companions and their helpers have moved from `Staging/Stage4b/` into
+[`Elements/BookIII/Prop07.lean`](../../Elements/BookIII/Prop07.lean), [`Prop08.lean`](../../Elements/BookIII/Prop08.lean) and [`Prop17.lean`](../../Elements/BookIII/Prop17.lean) (#111).
+`Touches.contact` is now in [`Elements/Figure/OnCircles.lean`](../../Elements/Figure/OnCircles.lean), and the companions are listed in [`Elements/Companions.lean`](../../Elements/Companions.lean).
+The records for [III.7](../../review/III/07.toml), [III.8](../../review/III/08.toml) and [III.17](../../review/III/17.toml) have scope `full` and review stage `exceptions`.
+The [renderer](../../scripts/render.py) now labels declarations by their use; prerequisite #94 is done.
+Still to do: full passage reviews; III.16 and III.31's mixed angles remain outside this brief.
+The frozen text below is kept as history.
+
 The readings are Astra's. Asked what a full statement would say for each of the five
 records that stages 2 to 4 leave short of full, Astra answered on
 [issue #51](https://github.com/jackChallis/stoicheia/issues/51), run read-only on the
