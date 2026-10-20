@@ -419,11 +419,29 @@ looked into.
    the train or pull request that makes them true; future findings are checklist rows
    for that work, not edits now. Wiki and issue reading is read-only; changes need the
    owner's OK.
+   Each finding falls in one of four tiers, which say when it is fixed:
+   - **Tier 0, defects:** a merge-conflict marker, a broken link, the owner's name, a
+     claim the Lean contradicts, a failing check. Never on main: fixed at once, and
+     refused by a check wherever a check can see it.
+   - **Tier 1, generated facts:** counts, status tables, the acceptance report, the
+     certificate. Never written by hand: generated from their source, and refused when
+     stale.
+   - **Tier 2, reader prose:** true at release. Fixed in the train that changes the fact,
+     or at the latest in the release's own pull request.
+   - **Tier 3, working records:** briefs, reports, issues and the tracker. Dated: a record
+     that later work overtakes gains a dated status note, never a quiet rewrite, and the
+     issues and the tracker are kept current.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book.
-10. **Release.** The notes are drafted from the generated summaries, the owner approves
-    them, and the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up to date:
-    the status board, the lessons, the costs.
+10. **Release.** A release waits for its gate: the read of step 8 on the release
+    candidate, with every Tier 0 to 2 finding fixed in the release's pull request and
+    every Tier 3 record given its status note; no open issue labelled `blocks-release`
+    (unfinished work, a prototype or a provisional answer may be on main only as such an
+    issue, and holds every release until it closes); and the wiki refreshed, so that it is
+    reasonably correct as of its date, as its pages say, and is not expected to be more
+    current than that. Then the notes are drafted from the generated summaries, the owner
+    approves them, and the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up
+    to date: the status board, the lessons, the costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
@@ -431,7 +449,8 @@ corrections and the common voice, as Books I and II have since their tags.
 ### Landing work: pull requests
 
 Work reaches main only as a pull request, merged with a merge commit. On GitHub, a ruleset
-on main requires a pull request and the checks `check`, `model` and `negative`, and blocks
+on main requires a pull request and the checks `check`, `model`, `negative`,
+`formal-model` and `acceptance`, and blocks
 force pushes and deletion; locally, the pre-push hook refuses every push to main. Agents
 never open, merge or approve a pull request: the coordinator does. The account cannot
 approve its own pull requests, so a merge is gated by the checks and by the review

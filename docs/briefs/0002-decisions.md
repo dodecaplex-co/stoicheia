@@ -1936,3 +1936,21 @@ findings:
   Findings go in dated reports under `docs/reports/`, and fixes in the trains or pull
   requests that make them true. The existing step numbers stay, preserving ACCEPTANCE's
   citation of step 9. No check changes.
+
+- **Content kept fresh in four tiers, and the release gate (#164).** On 20 October 2026
+  the owner approved a process for keeping hand-written content true: defects (a conflict
+  marker, a broken link, the owner's name, a claim the Lean contradicts, a failing check)
+  are never on main; facts (counts, status tables, the acceptance report, the certificate)
+  are generated, never written by hand; reader prose is true at release, fixed in the train
+  that changes the fact or at the latest in the release's pull request; working records
+  (briefs, reports, issues, the tracker) are dated, with status notes when overtaken, and
+  the issues and tracker kept current. A release waits for its gate: a read for stale
+  content on the candidate, its Tier 0 to 2 findings fixed and its Tier 3 records noted;
+  the wiki refreshed, reasonably correct as of its date and not expected to be more
+  current; the notes approved before the tag. The same day the owner ruled that
+  unfinished or prototype work may be on main only as an open issue labelled
+  `blocks-release`, and that no release goes out while one is open; the check that holds
+  a release on that label comes in its own pull request. WORKFLOW, section 10 (steps 8
+  and 10, and the landing section's list of required checks, which the owner extended on
+  20 October to `formal-model` and `acceptance`), and PROGRAM, section 2, now say so.
+  No check changes here.

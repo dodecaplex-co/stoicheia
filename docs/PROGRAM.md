@@ -45,8 +45,11 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
    list only.
 6. **Acceptance.** The checklist passes in CI, the independent audit agrees, a reader goes
    through the book start to finish.
-7. **Release.** Release notes drafted from the generated summaries, approved by the
-   owner, then the tag.
+7. **Release.** A read for stale content on the candidate, its findings fixed by their
+   tier (defects never on main, facts generated, reader prose true at release, working
+   records dated); no open issue labelled `blocks-release`; release notes drafted from the
+   generated summaries, approved by the owner, then the tag
+   ([WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, steps 8 and 10).
 
 ## 3. Status
 
