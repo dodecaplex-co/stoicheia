@@ -1351,7 +1351,9 @@ findings:
   use adds a clause naming both the rules used and those unused in the status line, the
   Overlap row and the book summaries. This applies to every record, including both kinds
   that contain the proposition and rules that supply a step. On main's present content,
-  every generated page stays byte for byte unchanged.
+  every generated page stays byte for byte unchanged. The protected file
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the page's Overlap row also
+  carries this account and that partial use names each rule used and unused.
   The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
   brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
   inequality of circles) and its comment on cutting and contact within and without,
@@ -1363,10 +1365,3 @@ findings:
   the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
   apart from an accompanying change to `scripts/render.py`. No check, statement, lock
   or review record changes here, apart from the approved signature in the scaffold.
-- **The tag `centre-given` no longer says why a circle has a centre.** Its meaning in the
-  protected file [`review/terms.toml`](../../review/terms.toml) said that a circle in Lean
-  has a centre only when a hypothesis or Postulate 3 gives it one. Once the rule that every
-  circle has a centre lands ([brief 0008](0008-centre.md), step 5), that is false. The
-  meaning now says only what the tag records, that the statement gives the circle a
-  centre, which is true before the rule lands and after. No record's tags change, and no
-  page changes, since every record with the tag says the rest in its own note.

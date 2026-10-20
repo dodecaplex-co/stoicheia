@@ -114,12 +114,13 @@ kinds, and `kind` names the row's kind in the catalogue's words:
   or a case of it, and does not give the proposition at once (I.2, I.3, I.7 and I.23,
   where the proof is the audit lemma, which takes seven axioms or more).
 
-The page words its overlap by the kind, in the line under the enunciation and in the
-book's summary, which also heads the book's index, its section of CERTIFICATE.md and its
-row of README.md. A rule that states the proposition or gives it at once "contains" it;
-a rule that supplies a step "supplies a step of a proof of it", and is never said to
-contain it. Each says too whether our proof rests on the rule, from facts.json's
-`axioms`. A record that names no kind is worded as one whose rule contains the
+The page words its overlap by the kind, in the line under the enunciation, the table's
+Overlap row and the book's summary, which also heads the book's index, its section of
+CERTIFICATE.md and its row of README.md. A rule that states the proposition or gives it
+at once "contains" it; a rule that supplies a step "supplies a step of a proof of it",
+and is never said to contain it. Each says too which of the named rules our proof rests
+on, from facts.json's `axioms`; when it uses some but not all, each rule used and unused
+is named. A record that names no kind is worded as one whose rule contains the
 proposition, so every record names its kind.
 
 ### `[coverage]`: the clause map
