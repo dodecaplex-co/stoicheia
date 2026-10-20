@@ -1538,3 +1538,23 @@ findings:
   the keys and when an item counts, so the schema's `items` row and the sentence after the
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
+
+- **The source scan reads the formal model too (#121).** On 19 October 2026 the scan in
+  `scripts/check_fidelity.py` is extended to every `.lean` file under `model/`, without
+  entering any directory named `.lake`, where Mathlib and the build live. Mathlib imports
+  are allowed there, but the forbidden commands and attributes stay the same, and an
+  `axiom` is refused anywhere in the model. Only `model/Check.lean` and `model/Check/`
+  may use `run_cmd` first on its line followed by `Check.Generator.<ident>` or
+  `(Check.Generator.<ident>`: running the generator is those files' job. The named
+  allowance exempts that command alone, so its arguments and any further command are
+  still scanned. `model/Check/Generator.lean` rewrites the implicit binder's string on
+  line 600 as an interpolated string with an escaped opening brace, with exactly the
+  same output, so the scan can read it for certain. `scripts/negative_tests.py` plants
+  axioms, forbidden commands and attributes in the model's Model and Check files, tests
+  the allowance's boundary, and checks that the unplanted tree passes; it copies only
+  `facts.json`, never `model/.lake`. These are the two protected files changed:
+  `scripts/check_fidelity.py` and `scripts/negative_tests.py`.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, records the scope and the tests.
+  Nothing is loosened in `Elements/`, `Staging/` or `Audit/`; Book Zero's import rule
+  and the placement policy still apply only in `Elements/`. The model's independent
+  kernel replay, the other half of #121, is still open.

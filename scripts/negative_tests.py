@@ -25,13 +25,18 @@ records current; CI runs it on every push.
 8. Every command docs/FORMALIZATION.md, section 7, forbids, an attribute for each ending
    and prefix by which the scan knows one, and an axiom declared twice, once after
    another command on the same line, planted in a new file of each folder the
-   scan reads, `Elements/`, `Staging/` (in a folder of its own) and `Audit/`, with
+   scan reads, `Elements/`, `Staging/` (in a folder of its own), `Audit/`, `model/Model/`
+   and `model/Check/`, with
    `#exit` at the end of each root file, `Elements.lean`, `Staging.lean` and
-   `Audit.lean`, and a new Book Zero file that imports a proposition: each is caught on
+   `Audit.lean`, `model/Model.lean` and `model/Check.lean`, and a new Book Zero file that
+   imports a proposition: each is caught on
    its own line. Some of the commands stand after a string, a raw string or a character
    literal holding `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, so
    the scan must read Lean's literals as Lean does; a string whose braces Lean could
-   read as code is caught too. The files are read, not built.
+   read as code is caught too. Generator calls, plain and parenthesised, are caught
+   outside the model's Check files; there they are allowed only first on their line,
+   with other commands still caught on that line and in their arguments. The files are
+   read, not built; no tree is copied, so model/.lake is never copied either.
 9. A lemma of the `Placement` namespace named in Book III's shared steps
    (`Squares.lean`), outside placement's own files, III.24's and `Arcs.lean`, read from
    the source, is caught; the word in a comment there is not.
@@ -231,6 +236,10 @@ PLANTED_COMMANDS = (
      "set_option «doc».«verso» true in theorem planted_verso : True := trivial"),
     ("#eval", '#eval IO.println "planted"'),
     ("run_cmd", "run_cmd pure ()"),
+    ("run_cmd", 'run_cmd Lean.logInfo "x"'),
+    ("run_cmd", "example : True := trivial run_cmd Check.Generator.checkFiles"),
+    ("run_cmd", "run_cmd Check.GeneratorOther.checkFiles"),
+    ("run_cmd", "run_cmd Check.Generator.checkFiles.other"),
     ("run_elab", "run_elab pure ()"),
     ("run_meta", "run_meta pure ()"),
     ("run_tac", "theorem planted_tac : True := by run_tac pure ()"),
@@ -329,9 +338,13 @@ PLANTED_COMMANDS = (
     ("string", 'def plantedBraces := "{" ++ "}"'),
     ("#exit", "#exit"),
 )
-# A new file in each folder the scan reads; Staging's in a folder of its own, which
-# shows that the scan reads every folder beneath.
-PLANTED_FILES = ("Elements/Planted.lean", "Staging/Planted/Commands.lean", "Audit/Planted.lean")
+# A new file in each folder the scan reads, paired with its root module; Staging's in a
+# folder of its own, which shows that the scan reads every folder beneath.
+PLANTED_FILES = (("Elements", "Elements/Planted.lean"),
+                 ("Staging", "Staging/Planted/Commands.lean"),
+                 ("Audit", "Audit/Planted.lean"),
+                 ("model/Model", "model/Model/Planted.lean"),
+                 ("model/Check", "model/Check/Planted.lean"))
 # A new file of Book Zero, and the line of it that imports a proposition.
 BOOK_ZERO = ("Elements/Figure/Planted.lean", 2, "-- Planted by scripts/negative_tests.py: "
              "the import below must be caught.\nimport Elements.BookI.Prop01\n")
@@ -342,13 +355,15 @@ def forbidden_commands() -> None:
     on the same line, in a new file of each folder `check_fidelity.py` scans, `#exit` at
     the end of each root file, and a Book Zero file importing a proposition. Each must be
     caught, by its file and line."""
-    header = ["/-! Planted by scripts/negative_tests.py: every line below must be caught. -/",
+    header = ["/-! Planted by scripts/negative_tests.py: forbidden commands must be caught. -/",
               ""]
     body = [("axiom", "example : True := trivial axiom planted_inline : True"),
             ("axiom", "axiom planted_axiom : True"),
             ("native_decide", "theorem planted_native : 2 + 2 = 4 := by native_decide"),
             *PLANTED_COMMANDS]
-    text = "\n".join(header + [line for _, line in body]) + "\n"
+    generator = ["run_cmd Check.Generator.checkFiles",
+                 "  run_cmd (Check.Generator.checkFiles)"]
+    text = "\n".join(header + [line for _, line in body] + generator) + "\n"
 
     def caught(rel: str, line: int, word: str) -> str:
         if word == "axiom":
@@ -360,10 +375,11 @@ def forbidden_commands() -> None:
         return f"{rel}:{line}: uses `{word}`"
 
     wanted: dict[str, list[str]] = {}
+    allowed: list[str] = []
     planted: list[Path] = []          # files, then the folders made for them
     roots: dict[Path, str] = {}
     try:
-        for rel in PLANTED_FILES:
+        for tree, rel in PLANTED_FILES:
             path = ROOT / rel
             assert not path.exists(), f"{rel} exists; update this test"
             if not path.parent.exists():
@@ -371,15 +387,34 @@ def forbidden_commands() -> None:
                 planted.append(path.parent)
             path.write_text(text)
             planted.insert(0, path)
-            wanted[rel.split("/")[0]] = [caught(rel, len(header) + i, word)
-                                         for i, (word, _) in enumerate(body, 1)]
+            wanted[tree] = [caught(rel, len(header) + i, word)
+                            for i, (word, _) in enumerate(body, 1)]
+            calls = [caught(rel, len(header) + len(body) + i, "run_cmd")
+                     for i in range(1, len(generator) + 1)]
+            if tree == "model/Check":
+                allowed += calls
+                # The allowance covers only run_cmd, not another command or its arguments.
+                extra = ['run_cmd Check.Generator.checkFiles run_cmd Lean.logInfo "x"',
+                         'run_cmd (Check.Generator.checkFiles (by_elab pure (.str "x")))']
+                path.write_text(text + "\n".join(extra) + "\n")
+                first = len(header) + len(body) + len(generator) + 1
+                wanted[tree] += [caught(rel, first, "run_cmd"), caught(rel, first + 1, "by_elab")]
+                allowed.append(caught(rel, first + 1, "run_cmd"))
+            else:
+                wanted[tree] += calls
         for tree in wanted:
             root = ROOT / f"{tree}.lean"
             roots[root] = root.read_text()
-            changed = roots[root] + "\n#exit\n"
+            changed = roots[root] + "\n" + "\n".join(generator) + "\n#exit\n"
             root.write_text(changed)
             line = changed[:changed.rindex("#exit")].count("\n") + 1
             wanted[tree].append(caught(f"{tree}.lean", line, "#exit"))
+            calls = [caught(f"{tree}.lean", line - len(generator) + i, "run_cmd")
+                     for i in range(len(generator))]
+            if tree == "model/Check":
+                allowed += calls
+            else:
+                wanted[tree] += calls
         figure, line, text = BOOK_ZERO
         assert not (ROOT / figure).exists(), f"{figure} exists; update this test"
         (ROOT / figure).write_text(text)
@@ -387,7 +422,7 @@ def forbidden_commands() -> None:
         result = fidelity()
         for tree, messages in wanted.items():
             expect_failure(f"every forbidden command and an axiom in {tree}/ and {tree}.lean",
-                           result, *messages)
+                           result, *messages, unwanted=tuple(allowed))
         expect_failure("a proposition imported by Book Zero", result,
                        f"{figure}:{line}: Book Zero must not import a proposition")
     finally:
@@ -600,6 +635,12 @@ def main() -> int:
     forbidden_commands()
     placement_named()
     planted_assumptions()
+    restored = fidelity()
+    if restored.returncode != 0:
+        failures.append("the unplanted tree failed check_fidelity.py")
+        print((restored.stdout + restored.stderr)[-3000:])
+    else:
+        print("✓ the unplanted tree passes check_fidelity.py")
     if failures:
         print(f"{len(failures)} change(s) went unnoticed:")
         for f in failures:
