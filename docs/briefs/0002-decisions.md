@@ -2151,3 +2151,18 @@ findings:
   `Certificate/FIELDS.md`, `tests/test_certificate.py`, `scripts/test_safe_push.py` and
   `.github/workflows/ci.yml` (the step's name only). No check is weakened, and main's
   facts and pages are unchanged.
+
+  The next review round found that the model still skipped every step without a
+  required command, so an earlier step could write a shell startup file defining
+  `python3() { return 0; }` and export it through `$GITHUB_ENV` as `BASH_ENV`, leaving
+  the certificate command in place but running nothing. The model now reads every step
+  of `jobs.check`: each is either a required check or the modeled setup, which is
+  `actions/checkout@v5` with no inputs, `actions/setup-python@v5` with only
+  `python-version`, and the elan install's exact body; any other step or action is
+  refused. Conditions, continuation, shell, working directory and `env` are refused on
+  every step, `env` also at the workflow and the check job, and a check-job setting the
+  model does not read, such as `container`, is refused. Mutations for the `BASH_ENV`
+  step, an unlisted action, a checkout of another ref, `env` at each scope and a
+  container are refused, and the actual workflow, whose other jobs keep their `env`, still
+  passes. Protected file changed in this round: `scripts/test_safe_push.py`. No check is
+  weakened, and main's facts and pages are unchanged.

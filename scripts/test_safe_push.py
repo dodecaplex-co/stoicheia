@@ -156,7 +156,10 @@ HARNESS_FILES = ("scripts/safe_push.py", "scripts/heath.py", "scripts/test_safe_
 @dataclass(frozen=True)
 class WorkflowStep:
     name: str
+    uses: str | None
+    inputs: tuple[tuple[str, object], ...]
     run: tuple[str, ...]
+    environment: tuple[tuple[str, object], ...]
     has_condition: bool
     has_continue_on_error: bool
     continue_on_error: object
@@ -167,12 +170,18 @@ class WorkflowStep:
 @dataclass(frozen=True)
 class WorkflowCheckJob:
     steps: tuple[WorkflowStep, ...]
+    environment: tuple[tuple[str, object], ...]
+    unmodeled_settings: tuple[str, ...]
     has_condition: bool
     has_continue_on_error: bool
     continue_on_error: object
     has_dependencies: bool
     has_shell_override: bool
     has_working_directory: bool
+
+
+CHECK_JOB_SETTINGS = frozenset({"runs-on", "steps", "if", "continue-on-error", "needs",
+                                "defaults", "env"})
 
 
 def default_run_settings(mapping: dict, place: str) -> frozenset[str]:
@@ -187,6 +196,15 @@ def default_run_settings(mapping: dict, place: str) -> frozenset[str]:
     if not isinstance(run, dict):
         raise AssertionError(f"{place} run defaults are not a mapping")
     return frozenset(run)
+
+
+def mapping_items(mapping: dict, key: str, place: str) -> tuple[tuple[str, object], ...]:
+    value = mapping.get(key)
+    if value is None:
+        return ()
+    if not isinstance(value, dict):
+        raise AssertionError(f"{place} {key} is not a mapping")
+    return tuple(sorted((str(name), item) for name, item in value.items()))
 
 
 def normalized_check_job(source: str) -> WorkflowCheckJob:
@@ -209,16 +227,23 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
         name = step.get("name", "")
         if not isinstance(name, str):
             raise AssertionError(f"CI check step {index} has a non-string name")
+        place = f"CI check step {name or index}"
+        uses = step.get("uses")
+        if uses is not None and not isinstance(uses, str):
+            raise AssertionError(f"{place} has a non-string uses value")
         run = step.get("run")
         if run is None:
             commands = ()
         elif isinstance(run, str):
             commands = tuple(line.strip() for line in run.splitlines() if line.strip())
         else:
-            raise AssertionError(f"CI check step {name or index} has a non-string run value")
+            raise AssertionError(f"{place} has a non-string run value")
         steps.append(WorkflowStep(
-            name=name,
+            name=name or str(index),
+            uses=uses,
+            inputs=mapping_items(step, "with", place),
             run=commands,
+            environment=mapping_items(step, "env", place),
             has_condition="if" in step,
             has_continue_on_error="continue-on-error" in step,
             continue_on_error=step.get("continue-on-error"),
@@ -229,6 +254,10 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
                 default_run_settings(job, "CI check job"))
     return WorkflowCheckJob(
         steps=tuple(steps),
+        environment=(mapping_items(workflow, "env", "CI workflow") +
+                     mapping_items(job, "env", "CI check job")),
+        unmodeled_settings=tuple(sorted(str(key) for key in job
+                                        if key not in CHECK_JOB_SETTINGS)),
         has_condition="if" in job,
         has_continue_on_error="continue-on-error" in job,
         continue_on_error=job.get("continue-on-error"),
@@ -242,9 +271,25 @@ FRESHNESS_COMMAND = ("git status --porcelain -- facts.json book CERTIFICATE.md G
                      "README.md docs/PROGRAM.md")
 RENDER_COMMAND = "python3 scripts/render.py"
 FRESHNESS_ASSERTION = f'test -z "$({FRESHNESS_COMMAND})"'
+SETUP_ACTIONS = {"actions/checkout@v5": frozenset(),
+                 "actions/setup-python@v5": frozenset({"python-version"})}
+ELAN_INSTALL = (
+    "curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh"
+    " | sh -s -- -y --default-toolchain none",
+    'echo "$HOME/.elan/bin" >> "$GITHUB_PATH"',
+)
+
+
+def is_modeled_setup(step: WorkflowStep) -> bool:
+    if step.uses is None:
+        return step.run == ELAN_INSTALL
+    inputs = {name for name, _ in step.inputs}
+    return not step.run and step.uses in SETUP_ACTIONS and inputs <= SETUP_ACTIONS[step.uses]
 
 
 def enforced_check_commands(job: WorkflowCheckJob, required: list[str]) -> list[str]:
+    if job.unmodeled_settings:
+        raise AssertionError(f"CI check job has unmodeled settings {list(job.unmodeled_settings)}")
     if job.has_condition:
         raise AssertionError("CI check job has an if condition")
     if job.has_continue_on_error and job.continue_on_error is not False:
@@ -255,13 +300,13 @@ def enforced_check_commands(job: WorkflowCheckJob, required: list[str]) -> list[
         raise AssertionError("CI check job has a default shell override")
     if job.has_working_directory:
         raise AssertionError("CI check job has a default working directory")
+    if job.environment:
+        raise AssertionError("CI check job has an environment override")
     generated_body = (RENDER_COMMAND, FRESHNESS_COMMAND, FRESHNESS_ASSERTION)
     simple = set(required) - {RENDER_COMMAND, FRESHNESS_COMMAND}
     required_set = set(required)
     commands = []
     for step in job.steps:
-        if not any(command in required_set for command in step.run):
-            continue
         if step.has_condition:
             raise AssertionError(f"CI check step {step.name!r} has an if condition")
         if step.has_continue_on_error and step.continue_on_error is not False:
@@ -270,6 +315,13 @@ def enforced_check_commands(job: WorkflowCheckJob, required: list[str]) -> list[
             raise AssertionError(f"CI check step {step.name!r} has a shell override")
         if step.has_working_directory:
             raise AssertionError(f"CI check step {step.name!r} has a working directory")
+        if step.environment:
+            raise AssertionError(f"CI check step {step.name!r} has an environment override")
+        if is_modeled_setup(step):
+            continue
+        if step.uses is not None or not any(command in required_set for command in step.run):
+            raise AssertionError(
+                f"CI check step {step.name!r} is neither a required check nor the modeled setup")
         if step.run == generated_body:
             commands.extend((RENDER_COMMAND, FRESHNESS_COMMAND))
         elif len(step.run) == 1 and step.run[0] in simple:
@@ -3814,6 +3866,55 @@ class Units(unittest.TestCase):
                     (scope == "render" and RENDER_COMMAND in step.get("run", ""))
                 )
                 target[field] = value
+                changed = yaml.safe_dump(workflow, sort_keys=False)
+                with self.assertRaisesRegex(AssertionError, message):
+                    enforced_check_commands(normalized_check_job(changed),
+                                            self.configured_check_commands())
+
+    def test_ci_check_job_rejects_unmodeled_setup_and_environment(self):
+        source = (SOURCE / ".github/workflows/ci.yml").read_text()
+        certificate = "python3 -I tests/test_certificate.py"
+        stub = {"name": "Prepare the shell", "run": (
+            "printf 'python3() { return 0; }\\n' > \"$RUNNER_TEMP/stub.sh\"\n"
+            "echo \"BASH_ENV=$RUNNER_TEMP/stub.sh\" >> \"$GITHUB_ENV\"\n")}
+        override = {"BASH_ENV": "stub.sh"}
+        unmodeled = "neither a required check nor the modeled setup"
+
+        def step_running(job, command):
+            return next(step for step in job["steps"] if step.get("run") == command)
+
+        def step_using(job, action):
+            return next(step for step in job["steps"] if step.get("uses") == action)
+
+        def before_certificate(step):
+            def insert(workflow, job):
+                job["steps"].insert(job["steps"].index(step_running(job, certificate)), step)
+            return insert
+
+        cases = (
+            ("BASH_ENV through GITHUB_ENV", before_certificate(stub), unmodeled),
+            ("unlisted action", before_certificate({"uses": "example/setup-shell@v1"}),
+             unmodeled),
+            ("checkout of another ref",
+             lambda workflow, job: step_using(job, "actions/checkout@v5").update(
+                 {"with": {"ref": "other"}}), unmodeled),
+            ("workflow environment", lambda workflow, job: workflow.update(env=override),
+             "check job has an environment override"),
+            ("job environment", lambda workflow, job: job.update(env=override),
+             "check job has an environment override"),
+            ("certificate step environment",
+             lambda workflow, job: step_running(job, certificate).update(env=override),
+             "has an environment override"),
+            ("setup step environment",
+             lambda workflow, job: step_using(job, "actions/setup-python@v5").update(
+                 env=override), "has an environment override"),
+            ("job container", lambda workflow, job: job.update(container="example/stub"),
+             "unmodeled settings"),
+        )
+        for label, mutate, message in cases:
+            with self.subTest(label=label):
+                workflow = yaml.safe_load(source)
+                mutate(workflow, workflow["jobs"]["check"])
                 changed = yaml.safe_dump(workflow, sort_keys=False)
                 with self.assertRaisesRegex(AssertionError, message):
                     enforced_check_commands(normalized_check_job(changed),
