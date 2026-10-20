@@ -376,6 +376,9 @@ jobs:
           GROUP_BASE: ${{ github.event.merge_group.base_sha }}
           REPOSITORY: ${{ github.repository }}
           ACCEPTANCE_VERDICTS: ${{ runner.temp }}/acceptance/verdicts.json
+          # The revert App's bot login (a repository variable, the owner's steps): only its
+          # pull requests may stand in a group as automatic reverts.
+          STOICHEIA_REVERT_BOT: ${{ vars.STOICHEIA_REVERT_BOT }}
         run: |
           case "$GITHUB_EVENT_NAME" in
             merge_group)
