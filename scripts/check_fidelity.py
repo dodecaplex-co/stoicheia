@@ -5,11 +5,11 @@
    order, must be exactly Heath's proof (whitespace aside). Euclid's words go in
    `--` comments; our own remarks go in `/- … -/` blocks.
 2. Every `axiom` lives in `Elements/Foundations/`: a first look in the source here,
-   which reads `Staging/` and `Audit/` too, and the real check from Lean's own
+   which reads `Staging/`, `Audit/` and `model/` too, and the real check from Lean's own
    environment in 6.
 3. Book Zero (`Elements/Figure/`) never imports a proposition.
 4. None of the commands that `docs/FORMALIZATION.md`, section 7, forbids under
-   `Elements/`, `Staging/` or `Audit/` (LEAN_TREES), since they get round the kernel,
+   `Elements/`, `Staging/`, `Audit/` or `model/` (LEAN_TREES), since they get round the kernel,
    bring in an axiom without the word, run a program when a file is built or imported,
    or stop Lean reading a file: `native_decide`, `bv_decide`, the word `native`,
    `(config := …)`, `set_option debug.…` and `set_option doc.…` (or `«debug».…` and
@@ -21,7 +21,14 @@
    literal's text never opens a comment or ends an attribute's brackets, and is not read
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
    braces Lean could read either way is refused. Each finding of 2, 3 and 4 names its
-   file and line.
+   file and line; symbolic links are refused by their paths and never followed.
+   Under `model/`, the package's own `model/.lake` directory is never entered or read
+   (a link there is refused like any other), while a `.lake` folder deeper in the model
+   is read like any other; Mathlib imports are allowed. Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first
+   word on its line followed by `Check.Generator.<ident>` or
+   `(Check.Generator.<ident>`, since those files run the generator. Every other command
+   and attribute on the list is still refused there. The model's independent kernel
+   replay, the other half of #121, remains open.
 5. Placement, Euclid's application of one figure to another (brief 0006): outside its
    own files, `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/`, no
    Lean under `Elements/` names `placement` or the `Placement` namespace but III.24's
@@ -72,6 +79,7 @@ Exits non-zero on any failure. Standard library only; the review records need Py
 import argparse
 import functools
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -111,9 +119,17 @@ PRIMITIVES = {
 # Lean's own logical foundations, which every proof may use.
 LEAN_FOUNDATIONS = {"propext", "Classical.choice", "Quot.sound"}
 # The Lean the edition builds, which the source scan (check_rules) reads: the library, the
-# statements staged before their proofs, and the audit lemmas, each folder with its root
-# file (`Staging.lean`). The checks' own Lean, `Certificate/Facts.lean`, is not among them.
-LEAN_TREES = ("Elements", "Staging", "Audit")
+# statements staged before their proofs, the audit lemmas, and model/, each folder with
+# its root file (`Staging.lean`). The model allows Mathlib and skips its own model/.lake
+# directory without entering it. Its Check files alone allow the generator calls named below.
+# The checks' own Lean, `Certificate/Facts.lean`, is not among them.
+LEAN_TREES = ("Elements", "Staging", "Audit", "model")
+# Only model/Check.lean and model/Check/ may run the generator: run_cmd must be the first
+# word on its source line, followed by Check.Generator.<ident> or (Check.Generator.<ident>.
+# Match just that command, never exempt its arguments or another command on the line.
+MODEL_CHECK_RUN_CMD = re.compile(
+    r"^[ \t]*(?P<command>run_cmd)[ \t]+(?:\([ \t]*)?Check\.Generator\."
+    r"[^\W\d][\w'!?]*(?=[ \t\r\n()]|$)", re.M)
 # Commands that could get round the kernel (`native_decide` and the `debug.` options, among
 # them `debug.skipKernelTC`, spelled `debug.` or `«debug».`), bring in an axiom without the
 # keyword, run a program when the file is built or imported (`#eval`, `run_cmd` and their
@@ -342,12 +358,26 @@ def _read_interpolated(src: str, i: int, marks: list) -> int | None:
 
 
 def lean_sources() -> list[Path]:
-    """Every `.lean` file of LEAN_TREES: each folder's root file, then the folder."""
+    """Every `.lean` file and symbolic link of LEAN_TREES, excluding what lies inside the
+    directory model/.lake: each folder's root file, then the folder in sorted order. A
+    link is listed before anything is pruned, so a link at model/.lake is refused too."""
     paths = []
     for tree in LEAN_TREES:
         root = ROOT / f"{tree}.lean"
-        paths += [root] if root.exists() else []
-        paths += sorted((ROOT / tree).rglob("*.lean"))
+        paths += [root] if root.is_symlink() or root.exists() else []
+        folder_root = ROOT / tree
+        if folder_root.is_symlink():
+            paths.append(folder_root)
+            continue
+        found = []
+        for folder, dirs, files in os.walk(folder_root, followlinks=False):
+            here = Path(folder)
+            links = {name for name in dirs + files if (here / name).is_symlink()}
+            dirs[:] = sorted(name for name in dirs if name not in links
+                             and not (here == ROOT / "model" and name == ".lake"))
+            found += sorted(here / name for name in links | set(files)
+                            if name in links or name.endswith(".lean"))
+        paths += sorted(found)
     return paths
 
 
@@ -358,8 +388,15 @@ def line_of(text: str, offset: int) -> int:
 def check_rules() -> None:
     for path in lean_sources():
         rel = path.relative_to(ROOT).as_posix()
+        if path.is_symlink():
+            fail(f"{rel}: a symbolic link, which the source scan does not follow; "
+                 "use a regular file or directory (docs/FORMALIZATION.md, section 7)")
+            continue
         src = path.read_text()
         code, unsure = read_lean(src)
+        generator_calls = ({m.start("command") for m in MODEL_CHECK_RUN_CMD.finditer(src)}
+                           if rel == "model/Check.lean" or rel.startswith("model/Check/")
+                           else set())
         if not rel.startswith("Elements/Foundations/"):
             for m in AXIOM.finditer(code):
                 fail(f"{rel}:{line_of(code, m.start())}: declares an axiom outside "
@@ -367,6 +404,8 @@ def check_rules() -> None:
         for m in re.finditer("native_decide", src):
             fail(f"{rel}:{line_of(src, m.start())}: uses native_decide")
         for m in FORBIDDEN.finditer(code):
+            if m.group(0) == "run_cmd" and m.start() in generator_calls:
+                continue
             if m.group(0) != "native_decide":
                 word = f"@[{m['attr']}]" if m["attr"] else " ".join(m.group(0).split())
                 fail(f"{rel}:{line_of(code, m.start())}: uses `{word}`, which could get round "
