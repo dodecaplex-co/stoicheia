@@ -59,9 +59,9 @@ case = "BC cut at two points, D and E, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "570e6fa"
+commit = "29cd78e"
 reviewer = "GPT-6 Astra (Codex), records re-read"
-lean = "sha256:2642bf8e58a5ea62"
+lean = "sha256:dca5badf15c0dfbd"
 run = "brief 0005 stage 5, ship C5 re-read"
 
 [review.items]
