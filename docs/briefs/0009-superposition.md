@@ -681,12 +681,13 @@ The owner's approval of 20 October 2026 authorises the replacement subject to th
 tooling pull requests landing first, /no-mistakes and an independent Codex read of the
 model lane. The remaining integration and validation work is:
 
-- **The tooling pull requests first.** Split the check changes in `Certificate/Facts.lean`
-  and `scripts/heath.py` into tooling pull requests, reviewed and landed before
-  the code they check. WORKFLOW, section 10, forbids changing a check in the same pull
+- **The tooling pull requests first.** Split the check changes in `Certificate/Facts.lean`,
+  `scripts/heath.py` and `review/SCHEMA.md` into tooling pull requests, reviewed and landed
+  before the code they check. WORKFLOW, section 10, forbids changing a check in the same pull
   request as that code. The certificate must recognise `Coincidence.step`
-  without requiring it to be present on main yet; the Heath self-test keeps its existing
-  outcomes while using I.7's surviving overlap. The model check changes, including the
+  without requiring it to be present on main yet; the Heath self-test and the schema's
+  example keep their outcomes while naming I.13's overlap in I.47 (Metric 5 in
+  `Prop47.within`), which survives this rule and the axiom retirements. The model check changes, including the
   older relative-path defect fixed on `tooling/superposition-model-check`, land first
   too. No check may be loosened.
 - **Merge the retirement branches.** `lean/retire-axioms` reduces 87 axioms to 79 and

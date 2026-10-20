@@ -72,9 +72,9 @@ conclusion says that a point exists, the program constructs one and checks it.
   for the axioms whose hypotheses chance rarely meets (three straight lines through one
   point, a right angle, two circles through a common point), over a large lattice and
   over fractions.
-- **[mutations.py](mutations.py)** weakens 14 axioms, and the placement that supports
-  superposition (M9), on purpose, by dropping or loosening one guard, and checks that each
-  weakened statement has a counterexample. So the harness can see a false axiom when there
+- **[mutations.py](mutations.py)** makes fourteen axiom-mutation cases and one mutation of
+  the placement that supports superposition (M9), on purpose, each by dropping or loosening
+  one guard, and checks that each weakened statement has a counterexample. So the harness can see a false axiom when there
   is one.
 - **[grid_check.py](grid_check.py)** and **[angle_check.py](angle_check.py)** are a second
   opinion, written separately: the incidence, order and circle rules exactly on a grid,
