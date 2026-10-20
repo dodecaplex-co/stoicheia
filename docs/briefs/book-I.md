@@ -97,7 +97,9 @@ The rule of [FORMALIZATION.md](../FORMALIZATION.md), section 6, as Book I applie
   `Circles.lean`, `Parallels.lean`, `Parallelograms.lean`, `Areas.lean`
   (`area_lt_of_cut`, the strict area comparison in I.39 and I.40), `Sums.lean` (the sums
   of lists, and `InOrder.between_end`) and `Rectilineal.lean` (a fitted figure's triangles
-  lie apart, `Fitted.inside_pairwise`).
+  lie apart, `Fitted.inside_pairwise`). `Superposition.lean`, imported separately by I.4
+  and I.8, proves the geometric laws their hypothetical placements cite, without
+  construction rules.
 - **Shared steps that cite a proposition:** `Elements/BookI/Helpers.lean`, with
   `Prop5.base` (I.5's angles at the base, with the sides produced anywhere); and
   `Elements/BookI/HelpersParallels.lean`, for those that cite I.28, I.30 or I.31, with
