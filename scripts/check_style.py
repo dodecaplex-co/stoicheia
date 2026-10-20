@@ -3038,13 +3038,13 @@ def modern_markup_findings(text: str) -> list[str]:
     selected = next((block for block in blocks if span[0] in block.offsets), None)
     contained_definition = bool(selected and selected.references
                                 and reference_destination_ranges(selected.text))
+    syntax = markdown_syntax(source, indented_code=False, reference_labels=labels,
+                             inline_html=True)
     resolved_reference = any(
-        link.label < link.start and source[link.start + 1:link.start + 2] != "("
-        for link in link_destination_ranges(source, references=False,
-                                            reference_labels=labels))
+        source[start:start + 1] == "]" and source[start + 1:start + 2] != "("
+        for start, _ in syntax.destinations)
     if contained_definition or resolved_reference:
         found.append("unsupported reference definition beside the modern paragraph")
-    syntax = markdown_syntax(source, indented_code=False, inline_html=True)
     visible = blank_ranges(source, [(s.start, s.end) for s in syntax.spans])
     # Main uses no character references. Refuse their spellings, even after an escaped
     # ampersand, instead of letting the spelling supply names the reader does not see.
@@ -3405,11 +3405,6 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
 def check_modern(path: Path, ref: str) -> None:
     """S24 and S25 for one figure of the modern way."""
     data = path.read_bytes()
-    root = svg_root(path, data)
-    if root is None:
-        return
-    # Scan exactly the bytes parsed above. Keep decoding errors separate from checker
-    # defects, and refuse UTF-16 without a BOM too, whose ASCII bytes decode with NULs.
     try:
         source = data.decode("utf-8")
     except UnicodeDecodeError as e:
@@ -3417,6 +3412,12 @@ def check_modern(path: Path, ref: str) -> None:
         return
     if "\0" in source:
         fail("S24", path, 0, "unsupported SVG encoding: expected UTF-8")
+        return
+    if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", source, re.I):
+        fail("S24", path, 0, "unsupported DTD or entity declaration in a modern figure")
+        return
+    root = svg_root(path, data)
+    if root is None:
         return
     refused = modern_svg_findings(root, source)
     for rule, message in refused:

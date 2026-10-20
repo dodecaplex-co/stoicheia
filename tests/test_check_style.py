@@ -1134,6 +1134,21 @@ class Modern(unittest.TestCase):
                 self.assertTrue(any(r == "S24" and "encoding" in m for r, m in findings),
                                 findings)
 
+    def test_modern_dtd_and_entity_declarations_are_refused(self):
+        document = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                    + MODERN_GOOD + '</svg>')
+        cases = (
+            ('<!DOCTYPE svg [<!ENTITY title "I.47: the modern way">]>',
+             document.replace("I.47: the modern way", "&title;")),
+            ('<!DOCTYPE svg SYSTEM "figure.dtd">', document),
+        )
+        for declaration, body in cases:
+            with self.subTest(declaration=declaration):
+                findings = self.check_refused_modern(
+                    figure_bytes=(declaration + body).encode("utf-8"))
+                self.assertEqual(findings, [
+                    ("S24", "unsupported DTD or entity declaration in a modern figure")])
+
     def test_modern_figure_is_read_once_as_bytes(self):
         opened = []
         original_open = io.open
@@ -1596,6 +1611,9 @@ class Modern(unittest.TestCase):
                     self.assertNotIn("S24", {r for r, _ in findings})
         for definition in ("[unused]: /reference\n\n", ""):
             text = definition + MODERN_PARAGRAPH + "\n\n[elsewhere]: /reference"
+            self.assertEqual(self.check_refused_modern(paragraph=text), [])
+        for code in ("`[x]`", "`` [x] ``"):
+            text = MODERN_PARAGRAPH + " Literal " + code + ".\n\n[x]: /reference"
             self.assertEqual(self.check_refused_modern(paragraph=text), [])
         findings = self.check_refused_modern(
             paragraph="[unused]: /reference\n" + MODERN_PARAGRAPH)
