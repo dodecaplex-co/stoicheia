@@ -98,7 +98,7 @@ A tag of kind `scope` may appear only when the statement is restricted or partia
 |---|---|---|---|
 | `rule` | string | yes | The axiom, named as facts.json names it: `"Tacit.inside_of_between"`. |
 | `also` | list of strings | no | Any further axioms that contain the proposition, or supply its step, only together with `rule`, as III.6 needs `"Tacit.centre_inside"`. |
-| `kind` | `"states"`, `"gives"` or `"step"` | no | The kind of the proposition's row in the catalogue (below). |
+| `kind` | `"states"`, `"gives"` or `"step"` | yes | The kind of the proposition's row in the catalogue (below). |
 | `note` | string | for `step` | What follows for the page: the proof reconstructs Euclid's reasoning within our foundations, and does not establish the rule. For a step, which step the rule carries, and in which proof. |
 
 The catalogue of overlaps, with their audit lemmas, is
@@ -119,8 +119,8 @@ book's summary, which also heads the book's index, its section of CERTIFICATE.md
 row of README.md. A rule that states the proposition or gives it at once "contains" it;
 a rule that supplies a step "supplies a step of a proof of it", and is never said to
 contain it. Each says too whether our proof rests on the rule, from facts.json's
-`axioms`. A record that names no kind is worded as one whose rule contains the
-proposition, so every record names its kind.
+`axioms`. Every `[overlap]` names its kind, and one that does not is a fault, so no
+page words an overlap by a guess.
 
 ### `[coverage]`: the clause map
 
@@ -199,7 +199,7 @@ require_stamp=False)` reads a record without them.
 
 - the sections and keys are known, the required ones present, each of its type;
 - `scope`, `route.kind`, passage `kind`, `[overlap]` `kind` and `stage` take only the
-  values above, and an overlap of the kind `step` has a `note`;
+  values above; an `[overlap]` names its `kind`, and one of the kind `step` has a `note`;
 - a restricted statement lists `hypotheses` and has no `omitted`; a partial one lists
   `omitted` and has `[coverage]`; a full one has neither; both kinds need a `note`;
 - `note` is one line of at most 160 characters;

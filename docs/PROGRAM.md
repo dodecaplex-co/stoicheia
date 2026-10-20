@@ -78,9 +78,9 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40, I.45, II.1, II.14 in full generality | proved in Staging ([#88]); the move into `Elements/` next ([#19]) |
+| 2 | I.40, I.45, II.1, II.14 in full generality | done, 19 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)) |
 | 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
-| 4 | III.14, III.15, III.25 | proved in Staging (this pull request); the move into `Elements/` next ([#28]) |
+| 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` next ([#28]) |
 | 5 | Consolidation review of all 99 | |
 | 6 | Acceptance, then a consolidation release of Books I–III | |
 
@@ -279,6 +279,7 @@ in the voyage logs).
 | The night of 18 October: pull requests #1 to #11 | not logged | not logged | one night |
 [#88]: https://github.com/jackChallis/stoicheia/pull/88
 [#89]: https://github.com/jackChallis/stoicheia/pull/89
+[#90]: https://github.com/jackChallis/stoicheia/pull/90
 [#19]: https://github.com/jackChallis/stoicheia/issues/19
 [#25]: https://github.com/jackChallis/stoicheia/issues/25
 [#28]: https://github.com/jackChallis/stoicheia/issues/28
