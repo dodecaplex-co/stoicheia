@@ -375,7 +375,7 @@ run_cmd Check.Generator.checkModelImportClosure
 #guard_msgs in
 run_cmd (Check.Generator.checkModelImportClosureFixture
   #[`Model, `Model.Signature, `Elements.Foundations.Superposition.Syntax,
-    `Init, `Std, `Lean, `Mathlib, `Batteries, `Aesop, `Qq, `Plausible,
+    `Init, `Std, `Lean, `Lake.Util.Version, `Mathlib, `Batteries, `Aesop, `Qq, `Plausible,
     `LeanSearchClient, `ImportGraph, `ProofWidgets, `Cli]
   #[`Model, `Model.Signature])
 
@@ -417,6 +417,7 @@ run_cmd (Check.Generator.checkModelImportFixture [
 run_cmd (Check.Generator.checkModelImportFixture [
   ("model/Model.lean",
     "import Model.Signature\nimport Mathlib\nimport Init\nimport Std\nimport Lean\n\
+    import Lake.Util.Version\n\
     import Plausible\nimport LeanSearchClient\nimport ImportGraph\nimport ProofWidgets\n\
     import Aesop\nimport Qq\nimport Batteries\nimport Cli\n"),
   ("model/Model/Planted.lean",
@@ -479,6 +480,13 @@ error: Elements/Foundations/Superposition/Restriction.lean: pure module imports 
 #guard_msgs in
 run_cmd (Check.Generator.checkModelImportFixture [
   ("Elements/Foundations/Superposition/Restriction.lean", "import Mathlib\n")])
+
+/--
+error: Elements/Foundations/Superposition/Restriction.lean: pure module imports `Lake.Util.Version`, outside the four pure modules and `Init`
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/Restriction.lean", "import Lake.Util.Version\n")])
 
 /-- error: model/Model.lean: Model imports `Check.Original`, outside the approved import roots -/
 #guard_msgs in
