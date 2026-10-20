@@ -130,6 +130,7 @@ import tempfile
 import tomllib
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+from io import BytesIO
 from pathlib import Path
 from typing import NamedTuple
 
@@ -3171,6 +3172,10 @@ def fill_under(root, x: float, y: float) -> str:
     return under
 
 
+class SvgDeclarationError(ET.ParseError):
+    """A DTD or entity declaration refused before any declared entity is read."""
+
+
 class FigureTreeBuilder(ET.TreeBuilder):
     def __init__(self):
         super().__init__()
@@ -3179,21 +3184,38 @@ class FigureTreeBuilder(ET.TreeBuilder):
     def pi(self, target, data):
         self.processing_instructions.append((target, data))
 
+    def doctype(self, name, pubid, system):
+        raise SvgDeclarationError("DTD or entity declaration is outside S26's SVG allow-list")
 
-def parse_svg(path: Path):
+
+def parse_svg(path: Path, source: bytes | None = None):
+    """Refuse declaration markers in the bytes before constructing any XML parser.
+
+    Strip NULs for the scan so UTF-16 and UTF-32 spellings cannot bypass it. This
+    deliberately also refuses such text inside a comment. Parse the original bytes
+    from the same read; the doctype callback remains a second guard.
+    """
+    raw = path.read_bytes() if source is None else source
+    declarations = raw.replace(b"\x00", b"")
+    if b"<!DOCTYPE" in declarations or b"<!ENTITY" in declarations:
+        raise SvgDeclarationError("DTD or entity declaration is outside S26's SVG allow-list")
     target = FigureTreeBuilder()
-    return ET.parse(path, parser=ET.XMLParser(target=target)), target.processing_instructions
+    return ET.parse(BytesIO(raw), parser=ET.XMLParser(target=target)), target.processing_instructions
 
 
 def svg_root(path: Path, source: bytes | None = None, *, missing_ok: bool = False):
     try:
         if source is not None:
-            return ET.fromstring(source)
+            tree, _ = parse_svg(path, source)
+            return tree.getroot()
         tree, processing_instructions = parse_svg(path)
     except OSError:
         if missing_ok:
             return None
         raise
+    except SvgDeclarationError as e:
+        fail("S26", path, 0, str(e))
+        return None
     except (ET.ParseError, LookupError, UnicodeDecodeError, ValueError) as e:
         rule = ("S14" if path.stem.endswith("-idea") else
                 "S24" if path.stem.endswith("-modern") else "S15")
@@ -3274,7 +3296,7 @@ def measure_idea(path: Path, ref: str, required: bool, root) -> int:
 
 def drawn_letters(path: Path) -> set[str] | None:
     """The letters Euclid's figure draws, which S16 holds to Heath's text; None when there
-    is no figure to read (S15 says why)."""
+    is no figure to read (S15 or S26 says why)."""
     try:
         tree, _ = parse_svg(path)
     except (OSError, ET.ParseError, LookupError, UnicodeDecodeError, ValueError):
@@ -3973,10 +3995,10 @@ def modern_text_of(el) -> str:
 def modern_drawn_letters(path: Path) -> set[str] | None:
     """The letters Euclid's figure draws for S25, preserving internal whitespace."""
     try:
-        root = ET.parse(path).getroot()
+        tree, _ = parse_svg(path)
     except (OSError, ET.ParseError):
         return None
-    return {modern_text_of(el) for el in root.iter()
+    return {modern_text_of(el) for el in tree.getroot().iter()
             if tag(el) == "text" and LETTER.fullmatch(modern_text_of(el))}
 
 
