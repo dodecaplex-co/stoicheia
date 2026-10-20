@@ -1140,6 +1140,35 @@ class Clearance(unittest.TestCase):
                         [("S26", "letter A at (150, 100) stands 1.5 from a line, "
                           "under 2: move it clear")])
 
+    def test_use_figure_entry_points(self):
+        """Both complete figure checks refuse references they do not follow."""
+        for idea in (True, False):
+            for use in ("", '<use href="#pointA" x="200"/>',
+                        '<g><use xmlns:xlink="http://www.w3.org/1999/xlink" '
+                        'xlink:href="#pointA" x="200"/></g>'):
+                with self.subTest(idea=idea, use=use):
+                    ink, size = ("#222222", 14) if idea else ("#3b2f2f", 17)
+                    title = "I.1 at a glance" if idea else "Euclid I.1: a point"
+                    desc = "<desc>A point [black].</desc>" if idea else ""
+                    root = ET.fromstring(
+                        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                        f'<title>{title}</title>{desc}'
+                        f'<text id="pointA" x="60" y="100" font-size="{size}" '
+                        f'font-style="normal" fill="{ink}">A</text>{use}</svg>')
+                    with patch.object(ET, "parse", return_value=ET.ElementTree(root)), \
+                            patch.object(Path, "read_text", return_value="A"), \
+                            patch.object(style, "failures", []), \
+                            patch.object(style, "reports", defaultdict(list)):
+                        name = "01-idea.svg" if idea else "01.svg"
+                        path = style.ROOT / "figures" / "I" / name
+                        if idea:
+                            style.check_idea(path, "I.1", True)
+                        else:
+                            style.check_euclid(path, "I.1")
+                        want = [("S26", f"figures/I/{name}", 0,
+                                 "<use> is not followed: draw its contents directly")] if use else []
+                        self.assertEqual(style.failures, want)
+
     def test_decision_attribution(self):
         """S26 credits G to the fifteen corrections on the branch that delivered it."""
         decisions = (style.ROOT / "docs" / "briefs" / "0002-decisions.md").read_text()

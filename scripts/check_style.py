@@ -3050,6 +3050,8 @@ def one_letter_one_point(path: Path, root, cuts: tuple[float, ...] = ()) -> None
     pieces, spots = list(strokes(root)), list(dots(root))
     count: dict[tuple[int, str], int] = defaultdict(int)
     for el, own, eff, m, _ in placed(root):
+        if tag(el) == "use":
+            fail("S26", path, 0, "<use> is not followed: draw its contents directly")
         s = text_of(el)
         if tag(el) != "text" or not LETTER.fullmatch(s):
             continue
