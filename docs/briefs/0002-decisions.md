@@ -1914,7 +1914,8 @@ findings:
   Since a check never changes in the pull request of the content it judges,
   this change prepares the checks first, with all 87 axioms in place and the pin change
   recorded below. Main already reads the expected axiom count from
-  the lock in its negative tests; this pull request keeps that file unchanged.
+  the lock in its negative tests, and that count stays as main has it; the further
+  changes to the negative tests are recorded below.
   [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) moves its mutation, count
   and membership fixtures to laws and pins that survive (I.5's inherited Postulate 3);
   [`scripts/safe_push.py`](../../scripts/safe_push.py) drops the generators `gs_adj` and
