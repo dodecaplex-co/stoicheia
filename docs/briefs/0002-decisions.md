@@ -1723,42 +1723,6 @@ findings:
   `tests/model/lock.sha256`, `model/lock.sha256`, `Audit.lean`, `Audit/Crossing.lean`,
   `Audit/Overlaps.lean` and `Audit/screen.py`. The labels and
   security review required by WORKFLOW remain part of integration.
-- **The renderer's words follow the content.** The protected file
-  [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
-  `facts.json`: `MixedAngle.ofSegment` enables the mixed-angle row; `Arc`, `InSegment`,
-  `OnArc` and `Arc.Congruent` enable the segment row; `Arc` with `Arc.measure` enables the
-  circumference row; `CirclesCut` enables the cutting and touching rows; `Foot` enables
-  the account of perpendicular feet in Definitions III.4 and III.5, including a diameter
-  at no distance from the centre; and III.24's
-  shared step `BookIII.placement` enables the account of its application of one segment
-  to another. Each keeps the present wording until its named content is there. Comments
-  about III.2's unused overlapping rule are corrected, and the clause-map docstring no
-  longer names particular propositions. The renderer distinguishes all, some and none of
-  a record's overlapping rules, using `facts.json`'s `axioms` for the proof's full
-  dependencies. When the proof uses all or none, the status line and Overlap row keep
-  their exact wording, with no added sentence repeating the record's note. Only partial
-  use adds a clause naming both the rules used and those unused in the status line, the
-  Overlap row and the book summaries. This applies to every record, including both kinds
-  that contain the proposition and rules that supply a step. On main's present content,
-  every generated page stays byte for byte unchanged.
-  The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
-  brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
-  inequality of circles) and its comment on cutting and contact within and without,
-  exactly as the supplied scaffold patch specifies. A search of `scripts/` and `tests/`
-  found no check that reads the scaffold's Book III strings. The scaffold records the
-  approved statements; it was not run to rewrite any Lean file.
-  This tooling change precedes train C6a so that its
-  content pull request changes no check input beyond the values pinned to that content:
-  the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
-  apart from an accompanying change to `scripts/render.py`. No check, statement, lock
-  or review record changes here, apart from the approved signature in the scaffold.
-- **The tag `centre-given` no longer says why a circle has a centre.** Its meaning in the
-  protected file [`review/terms.toml`](../../review/terms.toml) said that a circle in Lean
-  has a centre only when a hypothesis or Postulate 3 gives it one. Once the rule that every
-  circle has a centre lands ([brief 0008](0008-centre.md), step 5), that is false. The
-  meaning now says only what the tag records, that the statement gives the circle a
-  centre, which is true before the rule lands and after. No record's tags change, and no
-  page changes, since every record with the tag says the rest in its own note.
 
 - **The model's audit and its root are protected too (#96).** `model/Model/Audit.lean`
   pins the model's proofs to `propext`, `Classical.choice` and `Quot.sound` alone and
@@ -1776,3 +1740,35 @@ findings:
   relative link must resolve from the decisions page's folder to the protected file,
   so routine edits to `model/Model.lean` (a new import) and `model/Model/Audit.lean`
   (a new pinned law) now need such a line too.
+
+- **The renderer's words follow the content.** The protected file
+  [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
+  `facts.json`: `MixedAngle.ofSegment` enables the mixed-angle row; `Arc`, `InSegment`,
+  `OnArc` and `Arc.Congruent` enable the segment row; `Arc` with `Arc.measure` enables the
+  circumference row; `CirclesCut` enables the cutting and touching rows; `Foot` enables
+  the account of perpendicular feet in Definitions III.4 and III.5, including a diameter
+  at no distance from the centre; and III.24's
+  shared step `BookIII.placement` enables the account of its application of one segment
+  to another. Each keeps the present wording until its named content is there. Comments
+  about III.2's unused overlapping rule are corrected, and the clause-map docstring no
+  longer names particular propositions. The renderer distinguishes all, some and none of
+  a record's overlapping rules, using `facts.json`'s `axioms` for the proof's full
+  dependencies. When the proof uses all or none, the status line and Overlap row keep
+  their exact wording, with no added sentence repeating the record's note. Only partial
+  use adds a clause naming both the rules used and those unused in the status line, the
+  Overlap row and the book summaries. This applies to every record, including both kinds
+  that contain the proposition and rules that supply a step. On main's present content,
+  every generated page stays byte for byte unchanged. The protected file
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) now states that the page's Overlap row also
+  carries this account and that partial use names each rule used and unused.
+  The protected file [`scripts/scaffold_book.py`](../../scripts/scaffold_book.py) takes
+  brief 0008, section 7's approved III.5 signature (`CirclesCut`, without the separate
+  inequality of circles) and its comment on cutting and contact within and without,
+  exactly as the supplied scaffold patch specifies. A search of `scripts/` and `tests/`
+  found no check that reads the scaffold's Book III strings. The scaffold records the
+  approved statements; it was not run to rewrite any Lean file.
+  This tooling change lands before the content it describes, so that the content's
+  pull request changes no check input beyond the values pinned to that content:
+  the new lock makes main's checks fail, and `scripts/safe_push.py` keeps such content
+  apart from an accompanying change to `scripts/render.py`. No check, statement, lock
+  or review record changes here, apart from the approved signature in the scaffold.

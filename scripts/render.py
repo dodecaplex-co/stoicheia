@@ -1540,8 +1540,9 @@ def overlap_sentences(overlap, facts, records, links, up):
     proof rests on it"; "In I.7 one of our tacit rules supplies a step of a proof of the
     proposition, but our proof never uses that rule." Only a rule that states the
     proposition or gives it at once is said to contain it, as in the overlap catalogue.
-    Where an overlap names several rules together, it says so; partial use names the
-    rules used and unused separately for each proposition."""
+    Where an overlap names several rules together, it says so, but not of rules that
+    contain the proposition and go unused; partial use names the rules used and unused
+    separately for each proposition."""
     def rules(r):
         return overlap_rules(records[r]["overlap"])
 
@@ -1571,13 +1572,12 @@ def overlap_sentences(overlap, facts, records, links, up):
                        "Euclid's argument within our rules and does not establish them.")
     unused = [r for r in contain if not used_rules[r]]
     if unused:
-        extra = together(unused)
-        if len(unused) == 1 and not extra:
+        if len(unused) == 1:
             out.append(f"In {links(unused)} one of our {family} contains the proposition too, "
                        "but our proof never uses that rule.")
         else:
             out.append(f"In {and_list(links([r]) for r in unused)} our {family} contain the "
-                       f"propositions too{extra}, but our proofs never use those rules.")
+                       "propositions too, but our proofs never use those rules.")
     used = [r for r in step if r in rests]
     if used:
         extra = together(used)
