@@ -841,9 +841,10 @@ def overlap_use(p, overlap):
 def overlap_steps(overlap):
     """Does the rule only supply a step of a proof of the proposition, the overlap
     catalogue's third kind (`kind = "step"`), rather than state the proposition or give
-    it at once? Only then do the pages say "supplies a step" in place of "contains". A
-    record whose [overlap] names no kind is read as before, as "contains"."""
-    return overlap.get("kind") == "step"
+    it at once? Only then do the pages say "supplies a step" in place of "contains".
+    Every [overlap] names its kind (heath.load_review rejects one that does not), so
+    nothing is worded by a guess."""
+    return overlap["kind"] == "step"
 
 
 def overlap_word(overlap):
