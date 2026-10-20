@@ -1026,6 +1026,10 @@ def pi_refusal(target, data):
     return f"processing instruction {instruction!r} is outside S26's SVG allow-list"
 
 
+def text_refusal(payload):
+    return f"<text> payload {payload!r} is outside S26's SVG allow-list"
+
+
 DTD_CASES = (
     ('<!DOCTYPE svg [<!ENTITY family "Georgia">]>', '&family;'),
     ('<!DOCTYPE svg [<!ENTITY first "Geor"><!ENTITY family "&first;gia">]>', '&family;'),
@@ -1142,6 +1146,20 @@ class SvgGate(unittest.TestCase):
                         ET.SubElement(target if placement != "own" else group, "text", attrs).text = content
                     self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
 
+    def test_unicode_capitals_are_refused_and_checking_continues(self):
+        """Both figure entry points refuse unmeasured capitals and reach the next file."""
+        for idea in (False, True):
+            for payload in ("Α", "Ａ"):
+                with self.subTest(idea=idea, payload=payload):
+                    root = figure_fixture(idea)
+                    ET.SubElement(root, "text", {"x": "250", "y": "230",
+                                  "fill": "#222222" if idea else "#3b2f2f"}).text = payload
+                    found = figure_run(root, idea)
+                    path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                    self.assertEqual([f for f in found if f[1] == path],
+                                     [("S26", path, 0, text_refusal(payload))])
+                    self.assert_continued(found, idea, text_refusal(payload))
+
     def test_missing_label_font_family(self):
         """A default font cannot borrow Georgia's clearance at either entry point."""
         for idea in (False, True):
@@ -1203,7 +1221,7 @@ class SvgGate(unittest.TestCase):
                         root = figure_fixture(idea)
                         e = next(el for el in root.iter() if style.text_of(el) == "E")
                         e.text = content
-                        self.assert_refused(root, idea, "<text>", "unmeasured")
+                        self.assert_refused(root, idea, "<text>", "payload")
             for content in (" E ", "\tE\t", "\rE\r", "\nE\n", " \t\r\nE \t\r\n"):
                 with self.subTest(idea=idea, content=content):
                     root = figure_fixture(idea)
@@ -1536,6 +1554,31 @@ sys.exit(not result.wasSuccessful())
                         root = figure_fixture(idea)
                         root.set(attr, value)
                         self.assert_refused(root, idea, attr)
+
+    def test_zero_opacity_on_shapes_and_ancestor_groups(self):
+        """Invisible paint is refused where set, while main's positive values remain."""
+        for idea in (False, True):
+            for attr in ("fill-opacity", "stroke-opacity"):
+                for placement in ("shape", "group"):
+                    for value in ("0", "0.0"):
+                        with self.subTest(idea=idea, attr=attr, placement=placement,
+                                          value=value):
+                            root = figure_fixture(idea)
+                            parent = root if placement == "shape" else ET.SubElement(root, "g")
+                            shape = ET.SubElement(parent, "circle", {
+                                "cx": "250", "cy": "230", "r": "10", "fill": "none"})
+                            target = shape if placement == "shape" else parent
+                            target.set(attr, value)
+                            path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                            self.assertEqual(figure_findings(root, idea), [
+                                ("S26", path, 0, svg_refusal(style.tag(target), attr, value))])
+                for value in ("0.1", "0.55", "1"):
+                    with self.subTest(idea=idea, attr=attr, value=value):
+                        root = figure_fixture(idea)
+                        group = ET.SubElement(root, "g", {attr: value})
+                        ET.SubElement(group, "circle", {
+                            "cx": "250", "cy": "230", "r": "10", "fill": "none"})
+                        self.assertEqual(figure_findings(root, idea), [])
 
     def test_exact_keywords_and_whitespace(self):
         for idea in (False, True):
@@ -2154,11 +2197,12 @@ class Clearance(unittest.TestCase):
                             if suffix or attr in ("dx", "dy") else []
                         self.assertEqual(figure_findings(root, idea), want)
 
-    def test_unmeasured_capitals_figure_entry_points(self):
-        """Extra capital runs fail even while every required letter remains present."""
+    def test_text_payloads_figure_entry_points(self):
+        """Only one Heath letter or an ASCII integer is admitted as figure text."""
         for idea in (False, True):
             path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
-            for text in ("AA", "A B", "A=2", "Angle A", "2", "lowercase"):
+            for text in ("AA", "A B", "A=2", "Angle A", "lowercase", "Α", "Ａ",
+                         "2", "9", "16", "25"):
                 for x in ("120", "120 270"):
                     with self.subTest(idea=idea, text=text, x=x):
                         root = figure_fixture(idea)
@@ -2168,16 +2212,10 @@ class Clearance(unittest.TestCase):
                         want = []
                         if " " in x:
                             want.append(svg_refusal("text", "x", x))
-                        if " " not in x and text not in ("2", "lowercase"):
-                            want.append(f"<text> {text!r} has unmeasured capitals: "
-                                        "draw each label in a separate <text>")
+                        if text not in ("2", "9", "16", "25"):
+                            want.append(text_refusal(text))
                         expected = [("S26", str(path.relative_to(style.ROOT)), 0, msg)
                                     for msg in want]
-                        if " " not in x and idea and text != "2":
-                            expected.append(("S20", str(path.relative_to(style.ROOT)), 0,
-                                             f"<text>{text}</text>: an idea figure's text is "
-                                             "Heath's letters, one to a <text>, or numbers "
-                                             "on a fill"))
                         self.assertEqual(figure_findings(root, idea), expected)
 
     def test_stroke_widths_figure_entry_points(self):
@@ -2284,6 +2322,22 @@ class Clearance(unittest.TestCase):
                             self.assertIn("under 2", found[0][3])
                         else:
                             self.assertEqual(found, [])
+
+    def test_path_chord_error_is_local_to_each_subpath(self):
+        """A remote large arc cannot widen a separate straight subpath's measure."""
+        remote = "M-10000 -9000 A10000 10000 0 0 1 -9000 -10000 "
+        for y, want in ((103.5, False), (101.5, True)):
+            local = f"M100 {y} H200"
+            for d in (local, remote + local):
+                with self.subTest(y=y, remote=d != local):
+                    found = s26_findings(
+                        f'<path d="{d}" fill="none" stroke="#3b2f2f" '
+                        'stroke-width="1.6"/>', letter("A"))
+                    self.assertEqual(bool(found), want, found)
+                    if want:
+                        self.assertEqual(len(found), 1, found)
+                        self.assertIn("letter A at (150, 100)", found[0])
+                        self.assertIn("a path", found[0])
 
     def test_percentage_coordinates_figure_entry_points(self):
         """Percentages cannot conceal a line through E at either entry point."""

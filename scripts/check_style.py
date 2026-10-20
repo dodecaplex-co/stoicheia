@@ -2181,6 +2181,7 @@ INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap",
              "stroke-linejoin", "stroke-miterlimit", "stroke-dasharray",
              "font-family", "font-size", "font-style", "font-weight", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
+ASCII_NUMERIC_ANNOTATION = re.compile(r"[0-9]+")
 
 # Inventory of all 198 checked figures at 209d71fd, plus explicit initial keyword
 # values. No style, definitions, references, relative paths, quadratic curves or scales
@@ -2584,10 +2585,11 @@ def path_rings(d: str, closed: list[bool] | None = None,
     formed, as SVG draws it. Given a list `closed`, it gains a flag for each ring: whether
     a Z closes it, as its stroke is drawn (S26), retaining a single point closed by Z
     for its caps. A moveto alone draws nothing. Given `errors`, append a conservative
-    chord error for each elliptical arc or Bézier curve, before transforms. Given
-    `segments`, retain each ring's original segments and tangents for stroke joins."""
+    maximum chord error for each retained ring, before transforms. Given `segments`,
+    retain each ring's original segments and tangents for stroke joins."""
     rings: list[list[tuple[float, float]]] = []
     ring: list[tuple[float, float]] = []
+    ring_errors: list[float] = []
     run_segments: list[StrokeSegment] = []
 
     def keep(shut: bool) -> None:
@@ -2595,6 +2597,8 @@ def path_rings(d: str, closed: list[bool] | None = None,
             rings.append(ring)
             if closed is not None:
                 closed.append(shut)
+            if errors is not None:
+                errors.append(max(ring_errors, default=0.0))
             if segments is not None:
                 segments.append(run_segments + [stroke_segment([ring[-1], ring[0]])]
                                 if shut else run_segments)
@@ -2611,6 +2615,7 @@ def path_rings(d: str, closed: list[bool] | None = None,
         if kind == "z":
             keep(True)
             ring, x, y, ctrl = [(sx, sy)], sx, sy, None
+            ring_errors = []
             run_segments = []
             continue
         args = []
@@ -2628,6 +2633,7 @@ def path_rings(d: str, closed: list[bool] | None = None,
             keep(False)
             (x, y), ctrl = pairs[0], None
             sx, sy, ring = x, y, [(x, y)]
+            ring_errors = []
             run_segments = []
             cmd = "l" if cmd == "m" else "L"
             continue
@@ -2638,7 +2644,7 @@ def path_rings(d: str, closed: list[bool] | None = None,
         elif kind == "l":
             pts, ctrl = pairs, None
         elif kind == "a":
-            pts = arc_points(x, y, *args[:5], ox + args[5], oy + args[6], errors,
+            pts = arc_points(x, y, *args[:5], ox + args[5], oy + args[6], ring_errors,
                              run_segments if segments is not None else None)
             ctrl = None
         else:
@@ -2650,7 +2656,7 @@ def path_rings(d: str, closed: list[bool] | None = None,
             if segments is not None:
                 run_segments.append(stroke_segment(curve))
             if errors is not None:
-                errors.append(CURVE_ERROR)
+                ring_errors.append(CURVE_ERROR)
             ctrl = ("c" if kind in "cs" else "q", curve[-2])
         if kind in "hlv" and segments is not None:
             run_segments.append(stroke_segment([(x, y), pts[-1]]))
@@ -3097,7 +3103,7 @@ def supported_svg(path: Path, root) -> bool:
                 if ok and attr in ("r", "rx", "ry", "width", "height", "font-size", "stroke-width"):
                     ok = n >= 0
                 if ok and attr in ("fill-opacity", "stroke-opacity"):
-                    ok = 0 <= n <= 1
+                    ok = 0 < n <= 1
             elif attr in SVG_KEYWORDS:
                 ok = value in SVG_KEYWORDS[attr]
             elif attr in ("points", "viewBox", "stroke-dasharray"):
@@ -3117,6 +3123,12 @@ def supported_svg(path: Path, root) -> bool:
                 ok = attr == UNLETTERED
             if not ok:
                 fail("S26", path, 0, f"<{t}> {attr} {value!r} is outside S26's SVG allow-list")
+                valid = False
+        if t == "text":
+            s = text_of(el)
+            if not LETTER.fullmatch(s) and not ASCII_NUMERIC_ANNOTATION.fullmatch(s):
+                fail("S26", path, 0,
+                     f"<text> payload {s!r} is outside S26's SVG allow-list")
                 valid = False
     if not valid:
         return False
@@ -3215,21 +3227,25 @@ def strokes(path: Path, root):
         if w <= 0:
             continue
         closed = []
-        errors = []
+        run_errors = []
         segment_runs = []
         if t == "line":
             runs = [[(coord(own.get("x1")), coord(own.get("y1"))),
                      (coord(own.get("x2")), coord(own.get("y2")))]]
+            run_errors = [0.0]
         elif t in ("polyline", "polygon"):
             v = [float(n) for n in NUM.findall(own.get("points", ""))]
             run = list(zip(v[0::2], v[1::2]))
             runs = [run + run[:1] if t == "polygon" else run]
+            run_errors = [0.0]
         elif t == "path":
-            rings = path_rings(own.get("d", ""), closed, errors, segment_runs)
+            rings = path_rings(own.get("d", ""), closed, run_errors, segment_runs)
             runs = [ring + ring[:1] if shut else ring for ring, shut in zip(rings, closed)]
         elif t == "rect":
+            errors = []
             outline = rect_outline(own, errors)
             runs = [outline] if outline else []
+            run_errors = [max(errors, default=0.0)] if outline else []
         else:
             cx, cy = coord(own.get("cx")), coord(own.get("cy"))
             rx = coord(own.get("r")) if t == "circle" else coord(own.get("rx"))
@@ -3240,8 +3256,8 @@ def strokes(path: Path, root):
                   cy + ry * math.sin(i * math.tau / steps))
                  for i in range(steps + 1)]]
             # An ellipse stretches the unit circle by at most its greater radius.
-            errors.append(max(rx, ry) * (1 - math.cos(math.pi / steps)))
-        half = (w / 2 + max(errors, default=0.0)) * stretch(m)
+            run_errors = ([max(rx, ry) * (1 - math.cos(math.pi / steps))]
+                          if runs else [])
         dashed = (eff.get("stroke-dasharray") or "none").strip().lower() != "none"
         kind = "a dashed line" if dashed and t == "line" else \
             ("an " if t == "ellipse" else "a ") + t
@@ -3253,10 +3269,12 @@ def strokes(path: Path, root):
             closed = [t in ("polygon", "rect", "circle", "ellipse")] * len(runs)
             # Rounded rectangles join their sides tangentially to their corners.
             segment_runs = [[stroke_segment([a, b]) for a, b in zip(run, run[1:])]
-                            if t in ("polyline", "polygon", "rect") and not errors else []
+                            if t in ("polyline", "polygon", "rect")
+                            and not any(run_errors) else []
                             for run in runs]
-        for run, shut, segments in zip(runs, closed, segment_runs):
+        for run, shut, segments, error in zip(runs, closed, segment_runs, run_errors):
             if len(run) > 1 and not (cap == "butt" and all(p == run[0] for p in run)):
+                half = (w / 2 + error) * stretch(m)
                 yield kind, [at(m, x, y) for x, y in run], half
                 if miter:
                     for join in miter_joins(segments, w / 2, limit, shut):

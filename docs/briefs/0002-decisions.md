@@ -1888,7 +1888,12 @@ findings:
   fallback. Ordinary XML declarations, comments and character references remain
   admitted; an undeclared reference without a DTD retains its malformed-SVG finding.
   Mitre joins now use original segments' endpoint tangents, with no joins between a
-  curve's flattened chords.
+  curve's flattened chords. The closed text language admits only Heath's letters and
+  ASCII integer annotations, so Greek, full-width and other unmeasured text cannot pass
+  unseen. Zero fill and stroke opacity are refused on shapes and ancestor groups, while
+  main's positive opacity spellings remain admitted. Each path subpath now keeps its own
+  conservative chord allowance, so a remote arc cannot widen an unrelated straight
+  subpath's clearance measure.
   Both figure entry points have cases requiring an S26 finding. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures. The matching words in
