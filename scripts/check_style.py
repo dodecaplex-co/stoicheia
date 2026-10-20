@@ -2181,6 +2181,27 @@ INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap",
              "font-size", "font-style", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
 
+# Inventory of all 198 checked figures at 209d71fd, plus explicit initial keyword
+# values. No style, definitions, references, relative paths, quadratic curves or scales
+# occur there. Keep this language closed before any traversal can measure a figure.
+SVG_ELEMENTS = {"svg", "title", "desc", "g", "line", "polyline", "polygon", "rect",
+                "circle", "ellipse", "path", "text"}
+SVG_NUMBERS = {"x", "y", "x1", "y1", "x2", "y2", "cx", "cy", "r", "rx", "ry",
+               "width", "height", "font-size", "stroke-width", "fill-opacity", "stroke-opacity"}
+SVG_KEYWORDS = {
+    "fill": {"none", "black", "#1f5aa6", "#222222", "#3b2f2f", "#d0312d", "#e9dcc0",
+             "#f2b705", "#fbf7ee", "#fff"},
+    "stroke": {"none", "#1f5aa6", "#222222", "#3b2f2f", "#8c7b62", "#a0522d", "#d0312d",
+               "#f2b705", "#fbf7ee", "#fff"},
+    "font-family": {"Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"},
+    "font-style": {"normal", "italic"},
+    "font-weight": {"normal", "bold"},
+    "text-anchor": {"start", "middle", "end"},
+    "stroke-linecap": {"butt", "round"},
+    "stroke-linejoin": {"miter", "round"},
+}
+SVG_SPACE = " \t\r\n"
+
 # The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
 # canvas's units, 400 × 300.
 IDEA_INK = "#222222"            # a letter on the parchment or on yellow
@@ -2203,7 +2224,7 @@ PATH_NUMBER = re.compile(r"[\s,]*(" + NUM.pattern + ")")
 PATH_FLAG = re.compile(r"[\s,]*([01])")
 PATH_ARITY = {"m": 2, "l": 2, "h": 1, "v": 1, "c": 6, "s": 4, "q": 4, "t": 2, "a": 7}
 ARC_STEP = math.radians(3)   # an arc, in a straight piece to each 3 degrees of its sweep
-CURVE_STEPS = 32             # a Bézier curve, in this many straight pieces
+CURVE_ERROR = 0.001          # the maximum Bézier chord error, before transforms
 
 # One letter, one point (S26; STYLE, sections 7 and 8). A letter names one thing: a figure
 # draws it once, or once in each of Heath's figures where they stand side by side, and it
@@ -2358,16 +2379,6 @@ def tag(el) -> str:
     return el.tag[len(SVG):] if el.tag.startswith(SVG) else el.tag
 
 
-def style_of(el) -> dict[str, str]:
-    """An element's presentation attributes, its `style` declarations overriding them."""
-    attrs = {k: v.strip() for k, v in el.attrib.items()}
-    for decl in attrs.pop("style", "").split(";"):
-        if ":" in decl:
-            k, v = decl.split(":", 1)
-            attrs[k.strip()] = v.strip()
-    return attrs
-
-
 def walk(el, inherited=None):
     """(element, its own attributes, its effective inherited ones) for the whole tree."""
     for el, own, eff, _, _ in placed(el, IDENTITY, inherited):
@@ -2379,7 +2390,7 @@ def placed(el, m=IDENTITY, inherited=None, exempt=None):
     ones, its transform composed with its ancestors', and the data-unlettered in force as
     (the element that carries it, its reason), or None)."""
     inherited = dict(inherited or {})
-    own = style_of(el)
+    own = dict(el.attrib)
     eff = dict(inherited)
     eff.update({k: own[k] for k in INHERITED if k in own})
     m = compose(m, transform_of(own.get("transform")))
@@ -2412,33 +2423,24 @@ def compose(a, b):
 
 
 def transform_of(value: str | None):
-    """A `transform` attribute as one affine map: translate, scale, rotate, skewX, skewY
-    and matrix, applied as SVG applies them, the last first."""
-    m = IDENTITY
-    for name, args in re.findall(r"([A-Za-z]+)\s*\(([^)]*)\)", value or ""):
-        v = [float(x) for x in NUM.findall(args)]
-        if not v:
-            continue
-        if name == "translate":
-            t = (1.0, 0.0, 0.0, 1.0, v[0], v[1] if len(v) > 1 else 0.0)
-        elif name == "scale":
-            t = (v[0], 0.0, 0.0, v[1] if len(v) > 1 else v[0], 0.0, 0.0)
-        elif name == "rotate":
-            c, s = math.cos(math.radians(v[0])), math.sin(math.radians(v[0]))
-            t = (c, s, -s, c, 0.0, 0.0)
-            if len(v) >= 3:
-                t = compose(compose((1.0, 0.0, 0.0, 1.0, v[1], v[2]), t),
-                            (1.0, 0.0, 0.0, 1.0, -v[1], -v[2]))
-        elif name == "skewX":
-            t = (1.0, 0.0, math.tan(math.radians(v[0])), 1.0, 0.0, 0.0)
-        elif name == "skewY":
-            t = (1.0, math.tan(math.radians(v[0])), 0.0, 1.0, 0.0, 0.0)
-        elif name == "matrix" and len(v) == 6:
-            t = tuple(v)
-        else:
-            continue
-        m = compose(m, t)
-    return m
+    """The complete transform forms in main's figures; None for any other spelling."""
+    if value is None:
+        return IDENTITY
+    name, opening, tail = value.partition("(")
+    if not opening or not tail.endswith(")"):
+        return None
+    args = decimal_list(tail[:-1])
+    if args is None:
+        return None
+    v = [float(x) for x in args]
+    if name == "translate" and len(v) == 2:
+        return (1.0, 0.0, 0.0, 1.0, v[0], v[1])
+    if name == "rotate" and len(v) == 3:
+        c, s = math.cos(math.radians(v[0])), math.sin(math.radians(v[0]))
+        return compose(compose((1.0, 0.0, 0.0, 1.0, v[1], v[2]),
+                               (c, s, -s, c, 0.0, 0.0)),
+                       (1.0, 0.0, 0.0, 1.0, -v[1], -v[2]))
+    return None
 
 
 def at(m, x: float, y: float) -> tuple[float, float]:
@@ -2454,11 +2456,18 @@ def back(m, x: float, y: float) -> tuple[float, float] | None:
     return ((m[3] * x - m[2] * y) / det, (m[0] * y - m[1] * x) / det)
 
 
-def bezier(ps, t: float) -> tuple[float, float]:
-    """The point at t of the Bézier curve with control points ps (de Casteljau)."""
+def bezier_points(ps) -> list[tuple[float, float]]:
+    """Subdivide until the control polygon lies within CURVE_ERROR of the chord.
+    The curve lies in that polygon's convex hull, so the chord's CURVE_ERROR tube
+    contains the curve, including a reversal or a closed curve with coincident ends."""
+    if max(point_gap(p, ps[0], ps[-1]) for p in ps[1:-1]) <= CURVE_ERROR:
+        return [ps[-1]]
+    left, right = [ps[0]], [ps[-1]]
     while len(ps) > 1:
-        ps = [(a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])) for a, b in zip(ps, ps[1:])]
-    return ps[0]
+        ps = [((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) for a, b in zip(ps, ps[1:])]
+        left.append(ps[0])
+        right.append(ps[-1])
+    return bezier_points(left) + bezier_points(right[::-1])
 
 
 def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: float,
@@ -2506,7 +2515,7 @@ def path_rings(d: str, closed: list[bool] | None = None,
     formed, as SVG draws it. Given a list `closed`, it gains a flag for each ring: whether
     a Z closes it, as its stroke is drawn (S26), retaining a single point closed by Z
     for its caps. A moveto alone draws nothing. Given `errors`, append a conservative
-    chord error for each elliptical arc, before transforms."""
+    chord error for each elliptical arc or Bézier curve, before transforms."""
     rings: list[list[tuple[float, float]]] = []
     ring: list[tuple[float, float]] = []
 
@@ -2560,7 +2569,9 @@ def path_rings(d: str, closed: list[bool] | None = None,
                 same = ctrl is not None and ctrl[0] == ("c" if kind == "s" else "q")
                 pairs.insert(0, (2 * x - ctrl[1][0], 2 * y - ctrl[1][1]) if same else (x, y))
             curve = [(x, y)] + pairs
-            pts = [bezier(curve, i / CURVE_STEPS) for i in range(1, CURVE_STEPS + 1)]
+            pts = bezier_points(curve)
+            if errors is not None:
+                errors.append(CURVE_ERROR)
             ctrl = ("c" if kind in "cs" else "q", curve[-2])
         ring += pts
         x, y = ring[-1]
@@ -2652,7 +2663,7 @@ def check_idea(path: Path, ref: str, required: bool) -> int:
     """S13, S14, S20, S21 and S26 for one idea figure. Returns how many of its points wait
     for a letter while it is in the transition (no letter yet, the switch off), else 0."""
     root = svg_root(path)
-    if root is None or not supported_lengths(path, root):
+    if root is None or not supported_svg(path, root):
         return 0
     vb = " ".join(root.get("viewBox", "").replace(",", " ").split())
     if vb != "0 0 400 300":
@@ -2840,57 +2851,121 @@ def stretch(m) -> float:
     return math.sqrt((t + math.sqrt(max(0.0, t * t - 4 * det * det))) / 2)
 
 
+
+def decimal_end(value: str, pos: int) -> int | None:
+    """Read an optional sign, digits, and an optional point followed by digits, linearly."""
+    if pos < len(value) and value[pos] in "+-":
+        pos += 1
+    start = pos
+    while pos < len(value) and "0" <= value[pos] <= "9":
+        pos += 1
+    if pos == start:
+        return None
+    if pos < len(value) and value[pos] == ".":
+        pos += 1
+        start = pos
+        while pos < len(value) and "0" <= value[pos] <= "9":
+            pos += 1
+        if pos == start:
+            return None
+    return pos
+
+
 def length(value: str | None) -> float | None:
-    """An attribute that is one finite number, with no unit or px ("50", "5e1", "50px"),
-    or None. Read in one pass, by its characters and then float(), so that a long run of
-    digits cannot make the reading slow, as NUM matched to the end would."""
-    v = (value or "").strip()
-    v = v[:-2].rstrip() if v.endswith("px") else v
-    if not re.fullmatch(r"[-+.0-9eE]+", v):
+    """One finite plain decimal, with no unit, exponent or internal white space."""
+    v = (value or "").strip(SVG_SPACE)
+    if not v or decimal_end(v, 0) != len(v):
         return None
-    try:
-        n = float(v)
-        return n if math.isfinite(n) else None
-    except ValueError:
-        return None
+    n = float(v)
+    return n if math.isfinite(n) else None
 
 
-def supported_lengths(path: Path, root) -> bool:
-    """Refuse unreadable lengths before any figure measurement, including inherited
-    widths and sizes and presentation styles. Text coordinate lists still receive their
-    separate S26 finding; every entry must first be a readable length."""
-    attrs = {
-        "svg": ("x", "y", "width", "height"),
-        "line": ("x1", "y1", "x2", "y2"),
-        "circle": ("cx", "cy", "r"),
-        "ellipse": ("cx", "cy", "rx", "ry"),
-        "rect": ("x", "y", "width", "height", "rx", "ry"),
-        "text": ("x", "y", "dx", "dy"),
-    }
+def decimal_list(value: str) -> list[str] | None:
+    """Plain decimals separated by a comma with optional white space, or white space.
+    Retain the spelling so path flags can require exactly 0 or 1."""
+    v = value.strip(SVG_SPACE)
+    parts, pos = [], 0
+    while pos < len(v):
+        end = decimal_end(v, pos)
+        if end is None or length(v[pos:end]) is None:
+            return None
+        parts.append(v[pos:end])
+        pos = end
+        while pos < len(v) and v[pos] in SVG_SPACE:
+            pos += 1
+        if pos == len(v):
+            return parts
+        if v[pos] == ",":
+            pos += 1
+            while pos < len(v) and v[pos] in SVG_SPACE:
+                pos += 1
+            if pos == len(v):
+                return None
+        elif pos == end:
+            return None
+    return None
+
+
+def supported_path(value: str) -> bool:
+    """Whole paths in main's command language, including counts, separators and flags."""
+    parts = re.split(r"([A-Za-z])", value.strip(SVG_SPACE))
+    if len(parts) < 3 or parts[0] or parts[1] != "M":
+        return False
+    for cmd, args in zip(parts[1::2], parts[2::2]):
+        if cmd not in "MLHVACZ":
+            return False
+        if cmd == "Z":
+            if args.strip(SVG_SPACE):
+                return False
+            continue
+        v = decimal_list(args)
+        arity = PATH_ARITY[cmd.lower()]
+        if v is None or len(v) % arity:
+            return False
+        if cmd == "A" and any(float(v[i]) < 0 or float(v[i + 1]) < 0
+                              or v[i + 3] not in ("0", "1") or v[i + 4] not in ("0", "1")
+                              for i in range(0, len(v), arity)):
+            return False
+    return True
+
+
+def supported_svg(path: Path, root) -> bool:
+    """Refuse anything outside the inventory before measurements, naming every failure.
+    Read raw XML attributes only; CSS is neither accepted nor interpreted."""
     valid = True
-    for el, own, eff, _, _ in placed(root):
+    for el in root.iter():
         t = tag(el)
-        values = {attr: own[attr] for attr in attrs.get(t, ()) if attr in own}
-        if t == "text" and "font-size" in eff:
-            values["font-size"] = eff["font-size"]
-        if t in DRAWN and (eff.get("stroke") or "none").lower() != "none" \
-                and "stroke-width" in eff:
-            values["stroke-width"] = eff["stroke-width"]
-        for attr, value in values.items():
-            parts = re.split(r"[\s,]+", value) if t == "text" and attr != "font-size" else [value]
-            if any(length(part) is None for part in parts):
-                fail("S26", path, 0, f"<{t}> {attr} {value!r} is not a finite number "
-                     "with no unit or px")
-                valid = False
-        for attr in ("points", "viewBox"):
-            if attr not in own:
-                continue
-            parts = re.split(r"[\s,]+", own[attr])
-            if not all(NUM.fullmatch(part) and length(part) is not None for part in parts) \
-                    or (len(parts) != 4 if attr == "viewBox" else len(parts) % 2 != 0):
-                fail("S26", path, 0, f"<{t}> {attr} {own[attr]!r} is not "
-                     + ("four finite unitless numbers" if attr == "viewBox" else
-                        "pairs of finite unitless numbers"))
+        if t not in SVG_ELEMENTS or (t == "svg" and el is not root):
+            fail("S26", path, 0, f"<{t}> is outside S26's SVG allow-list")
+            valid = False
+            continue
+        for attr, value in el.attrib.items():
+            if attr in SVG_NUMBERS:
+                n = length(value)
+                ok = n is not None
+                if ok and attr in ("r", "rx", "ry", "width", "height", "font-size", "stroke-width"):
+                    ok = n >= 0
+                if ok and attr in ("fill-opacity", "stroke-opacity"):
+                    ok = 0 <= n <= 1
+            elif attr in SVG_KEYWORDS:
+                ok = value in SVG_KEYWORDS[attr]
+            elif attr in ("points", "viewBox", "stroke-dasharray"):
+                v = decimal_list(value)
+                ok = v is not None
+                if attr == "viewBox":
+                    ok = ok and len(v) == 4 and float(v[2]) > 0 and float(v[3]) > 0
+                elif attr == "points":
+                    ok = ok and len(v) % 2 == 0
+                else:
+                    ok = value == "none" or (ok and all(float(n) >= 0 for n in v))
+            elif attr == "transform":
+                ok = transform_of(value) is not None
+            elif attr == "d":
+                ok = supported_path(value)
+            else:
+                ok = attr == UNLETTERED
+            if not ok:
+                fail("S26", path, 0, f"<{t}> {attr} {value!r} is outside S26's SVG allow-list")
                 valid = False
     return valid
 
@@ -2980,11 +3055,7 @@ def strokes(path: Path, root):
         w = length(eff.get("stroke-width", "1"))
         if w is None or not math.isfinite(w):
             fail("S26", path, 0, f"<{t}> stroke-width {eff.get('stroke-width')!r} is not "
-                 "a finite number with no unit or px")
-            continue
-        if "vector-effect" in own:
-            fail("S26", path, 0, f"<{t}> vector-effect is not followed: draw the stroke "
-                 "without it")
+                 "a finite plain decimal")
             continue
         if w <= 0:
             continue
@@ -3106,14 +3177,12 @@ def one_letter_one_point(path: Path, root, cuts: tuple[float, ...] = ()) -> None
     with `cuts` between them, once in each, every letter wholly on one side of every cut;
     and each letter stands CLEAR of every stroke, every dot and the canvas's edge,
     measured by the hull of its capital as Georgia draws it, upright or italic."""
-    if not supported_lengths(path, root):
+    if not supported_svg(path, root):
         return
     vb = [float(v) for v in NUM.findall(root.get("viewBox", ""))]
     pieces, spots = list(strokes(path, root)), list(dots(root))
     count: dict[tuple[int, str], int] = defaultdict(int)
     for el, own, eff, m, _ in placed(root):
-        if tag(el) == "use":
-            fail("S26", path, 0, "<use> is not followed: draw its contents directly")
         if tag(el) != "text":
             continue
         unsupported = False
@@ -3121,11 +3190,6 @@ def one_letter_one_point(path: Path, root, cuts: tuple[float, ...] = ()) -> None
             fail("S26", path, 0, "<text> has an element child: draw each label in a "
                  "separate <text>")
             unsupported = True
-        for attr in ("x", "y", "dx", "dy"):
-            if len(NUM.findall(own.get(attr, ""))) > 1:
-                fail("S26", path, 0, f"<text> {attr} has more than one number: draw each "
-                     "label in a separate <text>")
-                unsupported = True
         s = text_of(el)
         if not LETTER.fullmatch(s):
             if re.search(r"[A-Z]", s):
@@ -3179,7 +3243,7 @@ def heath_letters(book: str, n: int) -> set[str]:
 
 def check_euclid(path: Path, ref: str) -> None:
     root = svg_root(path)
-    if root is None or not supported_lengths(path, root):
+    if root is None or not supported_svg(path, root):
         return
     book, n = ref.split(".")
     n = int(n)

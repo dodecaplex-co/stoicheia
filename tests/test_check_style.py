@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The cases of scripts/check_style.py: how its rules read a phrase, TeX, and a letter.
 
-    python3 -I tests/test_check_style.py        # well under a second; no Lean, no network
+    python3 -I tests/test_check_style.py        # no Lean, no network
 
 Each case is a short text, or a small figure, with the finding its rule should make of
 it, put to the script's own patterns and functions:
@@ -18,7 +18,7 @@ it, put to the script's own patterns and functions:
   arc; however the wedge is spelled (an absolute arc, a relative arc, a cubic curve), and
   wherever a transform moves it;
 * the clearance cases: S26 finds a stroke through a letter, or nearer it than 2 less half
-  its width (given as an attribute, in style= or inherited), and not one clear of it;
+  its width (given as an attribute or inherited), and not one clear of it;
   reads a stroke of none as no stroke and a dashed one whole; closes a path's stroke only
   where a Z closes it, a polygon's always and a polyline's never; finds a circle or an
   ellipse through a letter and not one round it, a dot beside it, a dot or a short stroke
@@ -34,6 +34,10 @@ it, put to the script's own patterns and functions:
   And it finds a letter drawn twice, or twice in one of
   several figures side by side, or across the cut between them, and reads A and A′ as two
   letters; and it names a line dashed by itself or by its group as a dashed line.
+* the input cases: both complete figure checks refuse elements, attributes, numbers,
+  transforms, keywords and path commands outside main's SVG language before measuring;
+  earlier cases using CSS, units, exponents or other excluded features now require that
+  refusal. Cubic subdivision includes its chord error, and malformed lists take linear time;
 * the scope cases (#66): which texts of a review record the rules read, and on which
   lines; the docstring render.py shows, found again in its file; S12's reading of a
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
@@ -53,6 +57,7 @@ section 8, "A guard defect gets a regression"). Python 3.11 or later; standard l
 from __future__ import annotations
 
 import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -971,11 +976,221 @@ class Ink(unittest.TestCase):
                               "letters on angles' wedges rightly")
 
 
+def svg_refusal(kind, attr=None, value=None):
+    """The diagnostic expected when a case is outside the declared input language."""
+    what = f"<{kind}>" + (f" {attr} {value!r}" if attr is not None else "")
+    return f"{what} is outside S26's SVG allow-list"
+
+
+class SvgGate(unittest.TestCase):
+    """The closed SVG input language, through both complete figure checks."""
+
+    def assert_refused(self, root, idea, *names):
+        found = [f for f in figure_findings(root, idea) if f[0] == "S26"]
+        path = "figures/I/01-idea.svg" if idea else "figures/I/01.svg"
+        self.assertTrue(found, (idea, names))
+        self.assertTrue(all(f[1:3] == (path, 0) for f in found), found)
+        for name in names:
+            self.assertTrue(any(name in f[3] for f in found), (name, found))
+
+    def test_supported_spellings_and_continuation(self):
+        for idea in (False, True):
+            root = figure_fixture(idea)
+            for transform in ("translate(+0,-0)", "translate(0 0)",
+                              "rotate(0 150 100)", "rotate(0,150,100)"):
+                group = ET.SubElement(root, "g", {"transform": transform, "font-style": "normal",
+                                      "font-weight": "normal", "text-anchor": "start",
+                                      "stroke-linecap": "butt", "stroke-linejoin": "miter"})
+                ET.SubElement(group, "polyline", {"points": "10,20 30,40", "stroke-dasharray": "none"})
+                ET.SubElement(group, "line", {"x1": "+10.00", "y1": "-0", "stroke-width": "0",
+                              "stroke-dasharray": "1, 2   3,4"})
+            self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
+            ET.SubElement(root, "image")
+            ET.SubElement(root, "g", {"style": "fill:none", "unknown": "bad"})
+            self.assert_refused(root, idea, "<image>", "style", "unknown")
+            self.assertEqual(figure_findings(figure_fixture(idea), idea), [])
+
+    def test_elements_and_attributes(self):
+        for idea in (False, True):
+            for name in ("style", "use", "image", "foreignObject", "animate", "tspan",
+                         "defs", "marker", "unknown", "{urn:other}line"):
+                with self.subTest(idea=idea, element=name):
+                    root = figure_fixture(idea)
+                    ET.SubElement(root, name)
+                    self.assert_refused(root, idea, f"<{name}>")
+            for name in ("style", "class", "id", "onclick", "filter", "clip-path",
+                         "mask", "vector-effect", "dx", "dy", "fill-rule",
+                         "stroke-miterlimit", "unknown", "{urn:other}x"):
+                with self.subTest(idea=idea, attribute=name):
+                    root = figure_fixture(idea)
+                    ET.SubElement(root, "g", {name: "none"})
+                    self.assert_refused(root, idea, "<g>", name)
+
+    def test_plain_decimals_and_lists(self):
+        for idea in (False, True):
+            for attr in ("x1", "stroke-width", "fill-opacity", "stroke-opacity", "font-size"):
+                for value in ("0 px", "1px", "1e2", ".5", "1.", "1 2", "1,2",
+                              "--1", "+", "", "NaN", "inf", "١", "9" * 400):
+                    with self.subTest(idea=idea, attr=attr, value=value[:30]):
+                        root = figure_fixture(idea)
+                        ET.SubElement(root, "line", {attr: value})
+                        self.assert_refused(root, idea, "<line>", attr)
+            for attr in ("points", "viewBox", "stroke-dasharray"):
+                for value in ("0 0 400x 300", "0 0 4e2 300", "0 0 .4 300", "0,,0",
+                              ",0 0", "0 0,", "0 0px", "0;0", "0 0 inherit", ""):
+                    with self.subTest(idea=idea, attr=attr, value=value):
+                        root = figure_fixture(idea)
+                        root.set(attr, value)
+                        self.assert_refused(root, idea, "<svg>", attr)
+
+    def test_transforms(self):
+        for idea in (False, True):
+            for value in ("translate(-80px,0)", "translate(-80,0,0)",
+                          "translate(-80,0)junk", "translate(-80,0) rotate(0)",
+                          "translate(-80)", "translate(-80,,0)", "translate(-8e1,0)",
+                          "translate(-80 0", "translate(-80,0))", "translate(-80;0)",
+                          "translate()", "rotate(0)", "rotate(0 1)", "rotate(0 1 2 3)",
+                          "scale(1)", "scale(1,2)", "matrix(1 0 0 1 0 0)", "skewX(0)", ""):
+                with self.subTest(idea=idea, transform=value):
+                    root = figure_fixture(idea)
+                    ET.SubElement(root, "line", {"x1": "352", "y1": "150.8", "x2": "364",
+                                  "y2": "150.8", "stroke": "#222222" if idea else "#3b2f2f",
+                                  "stroke-width": "1.6", "transform": value})
+                    self.assert_refused(root, idea, "<line>", "transform")
+
+    def test_css_coordinates_and_paths(self):
+        for idea in (False, True):
+            for kind, attrs in (
+                    ("line", {"x1": "352", "y1": "150.8", "x2": "364", "y2": "150.8",
+                              "style": "y1:210px;y2:210px"}),
+                    ("path", {"d": "M352 150.8 L364 150.8",
+                              "style": "d:path('M352 210 L364 210')"}),
+                    ("text", {"style": "y:220px"})):
+                with self.subTest(idea=idea, kind=kind):
+                    root = figure_fixture(idea)
+                    if kind == "text":
+                        el = next(e for e in root.iter() if style.text_of(e) == "E")
+                    else:
+                        el = ET.SubElement(root, kind, {
+                            "stroke": "#222222" if idea else "#3b2f2f", "stroke-width": "1.6"})
+                    el.attrib.update(attrs)
+                    self.assert_refused(root, idea, f"<{kind}>", "style")
+
+    def test_whitespace_width(self):
+        for idea in (False, True):
+            for placement in ("attribute", "style", "inherited"):
+                with self.subTest(idea=idea, placement=placement):
+                    root = figure_fixture(idea)
+                    parent = ET.SubElement(root, "g") if placement == "inherited" else root
+                    line = ET.SubElement(parent, "line", {
+                        "x1": "352", "y1": "150.8", "x2": "364", "y2": "150.8",
+                        "stroke": "#222222" if idea else "#3b2f2f"})
+                    target = parent if placement == "inherited" else line
+                    attr = "style" if placement == "style" else "stroke-width"
+                    target.set(attr, "stroke-width:0 px" if placement == "style" else "0 px")
+                    self.assert_refused(root, idea, f"<{style.tag(target)}>", attr)
+
+    def test_keywords(self):
+        for idea in (False, True):
+            for attr in ("text-anchor", "stroke-linecap", "stroke-linejoin", "font-style",
+                         "font-weight", "font-family", "fill", "stroke", "stroke-dasharray"):
+                for value in ("inherit", "initial", "unset", "revert", "revert-layer", "unknown"):
+                    with self.subTest(idea=idea, attr=attr, value=value):
+                        root = figure_fixture(idea)
+                        ET.SubElement(root, "g", {attr: value})
+                        self.assert_refused(root, idea, "<g>", attr)
+            for attr, value in (("stroke-linecap", "square"), ("stroke-linejoin", "bevel"),
+                                ("font-style", "oblique"), ("font-weight", "700")):
+                with self.subTest(idea=idea, attr=attr, value=value):
+                    root = figure_fixture(idea)
+                    ET.SubElement(root, "g", {attr: value})
+                    self.assert_refused(root, idea, attr)
+
+    def test_explicit_inheritance(self):
+        for idea in (False, True):
+            for attr, value, shape in (
+                    ("text-anchor", "middle", '<line x1="145" y1="85" x2="145" y2="105"/>'),
+                    ("stroke-linejoin", "miter", '<polyline points="130,160 155,103 180,160"/>')):
+                with self.subTest(idea=idea, attribute=attr):
+                    root = figure_fixture(idea)
+                    group = ET.SubElement(root, "g", {attr: value, "stroke-width": "1.6",
+                                          "stroke": "#222222" if idea else "#3b2f2f"})
+                    drawn = ET.fromstring(shape)
+                    group.append(drawn)
+                    e = next(el for el in root.iter() if style.tag(el) == "text"
+                             and style.text_of(el) == "E")
+                    e.attrib.update(x="150", y="100", **{"font-size": "17", "font-style": "normal",
+                                                        "text-anchor": "start"})
+                    if attr == "text-anchor":
+                        next(el for el in root.iter() if e in list(el)).remove(e)
+                        group.append(e)
+                    target = e if attr == "text-anchor" else drawn
+                    target.set(attr, "inherit")
+                    self.assert_refused(root, idea, attr)
+                    target.set(attr, value)
+                    found = [f[3] for f in figure_findings(root, idea) if f[0] == "S26"]
+                    self.assertTrue(any("letter E" in f for f in found), found)
+
+    def test_paths(self):
+        for idea in (False, True):
+            for value in ("M100 100 Q150 50 200 100", "M100 100 S150 50 200 100",
+                          "M100 100 T200 100", "m100 100 l100 0", "M100 100 a1 1 0 0 0 1 1",
+                          "M100 100 R200 100", "M100 100 L200", "L100 100", "M100px 100",
+                          "M1e2 100 L200 100", "M100 100 A10 10 0 2 0 120 100",
+                          "M100 100 A-10 10 0 0 0 120 100", "M100 100 L200 100 junk"):
+                with self.subTest(idea=idea, d=value):
+                    root = figure_fixture(idea)
+                    ET.SubElement(root, "path", {"d": value})
+                    self.assert_refused(root, idea, "<path>", "d")
+
+    def test_bezier_clearance(self):
+        # The quadratic in the review, and its exact cubic degree elevation.
+        paths = ("M100,182.5507421875 Q150,27.8632421875 200,173.1757421875",
+                 "M100,182.5507421875 C133.33333333333334,79.4257421875 "
+                 "166.66666666666666,76.3007421875 200,173.1757421875",
+                 # Its minimum at t = 0.5173 falls between subdivision points;
+                 # exact clearance 1.99999 requires subtracting the chord error.
+                 "M100,183.079777 C133.33333333333334,79.619777 "
+                 "166.66666666666666,76.159777 200,172.699777")
+        for idea in (False, True):
+            for d in paths:
+                with self.subTest(idea=idea, d=d):
+                    root = figure_fixture(idea)
+                    ET.SubElement(root, "path", {"d": d, "fill": "none", "stroke-width": "1.6",
+                                  "stroke": "#222222" if idea else "#3b2f2f"})
+                    e = next(el for el in root.iter() if style.tag(el) == "text"
+                             and style.text_of(el) == "E")
+                    e.attrib.update(x="150", y="100", **{"font-size": "17", "font-style": "normal",
+                                                        "text-anchor": "start"})
+                    if "Q" in d:
+                        self.assert_refused(root, idea, "<path>", "d")
+                    else:
+                        found = [f[3] for f in figure_findings(root, idea) if f[0] == "S26"]
+                        self.assertTrue(any("letter E" in f and "from a path" in f for f in found), found)
+                        root[-1].set("transform", "translate(0,0.1)")
+                        self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
+
+    def test_long_malformed_lists(self):
+        # A subprocess bounds even the old parser's quadratic failure time.
+        code = f"""
+import runpy
+ns = runpy.run_path({str(Path(__file__).resolve())!r})
+for idea in (False, True):
+    for attr in ('points', 'viewBox', 'stroke-dasharray'):
+        root = ns['figure_fixture'](idea)
+        root.set(attr, '0 0 ' + '9' * 32000 + 'x 300')
+        found = ns['figure_findings'](root, idea)
+        assert any(f[0] == 'S26' and attr in f[3] for f in found), found
+"""
+        subprocess.run([sys.executable, "-I", "-c", code], check=True, timeout=2,
+                       stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+
 class Clearance(unittest.TestCase):
     """The clearance cases, and a letter drawn more than once."""
 
     def test_width_spellings(self):
-        """Equivalent SVG widths keep the same 1.5 units of clearance."""
+        """Plain widths keep their clearance; CSS, units and exponents are refused."""
         for width in ("3", "3e0", "+3", "3px", "+3e0px"):
             for placement in ("attribute", "style", "inherited"):
                 with self.subTest(width=width, placement=placement):
@@ -986,14 +1201,20 @@ class Clearance(unittest.TestCase):
                              f'stroke="#222222" {attrs if placement != "inherited" else ""}/>')
                     if placement == "inherited":
                         drawn = f'<g {attrs}>{drawn}</g>'
-                    self.assertEqual(
-                        s26_findings(drawn, letter("A", font_style="normal", size=14)),
-                        ["letter A at (150, 100) stands 1.5 from a line, under 2: move it clear"])
+                    want = ["letter A at (150, 100) stands 1.5 from a line, under 2: move it clear"]
+                    if placement == "style":
+                        want = [svg_refusal("line", "style", f"stroke-width:{width}")]
+                    elif width not in ("3", "+3"):
+                        want = [svg_refusal("g" if placement == "inherited" else "line",
+                                            "stroke-width", width)]
+                    self.assertEqual(s26_findings(drawn, letter("A", font_style="normal", size=14)),
+                                     want)
 
     def test_text_offsets(self):
-        """Coordinates and offsets place the same capital, before any transform."""
+        """Coordinates and translations place the capital; unused offsets and scales fail."""
         drawn = '<line x1="150" y1="92" x2="160" y2="92" stroke="#222222" stroke-width="2"/>'
-        for transform in ("", 'transform="translate(25,20) scale(2,1.5)"'):
+        for transform in ("", 'transform="translate(25,20)"',
+                          'transform="translate(25,20) scale(2,1.5)"'):
             for position, want in (
                     ('x="150" y="100"', True),
                     ('x="150" y="120" dy="-20"', True),
@@ -1006,10 +1227,19 @@ class Clearance(unittest.TestCase):
                 with self.subTest(transform=transform, position=position):
                     text = f'<text {position} font-size="14" font-style="normal">A</text>'
                     found = s26_findings(f'<g {transform}>{drawn}{text}</g>', "")
-                    self.assertEqual(bool(found), want, found)
+                    refused = []
+                    if "scale" in transform:
+                        refused.append(svg_refusal("g", "transform", "translate(25,20) scale(2,1.5)"))
+                    for attr, value in ET.fromstring(text).attrib.items():
+                        if attr in ("dx", "dy"):
+                            refused.append(svg_refusal("text", attr, value))
+                    if refused:
+                        self.assertEqual(found, refused)
+                    else:
+                        self.assertEqual(bool(found), want, found)
 
     def test_stroke_joins(self):
-        """A mitre reaches the H; a round or bevel join, or a limited mitre, clears it."""
+        """A mitre reaches H and a round join clears it; unused join syntax is refused."""
         shapes = (
             '<polyline points="130,160 155,104 180,160" {attrs}/>',
             '<polyline points="180,160 155,104 130,160" {attrs}/>',
@@ -1030,12 +1260,18 @@ class Clearance(unittest.TestCase):
                         drawn = (f'<g {attrs}>{shape.format(attrs="")}</g>' if inherited
                                  else shape.format(attrs=attrs))
                         found = s26_findings(drawn, letter("H", font_style="normal"))
-                        self.assertEqual(bool(found), want, found)
-                        if want:
-                            self.assertIn("stands 0.3 from", found[0])
+                        refused = [svg_refusal("g" if inherited else style.tag(ET.fromstring(drawn)),
+                                               k, v) for k, v in ET.fromstring(f"<g {join}/>").attrib.items()
+                                   if k == "stroke-miterlimit" or v == "bevel"]
+                        if refused:
+                            self.assertEqual(found, refused)
+                        else:
+                            self.assertEqual(bool(found), want, found)
+                            if want:
+                                self.assertIn("stands 0.3 from", found[0])
 
     def test_square_caps(self):
-        """A square cap's corner approaches H; round and butt caps clear it."""
+        """Unused square caps, CSS and scales fail; supported round and butt caps clear H."""
         shapes = (
             '<line x1="163.2" y1="102.5" x2="183.2" y2="102.5" {attrs}/>',
             '<line x1="183.2" y1="102.5" x2="163.2" y2="102.5" {attrs}/>',
@@ -1059,16 +1295,22 @@ class Clearance(unittest.TestCase):
                             drawn = (f'<g {caps}>{shape.format(attrs=attrs)}</g>'
                                      if placement == "inherited"
                                      else shape.format(attrs=f"{attrs} {caps}"))
+                            group_transform = f' transform="{transform}"' if transform else ""
                             found = s26_findings(
-                                f'<g transform="{transform}">{drawn}'
+                                f'<g{group_transform}>{drawn}'
                                 + letter("H", font_style="normal", size=14) + '</g>', "")
-                            self.assertEqual(bool(found), cap == "square", found)
-                            if cap == "square":
-                                gap = "1.6" if "scale" in transform else "1.4"
-                                self.assertIn(f"stands {gap} from", found[0])
+                            refused = []
+                            if "scale" in transform:
+                                refused.append(svg_refusal("g", "transform", transform))
+                            kind = "g" if placement == "inherited" else style.tag(ET.fromstring(drawn))
+                            if placement == "style":
+                                refused.append(svg_refusal(kind, "style", f"stroke-linecap:{cap}"))
+                            elif cap == "square":
+                                refused.append(svg_refusal(kind, "stroke-linecap", cap))
+                            self.assertEqual(found, refused)
 
     def test_square_cap_boundaries(self):
-        """Caps respect local style and open ends; a moveto alone paints nothing."""
+        """Unused square caps are refused on open, closed and empty subpaths alike."""
         shape = ('<line x1="163.2" y1="102.5" x2="183.2" y2="102.5" '
                  'style="stroke-linecap:{cap}"/>')
         for drawn, want in (
@@ -1084,10 +1326,14 @@ class Clearance(unittest.TestCase):
                     '<g stroke="#222222" stroke-width="3" stroke-linecap="square" '
                     f'stroke-linejoin="round" fill="none">{drawn}</g>',
                     letter("H", font_style="normal", size=14))
-                self.assertEqual(bool(found), want, found)
+                refused = [svg_refusal("g", "stroke-linecap", "square")]
+                for el in ET.fromstring(drawn).iter():
+                    if "style" in el.attrib:
+                        refused.append(svg_refusal(style.tag(el), "style", el.get("style")))
+                self.assertEqual(found, refused)
 
     def test_square_caps_idea(self):
-        """The reviewer's square cap fails the complete idea-figure check alone."""
+        """The reviewer's square cap is refused by the complete idea-figure check."""
         for cap in ("square", "round", "butt"):
             with self.subTest(cap=cap):
                 root = ET.fromstring(
@@ -1102,8 +1348,8 @@ class Clearance(unittest.TestCase):
                         patch.object(style, "failures", []), \
                         patch.object(style, "reports", defaultdict(list)):
                     style.check_idea(style.ROOT / "figures" / "I" / "01-idea.svg", "I.1", True)
-                    want = [("S26", "letter H at (150, 100) stands 1.4 from a line, "
-                             "under 2: move it clear")] if cap == "square" else []
+                    want = [("S26", svg_refusal("line", "stroke-linecap", "square"))] \
+                        if cap == "square" else []
                     self.assertEqual([(r, m) for r, _, _, m in style.failures], want)
 
     def test_zero_length_subpaths(self):
@@ -1126,7 +1372,7 @@ class Clearance(unittest.TestCase):
             letter("A", font_style="normal", size=14)), [])
 
     def test_join_boundaries(self):
-        """Joins respect open ends, local style, transforms and a hull wholly inside."""
+        """Joins respect open ends and a hull wholly inside; CSS and scales are refused."""
         shape = ('<polyline points="130,160 155,104 180,160" stroke="#222222" '
                  'stroke-width="3" fill="none" {attrs}/>')
         for drawn, want in (
@@ -1140,12 +1386,16 @@ class Clearance(unittest.TestCase):
                  'stroke-width="300" fill="none"/>', True)):
             with self.subTest(drawn=drawn):
                 found = s26_findings(drawn, letter("H", font_style="normal"))
-                self.assertEqual(bool(found), want, found)
+                refused = [svg_refusal(style.tag(el), "style", el.get("style"))
+                           for el in ET.fromstring(drawn).iter() if "style" in el.attrib]
+                if refused:
+                    self.assertEqual(found, refused)
+                else:
+                    self.assertEqual(bool(found), want, found)
         found = s26_findings('<g transform="translate(25,10) scale(2)">'
                              + shape.format(attrs="") + letter("H", font_style="normal")
                              + '</g>', "")
-        self.assertEqual(found, [
-            "letter H at (150, 100) stands 0.6 from a polyline, under 2: move it clear"])
+        self.assertEqual(found, [svg_refusal("g", "transform", "translate(25,10) scale(2)")])
 
     def test_figure_entry_points(self):
         """Both production figure checks require S26's clearance finding."""
@@ -1200,8 +1450,10 @@ class Clearance(unittest.TestCase):
                             style.check_idea(path, "I.1", True)
                         else:
                             style.check_euclid(path, "I.1")
-                        want = [("S26", f"figures/I/{name}", 0,
-                                 "<use> is not followed: draw its contents directly")] if use else []
+                        messages = [svg_refusal("text", "id", "pointA")]
+                        if use:
+                            messages.append(svg_refusal("use"))
+                        want = [("S26", f"figures/I/{name}", 0, msg) for msg in messages]
                         self.assertEqual(style.failures, want)
 
     def test_text_children_figure_entry_points(self):
@@ -1219,8 +1471,7 @@ class Clearance(unittest.TestCase):
                         a.text = None
                         a.append(ET.fromstring(child))
                     want = [("S26", str(path.relative_to(style.ROOT)), 0,
-                             "<text> has an element child: draw each label in a separate "
-                             "<text>")] if child else []
+                             svg_refusal(style.tag(ET.fromstring(child))))] if child else []
                     self.assertEqual(figure_findings(root, idea), want)
             for y in ("150", "155"):
                 with self.subTest(idea=idea, flat_y=y):
@@ -1243,8 +1494,8 @@ class Clearance(unittest.TestCase):
                                  if style.tag(el) == "text" and style.text_of(el) == "A")
                         a.set(attr, a.get(attr, "0") + suffix)
                         want = [("S26", str(path.relative_to(style.ROOT)), 0,
-                                 f"<text> {attr} has more than one number: "
-                                 "draw each label in a separate <text>")] if suffix else []
+                                 svg_refusal("text", attr, a.get(attr)))] \
+                            if suffix or attr in ("dx", "dy") else []
                         self.assertEqual(figure_findings(root, idea), want)
 
     def test_unmeasured_capitals_figure_entry_points(self):
@@ -1260,14 +1511,13 @@ class Clearance(unittest.TestCase):
                             f'<text x="{x}" y="220" fill="{ink}">{text}</text>'))
                         want = []
                         if " " in x:
-                            want.append("<text> x has more than one number: "
-                                        "draw each label in a separate <text>")
-                        if text not in ("2", "lowercase"):
+                            want.append(svg_refusal("text", "x", x))
+                        if " " not in x and text not in ("2", "lowercase"):
                             want.append(f"<text> {text!r} has unmeasured capitals: "
                                         "draw each label in a separate <text>")
                         expected = [("S26", str(path.relative_to(style.ROOT)), 0, msg)
                                     for msg in want]
-                        if idea and text != "2":
+                        if " " not in x and idea and text != "2":
                             expected.append(("S20", str(path.relative_to(style.ROOT)), 0,
                                              f"<text>{text}</text>: an idea figure's text is "
                                              "Heath's letters, one to a <text>, or numbers "
@@ -1295,15 +1545,18 @@ class Clearance(unittest.TestCase):
                                 line.set("style" if placement == "style" else "stroke-width",
                                          f"stroke-width:{width}" if placement == "style" else width)
                         found = [f for f in figure_findings(root, idea) if f[0] == "S26"]
-                        if width in ("4", "4px"):
+                        if width == "4" and placement != "style":
                             self.assertEqual(len(found), 1, found)
                             self.assertIn("letter C", found[0][3])
                             self.assertIn("from a line, under 2", found[0][3])
                         else:
-                            want = [] if width in (None, "1", "1px") else [
-                                ("S26", str(path.relative_to(style.ROOT)), 0,
-                                 f"<line> stroke-width {width!r} is not a finite number "
-                                 "with no unit or px")]
+                            messages = []
+                            if width is not None and placement == "style":
+                                messages.append(svg_refusal("line", "style", f"stroke-width:{width}"))
+                            elif width not in (None, "1"):
+                                messages.append(svg_refusal("g" if placement == "inherited" else "line",
+                                                            "stroke-width", width))
+                            want = [("S26", str(path.relative_to(style.ROOT)), 0, m) for m in messages]
                             self.assertEqual(found, want)
 
     def test_vector_effect_figure_entry_points(self):
@@ -1322,9 +1575,11 @@ class Clearance(unittest.TestCase):
                             line.set("style" if placement == "style" else "vector-effect",
                                      f"vector-effect:{effect}" if placement == "style" else effect)
                         found = [f for f in figure_findings(root, idea) if f[0] == "S26"]
-                        want = [("S26", str(path.relative_to(style.ROOT)), 0,
-                                 "<line> vector-effect is not followed: draw the stroke "
-                                 "without it")] if effect is not None else []
+                        messages = [svg_refusal("line", "transform", "scale(.5)")]
+                        if effect is not None:
+                            attr = "style" if placement == "style" else "vector-effect"
+                            messages.append(svg_refusal("line", attr, line.get(attr)))
+                        want = [("S26", str(path.relative_to(style.ROOT)), 0, m) for m in messages]
                         self.assertEqual(found, want)
 
     def test_sagitta_figure_entry_points(self):
@@ -1358,7 +1613,11 @@ class Clearance(unittest.TestCase):
                         e.attrib.update(x="268.13", y=("47.38" if idea else "48.93")
                                         if near else "47")
                         found = figure_findings(root, idea)
-                        if near:
+                        if shape.startswith("transformed") or shape == "relative path":
+                            attr = "d" if shape == "relative path" else "transform"
+                            self.assertEqual(found, [("S26", str(path.relative_to(style.ROOT)), 0,
+                                svg_refusal(style.tag(curve[0]), attr, curve[0].get(attr)))])
+                        elif near:
                             self.assertEqual(len(found), 1, found)
                             self.assertEqual(found[0][:3],
                                              ("S26", str(path.relative_to(style.ROOT)), 0))
@@ -1387,8 +1646,7 @@ class Clearance(unittest.TestCase):
                     if percentage:
                         self.assertEqual(found, [
                             ("S26", str(path.relative_to(style.ROOT)), 0,
-                             f"<line> {attr} {line.get(attr)!r} is not a finite number "
-                             "with no unit or px") for attr in ("x1", "y1", "x2", "y2")])
+                             svg_refusal("line", attr, line.get(attr))) for attr in ("x1", "x2", "y1", "y2")])
                     else:
                         self.assertEqual(len(found), 1, found)
                         self.assertIn("letter E", found[0][3])
@@ -1430,21 +1688,26 @@ class Clearance(unittest.TestCase):
                                 found = [f for f in figure_findings(root, idea) if f[0] == "S26"]
                                 self.assertIn(
                                     ("S26", str(path.relative_to(style.ROOT)), 0,
-                                     f"<{kind}> {attr} {value!r} is not a finite number "
-                                     "with no unit or px"), found)
+                                     svg_refusal(style.tag(target),
+                                                 "style" if placement == "style" else attr,
+                                                 f"{attr}:{value}" if placement == "style" else value)), found)
 
     def test_length_spellings_figure_entry_points(self):
-        """Unitless and px lengths, including signed exponents, measure identically."""
+        """Plain signed decimals agree; former unit and exponent spellings are refused."""
         for idea in (False, True):
-            for suffix in ("", "px"):
-                with self.subTest(idea=idea, suffix=suffix):
+            for spec, suffix in (("+.6f", ""), ("+.6e", ""), ("+.6e", "px"), ("+.6f", "px")):
+                with self.subTest(idea=idea, spec=spec, suffix=suffix):
                     root = figure_fixture(idea)
+                    messages = []
                     for el in root.iter():
                         for attr in ("x", "y", "x1", "y1", "x2", "y2", "width", "height",
                                      "rx", "font-size", "stroke-width"):
                             if attr in el.attrib:
-                                el.set(attr, f"{float(el.get(attr)):+.6e}{suffix}")
-                    self.assertEqual(figure_findings(root, idea), [])
+                                value = format(float(el.get(attr)), spec) + suffix
+                                el.set(attr, value)
+                                if spec.endswith("e") or suffix:
+                                    messages.append(svg_refusal(style.tag(el), attr, value))
+                    self.assertCountEqual([m for _, _, _, m in figure_findings(root, idea)], messages)
 
     def test_coordinate_sequences_figure_entry_points(self):
         """Point lists and the canvas cannot hide units or drop malformed coordinates."""
@@ -1458,12 +1721,10 @@ class Clearance(unittest.TestCase):
                         el = root if kind == "svg" else ET.SubElement(
                             root, kind, {"stroke": "#222222" if idea else "#3b2f2f"})
                         el.set(attr, value)
-                        want = ("four finite unitless numbers" if kind == "svg" else
-                                "pairs of finite unitless numbers")
                         found = [f for f in figure_findings(root, idea) if f[0] == "S26"]
                         self.assertEqual(found, [
                             ("S26", str(path.relative_to(style.ROOT)), 0,
-                             f"<{kind}> {attr} {value!r} is not {want}")])
+                             svg_refusal(kind, attr, value))])
 
     def test_decision_attribution(self):
         """S26 credits G to the fifteen corrections on the branch that delivered it."""
@@ -1478,6 +1739,9 @@ class Clearance(unittest.TestCase):
         for drawn, s, font_style, anchor, want in CLEAR_CASES:
             with self.subTest(drawn=drawn, letter=s, style=font_style, anchor=anchor):
                 found = s26_findings(drawn, letter(s, font_style=font_style, anchor=anchor))
+                if 'rx="5e1"' in drawn:
+                    self.assertEqual(found, [svg_refusal("rect", "rx", "5e1")])
+                    continue
                 self.assertEqual(bool(found), want,
                                  f"S26 {'misses' if want else 'wrongly finds'} a stroke "
                                  f"near {font_style} {s}, anchored at its {anchor}: "

@@ -1852,14 +1852,11 @@ findings:
   and foot, a letter's size and transform, and a prime; and, from a later review, three on
   what a line through a letter is called: two dashed by itself or by its group, called a
   dashed line, and one whose dasharray is none, called a line. A corner's radius is now
-  read in one pass, so that no attribute can make the script slow. The next review adds
-  equivalent stroke-width spellings, text offsets before transforms, mitre joins with
-  inherited join style and limit, single-point subpaths closed by Z with round caps, and
-  square caps measured by their corners before transforms, with inherited style and
-  zero-length subpaths included, and cases refusing `<use>`, which the check does not follow;
-  the final reviews add refusals of text children, coordinate lists, unmeasured capitals,
-  unsupported lengths and vector-effect, and conservative clearances for circles,
-  ellipses, path arcs and rounded corners.
+  read in one pass, so that no attribute can make the script slow. Later reviews found, one
+  after another, SVG spellings that a renderer reads one way and S26 another; S26 now reads
+  only the elements, attributes and spellings that the figures on main use and refuses any
+  other, so no CSS is read, and it measures circles, ellipses, arcs, rounded corners and
+  curves with a conservative allowance for their chords.
   Both figure entry points have cases requiring an S26 finding. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures. The matching words in
