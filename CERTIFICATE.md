@@ -169,7 +169,7 @@ What the proofs show:
 | ✅ | [III.33](book/III/33.md) | whole | Euclid's | I.4, III.16 Por., III.31, III.32 | I.4, I.10, I.11, I.23, III.2, III.16 Por., III.31, III.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 21 | 25 |
 | ✅ | [III.34](book/III/34.md) | whole | Euclid's | I.23, III.32 | I.11, I.23, III.2, III.16, III.16 Por., III.32 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 13 | 23 |
 | ✅ | [III.35](book/III/35.md) | whole | Euclid's | I.47, II.5, III.3 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.5, III.1, III.3 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 66 | 13 | 28 |
-| ✅ | [III.36](book/III/36.md) | whole | Euclid's | I.47, II.6, III.3, III.18 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.6, III.1, III.3, III.18 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 68 | 14 | 29 |
-| ✅ | [III.37](book/III/37.md) | whole | Euclid's | I.8, III.16 Por., III.18, III.36 | I.3, I.4, I.8, I.20, I.28, I.34, I.46, I.47, II.6, III.1, III.16 Por., III.17, III.18, III.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 68 | 12 | 44 |
+| ✅ | [III.36](book/III/36.md) | whole | Euclid's | I.47, II.6, III.3, III.18 | I.4, I.12, I.17, I.19, I.28, I.34, I.46, I.47, II.6, III.1, III.3, III.18 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 68 | 13 | 30 |
+| ✅ | [III.37](book/III/37.md) | whole | Euclid's | I.8, III.16 Por., III.18, III.36 | I.3, I.4, I.8, I.20, I.28, I.34, I.46, III.1, III.16 Por., III.17, III.18, III.36 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 68 | 12 | 44 |
 
 The Common Notions are theorems in Lean (see [`CommonNotions.lean`](Elements/Foundations/CommonNotions.lean)), so `#print axioms` cannot see them; the walk that finds them goes everywhere `#print axioms` goes. Lean's own logical foundations (`propext`, `Classical.choice`, `Quot.sound`) are not Euclid's assumptions and are left out.
