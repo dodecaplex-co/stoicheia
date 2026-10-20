@@ -1,6 +1,7 @@
 import Elements.Figure.Basics
 import Elements.BookII.Rectangles
 import Elements.BookI.Prop04
+import Elements.BookI.Prop13
 import Elements.BookI.Prop28
 import Elements.BookI.Prop29
 import Elements.BookI.Prop30
@@ -88,7 +89,7 @@ theorem Prop3 {A B C : Point} (hACB : Between A C B) :
     rw [hCAFD.quadArea_rotate]
     have hD_AB : ¬ OnLine D AB := hDE_AB.not_onLine hD_DE
     /- The angle DCA adjacent to the square's right angle BCD is right
-       (System E, Diagram-angle 3). -/
+       (I.13, `adjacent_eq_of_right`). -/
     have hright : ∠ D C A = ∟ := by
       have h := hsq.2.2.2.1
       rw [adjacent_eq_of_right hB_AB hA_AB (between_symm hACB) hD_AB h] at h
