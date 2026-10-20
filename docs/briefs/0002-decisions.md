@@ -1925,8 +1925,6 @@ findings:
   the list against the table and exercises P3 with and without the required tag. CI does
   not run it yet; whoever changes the limitations runs it.
 
-## 20 October 2026
-
 - **A check for merge-conflict markers.** Pull request #138 left a diff3 base marker and a
   duplicated, outdated fragment on this page, and nothing caught it; the owner asked for a
   rule to catch such residue. S23 of `scripts/check_style.py` ([STYLE](../STYLE.md),
