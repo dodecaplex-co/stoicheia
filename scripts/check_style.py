@@ -2917,8 +2917,8 @@ def square_caps(run, half: float, closed: bool):
             yield corners + corners[:1]
 
 
-def strokes(root):
-    """(what it is, its points, half its width) for each stroke a figure draws, as a run
+def strokes(path: Path, root):
+    """(what it is, its points, half its width plus chord error) for each stroke, as a run
     of straight pieces: a line, a polyline, a polygon or a rect's outline (its corners
     rounded as rx and ry round them), each subpath of a path (closed where a Z closes it),
     a circle or an ellipse in short straight pieces; transforms applied, the width taken
@@ -2928,11 +2928,21 @@ def strokes(root):
     with None in place of half the width: their outlines already include it."""
     for el, own, eff, m, _ in placed(root):
         t = tag(el)
-        w = length(eff.get("stroke-width"))
-        w = 1.0 if w is None else w
-        if t not in DRAWN or (eff.get("stroke") or "none").strip().lower() == "none" or w <= 0:
+        if t not in DRAWN or (eff.get("stroke") or "none").strip().lower() == "none":
+            continue
+        w = length(eff.get("stroke-width", "1"))
+        if w is None or not math.isfinite(w):
+            fail("S26", path, 0, f"<{t}> stroke-width {eff.get('stroke-width')!r} is not "
+                 "a finite number with no unit or px")
+            continue
+        if "vector-effect" in own:
+            fail("S26", path, 0, f"<{t}> vector-effect is not followed: draw the stroke "
+                 "without it")
+            continue
+        if w <= 0:
             continue
         closed = []
+        sagitta = 0.0
         if t == "line":
             runs = [[(coord(own.get("x1")), coord(own.get("y1"))),
                      (coord(own.get("x2")), coord(own.get("y2")))]]
@@ -2952,9 +2962,12 @@ def strokes(root):
             ry = coord(own.get("r")) if t == "circle" else coord(own.get("ry"))
             steps = round(math.tau / ARC_STEP)
             runs = [] if rx <= 0 or ry <= 0 else [
-                [(cx + rx * math.cos(i * ARC_STEP), cy + ry * math.sin(i * ARC_STEP))
+                [(cx + rx * math.cos(i * math.tau / steps),
+                  cy + ry * math.sin(i * math.tau / steps))
                  for i in range(steps + 1)]]
-        half = w / 2 * stretch(m)
+            # An ellipse stretches the unit circle by at most its greater radius.
+            sagitta = max(rx, ry) * (1 - math.cos(math.pi / steps))
+        half = (w / 2 + sagitta) * stretch(m)
         dashed = (eff.get("stroke-dasharray") or "none").strip().lower() != "none"
         kind = "a dashed line" if dashed and t == "line" else \
             ("an " if t == "ellipse" else "a ") + t
@@ -3047,13 +3060,30 @@ def one_letter_one_point(path: Path, root, cuts: tuple[float, ...] = ()) -> None
     and each letter stands CLEAR of every stroke, every dot and the canvas's edge,
     measured by the hull of its capital as Georgia draws it, upright or italic."""
     vb = [float(v) for v in NUM.findall(root.get("viewBox", ""))]
-    pieces, spots = list(strokes(root)), list(dots(root))
+    pieces, spots = list(strokes(path, root)), list(dots(root))
     count: dict[tuple[int, str], int] = defaultdict(int)
     for el, own, eff, m, _ in placed(root):
         if tag(el) == "use":
             fail("S26", path, 0, "<use> is not followed: draw its contents directly")
+        if tag(el) != "text":
+            continue
+        unsupported = False
+        if len(el):
+            fail("S26", path, 0, "<text> has an element child: draw each label in a "
+                 "separate <text>")
+            unsupported = True
+        for attr in ("x", "y", "dx", "dy"):
+            if len(NUM.findall(own.get(attr, ""))) > 1:
+                fail("S26", path, 0, f"<text> {attr} has more than one number: draw each "
+                     "label in a separate <text>")
+                unsupported = True
         s = text_of(el)
-        if tag(el) != "text" or not LETTER.fullmatch(s):
+        if not LETTER.fullmatch(s):
+            if re.search(r"[A-Z]", s):
+                fail("S26", path, 0, f"<text> {s!r} has unmeasured capitals: draw each "
+                     "label in a separate <text>")
+            continue
+        if unsupported:
             continue
         hull = glyph_hull(own, eff, m, s)
         xs, ys = [p[0] for p in hull], [p[1] for p in hull]
@@ -3137,8 +3167,9 @@ def check_euclid(path: Path, ref: str) -> None:
             continue
         stroke = (eff.get("stroke") or "none").lower()
         if stroke != "none":
-            w = number(eff.get("stroke-width"))
-            w = 1.0 if w is None else w
+            w = length(eff.get("stroke-width", "1"))
+            if w is None or not math.isfinite(w):
+                continue  # S26 names unsupported widths, without assuming a default.
             if w < 1.2:
                 thin[w] += 1
             elif w > 3.2:

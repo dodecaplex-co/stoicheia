@@ -349,6 +349,19 @@ def letter(s: str, x: float = 150, y: float = 100, font_style: str = "italic",
             f'text-anchor="{anchor}">{s}</text>')
 
 
+def figure_findings(root, idea: bool):
+    """Both complete checks, with only the input figure replaced; Heath's text stays."""
+    path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
+    with patch.object(style, "svg_root", return_value=root), \
+            patch.object(style, "failures", []), \
+            patch.object(style, "reports", defaultdict(list)):
+        if idea:
+            style.check_idea(path, "I.1", True)
+        else:
+            style.check_euclid(path, "I.1")
+        return list(style.failures)
+
+
 PLACE_CASES = [   # (what is drawn; the letters, as markup; a finding?)
     # At 17 an A's apex stands 1.3 from a line at 86, its width taken off; at 14, 3.4.
     (LINE.format(y=86), letter("A"), True),
@@ -1168,6 +1181,162 @@ class Clearance(unittest.TestCase):
                         want = [("S26", f"figures/I/{name}", 0,
                                  "<use> is not followed: draw its contents directly")] if use else []
                         self.assertEqual(style.failures, want)
+
+    def test_text_children_figure_entry_points(self):
+        """Positioned descendants cannot borrow the parent's clear position."""
+        for idea in (False, True):
+            path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
+            for child in ("", '<tspan x="150" y="155">A</tspan>',
+                          '<tspan x="150" y="150">A</tspan>', '<tspan>A</tspan>',
+                          '<a>A</a>'):
+                with self.subTest(idea=idea, child=child):
+                    root = ET.parse(path).getroot()
+                    if child:
+                        a = next(el for el in root.iter()
+                                 if style.tag(el) == "text" and style.text_of(el) == "A")
+                        a.text = None
+                        a.append(ET.fromstring(child))
+                    want = [("S26", str(path.relative_to(style.ROOT)), 0,
+                             "<text> has an element child: draw each label in a separate "
+                             "<text>")] if child else []
+                    self.assertEqual(figure_findings(root, idea), want)
+            for y in ("150", "155"):
+                with self.subTest(idea=idea, flat_y=y):
+                    root = ET.parse(path).getroot()
+                    a = next(el for el in root.iter()
+                             if style.tag(el) == "text" and style.text_of(el) == "A")
+                    a.attrib.update(x="150", y=y)
+                    self.assertTrue(any(r == "S26" and "letter A" in msg
+                                        for r, _, _, msg in figure_findings(root, idea)))
+
+    def test_text_lists_figure_entry_points(self):
+        """All four text coordinates must place one label, including dx and dy."""
+        for idea in (False, True):
+            path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
+            for attr in ("x", "y", "dx", "dy"):
+                for suffix in ("", " 270", ",270", " +2.7e2"):
+                    with self.subTest(idea=idea, attr=attr, suffix=suffix):
+                        root = ET.parse(path).getroot()
+                        a = next(el for el in root.iter()
+                                 if style.tag(el) == "text" and style.text_of(el) == "A")
+                        a.set(attr, a.get(attr, "0") + suffix)
+                        want = [("S26", str(path.relative_to(style.ROOT)), 0,
+                                 f"<text> {attr} has more than one number: "
+                                 "draw each label in a separate <text>")] if suffix else []
+                        self.assertEqual(figure_findings(root, idea), want)
+
+    def test_unmeasured_capitals_figure_entry_points(self):
+        """Extra capital runs fail even while every required letter remains present."""
+        for idea in (False, True):
+            path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
+            for text in ("AA", "A B", "A=2", "Angle A", "2", "lowercase"):
+                for x in ("120", "120 270"):
+                    with self.subTest(idea=idea, text=text, x=x):
+                        root = ET.parse(path).getroot()
+                        ink = "#222222" if idea else "#3b2f2f"
+                        root.append(ET.fromstring(
+                            f'<text x="{x}" y="220" fill="{ink}">{text}</text>'))
+                        want = []
+                        if " " in x:
+                            want.append("<text> x has more than one number: "
+                                        "draw each label in a separate <text>")
+                        if text not in ("2", "lowercase"):
+                            want.append(f"<text> {text!r} has unmeasured capitals: "
+                                        "draw each label in a separate <text>")
+                        expected = [("S26", str(path.relative_to(style.ROOT)), 0, msg)
+                                    for msg in want]
+                        if idea and text != "2":
+                            expected.append(("S20", str(path.relative_to(style.ROOT)), 0,
+                                             f"<text>{text}</text>: an idea figure's text is "
+                                             "Heath's letters, one to a <text>, or numbers "
+                                             "on a fill"))
+                        self.assertEqual(figure_findings(root, idea), expected)
+
+    def test_stroke_widths_figure_entry_points(self):
+        """Unsupported widths fail explicitly; 3pt's equivalent 4 fails clearance."""
+        for idea in (False, True):
+            path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
+            for width in (None, "1", "1px", "4", "4px", "3pt", "3em", "3%",
+                          "bad", "", "1..5", "1e999"):
+                for placement in ("attribute", "style", "inherited"):
+                    with self.subTest(idea=idea, width=width, placement=placement):
+                        root = ET.parse(path).getroot()
+                        ink, y = ("#222222", 55.5) if idea else ("#3b2f2f", 57.5)
+                        line = ET.SubElement(root, "line", x1="194", y1=str(y), x2="206",
+                                             y2=str(y), stroke=ink)
+                        if width is not None:
+                            if placement == "inherited":
+                                root.remove(line)
+                                group = ET.SubElement(root, "g", {"stroke-width": width})
+                                group.append(line)
+                            else:
+                                line.set("style" if placement == "style" else "stroke-width",
+                                         f"stroke-width:{width}" if placement == "style" else width)
+                        found = [f for f in figure_findings(root, idea) if f[0] == "S26"]
+                        if width in ("4", "4px"):
+                            self.assertEqual(len(found), 1, found)
+                            self.assertIn("letter C", found[0][3])
+                            self.assertIn("from a line, under 2", found[0][3])
+                        else:
+                            want = [] if width in (None, "1", "1px") else [
+                                ("S26", str(path.relative_to(style.ROOT)), 0,
+                                 f"<line> stroke-width {width!r} is not a finite number "
+                                 "with no unit or px")]
+                            self.assertEqual(found, want)
+
+    def test_vector_effect_figure_entry_points(self):
+        """A scaled non-scaling stroke is refused in either presentation spelling."""
+        for idea in (False, True):
+            path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
+            for effect in (None, "non-scaling-stroke", "none"):
+                for placement in ("attribute", "style"):
+                    with self.subTest(idea=idea, effect=effect, placement=placement):
+                        root = ET.parse(path).getroot()
+                        ink, y = ("#222222", "111") if idea else ("#3b2f2f", "115")
+                        line = ET.SubElement(root, "line", x1="388", y1=y, x2="412", y2=y,
+                                             stroke=ink, transform="scale(.5)",
+                                             attrib={"stroke-width": "4"})
+                        if effect is not None:
+                            line.set("style" if placement == "style" else "vector-effect",
+                                     f"vector-effect:{effect}" if placement == "style" else effect)
+                        found = [f for f in figure_findings(root, idea) if f[0] == "S26"]
+                        want = [("S26", str(path.relative_to(style.ROOT)), 0,
+                                 "<line> vector-effect is not followed: draw the stroke "
+                                 "without it")] if effect is not None else []
+                        self.assertEqual(found, want)
+
+    def test_sagitta_figure_entry_points(self):
+        """Circle and ellipse chords must not hide a clearance just below 2."""
+        for idea in (False, True):
+            path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
+            for shape in ("circle", "ellipse", "transformed ellipse"):
+                for near in (False, True):
+                    with self.subTest(idea=idea, shape=shape, near=near):
+                        root = ET.parse(path).getroot()
+                        circle = next(el for el in root.iter()
+                                      if style.tag(el) == "circle" and el.get("cx") == "250"
+                                      and el.get("r") == "100")
+                        if shape != "circle":
+                            circle.tag = style.SVG + "ellipse"
+                            circle.attrib.pop("r")
+                            circle.attrib.update(rx="100", ry="100")
+                            if shape == "transformed ellipse":
+                                circle.attrib.update(cx="500", rx="200", transform="scale(.5,1)")
+                        e = next(el for el in root.iter()
+                                 if style.tag(el) == "text" and style.text_of(el) == "E")
+                        e.attrib.update(x="268.13", y=("47.38" if idea else "48.93")
+                                        if near else "47")
+                        found = figure_findings(root, idea)
+                        if near:
+                            self.assertEqual(len(found), 1, found)
+                            self.assertEqual(found[0][:3],
+                                             ("S26", str(path.relative_to(style.ROOT)), 0))
+                            self.assertIn("letter E", found[0][3])
+                            self.assertIn("from a circle" if shape == "circle" else
+                                          "from an ellipse", found[0][3])
+                            self.assertIn("under 2", found[0][3])
+                        else:
+                            self.assertEqual(found, [])
 
     def test_decision_attribution(self):
         """S26 credits G to the fifteen corrections on the branch that delivered it."""
