@@ -3213,9 +3213,10 @@ ODD_BREAK = re.compile("[\r\x0b\x0c\x1c-\x1e\x85  ]")
 
 
 def reads_as_heading(line: str) -> bool:
-    """A line that a reader could take for the section's heading, however written: its
-    letters, with tags and entities taken out and compatibility forms folded, begin
-    "unfinished work" (or are "unfinished", the first line of a heading split over two)."""
+    """A line that may be the section's heading written another way: its letters, with
+    tags and entities taken out and compatibility forms folded, begin "unfinished work"
+    (or are "unfinished", the first line of a heading split over two). A heading
+    disguised on purpose, in another alphabet or in crafted markup, is the reviews'."""
     text = unicodedata.normalize("NFKC", html.unescape(re.sub(r"<[^>]*>", "", line)))
     letters = "".join(c for c in text.lower() if "a" <= c <= "z")
     return letters.startswith("unfinishedwork") or letters == "unfinished"
@@ -3236,7 +3237,7 @@ def template_section(template: str | None) -> tuple[str | None, set[str]]:
 def unfinished_section(body: str, template: str | None = None) -> tuple[str, list[str]]:
     """The section's raw text, from its one heading to the next of the template's
     headings (to the end, with no template). Refused: a second heading, or any other
-    line that reads as one; a break GitHub makes where a line does not, or the reverse;
+    line reads_as_heading finds; a break GitHub makes where a line does not, or the reverse;
     no following heading when the template has some."""
     _, ends = template_section(template)
     lines = raw_lines(body or "")
@@ -3249,7 +3250,8 @@ def unfinished_section(body: str, template: str | None = None) -> tuple[str, lis
              if line.rstrip() != UNFINISHED_HEADING and reads_as_heading(line)]
     if len(starts) != 1 or alike:
         return "", ["the body must have exactly one ## Unfinished work heading, at the left "
-                    "edge, and no other line whose letters begin \"unfinished work\""
+                    "edge, and no other line whose letters begin \"unfinished work\" or "
+                    "are just \"unfinished\""
                     + "".join(f": {printable_text(line.strip())}" for line in alike[:1])]
     start = starts[0] + 1
     end = next((i for i in range(start, len(lines)) if lines[i].rstrip() in ends), None)
@@ -3265,10 +3267,14 @@ def unfinished_refs(text: str, comment: str | None = None) -> tuple[list[int], l
     item `- ` or `* ` at the left edge with one space, wrapped with two to five spaces and
     no blank line, naming its issue as a token #N. Every other `#`, or GH-N, is refused."""
     if comment:
-        text = text.replace(comment, "", 1)
-    if any(ord(c) > 126 or (ord(c) < 32 and c != "\n") for c in text):
-        return [], ["Unfinished work must be plain ASCII text, with no tab or control "
-                    "character"]
+        # Only where it stands on lines of its own: text after its "-->" on the same line
+        # is shown by GitHub outside any list, so the comment is then refused instead.
+        text = re.sub(r"(?m)^" + re.escape(comment) + r"[ \t]*$", "", text, count=1)
+    for n, line in enumerate(text.split("\n"), 1):
+        odd = next((c for c in line if ord(c) > 126 or ord(c) < 32), None)
+        if odd is not None:
+            return [], [f"Unfinished work must be plain ASCII text, with no tab or control "
+                        f"character: U+{ord(odd):04X} on line {n} of the section"]
     if "<!--" in text:
         return [], ["Unfinished work holds a comment other than the template's own for it "
                     "(origin/main's wording, which may have changed): delete it"]

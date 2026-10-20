@@ -320,12 +320,12 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cac
 (section 10), so a change to them is made there too, and in the CI workflow. It leaves the
 `formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files; its merge
 gate still waits for that job, like every other ([model/README.md](../model/README.md#the-ci-job)).
-The separate `release-gate` workflow runs its job only on pull requests labelled `release`,
-reading the open issues labelled `blocks-release` with `python3 scripts/check_release_gate.py`;
-ordinary pull requests skip it. It runs main's copy of the script, from the base commit,
-but GitHub takes the workflow file itself from the pull request, which could change it, so
-the job only shows the hold: the authority is the merge gate, which reads the issues again
-when the coordinator merges (section 10).
+The separate `release-gate` workflow runs its job only on pull requests labelled
+`release`, reading the open issues labelled `blocks-release` with `python3
+scripts/check_release_gate.py`; ordinary pull requests skip it. It runs main's copy of the
+script, from the base commit, but GitHub takes the workflow file itself from the pull
+request, which could change it, so the job only shows the hold: the authority is the merge
+gate, which reads the issues again when the coordinator merges (section 10).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -444,8 +444,8 @@ looked into.
     `python3 scripts/check_release_gate.py` once more just before the tag, since the hold
     rests on the labels. The job runs on the pull request's events, not the issues', so
     once the last blocker closes it is run again (or `release` removed and given again)
-    before `--merge`, which counts its failed run on a release pull request. PROGRAM.md is brought up to date:
-    the status board, the lessons, the costs.
+    before `--merge`, which counts its failed run on a release pull request. PROGRAM.md
+    is brought up to date: the status board, the lessons, the costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
@@ -653,9 +653,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    is green (`check`, `model` and `negative` pass, and nothing fails or is still
    running, apart from the `release-gate` job of the "Release gate" workflow on an
    ordinary pull request, even if a run remains from before its `release` label was
-   removed, in the pre-flight watcher too); no box marked **Required** is unticked, nor one
-   marked **Required if protected** when a protected path changes, and none of the template's
-   required boxes is missing (origin/main's template, or the head's while origin/main
+   removed, in the pre-flight watcher too); no box marked **Required** is unticked, nor
+   one marked **Required if protected** when a protected path changes, and none of the
+   template's required boxes is missing (origin/main's template, or the head's while
+   origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's
    copies, are shown beside the checklist); the coordinator has written "What and why",
    "Unfinished work" (once the template in force has that section),
@@ -664,12 +665,14 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    where GitHub shows them, by CommonMark's rules; "Unfinished work" is read as raw text,
    so that nothing GitHub hides or shows differently can stand in for it. The body holds
    the line `## Unfinished work` once, at the left edge, and no other line whose
-   letters, with tags and entities taken out, begin "unfinished work" (in a comment or
-   code too, so not even a sentence may start with those words); a heading disguised on
-   purpose, in another alphabet or in crafted markup, is for the reviews to find, as a
-   false "None" is. The section runs to the template's next heading. Taking out the template's own comment for it, it is plain
-   ASCII with no markup (no links, code, HTML, other comments, headings or entities):
-   "None", with an optional full stop, or a list, each item `- ` or `* ` at the left
+   letters, with tags and entities taken out, begin "unfinished work" or are just
+   "unfinished" (in a comment or code too, so not even a sentence may start with those
+   words); a heading disguised on purpose, in another alphabet or in crafted markup, is
+   for the reviews to find, as a false "None" is. The section runs to the template's
+   next heading. Taking out the template's own comment for it, where it stands on lines
+   of its own, it is plain ASCII with no markup (no links, code, HTML, other comments,
+   headings or entities): "None", with an optional full stop, or a list, each item `- `
+   or `* ` at the left
    edge, wrapped with two to five spaces, naming its issue as a token `#N` (perhaps in
    parentheses, or before punctuation); any other `#`, or `GH-N`, is refused. Each
    issue is open with `blocks-release`, not a pull request, and of this repository by

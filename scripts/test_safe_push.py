@@ -385,6 +385,11 @@ def main(argv):
                                cwd=ORIGIN, check=True)
                 pr["headRefName"] = rename["to"]
             save(s)
+        # "reread_body": the body GitHub gives the merge's own read of the body alone,
+        # as an edit made between the gates and that read would leave it.
+        if opt(args, "--json") == "body" and "reread_body" in s:
+            pr["body"] = s["reread_body"]
+            save(s)
         print(json.dumps(fields(pr, opt(args, "--json"))))
         return 0
     if cmd == ["pr", "edit"]:
@@ -1916,6 +1921,41 @@ class Merge(Edge):
         self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
         self.assertIn("#38 is closed", out)
         self.assertIn("#39 lacks the label blocks-release", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_unfinished_work_changed_after_the_gates_refused(self):
+        self.opened()
+        self.unfinished_body("None")
+        body = self.gh_state()["prs"][0]["body"]
+        self.set_gh(lambda s: s.update(reread_body=body.replace(
+            "\nNone\n", "\n- Deferred page to come\n", 1)))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("changed after the gates read it", out)
+        self.assertEqual(self.merges(), [])
+
+    def test_refresh_that_would_change_unfinished_work_refused(self):
+        # The statements part's end marker moved past "## Review records": the gates read
+        # the section as written, but writing the parts afresh would swallow it.
+        self.opened()
+        self.unfinished_body("None")
+        def move(s):
+            body = s["prs"][0]["body"]
+            end = "<!-- safe_push:statements end -->\n"
+            body = body.replace(end, "", 1).replace("## Review records\n",
+                                                    "## Review records\n" + end, 1)
+            s["prs"][0]["body"] = body
+        self.set_gh(move)
+        def edits():
+            return [c for c in self.gh_state()["calls"] if c[:2] == ["pr", "edit"]
+                    and "--body-file" in c]
+        before = len(edits())
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 1, out)
+        self.assertIn("would change its Unfinished work", out)
+        self.assertEqual(len(edits()), before)      # the body was not written
         self.assertEqual(self.merges(), [])
 
     def test_unfinished_work_open_labelled_issue_merges(self):

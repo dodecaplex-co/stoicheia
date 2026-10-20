@@ -187,6 +187,18 @@ class UnfinishedWork(unittest.TestCase):
                 refs, problems = self.refs(text)
                 self.assertTrue(problems)
 
+    def test_text_after_the_template_comment_on_its_line_is_refused(self):
+        comment = "<!-- Name each piece. -->"
+        refs, problems = safe_push.unfinished_refs(
+            "- Prototype #38\n" + comment + "  Deferred page with no issue", comment)
+        self.assertIn("comment other than the template's own", "\n".join(problems))
+        self.assertEqual(safe_push.unfinished_refs("- Prototype #38\n" + comment, comment),
+                         ([38], []))
+
+    def test_the_ascii_refusal_names_the_character_and_its_line(self):
+        refs, problems = self.refs("- Prototype #38\n- III.18\u2013III.22 awaiting, #39")
+        self.assertIn("U+2013 on line 2", "\n".join(problems))
+
     def test_a_stale_template_comment_is_named_as_such(self):
         refs, problems = self.refs("<!-- An older wording. -->\nNone")
         self.assertIn("comment other than the template's own", "\n".join(problems))

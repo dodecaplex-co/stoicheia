@@ -2047,8 +2047,8 @@ findings:
   read of that list.
   Three rounds of independent review found ways for a renderer to show what a parser of
   the section did not read, so the section is read as raw text: the one line
-  `## Unfinished work`, no other line that reads as that heading, and, apart from the
-  template's own comment, plain ASCII with no markup, "None" or a list naming each
+  `## Unfinished work`, no other line whose letters begin "unfinished work", and, apart
+  from the template's own comment, plain ASCII with no markup, "None" or a list naming each
   issue as `#N` (WORKFLOW, section 10, step 4). Malformed pull request labels refuse;
   label comparisons ignore case; each named issue is bound to this repository by its
   canonical address, so a rename is allowed and a transfer is not; the merge gate and
@@ -2069,9 +2069,11 @@ findings:
   stand-in; its source clone copies Git's objects without hard links, so a sandbox that
   may read the repository can run it, and its renderer case reads `docs/program.toml`'s
   first released stage instead of pinning words main has since changed. No planted fault
-  is added to `negative_tests.py`: these gates judge pull request
-  text and issue state, which the offline fixtures and gh stand-in supply, rather than a
-  break in the edition's files. The protected files changed are:
+  is added to `negative_tests.py`: these gates judge pull request text and issue state,
+  which the offline fixtures and gh stand-in supply, rather than a break in the
+  edition's files. WORKFLOW's step 9 also gains a sentence the release needs beside the
+  hold: the release pull request moves the `acceptance` job's `ACCEPTANCE_GATE` from
+  `ratchet` to `full`, as that job's entry above says. The protected files changed are:
   `.github/pull_request_template.md`,
   `.github/workflows/ci.yml`,
   `.github/workflows/release-gate.yml`,
