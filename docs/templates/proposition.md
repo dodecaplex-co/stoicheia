@@ -35,8 +35,8 @@ Declarations (exact Lean, with any porism and companions):
 In plain words (the statement read back, to set beside the enunciation):
 
 Coverage: full / restricted / partial
-- Extra hypotheses, each excluding a case Euclid's words admit (plain words, then the Lean
-  hypothesis):
+- Extra hypotheses, each excluding a case Euclid's words admit (in words, then the Lean
+  condition: STYLE, section 1, "Hypotheses in words"):
 - Clauses left out, quoted exactly from Heath:
 - Hypotheses of Euclid's left out, so that the statement claims more:
 Cases the statement admits (boundary positions, equality, order, orientation, coincidence,
@@ -162,7 +162,7 @@ What the review leaves in the repository: `review/<book>/NN.toml`, read by
 # review/<Book>/NN.toml
 [statement]
 scope = "full"                 # or "restricted", "partial"
-# hypotheses = ["plain words (`hX : …`)"]       # restricted
+# hypotheses = ["in words (`the condition`)"]   # restricted; STYLE, section 1
 # omitted = ["quoted exactly from Heath"]       # partial
 # note = "One line, at most 160 characters."    # unless full
 # short = "a few words for beside the badge"    # unless full; 70 characters at most
