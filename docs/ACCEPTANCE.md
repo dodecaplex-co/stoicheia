@@ -136,8 +136,8 @@ signoff = "pass"
 Each item is `"pass"`, `"fail"` or `"n/a"`; only P13 may be `n/a`. An item counts only in
 a record at the stage `full` whose stamps are current and which names a reviewer with a
 role and its commit, one in the history of the revision checked (P2), so a record read
-again for a changed Lean file is assessed again. The reviewer records only what they read
-themselves, and never an item of a claim they wrote.
+again for a changed Lean file is assessed again. The reviewer records only their own
+reading, and never records an item for a claim they wrote, prompted, or edited.
 
 **For a book,** in `docs/reports/acceptance/book-<book>.toml`, a table for each review
 item, each with its verdict, the reviewer and role, the commit read, and the report the
