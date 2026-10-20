@@ -246,9 +246,10 @@ the frozen text that follows is kept, not silently rewritten.
   it does not wait for step 6. The construction and porism content comes first, the
   guard next in a separate landing, then the centre restatements.
 - **Consumers affected.** III.1's callers, the porism's callers, its review record and
-  page, Book III's introduction where it discusses centres, III.2's commentary, the
-  overlap catalogue, `Certificate/FIELDS.md`, `tests/certificate_expectations.json`,
-  the future `Audit/Centre.lean`, and the dependency pins in `Audit/Overlaps.lean` and
+  page, `docs/briefs/0004-book-III.md` where it discusses centres and porisms, III.2's
+  commentary, `docs/reports/gaps-book-III.md`, the overlap catalogue,
+  `Certificate/FIELDS.md`, `tests/certificate_expectations.json`, the future
+  `Audit/Centre.lean`, and the dependency pins in `Audit/Overlaps.lean` and
   `Audit/Crossing.lean`. The integrator regenerates the pages. No proposition or porism
   statement, Heath sentence, foundation or lock changes under this correction.
 - **Work that can go on meanwhile.** The remaining content proceeds under its approved
