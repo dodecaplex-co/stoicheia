@@ -1942,3 +1942,49 @@ findings:
   those entries and their comment, and `tests/test_acceptance_limits.py` (new), which checks
   the list against the table and exercises P3 with and without the required tag. CI does
   not run it yet; whoever changes the limitations runs it.
+
+- **A check for merge-conflict markers.** Pull request #138 left a diff3 base marker and a
+  duplicated, outdated fragment on this page, and nothing caught it; the owner asked for a
+  rule to catch such residue. S23 of `scripts/check_style.py` ([STYLE](../STYLE.md),
+  section 8) reads every tracked text file, fenced code and comments included, and refuses
+  an opening, base or closing marker (exactly seven characters, then a space or the line's
+  end), and a seven-equals middle between markers or where it cannot underline a Markdown
+  paragraph, since a resolver can delete the outer markers and leave a middle, as #138
+  left a base. Setext headings stay allowed, including paragraphs of several lines.
+  The check tracks comments, fences, HTML blocks, GFM tables, completed headings,
+  indented code and link reference definitions; a fence inside a comment or HTML block
+  opens no block. It skips symlinks,
+  and traversal errors name their path and stop the check. The walk without Git serves
+  S23 alone; S12 loads its strictly Git-backed index only when needed. The updated S23
+  finds no marker in origin/main's 1,100 text files at `d95125f0`.
+  The style check is its home because it
+  already holds the repository's file-and-line rules and runs in CI and the pre-flight
+  with its cases; `check_fidelity.py` judges the Lean, Heath's text and the certificate,
+  and the Jev audit is an independent model's reading, not a mechanical check. Planted
+  markers in `scripts/negative_tests.py` (item 16) and cases in `tests/test_check_style.py`
+  show each kind refused, the block boundaries held, traversal errors raised, symlinks
+  skipped and valid setext headings allowed. By keep_apart (WORKFLOW, section 10),
+  the rule lands apart from the content fix, `text/decisions-marker` (#140), which removed
+  the marker first; on main since #140 it finds none. The protected files changed are `scripts/check_style.py`,
+  `scripts/negative_tests.py` and `tests/test_check_style.py`.
+
+- **S23 errs toward refusal for possible reference definitions.** A lone Markdown middle
+  is allowed only when every line of the preceding block is ordinary paragraph text;
+  any line beginning with up to three spaces, a bracketed label (escaped brackets
+  included) and a colon disqualifies the block until its next boundary, as does a block
+  quote or list item, since an underline is never a lazy continuation. Within a
+  paragraph, as in GFM, only a list item that can interrupt it counts: a bullet, or an
+  ordered item numbered 1, with some text. `2. item`, `1.` or a bare `*` goes on with
+  the paragraph, which a seven-equals line may underline; at a block's start any list
+  item disqualifies the block.
+  S23 examines only middles of exactly seven equals and errs toward refusal in doubtful
+  contexts, so an author whose heading is refused can use eight, since other lengths are
+  never examined as middles.
+  This deliberately refuses `[label]: destination extra words` with seven equals even
+  though it is paragraph text. `scripts/check_style.py` retains the possible definition
+  across destination and title continuations. `tests/test_check_style.py` covers the
+  three reported escapes, the conservative refusal, the eight-equals alternative,
+  list markers that cannot interrupt a paragraph and ordinary headings across block
+  boundaries; `scripts/negative_tests.py` adds a two-line
+  definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
+  states the rule. No mathematical statement or review record changes.

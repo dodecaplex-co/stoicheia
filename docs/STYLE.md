@@ -585,6 +585,15 @@ just before the script ([WORKFLOW](WORKFLOW.md), section 8).
 
 **Failures.** Each fails the script, naming the file, the line and the rule.
 
+S23 reads every tracked text file's raw contents, including comments and fenced code
+blocks in Markdown; text means bytes with no NUL that decode as UTF-8. It uses
+`git ls-files` at the root, or, in a copy without Git, walks the tree excluding `.git`,
+`.lake` at every depth (including `model/.lake`), `__pycache__`, `.pytest_cache`,
+`.mypy_cache`, `.ruff_cache`, `.tox`, `.venv`, `venv`, `node_modules`, `build`, `dist`
+and `_build`. Traversal errors stop the check with the affected path. Symlinks are
+skipped, since Git stores the target path rather than the target's contents. This walk
+serves S23 alone; S12 still requires Git's tracked-file index.
+
 | Rule | What fails | Where |
 |---|---|---|
 | S1 | An em dash (—) | Prose, Review notes, Catalogues, Other reports, README, Lean notes, figure titles and captions |
@@ -609,6 +618,7 @@ just before the script ([WORKFLOW](WORKFLOW.md), section 8).
 | S20 | A `<text>` holding a Latin letter that is not one letter (a capital, with a prime or a subscript) or not one that `NN.svg` draws; a letter not upright (while the switch for upright letters is off, below, italic letters too, if every letter of the figure is italic), not at font-size 14, or not in the ink of what its middle stands on: `#222222` on the parchment or yellow, `#fbf7ee` on a red, blue or black fill: a polygon, polyline, rect, circle, ellipse or path (an angle's wedge), transforms applied, its arcs and curves followed | Idea figures |
 | S21 | A point the figure shows with no letter within 30 of it: a dot (a filled `<circle>` of radius 6 at most), an end of a `<line>` 25 long or more in a Byrne colour or black, or a corner of a `<polygon>` filled or stroked in one. Transforms are applied; a letter stands at its glyph's middle, reckoned from its x, y, anchor and size; points within 8 of one another are one point. A point drawn by an element marked `data-unlettered`, or inside a `<g>` so marked, is excused, and each mark is printed on every run; a mark whose reason is under two words, or that excuses no point, fails. With the switch on (below), S21 holds every figure | Idea figures |
 | S22 | Letters in backticks: a code span that holds only letters, a capital or a run of capitals (each with its prime or subscript) or several such runs apart by commas or spaces, as `P`, `PQ`, `ABCD` or `AB, CD` (section 1, "Lean notes") | Prose, Review notes, Catalogues, Other reports, Lean notes, Generated |
+| S23 | A merge-conflict marker, with its kind: a line beginning with exactly seven `<`, `\|` or `>` followed by a space or the line's end; or exactly seven `=` with optional trailing spaces or tabs. A trailing CR is allowed. A middle is refused between opening and closing markers, outside `.md` files, or unless every line of the preceding block is ordinary paragraph text. Blank lines, markers, ATX or completed setext headings, thematic breaks, fences, HTML blocks and GFM tables bound or disqualify the block; indented code cannot start a paragraph, but indented continuations are allowed. Any possible reference definition prefix (up to three spaces, a bracketed label allowing escaped brackets, then a colon), block quote or list item disqualifies the whole block; within a paragraph, a list item counts only where it can interrupt one, as a bullet or an ordered item numbered 1, with some text, so `2. item` or a bare `*` goes on with the paragraph. S23 errs toward refusal: other lengths of equals are never examined as middles, so a refused heading can use eight. Fences inside comments or HTML blocks open no block | Every tracked text file except symlinks, or the files of the walk described above |
 
 **Reports.** Each is listed, with its count, and fails nothing.
 
