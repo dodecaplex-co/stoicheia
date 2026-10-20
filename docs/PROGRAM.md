@@ -54,8 +54,8 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism and eight companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved, and eight companion theorems | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| I | 48 of 48 proved, and I.15's porism and eight companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved, and eight companion theorems | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
 | III | 37 of 37 proved, and the porisms of III.1 and III.16 and three companion theorems | released (next: arcs and segments) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV–XIII | not begun | — | — | — | — | — |
 
@@ -176,7 +176,7 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
 - **A formal model** of the axioms in Lean with Mathlib: done. Begun on 18 October 2026 in
   a package of its own, [`model/`](../model/README.md), with CI's `formal-model` job (#73,
-  a gate for the consolidation release), it proves all 79 locked laws in the ordinary
+  a gate for the consolidation release), it proves all 87 locked laws in the ordinary
   plane, and `model_exists` has no hypothesis left: a model relative to Lean's logic and
   Mathlib's construction of the real numbers. It does not show that a formal statement
   captures what Euclid meant. The independence of Postulate 5 still rests on the
