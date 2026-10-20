@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="400" height="270" viewBox="0 0 400 270" font-family="Georgia, 'Times New Roman', serif">
+  <title>I.31: the modern way</title>
+  <rect x="0" y="0" width="400" height="270" rx="10" fill="#fbf7ee"/>
+  <defs>
+    <marker id="head" viewBox="0 0 12 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="10" orient="auto-start-reverse"><path d="M 0 0 L 12 5 L 0 10 z" fill="#a0522d"/></marker>
+  </defs>
+  <line x1="165" y1="85" x2="125" y2="205" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="45" y1="85" x2="345" y2="85" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="65" y1="205" x2="245" y2="205" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)"/>
+  <line x1="165" y1="85" x2="345" y2="85" stroke="#a0522d" stroke-width="2.4" marker-end="url(#head)"/>
+  <circle cx="165" cy="85" r="2.6" fill="#3b2f2f"/>
+  <circle cx="65" cy="205" r="2.6" fill="#3b2f2f"/>
+  <circle cx="245" cy="205" r="2.6" fill="#3b2f2f"/>
+  <circle cx="125" cy="205" r="2.6" fill="#3b2f2f"/>
+  <circle cx="45" cy="85" r="2.6" fill="#3b2f2f"/>
+  <circle cx="345" cy="85" r="2.6" fill="#3b2f2f"/>
+  <g fill="#3b2f2f">
+    <text font-size="17" x="165" y="64" text-anchor="middle">A</text>
+    <text font-size="17" x="50" y="211" text-anchor="middle">B</text>
+    <text font-size="17" x="260" y="211" text-anchor="middle">C</text>
+    <text font-size="17" x="125" y="229" text-anchor="middle">D</text>
+    <text font-size="17" x="30" y="91" text-anchor="middle">E</text>
+    <text font-size="17" x="362" y="91" text-anchor="middle">F</text>
+    <text font-size="17" x="105" y="65" text-anchor="middle" font-style="italic">t &lt; 0</text>
+    <text font-size="17" x="255" y="65" text-anchor="middle" font-style="italic">t &gt; 0</text>
+  </g>
+</svg>

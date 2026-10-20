@@ -11,10 +11,58 @@ kind = "euclid"
 at = "let it be placed so that BE is in a straight line with AB"
 kind = "helper"
 helper = "Prop44.place"
-note = "Our foundations keep superposition for I.4 and I.8, so nothing is moved: `Prop44.place` builds a parallelogram equal to I.42's where Euclid places his, with I.2, I.23, I.31, I.4 and I.34."
+note = "Our foundations keep superposition for I.4 and I.8, so nothing is moved: `Prop44.place` builds a parallelogram equal to I.42's where Euclid places his, with I.2, I.23, I.31, I.4 and I.34. Its construction also finds F through `Prop31.parallelogram` and `Prop30.meet`, using I.30, which Heath does not cite here."
+
+[[passage]]
+at = "let FG be drawn through to H"
+kind = "helper"
+helper = "Prop30.meet"
+note = "Euclid takes H where FG meets the parallel AH and treats AH as parallel to both BG and EF. The Lean draws AH by I.31, finds H with `Prop30.meet`, and proves AH parallel to EF with `Prop30.parallel`, both using I.30, which Heath does not cite here."
+
+[[passage]]
+at = "Therefore the angles BHG, GFE are less than two right angles"
+kind = "helper"
+helper = "angle_add_of_within"
+note = "Euclid reads BHG as a part of AHF. The Lean puts B within AHF using the sides of the parallels, applies `angle_add_of_within` and Common Notion 5, and uses the order H, G, F, proved by `Between.of_sameSide` beneath the construction of AH, to identify the angles."
+
+[[passage]]
+at = "through the point K let KL be drawn parallel to either EA or FH"
+kind = "helper"
+helper = "Prop30.parallel"
+note = "Euclid takes a parallel to FH as parallel to EA too. The Lean draws KL by I.31 and uses `Prop30.parallel` (I.30, which Heath does not cite here) to prove it parallel to EA."
+
+[[passage]]
+at = "and let HA, GB be produced to the points L, M"
+kind = "helper"
+helper = "Prop30.meet"
+note = "Euclid takes L and M where HA and GB produced meet KL. The Lean finds both with `Prop30.meet` (I.30), then uses `Between.of_sameSide` to put A between H and L and B between G and M."
+
+[[passage]]
+at = "therefore LB is equal to BF"
+kind = "carried"
+note = "Euclid applies I.43 to the complements in HLKF. Beneath the earlier constructions, `Between.of_sameSide` puts B between H and K, A between H and L, M between K and L, E between F and K, and G between H and F; these are the five orders `Prop43` takes here."
+
+[[passage]]
+at = "And, since the angle GBE is equal to the angle ABM"
+kind = "carried"
+note = "Euclid uses the vertical angles at B. The Lean applies I.15 with A, B, E in order from `Prop44.place` and G, B, M in order from `Between.of_sameSide` beneath the production of GB."
+
+[[passage]]
+at = "Therefore the parallelogram LB equal to the given triangle C has been applied"
+kind = "carried"
+note = "Euclid concludes that LB, equal to C, has been applied to AB in the angle ABM equal to D. For the side named in the statement, the Lean chose G across AB from that side beneath the placing sentence; `OppositeSidesOf.of_between` puts M across AB from G, and `OppositeSidesOf.sameSideOf` gives the requested side."
 
 [review]
-stage = "exceptions"
-commit = "6e7c20b"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "40d340d"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:a2b5c0ae2745773e"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
