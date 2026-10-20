@@ -1922,7 +1922,7 @@ findings:
   `gs_lmc_opp` from its allow-list, because
   [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) now samples those two laws
   with generators the other laws use, with byte-identical output;
-  [`tests/model/derived.py`](../../tests/model/derived.py) (new) keeps the eight laws'
+  `tests/model/derived.py` (new) keeps the eight laws'
   configurations as derived properties, which
   [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py),
   [`tests/model/structured.py`](../../tests/model/structured.py) and
