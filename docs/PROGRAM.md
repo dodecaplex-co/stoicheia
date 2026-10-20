@@ -54,7 +54,7 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism and eight companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| I | 48 of 48 proved, and I.15's porism and nine companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
 | II | 14 of 14 proved, and eight companion theorems | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
 | III | 37 of 37 proved, and the porisms of III.1 and III.16 and three companion theorems | released (next: arcs and segments) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV–XIII | not begun | — | — | — | — | — |
@@ -150,10 +150,6 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
   request of its own ([#3]).
-- **The merge commit's subject** takes the owner from origin's URL, which after a transfer
-  would name the old owner (cosmetic).
-- **A guard for `gh` exiting 0 without merging,** needed if a merge queue or auto-merge is
-  ever turned on; neither is.
 - **The Lean notes of I.6, I.14 and I.24** still make Lean the subject: a later pass, with
   their records re-read.
 - **Two that are not pull requests:** the finished worktrees and their merged branches are

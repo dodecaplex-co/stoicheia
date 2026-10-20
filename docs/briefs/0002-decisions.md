@@ -1435,8 +1435,123 @@ findings:
   the change in its own note. No statement, check or earlier decision changes, and no
   protected path. Three things are the owner's to decide: the copyright line in
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
+  identity in `scripts/test_safe_push.py`, a protected file, now uses
+  `Stoicheia Team <team@example.org>` instead of a person's name. This tooling-only change
+  leaves the test's meaning unchanged: an ordinary identity is not flagged.
+
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+
+- **The style check reads every text a reader meets: the check change
+  ([#66](https://github.com/jackChallis/stoicheia/issues/66)).** Argon's second review of
+  the Book III release (18 October) found that S7 and S12 skipped the notes of the review
+  records, the front pages, the reports and the docstrings the pages show, so that
+  "Definition 8" and `hnearer` reached the pages unseen; our warm thanks to Argon.
+  [`scripts/check_style.py`](../../scripts/check_style.py) now reads each of them, as
+  [STYLE](../STYLE.md), section 8, lists:
+  - the Review notes: the texts of a record that its page shows (the statement's `note`,
+    `short` and `hypotheses`; the `note` of the route, the representation and the overlap;
+    the figure's `case` and `note`; the clause map's claims; each passage's `note`), and
+    each tag's `meaning` and `badge` in `review/terms.toml`, under the prose rules S1 to
+    S9, with D7 to D9;
+  - the overlap catalogue, beside the gap catalogues, and S7 in both, where it was D10;
+  - the Other reports, every other report of `docs/reports/` save the outside reviews,
+    which keep their reviewers' words as written, under S1, S7 and S8;
+  - the Rendered docstrings, the tacit rules' that `render.py` copies onto the pages,
+    which now fail S6 and S7 as well;
+  - the front pages and the table of names, beside the generated files, and S7 in all of
+    them;
+  - S12 beyond the mishnah, in the prose, the Review notes, the catalogues, the Rendered
+    docstrings and the front pages, each text with its book's namespace (every book's for
+    a text with none, and the foundations' for the Rendered docstrings), and the name
+    before the colon of a backticked `name : type`, which B2 and E2 of
+    `scripts/check_acceptance.py` now read in the gap catalogues and the
+    overlap catalogue too, as S12 does, since they take their names from
+    `check_style.lean_names`. `NOT_DECLARED` lists the two tactics and the three fields
+    of facts.json it cannot `#check`, each with its reason, and fails an entry that no
+    text uses any more. The overlap catalogue's audit lemmas are put to Lean once
+    `lake build Audit` has run, as CI runs it. The mishnah is asked as it always was,
+    every name with `import Elements` alone, and neither excuse holds there;
+  - S22, new: a code span of letters alone (`P`, `PQ`, `ABCD`), in all of these and the
+    Lean notes. The owner's second comment on #66 asked that Book Zero's backticked pairs
+    of letters be swept, or excepted in STYLE: they are swept, with the lone letters
+    beside them, so that a sentence does not set P one way and PQ another, in the text
+    change that follows this one; and STYLE, section 1, says that a step written over any
+    letters writes them plain too, the Lean's variables among them.
+
+  The hypotheses rule has one home, STYLE, section 1, "Hypotheses in words", as the
+  owner's first comment on #66 asked, since the form in review/SCHEMA.md named a
+  hypothesis by its local name where STYLE said words: the row for `hypotheses` and the
+  worked example of [`review/SCHEMA.md`](../../review/SCHEMA.md), and the
+  [proposition template](../templates/proposition.md), point to it, and S12 holds it.
+  The new reach is held file by file. On main at `89c5da4` it finds 1,173 things, 1,137 of
+  them S22's, nearly all in the notes of Book Zero and the foundations, 25 of S7 and 11 of
+  S12, in 37 files; `REACH_PENDING` lists those files, each with the rules it had findings
+  of and whoever mends it (the text change after this one; stages 3 and 4; the records of
+  Books I and II; the next change to III.10 and III.19, with their records; the
+  coordinator, for the foundations), and reports their findings of those rules as D16
+  meanwhile. Every other finding of the reach fails at once, in a listed file as in any
+  other, and every file is held to all it was held to before: nothing is loosened, and
+  cases of `tests/test_check_style.py` show an em dash still failing in a listed file, and
+  a listed file held at once to the rules it is not listed for. A rule of an entry whose
+  file has nothing of it left is reported as done, rule by rule as the excuse is (S12
+  aside when Lean is not asked, under `--no-lean` or for want of `lake`), and comes out
+  of its entry in a change to the check, and the entry with its last rule; the list goes
+  once it is empty.
+  `scripts/check_acceptance.py` also sends every style finding in a proposition's review
+  record to P9 before it classifies findings by rule.
+  The protected files changed are [`scripts/check_style.py`](../../scripts/check_style.py),
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py),
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (54 scope cases and 14
+  reach cases), [`review/SCHEMA.md`](../../review/SCHEMA.md) and
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), whose comment on S12 now
+  says what it reads. Astra read the first draft cold, through the Codex CLI, and found
+  nine faults, five more in a second reading of the mends and one in a third, each now
+  mended with a case of its own: among them, a phrase that runs from one Lean note into a
+  rendered docstring, a docstring read with other white space than its page shows, a
+  mishnah name excused that used to fail, a TOML comment taken for a note, and a D10
+  report lost. Our warm thanks to Astra.
+
+- **S12's reports distinguish names from other code spans.** The check change for #66
+  keeps the Other reports in S12, as `d017113` added them. Their file names and numeric
+  file locations are recognized against the repository; Lean supplies its keywords,
+  tactics, attributes and namespace-only names. A report may explicitly identify an
+  external tactic, a namespace, a scan identifier or a revision identifier. Certificate
+  fields and review schema fields and values are recognized from their definitions where
+  the prose discusses them. A trailing dot names a family, not a declaration. None is an
+  exception made from a list of failed names, and a typed hypothesis is still checked.
+  These classifications apply to the new report reach alone: the mishnah keeps every
+  check it already had.
+
+  The remaining findings on main's content at `bd3b72a` are the initial inventory of
+  this reach, deferred by file and rule in `REACH_PENDING`, as the other new reach is:
+
+  | File | Rule | Findings |
+  |---|---|---|
+  | `docs/reports/mixed-angles-prototype.md` | S12 | 147 |
+  | `docs/reports/read-through-01.md` | S12 | 2 |
+
+  The 149 findings include incomplete or ambiguous references, local names and names
+  from a staged or earlier version, among them `Exceeds.nearVertexOpen`. The content
+  change after #66 corrects or qualifies each reference; the S12 entry then comes out
+  in a check change. The read-through's existing S7 entry stays. Every report still
+  reaches S12, and an unknown declaration in an unlisted report fails.
+
+  Reading `d017113` and `8c235bb` in full also exposed the Lean probe's existing
+  100-error cutoff: the new reports reached it, and later names were not checked.
+  The probe now passes `-DmaxErrors=0` to Lean, so every name is read, even after a
+  pending report's hundredth finding. A source-level option does not change that
+  command-line reporting limit. The Markdown changes in those commits align code spans,
+  tables and container boundaries with the documented scope; the changed D10 expectation
+  concerns a multiline code span, which the rule excludes. No other main-content failure
+  or relaxation of a documented rule was found in those commits.
+
+  The protected files changed are [`scripts/check_style.py`](../../scripts/check_style.py)
+  and [`tests/test_check_style.py`](../../tests/test_check_style.py). The regressions cover
+  the token categories, retained mishnah enforcement, unknown report names with and
+  without an S12 pending entry, and a failure after more than 100 deferred errors.
+  [STYLE](../STYLE.md), section 8, describes the report classification. No judged content,
+  Lean source, review record or generated page changes.
 
 - **A new tag, `touching-whole-circles`.** [`review/terms.toml`](../../review/terms.toml)
   gains the tag, of kind `representation`, with the meaning [brief 0008](0008-centre.md)
@@ -1451,7 +1566,6 @@ findings:
   section 6 orders; no record carries it yet, so no page changes. When the definition of
   contact within changes, in the brief's step 6, the meaning gains that the inner circle has
   passed within the outer (question 16). Protected file changed: `review/terms.toml`.
-
 - **An overlap always names its kind.** The last part of
   [#93](https://github.com/jackChallis/stoicheia/issues/93), as its comments list it. The
   decision of 18 October, "An overlap is worded by its kind, as the catalogue gives it",
@@ -1469,7 +1583,6 @@ findings:
   The proposition template's `[overlap]` lines say the key is always named. Nothing a
   reader sees changes: the pages render the same at the branch's base. This is a check
   change on its own; it changes no record.
-
 - **The negative tests read the count of assumptions from the lock.** The planted-assumption
   test of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) expected
   `check_fidelity.py` to say "declares 88 axioms, not 87", a count fixed in the script. It
@@ -1481,7 +1594,6 @@ findings:
   the lock holds 87, so the test expects what it expected before; nothing else in the
   script, and no check, changes. The one protected file it changes is
   `scripts/negative_tests.py`.
-
 - **The model's audit and its root are protected too (#96).** `model/Model/Audit.lean`
   pins the model's proofs to `propext`, `Classical.choice` and `Quot.sound` alone and
   checks that `Elements` is absent; `model/Model.lean` imports that audit, so the build
@@ -1498,7 +1610,6 @@ findings:
   relative link must resolve from the decisions page's folder to the protected file,
   so routine edits to `model/Model.lean` (a new import) and `model/Model/Audit.lean`
   (a new pinned law) now need such a line too.
-
 - **The overlap wording and the table of stages are brought up to date.** The two text
   follow-ups to #93 update the [README](../../README.md)'s row for `Audit/` and the
   [Book I brief](book-I.md)'s account of its four overlaps: a rule supplies a step of
@@ -1538,3 +1649,180 @@ findings:
   the keys and when an item counts, so the schema's `items` row and the sentence after the
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
+
+- **No certificate entry may rest on Circle 2 or Circle 3.** The check keeps
+  [brief 0008](0008-centre.md)'s III.1 construction from reaching Circle 2, which states
+  III.2, or Circle 3, which gives it at once.
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) now refuses either rule
+  in any entry's axioms, propositions, porisms and companions of every book included,
+  and names the entry and the rule. It also fails if `Certificate/axioms.lock` no longer
+  holds either rule's name, so a renamed axiom cannot leave the check refusing nothing.
+  Main at `39ae65c` passes, and its `facts.json` is the one delivered here: none of its
+  121 entries rests on either rule.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants Circle 2 in a
+  proposition and Circle 3 in a porism and a companion, on separate copies of
+  `facts.json`, without a build, and expects each refusal by name. It then renames Circle 3
+  in the lock, restored after, and in a copy of `facts.json`, and expects the missing
+  name to be caught. These are the two protected files changed. FORMALIZATION states what
+  the check covers: an entry, whether through its own proof or through a lemma it uses.
+  Book Zero lemmas are not entries, so they are covered only through entries that use
+  them. The overlap catalogue's account of the rule, and the README's row, are held for
+  the pull request that follows. Nothing is loosened.
+
+- **Planted faults for the remaining checks.** `scripts/negative_tests.py` now plants an
+  em dash in I.1's mishnah, caught by S1 with the file named; a relative link to a
+  missing page, caught with the source and target named; a generated I.1 page stale
+  beside a changed mishnah, caught by the page's Git status line after rendering; and
+  an axiom omitted from an audit lemma's expected list, caught by `#guard_msgs` in
+  `lake build Audit`. The freshness test changes the source as well: editing only the
+  page would let the renderer restore the committed text and leave Git status clean.
+  A corrupt header in I.1's compiled file makes leanchecker itself name the file and
+  report its invalid header, using the invocation in `scripts/check_kernel.py`.
+  This tests the loading of compiled files; no invalid proof term is planted for the
+  kernel replay. Each new plant restores its inputs in `finally`, and the freshness
+  test saves every renderer output. Before each plant that builds, every file under
+  `.lake/build` is saved, including companion outputs, dependent modules, hashes and
+  traces. A restoration build is attempted; if it fails or is interrupted, the saved
+  files return with their original bytes and newly created files are removed. After
+  I.1's successful rebuild, leanchecker replays the restored environment. The
+  assumptions test restores or removes its temporary module's outputs in a nested
+  `finally`, even when the restoration build is interrupted. Each new plant reports
+  its time, restoration included. An outer `finally` compares the final Git status
+  with the entry status, even on interruption, preserving an exception already in
+  flight if that comparison also fails. Restoration needs writable files and time
+  for `finally` to finish; a forced process kill cannot provide it.
+  `tests/test_negative_tests.py` tests failed and interrupted builds, saved and absent
+  outputs, temporary-module cleanup, replay after a successful rebuild and the final
+  status comparison in temporary directories, without Lean or Git. The script runs
+  these regressions before planting. Its docstring states the coverage and its limits;
+  the README table update is deferred to a later pull request after this check change.
+  The protected files changed are `scripts/negative_tests.py` and
+  `tests/test_negative_tests.py`. No check is loosened.
+- **The merge commit names the owner GitHub names
+  ([#41](https://github.com/jackChallis/stoicheia/issues/41)).** `git safe-push --merge`
+  gives the merge commit GitHub's own subject, "Merge pull request #N from owner/branch",
+  and took the owner from origin's URL, which after a transfer or a rename, both of which
+  GitHub redirects, would name the old one. It now takes the owner GitHub reports for the
+  pull request's head (`headRepositoryOwner`), read by the gates with the branch name and
+  the title, and a new gate, "subject", shows the subject before the merge and refuses the
+  merge when GitHub names no owner, or none an account could have (a login of letters,
+  digits and hyphens), before gh is asked. Nothing the merge checked before is loosened.
+  The files changed are [`scripts/safe_push.py`](../../scripts/safe_push.py)
+  (`merge_subject`, beside `gates` and `merge`, and its docstring) and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) (a test, with the
+  stand-in for gh naming no owner, five owners no account could have, then a new one,
+  which fails before the change), with
+  [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
+- **A merge is GitHub's word, never gh's exit alone
+  ([#42](https://github.com/jackChallis/stoicheia/issues/42)).** With a merge queue or
+  auto-merge on, `gh pr merge` exits 0 having only queued the pull request; `--merge` took
+  that for a merge, judged origin/main's last commit as the merge commit, and would then
+  have advised reverting the wrong commit. Neither is on today. Whatever gh's exit, GitHub
+  is now asked, and success is reported only when GitHub says the pull request is merged
+  and origin/main holds the merge commit GitHub names (a full object name). gh exiting 0
+  with the pull request not merged, GitHub naming no merge commit or one origin/main does
+  not hold, GitHub not to be asked, or giving no state, is "merge state unknown", exit 3,
+  with no revert advised, since nothing on main is known to be the merge. Nothing is
+  loosened: a merge that happened, or may have, is still never exit 1, and three cases are
+  now more cautious than before: GitHub giving no state after gh failed, once "nothing was
+  merged", exit 1; GitHub not to be asked after gh exited 0, once a merge; and an
+  interruption while GitHub is asked after gh exited 0, once "merged", exit 3. One test's
+  expectation moves with the last, the more cautious way:
+  `test_interrupted_after_gh_merged_is_merged` is now
+  `test_interrupted_after_gh_exits_0_is_unknown`, still exit 3, and expects "merge state
+  unknown" where it expected "merged". The change's independent review found four answers
+  GitHub could give that the merge misread or crashed on, and we thank it: an owner that
+  is no account's name (above), a state that is none of OPEN, CLOSED and MERGED (once
+  "nothing was merged", exit 1, though gh had merged), and a merge commit named by
+  something other than its full object name, or by nothing, which was fetched and judged
+  before the merge state was settled. Each is now refused by the gate, or "merge state
+  unknown" before anything is fetched, with tests. The files changed are
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) (`merge_outcome`, `verify_merge`,
+  `merge_main`, a new refusal `MergeUnknown`, and its docstring) and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) (three ways for the
+  stand-in for gh to exit 0 with no merge on main that GitHub vouches for, a way for
+  GitHub to give any answer a test needs, and six new tests, each failing before the
+  change), with
+  [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
+- **III.37 leaves the grouped-case example.** The example in the `uncarried_runs` docstring
+  of [scripts/check_fidelity.py](../../scripts/check_fidelity.py) drops III.37, whose case
+  with the centre on AC gets a proof of its own, `Prop37.centre_on_secant`, on ship R1's
+  train. The docstring holds before and after that train lands. I.14 remains as the example
+  of a "similarly" that one argument already covers. The docstring is the only change to
+  the script; the check is unchanged.
+- **I.39 and I.40 now follow Euclid's reductio to its end.** I.40's companion
+  `Prop40.general` does so too, so their records' route is `euclid`. Under "The follow-ups
+  to the precision pass", the entry "Two more kinds of passage, and what 'argued another
+  way' means" called them "one step changed". It is superseded on this point and stays as
+  history. [review/SCHEMA.md](../../review/SCHEMA.md) now uses III.8 as its example of a
+  `modified` route: its last step compares the angles at the centre by I.24.
+||||||| bd3b72a1
+  name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
+  request of its own.
+- **The overlap screen unfolds every defined word, tries each statement bare, and has its
+  cases.** Argon's second review of the Book III release (section 1.3) found that
+  [`Audit/screen.py`](../../Audit/screen.py), the mechanical screen behind the
+  [overlap catalogue](../reports/overlaps.md), unfolded only the phrases `SameSideOf` to
+  `LinesMeet`, so that a statement written with `Triangle`, `Collinear`, `circumference` or
+  `standing` was searched only in part
+  ([#78](https://github.com/jackChallis/stoicheia/issues/78)); we thank Argon for reading
+  the screen so closely. The screen now begins with a pass that lists every definition of
+  the edition that a statement or a rule reaches, through the bodies of other definitions,
+  and stops if one is not provided for. It unfolds 35 words: the phrases, `Triangle` and
+  `Collinear` among them, and the words for "any number" that stage 2 brought in
+  (`InOrder`, `segments`, `endOf`, `triples`, `Magnitude.sum`, and the areas of a figure
+  given with its triangles), those defined by cases or by recursion through the equations
+  Lean proves for them. It gives the magnitudes Lean chooses (`circumference`, `standing`,
+  `rect`) and the order "not greater" to `grind` by what their definitions say and nothing
+  more, a lemma each, proved from Lean's choice alone, and leaves the kinds of magnitude,
+  with their sum, order and zero, as the axioms state them. Every file of tries first proves
+  thirteen goals that `grind` closes only with the definitions unfolded, each checked to
+  fail without them, so a screen that has stopped unfolding stops. Its docstring says what
+  stays unsearched: that two descriptions choose the same magnitude when they hold of the
+  same things; that every point of a circle measures a circumference alike, which is III.21;
+  and what a figure fitted from triangles (`Fitted`) or given with them (`Rectilineal`,
+  `Apart`) holds by its formation, since `grind` does not reason by induction or open a
+  structure's fields of itself. Each attempt with rules is now two tries, `grind` as it
+  chooses and `grind` forward, each with the budget the two used to share; a try that runs
+  out of time is tried again with four times as much, and one that runs out again, or that
+  stops on any other error, is listed as not searched to the end. A try leaves out the rules
+  `grind` refuses, finding nothing in them to match: the twelve that only say that a point,
+  a straight line or a circle exists, and, forward, fourteen more with no hypothesis it can
+  start from. Given one, `grind` refused the whole list, so that until now more than a
+  quarter of the attempts, the families Postulates and Constructions and every pair with
+  either among them, were made with no search at all. A bare try, with no rule, comes first
+  for each statement, so that a statement that holds by its definitions alone is listed
+  apart and not counted as a rule's. Each job runs on one thread. The screen names the
+  statements it closes; fails if III.2, III.5 or III.6, the rows it has always found, stops
+  closing by a rule; and stops if a Lean process ends before its file does, or an error
+  falls in a file's preamble. It reads a try's messages from its `set_option` line, so that
+  one reported there is not counted against the try before it, and it reads an error
+  whether or not Lean names its kind after the word, as Lean 4.35 does for some
+  (`error(lean.unknownIdentifier): …`), so that such an error in the pass over the rules
+  stops the screen, and a try that stops on one is listed.
+  [`tests/test_screen.py`](../../tests/test_screen.py) (new) puts the screen's own functions
+  to small cases with no Lean: the attempts and tries it makes, its reading of Lean's logs,
+  of the rules refused and of the definitions reached, and the known rows. The protected
+  file it adds is `tests/test_screen.py`. `Audit/screen.py` is not a protected path today;
+  it is named here too, as [#96](https://github.com/jackChallis/stoicheia/issues/96) may
+  make `Audit/` one. CI runs neither the screen, which takes about an hour and a half of
+  processor time, nor its cases yet: whoever changes the screen runs both. Run on the
+  statements of `89c5da4`, the 99 propositions, the three porisms and the 19 companions, its
+  48,400 attempts made 90,629 tries and closed III.2, III.5 and III.6, each by a rule, and
+  nothing else; no statement closed bare. Seven tries ran out of time even with four times
+  the budget, all of them III.34 from Postulate 4, alone or with Postulate 5 and at most one
+  more family. III.34 asks for three points on its circle, and the rules among those that
+  put a point on a circle that has none need a straight line, which III.34 does not give
+  and none of those rules draws. The catalogue's account of the screen, and III.30 among
+  its near misses, follow on a text branch of their own, after this one.
+- **What the checks of train H8b judge lands in train H9b.** As the entry for H8b says, the
+  content its branches held back lands here, after the checks: `docs/ACCEPTANCE.md`'s lines
+  for style everywhere (`tooling/style-everywhere`), the README's table and the overlap
+  catalogue's lines on the Circle rule (`tooling/no-circle-2`), the README's row for the
+  negative tests (`tooling/planted-faults`), PROGRAM.md's open work
+  (`tooling/safe-push-followups`) and the overlap screen itself
+  (`tooling/overlap-screen-unfold`, #78), whose tests landed with H8b. Acceptance in CI and
+  its page wait for a fix (#35). The protected file this train changes is `Audit/screen.py`:
+  the screen unfolds every defined word, tries each statement bare, and has its cases, as the
+  entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
+  statement changes.
