@@ -2238,7 +2238,15 @@ def decisions_page(text, folder):
     headings = re.findall(r"(?m)^## ([^\n]+)$", text[:markers.start()])
     previous = headings[-1].strip() if headings else None
     parts = []
-    for path in sorted(folder.iterdir()):
+    # Git keeps no empty folder: with no entry yet there is no folder, and no entry.
+    # Anything else in its place (a file, a link) is refused.
+    if not folder.exists() and not folder.is_symlink():
+        paths = []
+    elif folder.is_symlink() or not folder.is_dir():
+        raise SystemExit("docs/decisions: expected a folder of entry files")
+    else:
+        paths = sorted(folder.iterdir())
+    for path in paths:
         if path.name == "README.md":
             continue
         match = DECISION_FILE.fullmatch(path.name)

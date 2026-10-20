@@ -78,9 +78,18 @@ class DecisionPages(unittest.TestCase):
                 with self.assertRaisesRegex(SystemExit, "entry text"):
                     render.decisions_page(PAGE, self.folder)
 
-    def test_missing_folder_unreadable_entry_and_symlink_refused(self):
-        with self.assertRaises(OSError):
-            render.decisions_page(PAGE, self.folder / "missing")
+    def test_missing_folder_is_no_entries(self):
+        self.assertEqual(render.decisions_page(PAGE, self.folder / "missing"), PAGE)
+
+    def test_a_file_or_link_in_the_folder_s_place_refused(self):
+        (self.folder / "file").write_text("x\n")
+        with self.assertRaisesRegex(SystemExit, "a folder of entry files"):
+            render.decisions_page(PAGE, self.folder / "file")
+        (self.folder / "link").symlink_to(self.folder)
+        with self.assertRaisesRegex(SystemExit, "a folder of entry files"):
+            render.decisions_page(PAGE, self.folder / "link")
+
+    def test_unreadable_entry_and_symlink_refused(self):
         path = self.folder / "2026-10-20-test.md"
         path.write_bytes(b"\xff")
         with self.assertRaises(UnicodeError):

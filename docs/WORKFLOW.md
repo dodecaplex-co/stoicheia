@@ -527,7 +527,7 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
         a brief's revision or a decisions entry, that names the proposition (section 2);
       - `Certificate/axioms.lock` unchanged unless
         [0002-decisions.md](briefs/0002-decisions.md) or a dated entry in
-        [docs/decisions/](decisions/README.md) gains a new line mentioning the lock;
+        `docs/decisions/` gains a new line mentioning the lock;
       - no protected path changed unless 0002-decisions.md or a dated entry in
         docs/decisions/ gains a new line naming each file changed (below);
       - every change to `heath/` carries a comment naming a scan leaf of its own pages, as

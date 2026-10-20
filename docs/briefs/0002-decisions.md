@@ -2036,7 +2036,8 @@ findings:
   page, so any two queued together collide at its end: of the last 30 merged pull requests
   (#98 to #148), 24 changed it, and of 29 consecutive pairs, 16 would have conflicted had
   they been queued together, 13 of them on this page alone. So a decisions entry may now be a
-  file of its own, `docs/decisions/<YYYY-MM-DD>-<slug>.md` ([its folder's note](../decisions/README.md)),
+  file of its own, `docs/decisions/<YYYY-MM-DD>-<slug>.md` (a valid date, then a short name
+  of lower-case letters and digits joined by hyphens; the entry's text, with no date heading),
   and `scripts/render.py` assembles the entries, in file-name order, between the
   `decisions:entries` markers at the end of this page, under their date headings, leaving out
   a heading that would repeat the one before it. Readers see the same page; the entries
