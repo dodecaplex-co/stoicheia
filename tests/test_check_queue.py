@@ -14,9 +14,11 @@ from __future__ import annotations
 import copy
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -145,14 +147,18 @@ class QueueTests(unittest.TestCase):
         return self.make([first, second], changes, subject=(
             f"Merge pull request #{number} from owner/train-{number}"))
 
-    def block(self, head, base=None, harness=None):
+    def block(self, head, base=None, harness=None, harness_commit=None, legacy=False):
         base = base or self.base
-        blob = self.git("rev-parse", f"{base}:scripts/safe_push.py").strip()
-        return queue.safe_push.preflight_block(head, base, {
-            "full": True, "time": "20 October 2026",
-            "harness": harness or f"origin/main's `scripts/safe_push.py` (blob `{blob[:12]}`)",
-            "steps": [("4", "full checks", "ok", 1)],
-        })
+        harness_commit = harness_commit or base
+        blob = self.git("rev-parse", f"{harness_commit}:scripts/safe_push.py").strip()
+        harness = harness or f"origin/main's `scripts/safe_push.py` (blob `{blob[:12]}`)"
+        marker = "" if legacy else f" harness={harness_commit}"
+        lines = [f"<!-- safe_push:preflight begin sha={head} base={base}{marker} -->",
+                 f"Pre-flight of `{head[:12]}` against origin/main `{base[:12]}`, by {harness}.",
+                 "", "Verdict: PASS.", "", "| Step | Outcome | Seconds |", "|---|---|---|"]
+        lines.extend(f"| 4. {name} | ok | 1.0 |"
+                     for name, _ in (*queue.safe_push.CHECKS, *queue.safe_push.NEGATIVE))
+        return "\n".join([*lines, "<!-- safe_push:preflight end -->"])
 
     def train(self, number, changes, start=None, new="None."):
         start = start or self.base
@@ -227,6 +233,42 @@ class QueueTests(unittest.TestCase):
         group = self.merge(self.first, second, 2)
         self.verdict(self.cli(head=group), 1, "not overwriting", TEXT, "overwritten")
 
+    def test_later_train_restores_original_content(self):
+        two = self.train(2, {TEXT: self.trees[self.base][TEXT]}, start=self.one)
+        self.verdict(self.cli(head=self.merge(self.first, two, 2)), 1,
+                     "not overwriting", TEXT)
+
+    def test_later_train_removes_added_file(self):
+        path = "notes/added.txt"
+        one = self.train(1, {path: "An added line.\n"})
+        first = self.merge(self.base, one, 1)
+        two = self.train(2, {path: None}, start=one)
+        self.verdict(self.cli(head=self.merge(first, two, 2)), 1, "not overwriting", path)
+
+    def test_later_train_restores_deleted_file(self):
+        one = self.train(1, {TEXT: None})
+        first = self.merge(self.base, one, 1)
+        two = self.train(2, {TEXT: self.trees[self.base][TEXT]}, start=one)
+        self.verdict(self.cli(head=self.merge(first, two, 2)), 1, "not overwriting", TEXT)
+
+    def test_current_members_cannot_name_the_base_or_an_unrelated_head(self):
+        original = self.body()
+        member = queue.parents(self.repo, self.one)[1]
+        unrelated = self.make([self.base], {"notes/unrelated.txt": "Unrelated.\n"})
+        for replacement in (self.base, unrelated):
+            with self.subTest(replacement=replacement):
+                self.set_body(original.replace(member, replacement))
+                self.verdict(self.cli(), 1, "row has no unique member merge")
+
+    def test_current_members_cannot_omit_a_merged_member(self):
+        extra = self.make([self.base], {"notes/extra.txt": "Another member.\n"})
+        head = self.merge(self.one, extra)
+        body = self.body().replace(self.block(self.one), self.block(head))
+        self.pr(1, head, "train/area-1", body)
+        first = self.merge(self.base, head, 1)
+        self.verdict(self.cli(head=self.merge(first, self.two, 2)), 1,
+                     "has no Members row")
+
     def test_decisions_loses_an_earlier_added_line(self):
         original = self.trees[self.base][PAGE]
         one = self.train(1, {PAGE: original + "\nThe first train's decision.\n"})
@@ -250,18 +292,18 @@ class QueueTests(unittest.TestCase):
         self.verdict(self.cli(), 1, "pre-flight: sha differs")
 
     def test_preflight_is_missing(self):
-        self.set_body(queue.safe_push.BLOCK.sub("", self.body()))
+        self.set_body(queue.PREFLIGHT.sub("", self.body()))
         self.verdict(self.cli(), 1, "pre-flight: missing or malformed block")
 
     def test_preflight_names_another_harness_blob(self):
         old = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
         wrong = self.git("rev-parse", f"{self.base}:{TEXT}").strip()
         self.set_body(self.body().replace(old[:12], wrong[:12]))
-        self.verdict(self.cli(), 1, "harness blob is not the recorded base's safe_push.py")
+        self.verdict(self.cli(), 1, "harness blob is not the recorded harness commit's safe_push.py")
 
     def test_preflight_hidden_duplicated_or_malformed_refuses(self):
         original = self.body()
-        block = queue.safe_push.BLOCK.search(original).group()
+        block = queue.PREFLIGHT.search(original).group()
         for replacement in ("```\n" + block + "\n```", "<!-- hidden\n" + block + "\n-->",
                             block + "\n" + block, block.replace("sha=", "sha=BAD")):
             with self.subTest(replacement=replacement[:30]):
@@ -280,6 +322,83 @@ class QueueTests(unittest.TestCase):
         self.snapshot["main"]["sha"] = self.base
         first = self.merge(self.base, self.one, 1)
         self.verdict(self.cli(head=self.merge(first, self.two, 2)), 0, "queue: PASS")
+
+    def test_legacy_preflight_uses_its_base_as_harness_commit(self):
+        for number, head in ((1, self.one), (2, self.two)):
+            self.set_body(queue.PREFLIGHT.sub(self.block(head, legacy=True), self.body(number)),
+                          number)
+        self.verdict(self.cli(), 0, "queue: PASS")
+
+    def test_preflight_harness_may_be_newer_than_its_comparison_base(self):
+        old_base = self.base
+        self.base = self.make([old_base], {"scripts/safe_push.py": "# Updated main harness.\n"})
+        self.snapshot["main"]["sha"] = self.base
+        for number, head in ((1, self.one), (2, self.two)):
+            block = self.block(head, base=old_base, harness_commit=self.base)
+            self.set_body(queue.PREFLIGHT.sub(block, self.body(number)), number)
+        first = self.merge(self.base, self.one, 1)
+        self.verdict(self.cli(head=self.merge(first, self.two, 2)), 0, "queue: PASS")
+
+    def test_preflight_harness_must_have_been_on_main(self):
+        off_main = self.make([self.base], {"scripts/safe_push.py": "# Untrusted harness.\n"})
+        self.set_body(queue.PREFLIGHT.sub(self.block(self.one, harness_commit=off_main), self.body()))
+        self.verdict(self.cli(), 1, "harness commit is not an ancestor")
+
+    def test_preflight_requires_passing_summary_and_full_steps(self):
+        original = self.body()
+        for body, message in (
+            (original.replace("Verdict: PASS.\n", ""), "one passing verdict"),
+            (original.replace("Verdict: PASS.", "Verdict: FAIL."), "one passing verdict"),
+            (original.replace("| ok |", "| FAIL |", 1), "contains a FAIL row"),
+            (original.replace("| 4. lake build | ok | 1.0 |\n", ""), "run the full checks"),
+        ):
+            with self.subTest(message=message):
+                self.set_body(body)
+                self.verdict(self.cli(), 1, message)
+
+    def test_preflight_minimal_forged_block_refuses(self):
+        block = self.block(self.one).split("\n\n", 1)[0]
+        block += "\n<!-- safe_push:preflight end -->"
+        self.set_body(queue.PREFLIGHT.sub(block, self.body()))
+        self.verdict(self.cli(), 1, "one passing verdict")
+
+    def test_preflight_can_name_the_full_check_record(self):
+        body = self.body()
+        rows = "\n".join(line for line in body.splitlines() if not line.startswith("| 4."))
+        record = f"{self.one}-{self.base}.json"
+        body = rows.replace("\n|---|---|---|\n", "\n|---|---|---|\n"
+                            f"| 4. full local checks (record {record}) | skip | |\n")
+        self.set_body(body)
+        self.verdict(self.cli(), 0, "queue: PASS")
+        self.set_body(body.replace(record, f"{self.two}-{self.base}.json"))
+        self.verdict(self.cli(), 1, "run the full checks or name their record")
+
+    def test_preflight_reads_the_current_writer_with_a_newer_harness(self):
+        old_base = self.base
+        self.base = self.make([old_base], {"scripts/safe_push.py": "# Newer harness.\n"})
+        self.snapshot["main"]["sha"] = self.base
+        blob = self.git("rev-parse", f"{self.base}:scripts/safe_push.py").strip()
+        for number, head in ((1, self.one), (2, self.two)):
+            block = queue.safe_push.preflight_block(head, old_base, {
+                "full": True, "harness_sha": self.base, "time": "20 October 2026",
+                "harness": f"origin/main's `scripts/safe_push.py` (blob `{blob[:12]}`)",
+                "steps": [("4", name, "ok", 1.0)
+                          for name, _ in (*queue.safe_push.CHECKS, *queue.safe_push.NEGATIVE)],
+            })
+            self.set_body(queue.PREFLIGHT.sub(block, self.body(number)), number)
+        first = self.merge(self.base, self.one, 1)
+        self.verdict(self.cli(head=self.merge(first, self.two, 2)), 0, "queue: PASS")
+
+    def test_preflight_hidden_verdict_or_table_does_not_count(self):
+        original = self.body()
+        for body in (
+            original.replace("Verdict: PASS.", "<!-- Verdict: PASS. -->"),
+            original.replace("| Step | Outcome | Seconds |", "```\n| Step | Outcome | Seconds |")
+                    .replace("<!-- safe_push:preflight end -->", "```\n<!-- safe_push:preflight end -->"),
+        ):
+            with self.subTest(body=body):
+                self.set_body(body)
+                self.verdict(self.cli(), 1, "pre-flight:")
 
     def test_train_body_evidence_and_declaration_refuse(self):
         original = self.body()
@@ -401,9 +520,20 @@ class QueueTests(unittest.TestCase):
         head = self.make([self.base], changes)
         self.nodes().clear()
         self.pr(3, head, "revert/failed-group",
-                "\n".join(f"Reverts: {sha}" for sha in reverted) + "\n",
+                "Failed run: 71\n" + "\n".join(f"Reverts: {sha}" for sha in reverted) + "\n",
                 ["auto-revert"], {"login": BOT, "type": "Bot"})
+        self.failed_run(old_base, self.base)
         return self.merge(self.base, head, 3), old_base
+
+    def failed_run(self, before, after):
+        self.snapshot["runs"] = {"71": {
+            "id": 71, "path": ".github/workflows/post-merge.yml", "event": "push",
+            "head_branch": "main", "conclusion": "failure", "head_sha": after,
+        }}
+        self.snapshot["pushes"] = [[{
+            "ref": "refs/heads/main", "activity_type": "push", "before": before, "after": after,
+        }]]
+        self.snapshot["queue_merges"] = [[]]
 
     def test_exact_auto_revert_passes(self):
         head, _ = self.revert_group()
@@ -439,8 +569,92 @@ class QueueTests(unittest.TestCase):
         for sha, message in ((old_base, "must be a merge before its base"),
                              (self.two, "must be a distinct merge on main")):
             with self.subTest(sha=sha):
-                self.set_body(f"Reverts: {sha}\n", 3)
+                self.set_body(f"Failed run: 71\nReverts: {sha}\n", 3)
                 self.verdict(self.cli(head=head), 1, message)
+
+    def test_auto_revert_requires_one_visible_failed_run(self):
+        head, _ = self.revert_group()
+        original = self.body(3)
+        for replacement in ("", "Failed run: 71\nFailed run: 71", "Failed run: invalid",
+                            "<!-- Failed run: 71 -->", "```\nFailed run: 71\n```"):
+            with self.subTest(replacement=replacement):
+                self.set_body(original.replace("Failed run: 71", replacement), 3)
+                self.verdict(self.cli(head=head), 1, "exactly one Failed run line")
+
+    def test_auto_revert_requires_a_failed_main_post_merge_push(self):
+        head, _ = self.revert_group()
+        run = self.snapshot["runs"]["71"]
+        for key, value in (("path", ".github/workflows/ci.yml"), ("event", "pull_request"),
+                           ("head_branch", "train/one"), ("conclusion", "success")):
+            with self.subTest(key=key):
+                original = run[key]
+                run[key] = value
+                self.verdict(self.cli(head=head), 1, "failed post-merge push on main")
+                run[key] = original
+
+    def test_auto_revert_reads_later_activity_pages_and_queue_merges(self):
+        head, _ = self.revert_group()
+        activity = self.snapshot["pushes"][0][0]
+        self.snapshot["pushes"] = [[], [activity]]
+        self.verdict(self.cli(head=head), 0, "queue: PASS")
+        self.snapshot["pushes"] = [[]]
+        self.snapshot["queue_merges"] = [[], [{**activity, "activity_type": "merge_queue_merge"}]]
+        self.verdict(self.cli(head=head), 0, "queue: PASS")
+
+    def test_auto_revert_missing_ambiguous_or_malformed_activity_refuses(self):
+        head, _ = self.revert_group()
+        original = self.snapshot["pushes"]
+        activity = original[0][0]
+        for pages, code, message in (
+            ([[]], 1, "push is missing or ambiguous"),
+            ([[activity, {**activity, "before": self.two}]], 1, "push is missing or ambiguous"),
+            ([{}], 2, "could not read a main activity page"),
+            ([[{**activity, "before": "invalid"}]], 2, "could not read main push activity"),
+            ([[{**activity, "ref": "refs/heads/other"}]], 2, "could not read main push activity"),
+        ):
+            with self.subTest(pages=pages):
+                self.snapshot["pushes"] = pages
+                self.verdict(self.cli(head=head), code, message)
+
+    def test_auto_revert_missing_run_or_activity_never_uses_network(self):
+        head, _ = self.revert_group()
+        original = copy.deepcopy(self.snapshot)
+        for kind in ("runs", "pushes", "queue_merges"):
+            with self.subTest(kind=kind):
+                self.snapshot = {key: value for key, value in original.items() if key != kind}
+                self.verdict(self.cli(head=head), 2, f"fixture lacks {kind}")
+
+    def test_auto_revert_cannot_omit_a_failed_push_merge(self):
+        head, _ = self.revert_group(merges=2)
+        self.set_body(self.body(3).replace(f"Reverts: {self.first}\n", ""), 3)
+        self.verdict(self.cli(head=head), 1, "do not equal the failed push's merges")
+
+    def test_auto_revert_cannot_reverse_an_unrelated_historical_merge(self):
+        head, _ = self.revert_group()
+        # The run failed only on the next push; the exact earlier reversal is unrelated.
+        self.snapshot["main"]["sha"] = self.head
+        self.failed_run(self.first, self.head)
+        self.verdict(self.cli(head=head), 1, "do not equal the failed push's merges")
+
+    def test_auto_revert_requires_the_failed_push_on_main(self):
+        head, _ = self.revert_group()
+        self.failed_run(self.base, self.two)
+        self.verdict(self.cli(head=head), 1, "range is not on main's first-parent chain")
+
+    def test_activity_boundary_requests_all_pages_for_both_types(self):
+        with patch.dict(os.environ, {"GH_TOKEN": "fixture-token"}), \
+                patch.object(queue.subprocess, "run", return_value=subprocess.CompletedProcess(
+                    [], 0, "[[], []]", "")) as call:
+            api = queue.GitHub("owner/repository", None)
+            for kind, activity in (("pushes", "push"), ("queue_merges", "merge_queue_merge")):
+                self.assertEqual(api.read(kind), [[], []])
+                args = call.call_args.args[0]
+                self.assertIn("--paginate", args)
+                self.assertIn("--slurp", args)
+                self.assertIn(f"activity_type={activity}", args[-1])
+                self.assertIn("ref=refs/heads/main", args[-1])
+            api.read("runs", 71)
+            self.assertEqual(call.call_args.args[0][-1], "repos/owner/repository/actions/runs/71")
 
     def test_unreadable_github_never_passes(self):
         self.fixture.write_text("{unreadable", encoding="utf-8")
@@ -502,6 +716,101 @@ class QueueTests(unittest.TestCase):
                      "gaps: python3 -I scripts/test_another.py",
                      "gaps: python3 scripts/test_safe_push.py",
                      "another test ran", "safe push test ran")
+
+    def test_gaps_runs_a_changed_script_test_without_its_production_script(self):
+        for path, command in (("scripts/test_another.py", "python3 -I"),
+                              ("scripts/test_safe_push.py", "python3")):
+            with self.subTest(path=path):
+                one = self.train(1, {path: "raise SystemExit(7)\n"}, new=f"- check: {path}")
+                first = self.merge(self.base, one, 1)
+                self.verdict(self.cli("--gaps", head=self.merge(first, self.two, 2)), 1,
+                             f"gaps: {command} {path} failed (exit 7)")
+
+    def test_gaps_does_not_require_a_deleted_test(self):
+        one = self.train(1, {TEST: None}, new=f"- check: {TEST}")
+        first = self.merge(self.base, one, 1)
+        output = self.verdict(self.cli("--gaps", head=self.merge(first, self.two, 2)), 0,
+                              "queue: PASS")
+        self.assertNotIn(f"gaps: python3 -I {TEST}", output)
+
+    def test_exact_auto_revert_selects_nothing_for_deleted_check_and_tests(self):
+        old_base = self.base
+        changes = {
+            "scripts/introduced.py": "print('new check')\n",
+            "scripts/test_introduced.py": "raise SystemExit(7)\n",
+            "tests/test_introduced.py": "raise SystemExit(7)\n",
+        }
+        one = self.train(1, changes, new="\n".join(f"- check: {p}" for p in changes))
+        self.base = self.merge(old_base, one, 1)
+        self.snapshot["main"]["sha"] = self.base
+        head = self.make([self.base], {path: None for path in changes})
+        self.nodes().clear()
+        self.pr(3, head, "revert/introduced-tests",
+                f"Failed run: 71\nReverts: {self.base}\n", ["auto-revert"],
+                {"login": BOT, "type": "Bot"})
+        self.failed_run(old_base, self.base)
+        output = self.verdict(self.cli("--gaps", head=self.merge(self.base, head, 3)), 0,
+                              "queue: PASS")
+        self.assertNotIn("gaps: python3", output)
+
+    def test_deleted_script_selects_no_surviving_counterpart_test(self):
+        one = self.train(1, {CHECK: None}, new=f"- check: {CHECK}")
+        self.checkout(one)
+        self.assertEqual(queue.gap_commands(self.repo, {CHECK}, {CHECK}), [])
+
+    def queue_job(self, head, base):
+        """Execute the workflow's extraction and invocation with local fixture objects."""
+        workflow = (SCRIPTS.parent / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        step = workflow.split(
+            "      - name: Check the queue's integrity and the gaps of what is new\n", 1)[1]
+        script = textwrap.dedent(step.split("        run: |\n", 1)[1])
+        self.checkout(head)
+        runner = self.root / "runner"
+        runner.mkdir()
+        env = dict(os.environ, GROUP_HEAD=head, GROUP_BASE=base,
+                   GITHUB_EVENT_NAME="merge_group", RUNNER_TEMP=str(runner),
+                   REPOSITORY="owner/repository")
+        return subprocess.run(["bash", "-e", "-o", "pipefail", "-c", script], cwd=self.repo,
+                              env=env, capture_output=True, text=True)
+
+    def test_queue_job_executes_the_base_judge_with_all_its_scripts(self):
+        script = (
+            "import sys\nfrom pathlib import Path\n"
+            "sys.path.insert(0, str(Path(__file__).resolve().parent))\n"
+            "import safe_push, check_train\nfrom helpers.sample import VALUE\n"
+            "assert safe_push.VALUE == check_train.VALUE == VALUE == 'base'\n"
+            "print('base judge ran')\n"
+        )
+        base = self.make([self.base], {
+            "scripts/check_queue.py": script, "scripts/safe_push.py": "VALUE = 'base'\n",
+            "scripts/check_train.py": "VALUE = 'base'\n",
+            "scripts/helpers/sample.py": "VALUE = 'base'\n",
+        })
+        head = self.make([base], {
+            path: "raise SystemExit('group judge ran')\n" for path in (
+                "scripts/check_queue.py", "scripts/safe_push.py", "scripts/check_train.py",
+                "scripts/helpers/sample.py")
+        })
+        output = self.verdict(self.queue_job(head, base), 0, "base judge ran")
+        self.assertEqual(output.count("base judge ran"), 2)
+        self.assertNotIn("group judge ran", output)
+
+    def test_queue_job_refuses_when_only_the_group_has_a_judge(self):
+        head = self.make([self.base], {"scripts/check_queue.py": "print('group judge ran')\n"})
+        output = self.verdict(self.queue_job(head, self.base), 2, "base has no queue judge")
+        self.assertNotIn("group judge ran", output)
+
+    def test_real_judge_imports_its_own_dependencies_with_a_hostile_checkout(self):
+        judge = self.root / "judge"
+        shutil.copytree(SCRIPTS, judge, ignore=shutil.ignore_patterns("__pycache__"))
+        self.checkout(self.head)
+        for name in ("check_queue.py", "check_train.py", "safe_push.py", "heath.py"):
+            (self.repo / "scripts" / name).write_text("raise SystemExit('hostile script')\n",
+                                                     encoding="utf-8")
+        result = subprocess.run([sys.executable, "-I", str(judge / "check_queue.py"),
+                                 "--tree", str(self.repo)], cwd=self.repo,
+                                capture_output=True, text=True)
+        self.verdict(result, 0, "queue: PASS")
 
     def test_gaps_failing_test_refuses(self):
         one = self.train(1, {TEST: "raise SystemExit(7)\n"}, new=f"- check: {TEST}")

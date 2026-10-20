@@ -12,21 +12,26 @@ check_style.py, in the check job on the same merge group.
 
 GitHub reads use gh api and gh api graphql, with GH_TOKEN inherited and never
 printed. --github-json replaces that boundary completely: an object with
-pull_requests (REST pulls responses keyed by number), queue (the GraphQL response)
-and main (the REST commits/main response). Queue entries include pageInfo so a
-truncated answer cannot pass. The subject's pull request number and the queue's
+pull_requests and runs (REST responses keyed by number), queue (the GraphQL response),
+main (the REST commits/main response), and pushes and queue_merges (lists of REST
+activity pages, as returned by gh api --paginate --slurp). Queue entries include
+pageInfo so a truncated answer cannot pass. The subject's number and the queue's
 headRefOid must agree. A different queue merge subject is accepted only when its
 second parent uniquely identifies a queue entry; no subject fallback is allowed
 for the already merged prefix.
 
-Reversing T with merge-base T.head merges the group with T's original base. This
-is T's diff reverse-applied by a three-way merge, without context-only false
-alarms from a patch. Generated files are excluded; added decisions lines must
-remain a subsequence. An automatic revert instead requires an exact git revert
-tree and the Bot login set by trusted CI in STOICHEIA_REVERT_BOT.
+Reversing T with merge-base T.head merges the group with T's original base.
+A clean reverse merge alone does not prove preservation: a complete cancellation
+also merges cleanly. Reapplying T must reproduce the group on every non-exempt
+path. Generated files are excluded; added decisions lines must remain a
+subsequence. An automatic revert instead requires an exact git revert tree,
+the failed post-merge run's push range and the configured STOICHEIA_REVERT_BOT.
 
 safe_push records abbreviated harness blobs. They must resolve unambiguously to
-the full blob at the pre-flight's recorded base, an ancestor of the group base.
+the full blob at the pre-flight's harness commit, an ancestor of the group base.
+Older blocks without a harness field use their recorded base as that commit.
+The summary and steps must report passing full checks or name their saved record.
+These body fields are declarations, not authenticated attestations.
 ACCEPTANCE_VERDICTS names the acceptance job's JSON for proposition gap reports.
 Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, git.
 """
@@ -48,7 +53,13 @@ from pathlib import Path
 sys.dont_write_bytecode = True
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import safe_push
-from check_train import members_table, declared_new, derive_new, undeclared, body_problems
+import check_train
+from check_train import declared_new, derive_new
+
+# Isolated invocation and this directory supply the judge's complete script imports.
+for module in (safe_push, check_train):
+    if Path(module.__file__).resolve().parent != Path(__file__).resolve().parent:
+        raise ImportError("queue judge dependencies must come from its own directory")
 
 OID = re.compile(r"[0-9a-f]{40}")
 SLUG = re.compile(r"[A-Za-z0-9][A-Za-z0-9-]*/[A-Za-z0-9_.-]+")
@@ -56,6 +67,11 @@ SUBJECT = re.compile(r"Merge pull request #([1-9][0-9]*) from \S+")
 MONTHS = ("January", "February", "March", "April", "May", "June", "July",
           "August", "September", "October", "November", "December")
 GENERATED = (*safe_push.GENERATED, "book/", safe_push.DECISIONS)
+PREFLIGHT = re.compile(
+    r"(?ms)^<!-- safe_push:preflight begin sha=([0-9a-f]{40}) base=([0-9a-f]{40})"
+    r"(?: harness=([0-9a-f]{40}))? -->[ \t\r]*$"
+    r"(?:(?!<!-- safe_push:preflight begin).)*?"
+    r"^<!-- safe_push:preflight end -->[ \t\r]*$")
 
 
 class Refused(Exception):
@@ -75,7 +91,7 @@ class GitHub:
         if self.fixture is not None:
             try:
                 value = self.fixture[kind]
-                return value[str(number)] if kind == "pull_requests" else value
+                return value[str(number)] if kind in ("pull_requests", "runs") else value
             except (KeyError, TypeError):
                 raise ValueError(f"GitHub fixture lacks {kind}") from None
         if not os.environ.get("GH_TOKEN"):
@@ -90,8 +106,17 @@ class GitHub:
             )
             command = ["gh", "api", "graphql", "-f", f"query={query}",
                        "-f", f"owner={owner}", "-f", f"name={name}"]
+        elif kind in ("pushes", "queue_merges"):
+            activity = "push" if kind == "pushes" else "merge_queue_merge"
+            endpoint = (f"repos/{self.repo}/activity?ref=refs/heads/main"
+                        f"&activity_type={activity}&per_page=100")
+            command = ["gh", "api", "--method", "GET", "--paginate", "--slurp", endpoint]
         else:
-            endpoint = "commits/main" if kind == "main" else f"pulls/{number}"
+            endpoints = {"main": "commits/main", "pull_requests": f"pulls/{number}",
+                         "runs": f"actions/runs/{number}"}
+            if kind not in endpoints:
+                raise ValueError("GitHub: unknown read")
+            endpoint = endpoints[kind]
             command = ["gh", "api", "--method", "GET", f"repos/{self.repo}/{endpoint}"]
         try:
             result = subprocess.run(command, capture_output=True, text=True, timeout=60)
@@ -258,17 +283,54 @@ def chain(repo: Path, base: str, head: str, api: GitHub) -> list[dict]:
     return entries
 
 
+def preflight_steps(inner: str, head: str, base: str) -> None:
+    """Read a passing verdict and complete full-check rows, or their named record."""
+    visible = safe_push.visible(inner)
+    verdicts = [line.strip().strip("*") for line in visible.splitlines()
+                if re.match(r"(?:\*\*)?(?:Pre-flight )?Verdict:", line.strip(), re.I)]
+    if len(verdicts) != 1 or not re.fullmatch(
+            r"(?:Pre-flight )?Verdict: (?:\*\*)?PASS(?:\*\*)?\.?", verdicts[0], re.I):
+        raise Refused("pre-flight: summary must give one passing verdict")
+    lines = [line.strip() for line in visible.splitlines() if line.strip().startswith("|")]
+    if any(not line.endswith("|") for line in lines):
+        raise Refused("pre-flight: malformed steps table row")
+    rows = [[cell.strip().strip("`*") for cell in line[1:-1].split("|")] for line in lines]
+    if len(rows) < 3 or rows[0] != ["Step", "Outcome", "Seconds"] \
+            or len(rows[1]) != 3 \
+            or not all(re.fullmatch(r":?-{3,}:?", cell) for cell in rows[1]):
+        raise Refused("pre-flight: missing or malformed steps table")
+    steps = []
+    for row in rows[2:]:
+        if len(row) != 3 or row[1].casefold() not in {"ok", "pass", "fail", "skip", "note"} \
+                or not re.fullmatch(r"(?:[0-9]+(?:\.[0-9]+)?)?", row[2]):
+            raise Refused("pre-flight: malformed steps table row")
+        if row[1].casefold() == "fail":
+            raise Refused("pre-flight: steps table contains a FAIL row")
+        steps.append((row[0], row[1].casefold()))
+    if len({name for name, _ in steps}) != len(steps):
+        raise Refused("pre-flight: duplicate steps table row")
+    expected = {f"4. {name}" for name, _ in (*safe_push.CHECKS, *safe_push.NEGATIVE)}
+    passed = {name for name, outcome in steps if outcome in {"ok", "pass"}}
+    complete = any({name + suffix for name in expected} <= passed
+                   for suffix in ("", " (the commit's checks)"))
+    record = f"{head}-{base}.json"
+    reused = any(name.startswith("4. full local checks") and "record" in name
+                 and record in name and outcome in {"ok", "pass", "skip"}
+                 for name, outcome in steps)
+    if not complete and not reused:
+        raise Refused("pre-flight: steps must run the full checks or name their record")
+
+
 def preflight(repo: Path, base: str, pr: dict) -> None:
     """Require one visible pre-flight with the exact head and recorded harness."""
     body = pr["body"]
-    blocks = list(safe_push.BLOCK.finditer(body))
+    blocks = list(PREFLIGHT.finditer(body))
     if len(blocks) != 1 or body.count("<!-- safe_push:preflight begin") != 1 \
             or body.count("<!-- safe_push:preflight end") != 1:
         raise Refused("pre-flight: missing or malformed block")
     block = blocks[0]
-    checked, against = block.groups()
-    if not checked or not OID.fullmatch(checked) or not against or not OID.fullmatch(against):
-        raise Refused("pre-flight: malformed head or base")
+    checked, against, harness_commit = block.groups()
+    harness_commit = harness_commit or against
     if checked != pr["head"]:
         raise Refused("pre-flight: sha differs from the pull request head")
     sentinel = "Queue preflight visibility witness."
@@ -278,6 +340,9 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
     commit(repo, against)
     if not ancestor(repo, against, base) or not ancestor(repo, against, checked):
         raise Refused("pre-flight: recorded base is not an ancestor of the head and group base")
+    commit(repo, harness_commit)
+    if not ancestor(repo, harness_commit, base):
+        raise Refused("pre-flight: harness commit is not an ancestor of the group base")
     inner = "\n".join(block.group().splitlines()[1:-1])
     harness = re.findall(
         r"origin/main's `scripts/safe_push\.py` \(blob `([0-9a-f]{12,40})`\)",
@@ -285,37 +350,38 @@ def preflight(repo: Path, base: str, pr: dict) -> None:
     if len(harness) != 1 or "full checks skipped" in inner:
         raise Refused("pre-flight: missing origin/main harness or full checks skipped")
     actual = oid(safe_push.git(repo, "rev-parse",
-                              f"{against}:scripts/safe_push.py").strip(), "base harness")
+                              f"{harness_commit}:scripts/safe_push.py").strip(), "harness blob")
+    if safe_push.git(repo, "cat-file", "-t", actual).strip() != "blob":
+        raise Refused("pre-flight: the recorded harness is not a blob")
     candidates = safe_push.git(repo, "rev-parse", f"--disambiguate={harness[0]}").split()
     if candidates != [actual]:
-        raise Refused("pre-flight: harness blob is not the recorded base's safe_push.py")
+        raise Refused("pre-flight: harness blob is not the recorded harness commit's safe_push.py")
+    preflight_steps(inner, checked, against)
     if pr["ref"].startswith("train/"):
-        problems = body_problems(body)
-        if problems:
-            raise Refused("; ".join(problems))
-        declared = declared_new(body)
-        problems = undeclared(derive_new(repo, merge_base(repo, base, checked), checked),
-                              declared)
-        for row in members_table(body):
-            member = commit(repo, row["head"])
-            if row["no_mistakes"].startswith("passed at "):
-                evidence = row["no_mistakes"].split()[2]
-                if not member.startswith(evidence):
-                    problems.append("Members: /no-mistakes names another head")
-            mb = merge_base(repo, base, member)
-            protected = any(safe_push.is_protected(path)
-                            for _, path in safe_push.changed_files(repo, mb, member))
-            if protected and row["security_review"].casefold().startswith("not required"):
-                problems.append("Members: /security-review says Not required for protected paths")
+        try:
+            problems = check_train.check_train(repo, base=against, sha=checked, body=body)
+        except ValueError:
+            problems = check_train.body_problems(body)
+            if problems:
+                raise Refused("; ".join(problems)) from None
+            raise
         if problems:
             raise Refused("; ".join(problems))
 
 
 def intact(repo: Path, base: str, head: str, pr: dict) -> None:
-    """Check reverse application and preserve added decisions lines in their order."""
+    """Require reversal then reapplication to preserve the non-exempt group tree."""
     mb = merge_base(repo, pr["head"], base)
-    _, conflicts = automatic(repo, head, mb, pr["head"])
-    lost = [path for path in conflicts if not safe_push.under(path, GENERATED)]
+    reversed_tree, conflicts = automatic(repo, head, mb, pr["head"])
+    # merge-tree takes commits for its sides. This object has no ref or checkout.
+    reversed_commit = oid(safe_push.git(
+        repo, "-c", "user.name=Queue integrity", "-c", "user.email=queue@example.invalid",
+        "commit-tree", reversed_tree, "-m", "Queue reverse application").strip(),
+        "reverse application commit")
+    reapplied, forward_conflicts = automatic(repo, reversed_commit, pr["head"], mb)
+    changed = {path for _, path in safe_push.changed_files(repo, head, reapplied)}
+    lost = [path for path in set(conflicts) | set(forward_conflicts) | changed
+            if not safe_push.under(path, GENERATED)]
     if lost:
         raise Refused(f"not overwriting: #{pr['number']} changed lines were overwritten: "
                       + ", ".join(sorted(lost)))
@@ -355,11 +421,48 @@ def revert_checkout(repo: Path, start: str):
         yield root, env, git
 
 
-def exact_revert(repo: Path, pr: dict) -> None:
-    """Allow only the configured App bot and precisely the named main merge reverts."""
+def failed_push(api: GitHub, run_id: int) -> tuple[str, str]:
+    """Find the failed main post-merge run's exact push, reading every activity page."""
+    run = api.read("runs", run_id)
+    try:
+        if type(run["id"]) is not int or run["id"] != run_id:
+            raise ValueError
+        after = oid(run["head_sha"], "failed run head")
+        if any(run[key] != value for key, value in (
+                ("path", ".github/workflows/post-merge.yml"), ("event", "push"),
+                ("head_branch", "main"), ("conclusion", "failure"))):
+            raise Refused("auto-revert: run must be a failed post-merge push on main")
+    except (KeyError, TypeError, ValueError):
+        raise ValueError("GitHub: could not read the failed run") from None
+    found = set()
+    for kind, activity_type in (("pushes", "push"), ("queue_merges", "merge_queue_merge")):
+        pages = api.read(kind)
+        if not isinstance(pages, list) or not pages:
+            raise ValueError("GitHub: could not read main activity pages")
+        for page in pages:
+            if not isinstance(page, list):
+                raise ValueError("GitHub: could not read a main activity page")
+            for activity in page:
+                try:
+                    if activity["ref"] != "refs/heads/main" \
+                            or activity["activity_type"] != activity_type:
+                        raise ValueError
+                    before = oid(activity["before"], "push before")
+                    pushed = oid(activity["after"], "push after")
+                except (KeyError, TypeError, ValueError):
+                    raise ValueError("GitHub: could not read main push activity") from None
+                if pushed == after:
+                    found.add((before, after))
+    if len(found) != 1:
+        raise Refused("auto-revert: failed run's push is missing or ambiguous in main activity")
+    return found.pop()
+
+
+def exact_revert(repo: Path, pr: dict, api: GitHub) -> None:
+    """Require the configured bot and exactly the failed run's main merge reversals."""
     expected = os.environ.get("STOICHEIA_REVERT_BOT", "")
     if not expected or not expected.endswith("[bot]") or pr["author"]["type"] != "Bot" \
-            or pr["author"]["login"] != expected or not pr["ref"].startswith("revert/") \
+            or pr["author"]["login"] != expected or not re.fullmatch(r"revert/\S+", pr["ref"]) \
             or "auto-revert" not in pr["labels"]:
         raise Refused("auto-revert: label, revert branch and configured App bot must agree")
     text = safe_push.visible(pr["body"])
@@ -367,6 +470,10 @@ def exact_revert(repo: Path, pr: dict) -> None:
     if not lines or any(not re.fullmatch(r"Reverts: [0-9a-f]{40}", line) for line in lines):
         raise Refused("auto-revert: missing or malformed Reverts lines")
     named = [line.split()[1] for line in lines]
+    runs = [line for line in text.splitlines() if line.startswith("Failed run:")]
+    if len(runs) != 1 or not re.fullmatch(r"Failed run: [1-9][0-9]*", runs[0]):
+        raise Refused("auto-revert: expected exactly one Failed run line")
+    before, after = failed_push(api, int(runs[0].split()[2]))
     main = safe_push.git(repo, "rev-list", "--first-parent", pr["main"]).splitlines()
     start = merge_base(repo, pr["head"], pr["main"])
     if len(set(named)) != len(named) or any(sha not in main for sha in named):
@@ -376,6 +483,17 @@ def exact_revert(repo: Path, pr: dict) -> None:
     for sha in named:
         if len(parents(repo, sha)) != 2 or not ancestor(repo, sha, start):
             raise Refused("auto-revert: every named commit must be a merge before its base")
+    if before not in main or after not in main or main.index(after) >= main.index(before):
+        raise Refused("auto-revert: failed push range is not on main's first-parent chain")
+    expected_merges = []
+    for sha in main[main.index(after):main.index(before)]:
+        pp = parents(repo, sha)
+        if len(pp) not in (1, 2):
+            raise Refused("auto-revert: failed push has an unexpected merge shape")
+        if len(pp) == 2:
+            expected_merges.append(sha)
+    if named != expected_merges:
+        raise Refused("auto-revert: Reverts lines do not equal the failed push's merges")
     with revert_checkout(repo, start) as (root, env, git):
         for sha in named:
             result = safe_push.run(["git", "-c", "core.hooksPath=/dev/null", "revert",
@@ -457,11 +575,14 @@ def checkout(repo: Path, head: str) -> None:
         raise Refused("checkout has source changes outside the supplied group head")
 
 
-def gap_commands(repo: Path, checks: set[str]) -> list[list[str]]:
-    """Choose each existing test once, refusing a changed test which is absent."""
+def gap_commands(repo: Path, checks: set[str], deleted: set[str] | None = None) -> list[list[str]]:
+    """Choose tests once; skip proven deletions and refuse unexplained missing tests."""
     commands = set()
+    deleted = deleted or set()
     for path in sorted(checks):
-        if re.fullmatch(r"tests/test_[^/]+\.py", path):
+        if path in deleted:
+            continue
+        if re.fullmatch(r"(?:tests|scripts)/test_[^/]+\.py", path):
             candidates = [path]
         elif path == "scripts/safe_push.py":
             candidates = ["scripts/test_safe_push.py"]
@@ -472,6 +593,8 @@ def gap_commands(repo: Path, checks: set[str]) -> list[list[str]]:
         else:
             candidates = []
         for candidate in candidates:
+            if candidate in deleted:
+                continue
             target = repo / candidate
             if not target.is_file() or target.is_symlink():
                 raise Refused(f"gaps: declared test is missing or not a regular file: {candidate}")
@@ -484,8 +607,12 @@ def gap_commands(repo: Path, checks: set[str]) -> list[list[str]]:
 def gaps(repo: Path, base: str, entries: list[dict]) -> list[str]:
     """Run focused tests and report acceptance's existing proposition verdicts."""
     checks, propositions, foundations = set(), set(), set()
+    deleted = set()
     for pr in entries:
-        changes = [derive_new(repo, merge_base(repo, base, pr["head"]), pr["head"])]
+        mb = merge_base(repo, base, pr["head"])
+        changes = [derive_new(repo, mb, pr["head"])]
+        deleted.update(path for status, path in safe_push.changed_files(repo, mb, pr["head"])
+                       if status == "D")
         if pr["ref"].startswith("train/"):
             changes.append(declared_new(pr["body"]))
         for change in changes:
@@ -510,7 +637,9 @@ def gaps(repo: Path, base: str, entries: list[dict]) -> list[str]:
         print("gaps: foundations covered by model and formal-model: "
               + ", ".join(sorted(foundations)), flush=True)
     problems = []
-    for command in gap_commands(repo, checks):
+    # An entry's deletion excuses no file restored by a later entry in the group.
+    tracked = set(safe_push.git(repo, "ls-tree", "-r", "--name-only", "-z", "HEAD").split("\0"))
+    for command in gap_commands(repo, checks, deleted - tracked):
         print("gaps: " + shlex.join(command), flush=True)
         result = safe_push.run(command, repo)
         print(result.stdout, end="", flush=True)
@@ -546,10 +675,11 @@ def main(argv=None) -> int:
             if safe_push.git(repo, "rev-parse", "--is-shallow-repository").strip() != "false":
                 raise ValueError("could not read complete history: shallow repository")
             checkout(repo, head)
-            entries = chain(repo, base, head, GitHub(args.repo, args.github_json))
+            api = GitHub(args.repo, args.github_json)
+            entries = chain(repo, base, head, api)
             for pr in entries:
                 if "auto-revert" in pr["labels"] or pr["ref"].startswith("revert/"):
-                    exact_revert(repo, pr)
+                    exact_revert(repo, pr, api)
                 else:
                     preflight(repo, base, pr)
                     intact(repo, base, head, pr)
