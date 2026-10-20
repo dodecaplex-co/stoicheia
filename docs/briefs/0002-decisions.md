@@ -1411,6 +1411,13 @@ findings:
   [`review/SCHEMA.md`](../../review/SCHEMA.md) updates its overlap examples to distinguish
   current axioms from proved rules; its fields, requirements and worked TOML examples stay
   unchanged.
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) imports the proved rules, updates its
+  exact axiom pins to follow the retired rules' proofs and labels the circular derivations;
+  [`Audit/screen.py`](../../Audit/screen.py) removes the five retired rules from its list
+  of circle axioms and explains why I.7 is no longer an independent overlap.
+  [`model/Model/Audit.lean`](../../model/Model/Audit.lean) changes only comments to explain
+  the 79-law assembly and retention of the eight individual audits, with every guard and
+  axiom pin unchanged.
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
   the measured counts of III.1 and its porism (55 tacit rules each) and new pins that III.1,
   III.1 Por., III.2 and II.14 rest on none of the eight. The formal model's generated
