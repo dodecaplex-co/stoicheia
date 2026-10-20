@@ -14,7 +14,8 @@ records current; CI runs it on every push.
    statement of III.1's porism makes III.1's review record stale; `Centre`, no
    longer among the opaque primitives (as if it had been made a `def`), is caught;
    Circle 2 added to III.3's axioms, and Circle 3 to I.15's porism or II.1's general
-   companion, are each refused by the entry's name; and
+   companion, are each refused by the entry's name; Circle 3 renamed in the axiom lock
+   (restored after) and in the copy alike is caught as missing from the lock; and
    placement among III.26's shared steps is caught, while III.24, given it too, is not
    blamed.
 4. A changed Lean file makes its review record stale (I.1).
@@ -189,6 +190,25 @@ def circle_dependencies() -> None:
         expect_failure(f"{rule} in {ref}'s axioms", with_facts(change),
                        f"{ref}: rests on {axiom} ({rule}), forbidden for every entry",
                        unwanted=(f"{ref.split()[0]}: rests on {axiom}",) if " " in ref else ())
+
+
+def circle_renamed() -> None:
+    """Circle 3 renamed in the lock and in a copy of facts.json alike: the two still agree,
+    and no review record names the rule, so only the missing name shows that the check no
+    longer refuses it."""
+    old, new = "Tacit.outside_of_between", "Tacit.Circle.outside_of_between"
+    rel = "Certificate/axioms.lock"
+    saved = replace_once(rel, f'"{old}" =', f'"{new}" =')
+
+    def change(facts):
+        for table in ("axiom_types", "axiom_modules"):
+            facts[table][new] = facts[table].pop(old)
+    try:
+        expect_failure("Circle 3 renamed in the lock and facts.json", with_facts(change),
+                       f"{old} (Circle 3): not an axiom in {rel}",
+                       unwanted=("an assumption not in", "no longer an axiom"))
+    finally:
+        (ROOT / rel).write_text(saved)
 
 
 def placement_called() -> None:
@@ -608,6 +628,7 @@ def main() -> int:
     stale_statement()
     primitive_not_opaque()
     circle_dependencies()
+    circle_renamed()
     placement_called()
     stale_lean()
     undeclared_run()
