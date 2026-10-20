@@ -386,8 +386,9 @@ directory is used because its `Superposition/` subdirectory is absent on main; t
 includes all four pure sources when present, as well as other foundation sources.
 
 Lake's directory inputs hash selected contents, not their path captions. The same build
-file therefore gives Check a second dependency: on every Lake invocation it walks the two
-directories and the model package entries that the source audit reads, records files,
+file therefore gives Check a second dependency: whenever Check, including a module built
+directly, is requested, it walks the two directories and the model package entries that
+the source audit reads, records files,
 directories, symlinks and other entries by their exact repository-relative spellings,
 sorts those records and hashes them into the build trace. This path fingerprint sits beside,
 and does not replace, the content dependencies. A rename within the selected set or a change

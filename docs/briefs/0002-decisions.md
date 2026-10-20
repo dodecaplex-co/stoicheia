@@ -2471,8 +2471,9 @@ findings:
   inputs rerun the audit; a fresh CI build did not repair the incremental-build contract.
 
   `model/lakefile.lean` carries the same package, dependencies, libraries, build prerequisite
-  and content inputs as the replaced TOML file. Its `sourceListings` target runs on every
-  Lake invocation and deterministically hashes the sorted entry kinds and exact
+  and content inputs as the replaced TOML file. Its `sourceListings` target runs whenever
+  Check, including a module built directly, is requested and deterministically hashes the
+  sorted entry kinds and exact
   repository-relative spellings from the model and foundations listings the source audit
   inspects. Check depends on that trace beside the existing content traces. It includes
   directories, non-source files, symlinks and other entries, and works while
