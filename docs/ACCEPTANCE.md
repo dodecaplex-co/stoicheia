@@ -68,9 +68,9 @@ CI's `acceptance` job runs on pull request events and is skipped on pushes. It f
 the whole history (`fetch-depth: 0`) for the records' commits. Until the consolidation
 release, `ACCEPTANCE_GATE` is `ratchet`: the comparison holds each pull request to the
 items that pass on main, with the staging exception below. **A pass may not turn into a
-fail.** The [report committed on main](reports/acceptance-books-I-III.md) records 303
-failing items at `39ae65c2`; the comparison checks individual verdicts afresh on each run.
-The checker's tests and the builds must also pass, and a checker that cannot run or
+fail.** The [report committed on main](reports/acceptance-books-I-III.md) records failures
+at the revision it names; CI recomputes the individual verdicts for comparison on each
+run. The checker's tests and the builds must also pass, and a checker that cannot run or
 verdicts that cannot be compared fail the job. In three steps:
 
 1. After its comparison tests, the builds of `Elements` and `Audit`, and the computation
@@ -84,9 +84,10 @@ verdicts that cannot be compared fail the job. In three steps:
    `Certificate/axioms.lock`, `tests/certificate_expectations.json`,
    `tests/model/lock.sha256`, `tests/model/laws.toml`, `tests/model/MODEL.md` and
    `tests/model/results/` ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests), section 10,
-   step 4). The formal model's `model/` directory is not copied. An updated definition or
-   expected count must not make unchanged main fail and so hide a pull request's failure.
-   A stricter check, which lands in a pull request of its own before the content it judges
+   the pre-flight's step 4, "The full checks"). The formal model's `model/` directory is
+   not copied. An updated definition or expected count must not make unchanged main fail
+   and so hide a pull request's failure. A stricter check, which lands in a pull request
+   of its own before the content it judges
    ([WORKFLOW](WORKFLOW.md#landing-work-pull-requests), section 10), judges both revisions.
    An item it fails on main is reported but does not hold the pull request back.
    Main's run is `--quick`: the kernel replay and the model tests (E1 and E4) are recorded
@@ -113,9 +114,13 @@ Since 20 October 2026, `acceptance` and `formal-model` are required checks in ma
 ruleset, alongside `check`, `model` and `negative`. The local `REQUIRED_CHECKS` in
 `scripts/safe_push.py` still names only those last three. Its check judgement refuses
 any reported failure, cancellation or pending run, but does not itself reject a skipped
-or missing `acceptance` or `formal-model` when those three pass. GitHub enforces the
-ruleset when merging. The pre-flight leaves `acceptance` to CI, since the job builds main
-beside the pull request, as it leaves `formal-model` to CI
+or missing `acceptance` or `formal-model` when those three pass. GitHub uses the ruleset
+when merging, but requiring `acceptance` does not by itself prove that the pull request's
+checklist ran: the workflow also runs on pushes, where that job is conditionally skipped,
+and GitHub accepts a skipped job even when it is required
+([GitHub documentation](https://docs.github.com/en/pull-requests/reference/status-checks)).
+The pre-flight leaves `acceptance` to CI, since the job builds main beside the pull request,
+as it leaves `formal-model` to CI
 ([WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision), section 8).
 
 ## For each proposition

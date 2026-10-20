@@ -315,19 +315,23 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cac
                                        # CI's `formal-model` job: the formal model, with Mathlib
 python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the comparison tests
 # After lake build, lake build Audit and Facts.lean, the checklist run:
-python3 scripts/check_acceptance.py --output "$RUNNER_TEMP/acceptance/report.md" --json "$RUNNER_TEMP/acceptance/verdicts.json"
+python3 scripts/check_acceptance.py --output "${RUNNER_TEMP:-/tmp}/acceptance/report.md" --json "${RUNNER_TEMP:-/tmp}/acceptance/verdicts.json"
 ```
+
+`RUNNER_TEMP` supplies GitHub Actions' temporary directory; the fallback writes under
+`/tmp` when the command is run locally.
 
 The `acceptance` job runs on pull request events and is skipped on pushes. It checks
 CI's checked-out revision against the [acceptance checklist](ACCEPTANCE.md) and keeps
 the reports it produces in the `acceptance` artifact. With `ACCEPTANCE_GATE: ratchet`,
 it allows the checklist's exit 1 and checks main as well, with the pull request's own
-checker code and main's own values pinned to the edition (section 10, step 4).
-Main's run is `--quick`, leaving E1 and E4 as `not run`. The comparison then fails when
-an item that passes on main does not pass on the pull request. P10 and E6 turning into
-`fail` are listed and not held, since a statement is staged before its proof (section 2);
-a pass turning into `not run` or going missing still fails. A failed test or build, a
-checker exit of 2 or more, or unreadable or incompatible verdicts also fails the job.
+checker code and main's own values pinned to the edition
+([section 10](#landing-work-pull-requests), the pre-flight's step 4, "The full checks").
+Main's run is `--quick`, leaving E1 and E4 as `not run`. The comparison then fails when an
+item that passes on main does not pass on the pull request. P10 and E6 turning into `fail`
+are listed and not held, since a statement is staged before its proof (section 2); a pass
+turning into `not run` or going missing still fails. A failed test or build, a checker exit
+of 2 or more, or unreadable or incompatible verdicts also fails the job.
 The consolidation release's pull request sets `ACCEPTANCE_GATE: full`, which skips main
 and the comparison and fails for any failing item or check not run, including P10 and E6.
 Any other value fails before the checklist runs
@@ -343,8 +347,13 @@ run of `check`, `model` and `negative`, the three names still in its `REQUIRED_C
 its local check judgement does not reject a skipped or missing `formal-model` or
 `acceptance` when those three pass and no other check fails, is cancelled or is still
 running. Since 20 October 2026, main's ruleset requires all five checks, including
-`formal-model` and `acceptance`, and GitHub enforces it when merging
-(section 10, ["Landing work: pull requests"](#landing-work-pull-requests)).
+`formal-model` and `acceptance`. GitHub uses the ruleset when merging, but requiring
+`acceptance` does not by itself prove that the pull request's checklist ran: the workflow
+also runs on pushes, where that job is conditionally skipped, and GitHub accepts a skipped
+job even when it is required
+([GitHub documentation](https://docs.github.com/en/pull-requests/reference/status-checks)).
+The ruleset is described again in
+[section 10, "Landing work: pull requests"](#landing-work-pull-requests).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
