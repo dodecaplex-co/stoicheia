@@ -37,7 +37,9 @@ noncomputable def primitives : Superposition.Interpretation where
   ang := ang
   area := area
 
-namespace Tacit
+end Elements
+
+namespace Elements.Tacit
 
 /-- **Superposition.** A hypothetical placement of a triangle on a given ray and
 side permits a restricted derivation of metric equalities about the figure already
@@ -45,6 +47,4 @@ given. The derivation introduces no further objects, cites each geometric law it
 uses, and exports no symbol of the placement. -/
 axiom superposition : Superposition.Rule primitives
 
-end Tacit
-
-end Elements
+end Elements.Tacit
