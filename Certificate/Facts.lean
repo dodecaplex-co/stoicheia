@@ -577,12 +577,22 @@ run_cmd do
           pure s!" := {← Elab.Command.liftTermElabM <| printExpr v}" else pure ""
       | none => pure ""
     words := words.push (nameStr w, Json.str s!"{kind} : {type}{value}")
+  /- Proved tacit rules keep their names when they leave the axiom lock. Record what
+     Lean finds beneath each, so the policy check can still refuse a forbidden rule. -/
+  let mut provedRules : Array (String × Json) := #[]
+  for (n, ci) in env.constants.toList do
+    unless isLocal env n && (`Elements.Tacit).isPrefixOf n do continue
+    if let .thmInfo _ := ci then
+      let axs := euclidOnly (← collectAxioms n)
+      provedRules := provedRules.push
+        (nameStr n, toJson ((axs.map nameStr).qsort (· < ·)))
   let out := Json.mkObj [("lean_version", Json.str Lean.versionString),
     ("propositions", Json.arr entries),
     ("axiom_modules", Json.mkObj (axiomModules.toList.map fun (n, m) => (n, Json.str m))),
     ("opaque", Json.arr ((opaques.map nameStr).qsort (· < ·) |>.map Json.str)),
     ("axiom_types", Json.mkObj axiomTypes.toList),
-    ("vocabulary", Json.mkObj words.toList)]
+    ("vocabulary", Json.mkObj words.toList),
+    ("proved_rules", Json.mkObj (provedRules.qsort (·.1 < ·.1)).toList)]
   IO.FS.writeFile "facts.json" (out.pretty ++ "\n")
   let count (k : String) := (subjects.filter (·.kind == k)).size
   logInfo m!"certificate: {count "proposition"} propositions, {count "porism"} porisms and \
