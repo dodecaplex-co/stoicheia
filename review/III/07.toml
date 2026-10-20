@@ -33,6 +33,7 @@ case = "FB, FC and FG compared on one side of AD, as in Heath's figure"
 
 [review]
 stage = "exceptions"
-commit = "16243feef5f36514fd2c21c634be60443965808b"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:bef720567502d812"
+commit = "4f94369e"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+run = "R2, independent re-read at 4f94369e"
+lean = "sha256:073c88ece99418f8"
