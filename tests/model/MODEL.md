@@ -381,10 +381,10 @@ lines are different and the points are not `A`.
 
 ## The guards and the mutations
 
-Many axioms carry a guard that looks fussy: a point must be different from another, two
-lines or circles must differ, a point must be strictly inside. The mutation test drops or
-loosens 15 of them and finds a counterexample to each weakened rule. So each guard is
-doing work, and the harness can see a false rule.
+Many rules, assumed or proved, carry a guard that looks fussy: a point must be different
+from another, two lines or circles must differ, a point must be strictly inside. The
+mutation test drops or loosens 15 of them and finds a counterexample to each weakened
+rule. So each guard is doing work, and the harness can see a false rule.
 
 | Mutation | What goes wrong without the guard |
 |---|---|
