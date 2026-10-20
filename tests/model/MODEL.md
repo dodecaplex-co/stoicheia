@@ -313,8 +313,7 @@ Three different lines through one point `A` cut the plane into six angles. In ea
 the side conditions force the points other than `A` to be off the lines named, so the
 lines are different and the points are not `A`.
 
-| Axiom | Why it holds |
-|---|---|
+All three rules are now theorems, tested as derived properties.
 
 ### Circles
 
@@ -364,10 +363,10 @@ lines are different and the points are not `A`.
 
 ## The guards and the mutations
 
-Many axioms carry a guard that looks fussy: a point must be different from another, two
-lines or circles must differ, a point must be strictly inside. The mutation test drops or
-loosens 15 of them and finds a counterexample to each weakened rule. So each guard is
-doing work, and the harness can see a false rule.
+Many axioms and derived rules carry a guard that looks fussy: a point must be different
+from another, two lines or circles must differ, a point must be strictly inside. The
+mutation test drops or loosens 15 of them and finds a counterexample to each weakened
+rule. So each guard is doing work, and the harness can see a false rule.
 
 | Mutation | What goes wrong without the guard |
 |---|---|
@@ -596,5 +595,5 @@ python3 -I tests/model/run.py --ties            # the ties to the Lean alone, in
 ```
 
 Each program also runs on its own, for example `python3 -I tests/model/search.py 20000 2`
-(samples per axiom, then the seed), and `ONLY=pasch4,circles_meet` limits search.py and
+(samples per axiom, then the seed), and `ONLY=pasch2,circles_meet` limits search.py and
 hyperbolic.py to the axioms named.

@@ -240,7 +240,7 @@ what it writes.
      Postulate5 : Law.Postulate5 S
    ```
 
-   Postulate 5 stands apart from the other 78, so that a hyperbolic plane can later satisfy
+   Postulate 5 stands apart from the other 47, so that a hyperbolic plane can later satisfy
    `Neutral` and fail it; so would any rule the library declared in
    `Elements.Tacit.Euclidean`, for the plane alone, of which there is none. The file's header
    records the sha256 of the lock it was written from, with a table of the 37 words and what
