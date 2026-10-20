@@ -1953,4 +1953,7 @@ findings:
   a release on that label comes in its own pull request. WORKFLOW, section 10 (steps 8
   and 10, and the landing section's list of required checks, which the owner extended on
   20 October to `formal-model` and `acceptance`), and PROGRAM, section 2, now say so.
-  No check changes here.
+  GitHub's ruleset requires all five checks. `scripts/safe_push.py` still tests for the
+  presence of a passing run only for `check`, `model` and `negative`, while refusing any
+  reported failure or pending check; aligning that local test is a separate follow-up
+  requiring its own protected-check change. No check changes here.

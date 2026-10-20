@@ -315,8 +315,12 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cac
 
 `scripts/safe_push.py` runs the first two groups on the head commit of every pull request
 (section 10), so a change to them is made there too, and in the CI workflow. It leaves the
-`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files; its merge
-gate still waits for that job, like every other ([model/README.md](../model/README.md#the-ci-job)).
+`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files
+([model/README.md](../model/README.md#the-ci-job)). GitHub requires that job and
+`acceptance`, as well as `check`, `model` and `negative`. The merge gate in
+`scripts/safe_push.py` refuses any reported failure or pending check, but its own presence
+test still requires a passing run only for `check`, `model` and `negative`; aligning it
+with the five-check ruleset needs a separate protected-check change.
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -636,8 +640,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    they run again too. The body's summary is written afresh when the full checks ran
    again or when it is not of this head and origin/main, and the other parts safe_push
    wrote whenever they are out of date. It merges only when those pass; CI on that head
-   is green (`check`, `model` and `negative` pass, and nothing fails or is still
-   running); no box marked **Required** in its checklist is unticked, nor one marked
+   is green: GitHub's ruleset requires `check`, `model`, `negative`, `formal-model` and
+   `acceptance`, while `scripts/safe_push.py` currently tests for a reported passing run
+   of the first three and refuses every reported failure or running check; no box marked
+   **Required** in its checklist is unticked, nor one marked
    **Required if protected** when a protected path changes, and none of the template's
    required boxes is missing (origin/main's template, or the head's while origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's

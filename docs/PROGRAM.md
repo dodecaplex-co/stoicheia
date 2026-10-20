@@ -43,12 +43,17 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 5. **Records.** A review record for every proposition, keyed to the commit it read; the
    gap and overlap catalogues; the book's introduction; further reading from the verified
    list only.
-6. **Acceptance.** The checklist passes in CI, the independent audit agrees, a reader goes
-   through the book start to finish.
-7. **Release.** A read for stale content on the candidate, its findings fixed by their
-   tier (defects never on main, facts generated, reader prose true at release, working
-   records dated); no open issue labelled `blocks-release`; release notes drafted from the
-   generated summaries, approved by the owner, then the tag
+6. **Acceptance.** The five required checks (`check`, `model`, `negative`, `formal-model`
+   and `acceptance`) pass in CI, the independent audit agrees, and a reader goes through
+   the book start to finish.
+7. **Release.** An independent reviewer reads the candidate for stale content and assigns
+   every finding to one of four tiers: **Tier 0, defects,** never on main; **Tier 1,
+   generated facts,** regenerated rather than written by hand; **Tier 2, reader prose,**
+   true at release; and **Tier 3, working records,** dated rather than quietly rewritten.
+   The release waits until every Tier 0 to 2 finding is fixed in the release change, every
+   Tier 3 finding has a dated status note, no open issue is labelled `blocks-release`, and
+   the wiki is refreshed and reasonably correct as of its stated date. Release notes are
+   drafted from the generated summaries and approved by the owner before the tag
    ([WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, steps 8 and 10).
 
 ## 3. Status
@@ -179,7 +184,11 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   Mathlib's construction of the real numbers. It does not show that a formal statement
   captures what Euclid meant. The independence of Postulate 5 still rests on the
   numerical hyperbolic check in [tests/model](../tests/model/), until a hyperbolic model
-  is built. Making `formal-model` a required check of the ruleset is the owner's call.
+  is built. GitHub now requires all five checks: `check`, `model`, `negative`,
+  `formal-model` and `acceptance`. The merge gate in `scripts/safe_push.py` still tests
+  for the presence of a passing run only for the first three, while refusing any reported
+  failure or pending check; aligning that local test needs a separate protected-check
+  change.
 - **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
   axioms' statements or the entries' statements reach: 61, the 37 of the axioms and 24
   that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
