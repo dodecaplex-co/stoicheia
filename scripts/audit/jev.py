@@ -733,7 +733,12 @@ def cmd_score(args) -> int:
                 if l.strip()]
     except (OSError, ValueError) as e:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
-    for r in rows:
+    answered = []
+    agreements: dict[int, bool] = {}
+    for n, r in enumerate(rows, 1):
+        if not isinstance(r, dict):
+            raise Failure(f"{Path(args.file).name}:{n} is not a JSON object; score reads "
+                          "only lines that `run` wrote")
         answers = [(r, "")]
         if ("error" not in r and "choice" in r and r.get("order_check") is True
                 and "reversed" not in r):
@@ -753,9 +758,41 @@ def cmd_score(args) -> int:
             if "noul" in answer and not (_number(answer["noul"]) and 0 <= answer["noul"] <= 1):
                 raise Failure(f"{r.get('id')}: its {asking}noul is not a number from 0 to 1; "
                               "score reads only lines that `run` wrote")
-    answered = [r for r in rows if "error" not in r and ("choice" in r or "noul" in r)]
-    labelled = [r for r in answered if "agrees" in r]
-    agree = [r for r in labelled if r["agrees"]]
+        if "error" in r:
+            continue
+        has_choice, has_noul = "choice" in r, "noul" in r
+        if has_choice == has_noul:
+            raise Failure(f"{r.get('id')}: its answer is not exactly one choice or noul; score "
+                          "reads only lines that `run` wrote")
+        if has_choice and not isinstance(r["choice"], str):
+            raise Failure(f"{r.get('id')}: its choice is not a string; score reads only lines "
+                          "that `run` wrote")
+        answered.append(r)
+        if "expected" not in r:
+            if "agrees" in r:
+                raise Failure(f"{r.get('id')}: its agreement has no expected answer; score "
+                              "reads only lines that `run` wrote")
+            continue
+        expected = r["expected"]
+        if has_choice:
+            if not isinstance(expected, str):
+                raise Failure(f"{r.get('id')}: its expected choice is not a string; score reads "
+                              "only lines that `run` wrote")
+            computed = r["choice"] == expected
+        else:
+            if not isinstance(expected, bool):
+                raise Failure(f"{r.get('id')}: its expected noul is not boolean; score reads "
+                              "only lines that `run` wrote")
+            computed = (r["noul"] >= 0.5) == expected
+        if not isinstance(r.get("agrees"), bool):
+            raise Failure(f"{r.get('id')}: its agreement is not boolean; score reads only lines "
+                          "that `run` wrote")
+        if r["agrees"] != computed:
+            raise Failure(f"{r.get('id')}: its agreement does not match its answer and expected "
+                          "answer; score reads only lines that `run` wrote")
+        agreements[id(r)] = computed
+    labelled = [r for r in answered if id(r) in agreements]
+    agree = [r for r in labelled if agreements[id(r)]]
     runs = {(r.get("input_sha256"), r.get("input_rows")) for r in rows}
     total = None
     if len(runs) == 1:
@@ -773,7 +810,7 @@ def cmd_score(args) -> int:
     for name, group in (("seeded", [r for r in labelled if r.get("seeded")]),
                         ("controls", [r for r in labelled if not r.get("seeded")])):
         if group:
-            print(f"  {name}: {sum(r['agrees'] for r in group)} of {len(group)} as expected")
+            print(f"  {name}: {sum(agreements[id(r)] for r in group)} of {len(group)} as expected")
     rate = len(agree) / len(labelled) if labelled else 0.0
     if labelled:
         print(f"  agreement: {len(agree)} of {len(labelled)} ({rate:.0%})")
@@ -781,7 +818,7 @@ def cmd_score(args) -> int:
     adjudicate = []
     for r in answered:
         why = []
-        if r.get("agrees") is False:
+        if id(r) in agreements and not agreements[id(r)]:
             why.append(f"chose {r.get('choice', r.get('noul'))!r}, expected {r.get('expected')!r}")
         answers = [(r, "")]
         if "reversed" in r:
@@ -1103,6 +1140,89 @@ def cmd_self_test(args) -> int:
         listed = {l.split(":")[0].strip() for l in out.splitlines() if "no confidence given" in l}
         check(code == 0 and {null_line["id"], absent_line["id"]} <= listed,
               "a choice with no confidence goes to adjudication", out + err)
+
+        agreement_base = json.loads(first[0])
+        agreement_base["input_rows"] = 1
+        agreement_base["expected"] = agreement_base["choice"]
+        agreement_base["agrees"] = True
+        agreement_base["confidence"] = 1
+        agreement_base["reversed"]["confidence"] = 1
+        agreement_base["reversed"]["consistent"] = True
+        other_choice = next(choice for choice in agreement_base["probabilities"]
+                            if choice != agreement_base["choice"])
+        forged_choice = dict(agreement_base, id="forged-choice", choice=other_choice)
+        missing_choice_agreement = dict(agreement_base, id="missing-choice-agreement")
+        del missing_choice_agreement["agrees"]
+        malformed_choice_agreement = dict(agreement_base, id="malformed-choice-agreement",
+                                          agrees="true")
+        malformed_choice_expected = dict(agreement_base, id="malformed-choice-expected",
+                                         expected=True)
+        unexpected_agreement = dict(agreement_base, id="unexpected-agreement")
+        del unexpected_agreement["expected"]
+        two_answers = dict(agreement_base, id="two-answers", noul=0.9)
+        no_answer = dict(agreement_base, id="no-answer")
+        del no_answer["choice"]
+        no_answer.pop("reversed")
+        forged_noul = {"id": "forged-noul", "noul": 0.9, "expected": False,
+                       "agrees": True, "input_sha256": "self-test-agreement",
+                       "input_rows": 1}
+        missing_noul_agreement = dict(forged_noul, id="missing-noul-agreement",
+                                      expected=True)
+        del missing_noul_agreement["agrees"]
+        malformed_noul_agreement = dict(forged_noul, id="malformed-noul-agreement",
+                                        expected=True, agrees=1)
+        malformed_noul_expected = dict(forged_noul, id="malformed-noul-expected",
+                                       expected="true")
+        agreement_failures = (
+            (forged_choice, "agreement does not match"),
+            (missing_choice_agreement, "agreement is not boolean"),
+            (malformed_choice_agreement, "agreement is not boolean"),
+            (malformed_choice_expected, "expected choice is not a string"),
+            (unexpected_agreement, "agreement has no expected answer"),
+            (two_answers, "answer is not exactly one choice or noul"),
+            (no_answer, "answer is not exactly one choice or noul"),
+            (forged_noul, "agreement does not match"),
+            (missing_noul_agreement, "agreement is not boolean"),
+            (malformed_noul_agreement, "agreement is not boolean"),
+            (malformed_noul_expected, "expected noul is not boolean"),
+        )
+        for row, message in agreement_failures:
+            agreement_file = tmp / "bad-agreement.jsonl"
+            agreement_file.write_text(json.dumps(row) + "\n")
+            for extra in ((), ("--bar", "1")):
+                code, out, err = run("score", str(agreement_file), *extra)
+                check(code == 1 and out == "" and message in err and "Traceback" not in err,
+                      f"score refuses {row['id']}" + (" under a bar" if extra else ""),
+                      out + err)
+
+        valid_choice = dict(agreement_base, id="valid-choice")
+        valid_choice.pop("reversed")
+        valid_choice["order_check"] = False
+        valid_choice_disagreement = dict(valid_choice, id="valid-choice-disagreement",
+                                         choice=other_choice, agrees=False)
+        valid_noul = {"id": "valid-noul", "noul": 0.75, "expected": True,
+                      "agrees": True, "input_sha256": "self-test-agreement",
+                      "input_rows": 1}
+        valid_noul_disagreement = dict(valid_noul, id="valid-noul-disagreement",
+                                       expected=False, agrees=False)
+        for row in (valid_choice, valid_noul):
+            agreement_file = tmp / "valid-agreement.jsonl"
+            agreement_file.write_text(json.dumps(row) + "\n")
+            for extra in ((), ("--bar", "1")):
+                code, out, err = run("score", str(agreement_file), *extra)
+                check(code == 0 and "agreement: 1 of 1" in out
+                      and (not extra or "at or above the bar of 100%" in out),
+                      f"score recomputes {row['id']}"
+                      + (" under a bar" if extra else ""), out + err)
+        for row in (valid_choice_disagreement, valid_noul_disagreement):
+            agreement_file = tmp / "valid-disagreement.jsonl"
+            agreement_file.write_text(json.dumps(row) + "\n")
+            code, out, err = run("score", str(agreement_file))
+            check(code == 0 and "agreement: 0 of 1" in out and "for adjudication: 1" in out,
+                  f"score recomputes {row['id']}", out + err)
+            code, out, err = run("score", str(agreement_file), "--bar", "1")
+            check(code == 1 and "below the bar of 100%" in out,
+                  f"score applies a bar to {row['id']}", out + err)
 
         confidence_cases = []
         for name, reversed_confidence in (("reversed-low", 0.49),
