@@ -1552,3 +1552,60 @@ findings:
 ||||||| bd3b72a1
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
+
+- **The overlap screen unfolds every defined word, tries each statement bare, and has its
+  cases.** Argon's second review of the Book III release (section 1.3) found that
+  [`Audit/screen.py`](../../Audit/screen.py), the mechanical screen behind the
+  [overlap catalogue](../reports/overlaps.md), unfolded only the phrases `SameSideOf` to
+  `LinesMeet`, so that a statement written with `Triangle`, `Collinear`, `circumference` or
+  `standing` was searched only in part
+  ([#78](https://github.com/jackChallis/stoicheia/issues/78)); we thank Argon for reading
+  the screen so closely. The screen now begins with a pass that lists every definition of
+  the edition that a statement or a rule reaches, through the bodies of other definitions,
+  and stops if one is not provided for. It unfolds 35 words: the phrases, `Triangle` and
+  `Collinear` among them, and the words for "any number" that stage 2 brought in
+  (`InOrder`, `segments`, `endOf`, `triples`, `Magnitude.sum`, and the areas of a figure
+  given with its triangles), those defined by cases or by recursion through the equations
+  Lean proves for them. It gives the magnitudes Lean chooses (`circumference`, `standing`,
+  `rect`) and the order "not greater" to `grind` by what their definitions say and nothing
+  more, a lemma each, proved from Lean's choice alone, and leaves the kinds of magnitude,
+  with their sum, order and zero, as the axioms state them. Every file of tries first proves
+  thirteen goals that `grind` closes only with the definitions unfolded, each checked to
+  fail without them, so a screen that has stopped unfolding stops. Its docstring says what
+  stays unsearched: that two descriptions choose the same magnitude when they hold of the
+  same things; that every point of a circle measures a circumference alike, which is III.21;
+  and what a figure fitted from triangles (`Fitted`) or given with them (`Rectilineal`,
+  `Apart`) holds by its formation, since `grind` does not reason by induction or open a
+  structure's fields of itself. Each attempt with rules is now two tries, `grind` as it
+  chooses and `grind` forward, each with the budget the two used to share; a try that runs
+  out of time is tried again with four times as much, and one that runs out again, or that
+  stops on any other error, is listed as not searched to the end. A try leaves out the rules
+  `grind` refuses, finding nothing in them to match: the twelve that only say that a point,
+  a straight line or a circle exists, and, forward, fourteen more with no hypothesis it can
+  start from. Given one, `grind` refused the whole list, so that until now more than a
+  quarter of the attempts, the families Postulates and Constructions and every pair with
+  either among them, were made with no search at all. A bare try, with no rule, comes first
+  for each statement, so that a statement that holds by its definitions alone is listed
+  apart and not counted as a rule's. Each job runs on one thread. The screen names the
+  statements it closes; fails if III.2, III.5 or III.6, the rows it has always found, stops
+  closing by a rule; and stops if a Lean process ends before its file does, or an error
+  falls in a file's preamble. It reads a try's messages from its `set_option` line, so that
+  one reported there is not counted against the try before it, and it reads an error
+  whether or not Lean names its kind after the word, as Lean 4.35 does for some
+  (`error(lean.unknownIdentifier): …`), so that such an error in the pass over the rules
+  stops the screen, and a try that stops on one is listed.
+  [`tests/test_screen.py`](../../tests/test_screen.py) (new) puts the screen's own functions
+  to small cases with no Lean: the attempts and tries it makes, its reading of Lean's logs,
+  of the rules refused and of the definitions reached, and the known rows. The protected
+  file it adds is `tests/test_screen.py`. `Audit/screen.py` is not a protected path today;
+  it is named here too, as [#96](https://github.com/jackChallis/stoicheia/issues/96) may
+  make `Audit/` one. CI runs neither the screen, which takes about an hour and a half of
+  processor time, nor its cases yet: whoever changes the screen runs both. Run on the
+  statements of `89c5da4`, the 99 propositions, the three porisms and the 19 companions, its
+  48,400 attempts made 90,629 tries and closed III.2, III.5 and III.6, each by a rule, and
+  nothing else; no statement closed bare. Seven tries ran out of time even with four times
+  the budget, all of them III.34 from Postulate 4, alone or with Postulate 5 and at most one
+  more family. III.34 asks for three points on its circle, and the rules among those that
+  put a point on a circle that has none need a straight line, which III.34 does not give
+  and none of those rules draws. The catalogue's account of the screen, and III.30 among
+  its near misses, follow on a text branch of their own, after this one.
