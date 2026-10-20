@@ -74,14 +74,15 @@ audit traffic:
         --out docs/reports/acceptance/jev/calibration-<model>-<date>.jsonl
     python3 scripts/audit/jev.py score docs/reports/acceptance/jev/calibration-<model>-<date>.jsonl
 
-`score` lists every answer that disagrees with its expected answer, has a confidence under
-`--low` (0.5 by default, the threshold under which the example on TypeSafe's Confidence
-page sends an answer to a person; a noul's confidence is |2p - 1|, as that page gives it)
-or no confidence at all, changes when its options are reversed, or comes from another model
-than the one pinned: these go to the adjudicator. It also counts how many of the input's
-rows are answered. With `--bar`, it exits 1 when agreement falls under the bar, when any
-request failed, or when any row of the input has no answer: a bar is met only when every
-row of the input is answered.
+`score` lists every answer that disagrees with its expected answer, has, in either asking,
+a confidence under `--low` (0.5 by default, the threshold under which the example on
+TypeSafe's Confidence page sends an answer to a person; a noul's confidence is |2p - 1|,
+as that page gives it) or none, changes when its options are reversed, or comes from
+another model than the one pinned: these go to the adjudicator. A line whose reversed asking
+is not an answer is refused. It also counts
+how many of the input's rows are answered. With `--bar`, it exits 1 when agreement falls
+under the bar, when any request failed, or when any row of the input has no answer: a bar
+is met only when every row of the input is answered.
 
 The self-test runs every command above against a stand-in for the service on this machine,
 with a key it makes up, and checks among other things that the key appears in no output,
@@ -733,6 +734,10 @@ def cmd_score(args) -> int:
     except (OSError, ValueError) as e:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
     answered = [r for r in rows if "error" not in r and ("choice" in r or "noul" in r)]
+    for r in answered:
+        if "reversed" in r and not isinstance(r["reversed"], dict):
+            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
+                          "only lines that `run` wrote")
     labelled = [r for r in answered if "agrees" in r]
     agree = [r for r in labelled if r["agrees"]]
     runs = {(r.get("input_sha256"), r.get("input_rows")) for r in rows}
@@ -762,14 +767,18 @@ def cmd_score(args) -> int:
         why = []
         if r.get("agrees") is False:
             why.append(f"chose {r.get('choice', r.get('noul'))!r}, expected {r.get('expected')!r}")
-        confidence = r.get("confidence")
-        if confidence is None and isinstance(r.get("noul"), (int, float)):
-            confidence = abs(2 * r["noul"] - 1)
-        if confidence is None:
-            why.append("no confidence given")
-        elif confidence < args.low:
-            why.append(f"confidence {confidence:.2f}")
-        if r.get("reversed", {}).get("consistent") is False:
+        answers = [(r, "")]
+        if isinstance(r.get("reversed"), dict):
+            answers.append((r["reversed"], " with the options reversed"))
+        for answer, order in answers:
+            confidence = answer.get("confidence")
+            if confidence is None and isinstance(answer.get("noul"), (int, float)):
+                confidence = abs(2 * answer["noul"] - 1)
+            if confidence is None:
+                why.append("no confidence given" + order)
+            elif confidence < args.low:
+                why.append(f"confidence {confidence:.2f}" + order)
+        if isinstance(r.get("reversed"), dict) and r["reversed"].get("consistent") is False:
             why.append(f"chose {r['reversed']['choice']!r} with the options reversed")
         if r.get("model_differs"):
             why.append(f"answered by {r.get('model')}, not {r.get('model_requested')}")
@@ -1077,6 +1086,66 @@ def cmd_self_test(args) -> int:
         check(code == 0 and {null_line["id"], absent_line["id"]} <= listed,
               "a choice with no confidence goes to adjudication", out + err)
 
+        confidence_cases = []
+        for name, reversed_confidence in (("reversed-low", 0.49),
+                                          ("reversed-null", None),
+                                          ("boundary", 0.5)):
+            row = json.loads(first[0])
+            row["id"] = name
+            row["expected"] = row["choice"]
+            row["agrees"] = True
+            row["confidence"] = 0.5
+            row["reversed"]["confidence"] = reversed_confidence
+            row["reversed"]["consistent"] = True
+            confidence_cases.append(row)
+        reversed_missing = json.loads(first[0])
+        reversed_missing["id"] = "reversed-missing"
+        reversed_missing["expected"] = reversed_missing["choice"]
+        reversed_missing["agrees"] = True
+        reversed_missing["confidence"] = 0.5
+        reversed_missing["reversed"]["consistent"] = True
+        del reversed_missing["reversed"]["confidence"]
+        confidence_cases.append(reversed_missing)
+        single_order = json.loads(first[0])
+        single_order["id"] = "single-order-low"
+        single_order["expected"] = single_order["choice"]
+        single_order["agrees"] = True
+        single_order["confidence"] = 0.49
+        single_order.pop("reversed")
+        single_order["order_check"] = False
+        confidence_cases.append(single_order)
+        confidence_cases.extend([
+            {"id": "noul-low", "noul": 0.74},
+            {"id": "noul-boundary", "noul": 0.75},
+        ])
+        confidence_file = tmp / "confidence.jsonl"
+        confidence_file.write_text("".join(json.dumps(row) + "\n" for row in confidence_cases))
+        code, out, err = run("score", str(confidence_file))
+        case_ids = {row["id"] for row in confidence_cases}
+        listed = {row_id for row_id in case_ids if f"  {row_id}:" in out}
+        check(code == 0 and listed == {"reversed-low", "reversed-null", "reversed-missing",
+                                      "single-order-low", "noul-low"}
+              and "confidence 0.49 with the options reversed" in out
+              and "no confidence given with the options reversed" in out,
+              "score checks confidence in each asking and keeps the threshold exclusive",
+              out + err)
+        for broken in (None, [], "reversed", 1, True):
+            valid = json.loads(first[1])
+            valid["id"] = "valid-before-reversed-broken"
+            row = json.loads(first[0])
+            row["id"] = "reversed-broken"
+            row["expected"] = row["choice"]
+            row["agrees"] = True
+            row["confidence"] = 0.9
+            row["reversed"] = broken
+            broken_file = tmp / "reversed-broken.jsonl"
+            broken_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
+            for extra in ((), ("--bar", "0")):
+                code, out, err = run("score", str(broken_file), *extra)
+                check(code == 1 and out == "" and "reversed asking is not an answer" in err,
+                      f"score refuses a reversed asking of {broken!r}"
+                      + (" under a bar" if extra else ""), out + err)
+
         def one(name: str, row: dict) -> Path:
             p = tmp / name
             p.write_text(json.dumps(row) + "\n")
@@ -1218,8 +1287,8 @@ def main(argv: list[str] | None = None) -> int:
                         "or a row of the input has no answer: a bar is met only when every "
                         "row of the input is answered")
     p.add_argument("--low", type=float, default=LOW,
-                   help=f"a confidence under this goes to adjudication, as does an answer "
-                        f"with none (default {LOW})")
+                   help=f"a confidence under this in either asking goes to adjudication, "
+                        f"as does an asking with none (default {LOW})")
     p.set_defaults(func=cmd_score)
     p = sub.add_parser("self-test", help="every command, against a stand-in on this machine")
     p.set_defaults(func=cmd_self_test)
