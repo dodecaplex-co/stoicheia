@@ -9,8 +9,9 @@ with the phrase definitions (SameSideOf, CirclesMeet, ...) unfolded. A failed at
 falls back to `sorry`, and only the attempts that close without it are reported.
 
 It is a screen, not a proof search. `grind` instantiates rules among the terms already in
-a goal; it does not draw a new circle or lay down a triangle, so a proposition that needs
-one (I.7 from Circle 4, I.23 from superposition) is found by reading, not here.
+a goal; it does not draw a new circle, so an overlap that needs one (I.7 from Circle 4)
+is found by reading, not here. The former superposition shortcuts for I.2, I.3 and I.23
+are retired: the restricted rule returns no placement witnesses.
 
 The statements are facts.json's entries. At commit d040117 that is the 99 propositions,
 399 attempts each, 39,501 in all; with the three porisms as well, 40,698. Either way the
