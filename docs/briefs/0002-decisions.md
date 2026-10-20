@@ -2433,9 +2433,10 @@ findings:
   translation and proof. The tooling pull requests must land first. Landing the
   replacement also requires /no-mistakes and an independent Codex read of the model lane.
   The read at `cdcf3b9e`
-  found no weakening and one older relative-path defect in `model/Check/Generator.lean`,
-  fixed on `tooling/superposition-model-check`. That evidence is tied to the revision
-  read; the final integrated revision still needs its validation.
+  found no weakening and one older relative-path defect in `model/Check/Generator.lean`;
+  the read at `0085b443` found that an escaped module name passed the Model import audit.
+  Both are fixed on `tooling/superposition-model-check`. That evidence is tied to the
+  revisions read; the revision that lands still needs its own read and validation.
 
   Common Notion 4 is marked at its actual steps by the pure proposition
   `Elements.Superposition.Coincidence`, with its sole constructor
@@ -2458,7 +2459,8 @@ findings:
   `tests/certificate_expectations.json` keeps all 24 existing expectations and adds
   I.8's inclusion of C.N. 4 beside I.4's existing expectation. The fixture tests cover
   derivations that reach transformers without a step. I.4's and I.8's review records
-  remain stale after the marker change and require their reviewers' fresh stamps.
+  were read again by an independent reader after the marker change and stamped at
+  `0085b443`.
 
   The protected files changed on the replacement branch relative to `origin/main`,
   already named in the preceding entry, are `Audit.lean`, `Audit/Overlaps.lean`,

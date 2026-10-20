@@ -57,7 +57,11 @@ claim "a restricted inference in System E's style". The exact approval is record
 [the decisions entry](0002-decisions.md#20-october-2026). The tooling pull requests land
 first; landing also requires /no-mistakes and an independent Codex read of the model
 lane. The read at `cdcf3b9e` found no weakening and one older relative-path defect in
-`model/Check/Generator.lean`, fixed on `tooling/superposition-model-check`.
+`model/Check/Generator.lean`. A second read, at `0085b443`, found that an escaped module
+name such as `Model.«..».Check.Original` passed the Model import audit. Both are fixed on
+`tooling/superposition-model-check`, which also checks the compiled import graph and
+refuses a source whose extension is a case variant of `.lean`. The read owed before
+landing is of the revision that lands.
 
 ## The problem
 
@@ -566,7 +570,8 @@ I.22's constructed points and I.8's angle equality distinct, and explains the in
 rule through I.8 and I.20. I.44's comment describes its existing construction of the
 parallelogram. The six records for I.2, I.3, I.4, I.8, I.23 and I.44 have been read and
 stamped independently; all retain full coverage and Euclid's route. The marker change
-subsequently made I.4's and I.8's records stale; they await a fresh review and stamp.
+made I.4's and I.8's records stale; an independent reader read both again and stamped
+them at `0085b443`.
 The pages were regenerated from the integrated sources on 20 October.
 
 ## Evidence before landing
@@ -697,8 +702,8 @@ model lane. The remaining integration and validation work is:
   every audit pin against that revision.
 - **Finish validation and review on that revision.** Complete WORKFLOW, section 8, including
   the kernel replay, style tests, clean regeneration, negative suite, numerical model and
-  formal-model build, and run /no-mistakes. The independent Codex read of the model lane
-  at `cdcf3b9e` found no weakening and the older relative-path defect described above.
+  formal-model build, and run /no-mistakes. The independent Codex reads of the model lane
+  at `cdcf3b9e` and `0085b443` found the defects described above, now fixed.
   Verify the fix and complete the required code and protected-path security reviews on
   the revision to land. A successful earlier lane check is not a pass on the final
   merged revision.
@@ -780,7 +785,8 @@ unconditional `model_exists`. It also distinguished uniform validity from a rest
 on how callers choose arguments, and warned that `drawsNothing` must be reviewed after
 axiom retirement. The branch now supplies the translation and model proof. The independent
 Codex read of the model lane at `cdcf3b9e` found no weakening and one older relative-path
-defect in `model/Check/Generator.lean`, fixed on `tooling/superposition-model-check`.
+defect in `model/Check/Generator.lean`; the read at `0085b443` found the escaped module
+name in the import audit. Both are fixed on `tooling/superposition-model-check`.
 That reading is evidence for its named revision; it does not replace validation of the
 final integrated revision.
 
