@@ -1192,8 +1192,7 @@ class Modern(unittest.TestCase):
                         label = f'<g font-style="{value}">{letter}</g>'
                     inside = MODERN_GOOD.replace(
                         letter, f'<g font-style="italic">{label}</g>')
-                    self.assertEqual(modern_rules(inside, "I.47"),
-                                     set() if value == "normal" else {"S25"})
+                    self.assertEqual(modern_rules(inside, "I.47"), {"S25"})
 
     def test_modern_gate_elements(self):
         for element in ("use", "image", "foreignObject", "switch", "animate", "set",
@@ -1286,16 +1285,44 @@ class Modern(unittest.TestCase):
                         root_attributes=f'{attribute}="{value}"')
                     self.assertTrue(any(attribute in m and "<svg>" in m for _, m in findings),
                                     findings)
-        for attribute, value in (("stroke", "none"), ("font-style", "normal"),
-                                 ("text-anchor", "start"), ("stroke-linejoin", "miter"),
-                                 ("markerUnits", "strokeWidth"), ("orient", "0"),
-                                 ("marker-end", "none"), ("stroke-dasharray", "none")):
+        for attribute, value in (("text-anchor", "start"),
+                                 ("stroke-dasharray", "5 4")):
             with self.subTest(attribute=attribute, value=value):
                 self.assertEqual(self.check_refused_modern(
                     root_attributes=f'{attribute}="{value}"'), [])
-        # An explicit initial fill still fails the existing palette rule.
-        self.assertTrue(any("palette" in m for _, m in self.check_refused_modern(
-            root_attributes='fill="black"')))
+        for attribute, value in (("fill", "black"), ("stroke", "none"),
+                                 ("font-style", "normal"), ("stroke-linejoin", "miter"),
+                                 ("markerUnits", "strokeWidth"), ("orient", "0"),
+                                 ("marker-end", "none"), ("stroke-dasharray", "none")):
+            with self.subTest(attribute=attribute, value=value):
+                findings = self.check_refused_modern(
+                    root_attributes=f'{attribute}="{value}"')
+                self.assertTrue(any(attribute in message for _, message in findings), findings)
+
+    def test_serialized_attribute_references_are_refused_before_xml_normalisation(self):
+        for attribute, value in (("font-family", "&#71;eorgia"),
+                                 ("font-style", "&#105;talic"),
+                                 ("text-anchor", "&#x6d;iddle")):
+            with self.subTest(attribute=attribute, value=value):
+                findings = self.check_refused_modern(
+                    root_attributes=f'{attribute}="{value}"')
+                self.assertEqual(findings, [
+                    ("S24", "unsupported character reference in a serialized attribute value")])
+        self.assertEqual(self.check_refused_modern(
+            MODERN_GOOD.replace(">c<", ">c &lt; 3<")), [])
+
+    def test_modern_title_is_unique_and_direct(self):
+        cases = (
+            MODERN_GOOD + "<title>I.47: the modern way</title>",
+            MODERN_GOOD + "<g><title>wrong</title></g>",
+            MODERN_GOOD.replace("<title>I.47: the modern way</title>",
+                                "<g><title>I.47: the modern way</title></g>"),
+        )
+        for inside in cases:
+            with self.subTest(inside=inside):
+                findings = self.check_refused_modern(inside)
+                self.assertTrue(any(rule == "S24" and "exactly one directly" in message
+                                    for rule, message in findings), findings)
 
     def test_no_paragraph_and_no_figure(self):
         self.assertIn("S24", modern_rules(MODERN_GOOD, "I.47", names=None))
@@ -1551,8 +1578,8 @@ class Modern(unittest.TestCase):
 
     def test_inline_html_and_reference_syntax_are_refused(self):
         for inline in ("e<span>x</span>ponent", "si<!-- notation -->n",
-                       '<span data-note="x">the side</span>', "[the side][x]",
-                       "[x][]", "[x]"):
+                       '<span data-note="x">the side</span>', "<?note x?>",
+                       "<!NOTE x>", "<![CDATA[x]]>", "[the side][x]", "[x][]", "[x]"):
             with self.subTest(inline=inline):
                 findings = self.check_refused_modern(paragraph=MW + "Put $b$ in " + inline + ".")
                 self.assertTrue(any(r == "S25" and "unsupported" in m for r, m in findings),
@@ -1567,9 +1594,26 @@ class Modern(unittest.TestCase):
                     self.assertTrue(any(r == "S25" and "reference definition" in m
                                         for r, m in findings), findings)
                     self.assertNotIn("S24", {r for r, _ in findings})
-        for inline in ("[the side](/reference)", "`<span>`", "`<!-- notation -->`"):
+        for definition in ("[unused]: /reference\n\n", ""):
+            text = definition + MODERN_PARAGRAPH + "\n\n[elsewhere]: /reference"
+            self.assertEqual(self.check_refused_modern(paragraph=text), [])
+        findings = self.check_refused_modern(
+            paragraph="[unused]: /reference\n" + MODERN_PARAGRAPH)
+        self.assertTrue(any(r == "S25" and "reference definition" in m
+                            for r, m in findings), findings)
+        for inline in ("[the side](/reference)", "`<span>`", "`<!-- notation -->`",
+                       "`<?note x?>`", "`<!NOTE x>`", "`<![CDATA[x]]>`",
+                       r"\<?note x?>", r"\<!NOTE x>", r"\<!\[CDATA\[x\]\]>"):
             self.assertEqual(self.check_refused_modern(paragraph=MODERN_PARAGRAPH + " " + inline),
                              [])
+
+    def test_all_repository_modern_figures_pass(self):
+        paths = sorted((style.ROOT / "figures").glob("*/*-modern.svg"))
+        self.assertEqual(len(paths), 30)
+        with patch.object(style, "fail") as fail:
+            for path in paths:
+                style.check_modern(path, style.ref_of(path))
+        self.assertEqual(fail.call_args_list, [])
 
     def test_checker_errors_are_not_input_findings(self):
         with patch.object(style, "modern_findings", side_effect=ValueError("checker defect")):

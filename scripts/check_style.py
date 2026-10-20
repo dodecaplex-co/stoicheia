@@ -927,10 +927,13 @@ HTML_BLOCKS = (
 HTML_TAG_LINE = re.compile(r"(?:<[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[A-Za-z_:][\w.:-]*"
                              r"(?:[ \t]*=[ \t]*(?:[^\s\"'=<>`]+|'[^']*'|\"[^\"]*\"))?)*"
                              r"[ \t]*/?>|</[A-Za-z][A-Za-z0-9-]*[ \t]*>)[ \t]*$")
-INLINE_HTML_TAG = re.compile(
+INLINE_HTML = re.compile(
     r"(?:<[A-Za-z][A-Za-z0-9-]*(?:\s+[A-Za-z_:][\w.:-]*"
     r"(?:\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s\"'=<>`]+))?)*\s*/?>"
-    r"|</[A-Za-z][A-Za-z0-9-]*\s*>)")
+    r"|</[A-Za-z][A-Za-z0-9-]*\s*>"
+    r"|<\?.*?\?>"
+    r"|<![A-Z].*?>"
+    r"|<!\[CDATA\[.*?\]\]>)", re.S)
 
 class InlineBlock(NamedTuple):
     text: str
@@ -1510,7 +1513,7 @@ def link_destination_ranges(text: str, *, references: bool = True,
               if backslashes_before(text, m.start()) % 2 == 0]
     if inline_html:
         found += [LinkDestination(m.start(), m.end(), m.start(), False)
-                  for m in INLINE_HTML_TAG.finditer(text)
+                  for m in INLINE_HTML.finditer(text)
                   if backslashes_before(text, m.start()) % 2 == 0]
     for match in re.finditer(r"\]", text):
         close = match.start()
@@ -3012,20 +3015,35 @@ def modern_markup_findings(text: str) -> list[str]:
     """Refuse unsupported markup before it can supply names to a modern figure."""
     blocks = markdown_blocks(text, raw_html=True).inline
     span = modern_span(text)
+    candidate = next((block for block in blocks if block.paragraph
+                      and any(line.lstrip(" \t").startswith(MODERN_WAY)
+                              for line in block.text.splitlines())), None)
     # A leading multiline reference definition can hide the paragraph from modern_span.
     # Refuse its syntax here without trying to resolve its destination.
-    if span is None and not any(
-            block.paragraph and any(line.lstrip(" \t").startswith(MODERN_WAY)
-                                    for line in block.text.splitlines())
-            for block in blocks):
+    if span is None and candidate is None:
         return []
     found = []
-    if any(REFERENCE_LABEL.match(line) for block in blocks if block.references
-           for line in block.text.splitlines()):
-        found.append("unsupported reference definition beside the modern paragraph")
     if span is None:
+        if candidate.references and any(REFERENCE_LABEL.match(line)
+                                        for line in candidate.text.splitlines()):
+            found.append("unsupported reference definition beside the modern paragraph")
         return found
     source = text[span[0]:span[1]]
+    labels = document_reference_labels(text) | {
+        reference_key(match.group(1))
+        for block in blocks if block.references
+        for line in block.text.splitlines()
+        if (match := REFERENCE_LABEL.match(line))
+    }
+    selected = next((block for block in blocks if span[0] in block.offsets), None)
+    contained_definition = bool(selected and selected.references
+                                and reference_destination_ranges(selected.text))
+    resolved_reference = any(
+        link.label < link.start and source[link.start + 1:link.start + 2] != "("
+        for link in link_destination_ranges(source, references=False,
+                                            reference_labels=labels))
+    if contained_definition or resolved_reference:
+        found.append("unsupported reference definition beside the modern paragraph")
     syntax = markdown_syntax(source, indented_code=False, inline_html=True)
     visible = blank_ranges(source, [(s.start, s.end) for s in syntax.spans])
     # Main uses no character references. Refuse their spellings, even after an escaped
@@ -3037,7 +3055,7 @@ def modern_markup_findings(text: str) -> list[str]:
     if re.search(r"\w(?:\*+|['’.][*_]+|[*_]+['’.])\w", modern_paragraph(text)):
         found.append("unsupported intraword emphasis in the modern paragraph")
     if syntax.comments or any(backslashes_before(visible, m.start()) % 2 == 0
-                              for m in INLINE_HTML_TAG.finditer(visible)):
+                              for m in INLINE_HTML.finditer(visible)):
         found.append("unsupported inline HTML tag or comment in the modern paragraph")
     # Inline links are supported; any remaining bracketed label could be a reference.
     links = link_destination_ranges(visible, references=False)
@@ -3079,18 +3097,18 @@ MODERN_ELEMENTS = {"svg", "title", "defs", "marker", "g", "rect", "line", "circl
 MODERN_NUMBERS = {"x", "y", "x1", "x2", "y1", "y2", "cx", "cy", "r", "rx", "ry",
                   "width", "height", "fill-opacity", "markerWidth", "markerHeight",
                   "refX", "refY", "font-size", "stroke-width"}
-# Exact values from those figures, plus explicit SVG initial values, never CSS-wide
-# keywords. The palette and text checks still apply after this syntax gate.
+# Exact values from those figures, never CSS-wide keywords. The palette and text checks
+# still apply after this syntax gate; omitted attributes retain their SVG defaults.
 MODERN_VALUES = {
-    "fill": EUCLID_COLOURS | {"none", "black"},
-    "stroke": {"#3b2f2f", "#8c7b62", "#a0522d", "none"},
+    "fill": EUCLID_COLOURS | {"none"},
+    "stroke": {"#3b2f2f", "#8c7b62", "#a0522d"},
     "font-family": {"Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"},
-    "font-style": {"italic", "normal"},
+    "font-style": {"italic"},
     "text-anchor": {"middle", "start"},
-    "stroke-linejoin": {"round", "miter"},
-    "markerUnits": {"userSpaceOnUse", "strokeWidth"},
-    "orient": {"auto-start-reverse", "0"},
-    "marker-end": {"url(#axis)", "url(#head)", "none"},
+    "stroke-linejoin": {"round"},
+    "markerUnits": {"userSpaceOnUse"},
+    "orient": {"auto-start-reverse"},
+    "marker-end": {"url(#axis)", "url(#head)"},
     "id": {"axis", "head"},
 }
 MODERN_ATTRIBUTES = MODERN_NUMBERS | MODERN_VALUES.keys() | {
@@ -3170,8 +3188,53 @@ def modern_path(value: str) -> bool:
     return True
 
 
-def modern_svg_findings(root) -> list[tuple[str, str]]:
+def serialized_attribute_values(source: str):
+    """The quoted attribute values of XML start tags, before XML normalisation."""
+    at = 0
+    while at < len(source):
+        start = source.find("<", at)
+        if start < 0:
+            return
+        if source.startswith("<!--", start):
+            end = source.find("-->", start + 4)
+            at = len(source) if end < 0 else end + 3
+            continue
+        if source.startswith("<![CDATA[", start):
+            end = source.find("]]>", start + 9)
+            at = len(source) if end < 0 else end + 3
+            continue
+        if source.startswith("<?", start):
+            end = source.find("?>", start + 2)
+            at = len(source) if end < 0 else end + 2
+            continue
+        if source.startswith(("</", "<!"), start):
+            end = source.find(">", start + 2)
+            at = len(source) if end < 0 else end + 1
+            continue
+        quote = None
+        end = start + 1
+        while end < len(source):
+            char = source[end]
+            if quote:
+                if char == quote:
+                    quote = None
+            elif char in "\"'":
+                quote = char
+            elif char == ">":
+                break
+            end += 1
+        tag_source = source[start:end + 1]
+        for match in re.finditer(
+                r"\s+[A-Za-z_:][\w.:-]*\s*=\s*(?P<quote>['\"])(?P<value>.*?)(?P=quote)",
+                tag_source, re.S):
+            yield match.group("value")
+        at = end + 1
+
+
+def modern_svg_findings(root, source: str | None = None) -> list[tuple[str, str]]:
     """Close the input before walk() reads any presentation attributes or text."""
+    if source is not None and any("&" in value for value in serialized_attribute_values(source)):
+        return [("S24", "unsupported character reference in a serialized attribute value")]
     # Bound the tree iteratively before any recursive helper sees it.
     pending = [(root, 0)]
     while pending:
@@ -3211,8 +3274,6 @@ def modern_svg_findings(root) -> list[tuple[str, str]]:
                 values = modern_numbers(value)
                 valid = (values is not None and (len(values) == 4 if key == "viewBox"
                                                  else all(n >= 0 for n in values)))
-                if key == "stroke-dasharray" and value == "none":
-                    valid = True
             if not valid:
                 rule = "S25" if key in {"font-size", "font-style"} else "S24"
                 what = "malformed or unsupported" if key in MODERN_ATTRIBUTES else "unsupported"
@@ -3256,9 +3317,14 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
             found.append(("S24", f"viewBox width {width}, not 400 to 440, as Euclid's figure"))
         if values[3] <= 0:
             found.append(("S24", f"viewBox height {values[3]}, not positive"))
-    title = root.find(f"{SVG}title")
-    if title is None or " ".join(text_of(title).split()) != f"{ref}: the modern way":
-        got = "no <title>" if title is None else f"title \"{text_of(title)}\""
+    titles = list(root.iter(f"{SVG}title"))
+    direct_titles = root.findall(f"{SVG}title")
+    title = direct_titles[0] if len(titles) == len(direct_titles) == 1 else None
+    if len(titles) != 1 or len(direct_titles) != 1:
+        found.append(("S24", f"{len(titles)} <title> elements, not exactly one directly "
+                      "under <svg>"))
+    elif " ".join(text_of(title).split()) != f"{ref}: the modern way":
+        got = f"title \"{text_of(title)}\""
         found.append(("S24", f"{got}, not \"{ref}: the modern way\""))
     if root.find(f".//{SVG}desc") is not None:
         found.append(("S24", "a caption (<desc>): the modern-way paragraph serves as its caption"))
@@ -3352,7 +3418,7 @@ def check_modern(path: Path, ref: str) -> None:
     if "\0" in source:
         fail("S24", path, 0, "unsupported SVG encoding: expected UTF-8")
         return
-    refused = modern_svg_findings(root)
+    refused = modern_svg_findings(root, source)
     for rule, message in refused:
         fail(rule, path, 0, message)
     if refused:
