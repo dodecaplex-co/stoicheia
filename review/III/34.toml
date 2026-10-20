@@ -16,6 +16,9 @@ kind = "helper"
 helper = "Prop16"
 note = "Euclid reads C off his figure. The Lean finds it: by III.16 the straight line BC passes within the circle, so it meets the circle again, on the centre's side of EF."
 
+[figure]
+case = "an acute given angle, with BAC the greater segment"
+
 [review]
 stage = "exceptions"
 commit = "66e9871"

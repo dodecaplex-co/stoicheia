@@ -12,6 +12,9 @@ at = "Therefore FG is not perpendicular to DE."
 kind = "grouped"
 note = "The reductio shows that the foot G of the perpendicular from F is C itself, so FC is that perpendicular, and no other straight line is left to prove."
 
+[figure]
+note = "The figure shows the impossible supposition with G distinct from C: FG is supposed perpendicular to DE, but the perpendicular in the drawn geometry is FC."
+
 [review]
 stage = "exceptions"
 commit = "dcb1767"

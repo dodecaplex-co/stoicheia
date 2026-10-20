@@ -178,7 +178,7 @@ theorem surrounds_sameSideOf (h : SameSideOf P C A B) :
 /-- **A point within a circle has a whole circle about it within the circle.** If P is not
 the centre O, the circle about P through K, where OP produced beyond P meets the
 circumference (System E, Intersections 5): a point Q within it is nearer O than K is, since
-OQ is less than OP, PQ together, and these are less than OP, PK together, which make OK.
+OQ is at most OP and PQ together, and their sum is less than OP and PK together, which make OK.
 [I. 20] -/
 theorem surrounds_inside (hP : InsideCircle P α) :
     Surrounds (fun Q => InsideCircle Q α) P := by

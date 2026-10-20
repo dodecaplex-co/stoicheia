@@ -12,6 +12,9 @@ kind = "helper"
 helper = "Prop35.cut"
 note = "Euclid's argument is written once for any straight line through E: it covers Simson's cases, where one straight line passes through the centre, and E at G, and serves for DB. The proof takes F from the rule where Euclid takes the centre without a bracket for III.1."
 
+[figure]
+case = "both straight lines through the centre E (left), and neither through F with E distinct from G and H (right)"
+
 [review]
 stage = "exceptions"
 commit = "dcb1767"

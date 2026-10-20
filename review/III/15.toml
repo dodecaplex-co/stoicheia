@@ -7,7 +7,7 @@ fingerprint = "sha256:c0f5cead6405c5bd"
 
 [route]
 kind = "euclid"
-note = "`Prop15.le_diameter` uses Euclid's triangle inequality step [I. 20] when BC does not pass through E, and treats diameters and coincident endpoints separately. `Prop15.nearer` takes two straight lines not through the centre from `Prop15`, by his argument [III. 14, I. 24], and a nearer diameter from `Prop15.le_diameter`."
+note = "`Prop15.le_diameter` uses Euclid's triangle inequality step [I. 20] when BC does not pass through E, and treats diameters and coincident endpoints separately. `Prop15.nearer` takes two straight lines not through the centre from `Prop15`, by his argument [III. 14, I. 24], and a nearer diameter from `Prop15.le_diameter`. `Prop15` and `Prop15.nearer` rest on `Tacit.exists_centre` through III.14; `Prop15.le_diameter` does not."
 
 [[passage]]
 at = "For from the centre E let EH, EK be drawn"

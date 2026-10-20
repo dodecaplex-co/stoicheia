@@ -12,7 +12,7 @@ note = "The companion takes Euclid's case, two straight lines not through the ce
 [[passage]]
 at = "For let the centre of the circle ABDC be taken"
 kind = "given"
-note = "The centre E and the feet F, G of the perpendiculars are given, since Definition III.4 measures from them; the proof still takes III.1's centre and shows that it is E. The companion is given the feet as `Foot`, the foot of the perpendicular, which is E itself for a straight line through E, so that a diameter is at no distance from the centre (Definition III.4, extended to that case)."
+note = "The centre E and the feet F, G of the perpendiculars are given, since Definition III.4 measures from them; the proof still takes III.1's centre and shows that it is E. The companion is given the feet as `Foot`, the foot of the perpendicular, which is E itself for a straight line through E, so that a diameter is at no distance from the centre (Definition III.4, extended to that case). `Prop14` and `Prop14.general` rest on `Tacit.exists_centre` through III.1."
 
 [[passage]]
 at = "Then, since a straight line EF through the centre cuts a straight line AB not through the centre"

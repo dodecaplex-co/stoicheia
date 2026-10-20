@@ -9,15 +9,15 @@ fingerprint = "sha256:5dafebad74ae3ff0"
 kind = "euclid"
 
 [[passage]]
+at = "Let A be the given point, and BCD the given circle"
+kind = "case"
+note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page. The companion returns a straight line named by A and X; its point of contact is not returned beside X (`Touches.contact` reads it off). From a point within no straight line touches (`Prop17.inside`), so not being within is the condition for a solution."
+
+[[passage]]
 at = "For let the centre E of the circle be taken"
 kind = "helper"
 helper = "Prop1.of_circle"
 note = "`Prop1.of_circle` takes two points of the circle and applies III.1's construction and correctness proof to obtain E. The proof then joins EA and takes its meeting D with BCD between E and A, before continuing Euclid's construction."
-
-[[passage]]
-at = "Let A be the given point, and BCD the given circle"
-kind = "case"
-note = "Euclid's A is outside the circle. `Prop17.general` takes A on the circle too, a case Euclid leaves out, Heath explains, because III.16's porism so directly indicates it (vol. 2, p. 44): AX drawn at right angles to the radius EA at A (I.11) touches by that porism. The construction is not on Euclid's page. The companion returns a straight line named by A and X; its point of contact is not returned beside X (`Touches.contact` reads it off). From a point within no straight line touches (`Prop17.inside`), so not being within is the condition for a solution."
 
 [figure]
 case = "A outside the circle, as in Heath's figure"

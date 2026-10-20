@@ -322,7 +322,7 @@ theorem WithinAngle.iff_angle_lt {R T : Point} (hRT : SameSideOf R T A C) :
     exact hlt
   · exact sameSideOf_of_angle_lt hRT
 
-/-- **The angle CAT holds every angle CAR beyond it.** Let R and T be on one side of the
+/-- **The angle CAR holds CAT.** Let R and T be on one side of the
 straight line AC, and R not on C's side of AT. Then R is on the ray AT, and the two angles
 have one region; or R is across AT from C, the straight line RC crosses AT at a point X of
 the ray AT within the angle CAR (System E, Intersection 1, Pasch 2), and the angle CAX lies

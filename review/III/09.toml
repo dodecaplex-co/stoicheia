@@ -11,6 +11,14 @@ kind = "euclid"
 tags = ["hypothesis-dropped"]
 note = "The rule supplies a centre, which the proof shows is D. Euclid's proof never uses that D is within, and the statement does not ask it."
 
+[[passage]]
+at = "For let AB, BC be joined and bisected at the points E, F"
+kind = "case"
+note = "If AB or BC passes through D, the Lean also bisects CA and applies the same I.8 and III.1 Por. argument to the two straight lines that miss D, using `Prop9.centre_on`. In Euclid's case ED and FD name GK and HL, so G, K, H and L need no further construction."
+
+[figure]
+case = "D off both AB and BC, as in Heath's figure"
+
 [review]
 stage = "exceptions"
 commit = "66e9871"

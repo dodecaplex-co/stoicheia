@@ -9,7 +9,7 @@ kind = "modified"
 note = "Euclid's application of one segment to the other is kept (`placement`: A on C, AB on CD, B on D); the coincidence of the circumferences is argued directly, point by point, by the angles (I.8 at each point and its image, then III.23's companion `Prop23.point`), in place of his reductio, and III.10 is not needed. The companion `Prop24.equalCircles` keeps the proof by the radii (III.20, III.22, `Prop24.isosceles`), shown on the page as the alternative."
 
 [representation]
-tags = ["segment-with-circle", "redundant-hypothesis"]
+tags = ["segment-with-circle", "angle-measure", "redundant-hypothesis"]
 note = "A segment is its circle, the ends of its base and a point naming its side (`Arc`). \"Equal\" segments are read through Common Notion 4 as segments that coincide (`Arc.Congruent`): one map puts A on C and B on D, the segment on the segment and the circumference on the circumference, keeping every distance between their points; no magnitude of a segment is defined. The main theorem says nothing of a measure. Its companions measure circumferences by the angle standing on them, taken twice, a measure with no radius in it, and the measure clause of `Prop24.equalCircles` follows from the equal angles at E and F alone; the equal bases are needed for its equal circles, as for the congruence."
 
 [[passage]]

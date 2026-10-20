@@ -651,6 +651,14 @@ III.15 through III.14; III.26 and III.27 through `Circumference.eq`, `.standing`
 porism through III.1. III.3, III.7, III.11, III.12, III.16, III.18 and III.20 do not reach
 the rule, nor do III.5, III.6 and III.19.
 
+**19 October 2026, measured dependencies after step 6.** The forecast above is superseded
+by the certificate at `17987153`: seven of the twelve named-centre propositions rest on
+`exists_centre`, III.7, III.11, III.14, III.15, III.26, III.27 and III.31. III.7 and
+III.11 reach it through `Prop2.within` and III.2; III.1's porism does not rest on it.
+The 28 main Book III propositions that rest on it are III.1, 2, 4, 7–11, 13–15, 17,
+21–24 and 26–37. This also replaces the certificate forecast under "Records, Lean files
+and pages" below; the earlier forecasts remain as history.
+
 ### Records, Lean files and pages
 
 **19 October 2026, inventory after step 6.** The counts and predictions below belong

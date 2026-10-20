@@ -23,6 +23,9 @@ at = "Similarly this can be proved to be the case even if the centre be on AC"
 kind = "grouped"
 note = "No second case is needed: III.36 is cited by its statement, which holds wherever the centre lies, and nothing else in the argument looks at AC."
 
+[figure]
+case = "F off AC, with distinct contacts B and E on opposite sides of DF"
+
 [review]
 stage = "exceptions"
 commit = "66e9871"

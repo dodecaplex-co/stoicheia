@@ -8,9 +8,17 @@ fingerprint = "sha256:84c2e52c5d72734a"
 kind = "euclid"
 
 [[passage]]
+at = "But the angle FEA was also proved right"
+kind = "case"
+note = "If B is on A's side of FE, the equal right angles put B on EA; otherwise D is on that side and the angle FED is right, so the same argument puts D on EA. Either would make BD and AC one straight line."
+
+[[passage]]
 at = "Therefore AC, BD do not bisect one another."
 kind = "grouped"
 note = "The reductio's conclusion. The Lean supposed the bisection at the start and has reached the contradiction above, which proves it."
+
+[figure]
+case = "B on A's side of FE, as in Heath's figure"
 
 [review]
 stage = "exceptions"
