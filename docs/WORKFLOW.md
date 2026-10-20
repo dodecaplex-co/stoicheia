@@ -634,11 +634,13 @@ without the rejected change.
 If it fails, the workflow takes `scripts/auto_revert.py` from the previous main, the
 push's `before` commit, but only when the post-merge run on `before` itself passed;
 otherwise it opens the issue alone and says why. It runs the script in Python's
-isolated mode, importing no code from the failed checkout. The `auto-revert` environment must allow main alone and hold
-`STOICHEIA_REVERT_APP_ID` and `STOICHEIA_REVERT_APP_KEY`. The script uses that App's
-installation token to make `revert/<after12>`, revert each merge in the push's
-first-parent chain, newest first, and open and enqueue one pull request with its head
-pinned. If main has moved on since the failed push, it reverts nothing and leaves the
+isolated mode, importing no code from the failed checkout. The `auto-revert`
+environment must allow main alone and hold `STOICHEIA_REVERT_APP_ID` and
+`STOICHEIA_REVERT_APP_KEY`. The script reverts each merge in the push's first-parent
+chain, newest first, pushes `revert/<after12>` with the job's own token, and opens and
+enqueues one pull request, its head pinned, with that App's installation token. A revert
+that changes `.github/workflows/` cannot be pushed with the job's token, so it is left
+to the coordinator, and the issue says so. If main has moved on since the failed push, it reverts nothing and leaves the
 issue, since a later push's own run then decides. A push that GitHub records as a
 plain pull request merge, rather than a push or a queue merge, is not reverted by the
 App either. The pull request carries `auto-revert`, the reverted requests' kind labels,
@@ -668,7 +670,8 @@ writes nothing to the repository's contents (the App only reads them; the revert
 own token, which lasts as long as the job, pushes the revert branch), so it makes no
 branch, tag or release; it is no ruleset's bypass actor; and it lands nothing but the
 revert above, since the queue refuses any other entry a bot wrote, queued or last
-edited. It can still open, label and edit pull requests. Reverting such a change does
+edited. It can still open, label and edit pull requests, and take entries out of the
+queue. Reverting such a change does
 not take the key back: the owner makes a new key. And the pre-flight block
 in a pull request body is evidence the coordinator's harness wrote, which anyone who can
 edit the body could imitate; the queue checks it for the head and the harness, and
@@ -690,7 +693,8 @@ train that changed `.github/workflows/` cannot be pushed by the job's token, and
 reverted by hand); add the rulesets that keep branches other than `revert/**` and tags
 to the owner; restrict the
 `auto-revert` environment to main and put the App credentials there, not in repository
-secrets; set the repository variable `STOICHEIA_REVERT_BOT` to its bot login. With the
+secrets; set the repository variable `STOICHEIA_REVERT_BOT` to its bot login as REST
+spells it, `<the App's slug>[bot]`. With the
 queue off, `--merge` follows the direct merge path below. The issue and the pause still
 apply if the App has not been set up.
 
@@ -859,9 +863,9 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    checks, Lean at elaboration) could have written, so it stands in only for the full
    checks, which CI runs as well, and only for this head and base with the running
    origin/main harness's blob, and never for a head that changes the checks (`scripts/`,
-   `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`), since CI runs a
-   head's own copies and only the pre-flight runs origin/main's on it; otherwise they
-   run again too. The body's summary is
+   `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) or any protected
+   path, since CI runs a head's own copies and its own workflow, and only the pre-flight
+   runs origin/main's on it; otherwise they run again too. The body's summary is
    written afresh when the full checks ran again or when it is not of this head and
    base, and the other parts safe_push wrote whenever they are out of date. It merges
    only when those pass; CI on that head
@@ -901,7 +905,9 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    the branch name, which go into main's merge commit, hold
    nothing the secret scan refuses; it carries a label for its kind, and
    `security-review` when a protected path changes; and it is not a draft. These gates
-   hold in both modes.
+   hold in both modes; in queue mode they are read when the pull request is queued, and
+   the queue does not read the release hold again before it merges (the owner's OK
+   before the tag still holds a release).
 
    **Queue on:** main's health is checked again at its current tip, and the head is
    enqueued with GraphQL `enqueuePullRequest`, `expectedHeadOid` pinned to the checked

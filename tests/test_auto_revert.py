@@ -375,12 +375,14 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(set(self.api.labels),
                          {"blocks-release", "main-red", "auto-revert", "tooling", "docs", "security-review"})
 
-    def test_the_app_never_asks_to_write_contents_or_workflows(self):
+    def test_a_workflow_revert_is_left_to_the_coordinator(self):
+        # The job's token cannot push a workflow change and the App writes no contents.
         self.train(path=".github/workflows/example.yml", text="name: Example\n", labels=("tooling",))
         status, output = self.run_revert()
-        self.assertEqual(status, 0, output)
-        self.assertEqual(self.api.issued_permissions, {
-            "contents": "read", "pull_requests": "write", "merge_queues": "write"})
+        self.assertEqual(status, 1, output)
+        self.assertEqual(self.pushes, [])
+        self.assertIsNone(self.api.issued_permissions)
+        self.assertIn("revert it by hand", self.body())
 
     def test_tokens_and_private_key_are_never_printed(self):
         self.train()

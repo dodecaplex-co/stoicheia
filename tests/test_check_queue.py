@@ -666,6 +666,12 @@ class QueueTests(unittest.TestCase):
         self.snapshot["pull_requests"]["3"]["head"]["ref"] = "revert/000000000000"
         self.verdict(self.cli(head=head), 1, "the branch must be revert/")
 
+    def test_auto_revert_queued_by_the_bot_passes(self):
+        # As GitHub gives it: the revert App's bot queued it, named by GraphQL without "[bot]".
+        head, _ = self.revert_group()
+        self.nodes()[0]["enqueuer"] = {"__typename": "Bot", "login": BOT.removesuffix("[bot]")}
+        self.verdict(self.cli(head=head), 0, "queue: PASS")
+
     def test_auto_revert_with_extra_change_refuses(self):
         head, _ = self.revert_group(extra=True)
         self.verdict(self.cli(head=head), 1, "not the exact revert tree (extra change)")

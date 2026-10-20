@@ -28,9 +28,9 @@ subsequence. An automatic revert instead requires an exact git revert tree,
 the failed post-merge run's push range and the configured STOICHEIA_REVERT_BOT.
 
 safe_push records abbreviated harness blobs. They must resolve unambiguously to
-the full blob at the pre-flight's harness commit, an ancestor of the group base.
+the full blob at the pre-flight's harness commit, on the group base's first-parent chain.
 Older blocks without a harness field use their recorded base as that commit.
-The summary and steps must report passing full checks or name their saved record.
+The summary and steps must report a passing verdict and every full check its harness runs.
 These body fields are declarations, not authenticated attestations.
 ACCEPTANCE_VERDICTS names the acceptance job's JSON for proposition gap reports.
 Exit 0 means pass, 1 refused, and 2 unreadable. Standard library, Python 3.11+, git.
@@ -217,8 +217,8 @@ def queue_actors(answer) -> dict[int, tuple[bool, bool]]:
         actors = {}
         for node in answer["data"]["repository"]["mergeQueue"]["entries"]["nodes"]:
             enqueuer, editor = node["enqueuer"], node["pullRequest"]["editor"]
-            for actor in (enqueuer, editor):
-                if actor is None and actor is editor:
+            for actor, may_be_none in ((enqueuer, False), (editor, True)):
+                if actor is None and may_be_none:
                     continue
                 if not isinstance(actor, dict) or not isinstance(actor["login"], str) \
                         or not actor["login"] or not isinstance(actor["__typename"], str):

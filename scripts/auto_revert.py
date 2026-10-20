@@ -4,8 +4,9 @@
 The revert job runs this file from the previous main with Python's isolated mode,
 only after that commit's latest post-merge run has concluded success.
 It imports no repository code. Git works in a temporary clone with hooks, global
-configuration and inherited credentials disabled. Only the push receives the App
-token; the issue and its labels always use GITHUB_TOKEN.
+configuration and inherited credentials disabled. The job's own GITHUB_TOKEN pushes
+the revert branch and writes the issue and its labels; the App's token, which reads
+contents and writes none, opens, labels and enqueues the pull request.
 
 Only a first-parent chain of two-parent pull request merges can be reverted.
 Unreadable history or metadata, missing credentials and conflicts leave an issue
@@ -351,7 +352,7 @@ def dry_run(args, repo: Path, env: dict) -> int:
     print("Would stop on any conflict, update the issue and open no pull request.")
     print("Would sign an RS256 JWT with openssl, find the installation and mint its scoped token.")
     print("Would ensure auto-revert, the trains' kind labels and security-review for protected paths.")
-    print("Would check main still names after, push with the App token and open the pull request.")
+    print("Would check main still names after, push with the job's token and open the pull request with the App's.")
     print("Would label the pull request, verify its head and enqueue it with expectedHeadOid.")
     print("Would update the issue with the pull request and queue outcome using GITHUB_TOKEN.")
     return 0
@@ -387,6 +388,11 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
         with tempfile.TemporaryDirectory(prefix="stoicheia-revert-") as directory:
             target = Path(directory) / "tree"
             head, paths = make_revert(source, target, args.after, entries)
+            if any(path.startswith(".github/workflows/") for path in paths):
+                # The job's token cannot push a change to a workflow, and the App writes
+                # no contents: such a revert is the coordinator's, by hand.
+                raise Refusal("The revert changes .github/workflows/, which the job's token "
+                              "cannot push: revert it by hand.")
             labels = {"auto-revert"} | {label for t in entries for label in t.labels if label in KINDS}
             if any(protected(path) for path in paths):
                 labels.add("security-review")
