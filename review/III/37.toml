@@ -25,7 +25,7 @@ note = "Our porism to III.16 is said at the end of a radius, so the Lean applies
 at = "Similarly this can be proved to be the case even if the centre be on AC"
 kind = "case"
 helper = "Prop37.centre_on_secant"
-note = "Euclid leaves the case with the centre on AC to the reader; `Prop37.centre_on_secant` proves it in the first branch. The diameter calculation of III.36 and the given equality give equal squares on DE and DB, and Euclid's argument with the two triangles finishes the proof."
+note = "Euclid leaves the case with the centre on AC to the reader; `Prop37.centre_on_secant` proves it in the first branch. It uses `Prop36.through_centre`, proved from III.36, and the given equality to obtain equal squares on DE and DB, and Euclid's argument with the two triangles finishes the proof."
 
 [figure]
 case = "the centre F off AC, with DE and DB touching on opposite sides of DF"

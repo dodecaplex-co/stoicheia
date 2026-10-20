@@ -10,12 +10,6 @@ kind = "euclid"
 tags = ["centre-given"]
 note = "The circle comes with a centre (`∃ F, Centre F ABC`), and the proof finds it by III.1 where Euclid takes it, in each of his two cases."
 
-[[passage]]
-at = "let FB be joined"
-kind = "grouped"
-helper = "Prop36.through_centre"
-note = "`Prop36.through_centre` carries these sentences together: III.18 gives the right angle, the centre bisects AC, and II.6 and I.47 give equal sums from which the square on FB is cancelled. III.37 shares this calculation."
-
 [review]
 stage = "exceptions"
 commit = "11d6c0ec"

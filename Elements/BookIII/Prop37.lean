@@ -47,8 +47,9 @@ theorem Prop37.triangle {B D E F : Point} {ABC : Circle} (hF : Centre F ABC)
     rw [hDE_DB, ← h1, len_symm E F, hFE_FB, len_symm F D, add_comm] at h20
     exact lt_irrefl _ h20
 
-/-- The centre-on-AC case left to the reader at the end of III.37. The diameter
-calculation of III.36 and the given rectangle equality give equal squares on DE and DB.
+/-- The centre-on-AC case left to the reader at the end of III.37. The diameter case,
+stated as `Prop36.through_centre` and proved from III.36, and the given rectangle
+equality give equal squares on DE and DB.
 Euclid's equal radii and I.8 then carry the right angle at E to B, where III.16's porism
 gives the tangent. -/
 theorem Prop37.centre_on_secant {A B C D F : Point} {ABC : Circle}

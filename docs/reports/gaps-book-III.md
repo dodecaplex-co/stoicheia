@@ -266,7 +266,7 @@ Heath's brackets give in most of the propositions of Book III.
 - III.3 needs F between A and C (`foot_between`).
 - I.47 needs FBD a triangle, and EBD in the second case: the centre is within the circle (`centre_inside`), and no point of DB, which touches it, is within (`Touches.not_inside`), so the centre is off DB.
 - I.47 is said of squares on straight lines here too (`BookI.Prop47.sq`).
-- The diameter calculation, through cancellation of the radius square, is `Prop36.through_centre`; III.37 shares it when the centre lies on AC. (Updated 19 October 2026.)
+- The diameter calculation stays under Euclid's sentences through cancellation of the radius square. After III.36, `Prop36.through_centre` states this case on its own and is proved from III.36; III.37 uses it when the centre lies on AC. (Updated 19 October 2026.)
 
 ## III.37
 - "Let DE be drawn touching ABC; let the centre of the circle ABC be taken, and let it be F": Heath gives no bracket for either: they are III.17 and III.1.
@@ -274,7 +274,7 @@ Heath's brackets give in most of the propositions of Book III.
 - I.8 needs DBF to be a triangle, which Euclid reads off his figure. Were B on DF, either D would be within the circle, or two sides of the triangle DEF would together equal the third, against I.20 (`Prop37.triangle`).
 - De Morgan finds here "the same defect as in I. 48, i.e. an apparent avoidance of indirect demonstration by drawing the tangent DE on the opposite side of DF from DB" (Heath, vol. 2, pp. 76–77). III.17 does not say which straight line it draws. Our proof holds for either, even with E at B, for our I.8 does not ask on which side of DF the triangles lie.
 - "And FB produced is a diameter": our porism to III.16 is said at the end of a radius, so FB need not be produced.
-- "Similarly this can be proved to be the case even if the centre be on AC": `Prop37.centre_on_secant` makes this already covered case explicit, using III.36's shared diameter calculation and the given equality, followed by Euclid's comparison of two triangles through I.8. The statement's scope is unchanged. (Updated 19 October 2026.)
+- "Similarly this can be proved to be the case even if the centre be on AC": `Prop37.centre_on_secant` makes this already covered case explicit, using `Prop36.through_centre`, proved from III.36, and the given equality, followed by Euclid's comparison of two triangles through I.8. The statement's scope is unchanged. (Updated 19 October 2026.)
 
 ## The postulates: what the Lean uses and what Heath's brackets give
 
