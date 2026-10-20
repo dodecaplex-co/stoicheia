@@ -1,15 +1,15 @@
 # Jev audit of Books I and II
 
-Brief 0005's stage 6 ([#36](https://github.com/jackChallis/stoicheia/issues/36)) asks a model family that wrote none of Stoicheia to audit the review records. This is that audit for Books I and II, whose 62 records are at the stage `full`. The cold reviewers' finding it answers: "No record in any book is signed off by a human or a model family outside the authoring Claude/Codex crews." Jev is TypeSafe's decision model, and we thank TypeSafe warmly for it.
+Brief 0005's stage 6 ([#36](https://github.com/jackChallis/stoicheia/issues/36)) asks a model family that wrote none of Stoicheia to audit the review records. This report records Jev's run and the adjudications for Books I and II, whose 62 records are at the stage `full`. Because neither a pre-run calibration bar nor the raw calibration answers survives, Jev is a secondary signal here and this report does not complete independent acceptance. Jev is TypeSafe's decision model, and we thank TypeSafe warmly for it.
 
-**In short.** Jev agreed with the records on 251 of 293 questions (86%), and on 243 (83%) in both orders of the options. It agreed on all 79 citation questions, and found both defects planted among them. The original audit sent 83 production answers to adjudication; this review added the 18 high-confidence scope answers that the calibration decision required, for 101 production adjudications. The adjudicators found the record right in 99. The two others are figure captions, I.6 and I.26, which draw Euclid's impossible supposition without saying so. Those two readings are provisional, and their fixes are not yet made (see [Open](#open)). The representation and commentary questions missed every defect planted in them, so Jev's agreement on those items is not evidence.
+**In short.** Jev agreed with the records on 251 of 293 questions (86%), and on 243 (83%) in both orders of the options. It agreed on all 79 citation questions, and found both defects planted among them. Those model-only citation agreements are not independent confirmation without a passed calibration or fallback review. The original audit sent 83 production answers to adjudication; this review added the 18 high-confidence scope answers that the calibration decision required, for 101 production adjudications. The adjudicators found the record right in 99. The two others are figure captions, I.6 and I.26, which draw Euclid's impossible supposition without saying so. Those two readings are among eleven provisional figure readings, and their fixes are listed for later (see [Open](#open)). The 79 citation rows and 41 figure rows outside adjudication still need revision-pinned fallback review. The representation and commentary questions missed every defect planted in them, so Jev's agreement on those items is not evidence.
 
 ## What was asked, of which model, when
 
-- **Model.** `jev-1.13.0`, a pinned id, which answered every request. The owner [reported in #36](https://github.com/jackChallis/stoicheia/issues/36) that the calibration of 19 October 2026 got 12 of 14 right and found that its scope answers could change when the options were reversed. The original redacted calibration answers are not in this tree or its branch history, so the score cannot yet be checked against the raw output.
+- **Model.** `jev-1.13.0`, a pinned id, which answered every request. The owner [reported in #36](https://github.com/jackChallis/stoicheia/issues/36) that the calibration of 19 October 2026 got 12 of 14 right and found that its scope answers could change when the options were reversed. The original redacted calibration answers and any pre-run accuracy bar are not in this tree or its branch history. The score cannot be checked against raw output or classified as a passed gate.
 - **When.** 19 October 2026, Pacific time: 303 requests between 03:56:48 and 03:57:29 UTC on 20 October. The client was [`scripts/audit/jev.py`](../../../../scripts/audit/jev.py), with its order check on, so each choice was asked twice in one request, the second time with its options reversed. The requests carried 1,683,107 input tokens, at most 24,740 in one, and the median latency was 0.13 s.
 - **Cost.** The committed responses record 1,683,107 input tokens and 30,915 output tokens. At TypeSafe's [published price](https://typesafe.ai/) of USD 0.042 per million input tokens and free output, their list-price equivalent is USD 0.070690494. This is not an account charge: no billing receipt or console export was preserved, so the actual charged amount remains unverified.
-- **What.** The 303 rows of [audit-books-I-II.jsonl](audit-books-I-II.jsonl), written by the historical `scripts/audit/jev_questions.py` at `aca67cc385df6134272613c60c803b2aa9c2f398` from evidence commit `39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3`. Every state quotes its files exactly, and the generator checks each byte against `git show` of that commit. The record's expected answer stays on this machine: Jev saw the state, the question and, for figures, the image. [The manifest](audit-books-I-II-manifest.json) lists, for each proposition, its rows, proof units, calls and state sizes. Jev's answers are in [audit-books-I-II-jev-1.13.0-2026-10-19.jsonl](audit-books-I-II-jev-1.13.0-2026-10-19.jsonl). The later reviewed generator at `e5fb40fcb550ac688f6bd16f0d0c735bc6447e39` corrects evidence and bridge placement; it is not the generator of these preserved audit bytes.
+- **What.** The 303 rows of [audit-books-I-II.jsonl](audit-books-I-II.jsonl), written by the historical `scripts/audit/jev_questions.py` at `aca67cc385df6134272613c60c803b2aa9c2f398` from evidence commit `39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3`. Every state quotes its files exactly, and the generator checks each byte against `git show` of that commit. The record's expected answer stays on this machine: Jev saw the state, the question and, for figures, the image. [The manifest](audit-books-I-II-manifest.json) lists, for each proposition, its rows, proof units, calls and state sizes. Jev's answers are in [audit-books-I-II-jev-1.13.0-2026-10-19.jsonl](audit-books-I-II-jev-1.13.0-2026-10-19.jsonl). The committed [generator-history bundle](audit-books-I-II-generator-history.bundle) makes the historical generator and its later reviewed head retrievable from the evidence revision. The later generator at `e5fb40fcb550ac688f6bd16f0d0c735bc6447e39` corrects evidence and bridge placement; it is not the generator of these preserved audit bytes.
 
 | Item | Question | Rows | Seeded |
 |---|---|---:|---:|
@@ -44,8 +44,8 @@ Of the 293 states, 124 run past 12,000 characters, chiefly the citation and comm
 
 What the figures support:
 
-- **Citations: strong evidence.** All 79 agree, in both orders and with confidence of 0.5 or more, and both planted defects were found. No proof unit in Books I and II has a dummy citation or an artificial hypothesis use, on Jev's reading of the proofs and the signatures of what they call. The helpers' own proofs were not sent.
-- **Figures: good evidence.** Both planted wrong figures were found. Eleven answers disagreed, and nine of those were Jev's mistakes; the other two are the captions under [Fixes](#fixes).
+- **Citations: secondary signal only.** All 79 agree, in both orders and with confidence of 0.5 or more, and both planted defects were found. With no verifiable calibration gate and no fallback adjudication, that agreement does not establish that the proof units have no dummy citation or artificial hypothesis use. The helpers' own proofs were not sent.
+- **Figures: secondary outside adjudication.** Both planted wrong figures were found. Twenty-one production figure rows went to adjudication, including the eleven provisional readings described below. The other 41 have only Jev's agreement and need fallback review before they count as independent confirmation.
 - **Scope: weak evidence alone.** Both planted restrictions were found, but Jev disagreed with 23 records and changed its answer on 10 when the options were reversed. On adjudication all 62 records were right. The adjudicated rows carry this item, not Jev's agreement.
 - **Representations and commentary: no evidence from agreement.** Jev called all four planted defects agreement, so its 62 agreements on commentary and 20 on representations show nothing. Those items rest on the adjudicated rows and on the records' own reviews.
 
@@ -209,7 +209,7 @@ A seeded row's right answer is the defect planted, so no reader is needed: the v
 
 ## Fixes
 
-**No record is wrong in its scope, its citations, its representations or its commentary**, on any adjudicated row.
+**No record is wrong in its scope, its representations or its commentary**, on any adjudicated row. The citation rows did not go to adjudication and remain a secondary Jev signal.
 
 Two figure captions are wrong, on the captain's provisional reading. Each draws Euclid's impossible supposition, as Heath's figure does. Neither says so, as the captions of I.14, I.27, I.39 and I.40 do, and the row's question excuses only an incompatibility the caption names. The fix in each is a `note` in the record's `[figure]` table, which the page prints after the case:
 
@@ -226,30 +226,39 @@ One improvement, not a fault: the reason I.30's record is `full` lives in a TOML
 - That the commentary quotes and attributes exactly, or is in the common voice: P14's question asked only about its account of the mathematics, and that question missed both planted defects.
 - That every representation's bridge is adequate: that question missed both planted defects.
 - A judgement free of the records: scope and representation rows had to carry the record's claim, since that claim is what they test.
+- That Jev passed a calibration gate: no contemporaneous bar or raw calibration response is preserved.
+- That the 79 citation rows or the 41 figure rows outside adjudication have independent acceptance: they have no fallback review.
 
 ## Open
 
-1. Recover and commit the original redacted calibration response, then verify the reported 12 of 14 score against its 14 raw answers. Repository history and #36 preserve only the question set and the owner's summary.
-2. Recover the account's billing evidence and record the actual audit charge in its billed currency. The committed usage proves only the USD 0.070690494 public-list-price equivalent.
-3. An independent Codex reader for the eleven figure rows read provisionally by the captain, then the I.6 and I.26 caption fixes in a later branch, with each changed record re-read and stamped by a reviewer who wrote none of it.
-4. The I.30 note, if the editors want it.
-5. Sharper representation and commentary questions, which must find their planted defects before their agreement counts, then a new calibration for both.
-6. Book III's audit, after Book III's records reach the stage `full` (train C6).
+1. Recover and commit the original redacted calibration response and verifiable evidence of the bar fixed before the first request, then decide whether the reported 12 of 14 cleared it. Repository history and #36 preserve only the question set and the owner's summary. If that evidence cannot be recovered, Jev remains secondary.
+2. Give all 79 citation rows and the 41 figure rows outside adjudication revision-pinned fallback review before claiming independent acceptance.
+3. Recover the account's billing evidence and record the actual audit charge in its billed currency. The committed usage proves only the USD 0.070690494 public-list-price equivalent.
+4. An independent Codex reader for the eleven figure rows read provisionally by the captain, then the I.6 and I.26 caption fixes in a later branch, with each changed record re-read and stamped by a reviewer who wrote none of it.
+5. The I.30 note, if the editors want it.
+6. Sharper representation and commentary questions, which must find their planted defects before their agreement counts, then a new calibration for both.
+7. Book III's audit, after Book III's records reach the stage `full` (train C6).
 
 ## Reproducing it
 
 ```sh
-python3 -c '
-import pathlib, subprocess
-root = pathlib.Path.cwd().resolve()
-revision = "aca67cc385df6134272613c60c803b2aa9c2f398"
-path = "scripts/audit/jev_questions.py"
-source = subprocess.run(
-    ["git", "show", f"{revision}:{path}"], cwd=root, check=True, capture_output=True
-).stdout
-scope = {"__file__": str(root / path), "__name__": "__main__"}
-exec(compile(source, str(root / path), "exec"), scope)
-' --commit 39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3 --check
+source_root=$(git rev-parse --show-toplevel)
+repro_root=$(mktemp -d)
+trap 'rm -rf "$repro_root"' EXIT
+git clone --no-checkout https://github.com/jackChallis/stoicheia.git "$repro_root/stoicheia"
+git -C "$repro_root/stoicheia" fetch \
+  "$source_root/docs/reports/acceptance/jev/audit-books-I-II-generator-history.bundle" \
+  refs/heads/tooling/jev-questions:refs/remotes/audit/tooling/jev-questions
+git -C "$repro_root/stoicheia" checkout --detach aca67cc385df6134272613c60c803b2aa9c2f398
+cp "$source_root/docs/reports/acceptance/jev/audit-books-I-II.jsonl" \
+  "$repro_root/stoicheia/docs/reports/acceptance/jev/"
+cp "$source_root/docs/reports/acceptance/jev/audit-books-I-II-manifest.json" \
+  "$repro_root/stoicheia/docs/reports/acceptance/jev/"
+cp "$source_root/docs/reports/acceptance/jev/audit-books-I-II-jev-1.13.0-2026-10-19.jsonl" \
+  "$repro_root/stoicheia/docs/reports/acceptance/jev/"
+cd "$repro_root/stoicheia"
+python3 scripts/audit/jev_questions.py \
+  --commit 39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3 --check
 python3 scripts/audit/jev.py run docs/reports/acceptance/jev/audit-books-I-II.jsonl --dry-run
 python3 scripts/audit/jev.py score docs/reports/acceptance/jev/audit-books-I-II-jev-1.13.0-2026-10-19.jsonl
 python3 - <<'PY'
@@ -269,4 +278,4 @@ print("Questions, manifest and 303 answers share", digest)
 PY
 ```
 
-The first executes the historical generator directly from its pinned commit, regenerates the rows twice and compares both generated files byte for byte with the committed artifacts. The second builds every request and sends nothing. The third needs no key. The fourth ties the question bytes and manifest to every answer's `input_sha256`. Sending the questions needs TypeSafe's key, as the client's docstring explains. Running the later generator at `e5fb40fcb550ac688f6bd16f0d0c735bc6447e39` is a new audit input, not a reproduction of this one.
+The clone supplies the evidence revision and the exact imported modules. The thin Git bundle, whose prerequisite is that evidence revision, supplies the historical generator commit and the later reviewed generator without relying on an unpushed branch. The first Python command regenerates the rows twice in the historical checkout and compares both generated files byte for byte with the committed artifacts. The second builds every request and sends nothing. The third needs no key. The fourth ties the question bytes and manifest to every answer's `input_sha256`. Sending the questions needs TypeSafe's key, as the client's docstring explains. Running the later generator at `e5fb40fcb550ac688f6bd16f0d0c735bc6447e39` is a new audit input, not a reproduction of this one.
