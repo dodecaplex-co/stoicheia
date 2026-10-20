@@ -221,7 +221,7 @@ point within the circle, or on it other than A, is on the side of AE of any poin
 the circle: a point on AE, or across it, would put a point of AE within the circle, on the
 way to K (System E, Intersection 1; III.2, as `InsideCircle.of_between` gives it). -/
 theorem Prop16.sameSideOf_of_inside {A E K Q : Point} {α : Circle}
-    (hA : OnCircle A α) (hAE_out : Outside A E α)
+    (hA : OnCircle A α) (hAE_out : Prop16.Outside A E α)
     (hK : InsideCircle K α) (hQ : InsideCircle Q α ∨ OnCircle Q α) (hQA : Q ≠ A) :
     SameSideOf Q K A E := by
   have hAE : A ≠ E := Prop16.Outside.ne hA hK hAE_out

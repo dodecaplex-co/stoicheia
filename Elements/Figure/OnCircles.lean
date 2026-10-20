@@ -119,9 +119,8 @@ theorem standing_congr {A' : Point} (hA : SameSideOf A A' B C) :
     exact ⟨X, hX, hXA'.trans hA.symm, rfl⟩
 
 /-- What is true of one centre of a circle is true of every centre, since a circle has only
-one (`centre_unique`, Generalities 2). For a condition said of every centre, as III.4's
-"not through the centre" and III.8's "through the centre" are: a citer who has named the
-centre O passes `hO.every h`, with `h` the condition at O. -/
+one (`centre_unique`, Generalities 2). For III.4's and III.8's conditions on every centre,
+`Centre.every` carries the condition from a known centre O to any other centre. -/
 theorem Centre.every {O : Point} {α : Circle} {p : Point → Prop}
     (hO : Centre O α) (h : p O) : ∀ F : Point, Centre F α → p F :=
   fun _ hF => centre_unique hO hF ▸ h
