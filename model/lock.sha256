@@ -19,7 +19,7 @@
 #     shasum -a 256 Certificate/axioms.lock
 # run from the repository root (keep these comment lines).
 #
-# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved retirement
-# in principle that day, pending the evidence): their laws leave the generated translation;
+# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved both
+# retirements that day): their laws leave the generated translation;
 # the other 79 axioms and every word are unchanged, byte for byte.
 da52a4969bf323512b82545ca01023038782d1c17a57e56da3273efdc93a1402  Certificate/axioms.lock
