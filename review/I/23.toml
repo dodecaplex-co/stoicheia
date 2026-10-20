@@ -34,7 +34,7 @@ stage = "full"
 commit = "bda0636"
 reviewer = "Codex (gpt-6-astra), independent reader"
 lean = "sha256:03384cc241aed0a4"
-run = "brief 0009, superposition replacement, ship S"
+run = "brief 0009 round 3, superposition replacement, ship S reader S-read, workflow wf_27c9b8ae-9f5"
 
 [review.items]
 statement = "pass"

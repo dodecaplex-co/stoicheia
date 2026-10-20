@@ -56,7 +56,7 @@ stage = "full"
 commit = "0085b443"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:6c1e94da2ef25d4e"
-run = "brief 0009, coincidence marker and approval, ship S2"
+run = "brief 0009 round 3, coincidence marker and approval, ship S2 reader S2-read, workflow wf_7835d6b5-321"
 
 [review.items]
 statement = "pass"
