@@ -61,8 +61,7 @@ records current; CI runs it on every push.
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
 plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s own
-`--self-test` withholds Postulate 5 from nanoda alone. The update to README.md's
-"What the checks show" table is deferred to a later pull request after this check change.
+`--self-test` withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
