@@ -64,8 +64,8 @@ substitution, as the three `CommonNotion4` theorems do. Count a constructor name
 declaration's value, not one merely reached through `Derives` and its constructor list.
 These steps change only the reported notions; the axiom walks keep their boundaries. -/
 def coincidenceSteps : List Name :=
-  [``Elements.Superposition.Derives.len_congr, ``Elements.Superposition.Derives.angle_congr,
-   ``Elements.Superposition.Derives.area_congr]
+  [`Elements.Superposition.Derives.len_congr, `Elements.Superposition.Derives.angle_congr,
+   `Elements.Superposition.Derives.area_congr]
 
 /-- The books, their Lean namespaces and how many propositions each has. A proposition
 of a later book may cite one of an earlier book, and the walk below records it by its
