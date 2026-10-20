@@ -1538,3 +1538,22 @@ findings:
   the keys and when an item counts, so the schema's `items` row and the sentence after the
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
+
+- **The Jev audit's question generator.** On 19 October 2026 the owner approved running Jev,
+  TypeSafe's decision model, as the independent audit of brief 0005's stage 6
+  ([#36](https://github.com/jackChallis/stoicheia/issues/36)) on Books I and II, whose 62
+  records are at the stage `full`.
+  [`scripts/audit/jev_questions.py`](../../scripts/audit/jev_questions.py) (new) writes that
+  audit's questions, in the rows that [`scripts/audit/jev.py`](../../scripts/audit/jev.py)
+  sends, for review items P11 to P15 of [ACCEPTANCE](../ACCEPTANCE.md): the statement's
+  scope, with its companions and porism; whether each proposition a proof unit calls does
+  work, and whether any hypothesis is used only for show; whether a representation's bridge
+  is stated; whether the commentary's account of the scope, the route and the Lean it names
+  agrees with them; and whether the Heath figure, sent as an image, agrees with the proof
+  and its caption. Every state quotes its files exactly, checked byte for byte against
+  `git show` of a named commit, and the expected answers, taken from the records, stay on
+  this machine. Ten seeded controls, each a planted defect in a generated state only,
+  measure whether the questions can find a fault. It uses the standard library alone,
+  reads no key and sends nothing; `--check` regenerates the rows twice and compares them
+  with the files. It lands on its own, before the rows, results and report it produces
+  (`text/jev-audit-I-II`), as keep_apart asks. No check, schema or expected value changes.
