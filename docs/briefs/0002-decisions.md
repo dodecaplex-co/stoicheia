@@ -1820,6 +1820,34 @@ findings:
   GitHub to give any answer a test needs, and six new tests, each failing before the
   change), with
   [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
+- **Planted faults for the remaining checks.** `scripts/negative_tests.py` now plants an
+  em dash in I.1's mishnah, caught by S1 with the file named; a relative link to a
+  missing page, caught with the source and target named; a generated I.1 page stale
+  beside a changed mishnah, caught by the page's Git status line after rendering; and
+  an axiom omitted from an audit lemma's expected list, caught by `#guard_msgs` in
+  `lake build Audit`. The freshness test changes the source as well: editing only the
+  page would let the renderer restore the committed text and leave Git status clean.
+  A corrupt header in I.1's compiled file makes leanchecker itself name the file and
+  report its invalid header, using the invocation in `scripts/check_kernel.py`.
+  This tests the loading of compiled files; no invalid proof term is planted for the
+  kernel replay. Each new plant restores its inputs in `finally`, and the freshness
+  test saves every renderer output. Before each plant that builds, every file under
+  `.lake/build` is saved, including companion outputs, dependent modules, hashes and
+  traces. A restoration build is attempted; if it fails or is interrupted, the saved
+  files return with their original bytes and newly created files are removed. After
+  I.1's successful rebuild, leanchecker replays the restored environment. The
+  assumptions test restores or removes its temporary module's outputs in a nested
+  `finally`, even when the restoration build is interrupted. Each new plant reports
+  its time, restoration included. An outer `finally` compares the final Git status
+  with the entry status, even on interruption, preserving an exception already in
+  flight if that comparison also fails. Restoration needs writable files and time
+  for `finally` to finish; a forced process kill cannot provide it.
+  `tests/test_negative_tests.py` tests failed and interrupted builds, saved and absent
+  outputs, temporary-module cleanup, replay after a successful rebuild and the final
+  status comparison in temporary directories, without Lean or Git. The script runs
+  these regressions before planting. Its docstring and the README's table state the
+  coverage and its limits. The protected files changed are `scripts/negative_tests.py`
+  and `tests/test_negative_tests.py`. No check is loosened.
 - **Check changes land apart from what they judge, in trains H8 and H9.** Train H6b put the
   reviewed check changes of `tooling/fixture-name`, `tooling/style-everywhere`,
   `tooling/overlap-screen-unfold` and `tooling/acceptance-ci` together with content those
@@ -1831,7 +1859,9 @@ findings:
   by a commit that holds the judged files back, and their content lands after the
   checks, in train H9, by the revert of that commit: `docs/ACCEPTANCE.md` (and WORKFLOW's
   lines that link its section "In CI"), `Audit/screen.py`, the README's table and the
-  overlap catalogue's lines on the Circle rule, and PROGRAM.md's open work. Train H8
+  overlap catalogue's lines on the Circle rule (`tooling/no-circle-2`), the README's row
+  for the negative tests (`tooling/planted-faults`), and PROGRAM.md's open work
+  (`tooling/safe-push-followups`). Train H8
   carries the checks alone, with this page and the guides. The screen's tests land
   before the screen they test, as the rule orders; nothing runs them in CI, and until H9
   lands, `tests/test_screen.py` fails against main's screen. The texts that the widened
@@ -1844,3 +1874,4 @@ findings:
   `scripts/copy_acceptance_checks.sh`, `scripts/negative_tests.py`,
   `scripts/safe_push.py`, `scripts/test_safe_push.py`, `tests/test_check_acceptance.py`,
   `tests/test_check_style.py` and `tests/test_screen.py`.
+
