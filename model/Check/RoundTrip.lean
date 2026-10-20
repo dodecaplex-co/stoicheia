@@ -175,6 +175,36 @@ run_cmd Check.Generator.pureAxiom
 #guard_msgs in
 run_cmd Check.Generator.checkSharedIdentity ``Nat.rec
 
+/- Stand-in module lists exercise successful identities before the calculus exists.
+List.filterMap has two universe arguments; Model.Kind.rec also checks that a shared name
+in the Model namespace survives the residual-name check in reverse translation. -/
+#guard_msgs in
+run_cmd (Check.Generator.checkSharedIdentityWith #[`Init.Data.List.Basic] ``List.filterMap)
+
+#guard_msgs in
+run_cmd (Check.Generator.checkSharedIdentityWith #[`Model.Signature] ``Model.Kind.rec)
+
+#guard_msgs in
+run_cmd (Check.Generator.checkPureModuleFixture #[`Init.Data.List.Basic] ``List.filterMap)
+
+/- No explicit declaration root is supplied to the audit: module data must find this
+word even though the library's laws do not use it. -/
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd (Check.Generator.checkPureModuleFixture
+  #[`Init.Data.List.Basic] ``List.filterMap (some ``Elements.Point))
+
+#guard_msgs in
+run_cmd Check.Generator.checkSharedImportHeader
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureOpaqueDependency
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Generator.pureRecursorDependency
+
 #guard_msgs in
 run_cmd Check.Generator.checkModelDirPaths
 
@@ -189,7 +219,10 @@ run_cmd Check.Generator.checkModelImports
 
 #guard_msgs in
 run_cmd (Check.Generator.checkModelImportFixture [
-  ("model/Model.lean", "import Model.Signature\nimport Mathlib\n"),
+  ("model/Model.lean",
+    "import Model.Signature\nimport Mathlib\nimport Init\nimport Std\nimport Lean\n\
+    import Plausible\nimport LeanSearchClient\nimport ImportGraph\nimport ProofWidgets\n\
+    import Aesop\nimport Qq\nimport Batteries\nimport Cli\n"),
   ("model/Model/Planted.lean",
     "/- import Elements.Point /- nested -/ -/\nmodule\n\n\
     public /- between tokens -/ import Elements.Foundations.Superposition.Syntax\n\
@@ -250,3 +283,28 @@ error: Elements/Foundations/Superposition/Restriction.lean: pure module imports 
 #guard_msgs in
 run_cmd (Check.Generator.checkModelImportFixture [
   ("Elements/Foundations/Superposition/Restriction.lean", "import Mathlib\n")])
+
+/-- error: model/Model.lean: Model imports `Check.Original`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "import Check.Original\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Staging.X`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "module\npublic import Staging.X\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Unknown.X`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "module\nimport Unknown.X\n")])
+
+/-- error: model/Model/Planted.lean: Model imports `Audit.X`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Planted.lean", "import Audit.X\n")])
+
+/-- error: model/Model.lean: Model imports `Certificate.Facts`, outside the approved import roots -/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model.lean", "module\npublic import Certificate.Facts\n")])

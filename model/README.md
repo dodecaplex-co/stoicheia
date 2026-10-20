@@ -286,12 +286,31 @@ with no extra import or blank line in the header.
 
 `checkModelImports`, called from `Check/RoundTrip.lean`, also reads the headers of
 `Model.lean`, every Lean file under `Model/`, and each of the four pure source files that
-exists. A Model file may import no other `Elements` module. A pure file may import only
-`Init` modules and the other pure modules. Lean's own header parser reads comments,
-blank lines, `module`, `public import` and the other import modifiers, stopping at the
-first body command; a malformed header is an error. `checkModelImportsWith` makes the
-decision from a list of file paths and imports, so planted cases exercise it without
-creating files or loading their imports.
+exists. A Model file may import only other Model modules, those four pure modules, and
+the external module roots listed in `modelImportPackages` in
+[Check/Generator.lean](Check/Generator.lean). That single list records Lean's permitted
+roots and the library roots supplied by Mathlib and its dependencies, checked against
+the pinned packages in `lake-manifest.json`. Every other root is refused, including
+`Check`, `Staging`, `Audit` and `Certificate`. The external packages cannot import this
+repository's modules. Auditing every Model source, and allowing the pure files to import
+only each other and `Init`, therefore checks the whole import closure.
+
+Lake 4.35 defaults the Model library's roots to `Model` and its globs to that root alone.
+It builds `Model.lean` and recursively follows imports. The audit includes this file
+outside `Model/`, and also checks sources under `Model/` that the root does not import.
+Lean's own header parser reads both legacy headers without `module` and headers with
+`module`, comments, blank lines, `public import` and the other import modifiers, stopping
+at the first body command; a malformed header is an error. `checkModelImportsWith` makes
+the decision from file paths and imports, so planted cases use the same parser and
+decision without creating files or loading their imports.
+
+The Check library registers `Model.lean`, the whole `Model/` directory and
+`../Elements/Foundations/` as text inputs in [lakefile.toml](lakefile.toml). Directory
+inputs track additions and removals as well as edits. The existing foundations directory
+is used because Lake rejects an input directory that does not exist, and its
+`Superposition/` subdirectory is absent on main. This also catches the first pure module
+when it is added. Lake hashes text contents, so a timestamp-only touch may replay a
+cached result; changing an audited source's contents rebuilds the checks.
 
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
@@ -353,16 +372,24 @@ the original means. These checks do that, at every build.
   and the fourth pass the kernel's `rfl`, which the file shows too. Further cases pass
   copies of Init declarations to the purity checker without installing them in Lean's
   environment: an Init-only closure passes, while a transitive reference to `Elements.Point`
-  in a type or value, `sorryAx`, and an unapproved axiom are refused. Every helper called
+  in a type or value, a dependency found only in an opaque value or a recursor rule,
+  `sorryAx`, and an unapproved axiom are refused. Every helper called
   by `run_cmd` is defined in `Check/Generator.lean`. `plantPureDependency` accepts any
   definition as its root and puts a named dependency in a copy of its type or value.
-  `checkSharedIdentity` translates a shared constant at a symbolic universe level and
-  back, requiring its name and level to stay unchanged in each direction. With no shared
-  modules yet, the case for `Nat.rec` pins its refusal: the constant is not shared.
-  Import cases accept the real tree and permitted headers, and refuse geometric imports
-  in Model files or pure files, a module below an approved module, and Mathlib in a pure
-  file. A path regression checks that both relative and absolute Check filenames locate
-  the model package.
+  The production identity check still refuses `Nat.rec`, which is not shared.
+  Parameterised variants use stand-in module lists to exercise successful identity
+  entries in the plan, forward and reverse translation with zero, symbolic and compound
+  universe arguments, and a non-empty shared-import header before the calculus arrives.
+  `List.filterMap` tests two universe arguments; `Model.Kind.rec` tests a shared name
+  outside `Elements`, including the residual model-name check. The module-root collector
+  accepts an Init module and finds a planted dependency in a declaration no law uses,
+  without receiving that declaration as an explicit audit root. Production keeps the
+  four-module boundary throughout.
+  Import cases accept the real tree and permitted headers, and refuse geometric imports,
+  `Check.Original` in a legacy `Model.lean` header, `Staging`, `Audit`, `Certificate`, an
+  unknown root, a module below an approved pure module, and Mathlib in a pure file.
+  A path regression checks that both relative and absolute Check filenames locate the
+  model package.
 
 The eight magnitude laws quantify over the kind (`∀ {k : Elements.Kind}`), and with two
 copies of `Kind` their round trip is an equivalence, not `rfl`. Each direction is the other

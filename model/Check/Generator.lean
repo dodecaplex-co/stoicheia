@@ -301,16 +301,20 @@ def pureModules : Array Name := #[
   `Elements.Foundations.Superposition.Soundness,
   `Elements.Foundations.Superposition.Restriction]
 
+/-- Sharing by declaring module, with a supplied boundary for regression fixtures. -/
+def isSharedWith (modules : Array Name) (env : Environment) (c : Name) : Bool :=
+  (moduleOf? env c).any modules.contains
+
 /-- A constant declared in one of the four approved pure modules. -/
 def isShared (env : Environment) (c : Name) : Bool :=
-  (moduleOf? env c).any pureModules.contains
+  isSharedWith pureModules env c
 
 /-- Check the transitive types and values of the shared declarations, including theorem
 proofs, opaque values, constructors and recursor rules. Only the four pure modules and
 `Init` are admissible, and only Lean's three logical axioms. A visited set handles mutual
 inductives and recursive definitions without leaving any dependency unchecked. -/
 def checkPureWith (env : Environment) (find? : Name → Option ConstantInfo)
-    (roots : Array Name) : Except String Unit := do
+    (roots : Array Name) (modules : Array Name := pureModules) : Except String Unit := do
   let mut todo := roots
   let mut seen : NameSet := {}
   while !todo.isEmpty do
@@ -319,7 +323,7 @@ def checkPureWith (env : Environment) (find? : Name → Option ConstantInfo)
     if seen.contains c then continue
     seen := seen.insert c
     if c == `sorryAx then throw "shared calculus reaches `sorryAx`"
-    unless isShared env c || isLeanCore env c do
+    unless isSharedWith modules env c || isLeanCore env c do
       throw s!"shared calculus reaches `{c}`, outside the four pure modules and `Init`"
     let some ci := find? c | throw s!"shared calculus reaches undeclared `{c}`"
     if ci.isAxiom && !([`propext, `Classical.choice, `Quot.sound].contains c) then
@@ -338,13 +342,20 @@ lookup for regression fixtures; production always uses the environment's own loo
 def checkPure (env : Environment) (roots : Array Name) : Except String Unit :=
   checkPureWith env env.find? roots
 
-/-- Audit every declaration in every imported pure module, even if no law reaches it. -/
-def checkPureModules (env : Environment) : Except String Unit := do
+/-- Collect and audit every declaration in the supplied modules, including words no law
+reaches. The supplied lookup permits isolated regression data without changing Lean's
+environment. Production supplies `pureModules` and the environment's own lookup. -/
+def checkPureModulesWith (modules : Array Name) (env : Environment)
+    (find? : Name → Option ConstantInfo) : Except String Unit := do
   let mut roots := #[]
   for i in [:env.header.moduleNames.size] do
-    if pureModules.contains env.header.moduleNames[i]! then
+    if modules.contains env.header.moduleNames[i]! then
       roots := roots ++ env.header.moduleData[i]!.constNames
-  checkPure env roots
+  checkPureWith env find? roots modules
+
+/-- Audit every declaration in every imported pure module, even if no law reaches it. -/
+def checkPureModules (env : Environment) : Except String Unit :=
+  checkPureModulesWith pureModules env env.find?
 
 /-- The library's name for a word or a law, without `Elements.`: the lock's key. -/
 def lockKey (n : Name) : String := (n.replacePrefix `Elements .anonymous).toString
@@ -397,7 +408,7 @@ def untranslate (inverse : NameMap Target) (S : Expr) (what : String) (e : Expr)
   if e'.containsFVar S.fvarId! then
     throw s!"{what}: the signature is used other than through one of its words"
   for c in e'.getUsedConstants do
-    if (`Model).isPrefixOf c then
+    if (`Model).isPrefixOf c && !(inverse.find? c).any (·.identity) then
       throw s!"{what}: `{c}` is a word of the model that does not translate back to the \
         library's"
   return e'
@@ -586,12 +597,13 @@ def fieldName (n : Name) : Name := .mkSimple n.getString!
 `Elements.Collinear`. -/
 def generatedName (n : Name) : Name := n.replacePrefix `Elements `Model.Signature
 
-/-- The plan, from the library's declarations in `env`, after checking that everything the
-laws reach can be translated. -/
-def plan (env : Environment) : Except String Plan := do
-  checkPureModules env
+/-- Construct the plan with an explicit sharing boundary and additional reached words for
+fixtures. Production uses the four pure modules and only the words the laws reach. -/
+def planWith (modules : Array Name) (env : Environment) (extraWords : Array Name := #[]) :
+    Except String Plan := do
+  checkPureModulesWith modules env env.find?
   let laws := foundationAxioms env
-  let reached := reachedWords env laws
+  let reached := reachedWords env laws ++ extraWords
   let mut vocab : NameMap Target := {}
   for (lib, field) in fields do
     vocab := vocab.insert lib { name := field, overS := true, levels := levelsOf lib }
@@ -601,7 +613,7 @@ def plan (env : Environment) : Except String Plan := do
   let mut bad : Array String := #[]
   for w in reached do
     if vocab.contains w then continue
-    if isShared env w then
+    if isSharedWith modules env w then
       vocab := vocab.insert w { name := w, overS := false, identity := true }
       continue
     match env.find? w with
@@ -628,6 +640,10 @@ def plan (env : Environment) : Except String Plan := do
     inverse := inverse.insert t.name {
       name := lib, overS := t.overS, levels := t.levels, identity := t.identity }
   return { laws, reached, generated := dependencyOrder env generated, vocab, inverse }
+
+/-- The production plan, with the four approved modules as the shared boundary. -/
+def plan (env : Environment) : Except String Plan :=
+  planWith pureModules env
 
 /-! ## Printing Lean a reader can read -/
 
@@ -838,6 +854,15 @@ def vocabularyTable (p : Plan) : Array String := Id.run do
 def withSignature (k : Expr → MetaM α) : MetaM α :=
   withLocalDeclD `S (.const `Model.Signature []) k
 
+/-- Shared imports in boundary order, once per reached module. An empty list contributes
+no newline. Production supplies `pureModules`; fixtures can exercise a non-empty header
+before those modules exist. -/
+def sharedImportHeaderWith (modules : Array Name) (env : Environment)
+    (reached : Array Name) : String :=
+  let imports := modules.filter fun m =>
+    reached.any fun w => moduleOf? env w == some m
+  String.join (imports.toList.map (s!"\npublic import {·}"))
+
 /-- The text of `Model/Laws.lean`. It adds the generated words, and the laws as definitions,
 to the environment as it goes, so that each prints with the words before it (the caller runs
 it inside `withoutModifyingEnv`). -/
@@ -894,9 +919,7 @@ def lawsText (p : Plan) (hash : String) : MetaM String := withSignature fun S =>
   let euclidean := fs.filter (·.2.2)
   let field (n : Name × Name × Bool) : String :=
     s!"  {n.2.1} : {(lawName n.1).replacePrefix `Model .anonymous} S"
-  let sharedImports := pureModules.filter fun m =>
-    p.reached.any fun w => moduleOf? env w == some m
-  let sharedHeader := String.join (sharedImports.toList.map (s!"\npublic import {·}"))
+  let sharedHeader := sharedImportHeaderWith pureModules env p.reached
   let header := s!"module
 
 public import Model.Signature{sharedHeader}
@@ -1165,9 +1188,29 @@ def repoRoot (modelDir : System.FilePath) : CommandElabM System.FilePath := do
 def pureModuleFile (m : Name) : String :=
   m.toString.replace "." "/" ++ ".lean"
 
+/-- The permitted external module roots, recorded here alone. Package names come from
+`model/lake-manifest.json`; roots come from their pinned Lake library configurations.
+`stoicheia` is deliberately excluded. Lean itself supplies only `Init`, `Std` and `Lean`.
+The other entries include the packages' test and auxiliary libraries as well as their
+main libraries; ProofWidgets.Demos has the same root as ProofWidgets. -/
+def modelImportPackages : Array (String × Array Name) := #[
+  ("lean", #[`Init, `Std, `Lean]),
+  ("mathlib", #[`Mathlib, `Cache, `MathlibTest, `Archive, `Counterexamples, `Wanted, `docs]),
+  ("plausible", #[`Plausible, `PlausibleTest]),
+  ("LeanSearchClient", #[`LeanSearchClient, `LeanSearchClientTest]),
+  ("importGraph", #[`ImportGraph, `ImportGraphTest]),
+  ("proofwidgets", #[`ProofWidgets, `test]),
+  ("aesop", #[`Aesop, `AesopTest]),
+  ("Qq", #[`Qq, `QqTest]),
+  ("batteries", #[`Batteries, `BatteriesTest]),
+  ("Cli", #[`Cli, `CliTest])]
+
 /-- Check imports recorded for source files, with paths relative to the repository.
-Model files may import only the four pure modules from `Elements`; the pure modules
-themselves may import only each other and `Init`. This decision needs no environment. -/
+Model files may import only `Model`, its submodules, the four pure modules and the external
+roots in `modelImportPackages`. Pure modules may import only each other and `Init`.
+Every Model source is audited. Lean and the pinned external packages cannot import this
+repository's modules, so checking these direct imports checks the whole import closure.
+This decision needs no environment. -/
 def checkModelImportsWith (files : List (String × List Name)) : Except String Unit := do
   for (file, imports) in files do
     let shared := pureModules.any fun m => pureModuleFile m == file
@@ -1177,6 +1220,9 @@ def checkModelImportsWith (files : List (String × List Name)) : Except String U
           throw s!"{file}: pure module imports `{m}`, outside the four pure modules and `Init`"
       else if m.getRoot == `Elements && !pureModules.contains m then
         throw s!"{file}: Model imports `{m}`, outside the four pure modules"
+      else unless m.getRoot == `Model || pureModules.contains m ||
+          modelImportPackages.any (fun (_, roots) => roots.contains m.getRoot) do
+        throw s!"{file}: Model imports `{m}`, outside the approved import roots"
 
 /-- Read just the header with Lean's own parser. It handles comments, blank lines,
 `module` and import modifiers, and stops at the first command after the imports.
@@ -1199,7 +1245,11 @@ def checkModelImportFixture (files : List (String × String)) : CommandElabM Uni
   | .error e => throwError "{e}"
 
 /-- Audit every Lean source under `Model/`, its root file, and each pure module present
-in the repository. The four pure modules need not exist yet. -/
+in the repository. Lake 4.35 defaults the Model library's roots to `#[Model]` and its
+globs to `#[Glob.one Model]`: it builds `Model.lean` and follows local imports. The root
+outside `Model/` is therefore included, and scanning the entire directory also checks
+unimported Model sources. The import whitelist refuses any other local module root.
+The four pure modules need not exist yet. -/
 def checkModelImports : CommandElabM Unit := do
   let dir ← modelDir
   let root ← repoRoot dir
@@ -1604,26 +1654,101 @@ def pureDependency (dep : Name) (inType : Bool := false) : CommandElabM Unit := 
   checkPureFixture #[``id] #[
     .defnInfo { root with value := .const ``Not [] }, next]
 
-/-- Check that the plan preserves a shared declaration at a symbolic universe level in
-both directions. A constant outside the shared modules is refused before translation. -/
+/-- Check actual identity entries in both dictionaries, then preserve a shared constant
+with zero, symbolic and compound universe arguments in both directions. -/
+def checkIdentityPlan (p : Plan) (c : Name) : CommandElabM Unit := do
+  let env ← getEnv
+  unless (p.vocab.find? c).any (fun t => t.identity && t.name == c && !t.overS) &&
+      (p.inverse.find? c).any (fun t => t.identity && t.name == c && !t.overS) do
+    throwError "`{c}` has no identity entry in both dictionaries"
+  let some ci := env.find? c | throwError "no shared declaration `{c}`"
+  unless !ci.levelParams.isEmpty do throwError "`{c}` has no universe arguments to test"
+  liftTermElabM <| withSignature fun S => do
+    for levels in [
+        ci.levelParams.map (fun _ => Level.zero),
+        ci.levelParams.map Level.param,
+        ci.levelParams.map (fun u => Level.succ (.max (.param u) (.param `v)))] do
+      let original := Expr.const c levels
+      let translated ← match translate env p.vocab S s!"`{c}`" original with
+        | .ok e => pure e
+        | .error e => throwError "{e}"
+      unless translated == original do
+        throwError "`{c}` changed in translation at {levels}"
+      let restored ← match untranslate p.inverse S s!"`{c}`" translated with
+        | .ok e => pure e
+        | .error e => throwError "{e}"
+      unless restored == original do
+        throwError "`{c}` changed in reverse translation at {levels}"
+
+/-- Exercise the same plan construction before the pure modules exist, with the supplied
+module boundary and a shared word explicitly included among the reached words. -/
+def checkSharedIdentityWith (modules : Array Name) (c : Name) : CommandElabM Unit := do
+  let env ← getEnv
+  unless isSharedWith modules env c do throwError "`{c}` is not shared"
+  let p ← match planWith modules env #[c] with
+    | .ok p => pure p
+    | .error e => throwError "{e}"
+  checkIdentityPlan p c
+
+/-- Check the production plan's shared identity entries. A constant outside the four pure
+modules is refused before translation. -/
 def checkSharedIdentity (c : Name) : CommandElabM Unit := do
   let env ← getEnv
   unless isShared env c do throwError "`{c}` is not shared"
   let p ← match plan env with
     | .ok p => pure p
     | .error e => throwError "{e}"
-  liftTermElabM <| withSignature fun S => do
-    let original := Expr.const c [.param `u]
-    let translated ← match translate env p.vocab S s!"`{c}`" original with
-      | .ok e => pure e
+  checkIdentityPlan p c
+
+/-- Collect roots from module data, using an optional isolated replacement. A planted
+dependency in an otherwise unused declaration must be found without an explicit root. -/
+def checkPureModuleFixture (modules : Array Name) (target : Name)
+    (dep : Option Name := none) : CommandElabM Unit := do
+  let env ← getEnv
+  unless isSharedWith modules env target do throwError "`{target}` is not shared"
+  let replacement ← match dep with
+    | none => pure none
+    | some dep => match pureDependencyCopy env target dep false with
+      | .ok ci => pure (some ci)
       | .error e => throwError "{e}"
-    unless translated == original do
-      throwError "`{c}` changed in translation at universe `u`"
-    let restored ← match untranslate p.inverse S s!"`{c}`" translated with
-      | .ok e => pure e
-      | .error e => throwError "{e}"
-    unless restored == original do
-      throwError "`{c}` changed in reverse translation at universe `u`"
+  let lookup := fun n => (replacement.filter (·.name == n)).orElse fun _ => env.find? n
+  match checkPureModulesWith modules env lookup with
+  | .ok () => pure ()
+  | .error e => throwError "{e}"
+
+/-- The actual shared-header printer includes a reached module once, ignores an unreached
+module, and contributes no newline when the production boundary is absent. -/
+def checkSharedImportHeader : CommandElabM Unit := do
+  let env ← getEnv
+  let reached := #[``List.filterMap, ``List.filterMap]
+  let header := sharedImportHeaderWith #[`Init.Data.Option.Basic, `Init.Data.List.Basic]
+    env reached
+  unless header == "\npublic import Init.Data.List.Basic" do
+    throwError "unexpected shared import header: {repr header}"
+  unless (sharedImportHeaderWith #[] env reached).isEmpty &&
+      (sharedImportHeaderWith #[`Init.Data.List.Basic] env #[]).isEmpty do
+    throwError "an empty shared import list added text"
+
+/-- A dependency reached only through an opaque value in an isolated lookup. No copy is
+submitted to the kernel, and the opaque declaration's type contains no planted dependency. -/
+def pureOpaqueDependency : CommandElabM Unit := do
+  let env ← getEnv
+  let some (.defnInfo root) := env.find? ``id | throwError "no Init identity definition"
+  let some next := env.find? ``Not | throwError "no Init negation definition"
+  checkPureFixture #[``id] #[
+    .defnInfo { root with value := .const ``Not [] },
+    .opaqueInfo {
+      name := next.name, levelParams := next.levelParams, type := next.type,
+      value := .const `Elements.Point [], isUnsafe := false }]
+
+/-- A dependency reached only through a recursor rule in an isolated lookup. The copied
+recursor's type is unchanged and a recursor has no ordinary declaration value to inspect. -/
+def pureRecursorDependency : CommandElabM Unit := do
+  let env ← getEnv
+  let some (.recInfo next) := env.find? ``Nat.rec | throwError "no Init natural recursor"
+  let rule :: rest := next.rules | throwError "no natural recursor rule"
+  checkPureFixture #[``Nat.rec] #[
+    .recInfo { next with rules := { rule with rhs := .const `Elements.Point [] } :: rest }]
 
 /-- An axiom-shaped copy of `Not` keeps its Init provenance, so only the axiom check can
 refuse it. It is lookup data, never a new axiom in the environment. -/
