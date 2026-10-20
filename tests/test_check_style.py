@@ -543,6 +543,19 @@ def figure_fixture(idea: bool):
         + '</g></svg>')
 
 
+def svg_sub(parent, name, attrib=None, **extra):
+    qualified = name if name.startswith("{") else style.SVG + name
+    return ET.SubElement(parent, qualified, {} if attrib is None else attrib, **extra)
+
+
+def svg_element(markup):
+    root = ET.fromstring(markup)
+    for el in root.iter():
+        if not el.tag.startswith("{"):
+            el.tag = style.SVG + el.tag
+    return root
+
+
 def figure_findings(root, idea: bool):
     """Both complete checks, with a fixed figure and its fixed set of Heath's letters."""
     path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
@@ -1179,6 +1192,20 @@ class Ink(unittest.TestCase):
 class Modern(unittest.TestCase):
     """The modern cases: the names a paragraph gives, and a figure of the modern way read
     against them and against its Euclid's figure's letters."""
+
+    def test_companion_reader_refuses_internal_dtd(self):
+        source = ET.tostring(figure_fixture(False))
+        raw = b'<!DOCTYPE svg [<!ENTITY label "A">]>' + source.replace(b">A<", b">&label;<")
+        self.assertIn(b">&label;<", raw)
+        with tempfile.TemporaryDirectory() as tmp, patch.object(style, "failures", []):
+            path = Path(tmp) / "01.svg"
+            for encoding in ("utf-8", "utf-16", "utf-32-le", "utf-32-be"):
+                with self.subTest(encoding=encoding):
+                    path.write_bytes(raw.decode("ascii").encode(encoding))
+                    self.assertIsNone(style.modern_drawn_letters(path))
+                    with patch.object(ET, "XMLParser", side_effect=AssertionError("parser built")):
+                        self.assertIsNone(style.modern_drawn_letters(path))
+            self.assertEqual(style.failures, [])
 
     def test_companion_letter_keeps_internal_newline(self):
         euclid = (style.ROOT / "figures/I/01.svg").read_text(encoding="utf-8")
@@ -1915,8 +1942,42 @@ class Modern(unittest.TestCase):
                              [])
 
     def test_all_repository_modern_figures_pass(self):
+        required = (
+            "I/01-modern.svg",
+            "I/02-modern.svg",
+            "I/05-modern.svg",
+            "I/06-modern.svg",
+            "I/07-modern.svg",
+            "I/09-modern.svg",
+            "I/11-modern.svg",
+            "I/12-modern.svg",
+            "I/13-modern.svg",
+            "I/14-modern.svg",
+            "I/15-modern.svg",
+            "I/16-modern.svg",
+            "I/19-modern.svg",
+            "I/20-modern.svg",
+            "I/21-modern.svg",
+            "I/22-modern.svg",
+            "I/24-modern.svg",
+            "I/27-modern.svg",
+            "I/31-modern.svg",
+            "I/34-modern.svg",
+            "I/35-modern.svg",
+            "I/37-modern.svg",
+            "I/43-modern.svg",
+            "I/44-modern.svg",
+            "II/03-modern.svg",
+            "II/04-modern.svg",
+            "II/07-modern.svg",
+            "II/09-modern.svg",
+            "II/11-modern.svg",
+            "II/14-modern.svg",
+        )
         paths = sorted((style.ROOT / "figures").glob("*/*-modern.svg"))
-        self.assertEqual(len(paths), 30)
+        for relative in required:
+            with self.subTest(path=relative):
+                self.assertIn(style.ROOT / "figures" / relative, paths)
         with patch.object(style, "fail") as fail:
             for path in paths:
                 style.check_modern(path, style.ref_of(path))
@@ -2049,6 +2110,35 @@ def pi_refusal(target, data):
     return f"processing instruction {instruction!r} is outside S26's SVG allow-list"
 
 
+def text_refusal(payload):
+    return f"<text> payload {payload!r} is outside S26's SVG allow-list"
+
+
+DTD_CASES = (
+    ('<!DOCTYPE svg [<!ENTITY family "Georgia">]>', '&family;'),
+    ('<!DOCTYPE svg [<!ENTITY first "Geor"><!ENTITY family "&first;gia">]>', '&family;'),
+    ('<!DOCTYPE svg SYSTEM "x.dtd">', 'Georgia'),
+    ('<!DOCTYPE svg PUBLIC "figure" "x.dtd">', 'Georgia'),
+    ('<!DOCTYPE svg [<!ENTITY % family "Georgia">]>', 'Georgia'),
+    ('<!DOCTYPE svg>', 'Georgia'),
+)
+DTD_REFERENCE_CASES = (
+    ('<!DOCTYPE svg SYSTEM "x.dtd" [<!ENTITY family "Georgia">]>', '&family;', 'A'),
+    ('<!DOCTYPE svg PUBLIC "figure" "x.dtd" [<!ENTITY family "Georgia">]>', '&family;', 'A'),
+    ('<!DOCTYPE svg [<!ENTITY label "A">]>', 'Georgia', '&label;'),
+    ('''<!DOCTYPE svg [<!ENTITY % labels "<!ENTITY label 'A'>">%labels;]>''',
+     'Georgia', '&label;'),
+    ('<!DOCTYPE svg>', '&missing;', 'A'),
+    ('<!DOCTYPE svg>', 'Georgia', '&missing;'),
+)
+DTD_REFUSAL = "DTD or entity declaration is outside S26's SVG allow-list"
+
+
+def dtd_figure(idea, declaration, family):
+    return declaration.encode("ascii") + ET.tostring(figure_fixture(idea)).replace(
+        b'font-family="Georgia"', f'font-family="{family}"'.encode("ascii"))
+
+
 class SvgGate(unittest.TestCase):
     """The closed SVG input language, through both complete figure checks."""
 
@@ -2086,12 +2176,50 @@ class SvgGate(unittest.TestCase):
                 root = figure_fixture(idea)
                 parent = root
                 for _ in range(16):
-                    parent = ET.SubElement(parent, style.SVG + "g")
+                    parent = svg_sub(parent, style.SVG + "g")
                 self.assertEqual(figure_findings(root, idea), [])
-                ET.SubElement(parent, style.SVG + "g")
+                svg_sub(parent, style.SVG + "g")
                 self.assertEqual(figure_findings(root, idea), [
                     ("S26", "figures/I/01" + ("-idea.svg" if idea else ".svg"), 0,
                      "SVG nesting exceeds 16 levels below the root")])
+
+    def test_svg_namespace_at_both_entry_points(self):
+        """The root and every descendant belong to the SVG namespace."""
+        for idea in (False, True):
+            path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+            root = figure_fixture(idea)
+            root.tag = "svg"
+            self.assertEqual(figure_findings(root, idea), [
+                ("S26", path, 0, "<svg> root is not an SVG-namespaced <svg> in "
+                 "S26's SVG allow-list")])
+
+            root = figure_fixture(idea)
+            label = next(el for el in root.iter() if style.text_of(el) == "A")
+            label.tag = "text"
+            self.assertEqual(figure_findings(root, idea), [
+                ("S26", path, 0, "<text> is outside S26's SVG namespace")])
+
+            self.assertEqual(figure_findings(figure_fixture(idea), idea), [])
+
+    def test_nonrendering_descendants_at_both_entry_points(self):
+        """Metadata is text-only, and text and drawn elements are leaves."""
+        for idea in (False, True):
+            path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+            for kind in ("title", "desc", "text", "line"):
+                with self.subTest(idea=idea, parent=kind):
+                    root = figure_fixture(idea)
+                    if kind == "desc":
+                        parent = next((el for el in root if style.tag(el) == "desc"), None)
+                        if parent is None:
+                            parent = svg_sub(root, "desc")
+                    else:
+                        parent = next(el for el in root.iter() if style.tag(el) == kind)
+                    child = svg_sub(parent, "text" if kind in ("title", "desc") else "g")
+                    if style.tag(child) == "text":
+                        child.text = "A"
+                    self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [
+                        ("S26", path, 0, f"<{kind}> may not contain element children in "
+                         "S26's SVG allow-list")])
 
     def test_stroked_labels(self):
         for idea in (False, True):
@@ -2103,7 +2231,7 @@ class SvgGate(unittest.TestCase):
                     e.attrib.update(x="150", y="100", **{"font-size": "17",
                                          "font-style": "normal", "text-anchor": "start"})
                     ink = "#222222" if idea else "#3b2f2f"
-                    ET.SubElement(root, "line", {"x1": "145", "y1": "103.5", "x2": "170",
+                    svg_sub(root, "line", {"x1": "145", "y1": "103.5", "x2": "170",
                                   "y2": "103.5", "stroke": ink, "stroke-width": "1.6"})
                     target = {"own": e, "group": group, "root": root}[placement]
                     target.attrib.update(stroke=ink, **{"stroke-width": "1.6"})
@@ -2114,6 +2242,32 @@ class SvgGate(unittest.TestCase):
                             el.set("stroke", "none")
                     self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
 
+    def test_point_labels_need_visible_fill(self):
+        """Direct and inherited fill none fail; explicit visible fill overrides it."""
+        for idea in (False, True):
+            path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+            ink = "#222222" if idea else "#3b2f2f"
+
+            root = figure_fixture(idea)
+            label = next(el for el in root.iter() if style.text_of(el) == "E")
+            label.set("fill", "none")
+            self.assertEqual(figure_findings(root, idea), [
+                ("S26", path, 0, "letter E has effective fill 'none': outside S26's SVG "
+                 "allow-list")])
+
+            root = figure_fixture(idea)
+            group = next(el for el in root.iter()
+                         if style.tag(el) == "g" and any(style.tag(child) == "text"
+                                                         for child in el))
+            group.set("fill", "none")
+            self.assertEqual(figure_findings(root, idea), [
+                ("S26", path, 0, f"letter {s} has effective fill 'none': outside S26's SVG "
+                 "allow-list") for s in ("A", "C", "E")])
+
+            for label in group:
+                label.set("fill", ink)
+            self.assertEqual(figure_findings(root, idea), [])
+
     def test_bold_labels_and_numerals(self):
         for idea in (False, True):
             for placement in ("own", "group", "root"):
@@ -2123,7 +2277,7 @@ class SvgGate(unittest.TestCase):
                     group = next(el for el in root.iter() if e in list(el))
                     e.attrib.update(x="150", y="100", **{"font-size": "17",
                                          "font-style": "normal", "text-anchor": "start"})
-                    ET.SubElement(root, "line", {"x1": "163.6", "y1": "80", "x2": "163.6",
+                    svg_sub(root, "line", {"x1": "163.6", "y1": "80", "x2": "163.6",
                                   "y2": "105", "stroke-width": "1.6",
                                   "stroke": "#222222" if idea else "#3b2f2f"})
                     target = {"own": e, "group": group, "root": root}[placement]
@@ -2137,8 +2291,22 @@ class SvgGate(unittest.TestCase):
                         attrs = {"x": "250", "y": "230"}
                         if placement == "own":
                             attrs["font-weight"] = "bold"
-                        ET.SubElement(target if placement != "own" else group, "text", attrs).text = content
+                        svg_sub(target if placement != "own" else group, "text", attrs).text = content
                     self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
+
+    def test_unicode_capitals_are_refused_and_checking_continues(self):
+        """Both figure entry points refuse unmeasured capitals and reach the next file."""
+        for idea in (False, True):
+            for payload in ("Α", "Ａ"):
+                with self.subTest(idea=idea, payload=payload):
+                    root = figure_fixture(idea)
+                    svg_sub(root, "text", {"x": "250", "y": "230",
+                                  "fill": "#222222" if idea else "#3b2f2f"}).text = payload
+                    found = figure_run(root, idea)
+                    path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                    self.assertEqual([f for f in found if f[1] == path],
+                                     [("S26", path, 0, text_refusal(payload))])
+                    self.assert_continued(found, idea, text_refusal(payload))
 
     def test_missing_label_font_family(self):
         """A default font cannot borrow Georgia's clearance at either entry point."""
@@ -2152,7 +2320,7 @@ class SvgGate(unittest.TestCase):
                             el.set("font-family", "Georgia")
                     # E clears this stroke by 2.04 in Georgia; a default font can differ.
                     x = "355.33" if idea else "349.85"
-                    ET.SubElement(root, "line", {
+                    svg_sub(root, "line", {
                         "x1": x, "x2": x, "y1": "138", "y2": "160",
                         "stroke": "#222222" if idea else "#3b2f2f", "stroke-width": "1.6"})
                     path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
@@ -2174,7 +2342,7 @@ class SvgGate(unittest.TestCase):
                         for target in targets:
                             target.set("font-family", family)
                         x = "355.33" if idea else "349.85"
-                        ET.SubElement(root, "line", {
+                        svg_sub(root, "line", {
                             "x1": x, "x2": x, "y1": "138", "y2": "160",
                             "stroke": "#222222" if idea else "#3b2f2f", "stroke-width": "1.6"})
                         self.assertEqual(figure_findings(root, idea), [])
@@ -2201,7 +2369,7 @@ class SvgGate(unittest.TestCase):
                         root = figure_fixture(idea)
                         e = next(el for el in root.iter() if style.text_of(el) == "E")
                         e.text = content
-                        self.assert_refused(root, idea, "<text>", "unmeasured")
+                        self.assert_refused(root, idea, "<text>", "payload")
             for content in (" E ", "\tE\t", "\rE\r", "\nE\n", " \t\r\nE \t\r\n"):
                 with self.subTest(idea=idea, content=content):
                     root = figure_fixture(idea)
@@ -2217,7 +2385,7 @@ class SvgGate(unittest.TestCase):
                         e = next(el for el in root.iter() if style.text_of(el) == "E")
                         e.attrib.update(x="150", y="100", **{"font-size": "17",
                                              "font-style": "normal", "text-anchor": "start"})
-                        ellipse = ET.SubElement(root, "ellipse", {"cx": "150", "cy": "100",
+                        ellipse = svg_sub(root, "ellipse", {"cx": "150", "cy": "100",
                                      "rx": "8", "ry": "8", "fill": fill, "stroke-width": "1.6",
                                      "stroke": "#222222" if idea else "#3b2f2f"})
                         for attr in (("rx", "ry") if missing == "both" else (missing,)):
@@ -2236,20 +2404,20 @@ class SvgGate(unittest.TestCase):
                                     ("d", f"M150 100 A{big} 8 0 0 1 160 100")):
                     with self.subTest(idea=idea, attr=attr, value=value[:40]):
                         root = figure_fixture(idea)
-                        shape = ET.SubElement(root, "path", {"fill": "none",
+                        shape = svg_sub(root, "path", {"fill": "none",
                                               "stroke": "#222222" if idea else "#3b2f2f",
                                               "stroke-width": "1.6"})
                         shape.set(attr, value)
                         self.assert_refused(root, idea, attr, "allow-list")
                         self.assert_continued(figure_run(root, idea), idea, "allow-list")
             root = figure_fixture(idea)
-            ET.SubElement(root, "line", {"x1": "-10000", "x2": "10000", "stroke": "none"})
+            svg_sub(root, "line", {"x1": "-10000", "x2": "10000", "stroke": "none"})
             self.assertEqual(figure_findings(root, idea), [])
 
     def test_curve_limits_and_continuation(self):
         for idea in (False, True):
             root = figure_fixture(idea)
-            ET.SubElement(root, "path", {"d": "M100 100 C100 200 200 200 200 100",
+            svg_sub(root, "path", {"d": "M100 100 C100 200 200 200 200 100",
                           "stroke": "#222222" if idea else "#3b2f2f", "fill": "none",
                           "stroke-width": "1.6"})
             # Exhaust the budget on a small curve to exercise the failure path quickly.
@@ -2271,7 +2439,7 @@ class SvgGate(unittest.TestCase):
                 for fill in ("none", "#222222" if idea else "#3b2f2f"):
                     with self.subTest(idea=idea, radius=radius, fill=fill):
                         root = figure_fixture(idea)
-                        ET.SubElement(root, "path", {
+                        svg_sub(root, "path", {
                             "d": f"M100 100 A{radius} 1 0 0 1 200 100", "fill": fill,
                             "stroke": "#222222" if idea else "#3b2f2f", "stroke-width": "1.6"})
                         self.assert_continued(figure_run(root, idea), idea, "non-finite")
@@ -2279,8 +2447,9 @@ class SvgGate(unittest.TestCase):
     def test_tiny_ellipse_fill(self):
         # Squaring these finite ratios used to overflow in S20's fill measurement.
         root = figure_fixture(True)
-        ellipse = ET.Element("ellipse", {"cx": "20", "cy": "20", "rx": "0." + "0" * 160 + "1",
-                             "ry": "1", "fill": "#222222"})
+        ellipse = ET.Element(style.SVG + "ellipse", {
+            "cx": "20", "cy": "20", "rx": "0." + "0" * 160 + "1",
+            "ry": "1", "fill": "#222222"})
         root.insert(1, ellipse)
         self.assertEqual(figure_findings(root, True), [])
         ellipse.set("rx", "0." + "0" * 309 + "1")
@@ -2299,13 +2468,13 @@ class SvgGate(unittest.TestCase):
             self.assert_continued(figure_run(figure_fixture(True), True, reference=raw), True,
                                   "not well-formed SVG", first_path="figures/I/01.svg", rule="S15")
         # Expat versions differ in which decoder failures they produce.
-        parse = ET.parse
+        parse = style.parse_svg
         for idea in (False, True):
             def decode_failure(path, *args, **kwargs):
                 if Path(path).name == ("01-idea.svg" if idea else "01.svg"):
                     raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
                 return parse(path, *args, **kwargs)
-            with patch.object(ET, "parse", side_effect=decode_failure):
+            with patch.object(style, "parse_svg", side_effect=decode_failure):
                 self.assert_continued(figure_run(figure_fixture(idea), idea), idea,
                                       "not well-formed SVG", rule="S14" if idea else "S15")
 
@@ -2321,6 +2490,166 @@ class SvgGate(unittest.TestCase):
                 path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
                 self.assertEqual([f for f in found if f[1] == path], [("S26", path, 0, expected)])
                 self.assert_continued(found, idea, expected)
+
+    def test_dtd_refusal_and_continuation(self):
+        for idea in (False, True):
+            for declaration, family in DTD_CASES:
+                for encoding in ("utf-8", "utf-16"):
+                    with self.subTest(idea=idea, declaration=declaration, encoding=encoding):
+                        raw = dtd_figure(idea, declaration, family).decode("ascii").encode(encoding)
+                        found = figure_run(raw, idea)
+                        path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                        self.assertEqual([f for f in found if f[1] == path],
+                                         [("S26", path, 0, DTD_REFUSAL)])
+                        self.assert_continued(found, idea, DTD_REFUSAL)
+
+    def test_dtd_references_and_continuation(self):
+        for idea in (False, True):
+            for declaration, family, label in DTD_REFERENCE_CASES:
+                with self.subTest(idea=idea, declaration=declaration, family=family, label=label):
+                    raw = dtd_figure(idea, declaration, family).replace(
+                        b">A<", f">{label}<".encode("ascii"))
+                    found = figure_run(raw, idea)
+                    path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                    self.assertEqual([f for f in found if f[1] == path],
+                                     [("S26", path, 0, DTD_REFUSAL)])
+                    self.assert_continued(found, idea, DTD_REFUSAL)
+                    with tempfile.TemporaryDirectory() as tmp, patch.object(style, "failures", []):
+                        copy = Path(tmp) / "01.svg"
+                        copy.write_bytes(raw)
+                        self.assertIsNone(style.drawn_letters(copy))
+                        self.assertEqual(style.failures, [])
+
+    def test_dtd_markup_anywhere_and_continuation(self):
+        # The byte guard deliberately refuses declaration markers inside comments too.
+        for idea in (False, True):
+            body = ET.tostring(figure_fixture(idea))
+            for declaration in (b"<!DOCTYPE svg>", b'<!ENTITY label "A">'):
+                for comment in (False, True):
+                    markup = b"<!-- " + declaration + b" -->" if comment else declaration
+                    for place in ("before", "inside", "after"):
+                        raw = {"before": markup + body,
+                               "inside": body.replace(b">", b">" + markup, 1),
+                               "after": body + markup}[place]
+                        for encoding in ("utf-8", "utf-16-le", "utf-16-be", "utf-32-le", "utf-32-be"):
+                            with self.subTest(idea=idea, declaration=declaration, comment=comment,
+                                              place=place, encoding=encoding):
+                                found = figure_run(raw.decode("ascii").encode(encoding), idea)
+                                path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                                self.assertEqual([f for f in found if f[1] == path],
+                                                 [("S26", path, 0, DTD_REFUSAL)])
+                                self.assert_continued(found, idea, DTD_REFUSAL)
+
+    def test_undeclared_references_without_dtd_and_continuation(self):
+        for idea in (False, True):
+            for family, label in (("&missing;", "A"), ("Georgia", "&missing;")):
+                with self.subTest(idea=idea, family=family, label=label):
+                    raw = dtd_figure(idea, "", family).replace(b">A<", f">{label}<".encode("ascii"))
+                    found = figure_run(raw, idea)
+                    path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                    errors = [f for f in found if f[1] == path]
+                    rule = "S14" if idea else "S15"
+                    self.assertEqual(len(errors), 1, errors)
+                    self.assertEqual(errors[0][:3], (rule, path, 0))
+                    self.assertIn("not well-formed SVG: undefined entity", errors[0][3])
+                    self.assert_continued(found, idea, "undefined entity", rule=rule)
+
+    def test_dtd_refusal_with_python_parser(self):
+        """Use the real fallback in isolation, including a temporary copy of I.1."""
+        code = """
+import runpy
+import sys
+import unittest
+sys.modules['_elementtree'] = None
+ns = runpy.run_path(sys.argv[1])
+style = ns['style']
+assert sys.flags.isolated
+assert hasattr(style.ET.XMLParser(), 'parser'), 'not the pure-Python parser'
+case = ns['SvgGate']()
+for idea in (False, True):
+    suffix = '-idea.svg' if idea else '.svg'
+    source = (style.ROOT / 'figures' / 'I' / ('01' + suffix)).read_bytes()
+    raw = b'<!DOCTYPE svg [<!ENTITY family "Georgia">]>' + source.replace(
+        b'font-family="Georgia, \\'Times New Roman\\', serif"', b'font-family="&family;"')
+    assert b'font-family="&family;"' in raw
+    found = ns['figure_run'](raw, idea)
+    path = 'figures/I/01' + suffix
+    case.assertEqual([f for f in found if f[1] == path], [('S26', path, 0, ns['DTD_REFUSAL'])])
+    case.assert_continued(found, idea, ns['DTD_REFUSAL'])
+names = (
+    'test_dtd_refusal_and_continuation',
+    'test_dtd_references_and_continuation',
+    'test_dtd_markup_anywhere_and_continuation',
+    'test_dtd_in_euclid_reference_is_reported_once_and_continues',
+    'test_drawn_letters_refuses_dtd',
+    'test_dtd_refusal_precedes_internal_subset',
+    'test_svg_root_source_refuses_declarations_before_parser',
+    'test_undeclared_references_without_dtd_and_continuation',
+    'test_character_references_keep_the_resolved_value_gate',
+    'test_xml_declarations_and_comments_are_admitted',
+)
+suite = unittest.TestSuite(ns['SvgGate'](name) for name in names)
+suite.addTest(ns['Modern']('test_companion_reader_refuses_internal_dtd'))
+suite.addTest(ns['Modern']('test_companion_letter_keeps_internal_newline'))
+result = unittest.TextTestRunner().run(suite)
+sys.exit(not result.wasSuccessful())
+"""
+        result = subprocess.run([sys.executable, "-I", "-c", code, str(Path(__file__).resolve())],
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_dtd_in_euclid_reference_is_reported_once_and_continues(self):
+        for declaration, family in DTD_CASES:
+            with self.subTest(declaration=declaration):
+                raw = dtd_figure(False, declaration, family)
+                found = figure_run(figure_fixture(True), True, reference=raw)
+                path = "figures/I/01.svg"
+                self.assertEqual([f for f in found if f[1] == path],
+                                 [("S26", path, 0, DTD_REFUSAL)])
+                self.assert_continued(found, True, DTD_REFUSAL, first_path=path)
+
+    def test_drawn_letters_refuses_dtd(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "01.svg"
+            for declaration, family in DTD_CASES:
+                with self.subTest(declaration=declaration):
+                    path.write_bytes(dtd_figure(False, declaration, family))
+                    self.assertIsNone(style.drawn_letters(path))
+
+    def test_dtd_refusal_precedes_internal_subset(self):
+        # Refuse even before any declaration or reference in the subset is read.
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "01.svg"
+            path.write_bytes(b"<!DOCTYPE svg [")
+            with self.assertRaises(ET.ParseError) as raised:
+                style.parse_svg(path)
+            self.assertEqual(str(raised.exception), DTD_REFUSAL)
+
+    def test_svg_root_source_refuses_declarations_before_parser(self):
+        path = style.ROOT / "figures/I/01-modern.svg"
+        for declaration in (b"<!DOCTYPE svg [", b'<!ENTITY label "A">'):
+            for encoding in ("utf-8", "utf-16", "utf-32-le", "utf-32-be"):
+                with self.subTest(declaration=declaration, encoding=encoding), \
+                        patch.object(style, "failures", []), \
+                        patch.object(ET, "XMLParser", side_effect=AssertionError("parser built")), \
+                        patch.object(Path, "read_bytes", side_effect=AssertionError("file reread")):
+                    raw = declaration.decode("ascii").encode(encoding)
+                    self.assertIsNone(style.svg_root(path, raw))
+                    self.assertEqual(style.failures,
+                                     [("S26", "figures/I/01-modern.svg", 0, DTD_REFUSAL)])
+
+    def test_character_references_keep_the_resolved_value_gate(self):
+        for idea in (False, True):
+            for family in (b"&#71;eorgia", b"&#x47;eorgia", b"&#83;erif"):
+                with self.subTest(idea=idea, family=family):
+                    raw = ET.tostring(figure_fixture(idea)).replace(
+                        b'font-family="Georgia"', b'font-family="' + family + b'"')
+                    raw = raw.replace(b">A<", b">&#65;<")
+                    found = figure_run(raw, idea)
+                    path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                    expected = [("S26", path, 0, svg_refusal("svg", "font-family", "Serif"))] \
+                        if family == b"&#83;erif" else []
+                    self.assertEqual([f for f in found if f[1] == path], expected)
 
     def test_xml_declarations_and_comments_are_admitted(self):
         for idea in (False, True):
@@ -2365,7 +2694,7 @@ class SvgGate(unittest.TestCase):
     def test_nested_svg(self):
         for idea in (False, True):
             root = figure_fixture(idea)
-            ET.SubElement(root, "svg", {"viewBox": "0 0 400 300"})
+            svg_sub(root, "svg", {"viewBox": "0 0 400 300"})
             self.assert_refused(root, idea, "<svg>")
 
     def test_numeric_ranges(self):
@@ -2373,13 +2702,13 @@ class SvgGate(unittest.TestCase):
             for attr in ("r", "rx", "ry", "width", "height", "font-size", "stroke-width"):
                 with self.subTest(idea=idea, attr=attr):
                     root = figure_fixture(idea)
-                    ET.SubElement(root, "rect", {attr: "-0.1"})
+                    svg_sub(root, "rect", {attr: "-0.1"})
                     self.assert_refused(root, idea, attr)
             for attr in ("fill-opacity", "stroke-opacity"):
                 for value in ("-0.1", "1.1"):
                     with self.subTest(idea=idea, attr=attr, value=value):
                         root = figure_fixture(idea)
-                        ET.SubElement(root, "g", {attr: value})
+                        svg_sub(root, "g", {attr: value})
                         self.assert_refused(root, idea, attr)
             for attr, values in (
                     ("viewBox", ("0 0 400", "0 0 400 300 1", "0 0 0 300", "0 0 400 0",
@@ -2392,6 +2721,49 @@ class SvgGate(unittest.TestCase):
                         root.set(attr, value)
                         self.assert_refused(root, idea, attr)
 
+    def test_dasharray_requires_a_positive_component(self):
+        for idea in (False, True):
+            path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+            for value in ("0", "0 0", "0.0", "0, 0.00"):
+                with self.subTest(idea=idea, value=value):
+                    root = figure_fixture(idea)
+                    group = svg_sub(root, "g", {"stroke-dasharray": value})
+                    self.assertEqual(
+                        [f for f in figure_findings(root, idea) if f[0] == "S26"],
+                        [("S26", path, 0,
+                          svg_refusal(style.tag(group), "stroke-dasharray", value))])
+            for value in ("none", "1", "0 2", "1, 2 3,4"):
+                with self.subTest(idea=idea, value=value):
+                    root = figure_fixture(idea)
+                    svg_sub(root, "g", {"stroke-dasharray": value})
+                    self.assertEqual(
+                        [f for f in figure_findings(root, idea) if f[0] == "S26"], [])
+
+    def test_zero_opacity_on_shapes_and_ancestor_groups(self):
+        """Invisible paint is refused where set, while main's positive values remain."""
+        for idea in (False, True):
+            for attr in ("fill-opacity", "stroke-opacity"):
+                for placement in ("shape", "group"):
+                    for value in ("0", "0.0"):
+                        with self.subTest(idea=idea, attr=attr, placement=placement,
+                                          value=value):
+                            root = figure_fixture(idea)
+                            parent = root if placement == "shape" else svg_sub(root, "g")
+                            shape = svg_sub(parent, "circle", {
+                                "cx": "250", "cy": "230", "r": "10", "fill": "none"})
+                            target = shape if placement == "shape" else parent
+                            target.set(attr, value)
+                            path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                            self.assertEqual(figure_findings(root, idea), [
+                                ("S26", path, 0, svg_refusal(style.tag(target), attr, value))])
+                for value in ("0.1", "0.55", "1"):
+                    with self.subTest(idea=idea, attr=attr, value=value):
+                        root = figure_fixture(idea)
+                        group = svg_sub(root, "g", {attr: value})
+                        svg_sub(group, "circle", {
+                            "cx": "250", "cy": "230", "r": "10", "fill": "none"})
+                        self.assertEqual(figure_findings(root, idea), [])
+
     def test_exact_keywords_and_whitespace(self):
         for idea in (False, True):
             for attr, word in (("font-weight", "normal"), ("font-style", "normal"),
@@ -2402,7 +2774,7 @@ class SvgGate(unittest.TestCase):
                               word + "\n", "\u00a0" + word):
                     with self.subTest(idea=idea, attr=attr, value=value):
                         root = figure_fixture(idea)
-                        ET.SubElement(root, "g", {attr: value})
+                        svg_sub(root, "g", {attr: value})
                         self.assert_refused(root, idea, attr)
             for space in ("\u00a0", "\u2003", "\v", "\f"):
                 for attr, value in (("x1", space + "10"), ("x1", "10" + space),
@@ -2412,10 +2784,10 @@ class SvgGate(unittest.TestCase):
                                     ("d", f"M100{space}100 L200 100")):
                     with self.subTest(idea=idea, attr=attr, value=value):
                         root = figure_fixture(idea)
-                        ET.SubElement(root, "g", {attr: value})
+                        svg_sub(root, "g", {attr: value})
                         self.assert_refused(root, idea, attr)
             root = figure_fixture(idea)
-            ET.SubElement(root, "line", {"x1": " \t\r\n10 \t\r\n",
+            svg_sub(root, "line", {"x1": " \t\r\n10 \t\r\n",
                           "stroke-dasharray": "1,\t2\r\n3 4"})
             self.assertEqual(figure_findings(root, idea), [])
 
@@ -2429,7 +2801,7 @@ class SvgGate(unittest.TestCase):
             for value in paths:
                 with self.subTest(idea=idea, d=value):
                     root = figure_fixture(idea)
-                    ET.SubElement(root, "path", {"d": value})
+                    svg_sub(root, "path", {"d": value})
                     self.assert_refused(root, idea, "<path>", "d")
 
     def test_supported_spellings_and_continuation(self):
@@ -2437,15 +2809,15 @@ class SvgGate(unittest.TestCase):
             root = figure_fixture(idea)
             for transform in ("translate(+0,-0)", "translate(0 0)",
                               "rotate(0 150 100)", "rotate(0,150,100)"):
-                group = ET.SubElement(root, "g", {"transform": transform, "font-style": "normal",
+                group = svg_sub(root, "g", {"transform": transform, "font-style": "normal",
                                       "font-weight": "normal", "text-anchor": "start",
                                       "stroke-linecap": "butt", "stroke-linejoin": "miter"})
-                ET.SubElement(group, "polyline", {"points": "10,20 30,40", "stroke-dasharray": "none"})
-                ET.SubElement(group, "line", {"x1": "+10.00", "y1": "-0", "stroke-width": "0",
+                svg_sub(group, "polyline", {"points": "10,20 30,40", "stroke-dasharray": "none"})
+                svg_sub(group, "line", {"x1": "+10.00", "y1": "-0", "stroke-width": "0",
                               "stroke-dasharray": "1, 2   3,4"})
             self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
-            ET.SubElement(root, "image")
-            ET.SubElement(root, "g", {"style": "fill:none", "unknown": "bad"})
+            svg_sub(root, "image")
+            svg_sub(root, "g", {"style": "fill:none", "unknown": "bad"})
             self.assert_refused(root, idea, "<image>", "style", "unknown")
             self.assertEqual(figure_findings(figure_fixture(idea), idea), [])
 
@@ -2455,14 +2827,14 @@ class SvgGate(unittest.TestCase):
                          "defs", "marker", "unknown", "{urn:other}line"):
                 with self.subTest(idea=idea, element=name):
                     root = figure_fixture(idea)
-                    ET.SubElement(root, name)
+                    svg_sub(root, name)
                     self.assert_refused(root, idea, f"<{name}>")
             for name in ("style", "class", "id", "onclick", "filter", "clip-path",
                          "mask", "vector-effect", "dx", "dy", "fill-rule",
                          "stroke-miterlimit", "unknown", "{urn:other}x"):
                 with self.subTest(idea=idea, attribute=name):
                     root = figure_fixture(idea)
-                    ET.SubElement(root, "g", {name: "none"})
+                    svg_sub(root, "g", {name: "none"})
                     self.assert_refused(root, idea, "<g>", name)
 
     def test_plain_decimals_and_lists(self):
@@ -2472,7 +2844,7 @@ class SvgGate(unittest.TestCase):
                               "--1", "+", "", "NaN", "inf", "١", "9" * 400):
                     with self.subTest(idea=idea, attr=attr, value=value[:30]):
                         root = figure_fixture(idea)
-                        ET.SubElement(root, "line", {attr: value})
+                        svg_sub(root, "line", {attr: value})
                         self.assert_refused(root, idea, "<line>", attr)
             for attr in ("points", "viewBox", "stroke-dasharray"):
                 for value in ("0 0 400x 300", "0 0 4e2 300", "0 0 .4 300", "0,,0",
@@ -2492,7 +2864,7 @@ class SvgGate(unittest.TestCase):
                           "scale(1)", "scale(1,2)", "matrix(1 0 0 1 0 0)", "skewX(0)", ""):
                 with self.subTest(idea=idea, transform=value):
                     root = figure_fixture(idea)
-                    ET.SubElement(root, "line", {"x1": "352", "y1": "150.8", "x2": "364",
+                    svg_sub(root, "line", {"x1": "352", "y1": "150.8", "x2": "364",
                                   "y2": "150.8", "stroke": "#222222" if idea else "#3b2f2f",
                                   "stroke-width": "1.6", "transform": value})
                     self.assert_refused(root, idea, "<line>", "transform")
@@ -2510,7 +2882,7 @@ class SvgGate(unittest.TestCase):
                     if kind == "text":
                         el = next(e for e in root.iter() if style.text_of(e) == "E")
                     else:
-                        el = ET.SubElement(root, kind, {
+                        el = svg_sub(root, kind, {
                             "stroke": "#222222" if idea else "#3b2f2f", "stroke-width": "1.6"})
                     el.attrib.update(attrs)
                     self.assert_refused(root, idea, f"<{kind}>", "style")
@@ -2520,8 +2892,8 @@ class SvgGate(unittest.TestCase):
             for placement in ("attribute", "style", "inherited"):
                 with self.subTest(idea=idea, placement=placement):
                     root = figure_fixture(idea)
-                    parent = ET.SubElement(root, "g") if placement == "inherited" else root
-                    line = ET.SubElement(parent, "line", {
+                    parent = svg_sub(root, "g") if placement == "inherited" else root
+                    line = svg_sub(parent, "line", {
                         "x1": "352", "y1": "150.8", "x2": "364", "y2": "150.8",
                         "stroke": "#222222" if idea else "#3b2f2f"})
                     target = parent if placement == "inherited" else line
@@ -2536,13 +2908,13 @@ class SvgGate(unittest.TestCase):
                 for value in ("inherit", "initial", "unset", "revert", "revert-layer", "unknown"):
                     with self.subTest(idea=idea, attr=attr, value=value):
                         root = figure_fixture(idea)
-                        ET.SubElement(root, "g", {attr: value})
+                        svg_sub(root, "g", {attr: value})
                         self.assert_refused(root, idea, "<g>", attr)
             for attr, value in (("stroke-linecap", "square"), ("stroke-linejoin", "bevel"),
                                 ("font-style", "oblique"), ("font-weight", "700")):
                 with self.subTest(idea=idea, attr=attr, value=value):
                     root = figure_fixture(idea)
-                    ET.SubElement(root, "g", {attr: value})
+                    svg_sub(root, "g", {attr: value})
                     self.assert_refused(root, idea, attr)
 
     def test_explicit_inheritance(self):
@@ -2552,9 +2924,9 @@ class SvgGate(unittest.TestCase):
                     ("stroke-linejoin", "miter", '<polyline points="130,160 155,103 180,160"/>')):
                 with self.subTest(idea=idea, attribute=attr):
                     root = figure_fixture(idea)
-                    group = ET.SubElement(root, "g", {attr: value, "stroke-width": "1.6",
+                    group = svg_sub(root, "g", {attr: value, "stroke-width": "1.6",
                                           "stroke": "#222222" if idea else "#3b2f2f"})
-                    drawn = ET.fromstring(shape)
+                    drawn = svg_element(shape)
                     group.append(drawn)
                     e = next(el for el in root.iter() if style.tag(el) == "text"
                              and style.text_of(el) == "E")
@@ -2579,7 +2951,7 @@ class SvgGate(unittest.TestCase):
                           "M100 100 A-10 10 0 0 0 120 100", "M100 100 L200 100 junk"):
                 with self.subTest(idea=idea, d=value):
                     root = figure_fixture(idea)
-                    ET.SubElement(root, "path", {"d": value})
+                    svg_sub(root, "path", {"d": value})
                     self.assert_refused(root, idea, "<path>", "d")
 
     def test_bezier_clearance(self):
@@ -2595,7 +2967,7 @@ class SvgGate(unittest.TestCase):
             for d in paths:
                 with self.subTest(idea=idea, d=d):
                     root = figure_fixture(idea)
-                    ET.SubElement(root, "path", {"d": d, "fill": "none", "stroke-width": "1.6",
+                    svg_sub(root, "path", {"d": d, "fill": "none", "stroke-width": "1.6",
                                   "stroke": "#222222" if idea else "#3b2f2f"})
                     e = next(el for el in root.iter() if style.tag(el) == "text"
                              and style.text_of(el) == "E")
@@ -2658,7 +3030,7 @@ class Clearance(unittest.TestCase):
                 for join in (None, "miter", "round"):
                     with self.subTest(idea=idea, d=d, join=join):
                         root = figure_fixture(idea)
-                        curve = ET.SubElement(root, "path", {
+                        curve = svg_sub(root, "path", {
                             "d": d, "fill": "none",
                             "stroke": "#222222" if idea else "#3b2f2f",
                             "stroke-width": "1.6"})
@@ -2980,9 +3352,10 @@ class Clearance(unittest.TestCase):
                         a = next(el for el in root.iter()
                                  if style.tag(el) == "text" and style.text_of(el) == "A")
                         a.text = None
-                        a.append(ET.fromstring(child))
+                        a.append(svg_element(child))
                     want = [("S26", str(path.relative_to(style.ROOT)), 0,
-                             svg_refusal(style.tag(ET.fromstring(child))))] if child else []
+                             "<text> may not contain element children in S26's SVG allow-list")] \
+                        if child else []
                     self.assertEqual(figure_findings(root, idea), want)
             for y in ("150", "155"):
                 with self.subTest(idea=idea, flat_y=y):
@@ -3009,30 +3382,25 @@ class Clearance(unittest.TestCase):
                             if suffix or attr in ("dx", "dy") else []
                         self.assertEqual(figure_findings(root, idea), want)
 
-    def test_unmeasured_capitals_figure_entry_points(self):
-        """Extra capital runs fail even while every required letter remains present."""
+    def test_text_payloads_figure_entry_points(self):
+        """Only one Heath letter or an ASCII integer is admitted as figure text."""
         for idea in (False, True):
             path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
-            for text in ("AA", "A B", "A=2", "Angle A", "2", "lowercase"):
+            for text in ("AA", "A B", "A=2", "Angle A", "lowercase", "Α", "Ａ",
+                         "2", "9", "16", "25"):
                 for x in ("120", "120 270"):
                     with self.subTest(idea=idea, text=text, x=x):
                         root = figure_fixture(idea)
                         ink = "#222222" if idea else "#3b2f2f"
-                        root.append(ET.fromstring(
+                        root.append(svg_element(
                             f'<text x="{x}" y="220" fill="{ink}">{text}</text>'))
                         want = []
                         if " " in x:
                             want.append(svg_refusal("text", "x", x))
-                        if " " not in x and text not in ("2", "lowercase"):
-                            want.append(f"<text> {text!r} has unmeasured capitals: "
-                                        "draw each label in a separate <text>")
+                        if text not in ("2", "9", "16", "25"):
+                            want.append(text_refusal(text))
                         expected = [("S26", str(path.relative_to(style.ROOT)), 0, msg)
                                     for msg in want]
-                        if " " not in x and idea and text != "2":
-                            expected.append(("S20", str(path.relative_to(style.ROOT)), 0,
-                                             f"<text>{text}</text>: an idea figure's text is "
-                                             "Heath's letters, one to a <text>, or numbers "
-                                             "on a fill"))
                         self.assertEqual(figure_findings(root, idea), expected)
 
     def test_stroke_widths_figure_entry_points(self):
@@ -3045,12 +3413,12 @@ class Clearance(unittest.TestCase):
                     with self.subTest(idea=idea, width=width, placement=placement):
                         root = figure_fixture(idea)
                         ink, y = ("#222222", 55.5) if idea else ("#3b2f2f", 57.5)
-                        line = ET.SubElement(root, "line", x1="194", y1=str(y), x2="206",
+                        line = svg_sub(root, "line", x1="194", y1=str(y), x2="206",
                                              y2=str(y), stroke=ink)
                         if width is not None:
                             if placement == "inherited":
                                 root.remove(line)
-                                group = ET.SubElement(root, "g", {"stroke-width": width})
+                                group = svg_sub(root, "g", {"stroke-width": width})
                                 group.append(line)
                             else:
                                 line.set("style" if placement == "style" else "stroke-width",
@@ -3079,7 +3447,7 @@ class Clearance(unittest.TestCase):
                     with self.subTest(idea=idea, effect=effect, placement=placement):
                         root = figure_fixture(idea)
                         ink, y = ("#222222", "111") if idea else ("#3b2f2f", "115")
-                        line = ET.SubElement(root, "line", x1="388", y1=y, x2="412", y2=y,
+                        line = svg_sub(root, "line", x1="388", y1=y, x2="412", y2=y,
                                              stroke=ink, transform="scale(.5)",
                                              attrib={"stroke-width": "4"})
                         if effect is not None:
@@ -3115,10 +3483,10 @@ class Clearance(unittest.TestCase):
                 for near in (False, True):
                     with self.subTest(idea=idea, shape=shape, near=near):
                         root = figure_fixture(idea)
-                        curve = ET.SubElement(root, "g", {
+                        curve = svg_sub(root, "g", {
                             "fill": "none", "stroke": "#222222" if idea else "#8c7b62",
                             "stroke-width": "3" if idea else "1.3"})
-                        curve.append(ET.fromstring(markup))
+                        curve.append(svg_element(markup))
                         e = next(el for el in root.iter()
                                  if style.tag(el) == "text" and style.text_of(el) == "E")
                         e.attrib.update(x="268.13", y=("47.38" if idea else "48.93")
@@ -3140,6 +3508,22 @@ class Clearance(unittest.TestCase):
                         else:
                             self.assertEqual(found, [])
 
+    def test_path_chord_error_is_local_to_each_subpath(self):
+        """A remote large arc cannot widen a separate straight subpath's measure."""
+        remote = "M-10000 -9000 A10000 10000 0 0 1 -9000 -10000 "
+        for y, want in ((103.5, False), (101.5, True)):
+            local = f"M100 {y} H200"
+            for d in (local, remote + local):
+                with self.subTest(y=y, remote=d != local):
+                    found = s26_findings(
+                        f'<path d="{d}" fill="none" stroke="#3b2f2f" '
+                        'stroke-width="1.6"/>', letter("A"))
+                    self.assertEqual(bool(found), want, found)
+                    if want:
+                        self.assertEqual(len(found), 1, found)
+                        self.assertIn("letter A at (150, 100)", found[0])
+                        self.assertIn("a path", found[0])
+
     def test_percentage_coordinates_figure_entry_points(self):
         """Percentages cannot conceal a line through E at either entry point."""
         for idea in (False, True):
@@ -3147,7 +3531,7 @@ class Clearance(unittest.TestCase):
             for percentage in (False, True):
                 with self.subTest(idea=idea, percentage=percentage):
                     root = figure_fixture(idea)
-                    line = ET.SubElement(root, "line", {
+                    line = svg_sub(root, "line", {
                         "x1": "88%" if percentage else "352",
                         "x2": "91%" if percentage else "364",
                         "y1": "50.2667%" if percentage else "150.8",
@@ -3184,7 +3568,7 @@ class Clearance(unittest.TestCase):
                             with self.subTest(idea=idea, kind=kind, attr=attr, value=value,
                                               placement=placement):
                                 root = figure_fixture(idea)
-                                el = ET.SubElement(root, kind, {
+                                el = svg_sub(root, kind, {
                                     "fill": "none",
                                     "stroke": "#222222" if idea else "#3b2f2f"})
                                 if kind == "text":
@@ -3192,7 +3576,7 @@ class Clearance(unittest.TestCase):
                                 target = el
                                 if placement == "inherited":
                                     root.remove(el)
-                                    target = ET.SubElement(root, "g")
+                                    target = svg_sub(root, "g")
                                     target.append(el)
                                 target.set("style" if placement == "style" else attr,
                                            f"{attr}:{value}" if placement == "style" else value)
@@ -3229,7 +3613,7 @@ class Clearance(unittest.TestCase):
                               "0 0 1..5 300", "0 0 1e999 300", "0 0 400", ""):
                     with self.subTest(idea=idea, kind=kind, value=value):
                         root = figure_fixture(idea)
-                        el = root if kind == "svg" else ET.SubElement(
+                        el = root if kind == "svg" else svg_sub(
                             root, kind, {"stroke": "#222222" if idea else "#3b2f2f"})
                         el.set(attr, value)
                         found = [f for f in figure_findings(root, idea) if f[0] == "S26"]

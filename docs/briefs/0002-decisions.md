@@ -2148,8 +2148,32 @@ findings:
   parser call. Both entry points have regressions requiring the next figure's finding after an
   arithmetic or encoding failure. Subdivision is bounded for each cubic; these limits do
   not bound the input's length or its number of elements or path commands.
+  The protected files changed by the DTD correction are `scripts/check_style.py` and
+  `tests/test_check_style.py`. Every figure reader now scans the bytes for `<!DOCTYPE`
+  and `<!ENTITY` before constructing a parser, then parses those same bytes. The scan
+  removes NULs so UTF-16 and UTF-32 spellings are caught too, and deliberately refuses
+  declaration markers inside comments. ElementTree's pure-Python fallback omits the
+  doctype callback for bare declarations and internal subsets alone; the byte guard
+  makes refusal independent of that callback, which remains a second guard. The
+  tests pin the single S26 diagnostic and continuation for SYSTEM and PUBLIC
+  declarations with internal subsets, entities referenced in attributes and text,
+  a referenced parameter entity, undeclared references and markers throughout the
+  document. An isolated subprocess disables the C accelerator before import and
+  checks temporary copies of I.1's figures and the declaration cases with the real
+  fallback. Ordinary XML declarations, comments and character references remain
+  admitted; an undeclared reference without a DTD retains its malformed-SVG finding.
+  The combined parser guards supplied source bytes too, and S25's companion reader
+  shares that refusal, returning `None` while retaining `modern_text_of`'s exact
+  reading of the text; its regression also runs with the pure-Python parser.
   Mitre joins now use original segments' endpoint tangents, with no joins between a
-  curve's flattened chords.
+  curve's flattened chords. The closed text language admits only Heath's letters and
+  ASCII integer annotations, so Greek, full-width and other unmeasured text cannot pass
+  unseen. Zero fill and stroke opacity are refused on shapes and ancestor groups, while
+  main's positive opacity spellings remain admitted. Each path subpath now keeps its own
+  conservative chord allowance, so a remote arc cannot widen an unrelated straight
+  subpath's clearance measure. The gate also requires the SVG namespace and the figures'
+  container-and-leaf structure before measuring anything. A point label with effective
+  fill none is refused, while a visible explicit fill still overrides an ancestor's none.
   Both figure entry points have cases requiring an S26 finding. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures. The matching words in
