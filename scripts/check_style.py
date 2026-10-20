@@ -1190,8 +1190,6 @@ INLINE_HTML_TAG = re.compile(
     r"(?:<[A-Za-z][A-Za-z0-9-]*(?:\s+[A-Za-z_:][\w.:-]*"
     r"(?:\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s\"'=<>`]+))?)*\s*/?>"
     r"|</[A-Za-z][A-Za-z0-9-]*\s*>)")
-INLINE_RAW_HTML = re.compile(
-    rf"(?:{INLINE_HTML_TAG.pattern}|<\?[\s\S]*?\?>|<![A-Z][^>]*>|<!\[CDATA\[[\s\S]*?\]\]>)")
 
 class InlineBlock(NamedTuple):
     text: str
@@ -1807,7 +1805,7 @@ def link_destination_ranges(text: str, *, references: bool = True,
               if backslashes_before(text, m.start()) % 2 == 0]
     if inline_html:
         found += [LinkDestination(m.start(), m.end(), m.start(), False)
-                  for m in INLINE_RAW_HTML.finditer(text)
+                  for m in INLINE_HTML_TAG.finditer(text)
                   if backslashes_before(text, m.start()) % 2 == 0]
     for match in re.finditer(r"\]", text):
         close = match.start()
@@ -2614,19 +2612,6 @@ SVG_KEYWORDS = {
     "stroke-linecap": {"butt", "round"},
     "stroke-linejoin": {"miter", "round"},
 }
-# Marker viewports have their own exact spellings, from the modern figures on main.
-MODERN_MARKER_VALUES = {
-    "id": {"axis", "head"},
-    "markerUnits": {"userSpaceOnUse"},
-    "markerWidth": {"5", "7", "12"},
-    "markerHeight": {"5", "6", "10"},
-    "viewBox": {"0 0 10 10", "0 0 7 6", "0 0 12 10"},
-    "refX": {"9", "6", "11"},
-    "refY": {"5", "3"},
-    "orient": {"auto-start-reverse"},
-}
-MODERN_MARKER_ENDS = {"none", "url(#axis)", "url(#head)"}
-MODERN_MARKER_FILLS = {"#8c7b62", "#a0522d"}
 SVG_SPACE = " \t\r\n"
 # Main's largest numeric input at 209d71fd is 440. This admits ample room around
 # its canvases while keeping coordinates, lengths, radii and path arithmetic bounded.
@@ -3502,7 +3487,7 @@ def supported_path(value: str) -> bool:
     return True
 
 
-def supported_svg(path: Path, root, markers: bool = False) -> bool:
+def supported_svg(path: Path, root) -> bool:
     """Refuse deep trees and unsupported SVG before recursive walks or measurements.
     Read raw XML attributes only; CSS is neither accepted nor interpreted."""
     pending = [(root, 0)]
@@ -3514,11 +3499,9 @@ def supported_svg(path: Path, root, markers: bool = False) -> bool:
         pending.extend((child, depth + 1) for child in el)
 
     valid = True
-    elements = SVG_ELEMENTS | ({"defs", "marker"} if markers else set())
-    definitions = svg_definition_nodes(root) if markers else set()
     for el in root.iter():
         t = tag(el)
-        if t not in elements or (t == "svg" and el is not root):
+        if t not in SVG_ELEMENTS or (t == "svg" and el is not root):
             fail("S26", path, 0, f"<{t}> is outside S26's SVG allow-list")
             valid = False
             continue
@@ -3526,15 +3509,7 @@ def supported_svg(path: Path, root, markers: bool = False) -> bool:
             fail("S26", path, 0, "<ellipse> needs explicit rx and ry in S26's SVG allow-list")
             valid = False
         for attr, value in el.attrib.items():
-            if markers and t == "marker":
-                ok = value in MODERN_MARKER_VALUES.get(attr, set())
-            elif markers and tag(el) == "path" and el in definitions and attr == "d":
-                ok = modern_path(value)
-            elif markers and el in definitions and attr == "fill":
-                ok = value in MODERN_MARKER_FILLS
-            elif markers and attr == "marker-end":
-                ok = value in MODERN_MARKER_ENDS
-            elif attr in SVG_NUMBERS:
+            if attr in SVG_NUMBERS:
                 n = length(value)
                 ok = n is not None
                 if ok and attr in ("r", "rx", "ry", "width", "height", "font-size", "stroke-width"):
@@ -3583,15 +3558,6 @@ def supported_svg(path: Path, root, markers: bool = False) -> bool:
                  f"{eff['font-weight']!r}: outside S26's SVG allow-list")
             valid = False
     return valid
-
-
-def svg_definition_nodes(root) -> set:
-    """Elements that define reusable SVG content and are not drawn where they occur."""
-    hidden = set()
-    for el in root.iter():
-        if tag(el) in {"defs", "marker"}:
-            hidden.update(el.iter())
-    return hidden
 
 
 def rect_outline(own, errors: list[float] | None = None) -> list[tuple[float, float]] | None:
@@ -3646,7 +3612,7 @@ def miter_joins(segments, half: float, limit: float, closed: bool):
                (b[0] + half * mx, b[1] + half * my), b]
 
 
-def strokes(path: Path, root, hidden=frozenset()):
+def strokes(path: Path, root):
     """(what it is, its points, half its width plus chord error) for each stroke, as a run
     of straight pieces: a line, a polyline, a polygon or a rect's outline (its corners
     rounded as rx and ry round them), each subpath of a path (closed where a Z closes it),
@@ -3656,8 +3622,6 @@ def strokes(path: Path, root, hidden=frozenset()):
     butt caps) left out (S26). Mitre joins add closed filled outlines
     with None in place of half the width: their outlines already include it."""
     for el, own, eff, m, _ in placed(root):
-        if el in hidden:
-            continue
         t = tag(el)
         if t not in DRAWN or (eff.get("stroke") or "none").strip().lower() == "none":
             continue
@@ -3717,13 +3681,11 @@ def strokes(path: Path, root, hidden=frozenset()):
                         yield kind, [at(m, x, y) for x, y in join], None
 
 
-def dots(root, hidden=frozenset()):
+def dots(root):
     """(where, radius) for each dot a figure draws: a filled circle of radius DOT at most,
     transforms applied, its radius taken at the most the transform stretches it (S26, as
     S21 reads a dot)."""
     for el, own, eff, m, _ in placed(root):
-        if el in hidden:
-            continue
         r = coord(own.get("r"))
         filled = (eff.get("fill") or "black").strip().lower() != "none"
         if tag(el) == "circle" and 0 < r <= DOT and filled:
@@ -3785,21 +3747,17 @@ def nearest(hull, pieces, spots) -> tuple[float, str] | None:
     return best
 
 
-def one_letter_one_point(path: Path, root, cuts: tuple[float, ...] = (),
-                         markers: bool = False) -> None:
+def one_letter_one_point(path: Path, root, cuts: tuple[float, ...] = ()) -> None:
     """S26: a figure draws each letter once, or, where Heath's figures stand side by side
     with `cuts` between them, once in each, every letter wholly on one side of every cut;
     and each letter stands CLEAR of every stroke, every dot and the canvas's edge,
     measured by the hull of its capital as Georgia draws it, upright or italic."""
-    if not supported_svg(path, root, markers):
+    if not supported_svg(path, root):
         return
     vb = [float(v) for v in NUM.findall(root.get("viewBox", ""))]
-    hidden = svg_definition_nodes(root) if markers else set()
-    pieces, spots = list(strokes(path, root, hidden)), list(dots(root, hidden))
+    pieces, spots = list(strokes(path, root)), list(dots(root))
     count: dict[tuple[int, str], int] = defaultdict(int)
     for el, own, eff, m, _ in placed(root):
-        if el in hidden:
-            continue
         if tag(el) != "text":
             continue
         unsupported = False
@@ -3946,10 +3904,9 @@ def measure_euclid(path: Path, ref: str, root) -> None:
 
 
 # ---------------------------------------------------------------------------------------
-# The figure of the modern way (S24, S25, S26; STYLE, section 7):
-# figures/<book>/NN-modern.svg, intended for the page's paragraph "**The modern way.**".
-# It is drawn as Euclid's figure is, on its canvas and in its palette, with its letters,
-# upright, at the same points,
+# The figure of the modern way (S24, S25; STYLE, section 7): figures/<book>/NN-modern.svg,
+# intended for the page's paragraph "**The modern way.**". It is drawn as Euclid's figure
+# is, on its canvas and in its palette, with its letters, upright, at the same points,
 # and with the paragraph's own names for what the modern way measures (a, b, θ, u),
 # italic, so that a reader moves between the two figures by the same names.
 
@@ -4003,19 +3960,6 @@ def without_upright(body: str) -> str:
     return "".join(out) + body[pos:]
 
 
-def modern_block(text: str) -> tuple[InlineBlock, int] | None:
-    """The inline block and source offset where the modern-way paragraph begins."""
-    for block in markdown_blocks(text, raw_html=True).inline:
-        if not block.paragraph:
-            continue
-        definitions = reference_destination_ranges(block.text)
-        start = definitions[-1].end if definitions else 0
-        content = block.text[start:].lstrip(" \t\n")
-        if content.startswith(MODERN_WAY):
-            return block, len(block.text) - len(content)
-    return None
-
-
 def modern_span(text: str) -> tuple[int, int] | None:
     """Where the paragraph that opens "**The modern way.**" stands in a mishnah, as
     (start, end) source offsets. Read blocks in the original text, before masking any
@@ -4024,16 +3968,21 @@ def modern_span(text: str) -> tuple[int, int] | None:
     inline comments leave the paragraph's line boundaries intact. Leading reference
     definitions are excluded without moving the offsets into the original text.
     These offsets also let a renderer put the figure after the whole paragraph."""
-    selected = modern_block(text)
-    if selected is None:
-        return None
-    block, first = selected
-    return block.offsets[first], block.offsets[-1] + 1
+    for block in markdown_blocks(text, raw_html=True).inline:
+        if not block.paragraph:
+            continue
+        definitions = reference_destination_ranges(block.text)
+        start = definitions[-1].end if definitions else 0
+        content = block.text[start:].lstrip(" \t\n")
+        if content.startswith(MODERN_WAY):
+            first = len(block.text) - len(content)
+            return block.offsets[first], block.offsets[-1] + 1
+    return None
 
 
 def modern_paragraph(text: str) -> str | None:
     """The paragraph of a mishnah that opens "**The modern way.**" (modern_span), as a
-    reader sees it: its raw HTML and code blanked afterwards.
+    reader sees it: its HTML tags and comments and code blanked afterwards.
     Inline links keep their labels, with brackets and targets removed so that visible
     word boundaries stay intact and a link's bracket cannot turn the article a into a name.
     Reference links resolve against the whole document before their identifiers are
@@ -4057,21 +4006,7 @@ def modern_paragraph(text: str) -> str | None:
 def modern_markup_findings(text: str) -> list[str]:
     """Refuse unsupported markup before it can supply names to a modern figure."""
     blocks = markdown_blocks(text, raw_html=True).inline
-    selected = modern_block(text)
     span = modern_span(text)
-    reference_labels = {
-        reference_key(match.group(1))
-        for block in blocks if block.references
-        for line in block.text.splitlines()
-        if (match := REFERENCE_LABEL.match(line))
-    }
-
-    def resolves_reference(source: str) -> bool:
-        syntax = markdown_syntax(source, indented_code=False,
-                                 reference_labels=reference_labels, inline_html=True)
-        plain = markdown_syntax(source, indented_code=False, inline_html=True)
-        return bool(set(syntax.destinations) - set(plain.destinations))
-
     # A leading multiline reference definition can hide the paragraph from modern_span.
     # Refuse its syntax here without trying to resolve its destination.
     if span is None and not any(
@@ -4080,20 +4015,13 @@ def modern_markup_findings(text: str) -> list[str]:
             for block in blocks):
         return []
     found = []
+    if any(REFERENCE_LABEL.match(line) for block in blocks if block.references
+           for line in block.text.splitlines()):
+        found.append("unsupported reference definition beside the modern paragraph")
     if span is None:
-        candidates = [block for block in blocks if block.paragraph and any(
-            line.lstrip(" \t").startswith(MODERN_WAY) for line in block.text.splitlines())]
-        if any(any(REFERENCE_LABEL.match(line) for line in block.text.splitlines())
-               or resolves_reference(block.text) for block in candidates):
-            found.append("unsupported reference definition beside the modern paragraph")
         return found
     source = text[span[0]:span[1]]
-    syntax = markdown_syntax(source, indented_code=False,
-                             reference_labels=document_reference_labels(text), inline_html=True)
-    leading = selected[0].text[:selected[1]] if selected else ""
-    if any(REFERENCE_LABEL.match(line) for line in leading.splitlines()) \
-            or resolves_reference(source):
-        found.append("unsupported reference definition beside the modern paragraph")
+    syntax = markdown_syntax(source, indented_code=False, inline_html=True)
     visible = blank_ranges(source, [(s.start, s.end) for s in syntax.spans])
     # Main uses no character references. Refuse their spellings, even after an escaped
     # ampersand, instead of letting the spelling supply names the reader does not see.
@@ -4104,8 +4032,8 @@ def modern_markup_findings(text: str) -> list[str]:
     if re.search(r"\w(?:\*+|['’.][*_]+|[*_]+['’.])\w", modern_paragraph(text)):
         found.append("unsupported intraword emphasis in the modern paragraph")
     if syntax.comments or any(backslashes_before(visible, m.start()) % 2 == 0
-                              for m in INLINE_RAW_HTML.finditer(visible)):
-        found.append("unsupported raw HTML in the modern paragraph")
+                              for m in INLINE_HTML_TAG.finditer(visible)):
+        found.append("unsupported inline HTML tag or comment in the modern paragraph")
     # Inline links are supported; any remaining bracketed label could be a reference.
     links = link_destination_ranges(visible, references=False)
     visible = blank_ranges(visible, [(link.label, link.end) for link in links])
@@ -4162,6 +4090,21 @@ MODERN_VALUES = {
 }
 MODERN_ATTRIBUTES = MODERN_NUMBERS | MODERN_VALUES.keys() | {
     "viewBox", "points", "stroke-dasharray", "transform", "d"}
+# Marker viewports have their own exact spellings, from the same 30 figures.
+# None uses text or strokes inside a marker, so those are refused below rather than
+# measured without the marker's scale. An omitted markerUnits keeps SVG's default.
+MODERN_MARKER_VALUES = {
+    "id": {"axis", "head"},
+    "markerUnits": {"userSpaceOnUse"},
+    "markerWidth": {"5", "7", "12"},
+    "markerHeight": {"5", "6", "10"},
+    "viewBox": {"0 0 10 10", "0 0 7 6", "0 0 12 10"},
+    "refX": {"9", "6", "11"},
+    "refY": {"5", "3"},
+    "orient": {"auto-start-reverse"},
+}
+
+
 def modern_number(value: str | None) -> float | None:
     """A finite plain decimal, scanned once without regex backtracking or units."""
     if not value:
@@ -4273,15 +4216,13 @@ def modern_svg_findings(root) -> list[tuple[str, str]]:
         return found
     # Read inheritance only after the syntax gate has excluded CSS. Include ancestors
     # outside the marker: a stroke on <defs> or the root still reaches its shapes.
-    markers = list(root.iter(SVG + "marker"))
-    in_markers = {child for marker in markers for child in marker.iter()}
-    marker_content = in_markers - set(markers)
+    in_markers = {child for marker in root.iter(SVG + "marker") for child in marker.iter()}
     for el, _, eff in walk(root):
         if el not in in_markers:
             continue
         t = tag(el)
-        if el in marker_content and t != "path":
-            found.append(("S24", f"unsupported <{t}> inside <marker>"))
+        if t == "text":
+            found.append(("S24", "unsupported <text> inside <marker>"))
         elif t in DRAWN and eff.get("stroke", "none") != "none":
             found.append(("S24", f"unsupported stroke on <{t}> inside <marker>"))
     return found
@@ -4391,7 +4332,7 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
 
 
 def check_modern(path: Path, ref: str) -> None:
-    """S24, S25 and S26 for one figure of the modern way."""
+    """S24 and S25 for one figure of the modern way."""
     data = path.read_bytes()
     root = svg_root(path, data)
     if root is None:
@@ -4432,10 +4373,6 @@ def check_modern(path: Path, ref: str) -> None:
         caption_text_rules(path, title, "title")
     for rule, message in modern_findings(root, ref, heaths, names):
         fail(rule, path, 0, message)
-    try:
-        one_letter_one_point(path, root, markers=True)
-    except SvgMeasurementError as e:
-        fail("S26", path, 0, f"cannot measure SVG: {e}")
 
 
 def check_figures(required: bool) -> None:

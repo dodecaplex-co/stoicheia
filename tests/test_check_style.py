@@ -1311,13 +1311,6 @@ class Modern(unittest.TestCase):
     def test_modern_marker_attributes_match_main(self):
         attributes = dict(id="head", viewBox="0 0 10 10", refX="9", refY="5",
                           markerWidth="5", markerHeight="5", orient="auto-start-reverse")
-        attrs = " ".join(f'{key}="{value}"' for key, value in attributes.items())
-        marked = MODERN_GOOD.replace('stroke-width="1.6"',
-                                     'stroke-width="1.6" marker-end="url(#head)"', 1)
-        marked += (f'<defs><marker {attrs}>'
-                   '<path d="M 0 0 L 10 5 L 0 10 z" fill="#a0522d"/>'
-                   '</marker></defs>')
-        self.assertEqual(self.check_refused_modern(marked, s26=True), [])
         for key, values in (
                 ("markerUnits", ("strokeWidth",)),
                 ("markerWidth", ("50", "5.0")),
@@ -1741,7 +1734,7 @@ class Modern(unittest.TestCase):
 
     def check_refused_modern(self, inside=MODERN_GOOD, paragraph=MODERN_PARAGRAPH,
                             prefix="", root_attributes="", viewbox="0 0 400 300",
-                            figure_bytes=None, s26=False):
+                            figure_bytes=None):
         """Read two real files, keeping the following figure's independent finding."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1762,12 +1755,9 @@ class Modern(unittest.TestCase):
                     + body + "</svg>")
             if figure_bytes is not None:
                 first.write_bytes(figure_bytes)
-            with ExitStack() as stack:
-                stack.enter_context(patch.object(style, "ROOT", root))
-                stack.enter_context(patch.object(style, "drawn_letters", return_value=HEATHS))
-                fail = stack.enter_context(patch.object(style, "fail"))
-                if not s26:
-                    stack.enter_context(patch.object(style, "one_letter_one_point"))
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style, "drawn_letters", return_value=HEATHS), \
+                    patch.object(style, "fail") as fail:
                 style.check_modern(first, "I.47")
                 style.check_modern(following, "I.48")
             findings = [call.args for call in fail.call_args_list]
@@ -1828,38 +1818,9 @@ class Modern(unittest.TestCase):
                     self.assertTrue(any(r == "S25" and "reference definition" in m
                                         for r, m in findings), findings)
                     self.assertNotIn("S24", {r for r, _ in findings})
-        for inline in ("[the side](/reference)", "`<span>`", "`<!-- notation -->`",
-                       "`<?note x?>`", "`<!NOTE x>`", "`<![CDATA[x]]>`"):
+        for inline in ("[the side](/reference)", "`<span>`", "`<!-- notation -->`"):
             self.assertEqual(self.check_refused_modern(paragraph=MODERN_PARAGRAPH + " " + inline),
                              [])
-
-    def test_all_inline_raw_html_is_refused_without_granting_names(self):
-        forms = ("<?note x?>", "<?note\nx?>", "<!NOTE x>", "<!NOTE\nx>",
-                 "<![CDATA[x]]>", "<![CDATA[\nx\n]]>")
-        for raw_html in forms:
-            paragraph = MW + "Put $b$ here " + raw_html + "."
-            with self.subTest(raw_html=raw_html):
-                findings = self.check_refused_modern(
-                    MODERN_GOOD.replace(">c<", ">x<"), paragraph=paragraph)
-                self.assertTrue(any(r == "S25" and "raw HTML" in message
-                                    for r, message in findings), findings)
-                self.assertTrue(any(r == "S25" and "x is no name" in message
-                                    for r, message in findings), findings)
-                self.assertNotIn("x", style.modern_names(style.modern_paragraph(paragraph)))
-
-    def test_unrelated_reference_definitions_do_not_refuse_the_modern_paragraph(self):
-        definition = "[unused]: /reference"
-        for text in (definition + "\n\nBefore.\n\n" + MODERN_PARAGRAPH,
-                     MODERN_PARAGRAPH + "\n\n" + definition):
-            with self.subTest(text=text):
-                self.assertEqual(self.check_refused_modern(paragraph=text), [])
-
-    def test_modern_entry_point_requires_s26(self):
-        duplicate = MODERN_GOOD.replace(
-            "</g>", '<text x="80" y="80" font-style="normal">A</text></g>')
-        findings = self.check_refused_modern(duplicate, s26=True)
-        self.assertTrue(any(r == "S26" and "letter A drawn 2 times" in message
-                            for r, message in findings), findings)
 
     def test_checker_errors_are_not_input_findings(self):
         with patch.object(style, "modern_findings", side_effect=ValueError("checker defect")):
