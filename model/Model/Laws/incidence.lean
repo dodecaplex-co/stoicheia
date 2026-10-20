@@ -12,7 +12,7 @@ generated laws described in the [README](../../README.md). Each law here is the 
 statement is quoted above it, from `Certificate/axioms.lock`. Each binder is implicit or
 explicit as the lock prints it. `Check/Incidence.lean` puts the library's own words in for
 `S` and asks the kernel whether each result is the original declaration; the build fails if
-it is not. The same check file compares each translation with its generated law.
+it is not. The same check file compares each translation by the route that README describes.
 
 The laws are those of a straight line and the points on it:
 
