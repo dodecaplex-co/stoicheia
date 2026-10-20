@@ -147,8 +147,6 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   clauses for every straight line, the foot of the perpendicular, and III.25's construction
   core, which never sees a circle or a centre, with its correctness (#26, #27). Next is the
   move into `Elements/` with the records (#28).
-- **`check_fidelity.py`'s forbidden-command scan** reaches neither `Staging/` nor
-  `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
   request of its own ([#3]).
 - **The Lean notes of I.6, I.14 and I.24** still make Lean the subject: a later pass, with
