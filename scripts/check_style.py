@@ -324,7 +324,7 @@ MARKER_SKIP_DIRS = {
 CONFLICT_EDGE = re.compile(r"^(<{7}|\|{7}|>{7})(?: |$)")
 CONFLICT_MIDDLE = re.compile(r"={7}[ \t]*")
 CONFLICT_KINDS = {"<": "opening", "|": "base", ">": "closing"}
-LINK_REFERENCE_START = re.compile(r"^ {0,3}\[(?:\\.|[^\[\]\\])+\]:")
+LINK_REFERENCE_OPEN = re.compile(r"^ {0,3}\[")
 # A block quote or list item: a seven-equals line after one cannot underline a
 # paragraph (a setext underline is never a lazy continuation), so S23 refuses it.
 CONTAINER_START = re.compile(r"^ {0,3}(?:>|[-+*](?:[ \t]|$)|[0-9]{1,9}[.)](?:[ \t]|$))")
@@ -336,10 +336,47 @@ HTML_BLOCK_TAG_START = re.compile(
     r"^ {0,3}</?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|"
     r"colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|"
     r"frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|"
-    r"nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|"
-    r"th|thead|title|tr|track|ul)(?:[ \t]|/?>|$)", re.I)
+    r"nav|noframes|ol|optgroup|option|p|param|search|section|source|summary|table|tbody|td|"
+    r"tfoot|th|thead|title|tr|track|ul)(?:[ \t]|/?>|$)", re.I)
+HTML_TAG_NAME = r"[A-Za-z][A-Za-z0-9-]*"
+HTML_ATTRIBUTE_NAME = r"[A-Za-z_:][A-Za-z0-9_.:-]*"
+HTML_ATTRIBUTE_VALUE = r'''(?:[^ \t\n\f\r"'=<>`]+|'[^']*'|"[^"]*")'''
+HTML_ATTRIBUTE = rf"(?:[ \t]+{HTML_ATTRIBUTE_NAME}(?:[ \t]*=[ \t]*{HTML_ATTRIBUTE_VALUE})?)"
 HTML_COMPLETE_TAG = re.compile(
-    r"^ {0,3}</?[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[^<>]*)?/?>[ \t]*$")
+    rf"^ {{0,3}}(?:<{HTML_TAG_NAME}{HTML_ATTRIBUTE}*[ \t]*/?>|"
+    rf"</{HTML_TAG_NAME}[ \t]*>)[ \t]*$")
+
+
+def possible_reference_label(line: str, active: bool | None) -> tuple[bool | None, bool]:
+    """Carry a possible link-reference label across lines and recognize its colon."""
+    if active is None:
+        match = LINK_REFERENCE_OPEN.match(line)
+        if not match:
+            return None, False
+        active = False
+        at = match.end()
+    else:
+        at = 0
+    while at < len(line):
+        if line[at] == "\\" and at + 1 < len(line):
+            active = active or not line[at + 1].isspace()
+            at += 2
+        elif line[at] == "[":
+            return None, False
+        elif line[at] == "]":
+            return None, bool(active and line[at + 1:at + 2] == ":")
+        else:
+            active = active or not line[at].isspace()
+            at += 1
+    return active, False
+
+
+def table_block_boundary(line: str) -> bool:
+    """Whether a line ends a GFM table instead of becoming its next row."""
+    return (not line.strip() or ATX_LINE.match(line) is not None
+            or THEMATIC_LINE.fullmatch(line) is not None
+            or CONTAINER_START.match(line) is not None
+            or line.expandtabs(4).startswith("    "))
 
 
 def repository_files(root: Path):
@@ -380,13 +417,13 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
     line of the preceding block is ordinary paragraph text. The block ends at a
     blank line, marker, ATX or completed setext heading, thematic break, fence, HTML
     block or GFM table. Any possible link reference definition prefix (up to three
-    spaces, a bracketed label allowing escaped brackets, then a colon) disqualifies the
-    whole block, even with no destination yet or extra words after it. Thus
-    "[label]: destination extra words" is refused with seven equals despite being
-    paragraph text. An indented line (four columns, tabs expanded) cannot start a
-    paragraph, but may continue one. Paragraphs may span several lines. A fence
-    inside a comment, or a comment inside a fence, opens no block. This is not a
-    full CommonMark parser.
+    spaces, a bracketed label allowing escaped brackets and line breaks, then a colon)
+    disqualifies the whole block, even with no destination yet or extra words after it.
+    Thus "[label]: destination extra words" is refused with seven equals despite
+    being paragraph text. An indented line (four columns, tabs expanded) cannot
+    start a paragraph, but may continue one. Paragraphs may span several lines. A
+    fence inside a comment, or a comment inside a fence, opens no block. This is
+    not a full CommonMark parser.
     """
     lines = [line.removesuffix("\r") for line in text.split("\n")]
     edges = [CONFLICT_EDGE.match(line) for line in lines]
@@ -398,6 +435,7 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
     comment = paragraph = False
     table = False
     reference_definition = False
+    reference_label: bool | None = None
     for i, (line, edge) in enumerate(zip(lines, edges)):
         block = False
         if markdown:
@@ -447,11 +485,10 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
             if block:
                 table = False
             elif table:
-                _, table_row = table_cell_ranges(line)
-                if line.strip() and table_row:
-                    block = True
-                else:
+                if table_block_boundary(line):
                     table = False
+                else:
+                    block = True
             if (not block and paragraph and i
                     and gfm_table_columns(lines[i - 1], line) is not None):
                 table = True
@@ -475,13 +512,17 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
                 or paragraph and SETEXT_LINE.fullmatch(line)):
             paragraph = False
             reference_definition = False
-        elif LINK_REFERENCE_START.match(line) or CONTAINER_START.match(line):
-            reference_definition = True
-            paragraph = False
-        elif not paragraph and line.expandtabs(4).startswith("    "):
-            paragraph = False
+            reference_label = None
         else:
-            paragraph = True
+            reference_label, completed_reference = possible_reference_label(
+                line, reference_label)
+            if completed_reference or CONTAINER_START.match(line):
+                reference_definition = True
+                paragraph = False
+            elif not paragraph and line.expandtabs(4).startswith("    "):
+                paragraph = False
+            else:
+                paragraph = True
     return found
 
 
