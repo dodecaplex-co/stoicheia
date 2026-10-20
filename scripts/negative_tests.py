@@ -63,8 +63,7 @@ records current; CI runs it on every push.
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
 plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s own
-`--self-test` withholds Postulate 5 from nanoda alone. README.md's table, "What the
-checks show", records these limits.
+`--self-test` withholds Postulate 5 from nanoda alone.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
@@ -135,8 +134,12 @@ def expect_failure(name: str, result: subprocess.CompletedProcess, *wanted: str,
 
 def expect_success(name: str, result: subprocess.CompletedProcess) -> bool:
     if result.returncode != 0:
-        failures.append(f"{name}: exit {result.returncode}")
-        print((result.stdout + result.stderr)[-3000:])
+        message = f"{name}: exit {result.returncode}"
+        failures.append(message)
+        print(f"✗ {message}")
+        output = (result.stdout + result.stderr)[-3000:]
+        if output:
+            print(output, end="" if output.endswith("\n") else "\n")
         return False
     return True
 
@@ -841,8 +844,12 @@ def main() -> int:
             after = run("git", "status", "--porcelain")
             if expect_success("final Git status", after):
                 if after.stdout != before.stdout:
-                    failures.append("the working tree did not return to its entry Git status")
-                    print(after.stdout)
+                    message = "the working tree did not return to its entry Git status"
+                    failures.append(message)
+                    print(f"✗ {message}:")
+                    output = after.stdout + after.stderr
+                    if output:
+                        print(output, end="" if output.endswith("\n") else "\n")
                 else:
                     print("✓ working tree restored to its entry Git status")
         except BaseException as error:
