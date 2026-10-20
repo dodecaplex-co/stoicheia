@@ -3,7 +3,7 @@
 
 What [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) finds against [the acceptance checklist](../ACCEPTANCE.md), item by item: for each of the 99 propositions, for each book and for the edition as a whole. A [machine] item is checked by the script; a [review] item is read from the records, and passes only when a reviewer has recorded it. The checklist says what each item asks. ✓ passes; ✗ fails, and every failure is listed at the end.
 
-- **Revision:** `d7c50fc1`.
+- **Revision:** `01ecbaa2`.
 - **Lean:** facts.json as Lean 4.35.0 wrote it.
 - **Run:** every item.
 
