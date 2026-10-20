@@ -1971,10 +1971,10 @@ findings:
   fault caught by a separate check; it runs only in a disposable tree.
   `tests/test_negative_tests.py` checks restoration on interruption.
 
-  `scripts/heath.py` keeps the branch's existing overlap self-test change to I.7's rule,
-  `Tacit.not_same_side_of_circles_meet`, with the same acceptance of a complete `step`
-  record and rejection when its note is missing. No check is weakened. Protected files
-  changed, each named here on a line added relative to origin/main:
+  `scripts/heath.py` uses `Tacit.angle_le_two_right`, which supplies I.13's upper bound
+  on an angle in `Prop47.within`, for its overlap self-test, with the same acceptance of
+  a complete `step` record and rejection when its note is missing. No check is weakened.
+  Protected files changed, each named here on a line added relative to origin/main:
   `Certificate/Facts.lean`, `Certificate/FIELDS.md`,
   `scripts/heath.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
   `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
