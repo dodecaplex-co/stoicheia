@@ -102,7 +102,8 @@ class GitHub:
             query = (
                 "query($owner:String!,$name:String!){repository(owner:$owner,name:$name){"
                 'mergeQueue(branch:"main"){entries(first:100){'
-                "nodes{position enqueuer{login} pullRequest{number headRefOid editor{login}}} "
+                "nodes{position enqueuer{__typename login} "
+                "pullRequest{number headRefOid editor{__typename login}}} "
                 "pageInfo{hasNextPage}}}}}"
             )
             command = ["gh", "api", "graphql", "-f", f"query={query}",
@@ -207,39 +208,44 @@ def queue_entries(answer) -> list[tuple[int, str]]:
         raise ValueError("GitHub: could not read a complete queue in position order") from None
 
 
-def queue_actors(answer) -> dict[int, tuple[str, str | None]]:
-    """Who put each queued pull request in the queue, and who last edited its body (None
-    when nobody has): read so that the revert App's bot can stand in a group only as the
-    exact revert it is allowed to make. Missing or malformed data refuses."""
+def queue_actors(answer) -> dict[int, tuple[bool, bool]]:
+    """Whether a bot put each queued pull request in the queue, and whether a bot last
+    edited its body (False when nobody has), read by GraphQL's type of the actor: GraphQL
+    spells a bot's login without the "[bot]" REST adds, so logins are not compared.
+    Missing or malformed data refuses."""
     try:
         actors = {}
         for node in answer["data"]["repository"]["mergeQueue"]["entries"]["nodes"]:
             enqueuer, editor = node["enqueuer"], node["pullRequest"]["editor"]
-            if not isinstance(enqueuer, dict) or not isinstance(enqueuer["login"], str) \
-                    or not enqueuer["login"]:
-                raise ValueError
-            if editor is not None and (not isinstance(editor, dict)
-                                       or not isinstance(editor["login"], str)
-                                       or not editor["login"]):
-                raise ValueError
+            for actor in (enqueuer, editor):
+                if actor is None and actor is editor:
+                    continue
+                if not isinstance(actor, dict) or not isinstance(actor["login"], str) \
+                        or not actor["login"] or not isinstance(actor["__typename"], str):
+                    raise ValueError
             actors[node["pullRequest"]["number"]] = (
-                enqueuer["login"], editor["login"] if editor else None)
+                enqueuer["__typename"] == "Bot",
+                editor is not None and editor["__typename"] == "Bot")
         return actors
     except (KeyError, TypeError, ValueError):
         raise ValueError("GitHub: could not read who queued and edited each entry") from None
 
 
 def ordinary_entry(pr: dict, actors: dict, repo_slug: str) -> None:
-    """An entry that is not an automatic revert: its head is in this repository, and the
-    revert App's bot neither wrote, queued nor last edited it, so the App's key cannot
-    land anything but the revert the queue checks it to be."""
+    """An entry that is not an automatic revert: its head is in this repository, and no
+    bot (the revert App's above all) wrote it, put it in the queue or last edited its
+    body, so the App's key cannot land anything but the revert the queue checks it to
+    be. Trains are written and queued by people."""
     if pr["head_repo"] != repo_slug:
         raise Refused(f"#{pr['number']}: its head is not in {repo_slug}")
-    bot = os.environ.get("STOICHEIA_REVERT_BOT", "")
-    enqueuer, editor = actors.get(pr["number"], (None, None))
-    if bot and bot in (pr["author"]["login"], enqueuer, editor):
-        raise Refused(f"#{pr['number']}: the revert App's bot wrote, queued or edited a "
-                      "pull request that is not an automatic revert")
+    if pr["state"] == "MERGED":
+        return
+    if pr["number"] not in actors:
+        raise ValueError(f"GitHub: #{pr['number']} is open but not in the queue read")
+    queued_by_bot, edited_by_bot = actors[pr["number"]]
+    if pr["author"]["type"] == "Bot" or queued_by_bot or edited_by_bot:
+        raise Refused(f"#{pr['number']}: a bot wrote, queued or edited a pull request that "
+                      "is not an automatic revert")
 
 
 def pull_request(answer, number: int) -> dict:
@@ -275,9 +281,9 @@ def pull_request(answer, number: int) -> dict:
         raise ValueError(f"GitHub: could not read pull request #{number}") from None
 
 
-def chain(repo: Path, base: str, head: str, api: GitHub) -> list[dict]:
+def chain(repo: Path, base: str, head: str, api: GitHub, queue_answer=None) -> list[dict]:
     """Identify the first-parent chain and prove its queue order and merge trees."""
-    queued = queue_entries(api.read("queue"))
+    queued = queue_entries(queue_answer if queue_answer is not None else api.read("queue"))
     main = commit(repo, oid(api.read("main")["sha"], "main head"))
     main_chain = safe_push.git(repo, "rev-list", "--first-parent", main).splitlines()
     if base not in main_chain:
@@ -812,8 +818,10 @@ def main(argv=None) -> int:
                 raise ValueError("could not read complete history: shallow repository")
             checkout(repo, head)
             api = GitHub(args.repo, args.github_json)
-            entries = chain(repo, base, head, api)
-            actors = queue_actors(api.read("queue"))
+            # The queue is read once, for its order and for who queued and edited each entry.
+            queue_answer = api.read("queue")
+            entries = chain(repo, base, head, api, queue_answer)
+            actors = queue_actors(queue_answer)
             for pr in entries:
                 if "auto-revert" in pr["labels"] or pr["ref"].startswith("revert/"):
                     if pr["head_repo"] != args.repo:

@@ -4274,11 +4274,13 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         # changes the checks themselves, CI runs the head's copies, never origin/main's,
         # so only the pre-flight can find that origin/main's checks fail on it: the full
         # checks run again here rather than trust the record.
-        if checked is not None and any(under(p, CHECK_INPUTS)
+        # So too for a head that changes any protected path: CI runs the head's own
+        # workflow (.github/) as well as its own checks.
+        if checked is not None and any(under(p, CHECK_INPUTS) or is_protected(p)
                                        for _, p in changed_files(repo, ctx.base, ctx.sha)):
-            rep.add("3", "full checks record", "note", "the head changes the checks "
-                    f"({', '.join(CHECK_INPUTS)}), so the full checks run again, not the "
-                    "record of the pre-flight")
+            rep.add("3", "full checks record", "note", "the head changes the checks or a "
+                    "protected path, so the full checks run again, not the record of the "
+                    "pre-flight")
             checked = None
         if checked is None:
             view = gates(ctx, number, rep)   # before long checks, so a draft fails at once

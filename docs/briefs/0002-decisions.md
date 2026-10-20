@@ -2125,11 +2125,12 @@ findings:
     the push's merges on a `revert/` branch and queues the revert, which the queue admits
     only as the exact revert of a failed push's merges, while an open `main-red` issue
     names that run. The workflow that holds the key is read from main, so code that has
-    landed there could take it; the App is bounded instead: no bypass, rulesets keeping it
-    to `revert/**` branches and from tags, and the queue's refusal of anything else it
-    writes, queues or edits. `--merge` no longer lets a record stand in for the full
-    checks of a head that changes the checks, since only the pre-flight runs
-    origin/main's copies on it.
+    landed there could take it; the App is bounded instead: no bypass, no permission to
+    write contents at all (the job's own token pushes the revert branch), and the
+    queue's refusal of any entry a bot wrote, queued or edited, save that revert.
+    `--merge` no longer lets a record stand in for the full checks of a head that
+    changes the checks or a protected path, since only the pre-flight runs origin/main's
+    copies on it.
 
   The measurements. Of the last 30 merged pull requests (#98 to #148), 24 changed this
   page, 14 `book/`, 13 `README.md`, 11 `docs/PROGRAM.md`, 8 `facts.json`, 7

@@ -215,7 +215,7 @@ class AutoRevert(unittest.TestCase):
 
     def push(self, repo, slug, branch, token):
         self.assertEqual(slug, SLUG)
-        self.assertEqual(token, APP_TOKEN)
+        self.assertEqual(token, WORKFLOW_TOKEN)
         head = command(repo, "git", "rev-parse", "HEAD")
         subjects = command(repo, "git", "log", "--reverse", "--format=%B",
                            f"{self.api.after}..{head}")
@@ -266,7 +266,7 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(self.rev(), merge)
         self.assertEqual(self.git("status", "--porcelain"), "")
         self.assertEqual(self.api.issued_permissions, {
-            "contents": "write", "pull_requests": "write", "merge_queues": "write"})
+            "contents": "read", "pull_requests": "write", "merge_queues": "write"})
 
     def test_two_trains_reverted_newest_first_in_one_pull_request(self):
         first = self.train()
@@ -375,11 +375,12 @@ class AutoRevert(unittest.TestCase):
         self.assertEqual(set(self.api.labels),
                          {"blocks-release", "main-red", "auto-revert", "tooling", "docs", "security-review"})
 
-    def test_workflow_revert_requests_workflow_permission(self):
+    def test_the_app_never_asks_to_write_contents_or_workflows(self):
         self.train(path=".github/workflows/example.yml", text="name: Example\n", labels=("tooling",))
         status, output = self.run_revert()
         self.assertEqual(status, 0, output)
-        self.assertEqual(self.api.issued_permissions["workflows"], "write")
+        self.assertEqual(self.api.issued_permissions, {
+            "contents": "read", "pull_requests": "write", "merge_queues": "write"})
 
     def test_tokens_and_private_key_are_never_printed(self):
         self.train()

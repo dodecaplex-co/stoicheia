@@ -483,7 +483,7 @@ corrections and the common voice, as Books I and II have since their tags.
 Work reaches main only as a pull request, merged with a merge commit. On GitHub, a ruleset
 on main requires a pull request and the checks `check`, `model` and `negative`, and blocks
 force pushes and deletion. When the owner enables the merge queue, the owner adds
-`queue-integrity`, `formal-model` and `acceptance` to those required checks. The queue is
+`formal-model`, `acceptance`, `queue-integrity` and `queue-gaps` to those required checks. The queue is
 off until then; the coordinator holds the setup steps below. Locally, the pre-push hook
 refuses every push to main. Agents never open, merge or approve a pull request: the
 coordinator does. The account cannot
@@ -557,9 +557,11 @@ the decisions page; that the train's own commits change only those; and that the
 evidence, separation of checks from content, and declarations hold. A member's own
 history, a merge of main into it with its resolution included, is the member's, judged
 by its reviews. Decisions here include the page and Markdown entry files directly under
-`docs/decisions/`. A merge of main needs no member row, but its tree is checked too. While origin/main has no train checker, safe_push reports that
-train is refused, unless the commit itself adds `scripts/check_train.py`: then its own
-copy runs, and the pre-flight notes it for the security review (the bootstrap). An
+`docs/decisions/`. A merge of main needs no member row, but its tree is checked too.
+While origin/main has no train checker, a train is refused, unless the commit itself
+adds `scripts/check_train.py`: then its own copy runs, and the pre-flight notes it for
+the security review (the bootstrap; the change that adds the checker lands, in fact,
+under the harness before it, which has no train step). An
 unreadable checker or a refused train stops the pre-flight. `--merge` runs the train
 check again, on the pull request's current body, in both modes.
 
@@ -583,8 +585,8 @@ the security review, not by this job. Its four rules are:
 - **(b) Nothing unchecked.** Each entry has one visible pre-flight block naming exactly
   its head, the base it was compared against and the harness: the main commit whose
   `scripts/safe_push.py` ran it (in queue mode the base is the head's merge base with
-  main, and the harness may be newer). The harness commit must have been on main (an
-  ancestor of the group's base), the block must name that commit's blob, give a passing
+  main, and the harness may be newer). The harness commit must have been main itself
+  (on the first-parent chain of the group's base), the block must name that commit's blob, give a passing
   verdict, and show every full check that harness runs, by its own `CHECKS` and
   `NEGATIVE` lists, with no failure. A `train/` entry's Members table is matched again to
   its actual member merges with `check_train.py`, against the pull request's current
@@ -601,8 +603,10 @@ the security review, not by this job. Its four rules are:
   the group changes no generated file is the `check` job's, on the same group, and
   conflict markers are S23's of `scripts/check_style.py`, in the same job.
 
-Every entry other than an automatic revert must have its head in this repository, and the
-revert App's bot must not have written it, put it in the queue or last edited its body.
+Every entry other than an automatic revert must have its head in this repository, and no
+bot, the revert App's above all, may have written it, put it in the queue or last edited
+its body: trains are written and queued by people. GraphQL names a bot by a login
+without the "[bot]" that REST adds, so the actor's type is read, not its login.
 
 **The gaps of what is new.** In the `queue-gaps` job, `check_queue.py --gaps` takes the union
 of the entries' derived changes and their declarations. A changed `tests/test_*.py`
@@ -654,11 +658,13 @@ its tree is exactly those merges reverted. The job that clears `main-red` runs n
 repository code at all.
 
 Two limits are stated rather than closed. The workflow that holds the App's key is read
-from main, so code that has landed there could take the key; a key taken that way can
-still push only `revert/**` branches (a ruleset of the owner's, with no bypass for the
-App), make no tag (another), and land nothing but the revert above, since the queue
-refuses any other entry the App's bot wrote, queued or last edited. Reverting such a
-change does not take the key back: the owner makes a new key. And the pre-flight block
+from main, so code that has landed there could take the key. A key taken that way still
+writes nothing to the repository's contents (the App only reads them; the revert job's
+own token, which lasts as long as the job, pushes the revert branch), so it makes no
+branch, tag or release; it is no ruleset's bypass actor; and it lands nothing but the
+revert above, since the queue refuses any other entry a bot wrote, queued or last
+edited. It can still open, label and edit pull requests. Reverting such a change does
+not take the key back: the owner makes a new key. And the pre-flight block
 in a pull request body is evidence the coordinator's harness wrote, which anyone who can
 edit the body could imitate; the queue checks it for the head and the harness, and
 `git safe-push --merge` remains the way trains are queued.
@@ -672,10 +678,12 @@ the issue stays open with `blocks-release` for the coordinator.
 
 **Turning it on.** The queue remains off until the owner enables it. The coordinator
 holds these steps: add the merge queue rule for main, keep merge commits and enable
-"only merge non-failing pull requests"; require all seven checks named above; install
-the revert App for this repository with contents, pull requests and merge queues
-write access (no workflows access: a train that changed workflows is reverted by hand),
-and the rulesets that keep it to `revert/**` branches and from tags; restrict the
+"only merge non-failing pull requests"; require `check`, `model`, `negative`,
+`formal-model`, `acceptance`, `queue-integrity` and `queue-gaps`; install the revert App
+for this repository with contents read, and pull requests and merge queues write (a
+train that changed `.github/workflows/` cannot be pushed by the job's token, and is
+reverted by hand); add the rulesets that keep branches other than `revert/**` and tags
+to the owner; restrict the
 `auto-revert` environment to main and put the App credentials there, not in repository
 secrets; set the repository variable `STOICHEIA_REVERT_BOT` to its bot login. With the
 queue off, `--merge` follows the direct merge path below. The issue and the pause still

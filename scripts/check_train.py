@@ -269,8 +269,8 @@ def _commits(repo: Path, *args: str) -> set[str]:
 def check_train(repo: Path, base: str, sha: str, body: str) -> list[str]:
     """Check rules 1 to 6, returning refusals; unreadable inputs raise ValueError or Refusal.
 
-    The base is origin/main's supplied tip. Every merge in base..sha is checked,
-    including merges within members. Keep-apart is stricter than safe_push.keep_apart:
+    The base is origin/main's supplied tip. The train's own first-parent chain is read:
+    its merges and its own commits; a member's history is the member's. Keep-apart is stricter than safe_push.keep_apart:
     check changes with judged content refuse even when origin/main's checks pass.
     """
     rows, declared = members_table(body), declared_new(body)

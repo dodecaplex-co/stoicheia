@@ -1,8 +1,11 @@
 # The workflow at after receives the App key; this repository alone cannot make
-# that authority independent. The App is no ruleset's bypass actor. The owner's
-# setup steps must give it a ruleset so it can push only revert/** branches.
-# queue-integrity, run from main's copy, admits its pull request only as the exact
-# revert of a failed push's merges. These bounds require the owner's configuration.
+# that authority independent, so the App's power is bounded instead. It reads the
+# repository's contents and writes none (this job's own token pushes the revert
+# branch), so a key taken from it can make no branch, tag or release; it is no
+# ruleset's bypass actor; and queue-integrity, run from main's copy, refuses any entry
+# its bot wrote, queued or edited, save the exact revert of a failed push's merges
+# while an open main-red issue names the run. WORKFLOW, section 10, and the owner's
+# setup steps say what the owner configures.
 name: Post-merge
 
 on:
@@ -18,6 +21,7 @@ jobs:
       contents: read
       pull-requests: read
       actions: read
+      issues: read
     uses: ./.github/workflows/ci.yml
 
   revert:
@@ -28,7 +32,9 @@ jobs:
     # secrets must not be repository secrets available to pull requests or groups.
     environment: auto-revert
     permissions:
-      contents: read
+      # contents: write lets this job's own token push revert/<12 hex> (the App writes
+      # nothing to contents); it lasts only as long as the job.
+      contents: write
       issues: write
       actions: read
       pull-requests: read

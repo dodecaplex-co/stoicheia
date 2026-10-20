@@ -2471,6 +2471,15 @@ class Merge(Edge):
         self.assertIn("so the full checks run again, not the record", r.stdout,
                       r.stdout + r.stderr)
 
+    def test_record_never_stands_in_for_a_head_that_changes_the_workflow(self):
+        self.opened(**{".github/workflows/ci.yml": self.text(".github/workflows/ci.yml")
+                       + "# A comment for the test.\n",
+                       **self.decision("`.github/workflows/ci.yml` is changed for the test.")})
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        r = self.merge("--dry-run")
+        self.assertIn("so the full checks run again, not the record", r.stdout,
+                      r.stdout + r.stderr)
+
     def test_bad_new_head_refused_at_the_merge(self):
         self.opened()
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))

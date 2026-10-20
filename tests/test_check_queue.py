@@ -200,7 +200,8 @@ class QueueTests(unittest.TestCase):
                 node["pullRequest"]["headRefOid"] = head
                 break
         else:
-            nodes.append({"position": len(nodes) + 1, "enqueuer": {"login": "fixture"},
+            nodes.append({"position": len(nodes) + 1,
+                          "enqueuer": {"__typename": "User", "login": "fixture"},
                           "pullRequest": {"number": number, "headRefOid": head,
                                           "editor": None}})
 
@@ -506,17 +507,25 @@ class QueueTests(unittest.TestCase):
         self.snapshot["pull_requests"]["1"]["head"]["repo"]["full_name"] = "fork/repository"
         self.verdict(self.cli(), 1, "its head is not in owner/repository")
 
-    def test_revert_bot_cannot_write_queue_or_edit_an_ordinary_entry(self):
+    def test_no_bot_may_write_queue_or_edit_an_ordinary_entry(self):
+        # GraphQL spells a bot's login without "[bot]" (the revert App's is
+        # "revert-fixture" there), so the actor's type is read, not its login.
         for change in (
                 lambda: self.snapshot["pull_requests"]["1"].update(
                     user={"login": BOT, "type": "Bot"}),
-                lambda: self.nodes()[0].update(enqueuer={"login": BOT}),
-                lambda: self.nodes()[0]["pullRequest"].update(editor={"login": BOT})):
+                lambda: self.nodes()[0].update(
+                    enqueuer={"__typename": "Bot", "login": BOT.removesuffix("[bot]")}),
+                lambda: self.nodes()[0]["pullRequest"].update(
+                    editor={"__typename": "Bot", "login": BOT.removesuffix("[bot]")})):
             with self.subTest(change=change):
                 saved = json.loads(json.dumps(self.snapshot))
                 change()
-                self.verdict(self.cli(), 1, "the revert App's bot wrote, queued or edited")
+                self.verdict(self.cli(), 1, "a bot wrote, queued or edited")
                 self.snapshot = saved
+
+    def test_a_person_s_edit_is_allowed(self):
+        self.nodes()[0]["pullRequest"]["editor"] = {"__typename": "User", "login": "someone"}
+        self.verdict(self.cli(), 0, "queue: PASS")
 
     def test_unreadable_enqueuer_refuses(self):
         self.nodes()[0]["enqueuer"] = None

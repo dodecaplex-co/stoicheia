@@ -224,8 +224,7 @@ def protected(path: str) -> bool:
                for prefix in PROTECTED)
 
 
-def installation_token(api: GitHub, app_id: str, key: str, repo: str,
-                       workflows: bool) -> str:
+def installation_token(api: GitHub, app_id: str, key: str, repo: str) -> str:
     """Sign an RS256 JWT with openssl, then request a repository-scoped token."""
     if not re.fullmatch(r"[1-9][0-9]*", app_id):
         raise Refusal("STOICHEIA_REVERT_APP_ID is not a numeric App id.")
@@ -251,10 +250,12 @@ def installation_token(api: GitHub, app_id: str, key: str, repo: str,
     if (not isinstance(installation, dict) or type(installation.get("id")) is not int
             or installation["id"] <= 0):
         raise Refusal("GitHub did not identify the App installation.")
-    # merge_queues: write, to put the revert in the queue (enqueuePullRequest).
-    permissions = {"contents": "write", "pull_requests": "write", "merge_queues": "write"}
-    if workflows:
-        permissions["workflows"] = "write"
+    # The App writes nothing to the repository's contents: the job's own GITHUB_TOKEN,
+    # which lasts only as long as the job, pushes the revert branch. So a key taken from
+    # the App can make no branch, tag or release; it opens and labels the revert
+    # (pull_requests: write), which starts its CI as GITHUB_TOKEN's could not, and puts it
+    # in the queue (merge_queues: write).
+    permissions = {"contents": "read", "pull_requests": "write", "merge_queues": "write"}
     data = app.call("POST", f"/app/installations/{installation['id']}/access_tokens",
                     {"repositories": [repo.split("/")[1]], "permissions": permissions})
     if (not isinstance(data, dict) or not isinstance(data.get("token"), str)
@@ -391,13 +392,14 @@ def revert(args, source: Path, api: GitHub, env: dict, push) -> int:
                 labels.add("security-review")
             api.ensure_labels(labels)
             token = installation_token(api, env["STOICHEIA_REVERT_APP_ID"],
-                                       env["STOICHEIA_REVERT_APP_KEY"], args.repo,
-                                       any(path.startswith(".github/workflows/") for path in paths))
+                                       env["STOICHEIA_REVERT_APP_KEY"], args.repo)
             app = GitHub(args.repo, token, api.http)
             main_tip(api, args.after)
             branch = f"revert/{args.after[:12]}"
             stage = f"Push of {branch} was attempted; its remote state may need inspection."
-            push(target, args.repo, branch, token)
+            # The job's own token pushes; a GITHUB_TOKEN cannot push a change to
+            # .github/workflows/, so such a revert fails here and leaves the issue.
+            push(target, args.repo, branch, env["GITHUB_TOKEN"])
             stage = f"Branch {branch} was pushed; pull request creation may need inspection."
             # Quote job names so they cannot add run or revert metadata lines.
             jobs = "\n".join("> " + line for line in args.failed_jobs.splitlines())

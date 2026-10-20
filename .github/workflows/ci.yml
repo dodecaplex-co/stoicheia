@@ -328,6 +328,9 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+      # An automatic revert's failed run and the open main-red issue that names it.
+      actions: read
+      issues: read
     steps:
       - uses: actions/checkout@v5
         with:
@@ -382,6 +385,7 @@ jobs:
       contents: read
       pull-requests: read
       actions: read
+      issues: read
     steps:
       - name: Require a completed acceptance check
         env:
