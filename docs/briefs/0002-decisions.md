@@ -1862,8 +1862,9 @@ findings:
   (main's bold numbers remain allowed), retain significant Unicode spaces for refusal, and
   require both ellipse radii. Numeric inputs are limited to magnitude 10,000, against
   main's largest input of 440 at `209d71fd`; cubic subdivision has a depth limit, and
-  non-finite intermediate results fail the figure. Decoder errors are caught at the parser
-  call. Both entry points have regressions requiring the next figure's finding after an
+  non-finite intermediate results fail the figure; an iterative gate limits nesting to
+  16 levels below the root before recursive helpers run. Decoder errors are caught at the
+  parser call. Both entry points have regressions requiring the next figure's finding after an
   arithmetic or encoding failure. Subdivision is bounded for each cubic; these limits do
   not bound the input's length or its number of elements or path commands.
   Mitre joins now use original segments' endpoint tangents, with no joins between a

@@ -1037,6 +1037,30 @@ class SvgGate(unittest.TestCase):
                             and "letter E" in msg and "canvas's edge" in msg
                             for r, p, _, msg in found), found)
 
+    def test_nesting_depth_and_continuation(self):
+        """Refuse excessive nesting before recursion, then check the next figure."""
+        for idea in (False, True):
+            for depth in (17, 1100):
+                with self.subTest(idea=idea, depth=depth):
+                    # Build bytes directly: ElementTree's serialiser is recursive too.
+                    raw = (b'<svg xmlns="http://www.w3.org/2000/svg">'
+                           + b"<g>" * depth + b"</g>" * depth + b"</svg>")
+                    self.assert_continued(figure_run(raw, idea), idea,
+                                          "nesting exceeds 16 levels below the root")
+
+    def test_nesting_depth_boundary(self):
+        for idea in (False, True):
+            with self.subTest(idea=idea):
+                root = figure_fixture(idea)
+                parent = root
+                for _ in range(16):
+                    parent = ET.SubElement(parent, style.SVG + "g")
+                self.assertEqual(figure_findings(root, idea), [])
+                ET.SubElement(parent, style.SVG + "g")
+                self.assertEqual(figure_findings(root, idea), [
+                    ("S26", "figures/I/01" + ("-idea.svg" if idea else ".svg"), 0,
+                     "SVG nesting exceeds 16 levels below the root")])
+
     def test_stroked_labels(self):
         for idea in (False, True):
             for placement in ("own", "group", "root"):

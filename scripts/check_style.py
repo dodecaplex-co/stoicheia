@@ -2204,6 +2204,8 @@ SVG_SPACE = " \t\r\n"
 # Main's largest numeric input at 209d71fd is 440. This admits ample room around
 # its canvases while keeping coordinates, lengths, radii and path arithmetic bounded.
 SVG_NUMBER_LIMIT = 10_000
+# Main's deepest checked figure at c6ff6817 is 3 levels below its root.
+SVG_MAX_DEPTH = 16
 
 # The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
 # canvas's units, 400 × 300.
@@ -3026,8 +3028,16 @@ def supported_path(value: str) -> bool:
 
 
 def supported_svg(path: Path, root) -> bool:
-    """Refuse anything outside the inventory before measurements, naming every failure.
+    """Refuse deep trees and unsupported SVG before recursive walks or measurements.
     Read raw XML attributes only; CSS is neither accepted nor interpreted."""
+    pending = [(root, 0)]
+    while pending:
+        el, depth = pending.pop()
+        if depth > SVG_MAX_DEPTH:
+            fail("S26", path, 0, f"SVG nesting exceeds {SVG_MAX_DEPTH} levels below the root")
+            return False
+        pending.extend((child, depth + 1) for child in el)
+
     valid = True
     for el in root.iter():
         t = tag(el)
