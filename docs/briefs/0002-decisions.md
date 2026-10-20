@@ -1500,11 +1500,6 @@ findings:
   [`tests/model/results/search-seed3.txt`](../../tests/model/results/search-seed3.txt),
   [`tests/model/results/structured.txt`](../../tests/model/results/structured.txt) and
   [`tests/model/results/summary.txt`](../../tests/model/results/summary.txt).
-  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates the measured counts for
-  III.1, its porism and III.2; its axiom examples use retained assumptions or identify the
-  retired rules as theorems. [`review/SCHEMA.md`](../../review/SCHEMA.md) marks the overlap
-  examples that treated Generalities 3 as an axiom as historical; its fields, requirements
-  and worked TOML examples stay unchanged.
   [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) imports the proved rules and updates
   its pinned axiom closures and explanatory comments to follow the retirements, retaining
   every `#guard_msgs` check.
@@ -1518,10 +1513,7 @@ findings:
   derived properties in [`tests/model/derived.py`](../../tests/model/derived.py), which
   [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py) and
   [`tests/model/structured.py`](../../tests/model/structured.py) run by name, adding runs
-  for the ones they did not yet sample; [`scripts/safe_push.py`](../../scripts/safe_push.py)'s
-  `LAW_GLOBALS` loses the nine entries no remaining law uses, so its test that each entry is
-  needed still passes, and [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py)'s
-  example decorator `gs_ti()` becomes `gs_convex('in')`; and, in the formal model,
+  for the ones they did not yet sample; and, in the formal model,
   `model/Check/Generator.lean` extends `comparePlanted` to check the hand `LineMeetsCircle`'s
   type and body against the library's definition before translating it, including binder
   kinds and without unfolding. `model/Check/Intersections.lean` uses it for Intersections 2
@@ -1531,4 +1523,7 @@ findings:
   The formal model's generated laws, checks and assembly
   follow from its generator; its proofs in the plane stay, as derived facts, and
   `model_exists` stays unconditional. Proposition and porism statements, definitions and
-  `--` lines are unchanged.
+  `--` lines are unchanged. The check inputs this retirement leaves stale, the law
+  allow-list in `scripts/safe_push.py` (nine entries no remaining law uses, which the
+  retirement leaves harmless) and the examples of `Certificate/FIELDS.md` and
+  `review/SCHEMA.md`, follow in a check change of their own, landed after this one.
