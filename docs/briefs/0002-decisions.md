@@ -1435,9 +1435,12 @@ findings:
   the change in its own note. No statement, check or earlier decision changes, and no
   protected path. Three things are the owner's to decide: the copyright line in
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
+  identity in `scripts/test_safe_push.py`, a protected file, now uses
+  `Stoicheia Team <team@example.org>` instead of a person's name. This tooling-only change
+  leaves the test's meaning unchanged: an ordinary identity is not flagged.
+
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
-
 - **A new tag, `touching-whole-circles`.** [`review/terms.toml`](../../review/terms.toml)
   gains the tag, of kind `representation`, with the meaning [brief 0008](0008-centre.md)
   gives it, word for word (section 4, "Records, Lean files and pages", and question 9):
@@ -1451,7 +1454,6 @@ findings:
   section 6 orders; no record carries it yet, so no page changes. When the definition of
   contact within changes, in the brief's step 6, the meaning gains that the inner circle has
   passed within the outer (question 16). Protected file changed: `review/terms.toml`.
-
 - **An overlap always names its kind.** The last part of
   [#93](https://github.com/jackChallis/stoicheia/issues/93), as its comments list it. The
   decision of 18 October, "An overlap is worded by its kind, as the catalogue gives it",
@@ -1469,7 +1471,6 @@ findings:
   The proposition template's `[overlap]` lines say the key is always named. Nothing a
   reader sees changes: the pages render the same at the branch's base. This is a check
   change on its own; it changes no record.
-
 - **The negative tests read the count of assumptions from the lock.** The planted-assumption
   test of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) expected
   `check_fidelity.py` to say "declares 88 axioms, not 87", a count fixed in the script. It
@@ -1481,7 +1482,6 @@ findings:
   the lock holds 87, so the test expects what it expected before; nothing else in the
   script, and no check, changes. The one protected file it changes is
   `scripts/negative_tests.py`.
-
 - **The model's audit and its root are protected too (#96).** `model/Model/Audit.lean`
   pins the model's proofs to `propext`, `Classical.choice` and `Quot.sound` alone and
   checks that `Elements` is absent; `model/Model.lean` imports that audit, so the build
@@ -1498,7 +1498,6 @@ findings:
   relative link must resolve from the decisions page's folder to the protected file,
   so routine edits to `model/Model.lean` (a new import) and `model/Model/Audit.lean`
   (a new pinned law) now need such a line too.
-
 - **The overlap wording and the table of stages are brought up to date.** The two text
   follow-ups to #93 update the [README](../../README.md)'s row for `Audit/` and the
   [Book I brief](book-I.md)'s account of its four overlaps: a rule supplies a step of
@@ -1538,17 +1537,18 @@ findings:
   the keys and when an item counts, so the schema's `items` row and the sentence after the
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
-
 - **III.37 leaves the grouped-case example.** The example in the `uncarried_runs` docstring
   of [scripts/check_fidelity.py](../../scripts/check_fidelity.py) drops III.37, whose case
   with the centre on AC gets a proof of its own, `Prop37.centre_on_secant`, on ship R1's
   train. The docstring holds before and after that train lands. I.14 remains as the example
   of a "similarly" that one argument already covers. The docstring is the only change to
   the script; the check is unchanged.
-
 - **I.39 and I.40 now follow Euclid's reductio to its end.** I.40's companion
   `Prop40.general` does so too, so their records' route is `euclid`. Under "The follow-ups
   to the precision pass", the entry "Two more kinds of passage, and what 'argued another
   way' means" called them "one step changed". It is superseded on this point and stays as
   history. [review/SCHEMA.md](../../review/SCHEMA.md) now uses III.8 as its example of a
   `modified` route: its last step compares the angles at the centre by I.24.
+||||||| bd3b72a1
+  name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
+  request of its own.

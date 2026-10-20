@@ -3798,7 +3798,7 @@ class Units(unittest.TestCase):
         self.assertTrue(flagged("a", "Some One <someone@Some-MacBook.local>"))
         self.assertTrue(flagged("a", "someone <someone@(none)>"))
         self.assertTrue(flagged("a", "/" + "Users" + "/someone <a@example.org>"))
-        self.assertEqual(flagged("a", "Jack Challis <jack@example.org>"), [])
+        self.assertEqual(flagged("a", "Stoicheia Team <team@example.org>"), [])
         self.assertEqual(flagged("a", "GitHub <noreply@github.com>"), [])
 
     def test_checklist(self):
