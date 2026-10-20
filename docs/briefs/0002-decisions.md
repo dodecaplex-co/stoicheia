@@ -1760,20 +1760,29 @@ findings:
   [STYLE](../STYLE.md), section 8, describes the report classification. No judged content,
   Lean source, review record or generated page changes.
 
-- **No certificate entry may rest on Circle 2 or Circle 3.** Plan lane 1 keeps
+- **No certificate entry may rest on Circle 2 or Circle 3.** The check keeps
   [brief 0008](0008-centre.md)'s III.1 construction from reaching Circle 2, which states
   III.2, or Circle 3, which gives it at once.
   [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) now refuses either rule
   in any entry's axioms, propositions, porisms and companions of every book included,
-  and names the entry and the rule. Main at `bd3b72a` passes: none of its 121 entries
-  rests on either rule.
+  and names the entry and the rule. It also fails if `Certificate/axioms.lock` no longer
+  holds either rule's name, so a renamed axiom cannot leave the check refusing nothing.
+  Main at `39ae65c` passes, and its `facts.json` is the one delivered here: none of its
+  121 entries rests on either rule.
   [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants Circle 2 in a
   proposition and Circle 3 in a porism and a companion, on separate copies of
+  `facts.json`, without a build, and expects each refusal by name. It then renames Circle 3
+  in the lock, restored after, and in a copy of `facts.json`, and expects the missing
+  name to be caught. These are the two protected files changed. FORMALIZATION states what
+  the check covers: an entry, whether through its own proof or through a lemma it uses.
+  Book Zero lemmas are not entries, so they are covered only through entries that use
+  them. The overlap catalogue's account of the rule, and the README's row, are held for
+  the pull request that follows. Nothing is loosened.
+
   `facts.json`, without a build, and expects each refusal by name. These are the two
   protected files changed. The overlap catalogue and the guides say what the check
   covers: Book Zero lemmas are not entries, so it covers them only through entries that
   use them. Nothing is loosened.
-
 - **The merge commit names the owner GitHub names
   ([#41](https://github.com/jackChallis/stoicheia/issues/41)).** `git safe-push --merge`
   gives the merge commit GitHub's own subject, "Merge pull request #N from owner/branch",
@@ -1875,3 +1884,8 @@ findings:
   `scripts/copy_acceptance_checks.sh`, `scripts/negative_tests.py`,
   `scripts/safe_push.py`, `scripts/test_safe_push.py`, `tests/test_check_acceptance.py`,
   `tests/test_check_style.py`, `tests/test_negative_tests.py` and `tests/test_screen.py`.
+||||||| 6e6a2629
+  `facts.json`, without a build, and expects each refusal by name. These are the two
+  protected files changed. The overlap catalogue and the guides say what the check
+  covers: Book Zero lemmas are not entries, so it covers them only through entries that
+  use them. Nothing is loosened.
