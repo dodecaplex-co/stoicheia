@@ -733,6 +733,11 @@ def cmd_score(args) -> int:
                 if l.strip()]
     except (OSError, ValueError) as e:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
+    for r in rows:
+        if "reversed" in r and (not isinstance(r["reversed"], dict)
+                                or not isinstance(r["reversed"].get("choice"), str)):
+            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
+                          "only lines that `run` wrote")
     answered = [r for r in rows if "error" not in r and ("choice" in r or "noul" in r)]
     labelled = [r for r in answered if "agrees" in r]
     agree = [r for r in labelled if r["agrees"]]
@@ -764,11 +769,8 @@ def cmd_score(args) -> int:
         if r.get("agrees") is False:
             why.append(f"chose {r.get('choice', r.get('noul'))!r}, expected {r.get('expected')!r}")
         answers = [(r, "")]
-        if isinstance(r.get("reversed"), dict):
+        if "reversed" in r:
             answers.append((r["reversed"], " with the options reversed"))
-        elif "reversed" in r:
-            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
-                          "only lines that `run` wrote")
         for answer, order in answers:
             confidence = answer.get("confidence")
             if confidence is None and isinstance(answer.get("noul"), (int, float)):
@@ -1128,7 +1130,8 @@ def cmd_self_test(args) -> int:
               and "no confidence given with the options reversed" in out,
               "score checks confidence in each asking and keeps the threshold exclusive",
               out + err)
-        for broken in (None, [], "reversed", 1, True):
+        for broken in (None, [], "reversed", 1, True, {},
+                       {"confidence": 0.9, "consistent": True}):
             row = json.loads(first[0])
             row["id"] = "reversed-broken"
             row["expected"] = row["choice"]

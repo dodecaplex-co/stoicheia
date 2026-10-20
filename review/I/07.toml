@@ -43,7 +43,7 @@ note = "Like Heath's, this figure draws Euclid's impossible supposition. CA and 
 stage = "full"
 commit = "4a4bd6ec"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-run = "Q watch, independent re-read at 4a4bd6ec"
+run = "brief 0005 stage 6, workflow Q-read-jev, independent re-read at 4a4bd6ec"
 lean = "sha256:ffbc06b6dd19da41"
 
 [review.items]
