@@ -40,8 +40,16 @@ case = "the bases BC and CE meeting at C, with F on CD between C and D, as in He
 note = "Heath draws AD level and AF sloping; our drawing puts AF level, as the proof supposes. Like Heath's, this figure draws Euclid's impossible supposition: AF parallel to BE with F strictly between C and D, while the triangles ABC and DCE on equal bases BC and CE are assumed equal in area. Their drawn areas are unequal."
 
 [review]
-stage = "exceptions"
-commit = "06138bcb"
-reviewer = "Codex (GPT-6), independent reader"
-run = "issue #29, independent Codex source-first reading at 06138bcb94a2a47d9844a4f40ac8f8c55dddac95: Heath, both formal statements and complete Lean files, Prop40.general/join/special, helper semantics, records, mishnahs, figures and temporary rendered previews; generated certificates await refreshed facts"
+stage = "full"
+commit = "adbf6993"
+reviewer = "GPT-6 Astra, independent reader"
+run = "ship R1 wave 2, independent re-read of the merged record at adbf6993"
 lean = "sha256:42c6b5725278f449"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
