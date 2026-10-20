@@ -1406,11 +1406,8 @@ findings:
   [`tests/model/results/search-seed3.txt`](../../tests/model/results/search-seed3.txt),
   [`tests/model/results/structured.txt`](../../tests/model/results/structured.txt) and
   [`tests/model/results/summary.txt`](../../tests/model/results/summary.txt).
-  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates its axiom examples and
-  the counts for III.1 and its porism because `centre_unique` and Circle 2 are now theorems.
-  [`review/SCHEMA.md`](../../review/SCHEMA.md) updates its overlap examples to distinguish
-  current axioms from proved rules; its fields, requirements and worked TOML examples stay
-  unchanged.
+  The examples of the certificate's fields and of the review schema, which are check
+  inputs, follow in a change of their own, landed after this one.
   [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) imports the proved rules, updates its
   exact axiom pins to follow the retired rules' proofs and labels the circular derivations;
   [`Audit/screen.py`](../../Audit/screen.py) removes the five retired rules from its list
@@ -1425,6 +1422,14 @@ findings:
   derived facts. Proposition and porism statements, definitions and `--` lines are
   unchanged; the records whose Lean changed were read again and stamped by readers who
   wrote none of them.
+- **The certificate's and the schema's examples follow the eight retired axioms.** A
+  check-input change of its own, landed after the retirement of the eight (87 to 79), which
+  leaves the check inputs alone.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates its axiom examples and
+  the counts for III.1 and its porism because `centre_unique` and Circle 2 are now theorems.
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) updates its overlap examples to distinguish
+  current axioms from proved rules; its fields, requirements and worked TOML examples stay
+  unchanged. No check, field or requirement changes.
 - **The numerical checks, made ready for the second axiom retirement.** This preparation
   keeps all 79 axioms in place. Under [WORKFLOW](../WORKFLOW.md), section 10, the check
   change lands in a pull request of its own before the retirement it judges. The 31 laws
