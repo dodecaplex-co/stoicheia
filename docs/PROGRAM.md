@@ -89,10 +89,10 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 19 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, until the proof from the outline ([#116]) |
+| 2 | I.40 and II.1 general; I.45 and II.14 with supplied divisions | done, 18 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)); I.45 and II.14 restricted from 20 Oct, for figures supplied with a checked division, until the proof from the outline ([#116]) |
 | 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
 | 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` next ([#28]) |
-| 5 | Consolidation review of all 99 | Books I and II: all 62 records at `full` ([#115]); Book III: 37 at `exceptions`, full review after its migrations ([#29]) |
+| 5 | Consolidation review of all 99 | Books I and II: all records at `full` ([#115]); Book III: all at `exceptions`, full review after its migrations ([#29]) |
 | 6 | Acceptance, then a consolidation release of Books I–III | report exists; acceptance has not passed; CI checks regressions against main ([#148]) |
 
 ### Landed on 18 October
@@ -140,9 +140,9 @@ own, the figure letters as three:
 
 ### Open items
 
-What remains on 20 October. Stage 2 is in the edition ([#102](https://github.com/jackChallis/stoicheia/pull/102));
-I.47 general, for squares on either side of each base, followed in [#134].
-How work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
+What remains on 20 October. Stage 2 is in the edition; I.47 general, for squares on
+either side of each base, followed in [#134]. How work lands is in
+[WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull requests".
 
 - **I.45 and II.14's representation** still takes a supplied division into triangles.
   The remaining work is to give the figure by its outline, prove that a division exists
@@ -163,8 +163,8 @@ How work lands is in [WORKFLOW](WORKFLOW.md), section 10, "Landing work: pull re
 - **Mixed angles and the centre rule** await migration into the edition: the approved
   mixed-angle prototype supplies III.16 and III.31's comparisons ([#57]), and frozen
   [brief 0008](briefs/0008-centre.md) settles the centre rule and its restatements ([#59]).
-- **Book III's 37 review records** remain at `exceptions`; they reach `full` after the
-  migrations and review ([#29]). Books I and II's 48 and 14 records are already at `full`
+- **Book III's review records** remain at `exceptions`; they reach `full` after the
+  migrations and review ([#29]). Books I and II's records are already at `full`
   ([#115]).
 - **Acceptance** still has failing items in its report. CI now checks every pull request
   against main ([#148]); the consolidation release must pass every item.
