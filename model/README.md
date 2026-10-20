@@ -285,8 +285,9 @@ The generator shares four modules for the restricted calculus of
 `Elements.Foundations.Superposition.Semantics`,
 `Elements.Foundations.Superposition.Soundness` and
 `Elements.Foundations.Superposition.Restriction`. A declaration qualifies by its declaring
-module, never by its namespace. Its translation keeps its name and universe arguments in
-both directions, and the generated laws import the shared modules their vocabulary reaches.
+canonical module name, never by its namespace. Its translation keeps its name and universe
+arguments in both directions, and the generated laws import the shared modules their
+vocabulary reaches.
 Before translating, the generator audits every declaration in every imported shared module,
 including declarations no law reaches. It follows types and values transitively, including
 theorem proofs, opaque values, constructors and recursor rules. Every dependency must come
@@ -302,9 +303,29 @@ the external module roots listed in `modelImportPackages` in
 [Check/Generator.lean](Check/Generator.lean). That single list records Lean's permitted
 roots and the library roots supplied by Mathlib and its dependencies, checked against
 the pinned packages in `lake-manifest.json`. Every other root is refused, including
-`Check`, `Staging`, `Audit` and `Certificate`. The external packages cannot import this
-repository's modules. Auditing every Model source, and allowing the pure files to import
-only each other and `Init`, therefore checks the whole import closure.
+`Check`, `Staging`, `Audit` and `Certificate`. Pure files may import only each other and
+`Init`. Before applying any root permission, the audit requires a canonical module name:
+every component is a non-empty string, with no `/`, `\`, NUL or colon, neither `.` nor
+`..`, and no trailing dot or space. Anonymous names and numeric components are refused.
+Harmless escaped identifiers, including `areas-p5`, remain valid. The same predicate guards
+core, shared and project declaration membership, foundation collection and shared headers.
+
+Lean 4.35's `modToFilePath` joins each component as a path: `..` can leave a package and
+an absolute component replaces the path before it. Colons and trailing dots or spaces have
+additional drive, stream or normalisation meanings on Windows, so they are refused on every
+platform. This closes the escaped-component routes, including
+`Model.«..».Check.Original` and an absolute path beneath `Init`.
+
+The closure claim depends on the configured package roots, unmodified pinned dependencies
+and toolchain, and no search-path or symlink substitution. The audit checks all local Model
+sources and the four pure sources, but does not recursively audit external source files or
+authenticate their origin. Lean 4.35 exposes an imported module's optional package identifier
+through `Environment.getModulePackageByIdx?`. All 653 `Init` modules in the installed pinned
+toolchain have no identifier, so `isLeanCore` requires both a canonical `Init` name and no
+package identifier. This refuses a named package, including `stoicheia`, posing as `Init`.
+It does not authenticate an unlabelled replacement. Lean's environment retains no resolved
+`.olean` path. `findOLean` searches the current path again; it does not recover the loaded
+file's provenance, and Lake can supply explicit import artefacts.
 
 Lake 4.35 defaults the Model library's roots to `Model` and its globs to that root alone.
 It builds `Model.lean` and recursively follows imports. The audit includes this file
@@ -315,13 +336,21 @@ at the first body command; a malformed header is an error. `checkModelImportsWit
 the decision from file paths and imports, so planted cases use the same parser and
 decision without creating files or loading their imports.
 
-The Check library registers `Model.lean`, the whole `Model/` directory and
-`../Elements/Foundations/` as text inputs in [lakefile.toml](lakefile.toml). Directory
-inputs track additions and removals as well as edits. The foundations parent was registered
-before its `Superposition/` subdirectory existed, since Lake rejects a missing input
-directory. It continues to cover all four pure modules. Lake hashes text contents,
-so a timestamp-only touch may replay a
-cached result; changing an audited source's contents rebuilds the checks.
+The Check library registers `Model.lean` and the `.lean` files under `Model/` and
+`../Elements/Foundations/` as text inputs in [lakefile.toml](lakefile.toml). The plane-proof
+input is filtered to `.lean` too. The existing foundations directory is used because Lake
+rejects an input directory that does not exist, and its `Superposition/` subdirectory did
+not exist on main when the input was added; this input includes all four pure sources when present, as well as other
+foundation sources.
+
+Lake 4.35 filters directory entries before sorting them and combining their content hashes.
+Adding or removing a selected file, including a same-content rename from `.txt` to `.lean`
+or back, changes that list. This catches the first pure module arriving by such a rename.
+File paths are trace captions, not part of the hash: a rename within the selected set can
+still replay a cached result when the ordered contents stay the same. Text hashes normalise
+line endings, and a timestamp-only touch can also replay a result. Changes to the selected
+contents otherwise rebuild the checks. CI's fresh build runs every check, including the
+whole import audit, regardless of local cache traces.
 
 The library keeps its geometric words; I.4 and I.8 use the restricted rule.
 Rewriting the library over a signature, with
@@ -381,27 +410,38 @@ the original means. These checks do that, at every build.
   dropped guard, a word written out) and two statements the translation must refuse (a word
   the laws do not reach, and a constant that is neither the library's nor Lean's own), and
   `#guard_msgs` fails the build unless each is refused with the message it pins. The first
-  and the fourth pass the kernel's `rfl`, which the file shows too. Further cases pass
-  copies of Init declarations to the purity checker without installing them in Lean's
-  environment: an Init-only closure passes, while a transitive reference to `Elements.Point`
+  and the fourth pass the kernel's `rfl`, which the file shows too. `comparePlantedWord`
+  also runs on two copies of the translated `Elements.Collinear` definition: the matching
+  copy produces no message, and a copy with two points exchanged pins the exact refusal.
+  Further cases pass copies of Init declarations to the purity checker without installing
+  them in Lean's environment: an Init-only closure passes, while a transitive reference to `Elements.Point`
   in a type or value, a dependency found only in an opaque value or a recursor rule,
   `sorryAx`, and an unapproved axiom are refused. Every helper called
   by `run_cmd` is defined in `Check/Generator.lean`. `plantPureDependency` accepts any
   definition as its root and puts a named dependency in a copy of its type or value.
   The production identity check still refuses `Nat.rec`, which is not shared.
-  Parameterised variants use stand-in module lists to exercise successful identity
-  entries in the plan, forward and reverse translation with zero, symbolic and compound
-  universe arguments, and a non-empty shared-import header even without the calculus.
+  Parameterised variants extend the production module list with stand-ins to exercise
+  successful identity entries in the plan, and forward and reverse translation with zero,
+  symbolic and compound universe arguments, before the calculus arrives.
   `List.filterMap` tests two universe arguments; `Model.Kind.rec` tests a shared name
-  outside `Elements`, including the residual model-name check. These two fixtures add
-  their stand-in modules to the four approved modules so the real laws still translate.
-  The module-root collector
+  outside `Elements`, including the residual model-name check. The module-root collector
   accepts an Init module and finds a planted dependency in a declaration no law uses,
-  without receiving that declaration as an explicit audit root. Production keeps the
-  four-module boundary throughout.
+  without receiving that declaration as an explicit audit root. These module-root fixtures
+  also retain the production list, so the same cases can run after the calculus arrives.
+  The header-printer fixtures exercise a non-empty shared-import header using explicit
+  stand-in reached words, and build no translation plan. Production keeps the four-module
+  boundary throughout.
   Import cases accept the real tree and permitted headers, and refuse geometric imports,
   `Check.Original` in a legacy `Model.lean` header, `Staging`, `Audit`, `Certificate`, an
   unknown root, a module below an approved pure module, and Mathlib in a pure file.
+  Escaped traversal and absolute-path headers are refused. A matrix checks empty, dot,
+  separator, NUL, drive, stream and trailing-dot or trailing-space components in root,
+  intermediate and final positions, through the predicate and import decisions; escaped
+  strings also pass through Lean's header parser. Anonymous and numeric names are tested
+  directly. Planted declaring-module lookups for `Elements.Point` and `Elements.Collinear`
+  exercise the same core and sharing decisions as production, without installing a module.
+  Core cases also refuse canonical names with a named package and accept actual Init
+  declarations. Canonical names, including harmless escaped identifiers, remain accepted.
   A path regression checks that both relative and absolute Check filenames locate the
   model package.
   The real calculus cases also refuse a changed placement guard, angle and area swapped

@@ -2122,14 +2122,19 @@ findings:
   definition with an isolated lookup. The content branch can use it on
   `Elements.Superposition.guards`. `checkSharedIdentity` checks the production translation
   plan in both directions, preserving zero, symbolic and compound universe arguments;
-  here `Nat.rec` pins the refusal of a constant that is not shared. Parameterised variants
-  supply stand-in module lists and reached words to the same plan construction, purity
-  audit and import-header printer. The cases for `List.filterMap` and `Model.Kind.rec`
-  exercise successful identity entries before the calculus arrives, including two
-  universe arguments and a shared name in the Model namespace. Reverse translation exempts
+  here `Nat.rec` pins the refusal of a constant that is not shared. Parameterised fixtures
+  extend `pureModules` with stand-in modules for the same plan construction and purity
+  audit, so the real calculus stays shared after it arrives. The import-header fixtures
+  use explicit stand-in reached words without constructing a plan. The cases for
+  `List.filterMap` and `Model.Kind.rec` exercise successful identity entries before the
+  calculus arrives, including two universe arguments and a shared name in the Model namespace.
+  Reverse translation exempts
   identity entries from its residual model-name check. Further cases check a non-empty
   shared-import header and module-root collection: a dependency planted in an otherwise
   unused declaration is found without that declaration being supplied as an audit root.
+  Both module-root fixtures also extend the production boundary. `comparePlantedWord`
+  runs on a matching copy of translated `Elements.Collinear`, with no message, and on a
+  copy with two points exchanged, with its exact diagnostic pinned by `#guard_msgs`.
   Production continues to use exactly the four pure modules.
   `checkModelImports`, called from RoundTrip, reads `Model.lean`, every Lean file under
   `Model/`, and each pure module's source if present. Model imports are restricted to Model
@@ -2137,8 +2142,11 @@ findings:
   `modelImportPackages`, from Lean and the pinned Mathlib dependency configurations in
   `model/lake-manifest.json`. Other roots, including `Check`, `Staging`, `Audit`,
   `Certificate` and unknown names, are refused. Pure files admit only the four pure
-  modules and `Init`. The external packages cannot import this repository, so auditing
-  every local source's direct imports checks the whole import closure. Lake 4.35 defaults
+  modules and `Init`. Every import name must first have canonical path components, as
+  specified in the fifth-round correction below. Auditing these local sources bounds their
+  closure under the configured package roots and unmodified external dependencies and
+  toolchain, without search-path or symlink substitution. External sources and file
+  provenance are not audited here. Lake 4.35 defaults
   the Model library to root `Model` and glob `Glob.one Model`, building `Model.lean` and
   following its imports. Auditing that root outside `Model/` and the whole directory
   covers its local sources, including unimported ones. Lean's header parser handles legacy
@@ -2150,15 +2158,25 @@ findings:
   Mathlib in a pure file, as well as `Check.Original` in a legacy `Model.lean` header,
   `Staging`, `Audit`, `Certificate` and an unknown root. The real tree is checked too.
   **The protected path `model/lakefile.toml` changes** to register all files the import
-  audit reads as text inputs in the Check library's `needs`: `Model.lean`, the entire
-  `Model/` directory and `../Elements/Foundations/`. An experiment with a missing
-  `input_dir` fails with "no such file or directory", so the existing foundations parent
-  is registered instead of its absent `Superposition/` child. Directory inputs cover
-  additions and removals, including the first pure source, as well as changed contents.
-  A timestamp-only touch can replay cached checks because Lake hashes text contents;
-  a content change rebuilds them. This strengthens the check without changing its
-  expectations or the generated files. The protected build-file change needs the
-  security review required by WORKFLOW before landing.
+  audit reads as text inputs in the Check library's `needs`: `Model.lean` and the `.lean`
+  files under `Model/` and `../Elements/Foundations/`. The plane-proof input also selects
+  only `.lean` files. An experiment with a missing `input_dir` fails with "no such file or
+  directory", so the existing foundations parent is registered instead of its absent
+  `Superposition/` child; it selects other foundation
+  Lean files as well as the four pure sources. Reading Lake 4.35's installed
+  `Lake/Config/InputFileConfig.lean`, `Lake/Load/Toml.lean`,
+  `Lake/Build/Common.lean` and `Lake/Build/Trace.lean` confirms that `filter` is supported,
+  `inputDir` filters and sorts before collecting file traces, and `BuildTrace.mix`
+  combines hashes without hashing their path captions. The filter
+  `filter = { extension = ["lean"] }` makes a `.txt` to `.lean` rename add a hashed input,
+  including when it introduces the first pure source. A selected file's addition or
+  removal changes the hashed list. A rename within that list can still replay a result
+  if its ordered contents stay the same; filenames are not themselves hashed. Text hashes
+  normalise line endings, and timestamp-only changes can also replay results. Other
+  changes to selected contents rebuild the checks. CI's fresh build runs every check,
+  including the whole import audit, regardless of these local cache traces. This
+  strengthens the check without changing its expectations or the generated files. The
+  protected build-file change needs the security review required by WORKFLOW before landing.
   RoundTrip also tests `modelDir` with relative and absolute filenames.
   The path fix in `model/Check/Generator.lean` replaces the early `return` with `pure`,
   so resolving a relative filename continues to its parent directories and the package
@@ -2167,6 +2185,61 @@ findings:
   `model/lakefile.toml` and `docs/briefs/0002-decisions.md`; `model/lakefile.toml` is the
   only protected path among them under `PROTECTED` or `PROTECTED_JUDGED` in
   `scripts/safe_push.py`.
+
+- **Fourth-round rename experiments for `model/lakefile.toml`.** Run on `68e4ea30` with
+  the fourth-round working changes, on 20 October 2026. From `model/`, with
+  `export PATH=$HOME/.elan/bin:$PATH` before each Lake invocation, the unmodified baseline's
+  `lake build` passed (2625 jobs). A file `Model/Unused.txt` containing
+  `import Check.Original` followed by a newline was added, and `lake build` passed.
+  After `mv Model/Unused.txt Model/Unused.lean`, with identical bytes, `lake build`
+  incorrectly passed from cache. Removing the fixture and rebuilding restored a passing
+  tree before editing the inputs.
+  With the extension filters in place, the same build, rename and build sequence rebuilt
+  `Check.RoundTrip` and exited 1 with:
+  ```text
+  error: Check/RoundTrip.lean:239:0: model/Model/Unused.lean: Model imports `Check.Original`, outside the approved import roots
+  ```
+  The second case created `../Elements/Foundations/Superposition/Syntax.txt`, containing
+  `import Elements.Foundations.Words` followed by a newline. `lake build` passed;
+  `mv ../Elements/Foundations/Superposition/Syntax.txt ../Elements/Foundations/Superposition/Syntax.lean`
+  preserved its bytes, and the next `lake build` exited 1, rebuilding `Check.RoundTrip`:
+  ```text
+  error: Check/RoundTrip.lean:239:0: Elements/Foundations/Superposition/Syntax.lean: pure module imports `Elements.Foundations.Words`, outside the four pure modules and `Init`
+  ```
+  `Check.Generated` also refused the newly present, unimported foundation module in that
+  case. Each fixture was removed afterwards, the newly created `Superposition/` directory
+  was removed, and `lake build` passed again (2625 jobs). No generated source was written.
+
+- **Fifth-round module-name correction for brief 0009, #75.** The import audit previously
+  accepted `Model.«..».Check.Original`; an absolute-path component under `Init` could also
+  label the geometric words as Lean's own. `isCanonicalModuleName` now requires non-empty
+  string components, with no slash, backslash, NUL or colon, neither `.` nor `..`, and no
+  trailing dot or space. Anonymous names and numeric components are refused. The import audit
+  applies this predicate before root permissions; core, shared and project membership,
+  foundation collection and shared headers use it too. A non-canonical sharing boundary
+  is an error. Harmless escaped names such as `areas-p5` remain accepted.
+  Reading the installed Lean 4.35 `Lean/Util/Path.lean` and `Init/System/FilePath.lean`
+  confirms that `modToFilePath` joins each component with `FilePath.join`: `..` permits
+  traversal and an absolute component discards the preceding path. Windows drive prefixes,
+  streams and trailing-dot or trailing-space aliases are refused on every platform.
+  `Lean/Compiler/ModPkgExt.lean` exposes an imported module's optional package identifier
+  through `Environment.getModulePackageByIdx?`. Inspection found no identifier on any of
+  the installed toolchain's 653 `Init` modules, and `some "stoicheia"` on the geometric
+  words. `isLeanCore` now requires a canonical `Init` name and an absent package identifier,
+  refusing every named package. `Lean/Environment.lean` retains no resolved file path; its
+  importer can use either `findOLean` or explicit import artefacts, so looking up a name
+  again would not authenticate the already loaded file. An unlabelled replacement remains
+  outside what these checks distinguish. The build assumptions above still apply.
+  Planted headers reproduce both escapes, and planted declaring-module lookups for
+  `Elements.Point` and `Elements.Collinear` exercise the core and sharing decisions without
+  installing a new module. These cases failed before the canonical guard was added.
+  A matrix exercises the predicate, header parser and import decisions, including Windows
+  spellings, empty components, NUL and invalid numeric names; positive cases keep harmless
+  escaped identifiers and canonical modules admitted. Further core cases refuse named
+  packages even with canonical names, and accept actual Init declarations. All run before
+  the calculus arrives.
+  This round changes only `model/Check/Generator.lean`, `model/Check/RoundTrip.lean`,
+  `model/README.md` and this decisions file. The three generated sources stay unchanged.
 
 - **The owner approves the restricted superposition replacement.** The owner's exact
   approval is: "replace the superposition rule as ship S built it, with brief 0009 questions 2, 4 and 5 as prototyped, the model's import of the four pure modules, the page claim 'a restricted inference in System E's style', tooling PR first. Lands after /no-mistakes and an independent Codex read of the model lane."
