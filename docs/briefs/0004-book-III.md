@@ -260,10 +260,10 @@ proposition. A proposition counts as proved only when its porism is too, and its
 shows the porism's certificate in a column of its own. III.1 Por. follows Euclid's
 reductio directly from its given centre. On AB, the centre is D by `Prop1.middle`; off
 AB, it shares `Prop1.equal_adjacent` and `Prop1.perpendicular` with III.1: the first
-makes the adjacent angles equal through I.8, Postulate 4 makes them right, and the second
-puts the centre on DC. It neither calls III.1 nor uses `centre_unique` or
-`exists_centre`. III.16 Por. cites III.16 for the result from which its "from this it is
-manifest" follows.
+applies I.8 to make the adjacent angles equal, Definition I.10 makes them right,
+Postulate 4 identifies their measure with `∟`, and the second puts the centre on DC. It
+neither calls III.1 nor uses `centre_unique` or `exists_centre`. III.16 Por. cites III.16
+for the result from which its "from this it is manifest" follows.
 
 ## How the statements say Euclid's phrases
 
