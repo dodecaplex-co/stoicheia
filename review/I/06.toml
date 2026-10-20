@@ -42,6 +42,7 @@ note = "Euclid takes for granted that DBC is less than ACB; the Lean proves it w
 
 [figure]
 case = "AB supposed greater than AC, with DB cut off from AB equal to AC, as in Heath's figure"
+note = "Like Heath's, this figure draws Euclid's impossible supposition. DB is drawn shorter than AC, although it is cut off equal to AC."
 
 [review]
 stage = "full"
