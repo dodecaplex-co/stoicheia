@@ -1240,6 +1240,36 @@ def isModelImport (m : Name) : Bool :=
   isCanonicalModuleName m && (m.getRoot == `Model || pureModules.contains m ||
     modelImportPackages.any (fun (_, roots) => roots.contains m.getRoot))
 
+/-- Local source path components use only ASCII letters, digits, underscores, hyphens
+and dots. Unicode case folding and normalisation differ across filesystems, so refuse
+non-ASCII names before comparing spellings or selecting sources. -/
+def isCanonicalSourceComponent (s : String) : Bool :=
+  !s.isEmpty && s != "." && s != ".." && s.toList.all fun c =>
+    ('a' ≤ c && c ≤ 'z') || ('A' ≤ c && c ≤ 'Z') || ('0' ≤ c && c ≤ '9') ||
+      c == '_' || c == '-' || c == '.'
+
+/-- Check every directory entry, including directories and non-source files. ASCII case
+variants of `.lean` and distinct paths equal after lowercasing are errors too. A pure
+module's path must have its prescribed spelling even when no other spelling is listed.
+The input is data so the same regressions run on case-sensitive filesystems. -/
+def checkModelSourceListing (files : Array String) : Except String Unit := do
+  for file in files do
+    unless (file.splitOn "/").all isCanonicalSourceComponent do
+      throw s!"{file}: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)"
+  let mut seen : Array String := #[]
+  for file in files do
+    if let some other := seen.find? (fun s => s != file && s.toLower == file.toLower) then
+      throw s!"source paths differ only in case: `{other}` and `{file}`"
+    seen := seen.push file
+  for file in files do
+    if let some ext := (System.FilePath.mk file).extension then
+      if ext.toLower == "lean" && ext != "lean" then
+        throw s!"{file}: non-canonical source extension (expected `.lean`)"
+    for m in pureModules do
+      let expected := pureModuleFile m
+      if file != expected && file.toLower == expected.toLower then
+        throw s!"{file}: non-canonical pure source path (expected `{expected}`)"
+
 /-- Check imports recorded for source files, with paths relative to the repository.
 Model files may import only `Model`, its submodules, the four pure modules and the external
 roots in `modelImportPackages`. Pure modules may import only each other and `Init`.
@@ -1247,6 +1277,7 @@ Every Model source is audited. Under the configured package roots and unmodified
 dependencies, these direct imports bound the local closure. This name-based check does not
 authenticate external files, search paths or symlink targets. It needs no environment. -/
 def checkModelImportsWith (files : List (String × List Name)) : Except String Unit := do
+  checkModelSourceListing (files.map Prod.fst).toArray
   for (file, imports) in files do
     let shared := pureModules.any fun m => pureModuleFile m == file
     for m in imports do
@@ -1280,25 +1311,6 @@ def checkModelImportFixture (files : List (String × String)) : CommandElabM Uni
   | .ok () => pure ()
   | .error e => throwError "{e}"
 
-/-- Check directory listings before selecting sources. Case variants of `.lean` are
-errors, not files to ignore: a case-insensitive filesystem can resolve them as sources.
-Distinct paths equal after lowercasing are refused too, including directory components.
-The input is data so the same regressions run on case-sensitive filesystems. -/
-def checkModelSourceListing (files : Array String) : Except String Unit := do
-  let mut seen : Array String := #[]
-  for file in files do
-    if let some other := seen.find? (fun s => s != file && s.toLower == file.toLower) then
-      throw s!"source paths differ only in case: `{other}` and `{file}`"
-    seen := seen.push file
-  for file in files do
-    if let some ext := (System.FilePath.mk file).extension then
-      if ext.toLower == "lean" && ext != "lean" then
-        throw s!"{file}: non-canonical source extension (expected `.lean`)"
-    for m in pureModules do
-      let expected := pureModuleFile m
-      if file != expected && file.toLower == expected.toLower then
-        throw s!"{file}: non-canonical pure source path (expected `{expected}`)"
-
 /-- The production listing decision, exercised without creating files. -/
 def checkModelSourceListingFixture (files : List String) : CommandElabM Unit := do
   match checkModelSourceListing files.toArray with
@@ -1308,7 +1320,9 @@ def checkModelSourceListingFixture (files : List String) : CommandElabM Unit := 
 /-- Collect source paths once for both import audits. Validate the actual listings under
 `Model/` and `Elements/Foundations/`, and the spelling of the Model root file. The latter
 directory exists before the pure modules arrive and is also Lake's input directory.
-Only Model sources and the four pure sources have their import headers read. -/
+The pure sources are probed by the canonical paths used by module resolution, independently
+of the listing. Reading those paths audits whatever files the filesystem resolves there.
+Model sources come from the validated ASCII listing; the root uses its canonical path. -/
 def modelSourceFiles (dir : System.FilePath) : CommandElabM (Array String) := do
   let root ← repoRoot dir
   let mut files ← System.FilePath.walkDir (dir / "Model")
@@ -1322,10 +1336,13 @@ def modelSourceFiles (dir : System.FilePath) : CommandElabM (Array String) := do
   | .error e => throwError "{e}"
   unless relative.contains "model/Model.lean" do
     throwError "model/Model.lean: missing canonical source path"
-  return relative.filter fun file =>
+  let mut sources := relative.filter fun file =>
     (System.FilePath.mk file).extension == some "lean" &&
-      (file == "model/Model.lean" || file.startsWith "model/Model/" ||
-        pureModules.any (pureModuleFile · == file))
+      (file == "model/Model.lean" || file.startsWith "model/Model/")
+  for m in pureModules do
+    let file := pureModuleFile m
+    if ← (root / file).pathExists then sources := sources.push file
+  return sources
 
 /-- Audit every Model source, including files nothing imports, and each pure module
 present in the repository. This source check complements the compiled-import graph. -/

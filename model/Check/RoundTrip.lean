@@ -308,6 +308,84 @@ error: Elements/Foundations/Superposition/syntax.lean: non-canonical pure source
 run_cmd (Check.Generator.checkModelSourceListingFixture [
   "Elements/Foundations/Superposition/syntax.lean"])
 
+/- Unicode filenames are refused before ASCII case comparison or source selection.
+These listings and headers are data, so the cases need neither a folding filesystem
+nor the four pure modules. The long s can alias S, and the Kelvin sign can alias K. -/
+/--
+error: Elements/Foundations/Superposition/ſyntax.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/Superposition/ſyntax.lean"])
+
+/--
+error: model/Model/ſignature.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["model/Model/ſignature.lean"])
+
+/--
+error: model/Model/Kind.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model/Kind.lean", "model/Model/Kind.lean"])
+
+/--
+error: Elements/Foundations/α.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["Elements/Foundations/α.lean"])
+
+/--
+error: Elements/Foundations/ſuperposition/Syntax.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "Elements/Foundations/ſuperposition/Syntax.lean"])
+
+/--
+error: model/Model/notes-é.txt: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture ["model/Model/notes-é.txt"])
+
+/--
+error: Elements/Foundations/Superposition/ſyntax.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/Superposition/ſyntax.lean", "import Lake.Util.Version\n")])
+
+/--
+error: model/Model/ſignature.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/ſignature.lean", "import Lake.Util.Version\n")])
+
+/--
+error: model/Model/Kind.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("model/Model/Kind.lean", "import Init\n")])
+
+/--
+error: Elements/Foundations/α.lean: non-canonical source path (expected ASCII letters, digits, `_`, `-`, `.` in each component)
+-/
+#guard_msgs in
+run_cmd (Check.Generator.checkModelImportFixture [
+  ("Elements/Foundations/α.lean", "import Init\n")])
+
+#guard_msgs in
+run_cmd (Check.Generator.checkModelSourceListingFixture [
+  "model/Model.lean", "model/Model/Signature.lean", "model/Model/Kind.lean",
+  "model/Model/Sub_2/areas-p5.lean", "Elements/Foundations/Superposition/Syntax.lean",
+  "Elements/Foundations/Superposition/Semantics.lean",
+  "Elements/Foundations/Superposition/Soundness.lean",
+  "Elements/Foundations/Superposition/Restriction.lean"])
+
 /-! The compiled graph is checked separately from source headers. The real closure is
 required to pass; planted closures need no compiled fixture files. -/
 
