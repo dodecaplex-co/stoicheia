@@ -1527,3 +1527,16 @@ findings:
   allow-list in `scripts/safe_push.py` (nine entries no remaining law uses, which the
   retirement leaves harmless) and the examples of `Certificate/FIELDS.md` and
   `review/SCHEMA.md`, follow in a check change of their own, landed after this one.
+- **The law allow-list and the examples follow the 31 retired axioms.** A check change of
+  its own, landed after the retirement of the 31 (79 to 48), which leaves the check code and
+  inputs alone. [`scripts/safe_push.py`](../../scripts/safe_push.py)'s `LAW_GLOBALS` loses
+  the nine entries no remaining law uses (`_ti_hyp`, `line_meets_circle`, `lval` and `sgn` in
+  search.py; `_ti_hyp`, `line_meets_circle`, `pt_on_circle`, `gs_pasch4` and `gs_ti` in
+  hyperbolic.py), so its test that each entry is needed passes again; nothing is widened.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py)'s example decorator `gs_ti()`
+  becomes `gs_convex('in')`, an entry that stays.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates the measured counts for
+  III.1, its porism and III.2; its axiom examples use retained assumptions or identify the
+  retired rules as theorems. [`review/SCHEMA.md`](../../review/SCHEMA.md) marks the overlap
+  examples that treated Generalities 3 as an axiom as historical; its fields, requirements
+  and worked TOML examples stay unchanged.
