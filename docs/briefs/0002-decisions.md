@@ -1649,3 +1649,113 @@ findings:
   put a point on a circle that has none need a straight line, which III.34 does not give
   and none of those rules draws. The catalogue's account of the screen, and III.30 among
   its near misses, follow on a text branch of their own, after this one.
+- **The style check reads every text a reader meets: the check change
+  ([#66](https://github.com/jackChallis/stoicheia/issues/66)).** Argon's second review of
+  the Book III release (18 October) found that S7 and S12 skipped the notes of the review
+  records, the front pages, the reports and the docstrings the pages show, so that
+  "Definition 8" and `hnearer` reached the pages unseen; our warm thanks to Argon.
+  [`scripts/check_style.py`](../../scripts/check_style.py) now reads each of them, as
+  [STYLE](../STYLE.md), section 8, lists:
+  - the Review notes: the texts of a record that its page shows (the statement's `note`,
+    `short` and `hypotheses`; the `note` of the route, the representation and the overlap;
+    the figure's `case` and `note`; the clause map's claims; each passage's `note`), and
+    each tag's `meaning` and `badge` in `review/terms.toml`, under the prose rules S1 to
+    S9, with D7 to D9;
+  - the overlap catalogue, beside the gap catalogues, and S7 in both, where it was D10;
+  - the Other reports, every other report of `docs/reports/` save the outside reviews,
+    which keep their reviewers' words as written, under S1, S7 and S8;
+  - the Rendered docstrings, the tacit rules' that `render.py` copies onto the pages,
+    which now fail S6 and S7 as well;
+  - the front pages and the table of names, beside the generated files, and S7 in all of
+    them;
+  - S12 beyond the mishnah, in the prose, the Review notes, the catalogues, the Rendered
+    docstrings and the front pages, each text with its book's namespace (every book's for
+    a text with none, and the foundations' for the Rendered docstrings), and the name
+    before the colon of a backticked `name : type`, which B2 and E2 of
+    `scripts/check_acceptance.py` now read in the gap catalogues and the
+    overlap catalogue too, as S12 does, since they take their names from
+    `check_style.lean_names`. `NOT_DECLARED` lists the two tactics and the three fields
+    of facts.json it cannot `#check`, each with its reason, and fails an entry that no
+    text uses any more. The overlap catalogue's audit lemmas are put to Lean once
+    `lake build Audit` has run, as CI runs it. The mishnah is asked as it always was,
+    every name with `import Elements` alone, and neither excuse holds there;
+  - S22, new: a code span of letters alone (`P`, `PQ`, `ABCD`), in all of these and the
+    Lean notes. The owner's second comment on #66 asked that Book Zero's backticked pairs
+    of letters be swept, or excepted in STYLE: they are swept, with the lone letters
+    beside them, so that a sentence does not set P one way and PQ another, in the text
+    change that follows this one; and STYLE, section 1, says that a step written over any
+    letters writes them plain too, the Lean's variables among them.
+
+  The hypotheses rule has one home, STYLE, section 1, "Hypotheses in words", as the
+  owner's first comment on #66 asked, since the form in review/SCHEMA.md named a
+  hypothesis by its local name where STYLE said words: the row for `hypotheses` and the
+  worked example of [`review/SCHEMA.md`](../../review/SCHEMA.md), and the
+  [proposition template](../templates/proposition.md), point to it, and S12 holds it.
+  The new reach is held file by file. On main at `89c5da4` it finds 1,173 things, 1,137 of
+  them S22's, nearly all in the notes of Book Zero and the foundations, 25 of S7 and 11 of
+  S12, in 37 files; `REACH_PENDING` lists those files, each with the rules it had findings
+  of and whoever mends it (the text change after this one; stages 3 and 4; the records of
+  Books I and II; the next change to III.10 and III.19, with their records; the
+  coordinator, for the foundations), and reports their findings of those rules as D16
+  meanwhile. Every other finding of the reach fails at once, in a listed file as in any
+  other, and every file is held to all it was held to before: nothing is loosened, and
+  cases of `tests/test_check_style.py` show an em dash still failing in a listed file, and
+  a listed file held at once to the rules it is not listed for. A rule of an entry whose
+  file has nothing of it left is reported as done, rule by rule as the excuse is (S12
+  aside when Lean is not asked, under `--no-lean` or for want of `lake`), and comes out
+  of its entry in a change to the check, and the entry with its last rule; the list goes
+  once it is empty.
+  `scripts/check_acceptance.py` also sends every style finding in a proposition's review
+  record to P9 before it classifies findings by rule.
+  The protected files changed are [`scripts/check_style.py`](../../scripts/check_style.py),
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py),
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) (54 scope cases and 14
+  reach cases), [`review/SCHEMA.md`](../../review/SCHEMA.md) and
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), whose comment on S12 now
+  says what it reads. Astra read the first draft cold, through the Codex CLI, and found
+  nine faults, five more in a second reading of the mends and one in a third, each now
+  mended with a case of its own: among them, a phrase that runs from one Lean note into a
+  rendered docstring, a docstring read with other white space than its page shows, a
+  mishnah name excused that used to fail, a TOML comment taken for a note, and a D10
+  report lost. Our warm thanks to Astra.
+
+- **S12's reports distinguish names from other code spans.** The check change for #66
+  keeps the Other reports in S12, as `d017113` added them. Their file names and numeric
+  file locations are recognized against the repository; Lean supplies its keywords,
+  tactics, attributes and namespace-only names. A report may explicitly identify an
+  external tactic, a namespace, a scan identifier or a revision identifier. Certificate
+  fields and review schema fields and values are recognized from their definitions where
+  the prose discusses them. A trailing dot names a family, not a declaration. None is an
+  exception made from a list of failed names, and a typed hypothesis is still checked.
+  These classifications apply to the new report reach alone: the mishnah keeps every
+  check it already had.
+
+  The remaining findings on main's content at `bd3b72a` are the initial inventory of
+  this reach, deferred by file and rule in `REACH_PENDING`, as the other new reach is:
+
+  | File | Rule | Findings |
+  |---|---|---|
+  | `docs/reports/mixed-angles-prototype.md` | S12 | 147 |
+  | `docs/reports/read-through-01.md` | S12 | 2 |
+
+  The 149 findings include incomplete or ambiguous references, local names and names
+  from a staged or earlier version, among them `Exceeds.nearVertexOpen`. The content
+  change after #66 corrects or qualifies each reference; the S12 entry then comes out
+  in a check change. The read-through's existing S7 entry stays. Every report still
+  reaches S12, and an unknown declaration in an unlisted report fails.
+
+  Reading `d017113` and `8c235bb` in full also exposed the Lean probe's existing
+  100-error cutoff: the new reports reached it, and later names were not checked.
+  The probe now passes `-DmaxErrors=0` to Lean, so every name is read, even after a
+  pending report's hundredth finding. A source-level option does not change that
+  command-line reporting limit. The Markdown changes in those commits align code spans,
+  tables and container boundaries with the documented scope; the changed D10 expectation
+  concerns a multiline code span, which the rule excludes. No other main-content failure
+  or relaxation of a documented rule was found in those commits.
+
+  The protected files changed are [`scripts/check_style.py`](../../scripts/check_style.py)
+  and [`tests/test_check_style.py`](../../tests/test_check_style.py). The regressions cover
+  the token categories, retained mishnah enforcement, unknown report names with and
+  without an S12 pending entry, and a failure after more than 100 deferred errors.
+  [STYLE](../STYLE.md), section 8, describes the report classification. No judged content,
+  Lean source, review record or generated page changes.
