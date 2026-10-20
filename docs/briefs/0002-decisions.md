@@ -1852,11 +1852,20 @@ findings:
   and foot, a letter's size and transform, and a prime; and, from a later review, three on
   what a line through a letter is called: two dashed by itself or by its group, called a
   dashed line, and one whose dasharray is none, called a line. A corner's radius is now
-  read in one pass, so that no attribute can make the script slow. Later reviews found, one
-  after another, SVG spellings that a renderer reads one way and S26 another; S26 now reads
-  only the elements, attributes and spellings that the figures on main use and refuses any
-  other, so no CSS is read, and it measures circles, ellipses, arcs, rounded corners and
-  curves with a conservative allowance for their chords.
+  read in one pass, so reading a malformed radius takes time linear in its length.
+  Later reviews found, one after another, SVG spellings that a renderer reads one way and
+  S26 another; S26 now reads only the elements, attributes and spellings that the figures
+  on main use and refuses any other, so no CSS is read, and it measures circles, ellipses,
+  arcs, rounded corners and curves with a conservative allowance for their chords. The
+  final review's fixes in `scripts/check_style.py`, with regressions in
+  `tests/test_check_style.py`, refuse effective strokes and bold weights on point labels
+  (main's bold numbers remain allowed), retain significant Unicode spaces for refusal, and
+  require both ellipse radii. Numeric inputs are limited to magnitude 10,000, against
+  main's largest input of 440 at `209d71fd`; cubic subdivision has a depth limit, and
+  non-finite intermediate results fail the figure. Decoder errors are caught at the parser
+  call. Both entry points have regressions requiring the next figure's finding after an
+  arithmetic or encoding failure. Subdivision is bounded for each cubic; these limits do
+  not bound the input's length or its number of elements or path commands.
   Both figure entry points have cases requiring an S26 finding. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures. The matching words in

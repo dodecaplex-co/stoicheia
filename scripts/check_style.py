@@ -2178,7 +2178,7 @@ DRAWN = {"line", "path", "polyline", "polygon", "circle", "ellipse", "rect"}
 FILLED = DRAWN - {"line"}
 INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap",
              "stroke-linejoin", "stroke-miterlimit", "stroke-dasharray",
-             "font-size", "font-style", "text-anchor")
+             "font-size", "font-style", "font-weight", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
 
 # Inventory of all 198 checked figures at 209d71fd, plus explicit initial keyword
@@ -2201,6 +2201,9 @@ SVG_KEYWORDS = {
     "stroke-linejoin": {"miter", "round"},
 }
 SVG_SPACE = " \t\r\n"
+# Main's largest numeric input at 209d71fd is 440. This admits ample room around
+# its canvases while keeping coordinates, lengths, radii and path arithmetic bounded.
+SVG_NUMBER_LIMIT = 10_000
 
 # The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
 # canvas's units, 400 × 300.
@@ -2225,6 +2228,7 @@ PATH_FLAG = re.compile(r"[\s,]*([01])")
 PATH_ARITY = {"m": 2, "l": 2, "h": 1, "v": 1, "c": 6, "s": 4, "q": 4, "t": 2, "a": 7}
 ARC_STEP = math.radians(3)   # an arc, in a straight piece to each 3 degrees of its sweep
 CURVE_ERROR = 0.001          # the maximum Bézier chord error, before transforms
+CURVE_MAX_DEPTH = 16         # at most 2**16 chords per curve; refuse if still not flat
 
 # One letter, one point (S26; STYLE, sections 7 and 8). A letter names one thing: a figure
 # draws it once, or once in each of Heath's figures where they stand side by side, and it
@@ -2402,7 +2406,13 @@ def placed(el, m=IDENTITY, inherited=None, exempt=None):
 
 
 def text_of(el) -> str:
-    return "".join(el.itertext()).strip()
+    raw = "".join(el.itertext())
+    if tag(el) == "text":
+        # SVG's default white-space handling removes newlines, changes tabs to
+        # spaces, then collapses spaces. Unicode spaces retain their advance.
+        raw = raw.replace("\r", "").replace("\n", "").replace("\t", " ")
+        return re.sub(" +", " ", raw).strip(" ")
+    return raw.strip()
 
 
 def number(value: str | None) -> float | None:
@@ -2456,18 +2466,32 @@ def back(m, x: float, y: float) -> tuple[float, float] | None:
     return ((m[3] * x - m[2] * y) / det, (m[0] * y - m[1] * x) / det)
 
 
-def bezier_points(ps) -> list[tuple[float, float]]:
+class SvgMeasurementError(Exception):
+    """A figure whose geometry cannot be measured within S26's numerical limits."""
+
+
+def finite_geometry(*values: float) -> None:
+    if not all(math.isfinite(v) for v in values):
+        raise SvgMeasurementError("non-finite intermediate result")
+
+
+def bezier_points(ps, depth: int = 0) -> list[tuple[float, float]]:
     """Subdivide until the control polygon lies within CURVE_ERROR of the chord.
     The curve lies in that polygon's convex hull, so the chord's CURVE_ERROR tube
     contains the curve, including a reversal or a closed curve with coincident ends."""
-    if max(point_gap(p, ps[0], ps[-1]) for p in ps[1:-1]) <= CURVE_ERROR:
+    finite_geometry(*(v for p in ps for v in p))
+    gaps = [point_gap(p, ps[0], ps[-1]) for p in ps[1:-1]]
+    finite_geometry(*gaps)
+    if max(gaps) <= CURVE_ERROR:
         return [ps[-1]]
+    if depth >= CURVE_MAX_DEPTH:
+        raise SvgMeasurementError("cubic subdivision limit reached")
     left, right = [ps[0]], [ps[-1]]
     while len(ps) > 1:
         ps = [((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) for a, b in zip(ps, ps[1:])]
         left.append(ps[0])
         right.append(ps[-1])
-    return bezier_points(left) + bezier_points(right[::-1])
+    return bezier_points(left, depth + 1) + bezier_points(right[::-1], depth + 1)
 
 
 def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: float,
@@ -2483,17 +2507,28 @@ def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: fl
     c, s = math.cos(math.radians(phi)), math.sin(math.radians(phi))
     dx, dy = (x1 - x2) / 2, (y1 - y2) / 2
     px, py = c * dx + s * dy, -s * dx + c * dy
-    grow = (px / rx) ** 2 + (py / ry) ** 2
+    u, v = px / rx, py / ry
+    grow = u * u + v * v
+    finite_geometry(u, v, grow)
     if grow > 1:
         rx, ry = rx * math.sqrt(grow), ry * math.sqrt(grow)
-    num = (rx * ry) ** 2 - (rx * py) ** 2 - (ry * px) ** 2
-    k = math.sqrt(max(0.0, num / ((rx * py) ** 2 + (ry * px) ** 2)))
+    rxy, rxpy, rypx = rx * ry, rx * py, ry * px
+    num = rxy * rxy - rxpy * rxpy - rypx * rypx
+    den = rxpy * rxpy + rypx * rypx
+    finite_geometry(rx, ry, num, den)
+    if den == 0:
+        raise SvgMeasurementError("arc centre calculation underflowed")
+    ratio = num / den
+    finite_geometry(ratio)
+    k = math.sqrt(max(0.0, ratio))
     if large == sweep:
         k = -k
     qx, qy = k * rx * py / ry, -k * ry * px / rx
     cx, cy = c * qx - s * qy + (x1 + x2) / 2, s * qx + c * qy + (y1 + y2) / 2
-    start = math.atan2((py - qy) / ry, (px - qx) / rx)
-    turn = (math.atan2((-py - qy) / ry, (-px - qx) / rx) - start) % math.tau
+    ax, ay, bx, by = (px - qx) / rx, (py - qy) / ry, (-px - qx) / rx, (-py - qy) / ry
+    finite_geometry(qx, qy, cx, cy, ax, ay, bx, by)
+    start = math.atan2(ay, ax)
+    turn = (math.atan2(by, bx) - start) % math.tau
     if not sweep and turn > 0:
         turn -= math.tau
     n = max(1, math.ceil(abs(turn) / ARC_STEP))
@@ -2504,7 +2539,9 @@ def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: fl
     for i in range(1, n):
         a = start + turn * i / n
         ex, ey = rx * math.cos(a), ry * math.sin(a)
-        pts.append((cx + c * ex - s * ey, cy + s * ex + c * ey))
+        p = (cx + c * ex - s * ey, cy + s * ex + c * ey)
+        finite_geometry(*p)
+        pts.append(p)
     return pts + [(x2, y2)]
 
 
@@ -2605,8 +2642,11 @@ def inside(el, own, x: float, y: float, evenodd: bool = False) -> bool:
         return math.dist((x, y), (coord(own.get("cx")), coord(own.get("cy")))) <= coord(own.get("r"))
     if t == "ellipse":
         rx, ry = coord(own.get("rx")), coord(own.get("ry"))
-        return rx > 0 and ry > 0 and ((x - coord(own.get("cx"))) / rx) ** 2 + (
-            (y - coord(own.get("cy"))) / ry) ** 2 <= 1
+        if rx <= 0 or ry <= 0:
+            return False
+        u, v = (x - coord(own.get("cx"))) / rx, (y - coord(own.get("cy"))) / ry
+        finite_geometry(u, v)
+        return math.hypot(u, v) <= 1
     return False
 
 
@@ -2629,12 +2669,18 @@ def fill_under(root, x: float, y: float) -> str:
     return under
 
 
-def svg_root(path: Path):
+def svg_root(path: Path, missing_ok: bool = False):
     try:
-        return ET.parse(path).getroot()
-    except ET.ParseError as e:
+        tree = ET.parse(path)
+    except OSError:
+        if missing_ok:
+            return None
+        raise
+    except (ET.ParseError, LookupError, UnicodeDecodeError, ValueError) as e:
         fail("S14" if path.stem.endswith("-idea") else "S15", path, 0, f"not well-formed SVG: {e}")
         return None
+    # Only the parser call is inside the decoder exception boundary.
+    return tree.getroot()
 
 
 def caption_text_rules(path: Path, el, kind: str) -> None:
@@ -2665,6 +2711,14 @@ def check_idea(path: Path, ref: str, required: bool) -> int:
     root = svg_root(path)
     if root is None or not supported_svg(path, root):
         return 0
+    try:
+        return measure_idea(path, ref, required, root)
+    except SvgMeasurementError as e:
+        fail("S26", path, 0, f"cannot measure SVG: {e}")
+        return 0
+
+
+def measure_idea(path: Path, ref: str, required: bool, root) -> int:
     vb = " ".join(root.get("viewBox", "").replace(",", " ").split())
     if vb != "0 0 400 300":
         fail("S14", path, 0, f"viewBox {vb or 'missing'}, not 0 0 400 300")
@@ -2696,9 +2750,8 @@ def check_idea(path: Path, ref: str, required: bool) -> int:
 def drawn_letters(path: Path) -> set[str] | None:
     """The letters Euclid's figure draws, which S16 holds to Heath's text; None when there
     is no figure to read (S15 says why)."""
-    try:
-        root = ET.parse(path).getroot()
-    except (OSError, ET.ParseError):
+    root = svg_root(path, missing_ok=True)
+    if root is None:
         return None
     return {text_of(el) for el in root.iter() if tag(el) == "text" and LETTER.fullmatch(text_of(el))}
 
@@ -2872,12 +2925,14 @@ def decimal_end(value: str, pos: int) -> int | None:
 
 
 def length(value: str | None) -> float | None:
-    """One finite plain decimal, with no unit, exponent or internal white space."""
+    """One bounded plain decimal, with no unit, exponent or internal white space."""
     v = (value or "").strip(SVG_SPACE)
     if not v or decimal_end(v, 0) != len(v):
         return None
     n = float(v)
-    return n if math.isfinite(n) else None
+    if n == 0 and any(c in "123456789" for c in v):
+        return None  # A positive radius rounded to zero would silently lose its arc.
+    return n if math.isfinite(n) and abs(n) <= SVG_NUMBER_LIMIT else None
 
 
 def decimal_list(value: str) -> list[str] | None:
@@ -2939,6 +2994,9 @@ def supported_svg(path: Path, root) -> bool:
             fail("S26", path, 0, f"<{t}> is outside S26's SVG allow-list")
             valid = False
             continue
+        if t == "ellipse" and not {"rx", "ry"} <= el.attrib.keys():
+            fail("S26", path, 0, "<ellipse> needs explicit rx and ry in S26's SVG allow-list")
+            valid = False
         for attr, value in el.attrib.items():
             if attr in SVG_NUMBERS:
                 n = length(value)
@@ -2967,6 +3025,23 @@ def supported_svg(path: Path, root) -> bool:
             if not ok:
                 fail("S26", path, 0, f"<{t}> {attr} {value!r} is outside S26's SVG allow-list")
                 valid = False
+    if not valid:
+        return False
+    # Attribute spellings are now safe to traverse. Only point labels need the
+    # regular outlines: main also uses bold numerical annotations.
+    for el, _, eff in walk(root):
+        if tag(el) != "text":
+            continue
+        s = text_of(el)
+        if not LETTER.fullmatch(s):
+            continue
+        if eff.get("stroke", "none") != "none":
+            fail("S26", path, 0, f"letter {s} has an effective stroke: outside S26's SVG allow-list")
+            valid = False
+        if eff.get("font-weight", "normal") != "normal":
+            fail("S26", path, 0, f"letter {s} has effective font-weight "
+                 f"{eff['font-weight']!r}: outside S26's SVG allow-list")
+            valid = False
     return valid
 
 
@@ -3245,6 +3320,13 @@ def check_euclid(path: Path, ref: str) -> None:
     root = svg_root(path)
     if root is None or not supported_svg(path, root):
         return
+    try:
+        measure_euclid(path, ref, root)
+    except SvgMeasurementError as e:
+        fail("S26", path, 0, f"cannot measure SVG: {e}")
+
+
+def measure_euclid(path: Path, ref: str, root) -> None:
     book, n = ref.split(".")
     n = int(n)
     vb = root.get("viewBox", "").replace(",", " ").split()

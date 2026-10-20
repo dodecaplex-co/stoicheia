@@ -24,20 +24,24 @@ it, put to the script's own patterns and functions:
   ellipse through a letter and not one round it, a dot beside it, a dot or a short stroke
   wholly within it, and each of the canvas's four edges; leaves out a circle of no radius,
   a rect of no width and a line of no length with butt caps, and follows a rect's rounded
-  corners however their radius is spelled; follows a transform, of a stroke or of the
+  corners for the admitted radius spellings; follows a transform, of a stroke or of the
   letter, taking a width and a radius at the most it stretches them; measures a letter
   upright or italic, and at its size, as its figure sets it, and places it by its anchor
-  and the whole label's advance, with dx and dy before transforms; reads equivalent
-  widths alike, mitre joins with their inherited style and limit, square caps by their
-  corners before transforms, and caps on single-point closed subpaths. Both figure entry
-  points require its findings.
+  and the whole label's advance; reads admitted decimal widths alike, mitre joins with
+  inherited stroke-linejoin and the default limit of 4, and round caps on single-point
+  closed subpaths. Offsets, explicit mitre limits and square caps require refusal.
+  Both figure entry points require its findings.
   And it finds a letter drawn twice, or twice in one of
   several figures side by side, or across the cut between them, and reads A and A′ as two
   letters; and it names a line dashed by itself or by its group as a dashed line.
 * the input cases: both complete figure checks refuse elements, attributes, numbers,
   transforms, keywords and path commands outside main's SVG language before measuring;
   earlier cases using CSS, units, exponents or other excluded features now require that
-  refusal. Cubic subdivision includes its chord error, and malformed lists take linear time;
+  refusal. Effective strokes and bold weights on point labels, unmeasured label
+  characters and incomplete ellipse radii fail. Numeric inputs and cubic subdivision
+  are bounded; non-finite geometry and decoder failures report the figure and leave
+  subsequent figures checked. Cubic subdivision includes its chord error, and malformed
+  lists take linear time;
 * the scope cases (#66): which texts of a review record the rules read, and on which
   lines; the docstring render.py shows, found again in its file; S12's reading of a
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
@@ -386,6 +390,37 @@ def figure_findings(root, idea: bool):
             style.check_idea(path, "I.1", True)
         else:
             style.check_euclid(path, "I.1")
+        return list(style.failures)
+
+
+def figure_run(first, idea: bool, reference: bytes | None = None):
+    """Parse a bad figure, then a distinct collision, through the production file loop.
+    `reference` instead puts bad bytes in the Euclid figure read by an idea's S20."""
+    with tempfile.TemporaryDirectory() as tmp, ExitStack() as stack:
+        root = Path(tmp)
+        folder = root / "figures" / "I"
+        folder.mkdir(parents=True)
+        suffix = "-idea.svg" if idea else ".svg"
+        path = folder / ("01" + suffix)
+        raw = first if isinstance(first, bytes) else ET.tostring(first)
+        path.write_bytes(raw)
+        if idea:
+            (folder / "01.svg").write_bytes(
+                reference if reference is not None else ET.tostring(figure_fixture(False)))
+            (folder / "02.svg").write_bytes(ET.tostring(figure_fixture(False)))
+        second = figure_fixture(idea)
+        e = next(el for el in second.iter() if style.text_of(el) == "E")
+        e.set("x", "0")
+        e.set("text-anchor", "end")
+        (folder / ("02" + suffix)).write_bytes(ET.tostring(second))
+        stack.enter_context(patch.object(style, "ROOT", root))
+        stack.enter_context(patch.object(style, "books_with_pages", return_value=["I"]))
+        stack.enter_context(patch.object(style, "heath_letters", return_value={"A", "C", "E"}))
+        stack.enter_context(patch.object(style, "failures", []))
+        stack.enter_context(patch.object(style, "reports", defaultdict(list)))
+        stack.enter_context(patch.object(style, "italic_figures",
+                                        defaultdict(lambda: defaultdict(list))))
+        style.check_figures(True)
         return list(style.failures)
 
 
@@ -992,6 +1027,263 @@ class SvgGate(unittest.TestCase):
         self.assertTrue(all(f[1:3] == (path, 0) for f in found), found)
         for name in names:
             self.assertTrue(any(name in f[3] for f in found), (name, found))
+
+    def assert_continued(self, found, idea, message, first_path=None, rule="S26"):
+        suffix = "-idea.svg" if idea else ".svg"
+        first_path = first_path or "figures/I/01" + suffix
+        self.assertTrue(any(r == rule and p == first_path and message in msg
+                            for r, p, _, msg in found), found)
+        self.assertTrue(any(r == "S26" and p == "figures/I/02" + suffix
+                            and "letter E" in msg and "canvas's edge" in msg
+                            for r, p, _, msg in found), found)
+
+    def test_stroked_labels(self):
+        for idea in (False, True):
+            for placement in ("own", "group", "root"):
+                with self.subTest(idea=idea, placement=placement):
+                    root = figure_fixture(idea)
+                    e = next(el for el in root.iter() if style.text_of(el) == "E")
+                    group = next(el for el in root.iter() if e in list(el))
+                    e.attrib.update(x="150", y="100", **{"font-size": "17",
+                                         "font-style": "normal", "text-anchor": "start"})
+                    ink = "#222222" if idea else "#3b2f2f"
+                    ET.SubElement(root, "line", {"x1": "145", "y1": "103.5", "x2": "170",
+                                  "y2": "103.5", "stroke": ink, "stroke-width": "1.6"})
+                    target = {"own": e, "group": group, "root": root}[placement]
+                    target.attrib.update(stroke=ink, **{"stroke-width": "1.6"})
+                    self.assert_refused(root, idea, "letter E", "stroke")
+                    # An explicit reset overrides every ancestor.
+                    for el in root.iter():
+                        if style.tag(el) == "text":
+                            el.set("stroke", "none")
+                    self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
+
+    def test_bold_labels_and_numerals(self):
+        for idea in (False, True):
+            for placement in ("own", "group", "root"):
+                with self.subTest(idea=idea, placement=placement):
+                    root = figure_fixture(idea)
+                    e = next(el for el in root.iter() if style.text_of(el) == "E")
+                    group = next(el for el in root.iter() if e in list(el))
+                    e.attrib.update(x="150", y="100", **{"font-size": "17",
+                                         "font-style": "normal", "text-anchor": "start"})
+                    ET.SubElement(root, "line", {"x1": "163.6", "y1": "80", "x2": "163.6",
+                                  "y2": "105", "stroke-width": "1.6",
+                                  "stroke": "#222222" if idea else "#3b2f2f"})
+                    target = {"own": e, "group": group, "root": root}[placement]
+                    target.set("font-weight", "bold")
+                    self.assert_refused(root, idea, "letter E", "font-weight")
+                    for el in root.iter():
+                        if style.tag(el) == "text":
+                            el.set("font-weight", "normal")
+                    # Main's bold numerical annotations remain allowed, inherited too.
+                    for content in ("9", "16", "25"):
+                        attrs = {"x": "250", "y": "230"}
+                        if placement == "own":
+                            attrs["font-weight"] = "bold"
+                        ET.SubElement(target if placement != "own" else group, "text", attrs).text = content
+                    self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
+
+    def test_raw_label_content(self):
+        for idea in (False, True):
+            for char in ("\u00a0", "\u2002", "\u2003", "\u202f", "\u3000", "\u200b", "\u0301"):
+                for content in (char + "E", "E" + char, "E" + char + "′"):
+                    with self.subTest(idea=idea, content=content):
+                        root = figure_fixture(idea)
+                        e = next(el for el in root.iter() if style.text_of(el) == "E")
+                        e.text = content
+                        self.assert_refused(root, idea, "<text>", "unmeasured")
+            for content in (" E ", "\tE\t", "\rE\r", "\nE\n", " \t\r\nE \t\r\n"):
+                with self.subTest(idea=idea, content=content):
+                    root = figure_fixture(idea)
+                    next(el for el in root.iter() if style.text_of(el) == "E").text = content
+                    self.assertEqual(figure_findings(root, idea), [])
+
+    def test_explicit_ellipse_radii(self):
+        for idea in (False, True):
+            for missing in ("rx", "ry", "both"):
+                for fill in ("none", "#222222" if idea else "#3b2f2f"):
+                    with self.subTest(idea=idea, missing=missing, fill=fill):
+                        root = figure_fixture(idea)
+                        e = next(el for el in root.iter() if style.text_of(el) == "E")
+                        e.attrib.update(x="150", y="100", **{"font-size": "17",
+                                             "font-style": "normal", "text-anchor": "start"})
+                        ellipse = ET.SubElement(root, "ellipse", {"cx": "150", "cy": "100",
+                                     "rx": "8", "ry": "8", "fill": fill, "stroke-width": "1.6",
+                                     "stroke": "#222222" if idea else "#3b2f2f"})
+                        for attr in (("rx", "ry") if missing == "both" else (missing,)):
+                            del ellipse.attrib[attr]
+                        self.assert_refused(root, idea, "<ellipse>", "rx", "ry")
+
+    def test_numeric_bounds_and_continuation(self):
+        for idea in (False, True):
+            for big in ("10000.1", "-10000.1", "9" * 308, "0." + "0" * 330 + "1"):
+                for attr, value in (("x1", big), ("r", big), ("stroke-width", big),
+                                    ("points", f"0 0 {big} 100"),
+                                    ("viewBox", f"0 0 {big} 300"),
+                                    ("stroke-dasharray", f"1 {big}"),
+                                    ("transform", f"translate({big},0)"),
+                                    ("d", f"M150 100 C{big} 100 {big} 100 160 100"),
+                                    ("d", f"M150 100 A{big} 8 0 0 1 160 100")):
+                    with self.subTest(idea=idea, attr=attr, value=value[:40]):
+                        root = figure_fixture(idea)
+                        shape = ET.SubElement(root, "path", {"fill": "none",
+                                              "stroke": "#222222" if idea else "#3b2f2f",
+                                              "stroke-width": "1.6"})
+                        shape.set(attr, value)
+                        self.assert_refused(root, idea, attr, "allow-list")
+                        self.assert_continued(figure_run(root, idea), idea, "allow-list")
+            root = figure_fixture(idea)
+            ET.SubElement(root, "line", {"x1": "-10000", "x2": "10000", "stroke": "none"})
+            self.assertEqual(figure_findings(root, idea), [])
+
+    def test_curve_limits_and_continuation(self):
+        for idea in (False, True):
+            root = figure_fixture(idea)
+            ET.SubElement(root, "path", {"d": "M100 100 C100 200 200 200 200 100",
+                          "stroke": "#222222" if idea else "#3b2f2f", "fill": "none",
+                          "stroke-width": "1.6"})
+            # Exhaust the budget on a small curve to exercise the failure path quickly.
+            for depth in (0, 1):
+                with self.subTest(idea=idea, depth=depth), \
+                        patch.object(style, "CURVE_MAX_DEPTH", depth, create=True):
+                    self.assert_continued(figure_run(root, idea), idea, "subdivision limit")
+            distance = style.point_gap
+            for bad in (float("inf"), float("nan")):
+                def nonfinite(p, a, b):
+                    return bad if p == (100.0, 200.0) else distance(p, a, b)
+                with self.subTest(idea=idea, intermediate=bad), \
+                        patch.object(style, "point_gap", side_effect=nonfinite):
+                    self.assert_continued(figure_run(root, idea), idea, "non-finite")
+
+    def test_arc_arithmetic_and_continuation(self):
+        for idea in (False, True):
+            for radius in ("0." + "0" * 309 + "1", "0." + "0" * 160 + "1"):
+                for fill in ("none", "#222222" if idea else "#3b2f2f"):
+                    with self.subTest(idea=idea, radius=radius, fill=fill):
+                        root = figure_fixture(idea)
+                        ET.SubElement(root, "path", {
+                            "d": f"M100 100 A{radius} 1 0 0 1 200 100", "fill": fill,
+                            "stroke": "#222222" if idea else "#3b2f2f", "stroke-width": "1.6"})
+                        self.assert_continued(figure_run(root, idea), idea, "non-finite")
+
+    def test_tiny_ellipse_fill(self):
+        # Squaring these finite ratios used to overflow in S20's fill measurement.
+        root = figure_fixture(True)
+        ellipse = ET.Element("ellipse", {"cx": "20", "cy": "20", "rx": "0." + "0" * 160 + "1",
+                             "ry": "1", "fill": "#222222"})
+        root.insert(1, ellipse)
+        self.assertEqual(figure_findings(root, True), [])
+        ellipse.set("rx", "0." + "0" * 309 + "1")
+        self.assert_continued(figure_run(root, True), True, "non-finite")
+
+    def test_encoding_failures_and_continuation(self):
+        for idea in (False, True):
+            for encoding in ("unknown-encoding", "shift_jis"):
+                raw = f'<?xml version="1.0" encoding="{encoding}"?><svg/>'.encode("ascii")
+                with self.subTest(idea=idea, encoding=encoding):
+                    self.assert_continued(figure_run(raw, idea), idea, "not well-formed SVG",
+                                          rule="S14" if idea else "S15")
+        # The second parse site reads Euclid's figure while checking an idea's letters.
+        for encoding in ("unknown-encoding", "shift_jis"):
+            raw = f'<?xml version="1.0" encoding="{encoding}"?><svg/>'.encode("ascii")
+            self.assert_continued(figure_run(figure_fixture(True), True, reference=raw), True,
+                                  "not well-formed SVG", first_path="figures/I/01.svg", rule="S15")
+        # Expat versions differ in which decoder failures they produce.
+        parse = ET.parse
+        for idea in (False, True):
+            def decode_failure(path, *args, **kwargs):
+                if Path(path).name == ("01-idea.svg" if idea else "01.svg"):
+                    raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
+                return parse(path, *args, **kwargs)
+            with patch.object(ET, "parse", side_effect=decode_failure):
+                self.assert_continued(figure_run(figure_fixture(idea), idea), idea,
+                                      "not well-formed SVG", rule="S14" if idea else "S15")
+
+    def test_checker_errors_are_not_decoder_failures(self):
+        for idea in (False, True):
+            for error in (LookupError("checker defect"), ValueError("checker defect"),
+                          UnicodeDecodeError("utf-8", b"\xff", 0, 1, "checker defect")):
+                for function in ("supported_svg", "glyph_hull"):
+                    with self.subTest(idea=idea, error=type(error).__name__, function=function), \
+                            patch.object(style, function, side_effect=error):
+                        with self.assertRaises(type(error)):
+                            figure_run(figure_fixture(idea), idea)
+            # getroot runs after the parser's exception boundary, too.
+            with patch.object(ET, "parse") as parse:
+                parse.return_value.getroot.side_effect = ValueError("checker defect")
+                with self.assertRaisesRegex(ValueError, "checker defect"):
+                    figure_run(figure_fixture(idea), idea)
+
+    def test_nested_svg(self):
+        for idea in (False, True):
+            root = figure_fixture(idea)
+            ET.SubElement(root, "svg", {"viewBox": "0 0 400 300"})
+            self.assert_refused(root, idea, "<svg>")
+
+    def test_numeric_ranges(self):
+        for idea in (False, True):
+            for attr in ("r", "rx", "ry", "width", "height", "font-size", "stroke-width"):
+                with self.subTest(idea=idea, attr=attr):
+                    root = figure_fixture(idea)
+                    ET.SubElement(root, "rect", {attr: "-0.1"})
+                    self.assert_refused(root, idea, attr)
+            for attr in ("fill-opacity", "stroke-opacity"):
+                for value in ("-0.1", "1.1"):
+                    with self.subTest(idea=idea, attr=attr, value=value):
+                        root = figure_fixture(idea)
+                        ET.SubElement(root, "g", {attr: value})
+                        self.assert_refused(root, idea, attr)
+            for attr, values in (
+                    ("viewBox", ("0 0 400", "0 0 400 300 1", "0 0 0 300", "0 0 400 0",
+                                 "0 0 -1 300", "0 0 400 -1")),
+                    ("points", ("10 20 30",)),
+                    ("stroke-dasharray", ("-1 2", "1 -2"))):
+                for value in values:
+                    with self.subTest(idea=idea, attr=attr, value=value):
+                        root = figure_fixture(idea)
+                        root.set(attr, value)
+                        self.assert_refused(root, idea, attr)
+
+    def test_exact_keywords_and_whitespace(self):
+        for idea in (False, True):
+            for attr, word in (("font-weight", "normal"), ("font-style", "normal"),
+                               ("text-anchor", "start"), ("font-family", "Georgia"),
+                               ("stroke-linecap", "butt"), ("stroke-linejoin", "miter"),
+                               ("fill", "none"), ("stroke", "none"), ("stroke-dasharray", "none")):
+                for value in (word.upper(), " " + word, word + " ", "\t" + word,
+                              word + "\n", "\u00a0" + word):
+                    with self.subTest(idea=idea, attr=attr, value=value):
+                        root = figure_fixture(idea)
+                        ET.SubElement(root, "g", {attr: value})
+                        self.assert_refused(root, idea, attr)
+            for space in ("\u00a0", "\u2003", "\v", "\f"):
+                for attr, value in (("x1", space + "10"), ("x1", "10" + space),
+                                    ("points", f"0{space}0"), ("viewBox", f"0 0{space}400 300"),
+                                    ("stroke-dasharray", f"1{space}2"),
+                                    ("transform", f"translate(0{space}0)"),
+                                    ("d", f"M100{space}100 L200 100")):
+                    with self.subTest(idea=idea, attr=attr, value=value):
+                        root = figure_fixture(idea)
+                        ET.SubElement(root, "g", {attr: value})
+                        self.assert_refused(root, idea, attr)
+            root = figure_fixture(idea)
+            ET.SubElement(root, "line", {"x1": " \t\r\n10 \t\r\n",
+                          "stroke-dasharray": "1,\t2\r\n3 4"})
+            self.assertEqual(figure_findings(root, idea), [])
+
+    def test_arc_flags_and_close_arguments(self):
+        for idea in (False, True):
+            paths = ["M100 100 Z 200 100", "M100 100 Z 0",
+                     "M100 100 A10 -10 0 0 0 120 100"]
+            for flag in ("2", "-1", "0.0", "1.0", "+1", "01"):
+                paths += [f"M100 100 A10 10 0 {flag} 0 120 100",
+                          f"M100 100 A10 10 0 0 {flag} 120 100"]
+            for value in paths:
+                with self.subTest(idea=idea, d=value):
+                    root = figure_fixture(idea)
+                    ET.SubElement(root, "path", {"d": value})
+                    self.assert_refused(root, idea, "<path>", "d")
 
     def test_supported_spellings_and_continuation(self):
         for idea in (False, True):
