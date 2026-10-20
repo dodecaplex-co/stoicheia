@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The cases of scripts/check_style.py: how its rules read a phrase, TeX, and a letter.
 
-    python3 -I tests/test_check_style.py        # well under a second; no Lean, no network
+    python3 -I tests/test_check_style.py        # no Lean, no network
 
 Each case is a short text, or a small figure, with the finding its rule should make of
 it, put to the script's own patterns and functions:
@@ -24,7 +24,11 @@ it, put to the script's own patterns and functions:
   rules the file is listed for, while every other finding in that file still fails, and
   whose rules are reported as done one by one, as each is left with no finding;
 * the acceptance case: check_acceptance.py sorts a style finding in a review record to
-  its proposition's P9, the item for the record's notes, and every other as before.
+  its proposition's P9, the item for the record's notes, and every other as before;
+* the conflict-marker cases: S23 reads tracked UTF-8 text and copies without Git,
+  refuses each marker kind even in Markdown fences and comments, allows setext headings
+  over ordinary paragraphs but refuses possible reference definitions throughout a block,
+  raises on traversal errors and skips symlinks; S12 keeps Git's index.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -36,6 +40,7 @@ section 8, "A guard defect gets a regression"). Python 3.11 or later; standard l
 from __future__ import annotations
 
 import os
+import runpy
 import sys
 import tempfile
 import unittest
@@ -49,6 +54,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_style as style  # noqa: E402
+import negative_tests as plants  # noqa: E402
 
 # ---------------------------------------------------------------------------------------
 # The phrase cases. (D7 once let "Lean\ncannot" through, in a docstring.)
@@ -980,6 +986,575 @@ class Scopes(unittest.TestCase):
                 os.environ["PATH"] = saved[0]
             style.lean_short[:] = saved[1]
         self.assertEqual(done, (0, ["S12"], [(GAPS_REL, ["S7"], False)]))
+
+
+class ConflictMarkers(unittest.TestCase):
+    """Raw text, including fences, and the boundary between separators and headings."""
+
+    def test_edges_with_and_without_labels(self):
+        for char, kind in (("<", "opening"), ("|", "base"), (">", "closing")):
+            for ending in ("", " ours", " ", "\r", " ours\r"):
+                with self.subTest(char=char, ending=ending):
+                    text = "A paragraph.\n" + char * 7 + ending + "\n"
+                    self.assertEqual(style.conflict_markers(text, markdown=True), [(2, kind)])
+
+    def test_exact_edge_width_and_boundary(self):
+        for char in "<|>":
+            for line in (char * 6, char * 8, char * 8 + " ours", char * 7 + "ours",
+                         char * 7 + "\tours", " " + char * 7 + " ours"):
+                with self.subTest(line=line):
+                    self.assertEqual(style.conflict_markers(line, markdown=False), [])
+
+    def test_middle_between_edges_after_paragraph(self):
+        for ending in ("", "  ", "\r", " \t\r"):
+            with self.subTest(ending=ending):
+                text = "\n".join(("<" * 7 + " ours", "A paragraph.", "=" * 7 + ending,
+                                  "The other side.", ">" * 7 + " theirs"))
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(1, "opening"), (3, "middle"), (5, "closing")])
+
+    def test_diff3_block(self):
+        text = "\n".join(("<" * 7, "Ours.", "|" * 7, "Base.", "=" * 7,
+                          "Theirs.", ">" * 7))
+        self.assertEqual(style.conflict_markers(text, markdown=True),
+                         [(1, "opening"), (3, "base"), (5, "middle"), (7, "closing")])
+
+    def test_nested_conflicts_keep_the_outer_block_open(self):
+        text = "\n".join(("<" * 7 + " outer", "<" * 7 + " inner", "=" * 7,
+                          ">" * 7 + " inner", "Outer text", "=" * 7,
+                          ">" * 7 + " outer"))
+        self.assertEqual(style.conflict_markers(text, markdown=True), [
+            (1, "opening"), (2, "opening"), (3, "middle"), (4, "closing"),
+            (6, "middle"), (7, "closing"),
+        ])
+
+    def test_middle_needs_both_edges_to_override_setext(self):
+        for text, expected in (
+            ("\n".join(("<" * 7, "A heading", "=" * 7)), [(1, "opening")]),
+            ("\n".join(("A heading", "=" * 7, ">" * 7)), [(3, "closing")]),
+            ("\n".join(("<" * 7, ">" * 7, "A heading", "=" * 7)),
+             [(1, "opening"), (2, "closing")]),
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(style.conflict_markers(text, markdown=True), expected)
+
+    def test_lone_middle_in_non_markdown(self):
+        for ending in ("", " ", "\r"):
+            with self.subTest(ending=ending):
+                self.assertEqual(style.conflict_markers("Text.\n" + "=" * 7 + ending,
+                                                       markdown=False), [(2, "middle")])
+
+    def test_setext_headings_of_any_length(self):
+        for width in (1, 6, 7, 8, 80):
+            for paragraph in ("A heading", "A paragraph\ncontinued", "#hashtag",
+                              "#" * 7 + " is paragraph text"):
+                with self.subTest(width=width, paragraph=paragraph):
+                    self.assertEqual(style.conflict_markers(
+                        paragraph + "\n" + "=" * width + " \r\n", markdown=True), [])
+
+    def test_middle_after_completed_setext_heading(self):
+        for char in "=-":
+            for width in (1, 3, 7, 8):
+                with self.subTest(char=char, width=width):
+                    text = "Heading\n   " + char * width + " \t\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True),
+                                     [(3, "middle")])
+
+    def test_middle_in_comment_blocks(self):
+        for indent in ("", " ", "   "):
+            for ending in ("", "\n-->"):
+                with self.subTest(indent=indent, ending=ending):
+                    text = indent + "<!--\nComment text\n" + "=" * 7 + ending
+                    self.assertEqual(style.conflict_markers(text, markdown=True),
+                                     [(3, "middle")])
+        for comment in ("<!-- one line -->", "<!--\ncomment\n-->"):
+            text = comment + "\n" + "=" * 7
+            self.assertEqual(style.conflict_markers(text, markdown=True),
+                             [(text.count("\n") + 1, "middle")])
+
+    def test_comment_fences_do_not_escape_the_comment(self):
+        for fence in ("```", "~~~~"):
+            for gap in ("", "\n"):
+                with self.subTest(fence=fence, gap=gap):
+                    text = "<!--\n" + fence + "\n-->\n" + gap + "Heading\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        for char, kind in (("<", "opening"), ("|", "base"), ("=", "middle"),
+                           (">", "closing")):
+            text = "<!--\n```\nComment text\n" + char * 7 + "\n-->"
+            self.assertEqual(style.conflict_markers(text, markdown=True), [(4, kind)])
+
+    def test_comment_openers_in_fences_do_not_escape_the_fence(self):
+        text = "\n".join(("```", "<!--", "```", "Heading", "=" * 7))
+        self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_middle_in_html_blocks(self):
+        for html in ("<div>", "<div>\nbody", "<div>\nbody\n</div>",
+                     "<script>\ncode\n</script>", "<?instruction?>", "<!DOCTYPE html>",
+                     "<![CDATA[text]]>", '<x title="a>b">', "<source src=x",
+                     "<div\fclass=x>", "<x\vtitle=y>"):
+            with self.subTest(html=html):
+                text = html + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(text.count("\n") + 1, "middle")])
+
+    def test_form_feed_does_not_end_html_or_reference_blocks(self):
+        for prefix in ("<div>", "[label]: /url"):
+            with self.subTest(prefix=prefix):
+                text = prefix + "\n\f\nText\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(4, "middle")])
+
+    def test_html_block_termination_restores_paragraph_headings(self):
+        for html in ("<div>\nbody\n</div>", "<script>\ncode\n</script>"):
+            with self.subTest(html=html):
+                text = html + "\n\nHeading\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_any_raw_closing_tag_ends_a_raw_html_block(self):
+        for html in ("<script>\n</style>", "<pre>\n</SCRIPT>", "<style>\nx</textarea> y",
+                     "<textarea>\n</Pre>", "<style>body</pre>"):
+            with self.subTest(html=html):
+                text = html + "\nHeading\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        for html in ("<script>\n</div>", "<pre>\n</scripts>", "<style>\n</ style>"):
+            with self.subTest(html=html):
+                text = html + "\nHeading\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(text.count("\n") + 1, "middle")])
+
+    def test_self_closing_literal_content_tags_remain_paragraph_text(self):
+        for tag in ("<script/>", "<PRE/>", "<Style/>", "<textarea/>", "   <pre/>",
+                    "<script/> \t"):
+            with self.subTest(tag=tag):
+                self.assertEqual(style.conflict_markers(tag + "\n" + "=" * 7,
+                                                       markdown=True), [])
+        for tag in ("<scripts/>", "<prefix/>", "<stylesheet/>", "<textareas/>",
+                    "</script>", "</PRE>", "<script>", "<style />", "<pre\vtitle='x'/>",
+                    "<div/>", "<x/>"):
+            with self.subTest(tag=tag):
+                self.assertEqual(style.conflict_markers(tag + "\n" + "=" * 7,
+                                                       markdown=True), [(2, "middle")])
+
+    def test_html_blocks_keep_exact_width_and_edge_detection(self):
+        for width in (6, 8):
+            self.assertEqual(style.conflict_markers("<div>\n" + "=" * width,
+                                                   markdown=True), [])
+        text = "<div>\n" + "<" * 7 + " ours\n" + ">" * 7 + " theirs"
+        self.assertEqual(style.conflict_markers(text, markdown=True),
+                         [(2, "opening"), (3, "closing")])
+
+    def test_inline_html_remains_paragraph_text(self):
+        for paragraph in ('Text <x title="a>b">', '<x title="a>b"> trailing'):
+            with self.subTest(paragraph=paragraph):
+                self.assertEqual(style.conflict_markers(
+                    paragraph + "\n" + "=" * 7, markdown=True), [])
+
+    def test_middle_after_gfm_table_delimiter_and_rows(self):
+        for table in ("| A | B |\n| --- | --- |",
+                      "A | B\n--- | ---\nleft | right\nnext | row",
+                      "| A | B |\n| --- | --- |\nplain"):
+            with self.subTest(table=table):
+                text = table + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(text.count("\n") + 1, "middle")])
+
+    def test_table_delimiters_trim_only_spaces_and_tabs(self):
+        for control in ("\f", "\v"):
+            for table in (f"A | B\n--- | {control}---", f"A | B\n---{control} | ---",
+                          f"| A | B |\n| --- | --- |{control}"):
+                with self.subTest(table=table):
+                    self.assertEqual(style.conflict_markers(
+                        table + "\n" + "=" * 7, markdown=True), [])
+        for table in ("A | B\n--- | \t---", "A | B\n---\t | ---",
+                      "| A | B |\n| --- | --- | \t"):
+            with self.subTest(table=table):
+                self.assertEqual(style.conflict_markers(
+                    table + "\n" + "=" * 7, markdown=True), [(3, "middle")])
+
+    def test_gfm_table_termination_restores_paragraph_headings(self):
+        table = "| A | B |\n| --- | --- |\nplain\n"
+        for boundary in ("\n", "# Boundary\n", "---\n", "> quote\n\n", "- item\n\n",
+                         "```\ncode\n```\n", "<div>\nbody\n\n"):
+            with self.subTest(boundary=boundary):
+                text = table + boundary + "Heading\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_gfm_tables_keep_exact_width_and_edge_detection(self):
+        table = "| A | B |\n| --- | --- |\n"
+        for width in (6, 8):
+            self.assertEqual(style.conflict_markers(table + "=" * width, markdown=True), [])
+        text = table + "|" * 7 + " base\n" + ">" * 7
+        self.assertEqual(style.conflict_markers(text, markdown=True),
+                         [(3, "base"), (4, "closing")])
+
+    def test_multiline_reference_definition_taints_the_block(self):
+        for definition in ("[\nfoo\n]: /url", "  [\nfoo\n]:", "[\nfo\\]o\n]: /url"):
+            with self.subTest(definition=definition):
+                text = definition + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(text.count("\n") + 1, "middle")])
+
+    def test_multiline_reference_candidate_resets_or_remains_paragraph_text(self):
+        for prefix in ("[\nfoo\n\n", "[\nfoo\n] not a definition\n"):
+            with self.subTest(prefix=prefix):
+                self.assertEqual(style.conflict_markers(
+                    prefix + "Heading\n" + "=" * 7, markdown=True), [])
+
+    def test_multiline_reference_keeps_exact_middle_width(self):
+        definition = "[\nfoo\n]: /url\n"
+        for width in (6, 8):
+            with self.subTest(width=width):
+                self.assertEqual(style.conflict_markers(
+                    definition + "=" * width, markdown=True), [])
+
+    def test_middle_after_indented_code(self):
+        for indent in ("    ", "\t", "  \t"):
+            for prefix in ("", "Paragraph\n\n"):
+                with self.subTest(indent=indent, prefix=prefix):
+                    text = prefix + indent + "code\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True),
+                                     [(text.count("\n") + 1, "middle")])
+
+    def test_indented_continuation_is_still_a_paragraph(self):
+        for indent in ("    ", "\t", "  \t"):
+            with self.subTest(indent=indent):
+                text = "Heading\n" + indent + "continued\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_middle_after_link_reference_definition(self):
+        for indent in ("", " ", "   "):
+            for destination in ("destination", "<somewhere>", 'destination "Title"'):
+                with self.subTest(indent=indent, destination=destination):
+                    text = indent + "[label]: " + destination + "\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True),
+                                     [(2, "middle")])
+        self.assertEqual(style.conflict_markers(
+            "[\\ ]: /url\n" + "=" * 7, markdown=True), [(2, "middle")])
+        self.assertEqual(style.conflict_markers(
+            "[\u00a0]: /url\n" + "=" * 7, markdown=True), [(2, "middle")])
+        text = "[label]: destination\nHeading\ncontinued\n" + "=" * 7
+        self.assertEqual(style.conflict_markers(text, markdown=True), [(4, "middle")])
+
+    def test_reference_shape_inside_paragraph_refuses_middle(self):
+        text = "Heading\n[label]: destination\n" + "=" * 7
+        self.assertEqual(style.conflict_markers(text, markdown=True), [(3, "middle")])
+
+    def test_reference_definition_bypasses_through_scanner(self):
+        definitions = ("[label]:\n /url", '[label]: /url\n "Title"',
+                       r"[la\]bel]: /url")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "definition.md"
+            for definition in definitions:
+                with self.subTest(definition=definition):
+                    path.write_text(definition + "\n" + "=" * 7 + "\n")
+                    with patch.object(style, "ROOT", root), \
+                            patch.object(style, "failures", []):
+                        style.check_conflict_markers()
+                        self.assertEqual(style.failures, [
+                            ("S23", "definition.md", definition.count("\n") + 2,
+                             "middle merge-conflict marker"),
+                        ])
+
+    def test_possible_reference_definition_taints_whole_block(self):
+        for indent in ("", " ", "  ", "   "):
+            for label in ("label", r"la\[bel", r"la\]bel", r"la\[b\]el", r"label\\"):
+                for prefix in ("", "Heading\n"):
+                    with self.subTest(indent=indent, label=label, prefix=prefix):
+                        text = (prefix + indent + "[" + label + "]:\n /url\n"
+                                '"Title"\ncontinued\n' + "=" * 7)
+                        self.assertEqual(style.conflict_markers(text, markdown=True),
+                                         [(text.count("\n") + 1, "middle")])
+
+    def test_doubtful_reference_heading_uses_eight_equals(self):
+        # Extra words make paragraph text, but refusal is the deliberate price
+        # of treating every possible definition prefix conservatively.
+        for width in (1, 6, 7, 8, 80):
+            with self.subTest(width=width):
+                text = "[label]: destination extra words\n" + "=" * width
+                expected = [(2, "middle")] if width == 7 else []
+                self.assertEqual(style.conflict_markers(text, markdown=True), expected)
+
+    def test_middle_after_block_quote_or_list_item_is_refused(self):
+        for start in ("> quote", "- item", "* item", "+ item", "1. item", "12) item",
+                      "0. item", "2.", "*", "+ \t", "Para\n\n2. item", "Para\n\n*",
+                      "Para\n> quote", "Para\n>", "Para\n- item", "Para\n*\tx",
+                      "Para\n1. item", "Para\n01) item", "Para\n2. item\n- x"):
+            with self.subTest(start=start):
+                text = start + "\n" + "=" * 7
+                line = text.count("\n") + 1
+                self.assertEqual(style.conflict_markers(text, markdown=True), [(line, "middle")])
+                self.assertEqual(style.conflict_markers(start + "\n" + "=" * 8, markdown=True), [])
+        for text in ("-item\n", "1.5 metres\n", "*emphasis* here\n"):
+            with self.subTest(paragraph=text):
+                self.assertEqual(style.conflict_markers(text + "=" * 7, markdown=True), [])
+
+    def test_list_items_that_cannot_interrupt_continue_the_paragraph(self):
+        for line in ("2. item", "12) item", "0. item", "*", "+", "* \t", "+ ", "1.",
+                     "1)  ", "01.", "2.", "2. item\n3. item"):
+            with self.subTest(line=line):
+                text = "Heading\n" + line + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_list_items_holding_only_control_whitespace_continue_the_paragraph(self):
+        for marker in ("*", "-", "+", "1.", "1)", "01."):
+            for content in (" \f", " \v", "\t\f", " \v \f\t"):
+                with self.subTest(marker=marker, content=content):
+                    text = "Heading\n" + marker + content + "\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        for line in ("* \fx", "- \vitem", "1. \f1", "1) \v \fx"):
+            with self.subTest(line=line):
+                text = "Heading\n" + line + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(3, "middle")])
+
+    def test_setext_and_thematic_lines_precede_list_items(self):
+        for line in ("-", "- ", "-\t", "* * *", "- - -", "_ _ _"):
+            with self.subTest(line=line):
+                text = "Heading\n" + line + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(3, "middle")])
+
+    def test_reference_definition_stops_at_block_boundary(self):
+        for boundary in ("\n", "<!-- comment -->\n", "<!--\ncomment\n-->\n",
+                         "```\ncode\n```\n", "# Heading\n", "---\n",
+                         "Heading\n" + "=" * 8 + "\n"):
+            with self.subTest(boundary=boundary):
+                text = "[label]: /url\n" + boundary + "Heading\ncontinued\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_brackets_without_reference_prefix_remain_paragraph_text(self):
+        for line in ("[label] text", "[label] : /url", r"\[label]: /url",
+                     "Text [label]: /url", "[unescaped[bracket]: /url"):
+            with self.subTest(line=line):
+                self.assertEqual(style.conflict_markers(line + "\n" + "=" * 7,
+                                                       markdown=True), [])
+
+    def test_lone_middle_without_paragraph(self):
+        for previous in ("", "  ", "#", "## A heading", "   ### Heading",
+                         "---", "* * *", "___"):
+            with self.subTest(previous=previous):
+                self.assertEqual(style.conflict_markers(previous + "\n" + "=" * 7,
+                                                       markdown=True), [(2, "middle")])
+        self.assertEqual(style.conflict_markers("=" * 7, markdown=True), [(1, "middle")])
+
+    def test_middle_after_each_marker(self):
+        for char, kind in (("<", "opening"), ("|", "base"), (">", "closing"),
+                           ("=", "middle")):
+            with self.subTest(char=char):
+                self.assertEqual(style.conflict_markers(char * 7 + "\n" + "=" * 7,
+                                                       markdown=True),
+                                 [(1, kind), (2, "middle")])
+
+    def test_other_equals_lines(self):
+        for line in ("=" * 6, "=" * 8, "=" * 7 + " label", " " + "=" * 7):
+            with self.subTest(line=line):
+                self.assertEqual(style.conflict_markers(line, markdown=False), [])
+
+    def test_markers_in_fences(self):
+        for fence in ("```", "~~~~"):
+            for char, kind in (("<", "opening"), ("|", "base"), ("=", "middle"),
+                               (">", "closing")):
+                with self.subTest(fence=fence, char=char):
+                    text = "\n".join((fence + "text", "A code line.", char * 7, fence))
+                    self.assertEqual(style.conflict_markers(text, markdown=True), [(3, kind)])
+
+    def test_middle_at_fence_boundaries(self):
+        for text, line in (
+            ("\n".join(("```text", "=" * 7, "```")), 2),
+            ("\n".join(("~~~", "code", "~~~", "=" * 7)), 4),
+            ("\n".join(("````", "```", "paragraph", "=" * 7)), 4),
+            ("\n".join(("~~~", "```", "paragraph", "=" * 7)), 4),
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(style.conflict_markers(text, markdown=True), [(line, "middle")])
+        self.assertEqual(style.conflict_markers(
+            "\n".join(("```", "code", "```", "A heading", "=" * 7)), markdown=True), [])
+        self.assertEqual(style.conflict_markers("```not`a fence\n" + "=" * 7,
+                                               markdown=True), [])
+
+    def test_fence_closing_tail_uses_spaces_and_tabs_only(self):
+        for tail in ("", " ", "\t", " \t"):
+            with self.subTest(tail=repr(tail)):
+                text = "```\ncode\n```" + tail + "\nHeading\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        text = "```\n```\v\nText\n" + "=" * 7
+        self.assertEqual(style.conflict_markers(text, markdown=True), [(4, "middle")])
+
+    def test_lines_are_counted_by_newlines(self):
+        for newline in ("\n", "\r\n", "\r"):
+            with self.subTest(newline=repr(newline)):
+                text = "Text with Unicode separators \u2028 and \u2029 here." + newline
+                text += "|" * 7 + " base" + newline
+                self.assertEqual(style.conflict_markers(text, markdown=True), [(2, "base")])
+        text = "First\r\nSecond\r" + ">" * 7 + " last\n"
+        self.assertEqual(style.conflict_markers(text, markdown=True), [(3, "closing")])
+
+    def test_raw_files_and_binary_detection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            marker = ("|" * 7 + " base\n").encode()
+            for name, data in {
+                "notes.md": b"<!--\n" + marker + b"-->\n",
+                "image.bin": marker,  # The bytes decide, not the extension.
+                "nul.txt": marker + b"\0",
+                "non-utf8.txt": marker + b"\xff",
+                "heading.MD": b"Heading\n" + ("=" * 7).encode(),
+            }.items():
+                (root / name).write_bytes(data)
+            with patch.object(style, "ROOT", root), patch.object(style, "failures", []):
+                style.check_conflict_markers()
+                self.assertEqual(sorted(style.failures), [
+                    ("S23", "image.bin", 1, "base merge-conflict marker"),
+                    ("S23", "notes.md", 2, "base merge-conflict marker"),
+                ])
+
+    def test_copy_walk_omits_build_and_cache_directories(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source.txt").write_text("text")
+            for folder in (".lake", "model/.lake", "build", "dist", "_build",
+                           "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache",
+                           ".tox", ".venv", "venv", "node_modules"):
+                path = root / folder
+                path.mkdir(parents=True, exist_ok=True)
+                (path / "ignored.txt").write_text("<" * 7)
+            self.assertEqual(list(style.repository_files(root)), [root / "source.txt"])
+
+    def test_git_list_is_nul_delimited_and_unpruned(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            names = ["tracked.txt", "line\nbreak.txt", "build/tracked.txt"]
+            for name in names + ["untracked.txt"]:
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("text")
+            listing = SimpleNamespace(stdout=("\0".join(names) + "\0").encode())
+            with patch.object(Path, "exists", return_value=True), \
+                    patch.object(style.subprocess, "run", return_value=listing) as run:
+                self.assertEqual(list(style.repository_files(root)), [root / name for name in names])
+                run.assert_called_once_with(["git", "ls-files", "-z"], cwd=root,
+                                            capture_output=True, check=True)
+
+    def test_no_git_executable_in_a_checkout_stops_the_scan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source.txt").write_text("text")
+            with patch.object(Path, "exists", return_value=True), \
+                    patch.object(style.subprocess, "run", side_effect=FileNotFoundError):
+                with self.assertRaises(FileNotFoundError):
+                    list(style.repository_files(root))
+
+    def test_git_failure_is_not_an_empty_scan(self):
+        with patch.object(Path, "exists", return_value=True), \
+                patch.object(style.subprocess, "run",
+                             side_effect=style.subprocess.CalledProcessError(128, "git")):
+            with self.assertRaises(style.subprocess.CalledProcessError):
+                list(style.repository_files(style.ROOT))
+
+    def test_walk_error_names_the_unread_directory(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            blocked = root / "docs" / "briefs"
+            blocked.mkdir(parents=True)
+            (blocked / "marker.md").write_text("|" * 7)
+            scandir = os.scandir
+
+            def unreadable(path):
+                if Path(path) == blocked:
+                    raise PermissionError(13, "Permission denied", str(path))
+                return scandir(path)
+
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style.os, "scandir", side_effect=unreadable):
+                with self.assertRaisesRegex(OSError, str(blocked)):
+                    style.check_conflict_markers()
+
+    def test_symlinks_are_not_scanned(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "copy"
+            root.mkdir()
+            outside = Path(tmp) / "outside"
+            outside.mkdir()
+            (outside / "marker.md").write_text("|" * 7)
+            links = [root / "file.md", root / "folder", root / "missing.md"]
+            for link, target in zip(links, (outside / "marker.md", outside,
+                                           outside / "missing.md")):
+                link.symlink_to(target)
+            (root / "ordinary.md").write_text("|" * 7)
+            for tracked in (False, True):
+                with self.subTest(tracked=tracked), ExitStack() as stack:
+                    stack.enter_context(patch.object(style, "ROOT", root))
+                    stack.enter_context(patch.object(style, "failures", []))
+                    if tracked:
+                        stack.enter_context(patch.object(style, "repository_files",
+                            return_value=links + [root / "ordinary.md"]))
+                    style.check_conflict_markers()
+                    self.assertEqual(style.failures,
+                        [("S23", "ordinary.md", 1, "base merge-conflict marker")])
+
+    def test_marker_copy_does_not_dereference_symlinks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            source, copy = Path(tmp) / "source", Path(tmp) / "copy"
+            source.mkdir()
+            copy.mkdir()
+            outside = Path(tmp) / "outside"
+            outside.write_text("|" * 7)
+            (source / "link.md").symlink_to(outside)
+            (source / "missing.md").symlink_to(Path(tmp) / "missing")
+            (source / "ordinary.md").write_text("A paragraph.")
+            with patch.object(plants, "ROOT", source):
+                plants.copy_marker_files(copy, ["link.md", "missing.md", "ordinary.md"])
+            self.assertEqual((copy / "ordinary.md").read_text(), "A paragraph.")
+            for name in ("link.md", "missing.md"):
+                path = copy / name
+                self.assertTrue(path.is_symlink() or not path.exists())
+
+
+class TrackedFiles(unittest.TestCase):
+    """S12 has no filesystem fallback, and importing the check needs no Git."""
+
+    def test_git_index_ignores_untracked_files(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Bogus.missing").write_text("untracked")
+            listing = SimpleNamespace(returncode=0, stdout="docs/kept.md\0", stderr="")
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style.subprocess, "run", return_value=listing) as run:
+                self.assertEqual(style.tracked_file_index(),
+                    (frozenset({"docs/kept.md"}), frozenset({"kept.md"})))
+                run.assert_called_once_with(["git", "ls-files", "-z"], cwd=root,
+                                            capture_output=True, text=True)
+
+    def test_git_failure_without_metadata_still_raises(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Bogus.missing").write_text("untracked")
+            listing = SimpleNamespace(returncode=128, stdout="", stderr="not a git repository")
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style.subprocess, "run", return_value=listing):
+                with self.assertRaisesRegex(RuntimeError, "could not list tracked files"):
+                    style.tracked_file_index()
+
+    def test_import_does_not_build_the_git_index(self):
+        with patch.object(style.subprocess, "run", side_effect=FileNotFoundError) as run:
+            runpy.run_path(str(style.SCRIPT), run_name="style_import_probe")
+            run.assert_not_called()
+
+    def test_report_classification_cannot_use_the_fallback_walk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "Bogus.missing").write_text("untracked")
+            named = style.NamedText(root / "report.md", "`Bogus.missing`",
+                                   style.every_book_opens())
+            occurrence, = style.lean_name_occurrences(named.text, all_uses=True)
+            listing = SimpleNamespace(returncode=128, stdout="", stderr="not a git repository")
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style, "TRACKED_FILE_INDEX", None), \
+                    patch.object(style.subprocess, "run", return_value=listing):
+                with self.assertRaisesRegex(RuntimeError, "could not list tracked files"):
+                    style.report_non_declaration(named, occurrence, (set(), set()))
+                self.assertIsNone(style.TRACKED_FILE_INDEX)
 
 
 class Acceptance(unittest.TestCase):

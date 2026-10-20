@@ -65,6 +65,10 @@
      helpers that exist; and every run of `--` lines with no Lean beneath it before
      the next run, a `/- … -/` remark ending a run and carrying none, is declared as a
      passage (`uncarried_runs`).
+7. Inline count markers in tracked Markdown match the exact file-derived counts in
+   generated_counts.py, and stand only where that module allows. Unknown and
+   malformed markers are refused, as are unsafe paths and a missing or mismatched Git
+   work tree.
 
 `--facts PATH` checks another copy of facts.json (scripts/negative_tests.py uses it);
 `--write-lock` writes `Certificate/axioms.lock` from facts.json and stops.
@@ -83,6 +87,7 @@ from pathlib import Path
 from typing import NamedTuple
 
 import heath
+import generated_counts
 
 ROOT = heath.ROOT
 BOOKS = heath.BOOKS
@@ -1065,6 +1070,9 @@ def main(argv=None) -> int:
         return write_lock(json.loads(args.facts.read_text()))
     check_fidelity()
     check_rules()
+    _, count_errors = generated_counts.updates(ROOT, check=True)
+    for error in count_errors:
+        fail(error)
     check_facts(args.facts)
     if errors:
         print(f"{len(errors)} problem(s):")
