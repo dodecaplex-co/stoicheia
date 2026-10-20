@@ -40,6 +40,7 @@ section 8, "A guard defect gets a regression"). Python 3.11 or later; standard l
 
 from __future__ import annotations
 
+import io
 import os
 import sys
 import tempfile
@@ -925,6 +926,116 @@ class Modern(unittest.TestCase):
     """The modern cases: the names a paragraph gives, and a figure of the modern way read
     against them and against its Euclid's figure's letters."""
 
+    def test_modern_nested_svg_is_refused(self):
+        for content in ('<line x2="20" stroke="#3b2f2f" stroke-width="1.6"/>',
+                        '<text font-size="17" fill="#3b2f2f">A</text>'):
+            with self.subTest(content=content):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + '<svg width="400" height="300" viewBox="0 0 40 30">'
+                    + content + '</svg>')
+                self.assertTrue(any(r == "S24" and "<svg>" in m for r, m in findings),
+                                findings)
+
+    def test_modern_marker_attributes_match_main(self):
+        attributes = dict(id="head", viewBox="0 0 10 10", refX="9", refY="5",
+                          markerWidth="5", markerHeight="5", orient="auto-start-reverse")
+        for key, values in (
+                ("markerUnits", ("strokeWidth",)),
+                ("markerWidth", ("50", "5.0")),
+                ("markerHeight", ("50", "5.0")),
+                ("viewBox", ("0 0 1 1", "0 0 10.0 10")),
+                ("refX", ("90", "9.0")), ("refY", ("50", "5.0")),
+                ("orient", ("0",)), ("width", ("5",))):
+            for value in values:
+                with self.subTest(key=key, value=value):
+                    changed = attributes | {key: value}
+                    attrs = " ".join(f'{k}="{v}"' for k, v in changed.items())
+                    findings = self.check_refused_modern(
+                        MODERN_GOOD + f'<defs><marker {attrs}>'
+                        '<path d="M 0 0 L 10 5 L 0 10 z" fill="#8c7b62"/>'
+                        '</marker></defs>')
+                    self.assertTrue(any(r == "S24" and key in m and "<marker>" in m
+                                        for r, m in findings), findings)
+
+    def test_modern_markers_refuse_strokes_and_text(self):
+        line = '<path d="M 0 0 L 10 5 L 0 10 z" fill="#8c7b62"/>'
+        ink = 'stroke="#3b2f2f" stroke-width="1.6"'
+        cases = [
+            (line.replace("/>", f" {ink}/>"), ""),
+            (f'<g {ink}>{line}</g>', ""),
+            (line, ink),
+            ('<g><text font-size="17" fill="#3b2f2f">A</text></g>', ""),
+        ]
+        for content, inherited in cases:
+            with self.subTest(content=content, inherited=inherited):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + f'<defs {inherited}><marker id="head" '
+                    'viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" '
+                    'markerHeight="5" orient="auto-start-reverse">'
+                    + content + '</marker></defs>')
+                self.assertTrue(any(r == "S24" and "<marker>" in m for r, m in findings),
+                                findings)
+
+    def test_inline_links_preserve_visible_names_and_articles(self):
+        cases = (
+            ("a point reached", "[a point](../../book/I/01.md) reached", set()),
+            ("a point reached", "[a](../../book/I/01.md) point reached", set()),
+            ("AC = a", "AC = [a](../../book/I/01.md)", {"a"}),
+            ("a + b", "[a + b](../../book/I/01.md)", {"a", "b"}),
+            ("exponent", "e[x](../../book/I/01.md)ponent", set()),
+            ("axis", "[a](../../book/I/01.md)xis", set()),
+        )
+        for plain, linked, expected in cases:
+            for words in (plain, linked):
+                with self.subTest(words=words):
+                    paragraph = MW + words + "."
+                    findings = self.check_refused_modern(
+                        '<title>I.47: the modern way</title>'
+                        '<text font-size="17" font-style="italic" fill="#3b2f2f">a</text>',
+                        paragraph=paragraph)
+                    self.assertEqual(findings, [] if "a" in expected else [
+                        ("S25", "<text>a</text>: a is no name of the page's modern way")])
+                    self.assertEqual(style.modern_names(style.modern_paragraph(paragraph)),
+                                     expected)
+
+    def test_modern_encoding_failures_continue(self):
+        document = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                    + MODERN_GOOD + '</svg>')
+        for declaration, encoding in (("unknown-encoding", "utf-8"), ("UTF-7", "utf-7"),
+                                       ("UTF-16", "utf-16"), ("UTF-16", "utf-16-le"),
+                                       ("ISO-8859-1", "iso-8859-1")):
+            with self.subTest(declaration=declaration, encoding=encoding):
+                body = (document.replace("²", "2") if encoding == "utf-16-le" else
+                        document.replace("</svg>", "<!-- café --></svg>"))
+                source = f'<?xml version="1.0" encoding="{declaration}"?>' + body
+                findings = self.check_refused_modern(figure_bytes=source.encode(encoding))
+                self.assertTrue(any(r == "S24" and "encoding" in m for r, m in findings),
+                                findings)
+
+    def test_modern_figure_is_read_once_as_bytes(self):
+        opened = []
+        original_open = io.open
+
+        def record_open(file, mode="r", *args, **kwargs):
+            if str(file).endswith("47-modern.svg") and "r" in mode:
+                opened.append(mode)
+            return original_open(file, mode, *args, **kwargs)
+
+        with patch("builtins.open", side_effect=record_open), \
+                patch("io.open", side_effect=record_open):
+            self.assertEqual(self.check_refused_modern(), [])
+        self.assertEqual(opened, ["rb"])
+
+    def test_encoding_exceptions_from_checker_propagate(self):
+        for error in (LookupError("checker defect"),
+                      UnicodeDecodeError("utf-8", b"\xff", 0, 1, "checker defect"),
+                      ValueError("checker defect")):
+            for checker in ("modern_svg_findings", "modern_findings"):
+                with self.subTest(error=type(error).__name__, checker=checker):
+                    with patch.object(style, checker, side_effect=error):
+                        with self.assertRaisesRegex(type(error), "checker defect"):
+                            self.check_refused_modern()
+
     def test_names(self):
         for text, given, not_given in NAMES_CASES:
             with self.subTest(text=text):
@@ -1226,7 +1337,8 @@ class Modern(unittest.TestCase):
                                         for r, path, _, message in findings), findings)
 
     def check_refused_modern(self, inside=MODERN_GOOD, paragraph=MODERN_PARAGRAPH,
-                            prefix="", root_attributes="", viewbox="0 0 400 300"):
+                            prefix="", root_attributes="", viewbox="0 0 400 300",
+                            figure_bytes=None):
         """Read two real files, keeping the following figure's independent finding."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1245,6 +1357,8 @@ class Modern(unittest.TestCase):
                     + (f'viewBox="{viewbox}" {root_attributes}>' if n == "47"
                        else 'viewBox="0 0 400 300">')
                     + body + "</svg>")
+            if figure_bytes is not None:
+                first.write_bytes(figure_bytes)
             with patch.object(style, "ROOT", root), \
                     patch.object(style, "drawn_letters", return_value=HEATHS), \
                     patch.object(style, "fail") as fail:

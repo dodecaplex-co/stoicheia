@@ -2615,10 +2615,12 @@ def fill_under(root, x: float, y: float) -> str:
     return under
 
 
-def svg_root(path: Path):
+def svg_root(path: Path, source: bytes | None = None):
+    if source is None:
+        source = path.read_bytes()
     try:
-        return ET.parse(path).getroot()
-    except ET.ParseError as e:
+        return ET.fromstring(source)
+    except (ET.ParseError, LookupError, UnicodeDecodeError, ValueError) as e:
         rule = ("S14" if path.stem.endswith("-idea") else
                 "S24" if path.stem.endswith("-modern") else "S15")
         fail(rule, path, 0, f"not well-formed SVG: {e}")
@@ -2983,14 +2985,25 @@ def modern_span(text: str) -> tuple[int, int] | None:
 
 def modern_paragraph(text: str) -> str | None:
     """The paragraph of a mishnah that opens "**The modern way.**" (modern_span), as a
-    reader sees it: its HTML tags and comments, code and link targets blanked afterwards.
+    reader sees it: its HTML tags and comments and code blanked afterwards.
+    Inline links keep their labels, with brackets and targets removed so that visible
+    word boundaries stay intact and a link's bracket cannot turn the article a into a name.
     Reference links resolve against the whole document before their identifiers are
     blanked. None when there is no such paragraph."""
     span = modern_span(text)
     if span is None:
         return None
-    return blank_code(text[span[0]:span[1]], indented_code=False,
-                      reference_labels=document_reference_labels(text), inline_html=True)
+    source = text[span[0]:span[1]]
+    syntax = markdown_syntax(source, indented_code=False,
+                             reference_labels=document_reference_labels(text), inline_html=True)
+    visible = blank_ranges(source, syntax.comments + syntax.destinations
+                           + [(s.start, s.end) for s in syntax.spans])
+    removed = set()
+    for link in link_destination_ranges(source, references=False):
+        if link.label < link.start and (link.start, link.end) in syntax.destinations:
+            removed.add(link.label)
+            removed.update(range(link.start, link.end))
+    return "".join(c for i, c in enumerate(visible) if i not in removed)
 
 
 def modern_markup_findings(text: str) -> list[str]:
@@ -3072,6 +3085,19 @@ MODERN_VALUES = {
 }
 MODERN_ATTRIBUTES = MODERN_NUMBERS | MODERN_VALUES.keys() | {
     "viewBox", "points", "stroke-dasharray", "transform", "d"}
+# Marker viewports have their own exact spellings, from the same 30 figures.
+# None uses text or strokes inside a marker, so those are refused below rather than
+# measured without the marker's scale. An omitted markerUnits keeps SVG's default.
+MODERN_MARKER_VALUES = {
+    "id": {"axis", "head"},
+    "markerUnits": {"userSpaceOnUse"},
+    "markerWidth": {"5", "7", "12"},
+    "markerHeight": {"5", "6", "10"},
+    "viewBox": {"0 0 10 10", "0 0 7 6", "0 0 12 10"},
+    "refX": {"9", "6", "11"},
+    "refY": {"5", "3"},
+    "orient": {"auto-start-reverse"},
+}
 
 
 def modern_number(value: str | None) -> float | None:
@@ -3139,7 +3165,8 @@ def modern_svg_findings(root) -> list[tuple[str, str]]:
     found = []
     for el in root.iter():
         t = tag(el)
-        if el.tag != SVG + t or t not in MODERN_ELEMENTS or (el is root and t != "svg"):
+        if (el.tag != SVG + t or t not in MODERN_ELEMENTS
+                or (el is root) != (t == "svg")):
             rule = "S25" if t == "tspan" else "S24"
             found.append((rule, f"unsupported <{t}> in a modern figure"))
         if t == "text":
@@ -3148,7 +3175,9 @@ def modern_svg_findings(root) -> list[tuple[str, str]]:
                               "use plain text"))
         for key, value in el.attrib.items():
             valid = False
-            if key in MODERN_NUMBERS:
+            if t == "marker":
+                valid = value in MODERN_MARKER_VALUES.get(key, set())
+            elif key in MODERN_NUMBERS:
                 valid = modern_number(value) is not None
             elif key in MODERN_VALUES:
                 valid = value in MODERN_VALUES[key]
@@ -3170,6 +3199,19 @@ def modern_svg_findings(root) -> list[tuple[str, str]]:
                 rule = "S25" if key in {"font-size", "font-style"} else "S24"
                 what = "malformed or unsupported" if key in MODERN_ATTRIBUTES else "unsupported"
                 found.append((rule, f"{what} {key} {value!r} on <{t}>"))
+    if found:
+        return found
+    # Read inheritance only after the syntax gate has excluded CSS. Include ancestors
+    # outside the marker: a stroke on <defs> or the root still reaches its shapes.
+    in_markers = {child for marker in root.iter(SVG + "marker") for child in marker.iter()}
+    for el, _, eff in walk(root):
+        if el not in in_markers:
+            continue
+        t = tag(el)
+        if t == "text":
+            found.append(("S24", "unsupported <text> inside <marker>"))
+        elif t in DRAWN and eff.get("stroke", "none") != "none":
+            found.append(("S24", f"unsupported stroke on <{t}> inside <marker>"))
     return found
 
 
@@ -3263,8 +3305,19 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
 
 def check_modern(path: Path, ref: str) -> None:
     """S24 and S25 for one figure of the modern way."""
-    root = svg_root(path)
+    data = path.read_bytes()
+    root = svg_root(path, data)
     if root is None:
+        return
+    # Scan exactly the bytes parsed above. Keep decoding errors separate from checker
+    # defects, and refuse UTF-16 without a BOM too, whose ASCII bytes decode with NULs.
+    try:
+        source = data.decode("utf-8")
+    except UnicodeDecodeError as e:
+        fail("S24", path, 0, f"unsupported SVG encoding: {e}")
+        return
+    if "\0" in source:
+        fail("S24", path, 0, "unsupported SVG encoding: expected UTF-8")
         return
     refused = modern_svg_findings(root)
     for rule, message in refused:
@@ -3272,7 +3325,6 @@ def check_modern(path: Path, ref: str) -> None:
     if refused:
         return
     # ElementTree drops processing instructions, including those before the root.
-    source = path.read_text(encoding="utf-8")
     for pattern, what in ((r"<\?xml-stylesheet\b", "stylesheet reference"),
                           (r"@import\b", "@import")):
         if re.search(pattern, source, re.I):
