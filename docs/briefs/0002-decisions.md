@@ -1840,6 +1840,6 @@ findings:
   and the Jev audit is an independent model's reading, not a mechanical check. Planted
   markers in `scripts/negative_tests.py` (item 16) and cases in `tests/test_check_style.py`
   show each kind refused and a setext heading not. By keep_apart (WORKFLOW, section 10),
-  the rule lands apart from the content fix, `text/decisions-marker`, and fails on main
-  until that fix lands. The protected files changed are `scripts/check_style.py`,
+  the rule lands apart from the content fix, `text/decisions-marker` (#140), which removed
+  the marker first; on main since #140 it finds none. The protected files changed are `scripts/check_style.py`,
   `scripts/negative_tests.py` and `tests/test_check_style.py`.
