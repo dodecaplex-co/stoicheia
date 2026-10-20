@@ -481,6 +481,10 @@ def _number(value: Any) -> bool:
     return isinstance(value, int) or (isinstance(value, float) and math.isfinite(value))
 
 
+def _model_id(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
 def answer_of(reply_json: Any, qid: str, q: dict) -> dict:
     """One answer, checked against its question; raises ValueError when it is malformed."""
     if not isinstance(reply_json, dict):
@@ -492,6 +496,8 @@ def answer_of(reply_json: Any, qid: str, q: dict) -> dict:
     if not isinstance(a, dict):
         raise ValueError(f"the answer to {qid} is missing or not a JSON object")
     if q["type"] == "choice":
+        if "noul" in a:
+            raise ValueError("the choice answer also has a noul")
         choice, probs = a.get("choice"), a.get("probabilities")
         if not isinstance(probs, dict) or not all(_number(p) and 0 <= p <= 1
                                                   for p in probs.values()):
@@ -662,8 +668,13 @@ def cmd_run(args) -> int:
             if reply.status == 200:
                 try:
                     data = reply.json()
+                    if not isinstance(data, dict):
+                        raise ValueError("the reply is not a JSON object")
+                    answering_model = data.get("model")
+                    if not _model_id(answering_model):
+                        raise ValueError("the reply's model is not a nonempty string")
                     got = answer_of(data, "q", row["question"])
-                    line["model"] = data.get("model")
+                    line["model"] = answering_model
                     line.update(got)
                     if "q" + REVERSED in body["questions"]:
                         again = answer_of(data, "q" + REVERSED, body["questions"]["q" + REVERSED])
@@ -722,7 +733,8 @@ def answered_lines(path: Path, made: dict[str, Any]) -> list[str]:
             raise Failure(f"{path.name} was made {'with' if made['order_check'] else 'without'} "
                           "--no-order-check; resume it as it was made, start afresh with "
                           "--overwrite, or write to another file")
-        if "error" not in line and isinstance(line.get("id"), str):
+        if ("error" not in line and _model_id(line.get("model"))
+                and isinstance(line.get("id"), str)):
             kept.append(text)
     return kept
 
@@ -751,6 +763,7 @@ def cmd_score(args) -> int:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
     answered = []
     agreements: dict[int, bool] = {}
+    confidence_checks: dict[int, list[tuple[float | None, str]]] = {}
     model_mismatches: dict[int, bool] = {}
     seen_ids = set()
     for n, r in enumerate(rows, 1):
@@ -776,12 +789,15 @@ def cmd_score(args) -> int:
                           "that `run` wrote")
         if has_choice:
             checked = _scored_choice(r, row_id)
+            row_confidences = [(checked.get("confidence"), "")]
             has_reversed = "reversed" in r
             if r["order_check"] != has_reversed:
                 raise Failure(f"{row_id}: its reversed asking does not match its order check; "
                               "score reads only lines that `run` wrote")
             if has_reversed:
                 reversed_checked = _scored_choice(r["reversed"], row_id, "reversed")
+                row_confidences.append((reversed_checked.get("confidence"),
+                                        " with the options reversed"))
                 if set(checked["probabilities"]) != set(reversed_checked["probabilities"]):
                     raise Failure(f"{row_id}: its reversed asking has different options; score "
                                   "reads only lines that `run` wrote")
@@ -797,12 +813,13 @@ def cmd_score(args) -> int:
             if "confidence" in r or "probabilities" in r or "reversed" in r:
                 raise Failure(f"{row_id}: its noul answer has choice-only fields; score reads "
                               "only lines that `run` wrote")
+            row_confidences = [(abs(2 * r["noul"] - 1), "")]
         model = r.get("model")
         requested_model = r.get("model_requested")
-        if not isinstance(model, str) or not model.strip():
+        if not _model_id(model):
             raise Failure(f"{row_id}: its answering model is not a nonempty string; score "
                           "reads only lines that `run` wrote")
-        if not isinstance(requested_model, str) or not requested_model.strip():
+        if not _model_id(requested_model):
             raise Failure(f"{row_id}: its requested model is not a nonempty string; score "
                           "reads only lines that `run` wrote")
         model_mismatch = model != requested_model
@@ -814,6 +831,7 @@ def cmd_score(args) -> int:
                 raise Failure(f"{row_id}: its model mismatch flag does not match its models; "
                               "score reads only lines that `run` wrote")
         model_mismatches[id(r)] = model_mismatch
+        confidence_checks[id(r)] = row_confidences
         answered.append(r)
         if "expected" not in r:
             if "agrees" in r:
@@ -870,14 +888,7 @@ def cmd_score(args) -> int:
         why = []
         if id(r) in agreements and not agreements[id(r)]:
             why.append(f"chose {r.get('choice', r.get('noul'))!r}, expected {r.get('expected')!r}")
-        answers = [(r, "")]
-        if "reversed" in r:
-            answers.append((r["reversed"], " with the options reversed"))
-        for answer, order in answers:
-            if "noul" in answer:
-                confidence = abs(2 * answer["noul"] - 1)
-            else:
-                confidence = answer.get("confidence")
+        for confidence, order in confidence_checks[id(r)]:
             if confidence is None:
                 why.append("no confidence given" + order)
             elif confidence < args.low:
@@ -1041,8 +1052,17 @@ class _StandIn(http.server.BaseHTTPRequestHandler):
                 if "noul" in a:
                     a["noul"] = "0.9"
         model = req["model"] if VERSIONED.match(req["model"]) else DEFAULT_MODEL
-        self._send(200, {"model": model, "answers": answers,
-                         "usage": {"input_tokens": len(body) // 4, "output_tokens": 20}})
+        response = {"model": model, "answers": answers,
+                    "usage": {"input_tokens": len(body) // 4, "output_tokens": 20}}
+        if "SELFTEST-MODEL-MISSING" in text:
+            response.pop("model")
+        elif "SELFTEST-MODEL-EMPTY" in text:
+            response["model"] = ""
+        elif "SELFTEST-MODEL-BLANK" in text:
+            response["model"] = "  "
+        elif "SELFTEST-MODEL-NONSTRING" in text:
+            response["model"] = 1
+        self._send(200, response)
 
 
 class _QuietServer(http.server.ThreadingHTTPServer):
@@ -1420,6 +1440,20 @@ def cmd_self_test(args) -> int:
                       f"score refuses {row['id']}" + (" under a bar" if extra else ""),
                       out + err)
 
+        for name, noul in (("numeric", 1.0), ("nonnumeric", "certain")):
+            reversed_noul = json.loads(json.dumps(agreement_base))
+            reversed_noul["id"] = f"reversed-noul-{name}"
+            reversed_noul["reversed"]["confidence"] = 0.1
+            reversed_noul["reversed"]["noul"] = noul
+            reversed_noul_file = tmp / "reversed-noul.jsonl"
+            reversed_noul_file.write_text(json.dumps(reversed_noul) + "\n")
+            for extra in ((), ("--bar", "1")):
+                code, out, err = run("score", str(reversed_noul_file), *extra)
+                check(code == 1 and out == "" and "choice answer also has a noul" in err
+                      and "Traceback" not in err,
+                      f"score refuses a reversed choice with {name} noul"
+                      + (" under a bar" if extra else ""), out + err)
+
         confidence_cases = []
         for name, reversed_confidence in (("reversed-low", 0.49),
                                           ("reversed-null", None),
@@ -1694,6 +1728,57 @@ def cmd_self_test(args) -> int:
               and all(l.get("status") == 200 and "error" in l for l in got),
               "a 200 that is not the documented shape is recorded as a failure, and the run "
               "goes on", out + err)
+
+        for name in ("MISSING", "EMPTY", "BLANK", "NONSTRING"):
+            model_row = one(f"model-{name}.jsonl",
+                            {**base_row, "id": f"model-{name.lower()}",
+                             "state": f"SELFTEST-MODEL-{name}"})
+            model_output = tmp / f"model-{name}-out.jsonl"
+            before = posts()
+            code, out, err = run("run", str(model_row), "--out", str(model_output), *common)
+            stored = parsed(model_output.read_text()) or []
+            check(code == 1 and posts() - before == 1 and len(stored) == 1
+                  and "model is not a nonempty string" in stored[0].get("error", "")
+                  and "Traceback" not in err,
+                  f"run records a {name.lower()} response model as failed", out + err)
+            code, out, err = run("score", str(model_output), "--bar", "0")
+            check(code == 1 and "failed requests: 1" in out
+                  and f"model-{name.lower()}" in out and "Traceback" not in err,
+                  f"score reports a {name.lower()} response model failure", out + err)
+
+            reply_body = json.loads(stored[0]["body"])
+            legacy = {k: v for k, v in stored[0].items() if k not in ("error", "body")}
+            if "model" in reply_body:
+                legacy["model"] = reply_body["model"]
+            legacy.update(reply_body["answers"]["q"])
+            reversed_answer = dict(reply_body["answers"]["q" + REVERSED])
+            reversed_answer["consistent"] = reversed_answer["choice"] == legacy["choice"]
+            legacy["reversed"] = reversed_answer
+            legacy["usage"] = reply_body.get("usage")
+            model_output.write_text(json.dumps(legacy) + "\n")
+            code, out, err = run("score", str(model_output))
+            check(code == 1 and out == "" and "model is not a nonempty string" in err
+                  and "Traceback" not in err,
+                  f"score refuses a legacy {name.lower()} successful model", out + err)
+            before = posts()
+            code, out, err = run("run", str(model_row), "--out", str(model_output),
+                                 "--resume", *common)
+            retried = parsed(model_output.read_text()) or []
+            check(code == 1 and posts() - before == 1 and len(retried) == 1
+                  and "error" in retried[0] and "Traceback" not in err,
+                  f"resume retries a legacy {name.lower()} successful model", out + err)
+
+        differing_model_row = one("differing-model.jsonl",
+                                  {**base_row, "id": "differing-model",
+                                   "state": "ordinary valid model response"})
+        differing_model_output = tmp / "differing-model-out.jsonl"
+        code, out, err = run("run", str(differing_model_row), "--out",
+                             str(differing_model_output), "--model", "jev-latest",
+                             "--allow-alias", *common)
+        code_score, scored, score_err = run("score", str(differing_model_output))
+        check(code == 0 and code_score == 0 and "for adjudication: 1" in scored
+              and f"answered by {DEFAULT_MODEL}, not jev-latest" in scored,
+              "a valid differing model remains an adjudication", out + err + scored + score_err)
 
         redirect = one("redirect.jsonl", {**base_row, "state": "SELFTEST-REDIRECT"})
         code, out, err = run("run", str(redirect), *common)
