@@ -39,7 +39,9 @@ records current; CI runs it on every push.
    read, not built; no tree is copied, so model/.lake is never copied either.
    Symbolic links to a directory in model/Model/ and a file in model/Check/ are refused
    by their own paths, without following them. An axiom in a `.lake` folder of
-   model/Model/ and of model/Check/ is caught, and one in model/.lake is not read.
+   model/Model/ and of model/Check/ is caught, and one in model/.lake is not read. A
+   link named `.lake`, to a directory, a file or nothing, is refused in model/,
+   model/Model/ and model/Check/, each in a small tree of its own.
 9. A lemma of the `Placement` namespace named in Book III's shared steps
    (`Squares.lean`), outside placement's own files, III.24's and `Arcs.lean`, read from
    the source, is caught; the word in a comment there is not.
@@ -488,6 +490,56 @@ def model_lake() -> None:
                 path.unlink(missing_ok=True)
 
 
+def rules_in(root: Path) -> subprocess.CompletedProcess:
+    """check_fidelity's source scan, run on the tree at `root` instead of the edition's."""
+    saved_root, saved_errors = check_fidelity.ROOT, list(check_fidelity.errors)
+    check_fidelity.ROOT = root
+    check_fidelity.errors.clear()
+    try:
+        check_fidelity.check_rules()
+        found = list(check_fidelity.errors)
+    finally:
+        check_fidelity.ROOT = saved_root
+        check_fidelity.errors[:] = saved_errors
+    return subprocess.CompletedProcess([], 1 if found else 0, "\n".join(found) + "\n", "")
+
+
+def lake_links() -> None:
+    """A symbolic link named `.lake`, to a directory, to a file or to nothing, is refused
+    by its own path in model/, model/Model/ and model/Check/, never followed; a real
+    model/.lake directory holding an axiom and a link is not entered. Each case is a
+    small tree of its own, so the edition's model/.lake is never moved, copied or read."""
+    axiom = "axiom planted_axiom : True\n"
+    for folder in ("model", "model/Model", "model/Check"):
+        for kind in ("directory", "file", "dangling"):
+            with tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp).resolve()
+                (root / "model/Model").mkdir(parents=True)
+                (root / "model/Check").mkdir()
+                target = root / "Target"
+                if kind == "directory":
+                    target.mkdir()
+                    (target / "Planted.lean").write_text(axiom)
+                elif kind == "file":
+                    target.write_text(axiom)
+                rel = f"{folder}/.lake"
+                (root / rel).symlink_to(target, target_is_directory=kind == "directory")
+                expect_failure(f"a {kind} link at {rel}", rules_in(root),
+                               f"{rel}: a symbolic link, which the source scan does not follow;",
+                               unwanted=(f"{rel}/", f"{rel}:1:"))
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp).resolve()
+        (root / "model/.lake").mkdir(parents=True)
+        (root / "model/.lake/Planted.lean").write_text(axiom)
+        (root / "model/.lake/Link.lean").symlink_to(root / "model/.lake/Planted.lean")
+        result = rules_in(root)
+        if result.returncode != 0:
+            failures.append("a real model/.lake was read: " + result.stdout.strip())
+            print(result.stdout[-3000:])
+        else:
+            print("✓ a real model/.lake holding an axiom and a link: not read")
+
+
 def placement_named() -> None:
     """A lemma of the `Placement` namespace named in Squares.lean, Book III's shared steps,
     read from the source: caught on its line. The word in a comment on the line before
@@ -688,6 +740,7 @@ def main() -> int:
     forbidden_commands()
     symbolic_links()
     model_lake()
+    lake_links()
     placement_named()
     planted_assumptions()
     restored = fidelity()

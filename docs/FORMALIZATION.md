@@ -468,20 +468,23 @@ stand after a string, a raw string or a character literal holding `/-`, `-/`, `]
 and one in an interpolated string's hole, and a string whose braces Lean could read as
 code is planted too. The source scan names each finding's file and line, except for
 symbolic links to files or directories in the scanned trees and root files, which are
-refused by their paths and never followed. A complete book's missing figure or mishnah
-has no planted break yet. The tests also check that
-generator calls first on their line are allowed in `model/Check.lean` and `model/Check/`,
-that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is caught while one
-in `model/.lake` is not read, and that the unplanted tree passes. They plant source
-files in place and copy only `facts.json`, never `model/.lake`.
+refused by their paths and never followed, a link at `model/.lake` among them. A
+complete book's missing figure or mishnah has no planted break yet. The tests also check
+that generator calls first on their line are allowed in `model/Check.lean` and
+`model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
+caught while one in `model/.lake` is not read, that a link named `.lake`, to a
+directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
+and that the unplanted tree passes. They plant source files in place, the `.lake` links
+in small trees of their own, and copy only `facts.json`, never `model/.lake`.
 
 The first two policies hold in `Staging/` (section 6), `Audit/` and `model/` as well,
 with the model's Check allowance above. Nothing there reaches the certificate, so the
 source scan is what enforces them:
 `check_fidelity.py`'s `check_rules` reads every `.lean` file under `Elements/`,
 `Staging/` and `Audit/`, and the three roots, and every `.lean` file under `model/`,
-without entering `model/.lake`; a `.lake` folder deeper in the model is read like any
-other. It refuses an `axiom` anywhere outside
+without entering the directory `model/.lake`, whose contents go unscanned; a link at
+`model/.lake` is refused like any other link, and a `.lake` folder deeper in the model is
+read like any other. It refuses an `axiom` anywhere outside
 `Elements/Foundations/` and every command and attribute the list above names, with only
 the generator `run_cmd` allowance in `model/Check.lean` and `model/Check/`.
 `MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,

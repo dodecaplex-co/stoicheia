@@ -22,9 +22,9 @@
    as code, while the code in an interpolated string's `{…}` holes is; a string whose
    braces Lean could read either way is refused. Each finding of 2, 3 and 4 names its
    file and line; symbolic links are refused by their paths and never followed.
-   Under `model/`, the package's own `model/.lake` is never entered or read, while a
-   `.lake` folder deeper in the model is read like any other; Mathlib imports are
-   allowed. Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first
+   Under `model/`, the package's own `model/.lake` directory is never entered or read
+   (a link there is refused like any other), while a `.lake` folder deeper in the model
+   is read like any other; Mathlib imports are allowed. Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first
    word on its line followed by `Check.Generator.<ident>` or
    `(Check.Generator.<ident>`, since those files run the generator. Every other command
    and attribute on the list is still refused there. The model's independent kernel
@@ -109,7 +109,7 @@ LEAN_FOUNDATIONS = {"propext", "Classical.choice", "Quot.sound"}
 # The Lean the edition builds, which the source scan (check_rules) reads: the library, the
 # statements staged before their proofs, the audit lemmas, and model/, each folder with
 # its root file (`Staging.lean`). The model allows Mathlib and skips its own model/.lake
-# without entering it. Its Check files alone allow the generator calls named below.
+# directory without entering it. Its Check files alone allow the generator calls named below.
 # The checks' own Lean, `Certificate/Facts.lean`, is not among them.
 LEAN_TREES = ("Elements", "Staging", "Audit", "model")
 # Only model/Check.lean and model/Check/ may run the generator: run_cmd must be the first
@@ -346,8 +346,9 @@ def _read_interpolated(src: str, i: int, marks: list) -> int | None:
 
 
 def lean_sources() -> list[Path]:
-    """Every `.lean` file and symbolic link of LEAN_TREES, excluding model/.lake: each
-    folder's root file, then the folder in sorted order."""
+    """Every `.lean` file and symbolic link of LEAN_TREES, excluding what lies inside the
+    directory model/.lake: each folder's root file, then the folder in sorted order. A
+    link is listed before anything is pruned, so a link at model/.lake is refused too."""
     paths = []
     for tree in LEAN_TREES:
         root = ROOT / f"{tree}.lean"
@@ -358,13 +359,12 @@ def lean_sources() -> list[Path]:
             continue
         found = []
         for folder, dirs, files in os.walk(folder_root, followlinks=False):
-            if Path(folder) == ROOT / "model":
-                dirs[:] = [name for name in dirs if name != ".lake"]
-                files = [name for name in files if name != ".lake"]
-            links = [name for name in dirs if (Path(folder) / name).is_symlink()]
-            dirs[:] = sorted(name for name in dirs if name not in links)
-            found += sorted(Path(folder) / name for name in links + files
-                            if name.endswith(".lean") or (Path(folder) / name).is_symlink())
+            here = Path(folder)
+            links = {name for name in dirs + files if (here / name).is_symlink()}
+            dirs[:] = sorted(name for name in dirs if name not in links
+                             and not (here == ROOT / "model" and name == ".lake"))
+            found += sorted(here / name for name in links | set(files)
+                            if name in links or name.endswith(".lean"))
         paths += sorted(found)
     return paths
 
