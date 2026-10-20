@@ -1823,6 +1823,48 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+- **The checks, made ready for retiring axioms.** The owner asked, "Fewer axioms is better.
+  Any more that can go?", and on 19 October 2026 approved both retirements: "Please do both.
+  79 is rather large with so many books in front of us." On 20 October the owner approved
+  landing each as three pull requests; this is the first of the first. A search found eight that can go with no choice of basis (the retirement's own entry
+  names them). Since a check never changes in the pull request of the content it judges,
+  this change prepares the checks first, with all 87 axioms in place and the pin change
+  recorded below. Main already reads the expected axiom count from
+  the lock in its negative tests, and that count stays as main has it; the further
+  changes to the negative tests are recorded below.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) moves its mutation, count
+  and membership fixtures to laws and pins that survive (I.5's inherited Postulate 3);
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) drops the generators `gs_adj` and
+  `gs_lmc_opp` from its allow-list, because
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) now samples those two laws
+  with generators the other laws use, with byte-identical output;
+  `tests/model/derived.py` (new) keeps the eight laws'
+  configurations as derived properties, which
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py),
+  [`tests/model/structured.py`](../../tests/model/structured.py) and
+  [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
+  laws, [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records that independent
+  contract, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only
+  a description. The formal model's comparison of the eight hand translations directly
+  with the library's declarations goes with the retirement, since the model is content
+  the checks judge.
+- **One certificate pin dropped, with the owner's approval.** The retirement makes
+  `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
+  in [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json),
+  that III.1 Por.'s assumptions include it, had to go first, as the pin dropped for #60 did.
+  On 19 October 2026 the owner approved this first step of a two-step pin flip: commit
+  `5d200cf` removes the `includes: ["Tacit.centre_unique"]` pin while retaining its count.
+  Deleting that dependency still fails, but a substitution that keeps the count would no
+  longer be caught. C6's full `equals` pin remains pending; the retirement then adds stronger
+  pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight. This approval is for
+  the first pin change alone; the retirement itself is approved as the entry above says.
+  The stronger pins cannot fail once the eight are theorems, as the next paragraph explains;
+  pins that can fail are #168, which holds every release until it closes.
+  As built, those pins put the eight names in `excludes` on each entry's `axioms`. Once
+  the eight are theorems no axiom list can hold their names, so those pins cannot fail;
+  an entry's use of a proved rule shows only in the axioms beneath it, which `proved_rules`
+  (the entry below) lists for each rule. A pin on the proved rules an entry uses would
+  need a field of its own, which this change does not add.
 
 ## 20 October 2026
 
@@ -2031,6 +2073,96 @@ findings:
   boundaries; `scripts/negative_tests.py` adds a two-line
   definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
   states the rule. No mathematical statement or review record changes.
+
+- **The circle ban survives a rule being proved.** The check change precedes the
+  retirement, with all 87 axioms still in place. No certificate entry may rest on
+  Circle 2 (`Tacit.inside_of_between`) or Circle 3 (`Tacit.outside_of_between`).
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) now finds every theorem
+  this project declares in `Elements.Tacit` and records Lean's `collectAxioms` for it
+  in `facts.json` as `proved_rules`, documented in
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md).
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) requires each
+  forbidden name either to remain an axiom in the lock or to name a proved rule
+  resting on another forbidden circle rule that remains an axiom there. The
+  per-entry refusal is unchanged: in the planned retirement, Circle 2 is proved
+  from Circle 3, so every use still brings in a forbidden axiom. A renamed rule or
+  a proof without a forbidden axiom beneath it is refused.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants both cases
+  of proved Circle 2, restores the lock, and drops one project axiom from
+  `Audit.III_2`'s pin whether its list occupies one line or several.
+  [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) checks the
+  guard, both pin forms and restoration on failure or interruption.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, records how the ban continues
+  to hold. This prepares the checks for the retirement; it retires no axiom.
+- **Eight axioms retired, 87 to 79.** The owner asked,
+  "Fewer axioms is better. Any more that can go?", and on 19 October 2026 approved both
+  retirements: "Please do both. 79 is rather large with so many books in front of us." On
+  20 October the owner approved landing each as three pull requests; this is the second of
+  the first. Pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight, able
+  to fail now that the eight are theorems, are #168, which holds every release until it
+  closes. Each of the eight keeps its name and exact type and becomes a theorem at the
+  earliest place it can be proved: `Tacit.centre_unique`, `Tacit.inside_of_between`
+  (Circle 2, from Circle 3, which stays), `Tacit.exists_point_outside_circle`,
+  `Tacit.line_meets_circle_of_opposite_sides` and `Tacit.triple_incidence3` in
+  [`Elements/Figure/Circles.lean`](../../Elements/Figure/Circles.lean);
+  `Tacit.not_same_side_of_circles_meet` (Circle 4) after I.7; and
+  `Tacit.adjacent_eq_of_right` and `Tacit.inside_of_angle_add` after I.13. No proof rests on
+  the axiom it replaces or on a later proposition, and I.7 and I.13 do not rest on their
+  corollaries. The first four came from a probe; the other four are the derivable rules
+  that lie on no cycle of the derivation graph, so no later choice of basis can disturb
+  them. The rest of the search, what else could go and what each choice costs, is evidence
+  for the owner, not part of this change. I.7's audited shortcut through Circle 4 is
+  circular now, and the audit says so. I.12, which cited the intersection rule now proved
+  from Circle 3, cuts its circle instead through a point inside it, the crossing of CD with
+  AB (Intersection 3), so that no certificate entry rests on Circle 2 or Circle 3; the pins
+  of #60 for II.14, III.1 and III.2 still say so, through their exclusion of Circle 3. The
+  axioms leave
+  `Elements/Foundations/Tacit/Constructions.lean`, `Diagram.lean` and `Transfer.lean`.
+  Protected files changed with them, as values pinned to the axioms:
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock), written by `--write-lock`;
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and `model/lock.sha256`;
+  [`tests/model/laws.toml`](../../tests/model/laws.toml), and the eight laws' code in
+  [`tests/model/search.py`](../../tests/model/search.py) and
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py), the other laws in their
+  order. [`tests/model/MODEL.md`](../../tests/model/MODEL.md) follows the smaller lock.
+  The results of `run.py --full --write` are recorded in
+  [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
+  [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
+  [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
+  [`tests/model/results/hyperbolic.txt`](../../tests/model/results/hyperbolic.txt),
+  [`tests/model/results/mutations.txt`](../../tests/model/results/mutations.txt),
+  [`tests/model/results/search-seed1.txt`](../../tests/model/results/search-seed1.txt),
+  [`tests/model/results/search-seed2.txt`](../../tests/model/results/search-seed2.txt),
+  [`tests/model/results/search-seed3.txt`](../../tests/model/results/search-seed3.txt),
+  [`tests/model/results/structured.txt`](../../tests/model/results/structured.txt) and
+  [`tests/model/results/summary.txt`](../../tests/model/results/summary.txt).
+  The examples of the certificate's fields and of the review schema, which are check
+  inputs, follow in a change of their own, landed after this one.
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) imports the proved rules, updates its
+  exact axiom pins to follow the retired rules' proofs and labels the circular derivations;
+  [`Audit/screen.py`](../../Audit/screen.py) removes the five retired rules from its list
+  of circle axioms and explains why I.7 is no longer an independent overlap.
+  [`model/Model/Audit.lean`](../../model/Model/Audit.lean) changes only comments to explain
+  the 79-law assembly and retention of the eight individual audits, with every guard and
+  axiom pin unchanged.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  the measured counts of III.1 and its porism (55 tacit rules each) and gains pins that
+  keep the eight names out of the axiom lists of III.1, III.1 Por., III.2 and II.14. With
+  the eight now theorems those pins cannot fail; the pins that hold are the counts and the
+  exclusion of Circle 3, which keeps Circle 2 out too, since Circle 2 rests on it (III.1
+  Por. does use the proved `Tacit.centre_unique`). The formal model's generated
+  laws, checks and assembly follow from its generator; its proofs in the plane stay, as
+  derived facts. The five files `model/Check/Angles.lean`, `model/Check/Circles.lean`,
+  `model/Check/Incidence.lean`, `model/Check/Intersections.lean` and `model/Check/Sides.lean`
+  compare the eleven hand translations of the eight rules directly with the library's
+  declarations, binder kinds included, so the comparisons stand now that the eight are
+  theorems; [`model/README.md`](../../model/README.md) and the hand-translated law files
+  say so. Proposition and porism statements, definitions and `--` lines are
+  unchanged; the records whose Lean changed were read again and stamped by readers who
+  wrote none of them.
+  On integration with main at `209d71fd`, `Audit/Overlaps.lean` also updates the exact
+  pin for `Audit.III_30_measure`: Lean no longer prints `Tacit.adjacent_eq_of_right`,
+  now a theorem, and prints every other entry unchanged. The guard remains exact.
 
 - **Unfinished work may land with its issue, and holds the release until it is finished.**
   The owner set the rule: "I don't mind incomplete work, prototypes, whatever so long as

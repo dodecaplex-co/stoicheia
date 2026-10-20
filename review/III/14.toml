@@ -27,6 +27,6 @@ note = "The converse needs no Lean of its own until \"And, since AE is equal to 
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
+commit = "2c3686e"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:2c5b7de80bddf235"
+lean = "sha256:dc0a7b696a432ca8"

@@ -210,9 +210,10 @@ citations and status, and every policy check applies to it as to a proposition. 
 "[III. 1, Por.]" and "[III. 16, Por.]" are read as citations of those entries, by the
 scripts and by `Certificate/Facts.lean` alike, and the graph draws a porism as its
 proposition. A proposition counts as proved only when its porism is too, and its page
-shows the porism's certificate in a column of its own. III.1 Por. rests on one rule III.1
-does not, that a circle has one centre (`centre_unique`). Each porism's proof cites its
-proposition, "from this it is manifest".
+shows the porism's certificate in a column of its own. III.1 Por. uses `centre_unique`,
+now proved from the foundations in `Elements/Figure/Circles.lean`, to identify the
+centre III.1 finds with the given centre. It adds no axiom to III.1's closure.
+Each porism's proof cites its proposition, "from this it is manifest".
 
 ## How the statements say Euclid's phrases
 
@@ -365,6 +366,11 @@ This table is generated from them as they stand on 17 October 2026, with III.15 
 stands on 18 October, and III.7, III.8 and III.17 as stage 4b of
 [brief 0007](0007-stage-4b.md) leaves them (the centre given by hypothesis, `centre-given`,
 is left out, being nearly everywhere):
+
+19 October 2026: the table below preserves the earlier record snapshot. Circle 2,
+`inside_of_between`, is now proved from Circle 3 in `Elements/Figure/Circles.lean`.
+III.2's current axiom overlap is with Circle 3, `outside_of_between`, which gives it
+at once; the published proof still follows Euclid without that axiom.
 
 | Proposition | Statement | Argument | Overlap | Tags | Planned |
 |---|---|---|---|---|---|

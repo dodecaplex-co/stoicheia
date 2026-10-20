@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.Figure.Circles
 import Elements.BookI.Prop08
 import Elements.BookI.Prop11
 import Elements.BookI.Prop12
@@ -951,7 +952,7 @@ no point of the angle BAC, nor of its arms, that is not within `α`.
 The circle about A passes through N, the foot of the perpendicular from A to BC [I. 12];
 every other point X of the straight line BC is farther from A (`foot_nearest`). A point P of
 the angle within that circle lies on a ray from A that crosses BC at some X (the crossbar,
-`crossbar`), nearer A than X, and so between A and a point within `α` (System E, Circle 2). -/
+`crossbar`), nearer A than X, and so between A and a point within `α` (Circle 2, proved from Circle 3). -/
 theorem near_inside_of_angle (hA : InsideCircle A α ∨ OnCircle A α)
     (hB : InsideCircle B α ∨ OnCircle B α) (hC : InsideCircle C α ∨ OnCircle C α)
     (hBAC : Triangle B A C) :
@@ -988,7 +989,7 @@ with the points of the ray AU near A within the circle `α`, and every point of 
 without it. Then every circle about A holds a point within the angle UAV and within `α`, and
 another within the angle and without `α`: on the straight line from a point Y of AU to a
 point W of AV, both near A, on either side of the point where it crosses the circumference
-(System E, Intersections 4, Circle 2 and 3). -/
+(System E, Intersections 4 and Circle 3, which also proves Circle 2). -/
 theorem exists_near_across {U V : Point} (hUAV : Triangle U A V)
     (hU : LocallyWithin A (fun P => OnRay P A U) (fun P => InsideCircle P α))
     (hV : ∀ P : Point, OnRay P A V → OutsideCircle P α) (hγ : Centre A γ) :
@@ -1079,7 +1080,7 @@ theorem outside_of_onRay (hAE_out : Outside A E α) :
 /-- **The circle lies on one side of the straight line AE.** Under III.16's first part, every
 point within the circle, or on it other than A, is on the side of AE of any point K within
 the circle: a point on AE, or across it, would put a point of AE within the circle, on the
-way to K (System E, Intersection 1 and Circle 2). -/
+way to K (System E, Intersection 1 and Circle 3, through Circle 2). -/
 theorem sameSideOf_of_inside {K : Point} (hA : OnCircle A α) (hAE_out : Outside A E α)
     (hK : InsideCircle K α) (hQ : InsideCircle Q α ∨ OnCircle Q α) (hQA : Q ≠ A) :
     SameSideOf Q K A E := by
@@ -1221,7 +1222,7 @@ theorem tangent_parts {O T : Point} (hO : Centre O α) (hA : OnCircle A α)
 /-- **The straight line at right angles to the radius, on the segment's side.** Let AC be a
 straight line in a circle about O, not through the centre, and S a point off AC. A straight
 line AT can be drawn at right angles to OA, with T on S's side of AC: the perpendicular at A
-[I. 11], produced beyond A if it falls on the other side (System E, Diagram-angle 3). It is
+[I. 11], produced beyond A if it falls on the other side (I.13, `adjacent_eq_of_right`). It is
 not AC itself, for every point of it but A is without the circle (`tangent_parts`), and C is
 on it. -/
 theorem exists_tangent {C O S : Point} (hO : Centre O α) (hA : OnCircle A α)
@@ -1943,7 +1944,7 @@ theorem less_lt_right {A B C D E R : Point} {ABCD : Circle} (hE : Centre E ABCD)
   have hAF : A ≠ F := ne_of_between (between_symm hBAF) |>.symm
   have hBF : OppositeSidesOf B F A C := (OppositeSidesOf.of_between hABC.cab hBAF).swap
   have hDF : SameSideOf D F A C := OppositeSidesOf.sameSideOf hBD hBF
-  /- The angle CAF is right, as its adjacent angle BAC is (System E, Diagram-angle 3). -/
+  /- The angle CAF is right, as its adjacent angle BAC is (I.13, `adjacent_eq_of_right`). -/
   have hCAF : ∠ C A F = ∟ := by
     rw [← (adjacent_eq_of_right hB_N hF_N hBAF hC_N hBAC), hBAC]
   have hRray : OnRay R A F := onRay_of_angle_eq (hR.trans hDF) (hCAR.trans hCAF.symm)
@@ -1961,7 +1962,7 @@ theorem less_lt_right {A B C D E R : Point} {ABCD : Circle} (hE : Centre E ABCD)
       (between_of_inside_chord hT hA_N hB_N hTα hA hB hAB)
   /- So a point within the circle on D's side of AC is on C's side of AB: were it on AB, it
      would be on B's side of AC; were it on the other side of AB, the straight line from it to
-     C would cross AB within the circle (Intersection 1, Circle 2), at a point on D's side of
+     C would cross AB within the circle (Intersection 1 and Circle 3, through Circle 2), at a point on D's side of
      AC (Pasch 2). -/
   have hside : ∀ P : Point, SameSideOf P D A C → InsideCircle P ABCD → SameSideOf P C A B := by
     intro P hPD hPα
