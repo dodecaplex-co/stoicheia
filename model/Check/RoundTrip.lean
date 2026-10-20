@@ -59,12 +59,12 @@ run_cmd Check.Generator.checkRoundTrip
 
 /-! ## The check refuses what it is meant to refuse
 
-Each definition here is a law of `Model/Laws.lean` with one fault planted in it, and
-`comparePlanted` runs on it the comparison that `checkRoundTrip` makes of every generated law;
-`#guard_msgs` fails the build unless the comparison refuses it with exactly the message above.
-The first and the fourth pass the kernel's `rfl`, which is why the comparison by syntax is
-needed. The last two are statements in the library's words, and the translation must refuse a
-constant it has no translation for. -/
+The law fixtures copy `Model/Laws.lean` with one fault planted in each; `comparePlanted`
+applies the comparison that `checkRoundTrip` makes of every generated law. `#guard_msgs`
+pins each exact refusal. The first and fourth pass the kernel's `rfl`, which is why the
+comparison by syntax is needed. Two statements in the library's words test that translation
+refuses constants it has no translation for. Two copies of collinearity exercise
+`comparePlantedWord`: the matching copy passes, and the corrupted copy pins its refusal. -/
 
 namespace Check.Planted
 
@@ -101,7 +101,23 @@ def parallels : Prop := ∀ L M : Elements.Line, Elements.Parallel L M → L ≠
 /-- A statement using the check's own copy of the kinds, neither the library's nor Lean's. -/
 def foreign : Prop := ∀ k : Model.Kind, kind k = kind k
 
+/-- A copy of the translated definition of collinearity, with no fault planted. -/
+def collinear (S : Signature) (A B C : S.Point) : Prop :=
+  ∃ L : S.Line, S.OnLine A L ∧ S.OnLine B L ∧ S.OnLine C L
+
+/-- The same definition with the last two points exchanged in its value. -/
+def collinearExchanged (S : Signature) (A B C : S.Point) : Prop :=
+  ∃ L : S.Line, S.OnLine A L ∧ S.OnLine C L ∧ S.OnLine B L
+
 end Check.Planted
+
+#guard_msgs in
+run_cmd Check.Generator.comparePlantedWord ``Check.Planted.collinear ``Elements.Collinear
+
+/-- error: `Check.Planted.collinearExchanged`: `C` where the library has `B` -/
+#guard_msgs in
+run_cmd (Check.Generator.comparePlantedWord ``Check.Planted.collinearExchanged
+  ``Elements.Collinear)
 
 /-- error: `Check.Planted.explicit`: the binder `A` is explicit where the library's `A` is implicit -/
 #guard_msgs in
@@ -175,24 +191,29 @@ run_cmd Check.Generator.pureAxiom
 #guard_msgs in
 run_cmd Check.Generator.checkSharedIdentity ``Nat.rec
 
-/- Stand-in module lists exercise successful identities before the calculus exists.
+/- Stand-in modules extend the production boundary, so these fixtures also work after
+the calculus arrives. They exercise successful identities before the calculus exists.
 List.filterMap has two universe arguments; Model.Kind.rec also checks that a shared name
 in the Model namespace survives the residual-name check in reverse translation. -/
 #guard_msgs in
-run_cmd (Check.Generator.checkSharedIdentityWith #[`Init.Data.List.Basic] ``List.filterMap)
+run_cmd (Check.Generator.checkSharedIdentityWith
+  (Check.Generator.pureModules ++ #[`Init.Data.List.Basic]) ``List.filterMap)
 
 #guard_msgs in
-run_cmd (Check.Generator.checkSharedIdentityWith #[`Model.Signature] ``Model.Kind.rec)
+run_cmd (Check.Generator.checkSharedIdentityWith
+  (Check.Generator.pureModules ++ #[`Model.Signature]) ``Model.Kind.rec)
 
 #guard_msgs in
-run_cmd (Check.Generator.checkPureModuleFixture #[`Init.Data.List.Basic] ``List.filterMap)
+run_cmd (Check.Generator.checkPureModuleFixture
+  (Check.Generator.pureModules ++ #[`Init.Data.List.Basic]) ``List.filterMap)
 
 /- No explicit declaration root is supplied to the audit: module data must find this
 word even though the library's laws do not use it. -/
 /-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
 #guard_msgs in
 run_cmd (Check.Generator.checkPureModuleFixture
-  #[`Init.Data.List.Basic] ``List.filterMap (some ``Elements.Point))
+  (Check.Generator.pureModules ++ #[`Init.Data.List.Basic])
+  ``List.filterMap (some ``Elements.Point))
 
 #guard_msgs in
 run_cmd Check.Generator.checkSharedImportHeader

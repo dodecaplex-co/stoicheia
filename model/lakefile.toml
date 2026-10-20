@@ -25,8 +25,10 @@ name = "Model"
 # of Model (Model.Signature, Model.Laws, Model.Hand), never Mathlib. Its modules read files
 # that are not Lean imports: the lock and its hash, the files the generator writes, and the
 # proofs in the plane, whose theorems the assembly gathers, and the import audit's sources.
-# Lake reruns a module only when its inputs change, so the library `needs` each of those
-# files, and any change to one of them reruns the checks, as a fresh build in CI does.
+# The library `needs` these inputs. Lake hashes text with line endings normalised;
+# content changes or a file entering or leaving a filtered directory input rerun the
+# checks. Timestamps and filenames alone are not hashed. CI's fresh build runs every
+# check regardless of these local cache traces.
 [[lean_lib]]
 name = "Check"
 needs = ["axiomsLock", "lockHash", "generatedLaws", "generatedChecks", "generatedAssembly",
@@ -61,9 +63,11 @@ text = true
 name = "planeProofs"
 path = "Model/Euclidean"
 text = true
+filter = { extension = ["lean"] }
 
 # The import audit reads the library root as well as every Model source, including files
-# not imported by the root. A directory input also tracks additions and removals.
+# not imported by the root. Filter before hashing: a same-content .txt to .lean rename
+# must add a hashed input, since it adds a source to the audit.
 [[input_file]]
 name = "modelRoot"
 path = "Model.lean"
@@ -73,10 +77,13 @@ text = true
 name = "modelSources"
 path = "Model"
 text = true
+filter = { extension = ["lean"] }
 
 # Superposition does not exist on main yet. Lake rejects a missing input directory, so
-# track its existing parent to catch the first added pure module as well as later edits.
+# track Lean files under its existing parent, a superset of the four pure sources.
+# The extension filter also catches the first source arriving by a .txt to .lean rename.
 [[input_dir]]
 name = "pureSources"
 path = "../Elements/Foundations"
 text = true
+filter = { extension = ["lean"] }

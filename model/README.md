@@ -304,13 +304,21 @@ at the first body command; a malformed header is an error. `checkModelImportsWit
 the decision from file paths and imports, so planted cases use the same parser and
 decision without creating files or loading their imports.
 
-The Check library registers `Model.lean`, the whole `Model/` directory and
-`../Elements/Foundations/` as text inputs in [lakefile.toml](lakefile.toml). Directory
-inputs track additions and removals as well as edits. The existing foundations directory
-is used because Lake rejects an input directory that does not exist, and its
-`Superposition/` subdirectory is absent on main. This also catches the first pure module
-when it is added. Lake hashes text contents, so a timestamp-only touch may replay a
-cached result; changing an audited source's contents rebuilds the checks.
+The Check library registers `Model.lean` and the `.lean` files under `Model/` and
+`../Elements/Foundations/` as text inputs in [lakefile.toml](lakefile.toml). The plane-proof
+input is filtered to `.lean` too. The existing foundations directory is used because Lake
+rejects an input directory that does not exist, and its `Superposition/` subdirectory is
+absent on main; this input includes all four pure sources when present, as well as other
+foundation sources.
+
+Lake 4.35 filters directory entries before sorting them and combining their content hashes.
+Adding or removing a selected file, including a same-content rename from `.txt` to `.lean`
+or back, changes that list. This catches the first pure module arriving by such a rename.
+File paths are trace captions, not part of the hash: a rename within the selected set can
+still replay a cached result when the ordered contents stay the same. Text hashes normalise
+line endings, and a timestamp-only touch can also replay a result. Changes to the selected
+contents otherwise rebuild the checks. CI's fresh build runs every check, including the
+whole import audit, regardless of local cache traces.
 
 The library's 99 proofs do not change. Rewriting the library over a signature, with
 wrappers that keep its present names, is a later and separate decision, and it would need
@@ -369,22 +377,27 @@ the original means. These checks do that, at every build.
   dropped guard, a word written out) and two statements the translation must refuse (a word
   the laws do not reach, and a constant that is neither the library's nor Lean's own), and
   `#guard_msgs` fails the build unless each is refused with the message it pins. The first
-  and the fourth pass the kernel's `rfl`, which the file shows too. Further cases pass
-  copies of Init declarations to the purity checker without installing them in Lean's
-  environment: an Init-only closure passes, while a transitive reference to `Elements.Point`
+  and the fourth pass the kernel's `rfl`, which the file shows too. `comparePlantedWord`
+  also runs on two copies of the translated `Elements.Collinear` definition: the matching
+  copy produces no message, and a copy with two points exchanged pins the exact refusal.
+  Further cases pass copies of Init declarations to the purity checker without installing
+  them in Lean's environment: an Init-only closure passes, while a transitive reference to `Elements.Point`
   in a type or value, a dependency found only in an opaque value or a recursor rule,
   `sorryAx`, and an unapproved axiom are refused. Every helper called
   by `run_cmd` is defined in `Check/Generator.lean`. `plantPureDependency` accepts any
   definition as its root and puts a named dependency in a copy of its type or value.
   The production identity check still refuses `Nat.rec`, which is not shared.
-  Parameterised variants use stand-in module lists to exercise successful identity
-  entries in the plan, forward and reverse translation with zero, symbolic and compound
-  universe arguments, and a non-empty shared-import header before the calculus arrives.
+  Parameterised variants extend the production module list with stand-ins to exercise
+  successful identity entries in the plan, and forward and reverse translation with zero,
+  symbolic and compound universe arguments, before the calculus arrives.
   `List.filterMap` tests two universe arguments; `Model.Kind.rec` tests a shared name
   outside `Elements`, including the residual model-name check. The module-root collector
   accepts an Init module and finds a planted dependency in a declaration no law uses,
-  without receiving that declaration as an explicit audit root. Production keeps the
-  four-module boundary throughout.
+  without receiving that declaration as an explicit audit root. These module-root fixtures
+  also retain the production list, so the same cases can run after the calculus arrives.
+  The header-printer fixtures exercise a non-empty shared-import header using explicit
+  stand-in reached words, and build no translation plan. Production keeps the four-module
+  boundary throughout.
   Import cases accept the real tree and permitted headers, and refuse geometric imports,
   `Check.Original` in a legacy `Model.lean` header, `Staging`, `Audit`, `Certificate`, an
   unknown root, a module below an approved pure module, and Mathlib in a pure file.
