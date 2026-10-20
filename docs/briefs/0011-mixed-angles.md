@@ -340,3 +340,21 @@ the staged file at that revision, and "R" the report.
    for that sentence in `scripts/render.py` to be rewritten, in a tooling change of its
    own. Recommended: the tag now, and the badge only if the coordinator wants it.
 6. **III.16's route `modified`.** Recommended, as Astra advises and I.39 and I.40 have it.
+
+## Dated correction, 19 October 2026: step 6
+
+Step 6 of [brief 0008](0008-centre.md) supersedes the centre-taking interfaces described
+above; the earlier account remains as the history of this brief. Helpers whose centre
+served only to establish that the circle had one now take no centre input, including
+`surrounds_inside`, `surrounds_outside`, `near_across`, `Segment.exceeds_iff`,
+`Segment.nearVertexOpen` and `Segment.fallsShort_iff`. Their proofs obtain a centre
+internally where the geometry needs one. The mixed-angle steps built from them,
+`near_inside_of_angle`, `near_inside_of_ray`, `near_inside_of_onRay` and
+`Prop16.sameSideOf_of_inside`, likewise expose centre-free interfaces.
+
+The temporary III.2 corollaries have now given way to the shared declarations approved in
+step 6: uses of `InsideCircle.of_between` cite `Prop2.within`, and uses of
+`Triangle.of_onCircle_centre` cite `Prop2.triangle`; `OutsideCircle.of_between` remains and
+is derived from `Prop2.within`. The companions `Prop16.semicircle`, `Prop16.remaining`,
+`Prop16.acute`, `Prop31.greater` and `Prop31.less` retain their named centres, since those
+points occur in their geometry, as brief 0008's standing rule requires.

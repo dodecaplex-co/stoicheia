@@ -182,7 +182,7 @@ theorem Prop31.greater_gt_right {A B C E R : Point} {ABCD : Circle} (hE : Centre
   refine ⟨hR.triangle.bac, ?_⟩
   show LocallyLess A (WithinAngle C A R) (MixedAngle.ofSegment A C ABCD B).region
   have hABC : Triangle A B C :=
-    Triangle.of_onCircle_centre hA hB hC hAB (ne_of_between_ends hBEC) hAC
+    Prop2.triangle hA hB hC hAB (ne_of_between_ends hBEC) hAC
   have hCAB : ∠ C A B = ∟ := by
     rw [angle_symm hAC.symm hAB.symm]; exact hBAC
   have hRray : OnRay R A B := onRay_of_angle_eq hR (hCAR.trans hCAB.symm)
@@ -222,7 +222,7 @@ theorem Prop31.less_nearVertex {A B C D E : Point} {ABCD : Circle} (hE : Centre 
     (hBEC : Between B E C) (hAB : A ≠ B) (hAC : A ≠ C) (hBD : OppositeSidesOf B D A C) :
     NearVertexOpen A (MixedAngle.ofSegment A C ABCD D).region := by
   have hABC : Triangle A B C :=
-    Triangle.of_onCircle_centre hA hB hC hAB (ne_of_between_ends hBEC) hAC
+    Prop2.triangle hA hB hC hAB (ne_of_between_ends hBEC) hAC
   obtain ⟨F, hBAF⟩ := produce hAB.symm
   have hBF : OppositeSidesOf B F A C := (OppositeSidesOf.of_between hABC.cab hBAF).swap
   have hDF : SameSideOf D F A C := OppositeSidesOf.sameSideOf hBD hBF
@@ -247,7 +247,7 @@ theorem Prop31.less_lt_right {A B C D E R : Point} {ABCD : Circle} (hE : Centre 
   refine ⟨hR.triangle.bac, less_nearVertex hE hA hB hC hBEC hAB hAC hBD, ?_⟩
   show LocallyLess A (MixedAngle.ofSegment A C ABCD D).region (WithinAngle C A R)
   have hABC : Triangle A B C :=
-    Triangle.of_onCircle_centre hA hB hC hAB (ne_of_between_ends hBEC) hAC
+    Prop2.triangle hA hB hC hAB (ne_of_between_ends hBEC) hAC
   obtain ⟨F, hBAF⟩ := produce hAB.symm
   obtain ⟨N, hA_N, hB_N⟩ := Postulate1 A B hAB
   have hF_N : OnLine F N := on_line_of_between hBAF hB_N hA_N
@@ -282,7 +282,7 @@ theorem Prop31.less_lt_right {A B C D E R : Point} {ABCD : Circle} (hE : Centre 
     refine SameSideOf.of_line hAB hA_N hB_N (Classical.byContradiction fun hs => ?_)
     obtain ⟨T, hT_N, hPTC⟩ := OppositeSides.exists_between ⟨hP_N, hC_N, hs⟩
     have hTα : InsideCircle T ABCD :=
-      InsideCircle.of_between (Or.inl hPα) (Or.inr hC) hPTC
+      Prop2.within (Or.inl hPα) (Or.inr hC) hPTC
     have hTD : SameSideOf T D A C :=
       SameSideOf.of_between_line ⟨M, hA_M, hC_M, hC_M⟩ hPD (between_symm hPTC)
     exact hnotB T hTD (hseg T hT_N hTα)

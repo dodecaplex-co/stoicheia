@@ -112,11 +112,11 @@ Heath's brackets give in most of the propositions of Book III.
 - Euclid's "within" is never used: ED and FD are drawn through from E and F, which are within wherever D is. Our statement leaves it out, as III.25 needs.
 
 ## III.10
-- "Euclid's proof contains an unproved assumption, namely that the lines bisecting BG, BH at right angles *will* meet in a point P" (vol. 2, p. 24). Our circles carry their centres, so the porism to III.1 puts the centre of ABC on both straight lines (`Prop1.porism`), and they meet there.
+- "Euclid's proof contains an unproved assumption, namely that the lines bisecting BG, BH at right angles *will* meet in a point P" (vol. 2, p. 24). The proof obtains a centre of each circle through `Tacit.exists_centre`; the porism to III.1 puts each centre on both straight lines (`Prop1.porism`), and they meet there.
 - "Meet at no point except at P" takes AC and NO to be two straight lines. Were they one, the triangle BKL would have a right angle at K and another at L, against I.17 (`Prop10.meet_once`).
 - KC, drawn at right angles to BH and carried through to A, is at right angles on both sides of K (`Prop10.right_on_line`, by `adjacent_eq_of_right`), as the porism asks.
 - Heath gives no bracket for the bisections or the right angles: they are I.10 and I.11.
-- Euclid names four common points and uses three; F never enters the argument. Heath observes that the proof covers circles that merely meet (vol. 2, p. 23). Our statement asks for three distinct common points, with both circles given centres.
+- Euclid names four common points and uses three; F never enters the argument. Heath observes that the proof covers circles that merely meet (vol. 2, p. 23). Our statement asks for three distinct common points, without centre inputs.
 - The last step changes: after locating both centres at P, the Lean calls `circle_eq` directly with the common point B. The restated III.5 asks for crossing, which III.10 does not assume. This is the converse Heath gives under III.5 (vol. 2, p. 12), and the record marks the route `modified`.
 
 ## III.11
@@ -159,7 +159,7 @@ Heath's brackets give in most of the propositions of Book III.
 - Heiberg drops, as Theon's addition, the words "and that a straight line touches a circle at one point only" (Heath, vol. 2, p. 43); our `Touches` (Definition III.2) says it. Simson's remark that "there can be but one straight line which touches the circle at the same point" (vol. 2, p. 43) follows from our second clause.
 
 ## III.17
-- "Let the centre E of the circle be taken [III. 1]": III.1 needs two points of the circle, and our statement names none. Our proof finds two on the straight line from the given centre to A: one between the centre and A, since A is outside (`line_circle_between`), and one beyond the centre (`line_circle_beyond`). III.1's centre is then the given one (`centre_unique`), and the first point is Euclid's D.
+- "Let the centre E of the circle be taken [III. 1]": the proof obtains E through `Prop1.of_circle BCD`, which applies III.1 to two points of the circle. Since A is outside, `line_circle_between` then finds Euclid's D between E and A.
 - "From D let DF be drawn at right angles to EA": Heath gives no bracket for it: it is I.11. I.11's straight line need not end on the circle AFG; F is where it, produced beyond D, meets that circle, and the angle there is right too (`adjacent_eq_of_right`).
 - B, where EF meets the circle BCD, is read off the figure. F is farther from E than D, so outside BCD, and EF meets the circle between E and F (`line_circle_between`).
 - A point on the circumference Euclid leaves out, Heath explains, as "so directly indicated by III. 16, Por. as to be scarcely worth a separate statement" (vol. 2, p. 44). The companion `Prop17.general` takes it: the straight line at right angles to the radius EA at A (I.11) touches by III.16's porism, and the point of contact is A itself. From a point within, no straight line touches (`Prop17.inside`, by `Touches.not_inside`).
