@@ -1861,8 +1861,8 @@ findings:
   lines that link its section "In CI"), `Audit/screen.py`, the README's table and the
   overlap catalogue's lines on the Circle rule (`tooling/no-circle-2`), the README's row
   for the negative tests (`tooling/planted-faults`), and PROGRAM.md's open work
-  (`tooling/safe-push-followups`). Train H8
-  carries the checks alone, with this page and the guides. The screen's tests land
+  (`tooling/safe-push-followups`). Train H8 carries the checks alone, with this page and
+  the guides. The screen's tests land
   before the screen they test, as the rule orders; nothing runs them in CI, and until H9
   lands, `tests/test_screen.py` fails against main's screen. The texts that the widened
   S12 finds on main (Book II's notes naming Book I's lemmas without their book, and two
@@ -1873,5 +1873,5 @@ findings:
   `scripts/check_fidelity.py`, `scripts/check_style.py`,
   `scripts/copy_acceptance_checks.sh`, `scripts/negative_tests.py`,
   `scripts/safe_push.py`, `scripts/test_safe_push.py`, `tests/test_check_acceptance.py`,
-  `tests/test_check_style.py` and `tests/test_screen.py`.
+  `tests/test_check_style.py`, `tests/test_negative_tests.py` and `tests/test_screen.py`.
 
