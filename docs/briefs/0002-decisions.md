@@ -1860,7 +1860,9 @@ findings:
   final review's fixes in `scripts/check_style.py`, with regressions in
   `tests/test_check_style.py`, refuse effective strokes and bold weights on point labels
   (main's bold numbers remain allowed), retain significant Unicode spaces for refusal, and
-  require both ellipse radii. Numeric inputs are limited to magnitude 10,000, against
+  require both ellipse radii and an effective `font-family` on point labels of `Georgia`,
+  `Georgia, serif` or `Georgia, 'Times New Roman', serif`, inherited or explicit.
+  Numeric inputs are limited to magnitude 10,000, against
   main's largest input of 440 at `209d71fd`; cubic subdivision has a depth limit, and
   non-finite intermediate results fail the figure; an iterative gate limits nesting to
   16 levels below the root before recursive helpers run. Decoder errors are caught at the

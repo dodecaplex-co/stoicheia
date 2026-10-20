@@ -2178,7 +2178,7 @@ DRAWN = {"line", "path", "polyline", "polygon", "circle", "ellipse", "rect"}
 FILLED = DRAWN - {"line"}
 INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap",
              "stroke-linejoin", "stroke-miterlimit", "stroke-dasharray",
-             "font-size", "font-style", "font-weight", "text-anchor")
+             "font-family", "font-size", "font-style", "font-weight", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
 
 # Inventory of all 198 checked figures at 209d71fd, plus explicit initial keyword
@@ -3086,6 +3086,10 @@ def supported_svg(path: Path, root) -> bool:
         s = text_of(el)
         if not LETTER.fullmatch(s):
             continue
+        if eff.get("font-family") not in SVG_KEYWORDS["font-family"]:
+            fail("S26", path, 0, f"letter {s} has effective font-family "
+                 f"{eff.get('font-family')!r}: outside S26's SVG allow-list")
+            valid = False
         if eff.get("stroke", "none") != "none":
             fail("S26", path, 0, f"letter {s} has an effective stroke: outside S26's SVG allow-list")
             valid = False

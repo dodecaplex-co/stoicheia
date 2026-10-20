@@ -37,8 +37,9 @@ it, put to the script's own patterns and functions:
 * the input cases: both complete figure checks refuse elements, attributes, numbers,
   transforms, keywords and path commands outside main's SVG language before measuring;
   earlier cases using CSS, units, exponents or other excluded features now require that
-  refusal. Effective strokes and bold weights on point labels, unmeasured label
-  characters and incomplete ellipse radii fail. Numeric inputs and cubic subdivision
+  refusal. Point labels require an effective supported Georgia declaration; effective
+  strokes and bold weights, unmeasured label characters and incomplete ellipse radii fail.
+  Numeric inputs and cubic subdivision
   are bounded; non-finite geometry and decoder failures report the figure and leave
   subsequent figures checked. Cubic subdivision includes its chord error, and malformed
   lists take linear time;
@@ -343,7 +344,7 @@ TWICE_CASES = [   # (the x of each letter A, at y 100; the cuts between figures 
 def s26_findings(drawn: str, letters: str, cuts: tuple[float, ...] = ()) -> list[str]:
     """S26's findings on a parchment canvas with `drawn` and `letters` on it."""
     root = ET.fromstring(
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia">'
         f'<rect width="400" height="300" fill="#fbf7ee"/>{drawn}{letters}</svg>')
     before = len(style.failures)
     style.one_letter_one_point(style.ROOT / "figures" / "case.svg", root, cuts)
@@ -367,7 +368,7 @@ def figure_fixture(idea: bool):
     ex, ey = (363, 155.6) if idea else (353, 156)
     anchor = "middle" if idea else "start"
     return ET.fromstring(
-        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" font-family="Georgia">'
         f'<title>{title}</title>{desc}'
         '<rect width="400" height="300" rx="10" fill="#fbf7ee"/>'
         f'<line x1="145" y1="150" x2="165" y2="150" stroke="{ink}" stroke-width="1.6"/>'
@@ -1108,6 +1109,59 @@ class SvgGate(unittest.TestCase):
                         ET.SubElement(target if placement != "own" else group, "text", attrs).text = content
                     self.assertEqual([f for f in figure_findings(root, idea) if f[0] == "S26"], [])
 
+    def test_missing_label_font_family(self):
+        """A default font cannot borrow Georgia's clearance at either entry point."""
+        for idea in (False, True):
+            for missing in (("A", "C", "E"), ("E",)):
+                with self.subTest(idea=idea, missing=missing):
+                    root = figure_fixture(idea)
+                    del root.attrib["font-family"]
+                    for el in root.iter():
+                        if style.tag(el) == "text" and style.text_of(el) not in missing:
+                            el.set("font-family", "Georgia")
+                    # E clears this stroke by 2.04 in Georgia; a default font can differ.
+                    x = "355.33" if idea else "349.85"
+                    ET.SubElement(root, "line", {
+                        "x1": x, "x2": x, "y1": "138", "y2": "160",
+                        "stroke": "#222222" if idea else "#3b2f2f", "stroke-width": "1.6"})
+                    path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                    self.assertEqual(figure_findings(root, idea), [
+                        ("S26", path, 0, f"letter {s} has effective font-family None: "
+                         "outside S26's SVG allow-list") for s in missing])
+
+    def test_supported_label_font_families(self):
+        """Main's three Georgia declarations work on the root, a group or each label."""
+        for idea in (False, True):
+            for family in ("Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"):
+                for placement in ("root", "group", "own"):
+                    with self.subTest(idea=idea, family=family, placement=placement):
+                        root = figure_fixture(idea)
+                        del root.attrib["font-family"]
+                        labels = [el for el in root.iter() if style.tag(el) == "text"]
+                        group = next(el for el in root.iter() if labels[0] in list(el))
+                        targets = {"root": [root], "group": [group], "own": labels}[placement]
+                        for target in targets:
+                            target.set("font-family", family)
+                        x = "355.33" if idea else "349.85"
+                        ET.SubElement(root, "line", {
+                            "x1": x, "x2": x, "y1": "138", "y2": "160",
+                            "stroke": "#222222" if idea else "#3b2f2f", "stroke-width": "1.6"})
+                        self.assertEqual(figure_findings(root, idea), [])
+
+    def test_unsupported_label_font_families(self):
+        for idea in (False, True):
+            for family in ("", "serif", "Times New Roman", "Arial, Georgia", "Georgia, sans-serif"):
+                for placement in ("root", "group", "own"):
+                    with self.subTest(idea=idea, family=family, placement=placement):
+                        root = figure_fixture(idea)
+                        e = next(el for el in root.iter() if style.text_of(el) == "E")
+                        group = next(el for el in root.iter() if e in list(el))
+                        target = {"root": root, "group": group, "own": e}[placement]
+                        target.set("font-family", family)
+                        path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                        self.assertEqual(figure_findings(root, idea), [
+                            ("S26", path, 0, svg_refusal(style.tag(target), "font-family", family))])
+
     def test_raw_label_content(self):
         for idea in (False, True):
             for char in ("\u00a0", "\u2002", "\u2003", "\u202f", "\u3000", "\u200b", "\u0301"):
@@ -1723,7 +1777,8 @@ class Clearance(unittest.TestCase):
         for cap in ("square", "round", "butt"):
             with self.subTest(cap=cap):
                 root = ET.fromstring(
-                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" '
+                    'font-family="Georgia">'
                     '<title>I.1 at a glance</title><desc>A straight line [black].</desc>'
                     '<text x="150" y="100" font-size="14" font-style="normal" '
                     'fill="#222222">H</text>'
@@ -1791,7 +1846,8 @@ class Clearance(unittest.TestCase):
                 title = "I.1 at a glance" if idea else "Euclid I.1: a triangle"
                 desc = "<desc>A straight line [black].</desc>" if idea else ""
                 root = ET.fromstring(
-                    f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                    f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" '
+                    f'font-family="Georgia">'
                     f'<title>{title}</title>{desc}'
                     f'<line x1="145" y1="103" x2="165" y2="103" '
                     f'stroke="{ink}" stroke-width="3"/>'
