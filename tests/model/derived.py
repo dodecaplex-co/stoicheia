@@ -1,7 +1,7 @@
 """Numerical properties retained independently of the axiom registries.
 
 These predicates keep the guards and conclusions of their search.py checks: the eight retired
-first, then the 31 retired with them on 19 October 2026.
+first, then the 31 prepared for retirement while all 79 axioms remain.
 The exhaustive and structured harnesses report them with a derived. prefix, even
 while the corresponding declarations are still axioms. Their configurations and
 results therefore survive removal of those laws from search.py and hyperbolic.py.
@@ -90,8 +90,8 @@ def inside_of_angle_add(c):
     return same_side(B, D, c['M']) and same_side(Cc, D, c['L'])
 
 
-# The 31 retired on 19 October 2026 by the owner's decision ("Please do both"), each the
-# guard and conclusion of its former search.py law, unchanged.
+# The 31 prepared for the second retirement while all 79 axioms remain, each the guard and
+# conclusion of its search.py law, unchanged.
 
 
 # Floating-point helpers, copied from search.py so that these predicates keep to themselves.
