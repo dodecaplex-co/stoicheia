@@ -7,8 +7,29 @@ fingerprint = "sha256:a15d22bcd9cd5da0"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and from the point C"
+kind = "helper"
+helper = "Tacit.circles_meet"
+note = "Euclid takes C where the circles cut one another; the Lean uses `Tacit.circles_meet`, a tacit rule we assume in our foundations (System E, Intersection 5), since each circle passes through the other's centre and each centre lies inside its own circle. The Lean chooses C on P's side when P is off AB using `Tacit.circles_meet_same_side`, the rule for crossings on each side (System E, Intersections 8), and uses C without drawing CA and CB."
+
+[[passage]]
+at = "Therefore the triangle ABC is equilateral"
+kind = "helper"
+helper = "Prop1.figure"
+note = "Euclid takes ABC to be a triangle once its sides are equal. `Prop1.figure` proves that C is off AB, since three distinct points on one straight line with all three distances equal would make a nonzero length equal to itself taken twice."
+
 [review]
-stage = "exceptions"
-commit = "2a34715"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "ab90f7e"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:02664b10a40223fd"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

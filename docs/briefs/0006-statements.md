@@ -653,6 +653,13 @@ theorem Prop40.special {A B C D E : Point} (hABC : Triangle A B C) (hCDE : Trian
 - **Dependencies.** I.31, I.38, `Prop30.meet` (HelpersParallels), `Prop31.line`,
   `OnRay.eq_of_area_eq`; `AreParallel.of_parallel` for `special`.
 
+Reconciled 19 October 2026: `Prop40` and `Prop40.general` now retain Euclid's closing
+reductio. The contrary supposition makes the constructed intersection differ from D.
+I.38 and Common Notion 1 give equal areas; `between_cases` and `area_lt_of_cut`
+contradict them in either order on the ray. Neither proof calls `OnRay.eq_of_area_eq`.
+The route is `euclid`; the statements, admitted configurations and companion registration
+are unchanged, including the general companion's coverage of coincident vertices.
+
 ### I.45, for any rectilineal figure
 
 `Staging/Stage2/BookI/Prop45.lean`. Companions "I.45 append", "I.45 sum", "I.45 apart",
@@ -1905,6 +1912,12 @@ into `Elements/`, each read again then, as "Records made stale" says:
 - I.40 (`review/I/40.toml`): nothing departs. The route stays `modified`, the end of the
   reductio direct; "I.40 general" is Euclid's argument for bases anywhere on L, his F being
   the meeting point G, and "I.40 join" follows from it.
+
+  Reconciled 19 October 2026: the route instruction above is superseded by the
+  [I.40 reconciliation](#i40-for-bases-anywhere-on-one-straight-line). `Prop40` and
+  `Prop40.general` retain the closing reductio, so the route is `euclid`. Statements
+  and companion registration are unchanged.
+
 - I.45 (`review/I/45.toml`): "I.45 append" cites I.30 with Euclid; "I.45 fan" rests on I.13
   through `Fitted.fan`, which moves into `Prop45.lean`.
 - II.1 (`review/II/01.toml`): "II.1 two" cites I.2 and I.30, as today's II.1 does; "II.1

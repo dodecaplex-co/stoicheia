@@ -1,6 +1,6 @@
 """Check the house style's hard rules, and report its defaults.
 
-The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S24
+The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S22, S24 and S25
 fail the script, and D4 to D11 and D14 to D16 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
@@ -36,7 +36,7 @@ What the scopes cover (STYLE, section 8):
 * Generated: CERTIFICATE.md, GRAPH.md, book/<book>/index.md, book/<book>/front.md and
   book/names.md. A failure here is mended in scripts/render.py or in the source it reads.
 * Idea figures, figures/<book>/NN-idea.svg; Euclid's figures, figures/<book>/NN.svg;
-  the figures of the modern way, figures/<book>/NN-modern.svg (S23, S24), each drawn to
+  the figures of the modern way, figures/<book>/NN-modern.svg (S24, S25), each drawn to
   stand under its page's paragraph "**The modern way.**", with Euclid's figure's letters
   and the paragraph's own names.
 
@@ -262,8 +262,8 @@ RULES = {
     "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
     "S22": "letters in backticks, where they are plain",
-    "S23": "a modern figure's canvas, colours, strokes, title, or paragraph to stand under",
-    "S24": "a modern figure's text not Euclid's figure's letters, upright, or the modern way's names, italic",
+    "S24": "a modern figure's canvas, colours, strokes, title, or paragraph to stand under",
+    "S25": "a modern figure's text not Euclid's figure's letters, upright, or the modern way's names, italic",
 }
 
 REPORTS = {
@@ -1026,7 +1026,7 @@ def markdown_blocks(text: str, *, indented_code: bool = True,
     """The inline leaf blocks, fences and comment blocks of a Markdown text, with source
     offsets retained after block quote and list markers are removed.
 
-    Mark top-level paragraphs for the renderer. With `raw_html`, leave raw HTML blocks
+    Mark top-level paragraphs for modern_span. With `raw_html`, leave raw HTML blocks
     out of that selection, with their contents inert, including any apparent fences;
     the wording rules retain their existing reading of text inside HTML by default."""
     blocks: list[InlineBlock] = []
@@ -2574,7 +2574,7 @@ def svg_root(path: Path):
         return ET.parse(path).getroot()
     except ET.ParseError as e:
         rule = ("S14" if path.stem.endswith("-idea") else
-                "S22" if path.stem.endswith("-modern") else "S15")
+                "S24" if path.stem.endswith("-modern") else "S15")
         fail(rule, path, 0, f"not well-formed SVG: {e}")
         return None
 
@@ -2861,7 +2861,7 @@ def check_euclid(path: Path, ref: str) -> None:
 
 
 # ---------------------------------------------------------------------------------------
-# The figure of the modern way (S23, S24; STYLE, section 7): figures/<book>/NN-modern.svg,
+# The figure of the modern way (S24, S25; STYLE, section 7): figures/<book>/NN-modern.svg,
 # shown under the page's paragraph "**The modern way.**". It is drawn as Euclid's figure
 # is, on its canvas and in its palette, with its letters, upright, at the same points,
 # and with the paragraph's own names for what the modern way measures (a, b, θ, u),
@@ -2920,8 +2920,8 @@ def modern_span(text: str) -> tuple[int, int] | None:
     (start, end) source offsets. Read blocks in the original text, before masking any
     comments or code. Four columns of indentation start code, but cannot interrupt an
     open paragraph. Fences and HTML blocks keep their contents out of the search;
-    inline comments leave the paragraph's line boundaries intact. render.py uses these
-    same offsets to put the figure after the whole paragraph."""
+    inline comments leave the paragraph's line boundaries intact. These offsets also
+    let a renderer put the figure after the whole paragraph."""
     for block in markdown_blocks(text, raw_html=True).inline:
         if not block.paragraph:
             continue
@@ -2970,24 +2970,24 @@ def modern_names(paragraph: str) -> set[str]:
 
 def modern_findings(root, ref: str, heaths: set[str] | None,
                     names: set[str] | None) -> list[tuple[str, str]]:
-    """(rule, message) for each fault of a modern figure (S23, S24), given the letters its
+    """(rule, message) for each fault of a modern figure (S24, S25), given the letters its
     Euclid's figure draws (None: no Euclid's figure) and the names its page's modern way
     uses (None: no such paragraph)."""
     found: list[tuple[str, str]] = []
     vb = root.get("viewBox", "").replace(",", " ").split()
     width = float(vb[2]) if len(vb) == 4 else None
     if width is None or not 400 <= width <= 440:
-        found.append(("S23", f"viewBox width {width}, not 400 to 440, as Euclid's figure"))
+        found.append(("S24", f"viewBox width {width}, not 400 to 440, as Euclid's figure"))
     title = root.find(f"{SVG}title")
     if title is None or " ".join(text_of(title).split()) != f"{ref}: the modern way":
         got = "no <title>" if title is None else f"title \"{text_of(title)}\""
-        found.append(("S23", f"{got}, not \"{ref}: the modern way\""))
+        found.append(("S24", f"{got}, not \"{ref}: the modern way\""))
     if root.find(f".//{SVG}desc") is not None:
-        found.append(("S23", "a caption (<desc>): the paragraph above the figure is its caption"))
+        found.append(("S24", "a caption (<desc>): the paragraph above the figure is its caption"))
     if heaths is None:
-        found.append(("S23", "no Euclid's figure to take the letters from"))
+        found.append(("S24", "no Euclid's figure to take the letters from"))
     if names is None:
-        found.append(("S23", "the page's mishnah has no paragraph opening "
+        found.append(("S24", "the page's mishnah has no paragraph opening "
                       f"{MODERN_WAY} for the figure to stand under"))
     bad = defaultdict(int)
     for el, own, eff in walk(root):
@@ -2997,58 +2997,58 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
             if v is not None and v.lower() != "none" and v.lower() not in EUCLID_COLOURS:
                 bad[f"{k}={v}"] += 1
         if (t in FILLED or t == "text") and eff.get("fill") is None:
-            found.append(("S23", f"a <{t}> with no fill, which SVG paints black: give it "
+            found.append(("S24", f"a <{t}> with no fill, which SVG paints black: give it "
                           "a colour of the palette, or fill=\"none\""))
         if t in DRAWN and (eff.get("stroke") or "none").lower() != "none":
             w = number(eff.get("stroke-width"))
             w = 1.0 if w is None else w
             if not 1.2 <= w <= 3.2:
-                found.append(("S23", f"stroke-width {w:g} on a <{t}>, not 1.2 to 3.2"))
+                found.append(("S24", f"stroke-width {w:g} on a <{t}>, not 1.2 to 3.2"))
         if t == "tspan":
-            found.append(("S24", "a <tspan>: one size and one style to each <text>"))
+            found.append(("S25", "a <tspan>: one size and one style to each <text>"))
         if t != "text":
             continue
         s = " ".join(text_of(el).split()).translate(GREEK_VARIANTS)
         if not s:
             continue
         if number(eff.get("font-size")) != MODERN_TEXT_SIZE:
-            found.append(("S24", f"<text>{s}</text> at font-size {eff.get('font-size')}, "
+            found.append(("S25", f"<text>{s}</text> at font-size {eff.get('font-size')}, "
                           f"not {MODERN_TEXT_SIZE}"))
         style = letter_style(eff)
         if LETTER.fullmatch(s):
             if heaths is not None and s not in heaths:
-                found.append(("S24", f"letter {s} is not one Euclid's figure draws "
+                found.append(("S25", f"letter {s} is not one Euclid's figure draws "
                               f"({', '.join(sorted(heaths))})"))
             if style != "normal":
-                found.append(("S24", f"letter {s} in font-style {style}: Heath's letters are "
+                found.append(("S25", f"letter {s} in font-style {style}: Heath's letters are "
                               "upright (STYLE, section 4)"))
             continue
         if re.search(r"[A-Z]", s):
-            found.append(("S24", f"<text>{s}</text>: a capital stands alone, as one of Heath's "
+            found.append(("S25", f"<text>{s}</text>: a capital stands alone, as one of Heath's "
                           "letters; a length or a vector takes the modern way's own name"))
             continue
         if not MODERN_TEXT.fullmatch(s):
             odd = "".join(sorted({c for c in s if not MODERN_TEXT.fullmatch(c)}))
-            found.append(("S24", f"<text>{s}</text> holds {odd!r}: a modern figure's text is "
+            found.append(("S25", f"<text>{s}</text> holds {odd!r}: a modern figure's text is "
                           "Heath's letters, or the modern way's names, numbers and signs"))
             continue
         letters = sorted({c for c in s if c.isalpha()})
         if not letters:
             continue
         if style != "italic":
-            found.append(("S24", f"<text>{s}</text> in font-style {style}: the modern way's "
+            found.append(("S25", f"<text>{s}</text> in font-style {style}: the modern way's "
                           "names are italic, as its mathematics sets them"))
         unknown = [c for c in letters if names is not None and c not in names]
         if unknown:
-            found.append(("S24", f"<text>{s}</text>: {', '.join(unknown)} is no name of the "
+            found.append(("S25", f"<text>{s}</text>: {', '.join(unknown)} is no name of the "
                           "page's modern way"))
     for what, k in sorted(bad.items()):
-        found.append(("S23", f"colour {what} ({k}×) is not in Euclid's figure's palette"))
+        found.append(("S24", f"colour {what} ({k}×) is not in Euclid's figure's palette"))
     return found
 
 
 def check_modern(path: Path, ref: str) -> None:
-    """S23 and S24 for one figure of the modern way."""
+    """S24 and S25 for one figure of the modern way."""
     root = svg_root(path)
     if root is None:
         return
@@ -3223,7 +3223,7 @@ def main() -> int:
         print("  by rule: " + ", ".join(f"{r} {RULES[r]} ({k})"
                                        for r, k in sorted(by_rule.items(), key=lambda x: int(x[0][1:]))))
         return 1
-    rules = "S1–S24" if not args.no_lean else "S1–S11 and S13–S24"
+    rules = "S1–S22, S24 and S25" if not args.no_lean else "S1–S11, S13–S22, S24 and S25"
     print(f"\n✓ style: the hard rules hold ({rules})")
     return 0
 

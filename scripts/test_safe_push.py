@@ -22,7 +22,10 @@ one commit and runs safe_push.py against that origin:
   body and the pre-flight's summary; then updated, keeping the coordinator's words;
 - --merge refuses a draft, an unticked or missing required box, red or missing CI, and a
   protected change without its label; reruns the pre-flight for a head it has not seen;
-  and merges with a merge commit, deleting the branch;
+  and merges with a merge commit, deleting the branch, its subject naming the owner
+  GitHub names for the head (issue #41); and believes gh's exit 0 only once GitHub says
+  the pull request merged and origin/main holds the merge commit GitHub names, the merge
+  state otherwise unknown, with no revert advised (issue #42);
 - the pre-push hook refuses every push to main and scans a push to any other branch;
 - the review's findings: the harness and the check scripts are origin/main's, an
   allow-list entry the push adds does not count, the heath/ leaves are origin/main's, an
@@ -61,6 +64,10 @@ one commit and runs safe_push.py against that origin:
   committed list through load_allowlist, and the dry-run refusals name the step that
   refused; and the stand-in for gh refuses a second pull request for a head, as gh does,
   while ours is found whatever owner GitHub names for its head;
+- issue #95: the tests of an interruption after the push read no wall clock (DRIVER's
+  clock, standing still and then leaping an hour at each reading), and DRIVER runs the
+  harness committed at BASE, so that neither the machine's load nor a change to this
+  checkout's harness while the tests run can move their outcome;
 - the model's laws (issue #40): an axiom added in one pull request with its entry in the
   lock, the lock's hash, its line of tests/model/laws.toml, its law's code in search.py
   and hyperbolic.py and the model's account lands as content, and the model's ties hold
@@ -74,6 +81,11 @@ one commit and runs safe_push.py against that origin:
   drop or re-key such a law first; every law of the two harnesses keeps to the
   allow-list, and each entry of the list is one a law needs; and a harness of the model
   that stops before its last line, with status 0, fails the model's run;
+- the protected paths of issue #96: Audit/, Audit.lean, model/Model/Audit.lean,
+  model/Model.lean and the formal model's build files are refused without a decisions
+  entry naming them, a protected path is named only whole (a line naming
+  tests/model/lock.sha256 names no model/lock.sha256), and those
+  paths stay what the checks judge, so a check change is still kept apart from them;
 - and the edge cases, each refused: (1) a credential split over two lines; (2) one
   base64-encoded; (3) a key file added under a name later renamed, a secret taken out
   again within the push, and files renamed to .pem, .key and .env names; (4) symlinks
@@ -128,6 +140,7 @@ LOG: Path
 BASE: str
 GH: Path
 GH_STATE: Path
+UNDER_TEST: Path      # the harness committed at BASE, which DRIVER runs (setUpModule)
 BRANCH = "test-pr"
 DECISIONS = "docs/briefs/0002-decisions.md"
 # The files of the harness under test, committed on top of HEAD as origin's main.
@@ -156,7 +169,7 @@ def clean_env() -> dict:
                STOICHEIA_PYTHON=sys.executable)
     for name in ("STOICHEIA_SAFE_PUSH", "STOICHEIA_HARNESS", "STOICHEIA_TAG_PUSH",
                  "STOICHEIA_FAKE_GH_KILL", "STOICHEIA_FAKE_GH_MERGE", "STOICHEIA_TEST_CI_POLL",
-                 "STOICHEIA_TEST_CI_APPEAR"):
+                 "STOICHEIA_TEST_CI_APPEAR", "STOICHEIA_TEST_CLOCK"):
         env.pop(name, None)
     return env
 
@@ -375,7 +388,13 @@ def main(argv):
         # STOICHEIA_FAKE_GH_MERGE: "fail-before" refuses; "fail-after" merges and then
         # fails, as gh does when it cannot delete the branch; "main-first:<sha>" moves
         # main to <sha> first, as another merge landing at that moment would;
-        # "flag:<path>" makes the file <path> once merged.
+        # "flag:<path>" makes the file <path> once merged. Three exit 0 with no merge on
+        # main that GitHub vouches for (issue #42): "queue" merges nothing, as gh does
+        # when a merge queue or auto-merge takes the pull request to merge later;
+        # "off-main" says merged, naming a merge commit that main does not hold
+        # ("off-main:<ref>" puts it on <ref>, so that a fetch brings it, and only main's
+        # history can show it is not the merge); and "no-commit" merges, but GitHub names
+        # no merge commit.
         how = os.environ.get("STOICHEIA_FAKE_GH_MERGE", "")
         if "--merge" not in args or "--squash" in args or "--rebase" in args:
             return 1
@@ -386,6 +405,9 @@ def main(argv):
         if opt(args, "--match-head-commit") != sha:
             print("head moved", file=sys.stderr)
             return 1
+        if how == "queue":
+            print("Pull request #%d will be added to the merge queue for main when ready" % n)
+            return 0
         if how.startswith("main-first:"):
             subprocess.run(["git", "update-ref", "refs/heads/main", how.split(":", 1)[1]],
                            cwd=ORIGIN, check=True)
@@ -399,12 +421,17 @@ def main(argv):
         merge = subprocess.run(["git", "commit-tree", sha + "^{tree}", "-p", main, "-p", sha,
                                 *message], cwd=ORIGIN, env=env,
                                capture_output=True, text=True, check=True).stdout.strip()
-        subprocess.run(["git", "update-ref", "refs/heads/main", merge, main], cwd=ORIGIN,
-                       check=True)
+        if how.startswith("off-main:"):
+            subprocess.run(["git", "update-ref", how.split(":", 1)[1], merge], cwd=ORIGIN,
+                           check=True)
+        elif how != "off-main":
+            subprocess.run(["git", "update-ref", "refs/heads/main", merge, main], cwd=ORIGIN,
+                           check=True)
         if "--delete-branch" in args and how != "fail-after":
             subprocess.run(["git", "update-ref", "-d", "refs/heads/" + pr["headRefName"]],
                            cwd=ORIGIN, check=True)
-        pr["state"], pr["mergedHead"], pr["mergeCommit"] = "MERGED", sha, {"oid": merge}
+        pr["state"], pr["mergedHead"] = "MERGED", sha
+        pr["mergeCommit"] = None if how == "no-commit" else {"oid": merge}
         save(s)
         if how.startswith("flag:"):
             open(how.split(":", 1)[1], "w").close()
@@ -427,7 +454,7 @@ def reset_gh() -> None:
 
 
 def setUpModule():
-    global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE
+    global TMP, ORIGIN, WORK, LOG, BASE, GH, GH_STATE, UNDER_TEST
     TMP = Path(tempfile.mkdtemp(prefix="stoicheia-safe-push-test-"))
     ORIGIN, WORK, LOG = TMP / "origin.git", TMP / "work", TMP / "cache" / "pushes.log"
     GH, GH_STATE = TMP / "fake-gh", TMP / "fake-gh.json"
@@ -453,6 +480,15 @@ def setUpModule():
         git(WORK, "commit", "-q", "-m", "The harness under test")
         git(WORK, "push", "--quiet", "--no-verify", "origin", "HEAD:refs/heads/main")
     BASE = git(WORK, "rev-parse", "HEAD").strip()
+    # DRIVER runs the harness as BASE holds it, from a directory of its own, as a hand-over
+    # runs origin/main's: had it run this checkout's copy, a change to that copy while the
+    # tests run would make it hand over to origin/main's, out of DRIVER's reach (#95).
+    UNDER_TEST = TMP / "harness-under-test"
+    UNDER_TEST.mkdir()
+    for name in ("safe_push.py", "heath.py"):
+        (UNDER_TEST / name).write_bytes(subprocess.run(
+            ["git", "show", f"{BASE}:scripts/{name}"], cwd=WORK, capture_output=True,
+            check=True).stdout)
     git(WORK, "fetch", "--quiet", "origin")
     r = subprocess.run(["sh", str(INSTALL_HOOKS)], cwd=WORK, capture_output=True, text=True)
     assert r.returncode == 0, r.stdout + r.stderr
@@ -1185,10 +1221,26 @@ class GeneratedPages(Edge):
 # Runs safe_push in a subprocess with `guards`, `gates` or `watch_checks` wrapped, so that
 # something happens at a chosen moment: origin's main moves, or an interruption.
 DRIVER = r"""
-import subprocess, sys
+import json, os, subprocess, sys
 sys.path.insert(0, sys.argv[1])
 import safe_push
 action, origin, target = sys.argv[2], sys.argv[3], sys.argv[4]
+class Clock:
+    # STOICHEIA_TEST_CLOCK: a stand-in for safe_push's clock, time.time and time.sleep, by
+    # which it times its steps and its waits (datetime, which only stamps the log and the
+    # pre-flight's record, stays).
+    # It never reads the wall clock and never waits. "still": time stands, but for the
+    # sleeps; "leap": each reading is an hour after the last, past every deadline safe_push
+    # keeps, as on a machine so loaded that each step takes an hour.
+    def __init__(self, leap):
+        self.now, self.leap = 1e9, leap
+    def time(self):
+        self.now += self.leap
+        return self.now
+    def sleep(self, seconds):
+        self.now += seconds
+if os.environ.get("STOICHEIA_TEST_CLOCK"):
+    safe_push.time = Clock({"still": 0.0, "leap": 3600.0}[os.environ["STOICHEIA_TEST_CLOCK"]])
 real_guards, real_watch = safe_push.guards, safe_push.watch_checks
 real_gates = safe_push.gates
 def gates(ctx, number, rep, record=None):
@@ -1216,6 +1268,11 @@ def gh_json(ctx, *args):
         raise KeyboardInterrupt("a test interruption")
     if "state,mergeCommit" in args and action == "merge-view-fail":
         raise safe_push.Refusal("`gh pr view` failed: a test failure")
+    if "state,mergeCommit" in args and action == "merge-view-empty":
+        return {}
+    # "merge-view-json:<JSON>": GitHub's answer, as odd as a test needs it.
+    if "state,mergeCommit" in args and action.startswith("merge-view-json:"):
+        return json.loads(action.split(":", 1)[1])
     return real_gh_json(ctx, *args)
 def gh_run(ctx, *args):
     r = real_gh_run(ctx, *args)
@@ -1237,7 +1294,7 @@ class Ancestry(Edge):
 
     def drive(self, action: str, target: str, *args, env=None) -> subprocess.CompletedProcess:
         args = with_branch(args)
-        return subprocess.run([sys.executable, "-c", DRIVER, str(HERE), action, str(ORIGIN),
+        return subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), action, str(ORIGIN),
                                target, "--_test-skip-checks", *args], cwd=WORK,
                               env=env or clean_env(), capture_output=True, text=True)
 
@@ -1408,7 +1465,7 @@ class DryRun(Edge):
         env["TMPDIR"] = str(tmp)
         refs = git(ORIGIN, "for-each-ref")
         if driver:
-            r = subprocess.run([sys.executable, "-c", DRIVER, str(HERE), driver, str(ORIGIN),
+            r = subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), driver, str(ORIGIN),
                                 BASE, "--_test-skip-checks", "--dry-run", *args], cwd=WORK,
                                env=env, capture_output=True, text=True)
         else:
@@ -1806,6 +1863,40 @@ class Merge(Edge):
         self.assertEqual(git(ORIGIN, "log", "-1", "--format=%B", main).strip(),
                          f"{subject}\n\nA good commit")
 
+    def test_merge_subject_names_the_owner_github_names(self):
+        # Issue #41: after a transfer or a rename, which GitHub redirects, origin's URL names
+        # the old owner, and GitHub the new one for the head. The merge commit's subject is
+        # GitHub's own words, so it names the owner GitHub reports; when GitHub names none,
+        # the gates refuse, before gh is asked to merge.
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        # None, or an answer no account could have (the review of 19 October): each is
+        # refused by the gate, never a traceback, and never a subject.
+        for owner in (None, "new-owner", {"login": True}, {"login": ""},
+                      {"login": "new-owner/x"}, {"login": "new owner"}):
+            with self.subTest(owner=owner):
+                self.set_gh(lambda s: s["prs"][0].update(headRepositoryOwner=owner))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "subject"), "FAIL", out)
+                self.assertIn("GitHub names no owner for #1's head", out)
+                self.assertNotIn("Traceback", out)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.origin_main(), BASE)
+        self.set_gh(lambda s: s["prs"][0].update(headRepositoryOwner={"login": "new-owner"}))
+        r = self.merge()
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 0, out)
+        subject = f"Merge pull request #1 from new-owner/{BRANCH}"
+        self.assertEqual(self.guard(out, "subject"), "ok", out)
+        self.assertIn(subject, out)
+        (call,) = self.merges()
+        self.assertEqual(call[call.index("--subject") + 1], subject)
+        main = self.origin_main()
+        self.assertEqual(git(ORIGIN, "rev-parse", f"{main}^2").strip(), sha)
+        self.assertEqual(git(ORIGIN, "log", "-1", "--format=%s", main).strip(), subject)
+
     def test_missing_required_box_refused(self):
         self.opened()
         drop = "- [ ] **Required:** Nothing public goes out without the owner's OK.\n"
@@ -2039,20 +2130,152 @@ class Merge(Edge):
         """--merge 1 of the open pull request, its body completed, with DRIVER's `action`
         playing what GitHub or a signal does after the merge is asked of gh."""
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
-        return subprocess.run([sys.executable, "-c", DRIVER, str(HERE), action, str(ORIGIN),
+        return subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), action, str(ORIGIN),
                                BASE, "--_test-skip-checks", "--merge", "1"], cwd=WORK,
                               env=env or clean_env(), capture_output=True, text=True)
 
-    def test_interrupted_after_gh_merged_is_merged(self):
-        # The re-review: `gh pr merge` exiting 0 is a merge, recorded before GitHub is
-        # asked about it, so an interruption while it is asked is exit 3, "merged".
+    def test_interrupted_after_gh_exits_0_is_unknown(self):
+        # The re-review made an interruption after gh's exit 0 exit 3, never exit 1. Since
+        # issue #42, gh's exit 0 is no merge until GitHub says so, so an interruption while
+        # GitHub is asked is exit 3 with the merge state unknown, not "merged".
         sha = self.opened()
         r = self.driven_merge("merge-view-interrupt")
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 3, out)
-        self.assertIn("Interrupted: interrupted (a test interruption); merged.", out)
+        self.assertIn("Interrupted once `gh pr merge` was run: the merge may have happened",
+                      out)
+        self.assertNotIn("; merged", out)
         self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
-        self.assertIn("; merged", LOG.read_text().splitlines()[-1])
+        self.assertIn("merge state unknown (interrupted", LOG.read_text().splitlines()[-1])
+
+    def test_gh_exiting_0_github_unasked_is_unknown(self):
+        # Issue #42: gh exits 0, and GitHub cannot be asked whether the pull request merged.
+        # gh's exit 0 alone is no merge, so the merge state is unknown, exit 3, though here
+        # it did merge; the run says to look before anything else.
+        sha = self.opened()
+        r = self.driven_merge("merge-view-fail")
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertEqual(self.guard(out, "gh pr merge"), "FAIL", out)
+        self.assertIn("The merge may have happened: `gh pr merge` exited 0, and GitHub could "
+                      "not be asked whether #1 merged", out)
+        self.assertNotIn("REFUSED", out)
+        self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+        self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_github_giving_no_state_is_unknown(self):
+        # Issue #42: after gh failed, GitHub answers with no state for the pull request.
+        # That says nothing of the merge, so it is no "nothing was merged", exit 1: the
+        # merge state is unknown, exit 3.
+        self.opened()
+        env = clean_env()
+        env["STOICHEIA_FAKE_GH_MERGE"] = "fail-before"
+        r = self.driven_merge("merge-view-empty", env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertIn("`gh pr merge` failed, and GitHub could not be asked whether #1 merged "
+                      "(it gave no state for #1)", out)
+        self.assertNotIn("nothing was merged", out)
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_github_giving_a_state_of_no_pull_request_is_unknown(self):
+        # The review of 19 October: gh fails after merging, and GitHub answers with a state
+        # that is none of OPEN, CLOSED and MERGED. That says nothing of the merge, so it is
+        # no "nothing was merged", exit 1: the merge state is unknown, exit 3.
+        for answer in ('{"state": true}', '{"state": "SQUASHED"}', '[]'):
+            with self.subTest(answer=answer):
+                self.setUp()
+                sha = self.opened()
+                env = clean_env()
+                env["STOICHEIA_FAKE_GH_MERGE"] = "fail-after"
+                r = self.driven_merge(f"merge-view-json:{answer}", env)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn("`gh pr merge` failed, and GitHub could not be asked whether #1 "
+                              "merged", out)
+                self.assertNotIn("nothing was merged", out)
+                self.assertNotIn("Traceback", out)
+                self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+                self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_merge_commit_github_names_by_no_full_object_name_is_unknown(self):
+        # The review of 19 October: GitHub says merged, and names its merge commit by
+        # something that is no full object name. Nothing on main is known to be the merge,
+        # so the merge state is unknown, exit 3, with no revert advised, and nothing is
+        # fetched or judged as the merge first: never a traceback, never "merged".
+        for commit in ('{"oid": 123}', '"abc"', '{"oid": "abc123"}', '{"oid": null}'):
+            with self.subTest(commit=commit):
+                self.setUp()
+                sha = self.opened()
+                r = self.driven_merge(
+                    'merge-view-json:{"state": "MERGED", "mergeCommit": %s}' % commit)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertEqual(self.guard(out, "main"), "FAIL", out)
+                self.assertIn("The merge state is unknown: GitHub says #1 is merged, but it "
+                              "names no merge commit", out)
+                self.assertNotIn("Traceback", out)
+                self.assertNotIn("git revert", out)
+                self.assertNotIn("Merged, but", out)
+                self.assertEqual(git(ORIGIN, "rev-parse", "refs/heads/main^2").strip(), sha)
+                self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_gh_exiting_0_without_merging_is_unknown(self):
+        # Issue #42: with a merge queue or auto-merge on, `gh pr merge` exits 0 having only
+        # queued the pull request. GitHub says it is still open, so the merge state is
+        # unknown, exit 3, and no revert is advised: it would name origin/main's last
+        # commit, which is not this merge.
+        sha = self.opened()
+        self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+        env = clean_env()
+        env["STOICHEIA_FAKE_GH_MERGE"] = "queue"
+        r = self.safe_push("--merge", "1", env=env)
+        out = r.stdout + r.stderr
+        self.assertEqual(r.returncode, 3, out)
+        self.assertEqual(self.guard(out, "gh pr merge"), "FAIL", out)
+        self.assertIn("The merge state is unknown: `gh pr merge` exited 0, but GitHub says #1 "
+                      "is OPEN, not merged", out)
+        self.assertIn("will be added to the merge queue", out)
+        self.assertIsNone(self.step(out, "main"), out)
+        self.assertNotIn("git revert", out)
+        self.assertNotIn("REFUSED", out)
+        self.assertEqual(self.origin_main(), BASE)
+        self.assertEqual(self.origin_branch(), sha)
+        self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+
+    def test_merge_commit_github_names_must_be_on_main(self):
+        # Issue #42: GitHub says merged, but names no merge commit, or one origin/main does
+        # not hold. Nothing on main is known to be this merge, so the merge state is
+        # unknown, exit 3, and no revert is advised, for it would name origin/main's last
+        # commit in place of the merge. A merge commit main does not hold is refused
+        # whether or not a fetch brings it: on a merge queue's branch, say, it is a merge
+        # of the base and the head with the head's tree, and only main's history tells.
+        queued = "refs/heads/gh-readonly-queue/main/pr-1"
+        off = "as its merge commit, which origin/main ("
+        for how, why in (("off-main", off), (f"off-main:{queued}", off),
+                         ("no-commit", "names no merge commit")):
+            with self.subTest(how=how):
+                self.setUp()
+                self.opened()
+                self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
+                env = clean_env()
+                env["STOICHEIA_FAKE_GH_MERGE"] = how
+                r = self.safe_push("--merge", "1", env=env)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertEqual(self.guard(out, "gh pr merge"), "ok", out)
+                self.assertEqual(self.guard(out, "main"), "FAIL", out)
+                self.assertIn("The merge state is unknown: GitHub says #1 is merged, but it "
+                              "names ", out)
+                self.assertIn(why, out)
+                self.assertNotIn("git revert", out)
+                self.assertNotIn("Merged, but", out)
+                self.assertIn("merge state unknown", LOG.read_text().splitlines()[-1])
+                if how.startswith("off-main:"):
+                    oid = self.gh_state()["prs"][0]["mergeCommit"]["oid"]
+                    self.assertEqual(git(WORK, "cat-file", "-t", oid).strip(), "commit",
+                                     "the fetch did not bring the merge commit GitHub names")
 
     def test_merge_github_cannot_be_asked_about_is_unknown(self):
         # gh fails after merging, and GitHub cannot be asked: the merge may have happened,
@@ -2113,7 +2336,7 @@ class Merge(Edge):
         side = self.side_commit()
         self.opened()
         self.set_gh(lambda s: s["prs"][0].update(body=ticked(s["prs"][0]["body"])))
-        r = subprocess.run([sys.executable, "-c", DRIVER, str(HERE), "move-at-merge",
+        r = subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), "move-at-merge",
                             str(ORIGIN), side, "--_test-skip-checks", "--merge", "1"],
                            cwd=WORK, env=clean_env(), capture_output=True, text=True)
         out = r.stdout + r.stderr
@@ -2212,7 +2435,10 @@ class ProtectedPaths(Edge):
     def test_protected_change_without_a_decision_refused(self):
         for path in ("scripts/check_style.py", ".github/workflows/ci.yml",
                      "tests/model/MODEL.md", "review/terms.toml", ".gitattributes",
-                     ".gitignore", "lakefile.lean"):
+                     ".gitignore", "lakefile.lean", "Audit/Overlaps.lean", "Audit.lean",
+                     "model/Model/Audit.lean", "model/Model.lean",
+                     "model/lakefile.toml", "model/lakefile.lean", "model/lean-toolchain",
+                     "model/lake-manifest.json", "model/lock.sha256"):
             with self.subTest(path=path):
                 git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
                 old = self.text(path) if (WORK / path).exists() else ""
@@ -2225,6 +2451,95 @@ class ProtectedPaths(Edge):
         changes.update(self.decision("A comment in `scripts/check_links.py`."))
         self.commit("Touch check_style.py, naming check_links.py", changes)
         self.assertRefused(self.safe_push(), "naming them: scripts/check_style.py")
+
+    def test_decision_naming_a_longer_path_does_not_count(self):
+        # #96: a protected path is named whole. A line naming tests/model/lock.sha256 does
+        # not name model/lock.sha256, nor one naming model/lakefile.toml the root's
+        # lakefile.toml, nor one naming model/lean-toolchain the root's lean-toolchain; and
+        # at the other end, a line naming Audit.lean.orig does not name Audit.lean.
+        for path, other in (("model/lock.sha256", "tests/model/lock.sha256"),
+                            ("lakefile.toml", "model/lakefile.toml"),
+                            ("lean-toolchain", "model/lean-toolchain"),
+                            (".gitignore", "model/.gitignore"),
+                            ("Audit.lean", "Audit.lean.orig"),
+                            ("model/Model/Audit.lean", "tests/model/Model/Audit.lean"),
+                            ("model/Model/Audit.lean", "model/Model/Audit.lean.orig"),
+                            ("model/Model.lean", "tests/model/Model.lean"),
+                            ("model/Model.lean", "model/Model.lean.orig"),
+                            ("model/lakefile.toml", "model/lakefile.toml.bak"),
+                            ("lakefile.toml", "/model/lakefile.toml")):
+            with self.subTest(path=path):
+                git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                changes = {path: self.text(path) + "\n# for the test\n"}
+                changes.update(self.decision(f"`{other}` is named, for the test."))
+                self.commit(f"Touch {path}, naming {other}", changes)
+                out = self.assertRefused(self.safe_push(), f"naming them: {path}")
+                self.assertEqual(self.guard(out, "protected paths"), "FAIL", out)
+
+    def test_decision_naming_the_path_by_a_relative_link_counts(self):
+        # From the decisions page, docs/briefs/, a link reaches the root through ../../. A
+        # path that ends a sentence, its period after it, is named whole too.
+        for path, line in (
+                ("model/lock.sha256", "[the model's hash](../../model/lock.sha256) is renewed."),
+                ("model/lock.sha256", "[the model's hash](/model/lock.sha256) is renewed."),
+                ("Audit/Overlaps.lean", "`Audit/Overlaps.lean` gains a lemma."),
+                ("model/Model/Audit.lean",
+                 "[the model's audit](../../model/Model/Audit.lean) changes."),
+                ("model/Model.lean", "[the model's root](../../model/Model.lean) changes."),
+                (".gitignore", "[the rule](../../.gitignore) is added."),
+                ("Audit.lean", "The audit's root is Audit.lean.")):
+            with self.subTest(path=path):
+                git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                changes = {path: self.text(path) + "\n-- for the test\n"}
+                changes.update(self.decision(line))
+                self.commit(f"Touch {path}, naming it", changes)
+                out = self.safe_push("--dry-run").stdout
+                self.assertEqual(self.guard(out, "protected paths"), "ok", out)
+                self.assertIn(f"each named in {DECISIONS}: {path};", out)
+
+    def test_decision_relative_link_must_resolve_from_decisions_page(self):
+        # A protected judged file and a check both need their actual path named.
+        for path in ("model/Model/Audit.lean", "scripts/check_style.py"):
+            for mention, outcome in (
+                    (f"[file](../{path})", "FAIL"),
+                    (f"[file](../../../{path})", "FAIL"),
+                    (f"[file](./{path})", "FAIL"),
+                    (f"[file](../../{path})", "ok"),
+                    (f"[file](./../../{path})", "ok"),
+                    (f"[file](.././../{path})", "ok"),
+                    (f"[file](/{path})", "ok"),
+                    (f"`{path}`", "ok"),
+                    (path, "ok")):
+                with self.subTest(path=path, mention=mention):
+                    git(WORK, "checkout", "--quiet", "--force", "--detach", BASE)
+                    changes = {path: self.text(path) + "\n# for the test\n"}
+                    changes.update(self.decision(f"{mention} changes."))
+                    sha = self.commit("Touch a protected file with a path mention", changes)
+                    rep, out = safe_push.Report(), io.StringIO()
+                    with contextlib.redirect_stdout(out):
+                        files = safe_push.guard_protected(WORK, BASE, sha, rep)
+                    self.assertEqual(files, [path])
+                    self.assertEqual(self.guard(out.getvalue(), "protected paths"),
+                                     outcome, out.getvalue())
+
+    def test_audit_and_the_models_audit_and_build_files_stay_judged(self):
+        # #96: Audit/, Audit.lean, the model's audit and its root, and the model's build
+        # files are protected, yet still what the checks judge, so a check change stays
+        # apart from them (keep_apart); the rest of the protected paths and the guides
+        # are not judged.
+        judged = ["Audit.lean", "Audit/Overlaps.lean", "model/Model.lean",
+                  "model/Model/Audit.lean", "model/README.md",
+                  "model/lake-manifest.json", "model/lakefile.lean", "model/lakefile.toml",
+                  "model/lean-toolchain", "model/lock.sha256"]
+        apart = ["scripts/check_links.py", "lakefile.toml", "lean-toolchain", ".gitignore",
+                 "tests/model/lock.sha256", "docs/WORKFLOW.md"]
+        sha = self.commit("Touch protected and judged files", {
+            p: (self.text(p) if (WORK / p).exists() else "") + "\n-- for the test\n"
+            for p in judged + apart})
+        self.assertEqual(safe_push.judged_files(WORK, BASE, sha), judged)
+        for p in judged + apart:
+            self.assertEqual(safe_push.is_protected(p), p != "model/README.md"
+                             and p != "docs/WORKFLOW.md", p)
 
     def test_weakened_check_with_the_code_it_would_catch_refused(self):
         # The commit makes check_fidelity.py pass whatever it finds, and changes a Lean
@@ -2848,7 +3163,11 @@ class ProtectedPaths(Edge):
                      "Certificate/Facts.lean", "tests/certificate_expectations.json",
                      "review/SCHEMA.md", "review/terms.toml", ".gitattributes",
                      ".gitignore", "lakefile.toml", "lakefile.lean", "lean-toolchain",
-                     "lake-manifest.json", "scripts/hooks/safe-push"):
+                     "lake-manifest.json", "scripts/hooks/safe-push", "Audit/Overlaps.lean",
+                     "Audit/screen.py", "Audit.lean", "model/lakefile.toml",
+                     "model/Model/Audit.lean", "model/Model.lean",
+                     "model/lakefile.lean", "model/lean-toolchain", "model/lake-manifest.json",
+                     "model/lock.sha256"):
             self.assertTrue(safe_push.is_protected(path), path)
         # One home: WORKFLOW.md's "Protected paths" names every one of them, and the
         # template points to it rather than copying the list.
@@ -2867,43 +3186,77 @@ class ProtectedPaths(Edge):
         self.assertIn('"Protected paths"', template)
         self.assertNotIn("lake-manifest.json", template)
         for path in ("docs/WORKFLOW.md", "review/I/01.toml", "Elements/BookI/Prop01.lean",
-                     "heath/I/01.md", "scriptsx/a.py", "book/I/01.md"):
+                     "heath/I/01.md", "scriptsx/a.py", "book/I/01.md", "Auditx/a.lean",
+                     "Audit.leanx", "model/README.md", "model/Model/Hand.lean",
+                     "model/Model/Audit.lean.orig", "model/Model/Audit.lean/Hand.lean",
+                     "model/Model.lean.orig", "model/Model.lean/Hand.lean",
+                     "model/Check/Hand.lean", "model/.gitignore", "docs/reports/overlaps.md"):
             self.assertFalse(safe_push.is_protected(path), path)
+        self.assertTrue(set(safe_push.PROTECTED_JUDGED) <= set(safe_push.PROTECTED))
 
 
 class InterruptedAfterThePush(Edge):
     """(4) An interruption or a failure to follow CI after the push is "pushed; CI not
-    followed", exit 3; never "interrupted", exit 1."""
+    followed", exit 3; never "interrupted", exit 1.
 
-    def drive(self, action: str) -> subprocess.CompletedProcess:
-        return subprocess.run([sys.executable, "-c", DRIVER, str(HERE), action, str(ORIGIN),
-                               BASE, "--_test-skip-checks", *with_branch(())], cwd=WORK,
-                              env=clean_env(), capture_output=True, text=True)
+    None of these depends on time (#95): each runs through DRIVER on its clock, which never
+    reads the wall clock and never waits, twice, once with time standing still and once
+    leaping an hour at each reading, past every deadline safe_push keeps, and asks the same
+    outcome of both, its reason included, so that neither clock can reach exit 3 by another
+    path; and DRIVER runs the harness committed at BASE, so that the run is origin/main's
+    harness, never handed over to it out of DRIVER's reach."""
+
+    CLOCKS = ("still", "leap")
+
+    def drive(self, action: str, clock: str, env=None) -> subprocess.CompletedProcess:
+        env = env or clean_env()
+        env["STOICHEIA_TEST_CLOCK"] = clock
+        return subprocess.run([sys.executable, "-c", DRIVER, str(UNDER_TEST), action,
+                               str(ORIGIN), BASE, "--_test-skip-checks", *with_branch(())],
+                              cwd=WORK, env=env, capture_output=True, text=True)
+
+    def assertOnTheClock(self, out: str, clock: str) -> None:
+        """The run was origin/main's harness, under DRIVER, on the clock named: its total
+        is 0 s while time stands still, and an hour or more when it leaps."""
+        self.assertEqual(self.guard(out, "harness"), "ok", out)
+        self.assertNotIn("running origin/main's in its place", out)
+        total = re.search(r"^Summary: .* \((\d+) s\)$", out, re.M)
+        self.assertIsNotNone(total, out)
+        if clock == "still":
+            self.assertEqual(int(total.group(1)), 0, out)
+        else:
+            self.assertGreaterEqual(int(total.group(1)), 3600, out)
 
     def test_interrupt_while_following_ci(self):
-        sha = self.good_commit()
-        r = self.drive("watch-interrupt")
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 3, out)
-        self.assertIn("pushed; CI not followed", out)
-        self.assertNotIn("Interrupted:", out)
-        self.assertEqual(self.origin_branch(), sha)
-        self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+        for clock in self.CLOCKS:
+            with self.subTest(clock=clock):
+                self.setUp()
+                sha = self.good_commit()
+                r = self.drive("watch-interrupt", clock)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn("Pushed; CI not followed: interrupted (a test interruption)", out)
+                self.assertNotIn("Interrupted:", out)
+                self.assertEqual(self.origin_branch(), sha)
+                self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+                self.assertOnTheClock(out, clock)
 
     def test_failure_while_following_ci(self):
-        self.good_commit()
-        r = self.drive("watch-fail")
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 3, out)
-        self.assertIn("pushed; CI not followed (RuntimeError: gh went away)", out)
+        for clock in self.CLOCKS:
+            with self.subTest(clock=clock):
+                self.setUp()
+                sha = self.good_commit()
+                r = self.drive("watch-fail", clock)
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn("pushed; CI not followed (RuntimeError: gh went away)", out)
+                self.assertEqual(self.origin_branch(), sha)
+                self.assertOnTheClock(out, clock)
 
     def test_failure_right_after_the_push(self):
         # The final review: the push lands, and origin stops answering before the branch
         # is seen there. The branch is public from the moment `git push` returns 0.
-        sha = self.good_commit()
         flag, hook = TMP / "origin-gone", ORIGIN / "hooks" / "post-receive"
-        hook.write_text(f'#!/bin/sh\ntouch "{flag}"\n')
-        hook.chmod(0o755)
         self.addCleanup(lambda: (hook.unlink(missing_ok=True), flag.unlink(missing_ok=True)))
         bindir = Path(tempfile.mkdtemp(prefix="bin-", dir=TMP))
         (bindir / "git").write_text(
@@ -2913,15 +3266,25 @@ class InterruptedAfterThePush(Edge):
             '        exit 128\n    fi\ndone\n'
             f'exec "{shutil.which("git")}" "$@"\n')
         (bindir / "git").chmod(0o755)
-        env = clean_env()
-        env["PATH"] = f"{bindir}{os.pathsep}{env['PATH']}"
-        r = self.safe_push(env=env)
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 3, out)
-        self.assertIn("Pushed; CI not followed", out)
-        self.assertNotIn("REFUSED", out)
-        self.assertEqual(self.origin_branch(), sha)
-        self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+        for clock in self.CLOCKS:
+            with self.subTest(clock=clock):
+                self.setUp()
+                flag.unlink(missing_ok=True)
+                hook.write_text(f'#!/bin/sh\ntouch "{flag}"\n')
+                hook.chmod(0o755)
+                sha = self.good_commit()
+                env = clean_env()
+                env["PATH"] = f"{bindir}{os.pathsep}{env['PATH']}"
+                r = self.drive("push", clock, env=env)
+                hook.unlink()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 3, out)
+                self.assertIn("Pushed; CI not followed: `git ls-remote origin refs/heads/"
+                              f"{BRANCH}` failed: fatal: unable to access origin", out)
+                self.assertNotIn("REFUSED", out)
+                self.assertEqual(self.origin_branch(), sha)
+                self.assertIn("pushed; CI not followed", LOG.read_text().splitlines()[-1])
+                self.assertOnTheClock(out, clock)
 
 
 class Interpreter(Edge):
@@ -3623,7 +3986,7 @@ class Units(unittest.TestCase):
         self.assertTrue(flagged("a", "Some One <someone@Some-MacBook.local>"))
         self.assertTrue(flagged("a", "someone <someone@(none)>"))
         self.assertTrue(flagged("a", "/" + "Users" + "/someone <a@example.org>"))
-        self.assertEqual(flagged("a", "Jack Challis <jack@example.org>"), [])
+        self.assertEqual(flagged("a", "Stoicheia Team <team@example.org>"), [])
         self.assertEqual(flagged("a", "GitHub <noreply@github.com>"), [])
 
     def test_checklist(self):

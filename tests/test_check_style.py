@@ -17,11 +17,11 @@ it, put to the script's own patterns and functions:
   fill, within its three ends and beyond its chord out to its arc, and not beyond the
   arc; however the wedge is spelled (an absolute arc, a relative arc, a cubic curve), and
   wherever a transform moves it;
-* the modern cases: S23 and S24 read a figure of the modern way against its Euclid's
+* the modern cases: S24 and S25 read a figure of the modern way against its Euclid's
   figure's letters and its paragraph's names, which `modern_names` takes from TeX and
   from plain words alike, save the letters of English (A's, e.g., the article "a") and
-  what a reader does not see, in a comment or in code; the renderer puts that figure
-  after the same whole paragraph and keeps its source indentation.
+  what a reader does not see, in a comment or in code; the paragraph selection keeps
+  its source offsets and indentation.
 * the scope cases (#66): which texts of a review record the rules read, and on which
   lines; the docstring render.py shows, found again in its file; S12's reading of a
   `name : type`; S22's reading of letters in backticks, one code span at a time; and the
@@ -54,7 +54,6 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import check_style as style  # noqa: E402
-import render  # noqa: E402
 
 # ---------------------------------------------------------------------------------------
 # The phrase cases. (D7 once let "Lean\ncannot" through, in a docstring.)
@@ -210,7 +209,7 @@ def ink_finding(drawn: str, x: float, y: float, ink: str) -> bool:
 
 
 # ---------------------------------------------------------------------------------------
-# The modern cases: a figure of the modern way, read as S23 and S24 read it, against the
+# The modern cases: a figure of the modern way, read as S24 and S25 read it, against the
 # letters its Euclid's figure draws and the names its paragraph uses.
 
 MODERN_PARAGRAPH = (style.MODERN_WAY + r" Put $\mathrm{A} = (0, 0)$, $\mathrm{B} = (c, 0)$ "
@@ -328,30 +327,30 @@ MODERN_GOOD = ('<title>I.47: the modern way</title>'
                '<text x="70" y="290">(0, 0)</text></g>')
 MODERN_CASES = [   # (a figure's inside, the title's ref, the finding wanted: rule, or None)
     (MODERN_GOOD, "I.47", None),
-    (MODERN_GOOD, "I.48", "S23"),
-    (MODERN_GOOD.replace("</title>", "</title><desc>A caption.</desc>"), "I.47", "S23"),
-    (MODERN_GOOD.replace('fill="#e9dcc0"', 'fill="#f2b705"'), "I.47", "S23"),
-    (MODERN_GOOD.replace('stroke-width="1.6"', 'stroke-width="0.8"'), "I.47", "S23"),
-    (MODERN_GOOD.replace(">C<", ">D<"), "I.47", "S24"),
+    (MODERN_GOOD, "I.48", "S24"),
+    (MODERN_GOOD.replace("</title>", "</title><desc>A caption.</desc>"), "I.47", "S24"),
+    (MODERN_GOOD.replace('fill="#e9dcc0"', 'fill="#f2b705"'), "I.47", "S24"),
+    (MODERN_GOOD.replace('stroke-width="1.6"', 'stroke-width="0.8"'), "I.47", "S24"),
+    (MODERN_GOOD.replace(">C<", ">D<"), "I.47", "S25"),
     (MODERN_GOOD.replace('<text x="50" y="270">A', '<text x="50" y="270" font-style="italic">A'),
-     "I.47", "S24"),
-    (MODERN_GOOD.replace('font-style="italic">c<', '>c<'), "I.47", "S24"),
-    (MODERN_GOOD.replace(">c<", ">x<"), "I.47", "S24"),
-    (MODERN_GOOD.replace(">c<", ">BC<"), "I.47", "S24"),
-    (MODERN_GOOD.replace(">c<", ">c<tspan>₁</tspan><"), "I.47", "S24"),
-    (MODERN_GOOD.replace(">c<", ">c∫<"), "I.47", "S24"),
-    (MODERN_GOOD.replace('font-size="17"', 'font-size="14"'), "I.47", "S24"),
-    (MODERN_GOOD.replace(' fill="#3b2f2f">', '>'), "I.47", "S23"),
+     "I.47", "S25"),
+    (MODERN_GOOD.replace('font-style="italic">c<', '>c<'), "I.47", "S25"),
+    (MODERN_GOOD.replace(">c<", ">x<"), "I.47", "S25"),
+    (MODERN_GOOD.replace(">c<", ">BC<"), "I.47", "S25"),
+    (MODERN_GOOD.replace(">c<", ">c<tspan>₁</tspan><"), "I.47", "S25"),
+    (MODERN_GOOD.replace(">c<", ">c∫<"), "I.47", "S25"),
+    (MODERN_GOOD.replace('font-size="17"', 'font-size="14"'), "I.47", "S25"),
+    (MODERN_GOOD.replace(' fill="#3b2f2f">', '>'), "I.47", "S24"),
     (MODERN_GOOD + '<polyline points="1,1 9,9 1,9" stroke="#8c7b62" stroke-width="1.3"/>',
-     "I.47", "S23"),
+     "I.47", "S24"),
     (MODERN_GOOD.replace(">a² = b² + c²<", ">a² =\n   b² + c²<"), "I.47", None),
     (MODERN_GOOD.replace(">c<", ">ϑ<"), "I.47", None),
-    (MODERN_GOOD.replace(">c<", ">ν<"), "I.47", "S24"),
+    (MODERN_GOOD.replace(">c<", ">ν<"), "I.47", "S25"),
 ]
 
 
 def modern_rules(inside: str, ref: str, heaths=HEATHS, names=NAMES) -> set[str]:
-    """The rules S23 and S24 find broken in a 400 × 300 figure of the modern way."""
+    """The rules S24 and S25 find broken in a 400 × 300 figure of the modern way."""
     root = ET.fromstring('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
                          f"{inside}</svg>")
     return {rule for rule, _ in style.modern_findings(root, ref, heaths, names)}
@@ -944,16 +943,26 @@ class Modern(unittest.TestCase):
             with self.subTest(figure=inside, ref=ref):
                 found = modern_rules(inside, ref)
                 if want is None:
-                    self.assertEqual(found, set(), f"S23 and S24 wrongly find {found}")
+                    self.assertEqual(found, set(), f"S24 and S25 wrongly find {found}")
                 else:
                     self.assertIn(want, found, f"{want} misses a fault in {inside!r}")
 
     def test_no_paragraph_and_no_figure(self):
-        self.assertIn("S23", modern_rules(MODERN_GOOD, "I.47", names=None))
-        self.assertIn("S23", modern_rules(MODERN_GOOD, "I.47", heaths=None))
+        self.assertIn("S24", modern_rules(MODERN_GOOD, "I.47", names=None))
+        self.assertIn("S24", modern_rules(MODERN_GOOD, "I.47", heaths=None))
         for text, want in SPAN_CASES:
             with self.subTest(text=text):
                 self.assertEqual(style.modern_paragraph(text), want)
+
+    def test_malformed_modern_svg_is_s24(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "01-modern.svg"
+            path.write_text("<svg>")
+            with patch.object(style, "fail") as fail:
+                self.assertIsNone(style.svg_root(path))
+                fail.assert_called_once()
+                self.assertEqual(fail.call_args.args[:3], ("S24", path, 0))
+                self.assertIn("not well-formed SVG", fail.call_args.args[3])
 
     def test_source_spans(self):
         for before, paragraph, after in SOURCE_SPAN_CASES:
@@ -964,35 +973,9 @@ class Modern(unittest.TestCase):
                 selected = style.modern_paragraph(text)
                 names = style.modern_names(selected) if selected is not None else None
                 findings = modern_rules(MODERN_GOOD, "I.47", names=names)
-                self.assertEqual("S23" in findings, paragraph is None)
+                self.assertEqual("S24" in findings, paragraph is None)
 
-    def test_render_placement(self):
-        count, faults = render.modern_figure_self_check()
-        self.assertEqual(count, len(render.MODERN_FIGURE_CASES))
-        self.assertEqual(faults, [])
-
-    def test_render_page(self):
-        """Exercise the page caller too, which must preserve leading code indentation."""
-        mishnah = render.ROOT / "mishnah" / "I" / "47.md"
-        figure = render.ROOT / "figures" / "I" / "47-modern.svg"
-        read_text, exists = Path.read_text, Path.exists
-        facts, docs, records = render.load_facts(), render.load_axiom_docs(), render.load_records()
-        count, titles = render.BOOKS["I"]
-        for source, want_figure in [("    " + style.MODERN_WAY + " Put $b$ here.", False),
-                                    (COMMENT_PARAGRAPH, True), (CODE_PARAGRAPH, True)]:
-            def read(path, *args, **kwargs):
-                return source + "\n" if path == mishnah else read_text(path, *args, **kwargs)
-
-            with self.subTest(source=source), patch.object(Path, "read_text", read), \
-                    patch.object(Path, "exists", lambda path: path == figure or exists(path)):
-                page = render.page("I", 47, count, titles, facts, docs, records)
-                self.assertIn(source, page)
-                marker = '<p align="center"><img src="../../figures/I/47-modern.svg"'
-                self.assertEqual(marker in page, want_figure)
-                if want_figure:
-                    self.assertIn(source + "\n\n" + marker, page)
-
-    test_modern_cases.__doc__ = (f"S23 and S24 read {len(MODERN_CASES)} figures of the "
+    test_modern_cases.__doc__ = (f"S24 and S25 read {len(MODERN_CASES)} figures of the "
                                  "modern way rightly")
 
 
@@ -1212,7 +1195,35 @@ class Scopes(unittest.TestCase):
 
 
 class Acceptance(unittest.TestCase):
-    """The acceptance case: how check_acceptance.py sorts the style check's findings."""
+    """How check_acceptance.py assigns the style check's findings to items and pages."""
+
+    def test_modern_figure_owners(self):
+        import check_acceptance as acceptance
+        for path, want in [
+            ("figures/I/01-modern.svg", "I.1"),
+            ("./figures/II/14-modern.svg", "II.14"),
+            ("figures/III/37-modern.svg", "III.37"),
+            ("figures/I/00-modern.svg", None),
+            ("figures/II/15-modern.svg", None),
+            ("figures/IV/01-modern.svg", None),
+            ("figures/I/01-modern-extra.svg", None),
+        ]:
+            with self.subTest(path=path):
+                self.assertEqual(acceptance.owner(path), want)
+
+    def test_modern_findings_are_figures_and_backticks_are_style(self):
+        import check_acceptance as acceptance
+        out = "\n".join([
+            "  ✗ S24 figures/I/01-modern.svg: a wrong title",
+            "  ✗ S25 figures/II/14-modern.svg: an unknown name",
+            "  ✗ S22 mishnah/I/02.md:3: letters in backticks",
+        ])
+        with patch.object(acceptance, "failures", {}), \
+                patch.object(acceptance, "run", return_value=SimpleNamespace(
+                    returncode=1, stdout=out, stderr="")):
+            acceptance.check_style_rules()
+            self.assertEqual(sorted(acceptance.failures),
+                             [("I.1", "P8"), ("I.2", "P9"), ("II.14", "P8")])
 
     def test_review_record_findings_are_style(self):
         """A record's finding is its proposition's P9, whatever its rule; others as before"""

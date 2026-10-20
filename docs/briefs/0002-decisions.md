@@ -1316,6 +1316,109 @@ findings:
   `negative`, and making `formal-model` required, as the decision of 18 October foresees
   once the package builds, is the owner's call.
 
+- **A representation tag for the mixed angles.**
+  [`review/terms.toml`](../../review/terms.toml) gains `mixed-angles-local`, the tag that
+  brief 0011, which lands with them, gives the records of III.16 and III.31 once their
+  companions state the angle clauses, in the move of the mixed angles into the edition
+  ([#57](https://github.com/jackChallis/stoicheia/issues/57)): an angle contained by a
+  straight line and a circumference is read as the region it opens near its vertex, and
+  compared with a rectilineal angle placed at that vertex, along its straight arm and on its
+  side, by containment near the vertex. Its last clause carries Astra's wording, as the
+  prototype's report gives it (its condition 4): the comparisons use local containment of
+  curved angular regions, and no general arithmetic or ratio theory of mixed angles is
+  claimed. The tag adds that no motion of a mixed angle is claimed either, as the
+  coordinator's approval of the prototype, above, says. It is a tag of kind
+  `representation`, with no badge, since the certificate's sentence on badges speaks of a
+  measure with no radius in it. It lands on its own, before the records that use it, since
+  safe_push keeps a check's data apart from the content it judges, as
+  `figure-with-dissection` did; `mixed-angles-omitted` stays while a record uses it. The
+  protected file this changes is `review/terms.toml`.
+
+- **The negative test of an undeclared run reads the passage of any kind.**
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py)'s fifth test drops the
+  passages that declare III.16's runs of `--` lines with no Lean beneath them, and expects
+  `check_fidelity.py` to catch the run of the angle clauses. It required that run's passage
+  to be `unformalized`; once the companions of III.16 state those clauses (brief 0011, in
+  the move of the mixed angles,
+  [#57](https://github.com/jackChallis/stoicheia/issues/57)), the record declares the run
+  as argued another way, and the test would fail on a precondition while the check it
+  tests still works. It now requires only that a dropped passage begins that run, of
+  whatever kind, and expects the same failure, so it plants the same break and catches it
+  on today's record and on the record to come; nothing is loosened. It lands on its own,
+  before the records it reads, since safe_push keeps a check apart from the content it
+  judges. The protected file this changes is `scripts/negative_tests.py`.
+
+- **Placement: only III.24 and `Arcs.lean` may cite it.** [Brief 0006](0006-statements.md)
+  ("Placement", the policy) asks for a check, with a negative test, that outside
+  `Elements/BookIII/Placement.lean` and `Elements/BookIII/Placement/` only III.24 and
+  `Elements/BookIII/Arcs.lean` cite `placement` or any declaration of the `Placement`
+  namespace: the lemmas of the namespace carry the same distance-keeping content as the
+  whole, so a check of `placement` alone could be got round through them.
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) gains it in two parts. Read
+  from the source as its scan of forbidden commands reads it (`read_lean`), comments and
+  literals taken out, no Lean file under `Elements/` but those four names `placement` or
+  `Placement`, each finding naming its file and line; `Staging/` and `Audit/`, which that
+  scan reads too, are outside the policy, which is the edition's, and `Staging/` holds
+  placement's staged statements until they move. And, from facts.json, no entry but III.24
+  has placement, a lemma of the `Placement` namespace or anything declared in placement's
+  files among its shared steps, so that a proof that reaches it without naming it is caught
+  too. [`scripts/negative_tests.py`](../../scripts/negative_tests.py) gains two tests: a
+  lemma of the namespace named in `Elements/BookIII/Squares.lean` is caught on its line,
+  and the word in a comment there is not (test 9, the build test becoming 10); placement
+  among III.26's shared steps, on a copy of facts.json, is caught, and III.24, given it
+  too, is not blamed (in test 3). The superposition check that the brief rewords needs no
+  new code: the policy that only I.4 and I.8 use superposition directly reads III.24's
+  `direct_axioms`, whose walk passes through placement and its lemmas and stops at I.4, I.7
+  and I.8 as entries, and the lock check covers every axiom III.24 rests on. The check is
+  added, and nothing is loosened; with nothing under `Elements/` naming placement yet, it
+  passes on main. It is a check change, and lands in a pull request of its own, before the
+  stage 3 statements it checks (WORKFLOW, section 10). FORMALIZATION, section 7, lists the
+  policy and the two tests.
+
+- **`Audit/` and the formal model's build files are protected paths.** `Audit/` holds the
+  audit lemmas whose pinned axiom lists (`#guard_msgs`) back the overlap catalogue's
+  claims, so a change there could weaken what the catalogue asserts without a security
+  review or a decisions entry. The work on brief 0008 raised it, and the coordinator
+  decided it as a check strengthened, never weakened (#96).
+  [`scripts/safe_push.py`](../../scripts/safe_push.py)'s protected list now holds `Audit/`;
+  `Audit.lean`, the root that decides which audit lemmas `lake build Audit` checks; and
+  the model's build files, `model/lakefile.toml`, `model/lakefile.lean` (which Lake would
+  read in preference to the toml, as at the root), `model/lean-toolchain`,
+  `model/lake-manifest.json` and `model/lock.sha256`. [WORKFLOW](../WORKFLOW.md), section
+  10, "Protected paths", names each. A change to any of them needs a new line here naming
+  it, the label `security-review` and a `/security-review`. They are content the checks
+  judge, not checks, so they stay judged: a check change is still kept apart from them, as
+  it was before they were protected. A protected path is now named only whole, from the
+  root (with or without a leading slash) or by a relative link, so a line naming
+  `tests/model/lock.sha256` no longer counts for `model/lock.sha256`, nor one naming
+  `model/lakefile.toml` for the root's `lakefile.toml`. Nor is a path named by a longer
+  one at its other end, so a line naming `Audit.lean.orig` does not count for
+  `Audit.lean`; and a line edited in place so that it names a different file now counts
+  for the file it newly names (from `model/lakefile.toml` to `lakefile.toml`, say), which
+  the old pattern refused, because it read the root's `lakefile.toml` in the removed line
+  too. [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains the cases:
+  each new path refused without its line, a longer path's mention refused, a relative
+  link accepted, and the new paths still judged. None of the cases it held before is
+
+- **The tests of an interruption after the push depend on nothing but the run.** Two tests
+  of `InterruptedAfterThePush` had failed once beside a Lean build (#95, found during the
+  work on #40). Under load alone they never failed here: eleven runs of the class, eight
+  of them at load averages of 23 to 32 with four from-scratch builds of the library
+  running alongside, and three more with git's background gc forced. They did fail,
+  exactly the two that follow CI while the third passed, when the checkout's
+  `scripts/safe_push.py` changed after the suite had committed it as origin/main's, as an
+  edit in a shared checkout would change it while the suite runs: the copy run then
+  differs from origin/main's and hands over to it, the hand-over leaves behind the
+  stand-ins the tests put in place of following CI, and the run follows the stand-in CI to
+  success, exit 0. So [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) now
+  runs every driven test from a copy of the harness as the suite committed it, and the
+  three tests of the class run on a clock of their own, which never reads the wall clock
+  and never waits, twice: with time standing still, and with each reading an hour after
+  the last, past every deadline `safe_push.py` keeps. Each run must still end in "pushed;
+  CI not followed", exit 3, and must now show origin/main's harness, never handed over,
+  and a total that is the clock's. `scripts/safe_push.py` is unchanged, and no test is
+  loosened.
+
 ## 19 October 2026
 
 - **The edition does not name its owner.** The owner asked that Stoicheia not be presented
@@ -1332,6 +1435,10 @@ findings:
   the change in its own note. No statement, check or earlier decision changes, and no
   protected path. Three things are the owner's to decide: the copyright line in
   `NOTICE`, the authors in `CITATION.cff` and the repository's address on GitHub. A sample
+  identity in `scripts/test_safe_push.py`, a protected file, now uses
+  `Stoicheia Team <team@example.org>` instead of a person's name. This tooling-only change
+  leaves the test's meaning unchanged: an ordinary identity is not flagged.
+
   name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
   request of its own.
 
@@ -1446,29 +1553,304 @@ findings:
   [STYLE](../STYLE.md), section 8, describes the report classification. No judged content,
   Lean source, review record or generated page changes.
 
-- **A figure for the modern way, and its two rules.** The owner asked for figures for the
-  modern mathematics, drawn to match Euclid's figure on the same page and carrying the
-  same letters ([#49](https://github.com/jackChallis/stoicheia/issues/49)). A page may
-  now have a third figure, `figures/<book>/NN-modern.svg`, which
-  [`scripts/render.py`](../../scripts/render.py) sets under the paragraph that opens
-  "**The modern way.**". [`scripts/check_style.py`](../../scripts/check_style.py) gains
-  two rules for it: S22, the frame (Euclid's figure's canvas, palette and strokes; the
-  title "I.N: the modern way" and no caption; a Euclid's figure beside it and a modern way
-  on the page for it to stand under), and S23, its text (Euclid's figure's letters,
-  upright at 17, and otherwise only the paragraph's own names, italic, with digits and
-  the signs of an expression). [`tests/test_check_style.py`](../../tests/test_check_style.py)
-  holds their cases, and [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
-  counts the two rules under P8 and gives a modern figure's findings to its proposition.
-  Protected files changed: `scripts/check_style.py`, `scripts/render.py`,
-  `scripts/check_acceptance.py` and `tests/test_check_style.py`. STYLE, sections 2, 7 and
-  8, and the checklist's P8 say the same. No check is weakened: the rules hold only the
-  new files, and no figure exists yet for them to judge; the figures follow in a content
-  pull request, since a check lands apart from the content it judges. S23 reads a name in
-  the paragraph's plain words too, as Book II's "AC = a" needs, but not a letter of
-  English: one after an apostrophe, those of e.g. and i.e., and the article "a" with no
-  sign of an expression, digit or bracket beside it; nor anything in a comment or in code.
-  A fix in `scripts/check_style.py`, `scripts/render.py` and `tests/test_check_style.py`
-  selects the paragraph from the original Markdown blocks with its source offsets kept,
-  then masks comments and code, so that indented code gives no paragraph, a multiline
-  inline comment leaves the figure after the whole paragraph, and a code span across a
-  line break supplies no name, with regression cases for the rules and the renderer.
+- **A new tag, `touching-whole-circles`.** [`review/terms.toml`](../../review/terms.toml)
+  gains the tag, of kind `representation`, with the meaning [brief 0008](0008-centre.md)
+  gives it, word for word (section 4, "Records, Lean files and pages", and question 9):
+  "Circles touching one another are read of the whole circles: touching within, no point
+  of the inner is outside the outer; touching without, no point is within both; so touching
+  circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
+  It is a representation, not a centre: when `centre-given` leaves the records, those of
+  III.11, III.12 and III.13 keep their `[representation]` with this tag, and III.6 takes it
+  too. It lands here, in a pull request of its own, before any record uses it, as
+  [FORMALIZATION](../FORMALIZATION.md), section 3, asks and as step 1 of the brief's
+  section 6 orders; no record carries it yet, so no page changes. When the definition of
+  contact within changes, in the brief's step 6, the meaning gains that the inner circle has
+  passed within the outer (question 16). Protected file changed: `review/terms.toml`.
+- **An overlap always names its kind.** The last part of
+  [#93](https://github.com/jackChallis/stoicheia/issues/93), as its comments list it. The
+  decision of 18 October, "An overlap is worded by its kind, as the catalogue gives it",
+  made `kind` optional so that the check could land before the records named their kinds,
+  and worded a record with no kind as one whose rule contains the proposition. Every
+  record on main now names its kind (I.2, I.3, I.7 and I.23 `step`, III.2 `states`, III.5
+  and III.6 `gives`), so the key is required, and a new `[overlap]` without it, as III.1's
+  might be under brief 0008, can no longer render "contains" by default, the defect #93
+  fixes. [`review/SCHEMA.md`](../../review/SCHEMA.md) marks `kind` required, and its list
+  of what the machine checks says so. [`scripts/heath.py`](../../scripts/heath.py) rejects
+  an `[overlap]` with no `kind` ("`kind` is missing"), and its self-test case
+  `{rule: Tacit.circle_eq}`, which it accepted, is now a rejection; the other five cases
+  stand. [`scripts/render.py`](../../scripts/render.py) drops its fallback to "contains":
+  `overlap_steps` reads the record's `kind`, which every record it is given now carries.
+  The proposition template's `[overlap]` lines say the key is always named. Nothing a
+  reader sees changes: the pages render the same at the branch's base. This is a check
+  change on its own; it changes no record.
+- **The negative tests read the count of assumptions from the lock.** The planted-assumption
+  test of [`scripts/negative_tests.py`](../../scripts/negative_tests.py) expected
+  `check_fidelity.py` to say "declares 88 axioms, not 87", a count fixed in the script. It
+  now reads the number of axioms in
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock) before it plants anything, and
+  expects one more than that, so the test keeps its meaning when an approved rule joins the
+  lock. This is step 1's third item in [brief 0008](0008-centre.md), section 6: without it,
+  the pull request that adds the rule that every circle has a centre could not pass. Today
+  the lock holds 87, so the test expects what it expected before; nothing else in the
+  script, and no check, changes. The one protected file it changes is
+  `scripts/negative_tests.py`.
+- **The model's audit and its root are protected too (#96).** `model/Model/Audit.lean`
+  pins the model's proofs to `propext`, `Classical.choice` and `Quot.sound` alone and
+  checks that `Elements` is absent; `model/Model.lean` imports that audit, so the build
+  checks it. They join `Audit/` and `Audit.lean` in the protected paths of
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), and remain content the checks
+  judge, so a check change is still kept apart from them. A change to either needs its
+  own whole path named here, the label `security-review` and a `/security-review`.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) gains cases for each:
+  refused without that line, a longer path's mention refused, a relative link accepted,
+  and still judged. The cases also keep similarly named paths, `model/Model/Hand.lean`
+  and `model/Check/Hand.lean` unprotected. [WORKFLOW](../WORKFLOW.md), section 10, names
+  the two files and their reason. Nothing is loosened; no model proof or audit changes.
+  In `scripts/safe_push.py`, with regression cases in `scripts/test_safe_push.py`, a
+  relative link must resolve from the decisions page's folder to the protected file,
+  so routine edits to `model/Model.lean` (a new import) and `model/Model/Audit.lean`
+  (a new pinned law) now need such a line too.
+- **The overlap wording and the table of stages are brought up to date.** The two text
+  follow-ups to #93 update the [README](../../README.md)'s row for `Audit/` and the
+  [Book I brief](book-I.md)'s account of its four overlaps: a rule supplies a step of
+  I.2, I.3, I.7 and I.23, and I.23 rests on superposition through I.20 as well as I.8.
+  Brief 0005's table of stages in [PROGRAM](../PROGRAM.md) marks stage 2 done and names
+  #90 in stage 4's row as the pull request that proved its propositions in Staging.
+  The next steps in [`docs/program.toml`](../program.toml), which supply PROGRAM's
+  status table, keep their words for now. A protected test in
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) quotes Book I's stage
+  words. The next steps are reworded after the test's own change on
+  `tooling/safe-push-stage-line` lands separately, as [WORKFLOW](../WORKFLOW.md),
+  section 10, requires.
+- **Stoicheia Team is the edition's copyright holder and cited author.** On 19 October 2026
+  the owner decided that [NOTICE](../../NOTICE) reads "Copyright 2026 Stoicheia Team and
+  contributors" and [CITATION.cff](../../CITATION.cff) names one author, the entity
+  "Stoicheia Team". The credit that [LICENSE-PROSE.md](../../LICENSE-PROSE.md) asks for now
+  names that author beside the title. [README.md](../../README.md) has no citation block or
+  text asking readers to cite the project; [references.bib](../references.bib) has no entry
+  for Stoicheia itself, so neither changes. [LICENSE](../../LICENSE) keeps the Apache
+  template's copyright line. A repository-wide search for the surname and copyright lines
+  found no other project attribution to change; third-party credits and notices stay as they
+  are. The sample name in `scripts/test_safe_push.py` still waits for its own tooling pull
+  request. This settles two of the three things "The edition does not name its owner" left
+  to the owner. The repository's address on GitHub remains the owner's to decide, and its
+  links stay unchanged. No statement, check or protected path changes.
+- **The screen's new near misses are pinned in the audit.** The overlap screen, as #78 widened
+  it, finds that III.30 can be proved from its angle measure alone, without III.28. The
+  catalogue lists it among the near misses of representation, and
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) gains the proof that shows it,
+  `Audit.III_30_measure`, beside the other audit lemmas. `Audit/` became a protected path
+  with #96 (train H6, #113), so this entry names the file: `Audit/Overlaps.lean` gains one
+  lemma and its docstring, and no pin, statement or check changes. No proposition rests on
+  the new lemma; it records what a rule already gives.
+- **The review schema points to the acceptance checklist that now exists.**
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) said that `docs/ACCEPTANCE.md` "will fix the item
+  keys" and that `items` stays empty until it exists. The checklist landed with #111 and fixes
+  the keys and when an item counts, so the schema's `items` row and the sentence after the
+  table now say so and link it. Wording only: no field, rule or check of the schema changes.
+  This entry names the protected file `review/SCHEMA.md`.
+
+- **No certificate entry may rest on Circle 2 or Circle 3.** The check keeps
+  [brief 0008](0008-centre.md)'s III.1 construction from reaching Circle 2, which states
+  III.2, or Circle 3, which gives it at once.
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) now refuses either rule
+  in any entry's axioms, propositions, porisms and companions of every book included,
+  and names the entry and the rule. It also fails if `Certificate/axioms.lock` no longer
+  holds either rule's name, so a renamed axiom cannot leave the check refusing nothing.
+  Main at `39ae65c` passes, and its `facts.json` is the one delivered here: none of its
+  121 entries rests on either rule.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants Circle 2 in a
+  proposition and Circle 3 in a porism and a companion, on separate copies of
+  `facts.json`, without a build, and expects each refusal by name. It then renames Circle 3
+  in the lock, restored after, and in a copy of `facts.json`, and expects the missing
+  name to be caught. These are the two protected files changed. FORMALIZATION states what
+  the check covers: an entry, whether through its own proof or through a lemma it uses.
+  Book Zero lemmas are not entries, so they are covered only through entries that use
+  them. The overlap catalogue's account of the rule, and the README's row, are held for
+  the pull request that follows. Nothing is loosened.
+
+- **Planted faults for the remaining checks.** `scripts/negative_tests.py` now plants an
+  em dash in I.1's mishnah, caught by S1 with the file named; a relative link to a
+  missing page, caught with the source and target named; a generated I.1 page stale
+  beside a changed mishnah, caught by the page's Git status line after rendering; and
+  an axiom omitted from an audit lemma's expected list, caught by `#guard_msgs` in
+  `lake build Audit`. The freshness test changes the source as well: editing only the
+  page would let the renderer restore the committed text and leave Git status clean.
+  A corrupt header in I.1's compiled file makes leanchecker itself name the file and
+  report its invalid header, using the invocation in `scripts/check_kernel.py`.
+  This tests the loading of compiled files; no invalid proof term is planted for the
+  kernel replay. Each new plant restores its inputs in `finally`, and the freshness
+  test saves every renderer output. Before each plant that builds, every file under
+  `.lake/build` is saved, including companion outputs, dependent modules, hashes and
+  traces. A restoration build is attempted; if it fails or is interrupted, the saved
+  files return with their original bytes and newly created files are removed. After
+  I.1's successful rebuild, leanchecker replays the restored environment. The
+  assumptions test restores or removes its temporary module's outputs in a nested
+  `finally`, even when the restoration build is interrupted. Each new plant reports
+  its time, restoration included. An outer `finally` compares the final Git status
+  with the entry status, even on interruption, preserving an exception already in
+  flight if that comparison also fails. Restoration needs writable files and time
+  for `finally` to finish; a forced process kill cannot provide it.
+  `tests/test_negative_tests.py` tests failed and interrupted builds, saved and absent
+  outputs, temporary-module cleanup, replay after a successful rebuild and the final
+  status comparison in temporary directories, without Lean or Git. The script runs
+  these regressions before planting. Its docstring states the coverage and its limits;
+  the README table update is deferred to a later pull request after this check change.
+  The protected files changed are `scripts/negative_tests.py` and
+  `tests/test_negative_tests.py`. No check is loosened.
+- **The merge commit names the owner GitHub names
+  ([#41](https://github.com/jackChallis/stoicheia/issues/41)).** `git safe-push --merge`
+  gives the merge commit GitHub's own subject, "Merge pull request #N from owner/branch",
+  and took the owner from origin's URL, which after a transfer or a rename, both of which
+  GitHub redirects, would name the old one. It now takes the owner GitHub reports for the
+  pull request's head (`headRepositoryOwner`), read by the gates with the branch name and
+  the title, and a new gate, "subject", shows the subject before the merge and refuses the
+  merge when GitHub names no owner, or none an account could have (a login of letters,
+  digits and hyphens), before gh is asked. Nothing the merge checked before is loosened.
+  The files changed are [`scripts/safe_push.py`](../../scripts/safe_push.py)
+  (`merge_subject`, beside `gates` and `merge`, and its docstring) and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) (a test, with the
+  stand-in for gh naming no owner, five owners no account could have, then a new one,
+  which fails before the change), with
+  [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
+- **A merge is GitHub's word, never gh's exit alone
+  ([#42](https://github.com/jackChallis/stoicheia/issues/42)).** With a merge queue or
+  auto-merge on, `gh pr merge` exits 0 having only queued the pull request; `--merge` took
+  that for a merge, judged origin/main's last commit as the merge commit, and would then
+  have advised reverting the wrong commit. Neither is on today. Whatever gh's exit, GitHub
+  is now asked, and success is reported only when GitHub says the pull request is merged
+  and origin/main holds the merge commit GitHub names (a full object name). gh exiting 0
+  with the pull request not merged, GitHub naming no merge commit or one origin/main does
+  not hold, GitHub not to be asked, or giving no state, is "merge state unknown", exit 3,
+  with no revert advised, since nothing on main is known to be the merge. Nothing is
+  loosened: a merge that happened, or may have, is still never exit 1, and three cases are
+  now more cautious than before: GitHub giving no state after gh failed, once "nothing was
+  merged", exit 1; GitHub not to be asked after gh exited 0, once a merge; and an
+  interruption while GitHub is asked after gh exited 0, once "merged", exit 3. One test's
+  expectation moves with the last, the more cautious way:
+  `test_interrupted_after_gh_merged_is_merged` is now
+  `test_interrupted_after_gh_exits_0_is_unknown`, still exit 3, and expects "merge state
+  unknown" where it expected "merged". The change's independent review found four answers
+  GitHub could give that the merge misread or crashed on, and we thank it: an owner that
+  is no account's name (above), a state that is none of OPEN, CLOSED and MERGED (once
+  "nothing was merged", exit 1, though gh had merged), and a merge commit named by
+  something other than its full object name, or by nothing, which was fetched and judged
+  before the merge state was settled. Each is now refused by the gate, or "merge state
+  unknown" before anything is fetched, with tests. The files changed are
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) (`merge_outcome`, `verify_merge`,
+  `merge_main`, a new refusal `MergeUnknown`, and its docstring) and
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) (three ways for the
+  stand-in for gh to exit 0 with no merge on main that GitHub vouches for, a way for
+  GitHub to give any answer a test needs, and six new tests, each failing before the
+  change), with
+  [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
+- **III.37 leaves the grouped-case example.** The example in the `uncarried_runs` docstring
+  of [scripts/check_fidelity.py](../../scripts/check_fidelity.py) drops III.37, whose case
+  with the centre on AC gets a proof of its own, `Prop37.centre_on_secant`, on ship R1's
+  train. The docstring holds before and after that train lands. I.14 remains as the example
+  of a "similarly" that one argument already covers. The docstring is the only change to
+  the script; the check is unchanged.
+- **I.39 and I.40 now follow Euclid's reductio to its end.** I.40's companion
+  `Prop40.general` does so too, so their records' route is `euclid`. Under "The follow-ups
+  to the precision pass", the entry "Two more kinds of passage, and what 'argued another
+  way' means" called them "one step changed". It is superseded on this point and stays as
+  history. [review/SCHEMA.md](../../review/SCHEMA.md) now uses III.8 as its example of a
+  `modified` route: its last step compares the angles at the centre by I.24.
+- **The overlap screen unfolds every defined word, tries each statement bare, and has its
+  cases.** Argon's second review of the Book III release (section 1.3) found that
+  [`Audit/screen.py`](../../Audit/screen.py), the mechanical screen behind the
+  [overlap catalogue](../reports/overlaps.md), unfolded only the phrases `SameSideOf` to
+  `LinesMeet`, so that a statement written with `Triangle`, `Collinear`, `circumference` or
+  `standing` was searched only in part
+  ([#78](https://github.com/jackChallis/stoicheia/issues/78)); we thank Argon for reading
+  the screen so closely. The screen now begins with a pass that lists every definition of
+  the edition that a statement or a rule reaches, through the bodies of other definitions,
+  and stops if one is not provided for. It unfolds 35 words: the phrases, `Triangle` and
+  `Collinear` among them, and the words for "any number" that stage 2 brought in
+  (`InOrder`, `segments`, `endOf`, `triples`, `Magnitude.sum`, and the areas of a figure
+  given with its triangles), those defined by cases or by recursion through the equations
+  Lean proves for them. It gives the magnitudes Lean chooses (`circumference`, `standing`,
+  `rect`) and the order "not greater" to `grind` by what their definitions say and nothing
+  more, a lemma each, proved from Lean's choice alone, and leaves the kinds of magnitude,
+  with their sum, order and zero, as the axioms state them. Every file of tries first proves
+  thirteen goals that `grind` closes only with the definitions unfolded, each checked to
+  fail without them, so a screen that has stopped unfolding stops. Its docstring says what
+  stays unsearched: that two descriptions choose the same magnitude when they hold of the
+  same things; that every point of a circle measures a circumference alike, which is III.21;
+  and what a figure fitted from triangles (`Fitted`) or given with them (`Rectilineal`,
+  `Apart`) holds by its formation, since `grind` does not reason by induction or open a
+  structure's fields of itself. Each attempt with rules is now two tries, `grind` as it
+  chooses and `grind` forward, each with the budget the two used to share; a try that runs
+  out of time is tried again with four times as much, and one that runs out again, or that
+  stops on any other error, is listed as not searched to the end. A try leaves out the rules
+  `grind` refuses, finding nothing in them to match: the twelve that only say that a point,
+  a straight line or a circle exists, and, forward, fourteen more with no hypothesis it can
+  start from. Given one, `grind` refused the whole list, so that until now more than a
+  quarter of the attempts, the families Postulates and Constructions and every pair with
+  either among them, were made with no search at all. A bare try, with no rule, comes first
+  for each statement, so that a statement that holds by its definitions alone is listed
+  apart and not counted as a rule's. Each job runs on one thread. The screen names the
+  statements it closes; fails if III.2, III.5 or III.6, the rows it has always found, stops
+  closing by a rule; and stops if a Lean process ends before its file does, or an error
+  falls in a file's preamble. It reads a try's messages from its `set_option` line, so that
+  one reported there is not counted against the try before it, and it reads an error
+  whether or not Lean names its kind after the word, as Lean 4.35 does for some
+  (`error(lean.unknownIdentifier): …`), so that such an error in the pass over the rules
+  stops the screen, and a try that stops on one is listed.
+  [`tests/test_screen.py`](../../tests/test_screen.py) (new) puts the screen's own functions
+  to small cases with no Lean: the attempts and tries it makes, its reading of Lean's logs,
+  of the rules refused and of the definitions reached, and the known rows. The protected
+  file it adds is `tests/test_screen.py`. `Audit/screen.py` is not a protected path today;
+  it is named here too, as [#96](https://github.com/jackChallis/stoicheia/issues/96) may
+  make `Audit/` one. CI runs neither the screen, which takes about an hour and a half of
+  processor time, nor its cases yet: whoever changes the screen runs both. Run on the
+  statements of `89c5da4`, the 99 propositions, the three porisms and the 19 companions, its
+  48,400 attempts made 90,629 tries and closed III.2, III.5 and III.6, each by a rule, and
+  nothing else; no statement closed bare. Seven tries ran out of time even with four times
+  the budget, all of them III.34 from Postulate 4, alone or with Postulate 5 and at most one
+  more family. III.34 asks for three points on its circle, and the rules among those that
+  put a point on a circle that has none need a straight line, which III.34 does not give
+  and none of those rules draws. The catalogue's account of the screen, and III.30 among
+  its near misses, follow on a text branch of their own, after this one.
+- **What the checks of train H8b judge lands in train H9b.** As the entry for H8b says, the
+  content its branches held back lands here, after the checks: `docs/ACCEPTANCE.md`'s lines
+  for style everywhere (`tooling/style-everywhere`), the README's table and the overlap
+  catalogue's lines on the Circle rule (`tooling/no-circle-2`), the README's row for the
+  negative tests (`tooling/planted-faults`), PROGRAM.md's open work
+  (`tooling/safe-push-followups`) and the overlap screen itself
+  (`tooling/overlap-screen-unfold`, #78), whose tests landed with H8b. Acceptance in CI and
+  its page wait for a fix (#35). The protected file this train changes is `Audit/screen.py`:
+  the screen unfolds every defined word, tries each statement bare, and has its cases, as the
+  entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
+  statement changes.
+
+## 20 October 2026
+
+- **The modern figure's checks precede its place on the page.** The owner asked for
+  figures for the modern mathematics, drawn to match Euclid's figure and carrying the
+  same letters (#49). S24 checks `figures/<book>/NN-modern.svg`: Euclid's figure's canvas
+  width, palette and strokes; the title "I.N: the modern way", with no caption; a Euclid's
+  figure beside it; and a paragraph opening "**The modern way.**" in its mishnah.
+  S25 checks its text at size 17: Euclid's figure's letters upright, and the paragraph's
+  own lower-case names italic, with numbers and the signs of an expression. It reads names
+  in TeX and plain words, including Book II's "AC = a", but excludes English letters
+  after apostrophes, those of e.g. and i.e., and the article "a" unless a sign, digit or
+  bracket stands beside it. Comments, code and link targets supply no names.
+  The shared `check_style.modern_span` selects the paragraph from the original Markdown
+  blocks and retains its source offsets before comments and code are masked: indented
+  code supplies no paragraph, multiline inline comments preserve its boundaries, and
+  code spans across lines supply no names. Its regression cases stay with these checks.
+  The rules are S24 and S25, formerly S23 and S24 on this branch; S22 remains letters in
+  backticks, S23 is reserved for `tooling/no-conflict-markers`, and S26 for
+  `tooling/letter-check` (#68). No contiguous range including the reserved rules is
+  claimed. Acceptance assigns both modern rules to P8 and each modern figure's findings
+  to its proposition; S22 remains a text rule.
+  These checks read the source paragraph and SVGs, not the generated page, and apply to
+  the thirty modern figures already on main. Train H10 carries the checks; the page
+  insertion, its two renderer tests, the regenerated pages and the checklist's P8 sentence
+  follow in train F1. `scripts/render.py` and `docs/ACCEPTANCE.md` keep main's copies.
+  The protected files changed are
+  [scripts/check_style.py](../../scripts/check_style.py),
+  [scripts/check_acceptance.py](../../scripts/check_acceptance.py) and
+  [tests/test_check_style.py](../../tests/test_check_style.py).
+  [STYLE](../STYLE.md), sections 2, 7 and 8, describes the figure and its rules.

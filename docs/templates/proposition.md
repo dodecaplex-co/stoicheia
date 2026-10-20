@@ -93,7 +93,7 @@ Proposed record entries (review/SCHEMA.md):
 - [statement] scope, hypotheses, omitted, note, short:
 - [route] kind, note:
 - [representation] tags:
-- [overlap] rule, also, kind (states / gives / step), note (required for a step):
+- [overlap] rule, also, kind (states / gives / step, always named), note (required for a step):
 - [[passage]] at, kind (helper / grouped / case / given / different / unformalized), helper, note:
 - [figure] case, and note (a line for under the figure, where the drawing departs from Heath's):
 
@@ -179,7 +179,7 @@ tags = []                      # from review/terms.toml
 # [overlap]
 # rule = "Tacit.…"
 # also = ["Tacit.…"]           # any rules that contain it, or supply its step, only with `rule`
-# kind = "states"              # or "gives", "step": the catalogue's kind of its row
+# kind = "states"              # required: or "gives", "step", the catalogue's kind of its row
 # note = "…"                   # required for a step: which step, in which proof
 
 # [coverage]                   # required when partial

@@ -11,19 +11,40 @@ note = "Euclid shows two triangles. The companions repeat his second step for ea
 
 [representation]
 tags = ["figure-with-dissection"]
-note = "A rectilineal figure is given with its division into triangles, and the division is checked: as triangles that lie apart, no point inside two of them, for any figure, a figure with a hole among them (`Prop45.apart`); as triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or as Euclid and Oliver Byrne divide it, from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles, the triangles then shown to fit together (`Prop45.fan`, by `Fitted.fan`). Equal to the figure means equal to those triangles together. That every figure can be so divided, and that another division gives the same sum, are not proved here; David Hilbert proved the second, for his measure of area. The construction does not use that the triangles lie apart, which is what makes their sum the figure's: it is `Prop45.sum`'s, for any triangles. The main theorem is an area-sum theorem: it takes ABD and DBC unchecked, and they may overlap. It represents Euclid's pictured division when A and C lie on opposite sides of DB; that checked case is `Prop45.fan` for the corners D, A, B, C. Full coverage is carried by `Prop45.apart`, for any figure given with any division into triangles that lie apart."
+note = "A rectilineal figure is given with its division into triangles, and the division is checked: as triangles that lie apart, no point inside two of them, for any figure, a figure with a hole among them (`Prop45.apart`); as triangles glued edge to edge in a suitable order, for a figure with one boundary (`Prop45.figure`); or as Euclid and Oliver Byrne divide it, from one corner, neighbours on opposite sides of the straight line they share and the angles at that corner together less than four right angles, the triangles then shown to fit together (`Prop45.fan`, by `Fitted.fan`). Equal to the figure means equal to those triangles together. That every figure can be so divided, and that another division gives the same sum, are not proved here; David Hilbert proved the second, for his measure of area. In `Prop45.fan`, `Fitted.fan` proves that the triangles fit together; the Lean does not state that their figure is bounded by the closed line through the corners in order, though this is true in the plane. The construction does not use that the triangles lie apart, which is what makes their sum the figure's: it is `Prop45.sum`'s, for any triangles. The main theorem is an area-sum theorem: it takes ABD and DBC unchecked, and they may overlap. It represents Euclid's pictured division when A and C lie on opposite sides of DB; that checked case is `Prop45.fan` for the corners D, A, B, C. Full coverage is carried by `Prop45.apart`, for any figure given with any division into triangles that lie apart."
 
 [[passage]]
 at = "Let DB be joined, and let the parallelogram FH be constructed equal to the triangle ABD"
 kind = "carried"
 note = "I.42 builds FH on half of BD itself, so H falls on D: the Lean writes D wherever Euclid writes H, and its parallelogram KFLM overlaps ABCD."
 
+[[passage]]
+at = "Thus, with a straight line GH"
+kind = "helper"
+helper = "SameSideOf.trans_opposite"
+note = "Euclid uses KH and HM on opposite sides of GH to apply I.14. Beneath the first constructions, the Lean requests I.44's parallelogram across GH from K and uses `SameSideOf.trans_opposite` to put M on the other side; I.14 now puts H between K and M, with D for H in the Lean."
+
+[[passage]]
+at = "And, since the triangle ABD is equal to the parallelogram FH"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid takes FH and GM together as KFLM, equal to the two triangles of ABCD. With H between K and M and G between F and L from the two applications of I.14, `quadArea_add_of_parallelograms` joins the areas; the Lean writes D for H and takes ABCD as the given sum of ABD and DBC, as the representation note explains."
+
 [figure]
 case = "Euclid's figure ABCD, cut by DB into the two triangles ABD and DBC"
 note = "H is drawn on D, as the Lean has it; Heath draws the parallelogram apart."
 
 [review]
-stage = "exceptions"
-commit = "5d6b1f6"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:b695b9572f39b180"
+run = "brief 0005 stage 5, ship C5 re-read"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

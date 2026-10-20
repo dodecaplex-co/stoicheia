@@ -79,7 +79,7 @@ If it no longer matches, a statement changed after the review.
   declared as a passage (`case`, `helper` or `given`).
 - **modified**: Euclid's argument, with a step done materially differently: another
   construction, or one of his steps, or a real case within his statement, argued another
-  way (I.39 and I.40, whose Lean makes the end of his reductio direct).
+  way (III.8, whose last step compares the angles at the centre by I.24).
 - **alternative**: a different proof altogether, labelled as one on the page (III.24's
   proof by the radii, once stage 3 gives Euclid's own).
 
@@ -98,7 +98,7 @@ A tag of kind `scope` may appear only when the statement is restricted or partia
 |---|---|---|---|
 | `rule` | string | yes | The axiom, named as facts.json names it: `"Tacit.inside_of_between"`. |
 | `also` | list of strings | no | Any further axioms that contain the proposition, or supply its step, only together with `rule`, as III.6 needs `"Tacit.centre_inside"`. |
-| `kind` | `"states"`, `"gives"` or `"step"` | no | The kind of the proposition's row in the catalogue (below). |
+| `kind` | `"states"`, `"gives"` or `"step"` | yes | The kind of the proposition's row in the catalogue (below). |
 | `note` | string | for `step` | What follows for the page: the proof reconstructs Euclid's reasoning within our foundations, and does not establish the rule. For a step, which step the rule carries, and in which proof. |
 
 The catalogue of overlaps, with their audit lemmas, is
@@ -119,8 +119,8 @@ book's summary, which also heads the book's index, its section of CERTIFICATE.md
 row of README.md. A rule that states the proposition or gives it at once "contains" it;
 a rule that supplies a step "supplies a step of a proof of it", and is never said to
 contain it. Each says too whether our proof rests on the rule, from facts.json's
-`axioms`. A record that names no kind is worded as one whose rule contains the
-proposition, so every record names its kind.
+`axioms`. Every `[overlap]` names its kind, and one that does not is a fault, so no
+page words an overlap by a guess.
 
 ### `[coverage]`: the clause map
 
@@ -181,11 +181,10 @@ The section needs at least one of the two, and is left out when it has neither.
 | `lean` | `"sha256:"` and 16 hex digits | stamp | `heath.file_hash` of `Elements/Book<book>/PropNN.lean`, which holds the theorem, its helpers, porism and companions. |
 | `reviewer` | string | yes | Who reviewed it: a person's name, or the model, as `"Claude Opus 5.5"`. From stage `full`, the model and its role, as `"Claude Opus 5.5, records crew"`, so that a reader can tell the reviewer from the proofs' authors. |
 | `run` | string | from stage `full` | The run the review was made in: the brief and stage, and the workflow, as `"brief 0005 stage 5, workflow wf_…"`. |
-| `items` | table | no | Acceptance items (stage 6), each `"pass"`, `"fail"` or `"n/a"`. |
+| `items` | table | no | Acceptance items, each `"pass"`, `"fail"` or `"n/a"`. |
 
-The acceptance checklist, `docs/ACCEPTANCE.md`, will fix the item keys. Until it exists
-`items` stays empty. The keys foreseen for brief 0005's review items 9 to 14 are
-`statement`, `passages`, `representations`, `commentary`, `figures` and `signoff`.
+The acceptance checklist, [docs/ACCEPTANCE.md](../docs/ACCEPTANCE.md), fixes the item keys
+and when an item counts, in "Recording a review item".
 
 ## Stamps
 
@@ -200,7 +199,7 @@ require_stamp=False)` reads a record without them.
 
 - the sections and keys are known, the required ones present, each of its type;
 - `scope`, `route.kind`, passage `kind`, `[overlap]` `kind` and `stage` take only the
-  values above, and an overlap of the kind `step` has a `note`;
+  values above; an `[overlap]` names its `kind`, and one of the kind `step` has a `note`;
 - a restricted statement lists `hypotheses` and has no `omitted`; a partial one lists
   `omitted` and has `[coverage]`; a full one has neither; both kinds need a `note`;
 - `note` is one line of at most 160 characters;

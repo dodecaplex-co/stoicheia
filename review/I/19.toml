@@ -6,8 +6,23 @@ fingerprint = "sha256:e765e06d4d7f208e"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "For, if not, AC is either equal to AB or less"
+kind = "helper"
+helper = "Tacit.lt_trichotomy"
+note = "Euclid takes equality and less as the only possibilities when AC is not greater than AB. The Lean obtains this division from `Tacit.lt_trichotomy`, a rule of magnitudes we assume, not a proof (System E §3.5)."
+
 [review]
-stage = "exceptions"
-commit = "2a34715"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "882b90a4"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:25107852e253b12a"
+run = "brief 0005 stage 5, ship C5 re-read"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

@@ -7,11 +7,37 @@ fingerprint = "sha256:562b9178b7b445ef"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let AD be produced in both directions to E, F"
+kind = "given"
+note = "Euclid produces AD in both directions. The statement already supplies the whole straight line through A and D, even when the vertices coincide; the following parallels determine E and F on it."
+
+[[passage]]
+at = "through B let BE be drawn parallel to CA"
+kind = "helper"
+helper = "Prop31.parallelogram"
+note = "Euclid draws BE and CF and reads their meetings E and F with AD from the figure. `Prop31.parallelogram` uses I.31 and `Prop30.meet` (I.30, which Heath does not cite here) to find both points on the whole straight line AD and prove that ACBE and DBCF are parallelograms, which Euclid's next sentence asserts without a reason, naming ACBE as EBCA."
+
+[[passage]]
+at = "But the halves of equal things are equal to one another"
+kind = "helper"
+helper = "Magnitude.eq_of_add_self_eq"
+note = "Euclid infers that the triangles are equal because they are halves of equal parallelograms; the bracketed sentence states the principle this inference needs, but Heath reports that Heiberg judges its words interpolated. `Magnitude.eq_of_add_self_eq` proves the step from the order of magnitudes: if one half were less, its double would be less too."
+
 [figure]
 case = "the vertices A and D apart"
 
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "e8b6113"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:d59da7f6e4de693e"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
