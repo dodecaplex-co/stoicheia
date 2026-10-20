@@ -11,11 +11,13 @@ records current; CI runs it on every push.
 3. Without a build, on a copy of `facts.json`: Postulate 1 weakened in the printed
    statements no longer matches the axiom lock; `Touches`, a word only Book III's
    statements use, given another meaning no longer matches it either; a changed
-   statement of III.1's porism makes III.1's review record stale; and `Centre`, no
-   longer among the opaque primitives (as if it had been made a `def`), is caught.
+   statement of III.1's porism makes III.1's review record stale; `Centre`, no
+   longer among the opaque primitives (as if it had been made a `def`), is caught; and
+   placement among III.26's shared steps is caught, while III.24, given it too, is not
+   blamed.
 4. A changed Lean file makes its review record stale (I.1).
-5. III.16's review record without its unformalized passage leaves a run of `--` lines
-   with no Lean beneath it undeclared.
+5. III.16's review record without the passage that declares its angle clauses, of
+   whatever kind, leaves a run of `--` lines with no Lean beneath it undeclared.
 6. A remark planted in I.5 between two sentences that share one step of Lean leaves the
    first with no Lean of its own: a remark ends a run and carries nothing. A second
    remark, between the next sentence and its Lean, does not stop that Lean carrying it.
@@ -30,7 +32,10 @@ records current; CI runs it on every push.
    literal holding `/-`, `-/`, `]` or `"`, and one in an interpolated string's hole, so
    the scan must read Lean's literals as Lean does; a string whose braces Lean could
    read as code is caught too. The files are read, not built.
-9. One build with planted assumptions, the certificate recomputed:
+9. A lemma of the `Placement` namespace named in Book III's shared steps
+   (`Squares.lean`), outside placement's own files, III.24's and `Arcs.lean`, read from
+   the source, is caught; the word in a comment there is not.
+10. One build with planted assumptions, the certificate recomputed:
    - in I.16, Postulate 5, a planted Euclidean-only rule (`Tacit.Euclidean.planted`)
      and an axiom declared in I.16's own file after a docstring on the same line:
      each is caught, so are the count of Euclid's assumptions and the two planted
@@ -40,15 +45,15 @@ records current; CI runs it on every push.
    - a helper of I.16 that mentions I.22 only in its statement: the certificate's
      walk reads types as well as proofs, so I.16 is caught citing a later proposition;
    - a `sorry` in I.16's proof: Book I is complete, so I.16 not proved is caught.
-10. An em dash in I.1's mishnah: `check_style.py` fails with S1 and the file's name.
-11. A relative link to a missing file in README.md: `check_links.py` names the link
+11. An em dash in I.1's mishnah: `check_style.py` fails with S1 and the file's name.
+12. A relative link to a missing file in README.md: `check_links.py` names the link
     and its source file.
-12. I.1's generated page left stale beside a changed mishnah: after `render.py`, the
+13. I.1's generated page left stale beside a changed mishnah: after `render.py`, the
     section 8 `git status --porcelain` command names the changed page. Editing just
     the page would be repaired back to HEAD and leave that status clean.
-13. An axiom dropped from an audit lemma's expected list: `lake build Audit` fails
+14. An axiom dropped from an audit lemma's expected list: `lake build Audit` fails
     with the file's name and a `#guard_msgs` mismatch; the restored audit must build.
-14. A corrupt header in I.1's compiled `.olean`: leanchecker, invoked as in
+15. A corrupt header in I.1's compiled `.olean`: leanchecker, invoked as in
     `check_kernel.py`, fails naming the file and its invalid header. The original
     bytes are restored, a rebuild is required, and on success the whole environment
     is replayed.
@@ -61,10 +66,10 @@ checks show", records these limits.
 
 Every new plant restores its inputs in `finally`; the freshness plant also restores
 all renderer outputs.
-Tests 9, 13 and 14 attempt a restoration build; if it fails or is interrupted, every
+Tests 10, 14 and 15 attempt a restoration build; if it fails or is interrupted, every
 file in `.lake/build` returns to its saved contents and presence or absence before
-the plant, including dependent modules, hashes and traces. Test 9 always restores or
-removes `Planted.*` outputs in a nested `finally`. Tests 10 to 14 report elapsed time,
+the plant, including dependent modules, hashes and traces. Test 10 always restores or
+removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15 report elapsed time,
 restoration included. An outer `finally` compares Git status with the entry status,
 including on interruption, without replacing an exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
@@ -373,6 +378,22 @@ def primitive_not_opaque() -> None:
                    "Centre: no longer an opaque primitive")
 
 
+def placement_called() -> None:
+    """Placement among the shared steps of III.26, on a copy of facts.json, is caught; III.24,
+    the one entry that may call on it, is given the same step and is not blamed."""
+    step = {"name": "BookIII.placement", "brings_in": ["I.7"],
+            "file": "Elements/BookIII/Placement.lean", "line": 1}
+
+    def change(facts):
+        for ref in ("III.24", "III.26"):
+            steps = entry(facts, ref)["shared_steps"]
+            if not any(s.get("name") == step["name"] for s in steps):
+                steps.append(dict(step))
+    expect_failure("placement among III.26's shared steps in facts.json", with_facts(change),
+                   "III.26: calls on BookIII.placement",
+                   unwanted=("III.24: calls on",))
+
+
 def native_decide() -> None:
     rel = "Elements/BookI/Prop16.lean"
     saved = replace_once(rel, "\nend Elements.BookI", "\n/-- Planted by scripts/negative_tests.py. "
@@ -581,6 +602,26 @@ def forbidden_commands() -> None:
                 path.unlink(missing_ok=True)
 
 
+def placement_named() -> None:
+    """A lemma of the `Placement` namespace named in Squares.lean, Book III's shared steps,
+    read from the source: caught on its line. The word in a comment on the line before
+    cites nothing, and is not caught."""
+    rel = "Elements/BookIII/Squares.lean"
+    marker = "\nend Elements\n"
+    saved = replace_once(rel, marker,
+                         "\n-- The word placement, in a comment, cites nothing.\n"
+                         "/-- Planted by scripts/negative_tests.py. -/\n"
+                         "theorem planted_placement : True := (fun _ => trivial) @Placement.dist\n"
+                         + marker)
+    before = saved[:saved.index(marker)].count("\n") + 1
+    try:
+        expect_failure("a lemma of placement named in Squares.lean", fidelity(),
+                       f"{rel}:{before + 3}: names `Placement`",
+                       unwanted=(f"{rel}:{before + 1}:",))
+    finally:
+        (ROOT / rel).write_text(saved)
+
+
 def stale_lean() -> None:
     path = ROOT / "Elements" / "BookI" / "Prop01.lean"
     saved = path.read_text()
@@ -606,8 +647,10 @@ def toml_blocks(text: str) -> list[str]:
 
 def undeclared_run() -> None:
     """Drop the [[passage]] tables that begin within III.16's runs of `--` lines with no
-    Lean beneath them, and the run of the unformalized angle clauses must be caught: the
-    message names it by its first words, since the runs before it are caught too."""
+    Lean beneath them, and the run of the angle clauses must be caught: the message names
+    it by its first words, since the runs before it are caught too. The passage that
+    declares that run may be of any kind (left in Euclid's words, or argued another way
+    by a companion); what is tested is that a run no passage declares is caught."""
     import tomllib
     record = heath.review_path("III", 16)
     src = heath.lean_path("III", 16).read_text()
@@ -619,16 +662,18 @@ def undeclared_run() -> None:
         table = tomllib.loads(block).get("passage", [{}])[0] if block.lstrip().startswith("[[passage]]") else {}
         at = check_fidelity._plain(table.get("at", "")) if table else None
         if at and any(ln in run.lines and words.startswith(at) for run in runs for ln, words in starts):
-            dropped.append(table.get("kind"))
+            dropped.append(at)
         else:
             kept.append(block)
-    if "unformalized" not in dropped:
-        failures.append("III.16's unformalized passage: review/III/16.toml declares none in "
-                        "the run of `--` lines with no Lean beneath it; update this test")
+    angles = check_fidelity._plain("I say further that the angle of the")
+    if not any(at.startswith(angles) for at in dropped):
+        failures.append("III.16's angle clauses: review/III/16.toml declares no passage in "
+                        "the run of `--` lines with no Lean beneath it that begins 'I say "
+                        "further that the angle of the'; update this test")
         return
     record.write_text("".join(kept))
     try:
-        expect_failure("III.16's record without its unformalized passage", fidelity(),
+        expect_failure("III.16's record without the passage on its angle clauses", fidelity(),
                        "III.16: the `--` lines from 'I say further that the angle of the'")
     finally:
         record.write_text(saved)
@@ -656,6 +701,12 @@ def remark_ends_run() -> None:
 
 
 def planted_assumptions() -> None:
+    # The count of Euclid's assumptions is the lock's, read before anything is planted:
+    # the planted rule makes one more, whatever the foundations hold.
+    lock = check_fidelity.read_lock()
+    assert lock is not None, "Certificate/axioms.lock is missing"
+    locked = len(lock[0])
+
     facts = (ROOT / "facts.json").read_text()
     outputs = BuildOutputs()
     planted_outputs = BuildOutputs("**/Elements/Foundations/Tacit/Planted.*")
@@ -713,7 +764,7 @@ def planted_assumptions() -> None:
                        "I.16: rests on Postulate5, Tacit.Euclidean.planted before I.29",
                        "BookI.sneaky: an axiom declared in Elements.BookI.Prop16, outside",
                        "I.16: rests on BookI.sneaky",
-                       "declares 88 axioms, not 87")
+                       f"declares {locked + 1} axioms, not {locked}")
         expect_failure("the planted axioms missing from the lock", result,
                        "Tacit.Euclidean.planted: an assumption not in Certificate/axioms.lock",
                        "BookI.sneaky: an assumption not in Certificate/axioms.lock")
@@ -754,11 +805,13 @@ def main() -> int:
         changed_word()
         stale_statement()
         primitive_not_opaque()
+        placement_called()
         stale_lean()
         undeclared_run()
         remark_ends_run()
         native_decide()
         forbidden_commands()
+        placement_named()
         planted_assumptions()
         for test in (style_error, broken_link, stale_page, changed_audit_pin, corrupt_olean):
             started = perf_counter()

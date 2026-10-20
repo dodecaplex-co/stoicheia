@@ -35,9 +35,17 @@ meaning = "Straight lines through the centre are excluded by hypothesis, so the 
 kind = "scope"
 meaning = "A clause about an angle contained by a straight line and a circumference is left out, since our angles are made by two straight lines; the rectilineal facts Euclid proves it by are stated (III.16, III.31)."
 
+[tag.mixed-angles-local]
+kind = "representation"
+meaning = "An angle contained by a straight line and a circumference (Definition III.7) is read as the region it opens near its vertex, and compared with a rectilineal angle placed at that vertex, along its straight arm and on its side, by containment near the vertex with whole small circles to spare: the comparisons use local containment of curved angular regions, and no general arithmetic or ratio theory of mixed angles is claimed, nor any motion of one (III.16, III.31)."
+
 [tag.centre-given]
 kind = "representation"
 meaning = "The circle comes with a centre, named or as `∃ G, Centre G α`, because a circle in Lean has a centre only when a hypothesis or Postulate 3 gives it one (brief 0004)."
+
+[tag.touching-whole-circles]
+kind = "representation"
+meaning = "Circles touching one another are read of the whole circles: touching within, no point of the inner is outside the outer; touching without, no point is within both; so touching circles cross nowhere, the reading Heath reports as Todhunter's (III.6, III.11–III.13)."
 
 [tag.segment-with-circle]
 kind = "representation"

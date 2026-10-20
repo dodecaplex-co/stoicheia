@@ -6,8 +6,59 @@ fingerprint = "sha256:de3dc6794ff74dad"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and let DE be joined"
+kind = "grouped"
+helper = "Parallelogram.figure"
+note = "Euclid joins DE and draws the parallels through B and H; `between_inner`, beneath the setting-out, puts B between C and D. `Parallelogram.figure` carries the three constructions together, drawing the parallels by I.31, finding their meetings by `Prop30.meet`, proving the further parallels by I.30 and ordering their points by `Parallel.between`."
+
+[[passage]]
+at = "and further through A let AK be drawn parallel"
+kind = "helper"
+helper = "Prop31.parallelogram"
+note = "Euclid draws AK parallel to CL and takes K on KM from the figure; `Prop31.parallelogram` draws the parallel by I.31, finds K by `Prop30.meet` and proves that LCAK is a parallelogram. `Parallelogram.complements` uses I.30 to prove CH and HF are parallelograms; CH is then used by I.36, in the division of CM, and by I.34 to identify the side HL of LG with BC."
+
+[[passage]]
+at = "Let CM be added to each"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid adds CM, treating it as CH and BM together. The Lean proves CM a parallelogram and `quadArea_add_of_parallelograms` proves that division; the addition is carried out in the next sentence."
+
+[[passage]]
+at = "therefore the whole AM is equal to the gnomon NOP"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid takes AM as AL and CM together. The Lean uses the order A, C, D proved beneath the setting-out, places L between K and M by `Parallel.between`, and joins the two areas by `quadArea_add_of_parallelograms`, giving the gnomon CH, BM and HF."
+
+[[passage]]
+at = "But AM is the rectangle AD, DB"
+kind = "helper"
+helper = "Square.about_diameter"
+note = "Euclid takes DM equal to DB from the square BM and treats AM as a rectangle. `Square.about_diameter` proves BM a square, `Prop30.parallel` (I.30, for which Heath gives no reference here) makes AK parallel to DM, and `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` identify AM."
+
+[[passage]]
+at = "Let LG, which is equal to the square on BC"
+kind = "helper"
+helper = "Square.about_diameter"
+note = "Euclid takes LG to be the square on BC. `Square.about_diameter` proves LG a square, and I.34 with `Square.eq_sq` identifies its area as the square on BC; the next sentence adds it to both sides."
+
+[[passage]]
+at = "But the gnomon NOP and LG are the whole square CEFD"
+kind = "helper"
+helper = "Parallelogram.about_diameter"
+note = "Euclid takes the gnomon NOP and LG together as the whole square CEFD. `Parallelogram.about_diameter` proves the complements are parallelograms, uses I.30 and `Between.of_inside` to join and order L, H and M, then joins the four pieces with `quadArea_add_of_parallelograms`."
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "50b595b"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:e79c7bc06dd9639a"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

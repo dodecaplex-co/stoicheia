@@ -12,8 +12,47 @@ at = "On BC, one of the sides of the triangle ABC"
 kind = "given"
 note = "The statement gives the point D within the triangle, and BD and DC are named by their ends, so nothing is constructed here."
 
+[[passage]]
+at = "For let BD be drawn through to E"
+kind = "helper"
+helper = "Prop21.through"
+note = "Euclid takes from his figure that BD produced meets AC beyond D; the Lean uses `crossbar` in `Prop21.through` to find E between A and C on the ray from B through D, since D lies within the angle ABC. The ray rules out B between D and E, and B and D lying on one side of AC rules out E between them (System E, Pasch 3), so D lies between B and E."
+
+[[passage]]
+at = "Let EC be added to each"
+kind = "helper"
+helper = "Tacit.add_lt_add_right"
+note = "Euclid adds EC both to the sum of AB and AE and to BE, keeping the first sum greater. The Lean uses `Tacit.add_lt_add_right`, a rule we assume, not a proof (System E §3.5)."
+
+[[passage]]
+at = "therefore BA, AC are greater than BE, EC"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid reads AE and EC together as AC because E lies between A and C. The Lean makes this replacement with `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1)."
+
+[[passage]]
+at = "let DB be added to each"
+kind = "helper"
+helper = "Tacit.add_lt_add_right"
+note = "Euclid adds DB both to the sum of CE and ED and to CD, keeping the first sum greater. The Lean uses `Tacit.add_lt_add_right`, a rule we assume, not a proof (System E §3.5)."
+
+[[passage]]
+at = "therefore CE, EB are greater than CD, DB"
+kind = "helper"
+helper = "Tacit.len_add_of_between"
+note = "Euclid reads ED and DB together as EB because D lies between E and B. The Lean makes this replacement with `Tacit.len_add_of_between`, a rule we assume, not a proof (System E, Diagram-segment 1)."
+
 [review]
-stage = "exceptions"
-commit = "2e1d5c1"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:043c9336dae4f96b"
+run = "brief 0005 stage 5, ship C5 re-read"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

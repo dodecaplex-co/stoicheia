@@ -8,8 +8,9 @@ circle. Astra pointed this out in the [outside review](outside-review-01.md), wi
 one-line proof compiled in Lean, and asked for this catalogue. We are grateful. Two later
 readings added to it, and we thank them too: a cold review by Claude saw that
 superposition supplies the steps of I.2 and I.3, and Argon's second review corrected our
-account of how each rule enters the proofs: the certificate counted a rule a proof reaches
-through a lemma as one it calls itself, and now keeps the two apart.
+account of how each rule enters the proofs (the certificate counted a rule a proof reaches
+through a lemma as one it calls itself, and now keeps the two apart), found defined words
+that our screen left folded, and saw that III.30 belongs among the near misses.
 
 A reconstruction that rests on such a rule does not establish the rule independently: it
 shows that Euclid's reasoning goes through within System E, not that the proposition holds
@@ -250,17 +251,50 @@ fewest rules in `direct_axioms`, three to five, but each cites propositions and 
 Euclid's argument.
 
 **A sweep of every rule.** We read each of the 81 tacit rules, with the postulates and
-Definition 15, against the 99 statements and the three porisms. Then a mechanical screen,
+Definition 15, against the 99 statements and the three porisms, and later against the 19
+companions that stages 2 and 4b brought in (I.40's, I.45's, II.1's and II.14's, and those
+of III.7, III.8 and III.17), and found no more. Then a mechanical screen,
 [Audit/screen.py](../../Audit/screen.py), had Lean's `grind` try every statement against
 every axiom alone, every family of axioms (the file that declares them) together, every
-pair of the 24 rules about circles, and every pair of families: 40,698 attempts over the
-99 propositions and the three porisms. It closed III.2, III.5 and III.6, and nothing
-else. The screen cannot draw a figure, for `grind` works with the points and circles a
-goal already names. I.7 needs two circles its statement never mentions, and I.23 a
-triangle laid down, so both came from reading. I.2 and I.3 need a triangle drawn and then
-laid down. The catalogue first listed them as near misses, since neither statement gives a
-triangle to move; but the same holds of I.7's circles, and they are rows now, with
-`Audit.I_2` and `Audit.I_3`.
+pair of the 24 rules about circles, and every pair of families. Its first run, 40,698
+attempts over the 99 propositions and the three porisms, closed III.2, III.5 and III.6, and
+nothing else. But it left defined words folded, `Triangle`, `Collinear`, `circumference`
+and `standing` among them, so that a statement written with them was searched only in part,
+as Argon's second review pointed out; and it lost more than a quarter of its attempts
+without a search, for `grind` refuses a rule in which it finds nothing to match, as it does
+the twelve rules that only say a point, a straight line or a circle exists, and with it the
+rest of the attempt, so that Postulates 4 and 5, for instance, were never tried with the
+diagram rules.
+
+The revised screen of `tooling/overlap-screen-unfold` (commit `760b974`) was run against
+library revision `89c5da4`. The linked `Audit/screen.py` gains the behaviours described here
+when that tooling lands. In the revised screen, every definition a statement or a rule
+reaches is unfolded, but for the kinds of magnitude, with their sum, order and zero, in
+which the rules are stated, and the magnitudes Lean chooses (`circumference`, `standing` and
+the rectangle `rect`), which are given by what their definitions say; each try leaves out
+the rules `grind` refuses, and each statement is also tried with no rule, so that one that
+holds by its definitions alone is not counted as a rule's. Run so over all 121 statements,
+the propositions, the porisms and the companions, the revised screen closed the same three,
+each by a rule, and nothing else; no statement closed with no rule. Seven of its 90,629
+tries ran out of time even with four times the usual allowance, all of them III.34 from
+Postulate 4, alone or with Postulate 5 and at most one more family. III.34 asks for three
+points on its circle, and the rules among those that put a point on a circle that has none
+need a straight line, which III.34 does not give and none of those rules draws. No try
+stopped on any other error. What the revised screen does not give `grind` is that every
+point of a circle measures a circumference alike: that is III.21, a proposition, so the near
+misses of the measure (below) are not found by it, and are not overlaps with a rule. Nor
+does it give `grind` that a magnitude Lean chooses is one magnitude under two descriptions
+that hold of the same points, as `standing_eq_circumference` and `standing_congr` show, so a
+statement that needs that step is not searched either. Nor does `grind` reason by induction,
+or open a figure's fields of itself, so what a figure given with its triangles holds by its
+formation is not searched, which only the companions of I.45 and II.14 speak of. The revised
+screen is not one of CI's checks: that run took about an hour and a half of processor time,
+and nothing runs it of itself; it should be run again when a statement or a rule changes. It
+cannot draw a figure, for `grind` works with the points and circles a goal already names.
+I.7 needs two circles its statement never mentions, and I.23 a triangle laid down, so both
+came from reading. I.2 and I.3 need a triangle drawn and then laid down. The catalogue first
+listed them as near misses, since neither statement gives a triangle to move; but the same
+holds of I.7's circles, and they are rows now, with `Audit.I_2` and `Audit.I_3`.
 
 **How each rule enters.** Argon's second review pointed out that `direct_axioms` counts a
 rule a proof reaches through a lemma as well as one its own Lean names, and found that
@@ -324,6 +358,19 @@ For each row we looked for a proof of the proposition's statement from at most t
   get a meaning of their own (brief 0005, stage 3). III.1 and III.25 take a centre from a
   hypothesis. These belong to the review records, under `[representation]` and
   `[statement]`.
+
+- **III.30, by the same measure.** I.4 makes the angles DAB and ABD equal, and they stand
+  on the halves DB and AD. Each half is measured by the angle standing on it, taken twice,
+  so the halves are equal. Euclid goes instead from the equal straight lines AD and DB, by
+  III.28, with his step that each half is less than a semicircle; his own III.26 would take
+  him from the equal angles to equal halves without either. What the measure saves is
+  III.26's work at the circumference, which it reduces to its definition and III.21.
+  `Audit.III_30_measure` proves III.30 so, with its own statement and its axioms pinned; it
+  cites III.21, through which every point of the circle measures a circumference alike, so
+  it is a near miss of the measure, not of a rule. Our III.30 follows Euclid, by III.28, as
+  [FORMALIZATION](../FORMALIZATION.md), section 5, asks. III.30's statement keeps the
+  measure when arcs get a meaning of their own ([brief 0006](../briefs/0006-statements.md),
+  stage 3), so this near miss stays.
 
 ## A separate piece of work
 
