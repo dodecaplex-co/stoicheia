@@ -361,19 +361,24 @@ own statements they stay `sorry`:
 - A2 and A4, `Closed.lean`: `closed_triangle_sides`, `area_cut_closed`,
   `triangle_cut_cover`;
 - A3, `Avoid.lean`: `triangle_point_avoiding`, `small_triangle`;
-- B1 to B4, `ConvexCover.lean` and `ConvexArea.lean`, with their shared facts in
+- B3 and B4, `ConvexCover.lean` and `ConvexArea.lean`, with their shared facts in
   `ConvexFacts.lean`: `ConvexOutline.rotate`, `ConvexOutline.reverse`,
   `convexRegion_rotate`, `fan_triangle`, `fan_apart`, `fan_covers` (the boundary bridge
   for every strictly convex outline), `fanSum_rotate` and `fanSum_reverse` (the fan has
-  one sum from every corner, either way round); and so the derivation `convex_fan`;
+  one sum from every corner, either way round); and so the derivation `convex_fan`.
+  B1 and B2 are not among them: the prototype proves their substance, but
+  `convex_diagonal_separates`, `convex_diagonal_split` and B4's `fanSum_rotateLeft`, in
+  `Arrangement.lean`, stay `sorry` on both branches;
 - B0, B5 and B6, `Cells.lean` with `ExtHelpers.lean` and `CutHelpers.lean`:
   `triangle_cell`, `fan_insert_between`, `boundary_fan_sum`, `convex_extreme_iff` and
   `convex_area_ext` (a cell's area depends only on its region);
-- and C1, `convex_cut`, in every case but one, resting on one new staged lemma: a line
-  that misses the cell, touches it at a corner or runs along a side, and the area of every
-  genuine cut, are proved; the construction of a genuine cut's two pieces (corner to
-  corner, corner to side, side to side), their convexity, the clipping conditions and
-  exact coverage are the statement `convex_cut_pieces`, with `sorry`.
+- and C1, `convex_cut`, in every case but one, resting on one new lemma of the prototype:
+  a line that misses the cell, touches it at a corner or runs along a side, and the area
+  of every genuine cut, are proved; the construction of a genuine cut's two pieces (corner
+  to corner, corner to side, side to side), their convexity, the clipping conditions and
+  exact coverage are the statement `convex_cut_pieces`, with `sorry`. That statement
+  exists only on `lean/figures-staging`: it is not staged with this brief's statements,
+  and is to be approved with the prototype (decision 6).
 
 None of them cites a proposition: an early version used I.21 for the straight line from a
 corner through a point inside a triangle, and now cites `inside_through`, proved from the
@@ -541,13 +546,13 @@ the intermediate obligations the route described in prose.
 | A3 | `triangle_point_avoiding`, `small_triangle` | finite choice, incidence and order; `exists_off_line` for the frame | `Avoid.lean`, staged; proved on `lean/figures-staging` |
 | A4 | `area_cut_closed`, `triangle_cut_cover` | existing area cut, zero area, Pasch | `Closed.lean`, staged; proved on `lean/figures-staging` |
 | B0 | `triangle_cell` | A2, singleton sum | `Cells.lean`, staged; proved on `lean/figures-staging` |
-| B1 | `convex_diagonal_separates` | supporting sides and incidence | `Arrangement.lean`, staged; its substance is proved in `ConvexFacts.lean` (`ear_opposite`, `cut_convex`) |
-| B2 | `convex_diagonal_split` | A2, B1 | `Arrangement.lean`, staged; the fan's induction proves its substance |
-| B3 | `fan_triangle`, `fan_apart`, `fan_covers`; `convex_fan` | B0, B2 | `ConvexCover.lean`, staged; proved on `lean/figures-staging`; `Division.lean`, derivation, resting there on no stub |
-| B4 | `fanSum_rotate`, `fanSum_reverse`, `fanSum_rotateLeft` | B1, probe flips and sums | `ConvexArea.lean`, staged; proved on `lean/figures-staging`; `fanSum_rotateLeft` in `Arrangement.lean`, staged |
+| B1 | `convex_diagonal_separates` | supporting sides and incidence | `Arrangement.lean`, staged, `sorry` on both branches; its substance is proved in the prototype's `ConvexFacts.lean` (`ear_opposite`, `cut_convex`) |
+| B2 | `convex_diagonal_split` | A2, B1 | `Arrangement.lean`, staged, `sorry` on both branches; the prototype's fan induction proves its substance |
+| B3 | `ConvexOutline.rotate`, `ConvexOutline.reverse`, `convexRegion_rotate`, `fan_triangle`, `fan_apart`, `fan_covers`; `convex_fan` | B0, B2 | `ConvexCover.lean`, staged; proved on `lean/figures-staging`; `Division.lean`, derivation, resting there on no stub |
+| B4 | `fanSum_rotate`, `fanSum_reverse`, `fanSum_rotateLeft` | B1, probe flips and sums | `ConvexArea.lean`, staged; proved on `lean/figures-staging`; `fanSum_rotateLeft` in `Arrangement.lean`, staged, `sorry` on both branches |
 | B5 | `fan_insert_between`, `boundary_fan_sum` | A4, B1, B4 | `Cells.lean`, staged; proved on `lean/figures-staging` |
 | B6 | `convex_extreme_iff`, `convex_area_ext` | A2, A3, B2 to B4 | `Cells.lean`, staged; proved on `lean/figures-staging`, citing no content |
-| C1 | `convex_cut`, `convex_cut_pieces` | A2 to A4, B1 to B5 | `Cells.lean`; `convex_cut` staged; proved on `lean/figures-staging` from `convex_cut_pieces`, staged |
+| C1 | `convex_cut` | A2 to A4, B1 to B5 | `Cells.lean`, staged; proved on `lean/figures-staging` from that branch's `convex_cut_pieces`, which has `sorry` and is not staged here |
 | C2 | `convex_tiles_area` | A1, A3, B6, C1 | `Cells.lean`, staged |
 | C3 | `convex_intersection` | C1 | `Cells.lean`, staged |
 | C4 | `Apart.area_eq_of_same_region`, `triangle_division_area` | A1, B0, C2, C3 | `Content.lean`, staged |
@@ -657,8 +662,10 @@ quietly weakening the statement.
    section 8 at the revision named in section 10, with their dependency checks, so
    that they may stay in `Staging/` (WORKFLOW, section 2). Recommended: they are the
    route's first wave, every one free of new axioms and all but `convex_cut` free of
-   `sorry`; `convex_cut` rests on the one staged lemma `convex_cut_pieces`. Until then they
-   stay on their branch, and the brief with its statements lands without them. Then
+   `sorry`; `convex_cut` rests on one lemma, `convex_cut_pieces`, with `sorry`, which exists
+   only on that branch and is not among the statements staged with this brief, so its
+   statement is approved, or not, with the prototype. Until then they stay on their branch,
+   and the brief with its statements lands without them. Then
    authorise the next prototypes: the genuine cut, ray parity, and exact coverage for a
    concave figure and a figure with a hole. Approving this plan alone is not evidence
    that those proofs exist.
@@ -678,7 +685,12 @@ The delivery is two branches from main at `39ae65c`. `docs/brief-0013-figures` h
 brief, the probe's scratch files and `Staging/Figures/` with every staged fact `sorry`
 and only the derivations proved; `lean/figures-staging`, stacked on it, adds the
 prototype proofs of section 8. Nothing else changes: no production Lean, Heath's text,
-review record, lock, check or generated file. `lake build Staging` builds every file
+review record, lock, check or generated file. What `scripts/check_acceptance.py` reports
+does change: it assigns the staged declarations of `Staging/Figures/BookI.lean` and
+`BookII.lean` to I.45 and II.14, which then fail P10, and adds E6 entries for the other
+files of `Staging/Figures/`, so this delivery holds the consolidation release of Books
+I–III (stage 6 of [PROGRAM](../PROGRAM.md)) until the companions, and the rest of
+`Staging/Figures/`, are promoted or retired. `lake build Staging` builds every file
 under `Staging/` without the root importing them.
 
 The same commands passed on the head of each branch, the commits that carry this text:
