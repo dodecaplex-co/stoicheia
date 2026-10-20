@@ -6,8 +6,7 @@ import Staging.Figures.ConvexArea
 # Staging: from side lines to a division of an outline
 
 Internal statements for brief 0013, all awaiting their own proofs. The convex
-precursors make the proposed dependency order explicit without changing the existing
-convex files. Regular rays and their parity are `good_ray_exists` and
+precursors make the proposed dependency order explicit. Regular rays and their parity are `good_ray_exists` and
 `crossing_parity_independent` in `Outline.lean`.
 
 The recommended division route selects cells of a finite arrangement. The first two

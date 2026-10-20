@@ -14,15 +14,6 @@ namespace Elements.Figures
 theorem division_exists (F : Outline) : ∃ R : Apart, Divides F.region R := by
   sorry
 
-/-- Exact closed coverage and disjoint interiors are both part of a division.
-This merely unpacks the proposed interface. -/
-theorem division_coverage (F : Outline) (R : Apart) (h : Divides F.region R) :
-    (∀ X : Point, Covers R.pieces X ↔ F.region X) ∧
-      R.pieces.Pairwise (fun s t => ∀ X : Point,
-        InsideTriangle X s.1 s.2.1 s.2.2 →
-          ¬ InsideTriangle X t.1 t.2.1 t.2.2) :=
-  ⟨h, R.apart⟩
-
 /-- The explicit fan divides a strictly convex outline. This interface derivation
 uses the staged triangle, separation and coverage theorems. -/
 theorem convex_fan {cs : List Point} (h : ConvexOutline cs) :

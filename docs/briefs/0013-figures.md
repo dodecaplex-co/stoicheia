@@ -17,6 +17,8 @@ checks in section 10 belong to the revision delivered.
 Heath's definitions, quoted from [the repository transcription](../../heath/I/front.md)
 (vol. 1, pp. 153–155), are:
 
+> 13. A boundary is that which is an extremity of anything.
+
 > 14. A figure is that which is contained by any boundary or boundaries.
 
 > 19. Rectilineal figures are those which are contained by straight lines, trilateral figures being those contained by three, quadrilateral those contained by four, and multilateral those contained by more than four straight lines.
@@ -31,7 +33,9 @@ Heath's definitions, quoted from [the repository transcription](../../heath/I/fr
 
 These quotations were checked against the repository transcription, not against the page images during this task.
 
-Definitions I.20 to I.22 classify triangles and quadrilaterals. They do not impose convexity on every multilateral figure. Definition I.23 concerns whole straight lines; the sides bounding a figure are finite straight lines.
+Definition I.13 gives the word the outline formalises: a boundary is an extremity, here
+the finite straight lines that end the figure. Definitions I.20 to I.22 classify triangles
+and quadrilaterals. They do not impose convexity on every multilateral figure. Definition I.23 concerns whole straight lines; the sides bounding a figure are finite straight lines.
 
 **The proposed domain is a nonempty bounded rectilineal region with finitely many boundary sides, described by finitely many simple closed contours.** Concave figures, holes, separate pieces and isolated contacts at corners are admitted. Infinite boundaries, zero-area appendages and a crossing traversal treated as a single simple contour are excluded.
 
@@ -94,7 +98,7 @@ Parity of triangles from a reference point would instead require independence fr
 ## 3. Divisions
 
 `Covers R.pieces X` means that X lies on or inside one triangle of `R : Apart`.
-The existing `Covers` takes a list of triangles. The existing
+`Covers` takes a list of triangles, and
 `Divides (U : Point → Prop) (R : Apart)` says that their closed union is exactly U.
 For an outline F the contract is `Divides F.region R`:
 
@@ -107,7 +111,6 @@ it left uncovered. `Apart` already requires nondegenerate triangles, at least on
 triangle, and pairwise disjoint interiors.
 
 - `division_exists` supplies an `Apart` division for every outline.
-- `division_coverage` unpacks exact coverage and disjoint interiors together.
 - `convex_fan` returns an `Apart` whose pieces are exactly `fan cs`, dividing
   `ConvexRegion cs`. Its derivation uses `fan_triangle`, `fan_apart` and
   `fan_covers` from `ConvexCover.lean`; the length condition supplies nonemptiness.
@@ -234,7 +237,6 @@ Before approval, WORKFLOW, section 2, permits interface derivations and explicit
 The accompanying text contains these interface derivations:
 
 - `loop_inside_iff` from ray independence.
-- `division_coverage` by unpacking the proposed division interface.
 - `divisions_equal`, `area_eq`, `area_congr`, `area_of_same_boundary` and `convex_fan_area` from the staged bridges.
 - The outline construction companions from division existence, content and the existing constructions.
 - `convex_fan` from the existing convex fan interfaces.
@@ -259,17 +261,18 @@ Only the book companions use `Elements.BookI.Staging` or `Elements.BookII.Stagin
 they lose `Staging` on promotion. Staged copies and obsolete checks are removed
 in the same change, so no declaration is duplicated.
 
-The eight existing files are read-only in this assignment. Their words, fields and
-theorem types stay unchanged. Each proposed home below requires approval; names
-of future files are proposals, not existing links.
+Each proposed home below requires approval; names of future files are proposals, not
+links. No staged fact cites a proposition of the *Elements*: the prototype's one use of I.21
+(the straight line from a corner through a point inside a triangle meets the opposite
+side) was replaced by `inside_through`, from the crossbar, so Book Zero can hold them.
 
 | Staged file or group | Eventual home | Writer responsible on promotion |
 |---|---|---|
 | `Convex.lean`, `Loops.lean`; definitions in `Avoid.lean`, `Cells.lean`, `Content.lean`, `OutlineArea.lean` | `Elements/Foundations/Figures.lean` | coordinator |
 | `Sums.lean` | `Elements/Figure/Sums.lean` | assigned sums contributor |
 | `Closed.lean`, `Avoid.lean` theorems | approved Book Zero modules | assigned finite-geometry contributor |
-| `ConvexCover.lean`, `ConvexArea.lean`; convex precursors in `Arrangement.lean` | approved Book Zero convex modules | one writer per file, named by coordinator |
-| `Cells.lean`, `Content.lean` theorems | approved Book Zero cells and content modules | cut and content contributors, with separate files |
+| `ConvexCover.lean`, `ConvexArea.lean`, and the prototype's `ConvexFacts.lean` and `ConvexAreaHelpers.lean`; convex precursors in `Arrangement.lean` | approved Book Zero convex modules | one writer per file, named by coordinator |
+| `Cells.lean`, `Content.lean` theorems, and the prototype's `ExtHelpers.lean` and `CutHelpers.lean` | approved Book Zero cells and content modules | cut and content contributors, with separate files |
 | `Outline.lean` | `Elements/Figure/Outlines.lean` | outline contributor |
 | `Arrangement.lean`, except the optional diagonal route | `Elements/Figure/Arrangements.lean` | arrangement contributor |
 | optional D5 to D7 in `Arrangement.lean` | approved shared Book I module after the latest cited proposition | diagonal contributor |
@@ -281,12 +284,13 @@ The new words are `SimpleLoop`, `ReducedLoop`, `GoodRay`, `RayCrosses`,
 `crossingCount`, `loopBoundary`, `loopInside`, `loopRegion`, `CompatibleLoops`,
 `Outline` and its fields, `Outline.boundary`, `Outline.depth`, `Outline.inside`,
 `Outline.region`, `singleOutline`, `RegionBoundary` and `Outline.area`.
-They join the already staged `sides`, `ClosedSide`, `ConvexOutline`, `ConvexRegion`,
-`fan`, `Covers`, `fanSum`, the cells and `Divides`, without competing definitions.
+They join `sides`, `ClosedSide`, `Half`, `ConvexOutline`, `ConvexRegion`, `fan`,
+`Covers`, `fanSum`, the cells and `Divides`, staged here too, with no competing
+definitions.
 
 The reachable vocabulary and generated auxiliaries join `Certificate/axioms.lock` through the existing lock procedure, with a decisions entry when approved statements use them. The axioms remain unchanged. Any required model and lock synchronisation follows the existing checks.
 
-Book Zero imports no proposition. In particular, it does not call `Fitted.fan` or II.14's area-positivity helper. The checked fan bridge stays beside I.45.
+Book Zero imports no proposition. In particular, it does not call `Fitted.fan`, II.14's area-positivity helper or I.21. The checked fan bridge stays beside I.45.
 
 The integrator owns `Elements/Companions.lean` and generated output. An independent reviewer owns the renewed semantic reviews. The edition contributor owns the assigned commentary and gap-account changes. The approved orders must give each file exactly one writer.
 
@@ -335,8 +339,9 @@ count corners, crossings and tiles. They do not measure geometry.
 
 ### Evidence already available
 
-The probe of 19 October, reported in `probe-area.md`, has two Lean files,
-`Probe/BoundaryBridge.lean` and `Probe/FanArea.lean`. It proves the closed-triangle
+The probe of 19 October has two Lean files, kept unbuilt as scratch proofs (WORKFLOW,
+section 2) in [`docs/reports/crew/scratch-figures/`](../reports/crew/scratch-figures/):
+`BoundaryBridge.lean` and `FanArea.lean`. It proves the closed-triangle
 half-plane bridge, exact coverage of a strictly convex quadrilateral by its two
 fan triangles, and `fanArea_rotate`, which moves the fan across one edge under
 explicit separation hypotheses, for a list of arbitrary finite length. The first
@@ -346,10 +351,11 @@ checks performed in this delivery. The library's `quadArea_rotate_of_cross` is
 already proved.
 
 On 19 October the route's first lemmas were proved as a prototype, on the branch
-`lean/figures-staging`, two sailors to each hard lemma and the better proof kept. Each
-of the following is proved in `Staging/Figures/` with no `sorry` in its dependency
-closure, no new axiom, and neither Postulate 5 nor superposition among the axioms
-`#print axioms` reports:
+`lean/figures-staging`, stacked on this brief, two sailors to each hard lemma and the
+better proof kept. On that branch each of the following is proved in `Staging/Figures/`
+with no `sorry` in its dependency closure, no new axiom, and neither Postulate 5 nor
+superposition among the axioms `#print axioms` reports (22 theorems); in the brief's
+own statements they stay `sorry`:
 
 - A1, `Sums.lean`: `sum_perm`, `sum_flatMap`, `sum_exchange`, `sum_filter_ne_zero`;
 - A2 and A4, `Closed.lean`: `closed_triangle_sides`, `area_cut_closed`,
@@ -363,16 +369,17 @@ closure, no new axiom, and neither Postulate 5 nor superposition among the axiom
 - B0, B5 and B6, `Cells.lean` with `ExtHelpers.lean` and `CutHelpers.lean`:
   `triangle_cell`, `fan_insert_between`, `boundary_fan_sum`, `convex_extreme_iff` and
   `convex_area_ext` (a cell's area depends only on its region);
-- C1, `convex_cut`, in every case but one: a line that misses the cell, touches it at a
-  corner or runs along a side, and the area of every genuine cut. What remains is the
-  construction of a genuine cut's two pieces (corner to corner, corner to side, side to
-  side), their convexity, the clipping conditions and exact coverage, stated as one
-  `sorry` inside the proof.
+- and C1, `convex_cut`, in every case but one, resting on one new staged lemma: a line
+  that misses the cell, touches it at a corner or runs along a side, and the area of every
+  genuine cut, are proved; the construction of a genuine cut's two pieces (corner to
+  corner, corner to side, side to side), their convexity, the clipping conditions and
+  exact coverage are the statement `convex_cut_pieces`, with `sorry`.
 
-`small_triangle`, `convex_extreme_iff` and `convex_area_ext` cite I.21
-(`BookI.Prop21.through`) for the straight line through a point inside a triangle, so
-their homes are in Book I after I.21, not in Book Zero; `small_triangle` also uses
-`exists_off_line`, with its circles. None of this decides the hard lemmas still due:
+None of them cites a proposition: an early version used I.21 for the straight line from a
+corner through a point inside a triangle, and now cites `inside_through`, proved from the
+crossbar. `small_triangle` uses `exists_off_line`, with its circles. Several helper lemmas
+of the cut restate facts proved elsewhere in the prototype under the names its proof uses,
+and are proved by citing them; promotion keeps one name for each. None of this decides the hard lemmas still due:
 the genuine cut, tiling, content, ray parity, exact cell selection and extraction of
 outlines.
 
@@ -517,7 +524,7 @@ means a checked interface derivation whose geometric dependencies remain pending
 A1 to A4, B0 to B6 and C1 to C4 are staged in the files named below. The reported
 convex prototype has the separate approval status described above.
 
-The existing `small_triangle` contract in `Avoid.lean` omits the route draft's
+The `small_triangle` contract in `Avoid.lean` omits the route draft's
 extra triangle-frame hypothesis. Its proof builds the frame: finite avoidance,
 incidence, order and side rules, and, with no frame supplied, `exists_point` and
 `exists_off_line`, which add the latter's circle and magnitude dependencies,
@@ -529,18 +536,18 @@ the intermediate obligations the route described in prose.
 
 | ID | Lemmas or contract | Dependencies | File and present status |
 |---|---|---|---|
-| A1 | `sum_perm`, `sum_flatMap`, `sum_exchange`, zero-term filtering | magnitude laws | `Sums.lean`, proved (prototype) |
-| A2 | `closed_triangle_sides` | incidence, order, sides, Pasch | `Closed.lean`, proved (prototype), from the probe |
-| A3 | `triangle_point_avoiding`, `small_triangle` | finite choice, incidence and order; I.21, and `exists_off_line` for the frame | `Avoid.lean`, proved (prototype) |
-| A4 | `area_cut_closed`, `triangle_cut_cover` | existing area cut, zero area, Pasch | `Closed.lean`, proved (prototype) |
-| B0 | `triangle_cell` | A2, singleton sum | `Cells.lean`, proved (prototype) |
+| A1 | `sum_perm`, `sum_flatMap`, `sum_exchange`, zero-term filtering | magnitude laws | `Sums.lean`, staged; proved on `lean/figures-staging` |
+| A2 | `closed_triangle_sides` | incidence, order, sides, Pasch | `Closed.lean`, staged; proved on `lean/figures-staging`, from the probe |
+| A3 | `triangle_point_avoiding`, `small_triangle` | finite choice, incidence and order; `exists_off_line` for the frame | `Avoid.lean`, staged; proved on `lean/figures-staging` |
+| A4 | `area_cut_closed`, `triangle_cut_cover` | existing area cut, zero area, Pasch | `Closed.lean`, staged; proved on `lean/figures-staging` |
+| B0 | `triangle_cell` | A2, singleton sum | `Cells.lean`, staged; proved on `lean/figures-staging` |
 | B1 | `convex_diagonal_separates` | supporting sides and incidence | `Arrangement.lean`, staged; its substance is proved in `ConvexFacts.lean` (`ear_opposite`, `cut_convex`) |
 | B2 | `convex_diagonal_split` | A2, B1 | `Arrangement.lean`, staged; the fan's induction proves its substance |
-| B3 | `fan_triangle`, `fan_apart`, `fan_covers`; `convex_fan` | B0, B2 | `ConvexCover.lean`, proved (prototype); `Division.lean`, derivation, now resting on no stub |
-| B4 | `fanSum_rotate`, `fanSum_reverse`, `fanSum_rotateLeft` | B1, probe flips and sums | `ConvexArea.lean`, proved (prototype); `fanSum_rotateLeft` in `Arrangement.lean`, staged |
-| B5 | `fan_insert_between`, `boundary_fan_sum` | A4, B1, B4 | `Cells.lean`, proved (prototype) |
-| B6 | `convex_extreme_iff`, `convex_area_ext` | A2, A3, B2 to B4 | `Cells.lean`, proved (prototype), citing no content |
-| C1 | `convex_cut` | A2 to A4, B1 to B5 | `Cells.lean`, proved but for the construction of a genuine cut's pieces |
+| B3 | `fan_triangle`, `fan_apart`, `fan_covers`; `convex_fan` | B0, B2 | `ConvexCover.lean`, staged; proved on `lean/figures-staging`; `Division.lean`, derivation, resting there on no stub |
+| B4 | `fanSum_rotate`, `fanSum_reverse`, `fanSum_rotateLeft` | B1, probe flips and sums | `ConvexArea.lean`, staged; proved on `lean/figures-staging`; `fanSum_rotateLeft` in `Arrangement.lean`, staged |
+| B5 | `fan_insert_between`, `boundary_fan_sum` | A4, B1, B4 | `Cells.lean`, staged; proved on `lean/figures-staging` |
+| B6 | `convex_extreme_iff`, `convex_area_ext` | A2, A3, B2 to B4 | `Cells.lean`, staged; proved on `lean/figures-staging`, citing no content |
+| C1 | `convex_cut`, `convex_cut_pieces` | A2 to A4, B1 to B5 | `Cells.lean`; `convex_cut` staged; proved on `lean/figures-staging` from `convex_cut_pieces`, staged |
 | C2 | `convex_tiles_area` | A1, A3, B6, C1 | `Cells.lean`, staged |
 | C3 | `convex_intersection` | C1 | `Cells.lean`, staged |
 | C4 | `Apart.area_eq_of_same_region`, `triangle_division_area` | A1, B0, C2, C3 | `Content.lean`, staged |
@@ -553,7 +560,7 @@ the intermediate obligations the route described in prose.
 | D6 | `simple_diagonal_partition` | A3, D3, D4, local side argument | `Arrangement.lean`, staged, optional route |
 | D7 | `simple_triangulation` | D4 to D6, or D9 | `Arrangement.lean`, staged, optional direct proof |
 | D8 | `convex_arrangement` | C1 | `Arrangement.lean`, staged |
-| D9 | `outline_enclosure`, `outline_side_lines`, `outline_cell_constant`, `outline_cells_cover`; `division_exists` | A3, B3, D2 to D4, D8, boundedness and local separation | `Arrangement.lean` and `Division.lean`, staged; `division_coverage` derived |
+| D9 | `outline_enclosure`, `outline_side_lines`, `outline_cell_constant`, `outline_cells_cover`; `division_exists` | A3, B3, D2 to D4, D8, boundedness and local separation | `Arrangement.lean` and `Division.lean`, staged |
 | D10 | `apart_has_outline` | A3, B1, D8, finite boundary graph | `Division.lean`, staged |
 | E1 | `Outline.area`, `divisions_equal`, `area_eq`, `area_congr`, `area_of_same_boundary`, `convex_fan_area` | C4, D9; boundary and convex bridges where used | `OutlineArea.lean`, definition and derivations |
 | E2 | `Prop45.outline`, `Prop14.outline`, `Prop14.outline_side` | D9, E1, existing constructions | `BookI.lean`, `BookII.lean`, derivations |
@@ -574,8 +581,7 @@ This is a proof dependency plan, not the import graph of the present stub files.
 For example, `Outline.lean` contains D3's contract before D2 is proved; it must not
 import `Arrangement.lean` and create a cycle. At proof assignment the coordinator
 must split the approved modules in dependency order. The extra B1, B2 and all-corner
-B4 contracts are staged in `Arrangement.lean` because this task may not edit the
-existing convex files. Their eventual home is with the convex facts, under one
+B4 contracts are staged in `Arrangement.lean`, beside the arrangement that uses them. Their eventual home is with the convex facts, under one
 writer. If a proof needs `Prop21.through`, it must reuse it in a Book I home; it
 cannot silently duplicate that proposition inside Book Zero.
 
@@ -611,9 +617,9 @@ its model's capacity available, not in sailor-days:
 
 That is about **10 to 15 working days**, some in parallel, so **two to three weeks
 of calendar time** once work can run; parity (D3), exact cell selection (D9) and
-extraction (D10) carry the risk, and each could double its line. The crew's model
-reached its usage limit on 19 October and is unavailable until 26 October, so no
-proof work can run before then unless that capacity is restored. The optional
+extraction (D10) carry the risk, and each could double its line. The proof crew's
+capacity ran out on 19 October and returns on 26 October, so no proof work can run
+before then unless it is restored. The optional
 diagonal route (D5 to D7) is not counted. Freeze the interfaces of the risky lemmas
 and try them first, before distributing the downstream proofs.
 
@@ -650,15 +656,12 @@ quietly weakening the statement.
 6. **Prototype approval.** The coordinator approves, or not, the prototype proofs of
    section 8 at the revision named in section 10, with their dependency checks, so
    that they may stay in `Staging/` (WORKFLOW, section 2). Recommended: they are the
-   route's first wave, every one free of `sorry` and of new axioms. Until then they
+   route's first wave, every one free of new axioms and all but `convex_cut` free of
+   `sorry`; `convex_cut` rests on the one staged lemma `convex_cut_pieces`. Until then they
    stay on their branch, and the brief with its statements lands without them. Then
    authorise the next prototypes: the genuine cut, ray parity, and exact coverage for a
    concave figure and a figure with a hole. Approving this plan alone is not evidence
    that those proofs exist.
-9. **The homes of three proved facts.** `small_triangle`, `convex_extreme_iff` and
-   `convex_area_ext` cite I.21 (`BookI.Prop21.through`). Recommended: give them, and
-   whatever cites them, a shared Book I module after I.21 and before I.45, rather than
-   reprove I.21's step in Book Zero.
 7. **Ownership.** Approve the homes in section 7, name one writer per file and split
    outline and arrangement dependencies before proofs begin. Recommended. Reconcile
    any shared vocabulary with brief 0012 without silently replacing its `Polygon`.
@@ -671,19 +674,20 @@ quietly weakening the statement.
 
 ## 10. Validation and acceptance
 
-The delivery is this brief and `Staging/Figures/`, from main at `39ae65c`: the brief
-with its statements (every staged fact with `sorry`, and the derivations), and, stacked on
-it, the prototype proofs of section 8 on `lean/figures-staging`. The results below are
-for the prototype branch, which contains both. Nothing outside `docs/briefs/0013-figures.md` and
-`Staging/Figures/` changes: no production Lean, Heath's text, review record, lock, check or
-generated file. `lake build Staging` builds every file under `Staging/` without the root
-importing them.
+The delivery is two branches from main at `39ae65c`. `docs/brief-0013-figures` holds this
+brief, the probe's scratch files and `Staging/Figures/` with every staged fact `sorry`
+and only the derivations proved; `lean/figures-staging`, stacked on it, adds the
+prototype proofs of section 8. Nothing else changes: no production Lean, Heath's text,
+review record, lock, check or generated file. `lake build Staging` builds every file
+under `Staging/` without the root importing them.
 
-| Command | Outcome |
+The same commands passed on the head of each branch, the commits that carry this text:
+
+| Command | Outcome on both branches |
 |---|---|
 | `lake build` | Passed, 137 jobs. |
 | `lake build Audit` | Passed, 139 jobs. |
-| `lake build Staging` | Passed, 189 jobs; 35 declarations in `Staging/Figures/` keep their own `sorry` (Arrangement 12, Outline 14, Cells 3, Content 2, Division 2, BookI 1), as staged. |
+| `lake build Staging` | Passed. Declarations of `Staging/Figures/` with their own `sorry`: 56 on the brief's branch (Outline 14, Arrangement 12, Cells 8, ConvexCover 6, Sums 4, Closed 3, Avoid 2, ConvexArea 2, Content 2, Division 2, BookI 1); 34 on the prototype's (Outline 14, Arrangement 12, Cells 3, Content 2, Division 2, BookI 1). |
 | `lake env lean Certificate/Facts.lean` | Passed: 99 propositions, 3 porisms, 19 companions, 87 axioms; `facts.json` unchanged. |
 | `python3 scripts/heath.py` | Passed. |
 | `python3 scripts/check_fidelity.py` | Passed: 99 propositions, the lock, policies and 99 review records. |
@@ -691,9 +695,10 @@ importing them.
 | `python3 scripts/check_links.py` | Passed. |
 | `python3 scripts/negative_tests.py` | Passed: every planted change caught. |
 | `python3 -I tests/model/run.py --fast` | Passed. |
-| `#print axioms` on the 22 prototype theorems of section 8 | No `sorryAx`, Postulate 5 or superposition; `convex_cut` alone still reaches `sorryAx`, through its one stated obligation. |
+| `#print axioms`, prototype branch, the 22 theorems of section 8 | No `sorryAx`, Postulate 5 or superposition. `convex_cut`, the 23rd, reaches `sorryAx` only through `convex_cut_pieces`. |
+| `lake env lean` on the two scratch files | Passed. |
 
-Every lake or Lean command followed `export PATH=$HOME/.elan/bin:$PATH`. The six quoted
+Every lake or Lean command followed `export PATH=$HOME/.elan/bin:$PATH`. The seven quoted
 definitions match `heath/I/front.md`. Elaboration with staged `sorry` is interface
 evidence, not geometric completion; no independent semantic approval of the prototype
 proofs, scan comparison or kernel replay is claimed.
