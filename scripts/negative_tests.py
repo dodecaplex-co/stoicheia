@@ -843,6 +843,8 @@ def main() -> int:
         changed_word()
         stale_statement()
         primitive_not_opaque()
+        circle_dependencies()
+        circle_renamed()
         placement_called()
         stale_lean()
         undeclared_run()
