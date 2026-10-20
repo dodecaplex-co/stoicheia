@@ -78,9 +78,9 @@ depend on the corresponding declarations remaining in the axiom registry.
   retained derived properties on purpose, where chance rarely meets them (three straight
   lines through one point, a right angle, two circles through a common point), over a
   large lattice and over fractions.
-- **[mutations.py](mutations.py)** weakens 15 rules on purpose, by dropping or loosening
-  one guard, and checks that each weakened rule has a counterexample. So the harness can
-  see a false rule when there is one.
+- **[mutations.py](mutations.py)** makes 15 deliberate changes to statements, most by
+  dropping or loosening a guard, and checks that each altered statement has a counterexample.
+  So the harness can see a false rule when there is one.
 - **[grid_check.py](grid_check.py)** and **[angle_check.py](angle_check.py)** are a second
   opinion, written separately: the incidence, order and circle rules exactly on a grid,
   and the angle, area, Postulate 4, Postulate 5 and superposition rules in floating point.
@@ -365,10 +365,11 @@ All three rules are now theorems, tested as derived properties.
 
 Many axioms and derived rules carry a guard that looks fussy: a point must be different
 from another, two lines or circles must differ, a point must be strictly inside. The
-mutation test drops or loosens 15 of them and finds a counterexample to each weakened
-rule. So each guard is doing work, and the harness can see a false rule.
+mutation test makes 15 changes to statements, most by dropping or loosening a guard,
+and finds a counterexample to each. So the guards tested do work, and the harness can
+see a false rule.
 
-| Mutation | What goes wrong without the guard |
+| Mutation | What goes wrong |
 |---|---|
 | `circles_meet_of_on_inside_outside` with `A` on or inside `α` | a small circle wholly inside a large one (the form printed in System E) |
 | `triple_incidence2` without `D` off `M` | `D` on `M` |

@@ -205,18 +205,18 @@ what it writes.
    constructors by `Model.Kind`'s. A project definition the law reaches, such as
    `Triangle`, `Collinear`, `CirclesMeet`, `IsRightAngle` or the magnitude instances,
    among them the present definition of `≤`, is translated the same way, once, into a
-   definition over `S` in dependency order. The axioms reach 37 words of the lock's
-   vocabulary: the seventeen opaque words, `Kind` and its three constructors, and 16
+   definition over `S` in dependency order. The axioms reach 36 words of the lock's
+   vocabulary: the seventeen opaque words, `Kind` and its three constructors, and 15
    definitions. Eight of those, the carriers of the magnitudes and their instances, are
    written by hand in `Model/Signature.lean`, since the signature's own fields need them to
-   be used at all, and the generator checks them rather than writing them; the other eight
+   be used at all, and the generator checks them rather than writing them; the other seven
    it writes. Lean's own constants, those of `Init` (`Eq`, `Ne`, `And`, `Or`, `Not`,
    `Exists`, `List`, `Membership.mem`, `LT.lt`, `HAdd.hAdd`, `OfNat.ofNat` and the like),
    stay as they are. **Any other constant is an error**, so nothing untranslated can reach
    the model. (One detail: Lean declares the library's `MagnitudeImpl` at every universe,
    since it generalizes the level of `NonemptyType`, and `Magnitude` uses it at universe 0;
    the field is that one, and the translation insists on it.)
-3. **Write a file a reader can read.** The output is plain Lean with no Mathlib: the eight
+3. **Write a file a reader can read.** The output is plain Lean with no Mathlib: the seven
    translated words, then each law as a definition named as in the lock, `Law.Postulate1 S`
    for `Postulate1` and `Law.Tacit.circles_meet S` for `Tacit.circles_meet`, laid out as a
    reader writes a law, its hypotheses filling the line:
@@ -243,7 +243,7 @@ what it writes.
    Postulate 5 stands apart from the other 47, so that a hyperbolic plane can later satisfy
    `Neutral` and fail it; so would any rule the library declared in
    `Elements.Tacit.Euclidean`, for the plane alone, of which there is none. The file's header
-   records the sha256 of the lock it was written from, with a table of the 37 words and what
+   records the sha256 of the lock it was written from, with a table of the 36 words and what
    each becomes, so the vocabulary is pinned with the lock's hash.
 4. **Assemble the model.** Each law is proved in the plane as a theorem of its own, named as
    its field, `Euclidean.circles_meet`, in a module of `Model/Euclidean/` that imports the
@@ -295,7 +295,7 @@ the original means. These checks do that, at every build.
   swapped arguments or a change in the order of the binders fails it, and the build with
   it. This covers all 48 laws and all 15 defined words they reach. The family checks in
   `Check/` retain the original library checks. They also compare each hand-translated law
-  with its generated field over any signature, except for the 39 retired axioms. Eight were
+  with its generated field over any signature, except for the 39 retired rules. Eight were
   retired first: `adjacent_eq_of_right`, `not_same_side_of_circles_meet`,
   `centre_unique`, `inside_of_between`, `exists_point_outside_circle`,
   `line_meets_circle_of_opposite_sides`, `triple_incidence3` and `inside_of_angle_add`;
@@ -331,7 +331,7 @@ the original means. These checks do that, at every build.
   hand translations of `Model/Hand.lean` and of seven files of `Model/Laws/`. The hand
   translations kept under suffixed names ([below](#proved-laws)), and the angle and
   superposition translations, which use words of their own written by hand, are compared
-  with the generated laws by the kernel in their files of `Check/`, apart from the eleven
+  with the generated laws by the kernel in their files of `Check/`, apart from the 47
   direct declaration comparisons just described.
 - **Completeness.** [Check/Generated.lean](Check/Generated.lean) checks that the axioms
   declared in `Elements.Foundations` are exactly the lock's `[axioms]`, so that none is
