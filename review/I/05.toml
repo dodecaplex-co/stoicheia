@@ -58,10 +58,10 @@ note = "Euclid identifies FBC and GCB with the angles under the base. The Lean u
 
 [review]
 stage = "full"
-commit = "8bdf0ef"
-reviewer = "Claude Opus 5.5, records review"
+commit = "006ac64c"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:434da0bb3337847c"
-run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+run = "Q watch, independent re-read at 006ac64c"
 
 [review.items]
 statement = "pass"
