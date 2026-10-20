@@ -1538,3 +1538,8 @@ findings:
   the keys and when an item counts, so the schema's `items` row and the sentence after the
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
+- **The sample identity in the safe-push tests uses the team's name.** The item the two
+  entries above left waiting for a tooling pull request of its own: a sample identity in
+  `scripts/test_safe_push.py`, a protected file, now uses
+  `Stoicheia Team <team@example.org>` instead of a person's name. This tooling-only change
+  leaves the test's meaning unchanged: an ordinary identity is not flagged.
