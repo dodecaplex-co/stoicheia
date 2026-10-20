@@ -1552,3 +1552,16 @@ findings:
   the Lean replacement it checks, and neither check is weakened. `Certificate/FIELDS.md`
   records the resulting `common_notions` contract. Protected files changed:
   `Certificate/Facts.lean`, `Certificate/FIELDS.md` and `scripts/heath.py`.
+  The focused regression adds two protected files, `tests/test_certificate.py` and
+  `tests/fixtures/CertificateCN4.lean`. It runs the certificate source in a temporary
+  Lake package, substituting the fixture for its `Elements` import and keeping
+  `facts.json` there. The fixture declares stand-ins with the exact fully qualified
+  names `Elements.Superposition.Derives.len_congr`,
+  `Elements.Superposition.Derives.angle_congr` and
+  `Elements.Superposition.Derives.area_congr`, so it runs before the Lean replacement.
+  Each constructor is tested directly and through a helper's value; reaching only the
+  inductive type's constructor list reports no C.N. 4. Every case must keep the same
+  axiom fields, with existing axioms used directly and inherited through a helper.
+  CI does not run this standalone test: the tooling writer and the integrator run
+  `python3 -I tests/test_certificate.py` after `lake build`, with the Lean tools on
+  `PATH`, on the revision delivered.
