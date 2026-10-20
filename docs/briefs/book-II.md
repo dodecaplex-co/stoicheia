@@ -112,5 +112,5 @@ so that each record's scope is `full`:
 
 Each main theorem keeps Euclid's worked configuration, with the general theorems beside it
 as companions. `exists_rect` proves that a rectangle contained by any two straight lines
-can be drawn. Book II never needs it, since it always draws its rectangles; it is there
-for later books and for anyone using the library.
+can be drawn. Book II's proofs already draw their rectangles; the lemma is there for later
+books and for anyone using the library.

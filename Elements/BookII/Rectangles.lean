@@ -104,10 +104,10 @@ theorem Rectangle.eq_rect (h : Rectangle P Q R S) (h₁ : ‖P Q‖ = ‖A B‖)
   h.contained.trans (rect_congr h₁ h₂)
 
 /-- Euclid takes for granted that the rectangle contained by two given straight
-lines can be described. We use II.1's construction: raise a perpendicular to AB
-at A on P's side [I. 11], produce it far enough to cut off AE equal to CD
-[I. 2, I. 3], and complete ABFE by parallels [I. 30, I. 31]. Both E and F lie
-on P's side of AB. Its angles are right (`Rectangle.of_right`), and its area is
+lines can be described. We carry out, from Book I, the construction that II.1
+makes: raise a perpendicular to AB at A on P's side [I. 11], produce it far
+enough to cut off AE equal to CD [I. 2, I. 3], and complete ABFE by parallels
+[I. 30, I. 31]. Both E and F lie on P's side of AB. Its angles are right (`Rectangle.of_right`), and its area is
 the rectangle contained by AB, CD (`Rectangle.eq_rect`).
 [I. 2, I. 3, I. 4, I. 11, I. 29, I. 30, I. 31, I. 34] -/
 theorem exists_rect {A B C D P : Point} (hAB : A ≠ B) (hCD : C ≠ D) (hP : ¬ Collinear A B P) :
