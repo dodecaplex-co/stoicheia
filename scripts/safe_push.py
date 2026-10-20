@@ -104,8 +104,8 @@ not help; origin/main's template, or the head's while origin/main has none), the
 coordinator has written its "What and why", its reviews (each with its commit and its
 findings) and its "Needs the owner's OK", read as GitHub shows them by CommonMark's
 rules (not in a comment, an HTML block or code, and a box only as a list item), and its
-"Unfinished work", checked as raw text (None, or a plain list of #N references to issues
-open with blocks-release). The title
+"Unfinished work", checked as raw text under a heading GitHub shows (None, or a plain
+list of #N references to issues open with blocks-release). The title
 and branch name, which go into main's merge commit, hold nothing the scan refuses, it
 carries a label for its kind and `security-review` when a protected path changes, and it
 is not a draft; a pull request labelled release waits until no blocks-release issue or
@@ -3186,7 +3186,9 @@ def section_problems(body: str, template: str | None, protected: bool) -> list[s
 
 # "Unfinished work" is read as raw text, never through `shown`: whatever GitHub might hide
 # or show differently is refused, so that what the gate reads is what a reader sees. The
-# one heading is this line exactly; the section runs to the next of the template's own
+# one heading is this line exactly, and `shown` must find it too, so that one in a comment,
+# an HTML block, code or a part safe_push writes cannot stand in for the section, which
+# GitHub would not show; the section runs to the next of the template's own
 # headings; only the template's own comment for it may stay, and nothing else but plain
 # ASCII: "None", or a list whose items each name an issue as #N.
 UNFINISHED_HEADING = "## Unfinished work"
@@ -3237,8 +3239,9 @@ def template_section(template: str | None) -> tuple[str | None, set[str]]:
 def unfinished_section(body: str, template: str | None = None) -> tuple[str, list[str]]:
     """The section's raw text, from its one heading to the next of the template's
     headings (to the end, with no template). Refused: a second heading, or any other
-    line reads_as_heading finds; a break GitHub makes where a line does not, or the reverse;
-    no following heading when the template has some."""
+    line reads_as_heading finds; a heading GitHub does not show (shown); a break GitHub
+    makes where a line does not, or the reverse; no following heading when the template
+    has some."""
     _, ends = template_section(template)
     lines = raw_lines(body or "")
     odd = [n for n, line in enumerate(lines, 1) if ODD_BREAK.search(line)]
@@ -3253,6 +3256,9 @@ def unfinished_section(body: str, template: str | None = None) -> tuple[str, lis
                     "edge, and no other line whose letters begin \"unfinished work\" or "
                     "are just \"unfinished\""
                     + "".join(f": {printable_text(line.strip())}" for line in alike[:1])]
+    if not any(line.rstrip() == UNFINISHED_HEADING for line, _ in shown(body)):
+        return "", ["the ## Unfinished work heading must be one GitHub shows: not in an HTML "
+                    "comment or block, in code, or in a part safe_push writes"]
     start = starts[0] + 1
     end = next((i for i in range(start, len(lines)) if lines[i].rstrip() in ends), None)
     if ends and end is None:

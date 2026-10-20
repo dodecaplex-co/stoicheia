@@ -664,15 +664,16 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    protected path changes) and "Needs the owner's OK". Boxes and other sections count
    where GitHub shows them, by CommonMark's rules; "Unfinished work" is read as raw text,
    so that nothing GitHub hides or shows differently can stand in for it. The body holds
-   the line `## Unfinished work` once, at the left edge, and no other line whose
-   letters, with tags and entities taken out, begin "unfinished work" or are just
-   "unfinished" (in a comment or code too, so not even a sentence may start with those
-   words); a heading disguised on purpose, in another alphabet or in crafted markup, is
-   for the reviews to find, as a false "None" is. The section runs to the template's
-   next heading. Taking out the template's own comment for it, where it stands on lines
-   of its own, it is plain ASCII with no markup (no links, code, HTML, other comments,
-   headings or entities): "None", with an optional full stop, or a list, each item `- `
-   or `* ` at the left
+   the line `## Unfinished work` once, at the left edge, where GitHub shows it as a
+   heading (not in a comment, an HTML block, code or a part safe_push writes), and no
+   other line whose letters, with tags and entities taken out, begin "unfinished work"
+   or are just "unfinished" (in a comment or code too, so not even a sentence may start
+   with those words); a heading disguised on purpose, in another alphabet or in crafted
+   markup, is for the reviews to find, as a false "None" is. The section runs to the
+   template's next heading. Taking out the template's own comment for it, where it
+   stands on lines of its own, it is plain ASCII with no markup (no links, code, HTML,
+   other comments, headings or entities): "None", with an optional full stop, or a list,
+   each item `- ` or `* ` at the left
    edge, wrapped with two to five spaces, naming its issue as a token `#N` (perhaps in
    parentheses, or before punctuation); any other `#`, or `GH-N`, is refused. Each
    issue is open with `blocks-release`, not a pull request, and of this repository by

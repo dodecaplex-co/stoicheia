@@ -2047,7 +2047,8 @@ findings:
   read of that list.
   Three rounds of independent review found ways for a renderer to show what a parser of
   the section did not read, so the section is read as raw text: the one line
-  `## Unfinished work`, no other line whose letters begin "unfinished work", and, apart
+  `## Unfinished work`, which GitHub must show as a heading, no other line whose letters
+  begin "unfinished work", and, apart
   from the template's own comment, plain ASCII with no markup, "None" or a list naming each
   issue as `#N` (WORKFLOW, section 10, step 4). Malformed pull request labels refuse;
   label comparisons ignore case; each named issue is bound to this repository by its

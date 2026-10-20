@@ -1936,8 +1936,9 @@ class Merge(Edge):
         self.assertEqual(self.merges(), [])
 
     def test_refresh_that_would_change_unfinished_work_refused(self):
-        # The statements part's end marker moved past "## Review records": the gates read
-        # the section as written, but writing the parts afresh would swallow it.
+        # The statements part's end marker moved past "## Review records": writing the
+        # parts afresh would swallow the section, so the gates, reading its heading as
+        # GitHub shows it without the parts safe_push writes, refuse it before any write.
         self.opened()
         self.unfinished_body("None")
         def move(s):
@@ -1954,7 +1955,8 @@ class Merge(Edge):
         r = self.merge()
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 1, out)
-        self.assertIn("would change its Unfinished work", out)
+        self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+        self.assertIn("must be one GitHub shows", out)
         self.assertEqual(len(edits()), before)      # the body was not written
         self.assertEqual(self.merges(), [])
 
@@ -2028,6 +2030,41 @@ class Merge(Edge):
         self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
         self.assertIn("exactly one", out)
         self.assertEqual(self.merges(), [])
+
+    def test_hidden_unfinished_heading_refuses_the_merge(self):
+        # The one raw heading, and the section after it saying None, where GitHub shows
+        # no heading: in a comment, code, an HTML block or a part safe_push writes.
+        self.opened()
+        body = ticked(self.gh_state()["prs"][0]["body"])
+        for before, after in (("<!--", "-->"), ("```", "```"), ("~~~", "~~~"),
+                              ("<div>", "</div>"),
+                              ("<!-- safe_push:custom begin -->",
+                               "<!-- safe_push:custom end -->")):
+            hidden = re.sub(r"## Unfinished work\n.*?(?=## Review records\n)",
+                            lambda m: f"{before}\n## Unfinished work\nNone\n"
+                                      f"## Review records\n{after}\n\n",
+                            body, count=1, flags=re.S)
+            with self.subTest(before=before):
+                self.set_gh(lambda s: s["prs"][0].update(body=hidden))
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertEqual(self.guard(out, "unfinished work"), "FAIL", out)
+                self.assertIn("must be one GitHub shows", out)
+                self.assertEqual(self.merges(), [])
+                self.assertEqual(self.origin_main(), BASE)
+
+    def test_unfinished_heading_after_closed_comment_code_and_html_merges(self):
+        self.opened()
+        self.set_gh(lambda s: s.update(issues=[self.blocker()]))
+        self.unfinished_body("- Prototype #38")
+        self.set_gh(lambda s: s["prs"][0].update(body=s["prs"][0]["body"].replace(
+            "## Unfinished work\n", "<!--\nA note.\n-->\n```\ncode\n```\n<div>\nA note.\n"
+            "</div>\n\n## Unfinished work\n", 1)))
+        r = self.merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
+        self.assertEqual(len(self.merges()), 1)
 
     def test_malformed_labels_refuse_release_without_stale_check_exemption(self):
         sha = self.opened()

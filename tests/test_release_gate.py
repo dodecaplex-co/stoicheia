@@ -133,6 +133,23 @@ class UnfinishedWork(unittest.TestCase):
                     self.assertEqual(verdict, "FAIL")
                     self.assertIn("exactly one ## Unfinished work heading", detail)
 
+    def test_a_heading_github_does_not_show_is_refused(self):
+        for before, after in (("<!--", "-->"), ("```", "```"), ("~~~", "~~~"),
+                              ("<div>", "</div>"), ("<details>", "</details>"),
+                              ("<!-- safe_push:custom begin -->",
+                               "<!-- safe_push:custom end -->")):
+            with self.subTest(before=before):
+                body = self.section("None").replace(
+                    "## Unfinished work\n", f"{before}\n## Unfinished work\nNone\n"
+                    f"## Review records\n{after}\n\n", 1)
+                verdict, detail = self.gate(body)
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn("must be one GitHub shows", detail)
+        # Each closed before the heading, it is shown, and the section is read.
+        shown_body = self.section("None", before="<!--\nA note.\n-->\n```\ncode\n```\n"
+                                  "<div>\nA note.\n</div>\n\n")
+        self.assertEqual(self.gate(shown_body), ("ok", "None"))
+
     def test_section_ends_only_at_the_templates_next_heading(self):
         for line in ("##", "## #", "# Next", "## Next", "### Next", "---", "===",
                      "## &nbsp;", "  ## Next"):
