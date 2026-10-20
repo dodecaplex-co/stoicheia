@@ -207,8 +207,10 @@ class RestorationTests(unittest.TestCase):
     def test_final_status_checked_without_replacing_original_exception(self):
         for final in ("unchanged", "changed", "failed", "raised"):
             with self.subTest(final=final):
+                negative.failures.clear()
                 status_calls = []
                 original = KeyboardInterrupt("plant interrupted")
+                output = io.StringIO()
                 def run(*cmd):
                     if cmd[:2] != ("git", "status"):
                         return subprocess.CompletedProcess(cmd, 0, "", "")
@@ -221,7 +223,8 @@ class RestorationTests(unittest.TestCase):
                         if final == "changed":
                             return subprocess.CompletedProcess(cmd, 0, " M unexpected\n", "")
                     return subprocess.CompletedProcess(cmd, 0, " M entry\n", "")
-                with patch.object(negative, "run", side_effect=run), \
+                with redirect_stdout(output), \
+                        patch.object(negative, "run", side_effect=run), \
                         patch.object(negative, "heath_word", side_effect=original):
                     with self.assertRaises(KeyboardInterrupt) as raised:
                         negative.main()
@@ -230,10 +233,22 @@ class RestorationTests(unittest.TestCase):
                 if final == "changed":
                     self.assertIn("the working tree did not return to its entry Git status",
                                   negative.failures)
+                    self.assertIn(
+                        "✗ the working tree did not return to its entry Git status:\n",
+                        output.getvalue())
+                    self.assertIn(" M unexpected\n", output.getvalue())
                 elif final == "failed":
                     self.assertIn("final Git status: exit 1", negative.failures)
+                    self.assertIn("✗ final Git status: exit 1\n", output.getvalue())
+                    self.assertIn("status failed\n", output.getvalue())
                 elif final == "raised":
-                    self.assertIn("final status unavailable", self.output.getvalue())
+                    self.assertIn(
+                        "Final Git status also failed: OSError: final status unavailable\n",
+                        output.getvalue())
+                else:
+                    self.assertIn(
+                        "✓ working tree restored to its entry Git status\n",
+                        output.getvalue())
 
 
 if __name__ == "__main__":

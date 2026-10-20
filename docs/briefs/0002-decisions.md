@@ -1564,6 +1564,7 @@ findings:
   `tests/test_negative_tests.py` tests failed and interrupted builds, saved and absent
   outputs, temporary-module cleanup, replay after a successful rebuild and the final
   status comparison in temporary directories, without Lean or Git. The script runs
-  these regressions before planting. Its docstring and the README's table state the
-  coverage and its limits. The protected files changed are `scripts/negative_tests.py`
-  and `tests/test_negative_tests.py`. No check is loosened.
+  these regressions before planting. Its docstring states the coverage and its limits;
+  the README table update is deferred to a later pull request after this check change.
+  The protected files changed are `scripts/negative_tests.py` and
+  `tests/test_negative_tests.py`. No check is loosened.
