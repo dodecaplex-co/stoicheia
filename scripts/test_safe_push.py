@@ -2434,6 +2434,105 @@ class DecisionEntries(Clone):
     ENTRY = "docs/decisions/2026-10-20-test.md"
     PATH = "scripts/check_style.py"
 
+    def decision_change(self, kind):
+        """Plant old mentions, then change each thing the four guards protect."""
+        old = (f"The earlier entry names `{self.PATH}`, `Certificate/axioms.lock`, "
+               "I.1 and `mishnah/test/`.\n")
+        source = {"page copy": DECISIONS, "readme copy": "docs/decisions/README.md",
+                  "undated copy": "docs/decisions/notes.md"}.get(kind, self.ENTRY)
+        base = self.commit("Record an earlier decision", {
+            source: self.text(DECISIONS) + "\n" + old if source == DECISIONS else old,
+            "mishnah/test/note.md": "A note.\n",
+        })
+        moved = "docs/decisions/2026-10-20-moved.md"
+        writes = {
+            self.PATH: self.text(self.PATH) + "\n# A comment for the test.\n",
+            safe_push.LOCK: self.text(safe_push.LOCK) + "\n# A comment for the test.\n",
+            "Elements/BookI/Prop01.lean": self.replaced(
+                "Elements/BookI/Prop01.lean", SIGNATURE_OLD, SIGNATURE_NEW),
+        }
+        remove = ["mishnah/test"]
+        if kind == "delete and re-add":
+            self.commit("Remove the earlier entry", remove=[self.ENTRY])
+            writes[self.ENTRY] = old
+        elif kind == "edit":
+            writes[self.ENTRY] = old.replace("earlier", "revised")
+        elif kind == "edit and add":
+            writes[self.ENTRY] = old + old.replace("earlier", "new")
+        else:
+            writes[moved] = old
+            if kind in ("rename", "rename and add"):
+                remove.append(self.ENTRY)
+            if kind == "rename and add":
+                writes[moved] += old.replace("earlier", "new")
+            if kind == "whitespace copy":
+                writes[moved] = " \t" + old.rstrip() + "\t \n"
+        sha = self.commit("Change the guarded files", writes, remove=remove)
+        return base, sha
+
+    def check_decision_change(self, kind, outcome):
+        base, sha = self.decision_change(kind)
+        for guard, args in ((safe_push.guard_protected, ()), (safe_push.guard_lock, ()),
+                            (safe_push.guard_statements, (WORK,)),
+                            (safe_push.guard_directories, ())):
+            with self.subTest(guard=guard.__name__):
+                rep = self.check_guard(guard, base, sha, *args)
+                self.assertEqual(rep.steps[-1].outcome, outcome, rep.steps)
+                if outcome == "FAIL":
+                    self.assertIn("no new line", rep.failed()[0].detail)
+                else:
+                    self.assertFalse(rep.failed(), rep.steps)
+
+    def test_rename_renews_no_approval(self):
+        self.check_decision_change("rename", "FAIL")
+
+    def test_rename_with_a_new_naming_line_passes(self):
+        self.check_decision_change("rename and add", "ok")
+
+    def test_copy_renews_no_approval(self):
+        self.check_decision_change("copy", "FAIL")
+
+    def test_copy_with_surrounding_whitespace_renews_no_approval(self):
+        self.check_decision_change("whitespace copy", "FAIL")
+
+    def test_copy_from_the_page_renews_no_approval(self):
+        self.check_decision_change("page copy", "FAIL")
+
+    def test_copy_from_the_folder_readme_renews_no_approval(self):
+        self.check_decision_change("readme copy", "FAIL")
+
+    def test_copy_from_an_undated_file_renews_no_approval(self):
+        self.check_decision_change("undated copy", "FAIL")
+
+    def test_delete_and_re_add_renews_no_approval(self):
+        self.check_decision_change("delete and re-add", "FAIL")
+
+    def test_old_entry_edited_in_place_renews_no_approval(self):
+        self.check_decision_change("edit", "FAIL")
+
+    def test_old_entry_with_a_new_naming_line_passes(self):
+        self.check_decision_change("edit and add", "ok")
+
+    def test_unreadable_base_record_refuses(self):
+        base, sha = self.decision_change("rename and add")
+        original_git = safe_push.git
+
+        def unreadable(repo, *args, **kwargs):
+            if args[:2] == ("cat-file", "blob"):
+                raise safe_push.Refusal("cannot read the base decision blob")
+            return original_git(repo, *args, **kwargs)
+
+        with mock.patch.object(safe_push, "git", side_effect=unreadable):
+            with self.assertRaisesRegex(safe_push.Refusal, "cannot read the base decision"):
+                safe_push.decision_hunks(WORK, base, sha)
+
+    def test_undecodable_base_record_refuses(self):
+        base = self.commit("An unreadable earlier entry", {self.ENTRY: b"\xff\n"})
+        sha = self.protected_change(f"`{self.PATH}` changes.",
+                                    "docs/decisions/2026-10-20-new.md")
+        with self.assertRaisesRegex(safe_push.Refusal, "could not decode the decisions record"):
+            safe_push.decision_hunks(WORK, base, sha)
+
     def check_guard(self, guard, base, sha, *args):
         rep = safe_push.Report()
         with contextlib.redirect_stdout(io.StringIO()):

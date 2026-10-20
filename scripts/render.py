@@ -44,11 +44,13 @@ later for the review records (tomllib).
 """
 
 import functools
+import html
 import json
 import re
 from datetime import date
 
 import check_fidelity
+import check_links
 import generated_counts
 from generated_counts import axiom_groups
 import heath
@@ -2219,9 +2221,29 @@ DECISION_ENTRIES = ROOT / "docs" / "decisions"
 DECISION_BEGIN = "<!-- decisions:entries begin -->"
 DECISION_END = "<!-- decisions:entries end -->"
 DECISION_FILE = re.compile(r"([0-9]{4}-[0-9]{2}-[0-9]{2})-[a-z0-9]+(?:-[a-z0-9]+)*\.md")
-DECISION_DATE = re.compile(r"(?m)^ {0,3}##[ \t]+\d{1,2} [A-Za-z]+ \d{4}(?:[ \t]+#+)?[ \t]*$")
+DECISION_DATE = re.compile(r"(?m)^ {0,3}##[ \t]+(\d{1,2} [A-Za-z]+ \d{4})"
+                           r"(?:[ \t]+#+)?[ \t]*$")
 MONTHS = ("January", "February", "March", "April", "May", "June", "July", "August",
           "September", "October", "November", "December")
+
+
+def decision_links(entry):
+    """Read entry links with check_links' readers, including wrapped destinations."""
+    lines = check_links.blank_code(entry)
+    text = "\n".join(lines)
+    spans = check_links.blank_spans(text)
+    for match in check_links.LINK_TEXT.finditer(spans):
+        target = check_links.destination(text, match.end())
+        if target is None:
+            raise SystemExit("docs/decisions: cannot read an inline link destination")
+        yield text.count("\n", 0, match.start()) + 1, target
+    for index, line in enumerate(lines):
+        following = lines[index + 1].lstrip() if index + 1 < len(lines) else ""
+        match = check_links.REF_DEF.match(line + " " + following)
+        if match:
+            yield index + 1, match.group(2).strip("<>")
+    for match in check_links.HTML_URL.finditer(spans):
+        yield text.count("\n", 0, match.start()) + 1, html.unescape(match.group(1)[1:-1])
 
 
 def decisions_page(text, folder):
@@ -2235,9 +2257,16 @@ def decisions_page(text, folder):
     if text.count(DECISION_BEGIN) != 1 or text.count(DECISION_END) != 1 or not markers:
         raise SystemExit("docs/briefs/0002-decisions.md needs one pair of decisions:entries "
                          "markers on separate lines at the page's end")
-    headings = re.findall(r"(?m)^## ([^\n]+)$", text[:markers.start()])
-    previous = headings[-1].strip() if headings else None
+    headings = DECISION_DATE.findall(text[:markers.start()])
+    previous = None
+    if headings:
+        day, month, year = headings[-1].split()
+        previous = f"{int(day)} {month} {int(year):04d}"
     parts = []
+    try:
+        folder = generated_counts.repository_path(ROOT, folder)
+    except ValueError as error:
+        raise SystemExit(f"docs/decisions: expected a folder of entry files: {error}") from None
     # Git keeps no empty folder: with no entry yet there is no folder, and no entry.
     # Anything else in its place (a file, a link) is refused.
     if not folder.exists() and not folder.is_symlink():
@@ -2263,6 +2292,18 @@ def decisions_page(text, folder):
                              "a date heading")
         if DECISION_BEGIN in entry or DECISION_END in entry:
             raise SystemExit(f"docs/decisions/{path.name}: entry text contains page markers")
+        try:
+            counts = generated_counts.markers(entry, f"docs/decisions/{path.name}")
+        except ValueError as error:
+            raise SystemExit(str(error)) from None
+        if counts:
+            raise SystemExit(f"docs/decisions/{path.name}: count markers are forbidden "
+                             "in dated history")
+        for number, target in decision_links(entry):
+            target = target.strip()
+            if not target or (check_links.relative(target) and not target.startswith("../")):
+                raise SystemExit(f"docs/decisions/{path.name}:{number}: relative links must "
+                                 "start with ../ so they resolve alike on the decisions page")
         heading = f"{day.day} {MONTHS[day.month - 1]} {day.year:04d}"
         if heading != previous:
             parts.append(f"## {heading}")

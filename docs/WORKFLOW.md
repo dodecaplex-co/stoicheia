@@ -540,7 +540,15 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
         new line naming it.
 
       For each of these, the push must add a mention: an old line that already named the
-      thing, edited in place, does not count.
+      thing, edited in place, does not count. An added line in a dated entry counts only
+      when neither the decisions page nor any file under `docs/decisions/` held that line
+      at origin/main, compared line by line with surrounding whitespace stripped. A
+      rename, copy, or deletion and re-addition of old text renews no approval; a new
+      naming line does. Entry files contain no date heading or count marker, since they
+      are dated history. Their relative links, inline or by reference, must start with
+      `../`, which resolves alike from `docs/decisions/` and `docs/briefs/`; same-folder
+      links and bare anchors are refused. The entries folder and its ancestors may not
+      be links. The renderer validates entries before writing any output.
    4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
       second, each step timed. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's

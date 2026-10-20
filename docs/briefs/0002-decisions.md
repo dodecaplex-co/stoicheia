@@ -2037,16 +2037,23 @@ findings:
   (#98 to #148), 24 changed it, and of 29 consecutive pairs, 16 would have conflicted had
   they been queued together, 13 of them on this page alone. So a decisions entry may now be a
   file of its own, `docs/decisions/<YYYY-MM-DD>-<slug>.md` (a valid date, then a short name
-  of lower-case letters and digits joined by hyphens; the entry's text, with no date heading),
-  and `scripts/render.py` assembles the entries, in file-name order, between the
+  of lower-case letters and digits joined by hyphens; the entry's text, with no date heading
+  or count marker, since entries are dated history). Relative links, inline or by reference,
+  must start with `../` so they resolve alike from the sibling folders `docs/decisions/`
+  and `docs/briefs/`; same-folder links and bare anchors are refused. The folder and its
+  ancestors may not be links. `scripts/render.py` validates the entries before writing,
+  and assembles them, in file-name order, between the
   `decisions:entries` markers at the end of this page, under their date headings, leaving out
   a heading that would repeat the one before it. Readers see the same page; the entries
   between the markers are generated output, the integrator's (WORKFLOW, section 4), and CI's
   freshness check now reads this page as well. With no entry files the page is unchanged.
   Every guard that asks for a new line in this page (a statement changed, the axiom lock, a
   protected path, a deleted directory) also accepts a new line in a dated entry file, a
-  relative link in an entry resolving from `docs/decisions/`; an old line edited in place
-  still does not count. The entries already on this page stay where they are. The protected
+  relative link in an entry resolving from `docs/decisions/`. An added entry line counts
+  only when neither this page nor any file under `docs/decisions/` held it at origin/main,
+  compared line by line with surrounding whitespace stripped. Renaming, copying, or deleting
+  and re-adding old text renews no approval; an old mention edited in place still does not
+  count. A new naming line does. The entries already on this page stay where they are. The protected
   files changed: `scripts/render.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
   `tests/test_render_decisions.py` and `.github/workflows/ci.yml`.
 

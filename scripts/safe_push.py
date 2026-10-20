@@ -1210,8 +1210,12 @@ def names_ref(text: str, ref: str) -> bool:
 def decision_hunks(repo, base, sha) -> list[Hunk]:
     """The decisions page's changes and those of dated entry files. The folder's
     README, invalid dates and files outside the entry filename form supply no
-    approval. An entry must be a regular file at the revision being checked."""
+    approval. An entry must be a regular file at the revision being checked. Its
+    added lines count only if no file of the decisions record held them at the
+    base, with surrounding whitespace stripped; moving old text adds no approval.
+    Removed lines stay in each hunk, so editing an old mention adds none either."""
     entries = {}
+    old_lines = None
     found = []
     for h in diff_hunks(repo, base, sha, DECISIONS, "docs/decisions/"):
         if h.path == DECISIONS:
@@ -1232,7 +1236,30 @@ def decision_hunks(repo, base, sha) -> list[Hunk]:
                 raise Refusal(f"could not read the decision entry {h.path} at {sha}")
             entries[h.path] = fields[0] in ("100644", "100755") and fields[1] == "blob"
         if entries[h.path]:
-            found.append(h)
+            if old_lines is None:
+                old_lines = set()
+                tree = git(repo, "ls-tree", "-r", "-z", base, "--", DECISIONS,
+                           "docs/decisions", binary=True)
+                for item in tree.split(b"\0"):
+                    if not item:
+                        continue
+                    metadata, separator, path = item.partition(b"\t")
+                    fields = metadata.split()
+                    if (not separator or len(fields) != 3
+                            or fields[0] not in (b"100644", b"100755")
+                            or fields[1] != b"blob"
+                            or not (path == DECISIONS.encode()
+                                    or path.startswith(b"docs/decisions/"))):
+                        raise Refusal(f"could not read the decisions record at {base}")
+                    try:
+                        text = git(repo, "cat-file", "blob", fields[2].decode("ascii"),
+                                   binary=True).decode("utf-8")
+                    except UnicodeError:
+                        raise Refusal(f"could not decode the decisions record at {base}") \
+                            from None
+                    old_lines.update(line.strip() for line in text.split("\n"))
+            found.append(h._replace(added=[a for a in h.added
+                                          if a.text.strip() not in old_lines]))
     return found
 
 
