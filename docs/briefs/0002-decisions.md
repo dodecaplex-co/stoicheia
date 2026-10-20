@@ -1841,7 +1841,7 @@ findings:
   carries as numbers (`GLYPHS_UPRIGHT`, `GLYPHS_ITALIC`), read once from the fonts, so that
   it still needs only Python's standard library; `path_rings` now also says which subpaths a
   Z closes, and what S20 reads is unchanged.
-  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains 62 cases of S26,
+  [`tests/test_check_style.py`](../../tests/test_check_style.py) gains cases of S26,
   among them one or more for each of seven faults that two reviews of the rule found: a
   stroke's width taken at a transform's mean stretch, a rect's rounded corners read as
   square, a circle of no radius read as drawn, an anchored label with a prime placed by its
@@ -1852,17 +1852,19 @@ findings:
   and foot, a letter's size and transform, and a prime; and, from a later review, three on
   what a line through a letter is called: two dashed by itself or by its group, called a
   dashed line, and one whose dasharray is none, called a line. A corner's radius is now
-  read in one pass, so that no attribute can make the script slow. And
+  read in one pass, so that no attribute can make the script slow. The next review adds
+  equivalent stroke-width spellings, text offsets before transforms, mitre joins with
+  inherited join style and limit, and single-point subpaths closed by Z with round caps.
+  Both figure entry points have cases requiring an S26 finding. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures. The matching words in
   [ACCEPTANCE](../ACCEPTANCE.md) follow in the content train; this branch keeps that
   page exactly as it is on origin/main.
   [STYLE](../STYLE.md), sections 7 and 8, gives the rule, and the reviewer's checklist, item
   16, asks that a letter naming one of Heath's points name no straight line or circle in the
-  Lean. A rule is added and nothing is weakened. The earlier figure work for #68 moves
-  Argon's letters and eight more found by the same measure; III.16's G stands clear of the
-  chord AC through the work on mixed angles
-  ([#57](https://github.com/jackChallis/stoicheia/issues/57)), whose page it is.
+  Lean. A rule is added and nothing is weakened. The earlier figure work for #68 corrects
+  fifteen labels, III.16's G among them, through `text/letter-collisions`. G's correction
+  is in `a4cb748c`, brought into train D3 by `c2424533`.
 
   This check change lands in train H10 before the content it judges, with the checklist's
   words following in the content train, as H9b followed H8b for style everywhere. Its number

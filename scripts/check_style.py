@@ -2177,7 +2177,8 @@ COLOUR_ATTRS = ("fill", "stroke", "stop-color", "color", "flood-color", "lightin
 DRAWN = {"line", "path", "polyline", "polygon", "circle", "ellipse", "rect"}
 FILLED = DRAWN - {"line"}
 INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "stroke-linecap",
-             "stroke-dasharray", "font-size", "font-style", "text-anchor")
+             "stroke-linejoin", "stroke-miterlimit", "stroke-dasharray",
+             "font-size", "font-style", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
 
 # The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
@@ -2501,12 +2502,13 @@ def path_rings(d: str, closed: list[bool] | None = None) -> list[list[tuple[floa
     """A path's subpaths as the rings of points its fill closes: straight segments as they
     are, arcs and curves in short straight pieces. A path is read as far as it is well
     formed, as SVG draws it. Given a list `closed`, it gains a flag for each ring: whether
-    a Z closes it, as its stroke is drawn (S26)."""
+    a Z closes it, as its stroke is drawn (S26), retaining a single point closed by Z
+    for its caps. A moveto alone draws nothing."""
     rings: list[list[tuple[float, float]]] = []
     ring: list[tuple[float, float]] = []
 
     def keep(shut: bool) -> None:
-        if len(ring) > 1:
+        if len(ring) > 1 or (closed is not None and shut and ring):
             rings.append(ring)
             if closed is not None:
                 closed.append(shut)
@@ -2812,15 +2814,16 @@ def glyph_hull(own, eff, m, s: str) -> list[tuple[float, float]]:
     """The corners of the hull of letter s's capital (S26), upright or italic as its
     font-style sets it, where the text element puts it: x and y give the start of its
     baseline (its middle or its end, by text-anchor, the whole label's advance counted,
-    a prime or a subscript after the capital included), at its font-size, transforms
-    applied."""
+    a prime or a subscript after the capital included), at its font-size, with dx and dy
+    applied before transforms."""
     glyphs = GLYPHS_ITALIC if letter_style(eff) == "italic" else GLYPHS_UPRIGHT
     advance, corners = glyphs[s[0]]
     whole = advance + sum(SUFFIXES.get(c, 0) for c in s[1:])
     k = (number(eff.get("font-size")) or 16.0) / EM
-    x = coord(own.get("x")) + {"middle": -whole * k / 2, "end": -whole * k}.get(
+    x = coord(own.get("x")) + coord(own.get("dx")) + {
+        "middle": -whole * k / 2, "end": -whole * k}.get(
         (eff.get("text-anchor") or "start").strip(), 0.0)
-    y = coord(own.get("y"))
+    y = coord(own.get("y")) + coord(own.get("dy"))
     return [at(m, x + corners[i] * k, y - corners[i + 1] * k)
             for i in range(0, len(corners), 2)]
 
@@ -2872,6 +2875,28 @@ def rect_outline(own) -> list[tuple[float, float]] | None:
     return out + out[:1]
 
 
+def miter_joins(run, half: float, limit: float, closed: bool):
+    """The filled corners beyond a round join, before transforms, up to the mitre limit.
+    Repeated points give no direction; a closed run joins at its first point too."""
+    points = [p for i, p in enumerate(run) if i == 0 or p != run[i - 1]]
+    if closed and len(points) > 2 and points[0] == points[-1]:
+        points = points[-2:-1] + points
+    for a, b, c in zip(points, points[1:], points[2:]):
+        ab, bc = math.dist(a, b), math.dist(b, c)
+        ux, uy = (b[0] - a[0]) / ab, (b[1] - a[1]) / ab
+        vx, vy = (c[0] - b[0]) / bc, (c[1] - b[1]) / bc
+        turn, den = ux * vy - uy * vx, 1 + ux * vx + uy * vy
+        if turn == 0 or den <= 0:
+            continue
+        if math.sqrt(2 / den) > limit:
+            continue
+        side = 1 if turn > 0 else -1
+        nx, ny, mx, my = side * uy, -side * ux, side * vy, -side * vx
+        yield [b, (b[0] + half * nx, b[1] + half * ny),
+               (b[0] + half * (nx + mx) / den, b[1] + half * (ny + my) / den),
+               (b[0] + half * mx, b[1] + half * my), b]
+
+
 def strokes(root):
     """(what it is, its points, half its width) for each stroke a figure draws, as a run
     of straight pieces: a line, a polyline, a polygon or a rect's outline (its corners
@@ -2879,13 +2904,15 @@ def strokes(root):
     a circle or an ellipse in short straight pieces; transforms applied, the width taken
     at the most the transform stretches it, a dashed stroke read whole, and a stroke SVG
     does not draw (a circle of no radius, a rect of no width, a run of no length with
-    butt caps) left out (S26)."""
+    butt caps) left out (S26). Mitre joins add closed filled outlines with None in place
+    of half the width: their outlines already include it."""
     for el, own, eff, m, _ in placed(root):
         t = tag(el)
-        w = number(eff.get("stroke-width"))
+        w = length(eff.get("stroke-width"))
         w = 1.0 if w is None else w
         if t not in DRAWN or (eff.get("stroke") or "none").strip().lower() == "none" or w <= 0:
             continue
+        closed = []
         if t == "line":
             runs = [[(coord(own.get("x1")), coord(own.get("y1"))),
                      (coord(own.get("x2")), coord(own.get("y2")))]]
@@ -2894,7 +2921,6 @@ def strokes(root):
             run = list(zip(v[0::2], v[1::2]))
             runs = [run + run[:1] if t == "polygon" else run]
         elif t == "path":
-            closed: list[bool] = []
             rings = path_rings(own.get("d", ""), closed)
             runs = [ring + ring[:1] if shut else ring for ring, shut in zip(rings, closed)]
         elif t == "rect":
@@ -2913,9 +2939,17 @@ def strokes(root):
         kind = "a dashed line" if dashed and t == "line" else \
             ("an " if t == "ellipse" else "a ") + t
         butt = (eff.get("stroke-linecap") or "butt").strip() == "butt"
-        for run in runs:
+        miter = (eff.get("stroke-linejoin") or "miter").strip() == "miter"
+        limit = length(eff.get("stroke-miterlimit"))
+        limit = 4.0 if limit is None else limit
+        if t != "path":
+            closed = [t in ("polygon", "rect", "circle", "ellipse")] * len(runs)
+        for run, shut in zip(runs, closed):
             if len(run) > 1 and not (butt and all(p == run[0] for p in run)):
                 yield kind, [at(m, x, y) for x, y in run], half
+                if miter and t in ("polyline", "polygon", "path", "rect"):
+                    for join in miter_joins(run, w / 2, limit, shut):
+                        yield kind, [at(m, x, y) for x, y in join], None
 
 
 def dots(root):
@@ -2958,19 +2992,22 @@ def hull_gap(hull, a, b) -> float:
 
 
 def nearest(hull, pieces, spots) -> tuple[float, str] | None:
-    """How near a stroke (less half its width) or a dot (less its radius) comes to a
-    letter's hull, and what it is; None if none comes within CLEAR."""
+    """How near a stroke (less half its width), its filled mitre joins, or a dot (less
+    its radius) comes to a letter's hull, and what it is; None if none comes within CLEAR."""
     xs, ys = [p[0] for p in hull], [p[1] for p in hull]
     best = None
     for kind, run, half in pieces:
-        reach = CLEAR + half
+        if half is None and enclosed([run], *hull[0], False):
+            if best is None or best[0] > 0:
+                best = (0.0, kind)
+        reach = CLEAR + (half or 0.0)
         lo_x, hi_x = min(xs) - reach, max(xs) + reach
         lo_y, hi_y = min(ys) - reach, max(ys) + reach
         for a, b in zip(run, run[1:]):
             if max(a[0], b[0]) < lo_x or min(a[0], b[0]) > hi_x \
                     or max(a[1], b[1]) < lo_y or min(a[1], b[1]) > hi_y:
                 continue
-            gap = hull_gap(hull, a, b) - half
+            gap = hull_gap(hull, a, b) - (half or 0.0)
             if gap < CLEAR and (best is None or gap < best[0]):
                 best = (gap, kind)
     for p, r in spots:

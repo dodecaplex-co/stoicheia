@@ -27,7 +27,10 @@ it, put to the script's own patterns and functions:
   corners however their radius is spelled; follows a transform, of a stroke or of the
   letter, taking a width and a radius at the most it stretches them; measures a letter
   upright or italic, and at its size, as its figure sets it, and places it by its anchor
-  and the whole label's advance. And it finds a letter drawn twice, or twice in one of
+  and the whole label's advance, with dx and dy before transforms; reads equivalent
+  widths alike, mitre joins with their inherited style and limit, and round-capped
+  single-point closed subpaths. Both figure entry points require its findings.
+  And it finds a letter drawn twice, or twice in one of
   several figures side by side, or across the cut between them, and reads A and A′ as two
   letters; and it names a line dashed by itself or by its group as a dashed line.
 * the scope cases (#66): which texts of a review record the rules read, and on which
@@ -934,6 +937,144 @@ class Ink(unittest.TestCase):
 
 class Clearance(unittest.TestCase):
     """The clearance cases, and a letter drawn more than once."""
+
+    def test_width_spellings(self):
+        """Equivalent SVG widths keep the same 1.5 units of clearance."""
+        for width in ("3", "3e0", "+3", "3px", "+3e0px"):
+            for placement in ("attribute", "style", "inherited"):
+                with self.subTest(width=width, placement=placement):
+                    attrs = f'stroke-width="{width}"'
+                    if placement == "style":
+                        attrs = f'style="stroke-width:{width}"'
+                    drawn = (f'<line x1="145" y1="103" x2="165" y2="103" '
+                             f'stroke="#222222" {attrs if placement != "inherited" else ""}/>')
+                    if placement == "inherited":
+                        drawn = f'<g {attrs}>{drawn}</g>'
+                    self.assertEqual(
+                        s26_findings(drawn, letter("A", font_style="normal", size=14)),
+                        ["letter A at (150, 100) stands 1.5 from a line, under 2: move it clear"])
+
+    def test_text_offsets(self):
+        """Coordinates and offsets place the same capital, before any transform."""
+        drawn = '<line x1="150" y1="92" x2="160" y2="92" stroke="#222222" stroke-width="2"/>'
+        for transform in ("", 'transform="translate(25,20) scale(2,1.5)"'):
+            for position, want in (
+                    ('x="150" y="100"', True),
+                    ('x="150" y="120" dy="-20"', True),
+                    ('x="130" y="100" dx="+2e1"', True),
+                    ('x="130" y="120" dx="20" dy="-20"', True),
+                    ('x="150" y="120"', False),
+                    ('x="150" y="100" dy="20"', False),
+                    ('x="170" y="100"', False),
+                    ('x="150" y="100" dx="20"', False)):
+                with self.subTest(transform=transform, position=position):
+                    text = f'<text {position} font-size="14" font-style="normal">A</text>'
+                    found = s26_findings(f'<g {transform}>{drawn}{text}</g>', "")
+                    self.assertEqual(bool(found), want, found)
+
+    def test_stroke_joins(self):
+        """A mitre reaches the H; a round or bevel join, or a limited mitre, clears it."""
+        shapes = (
+            '<polyline points="130,160 155,104 180,160" {attrs}/>',
+            '<polyline points="180,160 155,104 130,160" {attrs}/>',
+            '<polyline points="130,160 155,104 155,104 180,160" {attrs}/>',
+            '<path d="M130 160 L155 104 L180 160" {attrs}/>',
+            '<path d="M155 104 L180 160 L130 160 Z" {attrs}/>',
+            '<polygon points="155,104 180,160 130,160" {attrs}/>',
+        )
+        for shape in shapes:
+            for join, want in (("", True), ('stroke-linejoin="miter"', True),
+                               ('stroke-linejoin="round"', False),
+                               ('stroke-linejoin="bevel"', False),
+                               ('stroke-miterlimit="2"', False),
+                               ('stroke-miterlimit="+3e0"', True)):
+                for inherited in (False, True):
+                    with self.subTest(shape=shape, join=join, inherited=inherited):
+                        attrs = f'stroke="#222222" stroke-width="3" fill="none" {join}'
+                        drawn = (f'<g {attrs}>{shape.format(attrs="")}</g>' if inherited
+                                 else shape.format(attrs=attrs))
+                        found = s26_findings(drawn, letter("H", font_style="normal"))
+                        self.assertEqual(bool(found), want, found)
+                        if want:
+                            self.assertIn("stands 0.3 from", found[0])
+
+    def test_zero_length_subpaths(self):
+        """A closed point with round caps is drawn like a zero-length line."""
+        for cap in ("butt", "round"):
+            for shape in (
+                    '<line x1="156" y1="94" x2="156" y2="94" {attrs}/>',
+                    '<path d="M156 94 Z" {attrs}/>',
+                    '<path d="M156 94 L156 94" {attrs}/>',
+                    '<path d="M156 94 Z M250 200 L260 200" {attrs}/>',
+                    '<path d="M250 200 L260 200 M156 94 Z" {attrs}/>'):
+                with self.subTest(cap=cap, shape=shape):
+                    drawn = shape.format(attrs=f'stroke="#222222" stroke-width="3" '
+                                         f'stroke-linecap="{cap}" fill="none"')
+                    found = s26_findings(drawn, letter("A", font_style="normal", size=14))
+                    self.assertEqual(bool(found), cap == "round", found)
+        # A moveto alone has no drawing command, so even round caps paint nothing.
+        self.assertEqual(s26_findings(
+            '<path d="M156 94" stroke="#222222" stroke-width="3" stroke-linecap="round"/>',
+            letter("A", font_style="normal", size=14)), [])
+
+    def test_join_boundaries(self):
+        """Joins respect open ends, local style, transforms and a hull wholly inside."""
+        shape = ('<polyline points="130,160 155,104 180,160" stroke="#222222" '
+                 'stroke-width="3" fill="none" {attrs}/>')
+        for drawn, want in (
+                ('<path d="M155 104 L180 160 L130 160 L155 104" stroke="#222222" '
+                 'stroke-width="3" fill="none"/>', False),
+                ('<g stroke-linejoin="round">'
+                 + shape.format(attrs='style="stroke-linejoin:miter"') + '</g>', True),
+                ('<g stroke-linejoin="miter">'
+                 + shape.format(attrs='style="stroke-linejoin:round"') + '</g>', False),
+                ('<polyline points="-95,960 155,400 405,960" stroke="#222222" '
+                 'stroke-width="300" fill="none"/>', True)):
+            with self.subTest(drawn=drawn):
+                found = s26_findings(drawn, letter("H", font_style="normal"))
+                self.assertEqual(bool(found), want, found)
+        found = s26_findings('<g transform="translate(25,10) scale(2)">'
+                             + shape.format(attrs="") + letter("H", font_style="normal")
+                             + '</g>', "")
+        self.assertEqual(found, [
+            "letter H at (150, 100) stands 0.6 from a polyline, under 2: move it clear"])
+
+    def test_figure_entry_points(self):
+        """Both production figure checks require S26's clearance finding."""
+        for idea in (True, False):
+            with self.subTest(idea=idea):
+                ink, size = ("#222222", 14) if idea else ("#3b2f2f", 17)
+                title = "I.1 at a glance" if idea else "Euclid I.1: a triangle"
+                desc = "<desc>A straight line [black].</desc>" if idea else ""
+                root = ET.fromstring(
+                    f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                    f'<title>{title}</title>{desc}'
+                    f'<line x1="145" y1="103" x2="165" y2="103" '
+                    f'stroke="{ink}" stroke-width="3"/>'
+                    f'<g fill="{ink}">{letter("A", font_style="normal", size=size)}</g></svg>')
+                with patch.object(style, "svg_root", return_value=root), \
+                        patch.object(style, "drawn_letters", return_value={"A"}), \
+                        patch.object(style, "heath_letters", return_value={"A"}), \
+                        patch.object(style, "failures", []), \
+                        patch.object(style, "reports", defaultdict(list)):
+                    path = style.ROOT / "figures" / "I" / ("01-idea.svg" if idea else "01.svg")
+                    if idea:
+                        style.check_idea(path, "I.1", True)
+                    else:
+                        style.check_euclid(path, "I.1")
+                    self.assertEqual(
+                        [(rule, msg) for rule, _, _, msg in style.failures],
+                        [("S26", "letter A at (150, 100) stands 1.5 from a line, "
+                          "under 2: move it clear")])
+
+    def test_decision_attribution(self):
+        """S26 credits G to the fifteen corrections on the branch that delivered it."""
+        decisions = (style.ROOT / "docs" / "briefs" / "0002-decisions.md").read_text()
+        entry = decisions.split("**One letter, one point: S26.**", 1)[1].split("\n- **", 1)[0]
+        self.assertNotIn("work on mixed angles", entry)
+        for fact in ("fifteen", "III.16's G", "text/letter-collisions", "a4cb748c", "c2424533"):
+            with self.subTest(fact=fact):
+                self.assertIn(fact, entry)
 
     def test_clearance_cases(self):
         for drawn, s, font_style, anchor, want in CLEAR_CASES:
