@@ -35,7 +35,7 @@ at the repository's root builds the library exactly as before.
 
 | File | What it holds | Imports |
 |---|---|---|
-| [lakefile.toml](lakefile.toml) | the package: Mathlib pinned to `v4.35.0`, the release for the toolchain both packages use; the library itself, read only by `Check`; and the files besides Lean imports that `Check` reads | |
+| [lakefile.lean](lakefile.lean) | the package: Mathlib pinned to `v4.35.0`, the release for the toolchain both packages use; the library itself, read only by `Check`; and the files besides Lean imports that `Check` reads | |
 | [Model/Signature.lean](Model/Signature.lean) | the seventeen words as the fields of `Signature`, and the words behind the magnitudes | nothing |
 | [Model/Laws.lean](Model/Laws.lean) | **generated:** every law, and the defined words they reach, translated from the library; the structures `Neutral` and `Laws` | `Signature` |
 | [Model/Hand.lean](Model/Hand.lean) | the laws first proved in the plane, translated **by hand**, and the proposed `exists_centre` | `Laws` |
