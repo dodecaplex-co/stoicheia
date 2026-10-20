@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.Figure.Circles
 import Elements.BookI.Prop08
 import Elements.BookI.Prop10
 
@@ -44,12 +45,14 @@ theorem Prop12 {A B C : Point} (hAB : A ≠ B) (hC : ¬ Collinear A B C) :
     rintro rfl
     exact hCD_AB.2.2 (same_side_refl hC_AB)
   obtain ⟨EFG, hC_EFG, hD_EFG⟩ := Postulate3 C D hCD
-  /- The circle's centre C is inside it and D is on it, on the other side of AB,
-     so AB cuts the circle in two points (System E, Intersection 2). Heath's figure
-     calls them G and E. F, the third letter of the circle's name, is only a name:
-     the proof never uses it. -/
+  /- C and D lie on opposite sides of AB, so CD crosses AB at a point X between
+     them. X lies between the centre C and the point D on the circle, so it is
+     within the circle, and AB, passing through it, cuts the circle in two points
+     (Intersection 3). Heath's figure calls them G and E. F, the third letter of
+     the circle's name, is only a name: the proof never uses it. -/
+  obtain ⟨X, hX_AB, hCXD⟩ := hCD_AB.exists_between
   obtain ⟨E, G, hEG, hE_AB, hE_EFG, hG_AB, hG_EFG⟩ :=
-    line_meets_circle_of_opposite_sides (Or.inl (centre_inside hC_EFG)) (Or.inr hD_EFG) hCD_AB
+    line_meets_circle_of_inside (InsideCircle.of_between_centre hC_EFG hD_EFG hCXD) hX_AB
   -- let the straight line EG be bisected at H, [I. 10]
   obtain ⟨H, hEHG, hEH_HG⟩ := Prop10 hEG
   have hH_AB : OnLine H AB := on_line_of_between_ends hEHG hE_AB hG_AB

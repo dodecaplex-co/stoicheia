@@ -9,18 +9,22 @@ public import Model.Hand
 intersection rules beyond `Model/Hand.lean`, and separate hand copies of the two defined
 words they reach in `Hand.Intersections`. The generator described in the
 [README](../../README.md) writes every law from its elaborated declaration.
-`Check/Intersections.lean` compares each statement and hand word here with its generated
-counterpart. Overlapping translations keep their statements under distinct names.
+`Check/Intersections.lean` compares each locked law and hand word here with its generated
+counterpart. The retired rules `line_meets_circle_of_opposite_sides`, `inside_of_between`
+and `not_same_side_of_circles_meet` are compared directly with their library declarations,
+including binder kinds. Their concrete plane proofs remain as derived facts, with no
+generated assumption fields. Overlapping translations keep their statements under
+distinct names.
 
 Each declaration is the library's, word for word, with `S.Point` for `Elements.Point`,
 `S.OnLine` for `Elements.OnLine`, and so on. The printed original is quoted above each
-law, from `Certificate/axioms.lock`. `Check/Intersections.lean` puts the library's own
-words in for `S` and asks Lean whether each result is the original declaration; the build
-fails if it is not.
+law, from the lock or its unchanged theorem type. `Check/Intersections.lean` puts the
+library's own words in for `S` and asks Lean whether each result is the original
+declaration; the build fails if it is not.
 
 System E numbers its intersection rules 1 to 9, and the library keeps two groups of them.
-In `Tacit/Diagram.lean`, the rules that say *that* a crossing exists: Intersection 1 (a
-line joining points on opposite sides of a line crosses it), 2 (a line separating two
+The diagram rules say *that* a crossing exists: Intersection 1 (a line joining points
+on opposite sides of a line crosses it), 2 (a line separating two
 points on or inside a circle cuts it), 3 (a line through a point inside a circle cuts it),
 4 in LeanEuclid's corrected form and 5 (two circles cut one another). In
 `Tacit/Constructions.lean`, the rules that say *where* the crossing lies: Intersections 4
@@ -29,8 +33,8 @@ outside, and beyond that point on the side away from any other point of the line
 and 9 (two circles cut one another on each side of the line of centres). The two circle
 laws of each group are in `Model/Hand.lean` already; the five line laws are here.
 
-With them are the four circle rules of `Tacit/Diagram.lean`, which say where a line and a
-circle, or two circles, meet: Circle 1 (a point inside on a chord's line lies between the
+With them are the four circle rules, which say where a line and a circle, or two circles,
+meet: Circle 1 (a point inside on a chord's line lies between the
 chord's ends), 2 (between two points on or inside a circle, every point is inside), 3
 (once a line has left a circle it does not come back), and 4 (two circles cut one another
 on opposite sides of the line of centres).
@@ -68,8 +72,9 @@ def lines_meet_of_opposite_sides_intersections : Prop :=
   ∀ {A B : S.Point} {L M : S.Line}, S.OppositeSides A B L → S.OnLine A M → S.OnLine B M →
     S.LinesMeet L M
 
-/-- `Elements.Tacit.line_meets_circle_of_opposite_sides` (Intersection 2), by hand. The lock
-prints it as `∀ {A B : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Or
+/-- `Elements.Tacit.line_meets_circle_of_opposite_sides` (Intersection 2), by hand.
+The theorem's unchanged type is
+`∀ {A B : Elements.Point} {L : Elements.Line} {α : Elements.Circle}, Or
 (Elements.InsideCircle A α) (Elements.OnCircle A α) → Or (Elements.InsideCircle B α)
 (Elements.OnCircle B α) → Elements.OppositeSides A B L → Elements.LineMeetsCircle L α`. -/
 def line_meets_circle_of_opposite_sides : Prop :=
@@ -116,7 +121,8 @@ def between_of_inside_chord_intersections : Prop :=
     S.OnLine C L → S.InsideCircle A α → S.OnCircle B α → S.OnCircle C α → B ≠ C →
     S.Between B A C
 
-/-- `Elements.Tacit.inside_of_between` (Circle 2), by hand. The lock prints it as
+/-- `Elements.Tacit.inside_of_between` (Circle 2), by hand.
+The theorem's unchanged type is
 `∀ {A B C : Elements.Point} {α : Elements.Circle}, Or (Elements.InsideCircle A α)
 (Elements.OnCircle A α) → Or (Elements.InsideCircle B α) (Elements.OnCircle B α) →
 Elements.Between A C B → Elements.InsideCircle C α`. -/
@@ -132,8 +138,9 @@ def outside_of_between_intersections : Prop :=
   ∀ {A B C : S.Point} {α : S.Circle}, S.InsideCircle A α ∨ S.OnCircle A α →
     ¬ S.InsideCircle C α → S.Between A C B → S.OutsideCircle B α
 
-/-- `Elements.Tacit.not_same_side_of_circles_meet` (Circle 4), by hand. The lock prints it
-as `∀ {A B C D : Elements.Point} {L : Elements.Line} {α β : Elements.Circle}, Ne α β →
+/-- `Elements.Tacit.not_same_side_of_circles_meet` (Circle 4), by hand.
+The theorem's unchanged type is
+`∀ {A B C D : Elements.Point} {L : Elements.Line} {α β : Elements.Circle}, Ne α β →
 Elements.OnCircle C α → Elements.OnCircle C β → Elements.OnCircle D α → Elements.OnCircle
 D β → Ne C D → Elements.Centre A α → Elements.Centre B β → Elements.OnLine A L →
 Elements.OnLine B L → Not (Elements.SameSide C D L)`. -/

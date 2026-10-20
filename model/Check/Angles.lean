@@ -1,6 +1,8 @@
+import Elements.BookI.Prop13
 import Elements.Foundations.Postulates
 import Elements.Foundations.Tacit.Transfer
 import Check.Hand
+import Check.Generator
 import Model.Laws.angles
 
 /-!
@@ -9,11 +11,14 @@ import Model.Laws.angles
 `Model/Laws/angles.lean` translates the ten angle laws, and the two words they reach, by
 hand. As in `Check/Hand.lean`, the library's own words are put in for the signature's fields
 (`Check.original`), and the kernel is asked whether each translated word and law then is the
-library's declaration. Each check is `rfl`, up to unfolding definitions; a dropped guard, two
+library's declaration. Each kernel check is `rfl`, up to unfolding definitions; a dropped guard, two
 swapped arguments or a change in the order of the binders fails here, and the build with it.
 
-This file reads the library's axioms only through `type_of%`, which takes a declaration's
-statement and does not use it. Nothing in `Model/` imports this file.
+The kernel comparisons read the library's declarations through `type_of%`. For the
+properties retained through axiom retirement, `comparePlanted` also translates the
+hand definition back and compares it directly with the declaration's type, including
+binder kinds. Both checks read only the statement, whether it is an axiom or a theorem.
+Nothing in `Model/` imports this file.
 -/
 
 namespace Check
@@ -46,7 +51,7 @@ example : Model.Hand.angle_eq_of_same_rays original =
 example (S : Model.Signature) : Model.Hand.Collinear S = S.Collinear := rfl
 example (S : Model.Signature) : Model.Hand.IsRightAngle S = S.IsRightAngle := rfl
 
-/-! ## The hand translations against the generated laws -/
+/-! ## The hand translations against generated laws or declaration types -/
 
 example (S : Model.Signature) : Model.Hand.Definition15_angles S =
     Model.Law.Definition15 S := rfl
@@ -62,10 +67,10 @@ example (S : Model.Signature) : Model.Hand.same_ray_of_angle_eq_zero S =
     Model.Law.Tacit.same_ray_of_angle_eq_zero S := rfl
 example (S : Model.Signature) : Model.Hand.angle_add_of_inside S =
     Model.Law.Tacit.angle_add_of_inside S := rfl
-example (S : Model.Signature) : Model.Hand.inside_of_angle_add S =
-    Model.Law.Tacit.inside_of_angle_add S := rfl
-example (S : Model.Signature) : Model.Hand.adjacent_eq_of_right S =
-    Model.Law.Tacit.adjacent_eq_of_right S := rfl
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.inside_of_angle_add
+  ``Elements.Tacit.inside_of_angle_add)
+run_cmd (Check.Generator.comparePlanted ``Model.Hand.adjacent_eq_of_right
+  ``Elements.Tacit.adjacent_eq_of_right)
 example (S : Model.Signature) : Model.Hand.angle_eq_of_same_rays S =
     Model.Law.Tacit.angle_eq_of_same_rays S := rfl
 

@@ -2094,6 +2094,76 @@ findings:
   guard, both pin forms and restoration on failure or interruption.
   [FORMALIZATION](../FORMALIZATION.md), section 7, records how the ban continues
   to hold. This prepares the checks for the retirement; it retires no axiom.
+- **Eight axioms retired, 87 to 79.** The owner asked,
+  "Fewer axioms is better. Any more that can go?", and on 19 October 2026 approved both
+  retirements: "Please do both. 79 is rather large with so many books in front of us." On
+  20 October the owner approved landing each as three pull requests; this is the second of
+  the first. Pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight, able
+  to fail now that the eight are theorems, are #168, which holds every release until it
+  closes. Each of the eight keeps its name and exact type and becomes a theorem at the
+  earliest place it can be proved: `Tacit.centre_unique`, `Tacit.inside_of_between`
+  (Circle 2, from Circle 3, which stays), `Tacit.exists_point_outside_circle`,
+  `Tacit.line_meets_circle_of_opposite_sides` and `Tacit.triple_incidence3` in
+  [`Elements/Figure/Circles.lean`](../../Elements/Figure/Circles.lean);
+  `Tacit.not_same_side_of_circles_meet` (Circle 4) after I.7; and
+  `Tacit.adjacent_eq_of_right` and `Tacit.inside_of_angle_add` after I.13. No proof rests on
+  the axiom it replaces or on a later proposition, and I.7 and I.13 do not rest on their
+  corollaries. The first four came from a probe; the other four are the derivable rules
+  that lie on no cycle of the derivation graph, so no later choice of basis can disturb
+  them. The rest of the search, what else could go and what each choice costs, is evidence
+  for the owner, not part of this change. I.7's audited shortcut through Circle 4 is
+  circular now, and the audit says so. I.12, which cited the intersection rule now proved
+  from Circle 3, cuts its circle instead through a point inside it, the crossing of CD with
+  AB (Intersection 3), so that no certificate entry rests on Circle 2 or Circle 3; the pins
+  of #60 for II.14, III.1 and III.2 still say so, through their exclusion of Circle 3. The
+  axioms leave
+  `Elements/Foundations/Tacit/Constructions.lean`, `Diagram.lean` and `Transfer.lean`.
+  Protected files changed with them, as values pinned to the axioms:
+  [`Certificate/axioms.lock`](../../Certificate/axioms.lock), written by `--write-lock`;
+  [`tests/model/lock.sha256`](../../tests/model/lock.sha256) and `model/lock.sha256`;
+  [`tests/model/laws.toml`](../../tests/model/laws.toml), and the eight laws' code in
+  [`tests/model/search.py`](../../tests/model/search.py) and
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py), the other laws in their
+  order. [`tests/model/MODEL.md`](../../tests/model/MODEL.md) follows the smaller lock.
+  The results of `run.py --full --write` are recorded in
+  [`tests/model/results/angle_check.txt`](../../tests/model/results/angle_check.txt),
+  [`tests/model/results/exhaustive.txt`](../../tests/model/results/exhaustive.txt),
+  [`tests/model/results/grid_check.txt`](../../tests/model/results/grid_check.txt),
+  [`tests/model/results/hyperbolic.txt`](../../tests/model/results/hyperbolic.txt),
+  [`tests/model/results/mutations.txt`](../../tests/model/results/mutations.txt),
+  [`tests/model/results/search-seed1.txt`](../../tests/model/results/search-seed1.txt),
+  [`tests/model/results/search-seed2.txt`](../../tests/model/results/search-seed2.txt),
+  [`tests/model/results/search-seed3.txt`](../../tests/model/results/search-seed3.txt),
+  [`tests/model/results/structured.txt`](../../tests/model/results/structured.txt) and
+  [`tests/model/results/summary.txt`](../../tests/model/results/summary.txt).
+  The examples of the certificate's fields and of the review schema, which are check
+  inputs, follow in a change of their own, landed after this one.
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) imports the proved rules, updates its
+  exact axiom pins to follow the retired rules' proofs and labels the circular derivations;
+  [`Audit/screen.py`](../../Audit/screen.py) removes the five retired rules from its list
+  of circle axioms and explains why I.7 is no longer an independent overlap.
+  [`model/Model/Audit.lean`](../../model/Model/Audit.lean) changes only comments to explain
+  the 79-law assembly and retention of the eight individual audits, with every guard and
+  axiom pin unchanged.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) keeps
+  the measured counts of III.1 and its porism (55 tacit rules each) and gains pins that
+  keep the eight names out of the axiom lists of III.1, III.1 Por., III.2 and II.14. With
+  the eight now theorems those pins cannot fail; the pins that hold are the counts and the
+  exclusion of Circle 3, which keeps Circle 2 out too, since Circle 2 rests on it (III.1
+  Por. does use the proved `Tacit.centre_unique`). The formal model's generated
+  laws, checks and assembly follow from its generator; its proofs in the plane stay, as
+  derived facts. The five files `model/Check/Angles.lean`, `model/Check/Circles.lean`,
+  `model/Check/Incidence.lean`, `model/Check/Intersections.lean` and `model/Check/Sides.lean`
+  compare the eleven hand translations of the eight rules directly with the library's
+  declarations, binder kinds included, so the comparisons stand now that the eight are
+  theorems; [`model/README.md`](../../model/README.md) and the hand-translated law files
+  say so. Proposition and porism statements, definitions and `--` lines are
+  unchanged; the records whose Lean changed were read again and stamped by readers who
+  wrote none of them.
+  On integration with main at `209d71fd`, `Audit/Overlaps.lean` also updates the exact
+  pin for `Audit.III_30_measure`: Lean no longer prints `Tacit.adjacent_eq_of_right`,
+  now a theorem, and prints every other entry unchanged. The guard remains exact.
+
 
 - **The Jev audit's question generator.** On 19 October 2026 the owner approved running Jev,
   TypeSafe's decision model, as the independent audit of brief 0005's stage 6

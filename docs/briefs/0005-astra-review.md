@@ -1,5 +1,15 @@
 # Brief 0005: answering Astra's review
 
+19 October 2026: this brief keeps its earlier measurements and instructions as history.
+[Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), with their names
+and types unchanged; the baseline is 79 axioms, including 73 tacit rules. Fresh
+certificate output at `1e713bb` gives III.1 and its porism the same 60 axioms, including
+55 tacit rules. `centre_unique` is proved in Book Zero, so the old 56/57 counts and
+required axiom membership no longer describe their dependencies. Any change to those
+checks needs its own approval and separate preparation under WORKFLOW, section 10.
+Circle 2 is proved from Circle 3; III.2's remaining overlap is with Circle 3, and its
+published proof uses neither the Circle 2 theorem nor the Circle 3 axiom.
+
 *Written and committed on 17 October 2026 (d040117), and revised on 18 October 2026 to the owner's decisions taken after it. The first text stands in the history, and each revised passage says so where it stands. What changed, and why:*
 
 - **Placement has no time limit and no fallback.** The owner decided on 17 October that III.24 waits for a proved placement lemma, and that a fact the axioms lack is a decision for the owner, never a quiet new axiom. "Timeboxed", the fallback congruence and "if the fallback was used" are removed; the verification line for placement, which could never pass, is restated; the corrections to the design and the order of work, spike first, are added under stage 3.

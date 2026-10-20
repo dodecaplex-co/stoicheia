@@ -1,10 +1,10 @@
-# mutations: 15 deliberately weakened axioms
+# mutations: 15 deliberately weakened statements
 # command: python3 -I tests/model/mutations.py
 # seeds: none (deterministic)
-# commit: 9dbe96182b9a6d2080f23d3ead93e4c35f9ce624 (harness files as committed)
-# harness sha256: a156322ad06909ccfbc90d48426ac7bc3457d5625dd1072b2a4e98d5602a456a
+# commit: 8fe005701f4c092f09e6b273cc3c3afb5f6fe8f6 (harness files as committed)
+# harness sha256: af955532fb3cdb0b88b5e2d22382c31353a34623d58d281baa315f3aeadbe6da
 # python: 3.11.9 (CPython, Darwin arm64)
-# date: 2026-10-17
+# date: 2026-10-19
 # time: 0.2 s
 
 Intersection 4 as printed (A on OR inside alpha)               counterexample found
