@@ -6,8 +6,40 @@ fingerprint = "sha256:09023ac3c93f260b"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "For let a point D be taken at random on the other side of the straight line AB"
+kind = "helper"
+helper = "Tacit.line_meets_circle_of_opposite_sides"
+note = "Euclid takes the circle's crossings E and G with AB for granted. After choosing D on the other side by `exists_oppositeSidesOf` and drawing the circle by Postulate 3, the Lean obtains them from `Tacit.centre_inside` and `Tacit.line_meets_circle_of_opposite_sides`, rules we assume (System E, Generalities 3 and Intersection 2)."
+
+[[passage]]
+at = "and let the straight lines CG, CH, CE be joined"
+kind = "given"
+note = "Euclid joins CG, CH and CE; our triangles are named by their corners, so no separate straight lines are needed. The Lean checks that HGC and HEC are triangles by `Triangle.of_line`, since H, G and E lie on AB and C is off it."
+
+[[passage]]
+at = "and the base CG is equal to the base CE"
+kind = "helper"
+helper = "Definition15"
+note = "Euclid uses the equal radii CG and CE without naming a reason. The Lean applies `Definition15`, Euclid's definition of a circle, as a rule we assume."
+
+[[passage]]
+at = "Therefore CH has been drawn perpendicular to the given infinite straight line AB"
+kind = "helper"
+helper = "OnRay.cases_of_between"
+note = "Euclid concludes that CH is perpendicular to AB from the two right angles at H. For every other point P of AB, `OnRay.cases_of_between` puts P on the ray from H through G or E, and `angle_onRay_right` carries the corresponding right angle to CHP."
+
 [review]
-stage = "exceptions"
-commit = "2a34715"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "a9bca05"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:0ca9857095b86a95"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"
