@@ -1554,9 +1554,11 @@ findings:
   `Certificate/Facts.lean`, `Certificate/FIELDS.md` and `scripts/heath.py`.
   The focused regression adds two protected files, `tests/test_certificate.py` and
   `tests/fixtures/CertificateCN4.lean`. It runs the certificate source in a temporary
-  Lake package, substituting the fixture for its `Elements` import and keeping
-  `facts.json` there. The fixture declares stand-ins with the exact fully qualified
-  names `Elements.Superposition.Derives.len_congr`,
+  Lake package, compiling the fixture as that package's `Elements` module and running
+  a byte-for-byte unmodified copy of `Certificate/Facts.lean` against it. The temporary
+  module takes precedence while imports of the repository's foundation modules remain
+  available, and `facts.json` stays in the package. The fixture declares stand-ins with
+  the exact fully qualified names `Elements.Superposition.Derives.len_congr`,
   `Elements.Superposition.Derives.angle_congr` and
   `Elements.Superposition.Derives.area_congr`, so it runs before the Lean replacement.
   Each constructor is tested directly and through a helper's value; reaching only the

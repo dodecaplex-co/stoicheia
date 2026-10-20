@@ -1,8 +1,9 @@
 import Elements.Foundations.CommonNotions
 
 /-!
-Small subjects for the certificate's C.N. 4 regression. The test substitutes this file
-for `import Elements` in a temporary copy of `Certificate/Facts.lean`.
+Small subjects for the certificate's C.N. 4 regression. The test compiles this file as
+the temporary package's `Elements` module, which an unmodified copy of
+`Certificate/Facts.lean` imports in preference to the repository's module.
 
 The restricted calculus has not landed on the tooling branch. These are stand-ins with
 the exact constructor names from `Elements/Foundations/Superposition/Syntax.lean` on

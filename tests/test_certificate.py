@@ -5,10 +5,12 @@
     lake build
     python3 -I tests/test_certificate.py
 
-Run the actual certificate source against a small Lean fixture, substituting only its
-Elements import. A temporary Lake package keeps every output, including facts.json,
-away from the repository. The fixture declares stand-ins with the exact constructor
-names, so this test can land before the calculus it checks.
+Run an unmodified copy of the certificate source against a small Lean fixture compiled
+as the temporary package's Elements module. The temporary module takes precedence over
+the repository's Elements module while retaining access to its foundation modules. The
+package keeps every output, including facts.json, away from the repository. The fixture
+declares stand-ins with the exact constructor names, so this test can land before the
+calculus it checks.
 
 CI does not currently run this file. The tooling writer and the integrator run it
 explicitly, as recorded in docs/briefs/0002-decisions.md. Standard library only.
@@ -17,6 +19,7 @@ explicitly, as recorded in docs/briefs/0002-decisions.md. Standard library only.
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -29,26 +32,44 @@ AXIOM_FIELDS = ("axioms", "direct_axioms", "own_axioms", "inherited", "lean_foun
 class CommonNotion4Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        source = (ROOT / "Certificate/Facts.lean").read_text()
-        fixture = (ROOT / "tests/fixtures/CertificateCN4.lean").read_text()
-        if source.count("\nimport Elements\n") != 1:
-            raise AssertionError("expected exactly one Elements import in Facts.lean")
-        source = source.replace("\nimport Elements\n", "\n" + fixture + "\n", 1)
         with tempfile.TemporaryDirectory(prefix="stoicheia-cn4-") as tmp:
             work = Path(tmp)
             (work / "lakefile.toml").write_text('name = "certificate_fixture"\n')
             (work / "lean-toolchain").write_bytes((ROOT / "lean-toolchain").read_bytes())
-            (work / "FactsFixture.lean").write_text(source)
+            shutil.copyfile(ROOT / "tests/fixtures/CertificateCN4.lean", work / "Elements.lean")
+            shutil.copyfile(ROOT / "Certificate/Facts.lean", work / "Facts.lean")
             env = os.environ.copy()
-            env["LEAN_PATH"] = str(ROOT / ".lake/build/lib/lean")
-            result = subprocess.run(
-                ["lake", "env", "lean", "FactsFixture.lean"],
+            repository_modules = str(ROOT / ".lake/build/lib/lean")
+            if inherited_modules := env.get("LEAN_PATH"):
+                repository_modules += os.pathsep + inherited_modules
+            env["LEAN_PATH"] = repository_modules
+            fixture_modules = work / ".lake/build/lib/lean"
+            fixture_modules.mkdir(parents=True)
+            shutil.copytree(
+                ROOT / ".lake/build/lib/lean/Elements/Foundations",
+                fixture_modules / "Elements/Foundations",
+            )
+            fixture_result = subprocess.run(
+                [
+                    "lake", "env", "lean", "Elements.lean",
+                    "-o", str(fixture_modules / "Elements.olean"),
+                ],
                 cwd=work, env=env, capture_output=True, text=True, timeout=120,
             )
-            if result.returncode:
+            if fixture_result.returncode:
                 raise AssertionError(
-                    f"fixture: lake env lean exited {result.returncode}\n"
-                    + result.stdout + result.stderr
+                    f"fixture: lake env lean exited {fixture_result.returncode}\n"
+                    + fixture_result.stdout + fixture_result.stderr
+                )
+            env["LEAN_PATH"] = str(fixture_modules) + os.pathsep + repository_modules
+            certificate_result = subprocess.run(
+                ["lake", "env", "lean", "Facts.lean"],
+                cwd=work, env=env, capture_output=True, text=True, timeout=120,
+            )
+            if certificate_result.returncode:
+                raise AssertionError(
+                    f"certificate: lake env lean exited {certificate_result.returncode}\n"
+                    + certificate_result.stdout + certificate_result.stderr
                 )
             facts = json.loads((work / "facts.json").read_text())
         cls.entries = {entry["ref"]: entry for entry in facts["propositions"]}
