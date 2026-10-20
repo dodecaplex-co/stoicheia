@@ -1122,6 +1122,19 @@ class ConflictMarkers(unittest.TestCase):
                 self.assertEqual(style.conflict_markers(text, markdown=True),
                                  [(text.count("\n") + 1, "middle")])
 
+    def test_self_closing_literal_content_tags_remain_paragraph_text(self):
+        for tag in ("<script/>", "<PRE/>", "<Style/>", "<textarea/>", "   <pre/>",
+                    "<script/> \t"):
+            with self.subTest(tag=tag):
+                self.assertEqual(style.conflict_markers(tag + "\n" + "=" * 7,
+                                                       markdown=True), [])
+        for tag in ("<scripts/>", "<prefix/>", "<stylesheet/>", "<textareas/>",
+                    "</script>", "</PRE>", "<script>", "<style />", "<pre\vtitle='x'/>",
+                    "<div/>", "<x/>"):
+            with self.subTest(tag=tag):
+                self.assertEqual(style.conflict_markers(tag + "\n" + "=" * 7,
+                                                       markdown=True), [(2, "middle")])
+
     def test_html_blocks_keep_exact_width_and_edge_detection(self):
         for width in (6, 8):
             self.assertEqual(style.conflict_markers("<div>\n" + "=" * width,
@@ -1282,6 +1295,18 @@ class ConflictMarkers(unittest.TestCase):
             with self.subTest(line=line):
                 text = "Heading\n" + line + "\n" + "=" * 7
                 self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_list_items_holding_only_control_whitespace_continue_the_paragraph(self):
+        for marker in ("*", "-", "+", "1.", "1)", "01."):
+            for content in (" \f", " \v", "\t\f", " \v \f\t"):
+                with self.subTest(marker=marker, content=content):
+                    text = "Heading\n" + marker + content + "\n" + "=" * 7
+                    self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        for line in ("* \fx", "- \vitem", "1. \f1", "1) \v \fx"):
+            with self.subTest(line=line):
+                text = "Heading\n" + line + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(3, "middle")])
 
     def test_setext_and_thematic_lines_precede_list_items(self):
         for line in ("-", "- ", "-\t", "* * *", "- - -", "_ _ _"):

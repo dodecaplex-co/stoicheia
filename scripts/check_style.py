@@ -325,17 +325,19 @@ CONFLICT_EDGE = re.compile(r"^(<{7}|\|{7}|>{7})(?: |$)")
 CONFLICT_MIDDLE = re.compile(r"={7}[ \t]*")
 CONFLICT_KINDS = {"<": "opening", "|": "base", ">": "closing"}
 LINK_REFERENCE_OPEN = re.compile(r"^ {0,3}\[")
+GFM_WHITESPACE_CHARS = " \t\n\v\f\r"
+GFM_WHITESPACE = r"[ \t\n\v\f\r]"
 # A block quote or list item: a seven-equals line after one cannot underline a
 # paragraph (a setext underline is never a lazy continuation), so S23 refuses it.
 CONTAINER_START = re.compile(r"^ {0,3}(?:>|[-+*](?:[ \t]|$)|[0-9]{1,9}[.)](?:[ \t]|$))")
 # Of those, the ones that may interrupt a paragraph: a block quote, a bullet item with
 # some text, or an ordered one numbered 1 with some text. Any other goes on with it.
-PARAGRAPH_CONTAINER_START = re.compile(r"^ {0,3}(?:>|(?:[-+*]|0{0,8}1[.)])[ \t]+[^ \t])")
-GFM_WHITESPACE_CHARS = " \t\n\v\f\r"
-GFM_WHITESPACE = r"[ \t\n\v\f\r]"
+PARAGRAPH_CONTAINER_START = re.compile(
+    rf"^ {{0,3}}(?:>|(?:[-+*]|0{{0,8}}1[.)])[ \t]{GFM_WHITESPACE}*[^ \t\n\v\f\r])")
+HTML_RAW_NAMES = r"script|pre|style|textarea"
 HTML_RAW_START = re.compile(
-    rf"^ {{0,3}}<(script|pre|style|textarea)(?:{GFM_WHITESPACE}|>|$)", re.I)
-HTML_RAW_END = r"</(?:script|pre|style|textarea)>"
+    rf"^ {{0,3}}<({HTML_RAW_NAMES})(?:{GFM_WHITESPACE}|>|$)", re.I)
+HTML_RAW_END = rf"</(?:{HTML_RAW_NAMES})>"
 HTML_CDATA_START = re.compile(r"^ {0,3}<!\[CDATA\[")
 HTML_DECLARATION_START = re.compile(r"^ {0,3}<![A-Z]")
 HTML_INSTRUCTION_START = re.compile(r"^ {0,3}<\?")
@@ -351,7 +353,8 @@ HTML_ATTRIBUTE_VALUE = r'''(?:[^ \t\n\v\f\r"'=<>`]+|'[^']*'|"[^"]*")'''
 HTML_ATTRIBUTE = (rf"(?:{GFM_WHITESPACE}+{HTML_ATTRIBUTE_NAME}"
                   rf"(?:{GFM_WHITESPACE}*={GFM_WHITESPACE}*{HTML_ATTRIBUTE_VALUE})?)")
 HTML_COMPLETE_TAG = re.compile(
-    rf"^ {{0,3}}(?:<{HTML_TAG_NAME}{HTML_ATTRIBUTE}*{GFM_WHITESPACE}*/?>|"
+    rf"^ {{0,3}}(?:<(?!(?i:{HTML_RAW_NAMES})(?![A-Za-z0-9-])){HTML_TAG_NAME}"
+    rf"{HTML_ATTRIBUTE}*{GFM_WHITESPACE}*/?>|"
     rf"</{HTML_TAG_NAME}{GFM_WHITESPACE}*>){GFM_WHITESPACE}*$")
 
 
