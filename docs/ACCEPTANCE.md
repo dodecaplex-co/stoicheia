@@ -122,7 +122,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | P6 | Runs | machine | Every run of `--` lines with no Lean beneath it, before the next run, is declared as a passage (`check_fidelity.py`, by the rule made stricter on 18 October: a `/- … -/` remark ends a run and carries none). Each passage begins at one of Euclid's sentences and names a helper that is declared, and each passage's note is on the page. |
 | P7 | Text | machine | The docstring is Heath's enunciation and the `--` lines are Heath's proof, word for word (`check_fidelity.py`); the record's quotations are Heath's (P2). Heath's letters are plain and the quotation marks straight (`check_style.py`, S9 and S8). The reading line links only works that [docs/reading.md](reading.md) gives (S17). Every relative link of the page, the mishnah and the reading line resolves (`check_links.py`). Heath's source note names the scan leaves, so the page links his page images; the links themselves go to the Internet Archive, and are not fetched. |
 | P8 | Figures | machine | Euclid's figure and the figure at a glance exist, and pass the figure rules (S13 to S16, S20 and S21): Heath's letters, all and only his, in both figures and at every point the figure at a glance shows; the palette, the strokes, the captions and the titles. When the theorem covers several cases (a `case` passage, or a companion), the record's `[figure]` gives the `case` its caption names. |
-| P9 | Style | machine | The hard rules of `check_style.py` hold in the mishnah, the reading line and the Lean notes of the proposition's file, S12 among them (every Lean name in the mishnah is one Lean knows); the mishnah exists; and the committed page is exactly what `render.py` makes. |
+| P9 | Style | machine | The hard rules of `check_style.py` hold in the mishnah, the reading line, the notes of the record that its page shows and the Lean notes of the proposition's file, S12 among them (every Lean name in the mishnah, the reading line and the record's notes is one Lean knows); the mishnah exists; and the committed page is exactly what `render.py` makes. |
 | P10 | Out of Staging | machine | No declaration under `Staging/` is for this proposition (a name with `PropN` under `Book<book>`, or in a file that imports that book's `PropN`): a statement once proved has moved to `Elements/`, and its staged copy is deleted ([WORKFLOW](WORKFLOW.md#2-briefs-before-proofs), section 2). |
 | P11 | Statement | review | The statement says what Euclid's enunciation says, or its qualification is exact. Quantifiers, conclusions, hypotheses and cases have been checked, by the questions of [FORMALIZATION](FORMALIZATION.md#coverage-does-it-say-what-euclid-says), section 2. |
 | P12 | Passages | review | Each substantive passage is carried, or its helper, grouping, case, alternative or omission is named truly. There are no dummy citations, no artificial hypothesis uses and no helpers that conceal a whole conclusion. |
@@ -138,7 +138,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | B1 | Pages | machine | The book's index (with its introduction) and front matter, and README.md's completion summary for the book, are exactly what `render.py` makes. They are generated from facts.json and the records, so the summary is true to them. The introduction, the index and the front matter pass `check_style.py` (S18 and S19 among its rules), and their links resolve. |
 | B2 | Catalogues | machine | The gap catalogue, `docs/reports/gaps-book-<book>.md`, passes `check_style.py`, and every Lean name it gives in backticks is one that Lean knows, asked of Lean with `Elements`, `Elements.Book<book>` and `Elements.Tacit` open (a pattern's placeholder `PropN`, a field of facts.json and a tactic aside). Every record of the book with an `[overlap]` has a row of its own in [the overlap catalogue](reports/overlaps.md), its first cell the reference alone, naming its rules; and no such row is for a proposition whose record declares none. The rows on a rule's use in other proofs (I.13's, say, in 17 proofs from II.1 on) are read by no record, and not counted. |
 | B3 | Read-through | review | Read straight through, the book flows, and the voice is common. |
-| B4 | Limitations | review | The remaining limitations are deliberate, few and stated plainly where they occur: those allowed below, the overlaps of III.2's kind, and I.45's and II.14's convention, a figure that comes with a checked finite division, under which both are full (the decisions of 18 October). |
+| B4 | Limitations | review | The remaining limitations are deliberate, few and stated plainly where they occur: those allowed below and the overlaps of III.2's kind. The decisions of 18 October accepted I.45 and II.14 as full under the convention that a figure comes with a checked finite division; the owner's decision of 20 October instead allows them as restricted until the proof from the figure's outline is proved and reviewed (#116). |
 
 ## For the whole edition
 
@@ -148,7 +148,7 @@ All 99 of Books I–III, each with its porism and its companions.
 | E2 | Certificate | machine | `check_fidelity.py`'s checks of the whole: the axiom lock (every axiom's statement and every word of the statements), every axiom in `Elements/Foundations/`, the primitive words opaque, the entries, for their findings that name no one proposition (a finding that names one goes to that proposition: P5, or P8 or P9 for a missing figure or mishnah), and the facts pinned in `tests/certificate_expectations.json`; any finding of these checks that names no one proposition; no shared file citing placement; and every Lean name the overlap catalogue gives (its rules, its audit lemmas) one that Lean knows, with `Audit` built. |
 | E3 | Contracts | machine | `heath.py` passes: references, porisms, review terms and every record, against their contracts. |
 | E4 | Model | machine | `tests/model/run.py --fast` passes, as CI's `model` job runs it. |
-| E5 | The edition's pages | machine | CERTIFICATE.md, GRAPH.md and PROGRAM.md's status table are exactly what `render.py` makes, and the style rules and links hold in the files that belong to no proposition or book (README.md, the generated pages, the notes of the shared Lean modules). |
+| E5 | The edition's pages | machine | CERTIFICATE.md, GRAPH.md and PROGRAM.md's status table are exactly what `render.py` makes, and the style rules and links hold in the files that belong to no proposition or book (README.md, the generated pages, the notes of the shared Lean modules, the overlap catalogue, the other reports and `review/terms.toml`). |
 | E6 | Nothing else staged | machine | No file under `Staging/` declares anything that P10 does not already assign to a proposition: every staged statement, definition and shared step has moved to `Elements/`, or been retired. |
 
 ## The limitations allowed
@@ -159,8 +159,13 @@ this table, in a change to the check of its own.
 
 | Proposition | Scope | Tag | Why |
 |---|---|---|---|
+| I.45 | restricted | `figure-with-dissection` | A figure given with its checked division into triangles, its area relative to that division. The outline proof is to come (#116); this row goes when it is proved and reviewed. |
+| II.14 | restricted | `figure-with-dissection` | A figure given with its checked division into triangles, its area relative to that division. The outline proof is to come (#116); this row goes when it is proved and reviewed. |
 | III.16 | partial | `mixed-angles-omitted` | The angle of the semicircle and the horn-like angle are angles of a straight line and a circumference, which our angles are not; a prototype of mixed angles is to decide whether they become full (issue #57). |
 | III.31 | partial | `mixed-angles-omitted` | The angles of the greater and the less segment, likewise. |
+
+For I.45 and II.14, the outline proof must establish that a division into triangles exists
+and that the area is independent of the division chosen (#116).
 
 If the prototype carries III.16 and III.31 to full, their rows go. An overlap is no
 limitation of scope: it is a disclosure, declared in the record's `[overlap]` and the

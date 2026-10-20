@@ -6,8 +6,38 @@ fingerprint = "sha256:0f1727b89205fb19"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "Let the angle BGH be added to each; therefore the angles AGH"
+kind = "helper"
+helper = "Tacit.add_lt_add_right"
+note = "Euclid adds BGH to both angles and keeps the strict inequality. The Lean uses `Tacit.add_lt_add_right`, a rule we assume about magnitudes (System E §3.5), not a proof."
+
+[[passage]]
+at = "Therefore the angle AGH is not unequal to the angle GHD"
+kind = "case"
+note = "Euclid supposes AGH greater than GHD; the Lean proves his argument once over any letters and applies it again from H's end, with D, C, B, A for A, B, C, D and H, G for G, H, to rule out GHD greater than AGH. `SameSideOf.oppositeSidesOf_of_between` and `OppositeSidesOf.sameSideOf_of_between` put C and A on one side of HG for that second application."
+
+[[passage]]
+at = "and is therefore equal to it"
+kind = "helper"
+helper = "Tacit.lt_trichotomy"
+note = "Euclid concludes that the angles AGH and GHD are equal. The Lean uses both refutations with `Tacit.lt_trichotomy`, a rule we assume about magnitudes (System E §3.5), not a proof: of two unequal angles, one is greater."
+
+[figure]
+case = "EF crosses the parallel straight lines AB and CD at G and H, with B and D on the same side of EF"
+note = "The drawing marks AGH, GHD and EGB equal, as the proof establishes."
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "5c0cdd65"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:78a65285e619e2f8"
+run = "brief 0005 stage 5, ship C5 re-read"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

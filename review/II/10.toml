@@ -6,17 +6,75 @@ fingerprint = "sha256:91fc529dff60f152"
 kind = "euclid"
 
 [[passage]]
+at = "For let CE be drawn from the point C at right angles to AB"
+kind = "helper"
+helper = "produce_longer"
+note = "Euclid cuts CE equal to AC on the perpendicular, taking enough room for I.3 for granted. The Lean draws the perpendicular by I.11, uses `produce_longer` to find a length greater than AC along it, cuts off CE by I.3, and uses `OnRay.of_between_between` to put E on the original ray and carry its right angle to CE."
+
+[[passage]]
+at = "and through D let FD be drawn parallel to CE"
+kind = "helper"
+helper = "BookI.Prop31.parallelogram"
+note = "Euclid draws the parallel through D and takes its meeting F with EF from the figure. `BookI.Prop31.parallelogram` carries I.31's construction together with that meeting, using I.30, and proves that ECDF is a parallelogram."
+
+[[passage]]
+at = "therefore the angles FEB, EFD are less than two right angles"
+kind = "helper"
+helper = "angle_add_of_within"
+note = "Euclid takes EB to fall within CEF, so FEB is less than CEF. The Lean proves that B lies on the required sides of EC and EF, splits CEF with `angle_add_of_within`, and uses the positive angle CEB and Common Notion 5 to make the sum less than two right angles."
+
+[[passage]]
 at = "therefore EB, FD, if produced in the direction B, D, will meet"
 kind = "grouped"
-note = "One application of Postulate 5, under the sentence before, carries both that sentence and this conclusion; the Lean then takes the meeting point G."
+helper = "Postulate5"
+note = "One application of Postulate 5, under the sentence before, carries both that sentence and this conclusion; the Lean then takes the meeting point G. Our foundations state Euclid's own Postulate 5 as `Postulate5`, in System E's form (System E §3.6, diagram-angle transfer rule 5)."
+
+[[passage]]
+at = "Let them be produced and meet at G"
+kind = "helper"
+helper = "Between.of_inside"
+note = "Euclid puts G beyond B on EB and beyond D on FD. After taking the meeting supplied by Postulate 5, the Lean proves that B lies between E and G with `Between.of_inside`, and that D lies between F and G with `Between.of_sameSide`."
 
 [[passage]]
 at = "and let AG be joined"
 kind = "given"
 note = "Our triangles AEG and ADG are named by their corners, so no straight line AG is drawn; it is their common side."
 
+[[passage]]
+at = "therefore the angle AEB is right"
+kind = "helper"
+helper = "angle_add_of_between"
+note = "Euclid adds the two half-right angles at E to obtain AEB. `angle_add_of_between` shows that EC divides AEB because C lies between A and B; the Lean proves CEA and CEB equal with `Magnitude.eq_of_add_self_eq`, then adds the equal halves."
+
+[[passage]]
+at = "for it is equal to the angle DCE, they being alternate"
+kind = "helper"
+helper = "Tacit.pasch3"
+note = "Euclid reads E and G on opposite sides of AB from his figure when he takes BDG and DCE as alternate angles. From B between E and G, proved beneath \"Let them be produced and meet at G\", the Lean places them on opposite sides by `Tacit.pasch3`, a rule we assume (System E, Pasch 3), and applies I.29 to the parallels CE and DG to carry the right angle DCE to BDG."
+
+[[passage]]
+at = "therefore the angle DGB is equal to the angle DBG"
+kind = "helper"
+helper = "Magnitude.eq_of_add_self_eq"
+note = "Euclid takes the angles DGB and DBG to be equal because each is half a right angle. The Lean applies `Magnitude.eq_of_add_self_eq` to their equal doubles."
+
+[[passage]]
+at = "therefore the angle EGF is equal to the angle FEG"
+kind = "helper"
+helper = "Magnitude.eq_of_add_self_eq"
+note = "Euclid takes the angles EGF and FEG to be equal because each is half a right angle. The Lean applies `Magnitude.eq_of_add_self_eq` to their equal doubles."
+
 [review]
-stage = "exceptions"
-commit = "8a014a8"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "570e6fa"
+reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:3884ca872c6802f9"
+run = "brief 0005 stage 5, ship C5 re-read"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

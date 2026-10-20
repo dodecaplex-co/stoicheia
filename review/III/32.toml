@@ -36,8 +36,11 @@ at = "therefore the angle DBF which remains"
 kind = "case"
 note = "Euclid's A is the end of the diameter; the statement says this of every point of the segment BAD, and III.21 makes each such angle equal to BAD."
 
+[figure]
+case = "D on F's side of BA and apart from A, as in Heath's figure"
+
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "39e9dbb"
 reviewer = "Claude Opus 5.5"
 lean = "sha256:f90e259b1de276c5"

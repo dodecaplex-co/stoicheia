@@ -163,9 +163,10 @@ files working in parallel, the renderers, and an integrator followed by blind re
   with `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions page,
   PROGRAM.md and the CI workflow to a wave's integrator. The integrator
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
-  README.md's rows between the `<!-- scope:… -->` markers and PROGRAM.md's status table
-  between the `<!-- status -->` markers, which `render.py` fills; the rest of README.md has
-  an owner of its own, named in the orders. The integrator also owns the companions list,
+  README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
+  between the `<!-- status -->` markers and inline `count:` values in tracked Markdown,
+  which `render.py` fills; the rest of README.md has an owner of its own, named in the
+  orders. The integrator also owns the companions list,
   `Elements/Companions.lean`, which the certificate reads and checks, and adds a
   companion's entry in the commit that moves the companion beside its proposition, so
   that the listing travels with the proof and its record's stamp
@@ -177,8 +178,9 @@ files working in parallel, the renderers, and an integrator followed by blind re
   ([template](templates/proposition.md)). That is far easier to integrate than "something
   about circles".
 - **Generated files.** Contributors may render previews; only the integrator commits the
-  generated edition, regenerated from the integrated sources. This avoids merging separately
-  generated copies of the same pages.
+  generated edition, including inline `count:` values in tracked Markdown, regenerated
+  from the integrated sources. This avoids merging separately generated copies of the
+  same pages.
 - **Commit by name** (`git add` the files you own), never `git add -A` in a tree others use.
   Do not push, open, merge or approve a pull request, or rebase a shared branch: the
   coordinator lands work, as pull requests (section 10, "Landing work: pull requests").
@@ -364,6 +366,13 @@ running. Making either job required is the owner's call
   It runs just before the script, so a rule that reads a case wrongly stops the checks
   before the script's findings are read. The script does not run them itself: whoever
   changes it runs the file too.
+- **Counts in prose.** A count a script knows exactly goes between count markers and is
+  rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
+  `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
+  tests the counts and markers without Lean. Count markers do not overlap README.md's
+  generated scope regions or PROGRAM.md's generated status region. `negative_tests.py` runs
+  the tests before planting; its `--counts-only` option runs these plants and the file-only
+  regressions without a build.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,
@@ -556,10 +565,12 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
       the pull request for the security review, and refuses the pull request if it also
-      changes what the checks judge (anything but the protected paths, the guides and
-      briefs, the generated pages and a review record's stamp): the check change goes
-      first, in a pull request of its own. Two kinds of failure are only noted. Pages gone
-      stale under origin/main's `render.py`, or `facts.json` rewritten by origin/main's
+      changes what the checks judge (anything but the guides and briefs, the generated
+      pages, a review record's stamp, and the protected paths other than `Audit/`,
+      `Audit.lean`, `model/Model/Audit.lean`, `model/Model.lean` and the model's build
+      files): the check change goes first, in a pull request of its own. Two kinds of
+      failure are only noted. Pages gone stale under origin/main's `render.py`, or
+      `facts.json` rewritten by origin/main's
       certificate, show the generator's change in the pages' diff; a failure of
       `render.py` itself, its check of `docs/program.toml` among them, is a verdict. And
       the values pinned to the edition move with the content they pin (a re-proof that
@@ -639,29 +650,53 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    nothing the secret scan refuses; it carries a label for its kind, and
    `security-review` when a protected path changes; and it is not a draft. Then
    `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
-   commit's subject and body given (GitHub's own words, with the branch name scanned,
-   and the title scanned; a branch renamed since the merge first read the pull request
-   is refused, as a head moved is), so main holds exactly what was scanned: a merge
-   commit, never a squash or a rebase, and the branch deleted. When gh fails, GitHub is
-   asked whether the pull request merged before anything is said; once gh is asked to
-   merge, the script says nothing merged only when GitHub says so, and an interruption,
-   or a failure GitHub cannot be asked about, is reported as "merge state unknown", exit
-   3, since the merge may have happened. Afterwards the merge commit is checked to join
-   the base and the head checked, with the head's tree, on main; if it does not, the
-   script prints how to revert it in a pull request of its own, with the merged pull
-   request's label for its kind, and reverts nothing itself.
+   commit's subject and body given (GitHub's own words: the owner GitHub names for the
+   head, never the one in origin's URL, which names the old owner after a transfer, and
+   refused when GitHub names none an account could have; the branch name, scanned; and
+   the title, scanned; a branch renamed since the merge first read the pull request is
+   refused, as a head moved is), so main holds exactly what was scanned: a merge commit,
+   never a squash or a rebase, and the branch deleted. Whatever gh's exit, GitHub is then
+   asked whether the pull request merged before anything is said: gh can fail after
+   merging, and can exit 0 without merging, when a merge queue or auto-merge takes the
+   pull request to merge later. Once gh is asked to merge, the script says nothing merged
+   only when GitHub says the pull request is open or closed after gh failed, and reports
+   success only when GitHub says merged and origin/main holds the merge commit GitHub
+   names by its full object name. gh exiting 0 with the pull request not merged, a merge
+   commit GitHub does not name or origin/main does not hold, an interruption before
+   GitHub answers, or GitHub not to be asked, or answering with no state of its own, is
+   reported as "merge state unknown", exit 3, with no revert advised, since nothing on
+   main is known to be the merge. Afterwards the merge commit is checked to join the base
+   and the head checked, with the head's tree; if it does not, the script prints how to
+   revert it in a pull request of its own, with the merged pull request's label for its
+   kind, and reverts nothing itself.
 5. **Generated files** are regenerated from the integrated sources and committed by the
    integrator (section 4), so the pull request that changes their sources carries them.
 
 **Protected paths.** `scripts/` (the hook and the launcher included), `.github/`,
 `Certificate/` (the lock included), `tests/`, `review/SCHEMA.md`, `review/terms.toml`,
 `.gitattributes`, `.gitignore` (a rule added there hides untracked files from
-`git status`, and so from the check that the generated pages are current), and the
+`git status`, and so from the check that the generated pages are current), the
 toolchain files (`lakefile.toml`, `lakefile.lean`, which Lake reads in preference to
-`lakefile.toml` and runs, `lean-toolchain`, `lake-manifest.json`). A change to any of them
-needs a new line in the decisions page naming each file changed, the label
-`security-review`, and a `/security-review` recorded in the pull request; weakening a
-check stays a decision of the owner's ([FORMALIZATION.md](FORMALIZATION.md), section 1).
+`lakefile.toml` and runs, `lean-toolchain`, `lake-manifest.json`), and, since 18 October
+(#96), `Audit/`, the audit lemmas whose pinned axiom lists back the overlap catalogue's
+claims, with `Audit.lean`, the root that decides which of them `lake build Audit` checks,
+and the formal model's build files (`model/lakefile.toml`, `model/lakefile.lean`,
+`model/lean-toolchain`, `model/lake-manifest.json`, and `model/lock.sha256`, the hash of
+the lock the model was last checked against). Since 19 October, `model/Model/Audit.lean`
+and `model/Model.lean` join them, because they pin the model's proofs to `propext`,
+`Classical.choice` and `Quot.sound` with `Elements` absent, and include that audit in the
+build. A change to any of them needs a new line in the decisions page naming each file
+changed, by its whole path (from the root, or by a relative link that resolves from
+`docs/briefs/`, the decisions page's folder, to exactly that path: for
+`model/Model/Audit.lean`, `../../model/Model/Audit.lean` counts, but
+`../model/Model/Audit.lean`, `../../../model/Model/Audit.lean` and
+`./model/Model/Audit.lean` do not; a line naming `tests/model/lock.sha256` does not name
+`model/lock.sha256`), the label `security-review`, and a `/security-review` recorded in
+the pull request; weakening a check stays a decision of the owner's
+([FORMALIZATION.md](FORMALIZATION.md), section 1). `Audit/`, `Audit.lean`,
+`model/Model/Audit.lean`, `model/Model.lean` and the model's build files are content the
+checks judge, not checks, so they stay judged when a check fails with origin/main's copies
+(step 4).
 
 **A pull request from a fork** is not merged by `--merge`: the coordinator brings its
 commits to a branch of origin with the pre-flight, which opens a pull request of its own,

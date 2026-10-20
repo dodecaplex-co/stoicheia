@@ -5,8 +5,41 @@ fingerprint = "sha256:e7a89ad4fe728865"
 [route]
 kind = "euclid"
 
+[[passage]]
+at = "and through A let AF be drawn parallel"
+kind = "helper"
+helper = "BookI.Prop31.parallelogram"
+note = "Euclid draws AF parallel to CD and takes its meeting with DE at F from the figure. `BookI.Prop31.parallelogram` draws the parallel by I.31, finds F by `BookI.Prop30.meet` and proves DCAF a parallelogram; `BookI.Prop30.parallel` (I.30, which Heath does not cite here) makes AF parallel to BE as well."
+
+[[passage]]
+at = "Then AE is equal to AD, CE"
+kind = "helper"
+helper = "quadArea_add_of_parallelograms"
+note = "Euclid takes AE as AD and CE together. `Parallel.between` places D between F and E, and `quadArea_add_of_parallelograms` proves that AFDC and CDEB make up AFEB."
+
+[[passage]]
+at = "Now AE is the rectangle contained by AB, BC"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid treats AE as a rectangle, with BE equal to BC. The Lean proves BAFE a parallelogram, carries the square's right angle at B along BA, and uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify its area."
+
+[[passage]]
+at = "AD is the rectangle AC, CB"
+kind = "helper"
+helper = "Rectangle.of_right"
+note = "Euclid treats AD as a rectangle, with DC equal to CB. The Lean gets the adjacent right angle at C from `Tacit.adjacent_eq_of_right`, the rule we assume as System E, Diagram-angle 3, then uses `Rectangle.of_right` (I.29) and `Rectangle.eq_rect` to identify AD."
+
 [review]
-stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+stage = "full"
+commit = "50b595b"
+reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:6682122d40cfab7c"
+run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "pass"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

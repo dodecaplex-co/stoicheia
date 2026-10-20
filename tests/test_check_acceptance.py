@@ -6,8 +6,8 @@
 CI's `acceptance` job holds a pull request to every item that passes on main: it runs the
 checker on main and on the pull request, each writing its verdicts with --json, and then
 `--compare MAIN PR`, which fails when an item that passes on main does not pass on the
-pull request (docs/ACCEPTANCE.md, "In CI"). These cases put that comparison to small
-files of verdicts, each with the outcome it should give:
+pull request. The `acceptance` job in `.github/workflows/ci.yml` runs that comparison;
+these cases put it to small files of verdicts, each with the outcome it should give:
 
 * a pass that turns into a fail, into "not run" (a check not run is not a pass), or that
   the pull request's verdicts lack, is held; a fail that stays a fail, or turns into a
@@ -237,6 +237,8 @@ class BaselineCopy(unittest.TestCase):
               "tests/test_check_acceptance.py", "tests/model/run.py",
               "tests/model/search.py", "tests/model/hyperbolic.py",
               "Certificate/Facts.lean", "review/SCHEMA.md", "review/terms.toml")
+    # The lock must contain each forbidden circle rule, with the same type in the facts.
+    axiom_types = {name: "fixture statement" for name in ca.cf.FORBIDDEN_CIRCLE_RULES}
 
     @staticmethod
     def write(root: Path, name: str, text: str) -> None:
@@ -289,7 +291,7 @@ class BaselineCopy(unittest.TestCase):
                     self.assertEqual((main / name).exists(), absent != "main", name)
 
     def certificate(self, root: Path, word: str, count: int) -> dict:
-        facts = {"axiom_types": {}, "vocabulary": {"word": word}}
+        facts = {"axiom_types": self.axiom_types, "vocabulary": {"word": word}}
         entries = {"I.1": (None, {"axioms": [f"rule{i}" for i in range(count)]})}
         _, errors = ca.captured(ca.cf.check_lock, facts, root / "Certificate/axioms.lock")
         _, more = ca.captured(ca.cf.check_expectations, entries,
@@ -308,7 +310,7 @@ class BaselineCopy(unittest.TestCase):
                 for tree, word, count in ((main, "main definition", 1),
                                           (pr, pr_word, pr_count)):
                     self.write(tree, "Certificate/axioms.lock",
-                               f'[axioms]\n[vocabulary]\nword = "{word}"\n')
+                               ca.cf.render_lock(self.axiom_types, {"word": word}))
                     self.write(tree, "tests/certificate_expectations.json", json.dumps({
                         "expectations": [{"ref": "I.1", "field": "axioms",
                                           "count": {"prefix": "rule", "is": count},
