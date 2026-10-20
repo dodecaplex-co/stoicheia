@@ -83,14 +83,17 @@ list counts neither its congruence constructors nor the marker. No transformer i
 Every walk checks the declaring module of each constant it reaches, before stopping at
 an entry, axiom, Common Notion or shared step. A declaration in `Elements` or a module
 below it is local, as is a declaration in the emitter itself. Only declarations from
-Lean's own module roots `Init`, `Std` and `Lean` may be treated as external leaves.
-These are exactly the roots, besides `Elements`, imported by the environment that
-Facts.lean loads with Lean 4.35. Any other reached module fails the certificate before
-it writes `facts.json`, with a message naming the declaration and its module. The module
-comes from Lean's environment, regardless of the declaration's namespace: a helper named
-`Elements.Hidden.step` in `Staging.Hidden` is refused. This applies to dependencies in
-types as well as values, and to the vocabulary walk. An imported helper that no walk
-reaches does not fail the certificate.
+Lean's own modules may be treated as external leaves: modules under the roots `Init`,
+`Std` and `Lean` whose `.olean`, as Lean's search path finds it for the import, lies in
+the library directory of the running `lean`, both paths resolved. These are exactly the
+roots, besides `Elements`, imported by the environment that Facts.lean loads with Lean
+4.35. Any other reached module fails the certificate before it writes `facts.json`, with
+a message naming the declaration and its module. The module comes from Lean's
+environment, regardless of the declaration's namespace: a helper named
+`Elements.Hidden.step` in `Staging.Hidden` is refused. Nor is a module's root evidence
+of its origin: a separately compiled `Lean.Hidden` is refused too. This applies to
+dependencies in types as well as values, and to the vocabulary walk. An imported helper
+that no walk reaches does not fail the certificate.
 
 `own_axioms` comes from the walk that gives `direct_axioms`, stopped at each lemma
 the proof's own declarations call, as the walk for `shared_steps` is; what a lemma brings

@@ -161,6 +161,7 @@ class WorkflowStep:
     has_continue_on_error: bool
     continue_on_error: object
     has_shell_override: bool
+    has_working_directory: bool
 
 
 @dataclass(frozen=True)
@@ -171,20 +172,21 @@ class WorkflowCheckJob:
     continue_on_error: object
     has_dependencies: bool
     has_shell_override: bool
+    has_working_directory: bool
 
 
-def has_default_shell(mapping: dict, place: str) -> bool:
+def default_run_settings(mapping: dict, place: str) -> frozenset[str]:
     defaults = mapping.get("defaults")
     if defaults is None:
-        return False
+        return frozenset()
     if not isinstance(defaults, dict):
         raise AssertionError(f"{place} defaults are not a mapping")
     run = defaults.get("run")
     if run is None:
-        return False
+        return frozenset()
     if not isinstance(run, dict):
         raise AssertionError(f"{place} run defaults are not a mapping")
-    return "shell" in run
+    return frozenset(run)
 
 
 def normalized_check_job(source: str) -> WorkflowCheckJob:
@@ -221,15 +223,18 @@ def normalized_check_job(source: str) -> WorkflowCheckJob:
             has_continue_on_error="continue-on-error" in step,
             continue_on_error=step.get("continue-on-error"),
             has_shell_override="shell" in step,
+            has_working_directory="working-directory" in step,
         ))
+    defaults = (default_run_settings(workflow, "CI workflow") |
+                default_run_settings(job, "CI check job"))
     return WorkflowCheckJob(
         steps=tuple(steps),
         has_condition="if" in job,
         has_continue_on_error="continue-on-error" in job,
         continue_on_error=job.get("continue-on-error"),
         has_dependencies="needs" in job,
-        has_shell_override=(has_default_shell(workflow, "CI workflow") or
-                            has_default_shell(job, "CI check job")),
+        has_shell_override="shell" in defaults,
+        has_working_directory="working-directory" in defaults,
     )
 
 
@@ -248,6 +253,8 @@ def enforced_check_commands(job: WorkflowCheckJob, required: list[str]) -> list[
         raise AssertionError("CI check job has dependencies")
     if job.has_shell_override:
         raise AssertionError("CI check job has a default shell override")
+    if job.has_working_directory:
+        raise AssertionError("CI check job has a default working directory")
     generated_body = (RENDER_COMMAND, FRESHNESS_COMMAND, FRESHNESS_ASSERTION)
     simple = set(required) - {RENDER_COMMAND, FRESHNESS_COMMAND}
     required_set = set(required)
@@ -261,6 +268,8 @@ def enforced_check_commands(job: WorkflowCheckJob, required: list[str]) -> list[
             raise AssertionError(f"CI check step {step.name!r} can continue on error")
         if step.has_shell_override:
             raise AssertionError(f"CI check step {step.name!r} has a shell override")
+        if step.has_working_directory:
+            raise AssertionError(f"CI check step {step.name!r} has a working directory")
         if step.run == generated_body:
             commands.extend((RENDER_COMMAND, FRESHNESS_COMMAND))
         elif len(step.run) == 1 and step.run[0] in simple:
@@ -3784,6 +3793,12 @@ class Units(unittest.TestCase):
             ("job shell", "job", "defaults", {"run": {"shell": "bash {0}"}},
              "default shell override"),
             ("step shell", "step", "shell", "bash {0}", "has a shell override"),
+            ("workflow working directory", "workflow", "defaults",
+             {"run": {"working-directory": "bypass"}}, "default working directory"),
+            ("job working directory", "job", "defaults",
+             {"run": {"working-directory": "bypass"}}, "default working directory"),
+            ("step working directory", "step", "working-directory", "bypass",
+             "has a working directory"),
             ("wrapped run", "step", "run", f"set +e\n{certificate}\nexit 0",
              "unsupported run body"),
             ("missing freshness assertion", "render", "run",
@@ -3820,6 +3835,12 @@ class Units(unittest.TestCase):
                     if step.get("run") == "python3 -I tests/test_certificate.py")
         job["continue-on-error"] = False
         step["continue-on-error"] = False
+        enforced_check_commands(normalized_check_job(yaml.safe_dump(workflow)), checks)
+
+        workflow = yaml.safe_load(source)
+        formal_model = workflow["jobs"]["formal-model"]
+        self.assertIn("model", {step.get("working-directory") for step in formal_model["steps"]})
+        formal_model["defaults"] = {"run": {"working-directory": "model"}}
         enforced_check_commands(normalized_check_job(yaml.safe_dump(workflow)), checks)
 
     def flagged(self, line: str) -> list[str]:

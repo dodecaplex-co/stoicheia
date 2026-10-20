@@ -347,7 +347,9 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
   `python3 -I tests/test_certificate.py` checks C.N. 4 detection directly, through helpers
   and through transformers, with negative controls for derivations that supply no step,
   while keeping the axiom fields unchanged. It rejects reached helpers from
-  `Staging.Hidden`, while allowing unused imports from foreign modules. It needs the
+  `Staging.Hidden`, and from a `Lean.Hidden` compiled outside the Lean toolchain, while
+  allowing unused imports from foreign modules and reached declarations of the
+  toolchain's own. It needs the
   foundation modules built by `lake build`, with the Lean tools on `PATH`. CI's `check`
   job and the pre-flight run it immediately after `Certificate/Facts.lean` on the revision
   delivered.

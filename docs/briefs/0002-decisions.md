@@ -2102,8 +2102,9 @@ findings:
 
   The security review's fix round closes the inherited module boundary gap. Listing
   `env.header.moduleNames` by root in the environment loaded by Facts.lean gives
-  `Init`, `Lean`, `Std` and `Elements`. The walks may stop at Lean's three module roots,
-  whose declarations belong to the pinned toolchain. They walk local declarations in
+  `Init`, `Lean`, `Std` and `Elements`. The walks may stop at modules under Lean's three
+  module roots that the running toolchain supplies, as the next fix round below
+  verifies. They walk local declarations in
   `Elements` and the emitter itself, and refuse any reached declaration from another
   imported module, naming both declaration and module before writing any certificate.
   All five walks apply this check before their stopping rules, including the vocabulary
@@ -2129,3 +2130,24 @@ findings:
   Protected files changed in this fix round: `Certificate/Facts.lean`,
   `Certificate/FIELDS.md`, `tests/test_certificate.py`, `scripts/negative_tests.py`
   and `tests/test_negative_tests.py`. No foundation or expected value changes.
+
+  A further review round found that a module's root is not evidence of its origin: a
+  separately compiled `Lean.Hidden`, found first on the search path, could supply a
+  helper using Common Notion 1 that every walk stopped at, silently omitting the
+  notion. Facts.lean now lists, once per run, the imported modules under `Init`, `Std`
+  and `Lean` whose `.olean`, as `findOLean` finds it for the import, lies in the library
+  directory of the running `lean` (`getLibDir`), both paths resolved; `isLocal`, the
+  boundary every walk shares, lets only those end a walk and refuses any other module
+  with the module diagnostic. The regression gives its temporary package a `Lean` root
+  whose entries link to the toolchain's own files beside a compiled `Lean.Hidden`. A
+  reached `Lean.Hidden.notion` fails, naming declaration and module, with no
+  `facts.json`; a reached `Lean.Position` of the toolchain's `Lean.Data.Position`, found
+  through those links, still ends the walk, and the existing cases pass unchanged.
+  `scripts/test_safe_push.py`'s model of `jobs.check` also records `working-directory`
+  at the workflow's and the check job's run defaults and on each required step, and
+  rejects any of them, since the recorded command could then run a substitute script;
+  mutations at all three scopes are refused, and the `formal-model` job keeps its
+  directories. Protected files changed in this round: `Certificate/Facts.lean`,
+  `Certificate/FIELDS.md`, `tests/test_certificate.py`, `scripts/test_safe_push.py` and
+  `.github/workflows/ci.yml` (the step's name only). No check is weakened, and main's
+  facts and pages are unchanged.
