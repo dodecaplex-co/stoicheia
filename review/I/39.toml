@@ -17,6 +17,12 @@ kind = "given"
 note = "The statement gives the goal, AD parallel to BC. The distinct vertices A and D name AD; its parallelism remains to be proved, so nothing is drawn here."
 
 [[passage]]
+at = "and let EC be joined"
+kind = "helper"
+helper = "Prop30.meet"
+note = "Euclid takes E where the parallel through A meets BD. The Lean proves that this meeting exists by I.30 (`Prop30.meet`), then joins EC by Postulate 1."
+
+[[passage]]
 at = "But ABC is equal to DBC"
 kind = "case"
 note = "The same-side hypothesis puts E on the ray from B through D, and the contrary supposition excludes E = D. If E is between B and D, EBC is less than DBC; if E is beyond D, DBC is less than EBC, so either order contradicts their equal areas."
@@ -25,12 +31,6 @@ note = "The same-side hypothesis puts E on the ray from B through D, and the con
 at = "Therefore AE is not parallel to BC"
 kind = "grouped"
 note = "The preceding strict-area contradiction rules out the proposed parallel meeting BD away from D."
-
-[[passage]]
-at = "and let EC be joined"
-kind = "helper"
-helper = "Prop30.meet"
-note = "Euclid takes E where the parallel through A meets BD. The Lean proves that this meeting exists by I.30 (`Prop30.meet`), then joins EC by Postulate 1."
 
 [[passage]]
 at = "Similarly we can prove that neither is any other straight line except AD"
