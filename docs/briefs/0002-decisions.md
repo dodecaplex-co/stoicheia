@@ -1823,10 +1823,10 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
-- **The checks, made ready for retiring axioms (proposed, pending the evidence).** The owner
-  asked, "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
-  principle on 19 October 2026, pending the evidence; nothing lands until the owner has seen
-  it. A search found eight that can go with no choice of basis (the retirement's own entry
+- **The checks, made ready for retiring axioms.** The owner asked, "Fewer axioms is better.
+  Any more that can go?", and on 19 October 2026 approved both retirements: "Please do both.
+  79 is rather large with so many books in front of us." On 20 October the owner approved
+  landing each as three pull requests; this is the first of the first. A search found eight that can go with no choice of basis (the retirement's own entry
   names them). Since a check never changes in the pull request of the content it judges,
   this change prepares the checks first, with all 87 axioms in place and the pin change
   recorded below. Main already reads the expected axiom count from
@@ -1857,8 +1857,9 @@ findings:
   Deleting that dependency still fails, but a substitution that keeps the count would no
   longer be caught. C6's full `equals` pin remains pending; the retirement then adds stronger
   pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight. This approval is for
-  the first pin change alone; the retirement itself remains pending the evidence and the
-  owner's separate decision.
+  the first pin change alone; the retirement itself is approved as the entry above says.
+  The stronger pins cannot fail once the eight are theorems, as the next paragraph explains;
+  pins that can fail are #168, which holds every release until it closes.
   As built, those pins put the eight names in `excludes` on each entry's `axioms`. Once
   the eight are theorems no axiom list can hold their names, so those pins cannot fail;
   an entry's use of a proved rule shows only in the axioms beneath it, which `proved_rules`
@@ -2094,9 +2095,12 @@ findings:
   [FORMALIZATION](../FORMALIZATION.md), section 7, records how the ban continues
   to hold. This prepares the checks for the retirement; it retires no axiom.
 - **Eight axioms retired, 87 to 79.** The owner asked,
-  "Fewer axioms is better. Any more that can go?", and approved retiring axioms in
-  principle on 19 October 2026, pending the evidence; this lands only when the owner has
-  seen it. Each of the eight keeps its name and exact type and becomes a theorem at the
+  "Fewer axioms is better. Any more that can go?", and on 19 October 2026 approved both
+  retirements: "Please do both. 79 is rather large with so many books in front of us." On
+  20 October the owner approved landing each as three pull requests; this is the second of
+  the first. Pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight, able
+  to fail now that the eight are theorems, are #168, which holds every release until it
+  closes. Each of the eight keeps its name and exact type and becomes a theorem at the
   earliest place it can be proved: `Tacit.centre_unique`, `Tacit.inside_of_between`
   (Circle 2, from Circle 3, which stays), `Tacit.exists_point_outside_circle`,
   `Tacit.line_meets_circle_of_opposite_sides` and `Tacit.triple_incidence3` in
