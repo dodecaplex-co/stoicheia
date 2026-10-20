@@ -206,7 +206,7 @@ reviewer = "…"                 # from stage "full": the model or person, and t
 # [review.items]               # acceptance (brief 0005, stage 6), in a "full" record
 # Keys fixed by docs/ACCEPTANCE.md, P11 to P16:
 # statement, passages, representations, commentary, figures, signoff = "pass" / "fail" / "n/a"
-# The reviewer records only their own reading, never claims they wrote, prompted or edited.
+# The reviewer records only their own reading, never records an item for a claim they wrote, prompted, or edited.
 # Acceptance requires "pass"; representations alone may be "n/a" when P13 does not apply.
 # Omitted or empty items are valid under the schema, but do not pass acceptance.
 ```
