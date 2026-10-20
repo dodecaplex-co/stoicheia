@@ -779,7 +779,9 @@ def cmd_score(args) -> int:
                 why.append("no confidence given" + order)
             elif confidence < args.low:
                 why.append(f"confidence {confidence:.2f}" + order)
-        if isinstance(r.get("reversed"), dict) and r["reversed"].get("consistent") is False:
+        if ("reversed" in r
+                and (r["reversed"]["choice"] != r.get("choice")
+                     or r["reversed"].get("consistent") is False)):
             why.append(f"chose {r['reversed']['choice']!r} with the options reversed")
         if r.get("model_differs"):
             why.append(f"answered by {r.get('model')}, not {r.get('model_requested')}")
@@ -1132,6 +1134,8 @@ def cmd_self_test(args) -> int:
               out + err)
         for broken in (None, [], "reversed", 1, True, {},
                        {"confidence": 0.9, "consistent": True}):
+            valid = json.loads(first[1])
+            valid["id"] = "valid-before-reversed-broken"
             row = json.loads(first[0])
             row["id"] = "reversed-broken"
             row["expected"] = row["choice"]
@@ -1139,12 +1143,46 @@ def cmd_self_test(args) -> int:
             row["confidence"] = 0.9
             row["reversed"] = broken
             broken_file = tmp / "reversed-broken.jsonl"
-            broken_file.write_text(json.dumps(row) + "\n")
+            broken_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
             for extra in ((), ("--bar", "0")):
                 code, out, err = run("score", str(broken_file), *extra)
-                check(code == 1 and "reversed asking is not an answer" in out + err,
+                check(code == 1 and out == "" and "reversed asking is not an answer" in err,
                       f"score refuses a reversed asking of {broken!r}"
                       + (" under a bar" if extra else ""), out + err)
+
+        order_cases = []
+        for name, differs, consistent in (("different-without-flag", True, None),
+                                          ("different-with-true-flag", True, True),
+                                          ("matching-without-flag", False, None),
+                                          ("matching-with-false-flag", False, False)):
+            row = json.loads(first[0])
+            row["id"] = name
+            row["input_rows"] = 4
+            row["expected"] = row["choice"]
+            row["agrees"] = True
+            row["confidence"] = 0.9
+            row["reversed"]["confidence"] = 0.9
+            if differs:
+                row["reversed"]["choice"] = next(
+                    choice for choice in row["probabilities"] if choice != row["choice"])
+            else:
+                row["reversed"]["choice"] = row["choice"]
+            if consistent is None:
+                row["reversed"].pop("consistent", None)
+            else:
+                row["reversed"]["consistent"] = consistent
+            order_cases.append(row)
+        order_file = tmp / "order-consistency.jsonl"
+        order_file.write_text("".join(json.dumps(row) + "\n" for row in order_cases))
+        for extra in ((), ("--bar", "1")):
+            code, out, err = run("score", str(order_file), *extra)
+            listed = {row["id"] for row in order_cases if f"  {row['id']}:" in out}
+            check(code == 0
+                  and listed == {"different-without-flag", "different-with-true-flag",
+                                 "matching-with-false-flag"}
+                  and (not extra or "at or above the bar of 100%" in out),
+                  "score compares reversed choices and keeps explicit false conservative"
+                  + (" under a bar" if extra else ""), out + err)
 
         def one(name: str, row: dict) -> Path:
             p = tmp / name
