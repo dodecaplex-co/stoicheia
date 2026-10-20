@@ -150,6 +150,10 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
   request of its own ([#3]).
+- **The merge commit's subject** takes the owner from origin's URL, which after a transfer
+  would name the old owner (cosmetic).
+- **A guard for `gh` exiting 0 without merging,** needed if a merge queue or auto-merge is
+  ever turned on; neither is.
 - **The Lean notes of I.6, I.14 and I.24** still make Lean the subject: a later pass, with
   their records re-read.
 - **Two that are not pull requests:** the finished worktrees and their merged branches are
