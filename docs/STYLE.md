@@ -476,8 +476,10 @@ would fit any page of the book is left out.
 
 ## 7. Figures
 
-Two per proposition, on the parchment card (`#fbf7ee`, a rect with `rx="10"` over the
-whole canvas), in Georgia. Section 2 says why there are two.
+Each proposition has two required figures, `NN-idea.svg` and `NN.svg`, on the parchment
+card (`#fbf7ee`, a rect with `rx="10"` over the whole canvas), in Georgia. It may also
+have `NN-modern.svg` beneath its paragraph **The modern way.** Section 2 says why the
+first two are required.
 
 **`NN-idea.svg`, the figure at a glance.** A canvas of 400 × 300 **[checked]**. Byrne's red
 `#d0312d`, yellow `#f2b705`, blue `#1f5aa6` and black `#222222`, and white only for grid
