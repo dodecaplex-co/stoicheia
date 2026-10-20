@@ -4,9 +4,11 @@ Syntax: <!-- count:vocabulary -->91<!-- /count -->. Append :word or :Word to
 spell a number in lower case or with its first letter capitalised. Only the value
 belongs to the generator. Literal examples must escape '<', even in code spans.
 
-Only tracked Markdown is read. Whole renderer outputs are excluded. The decisions
-log and reports are history, except the living gap and overlap catalogues; markers
-there are refused. Counts use files alone, never a Lean run or build outputs.
+Git must resolve the supplied root as its work tree. Only tracked Markdown and
+review records are scanned. Symlinks and paths resolving outside the root are
+refused. Whole renderer outputs are scanned but may not contain markers. The
+decisions log and reports are history, except the living gap and overlap catalogues;
+markers there are refused. Counts use files alone, never a Lean run or build outputs.
 Run this module to print every available count and its current value.
 """
 
@@ -20,9 +22,40 @@ import tomllib
 import heath
 
 
+def repository_path(root, path):
+    """Check a path before reading or writing, refusing symlinks and escapes."""
+    path = root / path
+    if path.is_symlink():
+        name = path.relative_to(root) if path.is_relative_to(root) else path
+        raise ValueError(f"{name}: symlink is forbidden")
+    if not path.resolve().is_relative_to(root.resolve()):
+        raise ValueError(f"{path}: resolved path is outside repository root {root}")
+    return path
+
+
+def tracked_files(root, pattern):
+    """Read Git's index only when its resolved work tree is the supplied root."""
+    try:
+        top = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=root,
+                             capture_output=True, check=True)
+    except (subprocess.CalledProcessError, OSError) as error:
+        raise ValueError(f"{root}: cannot resolve Git work tree; "
+                         "a checkout or explicit GIT_DIR and GIT_WORK_TREE is required") from error
+    resolved = Path(top.stdout.decode().removesuffix("\n")).resolve()
+    if resolved != root.resolve():
+        raise ValueError(f"{root}: Git work tree {resolved} does not match "
+                         f"repository root {root.resolve()}")
+    try:
+        result = subprocess.run(["git", "ls-files", "-z", "--", pattern], cwd=root,
+                                capture_output=True, check=True)
+    except (subprocess.CalledProcessError, OSError) as error:
+        raise ValueError(f"{root}: cannot list tracked files with Git") from error
+    return [Path(name.decode()) for name in result.stdout.split(b"\0") if name]
+
+
 def lock_table(root, table):
     """Read one of the lock's two tables, requiring the lock's declared shape."""
-    path = root / "Certificate/axioms.lock"
+    path = repository_path(root, "Certificate/axioms.lock")
     data = tomllib.loads(path.read_text())
     if set(data) != {"axioms", "vocabulary"} or not all(
             isinstance(t, dict) and all(isinstance(v, str) for v in t.values())
@@ -73,7 +106,7 @@ def companion_entries(root):
     # because check_fidelity imports this module too; neither import runs a check.
     from check_fidelity import read_lean
 
-    path = root / "Elements/Companions.lean"
+    path = repository_path(root, "Elements/Companions.lean")
     source = path.read_text()
     code, unsure = read_lean(source)
     start = re.search(r"\bdef\s+Elements\.companions\s*:\s*"
@@ -129,12 +162,17 @@ def companion_propositions(root):
 
 
 def review_stages(root, book):
-    """Read [review].stage from review/<book>/NN.toml, requiring a schema stage."""
+    """Read tracked review/<book>/NN.toml records, requiring valid numbers and stages."""
     stages = []
-    directory = root / "review" / book
+    directory = repository_path(root, Path("review") / book)
     if not directory.is_dir():
         raise ValueError(f"review/{book}: missing record directory")
-    for path in sorted(directory.glob("[0-9][0-9].toml")):
+    for rel in tracked_files(root, f"review/{book}/[0-9][0-9].toml"):
+        if rel.parent != Path("review") / book:
+            continue
+        if not 1 <= int(rel.stem) <= heath.BOOKS[book]:
+            raise ValueError(f"{rel}: proposition number is outside Book {book}")
+        path = repository_path(root, rel)
         data = tomllib.loads(path.read_text())
         review = data.get("review")
         stage = review.get("stage") if isinstance(review, dict) else None
@@ -159,7 +197,7 @@ ACCEPTANCE = "docs/reports/acceptance-books-I-III.md"
 
 def acceptance_summary(root):
     """Read the generated report's summary at its own revision, never rerun acceptance."""
-    text = (root / ACCEPTANCE).read_text()
+    text = repository_path(root, ACCEPTANCE).read_text()
     sections = re.findall(r"^## Summary\n(.*?)(?=^## |\Z)", text, re.M | re.S)
     if len(sections) != 1:
         raise ValueError(f"{ACCEPTANCE}: expected one generated Summary")
@@ -286,9 +324,7 @@ def historical(path):
 
 def tracked_markdown(root):
     """List tracked Markdown with Git's index, including names with spaces or newlines."""
-    result = subprocess.run(["git", "ls-files", "-z", "--", "*.md"],
-                            cwd=root, capture_output=True, check=True)
-    return [Path(name.decode()) for name in result.stdout.split(b"\0") if name]
+    return tracked_files(root, "*.md")
 
 
 def value(root, name, cache):
@@ -307,13 +343,20 @@ def value(root, name, cache):
 def updates(root, *, check=False):
     """Plan all replacements before writing; report stale text only when checking."""
     changes, errors, cache = {}, [], {}
-    for path in tracked_markdown(root):
-        if whole_output(path):
-            continue
-        text = (root / path).read_text()
+    try:
+        paths = tracked_markdown(root)
+    except (ValueError, OSError) as error:
+        return {}, [str(error)]
+    for path in paths:
         try:
+            text = repository_path(root, path).read_text()
+            token = START.search(text)
+            if whole_output(path) and token:
+                line = text.count("\n", 0, token.start()) + 1
+                raise ValueError(f"{path}:{line}: count markers are forbidden "
+                                 "in whole renderer outputs")
             spans = markers(text, path)
-        except ValueError as error:
+        except (ValueError, OSError) as error:
             errors.append(str(error))
             continue
         filled = text

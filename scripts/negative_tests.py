@@ -62,7 +62,8 @@ records current; CI runs it on every push.
     is replayed.
 16. Without a build, in a disposable source copy: a stale inline vocabulary count
     and an unknown count name are refused by check_fidelity.py, and a correct count
-    passes. Run just these plants and the file-only regressions with --counts-only.
+    passes. Missing or mismatched Git work trees and a Markdown symlink are refused
+    with diagnostics. Run just these plants and the file-only regressions with --counts-only.
 
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
@@ -865,7 +866,7 @@ def count_source_copy():
 
 
 def count_markers() -> None:
-    """Plant wrong, unknown and correct count markers in a copy, without Lean."""
+    """Plant count faults and unsafe discovery paths in a copy, without Lean."""
     with count_source_copy() as (copy, env):
         path = copy / "docs/PROGRAM.md"
         original = path.read_text()
@@ -887,6 +888,33 @@ def count_markers() -> None:
                                "run python3 scripts/render.py")
             elif expect_success("a correct inline count", result):
                 print("✓ a correct inline count: passed (without Lean)")
+        path.write_text(original)
+        for name, git_env, diagnostic in (
+                ("missing Git metadata",
+                 {k: v for k, v in env.items() if not k.startswith("GIT_")},
+                 "cannot resolve Git work tree"),
+                ("a mismatched Git work tree", {**env, "GIT_WORK_TREE": str(ROOT)},
+                 "does not match repository root")):
+            result = subprocess.run([sys.executable, "scripts/check_fidelity.py"],
+                                    cwd=copy, env=git_env, capture_output=True, text=True)
+            expect_failure(name, result, diagnostic, unwanted=("Traceback",))
+        with tempfile.TemporaryDirectory(prefix="stoicheia-count-target-", dir="/tmp") as tmp:
+            target = Path(tmp) / "notes.md"
+            text = "<!-- count:vocabulary -->0<!-- /count -->\n"
+            target.write_text(text)
+            path.unlink()
+            path.symlink_to(target)
+            try:
+                for script in ("check_fidelity.py", "render.py"):
+                    result = subprocess.run([sys.executable, f"scripts/{script}"],
+                                            cwd=copy, env=env, capture_output=True, text=True)
+                    expect_failure(f"a Markdown symlink in {script}", result,
+                                   "docs/PROGRAM.md: symlink is forbidden", unwanted=("Traceback",))
+                    if target.read_text() != text:
+                        failures.append(f"{script} wrote through a Markdown symlink")
+            finally:
+                path.unlink()
+                path.write_text(original)
 
 
 def main(argv=()) -> int:

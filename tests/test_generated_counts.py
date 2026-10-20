@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """File-only count and marker regressions: python3 -I tests/test_generated_counts.py."""
 
+import os
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -47,6 +49,10 @@ def Elements.companions : List (Lean.Name × String) := [
                            f'[review]\nstage = "{stage}"\n')
         self.write("review/I/notes.toml", 'stage = "full"')
         self.report("**7 failing items**. 2 of the 6 propositions pass every item of their own.")
+        self.tracked = [p.relative_to(self.root) for p in self.root.rglob("*") if p.is_file()]
+        self.enterContext(patch.object(
+            counts, "tracked_files",
+            side_effect=lambda root, pattern: [p for p in self.tracked if p.match(pattern)]))
 
     def write(self, path, text):
         path = self.root / path
@@ -169,18 +175,90 @@ def Elements.companions : List (Lean.Name × String) := [
         self.write("README.md", "<!-- count:vocabulary --> 3 <!-- /count -->")
         self.assertIn("stated ' 3 '", self.scan(["README.md"], check=True)[1][0])
 
-    def test_history_is_refused_and_whole_outputs_are_excluded(self):
+    def test_history_is_refused(self):
         history = ["docs/briefs/0002-decisions.md", "docs/reports/crew/new-log.md",
                    "docs/reports/read-through-01.md", counts.ACCEPTANCE]
-        outputs = ["book/I/index.md", "CERTIFICATE.md", "GRAPH.md"]
-        for path in history + outputs:
+        for path in history:
             self.write(path, "<!-- count:vocabulary -->3<!-- /count -->")
-        changes, errors = self.scan(history + outputs)
+        changes, errors = self.scan(history)
         self.assertEqual(changes, {})
         self.assertEqual(len(errors), len(history))
         for path, error in zip(history, errors):
             self.assertIn(f"{path}:1:", error)
             self.assertIn("forbidden in dated history", error)
+
+    def test_whole_outputs_refuse_every_marker_without_filling(self):
+        outputs = ["book/I/index.md", "book/appendix.md", "CERTIFICATE.md", "GRAPH.md"]
+        for marker in ("<!-- count:vocabulary -->3<!-- /count -->",
+                       "<!-- count:vocabulary -->0<!-- /count -->",
+                       "<!-- count:unknown -->0<!-- /count -->", "<!-- COUNT:broken"):
+            for path in outputs:
+                self.write(path, "# Output\n" + marker)
+            for check in (False, True):
+                with self.subTest(marker=marker, check=check):
+                    changes, errors = self.scan(outputs, check=check)
+                    self.assertEqual(changes, {})
+                    self.assertEqual(len(errors), len(outputs))
+                    for path, error in zip(outputs, errors):
+                        self.assertIn(f"{path}:2:", error)
+                        self.assertIn("forbidden in whole renderer outputs", error)
+                        self.assertEqual((self.root / path).read_text(), "# Output\n" + marker)
+
+    def test_tracked_review_numbers_must_belong_to_the_book(self):
+        for book in counts.heath.BOOKS:
+            for number in (0, counts.heath.BOOKS[book] + 1):
+                rel = f"review/{book}/{number:02d}.toml"
+                self.write(rel, '[review]\nstage = "full"\n')
+                self.tracked.append(Path(rel))
+                with self.subTest(path=rel), self.assertRaisesRegex(
+                        ValueError, f"{rel}: proposition number is outside Book {book}"):
+                    counts.review_stages(self.root, book)
+                self.tracked.remove(Path(rel))
+
+    def test_tracked_markdown_symlinks_are_refused_even_without_markers(self):
+        for text in ("Plain prose.", "<!-- count:vocabulary -->0<!-- /count -->"):
+            target = self.write("target.md", text)
+            path = self.root / "README.md"
+            path.symlink_to(target)
+            try:
+                for check in (False, True):
+                    changes, errors = self.scan(["README.md"], check=check)
+                    self.assertEqual(changes, {})
+                    self.assertEqual(errors, ["README.md: symlink is forbidden"])
+                self.assertEqual(target.read_text(), text)
+            finally:
+                path.unlink()
+
+    def test_paths_resolving_outside_the_root_are_refused(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            outside = Path(tmp)
+            target = outside / "notes.md"
+            text = "<!-- count:vocabulary -->0<!-- /count -->"
+            target.write_text(text)
+            (self.root / "linked").symlink_to(outside, target_is_directory=True)
+            changes, errors = self.scan(["linked/notes.md"])
+            self.assertEqual(changes, {})
+            self.assertIn("linked/notes.md", errors[0])
+            self.assertIn("outside repository root", errors[0])
+            with patch.object(render, "ROOT", self.root):
+                for path in (self.root / "linked/notes.md", target):
+                    with self.assertRaisesRegex(ValueError, "outside repository root"):
+                        render.read_text(path)
+                    with self.assertRaisesRegex(ValueError, "outside repository root"):
+                        render.write_text(path, "Changed.")
+            self.assertEqual(target.read_text(), text)
+
+    def test_render_rechecks_paths_before_writing(self):
+        target = self.write("target.md", "Original.")
+        path = self.write("README.md", "<!-- count:vocabulary -->0<!-- /count -->")
+        changes, errors = self.scan(["README.md"])
+        self.assertEqual(errors, [])
+        path.unlink()
+        path.symlink_to(target)
+        with patch.object(render, "ROOT", self.root):
+            with self.assertRaisesRegex(ValueError, "README.md: symlink is forbidden"):
+                render.write_text(path, changes[path])
+        self.assertEqual(target.read_text(), "Original.")
 
     def test_all_other_tracked_markdown_can_hold_counts(self):
         paths = ["docs/reports/gaps-book-I.md", "docs/reports/overlaps.md",
@@ -230,6 +308,98 @@ def Elements.companions : List (Lean.Name × String) := [
                 render.main()
         self.assertIn("-->0<!--", good.read_text())
         self.assertIn("unknown", bad.read_text())
+
+
+class GitCountTests(unittest.TestCase):
+    """Exercise real read-only Git calls, including the source copy's index."""
+
+    def setUp(self):
+        self.enterContext(patch.dict(
+            os.environ, {k: v for k, v in os.environ.items() if not k.startswith("GIT_")},
+            clear=True))
+
+    def test_discovery_refuses_an_untracked_directory_inside_a_checkout(self):
+        with tempfile.TemporaryDirectory(dir=REPO) as tmp:
+            root = Path(tmp)
+            with self.assertRaisesRegex(ValueError, "Git work tree .* does not match"):
+                counts.tracked_markdown(root)
+            changes, errors = counts.updates(root, check=True)
+            self.assertEqual(changes, {})
+            self.assertEqual(len(errors), 1)
+            self.assertIn("does not match repository root", errors[0])
+
+    def test_discovery_refuses_missing_git_metadata(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with self.assertRaisesRegex(ValueError, "cannot resolve Git work tree"):
+                counts.tracked_markdown(root)
+            self.assertIn("cannot resolve Git work tree", counts.updates(root, check=True)[1][0])
+
+    def test_explicit_copy_work_tree_is_honoured_and_resolved(self):
+        git_dir = subprocess.check_output(
+            ["git", "rev-parse", "--absolute-git-dir"], cwd=REPO, text=True).strip()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "copy"
+            root.mkdir()
+            alias = Path(tmp) / "alias"
+            alias.symlink_to(root, target_is_directory=True)
+            with patch.dict(os.environ, {"GIT_DIR": git_dir, "GIT_WORK_TREE": str(alias)}):
+                self.assertEqual(counts.tracked_markdown(root), counts.tracked_markdown(alias))
+                self.assertIn(Path("README.md"), counts.tracked_markdown(root))
+                with self.assertRaisesRegex(ValueError, "does not match repository root"):
+                    counts.tracked_markdown(REPO)
+                with self.assertRaisesRegex(ValueError, "does not match repository root"):
+                    counts.review_stages(REPO, "I")
+
+    def test_failed_git_listing_has_a_clear_error(self):
+        real_run = subprocess.run
+
+        def fail_listing(cmd, **kwargs):
+            if cmd[1] == "ls-files":
+                raise subprocess.CalledProcessError(128, cmd, stderr=b"index unavailable")
+            return real_run(cmd, **kwargs)
+
+        with patch.object(counts.subprocess, "run", side_effect=fail_listing):
+            changes, errors = counts.updates(REPO, check=True)
+        self.assertEqual(changes, {})
+        self.assertEqual(errors, [f"{REPO}: cannot list tracked files with Git"])
+
+    def test_untracked_review_records_cannot_move_counts(self):
+        git_dir = subprocess.check_output(
+            ["git", "rev-parse", "--absolute-git-dir"], cwd=REPO, text=True).strip()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            with patch.dict(os.environ, {"GIT_DIR": git_dir, "GIT_WORK_TREE": str(root)}):
+                paths = counts.tracked_files(root, "review/I/[0-9][0-9].toml")
+                self.assertTrue(paths)
+                for rel in paths:
+                    path = root / rel
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_text('[review]\nstage = "full"\n')
+                before = (counts.reviews(root, "I"), counts.full_reviews(root, "I"))
+                self.assertEqual(before, (len(paths), len(paths)))
+                (root / "review/I/99.toml").write_text('[review]\nstage = "full"\n')
+                self.assertEqual((counts.reviews(root, "I"), counts.full_reviews(root, "I")),
+                                 before)
+
+    def test_render_main_fills_intro_before_copying_without_count_comments(self):
+        from negative_tests import count_source_copy
+
+        with count_source_copy() as (root, env):
+            path = root / "mishnah/intro/I.md"
+            computed = counts.vocabulary(root)
+            path.write_text("There are <!-- count:vocabulary -->0<!-- /count --> words. "
+                            "<!-- An ordinary comment stays. -->\n")
+            result = subprocess.run([sys.executable, "scripts/render.py"], cwd=root, env=env,
+                                    capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertEqual(path.read_text(),
+                             f"There are <!-- count:vocabulary -->{computed}<!-- /count --> "
+                             "words. <!-- An ordinary comment stays. -->\n")
+            page = (root / "book/I/index.md").read_text()
+            self.assertIn(f"There are {computed} words. <!-- An ordinary comment stays. -->",
+                          page)
+            self.assertIsNone(counts.START.search(page))
 
 
 if __name__ == "__main__":

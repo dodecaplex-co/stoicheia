@@ -1854,3 +1854,15 @@ findings:
   adds markers to the prose. The protected files changed are
   `scripts/generated_counts.py`, `scripts/render.py`, `scripts/check_fidelity.py`,
   `scripts/negative_tests.py` and `tests/test_generated_counts.py`.
+- **Count discovery and rendering refuse unsafe inputs.** Following the code and
+  security reviews, Git's resolved work tree must match the supplied root, including
+  copies using `GIT_DIR` and `GIT_WORK_TREE`. Missing or mismatched metadata fails with
+  a diagnostic. Tracked Markdown symlinks and paths resolving outside the root are
+  refused before reading or writing. Whole renderer outputs are now scanned and any
+  count marker there is refused; this supersedes their exclusion in the entry above.
+  Review counts use tracked records alone and check proposition numbers. Regressions
+  cover these boundaries and run rendering from a stale marked introduction through
+  to its updated source and copied page without count comments. The protected paths
+  changed by this branch are `scripts/generated_counts.py`, `scripts/render.py`,
+  `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
+  `tests/test_generated_counts.py`.

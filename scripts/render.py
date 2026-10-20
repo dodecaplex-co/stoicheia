@@ -17,8 +17,8 @@ every book in `heath.BOOKS`:
     docs/PROGRAM.md    only the status table between `<!-- status -->` and
                        `<!-- /status -->`, with the stage, the outside score and the
                        release read from `docs/program.toml`
-    tracked Markdown  inline count values, as generated_counts.py defines; whole
-                       outputs above are excluded and markers in history are refused
+    tracked Markdown  inline count values, as generated_counts.py defines; markers
+                       in whole outputs above and in history are refused
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as
@@ -201,11 +201,21 @@ def whose(book, n):
     return "the argument Heath prints" if heath.bracketed(book, n) else "Euclid's argument"
 
 
+def read_text(path):
+    """Read a repository file only after checking its destination."""
+    return generated_counts.repository_path(ROOT, path).read_text()
+
+
+def write_text(path, text):
+    """Write a repository file only after checking its destination."""
+    generated_counts.repository_path(ROOT, path).write_text(text)
+
+
 def load_facts():
     path = ROOT / "facts.json"
     if not path.exists():
         return {}
-    return {p["ref"]: p for p in json.loads(path.read_text())["propositions"]}
+    return {p["ref"]: p for p in json.loads(read_text(path))["propositions"]}
 
 
 def load_records():
@@ -246,7 +256,7 @@ def load_axiom_docs():
     docs = {}
     pattern = re.compile(r"/--((?:(?!-/).)*?)-/\s*axiom\s+([^\s({]+)", re.S)
     for path in sorted((ROOT / "Elements" / "Foundations").rglob("*.lean")):
-        src = path.read_text()
+        src = read_text(path)
         # facts.json names an axiom by its namespace below `Elements`, e.g.
         # `Tacit.circles_meet` or, for a Euclidean-only rule, `Tacit.Euclidean.…`.
         ns = re.search(r"^namespace Elements\.(\S+)", src, re.M)
@@ -260,7 +270,7 @@ def load_axiom_docs():
 
 def svg_desc(path):
     """The one-line caption kept in an SVG's <desc> element."""
-    m = re.search(r"<desc>(.*?)</desc>", path.read_text(), re.S)
+    m = re.search(r"<desc>(.*?)</desc>", read_text(path), re.S)
     return " ".join(m.group(1).split()) if m else ""
 
 
@@ -288,7 +298,7 @@ def lean_parts(book, n):
     Text before the first helper that declares nothing (a section heading alone) goes
     with the main theorem, as does everything when the file has no documented main
     theorem."""
-    src = heath.lean_path(book, n).read_text()
+    src = read_text(heath.lean_path(book, n))
     start = src.find("open Tacit")
     start = start + len("open Tacit") if start >= 0 else 0
     end = src.rfind(f"end Elements.Book{book}")
@@ -1095,7 +1105,7 @@ def how_to_read(p, record, proof_text=""):
 def lean_code():
     """Every Lean file of the edition, by path, with its comments taken out
     (`check_fidelity.without_comments`): read once, for `use_kind`."""
-    return {path: check_fidelity.without_comments(path.read_text())
+    return {path: check_fidelity.without_comments(read_text(path))
             for path in sorted((ROOT / "Elements").rglob("*.lean"))}
 
 
@@ -1422,12 +1432,12 @@ def page(book, n, count, titles, facts, docs, records):
             "## What it rests on", "", rests_on(p, docs, 2, book, refs, attached_refs)]
     out += ["## Mishnah", ""]
     if mishnah.exists():
-        out += [MISHNAH_LEAD, "", generated_counts.without_markers(mishnah.read_text().strip()), ""]
+        out += [MISHNAH_LEAD, "", generated_counts.without_markers(read_text(mishnah).strip()), ""]
     else:
         out += ["_Commentary to come._", ""]
     # A line or three from docs/reading.md, chosen for this proposition; no file, no section.
     reading = ROOT / "reading" / book / f"{n:02d}.md"
-    further = generated_counts.without_markers(reading.read_text().strip()) if reading.exists() else ""
+    further = generated_counts.without_markers(read_text(reading).strip()) if reading.exists() else ""
     if further:
         out += ["## Further reading", "", further, ""]
     out += [nav, ""]
@@ -1438,7 +1448,7 @@ def page(book, n, count, titles, facts, docs, records):
 def front_sections(book):
     """The headings of a book's front matter, in order: Book I has Definitions,
     Postulates and Common Notions; Book II has Definitions alone."""
-    text = heath.HTML_COMMENT.sub("", (ROOT / "heath" / book / "front.md").read_text())
+    text = heath.HTML_COMMENT.sub("", read_text(ROOT / "heath" / book / "front.md"))
     return [line[3:].strip() for line in text.splitlines() if line.startswith("## ")]
 
 
@@ -1455,7 +1465,7 @@ def book_intro(book):
     and where Postulate 5 comes in), so that no page has to say it again. Empty if the
     book has none yet."""
     path = ROOT / "mishnah" / "intro" / f"{book}.md"
-    return generated_counts.without_markers(path.read_text().strip()) if path.exists() else ""
+    return generated_counts.without_markers(read_text(path).strip()) if path.exists() else ""
 
 
 def ref_ranges(refs):
@@ -1735,7 +1745,7 @@ FRONT_UNUSED = "Words with no Lean partner are never used in a Lean proof."
 
 
 def front(book):
-    raw = (ROOT / "heath" / book / "front.md").read_text()
+    raw = read_text(ROOT / "heath" / book / "front.md")
     source = heath.HTML_COMMENT.match(raw.strip()).group(0)[4:-3].strip()
     text = heath.HTML_COMMENT.sub("", raw)
     out = [GENERATED, f"[Book {book}](index.md)", "",
@@ -2046,7 +2056,7 @@ def load_program():
     where = PROGRAM_TOML.relative_to(ROOT).as_posix()
     tomllib = heath._toml()
     try:
-        data = tomllib.loads(PROGRAM_TOML.read_text())
+        data = tomllib.loads(read_text(PROGRAM_TOML))
     except (OSError, tomllib.TOMLDecodeError) as e:
         raise SystemExit(f"{where}: {e}")
     faults = []
@@ -2376,7 +2386,7 @@ def names_page(facts, records):
             record = records.get(ref)
             page = f"{book}/{n:02d}.md"
             path = heath.lean_path(book, n)
-            here = set(DECLARATION.findall(path.read_text())) if path.exists() else set()
+            here = set(DECLARATION.findall(read_text(path))) if path.exists() else set()
             module = (f"[`Elements.Book{book}.Prop{n:02d}`]"
                       f"(../{path.relative_to(ROOT).as_posix()})")
             rests = f"[what it rests on]({page}#what-it-rests-on)"
@@ -2433,27 +2443,27 @@ def main() -> None:
     docs = load_axiom_docs()
     records = load_records()
     for path, text in changes.items():
-        path.write_text(text)
+        write_text(path, text)
     for book, (count, titles) in BOOKS.items():
-        out_dir = ROOT / "book" / book
+        out_dir = generated_counts.repository_path(ROOT, ROOT / "book" / book)
         out_dir.mkdir(parents=True, exist_ok=True)
         for n in range(1, count + 1):
-            (out_dir / f"{n:02d}.md").write_text(page(book, n, count, titles, facts, docs,
-                                                      records))
-        (out_dir / "index.md").write_text(index(book, count, titles, facts, records))
-        (out_dir / "front.md").write_text(front(book))
-    (ROOT / "book" / "names.md").write_text(names_page(facts, records))
-    (ROOT / "CERTIFICATE.md").write_text(certificate(facts, docs, records))
-    (ROOT / "GRAPH.md").write_text(graph(facts))
+            write_text(out_dir / f"{n:02d}.md", page(book, n, count, titles, facts, docs,
+                                                  records))
+        write_text(out_dir / "index.md", index(book, count, titles, facts, records))
+        write_text(out_dir / "front.md", front(book))
+    write_text(ROOT / "book" / "names.md", names_page(facts, records))
+    write_text(ROOT / "CERTIFICATE.md", certificate(facts, docs, records))
+    write_text(ROOT / "GRAPH.md", graph(facts))
     path = ROOT / "README.md"
-    text = path.read_text()
+    text = read_text(path)
     filled = readme(text, facts, records)
     if filled != text:
-        path.write_text(filled)
-    text = PROGRAM.read_text()
+        write_text(path, filled)
+    text = read_text(PROGRAM)
     filled = program_page(text, facts, records, load_program())
     if filled != text:
-        PROGRAM.write_text(filled)
+        write_text(PROGRAM, filled)
     print("rendered book pages, the table of names, CERTIFICATE.md, GRAPH.md, README.md's "
           "scope summaries and PROGRAM.md's status table")
 

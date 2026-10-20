@@ -339,6 +339,10 @@ number. Append `:word` to the name for words, or `:Word` for a sentence's first 
 The module lists the names and prints their current values when run. Literal examples
 escape `<`, even in code spans. Markers are refused in the decisions log and in
 `docs/reports/`, except the living `gaps-book-*.md` and `overlaps.md` catalogues.
+They are also refused in `book/`, `CERTIFICATE.md` and `GRAPH.md`: copied prose keeps
+the computed value but loses the count comments. Only tracked Markdown and review
+records are scanned, with Git's work tree checked against the supplied root; symlinks
+and paths resolving outside that root are refused.
 
 **Heath's letters, one style.** Heath's letters name points, straight lines and figures,
 and a reader meets them in the text, in both figures, in the Lean and in the modern way.
