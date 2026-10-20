@@ -1854,3 +1854,16 @@ findings:
   [scripts/check_acceptance.py](../../scripts/check_acceptance.py) and
   [tests/test_check_style.py](../../tests/test_check_style.py).
   [STYLE](../STYLE.md), sections 2, 7 and 8, describes the figure and its rules.
+- **The modern figure is shown beneath its paragraph (#49).**
+  [scripts/render.py](../../scripts/render.py) places each existing modern figure
+  immediately after its whole modern way paragraph, with a blank line on each side.
+  It uses `check_style.modern_span`, preserving source indentation, comments and code,
+  and checks the placement against eight cases before writing pages.
+  [tests/test_check_style.py](../../tests/test_check_style.py) gains the two renderer
+  regression tests, for placement and the page caller. The renderer change is content:
+  [WORKFLOW](../WORKFLOW.md), section 10, says, "A change to what `render.py` writes is
+  not a check change in this sense, since the pages it regenerates show it".
+  These orders keep the output regression tests with that content; they add checks of
+  the output, while the source figure rules S24 and S25 precede it in train H10.
+  Train F1 carries the regenerated pages and [ACCEPTANCE](../ACCEPTANCE.md)'s P8 words
+  for S24 and S25 and for the letter rule S26, supplied by H10's letter branch.
