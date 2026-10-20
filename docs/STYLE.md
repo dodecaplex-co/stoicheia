@@ -333,6 +333,20 @@ docstring label, "System E, Intersection 5" (a diagram rule, §3.4 of System E) 
 E, Intersections 8" (a construction rule, §3.3), or by its Lean name. Titles and foreign
 words are in italics: *pons asinorum*, *reductio ad absurdum*.
 
+For an exact count from [scripts/generated_counts.py](../scripts/generated_counts.py),
+write &lt;!-- count:vocabulary -->91&lt;!-- /count -->; `render.py` fills only the
+number. Append `:word` to the name for words, or `:Word` for a sentence's first word.
+The module lists the names and prints their current values when run. Literal examples
+escape `<`, even in code spans. Markers are refused in the decisions log and in
+`docs/reports/`, except the living `gaps-book-*.md` and `overlaps.md` catalogues.
+They are also refused in `book/`, `CERTIFICATE.md` and `GRAPH.md`: copied prose keeps
+the computed value but loses the count comments. A marker may stand elsewhere in
+README.md or PROGRAM.md, but may not overlap README.md's `scope` regions or PROGRAM.md's
+`status` region, including their delimiters, since `render.py` replaces those regions.
+Only tracked Markdown and review records are scanned, with Git's work tree checked against
+the supplied root; symlinks in any component below it and paths resolving outside it are
+refused.
+
 **Heath's letters, one style.** Heath's letters name points, straight lines and figures,
 and a reader meets them in the text, in both figures, in the Lean and in the modern way.
 They look the same in each: upright, never italic. Heath's page sets them in italic, but a
@@ -370,8 +384,8 @@ strikethrough (write a space or `\sim`), and no backtick, which opens code; and 
 stands straight after a letter or a digit: `x_{1}^{2}`, not `x^{2}_{1}`, and
 `\mathrm{A_1}`, not `\mathrm{A}_1`. A shape not yet found may still break, so the reviewer
 sees each span rendered on GitHub (section 8, the reviewer's checklist, item 5).
-`scripts/render.py` copies the mishnah onto its page unchanged, so the page shows the same
-mathematics.
+`scripts/render.py` copies the mishnah onto its page unchanged but for its count comments,
+so the page shows the same mathematics.
 
 **System E and LeanEuclid** are thanked by name in every page's footer, so the mishnah
 does not thank them again; a particular debt is still said where it falls (Intersection 4

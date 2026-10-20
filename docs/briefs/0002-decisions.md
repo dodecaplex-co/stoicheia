@@ -1943,6 +1943,51 @@ findings:
   the list against the table and exercises P3 with and without the required tag. CI does
   not run it yet; whoever changes the limitations runs it.
 
+- **Exact counts in prose are rendered and checked.** The stale-content audit found the
+  vocabulary still given as 61 where the lock held 91, and companions as nineteen across
+  seven propositions where the list held twenty across eight. The owner asked for a rule
+  that catches such drift. Inline HTML comments, `count:name` and `/count`, delimit just
+  the number; `:word` spells it out and `:Word` capitalises its first letter. The syntax,
+  shown with its opening brackets escaped in [STYLE](../STYLE.md), section 4, is distinct
+  from the existing scope and status regions and leaves no visible delimiters in Markdown.
+  Only counts computed exactly from files are generated: the lock's axioms, tacit rules
+  and postulates, using the renderer's existing classification, the axioms other than
+  Postulate 5, and its vocabulary; the
+  listed companions and the propositions they widen; each book's records and those at
+  stage `full`; and the acceptance report's failing items and propositions passing every
+  own item, read from its generated summary at that report's revision. Surrounding prose
+  stays human. No Lean run is needed to compute or check a count.
+  `render.py` fills markers in tracked Markdown before copying introductions and other
+  prose into book pages, where it removes the count comments. Whole renderer outputs are
+  excluded. Markers that overlap README.md's generated scope regions or PROGRAM.md's
+  generated status region, including their delimiters, are refused before rendering,
+  since those regions are replaced. Markers are refused in this decisions log and throughout `docs/reports/`,
+  except the living `gaps-book-*.md` and `overlaps.md` catalogues, so dated evidence stays
+  at its revision. Unknown, malformed, nested and unclosed markers fail with file and
+  line. `check_fidelity.py`, already run before rendering, also refuses a stale value,
+  giving the name, stated and computed values, and the command to regenerate.
+  Small fixtures test each count and the marker boundaries; negative tests plant wrong,
+  unknown and correct counts in a source copy under `/tmp`, without a build. Their
+  `--counts-only` option runs those plants and the file-only regressions; the default
+  suite still runs every plant. This is the tooling branch only. A later content branch
+  adds markers to the prose. The protected files changed are
+  `scripts/generated_counts.py`, `scripts/render.py`, `scripts/check_fidelity.py`,
+  `scripts/negative_tests.py` and `tests/test_generated_counts.py`.
+- **Count discovery and rendering refuse unsafe inputs.** Following the code and
+  security reviews, Git's resolved work tree must match the supplied root, including
+  copies using `GIT_DIR` and `GIT_WORK_TREE`. Missing or mismatched metadata fails with
+  a diagnostic. Symlinks in every component below the repository root, and paths resolving
+  outside the root, are refused before an optional input is tested for presence, or a path
+  is read or written; a symlink supplied as the root itself remains a supported alias.
+  Whole renderer outputs are now scanned and any count marker there is refused; this
+  supersedes their exclusion in the entry above.
+  Review counts use tracked records alone and check proposition numbers. Regressions
+  cover these boundaries and run rendering from a stale marked introduction through
+  to its updated source and copied page without count comments. The protected paths
+  changed by this branch are `scripts/generated_counts.py`, `scripts/render.py`,
+  `scripts/check_fidelity.py`, `scripts/negative_tests.py` and
+  `tests/test_generated_counts.py`.
+
 - **A check for merge-conflict markers.** Pull request #138 left a diff3 base marker and a
   duplicated, outdated fragment on this page, and nothing caught it; the owner asked for a
   rule to catch such residue. S23 of `scripts/check_style.py` ([STYLE](../STYLE.md),
@@ -1967,7 +2012,6 @@ findings:
   the rule lands apart from the content fix, `text/decisions-marker` (#140), which removed
   the marker first; on main since #140 it finds none. The protected files changed are `scripts/check_style.py`,
   `scripts/negative_tests.py` and `tests/test_check_style.py`.
-
 - **S23 errs toward refusal for possible reference definitions.** A lone Markdown middle
   is allowed only when every line of the preceding block is ordinary paragraph text;
   any line beginning with up to three spaces, a bracketed label (escaped brackets
