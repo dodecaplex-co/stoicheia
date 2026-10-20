@@ -746,4 +746,3 @@ domain, no false staged statement. Its findings, and what was done:
 | `area_eq` needed no global division existence | Its proof now takes the given division as the witness |
 
 Warm thanks to Astra, whose Codex readers wrote, proved and challenged this work.
-
