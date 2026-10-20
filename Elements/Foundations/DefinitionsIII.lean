@@ -38,10 +38,12 @@ Book III is about circles, and most of its words need no Lean word of their own:
 * A segment (Definition 6) is a circle `α`, a straight line `AB` in it, and the
   circumference on one side of `AB`; "the segment AEB" names that side by a point `E` of
   its circumference. The segment as a figure, with its points, is an `Arc` (below).
-  III.25's construction core instead receives points A, C and P, the segment's points as
-  a predicate, and the meeting hypothesis, with no circle or centre. Its companions
-  receive the circle: `Prop25.complete` identifies the constructed circle with it, and
-  `Prop25.of_circle` recovers the statement given the whole circle.
+  III.25's construction core is given only A, C, a point P naming the side, the segment's
+  points as a predicate S, the noncollinearity of A, C, P, and the fact that a ray from
+  within AC towards P's side meets S. `Prop25.complete` proves that the circle constructed
+  from those data is the circle from which the segment came. The companion
+  `Prop25.of_circle` keeps the earlier, circle-backed statement, which is handed the whole
+  circle.
 * The angle in a segment (Definition 8) is the angle `AEB`, for a point `E` of its
   circumference; similar segments (Definition 11) are those whose angles `AEB`, `CFD` are
   equal.

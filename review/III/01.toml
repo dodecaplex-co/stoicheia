@@ -49,7 +49,7 @@ note = "The reductio shows that the supposed centre G lies on CE, and the Lean b
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop1.porism"
-note = "Proved as its own theorem, III.1 Por., by the argument of Euclid's reductio from the given centre G: on AB it is D by `Prop1.middle`; off AB, the shared I.8 step `Prop1.equal_adjacent` makes the adjacent angles equal, Postulate 4 makes them right, and `Prop1.perpendicular` puts G on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`."
+note = "Proved as its own theorem, III.1 Por., by the argument of Euclid's reductio from the given centre G: on AB it is D by `Prop1.middle`; off AB, the shared I.8 step `Prop1.equal_adjacent` makes the adjacent angles equal, Definition I.10 makes them right, Postulate 4 identifies their measure with `∟`, and `Prop1.perpendicular` puts G on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`."
 
 [figure]
 case = "AB not through F, with the supposed centre G off CE in the reductio"

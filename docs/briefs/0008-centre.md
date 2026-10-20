@@ -213,12 +213,12 @@ the frozen text that follows is kept, not silently rewritten.
   witness was used; the reader checks that confinement in the proof.
 - **Corrected porism, replacing "The porism" and its record and certificate promises.**
   The statement still names its centre G. Its proof takes the argument of Euclid's
-  reductio directly from that centre: on AB it is D by `Prop1.middle`; off AB, I.8's
-  comparison in `Prop1.equal_adjacent`, shared with `Prop1`, makes the adjacent angles
-  equal, Postulate 4 makes them right, and `Prop1.perpendicular` puts G on DC. It neither
-  calls III.1 nor uses `centre_unique` or `exists_centre`. The fresh certificate has 51
-  tacit rules, replacing the frozen prediction of 58. III.1 has 57, including the rule
-  through its construction, and still excludes `centre_unique`.
+  reductio directly from that centre: on AB it is D by `Prop1.middle`; off AB, the shared
+  I.8 step `Prop1.equal_adjacent` makes the adjacent angles equal, Definition I.10 makes
+  them right, Postulate 4 identifies their measure with `∟`, and `Prop1.perpendicular`
+  puts G on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`. The
+  fresh certificate has 51 tacit rules, replacing the frozen prediction of 58. III.1 has
+  57, including the rule through its construction, and still excludes `centre_unique`.
 - **Corrected overlap, replacing "The overlap note" and "The catalogue".** In the
   final restated III.1, the rule supplies two steps: D within by III.2's argument, and
   "let G be the centre". The bisections, perpendicular straight line and correctness
@@ -246,9 +246,11 @@ the frozen text that follows is kept, not silently rewritten.
   it does not wait for step 6. The construction and porism content comes first, the
   guard next in a separate landing, then the centre restatements.
 - **Consumers affected.** III.1's callers, the porism's callers, its review record and
-  page, Book III's introduction where it discusses centres, III.2's commentary, the
-  overlap catalogue, `Certificate/FIELDS.md`, `tests/certificate_expectations.json`,
-  the future `Audit/Centre.lean`, and the dependency pins in `Audit/Overlaps.lean` and
+  page, Book III's introduction (`mishnah/intro/III.md`) where it discusses centres,
+  `docs/briefs/0004-book-III.md` where it discusses centres and porisms, III.2's
+  commentary, `docs/reports/gaps-book-III.md`, the overlap catalogue,
+  `Certificate/FIELDS.md`, `tests/certificate_expectations.json`, the future
+  `Audit/Centre.lean`, and the dependency pins in `Audit/Overlaps.lean` and
   `Audit/Crossing.lean`. The integrator regenerates the pages. No proposition or porism
   statement, Heath sentence, foundation or lock changes under this correction.
 - **Work that can go on meanwhile.** The remaining content proceeds under its approved

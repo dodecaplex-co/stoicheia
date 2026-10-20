@@ -24,9 +24,10 @@ Three new lemmas for Lean users, approved at the freeze (question 11), are prove
 III.13's two clauses, each with only the two circles it speaks of (`Prop13.internally`,
 `Prop13.externally`), and `Centre.every`, which turns a fact about a named centre into the
 condition said of every centre that III.4 and III.8 ask for. The names sit in
-`Elements.BookIII.Staging.Centre` and `Elements.Staging.Centre`, apart from brief 0006's
-staged III.24 and III.25. When the restated statements are proved they replace today's, and
-this file is deleted.
+`Elements.BookIII.Staging.Centre` and `Elements.Staging.Centre`. Brief 0006's III.24 and
+III.25 now live in `Elements.BookIII`; their centre-removal variants remain staged in
+`Elements.BookIII.Staging.Centre.Stage3` and `.Stage4`. When the restated statements are
+proved they replace today's, and this file is deleted.
 -/
 
 namespace Elements.BookIII.Staging.Centre

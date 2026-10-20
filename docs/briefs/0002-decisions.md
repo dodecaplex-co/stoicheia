@@ -1838,9 +1838,9 @@ findings:
 
   Lane 3's porism keeps its statement and uses the argument of Euclid's reductio from
   its given centre G. On AB, G is D by `Prop1.middle`; off AB, the shared I.8 step
-  `Prop1.equal_adjacent` makes the adjacent angles equal, Postulate 4 makes them right,
-  and `Prop1.perpendicular` puts G on DC. It neither calls III.1 nor uses
-  `centre_unique` or `exists_centre`.
+  `Prop1.equal_adjacent` makes the adjacent angles equal, Definition I.10 makes them
+  right, Postulate 4 identifies their measure with `∟`, and `Prop1.perpendicular` puts G
+  on DC. It neither calls III.1 nor uses `centre_unique` or `exists_centre`.
 
   [Brief 0008's dated correction](0008-centre.md#correction-iii1-19-october-2026)
   records the discrepancy, the unchanged declarations, the corrected proof, guard,
@@ -1894,7 +1894,8 @@ findings:
   from 122 to 125 words. All 88 axioms and every previously locked word are byte-identical
   to the preceding integration. `tests/model/lock.sha256` and `model/lock.sha256` receive
   dated notes and the new hash; `model/Model/Laws.lean` is regenerated offline. No axiom
-  or model law changes. The protected-path security review remains part of integration.
+  or model law changes. The statement approval does not replace the independent review or
+  the protected-path security review, which remain part of integration.
 - **The renderer's words follow the content.** The protected file
   [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
   `facts.json`: `MixedAngle.ofSegment` enables the mixed-angle row; `Arc`, `InSegment`,
