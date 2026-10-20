@@ -1,6 +1,6 @@
-"""Mutation test: drop or weaken a guard in an axiom and confirm the search finds a
-counterexample.  Shows that the harness would have caught a false axiom, and that each
-guard in the real axioms is doing work.
+"""Mutation test: drop or weaken a guard in a geometric statement and confirm the search finds a
+counterexample. Shows that the harness catches false statements and that the tested
+guards do work, including those of properties retained after axiom retirement.
 Usage: python3 -I mutations.py"""
 import itertools
 import math

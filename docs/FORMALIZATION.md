@@ -446,7 +446,10 @@ dependencies.
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
 - **Circle 2 and Circle 3.** No certificate entry rests on `Tacit.inside_of_between` or
   `Tacit.outside_of_between`, whether through its own proof or through a lemma it uses;
-  the check fails if the axiom lock no longer holds either name.
+  each name must stay in the axiom lock, or name a theorem whose `proved_rules` entry
+  in `facts.json` includes another forbidden circle rule still in the lock as an axiom.
+  Thus a proved rule remains forbidden through the axiom beneath it; a missing name,
+  or a proof without such an axiom, fails the check.
 - **No later citations:** no proof cites a proposition that does not come before it.
 - **Complete books stay complete:** every proposition of a complete book is proved, with
   both figures and a mishnah, and so is every porism and companion attached to it.
@@ -459,7 +462,8 @@ axiom declared outside the foundations, in each of `Elements/`, `Staging/`, `Aud
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
 and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms,
-and Circle 3 renamed in the lock;
+Circle 3 renamed in the lock; and Circle 2 proved without Circle 3 beneath it, with a
+matching case that still rests on locked Circle 3 and must pass;
 placement among the shared steps of an entry other than III.24, and a lemma of
 its namespace named in another file under `Elements/`; a later citation, one of them
 named only in a helper's statement; every forbidden command, and an attribute for each
