@@ -66,7 +66,6 @@ rule's Lean name finds the same calls.
 | [I.13, a case of it, in 17 proofs from II.1 on](#i13-in-17-proofs) | Diagram-angle 3 (`adjacent_eq_of_right`): the angle beside a right angle is right | Supplies a step: I.13 makes the two angles two right angles, so the second is right | II.1 | `Audit.adjacent_eq_of_right` runs the other way: the rule, proved from I.13 |
 | [I.13, a consequence of it, in I.47](#i13-in-i47) | Metric 5 (`angle_le_two_right`): no angle exceeds two right angles | Supplies a step: for an angle between two straight lines, I.13 gives it | I.47, its only user | None |
 | [I.23](#i23) | Superposition (`superposition`): a triangle can be laid down on a given ray, on a given side, keeping its sides and angles | Supplies a step, in `Audit.I_23`: laid down at A along AB, the triangle DCE carries its angle at C to A, and naming the ray and the side takes seven axioms more | I.4 | `Audit.I_23` |
-| [III.1's corollary, in III.1 Por.](#iii1-por) | Generalities 2 (`centre_unique`): a circle has only one centre | Supplies a step: "a proposition which, if thought necessary, may be added to III. 1 as a corollary" (Heath, vol. 2, p. 8) | III.1's porism; of the propositions themselves, III.14 | None |
 | [III.2](#iii2) | Circle 2 (`inside_of_between`): between two points on or within a circle, every point is within it | States it, and more: the ends may be within the circle as well as on it | Nowhere: no proposition rests on it | `Audit.III_2`, Astra's proof: Circle 2 alone |
 | [III.2](#iii2) | Circle 3 (`outside_of_between`): a straight line that has left a circle does not come back; Circle 2 turned round | Gives it at once: were a point between two points of the circle not within it, the second point would be outside the circle, not on it | Nowhere: no proposition rests on it | `Audit.III_2_outside`: Circle 3 alone |
 | [III.5](#iii5) | Diagram-segment 2 (`circle_eq`): a circle is fixed by its centre and radius | Gives it at once: two circles about one centre through one point are one circle | III.5 | `Audit.III_5`: Diagram-segment 2 alone |
@@ -127,16 +126,6 @@ inference rule, whose placed points never become constructed ones
 Points 1 and Same side 3 to name the ray and the side: eight axioms in all, since System
 E's Metric 1 is two of ours.
 
-#### III.1 Por.
-
-III.1's porism calls the rule itself: it makes the centre III.1 finds the given centre,
-so that it lies on the cutting straight line. III.14, III.17 and III.36 call it
-themselves for the same step, making the centre III.1 finds the centre their statements
-speak of. III.26 reaches it only through Book Zero's `EqualCircles.radii`, that equal
-circles have equal radii: a circle has only one centre, so the centres the definition of
-equal circles names are the given ones. III.28 and III.29 call that lemma too, and rest on
-the rule through III.26 and III.27 as well, which they cite.
-
 #### III.2
 
 Two rules contain III.2, and no proposition rests on either. Circle 2 says it outright, and more,
@@ -153,9 +142,9 @@ rests on neither rule. Circle 2 used to reach it through III.1, which called the
 put D, the middle point of AB, within the circle, so that the straight line drawn through
 D at right angles to AB meets the circle on both sides of it: "a fact which Euclid first
 demonstrates in III. 2", as Isaac Todhunter observes (Heath, vol. 2, p. 7). III.1's
-helper `Prop1.within` proves it by III.2's own argument, from the centre III.1's statement
-gives: on AB that centre is D itself, and off it I.5, I.16 and I.19 make D nearer the
-centre than the circumference. II.14, once the first proof to call the rule, needs E, between
+helper `Prop1.within` proves it by III.2's own argument, from a centre that `exists_centre`
+supplies inside III.1's construction: on AB that centre is D itself, and off it I.5, I.16
+and I.19 make D nearer the centre than the circumference. II.14, once the first proof to call the rule, needs E, between
 B and F, the ends of the diameter of the semicircle BHF, within the circle, so that DE
 produced meets it at H, a step Euclid takes without saying why
 ([gaps in Book II](gaps-book-II.md#ii14)). G, the centre, falls between B and E, so E lies
@@ -233,7 +222,8 @@ both circles, and circles that touch without have none.
 
 **What the project already says.** The [gap catalogue for Book III](gaps-book-III.md) says
 that Circle 2 "already contains III.2", in its introduction and under III.1, where it also
-gives Generalities 2 as the corollary Heath would add to III.1. III.2's commentary has a
+identifies Generalities 2 with the corollary Heath would add to III.1, while noting that
+our Porism proves its conclusion without that rule. III.2's commentary has a
 paragraph headed "A rule that contains III.2", and III.5's and III.6's name `circle_eq` as
 the rule that supplies the step Euclid leaves tacit there. The axiom docstrings name one
 more of Euclid's steps: Intersection 5 is "the step Euclid takes for granted in I.1". That

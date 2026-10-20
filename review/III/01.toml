@@ -12,10 +12,10 @@ tags = ["centre-given"]
 note = "The circle comes with some centre G, Euclid's supposed centre, and with the two points A, B of the straight line he draws through it at random. The porism, too, is stated of a circle with a centre."
 
 [[passage]]
-at = "from D let DC be drawn at right angles to AB and let it be drawn through to E"
-kind = "helper"
-helper = "Prop1.within"
-note = "Drawing DC through to E needs D within the circle, which Euclid proves only in III.2, as Todhunter observes. `Prop1.within` takes it by III.2's own argument, by I.5, I.16 and I.19, from the centre the hypothesis gives; were the centre on AB, it would be D itself."
+at = "Let ABC be the given circle;"
+kind = "grouped"
+helper = "Prop1.construction"
+note = "The three construction sentences are carried together. The construction receives no centre; `exists_centre` supplies one only for `Prop1.within` to put D within by III.2's own argument, and none of its returned points comes from that centre."
 
 [[passage]]
 at = "and let GA, GD, GB be joined"
@@ -38,7 +38,7 @@ note = "The reductio shows that the supposed centre G lies on CE, and the Lean b
 at = "PORISM. From this it is manifest"
 kind = "carried"
 helper = "Prop1.porism"
-note = "Proved as its own theorem, III.1 Por., from this construction. It uses that a circle has one centre (`centre_unique`), which III.1 itself does not."
+note = "Proved as its own theorem, III.1 Por., by Euclid's reductio: I.8 makes the adjacent angles at D equal, Postulate 4 makes them right, and `Prop1.perpendicular` puts the given centre on DC. It uses neither III.1 nor `centre_unique`."
 
 [review]
 stage = "exceptions"

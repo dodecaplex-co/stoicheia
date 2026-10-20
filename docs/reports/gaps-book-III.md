@@ -50,25 +50,26 @@ line make up the whole circle (`Circumference.whole`); and a circumference is a
 semicircle, less or greater, as the centre lies on its straight line, beyond it or on
 its side (`Circumference.semicircle`, `Circumference.lt_semicircle`,
 `Circumference.gt_semicircle`). A lemma named after a proposition, such as
-`Prop8.within`, lives in its file. Our circles have a centre only when a hypothesis
-gives one, and the proofs take it by III.1, as [Book III's introduction](../../book/III/index.md)
-tells. These steps, with those below that Euclid takes with no bracket in Heath or without a
+`Prop8.within`, lives in its file. Our foundations assume that every circle has a centre,
+while the present proofs generally receive a named centre by hypothesis and take it by III.1,
+as [Book III's introduction](../../book/III/index.md) tells. These steps, with those below
+that Euclid takes with no bracket in Heath or without a
 word, are why [CERTIFICATE.md](../../CERTIFICATE.md) shows the Lean citing more than
 Heath's brackets give in most of the propositions of Book III.
 
 ## III.1
 - "Let it be bisected at the point D; from D let DC be drawn at right angles to AB": Heath gives no bracket for either step. They are I.10 and I.11 (`BookI.Prop10`, `BookI.Prop11`).
-- "Let it be drawn through to E" asks that the straight line through D meet the circle on both sides of D. Todhunter observes that D is taken to be within the circle, which Euclid proves only in III.2, and Heath that the straight line must meet the circle twice, "an assumption which we are not entitled to make on the basis of what has gone before only" (vol. 2, p. 7). `Prop1.within` puts D within the circle by III.2's own argument (I.5, I.16, I.19), from the centre our statement gives, rather than by Circle 2 (`inside_of_between`), which already contains III.2 (see III.2); Intersections 5 (`line_circle_beyond`), used twice, finds C and E.
+- "Let it be drawn through to E" asks that the straight line through D meet the circle on both sides of D. Todhunter observes that D is taken to be within the circle, which Euclid proves only in III.2, and Heath that the straight line must meet the circle twice, "an assumption which we are not entitled to make on the basis of what has gone before only" (vol. 2, p. 7). `Prop1.within` puts D within the circle by III.2's own argument (I.5, I.16, I.19), from a centre supplied within the construction by `exists_centre`, rather than by Circle 2 (`inside_of_between`), which already contains III.2 (see III.2); Intersections 5 (`line_circle_beyond`), used twice, finds C and E.
 - G, the supposed centre, must be off AB as well as off CE, or there are no triangles DAG, DBG for I.8. A centre on AB would be its middle point D (`Prop1.middle`), which is on CE.
 - "The angle FDB is equal to the angle GDB, the greater to the less": if AB passes through the centre, F falls on D and there is no angle FDB. Our proof sets the right angle CDB beside GDB, and `Prop1.perpendicular`, that at D only one straight line is at right angles to DB, says what "the greater to the less" stands for, on whichever side of CE G lies.
 - "Therefore the point F is the centre": the reductio shows only that the centre is on CE. Heath: "It is however taken for granted rather than proved that the centre must be the middle point of CE" (vol. 2, p. 8). The centre is within the circle (`centre_inside`), so between C and E (Circle 1, `between_of_inside_chord`), and its equal radii make it the middle point, which is F (`Prop1.middle`).
-- That a circle has one centre, which Heath says "may be added to III. 1 as a corollary" (vol. 2, p. 8), is System E's Generalities 2 (`centre_unique`). The Porism, proved from III.1 (`Prop1.porism`), uses it.
+- That a circle has one centre, which Heath says "may be added to III. 1 as a corollary" (vol. 2, p. 8), is System E's Generalities 2 (`centre_unique`). Our Porism (`Prop1.porism`) does not use that rule or III.1: it repeats Euclid's I.8 comparison of the adjacent angles, makes them right by Postulate 4, and uses `Prop1.perpendicular` to put the given centre on the cutting straight line.
 
 ## III.2
 - "Let it fall outside, as AEB", and then "Similarly we can prove that neither will it fall on the circumference itself": the two suppositions Heath calls "the destruction of two hypotheses" (vol. 2, p. 9). One comparison serves both. The angles make DE less than DB (I.5, I.16, I.19); outside the circle DE would be greater than the radius DF, and on it equal to the radius.
 - "Let DFE be drawn through": F, where DE crosses the circle, is read off the figure. A straight line from the centre, within the circle, to the supposed point E outside it meets the circle between them (`line_circle_between`, Intersections 4).
 - Euclid's figure keeps the centre off AB, so that DAE and DEB are triangles for I.5 and I.16. When AB passes through D, `Prop2.through_centre` argues apart: DE is a part of DA or of DB, which are equal; and when E is D itself there is no straight line DE.
-- III.2 is System E's Circle 2 (`inside_of_between`), and Circle 3 (`outside_of_between`) is the same rule turned round. Our III.2 rests on neither. III.1, from which III.2 takes its centre, puts D within the circle by III.2's own argument (`Prop1.within`): the gap Todhunter points out under III.1.
+- III.2 is System E's Circle 2 (`inside_of_between`), and Circle 3 (`outside_of_between`) is the same rule turned round. Our III.2 rests on neither. III.1, from which III.2 takes its centre, puts D within the circle by III.2's own argument (`Prop1.within`), using a centre supplied inside its construction by `exists_centre`: the gap Todhunter points out under III.1.
 
 ## III.3
 - "But the right angle AFE is equal to the right angle BFE": for the converse our statement gives only that AFE is right. Its neighbour BFE is right as well, by the tacit rule `adjacent_eq_of_right` (System E, Diagram-angle 3).
