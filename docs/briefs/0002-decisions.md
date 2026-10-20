@@ -1823,3 +1823,11 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+
+## 20 October 2026
+
+- **Review schema wording.** [review/SCHEMA.md](../../review/SCHEMA.md) now describes the
+  style check's reading of review notes, distinguishes items the schema permits from
+  verdicts that count for acceptance, and records I.40's completed stage-2 change, to match
+  the checks and records on main. The TOML fixtures read by `scripts/heath.py` and the
+  checks' requirements are unchanged.
