@@ -1,5 +1,10 @@
 # Brief 0007: the statements of stage 4b, III.7, III.8 and III.17
 
+19 October 2026: the frozen requirement below that `[axioms]` stay at 87 now has a
+baseline of 79, including 73 tacit rules, after [eight rules became theorems](../FORMALIZATION.md#rules-now-proved)
+with their names and exact types unchanged. The instruction to add no axiom remains;
+no statement or vocabulary change is made here.
+
 *18 October 2026. This brief settles the new statements that make the records of III.7,
 III.8 and III.17 full, before any proof work, as [WORKFLOW.md](../WORKFLOW.md), section 2,
 requires. Each statement of III.7, III.8 and III.17 below was written with `sorry` in the

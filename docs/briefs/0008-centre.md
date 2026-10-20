@@ -1,17 +1,30 @@
 # Brief 0008: every circle has a centre
 
+19 October 2026: the frozen plan below uses the former baseline of 87 axioms.
+[Eight rules are now theorems](../FORMALIZATION.md#rules-now-proved), keeping their
+names and exact types, so the baseline is 79, including 73 tacit rules. Adding the
+proposed centre-existence axiom would now take 79 to 80, and 73 tacit rules to 74.
+This note adds no axiom and grants no approval to add one.
+
+`centre_unique` is now proved in `Elements/Figure/Circles.lean`; Circle 4 is proved
+after I.7 from I.7, Definition I.15 and `circle_eq`; Circle 2 is proved from Circle 3,
+which stays an axiom. The old dependency counts must be measured again. A pin excluding
+a retired name from an axiom list no longer detects calls to that theorem; any intended
+restriction on its use needs a separate check proposal. The historical readings and
+frozen statements below are preserved.
+
 *Frozen 18 October 2026 by the coordinator, after Astra's challenges of `afe0ee9` and
 `3f00ebf` and the Claude challenger's; decisions Q1 to Q16 as recorded in section 8.*
 
-*Status, 20 October 2026 (main at d95125f0):*
+*Status, 20 October 2026, after the eight axiom retirements:*
 
-Circle 2 is out of every certified proof (#108); the [guard](../../scripts/check_fidelity.py) forbids it (#137).
+No certified proof uses Circle 2 or rests on Circle 3. The [guard](../../scripts/check_fidelity.py) now forbids the proved Circle 2 through its dependence on the retained Circle 3 axiom.
 The [overlap kind](../../review/SCHEMA.md) is required (#93); the [negative test](../../scripts/negative_tests.py) reads the lock and [`touching-whole-circles`](../../review/terms.toml) exists (#113).
 The [forbidden-command scan](../../scripts/check_fidelity.py) covers `Staging/` and `Audit/` (#39).
-The [formal model](../../model/Model/Assembly.lean) proves all 87 locked laws, with [generated laws](../../model/Model/Laws.lean) (#109).
+The [formal model](../../model/Model/Assembly.lean) proves all 79 locked laws, with [generated laws](../../model/Model/Laws.lean) (#109).
 Stage 2's proofs are in [`Elements/`](../../Elements/) (#102).
 Stage 4b's III.8 and III.17 companions are in [`Elements/BookIII/Prop08.lean`](../../Elements/BookIII/Prop08.lean) and [`Prop17.lean`](../../Elements/BookIII/Prop17.lean) (#111); stages 3 and 4 remain in `Staging/`.
-[Staged III.1](../../Staging/Centre/Prop01.lean) still calls Circle 2; its construction must be reconciled with [main's III.1](../../Elements/BookIII/Prop01.lean) before migration.
+[Staged III.1](../../Staging/Centre/Prop01.lean) still calls Circle 2, now a theorem resting on Circle 3; its construction must be reconciled with [main's III.1](../../Elements/BookIII/Prop01.lean) before migration.
 Still to do under #59: the prototype rename, centre rule, construction guard, restatements, tag revision and record migration.
 The frozen text below is kept as history.
 

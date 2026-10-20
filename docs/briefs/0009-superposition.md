@@ -1,14 +1,22 @@
 # Brief 0009: a restricted rule of superposition
 
-*Status, 20 October 2026 (main at d95125f0):*
+*Status, 20 October 2026, after the eight axiom retirements:*
 
 Prototype approval landed in #102, and its [`Staging.lean` entry](../../Staging.lean) followed in #108; its six files remain in [`Staging/Superposition/`](../../Staging/Superposition/).
 The [pinned model-law names](../../tests/model/laws.toml) are in place (#40, landed in #103), and the [forbidden-command scan](../../scripts/check_fidelity.py) covers staging and audit files (#39).
 The interim disclosures are in the [foundations](../../Elements/Foundations/Tacit/Superposition.lean), [overlap catalogue](../reports/overlaps.md#i23), [I.4](../../mishnah/I/04.md) and [I.8](../../mishnah/I/08.md) (#104, #134).
 The [formal model](../../model/Model/Euclidean/Superposition.lean) proves the current placement axiom (#109); the restricted rule still needs its own translation and model justification.
-At this revision, 116 of the 122 entries in [`facts.json`](../../facts.json) rest on superposition.
+After the retirement, a recount of the `axioms` lists in regenerated [`facts.json`](../../facts.json) still finds superposition in 116 of its 122 entries.
 Still to do for #75: settle the open design questions, complete that justification, review the delivered rule and replace the axiom with its proofs and records.
 The frozen text below is kept as history.
+
+19 October 2026: the frozen instruction below to leave the other overlap rows alone
+refers to the catalogue before [eight axiom retirements](../FORMALIZATION.md#rules-now-proved).
+Circle 4 is now a corollary of I.7, so the former I.7 shortcut is circular;
+Diagram-angle 3 follows I.13, and Generalities 2 is proved in Book Zero. Circle 2 is
+proved from Circle 3, which remains III.2's axiom overlap. The superposition work
+still leaves those rows to the retirement work. The baseline is now 79 axioms,
+including 73 tacit rules; no superposition statement changes here.
 
 *18 October 2026, revised the same day (round 2). A design brief and a prototype for issue
 #75, written to the owner's decision of 18 October after Astra's third answer. Nothing in

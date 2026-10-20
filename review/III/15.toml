@@ -22,6 +22,6 @@ note = "The statement assumes it (`hnearer : ‖E H‖ < ‖E K‖`), for Defini
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
+commit = "2c3686e"
 reviewer = "Claude Opus 5.5"
-lean = "sha256:d6d2b6b0dcaa6bb6"
+lean = "sha256:2bcd0eb0d33c230e"

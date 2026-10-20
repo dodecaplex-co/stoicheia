@@ -1,6 +1,7 @@
 """Structured random search: the hypotheses' incidence pattern is built by construction
 (so they hold often), over a large lattice and over rational points, with rational
-rotations for congruent copies.  Same check functions as search.py.
+rotations for congruent copies. Axiom checks come from search.py; retained derived
+properties use the same predicates, independently kept in derived.py.
 Usage: python3 -I structured.py [samples_per_axiom] [seed]   (defaults 50000 and 11)"""
 import math
 import os
@@ -9,9 +10,11 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import search  # noqa: E402
+from derived import PROPERTIES  # noqa: E402
 from model import *  # noqa
 
 CHECK = {name: f for name, kinds, f in search.AXIOMS}
+CHECK.update(PROPERTIES)
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 50000
 rng = random.Random(int(sys.argv[2]) if len(sys.argv) > 2 else 11)
 
@@ -380,33 +383,38 @@ def g_circ_pts():
     return dict(A=A, B=B, C=Cc, al=c, be=be)
 
 
-print(f"{'axiom':40s} {'samples':>8s} {'hyp':>8s} {'cex':>5s}")
+def g_centres():
+    c = circ([rp()])
+    return dict(A=any_pt([centre(c)]), B=any_pt([centre(c)]), al=c)
+
+
+print(f"{'axiom / derived property':40s} {'samples':>8s} {'hyp':>8s} {'cex':>5s}")
 run('Postulate4', g_p4)
 run('Postulate5', g_p5)
 for n in ['triple_incidence1', 'triple_incidence2']:
     run(n, g_ti)
-run('triple_incidence3', lambda: g_ti(True))
+run('derived.triple_incidence3', lambda: g_ti(True))
 for n in ['pasch1', 'pasch2', 'pasch3', 'same_side_or', 'same_side_trans', 'on_line_of_between', 'on_line_of_between_ends']:
     run(n, g_pasch())
 run('pasch4', g_pasch4)
 run('angle_add_of_inside', g_angle2)
-run('inside_of_angle_add', g_angle2)
-run('adjacent_eq_of_right', g_adj)
+run('derived.inside_of_angle_add', g_angle2)
+run('derived.adjacent_eq_of_right', g_adj)
 run('angle_eq_of_same_rays', g_rays)
 run('area_add_of_between', g_area_line)
 run('between_of_area_add', g_area_line)
 run('area_congruent', g_cong)
 run('between_of_inside_chord', g_chord)
-run('inside_of_between', g_convex('in'))
+run('derived.inside_of_between', g_convex('in'))
 run('outside_of_between', g_convex('out'))
 run('circles_meet_same_side', g_cm('side'))
 run('circles_meet_opposite_side', g_cm('side'))
-run('not_same_side_of_circles_meet', g_cm('nss'))
+run('derived.not_same_side_of_circles_meet', g_cm('nss'))
 run('circles_meet_of_on_inside_outside', g_cm('oio'))
 run('circles_meet', g_cm('five'))
 run('line_circle_between', g_lc)
 run('line_circle_beyond', g_lc)
-run('line_meets_circle_of_opposite_sides', g_lmc_opp)
+run('derived.line_meets_circle_of_opposite_sides', g_lmc_opp)
 run('superposition', g_sup)
 run('exists_point_on_line_off_line', g_two_lines)
 run('exists_point_between', g_seg)
@@ -417,5 +425,8 @@ for n in ['between_of_between_left', 'between_of_between_right', 'not_between_of
     run(n, g_between)
 for n in ['Definition15', 'circle_eq', 'on_circle_of_len_eq', 'inside_of_len_lt', 'len_lt_of_inside']:
     run(n, g_circ_pts)
+# Appended so the existing generators keep their random sequence.
+run('derived.centre_unique', g_centres)
+run('derived.exists_point_outside_circle', lambda: dict(al=circ()))
 print('structured total counterexamples:', sum(r[2] for r in results))
 print('never met:', [r[0] for r in results if r[1] == 0])

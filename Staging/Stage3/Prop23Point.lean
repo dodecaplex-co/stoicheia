@@ -1,4 +1,5 @@
 import Elements.Figure.Basics
+import Elements.Figure.Circles
 import Elements.BookI.Prop21
 import Elements.BookIII.Prop21
 
