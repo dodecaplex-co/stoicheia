@@ -138,7 +138,7 @@ structure's constructors are entries of their own.
 
 At commit d040117 there were 37, all reached from the axioms. Since 17 October 2026,
 the vocabulary also includes words reached from the entries' statements. It now has
-91 entries. Among them:
+<!-- count:vocabulary -->91<!-- /count --> entries. Among them:
 
 ```text
 "Collinear": "def : Elements.Point → Elements.Point → Elements.Point → Prop := fun (A B C : Elements.Point) => Exists fun (L : Elements.Line) => And (Elements.OnLine A L) (And (Elements.OnLine B L) (Elements.OnLine C L))"

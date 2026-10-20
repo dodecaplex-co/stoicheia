@@ -526,8 +526,8 @@ def circle_dependencies() -> None:
 
 def circle_renamed() -> None:
     """Circle 3 renamed in the lock and in a copy of facts.json alike: the two still agree,
-    and no review record names the rule, so only the missing name shows that the check no
-    longer refuses it."""
+    so the missing name is what must show that the check no longer refuses it. (III.2's
+    [overlap] names the rule and is refused as well; the plant does not rely on that.)"""
     old, new = "Tacit.outside_of_between", "Tacit.Circle.outside_of_between"
     rel = "Certificate/axioms.lock"
     saved = replace_once(rel, f'"{old}" =', f'"{new}" =')
