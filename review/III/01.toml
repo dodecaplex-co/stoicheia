@@ -52,6 +52,6 @@ case = "AB not through F, with the supposed centre G off CE in the reductio"
 
 [review]
 stage = "exceptions"
-commit = "17987153"
+commit = "61f2b56a"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:c0c6a4f3070bece9"

@@ -49,6 +49,6 @@ note = "The core constructs the angle and circle and places E on DB within the s
 
 [review]
 stage = "exceptions"
-commit = "17987153"
+commit = "61f2b56a"
 reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:bed3fe01a3829731"
