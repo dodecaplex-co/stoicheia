@@ -2160,7 +2160,14 @@ findings:
   shares that refusal, returning `None` while retaining `modern_text_of`'s exact
   reading of the text; its regression also runs with the pure-Python parser.
   Mitre joins now use original segments' endpoint tangents, with no joins between a
-  curve's flattened chords.
+  curve's flattened chords. The closed text language admits only Heath's letters and
+  ASCII integer annotations, so Greek, full-width and other unmeasured text cannot pass
+  unseen. Zero fill and stroke opacity are refused on shapes and ancestor groups, while
+  main's positive opacity spellings remain admitted. Each path subpath now keeps its own
+  conservative chord allowance, so a remote arc cannot widen an unrelated straight
+  subpath's clearance measure. The gate also requires the SVG namespace and the figures'
+  container-and-leaf structure before measuring anything. A point label with effective
+  fill none is refused, while a visible explicit fill still overrides an ancestor's none.
   Both figure entry points have cases requiring an S26 finding. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures. The matching words in
