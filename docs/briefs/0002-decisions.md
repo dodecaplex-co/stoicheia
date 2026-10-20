@@ -1827,7 +1827,6 @@ findings:
   The test in `scripts/test_safe_push.py` reads III.1's tacit count from
   `tests/certificate_expectations.json`, so it holds before and after the content it
   describes.
-
 - **III.1's construction home and its porism, 19 October 2026 (D1).** By the owner's
   decision D1 of 19 October, `Elements.BookIII.Prop1.construction` moves home before
   `Prop1`, with its frozen type: a circle and two points of it, no centre supplied,
