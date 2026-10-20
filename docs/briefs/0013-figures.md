@@ -298,8 +298,8 @@ The proposed vocabulary does not replace brief 0012's convex `Polygon`. Any shar
 
 ### Records and tags
 
-This draft changes only new staging files and this brief. It makes no production
-review record stale and stamps none.
+This draft changes only this brief, new staging files and the probe's two scratch files.
+It makes no production review record stale and stamps none.
 
 Moving the work into the two proposition files makes `review/I/45.toml` and `review/II/14.toml` stale. Their owners must review and stamp the integrated revision. Any additional consumer whose statement or Lean file changes is listed separately.
 
