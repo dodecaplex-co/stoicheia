@@ -1,6 +1,6 @@
 """Check the house style's hard rules, and report its defaults.
 
-The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S22
+The rules are those of docs/STYLE.md, section 8, which is their one home: S1 to S23
 fail the script, and D4 to D11 and D14 to D16 are listed for a reader to judge and fail
 nothing. Run from anywhere; the paths are the repository's.
 
@@ -15,6 +15,12 @@ built tree (`lake build`) and `lake` on the PATH; without them the script fails 
 so, unless `--no-lean` is given. The overlap catalogue's audit lemmas are Lean's only
 once `lake build Audit` has run: until then they are listed as not checked. CI runs the
 script after both.
+
+S23 reads every tracked text file, including comments and Markdown fences: it refuses
+seven-character opening, base and closing merge markers, and seven-equals separators
+between opening and closing markers or where they cannot be Markdown setext underlines.
+Text has no NUL and decodes as UTF-8; without Git it walks the tree, omitting the build
+and cache directories named in MARKER_SKIP_DIRS (including every .lake, model's too).
 
 What the scopes cover (STYLE, section 8):
 
@@ -105,6 +111,7 @@ import argparse
 import fnmatch
 import json
 import math
+import os
 import re
 import shutil
 import string
@@ -259,6 +266,7 @@ RULES = {
     "S20": "an idea figure's letter not Heath's, or not in the figure's one style, at 14 and in the ink of what it stands on",
     "S21": "a point of an idea figure without its letter",
     "S22": "letters in backticks, where they are plain",
+    "S23": "a merge-conflict marker",
 }
 
 REPORTS = {
@@ -305,6 +313,104 @@ def excerpt(text: str, start: int, end: int, width: int = 50) -> str:
     b = min(len(text), end + width)
     s = " ".join(text[a:b].split())
     return ("…" if a else "") + s + ("…" if b < len(text) else "")
+
+
+MARKER_SKIP_DIRS = {
+    ".git", ".lake", "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache",
+    ".tox", ".venv", "venv", "node_modules", "build", "dist", "_build",
+}
+CONFLICT_EDGE = re.compile(r"^(<{7}|\|{7}|>{7})(?: |$)")
+CONFLICT_MIDDLE = re.compile(r"={7}[ \t]*")
+CONFLICT_KINDS = {"<": "opening", "|": "base", ">": "closing"}
+
+
+def repository_files(root: Path):
+    """Git's tracked paths, or a pruned walk in a copy without Git.
+
+    Do not consult ignore rules or prune tracked paths. In a checkout, Git missing or
+    failing stops the check, rather than silently leaving tracked files unread or
+    reading untracked ones.
+    """
+    if (root / ".git").exists():
+        result = subprocess.run(["git", "ls-files", "-z"], cwd=root,
+                                capture_output=True, check=True)
+        for name in result.stdout.split(b"\0"):
+            if name:
+                yield root / os.fsdecode(name)
+        return
+    for folder, dirs, files in os.walk(root):
+        dirs[:] = sorted(d for d in dirs if d not in MARKER_SKIP_DIRS)
+        for name in sorted(files):
+            path = Path(folder) / name
+            if path.name != ".git" and path.is_file():
+                yield path
+
+
+def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
+    """Return (line, kind), without blanking comments, strings or fenced code.
+
+    Edges begin with exactly seven identical characters followed by a space or
+    the line's end. A middle has exactly seven equals, with optional trailing
+    horizontal space. Outside a conflict, Markdown may use it as a setext underline
+    after a paragraph, but never inside a fence or after a blank, marker, ATX
+    heading, thematic break or fence boundary. Other lengths of equals are allowed.
+    """
+    lines = [line.removesuffix("\r") for line in text.split("\n")]
+    edges = [CONFLICT_EDGE.match(line) for line in lines]
+    last_close = max((i for i, edge in enumerate(edges)
+                      if edge and edge[1][0] == ">"), default=-1)
+    found = []
+    opened = False
+    fence = ""
+    previous_boundary = previous_marker = False
+    for i, (line, edge) in enumerate(zip(lines, edges)):
+        boundary = False
+        if markdown:
+            match = FENCE_LINE.fullmatch(line)
+            if fence:
+                if (match and match[1][0] == fence[0] and len(match[1]) >= len(fence)
+                        and not match[2].strip()):
+                    fence = ""
+                    boundary = True
+            elif match and (match[1][0] != "`" or "`" not in match[2]):
+                fence = match[1]
+                boundary = True
+        kind = None
+        if edge:
+            char = edge[1][0]
+            kind = CONFLICT_KINDS[char]
+            if char == "<":
+                opened = True
+            elif char == ">":
+                opened = False
+        elif CONFLICT_MIDDLE.fullmatch(line):
+            previous = lines[i - 1] if i else ""
+            if (opened and i < last_close or not markdown or fence
+                    or not previous.strip() or previous_marker or previous_boundary
+                    or re.match(r"^ {0,3}#{1,6}(?:[ \t]|$)", previous)
+                    or THEMATIC_LINE.fullmatch(previous)):
+                kind = "middle"
+        if kind:
+            found.append((i + 1, kind))
+        previous_marker = kind is not None
+        previous_boundary = boundary
+    return found
+
+
+def check_conflict_markers() -> None:
+    """S23 covers raw text throughout the repository, independently of prose scopes."""
+    for path in repository_files(ROOT):
+        if not path.is_file():
+            continue
+        data = path.read_bytes()
+        if b"\0" in data:
+            continue
+        try:
+            text = data.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
+        for line, kind in conflict_markers(text, markdown=path.suffix.lower() == ".md"):
+            fail("S23", path, line, f"{kind} merge-conflict marker")
 
 
 # ---------------------------------------------------------------------------------------
@@ -1791,11 +1897,8 @@ FILE_NAME = re.compile(r".*\.(?:lean|json|md|svg|py|toml|txt|lock)$")
 
 
 def tracked_file_index() -> tuple[frozenset[str], frozenset[str]]:
-    """The repository's tracked files, by path and by basename."""
-    run = subprocess.run(["git", "ls-files", "-z"], cwd=ROOT, capture_output=True, text=True)
-    if run.returncode:
-        raise RuntimeError(f"could not list tracked files: {run.stderr.strip()}")
-    paths = frozenset(path for path in run.stdout.split("\0") if path)
+    """Tracked files, or the same pruned walk as S23 in a copy without Git."""
+    paths = frozenset(path.relative_to(ROOT).as_posix() for path in repository_files(ROOT))
     return paths, frozenset(Path(path).name for path in paths)
 
 
@@ -2828,6 +2931,7 @@ def main() -> int:
     args = parser.parse_args()
     required = IDEA_LETTERS_REQUIRED or args.require_idea_letters
 
+    check_conflict_markers()
     named: list[NamedText] = []   # the texts S12 reads
     for path in mishnah_files():
         raw = path.read_text(encoding="utf-8")
@@ -2939,7 +3043,7 @@ def main() -> int:
         print("  by rule: " + ", ".join(f"{r} {RULES[r]} ({k})"
                                        for r, k in sorted(by_rule.items(), key=lambda x: int(x[0][1:]))))
         return 1
-    rules = "S1–S22" if not args.no_lean else "S1–S11 and S13–S22"
+    rules = "S1–S23" if not args.no_lean else "S1–S11 and S13–S23"
     print(f"\n✓ style: the hard rules hold ({rules})")
     return 0
 

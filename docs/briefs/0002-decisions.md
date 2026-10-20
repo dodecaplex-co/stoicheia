@@ -1826,3 +1826,23 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+
+## 20 October 2026
+
+- **A check for merge-conflict markers.** Pull request #138 left a diff3 base marker and a
+  duplicated, outdated fragment on this page, and nothing caught it; the owner asked for a
+  rule to catch such residue. S23 of `scripts/check_style.py` ([STYLE](../STYLE.md),
+  section 8) reads every tracked text file, fenced code and comments included, and refuses
+  an opening, base or closing marker (exactly seven characters, then a space or the line's
+  end), and a seven-equals middle between markers or where it cannot underline a Markdown
+  paragraph, since a resolver can delete the outer markers and leave a middle, as #138
+  left a base. Setext headings stay allowed; origin/main at `a836cc31` holds no
+  seven-equals line and no marker in a fence. The style check is its home because it
+  already holds the repository's file-and-line rules and runs in CI and the pre-flight
+  with its cases; `check_fidelity.py` judges the Lean, Heath's text and the certificate,
+  and the Jev audit is an independent model's reading, not a mechanical check. Planted
+  markers in `scripts/negative_tests.py` (item 16) and cases in `tests/test_check_style.py`
+  show each kind refused and a setext heading not. By keep_apart (WORKFLOW, section 10),
+  the rule lands apart from the content fix, `text/decisions-marker`, and fails on main
+  until that fix lands. The protected files changed are `scripts/check_style.py`,
+  `scripts/negative_tests.py` and `tests/test_check_style.py`.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The cases of scripts/check_style.py: how its rules read a phrase, TeX, and a letter.
 
-    python3 -I tests/test_check_style.py        # well under a second; no Lean, no network
+    python3 -I tests/test_check_style.py        # no Lean, no network
 
 Each case is a short text, or a small figure, with the finding its rule should make of
 it, put to the script's own patterns and functions:
@@ -24,7 +24,9 @@ it, put to the script's own patterns and functions:
   rules the file is listed for, while every other finding in that file still fails, and
   whose rules are reported as done one by one, as each is left with no finding;
 * the acceptance case: check_acceptance.py sorts a style finding in a review record to
-  its proposition's P9, the item for the record's notes, and every other as before.
+  its proposition's P9, the item for the record's notes, and every other as before;
+* the conflict-marker cases: S23 reads tracked UTF-8 text and copies without Git,
+  refuses each marker kind even in Markdown fences, and preserves setext headings.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -980,6 +982,171 @@ class Scopes(unittest.TestCase):
                 os.environ["PATH"] = saved[0]
             style.lean_short[:] = saved[1]
         self.assertEqual(done, (0, ["S12"], [(GAPS_REL, ["S7"], False)]))
+
+
+class ConflictMarkers(unittest.TestCase):
+    """Raw text, including fences, and the boundary between separators and headings."""
+
+    def test_edges_with_and_without_labels(self):
+        for char, kind in (("<", "opening"), ("|", "base"), (">", "closing")):
+            for ending in ("", " ours", " ", "\r", " ours\r"):
+                with self.subTest(char=char, ending=ending):
+                    text = "A paragraph.\n" + char * 7 + ending + "\n"
+                    self.assertEqual(style.conflict_markers(text, markdown=True), [(2, kind)])
+
+    def test_exact_edge_width_and_boundary(self):
+        for char in "<|>":
+            for line in (char * 6, char * 8, char * 8 + " ours", char * 7 + "ours",
+                         char * 7 + "\tours", " " + char * 7 + " ours"):
+                with self.subTest(line=line):
+                    self.assertEqual(style.conflict_markers(line, markdown=False), [])
+
+    def test_middle_between_edges_after_paragraph(self):
+        for ending in ("", "  ", "\r", " \t\r"):
+            with self.subTest(ending=ending):
+                text = "\n".join(("<" * 7 + " ours", "A paragraph.", "=" * 7 + ending,
+                                  "The other side.", ">" * 7 + " theirs"))
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(1, "opening"), (3, "middle"), (5, "closing")])
+
+    def test_diff3_block(self):
+        text = "\n".join(("<" * 7, "Ours.", "|" * 7, "Base.", "=" * 7,
+                          "Theirs.", ">" * 7))
+        self.assertEqual(style.conflict_markers(text, markdown=True),
+                         [(1, "opening"), (3, "base"), (5, "middle"), (7, "closing")])
+
+    def test_middle_needs_both_edges_to_override_setext(self):
+        for text, expected in (
+            ("\n".join(("<" * 7, "A heading", "=" * 7)), [(1, "opening")]),
+            ("\n".join(("A heading", "=" * 7, ">" * 7)), [(3, "closing")]),
+            ("\n".join(("<" * 7, ">" * 7, "A heading", "=" * 7)),
+             [(1, "opening"), (2, "closing")]),
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(style.conflict_markers(text, markdown=True), expected)
+
+    def test_lone_middle_in_non_markdown(self):
+        for ending in ("", " ", "\r"):
+            with self.subTest(ending=ending):
+                self.assertEqual(style.conflict_markers("Text.\n" + "=" * 7 + ending,
+                                                       markdown=False), [(2, "middle")])
+
+    def test_setext_headings_of_any_length(self):
+        for width in (1, 6, 7, 8, 80):
+            for paragraph in ("A heading", "A paragraph\ncontinued", "#hashtag",
+                              "#" * 7 + " is paragraph text"):
+                with self.subTest(width=width, paragraph=paragraph):
+                    self.assertEqual(style.conflict_markers(
+                        paragraph + "\n" + "=" * width + " \r\n", markdown=True), [])
+
+    def test_lone_middle_without_paragraph(self):
+        for previous in ("", "  ", "#", "## A heading", "   ### Heading",
+                         "---", "* * *", "___"):
+            with self.subTest(previous=previous):
+                self.assertEqual(style.conflict_markers(previous + "\n" + "=" * 7,
+                                                       markdown=True), [(2, "middle")])
+        self.assertEqual(style.conflict_markers("=" * 7, markdown=True), [(1, "middle")])
+
+    def test_middle_after_each_marker(self):
+        for char, kind in (("<", "opening"), ("|", "base"), (">", "closing"),
+                           ("=", "middle")):
+            with self.subTest(char=char):
+                self.assertEqual(style.conflict_markers(char * 7 + "\n" + "=" * 7,
+                                                       markdown=True),
+                                 [(1, kind), (2, "middle")])
+
+    def test_other_equals_lines(self):
+        for line in ("=" * 6, "=" * 8, "=" * 7 + " label", " " + "=" * 7):
+            with self.subTest(line=line):
+                self.assertEqual(style.conflict_markers(line, markdown=False), [])
+
+    def test_markers_in_fences(self):
+        for fence in ("```", "~~~~"):
+            for char, kind in (("<", "opening"), ("|", "base"), ("=", "middle"),
+                               (">", "closing")):
+                with self.subTest(fence=fence, char=char):
+                    text = "\n".join((fence + "text", "A code line.", char * 7, fence))
+                    self.assertEqual(style.conflict_markers(text, markdown=True), [(3, kind)])
+
+    def test_middle_at_fence_boundaries(self):
+        for text, line in (
+            ("\n".join(("```text", "=" * 7, "```")), 2),
+            ("\n".join(("~~~", "code", "~~~", "=" * 7)), 4),
+            ("\n".join(("````", "```", "paragraph", "=" * 7)), 4),
+            ("\n".join(("~~~", "```", "paragraph", "=" * 7)), 4),
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(style.conflict_markers(text, markdown=True), [(line, "middle")])
+        self.assertEqual(style.conflict_markers(
+            "\n".join(("```", "code", "```", "A heading", "=" * 7)), markdown=True), [])
+        self.assertEqual(style.conflict_markers("```not`a fence\n" + "=" * 7,
+                                               markdown=True), [])
+
+    def test_lines_are_counted_by_newlines(self):
+        text = "Text with a Unicode separator \u2028 here.\r\n" + "|" * 7 + "\r\n"
+        self.assertEqual(style.conflict_markers(text, markdown=True), [(2, "base")])
+
+    def test_raw_files_and_binary_detection(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            marker = ("|" * 7 + " base\n").encode()
+            for name, data in {
+                "notes.md": b"<!--\n" + marker + b"-->\n",
+                "image.bin": marker,  # The bytes decide, not the extension.
+                "nul.txt": marker + b"\0",
+                "non-utf8.txt": marker + b"\xff",
+                "heading.MD": b"Heading\n" + ("=" * 7).encode(),
+            }.items():
+                (root / name).write_bytes(data)
+            with patch.object(style, "ROOT", root), patch.object(style, "failures", []):
+                style.check_conflict_markers()
+                self.assertEqual(sorted(style.failures), [
+                    ("S23", "image.bin", 1, "base merge-conflict marker"),
+                    ("S23", "notes.md", 2, "base merge-conflict marker"),
+                ])
+
+    def test_copy_walk_omits_build_and_cache_directories(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source.txt").write_text("text")
+            for folder in (".lake", "model/.lake", "build", "dist", "_build",
+                           "__pycache__", ".pytest_cache", ".mypy_cache", ".ruff_cache",
+                           ".tox", ".venv", "venv", "node_modules"):
+                path = root / folder
+                path.mkdir(parents=True, exist_ok=True)
+                (path / "ignored.txt").write_text("<" * 7)
+            self.assertEqual(list(style.repository_files(root)), [root / "source.txt"])
+
+    def test_git_list_is_nul_delimited_and_unpruned(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            names = ["tracked.txt", "line\nbreak.txt", "build/tracked.txt"]
+            for name in names + ["untracked.txt"]:
+                path = root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("text")
+            listing = SimpleNamespace(stdout=("\0".join(names) + "\0").encode())
+            with patch.object(Path, "exists", return_value=True), \
+                    patch.object(style.subprocess, "run", return_value=listing) as run:
+                self.assertEqual(list(style.repository_files(root)), [root / name for name in names])
+                run.assert_called_once_with(["git", "ls-files", "-z"], cwd=root,
+                                            capture_output=True, check=True)
+
+    def test_no_git_executable_in_a_checkout_stops_the_scan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "source.txt").write_text("text")
+            with patch.object(Path, "exists", return_value=True), \
+                    patch.object(style.subprocess, "run", side_effect=FileNotFoundError):
+                with self.assertRaises(FileNotFoundError):
+                    list(style.repository_files(root))
+
+    def test_git_failure_is_not_an_empty_scan(self):
+        with patch.object(Path, "exists", return_value=True), \
+                patch.object(style.subprocess, "run",
+                             side_effect=style.subprocess.CalledProcessError(128, "git")):
+            with self.assertRaises(style.subprocess.CalledProcessError):
+                list(style.repository_files(style.ROOT))
 
 
 class Acceptance(unittest.TestCase):
