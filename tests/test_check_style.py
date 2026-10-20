@@ -992,6 +992,87 @@ class Modern(unittest.TestCase):
                 self.assertEqual(modern_rules(MODERN_GOOD, "I.47", viewbox=viewbox),
                                  {"S24"})
 
+    def test_canvas_heights(self):
+        for height, valid in (("0", False), ("-0", False), ("-1", False),
+                              ("-300", False), (".5", True), ("300", True)):
+            with self.subTest(height=height):
+                findings = self.check_refused_modern(viewbox=f"0 0 400 {height}")
+                if valid:
+                    self.assertEqual(findings, [])
+                else:
+                    self.assertTrue(any(r == "S24" and "viewBox height" in message
+                                        for r, message in findings), findings)
+
+    def test_presentation_lengths_use_css_numbers(self):
+        letter = '<text x="50" y="270">A</text>'
+        for attribute, size, parent, rule in (("font-size", "17", "40", "S25"),
+                                               ("stroke-width", "2", "20", "S24")):
+            values = [(value, True) for value in
+                      (size, size + "px", size + ".0", size + ".0px",
+                       "+" + size, f".{size}e{len(size)}", size + "e0px")]
+            values += [(value, False) for value in
+                       (size + ".", size + ".px", size + ".e0", size + "em",
+                        size + "%", size + " px", size + "e", "", "\u00a0" + size)]
+            for element in ("text", "g"):
+                for inherited in (False, True):
+                    for value, valid in values:
+                        with self.subTest(attribute=attribute, element=element,
+                                          inherited=inherited, value=value):
+                            declaration = f'{attribute}="{value}"'
+                            label = (letter.replace("<text ", f"<text {declaration} ")
+                                     if element == "text"
+                                     else f"<g {declaration}>{letter}</g>")
+                            ink = 'stroke="#3b2f2f"' if attribute == "stroke-width" else ""
+                            ancestor = f'{attribute}="{parent}"' if inherited else ""
+                            inside = MODERN_GOOD.replace(
+                                letter, f"<g {ink} {ancestor}>{label}</g>")
+                            findings = self.check_refused_modern(inside)
+                            if valid:
+                                self.assertEqual(findings, [])
+                            else:
+                                self.assertTrue(any(r == rule and attribute in message
+                                                    for r, message in findings), findings)
+
+    def test_malformed_presentation_lengths_cannot_be_overridden(self):
+        for attribute, value, rule in (("font-size", "17.", "S25"),
+                                      ("stroke-width", "2.px", "S24")):
+            with self.subTest(attribute=attribute):
+                findings = self.check_refused_modern(
+                    root_attributes=f'{attribute}="{value}"')
+                self.assertTrue(any(r == rule and attribute in message
+                                    for r, message in findings), findings)
+
+    def test_font_family_and_weight_presentation(self):
+        letter = '<text x="50" y="270">A</text>'
+        for attribute, allowed, refused in (
+                ("font-family", ("Georgia", "Georgia, serif",
+                                 "Georgia, 'Times New Roman', serif"),
+                 ("Arial", "serif", "Georgia, monospace")),
+                ("font-weight", ("normal",), ("bold", "bolder", "400", "700"))):
+            values = [(value, True) for value in allowed]
+            values += [(value, False) for value in
+                       refused + ("initial", "inherit", "unset", "revert", "", " \t\n ")]
+            for element in ("svg", "g", "text"):
+                for value, valid in values:
+                    with self.subTest(attribute=attribute, element=element, value=value):
+                        declaration = f'{attribute}="{value}"'
+                        inside, root_attributes = MODERN_GOOD, ""
+                        if element == "svg":
+                            root_attributes = declaration
+                        elif element == "g":
+                            inside = inside.replace(letter, f"<g {declaration}><g>{letter}</g></g>")
+                        else:
+                            inside = inside.replace(letter, letter.replace(
+                                "<text ", f"<text {declaration} "))
+                        findings = self.check_refused_modern(
+                            inside, root_attributes=root_attributes)
+                        if valid:
+                            self.assertEqual(findings, [])
+                        else:
+                            self.assertTrue(any(r == "S24" and attribute in message
+                                                and f"<{element}>" in message
+                                                for r, message in findings), findings)
+
     def test_malformed_numbers_report_the_file_and_continue(self):
         cases = [
             ("0 0 invalid 300", MODERN_GOOD, "S24", "viewBox"),
@@ -1042,7 +1123,7 @@ class Modern(unittest.TestCase):
                                         for r, path, _, message in findings), findings)
 
     def check_refused_modern(self, inside=MODERN_GOOD, paragraph=MODERN_PARAGRAPH,
-                            prefix=""):
+                            prefix="", root_attributes="", viewbox="0 0 400 300"):
         """Read two real files, keeping the following figure's independent finding."""
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -1057,7 +1138,9 @@ class Modern(unittest.TestCase):
                 (mishnah / f"{n}.md").write_text(words)
                 (figures / f"{n}-modern.svg").write_text(
                     (prefix if n == "47" else "")
-                    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                    + '<svg xmlns="http://www.w3.org/2000/svg" '
+                    + (f'viewBox="{viewbox}" {root_attributes}>' if n == "47"
+                       else 'viewBox="0 0 400 300">')
                     + body + "</svg>")
             with patch.object(style, "ROOT", root), \
                     patch.object(style, "drawn_letters", return_value=HEATHS), \

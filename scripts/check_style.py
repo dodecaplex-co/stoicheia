@@ -3051,11 +3051,13 @@ def modern_names(paragraph: str) -> set[str]:
 
 
 def modern_number(value: str | None, *, pixels: bool = False) -> float | None:
-    """A finite SVG number, optionally in pixels, or None for malformed syntax."""
+    """A finite SVG number, or a CSS presentation number with px as its only unit."""
     if value is None:
         return None
-    pattern = r"([-+]?(?:[0-9]+\.?[0-9]*|\.[0-9]+)(?:[eE][-+]?[0-9]+)?)"
-    match = re.fullmatch(r"\s*" + pattern + (r"(?:px)?" if pixels else "") + r"\s*", value)
+    fraction = r"\.[0-9]+" if pixels else r"\.[0-9]*"
+    pattern = rf"([-+]?(?:[0-9]+(?:{fraction})?|\.[0-9]+)(?:[eE][-+]?[0-9]+)?)"
+    space = r"[ \t\r\n\f]*" if pixels else r"\s*"
+    match = re.fullmatch(space + pattern + (r"(?:px)?" if pixels else "") + space, value)
     if not match:
         return None
     try:
@@ -3088,7 +3090,13 @@ def modern_transform(value: str) -> bool:
 MODERN_STYLE = set(COLOUR_ATTRS) | {"stroke-width", "font-size", "font-style"}
 MODERN_NUMBERS = {"x", "y", "x1", "x2", "y1", "y2", "cx", "cy", "r", "rx", "ry",
                   "width", "height", "fill-opacity", "stroke-opacity", "opacity",
-                  "markerWidth", "markerHeight", "refX", "refY"}
+                  "markerWidth", "markerHeight", "refX", "refY", "font-size", "stroke-width"}
+# Main's thirty modern figures use these families and no weight attribute.
+# Euclid's roots also omit weight, leaving SVG's normal weight in force.
+MODERN_FONTS = {
+    "font-family": {"Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"},
+    "font-weight": {"normal"},
+}
 
 
 def modern_findings(root, ref: str, heaths: set[str] | None,
@@ -3103,8 +3111,11 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
     if len(values) != 4 or None in values:
         found.append(("S24", f"malformed viewBox {root.get('viewBox')!r}: "
                       "expected four finite SVG numbers"))
-    elif not 400 <= width <= 440:
-        found.append(("S24", f"viewBox width {width}, not 400 to 440, as Euclid's figure"))
+    else:
+        if not 400 <= width <= 440:
+            found.append(("S24", f"viewBox width {width}, not 400 to 440, as Euclid's figure"))
+        if values[3] <= 0:
+            found.append(("S24", f"viewBox height {values[3]}, not positive"))
     title = root.find(f"{SVG}title")
     if title is None or " ".join(text_of(title).split()) != f"{ref}: the modern way":
         got = "no <title>" if title is None else f"title \"{text_of(title)}\""
@@ -3119,6 +3130,11 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
     bad = defaultdict(int)
     for el, own, eff in walk(root):
         t = tag(el)
+        for attribute, allowed in MODERN_FONTS.items():
+            value = el.get(attribute)
+            if value is not None and value not in allowed:
+                found.append(("S24", f"unsupported {attribute} {value!r} on <{t}>: "
+                              f"use {' or '.join(sorted(allowed))}"))
         font_style = el.get("font-style")
         if font_style is not None and not font_style.strip():
             found.append(("S25", f"empty font-style presentation attribute on <{t}>: "
@@ -3139,8 +3155,11 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
             found.append(("S24", f"malformed or overflowing transform {own['transform']!r} "
                           f"on <{t}>"))
         for key in MODERN_NUMBERS & own.keys():
-            if modern_number(own[key], pixels=True) is None:
-                found.append(("S24", f"malformed {key} {own[key]!r} on <{t}>"))
+            # Read the raw attribute even when a child or inline style overrides it.
+            value = el.get(key, own[key])
+            if modern_number(value, pixels=True) is None:
+                rule = "S25" if key == "font-size" else "S24"
+                found.append((rule, f"malformed {key} {value!r} on <{t}>"))
         for k in COLOUR_ATTRS:
             v = own.get(k)
             if v is not None and v.lower() != "none" and v.lower() not in EUCLID_COLOURS:
