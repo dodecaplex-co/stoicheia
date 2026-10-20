@@ -20,13 +20,14 @@ carries it out.
 triangles ABD and DBC. Euclid's proof makes a parallelogram for the first triangle [I. 42],
 applies one for the second to its side [I. 44], and shows that the two make one
 parallelogram; a figure of more triangles repeats the second step, as Oliver Byrne draws it
-for three (1847, p. 46). The companions after it take any rectilineal figure:
+for three (1847, p. 46). The companions after it take a rectilineal figure given with its
+triangles:
 
 * `Prop45.append` is that second step.
 * `Prop45.sum` repeats it, for any number of triangles. It is the construction, and claims
   nothing of a figure: the triangles need not fit together.
-* `Prop45.apart` is the proposition for any rectilineal figure, with any boundaries, given
-  with any division into triangles that lie apart, no point inside two of them (`Apart`).
+* `Prop45.apart` is the proposition for a figure given with triangles that lie apart,
+  no point inside two of them (`Apart`).
   The figure may have a hole (Definition I.14: "any boundary or boundaries").
 * `Prop45.figure` is the proposition for a figure with one boundary, given with triangles
   fitted together in a suitable order (`Rectilineal`, `Fitted`). It follows from
@@ -316,7 +317,7 @@ theorem Prop45.sum {E₁ E E₂ : Point} (ts : List (Point × Point × Point)) (
         (fun s hs => hts s (List.mem_cons_of_mem _ hs))
     exact ⟨K, F', L, M, hp', hang', harea'⟩
 
-/-- **I.45, for any rectilineal figure, with any boundaries** (companion of I.45). To
+/-- **I.45, for a figure given with triangles that lie apart** (companion of I.45). To
 construct, in a given rectilineal angle E, a parallelogram KFLM, its angle at K equal to E,
 equal to a given rectilineal figure: the figure given with any division of it into
 triangles, no point inside two of them (`Apart`), and "equal to the figure" meaning equal
@@ -329,8 +330,9 @@ theorem Prop45.apart {E₁ E E₂ : Point} (R : Apart) (hE : Triangle E₁ E E�
       quadArea K F L M = R.area :=
   Prop45.sum R.pieces R.ne R.triangle hE
 
-/-- **I.45, for any rectilineal figure with one boundary** (companion of I.45). To
-construct, in a given rectilineal angle E, a parallelogram KFLM, its angle at K equal to E,
+/-- **I.45, for a figure with one boundary, given with triangles fitted together**
+(companion of I.45). To construct, in a given rectilineal angle E, a parallelogram KFLM,
+its angle at K equal to E,
 equal to a given rectilineal figure: the figure given with triangles fitted together in a
 suitable order, each glued across a side of an earlier one and meeting the earlier ones only
 along it (`Rectilineal`), and "equal to the figure" meaning equal to those triangles taken

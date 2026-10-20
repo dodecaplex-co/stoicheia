@@ -1853,7 +1853,77 @@ findings:
   and the placement policy still apply only in `Elements/`. The model's independent
   kernel replay, the other half of #121, is still open.
 
+- **The acceptance checklist in CI, held to what main passes
+  ([#35](https://github.com/jackChallis/stoicheia/issues/35)).** A new job, `acceptance`, in
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), runs
+  [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py) on every pull request,
+  with the whole history for the records' commits, and keeps its reports as an artifact of
+  the run. Until the consolidation release it fails only for an item that already passes on
+  main and does not pass on the pull request: a pass may not turn into a fail, while the
+  failures main still has (742 at #111) are reported and hold nothing back. Main is checked
+  beside the pull request, in a worktree of the merge commit's first parent, with the pull
+  request's own checks copied in (`scripts/`, `tests/`, `Certificate/`, `review/SCHEMA.md`
+  and `review/terms.toml`), keeping main's own values pinned to its content. The new
+  `scripts/copy_acceptance_checks.sh` is the helper that CI and the behavioural tests share
+  to copy the pull request's checker code while preserving those pinned values, so that one
+  copy of the checks judges both, and a check made stricter, which lands on its own before
+  the content it judges, holds nothing back. Main's
+  run leaves out the kernel replay and the model tests (E1 and E4), which the `check` and
+  `model` jobs hold on every pull request. The script gains two options: `--json`, which
+  writes every item's verdict beside the report, and `--compare MAIN PR`, which runs no
+  check and exits 1 for each item that passes in MAIN and does not pass in PR (a fail, a
+  check not run, or an item missing), and 2 for a file `--json` did not write, or for two
+  files written by different copies of the script. A staging item, P10 or E6, that turns
+  into a fail is listed and not held: both read `Staging/` alone, and a statement that a
+  stage adds or changes is staged before its proof ([WORKFLOW](../WORKFLOW.md), section 2),
+  so they turn into a fail exactly when a pull request stages one, as I.20's degenerate
+  case was staged after I.20 was proved; only the full gate holds them. The lane's
+  independent review found that the ratchet would have held such a pull request back, and
+  that a misspelt gate turned the job off; we thank it for both.
+  [`tests/test_check_acceptance.py`](../../tests/test_check_acceptance.py) (new) puts the
+  comparison to small files of verdicts, and the job runs it before the checker. The full
+  gate is one line of the workflow, `ACCEPTANCE_GATE: ratchet`, which the consolidation
+  release's pull request sets to `full`: from then on the job skips main, and any failure
+  fails it, as step 9 of [WORKFLOW](../WORKFLOW.md), section 10, asks; any other value
+  fails the job at once. Nothing is loosened:
+  no other job, check, test or expectation changes, and without the new options the
+  script's verdicts, report and exit status are as before. The job is not a required check:
+  the ruleset on main and `REQUIRED_CHECKS` in
+  [`scripts/safe_push.py`](../../scripts/safe_push.py), unchanged, still name `check`,
+  `model` and `negative`, and making `acceptance` one is the owner's call; even so,
+  `git safe-push --merge` refuses a pull request while any of its checks fails, is cancelled
+  or is still running, but a skipped or missing `acceptance` does not hold it when the
+  three required jobs pass and no other check fails, is cancelled or is still running.
+  The pre-flight's `CHECKS` are unchanged too, since the job builds main beside the
+  pull request: like `formal-model`, it is CI's alone. The follow-up pull request
+  `docs/acceptance-ci-page` will add the new section "In CI" to
+  [ACCEPTANCE](../ACCEPTANCE.md) and update [WORKFLOW](../WORKFLOW.md), sections 8 and 10;
+  those reader-facing documentation changes are deliberately deferred from this one.
+  The review's correction changes `.github/workflows/ci.yml`,
+  `scripts/copy_acceptance_checks.sh` and `tests/test_check_acceptance.py`: main keeps its
+  axiom lock, certificate expectations, model hash, law names and account of the laws
+  (WORKFLOW, section 10, step 4), and a regression runs the shared helper and the certificate
+  checks to show that an updated definition or expected count cannot hide a pull request's
+  E2 failure.
+
 ## 20 October 2026
+- **I.45 and II.14 are allowed as restricted while the outline proof is to come (#116).**
+  On 20 October 2026 the owner approved ship G's decisions for #116, including:
+  "**Interim disclosure.** Approve the restricted-scope entries in section 7 and keep
+  `figure-with-dissection` until all bridges are proved and reviewed."
+  This supersedes the 18 October decision to call both full under the convention of a
+  figure supplied with a checked finite division. The figure is given with its checked
+  division into triangles, and its area is relative to that division; existence of a
+  division from the outline and independence of area from the division chosen remain to
+  be proved under #116.
+  `scripts/check_acceptance.py` adds I.45 and II.14 to `ALLOWED_LIMITS`, each as
+  `("restricted", "figure-with-dissection")`, and [ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed)
+  gains the same two rows. They go when the outline proof is proved and reviewed.
+  The record change follows on a text branch of its own, stacked on this tooling change.
+  The protected files changed are `scripts/check_acceptance.py`, whose only change is
+  those entries and their comment, and `tests/test_acceptance_limits.py` (new), which checks
+  the list against the table and exercises P3 with and without the required tag. CI does
+  not run it yet; whoever changes the limitations runs it.
 
 - **Unfinished work may land with its issue, and holds the release until it is finished.**
   The owner set the rule: "I don't mind incomplete work, prototypes, whatever so long as those are flagged issues and releases are held up until those are finalized."

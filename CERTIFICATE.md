@@ -16,7 +16,7 @@ On each page, the notes under "How the Lean follows the text" open with a plain 
 
 ## Book I
 
-**All 48 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. In [I.23](book/I/23.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. In [I.2](book/I/02.md), [I.3](book/I/03.md) and [I.7](book/I/07.md) our tacit rules supply a step of a proof of each proposition, but our proofs never use those rules. [The overlap catalogue](docs/reports/overlaps.md) gives each.
+**All 48 propositions proved in Lean**: 47 as Euclid states them and 1 for a restricted statement ([I.45](book/I/45.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences. In [I.23](book/I/23.md) one of our tacit rules supplies a step of a proof of the proposition, and our proof rests on it. In [I.2](book/I/02.md), [I.3](book/I/03.md) and [I.7](book/I/07.md) our tacit rules supply a step of a proof of each proposition, but our proofs never use those rules. [The overlap catalogue](docs/reports/overlaps.md) gives each.
 
 What the proofs show:
 
@@ -73,7 +73,7 @@ What the proofs show:
 | ✅ | [I.42](book/I/42.md) | whole | Euclid's | I.23, I.31, I.38, I.41 | I.10, I.23, I.30, I.31, I.38, I.41 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 59 | 5 | 17 |
 | ✅ | [I.43](book/I/43.md) | whole | Euclid's | I.34 | I.34 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 56 | 10 | 16 |
 | ✅ | [I.44](book/I/44.md) | whole | Euclid's | I.15, I.29, I.31, I.42, I.43 | I.2, I.4, I.15, I.23, I.29, I.30, I.31, I.34, I.42, I.43 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 13 | 35 |
-| ✅ | [I.45](book/I/45.md) | whole | Euclid's | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 11 | 25 |
+| ✅ | [I.45](book/I/45.md) | restricted | Euclid's | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | I.14, I.29, I.30, I.33, I.34, I.42, I.44 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 11 | 25 |
 | ✅ | &emsp;[I.45 apart](book/I/45.md#apart) |  |  |  | I.45 sum | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 0 | 0 |
 | ✅ | &emsp;[I.45 append](book/I/45.md#append) |  |  |  | I.14, I.29, I.30, I.33, I.34, I.44 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 11 | 25 |
 | ✅ | &emsp;[I.45 fan](book/I/45.md#fan) |  |  |  | I.13, I.45 figure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 60 | 0 | 34 |
@@ -86,7 +86,7 @@ What the proofs show:
 
 ## Book II
 
-**All 14 propositions proved in Lean**, every one as Euclid states it. Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
+**All 14 propositions proved in Lean**: 13 as Euclid states them and 1 for a restricted statement ([II.14](book/II/14.md)). Every proof follows Euclid's argument, and each page notes where the Lean departs from his sentences.
 
 What the proofs show:
 
@@ -110,7 +110,7 @@ What the proofs show:
 | ✅ | [II.11](book/II/11.md) | whole | Euclid's | I.46, I.47, II.6 | I.4, I.10, I.17, I.19, I.20, I.28, I.29, I.30, I.34, I.46, I.47, II.6 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 13 | 42 |
 | ✅ | [II.12](book/II/12.md) | whole | Euclid's | I.47, II.4 | I.4, I.17, I.28, I.34, I.46, I.47, II.4 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 64 | 9 | 28 |
 | ✅ | [II.13](book/II/13.md) | whole | Euclid's | I.47, II.7 | I.4, I.13, I.17, I.28, I.34, I.46, I.47, II.7 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 63 | 12 | 24 |
-| ✅ | [II.14](book/II/14.md) | whole | Euclid's | I.45, I.47, II.5 | I.4, I.10, I.11, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 65 | 18 | 31 |
+| ✅ | [II.14](book/II/14.md) | restricted | Euclid's | I.45, I.47, II.5 | I.4, I.10, I.11, I.28, I.29, I.34, I.45, I.46, I.47, II.5 | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 65 | 18 | 31 |
 | ✅ | &emsp;[II.14 apart](book/II/14.md#apart) |  |  |  | II.14 sum | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 65 | 0 | 0 |
 | ✅ | &emsp;[II.14 fan](book/II/14.md#fan) |  |  |  | I.13, II.14 figure | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 65 | 0 | 34 |
 | ✅ | &emsp;[II.14 figure](book/II/14.md#figure) |  |  |  | II.14 apart | 1, 2, 3, 4, 5 | Def. I.15 | 1, 2, 3, 4, 5 | 65 | 0 | 3 |
