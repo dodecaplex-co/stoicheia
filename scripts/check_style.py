@@ -2395,10 +2395,7 @@ def text_of(el) -> str:
 
 
 def number(value: str | None) -> float | None:
-    if value is None:
-        return None
-    m = re.fullmatch(r"\s*([0-9.]+)\s*(?:px)?\s*", value)
-    return float(m.group(1)) if m else None
+    return length(value)
 
 
 def coord(value: str | None) -> float:
@@ -2465,7 +2462,8 @@ def bezier(ps, t: float) -> tuple[float, float]:
 
 
 def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: float,
-               sweep: float, x2: float, y2: float) -> list[tuple[float, float]]:
+               sweep: float, x2: float, y2: float,
+               errors: list[float] | None = None) -> list[tuple[float, float]]:
     """An elliptical arc of a path, from (x1, y1) to (x2, y2), as the points along it after
     the first, its centre found from its ends as SVG's implementation notes find it."""
     if (x1, y1) == (x2, y2):
@@ -2490,6 +2488,9 @@ def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: fl
     if not sweep and turn > 0:
         turn -= math.tau
     n = max(1, math.ceil(abs(turn) / ARC_STEP))
+    if errors is not None:
+        # Use the radii after SVG enlarges them to reach the endpoints.
+        errors.append(max(rx, ry) * (1 - math.cos(abs(turn) / (2 * n))))
     pts = []
     for i in range(1, n):
         a = start + turn * i / n
@@ -2498,12 +2499,14 @@ def arc_points(x1: float, y1: float, rx: float, ry: float, phi: float, large: fl
     return pts + [(x2, y2)]
 
 
-def path_rings(d: str, closed: list[bool] | None = None) -> list[list[tuple[float, float]]]:
+def path_rings(d: str, closed: list[bool] | None = None,
+               errors: list[float] | None = None) -> list[list[tuple[float, float]]]:
     """A path's subpaths as the rings of points its fill closes: straight segments as they
     are, arcs and curves in short straight pieces. A path is read as far as it is well
     formed, as SVG draws it. Given a list `closed`, it gains a flag for each ring: whether
     a Z closes it, as its stroke is drawn (S26), retaining a single point closed by Z
-    for its caps. A moveto alone draws nothing."""
+    for its caps. A moveto alone draws nothing. Given `errors`, append a conservative
+    chord error for each elliptical arc, before transforms."""
     rings: list[list[tuple[float, float]]] = []
     ring: list[tuple[float, float]] = []
 
@@ -2550,7 +2553,7 @@ def path_rings(d: str, closed: list[bool] | None = None) -> list[list[tuple[floa
         elif kind == "l":
             pts, ctrl = pairs, None
         elif kind == "a":
-            pts = arc_points(x, y, *args[:5], ox + args[5], oy + args[6])
+            pts = arc_points(x, y, *args[:5], ox + args[5], oy + args[6], errors)
             ctrl = None
         else:
             if kind in "st":
@@ -2649,7 +2652,7 @@ def check_idea(path: Path, ref: str, required: bool) -> int:
     """S13, S14, S20, S21 and S26 for one idea figure. Returns how many of its points wait
     for a letter while it is in the transition (no letter yet, the switch off), else 0."""
     root = svg_root(path)
-    if root is None:
+    if root is None or not supported_lengths(path, root):
         return 0
     vb = " ".join(root.get("viewBox", "").replace(",", " ").split())
     if vb != "0 0 400 300":
@@ -2838,7 +2841,7 @@ def stretch(m) -> float:
 
 
 def length(value: str | None) -> float | None:
-    """An attribute that is one number, in any spelling SVG allows ("50", "5e1", "50px"),
+    """An attribute that is one finite number, with no unit or px ("50", "5e1", "50px"),
     or None. Read in one pass, by its characters and then float(), so that a long run of
     digits cannot make the reading slow, as NUM matched to the end would."""
     v = (value or "").strip()
@@ -2846,15 +2849,57 @@ def length(value: str | None) -> float | None:
     if not re.fullmatch(r"[-+.0-9eE]+", v):
         return None
     try:
-        return float(v)
+        n = float(v)
+        return n if math.isfinite(n) else None
     except ValueError:
         return None
 
 
-def rect_outline(own) -> list[tuple[float, float]] | None:
+def supported_lengths(path: Path, root) -> bool:
+    """Refuse unreadable lengths before any figure measurement, including inherited
+    widths and sizes and presentation styles. Text coordinate lists still receive their
+    separate S26 finding; every entry must first be a readable length."""
+    attrs = {
+        "svg": ("x", "y", "width", "height"),
+        "line": ("x1", "y1", "x2", "y2"),
+        "circle": ("cx", "cy", "r"),
+        "ellipse": ("cx", "cy", "rx", "ry"),
+        "rect": ("x", "y", "width", "height", "rx", "ry"),
+        "text": ("x", "y", "dx", "dy"),
+    }
+    valid = True
+    for el, own, eff, _, _ in placed(root):
+        t = tag(el)
+        values = {attr: own[attr] for attr in attrs.get(t, ()) if attr in own}
+        if t == "text" and "font-size" in eff:
+            values["font-size"] = eff["font-size"]
+        if t in DRAWN and (eff.get("stroke") or "none").lower() != "none" \
+                and "stroke-width" in eff:
+            values["stroke-width"] = eff["stroke-width"]
+        for attr, value in values.items():
+            parts = re.split(r"[\s,]+", value) if t == "text" and attr != "font-size" else [value]
+            if any(length(part) is None for part in parts):
+                fail("S26", path, 0, f"<{t}> {attr} {value!r} is not a finite number "
+                     "with no unit or px")
+                valid = False
+        for attr in ("points", "viewBox"):
+            if attr not in own:
+                continue
+            parts = re.split(r"[\s,]+", own[attr])
+            if not all(NUM.fullmatch(part) and length(part) is not None for part in parts) \
+                    or (len(parts) != 4 if attr == "viewBox" else len(parts) % 2 != 0):
+                fail("S26", path, 0, f"<{t}> {attr} {own[attr]!r} is not "
+                     + ("four finite unitless numbers" if attr == "viewBox" else
+                        "pairs of finite unitless numbers"))
+                valid = False
+    return valid
+
+
+def rect_outline(own, errors: list[float] | None = None) -> list[tuple[float, float]] | None:
     """A rect's outline, its corners rounded by rx and ry as SVG rounds them (one given
     stands for both, and each is at most half the side), in short straight pieces; None
-    when it has no width or no height, and SVG draws nothing."""
+    when it has no width or no height, and SVG draws nothing. Given `errors`, append the
+    corners' conservative chord error, before transforms."""
     x0, y0 = coord(own.get("x")), coord(own.get("y"))
     w, h = coord(own.get("width")), coord(own.get("height"))
     if w <= 0 or h <= 0:
@@ -2867,6 +2912,8 @@ def rect_outline(own) -> list[tuple[float, float]] | None:
         return [(x0, y0), (x0 + w, y0), (x0 + w, y0 + h), (x0, y0 + h), (x0, y0)]
     out = []
     quarter = max(1, round(math.pi / 2 / ARC_STEP))
+    if errors is not None:
+        errors.append(max(rx, ry) * (1 - math.cos(math.pi / (4 * quarter))))
     for cx, cy, start in ((x0 + w - rx, y0 + ry, -90), (x0 + w - rx, y0 + h - ry, 0),
                           (x0 + rx, y0 + h - ry, 90), (x0 + rx, y0 + ry, 180)):
         for i in range(quarter + 1):
@@ -2942,7 +2989,7 @@ def strokes(path: Path, root):
         if w <= 0:
             continue
         closed = []
-        sagitta = 0.0
+        errors = []
         if t == "line":
             runs = [[(coord(own.get("x1")), coord(own.get("y1"))),
                      (coord(own.get("x2")), coord(own.get("y2")))]]
@@ -2951,10 +2998,10 @@ def strokes(path: Path, root):
             run = list(zip(v[0::2], v[1::2]))
             runs = [run + run[:1] if t == "polygon" else run]
         elif t == "path":
-            rings = path_rings(own.get("d", ""), closed)
+            rings = path_rings(own.get("d", ""), closed, errors)
             runs = [ring + ring[:1] if shut else ring for ring, shut in zip(rings, closed)]
         elif t == "rect":
-            outline = rect_outline(own)
+            outline = rect_outline(own, errors)
             runs = [outline] if outline else []
         else:
             cx, cy = coord(own.get("cx")), coord(own.get("cy"))
@@ -2966,8 +3013,8 @@ def strokes(path: Path, root):
                   cy + ry * math.sin(i * math.tau / steps))
                  for i in range(steps + 1)]]
             # An ellipse stretches the unit circle by at most its greater radius.
-            sagitta = max(rx, ry) * (1 - math.cos(math.pi / steps))
-        half = (w / 2 + sagitta) * stretch(m)
+            errors.append(max(rx, ry) * (1 - math.cos(math.pi / steps)))
+        half = (w / 2 + max(errors, default=0.0)) * stretch(m)
         dashed = (eff.get("stroke-dasharray") or "none").strip().lower() != "none"
         kind = "a dashed line" if dashed and t == "line" else \
             ("an " if t == "ellipse" else "a ") + t
@@ -3059,6 +3106,8 @@ def one_letter_one_point(path: Path, root, cuts: tuple[float, ...] = ()) -> None
     with `cuts` between them, once in each, every letter wholly on one side of every cut;
     and each letter stands CLEAR of every stroke, every dot and the canvas's edge,
     measured by the hull of its capital as Georgia draws it, upright or italic."""
+    if not supported_lengths(path, root):
+        return
     vb = [float(v) for v in NUM.findall(root.get("viewBox", ""))]
     pieces, spots = list(strokes(path, root)), list(dots(root))
     count: dict[tuple[int, str], int] = defaultdict(int)
@@ -3130,7 +3179,7 @@ def heath_letters(book: str, n: int) -> set[str]:
 
 def check_euclid(path: Path, ref: str) -> None:
     root = svg_root(path)
-    if root is None:
+    if root is None or not supported_lengths(path, root):
         return
     book, n = ref.split(".")
     n = int(n)

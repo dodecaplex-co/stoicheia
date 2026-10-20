@@ -1858,7 +1858,8 @@ findings:
   square caps measured by their corners before transforms, with inherited style and
   zero-length subpaths included, and cases refusing `<use>`, which the check does not follow;
   the final reviews add refusals of text children, coordinate lists, unmeasured capitals,
-  unsupported widths and vector-effect, and conservative circle and ellipse clearances.
+  unsupported lengths and vector-effect, and conservative clearances for circles,
+  ellipses, path arcs and rounded corners.
   Both figure entry points have cases requiring an S26 finding. And
   [`scripts/check_acceptance.py`](../../scripts/check_acceptance.py)
   files its findings under P8, the figures. The matching words in
