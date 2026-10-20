@@ -49,8 +49,9 @@ public import Model.Euclidean.TripleIncidence
 A model is evidence only if its proofs do not use the laws they are meant to satisfy. This
 file imports every module of the `Model` library, and checks two things at every build.
 
-* **The library is not imported,** directly or through another file: its words are unknown
-  here, so none of its laws is in scope.
+* **Only the four pure calculus modules are imported from the library.** An executable
+  module check rejects every other `Elements` import, including transitive ones. The
+  geometric words remain unknown here, so none of the library's laws is in scope.
 * **Each theorem that proves a law in the plane rests on Lean's own axioms alone,**
   `propext`, `Classical.choice` and `Quot.sound`, which Mathlib's real numbers use. No
   axiom of the library can appear, and neither can `sorryAx`, which an unfinished proof
@@ -64,7 +65,17 @@ gathers it; the theorems listed one by one before it are every law's, the copies
 suffixed names, `circlesMeet_self`, and the proposed `exists_centre`, which is no law yet.
 -/
 
-/-! ## The library is not imported -/
+/-! ## The exact shared-definition boundary -/
+
+run_cmd do
+  let allowed := #[`Elements.Foundations.Superposition.Syntax,
+    `Elements.Foundations.Superposition.Semantics,
+    `Elements.Foundations.Superposition.Soundness,
+    `Elements.Foundations.Superposition.Restriction]
+  for m in (← Lean.getEnv).header.moduleNames do
+    if (`Elements).isPrefixOf m && !allowed.contains m then
+      throwError "Model imports unapproved library module `{m}`"
+
 
 /-- error: Unknown identifier `Elements.Point` -/
 #guard_msgs in
@@ -647,6 +658,12 @@ info: 'Model.Euclidean.Postulate5' depends on axioms: [propext, Classical.choice
 -/
 #guard_msgs in
 #print axioms Model.Euclidean.Postulate5
+
+/--
+info: 'Model.Euclidean.superposition_placement' depends on axioms: [propext, Classical.choice, Quot.sound]
+-/
+#guard_msgs in
+#print axioms Model.Euclidean.superposition_placement
 
 /--
 info: 'Model.Euclidean.superposition' depends on axioms: [propext, Classical.choice, Quot.sound]

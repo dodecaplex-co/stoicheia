@@ -9,15 +9,16 @@ name = "mathlib"
 scope = "leanprover-community"
 rev = "v4.35.0"
 
-# The edition itself, read only by the Check library to compare translations with the
-# original declarations. The Model library never imports it, and the main package
-# depends on nothing here.
+# Check reads the edition to compare translations with the original declarations.
+# Model shares only Elements.Foundations.Superposition.{Syntax,Semantics,Soundness,Restriction},
+# whose transitive declarations are checked to use no geometric words or project axioms.
+# The main package depends on nothing here.
 [[require]]
 name = "stoicheia"
 path = ".."
 
-# The signature, the translated laws and the Euclidean interpretation. Imports Mathlib,
-# never Elements.
+# The signature, the translated laws and the Euclidean interpretation. Imports Mathlib
+# and only the four pure Elements modules named above. Model.Audit checks that boundary.
 [[lean_lib]]
 name = "Model"
 

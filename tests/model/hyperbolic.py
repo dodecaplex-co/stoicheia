@@ -1618,11 +1618,14 @@ def _(c):
     Df, Gf, Hf = (float(D[0]), float(D[1])), (float(G[0]), float(G[1])), (float(Hh[0]), float(Hh[1]))
     tol = 1e-7
     on_ray = (B2[0] - Df[0]) * (Gf[0] - Df[0]) + (B2[1] - Df[1]) * (Gf[1] - Df[1]) > 0
+    # The kept side through D and C', required by Rule.of_placement.
+    N = (Df[1] - C2[1], C2[0] - Df[0], Df[0] * C2[1] - C2[0] * Df[1])
     return (abs(f_side(B2, L)) < tol and on_ray and f_side(C2, L) * f_side(Hf, L) > 0
             and abs(f_side(C2, L)) > 1e-9
             and feq(f_dist(Df, B2), ab, tol) and feq(f_dist(B2, C2), bc, tol) and feq(f_dist(C2, Df), ca, tol)
             and feq(f_ang(B2, Df, C2), alpha, tol) and feq(f_ang(Df, C2, B2), ang(A, C, B), tol)
-            and feq(f_ang(C2, B2, Df), ang(C, B, A), tol))
+            and feq(f_ang(C2, B2, Df), ang(C, B, A), tol)
+            and Df != C2 and abs(f_side(Df, N)) < tol and abs(f_side(C2, N)) < tol)
 
 
 # ======================= run =======================

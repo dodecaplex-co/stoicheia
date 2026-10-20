@@ -19,7 +19,9 @@ to the library's axiom. The [README](../README.md) says why, and how the pieces 
   words behind the magnitudes are written by hand in `Model/Signature.lean`
   (`signatureWords`) and checked here; every other defined word a law reaches is translated
   in the same way, once, and written out. Lean's own constants, those of `Init`, stay as
-  they are. Any other constant is an error, so nothing untranslated can reach the model.
+  they are. Constants declared in exactly the four `pureModules` are shared by identity,
+  with their universe arguments preserved and their transitive types and values audited by
+  `checkPureModules`. Any other constant is an error.
 * **What it writes.** `Model/Laws.lean`, with the translated words, each law as a
   definition named as in the lock (`Law.Postulate1 S`), and the structures `Neutral S` and
   `Laws S`; `Check/Laws.lean`, the round trip by the kernel; and `Model/Assembly.lean`,
@@ -271,6 +273,8 @@ structure Target where
   overS : Bool
   /-- The universe levels at which the laws use the library's word (`levelsOf`). -/
   levels : List Level := []
+  /-- A shared pure declaration: identity translation at every universe level. -/
+  identity : Bool := false
   deriving Inhabited
 
 /-- The module that declares `c`. -/
@@ -288,6 +292,58 @@ def isLeanCore (env : Environment) (c : Name) : Bool :=
   match moduleOf? env c with
   | some m => m.getRoot == `Init
   | none => false
+
+/-- The complete shared-definition boundary, decided by declaring module, not namespace. -/
+def pureModules : Array Name := #[
+  `Elements.Foundations.Superposition.Syntax,
+  `Elements.Foundations.Superposition.Semantics,
+  `Elements.Foundations.Superposition.Soundness,
+  `Elements.Foundations.Superposition.Restriction]
+
+/-- A constant declared in one of the four approved pure modules. -/
+def isShared (env : Environment) (c : Name) : Bool :=
+  (moduleOf? env c).any pureModules.contains
+
+/-- Check the transitive types and values of the shared declarations, including theorem
+proofs, opaque values, constructors and recursor rules. Only the four pure modules and
+`Init` are admissible, and only Lean's three logical axioms. A visited set handles mutual
+inductives and recursive definitions without leaving any dependency unchecked. -/
+def checkPureWith (env : Environment) (find? : Name → Option ConstantInfo)
+    (roots : Array Name) : Except String Unit := do
+  let mut todo := roots
+  let mut seen : NameSet := {}
+  while !todo.isEmpty do
+    let c := todo.back!
+    todo := todo.pop
+    if seen.contains c then continue
+    seen := seen.insert c
+    if c == `sorryAx then throw "shared calculus reaches `sorryAx`"
+    unless isShared env c || isLeanCore env c do
+      throw s!"shared calculus reaches `{c}`, outside the four pure modules and `Init`"
+    let some ci := find? c | throw s!"shared calculus reaches undeclared `{c}`"
+    if ci.isAxiom && !([`propext, `Classical.choice, `Quot.sound].contains c) then
+      throw s!"shared calculus reaches unapproved axiom `{c}`"
+    todo := todo ++ ci.type.getUsedConstants
+    if let some value := ci.value? (allowOpaque := true) then
+      todo := todo ++ value.getUsedConstants
+    match ci with
+    | .inductInfo v => todo := todo ++ v.ctors.toArray
+    | .recInfo v =>
+      for rule in v.rules do todo := todo ++ rule.rhs.getUsedConstants
+    | _ => pure ()
+
+/-- Audit the actual declarations. `checkPureWith` also accepts an isolated declaration
+lookup for regression fixtures; production always uses the environment's own lookup. -/
+def checkPure (env : Environment) (roots : Array Name) : Except String Unit :=
+  checkPureWith env env.find? roots
+
+/-- Audit every declaration in every imported pure module, even if no law reaches it. -/
+def checkPureModules (env : Environment) : Except String Unit := do
+  let mut roots := #[]
+  for i in [:env.header.moduleNames.size] do
+    if pureModules.contains env.header.moduleNames[i]! then
+      roots := roots ++ env.header.moduleData[i]!.constNames
+  checkPure env roots
 
 /-- The library's name for a word or a law, without `Elements.`: the lock's key. -/
 def lockKey (n : Name) : String := (n.replacePrefix `Elements .anonymous).toString
@@ -310,15 +366,16 @@ def translate (env : Environment) (vocab : NameMap Target) (S : Expr) (what : St
       bad := bad.push s!"`{c}` is neither Lean's own (from `Init`) nor a word of the project"
   let atLevel := e.find? fun
     | .const c ls => match vocab.find? c with
-      | some t => ls != t.levels
+      | some t => !t.identity && ls != t.levels
       | none => false
     | _ => false
   if let some (.const c ls) := atLevel then
     bad := bad.push s!"`{c}` is used at the universe levels {ls}, not those the model's word has"
   unless bad.isEmpty do throw s!"{what}: {"; ".intercalate bad.toList}"
   return e.replace fun
-    | .const c _ => (vocab.find? c).map fun t =>
-        if t.overS then mkApp (.const t.name []) S else .const t.name []
+    | .const c ls => (vocab.find? c).map fun t =>
+        if t.identity then .const t.name ls
+        else if t.overS then mkApp (.const t.name []) S else .const t.name []
     | _ => none
 
 /-- `e`, translated back: each target applied to the signature `S` (or, for `Model.Kind`, on
@@ -331,8 +388,9 @@ def untranslate (inverse : NameMap Target) (S : Expr) (what : String) (e : Expr)
       if s == S then (inverse.find? c).bind fun t =>
         if t.overS then some (.const t.name t.levels) else none
       else none
-    | .const c [] => (inverse.find? c).bind fun t =>
-        if t.overS then none else some (.const t.name t.levels)
+    | .const c ls => (inverse.find? c).bind fun t =>
+        if t.identity then some (.const t.name ls)
+        else if t.overS || !ls.isEmpty then none else some (.const t.name t.levels)
     | _ => none
   if e'.containsFVar S.fvarId! then
     throw s!"{what}: the signature is used other than through one of its words"
@@ -529,6 +587,7 @@ def generatedName (n : Name) : Name := n.replacePrefix `Elements `Model.Signatur
 /-- The plan, from the library's declarations in `env`, after checking that everything the
 laws reach can be translated. -/
 def plan (env : Environment) : Except String Plan := do
+  checkPureModules env
   let laws := foundationAxioms env
   let reached := reachedWords env laws
   let mut vocab : NameMap Target := {}
@@ -540,6 +599,9 @@ def plan (env : Environment) : Except String Plan := do
   let mut bad : Array String := #[]
   for w in reached do
     if vocab.contains w then continue
+    if isShared env w then
+      vocab := vocab.insert w { name := w, overS := false, identity := true }
+      continue
     match env.find? w with
     | none => bad := bad.push s!"`{w}` is not declared"
     | some (.defnInfo _) =>
@@ -561,7 +623,8 @@ def plan (env : Environment) : Except String Plan := do
   unless bad.isEmpty do throw ("; ".intercalate bad.toList)
   let mut inverse : NameMap Target := {}
   for (lib, t) in vocab do
-    inverse := inverse.insert t.name { name := lib, overS := t.overS, levels := t.levels }
+    inverse := inverse.insert t.name {
+      name := lib, overS := t.overS, levels := t.levels, identity := t.identity }
   return { laws, reached, generated := dependencyOrder env generated, vocab, inverse }
 
 /-! ## Printing Lean a reader can read -/
@@ -761,7 +824,8 @@ def vocabularyTable (p : Plan) : Array String := Id.run do
     let some t := p.vocab.find? w | continue
     let short := (t.name.replacePrefix `Model.Signature .anonymous).toString
     let here :=
-      if byS.contains w then s!"`S.{short}`, a field of `Signature`"
+      if t.identity then s!"`{w}`, shared unchanged from its pure module"
+      else if byS.contains w then s!"`S.{short}`, a field of `Signature`"
       else if byKind.contains w then s!"`{t.name.replacePrefix `Model .anonymous}`"
       else if bySignature.contains w then s!"`S.{short}`, in `Model/Signature.lean`"
       else s!"`S.{short}`, below"
@@ -828,9 +892,12 @@ def lawsText (p : Plan) (hash : String) : MetaM String := withSignature fun S =>
   let euclidean := fs.filter (·.2.2)
   let field (n : Name × Name × Bool) : String :=
     s!"  {n.2.1} : {(lawName n.1).replacePrefix `Model .anonymous} S"
+  let sharedImports := pureModules.filter fun m =>
+    p.reached.any fun w => moduleOf? env w == some m
   let header := s!"module
 
 public import Model.Signature
+{"\n".intercalate (sharedImports.toList.map (s!"public import {·}"))}
 
 /-!
 # The laws
@@ -1412,6 +1479,18 @@ def comparePlanted (planted lib : Name) : CommandElabM Unit := do
     | .error e => throwError "{e}"
   let some ci := env.find? lib | throwError "no `{lib}`"
   let errors ← liftTermElabM <| compareDefinition p planted ci.type (.sort 0) true
+  unless errors.isEmpty do throwError "{"\n".intercalate errors.toList}"
+
+/-- Compare a planted word with a shared or generated definition, using the same strict
+comparison as generated words. Shared words themselves are pinned by the vocabulary lock. -/
+def comparePlantedWord (planted lib : Name) : CommandElabM Unit := do
+  let env ← getEnv
+  let p ← match plan env with
+    | .ok p => pure p
+    | .error e => throwError "{e}"
+  let some ci := env.find? lib | throwError "no `{lib}`"
+  let some value := ci.value? | throwError "`{lib}` is not a definition"
+  let errors ← liftTermElabM <| compareDefinition p planted value ci.type true
   unless errors.isEmpty do throwError "{"\n".intercalate errors.toList}"
 
 /-- Translate the value of the definition `n`, a statement in the library's words, as the

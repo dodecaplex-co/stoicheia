@@ -12,6 +12,7 @@ import Elements.Foundations.Tacit.Metric
 import Elements.Foundations.Tacit.Superposition
 import Elements.Foundations.Tacit.Transfer
 import Elements.Foundations.Words
+import Elements.Foundations.Superposition.Restriction
 import Model.Laws
 import Model.Hand
 import Model.Laws.«areas-p5»
@@ -131,3 +132,86 @@ error: `Check.Planted.foreign`: `Model.Kind` is neither Lean's own (from `Init`)
 -/
 #guard_msgs in
 run_cmd Check.Generator.translatePlanted ``Check.Planted.foreign
+
+/-! ## The shared restricted calculus
+
+A changed guard and swapped interpretation fields must fail the same expression comparison
+used for translated words. Shared definitions also remain in the vocabulary lock. Purity
+faults below alter only an in-memory copy inspected by the checker, never the environment
+in which Lean checks proofs. -/
+
+namespace Check.Planted
+
+open Model Elements.Superposition
+
+/-- The fourth placement guard is wrongly positive. -/
+def changedGuard (_S : Signature) {P L : Type} (d g h : P) (l : L) : List (Lit P L) :=
+  [.pos (.onLine d l), .pos (.onLine g l), .neg (.eq d g), .pos (.onLine h l)]
+
+/-- Exchange angle and area, including their carriers, in the interpretation. -/
+def swappedPrimitives (S : Signature) : Interpretation :=
+  ⟨S.Point, S.Line, S.OnLine, S.Between, S.SameSide, S.Length, S.Area, S.Angle,
+    S.len, S.area, S.ang⟩
+
+end Check.Planted
+
+/-- error: `Check.Planted.changedGuard`: `Elements.Superposition.Lit.pos` where the library has `Elements.Superposition.Lit.neg` -/
+#guard_msgs in
+run_cmd (Check.Generator.comparePlantedWord ``Check.Planted.changedGuard
+  ``Elements.Superposition.guards)
+
+/-- error: `Check.Planted.swappedPrimitives`: `Elements.Kind.area` where the library has `Elements.Kind.angle` -/
+#guard_msgs in
+run_cmd Check.Generator.comparePlantedWord ``Check.Planted.swappedPrimitives ``Elements.primitives
+
+/-- A familiar namespace gives no permission to share a declaration from another module. -/
+def Elements.Superposition.unapprovedShared : Prop := True
+
+def Check.Planted.unapproved : Prop := Elements.Superposition.unapprovedShared
+
+/-- error: `Check.Planted.unapproved`: `Elements.Superposition.unapprovedShared` is neither Lean's own (from `Init`) nor a word of the project -/
+#guard_msgs in
+run_cmd Check.Generator.translatePlanted ``Check.Planted.unapproved
+
+/-- Plant a dependency in a pure definition's value, leaving its provenance intact. The
+copy is used only as input to the purity checker; it is never installed in Lean. -/
+def Check.Planted.pureDependency (dep : Lean.Name) : Lean.Elab.Command.CommandElabM Unit := do
+  let env ← Lean.getEnv
+  let target := ``Elements.Superposition.guards
+  let some (.defnInfo ci) := env.find? target | throwError "no shared guards definition"
+  let some dependency := env.find? dep | throwError "no planted dependency"
+  let value := Lean.Expr.letE `planted dependency.type
+    (.const dep (dependency.levelParams.map Lean.Level.param)) ci.value true
+  let lookup := fun n =>
+    if n == target then some (.defnInfo { ci with value }) else env.find? n
+  match Check.Generator.checkPureWith env lookup #[target] with
+  | .ok () => pure ()
+  | .error e => throwError "{e}"
+
+/-- error: shared calculus reaches `Elements.Point`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Planted.pureDependency ``Elements.Point
+
+/-- error: shared calculus reaches `Elements.Tacit.superposition`, outside the four pure modules and `Init` -/
+#guard_msgs in
+run_cmd Check.Planted.pureDependency ``Elements.Tacit.superposition
+
+/-- error: shared calculus reaches `sorryAx` -/
+#guard_msgs in
+run_cmd Check.Planted.pureDependency ``sorryAx
+
+/- Shared recursors retain arbitrary universe arguments in both directions. -/
+run_cmd do
+  let env ← Lean.getEnv
+  let p ← match Check.Generator.plan env with
+    | .ok p => pure p
+    | .error e => throwError "{e}"
+  Lean.Elab.Command.liftTermElabM <| Check.Generator.withSignature fun S => do
+    let e := Lean.Expr.const ``Elements.Superposition.Atom.rec [Lean.Level.param `u]
+    let forward ← match Check.Generator.translate env p.vocab S "shared recursor" e with
+      | .ok e => pure e
+      | .error e => throwError "{e}"
+    unless forward == e do throwError "identity translation changed a universe argument"
+    match Check.Generator.untranslate p.inverse S "shared recursor" forward with
+    | .ok back => unless back == e do throwError "reverse translation changed a universe argument"
+    | .error e => throwError "{e}"

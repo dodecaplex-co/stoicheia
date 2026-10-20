@@ -95,6 +95,7 @@
 "Tacit.same_side_refl" = "same_side_refl"
 "Tacit.same_side_symm" = "same_side_symm"
 "Tacit.same_side_trans" = "same_side_trans"
+# The restricted rule follows from the tested placement with its kept side.
 "Tacit.superposition" = "superposition"
 "Tacit.triple_incidence1" = "triple_incidence1"
 "Tacit.triple_incidence2" = "triple_incidence2"
