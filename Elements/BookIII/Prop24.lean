@@ -81,7 +81,7 @@ theorem Prop24 {A B C D E F : Point} {AEB CFD : Circle} (hAEB : ∃ O : Point, C
      of CD, with CD, keeping every distance, and A goes to C. -/
   obtain ⟨f, hAC, hBD, ⟨hinto, honto, hdist⟩, hf⟩ := placement hE_AB hF_CD hAB
   -- the point B will also coincide with the point D, because AB is equal to CD;
-  /- `hBD`: the placement on the equal straight lines AB, CD puts B on D. -/
+  /- The placement on the equal straight lines AB, CD puts B on D. -/
   -- and, AB coinciding with CD,
   /- The points of AB go to points of CD: a point of the base is an end, or between the ends,
      exactly when its image is. -/
