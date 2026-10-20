@@ -2167,6 +2167,10 @@ findings:
   `scripts/heath.py` uses `Tacit.angle_le_two_right`, which supplies I.13's upper bound
   on an angle in `Prop47.within`, for its overlap self-test, with the same acceptance of
   a complete `step` record and rejection when its note is missing. No check is weakened.
+  For the same reason `review/SCHEMA.md` gives the same overlap as its example of the kind
+  `step`, in place of I.2, I.3, I.7 and I.23: the restricted rule retires the first three
+  shortcuts and the axiom retirements make the fourth circular, while I.13's in I.47
+  survives both. Wording only: no field, kind or rule of the schema changes.
   Protected files changed, each named here on a line added relative to origin/main:
   `Certificate/Facts.lean`, `Certificate/FIELDS.md`,
   `scripts/heath.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
@@ -2462,14 +2466,15 @@ findings:
   were read again by an independent reader after the marker change and stamped at
   `0085b443`.
 
-  The protected files changed on the replacement branch relative to `origin/main`,
-  already named in the preceding entry, are `Audit.lean`, `Audit/Overlaps.lean`,
-  `Audit/Superposition.lean`, `Audit/screen.py`, `Certificate/Facts.lean`,
+  Once the two tooling branches have landed, the protected files this branch changes are
+  `Audit.lean`, `Audit/Overlaps.lean`, `Audit/Superposition.lean`, `Audit/screen.py`,
   `Certificate/axioms.lock`, `model/Model/Audit.lean`, `model/lakefile.toml`,
-  `model/lock.sha256`, `review/SCHEMA.md`, `scripts/heath.py`,
-  `tests/certificate_expectations.json`, `tests/model/MODEL.md`,
-  `tests/model/hyperbolic.py`, `tests/model/laws.toml`, `tests/model/lock.sha256`
-  and `tests/model/search.py`. The content change in `Audit/screen.py` unfolds
+  `model/lock.sha256`, `tests/certificate_expectations.json`, `tests/model/MODEL.md`,
+  `tests/model/hyperbolic.py`, `tests/model/laws.toml`, `tests/model/lock.sha256` and
+  `tests/model/search.py`. `Certificate/Facts.lean`, `scripts/heath.py` and the example in
+  `review/SCHEMA.md` now arrive with `tooling/superposition-certificate`, which lands
+  first, so this branch changes no check input other than values pinned to it and the
+  superposition law's code in the two numerical harnesses. The content change in `Audit/screen.py` unfolds
   `primitives`, the edition's interpretation of the restricted calculus, without
   changing its coverage check or returning placement witnesses. No check, expected
   value, lock or schema is weakened; the check changes land in tooling first.

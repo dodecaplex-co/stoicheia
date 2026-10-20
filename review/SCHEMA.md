@@ -111,8 +111,8 @@ kinds, and `kind` names the row's kind in the catalogue's words:
   three rules that cites no proposition, any other rules only drawing or naming the figure
   (III.5 and III.6).
 - **step**: inside some proof, the rule carries a step that is the proposition's content,
-  or a case of it, and does not give the proposition at once (I.7, where the proof is
-  the audit lemma, which takes seven axioms).
+  or a case of it, and does not give the proposition at once (as for I.13, a consequence of
+  which, Metric 5, carries a step of I.47's proof).
 
 The page words its overlap by the kind, in the line under the enunciation and in the
 book's summary, which also heads the book's index, its section of CERTIFICATE.md and its
