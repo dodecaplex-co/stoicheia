@@ -63,7 +63,8 @@ records current; CI runs it on every push.
 16. Without a build, in a temporary copy of the tracked files without Git: opening,
     base and closing merge markers, a middle between outer markers, and a lone middle
     in a non-Markdown file, comment, fence or after a completed heading, indented code
-    or link reference definition each fail S23 with their file, line and kind.
+    or link reference definition (on one line or two) each fail S23 with their
+    file, line and kind.
     Setext headings, including several lines and one after a comment containing a
     fence, leave the unplanted copy's result unchanged. Symlinks are not copied.
     This runs before the plants that build, and preserves any existing findings.
@@ -252,6 +253,8 @@ def merge_conflict_markers() -> None:
              ["", "    code", "=" * 7], [(2, "middle")]),
             ("middle after a reference definition", markdown,
              ["", "[label]: destination", "=" * 7], [(2, "middle")]),
+            ("middle after a two-line reference definition", markdown,
+             ["", "[label]:", " /url", "=" * 7], [(3, "middle")]),
             ("middle in a fence", markdown,
              ["```", "Code text", "=" * 7, "```"], [(2, "middle")]),
             ("middle after a fence inside a comment", markdown,

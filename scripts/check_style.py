@@ -324,6 +324,7 @@ MARKER_SKIP_DIRS = {
 CONFLICT_EDGE = re.compile(r"^(<{7}|\|{7}|>{7})(?: |$)")
 CONFLICT_MIDDLE = re.compile(r"={7}[ \t]*")
 CONFLICT_KINDS = {"<": "opening", "|": "base", ">": "closing"}
+LINK_REFERENCE_START = re.compile(r"^ {0,3}\[(?:\\.|[^\[\]\\])+\]:")
 
 
 def repository_files(root: Path):
@@ -358,15 +359,20 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
 
     Edges begin with exactly seven identical characters followed by a space or
     the line's end. A middle has exactly seven equals, with optional trailing
-    horizontal space. Outside a conflict, Markdown may use it as a setext underline
-    after a paragraph. This small block state machine treats non-blank text as a
-    paragraph except for markers, ATX headings, thematic breaks, completed setext
-    headings, fences and line-opening HTML comments (up to three spaces before <!--,
-    through the line holding -->). An indented line (four columns, tabs expanded)
-    or a link reference definition ([label]: destination, up to three spaces)
-    cannot start a paragraph, but may continue one. Paragraphs may span several
-    lines. A fence inside a comment, or a comment inside a fence, opens no block.
-    Other lengths of equals are allowed. This is not a full CommonMark parser.
+    horizontal space. No other length is examined as a middle, so S23 errs toward
+    refusal in doubtful contexts: an author whose heading is refused can use eight
+    equals. Outside a conflict, a lone Markdown middle is allowed only when every
+    line of the preceding block is ordinary paragraph text. The block ends at a
+    blank line, marker, ATX or completed setext heading, thematic break, fence or
+    line-opening HTML comment (up to three spaces before <!--, through the line
+    holding -->). Any possible link reference definition prefix (up to three spaces,
+    a bracketed label allowing escaped brackets, then a colon) disqualifies the
+    whole block, even with no destination yet or extra words after it. Thus
+    "[label]: destination extra words" is refused with seven equals despite being
+    paragraph text. An indented line (four columns, tabs expanded) cannot start a
+    paragraph, but may continue one. Paragraphs may span several lines. A fence
+    inside a comment, or a comment inside a fence, opens no block. This is not a
+    full CommonMark parser.
     """
     lines = [line.removesuffix("\r") for line in text.split("\n")]
     edges = [CONFLICT_EDGE.match(line) for line in lines]
@@ -376,6 +382,7 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
     opened = False
     fence = ""
     comment = paragraph = False
+    reference_definition = False
     for i, (line, edge) in enumerate(zip(lines, edges)):
         block = False
         if markdown:
@@ -400,7 +407,8 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
             elif char == ">":
                 opened = False
         elif CONFLICT_MIDDLE.fullmatch(line):
-            if (opened and i < last_close or not markdown or block or not paragraph):
+            if (opened and i < last_close or not markdown or block or not paragraph
+                    or reference_definition):
                 kind = "middle"
         if kind:
             found.append((i + 1, kind))
@@ -408,8 +416,11 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
                 or THEMATIC_LINE.fullmatch(line)
                 or paragraph and SETEXT_LINE.fullmatch(line)):
             paragraph = False
-        elif not paragraph and (line.expandtabs(4).startswith("    ")
-                or re.match(r"^ {0,3}\[[^\]\n]+\]:[ \t]*\S", line)):
+            reference_definition = False
+        elif LINK_REFERENCE_START.match(line):
+            reference_definition = True
+            paragraph = False
+        elif not paragraph and line.expandtabs(4).startswith("    "):
             paragraph = False
         else:
             paragraph = True

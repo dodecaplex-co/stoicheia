@@ -26,8 +26,9 @@ it, put to the script's own patterns and functions:
 * the acceptance case: check_acceptance.py sorts a style finding in a review record to
   its proposition's P9, the item for the record's notes, and every other as before;
 * the conflict-marker cases: S23 reads tracked UTF-8 text and copies without Git,
-  refuses each marker kind even in Markdown fences and comments, preserves setext
-  paragraphs, raises on traversal errors and skips symlinks; S12 keeps Git's index.
+  refuses each marker kind even in Markdown fences and comments, allows setext headings
+  over ordinary paragraphs but refuses possible reference definitions throughout a block,
+  raises on traversal errors and skips symlinks; S12 keeps Git's index.
 
 CI's `check` job runs this file just before check_style.py, and scripts/safe_push.py runs
 it in the same place (docs/WORKFLOW.md, section 8), so a case read wrongly stops the
@@ -1099,11 +1100,62 @@ class ConflictMarkers(unittest.TestCase):
                     self.assertEqual(style.conflict_markers(text, markdown=True),
                                      [(2, "middle")])
         text = "[label]: destination\nHeading\ncontinued\n" + "=" * 7
-        self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        self.assertEqual(style.conflict_markers(text, markdown=True), [(4, "middle")])
 
-    def test_reference_shape_inside_paragraph_is_text(self):
+    def test_reference_shape_inside_paragraph_refuses_middle(self):
         text = "Heading\n[label]: destination\n" + "=" * 7
-        self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        self.assertEqual(style.conflict_markers(text, markdown=True), [(3, "middle")])
+
+    def test_reference_definition_bypasses_through_scanner(self):
+        definitions = ("[label]:\n /url", '[label]: /url\n "Title"',
+                       r"[la\]bel]: /url")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "definition.md"
+            for definition in definitions:
+                with self.subTest(definition=definition):
+                    path.write_text(definition + "\n" + "=" * 7 + "\n")
+                    with patch.object(style, "ROOT", root), \
+                            patch.object(style, "failures", []):
+                        style.check_conflict_markers()
+                        self.assertEqual(style.failures, [
+                            ("S23", "definition.md", definition.count("\n") + 2,
+                             "middle merge-conflict marker"),
+                        ])
+
+    def test_possible_reference_definition_taints_whole_block(self):
+        for indent in ("", " ", "  ", "   "):
+            for label in ("label", r"la\[bel", r"la\]bel", r"la\[b\]el", r"label\\"):
+                for prefix in ("", "Heading\n"):
+                    with self.subTest(indent=indent, label=label, prefix=prefix):
+                        text = (prefix + indent + "[" + label + "]:\n /url\n"
+                                '"Title"\ncontinued\n' + "=" * 7)
+                        self.assertEqual(style.conflict_markers(text, markdown=True),
+                                         [(text.count("\n") + 1, "middle")])
+
+    def test_doubtful_reference_heading_uses_eight_equals(self):
+        # Extra words make paragraph text, but refusal is the deliberate price
+        # of treating every possible definition prefix conservatively.
+        for width in (1, 6, 7, 8, 80):
+            with self.subTest(width=width):
+                text = "[label]: destination extra words\n" + "=" * width
+                expected = [(2, "middle")] if width == 7 else []
+                self.assertEqual(style.conflict_markers(text, markdown=True), expected)
+
+    def test_reference_definition_stops_at_block_boundary(self):
+        for boundary in ("\n", "<!-- comment -->\n", "<!--\ncomment\n-->\n",
+                         "```\ncode\n```\n", "# Heading\n", "---\n",
+                         "Heading\n" + "=" * 8 + "\n"):
+            with self.subTest(boundary=boundary):
+                text = "[label]: /url\n" + boundary + "Heading\ncontinued\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_brackets_without_reference_prefix_remain_paragraph_text(self):
+        for line in ("[label] text", "[label] : /url", r"\[label]: /url",
+                     "Text [label]: /url", "[unescaped[bracket]: /url"):
+            with self.subTest(line=line):
+                self.assertEqual(style.conflict_markers(line + "\n" + "=" * 7,
+                                                       markdown=True), [])
 
     def test_lone_middle_without_paragraph(self):
         for previous in ("", "  ", "#", "## A heading", "   ### Heading",

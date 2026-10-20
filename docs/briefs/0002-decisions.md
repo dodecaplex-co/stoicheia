@@ -1849,3 +1849,18 @@ findings:
   the rule lands apart from the content fix, `text/decisions-marker` (#140), which removed
   the marker first; on main since #140 it finds none. The protected files changed are `scripts/check_style.py`,
   `scripts/negative_tests.py` and `tests/test_check_style.py`.
+
+- **S23 errs toward refusal for possible reference definitions.** A lone Markdown middle
+  is allowed only when every line of the preceding block is ordinary paragraph text;
+  any line beginning with up to three spaces, a bracketed label (escaped brackets
+  included) and a colon disqualifies the block until its next boundary.
+  S23 examines only middles of exactly seven equals and errs toward refusal in doubtful
+  contexts, so an author whose heading is refused can use eight, since other lengths are
+  never examined as middles.
+  This deliberately refuses `[label]: destination extra words` with seven equals even
+  though it is paragraph text. `scripts/check_style.py` retains the possible definition
+  across destination and title continuations. `tests/test_check_style.py` covers the
+  three reported escapes, the conservative refusal, the eight-equals alternative and
+  ordinary headings across block boundaries; `scripts/negative_tests.py` adds a two-line
+  definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
+  states the rule. No mathematical statement or review record changes.
