@@ -38,14 +38,15 @@ What the scopes cover (STYLE, section 8):
 * Idea figures, figures/<book>/NN-idea.svg; Euclid's figures, figures/<book>/NN.svg.
 
 S12 reads the Prose, the Review notes, the Catalogues, the Other reports, the Rendered
-docstrings and the front pages (book/<book>/front.md), each with its book's namespace
-open, or every book's where a text has no book of its own; it reads the name before the
-colon of a backticked `name : type` too, for a hypothesis is said in words, not by its
-local name (STYLE, section 1). A backticked word that is Lean's or the certificate's but
-no declaration (a tactic, a field of facts.json) is listed in NOT_DECLARED with its
-reason. Reports also distinguish syntax, namespaces, repository files, scan identifiers,
-revision identifiers and schema fields or values by their source or explicit prose
-context (report_non_declaration). Those classifications never excuse a mishnah name.
+docstrings and the front pages (book/<book>/front.md). A text of one book gets that book's
+namespace; a text with no book of its own gets every book's; and the foundations' Rendered
+docstrings get only `Elements` and `Elements.Tacit`. S12 reads the name before the colon
+of a backticked `name : type` too, for a hypothesis is said in words, not by its local name
+(STYLE, section 1). A backticked word that is Lean's or the certificate's but no
+declaration (a tactic, a field of facts.json) is listed in NOT_DECLARED with its reason.
+Reports also distinguish syntax, namespaces, repository files, scan identifiers, revision
+identifiers and schema fields or values by their source or explicit prose context
+(report_non_declaration). Those classifications never excuse a mishnah name.
 
 The reach of #66, held file by file (REACH_PENDING). The Review notes, the overlap
 catalogue, the Other reports, the Rendered docstrings, the front pages and the table of
