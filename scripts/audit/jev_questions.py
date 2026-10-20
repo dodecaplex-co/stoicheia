@@ -984,26 +984,25 @@ class Generator:
                 call['row'] = row['id']
                 call['evidence'] = 'body' if call['in'] == name else 'reachable helper signature only'
 
-        if 'representation' in record or verdicts.get('representations') == 'pass':
-            source = self.source(book, n)
-            bridges, objects, bridge_info = self.bridges(source, book, n)
-            state = {'proposition': ref, **heath_text(e, source, book, n, proof=False),
-                     'lean_statement': statement(index, source, ref, 'lean_statement'),
-                     'attached_statements': {a: statement(index, source, a, 'attached_statements.' + a)
-                                             for a in attached},
-                     'record': tables(e, source, path, record, ('statement', 'representation')),
-                     'terms': terms(e, source, record), 'represented_objects': objects, 'bridges': bridges,
-                     'bridge_placement': bridge_info['placement'],
-                     **bridge_info['state']}
-            state.update(glossary(index, source,
-                                  [state['lean_statement'], *state['attached_statements'].values(), *bridges.values()],
-                                  objects))
-            state['statement_context'] = index.context(source, 'statement_context',
-                                                        [heath.parse_ref(a).lean for a in [ref] + attached])
-            coverage['bridge_placement'] = bridge_info['placement']
-            self.row(ref, 11, 'representation', source, state, REPRESENTATION, verdicts.get('representations'),
-                     {'pass': 'bridge stated', 'fail': 'bridge missing or inadequate', 'n/a': 'no bridge required'},
-                     'review.items.representations')
+        source = self.source(book, n)
+        bridges, objects, bridge_info = self.bridges(source, book, n)
+        state = {'proposition': ref, **heath_text(e, source, book, n, proof=False),
+                 'lean_statement': statement(index, source, ref, 'lean_statement'),
+                 'attached_statements': {a: statement(index, source, a, 'attached_statements.' + a)
+                                         for a in attached},
+                 'record': tables(e, source, path, record, ('statement', 'representation')),
+                 'terms': terms(e, source, record), 'represented_objects': objects, 'bridges': bridges,
+                 'bridge_placement': bridge_info['placement'],
+                 **bridge_info['state']}
+        state.update(glossary(index, source,
+                              [state['lean_statement'], *state['attached_statements'].values(), *bridges.values()],
+                              objects))
+        state['statement_context'] = index.context(source, 'statement_context',
+                                                    [heath.parse_ref(a).lean for a in [ref] + attached])
+        coverage['bridge_placement'] = bridge_info['placement']
+        self.row(ref, 11, 'representation', source, state, REPRESENTATION, verdicts.get('representations'),
+                 {'pass': 'bridge stated', 'fail': 'bridge missing or inadequate', 'n/a': 'no bridge required'},
+                 'review.items.representations')
 
         source = self.source(book, n)
         mishnah = e.whole(source, 'commentary', f'mishnah/{book}/{n:02d}.md')
@@ -1315,11 +1314,12 @@ def output_paths(paths: list[Path], evidence_files: dict[str, str]) -> list[Path
             'cannot list tracked files: ' + result.stderr.decode('utf-8', errors='replace').strip())
     tracked = {ROOT / os.fsdecode(name) for name in result.stdout.split(b'\0') if name}
     protected = {path.resolve() for path in tracked if path not in DEFAULT_OUTPUTS}
+    protected_names = {path.as_posix().casefold() for path in protected}
     protected_ids = {file_identity(path) for path in protected} - {None}
     for path, identity in zip(resolved, identities):
         require(path not in evidence and identity not in evidence_ids,
                 f'{path}: destination would replace an evidence file')
-        require(path not in protected and identity not in protected_ids,
+        require(path.as_posix().casefold() not in protected_names and identity not in protected_ids,
                 f'{path}: destination would replace a tracked input')
     roots = protected_paths()
     root_names = {path.as_posix().casefold() for path in roots}

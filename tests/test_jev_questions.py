@@ -187,6 +187,21 @@ class FileContainment(unittest.TestCase):
         self.assertEqual((self.root / 'facts.json').read_bytes(), b'original tracked input')
         self.assertFalse(self.output.exists())
 
+    def test_missing_tracked_case_aliases_cannot_be_outputs(self):
+        self.tracked.append('CONTRIBUTING.md')
+        alias = self.root / 'contributing.md'
+        for destination in ('questions', 'manifest'):
+            with self.subTest(destination=destination):
+                with patch.object(questions, 'MANIFEST',
+                                  alias if destination == 'manifest' else self.manifest):
+                    status, error = self.run_main(
+                        alias if destination == 'questions' else self.output)
+                self.assertEqual(status, 1, error)
+                self.assertIn('tracked', error)
+                self.assertFalse(alias.exists())
+                self.assertFalse(self.output.exists())
+                self.assertFalse(self.manifest.exists())
+
     def test_git_metadata_cannot_be_outputs(self):
         pointer = self.root / '.git'
         pointer.write_bytes(b'gitdir: ../git-private\n')
@@ -565,6 +580,17 @@ class Controls(unittest.TestCase):
         for item in range(9, 14):
             self.assertEqual(sum(row['item'] == item for row in seeded), 2)
         originals = {row['id']: row for row in rows if not row['seeded']}
+        representations = [row for row in originals.values() if row['item'] == 11]
+        expected_refs = {f'{book}.{n}' for book, count in (('I', 48), ('II', 14))
+                         for n in range(1, count + 1)}
+        self.assertEqual(len(representations), 62)
+        self.assertEqual({row['ref'] for row in representations}, expected_refs)
+        first = originals['11-I.1-representation']
+        self.assertEqual(first['expected'], 'no bridge required')
+        self.assertEqual(first['state']['bridges'], {})
+        self.assertNotIn('representation', first['state']['record'])
+        self.assertEqual(first['source']['record'], 'review/I/01.toml')
+        self.assertIn('review/I/01.toml', first['source']['files'])
         commentary = [row for row in seeded if row['item'] == 12]
         self.assertEqual(len(commentary), 2)
         for row in commentary:
