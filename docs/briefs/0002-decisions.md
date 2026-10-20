@@ -2496,3 +2496,36 @@ findings:
   foundation, lock, generated source or model proof is weakened or changed. The required
   independent security review is recorded in the next entry after it is performed on the
   committed protected-path revision.
+
+- **Independent security review of the model-generator build boundary.** A fresh reviewer
+  who did not write or edit the change reviewed revision
+  `f443892b627895c9edf32efc331b384b371c4aa7`, over the model-check range
+  `8e7d22f1..f443892b`. The merged restricted-superposition certificate tooling retained
+  its separate review scope. The disposition is ready: no blocking, material or security
+  finding remains.
+
+  The review confirmed the exactly four identity-shared pure modules and their transitive
+  type, value and proof audit; the canonical source-path and header checks; the compiled
+  import-closure audit; the retained content dependencies beside the new path-and-entry-kind
+  fingerprint; the default and direct `Check.RoundTrip` cached-build coverage; operation
+  before the Superposition modules arrive; byte-identical generated sources; and that no
+  check is weakened. It also confirmed the formal-model CI invocation.
+
+  Two editorial findings arose and were resolved before the reviewed revision. The README
+  still linked the replaced `model/lakefile.toml`; `7eccb38d` points it to
+  `model/lakefile.lean`. The first account said the listing target ran on every Lake
+  invocation, although only Check depends on it; `f443892b` now says it runs whenever Check,
+  including a module built directly, is requested. There were no other findings.
+
+  The reviewer ran `cd model && lake build` (2626 jobs),
+  `cd model && lake build Check.RoundTrip` (2611 jobs), the cached-build regression,
+  `python3 scripts/check_links.py` (13,459 links) and
+  `git diff --check 8e7d22f1..f443892b`; all passed and the fixtures were restored. The
+  three generated source object IDs match `8e7d22f1`, and the reviewed worktree was clean.
+  No proposition review record is made stale.
+
+  The documented limits remain: the checks do not authenticate external search-path or
+  package provenance or symlink targets. The regression plants a non-source addition and a
+  byte-identical source rename, not every possible transition between entry kinds. The Lake
+  target and `Check.Generator.modelSourceFiles` independently describe the audited listing
+  scope, so a later change to that scope must update both.
