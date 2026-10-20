@@ -15,7 +15,9 @@ records current; CI runs it on every push.
    longer among the opaque primitives (as if it had been made a `def`), is caught;
    Circle 2 added to III.3's axioms, and Circle 3 to I.15's porism or II.1's general
    companion, are each refused by the entry's name; Circle 3 renamed in the axiom lock
-   (restored after) and in the copy alike is caught as missing from the lock; and
+   (restored after) and in the copy alike is caught as missing from the lock;
+   Circle 2 proved without a forbidden axiom beneath it is refused by name, while
+   Circle 2 proved from Circle 3 still in the lock passes; and
    placement among III.26's shared steps is caught, while III.24, given it too, is not
    blamed.
 4. A changed Lean file makes its review record stale (I.1).
@@ -95,9 +97,10 @@ all renderer outputs.
 Tests 10, 14 and 15 attempt a restoration build; if it fails or is interrupted, every
 file in `.lake/build` returns to its saved contents and presence or absence before
 the plant, including dependent modules, hashes and traces. Test 10 always restores or
-removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15 report elapsed time,
-restoration included. An outer `finally` compares Git status with the entry status,
-including on interruption, without replacing an exception already in flight.
+removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15 and the proved Circle 2
+plant report elapsed time, restoration included. An outer `finally` compares Git status
+with the entry status, including on interruption, without replacing an exception already
+in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
 goes unnoticed or a restoration check fails. Restoration needs writable files and
 an opportunity for `finally` to finish; a forced process kill cannot provide it.
@@ -107,6 +110,7 @@ Standard library only; Python 3.11 or later, for the review records.
 import argparse
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -417,14 +421,21 @@ def changed_audit_pin() -> None:
     rel = "Audit/Overlaps.lean"
     path = ROOT / rel
     saved = path.read_bytes()
-    pin = b"'Audit.III_2' depends on axioms: [Elements.Tacit.inside_of_between]"
-    assert saved.count(pin) == 1, "Audit.III_2's pin has changed; update this test"
+    pins = list(re.finditer(rb"'Audit\.III_2' depends on axioms: \[([^\]]*)\]", saved))
+    assert len(pins) == 1, "expected exactly one Audit.III_2 axiom pin"
+    pin = pins[0]
+    axioms = [a.strip() for a in pin[1].split(b",") if a.strip()]
+    dropped = next((a for a in axioms if a.startswith(b"Elements.")), None)
+    assert dropped is not None, "Audit.III_2's pin has no project axiom to drop"
+    remaining = axioms.copy()
+    remaining.remove(dropped)
+    changed = saved[:pin.start(1)] + b", ".join(remaining) + saved[pin.end(1):]
     outputs = BuildOutputs()
     try:
-        path.write_bytes(saved.replace(pin, b"'Audit.III_2' depends on axioms: []"))
+        path.write_bytes(changed)
         expect_failure("an axiom dropped from Audit.III_2's pin", run("lake", "build", "Audit"),
                        f"{rel}:", "Docstring on `#guard_msgs` does not match generated message",
-                       "Audit.III_2", "Elements.Tacit.inside_of_between")
+                       "Audit.III_2", dropped.decode())
     finally:
         path.write_bytes(saved)
         rebuild_restored("the restored audit build", outputs, "Audit")
@@ -549,6 +560,35 @@ def circle_renamed() -> None:
                        unwanted=("an assumption not in", "no longer an axiom"))
     finally:
         (ROOT / rel).write_text(saved)
+
+
+def circle_proved() -> None:
+    """A proved Circle 2 must still bring in Circle 3 as a locked axiom."""
+    inside, outside = "Tacit.inside_of_between", "Tacit.outside_of_between"
+    path = ROOT / "Certificate/axioms.lock"
+    saved = path.read_bytes()
+    saved_errors = list(check_fidelity.errors)
+    axioms, vocabulary = check_fidelity.read_lock(path)
+    axioms.pop(inside, None)
+    try:
+        path.write_text(check_fidelity.render_lock(axioms, vocabulary))
+        for dependencies in ([], [outside]):
+            facts = json.loads((ROOT / "facts.json").read_text())
+            for table in ("axiom_types", "axiom_modules"):
+                facts[table].pop(inside, None)
+            facts.setdefault("proved_rules", {})[inside] = dependencies
+            check_fidelity.errors.clear()
+            check_fidelity.check_lock(facts, path)
+            found = list(check_fidelity.errors)
+            result = subprocess.CompletedProcess([], int(bool(found)), "\n".join(found), "")
+            if not dependencies:
+                expect_failure("Circle 2 proved without a forbidden axiom", result,
+                               f"{inside} (Circle 2): proved without another forbidden circle rule")
+            elif expect_success("Circle 2 proved from locked Circle 3", result):
+                print("✓ Circle 2 proved from locked Circle 3: allowed")
+    finally:
+        path.write_bytes(saved)
+        check_fidelity.errors[:] = saved_errors
 
 
 def placement_called() -> None:
@@ -1214,7 +1254,8 @@ def main(argv=()) -> int:
         placement_named()
         queue_repeated_heading()
         planted_assumptions()
-        for test in (style_error, broken_link, stale_page, changed_audit_pin, corrupt_olean):
+        for test in (circle_proved, style_error, broken_link, stale_page,
+                     changed_audit_pin, corrupt_olean):
             started = perf_counter()
             try:
                 test()

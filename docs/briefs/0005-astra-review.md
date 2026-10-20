@@ -232,7 +232,12 @@ Expected result: III.1 shows 56 tacit rules and III.1 Por. 57, including `centre
 **k. Additions that close every remaining review point.**
 
 *Certificate regressions* (the review asked for them by name):
-- `tests/certificate_expectations.json` pins facts the CI must keep: `III.1 Por.` includes `Tacit.centre_unique` and `III.1` does not. A negative test plants a dependency that occurs **only in a declaration's type** and checks the unified walk finds it.
+- `tests/certificate_expectations.json` originally pinned that `III.1 Por.` includes
+  `Tacit.centre_unique` and `III.1` does not. The membership pin was later dropped, with
+  the owner's approval, ahead of retiring that axiom; the
+  [decision record](0002-decisions.md#19-october-2026) owns that change. A negative test
+  plants a dependency that occurs **only in a declaration's type** and checks the unified
+  walk finds it.
 
 *Overlap catalogue columns*: proposition, rule, **where the rule first enters the development** (its first user), which dependencies bring it in, what the Lean proof does, and the audit lemma. Deriving these propositions from weaker assumptions is recorded as an optional, separate, dependency-audited workstream, not this plan.
 
