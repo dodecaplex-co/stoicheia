@@ -41,10 +41,10 @@ theorem Triangle.of_onCircle (hA : OnCircle A α) (hB : OnCircle B α) (hC : OnC
   · exact inside_not_on (inside_of_between (Or.inr hB) (Or.inr hC) h) hA
   · exact inside_not_on (inside_of_between (Or.inr hA) (Or.inr hB) h) hC
 
-/-- A straight line `BC` in a circle has a point of the circle on the other side of it
-from any point `K` off it. Take `M` between `B` and `C`; it is within the circle (System
-E, Circle 2), so the straight line `KM`, produced beyond `M`, meets the circle
-(Intersections 5), on the other side of `BC` from `K` (Pasch 3). For a circle with a
+/-- A straight line BC in a circle has a point of the circle on the other side of it
+from any point K off it. Take M between B and C; it is within the circle (System
+E, Circle 2), so the straight line KM, produced beyond M, meets the circle
+(Intersections 5), on the other side of BC from K (Pasch 3). For a circle with a
 centre, `BookIII.Prop2.oppositeSide` gives the same by III.2. -/
 theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α)
     (hK : Triangle B C K) : ∃ A : Point, OnCircle A α ∧ OppositeSidesOf A K B C := by
@@ -55,7 +55,7 @@ theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α
   have hKM : K ≠ M := fun e => hK_L (e ▸ hM_L)
   obtain ⟨N, hK_N, hM_N⟩ := Postulate1 K M hKM
   obtain ⟨A, hA_α, hA_N, hAMK⟩ := line_circle_beyond hM_in hM_N hK_N hKM
-  /- `A` is off `BC`: the straight lines `KM` and `BC` meet only at `M`, and `A` is on
+  /- A is off BC: the straight lines KM and BC meet only at M, and A is on
      the circle, not within it. -/
   have hAM : A ≠ M := fun e => inside_not_on hM_in (e ▸ hA_α)
   have hA_L : ¬ OnLine A L := fun hA_L =>
@@ -63,8 +63,8 @@ theorem exists_onCircle_oppositeSidesOf (hB : OnCircle B α) (hC : OnCircle C α
   exact ⟨A, hA_α, OppositeSidesOf.of_line hK.ne₁₂ hB_L hC_L
     ⟨hA_L, hK_L, pasch3 hAMK hM_L⟩⟩
 
-/-- A straight line `BC` in a circle has a point of the circle on the same side of it as
-any point `K` off it: take a point on the other side from `K`, and a point of the circle
+/-- A straight line BC in a circle has a point of the circle on the same side of it as
+any point K off it: take a point on the other side from K, and a point of the circle
 on the other side from that (`exists_onCircle_oppositeSidesOf`). For a circle with a
 centre, `BookIII.Prop2.sameSide` gives the same by III.2. -/
 theorem exists_onCircle_sameSideOf (hB : OnCircle B α) (hC : OnCircle C α)
@@ -75,8 +75,8 @@ theorem exists_onCircle_sameSideOf (hB : OnCircle B α) (hC : OnCircle C α)
 
 /-! ## A circumference named from either side -/
 
-/-- The circumference `BKC` is the circumference `BK'C` for any `K'` on the same side of
-`BC` as `K`: the points `A` that measure them, on the other side, are the same points. -/
+/-- The circumference BKC is the circumference BK'C for any K' on the same side of
+BC as K: the points A that measure them, on the other side, are the same points. -/
 theorem circumference_congr {K' : Point} (hK : SameSideOf K K' B C) :
     circumference α B K C = circumference α B K' C := by
   unfold circumference
@@ -89,9 +89,9 @@ theorem circumference_congr {K' : Point} (hK : SameSideOf K K' B C) :
   · rintro ⟨A, hA, hAK', rfl⟩
     exact ⟨A, hA, (hK.trans_opposite hAK'.symm).symm, rfl⟩
 
-/-- The circumference on which the angle `BAC` stands (Definition III.9) is the
-circumference `BKC`, for any `K` on the other side of `BC` from `A`: a point of the
-circle is on `A`'s side exactly when it is on the other side from `K`. -/
+/-- The circumference on which the angle BAC stands (Definition III.9) is the
+circumference BKC, for any K on the other side of BC from A: a point of the
+circle is on A's side exactly when it is on the other side from K. -/
 theorem standing_eq_circumference (hAK : OppositeSidesOf A K B C) :
     standing α B A C = circumference α B K C := by
   unfold standing circumference
@@ -104,8 +104,8 @@ theorem standing_eq_circumference (hAK : OppositeSidesOf A K B C) :
   · rintro ⟨X, hX, hXK, rfl⟩
     exact ⟨X, hX, OppositeSidesOf.sameSideOf hXK.symm hAK.symm, rfl⟩
 
-/-- The circumference on which the angle `BAC` stands is the one on which `BA'C` stands,
-for any `A'` on the same side of `BC` as `A`. -/
+/-- The circumference on which the angle BAC stands is the one on which BA'C stands,
+for any A' on the same side of BC as A. -/
 theorem standing_congr {A' : Point} (hA : SameSideOf A A' B C) :
     standing α B A C = standing α B A' C := by
   unfold standing
@@ -120,8 +120,8 @@ theorem standing_congr {A' : Point} (hA : SameSideOf A A' B C) :
 
 /-! ## Equal circles -/
 
-/-- In equal circles the radii are equal: any radius `GP` of the one is equal to any
-radius `HQ` of the other. A circle has only one centre (System E, Generalities 2), and
+/-- In equal circles the radii are equal: any radius GP of the one is equal to any
+radius HQ of the other. A circle has only one centre (System E, Generalities 2), and
 its radii are equal to one another (Definition 15). -/
 theorem EqualCircles.radii {G H : Point} (h : EqualCircles α β) (hG : Centre G α)
     (hH : Centre H β) (hP : OnCircle P α) (hQ : OnCircle Q β) : ‖G P‖ = ‖H Q‖ := by

@@ -9,16 +9,42 @@ fingerprint = "sha256:ac0ec095401a8c5e"
 kind = "euclid"
 
 [[passage]]
+at = "I say that AB is also parallel to CD"
+kind = "case"
+note = "Euclid's GK crosses EF, as in his figure. When EF lies outside AB and CD it need not, and that case rests on `Prop30.unique`: two straight lines through one point, each parallel to EF, are one (from I.29)."
+
+[[passage]]
 at = "For let the straight line GK fall upon them"
 kind = "helper"
-helper = "Prop30.unique"
-note = "Euclid's GK crosses EF, as in his figure. When EF lies outside AB and CD it need not, and that case rests on `Prop30.unique`: two straight lines through one point, each parallel to EF, are one (from I.29)."
+helper = "OppositeSides.exists_between"
+note = "Euclid reads from his figure that GK meets EF at H, between G and K; `OppositeSides.exists_between` supplies this point when EF separates G and K. The Lean chooses A, B, C, D, E and F afresh on the given straight lines, since the conclusion concerns whole lines: it takes F on EF off GK and produces FH to E, putting E and F on opposite sides of GK, uses `Prop30.point_on_side` to put A on AB on E's side and D on CD on F's side of GK, then produces AG to B and DK to C."
+
+[[passage]]
+at = "and they are alternate"
+kind = "helper"
+helper = "SameSideOf.trans_opposite"
+note = "Euclid reads the angles AGK and GKD as alternate. `SameSideOf.trans_opposite` puts A and D on opposite sides of GK from the constructed facts that A and F lie on opposite sides of GK and D is on F's side of GK."
+
+[[passage]]
+at = "Therefore AB is parallel to CD"
+kind = "helper"
+helper = "Prop27"
+note = "Euclid concludes parallelism from the equal alternate angles; the Lean applies I.27 (`Prop27`), for which Heath prints no reference here."
 
 [figure]
 case = "EF between AB and CD, so that GK crosses it, as in Heath's figure"
 
 [review]
-stage = "exceptions"
-commit = "9d0bdcb"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:9dec8104e7a1a82c"
+stage = "full"
+commit = "dc6e21f7"
+reviewer = "GPT-6 Astra (Codex), records re-read"
+lean = "sha256:2da81b72e5448168"
+run = "brief 0005 stage 5, ship C5 re-read"
+
+[review.items]
+statement = "pass"
+passages = "pass"
+representations = "n/a"
+commentary = "pass"
+figures = "pass"
+signoff = "pass"

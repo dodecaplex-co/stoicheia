@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" font-family="Georgia, 'Times New Roman', serif" font-size="17">
+  <rect x="0" y="0" width="400" height="260" rx="10" fill="#fbf7ee"/>
+  <title>I.13: the modern way</title>
+  <defs>
+    <marker id="axis" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#8c7b62"/></marker>
+  </defs>
+  <line x1="26" y1="210" x2="374" y2="210" stroke="#8c7b62" stroke-width="1.3" marker-end="url(#axis)"/>
+  <line x1="200" y1="239" x2="200" y2="24.4" stroke="#8c7b62" stroke-width="1.3" marker-end="url(#axis)"/>
+  <path d="M 345.0 210.0 A 145 145 0 0 0 55.0 210.0" fill="none" stroke="#8c7b62" stroke-width="1.3" stroke-dasharray="5 4"/>
+  <line x1="55" y1="210" x2="345" y2="210" stroke="#3b2f2f" stroke-width="1.6"/>
+  <line x1="200" y1="210" x2="106.795797" y2="98.923556" stroke="#a0522d" stroke-width="2.4"/>
+  <path d="M 242 210 A 42 42 0 0 0 173.00292 177.826133" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <path d="M 161.432743 164.037333 A 60 60 0 0 0 140 210" fill="none" stroke="#8c7b62" stroke-width="1.3"/>
+  <circle cx="106.795797" cy="98.923556" r="2.6" fill="#3b2f2f"/>
+  <circle cx="200" cy="210" r="2.6" fill="#3b2f2f"/>
+  <circle cx="55" cy="210" r="2.6" fill="#3b2f2f"/>
+  <circle cx="345" cy="210" r="2.6" fill="#3b2f2f"/>
+  <g fill="#3b2f2f">
+    <text font-size="17" x="93.795797" y="85.923556" text-anchor="middle">A</text>
+    <text font-size="17" x="183" y="235" text-anchor="middle">B</text>
+    <text font-size="17" x="55" y="235" text-anchor="middle">C</text>
+    <text font-size="17" x="345" y="235" text-anchor="middle">D</text>
+    <text font-size="17" x="228.738042" y="153.37107" text-anchor="middle" font-style="italic">θ</text>
+    <text font-size="17" x="105.74399" y="171.047701" text-anchor="middle" font-style="italic">π − θ</text>
+  </g>
+</svg>

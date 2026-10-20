@@ -54,8 +54,8 @@ The detail is in [WORKFLOW.md](WORKFLOW.md). In outline, with the crew sizes of 
 
 | Book | Propositions | Stage | Records | Acceptance | Outside score | Release |
 |---|---|---|---|---|---|---|
-| I | 48 of 48 proved, and I.15's porism and eight companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 0 at "full", 48 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
-| II | 14 of 14 proved, and eight companion theorems | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 0 at "full", 14 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
+| I | 48 of 48 proved, and I.15's porism and nine companion theorems | released (next: I.40 and I.45 in full generality) | 48 of 48 current: 48 at "full", 0 at "exceptions" | — | 90 (Astra, 676244a) | [book-I](https://github.com/jackChallis/stoicheia/releases/tag/book-I) |
+| II | 14 of 14 proved, and eight companion theorems | released (next: II.1 and II.14 in full generality) | 14 of 14 current: 14 at "full", 0 at "exceptions" | — | 85 (Astra, 676244a) | [book-II](https://github.com/jackChallis/stoicheia/releases/tag/book-II) |
 | III | 37 of 37 proved, and the porisms of III.1 and III.16 and three companion theorems | released (next: arcs and segments) | 37 of 37 current: 0 at "full", 37 at "exceptions" | — | 80 (Astra, 676244a) | [book-III](https://github.com/jackChallis/stoicheia/releases/tag/book-III) |
 | IV–XIII | not begun | — | — | — | — | — |
 
@@ -78,9 +78,9 @@ The work under way is [brief 0005](briefs/0005-astra-review.md):
 | 1 | Precision: certificate, review records, wording, layout, evidence, overlaps, Book III's reading | done, 17 Oct |
 | 1b | Standards: AGENTS.md, STYLE, FORMALIZATION, WORKFLOW, templates, `check_style.py` | done, 17 Oct |
 | — | Release of Book III | [done, 17 Oct](https://github.com/jackChallis/stoicheia/releases/tag/book-III); Book I and II notes corrected |
-| 2 | I.40, I.45, II.1, II.14 in full generality | proved in Staging ([#88]); the move into `Elements/` next ([#19]) |
+| 2 | I.40, I.45, II.1, II.14 in full generality | done, 19 Oct: proved in Staging ([#88]), and in the edition with their records ([#19], [#102](https://github.com/jackChallis/stoicheia/pull/102)) |
 | 3 | Arcs and segments; III.24 | proved in Staging ([#89]); the move into `Elements/` next ([#25]) |
-| 4 | III.14, III.15, III.25 | proved in Staging (this pull request); the move into `Elements/` next ([#28]) |
+| 4 | III.14, III.15, III.25 | proved in Staging ([#90]); the move into `Elements/` next ([#28]) |
 | 5 | Consolidation review of all 99 | |
 | 6 | Acceptance, then a consolidation release of Books I–III | |
 
@@ -150,10 +150,6 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   `Audit/`, and does not list `#eval`: a check change of its own.
 - **Whether `check_style.py`'s self-check cases belong in `tests/`** is left for a pull
   request of its own ([#3]).
-- **The merge commit's subject** takes the owner from origin's URL, which after a transfer
-  would name the old owner (cosmetic).
-- **A guard for `gh` exiting 0 without merging,** needed if a merge queue or auto-merge is
-  ever turned on; neither is.
 - **The Lean notes of I.6, I.14 and I.24** still make Lean the subject: a later pass, with
   their records re-read.
 - **Two that are not pull requests:** the finished worktrees and their merged branches are
@@ -279,6 +275,7 @@ in the voyage logs).
 | The night of 18 October: pull requests #1 to #11 | not logged | not logged | one night |
 [#88]: https://github.com/jackChallis/stoicheia/pull/88
 [#89]: https://github.com/jackChallis/stoicheia/pull/89
+[#90]: https://github.com/jackChallis/stoicheia/pull/90
 [#19]: https://github.com/jackChallis/stoicheia/issues/19
 [#25]: https://github.com/jackChallis/stoicheia/issues/25
 [#28]: https://github.com/jackChallis/stoicheia/issues/28

@@ -116,7 +116,7 @@ PLACEMENT_HOMES = ("Elements/BookIII/Placement.lean", "Elements/BookIII/Placemen
 
 # The check_style rules each item reads; the rest belong to P9 (or B1, B2 and E5).
 TEXT_RULES = {"S8", "S9", "S17"}
-FIGURE_RULES = {"S13", "S14", "S15", "S16", "S20", "S21", "S22"}
+FIGURE_RULES = {"S13", "S14", "S15", "S16", "S20", "S21", "S26"}
 
 # B2. Backticked words of a catalogue that are not Lean declarations, and need none: the
 # placeholder of a pattern, a field of facts.json, a tactic.
@@ -329,7 +329,8 @@ def check_certificate(facts: dict) -> None:
 
 
 def check_style_rules() -> None:
-    """check_style.py as CI runs it, each failure sorted by the file it names."""
+    """check_style.py as CI runs it, each failure sorted by the file it names: a
+    proposition's review record to P9, whatever its rule."""
     done = run([PY, "scripts/check_style.py", "--quiet"])
     found = 0
     for line in done.stdout.splitlines():
@@ -344,6 +345,8 @@ def check_style_rules() -> None:
             fail("edition", "E5", text)
         elif who.startswith("Book"):
             fail(who, "B2" if "gaps-book" in path else "B1", text)
+        elif path.lstrip("./").startswith("review/"):
+            fail(who, "P9", text)
         elif rule in TEXT_RULES:
             fail(who, "P7", text)
         elif rule in FIGURE_RULES:
