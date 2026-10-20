@@ -1854,4 +1854,8 @@ findings:
   [scripts/check_acceptance.py](../../scripts/check_acceptance.py) and
   [tests/test_check_style.py](../../tests/test_check_style.py).
   [STYLE](../STYLE.md), sections 2, 7 and 8, describes the figure and its rules.
-  The re-review fixes in `scripts/check_style.py`, with regressions in `tests/test_check_style.py`, refuse unsupported SVG styling and text children and modern-paragraph HTML and reference syntax, report malformed or overflowing numeric input per file, and count indentation in columns while retaining source offsets.
+  The re-review fixes in `scripts/check_style.py`, with regressions in
+  `tests/test_check_style.py`, refuse unsupported SVG styling and text children, empty
+  or whitespace-only font-style attributes, and modern-paragraph HTML and reference syntax,
+  report malformed or overflowing numeric input per file, and count indentation in columns
+  while retaining source offsets.

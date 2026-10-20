@@ -3119,6 +3119,10 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
     bad = defaultdict(int)
     for el, own, eff in walk(root):
         t = tag(el)
+        font_style = el.get("font-style")
+        if font_style is not None and not font_style.strip():
+            found.append(("S25", f"empty font-style presentation attribute on <{t}>: "
+                          "use normal or italic"))
         if t in {"style", "textPath"}:
             found.append(("S24", f"unsupported <{t}> in a modern figure"))
         if t == "text":

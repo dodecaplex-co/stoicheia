@@ -948,6 +948,20 @@ class Modern(unittest.TestCase):
                 else:
                     self.assertIn(want, found, f"{want} misses a fault in {inside!r}")
 
+    def test_font_style_presentation_under_italic_parent(self):
+        letter = '<text x="50" y="270">A</text>'
+        for element in ("text", "g"):
+            for value in ("", " \t\n ", "normal"):
+                with self.subTest(element=element, value=value):
+                    if element == "text":
+                        label = letter.replace("<text ", f'<text font-style="{value}" ')
+                    else:
+                        label = f'<g font-style="{value}">{letter}</g>'
+                    inside = MODERN_GOOD.replace(
+                        letter, f'<g font-style="italic">{label}</g>')
+                    self.assertEqual(modern_rules(inside, "I.47"),
+                                     set() if value == "normal" else {"S25"})
+
     def test_no_paragraph_and_no_figure(self):
         self.assertIn("S24", modern_rules(MODERN_GOOD, "I.47", names=None))
         self.assertIn("S24", modern_rules(MODERN_GOOD, "I.47", heaths=None))
