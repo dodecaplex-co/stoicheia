@@ -378,7 +378,13 @@ by name cannot see that, as Astra observes. Two small steps are taken here. Diag
 3 is a theorem of the other rules, which I.13 gives back. And III.2 rests on neither rule
 that contains it: our proofs take its step by III.2, its corollaries or Definition I.15, and
 for a circle with a centre `Prop2.within` proves Circle 2 from the other rules. Lean's
-certificate shows that no entry rests on Circle 2 or Circle 3; no check yet keeps it so.
+certificate shows that no entry rests on Circle 2 or Circle 3, and
+`scripts/check_fidelity.py` now refuses any entry, proposition, porism or companion,
+that rests on either rule. The Book Zero lemmas `Triangle.of_onCircle` and
+`exists_onCircle_oppositeSidesOf` in
+[`Elements/Figure/OnCircles.lean`](../../Elements/Figure/OnCircles.lean#L36) rest on
+Circle 2, as does any lemma built on them. They are not certificate entries: the check
+covers them only through the entries that use them.
 
 ## Keeping it current
 

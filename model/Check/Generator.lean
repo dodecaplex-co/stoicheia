@@ -660,7 +660,7 @@ def ppBinders (ns : Name) (xs : Array Expr) : MetaM String := do
     let ty := (← ppIn ns t).pretty 100000
     let ns := " ".intercalate (names.toList.map toString)
     pure <| match bi with
-      | .implicit => "{" ++ ns ++ " : " ++ ty ++ "}"
+      | .implicit => s!"\{{ns} : {ty}}"
       | .strictImplicit => "⦃" ++ ns ++ " : " ++ ty ++ "⦄"
       | .instImplicit => "[" ++ ns ++ " : " ++ ty ++ "]"
       | .default => "(" ++ ns ++ " : " ++ ty ++ ")"

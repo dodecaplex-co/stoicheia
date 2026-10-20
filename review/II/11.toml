@@ -21,13 +21,13 @@ note = "Euclid puts F beyond A with EF equal to EB. The Lean proves EB greater t
 at = "let the square FH be described on AF"
 kind = "helper"
 helper = "BookI.Prop20"
-note = "Euclid draws the square FH and produces GH to K, taking H within AB and K on CD from the figure. The Lean draws the square by I.46, places H on the ray AB with `onRay_of_angle_eq` after using the assumed rule `Tacit.adjacent_eq_of_right` (System E, Diagram-angle 3), uses I.20 and `OnRay.between_of_len_lt` to put H within AB, finds K with `Prop30.meet`, and uses `Prop30.parallel` (I.30, for which Heath gives no reference here) and `Parallel.between` to establish the parallels and point order that bound the rectangles."
+note = "Euclid draws the square FH and produces GH to K, taking H within AB and K on CD from the figure. The Lean draws the square by I.46, places H on the ray AB with `onRay_of_angle_eq` after using the assumed rule `Tacit.adjacent_eq_of_right` (System E, Diagram-angle 3), uses I.20 and `OnRay.between_of_len_lt` to put H within AB, finds K with `BookI.Prop30.meet`, and uses `BookI.Prop30.parallel` (I.30, for which Heath gives no reference here) and `Parallel.between` to establish the parallels and point order that bound the rectangles."
 
 [[passage]]
 at = "Now the rectangle CF, FA is FK"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid treats FK as a rectangle and identifies it by AF equal to FG. The Lean uses FGKC, built beneath the construction of FH using I.30 (`Prop30.parallel`), for which Heath gives no reference, carries FH's right angle at F along FC, proves the other angles right by `Rectangle.of_right`, and identifies its area by `Rectangle.eq_rect` with that equality of sides."
+note = "Euclid treats FK as a rectangle and identifies it by AF equal to FG. The Lean uses FGKC, built beneath the construction of FH using I.30 (`BookI.Prop30.parallel`), for which Heath gives no reference, carries FH's right angle at F along FC, proves the other angles right by `Rectangle.of_right`, and identifies its area by `Rectangle.eq_rect` with that equality of sides."
 
 [[passage]]
 at = "Let AK be subtracted from each"
@@ -39,7 +39,7 @@ note = "Euclid takes AK as the common part of FK and AD, leaving FH and HD. `qua
 at = "And HD is the rectangle AB, BH"
 kind = "helper"
 helper = "Rectangle.of_right"
-note = "Euclid treats HD as a rectangle and identifies it by AB equal to BD. The Lean uses HKDB, built beneath the construction of FH using I.30 (`Prop30.parallel`), for which Heath gives no reference, carries ABDC's right angle at B along BH, proves the other angles right by `Rectangle.of_right`, and identifies its area by `Rectangle.eq_rect` with that equality of sides."
+note = "Euclid treats HD as a rectangle and identifies it by AB equal to BD. The Lean uses HKDB, built beneath the construction of FH using I.30 (`BookI.Prop30.parallel`), for which Heath gives no reference, carries ABDC's right angle at B along BH, proves the other angles right by `Rectangle.of_right`, and identifies its area by `Rectangle.eq_rect` with that equality of sides."
 
 [review]
 stage = "full"

@@ -592,11 +592,12 @@ four pure modules, Book Zero and `Audit/Superposition.lean`; the proposition pro
 `Elements.BookI.Prop4` and `Elements.BookI.Prop8`. The old compatibility example using the
 existential axiom has no production copy.
 
-The forbidden-command scan **does cover `Staging/`**, as FORMALIZATION, section 7, specifies,
-as well as `Elements/`, `Audit/` and their three roots. It forbids axioms outside the
-foundations and the listed commands throughout that scope. The four pure modules are inside
-that scan and the vocabulary lock; their freedom from geometric axioms is also checked by
-the model. Review remains distinct from these checks.
+The forbidden-command policy and the trees its source scan reads are specified in
+[FORMALIZATION](../FORMALIZATION.md), section 7. The scan covers `Staging/` and the four
+pure modules in `Elements/`. The six prototype files declared no axiom and used none of
+the forbidden commands. The four pure modules are also inside the vocabulary lock; their
+freedom from geometric axioms is checked by the model. Review remains distinct from these
+checks.
 
 ## What is delivered, and what is not claimed
 
