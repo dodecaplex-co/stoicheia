@@ -2092,6 +2092,14 @@ findings:
   attributes and spellings the modern figures on main use, so no CSS is read; a malformed
   figure is reported on its file and checking goes on; and a modern paragraph with inline
   HTML or reference-link syntax is refused, its indentation counted in columns.
+  After merges `ce98e710` and `57a5a94f`, `scripts/check_style.py` restores `93d61b6c`'s
+  table reading as `modern_table_columns` and `modern_table_cell_ranges`, and its
+  companion lookup as `modern_drawn_letters`, with `modern_text_of` preserving internal
+  newlines, keeping S23, S26 and the idea-figure checks' helpers unchanged, with the S24
+  and S25 refusals covered in `tests/test_check_style.py`.
+  The fixes through `12667af1` retain these separate readers while tightening modern
+  SVG input and modern-paragraph markup checks; S23, S26 and the idea-figure checks
+  keep their existing readings.
 
 - **One letter, one point: S26.** Argon's second review of the book-III release found seven
   letters of Euclid's figures crossed or all but touched by strokes: III.17's D, III.16's G,
@@ -2107,7 +2115,8 @@ findings:
   as the figure sets it, by the convex hull of its outline's points, which the script
   carries as numbers (`GLYPHS_UPRIGHT`, `GLYPHS_ITALIC`), read once from the fonts, so that
   it still needs only Python's standard library; `path_rings` now also says which subpaths a
-  Z closes, and what S20 reads is unchanged.
+  Z closes. S20 now reads only figures the gate admits, flattens curves adaptively to within
+  0.001, and retains significant Unicode spaces in text rather than stripping them.
   [`tests/test_check_style.py`](../../tests/test_check_style.py) gains cases of S26,
   among them one or more for each of seven faults that two reviews of the rule found: a
   stroke's width taken at a transform's mean stretch, a rect's rounded corners read as
@@ -2120,6 +2129,9 @@ findings:
   what a line through a letter is called: two dashed by itself or by its group, called a
   dashed line, and one whose dasharray is none, called a line. A corner's radius is now
   read in one pass, so reading a malformed radius takes time linear in its length.
+  The CSS width, scale transforms and exponent radius began as geometry cases; once the
+  gate closed the input language, their cases instead require their exact refusal, while
+  every admitted clearance case remains a test of the geometry.
   Later reviews found, one after another, SVG spellings that a renderer reads one way and
   S26 another; S26 now reads only the elements, attributes and spellings that the figures
   on main use and refuses any other, so no CSS is read, and it measures circles, ellipses,
@@ -2155,3 +2167,6 @@ findings:
   markers, and S24 and S25 check the modern figure. All four rules are included in train
   H10. Main's checks, cases, REACH_PENDING and
   reports, including D15 for italic figures and D16 for the pending reach, stay whole.
+  The follow-up through `daf4bec7` brings S26's processing-instruction refusal and quiet
+  companion lookup on parse failure into H10, while the modern rules keep their byte
+  parser and readers and S23 keeps main's helpers.

@@ -1186,10 +1186,13 @@ HTML_BLOCKS = (
 HTML_TAG_LINE = re.compile(r"(?:<[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[A-Za-z_:][\w.:-]*"
                              r"(?:[ \t]*=[ \t]*(?:[^\s\"'=<>`]+|'[^']*'|\"[^\"]*\"))?)*"
                              r"[ \t]*/?>|</[A-Za-z][A-Za-z0-9-]*[ \t]*>)[ \t]*$")
-INLINE_HTML_TAG = re.compile(
+INLINE_HTML = re.compile(
     r"(?:<[A-Za-z][A-Za-z0-9-]*(?:\s+[A-Za-z_:][\w.:-]*"
     r"(?:\s*=\s*(?:\"[^\"]*\"|'[^']*'|[^\s\"'=<>`]+))?)*\s*/?>"
-    r"|</[A-Za-z][A-Za-z0-9-]*\s*>)")
+    r"|</[A-Za-z][A-Za-z0-9-]*\s*>"
+    r"|<\?.*?\?>"
+    r"|<![A-Z].*?>"
+    r"|<!\[CDATA\[.*?\]\]>)", re.S)
 
 class InlineBlock(NamedTuple):
     text: str
@@ -1246,6 +1249,42 @@ def gfm_table_columns(header: str, delimiter: str) -> int | None:
     return None
 
 
+# S24 and S25 retain their original whitespace reading, separate from S23 above.
+def modern_table_cell_ranges(line: str) -> tuple[list[tuple[int, int]], bool]:
+    """The source ranges of a GFM row's cells, and whether the row has a separator."""
+    pipes = []
+    slashes = 0
+    for at, char in enumerate(line):
+        if char == "\\":
+            slashes += 1
+            continue
+        if char == "|" and slashes % 2 == 0:
+            pipes.append(at)
+        slashes = 0
+    if not pipes:
+        return [(0, len(line))], False
+    edges = [-1] + pipes + [len(line)]
+    cells = [(edges[k] + 1, edges[k + 1]) for k in range(len(edges) - 1)]
+    if not line[:pipes[0]].strip():
+        cells.pop(0)
+    if cells and not line[pipes[-1] + 1:].strip():
+        cells.pop()
+    return cells, True
+
+
+def modern_table_columns(header: str, delimiter: str) -> int:
+    """The number of columns when two lines open a GFM table, or zero otherwise."""
+    header_cells, header_has_pipe = modern_table_cell_ranges(header)
+    delimiter_cells, delimiter_has_pipe = modern_table_cell_ranges(delimiter)
+    if ((header_has_pipe or delimiter_has_pipe)
+            and len(header_cells) == len(delimiter_cells)
+            and delimiter_cells
+            and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip())
+                    for a, b in delimiter_cells)):
+        return len(header_cells)
+    return 0
+
+
 def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     """Split a recognized GFM table into independent, offset-preserving cells."""
     lines = []
@@ -1257,8 +1296,8 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     for k in range(len(lines) - 1):
         _, _, header = lines[k]
         _, _, delimiter = lines[k + 1]
-        columns = gfm_table_columns(header, delimiter)
-        if columns is not None:
+        columns = modern_table_columns(header, delimiter)
+        if columns:
             table = (k, columns)
             break
     if table is None:
@@ -1273,7 +1312,7 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
                                  block.references, block.paragraph))
     for row_number, row in enumerate([lines[table]] + lines[table + 2:]):
         start, _, text = row
-        cells, _ = table_cell_ranges(text)
+        cells, _ = modern_table_cell_ranges(text)
         if row_number:
             cells = (cells + [(len(text), len(text))] * columns)[:columns]
         for a, b in cells:
@@ -1769,7 +1808,7 @@ def link_destination_ranges(text: str, *, references: bool = True,
               if backslashes_before(text, m.start()) % 2 == 0]
     if inline_html:
         found += [LinkDestination(m.start(), m.end(), m.start(), False)
-                  for m in INLINE_HTML_TAG.finditer(text)
+                  for m in INLINE_HTML.finditer(text)
                   if backslashes_before(text, m.start()) % 2 == 0]
     for match in re.finditer(r"\]", text):
         close = match.start()
@@ -3132,11 +3171,25 @@ def fill_under(root, x: float, y: float) -> str:
     return under
 
 
+class FigureTreeBuilder(ET.TreeBuilder):
+    def __init__(self):
+        super().__init__()
+        self.processing_instructions = []
+
+    def pi(self, target, data):
+        self.processing_instructions.append((target, data))
+
+
+def parse_svg(path: Path):
+    target = FigureTreeBuilder()
+    return ET.parse(path, parser=ET.XMLParser(target=target)), target.processing_instructions
+
+
 def svg_root(path: Path, source: bytes | None = None, *, missing_ok: bool = False):
     try:
         if source is not None:
             return ET.fromstring(source)
-        tree = ET.parse(path)
+        tree, processing_instructions = parse_svg(path)
     except OSError:
         if missing_ok:
             return None
@@ -3146,7 +3199,12 @@ def svg_root(path: Path, source: bytes | None = None, *, missing_ok: bool = Fals
                 "S24" if path.stem.endswith("-modern") else "S15")
         fail(rule, path, 0, f"not well-formed SVG: {e}")
         return None
-    # Only the parser call is inside the decoder exception boundary.
+    if processing_instructions:
+        target, data = processing_instructions[0]
+        instruction = target + (f" {data}" if data else "")
+        fail("S26", path, 0,
+             f"processing instruction {instruction!r} is outside S26's SVG allow-list")
+        return None
     return tree.getroot()
 
 
@@ -3217,9 +3275,11 @@ def measure_idea(path: Path, ref: str, required: bool, root) -> int:
 def drawn_letters(path: Path) -> set[str] | None:
     """The letters Euclid's figure draws, which S16 holds to Heath's text; None when there
     is no figure to read (S15 says why)."""
-    root = svg_root(path, missing_ok=True)
-    if root is None:
+    try:
+        tree, _ = parse_svg(path)
+    except (OSError, ET.ParseError, LookupError, UnicodeDecodeError, ValueError):
         return None
+    root = tree.getroot()
     return {text_of(el) for el in root.iter() if tag(el) == "text" and LETTER.fullmatch(text_of(el))}
 
 
@@ -3906,6 +3966,19 @@ ABBREVIATION = re.compile(r"(?<![A-Za-z])(?:[eE]\.g|[iI]\.e)\.")
 BESIDE_A_NAME = set("=+-−×·/<>≤≥()[]0123456789⁰¹²³⁴⁵⁶⁷⁸⁹₀₁₂₃₄₅₆₇₈₉")
 
 
+def modern_text_of(el) -> str:
+    return "".join(el.itertext()).strip()
+
+
+def modern_drawn_letters(path: Path) -> set[str] | None:
+    """The letters Euclid's figure draws for S25, preserving internal whitespace."""
+    try:
+        root = ET.parse(path).getroot()
+    except (OSError, ET.ParseError):
+        return None
+    return {modern_text_of(el) for el in root.iter()
+            if tag(el) == "text" and LETTER.fullmatch(modern_text_of(el))}
+
 
 def without_upright(body: str) -> str:
     """A TeX span with each upright argument (\\mathrm{…}, \\text{…}) taken out, its
@@ -3971,21 +4044,36 @@ def modern_markup_findings(text: str) -> list[str]:
     """Refuse unsupported markup before it can supply names to a modern figure."""
     blocks = markdown_blocks(text, raw_html=True).inline
     span = modern_span(text)
+    candidate = next((block for block in blocks if block.paragraph
+                      and any(line.lstrip(" \t").startswith(MODERN_WAY)
+                              for line in block.text.splitlines())), None)
     # A leading multiline reference definition can hide the paragraph from modern_span.
     # Refuse its syntax here without trying to resolve its destination.
-    if span is None and not any(
-            block.paragraph and any(line.lstrip(" \t").startswith(MODERN_WAY)
-                                    for line in block.text.splitlines())
-            for block in blocks):
+    if span is None and candidate is None:
         return []
     found = []
-    if any(REFERENCE_LABEL.match(line) for block in blocks if block.references
-           for line in block.text.splitlines()):
-        found.append("unsupported reference definition beside the modern paragraph")
     if span is None:
+        if candidate.references and any(REFERENCE_LABEL.match(line)
+                                        for line in candidate.text.splitlines()):
+            found.append("unsupported reference definition beside the modern paragraph")
         return found
     source = text[span[0]:span[1]]
-    syntax = markdown_syntax(source, indented_code=False, inline_html=True)
+    labels = document_reference_labels(text) | {
+        reference_key(match.group(1))
+        for block in blocks if block.references
+        for line in block.text.splitlines()
+        if (match := REFERENCE_LABEL.match(line))
+    }
+    selected = next((block for block in blocks if span[0] in block.offsets), None)
+    contained_definition = bool(selected and selected.references
+                                and reference_destination_ranges(selected.text))
+    syntax = markdown_syntax(source, indented_code=False, reference_labels=labels,
+                             inline_html=True)
+    resolved_reference = any(
+        source[start:start + 1] == "]" and source[start + 1:start + 2] != "("
+        for start, _ in syntax.destinations)
+    if contained_definition or resolved_reference:
+        found.append("unsupported reference definition beside the modern paragraph")
     visible = blank_ranges(source, [(s.start, s.end) for s in syntax.spans])
     # Main uses no character references. Refuse their spellings, even after an escaped
     # ampersand, instead of letting the spelling supply names the reader does not see.
@@ -3996,7 +4084,7 @@ def modern_markup_findings(text: str) -> list[str]:
     if re.search(r"\w(?:\*+|['’.][*_]+|[*_]+['’.])\w", modern_paragraph(text)):
         found.append("unsupported intraword emphasis in the modern paragraph")
     if syntax.comments or any(backslashes_before(visible, m.start()) % 2 == 0
-                              for m in INLINE_HTML_TAG.finditer(visible)):
+                              for m in INLINE_HTML.finditer(visible)):
         found.append("unsupported inline HTML tag or comment in the modern paragraph")
     # Inline links are supported; any remaining bracketed label could be a reference.
     links = link_destination_ranges(visible, references=False)
@@ -4038,18 +4126,18 @@ MODERN_ELEMENTS = {"svg", "title", "defs", "marker", "g", "rect", "line", "circl
 MODERN_NUMBERS = {"x", "y", "x1", "x2", "y1", "y2", "cx", "cy", "r", "rx", "ry",
                   "width", "height", "fill-opacity", "markerWidth", "markerHeight",
                   "refX", "refY", "font-size", "stroke-width"}
-# Exact values from those figures, plus explicit SVG initial values, never CSS-wide
-# keywords. The palette and text checks still apply after this syntax gate.
+# Exact values from those figures, never CSS-wide keywords. The palette and text checks
+# still apply after this syntax gate; omitted attributes retain their SVG defaults.
 MODERN_VALUES = {
-    "fill": EUCLID_COLOURS | {"none", "black"},
-    "stroke": {"#3b2f2f", "#8c7b62", "#a0522d", "none"},
+    "fill": EUCLID_COLOURS | {"none"},
+    "stroke": {"#3b2f2f", "#8c7b62", "#a0522d"},
     "font-family": {"Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"},
-    "font-style": {"italic", "normal"},
+    "font-style": {"italic"},
     "text-anchor": {"middle", "start"},
-    "stroke-linejoin": {"round", "miter"},
-    "markerUnits": {"userSpaceOnUse", "strokeWidth"},
-    "orient": {"auto-start-reverse", "0"},
-    "marker-end": {"url(#axis)", "url(#head)", "none"},
+    "stroke-linejoin": {"round"},
+    "markerUnits": {"userSpaceOnUse"},
+    "orient": {"auto-start-reverse"},
+    "marker-end": {"url(#axis)", "url(#head)"},
     "id": {"axis", "head"},
 }
 MODERN_ATTRIBUTES = MODERN_NUMBERS | MODERN_VALUES.keys() | {
@@ -4129,8 +4217,53 @@ def modern_path(value: str) -> bool:
     return True
 
 
-def modern_svg_findings(root) -> list[tuple[str, str]]:
+def serialized_attribute_values(source: str):
+    """The quoted attribute values of XML start tags, before XML normalisation."""
+    at = 0
+    while at < len(source):
+        start = source.find("<", at)
+        if start < 0:
+            return
+        if source.startswith("<!--", start):
+            end = source.find("-->", start + 4)
+            at = len(source) if end < 0 else end + 3
+            continue
+        if source.startswith("<![CDATA[", start):
+            end = source.find("]]>", start + 9)
+            at = len(source) if end < 0 else end + 3
+            continue
+        if source.startswith("<?", start):
+            end = source.find("?>", start + 2)
+            at = len(source) if end < 0 else end + 2
+            continue
+        if source.startswith(("</", "<!"), start):
+            end = source.find(">", start + 2)
+            at = len(source) if end < 0 else end + 1
+            continue
+        quote = None
+        end = start + 1
+        while end < len(source):
+            char = source[end]
+            if quote:
+                if char == quote:
+                    quote = None
+            elif char in "\"'":
+                quote = char
+            elif char == ">":
+                break
+            end += 1
+        tag_source = source[start:end + 1]
+        for match in re.finditer(
+                r"\s+[A-Za-z_:][\w.:-]*\s*=\s*(?P<quote>['\"])(?P<value>.*?)(?P=quote)",
+                tag_source, re.S):
+            yield match.group("value")
+        at = end + 1
+
+
+def modern_svg_findings(root, source: str | None = None) -> list[tuple[str, str]]:
     """Close the input before walk() reads any presentation attributes or text."""
+    if source is not None and any("&" in value for value in serialized_attribute_values(source)):
+        return [("S24", "unsupported character reference in a serialized attribute value")]
     # Bound the tree iteratively before any recursive helper sees it.
     pending = [(root, 0)]
     while pending:
@@ -4170,8 +4303,6 @@ def modern_svg_findings(root) -> list[tuple[str, str]]:
                 values = modern_numbers(value)
                 valid = (values is not None and (len(values) == 4 if key == "viewBox"
                                                  else all(n >= 0 for n in values)))
-                if key == "stroke-dasharray" and value == "none":
-                    valid = True
             if not valid:
                 rule = "S25" if key in {"font-size", "font-style"} else "S24"
                 what = "malformed or unsupported" if key in MODERN_ATTRIBUTES else "unsupported"
@@ -4215,9 +4346,14 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
             found.append(("S24", f"viewBox width {width}, not 400 to 440, as Euclid's figure"))
         if values[3] <= 0:
             found.append(("S24", f"viewBox height {values[3]}, not positive"))
-    title = root.find(f"{SVG}title")
-    if title is None or " ".join(text_of(title).split()) != f"{ref}: the modern way":
-        got = "no <title>" if title is None else f"title \"{text_of(title)}\""
+    titles = list(root.iter(f"{SVG}title"))
+    direct_titles = root.findall(f"{SVG}title")
+    title = direct_titles[0] if len(titles) == len(direct_titles) == 1 else None
+    if len(titles) != 1 or len(direct_titles) != 1:
+        found.append(("S24", f"{len(titles)} <title> elements, not exactly one directly "
+                      "under <svg>"))
+    elif " ".join(modern_text_of(title).split()) != f"{ref}: the modern way":
+        got = f"title \"{modern_text_of(title)}\""
         found.append(("S24", f"{got}, not \"{ref}: the modern way\""))
     if root.find(f".//{SVG}desc") is not None:
         found.append(("S24", "a caption (<desc>): the modern-way paragraph serves as its caption"))
@@ -4298,11 +4434,6 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
 def check_modern(path: Path, ref: str) -> None:
     """S24 and S25 for one figure of the modern way."""
     data = path.read_bytes()
-    root = svg_root(path, data)
-    if root is None:
-        return
-    # Scan exactly the bytes parsed above. Keep decoding errors separate from checker
-    # defects, and refuse UTF-16 without a BOM too, whose ASCII bytes decode with NULs.
     try:
         source = data.decode("utf-8")
     except UnicodeDecodeError as e:
@@ -4311,7 +4442,13 @@ def check_modern(path: Path, ref: str) -> None:
     if "\0" in source:
         fail("S24", path, 0, "unsupported SVG encoding: expected UTF-8")
         return
-    refused = modern_svg_findings(root)
+    if re.search(r"<!\s*(?:DOCTYPE|ENTITY)\b", source, re.I):
+        fail("S24", path, 0, "unsupported DTD or entity declaration in a modern figure")
+        return
+    root = svg_root(path, data)
+    if root is None:
+        return
+    refused = modern_svg_findings(root, source)
     for rule, message in refused:
         fail(rule, path, 0, message)
     if refused:
@@ -4323,7 +4460,7 @@ def check_modern(path: Path, ref: str) -> None:
             fail("S24", path, 0, f"unsupported {what} in a modern figure")
             return
     book, n = ref.split(".")
-    heaths = drawn_letters(path.with_name(f"{int(n):02d}.svg"))
+    heaths = modern_drawn_letters(path.with_name(f"{int(n):02d}.svg"))
     mishnah = ROOT / "mishnah" / book / f"{int(n):02d}.md"
     raw = mishnah.read_text(encoding="utf-8") if mishnah.exists() else ""
     markup = modern_markup_findings(raw)
