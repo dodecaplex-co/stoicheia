@@ -2506,6 +2506,7 @@ class Acceptance(unittest.TestCase):
             "  ✗ S8 mishnah/I/07.md:2: a curly quotation mark",
             "  ✗ S13 figures/I/08.svg: a letter not Heath's",
             "  ✗ S12 mishnah/I/09.md:4: an unknown name",
+            "  ✗ S26 figures/I/10.svg: a letter meets a line",
         ])
         with ExitStack() as stack:
             stack.enter_context(patch.object(acceptance, "failures", {}))
@@ -2513,8 +2514,8 @@ class Acceptance(unittest.TestCase):
                 returncode=1, stdout=out, stderr="")))
             acceptance.check_style_rules()
             self.assertEqual(sorted(acceptance.failures),
-                             [("I.5", "P9"), ("I.6", "P9"), ("I.7", "P7"), ("I.8", "P8"),
-                              ("I.9", "P9")])
+                             [("I.10", "P8"), ("I.5", "P9"), ("I.6", "P9"),
+                              ("I.7", "P7"), ("I.8", "P8"), ("I.9", "P9")])
 
 
 if __name__ == "__main__":
