@@ -17,5 +17,5 @@ note = "Like Heath's, this figure draws both impossible suppositions: EBFD touch
 [review]
 stage = "exceptions"
 commit = "e707d55"
-reviewer = "Claude Opus 5.5"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:7c02d4cfded9019e"
