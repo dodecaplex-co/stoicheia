@@ -1926,7 +1926,8 @@ findings:
   not run it yet; whoever changes the limitations runs it.
 
 - **Unfinished work may land with its issue, and holds the release until it is finished.**
-  The owner set the rule: "I don't mind incomplete work, prototypes, whatever so long as those are flagged issues and releases are held up until those are finalized."
+  The owner set the rule: "I don't mind incomplete work, prototypes, whatever so long as
+  those are flagged issues and releases are held up until those are finalized."
   Each prototype, provisional answer, restricted or partial scope awaiting a proof,
   deferred page, test not yet in CI, or thing a disclosure calls "to come" has an open
   issue labelled `blocks-release`, named in the pull request's new "Unfinished work"
@@ -1937,6 +1938,10 @@ findings:
   that cannot be trusted. A pull request labelled `release` is refused while any issue
   or pull request labelled `blocks-release` is open; ordinary pull requests make no
   read of that list.
+  Exactly one visible "Unfinished work" section is required: "None", or a plain list
+  with an issue per item, wrapped lines allowed, and no links, code or HTML.
+  Label comparisons ignore case, and each named issue is bound to this repository by
+  its canonical API URL, so a rename is allowed but a transfer elsewhere is refused.
   `scripts/check_release_gate.py` makes the same release check, with an offline JSON
   mode for its tests, and the separate `release-gate` CI job shows the hold on a release
   pull request. That job is skipped on ordinary pull requests and checks out main's copy

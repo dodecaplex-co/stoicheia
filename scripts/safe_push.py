@@ -3154,34 +3154,51 @@ def section_problems(body: str, template: str | None, protected: bool) -> list[s
 ISSUE_REF = re.compile(
     r"https://github\.com/([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/issues/([1-9]\d*)\b"
     r"|(?<![\w/.-])([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)#([1-9]\d*)\b"
-    r"|(?<![\w/\\])#([1-9]\d*)\b", re.I)
+    r"|(?:^|(?<=[\s(,]))#([1-9]\d*)\b", re.I)
 
 
 def unfinished_refs(text: str, slug: str) -> tuple[list[int], list[str]]:
-    """Read the section's visible words: None, or local issue references, one or more
-    on each list item's first line. Other repositories never stand in for this one's."""
-    text = visible(text).strip()
-    if re.fullmatch(r"None\.?", text, re.I):
+    """Read a section already passed through visible: None, or a plain list with an
+    issue per item. Preserve indentation and join wrapped lines before reading refs."""
+    if re.fullmatch(r"None\.?", text.strip(), re.I):
         return [], []
+    for token, reason in (("`", "a backtick (code)"), ("<", "HTML"),
+                          (">", "HTML or a block quote"), ("[", "a bracket (link)"),
+                          ("]", "a bracket (link)"), ("~~~", "a ~~~ code fence")):
+        if token in text:
+            return [], [f"Unfinished work must be a plain list: {reason} is forbidden"]
     refs, problems = set(), []
+    items = []
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        content = line.lstrip()
+        if line.startswith(("- ", "* ")):
+            content = line[2:].lstrip()
+            items.append(content)
+        elif line[0] in " \t" and items:
+            items[-1] += " " + content
+        else:
+            problems.append(f"Unfinished work must be a plain list: invalid line: {line}")
+            continue
+        if LIST_ITEM.match(content):
+            problems.append(f"Unfinished work forbids a nested list: {line}")
+        elif HEADING.match(content) or re.fullmatch(r"(?:=+|-+|\*+|_+)", content):
+            problems.append(f"Unfinished work forbids a heading or rule: {line}")
 
-    def read(line):
+    for item in items:
         local = []
-        # A code span is not an issue link, even though shown keeps its text.
-        line = INLINE.sub(lambda m: "" if m.group(1) else m.group(0), line)
-        for match in ISSUE_REF.finditer(line):
-            repo = match.group(1) or match.group(3)
+        for match in ISSUE_REF.finditer(item):
+            repo = match.group(1)
             if repo and repo.lower() != slug.lower():
                 problems.append(f"another repository's reference: {match.group(0)}")
+            elif match.group(3):
+                problems.append(f"owner/repo#N is forbidden; use #N: {match.group(0)}")
             else:
-                local.append(int(match.group(2) or match.group(4) or match.group(5)))
-        return local
-
-    for line, item in shown(text):
-        found = read(line)
-        refs.update(found)
-        if item and not found:
-            problems.append(f"list item names no local issue: {line.strip()}")
+                local.append(int(match.group(2) or match.group(5)))
+        refs.update(local)
+        if not local:
+            problems.append(f"list item names no local issue: {item}")
     if not refs:
         problems.append("Unfinished work must say None or name an open issue with blocks-release")
     return sorted(refs), problems
@@ -3208,14 +3225,20 @@ def issue_labels(issue: dict) -> set[str]:
     return names
 
 
-def unfinished_issue_problems(number: int, issue: dict) -> list[str]:
-    """A named issue must be this number, open and labelled, and not a pull request."""
+def unfinished_issue_problems(number: int, issue: dict, repository_url: str) -> list[str]:
+    """A named issue must belong to the canonical repository, have this number, be
+    open and labelled, and not be a pull request."""
     try:
         labels = issue_labels(issue)
     except ValueError as e:
         return [f"#{number} unreadable: {e}"]
     if issue["number"] != number:
         return [f"#{number} unreadable: GitHub returned another number"]
+    url = issue.get("repository_url")
+    if not isinstance(url, str) or not url:
+        return [f"#{number} unreadable: no repository_url"]
+    if url.lower() != repository_url.lower():
+        return [f"#{number} belongs to another repository"]
     problems = []
     if "pull_request" in issue:
         problems.append(f"#{number} is a pull request, not an issue")
@@ -3264,32 +3287,48 @@ def open_blockers(issues: list[dict]) -> list[dict]:
 
 
 def read_issues(ctx: Context, path: str, *, paginate=False):
-    """Use ctx.gh directly: gh api has no -R flag. Never accept stdout on a failed
-    command, or print gh's error text, which may contain credentials."""
+    """Read issues or their repository through ctx.gh directly: gh api has no -R flag.
+    Never accept stdout on failure or print gh's errors, which may contain credentials."""
     try:
         r = run([*ctx.gh, "api", *(["--paginate"] if paginate else []), path], ctx.repo)
     except (OSError, UnicodeError):
         raise ValueError("GitHub could not be read") from None
     if r.returncode:
-        raise ValueError(f"GitHub issue read failed (exit {r.returncode})")
+        raise ValueError(f"GitHub API read failed (exit {r.returncode})")
     if paginate:
         return issue_pages(r.stdout)
     try:
         return json.loads(r.stdout)
     except json.JSONDecodeError:
-        raise ValueError("GitHub printed malformed issue JSON") from None
+        raise ValueError("GitHub printed malformed API JSON") from None
 
 
 def unfinished_gate(ctx: Context, body: str, template: str | None) -> tuple[str, str]:
     """The section is required only once the template in force has it."""
     if "Unfinished work" not in sections(template or ""):
         return "skip", "the template in force has no Unfinished work section"
-    text = sections(body).get("Unfinished work", "")
-    refs, problems = unfinished_refs(text, ctx.github)
+    parts = SECTION.split(visible(body))
+    texts = [parts[i + 1] for i in range(1, len(parts) - 1, 2)
+             if parts[i].strip() == "Unfinished work"]
+    if len(texts) != 1:
+        return "FAIL", "the body must have exactly one visible ## Unfinished work heading"
+    refs, problems = unfinished_refs(texts[0], ctx.github)
+    if problems:
+        return "FAIL", "\n".join(problems)
+    if not refs:
+        return "ok", "None"
+    try:
+        repository = read_issues(ctx, f"repos/{ctx.github}")
+        url = repository.get("url") if isinstance(repository, dict) else None
+        if not isinstance(url, str) or not re.fullmatch(
+                r"https://api\.github\.com/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", url, re.I):
+            raise ValueError("GitHub returned no canonical repository URL")
+    except ValueError as e:
+        return "FAIL", f"repository unreadable: {e}"
     for number in refs:
         try:
             issue = read_issues(ctx, f"repos/{ctx.github}/issues/{number}")
-            problems.extend(unfinished_issue_problems(number, issue))
+            problems.extend(unfinished_issue_problems(number, issue, url))
         except ValueError as e:
             problems.append(f"#{number} unreadable: {e}")
     return ("FAIL", "\n".join(problems)) if problems else (
@@ -3299,7 +3338,7 @@ def unfinished_gate(ctx: Context, body: str, template: str | None) -> tuple[str,
 def release_gate(ctx: Context, labels: set[str]) -> tuple[str, str]:
     """Only a release pull request reads the open blockers; an ordinary one may land
     unfinished work. Every read failure holds the release."""
-    if RELEASE_LABEL not in labels:
+    if RELEASE_LABEL not in {label.lower() for label in labels}:
         return "skip", "not a release pull request"
     try:
         blockers = open_blockers(read_issues(
@@ -3419,7 +3458,7 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
     if notes:
         rep.add("G", "pre-flight notes", "note", f"{plural(len(notes), 'note')} of the "
                 "pre-flight, for the reviews:\n" + "\n".join(f"{n}: {d}" for n, d in notes))
-    labels = {item.get("name") for item in view.get("labels") or []}
+    labels = {(item.get("name") or "").lower() for item in view.get("labels") or []}
     verdict, detail = release_gate(ctx, labels)
     rep.add("G", "release", verdict, detail)
     if protected and SECURITY_LABEL not in labels:
@@ -3430,7 +3469,12 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
     problem = kind_problem(labels)
     rep.add("G", "kind label", "FAIL" if problem else "ok", f"#{number} has {problem}"
             if problem else ", ".join(sorted(labels & set(KIND_LABELS))))
-    verdict, detail = judge_checks(pr_checks(ctx, number))
+    checks = pr_checks(ctx, number)
+    if RELEASE_LABEL not in labels:
+        # A run left from before the release label was removed cannot hold ordinary work.
+        checks = [c for c in checks if not (
+            c.get("name") == "release-gate" and c.get("workflow") == "Release gate")]
+    verdict, detail = judge_checks(checks)
     rep.add("G", "CI", "ok" if verdict == "success" else "FAIL",
             f"{verdict} on {ctx.sha[:12]}: {detail}")
     failed = [s.name for s in rep.failed() if s.stage == "G"]

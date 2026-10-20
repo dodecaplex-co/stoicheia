@@ -421,6 +421,8 @@ looked into.
 8. **A read-through.**
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book.
+   The release pull request sets `ACCEPTANCE_GATE` from `ratchet` to `full` in the
+   [`acceptance` job](../.github/workflows/ci.yml), so every failing item fails the job.
 10. **Release.** No issue labelled `blocks-release` may be open, checked by
     `python3 scripts/check_release_gate.py`, by the `release-gate` job on the release
     pull request (labelled `release`), and by `git safe-push --merge`, which refuses a
@@ -634,7 +636,9 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    again or when it is not of this head and origin/main, and the other parts safe_push
    wrote whenever they are out of date. It merges only when those pass; CI on that head
    is green (`check`, `model` and `negative` pass, and nothing fails or is still
-   running); no box marked **Required** in its checklist is unticked, nor one marked
+   running, apart from the `release-gate` job of the "Release gate" workflow on an
+   ordinary pull request, even if a run remains from before its `release` label was
+   removed); no box marked **Required** in its checklist is unticked, nor one marked
    **Required if protected** when a protected path changes, and none of the template's
    required boxes is missing (origin/main's template, or the head's while origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's
@@ -644,10 +648,21 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    protected path changes) and "Needs the owner's OK"; boxes and sections count only
    where GitHub shows them, by CommonMark's rules: not in a comment, an HTML block or
    code, and a box only as a list item (a `<!--` in a code span is text, and hides
-   nothing); "Unfinished work" says "None" (case aside, with an optional final full stop),
-   or names issues of this repository, each open with `blocks-release`, each list
-   item's first line naming at least one; a pull request labelled `release` has no
-   open issue or pull request labelled `blocks-release`. Both issue gates read from
+   nothing); exactly one visible "Unfinished work" heading is present, and its section
+   says "None" (case aside, with an optional final full stop), or is a plain list,
+   one item per piece, each naming its issue as `#N`; no links, code or HTML.
+   Each non-blank line starts with `- ` or `* ` at the left edge, or is an indented
+   continuation of the item above; wrapped lines join their item before its references
+   are read. Paragraphs outside the list, numbered or nested lists and headings are
+   refused, as are backticks, angle or square brackets and `~~~` in the visible section.
+   A `#N` reference starts the item's text or follows whitespace, `(` or `,`; a bare
+   `https://github.com/<owner>/<repo>/issues/N` URL also counts for this repository
+   (case aside), but `owner/repo#N` and another repository's issue URL are refused.
+   Each issue is open with `blocks-release`, and its `repository_url` must match the
+   canonical URL read once from GitHub for this repository, case aside, so a rename
+   is allowed but an issue transferred elsewhere is refused.
+   A pull request labelled `release` has no open issue or pull request labelled
+   `blocks-release`; label comparisons ignore case. Both issue gates read from
    GitHub and fail closed on a failed read, malformed JSON or missing fields; the
    release gate makes no issue-list read for an ordinary pull request. The title and
    the branch name, which go into main's merge commit, hold

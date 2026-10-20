@@ -14,7 +14,7 @@ import sys
 import tempfile
 import unittest
 import urllib.error
-from contextlib import redirect_stderr
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from unittest import mock
 
@@ -23,10 +23,13 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import check_release_gate as gate
 import safe_push
 
+REPOSITORY_URL = "https://api.github.com/repos/example/edition"
+
 
 def issue(**changes):
     return dict({"number": 38, "title": "Finish the prototype", "state": "open",
                  "labels": [{"name": "blocks-release"}],
+                 "repository_url": REPOSITORY_URL,
                  "html_url": "https://github.com/example/edition/issues/38"}, **changes)
 
 
@@ -87,7 +90,7 @@ class Fixtures(unittest.TestCase):
 class UnfinishedWork(unittest.TestCase):
     def refs(self, text):
         body = "## Unfinished work\n\n" + text + "\n\n## Review records\n\n#99"
-        return safe_push.unfinished_refs(safe_push.sections(body)["Unfinished work"],
+        return safe_push.unfinished_refs(safe_push.SECTION.split(safe_push.visible(body))[2],
                                          "example/edition")
 
     def test_template_and_required_box(self):
@@ -117,17 +120,56 @@ class UnfinishedWork(unittest.TestCase):
     def test_local_references_collected_once(self):
         self.assertEqual(self.refs(
             "- Prototype #38\n- Page https://github.com/EXAMPLE/Edition/issues/39\n"
-            "- Test example/edition#38 and #39"), ([38, 39], []))
+            "* Test (#38),#39"), ([38, 39], []))
+
+    def test_wrapped_item_can_name_its_issue_on_the_continuation(self):
+        self.assertEqual(self.refs("- Prototype awaiting a proof,\n  tracked by #38."),
+                         ([38], []))
+
+    def test_anchor_and_url_fragment_do_not_name_issues(self):
+        for text in ("[section](#38)", "https://example.invalid/page?x=#38", "page#38"):
+            with self.subTest(text=text):
+                refs, problems = self.refs("- Prototype " + text)
+                self.assertEqual(refs, [])
+                self.assertTrue(problems)
+
+    def test_code_html_and_reference_definitions_are_refused(self):
+        for text, reason in (
+                ("- Prototype `code\n  #38`", "backtick"),
+                ("- ```\n  #38\n  ```", "backtick"),
+                ('- Prototype <span title="#38">later</span>', "HTML"),
+                ("[prototype]: https://github.com/example/edition/issues/38", "bracket"),
+                ("> - Prototype #38\n> - Deferred page to come", "block quote"),
+                ("- Prototype ~~~ #38", "~~~")):
+            with self.subTest(text=text):
+                refs, problems = self.refs(text)
+                self.assertEqual(refs, [])
+                self.assertIn(reason, "\n".join(problems))
+
+    def test_only_plain_top_level_items_and_wrapped_text_are_allowed(self):
+        for text in ("Prototype #38", "1. Prototype #38", "+ Prototype #38",
+                     " - Prototype #38", "- Prototype #38\n  - Deferred #39",
+                     "- Prototype #38\n  1. Deferred #39",
+                     "- Prototype #38\n  ### Deferred #39",
+                     "- Prototype #38\nDeferred #39", "  Wrapped #38"):
+            with self.subTest(text=text):
+                self.assertTrue(self.refs(text)[1])
+
+    def test_qualified_shorthand_is_refused_even_for_this_repository(self):
+        refs, problems = self.refs("- Prototype example/edition#38 and #39")
+        self.assertEqual(refs, [39])
+        self.assertIn("owner/repo#N", "\n".join(problems))
 
     def test_foreign_references_refused_even_beside_local(self):
-        for text in ("other/repo#38", "https://github.com/other/repo/issues/38"):
+        for text, reason in (("other/repo#38", "owner/repo#N"),
+                             ("https://github.com/other/repo/issues/38", "another repository")):
             with self.subTest(text=text):
-                refs, problems = self.refs(text + " and #39")
+                refs, problems = self.refs("- Prototype " + text + " and #39")
                 self.assertEqual(refs, [39])
-                self.assertTrue(any("another repository" in p for p in problems))
+                self.assertIn(reason, "\n".join(problems))
 
     def test_each_list_item_needs_its_issue(self):
-        refs, problems = self.refs("- Prototype #38\n- Page to come\n1. Test to come")
+        refs, problems = self.refs("- Prototype #38\n- Page to come\n* Test to come")
         self.assertEqual(refs, [38])
         self.assertEqual(len(problems), 2)
         self.assertIn("Page to come", problems[0])
@@ -144,14 +186,15 @@ class UnfinishedWork(unittest.TestCase):
                 self.assertTrue(problems)
 
     def test_issue_must_be_open_labelled_and_not_a_pull_request(self):
-        self.assertEqual(safe_push.unfinished_issue_problems(38, issue()), [])
+        self.assertEqual(safe_push.unfinished_issue_problems(38, issue(), REPOSITORY_URL), [])
         for data, wanted in ((issue(labels=[]), "lacks the label"),
                              (issue(state="closed"), "is closed"),
                              (issue(pull_request={}), "is a pull request"),
                              (issue(number=39), "another number"),
                              ({}, "unreadable"), (None, "unreadable")):
             with self.subTest(data=data):
-                self.assertIn(wanted, "\n".join(safe_push.unfinished_issue_problems(38, data)))
+                self.assertIn(wanted, "\n".join(
+                    safe_push.unfinished_issue_problems(38, data, REPOSITORY_URL)))
 
     def test_old_template_does_not_require_the_section(self):
         with mock.patch.object(safe_push, "read_issues") as read:
@@ -195,6 +238,78 @@ class ReleaseReads(unittest.TestCase):
             read.return_value = []
             self.assertEqual(safe_push.release_gate(self.ctx, {"release"})[0], "ok")
 
+    def test_release_label_case_cannot_bypass_blockers_or_unreadable_replies(self):
+        for label in ("Release", "RELEASE"):
+            with self.subTest(label=label):
+                with mock.patch.object(safe_push, "read_issues", return_value=[
+                        issue(labels=[{"name": "BLOCKS-RELEASE"}])]):
+                    verdict, detail = safe_push.release_gate(self.ctx, {label})
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn("#38", detail)
+                with mock.patch.object(safe_push, "read_issues", side_effect=ValueError("bad")):
+                    verdict, detail = safe_push.release_gate(self.ctx, {label})
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn("unreadable", detail)
+
+    def test_exactly_one_visible_unfinished_section_is_required(self):
+        for body in ("", "## Unfinished work\nNone\n## Unfinished work\n- Prototype #38"):
+            with self.subTest(body=body), mock.patch.object(safe_push, "read_issues") as read:
+                verdict, detail = safe_push.unfinished_gate(self.ctx, body, "## Unfinished work")
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn("exactly one", detail)
+                read.assert_not_called()
+        body = ("<!-- ## Unfinished work -->\n```\n## Unfinished work\n```\n"
+                "## Unfinished work\nNone")
+        self.assertEqual(safe_push.unfinished_gate(
+            self.ctx, body, "## Unfinished work"), ("ok", "None"))
+
+    def test_issues_are_bound_to_the_canonical_repository_read_once(self):
+        renamed = "https://api.github.com/repos/example/renamed"
+        replies = [{"url": renamed},
+                   issue(repository_url=renamed.upper(), labels=["Blocks-Release"]),
+                   issue(number=39, repository_url=renamed)]
+        with mock.patch.object(safe_push, "read_issues", side_effect=replies) as read:
+            self.assertEqual(safe_push.unfinished_gate(
+                self.ctx, "## Unfinished work\n- Prototype #38 and #39",
+                "## Unfinished work"), ("ok", "#38, #39"))
+        self.assertEqual(read.call_args_list, [
+            mock.call(self.ctx, "repos/example/edition"),
+            mock.call(self.ctx, "repos/example/edition/issues/38"),
+            mock.call(self.ctx, "repos/example/edition/issues/39")])
+
+    def test_transferred_or_unbound_issue_is_refused(self):
+        missing = issue()
+        del missing["repository_url"]
+        for data, wanted in (
+                (issue(repository_url="https://api.github.com/repos/other/edition"),
+                 "another repository"),
+                (missing, "repository_url"),
+                (issue(repository_url=None), "repository_url")):
+            with self.subTest(data=data), mock.patch.object(
+                    safe_push, "read_issues", side_effect=[{"url": REPOSITORY_URL}, data]):
+                verdict, detail = safe_push.unfinished_gate(
+                    self.ctx, "## Unfinished work\n- Prototype #38", "## Unfinished work")
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn(wanted, detail)
+
+    def test_canonical_repository_must_be_read_successfully_through_ctx_gh(self):
+        for data in (None, {}, {"url": None}, {"url": ""}, {"url": "not a repository URL"}):
+            with self.subTest(data=data), mock.patch.object(
+                    safe_push, "run",
+                    return_value=subprocess.CompletedProcess([], 0, json.dumps(data), "")) as run:
+                verdict, detail = safe_push.unfinished_gate(
+                    self.ctx, "## Unfinished work\n- Prototype #38", "## Unfinished work")
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn("repository unreadable", detail)
+                run.assert_called_once_with(
+                    ["stand-in", "api", "repos/example/edition"], ROOT)
+        reply = subprocess.CompletedProcess([], 1, json.dumps({"url": REPOSITORY_URL}), "")
+        with mock.patch.object(safe_push, "run", return_value=reply):
+            verdict, detail = safe_push.unfinished_gate(
+                self.ctx, "## Unfinished work\n- Prototype #38", "## Unfinished work")
+        self.assertEqual(verdict, "FAIL")
+        self.assertIn("repository unreadable", detail)
+
     def test_failed_command_with_valid_stdout_is_not_a_read(self):
         reply = subprocess.CompletedProcess([], 1, "[]", "private diagnostic")
         with mock.patch.object(safe_push, "run", return_value=reply):
@@ -218,9 +333,11 @@ class ReleaseReads(unittest.TestCase):
     def test_missing_fields_bad_json_and_command_errors_refuse(self):
         for reply in ("null", "{}", "[]", '{"number": 38}', "{"):
             with self.subTest(reply=reply), mock.patch.object(
-                    safe_push, "run", return_value=subprocess.CompletedProcess([], 0, reply, "")):
+                    safe_push, "run", side_effect=[
+                        subprocess.CompletedProcess([], 0, json.dumps({"url": REPOSITORY_URL}), ""),
+                        subprocess.CompletedProcess([], 0, reply, "")]):
                 verdict, detail = safe_push.unfinished_gate(
-                    self.ctx, "## Unfinished work\n#38", "## Unfinished work")
+                    self.ctx, "## Unfinished work\n- Prototype #38", "## Unfinished work")
                 self.assertEqual(verdict, "FAIL")
                 self.assertIn("#38 unreadable", detail)
         with mock.patch.object(safe_push, "run", side_effect=OSError("private diagnostic")):
@@ -300,6 +417,51 @@ class ReleaseReads(unittest.TestCase):
         checks = [{"name": name, "bucket": "pass"} for name in safe_push.REQUIRED_CHECKS]
         checks.append({"name": "release-gate", "bucket": "skipping"})
         self.assertEqual(safe_push.judge_checks(checks)[0], "success")
+
+
+class MergeChecks(unittest.TestCase):
+    def judge(self, label, extra):
+        ctx = safe_push.Context(ROOT, "head", "", 0, "", "example/edition", {},
+                                branch="test-gates")
+        template = "## Unfinished work\n\n## Checklist\n- [ ] **Required:** Reviewed."
+        view = {"headRefOid": "head", "headRefName": ctx.branch, "state": "OPEN",
+                "headRepositoryOwner": {"login": "example"}, "title": "Check the gates",
+                "body": template.replace("\n\n", "\nNone\n").replace("[ ]", "[x]"),
+                "labels": [{"name": name} for name in ["tooling", *([label] if label else [])]]}
+        checks = [{"name": name, "bucket": "pass"} for name in safe_push.REQUIRED_CHECKS]
+        report = safe_push.Report()
+        with mock.patch.object(safe_push, "gh_json", return_value=view), \
+                mock.patch.object(safe_push, "protected_files", return_value=[]), \
+                mock.patch.object(safe_push, "show", return_value=template), \
+                mock.patch.object(safe_push, "pr_checks", return_value=checks + [extra]), \
+                mock.patch.object(safe_push, "read_issues", return_value=[]), \
+                redirect_stdout(io.StringIO()):
+            try:
+                safe_push.gates(ctx, 1, report)
+            except safe_push.Refusal:
+                pass
+        return report
+
+    def test_removed_release_label_ignores_failing_and_pending_release_job(self):
+        for bucket in ("fail", "pending"):
+            with self.subTest(bucket=bucket):
+                report = self.judge(None, {"name": "release-gate", "workflow": "Release gate",
+                                          "bucket": bucket, "state": "IN_PROGRESS"})
+                self.assertEqual(report.failed(), [])
+
+    def test_release_label_keeps_failing_release_job(self):
+        for label in ("release", "Release", "RELEASE"):
+            with self.subTest(label=label):
+                report = self.judge(label, {"name": "release-gate", "workflow": "Release gate",
+                                           "bucket": "fail", "state": "FAILURE"})
+                self.assertEqual([s.name for s in report.failed()], ["CI"])
+
+    def test_every_other_check_still_counts(self):
+        for name, workflow in (("release-gate", "CI"), ("other", "Release gate"),
+                               ("release-gate", None)):
+            with self.subTest(name=name, workflow=workflow):
+                report = self.judge(None, {"name": name, "workflow": workflow, "bucket": "fail"})
+                self.assertEqual([s.name for s in report.failed()], ["CI"])
 
 
 if __name__ == "__main__":

@@ -33,7 +33,8 @@ or "None". -->
 <!-- Each piece of unfinished work this pull request lands: a prototype, a provisional
 answer, a restricted or partial scope awaiting a proof, a deferred page, a test not yet
 in CI, anything a disclosure calls "to come". Name each with its open issue labelled
-blocks-release, as #N; or write "None". -->
+blocks-release, as #N; or write "None". Use a plain list, one item per piece, each naming
+its issue as #N; no links, code or HTML. -->
 
 ## Review records
 

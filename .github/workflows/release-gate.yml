@@ -13,6 +13,7 @@ jobs:
     # safe_push's merge gate is the authority, reading the issues again at the merge;
     # this job shows the hold on the release pull request, using main's copy of the
     # script at the base commit so that the pull request cannot change its own verdict.
+    # GitHub's contains() compares label names case-insensitively.
     if: contains(github.event.pull_request.labels.*.name, 'release')
     runs-on: ubuntu-latest
     permissions:
