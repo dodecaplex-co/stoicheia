@@ -3032,9 +3032,9 @@ def modern_markup_findings(text: str) -> list[str]:
     # ampersand, instead of letting the spelling supply names the reader does not see.
     if re.search(r"&(?:#[xX][0-9a-fA-F]+|#[0-9]+|[A-Za-z][A-Za-z0-9]*);", visible):
         found.append("unsupported character reference in the modern paragraph")
-    # Refuse intraword asterisks rather than treating emphasis as word boundaries.
+    # Refuse emphasis touching a word, also through an apostrophe or full stop.
     # Removing link syntax first also catches e[*x*](/reference)ponent.
-    if re.search(r"(?<=\w)\*+(?=\w)", modern_paragraph(text)):
+    if re.search(r"\w(?:\*+|['’.][*_]+|[*_]+['’.])\w", modern_paragraph(text)):
         found.append("unsupported intraword emphasis in the modern paragraph")
     if syntax.comments or any(backslashes_before(visible, m.start()) % 2 == 0
                               for m in INLINE_HTML_TAG.finditer(visible)):
@@ -3241,6 +3241,10 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
     found = modern_svg_findings(root)
     if found:
         return found
+    for dimension in ("width", "height"):
+        value = root.get(dimension)
+        if value is not None and modern_number(value) <= 0:
+            found.append(("S24", f"root {dimension} {value!r}, not positive"))
     vb = root.get("viewBox", "").split(" ")
     values = [modern_number(value) for value in vb]
     width = values[2] if len(values) == 4 else None

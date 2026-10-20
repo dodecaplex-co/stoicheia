@@ -1021,6 +1021,32 @@ class Modern(unittest.TestCase):
                 self.assertEqual(style.modern_names(style.modern_paragraph(MW + words)),
                                  {"x"} if "name" in words else set())
 
+    def test_modern_emphasis_through_punctuation_is_refused(self):
+        for emphasis in ("*", "**", "***", "_", "__", "___"):
+            for word, name in (
+                    (f"A'{emphasis}s{emphasis}", "s"),
+                    (f"A’{emphasis}s{emphasis}", "s"),
+                    (f"{emphasis}A{emphasis}'s", "s"),
+                    (f"{emphasis}A{emphasis}’s", "s"),
+                    (f"e.{emphasis}g{emphasis}.", "g"),
+                    (f"{emphasis}e{emphasis}.g.", "g"),
+                    (f"i.{emphasis}e{emphasis}.", "e"),
+                    (f"{emphasis}i{emphasis}.e.", "e")):
+                with self.subTest(word=word):
+                    findings = self.check_refused_modern(
+                        MODERN_GOOD.replace(">c<", f">{name}<"),
+                        paragraph=MODERN_PARAGRAPH + " Consider " + word)
+                    self.assertTrue(any(r == "S25" and "intraword emphasis" in m
+                                        for r, m in findings), findings)
+                    self.assertTrue(any(r == "S25" and f"{name} is no name" in m
+                                        for r, m in findings), findings)
+        for words in ("The name *x*.", "The name _x_.", "The name '*x*'.",
+                      "The name '_x_'."):
+            with self.subTest(words=words):
+                self.assertEqual(self.check_refused_modern(
+                    MODERN_GOOD.replace(">c<", ">x<"),
+                    paragraph=MODERN_PARAGRAPH + " " + words), [])
+
     def test_modern_nested_svg_is_refused(self):
         for content in ('<line x2="20" stroke="#3b2f2f" stroke-width="1.6"/>',
                         '<text font-size="17" fill="#3b2f2f">A</text>'):
@@ -1312,6 +1338,29 @@ class Modern(unittest.TestCase):
                     message_part = "malformed or unsupported viewBox" if height == ".5" else "viewBox height"
                     self.assertTrue(any(r == "S24" and message_part in message
                                         for r, message in findings), findings)
+
+    def test_explicit_root_dimensions_must_be_positive(self):
+        for attribute in ("width", "height"):
+            for value in ("0", "-0", "0.0", "-0.0", "-1", "-290"):
+                with self.subTest(attribute=attribute, value=value):
+                    attributes = {"width": "400", "height": "290"}
+                    attributes[attribute] = value
+                    findings = self.check_refused_modern(
+                        viewbox="0 0 400 290",
+                        root_attributes=" ".join(f'{key}="{v}"'
+                                                 for key, v in attributes.items()))
+                    self.assertEqual(findings, [
+                        ("S24", f"root {attribute} {value!r}, not positive")])
+
+    def test_positive_or_omitted_root_dimensions_are_allowed(self):
+        for width in (None, "0.5", "400"):
+            for height in (None, "0.5", "290"):
+                with self.subTest(width=width, height=height):
+                    self.assertEqual(self.check_refused_modern(
+                        viewbox="0 0 400 290",
+                        root_attributes=" ".join(
+                            f'{key}="{value}"' for key, value in
+                            (("width", width), ("height", height)) if value is not None)), [])
 
     def test_presentation_lengths_use_plain_decimals(self):
         letter = '<text x="50" y="270">A</text>'
