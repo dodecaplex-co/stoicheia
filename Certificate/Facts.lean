@@ -20,7 +20,7 @@ straight from Lean's own proof terms:
   shared step, each with the lemma that brings it in;
 * which Common Notions it rests on, found by a walk that goes wherever
   `collectAxioms` goes, so that, like the postulates, they include those of the
-  entries it cites;
+  entries it cites, with the calculus's coincidence steps counted as Common Notion 4;
 * which shared steps it calls on (`Prop30.meet`, `Prop34.bisect`, `Rectangle.eq_rect`),
   and the entries each one brings in.
 
@@ -57,6 +57,15 @@ def commonNotions : List (Name × String) :=
    (``Elements.CommonNotion3, "C.N. 3"), (``Elements.CommonNotion4, "C.N. 4"),
    (``Elements.CommonNotion4.angle, "C.N. 4"), (``Elements.CommonNotion4.triangle, "C.N. 4"),
    (``Elements.CommonNotion5, "C.N. 5")]
+
+/-- Common Notion 4 as steps of the restricted calculus: equality of the points gives
+equality of the lengths, angles or triangles. `Derives.sound` justifies each by equality
+substitution, as the three `CommonNotion4` theorems do. Count a constructor named in a
+declaration's value, not one merely reached through `Derives` and its constructor list.
+These steps change only the reported notions; the axiom walks keep their boundaries. -/
+def coincidenceSteps : List Name :=
+  [`Elements.Superposition.Derives.len_congr, `Elements.Superposition.Derives.angle_congr,
+   `Elements.Superposition.Derives.area_congr]
 
 /-- The books, their Lean namespaces and how many propositions each has. A proposition
 of a later book may cite one of an earlier book, and the walk below records it by its
@@ -132,7 +141,8 @@ the walk goes through everything `mentions` gives, its shared steps, the entries
 and what they cite in turn, and stops only at the Common Notions themselves and at
 declarations from outside this project, which cannot use them. So the Common Notions are
 counted like the postulates, definitions and tacit rules, including those of the entries
-a proof cites. -/
+a proof cites. A declaration's value naming a coincidence constructor also records
+Common Notion 4: the constructor is that notion's step in the restricted calculus. -/
 def allNotions (env : Environment) (root : Name) : NameSet := Id.run do
   let cns := commonNotions.map (·.1)
   let mut seen : NameSet := {}
@@ -148,6 +158,10 @@ def allNotions (env : Environment) (root : Name) : NameSet := Id.run do
       continue
     unless isLocal env c do continue
     let some ci := env.find? c | continue
+    if let some v := ci.value? (allowOpaque := true) then
+      let used := v.getUsedConstants
+      if coincidenceSteps.any used.contains then
+        notions := notions.insert ``Elements.CommonNotion4
     for d in mentions ci do
       unless seen.contains d do todo := todo.push d
   return notions
