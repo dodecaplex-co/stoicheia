@@ -195,6 +195,39 @@ class RestorationTests(unittest.TestCase):
                     self.assertEqual((self.root / rel).read_bytes(), data)
                 self.assertEqual(self.files(), saved)
 
+    def test_certificate_plant_restores_source_on_interruption(self):
+        source = self.root / "Certificate/Facts.lean"
+        original = (REPO / "Certificate/Facts.lean").read_bytes()
+        self.write(source, original)
+        def interrupted(*cmd):
+            self.assertEqual(cmd, (sys.executable, "-I", "tests/test_certificate.py"))
+            self.assertIn(b"Derives.len_congr", source.read_bytes())
+            self.assertNotIn(b"used.contains coincidenceStep", source.read_bytes())
+            raise KeyboardInterrupt("certificate test interrupted")
+        with patch.object(negative, "run", side_effect=interrupted):
+            with self.assertRaises(KeyboardInterrupt):
+                negative.certificate_constructor_counting()
+        self.assertEqual(source.read_bytes(), original)
+
+    def test_certificate_plant_restores_source_when_mutation_fails(self):
+        source = self.root / "Certificate/Facts.lean"
+        original = (REPO / "Certificate/Facts.lean").read_bytes().replace(b"\n", b"\r\n")
+        for error in (KeyboardInterrupt("mutation interrupted"), OSError("partial write")):
+            with self.subTest(error=type(error).__name__):
+                self.write(source, original)
+                def damaged_write(path, text, *args, **kwargs):
+                    self.assertEqual(path, source)
+                    self.assertIn("Derives.len_congr", text)
+                    path.write_bytes(text[:100].encode())
+                    raise error
+                with patch.object(Path, "write_text", damaged_write), \
+                        patch.object(negative, "run") as commands:
+                    with self.assertRaises(type(error)) as raised:
+                        negative.certificate_constructor_counting()
+                self.assertIs(raised.exception, error)
+                commands.assert_not_called()
+                self.assertEqual(source.read_bytes(), original)
+
     def test_failed_regressions_stop_before_any_plant(self):
         with patch.object(negative, "run", return_value=subprocess.CompletedProcess(
                 [], 1, "", "regression failed")) as commands, \
