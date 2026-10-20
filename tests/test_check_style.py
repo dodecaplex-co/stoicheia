@@ -1110,6 +1110,18 @@ class ConflictMarkers(unittest.TestCase):
                 text = html + "\n\nHeading\n" + "=" * 7
                 self.assertEqual(style.conflict_markers(text, markdown=True), [])
 
+    def test_any_raw_closing_tag_ends_a_raw_html_block(self):
+        for html in ("<script>\n</style>", "<pre>\n</SCRIPT>", "<style>\nx</textarea> y",
+                     "<textarea>\n</Pre>", "<style>body</pre>"):
+            with self.subTest(html=html):
+                text = html + "\nHeading\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        for html in ("<script>\n</div>", "<pre>\n</scripts>", "<style>\n</ style>"):
+            with self.subTest(html=html):
+                text = html + "\nHeading\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(text.count("\n") + 1, "middle")])
+
     def test_html_blocks_keep_exact_width_and_edge_detection(self):
         for width in (6, 8):
             self.assertEqual(style.conflict_markers("<div>\n" + "=" * width,
@@ -1132,6 +1144,19 @@ class ConflictMarkers(unittest.TestCase):
                 text = table + "\n" + "=" * 7
                 self.assertEqual(style.conflict_markers(text, markdown=True),
                                  [(text.count("\n") + 1, "middle")])
+
+    def test_table_delimiters_trim_only_spaces_and_tabs(self):
+        for control in ("\f", "\v"):
+            for table in (f"A | B\n--- | {control}---", f"A | B\n---{control} | ---",
+                          f"| A | B |\n| --- | --- |{control}"):
+                with self.subTest(table=table):
+                    self.assertEqual(style.conflict_markers(
+                        table + "\n" + "=" * 7, markdown=True), [])
+        for table in ("A | B\n--- | \t---", "A | B\n---\t | ---",
+                      "| A | B |\n| --- | --- | \t"):
+            with self.subTest(table=table):
+                self.assertEqual(style.conflict_markers(
+                    table + "\n" + "=" * 7, markdown=True), [(3, "middle")])
 
     def test_gfm_table_termination_restores_paragraph_headings(self):
         table = "| A | B |\n| --- | --- |\nplain\n"

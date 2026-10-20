@@ -335,6 +335,7 @@ GFM_WHITESPACE_CHARS = " \t\n\v\f\r"
 GFM_WHITESPACE = r"[ \t\n\v\f\r]"
 HTML_RAW_START = re.compile(
     rf"^ {{0,3}}<(script|pre|style|textarea)(?:{GFM_WHITESPACE}|>|$)", re.I)
+HTML_RAW_END = r"</(?:script|pre|style|textarea)>"
 HTML_CDATA_START = re.compile(r"^ {0,3}<!\[CDATA\[")
 HTML_DECLARATION_START = re.compile(r"^ {0,3}<![A-Z]")
 HTML_INSTRUCTION_START = re.compile(r"^ {0,3}<\?")
@@ -466,25 +467,24 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
                     block = not spaces_or_tabs_only(line)
                     if not block:
                         html_end = ""
-                elif html_end.lower() in line.lower():
+                elif re.search(html_end, line, re.I):
                     html_end = ""
             elif re.match(r"^ {0,3}<!--", line):
                 block = True
                 comment = "-->" not in line
             else:
-                raw = HTML_RAW_START.match(line)
-                if raw:
+                if HTML_RAW_START.match(line):
                     block = True
-                    html_end = f"</{raw[1]}>"
+                    html_end = HTML_RAW_END
                 elif HTML_CDATA_START.match(line):
                     block = True
-                    html_end = "]]>"
+                    html_end = r"\]\]>"
                 elif HTML_DECLARATION_START.match(line):
                     block = True
                     html_end = ">"
                 elif HTML_INSTRUCTION_START.match(line):
                     block = True
-                    html_end = "?>"
+                    html_end = r"\?>"
                 elif HTML_BLOCK_TAG_START.match(line) or (
                         not paragraph and HTML_COMPLETE_TAG.fullmatch(line)):
                     block = True
@@ -492,7 +492,7 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
                 elif match and (match[1][0] != "`" or "`" not in match[2]):
                     fence = match[1]
                     block = True
-                if block and html_end != "\n" and html_end.lower() in line.lower():
+                if block and html_end != "\n" and re.search(html_end, line, re.I):
                     html_end = ""
             if block:
                 table = False
@@ -1179,9 +1179,9 @@ def table_cell_ranges(line: str) -> tuple[list[tuple[int, int]], bool]:
         return [(0, len(line))], False
     edges = [-1] + pipes + [len(line)]
     cells = [(edges[k] + 1, edges[k + 1]) for k in range(len(edges) - 1)]
-    if not line[:pipes[0]].strip():
+    if spaces_or_tabs_only(line[:pipes[0]]):
         cells.pop(0)
-    if cells and not line[pipes[-1] + 1:].strip():
+    if cells and spaces_or_tabs_only(line[pipes[-1] + 1:]):
         cells.pop()
     return cells, True
 
@@ -1193,7 +1193,7 @@ def gfm_table_columns(header: str, delimiter: str) -> int | None:
     if ((header_has_pipe or delimiter_has_pipe)
             and len(header_cells) == len(delimiter_cells)
             and delimiter_cells
-            and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip())
+            and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip(" \t"))
                     for a, b in delimiter_cells)):
         return len(header_cells)
     return None
