@@ -163,9 +163,10 @@ files working in parallel, the renderers, and an integrator followed by blind re
   with `docs/program.toml`, and the CI workflow, and may hand the lock, the decisions page,
   PROGRAM.md and the CI workflow to a wave's integrator. The integrator
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
-  README.md's rows between the `<!-- scope:… -->` markers and PROGRAM.md's status table
-  between the `<!-- status -->` markers, which `render.py` fills; the rest of README.md has
-  an owner of its own, named in the orders. The integrator also owns the companions list,
+  README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
+  between the `<!-- status -->` markers and inline `count:` values in tracked Markdown,
+  which `render.py` fills; the rest of README.md has an owner of its own, named in the
+  orders. The integrator also owns the companions list,
   `Elements/Companions.lean`, which the certificate reads and checks, and adds a
   companion's entry in the commit that moves the companion beside its proposition, so
   that the listing travels with the proof and its record's stamp

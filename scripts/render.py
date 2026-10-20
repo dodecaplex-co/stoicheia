@@ -17,8 +17,8 @@ every book in `heath.BOOKS`:
     docs/PROGRAM.md    only the status table between `<!-- status -->` and
                        `<!-- /status -->`, with the stage, the outside score and the
                        release read from `docs/program.toml`
-    tracked Markdown  inline count values, as generated_counts.py defines; markers
-                       in whole outputs above and in history are refused
+    tracked Markdown   inline count values; generated_counts.py defines the markers
+                       and where they are refused
 
 A page of a later book links each proposition it cites from an earlier one, as
 [I.47](../I/47.md) on a page of Book II, and a porism to its anchor, as

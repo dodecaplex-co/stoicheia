@@ -39,14 +39,14 @@ def repository_path(root, path):
         boundary = resolved_root
     else:
         raise ValueError(f"{path}: path is outside repository root {root}")
-    if not path.resolve().is_relative_to(resolved_root):
-        raise ValueError(f"{path}: resolved path is outside repository root {root}")
     component = boundary
     for part in relative.parts:
         component /= part
         if component.is_symlink():
             name = component.relative_to(boundary)
             raise ValueError(f"{name}: symlink is forbidden")
+    if not path.resolve().is_relative_to(resolved_root):
+        raise ValueError(f"{path}: resolved path is outside repository root {root}")
     return path
 
 

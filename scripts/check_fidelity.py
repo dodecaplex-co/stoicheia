@@ -58,9 +58,9 @@
      the next run, a `/- … -/` remark ending a run and carrying none, is declared as a
      passage (`uncarried_runs`).
 7. Inline count markers in tracked Markdown match the exact file-derived counts in
-   generated_counts.py. Unknown, malformed and historical markers, and markers in
-   whole renderer outputs, are refused, as are unsafe paths and a missing or mismatched
-   Git work tree.
+   generated_counts.py, and stand only where that module allows. Unknown and
+   malformed markers are refused, as are unsafe paths and a missing or mismatched Git
+   work tree.
 
 `--facts PATH` checks another copy of facts.json (scripts/negative_tests.py uses it);
 `--write-lock` writes `Certificate/axioms.lock` from facts.json and stops.

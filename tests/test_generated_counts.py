@@ -265,13 +265,14 @@ def Elements.companions : List (Lean.Name × String) := [
             (self.root / "linked").symlink_to(outside, target_is_directory=True)
             changes, errors = self.scan(["linked/notes.md"])
             self.assertEqual(changes, {})
-            self.assertIn("linked/notes.md", errors[0])
-            self.assertIn("outside repository root", errors[0])
+            self.assertEqual(errors, ["linked: symlink is forbidden"])
             with patch.object(render, "ROOT", self.root):
                 for path in (self.root / "linked/notes.md", target):
-                    with self.assertRaisesRegex(ValueError, "outside repository root"):
+                    diagnostic = ("symlink is forbidden" if path.is_relative_to(self.root)
+                                  else "outside repository root")
+                    with self.assertRaisesRegex(ValueError, diagnostic):
                         render.read_text(path)
-                    with self.assertRaisesRegex(ValueError, "outside repository root"):
+                    with self.assertRaisesRegex(ValueError, diagnostic):
                         render.write_text(path, "Changed.")
             self.assertEqual(target.read_text(), text)
 
