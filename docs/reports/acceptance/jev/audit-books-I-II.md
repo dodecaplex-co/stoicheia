@@ -263,7 +263,7 @@ One improvement, not a fault: the reason I.30's record is `full` lives in a TOML
 
 ## Open
 
-1. The scorer correction lands first, as its own pull request, on `tooling/jev-scorer` (`487b4089`, followed by `d7c2c2b5`), with its decisions entry naming `scripts/audit/jev.py`. This audit follows after both that change and `tooling/jev-questions` reach main; main is then merged into this branch, preserving the stamped commits as WORKFLOW section 10 requires. The scoring instructions below already pin the separate scorer commit.
+1. The scorer correction lands first, as its own pull request, on `tooling/jev-scorer` (`487b4089`, followed by `d7c2c2b5` and `610a0b2f`), with its decisions entry naming `scripts/audit/jev.py`. This audit follows after both that change and `tooling/jev-questions` reach main; main is then merged into this branch, preserving the stamped commits as WORKFLOW section 10 requires. The scoring instructions below already pin the separate scorer commit.
 2. Recover and commit the original redacted calibration response and verifiable evidence of the bar fixed before the first request, then decide whether the reported 12 of 14 cleared it. Repository history and #36 preserve only the question set and the owner's summary. Until that evidence is recovered, Jev remains secondary and this report relies on the cold fallback.
 3. Recover the account's billing evidence and record the actual audit charge in its billed currency. The committed usage proves only the USD 0.070690494 public-list-price equivalent.
 4. The I.30 note, if the editors want it.
@@ -276,7 +276,7 @@ One improvement, not a fault: the reason I.30's record is `full` lives in a TOML
 source_root=$(git rev-parse --show-toplevel)
 repro_root=$(mktemp -d)
 trap 'rm -rf "$repro_root"' EXIT
-git show d7c2c2b53dc38c7cc51d6660056ec91e6201be70:scripts/audit/jev.py \
+git show 610a0b2fad94a91207ad0d1191da05fb28a0e5d1:scripts/audit/jev.py \
   > "$repro_root/jev-scorer.py"
 git clone --no-checkout https://github.com/jackChallis/stoicheia.git "$repro_root/stoicheia"
 git -C "$repro_root/stoicheia" fetch \

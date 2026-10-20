@@ -77,9 +77,9 @@ audit traffic:
 `score` lists every answer that disagrees with its expected answer, has, in either asking,
 a confidence under `--low` (0.5 by default, the threshold under which the example on
 TypeSafe's Confidence page sends an answer to a person; a noul's confidence is |2p - 1|,
-as that page gives it) or none, has a reversed asking that is not an answer, changes when
-its options are reversed, or comes from another model than the one pinned: these go to the
-adjudicator. It also counts
+as that page gives it) or none, changes when its options are reversed, or comes from
+another model than the one pinned: these go to the adjudicator. A line whose reversed asking
+is not an answer is refused. It also counts
 how many of the input's rows are answered. With `--bar`, it exits 1 when agreement falls
 under the bar, when any request failed, or when any row of the input has no answer: a bar
 is met only when every row of the input is answered.
@@ -767,7 +767,8 @@ def cmd_score(args) -> int:
         if isinstance(r.get("reversed"), dict):
             answers.append((r["reversed"], " with the options reversed"))
         elif "reversed" in r:
-            why.append("the reversed asking is not an answer")
+            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
+                          "only lines that `run` wrote")
         for answer, order in answers:
             confidence = answer.get("confidence")
             if confidence is None and isinstance(answer.get("noul"), (int, float)):
@@ -1112,13 +1113,6 @@ def cmd_self_test(args) -> int:
         single_order.pop("reversed")
         single_order["order_check"] = False
         confidence_cases.append(single_order)
-        reversed_broken = json.loads(first[0])
-        reversed_broken["id"] = "reversed-broken"
-        reversed_broken["expected"] = reversed_broken["choice"]
-        reversed_broken["agrees"] = True
-        reversed_broken["confidence"] = 0.9
-        reversed_broken["reversed"] = None
-        confidence_cases.append(reversed_broken)
         confidence_cases.extend([
             {"id": "noul-low", "noul": 0.74},
             {"id": "noul-boundary", "noul": 0.75},
@@ -1129,12 +1123,25 @@ def cmd_self_test(args) -> int:
         case_ids = {row["id"] for row in confidence_cases}
         listed = {row_id for row_id in case_ids if f"  {row_id}:" in out}
         check(code == 0 and listed == {"reversed-low", "reversed-null", "reversed-missing",
-                                      "single-order-low", "reversed-broken", "noul-low"}
+                                      "single-order-low", "noul-low"}
               and "confidence 0.49 with the options reversed" in out
-              and "no confidence given with the options reversed" in out
-              and "the reversed asking is not an answer" in out,
+              and "no confidence given with the options reversed" in out,
               "score checks confidence in each asking and keeps the threshold exclusive",
               out + err)
+        for broken in (None, [], "reversed", 1, True):
+            row = json.loads(first[0])
+            row["id"] = "reversed-broken"
+            row["expected"] = row["choice"]
+            row["agrees"] = True
+            row["confidence"] = 0.9
+            row["reversed"] = broken
+            broken_file = tmp / "reversed-broken.jsonl"
+            broken_file.write_text(json.dumps(row) + "\n")
+            for extra in ((), ("--bar", "0")):
+                code, out, err = run("score", str(broken_file), *extra)
+                check(code == 1 and "reversed asking is not an answer" in out + err,
+                      f"score refuses a reversed asking of {broken!r}"
+                      + (" under a bar" if extra else ""), out + err)
 
         def one(name: str, row: dict) -> Path:
             p = tmp / name
