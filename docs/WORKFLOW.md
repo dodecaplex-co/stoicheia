@@ -313,30 +313,38 @@ python3 scripts/negative_tests.py      # CI's `negative` job, after lake build a
 python3 -I tests/model/run.py --fast   # CI's `model` job, which needs no Lean
 grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cache get && lake build)
                                        # CI's `formal-model` job: the formal model, with Mathlib
-python3 -I tests/test_check_acceptance.py && python3 scripts/check_acceptance.py
-                                       # CI's `acceptance` job, on every pull request, after
-                                       # lake build, lake build Audit and Facts.lean
+python3 -I tests/test_check_acceptance.py   # CI's `acceptance` job: the comparison tests
+# After lake build, lake build Audit and Facts.lean, the checklist run:
+python3 scripts/check_acceptance.py --output "$RUNNER_TEMP/acceptance/report.md" --json "$RUNNER_TEMP/acceptance/verdicts.json"
 ```
 
-The `acceptance` job checks the pull request against the [acceptance
-checklist](ACCEPTANCE.md) and keeps its report as an artifact. It checks main as well,
-with the pull request's own checker code and main's own values pinned to the edition
-(section 10, step 4; [ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci)). Until the consolidation
-release it fails only when an item that passes on main does not pass on the pull request:
-a pass may not turn into a fail. The staging items (P10 and E6) are the exception, since a
-statement is staged before its proof (section 2). The consolidation release's pull request
-switches on the full gate, under which any failure fails it
+The `acceptance` job runs on pull request events and is skipped on pushes. It checks
+CI's checked-out revision against the [acceptance checklist](ACCEPTANCE.md) and keeps
+the reports it produces in the `acceptance` artifact. With `ACCEPTANCE_GATE: ratchet`,
+it allows the checklist's exit 1 and checks main as well, with the pull request's own
+checker code and main's own values pinned to the edition (section 10, step 4).
+Main's run is `--quick`, leaving E1 and E4 as `not run`. The comparison then fails when
+an item that passes on main does not pass on the pull request. P10 and E6 turning into
+`fail` are listed and not held, since a statement is staged before its proof (section 2);
+a pass turning into `not run` or going missing still fails. A failed test or build, a
+checker exit of 2 or more, or unreadable or incompatible verdicts also fails the job.
+The consolidation release's pull request sets `ACCEPTANCE_GATE: full`, which skips main
+and the comparison and fails for any failing item or check not run, including P10 and E6.
+Any other value fails before the checklist runs
 ([ACCEPTANCE, "In CI"](ACCEPTANCE.md#in-ci)).
 
-`scripts/safe_push.py` runs the first two groups on the head commit of every pull request
-(section 10), so a change to them is made there too, and in the CI workflow. It leaves the
-`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files, and the
-`acceptance` job, since it builds main beside the pull request. Its merge gate refuses
+`scripts/safe_push.py` runs the commands for `check`, `model` and `negative` above on
+the head commit of every pull request (section 10), so a change to them is made there too,
+and in the CI workflow. It leaves the `formal-model` job to CI on purpose, since it
+fetches Mathlib's prebuilt files, and the `acceptance` job, since it builds main beside
+the pull request. Its merge gate refuses
 when any reported check fails, is cancelled or is still running. It requires a passing
-run of `check`, `model` and `negative`; a skipped or missing `formal-model` or `acceptance`
-does not hold it when those three pass and no other check fails, is cancelled or is still
-running. Making either job required is the owner's call
-([model/README.md](../model/README.md#the-ci-job)).
+run of `check`, `model` and `negative`, the three names still in its `REQUIRED_CHECKS`;
+its local check judgement does not reject a skipped or missing `formal-model` or
+`acceptance` when those three pass and no other check fails, is cancelled or is still
+running. Since 20 October 2026, main's ruleset requires all five checks, including
+`formal-model` and `acceptance`, and GitHub enforces it when merging
+(section 10, ["Landing work: pull requests"](#landing-work-pull-requests)).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -437,9 +445,10 @@ looked into.
 8. **A read-through.**
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book. CI's
-   `acceptance` job runs the checklist on every pull request; until the consolidation
-   release it holds each to what main already passes, and that release's pull request
-   switches on its full gate, no failures (section 8).
+   required `acceptance` job runs on pull request events; until the consolidation
+   release its ratchet holds each to what main passes, with the exceptions in section 8.
+   That release's pull request sets `ACCEPTANCE_GATE: full`, with every item passing
+   and no check left unrun.
 10. **Release.** The notes are drafted from the generated summaries, the owner approves
     them, and the tag (`book-I`, `book-II`, …) is made. PROGRAM.md is brought up to date:
     the status board, the lessons, the costs.
@@ -450,8 +459,9 @@ corrections and the common voice, as Books I and II have since their tags.
 ### Landing work: pull requests
 
 Work reaches main only as a pull request, merged with a merge commit. On GitHub, a ruleset
-on main requires a pull request and the checks `check`, `model` and `negative`, and blocks
-force pushes and deletion; locally, the pre-push hook refuses every push to main. Agents
+on main requires a pull request and the checks `check`, `model`, `negative`,
+`formal-model` and `acceptance` (the last two added on 20 October 2026), and blocks force
+pushes and deletion; locally, the pre-push hook refuses every push to main. Agents
 never open, merge or approve a pull request: the coordinator does. The account cannot
 approve its own pull requests, so a merge is gated by the checks and by the review
 findings recorded in the pull request, not by approvals. Tags, releases, release notes,
