@@ -4317,7 +4317,7 @@ class Units(unittest.TestCase):
         template = (SOURCE / ".github" / "pull_request_template.md").read_text()
         head, _, checklist = ticked(template).partition("## Checklist\n")
         boxes = [line for line in checklist.splitlines() if line.startswith("- [x]")]
-        self.assertEqual(len(boxes), 10)
+        self.assertEqual(len(safe_push.boxes(ticked(template))), 10)
 
         def problems(lines, indent=""):
             body = head + "## Checklist\n\n" + lines + "\n".join(indent + b for b in boxes)
