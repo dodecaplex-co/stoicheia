@@ -734,6 +734,10 @@ def cmd_score(args) -> int:
     except (OSError, ValueError) as e:
         raise Failure(f"cannot read {Path(args.file).name}: {e}") from None
     answered = [r for r in rows if "error" not in r and ("choice" in r or "noul" in r)]
+    for r in answered:
+        if "reversed" in r and not isinstance(r["reversed"], dict):
+            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
+                          "only lines that `run` wrote")
     labelled = [r for r in answered if "agrees" in r]
     agree = [r for r in labelled if r["agrees"]]
     runs = {(r.get("input_sha256"), r.get("input_rows")) for r in rows}
@@ -766,9 +770,6 @@ def cmd_score(args) -> int:
         answers = [(r, "")]
         if isinstance(r.get("reversed"), dict):
             answers.append((r["reversed"], " with the options reversed"))
-        elif "reversed" in r:
-            raise Failure(f"{r.get('id')}: its reversed asking is not an answer; score reads "
-                          "only lines that `run` wrote")
         for answer, order in answers:
             confidence = answer.get("confidence")
             if confidence is None and isinstance(answer.get("noul"), (int, float)):
@@ -1129,6 +1130,8 @@ def cmd_self_test(args) -> int:
               "score checks confidence in each asking and keeps the threshold exclusive",
               out + err)
         for broken in (None, [], "reversed", 1, True):
+            valid = json.loads(first[1])
+            valid["id"] = "valid-before-reversed-broken"
             row = json.loads(first[0])
             row["id"] = "reversed-broken"
             row["expected"] = row["choice"]
@@ -1136,10 +1139,10 @@ def cmd_self_test(args) -> int:
             row["confidence"] = 0.9
             row["reversed"] = broken
             broken_file = tmp / "reversed-broken.jsonl"
-            broken_file.write_text(json.dumps(row) + "\n")
+            broken_file.write_text(json.dumps(valid) + "\n" + json.dumps(row) + "\n")
             for extra in ((), ("--bar", "0")):
                 code, out, err = run("score", str(broken_file), *extra)
-                check(code == 1 and "reversed asking is not an answer" in out + err,
+                check(code == 1 and out == "" and "reversed asking is not an answer" in err,
                       f"score refuses a reversed asking of {broken!r}"
                       + (" under a bar" if extra else ""), out + err)
 
