@@ -1894,7 +1894,8 @@ findings:
   from 122 to 125 words. All 88 axioms and every previously locked word are byte-identical
   to the preceding integration. `tests/model/lock.sha256` and `model/lock.sha256` receive
   dated notes and the new hash; `model/Model/Laws.lean` is regenerated offline. No axiom
-  or model law changes. The protected-path security review remains part of integration.
+  or model law changes. The statement approval does not replace the independent review or
+  the protected-path security review, which remain part of integration.
 - **The renderer's words follow the content.** The protected file
   [`scripts/render.py`](../../scripts/render.py) selects its Book III wording from
   `facts.json`: `MixedAngle.ofSegment` enables the mixed-angle row; `Arc`, `InSegment`,
