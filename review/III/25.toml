@@ -45,7 +45,7 @@ note = "`Prop25.kind` proves `Arc.Semicircle` and that the circumference measure
 at = "But, if the angle ABD be less than the angle BAD"
 kind = "helper"
 helper = "Prop25.kind"
-note = "`Prop25.kind` proves `Arc.Greater` and that the circumference measures more than two right angles, since E is on P's side of AC. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
+note = "The core constructs the angle and circle and places E on DB within the segment, on B's side of AC; `Prop25.kind` supplies the resulting `Arc.Greater` classification and measure above two right angles. `Prop25.complete` identifies the constructed circle with the given arc's circle, transporting both conclusions to that arc."
 
 [review]
 stage = "exceptions"

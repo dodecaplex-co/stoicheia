@@ -1735,20 +1735,22 @@ findings:
   reprove the porism by Euclid's reductio, move the pinned list and count to that proof's
   assumptions, and add `excludes: ["Tacit.centre_unique"]` in its content pull request.
 
-- **III.25's segment kinds (19 October 2026), proposed for the coordinator's approval.**
+- **III.25's segment kinds (19 October 2026), approved by the owner.**
   The addition in [brief 0006](0006-statements.md#addition-19-october-2026-iii25s-segment-kinds)
-  records the exact statement of `Elements.BookIII.Prop25.kind`, reviewed unchanged by
-  both first mates. It is proved after `Prop25.complete` and registered as the companion
-  "III.25 kind" in `Elements/Companions.lean`. It supplies the three segment kinds and
-  their circumference measures relative to two right angles, from the construction's
-  centre-position conclusions and the three semicircle lemmas. `Prop25.complete`
-  transports the result to the given arc; the construction and correctness companions
-  retain their separate certificate entries. The three passages in `review/III/25.toml`
-  become helpers naming `Prop25.kind`; the record remains unstamped for independent review.
+  records the exact statement of `Elements.BookIII.Prop25.kind`, approved by the owner on
+  19 October 2026 after both first mates reviewed it unchanged. It is proved after
+  `Prop25.complete` and registered as the companion "III.25 kind" in
+  `Elements/Companions.lean`. It supplies the three segment kinds and their circumference
+  measures relative to two right angles, from the construction's centre-position
+  conclusions and the three semicircle lemmas. `Prop25.complete` transports the result to
+  the given arc; the construction and correctness companions retain their separate
+  certificate entries. The three passages in `review/III/25.toml` become helpers naming
+  `Prop25.kind`; the record remains unstamped for independent review.
 
   `Certificate/axioms.lock` is rewritten by `python3 scripts/check_fidelity.py --write-lock`.
   It adds only `Arc.Less`, `Arc.Semicircle` and `Arc.Greater`, bringing its vocabulary
   from 122 to 125 words. All 88 axioms and every previously locked word are byte-identical
   to the preceding integration. `tests/model/lock.sha256` and `model/lock.sha256` receive
   dated notes and the new hash; `model/Model/Laws.lean` is regenerated offline. No axiom
-  or model law changes. The protected-path security review remains part of integration.
+  or model law changes. The statement approval does not replace the independent review or
+  the protected-path security review, which remain part of integration.

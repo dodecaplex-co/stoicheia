@@ -1568,11 +1568,13 @@ theorem Prop25.of_circle {A C : Point} {ABC : Circle} (hABC : ∃ E : Point, Cen
 
 #### Addition, 19 October 2026: III.25's segment kinds
 
-Proposed for the coordinator's approval; reviewed by both first mates. Brief 0006
-freezes III.25; this is the addition to its frozen statements requested in plan lane 9.
-The construction core and its existing companions keep their statements. The new
-companion lives in `Elements/BookIII/Prop25.lean`, immediately after `Prop25.complete`,
-in `Elements.BookIII`. The reviewed declaration is reproduced unchanged below.
+The owner approved `Prop25.kind`'s statement on 19 October 2026 after both first mates
+reviewed it unchanged. This statement approval is distinct from the outstanding independent
+review of the proof and record and the protected-path security review at integration. Brief
+0006 freezes III.25; this is the addition to its frozen statements requested in plan lane 9.
+The construction core and its existing companions keep their statements. The new companion
+lives in `Elements/BookIII/Prop25.lean`, immediately after `Prop25.complete`, in
+`Elements.BookIII`. The approved declaration is reproduced unchanged below.
 
 ```lean
 theorem Prop25.kind {A B C D E P : Point} {γ : Circle}
@@ -1607,11 +1609,11 @@ The midpoint equality, perpendicularity and incidence of B on γ need not be rep
 
 **Connection to the given segment.** For a drawn arc `⟨α, A, C, P⟩`, run the core with `S := OnArc · ⟨α, A, C, P⟩`, using `Prop25.meets` for its meeting hypothesis. Keep its witnesses B, D, E and γ. Apply `Prop25.kind` to their returned properties. Then `Prop25.complete` gives `γ = α`; rewriting by this equality transfers the entire kind-and-measure conclusion to the given arc. Thus the classification concerns the same circle that the construction describes and correctness identifies.
 
-**Coverage, route and certificate.** This supplies the three classifications currently left `unformalized`, including both meanings requested in lane 9. The planned proof unfolds the kind definitions and uses `Circumference.lt_semicircle`, `.semicircle` and `.gt_semicircle`.
+**Coverage, route and certificate.** This supplies the three classifications formerly left `unformalized`, including both meanings requested in lane 9. The proof unfolds the kind definitions and uses `Circumference.lt_semicircle`, `.semicircle` and `.gt_semicircle`.
 
-Register **`Elements.BookIII.Prop25.kind` as `"III.25 kind"`**, through the integrator’s `Elements/Companions.lean`. It is a companion for display and certification, while supplying the steps named by the three `helper` passages. Its certificate will expose its own circumference-lemma dependencies. Neither III.25’s construction nor `Prop25.complete` enters that certificate merely because this lemma consumes their conclusions; their existing entries supply that evidence separately.
+**`Elements.BookIII.Prop25.kind` is registered as `"III.25 kind"`** through the integrator’s `Elements/Companions.lean`. It is a companion for display and certification, while supplying the steps named by the three `helper` passages. Its certificate exposes its own circumference-lemma dependencies. Neither III.25’s construction nor `Prop25.complete` enters that certificate merely because this lemma consumes their conclusions; their existing entries supply that evidence separately.
 
-After proof and review, add `"III.25 kind"` to the record’s companions and change all three existing kind passages to `kind = "helper"`, `helper = "Prop25.kind"`. Their notes should name the corresponding kind and measure comparison and explain the transport through `Prop25.complete`. Keep the construction and correctness companions displayed.
+The record adds `"III.25 kind"` to its companions and makes all three existing kind passages `kind = "helper"`, `helper = "Prop25.kind"`. Their notes name the corresponding kind and measure comparison and explain the transport through `Prop25.complete`. The construction and correctness companions remain displayed. The record stays unstamped until its independent review.
 
 ## What the spike found
 
