@@ -67,6 +67,7 @@ System E's rules, as I.1 does); `Parallel.between` and `quadArea_add_of_parallel
 | `Rectangle.of_right` | a parallelogram with one right angle has all four right | I.29 |
 | `Rectangle.congr` | rectangles contained by equal straight lines are equal | I.4, I.34 |
 | `Rectangle.contained`, `Rectangle.eq_rect` | a rectangle drawn is the rectangle contained by its sides | I.4, I.34 |
+| `exists_rect` | the rectangle contained by any two straight lines can be described, on a given side of one of them | I.2, I.3, I.4, I.11, I.29, I.30, I.31, I.34 |
 | `Square.eq_sq` | a square is the square on its side | I.4, I.34 |
 | `Square.described` | the square I.46 describes is a parallelogram, and the square on its side | I.4, I.28, I.34 |
 | `Square.about_diameter` | in square areas the parallelograms about the diameter are squares (the porism to II.4 that Heath calls interpolated) | I.5, I.6, I.29, I.34 |
@@ -110,6 +111,6 @@ so that each record's scope is `full`:
 | II.14 | the figure is two triangles, unchecked; the construction returns the side of the square | `Prop14.apart`, for any figure given with triangles that lie apart, and `Prop14.square`, returning a drawn square; `Prop14.figure` and `Prop14.fan`, the main companion, beside them; `Prop14.rectangle` and `Prop14.sum`, the construction | `figure-with-dissection`, `side-not-square` |
 
 Each main theorem keeps Euclid's worked configuration, with the general theorems beside it
-as companions. `rect` has as yet no lemma that a rectangle contained by any two straight lines
-can be drawn; Book II never needs one, since it always draws its rectangles, and Book VI
-will.
+as companions. `exists_rect` proves that a rectangle contained by any two straight lines
+can be drawn. Book II's proofs already draw their rectangles; the lemma is there for later
+books and for anyone using the library.
