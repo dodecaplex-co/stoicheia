@@ -172,14 +172,14 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 - **Solids** (Books XI–XIII): planes as primitives; one statement prototyped first.
 - **A formal model** of the axioms in Lean with Mathlib: done. Begun on 18 October 2026 in
   a package of its own, [`model/`](../model/README.md), with CI's `formal-model` job (#73,
-  a gate for the consolidation release), it proves all 87 locked laws in the ordinary
+  a gate for the consolidation release), it proves all <!-- count:axioms -->87<!-- /count --> locked laws in the ordinary
   plane, and `model_exists` has no hypothesis left: a model relative to Lean's logic and
   Mathlib's construction of the real numbers. It does not show that a formal statement
   captures what Euclid meant. The independence of Postulate 5 still rests on the
   numerical hyperbolic check in [tests/model](../tests/model/), until a hyperbolic model
   is built. Making `formal-model` a required check of the ruleset is the owner's call.
 - **The statements' vocabulary** (settled 17 Oct). The lock holds every word that the
-  axioms' statements or the entries' statements reach: 61, the 37 of the axioms and 24
+  axioms' statements or the entries' statements reach: <!-- count:vocabulary -->91<!-- /count -->, the 37 of the axioms and 54
   that only the statements use (`Touches`, `EqualCircles`, `circumference`, `rect`,
   `Parallel` and others). A change to one is a decision, as a changed axiom is
   ([0002](briefs/0002-decisions.md), [FIELDS.md](../Certificate/FIELDS.md#the-vocabulary)).

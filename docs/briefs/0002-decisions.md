@@ -1823,3 +1823,35 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+
+## 20 October 2026
+
+- **Current lock totals carry inline count markers.** The owner asked for the current
+  totals in handwritten prose to follow the lock. The markers surround the number alone:
+  `README.md` has the total in the formal-model row; `Certificate/FIELDS.md` has the
+  current vocabulary total; `docs/FORMALIZATION.md` has the tacit-rule and axiom totals
+  in the foundations policy and the axiom total in the model row; `docs/PROGRAM.md` has
+  the model's axiom total and the vocabulary total; `docs/briefs/book-I.md` has the
+  tacit-rule total; `model/README.md` has the lock totals in its introduction,
+  translation and dependency accounts, the total apart from Postulate 5, and only the
+  denominator of the assembly's coverage; `tests/model/MODEL.md` has the axiom and
+  tacit-rule totals in its introduction and model account, and the totals apart from
+  Postulate 5 in its hyperbolic and formal-model accounts. There are 29 markers.
+  The two current vocabulary totals change from 61 to 91. PROGRAM's statement-only
+  subset changes by hand from 24 to 54: the generated vocabulary table in
+  `model/Model/Laws.lean` has 37 distinct names, all in the lock's 91-entry vocabulary,
+  and its recorded SHA-256 matches the current lock. Subtracting those names leaves
+  54. The 37 stays, and neither subset gets a marker, since the tooling computes
+  neither subset.
+  Euclid's five postulates, historical counts, primitive-word and proof-coverage counts
+  stay human. In particular, the assembly's first 87 stays human, as does "all 87" in
+  `model/Model/Audit.lean`: the tooling reads tracked Markdown only, so that Lean comment
+  remains an open manual count. A grep of `mishnah/intro/` found no eligible lock total.
+  The existing block between `counts:begin` and `counts:end` in `tests/model/MODEL.md`
+  is written by `tests/model/run.py --full --write`: its dated numerical results and
+  axiom-by-axiom table stay untouched. README's scope rows and PROGRAM's status table
+  stay untouched too.
+  The markers are inert on this branch. Once `tooling/generated-counts` lands,
+  `scripts/render.py` fills them and `scripts/check_fidelity.py` checks them against
+  the lock. The protected files changed here are `Certificate/FIELDS.md` and
+  `tests/model/MODEL.md`; no check, declaration, lock or review record changes.
