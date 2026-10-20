@@ -25,7 +25,7 @@ note = "That DE is less than DB does not need the supposition, so the Lean prove
 at = "Then, since DA is equal to DB"
 kind = "case"
 helper = "Prop2.through_centre"
-note = "Euclid's figure keeps the centre D off AB. When AB passes through D there are no triangles DAE and DEB, and `Prop2.through_centre` shows DE less than DB directly: DE is part of DA or of DB, which are equal."
+note = "Euclid's figure keeps the centre D off AB. When AB passes through D there are no triangles DAE and DEB, and `Prop2.through_centre` shows DE less than DB directly: if E is D, DE has length zero and DB a positive length; otherwise DE is part of DA or of DB, which are equal."
 
 [figure]
 case = "the centre D off AB, as in Heath's figure"
@@ -33,6 +33,6 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "exceptions"
-commit = "39e9dbb"
-reviewer = "Claude Opus 5.5"
+commit = "f6af20c6"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:0f14d525b38befe4"
