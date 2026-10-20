@@ -20,39 +20,6 @@ namespace Elements.BookIII
 
 open Tacit
 
-/-- The diameter case of III.36: the centre F lies on AC. III.18 gives the right
-angle at B; II.6 and I.47 give equal sums, and cancellation removes the radius square.
-III.37 uses this same calculation when its centre lies on the secant. -/
-theorem Prop36.through_centre {A B C D F : Point} {ABC : Circle}
-    (hF : Centre F ABC)
-    (hA : OnCircle A ABC) (hB : OnCircle B ABC)
-    (hC : OnCircle C ABC)
-    (hDCA : Between D C A) (hACF : Collinear A C F)
-    (hDB : Touches D B ABC) :
-    rect A D D C = sq D B := by
-  /- The radius to B meets the tangent at a right angle, by III.18. -/
-  obtain ⟨L, hD_L, hB_L⟩ := Postulate1 D B hDB.1
-  have hFBD : ∠ F B D = ∟ :=
-    Prop18 hF hB hDB ⟨L, hD_L, hB_L, hB_L⟩ D ⟨L, hD_L, hB_L, hD_L⟩ hDB.1
-  /- The centre lies between A and C and bisects AC, so II.6 applies to AC produced
-     to D. Equal radii let us replace the square on FC with the square on FB. -/
-  obtain ⟨AC, hA_AC, hC_AC, hF_AC⟩ := hACF
-  have hAFC : Between A F C := between_of_inside_chord hF_AC hA_AC hC_AC
-    (centre_inside hF) hA hC (ne_of_between (between_symm hDCA))
-  have hAF : ‖A F‖ = ‖F C‖ := (len_symm A F).trans (Definition15 hF hA hC)
-  have h6 : rect A D D C + sq F C = sq F D :=
-    BookII.Prop6 hAFC hAF (between_symm hDCA)
-  have h6' : rect A D D C + sq F B = sq F D := by
-    rw [← sq_congr (Definition15 hF hC hB)]
-    exact h6
-  /- The tangent cannot contain the centre, so FBD is a triangle. I.47 gives its
-     square equality, and subtracting the square on FB completes the diameter case. -/
-  have hF_DB : Triangle D B F := fun hc => hDB.not_inside hc (centre_inside hF)
-  have h47 : sq F D = sq F B + sq B D := BookI.Prop47.sq hF_DB.bca hFBD
-  have hsum : rect A D D C + sq F B = sq B D + sq F B := by
-    rw [h6', h47, add_comm]
-  exact (CommonNotion3 hsum rfl).trans (sq_symm B D)
-
 /-- If a point be taken outside a circle and from it there fall on the circle two straight lines,
 and if one of them cut the circle and the other touch it, the rectangle contained by the whole
 of the straight line which cuts the circle and the straight line intercepted on it outside
@@ -78,20 +45,37 @@ theorem Prop36 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
     · obtain ⟨F, -, -, -, hF, -⟩ := Prop1 hABC hA hC hAC
       -- let FB be joined;
       -- therefore the angle FBD is right. [III. 18]
+      have hFBD : ∠ F B D = ∟ := Prop18 hF hB hDB hDB_B D hDB_D hDB'
       -- And, since AC has been bisected at F, and CD is added to it,
+      obtain ⟨AC, hA_AC, hC_AC, hF_AC⟩ := hthrough F hF
+      have hAFC : Between A F C :=
+        between_of_inside_chord hF_AC hA_AC hC_AC (centre_inside hF) hA hC hAC
+      have hAF : ‖A F‖ = ‖F C‖ := by
+        rw [len_symm A F]
+        exact Definition15 hF hA hC
       -- the rectangle AD, DC together with the square on FC is equal to the square on FD. [II. 6]
+      have h6 : rect A D D C + sq F C = sq F D := BookII.Prop6 hAFC hAF hACD
       -- But FC is equal to FB;
+      have hFC_FB : ‖F C‖ = ‖F B‖ := Definition15 hF hC hB
       -- therefore the rectangle AD, DC together with the square on FB is equal to the square on
       -- FD.
+      have h6' : rect A D D C + sq F B = sq F D := by
+        rw [← sq_congr hFC_FB]
+        exact h6
       -- And the squares on FB, BD are equal to the square on FD; [I. 47]
+      have hF_DB : ¬ Collinear D B F := fun h => hDB.not_inside h (centre_inside hF)
+      have t : Triangle B F D :=
+        (Triangle.of_line hB_DB hD_DB hDB'.symm (Triangle.off_line hF_DB hD_DB hB_DB)).acb
+      have h47 : sq F D = sq F B + sq B D := BookI.Prop47.sq t hFBD
       -- therefore the rectangle AD, DC together with the square on FB is equal to the squares on
       -- FB, BD.
+      have hsum : rect A D D C + sq F B = sq B D + sq F B := by
+        rw [h6', h47]
+        ac_rfl
       -- Let the square on FB be subtracted from each;
+      have hrect : rect A D D C = sq B D := CommonNotion3 hsum rfl
       -- therefore the rectangle AD, DC which remains is equal to the square on the tangent DB.
-      /- These sentences are carried out step by step in `Prop36.through_centre` above:
-         III.18, II.6, I.47, then subtraction of the square on FB. III.37 shares this
-         calculation. -/
-      exact Prop36.through_centre hF hA hB hC hDCA (hthrough F hF) hDB
+      exact hrect.trans (sq_symm B D)
     -- Again, let DCA not be through the centre of the circle ABC;
     -- let the centre E be taken, and from E let EF be drawn perpendicular to AC;
     · obtain ⟨E, -, -, -, hE, -⟩ := Prop1 hABC hA hC hAC
@@ -174,5 +158,21 @@ theorem Prop36 {A B C D : Point} {ABC : Circle} (hABC : ∃ F : Point, Centre F 
   -- Therefore etc.
   -- Q. E. D.
   exact hresult
+
+/-- The diameter case of III.36, stated on its own for III.37, which takes this case
+first. It is proved from III.36. -/
+theorem Prop36.through_centre {A B C D F : Point} {ABC : Circle}
+    (hF : Centre F ABC)
+    (hA : OnCircle A ABC) (hB : OnCircle B ABC)
+    (hC : OnCircle C ABC)
+    (hDCA : Between D C A) (hACF : Collinear A C F)
+    (hDB : Touches D B ABC) :
+    rect A D D C = sq D B := by
+  obtain ⟨AC, hA_AC, hC_AC, hF_AC⟩ := hACF
+  have hAFC : Between A F C := between_of_inside_chord hF_AC hA_AC hC_AC
+    (centre_inside hF) hA hC (ne_of_between (between_symm hDCA))
+  have hFCD : Between F C D := between_inner hAFC (between_symm hDCA)
+  have hD : OutsideCircle D ABC := outside_of_len_gt hF hC (len_lt_of_between hFCD)
+  exact Prop36 ⟨F, hF⟩ hD hA hB hC hDCA hDB
 
 end Elements.BookIII
