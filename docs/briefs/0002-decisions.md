@@ -1538,3 +1538,86 @@ findings:
   the keys and when an item counts, so the schema's `items` row and the sentence after the
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
+
+- **Restricted superposition prepared for the owner's final word, not landed.** On
+  19 October 2026, [brief 0009, round 3](0009-superposition.md) records the replacement
+  prepared on `lean/superposition-restricted`, at `aa96ab8`, from `origin/main` at
+  `39ae65c`. The owner's decision of 18 October authorised the prototype and preparation;
+  the finished branch awaits the owner's final word. `Tacit.superposition` now has type
+  `Superposition.Rule primitives`: a represented derivation may export one equality of
+  lengths, angles or triangles about the given figure, and may neither introduce objects
+  inside the placement nor export its hypothetical corners or side. I.4 and I.8 alone use
+  it directly. Their statements and Heath lines are unchanged, their coincidence
+  arguments are retained, and every dependent proof has rebuilt. The same 115 of 121
+  certificate entries rest on the rule. I.23 keeps its construction through I.22 and
+  inherits the rule through I.8 and I.20.
+
+  The four new pure modules under `Elements/Foundations/Superposition/` are `Syntax.lean`,
+  `Semantics.lean`, `Soundness.lean` and `Restriction.lean`. They use Lean's `module` format
+  with public imports and sections so that the model's modules can import them. Their
+  words include `Atom`, `Lit`, `Metric`, `Letter`, `LineLetter`, `Law`, `Cited`, `Derives`,
+  `Name`, `LineName`, `Interpretation`, `Val`, `Collinear`, `Triangle`, `Rule`, `guards`,
+  `kept`, `branch` and `rayOfAnglePremises`, with the reached constructors, fields,
+  recursors, matchers, renamings, law data and interpretations. The library's `primitives`
+  reads them in its own geometric words. `Elements/Figure/Superposition.lean` proves the
+  geometric cited laws; I.8 supplies I.7's adapter. The deleted directory
+  `Staging/Superposition/` held the six prototype files; its proofs and restriction evidence
+  now have these production homes. The old-axiom compatibility example is removed.
+
+  `Certificate/axioms.lock` restates one axiom, keeps all 87, and adds 115 vocabulary
+  entries, from 91 to 206, with no former word removed or otherwise changed.
+  `Certificate/Facts.lean` recognises actual uses of the calculus's three congruence
+  constructors as C.N. 4; all 121 common-notion lists match the baseline.
+  `tests/certificate_expectations.json` keeps its eleven existing expectations unchanged
+  and adds thirteen for the restricted rule, its citations and C.N. 4.
+  `Audit.lean` imports the new superposition audit.
+  `Audit/Superposition.lean` pins 27 dependency closures, including both propositions,
+  soundness, restriction evidence and the cited-law proofs.
+  `Audit/Overlaps.lean` retires `I_2`, `I_3` and `I_23`, preserving the thirteen surviving
+  overlap proofs and their pins.
+  `Audit/screen.py` describes those construction shortcuts as retired.
+  `review/SCHEMA.md` replaces the obsolete overlap example with I.7, without changing a
+  field or validation rule.
+  `scripts/heath.py` uses I.7's surviving overlap in two self-test cases, preserving their
+  accepted and rejected outcomes.
+
+  The model generator gives declarations from the four pure modules a checked identity
+  translation, retaining universe arguments, lock coverage, syntactic correspondence and
+  all previous rejection tests. It translates `primitives` over the model signature. The
+  plane's proved isometry and reflection supply placement, its proved Postulate 1 supplies
+  the kept side, and `Rule.of_placement` proves the restricted law. `model_exists` remains
+  unconditional, resting only on `propext`, `Classical.choice` and `Quot.sound`.
+  `model/Model/Audit.lean` retains the existing closure pins and the unknown-`Elements.Point`
+  sentinel, and checks that Model may import from Elements exactly these four modules:
+  `Elements.Foundations.Superposition.Syntax`, `Elements.Foundations.Superposition.Semantics`,
+  `Elements.Foundations.Superposition.Soundness` and
+  `Elements.Foundations.Superposition.Restriction`, including transitive imports. Their
+  declarations are checked to use only the pure modules and `Init`, with no geometric
+  words, project axioms or `sorryAx`.
+  `model/lakefile.toml` documents that precise import boundary; Mathlib stays in `model/`.
+  `model/lock.sha256` is renewed against the regenerated lock.
+  `tests/model/lock.sha256` is renewed against the same lock.
+  `tests/model/laws.toml` describes placement with its kept side as the sampled sufficient
+  condition for the restricted law.
+  `tests/model/MODEL.md` explains the reduction, the proved model and the import boundary.
+  `tests/model/search.py` retains its placement checks and checks the kept side too.
+  `tests/model/hyperbolic.py` retains its placement checks and checks the kept side too.
+
+  The I.4, I.8 and I.23 pages and the overlap catalogue now describe an inference in
+  System E's style. An independent reader has read and stamped the six records for I.2,
+  I.3, I.4, I.8, I.23 and I.44, retaining full coverage and Euclid's route. No equivalence
+  with System E's two rules or whole-theory non-derivability is claimed. Questions 2, 4
+  and 5 of the brief remain the owner's: accept the five-part restriction or require
+  another formal statement; permit I.7 inside the placement despite constructions in its
+  proof or require construction-free cited proofs; retain the laid-down side or revise
+  the calculus and argument. The branch follows the first reading in each case. After
+  `lean/retire-axioms-2`, the proofs of `triple_incidence2` from Postulate 2 and
+  `eq_of_len_eq_zero` from Postulate 3 bring I.4's cited laws within question 4 too;
+  `drawsNothing` and the audit pins must be reviewed again.
+
+  Before landing, the check changes in `Certificate/Facts.lean` and `scripts/heath.py`
+  must be split into a tooling pull request that lands first, as WORKFLOW, section 10,
+  requires. The retirement branches must be reconciled, generated outputs regenerated,
+  and the finished revision validated and independently reviewed, including the model
+  and the protected paths named above. This entry records preparation, not landing
+  approval; no check, expectation, lock or schema is loosened.

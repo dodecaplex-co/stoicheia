@@ -159,9 +159,10 @@ no field in which an existential claim could be written.
 
 **What a step may do.** There are two kinds of rule, and neither introduces a symbol.
 
-* **Logic.** Equality of points, of lengths, of angles and of triangles is reflexive,
-  symmetric and transitive, and Common Notion 4 puts one point for another that coincides
-  with it. These hold of anything, by logic alone.
+* **Logic.** Point equality has reflexivity and symmetry rules, but no transitivity rule
+  in `Derives`. Equality of lengths, angles and triangles has all three. Common Notion 4
+  puts a point for one that coincides with it in a length, angle or triangle equality.
+  These hold of anything, by logic alone.
 * **Citing a law** (`Derives.cite`). A step names a law from the fixed list `Cited`, puts a
   symbol of the derivation for each of its letters, derives its premises, and concludes its
   conclusion. The law is applied to symbols the derivation already has: citing it draws
