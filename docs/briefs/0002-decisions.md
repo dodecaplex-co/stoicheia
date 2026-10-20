@@ -1925,6 +1925,16 @@ findings:
   the list against the table and exercises P3 with and without the required tag. CI does
   not run it yet; whoever changes the limitations runs it.
 
+- **A standing read for stale content.** The A0 read of 20 October found claims false on
+  main and others that queued work would make false, beyond what mechanical checks can
+  judge. Before every release and at the end of each programme stage, the coordinator
+  assigns an independent reviewer the read set out in
+  [docs/WORKFLOW.md](../WORKFLOW.md#10-how-a-book-is-made-and-released), section 10,
+  step 8; [docs/PROGRAM.md](../PROGRAM.md#5-lessons), section 5, records its first
+  instance and the conflict marker and stale counts that prompted separate checks.
+  Findings go in dated reports under `docs/reports/`, and fixes in the trains or pull
+  requests that make them true. The existing step numbers stay, preserving ACCEPTANCE's
+  citation of step 9. No check changes.
 
 - **Current lock totals carry inline count markers.** The owner asked for the current
   totals in handwritten prose to follow the lock. The markers surround the number alone:

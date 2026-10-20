@@ -255,6 +255,11 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
 - **18 Oct. A stricter rule that today's content fails lands with a switch.** The figure
   letters came as three pull requests: the rule with its switch off, the letters, then the
   switch on, so that no check travelled with what it judges ([#8], [#9], [#10]).
+- **20 Oct. What a check cannot judge needs a standing read.** The first read for stale
+  content (A0) found claims false on main and others that queued work would make false;
+  the merge-conflict marker and the stale counts among them prompted checks of their own.
+  The read now comes before every release and at the end of each programme stage
+  ([WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, step 8).
 
 ## 6. Cost and time
 
