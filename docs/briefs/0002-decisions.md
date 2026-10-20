@@ -2073,11 +2073,14 @@ findings:
   command block. `scripts/test_safe_push.py` parses the workflow with PyYAML 6.0.3, pinned
   in `scripts/requirements-test_safe_push.txt`, and compares all three command sequences
   through a normalized `jobs.check` model. It pins that position and rejects job or step
-  conditions that could skip a check, or continuation settings that could suppress its
-  failure. `scripts/negative_tests.py` plants constructor counting, requires the focused
-  test to reject its false report, restores the source in `finally`, and requires the
-  restored regression to pass. This fits the harness's existing pattern of a source fault
-  caught by a separate check; it runs only in a disposable tree.
+  conditions, job dependencies, shell overrides, continuation settings other than
+  `continue-on-error: false`, and extra commands in a required check's run body. The one
+  multi-command body runs the renderer, prints generated-file freshness and asserts that
+  the output is empty. [WORKFLOW](../WORKFLOW.md), section 10 gives the pinned install
+  immediately before the guard suite. `scripts/negative_tests.py` plants constructor
+  counting, requires the focused test to reject its false report, restores the source in
+  `finally`, and requires the restored regression to pass. This fits the harness's existing
+  pattern of a source fault caught by a separate check; it runs only in a disposable tree.
   `tests/test_negative_tests.py` checks restoration on interruption.
 
   `scripts/heath.py` uses `Tacit.angle_le_two_right`, which supplies I.13's upper bound

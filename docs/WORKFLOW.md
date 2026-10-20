@@ -701,7 +701,8 @@ run, and without origin/main's copy the push is refused), and refuses to push or
 tag. With the owner's OK for
 a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`,
 and the hook still scans the commits it points to and an annotated tag's message.
-`python3 scripts/test_safe_push.py` plants a bad commit for each guard, gate and edge case
-on a throwaway clone, with a stand-in for gh, and checks that each is refused and a good
-one proposed and merged; `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and
-all.
+`python3 -m pip install -r scripts/requirements-test_safe_push.txt`, followed in the same
+Python environment by `python3 scripts/test_safe_push.py`, installs the pinned YAML parser
+and plants a bad commit for each guard, gate and edge case on a throwaway clone, with a
+stand-in for gh, and checks that each is refused and a good one proposed and merged;
+`STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all.
