@@ -81,13 +81,13 @@ theorem sound (hcites : ∀ c ∈ cites, c.Holds I) (v : Val I P L) (hΓ : ∀ �
   | area_refl => exact rfl
   | area_symm _ ih => exact Eq.symm ih
   | area_trans _ _ ih₁ ih₂ => exact Eq.trans ih₁ ih₂
-  | len_congr _ _ ih₁ ih₂ =>
+  | len_congr _cn4 _ _ ih₁ ih₂ =>
     change I.len _ _ = I.len _ _
     exact ih₁ ▸ ih₂ ▸ rfl
-  | angle_congr _ _ _ ih₁ ih₂ ih₃ =>
+  | angle_congr _cn4 _ _ _ ih₁ ih₂ ih₃ =>
     change I.ang _ _ _ = I.ang _ _ _
     exact ih₁ ▸ ih₂ ▸ ih₃ ▸ rfl
-  | area_congr _ _ _ ih₁ ih₂ ih₃ =>
+  | area_congr _cn4 _ _ _ ih₁ ih₂ ih₃ =>
     change I.area _ _ _ = I.area _ _ _
     exact ih₁ ▸ ih₂ ▸ ih₃ ▸ rfl
   | cite c σ τ _ hc ih =>
@@ -96,8 +96,8 @@ theorem sound (hcites : ∀ c ∈ cites, c.Holds I) (v : Val I P L) (hΓ : ∀ �
 
 end Derives
 
-/-- The valuation of a placement: the figure's symbols as `v` says, B′ at `B'`, C′ at `C'`
-and the side laid down along `N`. -/
+/-- The valuation of a placement: the figure's symbols as `v` says, B′ at B', C′ at C'
+and the side laid down along N. -/
 def Val.place (v : Val I P L) (B' C' : I.Point) (N : I.Line) : Val I (Name P) (LineName L) where
   pt
     | .given p => v.pt p
@@ -172,7 +172,7 @@ class Symbols (P : Type) where
   symbol_index : ∀ p, symbol (index p) = p
 
 /-- **The rule, with named symbols.** The rule for a figure whose symbols are named by finite
-vocabularies `P` and `L` of the proof's own: number the symbols, and use the rule on the
+vocabularies P and L of the proof's own: number the symbols, and use the rule on the
 numbers. -/
 theorem Rule.apply (S : Rule I) [Symbols P] [Symbols L] {cites : List Cited}
     (hcites : ∀ c ∈ cites, c.Holds I) {Γ : List (Lit P L)} {a b c d g h : P} {l : L}

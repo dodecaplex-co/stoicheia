@@ -17,7 +17,7 @@ prove are written as data over **symbols**, and the figure is given separately, 
 **valuation** that says which point or straight line each symbol stands for. This file is
 that language.
 
-* A symbol is a member of a type the proof chooses: `P` for points, `L` for straight lines.
+* A symbol is a member of a type the proof chooses: P for points, L for straight lines.
   The rule (`Rule`) takes its symbols from `Fin n` and `Fin m`, so a symbol is a number and
   nothing else; a proof may name its symbols with an inductive type of its own
   (`Symbols`, in `Soundness.lean`).
@@ -162,7 +162,10 @@ no field in which an existential claim could be written.
 * **Logic.** Point equality has reflexivity and symmetry rules, but no transitivity rule
   in `Derives`. Equality of lengths, angles and triangles has all three. Common Notion 4
   puts a point for one that coincides with it in a length, angle or triangle equality.
-  These hold of anything, by logic alone.
+  Each of these three congruence constructors takes a `Coincidence` argument. A derivation
+  supplies `Coincidence.step` when it takes that step; the certificate counts this marker.
+  A transformer such as `Derives.map` passes the argument it receives, so renaming alone
+  does not count as a use of Common Notion 4. These rules hold by logic alone.
 * **Citing a law** (`Derives.cite`). A step names a law from the fixed list `Cited`, puts a
   symbol of the derivation for each of its letters, derives its premises, and concludes its
   conclusion. The law is applied to symbols the derivation already has: citing it draws
@@ -189,7 +192,7 @@ axioms). The law of one ray for one angle names all three of its straight lines,
 the one through the point it speaks of, so that its proof draws nothing: in I.4 that straight line
 is the side AC laid down, which the placement supplies. I.7's proof draws the six straight
 lines joining its points, produces two and cites I.5; Euclid's I.8 uses I.7 inside the
-placement (brief 0009, open question 4).
+placement (brief 0009, question 4, approved on 20 October 2026).
 
 `Derives.sound` shows that every step holds of the very points its symbols stand for, under
 any valuation that makes the context true: the derivation needs no point and no straight
@@ -271,6 +274,11 @@ def Cited.drawsNothing : Cited → Bool
 
 open Lit
 
+/-- Common Notion 4's step in the calculus. A derivation that takes a congruence step
+supplies this marker, and the certificate counts it. -/
+inductive Coincidence : Prop where
+  | step
+
 /-- **A restricted derivation.** `Derives cites Γ ℓ`: the literal `ℓ` follows from the
 literals `Γ` by logic and by the laws listed in `cites`, all over the same symbols. No rule
 introduces a symbol, so no step constructs anything. -/
@@ -311,15 +319,15 @@ inductive Derives {P L : Type} (cites : List Cited) (Γ : List (Lit P L)) : Lit 
       Derives cites Γ (pos (.area p q r s t u)) →
       Derives cites Γ (pos (.area s t u x y z)) → Derives cites Γ (pos (.area p q r x y z))
   /-- Straight lines whose ends coincide are equal (Common Notion 4). -/
-  | len_congr {p q p' q' : P} :
+  | len_congr (cn4 : Coincidence) {p q p' q' : P} :
       Derives cites Γ (pos (.eq p p')) → Derives cites Γ (pos (.eq q q')) →
       Derives cites Γ (pos (.len p q p' q'))
   /-- Angles whose points coincide are equal (Common Notion 4). -/
-  | angle_congr {p q r p' q' r' : P} :
+  | angle_congr (cn4 : Coincidence) {p q r p' q' r' : P} :
       Derives cites Γ (pos (.eq p p')) → Derives cites Γ (pos (.eq q q')) →
       Derives cites Γ (pos (.eq r r')) → Derives cites Γ (pos (.angle p q r p' q' r'))
   /-- Triangles whose corners coincide are equal (Common Notion 4). -/
-  | area_congr {p q r p' q' r' : P} :
+  | area_congr (cn4 : Coincidence) {p q r p' q' r' : P} :
       Derives cites Γ (pos (.eq p p')) → Derives cites Γ (pos (.eq q q')) →
       Derives cites Γ (pos (.eq r r')) → Derives cites Γ (pos (.area p q r p' q' r'))
   /-- **Citing a law.** Put a symbol of the derivation for each letter of the law (`σ` for
@@ -352,9 +360,9 @@ theorem map {P' L' : Type} (f : P → P') (g : L → L') {ℓ : Lit P L}
   | area_refl => exact .area_refl
   | area_symm _ ih => exact .area_symm ih
   | area_trans _ _ ih₁ ih₂ => exact .area_trans ih₁ ih₂
-  | len_congr _ _ ih₁ ih₂ => exact .len_congr ih₁ ih₂
-  | angle_congr _ _ _ ih₁ ih₂ ih₃ => exact .angle_congr ih₁ ih₂ ih₃
-  | area_congr _ _ _ ih₁ ih₂ ih₃ => exact .area_congr ih₁ ih₂ ih₃
+  | len_congr cn4 _ _ ih₁ ih₂ => exact .len_congr cn4 ih₁ ih₂
+  | angle_congr cn4 _ _ _ ih₁ ih₂ ih₃ => exact .angle_congr cn4 ih₁ ih₂ ih₃
+  | area_congr cn4 _ _ _ ih₁ ih₂ ih₃ => exact .area_congr cn4 ih₁ ih₂ ih₃
   | cite c σ τ _ hc ih =>
     rw [Lit.map_map]
     exact .cite c (f ∘ σ) (g ∘ τ) (fun ℓ hℓ => by rw [← Lit.map_map]; exact ih ℓ hℓ) hc

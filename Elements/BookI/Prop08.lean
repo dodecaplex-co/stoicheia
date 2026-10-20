@@ -134,7 +134,7 @@ theorem Prop8 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
     .len_trans Kept.len₃ (given (ℓ := pos (.len .a .b .d .e)) (by simp [Γ]))
   have hGF_DF : Derives cites Δ (pos (.len g f d f)) :=
     .len_trans .len_comm <|
-    .len_trans (.len_congr (.eq_symm hC'F) .eq_refl) <|
+    .len_trans (.len_congr Coincidence.step (.eq_symm hC'F) .eq_refl) <|
     .len_trans Kept.len₂ <|
     .len_trans .len_comm (given (ℓ := pos (.len .a .c .d .f)) (by simp [Γ]))
   -- for, if the base BC coincides with the base EF, and the sides BA, AC do not coincide with
@@ -159,7 +159,7 @@ theorem Prop8 {A B C D E F : Point} (hABC : Triangle A B C) (hDEF : Triangle D E
   /- The angle BAC was carried to the angle e g c′, and g is d, c′ is f. This equality of
      angles names only the figure's symbols, so it leaves the placement. -/
   have hBAC : Derives cites Δ (pos (.angle b a c e d f)) :=
-    .angle_trans (.angle_symm Kept.angle₂) (.angle_congr .eq_refl hGD hC'F)
+    .angle_trans (.angle_symm Kept.angle₂) (.angle_congr Coincidence.step .eq_refl hGD hC'F)
   /- The laws cited, each from its proof: three from Book Zero and the foundations, and I.7.
      The guards are the triangle BCA, E and F on EF, E not F, and D off EF. -/
   have hcites : ∀ c ∈ cites, c.Holds primitives := by
