@@ -2712,9 +2712,23 @@ def fill_under(root, x: float, y: float) -> str:
     return under
 
 
+class FigureTreeBuilder(ET.TreeBuilder):
+    def __init__(self):
+        super().__init__()
+        self.processing_instructions = []
+
+    def pi(self, target, data):
+        self.processing_instructions.append((target, data))
+
+
+def parse_svg(path: Path):
+    target = FigureTreeBuilder()
+    return ET.parse(path, parser=ET.XMLParser(target=target)), target.processing_instructions
+
+
 def svg_root(path: Path, missing_ok: bool = False):
     try:
-        tree = ET.parse(path)
+        tree, processing_instructions = parse_svg(path)
     except OSError:
         if missing_ok:
             return None
@@ -2722,7 +2736,12 @@ def svg_root(path: Path, missing_ok: bool = False):
     except (ET.ParseError, LookupError, UnicodeDecodeError, ValueError) as e:
         fail("S14" if path.stem.endswith("-idea") else "S15", path, 0, f"not well-formed SVG: {e}")
         return None
-    # Only the parser call is inside the decoder exception boundary.
+    if processing_instructions:
+        target, data = processing_instructions[0]
+        instruction = target + (f" {data}" if data else "")
+        fail("S26", path, 0,
+             f"processing instruction {instruction!r} is outside S26's SVG allow-list")
+        return None
     return tree.getroot()
 
 
@@ -2793,9 +2812,11 @@ def measure_idea(path: Path, ref: str, required: bool, root) -> int:
 def drawn_letters(path: Path) -> set[str] | None:
     """The letters Euclid's figure draws, which S16 holds to Heath's text; None when there
     is no figure to read (S15 says why)."""
-    root = svg_root(path, missing_ok=True)
-    if root is None:
+    try:
+        tree, _ = parse_svg(path)
+    except (OSError, ET.ParseError, LookupError, UnicodeDecodeError, ValueError):
         return None
+    root = tree.getroot()
     return {text_of(el) for el in root.iter() if tag(el) == "text" and LETTER.fullmatch(text_of(el))}
 
 
