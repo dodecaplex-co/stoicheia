@@ -1552,10 +1552,12 @@ findings:
   may use `run_cmd` first on its line followed by `Check.Generator.<ident>` or
   `(Check.Generator.<ident>`: running the generator is those files' job. The named
   allowance exempts that command alone, so its arguments and any further command are
-  still scanned. `model/Check/Generator.lean` rewrites the implicit binder's string on
-  line 600 as an interpolated string with an escaped opening brace, with exactly the
-  same output, so the scan can read it for certain. `scripts/negative_tests.py` plants
-  axioms, forbidden commands and attributes in the model's Model and Check files, tests
+  still scanned. The one string in the model the scan could not read for certain, the
+  implicit binder's in `model/Check/Generator.lean`, line 600, became an interpolated
+  string with an escaped opening brace and exactly the same output in a pull request of
+  its own (`tooling/model-generator-brace`), landed before this one, since a check is
+  never changed in the same pull request as the code it checks.
+  `scripts/negative_tests.py` plants axioms, forbidden commands and attributes in the model's Model and Check files, tests
   the allowance's boundary and the `.lake` boundary both ways, refuses a link named
   `.lake` to a directory, a file or nothing in `model/`, `model/Model/` and
   `model/Check/`, and checks that the unplanted tree passes; it copies only `facts.json`,
