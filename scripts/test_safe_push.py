@@ -270,9 +270,11 @@ def fields(pr, wanted):
     full = dict(pr, headRefOid=head, labels=[{"name": n} for n in pr["labels"]],
                 isCrossRepository=fork,
                 headRepositoryOwner=pr.get("headRepositoryOwner", {"login": "test"}))
-    if "raw_labels" in pr:
+    if pr.get("omit_labels"):
+        del full["labels"]
+    elif "raw_labels" in pr:
         full["labels"] = pr["raw_labels"]
-    return {k: full.get(k) for k in wanted.split(",")}
+    return {k: full[k] for k in wanted.split(",") if k in full}
 
 
 def kill_on_watch():
@@ -374,6 +376,9 @@ def main(argv):
         print("fake gh: no such pull request: %s" % argv, file=sys.stderr)
         return 1
     if cmd == ["pr", "view"]:
+        if opt(args, "--json") == "labels" and s.get("label_read_fail"):
+            print(json.dumps({"labels": [{"name": "release"}]}))
+            return 1
         # "rename": {"views": n, "to": name}: after n views, the branch is renamed on
         # GitHub, its head kept, as a rename in GitHub's page would leave it.
         rename = s.get("rename")
@@ -425,6 +430,13 @@ def main(argv):
                       file=sys.stderr)
                 return 1
         if "--watch" in args:
+            if "watch_labels" in s:
+                pr["labels"] = s["watch_labels"]
+            if "watch_raw_labels" in s:
+                pr["raw_labels"] = s["watch_raw_labels"]
+            if s.get("watch_omit_labels"):
+                pr["omit_labels"] = True
+            save(s)
             kill_on_watch()
             return 0 if all(c["bucket"] == "pass" for c in checks) else 1
         print(json.dumps(checks))
@@ -1882,10 +1894,39 @@ class PullRequests(Edge):
         r = self.safe_push("--label", "release", "--label", "tooling")
         self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
         self.assertIn("failing: release-gate", r.stdout)
-        # The next pre-flight gives no release label; the open pull request carries it.
         self.set_gh(lambda s: s["prs"][0].update(labels=["tooling", "Release"]))
         r = self.safe_push()
         self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("failing: release-gate", r.stdout)
+
+    def test_watcher_keeps_release_check_when_label_is_added_during_watch(self):
+        self.stale_release_check("fail")
+        self.set_gh(lambda s: s.update(watch_labels=["docs", "release"]))
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("failing: release-gate", r.stdout)
+
+    def test_watcher_ignores_release_check_when_label_is_removed_during_watch(self):
+        self.stale_release_check("fail")
+        self.set_gh(lambda s: s.update(watch_labels=["docs"]))
+        r = self.safe_push("--label", "docs", "--label", "release")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self.guard(r.stdout, "CI"), "ok", r.stdout)
+
+    def test_watcher_refuses_unreadable_final_labels_without_exemption(self):
+        self.stale_release_check("fail")
+        self.set_gh(lambda s: s.update(watch_raw_labels=None))
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("the pull request's labels are unreadable", r.stdout)
+        self.assertIn("failing: release-gate", r.stdout)
+
+    def test_watcher_refuses_failed_final_label_read_without_exemption(self):
+        self.stale_release_check("fail")
+        self.set_gh(lambda s: s.update(label_read_fail=True))
+        r = self.safe_push()
+        self.assertEqual(r.returncode, 3, r.stdout + r.stderr)
+        self.assertIn("the pull request's labels could not be read", r.stdout)
         self.assertIn("failing: release-gate", r.stdout)
 
 
@@ -1996,6 +2037,8 @@ class Merge(Edge):
         cases = (
             ("- Prototype [section](#38)", "bracket"),
             ("- Prototype https://example.invalid/page?x=#38", "URL"),
+            ("- Prototype #38, see WWW.GITHUB.COM/example/edition/issues/39", "URL"),
+            ("- Prototype #38 fooGH-39", "write the issue as #N on its own"),
             ("- Prototype `code\n  #38`", "backtick"),
             ("- ```\n  #38\n  ```", "backtick"),
             ('- Prototype <span title="#38">later</span>', "HTML"),
@@ -2089,19 +2132,29 @@ class Merge(Edge):
         self.assertEqual(self.guard(r.stdout, "unfinished work"), "ok", r.stdout)
         self.assertEqual(len(self.merges()), 1)
 
-    def test_malformed_labels_refuse_release_without_stale_check_exemption(self):
+    def test_unreadable_labels_refuse_release_without_stale_check_exemption(self):
         sha = self.opened()
         self.unfinished_body("None")
-        self.set_gh(lambda s: s["prs"][0].update(raw_labels=[{"name": "tooling"}, {}]))
         self.set_gh(lambda s: s["checks"].update({sha: PASSING + [
             {"name": "release-gate", "workflow": "Release gate", "bucket": "fail"}]}))
-        r = self.merge()
-        out = r.stdout + r.stderr
-        self.assertEqual(r.returncode, 1, out)
-        self.assertIn("the pull request's labels are unreadable", out)
-        self.assertEqual(self.guard(out, "release"), "FAIL", out)
-        self.assertEqual(self.guard(out, "CI"), "FAIL", out)
-        self.assertEqual(self.merges(), [])
+        for labels in ([{"name": "tooling"}, {}], None, "missing"):
+            with self.subTest(labels=labels):
+                def set_labels(s):
+                    pr = s["prs"][0]
+                    pr.pop("raw_labels", None)
+                    pr.pop("omit_labels", None)
+                    if labels == "missing":
+                        pr["omit_labels"] = True
+                    else:
+                        pr["raw_labels"] = labels
+                self.set_gh(set_labels)
+                r = self.merge()
+                out = r.stdout + r.stderr
+                self.assertEqual(r.returncode, 1, out)
+                self.assertIn("the pull request's labels are unreadable", out)
+                self.assertEqual(self.guard(out, "release"), "FAIL", out)
+                self.assertEqual(self.guard(out, "CI"), "FAIL", out)
+                self.assertEqual(self.merges(), [])
 
     def test_transferred_or_unbound_unfinished_issue_refuses_the_merge(self):
         self.opened()

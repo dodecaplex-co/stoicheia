@@ -2678,7 +2678,6 @@ class PRPlan(NamedTuple):
     body: str
     labels: set
     title: str
-    check_labels: set[str]
 
 
 def own_prs(ctx: Context, prs: list[dict]) -> list[dict]:
@@ -2712,9 +2711,7 @@ def kind_problem(labels) -> str | None:
 
 
 def pr_labels(value) -> set[str]:
-    """Read gh's label objects strictly; missing labels mean an empty set."""
-    if value is None:
-        return set()
+    """Read gh's label objects strictly."""
     if not isinstance(value, list) or any(
             not isinstance(label, dict) or not isinstance(label.get("name"), str)
             or not label["name"].strip() for label in value):
@@ -2734,7 +2731,8 @@ def check_kind_label(ctx: Context, args, rep: Report) -> None:
         return
     existing = find_own_pr(ctx)
     try:
-        problem = kind_problem(pr_labels((existing or {}).get("labels")))
+        problem = kind_problem(pr_labels(
+            [] if existing is None else existing.get("labels")))
     except ValueError as e:
         raise Refusal(str(e)) from None
     if problem:
@@ -2750,8 +2748,7 @@ def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
     labels = set(args.label) | ({SECURITY_LABEL} if pre.protected else set())
     existing = find_own_pr(ctx)
     try:
-        check_labels = {label.lower() for label in labels} | pr_labels(
-            (existing or {}).get("labels"))
+        pr_labels([] if existing is None else existing.get("labels"))
     except ValueError as e:
         raise Refusal(str(e)) from None
     if args.body_file:
@@ -2764,7 +2761,7 @@ def plan_pr(ctx: Context, pre: Preflight, record: dict, args) -> PRPlan:
         body = generated_body(ctx, pre, record)
     check_body(body)
     title = args.title or git(ctx.repo, "log", "-1", "--format=%s", ctx.sha).strip()
-    return PRPlan(existing, body, labels, title, check_labels)
+    return PRPlan(existing, body, labels, title)
 
 
 def open_pr(ctx: Context, plan: PRPlan, args, rep: Report, logs: Path) -> PR:
@@ -2859,7 +2856,20 @@ def pr_checks(ctx: Context, number: int) -> list[dict]:
         return []
 
 
-def watch_checks(ctx: Context, pr: PR, rep: Report, labels: set[str]) -> str:
+def read_pr_labels(ctx: Context, number: int) -> set[str]:
+    r = gh_run(ctx, "pr", "view", str(number), "--json", "labels")
+    if r.returncode:
+        raise ValueError("the pull request's labels could not be read")
+    try:
+        view = json.loads(r.stdout)
+    except json.JSONDecodeError:
+        raise ValueError("the pull request's labels are unreadable") from None
+    if not isinstance(view, dict):
+        raise ValueError("the pull request's labels are unreadable")
+    return pr_labels(view.get("labels"))
+
+
+def watch_checks(ctx: Context, pr: PR, rep: Report) -> str:
     """Wait for the pull request's checks on the commit and follow them; return the
     verdict, judged as the merge judges it (judged_checks): on an ordinary pull request
     a release-gate run left from an earlier label is waited for, never counted."""
@@ -2878,7 +2888,16 @@ def watch_checks(ctx: Context, pr: PR, rep: Report, labels: set[str]) -> str:
     print(f"  following the checks of #{pr.number}: {pr.url}", flush=True)
     subprocess.run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
                     CI_WATCH_INTERVAL, "-R", ctx.github], cwd=ctx.repo)
-    verdict, detail = judge_checks(judged_checks(pr_checks(ctx, pr.number), labels))
+    checks = pr_checks(ctx, pr.number)
+    label_problem = None
+    try:
+        labels = read_pr_labels(ctx, pr.number)
+    except ValueError as e:
+        labels, label_problem = None, str(e)
+    verdict, detail = judge_checks(judged_checks(checks, labels))
+    if label_problem:
+        detail = f"{label_problem}; every check retained ({verdict}: {detail})"
+        verdict = "unknown"
     rep.add("6", "CI", "ok" if verdict == "success" else "FAIL", f"{verdict}: {detail}",
             time.time() - t)
     return verdict
@@ -3292,7 +3311,7 @@ def unfinished_refs(text: str, comment: str | None = None) -> tuple[list[int], l
         return [], ["Unfinished work holds a comment other than the template's own for it "
                     "(origin/main's wording, which may have changed): delete it"]
     for token, reason in UNFINISHED_FORBIDDEN:
-        if token in text:
+        if token.lower() in text.lower():
             return [], [f"Unfinished work must be a plain list: {reason} is forbidden"]
     if re.fullmatch(r"None\.?", text.strip(), re.I):
         return [], []
@@ -3325,7 +3344,7 @@ def unfinished_refs(text: str, comment: str | None = None) -> tuple[list[int], l
             match = ISSUE_TOKEN.fullmatch(token)
             if match:
                 local.append(int(match[1]))
-            elif "#" in token or re.search(r"(?<![a-z0-9])gh-[0-9]", token, re.I):
+            elif "#" in token or re.search(r"gh-[0-9]", token, re.I):
                 problems.append(f"write the issue as #N on its own: {token}")
         refs.update(local)
         if not local:
@@ -3864,7 +3883,7 @@ def preflight_main(repo: Path, args) -> int:
             pr = open_pr(ctx, plan, args, rep, logs)
             result = f"pushed to {ctx.branch}; pull request #{pr.number} " \
                      f"{'opened' if pr.created else 'updated'}"
-            ci = watch_checks(ctx, pr, rep, plan.check_labels)
+            ci = watch_checks(ctx, pr, rep)
             if ci == "success" and not rep.failed():
                 code = 0
             else:
