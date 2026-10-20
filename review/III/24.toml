@@ -50,6 +50,6 @@ note = "Like Heath's, this figure draws the last supposition the text refutes: t
 
 [review]
 stage = "exceptions"
-commit = "d0508d6c"
+commit = "6b606dc2"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:a89b0e46fd0c545c"
+lean = "sha256:d3c238070470a784"
