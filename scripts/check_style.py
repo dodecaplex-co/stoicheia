@@ -325,6 +325,9 @@ CONFLICT_EDGE = re.compile(r"^(<{7}|\|{7}|>{7})(?: |$)")
 CONFLICT_MIDDLE = re.compile(r"={7}[ \t]*")
 CONFLICT_KINDS = {"<": "opening", "|": "base", ">": "closing"}
 LINK_REFERENCE_START = re.compile(r"^ {0,3}\[(?:\\.|[^\[\]\\])+\]:")
+# A block quote or list item: a seven-equals line after one cannot underline a
+# paragraph (a setext underline is never a lazy continuation), so S23 refuses it.
+CONTAINER_START = re.compile(r"^ {0,3}(?:>|[-+*](?:[ \t]|$)|[0-9]{1,9}[.)](?:[ \t]|$))")
 
 
 def repository_files(root: Path):
@@ -417,7 +420,7 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
                 or paragraph and SETEXT_LINE.fullmatch(line)):
             paragraph = False
             reference_definition = False
-        elif LINK_REFERENCE_START.match(line):
+        elif LINK_REFERENCE_START.match(line) or CONTAINER_START.match(line):
             reference_definition = True
             paragraph = False
         elif not paragraph and line.expandtabs(4).startswith("    "):

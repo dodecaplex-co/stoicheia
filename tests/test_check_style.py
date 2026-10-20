@@ -1142,6 +1142,18 @@ class ConflictMarkers(unittest.TestCase):
                 expected = [(2, "middle")] if width == 7 else []
                 self.assertEqual(style.conflict_markers(text, markdown=True), expected)
 
+    def test_middle_after_block_quote_or_list_item_is_refused(self):
+        for start in ("> quote", "- item", "* item", "+ item", "1. item", "12) item",
+                      "Para\n> quote", "Para\n- item"):
+            with self.subTest(start=start):
+                text = start + "\n" + "=" * 7
+                line = text.count("\n") + 1
+                self.assertEqual(style.conflict_markers(text, markdown=True), [(line, "middle")])
+                self.assertEqual(style.conflict_markers(start + "\n" + "=" * 8, markdown=True), [])
+        for text in ("-item\n", "1.5 metres\n", "*emphasis* here\n"):
+            with self.subTest(paragraph=text):
+                self.assertEqual(style.conflict_markers(text + "=" * 7, markdown=True), [])
+
     def test_reference_definition_stops_at_block_boundary(self):
         for boundary in ("\n", "<!-- comment -->\n", "<!--\ncomment\n-->\n",
                          "```\ncode\n```\n", "# Heading\n", "---\n",

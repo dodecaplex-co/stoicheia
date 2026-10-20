@@ -1853,7 +1853,8 @@ findings:
 - **S23 errs toward refusal for possible reference definitions.** A lone Markdown middle
   is allowed only when every line of the preceding block is ordinary paragraph text;
   any line beginning with up to three spaces, a bracketed label (escaped brackets
-  included) and a colon disqualifies the block until its next boundary.
+  included) and a colon disqualifies the block until its next boundary, as does a block
+  quote or list item, since an underline is never a lazy continuation.
   S23 examines only middles of exactly seven equals and errs toward refusal in doubtful
   contexts, so an author whose heading is refused can use eight, since other lengths are
   never examined as middles.
