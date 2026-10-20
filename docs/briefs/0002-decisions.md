@@ -1842,9 +1842,9 @@ findings:
   stays human. No Lean run is needed to compute or check a count.
   `render.py` fills markers in tracked Markdown before copying introductions and other
   prose into book pages, where it removes the count comments. Whole renderer outputs are
-  excluded. Markers inside README.md's generated scope regions and PROGRAM.md's generated
-  status region are refused before rendering, since those regions are replaced. Markers
-  are refused in this decisions log and throughout `docs/reports/`,
+  excluded. Markers that overlap README.md's generated scope regions or PROGRAM.md's
+  generated status region, including their delimiters, are refused before rendering,
+  since those regions are replaced. Markers are refused in this decisions log and throughout `docs/reports/`,
   except the living `gaps-book-*.md` and `overlaps.md` catalogues, so dated evidence stays
   at its revision. Unknown, malformed, nested and unclosed markers fail with file and
   line. `check_fidelity.py`, already run before rendering, also refuses a stale value,

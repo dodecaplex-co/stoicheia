@@ -8,10 +8,10 @@ Git must resolve the supplied root as its work tree. Only tracked Markdown and
 review records are scanned. Symlinks and paths resolving outside the root are
 refused. Whole renderer outputs are scanned but may not contain markers. The
 decisions log and reports are history, except the living gap and overlap catalogues;
-markers there are refused. Markers are also refused in README scope regions and
-PROGRAM's status region, which the renderer replaces. Counts use files alone, never
-a Lean run or build outputs. Run this module to print every available count and its
-current value.
+markers there are refused. Markers are also refused when they overlap README scope
+regions or PROGRAM's status region, which the renderer replaces. Counts use files
+alone, never a Lean run or build outputs. Run this module to print every available
+count and its current value.
 """
 
 from dataclasses import dataclass
@@ -352,7 +352,8 @@ def partial_output_region(path, text, span):
         pattern, name = PROGRAM_STATUS_MARKERS, "docs/PROGRAM.md status region"
     else:
         return None
-    if any(region.start() <= span.start < region.end() for region in pattern.finditer(text)):
+    if any(span.start < region.end() and region.start() < span.end
+           for region in pattern.finditer(text)):
         return name
     return None
 

@@ -350,10 +350,10 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
 - **Counts in prose.** A count a script knows exactly goes between count markers and is
   rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
   `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
-  tests the counts and markers without Lean. Count markers stay outside README.md's generated
-  scope regions and PROGRAM.md's generated status region. `negative_tests.py` runs the tests
-  before planting; its `--counts-only` option runs these plants and the file-only regressions
-  without a build.
+  tests the counts and markers without Lean. Count markers do not overlap README.md's
+  generated scope regions or PROGRAM.md's generated status region. `negative_tests.py` runs
+  the tests before planting; its `--counts-only` option runs these plants and the file-only
+  regressions without a build.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,

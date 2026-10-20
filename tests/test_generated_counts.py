@@ -157,20 +157,29 @@ def Elements.companions : List (Lean.Name × String) := [
 
     def test_markers_in_partial_renderer_regions_are_refused(self):
         marker = "<!-- count:vocabulary -->3<!-- /count -->"
-        cases = {
-            "README.md": f"# Title\n<!-- scope:I -->\n{marker}\n<!-- /scope:I -->\n",
-            "docs/PROGRAM.md": f"# Programme\n<!-- status -->\n{marker}\n<!-- /status -->\n",
-        }
-        for path, text in cases.items():
-            self.write(path, text)
+        cases = (
+            ("README.md", f"# Title\n<!-- scope:I -->\n{marker}\n<!-- /scope:I -->\n"),
+            ("README.md", "# Title\n<!-- count:vocabulary -->3<!-- scope:I -->summary"
+             "<!-- /count --><!-- /scope:I -->\n"),
+            ("README.md", "# Title\n<!-- count:vocabulary -->3<!-- scope:I -->summary"
+             "<!-- /scope:I --><!-- /count -->\n"),
+            ("README.md", "# Title\n<!-- scope:I -->summary<!-- count:vocabulary -->3"
+             "<!-- /scope:I --><!-- /count -->\n"),
+            ("docs/PROGRAM.md",
+             f"# Programme\n<!-- status -->\n{marker}\n<!-- /status -->\n"),
+        )
+        for path, text in cases:
+            source = self.write(path, text)
+            line = text.count("\n", 0, counts.START.search(text).start()) + 1
             for check in (False, True):
-                with self.subTest(path=path, check=check):
+                with self.subTest(path=path, text=text, check=check):
                     changes, errors = self.scan([path], check=check)
                     self.assertEqual(changes, {})
                     self.assertEqual(len(errors), 1)
-                    self.assertTrue(errors[0].startswith(f"{path}:3:"), errors)
+                    self.assertTrue(errors[0].startswith(f"{path}:{line}:"), errors)
                     self.assertIn("forbidden", errors[0])
                     self.assertIn("region", errors[0])
+                    self.assertEqual(source.read_text(), text)
 
     def test_malformed_and_unknown_markers_name_the_line(self):
         bad = ("<!-- count:vocabulary -->3", "<!-- /count -->",
@@ -315,6 +324,18 @@ def Elements.companions : List (Lean.Name × String) := [
             self.assertEqual(render.read_text(alias / "notes.md"), "Original.")
             render.write_text(alias / "notes.md", "Changed.")
         self.assertEqual(target.read_text(), "Changed.")
+
+    def test_page_terms_reads_refuse_symlinks(self):
+        target = self.write("review/terms-target.toml", "[tag.example]\n"
+                            'kind = "representation"\nmeaning = "example"\n')
+        terms = self.root / "review/terms.toml"
+        terms.symlink_to(target)
+        with patch.object(render, "ROOT", self.root), \
+                patch.object(render.heath, "REVIEW", self.root / "review"):
+            with self.assertRaisesRegex(ValueError, "review/terms.toml: symlink is forbidden"):
+                render.representation_badge({"representation": {"tags": ["example"]}})
+        self.assertEqual(target.read_text(), "[tag.example]\nkind = \"representation\"\n"
+                         "meaning = \"example\"\n")
 
     def test_all_other_tracked_markdown_can_hold_counts(self):
         paths = ["docs/reports/gaps-book-I.md", "docs/reports/overlaps.md",
@@ -488,6 +509,45 @@ class GitCountTests(unittest.TestCase):
                     self.assertIn(f"{rel}:{line}:", message)
                     self.assertIn(diagnostic, message)
                     self.assertEqual({output: output.read_bytes() for output in outputs}, before)
+
+    def test_render_refuses_aliased_review_inputs_before_writing(self):
+        from negative_tests import count_source_copy
+
+        cases = (("review/I/01.toml", "inside-existing"),
+                 ("review/I/01.toml", "outside-dangling"),
+                 ("review/terms.toml", "outside-existing"),
+                 ("review/terms.toml", "inside-dangling"))
+        for rel, target_kind in cases:
+            with self.subTest(path=rel, target=target_kind), count_source_copy() as (root, env), \
+                    tempfile.TemporaryDirectory() as outside_dir:
+                path = root / rel
+                original = path.read_bytes()
+                if target_kind == "inside-existing":
+                    target = root / "review" / "alias-target.toml"
+                    target.write_bytes(original)
+                elif target_kind == "outside-existing":
+                    target = Path(outside_dir) / "alias-target.toml"
+                    target.write_bytes(original)
+                elif target_kind == "inside-dangling":
+                    target = root / "review" / "missing-target.toml"
+                else:
+                    target = Path(outside_dir) / "missing-target.toml"
+                target_before = target.read_bytes() if target.exists() else None
+                path.unlink()
+                path.symlink_to(target)
+                outputs = [root / name for name in
+                           ("README.md", "docs/PROGRAM.md", "CERTIFICATE.md", "GRAPH.md")]
+                outputs.extend((root / "book").rglob("*.md"))
+                before = {output: output.read_bytes() for output in outputs}
+                result = subprocess.run([sys.executable, "scripts/render.py"], cwd=root,
+                                        env=env, capture_output=True, text=True)
+                message = result.stdout + result.stderr
+                self.assertNotEqual(result.returncode, 0, message)
+                self.assertIn(rel, message)
+                self.assertTrue("symlink is forbidden" in message
+                                or "outside repository root" in message, message)
+                self.assertEqual({output: output.read_bytes() for output in outputs}, before)
+                self.assertEqual(target.read_bytes() if target.exists() else None, target_before)
 
 
 if __name__ == "__main__":

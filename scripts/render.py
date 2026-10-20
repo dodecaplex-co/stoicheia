@@ -211,6 +211,25 @@ def write_text(path, text):
     generated_counts.repository_path(ROOT, path).write_text(text)
 
 
+def guarded_review_path(book, n):
+    return generated_counts.repository_path(ROOT, heath.review_path(book, n))
+
+
+def guarded_terms_path():
+    return generated_counts.repository_path(ROOT, heath.REVIEW / "terms.toml")
+
+
+def load_terms():
+    guarded_terms_path()
+    return heath.load_terms()
+
+
+def load_review(book, n, *, require_stamp=True):
+    guarded_review_path(book, n)
+    guarded_terms_path()
+    return heath.load_review(book, n, require_stamp=require_stamp)
+
+
 def load_facts():
     path = ROOT / "facts.json"
     if not path.exists():
@@ -226,8 +245,8 @@ def load_records():
     records = {}
     for book, count in heath.BOOKS.items():
         for n in range(1, count + 1):
-            exists = heath.review_path(book, n).exists()
-            records[f"{book}.{n}"] = (heath.load_review(book, n, require_stamp=False)
+            exists = guarded_review_path(book, n).exists()
+            records[f"{book}.{n}"] = (load_review(book, n, require_stamp=False)
                                       if exists else None)
     return records
 
@@ -845,7 +864,7 @@ def overlap_word(overlap):
 def representation_badge(record):
     """A few words beside the badge for a representation that changes how the whole
     statement is read (review/terms.toml `badge`): "in our measure of circumferences"."""
-    terms = heath.load_terms()
+    terms = load_terms()
     tags = (record.get("representation") or {}).get("tags", [])
     badges = [terms[t]["badge"] for t in tags if "badge" in terms.get(t, {})]
     return and_list(badges) if badges else ""
@@ -954,7 +973,7 @@ def field_table(book, n, p, record, attached, docs):
                      + (f" {route['note']}" if route.get("note") else "")))
         rep = record.get("representation")
         if rep:
-            terms = heath.load_terms()
+            terms = load_terms()
             meanings = [terms[t]["meaning"] for t in rep["tags"]
                         if terms.get(t, {}).get("kind") == "representation"]
             text = rep.get("note") or " ".join(meanings)
@@ -1839,7 +1858,7 @@ def certificate_intro(facts, records):
     reached = ("which every record has reached" if stages == {"exceptions"} else
                "which every record has passed" if stages == {"full"} else
                "which every record has reached at least")
-    badges = sorted({t["badge"] for t in heath.load_terms().values() if "badge" in t})
+    badges = sorted({t["badge"] for t in load_terms().values() if "badge" in t})
     dagger = (f" A † marks a statement read {and_list(badges)}, which has no radius in it; "
               "the page's Representation row says what follows." if badges else "")
     bracketed = [f"{b}.{n}" for b, (count, _) in BOOKS.items() for n in range(1, count + 1)

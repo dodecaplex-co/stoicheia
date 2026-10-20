@@ -341,10 +341,11 @@ escape `<`, even in code spans. Markers are refused in the decisions log and in
 `docs/reports/`, except the living `gaps-book-*.md` and `overlaps.md` catalogues.
 They are also refused in `book/`, `CERTIFICATE.md` and `GRAPH.md`: copied prose keeps
 the computed value but loses the count comments. A marker may stand elsewhere in
-README.md or PROGRAM.md, but not inside README.md's `scope` regions or PROGRAM.md's
-`status` region, whose contents `render.py` replaces. Only tracked Markdown and review
-records are scanned, with Git's work tree checked against the supplied root; symlinks
-in any component below it and paths resolving outside it are refused.
+README.md or PROGRAM.md, but may not overlap README.md's `scope` regions or PROGRAM.md's
+`status` region, including their delimiters, since `render.py` replaces those regions.
+Only tracked Markdown and review records are scanned, with Git's work tree checked against
+the supplied root; symlinks in any component below it and paths resolving outside it are
+refused.
 
 **Heath's letters, one style.** Heath's letters name points, straight lines and figures,
 and a reader meets them in the text, in both figures, in the Lean and in the modern way.
