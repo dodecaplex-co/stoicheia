@@ -222,7 +222,7 @@ The representations Books I–III rest on:
 | lengths, angles, areas | `Magnitude` of one kind each, added and compared only | Common Notions proved as theorems | |
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
 | superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | stronger as a construction principle than System E's restricted inference rule, as [its file](../Elements/Foundations/Tacit/Superposition.lean) says; a restricted rule is being prototyped ([#75](https://github.com/jackChallis/stoicheia/issues/75)) | |
-| the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
+| the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
 | a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
 | a circumference | twice the angle standing on it, `circumference`, `standing`; no radius | proved facts in `Circumferences.lean`; arcs with membership are stage 3's work | `angle-measure`, `redundant-hypothesis` |
@@ -381,7 +381,13 @@ dependencies.
 - **Nothing gets round the kernel:** no `native_decide`, `decide +native`,
   or any other command of the kinds below, in any Lean file the edition builds: under
   `Elements/`, `Staging/` and `Audit/`, and in their roots, `Elements.lean`,
-  `Staging.lean` and `Audit.lean`. `check_fidelity.py` matches each as a whole word, in
+  `Staging.lean` and `Audit.lean`, and under `model/`, except the package's own
+  `model/.lake`, which the scan never enters. Mathlib imports are allowed in the model.
+  Only in `model/Check.lean` and `model/Check/`, `run_cmd` may be the first word on its
+  line followed by `Check.Generator.<ident>` or `(Check.Generator.<ident>`, since those
+  files run the generator. Every other forbidden command or attribute is still refused
+  there, and an `axiom` is refused everywhere under `model/`. `check_fidelity.py` matches
+  each as a whole word, in
   the Lean with its comments and the text of its string and character literals taken
   out, read as Lean reads them, raw strings and escapes among them (`native_decide` even
   in a comment or a string). The code in an interpolated string's `{…}` holes is read
@@ -438,6 +444,9 @@ dependencies.
   III.24 calls on one.
 - **Postulate 5.** No proof before I.29 uses Postulate 5 or a rule declared in
   `Elements.Tacit.Euclidean`; Books II and III come after Book I and may use it throughout.
+- **Circle 2 and Circle 3.** No certificate entry rests on `Tacit.inside_of_between` or
+  `Tacit.outside_of_between`, whether through its own proof or through a lemma it uses;
+  the check fails if the axiom lock no longer holds either name.
 - **No later citations:** no proof cites a proposition that does not come before it.
 - **Complete books stay complete:** every proposition of a complete book is proved, with
   both figures and a mishnah, and so is every porism and companion attached to it.
@@ -445,31 +454,54 @@ dependencies.
 
 `check_fidelity.py` enforces these for every certificate entry, porisms and companions
 included. `negative_tests.py` plants a break of these kinds to show each is caught: an
-axiom declared outside the foundations, in each of `Elements/`, `Staging/` and `Audit/`,
+axiom declared outside the foundations, in each of `Elements/`, `Staging/`, `Audit/`,
+`model/Model/` and `model/Check/`,
 one of them after another command on its line; an axiom missing from the lock, and one
 weakened; Postulate 5 and a Euclidean-only rule before I.29; superposition outside I.4
-and I.8; placement among the shared steps of an entry other than III.24, and a lemma of
+and I.8; Circle 2 or Circle 3 in a proposition's, porism's or companion's axioms,
+and Circle 3 renamed in the lock;
+placement among the shared steps of an entry other than III.24, and a lemma of
 its namespace named in another file under `Elements/`; a later citation, one of them
 named only in a helper's statement; every forbidden command, and an attribute for each
-ending and prefix the scan knows, in each of `Elements/`, `Staging/` and `Audit/`, and
-`#exit` at the end of each root; a proposition imported by Book Zero; a `sorry` in a
+ending and prefix the scan knows, in each of those five folders, and `#exit` at the end
+of each root; generator `run_cmd` calls, plain and parenthesised, outside the model's
+Check files, and calls there to another namespace or after another command on the line;
+other forbidden commands on an allowed generator call's line or in its arguments;
+a proposition imported by Book Zero; a `sorry` in a
 complete book; and a primitive word no longer opaque. Some of the forbidden commands
 stand after a string, a raw string or a character literal holding `/-`, `-/`, `]` or `"`,
 and one in an interpolated string's hole, and a string whose braces Lean could read as
-code is planted too. Each finding of the source scan names its file and line. A complete
-book's missing figure or mishnah has no planted break yet.
+code is planted too. The source scan names each finding's file and line, except for
+symbolic links to files or directories in the scanned trees and root files, which are
+refused by their paths and never followed, a link at `model/.lake` among them. A
+complete book's missing figure or mishnah has no planted break yet. The tests also check
+that generator calls first on their line are allowed in `model/Check.lean` and
+`model/Check/`, that an axiom in a `.lake` folder of `model/Model/` or `model/Check/` is
+caught while one in `model/.lake` is not read, that a link named `.lake`, to a
+directory, a file or nothing, is refused in `model/`, `model/Model/` and `model/Check/`,
+and that the unplanted tree passes. They plant source files in place, the `.lake` links
+in small trees of their own, and copy only `facts.json`, never `model/.lake`.
 
-The first two policies hold in `Staging/` (section 6) and in `Audit/` as well: a staged
-file or an audit lemma declares no axiom and uses none of the forbidden commands. Nothing
-there reaches the certificate, so the source scan is what enforces them:
+The first two policies hold in `Staging/` (section 6), `Audit/` and `model/` as well,
+with the model's Check allowance above. Nothing there reaches the certificate, so the
+source scan is what enforces them:
 `check_fidelity.py`'s `check_rules` reads every `.lean` file under `Elements/`,
-`Staging/` and `Audit/`, and the three roots, and refuses an `axiom` anywhere outside
-`Elements/Foundations/` and every command and attribute the list above names. It reads
+`Staging/` and `Audit/`, and the three roots, and every `.lean` file under `model/`,
+without entering the directory `model/.lake`, whose contents go unscanned; a link at
+`model/.lake` is refused like any other link, and a `.lake` folder deeper in the model is
+read like any other. It refuses an `axiom` anywhere outside
+`Elements/Foundations/` and every command and attribute the list above names, with only
+the generator `run_cmd` allowance in `model/Check.lean` and `model/Check/`.
+`MODEL_CHECK_RUN_CMD` names that allowance in the script; it exempts only `run_cmd`,
+so its arguments and any further command on the line are still scanned. Book Zero's
+import rule and the placement policy remain confined to `Elements/`. It reads
 comments and literals as Lean's tokenizer does, so a string cannot hide a command from it
 by opening a comment or ending an attribute's brackets. Beyond that it reads words, not
 Lean's grammar nor the tokens a file declares, so it catches a slip but not a command
 disguised from it on purpose, nor an attribute it does not list: review still reads every
-staged file and audit lemma. In `Elements/` the certificate reads the axioms from Lean itself as well.
+staged file, audit lemma and model file. In `Elements/` the certificate reads the axioms
+from Lean itself as well. The model's independent kernel replay, the other half of #121,
+is still open.
 The checks' own Lean, `Certificate/Facts.lean`, which writes `facts.json`, is not
 scanned: it is a protected path ([WORKFLOW.md](WORKFLOW.md), section 10), changed only
 with a decisions entry and a security review.
