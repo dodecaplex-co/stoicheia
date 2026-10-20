@@ -2354,12 +2354,15 @@ class ProtectedPaths(Edge):
         # The final review's blocking finding: a re-proof that moves an expected count
         # could land in no order. The expectations are pinned values: they change with
         # the content, origin/main's failure is noted, and the commit's own pass holds.
+        expectations = json.loads(self.text(self.EXPECT))
+        before = next(x["count"]["is"] for x in expectations["expectations"]
+                      if x["ref"] == "III.1" and x["field"] == "axioms" and "count" in x)
         self.regenerated_commit("Re-prove III.1, its expectations with it", self.reproof())
         r = self.safe_push("--dry-run")
         out = r.stdout + r.stderr
         self.assertEqual(r.returncode, 0, out)
         self.assertEqual(self.guard(out, "review records (origin/main's checks)"), "note", out)
-        self.assertIn("has 55 names beginning 'Tacit.', not 56", out)
+        self.assertIn(f"has {before - 1} names beginning 'Tacit.', not {before}", out)
         self.assertEqual(self.guard(out, "review records (the commit's checks)"), "ok", out)
         self.assertEqual(self.guard(out, "pinned values"), "note", out)
         self.assertIsNone(self.guard(out, "check change kept apart"), out)
