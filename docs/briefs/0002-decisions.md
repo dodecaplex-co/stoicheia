@@ -1823,3 +1823,18 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+
+## 20 October 2026
+
+- **The Jev scorer checks confidence in both askings
+  ([#36](https://github.com/jackChallis/stoicheia/issues/36)).** Each Jev question is asked
+  twice, the second time with its options reversed. `score` in
+  [`scripts/audit/jev.py`](../../scripts/audit/jev.py) sent an answer to adjudication when
+  its first asking had a confidence under the threshold or none, and read the reversed
+  asking only for a changed choice; it now applies the same confidence rule to the reversed
+  asking too, and says which asking fell short. The threshold stays 0.5 and exclusive. The
+  self-test gains cases for a low, a missing and a null confidence in the reversed asking,
+  a single asking, and the boundary. More answers go to adjudication, none fewer. The audit
+  of Books I and II found this while scoring, and its report, on `text/jev-audit-I-II`,
+  follows this change, as a check lands before the content it judges. The protected file
+  this change makes is `scripts/audit/jev.py`.
