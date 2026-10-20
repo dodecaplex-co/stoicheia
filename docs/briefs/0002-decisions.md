@@ -1756,9 +1756,6 @@ findings:
   way' means" called them "one step changed". It is superseded on this point and stays as
   history. [review/SCHEMA.md](../../review/SCHEMA.md) now uses III.8 as its example of a
   `modified` route: its last step compares the angles at the centre by I.24.
-||||||| bd3b72a1
-  name in a test in `scripts/test_safe_push.py`, a protected file, waits for a tooling pull
-  request of its own.
 - **The overlap screen unfolds every defined word, tries each statement bare, and has its
   cases.** Argon's second review of the Book III release (section 1.3) found that
   [`Audit/screen.py`](../../Audit/screen.py), the mechanical screen behind the
