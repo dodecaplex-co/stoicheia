@@ -1673,7 +1673,7 @@ findings:
   `not_between_of_between`, `not_on_line_of_same_side`, `same_side_trans`, `pasch2`,
   `exists_point_on_line`). Each keeps its name and exact type and becomes a theorem in four
   new Book Zero modules, which `Elements/Figure/Basics.lean` imports, so no proposition
-  file changes: `centre_inside`, `on_circle_of_len_eq`, `same_side_symm`,
+  statement or import changes: `centre_inside`, `on_circle_of_len_eq`, `same_side_symm`,
   `exists_point_same_side`, `ne_of_between`, `on_line_of_between_ends`, `pasch4`,
   `same_side_refl`, `triple_incidence1`, `pasch3`, `inside_not_on` and `eq_of_len_eq_zero`
   in [`Elements/Figure/RuleBase.lean`](../../Elements/Figure/RuleBase.lean);

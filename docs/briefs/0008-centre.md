@@ -14,8 +14,12 @@ to add one.
 after I.7 from I.7, Definition I.15 and `circle_eq`; Circle 2 is proved from Circle 3,
 which stays an axiom. The old dependency counts must be measured again. A pin excluding
 a retired name from an axiom list no longer detects calls to that theorem; any intended
-restriction on its use needs a separate check proposal. The historical readings and
-frozen statements below are preserved.
+restriction on its use needs a separate check proposal. Section 7's restated III.5 and
+III.6 still cite neither `circle_eq` nor Circle 4, but the axioms pinned for them in
+`Staging/Centre/Crossing.lean` now include `circle_eq` and Postulate 3, through proved
+rules such as `centre_inside`; where the frozen text below says they rest on neither, it
+records the state at the freeze. The historical readings and frozen statements below are
+preserved.
 
 *Frozen 18 October 2026 by the coordinator, after Astra's challenges of `afe0ee9` and
 `3f00ebf` and the Claude challenger's; decisions Q1 to Q16 as recorded in section 8.*

@@ -16,8 +16,11 @@ here is meant to be new.
 Each entry names the Lean lemma or tacit rule that fills the gap. A few of System E's
 rules for circles do most of the work, and we name them once here. A circle's centre is
 within it (`centre_inside`, Generalities 3), now proved in Book Zero's `RuleBase.lean`
-from Circle 1, Definition I.15, circle crossings and length addition: a centre outside
-would have unequal radii. That it has only one centre
+from Circle 1, Definition I.15, Postulates 1 and 3, circle crossings, length addition and
+the rule that one centre and one radius make one circle (`circle_eq`, Diagram-segment 2):
+a centre outside would have unequal radii, which needs every radius to be something, and
+Postulate 3 and Diagram-segment 2 show that it is (`RuleProofs.Circle.radius_ne_zero` and
+`length_pos`). That it has only one centre
 (`centre_unique`, Generalities 2) is now proved in Book Zero's `Circles.lean`:
 two supposed centres bisect the same straight line through the circle by Definition I.15,
 and equal doubles have equal halves. A point within a circle, on a straight line that
