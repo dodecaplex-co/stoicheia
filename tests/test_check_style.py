@@ -986,6 +986,18 @@ class Modern(unittest.TestCase):
             ("0 0 400 300", MODERN_GOOD.replace('font-size="17"',
                                                'font-size="17..0"'), "S25", "font-size"),
         ]
+        for value in ("rotate(1e999)", "rotate(nan)", "rotate(.)", "rotate(17..0)",
+                      "rotate(1, 2)", "translate(1,)", "scale(1e308) scale(1e308)",
+                      "rotate(1) rubbish", "unknown(1)"):
+            cases.append(("0 0 400 300",
+                          MODERN_GOOD.replace(">A<", f' transform="{value}">A<'),
+                          "S24", "transform"))
+        for attribute in ("x", "y", "fill-opacity"):
+            for value in ("1e999", ".", "17..0"):
+                cases.append(("0 0 400 300",
+                              MODERN_GOOD.replace(">A<", f' {attribute}="{value}">A<')
+                              .replace('x="50" ', '').replace('y="270"', ''),
+                              "S24", attribute))
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             figures = root / "figures" / "I"
@@ -1014,6 +1026,99 @@ class Modern(unittest.TestCase):
                     self.assertTrue(any(r == "S25" and path == following
                                         and "x is no name" in message
                                         for r, path, _, message in findings), findings)
+
+    def check_refused_modern(self, inside=MODERN_GOOD, paragraph=MODERN_PARAGRAPH,
+                            prefix=""):
+        """Read two real files, keeping the following figure's independent finding."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            figures = root / "figures" / "I"
+            figures.mkdir(parents=True)
+            mishnah = root / "mishnah" / "I"
+            mishnah.mkdir(parents=True)
+            first, following = (figures / f"{n}-modern.svg" for n in ("47", "48"))
+            for n, body, words in (("47", inside, paragraph),
+                                    ("48", MODERN_GOOD.replace("I.47", "I.48")
+                                     .replace(">c<", ">x<"), MODERN_PARAGRAPH)):
+                (mishnah / f"{n}.md").write_text(words)
+                (figures / f"{n}-modern.svg").write_text(
+                    (prefix if n == "47" else "")
+                    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">'
+                    + body + "</svg>")
+            with patch.object(style, "ROOT", root), \
+                    patch.object(style, "drawn_letters", return_value=HEATHS), \
+                    patch.object(style, "fail") as fail:
+                style.check_modern(first, "I.47")
+                style.check_modern(following, "I.48")
+            findings = [call.args for call in fail.call_args_list]
+            self.assertTrue(any(r == "S25" and path == following and "x is no name" in message
+                                for r, path, _, message in findings), findings)
+            return [(r, message) for r, path, _, message in findings if path == first]
+
+    def test_unsupported_svg_presentation_is_refused(self):
+        cases = [
+            (MODERN_GOOD + '<style>text { fill: #ff0000; font-size: 100px; '
+             'font-style: italic; stroke-width: 50px; }</style>', "", "<style>"),
+            (MODERN_GOOD, '<?xml-stylesheet href="figure.css" type="text/css"?>', "stylesheet"),
+            (MODERN_GOOD.replace(">A<", ' style="@import url(figure.css)">A<'), "", "@import"),
+            (MODERN_GOOD.replace(">A<", ' style="font: italic 32px serif">A<'), "", "font"),
+            (MODERN_GOOD.replace(">A<", ' style="letter-spacing: 30px">A<'), "", "letter-spacing"),
+            (MODERN_GOOD.replace(">A<", ' style="font-size 32px">A<'), "", "style"),
+            (MODERN_GOOD.replace(">A<", '><a font-size="100" font-style="italic">A</a><'),
+             "", "<a>"),
+            (MODERN_GOOD.replace(">A<", '><textPath href="#guide" font-size="9" '
+             'font-style="italic">A</textPath><')
+             + '<path id="guide" d="M 50 270 L 300 270" fill="none"/>', "", "<textPath>"),
+        ]
+        for inside, prefix, message in cases:
+            with self.subTest(message=message):
+                findings = self.check_refused_modern(inside, prefix=prefix)
+                self.assertTrue(any(r == "S24" and message in m for r, m in findings), findings)
+        supported = MODERN_GOOD.replace(">A<", ' style="font-size: 17px; fill: #3b2f2f">A<')
+        self.assertEqual(modern_rules(supported, "I.47"), set())
+
+    def test_mixed_indentation_keeps_columns_and_offsets(self):
+        paragraph = MW + "Put $b$ here."
+        for indent in (" \t", "  \t", "   \t", "\t ", " \t "):
+            for before in ("", "Before.\n\n"):
+                with self.subTest(indent=indent, before=before):
+                    text = before + indent + paragraph
+                    self.assertIsNone(style.modern_span(text))
+                    self.assertIsNone(style.modern_paragraph(text))
+                    self.assertIn("S24", {r for r, _ in self.check_refused_modern(paragraph=text)})
+            text = "Before.\n\n  " + paragraph + "\n" + indent + "With $c$ there."
+            self.assertEqual(style.modern_span(text), (len("Before.\n\n  "), len(text)))
+            self.assertEqual(style.modern_names(style.modern_paragraph(text)), {"b", "c"})
+
+    def test_inline_html_and_reference_syntax_are_refused(self):
+        for inline in ("e<span>x</span>ponent", "si<!-- notation -->n",
+                       '<span data-note="x">the side</span>', "[the side][x]",
+                       "[x][]", "[x]"):
+            with self.subTest(inline=inline):
+                findings = self.check_refused_modern(paragraph=MW + "Put $b$ in " + inline + ".")
+                self.assertTrue(any(r == "S25" and "unsupported" in m for r, m in findings),
+                                findings)
+        for definition in ("[x]: /reference\n", "[x]:\n /reference\n",
+                           "[x]:\n\t/reference\n"):
+            for before in (True, False):
+                paragraph = MW + "Put $b$ on [the side][x]."
+                text = definition + paragraph if before else paragraph + "\n\n" + definition
+                with self.subTest(definition=definition, before=before):
+                    findings = self.check_refused_modern(paragraph=text)
+                    self.assertTrue(any(r == "S25" and "reference definition" in m
+                                        for r, m in findings), findings)
+                    self.assertNotIn("S24", {r for r, _ in findings})
+        for inline in ("[the side](/reference)", "`<span>`", "`<!-- notation -->`"):
+            self.assertEqual(self.check_refused_modern(paragraph=MODERN_PARAGRAPH + " " + inline),
+                             [])
+
+    def test_checker_errors_are_not_input_findings(self):
+        with patch.object(style, "modern_findings", side_effect=ValueError("checker defect")):
+            with self.assertRaisesRegex(ValueError, "checker defect"):
+                self.check_refused_modern()
+        with patch.object(style, "transform_of", side_effect=ValueError("checker defect")):
+            with self.assertRaisesRegex(ValueError, "checker defect"):
+                self.check_refused_modern(MODERN_GOOD.replace(">A<", ' transform="rotate(1)">A<'))
 
     def test_text_strokes(self):
         for inherited in (False, True):

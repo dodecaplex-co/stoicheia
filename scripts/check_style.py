@@ -1174,7 +1174,8 @@ def markdown_blocks(text: str, *, indented_code: bool = True,
         if consumed:
             continue
 
-        indented = body.startswith("    ") or body.startswith("\t")
+        leading = body[:len(body) - len(body.lstrip(" \t"))]
+        indented = len(leading.expandtabs(4)) >= 4
         if indented_code and body.strip() and indented and not (chars and container == own):
             flush()
             fences.append((line_start, line_end))
@@ -2371,8 +2372,12 @@ def style_of(el) -> dict[str, str]:
 
 def walk(el, inherited=None):
     """(element, its own attributes, its effective inherited ones) for the whole tree."""
-    for el, own, eff, _, _ in placed(el, IDENTITY, inherited):
-        yield el, own, eff
+    own = style_of(el)
+    eff = dict(inherited or {})
+    eff.update({k: own[k] for k in INHERITED if k in own})
+    yield el, own, eff
+    for child in el:
+        yield from walk(child, eff)
 
 
 def placed(el, m=IDENTITY, inherited=None, exempt=None):
@@ -2988,6 +2993,37 @@ def modern_paragraph(text: str) -> str | None:
                       reference_labels=document_reference_labels(text), inline_html=True)
 
 
+def modern_markup_findings(text: str) -> list[str]:
+    """Refuse unsupported markup before it can supply names to a modern figure."""
+    blocks = markdown_blocks(text, raw_html=True).inline
+    span = modern_span(text)
+    # A leading multiline reference definition can hide the paragraph from modern_span.
+    # Refuse its syntax here without trying to resolve its destination.
+    if span is None and not any(
+            block.paragraph and any(line.lstrip(" \t").startswith(MODERN_WAY)
+                                    for line in block.text.splitlines())
+            for block in blocks):
+        return []
+    found = []
+    if any(REFERENCE_LABEL.match(line) for block in blocks if block.references
+           for line in block.text.splitlines()):
+        found.append("unsupported reference definition beside the modern paragraph")
+    if span is None:
+        return found
+    source = text[span[0]:span[1]]
+    syntax = markdown_syntax(source, indented_code=False, inline_html=True)
+    visible = blank_ranges(source, [(s.start, s.end) for s in syntax.spans])
+    if syntax.comments or any(backslashes_before(visible, m.start()) % 2 == 0
+                              for m in INLINE_HTML_TAG.finditer(visible)):
+        found.append("unsupported inline HTML tag or comment in the modern paragraph")
+    # Inline links are supported; any remaining bracketed label could be a reference.
+    links = link_destination_ranges(visible, references=False)
+    visible = blank_ranges(visible, [(link.label, link.end) for link in links])
+    if re.search(r"(?<!\\)\[[^\]\n]*\]", visible):
+        found.append("unsupported reference-style link in the modern paragraph")
+    return found
+
+
 def modern_names(paragraph: str) -> set[str]:
     """The names a modern-way paragraph uses: each lower-case Latin or Greek letter of a
     $…$ span, its commands taken out (\\vec, \\frac, \\sin) and its Greek ones read as
@@ -3029,6 +3065,32 @@ def modern_number(value: str | None, *, pixels: bool = False) -> float | None:
     return result if math.isfinite(result) else None
 
 
+def modern_transform(value: str) -> bool:
+    """Whether a supported transform parses completely to a finite affine map."""
+    counts = {"translate": {1, 2}, "scale": {1, 2}, "rotate": {1, 3},
+              "skewX": {1}, "skewY": {1}, "matrix": {6}}
+    end = 0
+    for match in re.finditer(r"([A-Za-z]+)\s*\(([^()]*)\)", value):
+        gap = value[end:match.start()]
+        if not re.fullmatch(r"\s*" if end == 0 else r"\s*,?\s*", gap):
+            return False
+        args = re.split(r"\s*,\s*|\s+", match.group(2).strip())
+        if (len(args) not in counts.get(match.group(1), set())
+                or any(modern_number(arg) is None for arg in args)):
+            return False
+        end = match.end()
+    if not end or value[end:].strip():
+        return False
+    return all(math.isfinite(n) for n in transform_of(value))
+
+
+# Only declarations whose effect S24 or S25 reads are accepted in an inline style.
+MODERN_STYLE = set(COLOUR_ATTRS) | {"stroke-width", "font-size", "font-style"}
+MODERN_NUMBERS = {"x", "y", "x1", "x2", "y1", "y2", "cx", "cy", "r", "rx", "ry",
+                  "width", "height", "fill-opacity", "stroke-opacity", "opacity",
+                  "markerWidth", "markerHeight", "refX", "refY"}
+
+
 def modern_findings(root, ref: str, heaths: set[str] | None,
                     names: set[str] | None) -> list[tuple[str, str]]:
     """(rule, message) for each fault of a modern figure (S24, S25), given the letters its
@@ -3057,6 +3119,24 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
     bad = defaultdict(int)
     for el, own, eff in walk(root):
         t = tag(el)
+        if t in {"style", "textPath"}:
+            found.append(("S24", f"unsupported <{t}> in a modern figure"))
+        if t == "text":
+            for child in el:
+                found.append(("S24", f"unsupported <{tag(child)}> child of <text>: "
+                              "use plain text"))
+        for declaration in el.get("style", "").split(";"):
+            if not declaration.strip():
+                continue
+            key, colon, value = declaration.partition(":")
+            if not colon or key.strip() not in MODERN_STYLE or not value.strip():
+                found.append(("S24", f"unsupported style declaration {declaration!r} on <{t}>"))
+        if "transform" in own and not modern_transform(own["transform"]):
+            found.append(("S24", f"malformed or overflowing transform {own['transform']!r} "
+                          f"on <{t}>"))
+        for key in MODERN_NUMBERS & own.keys():
+            if modern_number(own[key], pixels=True) is None:
+                found.append(("S24", f"malformed {key} {own[key]!r} on <{t}>"))
         for k in COLOUR_ATTRS:
             v = own.get(k)
             if v is not None and v.lower() != "none" and v.lower() not in EUCLID_COLOURS:
@@ -3119,15 +3199,26 @@ def check_modern(path: Path, ref: str) -> None:
     root = svg_root(path)
     if root is None:
         return
+    # ElementTree drops processing instructions, including those before the root.
+    source = path.read_text(encoding="utf-8")
+    for pattern, what in ((r"<\?xml-stylesheet\b", "stylesheet reference"),
+                          (r"@import\b", "@import")):
+        if re.search(pattern, source, re.I):
+            fail("S24", path, 0, f"unsupported {what} in a modern figure")
     book, n = ref.split(".")
     heaths = drawn_letters(path.with_name(f"{int(n):02d}.svg"))
     mishnah = ROOT / "mishnah" / book / f"{int(n):02d}.md"
-    para = modern_paragraph(mishnah.read_text(encoding="utf-8")) if mishnah.exists() else None
+    raw = mishnah.read_text(encoding="utf-8") if mishnah.exists() else ""
+    markup = modern_markup_findings(raw)
+    for message in markup:
+        fail("S25", path, 0, f"mishnah/{book}/{int(n):02d}.md: {message}")
+    # Refused markup supplies no names, and is not a claim that the paragraph is absent.
+    para = modern_paragraph(raw) if not markup else None
+    names = set() if markup else modern_names(para) if para is not None else None
     title = root.find(f"{SVG}title")
     if title is not None:
         caption_text_rules(path, title, "title")
-    for rule, message in modern_findings(root, ref, heaths,
-                                         modern_names(para) if para is not None else None):
+    for rule, message in modern_findings(root, ref, heaths, names):
         fail(rule, path, 0, message)
 
 
