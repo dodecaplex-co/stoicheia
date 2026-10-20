@@ -202,8 +202,8 @@ list by a revision of this brief.
 
 ### A restricted derivation judgement, with no construction steps
 
-`Derives cites Γ ℓ` is an inductive judgement: the literal `ℓ` follows from the literals `Γ`,
-all over the same symbols, by two kinds of rule.
+`Derives cites Γ ℓ` is an inductive judgement with seventeen constructors: the literal
+`ℓ` follows from the literals `Γ`, all over the same symbols, by two kinds of rule.
 
 - **Logic.** Point equality has reflexivity and symmetry rules, but no transitivity rule
   in `Derives`. Equality of lengths, angles and triangles has all three. Common Notion 4
@@ -399,15 +399,31 @@ The earlier certificate counted the congruence constructors themselves. Since
 `Derives.map` rebuilds every constructor, that also counted C.N. 4 for any proof reaching
 renaming, even one taking no congruence step. The tooling correction in
 `Certificate/Facts.lean` counts `Elements.Superposition.Coincidence.step` instead.
-I.4 names it at five congruence steps and I.8 at two. The expected affected entries are
-I.4 and I.8 and their dependents, 116 of the 122 entries after the main merge, including
-I.47's general companion; merely reaching `Derives.map` or `Derives.sound` supplies no
-marker. All 121 common-notion lists at the earlier revision matched `39ae65c`
-before this correction; the corrected certificate must be checked after integration
-and regeneration. No dummy citation was added.
-Thirteen new expectations pin direct use, I.7 in I.8, I.23's construction and inherited
-dependency, the six unaffected entries and C.N. 4 in I.4; all eleven previous expectations
-are retained unchanged.
+I.4 names it at five congruence steps and I.8 at two. After integration with the tooling
+on 20 October, 116 of the 122 entries reach the calculus and its marker, including
+I.47's general companion. No real entry reaches the calculus without taking or inheriting
+a congruence step, so no Common Notion list changes. Merely reaching `Derives.map` or
+`Derives.sound` supplies no marker; the fixture tests cover that case. All 121
+common-notion lists at the earlier revision matched `39ae65c`; all 122 lists at this
+integration match the preceding branch revision. No dummy citation was added.
+
+The regenerated lists for I.4, I.8, I.23 and the six entries not resting on the rule are:
+
+| Entry | Common Notions |
+|---|---|
+| I.4 | C.N. 4, C.N. 5 |
+| I.8 | C.N. 1, C.N. 3, C.N. 4, C.N. 5 |
+| I.23 | C.N. 1, C.N. 2, C.N. 3, C.N. 4, C.N. 5 |
+| I.1 | C.N. 1, C.N. 5 |
+| I.2 | C.N. 1, C.N. 3, C.N. 5 |
+| I.3 | C.N. 1, C.N. 3, C.N. 5 |
+| I.22 | C.N. 1, C.N. 3, C.N. 5 |
+| III.5 | C.N. 5 |
+| III.6 | C.N. 5 |
+
+Fourteen new expectations pin direct use, I.7 in I.8, I.23's construction and inherited
+dependency, the six unaffected entries and C.N. 4 in both I.4 and I.8. All eleven
+expectations from before the replacement are retained unchanged, making 25 in all.
 
 ## The restriction theorem
 
@@ -496,8 +512,10 @@ The assembled `model_exists : ∃ S : Signature, Laws S` remains unconditional, 
 87 laws proved; its audited closure is `propext`, `Classical.choice` and `Quot.sound`.
 
 **Import boundary and regressions.** `Model` may import from `Elements` exactly the four
-pure calculus modules named above, including transitive imports. `model/Model/Audit.lean`
-checks that boundary and retains the sentinel that `Elements.Point` is unknown, as well as
+pure calculus modules named above, including transitive imports.
+`Check.Generator.checkModelImports`, called from `model/Check/RoundTrip.lean`, checks
+that boundary for every Model source and the four pure modules.
+`model/Model/Audit.lean` retains the sentinel that `Elements.Point` is unknown, as well as
 every existing axiom-closure pin. The generator retains its six original planted faults;
 new cases reject a changed guard, swapped interpretation fields, a declaration in the
 shared namespace from an unapproved module, a geometric dependency in a pure definition,
@@ -547,8 +565,9 @@ our reading that I.7 may be cited although its proof constructs. `mishnah/I/23.m
 I.22's constructed points and I.8's angle equality distinct, and explains the inherited
 rule through I.8 and I.20. I.44's comment describes its existing construction of the
 parallelogram. The six records for I.2, I.3, I.4, I.8, I.23 and I.44 have been read and
-stamped independently; all retain full coverage and Euclid's route. Generated pages are
-the integrator's and must be regenerated from these sources.
+stamped independently; all retain full coverage and Euclid's route. The marker change
+subsequently made I.4's and I.8's records stale; they await a fresh review and stamp.
+The pages were regenerated from the integrated sources on 20 October.
 
 ## Evidence before landing
 
@@ -636,8 +655,14 @@ construction shortcuts, and proves the restated law in the formal model. At `aa9
 the regenerated lock kept 87 axioms and grew its vocabulary from 91 to 206, adding
 115 words and removing none. The certificate, model laws and both lock hashes were
 regenerated at that revision.
-The coincidence marker added on 20 October changes the locked vocabulary; those generated
-files and the pages must be regenerated later from the integrated sources.
+At the integration on 20 October, the lock still holds all 87 axiom statements unchanged
+and its vocabulary grows from 206 to 208. The added words are
+`Superposition.Coincidence` and `Superposition.Coincidence.step`; the changed words are
+`Superposition.Derives.len_congr`, `Superposition.Derives.angle_congr` and
+`Superposition.Derives.area_congr`, each gaining the explicit marker argument. No word
+is removed, and no other locked word changes. The lock, both hashes, the model's three
+generated files and the edition were regenerated from these integrated sources.
+The certificate has 99 propositions, 3 porisms and 20 companions, 122 entries in all.
 
 It does not prove equivalence with System E's two-rule presentation, or non-derivability of
 placement in the whole theory. Part 4 of the restriction remains chiefly an inspection of

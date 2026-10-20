@@ -146,6 +146,12 @@
       "field": "common_notions",
       "includes": ["C.N. 4"],
       "why": "I.4's len_congr, angle_congr and area_congr derivation steps express Common Notion 4, including the base equality under Heath's reference (#75)."
+    },
+    {
+      "ref": "I.8",
+      "field": "common_notions",
+      "includes": ["C.N. 4"],
+      "why": "I.8 supplies Coincidence.step at its length and angle congruence steps; its certificate must retain Common Notion 4 under the restricted rule (#75)."
     }
   ]
 }
