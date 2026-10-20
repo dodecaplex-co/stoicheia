@@ -1650,6 +1650,36 @@ findings:
   table now say so and link it. Wording only: no field, rule or check of the schema changes.
   This entry names the protected file `review/SCHEMA.md`.
 
+- **Planted faults for the remaining checks.** `scripts/negative_tests.py` now plants an
+  em dash in I.1's mishnah, caught by S1 with the file named; a relative link to a
+  missing page, caught with the source and target named; a generated I.1 page stale
+  beside a changed mishnah, caught by the page's Git status line after rendering; and
+  an axiom omitted from an audit lemma's expected list, caught by `#guard_msgs` in
+  `lake build Audit`. The freshness test changes the source as well: editing only the
+  page would let the renderer restore the committed text and leave Git status clean.
+  A corrupt header in I.1's compiled file makes leanchecker itself name the file and
+  report its invalid header, using the invocation in `scripts/check_kernel.py`.
+  This tests the loading of compiled files; no invalid proof term is planted for the
+  kernel replay. Each new plant restores its inputs in `finally`, and the freshness
+  test saves every renderer output. Before each plant that builds, every file under
+  `.lake/build` is saved, including companion outputs, dependent modules, hashes and
+  traces. A restoration build is attempted; if it fails or is interrupted, the saved
+  files return with their original bytes and newly created files are removed. After
+  I.1's successful rebuild, leanchecker replays the restored environment. The
+  assumptions test restores or removes its temporary module's outputs in a nested
+  `finally`, even when the restoration build is interrupted. Each new plant reports
+  its time, restoration included. An outer `finally` compares the final Git status
+  with the entry status, even on interruption, preserving an exception already in
+  flight if that comparison also fails. Restoration needs writable files and time
+  for `finally` to finish; a forced process kill cannot provide it.
+  `tests/test_negative_tests.py` tests failed and interrupted builds, saved and absent
+  outputs, temporary-module cleanup, replay after a successful rebuild and the final
+  status comparison in temporary directories, without Lean or Git. The script runs
+  these regressions before planting. Its docstring states the coverage and its limits;
+  the README table update is deferred to a later pull request after this check change.
+  The protected files changed are `scripts/negative_tests.py` and
+  `tests/test_negative_tests.py`. No check is loosened.
+
 - **The merge commit names the owner GitHub names
   ([#41](https://github.com/jackChallis/stoicheia/issues/41)).** `git safe-push --merge`
   gives the merge commit GitHub's own subject, "Merge pull request #N from owner/branch",
@@ -1696,7 +1726,6 @@ findings:
   GitHub to give any answer a test needs, and six new tests, each failing before the
   change), with
   [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
-
 - **III.37 leaves the grouped-case example.** The example in the `uncarried_runs` docstring
   of [scripts/check_fidelity.py](../../scripts/check_fidelity.py) drops III.37, whose case
   with the centre on AC gets a proof of its own, `Prop37.centre_on_secant`, on ship R1's
