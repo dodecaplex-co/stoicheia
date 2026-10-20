@@ -2,7 +2,7 @@
 [statement]
 scope = "full"
 note = "Given a circle and two of its points A, B, constructs D, C, E and F as Euclid does and proves that F is its centre; the porism keeps its given centre."
-fingerprint = "sha256:60cc6db69c4d4310"
+fingerprint = "sha256:7d6a58eb751858ff"
 
 [route]
 kind = "euclid"
@@ -52,6 +52,6 @@ case = "AB not through F, with the supposed centre G off CE in the reductio"
 
 [review]
 stage = "exceptions"
-commit = "bb1589c5"
+commit = "17987153"
 reviewer = "GPT-6 Astra (Codex), independent reader"
-lean = "sha256:01e4cde2b50cd281"
+lean = "sha256:c0c6a4f3070bece9"

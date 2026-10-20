@@ -1,13 +1,13 @@
 [statement]
 scope = "full"
 note = "Both pairs of opposite angles of ABCD make two right angles."
-fingerprint = "sha256:f130cda3e818298f"
+fingerprint = "sha256:ef0c1e70ee18e3b1"
 
 [route]
 kind = "euclid"
 
 [review]
 stage = "exceptions"
-commit = "66e9871"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:dc1d6ed07bb83103"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:6e648f85a153eb0a"

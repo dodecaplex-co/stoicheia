@@ -2,7 +2,7 @@
 [statement]
 scope = "full"
 note = "Every point strictly between two points of the circle is within it, AB through the centre included, which Euclid's figure leaves aside."
-fingerprint = "sha256:58a8fb1c86c1c4a0"
+fingerprint = "sha256:a05b6db601f15015"
 
 [route]
 kind = "euclid"
@@ -28,6 +28,6 @@ note = "Like Heath's, this figure draws the impossible supposition: the straight
 
 [review]
 stage = "exceptions"
-commit = "16243feef5f36514fd2c21c634be60443965808b"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:0f14d525b38befe4"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:833e3b1cd507afbf"

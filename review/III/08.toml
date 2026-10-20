@@ -3,7 +3,7 @@
 scope = "full"
 note = "Concave and convex orders stay separate. `Prop8.general` compares either side of DA; `Prop8` keeps one side. The last clause includes contact."
 companions = ["III.8 general"]
-fingerprint = "sha256:407ebb1e80f5d884"
+fingerprint = "sha256:a9259e6b54eb5360"
 
 [route]
 kind = "modified"
@@ -44,6 +44,6 @@ case = "DE, DF, DC and DK, DL, DH compared on one side of DA, as in Heath's figu
 
 [review]
 stage = "exceptions"
-commit = "16243feef5f36514fd2c21c634be60443965808b"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:24d4c4db2aba8cee"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:4f1dea9a8e1ffdea"

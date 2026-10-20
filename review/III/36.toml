@@ -1,7 +1,7 @@
 [statement]
 scope = "full"
 note = "The rectangle AD, DC is equal to the square on the tangent DB, whether or not DCA passes through the centre."
-fingerprint = "sha256:cbb9532a09c29817"
+fingerprint = "sha256:7af5806c7b62458d"
 
 [route]
 kind = "euclid"
@@ -9,6 +9,6 @@ note = "In each case the proof takes the centre from the rule where Euclid takes
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:35e8fdec862fbd29"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:c7b29f4f6f758223"

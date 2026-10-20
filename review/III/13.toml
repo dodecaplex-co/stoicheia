@@ -2,7 +2,7 @@
 [statement]
 scope = "full"
 note = "Circles touching within, either inside the other, or touching without, have no common point but the point of contact."
-fingerprint = "sha256:d8295ba59c1312b2"
+fingerprint = "sha256:103b3c1a26cf5fff"
 
 [route]
 kind = "euclid"
@@ -16,6 +16,6 @@ note = "Like Heath's, this figure draws both impossible suppositions: EBFD touch
 
 [review]
 stage = "exceptions"
-commit = "e707d55"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:7c02d4cfded9019e"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:947ea3ed47e6ee68"

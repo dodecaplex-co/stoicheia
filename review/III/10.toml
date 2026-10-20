@@ -2,7 +2,7 @@
 [statement]
 scope = "full"
 note = "Stated positively: two circles with three points in common are one circle, whether they cut or only meet."
-fingerprint = "sha256:c4eb7ec3551eb8f4"
+fingerprint = "sha256:83db90002176516a"
 
 [route]
 kind = "modified"
@@ -27,6 +27,6 @@ note = "Like Heath's, this figure draws the impossible supposition: DEF meeting 
 
 [review]
 stage = "exceptions"
-commit = "e707d55"
-reviewer = "Claude Opus 5.5"
-lean = "sha256:ca985a775f3743d1"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
+lean = "sha256:7e401349dd96268a"

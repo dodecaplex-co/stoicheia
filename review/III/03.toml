@@ -14,6 +14,6 @@ note = "The centre E is given, as Euclid's setting-out takes it. FE represents h
 
 [review]
 stage = "exceptions"
-commit = "dcb1767"
-reviewer = "Claude Opus 5.5"
+commit = "17987153"
+reviewer = "GPT-6 Astra (Codex), independent reader"
 lean = "sha256:dbe127860e3c138b"
