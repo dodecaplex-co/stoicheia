@@ -2045,25 +2045,30 @@ findings:
   that cannot be trusted. A pull request labelled `release` is refused while any issue
   or pull request labelled `blocks-release` is open; ordinary pull requests make no
   read of that list.
-  The raw text must have exactly one "Unfinished work" heading in `## ` form, counting
-  even headings in comments or code, followed by "None" or a plain list with a separate
-  `#N` per item, wrapped lines allowed as WORKFLOW specifies, and no links, URLs, code or
-  HTML apart from complete comments. Malformed pull request labels refuse; both the merge
-  gate and pre-flight watcher ignore a stale `release-gate` job from "Release gate" only
-  when readable labels establish an ordinary pull request.
-  Label comparisons ignore case, and each named issue is bound to this repository by
-  its canonical API URL, so a rename is allowed but a transfer elsewhere is refused.
+  Three rounds of independent review found ways for a renderer to show what a parser of
+  the section did not read, so the section is read as raw text: the one line
+  `## Unfinished work`, no other line that reads as that heading, and, apart from the
+  template's own comment, plain ASCII with no markup, "None" or a list naming each
+  issue as `#N` (WORKFLOW, section 10, step 4). Malformed pull request labels refuse;
+  label comparisons ignore case; each named issue is bound to this repository by its
+  canonical address, so a rename is allowed and a transfer is not; the merge gate and
+  the pre-flight's CI watcher leave out a `release-gate` run left from an earlier
+  `release` label on an ordinary pull request. The gate checks what the section says;
+  it cannot know what was left out of it, so a "None" that should have named an issue
+  remains for the reviews to find.
   `scripts/check_release_gate.py` makes the same release check, with an offline JSON
   mode for its tests, and the separate `release-gate` CI job shows the hold on a release
-  pull request. That job is skipped on ordinary pull requests and checks out main's copy
-  at the base commit; the merge gate reads the issues again and remains the authority.
+  pull request. That job is skipped on ordinary pull requests and runs main's copy of
+  the script, though GitHub reads the workflow file itself from the pull request; the
+  merge gate reads the issues again and is the authority, and the owner runs the script
+  once more just before a tag.
   Both readers follow every page and fail closed on unreadable data. The offline tests
   in `tests/test_release_gate.py` run in CI's `check` job and safe_push's check sequence,
   immediately after `tests/test_check_style.py`, with no Lean or network; the full
   `scripts/test_safe_push.py` harness tests the merges and refusals locally through its gh
-  stand-in. Its source clone copies Git's objects without hard links, so a sandbox that
-  permits reading the repository can run it, with all writes confined to the temporary
-  clone. No planted fault is added to `negative_tests.py`: these gates judge pull request
+  stand-in; its source clone copies Git's objects without hard links, so a sandbox that
+  may read the repository can run it, and its renderer case reads `docs/program.toml`'s
+  first released stage instead of pinning words main has since changed. No planted fault is added to `negative_tests.py`: these gates judge pull request
   text and issue state, which the offline fixtures and gh stand-in supply, rather than a
   break in the edition's files. The protected files changed are:
   `.github/pull_request_template.md`,

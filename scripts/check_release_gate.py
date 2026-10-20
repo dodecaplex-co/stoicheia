@@ -24,7 +24,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from safe_push import BLOCKS_RELEASE, github_slug, issue_pages, open_blockers
+from safe_push import BLOCKS_RELEASE, github_slug, issue_pages, open_blockers, printable_text
 
 
 def repo_slug(value: str | None) -> str:
@@ -135,8 +135,8 @@ def main(argv=None) -> int:
         return 2
     if blockers:
         for issue in blockers:
-            print(f"#{issue['number']}: {issue['title']} "
-                  f"({issue.get('html_url') or issue['url']})")
+            print(f"#{issue['number']}: {printable_text(issue['title'])} "
+                  f"({printable_text(issue.get('html_url') or issue['url'])})")
         return 1
     print("no open blocks-release issue")
     return 0

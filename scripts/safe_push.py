@@ -154,6 +154,7 @@ import binascii
 import contextlib
 import datetime
 import hashlib
+import html
 import json
 import math
 import os
@@ -165,6 +166,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import unicodedata
 from pathlib import Path
 from typing import NamedTuple
 
@@ -2859,7 +2861,8 @@ def pr_checks(ctx: Context, number: int) -> list[dict]:
 
 def watch_checks(ctx: Context, pr: PR, rep: Report, labels: set[str]) -> str:
     """Wait for the pull request's checks on the commit and follow them; return the
-    verdict."""
+    verdict, judged as the merge judges it (judged_checks): on an ordinary pull request
+    a release-gate run left from an earlier label is waited for, never counted."""
     rep.heading("CI")
     t = time.time()
     checks: list[dict] = []
@@ -2873,19 +2876,9 @@ def watch_checks(ctx: Context, pr: PR, rep: Report, labels: set[str]) -> str:
                 f"{CI_APPEAR_TIMEOUT} s: `gh pr checks {pr.number}`")
         return "unknown"
     print(f"  following the checks of #{pr.number}: {pr.url}", flush=True)
-    while True:
-        timed_out = False
-        try:
-            # gh watches all jobs. Recheck our selection every interval so a stale
-            # release job can delay an ordinary pull request by at most 30 seconds.
-            subprocess.run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
-                            CI_WATCH_INTERVAL, "-R", ctx.github], cwd=ctx.repo,
-                           timeout=float(CI_WATCH_INTERVAL))
-        except subprocess.TimeoutExpired:
-            timed_out = True
-        verdict, detail = judge_checks(judged_checks(pr_checks(ctx, pr.number), labels))
-        if not timed_out or verdict != "pending":
-            break
+    subprocess.run([*ctx.gh, "pr", "checks", str(pr.number), "--watch", "--interval",
+                    CI_WATCH_INTERVAL, "-R", ctx.github], cwd=ctx.repo)
+    verdict, detail = judge_checks(judged_checks(pr_checks(ctx, pr.number), labels))
     rep.add("6", "CI", "ok" if verdict == "success" else "FAIL", f"{verdict}: {detail}",
             time.time() - t)
     return verdict
@@ -3191,62 +3184,98 @@ def section_problems(body: str, template: str | None, protected: bool) -> list[s
     return problems
 
 
-RAW_ATX = re.compile(r" {0,3}(#{1,6})(?:[ \t]+(.*)|[ \t]*)")
-RAW_SETEXT = re.compile(r" {0,3}(?:=+|-+) *")
-ISSUE_REF = re.compile(r"\(?#([1-9][0-9]*)[).,;:]*")
+# "Unfinished work" is read as raw text, never through `shown`: whatever GitHub might hide
+# or show differently is refused, so that what the gate reads is what a reader sees. The
+# one heading is this line exactly; the section runs to the next of the template's own
+# headings; only the template's own comment for it may stay, and nothing else but plain
+# ASCII: "None", or a list whose items each name an issue as #N.
+UNFINISHED_HEADING = "## Unfinished work"
+# A token naming an issue: #N, perhaps in parentheses or before punctuation.
+ISSUE_TOKEN = re.compile(r"\(?#([1-9][0-9]*)[).,;:]*")
+# Characters GitHub reads as markup, or as a break or nothing, refused in the section.
+UNFINISHED_FORBIDDEN = (("`", "a backtick (code)"), ("<", "HTML or a comment"),
+                        (">", "HTML or a block quote"), ("[", "a bracket (link)"),
+                        ("]", "a bracket (link)"), ("~", "a tilde"), ("|", "a pipe"),
+                        ("\\", "a backslash escape"), ("://", "a URL"),
+                        ("www.", "a URL"), ("&", "an entity"))
 
 
-def unfinished_headings(lines: list[str]) -> list[tuple[int, bool]]:
-    """Count all candidate headings in raw text, including comments and code.
-    The boolean says whether the candidate uses the required ATX ## form."""
-    found = []
-    for i, line in enumerate(lines):
-        heading = RAW_ATX.fullmatch(line)
-        if heading:
-            text = re.sub(r"[ \t]+#+[ \t]*$", "", heading[2] or "")
-            if " ".join(text.split()).lower() == "unfinished work":
-                found.append((i, heading[1] == "##" and line.lstrip(" ").startswith("## ")))
-        if " ".join(line.split()).lower() == "unfinished work" and i + 1 < len(lines) \
-                and RAW_SETEXT.fullmatch(lines[i + 1]):
-            found.append((i, False))
-    return found
+def raw_lines(text: str) -> list[str]:
+    """Lines as CommonMark breaks them, at a line feed (a carriage return before it
+    dropped), never at the other separators str.splitlines knows; a carriage return or
+    separator left inside a line is refused by the callers."""
+    return [line[:-1] if line.endswith("\r") else line for line in text.split("\n")]
 
 
-def unfinished_section(body: str) -> tuple[str, list[str]]:
-    """Extract the raw section, refusing ambiguous headings before removing anything."""
-    lines = body.splitlines()
-    headings = unfinished_headings(lines)
-    if len(headings) != 1 or not headings[0][1]:
-        return "", ["the body must have exactly one ## Unfinished work heading"]
-    start = headings[0][0] + 1
-    end = len(lines)
-    for i in range(start, end):
-        heading = RAW_ATX.fullmatch(lines[i])
-        if heading and len(heading[1]) <= 2:
-            end = i
-            break
-        if heading or RAW_SETEXT.fullmatch(lines[i]):
-            return "", ["Unfinished work forbids a heading or setext underline in its section"]
+# Inside a line, a break CommonMark makes (a carriage return) or one str.splitlines makes
+# and GitHub does not: either would let the gate and a reader see different lines.
+ODD_BREAK = re.compile("[\r\x0b\x0c\x1c-\x1e\x85  ]")
+
+
+def reads_as_heading(line: str) -> bool:
+    """A line that a reader could take for the section's heading, however written: its
+    letters, with tags and entities taken out and compatibility forms folded, begin
+    "unfinished work" (or are "unfinished", the first line of a heading split over two)."""
+    text = unicodedata.normalize("NFKC", html.unescape(re.sub(r"<[^>]*>", "", line)))
+    letters = "".join(c for c in text.lower() if "a" <= c <= "z")
+    return letters.startswith("unfinishedwork") or letters == "unfinished"
+
+
+def template_section(template: str | None) -> tuple[str | None, set[str]]:
+    """The template's own comment for "Unfinished work" (None when the template has no
+    such section), and the headings that follow it, any of which ends the section."""
+    lines = [line.rstrip() for line in raw_lines(template or "")]
+    if UNFINISHED_HEADING not in lines:
+        return None, set()
+    start = lines.index(UNFINISHED_HEADING) + 1
+    after = [i for i in range(start, len(lines)) if lines[i].startswith("## ")]
+    end = after[0] if after else len(lines)
+    return "\n".join(lines[start:end]).strip(), {lines[i] for i in after}
+
+
+def unfinished_section(body: str, template: str | None = None) -> tuple[str, list[str]]:
+    """The section's raw text, from its one heading to the next of the template's
+    headings (to the end, with no template). Refused: a second heading, or any other
+    line that reads as one; a break GitHub makes where a line does not, or the reverse;
+    no following heading when the template has some."""
+    _, ends = template_section(template)
+    lines = raw_lines(body or "")
+    if any(ODD_BREAK.search(line) for line in lines):
+        return "", ["the body holds a carriage return, form feed or line separator inside "
+                    "a line, which GitHub and the gate would break differently"]
+    starts = [i for i, line in enumerate(lines) if line.rstrip() == UNFINISHED_HEADING]
+    alike = [line for line in lines
+             if line.rstrip() != UNFINISHED_HEADING and reads_as_heading(line)]
+    if len(starts) != 1 or alike:
+        return "", ["the body must have exactly one ## Unfinished work heading, at the left "
+                    "edge, and no other line that reads as one"
+                    + "".join(f": {line.strip()}" for line in alike[:1])]
+    start = starts[0] + 1
+    end = next((i for i in range(start, len(lines)) if lines[i].rstrip() in ends), None)
+    if ends and end is None:
+        return "", ["Unfinished work must end at the template's next heading"]
     return "\n".join(lines[start:end]), []
 
 
-def unfinished_refs(text: str) -> tuple[list[int], list[str]]:
-    """Validate raw section text as None or a plain list. Only complete comments go;
-    safe_push marker contents, code and HTML remain subject to every check."""
-    text = re.sub(r"<!--.*?-->", "", text, flags=re.S)
-    for token, reason in (("`", "a backtick (code)"), ("<", "HTML"),
-                          (">", "HTML or a block quote"), ("[", "a bracket (link)"),
-                          ("]", "a bracket (link)"), ("~", "a tilde"), ("|", "a pipe"),
-                          ("\\", "a backslash escape"), ("://", "a URL"),
-                          ("www.", "a URL"), ("\t", "a tab")):
+def unfinished_refs(text: str, comment: str | None = None) -> tuple[list[int], list[str]]:
+    """The issues the section names, and its problems. The template's own comment for the
+    section, given, is taken out once, exactly; then the text must be plain ASCII with no
+    markup, and either "None" (case aside, with an optional full stop) or a list: each
+    item `- ` or `* ` at the left edge with one space, wrapped with two to five spaces and
+    no blank line, naming its issue as a token #N. Every other `#`, or GH-N, is refused."""
+    if comment:
+        text = text.replace(comment, "", 1)
+    if any(ord(c) > 126 or (ord(c) < 32 and c != "\n") for c in text):
+        return [], ["Unfinished work must be plain ASCII text, with no tab or control "
+                    "character"]
+    for token, reason in UNFINISHED_FORBIDDEN:
         if token in text:
             return [], [f"Unfinished work must be a plain list: {reason} is forbidden"]
     if re.fullmatch(r"None\.?", text.strip(), re.I):
         return [], []
-    refs, problems = set(), []
-    items = []
+    refs, problems, items = set(), [], []
     can_continue = False
-    for line in text.splitlines():
+    for line in text.split("\n"):
         if not line.strip():
             can_continue = False
             continue
@@ -3263,27 +3292,22 @@ def unfinished_refs(text: str) -> tuple[list[int], list[str]]:
             can_continue = False
             continue
         can_continue = True
-        if re.match(r"(?:[-*+]|[0-9]+[.)])\s", content):
-            problems.append(f"Unfinished work forbids a nested list: {line}")
-        elif re.match(r"#{1,6}(?:\s|$)", content) \
-                or re.fullmatch(r"(?:[-*_] *){3,}|=+", content):
+        if re.match(r"(?:[-*+]|[0-9]+[.)])(?:\s|$)", content):
+            problems.append(f"Unfinished work forbids a nested list or rule: {line}")
+        elif re.fullmatch(r"(?:[-*_=] *)+", content):
             problems.append(f"Unfinished work forbids a heading or rule: {line}")
-
     for item in items:
         local = []
         for token in item.split():
-            match = ISSUE_REF.fullmatch(token)
+            match = ISSUE_TOKEN.fullmatch(token)
             if match:
-                try:
-                    local.append(int(match[1]))
-                except ValueError:
-                    problems.append("Unfinished work has an unreadable issue number")
-            elif re.search(r"#[0-9]", token):
+                local.append(int(match[1]))
+            elif "#" in token or re.match(r"\(?gh-[0-9]", token, re.I):
                 problems.append(f"write the issue as #N on its own: {token}")
         refs.update(local)
         if not local:
             problems.append(f"list item names no local issue: {item}")
-    if not refs:
+    if not refs and not problems:
         problems.append("Unfinished work must say None or name an open issue with blocks-release")
     return sorted(refs), problems
 
@@ -3352,6 +3376,13 @@ def issue_pages(text: str) -> list[dict]:
     return issues
 
 
+def printable_text(text: str) -> str:
+    """An issue's title, which its author may edit, with every character a terminal could
+    take for a command (controls, bidirectional marks) written as an escape."""
+    return "".join(c if c.isprintable() else c.encode("unicode_escape").decode("ascii")
+                   for c in text)
+
+
 def open_blockers(issues: list[dict]) -> list[dict]:
     """The open labelled issues, pull requests included. Validate every entry, even
     one that would not block, so a partial response cannot pass as a complete reading."""
@@ -3389,12 +3420,13 @@ def read_issues(ctx: Context, path: str, *, paginate=False):
 
 def unfinished_gate(ctx: Context, body: str, template: str | None) -> tuple[str, str]:
     """The section is required only once the template in force has it."""
-    if not unfinished_headings((template or "").splitlines()):
+    comment, _ = template_section(template)
+    if comment is None:
         return "skip", "the template in force has no Unfinished work section"
-    text, problems = unfinished_section(body)
+    text, problems = unfinished_section(body, template)
     if problems:
         return "FAIL", "\n".join(problems)
-    refs, problems = unfinished_refs(text)
+    refs, problems = unfinished_refs(text, comment)
     if problems:
         return "FAIL", "\n".join(problems)
     if not refs:
@@ -3432,7 +3464,7 @@ def release_gate(ctx: Context, labels: set[str] | None) -> tuple[str, str]:
         return "FAIL", f"release issues unreadable: {e}"
     if blockers:
         return "FAIL", "open blocks-release:\n" + "\n".join(
-            f"#{issue['number']}: {issue['title']}" for issue in blockers)
+            f"#{issue['number']}: {printable_text(issue['title'])}" for issue in blockers)
     return "ok", "no open blocks-release issue"
 
 
@@ -3549,7 +3581,10 @@ def gates(ctx: Context, number: int, rep: Report, record: dict | None = None) ->
         rep.add("G", "labels", "FAIL", str(e))
     verdict, detail = release_gate(ctx, labels)
     rep.add("G", "release", verdict, detail)
-    if protected and SECURITY_LABEL not in (labels or set()):
+    if protected and labels is None:
+        rep.add("G", "label", "FAIL", f"protected paths change ({', '.join(protected)}), and "
+                f"#{number}'s labels are unreadable")
+    elif protected and SECURITY_LABEL not in labels:
         rep.add("G", "label", "FAIL", f"protected paths change ({', '.join(protected)}), and "
                 f"#{number} lacks the label {SECURITY_LABEL}")
     elif protected:
@@ -3889,6 +3924,11 @@ def merge_main(repo: Path, number: int, dry_run: bool, test_mode: bool) -> int:
         # is not of this head and origin/main; the parts safe_push wrote, whenever they
         # are out of date.
         body = gh_json(ctx, "pr", "view", str(number), "--json", "body").get("body") or ""
+        template = show(ctx.repo, ctx.base, TEMPLATE) or show(ctx.repo, ctx.sha, TEMPLATE)
+        if unfinished_section(body, template) != unfinished_section(view.get("body") or "",
+                                                                    template):
+            raise Refusal(f"#{number}'s Unfinished work changed after the gates read it: "
+                          "run --merge again")
         m = BLOCK.search(body)
         new = refreshed(body, describe(ctx, pre))
         if checked is None or not m or (m.group(1), m.group(2)) != (ctx.sha, ctx.base):

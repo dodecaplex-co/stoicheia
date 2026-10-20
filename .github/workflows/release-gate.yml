@@ -11,8 +11,9 @@ jobs:
     # Unfinished work may land with its issue, but holds the release until it is closed.
     # Ordinary pull requests skip this job; label changes run no heavy CI jobs here.
     # safe_push's merge gate is the authority, reading the issues again at the merge;
-    # this job shows the hold on the release pull request, using main's copy of the
-    # script at the base commit so that the pull request cannot change its own verdict.
+    # this job shows the hold on the release pull request. It runs main's copy of the
+    # script, from the base commit, but GitHub reads this workflow file from the pull
+    # request, which could change it: the job is a signal, not the gate.
     # GitHub's contains() compares label names case-insensitively.
     if: contains(github.event.pull_request.labels.*.name, 'release')
     runs-on: ubuntu-latest

@@ -91,64 +91,100 @@ class UnfinishedWork(unittest.TestCase):
     def refs(self, text):
         return safe_push.unfinished_refs(text)
 
-    def test_raw_heading_count_and_form(self):
-        for heading in ("# Unfinished work", "### Unfinished work", "###### Unfinished work",
-                        "unfinished work\n===", "Unfinished   work\n  ---  ",
-                        "##\tUnfinished work"):
-            with self.subTest(heading=heading):
-                self.assertIn("exactly one ## Unfinished work heading",
-                              "\n".join(safe_push.unfinished_section(heading + "\nNone")[1]))
-        for duplicate in ("## Unfinished work ##", "### Unfinished work",
-                          "## unfinished work", "unfinished work\n---",
-                          "   ###### UNFINISHED   WORK ###"):
-            for wrapper in ("{}", "<!--\n{}\n-->", "```\n{}\n```", "~~~\n{}\n~~~"):
-                with self.subTest(duplicate=duplicate, wrapper=wrapper):
-                    body = "## Unfinished work\nNone\n\n## Elsewhere\n" + wrapper.format(duplicate)
-                    self.assertIn("exactly one ## Unfinished work heading",
-                                  "\n".join(safe_push.unfinished_section(body)[1]))
+    TEMPLATE = ("## What and why\n\n## Unfinished work\n\n<!-- Name each piece. -->\n\n"
+                "## Review records\n\n## Checklist\n")
 
-    def test_raw_section_boundaries_and_subheadings(self):
-        for heading in ("## Unfinished work", "  ## UNFINISHED   work ##"):
-            with self.subTest(heading=heading):
-                text, problems = safe_push.unfinished_section(heading + "\nNone")
-                self.assertEqual(problems, [])
-                self.assertEqual(self.refs(text), ([], []))
-        for heading in ("# Next", "  ## Next ##", "##"):
-            with self.subTest(heading=heading):
-                text, problems = safe_push.unfinished_section(
-                    "## Unfinished work\nNone\n" + heading + "\n`outside`")
-                self.assertEqual(problems, [])
-                self.assertEqual(self.refs(text), ([], []))
-        for line in ("### Next", "   ###### Next ###", "---", "   ===  "):
-            for wrapper in ("{}", "<!--\n{}\n-->"):
-                with self.subTest(line=line, wrapper=wrapper):
-                    self.assertTrue(safe_push.unfinished_section(
-                        "## Unfinished work\nNone\n" + wrapper.format(line))[1])
+    def section(self, text, before="", after=""):
+        """A body from the small template above, its section holding text."""
+        body = self.TEMPLATE.replace("<!-- Name each piece. -->\n",
+                                     "<!-- Name each piece. -->\n" + text + "\n")
+        return before + body + after
 
-    def test_raw_hidden_content_is_refused_at_the_gate(self):
+    def gate(self, body, template=None):
         ctx = safe_push.Context(ROOT, "", "", 0, "", "example/edition", {})
-        for tail in ("<div><ul><li>Deferred page</li></ul></div>",
-                     "```\n- Deferred page to come\n```",
-                     "~~~\n- Deferred page to come\n~~~",
+        with mock.patch.object(safe_push, "read_issues") as read:
+            verdict, detail = safe_push.unfinished_gate(ctx, body, template or self.TEMPLATE)
+            read.assert_not_called()
+        return verdict, detail
+
+    def test_the_one_heading_exactly(self):
+        self.assertEqual(self.gate(self.section("None")), ("ok", "None"))
+        for heading in ("# Unfinished work", "### Unfinished work", "## Unfinished work ##",
+                        "  ## Unfinished work", "## unfinished work", "##\tUnfinished work",
+                        "Unfinished work\n===", "Unfinished work\n---"):
+            with self.subTest(heading=heading):
+                body = self.section("None").replace("## Unfinished work", heading)
+                verdict, detail = self.gate(body)
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn("exactly one ## Unfinished work heading", detail)
+
+    def test_a_second_heading_or_look_alike_anywhere_is_refused(self):
+        for alike in ("## Unfinished work", "## Unfinished work ##", "### Unfinished work",
+                      "<h2>Unfinished work</h2>", "> ## Unfinished work", "- ## Unfinished work",
+                      "## Unfinished&#32;work", "## *Unfinished work*",
+                      "## Unfinished work (continued)", "## Unfinished\u200bwork",
+                      "## \uff35nfinished work", "Unfinished\nwork\n---",
+                      "unfinished work\n==="):
+            for wrapper in ("{}", "<!--\n{}\n-->", "```\n{}\n```"):
+                with self.subTest(alike=alike, wrapper=wrapper):
+                    body = self.section("None", after="\n" + wrapper.format(alike)
+                                        + "\n- Deferred page to come\n")
+                    verdict, detail = self.gate(body)
+                    self.assertEqual(verdict, "FAIL")
+                    self.assertIn("exactly one ## Unfinished work heading", detail)
+
+    def test_section_ends_only_at_the_templates_next_heading(self):
+        for line in ("##", "## #", "# Next", "## Next", "### Next", "---", "===",
+                     "## &nbsp;", "  ## Next"):
+            with self.subTest(line=line):
+                verdict, _ = self.gate(self.section("None\n\n" + line
+                                                    + "\n\n- Deferred page to come"))
+                self.assertEqual(verdict, "FAIL")
+        # No following heading of the template: refused, never read to the end.
+        body = "## Unfinished work\n\nNone\n"
+        self.assertIn("next heading", self.gate(body)[1])
+        # With no template, the section runs to the end of the body.
+        self.assertEqual(safe_push.unfinished_section(body), ("\nNone\n", []))
+
+    def test_breaks_github_and_the_gate_read_differently_are_refused(self):
+        for sep in ("\u2028", "\u2029", "\x0b", "\x0c", "\x85", "\r", "\x1c"):
+            with self.subTest(sep=repr(sep)):
+                body = self.section("None." + sep + "##\n\n- Prototype with no issue")
+                verdict, detail = self.gate(body)
+                self.assertEqual(verdict, "FAIL")
+                self.assertIn("break", detail)
+        # A body edited on GitHub's page has CRLF line ends: those are fine.
+        crlf = self.section("- Prototype #38").replace("\n", "\r\n")
+        text, problems = safe_push.unfinished_section(crlf, self.TEMPLATE)
+        self.assertEqual(problems, [])
+        self.assertEqual(safe_push.unfinished_refs(text, "<!-- Name each piece. -->"),
+                         ([38], []))
+
+    def test_comments_other_than_the_templates_are_refused(self):
+        for text in ("None <!--\n\n- Deferred page to come\n\n-->",
+                     "None\n<!-->\n- Prototype with no issue\n<!-- -->",
+                     "- Prototype #38 <!--\n- Deferred page to come\n-->",
                      "<!-- safe_push:custom begin -->\n- Prototype with no issue\n"
                      "<!-- safe_push:custom end -->",
-                     "## Unfinished work ##\n- Deferred page"):
-            with self.subTest(tail=tail), mock.patch.object(safe_push, "read_issues") as read:
-                verdict, _ = safe_push.unfinished_gate(
-                    ctx, "## Unfinished work\nNone\n\n" + tail, "## Unfinished work")
-                self.assertEqual(verdict, "FAIL")
-                read.assert_not_called()
+                     "<!-- safe_push:commits begin -->\n- Prototype #38\n"
+                     "<!-- safe_push:commits end -->",
+                     "None\n\n<div><ul><li>Deferred page</li></ul></div>",
+                     "None\n\n```\n- Deferred page to come\n```",
+                     "None\n\n~~~\n- Deferred page to come\n~~~"):
+            with self.subTest(text=text):
+                self.assertEqual(self.gate(self.section(text))[0], "FAIL")
+        # The template's own comment may stay, or go.
+        self.assertEqual(self.gate(self.section("None")), ("ok", "None"))
+        self.assertEqual(self.gate(self.section("None").replace(
+            "<!-- Name each piece. -->\n", "")), ("ok", "None"))
 
-    def test_template_comment_and_forged_markers(self):
-        template = (ROOT / safe_push.TEMPLATE).read_text()
-        text, problems = safe_push.unfinished_section(template)
-        self.assertEqual(problems, [])
-        self.assertEqual(self.refs(text + "\nNone"), ([], []))
-        self.assertEqual(self.refs("<!-- safe_push:custom begin -->\n- Prototype #38\n"
-                                   "<!-- safe_push:custom end -->"), ([38], []))
-        self.assertIn("names no local issue", "\n".join(self.refs(
-            "<!-- safe_push:custom begin -->\n- Prototype with no issue\n"
-            "<!-- safe_push:custom end -->")[1]))
+    def test_non_ascii_and_other_issue_forms_are_refused(self):
+        for text in ("- Prototype #38, deferred page GH-39", "- Prototype #\u00ad38",
+                     "- Prototype #\uff13\uff18", "- Prototype \u00e9 #38",
+                     "- Prototype & #38", "- Prototype&nbsp;#38"):
+            with self.subTest(text=text):
+                refs, problems = self.refs(text)
+                self.assertTrue(problems)
 
     def test_template_and_required_box(self):
         template = (ROOT / safe_push.TEMPLATE).read_text()
@@ -158,9 +194,16 @@ class UnfinishedWork(unittest.TestCase):
         self.assertTrue(any(kind == "Required" and '"Unfinished work"' in text
                             and "blocks-release" in text
                             for _, kind, text in safe_push.boxes(template)))
-        text, problems = safe_push.unfinished_section(template)
+        comment, ends = safe_push.template_section(template)
+        self.assertTrue(comment.startswith("<!--") and comment.endswith("-->"))
+        self.assertIn("## Review records", ends)
+        # The template as it stands: its section unwritten, so refused; written, it passes.
+        text, problems = safe_push.unfinished_section(template, template)
         self.assertEqual(problems, [])
-        self.assertTrue(self.refs(text)[1])
+        self.assertTrue(safe_push.unfinished_refs(text, comment)[1])
+        written = template.replace(comment + "\n", comment + "\n\nNone\n", 1)
+        text, problems = safe_push.unfinished_section(written, template)
+        self.assertEqual(safe_push.unfinished_refs(text, comment), ([], []))
 
     def test_empty_section_refused(self):
         refs, problems = self.refs("")
@@ -566,21 +609,26 @@ class MergeChecks(unittest.TestCase):
 
 
 class WatchChecks(unittest.TestCase):
-    def test_timed_watch_rechecks_selected_jobs(self):
+    def test_watch_judges_as_the_merge_does(self):
+        # gh's watch is run once, as before; its verdict leaves out a stale release-gate
+        # run on an ordinary pull request, and keeps it on a release pull request.
         ctx = safe_push.Context(ROOT, "head", "", 0, "", "example/edition", {}, gh=("stand-in",))
         pr = safe_push.PR(1, "https://example.invalid/pull/1", False)
         passing = [{"name": name, "bucket": "pass"} for name in safe_push.REQUIRED_CHECKS]
-        stale = {"name": "release-gate", "workflow": "Release gate", "bucket": "pending"}
-        pending = [dict(c, bucket="pending") for c in passing]
-        with mock.patch.object(safe_push, "pr_checks",
-                               side_effect=[pending + [stale], pending + [stale], passing + [stale]]), \
-                mock.patch.object(safe_push.subprocess, "run",
-                                  side_effect=subprocess.TimeoutExpired("stand-in", 30)) as run, \
-                redirect_stdout(io.StringIO()):
-            self.assertEqual(safe_push.watch_checks(ctx, pr, safe_push.Report(), {"tooling"}),
-                             "success")
-        self.assertEqual(run.call_count, 2)
-        self.assertTrue(all(call.kwargs["timeout"] == 30 for call in run.call_args_list))
+        for bucket in ("fail", "pending"):
+            stale = {"name": "release-gate", "workflow": "Release gate", "bucket": bucket}
+            for labels, verdict in (({"tooling"}, "success"),
+                                    ({"tooling", "release"},
+                                     "failure" if bucket == "fail" else "pending")):
+                with self.subTest(bucket=bucket, labels=labels), \
+                        mock.patch.object(safe_push, "pr_checks",
+                                          return_value=passing + [stale]), \
+                        mock.patch.object(safe_push.subprocess, "run") as run, \
+                        redirect_stdout(io.StringIO()):
+                    self.assertEqual(safe_push.watch_checks(ctx, pr, safe_push.Report(),
+                                                            labels), verdict)
+                    self.assertEqual(run.call_count, 1)
+                    self.assertNotIn("timeout", run.call_args.kwargs)
 
 
 if __name__ == "__main__":
