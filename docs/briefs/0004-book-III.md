@@ -200,7 +200,7 @@ III.23–III.37:
 proves of the angle in a semicircle: III.28 and III.29 need it first. It argues at the
 point that measures the circumference, so it needs only I.5 and I.32, not III.21.
 
-**Porisms.** Two corollaries are cited by later propositions, and are theorems of their
+**Porisms.** Two porisms are cited by later propositions, and are theorems of their
 own, after their propositions: `Prop1.porism` (the centre lies on a straight line
 bisecting a straight line in the circle at right angles; III.9, III.10) and
 `Prop16.porism` (the straight line at right angles to a radius at its end touches the
