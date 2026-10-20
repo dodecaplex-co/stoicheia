@@ -753,7 +753,7 @@ CITATIONS = {
 }
 REPRESENTATION = {
     'type': 'choice',
-    'instructions': "Do the supplied definitions and bridge signatures state the conditional connections between the represented objects named in `represented_objects` and Euclid's objects in `enunciation`, within the convention and limitations in `record` and `terms`? Check all hypotheses and conclusions. A definition may itself supply a connection; a choice definition alone does not prove that its choice represents a given object. This asks what the supplied declarations state, not whether each invocation meets its premises or whether a proof passes Lean. A missing supplied bridge does not establish that none exists elsewhere.",
+    'instructions': "Do the supplied definitions and bridge signatures state the conditional connections between the represented objects named in `represented_objects` and Euclid's objects in `enunciation`, within the convention and limitations in `record` and `terms`? Check all hypotheses and conclusions. A definition may itself supply a connection; a choice definition alone does not prove that its choice represents a given object. `bridge_placement` distinguishes declarations available before the main theorem from explanatory declarations at or after it; the latter are not premises available to that proof. This question asks what the supplied declarations state, not whether each invocation meets its premises, whether a proof passes Lean or whether the bridges are placed correctly in the dependency order. A `bridge stated` answer alone therefore does not establish all of P13. A missing supplied bridge does not establish that none exists elsewhere.",
     'criteria': {
         'bridge stated': 'The supplied declarations state each needed conditional connection under the relevant hypotheses and within the disclosed convention.',
         'bridge missing or inadequate': 'A needed connection has no adequate declaration supplied, or its premises make it unavailable for the represented objects under discussion.',
@@ -944,6 +944,7 @@ class Generator:
                                              for a in attached},
                      'record': tables(e, source, path, record, ('statement', 'representation')),
                      'terms': terms(e, source, record), 'represented_objects': objects, 'bridges': bridges,
+                     'bridge_placement': bridge_info['placement'],
                      **bridge_info['state']}
             state.update(glossary(index, source,
                                   [state['lean_statement'], *state['attached_statements'].values(), *bridges.values()],
@@ -976,7 +977,8 @@ class Generator:
                  'declaration_context': index.context(source, 'declaration_context',
                                                        [consumer.name, *named, *[heath.parse_ref(a).lean for a in attached]])}
         state.update(glossary(index, source,
-                              [state['lean_statement'], *state['attached_statements'].values(), *declarations.values()]))
+                              [state['lean_statement'], *state['attached_statements'].values(),
+                               state['lean_proof'], *declarations.values()]))
         self.row(ref, 12, 'commentary', source, state, COMMENTARY, verdicts.get('commentary'),
                  {'pass': 'agrees'}, 'review.items.commentary')
 
@@ -1023,6 +1025,14 @@ class Generator:
             row['mutation']['changes'].append({'operation': 'replace', 'field': field, 'old': old, 'new': new,
                                                'before_sha256': sha(text), 'after_sha256': sha(value[field[-1]])})
 
+        def remove(row: dict, field: list[str]) -> None:
+            value = row
+            for part in field[:-1]:
+                value = value[part]
+            old = value.pop(field[-1])
+            row['mutation']['changes'].append({'operation': 'remove', 'field': field, 'old': old,
+                                               'before_sha256': sha(old if isinstance(old, str) else dumps(old))})
+
         row = control('09-I.6-scope', 'restricted beyond what the note says')
         change(row, ['state', 'lean_statement'], '(hABC : Triangle A B C)',
                '(hABC : Triangle A B C) (hACBC : ‖A C‖ = ‖B C‖)')
@@ -1036,18 +1046,32 @@ class Generator:
         row['state']['cited'].update(self.cited(row['source'], ['I.15']))
         row['state']['declaration_context'].update(self.index.context(
             row['source'], 'declaration_context', ['Elements.BookI.Prop15']))
-        row['mutation']['added_evidence'] = ['Elements.BookI.Prop15', 'I.15']
+        for origin in ('certificate', 'source'):
+            old = row['state']['citation_origins'][origin]
+            new = sorted([*old, 'I.15'], key=lambda r: (heath.prop_key(r), r))
+            row['state']['citation_origins'][origin] = new
+            row['mutation']['changes'].append({'operation': 'replace',
+                                               'field': ['state', 'citation_origins', origin],
+                                               'old': old, 'new': new,
+                                               'before_sha256': sha(dumps(old)),
+                                               'after_sha256': sha(dumps(new))})
+        row['mutation']['added_evidence'] = [
+            'Elements.BookI.Prop15', 'I.15',
+            'citation_origins.certificate:I.15', 'citation_origins.source:I.15'
+        ]
         row = control('10-I.41-citations', 'an artificial hypothesis use')
         change(row, ['state', 'lean_proof'], '(hE : Collinear A D E)',
                '(hE : Collinear A D E) (hAA : A = A)')
         change(row, ['state', 'lean_proof'], ':= by\n', ':= by\n  have unused := hAA\n')
         row = control('11-II.4-representation', 'bridge missing or inadequate')
-        for name, signature in list(row['state']['bridges'].items()):
-            require(row['state']['bridges'][name].count(signature) == 1,
-                    f'{row["id"]}: bridge removal anchor is not unique')
-            row['mutation']['changes'].append({'operation': 'remove', 'field': ['state', 'bridges', name],
-                                               'old': signature, 'before_sha256': sha(signature)})
-            del row['state']['bridges'][name]
+        for name in list(row['state']['bridges']):
+            remove(row, ['state', 'bridges', name])
+            remove(row, ['state', 'bridge_context', name])
+            remove(row, ['state', 'bridge_placement', name])
+        remaining_paths = {self.index.get(name).path for name in row['state']['bridges']}
+        for path in list(row['state']['bridge_imports']):
+            if path not in remaining_paths:
+                remove(row, ['state', 'bridge_imports', path])
         row = control('11-II.4-representation', 'bridge missing or inadequate')
         for name in row['state']['bridges']:
             d = self.index.get(name)
@@ -1131,6 +1155,8 @@ class Generator:
                         'Citation questions inspect one unit body and helper signatures, not helper bodies.',
                         'Reachable helper calls are reconciled locally; their bodies receive no independent question.',
                         'Representation questions inspect conditional statements, not premise discharge or kernel checks.',
+                        'Representation rows record dependency placement locally in bridge_placement; a bridge-stated '
+                        'answer does not establish correct placement or all of P13.',
                         'Commentary questions exclude quotation accuracy, attribution and voice.',
                         'Figure questions inspect the Heath figure only.',
                         'Record expectations are claims to test, not independent findings.',
