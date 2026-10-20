@@ -41,10 +41,10 @@ case = "AB supposed greater than DE, with G between B and A, and separately BC s
 
 [review]
 stage = "full"
-commit = "89918a7f"
+commit = "e939480f"
 reviewer = "GPT-6 Astra (Codex), records re-read"
 lean = "sha256:3c089d4e9c8fe8a3"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "brief 0005 stage 5, ship T re-read"
 
 [review.items]
 statement = "pass"
