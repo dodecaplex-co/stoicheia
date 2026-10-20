@@ -2021,7 +2021,7 @@ def certificate(facts, docs, records):
 
 # README.md is generated in part: each book's completion summary stands between
 # `<!-- scope:I -->` and `<!-- /scope:I -->`, in its row of "Where things stand".
-SCOPE_MARKERS = re.compile(r"(<!-- scope:([IVX]+) -->)(.*?)(<!-- /scope:\2 -->)", re.S)
+SCOPE_MARKERS = generated_counts.README_SCOPE_MARKERS
 
 
 def readme(text, facts, records):
@@ -2043,7 +2043,7 @@ def readme(text, facts, records):
 # file of the edition holds, from docs/program.toml, kept by hand.
 PROGRAM = ROOT / "docs" / "PROGRAM.md"
 PROGRAM_TOML = ROOT / "docs" / "program.toml"
-STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)", re.S)
+STATUS_MARKERS = generated_counts.PROGRAM_STATUS_MARKERS
 PROGRAM_STAGES = ("brief", "statements", "proofs", "voice", "records", "acceptance",
                   "released")
 PROGRAM_KEYS = {"stage", "outside", "tag", "release"}

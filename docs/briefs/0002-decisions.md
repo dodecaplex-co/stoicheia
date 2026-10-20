@@ -1842,7 +1842,9 @@ findings:
   stays human. No Lean run is needed to compute or check a count.
   `render.py` fills markers in tracked Markdown before copying introductions and other
   prose into book pages, where it removes the count comments. Whole renderer outputs are
-  excluded. Markers are refused in this decisions log and throughout `docs/reports/`,
+  excluded. Markers inside README.md's generated scope regions and PROGRAM.md's generated
+  status region are refused before rendering, since those regions are replaced. Markers
+  are refused in this decisions log and throughout `docs/reports/`,
   except the living `gaps-book-*.md` and `overlaps.md` catalogues, so dated evidence stays
   at its revision. Unknown, malformed, nested and unclosed markers fail with file and
   line. `check_fidelity.py`, already run before rendering, also refuses a stale value,
@@ -1857,8 +1859,9 @@ findings:
 - **Count discovery and rendering refuse unsafe inputs.** Following the code and
   security reviews, Git's resolved work tree must match the supplied root, including
   copies using `GIT_DIR` and `GIT_WORK_TREE`. Missing or mismatched metadata fails with
-  a diagnostic. Tracked Markdown symlinks and paths resolving outside the root are
-  refused before reading or writing. Whole renderer outputs are now scanned and any
+  a diagnostic. Symlinks in every component below the repository root, and paths resolving
+  outside the root, are refused before reading or writing; a symlink supplied as the root
+  itself remains a supported alias. Whole renderer outputs are now scanned and any
   count marker there is refused; this supersedes their exclusion in the entry above.
   Review counts use tracked records alone and check proposition numbers. Regressions
   cover these boundaries and run rendering from a stale marked introduction through

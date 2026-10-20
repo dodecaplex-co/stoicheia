@@ -8,12 +8,15 @@ Git must resolve the supplied root as its work tree. Only tracked Markdown and
 review records are scanned. Symlinks and paths resolving outside the root are
 refused. Whole renderer outputs are scanned but may not contain markers. The
 decisions log and reports are history, except the living gap and overlap catalogues;
-markers there are refused. Counts use files alone, never a Lean run or build outputs.
-Run this module to print every available count and its current value.
+markers there are refused. Markers are also refused in README scope regions and
+PROGRAM's status region, which the renderer replaces. Counts use files alone, never
+a Lean run or build outputs. Run this module to print every available count and its
+current value.
 """
 
 from dataclasses import dataclass
 from functools import partial
+import os
 from pathlib import Path
 import re
 import subprocess
@@ -24,12 +27,26 @@ import heath
 
 def repository_path(root, path):
     """Check a path before reading or writing, refusing symlinks and escapes."""
-    path = root / path
-    if path.is_symlink():
-        name = path.relative_to(root) if path.is_relative_to(root) else path
-        raise ValueError(f"{name}: symlink is forbidden")
-    if not path.resolve().is_relative_to(root.resolve()):
+    root = Path(os.path.abspath(root))
+    resolved_root = root.resolve()
+    supplied = Path(path)
+    path = Path(os.path.abspath(supplied if supplied.is_absolute() else root / supplied))
+    if path.is_relative_to(root):
+        relative = path.relative_to(root)
+        boundary = root
+    elif root != resolved_root and path.is_relative_to(resolved_root):
+        relative = path.relative_to(resolved_root)
+        boundary = resolved_root
+    else:
+        raise ValueError(f"{path}: path is outside repository root {root}")
+    if not path.resolve().is_relative_to(resolved_root):
         raise ValueError(f"{path}: resolved path is outside repository root {root}")
+    component = boundary
+    for part in relative.parts:
+        component /= part
+        if component.is_symlink():
+            name = component.relative_to(boundary)
+            raise ValueError(f"{name}: symlink is forbidden")
     return path
 
 
@@ -322,6 +339,24 @@ def historical(path):
                               or re.fullmatch(r"gaps-book-[IVX]+\.md", path.name)))))
 
 
+README_SCOPE_MARKERS = re.compile(
+    r"(<!-- scope:([IVX]+) -->)(.*?)(<!-- /scope:\2 -->)", re.S)
+PROGRAM_STATUS_MARKERS = re.compile(r"(<!-- status -->\n)(.*?)(<!-- /status -->)", re.S)
+
+
+def partial_output_region(path, text, span):
+    """Name a renderer-owned region containing a count marker, if there is one."""
+    if path == Path("README.md"):
+        pattern, name = README_SCOPE_MARKERS, "README.md scope region"
+    elif path == Path("docs/PROGRAM.md"):
+        pattern, name = PROGRAM_STATUS_MARKERS, "docs/PROGRAM.md status region"
+    else:
+        return None
+    if any(region.start() <= span.start < region.end() for region in pattern.finditer(text)):
+        return name
+    return None
+
+
 def tracked_markdown(root):
     """List tracked Markdown with Git's index, including names with spaces or newlines."""
     return tracked_files(root, "*.md")
@@ -364,6 +399,10 @@ def updates(root, *, check=False):
             where = f"{path}:{text.count(chr(10), 0, span.start) + 1}"
             if historical(path):
                 errors.append(f"{where}: count marker {span.name!r} is forbidden in dated history")
+                continue
+            region = partial_output_region(path, text, span)
+            if region:
+                errors.append(f"{where}: count marker {span.name!r} is forbidden in {region}")
                 continue
             try:
                 computed = value(root, span.name, cache)

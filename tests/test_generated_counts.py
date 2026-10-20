@@ -144,15 +144,33 @@ def Elements.companions : List (Lean.Name × String) := [
         path.write_text(changes[path])
         self.assertEqual(self.scan(["docs/PROGRAM.md"], check=True), ({}, []))
 
-    def test_multiple_forms_preserve_surrounding_prose(self):
-        text = ("<!-- scope:I -->A <!-- count:companions:Word -->One<!-- /count -->"
-                " theorem; <!-- count:companion-propositions:word -->one<!-- /count -->"
-                " propositions.<!-- /scope:I -->\n<!-- status -->\n<!-- /status -->")
+    def test_multiple_forms_outside_generated_regions_preserve_surrounding_prose(self):
+        text = ("A <!-- count:companions:Word -->One<!-- /count --> theorem; "
+                "<!-- count:companion-propositions:word -->one<!-- /count --> propositions.\n"
+                "<!-- scope:I -->Generated summary.<!-- /scope:I -->\n"
+                "<!-- status -->\nGenerated status.\n<!-- /status -->")
         path = self.write("README.md", text)
         changes, errors = self.scan(["README.md"])
         self.assertEqual(errors, [])
         self.assertEqual(changes[path], text.replace("-->One<!--", "-->Three<!--")
                          .replace("-->one<!--", "-->two<!--"))
+
+    def test_markers_in_partial_renderer_regions_are_refused(self):
+        marker = "<!-- count:vocabulary -->3<!-- /count -->"
+        cases = {
+            "README.md": f"# Title\n<!-- scope:I -->\n{marker}\n<!-- /scope:I -->\n",
+            "docs/PROGRAM.md": f"# Programme\n<!-- status -->\n{marker}\n<!-- /status -->\n",
+        }
+        for path, text in cases.items():
+            self.write(path, text)
+            for check in (False, True):
+                with self.subTest(path=path, check=check):
+                    changes, errors = self.scan([path], check=check)
+                    self.assertEqual(changes, {})
+                    self.assertEqual(len(errors), 1)
+                    self.assertTrue(errors[0].startswith(f"{path}:3:"), errors)
+                    self.assertIn("forbidden", errors[0])
+                    self.assertIn("region", errors[0])
 
     def test_malformed_and_unknown_markers_name_the_line(self):
         bad = ("<!-- count:vocabulary -->3", "<!-- /count -->",
@@ -248,6 +266,19 @@ def Elements.companions : List (Lean.Name × String) := [
                         render.write_text(path, "Changed.")
             self.assertEqual(target.read_text(), text)
 
+    def test_in_repository_parent_symlinks_are_refused_for_reads_and_writes(self):
+        target = self.write("actual/notes.md", "Original.")
+        (self.root / "linked").symlink_to(self.root / "actual", target_is_directory=True)
+        changes, errors = self.scan(["linked/notes.md"])
+        self.assertEqual(changes, {})
+        self.assertEqual(errors, ["linked: symlink is forbidden"])
+        with patch.object(render, "ROOT", self.root):
+            with self.assertRaisesRegex(ValueError, "linked: symlink is forbidden"):
+                render.read_text(self.root / "linked/notes.md")
+            with self.assertRaisesRegex(ValueError, "linked: symlink is forbidden"):
+                render.write_text(self.root / "linked/notes.md", "Changed.")
+        self.assertEqual(target.read_text(), "Original.")
+
     def test_render_rechecks_paths_before_writing(self):
         target = self.write("target.md", "Original.")
         path = self.write("README.md", "<!-- count:vocabulary -->0<!-- /count -->")
@@ -259,6 +290,31 @@ def Elements.companions : List (Lean.Name × String) := [
             with self.assertRaisesRegex(ValueError, "README.md: symlink is forbidden"):
                 render.write_text(path, changes[path])
         self.assertEqual(target.read_text(), "Original.")
+
+    def test_render_rechecks_parent_components_before_writing(self):
+        path = self.write("docs/notes.md", "<!-- count:vocabulary -->0<!-- /count -->")
+        changes, errors = self.scan(["docs/notes.md"])
+        self.assertEqual(errors, [])
+        target_dir = self.root / "actual"
+        path.parent.rename(target_dir)
+        (self.root / "docs").symlink_to(target_dir, target_is_directory=True)
+        target = target_dir / "notes.md"
+        with patch.object(render, "ROOT", self.root):
+            with self.assertRaisesRegex(ValueError, "docs: symlink is forbidden"):
+                render.write_text(path, changes[path])
+        self.assertIn("-->0<!--", target.read_text())
+
+    def test_symlinked_root_alias_is_supported(self):
+        real_root = self.root / "real-root"
+        real_root.mkdir()
+        target = real_root / "notes.md"
+        target.write_text("Original.")
+        alias = self.root / "root-alias"
+        alias.symlink_to(real_root, target_is_directory=True)
+        with patch.object(render, "ROOT", alias):
+            self.assertEqual(render.read_text(alias / "notes.md"), "Original.")
+            render.write_text(alias / "notes.md", "Changed.")
+        self.assertEqual(target.read_text(), "Changed.")
 
     def test_all_other_tracked_markdown_can_hold_counts(self):
         paths = ["docs/reports/gaps-book-I.md", "docs/reports/overlaps.md",
@@ -400,6 +456,38 @@ class GitCountTests(unittest.TestCase):
             self.assertIn(f"There are {computed} words. <!-- An ordinary comment stays. -->",
                           page)
             self.assertIsNone(counts.START.search(page))
+
+    def test_public_checks_refuse_counts_in_partial_outputs_before_writing(self):
+        from negative_tests import count_source_copy
+
+        cases = (("README.md", counts.README_SCOPE_MARKERS, 3, "README.md scope region"),
+                 ("docs/PROGRAM.md", counts.PROGRAM_STATUS_MARKERS, 2,
+                  "docs/PROGRAM.md status region"))
+        marker = "<!-- count:vocabulary -->0<!-- /count -->"
+        for rel, pattern, body_group, diagnostic in cases:
+            with self.subTest(path=rel), count_source_copy() as (root, env):
+                path = root / rel
+                original = path.read_text()
+                region = pattern.search(original)
+                self.assertIsNotNone(region)
+                insertion = region.start(body_group)
+                prefix = "\n" if insertion and original[insertion - 1] != "\n" else ""
+                planted = original[:insertion] + prefix + marker + "\n" + original[insertion:]
+                marker_start = insertion + len(prefix)
+                line = planted.count("\n", 0, marker_start) + 1
+                path.write_text(planted)
+                outputs = [root / name for name in
+                           ("README.md", "docs/PROGRAM.md", "CERTIFICATE.md", "GRAPH.md")]
+                outputs.extend((root / "book").rglob("*.md"))
+                before = {output: output.read_bytes() for output in outputs}
+                for script in ("check_fidelity.py", "render.py"):
+                    result = subprocess.run([sys.executable, f"scripts/{script}"], cwd=root,
+                                            env=env, capture_output=True, text=True)
+                    message = result.stdout + result.stderr
+                    self.assertNotEqual(result.returncode, 0, message)
+                    self.assertIn(f"{rel}:{line}:", message)
+                    self.assertIn(diagnostic, message)
+                    self.assertEqual({output: output.read_bytes() for output in outputs}, before)
 
 
 if __name__ == "__main__":
