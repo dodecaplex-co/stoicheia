@@ -1828,8 +1828,10 @@ findings:
 
 - **S12 reads "Revision" as "revision".** The acceptance report's "Revision" header
   sent the commit identifier `d95125f0` to Lean as a name.
-  [scripts/check_style.py](../../scripts/check_style.py) now matches the revision
-  context without regard to case; the commit-shape test is unchanged and nothing else
-  is excused. [tests/test_check_style.py](../../tests/test_check_style.py) covers that
+  [scripts/check_style.py](../../scripts/check_style.py) now reads "Revision" as
+  "revision"; all other context words keep their case-sensitive matching. The
+  commit-shape test is unchanged and nothing else is excused.
+  [tests/test_check_style.py](../../tests/test_check_style.py) covers that
   header, the same hex word without revision context and a non-commit word beside
-  "Revision". These are the two protected files changed.
+  "Revision", and keeps the unknown Lean name in sentences beginning "Read", "Reviewed"
+  and "Verification" subject to Lean checking. These are the two protected files changed.
