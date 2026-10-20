@@ -2,7 +2,7 @@
 
 Brief 0005's stage 6 ([#36](https://github.com/jackChallis/stoicheia/issues/36)) asks a model family that wrote none of Stoicheia to audit the review records. This report records Jev's run and the adjudications for Books I and II, whose 62 records are at the stage `full`. Because neither a pre-run calibration bar nor the raw calibration answers survives, Jev is a secondary signal here and this report does not complete independent acceptance. Jev is TypeSafe's decision model, and we thank TypeSafe warmly for it.
 
-**In short.** Jev agreed with the records on 251 of 293 questions (86%), and on 243 (83%) in both orders of the options. It agreed on all 79 citation questions, and found both defects planted among them. Those model-only citation agreements are not independent confirmation without a passed calibration or fallback review. The original audit sent 83 production answers to adjudication; this review added the 18 high-confidence scope answers that the calibration decision required, for 101 production adjudications. The adjudicators found the record right in 99. The two others are figure captions, I.6 and I.26, which draw Euclid's impossible supposition without saying so. Those two readings are among eleven provisional figure readings, and their fixes are listed for later (see [Open](#open)). The 79 citation rows and 41 figure rows outside adjudication still need revision-pinned fallback review. The representation and commentary questions missed every defect planted in them, so Jev's agreement on those items is not evidence.
+**In short.** Jev agreed with the records on 251 of 293 questions (86%), and on 243 (83%) in both orders of the options. It agreed on all 79 citation questions, and found both defects planted among them. The 78 citation agreements without adjudication are not independent confirmation without a passed calibration or fallback review. Correctly checking confidence in both orders sends 90 production answers to adjudication; adding the 15 remaining scope answers that the calibration decision required gives 105 production adjudications. The adjudicators found the record right in 103. The two others are figure captions, I.6 and I.26, which draw Euclid's impossible supposition without saying so. Those two readings are among eleven provisional figure readings, and their fixes are listed for later (see [Open](#open)). The 78 citation rows and 40 figure rows outside adjudication still need revision-pinned fallback review. The representation and commentary questions missed every defect planted in them, so Jev's agreement on those items is not evidence.
 
 ## What was asked, of which model, when
 
@@ -33,50 +33,50 @@ Of the 293 states, 124 run past 12,000 characters, chiefly the citation and comm
 
 ## Agreement
 
-| Item | Rows | Agrees | Agrees in both orders | Answer changed when reversed | Confidence under 0.5 | To adjudication | Seeded defects found |
+| Item | Rows | Agrees | Agrees in both orders | Answer changed when reversed | Confidence under 0.5 in either order | To adjudication | Seeded defects found |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| Scope (P11) | 62 | 39 (63%) | 34 | 10 | 40 | 44 | 2 of 2 |
-| Citations (P12) | 79 | 79 (100%) | 79 | 0 | 0 | 0 | 2 of 2 |
-| Representations (P13) | 28 | 20 (71%) | 18 | 5 | 12 | 16 | 0 of 2 |
+| Scope (P11) | 62 | 39 (63%) | 34 | 10 | 46 | 47 | 2 of 2 |
+| Citations (P12) | 79 | 79 (100%) | 79 | 0 | 1 | 1 | 2 of 2 |
+| Representations (P13) | 28 | 20 (71%) | 18 | 5 | 15 | 18 | 0 of 2 |
 | Commentary (P14) | 62 | 62 (100%) | 62 | 0 | 2 | 2 | 0 of 2 |
-| Figures (P15) | 62 | 51 (82%) | 50 | 2 | 17 | 21 | 2 of 2 |
-| **All** | **293** | **251 (86%)** | **243** | **17** | **71** | **83** | **6 of 10** |
+| Figures (P15) | 62 | 51 (82%) | 50 | 2 | 18 | 22 | 2 of 2 |
+| **All** | **293** | **251 (86%)** | **243** | **17** | **82** | **90** | **6 of 10** |
 
 What the figures support:
 
-- **Citations: secondary signal only.** All 79 agree, in both orders and with confidence of 0.5 or more, and both planted defects were found. With no verifiable calibration gate and no fallback adjudication, that agreement does not establish that the proof units have no dummy citation or artificial hypothesis use. The helpers' own proofs were not sent.
-- **Figures: secondary outside adjudication.** Both planted wrong figures were found. Twenty-one production figure rows went to adjudication, including the eleven provisional readings described below. The other 41 have only Jev's agreement and need fallback review before they count as independent confirmation.
+- **Citations: secondary signal only.** All 79 agree in both orders; 78 have confidence of 0.5 or more in both orders, while I.1's reversed confidence of 0.48 sent it to adjudication. Both planted defects were found. With no verifiable calibration gate and no fallback adjudication of the other 78 rows, agreement does not establish that those proof units have no dummy citation or artificial hypothesis use. The helpers' own proofs were not sent.
+- **Figures: secondary outside adjudication.** Both planted wrong figures were found. Twenty-two production figure rows went to adjudication, including the eleven provisional readings described below. The other 40 have only Jev's agreement and need fallback review before they count as independent confirmation.
 - **Scope: weak evidence alone.** Both planted restrictions were found, but Jev disagreed with 23 records and changed its answer on 10 when the options were reversed. On adjudication all 62 records were right. The adjudicated rows carry this item, not Jev's agreement.
 - **Representations and commentary: no evidence from agreement.** Jev called all four planted defects agreement, so its 62 agreements on commentary and 20 on representations show nothing. Those items rest on the adjudicated rows and on the records' own reviews.
 
 ## Adjudication
 
-The original audit sent an answer to adjudication when it disagreed with the record, had a confidence under 0.5, or changed when the options were reversed. That selected 83 production rows and 5 seeded rows. The owner's calibration decision in [#36](https://github.com/jackChallis/stoicheia/issues/36) required every scope answer to go to an adjudicator, so this review also adjudicated the 18 high-confidence scope agreements the trigger had bypassed. The production total is now 101 rows; all 62 scope rows cross the adjudication boundary.
+An answer goes to adjudication when it disagrees with the record, has a confidence under 0.5 or no confidence in either order, or changes when the options are reversed. Correcting the scorer to apply the confidence rule to both orders selects 90 production rows and 5 seeded rows; 82 production rows have low confidence in at least one order. The owner's calibration decision in [#36](https://github.com/jackChallis/stoicheia/issues/36) required every scope answer to go to an adjudicator, so the 15 high-confidence scope agreements outside the corrected trigger are also adjudicated. The production total is now 105 rows; all 62 scope rows cross the adjudication boundary.
 
-The original adjudicators were fresh, read-only runs of OpenAI's Codex (GPT-6 Astra), which wrote none of the records. Six readers took the rows in groups. Each was told to decide from `heath/`, the Lean, the figures and the commentary alone, and not to open `review/`; it saw the record's claim only as the answer under test. Where a reader disagreed with Jev, the captain (Claude) decided. The captain read the files in full for I.30, recomputed the SVG coordinates for I.46, I.48, II.7 and II.13, and read the statements for I.14, I.27, I.45, II.1 and II.14. For the other rows the captain accepted the reader's cited evidence. A7 is OpenAI Codex (GPT-5) in the later no-mistakes review. It wrote none of the records and read Heath's whole proposition and the whole Lean file for each of the 18 scope rows the trigger omitted.
+The original adjudicators were fresh, read-only runs of OpenAI's Codex (GPT-6 Astra), which wrote none of the records. Six readers took the rows in groups. Each was told to decide from `heath/`, the Lean, the figures and the commentary alone, and not to open `review/`; it saw the record's claim only as the answer under test. Where a reader disagreed with Jev, the captain (Claude) decided. The captain read the files in full for I.30, recomputed the SVG coordinates for I.46, I.48, II.7 and II.13, and read the statements for I.14, I.27, I.45, II.1 and II.14. For the other rows the captain accepted the reader's cited evidence. A7 is OpenAI Codex (GPT-5) in the later no-mistakes review. It wrote none of the records and read Heath's whole proposition and the whole Lean file for each of the 18 scope rows the original trigger omitted. A8 is OpenAI Codex (GPT-5) in the no-mistakes review begun at `f9ef57381dbed6c4b6560638c8922753f73a293a`. It wrote none of the records and adjudicated all seven rows newly selected by the corrected trigger against source evidence at `39ae65c21c6b8188c0fa53bf91b6fde3ce3b11a3`, reading the complete Heath proposition and Lean file in each case and rendering I.5's SVG. Three scope rows repeat A7's independent result; the citation, two representation and figure rows are new adjudications.
 
 The reader for eleven figure rows (I.6 to I.42) did not run: its service had reached its usage limit, which resets on 26 October 2026. The captain read those eleven from the files instead: the SVG's coordinates, Heath's text, the Lean statement and the caption. Those readings are marked provisional, and a Codex reader is still owed them.
 
 | Verdict | Rows |
 |---|---:|
-| both right | 59 |
+| both right | 63 |
 | record right, Jev wrong | 40 |
 | Jev right, record wrong | 2 |
 | both wrong | 0 |
 
 Of the 40 rows marked "record right, Jev wrong", 36 are a reader's verdict, which the captain accepted. Three are the captain's provisional figure readings (I.14, I.27 and I.33). The last, I.30, is the captain's decision against both Jev and the reader, and its row says why. The two rows marked "Jev right, record wrong" are both provisional.
 
-The 18 rows added in the later review are all "both right": Jev and the record say `fully`, and A7 confirmed that answer from the complete Heath and Lean files.
+The seven rows exposed by the corrected trigger are all "both right". Three overlap the scope rows A7 reviewed; A8 confirmed them again and supplied the four new adjudications. The 15 scope rows still added outside the corrected trigger are also "both right".
 
 ### Every adjudication
 
-Jev's answer is given as chosen, then (after the slash) as chosen with the options reversed, with its confidence. A1 to A6 are the original Codex readers; A7 is the later Codex reviewer described above.
+Jev's answer is given as chosen, then (after the slash) as chosen with the options reversed. Parentheses give the first confidence, except that rows newly selected on reversed confidence show both confidences in asking order. A1 to A6 are the original Codex readers; A7 and A8 are the later Codex reviewers described above.
 
 #### Scope (P11)
 
 | Row | Jev | Record | Adjudicator: answer | Verdict | Evidence |
 |---|---|---|---|---|---|
-| `09-I.1-scope` | fully / fully (0.53) | fully | A7: fully | both right | `Prop1` constructs an equilateral triangle on arbitrary distinct A and B; P only chooses a side and restricts no given object (`Elements/BookI/Prop01.lean:45`). |
+| `09-I.1-scope` | fully / fully (0.53 / 0.31) | fully | A7, A8: fully | both right | `Prop1` constructs an equilateral triangle on arbitrary distinct A and B; P only chooses a side and restricts no given object (`Elements/BookI/Prop01.lean:45`). |
 | `09-I.2-scope` | fully / beyond (0.40) | fully | A1: fully | both right | `Prop2` takes A anywhere (`Elements/BookI/Prop02.lean:18`); the case A = B is proved at lines 22 to 23. |
 | `09-I.3-scope` | beyond / beyond (0.33) | fully | A1: fully | record right, Jev wrong | `hC` and `h` name a genuine lesser straight line; no relative position of the two lines is assumed (`Elements/BookI/Prop03.lean:21`). |
 | `09-I.4-scope` | fully / fully (0.87) | fully | A7: fully | both right | `Prop4` concludes equality of the base and triangle and both remaining angles (`Elements/BookI/Prop04.lean:23`). |
@@ -132,17 +132,24 @@ Jev's answer is given as chosen, then (after the slash) as chosen with the optio
 | `09-II.6-scope` | exactly / exactly (0.44) | fully | A3: fully | record right, Jev wrong | Adding beyond A is the theorem with A and B exchanged; no restriction on the added length (`Elements/BookII/Prop06.lean:26`). |
 | `09-II.7-scope` | fully / beyond (0.36) | fully | A3: fully | both right | Statement and conclusion as Euclid's (`Elements/BookII/Prop07.lean`). |
 | `09-II.8-scope` | fully / fully (0.39) | fully | A3: fully | both right | Statement and conclusion as Euclid's (`Elements/BookII/Prop08.lean`). |
-| `09-II.9-scope` | fully / fully (0.56) | fully | A7: fully | both right | C is the equal cut, D is any distinct interior cut, and the proof exchanges A and B to cover either order of C and D (`Elements/BookII/Prop09.lean:33`). |
+| `09-II.9-scope` | fully / fully (0.56 / 0.33) | fully | A7, A8: fully | both right | C is the equal cut, D is any distinct interior cut, and the proof exchanges A and B to cover either order of C and D (`Elements/BookII/Prop09.lean:33`). |
 | `09-II.10-scope` | fully / fully (0.25) | fully | A3: fully | both right | Statement and conclusion as Euclid's (`Elements/BookII/Prop10.lean`). |
-| `09-II.11-scope` | fully / fully (0.56) | fully | A7: fully | both right | For arbitrary distinct A and B, `Prop11` constructs H strictly between them and proves the required rectangle equals the square on AH (`Elements/BookII/Prop11.lean:31`). |
+| `09-II.11-scope` | fully / fully (0.56 / 0.45) | fully | A7, A8: fully | both right | For arbitrary distinct A and B, `Prop11` constructs H strictly between them and proves the required rectangle equals the square on AH (`Elements/BookII/Prop11.lean:31`). |
 | `09-II.12-scope` | beyond / beyond (0.32) | fully | A3: fully | record right, Jev wrong | The foot's external position is proved, not assumed (`Elements/BookII/Prop12.lean:23`, `:50`). |
 | `09-II.13-scope` | beyond / exactly (0.33) | fully | A3: fully | record right, Jev wrong | Acute angles at B and C are given in an acute-angled triangle; D within BC is proved (`Elements/BookII/Prop13.lean:47`, `:77`). |
 | `09-II.14-scope` | exactly / beyond (0.19) | fully | A3: fully | record right, Jev wrong | `Prop14.apart` and `Prop14.square` take any figure in the declared representation (`Elements/BookII/Prop14.lean:324`, `:364`). |
+
+#### Citations (P12)
+
+| Row | Jev | Record | Adjudicator: answer | Verdict | Evidence |
+|---|---|---|---|---|---|
+| `10-I.1-citations` | all do work / all do work (0.61 / 0.48) | all do work | A8: all do work | both right | The proof calls no proposition. Its two uses of Postulate 3 draw the circles, Postulate 1 names AB for the requested side, the circle-intersection rules supply C, Definition 15 supplies the equal radii, Common Notion 1 closes their equality, and `Prop1.figure` establishes that ABC is a triangle (`Elements/BookI/Prop01.lean:45`). |
 
 #### Representations (P13) and commentary (P14)
 
 | Row | Jev | Record | Adjudicator: answer | Verdict | Evidence |
 |---|---|---|---|---|---|
+| `11-II.1-representation` | bridge stated / bridge stated (0.57 / 0.45) | bridge stated | A8: bridge stated | both right | `Rectangle.contained` and `Rectangle.eq_rect` connect drawn rectangles to `rect`; `Prop1.general` states the arbitrary ordered segmentation using `InOrder.between_end`, `segments`, `endOf` and `Magnitude.sum` (`Elements/BookII/Rectangles.lean:81`, `Elements/BookII/Prop01.lean:248`). |
 | `11-I.34-representation` | bridge stated / bridge stated (0.47) | bridge stated | A6: bridge stated | both right | `Parallelogram`, `quadArea` (`Elements/Foundations/Phrases.lean:48`, `:53`) with `Prop34.bisect` (`Elements/BookI/Prop34.lean:100`). |
 | `11-I.35-representation` | missing / missing (0.44) | bridge stated | A6: bridge stated | record right, Jev wrong | `Parallelogram.cross` and `Parallelogram.quadArea_rotate` state that the measure does not depend on the diameter (`Elements/Figure/Parallelograms.lean:189`, `:200`). |
 | `11-I.36-representation` | missing / bridge stated (0.32) | bridge stated | A6: bridge stated | record right, Jev wrong | As I.35: `Elements/Figure/Parallelograms.lean:189`, `:200`. |
@@ -160,12 +167,14 @@ Jev's answer is given as chosen, then (after the slash) as chosen with the optio
 | `11-I.48-representation` | missing / missing (0.53) | bridge stated | A6: bridge stated | record right, Jev wrong | As I.46. |
 | `11-II.9-representation` | bridge stated / bridge stated (0.47) | bridge stated | A6: bridge stated | both right | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.eq_sq`, `Square.described` (`Elements/BookII/Rectangles.lean`). |
 | `11-II.10-representation` | bridge stated / bridge stated (0.39) | bridge stated | A6: bridge stated | both right | As II.9. |
+| `11-II.13-representation` | bridge stated / bridge stated (0.52 / 0.40) | bridge stated | A8: bridge stated | both right | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.eq_sq` and `Square.described` state the required rectangle and square connections; `Prop13` uses `rect` and `sq` through II.7 and the bridged square form of I.47 (`Elements/BookII/Rectangles.lean:81`, `Elements/BookII/Prop13.lean:83`). |
 | `11-II.14-representation` | bridge stated / bridge stated (0.33) | bridge stated | A6: bridge stated | both right | As II.9, with the `Apart` bridges of I.45. |
 
 #### Figures (P15)
 
 | Row | Jev | Record | Adjudicator: answer | Verdict | Evidence |
 |---|---|---|---|---|---|
+| `13-I.5-figure` | agrees / agrees (0.51 / 0.49) | agrees | A8: agrees | both right | The symmetric coordinates make AB equal to AC; B–F–D and C–G–E have the required order, BC, FC and GB are drawn, and the marked base and under-base angles match Heath's proof (`figures/I/05.svg`: A (200, 32), B (150, 132), C (250, 132), F (110, 212), G (290, 212)). |
 | `13-I.6-figure` | disagrees / disagrees (0.43) | agrees | captain (provisional): disagrees | Jev right, record wrong | The caption says DB is cut off equal to AC, but the drawn DB is 150 units against AC's 214 (`figures/I/06.svg`: A (200, 36), B (90, 220), C (310, 220), D (167, 91.2)). The impossible supposition makes that unavoidable, but unlike I.14's and I.40's captions this one does not say so. |
 | `13-I.14-figure` | disagrees / disagrees (0.53) | agrees | captain (provisional): agrees | record right, Jev wrong | The caption names the one incompatibility, C, B and E not in a straight line (`book/I/14.md:23`); everything else agrees. |
 | `13-I.21-figure` | agrees / agrees (0.41) | agrees | captain (provisional): agrees | both right | D within ABC, BD produced to E on AC (`figures/I/21.svg`). |
@@ -209,7 +218,7 @@ A seeded row's right answer is the defect planted, so no reader is needed: the v
 
 ## Fixes
 
-**No record is wrong in its scope, its representations or its commentary**, on any adjudicated row. The citation rows did not go to adjudication and remain a secondary Jev signal.
+**No record is wrong in its scope, its citations, its representations or its commentary**, on any adjudicated row. I.1's citation row is right on adjudication; the other 78 citation rows remain a secondary Jev signal.
 
 Two figure captions are wrong, on the captain's provisional reading. Each draws Euclid's impossible supposition, as Heath's figure does. Neither says so, as the captions of I.14, I.27, I.39 and I.40 do, and the row's question excuses only an incompatibility the caption names. The fix in each is a `note` in the record's `[figure]` table, which the page prints after the case:
 
@@ -227,12 +236,12 @@ One improvement, not a fault: the reason I.30's record is `full` lives in a TOML
 - That every representation's bridge is adequate: that question missed both planted defects.
 - A judgement free of the records: scope and representation rows had to carry the record's claim, since that claim is what they test.
 - That Jev passed a calibration gate: no contemporaneous bar or raw calibration response is preserved.
-- That the 79 citation rows or the 41 figure rows outside adjudication have independent acceptance: they have no fallback review.
+- That the 78 citation rows or the 40 figure rows outside adjudication have independent acceptance: they have no fallback review.
 
 ## Open
 
 1. Recover and commit the original redacted calibration response and verifiable evidence of the bar fixed before the first request, then decide whether the reported 12 of 14 cleared it. Repository history and #36 preserve only the question set and the owner's summary. If that evidence cannot be recovered, Jev remains secondary.
-2. Give all 79 citation rows and the 41 figure rows outside adjudication revision-pinned fallback review before claiming independent acceptance.
+2. Give the 78 citation rows and 40 figure rows outside adjudication revision-pinned fallback review before claiming independent acceptance.
 3. Recover the account's billing evidence and record the actual audit charge in its billed currency. The committed usage proves only the USD 0.070690494 public-list-price equivalent.
 4. An independent Codex reader for the eleven figure rows read provisionally by the captain, then the I.6 and I.26 caption fixes in a later branch, with each changed record re-read and stamped by a reviewer who wrote none of it.
 5. The I.30 note, if the editors want it.
