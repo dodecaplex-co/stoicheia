@@ -3,13 +3,14 @@
 
     python3 -I tests/test_jev_questions.py
 
-File access cases use temporary directories and a stub of Git's tracked file list.
+File access cases use temporary directories and stubs of Git's file and directory queries.
 The control case generates all rows in memory against the real HEAD and reports its
 duration. No case writes to the repository or its Git metadata.
 """
 
 from __future__ import annotations
 
+import builtins
 import copy
 import importlib.util
 import io
@@ -51,6 +52,10 @@ class FileContainment(unittest.TestCase):
         self.outside.write_bytes(b'outside evidence')
         self.output = self.root / 'questions.jsonl'
         self.manifest = self.root / 'manifest.json'
+        self.git_dir = self.directory / 'git-private'
+        self.git_common_dir = self.directory / 'git-common'
+        self.git_dir.mkdir()
+        self.git_common_dir.mkdir()
         self.tracked = [
             'facts.json', 'scripts/audit/jev_questions.py', 'scripts/heath.py',
             'scripts/audit/jev.py', 'AGENTS.md', '.github/workflows/ci.yml',
@@ -59,8 +64,11 @@ class FileContainment(unittest.TestCase):
             path = self.root / name
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b'original tracked input')
+        (self.root / 'scripts/safe_push.py').write_bytes(
+            (REPOSITORY / 'scripts/safe_push.py').read_bytes())
         self.evidence = self.root / 'evidence.txt'
         self.evidence.write_bytes(b'committed evidence')
+        self.committed = {'evidence.txt': b'committed evidence'}
         self.metadata = {
             'rows': 0, 'rows_by_item': {}, 'proof_units': 0, 'long_context_states': 0,
             'largest_state': {'characters': 0, 'id': 'fixture'},
@@ -73,11 +81,22 @@ class FileContainment(unittest.TestCase):
             self.enterContext(patch.object(questions, name, value))
         self.git = self.enterContext(patch.object(questions.subprocess, 'run',
                                                  side_effect=self.git_result))
+        self.enterContext(patch.object(questions.heath, 'ROOT', self.root))
+        self.enterContext(patch.object(questions.heath, 'REVIEW', self.root / 'review'))
 
     def git_result(self, command, **kwargs):
         self.assertEqual(kwargs['cwd'], self.root)
         if command[:2] == ['git', 'show']:
-            return subprocess.CompletedProcess(command, 0, b'committed evidence', b'')
+            path = command[2].split(':', 1)[1]
+            return subprocess.CompletedProcess(
+                command, 0, self.committed.get(path, b'committed evidence'), b'')
+        if command[:2] == ['git', 'rev-parse']:
+            if command[2:] == ['--absolute-git-dir']:
+                path = self.git_dir
+            else:
+                self.assertEqual(command[2:], ['--path-format=absolute', '--git-common-dir'])
+                path = self.git_common_dir
+            return subprocess.CompletedProcess(command, 0, os.fsencode(path) + b'\n', b'')
         self.assertEqual(command[:2], ['git', 'ls-files'])
         self.assertIn('-z', command)
         return subprocess.CompletedProcess(
@@ -167,6 +186,186 @@ class FileContainment(unittest.TestCase):
         self.assertIn('tracked', error)
         self.assertEqual((self.root / 'facts.json').read_bytes(), b'original tracked input')
         self.assertFalse(self.output.exists())
+
+    def test_git_metadata_cannot_be_outputs(self):
+        pointer = self.root / '.git'
+        pointer.write_bytes(b'gitdir: ../git-private\n')
+        before = pointer.read_bytes()
+        status, error = self.run_main(pointer)
+        self.assertEqual(status, 1, error)
+        self.assertIn('protected', error)
+        self.assertEqual(pointer.read_bytes(), before)
+        self.assertFalse(self.manifest.exists())
+        pointer.unlink()
+        pointer.mkdir()
+        for directory in (pointer, self.git_dir, self.git_common_dir):
+            member = directory / 'config'
+            member.write_bytes(b'original metadata')
+            for path in (directory, member, directory / 'new-file'):
+                with self.subTest(path=path):
+                    status, error = self.run_main(path)
+                    self.assertEqual(status, 1, error)
+                    self.assertIn('protected', error)
+                    self.assertEqual(member.read_bytes(), b'original metadata')
+                    self.assertFalse((directory / 'new-file').exists())
+                    self.assertFalse(self.manifest.exists())
+
+    def test_untracked_protected_files_cannot_be_outputs(self):
+        self.tracked.clear()
+        names = (
+            'scripts/audit/jev_questions.py', 'scripts/heath.py', 'scripts/audit/jev.py',
+            'scripts/new-script.py', '.github/workflows/ci.yml', 'Certificate/axioms.lock',
+            'tests/new-test.py', 'review/SCHEMA.md', 'review/terms.toml', '.gitattributes',
+            '.gitignore', 'lakefile.toml', 'lakefile.lean', 'lean-toolchain', 'lake-manifest.json',
+            'Audit/New.lean', 'Audit.lean', 'model/Model/Audit.lean', 'model/Model.lean',
+            'model/lakefile.toml', 'model/lakefile.lean', 'model/lean-toolchain',
+            'model/lake-manifest.json', 'model/lock.sha256', 'AGENTS.md',
+            'Elements/Foundations/New.lean', 'Elements/Companions.lean',
+            'docs/briefs/0002-decisions.md', 'docs/PROGRAM.md', 'facts.json',
+            'book/I/01.md', 'CERTIFICATE.md', 'GRAPH.md', 'README.md', 'heath/I/01.md',
+        )
+        for name in names:
+            with self.subTest(name=name):
+                path = self.root / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b'original protected input')
+                status, error = self.run_main(path)
+                self.assertEqual(status, 1, error)
+                self.assertIn('protected', error)
+                self.assertEqual(path.read_bytes(), b'original protected input')
+                self.assertFalse(self.manifest.exists())
+
+    def test_missing_protected_paths_and_case_aliases_are_refused(self):
+        for path in (self.root / 'scripts/new.py', self.root / 'SCRIPTS/new.py',
+                     self.root / 'LAKEFILE.LEAN', self.git_common_dir / 'OBJECTS/new'):
+            with self.subTest(path=path):
+                status, error = self.run_main(path)
+                self.assertEqual(status, 1, error)
+                self.assertIn('protected', error)
+                self.assertFalse(path.exists())
+                self.assertFalse(self.manifest.exists())
+
+    def test_external_hard_links_to_untracked_protected_files_are_refused(self):
+        self.tracked.clear()
+        metadata = self.git_common_dir / 'config'
+        metadata.write_bytes(b'original metadata')
+        for source in (self.root / 'scripts/audit/jev_questions.py', metadata):
+            alias = self.directory / 'alias.jsonl'
+            alias.hardlink_to(source)
+            try:
+                before = alias.read_bytes()
+                status, error = self.run_main(alias)
+                self.assertEqual(status, 1, error)
+                self.assertIn('protected', error)
+                self.assertEqual(alias.read_bytes(), before)
+                self.assertFalse(self.manifest.exists())
+            finally:
+                alias.unlink()
+
+    def test_git_pointer_aliases_are_refused(self):
+        source = self.root / '.git'
+        source.write_bytes(b'gitdir: ../git-private\n')
+        alias = self.directory / 'pointer-alias.jsonl'
+        alias.hardlink_to(source)
+        for path in (alias, self.root / '.GIT'):
+            with self.subTest(path=path):
+                status, error = self.run_main(path)
+                self.assertEqual(status, 1, error)
+                self.assertIn('protected', error)
+                self.assertEqual(source.read_bytes(), b'gitdir: ../git-private\n')
+                self.assertFalse(self.manifest.exists())
+
+    def test_protected_policy_is_read_without_executing_it(self):
+        path = self.root / 'scripts/safe_push.py'
+        path.write_text(path.read_text() + '\nraise AssertionError("policy executed")\n'
+                        'PROTECTED += ("new-protection",)\n')
+        # An unsupported extension must refuse output, not silently omit protection.
+        status, error = self.run_main()
+        self.assertEqual(status, 1, error)
+        self.assertIn('protected path extension', error)
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.manifest.exists())
+
+    def test_missing_protection_sources_refuse_output(self):
+        policy = self.root / 'scripts/safe_push.py'
+        policy.unlink()
+        status, _ = self.run_main()
+        self.assertEqual(status, 1)
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.manifest.exists())
+
+    def test_git_directory_query_failure_refuses_output(self):
+        original = self.git_result
+
+        def fail_query(command, **kwargs):
+            if command[:2] == ['git', 'rev-parse']:
+                return subprocess.CompletedProcess(command, 1, b'', b'unavailable')
+            return original(command, **kwargs)
+
+        self.git.side_effect = fail_query
+        status, error = self.run_main()
+        self.assertEqual(status, 1, error)
+        self.assertIn('cannot locate Git metadata', error)
+        self.assertFalse(self.output.exists())
+        self.assertFalse(self.manifest.exists())
+
+    def test_manifest_cannot_replace_an_untracked_protected_input(self):
+        self.tracked.clear()
+        path = self.root / 'scripts/heath.py'
+        before = path.read_bytes()
+        with patch.object(questions, 'MANIFEST', path):
+            status, error = self.run_main()
+        self.assertEqual(status, 1, error)
+        self.assertIn('protected', error)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertFalse(self.output.exists())
+
+    def assert_helper_refuses_without_opening_target(self, action):
+        attempted = []
+
+        def watch(function):
+            def wrapped(path, *args, **kwargs):
+                if not isinstance(path, int) and Path(path).resolve() == self.outside:
+                    attempted.append(str(path))
+                    raise AssertionError('outside target opened before refusal')
+                return function(path, *args, **kwargs)
+            return wrapped
+
+        with patch.object(Path, 'read_text', watch(Path.read_text)), \
+                patch.object(builtins, 'open', watch(builtins.open)), \
+                patch.object(os, 'open', watch(os.open)):
+            with self.assertRaisesRegex(questions.Refusal, 'symlink'):
+                action()
+        self.assertEqual(attempted, [])
+
+    def test_terms_helper_refuses_symlink_before_opening_target(self):
+        path = self.root / 'review/terms.toml'
+        path.parent.mkdir()
+        path.symlink_to(self.outside)
+        self.assert_helper_refuses_without_opening_target(
+            lambda: questions.terms(questions.Evidence('0' * 40), {'excerpts': []}, {}))
+
+    def test_review_helper_refuses_symlink_before_opening_target(self):
+        for name in ('review/I/05.toml', 'heath/I/05.md', 'review/terms.toml'):
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            self.committed[name] = (REPOSITORY / name).read_bytes()
+            path.write_bytes(self.committed[name])
+        generator = questions.Generator.__new__(questions.Generator)
+        generator.evidence = questions.Evidence('0' * 40)
+        generator.index = None
+        generator.facts = {'I.5': {}}
+        for name in ('heath/I/05.md', 'review/terms.toml'):
+            path = self.root / name
+            path.unlink()
+            path.symlink_to(self.outside)
+            try:
+                with self.subTest(name=name):
+                    self.assert_helper_refuses_without_opening_target(
+                        lambda: generator.proposition('I', 5))
+            finally:
+                path.unlink()
+                path.write_bytes(self.committed[name])
 
     def test_both_destinations_refuse_evidence_even_if_untracked(self):
         for destination in ('questions', 'manifest'):
@@ -342,7 +541,22 @@ class Controls(unittest.TestCase):
         commit = subprocess.check_output(
             ['git', 'rev-parse', 'HEAD'], cwd=REPOSITORY, text=True).strip()
         start = time.monotonic()
-        rows_bytes, _, manifest = questions.Generator(commit).finish()
+        generator = questions.Generator(commit)
+        helper_reads = set()
+
+        def verified_read(function):
+            def wrapped(path, *args, **kwargs):
+                name = path.relative_to(REPOSITORY).as_posix()
+                self.assertIn(name, generator.evidence.data, f'helper read before verification: {name}')
+                helper_reads.add(name)
+                return function(path, *args, **kwargs)
+            return wrapped
+
+        with patch.object(Path, 'read_text', verified_read(Path.read_text)), \
+                patch.object(Path, 'read_bytes', verified_read(Path.read_bytes)):
+            rows_bytes, _, manifest = generator.finish()
+        self.assertTrue({'review/terms.toml', 'review/I/01.toml', 'heath/I/01.md',
+                         'Elements/BookI/Prop01.lean'} <= helper_reads)
         elapsed = time.monotonic() - start
         rows = [json.loads(line) for line in rows_bytes.splitlines()]
         seeded = [row for row in rows if row['seeded']]

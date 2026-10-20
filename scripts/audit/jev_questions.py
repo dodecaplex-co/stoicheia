@@ -23,9 +23,12 @@ Generation reads no credentials and sends nothing. Every evidence file is compar
 the committed evidence, missing evidence, ambiguous names and differences from the revision
 are errors. Evidence paths must be relative, without parent traversal or symlinks, and
 resolve inside the repository. Both output paths reject symlinks, evidence files, tracked
-files other than the two default outputs, and collisions with each other; an output may
-be outside the repository. Both outputs are assembled and validated before either is
-written, using temporary files and replacement without following a final symlink.
+files other than the two default outputs, Git metadata, protected paths independently
+of the index, and collisions with each other; an output may be outside the repository.
+Both outputs are assembled and validated before either is written, using temporary
+files and replacement without following a final symlink.
+The checks cover links and aliases present when it runs, not a concurrent writer racing
+it in the same tree.
 --commit REV --check regenerates twice in memory and compares the bytes with both files
 on disk. The manifest stays beside this script's default output,
 including when --out selects another questions file. States over 12,000 characters are
@@ -37,6 +40,7 @@ copy these local provenance fields into its results.
 from __future__ import annotations
 
 import argparse
+import ast
 import copy
 import hashlib
 import importlib.util
@@ -693,9 +697,9 @@ def tables(e: Evidence, source: dict, path: str, record: dict, keys: tuple[str, 
 
 
 def terms(e: Evidence, source: dict, record: dict) -> dict:
-    valid = heath.load_terms()
     path = 'review/terms.toml'
     raw = e.read(path)
+    valid = heath.load_terms()
     result = {}
     for tag in record.get('representation', {}).get('tags', []):
         require(tag in valid, f'{path}: unknown representation {tag}')
@@ -897,10 +901,16 @@ class Generator:
         fact = self.facts[ref]
         path = f'review/{book}/{n:02d}.toml'
         record = tomllib.loads(e.read(path))
+        # load_review also reads Heath's text (including the porism) and, for
+        # representation tags, the terms catalogue. Guard all three before the helper.
+        e.read(relative(heath.heath_path(book, n)))
+        e.read('review/terms.toml')
         heath.load_review(book, n)
         require(record['statement']['fingerprint'] == heath.review_fingerprint(self.facts_data, ref),
                 f'{path}: stale statement fingerprint')
-        require(record['review']['lean'] == heath.file_hash(heath.lean_path(book, n)),
+        lean = heath.lean_path(book, n)
+        e.read(relative(lean))
+        require(record['review']['lean'] == heath.file_hash(lean),
                 f'{path}: stale Lean fingerprint')
         attached = sorted(fact['attached'], key=lambda r: (heath.prop_key(r), r))
         require(attached == fact['attached'], f'{ref}: attachment order differs from contract')
@@ -1221,6 +1231,70 @@ def file_identity(path: Path) -> tuple[int, int] | None:
     return info.st_dev, info.st_ino
 
 
+def protected_paths() -> set[Path]:
+    """Read the protected tuples without importing or running the push script."""
+    policy = 'scripts/safe_push.py'
+    try:
+        tree = ast.parse(read_no_follow(evidence_path(policy)), filename=policy)
+    except SyntaxError as error:
+        raise Refusal(f'{policy}: cannot parse protected path lists: {error}') from error
+    values: dict[str, tuple[str, ...]] = {}
+    names = {'PROTECTED', 'PROTECTED_JUDGED'}
+    for node in tree.body:
+        if (isinstance(node, ast.Assign) and len(node.targets) == 1
+                and isinstance(node.targets[0], ast.Name) and node.targets[0].id in names):
+            value = ast.literal_eval(node.value)
+            require(isinstance(value, tuple) and value and all(isinstance(p, str) for p in value),
+                    f'{policy}: protected paths must be nonempty tuples of strings')
+            values[node.targets[0].id] = value
+        elif (isinstance(node, ast.AugAssign) and isinstance(node.target, ast.Name)
+              and node.target.id == 'PROTECTED'):
+            require(isinstance(node.op, ast.Add) and isinstance(node.value, ast.Name)
+                    and node.value.id in values and 'PROTECTED' in values,
+                    f'{policy}: unsupported protected path extension')
+            values['PROTECTED'] += values[node.value.id]
+    require(names <= values.keys() and set(values['PROTECTED_JUDGED']) <= set(values['PROTECTED']),
+            f'{policy}: missing protected path lists or extension')
+    # Standing ownership and source restrictions in AGENTS.md, beyond the push policy.
+    declared = ('AGENTS.md', 'Elements/Foundations/', 'Elements/Companions.lean',
+                'docs/briefs/0002-decisions.md', 'docs/PROGRAM.md', 'docs/program.toml',
+                'facts.json', 'book/', 'CERTIFICATE.md', 'GRAPH.md', 'README.md', 'heath/')
+    roots = {ROOT / '.git'}
+    for name in (*values['PROTECTED'], *declared,
+                 'scripts/audit/jev_questions.py', 'scripts/heath.py', 'scripts/audit/jev.py'):
+        path = Path(name)
+        require(not path.is_absolute() and '..' not in path.parts and path.parts,
+                f'{policy}: invalid protected path {name!r}')
+        roots.add(ROOT / path)
+    for arguments in (['--absolute-git-dir'], ['--path-format=absolute', '--git-common-dir']):
+        result = subprocess.run(['git', 'rev-parse', *arguments], cwd=ROOT,
+                                capture_output=True, check=False)
+        require(result.returncode == 0,
+                'cannot locate Git metadata: ' + result.stderr.decode('utf-8', errors='replace').strip())
+        path = Path(os.fsdecode(result.stdout).rstrip('\n'))
+        require(path.is_absolute(), 'Git metadata path must be absolute')
+        roots.add(path)
+    return roots | {path.resolve() for path in roots}
+
+
+def protected_identities(roots: set[Path]) -> set[tuple[int, int]]:
+    """Include untracked descendants so a hard link outside a protected tree is refused."""
+    identities = set()
+
+    def failed(error: OSError) -> None:
+        raise error
+
+    for root in roots:
+        if any(root != parent and root.is_relative_to(parent) for parent in roots):
+            continue
+        identities.add(file_identity(root))
+        if not root.is_dir():
+            continue
+        for directory, dirs, files in os.walk(root, onerror=failed):
+            identities.update(file_identity(Path(directory) / name) for name in dirs + files)
+    return identities - {None}
+
+
 def output_paths(paths: list[Path], evidence_files: dict[str, str]) -> list[Path]:
     """Validate both destinations before reading or writing either one."""
     resolved = [checked_path(path) for path in paths]
@@ -1247,6 +1321,14 @@ def output_paths(paths: list[Path], evidence_files: dict[str, str]) -> list[Path
                 f'{path}: destination would replace an evidence file')
         require(path not in protected and identity not in protected_ids,
                 f'{path}: destination would replace a tracked input')
+    roots = protected_paths()
+    root_names = {path.as_posix().casefold() for path in roots}
+    protected_ids = protected_identities(roots)
+    for path in resolved:
+        require(not any(parent.as_posix().casefold() in root_names
+                        or file_identity(parent) in protected_ids
+                        for parent in (path, *path.parents)),
+                f'{path}: destination would replace a protected path or Git metadata')
     return resolved
 
 

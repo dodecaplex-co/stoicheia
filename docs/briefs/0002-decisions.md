@@ -1943,12 +1943,19 @@ findings:
   defect in a generated row only, measure whether the questions can find a fault. It
   refuses absolute evidence paths, parent traversal or evidence resolving outside the
   repository, symlinks in evidence or either output path, and output collisions with
-  evidence, tracked files other than the two default outputs, or each other; an output
-  outside the repository is allowed, and replacement never follows a final symlink.
+  evidence, tracked files other than the two default outputs, or each other.
+  `scripts/audit/jev_questions.py` also refuses Git metadata and protected paths from
+  AGENTS.md and the lists in `scripts/safe_push.py`, independently of the index, including
+  their aliases, and guards every input before a Heath helper opens it.
+  An output outside the repository is allowed, and replacement never follows a final
+  symlink; the checks cover existing links and aliases, excluding a concurrent writer
+  racing them in the same tree.
   It uses the standard library alone, reads no key and sends nothing;
   `--commit REV --check` regenerates the rows twice and compares them with both files.
   [`tests/test_jev_questions.py`](../../tests/test_jev_questions.py) (new) tests the file
   containment and all ten controls, including the two commentary mutations, with no Lean,
-  network or key; CI does not run it yet. The generator lands on its own, before the rows,
+  network or key; CI does not run it yet. The added cases in `tests/test_jev_questions.py`
+  verify protection without index entries and refusal before an outside target is opened.
+  The generator lands on its own, before the rows,
   results and report it produces (`text/jev-audit-I-II`), as keep_apart asks. No existing
   check is weakened, and no schema or record expectation changes.
