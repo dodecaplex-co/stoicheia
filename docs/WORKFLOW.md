@@ -283,8 +283,21 @@ Ships' captains enforcing a few pages each do not, between them, make one voice.
 ## 8. Validation on the integrated revision
 
 This section is the one home of the commands; every other page links here and keeps only
-the subset its reader runs. The evidence belongs to the revision being delivered. On it,
-run exactly what CI's `check` job runs, in its order:
+the subset its reader runs. The evidence belongs to the revision being delivered.
+`.github/workflows/ci.yml` runs on `pull_request` and `merge_group`, and can be called by
+another workflow. It no longer runs on branch pushes. The main push's
+`.github/workflows/post-merge.yml` calls it after the merge.
+
+| Run | Tree checked | Main used by the acceptance comparison |
+|---|---|---|
+| Local pre-flight | The exact committed head, in temporary worktrees | The pre-flight runs no acceptance comparison |
+| Pull request CI | GitHub's proposed merge of the pull request into main | That merge's first parent; the event's base if the checkout is the head itself |
+| Merge group CI | The group's head: main plus the queued pull requests ahead, in order | The event's group base |
+| Post-merge integration | The main push's exact `after` commit | The main tip before the push, `before` |
+
+The merge group's run checks the exact combined tree that the queue will merge. A
+pre-flight or a pull request run alone cannot check the interaction with trains queued
+ahead. On the integrated revision, run exactly what CI's `check` job runs, in its order:
 
 ```sh
 export PATH=$HOME/.elan/bin:$PATH
@@ -299,6 +312,7 @@ python3 -I tests/test_check_style.py
 python3 scripts/check_style.py
 python3 scripts/render.py
 git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md   # prints nothing
+python3 scripts/check_queue.py --tree .
 python3 scripts/check_links.py
 ```
 
@@ -313,10 +327,29 @@ grep -v '^#' model/lock.sha256 | shasum -a 256 -c - && (cd model && lake exe cac
                                        # CI's `formal-model` job: the formal model, with Mathlib
 ```
 
-`scripts/safe_push.py` runs the first two groups on the head commit of every pull request
-(section 10), so a change to them is made there too, and in the CI workflow. It leaves the
-`formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files; its merge
-gate still waits for that job, like every other ([model/README.md](../model/README.md#the-ci-job)).
+Two further jobs are `acceptance` and `queue-integrity`. Acceptance runs on each event,
+with the comparison base above. While `ACCEPTANCE_GATE` is `ratchet`, the same checker
+judges that base and the checked tree, keeping each tree's values pinned to its content:
+an item that passed may not stop passing, apart from the staging items P10 and E6.
+The `full` gate holds every item. The reports are kept as an artifact.
+
+`queue-integrity` requires acceptance to succeed. On pull requests and post-merge main
+runs it runs the offline cases in `tests/test_check_queue.py`, `tests/test_check_train.py`
+and `tests/test_auto_revert.py`, each with `python3 -I`. On a merge group it builds the
+certificate, reads acceptance's verdicts, and runs `scripts/check_queue.py` with the
+event's head, base and repository, then again with `--gaps`. Section 10 gives its four
+rules and its focused tests. The `check` job's `--tree .` command above scans tracked
+text for conflict markers and repeated dated decisions headings; it does not render.
+The preceding render step checks freshness. Adding `--render` to `--tree .` checks
+freshness too. The group check renders as well.
+
+`scripts/safe_push.py` runs the local checks above, the model tests and the isolated
+negative tests on the committed head (section 10), except that its `CHECKS` list does not
+yet include the new `check_queue.py --tree .` scan. That scan runs in CI. A valid earlier
+pre-flight record can stand in for the full local checks as section 10 describes. The
+`formal-model` job stays in CI because it fetches Mathlib's prebuilt files; acceptance's
+comparison and the queue group also belong to CI. The merge gate waits for all reported
+checks ([model/README.md](../model/README.md#the-ci-job)).
 
 - **Negative tests run in isolation.** `python3 scripts/negative_tests.py` plants breaks in
   the source and builds them, so it runs in a disposable worktree or its own CI job, never
@@ -421,8 +454,11 @@ corrections and the common voice, as Books I and II have since their tags.
 
 Work reaches main only as a pull request, merged with a merge commit. On GitHub, a ruleset
 on main requires a pull request and the checks `check`, `model` and `negative`, and blocks
-force pushes and deletion; locally, the pre-push hook refuses every push to main. Agents
-never open, merge or approve a pull request: the coordinator does. The account cannot
+force pushes and deletion. When the owner enables the merge queue, the owner adds
+`queue-integrity`, `formal-model` and `acceptance` to those required checks. The queue is
+off until then; the coordinator holds the setup steps below. Locally, the pre-push hook
+refuses every push to main. Agents never open, merge or approve a pull request: the
+coordinator does. The account cannot
 approve its own pull requests, so a merge is gated by the checks and by the review
 findings recorded in the pull request, not by approvals. Tags, releases, release notes,
 the GitHub description and anything sent outside the repository still need the owner's
@@ -441,27 +477,144 @@ brief 0005), and a change to a protected path carries `security-review`. A pull 
 opens as a draft (unless `--ready` is given), and is marked ready when its reviews are
 done; `--merge` refuses a draft.
 
-**Trains.** Since every pull request must be up to date with main before it merges, and
-nearly every one touches the decisions page and the generated pages, reviewed branches can
-land together, as a train (the owner, 18 October 2026). A train is a branch
-`train/<area>-<n>` that merges several branches, each already one coherent change with its
-own reviews and `/no-mistakes` run, as merge commits of their own, so history keeps each
-change whole. The coordinator resolves the decisions page and regenerates the pages once;
-the train passes the pre-flight and CI once and merges as one pull request, whose body
-lists each branch with its reviews and the issue it closes. A train never carries a check
-change together with content that check judges: trains of checks and trains of content are
-separate, and a branch that fails the train's pre-flight leaves the train.
+**Trains.** A train is a branch `train/<area>-<n>` that gathers reviewed branches as merge
+commits, each member already one coherent change with its own checks and reviews. The
+coordinator resolves the decisions page and regenerates the pages once. Each train has
+one pull request and a pre-flight of its combined head; several trains may then enter
+the merge queue. A train never carries a check change together with content that check
+judges: trains of checks and trains of content are separate. This train rule refuses
+the combination even when origin/main's checks pass.
+
+The train's `--body-file`, required on a dry run and on every update too, has the usual
+pull request sections and two more, `Members` and `What is new`. `Members` is a table
+with the columns `Branch`, `Head`, `/code-review`, `/security-review` and `/no-mistakes`,
+one row per member. `Head` is 12 to 40 lower-case hexadecimal digits naming the member
+head merged. The review cells contain written findings, not placeholders;
+`/security-review` may say "Not required" only if no protected path changed.
+`/no-mistakes` says `passed at <head>` for that same member head, or
+`not run: <reason>`, with at least five words giving the reason.
+
+`What is new` says `None.` or gives bullet lines of these forms:
+
+```text
+- check: scripts/check_queue.py
+- check: tests/test_check_queue.py
+- rule: trains go through the merge queue
+- propositions: I.5, II.3
+- foundations: Elements/Foundations/Plane.lean
+```
+
+Every changed file under `scripts/`, `tests/` and `.github/` needs a `check:` line.
+Every changed proposition, whether in its Lean, review record, Heath text, commentary
+or figures, is named under `propositions:`. Every changed file under
+`Elements/Foundations/` or `model/`, and `Certificate/axioms.lock`, needs a
+`foundations:` line. More may be declared; an omission refuses. Rule prose is written
+by the coordinator, since a file diff cannot derive it.
+
+At the pre-flight, origin/main's `scripts/check_train.py` checks that each member was
+merged exactly once and has exactly one row; that every merge has two parents and
+adds or resolves nothing outside generated files and decisions; that the train's own
+commits change only those files; and that the evidence, separation of checks from
+content, and declarations hold. Decisions here include the page and Markdown entry
+files directly under `docs/decisions/`. A merge of main needs no member row, but its
+tree is checked too. While origin/main has no train checker, safe_push reports that
+step as skipped; once it has one, an unreadable checker or a refused train stops the
+pre-flight.
+
+**The merge queue.** GitHub makes a group for each queued train: main plus the trains
+ahead of it, then that train, in queue order. Several passing entries can be batched
+into a push to main. CI runs the integration checks on each group and the
+`queue-integrity` job runs `scripts/check_queue.py`. It refuses an unreadable input,
+record or GitHub answer. Its four rules are:
+
+- **(a) No change overwritten.** Each train's change must reverse-apply cleanly to the
+  group tree, computed as a three-way merge to avoid conflicts caused by patch context
+  alone. Generated files are checked by regeneration instead. For the decisions page,
+  every line the train adds must remain in the group's page in the same order.
+- **(b) Nothing unchecked.** Each entry has one visible pre-flight block naming exactly
+  its head and the blob of origin/main's `scripts/safe_push.py` at the recorded base.
+  That base must be an ancestor of both the head and the group's base. A `train/`
+  entry also has readable member evidence and a declaration covering its changes.
+  The structural train check belongs to its pre-flight; the queue does not repeat
+  member review. An automatic revert has the narrowly checked exception below.
+- **(c) Batching in order.** From the group's base to its head, the first-parent chain
+  consists of two-parent merges whose trees are exactly their automatic merges.
+  An already merged prefix must be held by main; the rest must be the queue's entries
+  from position one through this group's last entry, in order. A skipped train, added
+  merge content, squash or rebase refuses. If a queue merge has no standard pull
+  request subject, its second parent must uniquely identify a queued head; that
+  fallback is not allowed for the already merged prefix.
+- **(d) A clean tree.** Rendering the group changes no generated file. Tracked text has
+  no conflict markers, and the decisions page has no repeated dated heading.
+
+**The gaps of what is new.** After those rules, `check_queue.py --gaps` takes the union
+of the entries' derived changes and their declarations. A changed `tests/test_*.py`
+runs with `python3 -I`; a changed `scripts/<name>.py` runs its existing
+`tests/test_<name>.py` or `scripts/test_<name>.py` tests. The safe_push test command is
+`python3 scripts/test_safe_push.py`. Each selected command runs once, and a failure
+fails the job. Changed propositions have their acceptance items printed from the
+acceptance artifact, as a report of the verdict already judged there. Declared rules
+are printed for the reader. Foundations need no extra run here, since `model` and
+`formal-model` run on every group.
+
+**Auto-eject.** With GitHub's "only merge non-failing pull requests" setting, a train
+merges only when its own group passed. If a group fails, GitHub removes its last
+train and rebuilds the groups after it without that train. Thus an earlier passing
+train need not wait for a broken later one, and the later groups are tested again
+without the rejected change.
+
+**Auto-revert.** `.github/workflows/post-merge.yml` reruns integration on each main push.
+If it fails, the workflow takes `scripts/auto_revert.py` from the previous main, the
+push's `before` commit, and runs it in Python's isolated mode. It imports no code from
+the failed checkout. The `auto-revert` environment must allow main alone and hold
+`STOICHEIA_REVERT_APP_ID` and `STOICHEIA_REVERT_APP_KEY`. The script uses that App's
+installation token to make `revert/<after12>`, revert each merge in the push's
+first-parent chain, newest first, and open and enqueue one pull request with its head
+pinned. The pull request carries `auto-revert`, the reverted requests' kind labels,
+`security-review` when a protected path changes, and `Reverts: <sha>` lines. The App
+lets that pull request trigger CI; a pull request opened with `GITHUB_TOKEN` would
+not trigger it.
+
+The workflow records an issue with `GITHUB_TOKEN`, labelled `blocks-release` and
+`main-red`, naming the trains, their merge commits, the failed jobs and the run. It
+does this before attempting the revert. Without the App credentials, it records the
+issue and the pause, with no revert. Unreadable history or a conflicting revert also
+leaves an issue; if the previous main has no readable script, or the failed jobs cannot
+be read, the workflow's own fallback opens the issue without running repository code.
+The queue accepts a revert without an ordinary pre-flight only from the configured
+App bot (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label,
+and only when its tree is exactly the named main merges reverted newest first.
+
+Landing through `--merge` pauses while an open `main-red` issue exists or the latest
+completed post-merge run at main's tip concluded anything other than success, neutral
+or skipped. A tip with no completed run is not itself marked red; unreadable health
+answers refuse. This gate does not remove trains already queued. Successful integration clears
+`main-red` only after confirming that the successful commit is still main's tip;
+the issue stays open with `blocks-release` for the coordinator.
+
+**Turning it on.** The queue remains off until the owner enables it. The coordinator
+holds these steps: add the merge queue rule for main, keep merge commits and enable
+"only merge non-failing pull requests"; require all six checks named above; install
+the revert App for this repository with contents and pull requests write access,
+and workflows write access for reverts that change workflows; restrict the
+`auto-revert` environment to main and put the App credentials there, not in repository
+secrets; set the repository variable `STOICHEIA_REVERT_BOT` to its bot login. With the
+queue off, `--merge` follows the direct merge path below. The issue and the pause still
+apply if the App has not been set up.
 
 ```sh
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
                                                    # clone, and after the hook or launcher changes
 git safe-push --branch <name> --dry-run            # every check; nothing pushed
-git safe-push --branch <name> --label <kind>       # the pre-flight, the push, a draft pull request
+git safe-push --branch <name> --label <kind>       # reuse matching full checks, then push and open
 git safe-push --branch <name>                      # after a fix: again, on the new head
+git safe-push --branch <name> --full               # force the full local checks again
 gh pr ready <n>                                    # when the reviews are done
 git safe-push --merge <n> --dry-run                # the gates, and no merge
-git safe-push --merge <n>                          # the gates, then a merge commit
+git safe-push --merge <n>                          # the gates, then queue or direct merge
 ```
+
+For `train/*`, add `--body-file <path>` to every `--branch` command above.
 
 `git safe-push` is a launcher that `install_hooks.sh` puts outside the tracked tree
 (`scripts/hooks/safe-push`, copied to `.git/stoicheia/safe-push`, with the alias): it
@@ -474,9 +627,12 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
 `STOICHEIA_PYTHON` when it is set, else the first of `python3.14`, `python3.13`,
 `python3.12`, `python3.11` and `python3` that is; without one, they refuse.
 
-1. **A branch.** The change is committed on a branch from origin/main. When main moves,
-   origin/main is merged into the branch, never rebased onto: review records stamp the
-   branch's commits, and a rebase would orphan the stamps.
+1. **A branch.** The change is committed on a branch from origin/main. Before a push,
+   it must contain the current origin/main. If main moved, merge it into the branch,
+   never rebase onto it: review records stamp the branch's commits, and a rebase would
+   orphan the stamps. With the queue off this still holds at the merge; with the queue
+   on, the group checks a head alongside the changes that reached main or queued ahead
+   since its pre-flight.
 2. **The pre-flight.** `git safe-push --branch <name>` checks the exact commit (HEAD, or
    `--commit <sha>`), then pushes it to that branch, never to main and never forced, and
    opens the pull request onto main, or updates the open one. It reads the commit alone,
@@ -486,7 +642,7 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    that a branch cannot weaken the harness that judges it. It stops, saying why, at the
    first step that fails:
    1. *Preconditions.* The commit exists; `git fetch origin`; origin/main is an ancestor
-      of the commit, so that the merge commit holds exactly the tree checked; the
+      of the commit, so a direct merge at that base holds exactly the tree checked; the
       branch, if origin has it, is an ancestor of the commit too; the branch is not main;
       the branch name and the title, which are public, hold nothing the secret scan
       refuses. No tag or release is made. The installed hook and launcher are compared
@@ -529,8 +685,18 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
 
       For each of these, the push must add a mention: an old line that already named the
       thing, edited in place, does not count.
-   4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
-      second, each step timed. The check scripts and what they expect (`scripts/`,
+
+      For `train/*`, step "3. train" then runs origin/main's train checker against the
+      committed head and the supplied body, as described above.
+   4. *The full local checks* of section 8 in that worktree, and `negative_tests.py` in a
+      second, each step timed. On `--branch`, a dry run's record of the full checks of
+      the same SHA against the same origin/main, made by the same origin/main harness,
+      stands in for this step alone on a push, as a matching record does on `--merge`.
+      A dry run always runs the full checks; `--full`, which goes with `--branch`
+      alone, forces them on a push too. The secret scan, invariant guards and train
+      check still run; a missing, failed or unreadable record means the full checks
+      run again.
+      The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in
@@ -598,14 +764,19 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    pushes and opens pull requests. Each blocking or material finding (section 9) is
    resolved, and the pull request says how. A fix is a new commit on the branch, and the
    pre-flight runs again.
-4. **The merge.** `git safe-push --merge <n>` runs the secret scan and the guards on the
-   pull request's head against the current origin/main again, every time: the
+4. **The merge.** `git safe-push --merge <n>` reads main's effective rules; an unreadable
+   answer refuses. A `merge_queue` rule selects queue mode. In either mode it checks
+   main's health and runs the secret scan and guards on the pull request's head again,
+   every time. With the queue off, the base is current origin/main, which the head must
+   contain. With the queue on, the base is the head's unique merge base with current
+   origin/main, so the head need not contain the intervening main changes. The
    pre-flight's record is a local file, which code the pre-flight ran (a commit's
    checks, Lean at elaboration) could have written, so it stands in only for the full
-   checks, which CI runs as well, and only when origin/main's harness made it; otherwise
-   they run again too. The body's summary is written afresh when the full checks ran
-   again or when it is not of this head and origin/main, and the other parts safe_push
-   wrote whenever they are out of date. It merges only when those pass; CI on that head
+   checks, which CI runs as well, and only for this head and base with the running
+   origin/main harness's blob; otherwise they run again too. The body's summary is
+   written afresh when the full checks ran again or when it is not of this head and
+   base, and the other parts safe_push wrote whenever they are out of date. It merges
+   only when those pass; CI on that head
    is green (`check`, `model` and `negative` pass, and nothing fails or is still
    running); no box marked **Required** in its checklist is unticked, nor one marked
    **Required if protected** when a protected path changes, and none of the template's
@@ -618,8 +789,21 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    code, and a box only as a list item (a `<!--` in a code span is text, and hides
    nothing); the title and the branch name, which go into main's merge commit, hold
    nothing the secret scan refuses; it carries a label for its kind, and
-   `security-review` when a protected path changes; and it is not a draft. Then
-   `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
+   `security-review` when a protected path changes; and it is not a draft. These gates
+   hold in both modes.
+
+   **Queue on:** main's health is checked again at its current tip, and the head is
+   enqueued with GraphQL `enqueuePullRequest`, `expectedHeadOid` pinned to the checked
+   head. The script follows the entry to a merge or removal from the queue. A merge
+   succeeds only when origin/main holds the named two-parent merge with the checked
+   head as its second parent. Its tree includes the trains ahead, checked by the
+   group's CI; it need not equal the pull request head's tree. An ejection is exit 1,
+   with the last observed group's checks when readable. An unreadable verdict,
+   interruption or timeout after the enqueue was attempted is exit 3,
+   "queued; verdict not followed", with no revert advised. A dry run enqueues nothing.
+
+   **Queue off:** main must still be the checked base, and its health is checked again.
+   Then `gh pr merge --merge --delete-branch --match-head-commit <head>`, with the merge
    commit's subject and body given (GitHub's own words: the owner GitHub names for the
    head, never the one in origin's URL, which names the old owner after a transfer, and
    refused when GitHub names none an account could have; the branch name, scanned; and
@@ -674,9 +858,10 @@ and closes the fork's with a link to it.
 
 The summary is printed and appended to `~/.cache/stoicheia/pushes.log`, outside the
 repository, with each step's full output beside it in `logs/`, and the pre-flight's record
-in `preflight/`, which `--merge` reads; origin/main's harness, when it runs in place of
-another copy, is written to `harness/`, named by its blobs. `sh scripts/install_hooks.sh`
-installs the launcher and the pre-push hook: the hook refuses every push to main, scans a
+in `preflight/`, which `--branch` and `--merge` read; origin/main's harness, when it runs
+in place of another copy, is written to `harness/`, named by its blobs.
+`sh scripts/install_hooks.sh` installs the launcher and the pre-push hook: the hook
+refuses every push to main, scans a
 push to any other branch (its name included) with origin/main's copy of the secret scan
 (`safe_push.py --scan-push`), whichever remote it goes to (another remote's main is never
 run, and without origin/main's copy the push is refused), and refuses to push or delete a
