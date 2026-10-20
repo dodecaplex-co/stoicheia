@@ -48,10 +48,12 @@ proposition or book whose file it names; and `render.py`'s functions, which rege
 pages in memory to compare them with the files. An item passes only when the checks it
 names pass for that proposition, book or edition.
 
-It is not yet a step of CI; the coordinator decides when it becomes a required one. A CI
-step would fetch the whole history (`fetch-depth: 0`), for the records' commits, and would
-change, together, the CI workflow, the sequence in [WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision),
-section 8, and the `CHECKS` list of `scripts/safe_push.py`, which runs that sequence.
+CI runs it as the required `acceptance` job on every pull request. That CI-only job's
+ratchet before the consolidation release, its full gate from the release onward, and the
+distinction between GitHub's five required checks and the merge gate's local presence test
+are kept in [WORKFLOW](WORKFLOW.md#8-validation-on-the-integrated-revision), section 8;
+the executable definitions are [the workflow](../.github/workflows/ci.yml) and
+[`scripts/check_acceptance.py`](../scripts/check_acceptance.py).
 
 ## For each proposition
 
@@ -210,9 +212,9 @@ section 10, step 9): the checklist with no failures, the independent audit, and 
 outside reading. The checklist is this page. The independent audit, by a model family that
 wrote none of the work, reads the [review] items afresh (brief 0005, stage 6), and its
 evidence goes under `docs/reports/acceptance/`. The cold outside reading scores the
-tagged candidate. On the candidate commit CI is green, with `check`, `model` and
-`negative`; the release notes are drafted from the generated summaries; and the owner
-approves them before the tag.
+tagged candidate. On the candidate commit all five required checks are green. The
+separate release gate, including the two readings and the owner's approval of the notes,
+is [WORKFLOW](WORKFLOW.md#10-how-a-book-is-made-and-released), section 10, steps 8 and 10.
 
 The check that every Lean name a catalogue gives is declared, by asking Lean itself (B2,
 E2), follows Patrick Massot's [leanblueprint](https://github.com/PatrickMassot/leanblueprint),
