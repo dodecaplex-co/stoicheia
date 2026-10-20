@@ -71,6 +71,10 @@ records current; CI runs it on every push.
     bytes are restored, a rebuild is required, and on success the whole environment
     is replayed.
 
+16. Counting congruence constructors instead of `Coincidence.step` in the certificate:
+    `tests/test_certificate.py` fails on transformers with no step. The restored
+    certificate must pass the same regression, including its real-step cases.
+
 These faults exercise the style and link checks, page freshness, an audit pin and
 leanchecker's loading of compiled files as well as the earlier checks. They do not
 plant an invalid proof term for leanchecker's kernel replay. `check_kernel.py`'s own
@@ -81,7 +85,7 @@ all renderer outputs.
 Tests 10, 14 and 15 attempt a restoration build; if it fails or is interrupted, every
 file in `.lake/build` returns to its saved contents and presence or absence before
 the plant, including dependent modules, hashes and traces. Test 10 always restores or
-removes `Planted.*` outputs in a nested `finally`. Tests 11 to 15 report elapsed time,
+removes `Planted.*` outputs in a nested `finally`. Tests 11 to 16 report elapsed time,
 restoration included. An outer `finally` compares Git status with the entry status,
 including on interruption, without replacing an exception already in flight.
 Temporary-directory regressions run first, without Lean. Exits non-zero if a fault
@@ -968,6 +972,30 @@ def planted_assumptions() -> None:
             planted_outputs.restore()
 
 
+def certificate_constructor_counting() -> None:
+    """Rebuilding constructors must not invent a coincidence step."""
+    rel = "Certificate/Facts.lean"
+    path = ROOT / rel
+    saved = path.read_bytes()
+    try:
+        replace_once(
+            rel, "used.contains coincidenceStep",
+            "([`Elements.Superposition.Derives.len_congr,\n"
+            "           `Elements.Superposition.Derives.angle_congr,\n"
+            "           `Elements.Superposition.Derives.area_congr]).any used.contains",
+        )
+        expect_failure(
+            "constructor counting reports a step in a transformer",
+            run(sys.executable, "-I", "tests/test_certificate.py"),
+            "FAIL: test_transformers_without_step_do_not_count",
+            "AssertionError: Lists differ: ['C.N. 4'] != []",
+        )
+    finally:
+        path.write_bytes(saved)
+    expect_success("the restored certificate regression",
+                   run(sys.executable, "-I", "tests/test_certificate.py"))
+
+
 def main() -> int:
     if not expect_success("restoration regressions",
                           run(sys.executable, "-I", "tests/test_negative_tests.py")):
@@ -996,7 +1024,8 @@ def main() -> int:
         lake_links()
         placement_named()
         planted_assumptions()
-        for test in (style_error, broken_link, stale_page, changed_audit_pin, corrupt_olean):
+        for test in (style_error, broken_link, stale_page, changed_audit_pin, corrupt_olean,
+                     certificate_constructor_counting):
             started = perf_counter()
             try:
                 test()

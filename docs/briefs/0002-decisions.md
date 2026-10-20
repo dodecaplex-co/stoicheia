@@ -1995,6 +1995,111 @@ findings:
 
 ## 20 October 2026
 
+- **I.45 and II.14 are allowed as restricted while the outline proof is to come (#116).**
+  On 20 October 2026 the owner approved ship G's decisions for #116, including:
+  "**Interim disclosure.** Approve the restricted-scope entries in section 7 and keep
+  `figure-with-dissection` until all bridges are proved and reviewed."
+  This supersedes the 18 October decision to call both full under the convention of a
+  figure supplied with a checked finite division. The figure is given with its checked
+  division into triangles, and its area is relative to that division; existence of a
+  division from the outline and independence of area from the division chosen remain to
+  be proved under #116.
+  `scripts/check_acceptance.py` adds I.45 and II.14 to `ALLOWED_LIMITS`, each as
+  `("restricted", "figure-with-dissection")`, and [ACCEPTANCE's table](../ACCEPTANCE.md#the-limitations-allowed)
+  gains the same two rows. They go when the outline proof is proved and reviewed.
+  The record change follows on a text branch of its own, stacked on this tooling change.
+  The protected files changed are `scripts/check_acceptance.py`, whose only change is
+  those entries and their comment, and `tests/test_acceptance_limits.py` (new), which checks
+  the list against the table and exercises P3 with and without the required tag. CI does
+  not run it yet; whoever changes the limitations runs it.
+
+
+- **The restricted-superposition certificate tooling lands before the Lean replacement.**
+  For issue #75 and [brief 0009](0009-superposition.md), the coordinator approves this
+  strengthening before the content branch lands. `Certificate/Facts.lean` counts C.N. 4
+  when a walked local declaration's value names `Elements.Superposition.Coincidence.step`.
+  The later calculus declares `Coincidence : Prop` with that one constructor; each of
+  `Derives.len_congr`, `Derives.angle_congr` and `Derives.area_congr` takes a first explicit
+  argument `(cn4 : Coincidence)`. Derivations taking the step supply `.step` or `⟨⟩`.
+  Transformers such as `Derives.map` pass the marker they receive as a bound variable.
+  Counting the three congruence constructors instead gave false C.N. 4 reports whenever
+  a proof reached a transformer that rebuilds all three, even on a derivation with no
+  congruence step. There is no list of eliminators to skip: that could hide a real use.
+
+  `Certificate/FIELDS.md` and the emitter's docstrings state the exact semantics. Like
+  `#print axioms`, the report follows what proof terms name, through the local declarations
+  they name, without evaluating them. Passing a bound marker adds no step; a helper that
+  names the constant counts even when evaluation would take another branch. Merely
+  reaching an inductive type's constructor list does not count. The marker changes no
+  axiom walk; the module boundary is strengthened below. A single backtick names the
+  marker without requiring it to exist, so the tooling runs on main before the calculus
+  exists and leaves main's facts unchanged.
+
+  `tests/fixtures/CertificateCN4.lean` declares exact-name stand-ins for the marker and
+  the three congruence constructors, a `Derives.map` that rebuilds every constructor and
+  passes its marker along, and a soundness-style eliminator. `tests/test_certificate.py`
+  runs an unmodified copy of the emitter against this fixture as a temporary package's
+  `Elements` module, with the built foundations available and all output kept temporary.
+  Each congruence constructor counts directly, through a helper, and through both
+  transformers. Given derivations through either transformer or both do not count; the
+  type-only and other-constructor controls remain. Bound markers do not count; a helper
+  that names a step does. All sixteen entries retain the same non-empty axiom fields.
+  The positive direct and helper cases fail against origin/main's old emitter, which has
+  no calculus detection; constructor counting passes those positives but fails the
+  transformer and bound-marker controls. These are separate regression baselines.
+
+  With the coordinator's approval, `.github/workflows/ci.yml` and `scripts/safe_push.py`
+  run `python3 -I tests/test_certificate.py` immediately after
+  `lake env lean Certificate/Facts.lean`, as does [WORKFLOW](../WORKFLOW.md), section 8's
+  command block. `scripts/test_safe_push.py` compares all three command sequences and pins
+  that position. `scripts/negative_tests.py` plants constructor counting, requires the
+  focused test to reject its false report, restores the source in `finally`, and requires
+  the restored regression to pass. This fits the harness's existing pattern of a source
+  fault caught by a separate check; it runs only in a disposable tree.
+  `tests/test_negative_tests.py` checks restoration on interruption.
+
+  `scripts/heath.py` keeps the branch's existing overlap self-test change to I.7's rule,
+  `Tacit.not_same_side_of_circles_meet`, with the same acceptance of a complete `step`
+  record and rejection when its note is missing. No check is weakened. Protected files
+  changed, each named here on a line added relative to origin/main:
+  `Certificate/Facts.lean`, `Certificate/FIELDS.md`,
+  `scripts/heath.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
+  `tests/test_certificate.py`, `tests/fixtures/CertificateCN4.lean`,
+  `.github/workflows/ci.yml`.
+  The later content branch must supply the marker interface and pin I.4's and I.8's
+  `common_notions` in `tests/certificate_expectations.json` when its proofs land.
+
+  The security review's fix round closes the inherited module boundary gap. Listing
+  `env.header.moduleNames` by root in the environment loaded by Facts.lean gives
+  `Init`, `Lean`, `Std` and `Elements`. The walks may stop at Lean's three module roots,
+  whose declarations belong to the pinned toolchain. They walk local declarations in
+  `Elements` and the emitter itself, and refuse any reached declaration from another
+  imported module, naming both declaration and module before writing any certificate.
+  All five walks apply this check before their stopping rules, including the vocabulary
+  walk. The module is read from the environment, not inferred from the declaration's
+  namespace.
+
+  The regression compiles `Staging.Hidden` separately from its temporary `Elements`
+  entry module. Its helpers supply `Coincidence.step`, Common Notion 1 and the existing
+  `Tacit.add_comm` axiom, with another case naming the helper only in the entry's type.
+  The axiom case also covers an entry that already uses the same axiom directly, which
+  the old axiom comparison could not distinguish. Reached helpers fail with the module
+  diagnostic; unused imported helpers remain allowed. The old emitter accepts the
+  hidden step, notion and type-only cases, and gives only the axiom mismatch for the
+  helper supplying an otherwise absent axiom. These regressions require the new
+  diagnostic and no certificate output.
+
+  The constructor-counting plant now saves the source bytes before entering `try`,
+  mutates inside it and restores those bytes in `finally`. Its restoration regression
+  covers interruption during the check, interruption during mutation and a partial
+  write error; the mutation cases also preserve CRLF bytes exactly. The other plants
+  retain their target checks: the compiled assumption plant is an `Elements` module,
+  and the `Staging`, `Audit` and model command plants are checked by the source scan.
+  Protected files changed in this fix round: `Certificate/Facts.lean`,
+  `Certificate/FIELDS.md`, `tests/test_certificate.py`, `scripts/negative_tests.py`
+  and `tests/test_negative_tests.py`. No foundation or expected value changes.
+
 - **The model's shared-module checks land before the restricted rule (brief 0009, #75).**
   The branch `tooling/superposition-model-check` carries the generic checks from
   `lean/superposition-restricted` in `model/Check/Generator.lean`: declarations from exactly
@@ -2095,8 +2200,20 @@ findings:
   it at their congruence steps. The tooling certificate counts this constructor instead
   of the congruence constructors, so merely reaching `Derives.map` no longer reports
   C.N. 4. This adds no axiom and changes no derivable conclusion, proposition statement,
-  Heath line or route. The lock, model outputs and hashes, certificate and pages are
-  regenerated later from the integrated sources.
+  Heath line or route. Integration with `tooling/superposition-certificate` regenerates
+  `Certificate/axioms.lock`, both model hashes, the model outputs, certificate and pages.
+  The 87 axiom statements stay unchanged; the vocabulary grows from 206 to 208, adding
+  `Superposition.Coincidence` and `Superposition.Coincidence.step` and changing only
+  `Superposition.Derives.len_congr`, `Superposition.Derives.angle_congr` and
+  `Superposition.Derives.area_congr` to take the marker. `Derives` still has seventeen
+  constructors. The certificate has 122 entries: 99 propositions, 3 porisms and 20
+  companions. Of these, 116 reach the calculus and its marker; none reaches the calculus
+  without taking or inheriting a congruence step, so all Common Notion lists stay
+  unchanged. I.4 has C.N. 4 and C.N. 5; I.8 has C.N. 1, C.N. 3, C.N. 4 and C.N. 5.
+  `tests/certificate_expectations.json` keeps all 24 existing expectations and adds
+  I.8's inclusion of C.N. 4 beside I.4's existing expectation. The fixture tests cover
+  derivations that reach transformers without a step. I.4's and I.8's review records
+  remain stale after the marker change and require their reviewers' fresh stamps.
 
   The protected files changed on the replacement branch relative to `origin/main`,
   already named in the preceding entry, are `Audit.lean`, `Audit/Overlaps.lean`,

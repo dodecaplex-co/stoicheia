@@ -292,6 +292,7 @@ lake build
 lake build Audit
 lake build Staging
 lake env lean Certificate/Facts.lean
+python3 -I tests/test_certificate.py
 python3 scripts/check_kernel.py --self-test
 python3 scripts/heath.py
 python3 scripts/check_fidelity.py
@@ -340,6 +341,12 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
   `tests/certificate_expectations.json`, or, for the style check's reading of a phrase or
   of a letter's ink, a case in `tests/test_check_style.py`). Tests that only repeat a
   trivial prose change are not added.
+- **The certificate's coincidence cases need built foundations.**
+  `python3 -I tests/test_certificate.py` checks C.N. 4 detection directly, through helpers
+  and through transformers, with negative controls for derivations that supply no step,
+  while keeping the axiom fields unchanged. It needs the foundation modules built by
+  `lake build`, with the Lean tools on `PATH`. CI's `check` job and the pre-flight run
+  it immediately after `Certificate/Facts.lean` on the revision delivered.
 - **The style check's cases run before it.** `tests/test_check_style.py` puts the
   wording rules of `scripts/check_style.py`, and S20's reading of a letter's ink, to short
   texts and small figures, each with the finding the rule should make, and needs no Lean.
