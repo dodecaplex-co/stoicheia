@@ -8,7 +8,7 @@ kind = "euclid"
 [[passage]]
 at = "and through A let AF be drawn parallel"
 kind = "helper"
-helper = "Prop31.parallelogram"
+helper = "BookI.Prop31.parallelogram"
 note = "Euclid draws AF parallel to CD and takes its meeting with DE at F from the figure. `BookI.Prop31.parallelogram` draws the parallel by I.31, finds F by `BookI.Prop30.meet` and proves DCAF a parallelogram; `BookI.Prop30.parallel` (I.30, which Heath does not cite here) makes AF parallel to BE as well."
 
 [[passage]]

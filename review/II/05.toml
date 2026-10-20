@@ -20,7 +20,7 @@ note = "Euclid joins BE and draws the parallels through D and H. `Parallelogram.
 [[passage]]
 at = "and again through A let AK be drawn parallel"
 kind = "helper"
-helper = "Prop31.parallelogram"
+helper = "BookI.Prop31.parallelogram"
 note = "Euclid draws AK parallel to CL and takes K on KM from the figure. `BookI.Prop31.parallelogram` draws the parallel, finds K and proves that LCAK is a parallelogram."
 
 [[passage]]

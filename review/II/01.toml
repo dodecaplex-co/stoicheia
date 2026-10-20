@@ -21,7 +21,7 @@ note = "Euclid cuts off BG equal to A by I.3, taking enough room on BF for grant
 [[passage]]
 at = "and through D, E, C let DK, EL, CH be drawn parallel to BG"
 kind = "helper"
-helper = "Prop31.parallelogram"
+helper = "BookI.Prop31.parallelogram"
 note = "Euclid draws DK, EL and CH and reads their meetings with GH from the figure. `BookI.Prop31.parallelogram` draws each parallel by I.31 and finds K, L and H by `BookI.Prop30.meet`, using I.30."
 
 [[passage]]

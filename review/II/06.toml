@@ -15,7 +15,7 @@ note = "Euclid joins DE and draws the parallels through B and H; `between_inner`
 [[passage]]
 at = "and further through A let AK be drawn parallel"
 kind = "helper"
-helper = "Prop31.parallelogram"
+helper = "BookI.Prop31.parallelogram"
 note = "Euclid draws AK parallel to CL and takes K on KM from the figure; `BookI.Prop31.parallelogram` draws the parallel by I.31, finds K by `BookI.Prop30.meet` and proves that LCAK is a parallelogram. `Parallelogram.complements` uses I.30 to prove CH and HF are parallelograms; CH is then used by I.36, in the division of CM, and by I.34 to identify the side HL of LG with BC."
 
 [[passage]]
