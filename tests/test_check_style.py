@@ -41,8 +41,9 @@ it, put to the script's own patterns and functions:
   letters; and it names a line dashed by itself or by its group as a dashed line.
 * the input cases: both complete figure checks refuse elements, attributes, numbers,
   transforms, keywords and path commands outside main's SVG language before measuring;
-  earlier cases using CSS, units, exponents or other excluded features now require that
-  refusal. Point labels require an effective supported Georgia declaration; effective
+  cases using CSS, scale transforms, units, exponents or other excluded features require
+  their exact refusal, separately from admitted geometry cases. Point labels require an
+  effective supported Georgia declaration; effective
   strokes and bold weights, unmeasured label characters and incomplete ellipse radii fail.
   Numeric inputs and cubic subdivision
   are bounded; non-finite geometry and decoder failures report the figure and leave
@@ -399,7 +400,8 @@ def modern_rules(inside: str, ref: str, heaths=HEATHS, names=NAMES,
 # rect's rounded corners as square, drew a circle of no radius, placed an anchored label
 # with a prime by its capital alone, and counted a letter drawn twice in one of several
 # figures side by side as once in each; a second found a radius spelled 5e1 read as none,
-# and a line of no length with butt caps read as drawn. Each has its case below. An
+# and a line of no length with butt caps read as drawn. Their admitted geometry or exact
+# allow-list refusal has a case below. An
 # independent review then found no case for an ellipse, a polyline, a dot or a stroke
 # wholly within a letter, the canvas's right, top and foot, a letter's size or transform,
 # or a prime, so that S26 could lose any of them and every case still pass; those cases
@@ -415,8 +417,6 @@ CLEAR_CASES = [   # (what is drawn beside a letter at (150, 100), at 17; the let
     (LINE.format(y=101.5), "A", "normal", "start", True),
     (LINE.format(y=102.5), "A", "italic", "start", True),    # 2.5 below it: 1.7
     (LINE.format(y=103.5), "A", "italic", "start", False),   # 3.5 below it: 2.7
-    ('<line x1="100" y1="103.5" x2="200" y2="103.5" style="stroke:#3b2f2f;stroke-width:4"/>',
-     "A", "italic", "start", True),                          # a width in style=: 1.5
     ('<g stroke="#3b2f2f" stroke-width="4"><line x1="100" y1="103.5" x2="200" y2="103.5"/>'
      '</g>', "A", "italic", "start", True),                  # a width inherited: 1.5
     ('<line x1="100" y1="90" x2="200" y2="90" stroke="none"/>', "A", "italic", "start", False),
@@ -454,8 +454,6 @@ CLEAR_CASES = [   # (what is drawn beside a letter at (150, 100), at 17; the let
      "A", "italic", "start", True),                          # its corner at the letter
     ('<rect x="150" y="100" width="100" height="100" rx="50" fill="none" stroke="#3b2f2f"/>',
      "A", "italic", "start", False),                         # a circle, 12.9 clear
-    ('<rect x="150" y="100" width="100" height="100" rx="5e1" fill="none" stroke="#3b2f2f"/>',
-     "A", "italic", "start", False),                         # the same, spelled otherwise
     ('<line x1="155" y1="94" x2="155" y2="94" stroke="#3b2f2f"/>',
      "A", "italic", "start", False),                         # no length, butt caps: nothing
     ('<line x1="155" y1="94" x2="155" y2="94" stroke="#3b2f2f" stroke-linecap="round"/>',
@@ -464,12 +462,6 @@ CLEAR_CASES = [   # (what is drawn beside a letter at (150, 100), at 17; the let
     ('<circle cx="156" cy="108" r="2.6" fill="#3b2f2f"/>', "A", "italic", "start", False),
     (LINE.format(y=114), "A", "italic", "start", False),
     ('<g transform="translate(0,-20)">' + LINE.format(y=114) + '</g>',
-     "A", "italic", "start", True),
-    # Stretched four times upright, a line at 104 is 6.4 wide, and a dot at 105 of
-    # radius 4: each 0.8 or 1 from the letter, though a mean stretch of 2 would clear them.
-    ('<g transform="scale(1,4)"><line x1="100" y1="26" x2="200" y2="26" stroke="#3b2f2f" '
-     'stroke-width="1.6"/></g>', "A", "italic", "start", True),
-    ('<g transform="scale(1,4)"><circle cx="156" cy="26.25" r="1" fill="#3b2f2f"/></g>',
      "A", "italic", "start", True),
     # An E's top right corner stands 1.7 further right italic than upright.
     ('<line x1="163.5" y1="84" x2="163.5" y2="90" stroke="#3b2f2f" stroke-width="1.6"/>',
@@ -484,6 +476,17 @@ CLEAR_CASES = [   # (what is drawn beside a letter at (150, 100), at 17; the let
     (UPRIGHT_STROKE.format(x=135), "A", "italic", "start", False),
     (UPRIGHT_STROKE.format(x=132), "A′", "italic", "end", True),
     (UPRIGHT_STROKE.format(x=132), "A", "italic", "end", False),
+]
+CLEAR_REFUSAL_CASES = [   # (excluded drawing, element, attribute, value)
+    ('<line x1="100" y1="103.5" x2="200" y2="103.5" '
+     'style="stroke:#3b2f2f;stroke-width:4"/>',
+     "line", "style", "stroke:#3b2f2f;stroke-width:4"),
+    ('<rect x="150" y="100" width="100" height="100" rx="5e1" fill="none" '
+     'stroke="#3b2f2f"/>', "rect", "rx", "5e1"),
+    ('<g transform="scale(1,4)"><line x1="100" y1="26" x2="200" y2="26" '
+     'stroke="#3b2f2f" stroke-width="1.6"/></g>', "g", "transform", "scale(1,4)"),
+    ('<g transform="scale(1,4)"><circle cx="156" cy="26.25" r="1" '
+     'fill="#3b2f2f"/></g>', "g", "transform", "scale(1,4)"),
 ]
 EDGE_CASES = [   # (a letter A's x and y; a finding?)
     (1, 100, True),         # by the left edge
@@ -1834,6 +1837,14 @@ class Modern(unittest.TestCase):
                                 for r, path, _, message in findings), findings)
             return [(r, message) for r, path, _, message in findings if path == first]
 
+    def test_processing_instruction_rules_stay_separate(self):
+        for prefix in ('<?note figure?>', '<?xml version="1.0"?>'):
+            with self.subTest(prefix=prefix):
+                self.assertEqual(self.check_refused_modern(prefix=prefix), [])
+        self.assertEqual(self.check_refused_modern(
+            prefix='<?xml-stylesheet href="figure.css" type="text/css"?>'),
+            [("S24", "unsupported stylesheet reference in a modern figure")])
+
     def test_unsupported_svg_presentation_is_refused(self):
         cases = [
             (MODERN_GOOD + '<style>text { fill: #ff0000; font-size: 100px; '
@@ -2031,6 +2042,11 @@ def svg_refusal(kind, attr=None, value=None):
     """The diagnostic expected when a case is outside the declared input language."""
     what = f"<{kind}>" + (f" {attr} {value!r}" if attr is not None else "")
     return f"{what} is outside S26's SVG allow-list"
+
+
+def pi_refusal(target, data):
+    instruction = target + (f" {data}" if data else "")
+    return f"processing instruction {instruction!r} is outside S26's SVG allow-list"
 
 
 class SvgGate(unittest.TestCase):
@@ -2292,6 +2308,44 @@ class SvgGate(unittest.TestCase):
             with patch.object(ET, "parse", side_effect=decode_failure):
                 self.assert_continued(figure_run(figure_fixture(idea), idea), idea,
                                       "not well-formed SVG", rule="S14" if idea else "S15")
+
+    def test_stylesheet_processing_instructions_and_continuation(self):
+        target = "xml-stylesheet"
+        data = 'type="text/css" href="data:text/css,line{stroke-width:20}"'
+        expected = pi_refusal(target, data)
+        for idea in (False, True):
+            with self.subTest(idea=idea):
+                raw = (f'<?xml version="1.0"?>\n<?{target} {data}?>\n'.encode("ascii")
+                       + ET.tostring(figure_fixture(idea)))
+                found = figure_run(raw, idea)
+                path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                self.assertEqual([f for f in found if f[1] == path], [("S26", path, 0, expected)])
+                self.assert_continued(found, idea, expected)
+
+    def test_xml_declarations_and_comments_are_admitted(self):
+        for idea in (False, True):
+            with self.subTest(idea=idea):
+                body = ET.tostring(figure_fixture(idea)).replace(b">", b"><!-- figure -->", 1)
+                found = figure_run(b'<?xml version="1.0"?>\n' + body, idea)
+                path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                self.assertFalse([f for f in found if f[1] == path], found)
+                next_path = "figures/I/02" + ("-idea.svg" if idea else ".svg")
+                self.assertTrue(any(r == "S26" and p == next_path and "canvas's edge" in msg
+                                    for r, p, _, msg in found), found)
+
+    def test_malformed_euclid_figure_is_reported_once(self):
+        bad_figures = (
+            b"<svg>",
+            b'<?xml version="1.0" encoding="unknown-encoding"?><svg/>',
+        )
+        for raw in bad_figures:
+            with self.subTest(raw=raw):
+                found = figure_run(figure_fixture(True), True, reference=raw)
+                first = [f for f in found if f[0] == "S15" and f[1] == "figures/I/01.svg"]
+                self.assertEqual(len(first), 1, found)
+                self.assertIn("not well-formed SVG", first[0][3])
+                self.assert_continued(found, True, "not well-formed SVG",
+                                      first_path="figures/I/01.svg", rule="S15")
 
     def test_checker_errors_are_not_decoder_failures(self):
         for idea in (False, True):
@@ -3187,9 +3241,7 @@ class Clearance(unittest.TestCase):
         for drawn, s, font_style, anchor, want in CLEAR_CASES:
             with self.subTest(drawn=drawn, letter=s, style=font_style, anchor=anchor):
                 found = s26_findings(drawn, letter(s, font_style=font_style, anchor=anchor))
-                if 'rx="5e1"' in drawn:
-                    self.assertEqual(found, [svg_refusal("rect", "rx", "5e1")])
-                    continue
+                self.assertFalse(any("SVG allow-list" in message for message in found), found)
                 self.assertEqual(bool(found), want,
                                  f"S26 {'misses' if want else 'wrongly finds'} a stroke "
                                  f"near {font_style} {s}, anchored at its {anchor}: "
@@ -3197,6 +3249,15 @@ class Clearance(unittest.TestCase):
 
     test_clearance_cases.__doc__ = (f"S26 reads {len(CLEAR_CASES)} strokes and dots beside "
                                     "a letter rightly")
+
+    def test_clearance_refusal_cases(self):
+        for drawn, kind, attr, value in CLEAR_REFUSAL_CASES:
+            with self.subTest(drawn=drawn):
+                self.assertEqual(s26_findings(drawn, letter("A")),
+                                 [svg_refusal(kind, attr, value)])
+
+    test_clearance_refusal_cases.__doc__ = (
+        f"S26 refuses {len(CLEAR_REFUSAL_CASES)} excluded clearance spellings exactly")
 
     def test_edge_cases(self):
         for x, y, want in EDGE_CASES:
@@ -4071,6 +4132,7 @@ class Acceptance(unittest.TestCase):
             "  ✗ S8 mishnah/I/07.md:2: a curly quotation mark",
             "  ✗ S13 figures/I/08.svg: a letter not Heath's",
             "  ✗ S12 mishnah/I/09.md:4: an unknown name",
+            "  ✗ S26 figures/I/10.svg: a letter meets a line",
         ])
         with ExitStack() as stack:
             stack.enter_context(patch.object(acceptance, "failures", {}))
@@ -4078,8 +4140,8 @@ class Acceptance(unittest.TestCase):
                 returncode=1, stdout=out, stderr="")))
             acceptance.check_style_rules()
             self.assertEqual(sorted(acceptance.failures),
-                             [("I.5", "P9"), ("I.6", "P9"), ("I.7", "P7"), ("I.8", "P8"),
-                              ("I.9", "P9")])
+                             [("I.10", "P8"), ("I.5", "P9"), ("I.6", "P9"),
+                              ("I.7", "P7"), ("I.8", "P8"), ("I.9", "P9")])
 
 
 if __name__ == "__main__":

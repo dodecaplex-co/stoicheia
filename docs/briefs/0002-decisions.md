@@ -2109,7 +2109,8 @@ findings:
   as the figure sets it, by the convex hull of its outline's points, which the script
   carries as numbers (`GLYPHS_UPRIGHT`, `GLYPHS_ITALIC`), read once from the fonts, so that
   it still needs only Python's standard library; `path_rings` now also says which subpaths a
-  Z closes, and what S20 reads is unchanged.
+  Z closes. S20 now reads only figures the gate admits, flattens curves adaptively to within
+  0.001, and retains significant Unicode spaces in text rather than stripping them.
   [`tests/test_check_style.py`](../../tests/test_check_style.py) gains cases of S26,
   among them one or more for each of seven faults that two reviews of the rule found: a
   stroke's width taken at a transform's mean stretch, a rect's rounded corners read as
@@ -2122,6 +2123,9 @@ findings:
   what a line through a letter is called: two dashed by itself or by its group, called a
   dashed line, and one whose dasharray is none, called a line. A corner's radius is now
   read in one pass, so reading a malformed radius takes time linear in its length.
+  The CSS width, scale transforms and exponent radius began as geometry cases; once the
+  gate closed the input language, their cases instead require their exact refusal, while
+  every admitted clearance case remains a test of the geometry.
   Later reviews found, one after another, SVG spellings that a renderer reads one way and
   S26 another; S26 now reads only the elements, attributes and spellings that the figures
   on main use and refuses any other, so no CSS is read, and it measures circles, ellipses,
@@ -2157,3 +2161,6 @@ findings:
   markers, and S24 and S25 check the modern figure. All four rules are included in train
   H10. Main's checks, cases, REACH_PENDING and
   reports, including D15 for italic figures and D16 for the pending reach, stay whole.
+  The follow-up through `daf4bec7` brings S26's processing-instruction refusal and quiet
+  companion lookup on parse failure into H10, while the modern rules keep their byte
+  parser and readers and S23 keeps main's helpers.
