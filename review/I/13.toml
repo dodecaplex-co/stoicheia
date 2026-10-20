@@ -34,7 +34,7 @@ case = "AB leaning towards C, as in Heath's figure"
 
 [review]
 stage = "full"
-commit = "a9bca05"
+commit = "64ccb2bb"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:aa3108c6a122b530"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"

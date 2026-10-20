@@ -40,7 +40,7 @@ case = "BA and AC together greater than BC, with D on BA produced beyond A in Eu
 
 [review]
 stage = "full"
-commit = "4ae9714"
+commit = "64ccb2bb"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:143bf867e071afbd"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
