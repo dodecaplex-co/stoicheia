@@ -34,11 +34,10 @@ or "None". -->
 <!-- Each piece of unfinished work this pull request lands: a prototype, a provisional
 answer, a restricted or partial scope awaiting a proof, a deferred page, a test not yet
 in CI, anything a disclosure calls "to come". Name each with its open issue labelled
-blocks-release, as #N; or write "None", with an optional final full stop. Keep exactly one
-heading for this section. Use a plain list with - or * at the left edge and one following space;
-wrap an item with 2 to 5 spaces and no intervening blank line. Each item names its issue
-as a separate #N token, optionally in parentheses or followed by punctuation. No links,
-URLs, code, HTML, nested lists or headings; this comment may stay. -->
+blocks-release, as #N; or write "None". Plain ASCII text, read as written: a list, each
+item "- " at the left edge, wrapped with two to five spaces, naming its issue as #N; no
+links, code, HTML, other comments or headings, and no other line of the body may begin
+with these two words of the heading. This comment may stay, on lines of its own. -->
 
 ## Review records
 

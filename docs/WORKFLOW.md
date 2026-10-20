@@ -351,11 +351,12 @@ S23's, in `scripts/check_style.py`.
 (section 10), so a change to them is made there too, and in the CI workflow. It leaves the
 `formal-model` job to CI on purpose, since it fetches Mathlib's prebuilt files; its merge
 gate still waits for that job, like every other ([model/README.md](../model/README.md#the-ci-job)).
-The separate `release-gate` workflow runs its job only on pull requests labelled `release`,
-reading the open issues labelled `blocks-release` with `python3 scripts/check_release_gate.py`;
-ordinary pull requests skip it. It checks out the base commit, main's copy of the script,
-so a release pull request cannot change the check that judges it. The merge gate reads the
-issues again when the coordinator merges (section 10).
+The separate `release-gate` workflow runs its job only on pull requests labelled
+`release`, reading the open issues labelled `blocks-release` with `python3
+scripts/check_release_gate.py`; ordinary pull requests skip it. It runs main's copy of the
+script, from the base commit, but GitHub takes the workflow file itself from the pull
+request, which could change it, so the job only shows the hold: the authority is the merge
+gate, which reads the issues again when the coordinator merges (section 10).
 `scripts/safe_push.py`'s `CHECKS` list does not include the `check_queue.py --tree .`
 step, which runs in CI.
 
@@ -472,8 +473,12 @@ looked into.
     be read. Pull requests carrying `blocks-release` count too. The release lands
     through that release pull request; the notes are drafted from the generated
     summaries, the owner approves them, and the owner makes the tag
-    (`book-I`, `book-II`, …) and release manually. PROGRAM.md is brought up to date:
-    the status board, the lessons, the costs.
+    (`book-I`, `book-II`, …) and release manually, running
+    `python3 scripts/check_release_gate.py` once more just before the tag, since the hold
+    rests on the labels. The job runs on the pull request's events, not the issues', so
+    once the last blocker closes it is run again (or `release` removed and given again)
+    before `--merge`, which counts its failed run on a release pull request. PROGRAM.md
+    is brought up to date: the status board, the lessons, the costs.
 
 A released book is not frozen. Its tag keeps the released text, and main carries the
 corrections and the common voice, as Books I and II have since their tags.
@@ -834,11 +839,10 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       draft with `gh pr create --base main --draft` (or `gh pr edit` of the open one; `--ready`
       opens it ready, or marks the open one ready), with the labels given and
       `security-review` when a protected path changes. Then its CI is followed to its
-      conclusion, using the same label-aware verdict as the merge gate (step 4). A stale
-      pending release job can delay that verdict by at most one 30-second watch interval,
-      plus the time to read the checks. Once `git push` succeeds, an interruption, a failure
-      to follow CI or a refusal is reported as "pushed; CI not followed", exit 3, never as
-      a refusal before the push.
+      conclusion, judged as the merge judges it (step 4): a `release-gate` run left from
+      an earlier `release` label is waited for, never counted. Once `git push` succeeds,
+      an interruption, a failure to follow CI or a refusal is reported as "pushed; CI not
+      followed", exit 3, never as a refusal before the push.
 3. **Reviews,** recorded in the pull request, in the template's table: `/code-review`
    always; `/security-review` when a protected path changes; `/no-mistakes` before the
    merge, run without its push and pull request steps, since `git safe-push` alone
@@ -864,28 +868,31 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
    is green (`check`, `model` and `negative` pass, and nothing fails or is still
    running, apart from the `release-gate` job of the "Release gate" workflow on an
    ordinary pull request, even if a run remains from before its `release` label was
-   removed, in the pre-flight watcher too); no box marked **Required** is unticked, nor one
-   marked **Required if protected** when a protected path changes, and none of the template's
-   required boxes is missing (origin/main's template, or the head's while origin/main
+   removed, in the pre-flight watcher too); no box marked **Required** is unticked, nor
+   one marked **Required if protected** when a protected path changes, and none of the
+   template's required boxes is missing (origin/main's template, or the head's while
+   origin/main
    has none; the pre-flight's notes, such as a check that failed with origin/main's
    copies, are shown beside the checklist); the coordinator has written "What and why",
    "Unfinished work" (once the template in force has that section),
    each review's commit and findings in the Reviews table (the security review's when a
-   protected path changes) and "Needs the owner's OK". Boxes and other sections follow
-   CommonMark visibility; "Unfinished work" is validated as raw text:
-   exactly one heading named "Unfinished work" (case and spacing aside), using `## `,
-   even counting headings inside comments or code. Its section ends at the next level
-   1 or 2 ATX heading; subheadings and setext underlines are refused. After complete HTML
-   comments are removed, write "None" or "None." (case aside), or a plain list.
-   Each item starts with `- ` or `* ` at the left edge, exactly one space after the marker;
-   continuation lines have 2 to 5 spaces and no intervening blank line. No paragraphs,
-   nested or numbered lists, rules, links, URLs, code or HTML; backticks, angle and square
-   brackets, tildes, pipes, backslashes and tabs are refused. Every item names an issue
-   as a separate `#N` token, optionally preceded by `(` and followed by `)`, `.`, `,`, `;`
-   or `:`; `owner/repo#N` and other embedded references are refused.
-   Each issue is open with `blocks-release`, and its `repository_url` must match the
-   canonical URL read once from GitHub for this repository, case aside, so a rename
-   is allowed but an issue transferred elsewhere is refused.
+   protected path changes) and "Needs the owner's OK". Boxes and other sections count
+   where GitHub shows them, by CommonMark's rules; "Unfinished work" is read as raw text,
+   so that nothing GitHub hides or shows differently can stand in for it. The body holds
+   the line `## Unfinished work` once, at the left edge, and no other line whose
+   letters, with tags and entities taken out, begin "unfinished work" or are just
+   "unfinished" (in a comment or code too, so not even a sentence may start with those
+   words); a heading disguised on purpose, in another alphabet or in crafted markup, is
+   for the reviews to find, as a false "None" is. The section runs to the template's
+   next heading. Taking out the template's own comment for it, where it stands on lines
+   of its own, it is plain ASCII with no markup (no links, code, HTML, other comments,
+   headings or entities): "None", with an optional full stop, or a list, each item `- `
+   or `* ` at the left
+   edge, wrapped with two to five spaces, naming its issue as a token `#N` (perhaps in
+   parentheses, or before punctuation); any other `#`, or `GH-N`, is refused. Each
+   issue is open with `blocks-release`, not a pull request, and of this repository by
+   GitHub's canonical address for it, so a rename is allowed and a transfer is not;
+   the section is read again before the merge, and refused if it changed meanwhile.
    A pull request labelled `release` has no open issue or pull request labelled
    `blocks-release`; label comparisons ignore case. Malformed pull request labels refuse
    the release gate and retain every CI check. Both issue gates read from
