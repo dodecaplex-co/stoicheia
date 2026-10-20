@@ -1498,6 +1498,12 @@ findings:
   retired rules as theorems. [`review/SCHEMA.md`](../../review/SCHEMA.md) marks the overlap
   examples that treated Generalities 3 as an axiom as historical; its fields, requirements
   and worked TOML examples stay unchanged.
+  [`Audit/Overlaps.lean`](../../Audit/Overlaps.lean) imports the proved rules and updates
+  its pinned axiom closures and explanatory comments to follow the retirements, retaining
+  every `#guard_msgs` check.
+  [`model/Model/Audit.lean`](../../model/Model/Audit.lean) changes only the comment counts
+  to 39 retired rules and 48 locked laws, with every individual audit, guard and axiom pin
+  unchanged.
   [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json) records
   the measured counts of III.1 and its porism (38 tacit rules each) and new pins that III.1,
   III.1 Por., III.2 and II.14 rest on none of the 31. The accompanying check changes must
