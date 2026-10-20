@@ -1852,3 +1852,44 @@ findings:
   Nothing is loosened in `Elements/`, `Staging/` or `Audit/`; Book Zero's import rule
   and the placement policy still apply only in `Elements/`. The model's independent
   kernel replay, the other half of #121, is still open.
+
+## 20 October 2026
+
+- **The model's shared-module checks land before the restricted rule (brief 0009, #75).**
+  The branch `tooling/superposition-model-check` carries the generic checks from
+  `lean/superposition-restricted` in `model/Check/Generator.lean`: declarations from exactly
+  the four pure superposition modules are shared by identity, with their universe
+  arguments preserved. Admission is by declaring module. Before translation, a transitive
+  audit reads every declaration in those modules and permits dependencies only on those
+  modules and `Init`, with only Lean's three logical axioms and no `sorryAx`. The checks
+  land separately from the content they serve, as WORKFLOW requires. The four modules do
+  not exist on main yet, so the audit has no roots, no declaration is shared, and all three
+  generated files remain byte for byte unchanged. An empty shared-import list adds no
+  blank line to the generated laws header.
+  `model/Check/RoundTrip.lean` adds cases using Init declarations and isolated lookup
+  copies, so the audit is exercised before the calculus arrives: it accepts an Init-only
+  closure and refuses a transitive geometric dependency in a type or value, `sorryAx`,
+  and an unapproved axiom. All helpers called by `run_cmd` live in
+  `model/Check/Generator.lean`, as the model scan's allowance intends; the guarded cases
+  stay in `model/Check/RoundTrip.lean`. `plantPureDependency` takes a definition and a
+  dependency, plants it in a copy of the definition's type or value, and audits from that
+  definition with an isolated lookup. The content branch can use it on
+  `Elements.Superposition.guards`. `checkSharedIdentity` takes the translation plan and
+  checks a shared constant at a symbolic universe level in both directions. The content
+  branch can use it on `Elements.Superposition.Atom.rec`; here `Nat.rec` pins the clear
+  refusal of a constant that is not shared.
+  `checkModelImports`, called from RoundTrip, reads `Model.lean`, every Lean file under
+  `Model/`, and each pure module's source if present. It admits only the four pure modules
+  among Model's `Elements` imports, and only those four and `Init` modules in the pure
+  files. Lean's header parser handles comments, blank lines, `module` and import
+  modifiers, and stops at the first body command. Malformed headers are refused.
+  `checkModelImportsWith` makes the decision from a list of files and imports; planted
+  headers exercise the same parser and decision. They accept permitted imports and
+  refuse plain and public geometric imports, a module below an approved module, and
+  Mathlib in a pure file. The real tree is checked too.
+  RoundTrip also tests `modelDir` with relative and absolute filenames.
+  The path fix in `model/Check/Generator.lean` replaces the early `return` with `pure`,
+  so resolving a relative filename continues to its parent directories and the package
+  check. `model/README.md` explains the boundary and the regressions. These three files
+  and `docs/briefs/0002-decisions.md` are the whole change; none is a protected path under
+  `PROTECTED` or `PROTECTED_JUDGED` in `scripts/safe_push.py`.
