@@ -328,6 +328,18 @@ LINK_REFERENCE_START = re.compile(r"^ {0,3}\[(?:\\.|[^\[\]\\])+\]:")
 # A block quote or list item: a seven-equals line after one cannot underline a
 # paragraph (a setext underline is never a lazy continuation), so S23 refuses it.
 CONTAINER_START = re.compile(r"^ {0,3}(?:>|[-+*](?:[ \t]|$)|[0-9]{1,9}[.)](?:[ \t]|$))")
+HTML_RAW_START = re.compile(r"^ {0,3}<(script|pre|style|textarea)(?:[ \t]|>|$)", re.I)
+HTML_CDATA_START = re.compile(r"^ {0,3}<!\[CDATA\[")
+HTML_DECLARATION_START = re.compile(r"^ {0,3}<![A-Z]")
+HTML_INSTRUCTION_START = re.compile(r"^ {0,3}<\?")
+HTML_BLOCK_TAG_START = re.compile(
+    r"^ {0,3}</?(?:address|article|aside|base|basefont|blockquote|body|caption|center|col|"
+    r"colgroup|dd|details|dialog|dir|div|dl|dt|fieldset|figcaption|figure|footer|form|"
+    r"frame|frameset|h[1-6]|head|header|hr|html|iframe|legend|li|link|main|menu|menuitem|"
+    r"nav|noframes|ol|optgroup|option|p|param|search|section|summary|table|tbody|td|tfoot|"
+    r"th|thead|title|tr|track|ul)(?:[ \t]|/?>|$)", re.I)
+HTML_COMPLETE_TAG = re.compile(
+    r"^ {0,3}</?[A-Za-z][A-Za-z0-9-]*(?:[ \t]+[^<>]*)?/?>[ \t]*$")
 
 
 def repository_files(root: Path):
@@ -366,10 +378,9 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
     refusal in doubtful contexts: an author whose heading is refused can use eight
     equals. Outside a conflict, a lone Markdown middle is allowed only when every
     line of the preceding block is ordinary paragraph text. The block ends at a
-    blank line, marker, ATX or completed setext heading, thematic break, fence or
-    line-opening HTML comment (up to three spaces before <!--, through the line
-    holding -->). Any possible link reference definition prefix (up to three spaces,
-    a bracketed label allowing escaped brackets, then a colon) disqualifies the
+    blank line, marker, ATX or completed setext heading, thematic break, fence, HTML
+    block or GFM table. Any possible link reference definition prefix (up to three
+    spaces, a bracketed label allowing escaped brackets, then a colon) disqualifies the
     whole block, even with no destination yet or extra words after it. Thus
     "[label]: destination extra words" is refused with seven equals despite being
     paragraph text. An indented line (four columns, tabs expanded) cannot start a
@@ -383,8 +394,9 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
                       if edge and edge[1][0] == ">"), default=-1)
     found = []
     opened = False
-    fence = ""
+    fence = html_end = ""
     comment = paragraph = False
+    table = False
     reference_definition = False
     for i, (line, edge) in enumerate(zip(lines, edges)):
         block = False
@@ -395,11 +407,54 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
                 if (match and match[1][0] == fence[0] and len(match[1]) >= len(fence)
                         and not match[2].strip()):
                     fence = ""
-            elif comment or re.match(r"^ {0,3}<!--", line):
+            elif comment:
                 block = True
                 comment = "-->" not in line
-            elif match and (match[1][0] != "`" or "`" not in match[2]):
-                fence = match[1]
+            elif html_end:
+                block = True
+                if html_end == "\n":
+                    block = bool(line.strip())
+                    if not block:
+                        html_end = ""
+                elif html_end.lower() in line.lower():
+                    html_end = ""
+            elif re.match(r"^ {0,3}<!--", line):
+                block = True
+                comment = "-->" not in line
+            else:
+                raw = HTML_RAW_START.match(line)
+                if raw:
+                    block = True
+                    html_end = f"</{raw[1]}>"
+                elif HTML_CDATA_START.match(line):
+                    block = True
+                    html_end = "]]>"
+                elif HTML_DECLARATION_START.match(line):
+                    block = True
+                    html_end = ">"
+                elif HTML_INSTRUCTION_START.match(line):
+                    block = True
+                    html_end = "?>"
+                elif HTML_BLOCK_TAG_START.match(line) or (
+                        not paragraph and HTML_COMPLETE_TAG.fullmatch(line)):
+                    block = True
+                    html_end = "\n"
+                elif match and (match[1][0] != "`" or "`" not in match[2]):
+                    fence = match[1]
+                    block = True
+                if block and html_end != "\n" and html_end.lower() in line.lower():
+                    html_end = ""
+            if block:
+                table = False
+            elif table:
+                _, table_row = table_cell_ranges(line)
+                if line.strip() and table_row:
+                    block = True
+                else:
+                    table = False
+            if (not block and paragraph and i
+                    and gfm_table_columns(lines[i - 1], line) is not None):
+                table = True
                 block = True
         kind = None
         if edge:
@@ -1077,6 +1132,19 @@ def table_cell_ranges(line: str) -> tuple[list[tuple[int, int]], bool]:
     return cells, True
 
 
+def gfm_table_columns(header: str, delimiter: str) -> int | None:
+    """Return a GFM table's column count when these lines start one."""
+    header_cells, header_has_pipe = table_cell_ranges(header)
+    delimiter_cells, delimiter_has_pipe = table_cell_ranges(delimiter)
+    if ((header_has_pipe or delimiter_has_pipe)
+            and len(header_cells) == len(delimiter_cells)
+            and delimiter_cells
+            and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip())
+                    for a, b in delimiter_cells)):
+        return len(header_cells)
+    return None
+
+
 def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     """Split a recognized GFM table into independent, offset-preserving cells."""
     lines = []
@@ -1088,14 +1156,9 @@ def table_inline_blocks(block: InlineBlock) -> list[InlineBlock]:
     for k in range(len(lines) - 1):
         _, _, header = lines[k]
         _, _, delimiter = lines[k + 1]
-        header_cells, header_has_pipe = table_cell_ranges(header)
-        delimiter_cells, delimiter_has_pipe = table_cell_ranges(delimiter)
-        if ((header_has_pipe or delimiter_has_pipe)
-                and len(header_cells) == len(delimiter_cells)
-                and delimiter_cells
-                and all(TABLE_DELIMITER_CELL.fullmatch(delimiter[a:b].strip())
-                        for a, b in delimiter_cells)):
-            table = (k, len(header_cells))
+        columns = gfm_table_columns(header, delimiter)
+        if columns is not None:
+            table = (k, columns)
             break
     if table is None:
         return [block]

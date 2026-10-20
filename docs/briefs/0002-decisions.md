@@ -1834,8 +1834,9 @@ findings:
   end), and a seven-equals middle between markers or where it cannot underline a Markdown
   paragraph, since a resolver can delete the outer markers and leave a middle, as #138
   left a base. Setext headings stay allowed, including paragraphs of several lines.
-  The check tracks comments, fences, completed headings, indented code and link
-  reference definitions; a fence inside a comment opens no block. It skips symlinks,
+  The check tracks comments, fences, HTML blocks, GFM tables, completed headings,
+  indented code and link reference definitions; a fence inside a comment or HTML block
+  opens no block. It skips symlinks,
   and traversal errors name their path and stop the check. The walk without Git serves
   S23 alone; S12 loads its strictly Git-backed index only when needed. The updated S23
   finds no marker in origin/main's 1,100 text files at `d95125f0`.

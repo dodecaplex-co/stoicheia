@@ -1078,6 +1078,49 @@ class ConflictMarkers(unittest.TestCase):
         text = "\n".join(("```", "<!--", "```", "Heading", "=" * 7))
         self.assertEqual(style.conflict_markers(text, markdown=True), [])
 
+    def test_middle_in_html_blocks(self):
+        for html in ("<div>", "<div>\nbody", "<div>\nbody\n</div>",
+                     "<script>\ncode\n</script>", "<?instruction?>", "<!DOCTYPE html>",
+                     "<![CDATA[text]]>"):
+            with self.subTest(html=html):
+                text = html + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(text.count("\n") + 1, "middle")])
+
+    def test_html_block_termination_restores_paragraph_headings(self):
+        for html in ("<div>\nbody\n</div>", "<script>\ncode\n</script>"):
+            with self.subTest(html=html):
+                text = html + "\n\nHeading\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_html_blocks_keep_exact_width_and_edge_detection(self):
+        for width in (6, 8):
+            self.assertEqual(style.conflict_markers("<div>\n" + "=" * width,
+                                                   markdown=True), [])
+        text = "<div>\n" + "<" * 7 + " ours\n" + ">" * 7 + " theirs"
+        self.assertEqual(style.conflict_markers(text, markdown=True),
+                         [(2, "opening"), (3, "closing")])
+
+    def test_middle_after_gfm_table_delimiter_and_rows(self):
+        for table in ("| A | B |\n| --- | --- |",
+                      "A | B\n--- | ---\nleft | right\nnext | row"):
+            with self.subTest(table=table):
+                text = table + "\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(text.count("\n") + 1, "middle")])
+
+    def test_gfm_table_termination_restores_paragraph_headings(self):
+        text = "| A | B |\n| --- | --- |\n| left | right |\n\nHeading\n" + "=" * 7
+        self.assertEqual(style.conflict_markers(text, markdown=True), [])
+
+    def test_gfm_tables_keep_exact_width_and_edge_detection(self):
+        table = "| A | B |\n| --- | --- |\n"
+        for width in (6, 8):
+            self.assertEqual(style.conflict_markers(table + "=" * width, markdown=True), [])
+        text = table + "|" * 7 + " base\n" + ">" * 7
+        self.assertEqual(style.conflict_markers(text, markdown=True),
+                         [(3, "base"), (4, "closing")])
+
     def test_middle_after_indented_code(self):
         for indent in ("    ", "\t", "  \t"):
             for prefix in ("", "Paragraph\n\n"):
