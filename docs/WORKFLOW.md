@@ -165,9 +165,10 @@ files working in parallel, the renderers, and an integrator followed by blind re
   owns the generated edition: `facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`,
   the entries in `docs/briefs/0002-decisions.md` between the
   `<!-- decisions:entries begin -->` and `<!-- decisions:entries end -->` markers,
-  README.md's rows between the `<!-- scope:… -->` markers and PROGRAM.md's status table
-  between the `<!-- status -->` markers, which `render.py` fills; the rest of README.md has
-  an owner of its own, named in the orders. The integrator also owns the companions list,
+  README.md's rows between the `<!-- scope:… -->` markers, PROGRAM.md's status table
+  between the `<!-- status -->` markers and inline `count:` values in tracked Markdown,
+  which `render.py` fills; the rest of README.md has an owner of its own, named in the
+  orders. The integrator also owns the companions list,
   `Elements/Companions.lean`, which the certificate reads and checks, and adds a
   companion's entry in the commit that moves the companion beside its proposition, so
   that the listing travels with the proof and its record's stamp
@@ -179,8 +180,9 @@ files working in parallel, the renderers, and an integrator followed by blind re
   ([template](templates/proposition.md)). That is far easier to integrate than "something
   about circles".
 - **Generated files.** Contributors may render previews; only the integrator commits the
-  generated edition, regenerated from the integrated sources. This avoids merging separately
-  generated copies of the same pages.
+  generated edition, including inline `count:` values in tracked Markdown, regenerated
+  from the integrated sources. This avoids merging separately generated copies of the
+  same pages.
 - **Commit by name** (`git add` the files you own), never `git add -A` in a tree others use.
   Do not push, open, merge or approve a pull request, or rebase a shared branch: the
   coordinator lands work, as pull requests (section 10, "Landing work: pull requests").
@@ -348,6 +350,13 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
   It runs just before the script, so a rule that reads a case wrongly stops the checks
   before the script's findings are read. The script does not run them itself: whoever
   changes it runs the file too.
+- **Counts in prose.** A count a script knows exactly goes between count markers and is
+  rendered; the surrounding prose stays human ([STYLE](STYLE.md), section 4).
+  `check_fidelity.py` refuses stale values before rendering; `tests/test_generated_counts.py`
+  tests the counts and markers without Lean. Count markers do not overlap README.md's
+  generated scope regions or PROGRAM.md's generated status region. `negative_tests.py` runs
+  the tests before planting; its `--counts-only` option runs these plants and the file-only
+  regressions without a build.
 - **Record the revision and the outcome** of each command. A command not run is not a
   passing check. A build that passed on a contributor's branch is evidence about that
   branch; if integration changes the mathematics, the dependencies or a public description,

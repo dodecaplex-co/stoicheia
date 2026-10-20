@@ -66,7 +66,8 @@ People start at [CONTRIBUTING.md](CONTRIBUTING.md); the state of the work is in
   generated output (`facts.json`, `book/`, `CERTIFICATE.md`, `GRAPH.md`, the entries
   assembled in `docs/briefs/0002-decisions.md`, README.md's rows between the
   `<!-- scope:… -->` markers and PROGRAM.md's status table between the
-  `<!-- status -->` markers) and the companions list (`Elements/Companions.lean`); the
+  `<!-- status -->` markers, and inline `count:` values) and the companions list
+  (`Elements/Companions.lean`); the
   coordinator owns the foundations
   (`Elements/Foundations/`), `Certificate/axioms.lock`, the toolchain (`lean-toolchain`,
   `lakefile.toml`, `lake-manifest.json`), the decisions page, PROGRAM.md and CI; your
