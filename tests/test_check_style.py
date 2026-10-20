@@ -1097,6 +1097,13 @@ class ConflictMarkers(unittest.TestCase):
                 self.assertEqual(style.conflict_markers(text, markdown=True),
                                  [(text.count("\n") + 1, "middle")])
 
+    def test_form_feed_does_not_end_html_or_reference_blocks(self):
+        for prefix in ("<div>", "[label]: /url"):
+            with self.subTest(prefix=prefix):
+                text = prefix + "\n\f\nText\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True),
+                                 [(4, "middle")])
+
     def test_html_block_termination_restores_paragraph_headings(self):
         for html in ("<div>\nbody\n</div>", "<script>\ncode\n</script>"):
             with self.subTest(html=html):
@@ -1185,6 +1192,8 @@ class ConflictMarkers(unittest.TestCase):
                                      [(2, "middle")])
         self.assertEqual(style.conflict_markers(
             "[\\ ]: /url\n" + "=" * 7, markdown=True), [(2, "middle")])
+        self.assertEqual(style.conflict_markers(
+            "[\u00a0]: /url\n" + "=" * 7, markdown=True), [(2, "middle")])
         text = "[label]: destination\nHeading\ncontinued\n" + "=" * 7
         self.assertEqual(style.conflict_markers(text, markdown=True), [(4, "middle")])
 
@@ -1297,6 +1306,14 @@ class ConflictMarkers(unittest.TestCase):
             "\n".join(("```", "code", "```", "A heading", "=" * 7)), markdown=True), [])
         self.assertEqual(style.conflict_markers("```not`a fence\n" + "=" * 7,
                                                markdown=True), [])
+
+    def test_fence_closing_tail_uses_spaces_and_tabs_only(self):
+        for tail in ("", " ", "\t", " \t"):
+            with self.subTest(tail=repr(tail)):
+                text = "```\ncode\n```" + tail + "\nHeading\n" + "=" * 7
+                self.assertEqual(style.conflict_markers(text, markdown=True), [])
+        text = "```\n```\v\nText\n" + "=" * 7
+        self.assertEqual(style.conflict_markers(text, markdown=True), [(4, "middle")])
 
     def test_lines_are_counted_by_newlines(self):
         for newline in ("\n", "\r\n", "\r"):

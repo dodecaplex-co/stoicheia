@@ -328,6 +328,7 @@ LINK_REFERENCE_OPEN = re.compile(r"^ {0,3}\[")
 # A block quote or list item: a seven-equals line after one cannot underline a
 # paragraph (a setext underline is never a lazy continuation), so S23 refuses it.
 CONTAINER_START = re.compile(r"^ {0,3}(?:>|[-+*](?:[ \t]|$)|[0-9]{1,9}[.)](?:[ \t]|$))")
+GFM_WHITESPACE_CHARS = " \t\n\v\f\r"
 GFM_WHITESPACE = r"[ \t\n\v\f\r]"
 HTML_RAW_START = re.compile(
     rf"^ {{0,3}}<(script|pre|style|textarea)(?:{GFM_WHITESPACE}|>|$)", re.I)
@@ -369,14 +370,19 @@ def possible_reference_label(line: str, active: bool | None) -> tuple[bool | Non
         elif line[at] == "]":
             return None, bool(active and line[at + 1:at + 2] == ":")
         else:
-            active = active or not line[at].isspace()
+            active = active or line[at] not in GFM_WHITESPACE_CHARS
             at += 1
     return active, False
 
 
+def spaces_or_tabs_only(text: str) -> bool:
+    """Whether text is empty or consists only of Markdown blank-line characters."""
+    return not text.strip(" \t")
+
+
 def table_block_boundary(line: str) -> bool:
     """Whether a line ends a GFM table instead of becoming its next row."""
-    return (not line.strip() or ATX_LINE.match(line) is not None
+    return (spaces_or_tabs_only(line) or ATX_LINE.match(line) is not None
             or THEMATIC_LINE.fullmatch(line) is not None
             or CONTAINER_START.match(line) is not None
             or line.expandtabs(4).startswith("    "))
@@ -446,7 +452,7 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
             if fence:
                 block = True
                 if (match and match[1][0] == fence[0] and len(match[1]) >= len(fence)
-                        and not match[2].strip()):
+                        and spaces_or_tabs_only(match[2])):
                     fence = ""
             elif comment:
                 block = True
@@ -454,7 +460,7 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
             elif html_end:
                 block = True
                 if html_end == "\n":
-                    block = bool(line.strip())
+                    block = not spaces_or_tabs_only(line)
                     if not block:
                         html_end = ""
                 elif html_end.lower() in line.lower():
@@ -510,7 +516,7 @@ def conflict_markers(text: str, *, markdown: bool) -> list[tuple[int, str]]:
                 kind = "middle"
         if kind:
             found.append((i + 1, kind))
-        if (kind or block or not line.strip() or ATX_LINE.match(line)
+        if (kind or block or spaces_or_tabs_only(line) or ATX_LINE.match(line)
                 or THEMATIC_LINE.fullmatch(line)
                 or paragraph and SETEXT_LINE.fullmatch(line)):
             paragraph = False
