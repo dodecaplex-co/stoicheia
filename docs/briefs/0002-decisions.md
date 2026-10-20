@@ -1833,11 +1833,11 @@ findings:
   [`scripts/audit/jev.py`](../../scripts/audit/jev.py) sent an answer to adjudication when
   its first asking had a confidence under the threshold or none, and read the reversed
   asking only for a changed choice; it now applies the same confidence rule to the reversed
-  asking too, and says which asking fell short. A reversed asking that is not an answer at
-  all, which stopped `score` with an error before, is now listed for adjudication. The
+  asking too, and says which asking fell short. A line whose reversed asking is not an answer
+  at all stops `score` with a failure, as it stopped it with an error before. The
   threshold stays 0.5 and exclusive. The self-test gains cases for a low, a missing and a
-  null confidence in the reversed asking, a reversed asking that is not an answer, a single
-  asking, and the boundary. More answers go to adjudication, none fewer. The audit of Books
+  null confidence in the reversed asking, a refused reversed asking that is not an answer
+  (with and without a bar), a single asking, and the boundary. More answers go to adjudication, none fewer. The audit of Books
   I and II found this while scoring, and its report, on `text/jev-audit-I-II`, follows this
   change, as a check lands before the content it judges. The protected file this changes is
   `scripts/audit/jev.py`. Neither CI nor `safe_push` runs its self-test: whoever changes the
