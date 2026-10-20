@@ -1873,9 +1873,20 @@ findings:
   parser call. Both entry points have regressions requiring the next figure's finding after an
   arithmetic or encoding failure. Subdivision is bounded for each cubic; these limits do
   not bound the input's length or its number of elements or path commands.
-  `scripts/check_style.py` refuses a DTD or entity declaration before any declared entity
-  is expanded, through the parser shared by every figure reader; `tests/test_check_style.py`
-  pins the refusal, continuation, XML declarations, comments and character references.
+  The protected files changed by the DTD correction are `scripts/check_style.py` and
+  `tests/test_check_style.py`. Every figure reader now scans the bytes for `<!DOCTYPE`
+  and `<!ENTITY` before constructing a parser, then parses those same bytes. The scan
+  removes NULs so UTF-16 and UTF-32 spellings are caught too, and deliberately refuses
+  declaration markers inside comments. ElementTree's pure-Python fallback omits the
+  doctype callback for bare declarations and internal subsets alone; the byte guard
+  makes refusal independent of that callback, which remains a second guard. The
+  tests pin the single S26 diagnostic and continuation for SYSTEM and PUBLIC
+  declarations with internal subsets, entities referenced in attributes and text,
+  a referenced parameter entity, undeclared references and markers throughout the
+  document. An isolated subprocess disables the C accelerator before import and
+  checks temporary copies of I.1's figures and the declaration cases with the real
+  fallback. Ordinary XML declarations, comments and character references remain
+  admitted; an undeclared reference without a DTD retains its malformed-SVG finding.
   Mitre joins now use original segments' endpoint tangents, with no joins between a
   curve's flattened chords.
   Both figure entry points have cases requiring an S26 finding. And

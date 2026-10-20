@@ -1034,6 +1034,15 @@ DTD_CASES = (
     ('<!DOCTYPE svg [<!ENTITY % family "Georgia">]>', 'Georgia'),
     ('<!DOCTYPE svg>', 'Georgia'),
 )
+DTD_REFERENCE_CASES = (
+    ('<!DOCTYPE svg SYSTEM "x.dtd" [<!ENTITY family "Georgia">]>', '&family;', 'A'),
+    ('<!DOCTYPE svg PUBLIC "figure" "x.dtd" [<!ENTITY family "Georgia">]>', '&family;', 'A'),
+    ('<!DOCTYPE svg [<!ENTITY label "A">]>', 'Georgia', '&label;'),
+    ('''<!DOCTYPE svg [<!ENTITY % labels "<!ENTITY label 'A'>">%labels;]>''',
+     'Georgia', '&label;'),
+    ('<!DOCTYPE svg>', '&missing;', 'A'),
+    ('<!DOCTYPE svg>', 'Georgia', '&missing;'),
+)
 DTD_REFUSAL = "DTD or entity declaration is outside S26's SVG allow-list"
 
 
@@ -1292,13 +1301,13 @@ class SvgGate(unittest.TestCase):
             self.assert_continued(figure_run(figure_fixture(True), True, reference=raw), True,
                                   "not well-formed SVG", first_path="figures/I/01.svg", rule="S15")
         # Expat versions differ in which decoder failures they produce.
-        parse = ET.parse
+        parse = style.parse_svg
         for idea in (False, True):
             def decode_failure(path, *args, **kwargs):
                 if Path(path).name == ("01-idea.svg" if idea else "01.svg"):
                     raise UnicodeDecodeError("utf-8", b"\xff", 0, 1, "invalid start byte")
                 return parse(path, *args, **kwargs)
-            with patch.object(ET, "parse", side_effect=decode_failure):
+            with patch.object(style, "parse_svg", side_effect=decode_failure):
                 self.assert_continued(figure_run(figure_fixture(idea), idea), idea,
                                       "not well-formed SVG", rule="S14" if idea else "S15")
 
@@ -1326,6 +1335,97 @@ class SvgGate(unittest.TestCase):
                         self.assertEqual([f for f in found if f[1] == path],
                                          [("S26", path, 0, DTD_REFUSAL)])
                         self.assert_continued(found, idea, DTD_REFUSAL)
+
+    def test_dtd_references_and_continuation(self):
+        for idea in (False, True):
+            for declaration, family, label in DTD_REFERENCE_CASES:
+                with self.subTest(idea=idea, declaration=declaration, family=family, label=label):
+                    raw = dtd_figure(idea, declaration, family).replace(
+                        b">A<", f">{label}<".encode("ascii"))
+                    found = figure_run(raw, idea)
+                    path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                    self.assertEqual([f for f in found if f[1] == path],
+                                     [("S26", path, 0, DTD_REFUSAL)])
+                    self.assert_continued(found, idea, DTD_REFUSAL)
+                    with tempfile.TemporaryDirectory() as tmp, patch.object(style, "failures", []):
+                        copy = Path(tmp) / "01.svg"
+                        copy.write_bytes(raw)
+                        self.assertIsNone(style.drawn_letters(copy))
+                        self.assertEqual(style.failures, [])
+
+    def test_dtd_markup_anywhere_and_continuation(self):
+        # The byte guard deliberately refuses declaration markers inside comments too.
+        for idea in (False, True):
+            body = ET.tostring(figure_fixture(idea))
+            for declaration in (b"<!DOCTYPE svg>", b'<!ENTITY label "A">'):
+                for comment in (False, True):
+                    markup = b"<!-- " + declaration + b" -->" if comment else declaration
+                    for place in ("before", "inside", "after"):
+                        raw = {"before": markup + body,
+                               "inside": body.replace(b">", b">" + markup, 1),
+                               "after": body + markup}[place]
+                        for encoding in ("utf-8", "utf-16-le", "utf-16-be", "utf-32-le", "utf-32-be"):
+                            with self.subTest(idea=idea, declaration=declaration, comment=comment,
+                                              place=place, encoding=encoding):
+                                found = figure_run(raw.decode("ascii").encode(encoding), idea)
+                                path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                                self.assertEqual([f for f in found if f[1] == path],
+                                                 [("S26", path, 0, DTD_REFUSAL)])
+                                self.assert_continued(found, idea, DTD_REFUSAL)
+
+    def test_undeclared_references_without_dtd_and_continuation(self):
+        for idea in (False, True):
+            for family, label in (("&missing;", "A"), ("Georgia", "&missing;")):
+                with self.subTest(idea=idea, family=family, label=label):
+                    raw = dtd_figure(idea, "", family).replace(b">A<", f">{label}<".encode("ascii"))
+                    found = figure_run(raw, idea)
+                    path = "figures/I/01" + ("-idea.svg" if idea else ".svg")
+                    errors = [f for f in found if f[1] == path]
+                    rule = "S14" if idea else "S15"
+                    self.assertEqual(len(errors), 1, errors)
+                    self.assertEqual(errors[0][:3], (rule, path, 0))
+                    self.assertIn("not well-formed SVG: undefined entity", errors[0][3])
+                    self.assert_continued(found, idea, "undefined entity", rule=rule)
+
+    def test_dtd_refusal_with_python_parser(self):
+        """Use the real fallback in isolation, including a temporary copy of I.1."""
+        code = """
+import runpy
+import sys
+import unittest
+sys.modules['_elementtree'] = None
+ns = runpy.run_path(sys.argv[1])
+style = ns['style']
+assert sys.flags.isolated
+assert hasattr(style.ET.XMLParser(), 'parser'), 'not the pure-Python parser'
+case = ns['SvgGate']()
+for idea in (False, True):
+    suffix = '-idea.svg' if idea else '.svg'
+    source = (style.ROOT / 'figures' / 'I' / ('01' + suffix)).read_bytes()
+    raw = b'<!DOCTYPE svg [<!ENTITY family "Georgia">]>' + source.replace(
+        b'font-family="Georgia, \\'Times New Roman\\', serif"', b'font-family="&family;"')
+    assert b'font-family="&family;"' in raw
+    found = ns['figure_run'](raw, idea)
+    path = 'figures/I/01' + suffix
+    case.assertEqual([f for f in found if f[1] == path], [('S26', path, 0, ns['DTD_REFUSAL'])])
+    case.assert_continued(found, idea, ns['DTD_REFUSAL'])
+names = (
+    'test_dtd_refusal_and_continuation',
+    'test_dtd_references_and_continuation',
+    'test_dtd_markup_anywhere_and_continuation',
+    'test_dtd_in_euclid_reference_is_reported_once_and_continues',
+    'test_drawn_letters_refuses_dtd',
+    'test_dtd_refusal_precedes_internal_subset',
+    'test_undeclared_references_without_dtd_and_continuation',
+    'test_character_references_keep_the_resolved_value_gate',
+    'test_xml_declarations_and_comments_are_admitted',
+)
+result = unittest.TextTestRunner().run(unittest.TestSuite(ns['SvgGate'](name) for name in names))
+sys.exit(not result.wasSuccessful())
+"""
+        result = subprocess.run([sys.executable, "-I", "-c", code, str(Path(__file__).resolve())],
+                                capture_output=True, text=True, timeout=30)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     def test_dtd_in_euclid_reference_is_reported_once_and_continues(self):
         for declaration, family in DTD_CASES:

@@ -118,6 +118,7 @@ import tempfile
 import tomllib
 import xml.etree.ElementTree as ET
 from collections import defaultdict
+from io import BytesIO
 from pathlib import Path
 from typing import NamedTuple
 
@@ -2713,7 +2714,7 @@ def fill_under(root, x: float, y: float) -> str:
 
 
 class SvgDeclarationError(ET.ParseError):
-    """A DTD refused before its subset or any declared entity is read."""
+    """A DTD or entity declaration refused before any declared entity is read."""
 
 
 class FigureTreeBuilder(ET.TreeBuilder):
@@ -2729,8 +2730,18 @@ class FigureTreeBuilder(ET.TreeBuilder):
 
 
 def parse_svg(path: Path):
+    """Refuse declaration markers in the bytes before constructing any XML parser.
+
+    Strip NULs for the scan so UTF-16 and UTF-32 spellings cannot bypass it. This
+    deliberately also refuses such text inside a comment. Parse the original bytes
+    from the same read; the doctype callback remains a second guard.
+    """
+    raw = path.read_bytes()
+    declarations = raw.replace(b"\x00", b"")
+    if b"<!DOCTYPE" in declarations or b"<!ENTITY" in declarations:
+        raise SvgDeclarationError("DTD or entity declaration is outside S26's SVG allow-list")
     target = FigureTreeBuilder()
-    return ET.parse(path, parser=ET.XMLParser(target=target)), target.processing_instructions
+    return ET.parse(BytesIO(raw), parser=ET.XMLParser(target=target)), target.processing_instructions
 
 
 def svg_root(path: Path, missing_ok: bool = False):
