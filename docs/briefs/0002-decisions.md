@@ -1820,3 +1820,27 @@ findings:
   GitHub to give any answer a test needs, and six new tests, each failing before the
   change), with
   [WORKFLOW](../WORKFLOW.md), section 10, "Landing work: pull requests", step 4.
+- **Check changes land apart from what they judge, in trains H8 and H9.** Train H6b put the
+  reviewed check changes of `tooling/fixture-name`, `tooling/style-everywhere`,
+  `tooling/overlap-screen-unfold` and `tooling/acceptance-ci` together with content those
+  checks judge, and the pre-flight refused it: origin/main's `scripts/check_links.py`
+  fails on that commit, since this page links `tests/test_check_acceptance.py` and
+  `tests/test_screen.py`, which origin/main's copies of the tests lack, and the commit
+  changed `Audit/screen.py` and `docs/ACCEPTANCE.md` as well ([WORKFLOW](../WORKFLOW.md),
+  section 10, "Landing work: pull requests"). So each branch that carried both is split
+  by a commit that holds the judged files back, and their content lands after the
+  checks, in train H9, by the revert of that commit: `docs/ACCEPTANCE.md` (and WORKFLOW's
+  lines that link its section "In CI"), `Audit/screen.py`, the README's table and the
+  overlap catalogue's lines on the Circle rule, and PROGRAM.md's open work. Train H8
+  carries the checks alone, with this page and the guides. The screen's tests land
+  before the screen they test, as the rule orders; nothing runs them in CI, and until H9
+  lands, `tests/test_screen.py` fails against main's screen. The texts that the widened
+  S12 finds on main (Book II's notes naming Book I's lemmas without their book, and two
+  archive identifiers in the figures report) are mended in train H7, which lands before
+  H8. No check is loosened, no pending list grows, and no record is re-stamped. Protected
+  files changed by train H8, each named in its branch's entry above as well:
+  `.github/workflows/ci.yml`, `review/SCHEMA.md`, `scripts/check_acceptance.py`,
+  `scripts/check_fidelity.py`, `scripts/check_style.py`,
+  `scripts/copy_acceptance_checks.sh`, `scripts/negative_tests.py`,
+  `scripts/safe_push.py`, `scripts/test_safe_push.py`, `tests/test_check_acceptance.py`,
+  `tests/test_check_style.py` and `tests/test_screen.py`.
