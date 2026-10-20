@@ -1,14 +1,22 @@
 name: CI
 
 on:
-  push:
+  # Main calls this workflow from post-merge.yml; branch pushes already run through
+  # pull_request, so a push trigger would run the same checks twice.
   pull_request:
+  merge_group:
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       # The review records are read with tomllib, which needs Python 3.11 or later.
       - uses: actions/setup-python@v5
@@ -68,6 +76,9 @@ jobs:
           git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md
           test -z "$(git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md README.md docs/PROGRAM.md)"
 
+      - name: Check the tree has no conflict markers or repeated decisions headings
+        run: python3 scripts/check_queue.py --tree .
+
       - name: Check every relative link and anchor
         run: python3 scripts/check_links.py
 
@@ -76,6 +87,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -99,6 +112,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -118,6 +133,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
 
       - name: Install Lean (elan)
         run: |
@@ -164,7 +181,6 @@ jobs:
     # Certificate/, review/SCHEMA.md, review/terms.toml), keeping main's values pinned to
     # its content (WORKFLOW, section 10, step 4), so that both are judged alike and a
     # check made stricter, in a pull request of its own, holds nothing back.
-    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -177,6 +193,7 @@ jobs:
         with:
           # The review records name their commits, which the checker finds in the history.
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -186,6 +203,55 @@ jobs:
         run: |
           curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Identify main for this event
+        # A reusable workflow keeps its caller's event. A queue group compares with
+        # its base; a main push compares with the main tip before that push.
+        run: |
+          python3 -I - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+
+          def git(*args):
+              return subprocess.check_output(["git", *args], text=True).strip()
+
+          def sha(value):
+              if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{40}", value) or not value.strip("0"):
+                  raise SystemExit("Cannot identify a non-zero, full commit SHA for acceptance.")
+              if git("rev-parse", "--verify", value + "^{commit}") != value:
+                  raise SystemExit("Acceptance's commit is unavailable.")
+              return value
+
+          with open(os.environ["GITHUB_EVENT_PATH"], encoding="utf-8") as source:
+              event = json.load(source)
+          name = os.environ["GITHUB_EVENT_NAME"]
+          head = git("rev-parse", "HEAD")
+          if name == "pull_request":
+              pull = event["pull_request"]
+              parents = git("rev-list", "--parents", "-n", "1", head).split()
+              if len(parents) == 3 and parents[2] == sha(pull["head"]["sha"]):
+                  main = sha(parents[1])
+              elif head == sha(pull["head"]["sha"]):
+                  main = sha(pull["base"]["sha"])
+              else:
+                  raise SystemExit("Checkout does not identify the pull request's main.")
+          elif name == "merge_group":
+              group = event["merge_group"]
+              if head != sha(group["head_sha"]) or group["base_ref"] != "refs/heads/main":
+                  raise SystemExit("Checkout does not identify this main queue group.")
+              main = sha(group["base_sha"])
+          elif name == "push":
+              if event["ref"] != "refs/heads/main" or event.get("deleted") is not False or head != sha(event["after"]):
+                  raise SystemExit("Acceptance needs the main push's exact checkout.")
+              main = sha(event["before"])
+          else:
+              raise SystemExit("No acceptance base is defined for this event.")
+          subprocess.run(["git", "merge-base", "--is-ancestor", main, head], check=True)
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
+              output.write("MAIN_SHA=" + main + "\n")
+          PY
 
       - name: Check the checker's comparison of two runs, case by case
         # tests/test_check_acceptance.py needs no Lean; a comparison read wrongly stops
@@ -217,10 +283,8 @@ jobs:
         # and the model tests (E1, E4) are left out here (--quick): the `check` and
         # `model` jobs hold them on every pull request.
         if: env.ACCEPTANCE_GATE == 'ratchet'
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if [ "$(git rev-list --parents -n 1 HEAD | wc -w)" -eq 3 ]; then main_sha=$(git rev-parse HEAD^1); else main_sha="$BASE_SHA"; fi
+          main_sha="$MAIN_SHA"
           main="$RUNNER_TEMP/main"
           git worktree add --detach "$main" "$main_sha"
           # An updated pin belongs to the content it pins. Copying it from the pull
@@ -248,3 +312,79 @@ jobs:
         with:
           name: acceptance
           path: ${{ runner.temp }}/acceptance/
+
+  queue-integrity:
+    needs: acceptance
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Require a completed acceptance check
+        env:
+          ACCEPTANCE_RESULT: ${{ needs.acceptance.result }}
+        run: test "$ACCEPTANCE_RESULT" = success
+
+      - name: Check the queue and train checks on pull requests and main
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: |
+          python3 -I tests/test_check_queue.py
+          python3 -I tests/test_check_train.py
+
+      - name: Check automatic reverts without network access
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        run: python3 -I tests/test_auto_revert.py
+
+      - name: Install Lean for the queue tree's freshness check
+        if: github.event_name == 'merge_group'
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Build and compute the queue certificate
+        if: github.event_name == 'merge_group'
+        run: |
+          lake build
+          lake env lean Certificate/Facts.lean
+
+      - name: Read acceptance's verdicts for the queue's gap report
+        if: github.event_name == 'merge_group'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          gh run download "$RUN_ID" --repo "$REPOSITORY" --name acceptance --dir "$RUNNER_TEMP/acceptance"
+          test -s "$RUNNER_TEMP/acceptance/verdicts.json"
+
+      - name: Check the queue's integrity and the gaps of what is new
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
+          GROUP_HEAD: ${{ github.event.merge_group.head_sha }}
+          GROUP_BASE: ${{ github.event.merge_group.base_sha }}
+          REPOSITORY: ${{ github.repository }}
+          ACCEPTANCE_VERDICTS: ${{ runner.temp }}/acceptance/verdicts.json
+        run: |
+          case "$GITHUB_EVENT_NAME" in
+            merge_group)
+              test -n "$GROUP_HEAD"
+              test -n "$GROUP_BASE"
+              test "$(git rev-parse HEAD)" = "$GROUP_HEAD"
+              python3 scripts/check_queue.py --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"
+              python3 scripts/check_queue.py --gaps --head "$GROUP_HEAD" --base "$GROUP_BASE" --repo "$REPOSITORY"
+              ;;
+            pull_request|push) ;;
+            *) echo "No queue check is defined for this event."; exit 2 ;;
+          esac

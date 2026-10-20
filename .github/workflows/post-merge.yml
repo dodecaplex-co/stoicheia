@@ -1,0 +1,203 @@
+name: Post-merge
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+    uses: ./.github/workflows/ci.yml
+
+  revert:
+    needs: integration
+    if: failure()
+    runs-on: ubuntu-latest
+    # Configure this environment to permit deployments from main only. Its App
+    # secrets must not be repository secrets available to pull requests or groups.
+    environment: auto-revert
+    permissions:
+      contents: read
+      issues: write
+      actions: read
+      pull-requests: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      BEFORE: ${{ github.event.before }}
+      AFTER: ${{ github.event.after }}
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.after }}
+
+      - name: Read the failed jobs
+        if: always()
+        id: failed
+        env:
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          jobs=$(mktemp "$RUNNER_TEMP/failed-jobs.XXXXXX")
+          response=$(mktemp "$RUNNER_TEMP/jobs-response.XXXXXX")
+          if gh api --paginate --slurp \
+            "repos/$REPOSITORY/actions/runs/$RUN_ID/attempts/$RUN_ATTEMPT/jobs?per_page=100" > "$response" \
+            && jq -er '
+              if type != "array" or length == 0 or any(.[]; (.jobs | type) != "array")
+              then error("Unreadable jobs") else
+                [.[] | .jobs[] | select(.conclusion != null and
+                  .conclusion != "success" and .conclusion != "skipped" and .conclusion != "neutral")
+                  | if (.name | type) == "string" then .name + ": " + .conclusion
+                    else error("Unreadable job name") end]
+                | if length > 0 then join("\n") else error("No failed jobs found") end
+              end' "$response" > "$jobs"; then
+            echo "readable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Failed job details could not be read; integration reported failure." > "$jobs"
+            echo "readable=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "path=$jobs" >> "$GITHUB_OUTPUT"
+
+      - name: Take the revert script from the previous main
+        if: always()
+        id: trusted
+        shell: bash
+        run: |
+          set -euo pipefail
+          script=$(mktemp "$RUNNER_TEMP/auto-revert.XXXXXX")
+          if [[ "$BEFORE" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE" != 0000000000000000000000000000000000000000 ]] \
+            && git show "$BEFORE:scripts/auto_revert.py" > "$script" && test -s "$script"; then
+            echo "script=$script" >> "$GITHUB_OUTPUT"
+          else
+            rm -f "$script"
+            echo "script=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Record the failure and enqueue the revert
+        if: always() && steps.trusted.outputs.script != '' && steps.failed.outputs.readable == 'true'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          STOICHEIA_REVERT_APP_ID: ${{ secrets.STOICHEIA_REVERT_APP_ID }}
+          STOICHEIA_REVERT_APP_KEY: ${{ secrets.STOICHEIA_REVERT_APP_KEY }}
+          TRUSTED_SCRIPT: ${{ steps.trusted.outputs.script }}
+          FAILED_JOBS: ${{ steps.failed.outputs.path }}
+        run: |
+          python3 -I "$TRUSTED_SCRIPT" --before "$BEFORE" --after "$AFTER" \
+            --repo "$REPOSITORY" --run-url "$RUN_URL" --failed-jobs "$(cat "$FAILED_JOBS")"
+
+      - name: Open the issue when the trusted script or failed jobs are unavailable
+        if: always() && (steps.trusted.outputs.script == '' || steps.failed.outputs.readable != 'true')
+        env:
+          FAILED_JOBS: ${{ steps.failed.outputs.path }}
+        shell: bash
+        # This fallback uses shell and the runner's tools only. No repository code
+        # runs with credentials, including on the first push that adds this workflow.
+        run: |
+          set -euo pipefail
+          labels=$(mktemp "$RUNNER_TEMP/revert-labels.XXXXXX")
+          gh api --paginate "repos/$REPOSITORY/labels?per_page=100" --jq '.[].name' > "$labels"
+          for label in blocks-release main-red; do
+            if ! grep -Fxq "$label" "$labels"; then
+              created=$(gh api --method POST "repos/$REPOSITORY/labels" -f name="$label" -f color=b60205 \
+                -f description="Main integration failure requiring attention" --jq '.name')
+              test "$created" = "$label"
+            fi
+          done
+          body=$(mktemp "$RUNNER_TEMP/revert-issue.XXXXXX")
+          {
+            printf "Main's integration checks failed.\n\nBefore: %s\nAfter: %s\n\n" "$BEFORE" "$AFTER"
+            printf 'Trains and commits, newest first:\n'
+            if [[ "$BEFORE" =~ ^[0-9a-f]{40}$ ]] && [[ "$AFTER" =~ ^[0-9a-f]{40}$ ]]; then
+              history=$(mktemp "$RUNNER_TEMP/revert-history.XXXXXX")
+              if git -c core.hooksPath=/dev/null log --first-parent --format='%H %s' "$BEFORE..$AFTER" > "$history"; then
+                while IFS= read -r line; do
+                  commit=${line%% *}
+                  subject=${line#* }
+                  if [[ "$subject" =~ ^Merge\ pull\ request\ \#([1-9][0-9]*)\ from\  ]]; then
+                    number=${BASH_REMATCH[1]}
+                    title=$(gh api "repos/$REPOSITORY/pulls/$number" --jq '.title') \
+                      || title="Title could not be read"
+                    printf -- '- #%s: %s (merge %s)\n' "$number" "$title" "$commit"
+                  else
+                    printf -- '- %s\n' "$line"
+                  fi
+                done < "$history"
+              else
+                printf 'The train history could not be read.\n'
+              fi
+            else
+              printf 'The push range could not be read.\n'
+            fi
+            printf '\nFailed jobs:\n'
+            if test -n "$FAILED_JOBS" && test -s "$FAILED_JOBS"; then
+              cat "$FAILED_JOBS"
+            else
+              printf 'Failed job details could not be read; integration reported failure.\n'
+            fi
+            printf '\nRun: %s\n\n' "$RUN_URL"
+            printf 'The previous main has no readable revert script, or the failed jobs could not be read.\n'
+            printf 'Issue only; no automatic revert or pull request was attempted.\n'
+          } > "$body"
+          payload=$(mktemp "$RUNNER_TEMP/revert-payload.XXXXXX")
+          jq -n --arg title "Main integration failed at ${AFTER:0:12}" --rawfile body "$body" \
+            '{title: $title, body: $body, labels: ["blocks-release", "main-red"]}' > "$payload"
+          gh api --method POST "repos/$REPOSITORY/issues" --input "$payload" --jq '"Opened issue #" + (.number | tostring)'
+          exit 1
+
+  clear:
+    needs: integration
+    if: needs.integration.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GITHUB_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+      BEFORE: ${{ github.event.before }}
+      AFTER: ${{ github.event.after }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ github.event.after }}
+
+      - name: Clear main-red after successful integration of the current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          script=$(mktemp "$RUNNER_TEMP/auto-revert-clear.XXXXXX")
+          if [[ "$BEFORE" =~ ^[0-9a-f]{40}$ ]] && [[ "$BEFORE" != 0000000000000000000000000000000000000000 ]] \
+            && git show "$BEFORE:scripts/auto_revert.py" > "$script" && test -s "$script"; then
+            python3 -I "$script" --clear --repo "$REPOSITORY" --after "$AFTER"
+          else
+            # The first successful run can precede the trusted script's presence.
+            # This fallback also uses no repository code.
+            tip=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq '.object.sha')
+            test "$tip" = "$AFTER"
+            issues=$(mktemp "$RUNNER_TEMP/main-red-issues.XXXXXX")
+            gh api --paginate --slurp "repos/$REPOSITORY/issues?state=open&labels=main-red&per_page=100" \
+              | jq -r '
+                  if type != "array" or length == 0 or any(.[]; type != "array") then error("Unreadable issues")
+                  else [.[][] | select(has("pull_request") | not)
+                    | if .state == "open" and (.number | type) == "number" and .number > 0
+                        and any(.labels[]; .name == "main-red") then .number
+                      else error("Unreadable issue") end] | .[] end' > "$issues"
+            while IFS= read -r number; do
+              gh api --method DELETE "repos/$REPOSITORY/issues/$number/labels/main-red" \
+                | jq -e 'type == "array" and all(.[]; (.name | type) == "string" and .name != "main-red")' > /dev/null
+            done < "$issues"
+          fi
