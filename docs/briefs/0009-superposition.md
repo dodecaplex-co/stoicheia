@@ -1,11 +1,14 @@
 # Brief 0009: a restricted rule of superposition
 
-*19 October 2026, round 3: the restricted rule is delivered on
-`lean/superposition-restricted`, unlanded, for the owner's final word. This revision of
+*20 October 2026, round 3: the owner approved the restricted rule delivered on
+`lean/superposition-restricted`, with questions 2, 4 and 5 answered as prototyped,
+the model's import of the four pure modules and the page claim
+"a restricted inference in System E's style". This revision of
 brief 0009 follows [WORKFLOW.md](../WORKFLOW.md), section 2, "Correcting a frozen brief".
-It records the finished replacement at `aa96ab8`, prepared from `origin/main` at `39ae65c`,
-and the decisions still open. Preparation is authorised by the owner's decision of
-18 October; landing is not. The code states what we formalized; the brief, the review
+It records the replacement first delivered at `aa96ab8`, from `origin/main` at `39ae65c`,
+and the approval after main was merged at `bccc3f52`. Landing remains conditional on the
+tooling pull requests landing first, /no-mistakes and an independent Codex read of the
+model lane. The code states what we formalised; the brief, the review
 records and the pages must agree with it ([FORMALIZATION.md](../FORMALIZATION.md),
 section 1).*
 
@@ -14,11 +17,13 @@ now declares `Tacit.superposition : Superposition.Rule primitives` in the founda
 The old axiom returned `∃ B' C' : Point, …`, points with the placement's properties. Its
 replacement permits only a represented derivation of an equality about the given figure.
 The reason is the construction shortcut described below. I.4 and I.8 use the replacement
-with their statements and Heath lines unchanged; their dependents rebuild, and 115 of the
-121 certificate entries rest on the restated rule. The model proves its law in the plane.
-Questions 2, 4 and 5 remain the owner's: the branch follows the five-part restriction,
-permits I.7 inside I.8's placement, and keeps the side laid down. This revision records
-those readings, not approval of them.
+with their statements and Heath lines unchanged; their dependents rebuild, and 116 of the
+122 certificate entries after the main merge rest on the restated rule. The model proves
+its law in the plane.
+The owner approved questions 2, 4 and 5 as prototyped on 20 October 2026: the branch
+follows the five-part restriction, permits I.7 inside I.8's placement, and keeps the
+side laid down. The model's import of the four pure modules and the page claim
+"a restricted inference in System E's style" are approved too.
 
 **Prototype history.** `lean/superposition-prototype` began at `f17b427` and merged main at
 `e04f318`. Its six files in `Staging/Superposition/` comprised 1,697 lines and passed
@@ -44,8 +49,15 @@ justification; land it only when complete; and meanwhile disclose that our rule 
 stronger, as a construction principle, than System E's. The same day the owner decided
 that every circle has a centre (#59) and that the formal model starts now in `model/` (#73).
 The prerequisite #40, the model's law names as a pinned data file, is now met by
-`tests/model/laws.toml`. One axiom is restated, with the total kept at 87. The owner's
-final decision on the completed branch is still required.
+`tests/model/laws.toml`. One axiom is restated, with the total kept at 87.
+
+On 20 October 2026 the owner approved the completed replacement with questions 2, 4
+and 5 answered as prototyped, the model's import of the four pure modules and the page
+claim "a restricted inference in System E's style". The exact approval is recorded in
+[the decisions entry](0002-decisions.md#20-october-2026). The tooling pull requests land
+first; landing also requires /no-mistakes and an independent Codex read of the model
+lane. The read at `cdcf3b9e` found no weakening and one older relative-path defect in
+`model/Check/Generator.lean`, fixed on `tooling/superposition-model-check`.
 
 ## The problem
 
@@ -196,6 +208,10 @@ all over the same symbols, by two kinds of rule.
 - **Logic.** Point equality has reflexivity and symmetry rules, but no transitivity rule
   in `Derives`. Equality of lengths, angles and triangles has all three. Common Notion 4
   puts a point for one that coincides with it in a length, angle or triangle equality.
+  Each of the three congruence constructors takes a `Coincidence` argument; the
+  derivation supplies `Coincidence.step` when it takes that step. This proposition has
+  one constructor and adds no axiom. Transformers pass the received marker along, so
+  the certificate counts an actual congruence step without counting renaming alone.
 - **Citing a law** (`Derives.cite`). A step names a law of `cites`, puts a symbol of the
   derivation for each letter, derives the law's premises and concludes its conclusion.
 
@@ -233,7 +249,7 @@ speaks of the side AC as it falls. With it, the law of one ray for one angle can
 three of its straight lines and be proved without drawing any (below), and nothing is drawn
 inside the placement. Its model obligation is now proved: wherever the triangle can be laid
 down, the straight line through D and C′ must exist too, which Postulate 1 gives, since D is
-not C′. Open question 5 asks the owner to confirm it.
+not C′. The owner approved this kept side under question 5 on 20 October 2026.
 
 Astra asked that the incidence and nondegeneracy facts the arguments need be retained
 explicitly. They are, as steps rather than as assumptions: that B′, C′ and D are three
@@ -374,10 +390,21 @@ the restricted axiom. Heath's 27 lines in I.4 and 24 in I.8, the enunciations an
 statements are unchanged against `39ae65c`.
 
 **Common Notion 4 stays visible.** The pure soundness proof uses equality substitution for
-`Derives.len_congr`, `angle_congr` and `area_congr`. `Certificate/Facts.lean` recognises an
-actual use of one of these constructors in a declaration's value as C.N. 4; merely mentioning
-`Derives`, whose constructors include them, is not counted. All 121 common-notion lists
-match `39ae65c`, with C.N. 4 present in the 115 affected entries. No dummy citation was added.
+`Derives.len_congr`, `angle_congr` and `area_congr`. Each now takes an explicit
+`Coincidence` argument, supplied as `Coincidence.step` only where a derivation takes a
+congruence step. `Derives.map` passes the received marker along; `Derives.sound` binds
+it and proves the equality by substitution. Neither supplies a fresh marker.
+
+The earlier certificate counted the congruence constructors themselves. Since
+`Derives.map` rebuilds every constructor, that also counted C.N. 4 for any proof reaching
+renaming, even one taking no congruence step. The tooling correction in
+`Certificate/Facts.lean` counts `Elements.Superposition.Coincidence.step` instead.
+I.4 names it at five congruence steps and I.8 at two. The expected affected entries are
+I.4 and I.8 and their dependents, 116 of the 122 entries after the main merge, including
+I.47's general companion; merely reaching `Derives.map` or `Derives.sound` supplies no
+marker. All 121 common-notion lists at the earlier revision matched `39ae65c`
+before this correction; the corrected certificate must be checked after integration
+and regeneration. No dummy citation was added.
 Thirteen new expectations pin direct use, I.7 in I.8, I.23's construction and inherited
 dependency, the six unaffected entries and C.N. 4 in I.4; all eleven previous expectations
 are retained unchanged.
@@ -406,7 +433,8 @@ are theorems; part 4 is read off the statement of `Rule.infer`, and its one theo
    under every valuation of exactly those symbols that makes its context true, so no step
    needs an object the symbols do not stand for. `Derives.map`: every rule is a scheme.
    `Cited.holds_iff`: every law asserts no existence. The separate claim about what a cited
-   law's proof constructs is tied to the revision above and is open question 4.
+   law's proof constructs is tied to the revision above; the owner accepted that reading
+   under question 4 on 20 October 2026.
 4. **No hypothesis of the rule speaks of the placement.** The rule's hypotheses are the
    cited laws (a fixed list, each a universal statement over its letters), the given facts
    and the conclusion (data over the figure's numbered symbols, holding no point, no straight
@@ -502,9 +530,9 @@ I.23 still constructs through I.22 and rests on the restricted rule through I.8 
 - touch the other overlap rows: Circle 2 and III.2, Diagram-segment 2 and III.5 and III.6,
   Generalities 3 and III.6, Generalities 2 and III.1's porism, Diagram-angle 3 and I.13,
   Metric 5 and I.47, Circle 4 and I.7;
-- shrink the certificate: 115 of the 121 entries in `facts.json` rest on the restricted
-  rule, as they did on its predecessor. The six exceptions remain I.1, I.2, I.3, I.22,
-  III.5 and III.6. The affected entries are 93 main propositions and 22 attached entries.
+- shrink the certificate: 116 of the 122 entries in `facts.json` after the main merge
+  rest on the restricted rule, as they did on its predecessor. The six exceptions remain I.1, I.2, I.3, I.22,
+  III.5 and III.6. The affected entries are 93 main propositions and 23 attached entries.
 
 ## The disclosure on the branch
 
@@ -531,8 +559,8 @@ Astra names three kinds. Their state on the delivered branch:
    the restated axiom and the I.4, I.5, I.7, I.8 dependency chain rebuilt.
 2. **A restriction theorem.** The represented system cannot export the placement's objects
    as witnesses, nor take construction steps in the placement. *Done in the five parts
-   above*, for the symbolic calculus. Whether these parts are the right statement of the
-   restriction is open question 2.
+   above*, for the symbolic calculus. The owner accepted this statement of the restriction
+   under question 2 on 20 October 2026, with part 4's limits retained.
 3. **A carefully scoped non-derivability result, if claimed.** *Not claimed.* A route, for
    whoever takes it up. Besides its hypotheses about the figure, an instance of `Rule`
    assumes that each cited law holds, `∀ c ∈ cites, c.Holds I`; that hypothesis quantifies
@@ -604,42 +632,51 @@ checks.
 The branch contains the symbolic language, generic interpretation, derivation soundness and
 renaming, placement reduction, finite-symbol front end and restriction evidence. It proves
 I.4 and I.8 from the restricted axiom, rebuilds their dependents, retires the three direct
-construction shortcuts, and proves the restated law in the formal model. The lock still
-has 87 axioms; its vocabulary grows from 91 to 206, adding 115 words and removing none.
-The certificate, model laws and both lock hashes have been regenerated.
+construction shortcuts, and proves the restated law in the formal model. At `aa96ab8`,
+the regenerated lock kept 87 axioms and grew its vocabulary from 91 to 206, adding
+115 words and removing none. The certificate, model laws and both lock hashes were
+regenerated at that revision.
+The coincidence marker added on 20 October changes the locked vocabulary; those generated
+files and the pages must be regenerated later from the integrated sources.
 
 It does not prove equivalence with System E's two-rule presentation, or non-derivability of
 placement in the whole theory. Part 4 of the restriction remains chiefly an inspection of
 the rule's hypotheses; `Metric.holds_const` does not settle classical recovery of witnesses.
-The decisions on questions 2, 4 and 5 and final landing approval remain open.
+The owner approved questions 2, 4 and 5 as prototyped on 20 October 2026, together with the
+four pure module imports and the page claim. Landing has the conditions below.
 
 ## Landing
 
-Preparation of the replacement does not authorise landing. The remaining work is:
+The owner's approval of 20 October 2026 authorises the replacement subject to the
+tooling pull requests landing first, /no-mistakes and an independent Codex read of the
+model lane. The remaining integration and validation work is:
 
-- **The owner's final word on the finished branch**, including questions 2, 4 and 5 below.
-- **A tooling pull request first.** Split the check changes in `Certificate/Facts.lean`
-  and `scripts/heath.py` into their own tooling pull request, reviewed and landed before
+- **The tooling pull requests first.** Split the check changes in `Certificate/Facts.lean`
+  and `scripts/heath.py` into tooling pull requests, reviewed and landed before
   the code they check. WORKFLOW, section 10, forbids changing a check in the same pull
-  request as that code. The certificate must recognise the new congruence constructors
-  without requiring them to be present on main yet; the Heath self-test keeps its existing
-  outcomes while using I.7's surviving overlap. Neither check may be loosened.
+  request as that code. The certificate must recognise `Coincidence.step`
+  without requiring it to be present on main yet; the Heath self-test keeps its existing
+  outcomes while using I.7's surviving overlap. The model check changes, including the
+  older relative-path defect fixed on `tooling/superposition-model-check`, land first
+  too. No check may be loosened.
 - **Merge the retirement branches.** `lean/retire-axioms` reduces 87 axioms to 79 and
   `lean/retire-axioms-2` reduces 79 to 48. Reconcile their edits to the lock, model,
   numerical laws, audit and overlap catalogue. Resolve the modify/delete conflict in
   `Staging/Superposition/Derivations.lean` by carrying needed geometric support into
   `Elements/Figure/Superposition.lean`, not by restoring the prototype. Preserve both
-  branches' root imports. Review `drawsNothing` and the stricter reading of question 4
-  after the construction dependencies change.
+  branches' root imports. Review `drawsNothing` after the construction dependencies
+  change; question 4 now permits cited laws whose proofs use constructions.
 - **Regenerate from the combined sources.** The integrator regenerates the lock, both model
   hashes, model laws and assembly, `facts.json`, certificate, graph and pages, and reconciles
   pinned counts without dropping or loosening expectations. Recheck affected records and
   every audit pin against that revision.
 - **Finish validation and review on that revision.** Complete WORKFLOW, section 8, including
   the kernel replay, style tests, clean regeneration, negative suite, numerical model and
-  formal-model build. Complete the adversarial model reading and the required code and
-  protected-path security reviews. A successful earlier lane check is not a pass on the
-  final merged revision.
+  formal-model build, and run /no-mistakes. The independent Codex read of the model lane
+  at `cdcf3b9e` found no weakening and the older relative-path defect described above.
+  Verify the fix and complete the required code and protected-path security reviews on
+  the revision to land. A successful earlier lane check is not a pass on the final
+  merged revision.
 
 ## The reviews
 
@@ -666,7 +703,7 @@ rule leaves, adding Generalities 3, in its own commit. Its findings, and what ro
 2. *The cited laws did more construction than the brief said:* one ray for one angle drew
    DE, DF and DP; I.7 draws, produces and cites I.5. *Answered:* the ray law names its three
    straight lines, the placement supplies the side AC, and the law is proved again with no
-   construction rule; I.7's construction is disclosed above, and open question 4 states the
+   construction rule; I.7's construction is disclosed above, and question 4 states the
    consequence of the stricter reading for I.8.
 3. *The interim disclosure was filed for later:* *Answered* in "The disclosure, now", with
    the four places and their owners.
@@ -699,10 +736,11 @@ orders to break it, and its findings are answered in `6aa4192`:
    the existential an instance contains.
 
 It left staging approval and the interface questions to their owners. Staging approval was
-subsequently recorded; questions 2, 4 and 5 remain open in round 3. It hunted for escapes along the routes that Astra's answer and round 1's verification name (a
-given fact encoding a proposition through the valuation, an opaque predicate among the atoms, an argument by contradiction, a cited
-law that constructs in its proof, a conclusion naming a placement symbol) and found no way
-out of the restriction.
+subsequently recorded; the owner answered questions 2, 4 and 5 as prototyped on
+20 October 2026. It hunted for escapes along the routes that Astra's answer and round 1's
+verification name (a given fact encoding a proposition through the valuation, an opaque
+predicate among the atoms, an argument by contradiction, a cited law that constructs in
+its proof, a conclusion naming a placement symbol) and found no way out of the restriction.
 
 **Round 3's independent record reader.** At `bda0636`, a reader who had not written the
 proofs checked the statements, Heath lines, represented derivations, I.7 adapter and page
@@ -715,31 +753,34 @@ prototype and the proposed model correspondence. It found no concrete escape or 
 cited law, but required a checked production translation, preserved rejection tests and an
 unconditional `model_exists`. It also distinguished uniform validity from a restriction
 on how callers choose arguments, and warned that `drawsNothing` must be reviewed after
-axiom retirement. The branch now supplies the translation and model proof. A further
-adversarial reading of the delivered model is pending; no final verdict from that reading
-is claimed here.
+axiom retirement. The branch now supplies the translation and model proof. The independent
+Codex read of the model lane at `cdcf3b9e` found no weakening and one older relative-path
+defect in `model/Check/Generator.lean`, fixed on `tooling/superposition-model-check`.
+That reading is evidence for its named revision; it does not replace validation of the
+final integrated revision.
 
 The reviews' scratch files are not committed.
 
 ## Open questions for the owner and the coordinator
 
-Questions 2, 4 and 5 have no owner answer yet. Their numbers are retained from round 2.
-The other items record the delivered design or the continuing process.
+The owner answered questions 2, 4 and 5 as prototyped on 20 October 2026. Their numbers
+are retained from round 2. The other items record the delivered design or the continuing
+process.
 
 1. **Cited laws.** The branch asks for a proof of each cited law, keeping its dependencies
    visible. Building laws into the derivation instead would hide those dependencies from
    the certificate. No extension of the fixed list is made here.
-2. **The restriction theorem.** The branch follows the five-part statement above: parts 1,
-   2, 3 and 5 are proved; part 4 is mainly inspection of the rule, with a limited
-   satisfiability theorem. The alternative is to require another formal statement before
-   landing, such as a theorem that every instance has a specified universal shape, or a
-   separating model for a precisely named fragment. Which evidence the owner requires
-   remains open; whole-theory non-derivability is not claimed.
+2. **The restriction theorem, approved 20 October 2026.** The owner accepted the five-part
+   statement as prototyped: parts 1, 2, 3 and 5 are theorems; part 4 is a reading of
+   `Rule.infer`, with `Metric.holds_const` its limited satisfiability theorem.
+   No further formal statement or separating model is a condition of this approval;
+   whole-theory non-derivability is not claimed.
 3. **The symbols' front end.** The delivered rule uses `Fin n` and `Fin m`; `Symbols` and
    `Rule.apply` let proofs name their letters. The alternative would quantify over any
    vocabulary with `Symbols` in the axiom itself. No such change is proposed here.
-4. **Laws whose proofs draw.** The branch permits a previously proved law whose statement
-   asserts no existence to be cited inside the placement, whatever its proof constructs.
+4. **Laws whose proofs draw, approved 20 October 2026.** The owner accepted the prototype's
+   reading: a previously proved law whose statement asserts no existence may be cited
+   inside the placement, whatever its proof constructs.
    Thus I.8 uses I.7 on its hypothetical corner, following Euclid's argument. The stricter
    alternative permits only laws proved without construction rules. The prototype's
    suggested test, `∀ c ∈ cites, c.drawsNothing = true`, expresses that only while the
@@ -747,15 +788,18 @@ The other items record the delivered design or the continuing process.
    another argument labelled as such. At `aa96ab8` I.4's cited laws pass that classification;
    after `lean/retire-axioms-2`, their use of `triple_incidence2` through Postulate 2 and
    `eq_of_len_eq_zero` through Postulate 3 brings I.4 within this decision too.
-5. **The side laid down.** The branch keeps the side AC as a straight line through D and
-   C′, so the angle-to-ray argument draws no line inside the placement. The model proves
+5. **The side laid down, approved 20 October 2026.** The owner accepted the prototype's
+   kept side AC as a straight line through D and C′, so the angle-to-ray argument draws no
+   line inside the placement. The model proves
    that this side exists. The alternative draws the line inside the placement, which
    would require a construction step there, or changes the argument and its calculus to
-   avoid that line. The kept side still awaits the owner's confirmation.
+   avoid that line. The approved design keeps it.
 6. **More citable propositions.** `Cited` holds I.7 alone among the propositions. Another
    joins only by a revision of this brief, with its reason.
-7. **Timing.** The replacement is prepared and unlanded. The owner decides on the finished
-   branch after the landing work above; the completed model does not itself grant approval.
+7. **Timing.** The replacement is approved and unlanded. The tooling pull requests land
+   first. Landing the replacement also requires /no-mistakes and the independent Codex
+   read of the model lane, with evidence tied to the revision delivered as described
+   under "Landing".
 
 ## Checks
 

@@ -5,7 +5,7 @@ fingerprint = "sha256:dd20d32592101253"
 
 [route]
 kind = "euclid"
-note = "I.7 is cited inside the hypothetical placement as a proved statement asserting no existence, although its proof uses constructions. This follows the prototype's reading of brief 0009, open question 4, which awaits the owner's confirmation."
+note = "I.7 is cited inside the hypothetical placement as a proved statement asserting no existence, although its proof uses constructions. This follows the prototype's reading of brief 0009, question 4, approved by the owner on 20 October 2026."
 
 [[passage]]
 at = "For, if the triangle ABC be applied to the triangle DEF"

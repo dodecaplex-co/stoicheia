@@ -1853,11 +1853,12 @@ findings:
   and the placement policy still apply only in `Elements/`. The model's independent
   kernel replay, the other half of #121, is still open.
 
-- **Restricted superposition prepared for the owner's final word, not landed.** On
+- **Restricted superposition prepared on 19 October, approved on 20 October, not landed.** On
   19 October 2026, [brief 0009, round 3](0009-superposition.md) records the replacement
   prepared on `lean/superposition-restricted`, at `aa96ab8`, from `origin/main` at
   `39ae65c`. The owner's decision of 18 October authorised the prototype and preparation;
-  the finished branch awaits the owner's final word. `Tacit.superposition` now has type
+  the owner approved the finished replacement on 20 October, with the scope and landing
+  conditions recorded in the dated entry below. `Tacit.superposition` now has type
   `Superposition.Rule primitives`: a represented derivation may export one equality of
   lengths, angles or triangles about the given figure, and may neither introduce objects
   inside the placement nor export its hypothetical corners or side. I.4 and I.8 alone use
@@ -1880,8 +1881,11 @@ findings:
 
   `Certificate/axioms.lock` restates one axiom, keeps all 87, and adds 115 vocabulary
   entries, from 91 to 206, with no former word removed or otherwise changed.
-  `Certificate/Facts.lean` recognises actual uses of the calculus's three congruence
-  constructors as C.N. 4; all 121 common-notion lists match the baseline.
+  `Certificate/Facts.lean` initially counted the calculus's three congruence constructors
+  as C.N. 4; all 121 common-notion lists matched the baseline. This also counted any use
+  of `Derives.map`, which rebuilds every constructor. The 20 October entry records the
+  correction: each congruence step supplies `Coincidence.step`, and the certificate
+  counts that marker instead.
   `tests/certificate_expectations.json` keeps its eleven existing expectations unchanged
   and adds thirteen for the restricted rule, its citations and C.N. 4.
   `Audit.lean` imports the new superposition audit.
@@ -1920,11 +1924,10 @@ findings:
   The I.4, I.8 and I.23 pages and the overlap catalogue now describe an inference in
   System E's style. An independent reader has read and stamped the six records for I.2,
   I.3, I.4, I.8, I.23 and I.44, retaining full coverage and Euclid's route. No equivalence
-  with System E's two rules or whole-theory non-derivability is claimed. Questions 2, 4
-  and 5 of the brief remain the owner's: accept the five-part restriction or require
-  another formal statement; permit I.7 inside the placement despite constructions in its
-  proof or require construction-free cited proofs; retain the laid-down side or revise
-  the calculus and argument. The branch follows the first reading in each case. After
+  with System E's two rules or whole-theory non-derivability is claimed. On 20 October
+  the owner answered questions 2, 4 and 5 as prototyped: accept the five-part restriction,
+  permit I.7 inside the placement despite constructions in its proof, and retain the
+  laid-down side. After
   `lean/retire-axioms-2`, the proofs of `triple_incidence2` from Postulate 2 and
   `eq_of_len_eq_zero` from Postulate 3 bring I.4's cited laws within question 4 too;
   `drawsNothing` and the audit pins must be reviewed again.
@@ -1933,5 +1936,55 @@ findings:
   must be split into a tooling pull request that lands first, as WORKFLOW, section 10,
   requires. The retirement branches must be reconciled, generated outputs regenerated,
   and the finished revision validated and independently reviewed, including the model
-  and the protected paths named above. This entry records preparation, not landing
-  approval; no check, expectation, lock or schema is loosened.
+  and the protected paths named above. The 20 October approval below supplies the
+  authority for the replacement and its landing conditions; no check, expectation, lock
+  or schema is loosened.
+
+## 20 October 2026
+
+- **The owner approves the restricted superposition replacement.** The owner's exact
+  approval is: "replace the superposition rule as ship S built it, with brief 0009 questions 2, 4 and 5 as prototyped, the model's import of the four pure modules, the page claim 'a restricted inference in System E's style', tooling PR first. Lands after /no-mistakes and an independent Codex read of the model lane."
+
+  [Brief 0009](0009-superposition.md) and the code agree on those answers. Question 2
+  accepts the five-part restriction: parts 1, 2, 3 and 5 are theorems; part 4 is a reading
+  of `Rule.infer`, with the limited theorem `Metric.holds_const`. Question 4 permits a
+  proved law whose statement asserts no existence inside the placement, even when its
+  proof uses constructions; I.8 therefore cites I.7 on its hypothetical corner.
+  Question 5 keeps the side AC as a straight line through D and C′. The approved model
+  imports are exactly the four pure modules `Elements.Foundations.Superposition.Syntax`,
+  `Elements.Foundations.Superposition.Semantics`, `Elements.Foundations.Superposition.Soundness`
+  and `Elements.Foundations.Superposition.Restriction`; the approved page claim is
+  "a restricted inference in System E's style". Neither equivalence with System E's
+  two printed rules nor whole-theory non-derivability is claimed.
+
+  The approval covers restating `Tacit.superposition`, the pure calculus and its use in
+  I.4 and I.8, the corresponding update of `Certificate/axioms.lock`, and the model's
+  translation and proof. The tooling pull requests must land first. Landing the
+  replacement also requires /no-mistakes and an independent Codex read of the model lane.
+  The read at `cdcf3b9e`
+  found no weakening and one older relative-path defect in `model/Check/Generator.lean`,
+  fixed on `tooling/superposition-model-check`. That evidence is tied to the revision
+  read; the final integrated revision still needs its validation.
+
+  Common Notion 4 is marked at its actual steps by the pure proposition
+  `Elements.Superposition.Coincidence`, with its sole constructor
+  `Elements.Superposition.Coincidence.step`. The three congruence constructors of
+  `Derives` take the marker as their first explicit argument. Renaming passes the
+  received marker along and soundness binds it; neither creates one. I.4 and I.8 supply
+  it at their congruence steps. The tooling certificate counts this constructor instead
+  of the congruence constructors, so merely reaching `Derives.map` no longer reports
+  C.N. 4. This adds no axiom and changes no derivable conclusion, proposition statement,
+  Heath line or route. The lock, model outputs and hashes, certificate and pages are
+  regenerated later from the integrated sources.
+
+  The protected files changed on the replacement branch relative to `origin/main`,
+  already named in the preceding entry, are `Audit.lean`, `Audit/Overlaps.lean`,
+  `Audit/Superposition.lean`, `Audit/screen.py`, `Certificate/Facts.lean`,
+  `Certificate/axioms.lock`, `model/Model/Audit.lean`, `model/lakefile.toml`,
+  `model/lock.sha256`, `review/SCHEMA.md`, `scripts/heath.py`,
+  `tests/certificate_expectations.json`, `tests/model/MODEL.md`,
+  `tests/model/hyperbolic.py`, `tests/model/laws.toml`, `tests/model/lock.sha256`
+  and `tests/model/search.py`. The content change in `Audit/screen.py` unfolds
+  `primitives`, the edition's interpretation of the restricted calculus, without
+  changing its coverage check or returning placement witnesses. No check, expected
+  value, lock or schema is weakened; the check changes land in tooling first.
