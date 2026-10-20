@@ -106,7 +106,7 @@ The catalogue of overlaps, with their audit lemmas, is
 kinds, and `kind` names the row's kind in the catalogue's words:
 
 - **states**: the rule, read for the proposition's figure, is its statement, or says more
-  (formerly III.2, which Circle 2 stated while it was an axiom).
+  (historically, III.2 and Circle 2, before that rule became a theorem).
 - **gives**: the proposition follows from the rule at once, in a short proof from at most
   three rules that cites no proposition, any other rules only drawing or naming the figure
   (III.2 from Circle 3, III.5 and III.6).

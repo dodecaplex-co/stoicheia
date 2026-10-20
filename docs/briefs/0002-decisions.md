@@ -2163,6 +2163,36 @@ findings:
   On integration with main at `209d71fd`, `Audit/Overlaps.lean` also updates the exact
   pin for `Audit.III_30_measure`: Lean no longer prints `Tacit.adjacent_eq_of_right`,
   now a theorem, and prints every other entry unchanged. The guard remains exact.
+- **The certificate's and the schema's examples follow the eight retired axioms.** A
+  check-input change of its own, landed after the retirement of the eight (87 to 79), which
+  leaves the check inputs not pinned to the axioms alone.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) updates its axiom examples and
+  the counts for III.1 and its porism because `centre_unique` and Circle 2 are now theorems.
+  [`review/SCHEMA.md`](../../review/SCHEMA.md) updates its overlap examples to distinguish
+  current axioms from proved rules; its fields, requirements and worked TOML examples stay
+  unchanged.
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md) also marks I.5's inherited
+  Postulate 3 example as an excerpt.
+  [`scripts/heath.py`](../../scripts/heath.py) uses the retained Circle 3 axiom in its
+  overlap error message's example.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) explains that its
+  Circle 2 plant deliberately puts a theorem's name in an axiom list, and that the Circle 3
+  rename also invalidates III.2's `[overlap]`, although the plant does not rely on that
+  failure; the plants stay unchanged.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) repairs its
+  expectation-drop test, which the retirement broke: it injected the retired name
+  `Tacit.centre_unique` into III.1's axiom list, and the commit's own pass refuses a name
+  that is no axiom. It now injects `Tacit.circle_eq`, a locked tacit rule III.1 does not
+  use, caught by III.1's count of tacit rules, and still drops III.1's axioms expectations
+  in the same commit to verify that the check change stays separate from content changes;
+  its corrected introduction describes that fixture without saying III.1's current
+  certificate contains `centre_unique`. The test now first asserts that III.1 does not
+  already use the rule, and looks in origin/main's failure for the count instead of the
+  excluded name; its other assertions stay.
+  [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json)
+  changes only its reasons: exclusions of retired names do not detect uses of the
+  theorems, while the existing Circle 3 exclusions still constrain dependencies.
+  Every expectation value stays unchanged. No check, field or requirement changes.
 
 - **Review schema wording.** [review/SCHEMA.md](../../review/SCHEMA.md) now describes the
   style check's reading of review notes, distinguishes items the schema permits from
@@ -2326,9 +2356,3 @@ findings:
   The follow-up through `daf4bec7` brings S26's processing-instruction refusal and quiet
   companion lookup on parse failure into H10, while the modern rules keep their byte
   parser and readers and S23 keeps main's helpers.
-
-- **Review schema examples after the retirement.** The prose of
-  [review/SCHEMA.md](../../review/SCHEMA.md) uses the retained Circle 3 axiom for
-  III.2, marks its former Circle 2 example as historical and removes I.7 from the
-  current examples of an axiom supplying a step. The schema's requirements and its
-  TOML fixtures are unchanged.
