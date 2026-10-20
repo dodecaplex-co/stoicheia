@@ -1823,6 +1823,48 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+- **The checks, made ready for retiring axioms.** The owner asked, "Fewer axioms is better.
+  Any more that can go?", and on 19 October 2026 approved both retirements: "Please do both.
+  79 is rather large with so many books in front of us." On 20 October the owner approved
+  landing each as three pull requests; this is the first of the first. A search found eight that can go with no choice of basis (the retirement's own entry
+  names them). Since a check never changes in the pull request of the content it judges,
+  this change prepares the checks first, with all 87 axioms in place and the pin change
+  recorded below. Main already reads the expected axiom count from
+  the lock in its negative tests, and that count stays as main has it; the further
+  changes to the negative tests are recorded below.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) moves its mutation, count
+  and membership fixtures to laws and pins that survive (I.5's inherited Postulate 3);
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) drops the generators `gs_adj` and
+  `gs_lmc_opp` from its allow-list, because
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) now samples those two laws
+  with generators the other laws use, with byte-identical output;
+  `tests/model/derived.py` (new) keeps the eight laws'
+  configurations as derived properties, which
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py),
+  [`tests/model/structured.py`](../../tests/model/structured.py) and
+  [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
+  laws, [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records that independent
+  contract, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only
+  a description. The formal model's comparison of the eight hand translations directly
+  with the library's declarations goes with the retirement, since the model is content
+  the checks judge.
+- **One certificate pin dropped, with the owner's approval.** The retirement makes
+  `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
+  in [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json),
+  that III.1 Por.'s assumptions include it, had to go first, as the pin dropped for #60 did.
+  On 19 October 2026 the owner approved this first step of a two-step pin flip: commit
+  `5d200cf` removes the `includes: ["Tacit.centre_unique"]` pin while retaining its count.
+  Deleting that dependency still fails, but a substitution that keeps the count would no
+  longer be caught. C6's full `equals` pin remains pending; the retirement then adds stronger
+  pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight. This approval is for
+  the first pin change alone; the retirement itself is approved as the entry above says.
+  The stronger pins cannot fail once the eight are theorems, as the next paragraph explains;
+  pins that can fail are #168, which holds every release until it closes.
+  As built, those pins put the eight names in `excludes` on each entry's `axioms`. Once
+  the eight are theorems no axiom list can hold their names, so those pins cannot fail;
+  an entry's use of a proved rule shows only in the axioms beneath it, which `proved_rules`
+  (the entry below) lists for each rule. A pin on the proved rules an entry uses would
+  need a field of its own, which this change does not add.
 
 - **Restricted superposition prepared on 19 October, approved on 20 October, not landed.** On
   19 October 2026, [brief 0009, round 3](0009-superposition.md) records the replacement
@@ -2119,6 +2161,27 @@ findings:
   definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
   states the rule. No mathematical statement or review record changes.
 
+- **The circle ban survives a rule being proved.** The check change precedes the
+  retirement, with all 87 axioms still in place. No certificate entry may rest on
+  Circle 2 (`Tacit.inside_of_between`) or Circle 3 (`Tacit.outside_of_between`).
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) now finds every theorem
+  this project declares in `Elements.Tacit` and records Lean's `collectAxioms` for it
+  in `facts.json` as `proved_rules`, documented in
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md).
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) requires each
+  forbidden name either to remain an axiom in the lock or to name a proved rule
+  resting on another forbidden circle rule that remains an axiom there. The
+  per-entry refusal is unchanged: in the planned retirement, Circle 2 is proved
+  from Circle 3, so every use still brings in a forbidden axiom. A renamed rule or
+  a proof without a forbidden axiom beneath it is refused.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants both cases
+  of proved Circle 2, restores the lock, and drops one project axiom from
+  `Audit.III_2`'s pin whether its list occupies one line or several.
+  [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) checks the
+  guard, both pin forms and restoration on failure or interruption.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, records how the ban continues
+  to hold. This prepares the checks for the retirement; it retires no axiom.
+
 
 - **The restricted-superposition certificate tooling lands before the Lean replacement.**
   For issue #75 and [brief 0009](0009-superposition.md), the coordinator approves this
@@ -2157,23 +2220,30 @@ findings:
   With the coordinator's approval, `.github/workflows/ci.yml` and `scripts/safe_push.py`
   run `python3 -I tests/test_certificate.py` immediately after
   `lake env lean Certificate/Facts.lean`, as does [WORKFLOW](../WORKFLOW.md), section 8's
-  command block. `scripts/test_safe_push.py` compares all three command sequences and pins
-  that position. `scripts/negative_tests.py` plants constructor counting, requires the
-  focused test to reject its false report, restores the source in `finally`, and requires
-  the restored regression to pass. This fits the harness's existing pattern of a source
-  fault caught by a separate check; it runs only in a disposable tree.
+  command block. `scripts/test_safe_push.py` parses the workflow with PyYAML 6.0.3, pinned
+  in `scripts/requirements-test_safe_push.txt`, and compares all three command sequences
+  through a normalized `jobs.check` model. It pins that position and rejects job or step
+  conditions, job dependencies, shell overrides, continuation settings other than
+  `continue-on-error: false`, and extra commands in a required check's run body. The one
+  multi-command body runs the renderer, prints generated-file freshness and asserts that
+  the output is empty. [WORKFLOW](../WORKFLOW.md), section 10 gives the pinned install
+  immediately before the guard suite. `scripts/negative_tests.py` plants constructor
+  counting, requires the focused test to reject its false report, restores the source in
+  `finally`, and requires the restored regression to pass. This fits the harness's existing
+  pattern of a source fault caught by a separate check; it runs only in a disposable tree.
   `tests/test_negative_tests.py` checks restoration on interruption.
 
   `scripts/heath.py` uses `Tacit.angle_le_two_right`, which supplies I.13's upper bound
   on an angle in `Prop47.within`, for its overlap self-test, with the same acceptance of
   a complete `step` record and rejection when its note is missing. No check is weakened.
   For the same reason `review/SCHEMA.md` gives the same overlap as its example of the kind
-  `step`, in place of I.2, I.3, I.7 and I.23: the restricted rule retires the first three
-  shortcuts and the axiom retirements make the fourth circular, while I.13's in I.47
+  `step`, in place of I.2, I.3, I.7 and I.23: the restricted rule retires the shortcuts for
+  I.2, I.3 and I.23, and the axiom retirements make I.7's audit circular, while I.13's in I.47
   survives both. Wording only: no field, kind or rule of the schema changes.
   Protected files changed, each named here on a line added relative to origin/main:
   `Certificate/Facts.lean`, `Certificate/FIELDS.md`,
   `scripts/heath.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `scripts/requirements-test_safe_push.txt`, `review/SCHEMA.md`,
   `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
   `tests/test_certificate.py`, `tests/fixtures/CertificateCN4.lean`,
   `.github/workflows/ci.yml`.
@@ -2182,8 +2252,9 @@ findings:
 
   The security review's fix round closes the inherited module boundary gap. Listing
   `env.header.moduleNames` by root in the environment loaded by Facts.lean gives
-  `Init`, `Lean`, `Std` and `Elements`. The walks may stop at Lean's three module roots,
-  whose declarations belong to the pinned toolchain. They walk local declarations in
+  `Init`, `Lean`, `Std` and `Elements`. The walks may stop at modules under Lean's three
+  module roots that the running toolchain supplies, as the next fix round below
+  verifies. They walk local declarations in
   `Elements` and the emitter itself, and refuse any reached declaration from another
   imported module, naming both declaration and module before writing any certificate.
   All five walks apply this check before their stopping rules, including the vocabulary
@@ -2209,6 +2280,51 @@ findings:
   Protected files changed in this fix round: `Certificate/Facts.lean`,
   `Certificate/FIELDS.md`, `tests/test_certificate.py`, `scripts/negative_tests.py`
   and `tests/test_negative_tests.py`. No foundation or expected value changes.
+
+  A further review round found that a module's root is not evidence of its origin: a
+  separately compiled `Lean.Hidden`, found first on the search path, could supply a
+  helper using Common Notion 1 that every walk stopped at, silently omitting the
+  notion. Facts.lean now lists, once per run, the imported modules under `Init`, `Std`
+  and `Lean` whose `.olean`, as `findOLean` finds it for the import, lies in the library
+  directory of the running `lean` (`getLibDir`), both paths resolved; `isLocal`, the
+  boundary every walk shares, lets only those end a walk and refuses any other module
+  with the module diagnostic. The regression gives its temporary package a `Lean` root
+  whose entries link to the toolchain's own files beside a compiled `Lean.Hidden`. A
+  reached `Lean.Hidden.notion` fails, naming declaration and module, with no
+  `facts.json`; a reached `Lean.Position` of the toolchain's `Lean.Data.Position`, found
+  through those links, still ends the walk, and the existing cases pass unchanged.
+  `scripts/test_safe_push.py`'s model of `jobs.check` also records `working-directory`
+  at the workflow's and the check job's run defaults and on each required step, and
+  rejects any of them, since the recorded command could then run a substitute script;
+  mutations at all three scopes are refused, and the `formal-model` job keeps its
+  directories. Protected files changed in this round: `Certificate/Facts.lean`,
+  `Certificate/FIELDS.md`, `tests/test_certificate.py`, `scripts/test_safe_push.py` and
+  `.github/workflows/ci.yml` (the step's name only). No check is weakened, and main's
+  facts and pages are unchanged.
+
+  The next review round found that the model still skipped every step without a
+  required command, so an earlier step could write a shell startup file defining
+  `python3() { return 0; }` and export it through `$GITHUB_ENV` as `BASH_ENV`, leaving
+  the certificate command in place but running nothing. The model now reads every step
+  of `jobs.check`: each is either a required check or the modeled setup, which is
+  `actions/checkout@v5` with no inputs, `actions/setup-python@v5` with only
+  `python-version`, and the elan install's exact body; any other step or action is
+  refused. Conditions, continuation, shell, working directory and `env` are refused on
+  every step, `env` also at the workflow and the check job, and a check-job setting the
+  model does not read, such as `container`, is refused. Mutations for the `BASH_ENV`
+  step, an unlisted action, a checkout of another ref, `env` at each scope and a
+  container are refused, and the actual workflow, whose other jobs keep their `env`, still
+  passes. Protected file changed in this round: `scripts/test_safe_push.py`. No check is
+  weakened, and main's facts and pages are unchanged.
+
+  A further review found that another checkout before rendering could restore the
+  committed `facts.json`, discarding the freshly computed certificate before the
+  freshness assertion. `scripts/test_safe_push.py` now requires the setup to form one
+  initial prefix: checkout, Python setup, then the elan install, each exactly once in
+  that order, before the first check. Mutations insert a checkout before rendering,
+  insert Python setup after checks begin, repeat either action, reverse the actions or
+  omit setup; each is refused. Protected file changed in this round:
+  `scripts/test_safe_push.py`. No check is weakened.
 
 - **The model's shared-module checks land before the restricted rule (brief 0009, #75).**
   The branch `tooling/superposition-model-check` carries the generic checks from

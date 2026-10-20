@@ -346,9 +346,13 @@ gate still waits for that job, like every other ([model/README.md](../model/READ
 - **The certificate's coincidence cases need built foundations.**
   `python3 -I tests/test_certificate.py` checks C.N. 4 detection directly, through helpers
   and through transformers, with negative controls for derivations that supply no step,
-  while keeping the axiom fields unchanged. It needs the foundation modules built by
-  `lake build`, with the Lean tools on `PATH`. CI's `check` job and the pre-flight run
-  it immediately after `Certificate/Facts.lean` on the revision delivered.
+  while keeping the axiom fields unchanged. It rejects reached helpers from
+  `Staging.Hidden`, and from a `Lean.Hidden` compiled outside the Lean toolchain, while
+  allowing unused imports from foreign modules and reached declarations of the
+  toolchain's own. It needs the
+  foundation modules built by `lake build`, with the Lean tools on `PATH`. CI's `check`
+  job and the pre-flight run it immediately after `Certificate/Facts.lean` on the revision
+  delivered.
 - **The style check's cases run before it.** `tests/test_check_style.py` puts the
   wording rules of `scripts/check_style.py`, and S20's reading of a letter's ink, to short
   texts and small figures, each with the finding the rule should make, and needs no Lean.
@@ -699,7 +703,8 @@ run, and without origin/main's copy the push is refused), and refuses to push or
 tag. With the owner's OK for
 a tag, it is pushed by name, `STOICHEIA_TAG_PUSH=<tag> git push origin refs/tags/<tag>`,
 and the hook still scans the commits it points to and an annotated tag's message.
-`python3 scripts/test_safe_push.py` plants a bad commit for each guard, gate and edge case
-on a throwaway clone, with a stand-in for gh, and checks that each is refused and a good
-one proposed and merged; `STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and
-all.
+`python3 -m pip install -r scripts/requirements-test_safe_push.txt`, followed in the same
+Python environment by `python3 scripts/test_safe_push.py`, installs the pinned YAML parser
+and plants a bad commit for each guard, gate and edge case on a throwaway clone, with a
+stand-in for gh, and checks that each is refused and a good one proposed and merged;
+`STOICHEIA_SLOW_TESTS=1` adds one run of the full checks, Lean and all.

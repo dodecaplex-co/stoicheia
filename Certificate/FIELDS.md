@@ -35,6 +35,7 @@ in Books I-III, I.15, III.1 and III.16.
 | `opaque` | list of names | Every `opaque` constant this project declares. |
 | `axiom_types` | object, name to string | **New.** The printed statement of every axiom in `axiom_modules`, with exactly the same keys. 87 at commit d040117. |
 | `vocabulary` | object, name to string | **New.** Every definition, instance, structure, inductive type and opaque of this project that the statement of an axiom, or of an entry, reaches (below). |
+| `proved_rules` | object, name to list of names | **New** (20 October 2026). Every theorem this project declares in `Elements.Tacit`, found in Lean's environment, with the axioms `collectAxioms` finds beneath it. Names omit the leading `Elements.`; Lean's three foundations and `sorryAx` are left out, as in an entry's `axioms`. Each list is sorted by string. |
 
 Names here are Lean's full names without the leading `Elements.`, as `axiom_modules`
 has always written them: `"Postulate1"`, `"Tacit.centre_unique"`, `"Magnitude.add"`.
@@ -83,14 +84,17 @@ list counts neither its congruence constructors nor the marker. No transformer i
 Every walk checks the declaring module of each constant it reaches, before stopping at
 an entry, axiom, Common Notion or shared step. A declaration in `Elements` or a module
 below it is local, as is a declaration in the emitter itself. Only declarations from
-Lean's own module roots `Init`, `Std` and `Lean` may be treated as external leaves.
-These are exactly the roots, besides `Elements`, imported by the environment that
-Facts.lean loads with Lean 4.35. Any other reached module fails the certificate before
-it writes `facts.json`, with a message naming the declaration and its module. The module
-comes from Lean's environment, regardless of the declaration's namespace: a helper named
-`Elements.Hidden.step` in `Staging.Hidden` is refused. This applies to dependencies in
-types as well as values, and to the vocabulary walk. An imported helper that no walk
-reaches does not fail the certificate.
+Lean's own modules may be treated as external leaves: modules under the roots `Init`,
+`Std` and `Lean` whose `.olean`, as Lean's search path finds it for the import, lies in
+the library directory of the running `lean`, both paths resolved. These are exactly the
+roots, besides `Elements`, imported by the environment that Facts.lean loads with Lean
+4.35. Any other reached module fails the certificate before it writes `facts.json`, with
+a message naming the declaration and its module. The module comes from Lean's
+environment, regardless of the declaration's namespace: a helper named
+`Elements.Hidden.step` in `Staging.Hidden` is refused. Nor is a module's root evidence
+of its origin: a separately compiled `Lean.Hidden` is refused too. This applies to
+dependencies in types as well as values, and to the vocabulary walk. An imported helper
+that no walk reaches does not fail the certificate.
 
 `own_axioms` comes from the walk that gives `direct_axioms`, stopped at each lemma
 the proof's own declarations call, as the walk for `shared_steps` is; what a lemma brings

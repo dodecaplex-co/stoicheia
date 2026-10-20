@@ -20,7 +20,10 @@ counts even when that branch is not taken (I.15). Every case keeps the same axio
 
 Separately compiled helpers in Staging.Hidden must be refused by their declaring module,
 even when their names begin with Elements. They supply a step, a Common Notion or an
-existing axiom, or appear only in an entry's type.
+existing axiom, or appear only in an entry's type. So must a separately compiled
+Lean.Hidden that supplies a Common Notion: its root is Lean's, but its .olean is not the
+toolchain's. The temporary package's Lean root links every other entry to the toolchain's
+own files, so a reached declaration of Lean.Data.Position still ends a walk.
 
 The foundation modules must be built first. CI's check job and the pre-flight run this
 immediately after Certificate/Facts.lean, as in docs/WORKFLOW.md, section 8.
@@ -56,6 +59,23 @@ def prepare_package(work):
     )
     env["LEAN_PATH"] = str(fixture_modules) + os.pathsep + repository_modules
     return env, fixture_modules
+
+
+def shadow_lean_root(work, env, modules):
+    result = subprocess.run(
+        ["lake", "env", "lean", "--print-libdir"],
+        cwd=work, env=env, capture_output=True, text=True, timeout=120,
+    )
+    if result.returncode:
+        raise AssertionError(
+            f"lean --print-libdir exited {result.returncode}\n" + result.stdout + result.stderr
+        )
+    library = Path(result.stdout.strip())
+    (modules / "Lean").mkdir()
+    for entry in (library / "Lean").iterdir():
+        (modules / "Lean" / entry.name).symlink_to(entry)
+    for entry in library.glob("Lean.*"):
+        (modules / entry.name).symlink_to(entry)
 
 
 def compile_module(work, env, modules, name):
@@ -168,10 +188,21 @@ class ModuleBoundaryTests(unittest.TestCase):
             "end Elements.Hidden\n"
         )
         compile_module(cls.work, cls.env, cls.modules, "Staging.Hidden")
+        shadow_lean_root(cls.work, cls.env, cls.modules)
+        (cls.work / "Lean").mkdir()
+        (cls.work / "Lean/Hidden.lean").write_text(
+            "import Elements.CertificateFixture\n"
+            "namespace Lean.Hidden\n"
+            "theorem notion (a b c : Elements.Length) (h : a = c) (k : b = c) : a = b :=\n"
+            "  Elements.CommonNotion1 h k\n"
+            "end Lean.Hidden\n"
+        )
+        compile_module(cls.work, cls.env, cls.modules, "Lean.Hidden")
 
     def certificate(self, declaration):
         (self.work / "Elements.lean").write_text(
-            "import Staging.Hidden\n" + declaration + "\n"
+            "import Staging.Hidden\nimport Lean.Hidden\nimport Lean.Data.Position\n"
+            + declaration + "\n"
         )
         compile_module(self.work, self.env, self.modules, "Elements")
         (self.work / "facts.json").unlink(missing_ok=True)
@@ -199,10 +230,41 @@ class ModuleBoundaryTests(unittest.TestCase):
                 self.assertNotEqual(result.returncode, 0, output)
                 self.assertIn(
                     f"certificate: declaration Elements.Hidden.{helper} is declared in "
-                    "unsupported module Staging.Hidden; expected Elements, Init, Std or Lean",
+                    "unsupported module Staging.Hidden; expected Elements, or Init, Std or "
+                    "Lean from the running Lean toolchain",
                     output,
                 )
                 self.assertFalse((self.work / "facts.json").exists())
+
+    def test_modules_from_outside_the_toolchain_are_rejected_under_its_roots(self):
+        result = self.certificate(
+            "namespace Elements.BookI\n"
+            "theorem Prop17 (a b c : Length) (h : a = c) (k : b = c) : a = b :=\n"
+            "  Lean.Hidden.notion a b c h k\n"
+            "end Elements.BookI"
+        )
+        output = result.stdout + result.stderr
+        self.assertNotEqual(result.returncode, 0, output)
+        self.assertIn(
+            "certificate: declaration Lean.Hidden.notion is declared in unsupported module "
+            "Lean.Hidden; expected Elements, or Init, Std or Lean from the running Lean "
+            "toolchain",
+            output,
+        )
+        self.assertFalse((self.work / "facts.json").exists())
+
+    def test_reached_toolchain_modules_end_walks(self):
+        result = self.certificate(
+            "namespace Elements.BookI\n"
+            "theorem Prop17 : (Lean.Position.mk 1 2).line = 1 := rfl\n"
+            "end Elements.BookI"
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        facts = json.loads((self.work / "facts.json").read_text())
+        entry = next(entry for entry in facts["propositions"] if entry["ref"] == "I.17")
+        self.assertEqual(entry["status"], "proved")
+        self.assertEqual(entry["common_notions"], [])
+        self.assertEqual(entry["axioms"], [])
 
     def test_unused_foreign_helpers_do_not_fail(self):
         result = self.certificate("")
