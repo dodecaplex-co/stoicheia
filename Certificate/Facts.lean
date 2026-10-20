@@ -581,7 +581,11 @@ run_cmd do
      Lean finds beneath each, so the policy check can still refuse a forbidden rule. -/
   let mut provedRules : Array (String × Json) := #[]
   for (n, ci) in env.constants.toList do
-    unless isLocal env n && (`Elements.Tacit).isPrefixOf n do continue
+    -- Only this project's own tacit rules, by declaring module, as `isLocal` decides; a
+    -- listing, not a walk, so a constant from another module is skipped here, not refused.
+    let own := (env.getModuleIdxFor? n).all fun idx =>
+      (`Elements).isPrefixOf env.header.moduleNames[idx.toNat]!
+    unless own && (`Elements.Tacit).isPrefixOf n do continue
     if let .thmInfo _ := ci then
       let axs := euclidOnly (← collectAxioms n)
       provedRules := provedRules.push
