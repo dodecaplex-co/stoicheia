@@ -422,11 +422,14 @@ looked into.
 7. **Review records** completed: each record written in step 3 is read again against its
    finished proof (section 6), and every one reaches the stage `full` before acceptance.
    Books I–III, whose records came after their proofs, reach it in brief 0005's stage 5.
-8. **A read-through.** Before every release and at the end of each programme stage,
-   the coordinator assigns an independent reviewer a read for stale content: every
-   hand-written repository file, the wiki pages and open issues, oldest untouched first,
-   excluding generated output, which is regenerated, and dated history (crew logs and
-   dated review responses), which records its day and is not brought up to date.
+8. **The page read-through and the stale-content audit.** Before every release or
+   consolidation, readers go through the rendered pages as visitors, as section 7 requires.
+   Separately, before every release and at the end of each programme stage, the coordinator
+   assigns an independent reviewer a stale-content audit: every hand-written repository
+   file, the wiki pages and open issues, oldest untouched first. Generated output is
+   excluded only from this audit, because it is regenerated; it remains part of the page
+   read-through. Dated history (crew logs and dated review responses) records its day and
+   is not brought up to date.
    Keep a dated report under `docs/reports/`, naming the revision read and indexing the
    files by last change; each finding gives `file:line` (or wiki page/issue), the stale
    text, evidence on main, what it should say, and its train or pull request.
@@ -448,9 +451,10 @@ looked into.
      issues and the tracker are kept current.
 9. **Acceptance:** from brief 0005's stage 6, the checklist passes in CI with no failures,
    the independent audit agrees, and a cold outside reading scores the book.
-10. **Release.** A release waits for its gate: the read of step 8 on the release
-    candidate, with every Tier 0 to 2 finding fixed in the release's pull request and
-    every Tier 3 record given its status note; no open issue labelled `blocks-release`
+10. **Release.** A release waits for its gate: both the page read-through and the
+    stale-content audit of step 8 on the release candidate, with every Tier 0 to 2 finding
+    from the audit fixed in the release's pull request and every Tier 3 record given its
+    status note; no open issue labelled `blocks-release`
     (unfinished work, a prototype or a provisional answer may be on main only as such an
     issue, and holds every release until it closes); and the wiki refreshed, so that it is
     reasonably correct as of its date, as its pages say, and is not expected to be more
