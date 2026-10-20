@@ -1823,6 +1823,48 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+- **The checks, made ready for retiring axioms.** The owner asked, "Fewer axioms is better.
+  Any more that can go?", and on 19 October 2026 approved both retirements: "Please do both.
+  79 is rather large with so many books in front of us." On 20 October the owner approved
+  landing each as three pull requests; this is the first of the first. A search found eight that can go with no choice of basis (the retirement's own entry
+  names them). Since a check never changes in the pull request of the content it judges,
+  this change prepares the checks first, with all 87 axioms in place and the pin change
+  recorded below. Main already reads the expected axiom count from
+  the lock in its negative tests, and that count stays as main has it; the further
+  changes to the negative tests are recorded below.
+  [`scripts/test_safe_push.py`](../../scripts/test_safe_push.py) moves its mutation, count
+  and membership fixtures to laws and pins that survive (I.5's inherited Postulate 3);
+  [`scripts/safe_push.py`](../../scripts/safe_push.py) drops the generators `gs_adj` and
+  `gs_lmc_opp` from its allow-list, because
+  [`tests/model/hyperbolic.py`](../../tests/model/hyperbolic.py) now samples those two laws
+  with generators the other laws use, with byte-identical output;
+  `tests/model/derived.py` (new) keeps the eight laws'
+  configurations as derived properties, which
+  [`tests/model/exhaustive.py`](../../tests/model/exhaustive.py),
+  [`tests/model/structured.py`](../../tests/model/structured.py) and
+  [`tests/model/run.py`](../../tests/model/run.py) run, count and enforce as strongly as the
+  laws, [`tests/model/MODEL.md`](../../tests/model/MODEL.md) records that independent
+  contract, and [`tests/model/mutations.py`](../../tests/model/mutations.py) changes only
+  a description. The formal model's comparison of the eight hand translations directly
+  with the library's declarations goes with the retirement, since the model is content
+  the checks judge.
+- **One certificate pin dropped, with the owner's approval.** The retirement makes
+  `Tacit.centre_unique` a theorem, so no certificate can list it, and the first expectation
+  in [`tests/certificate_expectations.json`](../../tests/certificate_expectations.json),
+  that III.1 Por.'s assumptions include it, had to go first, as the pin dropped for #60 did.
+  On 19 October 2026 the owner approved this first step of a two-step pin flip: commit
+  `5d200cf` removes the `includes: ["Tacit.centre_unique"]` pin while retaining its count.
+  Deleting that dependency still fails, but a substitution that keeps the count would no
+  longer be caught. C6's full `equals` pin remains pending; the retirement then adds stronger
+  pins that III.1, III.1 Por., III.2 and II.14 rest on none of the eight. This approval is for
+  the first pin change alone; the retirement itself is approved as the entry above says.
+  The stronger pins cannot fail once the eight are theorems, as the next paragraph explains;
+  pins that can fail are #168, which holds every release until it closes.
+  As built, those pins put the eight names in `excludes` on each entry's `axioms`. Once
+  the eight are theorems no axiom list can hold their names, so those pins cannot fail;
+  an entry's use of a proved rule shows only in the axioms beneath it, which `proved_rules`
+  (the entry below) lists for each rule. A pin on the proved rules an entry uses would
+  need a field of its own, which this change does not add.
 
 ## 20 October 2026
 
@@ -2031,6 +2073,27 @@ findings:
   boundaries; `scripts/negative_tests.py` adds a two-line
   definition to item 16. These are the three protected paths changed; [STYLE](../STYLE.md)
   states the rule. No mathematical statement or review record changes.
+
+- **The circle ban survives a rule being proved.** The check change precedes the
+  retirement, with all 87 axioms still in place. No certificate entry may rest on
+  Circle 2 (`Tacit.inside_of_between`) or Circle 3 (`Tacit.outside_of_between`).
+  [`Certificate/Facts.lean`](../../Certificate/Facts.lean) now finds every theorem
+  this project declares in `Elements.Tacit` and records Lean's `collectAxioms` for it
+  in `facts.json` as `proved_rules`, documented in
+  [`Certificate/FIELDS.md`](../../Certificate/FIELDS.md).
+  [`scripts/check_fidelity.py`](../../scripts/check_fidelity.py) requires each
+  forbidden name either to remain an axiom in the lock or to name a proved rule
+  resting on another forbidden circle rule that remains an axiom there. The
+  per-entry refusal is unchanged: in the planned retirement, Circle 2 is proved
+  from Circle 3, so every use still brings in a forbidden axiom. A renamed rule or
+  a proof without a forbidden axiom beneath it is refused.
+  [`scripts/negative_tests.py`](../../scripts/negative_tests.py) plants both cases
+  of proved Circle 2, restores the lock, and drops one project axiom from
+  `Audit.III_2`'s pin whether its list occupies one line or several.
+  [`tests/test_negative_tests.py`](../../tests/test_negative_tests.py) checks the
+  guard, both pin forms and restoration on failure or interruption.
+  [FORMALIZATION](../FORMALIZATION.md), section 7, records how the ban continues
+  to hold. This prepares the checks for the retirement; it retires no axiom.
 
 - **The Jev audit's question generator.** On 19 October 2026 the owner approved running Jev,
   TypeSafe's decision model, as the independent audit of brief 0005's stage 6

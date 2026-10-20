@@ -8,6 +8,8 @@ simulated builds delete, replace and create them before failing or being interru
 """
 
 import io
+import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -132,10 +134,15 @@ class RestorationTests(unittest.TestCase):
 
     def test_audit_restores_all_outputs(self):
         source = self.root / "Audit/Overlaps.lean"
-        original = b"'Audit.III_2' depends on axioms: [Elements.Tacit.inside_of_between]"
-        self.write(source, original)
-        for interrupt in (False, True):
-            with self.subTest(interrupt=interrupt):
+        for multiline, interrupt in ((False, False), (False, True),
+                                     (True, False), (True, True)):
+            with self.subTest(multiline=multiline, interrupt=interrupt):
+                dropped = ("Elements.Tacit.outside_of_between" if multiline
+                           else "Elements.Tacit.inside_of_between")
+                axioms = (f"propext,\n Classical.choice,\n Quot.sound,\n {dropped}"
+                          if multiline else dropped)
+                original = f"'Audit.III_2' depends on axioms: [{axioms}]".encode()
+                self.write(source, original)
                 self.outputs("Audit/Overlaps")
                 self.outputs("Audit")
                 saved = self.files()
@@ -146,7 +153,7 @@ class RestorationTests(unittest.TestCase):
                     self.damage_outputs()
                     return subprocess.CompletedProcess(cmd, 1, "", "Audit/Overlaps.lean: "
                         "Docstring on `#guard_msgs` does not match generated message "
-                        "Audit.III_2 Elements.Tacit.inside_of_between")
+                        f"Audit.III_2 {dropped}")
                 with patch.object(negative, "run", side_effect=run) as commands:
                     if interrupt:
                         with self.assertRaises(KeyboardInterrupt):
@@ -157,6 +164,45 @@ class RestorationTests(unittest.TestCase):
                 self.assertEqual(commands.call_count, 2)
                 self.assertEqual(source.read_bytes(), original)
                 self.assertEqual(self.files(), saved)
+
+    def test_audit_drops_one_project_axiom_and_keeps_other_pins(self):
+        source = self.root / "Audit/Overlaps.lean"
+        for axioms in (
+                "Elements.Tacit.inside_of_between",
+                "propext, Classical.choice, Quot.sound, Elements.Tacit.outside_of_between",
+                "propext,\n Classical.choice,\n Elements.Postulate1,\n Quot.sound,\n "
+                "Elements.Tacit.outside_of_between"):
+            with self.subTest(axioms=axioms):
+                names = [a.strip() for a in axioms.split(",")]
+                dropped = next(a for a in names if a.startswith("Elements."))
+                remaining = names.copy()
+                remaining.remove(dropped)
+                prefix = "/-- info: 'Audit.I_2' depends on axioms: [Elements.Postulate1] -/\n"
+                suffix = "\n-/\n#guard_msgs in\n#print axioms Audit.III_2\n"
+                original = (prefix + "/--\ninfo: 'Audit.III_2' depends on axioms: ["
+                            + axioms + "]" + suffix).encode()
+                self.write(source, original)
+                calls = []
+                def run(*cmd):
+                    calls.append(cmd)
+                    self.assertEqual(cmd, ("lake", "build", "Audit"))
+                    if len(calls) == 2:
+                        self.assertEqual(source.read_bytes(), original)
+                        return subprocess.CompletedProcess(cmd, 0, "", "")
+                    changed = source.read_text()
+                    self.assertTrue(changed.startswith(prefix))
+                    self.assertTrue(changed.endswith(suffix))
+                    pin = re.search(r"'Audit\.III_2' depends on axioms: \[([^\]]*)\]", changed)
+                    self.assertEqual([a.strip() for a in pin[1].split(",") if a.strip()],
+                                     remaining)
+                    return subprocess.CompletedProcess(cmd, 1, "", "Audit/Overlaps.lean: "
+                        "Docstring on `#guard_msgs` does not match generated message "
+                        f"Audit.III_2 {dropped}")
+                with patch.object(negative, "run", side_effect=run):
+                    negative.changed_audit_pin()
+                self.assertEqual(len(calls), 2)
+                self.assertEqual(source.read_bytes(), original)
+                self.assertEqual(negative.failures, [])
 
     def test_planted_outputs_cleaned_after_restoration(self):
         originals = {}
@@ -249,6 +295,104 @@ class RestorationTests(unittest.TestCase):
                     self.assertIn(
                         "✓ working tree restored to its entry Git status\n",
                         output.getvalue())
+
+
+class CircleRuleTests(unittest.TestCase):
+    inside = "Tacit.inside_of_between"
+    outside = "Tacit.outside_of_between"
+
+    def setUp(self):
+        tmp = self.enterContext(tempfile.TemporaryDirectory())
+        self.root = Path(tmp)
+        self.lock = self.root / "Certificate/axioms.lock"
+        self.lock.parent.mkdir()
+        self.errors = []
+        self.enterContext(patch.multiple(negative, ROOT=self.root, failures=[]))
+        self.enterContext(patch.object(negative.check_fidelity, "errors", self.errors))
+        self.enterContext(redirect_stdout(io.StringIO()))
+
+    def fixture(self, locked, proved=None):
+        types = {name: "fixture statement" for name in locked}
+        self.lock.write_text(negative.check_fidelity.render_lock(types, {}))
+        facts = {"axiom_types": types, "axiom_modules": {}, "vocabulary": {}}
+        if proved is not None:
+            facts["proved_rules"] = proved
+        return facts
+
+    def test_locked_rules_need_no_proved_rules_key(self):
+        facts = self.fixture((self.inside, self.outside))
+        self.assertEqual(negative.check_fidelity.check_lock(facts, self.lock), 2)
+        self.assertEqual(self.errors, [])
+
+    def test_either_proved_rule_needs_the_other_as_a_locked_axiom(self):
+        for proved, locked in ((self.inside, self.outside), (self.outside, self.inside)):
+            for dependencies in ([], ["Postulate1"], [proved], [locked], ["Postulate1", locked]):
+                with self.subTest(proved=proved, dependencies=dependencies):
+                    self.errors.clear()
+                    facts = self.fixture((locked,), {proved: dependencies})
+                    self.assertEqual(negative.check_fidelity.check_lock(facts, self.lock), 1)
+                    if locked in dependencies:
+                        self.assertEqual(self.errors, [])
+                    else:
+                        self.assertEqual(len(self.errors), 1)
+                        self.assertIn(proved, self.errors[0])
+                        self.assertIn("proved without another forbidden circle rule",
+                                      self.errors[0])
+
+    def test_missing_or_renamed_rule_is_refused_without_proof(self):
+        for proved in (None, {}, {"Tacit.renamed": [self.outside]}):
+            with self.subTest(proved=proved):
+                self.errors.clear()
+                facts = self.fixture((self.outside,), proved)
+                negative.check_fidelity.check_lock(facts, self.lock)
+                self.assertEqual(len(self.errors), 1)
+                self.assertIn(f"{self.inside} (Circle 2): not an axiom", self.errors[0])
+                self.assertIn("renamed", self.errors[0])
+
+    def test_unlocked_dependency_and_circular_proofs_are_refused(self):
+        facts = self.fixture((), {self.inside: [self.outside], self.outside: [self.inside]})
+        negative.check_fidelity.check_lock(facts, self.lock)
+        self.assertEqual(len(self.errors), 2)
+        for rule, error in zip(negative.check_fidelity.FORBIDDEN_CIRCLE_RULES, self.errors):
+            self.assertIn(rule, error)
+            self.assertIn("proved without another forbidden circle rule", error)
+
+    def test_circle_plant_checks_both_cases_and_restores_either_lock(self):
+        for retired in (False, True):
+            with self.subTest(retired=retired):
+                facts = self.fixture((self.outside,) if retired else (self.inside, self.outside))
+                (self.root / "facts.json").write_text(json.dumps(facts))
+                saved = self.lock.read_bytes()
+                saved_facts = (self.root / "facts.json").read_bytes()
+                self.errors[:] = ["a previous finding"]
+                with patch.object(negative.check_fidelity, "check_lock",
+                                  wraps=negative.check_fidelity.check_lock) as check:
+                    negative.circle_proved()
+                self.assertEqual(check.call_count, 2)
+                calls = [call.args[0] for call in check.call_args_list]
+                self.assertEqual(calls[0]["proved_rules"][self.inside], [])
+                self.assertEqual(calls[1]["proved_rules"][self.inside], [self.outside])
+                self.assertEqual(negative.failures, [])
+                self.assertEqual(self.errors, ["a previous finding"])
+                self.assertEqual(self.lock.read_bytes(), saved)
+                self.assertEqual((self.root / "facts.json").read_bytes(), saved_facts)
+
+    def test_circle_plant_restores_on_failure_or_interrupt(self):
+        for retired in (False, True):
+            for exception in (RuntimeError, KeyboardInterrupt):
+                with self.subTest(retired=retired, exception=exception):
+                    facts = self.fixture((self.outside,) if retired
+                                         else (self.inside, self.outside))
+                    (self.root / "facts.json").write_text(json.dumps(facts))
+                    saved = self.lock.read_bytes()
+                    self.errors[:] = ["a previous finding"]
+                    with patch.object(negative.check_fidelity, "check_lock",
+                                      side_effect=exception("interrupted")):
+                        with self.assertRaises(exception):
+                            negative.circle_proved()
+                    self.assertEqual(self.lock.read_bytes(), saved)
+                    self.assertEqual(self.errors, ["a previous finding"])
+                    self.assertEqual(json.loads((self.root / "facts.json").read_text()), facts)
 
 
 if __name__ == "__main__":

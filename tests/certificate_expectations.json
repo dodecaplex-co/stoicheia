@@ -4,9 +4,8 @@
     {
       "ref": "III.1 Por.",
       "field": "axioms",
-      "includes": ["Tacit.centre_unique"],
       "count": {"prefix": "Tacit.", "is": 57},
-      "why": "III.1's porism proves that the centre lies on the cutting line by `centre_unique`, which III.1's construction does not use. The review found the porism's assumptions missing from III.1's certificate; the porism's own entry must carry them: 57 tacit rules, centre_unique among them."
+      "why": "The review found the porism's assumptions missing from III.1's certificate. The porism's own entry must carry its full dependency count: 57 tacit rules, counted separately from III.1's construction."
     },
     {
       "ref": "III.1",
