@@ -17,8 +17,8 @@
 # and every word already locked are unchanged, byte for byte, so MODEL.md's account stands
 # as it was.
 #
-# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved retirement
-# in principle that day, pending the evidence): Tacit.adjacent_eq_of_right,
+# Renewed on 19 October 2026, when eight axioms became theorems (the owner approved both
+# retirements that day): Tacit.adjacent_eq_of_right,
 # Tacit.not_same_side_of_circles_meet, Tacit.centre_unique, Tacit.inside_of_between,
 # Tacit.exists_point_outside_circle, Tacit.line_meets_circle_of_opposite_sides,
 # Tacit.triple_incidence3 and Tacit.inside_of_angle_add. Their laws leave laws.toml, search.py
