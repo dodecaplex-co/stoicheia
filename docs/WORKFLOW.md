@@ -555,25 +555,37 @@ commits change only those files; and that the evidence, separation of checks fro
 content, and declarations hold. Decisions here include the page and Markdown entry
 files directly under `docs/decisions/`. A merge of main needs no member row, but its
 tree is checked too. While origin/main has no train checker, safe_push reports that
-step as skipped; once it has one, an unreadable checker or a refused train stops the
-pre-flight.
+train is refused, unless the commit itself adds `scripts/check_train.py`: then its own
+copy runs, and the pre-flight notes it for the security review (the bootstrap). An
+unreadable checker or a refused train stops the pre-flight. `--merge` runs the train
+check again, on the pull request's current body, in both modes.
 
 **The merge queue.** GitHub makes a group for each queued train: main plus the trains
 ahead of it, then that train, in queue order. Several passing entries can be batched
 into a push to main. CI runs the integration checks on each group and the
-`queue-integrity` job runs `scripts/check_queue.py`. It refuses an unreadable input,
-record or GitHub answer. Its four rules are:
+`queue-integrity` job runs `scripts/check_queue.py`, taken with the scripts beside it
+from the group's base, main, never from the group: a train cannot change the checker
+that judges it, and the job fails while main has none. It refuses an unreadable input,
+record or GitHub answer. GitHub reads the workflow file itself from the group, so a
+change to `.github/` is held by the pre-flight, which origin/main's harness runs, and by
+the security review, not by this job. Its four rules are:
 
-- **(a) No change overwritten.** Each train's change must reverse-apply cleanly to the
-  group tree, computed as a three-way merge to avoid conflicts caused by patch context
-  alone. Generated files are checked by regeneration instead. For the decisions page,
+- **(a) No change overwritten.** Each train's change is reverted from the group tree and
+  applied again, by three-way merges, and the result must be the group's tree on every
+  path the rule covers: so a later train that restores, removes or re-adds what an
+  earlier one changed is caught, as well as one that alters it. Generated files are
+  checked by regeneration instead. For the decisions page,
   every line the train adds must remain in the group's page in the same order.
 - **(b) Nothing unchecked.** Each entry has one visible pre-flight block naming exactly
-  its head and the blob of origin/main's `scripts/safe_push.py` at the recorded base.
-  That base must be an ancestor of both the head and the group's base. A `train/`
-  entry also has readable member evidence and a declaration covering its changes.
-  The structural train check belongs to its pre-flight; the queue does not repeat
-  member review. An automatic revert has the narrowly checked exception below.
+  its head, the base it was compared against and the harness: the main commit whose
+  `scripts/safe_push.py` ran it (in queue mode the base is the head's merge base with
+  main, and the harness may be newer). The harness commit must have been on main (an
+  ancestor of the group's base), the block must name that commit's blob, give a passing
+  verdict, and show every full check that harness runs, by its own `CHECKS` and
+  `NEGATIVE` lists, with no failure. A `train/` entry's Members table is matched again to
+  its actual member merges with `check_train.py`, against the pull request's current
+  body. The queue does not repeat member review. An automatic revert has the narrowly
+  checked exception below.
 - **(c) Batching in order.** From the group's base to its head, the first-parent chain
   consists of two-parent merges whose trees are exactly their automatic merges.
   An already merged prefix must be held by main; the rest must be the queue's entries
@@ -587,9 +599,10 @@ record or GitHub answer. Its four rules are:
 
 **The gaps of what is new.** After those rules, `check_queue.py --gaps` takes the union
 of the entries' derived changes and their declarations. A changed `tests/test_*.py`
-runs with `python3 -I`; a changed `scripts/<name>.py` runs its existing
-`tests/test_<name>.py` or `scripts/test_<name>.py` tests. The safe_push test command is
-`python3 scripts/test_safe_push.py`. Each selected command runs once, and a failure
+runs with `python3 -I`, and a changed `scripts/test_*.py` runs itself; a changed
+`scripts/<name>.py` runs its existing `tests/test_<name>.py` or `scripts/test_<name>.py`
+tests. The safe_push test command is `python3 scripts/test_safe_push.py`. A file the
+group deletes asks for no test. Each selected command runs once, and a failure
 fails the job. Changed propositions have their acceptance items printed from the
 acceptance artifact, as a report of the verdict already judged there. Declared rules
 are printed for the reader. Foundations need no extra run here, since `model` and
@@ -603,13 +616,15 @@ without the rejected change.
 
 **Auto-revert.** `.github/workflows/post-merge.yml` reruns integration on each main push.
 If it fails, the workflow takes `scripts/auto_revert.py` from the previous main, the
-push's `before` commit, and runs it in Python's isolated mode. It imports no code from
-the failed checkout. The `auto-revert` environment must allow main alone and hold
+push's `before` commit, but only when the post-merge run on `before` itself passed;
+otherwise it opens the issue alone and says why. It runs the script in Python's
+isolated mode, importing no code from the failed checkout. The `auto-revert` environment must allow main alone and hold
 `STOICHEIA_REVERT_APP_ID` and `STOICHEIA_REVERT_APP_KEY`. The script uses that App's
 installation token to make `revert/<after12>`, revert each merge in the push's
 first-parent chain, newest first, and open and enqueue one pull request with its head
 pinned. The pull request carries `auto-revert`, the reverted requests' kind labels,
-`security-review` when a protected path changes, and `Reverts: <sha>` lines. The App
+`security-review` when a protected path changes, a `Failed run: <id>` line and
+`Reverts: <sha>` lines; the script pushes to no branch but `revert/<12 hex>`. The App
 lets that pull request trigger CI; a pull request opened with `GITHUB_TOKEN` would
 not trigger it.
 
@@ -621,7 +636,17 @@ leaves an issue; if the previous main has no readable script, or the failed jobs
 be read, the workflow's own fallback opens the issue without running repository code.
 The queue accepts a revert without an ordinary pre-flight only from the configured
 App bot (`STOICHEIA_REVERT_BOT`), on a `revert/` branch with the `auto-revert` label,
-and only when its tree is exactly the named main merges reverted newest first.
+when its named run is a failed post-merge run of a push to main, the merges it names
+are exactly the merges of that push (its `before` and `after` read from GitHub's
+record of pushes to main), newest first, and its tree is exactly those merges reverted.
+
+The workflow that holds the App's key is itself read from main, so no rule inside the
+repository can keep it from code that has landed there; the App's power is bounded
+instead. It is no ruleset's bypass actor; a ruleset of the owner's lets it push only
+`revert/**` branches; and the queue admits its pull request only as the revert above.
+The pre-flight block in a pull request body is evidence the coordinator's harness wrote,
+and anyone who can edit the body could imitate it; the queue checks it for the head
+and the harness, while `git safe-push --merge` remains the way trains are queued.
 
 Landing through `--merge` pauses while an open `main-red` issue exists or the latest
 completed post-merge run at main's tip concluded anything other than success, neutral
@@ -633,8 +658,9 @@ the issue stays open with `blocks-release` for the coordinator.
 **Turning it on.** The queue remains off until the owner enables it. The coordinator
 holds these steps: add the merge queue rule for main, keep merge commits and enable
 "only merge non-failing pull requests"; require all six checks named above; install
-the revert App for this repository with contents and pull requests write access,
-and workflows write access for reverts that change workflows; restrict the
+the revert App for this repository with contents, pull requests and merge queues
+write access (no workflows access: a train that changed workflows is reverted by hand),
+and the ruleset that keeps it to `revert/**` branches; restrict the
 `auto-revert` environment to main and put the App credentials there, not in repository
 secrets; set the repository variable `STOICHEIA_REVERT_BOT` to its bot login. With the
 queue off, `--merge` follows the direct merge path below. The issue and the pause still
@@ -644,9 +670,8 @@ apply if the App has not been set up.
 sh scripts/install_hooks.sh                        # from a checkout of origin/main: once per
                                                    # clone, and after the hook or launcher changes
 git safe-push --branch <name> --dry-run            # every check; nothing pushed
-git safe-push --branch <name> --label <kind>       # reuse matching full checks, then push and open
+git safe-push --branch <name> --label <kind>       # the pre-flight, the push, a draft pull request
 git safe-push --branch <name>                      # after a fix: again, on the new head
-git safe-push --branch <name> --full               # force the full local checks again
 gh pr ready <n>                                    # when the reviews are done
 git safe-push --merge <n> --dry-run                # the gates, and no merge
 git safe-push --merge <n>                          # the gates, then queue or direct merge
@@ -727,14 +752,7 @@ and says so. The launcher and the pre-push hook run Python 3.11 or later:
       For `train/*`, step "3. train" then runs origin/main's train checker against the
       committed head and the supplied body, as described above.
    4. *The full checks* of section 8 in that worktree, and `negative_tests.py` in a
-      second, each step timed. On `--branch`, a dry run's record of the full checks of
-      the same SHA against the same origin/main, made by the same origin/main harness,
-      stands in for this step alone on a push, as a matching record does on `--merge`.
-      A dry run always runs the full checks; `--full`, which goes with `--branch`
-      alone, forces them on a push too. The secret scan, invariant guards and train
-      check still run; a missing, failed or unreadable record means the full checks
-      run again.
-      The check scripts and what they expect (`scripts/`,
+      second, each step timed. The check scripts and what they expect (`scripts/`,
       `tests/`, `Certificate/`, `review/SCHEMA.md`, `review/terms.toml`) are origin/main's
       copies; when the pull request changes any of them, the checks run again with its own
       copies, which must pass. A check that fails with origin/main's copies is noted in

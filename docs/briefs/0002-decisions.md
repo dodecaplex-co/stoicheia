@@ -2087,92 +2087,63 @@ findings:
   >
   > "I want to make sure that things have been thoroughly checked, so we are only looking at integration tests and the specific gaps of new things."
 
-  The measurements behind this change cover the last 30 merged pull requests in the
-  sample, #98 to #148. Of those, 24 changed the decisions page, 13 `README.md`,
-  11 `docs/PROGRAM.md`, 14 `book/`, 8 `facts.json`, 7 `CERTIFICATE.md` and 3 `GRAPH.md`.
-  Of the 29 consecutive pairs, 16 would have conflicted textually had they been queued
-  together: 13 on the decisions page alone, and 3 with other files, once each in `book/`,
-  `docs/FORMALIZATION.md` and `scripts/audit/jev.py`, each with the decisions page as
-  well. The 13 pairs that merged cleanly all regenerated clean under `render.py`.
-  These are measurements of those pairs, not a claim that future trains cannot conflict.
+  So a train, a branch that merges branches each already checked (its reviews, its
+  `/no-mistakes` at its head, its own checks), is the unit that lands, and trains go
+  through GitHub's merge queue, which may batch them. [WORKFLOW](../WORKFLOW.md), section
+  10, gives the whole account; in short:
 
-  The path measured today, before this change, runs the checks up to five times per
-  pull request: the dry run, the push's pre-flight again, CI on the branch push, CI on
-  the pull request and CI on main after the merge. Each local pre-flight takes 3.7 to
-  8.6 minutes, twice over when a check changes; CI's longest job takes 5.3 minutes.
-  This change removes the branch-push CI run and the push's repeated full pre-flight
-  checks when the dry run already checked the same SHA against the same origin/main
-  with origin/main's harness. On a push, `--branch` reuses that passing record for
-  step 4 alone; `--full` forces the checks. A dry run always runs them. A missing,
-  failed or unreadable record cannot stand in. The secret scan, guards and train
-  check still run.
+  - *Before the queue.* A train's body gains `Members` (each member's head and its three
+    reviews) and `What is new` (the checks, propositions and foundations it changes).
+    `scripts/check_train.py`, origin/main's copy run by the pre-flight, checks that each
+    member is merged once as a merge commit with its evidence, that no merge or
+    coordinator commit adds anything outside the generated files and the decisions
+    page, that checks and the content they judge travel apart, and that `What is new`
+    covers the diff. A train is refused while origin/main has no train check, unless it
+    adds one (the bootstrap, noted for the security review); `--merge` checks the
+    current body again.
+  - *The queue.* CI runs on `pull_request` and `merge_group` (and is called by the
+    post-merge workflow on main), no longer on every branch push, which ran the same
+    checks twice for each push. The new required job `queue-integrity` runs main's copy
+    of `scripts/check_queue.py` on each group, never the group's: (a) no train's change
+    overwritten, by reverting and reapplying it; (b) every head is the commit its
+    pre-flight checked, by a harness that was main's, with every check that harness runs
+    passing, and each train's Members still its actual merges; (c) the group is main and
+    the queued trains ahead, in order, as plain merge commits; (d) the generated pages
+    current and no dated heading repeated (conflict markers are S23's, in the `check`
+    job). Then the gaps of what is new: the tests of each changed check run. With "only
+    merge non-failing pull requests", a train merges only when its own group passed;
+    GitHub removes a failing group's last train and rebuilds the groups after it.
+  - *After the merge.* `.github/workflows/post-merge.yml` runs the integration tests on
+    each push to main. If they fail, it opens an issue labelled `blocks-release` and
+    `main-red`, and `git safe-push --merge` refuses while main is red; with the revert
+    App's key (in the `auto-revert` environment, main only), the previous main's
+    `scripts/auto_revert.py`, trusted only when its own post-merge run passed, reverts
+    the push's merges on a `revert/` branch and queues the revert, which the queue admits
+    only as the exact revert of a failed push's merges. The workflow that holds the key
+    is read from main, so the App is bounded instead: no bypass, a ruleset keeping it to
+    `revert/**`, and the queue's check of its pull request.
 
-  A train's body now has `Members`, with each merged head and its written review and
-  `/no-mistakes` evidence, and `What is new`, covering the changed checks, propositions
-  and foundations, with the coordinator's rule declarations. `scripts/check_train.py`
-  checks the merge structure, evidence and declarations before the train is pushed,
-  using origin/main's copy through safe_push. It refuses extra content in merge
-  resolutions or coordinator commits outside generated files and decisions, and a
-  train combining check changes with judged content. Until origin/main has the module,
-  that train-check step is explicitly reported as skipped.
+  The measurements. Of the last 30 merged pull requests (#98 to #148), 24 changed this
+  page, 14 `book/`, 13 `README.md`, 11 `docs/PROGRAM.md`, 8 `facts.json`, 7
+  `CERTIFICATE.md` and 3 `GRAPH.md`. Of 29 consecutive pairs, 16 would have conflicted
+  had they been queued together: 13 on this page alone, and 3 with other files as well
+  (`book/`, `docs/FORMALIZATION.md`, `scripts/audit/jev.py`, once each). The 13 pairs
+  that merged cleanly all rendered clean under `render.py` (`facts.json`, which Lean
+  computes, was not recomputed). Today a pull request is checked up to five times: the
+  dry run (2.7 to 8.6 minutes, once 14), the push's pre-flight again on the same commit,
+  CI on the branch push, CI on the pull request (its longest job, `negative`, 5.3
+  minutes) and CI on main after the merge. This change removes the branch-push run, the
+  only one that was pure duplication. The pre-flight with origin/main's copies stays,
+  since a branch cannot weaken the checks that judge it; the push's second pre-flight
+  stays too, since the dry run's record is a file the checks it ran could have written;
+  CI on the pull request stays; the group's run is the only one on the exact tree that
+  merges; and the post-merge run is the owner's auto-revert.
 
-  CI now runs on `pull_request` and `merge_group`, with `workflow_call` for main's
-  post-merge run, and no branch-push trigger. Each queued train gets a group containing
-  main and the trains ahead. `queue-integrity` runs `scripts/check_queue.py` on the
-  group: (a) every train's change survives; (b) the exact head has a pre-flight from
-  the harness at its recorded base; (c) plain merges preserve queue order and add no
-  content; (d) the generated tree is current, with no repeated dated decisions
-  heading. Conflict markers in tracked text are checked by S23 in
-  `scripts/check_style.py`, in the `check` job on the same group. That job also runs
-  `check_queue.py --tree .` for repeated dated headings; its preceding render step
-  checks freshness. The queue check's
-  `--gaps` runs the tests selected by the derived and declared changes, reports the
-  changed propositions' acceptance items, and leaves foundations to the model jobs.
-  Member review is not repeated. With "only merge non-failing pull requests", a train
-  merges only after its own group passes; GitHub removes a failing group's last train
-  and rebuilds later groups without it.
-
-  `.github/workflows/post-merge.yml` calls CI on each main push. On failure it uses the
-  previous main's `scripts/auto_revert.py`, isolated from the failed checkout's code,
-  and records an issue labelled `blocks-release` and `main-red`. With the App
-  credentials in the main-only `auto-revert` environment, it reverts the push's merges
-  newest first in one pull request and enqueues its pinned head. The queue admits
-  this exception to ordinary pre-flight evidence only for the configured App bot,
-  label and branch, with exactly the named revert tree. Without the App, or when the
-  history or revert cannot be read safely, the issue records why no revert was made.
-  A missing previous-main script also leaves an issue through the workflow's fallback.
-  `safe_push.py --merge` reads main's queue rule, keeps the existing gates, and either
-  enqueues the head or follows the direct merge path. In both modes an open `main-red`
-  issue or a failed completed post-merge run at main's tip pauses landing. This gate
-  does not eject entries already queued. A successful integration run clears
-  `main-red` only for the current main; the issue and `blocks-release` remain.
-
-  The pre-flight with origin/main's copies stays, since a branch cannot weaken the
-  checks that judge it. CI on the pull request stays. The merge group's run checks
-  the exact combined tree that merges, which the earlier runs cannot do. The
-  post-merge run stays for the owner's requested auto-revert. The local pre-flight's
-  `CHECKS` list does not yet include the new tree scan; CI does. Separately stored
-  decision entries and their assembly by the renderer belong to
-  `tooling/decision-entries`, not this change.
-
-  The protected paths in `git diff --name-only origin/main..HEAD`, against
-  `origin/main` at `c6ff6817e5b5c7c886f79a9ebcd869b91e6f045d`, are
-  `.github/workflows/ci.yml`, `.github/workflows/post-merge.yml`,
-  `scripts/auto_revert.py`, `scripts/check_acceptance.py`, `scripts/check_queue.py`,
+  Nothing is weakened: every existing refusal of `scripts/safe_push.py` stays, and with
+  the queue off `--merge` merges as before, save the new pause while main is red. The
+  queue stays off until the owner turns it on, with the steps the coordinator holds.
+  The protected files this change adds or changes: `.github/workflows/ci.yml`,
+  `.github/workflows/post-merge.yml`, `scripts/auto_revert.py`, `scripts/check_queue.py`,
   `scripts/check_train.py`, `scripts/negative_tests.py`, `scripts/safe_push.py`,
-  `scripts/test_safe_push.py`, `tests/test_acceptance_limits.py`,
-  `tests/test_auto_revert.py`, `tests/test_check_queue.py` and
-  `tests/test_check_train.py`. The acceptance checker and its limits test appear
-  because this branch and main have diverged: main has the later acceptance change
-  for I.45 and II.14. Those differences must be reconciled before landing; they are
-  not changes required by the queue.
-
-  The merge queue remains off until the owner turns it on. The coordinator holds
-  the setup steps in [WORKFLOW](../WORKFLOW.md), section 10: enable main's queue with
-  merge commits and "only merge non-failing pull requests"; keep `check`, `model`
-  and `negative` required and add `queue-integrity`, `formal-model` and `acceptance`;
-  install the revert App, give it the repository permissions needed for its reverts,
-  restrict the `auto-revert` environment to main, put the App credentials there and
-  set `STOICHEIA_REVERT_BOT` to its bot login. With the queue off, `--merge` works as
-  before, subject to the red-main pause. Without the App there is an issue and a
-  pause, with no automatic revert.
+  `scripts/test_safe_push.py`, `tests/test_auto_revert.py`, `tests/test_check_queue.py`
+  and `tests/test_check_train.py`.
