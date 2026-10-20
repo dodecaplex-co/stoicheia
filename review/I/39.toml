@@ -43,7 +43,7 @@ note = "AE is drawn level, as the proof supposes; Heath draws AD level. Like Hea
 
 [review]
 stage = "full"
-commit = "570e6fa"
+commit = "0e133256"
 reviewer = "GPT-6 Astra (Codex), records re-read"
 run = "brief 0005 stage 5, ship C5 re-read"
 lean = "sha256:a7efb796f39c1124"

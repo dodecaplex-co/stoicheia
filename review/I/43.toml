@@ -19,7 +19,7 @@ note = "Euclid takes for granted that the triangle ABC is made up of AEK, the co
 
 [review]
 stage = "full"
-commit = "40d340d"
+commit = "0e133256"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:06cb87f7d11f0746"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
