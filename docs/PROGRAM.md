@@ -136,8 +136,8 @@ What remains after 18 October. How work lands is in [WORKFLOW](WORKFLOW.md), sec
   20 October under #116; the [decision entry](briefs/0002-decisions.md#20-october-2026)
   supersedes the earlier full-scope call, and both records say so.
 - **Stage 2 is in the edition** (#19): I.40, I.45, II.1 and II.14 with their companions
-  beside them, certified, their records full and re-stamped, the words in the foundations
-  with the lock, and the gap entries for I.45's and II.14's tacit step.
+  beside them, certified, their records at the stage `full` and re-stamped, the words in
+  the foundations with the lock, and the gap entries for I.45's and II.14's tacit step.
 - **Stage 3's proofs** are done in `Staging/Stage3`, every statement of brief 0006's stage 3
   proved with no new axiom: placement in all its cases, with superposition not among its
   direct axioms, III.23 point by point, III.24 restated to conclude congruence by Euclid's
