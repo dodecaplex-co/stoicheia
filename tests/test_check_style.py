@@ -926,6 +926,101 @@ class Modern(unittest.TestCase):
     """The modern cases: the names a paragraph gives, and a figure of the modern way read
     against them and against its Euclid's figure's letters."""
 
+    def test_modern_depth_is_bounded_before_recursive_helpers(self):
+        self.assertEqual(self.check_refused_modern(
+            MODERN_GOOD + "<g>" * 16 + "</g>" * 16), [])
+        for depth in (17, 1100):
+            with self.subTest(depth=depth):
+                findings = self.check_refused_modern(
+                    MODERN_GOOD + "<g>" * depth + "</g>" * depth)
+                self.assertEqual(findings, [
+                    ("S24", "modern figure nesting exceeds 16 levels below <svg>")])
+        root = ET.fromstring('<svg xmlns="http://www.w3.org/2000/svg">'
+                             + "<g>" * 1100 + "</g>" * 1100 + "</svg>")
+        with patch.object(style, "walk", side_effect=AssertionError("recursive walk")):
+            self.assertEqual(style.modern_svg_findings(root), [
+                ("S24", "modern figure nesting exceeds 16 levels below <svg>")])
+
+    def test_modern_text_requires_effective_font_family(self):
+        bare = MODERN_GOOD.replace(' font-family="Georgia, serif"', "")
+        findings = self.check_refused_modern(bare)
+        self.assertEqual(len(findings), 6)
+        self.assertTrue(all(r == "S25" and "font-family" in m for r, m in findings),
+                        findings)
+        for family in ("Georgia", "Georgia, serif", "Georgia, 'Times New Roman', serif"):
+            for where in ("root", "group", "text"):
+                with self.subTest(family=family, where=where):
+                    attrs = f'font-family="{family}"'
+                    body = (bare.replace("<g ", f"<g {attrs} ") if where == "group" else
+                            bare.replace("<text ", f"<text {attrs} ") if where == "text"
+                            else bare)
+                    self.assertEqual(self.check_refused_modern(
+                        body, root_attributes=attrs if where == "root" else ""), [])
+        # A declaration on a sibling does not supply the unstyled text's family.
+        findings = self.check_refused_modern(
+            MODERN_GOOD + '<text font-size="17" fill="#3b2f2f">A</text>')
+        self.assertEqual(len(findings), 1)
+        self.assertIn("font-family", findings[0][1])
+        self.assertEqual(self.check_refused_modern(
+            MODERN_GOOD + '<text fill="#3b2f2f"> \t\r\n</text>'), [])
+
+    def test_modern_character_references_are_refused_without_granting_names(self):
+        for reference in ("&#x3c0;", "&#X3C0;", "&#960;", "&pi;", "&alpha;",
+                          r"\&#x3c0;", r"\\&#x3c0;"):
+            for name in ("x", "c", "π"):
+                with self.subTest(reference=reference, name=name):
+                    findings = self.check_refused_modern(
+                        MODERN_GOOD.replace(">c<", f">{name}/3<"),
+                        paragraph=MODERN_PARAGRAPH + " The turning angle is "
+                        + reference + "/3.")
+                    self.assertTrue(any(r == "S25" and "character reference" in m
+                                        for r, m in findings), findings)
+                    self.assertTrue(any(r == "S25" and f"{name} is no name" in m
+                                        for r, m in findings), findings)
+        # Literal π supplies π, and neither letter of a hexadecimal spelling.
+        for name in ("π", "x", "c"):
+            findings = self.check_refused_modern(
+                '<title>I.47: the modern way</title>'
+                '<text font-family="Georgia" font-size="17" font-style="italic" '
+                f'fill="#3b2f2f">{name}/3</text>',
+                paragraph=MW + "The turning angle is π/3.")
+            self.assertEqual(findings, [] if name == "π" else [
+                ("S25", f"<text>{name}/3</text>: {name} is no name of the page's modern way")])
+
+    def test_modern_text_checks_raw_space_characters(self):
+        for space in ("\u0085", "\u00a0", "\u1680", "\u2003", "\u2028", "\u2029",
+                      "\u202f", "\u205f", "\u3000"):
+            for old, new in ((">A<", f">{space}A{space}<"),
+                             (">c<", f">c{space}/{space}3<"),
+                             (">c<", f">{space}<")):
+                with self.subTest(space=repr(space), text=new):
+                    findings = self.check_refused_modern(MODERN_GOOD.replace(old, new))
+                    self.assertTrue(any(r == "S25" and "holds" in m and repr(space) in m
+                                        for r, m in findings), findings)
+        for space in (" ", "\t", "\r", "\n", " \t\r\n "):
+            with self.subTest(space=repr(space)):
+                self.assertEqual(self.check_refused_modern(MODERN_GOOD.replace(
+                    ">A<", f">{space}A{space}<").replace(">c<", f">c{space}/{space}3<")), [])
+
+    def test_modern_intraword_emphasis_is_refused(self):
+        for word in ("e*x*ponent", "e**x**ponent", "e***x***ponent",
+                     "e[*x*](/reference)ponent"):
+            for name in ("e", "x"):
+                with self.subTest(word=word, name=name):
+                    findings = self.check_refused_modern(
+                        MODERN_GOOD.replace(">c<", f">{name}<"),
+                        paragraph=MODERN_PARAGRAPH + " The " + word + " is positive.")
+                    self.assertTrue(any(r == "S25" and "intraword emphasis" in m
+                                        for r, m in findings), findings)
+                    self.assertTrue(any(r == "S25" and f"{name} is no name" in m
+                                        for r, m in findings), findings)
+        for words in ("The *exponent* is positive.", "The **exponent** is positive.",
+                      "The name *x* is given.", "The name **x** is given."):
+            with self.subTest(words=words):
+                self.assertEqual(style.modern_markup_findings(MW + words), [])
+                self.assertEqual(style.modern_names(style.modern_paragraph(MW + words)),
+                                 {"x"} if "name" in words else set())
+
     def test_modern_nested_svg_is_refused(self):
         for content in ('<line x2="20" stroke="#3b2f2f" stroke-width="1.6"/>',
                         '<text font-size="17" fill="#3b2f2f">A</text>'):
@@ -991,7 +1086,8 @@ class Modern(unittest.TestCase):
                     paragraph = MW + words + "."
                     findings = self.check_refused_modern(
                         '<title>I.47: the modern way</title>'
-                        '<text font-size="17" font-style="italic" fill="#3b2f2f">a</text>',
+                        '<text font-family="Georgia" font-size="17" font-style="italic" '
+                        'fill="#3b2f2f">a</text>',
                         paragraph=paragraph)
                     self.assertEqual(findings, [] if "a" in expected else [
                         ("S25", "<text>a</text>: a is no name of the page's modern way")])
@@ -1458,7 +1554,8 @@ class Modern(unittest.TestCase):
                 names = style.modern_names(style.modern_paragraph(text))
                 self.assertEqual(names, expected)
                 figure = ('<title>I.47: the modern way</title>'
-                          '<text font-size="17" fill="#3b2f2f" font-style="italic">x</text>')
+                          '<text font-family="Georgia" font-size="17" fill="#3b2f2f" '
+                          'font-style="italic">x</text>')
                 self.assertEqual(modern_rules(figure, "I.47", names=names), {"S25"})
         escaped = MW + r'Put $b$ on \<span data-note="x">c\</span>.'
         self.assertIn("x", style.modern_names(style.modern_paragraph(escaped)))
@@ -1481,7 +1578,8 @@ class Modern(unittest.TestCase):
                 names = style.modern_names(style.modern_paragraph(text))
                 self.assertEqual(names, expected)
                 figure = ('<title>I.47: the modern way</title>'
-                          '<text font-size="17" fill="#3b2f2f" font-style="italic">x</text>')
+                          '<text font-family="Georgia" font-size="17" fill="#3b2f2f" '
+                          'font-style="italic">x</text>')
                 self.assertEqual(modern_rules(figure, "I.47", names=names),
                                  set() if "x" in expected else {"S25"})
 

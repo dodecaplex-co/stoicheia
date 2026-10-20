@@ -2290,7 +2290,7 @@ COLOUR_ATTRS = ("fill", "stroke", "stop-color", "color", "flood-color", "lightin
 DRAWN = {"line", "path", "polyline", "polygon", "circle", "ellipse", "rect"}
 FILLED = DRAWN - {"line"}
 INHERITED = ("fill", "fill-rule", "stroke", "stroke-width", "font-size", "font-style",
-             "text-anchor")
+             "font-family", "text-anchor")
 LETTER = re.compile(r"[A-Z][′'₀-₉]*")
 
 # The letters of a figure at a glance (S20, S21; STYLE, section 7). Lengths are in the
@@ -2917,6 +2917,8 @@ def check_euclid(path: Path, ref: str) -> None:
 
 MODERN_SUFFIX = "-modern.svg"
 MODERN_TEXT_SIZE = 17
+# Main's deepest modern figure at c6ff6817 has three levels below its root.
+MODERN_MAX_DEPTH = 16
 # What the text of a modern figure may hold besides one of Heath's letters: the
 # paragraph's lower-case Latin and Greek names, digits, and the signs of an expression.
 MODERN_TEXT = re.compile(r"[a-zα-ωϑϕ0-9 +\-−·×()/√²³⁰¹⁴-⁹⁻½=,.|′'₀-₉<>≤≥±]+")
@@ -3026,6 +3028,14 @@ def modern_markup_findings(text: str) -> list[str]:
     source = text[span[0]:span[1]]
     syntax = markdown_syntax(source, indented_code=False, inline_html=True)
     visible = blank_ranges(source, [(s.start, s.end) for s in syntax.spans])
+    # Main uses no character references. Refuse their spellings, even after an escaped
+    # ampersand, instead of letting the spelling supply names the reader does not see.
+    if re.search(r"&(?:#[xX][0-9a-fA-F]+|#[0-9]+|[A-Za-z][A-Za-z0-9]*);", visible):
+        found.append("unsupported character reference in the modern paragraph")
+    # Refuse intraword asterisks rather than treating emphasis as word boundaries.
+    # Removing link syntax first also catches e[*x*](/reference)ponent.
+    if re.search(r"(?<=\w)\*+(?=\w)", modern_paragraph(text)):
+        found.append("unsupported intraword emphasis in the modern paragraph")
     if syntax.comments or any(backslashes_before(visible, m.start()) % 2 == 0
                               for m in INLINE_HTML_TAG.finditer(visible)):
         found.append("unsupported inline HTML tag or comment in the modern paragraph")
@@ -3162,6 +3172,14 @@ def modern_path(value: str) -> bool:
 
 def modern_svg_findings(root) -> list[tuple[str, str]]:
     """Close the input before walk() reads any presentation attributes or text."""
+    # Bound the tree iteratively before any recursive helper sees it.
+    pending = [(root, 0)]
+    while pending:
+        el, depth = pending.pop()
+        if depth > MODERN_MAX_DEPTH:
+            return [("S24", f"modern figure nesting exceeds {MODERN_MAX_DEPTH} levels "
+                      "below <svg>")]
+        pending.extend((child, depth + 1) for child in el)
     found = []
     for el in root.iter():
         t = tag(el)
@@ -3264,9 +3282,20 @@ def modern_findings(root, ref: str, heaths: set[str] | None,
                 found.append(("S24", f"stroke-width {w:g} on a <{t}>, not 1.2 to 3.2"))
         if t != "text":
             continue
-        s = " ".join(text_of(el).split()).translate(GREEK_VARIANTS)
+        raw = "".join(el.itertext())
+        odd = "".join(sorted({c for c in raw if c not in " \t\r\n"
+                             and not ("A" <= c <= "Z")
+                             and not MODERN_TEXT.fullmatch(c.translate(GREEK_VARIANTS))}))
+        if odd:
+            found.append(("S25", f"<text>{raw}</text> holds {odd!r}: a modern figure's text is "
+                          "Heath's letters, or the modern way's names, numbers and signs"))
+            continue
+        s = re.sub(r"[ \t\r\n]+", " ", raw).strip(" ").translate(GREEK_VARIANTS)
         if not s:
             continue
+        if eff.get("font-family") not in MODERN_VALUES["font-family"]:
+            found.append(("S25", f"<text>{s}</text> has no allowed effective font-family: "
+                          "declare Georgia on the text or an ancestor"))
         if modern_number(eff.get("font-size")) != MODERN_TEXT_SIZE:
             found.append(("S25", f"<text>{s}</text> at font-size {eff.get('font-size')}, "
                           f"not {MODERN_TEXT_SIZE}"))
