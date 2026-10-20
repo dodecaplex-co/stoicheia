@@ -29,7 +29,7 @@ case = "the vertices A and D apart"
 
 [review]
 stage = "full"
-commit = "e8b6113"
+commit = "0e133256"
 reviewer = "Claude Opus 5.5, records review"
 lean = "sha256:d59da7f6e4de693e"
 run = "brief 0005 stage 5, workflow stoicheia-records-full-I-II"
