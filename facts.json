@@ -159,6 +159,7 @@
   "def : Elements.Apart → Elements.Area := fun (R : Elements.Apart) => Elements.Magnitude.sum (List.map (fun (t : Prod Elements.Point (Prod Elements.Point Elements.Point)) => Elements.area (Prod.fst t) (Prod.fst (Prod.snd t)) (Prod.snd (Prod.snd t))) (Elements.Apart.pieces R))",
   "Apart": "structure : Type",
   "Angle": "def : Type := Elements.Magnitude Elements.Kind.angle"},
+ "proved_rules": {},
  "propositions":
  [{"status": "proved",
    "statement":
