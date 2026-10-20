@@ -53,7 +53,7 @@ note = "Euclid uses the equality of the radii GF and GH without giving a reason.
 at = "But the squares on HE, EG are equal to the square on GH"
 kind = "helper"
 helper = "Tacit.adjacent_eq_of_right"
-note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `Prop47.sq`."
+note = "Euclid takes the right angle HEG for granted when he applies I.47. The Lean gets the adjacent right angle BEH from the rectangle's right angle DEB by `Tacit.adjacent_eq_of_right`, now proved from I.13 and Common Notion 3 in `Elements/BookI/Prop13.lean`, identifies it with HEG because the proved order B, G, E puts G on the ray EB, and applies `BookI.Prop47.sq`."
 
 [representation]
 tags = ["figure-with-dissection", "side-not-square"]
@@ -64,10 +64,10 @@ case = "BE greater than ED, as in Heath's figure, with the figure A of two trian
 
 [review]
 stage = "full"
-commit = "29cd78e"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "c9110f9"
+reviewer = "GPT-6 (Codex), independent reader Aw2-reader-j"
 lean = "sha256:a68c1627405e8cef"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "brief 0005 stage 5, ship A wave-two merged-record re-read"
 
 [review.items]
 statement = "pass"

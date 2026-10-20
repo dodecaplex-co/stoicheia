@@ -66,10 +66,10 @@ note = "Euclid takes the angles EGF and FEG to be equal because each is half a r
 
 [review]
 stage = "full"
-commit = "570e6fa"
-reviewer = "GPT-6 Astra (Codex), records re-read"
+commit = "c9110f9"
+reviewer = "GPT-6 (Codex), independent reader Aw2-reader-j"
 lean = "sha256:3884ca872c6802f9"
-run = "brief 0005 stage 5, ship C5 re-read"
+run = "brief 0005 stage 5, ship A wave-two merged-record re-read"
 
 [review.items]
 statement = "pass"
