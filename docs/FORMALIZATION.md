@@ -222,7 +222,7 @@ The representations Books I–III rest on:
 | lengths, angles, areas | `Magnitude` of one kind each, added and compared only | Common Notions proved as theorems | |
 | a right angle | Definition I.10 as a predicate, and Postulate 4 making every right angle `∟` | | |
 | superposition | one rule, `Tacit.superposition`, allowed in I.4 and I.8 alone | stronger as a construction principle than System E's restricted inference rule, as [its file](../Elements/Foundations/Tacit/Superposition.lean) says; a restricted rule is being prototyped ([#75](https://github.com/jackChallis/stoicheia/issues/75)) | |
-| the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
+| the rectangle contained, the square on | `rect`, `sq`, areas defined from lengths | `exists_rect`, `Rectangle.contained`, `Rectangle.eq_rect`, `Square.described` | `side-not-square` (II.14) |
 | a rectilineal figure | given with its division into triangles, checked: triangles that lie apart (`Apart`), triangles fitted together (`Fitted`, `Rectilineal`), or Euclid's from one corner (`Fitted.fan`); equal to the figure means equal to those triangles together | that every figure can be so divided, and that another division gives the same sum, are not proved; Hilbert proved the second, for his measure of area | `figure-with-dissection` |
 | a circle's centre | a hypothesis, `∃ O, Centre O α`, or Postulate 3's | III.1 finds it | `centre-given` |
 | a circumference | twice the angle standing on it, `circumference`, `standing`; no radius | proved facts in `Circumferences.lean`; arcs with membership are stage 3's work | `angle-measure`, `redundant-hypothesis` |
