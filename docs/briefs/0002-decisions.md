@@ -1856,35 +1856,57 @@ findings:
 ## 20 October 2026
 
 - **The restricted-superposition certificate tooling lands before the Lean replacement.**
-  For [#75](https://github.com/jackChallis/stoicheia/issues/75) and
-  [brief 0009](0009-superposition.md), `Certificate/Facts.lean` counts occurrences of
-  `len_congr`, `angle_congr` and `area_congr` in declaration values as C.N. 4, while its
-  axiom walks and their boundaries stay unchanged. `scripts/heath.py` replaces the overlap
-  self-test fixtures for the old superposition rule with I.7's rule,
-  `Tacit.not_same_side_of_circles_meet`, preserving the same acceptance of a complete
-  `step` record and rejection when its note is missing. This tooling change lands before
-  the Lean replacement it checks, and neither check is weakened. `Certificate/FIELDS.md`
-  records the resulting `common_notions` contract. Protected files changed:
-  `Certificate/Facts.lean`, `Certificate/FIELDS.md` and `scripts/heath.py`.
-  The focused regression adds two protected files, `tests/test_certificate.py` and
-  `tests/fixtures/CertificateCN4.lean`. It runs the certificate source in a temporary
-  Lake package, compiling the fixture as that package's `Elements` module and running
-  a byte-for-byte unmodified copy of `Certificate/Facts.lean` against it. The temporary
-  module takes precedence while imports of the repository's foundation modules remain
-  available, and `facts.json` stays in the package. The fixture declares stand-ins with
-  the exact fully qualified names `Elements.Superposition.Derives.len_congr`,
-  `Elements.Superposition.Derives.angle_congr` and
-  `Elements.Superposition.Derives.area_congr`, so it runs before the Lean replacement.
-  Each constructor is tested directly and through a helper's value; reaching only the
-  inductive type's constructor list reports no C.N. 4 (I.7's control), and naming another
-  constructor of `Derives` in a value reports none either (I.8's control). Every case must
-  keep the same axiom fields, with existing axioms used directly and inherited through a
-  helper. CI does not yet run this standalone test: whoever changes
-  `Certificate/Facts.lean`, and the integrator, run `python3 -I tests/test_certificate.py`
-  after `lake build`, with the Lean tools on `PATH`, on the revision delivered, as
-  [WORKFLOW](../WORKFLOW.md), section 8, now records.
-  Open point: on `lean/superposition-restricted`, `Derives.map` names all three coincidence
-  constructors in its value, so any entry whose proof reaches it would report C.N. 4
-  whatever its derivation uses; nothing reaches it today, and when the Lean replacement
-  lands, `common_notions` for I.4 and I.8 should be pinned in
-  `tests/certificate_expectations.json`.
+  For issue #75 and [brief 0009](0009-superposition.md), the coordinator approves this
+  strengthening before the content branch lands. `Certificate/Facts.lean` counts C.N. 4
+  when a walked local declaration's value names `Elements.Superposition.Coincidence.step`.
+  The later calculus declares `Coincidence : Prop` with that one constructor; each of
+  `Derives.len_congr`, `Derives.angle_congr` and `Derives.area_congr` takes a first explicit
+  argument `(cn4 : Coincidence)`. Derivations taking the step supply `.step` or `⟨⟩`.
+  Transformers such as `Derives.map` pass the marker they receive as a bound variable.
+  Counting the three congruence constructors instead gave false C.N. 4 reports whenever
+  a proof reached a transformer that rebuilds all three, even on a derivation with no
+  congruence step. There is no list of eliminators to skip: that could hide a real use.
+
+  `Certificate/FIELDS.md` and the emitter's docstrings state the exact semantics. Like
+  `#print axioms`, the report follows what proof terms name, through the local declarations
+  they name, without evaluating them. Passing a bound marker adds no step; a helper that
+  names the constant counts even when evaluation would take another branch. Merely
+  reaching an inductive type's constructor list does not count. The walk's boundaries and
+  every axiom walk stay unchanged. A single backtick names the marker without requiring it
+  to exist, so the tooling runs on main before the calculus exists and leaves main's facts
+  unchanged.
+
+  `tests/fixtures/CertificateCN4.lean` declares exact-name stand-ins for the marker and
+  the three congruence constructors, a `Derives.map` that rebuilds every constructor and
+  passes its marker along, and a soundness-style eliminator. `tests/test_certificate.py`
+  runs an unmodified copy of the emitter against this fixture as a temporary package's
+  `Elements` module, with the built foundations available and all output kept temporary.
+  Each congruence constructor counts directly, through a helper, and through both
+  transformers. Given derivations through either transformer or both do not count; the
+  type-only and other-constructor controls remain. Bound markers do not count; a helper
+  that names a step does. All sixteen entries retain the same non-empty axiom fields.
+  The positive direct and helper cases fail against origin/main's old emitter, which has
+  no calculus detection; constructor counting passes those positives but fails the
+  transformer and bound-marker controls. These are separate regression baselines.
+
+  With the coordinator's approval, `.github/workflows/ci.yml` and `scripts/safe_push.py`
+  run `python3 -I tests/test_certificate.py` immediately after
+  `lake env lean Certificate/Facts.lean`, as does [WORKFLOW](../WORKFLOW.md), section 8's
+  command block. `scripts/test_safe_push.py` compares all three command sequences and pins
+  that position. `scripts/negative_tests.py` plants constructor counting, requires the
+  focused test to reject its false report, restores the source in `finally`, and requires
+  the restored regression to pass. This fits the harness's existing pattern of a source
+  fault caught by a separate check; it runs only in a disposable tree.
+  `tests/test_negative_tests.py` checks restoration on interruption.
+
+  `scripts/heath.py` keeps the branch's existing overlap self-test change to I.7's rule,
+  `Tacit.not_same_side_of_circles_meet`, with the same acceptance of a complete `step`
+  record and rejection when its note is missing. No check is weakened. Protected files
+  changed, each named here on a line added relative to origin/main:
+  `Certificate/Facts.lean`, `Certificate/FIELDS.md`,
+  `scripts/heath.py`, `scripts/safe_push.py`, `scripts/test_safe_push.py`,
+  `scripts/negative_tests.py`, `tests/test_negative_tests.py`,
+  `tests/test_certificate.py`, `tests/fixtures/CertificateCN4.lean`,
+  `.github/workflows/ci.yml`.
+  The later content branch must supply the marker interface and pin I.4's and I.8's
+  `common_notions` in `tests/certificate_expectations.json` when its proofs land.

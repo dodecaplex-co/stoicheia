@@ -3617,6 +3617,37 @@ class FullChecks(Edge):
 class Units(unittest.TestCase):
     """The scanner and the helpers, without git."""
 
+    def test_check_sequence_matches_workflow_and_ci(self):
+        workflow = (SOURCE / "docs/WORKFLOW.md").read_text()
+        block = workflow.split("## 8. Validation on the integrated revision", 1)[1]
+        block = block.split("```sh\n", 1)[1].split("```", 1)[0]
+        documented = [line.split("#", 1)[0].strip() for line in block.splitlines()
+                      if line.strip() and not line.startswith("export ")]
+        freshness = ("git status --porcelain -- facts.json book CERTIFICATE.md GRAPH.md "
+                     "README.md docs/PROGRAM.md")
+        check_job = (SOURCE / ".github/workflows/ci.yml").read_text()
+        check_job = check_job.split("  check:\n", 1)[1].split("\n  negative:", 1)[0]
+        ci_commands = []
+        for line in check_job.splitlines():
+            command = line.strip().removeprefix("run: ")
+            if command.startswith(("lake ", "python3 ", "git status ")):
+                ci_commands.append(command)
+        checks = []
+        for name, command in safe_push.CHECKS:
+            if name == "python3 -I tests/model/run.py --fast":
+                continue  # CI runs the model in its own job.
+            if command is None:
+                self.assertEqual(name, "git status --porcelain is empty")
+                checks.append(freshness)
+            else:
+                argv = ["python3" if part == safe_push.PY else part for part in command]
+                self.assertEqual(name, " ".join(argv))
+                checks.append(name)
+        self.assertEqual(checks, documented)
+        self.assertEqual(checks, ci_commands)
+        certificate = checks.index("lake env lean Certificate/Facts.lean")
+        self.assertEqual(checks[certificate + 1], "python3 -I tests/test_certificate.py")
+
     def flagged(self, line: str) -> list[str]:
         return [f.rule for f in safe_push.scan_text("x", 1, line)]
 

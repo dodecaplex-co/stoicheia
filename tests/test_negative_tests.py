@@ -195,6 +195,20 @@ class RestorationTests(unittest.TestCase):
                     self.assertEqual((self.root / rel).read_bytes(), data)
                 self.assertEqual(self.files(), saved)
 
+    def test_certificate_plant_restores_source_on_interruption(self):
+        source = self.root / "Certificate/Facts.lean"
+        original = (REPO / "Certificate/Facts.lean").read_bytes()
+        self.write(source, original)
+        def interrupted(*cmd):
+            self.assertEqual(cmd, (sys.executable, "-I", "tests/test_certificate.py"))
+            self.assertIn(b"Derives.len_congr", source.read_bytes())
+            self.assertNotIn(b"used.contains coincidenceStep", source.read_bytes())
+            raise KeyboardInterrupt("certificate test interrupted")
+        with patch.object(negative, "run", side_effect=interrupted):
+            with self.assertRaises(KeyboardInterrupt):
+                negative.certificate_constructor_counting()
+        self.assertEqual(source.read_bytes(), original)
+
     def test_failed_regressions_stop_before_any_plant(self):
         with patch.object(negative, "run", return_value=subprocess.CompletedProcess(
                 [], 1, "", "regression failed")) as commands, \

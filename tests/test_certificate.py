@@ -9,16 +9,18 @@ Run an unmodified copy of the certificate source against a small Lean fixture co
 as the temporary package's Elements module. The temporary module takes precedence over
 the repository's Elements module while retaining access to its foundation modules. The
 package keeps every output, including facts.json, away from the repository. The fixture
-declares stand-ins with the exact constructor names, so this test can land before the
+declares stand-ins with the exact marker and constructor names, so it can land before the
 calculus it checks.
 
-Each coincidence constructor is tested directly and through a helper's value. Reaching
-only the inductive type's constructor list (I.7), or naming another Derives constructor
-in a value (I.8), reports no C.N. 4. Every case must keep the same axiom fields.
+Each congruence constructor is tested directly, through a helper's value and through
+map and sound. Reaching only the inductive type's constructor list (I.7), naming another
+Derives constructor (I.8), transforming or eliminating a given derivation (I.9, I.10,
+I.16), or passing a bound marker (I.14) reports no C.N. 4. A helper that names the step
+counts even when that branch is not taken (I.15). Every case keeps the same axiom fields.
 
-The foundation modules must be built first. CI does not yet run this file: whoever
-changes Certificate/Facts.lean, and the integrator, run it explicitly on the revision
-delivered, as recorded in docs/WORKFLOW.md, section 8. Standard library only.
+The foundation modules must be built first. CI's check job and the pre-flight run this
+immediately after Certificate/Facts.lean, as in docs/WORKFLOW.md, section 8.
+Standard library only.
 """
 
 import json
@@ -78,7 +80,7 @@ class CommonNotion4Tests(unittest.TestCase):
                 )
             facts = json.loads((work / "facts.json").read_text())
         cls.entries = {entry["ref"]: entry for entry in facts["propositions"]}
-        if set(cls.entries) != {f"I.{i}" for i in range(1, 9)}:
+        if set(cls.entries) != {f"I.{i}" for i in range(1, 17)}:
             raise AssertionError(f"unexpected fixture subjects: {sorted(cls.entries)}")
 
     def test_direct_constructors(self):
@@ -95,6 +97,22 @@ class CommonNotion4Tests(unittest.TestCase):
         for ref in ("I.7", "I.8"):
             with self.subTest(ref=ref):
                 self.assertEqual(self.entries[ref]["common_notions"], [])
+
+    def test_transformers_without_step_do_not_count(self):
+        for ref in ("I.9", "I.10", "I.16"):
+            with self.subTest(ref=ref):
+                self.assertEqual(self.entries[ref]["common_notions"], [])
+
+    def test_transformers_preserve_real_steps(self):
+        for number, name in enumerate(("len_congr", "angle_congr", "area_congr"), 11):
+            with self.subTest(constructor=name):
+                self.assertEqual(self.entries[f"I.{number}"]["common_notions"], ["C.N. 4"])
+
+    def test_bound_marker_does_not_count(self):
+        self.assertEqual(self.entries["I.14"]["common_notions"], [])
+
+    def test_helper_naming_step_counts_without_evaluation(self):
+        self.assertEqual(self.entries["I.15"]["common_notions"], ["C.N. 4"])
 
     def test_axiom_fields_unchanged(self):
         control = self.entries["I.7"]

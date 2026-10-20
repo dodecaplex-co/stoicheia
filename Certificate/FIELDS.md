@@ -56,7 +56,7 @@ porisms; then the companions, each group in `prop_key` order. Read an entry by i
 | `attached` | list of refs | **New**, on propositions only: its porism, then its companions, in `prop_key` order; `[]` when it has none. |
 | `status` | `"proved"`, `"proved-pending"` or `"sketched"` | `"sketched"` if a `sorry` is in the declaration's own proof (through its helpers and shared steps); `"proved-pending"` if it rests on one only through what it cites; `"proved"` otherwise. A proposition, as before, also takes its porism's: it is not finished until its porism is. A companion's status is its own, and changes no other entry's. |
 | `cites` | list of refs | The entries the proof uses directly. **Changed**: a use of a porism is now recorded as the porism, `"III.1 Por."`, where it was recorded as `"III.1"`, and a use of a companion by its own ref. Sorted by string, as before. |
-| `common_notions` | list of strings | Every Common Notion beneath the proof, through what it cites too: `"C.N. 1"` and so on. A declaration value that names `Superposition.Derives.len_congr`, `angle_congr` or `area_congr` records `"C.N. 4"`, since these are the restricted calculus's coincidence steps. |
+| `common_notions` | list of strings | Every Common Notion beneath the proof, through what it cites too: `"C.N. 1"` and so on. A walked local declaration's value that names `Elements.Superposition.Coincidence.step` records `"C.N. 4"`, the restricted calculus's coincidence step. |
 | `axioms` | list of names | Lean's `collectAxioms` of this declaration alone, without Lean's three foundations and `sorryAx`. For the 99 propositions this list does not change: III.1's still has 56 tacit rules, and III.1 Por.'s has 57, `Tacit.centre_unique` among them. |
 | `direct_axioms` | list of names | The axioms the proof uses itself, through its helpers and shared steps, but not through another entry it cites or a Common Notion: exactly `own_axioms` together with the keys of `inherited`, besides any of Lean's own foundations it lists (`propext`, in II.2, II.5, III.27, III.29 and III.30), which those two leave out, as `axioms` does. The policy on superposition reads it, so a proof may not reach that rule through a lemma either. |
 | `own_axioms` | list of names | **New** (18 October 2026, [#65](https://github.com/jackChallis/stoicheia/issues/65)). The axioms the proof's own Lean names: in the declaration itself, in a helper written for its proposition (in the proposition's namespace: `Prop7.figure`; for a porism or companion, its proposition's, as `Prop1.middle` is III.1 Por.'s), or in Lean's auxiliary declarations for them; Lean's three foundations and `sorryAx` left out, as in `axioms`. Sorted by string. III.2's has 17, Circle 2 (`Tacit.inside_of_between`) not among them. |
@@ -69,9 +69,19 @@ porisms; then the companions, each group in `prop_key` order. Read an entry by i
 One walk, `mentions` (stage 1b), gives `cites`, `direct_axioms`, `own_axioms`,
 `inherited`, `common_notions` and `shared_steps`: it reads each declaration's type and
 value, opaque values included, and an inductive type's constructors. For
-`common_notions`, each declaration visited is also checked for a coincidence constructor
-named in its value; one merely reached through `Derives` and its constructor list does not
-count. `own_axioms` comes from the walk that gives `direct_axioms`, stopped at each lemma
+`common_notions`, each local declaration visited is also checked for
+`Elements.Superposition.Coincidence.step` named in its value. Like `#print axioms`, this
+records what the proof term names, through the local declarations it names, without
+evaluating it. Each of `Derives.len_congr`, `Derives.angle_congr` and `Derives.area_congr`
+takes a first explicit argument of type `Coincidence`. A derivation taking the step
+supplies `Coincidence.step` (`.step` and `⟨⟩` elaborate to that constant too). A transformer
+such as `Derives.map` or `Derives.sound` that only passes a derivation's own marker along
+as a bound variable adds no step. If a helper itself names the constant, it counts even
+when evaluation would not take that branch. Merely reaching an inductive type's constructor
+list counts neither its congruence constructors nor the marker. No transformer is skipped,
+and the walks' boundaries are unchanged.
+
+`own_axioms` comes from the walk that gives `direct_axioms`, stopped at each lemma
 the proof's own declarations call, as the walk for `shared_steps` is; what a lemma brings
 in is found by the walk for `direct_axioms`, started from the lemma. Facts.lean checks
 itself against Lean: each entry's `axioms` are exactly its `direct_axioms`, the axioms of
@@ -80,9 +90,9 @@ Lean's foundations aside, are exactly its `own_axioms` and the keys of its `inhe
 So its `axioms` are its own, those it inherits, its Common Notions' and those of what it
 cites. The Common Notions named as theorems count even though `collectAxioms` cannot see
 them, and some rest on tacit rules (C.N. 3 and C.N. 5 use
-`Tacit.add_lt_add_right`). The restricted calculus's three coincidence constructors also
-count as C.N. 4; `Derives.sound` justifies them by equality substitution, as the three
-`CommonNotion4` theorems do.
+`Tacit.add_lt_add_right`). The restricted calculus's marked coincidence steps count as
+C.N. 4; equality substitution justifies them, as it does the three `CommonNotion4`
+theorems. The marker adds no axiom and changes no axiom field.
 
 ## Printing a statement
 
