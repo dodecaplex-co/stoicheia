@@ -3024,10 +3024,11 @@ INLINE = re.compile(r"\\[!-/:-@\[-`{-~]|(`+)(?!`).*?(?<!`)\1(?!`)|`+|<!--.*?-->"
 EMPTY_CELL = {"", "-", "–", "—", "...", "…", "tbd", "todo"}
 
 
-def shown(body: str) -> list[tuple[str, bool]]:
+def shown(body: str, keep_own: bool = False) -> list[tuple[str, bool]]:
     """The lines of the body GitHub shows as Markdown, less what is not the coordinator's,
     each with whether it starts a list item: CommonMark's blocks, read line by line. The
-    parts safe_push wrote go first. Then fenced code (closed only by its own character, at
+    parts safe_push wrote go first, unless keep_own: GitHub shows them too, so whether a
+    line is shown at all is read with them in place. Then fenced code (closed only by its own character, at
     least as many, and nothing after them; never closed, it runs to the end), indented code
     (four spaces or more past its container, unless it goes on with a paragraph) and HTML
     blocks, a comment among them: a line that starts with "<!--", three spaces in at most,
@@ -3050,7 +3051,8 @@ def shown(body: str) -> list[tuple[str, bool]]:
             lines.extend((t, False) for t in text[1:])
             para.clear()
 
-    for line in OWN_PART.sub("", body or "").splitlines():
+    body = body or ""
+    for line in (body if keep_own else OWN_PART.sub("", body)).splitlines():
         text = line.expandtabs(4)
         spaces = len(text) - len(text.lstrip(" "))
         blank = not text.strip()
@@ -3186,9 +3188,10 @@ def section_problems(body: str, template: str | None, protected: bool) -> list[s
 
 # "Unfinished work" is read as raw text, never through `shown`: whatever GitHub might hide
 # or show differently is refused, so that what the gate reads is what a reader sees. The
-# one heading is this line exactly, and `shown` must find it too, so that one in a comment,
-# an HTML block, code or a part safe_push writes cannot stand in for the section, which
-# GitHub would not show; the section runs to the next of the template's own
+# one heading is this line exactly, outside the parts safe_push writes, and `shown`, which
+# reads those parts in place as GitHub does, must find it too, so that one in a comment,
+# an HTML block, code or such a part cannot stand in for the section, which GitHub would
+# not show; the section runs to the next of the template's own
 # headings; only the template's own comment for it may stay, and nothing else but plain
 # ASCII: "None", or a list whose items each name an issue as #N.
 UNFINISHED_HEADING = "## Unfinished work"
@@ -3239,9 +3242,9 @@ def template_section(template: str | None) -> tuple[str | None, set[str]]:
 def unfinished_section(body: str, template: str | None = None) -> tuple[str, list[str]]:
     """The section's raw text, from its one heading to the next of the template's
     headings (to the end, with no template). Refused: a second heading, or any other
-    line reads_as_heading finds; a heading GitHub does not show (shown); a break GitHub
-    makes where a line does not, or the reverse; no following heading when the template
-    has some."""
+    line reads_as_heading finds; a heading GitHub does not show, read with the parts
+    safe_push wrote in place (shown), or one in such a part; a break GitHub makes where a
+    line does not, or the reverse; no following heading when the template has some."""
     _, ends = template_section(template)
     lines = raw_lines(body or "")
     odd = [n for n, line in enumerate(lines, 1) if ODD_BREAK.search(line)]
@@ -3256,7 +3259,10 @@ def unfinished_section(body: str, template: str | None = None) -> tuple[str, lis
                     "edge, and no other line whose letters begin \"unfinished work\" or "
                     "are just \"unfinished\""
                     + "".join(f": {printable_text(line.strip())}" for line in alike[:1])]
-    if not any(line.rstrip() == UNFINISHED_HEADING for line, _ in shown(body)):
+    owned = any(body.count("\n", 0, m.start()) <= starts[0] <= body.count("\n", 0, m.end())
+                for m in OWN_PART.finditer(body))
+    if owned or not any(line.rstrip() == UNFINISHED_HEADING
+                        for line, _ in shown(body, keep_own=True)):
         return "", ["the ## Unfinished work heading must be one GitHub shows: not in an HTML "
                     "comment or block, in code, or in a part safe_push writes"]
     start = starts[0] + 1

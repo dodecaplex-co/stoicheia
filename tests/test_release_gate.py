@@ -145,9 +145,19 @@ class UnfinishedWork(unittest.TestCase):
                 verdict, detail = self.gate(body)
                 self.assertEqual(verdict, "FAIL")
                 self.assertIn("must be one GitHub shows", detail)
+        # A part safe_push writes is read in place, as GitHub shows it: a fence opened in
+        # it hides the heading after it.
+        body = self.TEMPLATE.replace("## Unfinished work\n\n<!-- Name each piece. -->\n\n",
+                                     "") + ("<!-- safe_push:custom begin -->\n```\n"
+                                            "<!-- safe_push:custom end -->\n"
+                                            "## Unfinished work\nNone\n## Review records\n")
+        verdict, detail = self.gate(body)
+        self.assertEqual(verdict, "FAIL")
+        self.assertIn("must be one GitHub shows", detail)
         # Each closed before the heading, it is shown, and the section is read.
         shown_body = self.section("None", before="<!--\nA note.\n-->\n```\ncode\n```\n"
-                                  "<div>\nA note.\n</div>\n\n")
+                                  "<div>\nA note.\n</div>\n\n<!-- safe_push:custom begin -->\n"
+                                  "- A commit\n<!-- safe_push:custom end -->\n\n")
         self.assertEqual(self.gate(shown_body), ("ok", "None"))
 
     def test_section_ends_only_at_the_templates_next_heading(self):
