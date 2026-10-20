@@ -1995,7 +1995,7 @@ def report_non_declaration(t: NamedText, occurrence: LeanName,
             and re.search(r'(?:\bscans?|\bvol\.\s*\d+(?:\s*\([^)]*\))?\s+is)\s*$', before)):
         return 'an Internet Archive scan identifier, identified as such in the prose'
     if (heath.COMMIT.fullmatch(name)
-            and re.search(r'\b(?:commit|revision|read|reviewed|verification)\b', paragraph)):
+            and re.search(r'\b(?:commit|revision|read|reviewed|verification)\b', paragraph, re.I)):
         return 'a commit identifier in an account of a revision or review'
     values = set(heath.SCOPES + heath.ROUTES + heath.PASSAGES + heath.OVERLAPS
                  + heath.STAGES + heath.VERDICTS + heath.TAG_KINDS)

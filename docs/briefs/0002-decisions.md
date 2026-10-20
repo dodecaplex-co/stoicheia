@@ -1823,3 +1823,13 @@ findings:
   the screen unfolds every defined word, tries each statement bare, and has its cases, as the
   entry for #78 describes; it declares nothing Lean checks, and no audit lemma, pin or
   statement changes.
+
+## 20 October 2026
+
+- **S12 reads "Revision" as "revision".** The acceptance report's "Revision" header
+  sent the commit identifier `d95125f0` to Lean as a name.
+  [scripts/check_style.py](../../scripts/check_style.py) now matches the revision
+  context without regard to case; the commit-shape test is unchanged and nothing else
+  is excused. [tests/test_check_style.py](../../tests/test_check_style.py) covers that
+  header, the same hex word without revision context and a non-commit word beside
+  "Revision". These are the two protected files changed.
