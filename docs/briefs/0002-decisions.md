@@ -1924,7 +1924,6 @@ findings:
   checks to show that an updated definition or expected count cannot hide a pull request's
   E2 failure.
 
-## 20 October 2026
 - **I.45 and II.14 are allowed as restricted while the outline proof is to come (#116).**
   On 20 October 2026 the owner approved ship G's decisions for #116, including:
   "**Interim disclosure.** Approve the restricted-scope entries in section 7 and keep
